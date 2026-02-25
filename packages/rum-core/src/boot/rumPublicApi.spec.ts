@@ -50,6 +50,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   stopAction: () => undefined,
   startResource: () => undefined,
   stopResource: () => undefined,
+  pipeline: {} as any,
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const FAKE_WORKER = {} as DeflateWorker

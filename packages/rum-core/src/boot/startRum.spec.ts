@@ -249,3 +249,54 @@ describe('view events', () => {
     expect(lastRumViewEvent._dd.sdk_name).toBe('rum')
   })
 })
+
+describe('pipeline', () => {
+  let lifeCycle: LifeCycle
+  let sessionManager: RumSessionManagerMock
+
+  beforeEach(() => {
+    lifeCycle = new LifeCycle()
+    sessionManager = createRumSessionManagerMock().setId('42')
+  })
+
+  it('should seal the pipeline during startRumEventCollection', () => {
+    const hooks = createHooks()
+    const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
+
+    const result = startRumEventCollection(
+      lifeCycle,
+      hooks,
+      mockRumConfiguration(),
+      sessionManager,
+      noopRecorderApi,
+      undefined,
+      createCustomVitalsState(),
+      new Observable(),
+      undefined,
+      noop,
+      trackingConsentState
+    )
+
+    registerCleanupTask(result.stop)
+
+    // The pipeline should be sealed: publishing an event should not throw
+    expect(() => {
+      result.pipeline.publish('observation', {
+        type: 'view',
+        startTime: 0,
+        data: {},
+      })
+    }).not.toThrow()
+
+    // Trying to add a decorator after sealing should throw
+    expect(() => {
+      result.pipeline.decorate('observation', {
+        name: 'test',
+        provides: [],
+        requires: [],
+        capabilities: { canDiscard: false },
+        create: () => ({ decorate: () => Promise.resolve({ status: 'skipped' as const }) }),
+      })
+    }).toThrow()
+  })
+})

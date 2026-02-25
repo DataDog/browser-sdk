@@ -40,6 +40,7 @@ export interface PageStateEntry {
 
 export interface PageStateHistory {
   wasInPageStateDuringPeriod: (state: PageState, startTime: RelativeTime, duration: Duration) => boolean
+  findAll: (startTime: RelativeTime, duration?: Duration) => PageStateEntry[]
   addPageState(nextPageState: PageState, startTime?: RelativeTime): void
   stop: () => void
 }
@@ -157,6 +158,7 @@ export function startPageStateHistory(
 
   return {
     wasInPageStateDuringPeriod,
+    findAll: (startTime: RelativeTime, duration?: Duration) => pageStateEntryHistory.findAll(startTime, duration),
     addPageState,
     stop: () => {
       stopEventListeners()

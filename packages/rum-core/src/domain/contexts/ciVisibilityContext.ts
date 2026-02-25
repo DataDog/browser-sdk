@@ -68,6 +68,7 @@ export function startCiVisibilityContext(
   })
 
   return {
+    getTestExecutionId: () => testExecutionId,
     stop: () => {
       cookieObservableSubscription.unsubscribe()
     },

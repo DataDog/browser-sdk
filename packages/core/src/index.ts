@@ -122,10 +122,16 @@ export type { ContextManager } from './domain/context/contextManager'
 export { createContextManager } from './domain/context/contextManager'
 export { defineContextMethod, bufferContextCalls } from './domain/context/defineContextMethod'
 export { storeContextManager, removeStorageListeners } from './domain/context/storeContextManager'
+<<<<<<< HEAD
 export { startAccountContext, buildAccountContextManager } from './domain/contexts/accountContext'
 export { startTabContext } from './domain/contexts/tabContext'
 export { startGlobalContext, buildGlobalContextManager } from './domain/contexts/globalContext'
 export { startUserContext, buildUserContextManager } from './domain/contexts/userContext'
+=======
+export { startAccountContext, buildAccountContextManager, accountContextDecoratorFactory } from './domain/contexts/accountContext'
+export { startGlobalContext, buildGlobalContextManager, globalContextDecoratorFactory } from './domain/contexts/globalContext'
+export { startUserContext, buildUserContextManager, userContextDecoratorFactory } from './domain/contexts/userContext'
+>>>>>>> 120667891 (✨ Wire RUM pipeline with all decorator factories, seal in startRumEventCollection)
 export type { User } from './domain/contexts/userContext'
 export type { Account } from './domain/contexts/accountContext'
 export type { RumInternalContext } from './domain/contexts/rumInternalContext.type'

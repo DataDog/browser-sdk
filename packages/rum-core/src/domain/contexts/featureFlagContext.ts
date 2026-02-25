@@ -15,6 +15,7 @@ export type FeatureFlagContext = Context
 
 export interface FeatureFlagContexts {
   addFeatureFlagEvaluation: (key: string, value: ContextValue) => void
+  findFeatureFlags: (startTime: RelativeTime) => FeatureFlagContext | undefined
 }
 
 /**
@@ -96,5 +97,6 @@ export function startFeatureFlagContexts(
         currentContext[key] = value
       }
     },
+    findFeatureFlags: (startTime: RelativeTime) => featureFlagContexts.find(startTime),
   }
 }

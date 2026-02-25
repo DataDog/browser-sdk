@@ -50,6 +50,7 @@ export function startDisplayContext(hooks: Hooks, configuration: RumConfiguratio
   )
 
   return {
+    getViewport: () => viewport,
     stop: () => {
       unsubscribeViewport()
       if (animationFrameId) {
