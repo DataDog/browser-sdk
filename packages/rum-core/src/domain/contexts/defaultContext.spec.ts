@@ -4,7 +4,90 @@ import type { RelativeTime } from '@datadog/browser-core'
 import { mockRumConfiguration } from '../../../test'
 import type { AssembleHookParams, DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
-import { startDefaultContext } from './defaultContext'
+import type { Observation } from '../pipeline/rumPipelineEvents'
+import { startDefaultContext, defaultContextDecoratorFactory } from './defaultContext'
+
+describe('defaultContextDecoratorFactory', () => {
+  beforeEach(() => {
+    mockClock()
+  })
+
+  it('should contribute applicationId and date', async () => {
+    const factory = defaultContextDecoratorFactory({
+      configuration: mockRumConfiguration({ applicationId: 'app-123' }),
+      getCurrentDrift: () => 0,
+      getTimeStampNow: () => 12345 as any,
+      canUseEventBridge: () => false,
+      sdkName: 'rum',
+    })
+    const obs: Observation = { type: 'view', startTime: 0, data: {} }
+    const result = await factory.create({}).decorate(obs, {})
+    expect(result.status).toBe('contributed')
+    if (result.status === 'contributed') {
+      const attrs = result.attributes as any
+      expect(attrs.application.id).toBe('app-123')
+      expect(attrs.date).toBe(12345)
+    }
+  })
+
+  it('should contribute camelCase _dd fields', async () => {
+    const factory = defaultContextDecoratorFactory({
+      configuration: mockRumConfiguration({ applicationId: 'app-1', sessionSampleRate: 50, sessionReplaySampleRate: 25, traceSampleRate: 10 }),
+      getCurrentDrift: () => 5,
+      getTimeStampNow: () => 99999 as any,
+      canUseEventBridge: () => false,
+      sdkName: 'rum',
+    })
+    const obs: Observation = { type: 'view', startTime: 0, data: {} }
+    const result = await factory.create({}).decorate(obs, {})
+    expect(result.status).toBe('contributed')
+    if (result.status === 'contributed') {
+      const attrs = result.attributes as any
+      expect(attrs._dd.formatVersion).toBe(2)
+      expect(attrs._dd.drift).toBe(5)
+      expect(attrs._dd.sdkName).toBe('rum')
+    }
+  })
+
+  it('should include browserSdkVersion when event bridge is active', async () => {
+    const factory = defaultContextDecoratorFactory({
+      configuration: mockRumConfiguration({ applicationId: 'app-1' }),
+      getCurrentDrift: () => 0,
+      getTimeStampNow: () => 0 as any,
+      canUseEventBridge: () => true,
+      sdkName: 'rum',
+    })
+    const obs: Observation = { type: 'view', startTime: 0, data: {} }
+    const result = await factory.create({}).decorate(obs, {})
+    expect(result.status).toBe('contributed')
+    if (result.status === 'contributed') {
+      const attrs = result.attributes as any
+      expect(attrs._dd.browserSdkVersion).toBeDefined()
+    }
+  })
+
+  it('should declare canDiscard: false', () => {
+    const factory = defaultContextDecoratorFactory({
+      configuration: mockRumConfiguration(),
+      getCurrentDrift: () => 0,
+      getTimeStampNow: () => 0 as any,
+      canUseEventBridge: () => false,
+      sdkName: 'rum',
+    })
+    expect(factory.capabilities.canDiscard).toBe(false)
+  })
+
+  it('should declare name: "defaultContext"', () => {
+    const factory = defaultContextDecoratorFactory({
+      configuration: mockRumConfiguration(),
+      getCurrentDrift: () => 0,
+      getTimeStampNow: () => 0 as any,
+      canUseEventBridge: () => false,
+      sdkName: 'rum',
+    })
+    expect(factory.name).toBe('defaultContext')
+  })
+})
 
 describe('startDefaultContext', () => {
   let hooks: Hooks
