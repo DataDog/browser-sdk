@@ -1,3 +1,4 @@
+import { getCookie as getDocumentCookie, setCookie as setDocumentCookie } from '@datadog/browser-native'
 import { display } from '../tools/display'
 import { ONE_MINUTE, ONE_SECOND } from '../tools/utils/timeUtils'
 import {
@@ -23,7 +24,7 @@ export function setCookie(name: string, value: string, expireDelay: number = 0, 
   const domain = options && options.domain ? `;domain=${options.domain}` : ''
   const secure = options && options.secure ? ';secure' : ''
   const partitioned = options && options.partitioned ? ';partitioned' : ''
-  document.cookie = `${name}=${value};${expires};path=/;samesite=${sameSite}${domain}${secure}${partitioned}`
+  setDocumentCookie(`${name}=${value};${expires};path=/;samesite=${sameSite}${domain}${secure}${partitioned}`)
 }
 
 /**
@@ -31,14 +32,14 @@ export function setCookie(name: string, value: string, expireDelay: number = 0, 
  * If there are multiple cookies with the same name, returns the first one
  */
 export function getCookie(name: string) {
-  return findCommaSeparatedValue(document.cookie, name)
+  return findCommaSeparatedValue(getDocumentCookie(), name)
 }
 
 /**
  * Returns all the values of the cookies with the given name
  */
 export function getCookies(name: string): string[] {
-  return findAllCommaSeparatedValues(document.cookie).get(name) || []
+  return findAllCommaSeparatedValues(getDocumentCookie()).get(name) || []
 }
 
 let initCookieParsed: Map<string, string> | undefined
@@ -51,7 +52,7 @@ let initCookieParsed: Map<string, string> | undefined
  */
 export function getInitCookie(name: string) {
   if (!initCookieParsed) {
-    initCookieParsed = findCommaSeparatedValues(document.cookie)
+    initCookieParsed = findCommaSeparatedValues(getDocumentCookie())
   }
   return initCookieParsed.get(name)
 }
@@ -65,7 +66,7 @@ export function deleteCookie(name: string, options?: CookieOptions) {
 }
 
 export function areCookiesAuthorized(options: CookieOptions): boolean {
-  if (document.cookie === undefined || document.cookie === null) {
+  if (getDocumentCookie() === undefined || getDocumentCookie() === null) {
     return false
   }
   try {
