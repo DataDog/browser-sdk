@@ -9,11 +9,7 @@ export type RumEventDomainContext<T extends RumEventType = any> = T extends type
   : T extends typeof RumEventType.ACTION
     ? RumActionEventDomainContext
     : T extends typeof RumEventType.RESOURCE
-      ?
-          | RumFetchResourceEventDomainContext
-          | RumXhrResourceEventDomainContext
-          | RumOtherResourceEventDomainContext
-          | RumManualResourceEventDomainContext
+      ? RumResourceEventDomainContext | RumManualResourceEventDomainContext
       : T extends typeof RumEventType.ERROR
         ? RumErrorEventDomainContext
         : T extends typeof RumEventType.LONG_TASK
@@ -32,25 +28,16 @@ export interface RumActionEventDomainContext {
   handlingStack?: string
 }
 
-export interface RumFetchResourceEventDomainContext {
+export interface RumResourceEventDomainContext {
+  isManual: false
+  performanceEntry: PerformanceEntry
+  xhr: XMLHttpRequest | undefined
+  isAborted: boolean
+  handlingStack: string | undefined
   requestInit: RequestInit | undefined
-  requestInput: RequestInfo
+  requestInput: RequestInfo | undefined
   response: Response | undefined
   error: Error | undefined
-  performanceEntry: PerformanceEntry
-  isAborted: boolean
-  handlingStack: string | undefined
-}
-
-export interface RumXhrResourceEventDomainContext {
-  xhr: XMLHttpRequest
-  performanceEntry: PerformanceEntry
-  isAborted: boolean
-  handlingStack: string | undefined
-}
-
-export interface RumOtherResourceEventDomainContext {
-  performanceEntry: PerformanceEntry
 }
 
 export interface RumManualResourceEventDomainContext {
