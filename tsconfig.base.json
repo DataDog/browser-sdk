@@ -17,6 +17,8 @@
     "lib": ["ES2020", "DOM", "WebWorker"],
 
     "paths": {
+      "@datadog/browser-native": ["./packages/browser-native/src"],
+
       "@datadog/browser-core": ["./packages/core/src"],
 
       "@datadog/browser-flagging": ["./packages/flagging/src/entries/main"],

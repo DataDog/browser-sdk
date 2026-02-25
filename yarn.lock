@@ -313,6 +313,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@datadog/browser-native@workspace:packages/browser-native":
+  version: 0.0.0-use.local
+  resolution: "@datadog/browser-native@workspace:packages/browser-native"
+  languageName: unknown
+  linkType: soft
+
 "@datadog/browser-rum-core@npm:6.27.1, @datadog/browser-rum-core@workspace:packages/rum-core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-core@workspace:packages/rum-core"
