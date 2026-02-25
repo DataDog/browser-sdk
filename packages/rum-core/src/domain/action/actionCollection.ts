@@ -155,7 +155,7 @@ function isAutoAction(action: AutoAction | ManualAction): action is AutoAction {
 }
 
 export function actionContextDecoratorFactory(deps: {
-  findActionId: (startTime: RelativeTime) => string[] | undefined
+  findActionId: (startTime?: RelativeTime) => string[]
 }): DecoratorFactory<Observation, { action?: { id: string[] } }> {
   return {
     name: 'actionContext',
