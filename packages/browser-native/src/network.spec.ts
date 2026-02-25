@@ -48,6 +48,7 @@ describe('sendBeacon', () => {
 
     const result = sendBeacon('https://example.com', 'data')
 
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(navigator.sendBeacon).toHaveBeenCalledWith('https://example.com', 'data')
     expect(result).toBeTrue()
   })

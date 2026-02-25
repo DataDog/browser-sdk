@@ -1,8 +1,8 @@
-import { monitor } from '../tools/monitor'
 import {
   addEventListener as nativeAddEventListener,
   removeEventListener as nativeRemoveEventListener,
 } from '@datadog/browser-native'
+import { monitor } from '../tools/monitor'
 import type { CookieStore, CookieStoreEventMap, VisualViewport, VisualViewportEventMap } from './browser.types'
 
 export type TrustableEvent<E extends Event = Event> = E & { __ddIsTrusted?: boolean }
