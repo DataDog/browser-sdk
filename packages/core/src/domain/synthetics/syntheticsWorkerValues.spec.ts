@@ -1,5 +1,5 @@
 import { mockSyntheticsWorkerValues } from '../../../test'
-import { getSyntheticsResultId, getSyntheticsTestId, willSyntheticsInjectRum } from './syntheticsWorkerValues'
+import { getSyntheticsContext, willSyntheticsInjectRum } from './syntheticsWorkerValues'
 
 describe('syntheticsWorkerValues', () => {
   describe('willSyntheticsInjectRum', () => {
@@ -28,55 +28,82 @@ describe('syntheticsWorkerValues', () => {
     })
   })
 
-  describe('getSyntheticsTestId', () => {
+  describe('getSyntheticsContext', () => {
     it('returns undefined if nothing is defined', () => {
       mockSyntheticsWorkerValues({}, 'globals')
 
-      expect(getSyntheticsTestId()).toBeUndefined()
+      expect(getSyntheticsContext()).toBeUndefined()
     })
 
-    it('returns the test id if the PUBLIC_ID global variable is defined', () => {
-      mockSyntheticsWorkerValues({ publicId: 'toto' }, 'globals')
+    it('returns the context from the global variable', () => {
+      mockSyntheticsWorkerValues({ context: { test_id: 'foo', result_id: 'bar' } }, 'globals')
 
-      expect(getSyntheticsTestId()).toBe('toto')
+      expect(getSyntheticsContext()).toEqual({ test_id: 'foo', result_id: 'bar' })
     })
 
-    it('returns undefined if the PUBLIC_ID global variable is not a string', () => {
-      mockSyntheticsWorkerValues({ publicId: 1 }, 'globals')
+    it('returns undefined if the global variable is missing test_id or result_id', () => {
+      mockSyntheticsWorkerValues({ context: { test_id: 'foo' } as any }, 'globals')
 
-      expect(getSyntheticsTestId()).toBeUndefined()
+      expect(getSyntheticsContext()).toBeUndefined()
     })
 
-    it('returns undefined if the PUBLIC_ID cookie is defined', () => {
-      mockSyntheticsWorkerValues({ publicId: 'toto' }, 'cookies')
+    it('returns undefined if test_id or result_id are not strings', () => {
+      mockSyntheticsWorkerValues({ context: { test_id: 1, result_id: 2 } as any }, 'globals')
 
-      expect(getSyntheticsTestId()).toBe('toto')
-    })
-  })
-
-  describe('getSyntheticsResultId', () => {
-    it('returns undefined if nothing is defined', () => {
-      mockSyntheticsWorkerValues({}, 'globals')
-
-      expect(getSyntheticsResultId()).toBeUndefined()
+      expect(getSyntheticsContext()).toBeUndefined()
     })
 
-    it('returns the test id if the RESULT_ID global variable is defined', () => {
-      mockSyntheticsWorkerValues({ resultId: 'toto' }, 'globals')
+    it('includes extra properties from the context', () => {
+      mockSyntheticsWorkerValues(
+        { context: { test_id: 'foo', result_id: 'bar', run_type: 'scheduled', suite_ids: ['abc'] as any } },
+        'globals'
+      )
 
-      expect(getSyntheticsResultId()).toBe('toto')
+      expect(getSyntheticsContext()).toEqual({
+        test_id: 'foo',
+        result_id: 'bar',
+        run_type: 'scheduled',
+        suite_ids: ['abc'],
+      })
     })
 
-    it('returns undefined if the RESULT_ID global variable is not a string', () => {
-      mockSyntheticsWorkerValues({ resultId: 1 }, 'globals')
+    it('returns the context from the cookie', () => {
+      mockSyntheticsWorkerValues({ context: { test_id: 'foo', result_id: 'bar' } }, 'cookies')
 
-      expect(getSyntheticsResultId()).toBeUndefined()
+      expect(getSyntheticsContext()).toEqual({ test_id: 'foo', result_id: 'bar' })
     })
 
-    it('returns undefined if the RESULT_ID cookie is defined', () => {
-      mockSyntheticsWorkerValues({ resultId: 'toto' }, 'cookies')
+    it('returns undefined if the cookie context is missing required fields', () => {
+      mockSyntheticsWorkerValues({ context: { test_id: 'foo' } as any }, 'cookies')
 
-      expect(getSyntheticsResultId()).toBe('toto')
+      expect(getSyntheticsContext()).toBeUndefined()
+    })
+
+    it('falls back to legacy globals when the new context is absent', () => {
+      mockSyntheticsWorkerValues({ publicId: 'foo', resultId: 'bar' }, 'globals')
+
+      expect(getSyntheticsContext()).toEqual({ test_id: 'foo', result_id: 'bar' })
+    })
+
+    it('falls back to legacy cookies when the new context is absent', () => {
+      mockSyntheticsWorkerValues({ publicId: 'foo', resultId: 'bar' }, 'cookies')
+
+      expect(getSyntheticsContext()).toEqual({ test_id: 'foo', result_id: 'bar' })
+    })
+
+    it('returns undefined from legacy fallback if one of the two values is missing', () => {
+      mockSyntheticsWorkerValues({ publicId: 'foo' }, 'globals')
+
+      expect(getSyntheticsContext()).toBeUndefined()
+    })
+
+    it('prefers the new context over legacy globals when both are present', () => {
+      mockSyntheticsWorkerValues(
+        { context: { test_id: 'new-id', result_id: 'new-result' }, publicId: 'old-id', resultId: 'old-result' },
+        'globals'
+      )
+
+      expect(getSyntheticsContext()).toEqual({ test_id: 'new-id', result_id: 'new-result' })
     })
   })
 })

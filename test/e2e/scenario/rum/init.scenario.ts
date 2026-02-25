@@ -314,6 +314,53 @@ test.describe('Synthetics Browser Test', () => {
       await flushEvents()
       expect(intakeRegistry.rumViewEvents).toHaveLength(0)
     })
+
+  createTest('enriches events with the synthetics context from the global variable')
+    .withRum()
+    .withRumInit((configuration) => {
+      ;(window as any)._DATADOG_SYNTHETICS_RUM_CONTEXT = {
+        test_id: 'test-abc',
+        result_id: 'result-xyz',
+        run_type: 'scheduled',
+      }
+      window.DD_RUM!.init(configuration)
+    })
+    .run(async ({ intakeRegistry, flushEvents }) => {
+      await flushEvents()
+      expect(intakeRegistry.rumViewEvents[0]).toEqual(
+        expect.objectContaining({
+          session: expect.objectContaining({ type: 'synthetics' }),
+          synthetics: {
+            test_id: 'test-abc',
+            result_id: 'result-xyz',
+            run_type: 'scheduled',
+            injected: false,
+          },
+        })
+      )
+    })
+
+  createTest('enriches events with the synthetics context from the cookie')
+    .withRum()
+    .withRumInit((configuration) => {
+      const context = { test_id: 'test-abc', result_id: 'result-xyz', run_type: 'scheduled' }
+      document.cookie = `datadog-synthetics-rum-context=${encodeURIComponent(JSON.stringify(context))}`
+      window.DD_RUM!.init(configuration)
+    })
+    .run(async ({ intakeRegistry, flushEvents }) => {
+      await flushEvents()
+      expect(intakeRegistry.rumViewEvents[0]).toEqual(
+        expect.objectContaining({
+          session: expect.objectContaining({ type: 'synthetics' }),
+          synthetics: {
+            test_id: 'test-abc',
+            result_id: 'result-xyz',
+            run_type: 'scheduled',
+            injected: false,
+          },
+        })
+      )
+    })
 })
 
 test.describe('Service workers Rum', () => {

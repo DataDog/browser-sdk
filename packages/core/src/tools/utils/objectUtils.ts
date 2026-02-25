@@ -1,3 +1,11 @@
+export function tryJsonParse<T = unknown>(text: string): T | undefined {
+  try {
+    return JSON.parse(text) as T
+  } catch {
+    // ignore
+  }
+}
+
 export function shallowClone<T>(object: T): T & Record<string, never> {
   return { ...object } as T & Record<string, never>
 }
