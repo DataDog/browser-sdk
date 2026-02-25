@@ -34,6 +34,7 @@ export interface SessionManager {
   expireObservable: Observable<void>
   sessionStateUpdateObservable: Observable<{ previousState: SessionState; newState: SessionState }>
   expire: () => void
+  // TODO: review difference between SessionState and SessionContext
   updateSessionState: (state: Partial<SessionState>) => void
 }
 
@@ -87,6 +88,7 @@ export function startSessionManager(
       sessionContextHistory.closeActive(relativeNow())
     })
     sessionStore.sessionStateUpdateObservable.subscribe(({ newState }) => {
+      // mutate the session state in the history
       const currentContext = sessionContextHistory.find()
       if (currentContext) {
         currentContext.isReplayForced = !!newState.forcedReplay
@@ -123,12 +125,11 @@ export function startSessionManager(
       findSession: (startTime, options) => sessionContextHistory.find(startTime, options),
       findTrackedSession: (startTime, options) => {
         const session = sessionContextHistory.find(startTime, options)
-        if (!session || session.id === 'invalid') {
+
+        if (!session || session.id === 'invalid' || !isSampled(session.id, configuration.sessionSampleRate)) {
           return
         }
-        if (!isSampled(session.id, configuration.sessionSampleRate)) {
-          return
-        }
+
         return {
           id: session.id,
           anonymousId: session.anonymousId,
@@ -166,7 +167,7 @@ export function startSessionManager(
 
 export function startSessionManagerStub(onReady: (sessionManager: SessionManager) => void): void {
   const stubSessionId = generateUUID()
-  const sessionContext: SessionContext = {
+  let sessionContext: SessionContext = {
     id: stubSessionId,
     isReplayForced: false,
     anonymousId: undefined,
@@ -183,8 +184,9 @@ export function startSessionManagerStub(onReady: (sessionManager: SessionManager
     sessionStateUpdateObservable: new Observable(),
     expire: noop,
     updateSessionState: (state) => {
-      if (state.forcedReplay) {
-        sessionContext.isReplayForced = true
+      sessionContext = {
+        ...sessionContext,
+        ...state,
       }
     },
   })
