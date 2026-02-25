@@ -35,7 +35,10 @@
       "@datadog/browser-rum-react/react-router-v6": ["./packages/rum-react/src/entries/reactRouterV6"],
       "@datadog/browser-rum-react/react-router-v7": ["./packages/rum-react/src/entries/reactRouterV7"],
 
-      "@datadog/browser-worker": ["./packages/worker/src/entries/main"]
+      "@datadog/browser-worker": ["./packages/worker/src/entries/main"],
+
+      "@datadog/browser-sdk-endpoint": ["./packages/endpoint/src/index.ts"],
+      "@datadog/browser-sdk-endpoint/*": ["./packages/endpoint/src/*"]
     }
   }
 }
