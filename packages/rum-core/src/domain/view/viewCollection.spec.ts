@@ -13,7 +13,8 @@ import type { ViewHistoryEntry } from '../contexts/viewHistory'
 import type { AssembleHookParams, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
-import type { Observation } from '../pipeline/rumPipelineEvents'
+import { createRumPipeline } from '../pipeline/createRumPipeline'
+import type { Observation, RumSignal } from '../pipeline/rumPipelineEvents'
 import { startViewCollection, viewDecoratorFactory } from './viewCollection'
 import type { ViewEvent } from './trackViews'
 
@@ -304,6 +305,81 @@ describe('viewCollection', () => {
       }) as DefaultTelemetryEventAttributes
 
       expect(telemetryEventAttributes.view?.id).toBeUndefined()
+    })
+  })
+
+  describe('pipeline observation', () => {
+    it('should publish an observation on the pipeline when a view update is collected', () => {
+      const localLifeCycle = new LifeCycle()
+      const localHooks = createHooks()
+      const pipeline = createRumPipeline()
+      const observations: Observation[] = []
+      pipeline.subscribe('observation', (obs) => observations.push(obs))
+      pipeline.seal()
+
+      const viewHistory = mockViewHistory()
+      const collectionResult = startViewCollection(
+        localLifeCycle,
+        localHooks,
+        mockRumConfiguration(),
+        new Observable<RumMutationRecord[]>(),
+        new Observable<void>(),
+        new Observable<LocationChange>(),
+        { ...noopRecorderApi, getReplayStats: jasmine.createSpy() },
+        viewHistory,
+        undefined,
+        pipeline
+      )
+      registerCleanupTask(() => {
+        collectionResult.stop()
+        viewHistory.stop()
+      })
+
+      localLifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
+
+      expect(observations.length).toBe(1)
+      expect(observations[0].type).toBe(RumEventType.VIEW)
+      expect(observations[0].startTime).toBe(1234 as RelativeTime)
+    })
+
+    it('should publish a viewCreated signal on the pipeline when a view is created', () => {
+      const localLifeCycle = new LifeCycle()
+      const localHooks = createHooks()
+      const pipeline = createRumPipeline()
+      const signals: RumSignal[] = []
+      pipeline.subscribe('signal', (sig) => signals.push(sig))
+      pipeline.seal()
+
+      const viewHistory = mockViewHistory()
+      const collectionResult = startViewCollection(
+        localLifeCycle,
+        localHooks,
+        mockRumConfiguration(),
+        new Observable<RumMutationRecord[]>(),
+        new Observable<void>(),
+        new Observable<LocationChange>(),
+        { ...noopRecorderApi, getReplayStats: jasmine.createSpy() },
+        viewHistory,
+        undefined,
+        pipeline
+      )
+      registerCleanupTask(() => {
+        collectionResult.stop()
+        viewHistory.stop()
+      })
+
+      localLifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+        id: 'test-view-id',
+        name: 'TestView',
+        startClocks: { relative: 0 as RelativeTime, timeStamp: 0 as TimeStamp },
+      })
+
+      expect(signals.length).toBe(1)
+      expect(signals[0].type).toBe('viewCreated')
+      if (signals[0].type === 'viewCreated') {
+        expect(signals[0].viewId).toBe('test-view-id')
+        expect(signals[0].name).toBe('TestView')
+      }
     })
   })
 })

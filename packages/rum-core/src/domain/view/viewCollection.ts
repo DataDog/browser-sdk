@@ -1,6 +1,6 @@
 import type { Duration, RelativeTime, ServerDuration, Observable } from '@datadog/browser-core'
 import { getTimeZone, DISCARDED, HookNames, isEmptyObject, mapValues, toServerDuration } from '@datadog/browser-core'
-import type { DecoratorFactory } from '@datadog/browser-core-next'
+import type { DecoratorFactory, Pipeline } from '@datadog/browser-core-next'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import type { RawRumViewEvent, ViewPerformanceData } from '../../rawRumEvent.types'
@@ -12,7 +12,7 @@ import type { RumConfiguration } from '../configuration'
 import type { ViewHistory, ViewHistoryEntry } from '../contexts/viewHistory'
 import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
-import type { Observation } from '../pipeline/rumPipelineEvents'
+import type { Observation, RumCoreEvents } from '../pipeline/rumPipelineEvents'
 import { trackViews } from './trackViews'
 import type { ViewEvent, ViewOptions } from './trackViews'
 import type { CommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
@@ -27,11 +27,27 @@ export function startViewCollection(
   locationChangeObservable: Observable<LocationChange>,
   recorderApi: RecorderApi,
   viewHistory: ViewHistory,
-  initialViewOptions?: ViewOptions
+  initialViewOptions?: ViewOptions,
+  pipeline?: Pipeline<RumCoreEvents>
 ) {
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processViewUpdate(view, configuration, recorderApi))
-  )
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) => {
+    const rawEvent = processViewUpdate(view, configuration, recorderApi)
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
+    if (pipeline) {
+      pipeline.publish('observation', {
+        type: rawEvent.rawRumEvent.type,
+        startTime: rawEvent.startClocks.relative,
+        duration: rawEvent.duration,
+        data: (rawEvent.domainContext ?? {}) as unknown as Record<string, unknown>,
+      })
+    }
+  })
+
+  if (pipeline) {
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, ({ id, name }) => {
+      pipeline.publish('signal', { type: 'viewCreated', viewId: id, name })
+    })
+  }
 
   hooks.register(HookNames.Assemble, ({ startTime, eventType }): DefaultRumEventAttributes | DISCARDED => {
     const view = viewHistory.findView(startTime)
