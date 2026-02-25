@@ -160,6 +160,38 @@ test.describe('logs', () => {
       })
     })
 
+  createTest('do not send XHR network errors for aborted requests')
+    .withLogs({ forwardErrorsToLogs: true })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(
+        () =>
+          new Promise<void>((resolve) => {
+            const xhr = new XMLHttpRequest()
+            xhr.addEventListener('loadend', () => resolve())
+            xhr.open('GET', '/')
+            xhr.send()
+            xhr.abort()
+          })
+      )
+
+      await flushEvents()
+      expect(intakeRegistry.logsEvents).toHaveLength(0)
+    })
+
+  createTest('do not send fetch network errors for aborted requests')
+    .withLogs({ forwardErrorsToLogs: true })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        const controller = new AbortController()
+        const p = fetch('/', { signal: controller.signal }).catch(() => undefined)
+        controller.abort()
+        return p
+      })
+
+      await flushEvents()
+      expect(intakeRegistry.logsEvents).toHaveLength(0)
+    })
+
   createTest('keep only the first bytes of the response')
     .withLogs({ forwardErrorsToLogs: true })
     .run(async ({ intakeRegistry, baseUrl, servers, flushEvents, page, withBrowserLogs, browserName }) => {

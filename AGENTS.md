@@ -128,6 +128,12 @@ Use gitmoji conventions (based on actual usage in this repo):
 - 🧹 **Cleanup** - Minor cleanup, housekeeping
 - 🔊 **Logging** - Add/modify debug logs, telemetry
 
+## Manual Testing with Chrome MCP
+
+`yarn dev` serves the sandbox at `http://localhost:8080` (increments port if busy). The sandbox page (`sandbox/index.html`) loads the SDK bundles and calls `DD_LOGS.init()` / `DD_RUM.init()`.
+
+To test with specific config options (e.g. `forwardErrorsToLogs: true`), just edit `sandbox/index.html` temporarily. The dev server reloads on change, so navigate to `http://localhost:8080` after saving and use `evaluate_script` to run test code.
+
 ## Git Workflow
 
 - Branch naming: `<username>/<feature>` (e.g., `john.doe/fix-session-bug`)
