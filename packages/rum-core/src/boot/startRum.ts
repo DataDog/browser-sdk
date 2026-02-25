@@ -198,15 +198,6 @@ export function startRumEventCollection(
   const userContext = startUserContext(hooks, configuration, session, 'rum')
   const accountContext = startAccountContext(hooks, configuration, 'rum')
 
-  const actionCollection = startActionCollection(
-    lifeCycle,
-    hooks,
-    domMutationObservable,
-    windowOpenObservable,
-    configuration
-  )
-  cleanupTasks.push(actionCollection.stop)
-
   const eventCollection = startEventCollection(lifeCycle)
 
   const displayContext = startDisplayContext(hooks, configuration)
@@ -220,6 +211,16 @@ export function startRumEventCollection(
   // Create the RUM pipeline (runs in parallel with the existing hooks-based assembly).
   // The profiling decorator is registered by the rum package's startRum, not here.
   const pipeline = createRumPipeline()
+
+  const actionCollection = startActionCollection(
+    lifeCycle,
+    hooks,
+    domMutationObservable,
+    windowOpenObservable,
+    configuration,
+    pipeline
+  )
+  cleanupTasks.push(actionCollection.stop)
 
   pipeline.decorate(
     'observation',

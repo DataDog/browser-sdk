@@ -9,6 +9,7 @@ import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { AssembleHookParams, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
+import { createRumPipeline } from '../pipeline/createRumPipeline'
 import { LONG_TASK_START_TIME_CORRECTION, startActionCollection, actionContextDecoratorFactory } from './actionCollection'
 import { ActionNameSource } from './actionNameConstants'
 import type { ActionContexts } from './actionCollection'
@@ -272,6 +273,37 @@ describe('actionCollection', () => {
       }) as DefaultTelemetryEventAttributes
 
       expect(telemetryEventAttributes.action?.id).toEqual([] as unknown as string)
+    })
+  })
+
+  describe('pipeline observation', () => {
+    it('should publish an observation on the pipeline when a manual action is collected', () => {
+      const localLifeCycle = new LifeCycle()
+      const localHooks = createHooks()
+      const pipeline = createRumPipeline()
+      const observations: Observation[] = []
+      pipeline.subscribe('observation', (obs) => observations.push(obs))
+      pipeline.seal()
+
+      const actionCollection = startActionCollection(
+        localLifeCycle,
+        localHooks,
+        new Observable<RumMutationRecord[]>(),
+        new Observable<void>(),
+        mockRumConfiguration(),
+        pipeline
+      )
+      registerCleanupTask(actionCollection.stop)
+
+      actionCollection.addAction({
+        name: 'test action',
+        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+        type: ActionType.CUSTOM,
+      })
+
+      expect(observations.length).toBe(1)
+      expect(observations[0].type).toBe(RumEventType.ACTION)
+      expect(observations[0].startTime).toBe(1234 as RelativeTime)
     })
   })
 })

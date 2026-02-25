@@ -1,6 +1,6 @@
 import type { Duration, Observable, RelativeTime } from '@datadog/browser-core'
 import { noop, toServerDuration, SKIPPED, HookNames, addDuration } from '@datadog/browser-core'
-import type { DecoratorFactory } from '@datadog/browser-core-next'
+import type { DecoratorFactory, Pipeline } from '@datadog/browser-core-next'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RawRumActionEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -9,11 +9,11 @@ import { LifeCycleEventType } from '../lifeCycle'
 import type { RumConfiguration } from '../configuration'
 import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
+import type { Observation, RumCoreEvents } from '../pipeline/rumPipelineEvents'
 import { trackClickActions } from './trackClickActions'
 import type { ClickAction } from './trackClickActions'
 import { trackManualActions } from './trackManualActions'
 import type { ManualAction } from './trackManualActions'
-import type { Observation } from '../pipeline/rumPipelineEvents'
 
 export type AutoAction = ClickAction
 
@@ -28,12 +28,22 @@ export function startActionCollection(
   hooks: Hooks,
   domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
-  configuration: RumConfiguration
+  configuration: RumConfiguration,
+  pipeline?: Pipeline<RumCoreEvents>
 ) {
   const { unsubscribe: unsubscribeAutoAction } = lifeCycle.subscribe(
     LifeCycleEventType.AUTO_ACTION_COMPLETED,
     (action) => {
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
+      const rawEvent = processAction(action)
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
+      if (pipeline) {
+        pipeline.publish('observation', {
+          type: rawEvent.rawRumEvent.type,
+          startTime: rawEvent.startClocks.relative,
+          duration: rawEvent.duration,
+          data: (rawEvent.domainContext ?? {}) as unknown as Record<string, unknown>,
+        })
+      }
     }
   )
 
@@ -45,7 +55,16 @@ export function startActionCollection(
   }
 
   const manualActions = trackManualActions(lifeCycle, (action) => {
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
+    const rawEvent = processAction(action)
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
+    if (pipeline) {
+      pipeline.publish('observation', {
+        type: rawEvent.rawRumEvent.type,
+        startTime: rawEvent.startClocks.relative,
+        duration: rawEvent.duration,
+        data: (rawEvent.domainContext ?? {}) as unknown as Record<string, unknown>,
+      })
+    }
   })
 
   const actionContexts: ActionContexts = {
