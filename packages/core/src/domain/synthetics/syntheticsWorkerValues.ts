@@ -1,5 +1,6 @@
 import { getInitCookie } from '../../browser/cookie'
 import { globalObject, isWorkerEnvironment } from '../../tools/globalObject'
+import { tryJsonParse } from '../../tools/utils/objectUtils'
 
 const cookieNamePrefix = 'datadog-synthetics-'
 export const SYNTHETICS_TEST_ID_COOKIE_NAME = `${cookieNamePrefix}public-id`
@@ -48,11 +49,7 @@ function getRawSyntheticsContext(): unknown {
 
   const rawCookie = getInitCookie(SYNTHETICS_CONTEXT_COOKIE_NAME)
   if (rawCookie) {
-    try {
-      return JSON.parse(decodeURIComponent(rawCookie))
-    } catch {
-      // ignore
-    }
+    return tryJsonParse(decodeURIComponent(rawCookie))
   }
 
   return {
