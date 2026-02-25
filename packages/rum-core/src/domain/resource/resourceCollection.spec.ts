@@ -1,7 +1,7 @@
 import type { Duration, RelativeTime, ServerDuration, TaskQueue, TimeStamp } from '@datadog/browser-core'
 import { createTaskQueue, noop, RequestType, ResourceType } from '@datadog/browser-core'
 import { replaceMockable, registerCleanupTask } from '@datadog/browser-core/test'
-import type { RumFetchResourceEventDomainContext, RumXhrResourceEventDomainContext } from '../../domainContext.types'
+import type { RumResourceEventDomainContext } from '../../domainContext.types'
 import {
   collectAndValidateRawRumEvents,
   createPerformanceEntry,
@@ -91,6 +91,14 @@ describe('resourceCollection', () => {
     })
     expect(rawRumEvents[0].domainContext).toEqual({
       performanceEntry,
+      isManual: false,
+      isAborted: false,
+      handlingStack: undefined,
+      requestInit: undefined,
+      requestInput: undefined,
+      response: undefined,
+      error: undefined,
+      xhr: undefined,
     })
   })
 
@@ -141,6 +149,11 @@ describe('resourceCollection', () => {
       performanceEntry: jasmine.any(Object),
       isAborted: false,
       handlingStack: jasmine.stringMatching(HANDLING_STACK_REGEX),
+      isManual: false,
+      requestInit: undefined,
+      requestInput: undefined,
+      response: undefined,
+      error: undefined,
     })
   })
 
@@ -308,6 +321,14 @@ describe('resourceCollection', () => {
     })
     expect(rawRumEvents[0].domainContext).toEqual({
       performanceEntry: jasmine.any(Object),
+      isManual: false,
+      isAborted: false,
+      handlingStack: undefined,
+      requestInit: undefined,
+      requestInput: undefined,
+      response: undefined,
+      error: undefined,
+      xhr: undefined,
     })
   })
 
@@ -415,6 +436,8 @@ describe('resourceCollection', () => {
       error: undefined,
       isAborted: false,
       handlingStack: jasmine.stringMatching(HANDLING_STACK_REGEX),
+      isManual: false,
+      xhr: undefined,
     })
   })
   ;[null, undefined, 42, {}].forEach((input: any) => {
@@ -427,7 +450,7 @@ describe('resourceCollection', () => {
       })
 
       expect(rawRumEvents.length).toBe(1)
-      expect((rawRumEvents[0].domainContext as RumFetchResourceEventDomainContext).requestInput).toBe(input)
+      expect((rawRumEvents[0].domainContext as RumResourceEventDomainContext).requestInput).toBe(input)
     })
   })
 
@@ -553,7 +576,7 @@ describe('resourceCollection', () => {
     setupResourceCollection()
     const response = new Response()
     notifyRequest({ request: { type: RequestType.FETCH, response } })
-    const domainContext = rawRumEvents[0].domainContext as RumFetchResourceEventDomainContext
+    const domainContext = rawRumEvents[0].domainContext as RumResourceEventDomainContext
 
     expect(domainContext.handlingStack).toMatch(HANDLING_STACK_REGEX)
   })
@@ -563,7 +586,7 @@ describe('resourceCollection', () => {
     const xhr = new XMLHttpRequest()
     notifyRequest({ request: { type: RequestType.XHR, xhr } })
 
-    const domainContext = rawRumEvents[0].domainContext as RumXhrResourceEventDomainContext
+    const domainContext = rawRumEvents[0].domainContext as RumResourceEventDomainContext
 
     expect(domainContext.handlingStack).toMatch(HANDLING_STACK_REGEX)
   })

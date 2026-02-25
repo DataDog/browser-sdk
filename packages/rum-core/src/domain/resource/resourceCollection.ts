@@ -1,7 +1,6 @@
 import {
   combine,
   generateUUID,
-  RequestType,
   toServerDuration,
   relativeToClocks,
   createTaskQueue,
@@ -10,11 +9,7 @@ import {
 import type { RumConfiguration } from '../configuration'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType, createPerformanceObservable } from '../../browser/performanceObservable'
-import type {
-  RumXhrResourceEventDomainContext,
-  RumFetchResourceEventDomainContext,
-  RumOtherResourceEventDomainContext,
-} from '../../domainContext.types'
+import type { RumResourceEventDomainContext } from '../../domainContext.types'
 import type { RawRumResourceEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData, LifeCycle } from '../lifeCycle'
@@ -144,30 +139,17 @@ function computeGraphQlMetaData(
 function getResourceDomainContext(
   entry: RumPerformanceResourceTiming,
   request: RequestCompleteEvent | undefined
-): RumFetchResourceEventDomainContext | RumXhrResourceEventDomainContext | RumOtherResourceEventDomainContext {
-  if (request) {
-    const baseDomainContext = {
-      performanceEntry: entry,
-      isAborted: request.isAborted,
-      handlingStack: request.handlingStack,
-    }
-
-    if (request.type === RequestType.XHR) {
-      return {
-        xhr: request.xhr!,
-        ...baseDomainContext,
-      }
-    }
-    return {
-      requestInput: request.input as RequestInfo,
-      requestInit: request.init,
-      response: request.response,
-      error: request.error,
-      ...baseDomainContext,
-    }
-  }
+): RumResourceEventDomainContext {
   return {
     performanceEntry: entry,
+    isManual: false,
+    isAborted: request ? request.isAborted : false,
+    handlingStack: request?.handlingStack,
+    requestInit: request?.init,
+    requestInput: request?.input as RequestInfo | undefined,
+    response: request?.response,
+    error: request?.error,
+    xhr: request?.xhr,
   }
 }
 
