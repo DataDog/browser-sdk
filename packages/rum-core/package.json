@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-rum-core",
-  "version": "6.28.0",
+  "version": "6.28.1",
   "license": "Apache-2.0",
   "main": "cjs/index.js",
   "module": "esm/index.js",
@@ -9,7 +9,7 @@
     "build": "node ../../scripts/build/build-package.ts --modules"
   },
   "dependencies": {
-    "@datadog/browser-core": "6.28.0"
+    "@datadog/browser-core": "6.28.1"
   },
   "devDependencies": {
     "ajv": "8.18.0"
