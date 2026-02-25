@@ -97,5 +97,19 @@ test.describe('tracking consent', () => {
         expect(intakeRegistry.isEmpty).toBe(false)
         expect(await findSessionCookie(browserContext)).toBeDefined()
       })
+
+    createTest('stops sending events if tracking consent is revoked @only')
+      .withLogs()
+      .run(async ({ intakeRegistry, flushEvents, browserContext, page }) => {
+        await page.evaluate(() => {
+          window.DD_LOGS!.setTrackingConsent('not-granted')
+          window.DD_LOGS!.logger.log('should not be sent')
+        })
+
+        await flushEvents()
+
+        expect(intakeRegistry.logsEvents).toHaveLength(0)
+        expect((await findSessionCookie(browserContext))?.isExpired).toEqual('1')
+      })
   })
 })
