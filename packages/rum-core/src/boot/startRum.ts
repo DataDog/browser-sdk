@@ -174,7 +174,7 @@ export function startRumEventCollection(
   bufferedDataObservable: Observable<BufferedData>,
   sdkName: SdkName | undefined,
   reportError: (error: RawError) => void,
-  trackingConsentState?: TrackingConsentState
+  trackingConsentState: TrackingConsentState
 ) {
   const cleanupTasks: Array<() => void> = []
 
@@ -221,12 +221,10 @@ export function startRumEventCollection(
   // The profiling decorator is registered by the rum package's startRum, not here.
   const pipeline = createRumPipeline()
 
-  if (trackingConsentState) {
-    pipeline.decorate(
-      'observation',
-      trackingConsentDecoratorFactory({ hasConsent: () => trackingConsentState.isGranted() })
-    )
-  }
+  pipeline.decorate(
+    'observation',
+    trackingConsentDecoratorFactory({ hasConsent: () => trackingConsentState.isGranted() })
+  )
   pipeline.decorate('observation', sessionDecoratorFactory({ getSession: () => session.findTrackedSession() ?? null }))
   pipeline.decorate(
     'observation',

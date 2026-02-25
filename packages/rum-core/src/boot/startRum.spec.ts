@@ -59,7 +59,8 @@ function startRumStub(
     createCustomVitalsState(),
     new Observable(),
     undefined,
-    reportError
+    reportError,
+    createTrackingConsentState(TrackingConsent.GRANTED)
   )
 
   return {
