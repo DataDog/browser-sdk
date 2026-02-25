@@ -9,9 +9,10 @@ import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { AssembleHookParams, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
-import { LONG_TASK_START_TIME_CORRECTION, startActionCollection } from './actionCollection'
+import { LONG_TASK_START_TIME_CORRECTION, startActionCollection, actionContextDecoratorFactory } from './actionCollection'
 import { ActionNameSource } from './actionNameConstants'
 import type { ActionContexts } from './actionCollection'
+import type { Observation } from '../pipeline/rumPipelineEvents'
 
 describe('actionCollection', () => {
   const lifeCycle = new LifeCycle()
@@ -208,6 +209,48 @@ describe('actionCollection', () => {
 
       const [correctedStartTime] = findActionIdSpy.calls.mostRecent().args
       expect(correctedStartTime).toEqual(addDuration(longTaskStartTime, LONG_TASK_START_TIME_CORRECTION))
+    })
+  })
+
+  describe('actionContextDecoratorFactory', () => {
+    it('should contribute action IDs for error event type', async () => {
+      const factory = actionContextDecoratorFactory({
+        findActionId: () => ['action-1', 'action-2'],
+      })
+      const obs: Observation = { type: RumEventType.ERROR, startTime: 0, data: {} }
+      const result = await factory.create({}).decorate(obs, {})
+      expect(result.status).toBe('contributed')
+      if (result.status === 'contributed') {
+        expect((result.attributes as any).action).toEqual({ id: ['action-1', 'action-2'] })
+      }
+    })
+
+    it('should skip for view event type', async () => {
+      const factory = actionContextDecoratorFactory({
+        findActionId: () => ['action-1'],
+      })
+      const obs: Observation = { type: RumEventType.VIEW, startTime: 0, data: {} }
+      const result = await factory.create({}).decorate(obs, {})
+      expect(result.status).toBe('skipped')
+    })
+
+    it('should skip when no action IDs found', async () => {
+      const factory = actionContextDecoratorFactory({
+        findActionId: () => [],
+      })
+      const obs: Observation = { type: RumEventType.ERROR, startTime: 0, data: {} }
+      const result = await factory.create({}).decorate(obs, {})
+      expect(result.status).toBe('skipped')
+    })
+
+    it('should declare canDiscard: false', () => {
+      const factory = actionContextDecoratorFactory({ findActionId: () => [] })
+      expect(factory.capabilities.canDiscard).toBe(false)
+    })
+
+    it('should declare name: "actionContext"', () => {
+      const factory = actionContextDecoratorFactory({ findActionId: () => [] })
+      expect(factory.name).toBe('actionContext')
     })
   })
 

@@ -1,5 +1,6 @@
 import type { Duration, Observable, RelativeTime } from '@datadog/browser-core'
 import { noop, toServerDuration, SKIPPED, HookNames, addDuration } from '@datadog/browser-core'
+import type { DecoratorFactory } from '@datadog/browser-core-next'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RawRumActionEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -12,6 +13,7 @@ import { trackClickActions } from './trackClickActions'
 import type { ClickAction } from './trackClickActions'
 import { trackManualActions } from './trackManualActions'
 import type { ManualAction } from './trackManualActions'
+import type { Observation } from '../pipeline/rumPipelineEvents'
 
 export type AutoAction = ClickAction
 
@@ -150,4 +152,39 @@ function processAction(action: AutoAction | ManualAction): RawRumEventCollectedD
 
 function isAutoAction(action: AutoAction | ManualAction): action is AutoAction {
   return 'events' in action
+}
+
+export function actionContextDecoratorFactory(deps: {
+  findActionId: (startTime: RelativeTime) => string[] | undefined
+}): DecoratorFactory<Observation, { action?: { id: string[] } }> {
+  return {
+    name: 'actionContext',
+    provides: [],
+    requires: [],
+    capabilities: { canDiscard: false },
+    create: () => ({
+      decorate: (event, _accumulated) => {
+        if (
+          event.type !== RumEventType.ERROR &&
+          event.type !== RumEventType.RESOURCE &&
+          event.type !== RumEventType.LONG_TASK
+        ) {
+          return Promise.resolve({ status: 'skipped' as const })
+        }
+
+        const correctedStartTime =
+          event.type === RumEventType.LONG_TASK
+            ? addDuration(event.startTime as RelativeTime, LONG_TASK_START_TIME_CORRECTION)
+            : (event.startTime as RelativeTime)
+
+        const actionIds = deps.findActionId(correctedStartTime)
+
+        if (!actionIds || !actionIds.length) {
+          return Promise.resolve({ status: 'skipped' as const })
+        }
+
+        return Promise.resolve({ status: 'contributed' as const, attributes: { action: { id: actionIds } } })
+      },
+    }),
+  }
 }
