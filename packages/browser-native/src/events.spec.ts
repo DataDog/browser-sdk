@@ -12,6 +12,24 @@ describe('addEventListener', () => {
     expect(listener).toHaveBeenCalledTimes(1)
   })
 
+  it('forwards options to the native addEventListener', () => {
+    const target = document.createElement('div')
+    const listener = jasmine.createSpy('listener')
+    const options = { capture: true, once: true }
+
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    const originalAdd = EventTarget.prototype.addEventListener
+    const addSpy = jasmine.createSpy('add').and.callFake(originalAdd.bind(target))
+    EventTarget.prototype.addEventListener = addSpy as any
+
+    try {
+      addEventListener(target, 'click', listener, options)
+      expect(addSpy).toHaveBeenCalledWith('click', listener, options)
+    } finally {
+      EventTarget.prototype.addEventListener = originalAdd
+    }
+  })
+
   describe('Zone.js bypass', () => {
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const originalAddEventListener = EventTarget.prototype.addEventListener
@@ -42,7 +60,7 @@ describe('addEventListener', () => {
 
       addEventListener(target, 'click', listener)
 
-      expect(zoneOriginalAddEventListener).toHaveBeenCalled()
+      expect(zoneOriginalAddEventListener).toHaveBeenCalledWith('click', listener, undefined)
       expect(patchedAddEventListener).not.toHaveBeenCalled()
     })
   })
@@ -90,7 +108,7 @@ describe('removeEventListener', () => {
 
       removeEventListener(target, 'click', listener)
 
-      expect(zoneOriginalRemoveEventListener).toHaveBeenCalled()
+      expect(zoneOriginalRemoveEventListener).toHaveBeenCalledWith('click', listener, undefined)
       expect(patchedRemoveEventListener).not.toHaveBeenCalled()
     })
   })
