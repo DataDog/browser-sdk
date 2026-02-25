@@ -14,6 +14,9 @@
     "url": "https://github.com/DataDog/browser-sdk.git",
     "directory": "packages/core"
   },
+  "dependencies": {
+    "@datadog/browser-native": "6.27.1"
+  },
   "devDependencies": {
     "@types/pako": "2.0.4",
     "pako": "2.1.0"

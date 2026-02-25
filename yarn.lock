@@ -281,6 +281,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-core@workspace:packages/core"
   dependencies:
+    "@datadog/browser-native": "npm:6.27.1"
     "@types/pako": "npm:2.0.4"
     pako: "npm:2.1.0"
   languageName: unknown
@@ -313,7 +314,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-native@workspace:packages/browser-native":
+"@datadog/browser-native@npm:6.27.1, @datadog/browser-native@workspace:packages/browser-native":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-native@workspace:packages/browser-native"
   languageName: unknown
