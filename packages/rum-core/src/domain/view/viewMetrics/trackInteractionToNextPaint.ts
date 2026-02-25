@@ -1,5 +1,5 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
-import { elapsed, noop, ONE_MINUTE } from '@datadog/browser-core'
+import { elapsed, ExperimentalFeature, isExperimentalFeatureEnabled, noop, ONE_MINUTE } from '@datadog/browser-core'
 import type { RumFirstInputTiming, RumPerformanceEventTiming } from '../../../browser/performanceObservable'
 import {
   createPerformanceObservable,
@@ -18,6 +18,9 @@ const MAX_INTERACTION_ENTRIES = 10
 // Arbitrary value to cap INP outliers
 export const MAX_INP_VALUE = (1 * ONE_MINUTE) as Duration
 
+// Event Timing API rounds duration values to the nearest 8 ms
+const RENDER_TIME_GROUPING_THRESHOLD = 8 as Duration
+
 export interface InteractionToNextPaint {
   value: Duration
   targetSelector?: string
@@ -28,6 +31,14 @@ export interface InteractionToNextPaint {
     presentationDelay: Duration
   }
 }
+interface EntriesGroup {
+  startTime: RelativeTime
+  processingStart: RelativeTime
+  processingEnd: RelativeTime
+  // Reference time used for grouping, set once at group creation — anchors the 8ms merge window
+  referenceRenderTime: RelativeTime
+}
+
 /**
  * Track the interaction to next paint (INP).
  * To avoid outliers, return the p98 worst interaction of the view.
@@ -59,6 +70,9 @@ export function trackInteractionToNextPaint(
 
   const { getViewInteractionCount, stopViewInteractionCount } = trackViewInteractionCount(viewLoadingType)
   const longestInteractions = trackLongestInteractions(getViewInteractionCount)
+  const subPartsTracker = isExperimentalFeatureEnabled(ExperimentalFeature.INP_SUBPARTS)
+    ? createSubPartsTracker(longestInteractions)
+    : null
   const firstInputSubscription = createPerformanceObservable(configuration, {
     type: RumPerformanceEntryType.FIRST_INPUT,
     buffered: true,
@@ -80,9 +94,10 @@ export function trackInteractionToNextPaint(
         entry.startTime <= viewEnd
       ) {
         longestInteractions.process(entry)
+        subPartsTracker?.process(entry)
       }
     }
-
+    subPartsTracker?.pruneUntracked()
     const candidate = longestInteractions.estimateP98Interaction()
     if (candidate) {
       updateCurrentInp(candidate)
@@ -104,6 +119,11 @@ export function trackInteractionToNextPaint(
         targetSelector,
       }
     }
+    // Recomputed on every batch: the group for the p98 interaction may have been updated
+    // with new min/max timing even when the p98 identity (duration, startTime) is unchanged.
+    if (subPartsTracker) {
+      currentInp.subParts = subPartsTracker.computeSubParts(candidate, sanitizeInpValue(currentInp.duration))
+    }
   }
 
   return {
@@ -112,7 +132,7 @@ export function trackInteractionToNextPaint(
       // but the view interaction count > 0 then report 0
       if (currentInp) {
         return {
-          value: Math.min(currentInp.duration, MAX_INP_VALUE) as Duration,
+          value: sanitizeInpValue(currentInp.duration),
           targetSelector: currentInp.targetSelector,
           time: currentInp.startTime,
           subParts: currentInp.subParts,
@@ -130,6 +150,7 @@ export function trackInteractionToNextPaint(
     stop: () => {
       eventSubscription.unsubscribe()
       firstInputSubscription.unsubscribe()
+      subPartsTracker?.stop()
     },
   }
 }
@@ -175,6 +196,10 @@ function trackLongestInteractions(getViewInteractionCount: () => number) {
       const interactionIndex = Math.min(longestInteractions.length - 1, Math.floor(getViewInteractionCount() / 50))
       return longestInteractions[interactionIndex]
     },
+
+    isTracked(interactionId: number): boolean {
+      return longestInteractions.some((i) => i.interactionId === interactionId)
+    },
   }
 }
 
@@ -201,10 +226,105 @@ export function trackViewInteractionCount(viewLoadingType: ViewLoadingType) {
   }
 }
 
+function createSubPartsTracker(longestInteractions: ReturnType<typeof trackLongestInteractions>) {
+  const groupsByInteractionId = new Map<number, EntriesGroup>()
+
+  function updateGroupWithEntry(group: EntriesGroup, entry: RumPerformanceEventTiming | RumFirstInputTiming) {
+    group.startTime = Math.min(entry.startTime, group.startTime) as RelativeTime
+    // For each group, we keep the biggest interval possible between processingStart and processingEnd
+    group.processingStart = Math.min(entry.processingStart, group.processingStart) as RelativeTime
+    group.processingEnd = Math.max(entry.processingEnd, group.processingEnd) as RelativeTime
+  }
+
+  return {
+    process(entry: RumPerformanceEventTiming | RumFirstInputTiming): void {
+      if (entry.interactionId === undefined || !entry.processingStart || !entry.processingEnd) {
+        return
+      }
+
+      const renderTime = (entry.startTime + entry.duration) as RelativeTime
+      const existingGroup = groupsByInteractionId.get(entry.interactionId)
+
+      if (existingGroup) {
+        // Update existing group with MIN/MAX values (keep original referenceRenderTime)
+        updateGroupWithEntry(existingGroup, entry)
+        return
+      }
+
+      // Try to find a group within 8ms window to merge with (different interactionId, same frame)
+      for (const [, group] of groupsByInteractionId.entries()) {
+        if (Math.abs(renderTime - group.referenceRenderTime) <= RENDER_TIME_GROUPING_THRESHOLD) {
+          updateGroupWithEntry(group, entry)
+          // Also store under this entry's interactionId for easy lookup
+          groupsByInteractionId.set(entry.interactionId, group)
+          return
+        }
+      }
+
+      // Create new group
+      groupsByInteractionId.set(entry.interactionId, {
+        startTime: entry.startTime,
+        processingStart: entry.processingStart,
+        processingEnd: entry.processingEnd,
+        referenceRenderTime: renderTime,
+      })
+    },
+
+    // Prune after all entries are grouped: groups not in longestInteractions can never affect p98 subparts.
+    // Keeps groupsByInteractionId capped at MAX_INTERACTION_ENTRIES
+    pruneUntracked(): void {
+      for (const [interactionId] of groupsByInteractionId) {
+        if (!longestInteractions.isTracked(interactionId)) {
+          groupsByInteractionId.delete(interactionId)
+        }
+      }
+    },
+
+    computeSubParts(
+      entry: RumPerformanceEventTiming | RumFirstInputTiming,
+      inpDuration: Duration
+    ): InteractionToNextPaint['subParts'] | undefined {
+      if (!entry.processingStart || !entry.processingEnd || entry.interactionId === undefined) {
+        return undefined
+      }
+
+      const group = groupsByInteractionId.get(entry.interactionId)
+      // Shouldn't happen since entries are grouped before p98 calculation.
+      if (!group) {
+        return undefined
+      }
+
+      // Use group.startTime consistently to ensure subparts sum to inpDuration
+      // Math.max prevents nextPaintTime from being before processingStart (Chrome implementation)
+      const nextPaintTime = Math.max(
+        (group.startTime + inpDuration) as RelativeTime,
+        group.processingStart
+      ) as RelativeTime
+
+      // Clamp processingEnd to not exceed nextPaintTime
+      const processingEnd = Math.min(group.processingEnd, nextPaintTime) as RelativeTime
+
+      return {
+        inputDelay: elapsed(group.startTime, group.processingStart),
+        processingDuration: elapsed(group.processingStart, processingEnd),
+        presentationDelay: elapsed(processingEnd, nextPaintTime),
+      }
+    },
+
+    stop(): void {
+      groupsByInteractionId.clear()
+    },
+  }
+}
+
 export function isInteractionToNextPaintSupported() {
   return (
     supportPerformanceTimingEvent(RumPerformanceEntryType.EVENT) &&
     window.PerformanceEventTiming &&
     'interactionId' in PerformanceEventTiming.prototype
   )
+}
+
+function sanitizeInpValue(inpValue: Duration) {
+  return Math.min(inpValue, MAX_INP_VALUE) as Duration
 }
