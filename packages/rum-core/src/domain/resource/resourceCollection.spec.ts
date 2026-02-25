@@ -29,6 +29,8 @@ import { validateAndBuildRumConfiguration } from '../configuration'
 import type { RumPerformanceEntry, RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import { createSpanIdentifier, createTraceIdentifier } from '../tracing/identifier'
+import { createRumPipeline } from '../pipeline/createRumPipeline'
+import type { Observation } from '../pipeline/rumPipelineEvents'
 import { startResourceCollection } from './resourceCollection'
 import { retrieveInitialDocumentResourceTiming } from './retrieveInitialDocumentResourceTiming'
 
@@ -46,6 +48,7 @@ describe('resourceCollection', () => {
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
   let taskQueuePushSpy: jasmine.Spy<TaskQueue['push']>
+  let observations: Observation[]
 
   function setupResourceCollection(partialConfig: Partial<RumConfiguration> = { trackResources: true }) {
     replaceMockable(retrieveInitialDocumentResourceTiming, noop)
@@ -53,7 +56,16 @@ describe('resourceCollection', () => {
     const taskQueue = createTaskQueue()
     replaceMockable(createTaskQueue, () => taskQueue)
     taskQueuePushSpy = spyOn(taskQueue, 'push')
-    const startResult = startResourceCollection(lifeCycle, { ...baseConfiguration, ...partialConfig }, pageStateHistory)
+    const pipeline = createRumPipeline()
+    observations = []
+    pipeline.subscribe('observation', (obs) => observations.push(obs))
+    pipeline.seal()
+    const startResult = startResourceCollection(
+      lifeCycle,
+      { ...baseConfiguration, ...partialConfig },
+      pageStateHistory,
+      pipeline
+    )
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
 
@@ -110,6 +122,20 @@ describe('resourceCollection', () => {
     expect(rawRumEvents[0].domainContext).toEqual({
       performanceEntry,
     })
+  })
+
+  it('should publish an observation on the pipeline when a resource is collected', async () => {
+    setupResourceCollection()
+
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])
+    runTasks()
+
+    // Pipeline processes events asynchronously
+    await new Promise<void>((resolve) => setTimeout(resolve, 0))
+
+    expect(observations.length).toBe(1)
+    expect(observations[0].type).toBe(RumEventType.RESOURCE)
+    expect(observations[0].startTime).toBe(200 as RelativeTime)
   })
 
   it('should create resource from completed XHR request', () => {

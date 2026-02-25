@@ -314,7 +314,7 @@ export function startRumEventCollection(
 
   cleanupTasks.push(stopViewCollection)
 
-  const resourceCollection = startResourceCollection(lifeCycle, configuration, pageStateHistory)
+  const resourceCollection = startResourceCollection(lifeCycle, configuration, pageStateHistory, pipeline)
   cleanupTasks.push(resourceCollection.stop)
 
   const { stop: stopLongTaskCollection } = startLongTaskCollection(lifeCycle, configuration)
