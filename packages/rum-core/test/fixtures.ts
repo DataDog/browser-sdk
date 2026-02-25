@@ -119,6 +119,21 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
         },
         overrides
       )
+    case RumEventType.VIEW_UPDATE:
+      return combine(
+        {
+          type,
+          _dd: {
+            document_version: 2,
+          },
+          date: 0 as TimeStamp,
+          view: {
+            time_spent: 0 as ServerDuration,
+            is_active: true,
+          },
+        },
+        overrides
+      )
   }
 }
 

@@ -332,7 +332,7 @@ describe('rum assembly', () => {
         })
 
         expect(serverRumEvents[0].view.id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
-        expect(displaySpy).toHaveBeenCalledWith("Can't dismiss view events using beforeSend!")
+        expect(displaySpy).toHaveBeenCalledWith("Can't dismiss view or view_update events using beforeSend!")
       })
     })
 
@@ -568,6 +568,60 @@ describe('rum assembly', () => {
           expect(serverRumEvents[1].date).toBe(300)
         })
       })
+    })
+  })
+
+  describe('view_update events', () => {
+    it('should not allow dismissing view_update events', () => {
+      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+        partialConfiguration: {
+          beforeSend: () => false,
+        },
+      })
+
+      const displaySpy = spyOn(display, 'warn')
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW_UPDATE, {
+          view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
+        }),
+      })
+
+      expect(serverRumEvents.length).toBe(1)
+      expect(displaySpy).toHaveBeenCalledWith("Can't dismiss view or view_update events using beforeSend!")
+    })
+
+    it('should allow modification of view_update events via beforeSend', () => {
+      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+        partialConfiguration: {
+          beforeSend: (event) => {
+            event.view.name = 'modified name'
+          },
+        },
+      })
+
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW_UPDATE),
+      })
+
+      expect(serverRumEvents[0].view.name).toBe('modified name')
+    })
+
+    it('should not rate-limit view_update events', () => {
+      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+        eventRateLimit: 1,
+      })
+
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW_UPDATE, { date: 100 as TimeStamp }),
+      })
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW_UPDATE, { date: 200 as TimeStamp }),
+      })
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW_UPDATE, { date: 300 as TimeStamp }),
+      })
+
+      expect(serverRumEvents.length).toBe(3)
     })
   })
 })

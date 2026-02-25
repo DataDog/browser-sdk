@@ -23,7 +23,7 @@ export function startSessionContext(
     let hasReplay
     let sampledForReplay
     let isActive
-    if (eventType === RumEventType.VIEW) {
+    if (eventType === RumEventType.VIEW || eventType === RumEventType.VIEW_UPDATE) {
       hasReplay = recorderApi.getReplayStats(view.id) ? true : undefined
       sampledForReplay = session.sessionReplay === SessionReplayState.SAMPLED
       isActive = view.sessionIsActive ? undefined : false

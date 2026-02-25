@@ -18,6 +18,7 @@ import type {
   RumLongTaskEvent,
   RumResourceEvent,
   RumViewEvent,
+  RumViewUpdateEvent,
   RumVitalEvent,
 } from './rumEvent.types'
 
@@ -26,6 +27,7 @@ export const RumEventType = {
   ERROR: 'error',
   LONG_TASK: 'long_task',
   VIEW: 'view',
+  VIEW_UPDATE: 'view_update',
   RESOURCE: 'resource',
   VITAL: 'vital',
 } as const
@@ -34,6 +36,7 @@ export type RumEventType = (typeof RumEventType)[keyof typeof RumEventType]
 
 export type AssembledRumEvent = (
   | RumViewEvent
+  | RumViewUpdateEvent
   | RumActionEvent
   | RumResourceEvent
   | RumErrorEvent
@@ -388,10 +391,58 @@ export const VitalType = {
 
 export type VitalType = (typeof VitalType)[keyof typeof VitalType]
 
+export interface RawRumViewUpdateEvent {
+  date: TimeStamp
+  type: typeof RumEventType.VIEW_UPDATE
+  view: {
+    time_spent: ServerDuration
+    // is_active omitted: VUs are only emitted for active views; view-end sends a full VIEW
+    // Counters — included only when changed
+    error?: Count
+    action?: Count
+    long_task?: Count
+    resource?: Count
+    frustration?: Count
+    // Web vitals — included only when changed
+    loading_time?: ServerDuration
+    cumulative_layout_shift?: number
+    cumulative_layout_shift_time?: ServerDuration
+    cumulative_layout_shift_target_selector?: string
+    interaction_to_next_paint?: ServerDuration
+    interaction_to_next_paint_time?: ServerDuration
+    interaction_to_next_paint_target_selector?: string
+    // Initial metrics — set once
+    first_contentful_paint?: ServerDuration
+    first_input_delay?: ServerDuration
+    first_input_time?: ServerDuration
+    first_input_target_selector?: string
+    largest_contentful_paint?: ServerDuration
+    largest_contentful_paint_target_selector?: string
+    dom_complete?: ServerDuration
+    dom_content_loaded?: ServerDuration
+    dom_interactive?: ServerDuration
+    load_event?: ServerDuration
+    first_byte?: ServerDuration
+    // Performance data — included when changed
+    performance?: ViewPerformanceData
+    // Custom timings — full object when changed (REPLACE semantics)
+    custom_timings?: { [key: string]: ServerDuration }
+  }
+  display?: ViewDisplay
+  _dd: {
+    document_version: number
+    replay_stats?: ReplayStats
+    configuration?: {
+      start_session_replay_recording_manually: boolean
+    }
+  }
+}
+
 export type RawRumEvent =
   | RawRumErrorEvent
   | RawRumResourceEvent
   | RawRumViewEvent
+  | RawRumViewUpdateEvent
   | RawRumLongTaskEvent
   | RawRumLongAnimationFrameEvent
   | RawRumActionEvent

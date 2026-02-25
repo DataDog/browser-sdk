@@ -31,6 +31,7 @@ const RUM_EVENT_TYPE_COLOR = {
   error: 'red',
   long_task: 'yellow',
   view: 'blue',
+  view_update: 'blue',
   resource: 'cyan',
   telemetry: 'teal',
   vital: 'orange',

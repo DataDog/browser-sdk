@@ -23,6 +23,8 @@ export enum ExperimentalFeature {
   USE_CHANGE_RECORDS = 'use_change_records',
   SOURCE_CODE_CONTEXT = 'source_code_context',
   LCP_SUBPARTS = 'lcp_subparts',
+  VIEW_UPDATE = 'view_update',
+  VIEW_UPDATE_CHAOS = 'view_update_chaos',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()

@@ -58,6 +58,25 @@ describe('featureFlagContexts', () => {
         },
       })
     })
+    it('should add feature flag evaluations on VIEW_UPDATE by default', () => {
+      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
+        startClocks: relativeToClocks(0 as RelativeTime),
+      } as ViewCreatedEvent)
+
+      featureFlagContexts.addFeatureFlagEvaluation('feature', 'foo')
+
+      const defaultViewUpdateAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view_update',
+        startTime: 0 as RelativeTime,
+      } as AssembleHookParams)
+
+      expect(defaultViewUpdateAttributes).toEqual({
+        type: 'view_update',
+        feature_flags: {
+          feature: 'foo',
+        },
+      })
+    })
     ;[RumEventType.VITAL, RumEventType.ACTION, RumEventType.LONG_TASK, RumEventType.RESOURCE].forEach((eventType) => {
       it(`should add feature flag evaluations on ${eventType} when specified in trackFeatureFlagsForEvents`, () => {
         trackFeatureFlagsForEvents.push(eventType)
