@@ -168,14 +168,7 @@ export function startRumEventCollection(
   startSessionContext(hooks, configuration, sessionManager, recorderApi, viewHistory)
   startConnectivityContext(hooks)
   const globalContext = startGlobalContext(hooks, configuration, 'rum', true)
-  const userContext = startUserContext(
-    hooks,
-    configuration,
-    {
-      findTrackedSession: (startTime) => sessionManager.findTrackedSession(startTime),
-    },
-    'rum'
-  )
+  const userContext = startUserContext(hooks, configuration, sessionManager, 'rum')
   const accountContext = startAccountContext(hooks, configuration, 'rum')
 
   const actionCollection = startActionCollection(

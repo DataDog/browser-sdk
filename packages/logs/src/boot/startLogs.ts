@@ -47,14 +47,7 @@ export function startLogs(
   // Start user and account context first to allow overrides from global context
   startSessionContext(hooks, configuration, sessionManager)
   const accountContext = startAccountContext(hooks, configuration, LOGS_STORAGE_KEY)
-  const userContext = startUserContext(
-    hooks,
-    configuration,
-    {
-      findTrackedSession: (startTime) => sessionManager.findTrackedSession(startTime),
-    },
-    LOGS_STORAGE_KEY
-  )
+  const userContext = startUserContext(hooks, configuration, sessionManager, LOGS_STORAGE_KEY)
   const globalContext = startGlobalContext(hooks, configuration, LOGS_STORAGE_KEY, false)
   startRUMInternalContext(hooks)
 
