@@ -85,6 +85,17 @@ describe('eventTracker', () => {
         })
       )
     })
+
+    it('should compute duration from timestamps, not relative times', () => {
+      const startClocks = { relative: 100 as RelativeTime, timeStamp: 1000 as TimeStamp }
+      tracker.start('key1', startClocks, { value: 'data1' })
+
+      const endClocks = { relative: 300 as RelativeTime, timeStamp: 1050 as TimeStamp }
+
+      const stopped = tracker.stop('key1', endClocks)
+
+      expect(stopped?.duration).toBe(50 as Duration)
+    })
   })
 
   describe('findId', () => {

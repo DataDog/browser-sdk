@@ -106,7 +106,7 @@ export function startEventTracker<TData>(lifeCycle: LifeCycle): EventTracker<TDa
 
     event.historyEntry.close(stopClocks.relative)
 
-    const duration = elapsed(event.startClocks.relative, stopClocks.relative)
+    const duration = elapsed(event.startClocks.timeStamp, stopClocks.timeStamp)
 
     const counts = event.eventCounts?.eventCounts
 
