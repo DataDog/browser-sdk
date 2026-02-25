@@ -24,6 +24,20 @@
 
 - 👷 bump all packages to version to v7.0.0-alpha.0
 
+## v6.28.1
+
+**Public Changes:**
+
+- 🐛 Compute duration from timestamps in event tracker ([#4233](https://github.com/DataDog/browser-sdk/pull/4233)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🐛 [RUM Profiler] Fix stateReason not updated on stop and cleanup tasks accumulation ([#4171](https://github.com/DataDog/browser-sdk/pull/4171)) [RUM]
+
+**Internal Changes:**
+
+- 👷 Update all non-major dependencies ([#4186](https://github.com/DataDog/browser-sdk/pull/4186)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 Update dependency eslint-plugin-unicorn to v63 ([#4221](https://github.com/DataDog/browser-sdk/pull/4221))
+- 👷 Update dependency @playwright/test to v1.58.2 ([#4187](https://github.com/DataDog/browser-sdk/pull/4187))
+- ⚗️ [RUM-13259] Add shadow DOM support for action selectors ([#4097](https://github.com/DataDog/browser-sdk/pull/4097)) [RUM] [RUM-REACT] [RUM-SLIM]
+
 ## v6.28.0
 
 **Public Changes:**
