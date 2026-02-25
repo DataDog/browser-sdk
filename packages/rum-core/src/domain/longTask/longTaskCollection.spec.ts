@@ -12,6 +12,8 @@ import type { RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, RumLongTaskEntryType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle } from '../lifeCycle'
+import { createRumPipeline } from '../pipeline/createRumPipeline'
+import type { Observation } from '../pipeline/rumPipelineEvents'
 import { startLongTaskCollection } from './longTaskCollection'
 
 describe('longTaskCollection', () => {
@@ -149,6 +151,29 @@ describe('longTaskCollection', () => {
       notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LONG_TASK)])
 
       expect(rawRumEvents.length).toBe(0)
+    })
+  })
+
+  describe('pipeline observation', () => {
+    it('should publish an observation on the pipeline when a long task is collected', () => {
+      const { notifyPerformanceEntries: notifyEntries } = mockPerformanceObserver({
+        supportedEntryTypes: [RumPerformanceEntryType.LONG_ANIMATION_FRAME],
+      })
+
+      const localLifeCycle = new LifeCycle()
+      const pipeline = createRumPipeline()
+      const observations: Observation[] = []
+      pipeline.subscribe('observation', (obs) => observations.push(obs))
+      pipeline.seal()
+
+      const longTaskCollection = startLongTaskCollection(localLifeCycle, mockRumConfiguration(), pipeline)
+      registerCleanupTask(() => longTaskCollection.stop())
+
+      notifyEntries([createPerformanceEntry(RumPerformanceEntryType.LONG_ANIMATION_FRAME)])
+
+      expect(observations.length).toBe(1)
+      expect(observations[0].type).toBe(RumEventType.LONG_TASK)
+      expect(observations[0].startTime).toBe(1234 as RelativeTime)
     })
   })
 })

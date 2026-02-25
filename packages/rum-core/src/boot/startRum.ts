@@ -319,7 +319,7 @@ export function startRumEventCollection(
   const resourceCollection = startResourceCollection(lifeCycle, configuration, pageStateHistory, pipeline)
   cleanupTasks.push(resourceCollection.stop)
 
-  const { stop: stopLongTaskCollection } = startLongTaskCollection(lifeCycle, configuration)
+  const { stop: stopLongTaskCollection } = startLongTaskCollection(lifeCycle, configuration, pipeline)
   cleanupTasks.push(stopLongTaskCollection)
 
   const { addError } = startErrorCollection(lifeCycle, configuration, bufferedDataObservable, pipeline)
