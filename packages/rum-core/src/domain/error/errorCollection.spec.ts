@@ -310,7 +310,7 @@ describe('error collection', () => {
   })
 
   describe('pipeline observation', () => {
-    it('should publish an observation on the pipeline when an error is collected', () => {
+    it('should publish an observation on the pipeline when an error is collected', async () => {
       const lifeCycle = new LifeCycle()
       const pipeline = createRumPipeline()
       const observations: Observation[] = []
@@ -324,6 +324,9 @@ describe('error collection', () => {
         handlingStack: 'Error: handling',
         startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       })
+
+      // Pipeline processes events asynchronously
+      await new Promise<void>((resolve) => setTimeout(resolve, 0))
 
       expect(observations.length).toBe(1)
       expect(observations[0].type).toBe(RumEventType.ERROR)

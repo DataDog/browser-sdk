@@ -325,7 +325,7 @@ describe('vitalCollection', () => {
   })
 
   describe('pipeline observation', () => {
-    it('should publish an observation on the pipeline when a duration vital is collected', () => {
+    it('should publish an observation on the pipeline when a duration vital is collected', async () => {
       const localLifeCycle = new LifeCycle()
       const pipeline = createRumPipeline()
       const observations: Observation[] = []
@@ -338,6 +338,10 @@ describe('vitalCollection', () => {
       const ref = localVitalCollection.startDurationVital('test-vital')
       clock.tick(100)
       localVitalCollection.stopDurationVital(ref)
+
+      // Pipeline processes events asynchronously via microtasks
+      await Promise.resolve()
+      await Promise.resolve()
 
       expect(observations.length).toBe(1)
       expect(observations[0].type).toBe(RumEventType.VITAL)

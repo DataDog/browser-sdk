@@ -155,7 +155,7 @@ describe('longTaskCollection', () => {
   })
 
   describe('pipeline observation', () => {
-    it('should publish an observation on the pipeline when a long task is collected', () => {
+    it('should publish an observation on the pipeline when a long task is collected', async () => {
       const { notifyPerformanceEntries: notifyEntries } = mockPerformanceObserver({
         supportedEntryTypes: [RumPerformanceEntryType.LONG_ANIMATION_FRAME],
       })
@@ -170,6 +170,9 @@ describe('longTaskCollection', () => {
       registerCleanupTask(() => longTaskCollection.stop())
 
       notifyEntries([createPerformanceEntry(RumPerformanceEntryType.LONG_ANIMATION_FRAME)])
+
+      // Pipeline processes events asynchronously
+      await new Promise<void>((resolve) => setTimeout(resolve, 0))
 
       expect(observations.length).toBe(1)
       expect(observations[0].type).toBe(RumEventType.LONG_TASK)

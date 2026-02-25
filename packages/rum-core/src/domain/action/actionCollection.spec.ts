@@ -277,7 +277,7 @@ describe('actionCollection', () => {
   })
 
   describe('pipeline observation', () => {
-    it('should publish an observation on the pipeline when a manual action is collected', () => {
+    it('should publish an observation on the pipeline when a manual action is collected', async () => {
       const localLifeCycle = new LifeCycle()
       const localHooks = createHooks()
       const pipeline = createRumPipeline()
@@ -300,6 +300,9 @@ describe('actionCollection', () => {
         startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         type: ActionType.CUSTOM,
       })
+
+      // Pipeline processes events asynchronously
+      await new Promise<void>((resolve) => setTimeout(resolve, 0))
 
       expect(observations.length).toBe(1)
       expect(observations[0].type).toBe(RumEventType.ACTION)

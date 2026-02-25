@@ -309,7 +309,7 @@ describe('viewCollection', () => {
   })
 
   describe('pipeline observation', () => {
-    it('should publish an observation on the pipeline when a view update is collected', () => {
+    it('should publish an observation on the pipeline when a view update is collected', async () => {
       const localLifeCycle = new LifeCycle()
       const localHooks = createHooks()
       const pipeline = createRumPipeline()
@@ -335,14 +335,21 @@ describe('viewCollection', () => {
         viewHistory.stop()
       })
 
+      // Wait for initial auto-view events to drain
+      await new Promise<void>((resolve) => setTimeout(resolve, 0))
+      observations.length = 0
+
       localLifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
+
+      // Pipeline processes events asynchronously
+      await new Promise<void>((resolve) => setTimeout(resolve, 0))
 
       expect(observations.length).toBe(1)
       expect(observations[0].type).toBe(RumEventType.VIEW)
       expect(observations[0].startTime).toBe(1234 as RelativeTime)
     })
 
-    it('should publish a viewCreated signal on the pipeline when a view is created', () => {
+    it('should publish a viewCreated signal on the pipeline when a view is created', async () => {
       const localLifeCycle = new LifeCycle()
       const localHooks = createHooks()
       const pipeline = createRumPipeline()
@@ -368,11 +375,18 @@ describe('viewCollection', () => {
         viewHistory.stop()
       })
 
+      // Wait for initial auto-view signals to drain
+      await new Promise<void>((resolve) => setTimeout(resolve, 0))
+      signals.length = 0
+
       localLifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
         id: 'test-view-id',
         name: 'TestView',
         startClocks: { relative: 0 as RelativeTime, timeStamp: 0 as TimeStamp },
       })
+
+      // Pipeline processes events asynchronously
+      await new Promise<void>((resolve) => setTimeout(resolve, 0))
 
       expect(signals.length).toBe(1)
       expect(signals[0].type).toBe('viewCreated')
