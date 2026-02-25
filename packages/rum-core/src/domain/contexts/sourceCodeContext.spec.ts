@@ -4,8 +4,9 @@ import type { AssembleHookParams, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { registerCleanupTask } from '../../../../core/test'
 import type { RawRumLongAnimationFrameEvent } from '../../rawRumEvent.types'
+import type { Observation } from '../pipeline/rumPipelineEvents'
 import type { BrowserWindow } from './sourceCodeContext'
-import { startSourceCodeContext } from './sourceCodeContext'
+import { sourceCodeDecoratorFactory, startSourceCodeContext } from './sourceCodeContext'
 
 describe('sourceCodeContext', () => {
   let hooks: Hooks
@@ -181,5 +182,35 @@ describe('sourceCodeContext', () => {
       service: 'my-service',
       version: '1.0.0',
     })
+  })
+})
+
+describe('sourceCodeDecoratorFactory', () => {
+  it('should contribute service and version when context found', async () => {
+    const factory = sourceCodeDecoratorFactory({
+      findContext: () => ({ service: 'my-service', version: '1.0.0' }),
+    })
+    const obs: Observation = { type: 'error', startTime: 0, data: {} }
+    const result = await factory.create({}).decorate(obs, {})
+    expect(result.status).toBe('contributed')
+    if (result.status === 'contributed') {
+      expect((result.attributes as any).service).toBe('my-service')
+      expect((result.attributes as any).version).toBe('1.0.0')
+    }
+  })
+
+  it('should skip when no context found', async () => {
+    const factory = sourceCodeDecoratorFactory({ findContext: () => undefined })
+    const obs: Observation = { type: 'error', startTime: 0, data: {} }
+    const result = await factory.create({}).decorate(obs, {})
+    expect(result.status).toBe('skipped')
+  })
+
+  it('should declare name: "sourceCode"', () => {
+    expect(sourceCodeDecoratorFactory({ findContext: () => undefined }).name).toBe('sourceCode')
+  })
+
+  it('should declare canDiscard: false', () => {
+    expect(sourceCodeDecoratorFactory({ findContext: () => undefined }).capabilities.canDiscard).toBe(false)
   })
 })
