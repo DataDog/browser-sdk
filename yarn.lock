@@ -277,13 +277,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@datadog/browser-core@npm:6.27.1":
-  version: 6.27.1
-  resolution: "@datadog/browser-core@npm:6.27.1"
-  checksum: 10c0/7a40493af6c0db0d78d60478905cca4caeb4db3bc79e3771505410e4b8a9499f70eb12aae331b94bc5eb4c2eb6e04c0a03186a1617fa1ec497e82e01fed8ea2d
-  languageName: node
-  linkType: hard
-
 "@datadog/browser-core@npm:6.28.0, @datadog/browser-core@workspace:*, @datadog/browser-core@workspace:packages/core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-core@workspace:packages/core"
@@ -320,11 +313,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-remote-config@npm:6.27.1, @datadog/browser-remote-config@workspace:packages/remote-config":
+"@datadog/browser-remote-config@npm:6.28.0, @datadog/browser-remote-config@workspace:packages/remote-config":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-remote-config@workspace:packages/remote-config"
   dependencies:
-    "@datadog/browser-core": "npm:6.27.1"
+    "@datadog/browser-core": "npm:6.28.0"
   languageName: unknown
   linkType: soft
 
@@ -424,7 +417,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-sdk-endpoint@workspace:packages/endpoint"
   dependencies:
-    "@datadog/browser-remote-config": "npm:6.27.1"
+    "@datadog/browser-remote-config": "npm:6.28.0"
   languageName: unknown
   linkType: soft
 
