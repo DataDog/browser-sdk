@@ -1,5 +1,8 @@
 import { monitor } from '../tools/monitor'
-import { getZoneJsOriginalValue } from '../tools/getZoneJsOriginalValue'
+import {
+  addEventListener as nativeAddEventListener,
+  removeEventListener as nativeRemoveEventListener,
+} from '@datadog/browser-native'
 import type { CookieStore, CookieStoreEventMap, VisualViewport, VisualViewportEventMap } from './browser.types'
 
 export type TrustableEvent<E extends Event = Event> = E & { __ddIsTrusted?: boolean }
@@ -127,16 +130,10 @@ export function addEventListeners<Target extends EventTarget, EventName extends 
 
   const options = passive ? { capture, passive } : capture
 
-  // Use the window.EventTarget.prototype when possible to avoid wrong overrides (e.g: https://github.com/salesforce/lwc/issues/1824)
-  const listenerTarget =
-    window.EventTarget && eventTarget instanceof EventTarget ? window.EventTarget.prototype : eventTarget
-
-  const add = getZoneJsOriginalValue(listenerTarget, 'addEventListener')
-  eventNames.forEach((eventName) => add.call(eventTarget, eventName, listenerWithMonitor, options))
+  eventNames.forEach((eventName) => nativeAddEventListener(eventTarget, eventName, listenerWithMonitor, options))
 
   function stop() {
-    const remove = getZoneJsOriginalValue(listenerTarget, 'removeEventListener')
-    eventNames.forEach((eventName) => remove.call(eventTarget, eventName, listenerWithMonitor, options))
+    eventNames.forEach((eventName) => nativeRemoveEventListener(eventTarget, eventName, listenerWithMonitor, options))
   }
 
   return {
