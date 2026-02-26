@@ -6,7 +6,7 @@ import type {
   ViewHistory,
   RumSession,
 } from '@datadog/browser-rum-core'
-import { LifeCycleEventType, SessionReplayState } from '@datadog/browser-rum-core'
+import { SessionReplayState } from '@datadog/browser-rum-core'
 import type { Telemetry, DeflateEncoder } from '@datadog/browser-core'
 import { asyncRunOnReadyState, monitorError, Observable } from '@datadog/browser-core'
 import type { Pipeline } from '@datadog/browser-core-next'

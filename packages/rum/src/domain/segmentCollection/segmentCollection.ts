@@ -109,7 +109,8 @@ export function doStartSegmentCollection(
   const pageMayExitSubscription = pipeline
     ? pipeline.subscribe('signal', (signal) => {
         if (signal.type === 'pageMayExit') {
-          flushSegment(signal.reason)
+          // page_hide is a valid PageExitReason but not in the schema-generated FlushReason type
+          flushSegment(signal.reason as FlushReason)
         }
       })
     : lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, (pageMayExitEvent) => {

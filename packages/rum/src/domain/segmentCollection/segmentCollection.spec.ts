@@ -69,9 +69,11 @@ describe('startSegmentCollection', () => {
       const reason =
         event.reason === PageExitReason.HIDDEN
           ? ('visibility_hidden' as const)
-          : event.reason === PageExitReason.FROZEN
-            ? ('page_frozen' as const)
-            : ('before_unload' as const)
+          : event.reason === PageExitReason.PAGEHIDE
+            ? ('page_hide' as const)
+            : event.reason === PageExitReason.FROZEN
+              ? ('page_frozen' as const)
+              : ('before_unload' as const)
       pipeline.notifySignal({ type: 'pageMayExit', reason })
     })
     lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, () => {

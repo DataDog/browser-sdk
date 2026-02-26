@@ -22,7 +22,7 @@ import type {
   ViewHistory,
   RumCoreEvents,
 } from '@datadog/browser-rum-core'
-import { createFormDataTransport, LifeCycleEventType } from '@datadog/browser-rum-core'
+import { createFormDataTransport } from '@datadog/browser-rum-core'
 import type { Pipeline } from '@datadog/browser-core-next'
 import type { BrowserProfilerTrace, RumViewEntry } from '../../types'
 import type {

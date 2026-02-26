@@ -11,7 +11,7 @@ export type RumSignal =
   | { type: 'sessionRenewed'; sessionId: string }
   | { type: 'sessionExpired' }
   | { type: 'viewCreated'; viewId: string; name?: string; startClocks: ClocksState }
-  | { type: 'pageMayExit'; reason: 'visibility_hidden' | 'before_unload' | 'page_frozen' }
+  | { type: 'pageMayExit'; reason: 'visibility_hidden' | 'before_unload' | 'page_hide' | 'page_frozen' }
 
 export interface RawResourceData {
   url: string

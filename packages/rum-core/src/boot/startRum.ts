@@ -103,7 +103,7 @@ export function startRum(
   const pageMayExitObservable = createPageMayExitObservable(configuration)
   const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => {
     lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, event)
-    rumPipeline.publish('signal', { type: 'pageMayExit', reason: event.reason as 'visibility_hidden' | 'before_unload' | 'page_frozen' })
+    rumPipeline.publish('signal', { type: 'pageMayExit', reason: event.reason })
   })
   cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
 

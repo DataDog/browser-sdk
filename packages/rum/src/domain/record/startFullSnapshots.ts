@@ -1,4 +1,4 @@
-import { LifeCycleEventType, getViewportDimension } from '@datadog/browser-rum-core'
+import { getViewportDimension } from '@datadog/browser-rum-core'
 import type { LifeCycle, RumCoreEvents } from '@datadog/browser-rum-core'
 import { ExperimentalFeature, isExperimentalFeatureEnabled, timeStampNow } from '@datadog/browser-core'
 import type { TimeStamp } from '@datadog/browser-core'
