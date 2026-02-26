@@ -65,6 +65,17 @@ export interface CookieStore extends EventTarget {
       partitioned?: boolean
     }>
   >
+  set(options: {
+    name: string
+    value: string
+    domain?: string
+    path?: string
+    expires?: number | Date
+    sameSite?: 'strict' | 'lax' | 'none'
+    secure?: boolean
+    partitioned?: boolean
+  }): Promise<void>
+  delete(options: { name: string; domain?: string; path?: string }): Promise<void>
 }
 
 export interface CookieStoreEventMap {
