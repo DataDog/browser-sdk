@@ -39,17 +39,18 @@ export function urlContextsDecoratorFactory(deps: {
   return {
     name: 'urlContexts',
     provides: ['url'],
-    requires: [],
+    requires: ['view'],
     capabilities: { canDiscard: true },
     create: () => ({
-      decorate: (event, _accumulated) => {
+      decorate: (event, accumulated) => {
         const urlContext = deps.findUrlContext(event.startTime as RelativeTime)
         if (!urlContext) {
           return Promise.resolve({ status: 'discarded' as const, reason: 'no URL context' })
         }
+        const existingView = (accumulated as any).view ?? {}
         return Promise.resolve({
           status: 'contributed' as const,
-          attributes: { view: { url: urlContext.url, referrer: urlContext.referrer } },
+          attributes: { view: { ...existingView, url: urlContext.url, referrer: urlContext.referrer } },
         })
       },
     }),
