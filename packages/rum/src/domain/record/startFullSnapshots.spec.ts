@@ -3,8 +3,13 @@ import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { TimeStamp } from '@datadog/browser-core'
 import { addExperimentalFeatures, ExperimentalFeature, noop } from '@datadog/browser-core'
 import type { BrowserRecord } from '../../types'
+<<<<<<< HEAD
 import { RecordType, SnapshotFormat } from '../../types'
 import { appendElement } from '../../../../rum-core/test'
+=======
+import { RecordType } from '../../types'
+import { appendElement, createMockRumPipeline } from '../../../../rum-core/test'
+>>>>>>> 0fcc5ef31 (♻️ Migrate LifeCycle coordination event subscribers to pipeline signals)
 import { startFullSnapshots } from './startFullSnapshots'
 import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
 import { createRecordingScopeForTesting } from './test/recordingScope.specHelper'
@@ -12,18 +17,24 @@ import { createRecordingScopeForTesting } from './test/recordingScope.specHelper
 const describeStartFullSnapshotsWithExpectedSnapshot = (fullSnapshotRecord: jasmine.Expected<BrowserRecord>) => {
   const viewStartClock = { relative: 1, timeStamp: 1 as TimeStamp }
   let lifeCycle: LifeCycle
+  let pipeline: ReturnType<typeof createMockRumPipeline>
   let emitRecordCallback: jasmine.Spy<EmitRecordCallback>
   let emitStatsCallback: jasmine.Spy<EmitStatsCallback>
 
   beforeEach(() => {
     lifeCycle = new LifeCycle()
+    pipeline = createMockRumPipeline()
+    // Bridge: forward VIEW_CREATED lifeCycle events to pipeline signals
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view: ViewCreatedEvent) => {
+      pipeline.notifySignal({ type: 'viewCreated', viewId: view.id ?? 'test-view-id', startClocks: view.startClocks })
+    })
     emitRecordCallback = jasmine.createSpy()
     emitStatsCallback = jasmine.createSpy()
 
     appendElement('<style>body { width: 100%; }</style>', document.head)
 
     const scope = createRecordingScopeForTesting()
-    startFullSnapshots(lifeCycle, emitRecordCallback, emitStatsCallback, noop, scope)
+    startFullSnapshots(lifeCycle, emitRecordCallback, emitStatsCallback, noop, scope, undefined, pipeline)
   })
 
   it('takes a full snapshot when startFullSnapshots is called', () => {

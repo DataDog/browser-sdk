@@ -23,7 +23,7 @@ import {
   waitNextMicrotask,
   replaceMockable,
 } from '@datadog/browser-core/test'
-import { createRumSessionManagerMock, mockRumConfiguration, mockViewHistory } from '../../../../rum-core/test'
+import { createRumSessionManagerMock, mockRumConfiguration, mockViewHistory, createMockRumPipeline } from '../../../../rum-core/test'
 import { mockProfiler } from '../../../test'
 import type { BrowserProfilerTrace } from '../../types'
 import { mockedTrace } from './test-utils/mockedTrace'
@@ -55,10 +55,22 @@ describe('profiler', () => {
   })
 
   let lifeCycle = new LifeCycle()
+  let pipeline: ReturnType<typeof createMockRumPipeline>
 
   function setupProfiler(currentView?: ViewHistoryEntry) {
     const sessionManager = createRumSessionManagerMock().setId('session-id-1')
     lifeCycle = new LifeCycle()
+    pipeline = createMockRumPipeline()
+    // Bridge: forward SESSION_EXPIRED/SESSION_RENEWED/VIEW_CREATED lifecycle events to pipeline signals
+    lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
+      pipeline.notifySignal({ type: 'sessionExpired' })
+    })
+    lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
+      pipeline.notifySignal({ type: 'sessionRenewed', sessionId: 'test-session-id' })
+    })
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
+      pipeline.notifySignal({ type: 'viewCreated', viewId: view.id, name: view.name, startClocks: view.startClocks })
+    })
     const hooks = createHooks()
     const profilingContextManager: ProfilingContextManager = startProfilingContext(hooks)
 
@@ -124,7 +136,8 @@ describe('profiler', () => {
         collectIntervalMs: 60000, // 1min
         minNumberOfSamples: 0,
         minProfileDurationMs: 0,
-      }
+      },
+      pipeline
     )
     return {
       profiler,

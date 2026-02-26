@@ -12,7 +12,7 @@ import {
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock } from '@datadog/browser-core/test'
-import { createFakeClick, createMutationRecord, mockRumConfiguration } from '../../../test'
+import { createFakeClick, createMutationRecord, mockRumConfiguration, createMockRumPipeline } from '../../../test'
 import type { AssembledRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ActionType, FrustrationType } from '../../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
@@ -49,6 +49,7 @@ function eventsCollector<T>() {
 
 describe('trackClickActions', () => {
   let lifeCycle: LifeCycle
+  let pipeline: ReturnType<typeof createMockRumPipeline>
   let domMutationObservable: Observable<RumMutationRecord[]>
   let windowOpenObservable: Observable<void>
   let clock: Clock
@@ -67,7 +68,8 @@ describe('trackClickActions', () => {
       lifeCycle,
       domMutationObservable,
       windowOpenObservable,
-      mockRumConfiguration(partialConfig)
+      mockRumConfiguration(partialConfig),
+      pipeline
     )
 
     findActionId = trackClickActionsResult.findActionId
@@ -79,6 +81,17 @@ describe('trackClickActions', () => {
 
   beforeEach(() => {
     lifeCycle = new LifeCycle()
+    pipeline = createMockRumPipeline()
+    // Bridge: forward PAGE_MAY_EXIT lifeCycle events to pipeline signals
+    lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, (event) => {
+      const reason =
+        event.reason === PageExitReason.HIDDEN
+          ? ('visibility_hidden' as const)
+          : event.reason === PageExitReason.FROZEN
+            ? ('page_frozen' as const)
+            : ('before_unload' as const)
+      pipeline.notifySignal({ type: 'pageMayExit', reason })
+    })
     clock = mockClock()
     domMutationObservable = new Observable<RumMutationRecord[]>()
     windowOpenObservable = new Observable<void>()

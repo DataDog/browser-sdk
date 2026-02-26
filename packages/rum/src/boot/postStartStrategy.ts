@@ -71,19 +71,6 @@ export function createPostStartStrategy(
         }
       }
     })
-  } else {
-    lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
-      if (status === RecorderStatus.Starting || status === RecorderStatus.Started) {
-        stop()
-        status = RecorderStatus.IntentToStart
-      }
-    })
-
-    lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-      if (status === RecorderStatus.IntentToStart) {
-        start()
-      }
-    })
   }
 
   const observable = new Observable<RecorderInitEvent>()

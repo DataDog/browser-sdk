@@ -2,6 +2,7 @@ import type { Context, RelativeTime } from '@datadog/browser-core'
 import { relativeToClocks, CLEAR_OLD_VALUES_INTERVAL } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import { createMockRumPipeline } from '../../../test'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { BeforeViewUpdateEvent, ViewCreatedEvent } from '../view/trackViews'
 import type { ViewHistory } from './viewHistory'
@@ -21,12 +22,14 @@ describe('ViewHistory', () => {
 
   let clock: Clock
   let lifeCycle: LifeCycle
+  let pipeline: ReturnType<typeof createMockRumPipeline>
   let viewHistory: ViewHistory
 
   beforeEach(() => {
     clock = mockClock()
     lifeCycle = new LifeCycle()
-    viewHistory = startViewHistory(lifeCycle)
+    pipeline = createMockRumPipeline()
+    viewHistory = startViewHistory(lifeCycle, pipeline)
 
     registerCleanupTask(() => {
       viewHistory.stop()
@@ -136,7 +139,7 @@ describe('ViewHistory', () => {
       expect(viewHistory.findView(15 as RelativeTime)).toBeDefined()
       expect(viewHistory.findView(25 as RelativeTime)).toBeDefined()
 
-      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+      pipeline.notifySignal({ type: 'sessionRenewed', sessionId: 'test-session-id' })
 
       expect(viewHistory.findView(15 as RelativeTime)).toBeUndefined()
       expect(viewHistory.findView(25 as RelativeTime)).toBeUndefined()

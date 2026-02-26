@@ -54,10 +54,6 @@ export function startViewHistory(lifeCycle: LifeCycle, pipeline?: Pipeline<RumCo
         viewValueHistory.reset()
       }
     })
-  } else {
-    lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-      viewValueHistory.reset()
-    })
   }
 
   function buildViewHistoryEntry(view: ViewCreatedEvent) {

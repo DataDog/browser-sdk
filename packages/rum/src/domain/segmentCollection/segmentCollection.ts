@@ -103,14 +103,18 @@ export function doStartSegmentCollection(
           flushSegment('view_change')
         }
       })
-    : lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, () => {
-        flushSegment('view_change')
-      })
+    : { unsubscribe: () => {} }
 
-  // Subscribe to PAGE_MAY_EXIT via lifeCycle for synchronous segment flush (needed before page unload)
-  const pageMayExitSubscription = lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, (pageMayExitEvent) => {
-    flushSegment(pageMayExitEvent.reason as FlushReason)
-  })
+  // Subscribe to PAGE_MAY_EXIT via pipeline signal or lifeCycle fallback for synchronous segment flush
+  const pageMayExitSubscription = pipeline
+    ? pipeline.subscribe('signal', (signal) => {
+        if (signal.type === 'pageMayExit') {
+          flushSegment(signal.reason)
+        }
+      })
+    : lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, (pageMayExitEvent) => {
+        flushSegment(pageMayExitEvent.reason as FlushReason)
+      })
 
   function flushSegment(flushReason: FlushReason) {
     if (state.status === SegmentCollectionStatus.SegmentPending) {

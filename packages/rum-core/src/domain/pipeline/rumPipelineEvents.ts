@@ -1,4 +1,4 @@
-import type { ClocksState, TimeStamp } from '@datadog/browser-core'
+import type { ClocksState } from '@datadog/browser-core'
 
 export interface Observation {
   readonly type: string
@@ -10,7 +10,7 @@ export interface Observation {
 export type RumSignal =
   | { type: 'sessionRenewed'; sessionId: string }
   | { type: 'sessionExpired' }
-  | { type: 'viewCreated'; viewId: string; name?: string; startTimestamp: TimeStamp }
+  | { type: 'viewCreated'; viewId: string; name?: string; startClocks: ClocksState }
   | { type: 'pageMayExit'; reason: 'visibility_hidden' | 'before_unload' | 'page_frozen' }
 
 export interface RawResourceData {

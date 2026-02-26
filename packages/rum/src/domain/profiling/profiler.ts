@@ -82,18 +82,6 @@ export function createRumProfiler(
         }
       }
     })
-  } else {
-    // Stops the profiler when session expires
-    lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
-      stopProfiling('session-expired')
-    })
-
-    // Start the profiler again when session is renewed
-    lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-      if (instance.state === 'stopped' && instance.stateReason === 'session-expired') {
-        start()
-      }
-    })
   }
 
   // Public API to start the profiler.
@@ -160,15 +148,12 @@ export function createRumProfiler(
     const viewCreatedSubscription = pipeline
       ? pipeline.subscribe('signal', (signal) => {
           if (signal.type === 'viewCreated') {
-            const currentView = viewHistory.findView()
-            const viewEntry = currentView
-              ? {
-                  viewId: signal.viewId,
-                  // Note: `viewName` is only filled when users use manual view creation via `startView` method.
-                  viewName: getCustomOrDefaultViewName(signal.name, document.location.pathname),
-                  startClocks: currentView.startClocks,
-                }
-              : undefined
+            const viewEntry = {
+              viewId: signal.viewId,
+              // Note: `viewName` is only filled when users use manual view creation via `startView` method.
+              viewName: getCustomOrDefaultViewName(signal.name, document.location.pathname),
+              startClocks: signal.startClocks,
+            }
 
             collectViewEntry(viewEntry)
 
@@ -176,19 +161,7 @@ export function createRumProfiler(
             lastViewEntry = viewEntry
           }
         })
-      : lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
-          const viewEntry = {
-            viewId: view.id,
-            // Note: `viewName` is only filled when users use manual view creation via `startView` method.
-            viewName: getCustomOrDefaultViewName(view.name, document.location.pathname),
-            startClocks: view.startClocks,
-          }
-
-          collectViewEntry(viewEntry)
-
-          // Update last view entry
-          lastViewEntry = viewEntry
-        })
+      : { unsubscribe: () => {} }
     cleanupTasks.push(viewCreatedSubscription.unsubscribe)
 
     return {

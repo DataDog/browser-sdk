@@ -169,20 +169,6 @@ export function trackViews(
           currentView.end({ sessionIsActive: false })
         }
       })
-    } else {
-      lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-        // Renew view on session renewal
-        currentView = startNewView(ViewLoadingType.ROUTE_CHANGE, undefined, {
-          name: currentView.name,
-          service: currentView.service,
-          version: currentView.version,
-          context: currentView.contextManager.getContext(),
-        })
-      })
-
-      lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
-        currentView.end({ sessionIsActive: false })
-      })
     }
   }
 
@@ -270,7 +256,7 @@ function newView(
   lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, viewCreatedEvent)
   lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, viewCreatedEvent)
   if (pipeline) {
-    pipeline.publish('signal', { type: 'viewCreated', viewId: id, name, startTimestamp: startClocks.timeStamp })
+    pipeline.publish('signal', { type: 'viewCreated', viewId: id, name, startClocks })
   }
 
   // Update the view every time the measures are changing
@@ -316,14 +302,6 @@ function newView(
       triggerViewUpdate()
     }
   })
-  // Also subscribe via pipeline signal for future migration path
-  const pageMayExitPipelineSubscription = pipeline
-    ? pipeline.subscribe('signal', (signal) => {
-        if (signal.type === 'pageMayExit' && signal.reason === 'before_unload') {
-          triggerViewUpdate()
-        }
-      })
-    : undefined
 
   // Initial view update
   triggerViewUpdate()
@@ -395,7 +373,6 @@ function newView(
       setViewEnd(endClocks.relative)
       stopCommonViewMetricsTracking()
       pageMayExitSubscription.unsubscribe()
-      pageMayExitPipelineSubscription?.unsubscribe()
       triggerViewUpdate()
       setTimeout(() => {
         this.stop()

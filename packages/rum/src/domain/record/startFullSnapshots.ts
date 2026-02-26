@@ -39,7 +39,7 @@ export function startFullSnapshots(
         if (signal.type === 'viewCreated') {
           flushMutations()
           takeFullSnapshot(
-            signal.startTimestamp,
+            signal.startClocks.timeStamp,
             SerializationKind.SUBSEQUENT_FULL_SNAPSHOT,
             emitRecord,
             emitStats,
@@ -48,17 +48,7 @@ export function startFullSnapshots(
           )
         }
       })
-    : lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
-        flushMutations()
-        takeFullSnapshot(
-          view.startClocks.timeStamp,
-          SerializationKind.SUBSEQUENT_FULL_SNAPSHOT,
-          emitRecord,
-          emitStats,
-          scope,
-          serialize
-        )
-      })
+    : { unsubscribe: () => {} }
 
   return {
     stop: subscription.unsubscribe,

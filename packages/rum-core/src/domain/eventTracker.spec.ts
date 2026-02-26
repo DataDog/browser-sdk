@@ -2,19 +2,22 @@ import type { Duration, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import { clocksNow } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
-import { LifeCycle, LifeCycleEventType } from './lifeCycle'
+import { createMockRumPipeline } from '../../test'
+import { LifeCycle } from './lifeCycle'
 import type { EventTracker } from './eventTracker'
 import { startEventTracker } from './eventTracker'
 
 describe('eventTracker', () => {
   let lifeCycle: LifeCycle
+  let pipeline: ReturnType<typeof createMockRumPipeline>
   let tracker: EventTracker<{ value?: string; extra?: string }>
   let clock: Clock
 
   beforeEach(() => {
     clock = mockClock()
     lifeCycle = new LifeCycle()
-    tracker = startEventTracker(lifeCycle)
+    pipeline = createMockRumPipeline()
+    tracker = startEventTracker(lifeCycle, pipeline)
     registerCleanupTask(() => tracker.stopAll())
   })
 
@@ -149,7 +152,7 @@ describe('eventTracker', () => {
 
       tracker.stopAll()
 
-      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+      pipeline.notifySignal({ type: 'sessionRenewed', sessionId: 'test-session-id' })
 
       expect(tracker.findId()).toEqual([])
     })

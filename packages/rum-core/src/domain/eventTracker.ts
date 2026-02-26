@@ -72,7 +72,7 @@ export function startEventTracker<TData>(lifeCycle: LifeCycle, pipeline?: Pipeli
           discardAll()
         }
       })
-    : lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, discardAll)
+    : { unsubscribe: () => {} }
 
   function start(key: string, startClocks: ClocksState, data: TData, options?: StartOptions): TrackedEventData<TData> {
     const id = generateUUID()

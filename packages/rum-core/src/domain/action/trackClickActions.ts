@@ -78,8 +78,6 @@ export function trackClickActions(
         stopClickChain()
       }
     })
-  } else {
-    lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, stopClickChain)
   }
 
   const { stop: stopActionEventsListener } = listenActionEvents<{
@@ -237,9 +235,7 @@ function startClickAction(
           click.stop(timeStampNow())
         }
       })
-    : lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, () => {
-        click.stop(timeStampNow())
-      })
+    : { unsubscribe: () => {} }
 
   const stopSubscription = stopObservable.subscribe(() => {
     click.stop()

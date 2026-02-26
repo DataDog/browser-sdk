@@ -1,5 +1,5 @@
-import { Observable, deepClone } from '@datadog/browser-core'
-import { mockRumConfiguration, setupLocationObserver } from '../../../test'
+import { Observable, PageExitReason, deepClone } from '@datadog/browser-core'
+import { mockRumConfiguration, setupLocationObserver, createMockRumPipeline } from '../../../test'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RumConfiguration } from '../configuration'
@@ -23,6 +23,29 @@ export function setupViewTest(
   const windowOpenObservable = new Observable<void>()
   const configuration = mockRumConfiguration(partialConfig)
   const { locationChangeObservable, changeLocation } = setupLocationObserver(initialLocation)
+
+  // Create a synchronous mock pipeline for signal-based lifecycle events.
+  // The mock fires signal handlers synchronously, which allows existing test patterns
+  // (synchronous assertions after lifeCycle.notify) to keep working.
+  const pipeline = createMockRumPipeline()
+
+  // Bridge: when lifeCycle notifies SESSION_EXPIRED/SESSION_RENEWED/PAGE_MAY_EXIT, also fire pipeline signals.
+  // This allows existing tests to continue using lifeCycle.notify() as signal producers.
+  lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
+    pipeline.notifySignal({ type: 'sessionExpired' })
+  })
+  lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
+    pipeline.notifySignal({ type: 'sessionRenewed', sessionId: 'test-session-id' })
+  })
+  lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, (event) => {
+    const reason =
+      event.reason === PageExitReason.HIDDEN
+        ? ('visibility_hidden' as const)
+        : event.reason === PageExitReason.FROZEN
+          ? ('page_frozen' as const)
+          : ('before_unload' as const)
+    pipeline.notifySignal({ type: 'pageMayExit', reason })
+  })
 
   const {
     handler: viewUpdateHandler,
@@ -61,7 +84,8 @@ export function setupViewTest(
     configuration,
     locationChangeObservable,
     !configuration.trackViewsManually,
-    initialViewOptions
+    initialViewOptions,
+    pipeline
   )
   return {
     stop,

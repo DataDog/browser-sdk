@@ -4,7 +4,7 @@ import type { ViewHistory, ViewHistoryEntry, RumConfiguration } from '@datadog/b
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask, restorePageVisibility } from '@datadog/browser-core/test'
-import { createRumSessionManagerMock } from '../../../../rum-core/test'
+import { createRumSessionManagerMock, createMockRumPipeline } from '../../../../rum-core/test'
 import type { BrowserRecord, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
 import { MockWorker, readMetadataFromReplayPayload } from '../../../test'
@@ -33,6 +33,7 @@ describe('startSegmentCollection', () => {
   let stopSegmentCollection: () => void
   let clock: Clock
   let lifeCycle: LifeCycle
+  let pipeline: ReturnType<typeof createMockRumPipeline>
   let worker: MockWorker
   let httpRequestSpy: {
     observable: Observable<HttpRequestEvent<ReplayPayload>>
@@ -62,6 +63,20 @@ describe('startSegmentCollection', () => {
   beforeEach(() => {
     configuration = {} as RumConfiguration
     lifeCycle = new LifeCycle()
+    pipeline = createMockRumPipeline()
+    // Bridge: forward PAGE_MAY_EXIT and VIEW_CREATED lifeCycle events to pipeline signals
+    lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, (event) => {
+      const reason =
+        event.reason === PageExitReason.HIDDEN
+          ? ('visibility_hidden' as const)
+          : event.reason === PageExitReason.FROZEN
+            ? ('page_frozen' as const)
+            : ('before_unload' as const)
+      pipeline.notifySignal({ type: 'pageMayExit', reason })
+    })
+    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, () => {
+      pipeline.notifySignal({ type: 'viewCreated', viewId: 'test-view-id', startClocks: { relative: 0 as any, timeStamp: 0 as any } })
+    })
     worker = new MockWorker()
     httpRequestSpy = {
       observable: new Observable<HttpRequestEvent<ReplayPayload>>(),
@@ -73,7 +88,8 @@ describe('startSegmentCollection', () => {
       lifeCycle,
       () => context,
       httpRequestSpy,
-      createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+      createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY),
+      pipeline
     ))
 
     registerCleanupTask(() => {
