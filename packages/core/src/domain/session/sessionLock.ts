@@ -1,14 +1,20 @@
 import { mockable } from '../../tools/mockable'
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 
-export function withNativeSessionLock(fn: () => void): void {
+let lockPromise: Promise<void> | undefined
+
+export function withNativeSessionLock(fn: () => void | Promise<void>): void {
   if (navigator?.locks) {
     void navigator.locks.request(SESSION_STORE_KEY, fn)
     return
   }
-  fn()
+  // Chain async callbacks to prevent interleaving
+  if (!lockPromise) {
+    lockPromise = Promise.resolve()
+  }
+  lockPromise = lockPromise.then(fn, fn)
 }
 
-export function withSessionLock(fn: () => void): void {
+export function withSessionLock(fn: () => void | Promise<void>): void {
   mockable(withNativeSessionLock)(fn)
 }

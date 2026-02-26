@@ -22,7 +22,7 @@ import { SESSION_TIME_OUT_DELAY, SessionPersistence } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
 import type { SessionState } from './sessionState'
 import { toSessionState } from './sessionState'
-import { retrieveSessionCookie } from './storeStrategies/sessionInCookie'
+import { retrieveSessionCookieSync } from './storeStrategies/sessionInCookie'
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 import { retrieveSessionFromLocalStorage } from './storeStrategies/sessionInLocalStorage'
 
@@ -230,7 +230,7 @@ async function reportUnexpectedSessionState(configuration: Configuration) {
   let cookieContext
 
   if (sessionStoreStrategyType.type === SessionPersistence.COOKIE) {
-    rawSession = retrieveSessionCookie(sessionStoreStrategyType.cookieOptions)
+    rawSession = retrieveSessionCookieSync(sessionStoreStrategyType.cookieOptions)
 
     cookieContext = {
       cookie: await getSessionCookies(),
