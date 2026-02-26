@@ -15,7 +15,7 @@ import type { ViewEndedEvent } from '../../../rum-core/src/domain/view/trackView
 import type { RumSessionManagerMock } from '../../../rum-core/test'
 import { appendElement, createRumSessionManagerMock, mockRumConfiguration, createMockRumPipeline } from '../../../rum-core/test'
 
-import { recordsPerFullSnapshot, readReplayPayload } from '../../test'
+import { recordsPerFullSnapshot, readReplayPayload, bridgeLifeCycleToPipeline } from '../../test'
 import type { ReplayPayload } from '../domain/segmentCollection'
 import { setSegmentBytesLimit } from '../domain/segmentCollection'
 
@@ -46,21 +46,7 @@ describe('startRecording', () => {
     }
 
     pipeline = createMockRumPipeline()
-    // Bridge: forward VIEW_CREATED and PAGE_MAY_EXIT lifecycle events to pipeline signals
-    const viewCreatedBridge = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view: ViewCreatedEvent) => {
-      pipeline.notifySignal({ type: 'viewCreated', viewId: view.id ?? viewId, startClocks: view.startClocks })
-    })
-    const pageMayExitBridge = lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, (event) => {
-      const reason =
-        event.reason === PageExitReason.HIDDEN
-          ? ('visibility_hidden' as const)
-          : event.reason === PageExitReason.PAGEHIDE
-            ? ('page_hide' as const)
-            : event.reason === PageExitReason.FROZEN
-              ? ('page_frozen' as const)
-              : ('before_unload' as const)
-      pipeline.notifySignal({ type: 'pageMayExit', reason })
-    })
+    bridgeLifeCycleToPipeline(lifeCycle, pipeline)
 
     const deflateEncoder = createDeflateEncoder(configuration, worker!, DeflateEncoderStreamId.REPLAY)
     const viewHistory = startViewHistory(lifeCycle, pipeline)
@@ -85,8 +71,6 @@ describe('startRecording', () => {
       deflateEncoder.stop()
       setSegmentBytesLimit()
       resetDeflateWorkerState()
-      viewCreatedBridge.unsubscribe()
-      pageMayExitBridge.unsubscribe()
     })
   }
 

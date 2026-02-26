@@ -27,20 +27,18 @@ export function startViewCollection(
   locationChangeObservable: Observable<LocationChange>,
   recorderApi: RecorderApi,
   viewHistory: ViewHistory,
-  initialViewOptions?: ViewOptions,
-  pipeline?: Pipeline<RumCoreEvents>
+  pipeline: Pipeline<RumCoreEvents>,
+  initialViewOptions?: ViewOptions
 ) {
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) => {
     const rawEvent = processViewUpdate(view, configuration, recorderApi)
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
-    if (pipeline) {
-      pipeline.publish('observation', {
-        type: rawEvent.rawRumEvent.type,
-        startTime: rawEvent.startClocks.relative,
-        duration: rawEvent.duration,
-        data: { ...rawEvent.rawRumEvent, ...(rawEvent.domainContext ?? {}) } as unknown as Record<string, unknown>,
-      })
-    }
+    pipeline.publish('observation', {
+      type: rawEvent.rawRumEvent.type,
+      startTime: rawEvent.startClocks.relative,
+      duration: rawEvent.duration,
+      data: { ...rawEvent.rawRumEvent, ...(rawEvent.domainContext ?? {}) } as unknown as Record<string, unknown>,
+    })
   })
 
   hooks.register(HookNames.Assemble, ({ startTime, eventType }): DefaultRumEventAttributes | DISCARDED => {
@@ -78,8 +76,8 @@ export function startViewCollection(
     configuration,
     locationChangeObservable,
     !configuration.trackViewsManually,
-    initialViewOptions,
-    pipeline
+    pipeline,
+    initialViewOptions
   )
 }
 

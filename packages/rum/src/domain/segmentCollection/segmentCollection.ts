@@ -97,18 +97,11 @@ export function doStartSegmentCollection(
     nextSegmentCreationReason: 'init',
   }
 
-  const viewCreatedSubscription = pipeline
+  const signalSubscription = pipeline
     ? pipeline.subscribe('signal', (signal) => {
         if (signal.type === 'viewCreated') {
           flushSegment('view_change')
-        }
-      })
-    : { unsubscribe: () => {} }
-
-  // Subscribe to PAGE_MAY_EXIT via pipeline signal or lifeCycle fallback for synchronous segment flush
-  const pageMayExitSubscription = pipeline
-    ? pipeline.subscribe('signal', (signal) => {
-        if (signal.type === 'pageMayExit') {
+        } else if (signal.type === 'pageMayExit') {
           // page_hide is a valid PageExitReason but not in the schema-generated FlushReason type
           flushSegment(signal.reason as FlushReason)
         }
@@ -179,8 +172,7 @@ export function doStartSegmentCollection(
 
     stop: () => {
       flushSegment('stop')
-      viewCreatedSubscription.unsubscribe()
-      pageMayExitSubscription.unsubscribe()
+      signalSubscription.unsubscribe()
     },
 
   }

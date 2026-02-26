@@ -7,7 +7,7 @@ import { mockClock, registerCleanupTask, restorePageVisibility } from '@datadog/
 import { createRumSessionManagerMock, createMockRumPipeline } from '../../../../rum-core/test'
 import type { BrowserRecord, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
-import { MockWorker, readMetadataFromReplayPayload } from '../../../test'
+import { MockWorker, readMetadataFromReplayPayload, bridgeLifeCycleToPipeline } from '../../../test'
 import { createDeflateEncoder } from '../deflate'
 import {
   computeSegmentContext,
@@ -64,21 +64,7 @@ describe('startSegmentCollection', () => {
     configuration = {} as RumConfiguration
     lifeCycle = new LifeCycle()
     pipeline = createMockRumPipeline()
-    // Bridge: forward PAGE_MAY_EXIT and VIEW_CREATED lifeCycle events to pipeline signals
-    lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, (event) => {
-      const reason =
-        event.reason === PageExitReason.HIDDEN
-          ? ('visibility_hidden' as const)
-          : event.reason === PageExitReason.PAGEHIDE
-            ? ('page_hide' as const)
-            : event.reason === PageExitReason.FROZEN
-              ? ('page_frozen' as const)
-              : ('before_unload' as const)
-      pipeline.notifySignal({ type: 'pageMayExit', reason })
-    })
-    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, () => {
-      pipeline.notifySignal({ type: 'viewCreated', viewId: 'test-view-id', startClocks: { relative: 0 as any, timeStamp: 0 as any } })
-    })
+    bridgeLifeCycleToPipeline(lifeCycle, pipeline)
     worker = new MockWorker()
     httpRequestSpy = {
       observable: new Observable<HttpRequestEvent<ReplayPayload>>(),

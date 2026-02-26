@@ -115,8 +115,8 @@ export function trackViews(
   configuration: RumConfiguration,
   locationChangeObservable: Observable<LocationChange>,
   areViewsTrackedAutomatically: boolean,
-  initialViewOptions?: ViewOptions,
-  pipeline?: Pipeline<RumCoreEvents>
+  pipeline: Pipeline<RumCoreEvents>,
+  initialViewOptions?: ViewOptions
 ) {
   const activeViews: Set<ReturnType<typeof newView>> = new Set()
   let currentView = startNewView(ViewLoadingType.INITIAL_LOAD, clocksOrigin(), initialViewOptions)
@@ -143,9 +143,9 @@ export function trackViews(
       windowOpenObservable,
       configuration,
       loadingType,
+      pipeline,
       startClocks,
-      viewOptions,
-      pipeline
+      viewOptions
     )
     activeViews.add(newlyCreatedView)
     newlyCreatedView.stopObservable.subscribe(() => {
@@ -155,21 +155,19 @@ export function trackViews(
   }
 
   function startViewLifeCycle() {
-    if (pipeline) {
-      pipeline.subscribe('signal', (signal) => {
-        if (signal.type === 'sessionRenewed') {
-          // Renew view on session renewal
-          currentView = startNewView(ViewLoadingType.ROUTE_CHANGE, undefined, {
-            name: currentView.name,
-            service: currentView.service,
-            version: currentView.version,
-            context: currentView.contextManager.getContext(),
-          })
-        } else if (signal.type === 'sessionExpired') {
-          currentView.end({ sessionIsActive: false })
-        }
-      })
-    }
+    pipeline.subscribe('signal', (signal) => {
+      if (signal.type === 'sessionRenewed') {
+        // Renew view on session renewal
+        currentView = startNewView(ViewLoadingType.ROUTE_CHANGE, undefined, {
+          name: currentView.name,
+          service: currentView.service,
+          version: currentView.version,
+          context: currentView.contextManager.getContext(),
+        })
+      } else if (signal.type === 'sessionExpired') {
+        currentView.end({ sessionIsActive: false })
+      }
+    })
   }
 
   function renewViewOnLocationChange(locationChangeObservable: Observable<LocationChange>) {
@@ -220,9 +218,9 @@ function newView(
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
   loadingType: ViewLoadingType,
+  pipeline: Pipeline<RumCoreEvents>,
   startClocks: ClocksState = clocksNow(),
-  viewOptions?: ViewOptions,
-  pipeline?: Pipeline<RumCoreEvents>
+  viewOptions?: ViewOptions
 ) {
   // Setup initial values
   const id = generateUUID()
@@ -255,9 +253,7 @@ function newView(
   }
   lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, viewCreatedEvent)
   lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, viewCreatedEvent)
-  if (pipeline) {
-    pipeline.publish('signal', { type: 'viewCreated', viewId: id, name, startClocks })
-  }
+  pipeline.publish('signal', { type: 'viewCreated', viewId: id, name, startClocks })
 
   // Update the view every time the measures are changing
   const { throttled, cancel: cancelScheduleViewUpdate } = throttle(triggerViewUpdate, THROTTLE_VIEW_UPDATE_PERIOD, {

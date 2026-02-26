@@ -3,13 +3,9 @@ import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { TimeStamp } from '@datadog/browser-core'
 import { addExperimentalFeatures, ExperimentalFeature, noop } from '@datadog/browser-core'
 import type { BrowserRecord } from '../../types'
-<<<<<<< HEAD
-import { RecordType, SnapshotFormat } from '../../types'
-import { appendElement } from '../../../../rum-core/test'
-=======
 import { RecordType } from '../../types'
 import { appendElement, createMockRumPipeline } from '../../../../rum-core/test'
->>>>>>> 0fcc5ef31 (♻️ Migrate LifeCycle coordination event subscribers to pipeline signals)
+import { bridgeLifeCycleToPipeline } from '../../../test'
 import { startFullSnapshots } from './startFullSnapshots'
 import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
 import { createRecordingScopeForTesting } from './test/recordingScope.specHelper'
@@ -24,10 +20,7 @@ const describeStartFullSnapshotsWithExpectedSnapshot = (fullSnapshotRecord: jasm
   beforeEach(() => {
     lifeCycle = new LifeCycle()
     pipeline = createMockRumPipeline()
-    // Bridge: forward VIEW_CREATED lifeCycle events to pipeline signals
-    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view: ViewCreatedEvent) => {
-      pipeline.notifySignal({ type: 'viewCreated', viewId: view.id ?? 'test-view-id', startClocks: view.startClocks })
-    })
+    bridgeLifeCycleToPipeline(lifeCycle, pipeline)
     emitRecordCallback = jasmine.createSpy()
     emitStatsCallback = jasmine.createSpy()
 
@@ -112,7 +105,7 @@ const describeStartFullSnapshotsWithExpectedSnapshot = (fullSnapshotRecord: jasm
 }
 
 describe('startFullSnapshots', () => {
-  describe('when generating BrowserFullSnapshotV1Record', () => {
+  describe('when generating BrowserFullSnapshotRecord', () => {
     describeStartFullSnapshotsWithExpectedSnapshot({
       data: {
         node: jasmine.any(Object),
@@ -121,21 +114,19 @@ describe('startFullSnapshots', () => {
           top: jasmine.any(Number),
         },
       },
-      format: SnapshotFormat.V1,
       type: RecordType.FullSnapshot,
       timestamp: jasmine.any(Number),
     })
   })
 
-  describe('when generating BrowserFullSnapshotChangeRecord', () => {
+  describe('when generating BrowserChangeRecord', () => {
     beforeEach(() => {
       addExperimentalFeatures([ExperimentalFeature.USE_CHANGE_RECORDS])
     })
 
     describeStartFullSnapshotsWithExpectedSnapshot({
       data: jasmine.any(Array),
-      format: SnapshotFormat.Change,
-      type: RecordType.FullSnapshot,
+      type: RecordType.Change,
       timestamp: jasmine.any(Number),
     })
   })

@@ -11,6 +11,7 @@ import {
   findNode,
   recordsPerFullSnapshot,
   createRumFrustrationEvent,
+  bridgeLifeCycleToPipeline,
 } from '../../../test'
 import { createMockRumPipeline } from '../../../../rum-core/test'
 >>>>>>> 0fcc5ef31 (♻️ Migrate LifeCycle coordination event subscribers to pipeline signals)
@@ -447,10 +448,7 @@ describe('record', () => {
   function startRecording() {
     lifeCycle = new LifeCycle()
     pipeline = createMockRumPipeline()
-    // Bridge: forward VIEW_CREATED lifeCycle events to pipeline signals
-    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view: ViewCreatedEvent) => {
-      pipeline.notifySignal({ type: 'viewCreated', viewId: view.id ?? FAKE_VIEW_ID, startClocks: view.startClocks })
-    })
+    bridgeLifeCycleToPipeline(lifeCycle, pipeline)
     recordApi = record({
       emitRecord: emitSpy,
       emitStats: noop,

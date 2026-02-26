@@ -325,8 +325,8 @@ export function startRumEventCollection(
     locationChangeObservable,
     recorderApi,
     viewHistory,
-    initialViewOptions,
-    resolvedPipeline
+    resolvedPipeline,
+    initialViewOptions
   )
 
   startSourceCodeContext(hooks)

@@ -2,7 +2,13 @@ import { DISCARDED, HookNames, Observable } from '@datadog/browser-core'
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RecorderApi } from '../../boot/rumPublicApi'
-import { collectAndValidateRawRumEvents, mockRumConfiguration, mockViewHistory, noopRecorderApi } from '../../../test'
+import {
+  collectAndValidateRawRumEvents,
+  createMockRumPipeline,
+  mockRumConfiguration,
+  mockViewHistory,
+  noopRecorderApi,
+} from '../../../test'
 import type { RawRumEvent, RawRumViewEvent } from '../../rawRumEvent.types'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
@@ -95,7 +101,8 @@ describe('viewCollection', () => {
         ...noopRecorderApi,
         getReplayStats: getReplayStatsSpy,
       },
-      viewHistory
+      viewHistory,
+      createMockRumPipeline()
     )
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
@@ -327,7 +334,6 @@ describe('viewCollection', () => {
         new Observable<LocationChange>(),
         { ...noopRecorderApi, getReplayStats: jasmine.createSpy() },
         viewHistory,
-        undefined,
         pipeline
       )
       registerCleanupTask(() => {
@@ -367,7 +373,6 @@ describe('viewCollection', () => {
         new Observable<LocationChange>(),
         { ...noopRecorderApi, getReplayStats: jasmine.createSpy() },
         viewHistory,
-        undefined,
         pipeline
       )
       registerCleanupTask(() => {

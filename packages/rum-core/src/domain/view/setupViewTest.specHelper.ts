@@ -86,8 +86,8 @@ export function setupViewTest(
     configuration,
     locationChangeObservable,
     !configuration.trackViewsManually,
-    initialViewOptions,
-    pipeline
+    pipeline,
+    initialViewOptions
   )
   return {
     stop,

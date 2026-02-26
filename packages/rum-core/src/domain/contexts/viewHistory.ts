@@ -23,7 +23,7 @@ export interface ViewHistory {
   stop: () => void
 }
 
-export function startViewHistory(lifeCycle: LifeCycle, pipeline?: Pipeline<RumCoreEvents>): ViewHistory {
+export function startViewHistory(lifeCycle: LifeCycle, pipeline: Pipeline<RumCoreEvents>): ViewHistory {
   const viewValueHistory = createValueHistory<ViewHistoryEntry>({ expireDelay: VIEW_CONTEXT_TIME_OUT_DELAY })
 
   lifeCycle.subscribe(LifeCycleEventType.BEFORE_VIEW_CREATED, (view) => {
@@ -48,13 +48,11 @@ export function startViewHistory(lifeCycle: LifeCycle, pipeline?: Pipeline<RumCo
     currentView.sessionIsActive = viewUpdate.sessionIsActive
   })
 
-  if (pipeline) {
-    pipeline.subscribe('signal', (signal) => {
-      if (signal.type === 'sessionRenewed') {
-        viewValueHistory.reset()
-      }
-    })
-  }
+  pipeline.subscribe('signal', (signal) => {
+    if (signal.type === 'sessionRenewed') {
+      viewValueHistory.reset()
+    }
+  })
 
   function buildViewHistoryEntry(view: ViewCreatedEvent) {
     return {
