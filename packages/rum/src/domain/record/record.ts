@@ -1,5 +1,6 @@
 import { sendToExtension } from '@datadog/browser-core'
-import type { LifeCycle, RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
+import type { LifeCycle, RumConfiguration, ViewHistory, RumCoreEvents } from '@datadog/browser-rum-core'
+import type { Pipeline } from '@datadog/browser-core-next'
 import * as replayStats from '../replayStats'
 import type { BrowserRecord } from '../../types'
 import type { Tracker } from './trackers'
@@ -29,6 +30,7 @@ export interface RecordOptions {
   configuration: RumConfiguration
   lifeCycle: LifeCycle
   viewHistory: ViewHistory
+  pipeline?: Pipeline<RumCoreEvents>
 }
 
 export interface RecordAPI {
@@ -38,7 +40,7 @@ export interface RecordAPI {
 }
 
 export function record(options: RecordOptions): RecordAPI {
-  const { emitRecord, emitStats, configuration, lifeCycle } = options
+  const { emitRecord, emitStats, configuration, lifeCycle, pipeline } = options
   // runtime checks for user options
   if (!emitRecord || !emitStats) {
     throw new Error('emit functions are required')
@@ -54,7 +56,7 @@ export function record(options: RecordOptions): RecordAPI {
   const shadowRootsController = initShadowRootsController(processRecord, emitStats)
   const scope = createRecordingScope(configuration, createElementsScrollPositions(), shadowRootsController)
 
-  const { stop: stopFullSnapshots } = startFullSnapshots(lifeCycle, processRecord, emitStats, flushMutations, scope)
+  const { stop: stopFullSnapshots } = startFullSnapshots(lifeCycle, processRecord, emitStats, flushMutations, scope, undefined, pipeline)
 
   function flushMutations() {
     shadowRootsController.flush()

@@ -13,7 +13,9 @@ import type {
   RecorderApi,
   RumConfiguration,
   StartRecordingOptions,
+  RumCoreEvents,
 } from '@datadog/browser-rum-core'
+import type { Pipeline } from '@datadog/browser-core-next'
 import { getReplayStats as getReplayStatsImpl } from '../domain/replayStats'
 import {
   createDeflateEncoder,
@@ -80,7 +82,8 @@ export function makeRecorderApi(): RecorderApi {
     sessionManager: RumSessionManager,
     viewHistory: ViewHistory,
     worker: DeflateWorker | undefined,
-    telemetry: Telemetry
+    telemetry: Telemetry,
+    pipeline: Pipeline<RumCoreEvents>
   ) {
     let cachedDeflateEncoder: DeflateEncoder | undefined
 
@@ -101,7 +104,8 @@ export function makeRecorderApi(): RecorderApi {
       sessionManager,
       viewHistory,
       getOrCreateDeflateEncoder,
-      telemetry
+      telemetry,
+      pipeline
     )
 
     if (shouldStartImmediately(configuration)) {

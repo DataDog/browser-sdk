@@ -375,15 +375,12 @@ describe('viewCollection', () => {
         viewHistory.stop()
       })
 
-      // Wait for initial auto-view signals to drain
+      // Wait for initial auto-view signal to be emitted by trackViews
       await new Promise<void>((resolve) => setTimeout(resolve, 0))
       signals.length = 0
 
-      localLifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
-        id: 'test-view-id',
-        name: 'TestView',
-        startClocks: { relative: 0 as RelativeTime, timeStamp: 0 as TimeStamp },
-      })
+      // Start a new view via the view tracker to trigger a viewCreated signal from trackViews
+      collectionResult.startView({ name: 'TestView' })
 
       // Pipeline processes events asynchronously
       await new Promise<void>((resolve) => setTimeout(resolve, 0))
@@ -391,7 +388,6 @@ describe('viewCollection', () => {
       expect(signals.length).toBe(1)
       expect(signals[0].type).toBe('viewCreated')
       if (signals[0].type === 'viewCreated') {
-        expect(signals[0].viewId).toBe('test-view-id')
         expect(signals[0].name).toBe('TestView')
       }
     })

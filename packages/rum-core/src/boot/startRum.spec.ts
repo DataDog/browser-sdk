@@ -49,7 +49,7 @@ function startRumStub(
 ) {
   const hooks = createHooks()
 
-  const { stop: rumEventCollectionStop } = startRumEventCollection(
+  const { stop: rumEventCollectionStop, pipeline } = startRumEventCollection(
     lifeCycle,
     hooks,
     configuration,
@@ -64,6 +64,7 @@ function startRumStub(
   )
 
   return {
+    pipeline,
     stop: () => {
       rumEventCollectionStop()
     },
@@ -74,27 +75,31 @@ describe('rum session', () => {
   let serverRumEvents: RumEvent[]
   let lifeCycle: LifeCycle
   let sessionManager: RumSessionManagerMock
+  let rumPipeline: ReturnType<typeof startRumStub>['pipeline']
 
   beforeEach(() => {
     lifeCycle = new LifeCycle()
     sessionManager = createRumSessionManagerMock().setId('42')
 
     serverRumEvents = collectServerEvents(lifeCycle)
-    const { stop } = startRumStub(lifeCycle, mockRumConfiguration(), sessionManager, noop)
+    const { stop, pipeline } = startRumStub(lifeCycle, mockRumConfiguration(), sessionManager, noop)
+    rumPipeline = pipeline
 
     registerCleanupTask(stop)
   })
 
-  it('when the session is renewed, a new view event should be sent', () => {
+  it('when the session is renewed, a new view event should be sent', async () => {
     expect(serverRumEvents.length).toEqual(1)
     expect(serverRumEvents[0].type).toEqual('view')
     expect(serverRumEvents[0].session.id).toEqual('42')
 
-    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+    rumPipeline.publish('signal', { type: 'sessionExpired' })
+    await new Promise<void>((resolve) => setTimeout(resolve, 0))
     expect(serverRumEvents.length).toEqual(2)
 
     sessionManager.setId('43')
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+    rumPipeline.publish('signal', { type: 'sessionRenewed', sessionId: '43' })
+    await new Promise<void>((resolve) => setTimeout(resolve, 0))
 
     expect(serverRumEvents.length).toEqual(3)
 

@@ -97,14 +97,19 @@ export function startRum(
     addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
   }
 
+  // Create the RUM pipeline early so it can be used by session manager and page exit signal publishing.
+  const rumPipeline = createRumPipeline()
+
   const pageMayExitObservable = createPageMayExitObservable(configuration)
+  const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => {
+    lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, event)
+    rumPipeline.publish('signal', { type: 'pageMayExit', reason: event.reason as 'visibility_hidden' | 'before_unload' | 'page_frozen' })
+  })
+  cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
 
   const session = !canUseEventBridge()
-    ? startRumSessionManager(configuration, lifeCycle, trackingConsentState)
+    ? startRumSessionManager(configuration, lifeCycle, trackingConsentState, rumPipeline)
     : startRumSessionManagerStub()
-
-  // Create the RUM pipeline before startRumBatch so we can pass it to both.
-  const rumPipeline = createRumPipeline()
 
   if (!canUseEventBridge()) {
     const batch = startRumBatch(
@@ -189,10 +194,14 @@ export function startRumEventCollection(
   const { observable: windowOpenObservable, stop: stopWindowOpen } = createWindowOpenObservable()
   cleanupTasks.push(stopWindowOpen)
 
+  // Use the provided pipeline or create one (runs in parallel with the existing hooks-based assembly).
+  // The profiling decorator is registered by the rum package's startRum, not here.
+  const resolvedPipeline = pipeline ?? createRumPipeline()
+
   startDefaultContext(hooks, configuration, sdkName)
   const pageStateHistory = startPageStateHistory(hooks, configuration)
   cleanupTasks.push(() => pageStateHistory.stop())
-  const viewHistory = startViewHistory(lifeCycle)
+  const viewHistory = startViewHistory(lifeCycle, resolvedPipeline)
   cleanupTasks.push(() => viewHistory.stop())
   const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable)
   cleanupTasks.push(() => urlContexts.stop())
@@ -213,10 +222,6 @@ export function startRumEventCollection(
   startSyntheticsContext(hooks)
 
   startRumAssembly(configuration, lifeCycle, hooks, reportError)
-
-  // Use the provided pipeline or create one (runs in parallel with the existing hooks-based assembly).
-  // The profiling decorator is registered by the rum package's startRum, not here.
-  const resolvedPipeline = pipeline ?? createRumPipeline()
 
   const actionCollection = startActionCollection(
     lifeCycle,

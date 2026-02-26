@@ -1,8 +1,10 @@
 import type { RelativeTime, ClocksState, Context } from '@datadog/browser-core'
 import { SESSION_TIME_OUT_DELAY, createValueHistory } from '@datadog/browser-core'
+import type { Pipeline } from '@datadog/browser-core-next'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { BeforeViewUpdateEvent, ViewCreatedEvent } from '../view/trackViews'
+import type { RumCoreEvents } from '../pipeline/rumPipelineEvents'
 
 export const VIEW_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 
@@ -21,7 +23,7 @@ export interface ViewHistory {
   stop: () => void
 }
 
-export function startViewHistory(lifeCycle: LifeCycle): ViewHistory {
+export function startViewHistory(lifeCycle: LifeCycle, pipeline?: Pipeline<RumCoreEvents>): ViewHistory {
   const viewValueHistory = createValueHistory<ViewHistoryEntry>({ expireDelay: VIEW_CONTEXT_TIME_OUT_DELAY })
 
   lifeCycle.subscribe(LifeCycleEventType.BEFORE_VIEW_CREATED, (view) => {
@@ -46,9 +48,17 @@ export function startViewHistory(lifeCycle: LifeCycle): ViewHistory {
     currentView.sessionIsActive = viewUpdate.sessionIsActive
   })
 
-  lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-    viewValueHistory.reset()
-  })
+  if (pipeline) {
+    pipeline.subscribe('signal', (signal) => {
+      if (signal.type === 'sessionRenewed') {
+        viewValueHistory.reset()
+      }
+    })
+  } else {
+    lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
+      viewValueHistory.reset()
+    })
+  }
 
   function buildViewHistoryEntry(view: ViewCreatedEvent) {
     return {

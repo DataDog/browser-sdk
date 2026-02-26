@@ -43,12 +43,6 @@ export function startViewCollection(
     }
   })
 
-  if (pipeline) {
-    lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, ({ id, name }) => {
-      pipeline.publish('signal', { type: 'viewCreated', viewId: id, name })
-    })
-  }
-
   hooks.register(HookNames.Assemble, ({ startTime, eventType }): DefaultRumEventAttributes | DISCARDED => {
     const view = viewHistory.findView(startTime)
 
@@ -84,7 +78,8 @@ export function startViewCollection(
     configuration,
     locationChangeObservable,
     !configuration.trackViewsManually,
-    initialViewOptions
+    initialViewOptions,
+    pipeline
   )
 }
 

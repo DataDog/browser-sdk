@@ -51,7 +51,7 @@ export function startActionCollection(
   let clickActions: ReturnType<typeof trackClickActions> | undefined
 
   if (configuration.trackUserInteractions) {
-    clickActions = trackClickActions(lifeCycle, domMutationObservable, windowOpenObservable, configuration)
+    clickActions = trackClickActions(lifeCycle, domMutationObservable, windowOpenObservable, configuration, pipeline)
   }
 
   const manualActions = trackManualActions(lifeCycle, (action) => {

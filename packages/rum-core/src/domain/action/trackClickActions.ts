@@ -1,5 +1,14 @@
 import type { Duration, ClocksState, TimeStamp } from '@datadog/browser-core'
-import { timeStampNow, Observable, timeStampToClocks, relativeToClocks, generateUUID } from '@datadog/browser-core'
+import {
+  timeStampNow,
+  Observable,
+  timeStampToClocks,
+  relativeToClocks,
+  generateUUID,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
+} from '@datadog/browser-core'
+import type { Pipeline } from '@datadog/browser-core-next'
 import { isNodeShadowHost } from '../../browser/htmlDomUtils'
 import type { FrustrationType } from '../../rawRumEvent.types'
 import { ActionType } from '../../rawRumEvent.types'
@@ -14,6 +23,7 @@ import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import { startEventTracker } from '../eventTracker'
 import type { StoppedEvent, DiscardedEvent, EventTracker } from '../eventTracker'
 import { getComposedPathSelector } from '../getComposedPathSelector'
+import type { RumCoreEvents } from '../pipeline/rumPipelineEvents'
 import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
@@ -54,14 +64,23 @@ export function trackClickActions(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
-  configuration: RumConfiguration
+  configuration: RumConfiguration,
+  pipeline?: Pipeline<RumCoreEvents>
 ) {
-  const actionTracker = startEventTracker<ClickActionBase>(lifeCycle)
+  const actionTracker = startEventTracker<ClickActionBase>(lifeCycle, pipeline)
   const stopObservable = new Observable<void>()
   let currentClickChain: ClickChain | undefined
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, stopClickChain)
-  lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, stopClickChain)
+  if (pipeline) {
+    pipeline.subscribe('signal', (signal) => {
+      if (signal.type === 'pageMayExit') {
+        stopClickChain()
+      }
+    })
+  } else {
+    lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, stopClickChain)
+  }
 
   const { stop: stopActionEventsListener } = listenActionEvents<{
     clickActionBase: ClickActionBase
@@ -81,7 +100,8 @@ export function trackClickActions(
         clickActionBase,
         startEvent,
         getUserActivity,
-        hadActivityOnPointerDown
+        hadActivityOnPointerDown,
+        pipeline
       )
     },
   })
@@ -170,7 +190,8 @@ function startClickAction(
   clickActionBase: ClickActionBase,
   startEvent: MouseEventOnElement,
   getUserActivity: () => UserActivity,
-  hadActivityOnPointerDown: () => boolean
+  hadActivityOnPointerDown: () => boolean,
+  pipeline?: Pipeline<RumCoreEvents>
 ) {
   const click = newClick(lifeCycle, actionTracker, getUserActivity, clickActionBase, startEvent)
   appendClickToClickChain(click)
@@ -210,9 +231,15 @@ function startClickAction(
     click.stop(endClocks.timeStamp)
   })
 
-  const pageMayExitSubscription = lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, () => {
-    click.stop(timeStampNow())
-  })
+  const pageMayExitSubscription = pipeline
+    ? pipeline.subscribe('signal', (signal) => {
+        if (signal.type === 'pageMayExit') {
+          click.stop(timeStampNow())
+        }
+      })
+    : lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, () => {
+        click.stop(timeStampNow())
+      })
 
   const stopSubscription = stopObservable.subscribe(() => {
     click.stop()
@@ -238,7 +265,10 @@ function computeClickActionBase(
   const rect = target.getBoundingClientRect()
   const selector = getSelectorFromElement(target, configuration.actionNameAttribute)
 
-  const composedPathSelector = getComposedPathSelector(event.composedPath(), configuration.actionNameAttribute)
+  const composedPathSelector =
+    isExperimentalFeatureEnabled(ExperimentalFeature.COMPOSED_PATH_SELECTOR) && typeof event.composedPath === 'function'
+      ? getComposedPathSelector(event.composedPath(), configuration.actionNameAttribute)
+      : undefined
 
   if (selector) {
     updateInteractionSelector(event.timeStamp, selector)

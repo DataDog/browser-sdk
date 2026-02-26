@@ -1,7 +1,8 @@
 import { LifeCycleEventType, getViewportDimension } from '@datadog/browser-rum-core'
-import type { LifeCycle } from '@datadog/browser-rum-core'
-import { timeStampNow } from '@datadog/browser-core'
+import type { LifeCycle, RumCoreEvents } from '@datadog/browser-rum-core'
+import { ExperimentalFeature, isExperimentalFeatureEnabled, timeStampNow } from '@datadog/browser-core'
 import type { TimeStamp } from '@datadog/browser-core'
+import type { Pipeline } from '@datadog/browser-core-next'
 import { RecordType } from '../../types'
 import {
   isFullSnapshotChangeRecordsEnabled,
@@ -28,24 +29,39 @@ export function startFullSnapshots(
   emitStats: EmitStatsCallback,
   flushMutations: () => void,
   scope: RecordingScope,
-  serialize: SerializeFullSnapshotCallback = defaultSerializeFullSnapshotCallback()
+  serialize: SerializeFullSnapshotCallback = defaultSerializeFullSnapshotCallback(),
+  pipeline?: Pipeline<RumCoreEvents>
 ) {
   takeFullSnapshot(timeStampNow(), SerializationKind.INITIAL_FULL_SNAPSHOT, emitRecord, emitStats, scope, serialize)
 
-  const { unsubscribe } = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
-    flushMutations()
-    takeFullSnapshot(
-      view.startClocks.timeStamp,
-      SerializationKind.SUBSEQUENT_FULL_SNAPSHOT,
-      emitRecord,
-      emitStats,
-      scope,
-      serialize
-    )
-  })
+  const subscription = pipeline
+    ? pipeline.subscribe('signal', (signal) => {
+        if (signal.type === 'viewCreated') {
+          flushMutations()
+          takeFullSnapshot(
+            signal.startTimestamp,
+            SerializationKind.SUBSEQUENT_FULL_SNAPSHOT,
+            emitRecord,
+            emitStats,
+            scope,
+            serialize
+          )
+        }
+      })
+    : lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
+        flushMutations()
+        takeFullSnapshot(
+          view.startClocks.timeStamp,
+          SerializationKind.SUBSEQUENT_FULL_SNAPSHOT,
+          emitRecord,
+          emitStats,
+          scope,
+          serialize
+        )
+      })
 
   return {
-    stop: unsubscribe,
+    stop: subscription.unsubscribe,
   }
 }
 

@@ -40,9 +40,11 @@ import {
   timeStampNow,
 } from '@datadog/browser-core'
 
+import type { Pipeline } from '@datadog/browser-core-next'
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewHistory } from '../domain/contexts/viewHistory'
 import type { RumSessionManager } from '../domain/rumSessionManager'
+import type { RumCoreEvents } from '../domain/pipeline/rumPipelineEvents'
 import type { ReplayStats } from '../rawRumEvent.types'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import { DEFAULT_TRACKED_RESOURCE_HEADERS } from '../domain/configuration'
@@ -532,7 +534,8 @@ export interface RecorderApi {
     sessionManager: RumSessionManager,
     viewHistory: ViewHistory,
     deflateWorker: DeflateWorker | undefined,
-    telemetry: Telemetry
+    telemetry: Telemetry,
+    pipeline: Pipeline<RumCoreEvents>
   ) => void
   isRecording: () => boolean
   getReplayStats: (viewId: string) => ReplayStats | undefined
@@ -547,7 +550,8 @@ export interface ProfilerApi {
     configuration: RumConfiguration,
     sessionManager: RumSessionManager,
     viewHistory: ViewHistory,
-    createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
+    createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
+    pipeline: Pipeline<RumCoreEvents>
   ) => void
 }
 
@@ -636,7 +640,8 @@ export function makeRumPublicApi(
         startRumResult.session,
         startRumResult.viewHistory,
         deflateWorker,
-        startRumResult.telemetry
+        startRumResult.telemetry,
+        startRumResult.pipeline
       )
 
       profilerApi.onRumStart(
@@ -645,7 +650,8 @@ export function makeRumPublicApi(
         configuration,
         startRumResult.session,
         startRumResult.viewHistory,
-        createEncoder
+        createEncoder,
+        startRumResult.pipeline
       )
 
       strategy = createPostStartStrategy(strategy, startRumResult)
