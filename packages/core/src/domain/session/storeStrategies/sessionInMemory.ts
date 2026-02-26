@@ -23,7 +23,6 @@ export function selectMemorySessionStoreStrategy(): SessionStoreStrategyType {
 export function initMemorySessionStoreStrategy(configuration: Configuration): SessionStoreStrategy {
   return {
     expireSession: (sessionState: SessionState) => expireSessionFromMemory(sessionState, configuration),
-    isLockEnabled: false,
     persistSession: persistInMemory,
     retrieveSession: retrieveFromMemory,
   }

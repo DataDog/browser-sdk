@@ -23,7 +23,6 @@ export function selectLocalStorageStrategy(): SessionStoreStrategyType | undefin
 
 export function initLocalStorageStrategy(configuration: Configuration): SessionStoreStrategy {
   return {
-    isLockEnabled: false,
     persistSession: persistInLocalStorage,
     retrieveSession: retrieveSessionFromLocalStorage,
     expireSession: (sessionState: SessionState) => expireSessionFromLocalStorage(sessionState, configuration),
