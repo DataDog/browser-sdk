@@ -336,7 +336,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-logs@workspace:packages/logs"
   dependencies:
+<<<<<<< HEAD
     "@datadog/browser-core": "npm:6.33.0"
+=======
+    "@datadog/browser-core": "npm:6.28.1"
+    "@datadog/browser-core-next": "workspace:*"
+>>>>>>> b5df58311 (✨ Migrate Logs package to Pipeline architecture)
   peerDependencies:
     "@datadog/browser-rum": 6.33.0
   peerDependenciesMeta:

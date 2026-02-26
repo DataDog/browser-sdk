@@ -7,7 +7,11 @@ import {
   startAccountContext,
   startGlobalContext,
   startUserContext,
+<<<<<<< HEAD
   startTabContext,
+=======
+  getRelativeTime,
+>>>>>>> b5df58311 (✨ Migrate Logs package to Pipeline architecture)
 } from '@datadog/browser-core'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration } from '../domain/configuration'
@@ -27,6 +31,8 @@ import type { Hooks } from '../domain/hooks'
 import { startRUMInternalContext } from '../domain/contexts/rumInternalContext'
 import { startSessionContext } from '../domain/contexts/sessionContext'
 import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
+import { createLogsPipeline } from '../domain/pipeline/createLogsPipeline'
+import { createAssemblyDecoratorFactory } from '../domain/pipeline/assemblyDecoratorFactory'
 
 const LOGS_STORAGE_KEY = 'logs'
 
@@ -75,15 +81,29 @@ export function startLogs(
 
   startLogsAssembly(configuration, lifeCycle, hooks, getCommonContext, reportError)
 
+  // Pipeline (additive, runs in parallel with existing lifeCycle path)
+  const pipeline = createLogsPipeline()
+  pipeline.decorate(
+    'observation',
+    createAssemblyDecoratorFactory(configuration, hooks, getCommonContext, reportError)
+  )
+  pipeline.seal()
+
+  // Wire all producers to also publish to the pipeline (additive path)
+  lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLogsEventData) => {
+    pipeline.publish('observation', {
+      type: 'log',
+      startTime: getRelativeTime(rawLogsEventData.rawLogsEvent.date),
+      data: rawLogsEventData,
+    })
+  })
+
   if (!canUseEventBridge()) {
-    const { stop: stopLogsBatch } = startLogsBatch(
-      configuration,
-      lifeCycle,
-      reportError,
-      pageMayExitObservable,
-      session
-    )
-    cleanupTasks.push(() => stopLogsBatch())
+    const batch = startLogsBatch(configuration, lifeCycle, reportError, pageMayExitObservable, session)
+    // TODO Task 13: Switch to pipeline-only path and remove lifeCycle assembly.
+    // When old lifeCycle path is removed, subscribe pipeline to batch instead:
+    // pipeline.subscribe('observation', (enriched) => { batch.add(logsToServerFormat(enriched as any)) })
+    cleanupTasks.push(() => batch.stop())
   } else {
     startLogsBridge(lifeCycle)
   }
