@@ -41,7 +41,7 @@ export function startActionCollection(
           type: rawEvent.rawRumEvent.type,
           startTime: rawEvent.startClocks.relative,
           duration: rawEvent.duration,
-          data: (rawEvent.domainContext ?? {}) as unknown as Record<string, unknown>,
+          data: { ...rawEvent.rawRumEvent, ...(rawEvent.domainContext ?? {}) } as unknown as Record<string, unknown>,
         })
       }
     }
@@ -62,7 +62,7 @@ export function startActionCollection(
         type: rawEvent.rawRumEvent.type,
         startTime: rawEvent.startClocks.relative,
         duration: rawEvent.duration,
-        data: (rawEvent.domainContext ?? {}) as unknown as Record<string, unknown>,
+        data: { ...rawEvent.rawRumEvent, ...(rawEvent.domainContext ?? {}) } as unknown as Record<string, unknown>,
       })
     }
   })

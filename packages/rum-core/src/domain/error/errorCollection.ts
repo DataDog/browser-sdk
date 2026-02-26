@@ -58,7 +58,7 @@ export function doStartErrorCollection(lifeCycle: LifeCycle, pipeline?: Pipeline
       pipeline.publish('observation', {
         type: rawEvent.rawRumEvent.type,
         startTime: rawEvent.startClocks.relative,
-        data: (rawEvent.domainContext ?? {}) as unknown as Record<string, unknown>,
+        data: { ...rawEvent.rawRumEvent, ...(rawEvent.domainContext ?? {}) } as unknown as Record<string, unknown>,
       })
     }
   })
