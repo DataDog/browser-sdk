@@ -10,13 +10,14 @@ import { selectCookieStrategy, initCookieStrategy } from './storeStrategies/sess
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
 import type { SessionState } from './sessionState'
 import {
+  expandSessionState,
   getExpiredSessionState,
   isSessionInExpiredState,
   isSessionInNotStartedState,
   isSessionStarted,
 } from './sessionState'
 import { initLocalStorageStrategy, selectLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
-import { processSessionStoreOperations } from './sessionStoreOperations'
+import { withSessionLock } from './sessionLock'
 import { SessionPersistence } from './sessionConstants'
 import { initMemorySessionStoreStrategy, selectMemorySessionStoreStrategy } from './storeStrategies/sessionInMemory'
 
@@ -136,27 +137,22 @@ export function startSessionStore(
 
   const { throttled: throttledExpandOrRenewSession, cancel: cancelExpandOrRenewSession } = throttle(
     (callback?: () => void) => {
-      processSessionStoreOperations(
-        {
-          process: (sessionState) => {
-            if (isSessionInNotStartedState(sessionState)) {
-              return
-            }
+      withSessionLock(() => {
+        const sessionState = sessionStoreStrategy.retrieveSession()
+        if (isSessionInNotStartedState(sessionState)) {
+          return
+        }
+        const synchronizedSession = synchronizeSession(sessionState)
+        expandOrRenewSessionState(synchronizedSession)
+        expandSessionState(synchronizedSession)
+        sessionStoreStrategy.persistSession(synchronizedSession)
 
-            const synchronizedSession = synchronizeSession(sessionState)
-            expandOrRenewSessionState(synchronizedSession)
-            return synchronizedSession
-          },
-          after: (sessionState) => {
-            if (isSessionStarted(sessionState) && !hasSessionInCache()) {
-              renewSessionInCache(sessionState)
-            }
-            sessionCache = sessionState
-            callback?.()
-          },
-        },
-        sessionStoreStrategy
-      )
+        if (isSessionStarted(synchronizedSession) && !hasSessionInCache()) {
+          renewSessionInCache(synchronizedSession)
+        }
+        sessionCache = synchronizedSession
+        callback?.()
+      })
     },
     STORAGE_POLL_DELAY
   )
@@ -164,12 +160,19 @@ export function startSessionStore(
   startSession()
 
   function expandSession() {
-    processSessionStoreOperations(
-      {
-        process: (sessionState) => (hasSessionInCache() ? synchronizeSession(sessionState) : undefined),
-      },
-      sessionStoreStrategy
-    )
+    withSessionLock(() => {
+      if (!hasSessionInCache()) {
+        return
+      }
+      const sessionState = sessionStoreStrategy.retrieveSession()
+      const synced = synchronizeSession(sessionState)
+      if (isSessionInExpiredState(synced)) {
+        sessionStoreStrategy.expireSession(synced)
+      } else {
+        expandSessionState(synced)
+        sessionStoreStrategy.persistSession(synced)
+      }
+    })
   }
 
   /**
@@ -178,20 +181,16 @@ export function startSessionStore(
    * - if the session is not active, clear the session store and expire the session cache
    */
   function watchSession() {
-    const sessionState = sessionStoreStrategy.retrieveSession()
-
-    if (isSessionInExpiredState(sessionState)) {
-      processSessionStoreOperations(
-        {
-          process: (sessionState: SessionState) =>
-            isSessionInExpiredState(sessionState) ? getExpiredSessionState(sessionState, configuration) : undefined,
-          after: synchronizeSession,
-        },
-        sessionStoreStrategy
-      )
-    } else {
-      synchronizeSession(sessionState)
-    }
+    withSessionLock(() => {
+      const sessionState = sessionStoreStrategy.retrieveSession()
+      if (isSessionInExpiredState(sessionState)) {
+        const expired = getExpiredSessionState(sessionState, configuration)
+        sessionStoreStrategy.expireSession(expired)
+        synchronizeSession(expired)
+      } else {
+        synchronizeSession(sessionState)
+      }
+    })
   }
 
   function synchronizeSession(sessionState: SessionState) {
@@ -209,22 +208,18 @@ export function startSessionStore(
     return sessionState
   }
 
-  function startSession(callback?: () => void) {
-    processSessionStoreOperations(
-      {
-        process: (sessionState) => {
-          if (isSessionInNotStartedState(sessionState)) {
-            sessionState.anonymousId = generateUUID()
-            return getExpiredSessionState(sessionState, configuration)
-          }
-        },
-        after: (sessionState) => {
-          sessionCache = sessionState
-          callback?.()
-        },
-      },
-      sessionStoreStrategy
-    )
+  function startSession() {
+    withSessionLock(() => {
+      const sessionState = sessionStoreStrategy.retrieveSession()
+      if (isSessionInNotStartedState(sessionState)) {
+        sessionState.anonymousId = generateUUID()
+        const expired = getExpiredSessionState(sessionState, configuration)
+        sessionStoreStrategy.expireSession(expired)
+        sessionCache = expired
+      } else {
+        sessionCache = sessionState
+      }
+    })
   }
 
   function expandOrRenewSessionState(sessionState: SessionState) {
@@ -263,13 +258,13 @@ export function startSessionStore(
   }
 
   function updateSessionState(partialSessionState: Partial<SessionState>) {
-    processSessionStoreOperations(
-      {
-        process: (sessionState) => ({ ...sessionState, ...partialSessionState }),
-        after: synchronizeSession,
-      },
-      sessionStoreStrategy
-    )
+    withSessionLock(() => {
+      const sessionState = sessionStoreStrategy.retrieveSession()
+      const updated = { ...sessionState, ...partialSessionState }
+      expandSessionState(updated)
+      sessionStoreStrategy.persistSession(updated)
+      synchronizeSession(updated)
+    })
   }
 
   return {

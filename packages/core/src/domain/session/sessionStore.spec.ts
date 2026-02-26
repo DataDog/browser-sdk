@@ -1,12 +1,12 @@
 import type { Clock } from '../../../test'
-import { mockClock, createFakeSessionStoreStrategy } from '../../../test'
+import { mockClock, createFakeSessionStoreStrategy, replaceMockable } from '../../../test'
 import type { InitConfiguration, Configuration } from '../configuration'
 import { display } from '../../tools/display'
+import { withNativeSessionLock } from './sessionLock'
 import type { SessionStore } from './sessionStore'
 import { STORAGE_POLL_DELAY, startSessionStore, selectSessionStoreStrategyType } from './sessionStore'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY, SessionPersistence } from './sessionConstants'
 import type { SessionState } from './sessionState'
-import { LOCK_RETRY_DELAY, createLock } from './sessionStoreOperations'
 
 const FIRST_ID = 'first'
 const SECOND_ID = 'second'
@@ -258,7 +258,7 @@ describe('session store', () => {
         return
       }
 
-      sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: true, initialSession: initialState })
+      sessionStoreStrategy = createFakeSessionStoreStrategy({ initialSession: initialState })
 
       sessionStoreManager = startSessionStore(sessionStoreStrategyType, DEFAULT_CONFIGURATION, sessionStoreStrategy)
       sessionStoreStrategy.persistSession.calls.reset()
@@ -267,6 +267,7 @@ describe('session store', () => {
     }
 
     beforeEach(() => {
+      replaceMockable(withNativeSessionLock, (fn: () => void) => fn())
       expireSpy = jasmine.createSpy('expire session')
       renewSpy = jasmine.createSpy('renew session')
       clock = mockClock()
@@ -384,36 +385,6 @@ describe('session store', () => {
 
         expect(callbackSpy).toHaveBeenCalledTimes(1)
       })
-
-      it('should execute callback after lock is released', () => {
-        const sessionStoreStrategyType = selectSessionStoreStrategyType(DEFAULT_INIT_CONFIGURATION)
-        if (sessionStoreStrategyType?.type !== SessionPersistence.COOKIE) {
-          fail('Unable to initialize cookie storage')
-          return
-        }
-
-        // Create a locked session state
-        const lockedSession: SessionState = {
-          ...createSessionState(FIRST_ID),
-          lock: createLock(),
-        }
-
-        sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: true, initialSession: lockedSession })
-
-        sessionStoreManager = startSessionStore(sessionStoreStrategyType, DEFAULT_CONFIGURATION, sessionStoreStrategy)
-
-        const callbackSpy = jasmine.createSpy('callback')
-        sessionStoreManager.expandOrRenewSession(callbackSpy)
-
-        expect(callbackSpy).not.toHaveBeenCalled()
-
-        // Remove the lock from the session
-        sessionStoreStrategy.planRetrieveSession(0, createSessionState(FIRST_ID))
-
-        clock.tick(LOCK_RETRY_DELAY)
-
-        expect(callbackSpy).toHaveBeenCalledTimes(1)
-      })
     })
 
     describe('expand session', () => {
@@ -473,25 +444,27 @@ describe('session store', () => {
     describe('regular watch', () => {
       it('when session not in cache and session not in store, should store the expired session', () => {
         setupSessionStore()
+        sessionStoreStrategy.expireSession.calls.reset()
 
         clock.tick(STORAGE_POLL_DELAY)
 
         expectSessionToBeExpiredInStore()
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).not.toHaveBeenCalled()
-        expect(sessionStoreStrategy.persistSession).toHaveBeenCalled()
+        expect(sessionStoreStrategy.expireSession).toHaveBeenCalled()
       })
 
       it('when session in cache and session not in store, should expire session', () => {
         setupSessionStore(createSessionState(FIRST_ID))
         resetSessionInStore()
+        sessionStoreStrategy.expireSession.calls.reset()
 
         clock.tick(STORAGE_POLL_DELAY)
 
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expectSessionToBeExpiredInStore()
         expect(expireSpy).toHaveBeenCalled()
-        expect(sessionStoreStrategy.persistSession).toHaveBeenCalled()
+        expect(sessionStoreStrategy.expireSession).toHaveBeenCalled()
       })
 
       it('when session not in cache and session in store, should do nothing', () => {
@@ -528,24 +501,18 @@ describe('session store', () => {
         expect(sessionStoreStrategy.persistSession).not.toHaveBeenCalled()
       })
 
-      it('when session in store is expired first and then get updated by another tab, should expire session in cache and not touch the store', () => {
+      it('when session in store is expired first and then get updated by another tab, should expire session in cache', () => {
         setupSessionStore(createSessionState(FIRST_ID))
         resetSessionInStore()
 
-        // Simulate a new session being written to the store by another tab during the watch.
-        // Watch is reading the cookie twice so we need to plan the write of the cookie at the right index
-        sessionStoreStrategy.planRetrieveSession(1, createSessionState(SECOND_ID))
+        // Simulate another tab writing a new session between the reset and the watch tick
+        setSessionInStore(createSessionState(SECOND_ID))
 
         clock.tick(STORAGE_POLL_DELAY)
 
-        // expires session in cache
+        // The watch sees SECOND_ID which differs from the cached FIRST_ID, so it expires the cache
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).toHaveBeenCalled()
-
-        // Does not touch the store
-        // The two calls to persist session are for the lock management, these can be ignored
-        expect(sessionStoreStrategy.persistSession).toHaveBeenCalledTimes(2)
-        expect(sessionStoreStrategy.expireSession).not.toHaveBeenCalled()
       })
     })
 
@@ -584,7 +551,7 @@ describe('session store', () => {
     function setupSessionStoreWithObserver(initialState: SessionState = {}, updateSpyFn: () => void) {
       const sessionStoreStrategyType = selectSessionStoreStrategyType(DEFAULT_INIT_CONFIGURATION)
 
-      sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: true, initialSession: initialState })
+      sessionStoreStrategy = createFakeSessionStoreStrategy({ initialSession: initialState })
 
       const sessionStoreManager = startSessionStore(
         sessionStoreStrategyType!,
@@ -600,6 +567,7 @@ describe('session store', () => {
     let otherSessionStoreManager: SessionStore
 
     beforeEach(() => {
+      replaceMockable(withNativeSessionLock, (fn: () => void) => fn())
       updateSpy = jasmine.createSpy()
       otherUpdateSpy = jasmine.createSpy()
       clock = mockClock()
