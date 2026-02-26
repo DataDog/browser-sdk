@@ -9,6 +9,9 @@ export interface LogsObservation {
   readonly data: RawLogsEventCollectedData
 }
 
+// type needed: Pipeline<TEventMap> requires TEventMap extends Record<string, unknown>,
+// which interfaces cannot satisfy without an explicit index signature
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type LogsEvents = {
   observation: LogsObservation
   signal: LogsSignal

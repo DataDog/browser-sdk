@@ -1,10 +1,9 @@
 import type { Context, RawError } from '@datadog/browser-core'
-import { DISCARDED, ErrorSource, HookNames, buildTags, combine, createEventRateLimiter, getRelativeTime } from '@datadog/browser-core'
+import { DISCARDED, ErrorSource, HookNames, buildTags, combine } from '@datadog/browser-core'
 import type { DecoratorFactory, DecoratorResult } from '@datadog/browser-core-next'
 import type { LogsEvent } from '../../logsEvent.types'
 import type { LogsConfiguration } from '../configuration'
 import type { Hooks } from '../hooks'
-import { STATUSES } from '../logger'
 import type { CommonContext } from '../../rawLogsEvent.types'
 import type { LogsObservation } from './logsPipelineEvents'
 
@@ -16,15 +15,10 @@ export function createAssemblyDecoratorFactory(
   configuration: LogsConfiguration,
   hooks: Hooks,
   getCommonContext: () => CommonContext,
-  reportError: (error: RawError) => void,
-  eventRateLimit?: number
+  // NOTE: reportError is kept as a parameter for future use when rate limiting is
+  // re-added to this decorator (Task 13, after old assembly path is removed).
+  _reportError: (error: RawError) => void
 ): DecoratorFactory<LogsObservation, AssembledLogAttributes> {
-  const statusWithCustom = (STATUSES as string[]).concat(['custom'])
-  const logRateLimiters: { [key: string]: ReturnType<typeof createEventRateLimiter> } = {}
-  statusWithCustom.forEach((status) => {
-    logRateLimiters[status] = createEventRateLimiter(status, reportError, eventRateLimit)
-  })
-
   return {
     name: 'assembly',
     provides: [],
@@ -32,7 +26,7 @@ export function createAssemblyDecoratorFactory(
     capabilities: { canDiscard: true },
     create(_deps) {
       return {
-        async decorate(
+        decorate(
           observation: LogsObservation,
           _accumulated: Readonly<Partial<AssembledLogAttributes>>
         ): Promise<DecoratorResult<AssembledLogAttributes>> {
@@ -44,7 +38,7 @@ export function createAssemblyDecoratorFactory(
           })
 
           if (defaultLogsEventAttributes === DISCARDED) {
-            return { status: 'discarded', reason: 'tracking consent not granted or no session' }
+            return Promise.resolve({ status: 'discarded', reason: 'tracking consent not granted or no session' })
           }
 
           const defaultDdtags = buildTags(configuration)
@@ -61,15 +55,15 @@ export function createAssemblyDecoratorFactory(
             }
           ) as LogsEvent & Context
 
-          if (
-            configuration.beforeSend?.(log, domainContext) === false ||
-            (log.origin !== ErrorSource.AGENT &&
-              (logRateLimiters[log.status] ?? logRateLimiters['custom']).isLimitReached())
-          ) {
-            return { status: 'discarded', reason: 'beforeSend returned false or rate limit reached' }
+          // NOTE: Rate limiting and beforeSend are intentionally omitted here during the
+          // parallel migration period (Task 12). Both are handled by the existing
+          // startLogsAssembly path. They will be re-added to this decorator in Task 13
+          // when the old assembly path is removed.
+          if (log.origin !== ErrorSource.AGENT && configuration.beforeSend?.(log, domainContext) === false) {
+            return Promise.resolve({ status: 'discarded', reason: 'beforeSend returned false' })
           }
 
-          return { status: 'contributed', attributes: { assembledLog: log } }
+          return Promise.resolve({ status: 'contributed', attributes: { assembledLog: log } })
         },
       }
     },

@@ -34,6 +34,7 @@ const pathsWithSideEffect = new Set([
 // Those packages are known to have no side effects when evaluated
 const packagesWithoutSideEffect = new Set([
   '@datadog/browser-core',
+  '@datadog/browser-core-next',
   '@datadog/browser-rum-core',
   '@datadog/browser-rum-react/internal',
   'react',
