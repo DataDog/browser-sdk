@@ -179,6 +179,7 @@ describe('viewCollection', () => {
             duration: (10 * 1e6) as ServerDuration,
             timestamp: (100 * 1e6) as ServerDuration,
             target_selector: undefined,
+            sub_parts: undefined,
           },
           lcp: {
             timestamp: (10 * 1e6) as ServerDuration,

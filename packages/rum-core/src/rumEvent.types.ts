@@ -142,10 +142,6 @@ export type RumActionEvent = CommonProperties &
            */
           readonly selector?: string
           /**
-           * Mobile-only: a globally unique and stable identifier for this UI element, computed as the hash of the element's path (32 lowercase hex characters). Used to correlate actions with mobile session replay wireframes.
-           */
-          readonly permanent_id?: string
-          /**
            * Width of the target element (in pixels)
            */
           readonly width?: number
@@ -153,6 +149,10 @@ export type RumActionEvent = CommonProperties &
            * Height of the target element (in pixels)
            */
           readonly height?: number
+          /**
+           * Mobile-only: a globally unique and stable identifier for this UI element, computed as the hash of the element's path (32 lowercase hex characters). Used to correlate actions with mobile session replay wireframes.
+           */
+          readonly permanent_id?: string
           [k: string]: unknown
         }
         /**
