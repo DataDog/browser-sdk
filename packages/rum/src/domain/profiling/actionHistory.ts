@@ -51,7 +51,7 @@ export function createActionHistory(lifeCycle: LifeCycle) {
               id: rawRumEvent.action.id,
               label: '',
               startClocks,
-              duration: duration!,
+              duration,
             },
             startClocks.relative
           )

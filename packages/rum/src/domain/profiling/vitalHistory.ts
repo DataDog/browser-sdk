@@ -49,7 +49,7 @@ export function createVitalHistory(lifeCycle: LifeCycle) {
             {
               id: rawRumEvent.vital.id,
               startClocks,
-              duration: duration!,
+              duration,
               label: rawRumEvent.vital.name,
             },
             startClocks.relative
