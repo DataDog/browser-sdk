@@ -47,7 +47,7 @@ describe('startRUMInternalContext', () => {
 
     describe('when RUM is injected by Synthetics', () => {
       beforeEach(() => {
-        mockSyntheticsWorkerValues({ injectsRum: true, publicId: 'test-id', resultId: 'result-id' })
+        mockSyntheticsWorkerValues({ injectsRum: true, context: { test_id: 'test-id', result_id: 'result-id' } })
       })
 
       it('uses the global variable created when the synthetics worker is injecting RUM', () => {

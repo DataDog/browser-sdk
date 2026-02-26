@@ -138,10 +138,10 @@ export { SESSION_STORE_KEY } from './domain/session/storeStrategies/sessionStore
 export { MEMORY_SESSION_STORE_KEY } from './domain/session/storeStrategies/sessionInMemory'
 export {
   willSyntheticsInjectRum,
-  getSyntheticsTestId,
-  getSyntheticsResultId,
+  getSyntheticsContext,
   isSyntheticsTest,
 } from './domain/synthetics/syntheticsWorkerValues'
+export type { SyntheticsContext } from './domain/synthetics/syntheticsWorkerValues'
 export { checkContext } from './domain/context/contextUtils'
 export * from './domain/resourceUtils'
 export * from './domain/bufferedData'
