@@ -1,9 +1,26 @@
 import type { SessionContext } from '@datadog/browser-core'
-import { HIGH_HASH_UUID, LOW_HASH_UUID, MID_HASH_UUID } from '@datadog/browser-core/test'
+import { BridgeCapability } from '@datadog/browser-core'
+import { HIGH_HASH_UUID, LOW_HASH_UUID, MID_HASH_UUID, mockEventBridge } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../test'
 import { SessionReplayState, computeSessionReplayState } from './sessionReplayState'
 
 describe('computeSessionReplayState', () => {
+  describe('in bridge environment', () => {
+    it('should return SAMPLED when bridge supports RECORDS, regardless of sample rates', () => {
+      mockEventBridge({ capabilities: [BridgeCapability.RECORDS] })
+      const session: SessionContext = { id: HIGH_HASH_UUID, anonymousId: undefined, isReplayForced: false }
+      const configuration = mockRumConfiguration({ sessionSampleRate: 100, sessionReplaySampleRate: 0 })
+      expect(computeSessionReplayState(session, configuration)).toBe(SessionReplayState.SAMPLED)
+    })
+
+    it('should return OFF when bridge does not support RECORDS, regardless of sample rates', () => {
+      mockEventBridge({ capabilities: [] })
+      const session: SessionContext = { id: LOW_HASH_UUID, anonymousId: undefined, isReplayForced: false }
+      const configuration = mockRumConfiguration({ sessionSampleRate: 100, sessionReplaySampleRate: 100 })
+      expect(computeSessionReplayState(session, configuration)).toBe(SessionReplayState.OFF)
+    })
+  })
+
   describe('with bigint support', () => {
     beforeEach(() => {
       if (!window.BigInt) {
