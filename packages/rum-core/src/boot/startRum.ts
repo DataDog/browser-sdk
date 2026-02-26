@@ -103,6 +103,9 @@ export function startRum(
     ? startRumSessionManager(configuration, lifeCycle, trackingConsentState)
     : startRumSessionManagerStub()
 
+  // Create the RUM pipeline before startRumBatch so we can pass it to both.
+  const rumPipeline = createRumPipeline()
+
   if (!canUseEventBridge()) {
     const batch = startRumBatch(
       configuration,
@@ -110,7 +113,8 @@ export function startRum(
       reportError,
       pageMayExitObservable,
       session.expireObservable,
-      createEncoder
+      createEncoder,
+      rumPipeline
     )
     const preparePageExitSubscription = batch.flushController.preparePageExitFlushObservable.subscribe((reason) => {
       lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, { reason })
@@ -142,7 +146,8 @@ export function startRum(
     bufferedDataObservable,
     sdkName,
     reportError,
-    trackingConsentState
+    trackingConsentState,
+    rumPipeline
   )
   cleanupTasks.push(stopRumEventCollection)
   bufferedDataObservable.unbuffer()
@@ -174,7 +179,8 @@ export function startRumEventCollection(
   bufferedDataObservable: Observable<BufferedData>,
   sdkName: SdkName | undefined,
   reportError: (error: RawError) => void,
-  trackingConsentState: TrackingConsentState
+  trackingConsentState: TrackingConsentState,
+  pipeline?: ReturnType<typeof createRumPipeline>
 ) {
   const cleanupTasks: Array<() => void> = []
 
@@ -208,9 +214,9 @@ export function startRumEventCollection(
 
   startRumAssembly(configuration, lifeCycle, hooks, reportError)
 
-  // Create the RUM pipeline (runs in parallel with the existing hooks-based assembly).
+  // Use the provided pipeline or create one (runs in parallel with the existing hooks-based assembly).
   // The profiling decorator is registered by the rum package's startRum, not here.
-  const pipeline = createRumPipeline()
+  const resolvedPipeline = pipeline ?? createRumPipeline()
 
   const actionCollection = startActionCollection(
     lifeCycle,
@@ -218,16 +224,19 @@ export function startRumEventCollection(
     domMutationObservable,
     windowOpenObservable,
     configuration,
-    pipeline
+    resolvedPipeline
   )
   cleanupTasks.push(actionCollection.stop)
 
-  pipeline.decorate(
+  resolvedPipeline.decorate(
     'observation',
     trackingConsentDecoratorFactory({ hasConsent: () => trackingConsentState.isGranted() })
   )
-  pipeline.decorate('observation', sessionDecoratorFactory({ getSession: () => session.findTrackedSession() ?? null }))
-  pipeline.decorate(
+  resolvedPipeline.decorate(
+    'observation',
+    sessionDecoratorFactory({ getSession: () => session.findTrackedSession() ?? null })
+  )
+  resolvedPipeline.decorate(
     'observation',
     defaultContextDecoratorFactory({
       configuration,
@@ -237,16 +246,19 @@ export function startRumEventCollection(
       sdkName,
     })
   )
-  pipeline.decorate('observation', viewDecoratorFactory({ findView: (t) => viewHistory.findView(t) }))
-  pipeline.decorate('observation', urlContextsDecoratorFactory({ findUrlContext: (t) => urlContexts.findUrl(t) }))
-  pipeline.decorate(
+  resolvedPipeline.decorate('observation', viewDecoratorFactory({ findView: (t) => viewHistory.findView(t) }))
+  resolvedPipeline.decorate(
+    'observation',
+    urlContextsDecoratorFactory({ findUrlContext: (t) => urlContexts.findUrl(t) })
+  )
+  resolvedPipeline.decorate(
     'observation',
     pageStateDecoratorFactory({
       findAll: (t, d) => pageStateHistory.findAll(t, d),
       wasInPageStateDuringPeriod: pageStateHistory.wasInPageStateDuringPeriod,
     })
   )
-  pipeline.decorate(
+  resolvedPipeline.decorate(
     'observation',
     featureFlagDecoratorFactory({
       findFeatureFlags: (t) => featureFlagContexts.findFeatureFlags(t),
@@ -254,18 +266,18 @@ export function startRumEventCollection(
         (configuration.trackFeatureFlagsForEvents as string[]).concat(['view', 'error']).includes(type),
     })
   )
-  pipeline.decorate('observation', connectivityDecoratorFactory())
-  pipeline.decorate('observation', displayDecoratorFactory({ getViewport: () => displayContext.getViewport() }))
-  pipeline.decorate('observation', syntheticsDecoratorFactory())
-  pipeline.decorate(
+  resolvedPipeline.decorate('observation', connectivityDecoratorFactory())
+  resolvedPipeline.decorate('observation', displayDecoratorFactory({ getViewport: () => displayContext.getViewport() }))
+  resolvedPipeline.decorate('observation', syntheticsDecoratorFactory())
+  resolvedPipeline.decorate(
     'observation',
     ciVisibilityDecoratorFactory({ getTestExecutionId: () => ciVisibilityContext.getTestExecutionId() })
   )
-  pipeline.decorate(
+  resolvedPipeline.decorate(
     'observation',
     globalContextDecoratorFactory({ getContext: () => globalContext.getContext(), useContextNamespace: true })
   )
-  pipeline.decorate(
+  resolvedPipeline.decorate(
     'observation',
     userContextDecoratorFactory({
       getUser: () => userContext.getContext() as { id?: string; email?: string; name?: string; [key: string]: unknown },
@@ -273,22 +285,22 @@ export function startRumEventCollection(
       trackAnonymousUser: configuration.trackAnonymousUser ?? false,
     })
   )
-  pipeline.decorate(
+  resolvedPipeline.decorate(
     'observation',
     accountContextDecoratorFactory({
       getAccount: () =>
         accountContext.getContext() as { id: string; name?: string; [key: string]: unknown },
     })
   )
-  pipeline.decorate(
+  resolvedPipeline.decorate(
     'observation',
     actionContextDecoratorFactory({ findActionId: actionCollection.actionContexts.findActionId })
   )
   // TODO: sourceCodeDecoratorFactory needs access to event data (handlingStack, error stack) for
   // accurate URL extraction — using a placeholder until Task 9 wires this properly.
-  pipeline.decorate('observation', sourceCodeDecoratorFactory({ findContext: () => undefined }))
+  resolvedPipeline.decorate('observation', sourceCodeDecoratorFactory({ findContext: () => undefined }))
 
-  pipeline.seal()
+  resolvedPipeline.seal()
 
   const {
     addTiming,
@@ -309,24 +321,24 @@ export function startRumEventCollection(
     recorderApi,
     viewHistory,
     initialViewOptions,
-    pipeline
+    resolvedPipeline
   )
 
   startSourceCodeContext(hooks)
 
   cleanupTasks.push(stopViewCollection)
 
-  const resourceCollection = startResourceCollection(lifeCycle, configuration, pageStateHistory, pipeline)
+  const resourceCollection = startResourceCollection(lifeCycle, configuration, pageStateHistory, resolvedPipeline)
   cleanupTasks.push(resourceCollection.stop)
 
-  const { stop: stopLongTaskCollection } = startLongTaskCollection(lifeCycle, configuration, pipeline)
+  const { stop: stopLongTaskCollection } = startLongTaskCollection(lifeCycle, configuration, resolvedPipeline)
   cleanupTasks.push(stopLongTaskCollection)
 
-  const { addError } = startErrorCollection(lifeCycle, configuration, bufferedDataObservable, pipeline)
+  const { addError } = startErrorCollection(lifeCycle, configuration, bufferedDataObservable, resolvedPipeline)
 
   startRequestCollection(lifeCycle, configuration, session, userContext, accountContext)
 
-  const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory, customVitalsState, pipeline)
+  const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory, customVitalsState, resolvedPipeline)
 
   const internalContext = startInternalContext(
     configuration.applicationId,
@@ -361,7 +373,7 @@ export function startRumEventCollection(
     globalContext,
     userContext,
     accountContext,
-    pipeline,
+    pipeline: resolvedPipeline,
     stop: () => cleanupTasks.forEach((task) => task()),
   }
 }
