@@ -30,9 +30,6 @@ describe('computeSessionReplayState', () => {
     })
 
     it('should apply the correction factor for chained sampling on the replay sample rate', () => {
-      // MID_HASH_UUID has a hash of ~50.7%. With sessionSampleRate=60 and sessionReplaySampleRate=60:
-      // - Without correction: isSampled(id, 60) → true (50.7 < 60)
-      // - With correction: isSampled(id, 60*60/100=36) → false (50.7 > 36)
       const session: SessionContext = { id: MID_HASH_UUID, anonymousId: undefined, isReplayForced: false }
       const configuration = mockRumConfiguration({ sessionSampleRate: 60, sessionReplaySampleRate: 60 })
       expect(computeSessionReplayState(session, configuration)).toBe(SessionReplayState.OFF)

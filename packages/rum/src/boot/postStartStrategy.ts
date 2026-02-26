@@ -1,6 +1,6 @@
 import type { LifeCycle, RumConfiguration, StartRecordingOptions, ViewHistory } from '@datadog/browser-rum-core'
 import { LifeCycleEventType, SessionReplayState, computeSessionReplayState } from '@datadog/browser-rum-core'
-import type { Telemetry, DeflateEncoder, SessionManager } from '@datadog/browser-core'
+import type { Telemetry, DeflateEncoder, SessionManager, SessionContext } from '@datadog/browser-core'
 import { asyncRunOnReadyState, monitorError, Observable } from '@datadog/browser-core'
 import { getSessionReplayLink } from '../domain/getSessionReplayLink'
 import { startRecorderInitTelemetry } from '../domain/startRecorderInitTelemetry'
@@ -106,7 +106,8 @@ export function createPostStartStrategy(
   function start(options?: StartRecordingOptions) {
     const session = sessionManager.findTrackedSession()
     const replayState = session ? computeSessionReplayState(session, configuration) : undefined
-    if (!session || (replayState === SessionReplayState.OFF && (!options || !options.force))) {
+
+    if (canStartRecording(session, replayState, options)) {
       status = RecorderStatus.IntentToStart
       return
     }
@@ -117,7 +118,7 @@ export function createPostStartStrategy(
 
     status = RecorderStatus.Starting
 
-    const forced = (options && options.force && replayState === SessionReplayState.OFF) || false
+    const forced = shouldForceReplay(replayState, options) || false
 
     // Intentionally not awaiting doStart() to keep it asynchronous
     doStart(forced).catch(monitorError)
@@ -145,8 +146,20 @@ export function createPostStartStrategy(
   }
 }
 
+function canStartRecording(
+  session: SessionContext | undefined,
+  replayState: SessionReplayState | undefined,
+  options?: StartRecordingOptions
+) {
+  return !session || (replayState === SessionReplayState.OFF && (!options || !options.force))
+}
+
 function isRecordingInProgress(status: RecorderStatus) {
   return status === RecorderStatus.Starting || status === RecorderStatus.Started
+}
+
+function shouldForceReplay(replayState: SessionReplayState | undefined, options?: StartRecordingOptions) {
+  return options && options.force && replayState === SessionReplayState.OFF
 }
 
 async function notifyWhenSettled<Event, Result>(
