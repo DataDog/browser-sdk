@@ -44,10 +44,6 @@ const VIEW: ViewEvent = {
       domInteractive: 10 as Duration,
       loadEvent: 10 as Duration,
     },
-    firstInput: {
-      delay: 12 as Duration,
-      time: 10 as RelativeTime,
-    },
     firstContentfulPaint: 10 as Duration,
     largestContentfulPaint: { value: 10 as RelativeTime },
   },
@@ -143,9 +139,6 @@ describe('viewCollection', () => {
           count: 10,
         },
         first_contentful_paint: (10 * 1e6) as ServerDuration,
-        first_input_delay: (12 * 1e6) as ServerDuration,
-        first_input_time: (10 * 1e6) as ServerDuration,
-        first_input_target_selector: undefined,
         interaction_to_next_paint: (10 * 1e6) as ServerDuration,
         interaction_to_next_paint_target_selector: undefined,
         interaction_to_next_paint_time: (100 * 1e6) as ServerDuration,
@@ -169,11 +162,6 @@ describe('viewCollection', () => {
           },
           fcp: {
             timestamp: (10 * 1e6) as ServerDuration,
-          },
-          fid: {
-            duration: (12 * 1e6) as ServerDuration,
-            timestamp: (10 * 1e6) as ServerDuration,
-            target_selector: undefined,
           },
           inp: {
             duration: (10 * 1e6) as ServerDuration,
