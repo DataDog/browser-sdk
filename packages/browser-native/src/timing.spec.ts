@@ -1,4 +1,4 @@
-import { now } from './performance'
+import { now } from './timing'
 
 describe('now', () => {
   it('returns performance.now()', () => {

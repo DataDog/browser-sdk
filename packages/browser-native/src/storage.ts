@@ -7,13 +7,3 @@ export function getCookie(): string {
 export function setCookie(value: string): void {
   document.cookie = value
 }
-
-/** Returns document.readyState. */
-export function getReadyState(): DocumentReadyState {
-  return document.readyState
-}
-
-/** Returns document.visibilityState. */
-export function getVisibilityState(): DocumentVisibilityState {
-  return document.visibilityState
-}

@@ -1,4 +1,5 @@
-export { fetch, sendBeacon } from './network'
+export { fetch, sendBeacon } from './transport'
 export { addEventListener, removeEventListener } from './events'
-export { getCookie, setCookie, getReadyState, getVisibilityState } from './document'
-export { now } from './performance'
+export { getCookie, setCookie } from './storage'
+export { getReadyState, getVisibilityState } from './page'
+export { now } from './timing'

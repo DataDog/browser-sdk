@@ -1,5 +1,5 @@
 import type { BrowserWindowWithZoneJs } from './getZoneJsOriginalValue'
-import { fetch, sendBeacon } from './network'
+import { fetch, sendBeacon } from './transport'
 
 describe('fetch', () => {
   it('calls window.fetch with the given arguments and returns the response', async () => {
