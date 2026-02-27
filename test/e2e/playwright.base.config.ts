@@ -31,13 +31,23 @@ export const config: Config = {
   },
 
   webServer: isLocal
-    ? {
-        stdout: 'pipe',
-        cwd: path.join(__dirname, '../..'),
-        command: 'yarn dev',
-        wait: {
-          stdout: /Server listening on port (?<dev_server_port>\d+)/,
+    ? [
+        {
+          stdout: 'pipe',
+          cwd: path.join(__dirname, '../..'),
+          command: 'yarn dev',
+          wait: {
+            stdout: /Server listening on port (?<dev_server_port>\d+)/,
+          },
         },
-      }
+        {
+          stdout: 'pipe',
+          cwd: path.join(__dirname, '../apps/nextjs-app-router'),
+          command: 'yarn dev',
+          wait: {
+            stdout: /- Local:\s+http:\/\/localhost:(?<nextjs_app_router_port>\d+)/,
+          },
+        },
+      ]
     : undefined,
 }

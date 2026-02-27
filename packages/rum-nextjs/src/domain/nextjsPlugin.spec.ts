@@ -1,8 +1,8 @@
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '../../../core/test'
-import { nextjsPlugin, onRumInit, onRumStart, resetNextjsPlugin } from './nextjsPlugin'
+import { nextjsPlugin, onRumInit, onRumStart, onRouterTransitionStart, resetNextjsPlugin } from './nextjsPlugin'
 
-const PUBLIC_API = {} as RumPublicApi
+const PUBLIC_API = { startView: jasmine.createSpy('startView') } as unknown as RumPublicApi
 const INIT_CONFIGURATION = {} as RumInitConfiguration
 
 const routerTypes = ['app', 'pages'] as const
@@ -90,6 +90,37 @@ routerTypes.forEach((routerType) => {
       onRumStart(callbackSpy)
 
       expect(callbackSpy).toHaveBeenCalledWith(mockAddEvent)
+    })
+
+    it('starts the initial view with the current pathname on init', () => {
+      const startViewSpy = jasmine.createSpy('startView')
+      const publicApi = { startView: startViewSpy } as unknown as RumPublicApi
+
+      nextjsPlugin({ router: routerType }).onInit({
+        publicApi,
+        initConfiguration: { ...INIT_CONFIGURATION },
+      })
+
+      expect(startViewSpy).toHaveBeenCalledOnceWith(window.location.pathname)
+    })
+
+    it('starts a new view on router transition', () => {
+      const startViewSpy = jasmine.createSpy('startView')
+      const publicApi = { startView: startViewSpy } as unknown as RumPublicApi
+
+      nextjsPlugin({ router: routerType }).onInit({
+        publicApi,
+        initConfiguration: { ...INIT_CONFIGURATION },
+      })
+      startViewSpy.calls.reset()
+
+      onRouterTransitionStart('/user/42', 'push')
+
+      expect(startViewSpy).toHaveBeenCalledOnceWith('/user/42')
+    })
+
+    it('does nothing on router transition before init', () => {
+      expect(() => onRouterTransitionStart('/user/42', 'push')).not.toThrow()
     })
   })
 })

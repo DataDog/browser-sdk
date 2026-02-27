@@ -14,12 +14,13 @@ import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
 import { getTestServers, waitForServersIdle } from './httpServers'
 import type { CallerLocation, SetupFactory, SetupOptions } from './pageSetups'
-import { html, DEFAULT_SETUPS, npmSetup, reactSetup } from './pageSetups'
+import { html, DEFAULT_SETUPS, npmSetup, reactSetup, formatConfiguration } from './pageSetups'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
 import type { Extension } from './createExtension'
 import type { Worker } from './createWorker'
 import { isBrowserStack } from './environment'
+import { NEXTJS_APP_ROUTER_BASE_URL } from '../helpers/playwright'
 
 export function createTest(title: string) {
   return new TestBuilder(title, captureCallerLocation())
@@ -60,6 +61,7 @@ class TestBuilder {
   } = {}
   private worker: Worker | undefined
   private hostName?: string
+  private nextjsApp?: { initialPath: string }
 
   constructor(
     private title: string,
@@ -108,6 +110,12 @@ class TestBuilder {
 
   withReactApp(appName: string) {
     this.setups = [{ factory: (options, servers) => reactSetup(options, servers, appName) }]
+    return this
+  }
+
+  withNextjsApp(initialPath: string) {
+    this.nextjsApp = { initialPath }
+    this.setups = [{ factory: () => '' }]
     return this
   }
 
@@ -181,6 +189,7 @@ class TestBuilder {
       hostName: this.hostName,
       worker: this.worker,
       callerLocation: this.callerLocation,
+      nextjsApp: this.nextjsApp,
     }
 
     if (this.alsoRunWithRumSlim) {
@@ -304,7 +313,7 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
 
     const setup = factory(setupOptions, servers)
     servers.base.bindServerApp(
-      createMockServerApp(servers, setup, setupOptions.remoteConfiguration, setupOptions.worker)
+      createMockServerApp(servers, setup, setupOptions)
     )
     servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
 
@@ -325,12 +334,23 @@ function createTestContext(
   browserContext: BrowserContext,
   browserLogsManager: BrowserLogsManager,
   browserName: TestContext['browserName'],
-  { basePath, hostName }: SetupOptions
+  { basePath, hostName, nextjsApp, rum, context }: SetupOptions
 ): TestContext {
-  const baseUrl = new URL(basePath, servers.base.origin)
+  let baseUrl: URL
 
-  if (hostName) {
-    baseUrl.hostname = hostName
+  if (nextjsApp) {
+    baseUrl = new URL(nextjsApp.initialPath, NEXTJS_APP_ROUTER_BASE_URL)
+    if (rum) {
+      baseUrl.searchParams.set('rum-config', JSON.stringify({ ...rum, proxy: servers.intake.origin }))
+    }
+    if (context) {
+      baseUrl.searchParams.set('rum-context', JSON.stringify(context))
+    }
+  } else {
+    baseUrl = new URL(basePath, servers.base.origin)
+    if (hostName) {
+      baseUrl.hostname = hostName
+    }
   }
 
   return {
@@ -365,7 +385,7 @@ function createTestContext(
       }, `(${fn.toString()})()`)
     },
     flushBrowserLogs: () => browserLogsManager.clear(),
-    flushEvents: () => flushEvents(page),
+    flushEvents: () => flushEvents(page, nextjsApp ? NEXTJS_APP_ROUTER_BASE_URL : undefined),
     deleteAllCookies: () => deleteAllCookies(browserContext),
     sendXhr: (url: string, headers?: string[][]) => sendXhr(page, url, headers),
     getExtensionId: async () => {

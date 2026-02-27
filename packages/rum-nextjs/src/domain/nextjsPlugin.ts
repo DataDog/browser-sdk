@@ -24,6 +24,8 @@ export function nextjsPlugin(configuration: NextjsPluginConfiguration): NextjsPl
       globalConfiguration = configuration
       initConfiguration.trackViewsManually = true
 
+      publicApi.startView(window.location.pathname)
+
       for (const subscriber of onRumInitSubscribers) {
         subscriber(configuration, publicApi)
       }
@@ -52,6 +54,12 @@ export function onRumStart(callback: StartSubscriber) {
     callback(globalAddEvent)
   } else {
     onRumStartSubscribers.push(callback)
+  }
+}
+
+export function onRouterTransitionStart(url: string, _navigationType?: 'push' | 'replace' | 'traverse') {
+  if (globalPublicApi) {
+    globalPublicApi.startView(url)
   }
 }
 
