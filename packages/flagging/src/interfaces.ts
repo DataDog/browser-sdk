@@ -16,8 +16,6 @@ export type BasePrecomputedFlag = {
   doLog: boolean
 }
 
-type Base64 = string
-
 export interface FlagEvaluationWithoutDetails {
   flagKey: string
   format: string
@@ -32,7 +30,7 @@ export interface FlagEvaluationWithoutDetails {
 }
 
 export interface PrecomputedFlag extends BasePrecomputedFlag {
-  variationValue: Base64
+  variationValue: string | number | boolean
 }
 
 export interface Subject {
