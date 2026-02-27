@@ -20,9 +20,16 @@ import { serializeDOMAttributes, serializeVirtualAttributes } from './serializeA
 export function serializeNodeAsChange(
   cursor: InsertionCursor,
   node: Node,
+  parentNodeName: string | undefined,
   parentPrivacyLevel: NodePrivacyLevel,
   transaction: ChangeSerializationTransaction
 ): void {
+  // Ignore the children of <style> elements; the CSS rules they contain are already
+  // serialized as StyleSheetSnapshots.
+  if (parentNodeName === 'STYLE') {
+    return
+  }
+
   let privacyLevel: NodePrivacyLevel
 
   const selfPrivacyLevel = getNodeSelfPrivacyLevel(node)
@@ -73,15 +80,9 @@ export function serializeNodeAsChange(
       return
   }
 
-  // Ignore the children of <style> elements; the CSS rules they contain are already
-  // serialized as StyleSheetSnapshots.
-  if (node.nodeName === 'STYLE') {
-    return
-  }
-
   cursor.descend()
   forEachChildNodes(node, (childNode) => {
-    serializeNodeAsChange(cursor, childNode, privacyLevel, transaction)
+    serializeNodeAsChange(cursor, childNode, node.nodeName, privacyLevel, transaction)
   })
   cursor.ascend()
 }

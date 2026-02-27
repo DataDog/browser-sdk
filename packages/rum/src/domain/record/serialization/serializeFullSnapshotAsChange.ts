@@ -25,6 +25,7 @@ export function serializeFullSnapshotAsChange(
       serializeNodeAsChange(
         createRootInsertionCursor(scope.nodeIds),
         document,
+        undefined,
         scope.configuration.defaultPrivacyLevel,
         transaction
       )

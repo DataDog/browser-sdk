@@ -124,6 +124,13 @@ function processMutations(
     timestamp
   )
   transaction.add(record)
+
+  transaction.scope.serializeObservable.notify({
+    type: 'incremental',
+    target: mutations,
+    timestamp,
+    v1: record,
+  })
 }
 
 function processChildListMutations(

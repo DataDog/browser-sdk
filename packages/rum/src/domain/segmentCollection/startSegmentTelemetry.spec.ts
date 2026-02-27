@@ -74,7 +74,7 @@ describe('segmentTelemetry', () => {
               },
               encoding: {
                 fullSnapshot: enableChangeRecords ? 'change' : 'v1',
-                incrementalSnapshot: 'v1',
+                incrementalSnapshot: enableChangeRecords ? 'change' : 'v1',
               },
               isFullSnapshot: true,
               ongoingRequests: {
