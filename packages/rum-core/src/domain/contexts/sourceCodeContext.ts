@@ -20,10 +20,6 @@ export interface BrowserWindow {
 type StackFrameUrl = string
 
 export function startSourceCodeContext(hooks: Hooks) {
-  if (!isExperimentalFeatureEnabled(ExperimentalFeature.SOURCE_CODE_CONTEXT)) {
-    return
-  }
-
   const browserWindow = window as BrowserWindow
   const contextByFile = new Map<StackFrameUrl, SourceCodeContext>()
 
