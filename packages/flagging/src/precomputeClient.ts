@@ -1,4 +1,3 @@
-/* eslint-disable local-rules/disallow-side-effects */
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 import type { ISyncStore } from './configuration-store/configurationStore'
@@ -6,9 +5,6 @@ import type { IConfigurationWire, IPrecomputedConfigurationResponse } from './co
 import { precomputedFlagsStorageFactory } from './configurationFactory'
 import type { FlagEvaluationWithoutDetails, PrecomputedFlag, Subject } from './interfaces'
 import { VariationType } from './interfaces'
-
-// Instantiate the precomputed flags and bandits stores with memory-only implementation.
-const memoryOnlyPrecomputedFlagsStore = precomputedFlagsStorageFactory()
 
 /**
  * Configuration parameters for initializing the precomputed client.
@@ -25,19 +21,6 @@ export interface IPrecomputedClientConfigSync {
 }
 
 export class PrecomputeClient {
-  public static instance = new PrecomputeClient({
-    subject: {
-      key: '',
-      attributes: {
-        numericAttributes: {},
-        categoricalAttributes: {},
-      },
-    },
-    precomputedFlagStore: memoryOnlyPrecomputedFlagsStore,
-  })
-
-  public static initialized = false
-
   private subject: Subject
   private precomputedFlagStore: ISyncStore<PrecomputedFlag>
 
@@ -88,8 +71,6 @@ export class PrecomputeClient {
     _expectedType: VariationType,
     valueTransformer: (value: unknown) => T = (v) => v as T
   ): T {
-    // validateNotBlank(flagKey, 'Invalid argument: flagKey cannot be blank')
-
     const precomputedFlag = this.getPrecomputedFlag(flagKey)
 
     if (precomputedFlag === null) {
@@ -138,10 +119,8 @@ export class PrecomputeClient {
  * The purpose is for use-cases where the precomputed assignments are available from an external process
  * that can bootstrap the SDK.
  *
- * This method should be called once on application startup.
- *
  * @param config - precomputed client configuration
- * @returns a singleton precomputed client instance
+ * @returns a new PrecomputeClient instance, or null if initialization fails
  * @public
  */
 export function offlinePrecomputedInit(config: IPrecomputedClientConfigSync): PrecomputeClient | null {
@@ -162,7 +141,6 @@ export function offlinePrecomputedInit(config: IPrecomputedClientConfigSync): Pr
     const { subjectKey, subjectAttributes, response } = configurationWire.precomputed
     const parsedResponse: IPrecomputedConfigurationResponse = JSON.parse(response)
 
-    // populate the caches
     const memoryOnlyPrecomputedStore = precomputedFlagsStorageFactory()
     memoryOnlyPrecomputedStore.setEntries(parsedResponse.flags)
 
@@ -174,12 +152,10 @@ export function offlinePrecomputedInit(config: IPrecomputedClientConfigSync): Pr
       },
     }
 
-    PrecomputeClient.instance = new PrecomputeClient({
+    return new PrecomputeClient({
       subject,
       precomputedFlagStore: memoryOnlyPrecomputedStore,
     })
-    PrecomputeClient.initialized = true
-    return PrecomputeClient.instance
   } catch {
     if (config.throwOnFailedInitialization) {
       throw new Error('unable to parse precomputed configuration wire')

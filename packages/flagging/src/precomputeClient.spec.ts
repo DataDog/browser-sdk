@@ -1,7 +1,6 @@
 import mockPrecomputedConfig from '../test/data/precomputed-v1-deobfuscated.json'
-import { precomputedFlagsStorageFactory } from './configurationFactory'
 import { VariationType } from './interfaces'
-import { offlinePrecomputedInit, PrecomputeClient } from './precomputeClient'
+import { offlinePrecomputedInit } from './precomputeClient'
 
 type TestCase<T = unknown> = {
   name: string
@@ -14,20 +13,6 @@ type TestCase<T = unknown> = {
 type DefaultTestCase<T = unknown> = Omit<TestCase<T>, 'flagKey'>
 
 describe('PrecomputeClient', () => {
-  beforeEach(() => {
-    // Reset the singleton instance before each test
-    PrecomputeClient.instance = new PrecomputeClient({
-      subject: {
-        key: '',
-        attributes: {
-          numericAttributes: {},
-          categoricalAttributes: {},
-        },
-      },
-      precomputedFlagStore: precomputedFlagsStorageFactory(),
-    })
-    PrecomputeClient.initialized = false
-  })
 
   describe('evaluate', () => {
     describe('flag evaluations', () => {
