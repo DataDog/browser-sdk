@@ -1,7 +1,15 @@
 /* eslint-disable no-restricted-syntax */
 // We need to use a class here to properly implement the OpenFeature Provider interface
 // which requires class methods and properties. This is a valid exception to the no-classes rule.
-import type { EvaluationContext, JsonValue, Logger, Paradigm, Provider, ResolutionDetails } from '@openfeature/web-sdk'
+import {
+  StandardResolutionReasons,
+  type EvaluationContext,
+  type JsonValue,
+  type Logger,
+  type Paradigm,
+  type Provider,
+  type ResolutionDetails,
+} from '@openfeature/web-sdk'
 import type { PrecomputeClient } from '../precomputeClient'
 
 export class DatadogProvider implements Provider {
@@ -22,9 +30,12 @@ export class DatadogProvider implements Provider {
     _context: EvaluationContext,
     _logger: Logger
   ): ResolutionDetails<boolean> {
+    if (!this.precomputeClient || !this.precomputeClient.hasFlag(flagKey)) {
+      return { value: defaultValue, reason: StandardResolutionReasons.DEFAULT }
+    }
     return {
-      value: this.precomputeClient?.getBooleanAssignment(flagKey, defaultValue) ?? defaultValue,
-      reason: 'DEFAULT',
+      value: this.precomputeClient.getBooleanAssignment(flagKey, defaultValue),
+      reason: StandardResolutionReasons.STATIC,
     }
   }
 
@@ -34,9 +45,12 @@ export class DatadogProvider implements Provider {
     _context: EvaluationContext,
     _logger: Logger
   ): ResolutionDetails<string> {
+    if (!this.precomputeClient || !this.precomputeClient.hasFlag(flagKey)) {
+      return { value: defaultValue, reason: StandardResolutionReasons.DEFAULT }
+    }
     return {
-      value: this.precomputeClient?.getStringAssignment(flagKey, defaultValue) ?? defaultValue,
-      reason: 'DEFAULT',
+      value: this.precomputeClient.getStringAssignment(flagKey, defaultValue),
+      reason: StandardResolutionReasons.STATIC,
     }
   }
 
@@ -46,9 +60,12 @@ export class DatadogProvider implements Provider {
     _context: EvaluationContext,
     _logger: Logger
   ): ResolutionDetails<number> {
+    if (!this.precomputeClient || !this.precomputeClient.hasFlag(flagKey)) {
+      return { value: defaultValue, reason: StandardResolutionReasons.DEFAULT }
+    }
     return {
-      value: this.precomputeClient?.getNumericAssignment(flagKey, defaultValue) ?? defaultValue,
-      reason: 'DEFAULT',
+      value: this.precomputeClient.getNumericAssignment(flagKey, defaultValue),
+      reason: StandardResolutionReasons.STATIC,
     }
   }
 
@@ -58,14 +75,17 @@ export class DatadogProvider implements Provider {
     _context: EvaluationContext,
     _logger: Logger
   ): ResolutionDetails<T> {
-    const value =
-      typeof defaultValue === 'object' && defaultValue !== null && this.precomputeClient
-        ? (this.precomputeClient.getJSONAssignment(flagKey, defaultValue as object) as T)
-        : defaultValue
-
+    if (
+      !this.precomputeClient ||
+      !this.precomputeClient.hasFlag(flagKey) ||
+      typeof defaultValue !== 'object' ||
+      defaultValue === null
+    ) {
+      return { value: defaultValue, reason: StandardResolutionReasons.DEFAULT }
+    }
     return {
-      value,
-      reason: 'DEFAULT',
+      value: this.precomputeClient.getJSONAssignment(flagKey, defaultValue as object) as T,
+      reason: StandardResolutionReasons.STATIC,
     }
   }
 }

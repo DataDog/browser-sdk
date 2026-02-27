@@ -52,6 +52,10 @@ export class PrecomputeClient {
     this.precomputedFlagStore = precomputedFlagStore
   }
 
+  public hasFlag(flagKey: string): boolean {
+    return this.getPrecomputedFlag(flagKey) !== null
+  }
+
   public getStringAssignment(flagKey: string, defaultValue: string): string {
     return this.getPrecomputedAssignment(flagKey, defaultValue, VariationType.STRING)
   }
