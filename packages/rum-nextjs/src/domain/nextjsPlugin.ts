@@ -1,7 +1,7 @@
 import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
 
 export interface NextjsPluginConfiguration {
-  router: 'app' | 'pages'
+  router: 'app'
 }
 
 export type NextjsPlugin = Pick<Required<RumPlugin>, 'name' | 'onInit' | 'onRumStart'>

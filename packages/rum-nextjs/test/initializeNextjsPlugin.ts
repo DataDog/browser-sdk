@@ -5,7 +5,7 @@ import { nextjsPlugin, resetNextjsPlugin } from '../src/domain/nextjsPlugin'
 import { registerCleanupTask } from '../../core/test'
 
 export function initializeNextjsPlugin({
-  configuration = { router: 'app' as const },
+  configuration = { router: 'app' },
   initConfiguration = {},
   publicApi = {},
   addEvent = noop,
