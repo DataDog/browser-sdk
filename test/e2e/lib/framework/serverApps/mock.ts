@@ -199,18 +199,6 @@ export function createMockServerApp(servers: Servers, setup: string, setupOption
     res.send(JSON.stringify(setupOptions?.remoteConfiguration))
   })
 
-  app.get('/sdk-config', (_req, res) => {
-    const rum = setupOptions?.rum ? { ...setupOptions.rum, proxy: servers.intake.origin } : undefined
-    const logs = setupOptions?.logs ? { ...setupOptions.logs, proxy: servers.intake.origin } : undefined
-    res.send(
-      JSON.stringify({
-        rum,
-        logs,
-        context: setupOptions?.context,
-      })
-    )
-  })
-
   return Object.assign(app, {
     getLargeResponseWroteSize() {
       return largeResponseBytesWritten
