@@ -41,6 +41,12 @@ export function nextjsPlugin(configuration: NextjsPluginConfiguration): NextjsPl
   } satisfies RumPlugin
 }
 
+export function startNextjsView(viewName: string) {
+  if (globalPublicApi) {
+    globalPublicApi.startView(viewName)
+  }
+}
+
 export function onRumInit(callback: InitSubscriber) {
   if (globalConfiguration && globalPublicApi) {
     callback(globalConfiguration, globalPublicApi)
@@ -54,12 +60,6 @@ export function onRumStart(callback: StartSubscriber) {
     callback(globalAddEvent)
   } else {
     onRumStartSubscribers.push(callback)
-  }
-}
-
-export function onRouterTransitionStart(url: string, _navigationType?: 'push' | 'replace' | 'traverse') {
-  if (globalPublicApi) {
-    globalPublicApi.startView(url)
   }
 }
 

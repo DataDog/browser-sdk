@@ -1,9 +1,18 @@
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '../../../core/test'
-import { nextjsPlugin, onRumInit, onRumStart, onRouterTransitionStart, resetNextjsPlugin } from './nextjsPlugin'
+import { nextjsPlugin, startNextjsView, onRumInit, onRumStart, resetNextjsPlugin } from './nextjsPlugin'
 
-const PUBLIC_API = { startView: jasmine.createSpy('startView') } as unknown as RumPublicApi
 const INIT_CONFIGURATION = {} as RumInitConfiguration
+
+function createPublicApi() {
+  return { startView: jasmine.createSpy('startView') } as unknown as RumPublicApi
+}
+
+function initPlugin(routerType: 'app' | 'pages', publicApi: RumPublicApi = createPublicApi()) {
+  const plugin = nextjsPlugin({ router: routerType })
+  plugin.onInit({ publicApi, initConfiguration: { ...INIT_CONFIGURATION } })
+  return { plugin, publicApi }
+}
 
 const routerTypes = ['app', 'pages'] as const
 
@@ -29,98 +38,85 @@ routerTypes.forEach((routerType) => {
 
     it('sets trackViewsManually to true', () => {
       const initConfiguration = { ...INIT_CONFIGURATION }
+      const publicApi = createPublicApi()
 
-      nextjsPlugin({ router: routerType }).onInit({ publicApi: PUBLIC_API, initConfiguration })
+      nextjsPlugin({ router: routerType }).onInit({ publicApi, initConfiguration })
 
       expect(initConfiguration.trackViewsManually).toBe(true)
     })
 
-    it('calls onRumInit subscribers during onInit', () => {
-      const callbackSpy = jasmine.createSpy()
-      const pluginConfiguration = { router: routerType }
-      onRumInit(callbackSpy)
-
-      expect(callbackSpy).not.toHaveBeenCalled()
-
-      nextjsPlugin(pluginConfiguration).onInit({
-        publicApi: PUBLIC_API,
-        initConfiguration: INIT_CONFIGURATION,
-      })
-
-      expect(callbackSpy).toHaveBeenCalledTimes(1)
-      expect(callbackSpy.calls.mostRecent().args[0]).toBe(pluginConfiguration)
-      expect(callbackSpy.calls.mostRecent().args[1]).toBe(PUBLIC_API)
-    })
-
-    it('calls onRumInit subscriber immediately if already initialized', () => {
-      const callbackSpy = jasmine.createSpy()
-      const pluginConfiguration = { router: routerType }
-
-      nextjsPlugin(pluginConfiguration).onInit({
-        publicApi: PUBLIC_API,
-        initConfiguration: INIT_CONFIGURATION,
-      })
-
-      onRumInit(callbackSpy)
-
-      expect(callbackSpy).toHaveBeenCalledTimes(1)
-      expect(callbackSpy.calls.mostRecent().args[0]).toBe(pluginConfiguration)
-      expect(callbackSpy.calls.mostRecent().args[1]).toBe(PUBLIC_API)
-    })
-
-    it('calls onRumStart subscribers during onRumStart', () => {
-      const callbackSpy = jasmine.createSpy()
-      const mockAddEvent = jasmine.createSpy()
-      onRumStart(callbackSpy)
-
-      const plugin = nextjsPlugin({ router: routerType })
-      plugin.onInit({ publicApi: PUBLIC_API, initConfiguration: INIT_CONFIGURATION })
-      plugin.onRumStart({ addEvent: mockAddEvent })
-
-      expect(callbackSpy).toHaveBeenCalledWith(mockAddEvent)
-    })
-
-    it('calls onRumStart subscriber immediately if already started', () => {
-      const mockAddEvent = jasmine.createSpy()
-      const plugin = nextjsPlugin({ router: routerType })
-      plugin.onInit({ publicApi: PUBLIC_API, initConfiguration: INIT_CONFIGURATION })
-      plugin.onRumStart({ addEvent: mockAddEvent })
-
-      const callbackSpy = jasmine.createSpy()
-      onRumStart(callbackSpy)
-
-      expect(callbackSpy).toHaveBeenCalledWith(mockAddEvent)
-    })
-
     it('starts the initial view with the current pathname on init', () => {
-      const startViewSpy = jasmine.createSpy('startView')
-      const publicApi = { startView: startViewSpy } as unknown as RumPublicApi
+      const { publicApi } = initPlugin(routerType)
 
-      nextjsPlugin({ router: routerType }).onInit({
-        publicApi,
-        initConfiguration: { ...INIT_CONFIGURATION },
-      })
-
-      expect(startViewSpy).toHaveBeenCalledOnceWith(window.location.pathname)
+      expect(publicApi.startView as jasmine.Spy).toHaveBeenCalledOnceWith(window.location.pathname)
     })
 
-    it('starts a new view on router transition', () => {
-      const startViewSpy = jasmine.createSpy('startView')
-      const publicApi = { startView: startViewSpy } as unknown as RumPublicApi
+    it('delegates startNextjsView to publicApi.startView', () => {
+      const { publicApi } = initPlugin(routerType)
+      ;(publicApi.startView as jasmine.Spy).calls.reset()
 
-      nextjsPlugin({ router: routerType }).onInit({
-        publicApi,
-        initConfiguration: { ...INIT_CONFIGURATION },
-      })
-      startViewSpy.calls.reset()
+      startNextjsView('/about')
 
-      onRouterTransitionStart('/user/42', 'push')
-
-      expect(startViewSpy).toHaveBeenCalledOnceWith('/user/42')
+      expect(publicApi.startView as jasmine.Spy).toHaveBeenCalledOnceWith('/about')
     })
 
-    it('does nothing on router transition before init', () => {
-      expect(() => onRouterTransitionStart('/user/42', 'push')).not.toThrow()
+    describe('lifecycle subscribers', () => {
+      it('calls onRumInit subscribers during onInit', () => {
+        const callbackSpy = jasmine.createSpy()
+        const pluginConfiguration = { router: routerType }
+        const publicApi = createPublicApi()
+        onRumInit(callbackSpy)
+
+        expect(callbackSpy).not.toHaveBeenCalled()
+
+        nextjsPlugin(pluginConfiguration).onInit({
+          publicApi,
+          initConfiguration: INIT_CONFIGURATION,
+        })
+
+        expect(callbackSpy).toHaveBeenCalledTimes(1)
+        expect(callbackSpy.calls.mostRecent().args[0]).toBe(pluginConfiguration)
+        expect(callbackSpy.calls.mostRecent().args[1]).toBe(publicApi)
+      })
+
+      it('calls onRumInit subscriber immediately if already initialized', () => {
+        const callbackSpy = jasmine.createSpy()
+        const pluginConfiguration = { router: routerType }
+        const publicApi = createPublicApi()
+
+        nextjsPlugin(pluginConfiguration).onInit({
+          publicApi,
+          initConfiguration: INIT_CONFIGURATION,
+        })
+
+        onRumInit(callbackSpy)
+
+        expect(callbackSpy).toHaveBeenCalledTimes(1)
+        expect(callbackSpy.calls.mostRecent().args[0]).toBe(pluginConfiguration)
+        expect(callbackSpy.calls.mostRecent().args[1]).toBe(publicApi)
+      })
+
+      it('calls onRumStart subscribers during onRumStart', () => {
+        const callbackSpy = jasmine.createSpy()
+        const mockAddEvent = jasmine.createSpy()
+        onRumStart(callbackSpy)
+
+        const { plugin } = initPlugin(routerType)
+        plugin.onRumStart({ addEvent: mockAddEvent })
+
+        expect(callbackSpy).toHaveBeenCalledWith(mockAddEvent)
+      })
+
+      it('calls onRumStart subscriber immediately if already started', () => {
+        const mockAddEvent = jasmine.createSpy()
+        const { plugin } = initPlugin(routerType)
+        plugin.onRumStart({ addEvent: mockAddEvent })
+
+        const callbackSpy = jasmine.createSpy()
+        onRumStart(callbackSpy)
+
+        expect(callbackSpy).toHaveBeenCalledWith(mockAddEvent)
+      })
     })
   })
 })

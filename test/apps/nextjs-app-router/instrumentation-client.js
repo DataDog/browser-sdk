@@ -19,3 +19,10 @@ if (config && !datadogRum.getInitConfiguration()) {
     datadogRum.setGlobalContext(JSON.parse(context))
   }
 }
+
+// datadogRum.init({ 
+//   applicationId: 'a81f40b8-e9bd-4805-9b66-4e4edc529a14',
+//     clientToken: 'pubfe2e138a54296da76dd66f6b0b5f3d98',
+//     site: 'datad0g.com',
+//     service: 'beltrans-app-router-test',
+//   plugins: [nextjsPlugin({ router: 'app' })] })

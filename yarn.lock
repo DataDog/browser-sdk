@@ -277,13 +277,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@datadog/browser-core@npm:6.27.1":
-  version: 6.27.1
-  resolution: "@datadog/browser-core@npm:6.27.1"
-  checksum: 10c0/7a40493af6c0db0d78d60478905cca4caeb4db3bc79e3771505410e4b8a9499f70eb12aae331b94bc5eb4c2eb6e04c0a03186a1617fa1ec497e82e01fed8ea2d
-  languageName: node
-  linkType: hard
-
 "@datadog/browser-core@npm:6.28.1, @datadog/browser-core@workspace:*, @datadog/browser-core@workspace:packages/core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-core@workspace:packages/core"
@@ -320,15 +313,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-rum-core@npm:6.27.1":
-  version: 6.27.1
-  resolution: "@datadog/browser-rum-core@npm:6.27.1"
-  dependencies:
-    "@datadog/browser-core": "npm:6.27.1"
-  checksum: 10c0/6a26c5e82bd2890b8e419639486a397dc1a1c880ce5f7735ed9293a700e203ee459ae39e8ec7df5d741d32849b414f035ca5b770b027da55fce046113a77404f
-  languageName: node
-  linkType: hard
-
 "@datadog/browser-rum-core@npm:6.28.1, @datadog/browser-rum-core@workspace:*, @datadog/browser-rum-core@workspace:packages/rum-core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-core@workspace:packages/rum-core"
@@ -342,8 +326,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-nextjs@workspace:packages/rum-nextjs"
   dependencies:
-    "@datadog/browser-core": "npm:6.27.1"
-    "@datadog/browser-rum-core": "npm:6.27.1"
+    "@datadog/browser-core": "npm:6.28.1"
+    "@datadog/browser-rum-core": "npm:6.28.1"
     "@types/react": "npm:19.2.11"
     next: "npm:15.3.3"
     react: "npm:19.2.4"
