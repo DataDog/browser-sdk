@@ -8,8 +8,6 @@ interface BrowserWindow extends Window {
   DD_FLAGGING?: DatadogProvider
 }
 
-defineGlobal(
-  getGlobalObject<BrowserWindow>(),
-  'DD_FLAGGING',
-  new DatadogProvider(offlineClientInit({ precomputedConfiguration: '' }) ?? undefined)
-)
+// CDN placeholder: provider without a precompute client returns defaults for
+// all evaluations. Users must call offlineClientInit() to bootstrap real flags.
+defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_FLAGGING', new DatadogProvider())
