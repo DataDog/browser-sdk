@@ -3,7 +3,7 @@ import { usePathname, useParams } from 'next/navigation'
 import { replaceMockable } from '../../../core/test'
 import { appendComponent } from '../../../rum-react/test/appendComponent'
 import { initializeNextjsPlugin } from '../../test/initializeNextjsPlugin'
-import { DatadogRumProvider } from './DatadogRumProvider'
+import { DatadogRumProvider } from './datadogRumProvider'
 
 describe('DatadogRumProvider', () => {
   let startViewSpy: jasmine.Spy

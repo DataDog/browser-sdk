@@ -5,6 +5,7 @@ coverage
 rum-events-format
 .yarn
 test/**/dist
+test/**/.next
 yarn.lock
 /docs
 /developer-extension/.output

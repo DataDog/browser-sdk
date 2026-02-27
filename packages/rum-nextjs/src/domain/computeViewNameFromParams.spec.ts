@@ -1,4 +1,4 @@
-import { computeViewNameFromParams } from "./computeViewNameFromParams"
+import { computeViewNameFromParams } from './computeViewNameFromParams'
 
 describe('computeViewNameFromParams', () => {
   // prettier-ignore

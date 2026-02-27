@@ -5,13 +5,15 @@ import { nextjsPlugin, startNextjsView, onRumInit, onRumStart, resetNextjsPlugin
 const INIT_CONFIGURATION = {} as RumInitConfiguration
 
 function createPublicApi() {
-  return { startView: jasmine.createSpy('startView') } as unknown as RumPublicApi
+  const startViewSpy = jasmine.createSpy('startView')
+  return { publicApi: { startView: startViewSpy } as unknown as RumPublicApi, startViewSpy }
 }
 
-function initPlugin(routerType: 'app' | 'pages', publicApi: RumPublicApi = createPublicApi()) {
+function initPlugin(routerType: 'app' | 'pages') {
+  const { publicApi, startViewSpy } = createPublicApi()
   const plugin = nextjsPlugin({ router: routerType })
   plugin.onInit({ publicApi, initConfiguration: { ...INIT_CONFIGURATION } })
-  return { plugin, publicApi }
+  return { plugin, publicApi, startViewSpy }
 }
 
 const routerTypes = ['app', 'pages'] as const
@@ -38,7 +40,7 @@ routerTypes.forEach((routerType) => {
 
     it('sets trackViewsManually to true', () => {
       const initConfiguration = { ...INIT_CONFIGURATION }
-      const publicApi = createPublicApi()
+      const { publicApi } = createPublicApi()
 
       nextjsPlugin({ router: routerType }).onInit({ publicApi, initConfiguration })
 
@@ -46,25 +48,25 @@ routerTypes.forEach((routerType) => {
     })
 
     it('starts the initial view with the current pathname on init', () => {
-      const { publicApi } = initPlugin(routerType)
+      const { startViewSpy } = initPlugin(routerType)
 
-      expect(publicApi.startView as jasmine.Spy).toHaveBeenCalledOnceWith(window.location.pathname)
+      expect(startViewSpy).toHaveBeenCalledOnceWith(window.location.pathname)
     })
 
     it('delegates startNextjsView to publicApi.startView', () => {
-      const { publicApi } = initPlugin(routerType)
-      ;(publicApi.startView as jasmine.Spy).calls.reset()
+      const { startViewSpy } = initPlugin(routerType)
+      startViewSpy.calls.reset()
 
       startNextjsView('/about')
 
-      expect(publicApi.startView as jasmine.Spy).toHaveBeenCalledOnceWith('/about')
+      expect(startViewSpy).toHaveBeenCalledOnceWith('/about')
     })
 
     describe('lifecycle subscribers', () => {
       it('calls onRumInit subscribers during onInit', () => {
         const callbackSpy = jasmine.createSpy()
         const pluginConfiguration = { router: routerType }
-        const publicApi = createPublicApi()
+        const { publicApi } = createPublicApi()
         onRumInit(callbackSpy)
 
         expect(callbackSpy).not.toHaveBeenCalled()
@@ -82,7 +84,7 @@ routerTypes.forEach((routerType) => {
       it('calls onRumInit subscriber immediately if already initialized', () => {
         const callbackSpy = jasmine.createSpy()
         const pluginConfiguration = { router: routerType }
-        const publicApi = createPublicApi()
+        const { publicApi } = createPublicApi()
 
         nextjsPlugin(pluginConfiguration).onInit({
           publicApi,

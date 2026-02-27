@@ -1,3 +1,3 @@
 export { nextjsPlugin } from '../domain/nextjsPlugin'
 export type { NextjsPluginConfiguration, NextjsPlugin } from '../domain/nextjsPlugin'
-export { DatadogRumProvider } from '../domain/DatadogRumProvider'
+export { DatadogRumProvider } from '../domain/datadogRumProvider'

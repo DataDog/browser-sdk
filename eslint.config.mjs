@@ -25,6 +25,7 @@ export default tseslint.config(
       'packages/*/cjs',
       'packages/*/esm',
       'test/**/dist',
+      'test/**/.next',
       'test/apps/react-heavy-spa',
       'test/apps/react-shopist-like',
       'sandbox',
@@ -458,6 +459,17 @@ export default tseslint.config(
     rules: {
       // Webpack configuration files and eslint rules files are expected to use a default export.
       'import/no-default-export': 'off',
+    },
+  },
+
+  {
+    files: ['test/apps/nextjs-app-router/**'],
+    languageOptions: {
+      globals: globals.browser,
+    },
+    rules: {
+      'import/no-default-export': 'off',
+      'unicorn/filename-case': 'off',
     },
   },
 
