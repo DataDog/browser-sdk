@@ -159,5 +159,28 @@ describe('PrecomputeClient', () => {
         })
       })
     })
+
+    describe('type mismatch behavior', () => {
+      it('should return default when calling getBooleanAssignment on a STRING flag', () => {
+        const client = offlinePrecomputedInit({ precomputedConfiguration: JSON.stringify(mockPrecomputedConfig) })
+        expect(client!.getBooleanAssignment('string-flag', false)).toBe(false)
+      })
+
+      it('should return default when calling getStringAssignment on a BOOLEAN flag', () => {
+        const client = offlinePrecomputedInit({ precomputedConfiguration: JSON.stringify(mockPrecomputedConfig) })
+        expect(client!.getStringAssignment('boolean-flag', 'fallback')).toBe('fallback')
+      })
+
+      it('should return default when calling getIntegerAssignment on a STRING flag', () => {
+        const client = offlinePrecomputedInit({ precomputedConfiguration: JSON.stringify(mockPrecomputedConfig) })
+        expect(client!.getIntegerAssignment('string-flag', 99)).toBe(99)
+      })
+
+      it('should return default when calling getJSONAssignment on a STRING flag', () => {
+        const client = offlinePrecomputedInit({ precomputedConfiguration: JSON.stringify(mockPrecomputedConfig) })
+        const fallback = { fallback: true }
+        expect(client!.getJSONAssignment('string-flag', fallback)).toEqual(fallback)
+      })
+    })
   })
 })

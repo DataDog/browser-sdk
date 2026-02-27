@@ -85,14 +85,16 @@ export class PrecomputeClient {
   private getPrecomputedAssignment<T>(
     flagKey: string,
     defaultValue: T,
-    _expectedType: VariationType,
+    expectedType: VariationType,
     valueTransformer: (value: unknown) => T = (v) => v as T
   ): T {
-    // validateNotBlank(flagKey, 'Invalid argument: flagKey cannot be blank')
-
     const precomputedFlag = this.getPrecomputedFlag(flagKey)
 
     if (precomputedFlag === null) {
+      return defaultValue
+    }
+
+    if (precomputedFlag.variationType !== expectedType) {
       return defaultValue
     }
 
