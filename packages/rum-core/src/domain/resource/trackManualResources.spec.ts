@@ -80,6 +80,24 @@ describe('trackManualResources', () => {
         })
       }
     )
+
+    it('should override start type with stop type', () => {
+      startResource('https://api.example.com/data', { type: ResourceType.XHR })
+      stopResource('https://api.example.com/data', { type: ResourceType.FETCH })
+
+      expect(rawRumEvents).toHaveSize(1)
+      const resourceEvent = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+      expect(resourceEvent.resource.type).toBe(ResourceType.FETCH)
+    })
+
+    it('should preserve start type when stop does not provide a type', () => {
+      startResource('https://api.example.com/data', { type: ResourceType.IMAGE })
+      stopResource('https://api.example.com/data')
+
+      expect(rawRumEvents).toHaveSize(1)
+      const resourceEvent = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+      expect(resourceEvent.resource.type).toBe(ResourceType.IMAGE)
+    })
   })
 
   describe('method and status_code', () => {

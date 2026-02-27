@@ -200,6 +200,11 @@ export interface ViewPerformanceData {
     duration: ServerDuration
     timestamp?: ServerDuration
     target_selector?: string
+    sub_parts?: {
+      input_delay: ServerDuration
+      processing_duration: ServerDuration
+      presentation_delay: ServerDuration
+    }
   }
   lcp?: {
     timestamp: ServerDuration

@@ -746,6 +746,7 @@ export function makeRumPublicApi(
       }
       // addTelemetryUsage({ feature: 'stop-resource' })
       strategy.stopResource(sanitize(url)!, {
+        type: sanitize(options && options.type) as ResourceType | undefined,
         statusCode: options && options.statusCode,
         context: sanitize(options && options.context) as Context,
         resourceKey: options && options.resourceKey,

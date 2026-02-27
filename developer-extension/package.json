@@ -17,6 +17,7 @@
     "@datadog/browser-core": "workspace:*",
     "@datadog/browser-logs": "workspace:*",
     "@datadog/browser-rum": "workspace:*",
+    "@datadog/browser-rum-core": "workspace:*",
     "@mantine/core": "8.3.15",
     "@mantine/hooks": "8.3.15",
     "@tabler/icons-react": "3.36.1",

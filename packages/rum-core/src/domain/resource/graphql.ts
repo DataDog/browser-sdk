@@ -1,4 +1,4 @@
-import { buildUrl, isNonEmptyArray, matchList, ONE_KIBI_BYTE, safeTruncate } from '@datadog/browser-core'
+import { buildUrl, isNonEmptyArray, matchList, ONE_KIBI_BYTE, safeTruncate, tryJsonParse } from '@datadog/browser-core'
 import type { RumConfiguration, GraphQlUrlOption } from '../configuration'
 import type { RequestCompleteEvent } from '../requestCollection'
 
@@ -50,7 +50,7 @@ export function extractGraphQlMetadata(
 }
 
 export function parseGraphQlResponse(responseText: string): GraphQlError[] | undefined {
-  const response = tryJsonParse<unknown>(responseText)
+  const response = tryJsonParse(responseText)
 
   if (!response || typeof response !== 'object') {
     return
@@ -160,12 +160,4 @@ function sanitizeGraphQlMetadata(rawMetadata: RawGraphQlMetadata, trackPayload: 
 
 function getOperationType(query: string) {
   return query.match(/^\s*(query|mutation|subscription)\b/i)?.[1] as 'query' | 'mutation' | 'subscription' | undefined
-}
-
-function tryJsonParse<T = unknown>(text: string): T | undefined {
-  try {
-    return JSON.parse(text) as T
-  } catch {
-    return undefined
-  }
 }
