@@ -2,15 +2,21 @@ import type { ServerResponse } from 'http'
 import * as url from 'url'
 import cors from 'cors'
 import express from 'express'
+import type { RemoteConfiguration } from '@datadog/browser-rum-core'
 import { getSdkBundlePath, getTestAppBundlePath } from '../sdkBuilds'
 import type { MockServerApp, Servers } from '../httpServers'
 import { DEV_SERVER_BASE_URL } from '../../helpers/playwright'
-import type { SetupOptions } from '../pageSetups'
+import type { WorkerOptions } from '../pageSetups'
 import { workerSetup } from '../pageSetups'
 
 export const LARGE_RESPONSE_MIN_BYTE_SIZE = 100_000
 
-export function createMockServerApp(servers: Servers, setup: string, setupOptions?: SetupOptions): MockServerApp {
+export function createMockServerApp(
+  servers: Servers,
+  setup: string,
+  remoteConfiguration?: RemoteConfiguration,
+  worker?: WorkerOptions
+): MockServerApp {
   const app = express()
   let largeResponseBytesWritten = 0
 
@@ -48,8 +54,8 @@ export function createMockServerApp(servers: Servers, setup: string, setupOption
       workerSetup(
         {
           importScripts: Boolean(query.importScripts),
-          rumConfiguration: setupOptions?.worker?.rumConfiguration,
-          logsConfiguration: setupOptions?.worker?.logsConfiguration,
+          rumConfiguration: worker?.rumConfiguration,
+          logsConfiguration: worker?.logsConfiguration,
         },
         servers
       )
@@ -196,7 +202,7 @@ export function createMockServerApp(servers: Servers, setup: string, setupOption
   })
 
   app.get('/config', (_req, res) => {
-    res.send(JSON.stringify(setupOptions?.remoteConfiguration))
+    res.send(JSON.stringify(remoteConfiguration))
   })
 
   return Object.assign(app, {

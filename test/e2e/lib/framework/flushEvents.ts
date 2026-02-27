@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { getTestServers } from './httpServers'
+import { getTestServers, waitForServersIdle } from './httpServers'
 import { waitForRequests } from './waitForRequests'
 
 export async function flushEvents(page: Page) {
@@ -22,4 +22,5 @@ export async function flushEvents(page: Page) {
   // very low (same machine), so the request resolves very quickly. In real life conditions, this
   // issue is mitigated, because requests will likely take a few milliseconds to reach the server.
   await page.goto(`${servers.base.origin}/ok?duration=200`)
+  await waitForServersIdle()
 }
