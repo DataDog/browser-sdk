@@ -684,7 +684,6 @@ describe('startSessionManager', () => {
       expect(getSessionState(SESSION_STORE_KEY).id).toBeDefined()
       // Tracking type is no longer stored in cookies - computed on demand
     })
-
   })
 
   function startSessionManagerWithDefaults({

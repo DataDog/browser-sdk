@@ -34,16 +34,11 @@ export function initLocalStorageStrategy(configuration: Configuration): SessionS
       return Promise.resolve()
     },
     onExternalChange: (callback) => {
-      const { stop } = addEventListener(
-        configuration,
-        window,
-        DOM_EVENT.STORAGE,
-        (event: StorageEvent) => {
-          if (event.key === SESSION_STORE_KEY) {
-            callback()
-          }
+      const { stop } = addEventListener(configuration, window, DOM_EVENT.STORAGE, (event: StorageEvent) => {
+        if (event.key === SESSION_STORE_KEY) {
+          callback()
         }
-      )
+      })
       return stop
     },
   }

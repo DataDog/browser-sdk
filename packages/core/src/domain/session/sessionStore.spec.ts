@@ -408,7 +408,6 @@ describe('session store', () => {
 
         expect(callbackSpy).toHaveBeenCalledTimes(1)
       })
-
     })
 
     describe('expand session', () => {
