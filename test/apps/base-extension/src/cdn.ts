@@ -23,6 +23,7 @@ function load<T extends 'DD_RUM' | 'DD_LOGS'>(
 ) {
   const script = document.createElement('script')
   script.src = url
+  script.crossOrigin = ''
   script.onload = () => {
     if (!window[sdk]) {
       console.error(`${sdk} is not loaded`)
