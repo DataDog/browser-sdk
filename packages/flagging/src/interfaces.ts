@@ -18,19 +18,6 @@ export type BasePrecomputedFlag = {
 
 type Base64 = string
 
-export interface FlagEvaluationWithoutDetails {
-  flagKey: string
-  format: string
-  subjectKey: string
-  subjectAttributes: Attributes
-  allocationKey: string | null
-  variation: Variation | null
-  extraLogging: Record<string, string>
-  // whether to log assignment event
-  doLog: boolean
-  entityId: number | null
-}
-
 export interface PrecomputedFlag extends BasePrecomputedFlag {
   variationValue: Base64
 }
@@ -38,11 +25,6 @@ export interface PrecomputedFlag extends BasePrecomputedFlag {
 export interface Subject {
   key: string
   attributes: ContextAttributes
-}
-
-export interface Variation {
-  key: string
-  value: string | number | boolean
 }
 
 export const enum VariationType {

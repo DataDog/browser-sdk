@@ -4,7 +4,7 @@
 import type { ISyncStore } from './configuration-store/configurationStore'
 import type { IConfigurationWire, IPrecomputedConfigurationResponse } from './configuration-wire/configurationWireTypes'
 import { precomputedFlagsStorageFactory } from './configurationFactory'
-import type { FlagEvaluationWithoutDetails, PrecomputedFlag, Subject } from './interfaces'
+import type { PrecomputedFlag, Subject } from './interfaces'
 import { VariationType } from './interfaces'
 
 // Instantiate the precomputed flags and bandits stores with memory-only implementation.
@@ -88,40 +88,16 @@ export class PrecomputeClient {
     _expectedType: VariationType,
     valueTransformer: (value: unknown) => T = (v) => v as T
   ): T {
-    // validateNotBlank(flagKey, 'Invalid argument: flagKey cannot be blank')
-
     const precomputedFlag = this.getPrecomputedFlag(flagKey)
 
     if (precomputedFlag === null) {
       return defaultValue
     }
 
-    const result: FlagEvaluationWithoutDetails = {
-      flagKey,
-      format: 'PRECOMPUTED',
-      subjectKey: this.subject.key ?? '',
-      subjectAttributes: {
-        ...this.subject.attributes?.numericAttributes,
-        ...this.subject.attributes?.categoricalAttributes,
-      },
-      variation: {
-        key: precomputedFlag.variationKey ?? '',
-        value: precomputedFlag.variationValue,
-      },
-      allocationKey: precomputedFlag.allocationKey ?? '',
-      extraLogging: precomputedFlag.extraLogging ?? {},
-      doLog: precomputedFlag.doLog,
-      entityId: null,
-    }
-
     try {
-      const transformedValue =
-        result.variation?.value !== undefined ? valueTransformer(result.variation.value) : defaultValue
-      // TODO: add logging or open feature hook
-      // if (result?.doLog) {
-      //   this.logAssignment(result)
-      // }
-      return transformedValue
+      return precomputedFlag.variationValue !== undefined
+        ? valueTransformer(precomputedFlag.variationValue)
+        : defaultValue
     } catch {
       return defaultValue
     }
