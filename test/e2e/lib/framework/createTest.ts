@@ -383,7 +383,7 @@ function createTestContext(
       }, `(${fn.toString()})()`)
     },
     flushBrowserLogs: () => browserLogsManager.clear(),
-    flushEvents: () => flushEvents(page, nextjsApp ? NEXTJS_APP_ROUTER_BASE_URL : undefined),
+    flushEvents: () => flushEvents(page),
     deleteAllCookies: () => deleteAllCookies(browserContext),
     sendXhr: (url: string, headers?: string[][]) => sendXhr(page, url, headers),
     getExtensionId: async () => {
