@@ -471,7 +471,6 @@ export default tseslint.config(
     },
     rules: {
       'import/no-default-export': 'off',
-      'import/no-unresolved': 'off',
       'unicorn/filename-case': 'off',
     },
   },

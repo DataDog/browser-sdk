@@ -2,7 +2,7 @@
 
 This package provides NextJS App Router integration for Datadog Browser RUM.
 
-To use please read [instrumentation-client docs][1]
+To use it, read the [instrumentation-client docs][1]
 
 [1]: https://nextjs.org/docs/app/api-reference/file-conventions/instrumentation-client
 

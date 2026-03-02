@@ -322,9 +322,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-rum-nextjs@workspace:packages/rum-nextjs":
+"@datadog/browser-rum-next-plugin@workspace:packages/rum-nextjs":
   version: 0.0.0-use.local
-  resolution: "@datadog/browser-rum-nextjs@workspace:packages/rum-nextjs"
+  resolution: "@datadog/browser-rum-next-plugin@workspace:packages/rum-nextjs"
   dependencies:
     "@datadog/browser-core": "npm:6.28.1"
     "@datadog/browser-rum-core": "npm:6.28.1"

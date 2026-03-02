@@ -1,8 +1,11 @@
+import type { useParams } from 'next/navigation'
 import { computeViewNameFromParams } from './computeViewNameFromParams'
+
+type Params = ReturnType<typeof useParams>
 
 describe('computeViewNameFromParams', () => {
   // prettier-ignore
-  const cases: Array<[string, string, Record<string, string | string[] | undefined>, string]> = [
+  const cases: Array<[string, string, Params, string]> = [
     // [description,                              pathname,                params,                                    expected]
     // Static routes
     ['static path',                                '/about',                {},                                        '/about'],

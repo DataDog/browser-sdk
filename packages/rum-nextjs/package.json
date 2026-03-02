@@ -1,5 +1,5 @@
 {
-  "name": "@datadog/browser-rum-nextjs",
+  "name": "@datadog/browser-rum-next-plugin",
   "version": "6.28.1",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",

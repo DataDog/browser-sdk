@@ -1,8 +1,9 @@
-export function computeViewNameFromParams(
-  pathname: string,
-  params: Record<string, string | string[] | undefined>
-): string {
-  if (!params || Object.keys(params).length === 0) {
+import type { useParams } from 'next/navigation'
+
+type Params = ReturnType<typeof useParams>
+
+export function computeViewNameFromParams(pathname: string, params: Params): string {
+  if (Object.keys(params).length === 0) {
     return pathname
   }
 
