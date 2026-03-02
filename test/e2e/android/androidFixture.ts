@@ -13,7 +13,7 @@ async function getOrCreateContext(): Promise<{ device: AndroidDevice; context: B
   if (cachedDevice && cachedContext) {
     try {
       // Verify the context is still alive by attempting a simple operation
-      await cachedContext.pages()
+      cachedContext.pages()
       return { device: cachedDevice, context: cachedContext }
     } catch {
       // Context is stale, recreate
