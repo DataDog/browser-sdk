@@ -6,30 +6,30 @@ export function computeViewNameFromParams(
     return pathname
   }
 
-  let viewName = pathname
+  const segments = pathname.split('/')
 
-  // Sort params by value length descending to replace longer values first.
-  // Prevents partial replacements (e.g., replacing '1' before '123').
-  const sortedParams = Object.entries(params).sort((a, b) => {
-    const aLen = Array.isArray(a[1]) ? a[1].join('/').length : (a[1]?.length ?? 0)
-    const bLen = Array.isArray(b[1]) ? b[1].join('/').length : (b[1]?.length ?? 0)
-    return bLen - aLen
-  })
-
-  for (const [paramName, paramValue] of sortedParams) {
+  for (const [paramName, paramValue] of Object.entries(params)) {
     if (paramValue === undefined) {
       continue
     }
 
     if (Array.isArray(paramValue)) {
-      const joinedValue = paramValue.join('/')
-      if (joinedValue && viewName.includes(joinedValue)) {
-        viewName = viewName.replace(joinedValue, `[...${paramName}]`)
+      if (paramValue.length === 0) {
+        continue
+      }
+      for (let i = 0; i < segments.length; i++) {
+        if (i + paramValue.length <= segments.length && paramValue.every((v, j) => segments[i + j] === v)) {
+          segments.splice(i, paramValue.length, `[...${paramName}]`)
+          break
+        }
       }
     } else if (paramValue) {
-      viewName = viewName.replace(paramValue, `[${paramName}]`)
+      const index = segments.indexOf(paramValue)
+      if (index !== -1) {
+        segments[index] = `[${paramName}]`
+      }
     }
   }
 
-  return viewName
+  return segments.join('/')
 }

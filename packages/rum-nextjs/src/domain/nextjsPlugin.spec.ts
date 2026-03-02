@@ -44,15 +44,14 @@ describe('nextjsPlugin', () => {
     expect(initConfiguration.trackViewsManually).toBe(true)
   })
 
-  it('starts the initial view with the current pathname on init', () => {
+  it('does not start a view on init', () => {
     const { startViewSpy } = initPlugin()
 
-    expect(startViewSpy).toHaveBeenCalledOnceWith(window.location.pathname)
+    expect(startViewSpy).not.toHaveBeenCalled()
   })
 
   it('delegates startNextjsView to publicApi.startView', () => {
     const { startViewSpy } = initPlugin()
-    startViewSpy.calls.reset()
 
     startNextjsView('/about')
 

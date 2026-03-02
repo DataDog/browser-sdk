@@ -24,8 +24,6 @@ export function nextjsPlugin(configuration: NextjsPluginConfiguration): NextjsPl
       globalConfiguration = configuration
       initConfiguration.trackViewsManually = true
 
-      publicApi.startView(window.location.pathname)
-
       for (const subscriber of onRumInitSubscribers) {
         subscriber(configuration, publicApi)
       }

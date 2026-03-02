@@ -16,6 +16,9 @@ describe('computeViewNameFromParams', () => {
     ['catch-all with single segment',              '/docs/intro',           { slug: ['intro'] },                       '/docs/[...slug]'],
     // Ordering
     ['longer values replaced first',               '/items/123/1',          { id: '123', subId: '1' },                '/items/[id]/[subId]'],
+    // Param value is a substring of another segment
+    ['does not match inside a static segment',     '/product/pro',          { id: 'pro' },                             '/product/[id]'],
+    ['catch-all does not match partial segments',  '/docs-extra/a/b',       { slug: ['a', 'b'] },                      '/docs-extra/[...slug]'],
     // Edge cases
     ['undefined param values ignored',             '/users/123',            { id: '123', optional: undefined },        '/users/[id]'],
     ['empty string param values ignored',          '/users/123',            { id: '123', empty: '' },                  '/users/[id]'],
