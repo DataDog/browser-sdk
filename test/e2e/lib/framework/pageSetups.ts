@@ -28,9 +28,7 @@ export interface SetupOptions {
   hostName?: string
   worker?: WorkerOptions
   callerLocation?: CallerLocation
-  nextjsApp?: {
-    initialPath: string
-  }
+  nextjsApp?: boolean
 }
 
 export interface CallerLocation {

@@ -4,7 +4,7 @@ import { createTest } from '../lib/framework'
 test.describe('nextjs app router', () => {
   createTest('should track initial home view')
     .withRum()
-    .withNextjsApp('/')
+    .withNextjsApp()
     .run(async ({ flushEvents, intakeRegistry, page }) => {
       await page.click('text=Go to User 42')
       await page.waitForURL('**/user/42')
@@ -18,7 +18,7 @@ test.describe('nextjs app router', () => {
 
   createTest('should normalize dynamic route to /user/[id]')
     .withRum()
-    .withNextjsApp('/')
+    .withNextjsApp()
     .run(async ({ page, flushEvents, intakeRegistry }) => {
       await page.click('text=Go to User 42')
       await page.waitForURL('**/user/42')

@@ -61,7 +61,7 @@ class TestBuilder {
   } = {}
   private worker: Worker | undefined
   private hostName?: string
-  private nextjsApp?: { initialPath: string }
+  private nextjsApp = false
 
   constructor(
     private title: string,
@@ -113,8 +113,8 @@ class TestBuilder {
     return this
   }
 
-  withNextjsApp(initialPath: string) {
-    this.nextjsApp = { initialPath }
+  withNextjsApp() {
+    this.nextjsApp = true
     this.setups = [{ factory: () => '' }]
     return this
   }
@@ -339,7 +339,7 @@ function createTestContext(
   let baseUrl: URL
 
   if (nextjsApp) {
-    baseUrl = new URL(nextjsApp.initialPath, NEXTJS_APP_ROUTER_BASE_URL)
+    baseUrl = new URL('/', NEXTJS_APP_ROUTER_BASE_URL)
     if (rum) {
       baseUrl.searchParams.set('rum-config', JSON.stringify({ ...rum, proxy: servers.intake.origin }))
     }
