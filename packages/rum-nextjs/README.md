@@ -24,41 +24,19 @@ datadogRum.init({
 })
 ```
 
-## 2. Create a client-side providers component
-
-Next.js components marked with `'use client'` are still [partially rendered on the server][2].
-To ensure `DatadogRumProvider` runs exclusively on the client, wrap it in
-an [intermediary client component][3]:
-
-```tsx
-// app/providers.tsx
-'use client'
-
-import { DatadogRumProvider } from '@datadog/browser-rum-nextjs'
-
-export function Providers({ children }: { children: React.ReactNode }) {
-  return <DatadogRumProvider>{children}</DatadogRumProvider>
-}
-```
-
-## 3. Wrap your root layout with the provider
-
-Import the client-side `Providers` component into your root layout (which remains a Server Component):
+## 2. Wrap your root layout with the provider
 
 ```tsx
 // app/layout.tsx
-import { Providers } from './providers'
+import { DatadogRumProvider } from '@datadog/browser-rum-nextjs'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <Providers>{children}</Providers>
+        <DatadogRumProvider>{children}</DatadogRumProvider>
       </body>
     </html>
   )
 }
 ```
-
-[2]: https://nextjs.org/docs/app/getting-started/server-and-client-components
-[3]: https://nextjs.org/docs/app/getting-started/server-and-client-components#third-party-components
