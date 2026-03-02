@@ -442,7 +442,7 @@ describe('rum assembly', () => {
       expect(serverRumEvents[0].context).toEqual({ foo: 'customer context' })
     })
 
-    it('should include browser_tab_id from tabContext', () => {
+    it('should include tab.id from tabContext', () => {
       const { lifeCycle, hooks, serverRumEvents } = setupAssemblyTestWithDefaults()
 
       startTabContext(hooks)
@@ -451,7 +451,7 @@ describe('rum assembly', () => {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })
 
-      expect(serverRumEvents[0]._dd.browser_tab_id).toEqual(jasmine.any(String))
+      expect((serverRumEvents[0] as any).tab.id).toEqual(jasmine.any(String))
     })
   })
 
