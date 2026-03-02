@@ -2048,6 +2048,24 @@ export interface ViewPerformanceData {
      * CSS selector path of the interacted element for the INP interaction
      */
     readonly target_selector?: string
+    /**
+     * Sub-parts of the INP
+     */
+    sub_parts?: {
+      /**
+       * Time from the start of the input event to the start of the processing of the event
+       */
+      readonly input_delay: number
+      /**
+       * Event handler execution time
+       */
+      readonly processing_time: number
+      /**
+       * Rendering time happening after processing
+       */
+      readonly presentation_delay: number
+      [k: string]: unknown
+    }
     [k: string]: unknown
   }
   /**
