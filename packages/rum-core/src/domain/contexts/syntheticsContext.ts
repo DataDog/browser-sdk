@@ -1,7 +1,6 @@
 import {
   SKIPPED,
-  getSyntheticsResultId,
-  getSyntheticsTestId,
+  getSyntheticsContext,
   HookNames,
   willSyntheticsInjectRum,
   isSyntheticsTest,
@@ -15,17 +14,13 @@ export function startSyntheticsContext(hooks: Hooks) {
       return SKIPPED
     }
 
-    const testId = getSyntheticsTestId()
-    const resultId = getSyntheticsResultId()
-
     return {
       type: eventType,
       session: {
         type: SessionType.SYNTHETICS,
       },
       synthetics: {
-        test_id: testId!,
-        result_id: resultId!,
+        ...getSyntheticsContext(),
         injected: willSyntheticsInjectRum(),
       },
     }
