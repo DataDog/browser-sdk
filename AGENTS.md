@@ -9,41 +9,23 @@ This project uses Yarn workspaces (v4.12.0). Never use `npm` or `npx`.
 ## Key Commands
 
 ```bash
-# Development server
-yarn dev
+yarn dev                  # Development server
+yarn build                # Build all packages
+yarn build:apps           # Build test apps (for E2E and performance testing)
+yarn typecheck            # Type checking
+yarn lint                 # Linting
+yarn format               # Format code
 
-# Build all packages
-yarn build
+# Unit tests (Jasmine + Karma)
+yarn test:unit                                                      # Run all unit tests
+yarn test:unit --spec packages/core/src/browser/addEventListener.spec.ts  # Run single file
+yarn test:unit --spec "packages/**/addEventListener.spec.ts"        # Pattern match
+yarn test:unit --seed 123                                           # Reproduce flaky test
 
-# build test apps (for E2E and performance testing)
-yarn build:apps
-
-# Run unit tests
-yarn test:unit
-
-# Run specific test file
-yarn test:unit --spec packages/core/src/path/to/feature.spec.ts
-
-# Run tests on a specific seed
-yarn test:unit --seed 123
-
-# setup E2E tests (installs Playwright and builds test apps)
-yarn test:e2e:init
-
-# Run E2E tests
-yarn test:e2e
-
-# Run specific E2E test which names match “unhandled rejections”
-yarn test:e2e -g "unhandled rejections"
-
-# Type checking
-yarn typecheck
-
-# Linting
-yarn lint
-
-# Format code
-yarn format
+# E2E tests (Playwright)
+yarn test:e2e:init        # Install Playwright and build test apps
+yarn test:e2e             # Run all E2E tests
+yarn test:e2e -g "unhandled rejections"  # Filter by name
 ```
 
 ## Monorepo Structure
@@ -69,66 +51,133 @@ test/
 scripts/             # Build, deploy, release automation
 ```
 
-## Critical Patterns
+## Code Style
 
-### Unit Tests
+### Formatting (Prettier)
 
-- Test framework: Jasmine + Karma. Spec files co-located with implementation: `feature.ts` → `feature.spec.ts`
-- Focus tests with `fit()` / `fdescribe()`, skip with `xit()` / `xdescribe()`
-- Use `registerCleanupTask()` for cleanup, NOT `afterEach()`
-- Mock values/functions: wrap with `mockable()` in source, use `replaceMockable()` or `replaceMockableWithSpy()` in tests (auto-cleanup)
+`singleQuote: true`, `semi: false`, `printWidth: 120`, `trailingComma: 'es5'`, `tabWidth: 2`
 
-### Naming Conventions
+### TypeScript
 
-- Use **camelCase** for all internal variables and object properties
-- Conversion to snake_case/pascal_case happens at the serialization boundary (just before sending events)
-- Never use snake_case in internal code, even if the final event format requires it
+- **No classes** — use plain functions and closures instead (enforced by lint)
+- **No default exports** — named exports only
+- **`interface` for object shapes** — not `type` aliases (enforced by `@typescript-eslint/consistent-type-definitions`)
+- **Separate `import type`** — type-only imports must use `import type { ... }` on their own line
+- **Import order**: builtin → external → internal → parent → sibling → index (enforced by `eslint-plugin-import`)
+- **Prefer TypeScript type narrowing** over runtime type assertions
+- **Use discriminated unions** to make invalid states unrepresentable at compile time
+- **`const` object maps** for enums: `export const ErrorSource = { AGENT: 'agent' } as const` + `export type ErrorSource = (typeof ErrorSource)[keyof typeof ErrorSource]`
+- **`const enum`** for compile-time-only constants (zero bundle cost): `const enum ErrorHandling { HANDLED = 'handled' }`
+- **`camelCase`** for all internal variables and properties — snake_case only at the serialization boundary (event payload fields in `*Event.types.ts`)
+- **Filenames**: `camelCase` in `src/`, `kebab-case` in `scripts/`
+- **No `Date.now()`** — use `dateNow()` wrapper (mockable in tests)
+- **No `console.*`** in package source code
+- **No array spread** — use `.concat()` instead
 
-### TypeScript Patterns
+### Imports (Cross-Package vs Within-Package)
 
-- Prefer **TypeScript type narrowing** over runtime type assertions (e.g., don't use `typeof x === 'object'` when proper return types can express the shape)
-- Use discriminated unions and return types to make invalid states unrepresentable at compile time
+```ts
+// Cross-package: use package name
+import type { TimeStamp } from '@datadog/browser-core'
+import { addTelemetryUsage } from '@datadog/browser-core'
 
-### Telemetry Usage
+// Within-package: relative paths
+import { createTaskQueue } from '../../tools/taskQueue'
+```
 
-- `addTelemetryUsage` tracks **which public API the customer calls and which options they pass** (static call-site information)
-- Do NOT include runtime state analysis (e.g., whether a view was active, whether a value was overwritten) in telemetry usage — that belongs elsewhere
+### Error Handling
+
+- **`monitor(fn)`** — wraps a function; catches any throw and routes to telemetry. Use for all public API methods.
+- **`callMonitored(fn)`** — one-off call with error capture; use when a return value is needed.
+- **`catchUserErrors(fn)`** — wraps user-provided callbacks only (keeps user errors separate from SDK errors).
+- **No `try/catch` in domain code** — domain functions propagate errors via `undefined` returns or discriminated unions.
+- Errors are represented as plain `RawError` data objects, not `Error` subclasses.
+
+### Lifecycle / Cleanup Pattern
+
+Modules return `{ stop }` and collect teardown work in a local array:
+
+```ts
+const cleanupTasks: Array<() => void> = []
+const sub = someObservable.subscribe(handler)
+cleanupTasks.push(() => sub.unsubscribe())
+const { stop: stopChild } = startChildModule(...)
+cleanupTasks.push(stopChild)
+return { stop: () => cleanupTasks.forEach((task) => task()) }
+```
+
+### Observables
+
+Custom `Observable<T>` (not RxJS). Constructor accepts an optional `onFirstSubscribe` callback that can return a teardown function. Use `BufferedObservable<T>` to replay buffered events to late subscribers.
+
+### Mockable Pattern
+
+Wrap values/functions with `mockable()` in source to enable test substitution without DI:
+
+```ts
+// source
+const result = mockable(startRum)(configuration, ...)
+const url = mockable(location).href
+
+// test
+replaceMockable(startRum, fakeStartRum)  // auto-cleaned up after each test
+```
+
+### Feature Flags
+
+```ts
+if (isExperimentalFeatureEnabled(ExperimentalFeature.SOME_FLAG)) { ... }
+```
+
+`ExperimentalFeature` is a real (non-const) enum — required for runtime string validation.
 
 ### Auto-Generated Files
 
-- **NEVER manually edit auto-generated files.** They have a `DO NOT MODIFY IT BY HAND` comment at the top — respect it
-- Example: `telemetryEvent.types.ts` is generated from the `rum-events-format` schema repository
-- Any changes to these files require a **corresponding PR in the upstream source repo first**, then regeneration
+**Never manually edit** files with a `DO NOT MODIFY IT BY HAND` header (e.g., `telemetryEvent.types.ts`). Changes require a PR in the upstream schema repo first, then regeneration.
+
+## Unit Tests
+
+- **Co-location**: `feature.ts` → `feature.spec.ts` in the same directory
+- **Focus/skip**: `fdescribe` / `fit` to focus; `xdescribe` / `xit` to skip
+- **Cleanup**: use `registerCleanupTask(() => ...)` — never `afterEach()`
+- **DOM helpers**: use `appendElement(html)` — never manually `createElement` + `appendChild`
+- **Time**: use `mockClock()` + `clock.tick(ms)` — never real `setTimeout` delays
+- **One behavior per test**: keep `it()` blocks focused on a single assertion
+- **TDD**: write the spec file before the implementation file (RED → GREEN → REFACTOR)
+
+## Verifying SDK Event Payloads
+
+When a change affects what events are emitted (fields, types, attributes), verify it in the sandbox using the `datadog-sdk-event-inspection` skill:
+
+- Use it when you need to confirm a RUM, log, or telemetry event contains the expected fields
+- Use it when unit tests alone are not sufficient to validate serialized event output
+- Run `yarn dev` first, then follow the skill to set up the `__ddBrowserSdkExtensionCallback` hook
+
+```bash
+yarn dev   # sandbox available at http://localhost:8080
+```
 
 ## Commit Messages
 
-Use gitmoji conventions (based on actual usage in this repo):
+Use gitmoji conventions:
 
-### User-Facing Changes
-
-- ✨ **New feature** - New public API, behavior, event, property
-- 🐛 **Bug fix** - Fix bugs, regressions, crashes
-- ⚡️ **Performance** - Improve performance, reduce bundle size
-- 💥 **Breaking change** - Breaking API changes
-- 📝 **Documentation** - User-facing documentation
-- ⚗️ **Experimental** - New public feature behind a feature flag
-
-### Internal Changes
-
-- 👷 **Build/CI** - Dependencies, tooling, deployment, CI config
-- ♻️ **Refactor** - Code restructuring, architectural changes
-- 🎨 **Code structure** - Improve code structure, formatting
-- ✅ **Tests** - Add/fix/improve tests
-- 🔧 **Configuration** - Config files, project setup
-- 🔥 **Removal** - Remove code, features, deprecated items
-- 👌 **Code review** - Address code review feedback
-- 🚨 **Linting** - Add/fix linter rules
-- 🧹 **Cleanup** - Minor cleanup, housekeeping
-- 🔊 **Logging** - Add/modify debug logs, telemetry
+| Emoji | Use case                                  |
+| ----- | ----------------------------------------- |
+| ✨    | New feature (public API, behavior, event) |
+| 🐛    | Bug fix                                   |
+| ⚡️    | Performance / bundle size                 |
+| 💥    | Breaking change                           |
+| ⚗️    | Experimental feature behind a flag        |
+| ♻️    | Refactor                                  |
+| ✅    | Tests                                     |
+| 👷    | Build / CI / dependencies                 |
+| 🔥    | Removal                                   |
+| 🧹    | Cleanup                                   |
+| 🔊    | Telemetry / debug logging                 |
 
 ## Git Workflow
 
 - Branch naming: `<username>/<feature>` (e.g., `john.doe/fix-session-bug`)
 - Always branch from `main` unless explicitly decided otherwise
 - PR title follows commit message convention (used when squashing to main)
-- PR template at `.github/PULL_REQUEST_TEMPLATE.md` - use it for all PRs
+- PR template at `.github/PULL_REQUEST_TEMPLATE.md` — fill it out for all PRs
