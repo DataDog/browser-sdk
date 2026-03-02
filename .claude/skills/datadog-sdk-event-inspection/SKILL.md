@@ -83,17 +83,17 @@ Then navigate to `http://localhost:8080`. Every event — including the initial 
 
 ## Key Fields Quick Reference
 
-| What to check | Field path |
-|---|---|
-| Event category | `msg.type` |
-| RUM sub-type | `msg.payload.type` |
-| User attribute (via `setUser`) | `msg.payload.usr.<key>` |
-| Global context attribute (via `addRumGlobalContext`) | `msg.payload.context.<key>` |
-| Action name | `msg.payload.action.target.name` |
-| Error message | `msg.payload.error.message` |
-| View URL | `msg.payload.view.url` |
-| Log message | `msg.payload.message` |
-| Telemetry status | `msg.payload.telemetry.status` |
+| What to check                                        | Field path                       |
+| ---------------------------------------------------- | -------------------------------- |
+| Event category                                       | `msg.type`                       |
+| RUM sub-type                                         | `msg.payload.type`               |
+| User attribute (via `setUser`)                       | `msg.payload.usr.<key>`          |
+| Global context attribute (via `addRumGlobalContext`) | `msg.payload.context.<key>`      |
+| Action name                                          | `msg.payload.action.target.name` |
+| Error message                                        | `msg.payload.error.message`      |
+| View URL                                             | `msg.payload.view.url`           |
+| Log message                                          | `msg.payload.message`            |
+| Telemetry status                                     | `msg.payload.telemetry.status`   |
 
 Note: user attributes use `usr` (not `user`) in the serialized payload.
 
@@ -106,11 +106,11 @@ To get the final view event: trigger a navigation, or call `window.DD_RUM.stopSe
 
 ## Common Mistakes
 
-| Mistake | Fix |
-|---|---|
-| Using network requests to verify events | Events may not be flushed yet; use the callback instead |
-| Console injection + reload to capture early events | Reload clears injected code — use Path B (CDP pre-load) |
-| Missing the initial view event | Use Path B: `Page.addScriptToEvaluateOnNewDocument` before navigating |
-| Seeing no `[SDK Event]` logs after reload | The callback was cleared by reload — re-run Path B setup |
-| Incomplete view event data | View updates until view ends — navigate away or call `stopSession()` |
-| Looking for `user.plan` in payload | It's `usr.plan` in serialized RUM events |
+| Mistake                                            | Fix                                                                   |
+| -------------------------------------------------- | --------------------------------------------------------------------- |
+| Using network requests to verify events            | Events may not be flushed yet; use the callback instead               |
+| Console injection + reload to capture early events | Reload clears injected code — use Path B (CDP pre-load)               |
+| Missing the initial view event                     | Use Path B: `Page.addScriptToEvaluateOnNewDocument` before navigating |
+| Seeing no `[SDK Event]` logs after reload          | The callback was cleared by reload — re-run Path B setup              |
+| Incomplete view event data                         | View updates until view ends — navigate away or call `stopSession()`  |
+| Looking for `user.plan` in payload                 | It's `usr.plan` in serialized RUM events                              |
