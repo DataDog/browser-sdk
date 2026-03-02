@@ -25,8 +25,8 @@ describe('tabContext', () => {
 
     expect(event).toEqual(
       jasmine.objectContaining({
-        _dd: jasmine.objectContaining({
-          browser_tab_id: jasmine.stringMatching(UUID_PATTERN),
+        tab: jasmine.objectContaining({
+          id: jasmine.stringMatching(UUID_PATTERN),
         }),
       })
     )
@@ -42,51 +42,64 @@ describe('tabContext', () => {
       startTime: 0 as RelativeTime,
     })
 
-    expect(event1._dd.browser_tab_id).toBe(event2._dd.browser_tab_id)
+    expect(event1.tab.id).toBe(event2.tab.id)
   })
 
-  it('should expose the tab ID via getTabId()', () => {
-    const tabContext = startTabContext(hooks)
-
-    expect(tabContext.getTabId()).toMatch(UUID_PATTERN)
-  })
-
-  it('should return the same tab ID from getTabId() and the hook', () => {
-    const tabContext = startTabContext(hooks)
+  it('should persist the tab ID to sessionStorage', () => {
+    startTabContext(hooks)
 
     const event = hooks.triggerHook(HookNames.Assemble, {
       startTime: 0 as RelativeTime,
     })
 
-    expect(event._dd.browser_tab_id).toBe(tabContext.getTabId())
-  })
-
-  it('should persist the tab ID to sessionStorage', () => {
-    const tabContext = startTabContext(hooks)
-
-    expect(sessionStorage.getItem('_dd_tab_id')).toBe(tabContext.getTabId())
+    expect(sessionStorage.getItem('_dd_tab_id')).toBe(event.tab.id)
   })
 
   it('should reuse an existing tab ID from sessionStorage', () => {
     sessionStorage.setItem('_dd_tab_id', 'existing-tab-id')
-    const tabContext = startTabContext(hooks)
+    startTabContext(hooks)
 
-    expect(tabContext.getTabId()).toBe('existing-tab-id')
+    const event = hooks.triggerHook(HookNames.Assemble, {
+      startTime: 0 as RelativeTime,
+    })
+
+    expect(event.tab.id).toBe('existing-tab-id')
   })
 
-  it('should generate a new tab ID when sessionStorage.getItem throws', () => {
+  it('should generate a tab ID when sessionStorage.getItem throws', () => {
     spyOn(sessionStorage, 'getItem').and.throwError('SecurityError')
-    const tabContext = startTabContext(hooks)
+    startTabContext(hooks)
 
-    expect(tabContext.getTabId()).toMatch(UUID_PATTERN)
+    const event = hooks.triggerHook(HookNames.Assemble, {
+      startTime: 0 as RelativeTime,
+    })
+
+    expect(event.tab.id).toMatch(UUID_PATTERN)
   })
 
-  it('should generate a new tab ID when sessionStorage.setItem throws', () => {
+  it('should generate a tab ID when sessionStorage.setItem throws', () => {
     spyOn(sessionStorage, 'getItem').and.returnValue(null)
     spyOn(sessionStorage, 'setItem').and.throwError('QuotaExceededError')
+    startTabContext(hooks)
 
-    const tabContext = startTabContext(hooks)
+    const event = hooks.triggerHook(HookNames.Assemble, {
+      startTime: 0 as RelativeTime,
+    })
 
-    expect(tabContext.getTabId()).toMatch(UUID_PATTERN)
+    expect(event.tab.id).toMatch(UUID_PATTERN)
+  })
+
+  it('should return the same tab ID across multiple startTabContext calls when sessionStorage is unavailable', () => {
+    spyOn(sessionStorage, 'getItem').and.throwError('SecurityError')
+
+    const hooks1 = createHooks()
+    startTabContext(hooks1)
+    const hooks2 = createHooks()
+    startTabContext(hooks2)
+
+    const event1 = hooks1.triggerHook(HookNames.Assemble, { startTime: 0 as RelativeTime })
+    const event2 = hooks2.triggerHook(HookNames.Assemble, { startTime: 0 as RelativeTime })
+
+    expect(event1.tab.id).toBe(event2.tab.id)
   })
 })
