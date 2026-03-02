@@ -78,22 +78,22 @@ Then navigate to `http://localhost:8080`. Every event — including the initial 
 { type: 'rum',       payload: RumEvent }       // view, action, error, resource, long_task
 { type: 'logs',      payload: LogsEvent }
 { type: 'telemetry', payload: TelemetryEvent }
-{ type: 'record',    payload: { record, segment } }  // Session Replay only
+{ type: 'record',    payload: { record } }             // Session Replay only
 ```
 
 ## Key Fields Quick Reference
 
-| What to check                                        | Field path                       |
-| ---------------------------------------------------- | -------------------------------- |
-| Event category                                       | `msg.type`                       |
-| RUM sub-type                                         | `msg.payload.type`               |
-| User attribute (via `setUser`)                       | `msg.payload.usr.<key>`          |
-| Global context attribute (via `addRumGlobalContext`) | `msg.payload.context.<key>`      |
-| Action name                                          | `msg.payload.action.target.name` |
-| Error message                                        | `msg.payload.error.message`      |
-| View URL                                             | `msg.payload.view.url`           |
-| Log message                                          | `msg.payload.message`            |
-| Telemetry status                                     | `msg.payload.telemetry.status`   |
+| What to check                                             | Field path                       |
+| --------------------------------------------------------- | -------------------------------- |
+| Event category                                            | `msg.type`                       |
+| RUM sub-type                                              | `msg.payload.type`               |
+| User attribute (via `setUser`)                            | `msg.payload.usr.<key>`          |
+| Global context attribute (via `setGlobalContextProperty`) | `msg.payload.context.<key>`      |
+| Action name                                               | `msg.payload.action.target.name` |
+| Error message                                             | `msg.payload.error.message`      |
+| View URL                                                  | `msg.payload.view.url`           |
+| Log message                                               | `msg.payload.message`            |
+| Telemetry status                                          | `msg.payload.telemetry.status`   |
 
 Note: user attributes use `usr` (not `user`) in the serialized payload.
 
