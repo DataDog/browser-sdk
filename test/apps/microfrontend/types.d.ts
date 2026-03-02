@@ -1,6 +1,3 @@
-// declare module 'app1/app1'
-// declare module 'app2/app2'
-
 interface Window {
   DD_RUM: {
     addError: (error: Error) => void

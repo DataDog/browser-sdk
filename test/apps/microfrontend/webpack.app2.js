@@ -1,22 +1,9 @@
-const path = require('node:path')
 const { datadogWebpackPlugin } = require('@datadog/webpack-plugin')
 const { ModuleFederationPlugin } = require('@module-federation/enhanced/webpack')
+const webpackBase = require('./webpack.base')
 
-module.exports = {
-  mode: 'development',
-  devtool: 'source-map',
-  module: {
-    rules: [{ test: /\.ts$/, use: 'ts-loader' }],
-  },
-  resolve: {
-    extensions: ['.ts', '.js'],
-  },
-  output: {
-    path: path.resolve(__dirname, 'dist'),
-    filename: 'app2.js',
-    chunkFilename: 'chunks/[name]-[contenthash]-app2.js',
-    publicPath: 'auto',
-  },
+module.exports = webpackBase({
+  name: 'app2',
   plugins: [
     new ModuleFederationPlugin({
       name: 'app2',
@@ -35,4 +22,4 @@ module.exports = {
       },
     }),
   ],
-}
+})
