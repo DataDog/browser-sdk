@@ -35,7 +35,10 @@ test.describe('API calls and events around init', () => {
 
       setTimeout(() => window.DD_RUM!.init(configuration), 30)
     })
-    .run(async ({ intakeRegistry, flushEvents }) => {
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      // Wait for the SDK to process all setTimeout callbacks (timings, view start, init)
+      // and batch the view updates. This is needed on slower environments like Android emulators.
+      await page.waitForTimeout(100)
       await flushEvents()
 
       const initialView = intakeRegistry.rumViewEvents[0]
