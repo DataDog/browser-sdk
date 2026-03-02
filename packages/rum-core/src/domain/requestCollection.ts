@@ -58,6 +58,7 @@ export interface RequestCompleteEvent {
   init?: RequestInit
   error?: Error
   isAborted: boolean
+  isAbortedOnStart: boolean
   handlingStack?: string
   requestBody?: unknown
   responseBody?: string
@@ -98,6 +99,7 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: RumConfiguration, 
         tracer.clearTracingIfNeeded(context)
         lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
           type: RequestType.XHR,
+          isAbortedOnStart: false,
           ...context,
         })
         break

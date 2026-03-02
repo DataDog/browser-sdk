@@ -17,6 +17,7 @@ interface FetchContextBase {
   init?: RequestInit
   url: string
   handlingStack?: string
+  isAbortedOnStart: boolean
 }
 
 export interface FetchStartContext extends FetchContextBase {
@@ -105,6 +106,7 @@ function beforeSend(
     startClocks,
     url,
     handlingStack,
+    isAbortedOnStart: init?.signal?.aborted || false,
   }
 
   observable.notify(context)
