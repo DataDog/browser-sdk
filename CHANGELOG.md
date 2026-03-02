@@ -18,6 +18,20 @@
 
 ---
 
+## v6.29.0
+
+**Public Changes:**
+
+- ✨ support per-value synthetics globals/cookies with a unified context object ([#4236](https://github.com/DataDog/browser-sdk/pull/4236)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✨ Compute session tracking type in developer extension for SDK v7 support ([#4202](https://github.com/DataDog/browser-sdk/pull/4202)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+**Internal Changes:**
+
+- ⚗✨ [RUM-14736] Add type to ResourceStopOptions ([#4232](https://github.com/DataDog/browser-sdk/pull/4232)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 👷 Update dependency minimatch to v10.2.3 [SECURITY] ([#4257](https://github.com/DataDog/browser-sdk/pull/4257))
+- 👷 Update all non-major dependencies ([#4256](https://github.com/DataDog/browser-sdk/pull/4256))
+- ⚗️feat: collect INP sub-parts RUM-14310 ([#4158](https://github.com/DataDog/browser-sdk/pull/4158)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
 ## v6.28.1
 
 **Public Changes:**
