@@ -2,15 +2,12 @@ import { dateNow } from '../tools/utils/timeUtils'
 import type { CookieOptions } from './cookie'
 import { getCookies, setCookie, deleteCookie } from './cookie'
 import type { CookieStore } from './browser.types'
+import type { CookieStoreWindow } from './cookieObservable'
 
 export interface CookieAccessor {
   getAll(name: string): Promise<string[]>
   set(name: string, value: string, expireDelay: number, options?: CookieOptions): Promise<void>
   delete(name: string, options?: CookieOptions): Promise<void>
-}
-
-interface CookieStoreWindow {
-  cookieStore?: CookieStore
 }
 
 export function createCookieAccessor(cookieOptions: CookieOptions): CookieAccessor {

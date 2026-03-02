@@ -83,4 +83,34 @@ describe('cookieObservable', () => {
 
     expect(cookieChange).toBeUndefined()
   })
+
+  it('should not re-notify observers if the cookie has not changed since last notification when cookieStore is not supported', () => {
+    Object.defineProperty(window, 'cookieStore', { get: () => undefined, configurable: true })
+    const observable = createCookieObservable(mockConfiguration(), COOKIE_NAME)
+
+    const cookieChanges: Array<string | undefined> = []
+    subscription = observable.subscribe((change) => cookieChanges.push(change))
+
+    setCookie(COOKIE_NAME, 'foo', COOKIE_DURATION)
+    clock.tick(WATCH_COOKIE_INTERVAL_DELAY) // detects 'foo'
+    clock.tick(WATCH_COOKIE_INTERVAL_DELAY) // no change since last notification
+
+    expect(cookieChanges).toEqual(['foo'])
+  })
+
+  it('should notify observers on consecutive cookie changes when cookieStore is not supported', () => {
+    Object.defineProperty(window, 'cookieStore', { get: () => undefined, configurable: true })
+    const observable = createCookieObservable(mockConfiguration(), COOKIE_NAME)
+
+    const cookieChanges: Array<string | undefined> = []
+    subscription = observable.subscribe((change) => cookieChanges.push(change))
+
+    setCookie(COOKIE_NAME, 'foo', COOKIE_DURATION)
+    clock.tick(WATCH_COOKIE_INTERVAL_DELAY)
+
+    setCookie(COOKIE_NAME, 'bar', COOKIE_DURATION)
+    clock.tick(WATCH_COOKIE_INTERVAL_DELAY)
+
+    expect(cookieChanges).toEqual(['foo', 'bar'])
+  })
 })

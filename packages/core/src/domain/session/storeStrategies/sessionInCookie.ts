@@ -1,12 +1,8 @@
-import { isEmptyObject } from '../../../tools/utils/objectUtils'
 import type { CookieOptions } from '../../../browser/cookie'
 import { getCurrentSite, areCookiesAuthorized, getCookies } from '../../../browser/cookie'
 import type { CookieAccessor } from '../../../browser/cookieAccess'
 import { createCookieAccessor } from '../../../browser/cookieAccess'
-import type { CookieStoreWindow } from '../../../browser/cookieObservable'
 import { createCookieObservable } from '../../../browser/cookieObservable'
-import { setInterval, clearInterval } from '../../../tools/timer'
-import { ONE_SECOND } from '../../../tools/utils/timeUtils'
 import type { InitConfiguration, Configuration } from '../../configuration'
 import {
   SESSION_COOKIE_EXPIRATION_DELAY,
@@ -15,7 +11,7 @@ import {
   SessionPersistence,
 } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
-import { toSessionString, toSessionState, getExpiredSessionState } from '../sessionState'
+import { toSessionString, toSessionState, getExpiredSessionState, isSessionInNotStartedState } from '../sessionState'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
 
@@ -44,15 +40,9 @@ export function initCookieStrategy(configuration: Configuration, cookieOptions: 
         SESSION_TIME_OUT_DELAY
       ),
     onExternalChange: (callback) => {
-      // Use CookieStore change events when available for instant, efficient notifications.
-      // Fall back to periodic polling (like the old code) when CookieStore is not supported.
-      if ((window as CookieStoreWindow).cookieStore) {
-        const observable = createCookieObservable(configuration, SESSION_STORE_KEY)
-        const { unsubscribe } = observable.subscribe(callback)
-        return unsubscribe
-      }
-      const intervalId = setInterval(callback, ONE_SECOND)
-      return () => clearInterval(intervalId)
+      const observable = createCookieObservable(configuration, SESSION_STORE_KEY)
+      const { unsubscribe } = observable.subscribe(callback)
+      return unsubscribe
     },
   }
 }
@@ -68,7 +58,7 @@ async function storeSessionCookie(
     ...sessionState,
     // deleting a cookie is writing a new cookie with an empty value
     // we don't want to store the cookie options in this case otherwise the cookie will not be deleted
-    ...(!isEmptyObject(sessionState) ? { c: encodeCookieOptions(cookieOptions) } : {}),
+    ...(!isSessionInNotStartedState(sessionState) ? { c: encodeCookieOptions(cookieOptions) } : {}),
   })
 
   await cookieAccessor.set(
