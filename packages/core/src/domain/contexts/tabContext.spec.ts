@@ -2,7 +2,7 @@ import type { Hooks } from '../../../test'
 import { createHooks, registerCleanupTask } from '../../../test'
 import { HookNames } from '../../tools/abstractHooks'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
-import { startTabContext } from './tabContext'
+import { TAB_ID_STORAGE_KEY, startTabContext } from './tabContext'
 
 const UUID_PATTERN = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/
 
@@ -12,7 +12,7 @@ describe('tabContext', () => {
   beforeEach(() => {
     hooks = createHooks()
     registerCleanupTask(() => {
-      sessionStorage.removeItem('_dd_tab_id')
+      sessionStorage.removeItem(TAB_ID_STORAGE_KEY)
     })
   })
 
@@ -52,11 +52,11 @@ describe('tabContext', () => {
       startTime: 0 as RelativeTime,
     })
 
-    expect(sessionStorage.getItem('_dd_tab_id')).toBe(event.tab.id)
+    expect(sessionStorage.getItem(TAB_ID_STORAGE_KEY)).toBe(event.tab.id)
   })
 
   it('should reuse an existing tab ID from sessionStorage', () => {
-    sessionStorage.setItem('_dd_tab_id', 'existing-tab-id')
+    sessionStorage.setItem(TAB_ID_STORAGE_KEY, 'existing-tab-id')
     startTabContext(hooks)
 
     const event = hooks.triggerHook(HookNames.Assemble, {
