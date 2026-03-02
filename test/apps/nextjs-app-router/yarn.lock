@@ -7,17 +7,17 @@ __metadata:
 
 "@datadog/browser-core@file:../../../packages/core/package.tgz::locator=nextjs-app-router%40workspace%3A.":
   version: 6.28.1
-  resolution: "@datadog/browser-core@file:../../../packages/core/package.tgz#../../../packages/core/package.tgz::hash=e9fba0&locator=nextjs-app-router%40workspace%3A."
-  checksum: 10c0/7bb5dc436ac13fa06d4651ad72e334f315d2d418b2bdfe54e6db0716aa972ede78532fec835dc0639c3053cadf3c1679c34ae41cd5b3a15392c35054a4720b86
+  resolution: "@datadog/browser-core@file:../../../packages/core/package.tgz#../../../packages/core/package.tgz::hash=d766a7&locator=nextjs-app-router%40workspace%3A."
+  checksum: 10c0/ed1c2e1c115cbf99209bf83eb9278943b2d9df3a6aee4174002d855de104a383857a12a0eb4a8a21b93c8a0e9913166d01db1f963c6e10127d96497be0742813
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz::locator=nextjs-app-router%40workspace%3A.":
   version: 6.28.1
-  resolution: "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz#../../../packages/rum-core/package.tgz::hash=d6a40c&locator=nextjs-app-router%40workspace%3A."
+  resolution: "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz#../../../packages/rum-core/package.tgz::hash=95fb30&locator=nextjs-app-router%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.28.1"
-  checksum: 10c0/cbf804eef41066fa64a346cb42bc83edf478285a57deef9ba1351fa4bc4291daae791b3f2ac984621aec25c5de7e0cc7aadbc6ff1b97effffad5bf8dbd3bc91b
+  checksum: 10c0/27b80d5a0dddb10ab20113b53d6ac3b4b54e4f4e91a2971eb277c919a086d229d9465890bfd6153cf36ea159355d123e442fc4e36bebec8e78625628545d46a9
   languageName: node
   linkType: hard
 

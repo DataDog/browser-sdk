@@ -59,6 +59,7 @@ export default tseslint.config(
           './tsconfig.default.json',
           './tsconfig.scripts.json',
           './developer-extension/tsconfig.json',
+          './packages/rum-nextjs/tsconfig.json',
           './test/e2e/tsconfig.json',
           './test/performance/tsconfig.json',
           './test/apps/**/tsconfig.json',
@@ -471,6 +472,7 @@ export default tseslint.config(
       'import/no-default-export': 'off',
       'import/no-unresolved': 'off',
       'unicorn/filename-case': 'off',
+      quotes: 'off',
     },
   },
 
