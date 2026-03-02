@@ -1,12 +1,4 @@
-import {
-  SKIPPED,
-  computeStackTrace,
-  objectEntries,
-  addTelemetryError,
-  HookNames,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
-} from '@datadog/browser-core'
+import { SKIPPED, computeStackTrace, objectEntries, addTelemetryError, HookNames } from '@datadog/browser-core'
 import type { Hooks, DefaultRumEventAttributes, AssembleHookParams } from '../hooks'
 
 interface SourceCodeContext {
@@ -50,19 +42,22 @@ export function startSourceCodeContext(hooks: Hooks) {
   hooks.register(HookNames.Assemble, ({ domainContext, rawRumEvent }): DefaultRumEventAttributes | SKIPPED => {
     buildContextByFile()
 
-    const url = getSourceUrl(domainContext, rawRumEvent)
-
-    if (url) {
-      const context = contextByFile.get(url)
-      if (context) {
-        return {
-          type: rawRumEvent.type,
-          service: context.service,
-          version: context.version,
-        }
-      }
+    if (contextByFile.size === 0) {
+      return SKIPPED
     }
-    return SKIPPED
+
+    const url = getSourceUrl(domainContext, rawRumEvent)
+    const context = url && contextByFile.get(url)
+
+    if (!context) {
+      return SKIPPED
+    }
+
+    return {
+      type: rawRumEvent.type,
+      service: context.service,
+      version: context.version,
+    }
   })
 }
 
