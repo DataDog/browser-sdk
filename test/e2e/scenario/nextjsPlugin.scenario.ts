@@ -15,4 +15,26 @@ test.describe('nextjs app router', () => {
       const homeView = viewEvents.find((e) => e.view.name === '/' && e.view.loading_type === 'initial_load')
       expect(homeView).toBeDefined()
     })
+
+  createTest('should normalize dynamic route to /user/[id]')
+    .withRum()
+    .withNextjsApp('/')
+    .run(async ({ page, flushEvents, intakeRegistry }) => {
+      await page.click('text=Go to User 42')
+      await page.waitForURL('**/user/42')
+
+      await page.click('text=Back to Home')
+
+      await flushEvents()
+
+      const viewEvents = intakeRegistry.rumViewEvents
+      expect(viewEvents.length).toBeGreaterThanOrEqual(2)
+
+      const homeView = viewEvents.find((e) => e.view.name === '/')
+      expect(homeView).toBeDefined()
+
+      const userView = viewEvents.find((e) => e.view.name === '/user/[id]')
+      expect(userView).toBeDefined()
+      expect(userView?.view.loading_type).toBe('route_change')
+    })
 })
