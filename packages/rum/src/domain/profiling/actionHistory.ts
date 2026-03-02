@@ -1,4 +1,4 @@
-import type { ClocksState, Duration, ValueHistoryEntry } from '@datadog/browser-core'
+import type { ClocksState, Duration } from '@datadog/browser-core'
 import { addDuration, createValueHistory, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
 import type { LifeCycle } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
@@ -17,10 +17,8 @@ export function createActionHistory(lifeCycle: LifeCycle) {
     expireDelay: ACTION_ID_HISTORY_TIME_OUT_DELAY,
   })
 
-  const startedActions = new Map<string, ValueHistoryEntry<ActionContext>>()
-
   lifeCycle.subscribe(LifeCycleEventType.ACTION_STARTED, (actionStart) => {
-    const startedActionHistoryEntry = history.add(
+    history.add(
       {
         id: actionStart.id,
         label: '',
@@ -29,21 +27,18 @@ export function createActionHistory(lifeCycle: LifeCycle) {
       },
       actionStart.startClocks.relative
     )
-
-    startedActions.set(actionStart.id, startedActionHistoryEntry)
   })
 
   lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, ({ rawRumEvent, startClocks, duration }) => {
     if (rawRumEvent.type === 'action') {
+      const historyEntry = history
+        .getEntries(startClocks.relative)
+        .find((entry) => entry.value.id === rawRumEvent.action.id)
       const durationForEntry = duration ?? (0 as Duration)
-      if (startedActions.has(rawRumEvent.action.id)) {
-        const actionHistoryEntry = startedActions.get(rawRumEvent.action.id)
 
-        if (actionHistoryEntry) {
-          actionHistoryEntry.value.duration = duration!
-          actionHistoryEntry.close(addDuration(startClocks.relative, durationForEntry))
-          startedActions.delete(rawRumEvent.action.id)
-        }
+      if (historyEntry) {
+        historyEntry.value.duration = durationForEntry
+        historyEntry.close(addDuration(startClocks.relative, durationForEntry))
       } else {
         history
           .add(
