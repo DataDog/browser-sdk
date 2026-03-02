@@ -36,6 +36,7 @@ export default tseslint.config(
       'docs',
       'developer-extension/.wxt',
       'developer-extension/dist',
+      'test/apps/nextjs-app-router/next-env.d.ts',
     ],
   },
 
@@ -472,7 +473,6 @@ export default tseslint.config(
       'import/no-default-export': 'off',
       'import/no-unresolved': 'off',
       'unicorn/filename-case': 'off',
-      quotes: 'off',
     },
   },
 
