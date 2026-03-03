@@ -53,6 +53,13 @@ export function startViewCollection(
         return
       }
 
+      // View ended: emit full VIEW, reset tracker (no diff on terminal state)
+      if (!view.isActive) {
+        diffTracker.reset()
+        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEventData)
+        return
+      }
+
       // Subsequent update: compute diff
       const lastSent = diffTracker.getLastSentState()
       if (!lastSent) {

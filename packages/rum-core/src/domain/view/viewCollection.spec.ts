@@ -449,4 +449,41 @@ describe('partial view updates', () => {
     expect(firstEvent._dd.document_version).toBe(1)
     expect(secondEvent._dd.document_version).toBe(2)
   })
+
+  it('should emit a full VIEW event (not VIEW_UPDATE) when view ends (isActive: false)', () => {
+    setupViewCollection()
+    // First update: active view (emits full VIEW as baseline)
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { ...ACTIVE_VIEW, documentVersion: 1 })
+    // Second update: active, something changed (emits VIEW_UPDATE)
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
+      ...ACTIVE_VIEW,
+      documentVersion: 2,
+      eventCounts: { ...ACTIVE_VIEW.eventCounts, errorCount: 5 },
+    })
+    // Third update: view ends (isActive: false)
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
+      ...VIEW, // VIEW has isActive: false
+      documentVersion: 3,
+      eventCounts: { ...VIEW.eventCounts, errorCount: 5 },
+    })
+
+    expect(rawRumEvents.length).toBe(3)
+    expect(rawRumEvents[0].rawRumEvent.type).toBe(RumEventType.VIEW)
+    expect(rawRumEvents[1].rawRumEvent.type).toBe(RumEventType.VIEW_UPDATE)
+    expect(rawRumEvents[2].rawRumEvent.type).toBe(RumEventType.VIEW) // full VIEW, not VIEW_UPDATE
+    const endEvent = rawRumEvents[2].rawRumEvent as RawRumViewEvent
+    expect(endEvent.view.is_active).toBe(false)
+  })
+
+  it('should reset the diffTracker after view end so the next view starts fresh', () => {
+    setupViewCollection()
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { ...ACTIVE_VIEW, documentVersion: 1 })
+    // View ends
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { ...VIEW, documentVersion: 2 })
+    // New view starts (new id)
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { ...ACTIVE_VIEW, id: 'new-view', documentVersion: 1 })
+
+    expect(rawRumEvents.length).toBe(3)
+    expect(rawRumEvents[2].rawRumEvent.type).toBe(RumEventType.VIEW)
+  })
 })
