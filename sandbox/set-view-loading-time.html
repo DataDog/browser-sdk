@@ -16,7 +16,8 @@
 
       setTimeout(function () {
         DD_RUM.setViewLoadingTime()
-        document.getElementById('status').textContent = 'Loaded! Check the Browser SDK DevTools extension for view events.'
+        document.getElementById('status').textContent =
+          'Loaded! Check the Browser SDK DevTools extension for view events.'
         console.log('[Demo] Called setViewLoadingTime() after 10s simulated async load')
         document.getElementById('overwrite-section').style.display = 'block'
       }, 10000)
@@ -24,7 +25,7 @@
       function triggerOverwrite() {
         DD_RUM.setViewLoadingTime({ overwrite: true })
         document.getElementById('overwrite-status').textContent =
-          'Overwrite applied! Check the Browser SDK DevTools extension — the view\'s loading_time should now reflect the time from view start to this overwrite call.'
+          "Overwrite applied! Check the Browser SDK DevTools extension — the view's loading_time should now reflect the time from view start to this overwrite call."
         console.log('[Demo] Called setViewLoadingTime({ overwrite: true }) — loading_time should now be updated')
       }
     </script>
@@ -39,14 +40,19 @@
       clicking the button that appears. Use the Browser SDK DevTools extension to observe the reported view events.
     </p>
     <p id="status"><strong>Loading...</strong></p>
-    <div id="overwrite-section" style="display: none; margin-top: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 5px;">
+    <div
+      id="overwrite-section"
+      style="display: none; margin-top: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 5px"
+    >
       <h3>Overwrite Scenario (DEMO-04)</h3>
       <p>
-        Click the button below to call <code>setViewLoadingTime({ overwrite: true })</code>. This will update the
-        view's loading_time to reflect the elapsed time from view start to NOW (when you click), replacing the original
-        ~10 second value.
+        Click the button below to call <code>setViewLoadingTime({ overwrite: true })</code>. This will update the view's
+        loading_time to reflect the elapsed time from view start to NOW (when you click), replacing the original ~10
+        second value.
       </p>
-      <button onclick="triggerOverwrite()" style="padding: 10px 20px; font-size: 16px; cursor: pointer;">Overwrite Loading Time</button>
+      <button onclick="triggerOverwrite()" style="padding: 10px 20px; font-size: 16px; cursor: pointer">
+        Overwrite Loading Time
+      </button>
       <p id="overwrite-status"></p>
     </div>
     <p><em>Open the Browser SDK DevTools extension to observe view events with loading_time values.</em></p>
