@@ -103,11 +103,16 @@ export function startRumBatch(
     }),
   })
 
+  let lastAssembledView: AssembledRumEvent | undefined
+
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent: AssembledRumEvent) => {
     if (serverRumEvent.type === RumEventType.VIEW) {
+      lastAssembledView = serverRumEvent
       batch.upsert(serverRumEvent, serverRumEvent.view.id)
+    } else if (serverRumEvent.type === RumEventType.VIEW_UPDATE) {
+      const toSend = lastAssembledView ? stripViewUpdateFields(serverRumEvent, lastAssembledView) : serverRumEvent
+      batch.add(toSend)
     } else {
-      // All other event types (including VIEW_UPDATE) are appended
       batch.add(serverRumEvent)
     }
   })
