@@ -15,6 +15,7 @@ export {
   createCrossOriginScriptUrls,
   microfrontendSetup,
 } from './pageSetups'
+export type { SetupOptions } from './pageSetups'
 export { IntakeRegistry } from './intakeRegistry'
 export { getTestServers, waitForServersIdle } from './httpServers'
 export type { Servers } from './httpServers'
