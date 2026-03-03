@@ -5,7 +5,7 @@ import { collectAndValidateRawRumEvents, mockPageStateHistory } from '../../../t
 import type { RawRumEvent, RawRumVitalEvent } from '../../rawRumEvent.types'
 import { VitalType, RumEventType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
-import { LifeCycle } from '../lifeCycle'
+import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { startDurationVital, stopDurationVital, startVitalCollection, createCustomVitalsState } from './vitalCollection'
 
 const pageStateHistory = mockPageStateHistory()
@@ -32,7 +32,7 @@ describe('vitalCollection', () => {
       it('should create duration vital from a vital reference', () => {
         const cbSpy = jasmine.createSpy()
 
-        const vitalRef = startDurationVital(vitalsState, lifeCycle, 'foo')
+        const vitalRef = startDurationVital(vitalsState, 'foo')
         clock.tick(100)
         stopDurationVital(cbSpy, vitalsState, vitalRef)
 
@@ -45,7 +45,7 @@ describe('vitalCollection', () => {
       it('should create duration vital from a vital name', () => {
         const cbSpy = jasmine.createSpy()
 
-        startDurationVital(vitalsState, lifeCycle, 'foo')
+        startDurationVital(vitalsState, 'foo')
         clock.tick(100)
         stopDurationVital(cbSpy, vitalsState, 'foo')
 
@@ -58,7 +58,7 @@ describe('vitalCollection', () => {
       it('should only create a single duration vital from a vital name', () => {
         const cbSpy = jasmine.createSpy()
 
-        startDurationVital(vitalsState, lifeCycle, 'foo')
+        startDurationVital(vitalsState, 'foo')
         clock.tick(100)
         stopDurationVital(cbSpy, vitalsState, 'foo')
         clock.tick(100)
@@ -73,7 +73,7 @@ describe('vitalCollection', () => {
       it('should not create multiple duration vitals by calling "stopDurationVital" on the same vital ref multiple times', () => {
         const cbSpy = jasmine.createSpy()
 
-        const vital = startDurationVital(vitalsState, lifeCycle, 'foo')
+        const vital = startDurationVital(vitalsState, 'foo')
         stopDurationVital(cbSpy, vitalsState, vital)
         stopDurationVital(cbSpy, vitalsState, vital)
 
@@ -83,7 +83,7 @@ describe('vitalCollection', () => {
       it('should not create multiple duration vitals by calling "stopDurationVital" on the same vital name multiple times', () => {
         const cbSpy = jasmine.createSpy()
 
-        startDurationVital(vitalsState, lifeCycle, 'bar')
+        startDurationVital(vitalsState, 'bar')
         stopDurationVital(cbSpy, vitalsState, 'bar')
         stopDurationVital(cbSpy, vitalsState, 'bar')
 
@@ -93,9 +93,9 @@ describe('vitalCollection', () => {
       it('should create multiple duration vitals from multiple vital refs', () => {
         const cbSpy = jasmine.createSpy()
 
-        const vitalRef1 = startDurationVital(vitalsState, lifeCycle, 'foo', { description: 'component 1' })
+        const vitalRef1 = startDurationVital(vitalsState, 'foo', { description: 'component 1' })
         clock.tick(100)
-        const vitalRef2 = startDurationVital(vitalsState, lifeCycle, 'foo', { description: 'component 2' })
+        const vitalRef2 = startDurationVital(vitalsState, 'foo', { description: 'component 2' })
         clock.tick(100)
         stopDurationVital(cbSpy, vitalsState, vitalRef2)
         clock.tick(100)
@@ -115,16 +115,16 @@ describe('vitalCollection', () => {
       it('should merge startDurationVital and stopDurationVital description', () => {
         const cbSpy = jasmine.createSpy()
 
-        startDurationVital(vitalsState, lifeCycle, 'both-undefined')
+        startDurationVital(vitalsState, 'both-undefined')
         stopDurationVital(cbSpy, vitalsState, 'both-undefined')
 
-        startDurationVital(vitalsState, lifeCycle, 'start-defined', { description: 'start-defined' })
+        startDurationVital(vitalsState, 'start-defined', { description: 'start-defined' })
         stopDurationVital(cbSpy, vitalsState, 'start-defined')
 
-        startDurationVital(vitalsState, lifeCycle, 'stop-defined')
+        startDurationVital(vitalsState, 'stop-defined')
         stopDurationVital(cbSpy, vitalsState, 'stop-defined', { description: 'stop-defined' })
 
-        startDurationVital(vitalsState, lifeCycle, 'both-defined', { description: 'start-defined' })
+        startDurationVital(vitalsState, 'both-defined', { description: 'start-defined' })
         stopDurationVital(cbSpy, vitalsState, 'both-defined', { description: 'stop-defined' })
 
         expect(cbSpy).toHaveBeenCalledTimes(4)
@@ -149,25 +149,25 @@ describe('vitalCollection', () => {
       it('should merge startDurationVital and stopDurationVital contexts', () => {
         const cbSpy = jasmine.createSpy()
 
-        const vitalRef1 = startDurationVital(vitalsState, lifeCycle, 'both-undefined')
+        const vitalRef1 = startDurationVital(vitalsState, 'both-undefined')
         stopDurationVital(cbSpy, vitalsState, vitalRef1)
 
-        const vitalRef2 = startDurationVital(vitalsState, lifeCycle, 'start-defined', {
+        const vitalRef2 = startDurationVital(vitalsState, 'start-defined', {
           context: { start: 'defined' },
         })
         stopDurationVital(cbSpy, vitalsState, vitalRef2)
 
-        const vitalRef3 = startDurationVital(vitalsState, lifeCycle, 'stop-defined', {
+        const vitalRef3 = startDurationVital(vitalsState, 'stop-defined', {
           context: { stop: 'defined' },
         })
         stopDurationVital(cbSpy, vitalsState, vitalRef3)
 
-        const vitalRef4 = startDurationVital(vitalsState, lifeCycle, 'both-defined', {
+        const vitalRef4 = startDurationVital(vitalsState, 'both-defined', {
           context: { start: 'defined' },
         })
         stopDurationVital(cbSpy, vitalsState, vitalRef4, { context: { stop: 'defined' } })
 
-        const vitalRef5 = startDurationVital(vitalsState, lifeCycle, 'stop-precedence', {
+        const vitalRef5 = startDurationVital(vitalsState, 'stop-precedence', {
           context: { precedence: 'start' },
         })
         stopDurationVital(cbSpy, vitalsState, vitalRef5, { context: { precedence: 'stop' } })
@@ -317,6 +317,15 @@ describe('vitalCollection', () => {
         expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.failure_reason).toBe('error')
         expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.description).toBe('baz')
         expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).context).toEqual({ foo: 'bar' })
+      })
+
+      it('should notify lifecycle with vital started event when starting a duration vital', () => {
+        const subscriberSpy = jasmine.createSpy()
+        lifeCycle.subscribe(LifeCycleEventType.VITAL_STARTED, subscriberSpy)
+
+        vitalCollection.startDurationVital('foo')
+
+        expect(subscriberSpy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ name: 'foo' }))
       })
     })
   })

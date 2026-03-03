@@ -21,6 +21,9 @@ export function createActionHistory(lifeCycle: LifeCycle) {
     history.add(
       {
         id: actionStart.id,
+        // The label is temporarily empty since we need to account for customers that might
+        // redact the action name in the beforeSend callback. We will either try to do patch this
+        // behavior, or remove the label field entirely.
         label: '',
         startClocks: actionStart.startClocks,
         duration: undefined,
@@ -44,6 +47,9 @@ export function createActionHistory(lifeCycle: LifeCycle) {
           .add(
             {
               id: rawRumEvent.action.id,
+              // The label is temporarily empty since we need to account for customers that might
+              // redact the action name in the beforeSend callback. We will either try to do patch this
+              // behavior, or remove the label field entirely.
               label: '',
               startClocks,
               duration,

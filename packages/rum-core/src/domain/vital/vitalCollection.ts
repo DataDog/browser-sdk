@@ -151,8 +151,14 @@ export function startVitalCollection(
   return {
     addOperationStepVital,
     addDurationVital,
-    startDurationVital: (name: string, options: DurationVitalOptions = {}) =>
-      startDurationVital(customVitalsState, lifeCycle, name, options),
+    startDurationVital: (name: string, options: DurationVitalOptions = {}) => {
+      const ref = startDurationVital(customVitalsState, name, options)
+      const vitalState = customVitalsState.vitalsByReference.get(ref)
+      if (vitalState) {
+        lifeCycle.notify(LifeCycleEventType.VITAL_STARTED, vitalState)
+      }
+      return ref
+    },
     stopDurationVital: (nameOrRef: string | DurationVitalReference, options: DurationVitalOptions = {}) => {
       stopDurationVital(addDurationVitalWithId, customVitalsState, nameOrRef, options)
     },
@@ -161,13 +167,11 @@ export function startVitalCollection(
 
 export function startDurationVital(
   { vitalsByName, vitalsByReference }: CustomVitalsState,
-  lifeCycle: LifeCycle | undefined, // the lifecycle might not be defined in case datadogRum is not initialized yet
   name: string,
   options: DurationVitalOptions = {}
 ) {
-  const vitalId = generateUUID()
   const vital = {
-    id: vitalId,
+    id: generateUUID(),
     name,
     startClocks: clocksNow(),
     ...options,
@@ -180,10 +184,6 @@ export function startDurationVital(
 
   // To avoid memory leaks caused by the creation of numerous references (e.g., from improper useEffect implementations), we use a WeakMap.
   vitalsByReference.set(reference, vital)
-
-  if (lifeCycle) {
-    lifeCycle.notify(LifeCycleEventType.VITAL_STARTED, vital)
-  }
 
   return reference
 }
