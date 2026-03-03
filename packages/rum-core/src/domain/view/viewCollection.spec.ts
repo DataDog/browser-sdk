@@ -72,6 +72,11 @@ const VIEW: ViewEvent = {
   sessionIsActive: true,
 }
 
+const ACTIVE_VIEW: ViewEvent = {
+  ...VIEW,
+  isActive: true,
+}
+
 describe('viewCollection', () => {
   const lifeCycle = new LifeCycle()
   let hooks: Hooks
@@ -365,9 +370,9 @@ describe('partial view updates', () => {
     setupViewCollection()
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
-      ...VIEW,
+      ...ACTIVE_VIEW,
       documentVersion: 4,
-      eventCounts: { ...VIEW.eventCounts, errorCount: 15 },
+      eventCounts: { ...ACTIVE_VIEW.eventCounts, errorCount: 15 },
     })
 
     expect(rawRumEvents.length).toBe(2)
@@ -379,9 +384,9 @@ describe('partial view updates', () => {
     setupViewCollection()
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
-      ...VIEW,
+      ...ACTIVE_VIEW,
       documentVersion: 4,
-      eventCounts: { ...VIEW.eventCounts, errorCount: 15 },
+      eventCounts: { ...ACTIVE_VIEW.eventCounts, errorCount: 15 },
     })
 
     const updateEvent = rawRumEvents[1].rawRumEvent as any
@@ -395,8 +400,8 @@ describe('partial view updates', () => {
 
   it('should not emit event when no fields changed', () => {
     setupViewCollection()
-    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
-    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW) // identical
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { ...ACTIVE_VIEW, documentVersion: 1 })
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { ...ACTIVE_VIEW, documentVersion: 1 }) // identical
 
     expect(rawRumEvents.length).toBe(1) // only the initial VIEW
   })
@@ -432,11 +437,11 @@ describe('partial view updates', () => {
 
   it('should have monotonically increasing document_version across view and view_update', () => {
     setupViewCollection()
-    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { ...VIEW, documentVersion: 1 })
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { ...ACTIVE_VIEW, documentVersion: 1 })
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
-      ...VIEW,
+      ...ACTIVE_VIEW,
       documentVersion: 2,
-      eventCounts: { ...VIEW.eventCounts, errorCount: 15 },
+      eventCounts: { ...ACTIVE_VIEW.eventCounts, errorCount: 15 },
     })
 
     const firstEvent = rawRumEvents[0].rawRumEvent as RawRumViewEvent
