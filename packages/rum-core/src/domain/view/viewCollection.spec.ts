@@ -20,7 +20,7 @@ import type { ViewHistoryEntry } from '../contexts/viewHistory'
 import type { AssembleHookParams, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
-import { startViewCollection } from './viewCollection'
+import { startViewCollection, PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL } from './viewCollection'
 import type { ViewEvent } from './trackViews'
 
 const VIEW: ViewEvent = {
@@ -485,5 +485,54 @@ describe('partial view updates', () => {
 
     expect(rawRumEvents.length).toBe(3)
     expect(rawRumEvents[2].rawRumEvent.type).toBe(RumEventType.VIEW)
+  })
+
+  it('should emit a full VIEW checkpoint after PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL view_updates', () => {
+    setupViewCollection()
+    // Emit initial VIEW
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { ...ACTIVE_VIEW, documentVersion: 1 })
+
+    // Emit PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL intermediate updates (each triggers VIEW_UPDATE)
+    for (let i = 2; i <= 1 + PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL; i++) {
+      lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
+        ...ACTIVE_VIEW,
+        documentVersion: i,
+        eventCounts: { ...ACTIVE_VIEW.eventCounts, errorCount: i },
+      })
+    }
+
+    // events: 1 VIEW + 9 VIEW_UPDATE + 1 VIEW checkpoint = 11 events
+    expect(rawRumEvents.length).toBe(1 + PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL)
+    expect(rawRumEvents[0].rawRumEvent.type).toBe(RumEventType.VIEW)
+    // Updates 2–10 are VIEW_UPDATE (indices 1–9)
+    for (let i = 1; i < PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL; i++) {
+      expect(rawRumEvents[i].rawRumEvent.type).toBe(RumEventType.VIEW_UPDATE)
+    }
+    // The 11th (index 10) is the checkpoint — a full VIEW
+    expect(rawRumEvents[10].rawRumEvent.type).toBe(RumEventType.VIEW)
+  })
+
+  it('should reset the checkpoint counter after emitting a checkpoint VIEW', () => {
+    setupViewCollection()
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { ...ACTIVE_VIEW, documentVersion: 1 })
+
+    // Trigger first checkpoint (9 VIEW_UPDATEs + 1 checkpoint VIEW)
+    for (let i = 2; i <= 1 + PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL; i++) {
+      lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
+        ...ACTIVE_VIEW,
+        documentVersion: i,
+        eventCounts: { ...ACTIVE_VIEW.eventCounts, errorCount: i },
+      })
+    }
+
+    // One more update after checkpoint — should be VIEW_UPDATE, not another checkpoint
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
+      ...ACTIVE_VIEW,
+      documentVersion: 12,
+      eventCounts: { ...ACTIVE_VIEW.eventCounts, errorCount: 99 },
+    })
+
+    expect(rawRumEvents.length).toBe(2 + PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL)
+    expect(rawRumEvents[11].rawRumEvent.type).toBe(RumEventType.VIEW_UPDATE)
   })
 })
