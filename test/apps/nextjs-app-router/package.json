@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "@datadog/browser-rum": "file:../../../packages/rum/package.tgz",
-    "@datadog/browser-rum-nextjs": "file:../../../packages/rum-nextjs/package.tgz",
+    "@datadog/browser-rum-next-plugin": "file:../../../packages/rum-nextjs/package.tgz",
     "@datadog/browser-rum-react": "file:../../../packages/rum-react/package.tgz",
     "next": "16.1.6",
     "react": "19.2.3",
@@ -18,7 +18,7 @@
     "@datadog/browser-rum-core": "file:../../../packages/rum-core/package.tgz",
     "@datadog/browser-core": "file:../../../packages/core/package.tgz",
     "@datadog/browser-rum": "file:../../../packages/rum/package.tgz",
-    "@datadog/browser-rum-nextjs": "file:../../../packages/rum-nextjs/package.tgz",
+    "@datadog/browser-rum-next-plugin": "file:../../../packages/rum-nextjs/package.tgz",
     "@datadog/browser-rum-react": "file:../../../packages/rum-react/package.tgz",
     "@datadog/browser-rum-slim": "file:../../../packages/rum-slim/package.tgz",
     "@datadog/browser-worker": "file:../../../packages/worker/package.tgz"

@@ -1,4 +1,4 @@
-import { DatadogRumProvider } from '@datadog/browser-rum-nextjs'
+import { DatadogRumProvider } from '@datadog/browser-rum-next-plugin'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {

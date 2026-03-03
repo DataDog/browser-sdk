@@ -1,5 +1,5 @@
 import { datadogRum } from '@datadog/browser-rum'
-import { nextjsPlugin } from '@datadog/browser-rum-nextjs'
+import { nextjsPlugin } from '@datadog/browser-rum-next-plugin'
 
 const params = new URLSearchParams(window.location.search)
 const config = params.get('rum-config')
