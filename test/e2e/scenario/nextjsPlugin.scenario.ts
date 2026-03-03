@@ -37,4 +37,25 @@ test.describe('nextjs app router', () => {
       expect(userView).toBeDefined()
       expect(userView?.view.loading_type).toBe('route_change')
     })
+
+  createTest('should track SPA navigation with loading_time')
+    .withRum()
+    .withNextjsApp()
+    .run(async ({ page, flushEvents, intakeRegistry }) => {
+      await page.waitForLoadState('networkidle')
+      await page.click('text=Go to User 42')
+      await page.waitForURL('**/user/42')
+
+      await page.click('text=Back to Home')
+
+      await flushEvents()
+
+      const viewEvents = intakeRegistry.rumViewEvents
+      const homeView = viewEvents.find(
+        (e) => e.view.name === '/' && e.view.loading_type === 'initial_load' && e.view.loading_time !== undefined
+      )
+      expect(homeView).toBeDefined()
+      expect(homeView?.view.loading_time).toBeDefined()
+      expect(homeView?.view.loading_time).toBeGreaterThan(0)
+    })
 })
