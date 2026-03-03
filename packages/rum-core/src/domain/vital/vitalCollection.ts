@@ -111,13 +111,7 @@ export function startVitalCollection(
     return !pageStateHistory.wasInPageStateDuringPeriod(PageState.FROZEN, vital.startClocks.relative, vital.duration)
   }
 
-  function addDurationVital(vital: DurationVital) {
-    if (isValid(vital)) {
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital))
-    }
-  }
-
-  function addDurationVitalWithId(vital: DurationVital, vitalId: string) {
+  function addDurationVital(vital: DurationVital, vitalId?: string) {
     if (isValid(vital)) {
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital, vitalId))
     }
@@ -160,7 +154,7 @@ export function startVitalCollection(
       return ref
     },
     stopDurationVital: (nameOrRef: string | DurationVitalReference, options: DurationVitalOptions = {}) => {
-      stopDurationVital(addDurationVitalWithId, customVitalsState, nameOrRef, options)
+      stopDurationVital(addDurationVital, customVitalsState, nameOrRef, options)
     },
   }
 }
