@@ -144,7 +144,7 @@ test.describe('partial view updates', () => {
       }
     })
 
-  createTest('should send view_update with is_active false when view ends')
+  createTest('should send a full VIEW event (not view_update) with is_active false when view ends')
     .withRum({
       enableExperimentalFeatures: ['partial_view_updates'],
     })
@@ -162,11 +162,37 @@ test.describe('partial view updates', () => {
 
       await flushEvents()
 
-      const viewUpdateEvents = getViewUpdateEvents(intakeRegistry)
-
-      // Find the view_update that marks the first view as inactive
-      const firstViewId = intakeRegistry.rumViewEvents[0].view.id
-      const endEvent = viewUpdateEvents.find((e) => e.view.id === firstViewId && e.view.is_active === false)
+      // After Fix 3: view-end emits a full VIEW event, not a VIEW_UPDATE
+      const viewEvents = intakeRegistry.rumViewEvents
+      const firstViewId = viewEvents[0].view.id
+      const endEvent = viewEvents.find((e) => e.view.id === firstViewId && !e.view.is_active)
       expect(endEvent).toBeDefined()
+      expect(endEvent?.type).toBe('view')
+
+      // No view_update should have is_active: false
+      const viewUpdateEvents = getViewUpdateEvents(intakeRegistry)
+      const endUpdateEvent = viewUpdateEvents.find((e) => e.view.id === firstViewId && e.view.is_active === false)
+      expect(endUpdateEvent).toBeUndefined()
+    })
+
+  createTest('should emit a full view checkpoint event during a long-lived view')
+    .withRum({
+      enableExperimentalFeatures: ['partial_view_updates'],
+    })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      // Trigger more than 10 updates by firing many actions
+      for (let i = 0; i < 12; i++) {
+        await page.evaluate((n) => {
+          window.DD_RUM!.addAction(`action-${n}`)
+        }, i)
+      }
+
+      await flushEvents()
+
+      // There must be at least 2 full VIEW events for the same view.id
+      // (the initial one + at least one checkpoint)
+      const firstViewId = intakeRegistry.rumViewEvents[0].view.id
+      const fullViewsForFirstView = intakeRegistry.rumViewEvents.filter((e) => e.view.id === firstViewId)
+      expect(fullViewsForFirstView.length).toBeGreaterThanOrEqual(2)
     })
 })
