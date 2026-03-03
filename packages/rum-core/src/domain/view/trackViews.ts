@@ -177,6 +177,9 @@ export function trackViews(
     addTiming: (name: string, time: RelativeTime | TimeStamp = timeStampNow()) => {
       currentView.addTiming(name, time)
     },
+    setLoadingTime: (callTimestamp?: TimeStamp, overwrite?: boolean) => {
+      return currentView.setLoadingTime(callTimestamp, overwrite)
+    },
     startView: (options?: ViewOptions, startClocks?: ClocksState) => {
       currentView.end({ endClocks: startClocks })
       currentView = startNewView(ViewLoadingType.ROUTE_CHANGE, startClocks, options)
@@ -224,6 +227,7 @@ function newView(
   const contextManager = createContextManager()
 
   let sessionIsActive = true
+  let hasManualLoadingTime = false
   let name = viewOptions?.name
   const service = viewOptions?.service || configuration.service
   const version = viewOptions?.version || configuration.version
@@ -256,6 +260,7 @@ function newView(
     stop: stopCommonViewMetricsTracking,
     stopINPTracking,
     getCommonViewMetrics,
+    setManualLoadingTime,
   } = trackCommonViewMetrics(
     lifeCycle,
     domMutationObservable,
@@ -375,6 +380,20 @@ function newView(
       const relativeTime = looksLikeRelativeTime(time) ? time : elapsed(startClocks.timeStamp, time)
       customTimings[sanitizeTiming(name)] = relativeTime
       scheduleViewUpdate()
+    },
+    setLoadingTime(callTimestamp?: TimeStamp, overwrite = false) {
+      if (endClocks) {
+        return { overwritten: false }
+      }
+      if (hasManualLoadingTime && !overwrite) {
+        return { overwritten: false }
+      }
+      const overwritten = hasManualLoadingTime
+      const loadingTime = elapsed(startClocks.timeStamp, callTimestamp ?? timeStampNow())
+      setManualLoadingTime(loadingTime)
+      hasManualLoadingTime = true
+      scheduleViewUpdate()
+      return { overwritten }
     },
     setViewName(updatedName: string) {
       name = updatedName

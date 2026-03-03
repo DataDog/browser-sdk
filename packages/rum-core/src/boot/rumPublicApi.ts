@@ -27,6 +27,7 @@ import {
   createHandlingStack,
   sanitize,
   createIdentityEncoder,
+  display,
   displayAlreadyInitializedError,
   createTrackingConsentState,
   timeStampToClocks,
@@ -37,6 +38,7 @@ import {
   ExperimentalFeature,
   mockable,
   generateUUID,
+  timeStampNow,
 } from '@datadog/browser-core'
 
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -65,6 +67,13 @@ import { startRum } from './startRum'
 
 export interface StartRecordingOptions {
   force: boolean
+}
+
+export interface SetViewLoadingTimeOptions {
+  /**
+   * Set to `true` to replace a previously set loading time.
+   */
+  overwrite?: boolean
 }
 
 /**
@@ -235,6 +244,20 @@ export interface RumPublicApi extends PublicApi {
    * @param [time] - Epoch timestamp of the custom timing (if not set, will use current time)
    */
   addTiming: (name: string, time?: number) => void
+
+  /**
+   * [Experimental] Manually set the current view's loading time.
+   *
+   * Call this method when the view has finished loading. The loading time is computed as the
+   * elapsed time since the view started. By default, the first call sets the loading time and
+   * subsequent calls are no-ops. Use `{ overwrite: true }` to replace a previously set value.
+   *
+   * Requires `enableExperimentalFeatures: ["set_view_loading_time"]` in init configuration.
+   *
+   * @category Data Collection
+   * @param options - Options. Set `overwrite: true` to replace a previously set loading time.
+   */
+  setViewLoadingTime: (options?: SetViewLoadingTimeOptions) => void
 
   /**
    * Set the global context information to all events, stored in `@context`
@@ -553,6 +576,7 @@ export interface Strategy {
   getInternalContext: StartRumResult['getInternalContext']
   stopSession: StartRumResult['stopSession']
   addTiming: StartRumResult['addTiming']
+  setLoadingTime: StartRumResult['setLoadingTime']
   startView: StartRumResult['startView']
   setViewName: StartRumResult['setViewName']
 
@@ -770,6 +794,21 @@ export function makeRumPublicApi(
     addTiming: monitor((name, time) => {
       // TODO: next major decide to drop relative time support or update its behaviour
       strategy.addTiming(sanitize(name)!, time as RelativeTime | TimeStamp | undefined)
+    }),
+
+    setViewLoadingTime: monitor((options?: SetViewLoadingTimeOptions) => {
+      if (strategy.initConfiguration && !isExperimentalFeatureEnabled(ExperimentalFeature.SET_VIEW_LOADING_TIME)) {
+        display.warn(
+          'setViewLoadingTime requires enableExperimentalFeatures: ["set_view_loading_time"] in your init configuration.'
+        )
+        return
+      }
+      const callTimestamp = timeStampNow()
+      const result = strategy.setLoadingTime(callTimestamp, options?.overwrite ?? false)
+      addTelemetryUsage({
+        feature: 'addViewLoadingTime',
+        overwritten: result?.overwritten ?? false,
+      })
     }),
 
     setGlobalContext: defineContextMethod(

@@ -24,6 +24,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   addError: () => undefined,
   addEvent: () => undefined,
   addTiming: () => undefined,
+  setLoadingTime: () => ({ overwritten: false }),
   addFeatureFlagEvaluation: () => undefined,
   startView: () => undefined,
   setViewContext: () => undefined,
@@ -552,6 +553,54 @@ describe('rum public api', () => {
       expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('foo')
       expect(addTimingSpy.calls.argsFor(0)[1]).toBe(12 as RelativeTime)
       expect(displaySpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('setViewLoadingTime', () => {
+    let setLoadingTimeSpy: jasmine.Spy<ReturnType<StartRum>['setLoadingTime']>
+    let rumPublicApi: RumPublicApi
+
+    beforeEach(() => {
+      setLoadingTimeSpy = jasmine.createSpy()
+      ;({ rumPublicApi } = makeRumPublicApiWithDefaults({
+        startRumResult: {
+          setLoadingTime: setLoadingTimeSpy,
+        },
+      }))
+    })
+
+    it('should call setLoadingTime with timestamp and no overwrite by default', () => {
+      addExperimentalFeatures([ExperimentalFeature.SET_VIEW_LOADING_TIME])
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+      rumPublicApi.setViewLoadingTime()
+
+      expect(setLoadingTimeSpy).toHaveBeenCalledOnceWith(jasmine.any(Number), false)
+    })
+
+    it('should pass overwrite true when specified', () => {
+      addExperimentalFeatures([ExperimentalFeature.SET_VIEW_LOADING_TIME])
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+      rumPublicApi.setViewLoadingTime({ overwrite: true })
+
+      expect(setLoadingTimeSpy).toHaveBeenCalledOnceWith(jasmine.any(Number), true)
+    })
+
+    it('should not throw when called before init', () => {
+      expect(() => rumPublicApi.setViewLoadingTime()).not.toThrow()
+
+      expect(setLoadingTimeSpy).not.toHaveBeenCalled()
+    })
+
+    it('should be a no-op and warn when experimental flag is disabled', () => {
+      const displayWarnSpy = spyOn(display, 'warn')
+
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.setViewLoadingTime()
+
+      expect(setLoadingTimeSpy).not.toHaveBeenCalled()
+      expect(displayWarnSpy).toHaveBeenCalledOnceWith(jasmine.stringContaining('enableExperimentalFeatures'))
     })
   })
 

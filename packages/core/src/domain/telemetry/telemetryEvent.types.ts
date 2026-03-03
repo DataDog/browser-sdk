@@ -531,6 +531,7 @@ export type TelemetryCommonFeaturesUsage =
 /**
  * Schema of browser specific features usage
  */
+// [MANUAL] AddViewLoadingTime added pending upstream rum-events-format schema sync (https://github.com/DataDog/rum-events-format/pull/352)
 export type TelemetryBrowserFeaturesUsage =
   | StartSessionReplayRecording
   | StartDurationVital
@@ -540,6 +541,7 @@ export type TelemetryBrowserFeaturesUsage =
   | StopAction
   | StartResource
   | StopResource
+  | AddViewLoadingTime
 /**
  * Schema of mobile specific features usage
  */
@@ -954,11 +956,13 @@ export interface AddViewLoadingTime {
   /**
    * Whether the view is not available
    */
-  no_view: boolean
+  // [MANUAL] Made optional pending rum-events-format PR #352 (https://github.com/DataDog/rum-events-format/pull/352)
+  no_view?: boolean
   /**
    * Whether the available view is not active
    */
-  no_active_view: boolean
+  // [MANUAL] Made optional pending rum-events-format PR #352 (https://github.com/DataDog/rum-events-format/pull/352)
+  no_active_view?: boolean
   /**
    * Whether the loading time was overwritten
    */

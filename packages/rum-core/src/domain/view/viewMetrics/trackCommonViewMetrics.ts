@@ -28,6 +28,7 @@ export function trackCommonViewMetrics(
   viewStart: ClocksState
 ) {
   const commonViewMetrics: CommonViewMetrics = {}
+  let hasManualLoadingTime = false
 
   const { stop: stopLoadingTimeTracking, setLoadEvent } = trackLoadingTime(
     lifeCycle,
@@ -37,8 +38,10 @@ export function trackCommonViewMetrics(
     loadingType,
     viewStart,
     (newLoadingTime) => {
-      commonViewMetrics.loadingTime = newLoadingTime
-      scheduleViewUpdate()
+      if (!hasManualLoadingTime) {
+        commonViewMetrics.loadingTime = newLoadingTime
+        scheduleViewUpdate()
+      }
     }
   )
 
@@ -73,6 +76,13 @@ export function trackCommonViewMetrics(
     getCommonViewMetrics: () => {
       commonViewMetrics.interactionToNextPaint = getInteractionToNextPaint()
       return commonViewMetrics
+    },
+    setManualLoadingTime: (loadingTime: Duration) => {
+      if (!hasManualLoadingTime) {
+        stopLoadingTimeTracking()
+      }
+      hasManualLoadingTime = true
+      commonViewMetrics.loadingTime = loadingTime
     },
   }
 }
