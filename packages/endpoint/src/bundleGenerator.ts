@@ -1,4 +1,5 @@
 import type { SdkVariant } from './sdkDownloader.ts'
+import { CONTEXT_RESOLUTION_HELPERS } from './contextResolutionHelpers.ts'
 
 export type { SdkVariant } from './sdkDownloader.ts'
 
@@ -59,6 +60,32 @@ export function generateCombinedBundle(options: CombineBundleOptions): string {
   const configJson = JSON.stringify(config, null, 2)
   const versionDisplay = sdkVersion ?? 'unknown'
 
+  const hasUser = Array.isArray(config.user) && (config.user as unknown[]).length > 0
+  const hasContext = Array.isArray(config.context) && (config.context as unknown[]).length > 0
+  const needsResolution = hasUser || hasContext
+
+  const contextResolutionCode = needsResolution
+    ? `// Resolve dynamic values for user and global context
+    var __dd_user = {};
+    (__DATADOG_REMOTE_CONFIG__.user || []).forEach(function(item) {
+      __dd_user[item.key] = __dd_resolveContextValue(item.value);
+    });
+    var __dd_globalContext = {};
+    (__DATADOG_REMOTE_CONFIG__.context || []).forEach(function(item) {
+      __dd_globalContext[item.key] = __dd_resolveContextValue(item.value);
+    });`
+    : ''
+
+  const initCallCode = needsResolution
+    ? `window.DD_RUM.init(Object.assign({}, __DATADOG_REMOTE_CONFIG__, {
+      "user": Object.keys(__dd_user).length ? __dd_user : undefined,
+      "context": undefined,
+      "globalContext": Object.keys(__dd_globalContext).length ? __dd_globalContext : undefined
+    }));`
+    : `window.DD_RUM.init(__DATADOG_REMOTE_CONFIG__);`
+
+  const helpersCode = needsResolution ? CONTEXT_RESOLUTION_HELPERS.trim() : ''
+
   return `/**
  * Datadog Browser SDK with Embedded Remote Configuration
  * SDK Variant: ${variant}
@@ -81,8 +108,10 @@ export function generateCombinedBundle(options: CombineBundleOptions): string {
 
   // Auto-initialize with embedded config
   if (typeof window !== 'undefined' && typeof window.DD_RUM !== 'undefined') {
-    window.DD_RUM.init(__DATADOG_REMOTE_CONFIG__);
+    ${contextResolutionCode}
+    ${initCallCode}
   }
+  ${helpersCode ? '\n  ' + helpersCode : ''}
 })();
 `
 }

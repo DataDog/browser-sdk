@@ -287,6 +287,98 @@ describe('edge cases', () => {
   })
 })
 
+describe('user and context resolution', () => {
+  const mockSdkCode = 'window.DD_RUM = { init: function(config) { this.config = config; } };'
+
+  it('emits user resolution code when user[] is present in config', () => {
+    const bundle = generateCombinedBundle({
+      sdkCode: mockSdkCode,
+      config: {
+        applicationId: 'test-app-id',
+        user: [
+          { key: 'id', value: { rcSerializedType: 'dynamic', strategy: 'cookie', name: 'user_id' } },
+        ],
+      },
+      variant: 'rum',
+    })
+
+    assert.ok(bundle.includes('__dd_user'), 'Should include user resolution variable')
+    assert.ok(bundle.includes('__dd_resolveContextValue'), 'Should include resolution helper call')
+    assert.ok(bundle.includes('"user"'), 'Should pass user to DD_RUM.init')
+  })
+
+  it('emits globalContext resolution code when context[] is present in config', () => {
+    const bundle = generateCombinedBundle({
+      sdkCode: mockSdkCode,
+      config: {
+        applicationId: 'test-app-id',
+        context: [
+          { key: 'plan', value: { rcSerializedType: 'string', value: 'pro' } },
+        ],
+      },
+      variant: 'rum',
+    })
+
+    assert.ok(bundle.includes('__dd_globalContext'), 'Should include globalContext resolution variable')
+    assert.ok(bundle.includes('"globalContext"'), 'Should pass globalContext to DD_RUM.init')
+  })
+
+  it('includes CONTEXT_RESOLUTION_HELPERS in the bundle when user or context is present', () => {
+    const bundle = generateCombinedBundle({
+      sdkCode: mockSdkCode,
+      config: {
+        applicationId: 'test-app-id',
+        user: [{ key: 'id', value: { rcSerializedType: 'string', value: 'u1' } }],
+      },
+      variant: 'rum',
+    })
+
+    assert.ok(bundle.includes('__dd_getCookie'), 'Should include cookie resolution helper')
+    assert.ok(bundle.includes('__dd_resolveJsPath'), 'Should include JS path resolution helper')
+  })
+
+  it('does not include resolution code when user and context are absent', () => {
+    const bundle = generateCombinedBundle({
+      sdkCode: mockSdkCode,
+      config: { applicationId: 'test-app-id', sessionSampleRate: 100 },
+      variant: 'rum',
+    })
+
+    assert.ok(!bundle.includes('__dd_user'), 'Should not include user resolution variable')
+    assert.ok(!bundle.includes('__dd_globalContext'), 'Should not include globalContext resolution variable')
+  })
+
+  it('passes resolved user and globalContext to DD_RUM.init, not the raw ContextItem arrays', async () => {
+    const bundle = generateCombinedBundle({
+      sdkCode: '',
+      config: {
+        applicationId: 'app-123',
+        user: [{ key: 'id', value: { rcSerializedType: 'string', value: 'u1' } }],
+        context: [{ key: 'plan', value: { rcSerializedType: 'string', value: 'pro' } }],
+      },
+      variant: 'rum',
+    })
+
+    let initArgs: unknown
+    const vm = await import('node:vm')
+    const sandbox = {
+      window: {
+        DD_RUM: {
+          init: (args: unknown) => {
+            initArgs = args
+          },
+        },
+      },
+    }
+    vm.runInNewContext(bundle, sandbox)
+
+    assert.deepEqual((initArgs as any).user, { id: 'u1' }, 'user should be resolved plain object')
+    assert.deepEqual((initArgs as any).globalContext, { plan: 'pro' }, 'globalContext should be resolved plain object')
+    assert.strictEqual((initArgs as any).context, undefined, 'raw context array must not leak into init args')
+    assert.strictEqual((initArgs as any).applicationId, 'app-123', 'other config fields must pass through')
+  })
+})
+
 describe('generateBundle() input validation', () => {
   it('throws if applicationId is missing', async () => {
     await assert.rejects(
