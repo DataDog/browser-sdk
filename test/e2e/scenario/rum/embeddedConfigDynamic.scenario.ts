@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { generateCombinedBundle } from '@datadog/browser-sdk-endpoint'
+import { createTest } from '../../lib/framework'
+import { createEmbeddedConfigSetup } from '../../lib/helpers/embeddedConfigSetup'
 
 test.describe('embedded configuration with dynamic values', () => {
   test('preserves cookie dynamic value markers in generated bundle', () => {
@@ -155,4 +157,19 @@ test.describe('embedded configuration with dynamic values', () => {
     // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
     expect(() => new Function(bundle)).not.toThrow()
   })
+
+  // The cookie is pre-set via a script injected before the SDK loads (preSDKScript),
+  // so no second navigation is needed and the cookie is available during SDK init.
+  createTest('should resolve dynamic cookie strategy for user context in embedded config')
+    .withSetup(
+      createEmbeddedConfigSetup({
+        user: [{ key: 'id', value: { rcSerializedType: 'dynamic', strategy: 'cookie', name: 'uid' } }],
+        preSDKScript: "document.cookie = 'uid=cookie-user-99; path=/';",
+      })
+    )
+    .run(async ({ intakeRegistry, flushEvents }) => {
+      await flushEvents()
+      expect(intakeRegistry.rumViewEvents.length).toBeGreaterThanOrEqual(1)
+      expect(intakeRegistry.rumViewEvents[0].usr?.id).toBe('cookie-user-99')
+    })
 })

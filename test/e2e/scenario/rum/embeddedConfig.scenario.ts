@@ -1,6 +1,7 @@
 import { generateCombinedBundle } from '@datadog/browser-sdk-endpoint'
 import { test, expect } from '@playwright/test'
 import { createTest } from '../../lib/framework'
+import { createEmbeddedConfigSetup } from '../../lib/helpers/embeddedConfigSetup'
 
 test.describe('embedded configuration', () => {
   createTest('should load SDK with embedded config and expose getInitConfiguration')
@@ -127,5 +128,21 @@ test.describe('embedded configuration', () => {
 
       // No remote config requests should have been made
       expect(configRequests).toHaveLength(0)
+    })
+
+  createTest('should apply static user context from embedded config to view events')
+    .withSetup(createEmbeddedConfigSetup({ user: [{ key: 'id', value: { rcSerializedType: 'string', value: 'test-user-42' } }] }))
+    .run(async ({ intakeRegistry, flushEvents }) => {
+      await flushEvents()
+      expect(intakeRegistry.rumViewEvents.length).toBeGreaterThanOrEqual(1)
+      expect(intakeRegistry.rumViewEvents[0].usr?.id).toBe('test-user-42')
+    })
+
+  createTest('should apply static globalContext from embedded config to view events')
+    .withSetup(createEmbeddedConfigSetup({ context: [{ key: 'plan', value: { rcSerializedType: 'string', value: 'enterprise' } }] }))
+    .run(async ({ intakeRegistry, flushEvents }) => {
+      await flushEvents()
+      expect(intakeRegistry.rumViewEvents.length).toBeGreaterThanOrEqual(1)
+      expect(intakeRegistry.rumViewEvents[0].context?.plan).toBe('enterprise')
     })
 })
