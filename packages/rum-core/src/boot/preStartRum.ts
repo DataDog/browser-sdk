@@ -131,6 +131,14 @@ export function createPreStartStrategy(
 
     // Update the exposed initConfiguration to reflect the bridge and remote configuration overrides
     cachedInitConfiguration = initConfiguration
+
+    if (initConfiguration.user) {
+      userContext.setContext(initConfiguration.user)
+    }
+    if (initConfiguration.globalContext) {
+      globalContext.setContext(initConfiguration.globalContext)
+    }
+
     addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
 
     if (cachedConfiguration) {
