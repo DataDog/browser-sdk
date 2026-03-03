@@ -26,6 +26,8 @@ import type { CommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
 import type { InitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
 import { computeViewDiff, createViewDiffTracker } from './viewDiff'
 
+export const PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL = 10
+
 export function startViewCollection(
   lifeCycle: LifeCycle,
   hooks: Hooks,
@@ -40,22 +42,34 @@ export function startViewCollection(
   if (isExperimentalFeatureEnabled(ExperimentalFeature.PARTIAL_VIEW_UPDATES)) {
     const diffTracker = createViewDiffTracker()
     let currentViewId: string | undefined
+    let updatesSinceFullView = 0
 
     lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) => {
       const rawEventData = processViewUpdate(view, configuration, recorderApi)
 
-      // New view: reset tracker, emit full view event
+      // New view: reset tracker and counter, emit full VIEW
       if (view.id !== currentViewId) {
         currentViewId = view.id
         diffTracker.reset()
+        updatesSinceFullView = 0
         diffTracker.recordSentState(rawEventData.rawRumEvent)
         lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEventData)
         return
       }
 
-      // View ended: emit full VIEW, reset tracker (no diff on terminal state)
+      // View ended: emit full VIEW, reset tracker and counter
       if (!view.isActive) {
         diffTracker.reset()
+        updatesSinceFullView = 0
+        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEventData)
+        return
+      }
+
+      // Periodic checkpoint: emit full VIEW every N updates to allow backend recovery
+      updatesSinceFullView += 1
+      if (updatesSinceFullView >= PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL) {
+        updatesSinceFullView = 0
+        diffTracker.recordSentState(rawEventData.rawRumEvent)
         lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEventData)
         return
       }
