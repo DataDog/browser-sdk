@@ -11,7 +11,7 @@ function createPublicApi() {
 
 function initPlugin() {
   const { publicApi, startViewSpy } = createPublicApi()
-  const plugin = nextjsPlugin({ router: 'app' })
+  const plugin = nextjsPlugin()
   plugin.onInit({ publicApi, initConfiguration: { ...INIT_CONFIGURATION } })
   return { plugin, publicApi, startViewSpy }
 }
@@ -24,7 +24,7 @@ describe('nextjsPlugin', () => {
   })
 
   it('returns a plugin object', () => {
-    const plugin = nextjsPlugin({ router: 'app' })
+    const plugin = nextjsPlugin()
 
     expect(plugin).toEqual(
       jasmine.objectContaining({
@@ -39,7 +39,7 @@ describe('nextjsPlugin', () => {
     const initConfiguration = { ...INIT_CONFIGURATION }
     const { publicApi } = createPublicApi()
 
-    nextjsPlugin({ router: 'app' }).onInit({ publicApi, initConfiguration })
+    nextjsPlugin().onInit({ publicApi, initConfiguration })
 
     expect(initConfiguration.trackViewsManually).toBe(true)
   })
@@ -61,28 +61,25 @@ describe('nextjsPlugin', () => {
   describe('lifecycle subscribers', () => {
     it('calls onRumInit subscribers during onInit', () => {
       const callbackSpy = jasmine.createSpy()
-      const pluginConfiguration = { router: 'app' as const }
       const { publicApi } = createPublicApi()
       onRumInit(callbackSpy)
 
       expect(callbackSpy).not.toHaveBeenCalled()
 
-      nextjsPlugin(pluginConfiguration).onInit({
+      nextjsPlugin().onInit({
         publicApi,
         initConfiguration: INIT_CONFIGURATION,
       })
 
       expect(callbackSpy).toHaveBeenCalledTimes(1)
-      expect(callbackSpy.calls.mostRecent().args[0]).toBe(pluginConfiguration)
-      expect(callbackSpy.calls.mostRecent().args[1]).toBe(publicApi)
+      expect(callbackSpy.calls.mostRecent().args[0]).toBe(publicApi)
     })
 
     it('calls onRumInit subscriber immediately if already initialized', () => {
       const callbackSpy = jasmine.createSpy()
-      const pluginConfiguration = { router: 'app' as const }
       const { publicApi } = createPublicApi()
 
-      nextjsPlugin(pluginConfiguration).onInit({
+      nextjsPlugin().onInit({
         publicApi,
         initConfiguration: INIT_CONFIGURATION,
       })
@@ -90,8 +87,7 @@ describe('nextjsPlugin', () => {
       onRumInit(callbackSpy)
 
       expect(callbackSpy).toHaveBeenCalledTimes(1)
-      expect(callbackSpy.calls.mostRecent().args[0]).toBe(pluginConfiguration)
-      expect(callbackSpy.calls.mostRecent().args[1]).toBe(publicApi)
+      expect(callbackSpy.calls.mostRecent().args[0]).toBe(publicApi)
     })
 
     it('calls onRumStart subscribers during onRumStart', () => {

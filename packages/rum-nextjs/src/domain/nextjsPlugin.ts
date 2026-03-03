@@ -1,31 +1,25 @@
 import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
 
-export interface NextjsPluginConfiguration {
-  router: 'app'
-}
-
 export type NextjsPlugin = Pick<Required<RumPlugin>, 'name' | 'onInit' | 'onRumStart'>
 
-type InitSubscriber = (configuration: NextjsPluginConfiguration, rumPublicApi: RumPublicApi) => void
+type InitSubscriber = (rumPublicApi: RumPublicApi) => void
 type StartSubscriber = (addEvent: StartRumResult['addEvent']) => void
 
 let globalPublicApi: RumPublicApi | undefined
-let globalConfiguration: NextjsPluginConfiguration | undefined
 let globalAddEvent: StartRumResult['addEvent'] | undefined
 
 const onRumInitSubscribers: InitSubscriber[] = []
 const onRumStartSubscribers: StartSubscriber[] = []
 
-export function nextjsPlugin(configuration: NextjsPluginConfiguration): NextjsPlugin {
+export function nextjsPlugin(): NextjsPlugin {
   return {
     name: 'nextjs',
     onInit({ publicApi, initConfiguration }) {
       globalPublicApi = publicApi
-      globalConfiguration = configuration
       initConfiguration.trackViewsManually = true
 
       for (const subscriber of onRumInitSubscribers) {
-        subscriber(configuration, publicApi)
+        subscriber(publicApi)
       }
     },
     onRumStart({ addEvent }) {
@@ -46,8 +40,8 @@ export function startNextjsView(viewName: string) {
 }
 
 export function onRumInit(callback: InitSubscriber) {
-  if (globalConfiguration && globalPublicApi) {
-    callback(globalConfiguration, globalPublicApi)
+  if (globalPublicApi) {
+    callback(globalPublicApi)
   } else {
     onRumInitSubscribers.push(callback)
   }
@@ -63,7 +57,6 @@ export function onRumStart(callback: StartSubscriber) {
 
 export function resetNextjsPlugin() {
   globalPublicApi = undefined
-  globalConfiguration = undefined
   globalAddEvent = undefined
   onRumInitSubscribers.length = 0
   onRumStartSubscribers.length = 0
