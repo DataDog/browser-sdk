@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 import { generateCombinedBundle } from '@datadog/browser-sdk-endpoint'
 import { serializeConfigToJs } from '@datadog/browser-remote-config/node'
 import { createTest } from '../../lib/framework'
-import { createEmbeddedConfigSetup } from './embeddedConfig.scenario'
+import { createEmbeddedConfigSetup } from '../../lib/helpers/embeddedConfigSetup'
 
 test.describe('embedded configuration with dynamic values', () => {
   test('preserves cookie dynamic value markers in generated bundle', () => {
