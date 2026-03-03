@@ -130,11 +130,7 @@ export function startSessionManager(
           return
         }
 
-        return {
-          id: session.id,
-          anonymousId: session.anonymousId,
-          isReplayForced: session.isReplayForced,
-        }
+        return session
       },
       renewObservable,
       expireObservable,
@@ -174,11 +170,7 @@ export function startSessionManagerStub(onReady: (sessionManager: SessionManager
   }
   onReady({
     findSession: () => sessionContext,
-    findTrackedSession: () => ({
-      id: stubSessionId,
-      anonymousId: sessionContext.anonymousId,
-      isReplayForced: sessionContext.isReplayForced,
-    }),
+    findTrackedSession: () => sessionContext,
     renewObservable: new Observable(),
     expireObservable: new Observable(),
     sessionStateUpdateObservable: new Observable(),

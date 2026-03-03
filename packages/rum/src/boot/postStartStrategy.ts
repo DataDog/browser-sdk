@@ -1,6 +1,6 @@
 import type { LifeCycle, RumConfiguration, StartRecordingOptions, ViewHistory } from '@datadog/browser-rum-core'
 import { LifeCycleEventType, SessionReplayState, computeSessionReplayState } from '@datadog/browser-rum-core'
-import type { Telemetry, DeflateEncoder, SessionManager, SessionContext } from '@datadog/browser-core'
+import type { Telemetry, DeflateEncoder, SessionManager } from '@datadog/browser-core'
 import { asyncRunOnReadyState, monitorError, Observable } from '@datadog/browser-core'
 import { getSessionReplayLink } from '../domain/getSessionReplayLink'
 import { startRecorderInitTelemetry } from '../domain/startRecorderInitTelemetry'
@@ -107,7 +107,7 @@ export function createPostStartStrategy(
     const session = sessionManager.findTrackedSession()
     const replayState = session ? computeSessionReplayState(session, configuration) : undefined
 
-    if (canStartRecording(session, replayState, options)) {
+    if (!canStartRecording(replayState, options)) {
       status = RecorderStatus.IntentToStart
       return
     }
@@ -146,12 +146,8 @@ export function createPostStartStrategy(
   }
 }
 
-function canStartRecording(
-  session: SessionContext | undefined,
-  replayState: SessionReplayState | undefined,
-  options?: StartRecordingOptions
-) {
-  return !session || (replayState === SessionReplayState.OFF && (!options || !options.force))
+function canStartRecording(replayState: SessionReplayState | undefined, options?: StartRecordingOptions) {
+  return replayState !== undefined && (replayState !== SessionReplayState.OFF || options?.force)
 }
 
 function isRecordingInProgress(status: RecorderStatus) {
