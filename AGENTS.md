@@ -137,6 +137,7 @@ if (isExperimentalFeatureEnabled(ExperimentalFeature.SOME_FLAG)) { ... }
 
 ## Unit Tests
 
+- **Test framework**: Jasmine + Karma
 - **Co-location**: `feature.ts` → `feature.spec.ts` in the same directory
 - **Focus/skip**: `fdescribe` / `fit` to focus; `xdescribe` / `xit` to skip
 - **Cleanup**: use `registerCleanupTask(() => ...)` — never `afterEach()`

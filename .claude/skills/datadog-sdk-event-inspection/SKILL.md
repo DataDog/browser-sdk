@@ -23,14 +23,11 @@ batching. Setting this callback captures full event payloads before they reach i
 
 ## Setup — Choose Your Injection Path
 
-```dot
-digraph injection {
-    "Need initial view event\nor events from init()?" [shape=diamond];
-    "Path B: CDP pre-load injection" [shape=box];
-    "Path A: Console injection" [shape=box];
-    "Need initial view event\nor events from init()?" -> "Path B: CDP pre-load injection" [label="yes"];
-    "Need initial view event\nor events from init()?" -> "Path A: Console injection" [label="no"];
-}
+```mermaid
+flowchart TD
+    Q["Need initial view event<br/>or events from init()?"]
+    Q -- "yes" --> B["Path B: CDP pre-load injection"]
+    Q -- "no" --> A["Path A: Console injection"]
 ```
 
 ### Path A — Console Injection (post-load events only)
