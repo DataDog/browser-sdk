@@ -1,6 +1,7 @@
 import { generateUUID, INTAKE_URL_PARAMETERS } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
-import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
+import type { RemoteConfiguration } from '@datadog/browser-remote-config'
+import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import type test from '@playwright/test'
 import { isBrowserStack, isContinuousIntegration } from './environment'
 import type { Servers } from './httpServers'
