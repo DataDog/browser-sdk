@@ -15,7 +15,7 @@ stages:
   stage: deploy
   script:
     - export BUILD_MODE=release
-    - VERSION=$(node -p -e "require('./lerna.json').version")
+    - VERSION=$(node -p -e "require('./package.json').version")
     - yarn
     - yarn build:bundle
     - node ./scripts/deploy/deploy-prod-dc.ts v${VERSION%%.*} $DATACENTER --check-telemetry-errors

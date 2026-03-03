@@ -22,7 +22,8 @@ function checkPackageJsonVersion(packageJsonInfo: PackageJsonInfo): void {
     // The developer extension is a private package, but it should still have a version
     if (
       packageJsonInfo.content.version &&
-      packageJsonInfo.content.name !== '@datadog/browser-sdk-developer-extension'
+      packageJsonInfo.content.name !== '@datadog/browser-sdk-developer-extension' &&
+      packageJsonInfo.relativePath !== 'package.json'
     ) {
       throw new Error(`Private package ${packageJsonInfo.relativePath} should not have a version`)
     }
