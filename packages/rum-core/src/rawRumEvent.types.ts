@@ -18,6 +18,7 @@ import type {
   RumLongTaskEvent,
   RumResourceEvent,
   RumViewEvent,
+  RumViewUpdateEvent,
   RumVitalEvent,
 } from './rumEvent.types'
 
@@ -35,6 +36,7 @@ export type RumEventType = (typeof RumEventType)[keyof typeof RumEventType]
 
 export type AssembledRumEvent = (
   | RumViewEvent
+  | RumViewUpdateEvent
   | RumActionEvent
   | RumResourceEvent
   | RumErrorEvent
