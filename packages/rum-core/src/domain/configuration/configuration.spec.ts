@@ -631,6 +631,8 @@ describe('serializeRumConfiguration', () => {
       profilingSampleRate: 42,
       propagateTraceBaggage: true,
       betaTrackActionsInShadowDom: true,
+      user: { id: 'user-id' },
+      globalContext: { foo: 'bar' },
     }
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
@@ -646,7 +648,8 @@ describe('serializeRumConfiguration', () => {
           ? 'track_long_task' // We forgot the s, keeping this for backward compatibility
           : // The following options are not reported as telemetry. Please avoid adding more of them.
             // TODO: Add betaTrackActionsInShadowDom to rum-events-format and remove from this exclusion
-            Key extends 'applicationId' | 'subdomain' | 'betaTrackActionsInShadowDom'
+            // user and globalContext are excluded from telemetry because they contain PII (user identity and arbitrary customer data)
+            Key extends 'applicationId' | 'subdomain' | 'betaTrackActionsInShadowDom' | 'user' | 'globalContext'
             ? never
             : CamelToSnakeCase<Key>
     // By specifying the type here, we can ensure that serializeConfiguration is returning an
