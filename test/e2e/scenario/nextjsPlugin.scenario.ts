@@ -15,7 +15,6 @@ test.describe('nextjs app router', () => {
       const homeView = viewEvents.find((e) => e.view.name === '/' && e.view.loading_type === 'initial_load')
       expect(homeView).toBeDefined()
     })
-
   ;[
     { linkText: 'Go to User 42', url: '**/user/42', expectedViewName: '/user/[id]' },
     { linkText: 'Go to Guides 123', url: '**/guides/123', expectedViewName: '/guides/[...slug]' },
