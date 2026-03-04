@@ -18,6 +18,12 @@
 
 ---
 
+## v6.30.1
+
+**Internal Changes:**
+
+- 👷 upgrade minimatch to 10.2.4 to fix npm publish packaging issue ([#4267](https://github.com/DataDog/browser-sdk/pull/4267))
+
 ## v6.30.0
 
 **Public Changes:**
