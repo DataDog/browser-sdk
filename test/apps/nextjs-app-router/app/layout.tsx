@@ -1,4 +1,4 @@
-import { DatadogRumProvider } from '@datadog/browser-rum-next-plugin'
+import { DatadogRumAppRouterProvider } from '@datadog/browser-rum-nextjs'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <DatadogRumProvider>
+      <DatadogRumAppRouterProvider>
         <body style={{ fontFamily: 'system-ui, sans-serif', margin: 0 }}>
           <nav style={{ background: '#632ca6', padding: '1rem', marginBottom: '1rem' }}>
             <a href="/" style={{ color: 'white', textDecoration: 'none' }}>
@@ -18,7 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </nav>
           <main style={{ maxWidth: '800px', margin: '0 auto', padding: '1rem' }}>{children}</main>
         </body>
-      </DatadogRumProvider>
+      </DatadogRumAppRouterProvider>
     </html>
   )
 }

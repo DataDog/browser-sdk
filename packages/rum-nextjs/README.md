@@ -14,13 +14,13 @@ Initialize the Datadog RUM SDK with the `nextjsPlugin`:
 
 ```js
 import { datadogRum } from '@datadog/browser-rum'
-import { nextjsPlugin } from '@datadog/browser-rum-next-plugin'
+import { nextjsPlugin } from '@datadog/browser-rum-nextjs'
 
 datadogRum.init({
   applicationId: '<APP_ID>',
   clientToken: '<CLIENT_TOKEN>',
   site: 'datadoghq.com',
-  plugins: [nextjsPlugin({ router: 'app' })],
+  plugins: [nextjsPlugin()],
 })
 ```
 
@@ -28,7 +28,7 @@ datadogRum.init({
 
 ```tsx
 // app/layout.tsx
-import { DatadogRumProvider } from '@datadog/browser-rum-next-plugin'
+import { DatadogRumProvider } from '@datadog/browser-rum-nextjs'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
