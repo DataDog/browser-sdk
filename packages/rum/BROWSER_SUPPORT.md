@@ -16,11 +16,10 @@
 | tracing           | ✅     | ✅      | ✅     | ✅   | ✅             | ✅         | ❌  | ✅    |
 | route change      | ✅     | ✅      | ✅     | ✅   | ✅             | ✅         | ❌  | ✅    |
 | loading time      | ✅     | ✅      | ✅     | ✅   | ✅             | ✅         | ❌  | ✅    |
-| resource timing   | ✅     | ✅      | ⚠️(2)  | ✅   | ✅             | ⚠️(2)      | ❌  | ✅    |
+| resource timing   | ✅     | ✅      | ⚠️(1)  | ✅   | ✅             | ⚠️(1)      | ❌  | ✅    |
 | navigation timing | ✅     | ✅      | ✅     | ✅   | ✅             | ✅         | ❌  | ✅    |
-| web vitals        | ✅     | ⚠️(1)   | ⚠️(1)  | ✅   | ✅             | ⚠️(1)      | ❌  | ✅    |
+| web vitals        | ✅     | ❌      | ❌     | ✅   | ✅             | ❌         | ❌  | ✅    |
 | FCP               | ✅     | ✅      | ✅     | ✅   | ✅             | ✅         | ❌  | ✅    |
 
-1. FID only
-2. size information not available
-3. firstByte and download only
+1. size information not available
+2. firstByte and download only

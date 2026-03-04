@@ -1,8 +1,6 @@
 import type { RelativeTime, TrackingConsentState } from '@datadog/browser-core'
-import { Observable, performDraw, SESSION_NOT_TRACKED, startSessionManager } from '@datadog/browser-core'
+import { isSampled, Observable, SESSION_NOT_TRACKED, startSessionManager } from '@datadog/browser-core'
 import type { LogsConfiguration } from './configuration'
-
-export const LOGS_SESSION_KEY = 'logs'
 
 export interface LogsSessionManager {
   findTrackedSession: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => LogsSession | undefined
@@ -21,47 +19,47 @@ export const enum LoggerTrackingType {
 
 export function startLogsSessionManager(
   configuration: LogsConfiguration,
-  trackingConsentState: TrackingConsentState
-): LogsSessionManager {
-  const sessionManager = startSessionManager(
-    configuration,
-    LOGS_SESSION_KEY,
-    (rawTrackingType) => computeTrackingType(configuration, rawTrackingType),
-    trackingConsentState
-  )
-  return {
-    findTrackedSession: (startTime?: RelativeTime, options = { returnInactive: false }) => {
-      const session = sessionManager.findSession(startTime, options)
-      return session && session.trackingType === LoggerTrackingType.TRACKED
-        ? {
-            id: session.id,
-            anonymousId: session.anonymousId,
-          }
-        : undefined
-    },
-    expireObservable: sessionManager.expireObservable,
-  }
+  trackingConsentState: TrackingConsentState,
+  onReady: (sessionManager: LogsSessionManager) => void
+) {
+  startSessionManager(configuration, trackingConsentState, (sessionManager) => {
+    onReady({
+      findTrackedSession: (startTime?: RelativeTime, options = { returnInactive: false }) => {
+        const session = sessionManager.findSession(startTime, options)
+        if (!session || session.id === 'invalid') {
+          return
+        }
+
+        const trackingType = computeTrackingType(configuration, session.id)
+        if (trackingType === LoggerTrackingType.NOT_TRACKED) {
+          return
+        }
+
+        return {
+          id: session.id,
+          anonymousId: session.anonymousId,
+        }
+      },
+      expireObservable: sessionManager.expireObservable,
+    })
+  })
 }
 
-export function startLogsSessionManagerStub(configuration: LogsConfiguration): LogsSessionManager {
-  const isTracked = computeTrackingType(configuration) === LoggerTrackingType.TRACKED
-  const session = isTracked ? {} : undefined
-  return {
-    findTrackedSession: () => session,
+export function startLogsSessionManagerStub(
+  _configuration: LogsConfiguration,
+  _trackingConsentState: TrackingConsentState,
+  onReady: (sessionManager: LogsSessionManager) => void
+): void {
+  onReady({
+    findTrackedSession: () => ({}),
     expireObservable: new Observable(),
-  }
+  })
 }
 
-function computeTrackingType(configuration: LogsConfiguration, rawTrackingType?: string) {
-  if (hasValidLoggerSession(rawTrackingType)) {
-    return rawTrackingType
-  }
-  if (!performDraw(configuration.sessionSampleRate)) {
+function computeTrackingType(configuration: LogsConfiguration, sessionId: string): LoggerTrackingType {
+  if (!isSampled(sessionId, configuration.sessionSampleRate)) {
     return LoggerTrackingType.NOT_TRACKED
   }
-  return LoggerTrackingType.TRACKED
-}
 
-function hasValidLoggerSession(trackingType?: string): trackingType is LoggerTrackingType {
-  return trackingType === LoggerTrackingType.NOT_TRACKED || trackingType === LoggerTrackingType.TRACKED
+  return LoggerTrackingType.TRACKED
 }

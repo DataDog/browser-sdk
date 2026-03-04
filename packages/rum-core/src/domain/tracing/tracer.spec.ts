@@ -1,5 +1,6 @@
 import type { ContextManager, ContextValue } from '@datadog/browser-core'
 import { display, objectEntries, TraceContextInjection } from '@datadog/browser-core'
+import { MID_HASH_UUID } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock } from '../../../test'
 import { createRumSessionManagerMock } from '../../../test'
 import type { RumFetchResolveContext, RumFetchStartContext, RumXhrStartContext } from '../requestCollection'
@@ -259,6 +260,25 @@ describe('tracer', () => {
       expect(xhr.headers['x-datadog-sampling-priority']).toBeDefined()
     })
 
+    it('should apply the correction factor for chained sampling on the trace sample rate', () => {
+      if (!window.BigInt) {
+        pending('BigInt is not supported')
+      }
+
+      // MID_HASH_UUID has a hash of ~50.7%. With sessionSampleRate=60 and traceSampleRate=60:
+      // - Without correction: isSampled(id, 60) → true (50.7 < 60)
+      // - With correction: isSampled(id, 60*60/100=36) → false (50.7 > 36)
+      const tracer = startTracerWithDefaults({
+        initConfiguration: { sessionSampleRate: 60, traceSampleRate: 60 },
+        sessionManager: createRumSessionManagerMock().setId(MID_HASH_UUID),
+      })
+      const context = { ...ALLOWED_DOMAIN_CONTEXT }
+      tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
+
+      expect(context.traceSampled).toBeUndefined()
+      expect(xhr.headers['x-datadog-trace-id']).toBeUndefined()
+    })
+
     describe('baggage propagation header', () => {
       function traceRequestAndGetBaggageHeader({
         initConfiguration,
@@ -463,10 +483,10 @@ describe('tracer', () => {
 
       expect(context.init).toBe(undefined)
       expect(context.input).not.toBe(request)
-      expect(headersAsArray((context.input as Request).headers)).toEqual([
-        ['foo', 'bar'],
-        ...tracingHeadersAsArrayFor(context.traceId!, context.spanId!, '1'),
-      ])
+      expect(toPlainObject((context.input as Request).headers)).toEqual({
+        foo: 'bar',
+        ...tracingHeadersFor(context.traceId!, context.spanId!, '1'),
+      })
       expect(headersAsArray(request.headers)).toEqual([['foo', 'bar']])
     })
 
@@ -720,6 +740,7 @@ function tracingHeadersFor(traceId: TraceIdentifier, spanId: SpanIdentifier, sam
     'x-datadog-parent-id': spanId.toString(),
     'x-datadog-sampling-priority': samplingPriority,
     'x-datadog-trace-id': traceId.toString(),
+    baggage: 'session.id=session-id,user.id=1234,account.id=5678',
   }
 }
 
