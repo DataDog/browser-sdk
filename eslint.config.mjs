@@ -9,6 +9,7 @@ import jasmine from 'eslint-plugin-jasmine'
 import globals from 'globals'
 // eslint-disable-next-line local-rules/disallow-protected-directory-import
 import eslintLocalRules from './eslint-local-rules/index.js'
+import { SCHEMAS } from './scripts/lib/generatedSchemaTypes.ts'
 
 const SPEC_FILES = '**/*.{spec,specHelper}.{ts,tsx,js}'
 const MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL = process.env.MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL || 'warn'
@@ -21,6 +22,7 @@ export default tseslint.config(
   importPlugin.flatConfigs.typescript,
   {
     ignores: [
+      ...SCHEMAS.map((schema) => schema.typesPath),
       'packages/*/bundle',
       'packages/*/cjs',
       'packages/*/esm',
