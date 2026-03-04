@@ -21,7 +21,6 @@ if (testReportDirectory) {
 export const config: Config = {
   testDir: './scenario',
   testMatch: ['**/*.scenario.ts'],
-  testIgnore: ['**/android/**'],
   tsconfig: './tsconfig.json',
   fullyParallel: true,
   forbidOnly: isCi,
