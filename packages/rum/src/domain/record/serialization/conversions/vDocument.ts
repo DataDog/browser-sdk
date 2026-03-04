@@ -33,7 +33,7 @@ export interface VDocument {
 
   naturalRendering(): BrowserFullSnapshotRecord['type'] | BrowserIncrementalSnapshotRecord['type']
   render(options?: Partial<V1RenderOptions>): BrowserFullSnapshotRecord | BrowserIncrementalSnapshotRecord
-  renderAsFullSnaphot(options?: Partial<V1RenderOptions>): BrowserFullSnapshotRecord
+  renderAsFullSnapshot(options?: Partial<V1RenderOptions>): BrowserFullSnapshotRecord
   renderAsIncrementalSnapshot(options?: Partial<V1RenderOptions>): BrowserIncrementalSnapshotRecord
 
   root: VNode | undefined
@@ -133,12 +133,12 @@ export function createVDocument(): VDocument {
 
     render(options?: Partial<V1RenderOptions>): BrowserFullSnapshotRecord | BrowserIncrementalSnapshotRecord {
       if (self.naturalRendering() === RecordType.FullSnapshot) {
-        return self.renderAsFullSnaphot(options)
+        return self.renderAsFullSnapshot(options)
       }
       return self.renderAsIncrementalSnapshot(options)
     },
 
-    renderAsFullSnaphot(renderOptions: Partial<V1RenderOptions> = {}): BrowserFullSnapshotRecord {
+    renderAsFullSnapshot(renderOptions: Partial<V1RenderOptions> = {}): BrowserFullSnapshotRecord {
       const options = createV1RenderOptions(renderOptions)
 
       const root = self.root

@@ -75,7 +75,7 @@ export function expectFullSnapshotRendering(
     type: RecordType.FullSnapshot,
     timestamp: 0,
   }
-  const actualRecord = document.renderAsFullSnaphot()
+  const actualRecord = document.renderAsFullSnapshot()
   expect(actualRecord).toEqual(expectedRecord)
 
   const expectedSerialization = JSON.stringify(expectedRecord)

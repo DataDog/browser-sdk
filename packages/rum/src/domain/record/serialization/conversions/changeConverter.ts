@@ -125,6 +125,14 @@ function applyChangeToVDOM(record: BrowserChangeRecord, document: VDocument, str
         }
         break
       }
+
+      case ChangeType.VisualViewport:
+        // Not yet supported.
+        break
+
+      default:
+        change satisfies never
+        throw new Error(`Unsupported BrowserChangeType: ${change[0] as any}`)
     }
   }
 }
