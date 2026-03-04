@@ -58,6 +58,7 @@ export interface RequestCompleteEvent {
   init?: RequestInit
   error?: Error
   isAborted: boolean
+  isAbortedOnStart: boolean
   handlingStack?: string
   requestBody?: unknown
   responseBody?: string
@@ -97,21 +98,9 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: RumConfiguration, 
       case 'complete':
         tracer.clearTracingIfNeeded(context)
         lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
-          duration: context.duration,
-          method: context.method,
-          requestIndex: context.requestIndex,
-          spanId: context.spanId,
-          startClocks: context.startClocks,
-          status: context.status,
-          traceId: context.traceId,
-          traceSampled: context.traceSampled,
           type: RequestType.XHR,
-          url: context.url,
-          xhr: context.xhr,
-          isAborted: context.isAborted,
-          handlingStack: context.handlingStack,
-          requestBody: context.requestBody,
-          responseBody: context.responseBody,
+          isAbortedOnStart: false,
+          ...context,
         })
         break
     }
@@ -148,23 +137,9 @@ export function trackFetch(lifeCycle: LifeCycle, configuration: RumConfiguration
         tracer.clearTracingIfNeeded(context)
         lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
           duration: elapsed(context.startClocks.timeStamp, timeStampNow()),
-          method: context.method,
-          requestIndex: context.requestIndex,
-          responseType: context.responseType,
-          spanId: context.spanId,
-          startClocks: context.startClocks,
-          status: context.status,
-          traceId: context.traceId,
-          traceSampled: context.traceSampled,
           type: RequestType.FETCH,
-          url: context.url,
-          response: context.response,
-          init: context.init,
-          input: context.input,
-          isAborted: context.isAborted,
-          handlingStack: context.handlingStack,
           requestBody: context.init?.body,
-          responseBody: context.responseBody,
+          ...context,
         })
         break
     }
