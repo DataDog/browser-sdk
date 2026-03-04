@@ -16,27 +16,32 @@ test.describe('nextjs app router', () => {
       expect(homeView).toBeDefined()
     })
 
-  createTest('should normalize dynamic route to /user/[id]')
-    .withRum()
-    .withNextjsApp()
-    .run(async ({ page, flushEvents, intakeRegistry }) => {
-      await page.click('text=Go to User 42')
-      await page.waitForURL('**/user/42')
+  ;[
+    { linkText: 'Go to User 42', url: '**/user/42', expectedViewName: '/user/[id]' },
+    { linkText: 'Go to Guides 123', url: '**/guides/123', expectedViewName: '/guides/[...slug]' },
+  ].forEach(({ linkText, url, expectedViewName }) => {
+    createTest(`should normalize dynamic route to ${expectedViewName}`)
+      .withRum()
+      .withNextjsApp()
+      .run(async ({ page, flushEvents, intakeRegistry }) => {
+        await page.click(`text=${linkText}`)
+        await page.waitForURL(url)
 
-      await page.click('text=Back to Home')
+        await page.click('text=Back to Home')
 
-      await flushEvents()
+        await flushEvents()
 
-      const viewEvents = intakeRegistry.rumViewEvents
-      expect(viewEvents.length).toBeGreaterThanOrEqual(2)
+        const viewEvents = intakeRegistry.rumViewEvents
+        expect(viewEvents.length).toBeGreaterThanOrEqual(2)
 
-      const homeView = viewEvents.find((e) => e.view.name === '/')
-      expect(homeView).toBeDefined()
+        const homeView = viewEvents.find((e) => e.view.name === '/')
+        expect(homeView).toBeDefined()
 
-      const userView = viewEvents.find((e) => e.view.name === '/user/[id]')
-      expect(userView).toBeDefined()
-      expect(userView?.view.loading_type).toBe('route_change')
-    })
+        const dynamicView = viewEvents.find((e) => e.view.name === expectedViewName)
+        expect(dynamicView).toBeDefined()
+        expect(dynamicView?.view.loading_type).toBe('route_change')
+      })
+  })
 
   createTest('should track SPA navigation with loading_time')
     .withRum()
