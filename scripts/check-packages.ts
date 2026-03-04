@@ -29,7 +29,7 @@ function checkBrowserSdkPackage(packagePath: string) {
   const packageFiles = getPackageFiles(packagePath)
 
   checkPackageJsonEntryPoints(packageJson, packageFiles)
-  checkNpmIgnore(packagePath, packageFiles)
+  checkFilesField(packageJson, packageFiles)
 }
 
 function getPackageFiles(packagePath: string): string[] {
@@ -52,31 +52,37 @@ function checkPackageJsonEntryPoints(packageJson: PackageJson, packageFiles: str
   }
 }
 
-// NPM will [always include some files][1] like `package.json` and `README.md`.
-// [1]: https://docs.npmjs.com/cli/v9/using-npm/developers#keeping-files-out-of-your-package
-const FILES_ALWAYS_INCLUDED_BY_NPM = ['package.json', 'README.md']
+// Files always included by yarn/npm regardless of the `files` field
+const ALWAYS_INCLUDED_FILES = new Set(['package.json', 'README.md'])
 
-function checkNpmIgnore(packagePath: string, packageFiles: string[]) {
-  const npmIgnorePath = path.join(packagePath, '.npmignore')
-  const npmNegatedIgnoreRules = fs
-    .readFileSync(npmIgnorePath, { encoding: 'utf8' })
-    .split('\n')
-    .filter(Boolean)
-    .map((glob) => new minimatch.Minimatch(glob, { dot: true, matchBase: true, flipNegate: true }))
-    .filter((rule) => rule.negate)
-
-  // Ensure that each file is explicitly included by checking if at least a negated rule matches it
-  for (const file of packageFiles) {
-    if (!FILES_ALWAYS_INCLUDED_BY_NPM.includes(file) && !npmNegatedIgnoreRules.some((rule) => rule.match(`/${file}`))) {
-      throw new Error(`File ${file} is not explicitly included in ${npmIgnorePath}`)
-    }
+function checkFilesField(packageJson: PackageJson, packageFiles: string[]) {
+  if (!packageJson.files) {
+    throw new Error(`Package ${packageJson.name} is missing the "files" field`)
   }
 
-  // Ensure that expected files are correctly included by checking if each negated rule matches at least one file
-  for (const rule of npmNegatedIgnoreRules) {
-    if (!packageFiles.some((file) => rule.match(`/${file}`))) {
-      throw new Error(`Rule ${rule.pattern} does not match any file ${npmIgnorePath}`)
+  const unexpectedFiles = packageFiles.filter((file) => {
+    if (ALWAYS_INCLUDED_FILES.has(file)) {
+      return false
     }
+    let matched = false
+    for (let pattern of packageJson.files!) {
+      const negated = pattern.startsWith('!')
+      if (negated) {
+        pattern = pattern.slice(1)
+      }
+      // Normalize directory patterns (e.g. "cjs" → "cjs/**") for glob matching
+      pattern = pattern.includes('*') || pattern.includes('?') ? pattern : `${pattern}/**`
+      if (minimatch(file, pattern)) {
+        matched = !negated
+      }
+    }
+    return !matched
+  })
+
+  if (unexpectedFiles.length > 0) {
+    throw new Error(
+      `Package ${packageJson.name} contains files not covered by the "files" field:\n${unexpectedFiles.map((f) => `  - ${f}`).join('\n')}`
+    )
   }
 }
 
@@ -92,4 +98,5 @@ interface PackageJson {
   main: string
   module: string
   types: string
+  files?: string[]
 }
