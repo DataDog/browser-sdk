@@ -269,6 +269,36 @@ test.describe('rum resources', () => {
       expect(resourceEvents[1]?.resource.size).toBeDefined()
     })
 
+  test.describe('resource response content-type', () => {
+    createTest('collect resource response content-type in Firefox')
+      .withRum()
+      .withHead(html`<link rel="stylesheet" href="/empty.css" />`)
+      .run(async ({ intakeRegistry, flushEvents, browserName }) => {
+        test.skip(browserName !== 'firefox', 'contentType is only available in Firefox')
+
+        await flushEvents()
+
+        const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.url.includes('empty.css'))
+        expect(resourceEvent).toBeDefined()
+        expect(resourceEvent!.resource.response).toBeDefined()
+        expect(resourceEvent!.resource.response!.headers).toBeDefined()
+        expect(resourceEvent!.resource.response!.headers!['content-type']).toBe('text/css')
+      })
+
+    createTest('do not collect resource response in other browsers')
+      .withRum()
+      .withHead(html`<link rel="stylesheet" href="/empty.css" />`)
+      .run(async ({ intakeRegistry, flushEvents, browserName }) => {
+        test.skip(browserName === 'firefox', 'contentType is only available in Firefox')
+
+        await flushEvents()
+
+        const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.url.includes('empty.css'))
+        expect(resourceEvent).toBeDefined()
+        expect(resourceEvent!.resource.response).toBeUndefined()
+      })
+  })
+
   test.describe('support XHRs with same XMLHttpRequest instance', () => {
     createTest('track XHRs when calling requests one after another')
       .withRum()
