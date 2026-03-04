@@ -1,17 +1,18 @@
 import { HookNames } from '../../tools/abstractHooks'
 import type { AbstractHooks } from '../../tools/abstractHooks'
-import { mockable } from '../../tools/mockable'
 import { generateUUID } from '../../tools/utils/stringUtils'
 
 export const TAB_ID_STORAGE_KEY = '_dd_tab_id'
 
-// Cached fallback ID for environments where sessionStorage is unavailable (e.g. sandboxed
-// iframes, Web Workers). Ensures RUM and Logs share the same tab ID within a page lifecycle
-// even when storage access throws.
-let fallbackTabId: string | undefined
+let cachedTabId: string | undefined
+
+// Exported for test cleanup only — allows specs to reset the in-memory cache between tests.
+export function resetCachedTabId(): void {
+  cachedTabId = undefined
+}
 
 export function startTabContext(hooks: AbstractHooks) {
-  const tabId = mockable(retrieveOrCreateTabId)()
+  const tabId = retrieveOrCreateTabId()
 
   hooks.register(HookNames.Assemble, () => ({
     tab: {
@@ -20,7 +21,14 @@ export function startTabContext(hooks: AbstractHooks) {
   }))
 }
 
-export function retrieveOrCreateTabId(): string {
+function retrieveOrCreateTabId(): string {
+  if (!cachedTabId) {
+    cachedTabId = getOrCreateIdInSessionStorage() ?? generateUUID()
+  }
+  return cachedTabId
+}
+
+function getOrCreateIdInSessionStorage(): string | undefined {
   try {
     const existingId = sessionStorage.getItem(TAB_ID_STORAGE_KEY)
     if (existingId) {
@@ -31,9 +39,6 @@ export function retrieveOrCreateTabId(): string {
     return newId
   } catch {
     // sessionStorage unavailable (e.g. Web Worker, sandboxed iframe, quota exceeded)
-    if (!fallbackTabId) {
-      fallbackTabId = generateUUID()
-    }
-    return fallbackTabId
+    return undefined
   }
 }
