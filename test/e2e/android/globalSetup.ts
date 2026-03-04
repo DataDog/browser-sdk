@@ -17,7 +17,16 @@ export default async function globalSetup() {
 
   const emulatorProcess = spawn(
     'emulator',
-    ['-avd', process.env.ANDROID_AVD || 'test_device', '-no-window', '-no-audio', '-no-snapshot', '-no-boot-anim', '-gpu', 'auto'],
+    [
+      '-avd',
+      process.env.ANDROID_AVD || 'test_device',
+      '-no-window',
+      '-no-audio',
+      '-no-snapshot',
+      '-no-boot-anim',
+      '-gpu',
+      'auto',
+    ],
     {
       stdio: ['ignore', 'ignore', 'ignore'],
       detached: true,

@@ -28,6 +28,7 @@ ANDROID_AVD="My_Device" yarn test:e2e:android
 ```
 
 **Prerequisites:**
+
 - Android Studio installed
 - `emulator` and `adb` on `$PATH` — add this to your `~/.zshrc`:
   ```bash
