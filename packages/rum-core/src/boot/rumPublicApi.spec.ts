@@ -570,7 +570,6 @@ describe('rum public api', () => {
     })
 
     it('should call setLoadingTime with timestamp and no overwrite by default', () => {
-      addExperimentalFeatures([ExperimentalFeature.SET_VIEW_LOADING_TIME])
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
       rumPublicApi.setViewLoadingTime()
@@ -579,7 +578,6 @@ describe('rum public api', () => {
     })
 
     it('should pass overwrite true when specified', () => {
-      addExperimentalFeatures([ExperimentalFeature.SET_VIEW_LOADING_TIME])
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
       rumPublicApi.setViewLoadingTime({ overwrite: true })
@@ -591,16 +589,6 @@ describe('rum public api', () => {
       expect(() => rumPublicApi.setViewLoadingTime()).not.toThrow()
 
       expect(setLoadingTimeSpy).not.toHaveBeenCalled()
-    })
-
-    it('should be a no-op and warn when experimental flag is disabled', () => {
-      const displayWarnSpy = spyOn(display, 'warn')
-
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      rumPublicApi.setViewLoadingTime()
-
-      expect(setLoadingTimeSpy).not.toHaveBeenCalled()
-      expect(displayWarnSpy).toHaveBeenCalledOnceWith(jasmine.stringContaining('enableExperimentalFeatures'))
     })
   })
 

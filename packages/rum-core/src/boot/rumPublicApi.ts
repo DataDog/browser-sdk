@@ -27,7 +27,6 @@ import {
   createHandlingStack,
   sanitize,
   createIdentityEncoder,
-  display,
   displayAlreadyInitializedError,
   createTrackingConsentState,
   timeStampToClocks,
@@ -251,8 +250,6 @@ export interface RumPublicApi extends PublicApi {
    * Call this method when the view has finished loading. The loading time is computed as the
    * elapsed time since the view started. By default, the first call sets the loading time and
    * subsequent calls are no-ops. Use `{ overwrite: true }` to replace a previously set value.
-   *
-   * Requires `enableExperimentalFeatures: ["set_view_loading_time"]` in init configuration.
    *
    * @category Data Collection
    * @param options - Options. Set `overwrite: true` to replace a previously set loading time.
@@ -797,12 +794,6 @@ export function makeRumPublicApi(
     }),
 
     setViewLoadingTime: monitor((options?: SetViewLoadingTimeOptions) => {
-      if (strategy.initConfiguration && !isExperimentalFeatureEnabled(ExperimentalFeature.SET_VIEW_LOADING_TIME)) {
-        display.warn(
-          'setViewLoadingTime requires enableExperimentalFeatures: ["set_view_loading_time"] in your init configuration.'
-        )
-        return
-      }
       const callTimestamp = timeStampNow()
       const result = strategy.setLoadingTime(callTimestamp, options?.overwrite ?? false)
       addTelemetryUsage({

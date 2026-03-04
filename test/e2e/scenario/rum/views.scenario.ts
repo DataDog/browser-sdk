@@ -68,9 +68,7 @@ test.describe('rum views', () => {
       })
 
     createTest('has a manual loading time')
-      .withRum({
-        enableExperimentalFeatures: ['set_view_loading_time'],
-      })
+      .withRum()
       .withBody(SPINNER)
       .run(async ({ flushEvents, intakeRegistry, page }) => {
         await page.evaluate(
@@ -90,9 +88,7 @@ test.describe('rum views', () => {
       })
 
     createTest('overwrites manual loading time when called with overwrite option')
-      .withRum({
-        enableExperimentalFeatures: ['set_view_loading_time'],
-      })
+      .withRum()
       .withBody(SPINNER)
       .run(async ({ flushEvents, intakeRegistry, page }) => {
         await page.evaluate(
