@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import type { RumResourceEvent } from '@datadog/browser-rum'
+import type { BrowserConfiguration } from '../../../browsers.conf'
 import type { IntakeRegistry } from '../../lib/framework'
 import { createTest, html } from '../../lib/framework'
 
@@ -274,7 +275,9 @@ test.describe('rum resources', () => {
       .withRum()
       .withHead(html`<link rel="stylesheet" href="/empty.css" />`)
       .run(async ({ intakeRegistry, flushEvents, browserName }) => {
+        const browserVersion = (test.info().project.metadata as BrowserConfiguration).version
         test.skip(browserName !== 'firefox', 'contentType is only available in Firefox')
+        test.skip(browserName === 'firefox' && Number(browserVersion) < 129, 'contentType requires Firefox >= 129')
 
         await flushEvents()
 
@@ -289,7 +292,11 @@ test.describe('rum resources', () => {
       .withRum()
       .withHead(html`<link rel="stylesheet" href="/empty.css" />`)
       .run(async ({ intakeRegistry, flushEvents, browserName }) => {
-        test.skip(browserName === 'firefox', 'contentType is only available in Firefox')
+        const browserVersion = (test.info().project.metadata as BrowserConfiguration).version
+        test.skip(
+          browserName === 'firefox' && Number(browserVersion) >= 129,
+          'contentType is available in Firefox >= 129'
+        )
 
         await flushEvents()
 
