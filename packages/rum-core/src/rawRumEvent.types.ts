@@ -87,6 +87,7 @@ export interface RawRumResourceEvent {
 }
 
 interface ResourceHTTPResponseDefaultHeaders {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   'content-type'?: string
 }
 
