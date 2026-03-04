@@ -1,6 +1,8 @@
+import { ExperimentalFeature, addExperimentalFeatures, resetExperimentalFeatures } from '@datadog/browser-core'
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { AssembledRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
-import { stripViewUpdateFields } from './startRumBatch'
+import { computeAssembledViewDiff, PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL } from './startRumBatch'
 
 function makeAssembledView(overrides: Record<string, unknown> = {}): AssembledRumEvent {
   return {
@@ -8,7 +10,18 @@ function makeAssembledView(overrides: Record<string, unknown> = {}): AssembledRu
     date: 1000,
     application: { id: 'app-1' },
     session: { id: 'sess-1', type: 'user' },
-    view: { id: 'view-1', name: 'Home', url: '/home', referrer: '' },
+    view: {
+      id: 'view-1',
+      name: 'Home',
+      url: '/home',
+      referrer: '',
+      is_active: true,
+      action: { count: 0 },
+      error: { count: 0 },
+      long_task: { count: 0 },
+      resource: { count: 0 },
+      time_spent: 0,
+    },
     _dd: {
       document_version: 1,
       format_version: 2,
@@ -24,94 +37,180 @@ function makeAssembledView(overrides: Record<string, unknown> = {}): AssembledRu
   } as unknown as AssembledRumEvent
 }
 
-function makeAssembledViewUpdate(overrides: Record<string, unknown> = {}): AssembledRumEvent {
-  return {
-    ...makeAssembledView(),
-    type: RumEventType.VIEW_UPDATE,
-    ...overrides,
-  } as unknown as AssembledRumEvent
-}
-
-describe('stripViewUpdateFields', () => {
-  it('should never strip required routing fields', () => {
-    const lastView = makeAssembledView()
-    const viewUpdate = makeAssembledViewUpdate()
-    const stripped = stripViewUpdateFields(viewUpdate, lastView)
-
-    expect(stripped.type).toBe(RumEventType.VIEW_UPDATE)
-    expect(stripped.date).toBeDefined()
-    expect(stripped.application).toEqual({ id: 'app-1' })
-    expect(stripped.session).toEqual({ id: 'sess-1', type: 'user' })
-    expect((stripped.view as any).id).toBe('view-1')
-    expect((stripped._dd as any).document_version).toBe(1)
-  })
-
-  it('should strip top-level fields unchanged from last VIEW', () => {
-    const lastView = makeAssembledView({ service: 'my-service', ddtags: 'env:prod', source: 'browser' })
-    const viewUpdate = makeAssembledViewUpdate({ service: 'my-service', ddtags: 'env:prod', source: 'browser' })
-    const stripped = stripViewUpdateFields(viewUpdate, lastView)
-
-    expect(stripped.service).toBeUndefined()
-    expect((stripped as any).ddtags).toBeUndefined()
-    expect((stripped as any).source).toBeUndefined()
-  })
-
-  it('should keep top-level fields that differ from last VIEW', () => {
-    const lastView = makeAssembledView({ service: 'old-service' })
-    const viewUpdate = makeAssembledViewUpdate({ service: 'new-service' })
-    const stripped = stripViewUpdateFields(viewUpdate, lastView)
-
-    expect(stripped.service).toBe('new-service')
-  })
-
-  it('should strip view.* sub-fields that are unchanged (except view.id)', () => {
-    const lastView = makeAssembledView({ view: { id: 'view-1', name: 'Home', url: '/home', referrer: '' } })
-    const viewUpdate = makeAssembledViewUpdate({
-      view: { id: 'view-1', name: 'Home', url: '/home', referrer: '', error: { count: 3 } },
+describe('computeAssembledViewDiff', () => {
+  it('should return undefined when nothing has changed', () => {
+    const last = makeAssembledView()
+    const current = makeAssembledView({
+      _dd: {
+        document_version: 2,
+        format_version: 2,
+        sdk_name: 'rum',
+        configuration: { start_session_replay_recording_manually: false },
+      },
     })
-    const stripped = stripViewUpdateFields(viewUpdate, lastView)
+    const result = computeAssembledViewDiff(current, last)
 
-    expect((stripped.view as any).id).toBe('view-1') // always kept
-    expect((stripped.view as any).name).toBeUndefined() // unchanged, stripped
-    expect((stripped.view as any).url).toBeUndefined() // unchanged, stripped
-    expect((stripped.view as any).error).toEqual({ count: 3 }) // changed, kept
+    // Only document_version changed (always required, not a "meaningful change")
+    // view.* unchanged → should return undefined
+    expect(result).toBeUndefined()
   })
 
-  it('should strip _dd.* sub-fields that are unchanged (except _dd.document_version)', () => {
-    const lastView = makeAssembledView({ _dd: { document_version: 1, format_version: 2, sdk_name: 'rum' } })
-    const viewUpdate = makeAssembledViewUpdate({ _dd: { document_version: 2, format_version: 2, sdk_name: 'rum' } })
-    const stripped = stripViewUpdateFields(viewUpdate, lastView)
+  it('should always include required routing fields', () => {
+    const last = makeAssembledView()
+    const current = makeAssembledView({
+      _dd: {
+        document_version: 2,
+        format_version: 2,
+        sdk_name: 'rum',
+        configuration: { start_session_replay_recording_manually: false },
+      },
+      view: {
+        id: 'view-1',
+        name: 'Home',
+        url: '/home',
+        referrer: '',
+        is_active: true,
+        action: { count: 1 },
+        error: { count: 0 },
+        long_task: { count: 0 },
+        resource: { count: 0 },
+        time_spent: 100,
+      },
+    })
+    const result = computeAssembledViewDiff(current, last)!
 
-    expect((stripped._dd as any).document_version).toBe(2) // always kept
-    expect((stripped._dd as any).format_version).toBeUndefined() // unchanged, stripped
-    expect((stripped._dd as any).sdk_name).toBeUndefined() // unchanged, stripped
+    expect(result.type).toBe(RumEventType.VIEW_UPDATE)
+    expect((result as any).application).toEqual({ id: 'app-1' })
+    expect((result as any).session).toEqual({ id: 'sess-1', type: 'user' })
+    expect((result.view as any).id).toBe('view-1')
+    expect((result._dd as any).document_version).toBe(2)
   })
 
-  it('should strip display.* sub-fields that are unchanged', () => {
-    const viewport = { width: 1920, height: 1080 }
-    const lastView = makeAssembledView({ display: { viewport, scroll: { max_depth: 100 } } })
-    const viewUpdate = makeAssembledViewUpdate({ display: { viewport, scroll: { max_depth: 200 } } })
-    const stripped = stripViewUpdateFields(viewUpdate, lastView)
+  it('should include only changed view.* fields', () => {
+    const last = makeAssembledView()
+    const current = makeAssembledView({
+      _dd: {
+        document_version: 2,
+        format_version: 2,
+        sdk_name: 'rum',
+        configuration: { start_session_replay_recording_manually: false },
+      },
+      view: {
+        id: 'view-1',
+        name: 'Home',
+        url: '/home',
+        referrer: '',
+        is_active: true,
+        action: { count: 3 },
+        error: { count: 0 },
+        long_task: { count: 0 },
+        resource: { count: 0 },
+        time_spent: 5000,
+      },
+    })
+    const result = computeAssembledViewDiff(current, last)!
 
-    expect((stripped as any).display.viewport).toBeUndefined() // unchanged, stripped
-    expect((stripped as any).display.scroll).toEqual({ max_depth: 200 }) // changed, kept
+    expect((result.view as any).action).toEqual({ count: 3 }) // changed
+    expect((result.view as any).time_spent).toBe(5000) // changed
+    expect((result.view as any).error).toBeUndefined() // unchanged, stripped
+    expect((result.view as any).name).toBeUndefined() // unchanged, stripped
+    expect((result.view as any).url).toBeUndefined() // unchanged, stripped
   })
 
-  it('should remove display entirely if all sub-fields are stripped', () => {
-    const viewport = { width: 1920, height: 1080 }
-    const lastView = makeAssembledView({ display: { viewport } })
-    const viewUpdate = makeAssembledViewUpdate({ display: { viewport } })
-    const stripped = stripViewUpdateFields(viewUpdate, lastView)
+  it('should strip unchanged top-level assembled fields', () => {
+    const last = makeAssembledView({ service: 'svc', version: '1.0.0' })
+    const current = makeAssembledView({
+      _dd: {
+        document_version: 2,
+        format_version: 2,
+        sdk_name: 'rum',
+        configuration: { start_session_replay_recording_manually: false },
+      },
+      view: {
+        id: 'view-1',
+        name: 'Home',
+        url: '/home',
+        referrer: '',
+        is_active: true,
+        action: { count: 1 },
+        error: { count: 0 },
+        long_task: { count: 0 },
+        resource: { count: 0 },
+        time_spent: 100,
+      },
+      service: 'svc',
+      version: '1.0.0',
+    })
+    const result = computeAssembledViewDiff(current, last)!
 
-    expect((stripped as any).display).toBeUndefined()
+    expect(result.service).toBeUndefined() // unchanged, stripped
+    expect((result as any).version).toBeUndefined() // unchanged, stripped
   })
 
-  it('should not mutate the original viewUpdate object', () => {
-    const lastView = makeAssembledView()
-    const viewUpdate = makeAssembledViewUpdate()
-    const originalService = viewUpdate.service
-    stripViewUpdateFields(viewUpdate, lastView)
+  it('should keep top-level assembled fields that changed', () => {
+    const last = makeAssembledView({ service: 'old-service' })
+    const current = makeAssembledView({
+      _dd: {
+        document_version: 2,
+        format_version: 2,
+        sdk_name: 'rum',
+        configuration: { start_session_replay_recording_manually: false },
+      },
+      view: {
+        id: 'view-1',
+        name: 'Home',
+        url: '/home',
+        referrer: '',
+        is_active: true,
+        action: { count: 1 },
+        error: { count: 0 },
+        long_task: { count: 0 },
+        resource: { count: 0 },
+        time_spent: 100,
+      },
+      service: 'new-service',
+    })
+    const result = computeAssembledViewDiff(current, last)!
 
-    expect(viewUpdate.service).toBe(originalService)
+    expect(result.service).toBe('new-service')
+  })
+
+  it('should not mutate the input events', () => {
+    const last = makeAssembledView()
+    const current = makeAssembledView({
+      _dd: {
+        document_version: 2,
+        format_version: 2,
+        sdk_name: 'rum',
+        configuration: { start_session_replay_recording_manually: false },
+      },
+      view: {
+        id: 'view-1',
+        name: 'Home',
+        url: '/home',
+        referrer: '',
+        is_active: true,
+        action: { count: 1 },
+        error: { count: 0 },
+        long_task: { count: 0 },
+        resource: { count: 0 },
+        time_spent: 100,
+      },
+    })
+    const currentService = current.service
+    computeAssembledViewDiff(current, last)
+
+    expect(current.service).toBe(currentService)
+  })
+})
+
+describe('startRumBatch partial_view_updates routing', () => {
+  beforeEach(() => {
+    addExperimentalFeatures([ExperimentalFeature.PARTIAL_VIEW_UPDATES])
+    registerCleanupTask(resetExperimentalFeatures)
+  })
+
+  it('PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL should be 10', () => {
+    expect(PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL).toBe(10)
   })
 })
