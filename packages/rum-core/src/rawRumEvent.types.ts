@@ -74,6 +74,7 @@ export interface RawRumResourceEvent {
     protocol?: string
     delivery_type?: DeliveryType
     graphql?: GraphQlMetadata
+    response?: ResourceHTTPResponse
   }
   _dd: {
     trace_id?: string
@@ -83,6 +84,14 @@ export interface RawRumResourceEvent {
     page_states?: PageStateServerEntry[]
   }
   context?: Context
+}
+
+interface ResourceHTTPResponseDefaultHeaders {
+  'content-type'?: string
+}
+
+export interface ResourceHTTPResponse {
+  headers?: ResourceHTTPResponseDefaultHeaders & Record<string, string>
 }
 
 export interface ResourceEntryDetailsElement {

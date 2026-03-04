@@ -17,7 +17,7 @@ import type {
   RumFetchResourceEventDomainContext,
   RumOtherResourceEventDomainContext,
 } from '../../domainContext.types'
-import type { RawRumResourceEvent } from '../../rawRumEvent.types'
+import type { RawRumResourceEvent, ResourceHTTPResponse } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData, LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -144,6 +144,7 @@ function assembleResource(
     : computeRequestDuration(pageStateHistory, startClocks, request!.duration)
 
   const graphql = request && computeGraphQlMetaData(request, configuration)
+  const response = computeResourceEntryHTTPResponse(entry, request)
 
   const resourceEvent = combine(
     {
@@ -163,6 +164,7 @@ function assembleResource(
         protocol: entry && computeResourceEntryProtocol(entry),
         delivery_type: entry && computeResourceEntryDeliveryType(entry),
         graphql,
+        response,
       },
       type: RumEventType.RESOURCE,
       _dd: {
@@ -191,6 +193,30 @@ function computeGraphQlMetaData(
   }
 
   return extractGraphQlMetadata(request, graphQlConfig)
+}
+
+function computeResourceEntryHTTPResponse(
+  entry: RumPerformanceResourceTiming | undefined,
+  request: RequestCompleteEvent | undefined
+): ResourceHTTPResponse | undefined {
+  if (!entry && !request) {
+    return undefined
+  }
+
+  const rawContentTypeResponseHeader =
+    request?.xhr?.getResponseHeader('content-type') ?? request?.response?.headers?.get('content-type')
+  const contentTypeResponseHeader = rawContentTypeResponseHeader?.split(';')[0].trim()
+  const contentType = contentTypeResponseHeader ?? entry?.contentType
+
+  if (contentType) {
+    return {
+      headers: {
+        'content-type': contentType,
+      },
+    }
+  }
+
+  return undefined
 }
 
 function getResourceDomainContext(
