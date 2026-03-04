@@ -5,7 +5,7 @@ import { RumEventType } from '../../rawRumEvent.types'
 /**
  * Compare two values for deep equality
  */
-function isEqual(a: unknown, b: unknown): boolean {
+export function isEqual(a: unknown, b: unknown): boolean {
   // Reference equality
   if (a === b) {
     return true
@@ -55,7 +55,7 @@ function isEqual(a: unknown, b: unknown): boolean {
 /**
  * Options for controlling diff merge behavior
  */
-interface DiffMergeOptions {
+export interface DiffMergeOptions {
   replaceKeys?: Set<string>
   appendKeys?: Set<string>
 }
@@ -64,7 +64,7 @@ interface DiffMergeOptions {
  * MERGE strategy: compare two objects and return an object with only changed fields.
  * Returns undefined if no changes.
  */
-function diffMerge(
+export function diffMerge(
   current: Record<string, unknown>,
   lastSent: Record<string, unknown>,
   options?: DiffMergeOptions
