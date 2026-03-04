@@ -12,11 +12,9 @@ let cachedContext: BrowserContext | undefined
 async function getOrCreateContext(): Promise<{ device: AndroidDevice; context: BrowserContext }> {
   if (cachedDevice && cachedContext) {
     try {
-      // Verify the context is still alive by attempting a simple operation
       cachedContext.pages()
       return { device: cachedDevice, context: cachedContext }
     } catch {
-      // Context is stale, recreate
       cachedContext = undefined
     }
   }
@@ -25,7 +23,6 @@ async function getOrCreateContext(): Promise<{ device: AndroidDevice; context: B
     cachedDevice = await connectDevice()
   }
 
-  // Use Chromium (org.chromium.chrome) instead of the outdated system Chrome (v113)
   cachedContext = await cachedDevice.launchBrowser({ pkg: 'org.chromium.chrome' })
   return { device: cachedDevice, context: cachedContext }
 }
@@ -39,15 +36,14 @@ export const test = base.extend<{ context: BrowserContext }>({
   page: async ({ context }, use) => {
     const page = await context.newPage()
     await use(page)
-    // Clean up service workers before closing the page to prevent stale SW state
-    // from interfering with subsequent tests in the shared browser context
+    // Unregister service workers to prevent stale state across tests
     try {
       await page.evaluate(async () => {
         const regs = await navigator.serviceWorker.getRegistrations()
         await Promise.all(regs.map((r) => r.unregister()))
       })
     } catch {
-      // Page might already be in a bad state, ignore cleanup errors
+      // ignore
     }
     await page.close()
   },

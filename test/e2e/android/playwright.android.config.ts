@@ -16,7 +16,6 @@ if (testReportDirectory) {
 export default defineConfig({
   testDir: '../scenario',
   testMatch: ['**/*.scenario.ts'],
-  testIgnore: ['**/android/**'],
   tsconfig: '../tsconfig.json',
   globalSetup: './globalSetup.ts',
   globalTeardown: './globalTeardown.ts',

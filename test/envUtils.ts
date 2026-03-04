@@ -1,6 +1,7 @@
 import os from 'os'
 
 export function getIp() {
+  // The emulator reaches the host via `adb reverse`, so localhost is correct
   if (process.env.ANDROID_E2E) {
     return 'localhost'
   }
