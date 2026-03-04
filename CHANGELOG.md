@@ -24,6 +24,24 @@
 
 - 👷 bump all packages to version to v7.0.0-alpha.0
 
+## v6.30.1
+
+**Internal Changes:**
+
+- 👷 upgrade minimatch to 10.2.4 to fix npm publish packaging issue ([#4267](https://github.com/DataDog/browser-sdk/pull/4267))
+
+## v6.30.0
+
+**Public Changes:**
+
+- ✨[MFE] Source code context event enrichment ([#4255](https://github.com/DataDog/browser-sdk/pull/4255)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 fix LogsEventDomainContext fallback to undefined instead of never ([#4264](https://github.com/DataDog/browser-sdk/pull/4264)) [LOGS]
+- 🐛 fix stale closure bug in watchCookieFallback ([#4259](https://github.com/DataDog/browser-sdk/pull/4259)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+**Internal Changes:**
+
+- 🧹 remove unused eslint-disable directives from generated type files ([#4260](https://github.com/DataDog/browser-sdk/pull/4260)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
 ## v6.29.0
 
 **Public Changes:**
