@@ -175,47 +175,49 @@ describe('pageStateHistory', () => {
       })
     })
   })
-  ;[RumEventType.ACTION, RumEventType.ERROR].forEach((eventType) => {
-    describe(`for ${eventType} events`, () => {
-      let pageStateHistory: PageStateHistory
+  ;[RumEventType.ACTION, RumEventType.ERROR, RumEventType.RESOURCE, RumEventType.LONG_TASK, RumEventType.VITAL].forEach(
+    (eventType) => {
+      describe(`for ${eventType} events`, () => {
+        let pageStateHistory: PageStateHistory
 
-      beforeEach(() => {
-        mockPerformanceObserver()
-        pageStateHistory = startPageStateHistory(hooks, configuration)
-        registerCleanupTask(pageStateHistory.stop)
-      })
+        beforeEach(() => {
+          mockPerformanceObserver()
+          pageStateHistory = startPageStateHistory(hooks, configuration)
+          registerCleanupTask(pageStateHistory.stop)
+        })
 
-      it('should add in_foreground: true when the page is active', () => {
-        pageStateHistory.addPageState(PageState.ACTIVE)
+        it('should add in_foreground: true when the page is active', () => {
+          pageStateHistory.addPageState(PageState.ACTIVE)
 
-        const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
-          eventType,
-          startTime: clock.relative(0),
-          duration: 0 as Duration,
-        } as AssembleHookParams)
+          const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+            eventType,
+            startTime: clock.relative(0),
+            duration: 0 as Duration,
+          } as AssembleHookParams)
 
-        expect(defaultRumEventAttributes).toEqual({
-          type: eventType,
-          view: { in_foreground: true },
+          expect(defaultRumEventAttributes).toEqual({
+            type: eventType,
+            view: { in_foreground: true },
+          })
+        })
+
+        it('should add in_foreground: false when the page is not active', () => {
+          pageStateHistory.addPageState(PageState.HIDDEN)
+
+          const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+            eventType,
+            startTime: clock.relative(0),
+            duration: 0 as Duration,
+          } as AssembleHookParams)
+
+          expect(defaultRumEventAttributes).toEqual({
+            type: eventType,
+            view: { in_foreground: false },
+          })
         })
       })
-
-      it('should add in_foreground: false when the page is not active', () => {
-        pageStateHistory.addPageState(PageState.HIDDEN)
-
-        const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
-          eventType,
-          startTime: clock.relative(0),
-          duration: 0 as Duration,
-        } as AssembleHookParams)
-
-        expect(defaultRumEventAttributes).toEqual({
-          type: eventType,
-          view: { in_foreground: false },
-        })
-      })
-    })
-  })
+    }
+  )
 
   describe('initialization with visibility-state backfill', () => {
     let pageStateHistory: PageStateHistory

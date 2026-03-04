@@ -1,6 +1,5 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import {
-  SKIPPED,
   elapsed,
   createValueHistory,
   SESSION_TIME_OUT_DELAY,
@@ -101,7 +100,7 @@ export function startPageStateHistory(
 
   hooks.register(
     HookNames.Assemble,
-    ({ startTime, duration = 0 as Duration, eventType }): DefaultRumEventAttributes | SKIPPED => {
+    ({ startTime, duration = 0 as Duration, eventType }): DefaultRumEventAttributes => {
       if (eventType === RumEventType.VIEW) {
         const pageStates = pageStateEntryHistory.findAll(startTime, duration)
         return {
@@ -110,14 +109,10 @@ export function startPageStateHistory(
         }
       }
 
-      if (eventType === RumEventType.ACTION || eventType === RumEventType.ERROR) {
-        return {
-          type: eventType,
-          view: { in_foreground: wasInPageStateDuringPeriod(PageState.ACTIVE, startTime, 0 as Duration) },
-        }
+      return {
+        type: eventType,
+        view: { in_foreground: wasInPageStateDuringPeriod(PageState.ACTIVE, startTime, 0 as Duration) },
       }
-
-      return SKIPPED
     }
   )
 

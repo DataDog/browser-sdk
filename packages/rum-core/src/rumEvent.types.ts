@@ -607,6 +607,16 @@ export type RumLongTaskEvent = CommonProperties &
       [k: string]: unknown
     }
     /**
+     * View properties
+     */
+    readonly view?: {
+      /**
+       * Is the long task starting in the foreground (focus in browser)
+       */
+      readonly in_foreground?: boolean
+      [k: string]: unknown
+    }
+    /**
      * Internal properties
      */
     readonly _dd?: {
@@ -919,6 +929,16 @@ export type RumResourceEvent = CommonProperties &
         }[]
         [k: string]: unknown
       }
+      [k: string]: unknown
+    }
+    /**
+     * View properties
+     */
+    readonly view?: {
+      /**
+       * Is the resource starting in the foreground (focus in browser)
+       */
+      readonly in_foreground?: boolean
       [k: string]: unknown
     }
     /**
@@ -1393,6 +1413,16 @@ export type RumVitalEventCommonProperties = CommonProperties &
      * RUM event type
      */
     readonly type: 'vital'
+    /**
+     * View properties
+     */
+    readonly view?: {
+      /**
+       * Is the vital starting in the foreground (focus in browser)
+       */
+      readonly in_foreground?: boolean
+      [k: string]: unknown
+    }
     /**
      * Vital properties
      */

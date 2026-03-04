@@ -75,6 +75,9 @@ export interface RawRumResourceEvent {
     delivery_type?: DeliveryType
     graphql?: GraphQlMetadata
   }
+  view?: {
+    in_foreground: boolean
+  }
   _dd: {
     trace_id?: string
     span_id?: string // not available for initial document tracing
@@ -261,6 +264,9 @@ export interface RawRumLongTaskEvent {
     entry_type: typeof RumLongTaskEntryType.LONG_TASK
     duration: ServerDuration
   }
+  view?: {
+    in_foreground: boolean
+  }
   _dd: {
     discarded: boolean
   }
@@ -301,6 +307,9 @@ export interface RawRumLongAnimationFrameEvent {
       invoker_type: InvokerType
       window_attribution: string
     }>
+  }
+  view?: {
+    in_foreground: boolean
   }
   _dd: {
     discarded: boolean
@@ -377,6 +386,9 @@ export interface RawRumVitalEvent {
     failure_reason?: string
     description?: string
     duration?: number
+  }
+  view?: {
+    in_foreground: boolean
   }
   _dd?: {
     vital: {
