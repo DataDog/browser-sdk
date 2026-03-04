@@ -144,7 +144,7 @@ function assembleResource(
     : computeRequestDuration(pageStateHistory, startClocks, request!.duration)
 
   const graphql = request && computeGraphQlMetaData(request, configuration)
-  const response = computeResourceEntryHTTPResponse(entry, request)
+  const response = computeResourceEntryHTTPResponse(entry)
 
   const resourceEvent = combine(
     {
@@ -196,17 +196,13 @@ function computeGraphQlMetaData(
 }
 
 function computeResourceEntryHTTPResponse(
-  entry: RumPerformanceResourceTiming | undefined,
-  request: RequestCompleteEvent | undefined
+  entry: RumPerformanceResourceTiming | undefined
 ): ResourceHTTPResponse | undefined {
-  if (!entry && !request) {
+  if (!entry) {
     return undefined
   }
 
-  const rawContentTypeResponseHeader =
-    request?.xhr?.getResponseHeader('content-type') ?? request?.response?.headers?.get('content-type')
-  const contentTypeResponseHeader = rawContentTypeResponseHeader?.split(';')[0].trim()
-  const contentType = contentTypeResponseHeader ?? entry?.contentType
+  const contentType = entry.contentType
 
   if (contentType) {
     return {

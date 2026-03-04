@@ -276,58 +276,6 @@ describe('resourceCollection', () => {
   })
 
   describe('HTTP response metadata enrichment', () => {
-    it('should extract content-type from XHR response header', () => {
-      setupResourceCollection()
-      const xhr = new XMLHttpRequest()
-      spyOn(xhr, 'getResponseHeader').and.returnValue('application/json')
-
-      notifyRequest({
-        request: {
-          type: RequestType.XHR,
-          xhr,
-        },
-      })
-
-      expect(rawRumEvents[0].rawRumEvent).toEqual(
-        jasmine.objectContaining({
-          resource: jasmine.objectContaining({
-            response: {
-              headers: {
-                'content-type': 'application/json',
-              },
-            },
-          }),
-        })
-      )
-    })
-
-    it('should extract content-type from Fetch response header', () => {
-      setupResourceCollection()
-      const response = new Response('', {
-        headers: { 'content-type': 'text/html' },
-      })
-
-      notifyRequest({
-        request: {
-          type: RequestType.FETCH,
-          response,
-          input: 'https://resource.com/valid',
-        },
-      })
-
-      expect(rawRumEvents[0].rawRumEvent).toEqual(
-        jasmine.objectContaining({
-          resource: jasmine.objectContaining({
-            response: {
-              headers: {
-                'content-type': 'text/html',
-              },
-            },
-          }),
-        })
-      )
-    })
-
     it('should extract content-type from performance entry when no request is available', () => {
       setupResourceCollection()
 
@@ -351,69 +299,11 @@ describe('resourceCollection', () => {
       )
     })
 
-    it('should strip charset and parameters from content-type header', () => {
-      setupResourceCollection()
-      const response = new Response('', {
-        headers: { 'content-type': 'text/html; charset=utf-8' },
-      })
-
-      notifyRequest({
-        request: {
-          type: RequestType.FETCH,
-          response,
-          input: 'https://resource.com/valid',
-        },
-      })
-
-      expect(rawRumEvents[0].rawRumEvent).toEqual(
-        jasmine.objectContaining({
-          resource: jasmine.objectContaining({
-            response: {
-              headers: {
-                'content-type': 'text/html',
-              },
-            },
-          }),
-        })
-      )
-    })
-
-    it('should prioritize request content-type over performance entry content-type', () => {
-      setupResourceCollection()
-      const xhr = new XMLHttpRequest()
-      spyOn(xhr, 'getResponseHeader').and.returnValue('application/json')
-
-      notifyRequest({
-        request: {
-          type: RequestType.XHR,
-          xhr,
-        },
-        performanceEntryOverrides: {
-          contentType: 'text/plain',
-        },
-      })
-
-      expect(rawRumEvents[0].rawRumEvent).toEqual(
-        jasmine.objectContaining({
-          resource: jasmine.objectContaining({
-            response: {
-              headers: {
-                'content-type': 'application/json',
-              },
-            },
-          }),
-        })
-      )
-    })
-
     it('should not include response when no content-type is available', () => {
       setupResourceCollection()
 
-      notifyRequest({
-        request: {
-          type: RequestType.XHR,
-        },
-      })
+      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {})])
+      runTasks()
 
       const resourceEvent = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
       expect(resourceEvent.resource.response).toBeUndefined()
