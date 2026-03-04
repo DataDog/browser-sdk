@@ -6,8 +6,6 @@ import {
   isEmptyObject,
   mapValues,
   toServerDuration,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
 } from '@datadog/browser-core'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RecorderApi } from '../../boot/rumPublicApi'
@@ -24,9 +22,6 @@ import { trackViews } from './trackViews'
 import type { ViewEvent, ViewOptions } from './trackViews'
 import type { CommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
 import type { InitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
-import { computeViewDiff, createViewDiffTracker } from './viewDiff'
-
-export const PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL = 10
 
 export function startViewCollection(
   lifeCycle: LifeCycle,
@@ -39,76 +34,9 @@ export function startViewCollection(
   viewHistory: ViewHistory,
   initialViewOptions?: ViewOptions
 ) {
-  if (isExperimentalFeatureEnabled(ExperimentalFeature.PARTIAL_VIEW_UPDATES)) {
-    const diffTracker = createViewDiffTracker()
-    let currentViewId: string | undefined
-    let updatesSinceFullView = 0
-
-    lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) => {
-      const rawEventData = processViewUpdate(view, configuration, recorderApi)
-
-      // New view: reset tracker and counter, emit full VIEW
-      if (view.id !== currentViewId) {
-        currentViewId = view.id
-        diffTracker.reset()
-        updatesSinceFullView = 0
-        diffTracker.recordSentState(rawEventData.rawRumEvent)
-        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEventData)
-        return
-      }
-
-      // View ended: emit full VIEW, reset tracker and counter
-      if (!view.isActive) {
-        diffTracker.reset()
-        updatesSinceFullView = 0
-        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEventData)
-        return
-      }
-
-      // Periodic checkpoint: emit full VIEW every N updates to allow backend recovery
-      updatesSinceFullView += 1
-      if (updatesSinceFullView >= PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL) {
-        updatesSinceFullView = 0
-        diffTracker.recordSentState(rawEventData.rawRumEvent)
-        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEventData)
-        return
-      }
-
-      // Subsequent update: compute diff
-      const lastSent = diffTracker.getLastSentState()
-      if (!lastSent) {
-        // Safety: should not happen, but fall back to full view
-        diffTracker.recordSentState(rawEventData.rawRumEvent)
-        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEventData)
-        return
-      }
-
-      try {
-        const viewUpdateEvent = computeViewDiff(rawEventData.rawRumEvent, lastSent)
-
-        if (viewUpdateEvent) {
-          lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-            rawRumEvent: viewUpdateEvent,
-            startTime: rawEventData.startTime,
-            duration: rawEventData.duration,
-            domainContext: rawEventData.domainContext,
-          })
-        }
-        // Empty diff: no event emitted (skip)
-      } catch {
-        // Diff computation failed: fall back to full view event
-        lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEventData)
-      }
-
-      // Always update tracker with current state
-      diffTracker.recordSentState(rawEventData.rawRumEvent)
-    })
-  } else {
-    // Feature flag OFF: existing behavior unchanged
-    lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processViewUpdate(view, configuration, recorderApi))
-    )
-  }
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processViewUpdate(view, configuration, recorderApi))
+  )
 
   hooks.register(HookNames.Assemble, ({ startTime, eventType }): DefaultRumEventAttributes | DISCARDED => {
     const view = viewHistory.findView(startTime)
