@@ -7,7 +7,13 @@ import { command } from '../lib/command.ts'
 runMain(() => {
   const {
     positionals: [version],
-  } = parseArgs({ allowPositionals: true })
+    values: { push },
+  } = parseArgs({
+    allowPositionals: true,
+    options: {
+      push: { type: 'boolean', default: false },
+    },
+  })
 
   if (!isSemanticVersion(version)) {
     throw new Error('Missing or invalid version argument. Usage: node scripts/release/prepare-release.ts <version>')
@@ -21,7 +27,8 @@ runMain(() => {
   const currentBranch = command`git branch --show-current`.run().trim()
   if (currentBranch !== releaseBranch) {
     printLog(`Checking out ${releaseBranch} branch...`)
-    command`git checkout -b ${releaseBranch} main`.run()
+    command`git fetch origin`.run()
+    command`git checkout -b ${releaseBranch} origin/main`.run()
   }
 
   printLog(`Preparing release v${version}...`)
@@ -35,14 +42,18 @@ runMain(() => {
   command`git commit -m v${version}`.run()
   command`git tag -a v${version} -m v${version}`.run()
 
+  if (push) {
+    command`git push origin ${releaseBranch} v${version}`.withLogs().run()
+  }
+
   printLog(`Release v${version} prepared successfully!`)
-  printLog(`
-Next steps:
-  1. git push origin ${releaseBranch}
-  2. Open a PR from ${releaseBranch} to main
-  3. Ask for a review and merge the PR
-  4. Go to the CI and trigger the deployment pipeline
-`)
+  printLog('Next steps:')
+  if (!push) {
+    printLog(`  * git push origin ${releaseBranch} v${version}`)
+  }
+  printLog(`  * Open a PR from ${releaseBranch} to main`)
+  printLog('  * Ask for a review and merge the PR')
+  printLog('  * Go to the CI and trigger the deployment pipeline')
 })
 
 function setVersionInPackageJsonFiles(version: string) {
@@ -76,5 +87,5 @@ function updateLernaJson(version: string) {
 }
 
 function isSemanticVersion(input: string | undefined): boolean {
-  return input !== undefined && /^\d+\.\d+\.\d+/.test(input)
+  return input !== undefined && /^\d+\.\d+\.\d+$/.test(input)
 }

@@ -22,7 +22,7 @@
     "lint": "NODE_OPTIONS='--max-old-space-size=4096' eslint .",
     "typecheck": "tsc -b --noEmit true",
     "dev": "node scripts/dev-server.ts",
-    "release": "node ./scripts/release/prepare-release.ts",
+    "release": "node ./scripts/release/prepare-release.ts --push",
     "test": "yarn test:unit:watch",
     "test:unit": "karma start ./test/unit/karma.local.conf.js",
     "test:script": "node --test --experimental-test-module-mocks './scripts/**/*.spec.*'",
