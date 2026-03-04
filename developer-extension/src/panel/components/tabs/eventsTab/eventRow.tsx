@@ -11,6 +11,7 @@ import type {
   RumLongTaskEvent,
   RumResourceEvent,
   RumViewEvent,
+  RumViewUpdateEvent,
   RumVitalEvent,
 } from '../../../../../../packages/rum-core/src/rumEvent.types'
 import type { SdkEvent } from '../../../sdkEvent'
@@ -288,6 +289,8 @@ export const EventDescription = React.memo(({ event }: { event: SdkEvent }) => {
     switch (event.type) {
       case 'view':
         return <ViewDescription event={event} />
+      case 'view_update':
+        return <ViewUpdateDescription event={event} />
       case 'long_task':
         return <LongTaskDescription event={event} />
       case 'error':
@@ -334,6 +337,26 @@ function ViewDescription({ event }: { event: RumViewEvent }) {
   return (
     <>
       {isRouteChange ? 'SPA Route Change' : 'Load Page'} <Emphasis>{getViewName(event.view)}</Emphasis>
+    </>
+  )
+}
+
+// Keys always present in view_update.view due to assemble hooks (not part of the diff)
+const VIEW_UPDATE_ASSEMBLE_KEYS = new Set(['id', 'url', 'name', 'referrer'])
+
+function ViewUpdateDescription({ event }: { event: RumViewUpdateEvent }) {
+  const changedFieldCount = Object.keys(event.view).filter((k) => !VIEW_UPDATE_ASSEMBLE_KEYS.has(k)).length
+  const viewName = getViewName(event.view)
+
+  return (
+    <>
+      View update <Emphasis>v{event._dd.document_version}</Emphasis> · <Emphasis>{viewName}</Emphasis>
+      {changedFieldCount > 0 && (
+        <>
+          {' '}
+          · <Emphasis>{changedFieldCount}</Emphasis> {changedFieldCount === 1 ? 'field' : 'fields'} changed
+        </>
+      )}
     </>
   )
 }
