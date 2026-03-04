@@ -6,14 +6,6 @@ import { printLog, runMain, printWarning } from './lib/executionUtils.ts'
 import { command } from './lib/command.ts'
 import { checkPackageJsonFiles } from './lib/checkBrowserSdkPackageJsonFiles.ts'
 
-interface PackageFile {
-  path: string
-}
-
-interface NpmPackOutput {
-  files: PackageFile[]
-}
-
 runMain(() => {
   checkPackageJsonFiles()
 
@@ -41,14 +33,13 @@ function checkBrowserSdkPackage(packagePath: string) {
 }
 
 function getPackageFiles(packagePath: string): string[] {
-  // Yarn behavior is a bit different from npm regarding `.npmignore` globs. Since we are publishing
-  // packages using npm through Lerna[1], let's use npm to list files here.
-  //
-  // [1]: Quoting Lerna doc: "Lerna always uses npm to publish packages."
-  // https://lerna.js.org/docs/features/version-and-publish#from-package
-  const output = command`npm pack --ignore-scripts --dry-run --json`.withCurrentWorkingDirectory(packagePath).run()
-  const parsed: NpmPackOutput[] = JSON.parse(output)
-  return parsed[0].files.map((file) => file.path)
+  const output = command`yarn pack --dry-run --json`.withCurrentWorkingDirectory(packagePath).run()
+  return output
+    .trim()
+    .split('\n')
+    .map((line) => JSON.parse(line) as Record<string, unknown>)
+    .filter((entry): entry is { location: string } => 'location' in entry)
+    .map((entry) => entry.location)
 }
 
 function checkPackageJsonEntryPoints(packageJson: PackageJson, packageFiles: string[]) {
