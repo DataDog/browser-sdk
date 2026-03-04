@@ -1,11 +1,11 @@
 'use client'
 
-import React, { useRef } from 'react'
+import { useRef } from 'react'
 import { usePathname, useParams } from 'next/navigation'
 import { computeViewNameFromParams } from './computeViewNameFromParams'
 import { startNextjsView } from './nextjsPlugin'
 
-export function DatadogRumAppRouterProvider({ children }: { children: React.ReactNode }) {
+export function DatadogAppRouter() {
   const pathname = usePathname()
   const params = useParams()
   const previousPathname = useRef<string | null>(null)
@@ -15,5 +15,5 @@ export function DatadogRumAppRouterProvider({ children }: { children: React.Reac
     startNextjsView(computeViewNameFromParams(pathname, params))
   }
 
-  return <>{children}</>
+  return null
 }

@@ -1,4 +1,4 @@
-import { DatadogRumAppRouterProvider } from '@datadog/browser-rum-nextjs'
+import { DatadogAppRouter } from '@datadog/browser-rum-nextjs'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -6,19 +6,21 @@ export const metadata: Metadata = {
   description: 'Test app for Datadog RUM Next.js integration',
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({ children, sidebar }: { children: React.ReactNode; sidebar: React.ReactNode }) {
   return (
     <html lang="en">
-      <DatadogRumAppRouterProvider>
-        <body style={{ fontFamily: 'system-ui, sans-serif', margin: 0 }}>
-          <nav style={{ background: '#632ca6', padding: '1rem', marginBottom: '1rem' }}>
-            <a href="/" style={{ color: 'white', textDecoration: 'none' }}>
-              Home
-            </a>
-          </nav>
-          <main style={{ maxWidth: '800px', margin: '0 auto', padding: '1rem' }}>{children}</main>
-        </body>
-      </DatadogRumAppRouterProvider>
+      <body style={{ fontFamily: 'system-ui, sans-serif', margin: 0 }}>
+        <DatadogAppRouter />
+        <nav style={{ background: '#632ca6', padding: '1rem', marginBottom: '1rem' }}>
+          <a href="/" style={{ color: 'white', textDecoration: 'none' }}>
+            Home
+          </a>
+        </nav>
+        <div style={{ display: 'flex', maxWidth: '800px', margin: '0 auto', padding: '1rem' }}>
+          <main style={{ flex: 1 }}>{children}</main>
+          {sidebar}
+        </div>
+      </body>
     </html>
   )
 }

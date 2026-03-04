@@ -1,3 +1,3 @@
-export { nextjsPlugin } from '../domain/nextjsPlugin'
+export { nextjsPlugin, onRouterTransitionStart } from '../domain/nextjsPlugin'
 export type { NextjsPlugin } from '../domain/nextjsPlugin'
-export { DatadogRumAppRouterProvider } from '../domain/datadogRumAppRouterProvider'
+export { DatadogAppRouter } from '../domain/datadogAppRouter'

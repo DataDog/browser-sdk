@@ -11,3 +11,5 @@ if (config && !datadogRum.getInitConfiguration()) {
     datadogRum.setGlobalContext(JSON.parse(context))
   }
 }
+
+export { onRouterTransitionStart } from '@datadog/browser-rum-nextjs'

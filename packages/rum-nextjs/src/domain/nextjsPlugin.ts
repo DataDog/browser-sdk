@@ -1,3 +1,4 @@
+import { buildUrl } from '@datadog/browser-core'
 import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
 
 export type NextjsPlugin = Pick<Required<RumPlugin>, 'name' | 'onInit' | 'onRumStart'>
@@ -7,6 +8,7 @@ type StartSubscriber = (addEvent: StartRumResult['addEvent']) => void
 
 let globalPublicApi: RumPublicApi | undefined
 let globalAddEvent: StartRumResult['addEvent'] | undefined
+let lastNavigationUrl: string | undefined
 
 const onRumInitSubscribers: InitSubscriber[] = []
 const onRumStartSubscribers: StartSubscriber[] = []
@@ -24,8 +26,8 @@ export function nextjsPlugin(): NextjsPlugin {
     },
     onRumStart({ addEvent }) {
       globalAddEvent = addEvent
-      for (const subscriber of onRumStartSubscribers) {
-        if (addEvent) {
+      if (addEvent) {
+        for (const subscriber of onRumStartSubscribers) {
           subscriber(addEvent)
         }
       }
@@ -35,8 +37,16 @@ export function nextjsPlugin(): NextjsPlugin {
 
 export function startNextjsView(viewName: string) {
   if (globalPublicApi) {
-    globalPublicApi.startView(viewName)
+    // Use the URL captured by onRouterTransitionStart if available, since React renders before pushState updates window.location
+    const url = lastNavigationUrl ? buildUrl(lastNavigationUrl, window.location.origin).href : undefined
+    lastNavigationUrl = undefined
+    globalPublicApi.startView({ name: viewName, url })
   }
+}
+
+// Must be re-exported from the user's instrumentation-client.ts so we can capture the URL before React renders
+export function onRouterTransitionStart(url: string) {
+  lastNavigationUrl = url
 }
 
 export function onRumInit(callback: InitSubscriber) {
@@ -60,4 +70,5 @@ export function resetNextjsPlugin() {
   globalAddEvent = undefined
   onRumInitSubscribers.length = 0
   onRumStartSubscribers.length = 0
+  lastNavigationUrl = undefined
 }

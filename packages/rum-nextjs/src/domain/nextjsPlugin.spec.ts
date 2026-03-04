@@ -1,6 +1,13 @@
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '../../../core/test'
-import { nextjsPlugin, startNextjsView, onRumInit, onRumStart, resetNextjsPlugin } from './nextjsPlugin'
+import {
+  nextjsPlugin,
+  startNextjsView,
+  onRumInit,
+  onRumStart,
+  onRouterTransitionStart,
+  resetNextjsPlugin,
+} from './nextjsPlugin'
 
 const INIT_CONFIGURATION = {} as RumInitConfiguration
 
@@ -50,12 +57,34 @@ describe('nextjsPlugin', () => {
     expect(startViewSpy).not.toHaveBeenCalled()
   })
 
-  it('delegates startNextjsView to publicApi.startView', () => {
+  it('delegates startNextjsView to publicApi.startView with name', () => {
     const { startViewSpy } = initPlugin()
 
     startNextjsView('/about')
 
-    expect(startViewSpy).toHaveBeenCalledOnceWith('/about')
+    expect(startViewSpy).toHaveBeenCalledOnceWith({ name: '/about', url: undefined })
+  })
+
+  it('uses onRouterTransitionStart URL when available', () => {
+    const { startViewSpy } = initPlugin()
+
+    onRouterTransitionStart('/about?foo=bar')
+    startNextjsView('/about')
+
+    expect(startViewSpy).toHaveBeenCalledOnceWith({
+      name: '/about',
+      url: `${window.location.origin}/about?foo=bar`,
+    })
+  })
+
+  it('clears onRouterTransitionStart URL after startNextjsView consumes it', () => {
+    const { startViewSpy } = initPlugin()
+
+    onRouterTransitionStart('/about')
+    startNextjsView('/about')
+    startNextjsView('/other')
+
+    expect(startViewSpy.calls.mostRecent().args[0]).toEqual({ name: '/other', url: undefined })
   })
 
   describe('lifecycle subscribers', () => {

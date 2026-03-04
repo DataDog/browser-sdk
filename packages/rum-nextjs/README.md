@@ -10,11 +10,13 @@ Requires Next.js v15.3+, which supports the [`instrumentation-client`][1] file c
 
 ## 1. Create an `instrumentation-client.js` file in the root of your Next.js project
 
-Initialize the Datadog RUM SDK with the `nextjsPlugin`:
+Initialize the Datadog RUM SDK with the `nextjsPlugin` and re-export `onRouterTransitionStart` so Next.js can call it on client-side navigations:
 
 ```js
 import { datadogRum } from '@datadog/browser-rum'
-import { nextjsPlugin } from '@datadog/browser-rum-nextjs'
+import { nextjsPlugin, onRouterTransitionStart } from '@datadog/browser-rum-nextjs'
+
+export { onRouterTransitionStart }
 
 datadogRum.init({
   applicationId: '<APP_ID>',
@@ -24,17 +26,18 @@ datadogRum.init({
 })
 ```
 
-## 2. Wrap your root layout with the provider
+## 2. Call the DatadogAppRouter component from your root layout.
 
 ```tsx
 // app/layout.tsx
-import { DatadogRumProvider } from '@datadog/browser-rum-nextjs'
+import { DatadogAppRouter } from '@datadog/browser-rum-nextjs'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <DatadogRumProvider>{children}</DatadogRumProvider>
+        <DatadogAppRouter />
+        {children}
       </body>
     </html>
   )
