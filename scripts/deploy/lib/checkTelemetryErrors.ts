@@ -2,13 +2,14 @@
  * Check telemetry errors
  */
 import { Agent } from 'undici'
-import { printLog, fetchHandlingError, timeout } from '../../lib/executionUtils.ts'
+import { printLog, fetchHandlingError, timeout, findError, FetchError } from '../../lib/executionUtils.ts'
 import { getTelemetryOrgApiKey, getTelemetryOrgApplicationKey } from '../../lib/secrets.ts'
 import { getDatacenterMetadata } from '../../lib/datacenter.ts'
 
 const TIME_WINDOW_IN_MINUTES = 5
 // Rate limit: 2 requests per 10 seconds. Wait 6 seconds between requests to be safe.
 const RATE_LIMIT_DELAY_MS = 6000
+const MAX_RETRIES = 3
 
 /**
  * Dedicated HTTP agent for telemetry API calls.
@@ -110,54 +111,69 @@ async function queryLogsApi(
   query: Query,
   agent: Agent
 ): Promise<QueryResultBucket[]> {
-  const response = await fetchHandlingError(`https://api.${site}/api/v2/logs/analytics/aggregate`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'DD-API-KEY': apiKey,
-      'DD-APPLICATION-KEY': applicationKey,
-    },
-    body: JSON.stringify({
-      compute: [
-        {
-          aggregation: 'count',
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const response = await fetchHandlingError(`https://api.${site}/api/v2/logs/analytics/aggregate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'DD-API-KEY': apiKey,
+          'DD-APPLICATION-KEY': applicationKey,
         },
-      ],
-      ...(query.groupBy
-        ? {
-            group_by: [
-              {
-                facet: query.groupBy,
-                sort: {
-                  type: 'measure',
-                  aggregation: 'count',
-                },
-              },
-            ],
-          }
-        : {}),
-      filter: {
-        from: `now-${TIME_WINDOW_IN_MINUTES}m`,
-        to: 'now',
-        query: query.query,
-      },
-    }),
-    // Use dedicated agent to avoid connection pool conflicts
-    dispatcher: agent,
-  })
+        body: JSON.stringify({
+          compute: [
+            {
+              aggregation: 'count',
+            },
+          ],
+          ...(query.groupBy
+            ? {
+                group_by: [
+                  {
+                    facet: query.groupBy,
+                    sort: {
+                      type: 'measure',
+                      aggregation: 'count',
+                    },
+                  },
+                ],
+              }
+            : {}),
+          filter: {
+            from: `now-${TIME_WINDOW_IN_MINUTES}m`,
+            to: 'now',
+            query: query.query,
+          },
+        }),
+        // Use dedicated agent to avoid connection pool conflicts
+        dispatcher: agent,
+      })
 
-  const data = (await response.json()) as QueryResult
+      const data = (await response.json()) as QueryResult
 
-  if (
-    !data ||
-    !data.data ||
-    !Array.isArray(data.data.buckets) ||
-    !data.data.buckets.every((bucket) => bucket.computes && typeof bucket.computes.c0 === 'number')
-  ) {
-    throw new Error(`Unexpected response from the API: ${JSON.stringify(data)}`)
+      if (
+        !data ||
+        !data.data ||
+        !Array.isArray(data.data.buckets) ||
+        !data.data.buckets.every((bucket) => bucket.computes && typeof bucket.computes.c0 === 'number')
+      ) {
+        throw new Error(`Unexpected response from the API: ${JSON.stringify(data)}`)
+      }
+
+      return data.data.buckets
+    } catch (error) {
+      const fetchError = findError(error, FetchError)
+      if (!fetchError || fetchError.response.status !== 503 || attempt === MAX_RETRIES) {
+        throw error
+      }
+      printLog(
+        `503 Service Unavailable, retrying in ${RATE_LIMIT_DELAY_MS / 1000}s (attempt ${attempt}/${MAX_RETRIES})...`
+      )
+      await timeout(RATE_LIMIT_DELAY_MS)
+    }
   }
 
-  return data.data.buckets
+  throw new Error('Unexpected: retry loop exited without returning or throwing')
 }
 
 function computeLogsLink(site: string, query: Query): string {
