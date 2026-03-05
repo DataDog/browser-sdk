@@ -2,7 +2,7 @@ import path from 'node:path'
 import { printLog, runMain } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
 import { getBuildEnvValue } from '../lib/buildEnv.ts'
-import { getTelemetryOrgApiKey } from '../lib/secrets.ts'
+import { getTelemetryOrgApiKey, getOrg2ApiKey } from '../lib/secrets.ts'
 import { getAllDatacentersMetadata, getDatacenterMetadata } from '../lib/datacenter.ts'
 import { forEachFile } from '../lib/filesUtils.ts'
 import { buildRootUploadPath, buildDatacenterUploadPath, buildBundleFolder, packages } from './lib/deploymentUtils.ts'
@@ -66,6 +66,7 @@ async function uploadSourceMaps(
     }
     const prefix = path.dirname(`/${uploadPath}`)
     uploadToDatadog(packageName, service, prefix, bundleFolder, sites)
+    uploadToOrg2(packageName, service, prefix, bundleFolder)
   }
 }
 
@@ -83,6 +84,29 @@ async function renameFilesWithVersionSuffix(bundleFolder: string, version: strin
     console.log(`Renaming ${bundlePath} to ${uploadPath}`)
     command`mv ${bundlePath} ${uploadPath}`.run()
   })
+}
+
+const ORG2_CLOUDFRONT_BASE_URL = 'https://d20xtzwzcl0ceb.cloudfront.net'
+
+function uploadToOrg2(packageName: string, service: string, prefix: string, bundleFolder: string): void {
+  const apiKey = getOrg2ApiKey()
+  const org2Prefix = `${ORG2_CLOUDFRONT_BASE_URL}${prefix === '/' ? '' : prefix}`
+
+  printLog(`Uploading ${packageName} source maps with prefix ${org2Prefix} for org2...`)
+
+  command`
+    datadog-ci sourcemaps upload ${bundleFolder}
+      --service ${service}
+      --release-version ${getBuildEnvValue('SDK_VERSION')}
+      --minified-path-prefix ${org2Prefix}
+      --project-path @datadog/browser-${packageName}/
+      --repository-url https://www.github.com/datadog/browser-sdk
+  `
+    .withEnvironment({
+      DATADOG_API_KEY: apiKey,
+      DATADOG_SITE: 'datadoghq.com',
+    })
+    .run()
 }
 
 function uploadToDatadog(
