@@ -4,6 +4,7 @@ import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration } from '@datadog/browser-rum'
 import { createLogger } from '../../common/logger'
 import { evalInWindow } from '../evalInWindow'
+import { computeLogsTrackingType, computeRumTrackingType } from '../sampler'
 
 const logger = createLogger('useSdkInfos')
 
@@ -31,6 +32,8 @@ export interface SdkInfos {
     rum?: string
     forcedReplay?: '1'
   }
+  rumTrackingType?: string
+  logsTrackingType?: string
 }
 
 export function useSdkInfos() {
@@ -51,8 +54,9 @@ export function useSdkInfos() {
 }
 
 async function getInfos(): Promise<SdkInfos> {
+  let raw: SdkInfos
   try {
-    return (await evalInWindow(
+    raw = (await evalInWindow(
       `
         // Helper to serialize objects while preserving function metadata
         function serializeWithFunctions(obj) {
@@ -95,8 +99,19 @@ async function getInfos(): Promise<SdkInfos> {
     )) as SdkInfos
   } catch (error) {
     logger.error('Error while getting SDK infos:', error)
+    return {}
   }
-  return {}
+
+  const sessionId = raw.cookie?.id
+  return {
+    ...raw,
+    rumTrackingType:
+      (raw.cookie?.rum ?? (sessionId && raw.rum?.config && computeRumTrackingType(sessionId, raw.rum.config))) ||
+      undefined,
+    logsTrackingType:
+      (raw.cookie?.logs ?? (sessionId && raw.logs?.config && computeLogsTrackingType(sessionId, raw.logs.config))) ||
+      undefined,
+  }
 }
 
 function deepEqual(a: unknown, b: unknown) {
