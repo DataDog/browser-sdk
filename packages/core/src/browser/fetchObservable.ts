@@ -106,7 +106,7 @@ function beforeSend(
     startClocks,
     url,
     handlingStack,
-    isAbortedOnStart: init?.signal?.aborted || false,
+    isAbortedOnStart: (input instanceof Request && input.signal?.aborted) || init?.signal?.aborted || false,
   }
 
   observable.notify(context)
