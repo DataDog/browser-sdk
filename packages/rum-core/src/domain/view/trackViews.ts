@@ -382,17 +382,15 @@ function newView(
     },
     setLoadingTime(callTimestamp?: TimeStamp, overwrite = false) {
       if (endClocks) {
-        return { overwritten: false }
+        return
       }
       if (hasManualLoadingTime && !overwrite) {
-        return { overwritten: false }
+        return
       }
-      const overwritten = hasManualLoadingTime
       const loadingTime = elapsed(startClocks.timeStamp, callTimestamp ?? timeStampNow())
       setManualLoadingTime(loadingTime)
       hasManualLoadingTime = true
       scheduleViewUpdate()
-      return { overwritten }
     },
     setViewName(updatedName: string) {
       name = updatedName

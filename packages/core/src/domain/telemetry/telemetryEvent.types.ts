@@ -950,23 +950,15 @@ export interface StopResource {
 }
 export interface AddViewLoadingTime {
   /**
-   * addViewLoadingTime API
+   * setViewLoadingTime API
    */
-  feature: 'addViewLoadingTime'
+  // [MANUAL] Updated pending rum-events-format PR #352 (https://github.com/DataDog/rum-events-format/pull/352)
+  feature: 'set-view-loading-time'
   /**
-   * Whether the view is not available
+   * Whether the overwrite option was passed
    */
-  // [MANUAL] Made optional pending rum-events-format PR #352 (https://github.com/DataDog/rum-events-format/pull/352)
-  no_view?: boolean
-  /**
-   * Whether the available view is not active
-   */
-  // [MANUAL] Made optional pending rum-events-format PR #352 (https://github.com/DataDog/rum-events-format/pull/352)
-  no_active_view?: boolean
-  /**
-   * Whether the loading time was overwritten
-   */
-  overwritten: boolean
+  // [MANUAL] Added pending rum-events-format PR #352 (https://github.com/DataDog/rum-events-format/pull/352)
+  overwrite: boolean
   [k: string]: unknown
 }
 export interface TrackWebView {

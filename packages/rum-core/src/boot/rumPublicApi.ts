@@ -795,10 +795,10 @@ export function makeRumPublicApi(
 
     setViewLoadingTime: monitor((options?: SetViewLoadingTimeOptions) => {
       const callTimestamp = timeStampNow()
-      const result = strategy.setLoadingTime(callTimestamp, options?.overwrite ?? false)
+      strategy.setLoadingTime(callTimestamp, options?.overwrite ?? false)
       addTelemetryUsage({
-        feature: 'addViewLoadingTime',
-        overwritten: result?.overwritten ?? false,
+        feature: 'set-view-loading-time',
+        overwrite: options?.overwrite ?? false,
       })
     }),
 
