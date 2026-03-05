@@ -50,10 +50,19 @@ export async function modifyFile(
   return false
 }
 
-interface PackageJsonInfo {
+export interface PackageJsonInfo {
   relativePath: string
   path: string
-  content: any
+  content: PackageJson
+}
+
+interface PackageJson {
+  name?: string
+  private?: boolean
+  version?: string
+  dependencies?: Record<string, string>
+  devDependencies?: Record<string, string>
+  peerDependencies?: Record<string, string>
 }
 
 export function findPackageJsonFiles(): PackageJsonInfo[] {

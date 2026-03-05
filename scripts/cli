@@ -55,27 +55,6 @@ cmd_build_json2type () {
   set -e
 }
 
-cmd_release () {
-  [[ `git branch --show-current` != "main" ]] || fail 'please do not release from `main` branch'
-  # We should publish all packages regardless of if there are changes in each.
-  # --force-publish will skip the `lerna changed` check for changed packages
-  # https://github.com/lerna/lerna/tree/main/libs/commands/version#--force-publish
-  yarn lerna version --exact --force-publish
-}
-
-cmd_version () {
-  node ./scripts/release/generate-changelog/index.ts
-  node ./scripts/release/update-peer-dependency-versions.ts
-  yarn run pack
-  # keep test apps lockfiles up to date
-  for app_package_path in $(git ls-files test/apps/*/package.json); do
-    app_dir=$(dirname "$app_package_path");
-    cd "$app_dir"
-    yarn up
-    git add yarn.lock
-    cd - > /dev/null
-  done
-}
 
 cmd_woke () {
   command -v woke || fail 'woke not installed, see https://github.com/get-woke/woke#installation'

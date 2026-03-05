@@ -1,5 +1,6 @@
 {
   "name": "browser-sdk",
+  "version": "6.30.1",
   "description": "browser SDK",
   "private": true,
   "workspaces": [
@@ -21,8 +22,7 @@
     "lint": "NODE_OPTIONS='--max-old-space-size=4096' eslint .",
     "typecheck": "tsc -b --noEmit true",
     "dev": "node scripts/dev-server.ts",
-    "release": "scripts/cli release",
-    "version": "scripts/cli version",
+    "release": "node ./scripts/release/prepare-release.ts --push",
     "test": "yarn test:unit:watch",
     "test:unit": "karma start ./test/unit/karma.local.conf.js",
     "test:script": "node --test --experimental-test-module-mocks './scripts/**/*.spec.*'",
