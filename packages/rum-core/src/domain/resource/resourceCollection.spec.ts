@@ -276,7 +276,7 @@ describe('resourceCollection', () => {
   })
 
   describe('HTTP response metadata enrichment', () => {
-    it('should extract content-type from performance entry when no request is available', () => {
+    it('should extract content-type from performance entry when available', () => {
       setupResourceCollection()
 
       notifyPerformanceEntries([
