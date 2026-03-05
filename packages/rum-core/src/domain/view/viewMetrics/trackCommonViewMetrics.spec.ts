@@ -29,7 +29,7 @@ describe('trackCommonViewMetrics', () => {
 
   describe('manual loading time suppresses auto-detected loading time callback', () => {
     it('should ignore auto-detected loading time when manual loading time was already set', () => {
-      const { setLoadEvent, setManualLoadingTime, getCommonViewMetrics, stop } = trackCommonViewMetrics(
+      const { setLoadEvent, setLoadingTime, getCommonViewMetrics, stop } = trackCommonViewMetrics(
         lifeCycle,
         domMutationObservable,
         windowOpenObservable,
@@ -48,12 +48,12 @@ describe('trackCommonViewMetrics', () => {
       domMutationObservable.notify([createMutationRecord()])
       clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
 
-      // Step 2: Set manual loading time. This sets hasManualLoadingTime = true
+      // Step 2: Set manual loading time via setLoadingTime. This sets hasManualLoadingTime = true
       // and calls stopLoadingTimeTracking (waitPageActivityEnd already completed).
-      const manualLoadingTime = 500 as Duration
-      setManualLoadingTime(manualLoadingTime)
+      setLoadingTime()
+      const manualLoadingTime = getCommonViewMetrics().loadingTime
 
-      expect(getCommonViewMetrics().loadingTime).toBe(manualLoadingTime)
+      expect(manualLoadingTime).toBeDefined()
 
       // Step 3: Fire setLoadEvent, which completes the remaining wait condition.
       // trackLoadingTime's invokeCallbackIfAllCandidatesAreReceived will now fire

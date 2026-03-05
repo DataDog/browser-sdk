@@ -226,7 +226,6 @@ function newView(
   const contextManager = createContextManager()
 
   let sessionIsActive = true
-  let hasManualLoadingTime = false
   let name = viewOptions?.name
   const service = viewOptions?.service || configuration.service
   const version = viewOptions?.version || configuration.version
@@ -259,7 +258,7 @@ function newView(
     stop: stopCommonViewMetricsTracking,
     stopINPTracking,
     getCommonViewMetrics,
-    setManualLoadingTime,
+    setLoadingTime: setLoadingTimeOnMetrics,
   } = trackCommonViewMetrics(
     lifeCycle,
     domMutationObservable,
@@ -381,16 +380,9 @@ function newView(
       scheduleViewUpdate()
     },
     setLoadingTime(callTimestamp?: TimeStamp, overwrite = false) {
-      if (endClocks) {
-        return
+      if (setLoadingTimeOnMetrics(callTimestamp, overwrite)) {
+        scheduleViewUpdate()
       }
-      if (hasManualLoadingTime && !overwrite) {
-        return
-      }
-      const loadingTime = elapsed(startClocks.timeStamp, callTimestamp ?? timeStampNow())
-      setManualLoadingTime(loadingTime)
-      hasManualLoadingTime = true
-      scheduleViewUpdate()
     },
     setViewName(updatedName: string) {
       name = updatedName

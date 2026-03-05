@@ -1,4 +1,5 @@
-import type { ClocksState, Duration, Observable } from '@datadog/browser-core'
+import type { ClocksState, Duration, Observable, RelativeTime, TimeStamp } from '@datadog/browser-core'
+import { elapsed, timeStampNow } from '@datadog/browser-core'
 import type { ViewLoadingType } from '../../../rawRumEvent.types'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
@@ -29,6 +30,7 @@ export function trackCommonViewMetrics(
 ) {
   const commonViewMetrics: CommonViewMetrics = {}
   let hasManualLoadingTime = false
+  let viewEnded = false
 
   const { stop: stopLoadingTimeTracking, setLoadEvent } = trackLoadingTime(
     lifeCycle,
@@ -61,7 +63,7 @@ export function trackCommonViewMetrics(
   const {
     stop: stopINPTracking,
     getInteractionToNextPaint,
-    setViewEnd,
+    setViewEnd: inpSetViewEnd,
   } = trackInteractionToNextPaint(configuration, viewStart.relative, loadingType)
 
   return {
@@ -72,17 +74,28 @@ export function trackCommonViewMetrics(
     },
     stopINPTracking,
     setLoadEvent,
-    setViewEnd,
+    setViewEnd: (viewEndTime: RelativeTime) => {
+      viewEnded = true
+      inpSetViewEnd(viewEndTime)
+    },
     getCommonViewMetrics: () => {
       commonViewMetrics.interactionToNextPaint = getInteractionToNextPaint()
       return commonViewMetrics
     },
-    setManualLoadingTime: (loadingTime: Duration) => {
+    setLoadingTime: (callTimestamp?: TimeStamp, overwrite = false): boolean => {
+      if (viewEnded) {
+        return false
+      }
+      if (hasManualLoadingTime && !overwrite) {
+        return false
+      }
+      const loadingTime = elapsed(viewStart.timeStamp, callTimestamp ?? timeStampNow())
       if (!hasManualLoadingTime) {
         stopLoadingTimeTracking()
       }
       hasManualLoadingTime = true
       commonViewMetrics.loadingTime = loadingTime
+      return true
     },
   }
 }
