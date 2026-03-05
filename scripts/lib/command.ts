@@ -1,5 +1,5 @@
 import childProcess from 'node:child_process'
-import { printError } from './executionUtils.ts'
+import { printDebug, printError } from './executionUtils.ts'
 
 interface CommandOptions {
   cwd?: string
@@ -57,6 +57,9 @@ export function command(...templateArguments: [TemplateStringsArray, ...any[]]):
     },
 
     run(): string {
+      const formattedCommand = `${commandName} ${commandArguments.join(' ')}`
+      printDebug(`Running command: ${formattedCommand}`)
+
       const commandResult = childProcess.spawnSync(commandName, commandArguments, {
         input,
         env: { ...process.env, ...env },
@@ -65,7 +68,6 @@ export function command(...templateArguments: [TemplateStringsArray, ...any[]]):
       })
 
       if (commandResult.status !== 0) {
-        const formattedCommand = `${commandName} ${commandArguments.join(' ')}`
         const formattedStderr = commandResult.stderr ? `\n---- stderr: ----\n${commandResult.stderr}\n----` : ''
         const formattedStdout = commandResult.stdout ? `\n---- stdout: ----\n${commandResult.stdout}\n----` : ''
         const exitCause =
