@@ -388,7 +388,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * Context - @category Data Collection
    *
-   * @param nameOrOptions - Name or options (name, service, version) for the view
+   * @param nameOrOptions - The view name, or a {@link ViewOptions} object to configure the view
    */
   startView(nameOrOptions?: string | ViewOptions): void
 
