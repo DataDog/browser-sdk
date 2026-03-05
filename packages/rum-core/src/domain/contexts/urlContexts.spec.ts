@@ -60,6 +60,24 @@ describe('urlContexts', () => {
     expect(urlContext.referrer).toBe(document.referrer)
   })
 
+  it('should use the provided url override for events starting before a location change', () => {
+    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
+      startClocks: clocksNow(),
+      url: 'https://example.com/manual-url',
+    } as ViewCreatedEvent)
+
+    clock.tick(10)
+    const resourceStartTime = clock.relative(10)
+
+    clock.tick(10)
+    changeLocation('/new-path')
+
+    expect(urlContexts.findUrl(resourceStartTime)).toEqual({
+      url: 'https://example.com/manual-url',
+      referrer: document.referrer,
+    })
+  })
+
   it('should fall back to location.href when no url override is provided', () => {
     lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
       startClocks: relativeToClocks(0 as RelativeTime),
