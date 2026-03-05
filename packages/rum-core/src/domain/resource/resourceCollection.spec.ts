@@ -306,48 +306,46 @@ describe('resourceCollection', () => {
     })
   })
 
-  describe('with trackEarlyRequests enabled', () => {
-    it('creates a resource from a performance entry without a matching request', () => {
-      setupResourceCollection({ trackResources: true, trackEarlyRequests: true })
+  it('creates a resource from a performance entry without a matching request', () => {
+    setupResourceCollection({ trackResources: true })
 
-      notifyPerformanceEntries([
-        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
-          initiatorType: RequestType.FETCH,
-        }),
-      ])
-      runTasks()
+    notifyPerformanceEntries([
+      createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+        initiatorType: RequestType.FETCH,
+      }),
+    ])
+    runTasks()
 
-      expect(rawRumEvents.length).toBe(1)
-      expect(rawRumEvents[0].startClocks.relative).toBe(200 as RelativeTime)
-      expect(rawRumEvents[0].rawRumEvent).toEqual({
-        date: jasmine.any(Number),
-        resource: {
-          id: jasmine.any(String),
-          duration: (100 * 1e6) as ServerDuration,
-          method: undefined,
-          status_code: 200,
-          delivery_type: 'cache',
-          protocol: 'HTTP/1.0',
-          type: ResourceType.FETCH,
-          url: 'https://resource.com/valid',
-          render_blocking_status: 'non-blocking',
-          size: undefined,
-          encoded_body_size: undefined,
-          decoded_body_size: undefined,
-          transfer_size: undefined,
-          download: { duration: 100000000 as ServerDuration, start: 0 as ServerDuration },
-          first_byte: { duration: 0 as ServerDuration, start: 0 as ServerDuration },
-          graphql: undefined,
-          response: undefined,
-        },
-        type: RumEventType.RESOURCE,
-        _dd: {
-          discarded: false,
-        },
-      })
-      expect(rawRumEvents[0].domainContext).toEqual({
-        performanceEntry: jasmine.any(Object),
-      })
+    expect(rawRumEvents.length).toBe(1)
+    expect(rawRumEvents[0].startClocks.relative).toBe(200 as RelativeTime)
+    expect(rawRumEvents[0].rawRumEvent).toEqual({
+      date: jasmine.any(Number),
+      resource: {
+        id: jasmine.any(String),
+        duration: (100 * 1e6) as ServerDuration,
+        method: undefined,
+        status_code: 200,
+        delivery_type: 'cache',
+        protocol: 'HTTP/1.0',
+        type: ResourceType.FETCH,
+        url: 'https://resource.com/valid',
+        render_blocking_status: 'non-blocking',
+        size: undefined,
+        encoded_body_size: undefined,
+        decoded_body_size: undefined,
+        transfer_size: undefined,
+        download: { duration: 100000000 as ServerDuration, start: 0 as ServerDuration },
+        first_byte: { duration: 0 as ServerDuration, start: 0 as ServerDuration },
+        graphql: undefined,
+        response: undefined,
+      },
+      type: RumEventType.RESOURCE,
+      _dd: {
+        discarded: false,
+      },
+    })
+    expect(rawRumEvents[0].domainContext).toEqual({
+      performanceEntry: jasmine.any(Object),
     })
   })
 
