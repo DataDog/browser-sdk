@@ -58,7 +58,7 @@ export interface PackageJsonInfo {
 
 interface PackageJson {
   name?: string
-  private?: string
+  private?: boolean
   version?: string
   dependencies?: Record<string, string>
   devDependencies?: Record<string, string>
