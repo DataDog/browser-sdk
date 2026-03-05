@@ -1,8 +1,8 @@
 /**
  * Check telemetry errors
  */
-import { Agent } from 'undici'
-import { printLog, fetchHandlingError, timeout, findError, FetchError } from '../../lib/executionUtils.ts'
+import { Agent, fetch, type Response } from 'undici'
+import { printLog, timeout, createFetchError } from '../../lib/executionUtils.ts'
 import { getTelemetryOrgApiKey, getTelemetryOrgApplicationKey } from '../../lib/secrets.ts'
 import { getDatacenterMetadata } from '../../lib/datacenter.ts'
 
@@ -109,71 +109,76 @@ async function queryLogsApi(
   apiKey: string,
   applicationKey: string,
   query: Query,
-  agent: Agent
+  agent: Agent,
+  attempt: number = 1
 ): Promise<QueryResultBucket[]> {
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    try {
-      const response = await fetchHandlingError(`https://api.${site}/api/v2/logs/analytics/aggregate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'DD-API-KEY': apiKey,
-          'DD-APPLICATION-KEY': applicationKey,
+  const response = await fetch(`https://api.${site}/api/v2/logs/analytics/aggregate`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'DD-API-KEY': apiKey,
+      'DD-APPLICATION-KEY': applicationKey,
+    },
+    body: JSON.stringify({
+      compute: [
+        {
+          aggregation: 'count',
         },
-        body: JSON.stringify({
-          compute: [
-            {
-              aggregation: 'count',
-            },
-          ],
-          ...(query.groupBy
-            ? {
-                group_by: [
-                  {
-                    facet: query.groupBy,
-                    sort: {
-                      type: 'measure',
-                      aggregation: 'count',
-                    },
-                  },
-                ],
-              }
-            : {}),
-          filter: {
-            from: `now-${TIME_WINDOW_IN_MINUTES}m`,
-            to: 'now',
-            query: query.query,
-          },
-        }),
-        // Use dedicated agent to avoid connection pool conflicts
-        dispatcher: agent,
-      })
+      ],
+      ...(query.groupBy
+        ? {
+            group_by: [
+              {
+                facet: query.groupBy,
+                sort: {
+                  type: 'measure',
+                  aggregation: 'count',
+                },
+              },
+            ],
+          }
+        : {}),
+      filter: {
+        from: `now-${TIME_WINDOW_IN_MINUTES}m`,
+        to: 'now',
+        query: query.query,
+      },
+    }),
+    // Use dedicated agent to avoid connection pool conflicts.
+    dispatcher: agent,
+  })
 
-      const data = (await response.json()) as QueryResult
-
-      if (
-        !data ||
-        !data.data ||
-        !Array.isArray(data.data.buckets) ||
-        !data.data.buckets.every((bucket) => bucket.computes && typeof bucket.computes.c0 === 'number')
-      ) {
-        throw new Error(`Unexpected response from the API: ${JSON.stringify(data)}`)
-      }
-
-      return data.data.buckets
-    } catch (error) {
-      const fetchError = findError(error, FetchError)
-      if (!fetchError || fetchError.response.status !== 503 || attempt === MAX_RETRIES) {
-        throw error
-      }
-      printLog(
-        `503 Service Unavailable, retrying in ${RATE_LIMIT_DELAY_MS / 1000}s (attempt ${attempt}/${MAX_RETRIES})...`
-      )
-      await timeout(RATE_LIMIT_DELAY_MS)
-    }
+  if (shouldRetry(response, attempt)) {
+    printLog(
+      `503 Service Unavailable, retrying in ${RATE_LIMIT_DELAY_MS / 1000}s (attempt ${attempt}/${MAX_RETRIES})...`
+    )
+    await timeout(RATE_LIMIT_DELAY_MS)
+    return queryLogsApi(site, apiKey, applicationKey, query, agent, attempt + 1)
   }
 
-  throw new Error('Unexpected: retry loop exited without returning or throwing')
+  if (!response.ok) {
+    throw await createFetchError(response)
+  }
+
+  const data = (await response.json()) as QueryResult
+
+  if (!isValidData(data)) {
+    throw new Error(`Unexpected response from the API: ${JSON.stringify(data)}`)
+  }
+
+  return data.data.buckets
+}
+
+function shouldRetry(response: Response, attempt: number): boolean {
+  return response.status === 503 && attempt < MAX_RETRIES
+}
+
+function isValidData(data: QueryResult): boolean {
+  return (
+    data?.data &&
+    Array.isArray(data.data.buckets) &&
+    data.data.buckets.every((bucket) => bucket.computes && typeof bucket.computes.c0 === 'number')
+  )
 }
 
 function computeLogsLink(site: string, query: Query): string {
