@@ -67,6 +67,20 @@ test.describe('rum resources', () => {
       expectToHaveValidTimings(resourceEvent!)
     })
 
+  createTest('collect fetch requests made before init with trackEarlyRequests')
+    .withHead(html`
+      <script>
+        fetch('/ok')
+      </script>
+    `)
+    .withRum({ trackEarlyRequests: true })
+    .run(async ({ intakeRegistry, flushEvents }) => {
+      await flushEvents()
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.type === 'fetch')
+      expect(resourceEvent).toBeDefined()
+      expect(resourceEvent!.resource.url).toContain('/ok')
+    })
+
   createTest('retrieve initial document timings')
     .withRum()
     .run(async ({ baseUrl, intakeRegistry, flushEvents }) => {
