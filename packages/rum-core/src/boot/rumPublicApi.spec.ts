@@ -925,6 +925,7 @@ describe('rum public api', () => {
         description: 'description-value',
       })
       expect(addDurationVitalSpy).toHaveBeenCalledWith({
+        id: jasmine.any(String),
         name: 'foo',
         startClocks: timeStampToClocks(startTime),
         duration: 100,

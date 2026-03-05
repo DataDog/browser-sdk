@@ -107,6 +107,59 @@ describe('valueHistory', () => {
     })
   })
 
+  describe('getEntries', () => {
+    const END_OF_TIMES = Infinity as RelativeTime
+
+    it('should return an empty array when there is no entry for the given startTime', () => {
+      valueHistory.add('foo', 0 as RelativeTime).close(10 as RelativeTime)
+      valueHistory.add('bar', 20 as RelativeTime)
+
+      expect(valueHistory.getEntries(15 as RelativeTime)).toEqual([])
+    })
+
+    it('should return the entries for the given startTime', () => {
+      valueHistory.add('foo', 0 as RelativeTime)
+      valueHistory.add('bar', 5 as RelativeTime).close(10 as RelativeTime)
+      valueHistory.add('qux', 5 as RelativeTime).close(15 as RelativeTime)
+      valueHistory.add('baz', 10 as RelativeTime)
+
+      expect(valueHistory.getEntries(0 as RelativeTime)).toEqual([
+        {
+          value: 'foo',
+          startTime: 0 as RelativeTime,
+          endTime: END_OF_TIMES,
+          remove: jasmine.any(Function),
+          close: jasmine.any(Function),
+        },
+      ])
+      expect(valueHistory.getEntries(5 as RelativeTime)).toEqual([
+        {
+          value: 'qux',
+          startTime: 5 as RelativeTime,
+          endTime: 15 as RelativeTime,
+          remove: jasmine.any(Function),
+          close: jasmine.any(Function),
+        },
+        {
+          value: 'bar',
+          startTime: 5 as RelativeTime,
+          endTime: 10 as RelativeTime,
+          remove: jasmine.any(Function),
+          close: jasmine.any(Function),
+        },
+      ])
+      expect(valueHistory.getEntries(10 as RelativeTime)).toEqual([
+        {
+          value: 'baz',
+          startTime: 10 as RelativeTime,
+          endTime: END_OF_TIMES,
+          remove: jasmine.any(Function),
+          close: jasmine.any(Function),
+        },
+      ])
+    })
+  })
+
   describe('removing entries', () => {
     it('should not return removed entries', () => {
       valueHistory.add('foo', 0 as RelativeTime).remove()
