@@ -189,7 +189,7 @@ describe('viewCollection', () => {
           max_scroll_height_time: 4000000000000000 as ServerDuration,
         },
       },
-      privacy: { replay_level: 'mask' },
+      privacy: { replay_level: 'mask-user-input' },
       device: {
         locale: jasmine.any(String),
         locales: jasmine.any(Array),
