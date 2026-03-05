@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 import type { RumResourceEvent } from '@datadog/browser-rum'
-import type { BrowserConfiguration } from '../../../browsers.conf'
+import { isContentTypeAvailableInPerformanceEntry } from 'test/e2e/lib/helpers/browser'
 import type { IntakeRegistry } from '../../lib/framework'
 import { createTest, html } from '../../lib/framework'
 
@@ -271,13 +271,14 @@ test.describe('rum resources', () => {
     })
 
   test.describe('resource response content-type', () => {
-    createTest('collect resource response content-type in Firefox')
+    createTest('collect resource response content-type for static resources')
       .withRum()
       .withHead(html`<link rel="stylesheet" href="/empty.css" />`)
       .run(async ({ intakeRegistry, flushEvents, browserName }) => {
-        const browserVersion = (test.info().project.metadata as BrowserConfiguration).version
-        test.skip(browserName !== 'firefox', 'contentType is only available in Firefox')
-        test.skip(browserName === 'firefox' && Number(browserVersion) < 129, 'contentType requires Firefox >= 129')
+        test.skip(
+          isContentTypeAvailableInPerformanceEntry(test, browserName) === false,
+          'contentType is not available in this browser'
+        )
 
         await flushEvents()
 
@@ -288,21 +289,44 @@ test.describe('rum resources', () => {
         expect(resourceEvent!.resource.response!.headers!['content-type']).toBe('text/css')
       })
 
-    createTest('do not collect resource response in other browsers')
+    createTest('collect resource response content-type for XHR resources')
       .withRum()
-      .withHead(html`<link rel="stylesheet" href="/empty.css" />`)
-      .run(async ({ intakeRegistry, flushEvents, browserName }) => {
-        const browserVersion = (test.info().project.metadata as BrowserConfiguration).version
-        test.skip(
-          browserName === 'firefox' && Number(browserVersion) >= 129,
-          'contentType is available in Firefox >= 129'
+      .run(async ({ intakeRegistry, flushEvents, page }) => {
+        test.skip(true, 'not implemented yet')
+
+        await page.evaluate(
+          () =>
+            new Promise<void>((resolve) => {
+              const xhr = new XMLHttpRequest()
+              xhr.addEventListener('loadend', () => resolve())
+              xhr.open('GET', '/ok')
+              xhr.send()
+            })
         )
 
         await flushEvents()
 
-        const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.url.includes('empty.css'))
+        const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.type === 'xhr')
         expect(resourceEvent).toBeDefined()
-        expect(resourceEvent!.resource.response).toBeUndefined()
+        expect(resourceEvent!.resource.response).toBeDefined()
+        expect(resourceEvent!.resource.response!.headers).toBeDefined()
+        expect(resourceEvent!.resource.response!.headers!['content-type']).toBe('text/plain')
+      })
+
+    createTest('collect resource response content-type for fetch resources')
+      .withRum()
+      .run(async ({ intakeRegistry, flushEvents, page }) => {
+        test.skip(true, 'not implemented yet')
+
+        await page.evaluate(() => fetch('/ok'))
+
+        await flushEvents()
+
+        const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.type === 'fetch')
+        expect(resourceEvent).toBeDefined()
+        expect(resourceEvent!.resource.response).toBeDefined()
+        expect(resourceEvent!.resource.response!.headers).toBeDefined()
+        expect(resourceEvent!.resource.response!.headers!['content-type']).toBe('text/plain')
       })
   })
 
