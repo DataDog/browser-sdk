@@ -371,16 +371,15 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('enablePrivacyForActionName', () => {
-    it('defaults to false', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.enablePrivacyForActionName).toBeFalse()
+    it('defaults to true', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.enablePrivacyForActionName).toBeTrue()
     })
 
-    it('is true when the option is true', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.enablePrivacyForActionName).toBeFalse()
+    it('is false when the option is false', () => {
       expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, enablePrivacyForActionName: true })!
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, enablePrivacyForActionName: false })!
           .enablePrivacyForActionName
-      ).toBeTrue()
+      ).toBeFalse()
     })
   })
 

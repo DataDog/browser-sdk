@@ -181,8 +181,9 @@ export interface RumInitConfiguration extends InitConfiguration {
    * Enables privacy control for action names.
    *
    * @category Privacy
+   * @defaultValue true
    */
-  enablePrivacyForActionName?: boolean | undefined // TODO next major: remove this option and make privacy for action name the default behavior
+  enablePrivacyForActionName?: boolean | undefined
 
   /**
    * Enables automatic collection of users actions.
@@ -399,7 +400,7 @@ export function validateAndBuildRumConfiguration(
     defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
       ? initConfiguration.defaultPrivacyLevel
       : DefaultPrivacyLevel.MASK_USER_INPUT,
-    enablePrivacyForActionName: !!initConfiguration.enablePrivacyForActionName,
+    enablePrivacyForActionName: initConfiguration.enablePrivacyForActionName !== false,
     traceContextInjection: objectHasValue(TraceContextInjection, initConfiguration.traceContextInjection)
       ? initConfiguration.traceContextInjection
       : TraceContextInjection.SAMPLED,
