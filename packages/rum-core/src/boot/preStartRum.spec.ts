@@ -686,7 +686,13 @@ describe('preStartRum', () => {
         addDurationVital: addDurationVitalSpy,
       } as unknown as StartRumResult)
 
-      const vitalAdd = { name: 'timing', type: VitalType.DURATION, startClocks: clocksNow(), duration: 100 as Duration }
+      const vitalAdd = {
+        id: 'id',
+        name: 'timing',
+        type: VitalType.DURATION,
+        startClocks: clocksNow(),
+        duration: 100 as Duration,
+      }
       strategy.addDurationVital(vitalAdd)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       await collectAsyncCalls(addDurationVitalSpy, 1)

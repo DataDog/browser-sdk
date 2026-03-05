@@ -949,6 +949,7 @@ describe('rum public api', () => {
       })
       await collectAsyncCalls(addDurationVitalSpy, 1)
       expect(addDurationVitalSpy).toHaveBeenCalledWith({
+        id: jasmine.any(String),
         name: 'foo',
         startClocks: timeStampToClocks(startTime),
         duration: 100,

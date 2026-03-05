@@ -290,7 +290,11 @@ function newClick(
   const clickKey = generateUUID()
   const startClocks = relativeToClocks(startEvent.timeStamp)
 
-  actionTracker.start(clickKey, startClocks, clickActionBase, { isChildEvent: isActionChildEvent })
+  const startedClickAction = actionTracker.start(clickKey, startClocks, clickActionBase, {
+    isChildEvent: isActionChildEvent,
+  })
+
+  lifeCycle.notify(LifeCycleEventType.ACTION_STARTED, startedClickAction)
 
   let status = ClickStatus.ONGOING
   let actionTrackerFinishedEvent: StoppedEvent<ClickActionBase> | DiscardedEvent<ClickActionBase> | undefined
