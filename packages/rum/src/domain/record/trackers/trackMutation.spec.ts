@@ -23,6 +23,7 @@ import { appendElement, appendText } from '../../../../../rum-core/test'
 import type { EmitRecordCallback, EmitStatsCallback } from '../record.types'
 import { takeFullSnapshotForTesting } from '../test/serialization.specHelper'
 import { serializeMutations } from '../serialization'
+import { createSerializationVerifier } from '../serializationVerifier'
 import { trackMutation } from './trackMutation'
 import type { MutationTracker } from './trackMutation'
 
@@ -68,6 +69,11 @@ describe('trackMutation', () => {
     serializedDocument: DocumentNode & SerializedNodeWithId
   } {
     const scope = options.scope || getRecordingScope()
+
+    const { stop: stopSerializationVerifier } = createSerializationVerifier(scope, (error, context) => {
+      fail({ error, ...context })
+    })
+    registerCleanupTask(stopSerializationVerifier)
 
     const serializedDocument = takeFullSnapshotForTesting(scope)
 
