@@ -126,7 +126,7 @@ export function trackFetch(lifeCycle: LifeCycle, configuration: RumConfiguration
       if (findGraphQlConfiguration(context.url, configuration)?.trackResponseErrors) {
         return ResponseBodyAction.COLLECT
       }
-      return ResponseBodyAction.WAIT
+      return ResponseBodyAction.IGNORE
     },
   }).subscribe((rawContext) => {
     const context = rawContext as RumFetchResolveContext | RumFetchStartContext

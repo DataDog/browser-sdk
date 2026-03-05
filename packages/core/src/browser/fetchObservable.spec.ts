@@ -301,8 +301,8 @@ describe('fetch proxy with ResponseBodyAction', () => {
     })
   })
 
-  it('should not collect response body with WAIT or IGNORE action', (done) => {
-    setupFetchTracking(() => ResponseBodyAction.WAIT)
+  it('should not collect response body with IGNORE action', (done) => {
+    setupFetchTracking(() => ResponseBodyAction.IGNORE)
 
     fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'response body content' })
 
@@ -313,7 +313,7 @@ describe('fetch proxy with ResponseBodyAction', () => {
   })
 
   it('should use the highest priority action when multiple getters are registered', (done) => {
-    setupFetchTracking(() => ResponseBodyAction.WAIT)
+    setupFetchTracking(() => ResponseBodyAction.IGNORE)
 
     initFetchObservable({
       responseBodyAction: () => ResponseBodyAction.COLLECT,
