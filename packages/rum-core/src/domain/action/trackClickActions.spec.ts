@@ -135,7 +135,7 @@ describe('trackClickActions', () => {
           selector: '#button',
           width: 100,
           height: 100,
-          composed_path_selector: undefined,
+          composedPathSelector: undefined,
         },
         position: { x: 50, y: 50 },
         events: [domEvent],
@@ -714,7 +714,7 @@ describe('trackClickActions', () => {
       })
 
       clock.tick(EXPIRE_DELAY)
-      expect(events[0].target?.composed_path_selector).toBeDefined()
+      expect(events[0].target?.composedPathSelector).toBeDefined()
     })
   })
 })
