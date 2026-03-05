@@ -1,6 +1,6 @@
 import type { Duration } from '@datadog/browser-core'
 import { mockClock, type Clock } from '@datadog/browser-core/test'
-import { addExperimentalFeatures, clocksNow, ExperimentalFeature } from '@datadog/browser-core'
+import { addExperimentalFeatures, clocksNow, ExperimentalFeature, generateUUID } from '@datadog/browser-core'
 import { collectAndValidateRawRumEvents, mockPageStateHistory } from '../../../test'
 import type { RawRumEvent, RawRumVitalEvent } from '../../rawRumEvent.types'
 import { VitalType, RumEventType } from '../../rawRumEvent.types'
@@ -37,8 +37,7 @@ describe('vitalCollection', () => {
         stopDurationVital(cbSpy, vitalsState, vitalRef)
 
         expect(cbSpy).toHaveBeenCalledOnceWith(
-          jasmine.objectContaining({ name: 'foo', duration: 100 }),
-          jasmine.any(String)
+          jasmine.objectContaining({ id: jasmine.any(String), name: 'foo', duration: 100 })
         )
       })
 
@@ -49,10 +48,7 @@ describe('vitalCollection', () => {
         clock.tick(100)
         stopDurationVital(cbSpy, vitalsState, 'foo')
 
-        expect(cbSpy).toHaveBeenCalledOnceWith(
-          jasmine.objectContaining({ name: 'foo', duration: 100 }),
-          jasmine.any(String)
-        )
+        expect(cbSpy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ name: 'foo', duration: 100 }))
       })
 
       it('should only create a single duration vital from a vital name', () => {
@@ -64,10 +60,7 @@ describe('vitalCollection', () => {
         clock.tick(100)
         stopDurationVital(cbSpy, vitalsState, 'foo')
 
-        expect(cbSpy).toHaveBeenCalledOnceWith(
-          jasmine.objectContaining({ name: 'foo', duration: 100 }),
-          jasmine.any(String)
-        )
+        expect(cbSpy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ name: 'foo', duration: 100 }))
       })
 
       it('should not create multiple duration vitals by calling "stopDurationVital" on the same vital ref multiple times', () => {
@@ -104,11 +97,9 @@ describe('vitalCollection', () => {
         expect(cbSpy).toHaveBeenCalledTimes(2)
         expect(cbSpy.calls.argsFor(0)).toEqual([
           jasmine.objectContaining({ description: 'component 2', duration: 100 }),
-          jasmine.any(String),
         ])
         expect(cbSpy.calls.argsFor(1)).toEqual([
           jasmine.objectContaining({ description: 'component 1', duration: 300 }),
-          jasmine.any(String),
         ])
       })
 
@@ -128,22 +119,10 @@ describe('vitalCollection', () => {
         stopDurationVital(cbSpy, vitalsState, 'both-defined', { description: 'stop-defined' })
 
         expect(cbSpy).toHaveBeenCalledTimes(4)
-        expect(cbSpy.calls.argsFor(0)).toEqual([
-          jasmine.objectContaining({ description: undefined }),
-          jasmine.any(String),
-        ])
-        expect(cbSpy.calls.argsFor(1)).toEqual([
-          jasmine.objectContaining({ description: 'start-defined' }),
-          jasmine.any(String),
-        ])
-        expect(cbSpy.calls.argsFor(2)).toEqual([
-          jasmine.objectContaining({ description: 'stop-defined' }),
-          jasmine.any(String),
-        ])
-        expect(cbSpy.calls.argsFor(3)).toEqual([
-          jasmine.objectContaining({ description: 'stop-defined' }),
-          jasmine.any(String),
-        ])
+        expect(cbSpy.calls.argsFor(0)).toEqual([jasmine.objectContaining({ description: undefined })])
+        expect(cbSpy.calls.argsFor(1)).toEqual([jasmine.objectContaining({ description: 'start-defined' })])
+        expect(cbSpy.calls.argsFor(2)).toEqual([jasmine.objectContaining({ description: 'stop-defined' })])
+        expect(cbSpy.calls.argsFor(3)).toEqual([jasmine.objectContaining({ description: 'stop-defined' })])
       })
 
       it('should merge startDurationVital and stopDurationVital contexts', () => {
@@ -218,6 +197,7 @@ describe('vitalCollection', () => {
         wasInPageStateDuringPeriodSpy.and.returnValue(true)
 
         vitalCollection.addDurationVital({
+          id: generateUUID(),
           name: 'foo',
           type: VitalType.DURATION,
           startClocks: clocksNow(),
@@ -282,6 +262,7 @@ describe('vitalCollection', () => {
 
       it('should create a duration vital from add API', () => {
         vitalCollection.addDurationVital({
+          id: generateUUID(),
           name: 'foo',
           type: VitalType.DURATION,
           startClocks: clocksNow(),

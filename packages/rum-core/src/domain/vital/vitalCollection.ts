@@ -80,6 +80,7 @@ interface BaseVital extends VitalOptions {
   handlingStack?: string
 }
 export interface DurationVital extends BaseVital {
+  id: string
   type: typeof VitalType.DURATION
   duration: Duration
 }
@@ -111,9 +112,9 @@ export function startVitalCollection(
     return !pageStateHistory.wasInPageStateDuringPeriod(PageState.FROZEN, vital.startClocks.relative, vital.duration)
   }
 
-  function addDurationVital(vital: DurationVital, vitalId?: string) {
+  function addDurationVital(vital: DurationVital) {
     if (isValid(vital)) {
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital, vitalId))
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital))
     }
   }
 
@@ -183,7 +184,7 @@ export function startDurationVital(
 }
 
 export function stopDurationVital(
-  stopCallback: (vital: DurationVital, vitalId: string) => void,
+  stopCallback: (vital: DurationVital) => void,
   { vitalsByName, vitalsByReference }: CustomVitalsState,
   nameOrRef: string | DurationVitalReference,
   options: DurationVitalOptions = {}
@@ -194,7 +195,7 @@ export function stopDurationVital(
     return
   }
 
-  stopCallback(buildDurationVital(vitalStart, vitalStart.startClocks, options, clocksNow()), vitalStart.id)
+  stopCallback(buildDurationVital(vitalStart, vitalStart.startClocks, options, clocksNow()))
 
   if (typeof nameOrRef === 'string') {
     vitalsByName.delete(nameOrRef)
@@ -210,6 +211,7 @@ function buildDurationVital(
   stopClocks: ClocksState
 ): DurationVital {
   return {
+    id: vitalStart.id,
     name: vitalStart.name,
     type: VitalType.DURATION,
     startClocks,
@@ -220,11 +222,10 @@ function buildDurationVital(
   }
 }
 
-function processVital(
-  vital: DurationVital | OperationStepVital,
-  vitalId?: string
-): RawRumEventCollectedData<RawRumVitalEvent> {
+function processVital(vital: DurationVital | OperationStepVital): RawRumEventCollectedData<RawRumVitalEvent> {
   const { startClocks, type, name, description, context, handlingStack } = vital
+  const vitalId = vital.type === VitalType.DURATION ? vital.id : undefined
+
   const vitalData = {
     id: vitalId ?? generateUUID(),
     type,

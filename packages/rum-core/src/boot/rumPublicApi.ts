@@ -36,6 +36,7 @@ import {
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
   mockable,
+  generateUUID,
 } from '@datadog/browser-core'
 
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -890,6 +891,7 @@ export function makeRumPublicApi(
       callMonitored(() => {
         addTelemetryUsage({ feature: 'add-duration-vital' })
         strategy.addDurationVital({
+          id: generateUUID(),
           name: sanitize(name)!,
           type: VitalType.DURATION,
           startClocks: timeStampToClocks(options.startTime as TimeStamp),
