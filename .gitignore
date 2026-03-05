@@ -33,4 +33,3 @@ playwright-report/
 # Claude Code local files
 *.local.md
 .claude/settings.local.json
-.planning/
