@@ -10,6 +10,7 @@ describe('tabContext', () => {
   let hooks: Hooks
 
   beforeEach(() => {
+    resetCachedTabId()
     hooks = createHooks()
     registerCleanupTask(() => {
       sessionStorage.removeItem(TAB_ID_STORAGE_KEY)
