@@ -6,6 +6,7 @@ import {
   HookNames,
   DISCARDED,
   mockable,
+  buildUrl,
 } from '@datadog/browser-core'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { LifeCycle } from '../lifeCycle'
@@ -40,7 +41,8 @@ export function startUrlContexts(
   let previousViewUrl: string | undefined
 
   lifeCycle.subscribe(LifeCycleEventType.BEFORE_VIEW_CREATED, ({ startClocks, url }) => {
-    const viewUrl = url ?? mockable(location).href
+    const mockedLocationHref = mockable(location).href
+    const viewUrl = url !== undefined ? buildUrl(url, mockedLocationHref).href : mockedLocationHref
     urlContextHistory.add(
       buildUrlContext({
         url: viewUrl,

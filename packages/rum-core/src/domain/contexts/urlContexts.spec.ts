@@ -60,6 +60,16 @@ describe('urlContexts', () => {
     expect(urlContext.referrer).toBe(document.referrer)
   })
 
+  it('should resolve a relative url override against the current location', () => {
+    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
+      startClocks: relativeToClocks(0 as RelativeTime),
+      url: '/dashboard',
+    } as ViewCreatedEvent)
+
+    const urlContext = urlContexts.findUrl()!
+    expect(urlContext.url).toBe('http://fake-url.com/dashboard')
+  })
+
   it('should fall back to location.href when no url override is provided', () => {
     lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
       startClocks: relativeToClocks(0 as RelativeTime),
