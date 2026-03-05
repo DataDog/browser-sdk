@@ -98,9 +98,9 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: RumConfiguration, 
       case 'complete':
         tracer.clearTracingIfNeeded(context)
         lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
+          ...context,
           type: RequestType.XHR,
           isAbortedOnStart: false,
-          ...context,
         })
         break
     }
@@ -136,10 +136,10 @@ export function trackFetch(lifeCycle: LifeCycle, configuration: RumConfiguration
       case 'resolve':
         tracer.clearTracingIfNeeded(context)
         lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
+          ...context,
           duration: elapsed(context.startClocks.timeStamp, timeStampNow()),
           type: RequestType.FETCH,
           requestBody: context.init?.body,
-          ...context,
         })
         break
     }
