@@ -49,13 +49,16 @@ describe('segmentTelemetry', () => {
     registerCleanupTask(stopSegmentTelemetry)
   }
 
-  for (const enableChangeRecords of [true, false] as const) {
-    const titlePrefix = enableChangeRecords ? 'with change records' : 'without change records'
-
-    it(`${titlePrefix}, should collect segment telemetry for all full snapshots`, async () => {
-      if (enableChangeRecords) {
-        addExperimentalFeatures([ExperimentalFeature.USE_CHANGE_RECORDS])
+  for (const changeRecordFeatureFlag of [
+    undefined,
+    ExperimentalFeature.USE_CHANGE_RECORDS,
+    ExperimentalFeature.USE_INCREMENTAL_CHANGE_RECORDS,
+  ] as const) {
+    it(`with ${changeRecordFeatureFlag || 'v1_records'}, should collect segment telemetry for all full snapshots`, async () => {
+      if (changeRecordFeatureFlag) {
+        addExperimentalFeatures([changeRecordFeatureFlag])
       }
+
       setupSegmentTelemetryCollection()
 
       for (const result of ['failure', 'queue-full', 'success'] as const) {
@@ -73,8 +76,9 @@ describe('segmentTelemetry', () => {
                 sum: 500,
               },
               encoding: {
-                fullSnapshot: enableChangeRecords ? 'change' : 'v1',
-                incrementalSnapshot: 'v1',
+                fullSnapshot: changeRecordFeatureFlag ? 'change' : 'v1',
+                incrementalSnapshot:
+                  changeRecordFeatureFlag === ExperimentalFeature.USE_INCREMENTAL_CHANGE_RECORDS ? 'change' : 'v1',
               },
               isFullSnapshot: true,
               ongoingRequests: {

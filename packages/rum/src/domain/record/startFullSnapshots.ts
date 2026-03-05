@@ -83,7 +83,8 @@ export function takeFullSnapshot(
 }
 
 function defaultSerializeFullSnapshotCallback(): SerializeFullSnapshotCallback {
-  return isExperimentalFeatureEnabled(ExperimentalFeature.USE_CHANGE_RECORDS)
+  return isExperimentalFeatureEnabled(ExperimentalFeature.USE_CHANGE_RECORDS) ||
+    isExperimentalFeatureEnabled(ExperimentalFeature.USE_INCREMENTAL_CHANGE_RECORDS)
     ? serializeFullSnapshotAsChange
     : serializeFullSnapshot
 }

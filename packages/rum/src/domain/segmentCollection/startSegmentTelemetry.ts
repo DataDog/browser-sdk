@@ -73,8 +73,14 @@ function createSegmentMetrics(
       sum: payload.cssText.sum,
     },
     encoding: {
-      fullSnapshot: isExperimentalFeatureEnabled(ExperimentalFeature.USE_CHANGE_RECORDS) ? 'change' : 'v1',
-      incrementalSnapshot: 'v1',
+      fullSnapshot:
+        isExperimentalFeatureEnabled(ExperimentalFeature.USE_CHANGE_RECORDS) ||
+        isExperimentalFeatureEnabled(ExperimentalFeature.USE_INCREMENTAL_CHANGE_RECORDS)
+          ? 'change'
+          : 'v1',
+      incrementalSnapshot: isExperimentalFeatureEnabled(ExperimentalFeature.USE_INCREMENTAL_CHANGE_RECORDS)
+        ? 'change'
+        : 'v1',
     },
     isFullSnapshot: payload.isFullSnapshot,
     ongoingRequests: {
