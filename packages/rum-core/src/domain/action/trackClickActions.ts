@@ -45,7 +45,7 @@ export interface ClickAction {
   nameSource: ActionNameSource
   target?: {
     selector: string | undefined
-    composed_path_selector?: string
+    composedPathSelector?: string
     width: number
     height: number
   }
@@ -267,7 +267,7 @@ function computeClickActionBase(
       width: Math.round(rect.width),
       height: Math.round(rect.height),
       selector,
-      composed_path_selector: composedPathSelector ?? undefined,
+      composedPathSelector: composedPathSelector || undefined,
     },
     position: {
       // Use clientX and Y because for SVG element offsetX and Y are relatives to the <svg> element

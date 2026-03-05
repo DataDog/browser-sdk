@@ -16,7 +16,6 @@ export const CHARACTER_LIMIT = 2 * ONE_KIBI_BYTE
 export const SAFE_ATTRIBUTES = STABLE_ATTRIBUTES.concat([
   'role',
   'type',
-  'name',
   'disabled',
   'readonly',
   'checked',

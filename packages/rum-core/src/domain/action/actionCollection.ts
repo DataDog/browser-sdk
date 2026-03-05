@@ -129,7 +129,12 @@ function processAction(action: AutoAction | ManualAction): RawRumEventCollectedD
         ? {
             _dd: {
               action: {
-                target: action.target,
+                target: {
+                  composed_path_selector: action.target?.composedPathSelector || undefined,
+                  selector: action.target?.selector || undefined,
+                  width: action.target?.width || undefined,
+                  height: action.target?.height || undefined,
+                },
                 position: action.position,
                 name_source: action.nameSource,
               },
