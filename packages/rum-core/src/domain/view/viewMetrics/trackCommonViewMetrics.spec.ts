@@ -1,4 +1,4 @@
-import type { Duration } from '@datadog/browser-core'
+import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { clocksOrigin, Observable } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
@@ -63,6 +63,86 @@ describe('trackCommonViewMetrics', () => {
 
       // Verify the manual value was preserved (not overwritten by auto-detection)
       expect(getCommonViewMetrics().loadingTime).toBe(manualLoadingTime)
+    })
+  })
+
+  describe('setLoadingTime end-of-view guard', () => {
+    it('should reject setLoadingTime after setViewEnd is called', () => {
+      const { setLoadingTime, setViewEnd, getCommonViewMetrics, stop } = trackCommonViewMetrics(
+        lifeCycle,
+        domMutationObservable,
+        windowOpenObservable,
+        mockRumConfiguration(),
+        scheduleViewUpdateSpy,
+        ViewLoadingType.ROUTE_CHANGE,
+        clocksOrigin()
+      )
+
+      registerCleanupTask(stop)
+
+      clock.tick(100)
+      const firstResult = setLoadingTime()
+      expect(firstResult).toBe(true)
+      const firstValue = getCommonViewMetrics().loadingTime
+
+      setViewEnd(200 as RelativeTime)
+
+      clock.tick(100)
+      const secondResult = setLoadingTime(undefined, true)
+      expect(secondResult).toBe(false)
+
+      expect(getCommonViewMetrics().loadingTime).toBe(firstValue)
+    })
+  })
+
+  describe('setLoadingTime overwrite logic', () => {
+    it('should reject setLoadingTime without overwrite after first call', () => {
+      const { setLoadingTime, getCommonViewMetrics, stop } = trackCommonViewMetrics(
+        lifeCycle,
+        domMutationObservable,
+        windowOpenObservable,
+        mockRumConfiguration(),
+        scheduleViewUpdateSpy,
+        ViewLoadingType.ROUTE_CHANGE,
+        clocksOrigin()
+      )
+
+      registerCleanupTask(stop)
+
+      clock.tick(100)
+      setLoadingTime()
+      const firstValue = getCommonViewMetrics().loadingTime
+
+      clock.tick(200)
+      const result = setLoadingTime()
+      expect(result).toBe(false)
+
+      expect(getCommonViewMetrics().loadingTime).toBe(firstValue)
+    })
+
+    it('should allow overwrite before view end', () => {
+      const { setLoadingTime, getCommonViewMetrics, stop } = trackCommonViewMetrics(
+        lifeCycle,
+        domMutationObservable,
+        windowOpenObservable,
+        mockRumConfiguration(),
+        scheduleViewUpdateSpy,
+        ViewLoadingType.ROUTE_CHANGE,
+        clocksOrigin()
+      )
+
+      registerCleanupTask(stop)
+
+      clock.tick(100)
+      setLoadingTime()
+      const firstValue = getCommonViewMetrics().loadingTime
+
+      clock.tick(200)
+      setLoadingTime(undefined, true)
+      const secondValue = getCommonViewMetrics().loadingTime
+
+      expect(secondValue).not.toBe(firstValue)
+      expect(secondValue).toBeGreaterThan(firstValue as number)
     })
   })
 })
