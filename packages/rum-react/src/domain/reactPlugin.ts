@@ -1,3 +1,4 @@
+import { display } from '@datadog/browser-core'
 import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
 
 let globalPublicApi: RumPublicApi | undefined
@@ -23,6 +24,11 @@ export interface ReactPluginConfiguration {
    * ```
    */
   router?: boolean
+  /**
+   * Enable Next.js App Router integration. Make sure to use `DatadogRumProvider` from
+   * {@link @datadog/browser-rum-react/nextjs! | @datadog/browser-rum-react/nextjs}.
+   */
+  nextAppRouter?: boolean
 }
 
 /**
@@ -61,8 +67,11 @@ export function reactPlugin(configuration: ReactPluginConfiguration = {}): React
       for (const subscriber of onRumInitSubscribers) {
         subscriber(globalConfiguration, globalPublicApi)
       }
-      if (configuration.router) {
+      if (configuration.router || configuration.nextAppRouter) {
         initConfiguration.trackViewsManually = true
+      }
+      if (configuration.router && configuration.nextAppRouter) {
+        display.warn('Both `router` and `nextAppRouter` are enabled. Only `nextAppRouter` will be used.')
       }
     },
     onRumStart({ addEvent }) {
@@ -74,7 +83,7 @@ export function reactPlugin(configuration: ReactPluginConfiguration = {}): React
       }
     },
     getConfigurationTelemetry() {
-      return { router: !!configuration.router }
+      return { router: !!configuration.router, nextAppRouter: !!configuration.nextAppRouter }
     },
   } satisfies RumPlugin
 }
