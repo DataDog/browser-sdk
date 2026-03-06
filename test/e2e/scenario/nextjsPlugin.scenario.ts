@@ -105,4 +105,48 @@ test.describe('nextjs app router', () => {
       expect(homeView?.view.loading_time).toBeDefined()
       expect(homeView?.view.loading_time).toBeGreaterThan(0)
     })
+
+  test.describe('addNextjsError', () => {
+    createTest('should report a client-side error via addNextjsError')
+      .withRum()
+      .withNextjsApp()
+      .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
+        await page.click('text=Go to Error Test')
+        await page.waitForURL('**/error-test')
+
+        await page.click('[data-testid="trigger-error"]')
+        await page.waitForSelector('[data-testid="error-boundary"]')
+
+        await flushEvents()
+
+        // React StrictMode double-fires useEffect in dev mode, so we may get 2 errors
+        const customErrors = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
+        expect(customErrors.length).toBeGreaterThanOrEqual(1)
+        expect(customErrors[0].error.message).toBe('Client error from error-test')
+
+        withBrowserLogs((browserLogs) => {
+          expect(browserLogs.length).toBeGreaterThan(0)
+          expect(browserLogs.some((log) => log.message.includes('Client error from error-test'))).toBe(true)
+        })
+      })
+
+    createTest('should report a server error with digest via addNextjsError')
+      .withRum()
+      .withNextjsApp()
+      .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
+        await page.click('text=Go to Server Error')
+        await page.waitForSelector('[data-testid="error-boundary"]')
+
+        await flushEvents()
+
+        // React StrictMode double-fires useEffect in dev mode, so we may get 2 errors
+        const customErrors = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
+        expect(customErrors.length).toBeGreaterThanOrEqual(1)
+        expect((customErrors[0].context?.nextjs as { digest: string }).digest).toBeDefined()
+
+        withBrowserLogs((browserLogs) => {
+          expect(browserLogs.length).toBeGreaterThan(0)
+        })
+      })
+  })
 })

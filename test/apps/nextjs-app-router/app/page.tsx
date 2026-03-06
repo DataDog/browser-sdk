@@ -11,6 +11,12 @@ export default function HomePage() {
         <li>
           <Link href="/guides/123">Go to Guides 123</Link>
         </li>
+        <li>
+          <Link href="/error-test">Go to Error Test</Link>
+        </li>
+        <li>
+          <Link href="/error-test/server-error?throw=true">Go to Server Error</Link>
+        </li>
       </ul>
     </div>
   )
