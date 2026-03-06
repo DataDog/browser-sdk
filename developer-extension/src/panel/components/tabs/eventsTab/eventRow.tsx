@@ -112,7 +112,7 @@ export const EventRow = React.memo(
             case 'date':
               return (
                 <Cell key="date" noWrap>
-                  {formatDate(event.date!)}
+                  {formatDate(event.date)}
                 </Cell>
               )
             case 'description':
@@ -457,7 +457,9 @@ function Emphasis({ children }: { children: ReactNode }) {
 }
 
 function getViewName(view: { name?: string; url: string }) {
-  if (view.name) return view.name
+  if (view.name) {
+    return view.name
+  }
   try {
     return new URL(view.url).pathname
   } catch {
