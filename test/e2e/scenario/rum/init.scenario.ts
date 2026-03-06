@@ -119,6 +119,29 @@ test.describe('API calls and events around init', () => {
       )
     })
 
+  createTest('should use the provided url option instead of location')
+    .withRum()
+    .withRumSlim()
+    .withRumInit((configuration) => {
+      window.DD_RUM!.init(configuration)
+
+      setTimeout(
+        () =>
+          window.DD_RUM!.startView({
+            name: 'manual view',
+            url: 'https://example.com/overridden-path',
+          }),
+        10
+      )
+    })
+    .run(async ({ intakeRegistry, flushEvents }) => {
+      await flushEvents()
+
+      const manualView = intakeRegistry.rumViewEvents.find((event) => event.view.name === 'manual view')!
+      expect(manualView).toBeTruthy()
+      expect(manualView.view.url).toBe('https://example.com/overridden-path')
+    })
+
   createTest('should be able to set view context')
     .withRum()
     .withRumSlim()

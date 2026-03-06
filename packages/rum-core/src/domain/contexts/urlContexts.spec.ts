@@ -49,6 +49,64 @@ describe('urlContexts', () => {
     expect(urlContext.referrer).toBe(document.referrer)
   })
 
+  it('should use the provided url override instead of location', () => {
+    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
+      startClocks: relativeToClocks(0 as RelativeTime),
+      url: 'https://example.com/overridden-path',
+    } as ViewCreatedEvent)
+
+    const urlContext = urlContexts.findUrl()!
+    expect(urlContext.url).toBe('https://example.com/overridden-path')
+    expect(urlContext.referrer).toBe(document.referrer)
+  })
+
+  it('should resolve a relative url override against the current location', () => {
+    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
+      startClocks: relativeToClocks(0 as RelativeTime),
+      url: '/dashboard',
+    } as ViewCreatedEvent)
+
+    const urlContext = urlContexts.findUrl()!
+    expect(urlContext.url).toBe('http://fake-url.com/dashboard')
+  })
+
+  it('should fall back to location.href when no url override is provided', () => {
+    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
+      startClocks: relativeToClocks(0 as RelativeTime),
+    } as ViewCreatedEvent)
+
+    const urlContext = urlContexts.findUrl()!
+    expect(urlContext.url).toBe('http://fake-url.com/')
+  })
+
+  it('should fall back to location.href when url override is explicitly undefined', () => {
+    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
+      startClocks: relativeToClocks(0 as RelativeTime),
+      url: undefined,
+    } as ViewCreatedEvent)
+
+    const urlContext = urlContexts.findUrl()!
+    expect(urlContext.url).toBe('http://fake-url.com/')
+  })
+
+  it('should use the provided url override for events starting before a location change', () => {
+    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
+      startClocks: clocksNow(),
+      url: 'https://example.com/manual-url',
+    } as ViewCreatedEvent)
+
+    clock.tick(10)
+    const resourceStartTime = clock.relative(10)
+
+    clock.tick(10)
+    changeLocation('/new-path')
+
+    expect(urlContexts.findUrl(resourceStartTime)).toEqual({
+      url: 'https://example.com/manual-url',
+      referrer: document.referrer,
+    })
+  })
+
   it('should update url context on location change', () => {
     lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
       startClocks: relativeToClocks(0 as RelativeTime),
