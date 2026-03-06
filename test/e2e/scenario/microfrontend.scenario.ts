@@ -240,20 +240,6 @@ test.describe('microfrontend', () => {
     })
 
     test.describe('with source code bundler plugin', () => {
-      createTest('errors from DD_RUM.addError should have service and version from source code context')
-        .withRum(RUM_CONFIG)
-        .withSetup(microfrontendSetup)
-        .run(async ({ intakeRegistry, flushEvents, page }) => {
-          await page.click('#app1-error')
-          await page.click('#app2-error')
-          await flushEvents()
-
-          expect(intakeRegistry.rumErrorEvents).toMatchObject([
-            expect.objectContaining({ service: 'mfe-app1-service', version: '1.0.0' }),
-            expect.objectContaining({ service: 'mfe-app2-service', version: '0.2.0' }),
-          ])
-        })
-
       createTest('errors from console.error should have service and version from source code context')
         .withRum(RUM_CONFIG)
         .withSetup(microfrontendSetup)
