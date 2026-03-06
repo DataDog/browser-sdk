@@ -24,7 +24,7 @@ describe('computeViewNameFromParams', () => {
     ['catch-all does not match partial segments',  '/docs-extra/a/b',       { slug: ['a', 'b'] },                      '/docs-extra/[...slug]'],
     // Catch-all processed before regular params (prevents a shared value being consumed by the regular param first)
     ['catch-all takes priority over same-value regular param', '/x/a/b', { id: 'a', slug: ['a', 'b'] }, '/x/[...slug]'],
-    // Ambiguous cases (known limitations — deterministic but not guaranteed to match route pattern)
+    // Repeated param values
     ['same value for multiple params: assigned left-to-right', '/toto/toto', { user: 'toto', view: 'toto' }, '/[user]/[view]'],
     ['param value appears in static segment: first occurrence taken', '/toto/toto', { user: 'toto' }, '/[user]/toto'],
     // Edge cases

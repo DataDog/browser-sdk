@@ -64,6 +64,8 @@ test.describe('nextjs app router', () => {
 
       await page.click('text=Go to User 42')
       await page.waitForURL('**/user/42?admin=true')
+
+      // Test that the sidebar content is shown on the page
       expect(await page.textContent('[data-testid="sidebar"]')).toContain('Sidebar: User 42')
 
       await page.click('text=Back to Home')
