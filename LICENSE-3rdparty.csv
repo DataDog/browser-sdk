@@ -13,6 +13,7 @@ prod,react-dom,MIT,Copyright (c) Facebook, Inc. and its affiliates.
 dev,typedoc,Apache-2.0,TypeStrong
 dev,@eslint/js,MIT,Copyright OpenJS Foundation and other contributors, <www.openjsf.org>
 dev,@jsdevtools/coverage-istanbul-loader,MIT,Copyright (c) 2015 James Messinger
+dev,@module-federation/enhanced,MIT, Copyright (c) 2020 ScriptedAlchemy LLC (Zack Jackson) Zhou Shaw (zhouxiao)
 dev,@playwright/test,Apache-2.0,Copyright Microsoft Corporation
 dev,@swc/core,Apache-2.0,Copyright (c) SWC Contributors
 dev,@types/chrome,MIT,Copyright Microsoft Corporation

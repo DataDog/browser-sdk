@@ -30,6 +30,7 @@ export default tseslint.config(
       'test/**/.next',
       'test/apps/react-heavy-spa',
       'test/apps/react-shopist-like',
+      'test/apps/microfrontend',
       'test/apps/nextjs-app-router',
       'sandbox',
       'coverage',
