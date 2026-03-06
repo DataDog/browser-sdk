@@ -124,13 +124,11 @@ export function trackViews(
   let locationChangeSubscription: Subscription
   if (areViewsTrackedAutomatically) {
     locationChangeSubscription = renewViewOnLocationChange(locationChangeObservable)
-    if (configuration.trackBfcacheViews) {
-      stopOnBFCacheRestore = onBFCacheRestore(configuration, (pageshowEvent) => {
-        currentView.end()
-        const startClocks = relativeToClocks(pageshowEvent.timeStamp as RelativeTime)
-        currentView = startNewView(ViewLoadingType.BF_CACHE, startClocks, undefined)
-      })
-    }
+    stopOnBFCacheRestore = onBFCacheRestore(configuration, (pageshowEvent) => {
+      currentView.end()
+      const startClocks = relativeToClocks(pageshowEvent.timeStamp as RelativeTime)
+      currentView = startNewView(ViewLoadingType.BF_CACHE, startClocks, undefined)
+    })
   }
 
   function startNewView(loadingType: ViewLoadingType, startClocks?: ClocksState, viewOptions?: ViewOptions) {
