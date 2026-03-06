@@ -65,6 +65,10 @@ export function onRumStart(callback: StartSubscriber) {
   }
 }
 
+export function getGlobalPublicApi(): RumPublicApi | undefined {
+  return globalPublicApi
+}
+
 export function resetNextjsPlugin() {
   globalPublicApi = undefined
   globalAddEvent = undefined
