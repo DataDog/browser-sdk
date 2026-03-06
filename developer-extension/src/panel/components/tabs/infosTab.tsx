@@ -77,6 +77,7 @@ export function InfosTab() {
   }
 
   const sessionId = infos.cookie?.id
+  const { rumTrackingType, logsTrackingType } = infos
 
   return (
     <TabBase>
@@ -87,14 +88,14 @@ export function InfosTab() {
               <Entry name="Id" value={infos.cookie.id} />
               <Entry
                 name="Logs"
-                value={infos.cookie.logs && formatSessionType(infos.cookie.logs, 'Not tracked', 'Tracked')}
+                value={logsTrackingType && formatSessionType(logsTrackingType, 'Not tracked', 'Tracked')}
               />
               <Entry
                 name="RUM"
                 value={
-                  infos.cookie.rum &&
+                  rumTrackingType &&
                   formatSessionType(
-                    infos.cookie.rum,
+                    rumTrackingType,
                     'Not tracked',
                     'Tracked with Session Replay',
                     'Tracked without Session Replay'

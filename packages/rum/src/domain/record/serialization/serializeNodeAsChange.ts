@@ -23,6 +23,12 @@ export function serializeNodeAsChange(
   parentPrivacyLevel: NodePrivacyLevel,
   transaction: ChangeSerializationTransaction
 ): void {
+  // Ignore the children of <style> elements; the CSS rules they contain are already
+  // serialized as StyleSheetSnapshots.
+  if (node.parentNode?.nodeName === 'STYLE') {
+    return
+  }
+
   let privacyLevel: NodePrivacyLevel
 
   const selfPrivacyLevel = getNodeSelfPrivacyLevel(node)
@@ -71,12 +77,6 @@ export function serializeNodeAsChange(
     case node.DOCUMENT_TYPE_NODE:
     case node.TEXT_NODE:
       return
-  }
-
-  // Ignore the children of <style> elements; the CSS rules they contain are already
-  // serialized as StyleSheetSnapshots.
-  if (node.nodeName === 'STYLE') {
-    return
   }
 
   cursor.descend()

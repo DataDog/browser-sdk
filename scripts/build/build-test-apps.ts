@@ -21,6 +21,7 @@ runMain(async () => {
   buildApp('test/apps/microfrontend')
   await buildReactRouterv7App()
   await buildExtensions()
+  buildApp('test/apps/nextjs-app-router')
 
   printLog('Test apps and extensions built successfully.')
 })

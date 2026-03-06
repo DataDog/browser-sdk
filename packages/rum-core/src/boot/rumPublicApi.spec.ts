@@ -838,6 +838,7 @@ describe('rum public api', () => {
         context: { requestId: 'abc' },
       })
       rumPublicApi.stopResource('https://api.example.com/data', {
+        type: ResourceType.XHR,
         statusCode: 200,
         context: { responseSize: 1024 },
       })
@@ -853,6 +854,7 @@ describe('rum public api', () => {
       expect(stopResourceSpy).toHaveBeenCalledWith(
         'https://api.example.com/data',
         jasmine.objectContaining({
+          type: ResourceType.XHR,
           statusCode: 200,
           context: { responseSize: 1024 },
         })
@@ -923,6 +925,7 @@ describe('rum public api', () => {
         description: 'description-value',
       })
       expect(addDurationVitalSpy).toHaveBeenCalledWith({
+        id: jasmine.any(String),
         name: 'foo',
         startClocks: timeStampToClocks(startTime),
         duration: 100,

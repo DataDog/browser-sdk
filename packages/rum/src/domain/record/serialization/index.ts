@@ -1,4 +1,7 @@
-export { createRootInsertionCursor } from './insertionCursor'
+export type { ChangeConverter, MutationLog, NodeIdRemapper } from './conversions'
+export { createChangeConverter, createCopyingNodeIdRemapper, createIdentityNodeIdRemapper } from './conversions'
+export { isFullSnapshotChangeRecordsEnabled, isIncrementalSnapshotChangeRecordsEnabled } from './experimentalFeatures'
+export { createChildInsertionCursor, createRootInsertionCursor } from './insertionCursor'
 export { getElementInputValue } from './serializationUtils'
 export { serializeFullSnapshot } from './serializeFullSnapshot'
 export { serializeFullSnapshotAsChange } from './serializeFullSnapshotAsChange'

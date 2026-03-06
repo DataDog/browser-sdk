@@ -1,15 +1,12 @@
 import type { RumEvent, RumEventDomainContext, RumInitConfiguration } from '@datadog/browser-rum-core'
 import type { LogsEvent, LogsInitConfiguration, LogsEventDomainContext } from '@datadog/browser-logs'
 import { test, expect } from '@playwright/test'
-import { ExperimentalFeature } from '@datadog/browser-core'
 import { createTest, microfrontendSetup } from '../lib/framework'
-
 const HANDLING_STACK_REGEX = /^HandlingStack: .*\n\s+at testHandlingStack @/
 
 const RUM_CONFIG: Partial<RumInitConfiguration> = {
   service: 'main-service',
   version: '1.0.0',
-  enableExperimentalFeatures: [ExperimentalFeature.SOURCE_CODE_CONTEXT],
   beforeSend: (event: RumEvent, domainContext: RumEventDomainContext) => {
     if ('handlingStack' in domainContext) {
       event.context!.handlingStack = domainContext.handlingStack

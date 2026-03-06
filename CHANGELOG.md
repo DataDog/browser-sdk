@@ -18,6 +18,52 @@
 
 ---
 
+## v6.30.1
+
+**Internal Changes:**
+
+- 👷 upgrade minimatch to 10.2.4 to fix npm publish packaging issue ([#4267](https://github.com/DataDog/browser-sdk/pull/4267))
+
+## v6.30.0
+
+**Public Changes:**
+
+- ✨[MFE] Source code context event enrichment ([#4255](https://github.com/DataDog/browser-sdk/pull/4255)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 fix LogsEventDomainContext fallback to undefined instead of never ([#4264](https://github.com/DataDog/browser-sdk/pull/4264)) [LOGS]
+- 🐛 fix stale closure bug in watchCookieFallback ([#4259](https://github.com/DataDog/browser-sdk/pull/4259)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+**Internal Changes:**
+
+- 🧹 remove unused eslint-disable directives from generated type files ([#4260](https://github.com/DataDog/browser-sdk/pull/4260)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+## v6.29.0
+
+**Public Changes:**
+
+- ✨ support per-value synthetics globals/cookies with a unified context object ([#4236](https://github.com/DataDog/browser-sdk/pull/4236)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✨ Compute session tracking type in developer extension for SDK v7 support ([#4202](https://github.com/DataDog/browser-sdk/pull/4202)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+**Internal Changes:**
+
+- ⚗✨ [RUM-14736] Add type to ResourceStopOptions ([#4232](https://github.com/DataDog/browser-sdk/pull/4232)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 👷 Update dependency minimatch to v10.2.3 [SECURITY] ([#4257](https://github.com/DataDog/browser-sdk/pull/4257))
+- 👷 Update all non-major dependencies ([#4256](https://github.com/DataDog/browser-sdk/pull/4256))
+- ⚗️feat: collect INP sub-parts RUM-14310 ([#4158](https://github.com/DataDog/browser-sdk/pull/4158)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+## v6.28.1
+
+**Public Changes:**
+
+- 🐛 Compute duration from timestamps in event tracker ([#4233](https://github.com/DataDog/browser-sdk/pull/4233)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🐛 [RUM Profiler] Fix stateReason not updated on stop and cleanup tasks accumulation ([#4171](https://github.com/DataDog/browser-sdk/pull/4171)) [RUM]
+
+**Internal Changes:**
+
+- 👷 Update all non-major dependencies ([#4186](https://github.com/DataDog/browser-sdk/pull/4186)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 Update dependency eslint-plugin-unicorn to v63 ([#4221](https://github.com/DataDog/browser-sdk/pull/4221))
+- 👷 Update dependency @playwright/test to v1.58.2 ([#4187](https://github.com/DataDog/browser-sdk/pull/4187))
+- ⚗️ [RUM-13259] Add shadow DOM support for action selectors ([#4097](https://github.com/DataDog/browser-sdk/pull/4097)) [RUM] [RUM-REACT] [RUM-SLIM]
+
 ## v6.28.0
 
 **Public Changes:**

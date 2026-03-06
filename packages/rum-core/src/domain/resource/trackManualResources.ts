@@ -33,6 +33,11 @@ export interface ResourceOptions {
 
 export interface ResourceStopOptions {
   /**
+   * Resource type
+   */
+  type?: ResourceType
+
+  /**
    * HTTP status code
    */
   statusCode?: number
@@ -102,6 +107,7 @@ export function trackManualResources(lifeCycle: LifeCycle, resourceTracker: Even
 
     const stopped = resourceTracker.stop(lookupKey, stopClocks, {
       context: options.context,
+      type: options.type,
     })
 
     if (!stopped) {

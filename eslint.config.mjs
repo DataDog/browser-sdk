@@ -9,6 +9,7 @@ import jasmine from 'eslint-plugin-jasmine'
 import globals from 'globals'
 // eslint-disable-next-line local-rules/disallow-protected-directory-import
 import eslintLocalRules from './eslint-local-rules/index.js'
+import { SCHEMAS } from './scripts/lib/generatedSchemaTypes.ts'
 
 const SPEC_FILES = '**/*.{spec,specHelper}.{ts,tsx,js}'
 const MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL = process.env.MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL || 'warn'
@@ -21,13 +22,16 @@ export default tseslint.config(
   importPlugin.flatConfigs.typescript,
   {
     ignores: [
+      ...SCHEMAS.map((schema) => schema.typesPath),
       'packages/*/bundle',
       'packages/*/cjs',
       'packages/*/esm',
       'test/**/dist',
+      'test/**/.next',
       'test/apps/react-heavy-spa',
       'test/apps/react-shopist-like',
       'test/apps/microfrontend',
+      'test/apps/nextjs-app-router',
       'sandbox',
       'coverage',
       'rum-events-format',
@@ -59,6 +63,7 @@ export default tseslint.config(
           './tsconfig.default.json',
           './tsconfig.scripts.json',
           './developer-extension/tsconfig.json',
+          './packages/rum-nextjs/tsconfig.json',
           './test/e2e/tsconfig.json',
           './test/performance/tsconfig.json',
           './test/apps/**/tsconfig.json',

@@ -15,7 +15,7 @@ export interface SetupOptions {
   eventBridge: boolean
   head?: string
   body?: string
-  basePath: string
+  baseUrlHooks: UrlHook[]
   context: {
     run_id: string
     test_name: string
@@ -25,7 +25,6 @@ export interface SetupOptions {
     rumConfiguration?: RumInitConfiguration
     logsConfiguration?: LogsInitConfiguration
   }
-  hostName?: string
   worker?: WorkerOptions
   callerLocation?: CallerLocation
 }
@@ -43,6 +42,7 @@ export interface WorkerOptions {
 }
 
 export type SetupFactory = (options: SetupOptions, servers: Servers) => string
+export type UrlHook = (baseUrl: URL, servers: Servers, options: SetupOptions) => void
 
 // By default, run tests only with the 'bundle' setup outside of the CI (to run faster on the
 // developer laptop) or with Browser Stack (to limit flakiness).

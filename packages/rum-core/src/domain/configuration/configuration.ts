@@ -126,6 +126,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    * See [Connect RUM and Traces](https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum) for further information.
    *
    * @category Tracing
+   * @defaultValue 100
    */
   traceSampleRate?: number | undefined
   /**
@@ -163,6 +164,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    * See [Configure Your Setup For Browser RUM and Browser RUM & Session Replay Sampling](https://docs.datadoghq.com/real_user_monitoring/guide/sampling-browser-plans) for further information.
    *
    * @category Session Replay
+   * @defaultValue 0
    */
   sessionReplaySampleRate?: number | undefined
 

@@ -34,5 +34,13 @@ export function serializeFullSnapshot(
       timestamp,
     }
     transaction.add(record)
+
+    scope.serializeObservable.notify({
+      type: 'full',
+      kind,
+      target: document,
+      timestamp,
+      v1: record,
+    })
   })
 }

@@ -1,5 +1,5 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
-import { elapsed, relativeNow } from '@datadog/browser-core'
+import { elapsed, relativeNow, ExperimentalFeature, addExperimentalFeatures } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import {
   appendElement,
@@ -106,6 +106,7 @@ describe('trackInteractionToNextPaint', () => {
       value: 100 as Duration,
       targetSelector: undefined,
       time: 1 as RelativeTime,
+      subParts: undefined,
     })
   })
 
@@ -121,6 +122,7 @@ describe('trackInteractionToNextPaint', () => {
       value: MAX_INP_VALUE,
       targetSelector: undefined,
       time: 1 as RelativeTime,
+      subParts: undefined,
     })
   })
 
@@ -137,6 +139,7 @@ describe('trackInteractionToNextPaint', () => {
       value: 98 as Duration,
       targetSelector: undefined,
       time: 98 as RelativeTime,
+      subParts: undefined,
     })
   })
 
@@ -158,6 +161,7 @@ describe('trackInteractionToNextPaint', () => {
       value: 40 as Duration,
       targetSelector: undefined,
       time: 1 as RelativeTime,
+      subParts: undefined,
     })
   })
 
@@ -175,6 +179,7 @@ describe('trackInteractionToNextPaint', () => {
       value: 100 as Duration,
       targetSelector: undefined,
       time: 100 as RelativeTime,
+      subParts: undefined,
     })
   })
 
@@ -263,6 +268,227 @@ describe('trackInteractionToNextPaint', () => {
 
       expect(getInteractionToNextPaint()?.targetSelector).toEqual('#foo')
       expect(getInteractionSelector(startTime)).toBeUndefined()
+    })
+  })
+
+  describe('INP subparts', () => {
+    beforeEach(() => {
+      addExperimentalFeatures([ExperimentalFeature.INP_SUBPARTS])
+    })
+
+    it('should not include subparts when INP is 0', () => {
+      startINPTracking()
+      interactionCountMock.setInteractionCount(1 as Duration)
+
+      expect(getInteractionToNextPaint()).toEqual({ value: 0 as Duration })
+    })
+    ;[
+      {
+        description: 'should calculate INP subparts correctly',
+        interaction: {
+          startTime: 1000,
+          processingStart: 1050,
+          processingEnd: 1200,
+          duration: 250,
+        },
+        expectedSubParts: {
+          inputDelay: 50, // 1050 - 1000
+          processingDuration: 150, // 1200 - 1050
+          presentationDelay: 50, // 1250 - 1200
+        },
+      },
+      {
+        description: 'should return undefined subparts when processingStart is missing',
+        interaction: {
+          startTime: 1000,
+          processingStart: undefined,
+          processingEnd: 1200,
+          duration: 250,
+        },
+        expectedSubParts: undefined,
+      },
+      {
+        description: 'should return undefined subparts when processingEnd is missing',
+        interaction: {
+          startTime: 1000,
+          processingStart: 1050,
+          processingEnd: undefined,
+          duration: 250,
+        },
+        expectedSubParts: undefined,
+      },
+      {
+        description: 'should clamp processingEnd to nextPaintTime',
+        interaction: {
+          startTime: 1000,
+          processingStart: 1050,
+          processingEnd: 1300, // Exceeds nextPaintTime (1000 + 250 = 1250)
+          duration: 250,
+        },
+        expectedSubParts: {
+          inputDelay: 50, // 1050 - 1000
+          processingDuration: 200, // 1250 - 1050 (clamped)
+          presentationDelay: 0, // 1250 - 1250
+        },
+      },
+    ].forEach(({ description, interaction, expectedSubParts }) => {
+      it(description, () => {
+        startINPTracking()
+
+        newInteraction({
+          interactionId: 1,
+          startTime: interaction.startTime as RelativeTime,
+          processingStart: interaction.processingStart as RelativeTime | undefined,
+          processingEnd: interaction.processingEnd as RelativeTime | undefined,
+          duration: interaction.duration as Duration,
+        })
+
+        const inp = getInteractionToNextPaint()
+
+        if (expectedSubParts === undefined) {
+          expect(inp?.subParts).toBeUndefined()
+        } else {
+          expect(inp?.subParts).toEqual({
+            inputDelay: expectedSubParts.inputDelay as Duration,
+            processingDuration: expectedSubParts.processingDuration as Duration,
+            presentationDelay: expectedSubParts.presentationDelay as Duration,
+          })
+          // Validate: subparts sum equals INP duration
+          const subPartsSum =
+            expectedSubParts.inputDelay + expectedSubParts.processingDuration + expectedSubParts.presentationDelay
+          expect(subPartsSum).toBe(interaction.duration)
+        }
+      })
+    })
+
+    it('should handle entry grouping with same interactionId by using group max processingEnd', () => {
+      startINPTracking()
+
+      newInteraction({
+        interactionId: 1,
+        startTime: 1000 as RelativeTime,
+        processingStart: 1050 as RelativeTime,
+        processingEnd: 1100 as RelativeTime,
+        duration: 250 as Duration,
+      })
+
+      newInteraction({
+        interactionId: 1,
+        startTime: 1005 as RelativeTime,
+        processingStart: 1060 as RelativeTime,
+        processingEnd: 1200 as RelativeTime,
+        duration: 245 as Duration,
+      })
+
+      const inp = getInteractionToNextPaint()
+      expect(inp?.value).toBe(250 as Duration)
+      expect(inp?.subParts).toEqual({
+        inputDelay: 50 as Duration,
+        processingDuration: 150 as Duration,
+        presentationDelay: 50 as Duration,
+      })
+    })
+
+    it('should group entries within 8ms renderTime window', () => {
+      startINPTracking()
+
+      newInteraction({
+        interactionId: 1,
+        startTime: 1000 as RelativeTime,
+        processingStart: 1050 as RelativeTime,
+        processingEnd: 1150 as RelativeTime,
+        duration: 250 as Duration,
+      })
+
+      // within 8ms renderTime window
+      newInteraction({
+        interactionId: 2,
+        startTime: 1010 as RelativeTime,
+        processingStart: 1055 as RelativeTime,
+        processingEnd: 1240 as RelativeTime,
+        duration: 245 as Duration,
+      })
+
+      // outside of 8ms renderTime window
+      newInteraction({
+        interactionId: 2,
+        startTime: 1020 as RelativeTime,
+        processingStart: 1070 as RelativeTime,
+        processingEnd: 1200 as RelativeTime,
+        duration: 190 as Duration,
+      })
+
+      const inp = getInteractionToNextPaint()
+      expect(inp?.value).toBe(250 as Duration)
+      expect(inp?.subParts).toEqual({
+        inputDelay: 50 as Duration,
+        processingDuration: 190 as Duration,
+        presentationDelay: 10 as Duration,
+      })
+    })
+
+    it('should keep correct subparts for p98 after interactions causing pruning', () => {
+      startINPTracking()
+
+      // The interaction that will remain the p98 throughout
+      newInteraction({
+        interactionId: 1,
+        startTime: 1000 as RelativeTime,
+        processingStart: 1050 as RelativeTime,
+        processingEnd: 1200 as RelativeTime,
+        duration: 1100 as Duration,
+      })
+
+      // Add more than MAX_INTERACTION_ENTRIES (10) shorter interactions to fill longestInteractions
+      // and trigger eviction and pruning of their groups
+      for (let i = 2; i <= 12; i++) {
+        newInteraction({
+          interactionId: i,
+          startTime: (i * 2000) as RelativeTime,
+          processingStart: (i * 2000 + 10) as RelativeTime,
+          processingEnd: (i * 2000 + 20) as RelativeTime,
+          duration: i as Duration,
+        })
+      }
+
+      const inp = getInteractionToNextPaint()
+      expect(inp?.value).toBe(1100 as Duration)
+      expect(inp?.subParts).toEqual({
+        inputDelay: 50 as Duration,
+        processingDuration: 150 as Duration,
+        presentationDelay: 900 as Duration,
+      })
+    })
+
+    it('should update subparts when INP changes to a different interaction', () => {
+      startINPTracking()
+
+      newInteraction({
+        interactionId: 1,
+        startTime: 1000 as RelativeTime,
+        processingStart: 1050 as RelativeTime,
+        processingEnd: 1150 as RelativeTime,
+        duration: 200 as Duration,
+      })
+
+      let inp = getInteractionToNextPaint()
+      expect(inp?.subParts?.inputDelay).toBe(50 as Duration)
+
+      newInteraction({
+        interactionId: 2,
+        startTime: 2000 as RelativeTime,
+        processingStart: 2100 as RelativeTime,
+        processingEnd: 2350 as RelativeTime,
+        duration: 400 as Duration,
+      })
+
+      inp = getInteractionToNextPaint()
+      expect(inp?.value).toBe(400 as Duration)
+      expect(inp?.subParts).toEqual({
+        inputDelay: 100 as Duration,
+        processingDuration: 250 as Duration,
+        presentationDelay: 50 as Duration,
+      })
     })
   })
 })

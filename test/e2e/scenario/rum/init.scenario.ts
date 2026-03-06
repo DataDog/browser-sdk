@@ -119,6 +119,29 @@ test.describe('API calls and events around init', () => {
       )
     })
 
+  createTest('should use the provided url option instead of location')
+    .withRum()
+    .withRumSlim()
+    .withRumInit((configuration) => {
+      window.DD_RUM!.init(configuration)
+
+      setTimeout(
+        () =>
+          window.DD_RUM!.startView({
+            name: 'manual view',
+            url: 'https://example.com/overridden-path',
+          }),
+        10
+      )
+    })
+    .run(async ({ intakeRegistry, flushEvents }) => {
+      await flushEvents()
+
+      const manualView = intakeRegistry.rumViewEvents.find((event) => event.view.name === 'manual view')!
+      expect(manualView).toBeTruthy()
+      expect(manualView.view.url).toBe('https://example.com/overridden-path')
+    })
+
   createTest('should be able to set view context')
     .withRum()
     .withRumSlim()
@@ -313,6 +336,53 @@ test.describe('Synthetics Browser Test', () => {
     .run(async ({ intakeRegistry, flushEvents }) => {
       await flushEvents()
       expect(intakeRegistry.rumViewEvents).toHaveLength(0)
+    })
+
+  createTest('enriches events with the synthetics context from the global variable')
+    .withRum()
+    .withRumInit((configuration) => {
+      ;(window as any)._DATADOG_SYNTHETICS_RUM_CONTEXT = {
+        test_id: 'test-abc',
+        result_id: 'result-xyz',
+        run_type: 'scheduled',
+      }
+      window.DD_RUM!.init(configuration)
+    })
+    .run(async ({ intakeRegistry, flushEvents }) => {
+      await flushEvents()
+      expect(intakeRegistry.rumViewEvents[0]).toEqual(
+        expect.objectContaining({
+          session: expect.objectContaining({ type: 'synthetics' }),
+          synthetics: {
+            test_id: 'test-abc',
+            result_id: 'result-xyz',
+            run_type: 'scheduled',
+            injected: false,
+          },
+        })
+      )
+    })
+
+  createTest('enriches events with the synthetics context from the cookie')
+    .withRum()
+    .withRumInit((configuration) => {
+      const context = { test_id: 'test-abc', result_id: 'result-xyz', run_type: 'scheduled' }
+      document.cookie = `datadog-synthetics-rum-context=${encodeURIComponent(JSON.stringify(context))}`
+      window.DD_RUM!.init(configuration)
+    })
+    .run(async ({ intakeRegistry, flushEvents }) => {
+      await flushEvents()
+      expect(intakeRegistry.rumViewEvents[0]).toEqual(
+        expect.objectContaining({
+          session: expect.objectContaining({ type: 'synthetics' }),
+          synthetics: {
+            test_id: 'test-abc',
+            result_id: 'result-xyz',
+            run_type: 'scheduled',
+            injected: false,
+          },
+        })
+      )
     })
 })
 
