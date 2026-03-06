@@ -48,24 +48,17 @@ Then trigger the interaction. Read `[SDK Event]` lines from console output.
 
 The sandbox calls `DD_RUM.init()` synchronously in `<head>`. The initial view event fires during page load — before any post-load console injection runs.
 
-**Before navigating**, call the `Page.addScriptToEvaluateOnNewDocument` CDP command via the chrome_devtools MCP. This is a protocol-level call — NOT JavaScript to paste in the console.
-
-The script source to inject:
-
-```js
-window.__ddBrowserSdkExtensionCallback = (msg) => {
-  console.log('[SDK Event]', JSON.stringify(msg))
-}
-```
-
-Invoke it via the MCP (exact tool name varies — check available tools, look for `Page.addScriptToEvaluateOnNewDocument` or a generic `execute_cdp_command`):
+**Before navigating**, use the `chrome-devtools_navigate_page` tool with the `initScript` parameter. This injects the script into every new document before any other code runs — before `DD_RUM.init()` fires.
 
 ```
-Tool: Page.addScriptToEvaluateOnNewDocument (or equivalent)
-Params: { source: "window.__ddBrowserSdkExtensionCallback = (msg) => { console.log('[SDK Event]', JSON.stringify(msg)) }" }
+Tool: chrome-devtools_navigate_page
+Params:
+  type: "url"
+  url: "http://localhost:8080"
+  initScript: "window.__ddBrowserSdkExtensionCallback = (msg) => { console.log('[SDK Event]', JSON.stringify(msg)) }"
 ```
 
-Then navigate to `http://localhost:8080`. Every event — including the initial view — will appear in console logs.
+Every event — including the initial view — will appear in console logs.
 
 **Do not inject via console and then reload.** Reloading clears the injected console code.
 
@@ -99,7 +92,7 @@ Note: user attributes use `usr` (not `user`) in the serialized payload.
 **View events are only finalized when the view ends** (navigation or session end).
 The initial view event will be updated multiple times as the page runs — earlier emissions are incomplete.
 
-To get the final view event: trigger a navigation, or call `window.DD_RUM.stopSession()` in the console (note: this permanently ends the current session — only use for debugging).
+To get the final view event: trigger a navigation, or — **only as a last resort for debugging, as it permanently ends the current session** — call `window.DD_RUM.stopSession()` in the console.
 
 ## Common Mistakes
 

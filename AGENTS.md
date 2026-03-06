@@ -154,6 +154,8 @@ When a change affects what events are emitted (fields, types, attributes), verif
 - Use it when unit tests alone are not sufficient to validate serialized event output
 - Run `yarn dev` first, then follow the skill to set up the `__ddBrowserSdkExtensionCallback` hook
 
+> **Note:** this skill is a debugging and spot-check tool, not a regression gate. If you need to prevent regressions, write an E2E test instead (see `test/e2e/`).
+
 ```bash
 yarn dev   # sandbox available at http://localhost:8080
 ```
@@ -175,6 +177,11 @@ Use gitmoji conventions:
 | 🔥    | Removal                                   |
 | 🧹    | Cleanup                                   |
 | 🔊    | Telemetry / debug logging                 |
+| 📝    | Documentation                             |
+| 🎨    | Code structure / formatting               |
+| 🔧    | Configuration / project setup             |
+| 🚨    | Linting rules                             |
+| 👌    | Address code review feedback              |
 
 ## Git Workflow
 
