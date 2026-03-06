@@ -12,6 +12,7 @@ import { trackCommonViewMetrics } from './trackCommonViewMetrics'
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = (PAGE_ACTIVITY_VALIDATION_DELAY * 0.8) as Duration
 const AFTER_PAGE_ACTIVITY_END_DELAY = PAGE_ACTIVITY_END_DELAY * 1.1
 
+// Tests trackCommonViewMetrics in isolation to verify loading time edge cases without the full view lifecycle setup
 describe('trackCommonViewMetrics', () => {
   const lifeCycle = new LifeCycle()
   let clock: Clock
