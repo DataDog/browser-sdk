@@ -536,14 +536,10 @@ export type TelemetryBrowserFeaturesUsage =
   | StartDurationVital
   | StopDurationVital
   | AddDurationVital
-  | StartAction
-  | StopAction
-  | StartResource
-  | StopResource
 /**
  * Schema of mobile specific features usage
  */
-export type TelemetryMobileFeaturesUsage = AddViewLoadingTime | TrackWebView | AndroidNetworkInstrumentation
+export type TelemetryMobileFeaturesUsage = AddViewLoadingTime | TrackWebView
 
 /**
  * Schema of common properties of Telemetry events
@@ -583,7 +579,6 @@ export interface CommonTelemetryProperties {
     | 'unity'
     | 'kotlin-multiplatform'
     | 'electron'
-    | 'rum-cpp'
   /**
    * The version of the SDK generating the telemetry event
    */
@@ -918,34 +913,6 @@ export interface AddDurationVital {
   feature: 'add-duration-vital'
   [k: string]: unknown
 }
-export interface StartAction {
-  /**
-   * startAction API
-   */
-  feature: 'start-action'
-  [k: string]: unknown
-}
-export interface StopAction {
-  /**
-   * stopAction API
-   */
-  feature: 'stop-action'
-  [k: string]: unknown
-}
-export interface StartResource {
-  /**
-   * startResource API
-   */
-  feature: 'start-resource'
-  [k: string]: unknown
-}
-export interface StopResource {
-  /**
-   * stopResource API
-   */
-  feature: 'stop-resource'
-  [k: string]: unknown
-}
 export interface AddViewLoadingTime {
   /**
    * addViewLoadingTime API
@@ -970,16 +937,5 @@ export interface TrackWebView {
    * trackWebView API
    */
   feature: 'trackWebView'
-  [k: string]: unknown
-}
-export interface AndroidNetworkInstrumentation {
-  /**
-   * Android network instrumentation
-   */
-  feature: 'androidNetworkInstrumentation'
-  /**
-   * The network instrumentation API used
-   */
-  type: 'CRONET' | 'OKHTTP'
   [k: string]: unknown
 }
