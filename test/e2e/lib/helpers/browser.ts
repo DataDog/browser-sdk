@@ -106,5 +106,6 @@ export function isContentTypeAvailableInPerformanceEntry(
 ) {
   const browserVersion = (test.info().project.metadata as BrowserConfiguration).version
 
+  // Currently our CI only runs Firefox 119, so this test only runs locally with yarn test:e2e --project=firefox
   return browserName === 'firefox' && Number(browserVersion) >= 129
 }
