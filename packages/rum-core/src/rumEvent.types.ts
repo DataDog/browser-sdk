@@ -142,6 +142,10 @@ export type RumActionEvent = CommonProperties &
            */
           readonly selector?: string
           /**
+           * Mobile-only: a globally unique and stable identifier for this UI element, computed as the hash of the element's path (32 lowercase hex characters). Used to correlate actions with mobile session replay wireframes.
+           */
+          readonly permanent_id?: string
+          /**
            * Width of the target element (in pixels)
            */
           readonly width?: number
@@ -149,10 +153,6 @@ export type RumActionEvent = CommonProperties &
            * Height of the target element (in pixels)
            */
           readonly height?: number
-          /**
-           * Mobile-only: a globally unique and stable identifier for this UI element, computed as the hash of the element's path (32 lowercase hex characters). Used to correlate actions with mobile session replay wireframes.
-           */
-          readonly permanent_id?: string
           [k: string]: unknown
         }
         /**
@@ -314,9 +314,6 @@ export type RumErrorEvent = CommonProperties &
         | 'ndk'
         | 'ios+il2cpp'
         | 'ndk+il2cpp'
-        | 'windows'
-        | 'macos'
-        | 'linux'
       /**
        * Resource properties of the error
        */
@@ -963,6 +960,19 @@ export type RumViewEvent = CommonProperties &
      * RUM event type
      */
     readonly type: 'view'
+    view: {
+      time_spent: number
+      action: {
+        [k: string]: unknown
+      }
+      error: {
+        [k: string]: unknown
+      }
+      resource: {
+        [k: string]: unknown
+      }
+      [k: string]: unknown
+    }
     /**
      * Internal properties
      */
@@ -971,6 +981,62 @@ export type RumViewEvent = CommonProperties &
        * Version of the update of the view event
        */
       readonly document_version: number
+      /**
+       * List of the page states during the view
+       */
+      readonly page_states?: {
+        /**
+         * Page state name
+         */
+        readonly state: 'active' | 'passive' | 'hidden' | 'frozen' | 'terminated'
+        /**
+         * Duration in ns between start of the view and start of the page state
+         */
+        readonly start: number
+        [k: string]: unknown
+      }[]
+      /**
+       * Debug metadata for Replay Sessions
+       */
+      replay_stats?: {
+        /**
+         * The number of records produced during this view lifetime
+         */
+        records_count?: number
+        /**
+         * The number of segments sent during this view lifetime
+         */
+        segments_count?: number
+        /**
+         * The total size in bytes of the segments sent during this view lifetime
+         */
+        segments_total_raw_size?: number
+        [k: string]: unknown
+      }
+      /**
+       * Additional information of the reported Cumulative Layout Shift
+       */
+      readonly cls?: {
+        /**
+         * Pixel ratio of the device where the layout shift was reported
+         */
+        readonly device_pixel_ratio?: number
+        [k: string]: unknown
+      }
+      /**
+       * Subset of the SDK configuration options in use during its execution
+       */
+      readonly configuration?: {
+        /**
+         * Whether session replay recording configured to start manually
+         */
+        readonly start_session_replay_recording_manually?: boolean
+        [k: string]: unknown
+      }
+      /**
+       * Profiling context
+       */
+      profiling?: ProfilingInternalContextSchema
       [k: string]: unknown
     }
     [k: string]: unknown
@@ -980,381 +1046,20 @@ export type RumViewEvent = CommonProperties &
  */
 export type RumViewUpdateEvent = ViewContainerSchema &
   StreamSchema &
-  ViewProperties & {
+  ViewProperties &
+  CommonProperties & {
     /**
      * RUM event type
      */
     readonly type: 'view_update'
     /**
-     * Start of the event in ms from epoch
-     */
-    readonly date?: number
-    /**
-     * Application properties
-     */
-    readonly application: {
-      /**
-       * UUID of the application
-       */
-      readonly id: string
-      /**
-       * The user's current locale as a language tag (language + region), computed from their preferences and the app's supported languages, e.g. 'es-FR'.
-       */
-      readonly current_locale?: string
-      [k: string]: unknown
-    }
-    /**
-     * Session properties
-     */
-    readonly session: {
-      /**
-       * UUID of the session
-       */
-      readonly id: string
-      /**
-       * Type of the session
-       */
-      readonly type: 'user' | 'synthetics' | 'ci_test'
-      /**
-       * Whether this session has a replay
-       */
-      readonly has_replay?: boolean
-      [k: string]: unknown
-    }
-    /**
-     * The source of this event
-     */
-    readonly source?:
-      | 'android'
-      | 'ios'
-      | 'browser'
-      | 'flutter'
-      | 'react-native'
-      | 'roku'
-      | 'unity'
-      | 'kotlin-multiplatform'
-      | 'electron'
-    /**
-     * The service name for this application
-     */
-    service?: string
-    /**
-     * The version for this application
-     */
-    version?: string
-    /**
-     * The build version for this application
-     */
-    readonly build_version?: string
-    /**
-     * Generated unique ID of the application build. Unlike version or build_version this field is not meant to be coming from the user, but rather generated by the tooling for each build.
-     */
-    readonly build_id?: string
-    /**
-     * Tags of the event in key:value format, separated by commas (e.g. 'env:prod,version:1.2.3')
-     */
-    readonly ddtags?: string
-    /**
-     * View properties
-     */
-    readonly view: {
-      /**
-       * UUID of the view
-       */
-      readonly id: string
-      /**
-       * URL of the view
-       */
-      url: string
-      /**
-       * URL that linked to the initial view of the page
-       */
-      referrer?: string
-      /**
-       * User defined name of the view
-       */
-      name?: string
-      [k: string]: unknown
-    }
-    /**
      * Internal properties
      */
-    readonly _dd: {
+    readonly _dd?: {
       /**
        * Version of the update of the view event
        */
       readonly document_version: number
-      /**
-       * Version of the RUM event format
-       */
-      readonly format_version?: 2
-      /**
-       * Session-related internal properties
-       */
-      session?: {
-        /**
-         * Session plan: 1 is the plan without replay, 2 is the plan with replay (deprecated)
-         */
-        plan?: 1 | 2
-        /**
-         * The precondition that led to the creation of the session
-         */
-        readonly session_precondition?:
-          | 'user_app_launch'
-          | 'inactivity_timeout'
-          | 'max_duration'
-          | 'background_launch'
-          | 'prewarm'
-          | 'from_non_interactive_session'
-          | 'explicit_stop'
-        [k: string]: unknown
-      }
-      /**
-       * Subset of the SDK configuration options in use during its execution
-       */
-      readonly configuration?: {
-        /**
-         * The percentage of sessions tracked
-         */
-        readonly session_sample_rate?: number
-        /**
-         * The percentage of sessions with RUM & Session Replay pricing tracked
-         */
-        readonly session_replay_sample_rate?: number
-        /**
-         * The percentage of sessions profiled
-         */
-        readonly profiling_sample_rate?: number
-        /**
-         * The percentage of sessions with traced resources
-         */
-        readonly trace_sample_rate?: number
-        [k: string]: unknown
-      }
-      /**
-       * Browser SDK version
-       */
-      readonly browser_sdk_version?: string
-      /**
-       * SDK name (e.g. 'logs', 'rum', 'rum-slim', etc.)
-       */
-      readonly sdk_name?: string
-      [k: string]: unknown
-    }
-    /**
-     * User properties
-     */
-    readonly usr?: {
-      /**
-       * Identifier of the user
-       */
-      readonly id?: string
-      /**
-       * Name of the user
-       */
-      readonly name?: string
-      /**
-       * Email of the user
-       */
-      readonly email?: string
-      /**
-       * Identifier of the user across sessions
-       */
-      readonly anonymous_id?: string
-      [k: string]: unknown
-    }
-    /**
-     * Account properties
-     */
-    readonly account?: {
-      /**
-       * Identifier of the account
-       */
-      readonly id: string
-      /**
-       * Name of the account
-       */
-      readonly name?: string
-      [k: string]: unknown
-    }
-    /**
-     * Device connectivity properties
-     */
-    connectivity?: {
-      /**
-       * Status of the device connectivity
-       */
-      readonly status: 'connected' | 'not_connected' | 'maybe'
-      /**
-       * The list of available network interfaces
-       */
-      readonly interfaces?: (
-        | 'bluetooth'
-        | 'cellular'
-        | 'ethernet'
-        | 'wifi'
-        | 'wimax'
-        | 'mixed'
-        | 'other'
-        | 'unknown'
-        | 'none'
-      )[]
-      /**
-       * Cellular connection type reflecting the measured network performance
-       */
-      readonly effective_type?: 'slow-2g' | '2g' | '3g' | '4g'
-      /**
-       * Cellular connectivity properties
-       */
-      readonly cellular?: {
-        /**
-         * The type of a radio technology used for cellular connection
-         */
-        readonly technology?: string
-        /**
-         * The name of the SIM carrier
-         */
-        readonly carrier_name?: string
-        [k: string]: unknown
-      }
-      [k: string]: unknown
-    }
-    /**
-     * Display properties
-     */
-    display?: {
-      /**
-       * The viewport represents the rectangular area that is currently being viewed. Content outside the viewport is not visible onscreen until scrolled into view.
-       */
-      readonly viewport?: {
-        /**
-         * Width of the viewport (in pixels)
-         */
-        readonly width: number
-        /**
-         * Height of the viewport (in pixels)
-         */
-        readonly height: number
-        [k: string]: unknown
-      }
-      [k: string]: unknown
-    }
-    /**
-     * Synthetics properties
-     */
-    readonly synthetics?: {
-      /**
-       * The identifier of the current Synthetics test
-       */
-      readonly test_id: string
-      /**
-       * The identifier of the current Synthetics test results
-       */
-      readonly result_id: string
-      /**
-       * Whether the event comes from a SDK instance injected by Synthetics
-       */
-      readonly injected?: boolean
-      [k: string]: unknown
-    }
-    /**
-     * CI Visibility properties
-     */
-    readonly ci_test?: {
-      /**
-       * The identifier of the current CI Visibility test execution
-       */
-      readonly test_execution_id: string
-      [k: string]: unknown
-    }
-    /**
-     * Operating system properties
-     */
-    os?: {
-      /**
-       * Operating system name, e.g. Android, iOS
-       */
-      readonly name: string
-      /**
-       * Full operating system version, e.g. 8.1.1
-       */
-      readonly version: string
-      /**
-       * Operating system build number, e.g. 15D21
-       */
-      readonly build?: string
-      /**
-       * Major operating system version, e.g. 8
-       */
-      readonly version_major: string
-      [k: string]: unknown
-    }
-    /**
-     * Device properties
-     */
-    device?: {
-      /**
-       * Device type info
-       */
-      readonly type?: 'mobile' | 'desktop' | 'tablet' | 'tv' | 'gaming_console' | 'bot' | 'other'
-      /**
-       * Device marketing name, e.g. Xiaomi Redmi Note 8 Pro, Pixel 5, etc.
-       */
-      readonly name?: string
-      /**
-       * Device SKU model, e.g. Samsung SM-988GN, etc. Quite often name and model can be the same.
-       */
-      readonly model?: string
-      /**
-       * Device marketing brand, e.g. Apple, OPPO, Xiaomi, etc.
-       */
-      readonly brand?: string
-      /**
-       * The CPU architecture of the device that is reporting the error
-       */
-      readonly architecture?: string
-      /**
-       * The user’s locale as a language tag combining language and region, e.g. 'en-US'.
-       */
-      readonly locale?: string
-      /**
-       * Ordered list of the user’s preferred system languages as IETF language tags.
-       */
-      readonly locales?: string[]
-      /**
-       * The device’s current time zone identifier, e.g. 'Europe/Berlin'.
-       */
-      readonly time_zone?: string
-      /**
-       * Current battery level of the device (0.0 to 1.0).
-       */
-      readonly battery_level?: number
-      /**
-       * Whether the device is in power saving mode.
-       */
-      readonly power_saving_mode?: boolean
-      /**
-       * Current screen brightness level (0.0 to 1.0).
-       */
-      readonly brightness_level?: number
-      /**
-       * Number of logical CPU cores available for scheduling on the device at runtime, as reported by the operating system.
-       */
-      readonly logical_cpu_count?: number
-      /**
-       * Total RAM in megabytes
-       */
-      readonly total_ram?: number
-      /**
-       * Whether the device is considered a low RAM device (Android)
-       */
-      readonly is_low_ram?: boolean
-      [k: string]: unknown
-    }
-    /**
-     * User provided context
-     */
-    context?: {
       [k: string]: unknown
     }
     [k: string]: unknown
@@ -1511,7 +1216,6 @@ export interface CommonProperties {
     | 'unity'
     | 'kotlin-multiplatform'
     | 'electron'
-    | 'rum-cpp'
   /**
    * View properties
    */
@@ -1854,7 +1558,6 @@ export interface ViewContainerSchema {
       | 'unity'
       | 'kotlin-multiplatform'
       | 'electron'
-      | 'rum-cpp'
     [k: string]: unknown
   }
   [k: string]: unknown
@@ -2087,7 +1790,7 @@ export interface ViewProperties {
       /**
        * Number of actions that occurred on the view
        */
-      readonly count?: number
+      readonly count: number
       [k: string]: unknown
     }
     /**
@@ -2097,7 +1800,7 @@ export interface ViewProperties {
       /**
        * Number of errors that occurred on the view
        */
-      readonly count?: number
+      readonly count: number
       [k: string]: unknown
     }
     /**
@@ -2107,7 +1810,7 @@ export interface ViewProperties {
       /**
        * Number of crashes that occurred on the view
        */
-      readonly count?: number
+      readonly count: number
       [k: string]: unknown
     }
     /**
@@ -2117,7 +1820,7 @@ export interface ViewProperties {
       /**
        * Number of long tasks that occurred on the view
        */
-      readonly count?: number
+      readonly count: number
       [k: string]: unknown
     }
     /**
@@ -2127,7 +1830,7 @@ export interface ViewProperties {
       /**
        * Number of frozen frames that occurred on the view
        */
-      readonly count?: number
+      readonly count: number
       [k: string]: unknown
     }
     /**
@@ -2151,7 +1854,7 @@ export interface ViewProperties {
       /**
        * Number of resources that occurred on the view
        */
-      readonly count?: number
+      readonly count: number
       [k: string]: unknown
     }
     /**
@@ -2259,69 +1962,7 @@ export interface ViewProperties {
     /**
      * The replay privacy level
      */
-    readonly replay_level?: 'allow' | 'mask' | 'mask-user-input'
-    [k: string]: unknown
-  }
-  /**
-   * Internal properties
-   */
-  readonly _dd?: {
-    /**
-     * List of the page states during the view
-     */
-    readonly page_states?: {
-      /**
-       * Page state name
-       */
-      readonly state: 'active' | 'passive' | 'hidden' | 'frozen' | 'terminated'
-      /**
-       * Duration in ns between start of the view and start of the page state
-       */
-      readonly start: number
-      [k: string]: unknown
-    }[]
-    /**
-     * Debug metadata for Replay Sessions
-     */
-    replay_stats?: {
-      /**
-       * The number of records produced during this view lifetime
-       */
-      records_count?: number
-      /**
-       * The number of segments sent during this view lifetime
-       */
-      segments_count?: number
-      /**
-       * The total size in bytes of the segments sent during this view lifetime
-       */
-      segments_total_raw_size?: number
-      [k: string]: unknown
-    }
-    /**
-     * Additional information of the reported Cumulative Layout Shift
-     */
-    readonly cls?: {
-      /**
-       * Pixel ratio of the device where the layout shift was reported
-       */
-      readonly device_pixel_ratio?: number
-      [k: string]: unknown
-    }
-    /**
-     * Subset of the SDK configuration options in use during its execution
-     */
-    readonly configuration?: {
-      /**
-       * Whether session replay recording configured to start manually
-       */
-      readonly start_session_replay_recording_manually?: boolean
-      [k: string]: unknown
-    }
-    /**
-     * Profiling context
-     */
-    profiling?: ProfilingInternalContextSchema
+    readonly replay_level: 'allow' | 'mask' | 'mask-user-input'
     [k: string]: unknown
   }
   /**
@@ -2335,19 +1976,19 @@ export interface ViewProperties {
       /**
        * Distance between the top and the lowest point reached on this view (in pixels)
        */
-      readonly max_depth?: number
+      readonly max_depth: number
       /**
        * Page scroll top (scrolled distance) when the maximum scroll depth was reached for this view (in pixels)
        */
-      readonly max_depth_scroll_top?: number
+      readonly max_depth_scroll_top: number
       /**
        * Maximum page scroll height (total height) for this view (in pixels)
        */
-      readonly max_scroll_height?: number
+      readonly max_scroll_height: number
       /**
        * Duration between the view start and the time the max scroll height was reached for this view (in nanoseconds)
        */
-      readonly max_scroll_height_time?: number
+      readonly max_scroll_height_time: number
       [k: string]: unknown
     }
     [k: string]: unknown
