@@ -14,6 +14,7 @@ export { TrackingConsent, createTrackingConsentState } from './domain/trackingCo
 export {
   isExperimentalFeatureEnabled,
   addExperimentalFeatures,
+  resetExperimentalFeatures,
   getExperimentalFeatures,
   initFeatureFlags,
   ExperimentalFeature,
