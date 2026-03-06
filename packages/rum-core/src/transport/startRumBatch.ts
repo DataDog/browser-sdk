@@ -18,7 +18,17 @@ import { diffMerge, isEqual } from '../domain/view/viewDiff'
 export const PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL = 10
 
 // Top-level assembled fields that should be diffed with simple equality
-const ASSEMBLED_TOP_LEVEL_FIELDS = ['service', 'version', 'source', 'ddtags', 'context', 'connectivity', 'usr', 'device', 'privacy'] as const
+const ASSEMBLED_TOP_LEVEL_FIELDS = [
+  'service',
+  'version',
+  'source',
+  'ddtags',
+  'context',
+  'connectivity',
+  'usr',
+  'device',
+  'privacy',
+] as const
 
 export function computeAssembledViewDiff(
   current: AssembledRumEvent,
