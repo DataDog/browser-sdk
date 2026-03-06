@@ -5,6 +5,7 @@ import type {
   ContextManager,
   BoundedBuffer,
   Telemetry,
+  TimeStamp,
 } from '@datadog/browser-core'
 import {
   createBoundedBuffer,
@@ -241,7 +242,7 @@ export function createPreStartStrategy(
       bufferApiCalls.add((startRumResult) => startRumResult.addTiming(name, time))
     },
 
-    setLoadingTime: ((callTimestamp = timeStampNow(), overwrite = false) => {
+    setLoadingTime: ((callTimestamp: TimeStamp, overwrite = false) => {
       bufferApiCalls.add((startRumResult) => startRumResult.setLoadingTime(callTimestamp, overwrite))
     }) as Strategy['setLoadingTime'],
 
