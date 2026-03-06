@@ -2,7 +2,7 @@ import { generateUUID, INTAKE_URL_PARAMETERS } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
 import type test from '@playwright/test'
-import { isBrowserStack, isContinuousIntegration } from './environment'
+import { isAndroid, isBrowserStack, isContinuousIntegration } from './environment'
 import type { Servers } from './httpServers'
 
 export interface SetupOptions {
@@ -45,9 +45,9 @@ export interface WorkerOptions {
 export type SetupFactory = (options: SetupOptions, servers: Servers) => string
 
 // By default, run tests only with the 'bundle' setup outside of the CI (to run faster on the
-// developer laptop) or with Browser Stack (to limit flakiness).
+// developer laptop), with Browser Stack (to limit flakiness), or with Android (single setup).
 export const DEFAULT_SETUPS =
-  !isContinuousIntegration || isBrowserStack
+  !isContinuousIntegration || isBrowserStack || isAndroid
     ? [{ name: 'bundle', factory: bundleSetup }]
     : [
         { name: 'async', factory: asyncSetup },
