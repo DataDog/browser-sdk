@@ -83,7 +83,9 @@ describe('computeAssembledViewDiff', () => {
     expect((result as any).application).toEqual({ id: 'app-1' })
     expect((result as any).session).toEqual({ id: 'sess-1', type: 'user' })
     expect((result.view as any).id).toBe('view-1')
+    expect((result.view as any).url).toBe('/home')
     expect((result._dd as any).document_version).toBe(2)
+    expect((result._dd as any).format_version).toBe(2)
   })
 
   it('should include only changed view.* fields', () => {
@@ -114,7 +116,7 @@ describe('computeAssembledViewDiff', () => {
     expect((result.view as any).time_spent).toBe(5000) // changed
     expect((result.view as any).error).toBeUndefined() // unchanged, stripped
     expect((result.view as any).name).toBeUndefined() // unchanged, stripped
-    expect((result.view as any).url).toBeUndefined() // unchanged, stripped
+    expect((result.view as any).url).toBe('/home') // required routing field, always present
   })
 
   it('should strip unchanged top-level assembled fields', () => {
