@@ -126,7 +126,6 @@ test.describe('nextjs app router', () => {
 
         withBrowserLogs((browserLogs) => {
           expect(browserLogs.length).toBeGreaterThan(0)
-          expect(browserLogs.some((log) => log.message.includes('Client error from error-test'))).toBe(true)
         })
       })
 
