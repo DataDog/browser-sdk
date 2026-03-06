@@ -180,10 +180,12 @@ test.describe('partial view updates', () => {
       enableExperimentalFeatures: ['partial_view_updates'],
     })
     .run(async ({ intakeRegistry, flushEvents, page }) => {
-      // Trigger more than 10 updates by firing many actions
+      // Use setViewName to trigger unthrottled view updates (unlike addAction which is
+      // throttled to THROTTLE_VIEW_UPDATE_PERIOD=3s, setViewName calls triggerViewUpdate directly).
+      // We need more than PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL (10) updates to trigger a checkpoint.
       for (let i = 0; i < 12; i++) {
         await page.evaluate((n) => {
-          window.DD_RUM!.addAction(`action-${n}`)
+          window.DD_RUM!.setViewName(`step-${n}`)
         }, i)
       }
 
