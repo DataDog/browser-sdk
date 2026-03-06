@@ -349,7 +349,7 @@ function ViewUpdateDescription({ event }: { event: RumViewUpdateEvent }) {
   const changedFieldCount = event.view
     ? Object.keys(event.view).filter((k) => !VIEW_UPDATE_REQUIRED_KEYS.has(k)).length
     : 0
-  const viewName = event.view ? (event.view.name || (event.view.url && new URL(event.view.url).pathname)) : undefined
+  const viewName = event.view ? event.view.name || event.view.url : undefined
 
   return (
     <>
@@ -457,5 +457,10 @@ function Emphasis({ children }: { children: ReactNode }) {
 }
 
 function getViewName(view: { name?: string; url: string }) {
-  return `${view.name || new URL(view.url).pathname}`
+  if (view.name) return view.name
+  try {
+    return new URL(view.url).pathname
+  } catch {
+    return view.url
+  }
 }
