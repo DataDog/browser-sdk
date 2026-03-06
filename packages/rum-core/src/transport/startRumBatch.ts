@@ -6,6 +6,7 @@ import {
   DeflateEncoderStreamId,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
+  sendToExtension,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -178,6 +179,7 @@ export function startRumBatch(
     const diff = computeAssembledViewDiff(serverRumEvent, lastSentView)
     lastSentView = serverRumEvent
     if (diff) {
+      sendToExtension('rum', diff)
       batch.add(diff)
     }
     // If diff is undefined (nothing changed), skip — no event emitted
