@@ -6,9 +6,9 @@ export function addNextjsError(error: Error & { digest?: string }, context?: Rec
     return
   }
   publicApi.addError(error, {
-    framework: 'nextjs',
     ...context,
+    framework: 'nextjs',
     // digest is a hash Next.js attaches to server-side errors, linking client errors to server logs
-    ...(error.digest !== undefined && { nextjs: { digest: error.digest } }),
+    ...(error.digest !== undefined && { nextjs: { ...(context?.nextjs ?? {}), digest: error.digest } }),
   })
 }
