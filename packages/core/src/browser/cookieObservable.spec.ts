@@ -1,13 +1,18 @@
-import type { Subscription } from '@datadog/browser-core'
-import { ONE_MINUTE, deleteCookie, setCookie } from '@datadog/browser-core'
-import type { Clock } from '@datadog/browser-core/test'
-import { mockClock } from '@datadog/browser-core/test'
-import { mockRumConfiguration } from '../../test'
+import type { Clock } from '../../test'
+import { mockClock } from '../../test'
+import type { Configuration } from '../domain/configuration'
+import type { Subscription } from '../tools/observable'
+import { ONE_MINUTE } from '../tools/utils/timeUtils'
+import { deleteCookie, setCookie } from './cookie'
 import type { CookieStoreWindow } from './cookieObservable'
 import { WATCH_COOKIE_INTERVAL_DELAY, createCookieObservable } from './cookieObservable'
 
 const COOKIE_NAME = 'cookie_name'
 const COOKIE_DURATION = ONE_MINUTE
+
+function mockConfiguration(): Configuration {
+  return {} as Configuration
+}
 
 describe('cookieObservable', () => {
   let subscription: Subscription
@@ -27,7 +32,7 @@ describe('cookieObservable', () => {
   })
 
   it('should notify observers on cookie change', async () => {
-    const observable = createCookieObservable(mockRumConfiguration(), COOKIE_NAME)
+    const observable = createCookieObservable(mockConfiguration(), COOKIE_NAME)
 
     const cookieChangePromise = new Promise((resolve) => {
       subscription = observable.subscribe(resolve)
@@ -53,7 +58,7 @@ describe('cookieObservable', () => {
 
   it('should notify observers on cookie change when cookieStore is not supported', () => {
     Object.defineProperty(window, 'cookieStore', { get: () => undefined, configurable: true })
-    const observable = createCookieObservable(mockRumConfiguration(), COOKIE_NAME)
+    const observable = createCookieObservable(mockConfiguration(), COOKIE_NAME)
 
     let cookieChange: string | undefined
     subscription = observable.subscribe((change) => (cookieChange = change))
@@ -66,7 +71,7 @@ describe('cookieObservable', () => {
 
   it('should not notify observers on cookie change when the cookie value as not changed when cookieStore is not supported', () => {
     Object.defineProperty(window, 'cookieStore', { get: () => undefined, configurable: true })
-    const observable = createCookieObservable(mockRumConfiguration(), COOKIE_NAME)
+    const observable = createCookieObservable(mockConfiguration(), COOKIE_NAME)
 
     setCookie(COOKIE_NAME, 'foo', COOKIE_DURATION)
 
@@ -77,5 +82,35 @@ describe('cookieObservable', () => {
     clock.tick(WATCH_COOKIE_INTERVAL_DELAY)
 
     expect(cookieChange).toBeUndefined()
+  })
+
+  it('should not re-notify observers if the cookie has not changed since last notification when cookieStore is not supported', () => {
+    Object.defineProperty(window, 'cookieStore', { get: () => undefined, configurable: true })
+    const observable = createCookieObservable(mockConfiguration(), COOKIE_NAME)
+
+    const cookieChanges: Array<string | undefined> = []
+    subscription = observable.subscribe((change) => cookieChanges.push(change))
+
+    setCookie(COOKIE_NAME, 'foo', COOKIE_DURATION)
+    clock.tick(WATCH_COOKIE_INTERVAL_DELAY) // detects 'foo'
+    clock.tick(WATCH_COOKIE_INTERVAL_DELAY) // no change since last notification
+
+    expect(cookieChanges).toEqual(['foo'])
+  })
+
+  it('should notify observers on consecutive cookie changes when cookieStore is not supported', () => {
+    Object.defineProperty(window, 'cookieStore', { get: () => undefined, configurable: true })
+    const observable = createCookieObservable(mockConfiguration(), COOKIE_NAME)
+
+    const cookieChanges: Array<string | undefined> = []
+    subscription = observable.subscribe((change) => cookieChanges.push(change))
+
+    setCookie(COOKIE_NAME, 'foo', COOKIE_DURATION)
+    clock.tick(WATCH_COOKIE_INTERVAL_DELAY)
+
+    setCookie(COOKIE_NAME, 'bar', COOKIE_DURATION)
+    clock.tick(WATCH_COOKIE_INTERVAL_DELAY)
+
+    expect(cookieChanges).toEqual(['foo', 'bar'])
   })
 })

@@ -10,8 +10,8 @@ export type SessionStoreStrategyType =
   | { type: typeof SessionPersistence.MEMORY }
 
 export interface SessionStoreStrategy {
-  isLockEnabled: boolean
-  persistSession: (session: SessionState) => void
-  retrieveSession: () => SessionState
-  expireSession: (previousSessionState: SessionState) => void
+  persistSession: (session: SessionState) => Promise<void>
+  retrieveSession: () => Promise<SessionState>
+  expireSession: (previousSessionState: SessionState) => Promise<void>
+  onExternalChange?: (callback: () => void) => () => void
 }

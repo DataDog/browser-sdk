@@ -30,46 +30,46 @@ describe('session in local storage strategy', () => {
     expect(available).toBeUndefined()
   })
 
-  it('should persist a session in local storage', () => {
+  it('should persist a session in local storage', async () => {
     const localStorageStrategy = initLocalStorageStrategy(DEFAULT_INIT_CONFIGURATION)
-    localStorageStrategy.persistSession(sessionState)
-    const session = localStorageStrategy.retrieveSession()
+    await localStorageStrategy.persistSession(sessionState)
+    const session = await localStorageStrategy.retrieveSession()
     expect(session).toEqual({ ...sessionState })
     expect(getSessionStateFromLocalStorage(SESSION_STORE_KEY)).toEqual(sessionState)
   })
 
-  it('should set `isExpired=1` to the local storage item holding the session', () => {
+  it('should set `isExpired=1` to the local storage item holding the session', async () => {
     const localStorageStrategy = initLocalStorageStrategy(DEFAULT_INIT_CONFIGURATION)
-    localStorageStrategy.persistSession(sessionState)
-    localStorageStrategy.expireSession(sessionState)
-    const session = localStorageStrategy?.retrieveSession()
+    await localStorageStrategy.persistSession(sessionState)
+    await localStorageStrategy.expireSession(sessionState)
+    const session = await localStorageStrategy.retrieveSession()
     expect(session).toEqual({ isExpired: '1' })
     expect(getSessionStateFromLocalStorage(SESSION_STORE_KEY)).toEqual({
       isExpired: '1',
     })
   })
 
-  it('should not generate an anonymousId if not present', () => {
+  it('should not generate an anonymousId if not present', async () => {
     const localStorageStrategy = initLocalStorageStrategy(DEFAULT_INIT_CONFIGURATION)
-    localStorageStrategy.persistSession(sessionState)
-    const session = localStorageStrategy.retrieveSession()
+    await localStorageStrategy.persistSession(sessionState)
+    const session = await localStorageStrategy.retrieveSession()
     expect(session).toEqual({ id: '123', created: '0' })
     expect(getSessionStateFromLocalStorage(SESSION_STORE_KEY)).toEqual({ id: '123', created: '0' })
   })
 
-  it('should return an empty object if session string is invalid', () => {
+  it('should return an empty object if session string is invalid', async () => {
     const localStorageStrategy = initLocalStorageStrategy(DEFAULT_INIT_CONFIGURATION)
     window.localStorage.setItem(SESSION_STORE_KEY, '{test:42}')
-    const session = localStorageStrategy.retrieveSession()
+    const session = await localStorageStrategy.retrieveSession()
     expect(session).toEqual({})
   })
 
-  it('should not interfere with other keys present in local storage', () => {
+  it('should not interfere with other keys present in local storage', async () => {
     window.localStorage.setItem('test', 'hello')
     const localStorageStrategy = initLocalStorageStrategy(DEFAULT_INIT_CONFIGURATION)
-    localStorageStrategy.persistSession(sessionState)
-    localStorageStrategy.retrieveSession()
-    localStorageStrategy.expireSession(sessionState)
+    await localStorageStrategy.persistSession(sessionState)
+    await localStorageStrategy.retrieveSession()
+    await localStorageStrategy.expireSession(sessionState)
     expect(window.localStorage.getItem('test')).toEqual('hello')
   })
 })

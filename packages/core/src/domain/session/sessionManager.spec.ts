@@ -6,6 +6,7 @@ import {
   LOW_HASH_UUID,
   mockClock,
   registerCleanupTask,
+  replaceMockable,
   restorePageVisibility,
   setPageVisibility,
 } from '../../../test'
@@ -17,7 +18,7 @@ import { ONE_HOUR, ONE_SECOND, relativeNow } from '../../tools/utils/timeUtils'
 import type { Configuration } from '../configuration'
 import type { TrackingConsentState } from '../trackingConsent'
 import { TrackingConsent, createTrackingConsentState } from '../trackingConsent'
-import { isChromium } from '../../tools/utils/browserDetection'
+import { withNativeSessionLock } from './sessionLock'
 import type { SessionManager } from './sessionManager'
 import {
   startSessionManager,
@@ -29,7 +30,37 @@ import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY, SessionPersistence } 
 import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 import { STORAGE_POLL_DELAY } from './sessionStore'
-import { createLock, LOCK_RETRY_DELAY } from './sessionStoreOperations'
+
+let lockQueue: Promise<void>
+
+function mockLock() {
+  lockQueue = Promise.resolve()
+  replaceMockable(withNativeSessionLock, (fn: () => void | Promise<void>) => {
+    lockQueue = lockQueue.then(fn, fn)
+  })
+}
+
+async function flushLock() {
+  await lockQueue
+}
+
+// Force the document.cookie fallback path in tests.
+// This ensures that onExternalChange uses polling (triggered by clock.tick) rather than
+// CookieStore change events, and that all cookie operations are synchronous under the hood.
+let originalCookieStoreDescriptor: PropertyDescriptor | undefined
+
+beforeEach(() => {
+  originalCookieStoreDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'cookieStore')
+  Object.defineProperty(globalThis, 'cookieStore', { value: undefined, configurable: true, writable: true })
+})
+
+afterEach(() => {
+  if (originalCookieStoreDescriptor) {
+    Object.defineProperty(globalThis, 'cookieStore', originalCookieStoreDescriptor)
+  } else {
+    delete (globalThis as any).cookieStore
+  }
+})
 
 describe('startSessionManager', () => {
   const DURATION = 123456
@@ -64,6 +95,7 @@ describe('startSessionManager', () => {
   }
 
   beforeEach(() => {
+    mockLock()
     clock = mockClock()
 
     registerCleanupTask(() => {
@@ -96,6 +128,7 @@ describe('startSessionManager', () => {
       const sessionManager = await startSessionManagerWithDefaults()
 
       window.dispatchEvent(createNewEvent(DOM_EVENT.RESUME))
+      await flushLock()
 
       expectSessionIdToBe(sessionManager, 'abcdef')
     })
@@ -104,11 +137,13 @@ describe('startSessionManager', () => {
       const sessionManager = await startSessionManagerWithDefaults()
 
       deleteSessionCookie()
+      await flushLock()
 
       expect(sessionManager.findSession()).toBeUndefined()
       expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
 
       window.dispatchEvent(createNewEvent(DOM_EVENT.RESUME))
+      await flushLock()
 
       expectSessionToBeExpired(sessionManager)
     })
@@ -137,12 +172,14 @@ describe('startSessionManager', () => {
       sessionManager.renewObservable.subscribe(renewSessionSpy)
 
       expireSessionCookie()
+      await flushLock()
 
       expect(renewSessionSpy).not.toHaveBeenCalled()
 
       expectSessionToBeExpired(sessionManager)
 
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+      await flushLock()
 
       expect(renewSessionSpy).toHaveBeenCalled()
       expectSessionIdToBeDefined(sessionManager)
@@ -154,8 +191,10 @@ describe('startSessionManager', () => {
       sessionManager.renewObservable.subscribe(renewSessionSpy)
 
       expireSessionCookie()
+      await flushLock()
 
       clock.tick(VISIBILITY_CHECK_DELAY)
+      await flushLock()
 
       expect(renewSessionSpy).not.toHaveBeenCalled()
       expectSessionToBeExpired(sessionManager)
@@ -167,6 +206,7 @@ describe('startSessionManager', () => {
       sessionManager.renewObservable.subscribe(renewSessionSpy)
 
       deleteSessionCookie()
+      await flushLock()
 
       expect(renewSessionSpy).not.toHaveBeenCalled()
 
@@ -174,6 +214,7 @@ describe('startSessionManager', () => {
       expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
 
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+      await flushLock()
 
       expect(renewSessionSpy).not.toHaveBeenCalled()
       expect(sessionManager.findSession()).toBeUndefined()
@@ -211,6 +252,7 @@ describe('startSessionManager', () => {
       secondSessionManager.renewObservable.subscribe(renewSessionBSpy)
 
       expireSessionCookie()
+      await flushLock()
 
       expect(expireSessionASpy).toHaveBeenCalled()
       expect(expireSessionBSpy).toHaveBeenCalled()
@@ -218,6 +260,7 @@ describe('startSessionManager', () => {
       expect(renewSessionBSpy).not.toHaveBeenCalled()
 
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+      await flushLock()
 
       expect(renewSessionASpy).toHaveBeenCalled()
       expect(renewSessionBSpy).toHaveBeenCalled()
@@ -234,6 +277,7 @@ describe('startSessionManager', () => {
       expect(getCookie(SESSION_STORE_KEY)).toBeDefined()
 
       clock.tick(SESSION_TIME_OUT_DELAY)
+      await flushLock()
       expectSessionToBeExpired(sessionManager)
       expect(expireSessionSpy).toHaveBeenCalled()
     })
@@ -277,6 +321,7 @@ describe('startSessionManager', () => {
       expectSessionIdToBeDefined(sessionManager)
 
       clock.tick(SESSION_EXPIRATION_DELAY)
+      await flushLock()
       expectSessionToBeExpired(sessionManager)
       expect(expireSessionSpy).toHaveBeenCalled()
     })
@@ -290,12 +335,15 @@ describe('startSessionManager', () => {
 
       clock.tick(SESSION_EXPIRATION_DELAY - 10)
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+      await flushLock()
 
       clock.tick(10)
+      await flushLock()
       expectSessionIdToBeDefined(sessionManager)
       expect(expireSessionSpy).not.toHaveBeenCalled()
 
       clock.tick(SESSION_EXPIRATION_DELAY)
+      await flushLock()
       expectSessionToBeExpired(sessionManager)
       expect(expireSessionSpy).toHaveBeenCalled()
     })
@@ -308,15 +356,18 @@ describe('startSessionManager', () => {
       sessionManager.expireObservable.subscribe(expireSessionSpy)
 
       clock.tick(3 * VISIBILITY_CHECK_DELAY)
+      await flushLock()
       setPageVisibility('hidden')
       expectSessionIdToBeDefined(sessionManager)
       expect(expireSessionSpy).not.toHaveBeenCalled()
 
       clock.tick(SESSION_EXPIRATION_DELAY - 10)
+      await flushLock()
       expectSessionIdToBeDefined(sessionManager)
       expect(expireSessionSpy).not.toHaveBeenCalled()
 
       clock.tick(10)
+      await flushLock()
       expectSessionToBeExpired(sessionManager)
       expect(expireSessionSpy).toHaveBeenCalled()
     })
@@ -329,6 +380,7 @@ describe('startSessionManager', () => {
       sessionManager.expireObservable.subscribe(expireSessionSpy)
 
       sessionManager.expire()
+      await flushLock()
 
       expectSessionToBeExpired(sessionManager)
       expect(expireSessionSpy).toHaveBeenCalled()
@@ -340,7 +392,9 @@ describe('startSessionManager', () => {
       sessionManager.expireObservable.subscribe(expireSessionSpy)
 
       sessionManager.expire()
+      await flushLock()
       sessionManager.expire()
+      await flushLock()
 
       expectSessionToBeExpired(sessionManager)
       expect(expireSessionSpy).toHaveBeenCalledTimes(1)
@@ -352,7 +406,9 @@ describe('startSessionManager', () => {
       sessionManager.expireObservable.subscribe(expireSessionSpy)
 
       clock.tick(SESSION_EXPIRATION_DELAY)
+      await flushLock()
       sessionManager.expire()
+      await flushLock()
 
       expectSessionToBeExpired(sessionManager)
       expect(expireSessionSpy).toHaveBeenCalledTimes(1)
@@ -361,10 +417,13 @@ describe('startSessionManager', () => {
     it('renew the session on user activity', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
       clock.tick(STORAGE_POLL_DELAY)
+      await flushLock()
 
       sessionManager.expire()
+      await flushLock()
 
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+      await flushLock()
 
       expectSessionIdToBeDefined(sessionManager)
     })
@@ -374,6 +433,7 @@ describe('startSessionManager', () => {
     it('should return undefined when there is no current session and no startTime', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
       expireSessionCookie()
+      await flushLock()
 
       expect(sessionManager.findSession()).toBeUndefined()
     })
@@ -389,15 +449,20 @@ describe('startSessionManager', () => {
 
       // 0s to 10s: first session
       clock.tick(10 * ONE_SECOND - STORAGE_POLL_DELAY)
-      const firstSessionId = sessionManager.findSession()!.id
       expireSessionCookie()
+      await flushLock()
 
       // 10s to 20s: no session
       clock.tick(10 * ONE_SECOND)
+      await flushLock()
+
+      const firstSessionId = sessionManager.findSession(clock.relative(5 * ONE_SECOND))!.id
 
       // 20s to end: second session
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+      await flushLock()
       clock.tick(10 * ONE_SECOND)
+      await flushLock()
       const secondSessionId = sessionManager.findSession()!.id
 
       expect(sessionManager.findSession(clock.relative(5 * ONE_SECOND))!.id).toBe(firstSessionId)
@@ -413,9 +478,11 @@ describe('startSessionManager', () => {
         clock.tick(10 * ONE_SECOND - STORAGE_POLL_DELAY)
 
         expireSessionCookie()
+        await flushLock()
 
         // 10s to 20s: no session
         clock.tick(10 * ONE_SECOND)
+        await flushLock()
 
         expect(sessionManager.findSession(clock.relative(15 * ONE_SECOND), { returnInactive: true })).toBeDefined()
 
@@ -430,8 +497,11 @@ describe('startSessionManager', () => {
 
       // new session
       expireSessionCookie()
+      await flushLock()
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+      await flushLock()
       clock.tick(STORAGE_POLL_DELAY)
+      await flushLock()
 
       expect(currentSession).toBeDefined()
     })
@@ -443,7 +513,9 @@ describe('startSessionManager', () => {
 
       // new session
       expireSessionCookie()
+      await flushLock()
       clock.tick(STORAGE_POLL_DELAY)
+      await flushLock()
 
       expect(currentSession).toBeDefined()
     })
@@ -455,6 +527,7 @@ describe('startSessionManager', () => {
       const sessionManager = await startSessionManagerWithDefaults({ trackingConsentState })
 
       trackingConsentState.update(TrackingConsent.NOT_GRANTED)
+      await flushLock()
 
       expectSessionToBeExpired(sessionManager)
       expect(getSessionState(SESSION_STORE_KEY).isExpired).toBe('1')
@@ -465,32 +538,12 @@ describe('startSessionManager', () => {
       const sessionManager = await startSessionManagerWithDefaults({ trackingConsentState })
 
       trackingConsentState.update(TrackingConsent.NOT_GRANTED)
+      await flushLock()
 
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+      await flushLock()
 
       expectSessionToBeExpired(sessionManager)
-    })
-
-    it('expires the session when tracking consent is withdrawn during async initialization', () => {
-      if (!isChromium()) {
-        pending('the lock is only enabled in Chromium')
-      }
-
-      // Set up a locked cookie to delay initialization
-      setCookie(SESSION_STORE_KEY, `lock=${createLock()}`, DURATION)
-
-      const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
-      void startSessionManagerWithDefaults({ trackingConsentState })
-
-      // Consent is revoked while waiting for lock
-      trackingConsentState.update(TrackingConsent.NOT_GRANTED)
-
-      // Release the lock
-      setCookie(SESSION_STORE_KEY, 'id=abc123&first=tracked', DURATION)
-      clock.tick(LOCK_RETRY_DELAY)
-
-      // Session should be expired due to consent revocation
-      expect(getSessionState(SESSION_STORE_KEY).isExpired).toBe('1')
     })
 
     it('renews the session when tracking consent is granted', async () => {
@@ -499,12 +552,15 @@ describe('startSessionManager', () => {
       const initialSessionId = sessionManager.findSession()!.id
 
       trackingConsentState.update(TrackingConsent.NOT_GRANTED)
+      await flushLock()
 
       expectSessionToBeExpired(sessionManager)
 
       trackingConsentState.update(TrackingConsent.GRANTED)
+      await flushLock()
 
       clock.tick(STORAGE_POLL_DELAY)
+      await flushLock()
 
       expectSessionIdToBeDefined(sessionManager)
       expect(sessionManager.findSession()!.id).not.toBe(initialSessionId)
@@ -516,6 +572,7 @@ describe('startSessionManager', () => {
       const session = sessionManager.findSession()!
 
       trackingConsentState.update(TrackingConsent.NOT_GRANTED)
+      await flushLock()
 
       expect(session.anonymousId).toBeUndefined()
     })
@@ -528,6 +585,7 @@ describe('startSessionManager', () => {
       sessionManager.sessionStateUpdateObservable.subscribe(sessionStateUpdateSpy)
 
       sessionManager.updateSessionState({ extra: 'extra' })
+      await flushLock()
 
       expectSessionIdToBeDefined(sessionManager)
       expect(sessionStateUpdateSpy).toHaveBeenCalledTimes(1)
@@ -543,6 +601,7 @@ describe('startSessionManager', () => {
       expect(sessionManager.findSession()!.isReplayForced).toBe(false)
 
       sessionManager.updateSessionState({ forcedReplay: '1' })
+      await flushLock()
 
       expect(sessionManager.findSession()!.isReplayForced).toBe(true)
     })
@@ -569,9 +628,11 @@ describe('startSessionManager', () => {
       // 0s to 10s: first session
       clock.tick(10 * ONE_SECOND - STORAGE_POLL_DELAY)
       expireSessionCookie()
+      await flushLock()
 
       // 10s to 20s: no session
       clock.tick(10 * ONE_SECOND)
+      await flushLock()
 
       expect(sessionManager.findTrackedSession(clock.relative(5 * ONE_SECOND))).toBeDefined()
       expect(sessionManager.findTrackedSession(clock.relative(15 * ONE_SECOND))).toBeUndefined()
@@ -583,6 +644,7 @@ describe('startSessionManager', () => {
       expect(sessionManager.findTrackedSession()!.isReplayForced).toBe(false)
 
       sessionManager.updateSessionState({ forcedReplay: '1' })
+      await flushLock()
 
       expect(sessionManager.findTrackedSession()!.isReplayForced).toBe(true)
     })
@@ -591,6 +653,7 @@ describe('startSessionManager', () => {
       const sessionManager = await startSessionManagerWithDefaults()
       expireCookie()
       clock.tick(STORAGE_POLL_DELAY)
+      await flushLock()
       expect(sessionManager.findTrackedSession(relativeNow(), { returnInactive: true })).toBeDefined()
     })
 
@@ -616,50 +679,10 @@ describe('startSessionManager', () => {
   })
 
   describe('delayed session manager initialization', () => {
-    it('starts the session manager synchronously if the session cookie is not locked', () => {
-      void startSessionManagerWithDefaults()
+    it('starts the session manager synchronously if the session cookie is not locked', async () => {
+      await startSessionManagerWithDefaults()
       expect(getSessionState(SESSION_STORE_KEY).id).toBeDefined()
       // Tracking type is no longer stored in cookies - computed on demand
-    })
-
-    it('delays the session manager initialization if the session cookie is locked', () => {
-      if (!isChromium()) {
-        pending('the lock is only enabled in Chromium')
-      }
-      setCookie(SESSION_STORE_KEY, `lock=${createLock()}`, DURATION)
-      void startSessionManagerWithDefaults()
-      expect(getSessionState(SESSION_STORE_KEY).id).toBeUndefined()
-
-      // Remove the lock
-      setCookie(SESSION_STORE_KEY, 'id=abcde', DURATION)
-      clock.tick(LOCK_RETRY_DELAY)
-
-      expect(getSessionState(SESSION_STORE_KEY).id).toBe('abcde')
-      // Tracking type is no longer stored in cookies - computed on demand
-    })
-
-    it('should call onReady callback with session manager after lock is released', () => {
-      if (!isChromium()) {
-        pending('the lock is only enabled in Chromium')
-      }
-
-      setCookie(SESSION_STORE_KEY, `lock=${createLock()}`, DURATION)
-      const onReadySpy = jasmine.createSpy<(sessionManager: SessionManager) => void>('onReady')
-
-      startSessionManager(
-        { sessionStoreStrategyType: STORE_TYPE } as Configuration,
-        createTrackingConsentState(TrackingConsent.GRANTED),
-        onReadySpy
-      )
-
-      expect(onReadySpy).not.toHaveBeenCalled()
-
-      // Remove lock
-      setCookie(SESSION_STORE_KEY, 'id=abc123', DURATION)
-      clock.tick(LOCK_RETRY_DELAY)
-
-      expect(onReadySpy).toHaveBeenCalledTimes(1)
-      expect(onReadySpy.calls.mostRecent().args[0].findSession).toBeDefined()
     })
   })
 

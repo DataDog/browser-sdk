@@ -1,6 +1,5 @@
-import { clearInterval, setInterval } from '../../tools/timer'
 import { Observable } from '../../tools/observable'
-import { ONE_SECOND, dateNow } from '../../tools/utils/timeUtils'
+import { dateNow, ONE_SECOND } from '../../tools/utils/timeUtils'
 import { throttle } from '../../tools/utils/functionUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import type { InitConfiguration, Configuration } from '../configuration'
@@ -10,13 +9,14 @@ import { selectCookieStrategy, initCookieStrategy } from './storeStrategies/sess
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
 import type { SessionState } from './sessionState'
 import {
+  expandSessionState,
   getExpiredSessionState,
   isSessionInExpiredState,
   isSessionInNotStartedState,
   isSessionStarted,
 } from './sessionState'
 import { initLocalStorageStrategy, selectLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
-import { processSessionStoreOperations } from './sessionStoreOperations'
+import { withSessionLock } from './sessionLock'
 import { SessionPersistence } from './sessionConstants'
 import { initMemorySessionStoreStrategy, selectMemorySessionStoreStrategy } from './storeStrategies/sessionInMemory'
 
@@ -131,32 +131,31 @@ export function startSessionStore(
   const expireObservable = new Observable<void>()
   const sessionStateUpdateObservable = new Observable<{ previousState: SessionState; newState: SessionState }>()
 
-  const watchSessionTimeoutId = setInterval(watchSession, STORAGE_POLL_DELAY)
+  let stopWatching: (() => void) | undefined
+  if (sessionStoreStrategy.onExternalChange) {
+    stopWatching = sessionStoreStrategy.onExternalChange(watchSession)
+  }
+
   let sessionCache: SessionState
 
   const { throttled: throttledExpandOrRenewSession, cancel: cancelExpandOrRenewSession } = throttle(
     (callback?: () => void) => {
-      processSessionStoreOperations(
-        {
-          process: (sessionState) => {
-            if (isSessionInNotStartedState(sessionState)) {
-              return
-            }
+      withSessionLock(async () => {
+        const sessionState = await sessionStoreStrategy.retrieveSession()
+        if (isSessionInNotStartedState(sessionState)) {
+          return
+        }
+        const synchronizedSession = synchronizeSession(sessionState)
+        expandOrRenewSessionState(synchronizedSession)
+        expandSessionState(synchronizedSession)
+        await sessionStoreStrategy.persistSession(synchronizedSession)
 
-            const synchronizedSession = synchronizeSession(sessionState)
-            expandOrRenewSessionState(synchronizedSession)
-            return synchronizedSession
-          },
-          after: (sessionState) => {
-            if (isSessionStarted(sessionState) && !hasSessionInCache()) {
-              renewSessionInCache(sessionState)
-            }
-            sessionCache = sessionState
-            callback?.()
-          },
-        },
-        sessionStoreStrategy
-      )
+        if (isSessionStarted(synchronizedSession) && !hasSessionInCache()) {
+          renewSessionInCache(synchronizedSession)
+        }
+        sessionCache = synchronizedSession
+        callback?.()
+      })
     },
     STORAGE_POLL_DELAY
   )
@@ -164,12 +163,19 @@ export function startSessionStore(
   startSession()
 
   function expandSession() {
-    processSessionStoreOperations(
-      {
-        process: (sessionState) => (hasSessionInCache() ? synchronizeSession(sessionState) : undefined),
-      },
-      sessionStoreStrategy
-    )
+    withSessionLock(async () => {
+      if (!hasSessionInCache()) {
+        return
+      }
+      const sessionState = await sessionStoreStrategy.retrieveSession()
+      const synced = synchronizeSession(sessionState)
+      if (isSessionInExpiredState(synced)) {
+        await sessionStoreStrategy.expireSession(synced)
+      } else {
+        expandSessionState(synced)
+        await sessionStoreStrategy.persistSession(synced)
+      }
+    })
   }
 
   /**
@@ -178,20 +184,16 @@ export function startSessionStore(
    * - if the session is not active, clear the session store and expire the session cache
    */
   function watchSession() {
-    const sessionState = sessionStoreStrategy.retrieveSession()
-
-    if (isSessionInExpiredState(sessionState)) {
-      processSessionStoreOperations(
-        {
-          process: (sessionState: SessionState) =>
-            isSessionInExpiredState(sessionState) ? getExpiredSessionState(sessionState, configuration) : undefined,
-          after: synchronizeSession,
-        },
-        sessionStoreStrategy
-      )
-    } else {
-      synchronizeSession(sessionState)
-    }
+    withSessionLock(async () => {
+      const sessionState = await sessionStoreStrategy.retrieveSession()
+      if (isSessionInExpiredState(sessionState)) {
+        const expired = getExpiredSessionState(sessionState, configuration)
+        await sessionStoreStrategy.expireSession(expired)
+        synchronizeSession(expired)
+      } else {
+        synchronizeSession(sessionState)
+      }
+    })
   }
 
   function synchronizeSession(sessionState: SessionState) {
@@ -210,21 +212,18 @@ export function startSessionStore(
   }
 
   function startSession(callback?: () => void) {
-    processSessionStoreOperations(
-      {
-        process: (sessionState) => {
-          if (isSessionInNotStartedState(sessionState)) {
-            sessionState.anonymousId = generateUUID()
-            return getExpiredSessionState(sessionState, configuration)
-          }
-        },
-        after: (sessionState) => {
-          sessionCache = sessionState
-          callback?.()
-        },
-      },
-      sessionStoreStrategy
-    )
+    withSessionLock(async () => {
+      const sessionState = await sessionStoreStrategy.retrieveSession()
+      if (isSessionInNotStartedState(sessionState)) {
+        sessionState.anonymousId = generateUUID()
+        const expired = getExpiredSessionState(sessionState, configuration)
+        await sessionStoreStrategy.expireSession(expired)
+        sessionCache = expired
+      } else {
+        sessionCache = sessionState
+      }
+      callback?.()
+    })
   }
 
   function expandOrRenewSessionState(sessionState: SessionState) {
@@ -263,13 +262,13 @@ export function startSessionStore(
   }
 
   function updateSessionState(partialSessionState: Partial<SessionState>) {
-    processSessionStoreOperations(
-      {
-        process: (sessionState) => ({ ...sessionState, ...partialSessionState }),
-        after: synchronizeSession,
-      },
-      sessionStoreStrategy
-    )
+    withSessionLock(async () => {
+      const sessionState = await sessionStoreStrategy.retrieveSession()
+      const updated = { ...sessionState, ...partialSessionState }
+      expandSessionState(updated)
+      await sessionStoreStrategy.persistSession(updated)
+      synchronizeSession(updated)
+    })
   }
 
   return {
@@ -282,14 +281,16 @@ export function startSessionStore(
     restartSession: startSession,
     expire: (hasConsent?: boolean) => {
       cancelExpandOrRenewSession()
-      if (hasConsent === false && sessionCache) {
-        delete sessionCache.anonymousId
-      }
-      sessionStoreStrategy.expireSession(sessionCache)
-      synchronizeSession(getExpiredSessionState(sessionCache, configuration))
+      withSessionLock(async () => {
+        if (hasConsent === false && sessionCache) {
+          delete sessionCache.anonymousId
+        }
+        await sessionStoreStrategy.expireSession(sessionCache)
+        synchronizeSession(getExpiredSessionState(sessionCache, configuration))
+      })
     },
     stop: () => {
-      clearInterval(watchSessionTimeoutId)
+      stopWatching?.()
     },
     updateSessionState,
   }

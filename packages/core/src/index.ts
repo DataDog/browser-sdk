@@ -102,6 +102,8 @@ export {
   resetInitCookies,
 } from './browser/cookie'
 export type { CookieStore, WeakRef, WeakRefConstructor } from './browser/browser.types'
+export type { CookieStoreWindow, CookieObservable } from './browser/cookieObservable'
+export { createCookieObservable, WATCH_COOKIE_INTERVAL_DELAY } from './browser/cookieObservable'
 export type { XhrCompleteContext, XhrStartContext } from './browser/xhrObservable'
 export { initXhrObservable } from './browser/xhrObservable'
 export type { FetchResolveContext, FetchStartContext, FetchContext } from './browser/fetchObservable'

@@ -1,7 +1,8 @@
-import { isEmptyObject } from '../../../tools/utils/objectUtils'
-import { isChromium } from '../../../tools/utils/browserDetection'
 import type { CookieOptions } from '../../../browser/cookie'
-import { getCurrentSite, areCookiesAuthorized, getCookies, setCookie } from '../../../browser/cookie'
+import { getCurrentSite, areCookiesAuthorized, getCookies } from '../../../browser/cookie'
+import type { CookieAccessor } from '../../../browser/cookieAccess'
+import { createCookieAccessor } from '../../../browser/cookieAccess'
+import { createCookieObservable } from '../../../browser/cookieObservable'
 import type { InitConfiguration, Configuration } from '../../configuration'
 import {
   SESSION_COOKIE_EXPIRATION_DELAY,
@@ -10,7 +11,7 @@ import {
   SessionPersistence,
 } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
-import { toSessionString, toSessionState, getExpiredSessionState } from '../sessionState'
+import { toSessionString, toSessionState, getExpiredSessionState, isSessionInNotStartedState } from '../sessionState'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
 
@@ -24,29 +25,31 @@ export function selectCookieStrategy(initConfiguration: InitConfiguration): Sess
 }
 
 export function initCookieStrategy(configuration: Configuration, cookieOptions: CookieOptions): SessionStoreStrategy {
-  const cookieStore = {
-    /**
-     * Lock strategy allows mitigating issues due to concurrent access to cookie.
-     * This issue concerns only chromium browsers and enabling this on firefox increases cookie write failures.
-     */
-    isLockEnabled: isChromium(),
+  const cookieAccessor = createCookieAccessor(cookieOptions)
+
+  return {
     persistSession: (sessionState: SessionState) =>
-      storeSessionCookie(cookieOptions, configuration, sessionState, SESSION_EXPIRATION_DELAY),
-    retrieveSession: () => retrieveSessionCookie(cookieOptions),
+      storeSessionCookie(cookieAccessor, cookieOptions, configuration, sessionState, SESSION_EXPIRATION_DELAY),
+    retrieveSession: () => retrieveSessionCookie(cookieAccessor, cookieOptions),
     expireSession: (sessionState: SessionState) =>
       storeSessionCookie(
+        cookieAccessor,
         cookieOptions,
         configuration,
         getExpiredSessionState(sessionState, configuration),
         SESSION_TIME_OUT_DELAY
       ),
+    onExternalChange: (callback) => {
+      const observable = createCookieObservable(configuration, SESSION_STORE_KEY)
+      const { unsubscribe } = observable.subscribe(callback)
+      return unsubscribe
+    },
   }
-
-  return cookieStore
 }
 
-function storeSessionCookie(
-  options: CookieOptions,
+async function storeSessionCookie(
+  cookieAccessor: CookieAccessor,
+  cookieOptions: CookieOptions,
   configuration: Configuration,
   sessionState: SessionState,
   defaultTimeout: number
@@ -55,14 +58,14 @@ function storeSessionCookie(
     ...sessionState,
     // deleting a cookie is writing a new cookie with an empty value
     // we don't want to store the cookie options in this case otherwise the cookie will not be deleted
-    ...(!isEmptyObject(sessionState) ? { c: encodeCookieOptions(options) } : {}),
+    ...(!isSessionInNotStartedState(sessionState) ? { c: encodeCookieOptions(cookieOptions) } : {}),
   })
 
-  setCookie(
+  await cookieAccessor.set(
     SESSION_STORE_KEY,
     sessionStateString,
     configuration.trackAnonymousUser ? SESSION_COOKIE_EXPIRATION_DELAY : defaultTimeout,
-    options
+    cookieOptions
   )
 }
 
@@ -70,8 +73,11 @@ function storeSessionCookie(
  * Retrieve the session state from the cookie that was set with the same cookie options
  * If there is no match, return the first cookie, because that's how `getCookie()` works
  */
-export function retrieveSessionCookie(cookieOptions: CookieOptions): SessionState {
-  const cookies = getCookies(SESSION_STORE_KEY)
+export async function retrieveSessionCookie(
+  cookieAccessor: CookieAccessor,
+  cookieOptions: CookieOptions
+): Promise<SessionState> {
+  const cookies = await cookieAccessor.getAll(SESSION_STORE_KEY)
   const opts = encodeCookieOptions(cookieOptions)
 
   let sessionState: SessionState | undefined
@@ -86,6 +92,28 @@ export function retrieveSessionCookie(cookieOptions: CookieOptions): SessionStat
   }
 
   // remove the cookie options from the session state as this is not part of the session state
+  delete sessionState?.c
+
+  return sessionState ?? {}
+}
+
+/**
+ * Retrieve the session state synchronously using document.cookie (for diagnostics only)
+ */
+export function retrieveSessionCookieSync(cookieOptions: CookieOptions): SessionState {
+  const cookies = getCookies(SESSION_STORE_KEY)
+  const opts = encodeCookieOptions(cookieOptions)
+
+  let sessionState: SessionState | undefined
+
+  for (const cookie of cookies.reverse()) {
+    sessionState = toSessionState(cookie)
+
+    if (sessionState.c === opts) {
+      break
+    }
+  }
+
   delete sessionState?.c
 
   return sessionState ?? {}

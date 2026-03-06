@@ -1,12 +1,12 @@
 import type { Clock } from '../../../test'
-import { mockClock, createFakeSessionStoreStrategy } from '../../../test'
-import type { InitConfiguration, Configuration } from '../configuration'
+import { mockClock, createFakeSessionStoreStrategy, replaceMockable } from '../../../test'
 import { display } from '../../tools/display'
+import type { InitConfiguration, Configuration } from '../configuration'
+import { withNativeSessionLock } from './sessionLock'
 import type { SessionStore } from './sessionStore'
 import { STORAGE_POLL_DELAY, startSessionStore, selectSessionStoreStrategyType } from './sessionStore'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY, SessionPersistence } from './sessionConstants'
 import type { SessionState } from './sessionState'
-import { LOCK_RETRY_DELAY, createLock } from './sessionStoreOperations'
 
 const FIRST_ID = 'first'
 const SECOND_ID = 'second'
@@ -23,23 +23,37 @@ function createSessionState(id?: string, expire?: number): SessionState {
 }
 
 let sessionStoreStrategy: ReturnType<typeof createFakeSessionStoreStrategy>
+let lockQueue: Promise<void>
 
-function getSessionStoreState(): SessionState {
+function mockLock() {
+  lockQueue = Promise.resolve()
+  replaceMockable(withNativeSessionLock, (fn: () => void | Promise<void>) => {
+    lockQueue = lockQueue.then(fn, fn)
+  })
+}
+
+async function flushLock() {
+  await lockQueue
+}
+
+function getSessionStoreState(): Promise<SessionState> {
   return sessionStoreStrategy.retrieveSession()
 }
 
-function expectSessionToBeInStore(id?: string) {
-  expect(getSessionStoreState().id).toEqual(id ? id : jasmine.any(String))
-  expect(getSessionStoreState().isExpired).toBeUndefined()
+async function expectSessionToBeInStore(id?: string) {
+  const state = await getSessionStoreState()
+  expect(state.id).toEqual(id ? id : jasmine.any(String))
+  expect(state.isExpired).toBeUndefined()
 }
 
-function expectSessionToBeExpiredInStore() {
-  expect(getSessionStoreState().isExpired).toEqual(IS_EXPIRED)
-  expect(getSessionStoreState().id).toBeUndefined()
+async function expectSessionToBeExpiredInStore() {
+  const state = await getSessionStoreState()
+  expect(state.isExpired).toEqual(IS_EXPIRED)
+  expect(state.id).toBeUndefined()
 }
 
-function getStoreExpiration() {
-  return getSessionStoreState().expire
+async function getStoreExpiration() {
+  return (await getSessionStoreState()).expire
 }
 
 function resetSessionInStore() {
@@ -47,8 +61,8 @@ function resetSessionInStore() {
   sessionStoreStrategy.expireSession.calls.reset()
 }
 
-function setSessionInStore(sessionState: SessionState) {
-  sessionStoreStrategy.persistSession(sessionState)
+async function setSessionInStore(sessionState: SessionState) {
+  await sessionStoreStrategy.persistSession(sessionState)
   sessionStoreStrategy.persistSession.calls.reset()
 }
 
@@ -251,22 +265,24 @@ describe('session store', () => {
     let sessionStoreManager: SessionStore
     let clock: Clock
 
-    function setupSessionStore(initialState: SessionState = {}) {
+    async function setupSessionStore(initialState: SessionState = {}) {
       const sessionStoreStrategyType = selectSessionStoreStrategyType(DEFAULT_INIT_CONFIGURATION)
       if (sessionStoreStrategyType?.type !== SessionPersistence.COOKIE) {
         fail('Unable to initialize cookie storage')
         return
       }
 
-      sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: true, initialSession: initialState })
+      sessionStoreStrategy = createFakeSessionStoreStrategy({ initialSession: initialState })
 
       sessionStoreManager = startSessionStore(sessionStoreStrategyType, DEFAULT_CONFIGURATION, sessionStoreStrategy)
+      await flushLock()
       sessionStoreStrategy.persistSession.calls.reset()
       sessionStoreManager.expireObservable.subscribe(expireSpy)
       sessionStoreManager.renewObservable.subscribe(renewSpy)
     }
 
     beforeEach(() => {
+      mockLock()
       expireSpy = jasmine.createSpy('expire session')
       renewSpy = jasmine.createSpy('renew session')
       clock = mockClock()
@@ -278,299 +294,287 @@ describe('session store', () => {
     })
 
     describe('initialize session', () => {
-      it('when session not in store, should initialize a new session', () => {
-        setupSessionStore()
+      it('when session not in store, should initialize a new session', async () => {
+        await setupSessionStore()
         expect(sessionStoreManager.getSession().isExpired).toEqual(IS_EXPIRED)
         expect(sessionStoreManager.getSession().anonymousId).toEqual(jasmine.any(String))
       })
 
-      it('when session in store, should do nothing', () => {
-        setupSessionStore(createSessionState(FIRST_ID))
+      it('when session in store, should do nothing', async () => {
+        await setupSessionStore(createSessionState(FIRST_ID))
 
         expect(sessionStoreManager.getSession().id).toBe(FIRST_ID)
         expect(sessionStoreManager.getSession().isExpired).toBeUndefined()
       })
 
-      it('should generate an anonymousId if not present', () => {
-        setupSessionStore()
+      it('should generate an anonymousId if not present', async () => {
+        await setupSessionStore()
         expect(sessionStoreManager.getSession().anonymousId).toBeDefined()
       })
     })
 
     describe('expand or renew session', () => {
-      it('when session not in cache and session not in store, should create new session and trigger renew session', () => {
-        setupSessionStore()
+      it('when session not in cache and session not in store, should create new session and trigger renew session', async () => {
+        await setupSessionStore()
 
         sessionStoreManager.expandOrRenewSession()
+        await flushLock()
 
         expect(sessionStoreManager.getSession().id).toBeDefined()
-        expectSessionToBeInStore()
+        await expectSessionToBeInStore()
         expect(expireSpy).not.toHaveBeenCalled()
         expect(renewSpy).toHaveBeenCalledTimes(1)
       })
 
-      it('when session not in cache and session in store, should expand session and trigger renew session', () => {
-        setupSessionStore()
-        setSessionInStore(createSessionState(FIRST_ID))
+      it('when session not in cache and session in store, should expand session and trigger renew session', async () => {
+        await setupSessionStore()
+        await setSessionInStore(createSessionState(FIRST_ID))
 
         sessionStoreManager.expandOrRenewSession()
+        await flushLock()
 
         expect(sessionStoreManager.getSession().id).toBe(FIRST_ID)
-        expectSessionToBeInStore(FIRST_ID)
+        await expectSessionToBeInStore(FIRST_ID)
         expect(expireSpy).not.toHaveBeenCalled()
         expect(renewSpy).toHaveBeenCalledTimes(1)
       })
 
-      it('when session in cache and session not in store, should expire session, create a new one and trigger renew session', () => {
-        setupSessionStore(createSessionState(FIRST_ID))
+      it('when session in cache and session not in store, should expire session, create a new one and trigger renew session', async () => {
+        await setupSessionStore(createSessionState(FIRST_ID))
         resetSessionInStore()
 
         sessionStoreManager.expandOrRenewSession()
+        await flushLock()
 
         const sessionId = sessionStoreManager.getSession().id
         expect(sessionId).toBeDefined()
         expect(sessionId).not.toBe(FIRST_ID)
-        expectSessionToBeInStore(sessionId)
+        await expectSessionToBeInStore(sessionId)
         expect(expireSpy).toHaveBeenCalled()
         expect(renewSpy).toHaveBeenCalledTimes(1)
       })
 
-      it('when session in cache is same session than in store, should expand session', () => {
-        setupSessionStore(createSessionState(FIRST_ID))
+      it('when session in cache is same session than in store, should expand session', async () => {
+        await setupSessionStore(createSessionState(FIRST_ID))
 
         clock.tick(10)
         sessionStoreManager.expandOrRenewSession()
+        await flushLock()
 
         expect(sessionStoreManager.getSession().id).toBe(FIRST_ID)
-        expect(sessionStoreManager.getSession().expire).toBe(getStoreExpiration())
-        expectSessionToBeInStore(FIRST_ID)
+        expect(sessionStoreManager.getSession().expire).toBe(await getStoreExpiration())
+        await expectSessionToBeInStore(FIRST_ID)
         expect(expireSpy).not.toHaveBeenCalled()
         expect(renewSpy).not.toHaveBeenCalled()
       })
 
-      it('when session in cache is different session than in store, should expire session, expand store session and trigger renew', () => {
-        setupSessionStore(createSessionState(FIRST_ID))
-        setSessionInStore(createSessionState(SECOND_ID))
+      it('when session in cache is different session than in store, should expire session, expand store session and trigger renew', async () => {
+        await setupSessionStore(createSessionState(FIRST_ID))
+        await setSessionInStore(createSessionState(SECOND_ID))
 
         sessionStoreManager.expandOrRenewSession()
+        await flushLock()
 
         expect(sessionStoreManager.getSession().id).toBe(SECOND_ID)
-        expectSessionToBeInStore(SECOND_ID)
+        await expectSessionToBeInStore(SECOND_ID)
         expect(expireSpy).toHaveBeenCalled()
         expect(renewSpy).toHaveBeenCalledTimes(1)
       })
 
-      it('when throttled, expandOrRenewSession() should not renew the session if expire() is called right after', () => {
-        setupSessionStore(createSessionState(FIRST_ID))
+      it('when throttled, expandOrRenewSession() should not renew the session if expire() is called right after', async () => {
+        await setupSessionStore(createSessionState(FIRST_ID))
 
         // The first call is not throttled (leading execution)
         sessionStoreManager.expandOrRenewSession()
+        await flushLock()
 
         sessionStoreManager.expandOrRenewSession()
         sessionStoreManager.expire()
 
         clock.tick(STORAGE_POLL_DELAY)
+        await flushLock()
 
-        expectSessionToBeExpiredInStore()
+        await expectSessionToBeExpiredInStore()
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(renewSpy).not.toHaveBeenCalled()
       })
 
-      it('should execute callback after session expansion', () => {
-        setupSessionStore(createSessionState(FIRST_ID))
+      it('should execute callback after session expansion', async () => {
+        await setupSessionStore(createSessionState(FIRST_ID))
 
         const callbackSpy = jasmine.createSpy('callback')
         sessionStoreManager.expandOrRenewSession(callbackSpy)
-
-        expect(callbackSpy).toHaveBeenCalledTimes(1)
-      })
-
-      it('should execute callback after lock is released', () => {
-        const sessionStoreStrategyType = selectSessionStoreStrategyType(DEFAULT_INIT_CONFIGURATION)
-        if (sessionStoreStrategyType?.type !== SessionPersistence.COOKIE) {
-          fail('Unable to initialize cookie storage')
-          return
-        }
-
-        // Create a locked session state
-        const lockedSession: SessionState = {
-          ...createSessionState(FIRST_ID),
-          lock: createLock(),
-        }
-
-        sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: true, initialSession: lockedSession })
-
-        sessionStoreManager = startSessionStore(sessionStoreStrategyType, DEFAULT_CONFIGURATION, sessionStoreStrategy)
-
-        const callbackSpy = jasmine.createSpy('callback')
-        sessionStoreManager.expandOrRenewSession(callbackSpy)
-
-        expect(callbackSpy).not.toHaveBeenCalled()
-
-        // Remove the lock from the session
-        sessionStoreStrategy.planRetrieveSession(0, createSessionState(FIRST_ID))
-
-        clock.tick(LOCK_RETRY_DELAY)
+        await flushLock()
 
         expect(callbackSpy).toHaveBeenCalledTimes(1)
       })
     })
 
     describe('expand session', () => {
-      it('when session not in cache and session not in store, should do nothing', () => {
-        setupSessionStore()
+      it('when session not in cache and session not in store, should do nothing', async () => {
+        await setupSessionStore()
 
         sessionStoreManager.expandSession()
+        await flushLock()
 
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).not.toHaveBeenCalled()
       })
 
-      it('when session not in cache and session in store, should do nothing', () => {
-        setupSessionStore()
-        setSessionInStore(createSessionState(FIRST_ID))
+      it('when session not in cache and session in store, should do nothing', async () => {
+        await setupSessionStore()
+        await setSessionInStore(createSessionState(FIRST_ID))
 
         sessionStoreManager.expandSession()
+        await flushLock()
 
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).not.toHaveBeenCalled()
       })
 
-      it('when session in cache and session not in store, should expire session', () => {
-        setupSessionStore(createSessionState(FIRST_ID))
+      it('when session in cache and session not in store, should expire session', async () => {
+        await setupSessionStore(createSessionState(FIRST_ID))
         resetSessionInStore()
 
         sessionStoreManager.expandSession()
+        await flushLock()
 
-        expectSessionToBeExpiredInStore()
+        await expectSessionToBeExpiredInStore()
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).toHaveBeenCalled()
       })
 
-      it('when session in cache is same session than in store, should expand session', () => {
-        setupSessionStore(createSessionState(FIRST_ID))
+      it('when session in cache is same session than in store, should expand session', async () => {
+        await setupSessionStore(createSessionState(FIRST_ID))
 
         clock.tick(10)
         sessionStoreManager.expandSession()
+        await flushLock()
 
         expect(sessionStoreManager.getSession().id).toBe(FIRST_ID)
-        expect(sessionStoreManager.getSession().expire).toBe(getStoreExpiration())
+        expect(sessionStoreManager.getSession().expire).toBe(await getStoreExpiration())
         expect(expireSpy).not.toHaveBeenCalled()
       })
 
-      it('when session in cache is different session than in store, should expire session', () => {
-        setupSessionStore(createSessionState(FIRST_ID))
-        setSessionInStore(createSessionState(SECOND_ID))
+      it('when session in cache is different session than in store, should expire session', async () => {
+        await setupSessionStore(createSessionState(FIRST_ID))
+        await setSessionInStore(createSessionState(SECOND_ID))
 
         sessionStoreManager.expandSession()
+        await flushLock()
 
         expect(sessionStoreManager.getSession().id).toBeUndefined()
-        expectSessionToBeInStore(SECOND_ID)
+        await expectSessionToBeInStore(SECOND_ID)
         expect(expireSpy).toHaveBeenCalled()
       })
     })
 
-    describe('regular watch', () => {
-      it('when session not in cache and session not in store, should store the expired session', () => {
-        setupSessionStore()
+    describe('external change watch', () => {
+      it('when session not in cache and session not in store, should store the expired session', async () => {
+        await setupSessionStore()
+        sessionStoreStrategy.expireSession.calls.reset()
 
-        clock.tick(STORAGE_POLL_DELAY)
+        sessionStoreStrategy.notifyExternalChange()
+        await flushLock()
 
-        expectSessionToBeExpiredInStore()
+        await expectSessionToBeExpiredInStore()
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).not.toHaveBeenCalled()
-        expect(sessionStoreStrategy.persistSession).toHaveBeenCalled()
+        expect(sessionStoreStrategy.expireSession).toHaveBeenCalled()
       })
 
-      it('when session in cache and session not in store, should expire session', () => {
-        setupSessionStore(createSessionState(FIRST_ID))
+      it('when session in cache and session not in store, should expire session', async () => {
+        await setupSessionStore(createSessionState(FIRST_ID))
         resetSessionInStore()
+        sessionStoreStrategy.expireSession.calls.reset()
 
-        clock.tick(STORAGE_POLL_DELAY)
+        sessionStoreStrategy.notifyExternalChange()
+        await flushLock()
 
         expect(sessionStoreManager.getSession().id).toBeUndefined()
-        expectSessionToBeExpiredInStore()
+        await expectSessionToBeExpiredInStore()
         expect(expireSpy).toHaveBeenCalled()
-        expect(sessionStoreStrategy.persistSession).toHaveBeenCalled()
+        expect(sessionStoreStrategy.expireSession).toHaveBeenCalled()
       })
 
-      it('when session not in cache and session in store, should do nothing', () => {
-        setupSessionStore()
-        setSessionInStore(createSessionState(FIRST_ID))
+      it('when session not in cache and session in store, should do nothing', async () => {
+        await setupSessionStore()
+        await setSessionInStore(createSessionState(FIRST_ID))
 
-        clock.tick(STORAGE_POLL_DELAY)
+        sessionStoreStrategy.notifyExternalChange()
+        await flushLock()
 
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).not.toHaveBeenCalled()
         expect(sessionStoreStrategy.persistSession).not.toHaveBeenCalled()
       })
 
-      it('when session in cache is same session than in store, should synchronize session', () => {
-        setupSessionStore(createSessionState(FIRST_ID))
-        setSessionInStore(createSessionState(FIRST_ID, Date.now() + SESSION_TIME_OUT_DELAY + 10))
+      it('when session in cache is same session than in store, should synchronize session', async () => {
+        await setupSessionStore(createSessionState(FIRST_ID))
+        await setSessionInStore(createSessionState(FIRST_ID, Date.now() + SESSION_TIME_OUT_DELAY + 10))
 
-        clock.tick(STORAGE_POLL_DELAY)
+        sessionStoreStrategy.notifyExternalChange()
+        await flushLock()
 
         expect(sessionStoreManager.getSession().id).toBe(FIRST_ID)
-        expect(sessionStoreManager.getSession().expire).toBe(getStoreExpiration())
+        expect(sessionStoreManager.getSession().expire).toBe(await getStoreExpiration())
         expect(expireSpy).not.toHaveBeenCalled()
         expect(sessionStoreStrategy.persistSession).not.toHaveBeenCalled()
       })
 
-      it('when session id in cache is different than session id in store, should expire session and not touch the store', () => {
-        setupSessionStore(createSessionState(FIRST_ID))
-        setSessionInStore(createSessionState(SECOND_ID))
+      it('when session id in cache is different than session id in store, should expire session and not touch the store', async () => {
+        await setupSessionStore(createSessionState(FIRST_ID))
+        await setSessionInStore(createSessionState(SECOND_ID))
 
-        clock.tick(STORAGE_POLL_DELAY)
+        sessionStoreStrategy.notifyExternalChange()
+        await flushLock()
 
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).toHaveBeenCalled()
         expect(sessionStoreStrategy.persistSession).not.toHaveBeenCalled()
       })
 
-      it('when session in store is expired first and then get updated by another tab, should expire session in cache and not touch the store', () => {
-        setupSessionStore(createSessionState(FIRST_ID))
+      it('when session in store is expired first and then get updated by another tab, should expire session in cache', async () => {
+        await setupSessionStore(createSessionState(FIRST_ID))
         resetSessionInStore()
 
-        // Simulate a new session being written to the store by another tab during the watch.
-        // Watch is reading the cookie twice so we need to plan the write of the cookie at the right index
-        sessionStoreStrategy.planRetrieveSession(1, createSessionState(SECOND_ID))
+        // Simulate another tab writing a new session between the reset and the watch tick
+        await setSessionInStore(createSessionState(SECOND_ID))
 
-        clock.tick(STORAGE_POLL_DELAY)
+        sessionStoreStrategy.notifyExternalChange()
+        await flushLock()
 
-        // expires session in cache
+        // The watch sees SECOND_ID which differs from the cached FIRST_ID, so it expires the cache
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).toHaveBeenCalled()
-
-        // Does not touch the store
-        // The two calls to persist session are for the lock management, these can be ignored
-        expect(sessionStoreStrategy.persistSession).toHaveBeenCalledTimes(2)
-        expect(sessionStoreStrategy.expireSession).not.toHaveBeenCalled()
       })
     })
 
     describe('reinitialize session', () => {
-      it('when session not in store, should reinitialize the store', () => {
-        setupSessionStore()
+      it('when session not in store, should reinitialize the store', async () => {
+        await setupSessionStore()
 
         sessionStoreManager.restartSession()
+        await flushLock()
 
         expect(sessionStoreManager.getSession().isExpired).toEqual(IS_EXPIRED)
         expect(sessionStoreManager.getSession().anonymousId).toEqual(jasmine.any(String))
       })
 
-      it('when session in store, should do nothing', () => {
-        setupSessionStore(createSessionState(FIRST_ID))
+      it('when session in store, should do nothing', async () => {
+        await setupSessionStore(createSessionState(FIRST_ID))
 
         sessionStoreManager.restartSession()
+        await flushLock()
 
         expect(sessionStoreManager.getSession().id).toBe(FIRST_ID)
         expect(sessionStoreManager.getSession().isExpired).toBeUndefined()
       })
 
-      it('restart session should generate an anonymousId if not present', () => {
-        setupSessionStore()
+      it('restart session should generate an anonymousId if not present', async () => {
+        await setupSessionStore()
         sessionStoreManager.restartSession()
+        await flushLock()
         expect(sessionStoreManager.getSession().anonymousId).toBeDefined()
       })
     })
@@ -579,18 +583,18 @@ describe('session store', () => {
   describe('session update and synchronisation', () => {
     let updateSpy: jasmine.Spy<jasmine.Func>
     let otherUpdateSpy: jasmine.Spy<jasmine.Func>
-    let clock: Clock
 
-    function setupSessionStoreWithObserver(initialState: SessionState = {}, updateSpyFn: () => void) {
+    async function setupSessionStoreWithObserver(initialState: SessionState = {}, updateSpyFn: () => void) {
       const sessionStoreStrategyType = selectSessionStoreStrategyType(DEFAULT_INIT_CONFIGURATION)
 
-      sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: true, initialSession: initialState })
+      sessionStoreStrategy = createFakeSessionStoreStrategy({ initialSession: initialState })
 
       const sessionStoreManager = startSessionStore(
         sessionStoreStrategyType!,
         DEFAULT_CONFIGURATION,
         sessionStoreStrategy
       )
+      await flushLock()
       sessionStoreManager.sessionStateUpdateObservable.subscribe(updateSpyFn)
 
       return sessionStoreManager
@@ -600,9 +604,10 @@ describe('session store', () => {
     let otherSessionStoreManager: SessionStore
 
     beforeEach(() => {
+      mockLock()
       updateSpy = jasmine.createSpy()
       otherUpdateSpy = jasmine.createSpy()
-      clock = mockClock()
+      mockClock()
     })
 
     afterEach(() => {
@@ -611,12 +616,13 @@ describe('session store', () => {
       otherSessionStoreManager.stop()
     })
 
-    it('should synchronise all stores and notify update observables of all stores', () => {
+    it('should synchronise all stores and notify update observables of all stores', async () => {
       const initialState = createSessionState(FIRST_ID)
-      sessionStoreManager = setupSessionStoreWithObserver(initialState, updateSpy)
-      otherSessionStoreManager = setupSessionStoreWithObserver(initialState, otherUpdateSpy)
+      sessionStoreManager = await setupSessionStoreWithObserver(initialState, updateSpy)
+      otherSessionStoreManager = await setupSessionStoreWithObserver(initialState, otherUpdateSpy)
 
       sessionStoreManager.updateSessionState({ extra: 'extra' })
+      await flushLock()
 
       expect(updateSpy).toHaveBeenCalledTimes(1)
 
@@ -624,8 +630,9 @@ describe('session store', () => {
       expect(callArgs!.previousState.extra).toBeUndefined()
       expect(callArgs.newState.extra).toBe('extra')
 
-      // Need to wait until watch is triggered
-      clock.tick(STORAGE_POLL_DELAY)
+      // Notify external change to sync the other store
+      sessionStoreStrategy.notifyExternalChange()
+      await flushLock()
       expect(otherUpdateSpy).toHaveBeenCalled()
     })
   })

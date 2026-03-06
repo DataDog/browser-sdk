@@ -1,3 +1,4 @@
+import { addEventListener, DOM_EVENT } from '../../../browser/addEventListener'
 import { generateUUID } from '../../../tools/utils/stringUtils'
 import type { Configuration } from '../../configuration'
 import { SessionPersistence } from '../sessionConstants'
@@ -23,10 +24,23 @@ export function selectLocalStorageStrategy(): SessionStoreStrategyType | undefin
 
 export function initLocalStorageStrategy(configuration: Configuration): SessionStoreStrategy {
   return {
-    isLockEnabled: false,
-    persistSession: persistInLocalStorage,
-    retrieveSession: retrieveSessionFromLocalStorage,
-    expireSession: (sessionState: SessionState) => expireSessionFromLocalStorage(sessionState, configuration),
+    persistSession: (sessionState: SessionState) => {
+      persistInLocalStorage(sessionState)
+      return Promise.resolve()
+    },
+    retrieveSession: () => Promise.resolve(retrieveSessionFromLocalStorage()),
+    expireSession: (sessionState: SessionState) => {
+      expireSessionFromLocalStorage(sessionState, configuration)
+      return Promise.resolve()
+    },
+    onExternalChange: (callback) => {
+      const { stop } = addEventListener(configuration, window, DOM_EVENT.STORAGE, (event: StorageEvent) => {
+        if (event.key === SESSION_STORE_KEY) {
+          callback()
+        }
+      })
+      return stop
+    },
   }
 }
 

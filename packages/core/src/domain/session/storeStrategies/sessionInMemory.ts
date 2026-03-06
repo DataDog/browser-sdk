@@ -22,10 +22,15 @@ export function selectMemorySessionStoreStrategy(): SessionStoreStrategyType {
 
 export function initMemorySessionStoreStrategy(configuration: Configuration): SessionStoreStrategy {
   return {
-    expireSession: (sessionState: SessionState) => expireSessionFromMemory(sessionState, configuration),
-    isLockEnabled: false,
-    persistSession: persistInMemory,
-    retrieveSession: retrieveFromMemory,
+    expireSession: (sessionState: SessionState) => {
+      expireSessionFromMemory(sessionState, configuration)
+      return Promise.resolve()
+    },
+    persistSession: (state: SessionState) => {
+      persistInMemory(state)
+      return Promise.resolve()
+    },
+    retrieveSession: () => Promise.resolve(retrieveFromMemory()),
   }
 }
 

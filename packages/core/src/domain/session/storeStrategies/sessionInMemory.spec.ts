@@ -15,63 +15,63 @@ describe('session in memory strategy', () => {
     })
   })
 
-  it('should persist a session in memory', () => {
+  it('should persist a session in memory', async () => {
     const memoryStorageStrategy = initMemorySessionStoreStrategy(DEFAULT_INIT_CONFIGURATION)
-    memoryStorageStrategy.persistSession(sessionState)
-    const session = memoryStorageStrategy.retrieveSession()
+    await memoryStorageStrategy.persistSession(sessionState)
+    const session = await memoryStorageStrategy.retrieveSession()
     expect(session).toEqual(sessionState)
     expect(session).not.toBe(sessionState)
   })
 
-  it('should set `isExpired=1` on session', () => {
+  it('should set `isExpired=1` on session', async () => {
     const memoryStorageStrategy = initMemorySessionStoreStrategy(DEFAULT_INIT_CONFIGURATION)
-    memoryStorageStrategy.persistSession(sessionState)
-    memoryStorageStrategy.expireSession(sessionState)
-    const session = memoryStorageStrategy.retrieveSession()
+    await memoryStorageStrategy.persistSession(sessionState)
+    await memoryStorageStrategy.expireSession(sessionState)
+    const session = await memoryStorageStrategy.retrieveSession()
     expect(session).toEqual({ isExpired: '1' })
     expect(session).not.toBe(sessionState)
   })
 
-  it('should return an empty object when no state persisted', () => {
+  it('should return an empty object when no state persisted', async () => {
     const memoryStorageStrategy = initMemorySessionStoreStrategy(DEFAULT_INIT_CONFIGURATION)
-    const session = memoryStorageStrategy.retrieveSession()
+    const session = await memoryStorageStrategy.retrieveSession()
     expect(session).toEqual({})
   })
 
-  it('should not mutate stored session if source state mutates', () => {
+  it('should not mutate stored session if source state mutates', async () => {
     const sessionStateToMutate: SessionState = {}
     const memoryStorageStrategy = initMemorySessionStoreStrategy(DEFAULT_INIT_CONFIGURATION)
-    memoryStorageStrategy.persistSession(sessionStateToMutate)
+    await memoryStorageStrategy.persistSession(sessionStateToMutate)
     sessionStateToMutate.id = '123'
-    const session = memoryStorageStrategy.retrieveSession()
+    const session = await memoryStorageStrategy.retrieveSession()
     expect(session).toEqual({})
     expect(session).not.toBe(sessionStateToMutate)
   })
 
-  it('should share session state between multiple strategy instances (RUM and Logs)', () => {
+  it('should share session state between multiple strategy instances (RUM and Logs)', async () => {
     const rumStrategy = initMemorySessionStoreStrategy(DEFAULT_INIT_CONFIGURATION)
     const logsStrategy = initMemorySessionStoreStrategy(DEFAULT_INIT_CONFIGURATION)
 
-    rumStrategy.persistSession(sessionState)
+    await rumStrategy.persistSession(sessionState)
 
-    const logsSession = logsStrategy.retrieveSession()
+    const logsSession = await logsStrategy.retrieveSession()
     expect(logsSession).toEqual(sessionState)
   })
 
-  it('should reflect updates from one SDK instance in another', () => {
+  it('should reflect updates from one SDK instance in another', async () => {
     const rumStrategy = initMemorySessionStoreStrategy(DEFAULT_INIT_CONFIGURATION)
     const logsStrategy = initMemorySessionStoreStrategy(DEFAULT_INIT_CONFIGURATION)
 
-    rumStrategy.persistSession({ id: '123', created: '0' })
-    logsStrategy.persistSession({ id: '123', created: '0', rum: '1' })
+    await rumStrategy.persistSession({ id: '123', created: '0' })
+    await logsStrategy.persistSession({ id: '123', created: '0', rum: '1' })
 
-    const rumSession = rumStrategy.retrieveSession()
+    const rumSession = await rumStrategy.retrieveSession()
     expect(rumSession.rum).toEqual('1')
   })
 
-  it('should store session in global object', () => {
+  it('should store session in global object', async () => {
     const memoryStorageStrategy = initMemorySessionStoreStrategy(DEFAULT_INIT_CONFIGURATION)
-    memoryStorageStrategy.persistSession(sessionState)
+    await memoryStorageStrategy.persistSession(sessionState)
 
     const globalObject = getGlobalObject<Record<string, unknown>>()
     expect(globalObject[MEMORY_SESSION_STORE_KEY]).toEqual(sessionState)
