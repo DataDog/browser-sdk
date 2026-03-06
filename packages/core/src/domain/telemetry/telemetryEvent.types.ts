@@ -531,7 +531,7 @@ export type TelemetryCommonFeaturesUsage =
 /**
  * Schema of browser specific features usage
  */
-// [MANUAL] AddViewLoadingTime added pending upstream rum-events-format schema sync (https://github.com/DataDog/rum-events-format/pull/352)
+// [MANUAL] SetViewLoadingTime added pending upstream rum-events-format schema sync (https://github.com/DataDog/rum-events-format/pull/352)
 export type TelemetryBrowserFeaturesUsage =
   | StartSessionReplayRecording
   | StartDurationVital
@@ -541,11 +541,11 @@ export type TelemetryBrowserFeaturesUsage =
   | StopAction
   | StartResource
   | StopResource
-  | AddViewLoadingTime
+  | SetViewLoadingTime
 /**
  * Schema of mobile specific features usage
  */
-export type TelemetryMobileFeaturesUsage = AddViewLoadingTime | TrackWebView | AndroidNetworkInstrumentation
+export type TelemetryMobileFeaturesUsage = SetViewLoadingTime | TrackWebView | AndroidNetworkInstrumentation
 
 /**
  * Schema of common properties of Telemetry events
@@ -948,7 +948,7 @@ export interface StopResource {
   feature: 'stop-resource'
   [k: string]: unknown
 }
-export interface AddViewLoadingTime {
+export interface SetViewLoadingTime {
   /**
    * setViewLoadingTime API
    */
