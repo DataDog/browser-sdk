@@ -137,14 +137,15 @@ function computePositionDataString(element: Element): string {
 
 /**
  * Extracts only the safe (allowlisted) attributes from an element.
+ * The attributes are sorted alphabetically by name.
  */
 function extractSafeAttributesString(element: Element, allowedAttributes: MatchOption[]): string {
-  let result = ''
+  const result: string[] = []
   for (let i = 0; i < element.attributes.length; i++) {
     const attr = element.attributes[i]
     if (matchList(allowedAttributes, attr.name)) {
-      result += `[${CSS.escape(attr.name)}="${CSS.escape(attr.value)}"]`
+      result.push(`[${CSS.escape(attr.name)}="${CSS.escape(attr.value)}"]`)
     }
   }
-  return result
+  return result.sort().join('')
 }
