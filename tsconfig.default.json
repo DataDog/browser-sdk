@@ -28,6 +28,9 @@
     // Files included in ./developer-extension/tsconfig.json
     "developer-extension",
 
+    // Files included in ./packages/rum-nextjs/tsconfig.json
+    "packages/rum-nextjs",
+
     // Skip typechecking for these folders for now
     "rum-events-format",
     "test/apps"
