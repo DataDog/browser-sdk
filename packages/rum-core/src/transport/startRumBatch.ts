@@ -39,11 +39,13 @@ export function computeAssembledViewDiff(
   // --- view.* diff (MERGE strategy, nested-aware) ---
   const currentView = currentObj.view as Record<string, unknown>
   const lastView = lastObj.view as Record<string, unknown>
-  const viewResult: Record<string, unknown> = { id: currentView.id }
+  // view.id and view.url are always required by the schema (_common-schema.json) for backend routing
+  const viewResult: Record<string, unknown> = { id: currentView.id, url: currentView.url }
 
   const viewDiff = diffMerge(currentView, lastView, { replaceKeys: new Set(['custom_timings']) })
   if (viewDiff) {
     delete viewDiff.id // already in required fields
+    delete viewDiff.url // already in required fields
     Object.assign(viewResult, viewDiff)
     if (Object.keys(viewDiff).length > 0) {
       hasChanges = true
@@ -54,11 +56,16 @@ export function computeAssembledViewDiff(
   // --- _dd.* diff (MERGE strategy, page_states APPEND) ---
   const currentDd = currentObj._dd as Record<string, unknown>
   const lastDd = lastObj._dd as Record<string, unknown>
-  const ddResult: Record<string, unknown> = { document_version: currentDd.document_version }
+  // _dd.document_version and _dd.format_version are always required by the schema for backend routing
+  const ddResult: Record<string, unknown> = {
+    document_version: currentDd.document_version,
+    format_version: currentDd.format_version,
+  }
 
   const ddDiff = diffMerge(currentDd, lastDd, { appendKeys: new Set(['page_states']) })
   if (ddDiff) {
     delete ddDiff.document_version // already in required fields
+    delete ddDiff.format_version // already in required fields
     Object.assign(ddResult, ddDiff)
     if (Object.keys(ddDiff).length > 0) {
       hasChanges = true
