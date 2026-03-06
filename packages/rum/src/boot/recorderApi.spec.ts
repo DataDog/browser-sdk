@@ -6,7 +6,7 @@ import type {
   SessionManager,
   Telemetry,
 } from '@datadog/browser-core'
-import { BridgeCapability, display } from '@datadog/browser-core'
+import { BridgeCapability, display, resetSampleDecisionCache } from '@datadog/browser-core'
 import type { RecorderApi } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { MockTelemetry, SessionManagerMock } from '@datadog/browser-core/test'
@@ -17,6 +17,8 @@ import {
   registerCleanupTask,
   startMockTelemetry,
   createSessionManagerMock,
+  LOW_HASH_UUID,
+  HIGH_HASH_UUID,
 } from '@datadog/browser-core/test'
 import { mockDocumentReadyState, mockRumConfiguration, mockViewHistory } from '../../../rum-core/test'
 import type { CreateDeflateWorker } from '../domain/deflate'
@@ -90,6 +92,7 @@ describe('makeRecorderApi', () => {
 
     registerCleanupTask(() => {
       resetDeflateWorkerState()
+      resetSampleDecisionCache()
     })
 
     return configuration
@@ -379,15 +382,14 @@ describe('makeRecorderApi', () => {
 
     describe('when session renewal change the tracking type', () => {
       describe('from WITHOUT_REPLAY to WITH_REPLAY', () => {
-        let configuration: ReturnType<typeof mockRumConfiguration>
-
         beforeEach(() => {
-          configuration = setupRecorderApi({ sessionManager, sessionReplaySampleRate: 0 })
+          sessionManager.setId(HIGH_HASH_UUID)
+          setupRecorderApi({ sessionManager, sessionReplaySampleRate: 50 })
         })
 
         it('starts recording if startSessionReplayRecording was called', async () => {
           rumInit()
-          configuration.sessionReplaySampleRate = 100
+          sessionManager.setId(LOW_HASH_UUID)
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
           expect(startRecordingSpy).not.toHaveBeenCalled()
           lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
@@ -400,7 +402,7 @@ describe('makeRecorderApi', () => {
         it('does not starts recording if stopSessionReplayRecording was called', () => {
           rumInit()
           recorderApi.stop()
-          configuration.sessionReplaySampleRate = 100
+          sessionManager.setId(LOW_HASH_UUID)
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
           lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
@@ -443,10 +445,8 @@ describe('makeRecorderApi', () => {
       })
 
       describe('from WITH_REPLAY to WITHOUT_REPLAY', () => {
-        let configuration: ReturnType<typeof mockRumConfiguration>
-
         beforeEach(() => {
-          configuration = setupRecorderApi({ sessionManager })
+          setupRecorderApi({ sessionManager, sessionReplaySampleRate: 50 })
         })
 
         it('stops recording if startSessionReplayRecording was called', async () => {
@@ -454,7 +454,7 @@ describe('makeRecorderApi', () => {
           await collectAsyncCalls(startRecordingSpy, 1)
 
           expect(startRecordingSpy).toHaveBeenCalledTimes(1)
-          configuration.sessionReplaySampleRate = 0
+          sessionManager.setId(HIGH_HASH_UUID)
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
           expect(stopRecordingSpy).toHaveBeenCalled()
           lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
@@ -462,11 +462,10 @@ describe('makeRecorderApi', () => {
           expect(startRecordingSpy).toHaveBeenCalledTimes(1)
         })
 
-        // reassess this test
         it('prevents session recording to start if the session is renewed before the DOM is loaded', () => {
           const { triggerOnDomLoaded } = mockDocumentReadyState()
           rumInit()
-          configuration.sessionReplaySampleRate = 0
+          sessionManager.setId(HIGH_HASH_UUID)
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
           lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
           triggerOnDomLoaded()
@@ -555,17 +554,15 @@ describe('makeRecorderApi', () => {
       })
 
       describe('from untracked to WITHOUT_REPLAY', () => {
-        let configuration: ReturnType<typeof mockRumConfiguration>
-
         beforeEach(() => {
           sessionManager.setNotTracked()
-          configuration = setupRecorderApi({ sessionManager })
+          setupRecorderApi({ sessionManager, sessionReplaySampleRate: 50 })
         })
 
         it('keeps not recording if startSessionReplayRecording was called', () => {
           rumInit()
           sessionManager.setTracked()
-          configuration.sessionReplaySampleRate = 0
+          sessionManager.setId(HIGH_HASH_UUID)
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
           lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
           expect(loadRecorderSpy).not.toHaveBeenCalled()
