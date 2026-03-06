@@ -1,6 +1,7 @@
 import type { SessionManager, startSessionManager } from '@datadog/browser-core'
 import { Observable } from '../src/tools/observable'
 import { noop } from '../src/tools/utils/functionUtils'
+import { LOW_HASH_UUID } from './sampling'
 
 export interface SessionManagerMock extends SessionManager {
   setId(id: string): SessionManagerMock
@@ -9,7 +10,7 @@ export interface SessionManagerMock extends SessionManager {
   setForcedReplay(): SessionManagerMock
 }
 
-export const MOCK_SESSION_ID = '00000000-aaaa-0000-aaaa-000000000000'
+export const MOCK_SESSION_ID = LOW_HASH_UUID
 
 const enum SessionStatus {
   TRACKED,
