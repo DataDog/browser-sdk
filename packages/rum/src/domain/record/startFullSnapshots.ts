@@ -1,9 +1,14 @@
 import { LifeCycleEventType, getViewportDimension } from '@datadog/browser-rum-core'
 import type { LifeCycle } from '@datadog/browser-rum-core'
-import { ExperimentalFeature, isExperimentalFeatureEnabled, timeStampNow } from '@datadog/browser-core'
+import { timeStampNow } from '@datadog/browser-core'
 import type { TimeStamp } from '@datadog/browser-core'
 import { RecordType } from '../../types'
-import { SerializationKind, serializeFullSnapshotAsChange, serializeFullSnapshot } from './serialization'
+import {
+  isFullSnapshotChangeRecordsEnabled,
+  SerializationKind,
+  serializeFullSnapshotAsChange,
+  serializeFullSnapshot,
+} from './serialization'
 import { getVisualViewport } from './viewports'
 import type { RecordingScope } from './recordingScope'
 import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
@@ -83,8 +88,5 @@ export function takeFullSnapshot(
 }
 
 function defaultSerializeFullSnapshotCallback(): SerializeFullSnapshotCallback {
-  return isExperimentalFeatureEnabled(ExperimentalFeature.USE_CHANGE_RECORDS) ||
-    isExperimentalFeatureEnabled(ExperimentalFeature.USE_INCREMENTAL_CHANGE_RECORDS)
-    ? serializeFullSnapshotAsChange
-    : serializeFullSnapshot
+  return isFullSnapshotChangeRecordsEnabled() ? serializeFullSnapshotAsChange : serializeFullSnapshot
 }

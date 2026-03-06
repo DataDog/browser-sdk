@@ -3,6 +3,7 @@ import { addExperimentalFeatures, ExperimentalFeature, Observable } from '@datad
 import type { MockTelemetry } from '@datadog/browser-core/test'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { startMockTelemetry } from '../../../../core/test'
+import { isFullSnapshotChangeRecordsEnabled, isIncrementalSnapshotChangeRecordsEnabled } from '../record'
 import { startSegmentTelemetry } from './startSegmentTelemetry'
 import type { ReplayPayload } from './buildReplayPayload'
 
@@ -49,14 +50,14 @@ describe('segmentTelemetry', () => {
     registerCleanupTask(stopSegmentTelemetry)
   }
 
-  for (const changeRecordFeatureFlag of [
-    undefined,
-    ExperimentalFeature.USE_CHANGE_RECORDS,
-    ExperimentalFeature.USE_INCREMENTAL_CHANGE_RECORDS,
+  for (const [featureFlag, description] of [
+    [undefined, 'V1 records enabled'],
+    [ExperimentalFeature.USE_CHANGE_RECORDS, 'full snapshot Change records enabled'],
+    [ExperimentalFeature.USE_INCREMENTAL_CHANGE_RECORDS, 'incremental snapshot Change records enabled'],
   ] as const) {
-    it(`with ${changeRecordFeatureFlag || 'v1_records'}, should collect segment telemetry for all full snapshots`, async () => {
-      if (changeRecordFeatureFlag) {
-        addExperimentalFeatures([changeRecordFeatureFlag])
+    it(`with ${description}, should collect segment telemetry for all full snapshots`, async () => {
+      if (featureFlag) {
+        addExperimentalFeatures([featureFlag])
       }
 
       setupSegmentTelemetryCollection()
@@ -76,9 +77,8 @@ describe('segmentTelemetry', () => {
                 sum: 500,
               },
               encoding: {
-                fullSnapshot: changeRecordFeatureFlag ? 'change' : 'v1',
-                incrementalSnapshot:
-                  changeRecordFeatureFlag === ExperimentalFeature.USE_INCREMENTAL_CHANGE_RECORDS ? 'change' : 'v1',
+                fullSnapshot: isFullSnapshotChangeRecordsEnabled() ? 'change' : 'v1',
+                incrementalSnapshot: isIncrementalSnapshotChangeRecordsEnabled() ? 'change' : 'v1',
               },
               isFullSnapshot: true,
               ongoingRequests: {
