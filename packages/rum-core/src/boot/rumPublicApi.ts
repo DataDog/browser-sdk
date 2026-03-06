@@ -36,6 +36,7 @@ import {
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
   mockable,
+  generateUUID,
 } from '@datadog/browser-core'
 
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -388,7 +389,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * Context - @category Data Collection
    *
-   * @param nameOrOptions - Name or options (name, service, version) for the view
+   * @param nameOrOptions - The view name, or a {@link ViewOptions} object to configure the view
    */
   startView(nameOrOptions?: string | ViewOptions): void
 
@@ -890,6 +891,7 @@ export function makeRumPublicApi(
       callMonitored(() => {
         addTelemetryUsage({ feature: 'add-duration-vital' })
         strategy.addDurationVital({
+          id: generateUUID(),
           name: sanitize(name)!,
           type: VitalType.DURATION,
           startClocks: timeStampToClocks(options.startTime as TimeStamp),

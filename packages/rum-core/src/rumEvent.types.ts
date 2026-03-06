@@ -313,6 +313,9 @@ export type RumErrorEvent = CommonProperties &
         | 'ndk'
         | 'ios+il2cpp'
         | 'ndk+il2cpp'
+        | 'windows'
+        | 'macos'
+        | 'linux'
       /**
        * Resource properties of the error
        */
@@ -1514,6 +1517,7 @@ export interface CommonProperties {
     | 'unity'
     | 'kotlin-multiplatform'
     | 'electron'
+    | 'rum-cpp'
   /**
    * View properties
    */
@@ -1856,6 +1860,7 @@ export interface ViewContainerSchema {
       | 'unity'
       | 'kotlin-multiplatform'
       | 'electron'
+      | 'rum-cpp'
     [k: string]: unknown
   }
   [k: string]: unknown

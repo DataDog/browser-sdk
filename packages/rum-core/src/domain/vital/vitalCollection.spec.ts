@@ -1,11 +1,11 @@
 import type { Duration } from '@datadog/browser-core'
 import { mockClock, type Clock } from '@datadog/browser-core/test'
-import { addExperimentalFeatures, clocksNow, ExperimentalFeature } from '@datadog/browser-core'
+import { addExperimentalFeatures, clocksNow, ExperimentalFeature, generateUUID } from '@datadog/browser-core'
 import { collectAndValidateRawRumEvents, mockPageStateHistory } from '../../../test'
 import type { RawRumEvent, RawRumVitalEvent } from '../../rawRumEvent.types'
 import { VitalType, RumEventType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
-import { LifeCycle } from '../lifeCycle'
+import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { startDurationVital, stopDurationVital, startVitalCollection, createCustomVitalsState } from './vitalCollection'
 
 const pageStateHistory = mockPageStateHistory()
@@ -36,7 +36,9 @@ describe('vitalCollection', () => {
         clock.tick(100)
         stopDurationVital(cbSpy, vitalsState, vitalRef)
 
-        expect(cbSpy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ name: 'foo', duration: 100 }))
+        expect(cbSpy).toHaveBeenCalledOnceWith(
+          jasmine.objectContaining({ id: jasmine.any(String), name: 'foo', duration: 100 })
+        )
       })
 
       it('should create duration vital from a vital name', () => {
@@ -195,6 +197,7 @@ describe('vitalCollection', () => {
         wasInPageStateDuringPeriodSpy.and.returnValue(true)
 
         vitalCollection.addDurationVital({
+          id: generateUUID(),
           name: 'foo',
           type: VitalType.DURATION,
           startClocks: clocksNow(),
@@ -259,6 +262,7 @@ describe('vitalCollection', () => {
 
       it('should create a duration vital from add API', () => {
         vitalCollection.addDurationVital({
+          id: generateUUID(),
           name: 'foo',
           type: VitalType.DURATION,
           startClocks: clocksNow(),
@@ -294,6 +298,15 @@ describe('vitalCollection', () => {
         expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.failure_reason).toBe('error')
         expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.description).toBe('baz')
         expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).context).toEqual({ foo: 'bar' })
+      })
+
+      it('should notify lifecycle with vital started event when starting a duration vital', () => {
+        const subscriberSpy = jasmine.createSpy()
+        lifeCycle.subscribe(LifeCycleEventType.VITAL_STARTED, subscriberSpy)
+
+        vitalCollection.startDurationVital('foo')
+
+        expect(subscriberSpy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ name: 'foo' }))
       })
     })
   })

@@ -68,6 +68,7 @@ export interface DurationVitalReference {
 }
 
 export interface DurationVitalStart extends DurationVitalOptions {
+  id: string
   name: string
   startClocks: ClocksState
   handlingStack?: string
@@ -79,6 +80,7 @@ interface BaseVital extends VitalOptions {
   handlingStack?: string
 }
 export interface DurationVital extends BaseVital {
+  id: string
   type: typeof VitalType.DURATION
   duration: Duration
 }
@@ -144,8 +146,14 @@ export function startVitalCollection(
   return {
     addOperationStepVital,
     addDurationVital,
-    startDurationVital: (name: string, options: DurationVitalOptions = {}) =>
-      startDurationVital(customVitalsState, name, options),
+    startDurationVital: (name: string, options: DurationVitalOptions = {}) => {
+      const ref = startDurationVital(customVitalsState, name, options)
+      const vitalState = customVitalsState.vitalsByReference.get(ref)
+      if (vitalState) {
+        lifeCycle.notify(LifeCycleEventType.VITAL_STARTED, vitalState)
+      }
+      return ref
+    },
     stopDurationVital: (nameOrRef: string | DurationVitalReference, options: DurationVitalOptions = {}) => {
       stopDurationVital(addDurationVital, customVitalsState, nameOrRef, options)
     },
@@ -158,6 +166,7 @@ export function startDurationVital(
   options: DurationVitalOptions = {}
 ) {
   const vital = {
+    id: generateUUID(),
     name,
     startClocks: clocksNow(),
     ...options,
@@ -202,6 +211,7 @@ function buildDurationVital(
   stopClocks: ClocksState
 ): DurationVital {
   return {
+    id: vitalStart.id,
     name: vitalStart.name,
     type: VitalType.DURATION,
     startClocks,
@@ -214,8 +224,10 @@ function buildDurationVital(
 
 function processVital(vital: DurationVital | OperationStepVital): RawRumEventCollectedData<RawRumVitalEvent> {
   const { startClocks, type, name, description, context, handlingStack } = vital
+  const vitalId = vital.type === VitalType.DURATION ? vital.id : undefined
+
   const vitalData = {
-    id: generateUUID(),
+    id: vitalId ?? generateUUID(),
     type,
     name,
     description,

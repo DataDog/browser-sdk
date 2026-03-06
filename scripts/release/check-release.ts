@@ -3,18 +3,6 @@ import { printLog, runMain } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
 import { checkPackageJsonFiles } from '../lib/checkBrowserSdkPackageJsonFiles.ts'
 
-export interface PackageJsonFile {
-  relativePath: string
-  content: {
-    name: string
-    version: string
-    private?: boolean
-    dependencies?: Record<string, string>
-    devDependencies?: Record<string, string>
-    peerDependencies?: Record<string, string>
-  }
-}
-
 runMain(() => {
   checkGitTag()
   checkPackageJsonFiles()

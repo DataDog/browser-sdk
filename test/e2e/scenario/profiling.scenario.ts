@@ -8,10 +8,12 @@ test.describe('profiling', () => {
   })
 
   createTest('send profile events when profiling is enabled')
-    .withRum({ profilingSampleRate: 100 })
+    .withRum({ profilingSampleRate: 100, trackUserInteractions: true })
     .withBasePath('/?js-profiling=true')
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await generateLongTask(page)
+      await generateAction(page)
+      await generateVital(page)
 
       await flushEvents()
 
@@ -20,6 +22,8 @@ test.describe('profiling', () => {
       // Extract RUM event IDs for verification
       const viewIds = intakeRegistry.rumViewEvents.map((event) => event.view.id)
       const longTaskIds = intakeRegistry.rumLongTaskEvents.map((event) => event.long_task.id)
+      const actionIds = intakeRegistry.rumActionEvents.map((event) => event.action.id)
+      const vitalIds = intakeRegistry.rumVitalEvents.map((event) => event.vital.id)
 
       const profileEvent = intakeRegistry.profileEvents[0]
 
@@ -37,6 +41,14 @@ test.describe('profiling', () => {
         },
         long_task: {
           id: expect.arrayOf(expect.any(String)),
+        },
+        action: {
+          id: expect.arrayOf(expect.any(String)),
+          label: expect.arrayOf(expect.any(String)),
+        },
+        vital: {
+          id: expect.arrayOf(expect.any(String)),
+          label: expect.arrayOf(expect.any(String)),
         },
         attachments: ['wall-time.json'],
         start: expect.any(String), // ISO 8601 date string
@@ -85,6 +97,23 @@ test.describe('profiling', () => {
           duration: expect.any(Number),
           entryType: expect.stringMatching(/^(long-animation-frame|longtask)$/),
           id,
+          startClocks: {
+            relative: expect.any(Number),
+            timeStamp: expect.any(Number),
+          },
+        })),
+        actions: actionIds.map((actionId) => ({
+          id: actionId,
+          label: expect.any(String),
+          startClocks: {
+            relative: expect.any(Number),
+            timeStamp: expect.any(Number),
+          },
+        })),
+        vitals: vitalIds.map((vitalId) => ({
+          duration: expect.any(Number),
+          id: vitalId,
+          label: expect.any(String),
           startClocks: {
             relative: expect.any(Number),
             timeStamp: expect.any(Number),
@@ -164,6 +193,17 @@ async function generateLongTask(page: Page, durationMs = 500) {
           resolve()
         })
       }),
+    durationMs
+  )
+}
+
+async function generateAction(page: Page) {
+  await page.evaluate(() => window.DD_RUM!.addAction('testAction'))
+}
+
+async function generateVital(page: Page, durationMs = 50) {
+  await page.evaluate(
+    (duration) => window.DD_RUM!.addDurationVital('testVitals', { startTime: Date.now() - duration, duration }),
     durationMs
   )
 }
