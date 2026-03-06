@@ -1,9 +1,13 @@
-export function getTimeZone() {
+function resolveTimeZone() {
   try {
-    const intl = new Intl.DateTimeFormat()
-
-    return intl.resolvedOptions().timeZone
+    return new Intl.DateTimeFormat().resolvedOptions().timeZone
   } catch {
     return undefined
   }
+}
+
+const timeZone = resolveTimeZone()
+
+export function getTimeZone() {
+  return timeZone
 }
