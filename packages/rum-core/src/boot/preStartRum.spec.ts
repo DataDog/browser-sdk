@@ -632,7 +632,7 @@ describe('preStartRum', () => {
       expect(setLoadingTimeSpy).toHaveBeenCalledOnceWith(jasmine.any(Number), false)
       // Verify the timestamp was captured at call time (tick 10), not at drain time (tick 30)
       const capturedTimestamp = setLoadingTimeSpy.calls.argsFor(0)[0] as number
-      expect(capturedTimestamp).toBeLessThan(clock.timeStamp(30))
+      expect(capturedTimestamp).toBe(clock.timeStamp(10))
     })
 
     it('setViewContext', () => {
