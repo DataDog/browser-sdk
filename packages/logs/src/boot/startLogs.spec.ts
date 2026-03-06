@@ -14,6 +14,8 @@ import {
   registerCleanupTask,
   mockClock,
   DEFAULT_FETCH_MOCK,
+  createSessionManagerMock,
+  MOCK_SESSION_ID,
 } from '@datadog/browser-core/test'
 
 import type { LogsConfiguration } from '../domain/configuration'
@@ -22,7 +24,6 @@ import { Logger } from '../domain/logger'
 import { createHooks } from '../domain/hooks'
 import { StatusType } from '../domain/logger/isAuthorized'
 import type { LogsEvent } from '../logsEvent.types'
-import { createLogsSessionManagerMock } from '../../test/mockLogsSessionManager'
 import { startLogs } from './startLogs'
 
 function getLoggedMessage(requests: Request[], index: number) {
@@ -47,7 +48,7 @@ const DEFAULT_PAYLOAD = {} as Payload
 
 function startLogsWithDefaults({ configuration }: { configuration?: Partial<LogsConfiguration> } = {}) {
   const endpointBuilder = mockEndpointBuilder('https://localhost/v1/input/log')
-  const sessionManager = createLogsSessionManagerMock()
+  const sessionManager = createSessionManagerMock()
   const { handleLog, stop, globalContext, accountContext, userContext } = startLogs(
     {
       ...validateAndBuildLogsConfiguration({ clientToken: 'xxx', service: 'service', telemetrySampleRate: 0 })!,
@@ -186,7 +187,7 @@ describe('logs', () => {
 
       expect(requests.length).toEqual(2)
       expect(firstRequest.message).toEqual('message 1')
-      expect(firstRequest.session_id).toEqual('session-id')
+      expect(firstRequest.session_id).toEqual(MOCK_SESSION_ID)
 
       expect(secondRequest.message).toEqual('message 2')
       expect(secondRequest.session_id).toBeUndefined()

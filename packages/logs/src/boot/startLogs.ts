@@ -1,4 +1,4 @@
-import type { BufferedObservable, BufferedData } from '@datadog/browser-core'
+import type { BufferedObservable, BufferedData, SessionManager } from '@datadog/browser-core'
 import {
   sendToExtension,
   createPageMayExitObservable,
@@ -7,7 +7,6 @@ import {
   startGlobalContext,
   startUserContext,
 } from '@datadog/browser-core'
-import type { LogsSessionManager } from '../domain/logsSessionManager'
 import type { LogsConfiguration } from '../domain/configuration'
 import { startLogsAssembly } from '../domain/assembly'
 import { startConsoleCollection } from '../domain/console/consoleCollection'
@@ -32,7 +31,7 @@ export type StartLogsResult = ReturnType<StartLogs>
 
 export function startLogs(
   configuration: LogsConfiguration,
-  sessionManager: LogsSessionManager,
+  sessionManager: SessionManager,
   getCommonContext: () => CommonContext,
   bufferedDataObservable: BufferedObservable<BufferedData>,
   hooks: Hooks

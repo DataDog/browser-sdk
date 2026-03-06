@@ -1,5 +1,4 @@
 import { Observable } from '../../tools/observable'
-import type { Context } from '../../tools/serialisation/context'
 import { createValueHistory } from '../../tools/valueHistory'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
 import { clocksOrigin, dateNow, ONE_MINUTE, relativeNow } from '../../tools/utils/timeUtils'
@@ -16,6 +15,9 @@ import { findLast } from '../../tools/utils/polyfills'
 import { monitorError } from '../../tools/monitor'
 import { isWorkerEnvironment } from '../../tools/globalObject'
 import { display } from '../../tools/display'
+import { generateUUID } from '../../tools/utils/stringUtils'
+import { noop } from '../../tools/utils/functionUtils'
+import { isSampled } from '../sampler'
 import { SESSION_TIME_OUT_DELAY, SessionPersistence } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
 import type { SessionState } from './sessionState'
@@ -27,17 +29,19 @@ import { resetSessionStoreOperations } from './sessionStoreOperations'
 
 export interface SessionManager {
   findSession: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => SessionContext | undefined
+  findTrackedSession: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => SessionContext | undefined
   renewObservable: Observable<void>
   expireObservable: Observable<void>
   sessionStateUpdateObservable: Observable<{ previousState: SessionState; newState: SessionState }>
   expire: () => void
+  // TODO: review difference between SessionState and SessionContext
   updateSessionState: (state: Partial<SessionState>) => void
 }
 
-export interface SessionContext extends Context {
+export interface SessionContext {
   id: string
-  isReplayForced: boolean
-  anonymousId: string | undefined
+  anonymousId?: string | undefined
+  isReplayForced?: boolean
 }
 
 export const VISIBILITY_CHECK_DELAY = ONE_MINUTE
@@ -83,6 +87,13 @@ export function startSessionManager(
       expireObservable.notify()
       sessionContextHistory.closeActive(relativeNow())
     })
+    sessionStore.sessionStateUpdateObservable.subscribe(({ newState }) => {
+      // mutate the session state in the history
+      const currentContext = sessionContextHistory.find()
+      if (currentContext) {
+        currentContext.isReplayForced = !!newState.forcedReplay
+      }
+    })
 
     sessionContextHistory.add(buildSessionContext(), clocksOrigin().relative)
     if (isExperimentalFeatureEnabled(ExperimentalFeature.SHORT_SESSION_INVESTIGATION)) {
@@ -112,6 +123,15 @@ export function startSessionManager(
 
     onReady({
       findSession: (startTime, options) => sessionContextHistory.find(startTime, options),
+      findTrackedSession: (startTime, options) => {
+        const session = sessionContextHistory.find(startTime, options)
+
+        if (!session || session.id === 'invalid' || !isSampled(session.id, configuration.sessionSampleRate)) {
+          return
+        }
+
+        return session
+      },
       renewObservable,
       expireObservable,
       sessionStateUpdateObservable: sessionStore.sessionStateUpdateObservable,
@@ -139,6 +159,29 @@ export function startSessionManager(
       anonymousId: session.anonymousId,
     }
   }
+}
+
+export function startSessionManagerStub(onReady: (sessionManager: SessionManager) => void): void {
+  const stubSessionId = generateUUID()
+  let sessionContext: SessionContext = {
+    id: stubSessionId,
+    isReplayForced: false,
+    anonymousId: undefined,
+  }
+  onReady({
+    findSession: () => sessionContext,
+    findTrackedSession: () => sessionContext,
+    renewObservable: new Observable(),
+    expireObservable: new Observable(),
+    sessionStateUpdateObservable: new Observable(),
+    expire: noop,
+    updateSessionState: (state) => {
+      sessionContext = {
+        ...sessionContext,
+        ...state,
+      }
+    },
+  })
 }
 
 export function stopSessionManager() {
