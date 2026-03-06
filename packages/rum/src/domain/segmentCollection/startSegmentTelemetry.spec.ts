@@ -3,6 +3,7 @@ import { addExperimentalFeatures, ExperimentalFeature, Observable } from '@datad
 import type { MockTelemetry } from '@datadog/browser-core/test'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { startMockTelemetry } from '../../../../core/test'
+import { isFullSnapshotChangeRecordsEnabled, isIncrementalSnapshotChangeRecordsEnabled } from '../record'
 import { startSegmentTelemetry } from './startSegmentTelemetry'
 import type { ReplayPayload } from './buildReplayPayload'
 
@@ -49,13 +50,16 @@ describe('segmentTelemetry', () => {
     registerCleanupTask(stopSegmentTelemetry)
   }
 
-  for (const enableChangeRecords of [true, false] as const) {
-    const titlePrefix = enableChangeRecords ? 'with change records' : 'without change records'
-
-    it(`${titlePrefix}, should collect segment telemetry for all full snapshots`, async () => {
-      if (enableChangeRecords) {
-        addExperimentalFeatures([ExperimentalFeature.USE_CHANGE_RECORDS])
+  for (const [featureFlag, description] of [
+    [undefined, 'V1 records enabled'],
+    [ExperimentalFeature.USE_CHANGE_RECORDS, 'full snapshot Change records enabled'],
+    [ExperimentalFeature.USE_INCREMENTAL_CHANGE_RECORDS, 'incremental snapshot Change records enabled'],
+  ] as const) {
+    it(`with ${description}, should collect segment telemetry for all full snapshots`, async () => {
+      if (featureFlag) {
+        addExperimentalFeatures([featureFlag])
       }
+
       setupSegmentTelemetryCollection()
 
       for (const result of ['failure', 'queue-full', 'success'] as const) {
@@ -73,8 +77,8 @@ describe('segmentTelemetry', () => {
                 sum: 500,
               },
               encoding: {
-                fullSnapshot: enableChangeRecords ? 'change' : 'v1',
-                incrementalSnapshot: 'v1',
+                fullSnapshot: isFullSnapshotChangeRecordsEnabled() ? 'change' : 'v1',
+                incrementalSnapshot: isIncrementalSnapshotChangeRecordsEnabled() ? 'change' : 'v1',
               },
               isFullSnapshot: true,
               ongoingRequests: {
