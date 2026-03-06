@@ -9,12 +9,13 @@ import { BrowserLogsManager, deleteAllCookies, getBrowserName, sendXhr } from '.
 import { DEFAULT_LOGS_CONFIGURATION, DEFAULT_RUM_CONFIGURATION } from '../helpers/configuration'
 import { validateRumFormat } from '../helpers/validation'
 import type { BrowserConfiguration } from '../../../browsers.conf'
+import { NEXTJS_APP_ROUTER_PORT } from '../helpers/playwright'
 import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
 import { getTestServers, waitForServersIdle } from './httpServers'
-import type { CallerLocation, SetupFactory, SetupOptions } from './pageSetups'
-import { html, DEFAULT_SETUPS, npmSetup, reactSetup } from './pageSetups'
+import type { CallerLocation, SetupFactory, SetupOptions, UrlHook } from './pageSetups'
+import { html, DEFAULT_SETUPS, npmSetup, reactSetup, formatConfiguration } from './pageSetups'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
 import type { Extension } from './createExtension'
@@ -50,7 +51,7 @@ class TestBuilder {
   private remoteConfiguration?: RemoteConfiguration = undefined
   private head = ''
   private body = ''
-  private basePath = ''
+  private baseUrlHooks: UrlHook[] = []
   private eventBridge = false
   private setups: Array<{ factory: SetupFactory; name?: string }> = DEFAULT_SETUPS
   private testFixture: typeof test = test
@@ -59,7 +60,6 @@ class TestBuilder {
     logsConfiguration?: LogsInitConfiguration
   } = {}
   private worker: Worker | undefined
-  private hostName?: string
 
   constructor(
     private title: string,
@@ -111,8 +111,26 @@ class TestBuilder {
     return this
   }
 
+  withNextjsApp() {
+    this.baseUrlHooks.push((baseUrl, servers, { rum, context }) => {
+      baseUrl.port = NEXTJS_APP_ROUTER_PORT
+      if (rum) {
+        baseUrl.searchParams.set('rum-config', formatConfiguration(rum, servers))
+      }
+      if (context) {
+        baseUrl.searchParams.set('rum-context', JSON.stringify(context))
+      }
+    })
+    this.setups = [{ factory: () => '' }]
+    return this
+  }
+
   withBasePath(newBasePath: string) {
-    this.basePath = newBasePath
+    this.baseUrlHooks.push((baseUrl) => {
+      const parsed = new URL(newBasePath, baseUrl.href)
+      baseUrl.pathname = parsed.pathname
+      baseUrl.search = parsed.search
+    })
     return this
   }
 
@@ -141,7 +159,7 @@ class TestBuilder {
     const options = worker.importScripts ? '{}' : '{ type: "module" }'
 
     // Service workers require HTTPS or localhost due to browser security restrictions
-    this.hostName = 'localhost'
+    this.withHostName('localhost')
     this.withBody(html`
       <script>
         if (!window.myServiceWorker && 'serviceWorker' in navigator) {
@@ -156,7 +174,9 @@ class TestBuilder {
   }
 
   withHostName(hostName: string) {
-    this.hostName = hostName
+    this.baseUrlHooks.push((baseUrl) => {
+      baseUrl.hostname = hostName
+    })
     return this
   }
 
@@ -171,14 +191,13 @@ class TestBuilder {
       logsInit: this.logsInit,
       useRumSlim: false,
       eventBridge: this.eventBridge,
-      basePath: this.basePath,
+      baseUrlHooks: this.baseUrlHooks,
       context: {
         run_id: getRunId(),
         test_name: '<PLACEHOLDER>',
       },
       testFixture: this.testFixture,
       extension: this.extension,
-      hostName: this.hostName,
       worker: this.worker,
       callerLocation: this.callerLocation,
     }
@@ -279,8 +298,12 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     addTag('test.browserName', browserName)
     addTestOptimizationTags(test.info().project.metadata as BrowserConfiguration)
 
+    const servers = await getTestServers()
+    const baseUrl = new URL(servers.base.origin)
+    setupOptions.baseUrlHooks.forEach((hook) => hook(baseUrl, servers, setupOptions))
+
     test.skip(
-      !!setupOptions.hostName && setupOptions.hostName.endsWith('.localhost') && isBrowserStack,
+      baseUrl.hostname.endsWith('.localhost') && isBrowserStack,
       // Skip those tests on BrowserStack because it doesn't support localhost subdomains. As a
       // workaround we could use normal domains and use either:
       // * the BrowserStack proxy capabilities -> not tried, but this sounds more complex because
@@ -296,10 +319,9 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     const title = test.info().titlePath.join(' > ')
     setupOptions.context.test_name = title
 
-    const servers = await getTestServers()
     const browserLogs = new BrowserLogsManager()
 
-    const testContext = createTestContext(servers, page, context, browserLogs, browserName, setupOptions)
+    const testContext = createTestContext(servers, page, context, browserLogs, browserName, baseUrl.href)
     servers.intake.bindServerApp(createIntakeServerApp(testContext.intakeRegistry))
 
     const setup = factory(setupOptions, servers)
@@ -325,16 +347,10 @@ function createTestContext(
   browserContext: BrowserContext,
   browserLogsManager: BrowserLogsManager,
   browserName: TestContext['browserName'],
-  { basePath, hostName }: SetupOptions
+  baseUrl: string
 ): TestContext {
-  const baseUrl = new URL(basePath, servers.base.origin)
-
-  if (hostName) {
-    baseUrl.hostname = hostName
-  }
-
   return {
-    baseUrl: baseUrl.href,
+    baseUrl,
     intakeRegistry: new IntakeRegistry(),
     servers,
     page,

@@ -20,6 +20,7 @@ runMain(async () => {
   buildApp('test/apps/react-shopist-like')
   await buildReactRouterv7App()
   await buildExtensions()
+  buildApp('test/apps/nextjs-app-router')
 
   printLog('Test apps and extensions built successfully.')
 })

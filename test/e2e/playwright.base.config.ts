@@ -30,14 +30,26 @@ export const config: Config = {
     trace: isCi ? 'off' : 'retain-on-failure',
   },
 
-  webServer: isLocal
-    ? {
-        stdout: 'pipe',
-        cwd: path.join(__dirname, '../..'),
-        command: 'yarn dev',
-        wait: {
-          stdout: /Server listening on port (?<dev_server_port>\d+)/,
-        },
-      }
-    : undefined,
+  webServer: [
+    ...(isLocal
+      ? [
+          {
+            stdout: 'pipe' as const,
+            cwd: path.join(__dirname, '../..'),
+            command: 'yarn dev',
+            wait: {
+              stdout: /Server listening on port (?<dev_server_port>\d+)/,
+            },
+          },
+        ]
+      : []),
+    {
+      stdout: 'pipe' as const,
+      cwd: path.join(__dirname, '../apps/nextjs-app-router'),
+      command: isLocal ? 'yarn dev' : 'yarn start',
+      wait: {
+        stdout: /- Local:\s+http:\/\/localhost:(?<nextjs_app_router_port>\d+)/,
+      },
+    },
+  ],
 }
