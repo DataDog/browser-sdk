@@ -342,16 +342,24 @@ function ViewDescription({ event }: { event: RumViewEvent }) {
   )
 }
 
-// Keys always present in view_update.view due to assemble hooks (not part of the diff)
-const VIEW_UPDATE_ASSEMBLE_KEYS = new Set(['id', 'url', 'name', 'referrer'])
+// view.id is the only field always present in a view_update diff (routing field)
+const VIEW_UPDATE_REQUIRED_KEYS = new Set(['id'])
 
 function ViewUpdateDescription({ event }: { event: RumViewUpdateEvent }) {
-  const changedFieldCount = Object.keys(event.view).filter((k) => !VIEW_UPDATE_ASSEMBLE_KEYS.has(k)).length
-  const viewName = getViewName(event.view)
+  const changedFieldCount = event.view
+    ? Object.keys(event.view).filter((k) => !VIEW_UPDATE_REQUIRED_KEYS.has(k)).length
+    : 0
+  const viewName = event.view ? (event.view.name || (event.view.url && new URL(event.view.url).pathname)) : undefined
 
   return (
     <>
-      View update <Emphasis>v{event._dd.document_version}</Emphasis> · <Emphasis>{viewName}</Emphasis>
+      View update <Emphasis>v{event._dd.document_version}</Emphasis>
+      {viewName && (
+        <>
+          {' '}
+          · <Emphasis>{viewName}</Emphasis>
+        </>
+      )}
       {changedFieldCount > 0 && (
         <>
           {' '}
