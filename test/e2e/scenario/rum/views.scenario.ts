@@ -111,6 +111,20 @@ test.describe('rum views', () => {
         // Should reflect the second (overwritten) value (~500ms), not the first (~200ms)
         expect(viewEvent!.view.loading_time).toBeGreaterThanOrEqual(500 * 1e6)
       })
+
+    createTest('reports manual loading time when called before init')
+      .withRum()
+      .withRumInit((configuration) => {
+        window.DD_RUM!.setViewLoadingTime()
+        window.DD_RUM!.init(configuration)
+      })
+      .withBody(SPINNER)
+      .run(async ({ flushEvents, intakeRegistry }) => {
+        await flushEvents()
+        const viewEvent = intakeRegistry.rumViewEvents.at(-1)
+        expect(viewEvent).toBeDefined()
+        expect(viewEvent!.view.loading_time).toBeGreaterThanOrEqual(0)
+      })
   })
 
   createTest('send performance first input delay')
