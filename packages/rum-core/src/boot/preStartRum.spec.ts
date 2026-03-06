@@ -624,7 +624,7 @@ describe('preStartRum', () => {
       doStartRumSpy.and.returnValue({ setLoadingTime: setLoadingTimeSpy } as unknown as StartRumResult)
 
       clock.tick(10)
-      strategy.setLoadingTime()
+      strategy.setLoadingTime(clock.timeStamp(10))
 
       clock.tick(20)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
