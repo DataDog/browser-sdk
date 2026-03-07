@@ -94,9 +94,15 @@ test.describe('nextjs pages router', () => {
 
       await flushEvents()
 
-      const userViews = intakeRegistry.rumViewEvents.filter((e) => e.view.name === '/user/[id]')
-      expect(userViews[0].view.url).toContain('/user/42')
-      expect(userViews[1].view.url).toContain('/user/999')
+      const user42View = intakeRegistry.rumViewEvents.find(
+        (e) => e.view.name === '/user/[id]' && e.view.url?.includes('/user/42')
+      )
+      const user999View = intakeRegistry.rumViewEvents.find(
+        (e) => e.view.name === '/user/[id]' && e.view.url?.includes('/user/999')
+      )
+      expect(user42View).toBeDefined()
+      expect(user999View).toBeDefined()
+      expect(user999View?.view.referrer).toContain('/user/42')
     })
 })
 
