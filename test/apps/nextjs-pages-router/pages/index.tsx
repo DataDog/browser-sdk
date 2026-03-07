@@ -9,7 +9,7 @@ export default function HomePage() {
           <Link href="/user/42?admin=true">Go to User 42</Link>
         </li>
         <li>
-          <Link href="/guides/getting-started/intro">Go to Guides</Link>
+          <Link href="/guides/123">Go to Guides 123</Link>
         </li>
       </ul>
     </div>
