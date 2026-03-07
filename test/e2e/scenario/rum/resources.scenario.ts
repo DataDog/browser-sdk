@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import type { RumResourceEvent } from '@datadog/browser-rum'
+import { isContentTypeAvailableInPerformanceEntry } from 'test/e2e/lib/helpers/browser'
 import type { IntakeRegistry } from '../../lib/framework'
 import { createTest, html } from '../../lib/framework'
 
@@ -268,6 +269,66 @@ test.describe('rum resources', () => {
       expect(resourceEvents[1]).toBeTruthy()
       expect(resourceEvents[1]?.resource.size).toBeDefined()
     })
+
+  test.describe('resource response content-type', () => {
+    createTest('collect resource response content-type for static resources')
+      .withRum()
+      .withHead(html`<link rel="stylesheet" href="/empty.css" />`)
+      .run(async ({ intakeRegistry, flushEvents, browserName }) => {
+        test.skip(
+          isContentTypeAvailableInPerformanceEntry(test, browserName) === false,
+          'contentType is not available in this browser'
+        )
+
+        await flushEvents()
+
+        const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.url.includes('empty.css'))
+        expect(resourceEvent).toBeDefined()
+        expect(resourceEvent!.resource.response).toBeDefined()
+        expect(resourceEvent!.resource.response!.headers).toBeDefined()
+        expect(resourceEvent!.resource.response!.headers!['content-type']).toBe('text/css')
+      })
+
+    createTest('collect resource response content-type for XHR resources')
+      .withRum()
+      .run(async ({ intakeRegistry, flushEvents, page }) => {
+        test.skip(true, 'not implemented yet')
+
+        await page.evaluate(
+          () =>
+            new Promise<void>((resolve) => {
+              const xhr = new XMLHttpRequest()
+              xhr.addEventListener('loadend', () => resolve())
+              xhr.open('GET', '/ok')
+              xhr.send()
+            })
+        )
+
+        await flushEvents()
+
+        const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.type === 'xhr')
+        expect(resourceEvent).toBeDefined()
+        expect(resourceEvent!.resource.response).toBeDefined()
+        expect(resourceEvent!.resource.response!.headers).toBeDefined()
+        expect(resourceEvent!.resource.response!.headers!['content-type']).toBe('text/plain')
+      })
+
+    createTest('collect resource response content-type for fetch resources')
+      .withRum()
+      .run(async ({ intakeRegistry, flushEvents, page }) => {
+        test.skip(true, 'not implemented yet')
+
+        await page.evaluate(() => fetch('/ok'))
+
+        await flushEvents()
+
+        const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.type === 'fetch')
+        expect(resourceEvent).toBeDefined()
+        expect(resourceEvent!.resource.response).toBeDefined()
+        expect(resourceEvent!.resource.response!.headers).toBeDefined()
+        expect(resourceEvent!.resource.response!.headers!['content-type']).toBe('text/plain')
+      })
+  })
 
   test.describe('support XHRs with same XMLHttpRequest instance', () => {
     createTest('track XHRs when calling requests one after another')

@@ -1,4 +1,13 @@
-import type { BrowserContext, Page } from '@playwright/test'
+import type {
+  BrowserContext,
+  Page,
+  PlaywrightTestArgs,
+  PlaywrightTestOptions,
+  PlaywrightWorkerArgs,
+  PlaywrightWorkerOptions,
+  TestType,
+} from '@playwright/test'
+import type { BrowserConfiguration } from 'test/browsers.conf'
 import { addTag } from './tags'
 
 export function getBrowserName(name: string) {
@@ -89,4 +98,14 @@ export async function sendXhr(page: Page, url: string, headers: string[][] = [])
     throw new Error(`sendXhr: request to ${url} failed`)
   }
   return result.response
+}
+
+export function isContentTypeAvailableInPerformanceEntry(
+  test: TestType<PlaywrightTestArgs & PlaywrightTestOptions, PlaywrightWorkerArgs & PlaywrightWorkerOptions>,
+  browserName: ReturnType<typeof getBrowserName>
+) {
+  const browserVersion = (test.info().project.metadata as BrowserConfiguration).version
+
+  // Currently our CI only runs Firefox 119, so this test only runs locally with yarn test:e2e --project=firefox
+  return browserName === 'firefox' && Number(browserVersion) >= 129
 }

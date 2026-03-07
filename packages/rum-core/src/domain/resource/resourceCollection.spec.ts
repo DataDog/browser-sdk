@@ -16,7 +16,7 @@ import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { RequestCompleteEvent } from '../requestCollection'
 import type { RumConfiguration } from '../configuration'
 import { validateAndBuildRumConfiguration } from '../configuration'
-import type { RumPerformanceEntry } from '../../browser/performanceObservable'
+import type { RumPerformanceEntry, RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import { createSpanIdentifier, createTraceIdentifier } from '../tracing/identifier'
 import { startResourceCollection } from './resourceCollection'
@@ -87,6 +87,7 @@ describe('resourceCollection', () => {
         render_blocking_status: 'blocking',
         method: undefined,
         graphql: undefined,
+        response: undefined,
       },
       type: RumEventType.RESOURCE,
       _dd: {
@@ -134,6 +135,7 @@ describe('resourceCollection', () => {
         download: { duration: 100000000 as ServerDuration, start: 0 as ServerDuration },
         first_byte: { duration: 0 as ServerDuration, start: 0 as ServerDuration },
         graphql: undefined,
+        response: undefined,
       },
       type: RumEventType.RESOURCE,
       _dd: {
@@ -273,6 +275,41 @@ describe('resourceCollection', () => {
     })
   })
 
+  describe('HTTP response metadata enrichment', () => {
+    it('should extract content-type from performance entry when available', () => {
+      setupResourceCollection()
+
+      notifyPerformanceEntries([
+        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+          contentType: 'image/png',
+        }),
+      ])
+      runTasks()
+
+      expect(rawRumEvents[0].rawRumEvent).toEqual(
+        jasmine.objectContaining({
+          resource: jasmine.objectContaining({
+            response: {
+              headers: {
+                'content-type': 'image/png',
+              },
+            },
+          }),
+        })
+      )
+    })
+
+    it('should not include response when no content-type is available', () => {
+      setupResourceCollection()
+
+      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {})])
+      runTasks()
+
+      const resourceEvent = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+      expect(resourceEvent.resource.response).toBeUndefined()
+    })
+  })
+
   describe('with trackEarlyRequests enabled', () => {
     it('creates a resource from a performance entry without a matching request', () => {
       setupResourceCollection({ trackResources: true, trackEarlyRequests: true })
@@ -305,6 +342,7 @@ describe('resourceCollection', () => {
           download: { duration: 100000000 as ServerDuration, start: 0 as ServerDuration },
           first_byte: { duration: 0 as ServerDuration, start: 0 as ServerDuration },
           graphql: undefined,
+          response: undefined,
         },
         type: RumEventType.RESOURCE,
         _dd: {
@@ -420,6 +458,7 @@ describe('resourceCollection', () => {
         first_byte: { duration: 0 as ServerDuration, start: 0 as ServerDuration },
         url: 'https://resource.com/valid',
         graphql: undefined,
+        response: undefined,
       },
       type: RumEventType.RESOURCE,
       _dd: {
@@ -616,7 +655,12 @@ describe('resourceCollection', () => {
   function notifyRequest({
     request,
     notifyPerformanceEntry = true,
-  }: { request?: Partial<RequestCompleteEvent>; notifyPerformanceEntry?: boolean } = {}) {
+    performanceEntryOverrides,
+  }: {
+    request?: Partial<RequestCompleteEvent>
+    notifyPerformanceEntry?: boolean
+    performanceEntryOverrides?: Partial<RumPerformanceResourceTiming>
+  } = {}) {
     const requestCompleteEvent = {
       duration: 100 as Duration,
       method: 'GET',
@@ -635,6 +679,7 @@ describe('resourceCollection', () => {
       notifyPerformanceEntries([
         createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
           initiatorType: requestCompleteEvent.type === RequestType.FETCH ? 'fetch' : 'xmlhttprequest',
+          ...performanceEntryOverrides,
         }),
       ])
     }
