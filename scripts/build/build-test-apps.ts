@@ -22,6 +22,7 @@ runMain(async () => {
   await buildReactRouterv7App()
   await buildExtensions()
   buildApp('test/apps/nextjs-app-router')
+  buildApp('test/apps/nextjs-pages-router')
 
   printLog('Test apps and extensions built successfully.')
 })

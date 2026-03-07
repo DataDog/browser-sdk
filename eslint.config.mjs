@@ -32,6 +32,7 @@ export default tseslint.config(
       'test/apps/react-shopist-like',
       'test/apps/microfrontend',
       'test/apps/nextjs-app-router',
+      'test/apps/nextjs-pages-router',
       'sandbox',
       'coverage',
       'rum-events-format',
