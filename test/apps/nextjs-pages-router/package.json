@@ -2,9 +2,9 @@
   "name": "nextjs-pages-router",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 0",
     "build": "next build",
-    "start": "next start"
+    "start": "next start -p 0"
   },
   "dependencies": {
     "@datadog/browser-rum": "file:../../../packages/rum/package.tgz",

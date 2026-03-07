@@ -1,12 +1,14 @@
 import { test, expect } from '@playwright/test'
 import { createTest } from '../lib/framework'
 ;[
-  { name: 'nextjs app router', withApp: (t: ReturnType<typeof createTest>) => t.withNextjsApp() },
-  { name: 'nextjs pages router', withApp: (t: ReturnType<typeof createTest>) => t.withNextjsPagesApp() },
-].forEach(({ name, withApp }) => {
+  { name: 'nextjs app router', router: 'app' as const },
+  { name: 'nextjs pages router', router: 'pages' as const },
+].forEach(({ name, router }) => {
   test.describe(name, () => {
-    withApp(createTest('should track initial home view').withRum()).run(
-      async ({ flushEvents, intakeRegistry, page }) => {
+    createTest('should track initial home view')
+      .withRum()
+      .withNextjsApp(router)
+      .run(async ({ flushEvents, intakeRegistry, page }) => {
         await page.click('text=Go to User 42')
         await page.waitForURL('**/user/42?admin=true')
 
@@ -15,11 +17,12 @@ import { createTest } from '../lib/framework'
         const viewEvents = intakeRegistry.rumViewEvents
         const homeView = viewEvents.find((e) => e.view.name === '/' && e.view.loading_type === 'initial_load')
         expect(homeView).toBeDefined()
-      }
-    )
+      })
 
-    withApp(createTest('should normalize dynamic routes and preserve real URLs and referrers').withRum()).run(
-      async ({ page, flushEvents, intakeRegistry, baseUrl }) => {
+    createTest('should normalize dynamic routes and preserve real URLs and referrers')
+      .withRum()
+      .withNextjsApp(router)
+      .run(async ({ page, flushEvents, intakeRegistry, baseUrl }) => {
         const baseOrigin = new URL(baseUrl).origin
 
         // Home → Guides → Home → User (link includes ?admin=true) → Home
@@ -52,11 +55,12 @@ import { createTest } from '../lib/framework'
         expect(userView?.view.loading_type).toBe('route_change')
         expect(userView?.view.url).toBe(`${baseOrigin}/user/42?admin=true`)
         expect(userView?.view.referrer).toBe(`${baseOrigin}/`)
-      }
-    )
+      })
 
-    withApp(createTest('should track SPA navigation with loading_time').withRum()).run(
-      async ({ page, flushEvents, intakeRegistry }) => {
+    createTest('should track SPA navigation with loading_time')
+      .withRum()
+      .withNextjsApp(router)
+      .run(async ({ page, flushEvents, intakeRegistry }) => {
         await page.waitForLoadState('networkidle')
         await page.click('text=Go to User 42')
         await page.waitForURL('**/user/42?admin=true')
@@ -72,15 +76,14 @@ import { createTest } from '../lib/framework'
         expect(homeView).toBeDefined()
         expect(homeView?.view.loading_time).toBeDefined()
         expect(homeView?.view.loading_time).toBeGreaterThan(0)
-      }
-    )
+      })
   })
 })
 
 test.describe('nextjs app router', () => {
   createTest('should not be affected by parallel routes')
     .withRum()
-    .withNextjsApp()
+    .withNextjsApp('app')
     .run(async ({ page, flushEvents, intakeRegistry }) => {
       // The @sidebar parallel route renders alongside the main content
       // but should not affect view names or URL structure
