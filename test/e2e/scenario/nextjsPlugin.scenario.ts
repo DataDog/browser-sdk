@@ -80,6 +80,26 @@ import { createTest } from '../lib/framework'
   })
 })
 
+test.describe('nextjs pages router', () => {
+  createTest('should track navigations between different concrete URLs of the same dynamic route')
+    .withRum()
+    .withNextjsApp('pages')
+    .run(async ({ page, flushEvents, intakeRegistry }) => {
+      await page.click('text=Go to User 42')
+      await page.waitForURL('**/user/42?admin=true')
+
+      // Navigate directly to another user — same route pattern, different URL
+      await page.click('text=Go to User 999')
+      await page.waitForURL('**/user/999?admin=true')
+
+      await flushEvents()
+
+      const userViews = intakeRegistry.rumViewEvents.filter((e) => e.view.name === '/user/[id]')
+      expect(userViews[0].view.url).toContain('/user/42')
+      expect(userViews[1].view.url).toContain('/user/999')
+    })
+})
+
 test.describe('nextjs app router', () => {
   createTest('should not be affected by parallel routes')
     .withRum()
