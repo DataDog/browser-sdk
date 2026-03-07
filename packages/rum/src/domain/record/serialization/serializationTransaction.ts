@@ -12,6 +12,7 @@ import type {
   AddShadowRootNodeChange,
   AddTextNodeChange,
   AttachedStyleSheetsChange,
+  AttributeChange,
   BrowserRecord,
   InsertionPoint,
   MediaInteractionType,
@@ -156,6 +157,12 @@ export interface ChangeSerializationTransaction {
    */
   attachStyleSheets(nodeId: NodeId, sheetIds: StyleSheetId[]): void
 
+  /** Remove a node from the document. */
+  removeNode(nodeId: NodeId): void
+
+  /** Set a node's attributes to the given values. */
+  setAttributes(change: AttributeChange): void
+
   /** Set the media playback state of an <audio> or <video> element. */
   setMediaPlaybackState(nodeId: NodeId, state: MediaInteractionType): void
 
@@ -164,6 +171,9 @@ export interface ChangeSerializationTransaction {
 
   /** Set the given node's size in CSS pixels. */
   setSize(nodeId: NodeId, width: number, height: number): void
+
+  /** Set the given node's text content. */
+  setText(nodeId: NodeId, content: string): void
 
   /** The kind of serialization being performed in this transaction. */
   kind: SerializationKind
@@ -206,14 +216,23 @@ export function serializeChangesInTransaction(
       }
       encoder.add(ChangeType.AttachedStyleSheets, change)
     },
+    removeNode(nodeId: NodeId): void {
+      encoder.add(ChangeType.RemoveNode, nodeId)
+    },
+    setAttributes(change: AttributeChange): void {
+      encoder.add(ChangeType.Attribute, change)
+    },
     setMediaPlaybackState(nodeId: NodeId, state: MediaInteractionType): void {
       encoder.add(ChangeType.MediaPlaybackState, [nodeId, state])
     },
-    setScrollPosition(nodeId: NodeId, x: number, y: number) {
+    setScrollPosition(nodeId: NodeId, x: number, y: number): void {
       encoder.add(ChangeType.ScrollPosition, [nodeId, x, y])
     },
-    setSize(nodeId: NodeId, width: number, height: number) {
+    setSize(nodeId: NodeId, width: number, height: number): void {
       encoder.add(ChangeType.Size, [nodeId, width, height])
+    },
+    setText(nodeId: NodeId, content: string): void {
+      encoder.add(ChangeType.Text, [nodeId, content])
     },
     kind,
     scope,
