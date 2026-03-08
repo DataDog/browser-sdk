@@ -56,6 +56,20 @@ function createEndpointUrlWithParametersBuilder(
   return (parameters) => `https://${host}${path}?${parameters}`
 }
 
+/**
+ * Convert a Datadog site to its intake host domain.
+ * For use by packages that only need site-based host resolution without full InitConfiguration.
+ */
+export function buildSiteHost(site: string = INTAKE_SITE_US1): string {
+  if (site === INTAKE_SITE_FED_STAGING) {
+    return `http-intake.logs.${site}`
+  }
+
+  const domainParts = site.split('.')
+  const extension = domainParts.pop()
+  return `browser-intake-${domainParts.join('-')}.${extension!}`
+}
+
 export function buildEndpointHost(
   trackType: TrackType,
   initConfiguration: InitConfiguration & { usePciIntake?: boolean }
@@ -70,13 +84,7 @@ export function buildEndpointHost(
     return `${internalAnalyticsSubdomain}.${INTAKE_SITE_US1}`
   }
 
-  if (site === INTAKE_SITE_FED_STAGING) {
-    return `http-intake.logs.${site}`
-  }
-
-  const domainParts = site.split('.')
-  const extension = domainParts.pop()
-  return `browser-intake-${domainParts.join('-')}.${extension!}`
+  return buildSiteHost(site)
 }
 
 /**
