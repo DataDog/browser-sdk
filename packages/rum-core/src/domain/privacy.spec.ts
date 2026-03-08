@@ -10,9 +10,11 @@ import {
   reducePrivacyLevel,
   getNodePrivacyLevel,
   shouldMaskNode,
+  shouldMaskAttribute,
   maskDisallowedTextContent,
 } from './privacy'
 import { ACTION_NAME_MASK } from './action/actionNameConstants'
+import { mockRumConfiguration } from '../../test'
 
 describe('getNodePrivacyLevel', () => {
   it('returns the element privacy mode if it has one', () => {
@@ -486,6 +488,58 @@ describe('shouldMaskNode', () => {
         })
       })
     })
+  })
+})
+
+describe('shouldMaskAttribute', () => {
+  it('does not mask attributes in attrUnmaskAllowlist when privacy level is MASK', () => {
+    const configuration = mockRumConfiguration({ attrUnmaskAllowlist: ['title', 'data-testid'] })
+    expect(
+      shouldMaskAttribute('DIV', 'title', 'some title', NodePrivacyLevel.MASK, configuration)
+    ).toBeFalse()
+    expect(
+      shouldMaskAttribute('DIV', 'data-testid', 'my-element', NodePrivacyLevel.MASK, configuration)
+    ).toBeFalse()
+  })
+
+  it('does not mask attributes in attrUnmaskAllowlist when privacy level is MASK_UNLESS_ALLOWLISTED', () => {
+    const configuration = mockRumConfiguration({ attrUnmaskAllowlist: ['alt', 'placeholder'] })
+    expect(
+      shouldMaskAttribute('IMG', 'alt', 'description', NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED, configuration)
+    ).toBeFalse()
+    expect(
+      shouldMaskAttribute('INPUT', 'placeholder', 'Enter text', NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED, configuration)
+    ).toBeFalse()
+  })
+
+  it('masks attributes not in allowlist according to normal rules when privacy level is MASK', () => {
+    const configuration = mockRumConfiguration({ attrUnmaskAllowlist: ['data-allowlisted'] })
+    expect(shouldMaskAttribute('DIV', 'title', 'secret', NodePrivacyLevel.MASK, configuration)).toBeTrue()
+    expect(shouldMaskAttribute('A', 'href', 'https://example.com', NodePrivacyLevel.MASK, configuration)).toBeTrue()
+    expect(
+      shouldMaskAttribute('DIV', 'data-allowlisted', 'value', NodePrivacyLevel.MASK, configuration)
+    ).toBeFalse()
+  })
+
+  it('preserves default masking behavior when attrUnmaskAllowlist is empty', () => {
+    const configuration = mockRumConfiguration({ attrUnmaskAllowlist: [] })
+    expect(shouldMaskAttribute('DIV', 'title', 'secret', NodePrivacyLevel.MASK, configuration)).toBeTrue()
+    expect(shouldMaskAttribute('IMG', 'alt', 'desc', NodePrivacyLevel.MASK, configuration)).toBeTrue()
+    expect(shouldMaskAttribute('A', 'href', 'https://x.com', NodePrivacyLevel.MASK, configuration)).toBeTrue()
+  })
+
+  it('does not mask standard sensitive attributes when they are in allowlist', () => {
+    const configuration = mockRumConfiguration({
+      attrUnmaskAllowlist: ['title', 'alt', 'placeholder', 'aria-label', 'name', 'href', 'srcdoc', 'src'],
+    })
+    expect(shouldMaskAttribute('DIV', 'title', 'visible', NodePrivacyLevel.MASK, configuration)).toBeFalse()
+    expect(shouldMaskAttribute('IMG', 'alt', 'visible', NodePrivacyLevel.MASK, configuration)).toBeFalse()
+    expect(shouldMaskAttribute('INPUT', 'placeholder', 'visible', NodePrivacyLevel.MASK, configuration)).toBeFalse()
+    expect(shouldMaskAttribute('DIV', 'aria-label', 'visible', NodePrivacyLevel.MASK, configuration)).toBeFalse()
+    expect(shouldMaskAttribute('INPUT', 'name', 'visible', NodePrivacyLevel.MASK, configuration)).toBeFalse()
+    expect(shouldMaskAttribute('A', 'href', 'https://example.com', NodePrivacyLevel.MASK, configuration)).toBeFalse()
+    expect(shouldMaskAttribute('IFRAME', 'srcdoc', '<p>html</p>', NodePrivacyLevel.MASK, configuration)).toBeFalse()
+    expect(shouldMaskAttribute('IMG', 'src', 'https://img.com/x.png', NodePrivacyLevel.MASK, configuration)).toBeFalse()
   })
 })
 
