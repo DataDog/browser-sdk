@@ -531,6 +531,7 @@ export type TelemetryCommonFeaturesUsage =
 /**
  * Schema of browser specific features usage
  */
+// [MANUAL] SetViewLoadingTime added pending upstream rum-events-format schema sync (https://github.com/DataDog/rum-events-format/pull/352)
 export type TelemetryBrowserFeaturesUsage =
   | StartSessionReplayRecording
   | StartDurationVital
@@ -540,10 +541,11 @@ export type TelemetryBrowserFeaturesUsage =
   | StopAction
   | StartResource
   | StopResource
+  | SetViewLoadingTime
 /**
  * Schema of mobile specific features usage
  */
-export type TelemetryMobileFeaturesUsage = AddViewLoadingTime | TrackWebView | AndroidNetworkInstrumentation
+export type TelemetryMobileFeaturesUsage = SetViewLoadingTime | TrackWebView | AndroidNetworkInstrumentation
 
 /**
  * Schema of common properties of Telemetry events
@@ -946,23 +948,17 @@ export interface StopResource {
   feature: 'stop-resource'
   [k: string]: unknown
 }
-export interface AddViewLoadingTime {
+export interface SetViewLoadingTime {
   /**
-   * addViewLoadingTime API
+   * setViewLoadingTime API
    */
-  feature: 'addViewLoadingTime'
+  // [MANUAL] Updated pending rum-events-format PR #352 (https://github.com/DataDog/rum-events-format/pull/352)
+  feature: 'set-view-loading-time'
   /**
-   * Whether the view is not available
+   * Whether the overwrite option was passed
    */
-  no_view: boolean
-  /**
-   * Whether the available view is not active
-   */
-  no_active_view: boolean
-  /**
-   * Whether the loading time was overwritten
-   */
-  overwritten: boolean
+  // [MANUAL] Added pending rum-events-format PR #352 (https://github.com/DataDog/rum-events-format/pull/352)
+  overwrite: boolean
   [k: string]: unknown
 }
 export interface TrackWebView {

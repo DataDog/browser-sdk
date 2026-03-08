@@ -179,6 +179,8 @@ export function trackViews(
     addTiming: (name: string, time: RelativeTime | TimeStamp = timeStampNow()) => {
       currentView.addTiming(name, time)
     },
+    setLoadingTime: (callTimestamp?: TimeStamp, overwrite?: boolean) =>
+      currentView.setLoadingTime(callTimestamp, overwrite),
     startView: (options?: ViewOptions, startClocks?: ClocksState) => {
       currentView.end({ endClocks: startClocks })
       currentView = startNewView(ViewLoadingType.ROUTE_CHANGE, startClocks, options)
@@ -259,6 +261,7 @@ function newView(
     stop: stopCommonViewMetricsTracking,
     stopINPTracking,
     getCommonViewMetrics,
+    setLoadingTime: setLoadingTimeOnMetrics,
   } = trackCommonViewMetrics(
     lifeCycle,
     domMutationObservable,
@@ -378,6 +381,11 @@ function newView(
       const relativeTime = looksLikeRelativeTime(time) ? time : elapsed(startClocks.timeStamp, time)
       customTimings[sanitizeTiming(name)] = relativeTime
       scheduleViewUpdate()
+    },
+    setLoadingTime(callTimestamp?: TimeStamp, overwrite = false) {
+      if (setLoadingTimeOnMetrics(callTimestamp, overwrite)) {
+        scheduleViewUpdate()
+      }
     },
     setViewName(updatedName: string) {
       name = updatedName
