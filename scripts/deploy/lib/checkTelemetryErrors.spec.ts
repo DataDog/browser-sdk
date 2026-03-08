@@ -2,8 +2,6 @@ import assert from 'node:assert/strict'
 import path from 'node:path'
 import type { Mock } from 'node:test'
 import { afterEach, before, describe, it, mock } from 'node:test'
-import type { Response, RequestInit } from 'undici'
-import type { fetchHandlingError } from 'scripts/lib/executionUtils.ts'
 import { mockModule } from './testHelpers.ts'
 import type { QueryResultBucket } from './checkTelemetryErrors.ts'
 
@@ -37,15 +35,14 @@ const TELEMETRY_ERROR_ON_SPECIFIC_MESSAGE_MOCK = [
 
 describe('check-telemetry-errors', () => {
   let checkTelemetryErrors: (datacenters: string[], version: string) => Promise<void>
-  const fetchHandlingErrorMock: Mock<typeof fetchHandlingError> = mock.fn()
+  const fetchMock: Mock<typeof globalThis.fetch> = mock.fn()
 
-  function mockFetchHandlingError(
-    responseBuckets: [QueryResultBucket[], QueryResultBucket[], QueryResultBucket[]]
-  ): void {
+  function mockFetch(responseBuckets: [QueryResultBucket[], QueryResultBucket[], QueryResultBucket[]]): void {
     for (let i = 0; i < 3; i++) {
-      fetchHandlingErrorMock.mock.mockImplementationOnce(
-        (_url: string, _options?: RequestInit) =>
+      fetchMock.mock.mockImplementationOnce(
+        () =>
           Promise.resolve({
+            ok: true,
             json: () =>
               Promise.resolve({
                 data: {
@@ -64,8 +61,9 @@ describe('check-telemetry-errors', () => {
       getTelemetryOrgApplicationKey: () => FAKE_APPLICATION_KEY,
     })
 
+    await mockModule('undici', { fetch: fetchMock })
+
     await mockModule(path.resolve(import.meta.dirname, '../../lib/executionUtils.ts'), {
-      fetchHandlingError: fetchHandlingErrorMock,
       timeout: mock.fn(() => Promise.resolve()),
     })
 
@@ -82,11 +80,11 @@ describe('check-telemetry-errors', () => {
   })
 
   afterEach(() => {
-    fetchHandlingErrorMock.mock.resetCalls()
+    fetchMock.mock.resetCalls()
   })
 
   it('should not throw an error if no telemetry errors are found for a given datacenter', async () => {
-    mockFetchHandlingError([
+    mockFetch([
       NO_TELEMETRY_ERRORS_MOCK,
       NO_TELEMETRY_ERRORS_ON_SPECIFIC_ORG_MOCK,
       NO_TELEMETRY_ERROR_ON_SPECIFIC_MESSAGE_MOCK,
@@ -96,7 +94,7 @@ describe('check-telemetry-errors', () => {
   })
 
   it('should throw an error if telemetry errors are found for a given datacenter', async () => {
-    mockFetchHandlingError([
+    mockFetch([
       TELEMETRY_ERRORS_MOCK,
       NO_TELEMETRY_ERRORS_ON_SPECIFIC_ORG_MOCK,
       NO_TELEMETRY_ERROR_ON_SPECIFIC_MESSAGE_MOCK,
@@ -105,7 +103,7 @@ describe('check-telemetry-errors', () => {
   })
 
   it('should throw an error if telemetry errors on specific org are found for a given datacenter', async () => {
-    mockFetchHandlingError([
+    mockFetch([
       NO_TELEMETRY_ERRORS_MOCK,
       TELEMETRY_ERRORS_ON_SPECIFIC_ORG_MOCK,
       NO_TELEMETRY_ERROR_ON_SPECIFIC_MESSAGE_MOCK,
@@ -118,7 +116,7 @@ describe('check-telemetry-errors', () => {
   })
 
   it('should throw an error if telemetry errors on specific message are found for a given datacenter', async () => {
-    mockFetchHandlingError([
+    mockFetch([
       NO_TELEMETRY_ERRORS_MOCK,
       NO_TELEMETRY_ERRORS_ON_SPECIFIC_ORG_MOCK,
       TELEMETRY_ERROR_ON_SPECIFIC_MESSAGE_MOCK,
@@ -132,9 +130,10 @@ describe('check-telemetry-errors', () => {
 
   it('should throw an error if the API returns an unexpected response format', async () => {
     // Mock first API call with invalid response (missing data.buckets)
-    fetchHandlingErrorMock.mock.mockImplementationOnce(
-      (_url: string, _options?: RequestInit) =>
+    fetchMock.mock.mockImplementationOnce(
+      () =>
         Promise.resolve({
+          ok: true,
           json: () =>
             Promise.resolve({
               error: 'Something went wrong',
@@ -148,9 +147,10 @@ describe('check-telemetry-errors', () => {
 
   it('should throw an error if buckets have invalid structure', async () => {
     // Mock first API call with invalid bucket structure (missing computes.c0)
-    fetchHandlingErrorMock.mock.mockImplementationOnce(
-      (_url: string, _options?: RequestInit) =>
+    fetchMock.mock.mockImplementationOnce(
+      () =>
         Promise.resolve({
+          ok: true,
           json: () =>
             Promise.resolve({
               data: {
