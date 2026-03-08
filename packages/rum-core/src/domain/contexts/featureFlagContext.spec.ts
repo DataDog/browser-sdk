@@ -28,7 +28,7 @@ describe('featureFlagContexts', () => {
   })
 
   describe('assemble hook', () => {
-    it('should add feature flag evaluations on VIEW and ERROR by default ', () => {
+    it('should add feature flag evaluations on VIEW, VIEW_UPDATE, and ERROR by default ', () => {
       lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
         startClocks: relativeToClocks(0 as RelativeTime),
       } as ViewCreatedEvent)
@@ -37,6 +37,10 @@ describe('featureFlagContexts', () => {
 
       const defaultViewAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
+        startTime: 0 as RelativeTime,
+      } as AssembleHookParams)
+      const defaultViewUpdateAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view_update' as any,
         startTime: 0 as RelativeTime,
       } as AssembleHookParams)
       const defaultErrorAttributes = hooks.triggerHook(HookNames.Assemble, {
@@ -50,6 +54,14 @@ describe('featureFlagContexts', () => {
           feature: 'foo',
         },
       })
+
+      expect(defaultViewUpdateAttributes).toEqual(
+        jasmine.objectContaining({
+          feature_flags: {
+            feature: 'foo',
+          },
+        })
+      )
 
       expect(defaultErrorAttributes).toEqual({
         type: 'error',

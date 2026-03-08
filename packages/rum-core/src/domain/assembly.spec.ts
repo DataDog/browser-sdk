@@ -336,6 +336,54 @@ describe('rum assembly', () => {
       })
     })
 
+    it('should not allow dismissing view_update events', () => {
+      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+        partialConfiguration: {
+          beforeSend: () => false,
+        },
+      })
+
+      const displaySpy = spyOn(display, 'warn')
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW_UPDATE),
+      })
+
+      expect(serverRumEvents.length).toBe(1)
+      expect(displaySpy).toHaveBeenCalledWith("Can't dismiss view events using beforeSend!")
+    })
+
+    it('should call beforeSend with view_update type and only the changed view fields', () => {
+      let capturedEvent: RumEvent | undefined
+      const { lifeCycle } = setupAssemblyTestWithDefaults({
+        partialConfiguration: {
+          beforeSend: (event) => {
+            capturedEvent = event
+          },
+        },
+      })
+
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW_UPDATE, {
+          view: {
+            action: { count: 5 },
+            error: { count: 2 },
+          },
+          _dd: { document_version: 3 },
+        }),
+      })
+
+      // beforeSend receives view_update, not view — the event type changed with partial_view_updates
+      expect(capturedEvent!.type).toBe('view_update')
+      // Only the specific changed fields from the raw diff are present
+      expect((capturedEvent!.view as any).action?.count).toBe(5)
+      expect((capturedEvent!.view as any).error?.count).toBe(2)
+      // Fields not in the diff are absent (unlike a full view event which would have all fields)
+      expect((capturedEvent!.view as any).is_active).toBeUndefined()
+      expect((capturedEvent!.view as any).resource).toBeUndefined()
+      // Session context is still fully populated by the assembly pipeline
+      expect(capturedEvent!.session.id).toBe('1234')
+    })
+
     it('should not dismiss when true is returned', () => {
       const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
         partialConfiguration: {

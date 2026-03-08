@@ -49,6 +49,12 @@ export function startRumAssembly(
       ...VIEW_MODIFIABLE_FIELD_PATHS,
       ...ROOT_MODIFIABLE_FIELD_PATHS,
     },
+    [RumEventType.VIEW_UPDATE]: {
+      'view.performance.lcp.resource_url': 'string',
+      ...USER_CUSTOMIZABLE_FIELD_PATHS,
+      ...VIEW_MODIFIABLE_FIELD_PATHS,
+      ...ROOT_MODIFIABLE_FIELD_PATHS,
+    },
     [RumEventType.ERROR]: {
       'error.message': 'string',
       'error.stack': 'string',
@@ -129,7 +135,8 @@ function shouldSend(
     const result = limitModification(event, modifiableFieldPathsByEvent[event.type], (event) =>
       beforeSend(event, domainContext)
     )
-    if (result === false && event.type !== RumEventType.VIEW) {
+    const eventType = event.type as RumEventType
+    if (result === false && eventType !== RumEventType.VIEW && eventType !== RumEventType.VIEW_UPDATE) {
       return false
     }
     if (result === false) {
