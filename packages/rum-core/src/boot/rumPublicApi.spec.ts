@@ -864,7 +864,8 @@ describe('rum public api', () => {
       rumPublicApi.stopResource('https://api.example.com/data', {
         type: ResourceType.XHR,
         statusCode: 200,
-        context: { responseSize: 1024 },
+        size: 1024,
+        context: { requestId: 'abc' },
       })
 
       expect(startResourceSpy).toHaveBeenCalledWith(
@@ -880,7 +881,8 @@ describe('rum public api', () => {
         jasmine.objectContaining({
           type: ResourceType.XHR,
           statusCode: 200,
-          context: { responseSize: 1024 },
+          size: 1024,
+          context: { requestId: 'abc' },
         })
       )
     })

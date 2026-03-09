@@ -749,6 +749,7 @@ export function makeRumPublicApi(
       strategy.stopResource(sanitize(url)!, {
         type: sanitize(options && options.type) as ResourceType | undefined,
         statusCode: options && options.statusCode,
+        size: options && options.size,
         context: sanitize(options && options.context) as Context,
         resourceKey: options && options.resourceKey,
       })
