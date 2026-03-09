@@ -7,10 +7,13 @@ import {
   HookNames,
   DISCARDED,
   buildTags,
+  SANITIZE_DEFAULT_MAX_CHARACTER_COUNT,
+  ONE_KIBI_BYTE,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { AssembledRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
+import type { RumResourceEvent } from '../rumEvent.types'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import type { RumConfiguration } from './configuration'
@@ -126,8 +129,8 @@ function shouldSend(
   eventRateLimiters: { [key in RumEventType]?: EventRateLimiter }
 ) {
   if (beforeSend) {
-    const result = limitModification(event, modifiableFieldPathsByEvent[event.type], (event) =>
-      beforeSend(event, domainContext)
+    const result = preventIllegalUpdates(event, () =>
+      limitModification(event, modifiableFieldPathsByEvent[event.type], (event) => beforeSend(event, domainContext))
     )
     if (result === false && event.type !== RumEventType.VIEW) {
       return false
@@ -140,4 +143,34 @@ function shouldSend(
   const rateLimitReached = eventRateLimiters[event.type]?.isLimitReached()
 
   return !rateLimitReached
+}
+
+function preventIllegalUpdates<CallbackResult>(
+  event: AssembledRumEvent,
+  callback: () => CallbackResult
+): CallbackResult {
+  if (event.type === RumEventType.RESOURCE) {
+    return preventIllegalUpdatesForResource(event, callback)
+  }
+
+  return callback()
+}
+
+const URL_BYTES_LIMIT = 32 * ONE_KIBI_BYTE
+
+function preventIllegalUpdatesForResource<CallbackResult>(
+  event: RumResourceEvent,
+  callback: () => CallbackResult
+): CallbackResult {
+  const url = event.resource.url
+
+  const result = callback()
+
+  // eslint-disable-next-line eqeqeq
+  if (event.resource.url == undefined && url.length > SANITIZE_DEFAULT_MAX_CHARACTER_COUNT) {
+    event.resource.url = url.slice(0, URL_BYTES_LIMIT)
+    display.warn(`Resource URL is too long, truncated to ${URL_BYTES_LIMIT} characters`)
+  }
+
+  return result
 }
