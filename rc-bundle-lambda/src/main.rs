@@ -1,77 +1,108 @@
 mod bundle;
+mod cache_cell;
 mod remote_config;
 mod sdk_codebase;
 
+use bundle::BundleService;
 use lambda_http::{Body, Error, Request, RequestExt, Response, run, service_fn};
-use remote_config::RemoteConfigService;
+use remote_config::{ClientToken, RemoteConfigId, RemoteConfigService, Site};
 use sdk_codebase::SdkCodebase;
 use std::sync::Arc;
 
-const SDK_ENTRY: &str = "packages/rum/src/entries/main.ts";
+#[cfg(debug_assertions)]
+fn init_tracing() {
+    tracing_subscriber::fmt()
+        .with_span_events(tracing_subscriber::fmt::format::FmtSpan::CLOSE)
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .init();
+}
+
+#[cfg(not(debug_assertions))]
+fn init_tracing() {
+    lambda_http::tracing::init_default_subscriber();
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    lambda_http::tracing::init_default_subscriber();
+    init_tracing();
 
-    let sdk = Arc::new(SdkCodebase::new());
+    let bundle = Arc::new(BundleService::new(Arc::new(SdkCodebase::new())));
     let rc = Arc::new(RemoteConfigService::new());
 
     run(service_fn(move |event: Request| {
-        let sdk = sdk.clone();
+        let bundle = bundle.clone();
         let rc = rc.clone();
-        async move { handler(event, sdk, rc).await }
+        async move { handler(event, bundle, rc).await }
     }))
     .await
 }
 
 async fn handler(
     event: Request,
-    sdk: Arc<SdkCodebase>,
+    bundle: Arc<BundleService>,
     rc: Arc<RemoteConfigService>,
 ) -> Result<Response<Body>, Error> {
     let params = event.query_string_parameters();
     let site = params.first("site");
     let rc_id = params.first("remoteConfigurationId");
+    let client_token = params.first("clientToken");
+    let minify = params.first("minify") != Some("false");
 
-    let (Some(site), Some(rc_id)) = (site, rc_id) else {
-        return Ok(Response::builder()
-            .status(400)
-            .body("missing required query parameters: site, remoteConfigurationId".into())?);
+    let (Some(site), Some(rc_id), Some(client_token)) = (site, rc_id, client_token) else {
+        return Ok(Response::builder().status(400).body(
+            "missing required query parameters: site, remoteConfigurationId, clientToken".into(),
+        )?);
     };
 
-    if let Err(e) = remote_config::build_rc_endpoint(site, rc_id) {
-        return Ok(Response::builder().status(400).body(e.into())?);
-    }
-
-    let (files, rc) = tokio::join!(sdk.files(), rc.fetch(site, rc_id));
-
-    let files = match files {
-        Ok(files) => files,
+    let site = match Site::new(site) {
+        Ok(site) => site,
         Err(error) => {
-            tracing::error!(error, "failed to fetch SDK codebase");
             return Ok(Response::builder()
-                .status(500)
-                .body("failed to fetch SDK codebase".into())?);
+                .status(400)
+                .body(format!("{error}").into())?);
         }
     };
 
-    let rc = match rc {
+    let rc_id = match RemoteConfigId::new(rc_id.to_string()) {
+        Ok(id) => id,
+        Err(error) => {
+            return Ok(Response::builder()
+                .status(400)
+                .body(format!("{error}").into())?);
+        }
+    };
+
+    let client_token = match ClientToken::new(client_token.to_string()) {
+        Ok(t) => t,
+        Err(error) => {
+            return Ok(Response::builder()
+                .status(400)
+                .body(format!("{error}").into())?);
+        }
+    };
+
+    let rc = match rc.fetch(site, rc_id).await {
         Ok(rc) => rc,
         Err(error) => {
-            tracing::error!(error, "failed to fetch remote config");
+            tracing::error!(%error, "failed to fetch remote config");
             return Ok(Response::builder()
                 .status(500)
                 .body("failed to fetch remote config".into())?);
         }
     };
 
-    tracing::debug!(rc = %rc, "fetched remote config");
-
-    let output =
-        tokio::task::spawn_blocking(move || bundle::bundle_sdk(files, SDK_ENTRY)).await??;
+    let output = match bundle.build(rc, client_token, minify).await {
+        Ok(output) => output,
+        Err(error) => {
+            tracing::error!(%error, "failed to build SDK bundle");
+            return Ok(Response::builder()
+                .status(500)
+                .body("failed to build SDK bundle".into())?);
+        }
+    };
 
     Ok(Response::builder()
         .status(200)
         .header("content-type", "text/javascript")
-        .body(output.into())?)
+        .body(output.as_slice().into())?)
 }
