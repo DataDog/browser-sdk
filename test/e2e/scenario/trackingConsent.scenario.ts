@@ -98,7 +98,7 @@ test.describe('tracking consent', () => {
         expect(await findSessionCookie(browserContext)).toBeDefined()
       })
 
-    createTest('stops sending events if tracking consent is revoked @only')
+    createTest('stops sending events if tracking consent is revoked')
       .withLogs()
       .run(async ({ intakeRegistry, flushEvents, browserContext, page }) => {
         await page.evaluate(() => {
