@@ -41,13 +41,13 @@ The function is then available at `http://localhost:9000/`. Use `curl` or simila
 cargo test
 ```
 
-This will run both inline unit tests within source files and the integration test in `tests/integration.rs`.
+This will run both inline unit tests within source files and the integration tests in `tests/integration.rs`.
 
-The integration test starts a local `cargo lambda watch` process, invokes the lambda, and checks that the response is valid JavaScript with no TypeScript type annotations.
+Each integration test starts its own `cargo lambda watch` process on a free port, invokes the lambda, and checks that the response is valid JavaScript with no TypeScript type annotations.
 
 > **Note:** The first run will fetch the SDK tarball from GitHub (~2.5 MB). Subsequent runs reuse the cached file at `target/sdk-cache.tar.gz`.
 
-Advanced usage — show output even for passing tests (useful for seeing timing traces):
+Show output even for passing tests (useful for seeing timing traces):
 
 ```sh
 cargo test --test integration -- --nocapture
