@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { createTest, html } from '../../lib/framework'
+import { createTest, html, waitForRequests } from '../../lib/framework'
 import type { IntakeRegistry } from '../../lib/framework'
 
 // Loose type for view_update events received at the intake (no generated schema type yet)
@@ -180,6 +180,13 @@ test.describe('partial view updates', () => {
       enableExperimentalFeatures: ['partial_view_updates'],
     })
     .run(async ({ intakeRegistry, flushEvents, page }) => {
+      // Flush the initial view first so it arrives at the intake in its own batch.
+      // The checkpoint (every 10 updates) uses batch.upsert with the same viewId which would
+      // replace the initial view if they share a batch — flushing first prevents that.
+      // Dispatching beforeunload triggers the SDK batch send without navigating away.
+      await page.evaluate(() => window.dispatchEvent(new Event('beforeunload')))
+      await waitForRequests(page)
+
       // Use setViewName to trigger unthrottled view updates (unlike addAction which is
       // throttled to THROTTLE_VIEW_UPDATE_PERIOD=3s, setViewName calls triggerViewUpdate directly).
       // We need more than PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL (10) updates to trigger a checkpoint.
