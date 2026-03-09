@@ -101,17 +101,21 @@ export class FetchError extends Error {
   }
 }
 
+export async function createFetchError(response: Response): Promise<FetchError> {
+  let cause: unknown
+  const body = await response.text()
+  try {
+    cause = JSON.parse(body)
+  } catch {
+    cause = body
+  }
+  return new FetchError(response, { cause })
+}
+
 export async function fetchHandlingError(url: string, options?: RequestInit): Promise<Response> {
   const response = await fetch(url, options)
   if (!response.ok) {
-    let cause: unknown
-    const body = await response.text()
-    try {
-      cause = JSON.parse(body)
-    } catch {
-      cause = body
-    }
-    throw new FetchError(response, { cause })
+    throw await createFetchError(response)
   }
 
   return response
