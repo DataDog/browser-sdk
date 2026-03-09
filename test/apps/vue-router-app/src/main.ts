@@ -1,6 +1,6 @@
 import { createApp } from 'vue'
 import { createWebHistory } from 'vue-router'
-import { createRouter } from '@datadog/browser-rum-vue/vue-router'
+import { createRouter } from '@datadog/browser-rum-vue/vue-router-v4'
 import { datadogRum } from '@datadog/browser-rum'
 import { vuePlugin, addVueError } from '@datadog/browser-rum-vue'
 import App from './App.vue'

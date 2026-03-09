@@ -4,4 +4,4 @@
 !/src/**/*
 /src/**/*.spec.ts
 /src/**/*.specHelper.ts
-!/vue-router/*
+!/vue-router-v4/*

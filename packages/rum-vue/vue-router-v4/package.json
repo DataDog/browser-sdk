@@ -1,5 +1,5 @@
 {
-  "name": "@datadog/browser-rum-vue/vue-router",
+  "name": "@datadog/browser-rum-vue/vue-router-v4",
   "private": true,
   "main": "../cjs/entries/vueRouter.js",
   "module": "../esm/entries/vueRouter.js",
