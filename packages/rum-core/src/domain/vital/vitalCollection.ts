@@ -29,18 +29,16 @@ export interface VitalOptions {
    * Vital description
    */
   description?: string
+
+  handlingStack?: string
 }
 
 /**
  * Duration vital options
  */
 
-export interface DurationVitalOptions extends VitalOptions {
-  /**
-   * Handling stack (internal use only)
-   */
-  handlingStack?: string
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface DurationVitalOptions extends VitalOptions {}
 
 export interface FeatureOperationOptions extends VitalOptions {
   operationKey?: string
@@ -128,7 +126,7 @@ export function startVitalCollection(
       return
     }
 
-    const { operationKey, context, description } = options || {}
+    const { operationKey, context, description, handlingStack } = options || {}
 
     const vital: OperationStepVital = {
       name,
@@ -139,6 +137,7 @@ export function startVitalCollection(
       startClocks: clocksNow(),
       context: sanitize(context),
       description,
+      handlingStack,
     }
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital))
   }

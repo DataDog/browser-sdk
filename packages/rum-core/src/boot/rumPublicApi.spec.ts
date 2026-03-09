@@ -949,6 +949,7 @@ describe('rum public api', () => {
       rumPublicApi.startFeatureOperation('foo', { operationKey: '00000000-0000-0000-0000-000000000000' })
       expect(addOperationStepVitalSpy).toHaveBeenCalledWith('foo', 'start', {
         operationKey: '00000000-0000-0000-0000-000000000000',
+        handlingStack: jasmine.any(String),
       })
     })
   })

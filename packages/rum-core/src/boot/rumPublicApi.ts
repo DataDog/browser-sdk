@@ -923,10 +923,13 @@ export function makeRumPublicApi(
       })
     }),
 
-    startFeatureOperation: monitor((name, options) => {
-      addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'start' })
-      strategy.addOperationStepVital(name, 'start', options)
-    }),
+    startFeatureOperation: (name, options) => {
+      const handlingStack = createHandlingStack('vital')
+      callMonitored(() => {
+        addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'start' })
+        strategy.addOperationStepVital(name, 'start', { ...options, handlingStack })
+      })
+    },
 
     succeedFeatureOperation: monitor((name, options) => {
       addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'succeed' })
