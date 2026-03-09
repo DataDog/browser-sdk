@@ -45,4 +45,24 @@ describe('addVueError', () => {
     const payload = addEventSpy.calls.mostRecent().args[1]
     expect(payload.error.component_stack).toBeUndefined()
   })
+
+  it('should merge dd_context from the original error with vue error context', () => {
+    const addEventSpy = jasmine.createSpy()
+    initializeVuePlugin({ addEvent: addEventSpy })
+    const originalError = new Error('error message')
+    originalError.name = 'CustomError'
+    ;(originalError as any).dd_context = { component: 'Menu', param: 123 }
+
+    addVueError(originalError, null, 'mounted hook')
+
+    expect(addEventSpy.calls.mostRecent().args[1]).toEqual(
+      jasmine.objectContaining({
+        context: {
+          framework: 'vue',
+          component: 'Menu',
+          param: 123,
+        },
+      })
+    )
+  })
 })
