@@ -228,7 +228,7 @@ export function createRumProfiler(
       .stop()
       .then((trace) => {
         const endClocks = clocksNow()
-        const duration = elapsed(startClocks.timeStamp, endClocks.timeStamp)
+        const duration = elapsed(startClocks.relative, endClocks.relative)
         const longTasks = longTaskHistory.findAll(startClocks.relative, duration)
         const actions = actionHistory.findAll(startClocks.relative, duration)
         const vitals = vitalHistory.findAll(startClocks.relative, duration)
