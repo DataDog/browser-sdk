@@ -98,6 +98,12 @@ async function buildModules({ outDir, module, verbose }: { outDir: string; modul
       module,
       rootDir: './src/',
       outDir,
+      // Override paths to resolve external peer dependency packages (like vue-router) to their
+      // actual node_modules types, preventing local subpath directories (e.g. packages/rum-vue/vue-router/)
+      // from shadowing the real package during compilation.
+      paths: {
+        'vue-router': ['../../node_modules/vue-router/dist/vue-router.d.mts'],
+      },
     },
     include: ['./src'],
     exclude: ['./src/**/*.spec.*', './src/**/*.specHelper.*'],
