@@ -2,6 +2,7 @@ import type { ClocksState, RelativeTime, TimeStamp } from '@datadog/browser-core
 import {
   ErrorSource,
   HookNames,
+  ONE_KIBI_BYTE,
   ONE_MINUTE,
   display,
   relativeToClocks,
@@ -366,6 +367,29 @@ describe('rum assembly', () => {
       })
 
       expect(serverRumEvents.length).toBe(1)
+    })
+  })
+
+  describe('prevent illegal event payload', () => {
+    it('should trim resource url before dispatching the event when beforeSend is provided', () => {
+      const urlBytesLimit = 32 * ONE_KIBI_BYTE
+      const longUrl = `https://example.com/${'a'.repeat(300 * ONE_KIBI_BYTE)}`
+      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+        partialConfiguration: {
+          beforeSend: () => undefined,
+        },
+      })
+
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.RESOURCE, {
+          resource: { url: longUrl },
+        }),
+      })
+
+      const dispatchedUrl = (serverRumEvents[0] as RumResourceEvent).resource.url
+      expect(serverRumEvents.length).toBe(1)
+      expect(dispatchedUrl.length).toBe(urlBytesLimit)
+      expect(dispatchedUrl).toBe(longUrl.slice(0, urlBytesLimit))
     })
   })
 
