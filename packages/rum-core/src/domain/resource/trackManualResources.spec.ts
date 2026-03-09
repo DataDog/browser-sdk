@@ -112,6 +112,26 @@ describe('trackManualResources', () => {
     })
   })
 
+  describe('size', () => {
+    it('should include size when provided at stop', () => {
+      startResource('https://api.example.com/data')
+      stopResource('https://api.example.com/data', { size: 1234 })
+
+      expect(rawRumEvents).toHaveSize(1)
+      const resourceEvent = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+      expect(resourceEvent.resource.size).toBe(1234)
+    })
+
+    it('should leave size undefined when not provided', () => {
+      startResource('https://api.example.com/data')
+      stopResource('https://api.example.com/data')
+
+      expect(rawRumEvents).toHaveSize(1)
+      const resourceEvent = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+      expect(resourceEvent.resource.size).toBeUndefined()
+    })
+  })
+
   describe('resourceKey', () => {
     it('should support resourceKey for tracking same url multiple times', () => {
       startResource('https://api.example.com/data', { resourceKey: 'request1' })

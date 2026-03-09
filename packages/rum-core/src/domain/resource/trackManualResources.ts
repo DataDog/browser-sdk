@@ -43,6 +43,11 @@ export interface ResourceStopOptions {
   statusCode?: number
 
   /**
+   * Resource size in bytes
+   */
+  size?: number
+
+  /**
    * Resource context
    */
   context?: Context
@@ -66,6 +71,7 @@ export function trackManualResources(lifeCycle: LifeCycle, resourceTracker: Even
     startClocks: ClocksState,
     data: ManualResourceData,
     statusCode?: number,
+    size?: number,
     endClocks?: ClocksState
   ) {
     const duration = endClocks ? elapsed(startClocks.relative, endClocks.relative) : undefined
@@ -80,6 +86,7 @@ export function trackManualResources(lifeCycle: LifeCycle, resourceTracker: Even
         duration: duration !== undefined ? toServerDuration(duration) : undefined,
         method: data.method,
         status_code: statusCode,
+        size,
       },
       _dd: {},
       context: data.context,
@@ -114,7 +121,7 @@ export function trackManualResources(lifeCycle: LifeCycle, resourceTracker: Even
       return
     }
 
-    emitResource(stopped.id, stopped.startClocks, stopped, options.statusCode, stopClocks)
+    emitResource(stopped.id, stopped.startClocks, stopped, options.statusCode, options.size, stopClocks)
   }
 
   return {
