@@ -208,8 +208,8 @@ describe('getActionNameFromElement', () => {
     `),
       defaultConfiguration
     )
-    expect(name).toBe('foo')
-    expect(nameSource).toBe('text_content')
+    expect(name).toBe('')
+    expect(nameSource).toBe('blank')
   })
 
   it('extracts text from a aria-labelledby associated element', () => {

@@ -146,7 +146,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    * See [Replay Privacy Options](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser/privacy_options) for further information.
    *
    * @category Privacy
-   * @defaultValue mask
+   * @defaultValue mask-user-input
    */
   defaultPrivacyLevel?: DefaultPrivacyLevel | undefined
 
@@ -181,8 +181,9 @@ export interface RumInitConfiguration extends InitConfiguration {
    * Enables privacy control for action names.
    *
    * @category Privacy
+   * @defaultValue true
    */
-  enablePrivacyForActionName?: boolean | undefined // TODO next major: remove this option and make privacy for action name the default behavior
+  enablePrivacyForActionName?: boolean | undefined
 
   /**
    * Enables automatic collection of users actions.
@@ -398,8 +399,8 @@ export function validateAndBuildRumConfiguration(
     subdomain: initConfiguration.subdomain,
     defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
       ? initConfiguration.defaultPrivacyLevel
-      : DefaultPrivacyLevel.MASK,
-    enablePrivacyForActionName: !!initConfiguration.enablePrivacyForActionName,
+      : DefaultPrivacyLevel.MASK_USER_INPUT,
+    enablePrivacyForActionName: initConfiguration.enablePrivacyForActionName !== false,
     traceContextInjection: objectHasValue(TraceContextInjection, initConfiguration.traceContextInjection)
       ? initConfiguration.traceContextInjection
       : TraceContextInjection.SAMPLED,

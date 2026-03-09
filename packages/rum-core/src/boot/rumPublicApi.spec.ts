@@ -665,7 +665,7 @@ describe('rum public api', () => {
     it('is started with the default defaultPrivacyLevel', async () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       const calls = await collectAsyncCalls(recorderApi.onRumStart, 1)
-      expect(calls.mostRecent().args[1].defaultPrivacyLevel).toBe(DefaultPrivacyLevel.MASK)
+      expect(calls.mostRecent().args[1].defaultPrivacyLevel).toBe(DefaultPrivacyLevel.MASK_USER_INPUT)
     })
 
     it('is started with the configured defaultPrivacyLevel', () => {
