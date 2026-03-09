@@ -739,7 +739,7 @@ function tracingHeadersFor(traceId: TraceIdentifier, spanId: SpanIdentifier, sam
     'x-datadog-parent-id': spanId.toString(),
     'x-datadog-sampling-priority': samplingPriority,
     'x-datadog-trace-id': traceId.toString(),
-    baggage: 'session.id=session-id,user.id=1234,account.id=5678',
+    baggage: `session.id=${MOCK_SESSION_ID},user.id=1234,account.id=5678`,
   }
 }
 

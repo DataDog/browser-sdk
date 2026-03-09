@@ -261,7 +261,7 @@ export function microfrontendSetup(options: SetupOptions, servers: Servers) {
 
   if (options.rum) {
     header += html`
-      <script type="text/javascript" src="${rumScriptUrl}"></script>
+      <script type="text/javascript" src="${rumScriptUrl}" crossorigin></script>
       <script type="text/javascript">
         DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
         ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
