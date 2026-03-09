@@ -7,7 +7,6 @@ import {
   HookNames,
   DISCARDED,
   buildTags,
-  SANITIZE_DEFAULT_MAX_CHARACTER_COUNT,
   ONE_KIBI_BYTE,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
@@ -112,7 +111,11 @@ export function startRumAssembly(
         ddtags: buildTags(configuration).join(','),
       }) as AssembledRumEvent
 
+      const savedFields = saveFieldsOfInterest(serverRumEvent)
+
       if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, eventRateLimiters)) {
+        ensureLegalPayload(serverRumEvent, savedFields)
+
         if (isEmptyObject(serverRumEvent.context!)) {
           delete serverRumEvent.context
         }
@@ -129,8 +132,8 @@ function shouldSend(
   eventRateLimiters: { [key in RumEventType]?: EventRateLimiter }
 ) {
   if (beforeSend) {
-    const result = preventIllegalUpdates(event, () =>
-      limitModification(event, modifiableFieldPathsByEvent[event.type], (event) => beforeSend(event, domainContext))
+    const result = limitModification(event, modifiableFieldPathsByEvent[event.type], (event) =>
+      beforeSend(event, domainContext)
     )
     if (result === false && event.type !== RumEventType.VIEW) {
       return false
@@ -145,32 +148,26 @@ function shouldSend(
   return !rateLimitReached
 }
 
-function preventIllegalUpdates<CallbackResult>(
-  event: AssembledRumEvent,
-  callback: () => CallbackResult
-): CallbackResult {
-  if (event.type === RumEventType.RESOURCE) {
-    return preventIllegalUpdatesForResource(event, callback)
-  }
-
-  return callback()
-}
-
 const URL_BYTES_LIMIT = 32 * ONE_KIBI_BYTE
 
-function preventIllegalUpdatesForResource<CallbackResult>(
-  event: RumResourceEvent,
-  callback: () => CallbackResult
-): CallbackResult {
-  const url = event.resource.url
+interface SavedFields {
+  resourceUrl?: string
+}
 
-  const result = callback()
-
-  // eslint-disable-next-line eqeqeq
-  if (event.resource.url == undefined && url.length > SANITIZE_DEFAULT_MAX_CHARACTER_COUNT) {
-    event.resource.url = url.slice(0, URL_BYTES_LIMIT)
-    display.warn(`Resource URL is too long, truncated to ${URL_BYTES_LIMIT} characters`)
+function saveFieldsOfInterest(event: AssembledRumEvent): SavedFields {
+  if (event.type === RumEventType.RESOURCE) {
+    return { resourceUrl: (event as RumResourceEvent).resource.url }
   }
+  return {}
+}
 
-  return result
+function ensureLegalPayload(event: AssembledRumEvent, savedFields: SavedFields) {
+  if (event.type === RumEventType.RESOURCE) {
+    const resourceEvent = event as RumResourceEvent
+    // eslint-disable-next-line eqeqeq
+    if (resourceEvent.resource.url == undefined || resourceEvent.resource.url.length > URL_BYTES_LIMIT) {
+      resourceEvent.resource.url = savedFields.resourceUrl!.slice(0, URL_BYTES_LIMIT)
+      display.warn(`Resource URL is too long, truncated to ${URL_BYTES_LIMIT} characters`)
+    }
+  }
 }

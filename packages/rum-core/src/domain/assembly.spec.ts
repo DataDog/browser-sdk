@@ -391,6 +391,25 @@ describe('rum assembly', () => {
       expect(dispatchedUrl.length).toBe(urlBytesLimit)
       expect(dispatchedUrl).toBe(longUrl.slice(0, urlBytesLimit))
     })
+
+    it('should trim resource url before dispatching the event when beforeSend is NOT provided', () => {
+      const urlBytesLimit = 32 * ONE_KIBI_BYTE
+      const longUrl = `https://example.com/${'a'.repeat(300 * ONE_KIBI_BYTE)}`
+      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+        partialConfiguration: {},
+      })
+
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.RESOURCE, {
+          resource: { url: longUrl },
+        }),
+      })
+
+      const dispatchedUrl = (serverRumEvents[0] as RumResourceEvent).resource.url
+      expect(serverRumEvents.length).toBe(1)
+      expect(dispatchedUrl.length).toBe(urlBytesLimit)
+      expect(dispatchedUrl).toBe(longUrl.slice(0, urlBytesLimit))
+    })
   })
 
   describe('service and version', () => {

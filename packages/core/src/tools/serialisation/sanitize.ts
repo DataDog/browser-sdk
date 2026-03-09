@@ -27,7 +27,7 @@ interface SanitizedEvent extends Context {
 
 // The maximum size of a single event is 256KiB. By default, we ensure that user-provided data
 // going through sanitize fits inside our events, while leaving room for other contexts, metadata, ...
-export const SANITIZE_DEFAULT_MAX_CHARACTER_COUNT = 220 * ONE_KIBI_BYTE
+const SANITIZE_DEFAULT_MAX_CHARACTER_COUNT = 220 * ONE_KIBI_BYTE
 
 // Symbol for the root element of the JSONPath used for visited objects
 const JSON_PATH_ROOT_ELEMENT = '$'
