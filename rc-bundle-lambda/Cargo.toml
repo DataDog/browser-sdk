@@ -1,0 +1,28 @@
+[package]
+name = "rc-bundle-lambda"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1"
+bytes-str = "0.2.7"
+flate2 = "1"
+lambda_http = "1"
+relative-path = "2"
+reqwest = "0.13"
+serde_json = "1"
+swc_bundler = "44"
+swc_common = "19"
+swc_ecma_ast = "21"
+swc_ecma_codegen = "24"
+swc_ecma_loader = "19"
+swc_ecma_parser = { version = "35", features = ["typescript"] }
+swc_ecma_transforms_base = "38"
+swc_ecma_transforms_typescript = "42"
+swc_ecma_visit = "21"
+tar = "0.4"
+tokio = { version = "1", features = ["fs", "macros", "rt-multi-thread", "sync"] }
+tracing = "0.1"
+
+[dev-dependencies]
+reqwest = { version = "0.13", features = ["blocking", "json"] }
