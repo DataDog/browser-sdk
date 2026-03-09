@@ -1,14 +1,15 @@
 /**
  * Check telemetry errors
  */
-import { Agent } from 'undici'
-import { printLog, fetchHandlingError, timeout } from '../../lib/executionUtils.ts'
+import { Agent, fetch, type Response } from 'undici'
+import { printLog, timeout, createFetchError } from '../../lib/executionUtils.ts'
 import { getTelemetryOrgApiKey, getTelemetryOrgApplicationKey } from '../../lib/secrets.ts'
 import { getDatacenterMetadata } from '../../lib/datacenter.ts'
 
 const TIME_WINDOW_IN_MINUTES = 5
 // Rate limit: 2 requests per 10 seconds. Wait 6 seconds between requests to be safe.
 const RATE_LIMIT_DELAY_MS = 6000
+const MAX_RETRIES = 3
 
 /**
  * Dedicated HTTP agent for telemetry API calls.
@@ -108,9 +109,10 @@ async function queryLogsApi(
   apiKey: string,
   applicationKey: string,
   query: Query,
-  agent: Agent
+  agent: Agent,
+  attempt: number = 1
 ): Promise<QueryResultBucket[]> {
-  const response = await fetchHandlingError(`https://api.${site}/api/v2/logs/analytics/aggregate`, {
+  const response = await fetch(`https://api.${site}/api/v2/logs/analytics/aggregate`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -142,22 +144,41 @@ async function queryLogsApi(
         query: query.query,
       },
     }),
-    // Use dedicated agent to avoid connection pool conflicts
+    // Use dedicated agent to avoid connection pool conflicts.
     dispatcher: agent,
   })
 
+  if (shouldRetry(response, attempt)) {
+    printLog(
+      `503 Service Unavailable, retrying in ${RATE_LIMIT_DELAY_MS / 1000}s (attempt ${attempt}/${MAX_RETRIES})...`
+    )
+    await timeout(RATE_LIMIT_DELAY_MS)
+    return queryLogsApi(site, apiKey, applicationKey, query, agent, attempt + 1)
+  }
+
+  if (!response.ok) {
+    throw await createFetchError(response)
+  }
+
   const data = (await response.json()) as QueryResult
 
-  if (
-    !data ||
-    !data.data ||
-    !Array.isArray(data.data.buckets) ||
-    !data.data.buckets.every((bucket) => bucket.computes && typeof bucket.computes.c0 === 'number')
-  ) {
+  if (!isValidData(data)) {
     throw new Error(`Unexpected response from the API: ${JSON.stringify(data)}`)
   }
 
   return data.data.buckets
+}
+
+function shouldRetry(response: Response, attempt: number): boolean {
+  return response.status === 503 && attempt < MAX_RETRIES
+}
+
+function isValidData(data: QueryResult): boolean {
+  return (
+    data?.data &&
+    Array.isArray(data.data.buckets) &&
+    data.data.buckets.every((bucket) => bucket.computes && typeof bucket.computes.c0 === 'number')
+  )
 }
 
 function computeLogsLink(site: string, query: Query): string {
