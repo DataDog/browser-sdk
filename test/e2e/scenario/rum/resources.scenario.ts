@@ -291,8 +291,13 @@ test.describe('rum resources', () => {
 
     createTest('collect resource response content-type for XHR resources')
       .withRum()
-      .run(async ({ intakeRegistry, flushEvents, page }) => {
-        test.skip(true, 'not implemented yet')
+      .run(async ({ intakeRegistry, flushEvents, page, browserName }) => {
+        // Firefox 129+ can use resource timing entries to collect xhr content-type,
+        // other browsers will have to retrieve the it from the response headers
+        test.skip(
+          isContentTypeAvailableInPerformanceEntry(test, browserName) === false,
+          'contentType is not available in this browser'
+        )
 
         await page.evaluate(
           () =>
@@ -315,8 +320,13 @@ test.describe('rum resources', () => {
 
     createTest('collect resource response content-type for fetch resources')
       .withRum()
-      .run(async ({ intakeRegistry, flushEvents, page }) => {
-        test.skip(true, 'not implemented yet')
+      .run(async ({ intakeRegistry, flushEvents, page, browserName }) => {
+        // Firefox 129+ can use resource timing entries to collect fetch content-type
+        // other browsers will have to retrieve the it from the response headers
+        test.skip(
+          isContentTypeAvailableInPerformanceEntry(test, browserName) === false,
+          'contentType is not available in this browser'
+        )
 
         await page.evaluate(() => fetch('/ok'))
 
