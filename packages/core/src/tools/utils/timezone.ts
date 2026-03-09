@@ -1,13 +1,12 @@
-function resolveTimeZone() {
-  try {
-    return new Intl.DateTimeFormat().resolvedOptions().timeZone
-  } catch {
-    return undefined
-  }
-}
-
-const timeZone = resolveTimeZone()
+let cachedTimeZone: string | undefined | null = null
 
 export function getTimeZone() {
-  return timeZone
+  if (cachedTimeZone === null) {
+    try {
+      cachedTimeZone = new Intl.DateTimeFormat().resolvedOptions().timeZone
+    } catch {
+      cachedTimeZone = undefined
+    }
+  }
+  return cachedTimeZone
 }
