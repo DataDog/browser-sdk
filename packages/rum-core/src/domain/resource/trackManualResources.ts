@@ -109,7 +109,7 @@ export function trackManualResources(lifeCycle: LifeCycle, resourceTracker: Even
       rawRumEvent,
       startClocks: stopped.startClocks,
       duration,
-      domainContext: { isManual: true as const },
+      domainContext: { isManual: true },
     })
   }
 
