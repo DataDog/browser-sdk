@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Vue RUM App</title>
+    <script>
+      window.RUM_CONFIGURATION = {
+        applicationId: 'xxx',
+        clientToken: 'xxx',
+        site: 'datadoghq.com',
+        trackUserInteractions: true,
+      }
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
