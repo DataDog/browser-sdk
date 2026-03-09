@@ -31,15 +31,20 @@ describe('computeViewName', () => {
     expect(computeViewName([])).toBe('')
   })
 
-  it('concatenates nested paths', () => {
-    expect(computeViewName([{ path: '/users' }, { path: ':id' }] as unknown as RouteLocationMatched[])).toBe(
+  it('returns the path for a simple route', () => {
+    expect(computeViewName([{ path: '/users' }] as unknown as RouteLocationMatched[])).toBe('/users')
+  })
+
+  it('returns the most specific matched path for nested routes', () => {
+    // Vue Router normalizes nested matched paths to absolute paths
+    expect(computeViewName([{ path: '/users' }, { path: '/users/:id' }] as unknown as RouteLocationMatched[])).toBe(
       '/users/:id'
     )
   })
 
-  it('handles absolute child paths', () => {
-    expect(computeViewName([{ path: '/foo' }, { path: '/foo/bar' }] as unknown as RouteLocationMatched[])).toBe(
-      '/foo/bar'
-    )
+  it('ignores records without a path', () => {
+    expect(
+      computeViewName([{ path: '/users' }, { path: '' }, { path: '/users/:id' }] as unknown as RouteLocationMatched[])
+    ).toBe('/users/:id')
   })
 })

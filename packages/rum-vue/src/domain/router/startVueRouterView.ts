@@ -25,6 +25,9 @@ export function computeViewName(matched: RouteLocationMatched[]): string {
       continue
     }
 
+    // Note: Vue Router normalizes all paths in the matched array to absolute paths,
+    // so the relative-path branch below is purely defensive and not expected to be
+    // hit in practice. It mirrors the React Router implementation for consistency.
     if (path.startsWith('/')) {
       viewName = path
     } else {
