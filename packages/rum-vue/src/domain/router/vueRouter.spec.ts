@@ -48,7 +48,9 @@ describe('createRouter (wrapped)', () => {
 
     // Block all navigations to /protected
     router.beforeEach((to) => {
-      if (to.path === '/protected') return false
+      if (to.path === '/protected') {
+        return false
+      }
     })
 
     router

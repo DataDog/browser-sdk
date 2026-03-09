@@ -2,6 +2,7 @@ import { defineComponent, h } from 'vue'
 import { mount } from '@vue/test-utils'
 import { initializeVuePlugin } from '../../../test/initializeVuePlugin'
 import { mockClock } from '../../../../core/test'
+// eslint-disable-next-line camelcase
 import { UNSTABLE_useVueComponentTracker } from './useVueComponentTracker'
 
 const MOUNT_DURATION = 50
@@ -22,6 +23,7 @@ describe('UNSTABLE_useVueComponentTracker', () => {
       },
     })
 
+    // eslint-disable-next-line @typescript-eslint/await-thenable
     await mount(TrackedComponent)
 
     expect(addDurationVitalSpy).toHaveBeenCalledTimes(1)
@@ -52,6 +54,7 @@ describe('UNSTABLE_useVueComponentTracker', () => {
       },
     })
 
+    // eslint-disable-next-line @typescript-eslint/await-thenable
     const wrapper = await mount(TrackedComponent, { props: { count: 0 } })
     await wrapper.setProps({ count: 1 })
 

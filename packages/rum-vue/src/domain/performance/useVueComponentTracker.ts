@@ -5,8 +5,8 @@ import { addDurationVital } from './addDurationVital'
 /**
  * Track the performance of a Vue component.
  *
- * @experimental
  * @category Performance
+ * @experimental
  * @example
  * ```ts
  * import { UNSTABLE_useVueComponentTracker } from '@datadog/browser-rum-vue'
@@ -15,6 +15,7 @@ import { addDurationVital } from './addDurationVital'
  * UNSTABLE_useVueComponentTracker('MyComponent')
  * ```
  */
+// eslint-disable-next-line camelcase
 export function UNSTABLE_useVueComponentTracker(name: string): void {
   let mountStartClocks: ReturnType<typeof clocksNow> | undefined
   let updateStartClocks: ReturnType<typeof clocksNow> | undefined
@@ -24,7 +25,9 @@ export function UNSTABLE_useVueComponentTracker(name: string): void {
   })
 
   onMounted(() => {
-    if (!mountStartClocks) return
+    if (!mountStartClocks) {
+      return
+    }
     const duration = clocksNow().relative - mountStartClocks.relative
     addDurationVital('vueComponentRender', {
       description: name,
@@ -42,7 +45,9 @@ export function UNSTABLE_useVueComponentTracker(name: string): void {
   })
 
   onUpdated(() => {
-    if (!updateStartClocks) return
+    if (!updateStartClocks) {
+      return
+    }
     const duration = clocksNow().relative - updateStartClocks.relative
     addDurationVital('vueComponentRender', {
       description: name,
