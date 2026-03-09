@@ -29,8 +29,6 @@ export interface VitalOptions {
    * Vital description
    */
   description?: string
-
-  handlingStack?: string
 }
 
 /**
@@ -119,7 +117,7 @@ export function startVitalCollection(
   function addOperationStepVital(
     name: string,
     stepType: 'start' | 'end',
-    options?: FeatureOperationOptions,
+    options?: FeatureOperationOptions & { handlingStack?: string },
     failureReason?: FailureReason
   ) {
     if (!isExperimentalFeatureEnabled(ExperimentalFeature.FEATURE_OPERATION_VITAL)) {
@@ -145,7 +143,7 @@ export function startVitalCollection(
   return {
     addOperationStepVital,
     addDurationVital,
-    startDurationVital: (name: string, options: DurationVitalOptions = {}) => {
+    startDurationVital: (name: string, options: DurationVitalOptions & { handlingStack?: string } = {}) => {
       const ref = startDurationVital(customVitalsState, name, options)
       const vitalState = customVitalsState.vitalsByReference.get(ref)
       if (vitalState) {
@@ -162,7 +160,7 @@ export function startVitalCollection(
 export function startDurationVital(
   { vitalsByName, vitalsByReference }: CustomVitalsState,
   name: string,
-  options: DurationVitalOptions = {}
+  options: DurationVitalOptions & { handlingStack?: string } = {}
 ) {
   const vital = {
     id: generateUUID(),
