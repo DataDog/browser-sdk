@@ -29,8 +29,8 @@ describe('UNSTABLE_useVueComponentTracker', () => {
     expect(name).toBe('vueComponentRender')
     expect(options).toEqual({
       description: 'MyComponent',
-      startTime: jasmine.any(Number),
-      duration: jasmine.any(Number),
+      startTime: clock.timeStamp(0),
+      duration: MOUNT_DURATION,
       context: {
         is_first_render: true,
         framework: 'vue',
