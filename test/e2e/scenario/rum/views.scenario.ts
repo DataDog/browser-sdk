@@ -66,6 +66,65 @@ test.describe('rum views', () => {
         expect(viewEvent).toBeDefined()
         expect(viewEvent.view.loading_time).toBeGreaterThan(0)
       })
+
+    createTest('has a manual loading time')
+      .withRum()
+      .withBody(SPINNER)
+      .run(async ({ flushEvents, intakeRegistry, page }) => {
+        await page.evaluate(
+          () =>
+            new Promise<void>((resolve) => {
+              setTimeout(() => {
+                window.DD_RUM!.setViewLoadingTime()
+                resolve()
+              }, 200)
+            })
+        )
+
+        await flushEvents()
+        const viewEvent = intakeRegistry.rumViewEvents.at(-1)
+        expect(viewEvent).toBeDefined()
+        expect(viewEvent!.view.loading_time).toBeGreaterThanOrEqual(200 * 1e6)
+      })
+
+    createTest('overwrites manual loading time when called with overwrite option')
+      .withRum()
+      .withBody(SPINNER)
+      .run(async ({ flushEvents, intakeRegistry, page }) => {
+        await page.evaluate(
+          () =>
+            new Promise<void>((resolve) => {
+              setTimeout(() => {
+                window.DD_RUM!.setViewLoadingTime()
+              }, 200)
+
+              setTimeout(() => {
+                window.DD_RUM!.setViewLoadingTime({ overwrite: true })
+                resolve()
+              }, 500)
+            })
+        )
+
+        await flushEvents()
+        const viewEvent = intakeRegistry.rumViewEvents.at(-1)
+        expect(viewEvent).toBeDefined()
+        // Should reflect the second (overwritten) value (~500ms), not the first (~200ms)
+        expect(viewEvent!.view.loading_time).toBeGreaterThanOrEqual(500 * 1e6)
+      })
+
+    createTest('reports manual loading time when called before init')
+      .withRum()
+      .withRumInit((configuration) => {
+        window.DD_RUM!.setViewLoadingTime()
+        window.DD_RUM!.init(configuration)
+      })
+      .withBody(SPINNER)
+      .run(async ({ flushEvents, intakeRegistry }) => {
+        await flushEvents()
+        const viewEvent = intakeRegistry.rumViewEvents.at(-1)
+        expect(viewEvent).toBeDefined()
+        expect(viewEvent!.view.loading_time).toBeGreaterThanOrEqual(0)
+      })
   })
 
   createTest('send performance first input delay')

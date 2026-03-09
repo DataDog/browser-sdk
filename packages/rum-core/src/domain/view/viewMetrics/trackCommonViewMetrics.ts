@@ -1,4 +1,5 @@
-import type { ClocksState, Duration, Observable } from '@datadog/browser-core'
+import type { ClocksState, Duration, Observable, RelativeTime, TimeStamp } from '@datadog/browser-core'
+import { elapsed, timeStampNow } from '@datadog/browser-core'
 import type { ViewLoadingType } from '../../../rawRumEvent.types'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
@@ -28,6 +29,8 @@ export function trackCommonViewMetrics(
   viewStart: ClocksState
 ) {
   const commonViewMetrics: CommonViewMetrics = {}
+  let hasManualLoadingTime = false
+  let viewEnded = false
 
   const { stop: stopLoadingTimeTracking, setLoadEvent } = trackLoadingTime(
     lifeCycle,
@@ -37,8 +40,10 @@ export function trackCommonViewMetrics(
     loadingType,
     viewStart,
     (newLoadingTime) => {
-      commonViewMetrics.loadingTime = newLoadingTime
-      scheduleViewUpdate()
+      if (!hasManualLoadingTime) {
+        commonViewMetrics.loadingTime = newLoadingTime
+        scheduleViewUpdate()
+      }
     }
   )
 
@@ -58,7 +63,7 @@ export function trackCommonViewMetrics(
   const {
     stop: stopINPTracking,
     getInteractionToNextPaint,
-    setViewEnd,
+    setViewEnd: setINPViewEnd,
   } = trackInteractionToNextPaint(configuration, viewStart.relative, loadingType)
 
   return {
@@ -69,10 +74,28 @@ export function trackCommonViewMetrics(
     },
     stopINPTracking,
     setLoadEvent,
-    setViewEnd,
+    setViewEnd: (viewEndTime: RelativeTime) => {
+      viewEnded = true
+      setINPViewEnd(viewEndTime)
+    },
     getCommonViewMetrics: () => {
       commonViewMetrics.interactionToNextPaint = getInteractionToNextPaint()
       return commonViewMetrics
+    },
+    setLoadingTime: (callTimestamp?: TimeStamp, overwrite = false) => {
+      if (viewEnded) {
+        return
+      }
+      if (hasManualLoadingTime && !overwrite) {
+        return
+      }
+      const loadingTime = elapsed(viewStart.timeStamp, callTimestamp ?? timeStampNow())
+      if (!hasManualLoadingTime) {
+        stopLoadingTimeTracking()
+      }
+      hasManualLoadingTime = true
+      commonViewMetrics.loadingTime = loadingTime
+      scheduleViewUpdate()
     },
   }
 }
