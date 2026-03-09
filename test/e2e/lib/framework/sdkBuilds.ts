@@ -11,6 +11,7 @@ export function getTestAppBundlePath(appName: string, originalUrl: string) {
     app: 'apps/vanilla',
     'react-router-v6-app': 'apps/react-router-v6-app',
     'react-router-v7-app': 'apps/react-router-v7-app',
+    microfrontend: 'apps/microfrontend',
   }
 
   const targetAppPath = appNameMapping[appName] || appName
