@@ -146,20 +146,6 @@ if (isExperimentalFeatureEnabled(ExperimentalFeature.SOME_FLAG)) { ... }
 - **One behavior per test**: keep `it()` blocks focused on a single assertion
 - **TDD**: write the spec file before the implementation file (RED → GREEN → REFACTOR)
 
-## Verifying SDK Event Payloads
-
-When a change affects what events are emitted (fields, types, attributes), verify it in the sandbox using the `datadog-sdk-event-inspection` skill:
-
-- Use it when you need to confirm a RUM, log, or telemetry event contains the expected fields
-- Use it when unit tests alone are not sufficient to validate serialized event output
-- Run `yarn dev` first, then follow the skill to set up the `__ddBrowserSdkExtensionCallback` hook
-
-> **Note:** this skill is a debugging and spot-check tool, not a regression gate. If you need to prevent regressions, write an E2E test instead (see `test/e2e/`).
-
-```bash
-yarn dev   # sandbox available at http://localhost:8080
-```
-
 ## Commit Messages
 
 Use gitmoji conventions:
