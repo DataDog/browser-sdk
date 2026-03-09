@@ -31,6 +31,7 @@ export default tseslint.config(
       'test/apps/react-heavy-spa',
       'test/apps/react-shopist-like',
       'test/apps/nextjs-app-router',
+      'test/apps/vue-router-app',
       'sandbox',
       'coverage',
       'rum-events-format',
