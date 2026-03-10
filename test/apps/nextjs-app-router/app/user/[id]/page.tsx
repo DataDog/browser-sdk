@@ -8,6 +8,7 @@ export default async function UserPage({ params }: { params: Promise<{ id: strin
       <Link href="/">← Back to Home</Link>
       <h1>User {id}</h1>
       <p>This is a dynamic route testing view name normalization.</p>
+      <Link href={`/user/${id}?admin=false`}>Change query params</Link>
     </div>
   )
 }

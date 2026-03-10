@@ -111,9 +111,13 @@ class TestBuilder {
     return this
   }
 
-  withNextjsApp() {
+  withNextjsApp(router: 'app' | 'pages') {
+    const basePath = router === 'pages' ? '/pages-router' : ''
     this.baseUrlHooks.push((baseUrl, servers, { rum, context }) => {
       baseUrl.port = NEXTJS_APP_ROUTER_PORT
+      if (basePath) {
+        baseUrl.pathname = basePath + (baseUrl.pathname === '/' ? '' : baseUrl.pathname)
+      }
       if (rum) {
         baseUrl.searchParams.set('rum-config', formatConfiguration(rum, servers))
       }
