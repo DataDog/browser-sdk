@@ -1,3 +1,4 @@
+import path from 'node:path'
 import { parseArgs } from 'node:util'
 import webpackBase from '../../webpack.base.ts'
 
@@ -78,7 +79,14 @@ export default {
   webpack: {
     stats: 'minimal',
     module: overrideTsLoaderRule(webpackConfig.module),
-    resolve: webpackConfig.resolve,
+    resolve: {
+      ...webpackConfig.resolve,
+      alias: {
+        ...webpackConfig.resolve.alias,
+        'next/navigation': path.resolve('packages/rum-nextjs/test/stubs/nextNavigation.ts'),
+        'next/router': path.resolve('packages/rum-nextjs/test/stubs/nextRouter.ts'),
+      },
+    },
     target: webpackConfig.target,
     devtool: false,
     mode: 'development',
