@@ -72,4 +72,13 @@ describe('addNextjsError', () => {
       nextjs: { digest: 'xyz789' },
     })
   })
+
+  it('does not spread non-object context?.nextjs when merging with digest', () => {
+    const { addErrorSpy } = initPluginWithAddErrorSpy()
+    const error = Object.assign(new Error('server error'), { digest: 'abc123' })
+
+    addNextjsError(error, { nextjs: 'oops' })
+
+    expect(addErrorSpy).toHaveBeenCalledOnceWith(error, { framework: 'nextjs', nextjs: { digest: 'abc123' } })
+  })
 })
