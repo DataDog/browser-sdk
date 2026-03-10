@@ -55,8 +55,7 @@ function setNestedValue(
   const newType = getType(value)
 
   if (newType === fieldType) {
-    const sanitized = sanitize(value)
-    object[field] = sanitized ?? (fieldType === 'string' ? '' : {})
+    object[field] = sanitize(value)
   } else if (fieldType === 'object' && (newType === 'undefined' || newType === 'null')) {
     object[field] = {}
   }

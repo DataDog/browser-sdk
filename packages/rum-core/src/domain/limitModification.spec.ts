@@ -1,5 +1,5 @@
 import type { Context } from '@datadog/browser-core'
-import { display, objectEntries } from '@datadog/browser-core'
+import { objectEntries } from '@datadog/browser-core'
 import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
 
@@ -193,18 +193,6 @@ describe('limitModification', () => {
 
     limitModification(object, { bar: 'object' }, modifier)
     expect(() => JSON.stringify(object)).not.toThrowError()
-  })
-
-  it('should not set to undefined unsafe field values', () => {
-    const displayWarnSpy = spyOn(display, 'warn')
-    const object: Context = { resource: { url: `/${'a'.repeat(300_000)}` } }
-    const modifier = function () {
-      /* Identity modifier */
-    }
-
-    limitModification(object, { 'resource.url': 'string' }, modifier)
-    expect(object).toEqual({ resource: { url: '' } })
-    expect(displayWarnSpy).toHaveBeenCalled()
   })
 })
 
