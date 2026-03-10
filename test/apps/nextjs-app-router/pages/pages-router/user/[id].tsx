@@ -7,11 +7,11 @@ export default function UserPage() {
 
   return (
     <div>
-      <Link href="/">← Back to Home</Link>
+      <Link href="/pages-router">← Back to Home</Link>
       <h1>User {id}</h1>
       <p>This is a dynamic route testing view name normalization.</p>
-      <Link href="/user/999?admin=true">Go to User 999</Link>
-      <Link href={`/user/${id}?admin=false`}>Change query params</Link>
+      <Link href="/pages-router/user/999?admin=true">Go to User 999</Link>
+      <Link href={`/pages-router/user/${id}?admin=false`}>Change query params</Link>
     </div>
   )
 }

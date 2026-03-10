@@ -8,7 +8,7 @@ export default function GuidesPage() {
 
   return (
     <div>
-      <Link href="/">← Back to Home</Link>
+      <Link href="/pages-router">← Back to Home</Link>
       <h1>Guides: {slugParts.join('/')}</h1>
       <p>This is a catch-all route testing slug normalization.</p>
     </div>

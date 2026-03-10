@@ -9,7 +9,7 @@ import { BrowserLogsManager, deleteAllCookies, getBrowserName, sendXhr } from '.
 import { DEFAULT_LOGS_CONFIGURATION, DEFAULT_RUM_CONFIGURATION } from '../helpers/configuration'
 import { validateRumFormat } from '../helpers/validation'
 import type { BrowserConfiguration } from '../../../browsers.conf'
-import { NEXTJS_APP_ROUTER_PORT, NEXTJS_PAGES_ROUTER_PORT } from '../helpers/playwright'
+import { NEXTJS_APP_ROUTER_PORT } from '../helpers/playwright'
 import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
@@ -112,9 +112,12 @@ class TestBuilder {
   }
 
   withNextjsApp(router: 'app' | 'pages') {
-    const port = router === 'app' ? NEXTJS_APP_ROUTER_PORT : NEXTJS_PAGES_ROUTER_PORT
+    const basePath = router === 'pages' ? '/pages-router' : ''
     this.baseUrlHooks.push((baseUrl, servers, { rum, context }) => {
-      baseUrl.port = port
+      baseUrl.port = NEXTJS_APP_ROUTER_PORT
+      if (basePath) {
+        baseUrl.pathname = basePath + (baseUrl.pathname === '/' ? '' : baseUrl.pathname)
+      }
       if (rum) {
         baseUrl.searchParams.set('rum-config', formatConfiguration(rum, servers))
       }

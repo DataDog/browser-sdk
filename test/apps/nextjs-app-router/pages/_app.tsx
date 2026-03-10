@@ -7,7 +7,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
     <>
       <DatadogPagesRouter />
       <nav style={{ background: '#632ca6', padding: '1rem', marginBottom: '1rem' }}>
-        <Link href="/" style={{ color: 'white', textDecoration: 'none' }}>
+        <Link href="/pages-router" style={{ color: 'white', textDecoration: 'none' }}>
           Home
         </Link>
       </nav>

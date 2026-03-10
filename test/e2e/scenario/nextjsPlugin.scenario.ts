@@ -1,9 +1,16 @@
 import { test, expect } from '@playwright/test'
 import { createTest } from '../lib/framework'
 ;[
-  { name: 'nextjs app router', router: 'app' as const },
-  { name: 'nextjs pages router', router: 'pages' as const },
-].forEach(({ name, router }) => {
+  { name: 'nextjs app router', router: 'app' as const, viewPrefix: '', homeUrlPattern: '**/' },
+  {
+    name: 'nextjs pages router',
+    router: 'pages' as const,
+    viewPrefix: '/pages-router',
+    homeUrlPattern: /\/pages-router(\?|$)/,
+  },
+].forEach(({ name, router, viewPrefix, homeUrlPattern }) => {
+  const homeViewName = viewPrefix || '/'
+
   test.describe(name, () => {
     createTest('should track initial home view')
       .withRum()
@@ -15,7 +22,7 @@ import { createTest } from '../lib/framework'
         await flushEvents()
 
         const viewEvents = intakeRegistry.rumViewEvents
-        const homeView = viewEvents.find((e) => e.view.name === '/' && e.view.loading_type === 'initial_load')
+        const homeView = viewEvents.find((e) => e.view.name === homeViewName && e.view.loading_type === 'initial_load')
         expect(homeView).toBeDefined()
       })
 
@@ -30,7 +37,7 @@ import { createTest } from '../lib/framework'
         await page.waitForURL('**/guides/123')
 
         await page.click('text=Back to Home')
-        await page.waitForURL('**/')
+        await page.waitForURL(homeUrlPattern)
 
         await page.click('text=Go to User 42')
         await page.waitForURL('**/user/42?admin=true')
@@ -41,20 +48,20 @@ import { createTest } from '../lib/framework'
 
         const viewEvents = intakeRegistry.rumViewEvents
 
-        const homeView = viewEvents.find((e) => e.view.name === '/')
+        const homeView = viewEvents.find((e) => e.view.name === homeViewName)
         expect(homeView).toBeDefined()
 
-        const guidesView = viewEvents.find((e) => e.view.name === '/guides/[...slug]')
+        const guidesView = viewEvents.find((e) => e.view.name === `${viewPrefix}/guides/[...slug]`)
         expect(guidesView).toBeDefined()
         expect(guidesView?.view.loading_type).toBe('route_change')
         expect(guidesView?.view.url).toContain('/guides/123')
         expect(guidesView?.view.referrer).toBe(baseUrl)
 
-        const userView = viewEvents.find((e) => e.view.name === '/user/[id]')
+        const userView = viewEvents.find((e) => e.view.name === `${viewPrefix}/user/[id]`)
         expect(userView).toBeDefined()
         expect(userView?.view.loading_type).toBe('route_change')
-        expect(userView?.view.url).toBe(`${baseOrigin}/user/42?admin=true`)
-        expect(userView?.view.referrer).toBe(`${baseOrigin}/`)
+        expect(userView?.view.url).toBe(`${baseOrigin}${viewPrefix}/user/42?admin=true`)
+        expect(userView?.view.referrer).toBe(`${baseOrigin}${homeViewName}`)
       })
 
     createTest('should track SPA navigation with loading_time')
@@ -71,7 +78,8 @@ import { createTest } from '../lib/framework'
 
         const viewEvents = intakeRegistry.rumViewEvents
         const homeView = viewEvents.find(
-          (e) => e.view.name === '/' && e.view.loading_type === 'initial_load' && e.view.loading_time !== undefined
+          (e) =>
+            e.view.name === homeViewName && e.view.loading_type === 'initial_load' && e.view.loading_time !== undefined
         )
         expect(homeView).toBeDefined()
         expect(homeView?.view.loading_time).toBeDefined()
@@ -90,7 +98,7 @@ import { createTest } from '../lib/framework'
 
         await flushEvents()
 
-        const userView = intakeRegistry.rumViewEvents.find((e) => e.view.name === '/user/[id]')
+        const userView = intakeRegistry.rumViewEvents.find((e) => e.view.name === `${viewPrefix}/user/[id]`)
         expect(userView).toBeDefined()
 
         // No view should have been created for the query-param-only navigation
@@ -114,10 +122,10 @@ import { createTest } from '../lib/framework'
         await flushEvents()
 
         const user42View = intakeRegistry.rumViewEvents.find(
-          (e) => e.view.name === '/user/[id]' && e.view.url?.includes('/user/42')
+          (e) => e.view.name === `${viewPrefix}/user/[id]` && e.view.url?.includes('/user/42')
         )
         const user999View = intakeRegistry.rumViewEvents.find(
-          (e) => e.view.name === '/user/[id]' && e.view.url?.includes('/user/999')
+          (e) => e.view.name === `${viewPrefix}/user/[id]` && e.view.url?.includes('/user/999')
         )
         expect(user42View).toBeDefined()
         expect(user999View).toBeDefined()
