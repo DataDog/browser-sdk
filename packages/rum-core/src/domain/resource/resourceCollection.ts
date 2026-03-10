@@ -17,7 +17,7 @@ import type {
   RumFetchResourceEventDomainContext,
   RumOtherResourceEventDomainContext,
 } from '../../domainContext.types'
-import type { RawRumResourceEvent } from '../../rawRumEvent.types'
+import type { RawRumResourceEvent, ResourceResponse } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData, LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -144,6 +144,7 @@ function assembleResource(
     : computeRequestDuration(pageStateHistory, startClocks, request!.duration)
 
   const graphql = request && computeGraphQlMetaData(request, configuration)
+  const response = entry && computeResourceResponse(entry)
 
   const resourceEvent = combine(
     {
@@ -163,6 +164,7 @@ function assembleResource(
         protocol: entry && computeResourceEntryProtocol(entry),
         delivery_type: entry && computeResourceEntryDeliveryType(entry),
         graphql,
+        response,
       },
       type: RumEventType.RESOURCE,
       _dd: {
@@ -191,6 +193,20 @@ function computeGraphQlMetaData(
   }
 
   return extractGraphQlMetadata(request, graphQlConfig)
+}
+
+function computeResourceResponse(entry: RumPerformanceResourceTiming): ResourceResponse | undefined {
+  const contentType = entry.contentType
+
+  if (contentType) {
+    return {
+      headers: {
+        'content-type': contentType,
+      },
+    }
+  }
+
+  return undefined
 }
 
 function getResourceDomainContext(
