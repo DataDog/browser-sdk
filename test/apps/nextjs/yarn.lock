@@ -14,16 +14,16 @@ __metadata:
 
 "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz::locator=nextjs-app-router%40workspace%3A.":
   version: 6.30.1
-  resolution: "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz#../../../packages/rum-core/package.tgz::hash=acbd3f&locator=nextjs-app-router%40workspace%3A."
+  resolution: "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz#../../../packages/rum-core/package.tgz::hash=edce70&locator=nextjs-app-router%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.30.1"
-  checksum: 10c0/4e2fe3cf78c7cbe16530bb4cf732922ae7866c8df233dfcbf1bd14380c348336c4abcf703b7f159fde344bbee0e5382169c58150e64f940a7949ded3e7cf6f81
+  checksum: 10c0/5d3844dd138f5aac887f3aa85dcdb26294214ad097b3d360bfdf007c509b70b3b6866e4410beb0306690712bf8d966f47e714047404e07981de3d0949b008d1f
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum-nextjs@file:../../../packages/rum-nextjs/package.tgz::locator=nextjs-app-router%40workspace%3A.":
   version: 6.30.1
-  resolution: "@datadog/browser-rum-nextjs@file:../../../packages/rum-nextjs/package.tgz#../../../packages/rum-nextjs/package.tgz::hash=6449a7&locator=nextjs-app-router%40workspace%3A."
+  resolution: "@datadog/browser-rum-nextjs@file:../../../packages/rum-nextjs/package.tgz#../../../packages/rum-nextjs/package.tgz::hash=e8798f&locator=nextjs-app-router%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.30.1"
     "@datadog/browser-rum-core": "npm:6.30.1"
@@ -35,7 +35,7 @@ __metadata:
       optional: true
     react:
       optional: true
-  checksum: 10c0/612cd4bec3d795fba9398ceed59d81e728bec05b85bc4f537daf0efa292a09fe1480d3f9c13be9b269c6e33121ad52c9960dcfdfe72cac817c73747009880a9b
+  checksum: 10c0/8b510310b51e57927becbc47d9a279a607ae1077c2086dc16f153a33933c501612ff8d13d6caca163c87ca983ad27232667c61de6e34f65b01e39651ccb06e56
   languageName: node
   linkType: hard
 
@@ -66,7 +66,7 @@ __metadata:
 
 "@datadog/browser-rum@file:../../../packages/rum/package.tgz::locator=nextjs-app-router%40workspace%3A.":
   version: 6.30.1
-  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=9cfd3b&locator=nextjs-app-router%40workspace%3A."
+  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=0ccf08&locator=nextjs-app-router%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.30.1"
     "@datadog/browser-rum-core": "npm:6.30.1"
@@ -75,7 +75,7 @@ __metadata:
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
-  checksum: 10c0/95237d8e152fffc25e395f8b417eff467bd90c367ab9017d7bab90eb77f626dcc75820e7163354e154175c82c091318cbf3dd5ea5bbd5a0d903660c2f939fb4e
+  checksum: 10c0/3bc1c2fc58c42e2c415ec9cf5ff9c1aa3cf41f0c892acf2087da3ced04c549876be57539f67c937a37280dd25c8d17fe2c5a01b525c6fc5af4b9d2e26c24a26a
   languageName: node
   linkType: hard
 
@@ -89,9 +89,9 @@ __metadata:
   linkType: hard
 
 "@img/colour@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "@img/colour@npm:1.0.0"
-  checksum: 10c0/02261719c1e0d7aa5a2d585981954f2ac126f0c432400aa1a01b925aa2c41417b7695da8544ee04fd29eba7ecea8eaf9b8bef06f19dc8faba78f94eeac40667d
+  version: 1.1.0
+  resolution: "@img/colour@npm:1.1.0"
+  checksum: 10c0/2ebea2c0bbaee73b99badcefa04e1e71d83f36e5369337d3121dca841f4569533c4e2faddda6d62dd247f0d5cca143711f9446c59bcce81e427ba433a7a94a17
   languageName: node
   linkType: hard
 
@@ -424,9 +424,9 @@ __metadata:
   linkType: hard
 
 "caniuse-lite@npm:^1.0.30001579":
-  version: 1.0.30001774
-  resolution: "caniuse-lite@npm:1.0.30001774"
-  checksum: 10c0/cc6a340a5421b9a67d8fa80889065ee27b2839ad62993571dded5296e18f02bbf685ce7094e93fe908cddc9fefdfad35d6c010b724cc3d22a6479b0d0b679f8c
+  version: 1.0.30001777
+  resolution: "caniuse-lite@npm:1.0.30001777"
+  checksum: 10c0/e35443fa7c470edc06e315297cca706790840e96983fff12dfe502a4b123d6e4a64b9b4e8e35fb2f5bb60c31b24fbda93d76b2f700ce183df474671236fa7a4a
   languageName: node
   linkType: hard
 

@@ -17,6 +17,9 @@ export default function HomePage() {
         <li>
           <Link href="/error-test/server-error?throw=true">Go to Server Error</Link>
         </li>
+        <li>
+          <Link href="/global-error-test?throw=true">Go to Global Error</Link>
+        </li>
       </ul>
     </div>
   )

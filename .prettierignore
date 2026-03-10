@@ -6,7 +6,7 @@ rum-events-format
 .yarn
 test/**/dist
 test/**/.next
-test/apps/nextjs-app-router/next-env.d.ts
+test/apps/nextjs/next-env.d.ts
 yarn.lock
 /docs
 /developer-extension/.output
