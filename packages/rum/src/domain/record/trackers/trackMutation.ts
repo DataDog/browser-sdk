@@ -5,7 +5,11 @@ import { getMutationObserverConstructor } from '@datadog/browser-rum-core'
 import type { RecordingScope } from '../recordingScope'
 import { createMutationBatch } from '../mutationBatch'
 import type { EmitRecordCallback, EmitStatsCallback } from '../record.types'
-import { serializeMutations } from '../serialization'
+import {
+  isIncrementalSnapshotChangeRecordsEnabled,
+  serializeMutations,
+  serializeMutationsAsChange,
+} from '../serialization'
 import type { Tracker } from './tracker.types'
 
 export type MutationTracker = Tracker & { flush: () => void }
@@ -66,5 +70,5 @@ export function trackMutation(
 }
 
 function defaultSerializeMutationsCallback(): SerializeMutationsCallback {
-  return serializeMutations
+  return isIncrementalSnapshotChangeRecordsEnabled() ? serializeMutationsAsChange : serializeMutations
 }
