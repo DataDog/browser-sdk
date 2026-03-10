@@ -49,12 +49,19 @@ import { callPluginsMethod } from '../domain/plugins'
 import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
 
+export interface InitialContexts {
+  globalContext: Context
+  userContext: Context
+  accountContext: Context
+}
+
 export type DoStartRum = (
   configuration: RumConfiguration,
   deflateWorker: DeflateWorker | undefined,
   initialViewOptions: ViewOptions | undefined,
   telemetry: Telemetry,
-  hooks: Hooks
+  hooks: Hooks,
+  initialContexts: InitialContexts
 ) => StartRumResult
 
 export function createPreStartStrategy(
@@ -117,7 +124,20 @@ export function createPreStartStrategy(
       initialViewOptions = firstStartViewCall.options
     }
 
-    const startRumResult = doStartRum(cachedConfiguration, deflateWorker, initialViewOptions, telemetry, hooks)
+    const initialContexts: InitialContexts = {
+      globalContext: globalContext.getContext(),
+      userContext: userContext.getContext(),
+      accountContext: accountContext.getContext(),
+    }
+
+    const startRumResult = doStartRum(
+      cachedConfiguration,
+      deflateWorker,
+      initialViewOptions,
+      telemetry,
+      hooks,
+      initialContexts
+    )
 
     bufferApiCalls.drain(startRumResult)
   }
