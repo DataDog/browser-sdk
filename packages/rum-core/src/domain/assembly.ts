@@ -7,12 +7,10 @@ import {
   HookNames,
   DISCARDED,
   buildTags,
-  ONE_KIBI_BYTE,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { AssembledRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
-import type { RumResourceEvent } from '../rumEvent.types'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import type { RumConfiguration } from './configuration'
@@ -111,11 +109,7 @@ export function startRumAssembly(
         ddtags: buildTags(configuration).join(','),
       }) as AssembledRumEvent
 
-      const savedFields = saveFieldsOfInterest(serverRumEvent)
-
       if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, eventRateLimiters)) {
-        ensureLegalPayload(serverRumEvent, savedFields)
-
         if (isEmptyObject(serverRumEvent.context!)) {
           delete serverRumEvent.context
         }
@@ -146,28 +140,4 @@ function shouldSend(
   const rateLimitReached = eventRateLimiters[event.type]?.isLimitReached()
 
   return !rateLimitReached
-}
-
-const URL_BYTES_LIMIT = 32 * ONE_KIBI_BYTE
-
-interface SavedFields {
-  resourceUrl?: string
-}
-
-function saveFieldsOfInterest(event: AssembledRumEvent): SavedFields {
-  if (event.type === RumEventType.RESOURCE) {
-    return { resourceUrl: (event as RumResourceEvent).resource.url }
-  }
-  return {}
-}
-
-function ensureLegalPayload(event: AssembledRumEvent, savedFields: SavedFields) {
-  if (event.type === RumEventType.RESOURCE) {
-    const resourceEvent = event as RumResourceEvent
-    // eslint-disable-next-line eqeqeq
-    if (resourceEvent.resource.url == undefined || resourceEvent.resource.url.length > URL_BYTES_LIMIT) {
-      resourceEvent.resource.url = savedFields.resourceUrl!.slice(0, URL_BYTES_LIMIT)
-      display.warn(`Resource URL is too long, truncated to ${URL_BYTES_LIMIT} characters`)
-    }
-  }
 }
