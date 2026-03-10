@@ -1,5 +1,5 @@
 import type { Context } from '@datadog/browser-core'
-import { objectEntries } from '@datadog/browser-core'
+import { display, objectEntries } from '@datadog/browser-core'
 import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
 
@@ -193,6 +193,18 @@ describe('limitModification', () => {
 
     limitModification(object, { bar: 'object' }, modifier)
     expect(() => JSON.stringify(object)).not.toThrowError()
+  })
+
+  it("should not reset unsafe fields that the user didn't alter", () => {
+    spyOn(display, 'warn')
+    const wayTooLongUrl = `/${'a'.repeat(300_000)}`
+    const object: Context = { resource: { url: wayTooLongUrl } }
+    const modifier = function () {
+      /* Identity modifier */
+    }
+
+    limitModification(object, { 'resource.url': 'string' }, modifier)
+    expect(object).toEqual({ resource: { url: wayTooLongUrl } })
   })
 })
 
