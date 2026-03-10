@@ -1,4 +1,6 @@
 export { nextjsPlugin, onRouterTransitionStart } from '../domain/nextjsPlugin'
 export type { NextjsPlugin } from '../domain/nextjsPlugin'
 export { DatadogAppRouter } from '../domain/datadogAppRouter'
-export { addNextjsError } from '../domain/addNextjsError'
+export { addNextjsError } from '../domain/error/addNextjsError'
+export { NextjsErrorBoundary } from '../domain/error/nextjsErrorBoundary'
+export type { NextjsErrorBoundaryProps, NextjsErrorBoundaryFallback } from '../domain/error/nextjsErrorBoundary'
