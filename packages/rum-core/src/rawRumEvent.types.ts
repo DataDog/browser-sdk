@@ -74,6 +74,7 @@ export interface RawRumResourceEvent {
     protocol?: string
     delivery_type?: DeliveryType
     graphql?: GraphQlMetadata
+    response?: ResourceResponse
   }
   _dd: {
     trace_id?: string
@@ -83,6 +84,15 @@ export interface RawRumResourceEvent {
     page_states?: PageStateServerEntry[]
   }
   context?: Context
+}
+
+interface ResourceResponseHeaders {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  'content-type'?: string
+}
+
+export interface ResourceResponse {
+  headers?: ResourceResponseHeaders & Record<string, string>
 }
 
 export interface ResourceEntryDetailsElement {
