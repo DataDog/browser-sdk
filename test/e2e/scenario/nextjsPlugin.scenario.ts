@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { createTest } from '../lib/framework'
-import { isContinuousIntegration } from '../lib/framework/environment'
+import { createTest, isContinuousIntegration } from '../lib/framework'
 
 const routerConfigs = [
   {
