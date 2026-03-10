@@ -45,8 +45,13 @@ function processMutations(mutations: RumMutationRecord[], transaction: ChangeSer
   const characterDataMutations = new Map<Node, OldValue>()
   const removedNodes = new Set<Node>()
 
-  // Collect the changes made by this sequence of mutations. The mutations tell us which
-  // nodes have been changed, but they don't
+  // Collect the changes made by this sequence of mutations. It's important to think of
+  // the mutations as telling us which parts of the tree are dirty, but not necessarily as
+  // specifying exactly which changes have occurred; trying to be too clever will result
+  // in incorrect behavior. For example, if we see a sequence of mutations where a node is
+  // removed and then added back in the same position, one might be tempted to "cancel
+  // out" these two changes and ignore both mutations, but that could cause us to miss
+  // changes to the node that occurred while it was detached.
   for (const mutation of mutations) {
     switch (mutation.type) {
       case 'attributes': {
@@ -146,8 +151,8 @@ function processAddedNodes(
 
     const parentId = nodeIds.get(parentNode)
     if (parentId === undefined) {
-      // This node's parent hasn't been serialized (e.g. because it's hidden),
-      // so we shouldn't serialize this node either.
+      // This node's parent hasn't been serialized (e.g. because it has privacy level
+      // HIDDEN), so we shouldn't serialize this node either.
       continue
     }
 
@@ -219,7 +224,7 @@ function processAttributeMutations(
   firstNewNodeId: NodeId,
   nodePrivacyLevelCache: NodePrivacyLevelCache,
   transaction: ChangeSerializationTransaction
-) {
+): void {
   const nodeIds = transaction.scope.nodeIds
 
   for (const [node, attributeNames] of mutations) {
