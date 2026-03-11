@@ -122,8 +122,13 @@ ci-image:
   when: manual
   tags: ['arch:amd64']
   image: $BUILD_STABLE_REGISTRY/images/docker:27.3.1
+  id_tokens:
+    DDSIGN_ID_TOKEN:
+      aud: image-integrity
   script:
-    - docker buildx build --platform linux/amd64 --build-arg CHROME_PACKAGE_VERSION=$CHROME_PACKAGE_VERSION --tag $CI_IMAGE --push .
+    - METADATA_FILE=$(mktemp)
+    - docker buildx build --platform linux/amd64 --build-arg CHROME_PACKAGE_VERSION=$CHROME_PACKAGE_VERSION --tag $CI_IMAGE --push --metadata-file $METADATA_FILE .
+    - ddsign sign $CI_IMAGE --docker-metadata-file $METADATA_FILE
 
 ########################################################################################################################
 # Tests
