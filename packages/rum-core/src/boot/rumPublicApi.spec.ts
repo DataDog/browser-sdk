@@ -569,20 +569,12 @@ describe('rum public api', () => {
       }))
     })
 
-    it('should call setLoadingTime with timestamp and no overwrite by default', () => {
+    it('should call setLoadingTime with timestamp', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
       rumPublicApi.setViewLoadingTime()
 
-      expect(setLoadingTimeSpy).toHaveBeenCalledOnceWith(jasmine.any(Number), false)
-    })
-
-    it('should pass overwrite true when specified', () => {
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-      rumPublicApi.setViewLoadingTime({ overwrite: true })
-
-      expect(setLoadingTimeSpy).toHaveBeenCalledOnceWith(jasmine.any(Number), true)
+      expect(setLoadingTimeSpy).toHaveBeenCalledOnceWith(jasmine.any(Number))
     })
 
     it('should not throw when called before init', () => {

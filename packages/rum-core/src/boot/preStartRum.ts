@@ -242,8 +242,8 @@ export function createPreStartStrategy(
       bufferApiCalls.add((startRumResult) => startRumResult.addTiming(name, time))
     },
 
-    setLoadingTime: ((callTimestamp: TimeStamp, overwrite = false) => {
-      bufferApiCalls.add((startRumResult) => startRumResult.setLoadingTime(callTimestamp, overwrite))
+    setLoadingTime: ((callTimestamp: TimeStamp) => {
+      bufferApiCalls.add((startRumResult) => startRumResult.setLoadingTime(callTimestamp))
     }) as Strategy['setLoadingTime'],
 
     startView(options, startClocks = clocksNow()) {

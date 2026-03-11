@@ -179,8 +179,7 @@ export function trackViews(
     addTiming: (name: string, time: RelativeTime | TimeStamp = timeStampNow()) => {
       currentView.addTiming(name, time)
     },
-    setLoadingTime: (callTimestamp?: TimeStamp, overwrite?: boolean) =>
-      currentView.setLoadingTime(callTimestamp, overwrite),
+    setLoadingTime: (callTimestamp?: TimeStamp) => currentView.setLoadingTime(callTimestamp),
     startView: (options?: ViewOptions, startClocks?: ClocksState) => {
       currentView.end({ endClocks: startClocks })
       currentView = startNewView(ViewLoadingType.ROUTE_CHANGE, startClocks, options)

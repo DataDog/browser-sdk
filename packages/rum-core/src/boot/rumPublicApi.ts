@@ -68,13 +68,6 @@ export interface StartRecordingOptions {
   force: boolean
 }
 
-export interface SetViewLoadingTimeOptions {
-  /**
-   * Set to `true` to replace a previously set loading time.
-   */
-  overwrite?: boolean
-}
-
 /**
  * Public API for the RUM browser SDK.
  *
@@ -248,13 +241,11 @@ export interface RumPublicApi extends PublicApi {
    * [Experimental] Manually set the current view's loading time.
    *
    * Call this method when the view has finished loading. The loading time is computed as the
-   * elapsed time since the view started. By default, the first call sets the loading time and
-   * subsequent calls are no-ops. Use `{ overwrite: true }` to replace a previously set value.
+   * elapsed time since the view started. Each call replaces any previously set value (last-call-wins).
    *
    * @category Data Collection
-   * @param options - Options. Set `overwrite: true` to replace a previously set loading time.
    */
-  setViewLoadingTime: (options?: SetViewLoadingTimeOptions) => void
+  setViewLoadingTime: () => void
 
   /**
    * Set the global context information to all events, stored in `@context`
@@ -794,9 +785,9 @@ export function makeRumPublicApi(
       strategy.addTiming(sanitize(name)!, time as RelativeTime | TimeStamp | undefined)
     }),
 
-    setViewLoadingTime: monitor((options?: SetViewLoadingTimeOptions) => {
+    setViewLoadingTime: monitor(() => {
       const callTimestamp = timeStampNow()
-      strategy.setLoadingTime(callTimestamp, options?.overwrite ?? false)
+      strategy.setLoadingTime(callTimestamp)
       addTelemetryUsage({
         feature: 'addViewLoadingTime',
       })

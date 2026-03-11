@@ -82,11 +82,8 @@ export function trackCommonViewMetrics(
       commonViewMetrics.interactionToNextPaint = getInteractionToNextPaint()
       return commonViewMetrics
     },
-    setLoadingTime: (callTimestamp?: TimeStamp, overwrite = false) => {
+    setLoadingTime: (callTimestamp?: TimeStamp) => {
       if (viewEnded) {
-        return
-      }
-      if (hasManualLoadingTime && !overwrite) {
         return
       }
       const loadingTime = elapsed(viewStart.timeStamp, callTimestamp ?? timeStampNow())

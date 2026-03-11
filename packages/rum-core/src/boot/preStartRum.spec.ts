@@ -613,9 +613,9 @@ describe('preStartRum', () => {
       doStartRumSpy.and.returnValue({ setLoadingTime: setLoadingTimeSpy } as unknown as StartRumResult)
 
       const timestamp = 123 as TimeStamp
-      strategy.setLoadingTime(timestamp, false)
+      strategy.setLoadingTime(timestamp)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
-      expect(setLoadingTimeSpy).toHaveBeenCalledOnceWith(timestamp, false)
+      expect(setLoadingTimeSpy).toHaveBeenCalledOnceWith(timestamp)
     })
 
     it('setLoadingTime should preserve call timestamp', () => {
@@ -629,7 +629,7 @@ describe('preStartRum', () => {
       clock.tick(20)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
 
-      expect(setLoadingTimeSpy).toHaveBeenCalledOnceWith(jasmine.any(Number), false)
+      expect(setLoadingTimeSpy).toHaveBeenCalledOnceWith(jasmine.any(Number))
       // Verify the timestamp was captured at call time (tick 10), not at drain time (tick 30)
       const capturedTimestamp = setLoadingTimeSpy.calls.argsFor(0)[0] as number
       expect(capturedTimestamp).toBe(clock.timeStamp(10))

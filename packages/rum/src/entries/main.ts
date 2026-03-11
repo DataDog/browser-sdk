@@ -42,7 +42,6 @@ export type {
   RumBeforeSend,
   ViewOptions,
   StartRecordingOptions,
-  SetViewLoadingTimeOptions,
   AddDurationVitalOptions,
   DurationVitalOptions,
   DurationVitalReference,

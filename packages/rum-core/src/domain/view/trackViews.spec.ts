@@ -807,7 +807,7 @@ describe('manual loading time', () => {
     expect(lastUpdate.commonViewMetrics.loadingTime).toBe(clock.relative(500))
   })
 
-  it('should not overwrite loading time by default on subsequent calls', () => {
+  it('should overwrite loading time on subsequent calls (last-call-wins)', () => {
     const { getViewUpdate, getViewUpdateCount, setLoadingTime } = viewTest
 
     clock.tick(100)
@@ -818,24 +818,6 @@ describe('manual loading time', () => {
 
     clock.tick(200)
     setLoadingTime()
-
-    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
-
-    const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
-    expect(lastUpdate.commonViewMetrics.loadingTime).toBe(firstValue)
-  })
-
-  it('should overwrite loading time when overwrite is true', () => {
-    const { getViewUpdate, getViewUpdateCount, setLoadingTime } = viewTest
-
-    clock.tick(100)
-    setLoadingTime()
-
-    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
-    const firstValue = getViewUpdate(getViewUpdateCount() - 1).commonViewMetrics.loadingTime
-
-    clock.tick(200)
-    setLoadingTime(undefined, true)
 
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
@@ -891,7 +873,7 @@ describe('manual loading time', () => {
     expect(lastUpdate.commonViewMetrics.loadingTime).toBe(manualValue)
   })
 
-  it('should start with clean overwrite state on new view', () => {
+  it('should start with clean loading time state on new view', () => {
     const { getViewUpdate, getViewUpdateCount, startView, setLoadingTime } = viewTest
 
     clock.tick(100)
@@ -933,22 +915,22 @@ describe('manual loading time', () => {
     const firstValue = getViewUpdate(getViewUpdateCount() - 1).commonViewMetrics.loadingTime
 
     clock.tick(200)
-    setLoadingTime(undefined, true) // overwrite
+    setLoadingTime() // second call
 
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
-    const overwrittenValue = getViewUpdate(getViewUpdateCount() - 1).commonViewMetrics.loadingTime
+    const secondValue = getViewUpdate(getViewUpdateCount() - 1).commonViewMetrics.loadingTime
 
     // Let page activity end fire (would set auto-detected loading time if tracking wasn't stopped)
     clock.tick(PAGE_ACTIVITY_END_DELAY)
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
-    // Auto-detection should not have replaced the overwritten value
+    // Auto-detection should not have replaced the second value
     const finalUpdate = getViewUpdate(getViewUpdateCount() - 1)
-    expect(finalUpdate.commonViewMetrics.loadingTime).toBe(overwrittenValue)
+    expect(finalUpdate.commonViewMetrics.loadingTime).toBe(secondValue)
     expect(finalUpdate.commonViewMetrics.loadingTime).not.toBe(firstValue)
   })
 
-  it('should overwrite loading time on a route-change view with correct elapsed time', () => {
+  it('should replace loading time on a route-change view with correct elapsed time', () => {
     const { getViewUpdate, getViewUpdateCount, startView, setLoadingTime } = viewTest
 
     clock.tick(2000) // 2s into session
@@ -961,7 +943,7 @@ describe('manual loading time', () => {
     const firstValue = getViewUpdate(getViewUpdateCount() - 1).commonViewMetrics.loadingTime
 
     clock.tick(200) // 200ms later (500ms + THROTTLE total from view start)
-    setLoadingTime(undefined, true) // overwrite
+    setLoadingTime() // second call replaces previous value
 
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
@@ -973,7 +955,7 @@ describe('manual loading time', () => {
     expect(lastUpdate.commonViewMetrics.loadingTime).toBe((300 + THROTTLE_VIEW_UPDATE_PERIOD + 200) as Duration)
   })
 
-  it('should allow multiple overwrites, each replacing the previous value', () => {
+  it('should allow multiple calls, each replacing the previous value (last-call-wins)', () => {
     const { getViewUpdate, getViewUpdateCount, setLoadingTime } = viewTest
 
     clock.tick(100)
@@ -982,12 +964,12 @@ describe('manual loading time', () => {
     const firstValue = getViewUpdate(getViewUpdateCount() - 1).commonViewMetrics.loadingTime
 
     clock.tick(200)
-    setLoadingTime(undefined, true) // overwrite #1
+    setLoadingTime() // second call
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
     const secondValue = getViewUpdate(getViewUpdateCount() - 1).commonViewMetrics.loadingTime
 
     clock.tick(300)
-    setLoadingTime(undefined, true) // overwrite #2
+    setLoadingTime() // third call
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
     const thirdValue = getViewUpdate(getViewUpdateCount() - 1).commonViewMetrics.loadingTime
 
