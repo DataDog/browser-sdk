@@ -9,7 +9,7 @@ export interface ErrorBoundaryProps {
 
 export type ErrorBoundaryFallback = React.ComponentType<{ error: Error; resetError: () => void }>
 
-export type State =
+type State =
   | {
       didCatch: false
       error: null

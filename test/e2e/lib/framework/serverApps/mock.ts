@@ -9,7 +9,7 @@ import { DEV_SERVER_BASE_URL } from '../../helpers/playwright'
 import type { WorkerOptions } from '../pageSetups'
 import { workerSetup } from '../pageSetups'
 
-export const LARGE_RESPONSE_MIN_BYTE_SIZE = 100_000
+const LARGE_RESPONSE_MIN_BYTE_SIZE = 100_000
 
 export function createMockServerApp(
   servers: Servers,

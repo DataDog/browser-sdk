@@ -52,6 +52,5 @@ export type DeflateEncoder = Encoder<Uint8ArrayBuffer> & { stop: () => void }
 export const enum DeflateEncoderStreamId {
   REPLAY = 1,
   RUM = 2,
-  TELEMETRY = 4,
   PROFILING = 6,
 }

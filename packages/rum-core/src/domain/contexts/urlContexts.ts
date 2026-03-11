@@ -19,7 +19,7 @@ import type { DefaultRumEventAttributes, Hooks } from '../hooks'
  * - the referrer corresponding to the previous view url (or document referrer for initial view)
  */
 
-export const URL_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
+const URL_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 
 export interface UrlContext {
   url: string

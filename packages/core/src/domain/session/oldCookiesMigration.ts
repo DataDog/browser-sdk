@@ -9,8 +9,8 @@ export const OLD_RUM_COOKIE_NAME = '_dd_r'
 export const OLD_LOGS_COOKIE_NAME = '_dd_l'
 
 // duplicate values to avoid dependency issues
-export const RUM_SESSION_KEY = 'rum'
-export const LOGS_SESSION_KEY = 'logs'
+const RUM_SESSION_KEY = 'rum'
+const LOGS_SESSION_KEY = 'logs'
 
 /**
  * This migration should remain in the codebase as long as older versions are available/live

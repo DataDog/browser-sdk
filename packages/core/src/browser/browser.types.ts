@@ -71,7 +71,7 @@ export interface CookieStoreEventMap {
   change: CookieChangeEvent
 }
 
-export interface CookieChangeItem {
+interface CookieChangeItem {
   name: string
   value: string | undefined
 }

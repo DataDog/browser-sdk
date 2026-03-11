@@ -8,5 +8,3 @@ export {
   isIncrementalSnapshotChangeRecordsEnabled,
   serializeNode,
 } from './serialization'
-export { createElementsScrollPositions } from './elementsScrollPositions'
-export type { ShadowRootsController } from './shadowRootsController'

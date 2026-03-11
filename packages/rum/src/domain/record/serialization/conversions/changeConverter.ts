@@ -24,7 +24,7 @@ import type { VDocument } from './vDocument'
 import { createVDocument } from './vDocument'
 import type { VNode } from './vNode'
 
-export interface ChangeConverter {
+interface ChangeConverter {
   convert(
     record: BrowserChangeRecord,
     options?: Partial<V1RenderOptions>

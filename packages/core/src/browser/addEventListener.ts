@@ -26,7 +26,6 @@ export const enum DOM_EVENT {
   HASH_CHANGE = 'hashchange',
   PAGE_HIDE = 'pagehide',
   MOUSE_DOWN = 'mousedown',
-  MOUSE_UP = 'mouseup',
   MOUSE_MOVE = 'mousemove',
   FOCUS = 'focus',
   BLUR = 'blur',

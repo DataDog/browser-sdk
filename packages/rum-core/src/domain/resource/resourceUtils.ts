@@ -14,7 +14,7 @@ import type { RumPerformanceResourceTiming } from '../../browser/performanceObse
 
 import type { ResourceEntryDetailsElement, DeliveryType } from '../../rawRumEvent.types'
 
-export interface ResourceEntryDetails {
+interface ResourceEntryDetails {
   worker?: ResourceEntryDetailsElement
   redirect?: ResourceEntryDetailsElement
   dns?: ResourceEntryDetailsElement

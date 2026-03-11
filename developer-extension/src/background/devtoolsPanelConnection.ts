@@ -12,7 +12,7 @@ const portNameRe = /^devtools-panel-for-tab-(\d+)$/
 
 export const onDevtoolsFirstConnection = new EventListeners<TabId>()
 export const onDevtoolsLastDisconnection = new EventListeners<TabId>()
-export const onDevtoolsConnection = new EventListeners<TabId>()
+const onDevtoolsConnection = new EventListeners<TabId>()
 export const onDevtoolsDisconnection = new EventListeners<TabId>()
 export const onDevtoolsMessage = new EventListeners<DevtoolsToBackgroundMessage>()
 

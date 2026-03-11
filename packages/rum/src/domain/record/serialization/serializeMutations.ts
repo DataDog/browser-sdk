@@ -34,7 +34,7 @@ import { serializeNode } from './serializeNode'
 import { serializeAttribute } from './serializeAttribute'
 import { getElementInputValue } from './serializationUtils'
 
-export type NodeWithSerializedNode = Node & { __brand: 'NodeWithSerializedNode' }
+type NodeWithSerializedNode = Node & { __brand: 'NodeWithSerializedNode' }
 type WithSerializedTarget<T> = T & { target: NodeWithSerializedNode }
 
 export function serializeMutations(

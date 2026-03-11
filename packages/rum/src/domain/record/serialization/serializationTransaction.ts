@@ -26,7 +26,7 @@ import type { SerializationStats } from './serializationStats'
 import { createSerializationStats, updateSerializationStats } from './serializationStats'
 import { createChangeEncoder } from './changeEncoder'
 
-export type SerializationTransactionCallback = (transaction: SerializationTransaction) => void
+type SerializationTransactionCallback = (transaction: SerializationTransaction) => void
 
 export const enum SerializationKind {
   INITIAL_FULL_SNAPSHOT,
@@ -114,7 +114,7 @@ export function serializeInTransaction(
 
 type AddNodeParams<NodeChange extends AddNodeChange> = NodeChange extends [any, any, ...infer Params] ? Params : never
 
-export type ChangeSerializationTransactionCallback = (transaction: ChangeSerializationTransaction) => void
+type ChangeSerializationTransactionCallback = (transaction: ChangeSerializationTransaction) => void
 
 /**
  * ChangeSerializationTransaction is used to build and emit a BrowserChangeRecord

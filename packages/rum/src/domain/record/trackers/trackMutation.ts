@@ -14,7 +14,7 @@ import type { Tracker } from './tracker.types'
 
 export type MutationTracker = Tracker & { flush: () => void }
 
-export type SerializeMutationsCallback = (
+type SerializeMutationsCallback = (
   timestamp: TimeStamp,
   mutations: RumMutationRecord[],
   emitRecord: EmitRecordCallback,

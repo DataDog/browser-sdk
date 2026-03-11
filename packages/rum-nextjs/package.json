@@ -17,14 +17,6 @@
     "next": ">=13.0.0",
     "react": ">=18.0.0"
   },
-  "peerDependenciesMeta": {
-    "next": {
-      "optional": true
-    },
-    "react": {
-      "optional": true
-    }
-  },
   "repository": {
     "type": "git",
     "url": "https://github.com/DataDog/browser-sdk.git",

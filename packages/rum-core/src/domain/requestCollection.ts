@@ -25,7 +25,7 @@ import { startTracer } from './tracing/tracer'
 import type { SpanIdentifier, TraceIdentifier } from './tracing/identifier'
 import { findGraphQlConfiguration } from './resource/graphql'
 
-export interface CustomContext {
+interface CustomContext {
   requestIndex: number
   spanId?: SpanIdentifier
   traceId?: TraceIdentifier

@@ -18,7 +18,7 @@ export const StatusType = {
   emerg: 'emerg',
 } as const
 
-export const STATUS_PRIORITIES: { [key in StatusType]: number } = {
+const STATUS_PRIORITIES: { [key in StatusType]: number } = {
   [StatusType.ok]: 0,
   [StatusType.debug]: 1,
   [StatusType.info]: 2,

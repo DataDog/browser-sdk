@@ -6,7 +6,7 @@ import {
   serializeNodeAndVerifyChangeRecord as serializeNode,
 } from '../test/serialization.specHelper'
 
-export const makeHtmlDoc = (htmlContent: string, privacyTag: string) => {
+const makeHtmlDoc = (htmlContent: string, privacyTag: string) => {
   try {
     const newDoc = document.implementation.createHTMLDocument('new doc')
     newDoc.documentElement.innerHTML = htmlContent
@@ -18,7 +18,7 @@ export const makeHtmlDoc = (htmlContent: string, privacyTag: string) => {
   }
 }
 
-export const removeIdFieldsRecursivelyClone = (thing: Record<string, unknown>): Record<string, unknown> => {
+const removeIdFieldsRecursivelyClone = (thing: Record<string, unknown>): Record<string, unknown> => {
   if (thing && typeof thing === 'object') {
     const object = thing
     delete object.id

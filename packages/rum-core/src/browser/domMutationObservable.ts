@@ -47,7 +47,7 @@ export function createDOMMutationObservable() {
 
 type MutationObserverConstructor = new (callback: (records: RumMutationRecord[]) => void) => MutationObserver
 
-export interface BrowserWindow extends Window {
+interface BrowserWindow extends Window {
   MutationObserver?: MutationObserverConstructor
   Zone?: unknown
 }

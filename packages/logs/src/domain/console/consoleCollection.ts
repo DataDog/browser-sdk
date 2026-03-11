@@ -7,7 +7,7 @@ import { StatusType } from '../logger/isAuthorized'
 import type { RawLogsEvent } from '../../rawLogsEvent.types'
 import { createErrorFieldFromRawError } from '../createErrorFieldFromRawError'
 
-export interface ProvidedError {
+interface ProvidedError {
   startClocks: ClocksState
   error: unknown
   context?: Context

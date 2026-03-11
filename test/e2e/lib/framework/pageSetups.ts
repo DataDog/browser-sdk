@@ -55,7 +55,7 @@ export const DEFAULT_SETUPS =
         { name: 'bundle', factory: bundleSetup },
       ]
 
-export function asyncSetup(options: SetupOptions, servers: Servers) {
+function asyncSetup(options: SetupOptions, servers: Servers) {
   let body = options.body || ''
   let header = options.head || ''
 
@@ -277,7 +277,7 @@ export function microfrontendSetup(options: SetupOptions, servers: Servers) {
   })
 }
 
-export function basePage({ header, body }: { header?: string; body?: string }) {
+function basePage({ header, body }: { header?: string; body?: string }) {
   return html`
     <!doctype html>
     <html>

@@ -31,7 +31,7 @@ export interface AssembleHookParams {
   readonly duration?: Duration | undefined
 }
 
-export interface HookCallbackMap {
+interface HookCallbackMap {
   [HookNamesAsConst.ASSEMBLE]: (param: AssembleHookParams) => DefaultRumEventAttributes | SKIPPED | DISCARDED
   [HookNamesAsConst.ASSEMBLE_TELEMETRY]: (param: {
     startTime: RelativeTime

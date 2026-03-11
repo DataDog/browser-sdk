@@ -14,7 +14,7 @@ export async function lazyLoadProfiler(): Promise<typeof createRumProfiler | und
   }
 }
 
-export async function importProfiler() {
+async function importProfiler() {
   const module = await import(/* webpackChunkName: "profiler" */ '../domain/profiling/profiler')
   return module.createRumProfiler
 }

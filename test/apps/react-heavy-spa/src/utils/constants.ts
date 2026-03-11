@@ -1,5 +1,5 @@
 // Data file paths
-export const DATA_PATHS = {
+const DATA_PATHS = {
   DASHBOARD: '/data/metrics.json',
   LOGS: '/data/logs.json',
   TRACES: '/data/traces.json',
@@ -17,7 +17,7 @@ export const ROUTES = {
 } as const
 
 // UI Constants
-export const SIDEBAR_WIDTH = 240
-export const TOPBAR_HEIGHT = 64
-export const LOG_TABLE_ROW_HEIGHT = 48
-export const ITEMS_PER_PAGE = 50
+const SIDEBAR_WIDTH = 240
+const TOPBAR_HEIGHT = 64
+const LOG_TABLE_ROW_HEIGHT = 48
+const ITEMS_PER_PAGE = 50

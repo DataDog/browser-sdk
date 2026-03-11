@@ -99,7 +99,7 @@ function selectStrategyForPersistence(
   }
 }
 
-export function getSessionStoreStrategy(
+function getSessionStoreStrategy(
   sessionStoreStrategyType: SessionStoreStrategyType,
   configuration: Configuration
 ) {

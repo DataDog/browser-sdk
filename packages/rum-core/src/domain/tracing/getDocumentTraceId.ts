@@ -25,7 +25,7 @@ export function getDocumentTraceDataFromMeta(document: Document): DocumentTraceD
   return createDocumentTraceData(traceIdMeta && traceIdMeta.content, traceTimeMeta && traceTimeMeta.content)
 }
 
-export function getDocumentTraceDataFromComment(document: Document): DocumentTraceData | undefined {
+function getDocumentTraceDataFromComment(document: Document): DocumentTraceData | undefined {
   const comment = findTraceComment(document)
   if (!comment) {
     return undefined

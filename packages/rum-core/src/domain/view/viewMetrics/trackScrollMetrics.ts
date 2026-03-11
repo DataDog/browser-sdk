@@ -14,7 +14,7 @@ import { getScrollY } from '../../../browser/scroll'
 import { getViewportDimension } from '../../../browser/viewportObservable'
 
 /** Arbitrary scroll throttle duration */
-export const THROTTLE_SCROLL_DURATION = ONE_SECOND
+const THROTTLE_SCROLL_DURATION = ONE_SECOND
 
 export interface ScrollMetrics {
   maxDepth: number
@@ -69,7 +69,7 @@ export interface ScrollValues {
   scrollHeight: number
 }
 
-export function computeScrollValues() {
+function computeScrollValues() {
   const scrollTop = getScrollY()
 
   const { height } = getViewportDimension()

@@ -282,7 +282,7 @@ function formatValue(path: string, value: unknown) {
   return defaultFormatValue(path, value)
 }
 
-export const EventDescription = React.memo(({ event }: { event: SdkEvent }) => {
+const EventDescription = React.memo(({ event }: { event: SdkEvent }) => {
   if (isRumEvent(event)) {
     switch (event.type) {
       case 'view':
