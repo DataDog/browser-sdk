@@ -139,18 +139,17 @@ export function startSessionStore(
     (callback?: () => void) => {
       withSessionLock(() => {
         const sessionState = sessionStoreStrategy.retrieveSession()
-        if (isSessionInNotStartedState(sessionState)) {
-          return
-        }
-        const synchronizedSession = synchronizeSession(sessionState)
-        expandOrRenewSessionState(synchronizedSession)
-        expandSessionState(synchronizedSession)
-        sessionStoreStrategy.persistSession(synchronizedSession)
+        if (!isSessionInNotStartedState(sessionState)) {
+          const synchronizedSession = synchronizeSession(sessionState)
+          expandOrRenewSessionState(synchronizedSession)
+          expandSessionState(synchronizedSession)
+          sessionStoreStrategy.persistSession(synchronizedSession)
 
-        if (isSessionStarted(synchronizedSession) && !hasSessionInCache()) {
-          renewSessionInCache(synchronizedSession)
+          if (isSessionStarted(synchronizedSession) && !hasSessionInCache()) {
+            renewSessionInCache(synchronizedSession)
+          }
+          sessionCache = synchronizedSession
         }
-        sessionCache = synchronizedSession
         callback?.()
       })
     },
