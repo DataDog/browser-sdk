@@ -1,3 +1,5 @@
+// Client component that throws on button click. The test clicks [data-testid="trigger-error"]
+// to trigger the error, which is then caught by the sibling error.tsx boundary.
 'use client'
 
 import { useState } from 'react'

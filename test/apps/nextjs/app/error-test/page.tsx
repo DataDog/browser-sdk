@@ -1,3 +1,5 @@
+// Error test page. Renders ClientErrorThrower so the test can trigger a client-side error
+// and verify it is captured by error.tsx via addNextjsError.
 import Link from 'next/link'
 import { ClientErrorThrower } from './clientErrorThrower'
 

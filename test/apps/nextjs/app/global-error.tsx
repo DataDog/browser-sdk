@@ -1,3 +1,5 @@
+// Global error boundary — catches errors that escape the root layout (https://nextjs.org/docs/app/getting-started/error-handling#global-errors).
+// Calls addNextjsError so tests can verify RUM captures root-level errors.
 'use client'
 
 import { addNextjsError } from '@datadog/browser-rum-nextjs'

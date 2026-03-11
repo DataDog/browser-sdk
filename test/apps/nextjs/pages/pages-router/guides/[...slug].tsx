@@ -1,3 +1,5 @@
+// Catch-all route page for /pages-router/guides/[...slug]. Used to verify that concrete URLs
+// (/guides/123) are normalised to /pages-router/guides/[...slug] in RUM view names.
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 

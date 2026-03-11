@@ -1,3 +1,5 @@
+// Segment-level error boundary for the error-test route (https://nextjs.org/docs/app/api-reference/file-conventions/error).
+// Calls addNextjsError to report both client errors and server errors (with digest) to RUM.
 'use client'
 
 import { addNextjsError } from '@datadog/browser-rum-nextjs'

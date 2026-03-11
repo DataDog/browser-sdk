@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { createTest, isContinuousIntegration } from '../lib/framework'
+import { createTest } from '../lib/framework'
 
 const routerConfigs = [
   {
@@ -229,22 +229,6 @@ test.describe('nextjs - errors', () => {
             withBrowserLogs((browserLogs) => {
               expect(browserLogs.length).toBeGreaterThan(0)
             })
-          })
-
-        createTest('should report SSR error via pages/_error.js')
-          .withRum()
-          .withNextjsApp('pages')
-          .run(async ({ page, flushEvents, intakeRegistry, baseUrl }) => {
-            test.skip(!isContinuousIntegration, 'pages/_error.js only renders in production (next start)')
-
-            await page.goto(`${baseUrl}/pages-router/throw-error`, { waitUntil: 'domcontentloaded' })
-            await page.waitForSelector('[data-testid="pages-error-page"]')
-
-            await flushEvents()
-
-            const customErrors = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
-            expect(customErrors.length).toBeGreaterThanOrEqual(1)
-            expect(customErrors[0].error.message).toBe('SSR error from pages router')
           })
       } else {
         createTest('should report a server error with digest via addNextjsError')

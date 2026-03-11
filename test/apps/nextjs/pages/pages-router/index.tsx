@@ -1,3 +1,5 @@
+// Home page — initial landing page for all pages router tests. Contains navigation links to
+// every other test route so tests can reach them via page.click().
 import Link from 'next/link'
 
 export default function HomePage() {
@@ -15,7 +17,7 @@ export default function HomePage() {
           <Link href="/pages-router/error-test">Go to Error Test</Link>
         </li>
         <li>
-          <Link href="/pages-router/throw-error">Go to Server Error</Link>
+          <Link href="/">Go to App Router</Link>
         </li>
       </ul>
     </div>

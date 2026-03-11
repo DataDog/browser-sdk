@@ -1,3 +1,5 @@
+// Error test page for the pages router. Uses NextjsErrorBoundary to catch a client-side throw
+// and report it via addNextjsError. Tests can trigger, inspect, and reset the error boundary.
 import { NextjsErrorBoundary } from '@datadog/browser-rum-nextjs'
 import type { NextjsErrorBoundaryFallback } from '@datadog/browser-rum-nextjs'
 import { useState } from 'react'

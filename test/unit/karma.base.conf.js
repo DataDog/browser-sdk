@@ -1,4 +1,3 @@
-import path from 'node:path'
 import { parseArgs } from 'node:util'
 import webpackBase from '../../webpack.base.ts'
 

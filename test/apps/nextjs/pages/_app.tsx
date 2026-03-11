@@ -1,19 +1,13 @@
+// Custom App wrapper for all pages router tests. Mounts DatadogPagesRouter (for view tracking)
+// around every page component. Equivalent of layout.tsx in the app router.
 import type { AppProps } from 'next/app'
-import Link from 'next/link'
 import { DatadogPagesRouter } from '@datadog/browser-rum-nextjs'
 
 export default function MyApp({ Component, pageProps }: AppProps) {
   return (
     <>
       <DatadogPagesRouter />
-      <nav style={{ background: '#632ca6', padding: '1rem', marginBottom: '1rem' }}>
-        <Link href="/pages-router" style={{ color: 'white', textDecoration: 'none' }}>
-          Home
-        </Link>
-      </nav>
-      <main style={{ maxWidth: '800px', margin: '0 auto', padding: '1rem' }}>
-        <Component {...pageProps} />
-      </main>
+      <Component {...pageProps} />
     </>
   )
 }

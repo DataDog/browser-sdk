@@ -7,7 +7,8 @@ import {
 } from '@datadog/browser-core/test'
 import { nextjsPlugin, resetNextjsPlugin } from '../nextjsPlugin'
 import { appendComponent } from '../../../../rum-react/test/appendComponent'
-import type { NextjsErrorBoundaryFallback } from './nextjsErrorBoundary';
+import { initReactOldBrowsersSupport } from '../../../../rum-react/test/reactOldBrowsersSupport'
+import type { NextjsErrorBoundaryFallback } from './nextjsErrorBoundary'
 import { NextjsErrorBoundary } from './nextjsErrorBoundary'
 
 type FallbackFunctionComponent = Extract<NextjsErrorBoundaryFallback, (...args: any[]) => any>
@@ -30,6 +31,7 @@ describe('NextjsErrorBoundary', () => {
   beforeEach(() => {
     ignoreConsoleLogs('error', 'Error: error')
     disableJasmineUncaughtExceptionTracking()
+    initReactOldBrowsersSupport()
     registerCleanupTask(() => {
       resetNextjsPlugin()
     })
