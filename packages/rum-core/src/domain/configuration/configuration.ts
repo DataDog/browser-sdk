@@ -16,6 +16,7 @@ import type { RumEventDomainContext } from '../../domainContext.types'
 import type { RumEvent } from '../../rumEvent.types'
 import type { RumPlugin } from '../plugins'
 import type { PropagatorType, TracingOption } from '../tracing/tracer.types'
+import type { RumSdkConfig } from './remoteConfiguration.types'
 
 export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'datadog']
 
@@ -102,6 +103,13 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @internal
    */
   remoteConfigurationId?: string | undefined
+
+  /**
+   * [Internal option] Remote configuration object, to apply directly without fetching
+   *
+   * @internal
+   */
+  remoteConfiguration?: RumSdkConfig['rum'] | undefined
 
   /**
    * [Internal option] set a proxy URL for the remote configuration

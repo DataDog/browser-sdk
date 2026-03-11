@@ -625,6 +625,7 @@ describe('serializeRumConfiguration', () => {
       trackBfcacheViews: true,
       trackEarlyRequests: true,
       remoteConfigurationId: '123',
+      remoteConfiguration: { applicationId: 'foo' },
       remoteConfigurationProxy: 'config',
       plugins: [{ name: 'foo', getConfigurationTelemetry: () => ({ bar: true }) }],
       trackFeatureFlagsForEvents: ['vital'],
@@ -646,7 +647,8 @@ describe('serializeRumConfiguration', () => {
           ? 'track_long_task' // We forgot the s, keeping this for backward compatibility
           : // The following options are not reported as telemetry. Please avoid adding more of them.
             // TODO: Add betaTrackActionsInShadowDom to rum-events-format and remove from this exclusion
-            Key extends 'applicationId' | 'subdomain' | 'betaTrackActionsInShadowDom'
+            // TODO: Add remoteConfiguration to rum-events-format and remove from this exclusion
+            Key extends 'applicationId' | 'subdomain' | 'betaTrackActionsInShadowDom' | 'remoteConfiguration'
             ? never
             : CamelToSnakeCase<Key>
     // By specifying the type here, we can ensure that serializeConfiguration is returning an

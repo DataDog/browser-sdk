@@ -56,6 +56,22 @@ interface RemoteConfigurationMetricCounters {
   [key: string]: number | undefined
 }
 
+export function applyRemoteConfigurationDirectly(
+  initConfiguration: RumInitConfiguration,
+  supportedContextManagers: SupportedContextManagers
+): RumInitConfiguration {
+  const metrics = initMetrics()
+  const result = applyRemoteConfiguration(
+    initConfiguration,
+    initConfiguration.remoteConfiguration! as RumRemoteConfiguration & { [key: string]: unknown },
+    supportedContextManagers,
+    metrics
+  )
+  // monitor-until: forever
+  addTelemetryMetrics(TelemetryMetrics.REMOTE_CONFIGURATION_METRIC_NAME, { metrics: metrics.get() })
+  return result
+}
+
 export async function fetchAndApplyRemoteConfiguration(
   initConfiguration: RumInitConfiguration,
   supportedContextManagers: SupportedContextManagers

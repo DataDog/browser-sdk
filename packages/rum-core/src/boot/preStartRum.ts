@@ -35,6 +35,7 @@ import type { RumConfiguration, RumInitConfiguration } from '../domain/configura
 import {
   validateAndBuildRumConfiguration,
   fetchAndApplyRemoteConfiguration,
+  applyRemoteConfigurationDirectly,
   serializeRumConfiguration,
 } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
@@ -216,7 +217,9 @@ export function createPreStartStrategy(
 
       callPluginsMethod(initConfiguration.plugins, 'onInit', { initConfiguration, publicApi })
 
-      if (initConfiguration.remoteConfigurationId) {
+      if (initConfiguration.remoteConfiguration) {
+        doInit(applyRemoteConfigurationDirectly(initConfiguration, { user: userContext, context: globalContext }), errorStack)
+      } else if (initConfiguration.remoteConfigurationId) {
         fetchAndApplyRemoteConfiguration(initConfiguration, { user: userContext, context: globalContext })
           .then((initConfiguration) => {
             if (initConfiguration) {
