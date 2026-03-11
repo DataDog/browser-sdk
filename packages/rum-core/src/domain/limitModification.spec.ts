@@ -1,5 +1,5 @@
 import type { Context } from '@datadog/browser-core'
-import { display, objectEntries } from '@datadog/browser-core'
+import { display, noop, objectEntries } from '@datadog/browser-core'
 import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
 
@@ -199,10 +199,7 @@ describe('limitModification', () => {
     spyOn(display, 'warn')
     const wayTooLongUrl = `/${'a'.repeat(300_000)}`
     const object: Context = { resource: { url: wayTooLongUrl } }
-    const modifier = function () {
-      /* Identity modifier */
-    }
-
+    const modifier = noop
     limitModification(object, { 'resource.url': 'string' }, modifier)
     expect(object).toEqual({ resource: { url: wayTooLongUrl } })
   })
