@@ -112,6 +112,32 @@ describe('addNextjsError', () => {
     )
   })
 
+  it('does not let user context overwrite framework', () => {
+    const { addEventSpy } = initializeNextjsPlugin()
+    const error = new Error('client error')
+
+    addNextjsError(error, { framework: 'user-provided' })
+
+    expect(addEventSpy.calls.mostRecent().args[1]).toEqual(
+      jasmine.objectContaining({
+        context: jasmine.objectContaining({ framework: 'nextjs' }),
+      })
+    )
+  })
+
+  it('does not let user context overwrite digest', () => {
+    const { addEventSpy } = initializeNextjsPlugin()
+    const error = Object.assign(new Error('server error'), { digest: 'abc123' })
+
+    addNextjsError(error, { nextjs: { digest: 'user-provided' } })
+
+    expect(addEventSpy.calls.mostRecent().args[1]).toEqual(
+      jasmine.objectContaining({
+        context: jasmine.objectContaining({ nextjs: { digest: 'abc123' } }),
+      })
+    )
+  })
+
   it('does not spread non-object context?.nextjs when merging with digest', () => {
     const { addEventSpy } = initializeNextjsPlugin()
     const error = Object.assign(new Error('server error'), { digest: 'abc123' })

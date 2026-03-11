@@ -43,7 +43,7 @@ export function addNextjsError(error: Error & { digest?: string }, context?: Rec
             source_type: 'browser',
             csp: rawError.csp,
           },
-          context: { framework: 'nextjs', ...context, ...nextjsExtra, ...rawError.context },
+          context: { ...context, ...rawError.context, framework: 'nextjs', ...nextjsExtra },
         },
         {
           error: rawError.originalError,
