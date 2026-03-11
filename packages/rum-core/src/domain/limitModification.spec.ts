@@ -195,7 +195,7 @@ describe('limitModification', () => {
     expect(() => JSON.stringify(object)).not.toThrowError()
   })
 
-  it("should not reset unsafe fields that the user didn't alter", () => {
+  it("should not reset unsafe literal fields that the user didn't alter", () => {
     spyOn(display, 'warn')
     const wayTooLongUrl = `/${'a'.repeat(300_000)}`
     const object: Context = { resource: { url: wayTooLongUrl } }
