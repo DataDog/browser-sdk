@@ -79,14 +79,7 @@ export default {
   webpack: {
     stats: 'minimal',
     module: overrideTsLoaderRule(webpackConfig.module),
-    resolve: {
-      ...webpackConfig.resolve,
-      alias: {
-        ...webpackConfig.resolve.alias,
-        'next/navigation': path.resolve('packages/rum-nextjs/test/stubs/nextNavigation.ts'),
-        'next/router': path.resolve('packages/rum-nextjs/test/stubs/nextRouter.ts'),
-      },
-    },
+    resolve: webpackConfig.resolve,
     target: webpackConfig.target,
     devtool: false,
     mode: 'development',
