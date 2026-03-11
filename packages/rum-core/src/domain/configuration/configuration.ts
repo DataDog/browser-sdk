@@ -569,7 +569,8 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     remote_configuration_id: configuration.remoteConfigurationId,
     profiling_sample_rate: configuration.profilingSampleRate,
     use_remote_configuration_proxy: !!configuration.remoteConfigurationProxy,
-    use_allowed_html_attributes: !!configuration.allowedHtmlAttributes && isNonEmptyArray(configuration.allowedHtmlAttributes),
+    use_allowed_html_attributes:
+      !!configuration.allowedHtmlAttributes && isNonEmptyArray(configuration.allowedHtmlAttributes),
     ...baseSerializedConfiguration,
   } satisfies RawTelemetryConfiguration
 }
