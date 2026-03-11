@@ -170,6 +170,15 @@ build-and-lint:
     - yarn lint
     - node scripts/check-packages.ts
 
+knip:
+  extends:
+    - .base-configuration
+    - .test-allowed-branches
+  interruptible: true
+  script:
+    - yarn
+    - yarn knip
+
 test-performance:
   extends:
     - .base-configuration
