@@ -1,13 +1,16 @@
 import {
   callMonitored,
   clocksNow,
+  combine,
   computeRawError,
   createHandlingStack,
   ErrorHandling,
   ErrorSource,
   generateUUID,
   NonErrorPrefix,
+  sanitize,
 } from '@datadog/browser-core'
+import type { Context } from '@datadog/browser-core'
 import { RumEventType } from '@datadog/browser-rum-core'
 import { onRumStart } from '../nextjsPlugin'
 
@@ -16,7 +19,9 @@ export function addNextjsError(error: Error & { digest?: string }, context?: Rec
   const startClocks = clocksNow()
   onRumStart((addEvent) => {
     callMonitored(() => {
-      const nextjsContext = context?.nextjs instanceof Object ? (context.nextjs as Record<string, unknown>) : {}
+      const sanitizedContext = sanitize(context) as Context | undefined
+      const nextjsContext =
+        sanitizedContext?.nextjs instanceof Object ? (sanitizedContext.nextjs as Record<string, unknown>) : {}
       const nextjsExtra = error.digest !== undefined ? { nextjs: { ...nextjsContext, digest: error.digest } } : {}
       const rawError = computeRawError({
         originalError: error,
@@ -43,7 +48,7 @@ export function addNextjsError(error: Error & { digest?: string }, context?: Rec
             source_type: 'browser',
             csp: rawError.csp,
           },
-          context: { ...context, ...rawError.context, framework: 'nextjs', ...nextjsExtra },
+          context: { ...combine(rawError.context, sanitizedContext), framework: 'nextjs', ...nextjsExtra },
         },
         {
           error: rawError.originalError,

@@ -150,4 +150,31 @@ describe('addNextjsError', () => {
       })
     )
   })
+
+  it('sanitizes non-serializable values in user context', () => {
+    const { addEventSpy } = initializeNextjsPlugin()
+    const error = new Error('test error')
+    const circular: Record<string, unknown> = {}
+    circular.self = circular
+
+    addNextjsError(error, { safe: 'value', circular })
+
+    const context = addEventSpy.calls.mostRecent().args[1].context as Record<string, unknown>
+    expect(context['safe']).toBe('value')
+    // circular reference is replaced with a string placeholder rather than crashing serialization
+    expect(typeof (context['circular'] as Record<string, unknown>)['self']).toBe('string')
+  })
+
+  it('user context wins over error.dd_context', () => {
+    const { addEventSpy } = initializeNextjsPlugin()
+    const error = Object.assign(new Error('test error'), { dd_context: { source: 'from-dd-context' } })
+
+    addNextjsError(error, { source: 'from-user-context' })
+
+    expect(addEventSpy.calls.mostRecent().args[1]).toEqual(
+      jasmine.objectContaining({
+        context: jasmine.objectContaining({ source: 'from-user-context' }),
+      })
+    )
+  })
 })
