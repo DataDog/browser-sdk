@@ -52,9 +52,8 @@ function setNestedValue(
   value: unknown,
   fieldType: 'string' | 'object'
 ) {
-  // When the value is the same as object[field], and it's unsafe,
-  // we don't want to tamper with it.
-  // This is to have a consistent SDK behavior when the user doesn't provide a beforeSend function
+  // Do not sanitize fields that have not been touched by the modifier.
+  // This is to have a consistent SDK behavior wether limitModification is called or not on the original object.
   // and when it provides one that doesn't modify the event.context.
   // This fix only works for strings, for example when the event.context is untouched,
   // it will still go through the sanitize process. It's acceptable given the unlikely eventuality.
