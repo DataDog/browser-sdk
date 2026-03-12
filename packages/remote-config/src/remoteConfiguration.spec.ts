@@ -529,7 +529,9 @@ describe('remoteConfiguration', () => {
         // access the property twice to trigger the getter each time
         void result.user
         void result.user
-        expect(callCount).toBe(2)
+        const userValue = result.user // third getter call
+        expect(userValue).toEqual({ id: undefined })
+        expect(callCount).toBe(3)
       })
 
       it('should NOT treat an empty array as ContextItem[]', () => {
