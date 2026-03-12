@@ -1,5 +1,5 @@
 import type { Context } from '@datadog/browser-core'
-import { objectEntries } from '@datadog/browser-core'
+import { display, noop, objectEntries, SANITIZE_DEFAULT_MAX_CHARACTER_COUNT } from '@datadog/browser-core'
 import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
 
@@ -193,6 +193,38 @@ describe('limitModification', () => {
 
     limitModification(object, { bar: 'object' }, modifier)
     expect(() => JSON.stringify(object)).not.toThrowError()
+  })
+
+  it("should not reset unsafe literal fields that the user didn't alter", () => {
+    spyOn(display, 'warn')
+    const wayTooLongUrl = `/${'a'.repeat(SANITIZE_DEFAULT_MAX_CHARACTER_COUNT + 1)}`
+    const object: Context = { resource: { url: wayTooLongUrl } }
+    const modifier = noop
+    limitModification(object, { 'resource.url': 'string' }, modifier)
+    expect(object).toEqual({ resource: { url: wayTooLongUrl } })
+  })
+
+  it('should sanitize object fields (fieldType "object") even with a noop modifier', () => {
+    spyOn(display, 'warn')
+    const wayTooLongUrl = `/${'a'.repeat(SANITIZE_DEFAULT_MAX_CHARACTER_COUNT + 1)}`
+    const object: Context = {
+      context: {
+        response: {
+          status: 200,
+          url: wayTooLongUrl,
+        },
+      },
+    }
+    const modifier = noop
+    limitModification(object, { context: 'object' }, modifier)
+    expect(object).toEqual({
+      context: {
+        response: {
+          status: 200,
+        },
+      },
+    })
+    expect(display.warn).toHaveBeenCalled()
   })
 })
 
