@@ -1,8 +1,7 @@
 import { isEmptyObject } from '../../../tools/utils/objectUtils'
-import { isChromium } from '../../../tools/utils/browserDetection'
 import type { CookieOptions } from '../../../browser/cookie'
 import { getCurrentSite, areCookiesAuthorized, getCookies, setCookie } from '../../../browser/cookie'
-import type { InitConfiguration, Configuration } from '../../configuration'
+import type { InitConfiguration } from '../../configuration'
 import {
   SESSION_COOKIE_EXPIRATION_DELAY,
   SESSION_EXPIRATION_DELAY,
@@ -10,11 +9,17 @@ import {
   SessionPersistence,
 } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
-import { toSessionString, toSessionState, getExpiredSessionState } from '../sessionState'
+import { toSessionString, toSessionState } from '../sessionState'
+import { Observable } from '../../../tools/observable'
+import { setInterval, clearInterval } from '../../../tools/timer'
+import { ONE_SECOND } from '../../../tools/utils/timeUtils'
+import { monitor } from '../../../tools/monitor'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
 
 const SESSION_COOKIE_VERSION = 0
+const BROADCAST_CHANNEL_NAME = '_dd_session'
+const POLL_DELAY = ONE_SECOND
 
 export function selectCookieStrategy(initConfiguration: InitConfiguration): SessionStoreStrategyType | undefined {
   const cookieOptions = buildCookieOptions(initConfiguration)
@@ -23,72 +28,117 @@ export function selectCookieStrategy(initConfiguration: InitConfiguration): Sess
     : undefined
 }
 
-export function initCookieStrategy(configuration: Configuration, cookieOptions: CookieOptions): SessionStoreStrategy {
-  const cookieStore = {
-    /**
-     * Lock strategy allows mitigating issues due to concurrent access to cookie.
-     * This issue concerns only chromium browsers and enabling this on firefox increases cookie write failures.
-     */
-    isLockEnabled: isChromium(),
-    persistSession: (sessionState: SessionState) =>
-      storeSessionCookie(cookieOptions, configuration, sessionState, SESSION_EXPIRATION_DELAY),
-    retrieveSession: () => retrieveSessionCookie(cookieOptions),
-    expireSession: (sessionState: SessionState) =>
-      storeSessionCookie(
-        cookieOptions,
-        configuration,
-        getExpiredSessionState(sessionState, configuration),
-        SESSION_TIME_OUT_DELAY
-      ),
+export function initCookieStrategy(cookieOptions: CookieOptions, trackAnonymousUser: boolean): SessionStoreStrategy {
+  const sessionObservable = new Observable<SessionState>()
+  const queue: Array<(sessionState: SessionState) => SessionState> = []
+  let isProcessing = false
+
+  // Cross-tab notification: BroadcastChannel (preferred) or polling (fallback)
+  let broadcastChannel: BroadcastChannel | undefined
+  let pollIntervalId: ReturnType<typeof setInterval> | undefined
+  let lastEmittedSessionString: string | undefined
+
+  try {
+    broadcastChannel = new BroadcastChannel(BROADCAST_CHANNEL_NAME)
+    broadcastChannel.onmessage = monitor(() => {
+      const state = readAndStripCookieOptions(cookieOptions)
+      const sessionString = toSessionString(state)
+      if (sessionString !== lastEmittedSessionString) {
+        lastEmittedSessionString = sessionString
+        sessionObservable.notify(state)
+      }
+    })
+  } catch {
+    // BroadcastChannel not available, fall back to polling
+    pollIntervalId = setInterval(() => {
+      const state = readAndStripCookieOptions(cookieOptions)
+      const sessionString = toSessionString(state)
+      if (sessionString !== lastEmittedSessionString) {
+        lastEmittedSessionString = sessionString
+        sessionObservable.notify(state)
+      }
+    }, POLL_DELAY)
   }
 
-  return cookieStore
+  function applyAndEmit(fn: (state: SessionState) => SessionState) {
+    const currentState = readAndStripCookieOptions(cookieOptions)
+    const newState = fn(currentState)
+    writeCookie(cookieOptions, trackAnonymousUser, newState)
+
+    const strippedState = { ...newState }
+    delete strippedState.c
+    lastEmittedSessionString = toSessionString(strippedState)
+    sessionObservable.notify(strippedState)
+    broadcastChannel?.postMessage(null)
+  }
+
+  function processQueue() {
+    if (isProcessing || queue.length === 0) {
+      return
+    }
+    isProcessing = true
+
+    if (typeof navigator !== 'undefined' && navigator.locks) {
+      navigator.locks.request(SESSION_STORE_KEY, () => {
+        // Process entire queue inside the lock for atomicity
+        while (queue.length > 0) {
+          applyAndEmit(queue.shift()!)
+        }
+        isProcessing = false
+      })
+    } else {
+      // No Web Locks available — process synchronously (last-write-wins)
+      while (queue.length > 0) {
+        applyAndEmit(queue.shift()!)
+      }
+      isProcessing = false
+    }
+  }
+
+  return {
+    setSessionState(fn: (sessionState: SessionState) => SessionState): void {
+      queue.push(fn)
+      processQueue()
+    },
+    sessionObservable,
+  }
 }
 
-function storeSessionCookie(
-  options: CookieOptions,
-  configuration: Configuration,
-  sessionState: SessionState,
-  defaultTimeout: number
-) {
-  const sessionStateString = toSessionString({
-    ...sessionState,
-    // deleting a cookie is writing a new cookie with an empty value
-    // we don't want to store the cookie options in this case otherwise the cookie will not be deleted
-    ...(!isEmptyObject(sessionState) ? { c: encodeCookieOptions(options) } : {}),
-  })
-
-  setCookie(
-    SESSION_STORE_KEY,
-    sessionStateString,
-    configuration.trackAnonymousUser ? SESSION_COOKIE_EXPIRATION_DELAY : defaultTimeout,
-    options
-  )
-}
-
-/**
- * Retrieve the session state from the cookie that was set with the same cookie options
- * If there is no match, return the first cookie, because that's how `getCookie()` works
- */
-export function retrieveSessionCookie(cookieOptions: CookieOptions): SessionState {
+function readAndStripCookieOptions(cookieOptions: CookieOptions): SessionState {
   const cookies = getCookies(SESSION_STORE_KEY)
   const opts = encodeCookieOptions(cookieOptions)
 
   let sessionState: SessionState | undefined
 
-  // reverse the cookies so that if there is no match, the cookie returned is the first one
   for (const cookie of cookies.reverse()) {
     sessionState = toSessionState(cookie)
-
     if (sessionState.c === opts) {
       break
     }
   }
 
-  // remove the cookie options from the session state as this is not part of the session state
   delete sessionState?.c
-
   return sessionState ?? {}
+}
+
+function writeCookie(cookieOptions: CookieOptions, trackAnonymousUser: boolean, sessionState: SessionState) {
+  const sessionStateWithOptions = {
+    ...sessionState,
+    ...(!isEmptyObject(sessionState) ? { c: encodeCookieOptions(cookieOptions) } : {}),
+  }
+  const sessionString = toSessionString(sessionStateWithOptions)
+
+  // Cookie expiration logic:
+  // - trackAnonymousUser=true: always use 1 year (keep cookie alive for device ID)
+  // - trackAnonymousUser=false + active session: 15 min (activity-based renewal)
+  // - trackAnonymousUser=false + expired session: 4h (absolute timeout)
+  const expireDelay = trackAnonymousUser
+    ? SESSION_COOKIE_EXPIRATION_DELAY
+    : sessionState.isExpired
+      ? SESSION_TIME_OUT_DELAY
+      : SESSION_EXPIRATION_DELAY
+
+  setCookie(SESSION_STORE_KEY, sessionString, expireDelay, cookieOptions)
 }
 
 export function buildCookieOptions(initConfiguration: InitConfiguration): CookieOptions | undefined {
@@ -115,10 +165,10 @@ function encodeCookieOptions(cookieOptions: CookieOptions): string {
 
   /* eslint-disable no-bitwise */
   let byte = 0
-  byte |= SESSION_COOKIE_VERSION << 5 // Store version in upper 3 bits
-  byte |= domainCount << 1 // Store domain count in next 4 bits
-  byte |= cookieOptions.crossSite ? 1 : 0 // Store useCrossSiteScripting in next bit
+  byte |= SESSION_COOKIE_VERSION << 5
+  byte |= domainCount << 1
+  byte |= cookieOptions.crossSite ? 1 : 0
   /* eslint-enable no-bitwise */
 
-  return byte.toString(16) // Convert to hex string
+  return byte.toString(16)
 }
