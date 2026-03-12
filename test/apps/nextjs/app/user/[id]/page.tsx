@@ -11,7 +11,12 @@ export default async function UserPage({ params }: { params: Promise<{ id: strin
       <div>
         <Link href="/user/999?admin=true">Go to User 999</Link>
       </div>
-      <Link href={`/user/${id}?admin=false`}>Change query params</Link>
+      <div>
+        <Link href={`/user/${id}?admin=false`}>Change query params</Link>
+      </div>
+      <div>
+        <Link href={`/user/${id}#section`}>Go to Section</Link>
+      </div>
     </div>
   )
 }

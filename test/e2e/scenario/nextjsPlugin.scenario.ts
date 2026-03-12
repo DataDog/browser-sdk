@@ -7,14 +7,12 @@ const routerConfigs = [
     router: 'app' as const,
     viewPrefix: '',
     homeUrlPattern: '**/',
-    clientErrorMessage: 'Client error from error-test',
   },
   {
     name: 'nextjs pages router',
     router: 'pages' as const,
     viewPrefix: '/pages-router',
     homeUrlPattern: /\/pages-router(\?|$)/,
-    clientErrorMessage: 'Pages Router error from NextjsErrorBoundary',
   },
 ]
 
@@ -99,6 +97,26 @@ test.describe('nextjs - router', () => {
           expect(homeView).toBeDefined()
           expect(homeView?.view.loading_time).toBeDefined()
           expect(homeView?.view.loading_time).toBeGreaterThan(0)
+        })
+
+      createTest('should not create a new view when only the hash changes')
+        .withRum()
+        .withNextjsApp(router)
+        .run(async ({ page, flushEvents, intakeRegistry }) => {
+          await page.click('text=Go to User 42')
+          await page.waitForURL('**/user/42?admin=true')
+
+          await page.click('text=Go to Section')
+          await page.waitForURL('**/user/42#section')
+
+          await flushEvents()
+
+          const userView = intakeRegistry.rumViewEvents.find((e) => e.view.name === `${viewPrefix}/user/[id]`)
+          expect(userView).toBeDefined()
+
+          // No new view should be created for the hash-only navigation
+          const spuriousView = intakeRegistry.rumViewEvents.find((e) => e.view.url?.includes('#section'))
+          expect(spuriousView).toBeUndefined()
         })
 
       createTest('should not create a new view when only query params change')
