@@ -2370,6 +2370,7 @@ dependencies = [
  "relative-path",
  "reqwest",
  "rolldown",
+ "rolldown_common",
  "rustc-hash",
  "serde",
  "serde_json",

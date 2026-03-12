@@ -91,7 +91,7 @@ async fn handler(
         }
     };
 
-    let output = match bundle.build(rc, client_token, minify).await {
+    let output = match bundle.build(rc, client_token, site, minify).await {
         Ok(output) => output,
         Err(error) => {
             tracing::error!(%error, "failed to build SDK bundle");
@@ -104,5 +104,5 @@ async fn handler(
     Ok(Response::builder()
         .status(200)
         .header("content-type", "text/javascript")
-        .body(output.as_slice().into())?)
+        .body(output.as_str().into())?)
 }

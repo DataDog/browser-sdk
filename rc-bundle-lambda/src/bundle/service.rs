@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use crate::remote_config::{ClientToken, RemoteConfigId, RemoteConfigSnapshot};
+use crate::remote_config::{ClientToken, RemoteConfigId, RemoteConfigSnapshot, Site};
 use crate::sdk_codebase::SdkCodebase;
 
 use super::build::bundle_sdk;
@@ -10,6 +10,7 @@ use super::build::bundle_sdk;
 struct BundleCacheKey {
     rc_id: RemoteConfigId,
     client_token: ClientToken,
+    site: Site,
     minify: bool,
 }
 
@@ -23,7 +24,7 @@ pub struct BundleService {
 struct CachedBundle {
     files_hash: u64,
     rc_hash: u64,
-    bundle: Arc<Vec<u8>>,
+    bundle: Arc<String>,
 }
 
 impl BundleService {
@@ -38,12 +39,14 @@ impl BundleService {
         &self,
         rc: RemoteConfigSnapshot,
         client_token: ClientToken,
+        site: Site,
         minify: bool,
-    ) -> anyhow::Result<Arc<Vec<u8>>> {
+    ) -> anyhow::Result<Arc<String>> {
         let files = self.sdk.files().await?;
         let cache_key = BundleCacheKey {
             rc_id: rc.id.clone(),
             client_token: client_token.clone(),
+            site,
             minify,
         };
 
@@ -68,7 +71,7 @@ impl BundleService {
         let rc_hash = rc.hash;
         let rc_id = rc.id.clone();
         tracing::debug!(%rc_id, files_hash, rc_hash, minify, "bundle cache miss, rebuilding");
-        let result = Arc::new(bundle_sdk(files, rc, client_token, minify).await?);
+        let result = Arc::new(bundle_sdk(files, rc, client_token, site, minify).await?);
 
         self.cache.lock().unwrap().insert(
             cache_key,

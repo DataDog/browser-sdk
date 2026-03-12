@@ -34,9 +34,8 @@ pub struct ClientToken(String);
 
 impl ClientToken {
     pub fn new(s: String) -> anyhow::Result<Self> {
-        let is_valid = s.len() == 35
-            && s.starts_with("pub")
-            && s[3..].bytes().all(|b| b.is_ascii_hexdigit());
+        let is_valid =
+            s.len() == 35 && s.starts_with("pub") && s[3..].bytes().all(|b| b.is_ascii_hexdigit());
         if !is_valid {
             return Err(anyhow::anyhow!(
                 "invalid clientToken: expected 'pub' followed by 32 hex characters"
@@ -62,7 +61,9 @@ impl RemoteConfigId {
                 _ => c.is_ascii_hexdigit(),
             });
         if !is_uuid {
-            return Err(anyhow::anyhow!("invalid remoteConfigurationId: expected a UUID"));
+            return Err(anyhow::anyhow!(
+                "invalid remoteConfigurationId: expected a UUID"
+            ));
         }
         Ok(Self(s))
     }
@@ -94,6 +95,10 @@ impl Site {
             .find(|&&allowed| allowed == s)
             .map(|&allowed| Site(allowed))
             .ok_or_else(|| anyhow::anyhow!("unsupported site: '{s}'"))
+    }
+
+    pub fn as_str(&self) -> &str {
+        self.0
     }
 }
 
@@ -229,7 +234,9 @@ mod tests {
     fn us3() {
         assert_eq!(
             endpoint("us3.datadoghq.com", TEST_UUID).unwrap(),
-            format!("https://sdk-configuration.browser-intake-us3-datadoghq.com/v1/{TEST_UUID}.json")
+            format!(
+                "https://sdk-configuration.browser-intake-us3-datadoghq.com/v1/{TEST_UUID}.json"
+            )
         );
     }
 

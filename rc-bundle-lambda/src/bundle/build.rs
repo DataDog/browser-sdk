@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::hash::BuildHasherDefault;
-use std::io::Write;
 use std::sync::Arc;
 use std::time::SystemTime;
 
@@ -17,9 +16,10 @@ use rolldown::{
         HookResolveIdReturn, HookUsage, Plugin, PluginContext, SharedLoadPluginContext,
     },
 };
+use rolldown_common::Output;
 use rustc_hash::FxHasher;
 
-use crate::remote_config::{ClientToken, RemoteConfigSnapshot};
+use crate::remote_config::{ClientToken, RemoteConfigSnapshot, Site};
 use crate::sdk_codebase::{Files, FilesSnapshot};
 
 type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
@@ -27,8 +27,11 @@ type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
 const SDK_VERSION: &str = "1.0.0";
 
 const VIRTUAL_ENTRY_PATH: &str = "__entry__.ts";
-const RECORDER_API_PATH: &str = "packages/rum/src/boot/recorderApi.ts";
 
+const DEFLATE_WORKER_PATH: &str = "packages/rum/src/domain/deflate/deflateWorker.ts";
+const STUB_DEFLATE_WORKER: &str = "export function startDeflateWorker() {}";
+
+const RECORDER_API_PATH: &str = "packages/rum/src/boot/recorderApi.ts";
 const STUB_RECORDER_API: &str = "\
 export function makeRecorderApi() {
   return {
@@ -46,16 +49,17 @@ pub async fn bundle_sdk(
     files: FilesSnapshot,
     rc: RemoteConfigSnapshot,
     client_token: ClientToken,
+    site: Site,
     minify: bool,
-) -> anyhow::Result<Vec<u8>> {
+) -> anyhow::Result<String> {
     let t = std::time::Instant::now();
 
-    let worker_string = build_worker_string(&files).await?;
+    let worker_string = build_worker_string(&files, minify).await?;
 
     let mut base_map = (*files.files).clone();
     base_map.insert(
         VIRTUAL_ENTRY_PATH.to_string(),
-        ArcStr::from(render_virtual_entry(&rc, &client_token)),
+        ArcStr::from(render_virtual_entry(&rc, &client_token, site)),
     );
     let file_map = apply_rc_overrides(Arc::new(base_map), &rc);
     let js = build_js(
@@ -70,7 +74,7 @@ pub async fn bundle_sdk(
     )
     .await?;
 
-    let buf = render(&rc, &files, &js);
+    let buf = render_bundle(&rc, &files, &js);
 
     tracing::info!(
         bytes = buf.len(),
@@ -80,29 +84,17 @@ pub async fn bundle_sdk(
     Ok(buf)
 }
 
-async fn build_worker_string(files: &FilesSnapshot) -> anyhow::Result<String> {
-    let package_map = build_package_map(&files.files);
-    let Some(worker_path) = package_map.get("@datadog/browser-worker") else {
-        return Ok(String::new());
-    };
-    let Some(entry) = try_resolve(&files.files, worker_path) else {
-        return Err(anyhow!(
-            "'@datadog/browser-worker' resolved to '{}' but no matching file was found",
-            worker_path
-        ));
-    };
-
-    let js = build_js(
+async fn build_worker_string(files: &FilesSnapshot, minify: bool) -> anyhow::Result<String> {
+    build_js(
         files.files.clone(),
-        &entry,
+        "@datadog/browser-worker",
         &[
             ("__BUILD_ENV__SDK_VERSION__", SDK_VERSION),
             ("__BUILD_ENV__SDK_SETUP__", "rc-bundle"),
         ],
-        true,
+        minify,
     )
-    .await?;
-    Ok(String::from_utf8(js)?)
+    .await
 }
 
 async fn build_js(
@@ -110,7 +102,7 @@ async fn build_js(
     entry: &str,
     defines: &[(&str, &str)],
     do_minify: bool,
-) -> anyhow::Result<Vec<u8>> {
+) -> anyhow::Result<String> {
     let define: FxIndexMap<String, String> = defines
         .iter()
         .map(|(k, v)| (k.to_string(), js_string_literal(v)))
@@ -150,11 +142,12 @@ async fn build_js(
         anyhow!("rolldown build failed:\n{}", messages.join("\n"))
     })?;
 
-    let mut result = Vec::new();
     for chunk in output.assets {
-        result.extend_from_slice(chunk.content_as_bytes());
+        if let Output::Chunk(chunk) = chunk {
+            return Ok(Arc::try_unwrap(chunk).unwrap().code);
+        }
     }
-    Ok(result)
+    Err(anyhow!("rolldown build did not return a chunk"))
 }
 
 fn apply_rc_overrides(files: Files, rc: &RemoteConfigSnapshot) -> Files {
@@ -169,6 +162,10 @@ fn apply_rc_overrides(files: Files, rc: &RemoteConfigSnapshot) -> Files {
             RECORDER_API_PATH.to_string(),
             ArcStr::from(STUB_RECORDER_API),
         ));
+        overrides.push((
+            DEFLATE_WORKER_PATH.to_string(),
+            ArcStr::from(STUB_DEFLATE_WORKER),
+        ));
     }
 
     if overrides.is_empty() {
@@ -180,7 +177,11 @@ fn apply_rc_overrides(files: Files, rc: &RemoteConfigSnapshot) -> Files {
     }
 }
 
-fn render_virtual_entry(rc: &RemoteConfigSnapshot, client_token: &ClientToken) -> String {
+fn render_virtual_entry(
+    rc: &RemoteConfigSnapshot,
+    client_token: &ClientToken,
+    site: Site,
+) -> String {
     let rum_json = serde_json::to_string(&rc.config.rum).expect("RumConfig serialization failed");
     format!(
         "
@@ -189,31 +190,28 @@ datadogRum._setDebug(true)
 datadogRum.init({{
     clientToken: '{}',
     applicationId: 'xxx',
-    remoteConfig: {rum_json}
+    site: '{}',
+    remoteConfiguration: {rum_json}
 }});
 ",
-        client_token.as_str()
+        client_token.as_str(),
+        site.as_str()
     )
 }
 
-fn render(rc: &RemoteConfigSnapshot, files: &FilesSnapshot, js: &[u8]) -> Vec<u8> {
-    let mut buf = Vec::new();
-    writeln!(
-        buf,
-        "// RC: {}, fetched at {}",
-        rc.url,
-        format_time(rc.fetched_at)
+fn render_bundle(rc: &RemoteConfigSnapshot, files: &FilesSnapshot, js: &str) -> String {
+    let rc_url = &rc.url;
+    let rc_fetched_at = format_time(rc.fetched_at);
+    let codebase_commit = &files.commit;
+    let codebase_fetched_at = format_time(files.fetched_at);
+
+    format!(
+        "\
+// RC: {rc_url}, fetched at {rc_fetched_at}
+// Codebase: commit {codebase_commit}, fetched at {codebase_fetched_at}
+{js}
+",
     )
-    .unwrap();
-    writeln!(
-        buf,
-        "// Codebase: commit {}, fetched at {}",
-        files.commit,
-        format_time(files.fetched_at)
-    )
-    .unwrap();
-    buf.extend_from_slice(js);
-    buf
 }
 
 fn format_time(t: SystemTime) -> String {
@@ -248,19 +246,18 @@ impl Plugin for MemoryPlugin {
     ) -> impl std::future::Future<Output = HookResolveIdReturn> + Send {
         let resolved = {
             let specifier = args.specifier;
-            let path = if specifier.starts_with('.') {
+            if specifier.starts_with('.') {
                 let base = args.importer.unwrap_or("");
-                RelativePath::new(base)
+                let path = RelativePath::new(base)
                     .parent()
                     .unwrap_or(RelativePath::new(""))
-                    .join_normalized(specifier)
-                    .into_string()
+                    .join_normalized(specifier);
+                try_resolve(&self.files, path.as_str())
             } else if let Some(pkg_path) = self.packages.get(specifier) {
-                pkg_path.clone()
+                try_resolve(&self.files, pkg_path)
             } else {
-                specifier.to_string()
-            };
-            try_resolve(&self.files, &path)
+                try_resolve(&self.files, specifier)
+            }
         };
         let id = resolved.map(HookResolveIdOutput::from_id);
         async move { Ok(id) }
@@ -313,10 +310,13 @@ fn build_package_map(files: &Files) -> HashMap<String, String> {
         .collect()
 }
 
-fn try_resolve(files: &Files, path: &str) -> Option<String> {
-    if files.contains_key(path) {
-        return Some(path.to_string());
+fn try_resolve<'a>(files: &'a Files, path: &str) -> Option<&'a str> {
+    if let Some((key, _)) = files.get_key_value(path) {
+        return Some(key);
     }
+    let mut candidate = String::with_capacity(path.len() + 10);
+    candidate.push_str(path);
+    let base_len = candidate.len();
     for suffix in [
         ".ts",
         ".tsx",
@@ -327,9 +327,10 @@ fn try_resolve(files: &Files, path: &str) -> Option<String> {
         "/index.js",
         "/index.jsx",
     ] {
-        let candidate = format!("{}{}", path, suffix);
-        if files.contains_key(&candidate) {
-            return Some(candidate);
+        candidate.truncate(base_len);
+        candidate.push_str(suffix);
+        if let Some((key, _)) = files.get_key_value(candidate.as_str()) {
+            return Some(key);
         }
     }
     None
@@ -342,13 +343,17 @@ mod tests {
 
     use super::*;
     use crate::remote_config::{
-        ClientToken, RemoteConfig, RemoteConfigId, RemoteConfigSnapshot, RumConfig,
+        ClientToken, RemoteConfig, RemoteConfigId, RemoteConfigSnapshot, RumConfig, Site,
     };
 
     const TEST_TOKEN: &str = "pub44a8a6e44d32ac6fcdfdeea44b840b21";
 
     fn make_client_token() -> ClientToken {
         ClientToken::new(TEST_TOKEN.to_string()).unwrap()
+    }
+
+    fn make_site() -> Site {
+        Site::new("datadoghq.com").unwrap()
     }
 
     fn make_rc(session_sample_rate: Option<f64>) -> RemoteConfigSnapshot {
@@ -404,33 +409,30 @@ mod tests {
     async fn outputs_empty_bundle_when_session_sample_rate_is_zero() {
         let files = make_snapshot(&[]);
         let rc = make_rc(Some(0.0));
-        let result = bundle_sdk(files, rc, make_client_token(), true)
+        let result = bundle_sdk(files, rc, make_client_token(), make_site(), true)
             .await
             .unwrap();
-        let output = std::str::from_utf8(&result).unwrap();
-        assert!(output.starts_with("// RC:"));
+        assert!(result.starts_with("// RC:"));
         // Empty entry: no SDK initialization code
-        assert!(!output.contains("datadogRum.init"));
+        assert!(!result.contains("datadogRum.init"));
     }
 
     #[tokio::test]
     async fn outputs_js_when_session_sample_rate_is_nonzero() {
         let (files, rc) = make_snapshot_with_rum(Some(100.0));
-        let result = bundle_sdk(files, rc, make_client_token(), true)
+        let result = bundle_sdk(files, rc, make_client_token(), make_site(), true)
             .await
             .unwrap();
-        let output = std::str::from_utf8(&result).unwrap();
-        assert!(output.lines().count() > 2);
+        assert!(result.lines().count() > 2);
     }
 
     #[tokio::test]
     async fn outputs_js_when_session_sample_rate_is_absent() {
         let (files, rc) = make_snapshot_with_rum(None);
-        let result = bundle_sdk(files, rc, make_client_token(), true)
+        let result = bundle_sdk(files, rc, make_client_token(), make_site(), true)
             .await
             .unwrap();
-        let output = std::str::from_utf8(&result).unwrap();
-        assert!(output.lines().count() > 2);
+        assert!(result.lines().count() > 2);
     }
 
     #[test]
