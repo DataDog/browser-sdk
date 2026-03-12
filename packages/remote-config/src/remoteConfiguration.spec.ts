@@ -1,6 +1,11 @@
 import { display, setCookie, deleteCookie, ONE_MINUTE } from '@datadog/browser-core'
 import { interceptRequests, registerCleanupTask } from '@datadog/browser-core/test'
-import { fetchRemoteConfiguration, buildEndpoint, resolveDynamicValues } from './remoteConfiguration'
+import {
+  fetchRemoteConfiguration,
+  buildEndpoint,
+  resolveDynamicValues,
+  browserContextItemHandler,
+} from './remoteConfiguration'
 import { parseJsonPath } from './jsonPathParser'
 
 describe('remoteConfiguration', () => {
@@ -501,7 +506,7 @@ describe('remoteConfiguration', () => {
         const items = [
           { key: 'id', value: { rcSerializedType: 'dynamic' as const, strategy: 'cookie' as const, name: 'user_id' } },
         ]
-        const result = resolveDynamicValues({ user: items }) as any
+        const result = resolveDynamicValues({ user: items }, { contextItemHandler: browserContextItemHandler }) as any
         expect(result.user).toEqual({ id: undefined }) // cookie not set in test env
       })
 
@@ -518,6 +523,7 @@ describe('remoteConfiguration', () => {
             onCookie: () => {
               callCount++
             },
+            contextItemHandler: browserContextItemHandler,
           }
         ) as any
         // access the property twice to trigger the getter each time
@@ -540,13 +546,14 @@ describe('remoteConfiguration', () => {
         const items = [
           { key: 'id', value: { rcSerializedType: 'dynamic' as const, strategy: 'cookie' as const, name: 'user_id' } },
         ]
-        const result = resolveDynamicValues({ user: items }) as any
+        const result = resolveDynamicValues({ user: items }, { contextItemHandler: browserContextItemHandler }) as any
         // direct enumerability check
         const descriptor = Object.getOwnPropertyDescriptor(result, 'user')
         expect(descriptor?.enumerable).toBe(true)
         // JSON.stringify invokes enumerable getters
         const json = JSON.parse(JSON.stringify(result))
-        expect(json.user).toEqual({ id: undefined })
+        // JSON.stringify drops undefined values, so the round-tripped object is {}
+        expect(json.user).toEqual({})
       })
     })
   })
