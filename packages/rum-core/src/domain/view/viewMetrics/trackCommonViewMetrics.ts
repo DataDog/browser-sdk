@@ -84,15 +84,17 @@ export function trackCommonViewMetrics(
     },
     setLoadingTime: (callTimestamp?: TimeStamp) => {
       if (viewEnded) {
-        return
+        return { no_active_view: true, overwritten: hasManualLoadingTime }
       }
       const loadingTime = elapsed(viewStart.timeStamp, callTimestamp ?? timeStampNow())
       if (!hasManualLoadingTime) {
         stopLoadingTimeTracking()
       }
+      const overwritten = hasManualLoadingTime
       hasManualLoadingTime = true
       commonViewMetrics.loadingTime = loadingTime
       scheduleViewUpdate()
+      return { no_active_view: false, overwritten }
     },
   }
 }
