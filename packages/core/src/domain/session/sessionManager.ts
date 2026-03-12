@@ -4,6 +4,7 @@ import type { RelativeTime } from '../../tools/utils/timeUtils'
 import { clocksOrigin, dateNow, ONE_MINUTE, ONE_SECOND, relativeNow } from '../../tools/utils/timeUtils'
 import { addEventListener, addEventListeners, DOM_EVENT } from '../../browser/addEventListener'
 import { clearInterval, setInterval } from '../../tools/timer'
+import { mockable } from '../../tools/mockable'
 import { noop, throttle } from '../../tools/utils/functionUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import type { Configuration, InitConfiguration } from '../configuration'
@@ -110,7 +111,7 @@ function selectStrategyForPersistence(
   }
 }
 
-function getSessionStoreStrategy(
+export function getSessionStoreStrategy(
   strategyType: SessionStoreStrategyType,
   configuration: Configuration
 ): SessionStoreStrategy {
@@ -177,7 +178,7 @@ export function startSessionManager(
     return
   }
 
-  const strategy = getSessionStoreStrategy(configuration.sessionStoreStrategyType, configuration)
+  const strategy = mockable(getSessionStoreStrategy)(configuration.sessionStoreStrategyType, configuration)
 
   const sessionContextHistory = createValueHistory<SessionContext>({
     expireDelay: SESSION_CONTEXT_TIMEOUT_DELAY,
