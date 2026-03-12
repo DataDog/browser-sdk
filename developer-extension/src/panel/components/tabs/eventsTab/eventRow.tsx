@@ -35,6 +35,7 @@ const RUM_EVENT_TYPE_COLOR = {
   telemetry: 'teal',
   vital: 'orange',
   transition: 'green',
+  view_update: 'blue',
 }
 
 const LOG_STATUS_COLOR = {

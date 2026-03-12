@@ -260,6 +260,17 @@ describe('vitalCollection', () => {
         expect(rawRumEvents[0].domainContext).toEqual({})
       })
 
+      it('should create operation step vital with handling stack in domainContext', () => {
+        addExperimentalFeatures([ExperimentalFeature.FEATURE_OPERATION_VITAL])
+        vitalCollection.addOperationStepVital('foo', 'start', {
+          handlingStack: 'Error\n    at foo\n    at bar',
+        })
+
+        expect(rawRumEvents[0].domainContext).toEqual({
+          handlingStack: 'Error\n    at foo\n    at bar',
+        })
+      })
+
       it('should create a duration vital from add API', () => {
         vitalCollection.addDurationVital({
           id: generateUUID(),

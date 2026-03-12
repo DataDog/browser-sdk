@@ -35,12 +35,8 @@ export interface VitalOptions {
  * Duration vital options
  */
 
-export interface DurationVitalOptions extends VitalOptions {
-  /**
-   * Handling stack (internal use only)
-   */
-  handlingStack?: string
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface DurationVitalOptions extends VitalOptions {}
 
 export interface FeatureOperationOptions extends VitalOptions {
   operationKey?: string
@@ -121,14 +117,14 @@ export function startVitalCollection(
   function addOperationStepVital(
     name: string,
     stepType: 'start' | 'end',
-    options?: FeatureOperationOptions,
+    options?: FeatureOperationOptions & { handlingStack?: string },
     failureReason?: FailureReason
   ) {
     if (!isExperimentalFeatureEnabled(ExperimentalFeature.FEATURE_OPERATION_VITAL)) {
       return
     }
 
-    const { operationKey, context, description } = options || {}
+    const { operationKey, context, description, handlingStack } = options || {}
 
     const vital: OperationStepVital = {
       name,
@@ -139,6 +135,7 @@ export function startVitalCollection(
       startClocks: clocksNow(),
       context: sanitize(context),
       description,
+      handlingStack,
     }
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital))
   }
@@ -146,7 +143,7 @@ export function startVitalCollection(
   return {
     addOperationStepVital,
     addDurationVital,
-    startDurationVital: (name: string, options: DurationVitalOptions = {}) => {
+    startDurationVital: (name: string, options: DurationVitalOptions & { handlingStack?: string } = {}) => {
       const ref = startDurationVital(customVitalsState, name, options)
       const vitalState = customVitalsState.vitalsByReference.get(ref)
       if (vitalState) {
@@ -163,7 +160,7 @@ export function startVitalCollection(
 export function startDurationVital(
   { vitalsByName, vitalsByReference }: CustomVitalsState,
   name: string,
-  options: DurationVitalOptions = {}
+  options: DurationVitalOptions & { handlingStack?: string } = {}
 ) {
   const vital = {
     id: generateUUID(),

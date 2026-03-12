@@ -61,6 +61,10 @@ export function createApp(id: string, title: string, borderColor: string) {
     window.DD_RUM.stopDurationVital(ref)
   })
 
+  createButton(container, 'feature-operation', () => {
+    window.DD_RUM.startFeatureOperation(`${id}-feature-operation`)
+  })
+
   createButton(container, 'view', () => {
     window.DD_RUM.startView({ name: `${id}-view` })
   })

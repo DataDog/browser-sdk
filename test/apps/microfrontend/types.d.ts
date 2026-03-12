@@ -4,6 +4,7 @@ interface Window {
     addAction: (name: string, context?: any) => void
     startDurationVital: (name: string) => any
     stopDurationVital: (ref: any) => void
+    startFeatureOperation: (name: string) => void
     startView: (options: { name: string }) => void
   }
 }
