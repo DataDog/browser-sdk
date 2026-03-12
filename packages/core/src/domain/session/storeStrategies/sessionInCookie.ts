@@ -11,7 +11,7 @@ import {
 import type { SessionState } from '../sessionState'
 import { toSessionString, toSessionState } from '../sessionState'
 import { Observable } from '../../../tools/observable'
-import { setInterval, clearInterval } from '../../../tools/timer'
+import { setInterval } from '../../../tools/timer'
 import { ONE_SECOND } from '../../../tools/utils/timeUtils'
 import { monitor } from '../../../tools/monitor'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './sessionStoreStrategy'
@@ -35,7 +35,6 @@ export function initCookieStrategy(cookieOptions: CookieOptions, trackAnonymousU
 
   // Cross-tab notification: BroadcastChannel (preferred) or polling (fallback)
   let broadcastChannel: BroadcastChannel | undefined
-  let pollIntervalId: ReturnType<typeof setInterval> | undefined
   let lastEmittedSessionString: string | undefined
 
   try {
@@ -50,7 +49,7 @@ export function initCookieStrategy(cookieOptions: CookieOptions, trackAnonymousU
     })
   } catch {
     // BroadcastChannel not available, fall back to polling
-    pollIntervalId = setInterval(() => {
+    setInterval(() => {
       const state = readAndStripCookieOptions(cookieOptions)
       const sessionString = toSessionString(state)
       if (sessionString !== lastEmittedSessionString) {
