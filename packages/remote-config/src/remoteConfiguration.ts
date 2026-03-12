@@ -140,9 +140,10 @@ export function resolveDynamicValues(
         const val = (configValue as { [key: string]: unknown })[key]
         if (options.contextItemHandler && isContextItemArray(val)) {
           const items = val
+          const handler = options.contextItemHandler
           const resolve = (v: unknown) => resolveDynamicValues(v, options)
           Object.defineProperty(result, key, {
-            get: () => options.contextItemHandler!(items, resolve),
+            get: () => handler(items, resolve),
             enumerable: true,
             configurable: true,
           })
