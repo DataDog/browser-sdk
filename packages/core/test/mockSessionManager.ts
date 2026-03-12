@@ -42,6 +42,7 @@ export function createSessionManagerMock(): SessionManagerMock {
     renewObservable: new Observable(),
     sessionStateUpdateObservable: new Observable(),
     updateSessionState: noop,
+    stop: noop,
     setId(newId) {
       id = newId
       return this
