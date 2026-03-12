@@ -12,6 +12,10 @@
     "!src/**/*.spec.ts",
     "!src/**/*.specHelper.ts"
   ],
+  "exports": {
+    ".": "./src/index.ts",
+    "./node": "./src/entries/node.ts"
+  },
   "scripts": {
     "build": "node ../../scripts/build/build-package.ts --modules"
   },
