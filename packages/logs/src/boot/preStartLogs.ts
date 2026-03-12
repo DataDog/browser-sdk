@@ -1,4 +1,4 @@
-import type { TrackingConsentState } from '@datadog/browser-core'
+import type { TrackingConsentState, SessionManager } from '@datadog/browser-core'
 import {
   createBoundedBuffer,
   canUseEventBridge,
@@ -14,6 +14,8 @@ import {
   addTelemetryConfiguration,
   buildGlobalContextManager,
   buildUserContextManager,
+  startSessionManager,
+  startSessionManagerStub,
   startTelemetry,
   TelemetryService,
   mockable,
@@ -23,12 +25,14 @@ import { createHooks } from '../domain/hooks'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
 import { serializeLogsConfiguration, validateAndBuildLogsConfiguration } from '../domain/configuration'
 import type { CommonContext } from '../rawLogsEvent.types'
+import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { Strategy } from './logsPublicApi'
 import type { StartLogsResult } from './startLogs'
 
 export type DoStartLogs = (
   initConfiguration: LogsInitConfiguration,
   configuration: LogsConfiguration,
+  sessionManager: SessionManager,
   hooks: Hooks
 ) => StartLogsResult
 
@@ -51,18 +55,17 @@ export function createPreStartStrategy(
 
   let cachedInitConfiguration: LogsInitConfiguration | undefined
   let cachedConfiguration: LogsConfiguration | undefined
+  let sessionManager: SessionManager | undefined
   const hooks = createHooks()
   const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartLogs)
 
   function tryStartLogs() {
-    if (!cachedConfiguration || !cachedInitConfiguration || !trackingConsentState.isGranted()) {
+    if (!cachedConfiguration || !cachedInitConfiguration || !sessionManager) {
       return
     }
 
-    mockable(startTelemetry)(TelemetryService.LOGS, cachedConfiguration, hooks)
-
     trackingConsentStateSubscription.unsubscribe()
-    const startLogsResult = doStartLogs(cachedInitConfiguration, cachedConfiguration, hooks)
+    const startLogsResult = doStartLogs(cachedInitConfiguration, cachedConfiguration, sessionManager, hooks)
 
     bufferApiCalls.drain(startLogsResult)
   }
@@ -103,7 +106,20 @@ export function createPreStartStrategy(
       initFetchObservable().subscribe(noop)
 
       trackingConsentState.tryToInit(configuration.trackingConsent)
-      tryStartLogs()
+
+      trackingConsentState.onGrantedOnce(() => {
+        startTrackingConsentContext(hooks, trackingConsentState)
+        mockable(startTelemetry)(TelemetryService.LOGS, configuration, hooks)
+        const onSessionManagerReady = (newSessionManager: SessionManager) => {
+          sessionManager = newSessionManager
+          tryStartLogs()
+        }
+        if (canUseEventBridge()) {
+          startSessionManagerStub(onSessionManagerReady)
+        } else {
+          mockable(startSessionManager)(configuration, trackingConsentState, onSessionManagerReady)
+        }
+      })
     },
 
     get initConfiguration() {

@@ -1,17 +1,16 @@
-import type { Context, Observable, PageMayExitEvent, RawError } from '@datadog/browser-core'
+import type { Context, Observable, PageMayExitEvent, RawError, SessionManager } from '@datadog/browser-core'
 import { createBatch, createFlushController, createHttpRequest, createIdentityEncoder } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
 import type { LogsEvent } from '../logsEvent.types'
-import type { LogsSessionManager } from '../domain/logsSessionManager'
 
 export function startLogsBatch(
   configuration: LogsConfiguration,
   lifeCycle: LifeCycle,
   reportError: (error: RawError) => void,
   pageMayExitObservable: Observable<PageMayExitEvent>,
-  session: LogsSessionManager
+  sessionManager: SessionManager
 ) {
   const endpoints = [configuration.logsEndpointBuilder]
   if (configuration.replica) {
@@ -23,7 +22,7 @@ export function startLogsBatch(
     request: createHttpRequest(endpoints, reportError),
     flushController: createFlushController({
       pageMayExitObservable,
-      sessionExpireObservable: session.expireObservable,
+      sessionExpireObservable: sessionManager.expireObservable,
     }),
   })
 

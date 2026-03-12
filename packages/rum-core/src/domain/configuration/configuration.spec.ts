@@ -347,9 +347,9 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('defaultPrivacyLevel', () => {
-    it('defaults to MASK', () => {
+    it('defaults to MASK_USER_INPUT', () => {
       expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.defaultPrivacyLevel).toBe(
-        DefaultPrivacyLevel.MASK
+        DefaultPrivacyLevel.MASK_USER_INPUT
       )
     })
 
@@ -366,21 +366,20 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, defaultPrivacyLevel: 'foo' as any })!
           .defaultPrivacyLevel
-      ).toBe(DefaultPrivacyLevel.MASK)
+      ).toBe(DefaultPrivacyLevel.MASK_USER_INPUT)
     })
   })
 
   describe('enablePrivacyForActionName', () => {
-    it('defaults to false', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.enablePrivacyForActionName).toBeFalse()
+    it('defaults to true', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.enablePrivacyForActionName).toBeTrue()
     })
 
-    it('is true when the option is true', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.enablePrivacyForActionName).toBeFalse()
+    it('is false when the option is false', () => {
       expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, enablePrivacyForActionName: true })!
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, enablePrivacyForActionName: false })!
           .enablePrivacyForActionName
-      ).toBeTrue()
+      ).toBeFalse()
     })
   })
 
