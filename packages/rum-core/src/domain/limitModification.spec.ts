@@ -203,6 +203,29 @@ describe('limitModification', () => {
     limitModification(object, { 'resource.url': 'string' }, modifier)
     expect(object).toEqual({ resource: { url: wayTooLongUrl } })
   })
+
+  it('should sanitize object fields (fieldType "object") even with a noop modifier', () => {
+    spyOn(display, 'warn')
+    const wayTooLongUrl = `/${'a'.repeat(300_000)}`
+    const object: Context = {
+      context: {
+        response: {
+          status: 200,
+          url: wayTooLongUrl,
+        },
+      },
+    }
+    const modifier = noop
+    limitModification(object, { context: 'object' }, modifier)
+    expect(object).toEqual({
+      context: {
+        response: {
+          status: 200,
+        },
+      },
+    })
+    expect(display.warn).toHaveBeenCalled()
+  })
 })
 
 function generateModifiableFieldPathsFrom(object: Record<string, string | object>) {
