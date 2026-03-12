@@ -2,12 +2,15 @@ import { Observable } from '../src/tools/observable'
 import type { SessionState } from '../src/domain/session/sessionState'
 import type { SessionStoreStrategy } from '../src/domain/session/storeStrategies/sessionStoreStrategy'
 
-export function createFakeSessionStoreStrategy({
-  initialSession = {},
-}: { initialSession?: SessionState } = {}): SessionStoreStrategy & {
+export type FakeSessionStoreStrategy = SessionStoreStrategy & {
+  setSessionState: jasmine.Spy<(fn: (state: SessionState) => SessionState) => void>
   getInternalState: () => SessionState
   simulateExternalChange: (state: SessionState) => void
-} {
+}
+
+export function createFakeSessionStoreStrategy({
+  initialSession = {},
+}: { initialSession?: SessionState } = {}): FakeSessionStoreStrategy {
   let session: SessionState = initialSession
   const sessionObservable = new Observable<SessionState>()
 
