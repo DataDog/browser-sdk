@@ -26,6 +26,7 @@ import {
 } from './sessionManager'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY, SessionPersistence } from './sessionConstants'
 import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
+import type { SessionState } from './sessionState'
 import { EXPIRED } from './sessionState'
 
 describe('startSessionManager', () => {
@@ -519,13 +520,13 @@ describe('startSessionManager', () => {
       let pendingNotify: (() => void) | undefined
       const delayedStrategy = createFakeSessionStoreStrategy()
       delayedStrategy.setSessionState = delayedStrategy.setSessionState.and.callFake(
-        (fn: (state: import('./sessionState').SessionState) => import('./sessionState').SessionState) => {
+        (fn: (state: SessionState) => SessionState) => {
           const newState = fn({})
           pendingNotify = () => delayedStrategy.sessionObservable.notify({ ...newState })
         }
-      ) as typeof delayedStrategy.setSessionState
+      )
 
-      fakeStrategy = delayedStrategy as typeof fakeStrategy
+      fakeStrategy = delayedStrategy
 
       const onReadySpy = jasmine.createSpy('onReady')
       startSessionManager(

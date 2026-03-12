@@ -78,7 +78,7 @@ export function initCookieStrategy(cookieOptions: CookieOptions, trackAnonymousU
     isProcessing = true
 
     if (typeof navigator !== 'undefined' && navigator.locks) {
-      navigator.locks.request(SESSION_STORE_KEY, () => {
+      void navigator.locks.request(SESSION_STORE_KEY, () => {
         // Process entire queue inside the lock for atomicity
         while (queue.length > 0) {
           applyAndEmit(queue.shift()!)

@@ -1,7 +1,7 @@
+import { registerCleanupTask } from '../../../../test'
 import { getGlobalObject } from '../../../tools/globalObject'
 import type { SessionState } from '../sessionState'
 import { initMemorySessionStoreStrategy, MEMORY_SESSION_STORE_KEY } from './sessionInMemory'
-import { registerCleanupTask } from '../../../../test'
 
 describe('Memory SessionStoreStrategy', () => {
   let strategy: ReturnType<typeof initMemorySessionStoreStrategy>

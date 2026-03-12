@@ -28,8 +28,12 @@ export function initLocalStorageStrategy(): SessionStoreStrategy {
         observable.notify(toSessionState(event.newValue))
       }
     }
+    // eslint-disable-next-line local-rules/disallow-zone-js-patched-values
     window.addEventListener('storage', listener)
-    return () => window.removeEventListener('storage', listener)
+    return () => {
+      // eslint-disable-next-line local-rules/disallow-zone-js-patched-values
+      window.removeEventListener('storage', listener)
+    }
   })
 
   return {
