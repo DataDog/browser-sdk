@@ -291,6 +291,7 @@ function isContextItemArray(value: unknown): value is ContextItem[] {
   )
 }
 
+/** @internal */
 export function browserContextItemHandler(
   items: ContextItem[],
   resolve: (value: unknown) => unknown
