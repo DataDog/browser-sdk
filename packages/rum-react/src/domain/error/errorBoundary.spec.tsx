@@ -1,7 +1,5 @@
 import React, { act } from 'react'
 
-import { toStackTraceString, computeStackTrace } from '@datadog/browser-core'
-import { RumEventType } from '@datadog/browser-rum-core'
 import { disableJasmineUncaughtExceptionTracking, ignoreConsoleLogs } from '../../../../core/test'
 import { appendComponent } from '../../../test/appendComponent'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
@@ -85,10 +83,10 @@ describe('ErrorBoundary', () => {
     expect(container.innerHTML).toBe('bar')
   })
 
-  it('reports the error to the SDK', () => {
-    const addEventSpy = jasmine.createSpy()
+  it('reports the error through addReactError', () => {
+    const addErrorSpy = jasmine.createSpy()
     initializeReactPlugin({
-      addEvent: addEventSpy,
+      addError: addErrorSpy,
     })
     const originalError = new Error('error')
     const ComponentSpy = jasmine.createSpy().and.throwError(originalError)
@@ -100,29 +98,16 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     )
 
-    expect(addEventSpy).toHaveBeenCalledOnceWith(
-      jasmine.any(Number),
-      {
-        type: RumEventType.ERROR,
-        date: jasmine.any(Number),
-        error: jasmine.objectContaining({
-          id: jasmine.any(String),
-          type: originalError.name,
-          message: originalError.message,
-          stack: toStackTraceString(computeStackTrace(originalError)),
-          handling_stack: jasmine.any(String),
-          component_stack: jasmine.stringContaining('ComponentSpy'),
-          source_type: 'browser',
-          handling: 'handled',
-        }),
+    expect(addErrorSpy).toHaveBeenCalledOnceWith(
+      jasmine.objectContaining({
+        error: originalError,
+        handlingStack: jasmine.any(String),
+        startClocks: jasmine.any(Object),
         context: {
           framework: 'react',
         },
-      },
-      {
-        error: originalError,
-        handlingStack: jasmine.any(String),
-      }
+        componentStack: jasmine.stringContaining('ComponentSpy'),
+      })
     )
   })
 })

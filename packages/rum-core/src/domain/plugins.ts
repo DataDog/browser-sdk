@@ -16,6 +16,10 @@ export interface OnRumStartOptions {
    * Add an event to the RUM browser SDK.
    */
   addEvent?: StartRumResult['addEvent']
+  /**
+   * Add an error to the RUM browser SDK.
+   */
+  addError?: StartRumResult['addError']
 }
 
 /**
