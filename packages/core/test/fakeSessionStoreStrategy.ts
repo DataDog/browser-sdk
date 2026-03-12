@@ -1,35 +1,30 @@
-import type { Configuration } from '../src/domain/configuration'
+import { Observable } from '../src/tools/observable'
 import type { SessionState } from '../src/domain/session/sessionState'
-import { getExpiredSessionState } from '../src/domain/session/sessionState'
+import type { SessionStoreStrategy } from '../src/domain/session/storeStrategies/sessionStoreStrategy'
 
 export function createFakeSessionStoreStrategy({
-  isLockEnabled = false,
   initialSession = {},
-}: { isLockEnabled?: boolean; initialSession?: SessionState } = {}) {
+}: { initialSession?: SessionState } = {}): SessionStoreStrategy & {
+  getInternalState: () => SessionState
+  simulateExternalChange: (state: SessionState) => void
+} {
   let session: SessionState = initialSession
-  const plannedRetrieveSessions: SessionState[] = []
+  const sessionObservable = new Observable<SessionState>()
 
   return {
-    isLockEnabled,
-
-    persistSession: jasmine.createSpy('persistSession').and.callFake((newSession) => {
-      session = newSession
-    }),
-
-    retrieveSession: jasmine.createSpy<() => SessionState>('retrieveSession').and.callFake(() => {
-      const plannedSession = plannedRetrieveSessions.shift()
-      if (plannedSession) {
-        session = plannedSession
+    setSessionState: jasmine.createSpy('setSessionState').and.callFake(
+      (fn: (state: SessionState) => SessionState) => {
+        session = fn({ ...session })
+        sessionObservable.notify({ ...session })
       }
-      return { ...session }
-    }),
+    ),
+    sessionObservable,
 
-    expireSession: jasmine.createSpy('expireSession').and.callFake((previousSession) => {
-      session = getExpiredSessionState(previousSession, { trackAnonymousUser: true } as Configuration)
-    }),
-
-    planRetrieveSession: (index: number, fakeSession: SessionState) => {
-      plannedRetrieveSessions[index] = fakeSession
+    // Test helpers
+    getInternalState: () => ({ ...session }),
+    simulateExternalChange: (state: SessionState) => {
+      session = state
+      sessionObservable.notify({ ...session })
     },
   }
 }
