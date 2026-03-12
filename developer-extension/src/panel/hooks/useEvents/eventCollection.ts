@@ -37,7 +37,7 @@ export function startEventCollection(strategy: EventCollectionStrategy, onEvents
 function compareEvents(a: SdkEvent, b: SdkEvent) {
   // Sort events chronologically
   if (a.date !== b.date) {
-    return b.date - a.date
+    return (b.date ?? 0) - (a.date ?? 0)
   }
 
   // If two events have the same date, make sure to display View events last. This ensures that View
