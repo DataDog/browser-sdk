@@ -633,6 +633,7 @@ export function makeRumPublicApi(
       callPluginsMethod(configuration.plugins, 'onRumStart', {
         strategy, // TODO: remove this in the next major release
         addEvent: startRumResult.addEvent,
+        addError: startRumResult.addError,
       })
 
       return startRumResult

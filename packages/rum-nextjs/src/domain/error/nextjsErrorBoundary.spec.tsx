@@ -1,5 +1,5 @@
 import React, { act } from 'react'
-import type { RumInitConfiguration, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
+import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 import {
   disableJasmineUncaughtExceptionTracking,
   ignoreConsoleLogs,
@@ -16,15 +16,15 @@ type FallbackFunctionComponent = Extract<NextjsErrorBoundaryFallback, (...args: 
 const INIT_CONFIGURATION = {} as RumInitConfiguration
 
 function initializeNextjsPlugin() {
-  const addEventSpy = jasmine.createSpy()
+  const addErrorSpy = jasmine.createSpy()
   const publicApi = { startView: jasmine.createSpy() } as unknown as RumPublicApi
   const plugin = nextjsPlugin()
   plugin.onInit({ publicApi, initConfiguration: { ...INIT_CONFIGURATION } })
-  plugin.onRumStart({ addEvent: addEventSpy } as unknown as StartRumResult)
+  plugin.onRumStart({ addError: addErrorSpy })
   registerCleanupTask(() => {
     resetNextjsPlugin()
   })
-  return { addEventSpy }
+  return { addErrorSpy }
 }
 
 describe('NextjsErrorBoundary', () => {
@@ -80,10 +80,9 @@ describe('NextjsErrorBoundary', () => {
   })
 
   it('calls addNextjsError with the caught error', () => {
-    const { addEventSpy } = initializeNextjsPlugin()
+    const { addErrorSpy } = initializeNextjsPlugin()
     const originalError = new Error('error')
     const ComponentSpy = jasmine.createSpy().and.throwError(originalError)
-    ;(ComponentSpy as any).displayName = 'ComponentSpy'
 
     appendComponent(
       <NextjsErrorBoundary fallback={() => null}>
@@ -91,20 +90,14 @@ describe('NextjsErrorBoundary', () => {
       </NextjsErrorBoundary>
     )
 
-    expect(addEventSpy).toHaveBeenCalledOnceWith(
-      jasmine.any(Number),
-      jasmine.objectContaining({
-        error: jasmine.objectContaining({
-          message: originalError.message,
-          handling_stack: jasmine.any(String),
-          handling: 'handled',
-          source_type: 'browser',
-        }),
-        context: jasmine.objectContaining({ framework: 'nextjs' }),
-      }),
+    expect(addErrorSpy).toHaveBeenCalledOnceWith(
       jasmine.objectContaining({
         error: originalError,
         handlingStack: jasmine.any(String),
+        startClocks: jasmine.any(Object),
+        context: {
+          framework: 'nextjs',
+        },
       })
     )
   })

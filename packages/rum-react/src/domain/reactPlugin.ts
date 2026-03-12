@@ -2,9 +2,9 @@ import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-r
 
 let globalPublicApi: RumPublicApi | undefined
 let globalConfiguration: ReactPluginConfiguration | undefined
-let globalAddEvent: StartRumResult['addEvent'] | undefined
+let globalAddError: StartRumResult['addError'] | undefined
 type InitSubscriber = (configuration: ReactPluginConfiguration, rumPublicApi: RumPublicApi) => void
-type StartSubscriber = (addEvent: StartRumResult['addEvent']) => void
+type StartSubscriber = (addError: StartRumResult['addError']) => void
 
 const onRumInitSubscribers: InitSubscriber[] = []
 const onRumStartSubscribers: StartSubscriber[] = []
@@ -65,11 +65,11 @@ export function reactPlugin(configuration: ReactPluginConfiguration = {}): React
         initConfiguration.trackViewsManually = true
       }
     },
-    onRumStart({ addEvent }) {
-      globalAddEvent = addEvent
+    onRumStart({ addError }) {
+      globalAddError = addError
       for (const subscriber of onRumStartSubscribers) {
-        if (addEvent) {
-          subscriber(addEvent)
+        if (addError) {
+          subscriber(addError)
         }
       }
     },
@@ -88,8 +88,8 @@ export function onRumInit(callback: InitSubscriber) {
 }
 
 export function onRumStart(callback: StartSubscriber) {
-  if (globalAddEvent) {
-    callback(globalAddEvent)
+  if (globalAddError) {
+    callback(globalAddError)
   } else {
     onRumStartSubscribers.push(callback)
   }
@@ -98,7 +98,7 @@ export function onRumStart(callback: StartSubscriber) {
 export function resetReactPlugin() {
   globalPublicApi = undefined
   globalConfiguration = undefined
-  globalAddEvent = undefined
+  globalAddError = undefined
   onRumInitSubscribers.length = 0
   onRumStartSubscribers.length = 0
 }

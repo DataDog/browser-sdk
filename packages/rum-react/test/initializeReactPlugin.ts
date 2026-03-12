@@ -8,12 +8,12 @@ export function initializeReactPlugin({
   configuration = {},
   initConfiguration = {},
   publicApi = {},
-  addEvent = noop,
+  addError = noop,
 }: {
   configuration?: ReactPluginConfiguration
   initConfiguration?: Partial<RumInitConfiguration>
   publicApi?: Partial<RumPublicApi>
-  addEvent?: StartRumResult['addEvent']
+  addError?: StartRumResult['addError']
 } = {}) {
   resetReactPlugin()
   const plugin = reactPlugin(configuration)
@@ -23,7 +23,7 @@ export function initializeReactPlugin({
     initConfiguration: initConfiguration as RumInitConfiguration,
   })
   plugin.onRumStart({
-    addEvent,
+    addError,
   })
 
   registerCleanupTask(() => {

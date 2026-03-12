@@ -21,6 +21,54 @@ export type State =
 
 const INITIAL_STATE: State = { didCatch: false, error: null }
 
+// eslint-disable-next-line no-restricted-syntax
+abstract class BaseErrorBoundary extends React.Component<ErrorBoundaryProps, State> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props)
+    this.state = INITIAL_STATE
+  }
+
+  static getDerivedStateFromError(error: Error): State {
+    return { didCatch: true, error }
+  }
+
+  resetError = () => {
+    this.setState(INITIAL_STATE)
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    this.reportError(error, errorInfo)
+  }
+
+  render() {
+    if (this.state.didCatch) {
+      return React.createElement(this.props.fallback, {
+        error: this.state.error,
+        resetError: this.resetError,
+      })
+    }
+
+    return this.props.children
+  }
+
+  protected abstract reportError(error: Error, errorInfo: ErrorInfo): void
+}
+
+export function createErrorBoundary(
+  reportError: (error: Error, errorInfo: ErrorInfo) => void,
+  displayName = 'ErrorBoundary'
+) {
+  const DatadogErrorBoundary: React.ComponentClass<ErrorBoundaryProps> = class DatadogErrorBoundary extends BaseErrorBoundary {
+    protected reportError(error: Error, errorInfo: ErrorInfo) {
+      reportError(error, errorInfo)
+    }
+  }
+
+  DatadogErrorBoundary.displayName = displayName
+
+  return DatadogErrorBoundary
+}
+
 /**
  * ErrorBoundary component to report React errors to Datadog.
  *
@@ -37,32 +85,8 @@ const INITIAL_STATE: State = { didCatch: false, error: null }
  * ```
  */
 // eslint-disable-next-line no-restricted-syntax
-export class ErrorBoundary extends React.Component<ErrorBoundaryProps, State> {
-  constructor(props: ErrorBoundaryProps) {
-    super(props)
-    this.state = INITIAL_STATE
-  }
-
-  static getDerivedStateFromError(error: Error): State {
-    return { didCatch: true, error }
-  }
-
-  resetError = () => {
-    this.setState(INITIAL_STATE)
-  }
-
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+export class ErrorBoundary extends BaseErrorBoundary {
+  protected reportError(error: Error, errorInfo: ErrorInfo) {
     addReactError(error, errorInfo)
-  }
-
-  render() {
-    if (this.state.didCatch) {
-      return React.createElement(this.props.fallback, {
-        error: this.state.error,
-        resetError: this.resetError,
-      })
-    }
-
-    return this.props.children
   }
 }

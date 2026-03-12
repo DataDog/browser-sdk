@@ -14,19 +14,20 @@ __metadata:
 
 "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz::locator=nextjs-app-router%40workspace%3A.":
   version: 6.30.1
-  resolution: "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz#../../../packages/rum-core/package.tgz::hash=32b803&locator=nextjs-app-router%40workspace%3A."
+  resolution: "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz#../../../packages/rum-core/package.tgz::hash=a57b8e&locator=nextjs-app-router%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.30.1"
-  checksum: 10c0/87c9d37318237311c35923393c08f0bc85a514ee3acda18010db13c2e55b8d1489944fd3812fc2b65b703b059bbc22ed420992b485e7b2010360c33ba64a73ad
+  checksum: 10c0/798d8b028f0dd3e2fd94ca44620ff727c7693e122c1505e9fecfbe852619c56b9f7c0ff8c4a34e734e39532f5d3dba4c9bd624ae6ed1f10da067113f0014627f
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum-nextjs@file:../../../packages/rum-nextjs/package.tgz::locator=nextjs-app-router%40workspace%3A.":
   version: 6.30.1
-  resolution: "@datadog/browser-rum-nextjs@file:../../../packages/rum-nextjs/package.tgz#../../../packages/rum-nextjs/package.tgz::hash=770094&locator=nextjs-app-router%40workspace%3A."
+  resolution: "@datadog/browser-rum-nextjs@file:../../../packages/rum-nextjs/package.tgz#../../../packages/rum-nextjs/package.tgz::hash=193b61&locator=nextjs-app-router%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.30.1"
     "@datadog/browser-rum-core": "npm:6.30.1"
+    "@datadog/browser-rum-react": "npm:6.30.1"
   peerDependencies:
     next: ">=13.0.0"
     react: ">=18.0.0"
@@ -35,13 +36,13 @@ __metadata:
       optional: true
     react:
       optional: true
-  checksum: 10c0/e3e7ada1223116821956bad279ef19ab3607ede5d04bae4a2390bad115fcaafb6d1705e429c63e4cd618d8a336eef61da58b5dbc99a8500b65e68cc6e0e1a3bd
+  checksum: 10c0/85b90774d3b02e468ddf8563063e0caa6fe7ba8604317b5ff6c4892642453c9599e44e5ffee1ae51f46971658fd85c0f5bd18dfb992a6d11a8214e9aa99ba136
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum-react@file:../../../packages/rum-react/package.tgz::locator=nextjs-app-router%40workspace%3A.":
   version: 6.30.1
-  resolution: "@datadog/browser-rum-react@file:../../../packages/rum-react/package.tgz#../../../packages/rum-react/package.tgz::hash=f6cb23&locator=nextjs-app-router%40workspace%3A."
+  resolution: "@datadog/browser-rum-react@file:../../../packages/rum-react/package.tgz#../../../packages/rum-react/package.tgz::hash=6245ef&locator=nextjs-app-router%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.30.1"
     "@datadog/browser-rum-core": "npm:6.30.1"
@@ -60,13 +61,13 @@ __metadata:
       optional: true
     react-router-dom:
       optional: true
-  checksum: 10c0/c84380fe7966b0500aa535e5f4e06aba3dac454d29a66266117c710b1d5ef59ea157e539a16a89409307cceca0767a05ebdd2b1e2bfb68ba0519f16874ed4276
+  checksum: 10c0/19d0db17429978046826cb668a925097fd2ced9bb6c9891ec9e0f181b8b158636ad23db4931454f555c87fc27ba8e99c0137755512bc4e34db90035a32f9302f
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum@file:../../../packages/rum/package.tgz::locator=nextjs-app-router%40workspace%3A.":
   version: 6.30.1
-  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=0093eb&locator=nextjs-app-router%40workspace%3A."
+  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=a29736&locator=nextjs-app-router%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.30.1"
     "@datadog/browser-rum-core": "npm:6.30.1"
@@ -75,7 +76,7 @@ __metadata:
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
-  checksum: 10c0/f535c06433b349de1b6d9407569e2af074c04f1ac863f881c1d185738c4fdbabbe1b2aa4b9c74509c60958bc51c21d85bee4c310f04c1ac008e2b21de6deed2f
+  checksum: 10c0/ddce39826fbd790d8b4a619965fdabbc6512ae84a26e69bb37d145df2c4500119e8734820c9e261854ca8be2bf3944512c5ef15662a05e26186324361d73df34
   languageName: node
   linkType: hard
 
