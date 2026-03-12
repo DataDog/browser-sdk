@@ -5,6 +5,10 @@
   "main": "cjs/index.js",
   "module": "esm/index.js",
   "types": "cjs/index.d.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./node": "./src/entries/node.ts"
+  },
   "scripts": {
     "build": "node ../../scripts/build/build-package.ts --modules"
   },
