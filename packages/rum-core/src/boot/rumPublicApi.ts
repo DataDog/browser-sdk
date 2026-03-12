@@ -37,6 +37,7 @@ import {
   ExperimentalFeature,
   mockable,
   generateUUID,
+  timeStampNow,
 } from '@datadog/browser-core'
 
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -235,6 +236,16 @@ export interface RumPublicApi extends PublicApi {
    * @param [time] - Epoch timestamp of the custom timing (if not set, will use current time)
    */
   addTiming: (name: string, time?: number) => void
+
+  /**
+   * [Experimental] Manually set the current view's loading time.
+   *
+   * Call this method when the view has finished loading. The loading time is computed as the
+   * elapsed time since the view started. Each call replaces any previously set value (last-call-wins).
+   *
+   * @category Data Collection
+   */
+  setViewLoadingTime: () => void
 
   /**
    * Set the global context information to all events, stored in `@context`
@@ -553,6 +564,7 @@ export interface Strategy {
   getInternalContext: StartRumResult['getInternalContext']
   stopSession: StartRumResult['stopSession']
   addTiming: StartRumResult['addTiming']
+  setLoadingTime: StartRumResult['setLoadingTime']
   startView: StartRumResult['startView']
   setViewName: StartRumResult['setViewName']
 
@@ -771,6 +783,14 @@ export function makeRumPublicApi(
     addTiming: monitor((name, time) => {
       // TODO: next major decide to drop relative time support or update its behaviour
       strategy.addTiming(sanitize(name)!, time as RelativeTime | TimeStamp | undefined)
+    }),
+
+    setViewLoadingTime: monitor(() => {
+      const callTimestamp = timeStampNow()
+      strategy.setLoadingTime(callTimestamp)
+      addTelemetryUsage({
+        feature: 'addViewLoadingTime',
+      })
     }),
 
     setGlobalContext: defineContextMethod(
