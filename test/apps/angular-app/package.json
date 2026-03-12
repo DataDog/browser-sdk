@@ -1,0 +1,37 @@
+{
+  "name": "angular-app",
+  "private": true,
+  "scripts": {
+    "build": "webpack"
+  },
+  "dependencies": {
+    "@angular/common": "19.2.5",
+    "@angular/compiler": "19.2.5",
+    "@angular/compiler-cli": "19.2.5",
+    "@angular/core": "19.2.5",
+    "@angular/platform-browser": "19.2.5",
+    "@angular/router": "19.2.5",
+    "rxjs": "7.8.2",
+    "zone.js": "0.15.0"
+  },
+  "resolutions": {
+    "@datadog/browser-rum-core": "file:../../../packages/rum-core/package.tgz",
+    "@datadog/browser-core": "file:../../../packages/core/package.tgz",
+    "@datadog/browser-rum": "file:../../../packages/rum/package.tgz",
+    "@datadog/browser-rum-angular": "file:../../../packages/rum-angular/package.tgz",
+    "@datadog/browser-rum-slim": "file:../../../packages/rum-slim/package.tgz",
+    "@datadog/browser-worker": "file:../../../packages/worker/package.tgz"
+  },
+  "devDependencies": {
+    "@datadog/browser-rum": "file:../../../packages/rum/package.tgz",
+    "@datadog/browser-rum-angular": "file:../../../packages/rum-angular/package.tgz",
+    "@ngtools/webpack": "19.2.6",
+    "babel-loader": "9.2.1",
+    "typescript": "5.8.3",
+    "webpack": "5.105.2",
+    "webpack-cli": "6.0.1"
+  },
+  "volta": {
+    "extends": "../../../package.json"
+  }
+}

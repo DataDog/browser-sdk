@@ -14,6 +14,7 @@ runMain(async () => {
   printLog('Packing packages...')
   command`yarn run pack`.run()
 
+  buildApp('test/apps/angular-app')
   buildApp('test/apps/vanilla')
   buildApp('test/apps/react-router-v6-app')
   buildApp('test/apps/react-heavy-spa')
