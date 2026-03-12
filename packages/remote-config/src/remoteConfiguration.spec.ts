@@ -495,6 +495,53 @@ describe('remoteConfiguration', () => {
         expect(displaySpy).toHaveBeenCalledWith('Unsupported remote configuration: "rcSerializedType": "unsupported"')
       })
     })
+
+    describe('ContextItem[] detection', () => {
+      it('should transform a ContextItem[] into a plain object via getter', () => {
+        const items = [
+          { key: 'id', value: { rcSerializedType: 'dynamic' as const, strategy: 'cookie' as const, name: 'user_id' } },
+        ]
+        const result = resolveDynamicValues({ user: items }) as any
+        expect(result.user).toEqual({ id: undefined }) // cookie not set in test env
+      })
+
+      it('should re-evaluate on each read', () => {
+        let callCount = 0
+        const items = [
+          { key: 'id', value: { rcSerializedType: 'dynamic' as const, strategy: 'cookie' as const, name: 'user_id' } },
+        ]
+        const result = resolveDynamicValues(
+          { user: items },
+          {
+            onCookie: () => {
+              callCount++
+            },
+          }
+        ) as any
+        void result.user
+        void result.user
+        expect(callCount).toBe(2)
+      })
+
+      it('should NOT treat an empty array as ContextItem[]', () => {
+        const result = resolveDynamicValues({ items: [] }) as any
+        expect(Array.isArray(result.items)).toBe(true)
+      })
+
+      it('should NOT treat an array without rcSerializedType on value as ContextItem[]', () => {
+        const result = resolveDynamicValues({ items: [{ key: 'foo', value: 'bar' }] }) as any
+        expect(Array.isArray(result.items)).toBe(true)
+      })
+
+      it('should be enumerable (JSON.stringify invokes getter)', () => {
+        const items = [
+          { key: 'id', value: { rcSerializedType: 'dynamic' as const, strategy: 'cookie' as const, name: 'user_id' } },
+        ]
+        const result = resolveDynamicValues({ user: items }) as any
+        const json = JSON.parse(JSON.stringify(result))
+        expect(json.user).toEqual({ id: undefined })
+      })
+    })
   })
 
   describe('parseJsonPath', () => {
