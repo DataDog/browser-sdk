@@ -1,0 +1,7 @@
+{
+  "name": "@datadog/browser-rum-react/error-boundary",
+  "private": true,
+  "main": "../cjs/entries/errorBoundary.js",
+  "module": "../esm/entries/errorBoundary.js",
+  "types": "../cjs/entries/errorBoundary.d.ts"
+}
