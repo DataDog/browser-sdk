@@ -290,3 +290,10 @@ function isContextItemArray(value: unknown): value is ContextItem[] {
     )
   )
 }
+
+export function browserContextItemHandler(
+  items: ContextItem[],
+  resolve: (value: unknown) => unknown
+): Record<string, unknown> {
+  return Object.fromEntries(items.map(({ key, value }) => [key, resolve(value)]))
+}
