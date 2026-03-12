@@ -621,6 +621,33 @@ describe('preStartRum', () => {
       expect(addTimingSpy).toHaveBeenCalledOnceWith(name, time)
     })
 
+    it('setLoadingTime', () => {
+      const setLoadingTimeSpy = jasmine.createSpy()
+      doStartRumSpy.and.returnValue({ setLoadingTime: setLoadingTimeSpy } as unknown as StartRumResult)
+
+      const timestamp = 123 as TimeStamp
+      strategy.setLoadingTime(timestamp)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      expect(setLoadingTimeSpy).toHaveBeenCalledOnceWith(timestamp)
+    })
+
+    it('setLoadingTime should preserve call timestamp', () => {
+      const clock = mockClock()
+      const setLoadingTimeSpy = jasmine.createSpy()
+      doStartRumSpy.and.returnValue({ setLoadingTime: setLoadingTimeSpy } as unknown as StartRumResult)
+
+      clock.tick(10)
+      strategy.setLoadingTime(clock.timeStamp(10))
+
+      clock.tick(20)
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+
+      expect(setLoadingTimeSpy).toHaveBeenCalledOnceWith(jasmine.any(Number))
+      // Verify the timestamp was captured at call time (tick 10), not at drain time (tick 30)
+      const capturedTimestamp = setLoadingTimeSpy.calls.argsFor(0)[0] as number
+      expect(capturedTimestamp).toBe(clock.timeStamp(10))
+    })
+
     it('setViewContext', async () => {
       const setViewContextSpy = jasmine.createSpy()
       doStartRumSpy.and.returnValue({ setViewContext: setViewContextSpy } as unknown as StartRumResult)

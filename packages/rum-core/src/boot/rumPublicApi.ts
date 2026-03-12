@@ -38,6 +38,7 @@ import {
   ExperimentalFeature,
   mockable,
   generateUUID,
+  timeStampNow,
 } from '@datadog/browser-core'
 
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -235,6 +236,16 @@ export interface RumPublicApi extends PublicApi {
    * @param [time] - Epoch timestamp of the custom timing (if not set, will use current time)
    */
   addTiming: (name: string, time?: number) => void
+
+  /**
+   * [Experimental] Manually set the current view's loading time.
+   *
+   * Call this method when the view has finished loading. The loading time is computed as the
+   * elapsed time since the view started. Each call replaces any previously set value (last-call-wins).
+   *
+   * @category Data Collection
+   */
+  setViewLoadingTime: () => void
 
   /**
    * Set the global context information to all events, stored in `@context`
@@ -553,6 +564,7 @@ export interface Strategy {
   getInternalContext: StartRumResult['getInternalContext']
   stopSession: StartRumResult['stopSession']
   addTiming: StartRumResult['addTiming']
+  setLoadingTime: StartRumResult['setLoadingTime']
   startView: StartRumResult['startView']
   setViewName: StartRumResult['setViewName']
 
@@ -773,6 +785,14 @@ export function makeRumPublicApi(
       strategy.addTiming(sanitize(name)!, time as RelativeTime | TimeStamp | undefined)
     }),
 
+    setViewLoadingTime: monitor(() => {
+      const callTimestamp = timeStampNow()
+      strategy.setLoadingTime(callTimestamp)
+      addTelemetryUsage({
+        feature: 'addViewLoadingTime',
+      })
+    }),
+
     setGlobalContext: defineContextMethod(
       getStrategy,
       CustomerContextKey.globalContext,
@@ -924,10 +944,13 @@ export function makeRumPublicApi(
       })
     }),
 
-    startFeatureOperation: monitor((name, options) => {
-      addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'start' })
-      strategy.addOperationStepVital(name, 'start', options)
-    }),
+    startFeatureOperation: (name, options) => {
+      const handlingStack = createHandlingStack('vital')
+      callMonitored(() => {
+        addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'start' })
+        strategy.addOperationStepVital(name, 'start', { ...options, handlingStack })
+      })
+    },
 
     succeedFeatureOperation: monitor((name, options) => {
       addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'succeed' })

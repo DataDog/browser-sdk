@@ -33,6 +33,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   addError: () => undefined,
   addEvent: () => undefined,
   addTiming: () => undefined,
+  setLoadingTime: () => undefined,
   addFeatureFlagEvaluation: () => undefined,
   startView: () => undefined,
   setViewContext: () => undefined,
@@ -570,6 +571,34 @@ describe('rum public api', () => {
     })
   })
 
+  describe('setViewLoadingTime', () => {
+    let setLoadingTimeSpy: jasmine.Spy<ReturnType<StartRum>['setLoadingTime']>
+    let rumPublicApi: RumPublicApi
+
+    beforeEach(() => {
+      setLoadingTimeSpy = jasmine.createSpy()
+      ;({ rumPublicApi } = makeRumPublicApiWithDefaults({
+        startRumResult: {
+          setLoadingTime: setLoadingTimeSpy,
+        },
+      }))
+    })
+
+    it('should call setLoadingTime with timestamp', () => {
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+      rumPublicApi.setViewLoadingTime()
+
+      expect(setLoadingTimeSpy).toHaveBeenCalledOnceWith(jasmine.any(Number))
+    })
+
+    it('should not throw when called before init', () => {
+      expect(() => rumPublicApi.setViewLoadingTime()).not.toThrow()
+
+      expect(setLoadingTimeSpy).not.toHaveBeenCalled()
+    })
+  })
+
   describe('addFeatureFlagEvaluation', () => {
     let addFeatureFlagEvaluationSpy: jasmine.Spy<ReturnType<StartRum>['addFeatureFlagEvaluation']>
     let displaySpy: jasmine.Spy<() => void>
@@ -977,6 +1006,7 @@ describe('rum public api', () => {
       await collectAsyncCalls(addOperationStepVitalSpy, 1)
       expect(addOperationStepVitalSpy).toHaveBeenCalledWith('foo', 'start', {
         operationKey: '00000000-0000-0000-0000-000000000000',
+        handlingStack: jasmine.any(String),
       })
     })
   })
