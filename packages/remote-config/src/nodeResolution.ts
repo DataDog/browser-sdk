@@ -24,10 +24,17 @@ export function isCodeExpression(value: unknown): value is CodeExpression {
 
 /**
  * Serialize a string as a single-quoted JS string literal.
- * Escapes backslashes and single quotes so the result is valid JS.
+ * Escapes backslashes, single quotes, and control characters so the result is valid JS.
  */
 function jsStringLiteral(value: string): string {
-  return `'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`
+  return `'${value
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/\r/g, '\\r')
+    .replace(/\n/g, '\\n')
+    .replace(/\t/g, '\\t')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029')}'`
 }
 
 export function serializeDynamicValueToJs(option: DynamicOption): string {
@@ -49,7 +56,7 @@ export function serializeDynamicValueToJs(option: DynamicOption): string {
       expr = `__dd_getLocalStorage(${jsStringLiteral(option.key)})`
       break
     default:
-      display.warn(`Unsupported remote configuration strategy: "${(option as DynamicOption).strategy}"`)
+      display.error(`Unsupported remote configuration strategy: "${(option as DynamicOption).strategy}"`)
       return 'undefined'
   }
 
@@ -65,7 +72,7 @@ export function serializeDynamicValueToJs(option: DynamicOption): string {
 // ---------------------------------------------------------------------------
 
 /** @internal */
-export function nodeContextItemHandler(items: ContextItem[], resolve: (value: unknown) => unknown): unknown {
+export function nodeContextItemHandler(items: ContextItem[], resolve: (value: unknown) => unknown): CodeExpression {
   const entries = items
     .map(({ key, value }) => {
       if (value === undefined) return null
@@ -90,7 +97,7 @@ export function serializeConfigToJs(config: unknown): string {
     const entries = Object.entries(config as Record<string, unknown>).map(
       ([k, v]) => `${JSON.stringify(k)}: ${serializeConfigToJs(v)}`
     )
-    return `{ ${entries.join(', ')} }`
+    return entries.length ? `{ ${entries.join(', ')} }` : '{}'
   }
   return JSON.stringify(config)
 }

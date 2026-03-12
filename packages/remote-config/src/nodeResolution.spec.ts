@@ -57,6 +57,15 @@ describe('serializeDynamicValueToJs', () => {
     expect(result).toBe("__dd_extract(__dd_getCookie('version_string'),'v(\\\\d+)')")
   })
 
+  it('should escape special characters in string values', () => {
+    const result = serializeDynamicValueToJs({
+      rcSerializedType: 'dynamic',
+      strategy: 'cookie',
+      name: 'foo\nbar\u2028baz',
+    })
+    expect(result).toBe("__dd_getCookie('foo\\nbar\\u2028baz')")
+  })
+
   it('should return "undefined" literal for unknown strategy', () => {
     const result = serializeDynamicValueToJs({
       rcSerializedType: 'dynamic',
