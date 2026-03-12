@@ -510,6 +510,8 @@ describe('remoteConfiguration', () => {
         const items = [
           { key: 'id', value: { rcSerializedType: 'dynamic' as const, strategy: 'cookie' as const, name: 'user_id' } },
         ]
+        // onCookie from the outer options is captured in the getter closure at creation time;
+        // each property read re-invokes the resolver with those same captured options
         const result = resolveDynamicValues(
           { user: items },
           {
@@ -518,6 +520,7 @@ describe('remoteConfiguration', () => {
             },
           }
         ) as any
+        // access the property twice to trigger the getter each time
         void result.user
         void result.user
         expect(callCount).toBe(2)
@@ -538,6 +541,10 @@ describe('remoteConfiguration', () => {
           { key: 'id', value: { rcSerializedType: 'dynamic' as const, strategy: 'cookie' as const, name: 'user_id' } },
         ]
         const result = resolveDynamicValues({ user: items }) as any
+        // direct enumerability check
+        const descriptor = Object.getOwnPropertyDescriptor(result, 'user')
+        expect(descriptor?.enumerable).toBe(true)
+        // JSON.stringify invokes enumerable getters
         const json = JSON.parse(JSON.stringify(result))
         expect(json.user).toEqual({ id: undefined })
       })
