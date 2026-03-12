@@ -1,5 +1,5 @@
 import { display, buildSiteHost, getCookie, isIndexableObject, fetch } from '@datadog/browser-core'
-import type { RumSdkConfig, DynamicOption } from './remoteConfiguration.types'
+import type { RumSdkConfig, DynamicOption, ContextItem } from './remoteConfiguration.types'
 import { parseJsonPath } from './jsonPathParser'
 
 export type RemoteConfiguration = RumSdkConfig
@@ -113,6 +113,7 @@ export function resolveDynamicValues(
     onCookie?: (value: string | undefined) => void
     onDom?: (value: string | null | undefined) => void
     onJs?: (value: unknown) => void
+    contextItemHandler?: (items: ContextItem[], resolve: (value: unknown) => unknown) => unknown
   } = {}
 ): unknown {
   if (Array.isArray(configValue)) {
@@ -136,7 +137,18 @@ export function resolveDynamicValues(
     const result: { [key: string]: unknown } = {}
     for (const key in configValue) {
       if (Object.prototype.hasOwnProperty.call(configValue, key)) {
-        result[key] = resolveDynamicValues(configValue[key], options)
+        const val = (configValue as { [key: string]: unknown })[key]
+        if (options.contextItemHandler && isContextItemArray(val)) {
+          const items = val
+          const resolve = (v: unknown) => resolveDynamicValues(v, options)
+          Object.defineProperty(result, key, {
+            get: () => options.contextItemHandler!(items, resolve),
+            enumerable: true,
+            configurable: true,
+          })
+        } else {
+          result[key] = resolveDynamicValues(val, options)
+        }
       }
     }
     return result
@@ -262,4 +274,18 @@ function extractValue(extractor: { value: string }, candidate: string) {
 
 function isSerializedOption(value: object): value is { rcSerializedType: string; [key: string]: unknown } {
   return 'rcSerializedType' in value
+}
+
+function isContextItemArray(value: unknown): value is ContextItem[] {
+  return (
+    Array.isArray(value) &&
+    value.length > 0 &&
+    value.every(
+      (item) =>
+        isIndexableObject(item) &&
+        typeof (item as { key?: unknown }).key === 'string' &&
+        isIndexableObject((item as { value?: unknown }).value) &&
+        (item as { value: { rcSerializedType?: unknown } }).value.rcSerializedType === 'dynamic'
+    )
+  )
 }
