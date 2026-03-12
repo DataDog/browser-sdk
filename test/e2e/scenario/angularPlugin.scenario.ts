@@ -4,7 +4,7 @@ import { createTest } from '../lib/framework'
 test.describe('angular plugin', () => {
   createTest('should define a view name based on the route')
     .withRum()
-    .withAngularApp('angular-app')
+    .withReactApp('angular-app')
     .run(async ({ page, flushEvents, intakeRegistry }) => {
       await page.click('text=Go to User')
       await flushEvents()
@@ -16,7 +16,7 @@ test.describe('angular plugin', () => {
 
   createTest('should define a view name for nested routes')
     .withRum()
-    .withAngularApp('angular-app')
+    .withReactApp('angular-app')
     .run(async ({ page, flushEvents, intakeRegistry }) => {
       await page.click('text=Go to Admin Settings')
       await flushEvents()
@@ -28,7 +28,7 @@ test.describe('angular plugin', () => {
 
   createTest('should define a view name for the initial route')
     .withRum()
-    .withAngularApp('angular-app')
+    .withReactApp('angular-app')
     .run(async ({ flushEvents, intakeRegistry }) => {
       await flushEvents()
       const viewEvents = intakeRegistry.rumViewEvents
