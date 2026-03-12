@@ -30,6 +30,7 @@ import * as replayStats from '../domain/replayStats'
 import { type RecorderInitMetrics } from '../domain/startRecorderInitTelemetry'
 import { makeRecorderApi } from './recorderApi'
 import type { StartRecording } from './postStartStrategy'
+import { lazyLoadRecorder } from './lazyLoadRecorder'
 
 describe('makeRecorderApi', () => {
   let lifeCycle: LifeCycle
@@ -59,7 +60,7 @@ describe('makeRecorderApi', () => {
     lifeCycle = new LifeCycle()
     stopRecordingSpy = jasmine.createSpy('stopRecording')
     startRecordingSpy = jasmine.createSpy('startRecording')
-    loadRecorderSpy = jasmine.createSpy('loadRecorder')
+    loadRecorderSpy = replaceMockableWithSpy(lazyLoadRecorder)
 
     if (loadRecorderError) {
       loadRecorderSpy.and.resolveTo(undefined)
@@ -77,7 +78,7 @@ describe('makeRecorderApi', () => {
       startSessionReplayRecordingManually: startSessionReplayRecordingManually ?? false,
     })
 
-    recorderApi = makeRecorderApi(loadRecorderSpy)
+    recorderApi = makeRecorderApi()
     rumInit = ({ worker } = {}) => {
       recorderApi.onRumStart(
         lifeCycle,
