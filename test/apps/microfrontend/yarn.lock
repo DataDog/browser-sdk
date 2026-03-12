@@ -12,7 +12,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@datadog/webpack-plugin@npm:^3.1.0":
+"@datadog/webpack-plugin@npm:3.1.0":
   version: 3.1.0
   resolution: "@datadog/webpack-plugin@npm:3.1.0"
   dependencies:
@@ -192,7 +192,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@module-federation/enhanced@npm:^2.0.1":
+"@module-federation/enhanced@npm:2.0.1":
   version: 2.0.1
   resolution: "@module-federation/enhanced@npm:2.0.1"
   dependencies:
@@ -1886,12 +1886,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "microfrontend-test-app@workspace:."
   dependencies:
-    "@datadog/webpack-plugin": "npm:^3.1.0"
-    "@module-federation/enhanced": "npm:^2.0.1"
+    "@datadog/webpack-plugin": "npm:3.1.0"
+    "@module-federation/enhanced": "npm:2.0.1"
     ts-loader: "npm:9.5.4"
     typescript: "npm:5.9.3"
     webpack: "npm:5.105.2"
-    webpack-cli: "npm:^6.0.1"
+    webpack-cli: "npm:6.0.1"
   languageName: unknown
   linkType: soft
 
@@ -2708,7 +2708,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack-cli@npm:^6.0.1":
+"webpack-cli@npm:6.0.1":
   version: 6.0.1
   resolution: "webpack-cli@npm:6.0.1"
   dependencies:

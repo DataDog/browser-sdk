@@ -1,7 +1,9 @@
 import type { RumEvent, RumEventDomainContext, RumInitConfiguration } from '@datadog/browser-rum-core'
 import type { LogsEvent, LogsInitConfiguration, LogsEventDomainContext } from '@datadog/browser-logs'
 import { test, expect } from '@playwright/test'
+import { ExperimentalFeature } from '@datadog/browser-core'
 import { createTest, microfrontendSetup } from '../lib/framework'
+
 const HANDLING_STACK_REGEX = /^HandlingStack: .*\n\s+at testHandlingStack @/
 
 const RUM_CONFIG: Partial<RumInitConfiguration> = {
@@ -175,6 +177,26 @@ test.describe('microfrontend', () => {
           await flushEvents()
 
           const event = intakeRegistry.rumVitalEvents.find((event) => event.vital.name === 'test-vital')
+
+          expect(event).toBeTruthy()
+          expect(event?.context?.handlingStack).toMatch(HANDLING_STACK_REGEX)
+        })
+
+      createTest('expose handling stack for DD_RUM.startFeatureOperation')
+        .withRum({ ...RUM_CONFIG, enableExperimentalFeatures: [ExperimentalFeature.FEATURE_OPERATION_VITAL] })
+        .withRumInit((configuration) => {
+          window.DD_RUM!.init(configuration)
+
+          function testHandlingStack() {
+            window.DD_RUM!.startFeatureOperation('test-operation')
+          }
+
+          testHandlingStack()
+        })
+        .run(async ({ intakeRegistry, flushEvents }) => {
+          await flushEvents()
+
+          const event = intakeRegistry.rumVitalEvents.find((event) => event.vital.name === 'test-operation')
 
           expect(event).toBeTruthy()
           expect(event?.context?.handlingStack).toMatch(HANDLING_STACK_REGEX)
@@ -380,6 +402,24 @@ test.describe('microfrontend', () => {
           await flushEvents()
 
           expect(intakeRegistry.rumVitalEvents).toMatchObject([
+            expect.objectContaining({ service: 'mfe-app1-service', version: '1.0.0' }),
+            expect.objectContaining({ service: 'mfe-app2-service', version: '0.2.0' }),
+          ])
+        })
+
+      createTest('feature operations should have service and version from source code context')
+        .withRum({ ...RUM_CONFIG, enableExperimentalFeatures: [ExperimentalFeature.FEATURE_OPERATION_VITAL] })
+        .withSetup(microfrontendSetup)
+        .run(async ({ intakeRegistry, flushEvents, page }) => {
+          await page.click('#app1-feature-operation')
+          await page.click('#app2-feature-operation')
+          await flushEvents()
+
+          const featureOperationEvents = intakeRegistry.rumVitalEvents.filter(
+            (event) => event.vital.step_type === 'start'
+          )
+
+          expect(featureOperationEvents).toMatchObject([
             expect.objectContaining({ service: 'mfe-app1-service', version: '1.0.0' }),
             expect.objectContaining({ service: 'mfe-app2-service', version: '0.2.0' }),
           ])
