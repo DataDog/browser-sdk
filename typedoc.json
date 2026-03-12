@@ -1,5 +1,10 @@
 {
-  "entryPoints": ["packages/*", "packages/rum-react/react-router-v6", "packages/rum-react/react-router-v7"],
+  "entryPoints": [
+    "packages/*",
+    "packages/rum-react/react-router-v6",
+    "packages/rum-react/react-router-v7",
+    "packages/rum-vue/vue-router-v4"
+  ],
   "entryPointStrategy": "packages",
   "includeVersion": true,
   "exclude": ["packages/core", "packages/rum-core", "packages/flagging", "packages/worker"],
