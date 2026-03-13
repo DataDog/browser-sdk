@@ -1,6 +1,8 @@
 import type { SdkVariant } from './sdkDownloader.ts'
-import { getDefaultVersion } from './sdkDownloader.ts'
+import { getDefaultVersion, downloadSDK } from './sdkDownloader.ts'
 import { INLINE_HELPERS } from './helpers.ts'
+import { fetchRemoteConfiguration } from '@datadog/browser-remote-config'
+import { resolveDynamicValues, serializeConfigToJs } from '@datadog/browser-remote-config/node'
 
 export type { SdkVariant } from './sdkDownloader.ts'
 
@@ -26,10 +28,9 @@ export interface GenerateBundleOptions {
 }
 
 const CONFIG_FETCH_TIMEOUT_MS = 30_000
-const VALID_VARIANTS: SdkVariant[] = ['rum', 'rum-slim']
+const VALID_VARIANTS: SdkVariant[] = ['rum', 'rum-slim', 'logs', 'rum-and-logs']
 
 export async function fetchConfig(options: FetchConfigOptions) {
-  const { fetchRemoteConfiguration } = await import('@datadog/browser-remote-config')
   const result = await fetchRemoteConfiguration({
     applicationId: options.applicationId,
     remoteConfigurationId: options.remoteConfigurationId,
@@ -69,9 +70,11 @@ export function generateCombinedBundle(options: CombineBundleOptions): string {
   // SDK bundle (${variant}) from CDN
   ${sdkCode}
 
-  // Auto-initialize
-  if (typeof window !== 'undefined' && window.DD_RUM) {
-    window.DD_RUM.init(__DATADOG_REMOTE_CONFIG__);
+  // Auto-initialize — merge base config (clientToken, site, etc.) set by the page before this script
+  var __DD_CONFIG__ = Object.assign({}, window.__DD_BASE_CONFIG__ || {}, __DATADOG_REMOTE_CONFIG__);
+  if (typeof window !== 'undefined') {
+    if (window.DD_RUM) { window.DD_RUM.init(__DD_CONFIG__); }
+    if (window.DD_LOGS) { window.DD_LOGS.init(__DD_CONFIG__); }
   }
 })();`
 }
@@ -93,11 +96,9 @@ export async function generateBundle(options: GenerateBundleOptions): Promise<st
     site: options.site,
   })
 
-  const { resolveDynamicValues, serializeConfigToJs } = await import('@datadog/browser-remote-config/node')
   const resolved = resolveDynamicValues(configResult.value)
   const configJs = serializeConfigToJs(resolved)
 
-  const { downloadSDK } = await import('./sdkDownloader.ts')
   const sdkCode = await downloadSDK({ variant: options.variant, datacenter: options.datacenter })
   const sdkVersion = getDefaultVersion()
 

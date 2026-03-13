@@ -7,7 +7,8 @@
   "types": "cjs/index.d.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./node": "./src/entries/node.ts"
+    "./node": "./src/entries/node.ts",
+    "./package.json": "./package.json"
   },
   "scripts": {
     "build": "node ../../scripts/build/build-package.ts --modules"
