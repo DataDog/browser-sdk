@@ -1,6 +1,6 @@
 import { isEmptyObject } from '../../../tools/utils/objectUtils'
 import type { CookieOptions } from '../../../browser/cookie'
-import { getCurrentSite, areCookiesAuthorized, getCookies, setCookie } from '../../../browser/cookie'
+import { getCurrentSite, areCookiesAuthorized } from '../../../browser/cookie'
 import type { Configuration, InitConfiguration } from '../../configuration'
 import {
   SESSION_COOKIE_EXPIRATION_DELAY,
@@ -12,6 +12,8 @@ import type { SessionState } from '../sessionState'
 import { toSessionString, toSessionState } from '../sessionState'
 import { Observable } from '../../../tools/observable'
 import { createCookieObservable } from '../../../browser/cookieObservable'
+import type { CookieAccess, CookieAccessItem } from '../../../browser/cookieAccess'
+import { createCookieAccess } from '../../../browser/cookieAccess'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
 
@@ -26,8 +28,10 @@ export function selectCookieStrategy(initConfiguration: InitConfiguration): Sess
 
 export function initCookieStrategy(cookieOptions: CookieOptions, configuration: Configuration): SessionStoreStrategy {
   const sessionObservable = new Observable<SessionState>()
-  const queue: Array<(sessionState: SessionState) => SessionState> = []
-  let isProcessing = false
+
+  const cookieAccess = createCookieAccess(SESSION_STORE_KEY, cookieOptions)
+  const trackAnonymousUser = !!configuration.trackAnonymousUser
+  const opts = encodeCookieOptions(cookieOptions)
 
   const cookieObservable = createCookieObservable(configuration, SESSION_STORE_KEY)
   cookieObservable.subscribe((cookieValue) => {
@@ -35,39 +39,23 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
     sessionObservable.notify(state)
   })
 
-  function applyAndWrite(fn: (state: SessionState) => SessionState) {
-    const currentState = readAndStripCookieOptions(cookieOptions)
+  async function applyAndWrite(fn: (state: SessionState) => SessionState) {
+    const items = await cookieAccess.getAll()
+    const currentState = findMatchingSessionState(items, opts)
     const newState = fn(currentState)
-    writeCookie(cookieOptions, !!configuration.trackAnonymousUser, newState)
+    await writeSessionState(cookieAccess, trackAnonymousUser, newState, cookieOptions)
   }
 
-  function processQueue() {
-    if (isProcessing || queue.length === 0) {
-      return
-    }
-    isProcessing = true
-
-    if (typeof navigator !== 'undefined' && navigator.locks) {
-      void navigator.locks.request(SESSION_STORE_KEY, () => {
-        // Process entire queue inside the lock for atomicity
-        while (queue.length > 0) {
-          applyAndWrite(queue.shift()!)
-        }
-        isProcessing = false
-      })
-    } else {
-      // No Web Locks available — process synchronously (last-write-wins)
-      while (queue.length > 0) {
-        applyAndWrite(queue.shift()!)
-      }
-      isProcessing = false
-    }
-  }
+  // Promise chain serializes calls when Web Locks are unavailable
+  let pendingChain = Promise.resolve()
 
   return {
     setSessionState(fn: (sessionState: SessionState) => SessionState): void {
-      queue.push(fn)
-      processQueue()
+      if (typeof navigator !== 'undefined' && navigator.locks) {
+        void navigator.locks.request(SESSION_STORE_KEY, () => applyAndWrite(fn))
+      } else {
+        pendingChain = pendingChain.then(() => applyAndWrite(fn))
+      }
     },
     sessionObservable,
   }
@@ -86,14 +74,11 @@ function parseAndStripCookieOptions(cookieValue: string | undefined): SessionSta
   return state
 }
 
-function readAndStripCookieOptions(cookieOptions: CookieOptions): SessionState {
-  const cookies = getCookies(SESSION_STORE_KEY)
-  const opts = encodeCookieOptions(cookieOptions)
-
+function findMatchingSessionState(items: CookieAccessItem[], opts: string): SessionState {
   let sessionState: SessionState | undefined
 
-  for (const cookie of cookies.reverse()) {
-    sessionState = toSessionState(cookie)
+  for (const item of items.slice().reverse()) {
+    sessionState = toSessionState(item.value)
     if (sessionState.c === opts) {
       break
     }
@@ -103,24 +88,35 @@ function readAndStripCookieOptions(cookieOptions: CookieOptions): SessionState {
   return sessionState ?? {}
 }
 
-function writeCookie(cookieOptions: CookieOptions, trackAnonymousUser: boolean, sessionState: SessionState) {
-  const sessionStateWithOptions = {
-    ...sessionState,
-    ...(!isEmptyObject(sessionState) ? { c: encodeCookieOptions(cookieOptions) } : {}),
-  }
-  const sessionString = toSessionString(sessionStateWithOptions)
-
+function computeExpireDelay(trackAnonymousUser: boolean, sessionState: SessionState): number {
   // Cookie expiration logic:
   // - trackAnonymousUser=true: always use 1 year (keep cookie alive for device ID)
   // - trackAnonymousUser=false + active session: 15 min (activity-based renewal)
   // - trackAnonymousUser=false + expired session: 4h (absolute timeout)
-  const expireDelay = trackAnonymousUser
+  return trackAnonymousUser
     ? SESSION_COOKIE_EXPIRATION_DELAY
     : sessionState.isExpired
       ? SESSION_TIME_OUT_DELAY
       : SESSION_EXPIRATION_DELAY
+}
 
-  setCookie(SESSION_STORE_KEY, sessionString, expireDelay, cookieOptions)
+function buildSessionString(sessionState: SessionState, cookieOptions: CookieOptions): string {
+  const sessionStateWithOptions = {
+    ...sessionState,
+    ...(!isEmptyObject(sessionState) ? { c: encodeCookieOptions(cookieOptions) } : {}),
+  }
+  return toSessionString(sessionStateWithOptions)
+}
+
+async function writeSessionState(
+  cookieAccess: CookieAccess,
+  trackAnonymousUser: boolean,
+  sessionState: SessionState,
+  cookieOptions: CookieOptions
+) {
+  const sessionString = buildSessionString(sessionState, cookieOptions)
+  const expireDelay = computeExpireDelay(trackAnonymousUser, sessionState)
+  await cookieAccess.set(sessionString, expireDelay)
 }
 
 export function buildCookieOptions(initConfiguration: InitConfiguration): CookieOptions | undefined {

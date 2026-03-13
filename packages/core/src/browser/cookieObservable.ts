@@ -4,11 +4,7 @@ import { ONE_SECOND } from '../tools/utils/timeUtils'
 import { findCommaSeparatedValue } from '../tools/utils/stringUtils'
 import type { Configuration } from '../domain/configuration'
 import { addEventListener, DOM_EVENT } from './addEventListener'
-import type { CookieStore } from './browser.types'
-
-export interface CookieStoreWindow {
-  cookieStore?: CookieStore
-}
+import type { CookieStoreWindow } from './browser.types'
 
 export type CookieObservable = ReturnType<typeof createCookieObservable>
 

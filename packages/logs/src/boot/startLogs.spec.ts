@@ -1,10 +1,5 @@
 import type { BufferedData, Payload } from '@datadog/browser-core'
-import {
-  ErrorSource,
-  display,
-  BufferedObservable,
-  FLUSH_DURATION_LIMIT,
-} from '@datadog/browser-core'
+import { ErrorSource, display, BufferedObservable, FLUSH_DURATION_LIMIT } from '@datadog/browser-core'
 import { ONE_SECOND } from '@datadog/browser-core/src/tools/utils/timeUtils'
 import type { Clock, Request } from '@datadog/browser-core/test'
 import {

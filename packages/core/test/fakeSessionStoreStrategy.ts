@@ -15,12 +15,10 @@ export function createFakeSessionStoreStrategy({
   const sessionObservable = new Observable<SessionState>()
 
   return {
-    setSessionState: jasmine.createSpy('setSessionState').and.callFake(
-      (fn: (state: SessionState) => SessionState) => {
-        session = fn({ ...session })
-        sessionObservable.notify({ ...session })
-      }
-    ),
+    setSessionState: jasmine.createSpy('setSessionState').and.callFake((fn: (state: SessionState) => SessionState) => {
+      session = fn({ ...session })
+      sessionObservable.notify({ ...session })
+    }),
     sessionObservable,
 
     // Test helpers

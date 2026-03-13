@@ -5,7 +5,7 @@ import type { Clock } from '../../test'
 import type { Configuration } from '../domain/configuration'
 import { WATCH_COOKIE_INTERVAL_DELAY, createCookieObservable } from './cookieObservable'
 import { deleteCookie, setCookie } from './cookie'
-import type { CookieStoreWindow } from './cookieObservable'
+import type { CookieStoreWindow } from './browser.types'
 
 const COOKIE_NAME = 'cookie_name'
 const COOKIE_DURATION = ONE_MINUTE
