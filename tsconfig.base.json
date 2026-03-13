@@ -32,7 +32,7 @@
       "@datadog/browser-rum-slim": ["./packages/rum-slim/src/entries/main"],
 
       "@datadog/browser-rum-react": ["./packages/rum-react/src/entries/main"],
-      "@datadog/browser-rum-react/error-boundary": ["./packages/rum-react/src/entries/errorBoundary"],
+      "@datadog/browser-rum-react/internal": ["./packages/rum-react/src/entries/internal"],
       "@datadog/browser-rum-react/react-router-v6": ["./packages/rum-react/src/entries/reactRouterV6"],
       "@datadog/browser-rum-react/react-router-v7": ["./packages/rum-react/src/entries/reactRouterV7"],
 

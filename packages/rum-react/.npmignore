@@ -4,5 +4,5 @@
 !/src/**/*
 /src/**/*.spec.ts
 /src/**/*.specHelper.ts
-!/error-boundary/*
+!/internal/*
 !/react-router-v[6-7]/*

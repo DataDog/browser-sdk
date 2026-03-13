@@ -22,7 +22,7 @@ export type State =
 const INITIAL_STATE: State = { didCatch: false, error: null }
 
 // eslint-disable-next-line no-restricted-syntax
-abstract class BaseErrorBoundary extends React.Component<ErrorBoundaryProps, State> {
+export abstract class BaseErrorBoundary extends React.Component<ErrorBoundaryProps, State> {
   constructor(props: ErrorBoundaryProps) {
     super(props)
     this.state = INITIAL_STATE
