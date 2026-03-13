@@ -602,7 +602,7 @@ export function makeRumPublicApi(
     options,
     trackingConsentState,
     customVitalsState,
-    (configuration, deflateWorker, initialViewOptions, telemetry, hooks) => {
+    (configuration, deflateWorker, initialViewOptions, telemetry, hooks, initialContexts) => {
       const createEncoder =
         deflateWorker && options.createDeflateEncoder
           ? (streamId: DeflateEncoderStreamId) => options.createDeflateEncoder!(configuration, deflateWorker, streamId)
@@ -619,7 +619,8 @@ export function makeRumPublicApi(
         bufferedDataObservable,
         telemetry,
         hooks,
-        options.sdkName
+        options.sdkName,
+        initialContexts
       )
 
       recorderApi.onRumStart(
