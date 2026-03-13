@@ -9,7 +9,7 @@ import { BrowserLogsManager, deleteAllCookies, getBrowserName, sendXhr } from '.
 import { DEFAULT_LOGS_CONFIGURATION, DEFAULT_RUM_CONFIGURATION } from '../helpers/configuration'
 import { validateRumFormat } from '../helpers/validation'
 import type { BrowserConfiguration } from '../../../browsers.conf'
-import { NEXTJS_APP_ROUTER_PORT } from '../helpers/playwright'
+import { NEXTJS_APP_ROUTER_PORT, VUE_ROUTER_APP_PORT } from '../helpers/playwright'
 import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
@@ -108,6 +108,20 @@ class TestBuilder {
 
   withApp(appName: string) {
     this.setups = [{ factory: (options, servers) => appSetup(options, servers, appName) }]
+    return this
+  }
+
+  withVueApp() {
+    this.baseUrlHooks.push((baseUrl, servers, { rum, context }) => {
+      baseUrl.port = VUE_ROUTER_APP_PORT
+      if (rum) {
+        baseUrl.searchParams.set('rum-config', formatConfiguration(rum, servers))
+      }
+      if (context) {
+        baseUrl.searchParams.set('rum-context', JSON.stringify(context))
+      }
+    })
+    this.setups = [{ factory: () => '' }]
     return this
   }
 
