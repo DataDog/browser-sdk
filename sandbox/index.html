@@ -4,29 +4,56 @@
     <meta charset="UTF-8" />
     <title>Sandbox</title>
     <script src="/datadog-rum.js"></script>
+    <script src="/datadog-remote-config.js"></script>
     <script src="/datadog-logs.js"></script>
     <script src="/datadog-flagging.js"></script>
     <script>
-      DD_RUM.init({
-        clientToken: 'xxx',
-        applicationId: 'xxx',
-        sessionReplaySampleRate: 100,
-        profilingSampleRate: 100,
-        trackResources: true,
-        trackLongTasks: true,
-        telemetrySampleRate: 100,
-        telemetryConfigurationSampleRate: 100,
-        telemetryUsageSampleRate: 100,
-        enableExperimentalFeatures: [],
-      })
-      DD_LOGS.init({
-        clientToken: 'xxx',
-        telemetrySampleRate: 100,
-        telemetryConfigurationSampleRate: 100,
-        telemetryUsageSampleRate: 100,
-        enableExperimentalFeatures: [],
-      })
-      DD_FLAGGING.init()
+      window.user = 'sandbox-user-123'
+      ;(async () => {
+        const APP_ID = 'd717cc88-ced7-4830-a377-14433a5c7bb0'
+        const RC_ID = 'e242d141-e05f-4814-981a-29e0c407050b'
+
+        const result = await DD_REMOTE_CONFIG.fetchRemoteConfiguration({
+          applicationId: APP_ID,
+          remoteConfigurationId: RC_ID,
+          site: 'datadoghq.com',
+        })
+
+        const config = {
+          clientToken: 'pubc39120f567244fa8ef1ae89b8372cab5',
+          applicationId: APP_ID,
+          site: 'datadoghq.com',
+          sessionReplaySampleRate: 100,
+          profilingSampleRate: 100,
+          trackResources: true,
+          trackLongTasks: true,
+          telemetrySampleRate: 100,
+          telemetryConfigurationSampleRate: 100,
+          telemetryUsageSampleRate: 100,
+          enableExperimentalFeatures: [],
+        }
+
+        if (result.ok) {
+          const resolved = DD_REMOTE_CONFIG.resolveDynamicValues(result.value)
+          Object.assign(config, resolved)
+          console.log('[RC] Remote configuration applied:', resolved)
+        } else {
+          console.warn('[RC] Failed to fetch remote configuration:', result.error)
+        }
+
+        DD_RUM.init(config)
+        console.log('[RUM] Init configuration:', DD_RUM.getInitConfiguration())
+
+        DD_LOGS.init({
+          clientToken: 'pubc39120f567244fa8ef1ae89b8372cab5',
+          site: 'datadoghq.com',
+          telemetrySampleRate: 100,
+          telemetryConfigurationSampleRate: 100,
+          telemetryUsageSampleRate: 100,
+          enableExperimentalFeatures: [],
+        })
+        DD_FLAGGING.init()
+      })()
     </script>
   </head>
 
