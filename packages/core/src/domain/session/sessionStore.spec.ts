@@ -189,54 +189,6 @@ describe('session store', () => {
       })
     })
 
-    describe('allowFallbackToLocalStorage (deprecated)', () => {
-      it('should return a type cookie when cookies are available', () => {
-        const sessionStoreStrategyType = selectSessionStoreStrategyType({
-          ...DEFAULT_INIT_CONFIGURATION,
-          allowFallbackToLocalStorage: true,
-        })
-        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.COOKIE }))
-      })
-
-      it('should report undefined when cookies are not available, and fallback is not allowed', () => {
-        disableCookies()
-        const sessionStoreStrategyType = selectSessionStoreStrategyType({
-          ...DEFAULT_INIT_CONFIGURATION,
-          allowFallbackToLocalStorage: false,
-        })
-        expect(sessionStoreStrategyType).toBeUndefined()
-      })
-
-      it('should fallback to localStorage when cookies are not available', () => {
-        disableCookies()
-        const sessionStoreStrategyType = selectSessionStoreStrategyType({
-          ...DEFAULT_INIT_CONFIGURATION,
-          allowFallbackToLocalStorage: true,
-        })
-        expect(sessionStoreStrategyType).toEqual({ type: SessionPersistence.LOCAL_STORAGE })
-      })
-
-      it('should report undefined when no storage is available', () => {
-        disableLocalStorage()
-        disableCookies()
-        const sessionStoreStrategyType = selectSessionStoreStrategyType({
-          ...DEFAULT_INIT_CONFIGURATION,
-          allowFallbackToLocalStorage: true,
-        })
-        expect(sessionStoreStrategyType).toBeUndefined()
-      })
-
-      it('does not fallback to localStorage when sessionPersistence is set to cookie', () => {
-        disableCookies()
-        const sessionStoreStrategyType = selectSessionStoreStrategyType({
-          ...DEFAULT_INIT_CONFIGURATION,
-          sessionPersistence: SessionPersistence.COOKIE,
-          allowFallbackToLocalStorage: true,
-        })
-        expect(sessionStoreStrategyType).toBeUndefined()
-      })
-    })
-
     function disableCookies() {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
     }

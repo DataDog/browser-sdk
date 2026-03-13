@@ -217,20 +217,6 @@ test.describe('Session Stores', () => {
       })
   })
 
-  createTest('allowFallbackToLocalStorage (deprecated)')
-    .withLogs({ allowFallbackToLocalStorage: true })
-    .withRum({ allowFallbackToLocalStorage: true })
-    .withHead(DISABLE_COOKIES)
-    .run(async ({ page }) => {
-      const sessionId = await getSessionIdFromLocalStorage(page)
-
-      const logsContext = await page.evaluate(() => window.DD_LOGS?.getInternalContext())
-      const rumContext = await page.evaluate(() => window.DD_RUM?.getInternalContext())
-
-      expect(logsContext?.session_id).toBe(sessionId)
-      expect(rumContext?.session_id).toBe(sessionId)
-    })
-
   createTest('sessionPersistence fallback')
     .withLogs({ sessionPersistence: ['local-storage', 'memory'] })
     .withRum({ sessionPersistence: ['local-storage', 'memory'] })
