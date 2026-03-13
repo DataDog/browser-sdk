@@ -150,12 +150,13 @@ describe('startSessionManager', () => {
       expect(onReadySpy).toHaveBeenCalledTimes(1)
     })
 
-    it('should start with an expired session state on fresh initialization', () => {
+    it('should start with an active session on fresh initialization', () => {
       startSessionManagerRaw()
 
-      // Fresh init starts as expired until user activity
+      // Fresh init creates a session immediately (initialize + expand)
       const state = fakeStrategy.getInternalState()
-      expect(state.isExpired).toBe(EXPIRED)
+      expect(state.isExpired).toBeUndefined()
+      expect(state.id).toMatch(/^[a-f0-9-]+$/)
     })
 
     it('should create a session with a real id after user activity', () => {
@@ -624,12 +625,8 @@ describe('startSessionManager', () => {
         sessionManager.expire()
         clock.tick(10 * ONE_SECOND)
 
-        expect(
-          sessionManager.findSession(clock.relative(15 * ONE_SECOND), { returnInactive: true })
-        ).toBeDefined()
-        expect(
-          sessionManager.findSession(clock.relative(15 * ONE_SECOND), { returnInactive: false })
-        ).toBeUndefined()
+        expect(sessionManager.findSession(clock.relative(15 * ONE_SECOND), { returnInactive: true })).toBeDefined()
+        expect(sessionManager.findSession(clock.relative(15 * ONE_SECOND), { returnInactive: false })).toBeUndefined()
       })
     })
   })

@@ -188,12 +188,9 @@ export function startSessionManager(
   let previousState: SessionState = {}
   let isFirstEmission = true
 
-  const { throttled: throttledExpandOrRenew, cancel: cancelExpandOrRenew } = throttle(
-    () => {
-      strategy.setSessionState((state) => expandOrRenew(state, configuration))
-    },
-    ONE_SECOND
-  )
+  const { throttled: throttledExpandOrRenew, cancel: cancelExpandOrRenew } = throttle(() => {
+    strategy.setSessionState((state) => expandOrRenew(state, configuration))
+  }, ONE_SECOND)
   stopCallbacks.push(cancelExpandOrRenew)
 
   // Subscribe to all state changes from the strategy
@@ -213,8 +210,11 @@ export function startSessionManager(
   })
   stopCallbacks.push(() => subscription.unsubscribe())
 
-  // Trigger the first emission by initializing the session
-  strategy.setSessionState((state) => initializeSession(state, configuration))
+  // Trigger the first emission by initializing and expanding the session
+  strategy.setSessionState((state) => {
+    const initialized = initializeSession(state, configuration)
+    return expandOrRenew(initialized, configuration)
+  })
 
   function handleFirstEmission(newState: SessionState) {
     // Tracking consent is always granted when the session manager is started, but it may be revoked
