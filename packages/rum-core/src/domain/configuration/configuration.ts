@@ -1,4 +1,11 @@
-import type { Configuration, InitConfiguration, MatchOption, RawTelemetryConfiguration, User, Context } from '@datadog/browser-core'
+import type {
+  Configuration,
+  InitConfiguration,
+  MatchOption,
+  RawTelemetryConfiguration,
+  User,
+  Context,
+} from '@datadog/browser-core'
 import {
   isMatchOption,
   serializeConfiguration,
