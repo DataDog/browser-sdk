@@ -1,7 +1,8 @@
 import { mockClock, mockCookies, registerCleanupTask } from '../../../../test'
 import { deleteCookie, getCookie } from '../../../browser/cookie'
 import type { SessionState } from '../sessionState'
-import type { InitConfiguration } from '../../configuration'
+import type { Configuration, InitConfiguration } from '../../configuration'
+import { WATCH_COOKIE_INTERVAL_DELAY } from '../../../browser/cookieObservable'
 import { SESSION_COOKIE_EXPIRATION_DELAY, SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from '../sessionConstants'
 import { buildCookieOptions, selectCookieStrategy, initCookieStrategy } from './sessionInCookie'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
@@ -25,6 +26,20 @@ function disableWebLocks() {
   })
 }
 
+/**
+ * Disable the CookieStore API so the cookie observable falls back to polling.
+ * This makes the tests deterministic since we can control time with mockClock.
+ */
+function disableCookieStore() {
+  const original = Object.getOwnPropertyDescriptor(window, 'cookieStore')
+  Object.defineProperty(window, 'cookieStore', { get: () => undefined, configurable: true })
+  registerCleanupTask(() => {
+    if (original) {
+      Object.defineProperty(window, 'cookieStore', original)
+    }
+  })
+}
+
 function setupCookieStrategy(partialInitConfiguration: Partial<InitConfiguration> = {}) {
   const initConfiguration = {
     ...DEFAULT_INIT_CONFIGURATION,
@@ -32,19 +47,23 @@ function setupCookieStrategy(partialInitConfiguration: Partial<InitConfiguration
   } as InitConfiguration
 
   const cookieOptions = buildCookieOptions(initConfiguration)!
-  const trackAnonymousUser = initConfiguration.trackAnonymousUser ?? true
+  const configuration = { trackAnonymousUser: initConfiguration.trackAnonymousUser ?? true } as Configuration
 
   registerCleanupTask(() => deleteCookie(SESSION_STORE_KEY, cookieOptions))
 
   return {
-    strategy: initCookieStrategy(cookieOptions, trackAnonymousUser),
+    strategy: initCookieStrategy(cookieOptions, configuration),
     cookieOptions,
   }
 }
 
 describe('session in cookie strategy', () => {
+  let clock: ReturnType<typeof mockClock>
+
   beforeEach(() => {
     disableWebLocks()
+    disableCookieStore()
+    clock = mockClock()
   })
 
   describe('setSessionState', () => {
@@ -101,6 +120,7 @@ describe('session in cookie strategy', () => {
       registerCleanupTask(() => subscription.unsubscribe())
 
       strategy.setSessionState(() => ({ id: 'test' }))
+      clock.tick(WATCH_COOKIE_INTERVAL_DELAY)
 
       expect(spy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ id: 'test' }))
       expect(spy.calls.mostRecent().args[0].c).toBeUndefined()
@@ -121,6 +141,7 @@ describe('session in cookie strategy', () => {
       registerCleanupTask(() => subscription.unsubscribe())
 
       strategy.setSessionState((state) => ({ ...state, id: 'test-id' }))
+      clock.tick(WATCH_COOKIE_INTERVAL_DELAY)
 
       expect(spy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ id: 'test-id' }))
     })
@@ -178,7 +199,6 @@ describe('session in cookie strategy', () => {
     it('should use 1 year expiration when trackAnonymousUser=true', () => {
       const { strategy } = setupCookieStrategy({ trackAnonymousUser: true })
       const cookieSetSpy = spyOnProperty(document, 'cookie', 'set')
-      const clock = mockClock()
 
       strategy.setSessionState(() => ({ id: '123', created: '0' }))
 
@@ -190,7 +210,6 @@ describe('session in cookie strategy', () => {
     it('should use 15 min expiration for active session when trackAnonymousUser=false', () => {
       const { strategy } = setupCookieStrategy({ trackAnonymousUser: false })
       const cookieSetSpy = spyOnProperty(document, 'cookie', 'set')
-      const clock = mockClock()
 
       strategy.setSessionState(() => ({ id: '123', created: '0' }))
 
@@ -202,7 +221,6 @@ describe('session in cookie strategy', () => {
     it('should use 4h expiration for expired session when trackAnonymousUser=false', () => {
       const { strategy } = setupCookieStrategy({ trackAnonymousUser: false })
       const cookieSetSpy = spyOnProperty(document, 'cookie', 'set')
-      const clock = mockClock()
 
       strategy.setSessionState(() => ({ isExpired: '1' }))
 

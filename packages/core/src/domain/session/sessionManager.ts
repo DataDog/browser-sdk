@@ -117,7 +117,7 @@ export function getSessionStoreStrategy(
 ): SessionStoreStrategy {
   switch (strategyType.type) {
     case SessionPersistence.COOKIE:
-      return initCookieStrategy(strategyType.cookieOptions, !!configuration.trackAnonymousUser)
+      return initCookieStrategy(strategyType.cookieOptions, configuration)
     case SessionPersistence.LOCAL_STORAGE:
       return initLocalStorageStrategy()
     case SessionPersistence.MEMORY:
