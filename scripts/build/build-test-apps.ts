@@ -18,10 +18,10 @@ runMain(async () => {
   buildApp('test/apps/react-router-v6-app')
   buildApp('test/apps/react-heavy-spa')
   buildApp('test/apps/react-shopist-like')
-  buildApp('test/apps/microfrontend')
   await buildReactRouterv7App()
   await buildExtensions()
   buildApp('test/apps/nextjs')
+  buildApp('test/apps/vue-router-app')
 
   printLog('Test apps and extensions built successfully.')
 })
