@@ -16,7 +16,7 @@ const DEFAULT_DATACENTER = 'us1'
 
 const sdkCache = new Map<string, string>()
 
-function getDefaultVersion(): string {
+export function getDefaultVersion(): string {
   const require = createRequire(import.meta.url)
   const pkg = require('@datadog/browser-remote-config/package.json') as { version: string }
   return pkg.version

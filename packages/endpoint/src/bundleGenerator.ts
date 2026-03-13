@@ -1,4 +1,5 @@
 import type { SdkVariant } from './sdkDownloader.ts'
+import { getDefaultVersion } from './sdkDownloader.ts'
 import { INLINE_HELPERS } from './helpers.ts'
 
 export type { SdkVariant } from './sdkDownloader.ts'
@@ -98,6 +99,7 @@ export async function generateBundle(options: GenerateBundleOptions): Promise<st
 
   const { downloadSDK } = await import('./sdkDownloader.ts')
   const sdkCode = await downloadSDK({ variant: options.variant, datacenter: options.datacenter })
+  const sdkVersion = getDefaultVersion()
 
-  return generateCombinedBundle({ sdkCode, configJs, variant: options.variant })
+  return generateCombinedBundle({ sdkCode, configJs, variant: options.variant, sdkVersion })
 }
