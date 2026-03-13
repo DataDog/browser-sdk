@@ -1,4 +1,5 @@
-import { ExperimentalFeature, addExperimentalFeatures, resetExperimentalFeatures } from '@datadog/browser-core'
+import { ExperimentalFeature, addExperimentalFeatures } from '@datadog/browser-core'
+import { resetExperimentalFeatures } from '@datadog/browser-core/src/tools/experimentalFeatures'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { AssembledRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
