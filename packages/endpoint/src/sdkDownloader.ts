@@ -3,7 +3,14 @@ import https from 'node:https'
 // eslint-disable-next-line local-rules/disallow-side-effects, local-rules/enforce-prod-deps-imports -- Node.js build tool
 import { createRequire } from 'node:module'
 
-export type SdkVariant = 'rum' | 'rum-slim'
+export type SdkVariant = 'rum' | 'rum-slim' | 'logs' | 'rum-and-logs'
+
+// Variants that map to a single CDN file
+const CDN_VARIANTS: Record<Exclude<SdkVariant, 'rum-and-logs'>, string> = {
+  rum: 'rum',
+  'rum-slim': 'rum-slim',
+  logs: 'logs',
+}
 
 export interface DownloadSDKOptions {
   variant: SdkVariant
@@ -34,7 +41,18 @@ export async function downloadSDK(options: SdkVariant | DownloadSDKOptions): Pro
   const variant = typeof options === 'string' ? options : options.variant
   const datacenter = typeof options === 'string' ? DEFAULT_DATACENTER : (options.datacenter ?? DEFAULT_DATACENTER)
   const version = typeof options === 'string' ? getDefaultVersion() : (options.version ?? getDefaultVersion())
+
+  // rum-and-logs: download both SDKs and concatenate
+  if (variant === 'rum-and-logs') {
+    const [rum, logs] = await Promise.all([
+      downloadSDK({ variant: 'rum', datacenter, version }),
+      downloadSDK({ variant: 'logs', datacenter, version }),
+    ])
+    return `${rum}\n${logs}`
+  }
+
   const majorVersion = getMajorVersion(version)
+  const cdnVariant = CDN_VARIANTS[variant]
 
   const cacheKey = `${variant}-${majorVersion}-${datacenter}`
   const cached = sdkCache.get(cacheKey)
@@ -42,7 +60,7 @@ export async function downloadSDK(options: SdkVariant | DownloadSDKOptions): Pro
     return cached
   }
 
-  const cdnUrl = `${CDN_HOST}/${datacenter}/v${majorVersion}/datadog-${variant}.js`
+  const cdnUrl = `${CDN_HOST}/${datacenter}/v${majorVersion}/datadog-${cdnVariant}.js`
 
   const sdkCode = await new Promise<string>((resolve, reject) => {
     const request = https.get(cdnUrl, { timeout: 30000 }, (res) => {
