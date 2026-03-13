@@ -13,7 +13,6 @@ prod,react-dom,MIT,Copyright (c) Facebook, Inc. and its affiliates.
 dev,typedoc,Apache-2.0,TypeStrong
 dev,@eslint/js,MIT,Copyright OpenJS Foundation and other contributors, <www.openjsf.org>
 dev,@jsdevtools/coverage-istanbul-loader,MIT,Copyright (c) 2015 James Messinger
-dev,@module-federation/enhanced,MIT, Copyright (c) 2020 ScriptedAlchemy LLC (Zack Jackson) Zhou Shaw (zhouxiao)
 dev,@playwright/test,Apache-2.0,Copyright Microsoft Corporation
 dev,@swc/core,Apache-2.0,Copyright (c) SWC Contributors
 dev,@types/chrome,MIT,Copyright Microsoft Corporation
@@ -28,6 +27,8 @@ dev,@types/react,MIT,Copyright Microsoft Corporation
 dev,@types/react-dom,MIT,Copyright Microsoft Corporation
 dev,@wxt-dev/module-react,MIT,Copyright (c) 2023 Aaron
 dev,@vitejs/plugin-react,MIT,Copyright (c) 2019-present Evan You & Vite Contributors
+dev,@vitejs/plugin-vue,MIT,Copyright (c) 2019-present, Yuxi (Evan) You and Vite contributors
+dev,@vue/test-utils,MIT,Copyright (c) 2021-present vuejs
 dev,ajv,MIT,Copyright 2015-2017 Evgeny Poberezkin
 dev,browserstack-local,MIT,Copyright 2016 BrowserStack
 dev,chrome-webstore-upload,MIT,Copyright Federico Brigante <me@fregante.com> (https://fregante.com), 2020 Andrew Levine
@@ -75,6 +76,8 @@ dev,typescript,Apache-2.0,Copyright Microsoft Corporation
 dev,typescript-eslint,MIT,Copyright (c) 2019 typescript-eslint and other contributors
 dev,undici,MIT,Copyright (c) Matteo Collina and Undici contributors
 dev,vite,MIT,Copyright (c) 2019-present, VoidZero Inc. and Vite contributors
+dev,vue,MIT,Copyright (c) 2018-present, Yuxi (Evan) You
+dev,vue-router,MIT,Copyright (c) 2019-present Eduardo San Martin Morote
 dev,webpack,MIT,Copyright JS Foundation and other contributors
 dev,webpack-cli,MIT,Copyright JS Foundation and other contributors
 dev,webpack-dev-middleware,MIT,Copyright JS Foundation and other contributors

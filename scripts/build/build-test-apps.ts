@@ -18,7 +18,6 @@ runMain(async () => {
   buildApp('test/apps/react-router-v6-app')
   buildApp('test/apps/react-heavy-spa')
   buildApp('test/apps/react-shopist-like')
-  buildApp('test/apps/microfrontend')
   await buildReactRouterv7App()
   await buildExtensions()
   buildApp('test/apps/nextjs-app-router')
@@ -35,9 +34,12 @@ function buildApp(appPath: string) {
   // so local packages are marked as optional peer dependencies and only installed when we build the test apps
   const packageJson = JSON.parse(fs.readFileSync(path.join(appPath, 'package.json'), 'utf-8'))
   if (packageJson.peerDependencies) {
-    // For each peer dependency, install it
+    // For each peer dependency, install it using the resolution if available.
+    // This allows apps to depend on not-yet-published packages by pointing to a local .tgz.
     for (const [name] of Object.entries(packageJson.peerDependencies)) {
-      command`yarn add -D ${name}`.withCurrentWorkingDirectory(appPath).run()
+      const resolution = packageJson.resolutions?.[name]
+      const specifier = resolution ? `${name}@${resolution}` : name
+      command`yarn add -D ${specifier}`.withCurrentWorkingDirectory(appPath).run()
     }
     // revert package.json & yarn.lock changes if they are versioned
     const areFilesVersioned = command`git ls-files package.json yarn.lock`.withCurrentWorkingDirectory(appPath).run()

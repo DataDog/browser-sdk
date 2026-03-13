@@ -1,4 +1,3 @@
-import path from 'node:path'
 import { parseArgs } from 'node:util'
 import webpackBase from '../../webpack.base.ts'
 
@@ -79,14 +78,7 @@ export default {
   webpack: {
     stats: 'minimal',
     module: overrideTsLoaderRule(webpackConfig.module),
-    resolve: {
-      ...webpackConfig.resolve,
-      alias: {
-        ...webpackConfig.resolve.alias,
-        'next/navigation': path.resolve('packages/rum-nextjs/test/stubs/nextNavigation.ts'),
-        'next/router': path.resolve('packages/rum-nextjs/test/stubs/nextRouter.ts'),
-      },
-    },
+    resolve: webpackConfig.resolve,
     target: webpackConfig.target,
     devtool: false,
     mode: 'development',
@@ -134,7 +126,7 @@ function overrideTsLoaderRule(module) {
   // We use swc-loader to transpile some dependencies that are using syntax not compatible with browsers we use for testing
   module.rules.push({
     test: /\.m?js$/,
-    include: /node_modules\/(react|react-router-dom|react-dom|react-router|turbo-stream)/,
+    include: /node_modules\/(react|react-router-dom|react-dom|react-router|turbo-stream|vue-router)/,
     use: {
       loader: 'swc-loader',
       options: {
