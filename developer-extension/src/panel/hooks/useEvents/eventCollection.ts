@@ -40,14 +40,14 @@ function compareEvents(a: SdkEvent, b: SdkEvent) {
     return (b.date ?? 0) - (a.date ?? 0)
   }
 
-  // If two events have the same date, make sure to display View events last. This ensures that View
-  // updates are collocated in the list (no other event are present between two updates)
+  // If two events have the same date, make sure to display type:view events last. This ensures that
+  // view events are collocated in the list (no other events appear between two view updates).
   //
-  // For example, we can receive an initial View event, then a 'document' Resource event, then a
-  // View event update. All of those events have the same date (navigationStart). If we only relied
+  // For example, we can receive an initial type:view event, then a 'document' Resource event, then
+  // a type:view update. All of those events have the same date (navigationStart). If we only relied
   // on the event date, events would be displayed in the order they are received, so the Resource
-  // event would be displayed between the two View events, which makes it a bit confusing. This
-  // ensures that all View updates are displayed before the Resource event.
+  // event would be displayed between the two type:view events, which is confusing. This ensures
+  // that type:view events are grouped at the end.
   return (isRumViewEvent(a) as any) - (isRumViewEvent(b) as any)
 }
 
