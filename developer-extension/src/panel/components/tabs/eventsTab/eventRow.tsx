@@ -341,18 +341,22 @@ function ViewDescription({ event }: { event: RumViewEvent }) {
   )
 }
 
-// view.id is the only field always present in a view_update diff (routing field)
-const VIEW_UPDATE_REQUIRED_KEYS = new Set(['id'])
+// view.id is always present in a view_update diff as a routing field to identify the view
+const VIEW_UPDATE_ROUTING_KEYS = new Set(['id'])
 
 function ViewUpdateDescription({ event }: { event: RumViewUpdateEvent }) {
   const changedFieldCount = event.view
-    ? Object.keys(event.view).filter((k) => !VIEW_UPDATE_REQUIRED_KEYS.has(k)).length
+    ? Object.keys(event.view).filter((k) => !VIEW_UPDATE_ROUTING_KEYS.has(k)).length
     : 0
-  const viewName = event.view ? event.view.name || event.view.url : undefined
+  const viewName = event.view
+    ? event.view.url
+      ? getViewName({ name: event.view.name, url: event.view.url })
+      : event.view.name
+    : undefined
 
   return (
     <>
-      View update <Emphasis>v{event._dd.document_version}</Emphasis>
+      View update{event._dd && <Emphasis> v{event._dd.document_version}</Emphasis>}
       {viewName && (
         <>
           {' '}
