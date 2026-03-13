@@ -3085,7 +3085,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/busboy@npm:*":
+"@types/busboy@npm:1.5.4":
   version: 1.5.4
   resolution: "@types/busboy@npm:1.5.4"
   dependencies:
@@ -3101,17 +3101,6 @@ __metadata:
     "@types/filesystem": "npm:*"
     "@types/har-format": "npm:*"
   checksum: 10c0/7de8f5be134035d4b764afd1f443fe842ad26975dbac914e977f94760be53bee3958ac2aed69d206ad8f18d8204b46075da78bd1ca22dab148193b6feb62e06f
-  languageName: node
-  linkType: hard
-
-"@types/connect-busboy@npm:1.0.3":
-  version: 1.0.3
-  resolution: "@types/connect-busboy@npm:1.0.3"
-  dependencies:
-    "@types/busboy": "npm:*"
-    "@types/express": "npm:*"
-    "@types/node": "npm:*"
-  checksum: 10c0/b2589191d51b2f60ed1a7b4dd6a77dcdadf8f5c05eae83985272ad44618cfdf8163d6c8ed01e0538a6abf10156c18cce1aad906bdc13865f4c1e58ac20f338b9
   languageName: node
   linkType: hard
 
@@ -3172,7 +3161,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/express@npm:*, @types/express@npm:5.0.6":
+"@types/express@npm:5.0.6":
   version: 5.0.6
   resolution: "@types/express@npm:5.0.6"
   dependencies:
@@ -4762,8 +4751,8 @@ __metadata:
     "@jsdevtools/coverage-istanbul-loader": "npm:3.0.5"
     "@playwright/test": "npm:1.58.2"
     "@swc/core": "npm:1.15.11"
+    "@types/busboy": "npm:1.5.4"
     "@types/chrome": "npm:0.1.37"
-    "@types/connect-busboy": "npm:1.0.3"
     "@types/cors": "npm:2.8.19"
     "@types/express": "npm:5.0.6"
     "@types/jasmine": "npm:3.10.19"
@@ -4771,8 +4760,8 @@ __metadata:
     "@types/node-forge": "npm:1.3.14"
     ajv: "npm:8.18.0"
     browserstack-local: "npm:1.5.10"
+    busboy: "npm:1.6.0"
     chrome-webstore-upload: "npm:4.0.3"
-    connect-busboy: "npm:1.0.0"
     cors: "npm:2.8.6"
     emoji-name-map: "npm:2.0.3"
     eslint: "npm:9.39.3"
@@ -4918,7 +4907,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"busboy@npm:^1.0.0":
+"busboy@npm:1.6.0":
   version: 1.6.0
   resolution: "busboy@npm:1.6.0"
   dependencies:
@@ -5561,15 +5550,6 @@ __metadata:
     graceful-fs: "npm:^4.2.11"
     xdg-basedir: "npm:^5.1.0"
   checksum: 10c0/98f74ee84eb7fea8361f588d2f0f8fbec2dd680a628bb1e50668cfd3001ea2584565d31de1d57f18ab498d339778701f9bc1e77a997107e8ff10abd8afb267a6
-  languageName: node
-  linkType: hard
-
-"connect-busboy@npm:1.0.0":
-  version: 1.0.0
-  resolution: "connect-busboy@npm:1.0.0"
-  dependencies:
-    busboy: "npm:^1.0.0"
-  checksum: 10c0/6f7fbcb5bc05c0de13336da540895e2ff6dadf1a93017ada2f9abf92c26eed211912c6edebdb2bc3fb05c735d350a82b584196b17963703020fe57cfc1d0a8c1
   languageName: node
   linkType: hard
 
