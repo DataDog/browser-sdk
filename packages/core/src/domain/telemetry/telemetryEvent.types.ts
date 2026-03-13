@@ -528,6 +528,7 @@ export type TelemetryCommonFeaturesUsage =
   | AddFeatureFlagEvaluation
   | AddOperationStepVital
   | GraphQLRequest
+  | AddViewLoadingTime
 /**
  * Schema of browser specific features usage
  */
@@ -543,7 +544,7 @@ export type TelemetryBrowserFeaturesUsage =
 /**
  * Schema of mobile specific features usage
  */
-export type TelemetryMobileFeaturesUsage = AddViewLoadingTime | TrackWebView | AndroidNetworkInstrumentation
+export type TelemetryMobileFeaturesUsage = TrackWebView | AndroidNetworkInstrumentation
 
 /**
  * Schema of common properties of Telemetry events
@@ -886,6 +887,25 @@ export interface GraphQLRequest {
   feature: 'graphql-request'
   [k: string]: unknown
 }
+export interface AddViewLoadingTime {
+  /**
+   * addViewLoadingTime API
+   */
+  feature: 'addViewLoadingTime'
+  /**
+   * Whether the view is not available
+   */
+  no_view?: boolean
+  /**
+   * Whether the available view is not active
+   */
+  no_active_view?: boolean
+  /**
+   * Whether this call overwrote a previously set loading time
+   */
+  overwritten?: boolean
+  [k: string]: unknown
+}
 export interface StartSessionReplayRecording {
   /**
    * startSessionReplayRecording API
@@ -944,25 +964,6 @@ export interface StopResource {
    * stopResource API
    */
   feature: 'stop-resource'
-  [k: string]: unknown
-}
-export interface AddViewLoadingTime {
-  /**
-   * addViewLoadingTime API
-   */
-  feature: 'addViewLoadingTime'
-  /**
-   * Whether the view is not available
-   */
-  no_view: boolean
-  /**
-   * Whether the available view is not active
-   */
-  no_active_view: boolean
-  /**
-   * Whether the loading time was overwritten
-   */
-  overwritten: boolean
   [k: string]: unknown
 }
 export interface TrackWebView {
