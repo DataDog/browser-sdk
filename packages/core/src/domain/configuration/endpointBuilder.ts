@@ -2,7 +2,7 @@ import type { Payload } from '../../transport'
 import { timeStampNow } from '../../tools/utils/timeUtils'
 import { normalizeUrl } from '../../tools/utils/urlPolyfill'
 import { generateUUID } from '../../tools/utils/stringUtils'
-import { INTAKE_SITE_FED_STAGING, INTAKE_SITE_US1, PCI_INTAKE_HOST_US1 } from '../intakeSites'
+import { INTAKE_SITE_FED_STAGING, INTAKE_SITE_US1 } from '../intakeSites'
 import type { InitConfiguration } from './configuration'
 
 // replaced at build time
@@ -52,19 +52,12 @@ function createEndpointUrlWithParametersBuilder(
   if (typeof proxy === 'function') {
     return (parameters) => proxy({ path, parameters })
   }
-  const host = buildEndpointHost(trackType, initConfiguration)
+  const host = buildEndpointHost(initConfiguration)
   return (parameters) => `https://${host}${path}?${parameters}`
 }
 
-export function buildEndpointHost(
-  trackType: TrackType,
-  initConfiguration: InitConfiguration & { usePciIntake?: boolean }
-) {
+export function buildEndpointHost(initConfiguration: InitConfiguration) {
   const { site = INTAKE_SITE_US1, internalAnalyticsSubdomain } = initConfiguration
-
-  if (trackType === 'logs' && initConfiguration.usePciIntake && site === INTAKE_SITE_US1) {
-    return PCI_INTAKE_HOST_US1
-  }
 
   if (internalAnalyticsSubdomain && site === INTAKE_SITE_US1) {
     return `${internalAnalyticsSubdomain}.${INTAKE_SITE_US1}`

@@ -314,5 +314,5 @@ export function buildEndpoint(configuration: RumInitConfiguration) {
   if (configuration.remoteConfigurationProxy) {
     return configuration.remoteConfigurationProxy
   }
-  return `https://sdk-configuration.${buildEndpointHost('rum', configuration)}/${REMOTE_CONFIGURATION_VERSION}/${encodeURIComponent(configuration.remoteConfigurationId!)}.json`
+  return `https://sdk-configuration.${buildEndpointHost(configuration)}/${REMOTE_CONFIGURATION_VERSION}/${encodeURIComponent(configuration.remoteConfigurationId!)}.json`
 }
