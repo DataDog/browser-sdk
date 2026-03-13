@@ -1,4 +1,6 @@
 import type { AddressInfo } from 'node:net'
+import { spawnSync } from 'node:child_process'
+import * as path from 'node:path'
 import express from 'express'
 import middleware from 'webpack-dev-middleware'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
@@ -11,7 +13,7 @@ const sandboxPath = './sandbox'
 const START_PORT = 8080
 const MAX_PORT = 8180
 
-const PACKAGES_WITH_BUNDLE = ['rum', 'rum-slim', 'logs', 'flagging', 'worker']
+const PACKAGES_WITH_BUNDLE = ['rum', 'rum-slim', 'logs', 'flagging', 'worker', 'remote-config']
 
 runMain(() => {
   const app = express()
@@ -21,6 +23,7 @@ runMain(() => {
   })
   app.use(createStaticSandboxApp())
   app.use('/react-app', createReactApp())
+  app.use('/generated-bundle', createGeneratedBundleApp())
   listenOnAvailablePort(app, START_PORT)
 })
 
@@ -64,6 +67,33 @@ function createStaticSandboxApp(): express.Application {
     } else {
       next()
     }
+  })
+
+  return app
+}
+
+const VITE_NODE = path.resolve('./node_modules/.bin/vite-node')
+const GENERATE_SCRIPT = path.resolve('./demo.ts')
+
+function createGeneratedBundleApp(): express.Application {
+  const app = express()
+
+  app.get('/bundle.js', (_req, res) => {
+    printLog('Generating bundle...')
+    const result = spawnSync(VITE_NODE, [GENERATE_SCRIPT], { encoding: 'utf-8' })
+    if (result.status !== 0) {
+      const err = result.stderr || result.stdout
+      printLog(`Bundle generation failed: ${err}`)
+      res.status(500).send(`/* Bundle generation failed:\n${err}\n*/`)
+      return
+    }
+    // demo.ts prints "=== N. ... ===" sections — extract just the bundle (section 3)
+    const output = result.stdout
+    const bundleStart = output.indexOf('(function()')
+    const bundle = bundleStart >= 0 ? output.slice(bundleStart) : output
+    printLog('Bundle generated successfully.')
+    res.setHeader('Content-Type', 'application/javascript')
+    res.send(bundle)
   })
 
   return app

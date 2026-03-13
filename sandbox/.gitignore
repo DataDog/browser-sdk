@@ -1,1 +1,6 @@
 *
+!.gitignore
+!index.html
+!bundle-demo.html
+!bundle-demo-2.html
+!endpoint-server.ts
