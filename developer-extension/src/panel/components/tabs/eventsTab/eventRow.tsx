@@ -11,6 +11,7 @@ import type {
   RumLongTaskEvent,
   RumResourceEvent,
   RumViewEvent,
+  RumViewUpdateEvent,
   RumVitalEvent,
 } from '../../../../../../packages/rum-core/src/rumEvent.types'
 import type { SdkEvent } from '../../../sdkEvent'
@@ -31,11 +32,11 @@ const RUM_EVENT_TYPE_COLOR = {
   error: 'red',
   long_task: 'yellow',
   view: 'blue',
+  view_update: 'blue',
   resource: 'cyan',
   telemetry: 'teal',
   vital: 'orange',
   transition: 'green',
-  view_update: 'blue',
 }
 
 const LOG_STATUS_COLOR = {
@@ -288,6 +289,8 @@ export const EventDescription = React.memo(({ event }: { event: SdkEvent }) => {
     switch (event.type) {
       case 'view':
         return <ViewDescription event={event} />
+      case 'view_update':
+        return <ViewUpdateDescription event={event} />
       case 'long_task':
         return <LongTaskDescription event={event} />
       case 'error':
@@ -334,6 +337,38 @@ function ViewDescription({ event }: { event: RumViewEvent }) {
   return (
     <>
       {isRouteChange ? 'SPA Route Change' : 'Load Page'} <Emphasis>{getViewName(event.view)}</Emphasis>
+    </>
+  )
+}
+
+// view.id is always present in a view_update diff as a routing field to identify the view
+const VIEW_UPDATE_ROUTING_KEYS = new Set(['id'])
+
+function ViewUpdateDescription({ event }: { event: RumViewUpdateEvent }) {
+  const changedFieldCount = event.view
+    ? Object.keys(event.view).filter((k) => !VIEW_UPDATE_ROUTING_KEYS.has(k)).length
+    : 0
+  const viewName = event.view
+    ? event.view.url
+      ? getViewName({ name: event.view.name, url: event.view.url })
+      : event.view.name
+    : undefined
+
+  return (
+    <>
+      View update{event._dd && <Emphasis> v{event._dd.document_version}</Emphasis>}
+      {viewName && (
+        <>
+          {' '}
+          · <Emphasis>{viewName}</Emphasis>
+        </>
+      )}
+      {changedFieldCount > 0 && (
+        <>
+          {' '}
+          · <Emphasis>{changedFieldCount}</Emphasis> {changedFieldCount === 1 ? 'field' : 'fields'} changed
+        </>
+      )}
     </>
   )
 }
@@ -425,5 +460,12 @@ function Emphasis({ children }: { children: ReactNode }) {
 }
 
 function getViewName(view: { name?: string; url: string }) {
-  return `${view.name || new URL(view.url).pathname}`
+  if (view.name) {
+    return view.name
+  }
+  try {
+    return new URL(view.url).pathname
+  } catch {
+    return view.url
+  }
 }
