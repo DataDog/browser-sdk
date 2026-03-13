@@ -1,37 +1,29 @@
 import React, { act } from 'react'
-import type { ErrorInfo } from 'react'
 
 import { disableJasmineUncaughtExceptionTracking, ignoreConsoleLogs } from '../../../../core/test'
 import { appendComponent } from '../../../test/appendComponent'
 import { initReactOldBrowsersSupport } from '../../../test/reactOldBrowsersSupport'
 import type { ErrorBoundaryFallback } from './errorBoundary'
-import { BaseErrorBoundary } from './errorBoundary'
+import { createErrorBoundary } from './errorBoundary'
 
 type FallbackFunctionComponent = Extract<ErrorBoundaryFallback, (...args: any[]) => any>
 
-let reportErrorSpy: jasmine.Spy
-
-class TestErrorBoundary extends BaseErrorBoundary {
-  protected reportError(error: Error, errorInfo: ErrorInfo) {
-    reportErrorSpy(error, errorInfo)
-  }
-}
-
-describe('BaseErrorBoundary', () => {
+describe('createErrorBoundary', () => {
   beforeEach(() => {
-    reportErrorSpy = jasmine.createSpy()
     ignoreConsoleLogs('error', 'Error: error')
     disableJasmineUncaughtExceptionTracking()
     initReactOldBrowsersSupport()
   })
 
   it('renders children', () => {
+    const TestErrorBoundary = createErrorBoundary(jasmine.createSpy(), 'TestErrorBoundary')
     const container = appendComponent(<TestErrorBoundary fallback={() => null}>bar</TestErrorBoundary>)
 
     expect(container.innerHTML).toBe('bar')
   })
 
   it('renders the fallback when an error occurs', () => {
+    const TestErrorBoundary = createErrorBoundary(jasmine.createSpy(), 'TestErrorBoundary')
     const fallbackSpy = jasmine.createSpy<FallbackFunctionComponent>().and.returnValue('fallback')
     const ComponentSpy = jasmine.createSpy().and.throwError(new Error('error'))
     const container = appendComponent(
@@ -51,6 +43,7 @@ describe('BaseErrorBoundary', () => {
   })
 
   it('resets the error when resetError is called', () => {
+    const TestErrorBoundary = createErrorBoundary(jasmine.createSpy(), 'TestErrorBoundary')
     const fallbackSpy = jasmine.createSpy<FallbackFunctionComponent>().and.returnValue('fallback')
     const ComponentSpy = jasmine.createSpy().and.throwError(new Error('error'))
     const container = appendComponent(
@@ -69,7 +62,9 @@ describe('BaseErrorBoundary', () => {
     expect(container.innerHTML).toBe('bar')
   })
 
-  it('passes error and errorInfo to reportError', () => {
+  it('passes error and errorInfo to the report callback', () => {
+    const reportErrorSpy = jasmine.createSpy()
+    const TestErrorBoundary = createErrorBoundary(reportErrorSpy, 'TestErrorBoundary')
     const originalError = new Error('error')
     const ComponentSpy = jasmine.createSpy().and.throwError(originalError)
     ;(ComponentSpy as any).displayName = 'ComponentSpy'
