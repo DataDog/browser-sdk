@@ -128,6 +128,9 @@ describe('logs', () => {
         usr: {
           anonymous_id: jasmine.any(String),
         },
+        tab: {
+          id: jasmine.any(String),
+        },
       })
     })
 
