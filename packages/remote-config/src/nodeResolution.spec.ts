@@ -110,12 +110,10 @@ describe('nodeContextItemHandler', () => {
     expect(result.code).toContain("__dd_getJs('window.env')")
   })
 
-  it('should skip items where resolve returns undefined', () => {
-    const items: ContextItem[] = [
-      { key: 'id', value: { rcSerializedType: 'dynamic', strategy: 'js', path: 'window.user' } },
-    ]
+  it('should skip items where value is undefined (malformed ContextItem)', () => {
+    const items = [{ key: 'id', value: undefined as any }]
     const result = nodeContextItemHandler(items, () => undefined) as CodeExpression
-    expect(result.code).toBe('{  }')
+    expect(result.code).toBe('{}')
   })
 })
 
