@@ -72,18 +72,20 @@ export function serializeDynamicValueToJs(option: DynamicOption): string {
 // ---------------------------------------------------------------------------
 
 /** @internal */
-export function nodeContextItemHandler(items: ContextItem[], resolve: (value: unknown) => unknown): CodeExpression {
+export function nodeContextItemHandler(
+  items: ContextItem[],
+  // resolve is intentionally unused — ContextItem values are always DynamicOption,
+  // so we serialize them directly to JS expressions rather than resolving live values.
+  _resolve: (value: unknown) => unknown
+): CodeExpression {
   const entries = items
     .map(({ key, value }) => {
       if (value === undefined) return null
-      const resolved = resolve(value)
-      if (resolved === undefined) return null
-      const code = isCodeExpression(resolved) ? resolved.code : JSON.stringify(resolved)
-      return `${JSON.stringify(key)}: ${code}`
+      return `${JSON.stringify(key)}: ${serializeDynamicValueToJs(value)}`
     })
     .filter((entry): entry is string => entry !== null)
 
-  return codeExpression(`{ ${entries.join(', ')} }`)
+  return codeExpression(entries.length ? `{ ${entries.join(', ')} }` : '{}')
 }
 
 export function serializeConfigToJs(config: unknown): string {
