@@ -296,13 +296,13 @@ function processAttributesMutations(
   const handledElements = new Map<Element, Set<string>>()
   const filteredMutations = mutations.filter((mutation) => {
     const handledAttributes = handledElements.get(mutation.target)
-    if (handledAttributes && handledAttributes.has(mutation.attributeName!)) {
+    if (handledAttributes && handledAttributes.has(mutation.attributeName)) {
       return false
     }
     if (!handledAttributes) {
-      handledElements.set(mutation.target, new Set([mutation.attributeName!]))
+      handledElements.set(mutation.target, new Set([mutation.attributeName]))
     } else {
-      handledAttributes.add(mutation.attributeName!)
+      handledAttributes.add(mutation.attributeName)
     }
     return true
   })
@@ -310,7 +310,7 @@ function processAttributesMutations(
   // Emit mutations
   const emittedMutations = new Map<Element, AttributeMutation>()
   for (const mutation of filteredMutations) {
-    const uncensoredValue = mutation.target.getAttribute(mutation.attributeName!)
+    const uncensoredValue = mutation.target.getAttribute(mutation.attributeName)
     if (uncensoredValue === mutation.oldValue) {
       continue
     }
@@ -328,7 +328,7 @@ function processAttributesMutations(
     const attributeValue = serializeAttribute(
       mutation.target,
       privacyLevel,
-      mutation.attributeName!,
+      mutation.attributeName,
       transaction.scope.configuration
     )
 
@@ -352,7 +352,7 @@ function processAttributesMutations(
       emittedMutations.set(mutation.target, emittedMutation)
     }
 
-    emittedMutation.attributes[mutation.attributeName!] = transformedValue
+    emittedMutation.attributes[mutation.attributeName] = transformedValue
   }
 
   return attributeMutations
