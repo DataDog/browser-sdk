@@ -19,7 +19,7 @@ import { PageState } from '../contexts/pageStateHistory'
 /**
  * Vital options
  */
-export interface VitalOptions {
+interface VitalOptions {
   /**
    * Vital context
    */
@@ -81,7 +81,7 @@ export interface DurationVital extends BaseVital {
   duration: Duration
 }
 
-export interface OperationStepVital extends BaseVital {
+interface OperationStepVital extends BaseVital {
   type: typeof VitalType.OPERATION_STEP
   stepType: 'start' | 'end'
   operationKey?: string

@@ -1,7 +1,7 @@
 import { test as base, chromium } from '@playwright/test'
 import type { BrowserContext } from '@playwright/test'
 
-export interface ExtensionFixture {
+interface ExtensionFixture {
   context: BrowserContext
   extensionId: string
 }

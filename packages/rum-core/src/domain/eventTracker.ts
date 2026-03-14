@@ -6,7 +6,7 @@ import type { LifeCycle } from './lifeCycle'
 import type { EventCounts } from './trackEventCounts'
 import { trackEventCounts } from './trackEventCounts'
 
-export const EVENT_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
+const EVENT_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
 
 type BaseTrackedEvent<TData = object> = TData & {
   id: string

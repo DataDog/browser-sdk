@@ -24,7 +24,7 @@ import { startFullSnapshots } from './startFullSnapshots'
 import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
 import { createRecordingScope } from './recordingScope'
 
-export interface RecordOptions {
+interface RecordOptions {
   emitRecord: EmitRecordCallback
   emitStats: EmitStatsCallback
   configuration: RumConfiguration

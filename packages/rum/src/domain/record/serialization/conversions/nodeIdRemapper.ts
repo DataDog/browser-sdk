@@ -13,7 +13,7 @@ export function createIdentityNodeIdRemapper(): NodeIdRemapper {
   }
 }
 
-export interface CopyingNodeIdRemapper extends NodeIdRemapper {
+interface CopyingNodeIdRemapper extends NodeIdRemapper {
   inputNodeIds: NodeIds
   outputNodeIds: NodeIds
 }

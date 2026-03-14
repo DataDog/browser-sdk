@@ -16,7 +16,7 @@ export function initViewportObservable(configuration: RumConfiguration) {
   return viewportObservable
 }
 
-export function createViewportObservable(configuration: RumConfiguration) {
+function createViewportObservable(configuration: RumConfiguration) {
   return new Observable<ViewportDimension>((observable) => {
     const { throttled: updateDimension } = throttle(() => {
       observable.notify(getViewportDimension())

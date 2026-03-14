@@ -91,11 +91,11 @@ function computeMessage(
       : 'Empty message'
 }
 
-export function tryToGetFingerprint(originalError: unknown) {
+function tryToGetFingerprint(originalError: unknown) {
   return isError(originalError) && 'dd_fingerprint' in originalError ? String(originalError.dd_fingerprint) : undefined
 }
 
-export function tryToGetErrorContext(originalError: unknown) {
+function tryToGetErrorContext(originalError: unknown) {
   if (isIndexableObject(originalError)) {
     return originalError.dd_context as Context | undefined
   }

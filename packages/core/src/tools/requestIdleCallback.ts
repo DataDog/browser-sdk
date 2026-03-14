@@ -5,7 +5,7 @@ import { dateNow } from './utils/timeUtils'
 // This type is not yet supported in TS 3.8. Imported from the TS source until we upgrade the
 // minimum supported TS version.
 // https://github.com/microsoft/TypeScript/blob/13c374a868c926f6a907666a5599992c1351b773/src/lib/dom.generated.d.ts#L9513-L9516
-export interface IdleDeadline {
+interface IdleDeadline {
   readonly didTimeout: boolean
   timeRemaining(): DOMHighResTimeStamp
 }

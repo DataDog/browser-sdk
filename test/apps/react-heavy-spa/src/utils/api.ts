@@ -1,7 +1,7 @@
 /**
  * Fetch data from static JSON files
  */
-export async function fetchData<T>(path: string): Promise<T> {
+async function fetchData<T>(path: string): Promise<T> {
   const response = await fetch(path)
   if (!response.ok) {
     throw new Error(`Failed to fetch ${path}: ${response.statusText}`)
@@ -12,7 +12,7 @@ export async function fetchData<T>(path: string): Promise<T> {
 /**
  * Simulate API delay for more realistic behavior
  */
-export function delay(ms: number): Promise<void> {
+function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 

@@ -6,10 +6,10 @@ import { RumEventType } from '../../rawRumEvent.types'
 import type { RumConfiguration } from '../configuration'
 import type { DefaultRumEventAttributes, Hooks } from '../hooks'
 
-export const FEATURE_FLAG_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
-export const BYTES_COMPUTATION_THROTTLING_DELAY = 200
+const FEATURE_FLAG_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
+const BYTES_COMPUTATION_THROTTLING_DELAY = 200
 
-export type FeatureFlagContext = Context
+type FeatureFlagContext = Context
 
 export interface FeatureFlagContexts {
   addFeatureFlagEvaluation: (key: string, value: ContextValue) => void

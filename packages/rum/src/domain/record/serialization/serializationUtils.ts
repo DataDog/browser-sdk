@@ -41,9 +41,9 @@ export function getElementInputValue(element: Element, nodePrivacyLevel: NodePri
   return value
 }
 
-export const URL_IN_CSS_REF = /url\((?:(')([^']*)'|(")([^"]*)"|([^)]*))\)/gm
-export const ABSOLUTE_URL = /^[A-Za-z]+:|^\/\//
-export const DATA_URI = /^["']?data:.*,/i
+const URL_IN_CSS_REF = /url\((?:(')([^']*)'|(")([^"]*)"|([^)]*))\)/gm
+const ABSOLUTE_URL = /^[A-Za-z]+:|^\/\//
+const DATA_URI = /^["']?data:.*,/i
 
 export function switchToAbsoluteUrl(cssText: string, cssHref: string | null): string {
   return cssText.replace(

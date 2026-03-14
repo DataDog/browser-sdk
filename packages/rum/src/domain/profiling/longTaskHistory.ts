@@ -3,7 +3,7 @@ import { addDuration, createValueHistory, SESSION_TIME_OUT_DELAY } from '@datado
 import type { LifeCycle } from '@datadog/browser-rum-core'
 import { RumPerformanceEntryType, LifeCycleEventType, RumLongTaskEntryType } from '@datadog/browser-rum-core'
 
-export const LONG_TASK_ID_HISTORY_EXPIRE_DELAY = SESSION_TIME_OUT_DELAY
+const LONG_TASK_ID_HISTORY_EXPIRE_DELAY = SESSION_TIME_OUT_DELAY
 
 export interface LongTaskContext {
   id: string

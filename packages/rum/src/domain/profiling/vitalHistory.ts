@@ -3,7 +3,7 @@ import { addDuration, createValueHistory, SESSION_TIME_OUT_DELAY } from '@datado
 import type { LifeCycle } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 
-export const VITAL_ID_HISTORY_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
+const VITAL_ID_HISTORY_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 
 export interface VitalContext {
   id: string

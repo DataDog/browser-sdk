@@ -41,7 +41,7 @@ interface SupportedContextManagers {
   context: ReturnType<typeof createContextManager>
 }
 
-export interface RemoteConfigurationMetrics extends Context {
+interface RemoteConfigurationMetrics extends Context {
   fetch: RemoteConfigurationMetricCounters
   cookie?: RemoteConfigurationMetricCounters
   dom?: RemoteConfigurationMetricCounters

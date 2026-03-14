@@ -224,7 +224,7 @@ function startClickAction(
   })
 }
 
-export type ClickActionBase = Pick<ClickAction, 'type' | 'name' | 'nameSource' | 'target' | 'position'>
+type ClickActionBase = Pick<ClickAction, 'type' | 'name' | 'nameSource' | 'target' | 'position'>
 
 function computeClickActionBase(
   event: MouseEventOnElement,

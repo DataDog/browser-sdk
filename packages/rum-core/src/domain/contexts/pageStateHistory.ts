@@ -17,11 +17,11 @@ import { RumEventType } from '../../rawRumEvent.types'
 import type { DefaultRumEventAttributes, Hooks } from '../hooks'
 
 // Arbitrary value to cap number of element for memory consumption in the browser
-export const MAX_PAGE_STATE_ENTRIES = 4000
+const MAX_PAGE_STATE_ENTRIES = 4000
 // Arbitrary value to cap number of element for backend & to save bandwidth
-export const MAX_PAGE_STATE_ENTRIES_SELECTABLE = 500
+const MAX_PAGE_STATE_ENTRIES_SELECTABLE = 500
 
-export const PAGE_STATE_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
+const PAGE_STATE_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 
 export const enum PageState {
   ACTIVE = 'active',
@@ -31,7 +31,7 @@ export const enum PageState {
   TERMINATED = 'terminated',
 }
 
-export interface PageStateEntry {
+interface PageStateEntry {
   state: PageState
   startTime: RelativeTime
 }

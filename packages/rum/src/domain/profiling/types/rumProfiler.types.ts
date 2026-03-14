@@ -6,7 +6,7 @@ import type { Profiler } from './profilerApi.types'
 /**
  * Additional data recorded during profiling session
  */
-export interface RumProfilerEnrichmentData {
+interface RumProfilerEnrichmentData {
   /** List of detected long tasks */
   readonly longTasks: LongTaskContext[]
   /** List of detected navigation entries */

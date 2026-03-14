@@ -19,7 +19,7 @@ export interface TransportPayload {
   [key: string]: Context
 }
 
-export interface Transport<T extends TransportPayload> {
+interface Transport<T extends TransportPayload> {
   send: (data: T) => Promise<void>
 }
 

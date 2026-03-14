@@ -5,14 +5,14 @@ export interface TimeSeriesDataPoint {
 }
 
 // Dashboard types
-export interface MetricSummary {
+interface MetricSummary {
   apm_requests: number
   logs_count: number
   infrastructure_hosts: number
   errors_count: number
 }
 
-export interface ServiceStatus {
+interface ServiceStatus {
   name: string
   status: 'healthy' | 'degraded' | 'critical'
   requests: number
@@ -20,7 +20,7 @@ export interface ServiceStatus {
   latency?: number
 }
 
-export interface DashboardData {
+interface DashboardData {
   summary: MetricSummary
   timeseries: TimeSeriesDataPoint[]
   services: ServiceStatus[]

@@ -86,7 +86,7 @@ export function getDeflateWorkerStatus() {
  *
  * more details: https://bugzilla.mozilla.org/show_bug.cgi?id=1736865#c2
  */
-export function doStartDeflateWorker(configuration: RumConfiguration, source: string) {
+function doStartDeflateWorker(configuration: RumConfiguration, source: string) {
   try {
     const worker = mockable(createDeflateWorker)(configuration)
     const { stop: removeErrorListener } = addEventListener(configuration, worker, 'error', (error) => {

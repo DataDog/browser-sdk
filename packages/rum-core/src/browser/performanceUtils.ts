@@ -32,11 +32,11 @@ export function getNavigationEntry(): RumPerformanceNavigationTiming {
   return entry
 }
 
-export type TimingsFromDeprecatedPerformanceTiming = {
+type TimingsFromDeprecatedPerformanceTiming = {
   -readonly [key in keyof Omit<PerformanceTiming, 'toJSON'>]: RelativeTime
 }
 
-export function computeTimingsFromDeprecatedPerformanceTiming() {
+function computeTimingsFromDeprecatedPerformanceTiming() {
   const result: Partial<TimingsFromDeprecatedPerformanceTiming> = {}
   const timing = performance.timing
 
@@ -58,7 +58,7 @@ export function sanitizeFirstByte(entry: RelevantNavigationTiming) {
   return entry.responseStart >= 0 && entry.responseStart <= relativeNow() ? entry.responseStart : undefined
 }
 
-export function getResourceEntries() {
+function getResourceEntries() {
   if (supportPerformanceTimingEvent(RumPerformanceEntryType.RESOURCE)) {
     return performance.getEntriesByType(RumPerformanceEntryType.RESOURCE)
   }

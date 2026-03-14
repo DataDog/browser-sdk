@@ -13,7 +13,7 @@ import { getVisualViewport } from './viewports'
 import type { RecordingScope } from './recordingScope'
 import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
 
-export type SerializeFullSnapshotCallback = (
+type SerializeFullSnapshotCallback = (
   timestamp: TimeStamp,
   kind: SerializationKind,
   document: Document,

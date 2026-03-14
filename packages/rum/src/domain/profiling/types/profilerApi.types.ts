@@ -82,6 +82,6 @@ interface ProfilerEventMap {
   samplebufferfull: SampleBufferFullEvent
 }
 
-export interface SampleBufferFullEvent extends Event {
+interface SampleBufferFullEvent extends Event {
   readonly target: Profiler
 }

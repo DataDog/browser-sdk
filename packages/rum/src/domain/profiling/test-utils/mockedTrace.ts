@@ -14,7 +14,7 @@ const generateFiftyRandomSamples = () => {
 // eslint-disable-next-line local-rules/disallow-side-effects
 const randomSamples = generateFiftyRandomSamples()
 
-export const mockedEmptyTrace: ProfilerTrace = {
+const mockedEmptyTrace: ProfilerTrace = {
   resources: [],
   frames: [],
   stacks: [],

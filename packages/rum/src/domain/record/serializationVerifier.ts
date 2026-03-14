@@ -32,11 +32,11 @@ import type { NodeId } from './itemIds'
  * V1 format and compare the results to verify that the two algorithms produce the same
  * output.
  */
-export interface SerializationVerifier {
+interface SerializationVerifier {
   stop(this: void): void
 }
 
-export type OnVerificationError = (message: string, context?: any) => void
+type OnVerificationError = (message: string, context?: any) => void
 
 export function createSerializationVerifier(
   scope: RecordingScope,

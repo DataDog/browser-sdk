@@ -18,7 +18,7 @@ import type { RumErrorEventDomainContext } from '../../domainContext.types'
 import { trackConsoleError } from './trackConsoleError'
 import { trackReportError } from './trackReportError'
 
-export interface ProvidedError {
+interface ProvidedError {
   startClocks: ClocksState
   error: unknown
   context?: Context

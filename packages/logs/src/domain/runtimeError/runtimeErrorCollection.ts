@@ -6,7 +6,7 @@ import { LifeCycleEventType } from '../lifeCycle'
 import { StatusType } from '../logger/isAuthorized'
 import { createErrorFieldFromRawError } from '../createErrorFieldFromRawError'
 
-export interface ProvidedError {
+interface ProvidedError {
   startClocks: ClocksState
   error: unknown
   context?: Context

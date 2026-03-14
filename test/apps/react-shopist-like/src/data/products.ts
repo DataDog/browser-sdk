@@ -9,7 +9,7 @@ export interface Product {
   rating: number
 }
 
-export const categories = ['Chairs', 'Sofas', 'Bedding', 'Lighting']
+const categories = ['Chairs', 'Sofas', 'Bedding', 'Lighting']
 
 export async function fetchProducts(): Promise<Product[]> {
   const response = await fetch('/products.json')
