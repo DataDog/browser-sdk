@@ -9,7 +9,16 @@ import { computeStackTrace } from './computeStackTrace'
  * - No monitored function should encapsulate it, that is why we need to use callMonitored inside it.
  */
 export function createHandlingStack(
-  type: 'console error' | 'action' | 'error' | 'instrumented method' | 'log' | 'react error' | 'view' | 'vital' | 'nextjs error'
+  type:
+    | 'console error'
+    | 'action'
+    | 'error'
+    | 'instrumented method'
+    | 'log'
+    | 'react error'
+    | 'view'
+    | 'vital'
+    | 'nextjs error'
 ): string {
   /**
    * Skip the two internal frames:
