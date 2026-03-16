@@ -10,10 +10,10 @@
     "build:bundle": "node ../../scripts/build/build-package.ts --bundle datadog-flagging.js"
   },
   "dependencies": {
-    "@datadog/browser-core": "6.22.0"
+    "@datadog/browser-core": "6.31.0"
   },
   "peerDependencies": {
-    "@datadog/browser-rum": "6.22.0"
+    "@datadog/browser-rum": "6.31.0"
   },
   "peerDependenciesMeta": {
     "@datadog/browser-rum": {
