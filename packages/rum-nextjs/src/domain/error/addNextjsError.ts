@@ -3,6 +3,25 @@ import type { Context } from '@datadog/browser-core'
 import type { ErrorInfo } from 'react'
 import { onRumStart } from '../nextjsPlugin'
 
+/**
+ * Add a Next.js error to the RUM session.
+ *
+ * @category Error
+ * @example
+ * ```ts
+ * // app/error.tsx (or app/global-error.tsx)
+ * 'use client'
+ * import { useEffect } from 'react'
+ * import { addNextjsError } from '@datadog/browser-rum-nextjs'
+ *
+ * export default function Error({ error }: { error: Error & { digest?: string } }) {
+ *   useEffect(() => {
+ *     addNextjsError(error)
+ *   }, [error])
+ *   return <div>Something went wrong</div>
+ * }
+ * ```
+ */
 export function addNextjsError(error: Error & { digest?: string }, errorInfo?: ErrorInfo) {
   const handlingStack = createHandlingStack('nextjs error')
   const startClocks = clocksNow()
