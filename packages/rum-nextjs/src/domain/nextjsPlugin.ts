@@ -26,8 +26,8 @@ export function nextjsPlugin(): NextjsPlugin {
     },
     onRumStart({ addError }) {
       globalAddError = addError
-      for (const subscriber of onRumStartSubscribers) {
-        if (addError) {
+      if (addError) {
+        for (const subscriber of onRumStartSubscribers) {
           subscriber(addError)
         }
       }

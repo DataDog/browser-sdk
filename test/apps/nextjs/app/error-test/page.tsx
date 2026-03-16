@@ -1,14 +1,24 @@
-// Error test page. Renders ClientErrorThrower so the test can trigger a client-side error
-// and verify it is captured by error.tsx via addNextjsError.
+// Error test page. Triggers a client-side error
+// and verifies it is captured by error.tsx via addNextjsError.
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link'
-import { ClientErrorThrower } from '../error-test/clientErrorThrower'
 
 export default function ErrorTestPage() {
+  const [shouldThrow, setShouldThrow] = useState(false)
+
+  if (shouldThrow) {
+    throw new Error('Client error from error-test')
+  }
+
   return (
     <div>
       <Link href="/">← Back to Home</Link>
       <h1>Error Test</h1>
-      <ClientErrorThrower />
+      <button data-testid="trigger-error" onClick={() => setShouldThrow(true)}>
+        Trigger Error
+      </button>
     </div>
   )
 }
