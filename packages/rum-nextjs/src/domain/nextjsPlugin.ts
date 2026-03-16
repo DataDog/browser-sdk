@@ -4,10 +4,10 @@ import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-r
 export type NextjsPlugin = Pick<Required<RumPlugin>, 'name' | 'onInit' | 'onRumStart'>
 
 type InitSubscriber = (rumPublicApi: RumPublicApi) => void
-type StartSubscriber = (addEvent: StartRumResult['addEvent']) => void
+type StartSubscriber = (addError: StartRumResult['addError']) => void
 
 let globalPublicApi: RumPublicApi | undefined
-let globalAddEvent: StartRumResult['addEvent'] | undefined
+let globalAddError: StartRumResult['addError'] | undefined
 let lastNavigationUrl: string | undefined
 
 const onRumInitSubscribers: InitSubscriber[] = []
@@ -24,11 +24,11 @@ export function nextjsPlugin(): NextjsPlugin {
         subscriber(publicApi)
       }
     },
-    onRumStart({ addEvent }) {
-      globalAddEvent = addEvent
-      if (addEvent) {
-        for (const subscriber of onRumStartSubscribers) {
-          subscriber(addEvent)
+    onRumStart({ addError }) {
+      globalAddError = addError
+      for (const subscriber of onRumStartSubscribers) {
+        if (addError) {
+          subscriber(addError)
         }
       }
     },
@@ -58,8 +58,8 @@ export function onRumInit(callback: InitSubscriber) {
 }
 
 export function onRumStart(callback: StartSubscriber) {
-  if (globalAddEvent) {
-    callback(globalAddEvent)
+  if (globalAddError) {
+    callback(globalAddError)
   } else {
     onRumStartSubscribers.push(callback)
   }
@@ -67,7 +67,7 @@ export function onRumStart(callback: StartSubscriber) {
 
 export function resetNextjsPlugin() {
   globalPublicApi = undefined
-  globalAddEvent = undefined
+  globalAddError = undefined
   onRumInitSubscribers.length = 0
   onRumStartSubscribers.length = 0
   lastNavigationUrl = undefined
