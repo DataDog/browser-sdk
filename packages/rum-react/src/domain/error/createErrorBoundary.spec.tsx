@@ -2,37 +2,37 @@ import React, { act } from 'react'
 
 import { disableJasmineUncaughtExceptionTracking, ignoreConsoleLogs } from '../../../../core/test'
 import { appendComponent } from '../../../test/appendComponent'
-import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import { initReactOldBrowsersSupport } from '../../../test/reactOldBrowsersSupport'
 import type { ErrorBoundaryFallback } from './errorBoundary'
-import { ErrorBoundary } from './errorBoundary'
+import { createErrorBoundary } from './errorBoundary'
 
 type FallbackFunctionComponent = Extract<ErrorBoundaryFallback, (...args: any[]) => any>
 
-describe('ErrorBoundary', () => {
+describe('createErrorBoundary', () => {
   beforeEach(() => {
-    // Prevent React from displaying the error in the console
     ignoreConsoleLogs('error', 'Error: error')
-
     disableJasmineUncaughtExceptionTracking()
     initReactOldBrowsersSupport()
   })
 
   it('renders children', () => {
-    const container = appendComponent(<ErrorBoundary fallback={() => null}>bar</ErrorBoundary>)
+    const TestErrorBoundary = createErrorBoundary(jasmine.createSpy(), 'TestErrorBoundary')
+    const container = appendComponent(<TestErrorBoundary fallback={() => null}>bar</TestErrorBoundary>)
+
     expect(container.innerHTML).toBe('bar')
   })
 
-  it('renders the fallback function component when an error occurs', () => {
+  it('renders the fallback when an error occurs', () => {
+    const TestErrorBoundary = createErrorBoundary(jasmine.createSpy(), 'TestErrorBoundary')
     const fallbackSpy = jasmine.createSpy<FallbackFunctionComponent>().and.returnValue('fallback')
     const ComponentSpy = jasmine.createSpy().and.throwError(new Error('error'))
     const container = appendComponent(
-      <ErrorBoundary fallback={fallbackSpy}>
+      <TestErrorBoundary fallback={fallbackSpy}>
         <ComponentSpy />
-      </ErrorBoundary>
+      </TestErrorBoundary>
     )
+
     expect(fallbackSpy).toHaveBeenCalled()
-    // React calls the component multiple times while rendering
     fallbackSpy.calls.all().forEach(({ args }) => {
       expect(args[0]).toEqual({
         error: new Error('error'),
@@ -42,37 +42,16 @@ describe('ErrorBoundary', () => {
     expect(container.innerHTML).toBe('fallback')
   })
 
-  it('renders the fallback class component when an error occurs', () => {
-    class FallbackComponent extends React.Component<{ error: Error; resetError: () => void }> {
-      constructor(props: { error: Error; resetError: () => void }) {
-        super(props)
-        expect(props).toEqual({ error: new Error('error'), resetError: jasmine.any(Function) })
-      }
-
-      render() {
-        return 'fallback'
-      }
-    }
-
-    const ComponentSpy = jasmine.createSpy().and.throwError(new Error('error'))
-    const container = appendComponent(
-      <ErrorBoundary fallback={FallbackComponent}>
-        <ComponentSpy />
-      </ErrorBoundary>
-    )
-    expect(container.innerHTML).toBe('fallback')
-  })
-
   it('resets the error when resetError is called', () => {
+    const TestErrorBoundary = createErrorBoundary(jasmine.createSpy(), 'TestErrorBoundary')
     const fallbackSpy = jasmine.createSpy<FallbackFunctionComponent>().and.returnValue('fallback')
     const ComponentSpy = jasmine.createSpy().and.throwError(new Error('error'))
     const container = appendComponent(
-      <ErrorBoundary fallback={fallbackSpy}>
+      <TestErrorBoundary fallback={fallbackSpy}>
         <ComponentSpy />
-      </ErrorBoundary>
+      </TestErrorBoundary>
     )
 
-    // Don't throw the second time
     ComponentSpy.and.returnValue('bar')
 
     const { resetError } = fallbackSpy.calls.mostRecent().args[0]
@@ -83,29 +62,22 @@ describe('ErrorBoundary', () => {
     expect(container.innerHTML).toBe('bar')
   })
 
-  it('reports the error through addReactError', () => {
-    const addErrorSpy = jasmine.createSpy()
-    initializeReactPlugin({
-      addError: addErrorSpy,
-    })
+  it('passes error and errorInfo to the report callback', () => {
+    const reportErrorSpy = jasmine.createSpy()
+    const TestErrorBoundary = createErrorBoundary(reportErrorSpy, 'TestErrorBoundary')
     const originalError = new Error('error')
     const ComponentSpy = jasmine.createSpy().and.throwError(originalError)
     ;(ComponentSpy as any).displayName = 'ComponentSpy'
 
     appendComponent(
-      <ErrorBoundary fallback={() => null}>
+      <TestErrorBoundary fallback={() => null}>
         <ComponentSpy />
-      </ErrorBoundary>
+      </TestErrorBoundary>
     )
 
-    expect(addErrorSpy).toHaveBeenCalledOnceWith(
+    expect(reportErrorSpy).toHaveBeenCalledOnceWith(
+      originalError,
       jasmine.objectContaining({
-        error: originalError,
-        handlingStack: jasmine.any(String),
-        startClocks: jasmine.any(Object),
-        context: {
-          framework: 'react',
-        },
         componentStack: jasmine.stringContaining('ComponentSpy'),
       })
     )
