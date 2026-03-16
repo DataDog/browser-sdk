@@ -70,7 +70,7 @@ function setVersionInPackageJsonFiles(version: string) {
       }
 
       for (const [key, value] of Object.entries(content[depField])) {
-        if (key.startsWith('@datadog/') && isSemanticVersion(value)) {
+        if (key.startsWith('@datadog/browser-') && isSemanticVersion(value)) {
           content[depField][key] = version
         }
       }
