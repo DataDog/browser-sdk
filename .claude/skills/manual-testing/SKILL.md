@@ -1,4 +1,7 @@
-Run a manual test of the current change end-to-end and output reproducible test instructions for the PR "Test instructions" section.
+---
+name: manual-testing
+description: Run a manual test of the current change end-to-end and output reproducible test instructions for the PR "Test instructions" section.
+---
 
 ## Step 1: Understand the change
 
@@ -37,13 +40,13 @@ EOF
 
 ## Step 4: Run the test flow
 
-Get the dev server URL from `yarn dev-server status`. Clear any previous intake data, open the page, interact with it using CSS selectors, flush events by reloading, then inspect the intake:
+Get the dev server URL from `yarn dev-server status`. Clear any previous intake data, open the page, interact with it using CSS selectors, flush events by opening a new tab or reloading, then inspect the intake:
 
 ```bash
 yarn dev-server intake clear
-playwright-cli -s <topic> open <dev-server-url>/test-<topic>.html
-playwright-cli -s <topic> run-code '(page) => page.click("#...")'
-playwright-cli -s <topic> reload
+agent-browser open <dev-server-url>/test-<topic>.html
+agent-browser click '#...'
+agent-browser tab new
 yarn dev-server intake <selector> | jq '<field>'
 ```
 

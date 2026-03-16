@@ -1,5 +1,5 @@
 {
   "permissions": {
-    "allow": ["Bash(yarn dev-server:*)", "Bash(playwright-cli:*)"]
+    "allow": ["Bash(yarn dev-server:*)", "Bash(agent-browser:*)"]
   }
 }
