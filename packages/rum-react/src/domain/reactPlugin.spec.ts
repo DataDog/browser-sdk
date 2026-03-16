@@ -1,5 +1,5 @@
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
-import { onRumInit, reactPlugin, resetReactPlugin } from './reactPlugin'
+import { onRumInit, onRumStart, reactPlugin, resetReactPlugin } from './reactPlugin'
 
 const PUBLIC_API = {} as RumPublicApi
 const INIT_CONFIGURATION = {} as RumInitConfiguration
@@ -15,6 +15,7 @@ describe('reactPlugin', () => {
       jasmine.objectContaining({
         name: 'react',
         onInit: jasmine.any(Function),
+        onRumStart: jasmine.any(Function),
       })
     )
   })
@@ -70,5 +71,25 @@ describe('reactPlugin', () => {
     const plugin = reactPlugin(pluginConfiguration)
 
     expect(plugin.getConfigurationTelemetry()).toEqual({ router: true })
+  })
+
+  it('calls onRumStart subscribers during onRumStart', () => {
+    const callbackSpy = jasmine.createSpy()
+    const addErrorSpy = jasmine.createSpy()
+    onRumStart(callbackSpy)
+
+    reactPlugin().onRumStart({ addError: addErrorSpy })
+
+    expect(callbackSpy).toHaveBeenCalledWith(addErrorSpy)
+  })
+
+  it('calls onRumStart subscribers immediately if already started', () => {
+    const addErrorSpy = jasmine.createSpy()
+    reactPlugin().onRumStart({ addError: addErrorSpy })
+
+    const callbackSpy = jasmine.createSpy()
+    onRumStart(callbackSpy)
+
+    expect(callbackSpy).toHaveBeenCalledWith(addErrorSpy)
   })
 })
