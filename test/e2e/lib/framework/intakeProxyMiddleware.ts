@@ -60,7 +60,6 @@ interface IntakeRequestInfos {
 
 interface IntakeProxyOptions {
   onRequest?: (request: IntakeRequest) => void
-  onError?: (error: unknown) => void
 }
 
 export function createIntakeProxyMiddleware(options: IntakeProxyOptions): express.RequestHandler {
