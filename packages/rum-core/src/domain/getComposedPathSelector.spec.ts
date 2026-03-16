@@ -76,7 +76,7 @@ describe('getSelectorFromComposedPath', () => {
         const element = appendElementInIsolation('<div data-testid="foo" data-qa="bar" data-cy="baz"></div>')
         const result = getComposedPathSelector([element], undefined)
 
-        expect(result).toBe('DIV[data-qa="bar"][data-testid="foo"];')
+        expect(result).toBe('DIV[data-cy="baz"][data-qa="bar"][data-testid="foo"];')
       })
 
       it('does not collect non-allowlisted attributes', () => {
