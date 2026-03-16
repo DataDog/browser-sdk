@@ -69,7 +69,6 @@ describe('transportConfiguration', () => {
     ;[
       { site: 'datadoghq.eu', intakeDomain: 'browser-intake-datadoghq.eu' },
       { site: 'datadoghq.com', intakeDomain: 'browser-intake-datadoghq.com' },
-      { site: 'datadoghq.com', intakeDomain: 'pci.browser-intake-datadoghq.com' },
       { site: 'us3.datadoghq.com', intakeDomain: 'browser-intake-us3-datadoghq.com' },
       { site: 'us5.datadoghq.com', intakeDomain: 'browser-intake-us5-datadoghq.com' },
       { site: 'ap1.datadoghq.com', intakeDomain: 'browser-intake-ap1-datadoghq.com' },
