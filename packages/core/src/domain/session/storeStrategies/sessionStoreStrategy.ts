@@ -11,6 +11,6 @@ export type SessionStoreStrategyType =
   | { type: typeof SessionPersistence.MEMORY }
 
 export interface SessionStoreStrategy {
-  setSessionState(fn: (sessionState: SessionState) => SessionState): void
+  setSessionState(fn: (sessionState: SessionState) => SessionState): Promise<void>
   sessionObservable: Observable<SessionState>
 }

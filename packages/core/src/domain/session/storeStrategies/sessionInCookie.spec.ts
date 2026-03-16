@@ -4,7 +4,6 @@ import type { SessionState } from '../sessionState'
 import type { Configuration, InitConfiguration } from '../../configuration'
 import { WATCH_COOKIE_INTERVAL_DELAY } from '../../../browser/cookieObservable'
 import { SESSION_COOKIE_EXPIRATION_DELAY, SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from '../sessionConstants'
-import { noop } from '../../../tools/utils/functionUtils'
 import { buildCookieOptions, selectCookieStrategy, initCookieStrategy } from './sessionInCookie'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
 
@@ -41,15 +40,6 @@ function setupCookieStrategy(partialInitConfiguration: Partial<InitConfiguration
   }
 }
 
-/**
- * Wait for the async queue processing to complete.
- * With Web Locks, we request the same lock — our callback is queued behind the pending
- * processing and runs only after it finishes, guaranteeing the queue has drained.
- */
-async function flushAsyncQueue() {
-  await navigator.locks.request(SESSION_STORE_KEY, noop)
-}
-
 describe('session in cookie strategy', () => {
   let clock: ReturnType<typeof mockClock>
 
@@ -62,8 +52,7 @@ describe('session in cookie strategy', () => {
     it('should read cookie, apply fn, and write back', async () => {
       const { strategy } = setupCookieStrategy()
 
-      strategy.setSessionState((state) => ({ ...state, id: 'abc123' }))
-      await flushAsyncQueue()
+      await strategy.setSessionState((state) => ({ ...state, id: 'abc123' }))
 
       expect(getCookie(SESSION_STORE_KEY)).toContain('id=abc123')
     })
@@ -72,11 +61,10 @@ describe('session in cookie strategy', () => {
       const { strategy } = setupCookieStrategy()
 
       let capturedState: SessionState | undefined
-      strategy.setSessionState((state) => {
+      await strategy.setSessionState((state) => {
         capturedState = state
         return { ...state, id: 'new-id' }
       })
-      await flushAsyncQueue()
 
       expect(capturedState).toEqual({})
     })
@@ -84,15 +72,13 @@ describe('session in cookie strategy', () => {
     it('should read existing state from cookie', async () => {
       const { strategy } = setupCookieStrategy()
 
-      strategy.setSessionState(() => ({ id: 'existing', created: '0' }))
-      await flushAsyncQueue()
+      await strategy.setSessionState(() => ({ id: 'existing', created: '0' }))
 
       let capturedState: SessionState | undefined
-      strategy.setSessionState((state) => {
+      await strategy.setSessionState((state) => {
         capturedState = state
         return state
       })
-      await flushAsyncQueue()
 
       expect(capturedState!.id).toBe('existing')
     })
@@ -100,8 +86,7 @@ describe('session in cookie strategy', () => {
     it('should add c=xxx to cookie on write', async () => {
       const { strategy } = setupCookieStrategy()
 
-      strategy.setSessionState(() => ({ id: 'abc' }))
-      await flushAsyncQueue()
+      await strategy.setSessionState(() => ({ id: 'abc' }))
 
       const cookieValue = getCookie(SESSION_STORE_KEY)
       expect(cookieValue).toContain('c=0')
@@ -111,11 +96,10 @@ describe('session in cookie strategy', () => {
       const { strategy } = setupCookieStrategy()
 
       let capturedState: SessionState | undefined
-      strategy.setSessionState((state) => {
+      await strategy.setSessionState((state) => {
         capturedState = state
         return { ...state, id: 'test' }
       })
-      await flushAsyncQueue()
 
       expect(capturedState!.c).toBeUndefined()
     })
@@ -126,8 +110,7 @@ describe('session in cookie strategy', () => {
       const subscription = strategy.sessionObservable.subscribe(spy)
       registerCleanupTask(() => subscription.unsubscribe())
 
-      strategy.setSessionState(() => ({ id: 'test' }))
-      await flushAsyncQueue()
+      await strategy.setSessionState(() => ({ id: 'test' }))
       clock.tick(WATCH_COOKIE_INTERVAL_DELAY)
 
       expect(spy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ id: 'test' }))
@@ -137,8 +120,7 @@ describe('session in cookie strategy', () => {
     it('should not write c to cookie when state is empty (deletes cookie)', async () => {
       const { strategy } = setupCookieStrategy()
 
-      strategy.setSessionState(() => ({}))
-      await flushAsyncQueue()
+      await strategy.setSessionState(() => ({}))
 
       expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
     })
@@ -149,8 +131,7 @@ describe('session in cookie strategy', () => {
       const subscription = strategy.sessionObservable.subscribe(spy)
       registerCleanupTask(() => subscription.unsubscribe())
 
-      strategy.setSessionState((state) => ({ ...state, id: 'test-id' }))
-      await flushAsyncQueue()
+      await strategy.setSessionState((state) => ({ ...state, id: 'test-id' }))
       clock.tick(WATCH_COOKIE_INTERVAL_DELAY)
 
       expect(spy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ id: 'test-id' }))
@@ -160,17 +141,15 @@ describe('session in cookie strategy', () => {
       const { strategy } = setupCookieStrategy()
       const calls: string[] = []
 
-      strategy.setSessionState((state) => {
+      void strategy.setSessionState((state) => {
         calls.push('first')
         return { ...state, id: 'first' }
       })
 
-      strategy.setSessionState((state) => {
+      await strategy.setSessionState((state) => {
         calls.push('second')
         return { ...state, id: 'second' }
       })
-
-      await flushAsyncQueue()
 
       expect(calls).toEqual(['first', 'second'])
       expect(getCookie(SESSION_STORE_KEY)).toContain('id=second')
@@ -184,11 +163,10 @@ describe('session in cookie strategy', () => {
       const { strategy } = setupCookieStrategy({ usePartitionedCrossSiteSessionCookie: true })
 
       let capturedState: SessionState = {}
-      strategy.setSessionState((state) => {
+      await strategy.setSessionState((state) => {
         capturedState = state
         return state
       })
-      await flushAsyncQueue()
 
       expect(capturedState.id).toBe('456')
     })
@@ -199,11 +177,10 @@ describe('session in cookie strategy', () => {
       const { strategy } = setupCookieStrategy({ usePartitionedCrossSiteSessionCookie: true })
 
       let capturedState: SessionState = {}
-      strategy.setSessionState((state) => {
+      await strategy.setSessionState((state) => {
         capturedState = state
         return state
       })
-      await flushAsyncQueue()
 
       expect(capturedState.id).toBe('123')
     })
@@ -214,8 +191,7 @@ describe('session in cookie strategy', () => {
       const { strategy } = setupCookieStrategy({ trackAnonymousUser: true })
       const cookieSetSpy = spyOnProperty(document, 'cookie', 'set')
 
-      strategy.setSessionState(() => ({ id: '123', created: '0' }))
-      await flushAsyncQueue()
+      await strategy.setSessionState(() => ({ id: '123', created: '0' }))
 
       expect(cookieSetSpy.calls.argsFor(0)[0]).toContain(
         new Date(clock.timeStamp(SESSION_COOKIE_EXPIRATION_DELAY)).toUTCString()
@@ -226,8 +202,7 @@ describe('session in cookie strategy', () => {
       const { strategy } = setupCookieStrategy({ trackAnonymousUser: false })
       const cookieSetSpy = spyOnProperty(document, 'cookie', 'set')
 
-      strategy.setSessionState(() => ({ id: '123', created: '0' }))
-      await flushAsyncQueue()
+      await strategy.setSessionState(() => ({ id: '123', created: '0' }))
 
       expect(cookieSetSpy.calls.argsFor(0)[0]).toContain(
         new Date(clock.timeStamp(SESSION_EXPIRATION_DELAY)).toUTCString()
@@ -238,8 +213,7 @@ describe('session in cookie strategy', () => {
       const { strategy } = setupCookieStrategy({ trackAnonymousUser: false })
       const cookieSetSpy = spyOnProperty(document, 'cookie', 'set')
 
-      strategy.setSessionState(() => ({ isExpired: '1' }))
-      await flushAsyncQueue()
+      await strategy.setSessionState(() => ({ isExpired: '1' }))
 
       expect(cookieSetSpy.calls.argsFor(0)[0]).toContain(
         new Date(clock.timeStamp(SESSION_TIME_OUT_DELAY)).toUTCString()
@@ -289,8 +263,7 @@ describe('session in cookie strategy', () => {
       const cookieSetSpy = spyOnProperty(document, 'cookie', 'set')
       const { strategy } = setupCookieStrategy({ usePartitionedCrossSiteSessionCookie: true })
 
-      strategy.setSessionState(() => ({ id: '123' }))
-      await flushAsyncQueue()
+      await strategy.setSessionState(() => ({ id: '123' }))
 
       const calls = cookieSetSpy.calls.all()
       const lastCall = calls[calls.length - 1]
@@ -300,8 +273,7 @@ describe('session in cookie strategy', () => {
     it('should not encode cookie options in the cookie value if the session is empty', async () => {
       const { strategy } = setupCookieStrategy({ usePartitionedCrossSiteSessionCookie: true })
 
-      strategy.setSessionState(() => ({}))
-      await flushAsyncQueue()
+      await strategy.setSessionState(() => ({}))
 
       expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
     })

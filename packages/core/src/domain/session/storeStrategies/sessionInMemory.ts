@@ -27,13 +27,14 @@ export function initMemorySessionStoreStrategy(): SessionStoreStrategy {
   const sessionObservable = globalObject[MEMORY_SESSION_OBSERVABLE_KEY]
 
   return {
-    setSessionState(fn: (sessionState: SessionState) => SessionState): void {
+    setSessionState(fn: (sessionState: SessionState) => SessionState): Promise<void> {
       const currentState = globalObject[MEMORY_SESSION_STORE_KEY]
         ? shallowClone(globalObject[MEMORY_SESSION_STORE_KEY])
         : {}
       const newState = fn(currentState)
       globalObject[MEMORY_SESSION_STORE_KEY] = shallowClone(newState)
       sessionObservable.notify(shallowClone(newState))
+      return Promise.resolve()
     },
     sessionObservable,
   }

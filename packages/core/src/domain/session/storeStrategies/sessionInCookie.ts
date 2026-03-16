@@ -50,11 +50,12 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
   let pendingChain = Promise.resolve()
 
   return {
-    setSessionState(fn: (sessionState: SessionState) => SessionState): void {
+    async setSessionState(fn: (sessionState: SessionState) => SessionState): Promise<void> {
       if (typeof navigator !== 'undefined' && navigator.locks) {
-        void navigator.locks.request(SESSION_STORE_KEY, () => applyAndWrite(fn))
+        await navigator.locks.request(SESSION_STORE_KEY, () => applyAndWrite(fn))
       } else {
         pendingChain = pendingChain.then(() => applyAndWrite(fn))
+        await pendingChain
       }
     },
     sessionObservable,

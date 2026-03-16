@@ -521,9 +521,10 @@ describe('startSessionManager', () => {
       let pendingNotify: (() => void) | undefined
       const delayedStrategy = createFakeSessionStoreStrategy()
       delayedStrategy.setSessionState = delayedStrategy.setSessionState.and.callFake(
-        (fn: (state: SessionState) => SessionState) => {
+        (fn: (state: SessionState) => SessionState): Promise<void> => {
           const newState = fn({})
           pendingNotify = () => delayedStrategy.sessionObservable.notify({ ...newState })
+          return Promise.resolve()
         }
       )
 

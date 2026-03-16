@@ -37,11 +37,12 @@ export function initLocalStorageStrategy(): SessionStoreStrategy {
   })
 
   return {
-    setSessionState(fn: (sessionState: SessionState) => SessionState): void {
+    setSessionState(fn: (sessionState: SessionState) => SessionState): Promise<void> {
       const currentState = toSessionState(localStorage.getItem(SESSION_STORE_KEY))
       const newState = fn(currentState)
       localStorage.setItem(SESSION_STORE_KEY, toSessionString(newState))
       sessionObservable.notify(newState)
+      return Promise.resolve()
     },
     sessionObservable,
   }

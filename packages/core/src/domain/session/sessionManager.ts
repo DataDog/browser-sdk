@@ -189,7 +189,7 @@ export function startSessionManager(
   let isFirstEmission = true
 
   const { throttled: throttledExpandOrRenew, cancel: cancelExpandOrRenew } = throttle(() => {
-    strategy.setSessionState((state) => expandOrRenew(state, configuration))
+    void strategy.setSessionState((state) => expandOrRenew(state, configuration))
   }, ONE_SECOND)
   stopCallbacks.push(cancelExpandOrRenew)
 
@@ -211,7 +211,7 @@ export function startSessionManager(
   stopCallbacks.push(() => subscription.unsubscribe())
 
   // Trigger the first emission by initializing and expanding the session
-  strategy.setSessionState((state) => {
+  void strategy.setSessionState((state) => {
     const initialized = initializeSession(state, configuration)
     return expandOrRenew(initialized, configuration)
   })
@@ -229,7 +229,7 @@ export function startSessionManager(
 
     trackingConsentState.observable.subscribe(() => {
       if (trackingConsentState.isGranted()) {
-        strategy.setSessionState((state) => expandOrRenew(state, configuration))
+        void strategy.setSessionState((state) => expandOrRenew(state, configuration))
       } else {
         expire()
       }
@@ -242,10 +242,10 @@ export function startSessionManager(
         }
       })
       trackVisibility(configuration, () => {
-        strategy.setSessionState((state) => expandOnly(state))
+        void strategy.setSessionState((state) => expandOnly(state))
       })
       trackResume(configuration, () => {
-        strategy.setSessionState((state) => initializeSession(state, configuration))
+        void strategy.setSessionState((state) => initializeSession(state, configuration))
       })
     }
 
@@ -265,7 +265,7 @@ export function startSessionManager(
       sessionStateUpdateObservable,
       expire,
       updateSessionState: (partialState) => {
-        strategy.setSessionState((state) => ({ ...state, ...partialState }))
+        void strategy.setSessionState((state) => ({ ...state, ...partialState }))
       },
       stop: () => {
         // Individual stop handled by stopSessionManager
@@ -301,7 +301,7 @@ export function startSessionManager(
 
   function expire() {
     cancelExpandOrRenew()
-    strategy.setSessionState((state) => {
+    void strategy.setSessionState((state) => {
       if (!trackingConsentState.isGranted()) {
         delete state.anonymousId
       }

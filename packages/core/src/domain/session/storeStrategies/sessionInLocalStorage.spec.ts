@@ -23,12 +23,12 @@ describe('LocalStorage SessionStoreStrategy', () => {
 
   describe('setSessionState', () => {
     it('should read current state from localStorage, apply fn, and write back', () => {
-      strategy.setSessionState((state) => ({ ...state, id: 'test-id' }))
+      void strategy.setSessionState((state) => ({ ...state, id: 'test-id' }))
       expect(localStorage.getItem(SESSION_STORE_KEY)).toContain('id=test-id')
     })
 
     it('should start with empty state when nothing stored', () => {
-      strategy.setSessionState((state) => {
+      void strategy.setSessionState((state) => {
         expect(state).toEqual({})
         return { ...state, id: 'new-id' }
       })
@@ -37,7 +37,7 @@ describe('LocalStorage SessionStoreStrategy', () => {
     it('should read existing state from localStorage', () => {
       localStorage.setItem(SESSION_STORE_KEY, toSessionString({ id: 'existing' } as SessionState))
 
-      strategy.setSessionState((state) => {
+      void strategy.setSessionState((state) => {
         expect(state.id).toBe('existing')
         return { ...state, expire: '999' }
       })
@@ -48,7 +48,7 @@ describe('LocalStorage SessionStoreStrategy', () => {
       const subscription = strategy.sessionObservable.subscribe(spy)
       registerCleanupTask(() => subscription.unsubscribe())
 
-      strategy.setSessionState((state) => ({ ...state, id: 'test-id' }))
+      void strategy.setSessionState((state) => ({ ...state, id: 'test-id' }))
 
       expect(spy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ id: 'test-id' }))
     })
