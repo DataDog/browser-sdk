@@ -216,7 +216,7 @@ function readProfileIntakeRequest(
 }
 
 function forwardIntakeRequestToDatadog(req: express.Request): Promise<any> {
-  return new Promise((resolve, reject) => {
+  return new Promise<void>((resolve) => {
     const ddforward = req.query.ddforward! as string
     if (!/^\/api\/v2\//.test(ddforward)) {
       throw new Error(`Unsupported ddforward: ${ddforward}`)
@@ -232,7 +232,10 @@ function forwardIntakeRequestToDatadog(req: express.Request): Promise<any> {
     const datadogIntakeRequest = https.request(new URL(ddforward, 'https://browser-intake-datadoghq.com'), options)
     req.pipe(datadogIntakeRequest)
     datadogIntakeRequest.on('response', resolve)
-    datadogIntakeRequest.on('error', reject)
+    datadogIntakeRequest.on('error', (error) => {
+      console.log('Error while forwarding request to Datadog:', error)
+      resolve()
+    })
   })
 }
 

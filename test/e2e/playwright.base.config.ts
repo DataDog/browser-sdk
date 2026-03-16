@@ -34,6 +34,7 @@ export const config: Config = {
     ...(isLocal
       ? [
           {
+            name: 'dev server',
             stdout: 'pipe' as const,
             cwd: path.join(__dirname, '../..'),
             command: 'yarn dev',
@@ -44,6 +45,7 @@ export const config: Config = {
         ]
       : []),
     {
+      name: 'nextjs app router',
       stdout: 'pipe' as const,
       cwd: path.join(__dirname, '../apps/nextjs'),
       command: isLocal ? 'yarn dev' : 'yarn start',
