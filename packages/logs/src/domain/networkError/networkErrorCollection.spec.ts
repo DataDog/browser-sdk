@@ -92,16 +92,12 @@ describe('network error collection', () => {
     })
   })
 
-  it('should track aborted requests', (done) => {
+  it('should not track aborted requests', (done) => {
     startCollection()
     fetch(FAKE_URL).abort()
 
     mockFetchManager.whenAllComplete(() => {
-      expect(rawLogsEvents.length).toEqual(1)
-      expect(rawLogsEvents[0].domainContext).toEqual({
-        isAborted: true,
-        handlingStack: jasmine.any(String),
-      })
+      expect(rawLogsEvents.length).toEqual(0)
       done()
     })
   })
