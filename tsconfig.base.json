@@ -19,8 +19,6 @@
     "paths": {
       "@datadog/browser-core": ["./packages/core/src"],
 
-      "@datadog/browser-flagging": ["./packages/flagging/src/entries/main"],
-
       "@datadog/browser-logs": ["./packages/logs/src/entries/main"],
 
       "@datadog/browser-rum-core": ["./packages/rum-core/src"],

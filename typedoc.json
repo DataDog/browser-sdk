@@ -2,7 +2,7 @@
   "entryPoints": ["packages/*", "packages/rum-react/react-router-v6", "packages/rum-react/react-router-v7"],
   "entryPointStrategy": "packages",
   "includeVersion": true,
-  "exclude": ["packages/core", "packages/rum-core", "packages/flagging", "packages/worker"],
+  "exclude": ["packages/core", "packages/rum-core", "packages/worker"],
   "validation": {
     "notExported": true,
     "invalidLink": true,
