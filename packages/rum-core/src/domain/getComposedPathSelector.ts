@@ -43,11 +43,7 @@ export const SAFE_ATTRIBUTES = STABLE_ATTRIBUTES.concat([
  * @param composedPath - The composedPath from a MouseEvent
  * @returns A selector string
  */
-export function getComposedPathSelector(
-  composedPath: EventTarget[],
-  actionNameAttribute: string | undefined,
-  attributesAllowList: MatchOption[]
-): string {
+export function getComposedPathSelector(composedPath: EventTarget[], actionNameAttribute: string | undefined): string {
   // Filter to only include Element nodes
   const elements = composedPath.filter(
     (el): el is Element => el instanceof Element && !FILTERED_TAGNAMES.includes(el.tagName)
@@ -59,8 +55,7 @@ export function getComposedPathSelector(
 
   const allowedAttributes = ([] as MatchOption[]).concat(
     actionNameAttribute ? [actionNameAttribute] : [],
-    SAFE_ATTRIBUTES,
-    attributesAllowList
+    SAFE_ATTRIBUTES
   )
 
   let result = ''

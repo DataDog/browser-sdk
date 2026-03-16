@@ -248,11 +248,7 @@ function computeClickActionBase(
 
   const composedPathSelector =
     isExperimentalFeatureEnabled(ExperimentalFeature.COMPOSED_PATH_SELECTOR) && typeof event.composedPath === 'function'
-      ? getComposedPathSelector(
-          event.composedPath(),
-          configuration.actionNameAttribute,
-          configuration.allowedHtmlAttributes || []
-        )
+      ? getComposedPathSelector(event.composedPath(), configuration.actionNameAttribute)
       : undefined
 
   if (selector) {

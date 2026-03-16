@@ -201,10 +201,6 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       action_name_attribute?: string
       /**
-       * Whether the allowed HTML attributes list is used
-       */
-      use_allowed_html_attributes?: boolean
-      /**
        * Whether the allowed tracing origins list is used (deprecated in favor of use_allowed_tracing_urls)
        */
       use_allowed_tracing_origins?: boolean

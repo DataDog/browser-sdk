@@ -802,11 +802,10 @@ test.describe('action collection with composed path selector', () => {
     .withRum({
       trackUserInteractions: true,
       enableExperimentalFeatures: ['composed_path_selector'],
-      allowedHtmlAttributes: ['data-test-allowed'],
     })
     .withBody(html`
       <button>Click</button>
-      <button id="my-button" data-test-allowed="test-btn" data-random="secret" class="foo bar baz">Click me</button>
+      <button id="my-button" data-test-id="test-btn" data-random="secret" class="foo bar baz">Click me</button>
     `)
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       const button = page.locator('#my-button')
@@ -816,7 +815,7 @@ test.describe('action collection with composed path selector', () => {
       const actionEvents = intakeRegistry.rumActionEvents
       expect(actionEvents).toHaveLength(1)
       expect(actionEvents[0]._dd.action?.target?.composed_path_selector).toBe(
-        'BUTTON#my-button[data-test-allowed="test-btn"].bar.baz.foo:nth-child(2):nth-of-type(2);'
+        'BUTTON#my-button[data-test-id="test-btn"].bar.baz.foo:nth-child(2):nth-of-type(2);'
       )
     })
 })
