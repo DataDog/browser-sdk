@@ -38,6 +38,7 @@ runMain(() => {
   setVersionInPackageJsonFiles(version)
   updateLernaJson(version)
   command`node ./scripts/release/generate-changelog/index.ts`.withLogs().run()
+  command`yarn`.run() // Update lockfile
   command`git add -u`.run()
   command`git commit -m v${version}`.run()
   command`git tag -a v${version} -m v${version}`.run()
