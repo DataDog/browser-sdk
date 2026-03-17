@@ -2,7 +2,7 @@ import type { Payload } from '../../transport'
 import { timeStampNow } from '../../tools/utils/timeUtils'
 import { normalizeUrl } from '../../tools/utils/urlPolyfill'
 import { generateUUID } from '../../tools/utils/stringUtils'
-import { INTAKE_SITE_FED_STAGING, INTAKE_SITE_US1 } from '../intakeSites'
+import { INTAKE_SITE_US1 } from '../intakeSites'
 import type { InitConfiguration } from './configuration'
 
 // replaced at build time
@@ -58,10 +58,6 @@ function createEndpointUrlWithParametersBuilder(
 
 export function buildEndpointHost(initConfiguration: InitConfiguration) {
   const { site = INTAKE_SITE_US1 } = initConfiguration
-
-  if (site === INTAKE_SITE_FED_STAGING) {
-    return `http-intake.logs.${site}`
-  }
 
   const domainParts = site.split('.')
   const extension = domainParts.pop()
