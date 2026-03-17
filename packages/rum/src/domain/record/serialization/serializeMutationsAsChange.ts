@@ -61,7 +61,7 @@ function processMutations(mutations: RumMutationRecord[], transaction: ChangeSer
           attributes = new Map<AttributeName, OldValue>()
           attributeMutations.set(node, attributes)
         }
-        const attributeName = mutation.attributeName!
+        const attributeName = mutation.attributeName
         if (!attributes.has(attributeName)) {
           attributes.set(attributeName, mutation.oldValue)
         }
