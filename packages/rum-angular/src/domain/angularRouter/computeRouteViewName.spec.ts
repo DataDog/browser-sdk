@@ -4,102 +4,98 @@ import type { RouteSnapshot } from './types'
 function createSnapshot(
   path: string | undefined,
   children: RouteSnapshot[] = [],
-  outlet: string = 'primary'
+  outlet: string = 'primary',
+  url: Array<{ path: string }> = []
 ): RouteSnapshot {
   return {
     routeConfig: path !== undefined ? { path } : null,
     children,
     outlet,
+    url,
   }
 }
 
-// Build a linear chain of snapshots (root → child1 → child2 → ...)
-// undefined means null routeConfig (root node pattern)
-function createSnapshotChain(...paths: Array<string | undefined>): RouteSnapshot {
+/**
+ * Build a RouteSnapshot tree from a compact route string and an actual path.
+ *
+ * Route string format mirrors the React Router test convention:
+ * 'foo > bar > :id' represents nested routes { path: 'foo', children: [{ path: 'bar', children: [{ path: ':id' }] }] }
+ *
+ * The actualPath is used to compute the URL segments matched by '**' wildcards,
+ * since Angular stores the matched segments on the wildcard node's `url` property.
+ */
+function buildSnapshot(routePaths: string, actualPath: string): RouteSnapshot {
+  const paths = routePaths.split(' > ')
+
+  // Compute prefix consumed before the wildcard to derive matched URL segments
+  const wildcardIndex = paths.indexOf('**')
+  let wildcardUrl: Array<{ path: string }> = []
+  if (wildcardIndex !== -1) {
+    const prefixSegments = paths.slice(0, wildcardIndex).filter((p) => p !== '')
+    let remaining = actualPath.startsWith('/') ? actualPath.slice(1) : actualPath
+    for (const prefix of prefixSegments) {
+      if (remaining.startsWith(prefix)) {
+        remaining = remaining.slice(prefix.length)
+        if (remaining.startsWith('/')) {
+          remaining = remaining.slice(1)
+        }
+      }
+    }
+    wildcardUrl = remaining ? remaining.split('/').map((s) => ({ path: s })) : []
+  }
+
+  // Build snapshot chain from right to left
   let current: RouteSnapshot | undefined
   for (let i = paths.length - 1; i >= 0; i--) {
-    current = createSnapshot(paths[i], current ? [current] : [])
+    const path = paths[i]
+    const url = path === '**' ? wildcardUrl : []
+    current = createSnapshot(path, current ? [current] : [], 'primary', url)
   }
-  return current!
+
+  // Wrap in root node (null routeConfig), matching Angular's ActivatedRouteSnapshot tree
+  return createSnapshot(undefined, current ? [current] : [])
 }
 
 describe('computeRouteViewName', () => {
-  it('returns / for root-only route (all empty paths)', () => {
-    const root = createSnapshotChain(undefined, '')
-    expect(computeRouteViewName(root)).toBe('/')
+  it('returns / when root has no children', () => {
+    expect(computeRouteViewName(createSnapshot(undefined))).toBe('/')
   })
 
-  it('returns /users for simple route', () => {
-    const root = createSnapshotChain(undefined, 'users')
-    expect(computeRouteViewName(root)).toBe('/users')
-  })
-
-  it('returns /users/:id for parameterized route', () => {
-    const root = createSnapshotChain(undefined, 'users', ':id')
-    expect(computeRouteViewName(root)).toBe('/users/:id')
-  })
-
-  it('returns /users/:id/posts/:postId for deeply nested route', () => {
-    const root = createSnapshotChain(undefined, 'users', ':id', 'posts', ':postId')
-    expect(computeRouteViewName(root)).toBe('/users/:id/posts/:postId')
-  })
-
-  it('skips empty path wrapper routes', () => {
-    // root → '' (wrapper) → users → :id
-    const root = createSnapshotChain(undefined, '', 'users', ':id')
-    expect(computeRouteViewName(root)).toBe('/users/:id')
-  })
-
-  it('skips multiple empty path wrappers', () => {
-    // root → '' → '' → users
-    const root = createSnapshotChain(undefined, '', '', 'users')
-    expect(computeRouteViewName(root)).toBe('/users')
-  })
-
-  it('returns / for wildcard route', () => {
-    const root = createSnapshotChain(undefined, '**')
-    expect(computeRouteViewName(root)).toBe('/')
-  })
-
-  it('returns / for wildcard route after segments', () => {
-    const root = createSnapshotChain(undefined, 'admin', '**')
-    expect(computeRouteViewName(root)).toBe('/')
-  })
-
-  it('returns /admin/settings for lazy-loaded route (post-resolution snapshot)', () => {
-    // After lazy loading, snapshot tree looks the same as non-lazy
-    const root = createSnapshotChain(undefined, 'admin', 'settings')
-    expect(computeRouteViewName(root)).toBe('/admin/settings')
-  })
-
-  it('excludes named outlets and follows primary outlet only', () => {
-    // root has two children: primary 'users' and auxiliary 'sidebar'
+  it('follows primary outlet only, ignoring named outlets', () => {
     const primaryChild = createSnapshot('users', [], 'primary')
     const namedChild = createSnapshot('sidebar', [], 'sidebar')
     const root = createSnapshot(undefined, [namedChild, primaryChild])
     expect(computeRouteViewName(root)).toBe('/users')
   })
 
-  it('handles root node with null routeConfig', () => {
-    // root (null routeConfig) → users
-    const usersNode = createSnapshot('users', [])
-    const root = createSnapshot(undefined, [usersNode])
-    expect(computeRouteViewName(root)).toBe('/users')
-  })
+  // prettier-ignore
+  const cases = [
+    // route paths,                  actual path,        expected view name
 
-  it('returns / when all paths are empty', () => {
-    const root = createSnapshotChain(undefined, '')
-    expect(computeRouteViewName(root)).toBe('/')
-  })
+    // Simple paths
+    ['',                             '/',                '/'],
+    ['users',                        '/users',           '/users'],
+    ['users > :id',                  '/users/42',        '/users/:id'],
+    ['users > :id > posts > :postId','/users/1/posts/2', '/users/:id/posts/:postId'],
+    ['users/list',                   '/users/list',      '/users/list'],
 
-  it('handles multi-segment path in a single route config entry', () => {
-    // Angular supports path: 'users/list' in a single route config
-    const root = createSnapshotChain(undefined, 'users/list')
-    expect(computeRouteViewName(root)).toBe('/users/list')
-  })
+    // Empty-path wrappers (layout routes)
+    [' > users > :id',              '/users/42',         '/users/:id'],
+    [' >  > users',                 '/users',            '/users'],
 
-  it('handles root with no children', () => {
-    const root = createSnapshot(undefined, [])
-    expect(computeRouteViewName(root)).toBe('/')
+    // Lazy-loaded routes (same shape post-resolution)
+    ['admin > settings',            '/admin/settings',   '/admin/settings'],
+
+    // Wildcards
+    ['**',                          '/foo/bar',          '/foo/bar'],
+    ['**',                          '/',                 '/'],
+    ['admin > **',                  '/admin/foo',        '/admin/foo'],
+  ] as const
+
+  cases.forEach(([routePaths, path, expectedViewName]) => {
+    it(`returns "${expectedViewName}" for path "${path}" with routes "${routePaths}"`, () => {
+      const root = buildSnapshot(routePaths, path)
+      expect(computeRouteViewName(root)).toBe(expectedViewName)
+    })
   })
 })

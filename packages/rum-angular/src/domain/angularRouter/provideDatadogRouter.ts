@@ -1,6 +1,6 @@
 import type { EnvironmentProviders } from '@angular/core'
 // eslint-disable-next-line local-rules/disallow-side-effects
-import { DestroyRef, ENVIRONMENT_INITIALIZER, inject, makeEnvironmentProviders } from '@angular/core'
+import { ENVIRONMENT_INITIALIZER, inject, makeEnvironmentProviders } from '@angular/core'
 // eslint-disable-next-line local-rules/disallow-side-effects
 import { GuardsCheckEnd, Router } from '@angular/router'
 // eslint-disable-next-line local-rules/disallow-side-effects
@@ -8,7 +8,6 @@ import { filter } from 'rxjs'
 
 import { startAngularView } from '../angularPlugin'
 import { computeRouteViewName } from './computeRouteViewName'
-import type { RouteSnapshot } from './types'
 
 /**
  * Angular provider that subscribes to Router events and starts a new RUM view
@@ -35,22 +34,21 @@ import type { RouteSnapshot } from './types'
 export function provideDatadogRouter(): EnvironmentProviders {
   return makeEnvironmentProviders([
     {
+      // Needed for Angular v15 support (provideEnvironmentInitializer requires v16+)
       provide: ENVIRONMENT_INITIALIZER,
       multi: true,
       useFactory: () => {
         const router = inject(Router)
-        const destroyRef = inject(DestroyRef)
 
         return () => {
-          const subscription = router.events
+          // No unsubscribe needed as its for the full app lifecycle and because DestroyRef requires v16+
+          router.events
             .pipe(filter((event): event is GuardsCheckEnd => event instanceof GuardsCheckEnd))
             .subscribe((event) => {
-              const root = event.state.root as unknown as RouteSnapshot
+              const root = event.state.root
               const viewName = computeRouteViewName(root)
               startAngularView(viewName)
             })
-
-          destroyRef.onDestroy(() => subscription.unsubscribe())
         }
       },
     },

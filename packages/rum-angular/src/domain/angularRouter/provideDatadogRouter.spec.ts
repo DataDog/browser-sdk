@@ -39,11 +39,13 @@ function createRoot(path: string): RouteSnapshot {
   return {
     routeConfig: null,
     outlet: 'primary',
+    url: [],
     children: [
       {
         routeConfig: { path },
         outlet: 'primary',
         children: [],
+        url: [],
       },
     ],
   }

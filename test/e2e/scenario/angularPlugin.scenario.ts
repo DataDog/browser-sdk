@@ -6,24 +6,36 @@ test.describe('angular plugin', () => {
     .withRum()
     .withReactApp('angular-app')
     .run(async ({ page, flushEvents, intakeRegistry }) => {
-      await page.click('text=Go to User')
+      await page.click('text=Go to Parameterized Route')
       await flushEvents()
       const viewEvents = intakeRegistry.rumViewEvents
       expect(viewEvents.length).toBeGreaterThan(0)
       const lastView = viewEvents[viewEvents.length - 1]
-      expect(lastView.view.name).toBe('/user/:id')
+      expect(lastView.view.name).toBe('/parameterized/:id')
     })
 
   createTest('should define a view name for nested routes')
     .withRum()
     .withReactApp('angular-app')
     .run(async ({ page, flushEvents, intakeRegistry }) => {
-      await page.click('text=Go to Admin Settings')
+      await page.click('text=Go to Nested Route')
       await flushEvents()
       const viewEvents = intakeRegistry.rumViewEvents
       expect(viewEvents.length).toBeGreaterThan(0)
       const lastView = viewEvents[viewEvents.length - 1]
-      expect(lastView.view.name).toBe('/admin/settings')
+      expect(lastView.view.name).toBe('/parent/nested')
+    })
+
+  createTest('should define a view name with the actual path for wildcard routes')
+    .withRum()
+    .withReactApp('angular-app')
+    .run(async ({ page, flushEvents, intakeRegistry }) => {
+      await page.click('text=Go to Wildcard Route')
+      await flushEvents()
+      const viewEvents = intakeRegistry.rumViewEvents
+      expect(viewEvents.length).toBeGreaterThan(0)
+      const lastView = viewEvents[viewEvents.length - 1]
+      expect(lastView.view.name).toBe('/unknown/page')
     })
 
   createTest('should define a view name for the initial route')

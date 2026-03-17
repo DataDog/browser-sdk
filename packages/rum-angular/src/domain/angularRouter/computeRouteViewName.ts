@@ -10,7 +10,10 @@ export function computeRouteViewName(root: RouteSnapshot): string {
     const path = current.routeConfig?.path
 
     if (path === '**') {
-      return '/'
+      for (const segment of current.url) {
+        segments.push(segment.path)
+      }
+      break
     }
 
     if (path) {
