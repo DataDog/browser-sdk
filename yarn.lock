@@ -270,13 +270,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@datadog/browser-core@npm:6.30.1":
-  version: 6.30.1
-  resolution: "@datadog/browser-core@npm:6.30.1"
-  checksum: 10c0/3a17ddcfbc1d8321941f8119958e8e050f83eb9f7bc7895c30e6e73d33f66fd50e1194756e0dc10830e59721a1fd7829e57e236c73588471d413596566e1f2c4
-  languageName: node
-  linkType: hard
-
 "@datadog/browser-core@npm:6.31.0, @datadog/browser-core@workspace:*, @datadog/browser-core@workspace:packages/core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-core@workspace:packages/core"
@@ -298,15 +291,6 @@ __metadata:
       optional: true
   languageName: unknown
   linkType: soft
-
-"@datadog/browser-rum-core@npm:6.30.1":
-  version: 6.30.1
-  resolution: "@datadog/browser-rum-core@npm:6.30.1"
-  dependencies:
-    "@datadog/browser-core": "npm:6.30.1"
-  checksum: 10c0/c26fec4859856b287c90ce3eb631f6b2703869d2fdf2119df5b33a3a3abf4016147de3ba7a95fa0973bd322b2b0655e4ca7310ff91461583536d8665186d37b7
-  languageName: node
-  linkType: hard
 
 "@datadog/browser-rum-core@npm:6.31.0, @datadog/browser-rum-core@workspace:*, @datadog/browser-rum-core@workspace:packages/rum-core":
   version: 0.0.0-use.local
@@ -386,8 +370,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-vue@workspace:packages/rum-vue"
   dependencies:
-    "@datadog/browser-core": "npm:6.30.1"
-    "@datadog/browser-rum-core": "npm:6.30.1"
+    "@datadog/browser-core": "npm:6.31.0"
+    "@datadog/browser-rum-core": "npm:6.31.0"
     "@vue/test-utils": "npm:2.4.6"
     vue: "npm:3.5.29"
     vue-router: "npm:4.6.4"
