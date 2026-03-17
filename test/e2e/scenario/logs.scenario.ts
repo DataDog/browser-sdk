@@ -29,6 +29,7 @@ test.describe('logs', () => {
 
         expect(intakeRegistry.logsRequests).toHaveLength(1)
         expect(intakeRegistry.logsEvents[0].message).toBe('Some message')
+        expect(intakeRegistry.logsEvents[0].session_id).toBeDefined()
       })
 
     createTest('service worker with worker logs - importScripts')
@@ -47,6 +48,7 @@ test.describe('logs', () => {
 
         expect(intakeRegistry.logsRequests).toHaveLength(1)
         expect(intakeRegistry.logsEvents[0].message).toBe('Other message')
+        expect(intakeRegistry.logsEvents[0].session_id).toBeDefined()
       })
 
     createTest('service worker console forwarding')
@@ -66,6 +68,7 @@ test.describe('logs', () => {
         // Expect logs for console, error, and report events from service worker
         expect(intakeRegistry.logsRequests).toHaveLength(1)
         expect(intakeRegistry.logsEvents[0].message).toBe('SW console log test')
+        expect(intakeRegistry.logsEvents[0].session_id).toBeDefined()
       })
   })
 
@@ -155,6 +158,38 @@ test.describe('logs', () => {
         // * blocked by CORS policy
         expect(browserLogs.length).toBeGreaterThanOrEqual(1)
       })
+    })
+
+  createTest('do not send XHR network errors for aborted requests')
+    .withLogs({ forwardErrorsToLogs: true })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(
+        () =>
+          new Promise<void>((resolve) => {
+            const xhr = new XMLHttpRequest()
+            xhr.addEventListener('loadend', () => resolve())
+            xhr.open('GET', '/')
+            xhr.send()
+            xhr.abort()
+          })
+      )
+
+      await flushEvents()
+      expect(intakeRegistry.logsEvents).toHaveLength(0)
+    })
+
+  createTest('do not send fetch network errors for aborted requests')
+    .withLogs({ forwardErrorsToLogs: true })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        const controller = new AbortController()
+        const p = fetch('/', { signal: controller.signal }).catch(() => undefined)
+        controller.abort()
+        return p
+      })
+
+      await flushEvents()
+      expect(intakeRegistry.logsEvents).toHaveLength(0)
     })
 
   createTest('keep only the first bytes of the response')

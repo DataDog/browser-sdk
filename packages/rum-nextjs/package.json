@@ -10,8 +10,8 @@
     "prepack": "npm run build"
   },
   "dependencies": {
-    "@datadog/browser-core": "6.31.0",
-    "@datadog/browser-rum-core": "6.31.0"
+    "@datadog/browser-core": "7.0.0-alpha.0",
+    "@datadog/browser-rum-core": "7.0.0-alpha.0"
   },
   "peerDependencies": {
     "next": ">=13.0.0",

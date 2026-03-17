@@ -119,39 +119,6 @@ describe('endpointBuilder', () => {
     })
   })
 
-  describe('PCI compliance intake with option', () => {
-    it('should return PCI compliance intake endpoint if site is us1', () => {
-      const config: InitConfiguration & { usePciIntake?: boolean } = {
-        clientToken,
-        usePciIntake: true,
-        site: 'datadoghq.com',
-      }
-      expect(createEndpointBuilder(config, 'logs').build('fetch', DEFAULT_PAYLOAD)).toContain(
-        'https://pci.browser-intake-datadoghq.com'
-      )
-    })
-    it('should not return PCI compliance intake endpoint if site is not us1', () => {
-      const config: InitConfiguration & { usePciIntake?: boolean } = {
-        clientToken,
-        usePciIntake: true,
-        site: 'ap1.datadoghq.com',
-      }
-      expect(createEndpointBuilder(config, 'logs').build('fetch', DEFAULT_PAYLOAD)).not.toContain(
-        'https://pci.browser-intake-datadoghq.com'
-      )
-    })
-    it('should not return PCI compliance intake endpoint if and site is us1 and track is not logs', () => {
-      const config: InitConfiguration & { usePciIntake?: boolean } = {
-        clientToken,
-        usePciIntake: true,
-        site: 'datadoghq.com',
-      }
-      expect(createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)).not.toContain(
-        'https://pci.browser-intake-datadoghq.com'
-      )
-    })
-  })
-
   describe('source configuration', () => {
     it('should use the default source when no configuration is provided', () => {
       const endpoint = createEndpointBuilder(initConfiguration, 'rum').build('fetch', DEFAULT_PAYLOAD)

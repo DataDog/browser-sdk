@@ -1,8 +1,21 @@
 import type { ContextManager } from '@datadog/browser-core'
-import { monitor, display, createContextManager, TrackingConsent, startTelemetry } from '@datadog/browser-core'
+import {
+  monitor,
+  display,
+  createContextManager,
+  TrackingConsent,
+  startTelemetry,
+  startSessionManager,
+} from '@datadog/browser-core'
+import {
+  collectAsyncCalls,
+  createFakeTelemetryObject,
+  replaceMockable,
+  replaceMockableWithSpy,
+  createStartSessionManagerMock,
+} from '@datadog/browser-core/test'
 import { HandlerType } from '../domain/logger'
 import { StatusType } from '../domain/logger/isAuthorized'
-import { createFakeTelemetryObject, replaceMockable, replaceMockableWithSpy } from '../../../core/test'
 import type { LogsPublicApi } from './logsPublicApi'
 import { makeLogsPublicApi } from './logsPublicApi'
 import type { StartLogs, StartLogsResult } from './startLogs'
@@ -49,15 +62,16 @@ describe('logs entry', () => {
     let logsPublicApi: LogsPublicApi
     let startLogsSpy: jasmine.Spy<StartLogs>
 
-    beforeEach(() => {
+    beforeEach(async () => {
       ;({ logsPublicApi, startLogsSpy } = makeLogsPublicApiWithDefaults())
       logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(startLogsSpy, 1)
     })
 
     it('should have the current date, view and global context', () => {
       logsPublicApi.setGlobalContextProperty('foo', 'bar')
 
-      const getCommonContext = startLogsSpy.calls.mostRecent().args[1]
+      const getCommonContext = startLogsSpy.calls.mostRecent().args[2]
       expect(getCommonContext()).toEqual({
         view: {
           referrer: document.referrer,
@@ -70,19 +84,21 @@ describe('logs entry', () => {
   describe('post start API usages', () => {
     let logsPublicApi: LogsPublicApi
     let getLoggedMessage: ReturnType<typeof makeLogsPublicApiWithDefaults>['getLoggedMessage']
+    let startLogsSpy: jasmine.Spy<StartLogs>
     let userContext: ContextManager
     let accountContext: ContextManager
 
-    beforeEach(() => {
+    beforeEach(async () => {
       userContext = createContextManager('mock')
       accountContext = createContextManager('mock')
-      ;({ logsPublicApi, getLoggedMessage } = makeLogsPublicApiWithDefaults({
+      ;({ logsPublicApi, getLoggedMessage, startLogsSpy } = makeLogsPublicApiWithDefaults({
         startLogsResult: {
           userContext,
           accountContext,
         },
       }))
       logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(startLogsSpy, 1)
     })
 
     it('main logger logs a message', () => {
@@ -240,6 +256,7 @@ function makeLogsPublicApiWithDefaults({
   }
 
   replaceMockable(startTelemetry, createFakeTelemetryObject)
+  replaceMockable(startSessionManager, createStartSessionManagerMock())
 
   return {
     startLogsSpy,

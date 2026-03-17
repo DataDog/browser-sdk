@@ -68,14 +68,6 @@ export interface LogsInitConfiguration extends InitConfiguration {
    * @category Data Collection
    */
   forwardReports?: RawReportType[] | 'all' | undefined
-
-  /**
-   * Use PCI-compliant intake. See [PCI DSS Compliance](https://docs.datadoghq.com/data_security/pci_compliance/?tab=logmanagement) for further information.
-   *
-   * @category Privacy
-   * @defaultValue false
-   */
-  usePciIntake?: boolean
 }
 
 /**
@@ -105,12 +97,6 @@ export function validateAndBuildLogsConfiguration(
   initConfiguration: LogsInitConfiguration,
   errorStack?: string
 ): LogsConfiguration | undefined {
-  if (initConfiguration.usePciIntake === true && initConfiguration.site && initConfiguration.site !== 'datadoghq.com') {
-    display.warn(
-      'PCI compliance for Logs is only available for Datadog organizations in the US1 site. Default intake will be used.'
-    )
-  }
-
   const baseConfiguration = validateAndBuildConfiguration(initConfiguration, errorStack)
 
   const forwardConsoleLogs = validateAndBuildForwardOption<ConsoleApiName>(
@@ -166,7 +152,6 @@ export function serializeLogsConfiguration(configuration: LogsInitConfiguration)
     forward_errors_to_logs: configuration.forwardErrorsToLogs,
     forward_console_logs: configuration.forwardConsoleLogs,
     forward_reports: configuration.forwardReports,
-    use_pci_intake: configuration.usePciIntake,
     ...baseSerializedInitConfiguration,
   } satisfies RawTelemetryConfiguration
 }
