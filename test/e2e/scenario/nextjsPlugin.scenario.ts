@@ -14,6 +14,7 @@ const routerConfigs = [
     router: 'pages' as const,
     viewPrefix: '/pages-router',
     homeUrlPattern: /\/pages-router(\?|$)/,
+    clientErrorMessage: 'Pages Router error from NextjsErrorBoundary',
   },
 ]
 
@@ -200,69 +201,98 @@ test.describe('nextjs - router', () => {
 })
 
 test.describe('nextjs - errors', () => {
-  const { name, viewPrefix, clientErrorMessage, router } = routerConfigs[0]
+  routerConfigs.forEach(({ name, router, viewPrefix, clientErrorMessage }) => {
+    test.describe(name, () => {
+      createTest('should report client-side error')
+        .withRum()
+        .withNextjsApp(router)
+        .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
+          await page.click('text=Go to Error Test')
+          await page.waitForURL(`**${viewPrefix}/error-test`)
 
-  test.describe(name, () => {
-    createTest('should report client-side error')
-      .withRum()
-      .withNextjsApp(router)
-      .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
-        await page.click('text=Go to Error Test')
-        await page.waitForURL(`**${viewPrefix}/error-test`)
+          await page.click('[data-testid="trigger-error"]')
+          await page.waitForSelector('[data-testid="error-boundary"]')
 
-        await page.click('[data-testid="trigger-error"]')
-        await page.waitForSelector('[data-testid="error-boundary"]')
+          await flushEvents()
 
-        await flushEvents()
+          const customErrors = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
+          expect(customErrors).toHaveLength(1)
+          expect(customErrors[0].error.message).toBe(clientErrorMessage)
+          expect(customErrors[0].error.handling_stack).toBeDefined()
+          expect(customErrors[0].context).toMatchObject({ framework: 'nextjs' })
 
-        // React StrictMode double-fires useEffect in dev mode, so we may get 2 errors
-        const customErrors = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
-        expect(customErrors.length).toBeGreaterThanOrEqual(1)
-        expect(customErrors[0].error.message).toBe(clientErrorMessage)
-        expect(customErrors[0].error.handling_stack).toBeDefined()
-
-        withBrowserLogs((browserLogs) => {
-          expect(browserLogs.length).toBeGreaterThan(0)
+          withBrowserLogs((browserLogs) => {
+            expect(browserLogs.length).toBeGreaterThan(0)
+          })
         })
-      })
 
-    createTest('should report a server error with digest via addNextjsError')
-      .withRum()
-      .withNextjsApp(router)
-      .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
-        await page.click('text=Go to Server Error')
-        await page.waitForSelector('[data-testid="error-boundary"]')
+      if (router === 'app') {
+        createTest('should report a server error with digest via addNextjsError')
+          .withRum()
+          .withNextjsApp(router)
+          .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
+            await page.click('text=Go to Server Error')
+            await page.waitForSelector('[data-testid="error-boundary"]')
 
-        await flushEvents()
+            await flushEvents()
 
-        // React StrictMode double-fires useEffect in dev mode, so we may get 2 errors
-        const customErrors = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
-        expect(customErrors.length).toBeGreaterThanOrEqual(1)
-        expect(customErrors[0].error.handling_stack).toBeDefined()
-        expect((customErrors[0].context?.nextjs as { digest: string }).digest).toBeDefined()
+            const customErrors = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
+            expect(customErrors).toHaveLength(1)
+            expect(customErrors[0].error.handling_stack).toBeDefined()
+            expect(customErrors[0].context).toMatchObject({
+              framework: 'nextjs',
+              nextjs: { digest: expect.any(String) },
+            })
 
-        withBrowserLogs((browserLogs) => {
-          expect(browserLogs.length).toBeGreaterThan(0)
-        })
-      })
+            withBrowserLogs((browserLogs) => {
+              expect(browserLogs.length).toBeGreaterThan(0)
+            })
+          })
 
-    createTest('should report global error via global-error.tsx')
-      .withRum()
-      .withNextjsApp(router)
-      .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
-        await page.click('text=Go to Global Error')
-        await page.waitForSelector('[data-testid="global-error-boundary"]')
+        createTest('should report global error via global-error.tsx')
+          .withRum()
+          .withNextjsApp(router)
+          .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
+            await page.click('text=Go to Global Error')
+            await page.waitForSelector('[data-testid="global-error-boundary"]')
 
-        await flushEvents()
+            await flushEvents()
 
-        // React StrictMode double-fires useEffect in dev mode, so we may get 2 errors
-        const customErrors = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
-        expect(customErrors.length).toBeGreaterThanOrEqual(1)
-        expect(customErrors[0].error.handling_stack).toBeDefined()
+            const customErrors = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
+            expect(customErrors).toHaveLength(1)
+            expect(customErrors[0].error.handling_stack).toBeDefined()
+            expect(customErrors[0].context).toMatchObject({ framework: 'nextjs' })
 
-        withBrowserLogs((browserLogs) => {
-          expect(browserLogs.length).toBeGreaterThan(0)
-        })
-      })
+            withBrowserLogs((browserLogs) => {
+              expect(browserLogs.length).toBeGreaterThan(0)
+            })
+          })
+      }
+
+      if (router === 'pages') {
+        createTest('should report a server error via _error page')
+          .withRum()
+          .withNextjsApp(router)
+          .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs, baseUrl }) => {
+            // Use page.goto() (not a Link click) so that rum-config params from baseUrl are
+            // preserved on the hard reload Next.js performs when getServerSideProps throws.
+            const errorPageUrl = new URL(baseUrl)
+            errorPageUrl.pathname = '/pages-router/throw-error'
+            await page.goto(errorPageUrl.href)
+            await page.waitForSelector('[data-testid="pages-error-page"]')
+
+            await flushEvents()
+
+            const customErrors = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
+            expect(customErrors).toHaveLength(1)
+            expect(customErrors[0].error.handling_stack).toBeDefined()
+            expect(customErrors[0].context).toMatchObject({ framework: 'nextjs' })
+
+            withBrowserLogs((browserLogs) => {
+              expect(browserLogs.length).toBeGreaterThan(0)
+            })
+          })
+      }
+    })
   })
 })
