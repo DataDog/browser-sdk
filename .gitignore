@@ -5,6 +5,7 @@ node_modules
 coverage
 tunnel.log
 local.log
+.dev-server/
 specs.log
 /test-report/
 browserstack.err
