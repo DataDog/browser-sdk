@@ -299,7 +299,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-remote-config@workspace:packages/remote-config":
+"@datadog/browser-remote-config@npm:6.28.0, @datadog/browser-remote-config@workspace:packages/remote-config":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-remote-config@workspace:packages/remote-config"
   dependencies:
@@ -441,6 +441,14 @@ __metadata:
     react-dom: "npm:19.2.4"
     typescript: "npm:5.9.3"
     wxt: "npm:0.20.18"
+  languageName: unknown
+  linkType: soft
+
+"@datadog/browser-sdk-endpoint@workspace:packages/endpoint":
+  version: 0.0.0-use.local
+  resolution: "@datadog/browser-sdk-endpoint@workspace:packages/endpoint"
+  dependencies:
+    "@datadog/browser-remote-config": "npm:6.28.0"
   languageName: unknown
   linkType: soft
 

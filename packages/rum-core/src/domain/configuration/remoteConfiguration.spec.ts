@@ -47,12 +47,15 @@ type ResolveRemoteConfigurationProperty<Key, Value> =
 type ResolvedRumRemoteConfiguration = ResolveRemoteConfigurationValue<RumRemoteConfiguration>
 
 // Make sure the RumRemoteConfiguration type is assignable to RumInitConfiguration.
+// 'user' and 'context' are excluded: in RumRemoteConfiguration they are ContextItem[] arrays
+// (resolved to array types), but in RumInitConfiguration they are User and Context objects.
+// The mapping between these shapes is handled by the bundle generator, not by direct assignment.
 type Assert<T extends true> = T
 export type _ = Assert<
-  ResolvedRumRemoteConfiguration & {
+  Omit<ResolvedRumRemoteConfiguration, 'user' | 'context'> & {
     // clientToken is not part of the remote configuration but required in init configuration
     clientToken: string
-  } extends RumInitConfiguration
+  } extends Omit<RumInitConfiguration, 'globalContext'>
     ? true
     : false
 >

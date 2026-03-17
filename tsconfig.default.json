@@ -18,6 +18,9 @@
     "scripts",
     "test/envUtils.ts",
 
+    // Files included in ./packages/endpoint/tsconfig.json
+    "packages/endpoint",
+
     // Files included in ./test/e2e/tsconfig.json
     "test/e2e",
     "test/lib",
