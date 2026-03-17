@@ -44,6 +44,7 @@
   "volta": {
     "extends": "../../package.json"
   },
+  "private": true,
   "publishConfig": {
     "access": "public"
   }
