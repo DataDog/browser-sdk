@@ -14,10 +14,14 @@
     "@datadog/browser-rum-core": "6.31.0"
   },
   "peerDependencies": {
+    "@datadog/browser-rum-react": ">=6.0.0",
     "next": ">=13.0.0",
     "react": ">=18.0.0"
   },
   "peerDependenciesMeta": {
+    "@datadog/browser-rum-react": {
+      "optional": true
+    },
     "next": {
       "optional": true
     },
@@ -37,8 +41,10 @@
     "access": "public"
   },
   "devDependencies": {
+    "@datadog/browser-rum-react": "6.31.0",
     "@types/react": "19.2.11",
     "next": "15.5.10",
-    "react": "19.2.4"
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
   }
 }

@@ -4,5 +4,6 @@
 !/src/**/*
 /src/**/*.spec.ts
 /src/**/*.specHelper.ts
+!/internal.d.ts
 !/internal/*
 !/react-router-v[6-7]/*

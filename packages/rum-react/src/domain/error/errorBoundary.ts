@@ -1,4 +1,4 @@
-import React from 'react'
+import * as React from 'react'
 import type { ErrorInfo } from 'react'
 import { addReactError } from './addReactError'
 

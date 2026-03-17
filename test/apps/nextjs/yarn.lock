@@ -6,45 +6,48 @@ __metadata:
   cacheKey: 10c0
 
 "@datadog/browser-core@file:../../../packages/core/package.tgz::locator=nextjs%40workspace%3A.":
-  version: 6.30.1
-  resolution: "@datadog/browser-core@file:../../../packages/core/package.tgz#../../../packages/core/package.tgz::hash=938bcb&locator=nextjs%40workspace%3A."
-  checksum: 10c0/57c9e38cc77d551614bd166ebbe2c0dd1048866377d0a325a0a486f6a12c99468e570c64ed39dfcd314a2f2895a76d413178a07f8d4f8c5b7226aaf332191b6e
+  version: 6.31.0
+  resolution: "@datadog/browser-core@file:../../../packages/core/package.tgz#../../../packages/core/package.tgz::hash=36bd6a&locator=nextjs%40workspace%3A."
+  checksum: 10c0/1e3797a56310fde499578396bd2594c4e0ac891610e7d57ddac2164a8c29a97177b3eac938f6a8480192bb31b5d798acaf2ea26de1778047d43c010ff0124dc0
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz::locator=nextjs%40workspace%3A.":
-  version: 6.30.1
-  resolution: "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz#../../../packages/rum-core/package.tgz::hash=37de46&locator=nextjs%40workspace%3A."
+  version: 6.31.0
+  resolution: "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz#../../../packages/rum-core/package.tgz::hash=55eb2b&locator=nextjs%40workspace%3A."
   dependencies:
-    "@datadog/browser-core": "npm:6.30.1"
-  checksum: 10c0/d9abf0dc293c6fee43c1c01894313b19325b7d7a5045f96943a48e14fca1d6ee8ae040781f1801f40b10e668582704ea09d69d88b838d999de5bc4401b20027c
+    "@datadog/browser-core": "npm:6.31.0"
+  checksum: 10c0/11b93076a410ef527c70d94d7b3203a3a24e05b665f40ce9b1c2227a30ee7efd99613e02a139be7f94ee1a95ca48cb2bf83e8b6d9f3d5253f7bf37d89f1ea338
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum-nextjs@file:../../../packages/rum-nextjs/package.tgz::locator=nextjs%40workspace%3A.":
-  version: 6.30.1
-  resolution: "@datadog/browser-rum-nextjs@file:../../../packages/rum-nextjs/package.tgz#../../../packages/rum-nextjs/package.tgz::hash=5da15c&locator=nextjs%40workspace%3A."
+  version: 6.31.0
+  resolution: "@datadog/browser-rum-nextjs@file:../../../packages/rum-nextjs/package.tgz#../../../packages/rum-nextjs/package.tgz::hash=fbbfac&locator=nextjs%40workspace%3A."
   dependencies:
-    "@datadog/browser-core": "npm:6.30.1"
-    "@datadog/browser-rum-core": "npm:6.30.1"
+    "@datadog/browser-core": "npm:6.31.0"
+    "@datadog/browser-rum-core": "npm:6.31.0"
   peerDependencies:
+    "@datadog/browser-rum-react": ">=6.0.0"
     next: ">=13.0.0"
     react: ">=18.0.0"
   peerDependenciesMeta:
+    "@datadog/browser-rum-react":
+      optional: true
     next:
       optional: true
     react:
       optional: true
-  checksum: 10c0/f60b0d7d24501bcc9c10b3d37abc5db4cf54e0f676dae8a2377033ac0dce93b98acd565b0fb9e0138092097b861277f677c5c9104b56cf1cbc825c3d3b2547c9
+  checksum: 10c0/06ffa3b9f798164b9f838c04fa69c011e70273f24f9a07f90fc61da530e7e9e01e9b9ab80c9fa372c67ec9565f78b6c355f3c6f239e51dae4e12137a47699cd1
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum-react@file:../../../packages/rum-react/package.tgz::locator=nextjs%40workspace%3A.":
-  version: 6.30.1
-  resolution: "@datadog/browser-rum-react@file:../../../packages/rum-react/package.tgz#../../../packages/rum-react/package.tgz::hash=c7f83a&locator=nextjs%40workspace%3A."
+  version: 6.31.0
+  resolution: "@datadog/browser-rum-react@file:../../../packages/rum-react/package.tgz#../../../packages/rum-react/package.tgz::hash=9ed545&locator=nextjs%40workspace%3A."
   dependencies:
-    "@datadog/browser-core": "npm:6.30.1"
-    "@datadog/browser-rum-core": "npm:6.30.1"
+    "@datadog/browser-core": "npm:6.31.0"
+    "@datadog/browser-rum-core": "npm:6.31.0"
   peerDependencies:
     react: 18 || 19
     react-router: 6 || 7
@@ -60,22 +63,22 @@ __metadata:
       optional: true
     react-router-dom:
       optional: true
-  checksum: 10c0/996c165116a29c3a7fad114865b72621f5501d062a5343f34a60d22ce52fad6235759eff64906d4bd9b3f25519f53d30b777f697de9b732235a02273fbeca194
+  checksum: 10c0/aed46f0c89e24df14c29e6670911eea459824e1ade4c795e68d38082f7b07866f55ff56dd22621e704356d63c643f128f17ee0354177d832241ef41399bfbc77
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum@file:../../../packages/rum/package.tgz::locator=nextjs%40workspace%3A.":
-  version: 6.30.1
-  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=956b2b&locator=nextjs%40workspace%3A."
+  version: 6.31.0
+  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=b23186&locator=nextjs%40workspace%3A."
   dependencies:
-    "@datadog/browser-core": "npm:6.30.1"
-    "@datadog/browser-rum-core": "npm:6.30.1"
+    "@datadog/browser-core": "npm:6.31.0"
+    "@datadog/browser-rum-core": "npm:6.31.0"
   peerDependencies:
-    "@datadog/browser-logs": 6.30.1
+    "@datadog/browser-logs": 6.31.0
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
-  checksum: 10c0/56030d55fd6301da366d2b1e12609ae7a561f2a59f381939a08cf50893043cc571d110619b2ea50a3f9ca508db8f80ede3f016c25ac0420d1ba850df5b892899
+  checksum: 10c0/5eeaf5251ce0207c45d6782b3e219f8366fbce0b60bddd8fa35473a3dfc84a97fc6e2fb686033d9c985ebade414ef432cd18f17e753c694c469a3e9a6ac4aad5
   languageName: node
   linkType: hard
 
