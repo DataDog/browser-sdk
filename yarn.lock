@@ -370,8 +370,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-vue@workspace:packages/rum-vue"
   dependencies:
-    "@datadog/browser-core": "npm:6.30.1"
-    "@datadog/browser-rum-core": "npm:6.30.1"
+    "@datadog/browser-core": "npm:6.31.0"
+    "@datadog/browser-rum-core": "npm:6.31.0"
     "@vue/test-utils": "npm:2.4.6"
     vue: "npm:3.5.29"
     vue-router: "npm:4.6.4"
