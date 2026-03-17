@@ -121,24 +121,24 @@ describe('nextjsPlugin', () => {
 
     it('calls onRumStart subscribers during onRumStart', () => {
       const callbackSpy = jasmine.createSpy()
-      const mockAddEvent = jasmine.createSpy()
+      const mockAddError = jasmine.createSpy()
       onRumStart(callbackSpy)
 
       const { plugin } = initPlugin()
-      plugin.onRumStart({ addEvent: mockAddEvent })
+      plugin.onRumStart({ addError: mockAddError })
 
-      expect(callbackSpy).toHaveBeenCalledWith(mockAddEvent)
+      expect(callbackSpy).toHaveBeenCalledWith(mockAddError)
     })
 
     it('calls onRumStart subscriber immediately if already started', () => {
-      const mockAddEvent = jasmine.createSpy()
+      const mockAddError = jasmine.createSpy()
       const { plugin } = initPlugin()
-      plugin.onRumStart({ addEvent: mockAddEvent })
+      plugin.onRumStart({ addError: mockAddError })
 
       const callbackSpy = jasmine.createSpy()
       onRumStart(callbackSpy)
 
-      expect(callbackSpy).toHaveBeenCalledWith(mockAddEvent)
+      expect(callbackSpy).toHaveBeenCalledWith(mockAddError)
     })
   })
 })
