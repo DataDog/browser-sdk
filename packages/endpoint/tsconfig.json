@@ -1,9 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "baseUrl": ".",
     "declaration": true,
-    "rootDir": "./src/",
     "module": "preserve",
     "moduleResolution": "bundler",
     "target": "ES2024",
