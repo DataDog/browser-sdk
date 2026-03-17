@@ -22,11 +22,10 @@ import {
   startDeflateWorker,
 } from '../domain/deflate'
 import { isBrowserSupported } from './isBrowserSupported'
-import type { StartRecording } from './postStartStrategy'
 import { createPostStartStrategy } from './postStartStrategy'
 import { createPreStartStrategy } from './preStartStrategy'
 
-export function makeRecorderApi(loadRecorder: () => Promise<StartRecording | undefined>): RecorderApi {
+export function makeRecorderApi(): RecorderApi {
   if ((canUseEventBridge() && !bridgeSupports(BridgeCapability.RECORDS)) || !isBrowserSupported()) {
     return {
       start: noop,
@@ -101,7 +100,6 @@ export function makeRecorderApi(loadRecorder: () => Promise<StartRecording | und
       lifeCycle,
       sessionManager,
       viewHistory,
-      loadRecorder,
       getOrCreateDeflateEncoder,
       telemetry
     )
