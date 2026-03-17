@@ -96,17 +96,6 @@ export interface InitConfiguration {
   sessionPersistence?: SessionPersistence | SessionPersistence[] | undefined
 
   /**
-   * Allows the use of localStorage when cookies cannot be set. This enables the RUM Browser SDK to run in environments that do not provide cookie support.
-   *
-   * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
-   * See [Monitor Electron Applications Using the Browser SDK](https://docs.datadoghq.com/real_user_monitoring/guide/monitor-electron-applications-using-browser-sdk) for further information.
-   *
-   * @category Session Persistence
-   * @deprecated use `sessionPersistence: local-storage` where you want to use localStorage instead
-   */
-  allowFallbackToLocalStorage?: boolean | undefined
-
-  /**
    * Allow listening to DOM events dispatched programmatically ([untrusted events](https://developer.mozilla.org/en-US/docs/Web/API/Event/isTrusted)). Enabling this option can be useful if you heavily rely on programmatic events, such as in an automated UI test environment.
    *
    * @defaultValue false
@@ -431,7 +420,6 @@ export function serializeConfiguration(initConfiguration: InitConfiguration) {
     session_persistence: Array.isArray(initConfiguration.sessionPersistence)
       ? initConfiguration.sessionPersistence[0]
       : initConfiguration.sessionPersistence,
-    allow_fallback_to_local_storage: !!initConfiguration.allowFallbackToLocalStorage,
     store_contexts_across_pages: !!initConfiguration.storeContextsAcrossPages,
     allow_untrusted_events: !!initConfiguration.allowUntrustedEvents,
     tracking_consent: initConfiguration.trackingConsent,

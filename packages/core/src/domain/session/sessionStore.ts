@@ -48,7 +48,9 @@ export const STORAGE_POLL_DELAY = ONE_SECOND
 export function selectSessionStoreStrategyType(
   initConfiguration: InitConfiguration
 ): SessionStoreStrategyType | undefined {
-  const persistenceList = normalizePersistenceList(initConfiguration.sessionPersistence, initConfiguration)
+  const { sessionPersistence } = initConfiguration
+
+  const persistenceList = normalizePersistenceList(sessionPersistence)
 
   for (const persistence of persistenceList) {
     const strategyType = selectStrategyForPersistence(persistence, initConfiguration)
@@ -61,13 +63,11 @@ export function selectSessionStoreStrategyType(
 }
 
 function normalizePersistenceList(
-  sessionPersistence: SessionPersistence | SessionPersistence[] | undefined,
-  initConfiguration: InitConfiguration
+  sessionPersistence: SessionPersistence | SessionPersistence[] | undefined
 ): SessionPersistence[] {
   if (Array.isArray(sessionPersistence)) {
     return sessionPersistence
   }
-
   if (sessionPersistence !== undefined) {
     return [sessionPersistence]
   }
@@ -79,10 +79,7 @@ function normalizePersistenceList(
     return [SessionPersistence.MEMORY]
   }
 
-  // Legacy default behavior: cookie first, with optional localStorage fallback
-  return initConfiguration.allowFallbackToLocalStorage
-    ? [SessionPersistence.COOKIE, SessionPersistence.LOCAL_STORAGE]
-    : [SessionPersistence.COOKIE]
+  return [SessionPersistence.COOKIE]
 }
 
 function selectStrategyForPersistence(
