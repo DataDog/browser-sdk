@@ -42,7 +42,6 @@ export function createSessionManagerMock(): SessionManagerMock {
     renewObservable: new Observable(),
     sessionStateUpdateObservable: new Observable(),
     updateSessionState: noop,
-    stop: noop,
     setId(newId) {
       id = newId
       return this
@@ -63,5 +62,7 @@ export function createSessionManagerMock(): SessionManagerMock {
 }
 
 export function createStartSessionManagerMock(): typeof startSessionManager {
-  return (_config, _consent, onReady) => onReady(createSessionManagerMock())
+  return (_config, _consent, onReady) => {
+    void Promise.resolve().then(() => onReady(createSessionManagerMock()))
+  }
 }

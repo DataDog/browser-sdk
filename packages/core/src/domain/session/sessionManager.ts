@@ -33,7 +33,6 @@ export interface SessionManager {
   sessionStateUpdateObservable: Observable<{ previousState: SessionState; newState: SessionState }>
   expire: () => void
   updateSessionState: (state: Partial<SessionState>) => void
-  stop: () => void
 }
 
 export interface SessionContext {
@@ -186,47 +185,63 @@ export function startSessionManager(
   stopCallbacks.push(() => sessionContextHistory.stop())
 
   let previousState: SessionState = {}
-  let isFirstEmission = true
 
   const { throttled: throttledExpandOrRenew, cancel: cancelExpandOrRenew } = throttle(() => {
     void strategy.setSessionState((state) => expandOrRenew(state, configuration))
   }, ONE_SECOND)
   stopCallbacks.push(cancelExpandOrRenew)
 
-  // Subscribe to all state changes from the strategy
-  const subscription = strategy.sessionObservable.subscribe((newState) => {
-    if (isSessionInExpiredState(newState)) {
-      newState = getExpiredSessionState(newState, configuration)
-    }
-
-    if (isFirstEmission) {
-      isFirstEmission = false
-      handleFirstEmission(newState)
-    } else {
-      handleSubsequentEmission(newState)
-    }
-
-    previousState = newState
-  })
-  stopCallbacks.push(() => subscription.unsubscribe())
-
-  // Trigger the first emission by initializing and expanding the session
-  void strategy.setSessionState((state) => {
-    const initialized = initializeSession(state, configuration)
-    return expandOrRenew(initialized, configuration)
+  let stopped = false
+  stopCallbacks.push(() => {
+    stopped = true
   })
 
-  function handleFirstEmission(newState: SessionState) {
-    // Tracking consent is always granted when the session manager is started, but it may be revoked
-    // during the async initialization (e.g., while waiting for cookie lock). We check
-    // consent status in the callback to handle this case.
+  void (async () => {
+    const initialState = await resolveInitialState()
+    if (stopped) {
+      return
+    }
+
+    // Consent is always granted when the session manager is started, but it may
+    // be revoked during the async initialization (e.g., while waiting for cookie lock).
     if (!trackingConsentState.isGranted()) {
       expire()
       return
     }
 
-    sessionContextHistory.add(buildSessionContext(newState), clocksOrigin().relative)
+    subscribeToSessionChanges(initialState)
+    setupSessionTracking()
+    onReady(buildSessionManager())
+  })()
 
+  async function resolveInitialState() {
+    let state: SessionState = {}
+    await strategy.setSessionState((currentState) => {
+      const init = initializeSession(currentState, configuration)
+      state = expandOrRenew(init, configuration)
+      return state
+    })
+    if (isSessionInExpiredState(state)) {
+      state = getExpiredSessionState(state, configuration)
+    }
+    return state
+  }
+
+  function subscribeToSessionChanges(initialState: SessionState) {
+    previousState = initialState
+    sessionContextHistory.add(buildSessionContext(initialState), clocksOrigin().relative)
+
+    const subscription = strategy.sessionObservable.subscribe((newState) => {
+      if (isSessionInExpiredState(newState)) {
+        newState = getExpiredSessionState(newState, configuration)
+      }
+      handleStateChange(newState)
+      previousState = newState
+    })
+    stopCallbacks.push(() => subscription.unsubscribe())
+  }
+
+  function setupSessionTracking() {
     trackingConsentState.observable.subscribe(() => {
       if (trackingConsentState.isGranted()) {
         void strategy.setSessionState((state) => expandOrRenew(state, configuration))
@@ -248,8 +263,10 @@ export function startSessionManager(
         void strategy.setSessionState((state) => initializeSession(state, configuration))
       })
     }
+  }
 
-    onReady({
+  function buildSessionManager(): SessionManager {
+    return {
       findSession: (startTime, options) => sessionContextHistory.find(startTime, options),
       findTrackedSession: (startTime, options) => {
         const session = sessionContextHistory.find(startTime, options)
@@ -267,13 +284,10 @@ export function startSessionManager(
       updateSessionState: (partialState) => {
         void strategy.setSessionState((state) => ({ ...state, ...partialState }))
       },
-      stop: () => {
-        // Individual stop handled by stopSessionManager
-      },
-    })
+    }
   }
 
-  function handleSubsequentEmission(newState: SessionState) {
+  function handleStateChange(newState: SessionState) {
     const hadSession = previousState.id !== undefined
     const hasSession = newState.id !== undefined
     const sessionIdChanged = hadSession && hasSession && previousState.id !== newState.id
@@ -346,7 +360,6 @@ export function startSessionManagerStub(onReady: (sessionManager: SessionManager
         ...state,
       }
     },
-    stop: noop,
   })
 }
 

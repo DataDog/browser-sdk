@@ -567,21 +567,23 @@ describe('rum public api', () => {
 
     it('should add custom timings', async () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await Promise.resolve()
       rumPublicApi.addTiming('foo')
-      const calls = await collectAsyncCalls(addTimingSpy, 1)
 
-      expect(calls.argsFor(0)[0]).toEqual('foo')
-      expect(calls.argsFor(0)[1]).toBeUndefined()
+      expect(addTimingSpy).toHaveBeenCalledTimes(1)
+      expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('foo')
+      expect(addTimingSpy.calls.argsFor(0)[1]).toBeUndefined()
       expect(displaySpy).not.toHaveBeenCalled()
     })
 
     it('adds custom timing with provided time', async () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await Promise.resolve()
       rumPublicApi.addTiming('foo', 12)
-      const calls = await collectAsyncCalls(addTimingSpy, 1)
 
-      expect(calls.argsFor(0)[0]).toEqual('foo')
-      expect(calls.argsFor(0)[1]).toBe(12 as RelativeTime)
+      expect(addTimingSpy).toHaveBeenCalledTimes(1)
+      expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('foo')
+      expect(addTimingSpy.calls.argsFor(0)[1]).toBe(12 as RelativeTime)
       expect(displaySpy).not.toHaveBeenCalled()
     })
   })
@@ -631,10 +633,11 @@ describe('rum public api', () => {
 
     it('should add feature flag evaluation when ff feature_flags enabled', async () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await Promise.resolve()
       rumPublicApi.addFeatureFlagEvaluation('feature', 'foo')
-      const calls = await collectAsyncCalls(addFeatureFlagEvaluationSpy, 1)
 
-      expect(calls.argsFor(0)).toEqual(['feature', 'foo'])
+      expect(addFeatureFlagEvaluationSpy).toHaveBeenCalledTimes(1)
+      expect(addFeatureFlagEvaluationSpy.calls.argsFor(0)).toEqual(['feature', 'foo'])
       expect(displaySpy).not.toHaveBeenCalled()
     })
   })
@@ -648,8 +651,8 @@ describe('rum public api', () => {
         },
       })
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await Promise.resolve()
       rumPublicApi.stopSession()
-      await collectAsyncCalls(stopSessionSpy, 1)
       expect(stopSessionSpy).toHaveBeenCalled()
     })
   })
@@ -713,11 +716,12 @@ describe('rum public api', () => {
       expect(calls.mostRecent().args[1].defaultPrivacyLevel).toBe(DefaultPrivacyLevel.MASK_USER_INPUT)
     })
 
-    it('is started with the configured defaultPrivacyLevel', () => {
+    it('is started with the configured defaultPrivacyLevel', async () => {
       rumPublicApi.init({
         ...DEFAULT_INIT_CONFIGURATION,
         defaultPrivacyLevel: DefaultPrivacyLevel.MASK_USER_INPUT,
       })
+      await Promise.resolve()
       expect(recorderApi.onRumStart.calls.mostRecent().args[1].defaultPrivacyLevel).toBe(
         DefaultPrivacyLevel.MASK_USER_INPUT
       )
@@ -758,8 +762,8 @@ describe('rum public api', () => {
         },
       })
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await Promise.resolve()
       rumPublicApi.startDurationVital('foo', { context: { foo: 'bar' }, description: 'description-value' })
-      await collectAsyncCalls(startDurationVitalSpy, 1)
       expect(startDurationVitalSpy).toHaveBeenCalledWith('foo', {
         description: 'description-value',
         context: { foo: 'bar' },
@@ -777,9 +781,9 @@ describe('rum public api', () => {
         },
       })
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await Promise.resolve()
       rumPublicApi.startDurationVital('foo', { context: { foo: 'bar' }, description: 'description-value' })
       rumPublicApi.stopDurationVital('foo', { context: { foo: 'bar' }, description: 'description-value' })
-      await collectAsyncCalls(stopDurationVitalSpy, 1)
       expect(stopDurationVitalSpy).toHaveBeenCalledWith('foo', {
         description: 'description-value',
         context: { foo: 'bar' },
@@ -794,9 +798,9 @@ describe('rum public api', () => {
         },
       })
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await Promise.resolve()
       const ref = rumPublicApi.startDurationVital('foo', { context: { foo: 'bar' }, description: 'description-value' })
       rumPublicApi.stopDurationVital(ref, { context: { foo: 'bar' }, description: 'description-value' })
-      await collectAsyncCalls(stopDurationVitalSpy, 1)
       expect(stopDurationVitalSpy).toHaveBeenCalledWith(ref, {
         description: 'description-value',
         context: { foo: 'bar' },
@@ -805,7 +809,7 @@ describe('rum public api', () => {
   })
 
   describe('startAction / stopAction', () => {
-    it('should call startAction and stopAction on the strategy', () => {
+    it('should call startAction and stopAction on the strategy', async () => {
       addExperimentalFeatures([ExperimentalFeature.START_STOP_ACTION])
 
       const startActionSpy = jasmine.createSpy()
@@ -818,6 +822,7 @@ describe('rum public api', () => {
       })
 
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await Promise.resolve()
       rumPublicApi.startAction('purchase', {
         type: ActionType.CUSTOM,
         context: { cart: 'abc' },
@@ -841,7 +846,7 @@ describe('rum public api', () => {
       )
     })
 
-    it('should sanitize startAction and stopAction inputs', () => {
+    it('should sanitize startAction and stopAction inputs', async () => {
       addExperimentalFeatures([ExperimentalFeature.START_STOP_ACTION])
 
       const startActionSpy = jasmine.createSpy()
@@ -852,6 +857,7 @@ describe('rum public api', () => {
       })
 
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await Promise.resolve()
       rumPublicApi.startAction('action_name', {
         type: ActionType.CUSTOM,
         context: { count: 123, nested: { foo: 'bar' } } as any,
@@ -867,7 +873,7 @@ describe('rum public api', () => {
       )
     })
 
-    it('should not call startAction/stopAction when feature flag is disabled', () => {
+    it('should not call startAction/stopAction when feature flag is disabled', async () => {
       const startActionSpy = jasmine.createSpy()
       const stopActionSpy = jasmine.createSpy()
       const { rumPublicApi } = makeRumPublicApiWithDefaults({
@@ -878,6 +884,7 @@ describe('rum public api', () => {
       })
 
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await Promise.resolve()
       rumPublicApi.startAction('purchase', { type: ActionType.CUSTOM })
       rumPublicApi.stopAction('purchase')
 
@@ -887,7 +894,7 @@ describe('rum public api', () => {
   })
 
   describe('startResource / stopResource', () => {
-    it('should call startResource and stopResource on the strategy', () => {
+    it('should call startResource and stopResource on the strategy', async () => {
       addExperimentalFeatures([ExperimentalFeature.START_STOP_RESOURCE])
 
       const startResourceSpy = jasmine.createSpy()
@@ -900,6 +907,7 @@ describe('rum public api', () => {
       })
 
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await Promise.resolve()
       rumPublicApi.startResource('https://api.example.com/data', {
         type: ResourceType.FETCH,
         method: 'POST',
@@ -931,7 +939,7 @@ describe('rum public api', () => {
       )
     })
 
-    it('should sanitize startResource and stopResource inputs', () => {
+    it('should sanitize startResource and stopResource inputs', async () => {
       addExperimentalFeatures([ExperimentalFeature.START_STOP_RESOURCE])
 
       const startResourceSpy = jasmine.createSpy()
@@ -942,6 +950,7 @@ describe('rum public api', () => {
       })
 
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await Promise.resolve()
       rumPublicApi.startResource('https://api.example.com/data', {
         type: ResourceType.XHR,
         method: 'GET',
@@ -959,7 +968,7 @@ describe('rum public api', () => {
       )
     })
 
-    it('should not call startResource/stopResource when feature flag is disabled', () => {
+    it('should not call startResource/stopResource when feature flag is disabled', async () => {
       const startResourceSpy = jasmine.createSpy()
       const stopResourceSpy = jasmine.createSpy()
       const { rumPublicApi } = makeRumPublicApiWithDefaults({
@@ -972,6 +981,9 @@ describe('rum public api', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.startResource('https://api.example.com/data', { type: ResourceType.FETCH })
       rumPublicApi.stopResource('https://api.example.com/data')
+
+      // Wait for session manager initialization to complete
+      await Promise.resolve()
 
       expect(startResourceSpy).not.toHaveBeenCalled()
       expect(stopResourceSpy).not.toHaveBeenCalled()
@@ -988,13 +1000,13 @@ describe('rum public api', () => {
       })
       const startTime = 1707755888000 as TimeStamp
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await Promise.resolve()
       rumPublicApi.addDurationVital('foo', {
         startTime,
         duration: 100,
         context: { foo: 'bar' },
         description: 'description-value',
       })
-      await collectAsyncCalls(addDurationVitalSpy, 1)
       expect(addDurationVitalSpy).toHaveBeenCalledWith({
         id: jasmine.any(String),
         name: 'foo',
@@ -1017,8 +1029,8 @@ describe('rum public api', () => {
         },
       })
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await Promise.resolve()
       rumPublicApi.startFeatureOperation('foo', { operationKey: '00000000-0000-0000-0000-000000000000' })
-      await collectAsyncCalls(addOperationStepVitalSpy, 1)
       expect(addOperationStepVitalSpy).toHaveBeenCalledWith('foo', 'start', {
         operationKey: '00000000-0000-0000-0000-000000000000',
         handlingStack: jasmine.any(String),
@@ -1035,8 +1047,8 @@ describe('rum public api', () => {
         },
       })
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await Promise.resolve()
       rumPublicApi.succeedFeatureOperation('foo', { operationKey: '00000000-0000-0000-0000-000000000000' })
-      await collectAsyncCalls(addOperationStepVitalSpy, 1)
       expect(addOperationStepVitalSpy).toHaveBeenCalledWith('foo', 'end', {
         operationKey: '00000000-0000-0000-0000-000000000000',
       })
@@ -1052,8 +1064,8 @@ describe('rum public api', () => {
         },
       })
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await Promise.resolve()
       rumPublicApi.failFeatureOperation('foo', 'error', { operationKey: '00000000-0000-0000-0000-000000000000' })
-      await collectAsyncCalls(addOperationStepVitalSpy, 1)
       expect(addOperationStepVitalSpy).toHaveBeenCalledWith(
         'foo',
         'end',
