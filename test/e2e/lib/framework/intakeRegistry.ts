@@ -1,4 +1,3 @@
-import type { LogsEvent } from '@datadog/browser-logs'
 import type {
   RumEvent,
   RumActionEvent,
@@ -14,47 +13,13 @@ import type {
   TelemetryConfigurationEvent,
   TelemetryUsageEvent,
 } from '@datadog/browser-core'
-import type { BrowserSegment, BrowserProfileEvent, BrowserProfilerTrace } from '@datadog/browser-rum/src/types'
-import type { BrowserSegmentMetadataAndSegmentSizes } from '@datadog/browser-rum/src/domain/segmentCollection'
-
-interface BaseIntakeRequest {
-  isBridge: boolean
-  encoding: string | null
-}
-
-export type LogsIntakeRequest = {
-  intakeType: 'logs'
-  events: LogsEvent[]
-} & BaseIntakeRequest
-
-export type RumIntakeRequest = {
-  intakeType: 'rum'
-  events: Array<RumEvent | TelemetryEvent>
-} & BaseIntakeRequest
-
-export type ReplayIntakeRequest = {
-  intakeType: 'replay'
-  segment: BrowserSegment
-  metadata: BrowserSegmentMetadataAndSegmentSizes
-  segmentFile: {
-    filename: string
-    encoding: string
-    mimetype: string
-  }
-} & BaseIntakeRequest
-
-export type ProfileIntakeRequest = {
-  intakeType: 'profile'
-  event: BrowserProfileEvent
-  trace: BrowserProfilerTrace
-  traceFile: {
-    filename: string
-    encoding: string | null
-    mimetype: string
-  }
-} & BaseIntakeRequest
-
-export type IntakeRequest = LogsIntakeRequest | RumIntakeRequest | ReplayIntakeRequest | ProfileIntakeRequest
+import type {
+  IntakeRequest,
+  LogsIntakeRequest,
+  ProfileIntakeRequest,
+  ReplayIntakeRequest,
+  RumIntakeRequest,
+} from './intakeProxyMiddleware'
 
 /**
  * Store data sent to the intake and expose helpers to access it.
