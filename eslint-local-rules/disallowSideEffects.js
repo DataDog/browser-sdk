@@ -37,6 +37,8 @@ const packagesWithoutSideEffect = new Set([
   '@datadog/browser-rum-core',
   'react',
   'react-router-dom',
+  'vue',
+  'vue-router',
 ])
 
 /**
