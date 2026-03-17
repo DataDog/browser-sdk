@@ -1,6 +1,10 @@
 import React, { act } from 'react'
 
-import { disableJasmineUncaughtExceptionTracking, ignoreConsoleLogs, registerCleanupTask } from '@datadog/browser-core/test'
+import {
+  disableJasmineUncaughtExceptionTracking,
+  ignoreConsoleLogs,
+  registerCleanupTask,
+} from '@datadog/browser-core/test'
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 import { appendComponent } from '../../../../rum-react/test/appendComponent'
 import { initReactOldBrowsersSupport } from '../../../../rum-react/test/reactOldBrowsersSupport'
