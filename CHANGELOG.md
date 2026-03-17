@@ -24,6 +24,47 @@
 
 - 👷 bump all packages to version to v7.0.0-alpha.0
 
+## v6.31.0
+
+**Public Changes:**
+
+- ✨ [RUM-14619] Add setViewLoadingTime() public API ([#4180](https://github.com/DataDog/browser-sdk/pull/4180)) [FLAGGING] [LOGS] [RUM] [RUM-NEXTJS] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✨[RUM-14826] Add source code context to feature operations ([#4297](https://github.com/DataDog/browser-sdk/pull/4297)) [RUM] [RUM-NEXTJS] [RUM-REACT] [RUM-SLIM]
+- ✨ [RUM-6798] Capture resource content type ([#4270](https://github.com/DataDog/browser-sdk/pull/4270)) [RUM] [RUM-NEXTJS] [RUM-REACT] [RUM-SLIM]
+- ✨ NextJS Pages Router Integration ([#4290](https://github.com/DataDog/browser-sdk/pull/4290)) [RUM-NEXTJS]
+- ✨ [PANA-6283] Support incremental mutation Change records ([#4287](https://github.com/DataDog/browser-sdk/pull/4287)) [RUM]
+- ✨ [RUM-14736] Add size to ResourceStopOptions ([#4296](https://github.com/DataDog/browser-sdk/pull/4296)) [RUM] [RUM-NEXTJS] [RUM-REACT] [RUM-SLIM]
+- ✨ NextJS App Router Integration ([#4254](https://github.com/DataDog/browser-sdk/pull/4254)) [RUM-NEXTJS]
+- ✨ Add url option to startView API ([#4199](https://github.com/DataDog/browser-sdk/pull/4199)) [RUM] [RUM-NEXTJS] [RUM-REACT] [RUM-SLIM]
+- ✨ Add action and vital metadata to profiles ([#4148](https://github.com/DataDog/browser-sdk/pull/4148)) [FLAGGING] [LOGS] [RUM] [RUM-NEXTJS] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 fix queueMicrotask to avoid binding to globalObject ([#4320](https://github.com/DataDog/browser-sdk/pull/4320)) [FLAGGING] [LOGS] [RUM] [RUM-NEXTJS] [RUM-REACT] [RUM-SLIM] [WORKER]
+- [RUM-13793] 🐛 Skip potential sanitize updates on unaltered fields ([#4298](https://github.com/DataDog/browser-sdk/pull/4298)) [FLAGGING] [LOGS] [RUM] [RUM-NEXTJS] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 [RUM Profiler] Fix long tasks query using wrong clock for duration computation ([#4227](https://github.com/DataDog/browser-sdk/pull/4227)) [RUM]
+- 🐛 retry transient 503 errors in telemetry error checking ([#4273](https://github.com/DataDog/browser-sdk/pull/4273))
+- 🐛 [PANA-6258] More robustly prevent serialization of <style> children ([#4283](https://github.com/DataDog/browser-sdk/pull/4283)) [RUM]
+- 🐛 [devext] fix replay tab broken with SDK v7 cookies ([#4280](https://github.com/DataDog/browser-sdk/pull/4280))
+- 🐛 filter non-directory entries in packagesDirectoryNames ([#4271](https://github.com/DataDog/browser-sdk/pull/4271))
+
+**Internal Changes:**
+
+- 👷 Update dependency undici to v7.24.0 [SECURITY] ([#4338](https://github.com/DataDog/browser-sdk/pull/4338))
+- 👷 Sign CI Docker image with ddsign ([#4313](https://github.com/DataDog/browser-sdk/pull/4313))
+- 👷 Add ci.browser-sdk to CLA allowlist ([#4312](https://github.com/DataDog/browser-sdk/pull/4312))
+- 👷 Bump chrome to 146.0.7680.71-1 ([#4311](https://github.com/DataDog/browser-sdk/pull/4311))
+- 👷 Bump next from 15.3.3 to 15.5.10 ([#4292](https://github.com/DataDog/browser-sdk/pull/4292)) [RUM-NEXTJS]
+- 👷 remove usages of "lerna" in `yarn release` ([#4275](https://github.com/DataDog/browser-sdk/pull/4275))
+- 🔧 Fix octo-sts pull_request policy subject pattern ([#4310](https://github.com/DataDog/browser-sdk/pull/4310))
+- 🎨 Rename mockedLocationHref to locationHref ([#4288](https://github.com/DataDog/browser-sdk/pull/4288)) [RUM] [RUM-NEXTJS] [RUM-REACT] [RUM-SLIM]
+- ✅ [RUM-14696] Improve microfrontend e2e test - plugin + module federation ([#4220](https://github.com/DataDog/browser-sdk/pull/4220))
+- 🔊 add debug context to "Too many requests" telemetry ([#4278](https://github.com/DataDog/browser-sdk/pull/4278)) [FLAGGING] [LOGS] [RUM] [RUM-NEXTJS] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ♻️ NextJS- Rename test app and update e2e tests. ([#4316](https://github.com/DataDog/browser-sdk/pull/4316)) [RUM-NEXTJS]
+- ⬆️ [PANA-6354] Update replay sandbox version in extension to support Change records ([#4305](https://github.com/DataDog/browser-sdk/pull/4305))
+- [PROF-13923] Upload source maps to org2 on every deployment ([#4282](https://github.com/DataDog/browser-sdk/pull/4282))
+- Bump rollup from 4.57.1 to 4.59.0 in /test/apps/react-heavy-spa ([#4293](https://github.com/DataDog/browser-sdk/pull/4293))
+- 🚧 [PANA-6282] Add USE_INCREMENTAL_CHANGE_RECORDS feature flag ([#4284](https://github.com/DataDog/browser-sdk/pull/4284)) [FLAGGING] [LOGS] [RUM] [RUM-NEXTJS] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ♻️ [PANA-6193] Add an Observer for DOM serializations ([#4277](https://github.com/DataDog/browser-sdk/pull/4277)) [RUM]
+- ♻️ [PANA-5947] Convert Change records to V1 records using a VDOM ([#4165](https://github.com/DataDog/browser-sdk/pull/4165)) [RUM]
+
 ## v6.30.1
 
 **Internal Changes:**

@@ -270,33 +270,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@datadog/browser-core@npm:6.22.0":
-  version: 6.22.0
-  resolution: "@datadog/browser-core@npm:6.22.0"
-  checksum: 10c0/3398f9efd2105197e5380588bc699a6cafa6b1fa548f3be6723aa1f440aad905469991b21d5142b5c17b0a60321d6fd73f573bd4c15455cf9c2f3d6403d8a5fd
-  languageName: node
-  linkType: hard
-
 "@datadog/browser-core@npm:7.0.0-alpha.0, @datadog/browser-core@workspace:*, @datadog/browser-core@workspace:packages/core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-core@workspace:packages/core"
   dependencies:
     "@types/pako": "npm:2.0.4"
     pako: "npm:2.1.0"
-  languageName: unknown
-  linkType: soft
-
-"@datadog/browser-flagging@workspace:packages/flagging":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-flagging@workspace:packages/flagging"
-  dependencies:
-    "@datadog/browser-core": "npm:6.22.0"
-    webpack: "npm:5.105.2"
-  peerDependencies:
-    "@datadog/browser-rum": 6.22.0
-  peerDependenciesMeta:
-    "@datadog/browser-rum":
-      optional: true
   languageName: unknown
   linkType: soft
 

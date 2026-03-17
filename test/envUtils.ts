@@ -1,9 +1,10 @@
 import os from 'os'
 
 export function getIp() {
-  return (Object.values(os.networkInterfaces()) as os.NetworkInterfaceInfo[][])
+  const networkInterface = (Object.values(os.networkInterfaces()) as os.NetworkInterfaceInfo[][])
     .flat()
-    .find(({ family, internal }) => family === 'IPv4' && !internal)!.address
+    .find(({ family, internal }) => family === 'IPv4' && !internal)
+  return networkInterface ? networkInterface.address : '127.0.0.1'
 }
 
 export function getBuildInfos() {

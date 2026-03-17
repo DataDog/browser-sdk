@@ -81,6 +81,21 @@ describe('rum public api', () => {
         }))
       })
 
+      it('passes addError to plugins on rum start', () => {
+        const plugin = { name: 'test-plugin', onRumStart: jasmine.createSpy() }
+
+        rumPublicApi.init({
+          ...DEFAULT_INIT_CONFIGURATION,
+          plugins: [plugin],
+        })
+
+        expect(plugin.onRumStart).toHaveBeenCalledWith(
+          jasmine.objectContaining({
+            addError: jasmine.any(Function),
+          })
+        )
+      })
+
       it('pass the worker to the recorder API', async () => {
         rumPublicApi.init({
           ...DEFAULT_INIT_CONFIGURATION,

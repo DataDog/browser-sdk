@@ -38,6 +38,7 @@ runMain(() => {
   setVersionInPackageJsonFiles(version)
   updateLernaJson(version)
   command`node ./scripts/release/generate-changelog/index.ts`.withLogs().run()
+  command`yarn`.run() // Update lockfile
   command`git add -u`.run()
   command`git commit -m v${version}`.run()
   command`git tag -a v${version} -m v${version}`.run()
@@ -69,7 +70,7 @@ function setVersionInPackageJsonFiles(version: string) {
       }
 
       for (const [key, value] of Object.entries(content[depField])) {
-        if (key.startsWith('@datadog/') && isSemanticVersion(value)) {
+        if (key.startsWith('@datadog/browser-') && isSemanticVersion(value)) {
           content[depField][key] = version
         }
       }
