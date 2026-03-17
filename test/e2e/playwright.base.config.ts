@@ -37,9 +37,9 @@ export const config: Config = {
             name: 'dev server',
             stdout: 'pipe' as const,
             cwd: path.join(__dirname, '../..'),
-            command: 'yarn dev',
+            command: 'yarn dev-server start --no-daemon',
             wait: {
-              stdout: /Server listening on port (?<dev_server_port>\d+)/,
+              stdout: /Dev server listening on port (?<dev_server_port>\d+)/,
             },
           },
         ]

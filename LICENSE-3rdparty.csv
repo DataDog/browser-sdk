@@ -16,7 +16,7 @@ dev,@jsdevtools/coverage-istanbul-loader,MIT,Copyright (c) 2015 James Messinger
 dev,@playwright/test,Apache-2.0,Copyright Microsoft Corporation
 dev,@swc/core,Apache-2.0,Copyright (c) SWC Contributors
 dev,@types/chrome,MIT,Copyright Microsoft Corporation
-dev,@types/connect-busboy,MIT,Copyright Microsoft Corporation
+dev,@types/busboy,MIT,Copyright Microsoft Corporation
 dev,@types/cors,MIT,Copyright Microsoft Corporation
 dev,@types/express,MIT,Copyright Microsoft Corporation
 dev,@types/jasmine,MIT,Copyright Microsoft Corporation
@@ -32,7 +32,7 @@ dev,@vue/test-utils,MIT,Copyright (c) 2021-present vuejs
 dev,ajv,MIT,Copyright 2015-2017 Evgeny Poberezkin
 dev,browserstack-local,MIT,Copyright 2016 BrowserStack
 dev,chrome-webstore-upload,MIT,Copyright Federico Brigante <me@fregante.com> (https://fregante.com), 2020 Andrew Levine
-dev,connect-busboy,MIT,Copyright Brian White
+dev,busboy,MIT,Copyright Brian White
 dev,cors,MIT,Copyright 2013 Troy Goode
 dev,emoji-name-map,MIT,Copyright 2016-19 Ionică Bizău <bizauionica@gmail.com> (https://ionicabizau.net)
 dev,eslint,MIT,Copyright JS Foundation and other contributors
