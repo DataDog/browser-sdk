@@ -315,6 +315,14 @@ export function startSessionManager(
 
   function expire() {
     cancelExpandOrRenew()
+    // Update in-memory state synchronously so events stop being collected immediately
+    const expiredState = getExpiredSessionState(previousState, configuration)
+    if (!trackingConsentState.isGranted()) {
+      delete expiredState.anonymousId
+    }
+    handleStateChange(expiredState)
+    previousState = expiredState
+    // Persist to storage asynchronously
     void strategy.setSessionState((state) => {
       if (!trackingConsentState.isGranted()) {
         delete state.anonymousId
