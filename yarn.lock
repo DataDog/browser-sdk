@@ -279,13 +279,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-core@npm:6.30.1":
-  version: 6.30.1
-  resolution: "@datadog/browser-core@npm:6.30.1"
-  checksum: 10c0/3a17ddcfbc1d8321941f8119958e8e050f83eb9f7bc7895c30e6e73d33f66fd50e1194756e0dc10830e59721a1fd7829e57e236c73588471d413596566e1f2c4
-  languageName: node
-  linkType: hard
-
 "@datadog/browser-logs@workspace:*, @datadog/browser-logs@workspace:packages/logs":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-logs@workspace:packages/logs"
@@ -307,15 +300,6 @@ __metadata:
     ajv: "npm:8.18.0"
   languageName: unknown
   linkType: soft
-
-"@datadog/browser-rum-core@npm:6.30.1":
-  version: 6.30.1
-  resolution: "@datadog/browser-rum-core@npm:6.30.1"
-  dependencies:
-    "@datadog/browser-core": "npm:6.30.1"
-  checksum: 10c0/c26fec4859856b287c90ce3eb631f6b2703869d2fdf2119df5b33a3a3abf4016147de3ba7a95fa0973bd322b2b0655e4ca7310ff91461583536d8665186d37b7
-  languageName: node
-  linkType: hard
 
 "@datadog/browser-rum-nextjs@workspace:packages/rum-nextjs":
   version: 0.0.0-use.local
