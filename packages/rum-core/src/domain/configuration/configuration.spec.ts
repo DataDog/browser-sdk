@@ -628,7 +628,6 @@ describe('serializeRumConfiguration', () => {
       trackFeatureFlagsForEvents: ['vital'],
       profilingSampleRate: 42,
       propagateTraceBaggage: true,
-      betaTrackActionsInShadowDom: true,
     }
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
@@ -643,8 +642,7 @@ describe('serializeRumConfiguration', () => {
         : Key extends 'trackLongTasks'
           ? 'track_long_task' // We forgot the s, keeping this for backward compatibility
           : // The following options are not reported as telemetry. Please avoid adding more of them.
-            // TODO: Add betaTrackActionsInShadowDom to rum-events-format and remove from this exclusion
-            Key extends 'applicationId' | 'subdomain' | 'betaTrackActionsInShadowDom'
+            Key extends 'applicationId' | 'subdomain'
             ? never
             : CamelToSnakeCase<Key>
     // By specifying the type here, we can ensure that serializeConfiguration is returning an
