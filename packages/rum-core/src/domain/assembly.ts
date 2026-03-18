@@ -49,6 +49,10 @@ export function startRumAssembly(
       ...VIEW_MODIFIABLE_FIELD_PATHS,
       ...ROOT_MODIFIABLE_FIELD_PATHS,
     },
+    // view_update events are created post-assembly in startRumBatch.ts and never go through
+    // this pipeline — they intentionally bypass beforeSend. This entry is required by the
+    // exhaustive type but is never reached in practice.
+    [RumEventType.VIEW_UPDATE]: {},
     [RumEventType.ERROR]: {
       'error.message': 'string',
       'error.stack': 'string',
