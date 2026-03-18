@@ -270,13 +270,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@datadog/browser-core@npm:6.28.0":
-  version: 6.28.0
-  resolution: "@datadog/browser-core@npm:6.28.0"
-  checksum: 10c0/3e393030bfd74b820c492bffb817390e7e14b341c76293f6585dc64ccacf41ffe359f70a73249450d5e0f0f4eb092f841a015cd6126f59cda905c7b2fd2c2ef3
-  languageName: node
-  linkType: hard
-
 "@datadog/browser-core@npm:6.31.0, @datadog/browser-core@workspace:*, @datadog/browser-core@workspace:packages/core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-core@workspace:packages/core"
@@ -303,7 +296,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-remote-config@workspace:packages/remote-config"
   dependencies:
-    "@datadog/browser-core": "npm:6.28.0"
+    "@datadog/browser-core": "npm:6.31.0"
   languageName: unknown
   linkType: soft
 
