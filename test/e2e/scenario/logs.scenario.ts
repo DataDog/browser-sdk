@@ -101,8 +101,8 @@ test.describe('logs', () => {
       })
     })
 
-  createTest('send console errors')
-    .withLogs({ forwardErrorsToLogs: true })
+  createTest('send console errors with forwardConsoleLogs set to ["error"]')
+    .withLogs({ forwardConsoleLogs: ['error'] })
     .run(async ({ intakeRegistry, flushEvents, page, withBrowserLogs }) => {
       await page.evaluate(() => {
         console.error('oh snap')
