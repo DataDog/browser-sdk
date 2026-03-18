@@ -302,8 +302,8 @@ __metadata:
   linkType: hard
 
 "@datadog/browser-rum-angular@file:../../../packages/rum-angular/package.tgz::locator=angular-app%40workspace%3A.":
-  version: 6.31.0
-  resolution: "@datadog/browser-rum-angular@file:../../../packages/rum-angular/package.tgz#../../../packages/rum-angular/package.tgz::hash=adfbc0&locator=angular-app%40workspace%3A."
+  version: 0.0.0
+  resolution: "@datadog/browser-rum-angular@file:../../../packages/rum-angular/package.tgz#../../../packages/rum-angular/package.tgz::hash=1db391&locator=angular-app%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.31.0"
     "@datadog/browser-rum-core": "npm:6.31.0"
@@ -316,7 +316,7 @@ __metadata:
       optional: true
     "@angular/router":
       optional: true
-  checksum: 10c0/37d26412bd6651ea1da11d1c3b4ef4c445c4c6b68d0dade3ce83312b658b295144dc6d39c39bc445fb2385a0e2243934c9fbaab321fba6f84a768580782919c0
+  checksum: 10c0/837488f8f27aee3c58e0be4f91039b2de9c3bc00e655f6f65bd5992c1101443ae48fbeedc68c95ef4281535c3a4de8c3e3073974b2938ebb493cf23e3a91f5a6
   languageName: node
   linkType: hard
 

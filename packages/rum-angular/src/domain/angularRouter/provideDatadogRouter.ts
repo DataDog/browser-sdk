@@ -5,9 +5,7 @@ import { ENVIRONMENT_INITIALIZER, inject, makeEnvironmentProviders } from '@angu
 import { GuardsCheckEnd, Router } from '@angular/router'
 // eslint-disable-next-line local-rules/disallow-side-effects
 import { filter } from 'rxjs'
-
-import { startAngularView } from '../angularPlugin'
-import { computeRouteViewName } from './computeRouteViewName'
+import { startAngularView } from './startAngularView'
 
 /**
  * Angular provider that subscribes to Router events and starts a new RUM view
@@ -46,8 +44,7 @@ export function provideDatadogRouter(): EnvironmentProviders {
             .pipe(filter((event): event is GuardsCheckEnd => event instanceof GuardsCheckEnd))
             .subscribe((event) => {
               const root = event.state.root
-              const viewName = computeRouteViewName(root)
-              startAngularView(viewName)
+              startAngularView(root, event.urlAfterRedirects)
             })
         }
       },

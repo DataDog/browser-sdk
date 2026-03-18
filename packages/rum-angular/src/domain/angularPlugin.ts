@@ -1,10 +1,14 @@
-import type { RumPlugin, RumPublicApi } from '@datadog/browser-rum-core'
+import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
 
-type InitSubscriber = (rumPublicApi: RumPublicApi) => void
+type InitSubscriber = (configuration: AngularPluginConfiguration, rumPublicApi: RumPublicApi) => void
+type StartSubscriber = (addError: StartRumResult['addError']) => void
 
 let globalPublicApi: RumPublicApi | undefined
+let globalConfiguration: AngularPluginConfiguration | undefined
+let globalAddError: StartRumResult['addError'] | undefined
 
 const onRumInitSubscribers: InitSubscriber[] = []
+const onRumStartSubscribers: StartSubscriber[] = []
 
 /**
  * Angular plugin configuration.
@@ -42,15 +46,21 @@ export function angularPlugin(configuration: AngularPluginConfiguration = {}): R
     name: 'angular',
     onInit({ publicApi, initConfiguration }) {
       globalPublicApi = publicApi
-
+      globalConfiguration = configuration
+      for (const subscriber of onRumInitSubscribers) {
+        subscriber(globalConfiguration, globalPublicApi)
+      }
       if (configuration.router) {
         initConfiguration.trackViewsManually = true
       }
-
-      for (const subscriber of onRumInitSubscribers) {
-        subscriber(publicApi)
+    },
+    onRumStart({ addError }) {
+      globalAddError = addError
+      for (const subscriber of onRumStartSubscribers) {
+        if (addError) {
+          subscriber(addError)
+        }
       }
-      onRumInitSubscribers.length = 0
     },
     getConfigurationTelemetry() {
       return { router: !!configuration.router }
@@ -58,21 +68,26 @@ export function angularPlugin(configuration: AngularPluginConfiguration = {}): R
   } satisfies RumPlugin
 }
 
-export function startAngularView(viewName: string) {
-  if (globalPublicApi) {
-    globalPublicApi.startView({ name: viewName })
-  }
-}
-
 export function onRumInit(callback: InitSubscriber) {
-  if (globalPublicApi) {
-    callback(globalPublicApi)
+  if (globalConfiguration && globalPublicApi) {
+    callback(globalConfiguration, globalPublicApi)
   } else {
     onRumInitSubscribers.push(callback)
   }
 }
 
+export function onRumStart(callback: StartSubscriber) {
+  if (globalAddError) {
+    callback(globalAddError)
+  } else {
+    onRumStartSubscribers.push(callback)
+  }
+}
+
 export function resetAngularPlugin() {
   globalPublicApi = undefined
+  globalConfiguration = undefined
+  globalAddError = undefined
   onRumInitSubscribers.length = 0
+  onRumStartSubscribers.length = 0
 }

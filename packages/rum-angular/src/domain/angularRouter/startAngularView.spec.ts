@@ -1,4 +1,4 @@
-import { computeRouteViewName } from './computeRouteViewName'
+import { computeViewName } from './startAngularView'
 import type { RouteSnapshot } from './types'
 
 function createSnapshot(
@@ -56,16 +56,16 @@ function buildSnapshot(routePaths: string, actualPath: string): RouteSnapshot {
   return createSnapshot(undefined, current ? [current] : [])
 }
 
-describe('computeRouteViewName', () => {
+describe('computeViewName', () => {
   it('returns / when root has no children', () => {
-    expect(computeRouteViewName(createSnapshot(undefined))).toBe('/')
+    expect(computeViewName(createSnapshot(undefined))).toBe('/')
   })
 
   it('follows primary outlet only, ignoring named outlets', () => {
     const primaryChild = createSnapshot('users', [], 'primary')
     const namedChild = createSnapshot('sidebar', [], 'sidebar')
     const root = createSnapshot(undefined, [namedChild, primaryChild])
-    expect(computeRouteViewName(root)).toBe('/users')
+    expect(computeViewName(root)).toBe('/users')
   })
 
   // prettier-ignore
@@ -95,7 +95,7 @@ describe('computeRouteViewName', () => {
   cases.forEach(([routePaths, path, expectedViewName]) => {
     it(`returns "${expectedViewName}" for path "${path}" with routes "${routePaths}"`, () => {
       const root = buildSnapshot(routePaths, path)
-      expect(computeRouteViewName(root)).toBe(expectedViewName)
+      expect(computeViewName(root)).toBe(expectedViewName)
     })
   })
 })
