@@ -133,9 +133,7 @@ function processAction(action: AutoAction | ManualAction): RawRumEventCollectedD
                   selector: action.target?.selector || undefined,
                   width: action.target?.width || undefined,
                   height: action.target?.height || undefined,
-                  ...(action.target?.composedPathSelector !== undefined && {
-                    composed_path_selector: action.target.composedPathSelector,
-                  }),
+                  composed_path_selector: action.target?.composedPathSelector,
                 },
                 position: action.position,
                 name_source: action.nameSource,

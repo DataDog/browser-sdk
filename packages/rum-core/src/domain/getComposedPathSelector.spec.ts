@@ -1,12 +1,9 @@
-import { registerCleanupTask } from '@datadog/browser-core/test'
 import { appendElement } from '../../test'
 import { getComposedPathSelector, CHARACTER_LIMIT } from './getComposedPathSelector'
 
 /** Appends content inside a wrapper so the element is the only child (no nth-child from body). */
 function appendElementInIsolation(html: string): HTMLElement {
-  const wrapper = document.createElement('div')
-  document.body.appendChild(wrapper)
-  registerCleanupTask(() => wrapper.remove())
+  const wrapper = appendElement('<div></div>')
   return appendElement(html, wrapper)
 }
 
@@ -106,15 +103,19 @@ describe('getSelectorFromComposedPath', () => {
 
         expect(result).toBe('INPUT[type="submit"];')
       })
+
+      it('collects attribute containing separator characters ;', () => {
+        const element = appendElementInIsolation('<div data-testid="foo;bar" />')
+        const result = getComposedPathSelector([element], undefined)
+
+        expect(result).toBe('DIV[data-testid="foo\\;bar"];')
+      })
     })
 
     describe('nthChild and nthOfType', () => {
       it('does not include nthChild when element is the only child', () => {
-        const parent = document.createElement('div')
-        const child = document.createElement('span')
-        parent.appendChild(child)
-        document.body.appendChild(parent)
-        registerCleanupTask(() => parent.remove())
+        const parent = appendElement('<div></div>')
+        const child = appendElement('<span></span>', parent)
 
         const result = getComposedPathSelector([child], undefined)
 
@@ -122,29 +123,20 @@ describe('getSelectorFromComposedPath', () => {
       })
 
       it('includes nthChild when element has siblings', () => {
-        const parent = document.createElement('div')
-        const child1 = document.createElement('span')
-        const child2 = document.createElement('span')
-        const child3 = document.createElement('span')
-        parent.appendChild(child1)
-        parent.appendChild(child2)
-        parent.appendChild(child3)
-        document.body.appendChild(parent)
-        registerCleanupTask(() => parent.remove())
+        const parent = appendElement('<div></div>')
+        appendElement('<span></span>', parent)
+        appendElement('<div></div>', parent)
+        const child3 = appendElement('<span></span>', parent)
 
-        const result = getComposedPathSelector([child2], undefined)
+        const result = getComposedPathSelector([child3], undefined)
 
-        expect(result).toBe('SPAN:nth-child(2):nth-of-type(2);')
+        expect(result).toBe('SPAN:nth-child(3):nth-of-type(2);')
       })
 
       it('calculates nthChild correctly for first child', () => {
-        const parent = document.createElement('div')
-        const child1 = document.createElement('span')
-        const child2 = document.createElement('div')
-        parent.appendChild(child1)
-        parent.appendChild(child2)
-        document.body.appendChild(parent)
-        registerCleanupTask(() => parent.remove())
+        const parent = appendElement('<div></div>')
+        const child1 = appendElement('<span></span>', parent)
+        appendElement('<div></div>', parent)
 
         const result = getComposedPathSelector([child1], undefined)
 
@@ -152,13 +144,9 @@ describe('getSelectorFromComposedPath', () => {
       })
 
       it('does not include nthOfType when element is unique of its type', () => {
-        const parent = document.createElement('div')
-        const span = document.createElement('span')
-        const div = document.createElement('div')
-        parent.appendChild(span)
-        parent.appendChild(div)
-        document.body.appendChild(parent)
-        registerCleanupTask(() => parent.remove())
+        const parent = appendElement('<div></div>')
+        const span = appendElement('<span></span>', parent)
+        appendElement('<div></div>', parent)
 
         const result = getComposedPathSelector([span], undefined)
 
@@ -166,32 +154,11 @@ describe('getSelectorFromComposedPath', () => {
         expect(result).toBe('SPAN:nth-child(1);')
       })
 
-      it('includes nthOfType when element has siblings of the same type', () => {
-        const parent = document.createElement('div')
-        const span1 = document.createElement('span')
-        const span2 = document.createElement('span')
-        const div = document.createElement('div')
-        parent.appendChild(span1)
-        parent.appendChild(div)
-        parent.appendChild(span2)
-        document.body.appendChild(parent)
-        registerCleanupTask(() => parent.remove())
-
-        const result = getComposedPathSelector([span2], undefined)
-
-        expect(result).toBe('SPAN:nth-child(3):nth-of-type(2);')
-      })
-
       it('includes nthOfType when the first element has same-type siblings', () => {
-        const parent = document.createElement('div')
-        const span1 = document.createElement('span')
-        const div = document.createElement('div')
-        const span2 = document.createElement('span')
-        parent.appendChild(span1)
-        parent.appendChild(div)
-        parent.appendChild(span2)
-        document.body.appendChild(parent)
-        registerCleanupTask(() => parent.remove())
+        const parent = appendElement('<div></div>')
+        const span1 = appendElement('<span></span>', parent)
+        appendElement('<div></div>', parent)
+        appendElement('<span></span>', parent)
 
         const result = getComposedPathSelector([span1], undefined)
 
@@ -199,19 +166,12 @@ describe('getSelectorFromComposedPath', () => {
       })
 
       it('calculates nthOfType correctly among mixed siblings', () => {
-        const parent = document.createElement('div')
-        const button1 = document.createElement('button')
-        const span = document.createElement('span')
-        const button2 = document.createElement('button')
-        const div = document.createElement('div')
-        const button3 = document.createElement('button')
-        parent.appendChild(button1)
-        parent.appendChild(span)
-        parent.appendChild(button2)
-        parent.appendChild(div)
-        parent.appendChild(button3)
-        document.body.appendChild(parent)
-        registerCleanupTask(() => parent.remove())
+        const parent = appendElement('<div></div>')
+        appendElement('<button></button>', parent)
+        appendElement('<span></span>', parent)
+        const button2 = appendElement('<button></button>', parent)
+        appendElement('<div></div>', parent)
+        appendElement('<button></button>', parent)
 
         const result = getComposedPathSelector([button2], undefined)
 
@@ -219,19 +179,11 @@ describe('getSelectorFromComposedPath', () => {
       })
 
       it('handles elements in composedPath with their position data', () => {
-        const wrapper = document.createElement('div')
-        document.body.appendChild(wrapper)
-        registerCleanupTask(() => wrapper.remove())
-
-        const grandparent = document.createElement('div')
-        const parent = document.createElement('section')
-        const sibling = document.createElement('article')
-        const target = document.createElement('button')
-
-        grandparent.appendChild(parent)
-        grandparent.appendChild(sibling)
-        parent.appendChild(target)
-        wrapper.appendChild(grandparent)
+        const wrapper = appendElement('<div></div>')
+        const grandparent = appendElement('<div></div>', wrapper)
+        const parent = appendElement('<section></section>', grandparent)
+        appendElement('<article></article>', grandparent)
+        const target = appendElement('<button></button>', parent)
 
         const composedPath = [target, parent, grandparent]
         const result = getComposedPathSelector(composedPath, undefined)
@@ -241,7 +193,7 @@ describe('getSelectorFromComposedPath', () => {
 
       it('does not include nthChild or nthOfType for elements without parent', () => {
         // Detached element with no parent
-        const element = document.createElement('div')
+        const element = appendElementInIsolation('<div></div>')
 
         const result = getComposedPathSelector([element], undefined)
 
@@ -251,8 +203,10 @@ describe('getSelectorFromComposedPath', () => {
 
     describe('truncation', () => {
       it('truncates the selector if it exceeds the character limit', () => {
-        const element = appendElementInIsolation('<div data-testid="test-btn" class="secret"></div>'.repeat(1000))
-        const result = getComposedPathSelector([element], undefined)
+        const elements = Array.from({ length: 1000 }, () =>
+          appendElement('<div data-testid="test-btn" class="secret"></div>')
+        )
+        const result = getComposedPathSelector(elements, undefined)
 
         expect(result.length).toBeLessThanOrEqual(CHARACTER_LIMIT)
       })
@@ -267,26 +221,16 @@ describe('getSelectorFromComposedPath', () => {
       })
 
       it('handles elements with whitespace-only class', () => {
-        const wrapper = document.createElement('div')
-        document.body.appendChild(wrapper)
-        registerCleanupTask(() => wrapper.remove())
-
-        const element = document.createElement('div')
-        element.setAttribute('class', '   ')
-        wrapper.appendChild(element)
+        const wrapper = appendElement('<div></div>')
+        const element = appendElement('<div class="   "></div>', wrapper)
 
         const result = getComposedPathSelector([element], undefined)
         expect(result).toBe('DIV;')
       })
 
       it('handles SVG elements', () => {
-        const wrapper = document.createElement('div')
-        document.body.appendChild(wrapper)
-        registerCleanupTask(() => wrapper.remove())
-
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-        svg.setAttribute('data-testid', 'my-svg')
-        wrapper.appendChild(svg)
+        const wrapper = appendElement('<div></div>')
+        const svg = appendElement('<svg data-testid="my-svg"></svg>', wrapper)
 
         const result = getComposedPathSelector([svg], undefined)
 

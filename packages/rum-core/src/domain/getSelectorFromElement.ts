@@ -192,25 +192,36 @@ function getStableAttributeSelector(element: Element, actionNameAttribute: strin
 
   function getAttributeSelector(attributeName: string) {
     if (element.hasAttribute(attributeName)) {
-      return `${CSS.escape(element.tagName)}[${attributeName}="${CSS.escape(element.getAttribute(attributeName)!)}"]`
+      return `${CSS.escape(element.tagName)}${getAttributeValueSelector(attributeName, element.getAttribute(attributeName)!)}`
     }
   }
 }
 
+export function getAttributeValueSelector(attributeName: string, attributeValue: string) {
+  return `[${attributeName}="${CSS.escape(attributeValue)}"]`
+}
+
 function getPositionSelector(element: Element): string {
+  const nthOfType = getNthOfTypeSelector(element)
+
+  return `${CSS.escape(element.tagName)}:nth-of-type(${nthOfType})`
+}
+
+export function getNthOfTypeSelector(element: Element): number {
   const parent = element.parentNode!
 
   let sibling = parent.firstElementChild
-  let elementIndex = 1
+
+  let nthOfType = 1
 
   while (sibling && sibling !== element) {
     if (sibling.tagName === element.tagName) {
-      elementIndex += 1
+      nthOfType += 1
     }
     sibling = sibling.nextElementSibling
   }
 
-  return `${CSS.escape(element.tagName)}:nth-of-type(${elementIndex})`
+  return nthOfType
 }
 
 function findSelector(

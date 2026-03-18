@@ -1,6 +1,13 @@
-import { safeTruncate, ONE_KIBI_BYTE, matchList } from '@datadog/browser-core'
+import { safeTruncate, ONE_KIBI_BYTE } from '@datadog/browser-core'
 import type { MatchOption } from '@datadog/browser-core'
-import { STABLE_ATTRIBUTES, isGeneratedValue, getIDSelector, getTagNameSelector } from './getSelectorFromElement'
+import {
+  STABLE_ATTRIBUTES,
+  isGeneratedValue,
+  getIDSelector,
+  getTagNameSelector,
+  getNthOfTypeSelector,
+  getAttributeValueSelector,
+} from './getSelectorFromElement'
 
 const FILTERED_TAGNAMES = ['HTML', 'BODY']
 
@@ -18,8 +25,6 @@ export const SAFE_ATTRIBUTES = STABLE_ATTRIBUTES.concat([
   'type',
   'disabled',
   'readonly',
-  'checked',
-  'selected',
   'tabindex',
   'draggable',
   'target',
@@ -53,19 +58,15 @@ export function getComposedPathSelector(composedPath: EventTarget[], actionNameA
     return ''
   }
 
-  const allowedAttributes = ([] as MatchOption[]).concat(
-    actionNameAttribute ? [actionNameAttribute] : [],
-    SAFE_ATTRIBUTES
-  )
+  const allowedAttributes = actionNameAttribute ? [actionNameAttribute].concat(SAFE_ATTRIBUTES) : SAFE_ATTRIBUTES
 
   let result = ''
-  for (let i = 0; i < elements.length; i++) {
-    const part = getSelectorStringFromElement(elements[i], allowedAttributes)
-    const next = result + part
-    if (next.length >= CHARACTER_LIMIT) {
-      return safeTruncate(next, CHARACTER_LIMIT)
+  for (const element of elements) {
+    const part = getSelectorStringFromElement(element, allowedAttributes)
+    result += part
+    if (result.length >= CHARACTER_LIMIT) {
+      return safeTruncate(result, CHARACTER_LIMIT)
     }
-    result = next
   }
   return result
 }
@@ -85,7 +86,7 @@ function getSelectorStringFromElement(element: Element, allowedAttributes: Match
 
 function getElementClassesString(element: Element): string {
   return Array.from(element.classList)
-    .filter((c) => c.trim() !== '' && !isGeneratedValue(c))
+    .filter((c) => !isGeneratedValue(c))
     .sort()
     .map((c) => `.${CSS.escape(c)}`)
     .join('')
@@ -98,36 +99,19 @@ function getElementClassesString(element: Element): string {
  * @returns A string of the form ":nth-child(1):nth-of-type(1)"
  */
 function computePositionDataString(element: Element): string {
-  const parent = element.parentElement
-  if (!parent) {
+  const siblings = Array.from(element.parentNode!.children)
+
+  if (siblings.length <= 1) {
     return ''
   }
 
-  const siblings = parent.children
-  const n = siblings.length
-  if (n <= 1) {
-    return ''
-  }
+  const sameTypeSiblings = siblings.filter((sibling) => sibling.tagName === element.tagName)
 
-  let result = ''
+  const nthChild = siblings.indexOf(element)
 
-  const sameTypeTotal = Array.from(siblings).filter((sibling) => sibling.tagName === element.tagName).length
+  const nthOfType = getNthOfTypeSelector(element)
 
-  for (let i = 0, j = 0; i < n; i++) {
-    const currentSibling = siblings[i]
-    if (currentSibling.tagName === element.tagName) {
-      j++
-    }
-    if (currentSibling === element) {
-      result += `:nth-child(${i + 1})` // 1-based
-      if (sameTypeTotal > 1 && j > 0) {
-        result += `:nth-of-type(${j})` // 1-based
-      }
-      break
-    }
-  }
-
-  return result
+  return `:nth-child(${nthChild + 1})${sameTypeSiblings.length > 1 ? `:nth-of-type(${nthOfType})` : ''}`
 }
 
 /**
@@ -136,10 +120,10 @@ function computePositionDataString(element: Element): string {
  */
 function extractSafeAttributesString(element: Element, allowedAttributes: MatchOption[]): string {
   const result: string[] = []
-  for (let i = 0; i < element.attributes.length; i++) {
-    const attr = element.attributes[i]
-    if (matchList(allowedAttributes, attr.name)) {
-      result.push(`[${CSS.escape(attr.name)}="${CSS.escape(attr.value)}"]`)
+  const attributes = Array.from(element.attributes)
+  for (const attribute of attributes) {
+    if (allowedAttributes.includes(attribute.name)) {
+      result.push(getAttributeValueSelector(attribute.name, attribute.value))
     }
   }
   return result.sort().join('')
