@@ -4,7 +4,7 @@ import { Observable } from '../tools/observable'
 import type { Configuration } from '../domain/configuration'
 import { addEventListener, DOM_EVENT } from './addEventListener'
 import type { CookieOptions } from './cookie'
-import { getCookie, getCookies, setCookie, deleteCookie } from './cookie'
+import { getCookie, getCookies, setCookie } from './cookie'
 import type { CookieStoreWindow } from './browser.types'
 import type { CookieObservable } from './cookieObservable'
 
@@ -97,11 +97,12 @@ function createDocumentCookieAccess(cookieName: string, cookieOptions: CookieOpt
   }
 
   return {
-    getAllAndSet(cb: (value: string[]) => { value: string; expireDelay: number }) {
+    async getAllAndSet(cb: (value: string[]) => { value: string; expireDelay: number }) {
       const currentValue = getCookies(cookieName)
       const { value, expireDelay } = cb(currentValue)
       setCookie(cookieName, value, expireDelay, cookieOptions)
-      return Promise.resolve()
+      await Promise.resolve()
+      motifyCookieValieIfChanged(value)
     },
 
     observable,
