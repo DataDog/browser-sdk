@@ -53,5 +53,12 @@ export const config: Config = {
         stdout: /- Local:\s+http:\/\/localhost:(?<nextjs_app_router_port>\d+)/,
       },
     },
+    {
+      stdout: 'pipe' as const,
+      cwd: path.join(__dirname, '../apps/vue-router-app'),
+      command: isLocal ? 'yarn dev' : 'yarn preview',
+      url: 'http://localhost:5175',
+      reuseExistingServer: !isCi,
+    },
   ],
 }
