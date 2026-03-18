@@ -641,8 +641,8 @@ describe('trackClickActions', () => {
       shadowHost.remove()
     })
 
-    it('with betaTrackActionsInShadowDom, gets action name from composedPath', () => {
-      startClickActionsTracking({ betaTrackActionsInShadowDom: true })
+    it('gets action name from composedPath', () => {
+      startClickActionsTracking()
 
       emulateClick({
         target: shadowHost,
@@ -658,8 +658,8 @@ describe('trackClickActions', () => {
       expect(events[0].name).toBe('Shadow Button')
     })
 
-    it('with betaTrackActionsInShadowDom, gets selector with shadow marker from composedPath', () => {
-      startClickActionsTracking({ betaTrackActionsInShadowDom: true })
+    it('gets selector with shadow marker from composedPath', () => {
+      startClickActionsTracking()
 
       emulateClick({
         target: shadowHost,
@@ -674,24 +674,6 @@ describe('trackClickActions', () => {
       expect(events.length).toBe(1)
       expect(events[0].target?.selector).toContain(SHADOW_DOM_MARKER)
       expect(events[0].target?.selector).toContain('BUTTON')
-    })
-
-    it('without betaTrackActionsInShadowDom, selector uses shadow host', () => {
-      startClickActionsTracking({ betaTrackActionsInShadowDom: false })
-
-      emulateClick({
-        target: shadowHost,
-        activity: {},
-        eventProperty: {
-          composed: true,
-          composedPath: () => [shadowButton, shadowHost.shadowRoot, shadowHost, document.body, document],
-        },
-      })
-      clock.tick(EXPIRE_DELAY)
-
-      expect(events.length).toBe(1)
-      expect(events[0].target?.selector).toBe('#shadow-host')
-      expect(events[0].target?.selector).not.toContain(SHADOW_DOM_MARKER)
     })
   })
 })
