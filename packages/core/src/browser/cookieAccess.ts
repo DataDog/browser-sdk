@@ -15,10 +15,7 @@ export interface CookieAccessItem {
 }
 
 export interface CookieAccess {
-  get(): Promise<string | undefined>
-  getAll(): Promise<CookieAccessItem[]>
-  set(value: string, expireDelay: number): Promise<void>
-  delete(): Promise<void>
+  getAllAndSet(cb: (value: string[]) => { value: string; expireDelay: number }): Promise<void>
   observable: CookieObservable
 }
 
@@ -55,21 +52,12 @@ function createCookieStoreAccess(
   })
 
   return {
-    async get() {
-      const item = await cookieStore.get(cookieName)
-      return item?.value ?? undefined
-    },
-
-    async getAll() {
+    async getAllAndSet(cb: (value: string[]) => { value: string; expireDelay: number }) {
       const items = await cookieStore.getAll(cookieName)
-      return items.map((item) => ({
-        value: item.value,
-        domain: item.domain,
-        partitioned: item.partitioned,
-      }))
-    },
 
-    set(value: string, expireDelay: number) {
+      const currentValues = items.map((item) => item.value)
+      const { value, expireDelay } = cb(currentValues)
+
       return cookieStore.set({
         name: cookieName,
         value,
@@ -78,15 +66,6 @@ function createCookieStoreAccess(
         sameSite: cookieOptions.crossSite ? 'none' : 'strict',
         domain: cookieOptions.domain,
         secure: cookieOptions.secure,
-        partitioned: cookieOptions.partitioned,
-      })
-    },
-
-    delete() {
-      return cookieStore.delete({
-        name: cookieName,
-        domain: cookieOptions.domain,
-        path: '/',
         partitioned: cookieOptions.partitioned,
       })
     },
@@ -118,22 +97,10 @@ function createDocumentCookieAccess(cookieName: string, cookieOptions: CookieOpt
   }
 
   return {
-    get() {
-      return Promise.resolve(getCookie(cookieName))
-    },
-
-    getAll() {
-      return Promise.resolve(getCookies(cookieName).map((value) => ({ value })))
-    },
-
-    async set(value: string, expireDelay: number) {
+    getAllAndSet(cb: (value: string[]) => { value: string; expireDelay: number }) {
+      const currentValue = getCookies(cookieName)
+      const { value, expireDelay } = cb(currentValue)
       setCookie(cookieName, value, expireDelay, cookieOptions)
-      await Promise.resolve()
-      motifyCookieValieIfChanged(value)
-    },
-
-    delete() {
-      deleteCookie(cookieName, cookieOptions)
       return Promise.resolve()
     },
 

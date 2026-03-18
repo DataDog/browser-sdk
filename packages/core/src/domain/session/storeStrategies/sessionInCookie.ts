@@ -11,7 +11,6 @@ import {
 import type { SessionState } from '../sessionState'
 import { toSessionString, toSessionState } from '../sessionState'
 import { Observable } from '../../../tools/observable'
-import type { CookieAccess, CookieAccessItem } from '../../../browser/cookieAccess'
 import { createCookieAccess } from '../../../browser/cookieAccess'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
@@ -37,11 +36,14 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
     sessionObservable.notify(state)
   })
 
-  async function applyAndWrite(fn: (state: SessionState) => SessionState) {
-    const items = await cookieAccess.getAll()
-    const currentState = findMatchingSessionState(items, opts)
-    const newState = fn(currentState)
-    await writeSessionState(cookieAccess, trackAnonymousUser, newState, cookieOptions)
+  function applyAndWrite(fn: (state: SessionState) => SessionState) {
+    return cookieAccess.getAllAndSet((cookieValues) => {
+      const currentState = findMatchingSessionState(cookieValues, opts)
+      const newState = fn(currentState)
+      const sessionString = buildSessionString(newState, cookieOptions)
+      const expireDelay = computeExpireDelay(trackAnonymousUser, newState)
+      return { value: sessionString, expireDelay }
+    })
   }
 
   // Promise chain serializes calls when Web Locks are unavailable
@@ -73,11 +75,11 @@ function parseAndStripCookieOptions(cookieValue: string | undefined): SessionSta
   return state
 }
 
-function findMatchingSessionState(items: CookieAccessItem[], opts: string): SessionState {
+function findMatchingSessionState(items: string[], opts: string): SessionState {
   let sessionState: SessionState | undefined
 
   for (const item of items.slice().reverse()) {
-    sessionState = toSessionState(item.value)
+    sessionState = toSessionState(item)
     if (sessionState.c === opts) {
       break
     }
@@ -105,17 +107,6 @@ function buildSessionString(sessionState: SessionState, cookieOptions: CookieOpt
     ...(!isEmptyObject(sessionState) ? { c: encodeCookieOptions(cookieOptions) } : {}),
   }
   return toSessionString(sessionStateWithOptions)
-}
-
-async function writeSessionState(
-  cookieAccess: CookieAccess,
-  trackAnonymousUser: boolean,
-  sessionState: SessionState,
-  cookieOptions: CookieOptions
-) {
-  const sessionString = buildSessionString(sessionState, cookieOptions)
-  const expireDelay = computeExpireDelay(trackAnonymousUser, sessionState)
-  await cookieAccess.set(sessionString, expireDelay)
 }
 
 export function buildCookieOptions(initConfiguration: InitConfiguration): CookieOptions | undefined {
