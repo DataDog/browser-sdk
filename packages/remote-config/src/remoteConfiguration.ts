@@ -291,7 +291,11 @@ function isContextItemArray(value: unknown): value is ContextItem[] {
   )
 }
 
-/** @internal */
+/**
+ * Resolves ContextItem arrays using live browser APIs (cookies, DOM, window.*).
+ *
+ * @internal
+ */
 export function browserContextItemHandler(
   items: ContextItem[],
   resolve: (value: unknown) => unknown
