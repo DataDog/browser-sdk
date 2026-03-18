@@ -57,19 +57,24 @@ describe('validateAndBuildLogsConfiguration', () => {
   })
 
   describe('forwardConsoleLogs', () => {
-    it('contains "error" when forwardErrorsToLogs is enabled', () => {
+    it('does not contain "error" when forwardConsoleLogs is disabled and forwardErrorsToLogs is explicitly enabled', () => {
       expect(
         validateAndBuildLogsConfiguration({ ...DEFAULT_INIT_CONFIGURATION, forwardErrorsToLogs: true })!
           .forwardConsoleLogs
-      ).toEqual(['error'])
+      ).not.toContain('error')
     })
 
-    it('contains "error" once when both forwardErrorsToLogs and forwardConsoleLogs are enabled', () => {
+    it('does not contain "error" when forwardConsoleLogs is disabled and forwardErrorsToLogs is omitted', () => {
+      expect(validateAndBuildLogsConfiguration({ ...DEFAULT_INIT_CONFIGURATION })!.forwardConsoleLogs).not.toContain(
+        'error'
+      )
+    })
+
+    it('contains "error" when forwardConsoleLogs contains "error"', () => {
       expect(
         validateAndBuildLogsConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
           forwardConsoleLogs: ['error'],
-          forwardErrorsToLogs: true,
         })!.forwardConsoleLogs
       ).toEqual(['error'])
     })

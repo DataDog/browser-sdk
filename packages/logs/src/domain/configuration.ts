@@ -48,7 +48,7 @@ export interface LogsInitConfiguration extends InitConfiguration {
   beforeSend?: LogsBeforeSend | undefined
 
   /**
-   * Forward console.error logs, uncaught exceptions and network errors to Datadog.
+   * Forward uncaught exceptions and network errors to Datadog.
    *
    * @category Data Collection
    * @defaultValue true
@@ -113,10 +113,6 @@ export function validateAndBuildLogsConfiguration(
 
   if (!baseConfiguration || !forwardConsoleLogs || !forwardReports) {
     return
-  }
-
-  if (initConfiguration.forwardErrorsToLogs && !forwardConsoleLogs.includes(ConsoleApiName.error)) {
-    forwardConsoleLogs.push(ConsoleApiName.error)
   }
 
   return {
