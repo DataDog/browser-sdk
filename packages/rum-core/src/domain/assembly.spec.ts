@@ -372,27 +372,31 @@ describe('rum assembly', () => {
   describe('service and version', () => {
     const extraConfigurationOptions = { service: 'default-service', version: 'default-version' }
 
-    Object.values(RumEventType).forEach((eventType) => {
-      it(`should be modifiable for ${eventType}`, () => {
-        const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
-          partialConfiguration: {
-            ...extraConfigurationOptions,
-            beforeSend: (event) => {
-              event.service = 'bar'
-              event.version = '0.2.0'
+    // view_update events bypass the assembly pipeline (created post-assembly in startRumBatch)
+    // and are intentionally not modifiable via beforeSend.
+    Object.values(RumEventType)
+      .filter((eventType) => eventType !== RumEventType.VIEW_UPDATE)
+      .forEach((eventType) => {
+        it(`should be modifiable for ${eventType}`, () => {
+          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+            partialConfiguration: {
+              ...extraConfigurationOptions,
+              beforeSend: (event) => {
+                event.service = 'bar'
+                event.version = '0.2.0'
 
-              return true
+                return true
+              },
             },
-          },
-        })
+          })
 
-        notifyRawRumEvent(lifeCycle, {
-          rawRumEvent: createRawRumEvent(eventType),
+          notifyRawRumEvent(lifeCycle, {
+            rawRumEvent: createRawRumEvent(eventType),
+          })
+          expect((serverRumEvents[0] as RumResourceEvent).service).toBe('bar')
+          expect((serverRumEvents[0] as RumResourceEvent).version).toBe('0.2.0')
         })
-        expect((serverRumEvents[0] as RumResourceEvent).service).toBe('bar')
-        expect((serverRumEvents[0] as RumResourceEvent).version).toBe('0.2.0')
       })
-    })
 
     it('should be added to the event as ddtags', () => {
       const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
