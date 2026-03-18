@@ -1,4 +1,11 @@
-import type { Configuration, InitConfiguration, MatchOption, RawTelemetryConfiguration } from '@datadog/browser-core'
+import type {
+  Configuration,
+  InitConfiguration,
+  MatchOption,
+  RawTelemetryConfiguration,
+  User,
+  Context,
+} from '@datadog/browser-core'
 import {
   isMatchOption,
   serializeConfiguration,
@@ -280,6 +287,23 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @category Data Collection
    */
   allowedGraphQlUrls?: Array<MatchOption | GraphQlUrlOption> | undefined
+
+  /**
+   * Sets the initial user context for the session. Equivalent to calling `datadogRum.setUser()`
+   * immediately after `init()`. Can be overridden at any time via `datadogRum.setUser()`.
+   *
+   * @category Data Collection
+   */
+  user?: User | undefined
+
+  /**
+   * Sets initial global context properties for the session. Equivalent to calling
+   * `datadogRum.setGlobalContextProperty()` for each key immediately after `init()`.
+   * Can be overridden at any time via `datadogRum.setGlobalContextProperty()`.
+   *
+   * @category Data Collection
+   */
+  globalContext?: Context | undefined
 }
 
 export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>

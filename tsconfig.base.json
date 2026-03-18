@@ -39,7 +39,9 @@
 
       "@datadog/browser-rum-nextjs": ["./packages/rum-nextjs/src/entries/main"],
 
-      "@datadog/browser-worker": ["./packages/worker/src/entries/main"]
+      "@datadog/browser-worker": ["./packages/worker/src/entries/main"],
+
+      "@datadog/browser-remote-config": ["./packages/remote-config/src/index.ts"]
     }
   }
 }
