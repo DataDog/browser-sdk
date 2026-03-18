@@ -50,8 +50,11 @@ export interface LogsInitConfiguration extends InitConfiguration {
   /**
    * Forward uncaught exceptions and network errors to Datadog.
    *
+   * To capture `console.error` calls, use {@link forwardConsoleLogs} with `"error"` (or `"all"`).
+   *
    * @category Data Collection
    * @defaultValue true
+   * @see forwardConsoleLogs
    */
   forwardErrorsToLogs?: boolean | undefined
 
