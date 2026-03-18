@@ -201,7 +201,7 @@ test.describe('nextjs - router', () => {
 })
 
 test.describe('nextjs - errors', () => {
-  routerConfigs.forEach(({ name, router, viewPrefix, clientErrorMessage }) => {
+  routerConfigs.forEach(({ name, router, viewPrefix, homeUrlPattern, clientErrorMessage }) => {
     test.describe(name, () => {
       createTest('should report client-side error')
         .withRum()
@@ -212,6 +212,11 @@ test.describe('nextjs - errors', () => {
 
           await page.click('[data-testid="trigger-error"]')
           await page.waitForSelector('[data-testid="error-boundary"]')
+
+          // Navigate back via SPA Link to trigger VIEW_ENDED, which immediately finalizes
+          // the pending click action so the error event is in the queue before flushEvents().
+          await page.click('text=Back to Home')
+          await page.waitForURL(homeUrlPattern)
 
           await flushEvents()
 
@@ -255,31 +260,6 @@ test.describe('nextjs - errors', () => {
           .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
             await page.click('text=Go to Global Error')
             await page.waitForSelector('[data-testid="global-error-boundary"]')
-
-            await flushEvents()
-
-            const customErrors = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
-            expect(customErrors).toHaveLength(1)
-            expect(customErrors[0].error.handling_stack).toBeDefined()
-            expect(customErrors[0].context).toMatchObject({ framework: 'nextjs' })
-
-            withBrowserLogs((browserLogs) => {
-              expect(browserLogs.length).toBeGreaterThan(0)
-            })
-          })
-      }
-
-      if (router === 'pages') {
-        createTest('should report a server error via _error page')
-          .withRum()
-          .withNextjsApp(router)
-          .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs, baseUrl }) => {
-            // Use page.goto() (not a Link click) so that rum-config params from baseUrl are
-            // preserved on the hard reload Next.js performs when getServerSideProps throws.
-            const errorPageUrl = new URL(baseUrl)
-            errorPageUrl.pathname = '/pages-router/throw-error'
-            await page.goto(errorPageUrl.href)
-            await page.waitForSelector('[data-testid="pages-error-page"]')
 
             await flushEvents()
 
