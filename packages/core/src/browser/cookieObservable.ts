@@ -22,7 +22,7 @@ function listenToCookieStoreChange(configuration: Configuration) {
   return (cookieName: string, callback: (event: string | undefined) => void) => {
     const listener = addEventListener(
       configuration,
-      (window as CookieStoreWindow).cookieStore!,
+      (window as CookieStoreWindow).cookieStore,
       DOM_EVENT.CHANGE,
       (event) => {
         // Based on our experimentation, we're assuming that entries for the same cookie cannot be in both the 'changed' and 'deleted' arrays.

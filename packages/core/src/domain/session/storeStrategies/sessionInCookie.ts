@@ -11,7 +11,6 @@ import {
 import type { SessionState } from '../sessionState'
 import { toSessionString, toSessionState } from '../sessionState'
 import { Observable } from '../../../tools/observable'
-import { createCookieObservable } from '../../../browser/cookieObservable'
 import type { CookieAccess, CookieAccessItem } from '../../../browser/cookieAccess'
 import { createCookieAccess } from '../../../browser/cookieAccess'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './sessionStoreStrategy'
@@ -29,12 +28,11 @@ export function selectCookieStrategy(initConfiguration: InitConfiguration): Sess
 export function initCookieStrategy(cookieOptions: CookieOptions, configuration: Configuration): SessionStoreStrategy {
   const sessionObservable = new Observable<SessionState>()
 
-  const cookieAccess = createCookieAccess(SESSION_STORE_KEY, cookieOptions)
+  const cookieAccess = createCookieAccess(SESSION_STORE_KEY, configuration, cookieOptions)
   const trackAnonymousUser = !!configuration.trackAnonymousUser
   const opts = encodeCookieOptions(cookieOptions)
 
-  const cookieObservable = createCookieObservable(configuration, SESSION_STORE_KEY)
-  cookieObservable.subscribe((cookieValue) => {
+  cookieAccess.observable.subscribe((cookieValue) => {
     const state = parseAndStripCookieOptions(cookieValue)
     sessionObservable.notify(state)
   })
