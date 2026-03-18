@@ -18,6 +18,8 @@ export enum ExperimentalFeature {
   FEATURE_OPERATION_VITAL = 'feature_operation_vital',
   TOO_MANY_REQUESTS_INVESTIGATION = 'too_many_requests_investigation',
   SESSION_RENEWAL_DEBUG_CONTEXT = 'session_renewal_debug_context',
+  PARTIAL_VIEW_UPDATES = 'partial_view_updates',
+  PARTIAL_VIEW_UPDATES_NO_CHECKPOINT = 'partial_view_updates_no_checkpoint',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()
