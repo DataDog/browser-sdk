@@ -3,7 +3,7 @@ import { Component } from '@angular/core'
 import { bootstrapApplication } from '@angular/platform-browser'
 import { provideRouter, RouterOutlet, RouterLink, type Routes } from '@angular/router'
 import { datadogRum } from '@datadog/browser-rum'
-import { angularPlugin, provideDatadogRouter } from '@datadog/browser-rum-angular'
+import { angularPlugin, provideDatadogRouter, provideDatadogErrorHandler } from '@datadog/browser-rum-angular'
 
 declare global {
   interface Window {
@@ -28,10 +28,22 @@ if (window.RUM_CONTEXT) {
     <h1>Initial Route</h1>
     <a routerLink="/parameterized/42">Go to Parameterized Route</a><br />
     <a routerLink="/parent/nested">Go to Nested Route</a><br />
-    <a routerLink="/unknown/page">Go to Wildcard Route</a>
+    <a routerLink="/unknown/page">Go to Wildcard Route</a><br />
+    <button id="throw-error" (click)="throwError()">Throw Error</button>
+    <button id="throw-error-with-context" (click)="throwErrorWithContext()">Throw Error With Context</button>
   `,
 })
-class InitialRouteComponent {}
+class InitialRouteComponent {
+  throwError() {
+    throw new Error('angular error from component')
+  }
+
+  throwErrorWithContext() {
+    const error = new Error('angular error with dd_context')
+    ;(error as any).dd_context = { component: 'InitialRoute', userId: 42 }
+    throw error
+  }
+}
 
 @Component({
   selector: 'app-parameterized-route',
@@ -83,5 +95,5 @@ const rootElement = document.createElement('app-root')
 document.body.appendChild(rootElement)
 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
 void bootstrapApplication(AppComponent, {
-  providers: [provideRouter(routes), provideDatadogRouter()],
+  providers: [provideRouter(routes), provideDatadogRouter(), provideDatadogErrorHandler()],
 })
