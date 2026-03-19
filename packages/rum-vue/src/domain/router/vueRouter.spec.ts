@@ -31,6 +31,31 @@ describe('createRouter (wrapped)', () => {
       .catch(done.fail)
   })
 
+  it('does not call startView when navigation is duplicated', (done) => {
+    const startViewSpy = jasmine.createSpy()
+    initializeVuePlugin({
+      configuration: { router: true },
+      publicApi: { startView: startViewSpy },
+    })
+
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: '/', component: {} }],
+    })
+
+    router
+      .push('/')
+      .then(() => {
+        startViewSpy.calls.reset()
+        return router.push('/')
+      })
+      .then(() => {
+        expect(startViewSpy).not.toHaveBeenCalled()
+        done()
+      })
+      .catch(done.fail)
+  })
+
   it('does not call startView when navigation is blocked', (done) => {
     const startViewSpy = jasmine.createSpy()
     initializeVuePlugin({
