@@ -29,7 +29,10 @@ export function addAngularError(error: unknown) {
         error,
         handlingStack,
         startClocks,
-        context: { ...(error as Error & { dd_context?: Context }).dd_context, framework: 'angular' },
+        context: {
+          ...(typeof error === 'object' && error !== null ? (error as { dd_context?: Context }).dd_context : undefined),
+          framework: 'angular',
+        },
       })
     })
   })
