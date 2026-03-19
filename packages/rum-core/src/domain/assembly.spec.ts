@@ -76,6 +76,22 @@ describe('rum assembly', () => {
 
           expect((serverRumEvents[0].view as any).performance.lcp.resource_url).toBe('modified_url')
         })
+
+        it('should allow modification of error.handling_stack', () => {
+          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+            partialConfiguration: {
+              beforeSend: (event) => (event.error.handling_stack = 'modified_handling_stack'),
+            },
+          })
+
+          notifyRawRumEvent(lifeCycle, {
+            rawRumEvent: createRawRumEvent(RumEventType.ERROR, {
+              error: { handling_stack: 'original_handling_stack' },
+            }),
+          })
+
+          expect((serverRumEvents[0].error as any).handling_stack).toBe('modified_handling_stack')
+        })
       })
 
       describe('context field', () => {
