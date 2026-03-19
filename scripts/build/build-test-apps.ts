@@ -9,11 +9,13 @@ import { modifyFile } from '../lib/filesUtils.ts'
 type AppConfig<T extends AppBuilderOptions = AppBuilderOptions> =
   | {
       name: string
+      deps?: string[]
     }
   | {
       name: string
-      builderFn(appName: string, options: T): Promise<void> | void
-      options: T
+      builderFn(appName: string, options?: T): Promise<void> | void
+      options?: T
+      deps?: string[]
     }
 
 type AppBuilderOptions = Record<string, unknown>
@@ -31,31 +33,68 @@ const APPS: AppConfig[] = [
 
   // browser extensions
   { name: 'base-extension' },
-  { name: 'cdn-extension', builderFn: buildExtension },
+  {
+    name: 'cdn-extension',
+    builderFn: buildExtension,
+    deps: ['base-extension'],
+  },
   {
     name: 'appendChild-extension',
     builderFn: buildExtension,
-    options: {
-      runAt: 'document_start',
-    },
+    options: { runAt: 'document_start' },
+    deps: ['base-extension'],
   },
 ]
 
-const { values } = parseArgs({
-  options: {
-    app: {
-      type: 'string',
-      multiple: true,
-      short: 'a',
+runMain(async () => {
+  const { values } = parseArgs({
+    options: {
+      app: {
+        type: 'string',
+        multiple: true,
+        short: 'a',
+      },
+      help: {
+        type: 'boolean',
+        short: 'h',
+      },
     },
-    help: {
-      type: 'boolean',
-      short: 'h',
-    },
-  },
+  })
+
+  if (values.help) {
+    showHelpAndExit()
+  }
+
+  const appsToBuild = values.app ? APPS.filter((app) => values.app!.includes(app.name)) : APPS
+
+  if (appsToBuild.length === 0) {
+    printLog('No valid app specified. Use --help to see available options.')
+    process.exit(1)
+  }
+
+  printLog('Packing packages...')
+  command`yarn run pack`.run()
+
+  const built = new Set<string>()
+  for (const app of appsToBuild) {
+    for (const dep of app.deps ?? []) {
+      if (!built.has(dep)) {
+        buildApp(dep)
+        built.add(dep)
+      }
+    }
+    if ('builderFn' in app) {
+      await app.builderFn(app.name, app.options)
+    } else {
+      buildApp(app.name)
+    }
+    built.add(app.name)
+  }
+
+  printLog('Test apps and extensions built successfully.')
 })
 
-if (values.help) {
+function showHelpAndExit() {
   console.log('Usage: node build-test-apps.ts [--app <name>] [--help]')
   console.log('')
   console.log('Options:')
@@ -68,23 +107,6 @@ if (values.help) {
   }
   process.exit(0)
 }
-
-const appsToBuild = values.app ? APPS.filter((app) => values.app!.includes(app.name)) : APPS
-
-runMain(async () => {
-  printLog('Packing packages...')
-  command`yarn run pack`.run()
-
-  for (const app of appsToBuild) {
-    if ('builderFn' in app) {
-      await app.builderFn(app.name, app.options)
-    } else {
-      buildApp(app.name)
-    }
-  }
-
-  printLog('Test apps and extensions built successfully.')
-})
 
 function buildApp(appName: string) {
   const appPath = `test/apps/${appName}`
@@ -138,9 +160,10 @@ async function buildReactRouterv7App() {
   buildApp('react-router-v7-app')
 }
 
-async function buildExtension(appName: string, options: { runAt?: string }): Promise<void> {
+async function buildExtension(appName: string, options?: { runAt?: string }): Promise<void> {
   const baseExtDir = 'test/apps/base-extension'
   const targetDir = `test/apps/${appName}`
+
   printLog(`Building app at ${targetDir}...`)
 
   fs.rmSync(targetDir, { recursive: true, force: true })
