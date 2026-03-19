@@ -6,9 +6,9 @@ describe('provideDatadogErrorHandler', () => {
     const addErrorSpy = jasmine.createSpy()
     initializeAngularPlugin({ addError: addErrorSpy })
 
-    const provider = provideDatadogErrorHandler()
+    const providers = provideDatadogErrorHandler()
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    const handler = new (provider as any).useClass() as { handleError: (error: unknown) => void }
+    const handler = new (providers as any).ɵproviders[0].useClass() as { handleError: (error: unknown) => void }
 
     const error = new Error('test error')
     handler.handleError(error)
@@ -19,9 +19,9 @@ describe('provideDatadogErrorHandler', () => {
   it('still logs the error to the console via default ErrorHandler', () => {
     initializeAngularPlugin()
 
-    const provider = provideDatadogErrorHandler()
+    const providers = provideDatadogErrorHandler()
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    const handler = new (provider as any).useClass() as { handleError: (error: unknown) => void }
+    const handler = new (providers as any).ɵproviders[0].useClass() as { handleError: (error: unknown) => void }
 
     const consoleErrorSpy = spyOn(console, 'error')
     const error = new Error('test error')
