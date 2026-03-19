@@ -17,6 +17,19 @@ yarn test:e2e -g "unhandled rejections"
 
 **Important**: `yarn test:e2e` does not build the SDK automatically. Run `yarn build:bundle` if you have made changes to the source code and `yarn build:apps` to rebuild the test Apps (because some of them are bundled with the SDK).
 
+To rebuild only specific apps (faster during development):
+
+```bash
+# List available apps
+yarn build:apps --help
+
+# Build a single app
+yarn build:apps --app vanilla
+
+# Build multiple apps
+yarn build:apps --app vanilla --app react-heavy-spa
+```
+
 ## Test Apps
 
 Located in `test/apps/`:
