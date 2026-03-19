@@ -49,20 +49,16 @@ module.exports = {
 
 ## Work with E2E tests
 
-E2E tests are run via [Playwright](https://playwright.dev/docs/test-configuration).
+See `test/e2e/AGENTS.md` for the full E2E testing guide (setup, writing tests, createTest builder, IntakeRegistry, best practices).
 
-**Most useful commands:**
+Quick commands:
 
-- `yarn test:e2e --ui` — run Playwright locally in [UI mode](https://playwright.dev/docs/test-ui-mode)
-- `yarn test:e2e -g "unhandled rejections"` — run tests whose names match _"unhandled rejections"_
-- `yarn test:e2e --debug` — run Playwright in [debug mode](https://playwright.dev/docs/debug#run-in-debug-mode-1)
-- `yarn test:e2e --project firefox` — run tests in Firefox. Other options: `chromium` (default), `firefox`, `webkit`, `android`, `*` (all)
-- `yarn test:e2e --repeat-each 3` — run each test 3 times, useful for catching flaky tests
-- `BS_USERNAME=<username> BS_ACCESS_KEY=<access_key> yarn test:e2e:bs` — run the tests in [Browserstack](https://www.browserstack.com/accounts/profile/details)
+- `yarn test:e2e:init` — first-time setup
+- `yarn test:e2e` — run all E2E tests
+- `yarn test:e2e -g "pattern"` — filter by name
+- `yarn test:e2e --ui` — Playwright UI mode
 
-> `yarn test:e2e` does not build the SDK automatically. Run `yarn build:bundle` if you have made changes to the SDK source code.
+## Run tests in browserstack
 
-**Tips:**
-
-- `expect([1, 2, 3]).toHaveLength(3)` shows a better error message when failing, including the actual array content.
-- `await page.pause()` to use with `--debug`.
+- `BS_USERNAME=<username> BS_ACCESS_KEY=<access_key> yarn test:unit:bs` - unit tests
+- `BS_USERNAME=<username> BS_ACCESS_KEY=<access_key> yarn test:e2e:bs` - e2e tests

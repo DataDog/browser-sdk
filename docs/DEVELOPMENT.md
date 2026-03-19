@@ -7,29 +7,25 @@ label our Commit messages and Pull Request titles:
 
 ### User-facing changes
 
-💥 - Breaking change.
-
-✨ - New feature.
-
-🐛 - Bug fix.
-
-⚡️ - Performance improvement.
-
-📝 - Documentation.
-
-⚗ - Experimental.
+- 💥 **Breaking change** - Breaking API changes
+- ✨ **New feature** - New public API, behavior, event, property
+- 🐛 **Bug fix** - Fix bugs, regressions, crashes
+- ⚡️ **Performance** - Improve performance, reduce bundle size
+- 📝 **Documentation** - User-facing documentation
+- ⚗️ **Experimental** - New public feature behind a feature flag
 
 ### Internal changes
 
-👷 - Updating project setup (continuous integration, build system, package dependencies...).
-
-♻️ - Refactoring code.
-
-🎨 - Improving structure / format of the code.
-
-✅ - Updating tests.
-
-👌 - Updating code due to code review changes.
+- 👷 **Build/CI** - Dependencies, tooling, deployment, CI config
+- ♻️ **Refactor** - Code restructuring, architectural changes
+- 🎨 **Code structure** - Improve code structure, formatting
+- ✅ **Tests** - Add/fix/improve tests
+- 🔧 **Configuration** - Config files, project setup
+- 🔥 **Removal** - Remove code, features, deprecated items
+- 👌 **Code review** - Address code review feedback
+- 🚨 **Linting** - Add/fix linter rules
+- 🧹 **Cleanup** - Minor cleanup, housekeeping
+- 🔊 **Logging** - Add/modify debug logs, telemetry
 
 ## Dependency Management
 
