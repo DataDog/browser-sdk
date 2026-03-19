@@ -51,4 +51,46 @@ test.describe('angular plugin', () => {
       const firstView = viewEvents[0]
       expect(firstView.view.name).toBe('/')
     })
+
+  createTest('should report errors caught by provideDatadogErrorHandler')
+    .withRum()
+    .withApp('angular-app')
+    .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
+      await page.click('#throw-error')
+      await flushEvents()
+
+      const angularErrors = intakeRegistry.rumErrorEvents.filter((event) => event.context?.framework === 'angular')
+      expect(angularErrors).toHaveLength(1)
+      expect(angularErrors[0].error.message).toBe('angular error from component')
+      expect(angularErrors[0].error.handling).toBe('handled')
+      expect(angularErrors[0].error.source).toBe('custom')
+      expect(angularErrors[0].error.handling_stack).toEqual(expect.stringContaining('angular error'))
+
+      withBrowserLogs((browserLogs) => {
+        expect(browserLogs.filter((log) => log.level === 'error').length).toBeGreaterThan(0)
+      })
+    })
+
+  createTest('should merge dd_context from the error object into the event context')
+    .withRum()
+    .withApp('angular-app')
+    .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
+      await page.click('#throw-error-with-context')
+      await flushEvents()
+
+      const angularErrors = intakeRegistry.rumErrorEvents.filter((event) => event.context?.framework === 'angular')
+      expect(angularErrors).toHaveLength(1)
+      expect(angularErrors[0].error.message).toBe('angular error with dd_context')
+      expect(angularErrors[0].context).toEqual(
+        expect.objectContaining({
+          framework: 'angular',
+          component: 'InitialRoute',
+          userId: 42,
+        })
+      )
+
+      withBrowserLogs((browserLogs) => {
+        expect(browserLogs.filter((log) => log.level === 'error').length).toBeGreaterThan(0)
+      })
+    })
 })
