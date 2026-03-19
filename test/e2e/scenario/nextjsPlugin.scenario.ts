@@ -201,22 +201,22 @@ test.describe('nextjs - router', () => {
 })
 
 test.describe('nextjs - errors', () => {
-  routerConfigs.forEach(({ name, router, viewPrefix, homeUrlPattern, clientErrorMessage }) => {
+  routerConfigs.forEach(({ name, router, viewPrefix, clientErrorMessage }) => {
     test.describe(name, () => {
       createTest('should report client-side error')
         .withRum()
         .withNextjsApp(router)
-        .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
+        .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs, browserName }) => {
           await page.click('text=Go to Error Test')
           await page.waitForURL(`**${viewPrefix}/error-test`)
 
           await page.click('[data-testid="trigger-error"]')
           await page.waitForSelector('[data-testid="error-boundary"]')
 
-          // Navigate back via SPA Link to trigger VIEW_ENDED, which immediately finalizes
-          // the pending click action so the error event is in the queue before flushEvents().
-          await page.click('text=Back to Home')
-          await page.waitForURL(homeUrlPattern)
+          // TODO: Remove this once we know why Firefox is delaying the error event
+          if (browserName === 'firefox') {
+            await page.waitForTimeout(3000)
+          }
 
           await flushEvents()
 

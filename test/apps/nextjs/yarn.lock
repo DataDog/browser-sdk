@@ -23,28 +23,26 @@ __metadata:
 
 "@datadog/browser-rum-nextjs@file:../../../packages/rum-nextjs/package.tgz::locator=nextjs%40workspace%3A.":
   version: 0.0.0
-  resolution: "@datadog/browser-rum-nextjs@file:../../../packages/rum-nextjs/package.tgz#../../../packages/rum-nextjs/package.tgz::hash=9e606a&locator=nextjs%40workspace%3A."
+  resolution: "@datadog/browser-rum-nextjs@file:../../../packages/rum-nextjs/package.tgz#../../../packages/rum-nextjs/package.tgz::hash=528334&locator=nextjs%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.31.0"
     "@datadog/browser-rum-core": "npm:6.31.0"
+    "@datadog/browser-rum-react": "npm:6.31.0"
   peerDependencies:
-    "@datadog/browser-rum-react": 6.31.0
     next: ">=13.0.0"
     react: ">=18.0.0"
   peerDependenciesMeta:
-    "@datadog/browser-rum-react":
-      optional: true
     next:
       optional: true
     react:
       optional: true
-  checksum: 10c0/c76831c738de5a8d7edc63daf07ca5a9ce63412e624c9dc100f234ecb882c158a4b899e02351c1e35d41025768ac454fc5f8d5befe0c8187d07e8d6eea20f19d
+  checksum: 10c0/08d0f50b13a5e2a32b40e14cb9b7c9e78fabc728bfeb7f172ba1aa0e232989c4ab9a2e6fc9a1194d02aeec4ad259a9448cb3745268bea7c9dcb302d7aae90e50
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum-react@file:../../../packages/rum-react/package.tgz::locator=nextjs%40workspace%3A.":
   version: 6.31.0
-  resolution: "@datadog/browser-rum-react@file:../../../packages/rum-react/package.tgz#../../../packages/rum-react/package.tgz::hash=bceee8&locator=nextjs%40workspace%3A."
+  resolution: "@datadog/browser-rum-react@file:../../../packages/rum-react/package.tgz#../../../packages/rum-react/package.tgz::hash=ff7bfc&locator=nextjs%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.31.0"
     "@datadog/browser-rum-core": "npm:6.31.0"
@@ -63,7 +61,7 @@ __metadata:
       optional: true
     react-router-dom:
       optional: true
-  checksum: 10c0/03bf4d5f3f94b4d5b864b5415332fbd746a3c4700eeeecfabf040a2bb822a93b73e954ab88e1f7ac7ea33fa1c237942d5292dcfa5eb256713b190cc0cd54b53c
+  checksum: 10c0/6d2a5f34727c9763abd67aaf9d2ba501e9fd38e8d754a15672e929dc4a37c93c85cdce08ce307122b9d055c688dfee0147315f3679fa377620318b4ab84f00bc
   languageName: node
   linkType: hard
 
