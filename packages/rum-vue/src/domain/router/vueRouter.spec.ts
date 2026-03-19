@@ -56,6 +56,52 @@ describe('createRouter (wrapped)', () => {
       .catch(done.fail)
   })
 
+  it('does not call startView when only query params change', (done) => {
+    const startViewSpy = jasmine.createSpy()
+    initializeVuePlugin({
+      configuration: { router: true },
+      publicApi: { startView: startViewSpy },
+    })
+
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: '/products', component: {} }],
+    })
+
+    router
+      .push('/products?page=1')
+      .then(() => {
+        startViewSpy.calls.reset()
+        return router.push('/products?page=2')
+      })
+      .then(() => {
+        expect(startViewSpy).not.toHaveBeenCalled()
+        done()
+      })
+      .catch(done.fail)
+  })
+
+  it('calls startView on initial navigation to /', (done) => {
+    const startViewSpy = jasmine.createSpy()
+    initializeVuePlugin({
+      configuration: { router: true },
+      publicApi: { startView: startViewSpy },
+    })
+
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: '/', component: {} }],
+    })
+
+    router
+      .push('/')
+      .then(() => {
+        expect(startViewSpy).toHaveBeenCalledOnceWith('/')
+        done()
+      })
+      .catch(done.fail)
+  })
+
   it('does not call startView when navigation is blocked', (done) => {
     const startViewSpy = jasmine.createSpy()
     initializeVuePlugin({
