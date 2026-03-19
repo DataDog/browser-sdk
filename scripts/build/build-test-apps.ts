@@ -1,32 +1,93 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import { parseArgs } from 'node:util'
 
 import { printLog, runMain } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
 import { modifyFile } from '../lib/filesUtils.ts'
 
-const OTHER_EXTENSIONS: Array<{ name: string; options?: { runAt?: string } }> = [
-  { name: 'cdn' },
-  { name: 'appendChild', options: { runAt: 'document_start' } },
+type AppConfig<T extends AppBuilderOptions = AppBuilderOptions> =
+  | {
+      name: string
+    }
+  | {
+      name: string
+      builderFn(appName: string, options: T): Promise<void> | void
+      options: T
+    }
+
+type AppBuilderOptions = Record<string, unknown>
+
+const APPS: AppConfig[] = [
+  { name: 'vanilla' },
+  { name: 'react-heavy-spa' },
+  { name: 'react-shopist-like' },
+  { name: 'microfrontend' },
+  { name: 'nextjs' },
+
+  // React Router apps
+  { name: 'react-router-v6-app' },
+  { name: 'react-router-v7-app', builderFn: buildReactRouterv7App },
+
+  // browser extensions
+  { name: 'base-extension' },
+  { name: 'cdn-extension', builderFn: buildExtension },
+  {
+    name: 'appendChild-extension',
+    builderFn: buildExtension,
+    options: {
+      runAt: 'document_start',
+    },
+  },
 ]
+
+const { values } = parseArgs({
+  options: {
+    app: {
+      type: 'string',
+      multiple: true,
+      short: 'a',
+    },
+    help: {
+      type: 'boolean',
+      short: 'h',
+    },
+  },
+})
+
+if (values.help) {
+  console.log('Usage: node build-test-apps.ts [--app <name>] [--help]')
+  console.log('')
+  console.log('Options:')
+  console.log('  --app, -a  Build a specific app (can be repeated for multiple apps)')
+  console.log('  --help, -h  Show this help message')
+  console.log('')
+  console.log('Available apps:')
+  for (const app of APPS) {
+    console.log(`  ${app.name}`)
+  }
+  process.exit(0)
+}
+
+const appsToBuild = values.app ? APPS.filter((app) => values.app!.includes(app.name)) : APPS
 
 runMain(async () => {
   printLog('Packing packages...')
   command`yarn run pack`.run()
 
-  buildApp('test/apps/vanilla')
-  buildApp('test/apps/react-router-v6-app')
-  buildApp('test/apps/react-heavy-spa')
-  buildApp('test/apps/react-shopist-like')
-  buildApp('test/apps/microfrontend')
-  await buildReactRouterv7App()
-  await buildExtensions()
-  buildApp('test/apps/nextjs')
+  for (const app of appsToBuild) {
+    if ('builderFn' in app) {
+      await app.builderFn(app.name, app.options)
+    } else {
+      buildApp(app.name)
+    }
+  }
 
   printLog('Test apps and extensions built successfully.')
 })
 
-function buildApp(appPath: string) {
+function buildApp(appName: string) {
+  const appPath = `test/apps/${appName}`
   printLog(`Building app at ${appPath}...`)
   command`yarn install --no-immutable`.withCurrentWorkingDirectory(appPath).run()
 
@@ -74,28 +135,25 @@ async function buildReactRouterv7App() {
       .replace('react-router-v6-app.js', 'react-router-v7-app.js')
   )
 
-  buildApp(appPath)
+  buildApp('react-router-v7-app')
 }
 
-async function buildExtensions(): Promise<void> {
+async function buildExtension(appName: string, options: { runAt?: string }): Promise<void> {
   const baseExtDir = 'test/apps/base-extension'
+  const targetDir = `test/apps/${appName}`
+  printLog(`Building app at ${targetDir}...`)
 
-  buildApp(baseExtDir)
+  fs.rmSync(targetDir, { recursive: true, force: true })
+  fs.cpSync(baseExtDir, targetDir, { recursive: true })
 
-  for (const { name, options } of OTHER_EXTENSIONS) {
-    const targetDir = path.join('test/apps', `${name}-extension`)
+  const manifestPath = path.join(targetDir, 'manifest.json')
+  await modifyFile(manifestPath, (originalContent: string) => {
+    const filename = appName.replace('-extension', '')
+    let content = originalContent.replace('dist/base.js', `dist/${filename}.js`)
 
-    fs.rmSync(targetDir, { recursive: true, force: true })
-    fs.cpSync(baseExtDir, targetDir, { recursive: true })
-
-    const manifestPath = path.join(targetDir, 'manifest.json')
-    await modifyFile(manifestPath, (originalContent: string) => {
-      let content = originalContent.replace('dist/base.js', `dist/${name}.js`)
-
-      if (options?.runAt) {
-        content = content.replace('document_end', options.runAt)
-      }
-      return content
-    })
-  }
+    if (options?.runAt) {
+      content = content.replace('document_end', options.runAt)
+    }
+    return content
+  })
 }
