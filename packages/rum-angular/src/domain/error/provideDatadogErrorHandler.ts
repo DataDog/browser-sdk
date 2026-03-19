@@ -1,6 +1,6 @@
-import type { Provider } from '@angular/core'
+import type { EnvironmentProviders } from '@angular/core'
 // eslint-disable-next-line local-rules/disallow-side-effects
-import { ErrorHandler } from '@angular/core'
+import { ErrorHandler, makeEnvironmentProviders } from '@angular/core'
 import { addAngularError } from './addAngularError'
 
 // eslint-disable-next-line no-restricted-syntax
@@ -24,6 +24,6 @@ class DatadogErrorHandler extends ErrorHandler {
  * })
  * ```
  */
-export function provideDatadogErrorHandler(): Provider {
-  return { provide: ErrorHandler, useClass: DatadogErrorHandler }
+export function provideDatadogErrorHandler(): EnvironmentProviders {
+  return makeEnvironmentProviders([{ provide: ErrorHandler, useClass: DatadogErrorHandler }])
 }
