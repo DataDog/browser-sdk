@@ -6,7 +6,7 @@ export {
   bundleSetup,
   html,
   npmSetup,
-  reactSetup,
+  appSetup,
   formatConfiguration,
   createCrossOriginScriptUrls,
   microfrontendSetup,
