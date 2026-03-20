@@ -31,11 +31,7 @@ describe('telemetrySessionContext', () => {
   })
 
   it('should merge extraContext into the result', () => {
-    startTelemetrySessionContext(
-      hooks,
-      createSessionManagerMock(),
-      { application: { id: 'app-789' } }
-    )
+    startTelemetrySessionContext(hooks, createSessionManagerMock(), { application: { id: 'app-789' } })
 
     const result = hooks.triggerHook(HookNames.AssembleTelemetry, { startTime: 0 as RelativeTime })
 
