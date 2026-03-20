@@ -36,19 +36,6 @@ export type BrowserProfileEvent = ProfileCommonProperties & {
      */
     readonly label: string[]
   }
-  /**
-   * Vital properties.
-   */
-  readonly vital?: {
-    /**
-     * Array of vital IDs.
-     */
-    readonly id: string[]
-    /**
-     * Array of vital labels.
-     */
-    readonly label: string[]
-  }
 }
 
 /**
@@ -94,6 +81,19 @@ export interface ProfileCommonProperties {
      * Array of long task IDs.
      */
     readonly id: string[]
+  }
+  /**
+   * Vital properties.
+   */
+  readonly vital?: {
+    /**
+     * Array of vital IDs.
+     */
+    readonly id: string[]
+    /**
+     * Array of vital labels.
+     */
+    readonly label: string[]
   }
   /**
    * List of attachment filenames.
