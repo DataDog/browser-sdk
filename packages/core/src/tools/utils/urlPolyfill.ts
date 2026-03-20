@@ -42,7 +42,7 @@ export function getPristineWindow() {
       iframe = document.createElement('iframe')
       iframe.style.display = 'none'
       document.body.appendChild(iframe)
-      pristineWindow = iframe.contentWindow as Window & typeof globalThis
+      pristineWindow = (iframe.contentWindow ?? globalObject) as Window & typeof globalThis
     } catch {
       pristineWindow = globalObject as unknown as Window & typeof globalThis
     }
