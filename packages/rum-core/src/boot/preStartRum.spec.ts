@@ -621,17 +621,18 @@ describe('preStartRum', () => {
       expect(addTimingSpy).toHaveBeenCalledOnceWith(name, time)
     })
 
-    it('setLoadingTime', () => {
+    it('setLoadingTime', async () => {
       const setLoadingTimeSpy = jasmine.createSpy()
       doStartRumSpy.and.returnValue({ setLoadingTime: setLoadingTimeSpy } as unknown as StartRumResult)
 
       const timestamp = 123 as TimeStamp
       strategy.setLoadingTime(timestamp)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      await collectAsyncCalls(setLoadingTimeSpy, 1)
       expect(setLoadingTimeSpy).toHaveBeenCalledOnceWith(timestamp)
     })
 
-    it('setLoadingTime should preserve call timestamp', () => {
+    it('setLoadingTime should preserve call timestamp', async () => {
       const clock = mockClock()
       const setLoadingTimeSpy = jasmine.createSpy()
       doStartRumSpy.and.returnValue({ setLoadingTime: setLoadingTimeSpy } as unknown as StartRumResult)
@@ -641,6 +642,7 @@ describe('preStartRum', () => {
 
       clock.tick(20)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      await collectAsyncCalls(setLoadingTimeSpy, 1)
 
       expect(setLoadingTimeSpy).toHaveBeenCalledOnceWith(jasmine.any(Number))
       // Verify the timestamp was captured at call time (tick 10), not at drain time (tick 30)

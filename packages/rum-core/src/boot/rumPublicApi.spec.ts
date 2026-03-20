@@ -81,7 +81,7 @@ describe('rum public api', () => {
         }))
       })
 
-      it('passes addError to plugins on rum start', () => {
+      it('passes addError to plugins on rum start', async () => {
         const plugin = { name: 'test-plugin', onRumStart: jasmine.createSpy() }
 
         rumPublicApi.init({
@@ -89,6 +89,7 @@ describe('rum public api', () => {
           plugins: [plugin],
         })
 
+        await collectAsyncCalls(plugin.onRumStart, 1)
         expect(plugin.onRumStart).toHaveBeenCalledWith(
           jasmine.objectContaining({
             addError: jasmine.any(Function),
@@ -601,11 +602,12 @@ describe('rum public api', () => {
       }))
     })
 
-    it('should call setLoadingTime with timestamp', () => {
+    it('should call setLoadingTime with timestamp', async () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
       rumPublicApi.setViewLoadingTime()
 
+      await collectAsyncCalls(setLoadingTimeSpy, 1)
       expect(setLoadingTimeSpy).toHaveBeenCalledOnceWith(jasmine.any(Number))
     })
 
