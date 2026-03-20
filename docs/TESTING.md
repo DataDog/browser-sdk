@@ -31,21 +31,7 @@ Use this strategy to test the integration on Real applications.
 Top-level `describe` blocks are run in a random order. Sometimes, an issue can only be reproduced with a given order. To reproduce a test run order:
 
 1. Check the `Randomized with seed XXXX` message from the test output.
-2. Temporarily set it as a `seed: XXXX` property in the [jasmine configuration](https://github.com/DataDog/browser-sdk/blob/c876a52fd91e4492d8842c135875fb6c197234b4/test/unit/karma.base.conf.js#L19):
-
-```js
-module.exports = {
-  // ...,
-  client: {
-    jasmine: {
-      // ...,
-      seed: 80413,
-    },
-  },
-}
-```
-
-1. Run `yarn test`.
+2. Run `yarn test:unit --seed XXXX`.
 
 ## Work with E2E tests
 
