@@ -1,5 +1,5 @@
 import type { SessionManager } from '@datadog/browser-core'
-import { DISCARDED, HookNames, SKIPPED } from '@datadog/browser-core'
+import { DISCARDED, HookNames } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../configuration'
 import type { Hooks } from '../hooks'
 
@@ -19,18 +19,6 @@ export function startSessionContext(hooks: Hooks, configuration: LogsConfigurati
       service: configuration.service,
       session_id: session ? session.id : undefined,
       session: session ? { id: session.id } : undefined,
-    }
-  })
-
-  hooks.register(HookNames.AssembleTelemetry, ({ startTime }) => {
-    const session = sessionManager.findTrackedSession(startTime)
-
-    if (!session) {
-      return SKIPPED
-    }
-
-    return {
-      session: { id: session.id },
     }
   })
 }

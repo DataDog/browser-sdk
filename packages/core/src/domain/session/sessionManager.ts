@@ -12,6 +12,7 @@ import type { TrackingConsentState } from '../trackingConsent'
 import { isWorkerEnvironment } from '../../tools/globalObject'
 import { display } from '../../tools/display'
 import { isSampled } from '../sampler'
+import { monitorError } from '../../tools/monitor'
 import { SESSION_TIME_OUT_DELAY, SessionPersistence } from './sessionConstants'
 import type { SessionState } from './sessionState'
 import {
@@ -187,7 +188,7 @@ export function startSessionManager(
   let previousState: SessionState = {}
 
   const { throttled: throttledExpandOrRenew, cancel: cancelExpandOrRenew } = throttle(() => {
-    void strategy.setSessionState((state) => expandOrRenew(state, configuration))
+    strategy.setSessionState((state) => expandOrRenew(state, configuration)).catch(monitorError)
   }, ONE_SECOND)
   stopCallbacks.push(cancelExpandOrRenew)
 
@@ -195,8 +196,7 @@ export function startSessionManager(
   stopCallbacks.push(() => {
     stopped = true
   })
-
-  void (async () => {
+  ;(async () => {
     const initialState = await resolveInitialState()
     if (stopped) {
       return
@@ -212,7 +212,7 @@ export function startSessionManager(
     subscribeToSessionChanges(initialState)
     setupSessionTracking()
     onReady(buildSessionManager())
-  })()
+  })().catch(monitorError)
 
   async function resolveInitialState() {
     let state: SessionState = {}
@@ -244,7 +244,7 @@ export function startSessionManager(
   function setupSessionTracking() {
     trackingConsentState.observable.subscribe(() => {
       if (trackingConsentState.isGranted()) {
-        void strategy.setSessionState((state) => expandOrRenew(state, configuration))
+        strategy.setSessionState((state) => expandOrRenew(state, configuration)).catch(monitorError)
       } else {
         expire()
       }
@@ -257,10 +257,10 @@ export function startSessionManager(
         }
       })
       trackVisibility(configuration, () => {
-        void strategy.setSessionState((state) => expandOnly(state))
+        strategy.setSessionState((state) => expandOnly(state)).catch(monitorError)
       })
       trackResume(configuration, () => {
-        void strategy.setSessionState((state) => initializeSession(state, configuration))
+        strategy.setSessionState((state) => initializeSession(state, configuration)).catch(monitorError)
       })
     }
   }
@@ -282,7 +282,7 @@ export function startSessionManager(
       sessionStateUpdateObservable,
       expire,
       updateSessionState: (partialState) => {
-        void strategy.setSessionState((state) => ({ ...state, ...partialState }))
+        strategy.setSessionState((state) => ({ ...state, ...partialState })).catch(monitorError)
       },
     }
   }
@@ -323,12 +323,14 @@ export function startSessionManager(
     handleStateChange(expiredState)
     previousState = expiredState
     // Persist to storage asynchronously
-    void strategy.setSessionState((state) => {
-      if (!trackingConsentState.isGranted()) {
-        delete state.anonymousId
-      }
-      return getExpiredSessionState(state, configuration)
-    })
+    strategy
+      .setSessionState((state) => {
+        if (!trackingConsentState.isGranted()) {
+          delete state.anonymousId
+        }
+        return getExpiredSessionState(state, configuration)
+      })
+      .catch(monitorError)
   }
 
   function buildSessionContext(sessionState: SessionState): SessionContext {

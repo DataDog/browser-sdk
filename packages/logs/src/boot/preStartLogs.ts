@@ -19,6 +19,7 @@ import {
   startTelemetry,
   TelemetryService,
   mockable,
+  startTelemetrySessionContext,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
@@ -85,7 +86,6 @@ export function createPreStartStrategy(
 
       // Expose the initial configuration regardless of initialization success.
       cachedInitConfiguration = initConfiguration
-      addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
 
       if (cachedConfiguration) {
         displayAlreadyInitializedError('DD_LOGS', initConfiguration)
@@ -112,6 +112,8 @@ export function createPreStartStrategy(
         mockable(startTelemetry)(TelemetryService.LOGS, configuration, hooks)
         const onSessionManagerReady = (newSessionManager: SessionManager) => {
           sessionManager = newSessionManager
+          startTelemetrySessionContext(hooks, sessionManager)
+          addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
           tryStartLogs()
         }
         if (canUseEventBridge()) {

@@ -50,18 +50,4 @@ export function startSessionContext(
       },
     }
   })
-
-  hooks.register(HookNames.AssembleTelemetry, ({ startTime }): DefaultTelemetryEventAttributes | SKIPPED => {
-    const session = sessionManager.findTrackedSession(startTime)
-
-    if (!session) {
-      return SKIPPED
-    }
-
-    return {
-      session: {
-        id: session.id,
-      },
-    }
-  })
 }

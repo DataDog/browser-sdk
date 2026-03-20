@@ -32,11 +32,4 @@ export function startDefaultContext(hooks: Hooks, configuration: RumConfiguratio
       source,
     }
   })
-
-  hooks.register(
-    HookNames.AssembleTelemetry,
-    (): DefaultTelemetryEventAttributes => ({
-      application: { id: configuration.applicationId },
-    })
-  )
 }

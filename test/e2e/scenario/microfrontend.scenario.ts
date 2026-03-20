@@ -29,23 +29,23 @@ const LOGS_CONFIG: Partial<LogsInitConfiguration> = {
   },
 }
 
-test.describe('microfrontend', () => {
+test.describe('microfrontend @only', () => {
   test.describe('RUM', () => {
     test.describe('with beforeSend', () => {
       createTest('expose handling stack for fetch requests')
         .withRum(RUM_CONFIG)
-        .withRumInit((configuration) => {
-          window.DD_RUM!.init(configuration)
 
-          // eslint-disable-next-line @typescript-eslint/no-empty-function
-          const noop = () => {}
-          function testHandlingStack() {
-            fetch('/ok').then(noop, noop)
-          }
+        .run(async ({ intakeRegistry, flushEvents, page }) => {
+          await page.evaluate(() => {
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
+            const noop = () => {}
+            function testHandlingStack() {
+              fetch('/ok').then(noop, noop)
+            }
 
-          testHandlingStack()
-        })
-        .run(async ({ intakeRegistry, flushEvents }) => {
+            testHandlingStack()
+          })
+
           await flushEvents()
 
           const event = intakeRegistry.rumResourceEvents.find((event) => event.resource.type === 'fetch')
@@ -56,19 +56,19 @@ test.describe('microfrontend', () => {
 
       createTest('expose handling stack for xhr requests')
         .withRum(RUM_CONFIG)
-        .withRumInit((configuration) => {
-          window.DD_RUM!.init(configuration)
+        .run(async ({ intakeRegistry, flushEvents, page }) => {
+          await page.evaluate(() => {
+            function testHandlingStack() {
+              const xhr = new XMLHttpRequest()
+              xhr.open('GET', '/ok')
+              xhr.send()
+            }
 
-          function testHandlingStack() {
-            const xhr = new XMLHttpRequest()
-            xhr.open('GET', '/ok')
-            xhr.send()
-          }
-
-          testHandlingStack()
-        })
-        .run(async ({ intakeRegistry, flushEvents }) => {
+            testHandlingStack()
+          })
           await flushEvents()
+
+          // TODO: test init() folowed by console.log , fetch, xhr, ...
 
           const event = intakeRegistry.rumResourceEvents.find((event) => event.resource.type === 'xhr')
 
@@ -78,16 +78,15 @@ test.describe('microfrontend', () => {
 
       createTest('expose handling stack for DD_RUM.addAction')
         .withRum(RUM_CONFIG)
-        .withRumInit((configuration) => {
-          window.DD_RUM!.init(configuration)
+        .run(async ({ intakeRegistry, flushEvents, page }) => {
+          await page.evaluate(() => {
+            function testHandlingStack() {
+              window.DD_RUM!.addAction('foo')
+            }
 
-          function testHandlingStack() {
-            window.DD_RUM!.addAction('foo')
-          }
+            testHandlingStack()
+          })
 
-          testHandlingStack()
-        })
-        .run(async ({ intakeRegistry, flushEvents }) => {
           await flushEvents()
 
           const event = intakeRegistry.rumActionEvents[0]
@@ -98,16 +97,14 @@ test.describe('microfrontend', () => {
 
       createTest('expose handling stack for DD_RUM.addError')
         .withRum(RUM_CONFIG)
-        .withRumInit((configuration) => {
-          window.DD_RUM!.init(configuration)
+        .run(async ({ intakeRegistry, flushEvents, page }) => {
+          await page.evaluate(() => {
+            function testHandlingStack() {
+              window.DD_RUM!.addError(new Error('foo'))
+            }
 
-          function testHandlingStack() {
-            window.DD_RUM!.addError(new Error('foo'))
-          }
-
-          testHandlingStack()
-        })
-        .run(async ({ intakeRegistry, flushEvents }) => {
+            testHandlingStack()
+          })
           await flushEvents()
 
           const event = intakeRegistry.rumErrorEvents[0]
@@ -118,16 +115,14 @@ test.describe('microfrontend', () => {
 
       createTest('expose handling stack for console errors')
         .withRum(RUM_CONFIG)
-        .withRumInit((configuration) => {
-          window.DD_RUM!.init(configuration)
+        .run(async ({ intakeRegistry, flushEvents, withBrowserLogs, page }) => {
+          await page.evaluate(() => {
+            function testHandlingStack() {
+              console.error('foo')
+            }
 
-          function testHandlingStack() {
-            console.error('foo')
-          }
-
-          testHandlingStack()
-        })
-        .run(async ({ intakeRegistry, flushEvents, withBrowserLogs }) => {
+            testHandlingStack()
+          })
           await flushEvents()
 
           const event = intakeRegistry.rumErrorEvents[0]
@@ -143,16 +138,15 @@ test.describe('microfrontend', () => {
 
       createTest('expose handling stack for DD_RUM.startView')
         .withRum(RUM_CONFIG)
-        .withRumInit((configuration) => {
-          window.DD_RUM!.init(configuration)
+        .run(async ({ intakeRegistry, flushEvents, page }) => {
+          await page.evaluate(() => {
+            function testHandlingStack() {
+              window.DD_RUM!.startView({ name: 'test-view' })
+            }
 
-          function testHandlingStack() {
-            window.DD_RUM!.startView({ name: 'test-view' })
-          }
+            testHandlingStack()
+          })
 
-          testHandlingStack()
-        })
-        .run(async ({ intakeRegistry, flushEvents }) => {
           await flushEvents()
 
           const event = intakeRegistry.rumViewEvents.find((event) => event.view.name === 'test-view')
@@ -163,17 +157,16 @@ test.describe('microfrontend', () => {
 
       createTest('expose handling stack for DD_RUM.startDurationVital')
         .withRum(RUM_CONFIG)
-        .withRumInit((configuration) => {
-          window.DD_RUM!.init(configuration)
 
-          function testHandlingStack() {
-            const ref = window.DD_RUM!.startDurationVital('test-vital')
-            window.DD_RUM!.stopDurationVital(ref)
-          }
+        .run(async ({ intakeRegistry, flushEvents, page }) => {
+          await page.evaluate(() => {
+            function testHandlingStack() {
+              const ref = window.DD_RUM!.startDurationVital('test-vital')
+              window.DD_RUM!.stopDurationVital(ref)
+            }
 
-          testHandlingStack()
-        })
-        .run(async ({ intakeRegistry, flushEvents }) => {
+            testHandlingStack()
+          })
           await flushEvents()
 
           const event = intakeRegistry.rumVitalEvents.find((event) => event.vital.name === 'test-vital')
@@ -430,16 +423,14 @@ test.describe('microfrontend', () => {
   test.describe('Logs', () => {
     createTest('expose handling stack for console.log')
       .withLogs(LOGS_CONFIG)
-      .withLogsInit((configuration) => {
-        window.DD_LOGS!.init(configuration)
+      .run(async ({ intakeRegistry, flushEvents, flushBrowserLogs, page }) => {
+        await page.evaluate(() => {
+          function testHandlingStack() {
+            console.log('foo')
+          }
 
-        function testHandlingStack() {
-          console.log('foo')
-        }
-
-        testHandlingStack()
-      })
-      .run(async ({ intakeRegistry, flushEvents, flushBrowserLogs }) => {
+          testHandlingStack()
+        })
         await flushEvents()
 
         const event = intakeRegistry.logsEvents[0]
@@ -454,16 +445,15 @@ test.describe('microfrontend', () => {
 
     createTest('expose handling stack for DD_LOGS.logger.log')
       .withLogs(LOGS_CONFIG)
-      .withLogsInit((configuration) => {
-        window.DD_LOGS!.init(configuration)
 
-        function testHandlingStack() {
-          window.DD_LOGS!.logger.log('foo')
-        }
+      .run(async ({ intakeRegistry, flushEvents, flushBrowserLogs, page }) => {
+        await page.evaluate(() => {
+          function testHandlingStack() {
+            window.DD_LOGS!.logger.log('foo')
+          }
+          testHandlingStack()
+        })
 
-        testHandlingStack()
-      })
-      .run(async ({ intakeRegistry, flushEvents, flushBrowserLogs }) => {
         await flushEvents()
 
         const event = intakeRegistry.logsEvents[0]
