@@ -1,13 +1,8 @@
 import type { Hooks } from '../../../test'
-import { createHooks } from '../../../test'
+import { createHooks, createSessionManagerMock, MOCK_SESSION_ID } from '../../../test'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
 import { HookNames } from '../../tools/abstractHooks'
-import type { SessionContext, SessionManager } from '../session/sessionManager'
 import { startTelemetrySessionContext } from './telemetrySessionContext'
-
-function mockSessionManager(findTrackedSession: (startTime?: RelativeTime) => SessionContext | undefined) {
-  return { findTrackedSession } as unknown as SessionManager
-}
 
 describe('telemetrySessionContext', () => {
   let hooks: Hooks
@@ -17,24 +12,18 @@ describe('telemetrySessionContext', () => {
   })
 
   it('should include session id and anonymous_id in assembled telemetry', () => {
-    startTelemetrySessionContext(
-      hooks,
-      mockSessionManager(() => ({ id: 'session-123', anonymousId: 'device-456' }))
-    )
+    startTelemetrySessionContext(hooks, createSessionManagerMock())
 
     const result = hooks.triggerHook(HookNames.AssembleTelemetry, { startTime: 0 as RelativeTime })
 
     expect(result).toEqual({
-      session: { id: 'session-123' },
-      anonymous_id: 'device-456',
+      session: { id: MOCK_SESSION_ID },
+      anonymous_id: 'device-123',
     })
   })
 
   it('should contribute nothing when no tracked session is found', () => {
-    startTelemetrySessionContext(
-      hooks,
-      mockSessionManager(() => undefined)
-    )
+    startTelemetrySessionContext(hooks, createSessionManagerMock().setNotTracked())
 
     const result = hooks.triggerHook(HookNames.AssembleTelemetry, { startTime: 0 as RelativeTime })
 
@@ -44,28 +33,27 @@ describe('telemetrySessionContext', () => {
   it('should merge extraContext into the result', () => {
     startTelemetrySessionContext(
       hooks,
-      mockSessionManager(() => ({ id: 'session-abc', anonymousId: 'device-xyz' })),
+      createSessionManagerMock(),
       { application: { id: 'app-789' } }
     )
 
     const result = hooks.triggerHook(HookNames.AssembleTelemetry, { startTime: 0 as RelativeTime })
 
     expect(result).toEqual({
-      session: { id: 'session-abc' },
-      anonymous_id: 'device-xyz',
+      session: { id: MOCK_SESSION_ID },
+      anonymous_id: 'device-123',
       application: { id: 'app-789' },
     })
   })
 
   it('should pass startTime to findTrackedSession', () => {
-    const findTrackedSessionSpy = jasmine
-      .createSpy<(startTime?: RelativeTime) => SessionContext | undefined>('findTrackedSession')
-      .and.returnValue({ id: 'session-123' } as SessionContext)
+    const sessionManager = createSessionManagerMock()
+    spyOn(sessionManager, 'findTrackedSession').and.callThrough()
 
-    startTelemetrySessionContext(hooks, mockSessionManager(findTrackedSessionSpy))
+    startTelemetrySessionContext(hooks, sessionManager)
 
     hooks.triggerHook(HookNames.AssembleTelemetry, { startTime: 42 as RelativeTime })
 
-    expect(findTrackedSessionSpy).toHaveBeenCalledWith(42 as RelativeTime)
+    expect(sessionManager.findTrackedSession).toHaveBeenCalledWith(42 as RelativeTime)
   })
 })
