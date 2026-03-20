@@ -67,5 +67,4 @@ describe('session context', () => {
       })
     })
   })
-
 })

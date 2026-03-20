@@ -17,7 +17,10 @@ describe('telemetrySessionContext', () => {
   })
 
   it('should include session id and anonymous_id in assembled telemetry', () => {
-    startTelemetrySessionContext(hooks, mockSessionManager(() => ({ id: 'session-123', anonymousId: 'device-456' })))
+    startTelemetrySessionContext(
+      hooks,
+      mockSessionManager(() => ({ id: 'session-123', anonymousId: 'device-456' }))
+    )
 
     const result = hooks.triggerHook(HookNames.AssembleTelemetry, { startTime: 0 as RelativeTime })
 
@@ -28,7 +31,10 @@ describe('telemetrySessionContext', () => {
   })
 
   it('should contribute nothing when no tracked session is found', () => {
-    startTelemetrySessionContext(hooks, mockSessionManager(() => undefined))
+    startTelemetrySessionContext(
+      hooks,
+      mockSessionManager(() => undefined)
+    )
 
     const result = hooks.triggerHook(HookNames.AssembleTelemetry, { startTime: 0 as RelativeTime })
 

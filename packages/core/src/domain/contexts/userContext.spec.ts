@@ -100,7 +100,6 @@ describe('user context', () => {
       })
     })
   })
-
 })
 
 describe('user context across pages', () => {

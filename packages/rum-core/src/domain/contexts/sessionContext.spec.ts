@@ -150,5 +150,4 @@ describe('session context', () => {
 
     expect(defaultRumEventAttributes).toBe(DISCARDED)
   })
-
 })

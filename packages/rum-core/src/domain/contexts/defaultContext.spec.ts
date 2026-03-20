@@ -73,5 +73,4 @@ describe('startDefaultContext', () => {
       expect(event._dd!.sdk_name).toBe('rum')
     })
   })
-
 })
