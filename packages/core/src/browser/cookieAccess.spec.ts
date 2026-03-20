@@ -82,7 +82,7 @@ describe('cookieAccess', () => {
     })
 
     describe('observable (polling)', () => {
-      it('should notify when cookie is changed externally', async () => {
+      it('should notify when cookie is changed externally', () => {
         const cookieAccess = createCookieAccess(COOKIE_NAME, MOCK_CONFIGURATION, COOKIE_OPTIONS)
         registerCleanupTask(() => deleteCookie(COOKIE_NAME))
         const spy = jasmine.createSpy<(value: string | undefined) => void>('observer')
@@ -95,7 +95,7 @@ describe('cookieAccess', () => {
         expect(spy).toHaveBeenCalledOnceWith('external')
       })
 
-      it('should notify when cookie is deleted externally', async () => {
+      it('should notify when cookie is deleted externally', () => {
         setCookie(COOKIE_NAME, 'existing', 1000)
         registerCleanupTask(() => deleteCookie(COOKIE_NAME))
 
