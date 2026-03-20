@@ -2,7 +2,7 @@ import type { Payload } from '../../transport'
 import { timeStampNow } from '../../tools/utils/timeUtils'
 import { normalizeUrl } from '../../tools/utils/urlPolyfill'
 import { generateUUID } from '../../tools/utils/stringUtils'
-import { INTAKE_SITE_FED_STAGING, INTAKE_SITE_US1 } from '../intakeSites'
+import { INTAKE_SITE_US1 } from '../intakeSites'
 import type { InitConfiguration } from './configuration'
 
 // replaced at build time
@@ -57,15 +57,7 @@ function createEndpointUrlWithParametersBuilder(
 }
 
 export function buildEndpointHost(initConfiguration: InitConfiguration) {
-  const { site = INTAKE_SITE_US1, internalAnalyticsSubdomain } = initConfiguration
-
-  if (internalAnalyticsSubdomain && site === INTAKE_SITE_US1) {
-    return `${internalAnalyticsSubdomain}.${INTAKE_SITE_US1}`
-  }
-
-  if (site === INTAKE_SITE_FED_STAGING) {
-    return `http-intake.logs.${site}`
-  }
+  const { site = INTAKE_SITE_US1 } = initConfiguration
 
   const domainParts = site.split('.')
   const extension = domainParts.pop()
@@ -77,7 +69,7 @@ export function buildEndpointHost(initConfiguration: InitConfiguration) {
  * request, as they change randomly.
  */
 function buildEndpointParameters(
-  { clientToken, internalAnalyticsSubdomain, source = 'browser' }: InitConfiguration,
+  { clientToken, source = 'browser' }: InitConfiguration,
   trackType: TrackType,
   api: ApiType,
   { retry, encoding }: Payload,
@@ -101,10 +93,6 @@ function buildEndpointParameters(
     if (retry) {
       parameters.push(`_dd.retry_count=${retry.count}`, `_dd.retry_after=${retry.lastFailureStatus}`)
     }
-  }
-
-  if (internalAnalyticsSubdomain) {
-    parameters.reverse()
   }
 
   return parameters.join('&')

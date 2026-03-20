@@ -227,14 +227,6 @@ export interface InitConfiguration {
   datacenter?: string
 
   /**
-   * [Internal option] Datadog internal analytics subdomain
-   *
-   * @internal
-   */
-  // TODO next major: remove this option and replace usages by proxyFn
-  internalAnalyticsSubdomain?: string
-
-  /**
    * [Internal option] The percentage of telemetry configuration sent. A value between 0 and 100.
    *
    * @internal
