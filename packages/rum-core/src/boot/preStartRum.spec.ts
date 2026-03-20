@@ -549,6 +549,69 @@ describe('preStartRum', () => {
     })
   })
 
+  describe('passes pre-start contexts to doStartRum', () => {
+    function mockStartRumResult(): StartRumResult {
+      return {
+        globalContext: { setContext: noop } as any,
+        userContext: { setContext: noop } as any,
+        accountContext: { setContext: noop } as any,
+      } as unknown as StartRumResult
+    }
+
+    it('should pass global context set before init to doStartRum', () => {
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+      doStartRumSpy.and.returnValue(mockStartRumResult())
+
+      strategy.globalContext.setContextProperty('foo', 'bar')
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+
+      expect(doStartRumSpy).toHaveBeenCalledTimes(1)
+      const initialContexts = doStartRumSpy.calls.mostRecent().args[5]
+      expect(initialContexts).toBeDefined()
+      expect(initialContexts.globalContext).toEqual({ foo: 'bar' })
+    })
+
+    it('should pass user context set before init to doStartRum', () => {
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+      doStartRumSpy.and.returnValue(mockStartRumResult())
+
+      strategy.userContext.setContextProperty('id', 'user-123')
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+
+      expect(doStartRumSpy).toHaveBeenCalledTimes(1)
+      const initialContexts = doStartRumSpy.calls.mostRecent().args[5]
+      expect(initialContexts).toBeDefined()
+      expect(initialContexts.userContext).toEqual({ id: 'user-123' })
+    })
+
+    it('should pass account context set before init to doStartRum', () => {
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+      doStartRumSpy.and.returnValue(mockStartRumResult())
+
+      strategy.accountContext.setContextProperty('id', 'account-456')
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+
+      expect(doStartRumSpy).toHaveBeenCalledTimes(1)
+      const initialContexts = doStartRumSpy.calls.mostRecent().args[5]
+      expect(initialContexts).toBeDefined()
+      expect(initialContexts.accountContext).toEqual({ id: 'account-456' })
+    })
+
+    it('should pass empty contexts when nothing is set before init', () => {
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+      doStartRumSpy.and.returnValue(mockStartRumResult())
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+
+      expect(doStartRumSpy).toHaveBeenCalledTimes(1)
+      const initialContexts = doStartRumSpy.calls.mostRecent().args[5]
+      expect(initialContexts).toBeDefined()
+      expect(initialContexts.globalContext).toEqual({})
+      expect(initialContexts.userContext).toEqual({})
+      expect(initialContexts.accountContext).toEqual({})
+    })
+  })
+
   describe('buffers API calls before starting RUM', () => {
     let strategy: Strategy
     let doStartRumSpy: jasmine.Spy<DoStartRum>

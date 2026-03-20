@@ -104,6 +104,75 @@ describe('rum session', () => {
   })
 })
 
+describe('initial view event with pre-start contexts', () => {
+  it('should include global context on the first view event when initial contexts are provided', () => {
+    const lifeCycle = new LifeCycle()
+    const sessionManager = createRumSessionManagerMock().setId('42')
+    const hooks = createHooks()
+    const serverRumEvents = collectServerEvents(lifeCycle)
+
+    const initialContexts = {
+      globalContext: { foo: 'bar' },
+      userContext: {},
+      accountContext: {},
+    }
+
+    const { stop } = startRumEventCollection(
+      lifeCycle,
+      hooks,
+      mockRumConfiguration(),
+      sessionManager,
+      noopRecorderApi,
+      undefined,
+      createCustomVitalsState(),
+      new Observable(),
+      undefined,
+      noop,
+      initialContexts
+    )
+
+    registerCleanupTask(stop)
+
+    // The first event should be a view with global context
+    expect(serverRumEvents.length).toBeGreaterThanOrEqual(1)
+    expect(serverRumEvents[0].type).toEqual('view')
+    expect(serverRumEvents[0].context).toEqual({ foo: 'bar' })
+  })
+
+  it('should include user context on the first view event when initial contexts are provided', () => {
+    const lifeCycle = new LifeCycle()
+    const sessionManager = createRumSessionManagerMock().setId('42')
+    const hooks = createHooks()
+    const serverRumEvents = collectServerEvents(lifeCycle)
+
+    const initialContexts = {
+      globalContext: {},
+      userContext: { id: 'user-123', name: 'Test User' },
+      accountContext: {},
+    }
+
+    const { stop } = startRumEventCollection(
+      lifeCycle,
+      hooks,
+      mockRumConfiguration(),
+      sessionManager,
+      noopRecorderApi,
+      undefined,
+      createCustomVitalsState(),
+      new Observable(),
+      undefined,
+      noop,
+      initialContexts
+    )
+
+    registerCleanupTask(stop)
+
+    expect(serverRumEvents.length).toBeGreaterThanOrEqual(1)
+    expect(serverRumEvents[0].type).toEqual('view')
+    expect(serverRumEvents[0].usr).toEqual(jasmine.objectContaining({ id: 'user-123', name: 'Test User' }))
+  })
+})
+
 describe('rum session keep alive', () => {
   let lifeCycle: LifeCycle
   let clock: Clock
