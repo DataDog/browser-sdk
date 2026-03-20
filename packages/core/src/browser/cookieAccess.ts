@@ -81,7 +81,7 @@ function createDocumentCookieAccess(cookieName: string, cookieOptions: CookieOpt
   const observable = new Observable<string | undefined>(() => {
     const watchCookieIntervalId = setInterval(() => {
       const cookieValue = getCookie(cookieName)
-      motifyCookieValieIfChanged(cookieValue)
+      notifyCookieValueIfChanged(cookieValue)
     }, WATCH_COOKIE_INTERVAL_DELAY)
 
     return () => {
@@ -89,7 +89,7 @@ function createDocumentCookieAccess(cookieName: string, cookieOptions: CookieOpt
     }
   })
 
-  function motifyCookieValieIfChanged(cookieValue: string | undefined) {
+  function notifyCookieValueIfChanged(cookieValue: string | undefined) {
     if (cookieValue !== previousCookieValue) {
       previousCookieValue = cookieValue
       observable.notify(cookieValue)
@@ -102,7 +102,7 @@ function createDocumentCookieAccess(cookieName: string, cookieOptions: CookieOpt
       const { value, expireDelay } = cb(currentValue)
       setCookie(cookieName, value, expireDelay, cookieOptions)
       await Promise.resolve()
-      motifyCookieValieIfChanged(value)
+      notifyCookieValueIfChanged(value)
     },
 
     observable,

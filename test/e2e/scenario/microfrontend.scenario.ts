@@ -29,7 +29,7 @@ const LOGS_CONFIG: Partial<LogsInitConfiguration> = {
   },
 }
 
-test.describe('microfrontend @only', () => {
+test.describe('microfrontend', () => {
   test.describe('RUM', () => {
     test.describe('with beforeSend', () => {
       createTest('expose handling stack for fetch requests')
@@ -67,8 +67,6 @@ test.describe('microfrontend @only', () => {
             testHandlingStack()
           })
           await flushEvents()
-
-          // TODO: test init() folowed by console.log , fetch, xhr, ...
 
           const event = intakeRegistry.rumResourceEvents.find((event) => event.resource.type === 'xhr')
 
