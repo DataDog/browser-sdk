@@ -56,6 +56,7 @@ export function startRumAssembly(
     [RumEventType.ERROR]: {
       'error.message': 'string',
       'error.stack': 'string',
+      'error.handling_stack': 'string',
       'error.resource.url': 'string',
       'error.fingerprint': 'string',
       ...USER_CUSTOMIZABLE_FIELD_PATHS,
