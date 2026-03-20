@@ -23,7 +23,7 @@ function initializeNextjsPlugin() {
   return { addErrorSpy }
 }
 
-describe('ErrorBoundary', () => {
+describe('NextjsErrorBoundary', () => {
   beforeEach(() => {
     ignoreConsoleLogs('error', 'Error: error')
     disableJasmineUncaughtExceptionTracking()
