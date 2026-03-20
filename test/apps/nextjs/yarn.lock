@@ -14,19 +14,20 @@ __metadata:
 
 "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz::locator=nextjs%40workspace%3A.":
   version: 6.31.0
-  resolution: "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz#../../../packages/rum-core/package.tgz::hash=55eb2b&locator=nextjs%40workspace%3A."
+  resolution: "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz#../../../packages/rum-core/package.tgz::hash=cad31e&locator=nextjs%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.31.0"
-  checksum: 10c0/11b93076a410ef527c70d94d7b3203a3a24e05b665f40ce9b1c2227a30ee7efd99613e02a139be7f94ee1a95ca48cb2bf83e8b6d9f3d5253f7bf37d89f1ea338
+  checksum: 10c0/f57c5d9fdbc7243f373afba6912bb75a90f3b65ab036750a858aa7776ed30b8921e456eff32a02e7dc021c192cd7bc220ea7b124459eacb7685c5c5ba0cca1c5
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum-nextjs@file:../../../packages/rum-nextjs/package.tgz::locator=nextjs%40workspace%3A.":
   version: 0.0.0
-  resolution: "@datadog/browser-rum-nextjs@file:../../../packages/rum-nextjs/package.tgz#../../../packages/rum-nextjs/package.tgz::hash=72ad74&locator=nextjs%40workspace%3A."
+  resolution: "@datadog/browser-rum-nextjs@file:../../../packages/rum-nextjs/package.tgz#../../../packages/rum-nextjs/package.tgz::hash=528334&locator=nextjs%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.31.0"
     "@datadog/browser-rum-core": "npm:6.31.0"
+    "@datadog/browser-rum-react": "npm:6.31.0"
   peerDependencies:
     next: ">=13.0.0"
     react: ">=18.0.0"
@@ -35,13 +36,13 @@ __metadata:
       optional: true
     react:
       optional: true
-  checksum: 10c0/4b71f2d2e40522120685bfb2457b17febae3f339ca19bc84d58a35f47da1c7a6a49ec13eaec8d62a7f8d61c4d4611293ff7053e338490a74b6f58263e1bc84e6
+  checksum: 10c0/08d0f50b13a5e2a32b40e14cb9b7c9e78fabc728bfeb7f172ba1aa0e232989c4ab9a2e6fc9a1194d02aeec4ad259a9448cb3745268bea7c9dcb302d7aae90e50
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum-react@file:../../../packages/rum-react/package.tgz::locator=nextjs%40workspace%3A.":
   version: 6.31.0
-  resolution: "@datadog/browser-rum-react@file:../../../packages/rum-react/package.tgz#../../../packages/rum-react/package.tgz::hash=ff7bfc&locator=nextjs%40workspace%3A."
+  resolution: "@datadog/browser-rum-react@file:../../../packages/rum-react/package.tgz#../../../packages/rum-react/package.tgz::hash=1edc15&locator=nextjs%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.31.0"
     "@datadog/browser-rum-core": "npm:6.31.0"
@@ -60,13 +61,13 @@ __metadata:
       optional: true
     react-router-dom:
       optional: true
-  checksum: 10c0/6d2a5f34727c9763abd67aaf9d2ba501e9fd38e8d754a15672e929dc4a37c93c85cdce08ce307122b9d055c688dfee0147315f3679fa377620318b4ab84f00bc
+  checksum: 10c0/e3ed7ae929dd29836b3f2d7adb910dc9e2fdc6cf6fce81e77e950ed5cd060bb9810c30b8eb8772cf9436203f5c08380b1879454aac856509224bc3a511c9af61
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum@file:../../../packages/rum/package.tgz::locator=nextjs%40workspace%3A.":
   version: 6.31.0
-  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=b23186&locator=nextjs%40workspace%3A."
+  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=c2aa74&locator=nextjs%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.31.0"
     "@datadog/browser-rum-core": "npm:6.31.0"
@@ -75,7 +76,7 @@ __metadata:
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
-  checksum: 10c0/5eeaf5251ce0207c45d6782b3e219f8366fbce0b60bddd8fa35473a3dfc84a97fc6e2fb686033d9c985ebade414ef432cd18f17e753c694c469a3e9a6ac4aad5
+  checksum: 10c0/135a2cdf999ea9505e08031ae7069f4d6a236a88e6203ef7105c784a77ae23a23fbabc648d793305dcb4b960cbe4a535fab2d688748efb5824137597f4de84b5
   languageName: node
   linkType: hard
 
@@ -415,18 +416,18 @@ __metadata:
   linkType: hard
 
 "baseline-browser-mapping@npm:^2.8.3":
-  version: 2.10.7
-  resolution: "baseline-browser-mapping@npm:2.10.7"
+  version: 2.10.8
+  resolution: "baseline-browser-mapping@npm:2.10.8"
   bin:
     baseline-browser-mapping: dist/cli.cjs
-  checksum: 10c0/fe2988088ede5a2dc7936f0a718d4b500b2a28a7ee3e11e2a3844a9444dd217a95a070c00508d8130da73c4fe576d677b21844bc078f6cd7867fb0e1be60caf0
+  checksum: 10c0/a77882e8ac37a900a9a0757b9bf4e50f407829ed17ee7630273ab5da0ae10d9c64ed4c5a1e03afb3490e39713440092417ded4bb856eeb9bd44856eacbd97497
   languageName: node
   linkType: hard
 
 "caniuse-lite@npm:^1.0.30001579":
-  version: 1.0.30001778
-  resolution: "caniuse-lite@npm:1.0.30001778"
-  checksum: 10c0/830042e0a6af0796d3da4d9575f60966b92308c5504577993b618dd196c835d023dbd725fa8b47c33b74c487d75ce01ee3ebd6e7a078714989513110e8ff80e5
+  version: 1.0.30001780
+  resolution: "caniuse-lite@npm:1.0.30001780"
+  checksum: 10c0/8a88f39758a228852d6f3ac92362ecb7694b1b2b022f194d8dfe59123ad40a5de6202bf2dff0fe316bb3d5ca9caf316c22056e0da693459c3be2771cde4f4bf9
   languageName: node
   linkType: hard
 

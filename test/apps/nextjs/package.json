@@ -2,9 +2,8 @@
   "name": "nextjs",
   "private": true,
   "scripts": {
-    "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start --port 0"
   },
   "dependencies": {
     "@datadog/browser-rum": "file:../../../packages/rum/package.tgz",
