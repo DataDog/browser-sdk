@@ -19,6 +19,19 @@ import type { PropagatorType, TracingOption } from '../tracing/tracer.types'
 
 export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'datadog']
 
+export const DEFAULT_TRACKED_RESOURCE_HEADERS: MatchOption[] = [
+  'cache-control',
+  'etag',
+  'age',
+  'expires',
+  'content-type',
+  'content-encoding',
+  'vary',
+  'content-length',
+  'server-timing',
+  'x-cache',
+]
+
 /**
  * Init Configuration for the RUM browser SDK.
  *
@@ -237,6 +250,17 @@ export interface RumInitConfiguration extends InitConfiguration {
   trackResources?: boolean | undefined
 
   /**
+   * Enables collection of request and response headers on resource events.
+   * - `true`: collect a set of default headers
+   * - `MatchOption[]`: collect default headers PLUS headers matching any item in the list
+   *
+   * @category Data Collection
+   * @defaultValue false (disabled)
+   * @hidden
+   */
+  trackResourceHeaders?: boolean | MatchOption[] | undefined
+
+  /**
    * Enables collection of long task events.
    *
    * @category Data Collection
@@ -319,6 +343,7 @@ export interface RumConfiguration extends Configuration {
   trackUserInteractions: boolean
   trackViewsManually: boolean
   trackResources: boolean
+  trackResourceHeaders: MatchOption[]
   trackLongTasks: boolean
   trackBfcacheViews: boolean
   trackEarlyRequests: boolean
@@ -392,6 +417,7 @@ export function validateAndBuildRumConfiguration(
     trackUserInteractions: !!(initConfiguration.trackUserInteractions ?? true),
     trackViewsManually: !!initConfiguration.trackViewsManually,
     trackResources: !!(initConfiguration.trackResources ?? true),
+    trackResourceHeaders: validateAndBuildTrackResourceHeaders(initConfiguration),
     trackLongTasks: !!(initConfiguration.trackLongTasks ?? true),
     trackBfcacheViews: !!initConfiguration.trackBfcacheViews,
     trackEarlyRequests: !!initConfiguration.trackEarlyRequests,
@@ -506,6 +532,32 @@ function validateAndBuildGraphQlOptions(initConfiguration: RumInitConfiguration)
   })
 
   return graphQlOptions
+}
+
+function validateAndBuildTrackResourceHeaders(initConfiguration: RumInitConfiguration): MatchOption[] {
+  const option = initConfiguration.trackResourceHeaders
+  if (option === undefined || option === false) {
+    return []
+  }
+  if (option === true) {
+    return DEFAULT_TRACKED_RESOURCE_HEADERS
+  }
+
+  if (!Array.isArray(option)) {
+    display.warn('trackResourceHeaders should be true or an array of MatchOption')
+    return []
+  }
+
+  const userMatchers: MatchOption[] = []
+  option.forEach((item) => {
+    if (isMatchOption(item)) {
+      userMatchers.push(typeof item === 'string' ? item.toLowerCase() : item)
+    } else {
+      display.warn('trackResourceHeaders items should be a string, RegExp, or function')
+    }
+  })
+
+  return DEFAULT_TRACKED_RESOURCE_HEADERS.concat(userMatchers)
 }
 
 function hasGraphQlPayloadTracking(allowedGraphQlUrls: RumInitConfiguration['allowedGraphQlUrls']): boolean {

@@ -7,7 +7,12 @@ import type {
 } from '@datadog/browser-core/test'
 import { EXHAUSTIVE_INIT_CONFIGURATION, SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION } from '@datadog/browser-core/test'
 import type { RumInitConfiguration } from './configuration'
-import { DEFAULT_PROPAGATOR_TYPES, serializeRumConfiguration, validateAndBuildRumConfiguration } from './configuration'
+import {
+  DEFAULT_PROPAGATOR_TYPES,
+  DEFAULT_TRACKED_RESOURCE_HEADERS,
+  serializeRumConfiguration,
+  validateAndBuildRumConfiguration,
+} from './configuration'
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx', applicationId: 'xxx' }
 
@@ -406,6 +411,77 @@ describe('validateAndBuildRumConfiguration', () => {
     })
   })
 
+  describe('trackResourceHeaders', () => {
+    it('defaults to empty array', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackResourceHeaders).toEqual([])
+    })
+
+    it('returns default headers when set to true', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResourceHeaders: true })!
+          .trackResourceHeaders
+      ).toEqual(DEFAULT_TRACKED_RESOURCE_HEADERS)
+    })
+
+    it('returns empty array when set to false', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResourceHeaders: false })!
+          .trackResourceHeaders
+      ).toEqual([])
+    })
+
+    it('merges user matchers with defaults when an array is provided', () => {
+      const result = validateAndBuildRumConfiguration({
+        ...DEFAULT_INIT_CONFIGURATION,
+        trackResourceHeaders: ['x-custom-header'],
+      })!.trackResourceHeaders
+
+      expect(result).toEqual([...DEFAULT_TRACKED_RESOURCE_HEADERS, 'x-custom-header'])
+    })
+
+    it('lowercases string matchers from user input', () => {
+      const result = validateAndBuildRumConfiguration({
+        ...DEFAULT_INIT_CONFIGURATION,
+        trackResourceHeaders: ['X-Custom-Header'],
+      })!.trackResourceHeaders
+
+      expect(result).toContain('x-custom-header')
+    })
+
+    it('accepts RegExp and function matchers', () => {
+      const regexpMatcher = /x-custom-.*/i
+      const fnMatcher = (header: string) => header.startsWith('x-')
+
+      const result = validateAndBuildRumConfiguration({
+        ...DEFAULT_INIT_CONFIGURATION,
+        trackResourceHeaders: [regexpMatcher, fnMatcher],
+      })!.trackResourceHeaders
+
+      expect(result).toContain(regexpMatcher)
+      expect(result).toContain(fnMatcher)
+    })
+
+    it('warns and returns empty array for invalid value', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResourceHeaders: 42 as any })!
+          .trackResourceHeaders
+      ).toEqual([])
+      expect(displayWarnSpy).toHaveBeenCalledOnceWith('trackResourceHeaders should be true or an array of MatchOption')
+    })
+
+    it('warns and filters invalid items in array', () => {
+      const result = validateAndBuildRumConfiguration({
+        ...DEFAULT_INIT_CONFIGURATION,
+        trackResourceHeaders: ['valid-header', 42 as any, 'another-valid'] as any,
+      })!.trackResourceHeaders
+
+      expect(result).toEqual([...DEFAULT_TRACKED_RESOURCE_HEADERS, 'valid-header', 'another-valid'])
+      expect(displayWarnSpy).toHaveBeenCalledOnceWith(
+        'trackResourceHeaders items should be a string, RegExp, or function'
+      )
+    })
+  })
+
   describe('trackLongTasks', () => {
     it('defaults to false', () => {
       expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackLongTasks).toBeTrue()
@@ -631,6 +707,7 @@ describe('serializeRumConfiguration', () => {
       profilingSampleRate: 42,
       propagateTraceBaggage: true,
       betaTrackActionsInShadowDom: true,
+      trackResourceHeaders: true,
     }
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
@@ -645,8 +722,8 @@ describe('serializeRumConfiguration', () => {
         : Key extends 'trackLongTasks'
           ? 'track_long_task' // We forgot the s, keeping this for backward compatibility
           : // The following options are not reported as telemetry. Please avoid adding more of them.
-            // TODO: Add betaTrackActionsInShadowDom to rum-events-format and remove from this exclusion
-            Key extends 'applicationId' | 'subdomain' | 'betaTrackActionsInShadowDom'
+            // TODO: Add betaTrackActionsInShadowDom and trackResourceHeaders to rum-events-format telemetry schema and remove from this exclusion
+            Key extends 'applicationId' | 'subdomain' | 'betaTrackActionsInShadowDom' | 'trackResourceHeaders'
             ? never
             : CamelToSnakeCase<Key>
     // By specifying the type here, we can ensure that serializeConfiguration is returning an
