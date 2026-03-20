@@ -1,5 +1,13 @@
 import type { Duration, RelativeTime, ServerDuration, TaskQueue, TimeStamp } from '@datadog/browser-core'
-import { createTaskQueue, noop, RequestType, ResourceType } from '@datadog/browser-core'
+import {
+  createTaskQueue,
+  noop,
+  RequestType,
+  ResourceType,
+  addExperimentalFeatures,
+  ExperimentalFeature,
+  display,
+} from '@datadog/browser-core'
 import { replaceMockable, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumFetchResourceEventDomainContext, RumXhrResourceEventDomainContext } from '../../domainContext.types'
 import {
@@ -509,6 +517,27 @@ describe('resourceCollection', () => {
     notifyPerformanceEntries([performanceEntry])
     runTasks()
     expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.status_code).toBeUndefined()
+  })
+
+  it('should call computeNetworkHeaders when track_resource_headers experimental feature is enabled', () => {
+    addExperimentalFeatures([ExperimentalFeature.TRACK_RESOURCE_HEADERS])
+    const displayLogSpy = spyOn(display, 'log')
+    setupResourceCollection()
+
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])
+    runTasks()
+
+    expect(displayLogSpy).toHaveBeenCalledWith('computeNetworkHeaders called')
+  })
+
+  it('should not call computeNetworkHeaders when track_resource_headers experimental feature is not enabled', () => {
+    const displayLogSpy = spyOn(display, 'log')
+    setupResourceCollection()
+
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])
+    runTasks()
+
+    expect(displayLogSpy).not.toHaveBeenCalledWith('computeNetworkHeaders called')
   })
 
   describe('tracing info', () => {

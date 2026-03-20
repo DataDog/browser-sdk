@@ -8,6 +8,9 @@ import {
   relativeToClocks,
   createTaskQueue,
   mockable,
+  display,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
@@ -142,6 +145,10 @@ function assembleResource(
   const duration = entry
     ? computeResourceEntryDuration(entry)
     : computeRequestDuration(pageStateHistory, startClocks, request!.duration)
+
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.TRACK_RESOURCE_HEADERS)) {
+    computeNetworkHeaders(request, entry, configuration)
+  }
 
   const graphql = request && computeGraphQlMetaData(request, configuration)
   const response = entry && computeResourceResponse(entry)
@@ -293,4 +300,12 @@ function computeRequestDuration(pageStateHistory: PageStateHistory, startClocks:
  */
 function discardZeroStatus(statusCode: number | undefined): number | undefined {
   return statusCode === 0 ? undefined : statusCode
+}
+
+function computeNetworkHeaders(
+  _request: RequestCompleteEvent | undefined,
+  _entry: RumPerformanceResourceTiming | undefined,
+  _configuration: RumConfiguration
+) {
+  display.log('computeNetworkHeaders called')
 }
