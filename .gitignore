@@ -10,7 +10,7 @@ specs.log
 /test-report/
 browserstack.err
 package.tgz
-# docs/
+docs/
 *.tsbuildinfo
 /developer-extension/dist
 /developer-extension/.wxt
