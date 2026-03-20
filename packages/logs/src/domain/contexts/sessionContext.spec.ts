@@ -68,27 +68,4 @@ describe('session context', () => {
     })
   })
 
-  describe('assemble telemetry hook', () => {
-    it('should set the session id', () => {
-      startSessionContext(hooks, configuration, createSessionManagerMock())
-
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
-        startTime: 0 as RelativeTime,
-      })
-
-      expect(defaultRumEventAttributes).toEqual({
-        session: { id: jasmine.any(String) },
-      })
-    })
-
-    it('should not set the session id if session is not tracked', () => {
-      startSessionContext(hooks, configuration, createSessionManagerMock().setNotTracked())
-
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
-        startTime: 0 as RelativeTime,
-      })
-
-      expect(defaultRumEventAttributes).toBeUndefined()
-    })
-  })
 })

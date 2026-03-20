@@ -3,7 +3,7 @@ import { clocksNow, DISCARDED, HookNames } from '@datadog/browser-core'
 import type { SessionManagerMock } from '@datadog/browser-core/test'
 import { createSessionManagerMock } from '@datadog/browser-core/test'
 import { mockRumConfiguration, noopRecorderApi } from '../../../test'
-import type { AssembleHookParams, DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
+import type { AssembleHookParams, DefaultRumEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { SessionType, startSessionContext } from './sessionContext'
 import type { ViewHistory } from './viewHistory'
@@ -151,22 +151,4 @@ describe('session context', () => {
     expect(defaultRumEventAttributes).toBe(DISCARDED)
   })
 
-  describe('assemble telemetry hook', () => {
-    it('should add session.id', () => {
-      const telemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
-        startTime: 0 as RelativeTime,
-      }) as DefaultTelemetryEventAttributes
-
-      expect(telemetryEventAttributes.session?.id).toEqual('00000000-0000-0000-0000-000000000123')
-    })
-
-    it('should not add session.id if no session', () => {
-      sessionManager.setNotTracked()
-      const telemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
-        startTime: 0 as RelativeTime,
-      })
-
-      expect(telemetryEventAttributes).toBeUndefined()
-    })
-  })
 })

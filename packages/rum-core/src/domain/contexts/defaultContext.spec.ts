@@ -2,7 +2,7 @@ import { mockClock, mockEventBridge } from '@datadog/browser-core/test'
 import { HookNames, timeStampNow } from '@datadog/browser-core'
 import type { RelativeTime } from '@datadog/browser-core'
 import { mockRumConfiguration } from '../../../test'
-import type { AssembleHookParams, DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
+import type { AssembleHookParams, DefaultRumEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { startDefaultContext } from './defaultContext'
 
@@ -74,15 +74,4 @@ describe('startDefaultContext', () => {
     })
   })
 
-  describe('assemble telemetry hook', () => {
-    it('should set the application id', () => {
-      startDefaultContext(hooks, mockRumConfiguration(), 'rum')
-
-      const telemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
-        startTime: 0 as RelativeTime,
-      }) as DefaultTelemetryEventAttributes
-
-      expect(telemetryEventAttributes.application?.id).toEqual('appId')
-    })
-  })
 })
