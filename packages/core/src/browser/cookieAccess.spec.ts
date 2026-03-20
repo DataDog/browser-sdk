@@ -1,7 +1,7 @@
 import { mockClock, registerCleanupTask } from '../../test'
+import type { Configuration } from '../domain/configuration'
 import { deleteCookie, getCookie, setCookie } from './cookie'
 import type { CookieStoreWindow } from './browser.types'
-import type { Configuration } from '../domain/configuration'
 import { createCookieAccess, WATCH_COOKIE_INTERVAL_DELAY } from './cookieAccess'
 
 const COOKIE_NAME = 'test_cookie'
