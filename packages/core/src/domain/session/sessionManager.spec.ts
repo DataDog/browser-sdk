@@ -1,4 +1,5 @@
 import {
+  collectAsyncCalls,
   createFakeSessionStoreStrategy,
   createNewEvent,
   HIGH_HASH_UUID,
@@ -142,10 +143,7 @@ describe('startSessionManager', () => {
       )
 
       expect(onReadySpy).not.toHaveBeenCalled()
-      // Two microtask ticks: one for the strategy.setSessionState await inside
-      // resolveInitialState, one for the IIFE awaiting resolveInitialState's return.
-      await Promise.resolve()
-      await Promise.resolve()
+      await collectAsyncCalls(onReadySpy, 1)
       expect(onReadySpy).toHaveBeenCalledTimes(1)
     })
 
