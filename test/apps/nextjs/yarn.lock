@@ -42,7 +42,7 @@ __metadata:
 
 "@datadog/browser-rum-react@file:../../../packages/rum-react/package.tgz::locator=nextjs%40workspace%3A.":
   version: 6.31.0
-  resolution: "@datadog/browser-rum-react@file:../../../packages/rum-react/package.tgz#../../../packages/rum-react/package.tgz::hash=ff7bfc&locator=nextjs%40workspace%3A."
+  resolution: "@datadog/browser-rum-react@file:../../../packages/rum-react/package.tgz#../../../packages/rum-react/package.tgz::hash=1edc15&locator=nextjs%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.31.0"
     "@datadog/browser-rum-core": "npm:6.31.0"
@@ -61,7 +61,7 @@ __metadata:
       optional: true
     react-router-dom:
       optional: true
-  checksum: 10c0/6d2a5f34727c9763abd67aaf9d2ba501e9fd38e8d754a15672e929dc4a37c93c85cdce08ce307122b9d055c688dfee0147315f3679fa377620318b4ab84f00bc
+  checksum: 10c0/e3ed7ae929dd29836b3f2d7adb910dc9e2fdc6cf6fce81e77e950ed5cd060bb9810c30b8eb8772cf9436203f5c08380b1879454aac856509224bc3a511c9af61
   languageName: node
   linkType: hard
 
