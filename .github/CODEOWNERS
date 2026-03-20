@@ -9,4 +9,4 @@ packages/rum/src/domain/segmentCollection/**    @Datadog/rum-browser @Datadog/se
 packages/rum/src/domain/*.ts                    @Datadog/rum-browser @Datadog/session-replay-sdk
 
 # Docs
-README.md    @Datadog/rum-browser @DataDog/documentation
+/README.md    @Datadog/rum-browser @DataDog/documentation
