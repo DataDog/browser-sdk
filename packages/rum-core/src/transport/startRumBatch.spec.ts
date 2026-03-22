@@ -1,6 +1,7 @@
 import type { PageMayExitEvent } from '@datadog/browser-core'
 import { addExperimentalFeatures, createIdentityEncoder, ExperimentalFeature, Observable } from '@datadog/browser-core'
-import { interceptRequests } from '@datadog/browser-core/test'
+import { interceptRequests, mockClock } from '@datadog/browser-core/test'
+import type { Clock } from '@datadog/browser-core/test'
 import { resetExperimentalFeatures } from '../../../core/src/tools/experimentalFeatures'
 import { mockRumConfiguration } from '../../test'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
@@ -601,13 +602,15 @@ describe('chaos mode', () => {
   let lifeCycle: LifeCycle
   let sessionExpireObservable: Observable<void>
   let interceptor: ReturnType<typeof interceptRequests>
+  let clock: Clock
 
   beforeEach(() => {
+    clock = mockClock()
     addExperimentalFeatures([ExperimentalFeature.VIEW_UPDATE, ExperimentalFeature.VIEW_UPDATE_CHAOS])
-    // Set chaos config: no drop, no shuffle, instant release for deterministic tests
+    // Set chaos config: no drop, no shuffle, short window for deterministic tests
     ;(window as any).__RUM_CHAOS_CONFIG__ = {
       dropRate: 0,
-      reorderWindowMs: 0,
+      reorderWindowMs: 100,
       releaseIntervalMs: 50,
       shuffleOnRelease: false,
     }
@@ -657,81 +660,99 @@ describe('chaos mode', () => {
     } as unknown as AssembledRumEvent
   }
 
-  it('chaos mode buffers view_update events', (done) => {
-    // With reorderWindowMs=0 and releaseIntervalMs=50, events are buffered briefly
-    ;(window as any).__RUM_CHAOS_CONFIG__.reorderWindowMs = 100
-    ;(window as any).__RUM_CHAOS_CONFIG__.releaseIntervalMs = 50
-
+  it('buffers view_update events and releases after reorderWindowMs', () => {
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, makeViewUpdateEvent(2))
 
-    // Immediately after: no flush yet, so interceptor should have no requests
-    // (events are in the chaos buffer, not yet released)
+    // Before reorderWindowMs expires: event is buffered, not in batch
+    clock.tick(50) // release interval fires, but event is only 50ms old (< 100ms window)
     flush()
+    const earlyPayloads = interceptor.requests.map((r) => r.body).join('\n')
+    expect(earlyPayloads).not.toContain('"view_update"')
 
-    // After the release interval fires, the event should appear
-    setTimeout(() => {
-      flush()
-      const allPayloads = interceptor.requests.map((r) => r.body).join('\n')
-      expect(allPayloads).toContain('"view_update"')
-      done()
-    }, 200)
+    // After reorderWindowMs: release interval fires and event is old enough
+    clock.tick(60) // now 110ms total — past the 100ms window
+    flush()
+    const latePayloads = interceptor.requests.map((r) => r.body).join('\n')
+    expect(latePayloads).toContain('"view_update"')
   })
 
-  it('chaos mode drops view_update events at configured rate', () => {
-    ;(window as any).__RUM_CHAOS_CONFIG__.dropRate = 1.0 // Drop everything
-    ;(window as any).__RUM_CHAOS_CONFIG__.reorderWindowMs = 0
-    ;(window as any).__RUM_CHAOS_CONFIG__.releaseIntervalMs = 10
+  it('drops view_update events at configured rate (live config read)', () => {
+    // Change drop rate AFTER init — config is read lazily on each enqueue
+    ;(window as any).__RUM_CHAOS_CONFIG__.dropRate = 1.0
 
-    // Send 5 view_updates — all should be dropped
     for (let i = 2; i <= 6; i++) {
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, makeViewUpdateEvent(i))
     }
 
+    // Advance past reorderWindowMs + releaseInterval to release anything that wasn't dropped
+    clock.tick(200)
     flush()
-    const payload = interceptor.requests.length > 0 ? interceptor.requests[0].body : ''
-    expect(typeof payload === 'string' ? payload : '').not.toContain('"view_update"')
+    const payload = interceptor.requests.map((r) => r.body).join('\n')
+    expect(payload).not.toContain('"view_update"')
   })
 
-  it('chaos mode always sends baseline VIEW immediately', (done) => {
+  it('always sends baseline VIEW immediately (bypasses chaos buffer)', () => {
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, makeViewEvent(1))
     flush()
 
-    // VIEW events bypass chaos buffer entirely — should be in the payload immediately
     expect(interceptor.requests.length).toBeGreaterThan(0)
     const payload = interceptor.requests[0].body
     expect(typeof payload === 'string' ? payload : '').toContain('"view"')
-    done()
   })
 
-  it('chaos mode always sends view end immediately', (done) => {
-    // Send baseline view
+  it('always sends view end immediately (bypasses chaos buffer)', () => {
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, makeViewEvent(1, true))
-    // Send view end
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, makeViewEvent(5, false))
     flush()
 
     expect(interceptor.requests.length).toBeGreaterThan(0)
     const allPayloads = interceptor.requests.map((r) => r.body).join('\n')
     expect(allPayloads).toContain('"is_active":false')
-    done()
   })
 
-  it('chaos mode flushes buffer on view end', (done) => {
-    ;(window as any).__RUM_CHAOS_CONFIG__.reorderWindowMs = 60000 // Very long — won't release on timer
-    ;(window as any).__RUM_CHAOS_CONFIG__.releaseIntervalMs = 60000
+  it('flushes buffer on view end', () => {
+    // Very long window — timer won't release
+    ;(window as any).__RUM_CHAOS_CONFIG__.reorderWindowMs = 60000
 
-    // Buffer some view_updates
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, makeViewUpdateEvent(2))
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, makeViewUpdateEvent(3))
 
-    // End the view — should flush all buffered events for this view
+    // End the view — should flush all buffered events for this view regardless of window
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, makeViewEvent(4, false))
     flush()
 
     const allPayloads = interceptor.requests.map((r) => r.body).join('\n')
     expect(allPayloads).toContain('"document_version":2')
     expect(allPayloads).toContain('"document_version":3')
-    done()
+  })
+
+  it('shuffles release order when shuffleOnRelease is true', () => {
+    ;(window as any).__RUM_CHAOS_CONFIG__.shuffleOnRelease = true
+    ;(window as any).__RUM_CHAOS_CONFIG__.reorderWindowMs = 0
+
+    // Send 20 events to make shuffle statistically detectable
+    for (let i = 2; i <= 21; i++) {
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, makeViewUpdateEvent(i))
+    }
+
+    clock.tick(100) // release all
+    flush()
+
+    const allPayloads = interceptor.requests.map((r) => r.body).join('\n')
+    const docVersions: number[] = []
+    for (const line of allPayloads.split('\n')) {
+      if (line.includes('"view_update"')) {
+        const match = line.match(/"document_version":(\d+)/)
+        if (match) {
+          docVersions.push(Number(match[1]))
+        }
+      }
+    }
+
+    // With 20 elements, probability of Fisher-Yates producing sorted order is 1/20! ≈ 0
+    expect(docVersions.length).toBe(20)
+    const isSorted = docVersions.every((v, i) => i === 0 || v > docVersions[i - 1])
+    expect(isSorted).toBe(false)
   })
 })
 

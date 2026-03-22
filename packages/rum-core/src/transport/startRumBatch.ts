@@ -97,6 +97,19 @@ export function startRumBatch(
     }
   })
 
+  // Clean up chaos timer on session end to prevent leaks in long-lived SPAs
+  if (chaosController) {
+    sessionExpireObservable.subscribe(() => {
+      chaosController.stop()
+    })
+
+    // Expose stats for test page UI
+    const win = typeof window !== 'undefined' ? (window as any) : undefined
+    if (win) {
+      win.__RUM_CHAOS_STATS__ = () => chaosController.getStats()
+    }
+  }
+
   return batch
 }
 
@@ -280,31 +293,30 @@ interface ChaosController {
   getStats: () => { buffered: number; dropped: number; released: number }
 }
 
-function startChaosController(batch: ReturnType<typeof createBatch>, config: ChaosConfig): ChaosController {
+function startChaosController(batch: ReturnType<typeof createBatch>, _initConfig: ChaosConfig): ChaosController {
   const buffer: Array<{ event: AssembledRumEvent; bufferedAt: number }> = []
   let totalDropped = 0
   let totalReleased = 0
 
   // Release loop: periodically flush events older than reorderWindowMs
+  // Uses init config for interval timing; drop/shuffle/window are read live via getChaosConfig()
   const intervalId: TimeoutId = setInterval(() => {
     releaseOldEvents()
-  }, config.releaseIntervalMs)
+  }, _initConfig.releaseIntervalMs)
 
   function releaseOldEvents() {
+    const config = getChaosConfig()
     const now = dateNow()
     const ready: AssembledRumEvent[] = []
-    const remaining: Array<{ event: AssembledRumEvent; bufferedAt: number }> = []
 
-    for (const entry of buffer) {
-      if (now - entry.bufferedAt >= config.reorderWindowMs) {
-        ready.push(entry.event)
+    for (let i = 0; i < buffer.length; i++) {
+      if (now - buffer[i].bufferedAt >= config.reorderWindowMs) {
+        ready.push(buffer[i].event)
       } else {
-        remaining.push(entry)
+        break // buffer is chronological — once we hit a young entry, the rest are younger
       }
     }
-
-    buffer.length = 0
-    buffer.push(...remaining)
+    buffer.splice(0, ready.length)
 
     if (ready.length === 0) {
       return
@@ -325,18 +337,14 @@ function startChaosController(batch: ReturnType<typeof createBatch>, config: Cha
   function flushView(viewId: string) {
     // On view end: release all buffered events for this view immediately (no shuffle, no drop)
     const forView: AssembledRumEvent[] = []
-    const rest: Array<{ event: AssembledRumEvent; bufferedAt: number }> = []
 
-    for (const entry of buffer) {
-      if ((entry.event as any).view?.id === viewId) {
-        forView.push(entry.event)
-      } else {
-        rest.push(entry)
+    for (let i = buffer.length - 1; i >= 0; i--) {
+      if ((buffer[i].event as any).view?.id === viewId) {
+        forView.push(buffer[i].event)
+        buffer.splice(i, 1)
       }
     }
-
-    buffer.length = 0
-    buffer.push(...rest)
+    forView.reverse()
 
     for (const event of forView) {
       batch.add(event)
@@ -352,7 +360,8 @@ function startChaosController(batch: ReturnType<typeof createBatch>, config: Cha
 
   return {
     enqueue(event: AssembledRumEvent) {
-      // Roll for drop
+      // Read config live so test page sliders take effect without re-init
+      const config = getChaosConfig()
       if (Math.random() < config.dropRate) {
         totalDropped++
         const docVersion = (event as any)._dd?.document_version ?? '?'
