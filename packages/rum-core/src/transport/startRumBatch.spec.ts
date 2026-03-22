@@ -1,6 +1,7 @@
 import type { PageMayExitEvent } from '@datadog/browser-core'
-import { createIdentityEncoder, Observable } from '@datadog/browser-core'
+import { addExperimentalFeatures, createIdentityEncoder, ExperimentalFeature, Observable } from '@datadog/browser-core'
 import { interceptRequests } from '@datadog/browser-core/test'
+import { resetExperimentalFeatures } from '../../../core/src/tools/experimentalFeatures'
 import { mockRumConfiguration } from '../../test'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { RumEventType } from '../rawRumEvent.types'
@@ -593,5 +594,179 @@ describe('startRumBatch', () => {
       // context NOT stripped → snapshot was deleted
       expect(viewUpdate.context).toEqual({ foo: 'bar' })
     })
+  })
+})
+
+describe('chaos mode', () => {
+  let lifeCycle: LifeCycle
+  let sessionExpireObservable: Observable<void>
+  let interceptor: ReturnType<typeof interceptRequests>
+
+  beforeEach(() => {
+    addExperimentalFeatures([ExperimentalFeature.VIEW_UPDATE, ExperimentalFeature.VIEW_UPDATE_CHAOS])
+    // Set chaos config: no drop, no shuffle, instant release for deterministic tests
+    ;(window as any).__RUM_CHAOS_CONFIG__ = {
+      dropRate: 0,
+      reorderWindowMs: 0,
+      releaseIntervalMs: 50,
+      shuffleOnRelease: false,
+    }
+
+    lifeCycle = new LifeCycle()
+    sessionExpireObservable = new Observable<void>()
+    interceptor = interceptRequests()
+
+    startRumBatch(
+      mockRumConfiguration(),
+      lifeCycle,
+      () => undefined,
+      new Observable<PageMayExitEvent>(),
+      sessionExpireObservable,
+      () => createIdentityEncoder()
+    )
+  })
+
+  afterEach(() => {
+    resetExperimentalFeatures()
+    delete (window as any).__RUM_CHAOS_CONFIG__
+  })
+
+  function flush() {
+    sessionExpireObservable.notify()
+  }
+
+  function makeViewUpdateEvent(docVersion: number, viewId = 'view-1'): AssembledRumEvent {
+    return {
+      type: RumEventType.VIEW_UPDATE,
+      view: { id: viewId, time_spent: docVersion * 100, is_active: true },
+      _dd: { document_version: docVersion },
+      application: { id: 'app-1' },
+      session: { id: 'session-1' },
+      date: 1000 + docVersion * 1000,
+    } as unknown as AssembledRumEvent
+  }
+
+  function makeViewEvent(docVersion: number, isActive = true, viewId = 'view-1'): AssembledRumEvent {
+    return {
+      type: RumEventType.VIEW,
+      view: { id: viewId, time_spent: docVersion * 100, is_active: isActive },
+      _dd: { document_version: docVersion },
+      application: { id: 'app-1' },
+      session: { id: 'session-1' },
+      date: 1000 + docVersion * 1000,
+    } as unknown as AssembledRumEvent
+  }
+
+  it('chaos mode buffers view_update events', (done) => {
+    // With reorderWindowMs=0 and releaseIntervalMs=50, events are buffered briefly
+    ;(window as any).__RUM_CHAOS_CONFIG__.reorderWindowMs = 100
+    ;(window as any).__RUM_CHAOS_CONFIG__.releaseIntervalMs = 50
+
+    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, makeViewUpdateEvent(2))
+
+    // Immediately after: no flush yet, so interceptor should have no requests
+    // (events are in the chaos buffer, not yet released)
+    flush()
+
+    // After the release interval fires, the event should appear
+    setTimeout(() => {
+      flush()
+      const allPayloads = interceptor.requests.map((r) => r.body).join('\n')
+      expect(allPayloads).toContain('"view_update"')
+      done()
+    }, 200)
+  })
+
+  it('chaos mode drops view_update events at configured rate', () => {
+    ;(window as any).__RUM_CHAOS_CONFIG__.dropRate = 1.0 // Drop everything
+    ;(window as any).__RUM_CHAOS_CONFIG__.reorderWindowMs = 0
+    ;(window as any).__RUM_CHAOS_CONFIG__.releaseIntervalMs = 10
+
+    // Send 5 view_updates — all should be dropped
+    for (let i = 2; i <= 6; i++) {
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, makeViewUpdateEvent(i))
+    }
+
+    flush()
+    const payload = interceptor.requests.length > 0 ? interceptor.requests[0].body : ''
+    expect(typeof payload === 'string' ? payload : '').not.toContain('"view_update"')
+  })
+
+  it('chaos mode always sends baseline VIEW immediately', (done) => {
+    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, makeViewEvent(1))
+    flush()
+
+    // VIEW events bypass chaos buffer entirely — should be in the payload immediately
+    expect(interceptor.requests.length).toBeGreaterThan(0)
+    const payload = interceptor.requests[0].body
+    expect(typeof payload === 'string' ? payload : '').toContain('"view"')
+    done()
+  })
+
+  it('chaos mode always sends view end immediately', (done) => {
+    // Send baseline view
+    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, makeViewEvent(1, true))
+    // Send view end
+    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, makeViewEvent(5, false))
+    flush()
+
+    expect(interceptor.requests.length).toBeGreaterThan(0)
+    const allPayloads = interceptor.requests.map((r) => r.body).join('\n')
+    expect(allPayloads).toContain('"is_active":false')
+    done()
+  })
+
+  it('chaos mode flushes buffer on view end', (done) => {
+    ;(window as any).__RUM_CHAOS_CONFIG__.reorderWindowMs = 60000 // Very long — won't release on timer
+    ;(window as any).__RUM_CHAOS_CONFIG__.releaseIntervalMs = 60000
+
+    // Buffer some view_updates
+    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, makeViewUpdateEvent(2))
+    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, makeViewUpdateEvent(3))
+
+    // End the view — should flush all buffered events for this view
+    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, makeViewEvent(4, false))
+    flush()
+
+    const allPayloads = interceptor.requests.map((r) => r.body).join('\n')
+    expect(allPayloads).toContain('"document_version":2')
+    expect(allPayloads).toContain('"document_version":3')
+    done()
+  })
+})
+
+describe('chaos mode inactive without VIEW_UPDATE_CHAOS flag', () => {
+  it('sends view_update directly without buffering', () => {
+    resetExperimentalFeatures()
+    addExperimentalFeatures([ExperimentalFeature.VIEW_UPDATE]) // Only view_update, no chaos
+
+    const lc = new LifeCycle()
+    const seo = new Observable<void>()
+    const ic = interceptRequests()
+
+    startRumBatch(
+      mockRumConfiguration(),
+      lc,
+      () => undefined,
+      new Observable<PageMayExitEvent>(),
+      seo,
+      () => createIdentityEncoder()
+    )
+
+    lc.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
+      type: RumEventType.VIEW_UPDATE,
+      view: { id: 'view-1', time_spent: 200, is_active: true },
+      _dd: { document_version: 2 },
+      application: { id: 'app-1' },
+      session: { id: 'session-1' },
+      date: 2000,
+    } as unknown as AssembledRumEvent)
+    seo.notify()
+
+    expect(ic.requests.length).toBeGreaterThan(0)
+    const payload = ic.requests[0].body
+    expect(typeof payload === 'string' ? payload : '').toContain('"view_update"')
+
+    resetExperimentalFeatures()
   })
 })

@@ -1,12 +1,15 @@
-import type { Observable, RawError, PageMayExitEvent, Encoder } from '@datadog/browser-core'
+import type { Observable, RawError, PageMayExitEvent, Encoder, TimeoutId } from '@datadog/browser-core'
 import {
+  clearInterval,
   createBatch,
   createFlushController,
   createHttpRequest,
+  dateNow,
   DeflateEncoderStreamId,
   display,
   ExperimentalFeature,
   isExperimentalFeatureEnabled,
+  setInterval,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -39,14 +42,22 @@ export function startRumBatch(
   // Store last assembled VIEW event per view_id for post-assembly strip
   const assembledViewSnapshots = new Map<string, AssembledRumEvent>()
 
+  // Chaos controller: buffers, reorders, and drops view_update events for backend resilience testing
+  const chaosController = isExperimentalFeatureEnabled(ExperimentalFeature.VIEW_UPDATE_CHAOS)
+    ? startChaosController(batch, getChaosConfig())
+    : undefined
+
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent: AssembledRumEvent) => {
     if (serverRumEvent.type === RumEventType.VIEW) {
       // Store snapshot for future view_update strip
       assembledViewSnapshots.set(serverRumEvent.view.id, serverRumEvent)
       batch.upsert(serverRumEvent, serverRumEvent.view.id)
 
-      // Cleanup on view end
+      // On view end: flush chaos buffer for this view, then clean up
       if (!serverRumEvent.view.is_active) {
+        if (chaosController) {
+          chaosController.flushView(serverRumEvent.view.id)
+        }
         assembledViewSnapshots.delete(serverRumEvent.view.id)
       }
     } else if (serverRumEvent.type === RumEventType.VIEW_UPDATE) {
@@ -58,10 +69,6 @@ export function startRumBatch(
       if (snapshot) {
         const snap = snapshot as any
         const update = serverRumEvent as any
-        // Backfill any top-level field from this VU into the snapshot so subsequent VUs can strip
-        // it when unchanged. Covers fields absent from baseline VIEW (usr/feature_flags set after
-        // init) and any future new top-level fields automatically.
-        // Routing keys are always on the snapshot; display needs sub-field merge (see below).
         for (const key of Object.keys(update)) {
           if (VIEW_UPDATE_ROUTING_KEYS.has(key) || key === 'display') {
             continue
@@ -70,7 +77,6 @@ export function startRumBatch(
             snap[key] = update[key]
           }
         }
-        // display.viewport: deferred via RAF, merge into snapshot without overwriting scroll
         const updateViewport = update.display?.viewport
         if (updateViewport) {
           snap.display = { ...snap.display, viewport: updateViewport }
@@ -81,7 +87,11 @@ export function startRumBatch(
         logStripDiagnostics(serverRumEvent, stripped, snapshot)
       }
 
-      batch.add(stripped)
+      if (chaosController) {
+        chaosController.enqueue(stripped)
+      } else {
+        batch.add(stripped)
+      }
     } else {
       batch.add(serverRumEvent)
     }
@@ -223,4 +233,157 @@ function logStripDiagnostics(original: AssembledRumEvent, stripped: AssembledRum
   display.debug(
     `[VU Strip] v=${docVersion} view=${viewId} | stripped: [${strippedFields.join(', ')}] (~${bytesSaved}B saved) | kept(changed): [${keptChanged.join(', ') || 'none'}]`
   )
+}
+
+// ─── Chaos Controller ──────────────────────────────────────────────────────
+
+interface ChaosConfig {
+  dropRate: number // 0.0-1.0: probability of dropping a view_update
+  reorderWindowMs: number // Buffer window before release
+  releaseIntervalMs: number // How often to flush the chaos buffer
+  shuffleOnRelease: boolean // Randomize order within release batch
+}
+
+const DEFAULT_CHAOS_CONFIG: ChaosConfig = {
+  dropRate: 0.2,
+  reorderWindowMs: 5000,
+  releaseIntervalMs: 2000,
+  shuffleOnRelease: true,
+}
+
+function getChaosConfig(): ChaosConfig {
+  // Allow runtime override via window.__RUM_CHAOS_CONFIG__
+  const win = typeof window !== 'undefined' ? (window as any) : undefined
+  const override = win?.__RUM_CHAOS_CONFIG__
+  if (override && typeof override === 'object') {
+    return {
+      dropRate: typeof override.dropRate === 'number' ? override.dropRate : DEFAULT_CHAOS_CONFIG.dropRate,
+      reorderWindowMs:
+        typeof override.reorderWindowMs === 'number' ? override.reorderWindowMs : DEFAULT_CHAOS_CONFIG.reorderWindowMs,
+      releaseIntervalMs:
+        typeof override.releaseIntervalMs === 'number'
+          ? override.releaseIntervalMs
+          : DEFAULT_CHAOS_CONFIG.releaseIntervalMs,
+      shuffleOnRelease:
+        typeof override.shuffleOnRelease === 'boolean'
+          ? override.shuffleOnRelease
+          : DEFAULT_CHAOS_CONFIG.shuffleOnRelease,
+    }
+  }
+  return DEFAULT_CHAOS_CONFIG
+}
+
+interface ChaosController {
+  enqueue: (event: AssembledRumEvent) => void
+  flushView: (viewId: string) => void
+  stop: () => void
+  getStats: () => { buffered: number; dropped: number; released: number }
+}
+
+function startChaosController(batch: ReturnType<typeof createBatch>, config: ChaosConfig): ChaosController {
+  const buffer: Array<{ event: AssembledRumEvent; bufferedAt: number }> = []
+  let totalDropped = 0
+  let totalReleased = 0
+
+  // Release loop: periodically flush events older than reorderWindowMs
+  const intervalId: TimeoutId = setInterval(() => {
+    releaseOldEvents()
+  }, config.releaseIntervalMs)
+
+  function releaseOldEvents() {
+    const now = dateNow()
+    const ready: AssembledRumEvent[] = []
+    const remaining: Array<{ event: AssembledRumEvent; bufferedAt: number }> = []
+
+    for (const entry of buffer) {
+      if (now - entry.bufferedAt >= config.reorderWindowMs) {
+        ready.push(entry.event)
+      } else {
+        remaining.push(entry)
+      }
+    }
+
+    buffer.length = 0
+    buffer.push(...remaining)
+
+    if (ready.length === 0) {
+      return
+    }
+
+    if (config.shuffleOnRelease) {
+      fisherYatesShuffle(ready)
+    }
+
+    for (const event of ready) {
+      batch.add(event)
+    }
+    totalReleased += ready.length
+
+    display.debug(`[RUM Chaos] Releasing ${ready.length} events (shuffled: ${config.shuffleOnRelease})`)
+  }
+
+  function flushView(viewId: string) {
+    // On view end: release all buffered events for this view immediately (no shuffle, no drop)
+    const forView: AssembledRumEvent[] = []
+    const rest: Array<{ event: AssembledRumEvent; bufferedAt: number }> = []
+
+    for (const entry of buffer) {
+      if ((entry.event as any).view?.id === viewId) {
+        forView.push(entry.event)
+      } else {
+        rest.push(entry)
+      }
+    }
+
+    buffer.length = 0
+    buffer.push(...rest)
+
+    for (const event of forView) {
+      batch.add(event)
+    }
+    totalReleased += forView.length
+
+    if (forView.length > 0) {
+      display.debug(
+        `[RUM Chaos] View end flush: released ${forView.length} buffered events for view=${viewId.slice(0, 8)}`
+      )
+    }
+  }
+
+  return {
+    enqueue(event: AssembledRumEvent) {
+      // Roll for drop
+      if (Math.random() < config.dropRate) {
+        totalDropped++
+        const docVersion = (event as any)._dd?.document_version ?? '?'
+        const viewId = String((event as any).view?.id ?? '?').slice(0, 8)
+        display.debug(`[RUM Chaos] Dropped view_update doc_version=${docVersion} for view=${viewId}`)
+        return
+      }
+      buffer.push({ event, bufferedAt: dateNow() })
+      display.debug(`[RUM Chaos] Buffer size: ${buffer.length}, total dropped: ${totalDropped}`)
+    },
+    flushView,
+    stop() {
+      clearInterval(intervalId)
+      // Release everything remaining
+      for (const entry of buffer) {
+        batch.add(entry.event)
+      }
+      totalReleased += buffer.length
+      buffer.length = 0
+    },
+    getStats() {
+      return { buffered: buffer.length, dropped: totalDropped, released: totalReleased }
+    },
+  }
+}
+
+function fisherYatesShuffle<T>(arr: T[]): void {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    const tmp = arr[i]
+    arr[i] = arr[j]
+    arr[j] = tmp
+  }
 }
