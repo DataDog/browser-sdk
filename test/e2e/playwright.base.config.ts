@@ -48,7 +48,7 @@ export const config: Config = {
       name: 'nextjs app router',
       stdout: 'pipe' as const,
       cwd: path.join(__dirname, '../apps/nextjs'),
-      command: isLocal ? 'yarn dev' : 'yarn start',
+      command: 'yarn start',
       wait: {
         stdout: /- Local:\s+http:\/\/localhost:(?<nextjs_app_router_port>\d+)/,
       },
