@@ -215,11 +215,11 @@ test.describe('nextjs - errors', () => {
 
         await flushEvents()
 
-        // React StrictMode double-fires useEffect in dev mode, so we may get 2 errors
         const customErrors = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
-        expect(customErrors.length).toBeGreaterThanOrEqual(1)
+        expect(customErrors).toHaveLength(1)
         expect(customErrors[0].error.message).toBe(clientErrorMessage)
         expect(customErrors[0].error.handling_stack).toBeDefined()
+        expect(customErrors[0].context).toMatchObject({ framework: 'nextjs' })
 
         withBrowserLogs((browserLogs) => {
           expect(browserLogs.length).toBeGreaterThan(0)
@@ -235,11 +235,13 @@ test.describe('nextjs - errors', () => {
 
         await flushEvents()
 
-        // React StrictMode double-fires useEffect in dev mode, so we may get 2 errors
         const customErrors = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
-        expect(customErrors.length).toBeGreaterThanOrEqual(1)
+        expect(customErrors).toHaveLength(1)
         expect(customErrors[0].error.handling_stack).toBeDefined()
-        expect((customErrors[0].context?.nextjs as { digest: string }).digest).toBeDefined()
+        expect(customErrors[0].context).toMatchObject({
+          framework: 'nextjs',
+          nextjs: { digest: expect.any(String) },
+        })
 
         withBrowserLogs((browserLogs) => {
           expect(browserLogs.length).toBeGreaterThan(0)
@@ -255,10 +257,10 @@ test.describe('nextjs - errors', () => {
 
         await flushEvents()
 
-        // React StrictMode double-fires useEffect in dev mode, so we may get 2 errors
         const customErrors = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
-        expect(customErrors.length).toBeGreaterThanOrEqual(1)
+        expect(customErrors).toHaveLength(1)
         expect(customErrors[0].error.handling_stack).toBeDefined()
+        expect(customErrors[0].context).toMatchObject({ framework: 'nextjs' })
 
         withBrowserLogs((browserLogs) => {
           expect(browserLogs.length).toBeGreaterThan(0)

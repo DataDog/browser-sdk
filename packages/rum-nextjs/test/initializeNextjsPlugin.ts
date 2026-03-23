@@ -1,14 +1,29 @@
-import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
-import { registerCleanupTask } from '../../core/test'
+import type { RumInitConfiguration, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
+import { noop } from '@datadog/browser-core'
 import { nextjsPlugin, resetNextjsPlugin } from '../src/domain/nextjsPlugin'
+import { registerCleanupTask } from '../../core/test'
 
-export function initializeNextjsPlugin() {
-  const startViewSpy = jasmine.createSpy('startView')
+export function initializeNextjsPlugin({
+  initConfiguration = {},
+  publicApi = {},
+  addError = noop,
+}: {
+  initConfiguration?: Partial<RumInitConfiguration>
+  publicApi?: Partial<RumPublicApi>
+  addError?: StartRumResult['addError']
+} = {}) {
+  resetNextjsPlugin()
   const plugin = nextjsPlugin()
+
   plugin.onInit({
-    publicApi: { startView: startViewSpy } as unknown as RumPublicApi,
-    initConfiguration: {} as RumInitConfiguration,
+    publicApi: publicApi as RumPublicApi,
+    initConfiguration: initConfiguration as RumInitConfiguration,
   })
-  registerCleanupTask(() => resetNextjsPlugin())
-  return startViewSpy
+  plugin.onRumStart({
+    addError,
+  })
+
+  registerCleanupTask(() => {
+    resetNextjsPlugin()
+  })
 }
