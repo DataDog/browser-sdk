@@ -6,6 +6,7 @@ import {
   ResourceType,
   addExperimentalFeatures,
   ExperimentalFeature,
+  display,
 } from '@datadog/browser-core'
 import { replaceMockable, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumFetchResourceEventDomainContext, RumXhrResourceEventDomainContext } from '../../domainContext.types'
@@ -774,6 +775,94 @@ describe('resourceCollection', () => {
           const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
           expect(event.resource.request?.headers?.[header]).toBeUndefined()
         })
+      })
+    })
+
+    describe('limit headers size', () => {
+      it('should truncate header values exceeding the max length', () => {
+        const displaySpy = spyOn(display, 'warn')
+        setupResourceCollection({ trackResourceHeaders: ['x-long'] })
+        const longValue = 'a'.repeat(200)
+
+        notifyRequest({
+          request: {
+            type: RequestType.FETCH,
+            response: new Response('', { headers: { 'X-Long': longValue } }),
+          },
+        })
+
+        const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+        expect(event.resource.response!.headers!['x-long']).toBe('a'.repeat(128))
+        expect(displaySpy).toHaveBeenCalledOnceWith('Header "x-long" value was truncated from 200 to 128 characters.')
+      })
+
+      it('should limit the number of collected headers', () => {
+        const headerNames = Array.from({ length: 101 }, (_, i) => `x-header-${i}`)
+        setupResourceCollection({ trackResourceHeaders: headerNames })
+
+        const headerEntries: Record<string, string> = {}
+        for (const name of headerNames) {
+          headerEntries[name] = 'value'
+        }
+
+        notifyRequest({
+          request: {
+            type: RequestType.FETCH,
+            response: new Response('', { headers: headerEntries }),
+          },
+        })
+
+        const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+        expect(Object.keys(event.resource.response!.headers!).length).toBe(100)
+      })
+
+      it('should only count headers that pass filtering toward the limit', () => {
+        const allowedHeaders = Array.from({ length: 100 }, (_, i) => `x-header-${i}`)
+        // Include a forbidden header name in the matchers - it won't be counted
+        const allMatchers = [...allowedHeaders, 'authorization', 'x-extra']
+        setupResourceCollection({ trackResourceHeaders: allMatchers })
+
+        const headerEntries: Record<string, string> = {}
+        // The forbidden header comes first but should not count toward the limit
+        headerEntries['Authorization'] = 'secret'
+        for (const name of allowedHeaders) {
+          headerEntries[name] = 'value'
+        }
+        headerEntries['X-Extra'] = 'extra-value'
+
+        notifyRequest({
+          request: {
+            type: RequestType.FETCH,
+            response: new Response('', { headers: headerEntries }),
+          },
+        })
+
+        const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+        const collectedHeaders = event.resource.response!.headers!
+        expect(Object.keys(collectedHeaders).length).toBe(100)
+        expect(collectedHeaders['authorization']).toBeUndefined()
+      })
+
+      it('should warn when the max number of headers is reached', () => {
+        const displaySpy = spyOn(display, 'warn')
+        const headerNames = Array.from({ length: 110 }, (_, i) => `x-header-${i}`)
+        setupResourceCollection({ trackResourceHeaders: headerNames })
+
+        const headerEntries: Record<string, string> = {}
+        for (const name of headerNames) {
+          headerEntries[name] = 'value'
+        }
+
+        notifyRequest({
+          request: {
+            type: RequestType.FETCH,
+            response: new Response('', { headers: headerEntries }),
+          },
+        })
+
+        expect(displaySpy).toHaveBeenCalledOnceWith(
+          'Maximum number of headers (100) has been reached. Further headers are dropped.'
+        )
       })
     })
   })

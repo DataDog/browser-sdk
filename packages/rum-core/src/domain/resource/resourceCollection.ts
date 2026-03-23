@@ -11,6 +11,9 @@ import {
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
   matchList,
+  safeTruncate,
+  display,
+  addTelemetryDebug,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
@@ -366,24 +369,55 @@ function getRequestHeaders(request: RequestCompleteEvent, matchers: MatchOption[
   return headers ? filterHeaders(headers, matchers) : undefined
 }
 
-const FORBIDDEN_HEADER_PATTERN = /(token|cookie|secret|authorization|(api|secret|access|app).?key|(client|connecting|real).?ip|forwarded)/
+const FORBIDDEN_HEADER_PATTERN =
+  /(token|cookie|secret|authorization|(api|secret|access|app).?key|(client|connecting|real).?ip|forwarded)/
+const MAX_HEADER_COUNT = 100
+const MAX_HEADER_VALUE_LENGTH = 128
 
 function filterHeaders(headers: Headers, matchers: MatchOption[]): NetworkHeaders | undefined {
   const result: NetworkHeaders = {} as NetworkHeaders
-  let hasHeaders = false
+  let headerCount = 0
+  let hasReachedMaxHeaderCount = false
 
   headers.forEach((value, name) => {
+    if (headerCount >= MAX_HEADER_COUNT) {
+      if (hasReachedMaxHeaderCount === false) {
+        display.warn(`Maximum number of headers (${MAX_HEADER_COUNT}) has been reached. Further headers are dropped.`)
+        // monitor-until: 2026-05-23
+        addTelemetryDebug('Maximum number of resource headers reached', {
+          limit: MAX_HEADER_COUNT,
+        })
+        hasReachedMaxHeaderCount = true
+      }
+
+      return
+    }
+
     const lowerName = name.toLowerCase()
+
     if (FORBIDDEN_HEADER_PATTERN.test(lowerName)) {
       return
     }
-    if (matchList(matchers, lowerName)) {
-      result[lowerName] = value
-      hasHeaders = true
+    if (!matchList(matchers, lowerName)) {
+      return
     }
+
+    if (value.length > MAX_HEADER_VALUE_LENGTH) {
+      display.warn(
+        `Header "${lowerName}" value was truncated from ${value.length} to ${MAX_HEADER_VALUE_LENGTH} characters.`
+      )
+      // monitor-until: 2026-05-23
+      addTelemetryDebug('Resource header value was truncated', {
+        header_name: lowerName,
+        original_length: value.length,
+        limit: MAX_HEADER_VALUE_LENGTH,
+      })
+    }
+    result[lowerName] = safeTruncate(value, MAX_HEADER_VALUE_LENGTH)
+    headerCount++
   })
 
-  return hasHeaders ? result : undefined
+  return headerCount > 0 ? result : undefined
 }
 
 function parseRawHeaders(rawHeaders: string): Array<[string, string]> {
