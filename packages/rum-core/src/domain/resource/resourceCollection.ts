@@ -366,12 +366,17 @@ function getRequestHeaders(request: RequestCompleteEvent, matchers: MatchOption[
   return headers ? filterHeaders(headers, matchers) : undefined
 }
 
+const FORBIDDEN_HEADER_PATTERN = /(token|cookie|secret|authorization|(api|secret|access|app).?key|(client|connecting|real).?ip|forwarded)/
+
 function filterHeaders(headers: Headers, matchers: MatchOption[]): NetworkHeaders | undefined {
   const result: NetworkHeaders = {} as NetworkHeaders
   let hasHeaders = false
 
   headers.forEach((value, name) => {
     const lowerName = name.toLowerCase()
+    if (FORBIDDEN_HEADER_PATTERN.test(lowerName)) {
+      return
+    }
     if (matchList(matchers, lowerName)) {
       result[lowerName] = value
       hasHeaders = true

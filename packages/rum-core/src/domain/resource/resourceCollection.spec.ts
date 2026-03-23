@@ -728,6 +728,54 @@ describe('resourceCollection', () => {
       const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
       expect(event.resource.request).toBeUndefined()
     })
+
+    describe('forbidden headers', () => {
+      const forbiddenHeaders = [
+        'authorization',
+        'x-api-key',
+        'x-access-token',
+        'x-auth-token',
+        'x-session-token',
+        'x-forwarded-for',
+        'x-real-ip',
+        'cf-connecting-ip',
+        'true-client-ip',
+        'x-csrf-token',
+        'x-xsrf-token',
+        'x-security-token',
+      ]
+
+      forbiddenHeaders.forEach((header) => {
+        it(`should not capture forbidden response header: ${header}`, () => {
+          setupResourceCollection({ trackResourceHeaders: forbiddenHeaders })
+
+          notifyRequest({
+            request: {
+              type: RequestType.FETCH,
+              response: new Response('', { headers: { [header]: 'secret-value' } }),
+            },
+          })
+
+          const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+          expect(event.resource.response?.headers?.[header]).toBeUndefined()
+        })
+
+        it(`should not capture forbidden request header: ${header}`, () => {
+          setupResourceCollection({ trackResourceHeaders: forbiddenHeaders })
+
+          notifyRequest({
+            request: {
+              type: RequestType.FETCH,
+              init: { headers: { [header]: 'secret-value' } },
+              response: new Response(''),
+            },
+          })
+
+          const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+          expect(event.resource.request?.headers?.[header]).toBeUndefined()
+        })
+      })
+    })
   })
 
   describe('tracing info', () => {
