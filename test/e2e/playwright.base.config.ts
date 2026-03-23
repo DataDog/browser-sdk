@@ -58,6 +58,9 @@ export const config: Config = {
       stdout: 'pipe' as const,
       cwd: path.join(__dirname, '../apps/vue-router-app'),
       command: isLocal ? 'yarn dev' : 'yarn preview',
+      // NO_COLOR=1 prevents Vite from wrapping "Local" in ANSI bold codes when
+      // FORCE_COLOR=1 is set in CI, which would break the wait.stdout regex.
+      env: { NO_COLOR: '1' },
       wait: {
         stdout: /Local:\s+http:\/\/localhost:(?<vue_router_app_port>\d+)/,
       },
