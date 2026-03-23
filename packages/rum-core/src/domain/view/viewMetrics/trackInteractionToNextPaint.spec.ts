@@ -1,5 +1,5 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
-import { elapsed, relativeNow, ExperimentalFeature, addExperimentalFeatures } from '@datadog/browser-core'
+import { elapsed, relativeNow } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import {
   appendElement,
@@ -272,10 +272,6 @@ describe('trackInteractionToNextPaint', () => {
   })
 
   describe('INP subparts', () => {
-    beforeEach(() => {
-      addExperimentalFeatures([ExperimentalFeature.INP_SUBPARTS])
-    })
-
     it('should not include subparts when INP is 0', () => {
       startINPTracking()
       interactionCountMock.setInteractionCount(1 as Duration)

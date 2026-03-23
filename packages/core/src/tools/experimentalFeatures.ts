@@ -23,7 +23,6 @@ export enum ExperimentalFeature {
   USE_CHANGE_RECORDS = 'use_change_records',
   USE_INCREMENTAL_CHANGE_RECORDS = 'use_incremental_change_records',
   LCP_SUBPARTS = 'lcp_subparts',
-  INP_SUBPARTS = 'inp_subparts',
   TOO_MANY_REQUESTS_INVESTIGATION = 'too_many_requests_investigation',
   COMPOSED_PATH_SELECTOR = 'composed_path_selector',
 }
