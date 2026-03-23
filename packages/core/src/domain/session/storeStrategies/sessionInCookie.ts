@@ -36,7 +36,12 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
   const opts = encodeCookieOptions(cookieOptions)
 
   cookieAccess.observable.subscribe((cookieValue) => {
-    const state = parseAndStripCookieOptions(cookieValue)
+    const state = toSessionState(cookieValue ?? '')
+    // Ignore updates from non-matching cookies (e.g. partitioned vs non-partitioned)
+    if (state.c && state.c !== opts) {
+      return
+    }
+    delete state.c
     sessionObservable.notify(state)
   })
 
@@ -64,18 +69,6 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
   }
 }
 
-function parseAndStripCookieOptions(cookieValue: string | undefined): SessionState {
-  if (!cookieValue) {
-    return {}
-  }
-
-  // The cookieObservable gives us the raw cookie value. When multiple cookies exist with the same
-  // name (e.g. partitioned vs non-partitioned), document.cookie contains all of them but
-  // cookieStore/polling only gives us one value. Parse what we get and strip cookie options.
-  const state = toSessionState(cookieValue)
-  delete state.c
-  return state
-}
 
 function findMatchingSessionState(items: string[], opts: string): SessionState {
   let sessionState: SessionState | undefined

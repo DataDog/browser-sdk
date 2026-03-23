@@ -1,5 +1,5 @@
 import { mockClock, mockCookies, registerCleanupTask } from '../../../../test'
-import { deleteCookie, getCookie } from '../../../browser/cookie'
+import { deleteCookie, getCookie, setCookie } from '../../../browser/cookie'
 import type { SessionState } from '../sessionState'
 import type { Configuration, InitConfiguration } from '../../configuration'
 import { WATCH_COOKIE_INTERVAL_DELAY } from '../../../browser/cookieAccess'
@@ -125,6 +125,19 @@ describe('session in cookie strategy', () => {
       await strategy.setSessionState(() => ({}))
 
       expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
+    })
+
+    it('should ignore observable updates from cookies with non-matching c marker', async () => {
+      const { strategy } = setupCookieStrategy()
+      const spy = jasmine.createSpy<(state: SessionState) => void>('observer')
+      const subscription = strategy.sessionObservable.subscribe(spy)
+      registerCleanupTask(() => subscription.unsubscribe())
+
+      // Simulate an external write with a different c marker (e.g. partitioned cookie)
+      setCookie(SESSION_STORE_KEY, 'id=foreign&c=ff', SESSION_EXPIRATION_DELAY)
+      clock.tick(WATCH_COOKIE_INTERVAL_DELAY)
+
+      expect(spy).not.toHaveBeenCalled()
     })
 
     it('should notify sessionObservable after write', async () => {
