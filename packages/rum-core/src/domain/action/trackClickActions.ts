@@ -74,10 +74,15 @@ export function trackClickActions(
   const { stop: stopActionEventsListener } = listenActionEvents<{
     clickActionBase: ClickActionBase
     hadActivityOnPointerDown: () => boolean
+    stopHadActivityTracking: () => void
   }>(configuration, {
     onPointerDown: (pointerDownEvent) =>
       processPointerDown(configuration, lifeCycle, domMutationObservable, pointerDownEvent, windowOpenObservable),
-    onPointerUp: ({ clickActionBase, hadActivityOnPointerDown }, startEvent, getUserActivity) => {
+    onPointerUp: (
+      { clickActionBase, hadActivityOnPointerDown, stopHadActivityTracking },
+      startEvent,
+      getUserActivity
+    ) => {
       startClickAction(
         configuration,
         lifeCycle,
@@ -89,7 +94,8 @@ export function trackClickActions(
         clickActionBase,
         startEvent,
         getUserActivity,
-        hadActivityOnPointerDown
+        hadActivityOnPointerDown,
+        stopHadActivityTracking
       )
     },
   })
@@ -151,7 +157,7 @@ function processPointerDown(
 
   let hadActivityOnPointerDown = false
 
-  waitPageActivityEnd(
+  const { stop: stopHadActivityTracking } = waitPageActivityEnd(
     lifeCycle,
     domMutationObservable,
     windowOpenObservable,
@@ -164,7 +170,7 @@ function processPointerDown(
     PAGE_ACTIVITY_VALIDATION_DELAY
   )
 
-  return { clickActionBase, hadActivityOnPointerDown: () => hadActivityOnPointerDown }
+  return { clickActionBase, hadActivityOnPointerDown: () => hadActivityOnPointerDown, stopHadActivityTracking }
 }
 
 function startClickAction(
@@ -178,7 +184,8 @@ function startClickAction(
   clickActionBase: ClickActionBase,
   startEvent: MouseEventOnElement,
   getUserActivity: () => UserActivity,
-  hadActivityOnPointerDown: () => boolean
+  hadActivityOnPointerDown: () => boolean,
+  stopHadActivityTracking: () => void
 ) {
   const click = newClick(lifeCycle, actionTracker, getUserActivity, clickActionBase, startEvent)
   appendClickToClickChain(click)
@@ -229,6 +236,7 @@ function startClickAction(
   click.stopObservable.subscribe(() => {
     pageMayExitSubscription.unsubscribe()
     viewEndedSubscription.unsubscribe()
+    stopHadActivityTracking()
     stopWaitPageActivityEnd()
     stopSubscription.unsubscribe()
   })

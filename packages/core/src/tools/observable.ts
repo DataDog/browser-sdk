@@ -34,7 +34,10 @@ export class Observable<T> {
   protected removeObserver(observer: Observer<T>) {
     this.observers = this.observers.filter((other) => observer !== other)
     if (!this.observers.length && this.onLastUnsubscribe) {
-      this.onLastUnsubscribe()
+      // Clear before calling to prevent re-entrant calls if cleanup triggers another unsubscribe
+      const cleanup = this.onLastUnsubscribe
+      this.onLastUnsubscribe = undefined
+      cleanup()
     }
   }
 }

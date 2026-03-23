@@ -30,7 +30,7 @@ describe('trackCommonViewMetrics', () => {
 
   describe('manual loading time suppresses auto-detected loading time callback', () => {
     it('should ignore auto-detected loading time when manual loading time was already set', () => {
-      const { setLoadEvent, setLoadingTime, getCommonViewMetrics, stop } = trackCommonViewMetrics(
+      const { setLoadEvent, setLoadingTime, getCommonViewMetrics, stop, stopINPTracking } = trackCommonViewMetrics(
         lifeCycle,
         domMutationObservable,
         windowOpenObservable,
@@ -40,7 +40,10 @@ describe('trackCommonViewMetrics', () => {
         clocksOrigin()
       )
 
-      registerCleanupTask(stop)
+      registerCleanupTask(() => {
+        stop()
+        stopINPTracking()
+      })
 
       // Step 1: Trigger page activity and let it end.
       // This sets isWaitingForActivityLoadingTime = false with a candidate,
