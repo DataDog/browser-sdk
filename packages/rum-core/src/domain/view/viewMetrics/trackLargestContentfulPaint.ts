@@ -4,8 +4,6 @@ import {
   ONE_MINUTE,
   addEventListeners,
   findLast,
-  ExperimentalFeature,
-  isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../../../browser/performanceObservable'
@@ -80,9 +78,7 @@ export function trackLargestContentfulPaint(
       const resourceUrl = computeLcpEntryUrl(lcpEntry)
       const lcpValue = lcpEntry.startTime
 
-      const subParts = isExperimentalFeatureEnabled(ExperimentalFeature.LCP_SUBPARTS)
-        ? computeLcpSubParts(resourceUrl, lcpValue)
-        : undefined
+      const subParts = computeLcpSubParts(resourceUrl, lcpValue)
 
       callback({
         value: lcpValue,
