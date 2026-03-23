@@ -6,7 +6,6 @@ import {
   ResourceType,
   addExperimentalFeatures,
   ExperimentalFeature,
-  display,
 } from '@datadog/browser-core'
 import { replaceMockable, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumFetchResourceEventDomainContext, RumXhrResourceEventDomainContext } from '../../domainContext.types'
@@ -519,25 +518,216 @@ describe('resourceCollection', () => {
     expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.status_code).toBeUndefined()
   })
 
-  it('should call computeNetworkHeaders when track_resource_headers experimental feature is enabled', () => {
-    addExperimentalFeatures([ExperimentalFeature.TRACK_RESOURCE_HEADERS])
-    const displayLogSpy = spyOn(display, 'log')
-    setupResourceCollection()
+  describe('network headers', () => {
+    beforeEach(() => {
+      addExperimentalFeatures([ExperimentalFeature.TRACK_RESOURCE_HEADERS])
+    })
 
-    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])
-    runTasks()
+    describe('Fetch', () => {
+      it('should extract matching response headers from Fetch', () => {
+        setupResourceCollection({ trackResourceHeaders: ['content-type', 'cache-control'] })
 
-    expect(displayLogSpy).toHaveBeenCalledWith('computeNetworkHeaders called')
-  })
+        notifyRequest({
+          request: {
+            type: RequestType.FETCH,
+            response: new Response('', {
+              headers: { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache', 'X-Other': 'ignored' },
+            }),
+          },
+        })
 
-  it('should not call computeNetworkHeaders when track_resource_headers experimental feature is not enabled', () => {
-    const displayLogSpy = spyOn(display, 'log')
-    setupResourceCollection()
+        const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+        expect(event.resource.response).toEqual({
+          headers: {
+            'content-type': 'text/html',
+            'cache-control': 'no-cache',
+          },
+        })
+      })
 
-    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])
-    runTasks()
+      it('should extract matching request headers from Fetch', () => {
+        setupResourceCollection({ trackResourceHeaders: ['x-custom'] })
 
-    expect(displayLogSpy).not.toHaveBeenCalledWith('computeNetworkHeaders called')
+        notifyRequest({
+          request: {
+            type: RequestType.FETCH,
+            init: { headers: { 'X-Custom': 'my-value', 'X-Other': 'ignored' } },
+            response: new Response(''),
+          },
+        })
+
+        const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+        expect(event.resource.request).toEqual({
+          headers: { 'x-custom': 'my-value' },
+        })
+      })
+
+      it('should extract request headers from Fetch Request input', () => {
+        setupResourceCollection({ trackResourceHeaders: ['x-custom'] })
+
+        notifyRequest({
+          request: {
+            type: RequestType.FETCH,
+            input: new Request('https://example.com', { headers: { 'X-Custom': 'from-request' } }),
+            response: new Response(''),
+          },
+        })
+
+        const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+        expect(event.resource.request).toEqual({
+          headers: { 'x-custom': 'from-request' },
+        })
+      })
+    })
+
+    describe('XHR', () => {
+      it('should extract matching response headers from XHR', () => {
+        setupResourceCollection({ trackResourceHeaders: ['content-type', 'cache-control'] })
+
+        const xhr = new XMLHttpRequest()
+        spyOn(xhr, 'getAllResponseHeaders').and.returnValue(
+          'Content-Type: application/json\r\nCache-Control: max-age=300\r\nX-Other: ignored\r\n'
+        )
+
+        notifyRequest({
+          request: { type: RequestType.XHR, xhr },
+        })
+
+        const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+        expect(event.resource.response).toEqual({
+          headers: {
+            'content-type': 'application/json',
+            'cache-control': 'max-age=300',
+          },
+        })
+      })
+
+      // TODO: Remove this test when we support request headers for XHR
+      it('should not extract request headers from XHR', () => {
+        setupResourceCollection({ trackResourceHeaders: ['content-type'] })
+
+        const xhr = new XMLHttpRequest()
+        spyOn(xhr, 'getAllResponseHeaders').and.returnValue('Content-Type: text/html\r\n')
+
+        notifyRequest({
+          request: { type: RequestType.XHR, xhr },
+        })
+
+        const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+        expect(event.resource.request).toBeUndefined()
+      })
+    })
+
+    it('should not collect headers when trackResourceHeaders is empty', () => {
+      setupResourceCollection({ trackResourceHeaders: [] })
+
+      notifyRequest({
+        request: {
+          type: RequestType.FETCH,
+          response: new Response('', { headers: { 'content-type': 'text/html', 'cache-control': 'no-cache' } }),
+        },
+      })
+
+      const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+      expect(event.resource.request).toBeUndefined()
+      expect(event.resource.response).toBeUndefined()
+    })
+
+    it('should not collect headers for perf-entry-only resources', () => {
+      setupResourceCollection({ trackResourceHeaders: ['content-type'] })
+
+      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])
+      runTasks()
+
+      const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+      expect(event.resource.request).toBeUndefined()
+    })
+
+    it('should override perf entry content-type with network content-type', () => {
+      setupResourceCollection({ trackResourceHeaders: ['content-type'] })
+
+      notifyRequest({
+        request: {
+          type: RequestType.FETCH,
+          response: new Response('', { headers: { 'Content-Type': 'application/json' } }),
+        },
+        performanceEntryOverrides: { contentType: 'text/html' },
+      })
+
+      const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+      expect(event.resource.response!.headers!['content-type']).toBe('application/json')
+    })
+
+    it('should preserve perf entry content-type when no request object', () => {
+      setupResourceCollection({ trackResourceHeaders: ['content-type'] })
+
+      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { contentType: 'image/png' })])
+      runTasks()
+
+      const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+      expect(event.resource.response!.headers!['content-type']).toBe('image/png')
+    })
+
+    it('should lowercase header names', () => {
+      setupResourceCollection({ trackResourceHeaders: ['x-custom-header'] })
+
+      notifyRequest({
+        request: {
+          type: RequestType.FETCH,
+          response: new Response('', { headers: { 'X-Custom-Header': 'value' } }),
+        },
+      })
+
+      const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+      expect(event.resource.response!.headers!['x-custom-header']).toBe('value')
+    })
+
+    it('should support RegExp matchers', () => {
+      setupResourceCollection({ trackResourceHeaders: [/^x-custom/] })
+
+      notifyRequest({
+        request: {
+          type: RequestType.FETCH,
+          response: new Response('', { headers: { 'X-Custom-One': 'a', 'X-Custom-Two': 'b', 'Cache-Control': 'no' } }),
+        },
+      })
+
+      const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+      expect(event.resource.response!.headers!['x-custom-one']).toBe('a')
+      expect(event.resource.response!.headers!['x-custom-two']).toBe('b')
+      expect(event.resource.response!.headers!['cache-control']).toBeUndefined()
+    })
+
+    it('should support function matchers', () => {
+      setupResourceCollection({ trackResourceHeaders: [(name: string) => name.startsWith('x-')] })
+
+      notifyRequest({
+        request: {
+          type: RequestType.FETCH,
+          response: new Response('', { headers: { 'X-Foo': 'bar', 'Content-Type': 'text/html' } }),
+        },
+      })
+
+      const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+      expect(event.resource.response!.headers!['x-foo']).toBe('bar')
+      expect(event.resource.response!.headers!['content-type']).toBeUndefined()
+    })
+
+    it('should not collect headers when experimental feature is disabled', () => {
+      // Reset experimental features to disable TRACK_RESOURCE_HEADERS
+      addExperimentalFeatures([])
+      setupResourceCollection({ trackResourceHeaders: ['content-type'] })
+
+      notifyRequest({
+        request: {
+          type: RequestType.FETCH,
+          response: new Response('', { headers: { 'Content-Type': 'text/html' } }),
+        },
+      })
+
+      const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+      expect(event.resource.request).toBeUndefined()
+    })
   })
 
   describe('tracing info', () => {

@@ -1,4 +1,4 @@
-import type { ClocksState, Duration } from '@datadog/browser-core'
+import type { ClocksState, Duration, MatchOption } from '@datadog/browser-core'
 import {
   combine,
   generateUUID,
@@ -8,9 +8,9 @@ import {
   relativeToClocks,
   createTaskQueue,
   mockable,
-  display,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
+  matchList,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
@@ -20,7 +20,7 @@ import type {
   RumFetchResourceEventDomainContext,
   RumOtherResourceEventDomainContext,
 } from '../../domainContext.types'
-import type { RawRumResourceEvent, ResourceResponse } from '../../rawRumEvent.types'
+import type { NetworkHeaders, RawRumResourceEvent, ResourceRequest, ResourceResponse } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData, LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -146,9 +146,9 @@ function assembleResource(
     ? computeResourceEntryDuration(entry)
     : computeRequestDuration(pageStateHistory, startClocks, request!.duration)
 
-  if (isExperimentalFeatureEnabled(ExperimentalFeature.TRACK_RESOURCE_HEADERS)) {
-    computeNetworkHeaders(request, entry, configuration)
-  }
+  const networkHeaders = isExperimentalFeatureEnabled(ExperimentalFeature.TRACK_RESOURCE_HEADERS)
+    ? computeNetworkHeaders(request, configuration)
+    : undefined
 
   const graphql = request && computeGraphQlMetaData(request, configuration)
   const response = entry && computeResourceResponse(entry)
@@ -179,7 +179,8 @@ function assembleResource(
       },
     },
     tracingInfo,
-    entry && computeResourceEntryMetrics(entry)
+    entry && computeResourceEntryMetrics(entry),
+    networkHeaders
   )
 
   return {
@@ -303,9 +304,91 @@ function discardZeroStatus(statusCode: number | undefined): number | undefined {
 }
 
 function computeNetworkHeaders(
-  _request: RequestCompleteEvent | undefined,
-  _entry: RumPerformanceResourceTiming | undefined,
-  _configuration: RumConfiguration
-) {
-  display.log('computeNetworkHeaders called')
+  request: RequestCompleteEvent | undefined,
+  configuration: RumConfiguration
+): { resource: { request?: ResourceRequest; response?: ResourceResponse } } | undefined {
+  const matchers = configuration.trackResourceHeaders
+  if (matchers.length === 0 || !request) {
+    return undefined
+  }
+
+  const responseHeaders = getResponseHeaders(request, matchers)
+  const requestHeaders = getRequestHeaders(request, matchers)
+
+  if (!responseHeaders && !requestHeaders) {
+    return undefined
+  }
+
+  return {
+    resource: {
+      request: requestHeaders ? { headers: requestHeaders } : undefined,
+      response: responseHeaders ? { headers: responseHeaders } : undefined,
+    },
+  }
+}
+
+function getResponseHeaders(request: RequestCompleteEvent, matchers: MatchOption[]): NetworkHeaders | undefined {
+  if (request.type === RequestType.FETCH && request.response) {
+    return filterHeaders(request.response.headers, matchers)
+  }
+
+  if (request.type === RequestType.XHR && request.xhr) {
+    const rawHeaders = request.xhr.getAllResponseHeaders()
+    if (rawHeaders) {
+      try {
+        return filterHeaders(new Headers(parseRawHeaders(rawHeaders)), matchers)
+      } catch {
+        // Ignore parsing errors
+      }
+    }
+  }
+
+  return undefined
+}
+
+function getRequestHeaders(request: RequestCompleteEvent, matchers: MatchOption[]): NetworkHeaders | undefined {
+  if (request.type !== RequestType.FETCH) {
+    return undefined
+  }
+
+  let headers: Headers | undefined
+
+  if (request.init?.headers) {
+    try {
+      headers = new Headers(request.init.headers)
+    } catch {
+      // Ignore invalid headers
+    }
+  } else if (request.input instanceof Request) {
+    headers = request.input.headers
+  }
+
+  return headers ? filterHeaders(headers, matchers) : undefined
+}
+
+function filterHeaders(headers: Headers, matchers: MatchOption[]): NetworkHeaders | undefined {
+  const result: NetworkHeaders = {} as NetworkHeaders
+  let hasHeaders = false
+
+  headers.forEach((value, name) => {
+    const lowerName = name.toLowerCase()
+    if (matchList(matchers, lowerName)) {
+      result[lowerName] = value
+      hasHeaders = true
+    }
+  })
+
+  return hasHeaders ? result : undefined
+}
+
+function parseRawHeaders(rawHeaders: string): Array<[string, string]> {
+  const pairs: Array<[string, string]> = []
+  const lines = rawHeaders.trim().split(/\r?\n/)
+  for (const line of lines) {
+    const colonIndex = line.indexOf(':')
+    if (colonIndex > 0) {
+      pairs.push([line.substring(0, colonIndex).trim(), line.substring(colonIndex + 1).trim()])
+    }
+  }
+  return pairs
 }

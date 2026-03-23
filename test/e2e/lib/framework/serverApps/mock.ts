@@ -98,6 +98,17 @@ export function createMockServerApp(servers: Servers, setup: string, setupOption
     setTimeout(() => res.send('ok'), timeoutDuration)
   })
 
+  app.all('/ok-with-resource-headers', (req, res) => {
+    res.header('Content-Type', 'text/plain')
+    res.header('Cache-Control', 'no-cache')
+    res.header('x-custom-response', 'custom-value')
+    if (req.query['timing-allow-origin'] === 'true') {
+      res.set('Timing-Allow-Origin', '*')
+    }
+    const timeoutDuration = req.query.duration ? Number(req.query.duration) : 0
+    setTimeout(() => res.send('ok'), timeoutDuration)
+  })
+
   app.post('/graphql', (req, res) => {
     res.header('Content-Type', 'application/json')
 

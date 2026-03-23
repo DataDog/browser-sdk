@@ -383,6 +383,144 @@ function expectToHaveValidTimings(resourceEvent: RumResourceEvent) {
   }
 }
 
+test.describe('resource headers with trackResourceHeaders', () => {
+  const TRACK_RESOURCE_HEADERS_CONFIG = {
+    enableExperimentalFeatures: ['track_resource_headers'] as string[],
+    trackResourceHeaders: true as true | string[],
+  }
+
+  createTest('collect default response headers for fetch when trackResourceHeaders is true')
+    .withRum(TRACK_RESOURCE_HEADERS_CONFIG)
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => fetch('/ok-with-resource-headers'))
+
+      await flushEvents()
+
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.type === 'fetch')
+      expect(resourceEvent).toBeDefined()
+      expect(resourceEvent!.resource.response).toBeDefined()
+      expect(resourceEvent!.resource.response!.headers).toBeDefined()
+      expect(resourceEvent!.resource.response!.headers!['content-type']).toBe('text/plain')
+      expect(resourceEvent!.resource.response!.headers!['cache-control']).toBe('no-cache')
+    })
+
+  createTest('collect default response headers for XHR when trackResourceHeaders is true')
+    .withRum(TRACK_RESOURCE_HEADERS_CONFIG)
+    .run(async ({ intakeRegistry, flushEvents, sendXhr }) => {
+      await sendXhr('/ok-with-resource-headers')
+
+      await flushEvents()
+
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.type === 'xhr')
+      expect(resourceEvent).toBeDefined()
+      expect(resourceEvent!.resource.response).toBeDefined()
+      expect(resourceEvent!.resource.response!.headers).toBeDefined()
+      expect(resourceEvent!.resource.response!.headers!['content-type']).toBe('text/plain')
+      expect(resourceEvent!.resource.response!.headers!['cache-control']).toBe('no-cache')
+    })
+
+  createTest('collect default request headers for fetch when trackResourceHeaders is true')
+    .withRum(TRACK_RESOURCE_HEADERS_CONFIG)
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() =>
+        fetch('/ok-with-resource-headers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: 'value' }),
+        })
+      )
+
+      await flushEvents()
+
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.type === 'fetch')
+      expect(resourceEvent).toBeDefined()
+      expect(resourceEvent!.resource.request).toBeDefined()
+      expect(resourceEvent!.resource.request!.headers).toBeDefined()
+      expect(resourceEvent!.resource.request!.headers!['content-type']).toBe('application/json')
+    })
+
+  createTest('collect default and custom response headers for fetch when trackResourceHeaders includes a custom header')
+    .withRum({
+      ...TRACK_RESOURCE_HEADERS_CONFIG,
+      trackResourceHeaders: ['x-custom-response'],
+    })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => fetch('/ok-with-resource-headers'))
+
+      await flushEvents()
+
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.type === 'fetch')
+      expect(resourceEvent).toBeDefined()
+      expect(resourceEvent!.resource.response).toBeDefined()
+      expect(resourceEvent!.resource.response!.headers).toBeDefined()
+      expect(resourceEvent!.resource.response!.headers!['content-type']).toBe('text/plain')
+      expect(resourceEvent!.resource.response!.headers!['cache-control']).toBe('no-cache')
+      expect(resourceEvent!.resource.response!.headers!['x-custom-response']).toBe('custom-value')
+    })
+
+  createTest('collect default and custom response headers for XHR when trackResourceHeaders includes a custom header')
+    .withRum({
+      ...TRACK_RESOURCE_HEADERS_CONFIG,
+      trackResourceHeaders: ['x-custom-response'],
+    })
+    .run(async ({ intakeRegistry, flushEvents, sendXhr }) => {
+      await sendXhr('/ok-with-resource-headers')
+
+      await flushEvents()
+
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.type === 'xhr')
+      expect(resourceEvent).toBeDefined()
+      expect(resourceEvent!.resource.response).toBeDefined()
+      expect(resourceEvent!.resource.response!.headers).toBeDefined()
+      expect(resourceEvent!.resource.response!.headers!['content-type']).toBe('text/plain')
+      expect(resourceEvent!.resource.response!.headers!['cache-control']).toBe('no-cache')
+      expect(resourceEvent!.resource.response!.headers!['x-custom-response']).toBe('custom-value')
+    })
+
+  createTest('collect default and custom request headers for fetch when trackResourceHeaders includes a custom header')
+    .withRum({
+      ...TRACK_RESOURCE_HEADERS_CONFIG,
+      trackResourceHeaders: ['x-custom-request'],
+    })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() =>
+        fetch('/ok-with-resource-headers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-custom-request': 'request-value' },
+          body: JSON.stringify({ key: 'value' }),
+        })
+      )
+
+      await flushEvents()
+
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.type === 'fetch')
+      expect(resourceEvent).toBeDefined()
+      expect(resourceEvent!.resource.request).toBeDefined()
+      expect(resourceEvent!.resource.request!.headers).toBeDefined()
+      expect(resourceEvent!.resource.request!.headers!['content-type']).toBe('application/json')
+      expect(resourceEvent!.resource.request!.headers!['x-custom-request']).toBe('request-value')
+    })
+
+  createTest('do not collect resource headers when trackResourceHeaders is not set')
+    .withRum({ enableExperimentalFeatures: ['track_resource_headers'] })
+    .run(async ({ intakeRegistry, flushEvents, sendXhr, page }) => {
+      await sendXhr('/ok-with-resource-headers')
+      await page.evaluate(() => fetch('/ok-with-resource-headers'))
+
+      await flushEvents()
+
+      const xhrEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.type === 'xhr')
+      expect(xhrEvent).toBeDefined()
+      expect(xhrEvent!.resource.request).toBeUndefined()
+      expect(xhrEvent!.resource.response?.headers?.['cache-control']).toBeUndefined()
+
+      const fetchEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.type === 'fetch')
+      expect(fetchEvent).toBeDefined()
+      expect(fetchEvent!.resource.request).toBeUndefined()
+      expect(fetchEvent!.resource.response?.headers?.['cache-control']).toBeUndefined()
+    })
+})
+
 test.describe('manual resources with startResource/stopResource', () => {
   createTest('track a manual resource with startResource/stopResource')
     .withRum({ enableExperimentalFeatures: ['start_stop_resource'] })
