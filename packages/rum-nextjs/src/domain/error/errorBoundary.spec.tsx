@@ -1,82 +1,22 @@
-import React, { act } from 'react'
+import React from 'react'
 
-import {
-  disableJasmineUncaughtExceptionTracking,
-  ignoreConsoleLogs,
-  registerCleanupTask,
-} from '@datadog/browser-core/test'
-import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
+import { disableJasmineUncaughtExceptionTracking, ignoreConsoleLogs } from '@datadog/browser-core/test'
 import { appendComponent } from '../../../../rum-react/test/appendComponent'
 import { initReactOldBrowsersSupport } from '../../../../rum-react/test/reactOldBrowsersSupport'
-import { nextjsPlugin, resetNextjsPlugin } from '../nextjsPlugin'
-import type { ErrorBoundaryFallback } from './errorBoundary'
+import { initializeNextjsPlugin } from '../../../test/initializeNextjsPlugin'
 import { ErrorBoundary } from './errorBoundary'
 
-type FallbackFunctionComponent = Extract<ErrorBoundaryFallback, (...args: any[]) => any>
-
-function initializeNextjsPlugin() {
-  const addErrorSpy = jasmine.createSpy()
-  const publicApi = { startView: jasmine.createSpy() } as unknown as RumPublicApi
-  const plugin = nextjsPlugin()
-  plugin.onInit({ publicApi, initConfiguration: {} as RumInitConfiguration })
-  plugin.onRumStart({ addError: addErrorSpy })
-  return { addErrorSpy }
-}
+// Component behavior (renders children, fallback, resetError) is tested via createErrorBoundary
+// in packages/rum-react/src/domain/error/errorBoundary.spec.tsx
 
 describe('NextjsErrorBoundary', () => {
-  beforeEach(() => {
+  it('reports the error through addNextjsError', () => {
     ignoreConsoleLogs('error', 'Error: error')
     disableJasmineUncaughtExceptionTracking()
     initReactOldBrowsersSupport()
-    resetNextjsPlugin()
-    registerCleanupTask(() => resetNextjsPlugin())
-  })
 
-  it('renders children', () => {
-    const container = appendComponent(<ErrorBoundary fallback={() => null}>bar</ErrorBoundary>)
-    expect(container.innerHTML).toBe('bar')
-  })
-
-  it('renders the fallback when an error occurs', () => {
-    const fallbackSpy = jasmine.createSpy<FallbackFunctionComponent>().and.returnValue('fallback')
-    const ComponentSpy = jasmine.createSpy().and.throwError(new Error('error'))
-    const container = appendComponent(
-      <ErrorBoundary fallback={fallbackSpy}>
-        <ComponentSpy />
-      </ErrorBoundary>
-    )
-
-    expect(fallbackSpy).toHaveBeenCalled()
-    fallbackSpy.calls.all().forEach(({ args }) => {
-      expect(args[0]).toEqual({
-        error: new Error('error'),
-        resetError: jasmine.any(Function),
-      })
-    })
-    expect(container.innerHTML).toBe('fallback')
-  })
-
-  it('resets the error when resetError is called', () => {
-    const fallbackSpy = jasmine.createSpy<FallbackFunctionComponent>().and.returnValue('fallback')
-    const ComponentSpy = jasmine.createSpy().and.throwError(new Error('error'))
-    const container = appendComponent(
-      <ErrorBoundary fallback={fallbackSpy}>
-        <ComponentSpy />
-      </ErrorBoundary>
-    )
-
-    ComponentSpy.and.returnValue('bar')
-
-    const { resetError } = fallbackSpy.calls.mostRecent().args[0]
-    act(() => {
-      resetError()
-    })
-
-    expect(container.innerHTML).toBe('bar')
-  })
-
-  it('reports the error through addNextjsError', () => {
-    const { addErrorSpy } = initializeNextjsPlugin()
+    const addErrorSpy = jasmine.createSpy()
+    initializeNextjsPlugin({ addError: addErrorSpy })
     const originalError = new Error('error')
     const ComponentSpy = jasmine.createSpy().and.throwError(originalError)
     ;(ComponentSpy as any).displayName = 'ComponentSpy'
