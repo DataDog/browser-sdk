@@ -19,6 +19,8 @@ function disableCookieStore() {
   registerCleanupTask(() => {
     if (original) {
       Object.defineProperty(window, 'cookieStore', original)
+    } else {
+      delete (window as { cookieStore?: unknown }).cookieStore
     }
   })
 }

@@ -255,6 +255,8 @@ function disableCookieStore() {
   registerCleanupTask(() => {
     if (original) {
       Object.defineProperty(window, 'cookieStore', original)
+    } else {
+      delete (window as CookieStoreWindow).cookieStore
     }
   })
 }
@@ -265,6 +267,8 @@ function enableMockCookieStore(mockStore: CookieStoreWindow['cookieStore']) {
   registerCleanupTask(() => {
     if (original) {
       Object.defineProperty(window, 'cookieStore', original)
+    } else {
+      delete (window as CookieStoreWindow).cookieStore
     }
   })
 }
