@@ -1,5 +1,4 @@
-import { defineComponent, h } from 'vue'
-import { mount } from '@vue/test-utils'
+import type { ComponentInternalInstance, ComponentPublicInstance } from 'vue'
 import { initializeVuePlugin } from '../../../test/initializeVuePlugin'
 import { addVueError } from './addVueError'
 
@@ -26,24 +25,16 @@ describe('addVueError', () => {
     const addErrorSpy = jasmine.createSpy()
     initializeVuePlugin({ addError: addErrorSpy })
 
-    const ChildComponent = defineComponent({
-      name: 'ChildComponent',
-      setup() {
-        return () => h('div')
-      },
-    })
+    // Build a mock instance chain without @vue/test-utils to avoid
+    // Object.fromEntries compatibility issues on older browsers
+    const parentInternal = { type: { name: 'ParentComponent' }, parent: null } as unknown as ComponentInternalInstance
+    const childInternal = {
+      type: { name: 'ChildComponent' },
+      parent: parentInternal,
+    } as unknown as ComponentInternalInstance
+    const mockInstance = { $: childInternal } as unknown as ComponentPublicInstance
 
-    const wrapper = mount(
-      defineComponent({
-        name: 'ParentComponent',
-        setup() {
-          return () => h(ChildComponent)
-        },
-      })
-    )
-
-    const childInstance = wrapper.findComponent(ChildComponent).vm
-    addVueError(new Error('oops'), childInstance, 'mounted hook')
+    addVueError(new Error('oops'), mockInstance, 'mounted hook')
 
     const componentStack = addErrorSpy.calls.mostRecent().args[0].componentStack as string
     expect(componentStack).toContain('mounted hook')

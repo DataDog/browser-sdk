@@ -9,9 +9,11 @@ export default defineConfig({
   preview: {
     port: 5175,
     strictPort: true,
+    host: true,
   },
   server: {
     port: 5175,
     strictPort: true,
+    host: true,
   },
 })
