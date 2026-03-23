@@ -1,9 +1,8 @@
 import type { Telemetry, HttpRequestEvent, BandwidthStats } from '@datadog/browser-core'
-import { addExperimentalFeatures, ExperimentalFeature, Observable } from '@datadog/browser-core'
+import { Observable } from '@datadog/browser-core'
 import type { MockTelemetry } from '@datadog/browser-core/test'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { startMockTelemetry } from '../../../../core/test'
-import { isFullSnapshotChangeRecordsEnabled, isIncrementalSnapshotChangeRecordsEnabled } from '../record'
 import { startSegmentTelemetry } from './startSegmentTelemetry'
 import type { ReplayPayload } from './buildReplayPayload'
 
@@ -50,60 +49,50 @@ describe('segmentTelemetry', () => {
     registerCleanupTask(stopSegmentTelemetry)
   }
 
-  for (const [featureFlag, description] of [
-    [undefined, 'V1 records enabled'],
-    [ExperimentalFeature.USE_CHANGE_RECORDS, 'full snapshot Change records enabled'],
-    [ExperimentalFeature.USE_INCREMENTAL_CHANGE_RECORDS, 'incremental snapshot Change records enabled'],
-  ] as const) {
-    it(`with ${description}, should collect segment telemetry for all full snapshots`, async () => {
-      if (featureFlag) {
-        addExperimentalFeatures([featureFlag])
-      }
+  it('should collect segment telemetry for all full snapshots', async () => {
+    setupSegmentTelemetryCollection()
 
-      setupSegmentTelemetryCollection()
+    for (const result of ['failure', 'queue-full', 'success'] as const) {
+      generateReplayRequest({ result, isFullSnapshot: true })
 
-      for (const result of ['failure', 'queue-full', 'success'] as const) {
-        generateReplayRequest({ result, isFullSnapshot: true })
-
-        expect(await telemetry.getEvents()).toEqual([
-          jasmine.objectContaining({
-            type: 'log',
-            status: 'debug',
-            message: 'Segment network request metrics',
-            metrics: {
-              cssText: {
-                count: 2,
-                max: 300,
-                sum: 500,
-              },
-              encoding: {
-                fullSnapshot: isFullSnapshotChangeRecordsEnabled() ? 'change' : 'v1',
-                incrementalSnapshot: isIncrementalSnapshotChangeRecordsEnabled() ? 'change' : 'v1',
-              },
-              isFullSnapshot: true,
-              ongoingRequests: {
-                count: 2,
-                totalSize: 3000,
-              },
-              recordCount: 3,
-              result,
-              size: {
-                compressed: 1000,
-                raw: 2000,
-              },
-              serializationDuration: {
-                count: 3,
-                max: 65,
-                sum: 105,
-              },
+      expect(await telemetry.getEvents()).toEqual([
+        jasmine.objectContaining({
+          type: 'log',
+          status: 'debug',
+          message: 'Segment network request metrics',
+          metrics: {
+            cssText: {
+              count: 2,
+              max: 300,
+              sum: 500,
             },
-          }),
-        ])
+            encoding: {
+              fullSnapshot: 'change',
+              incrementalSnapshot: 'change',
+            },
+            isFullSnapshot: true,
+            ongoingRequests: {
+              count: 2,
+              totalSize: 3000,
+            },
+            recordCount: 3,
+            result,
+            size: {
+              compressed: 1000,
+              raw: 2000,
+            },
+            serializationDuration: {
+              count: 3,
+              max: 65,
+              sum: 105,
+            },
+          },
+        }),
+      ])
 
-        telemetry.reset()
-      }
-    })
-  }
+      telemetry.reset()
+    }
+  })
 
   it('should collect segment telemetry for failed incremental mutation requests', async () => {
     setupSegmentTelemetryCollection()
@@ -123,8 +112,8 @@ describe('segmentTelemetry', () => {
               sum: 500,
             },
             encoding: {
-              fullSnapshot: 'v1',
-              incrementalSnapshot: 'v1',
+              fullSnapshot: 'change',
+              incrementalSnapshot: 'change',
             },
             isFullSnapshot: false,
             ongoingRequests: {

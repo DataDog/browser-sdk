@@ -1,15 +1,14 @@
 import type { ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { TimeStamp } from '@datadog/browser-core'
-import { addExperimentalFeatures, ExperimentalFeature, noop } from '@datadog/browser-core'
-import type { BrowserRecord } from '../../types'
+import { noop } from '@datadog/browser-core'
 import { RecordType } from '../../types'
 import { appendElement } from '../../../../rum-core/test'
 import { startFullSnapshots } from './startFullSnapshots'
 import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
 import { createRecordingScopeForTesting } from './test/recordingScope.specHelper'
 
-const describeStartFullSnapshotsWithExpectedSnapshot = (fullSnapshotRecord: jasmine.Expected<BrowserRecord>) => {
+describe('startFullSnapshots', () => {
   const viewStartClock = { relative: 1, timeStamp: 1 as TimeStamp }
   let lifeCycle: LifeCycle
   let emitRecordCallback: jasmine.Spy<EmitRecordCallback>
@@ -74,7 +73,11 @@ const describeStartFullSnapshotsWithExpectedSnapshot = (fullSnapshotRecord: jasm
           type: RecordType.Focus,
           timestamp: jasmine.any(Number),
         },
-        fullSnapshotRecord,
+        {
+          data: jasmine.any(Array),
+          type: RecordType.Change,
+          timestamp: jasmine.any(Number),
+        },
       ])
     )
   })
@@ -96,34 +99,6 @@ const describeStartFullSnapshotsWithExpectedSnapshot = (fullSnapshotRecord: jasm
     expect(emitStatsCallback.calls.mostRecent().args[0]).toEqual({
       cssText: { count: 1, max: 21, sum: 21 },
       serializationDuration: jasmine.anything(),
-    })
-  })
-}
-
-describe('startFullSnapshots', () => {
-  describe('when generating BrowserFullSnapshotRecord', () => {
-    describeStartFullSnapshotsWithExpectedSnapshot({
-      data: {
-        node: jasmine.any(Object),
-        initialOffset: {
-          left: jasmine.any(Number),
-          top: jasmine.any(Number),
-        },
-      },
-      type: RecordType.FullSnapshot,
-      timestamp: jasmine.any(Number),
-    })
-  })
-
-  describe('when generating BrowserChangeRecord', () => {
-    beforeEach(() => {
-      addExperimentalFeatures([ExperimentalFeature.USE_CHANGE_RECORDS])
-    })
-
-    describeStartFullSnapshotsWithExpectedSnapshot({
-      data: jasmine.any(Array),
-      type: RecordType.Change,
-      timestamp: jasmine.any(Number),
     })
   })
 })

@@ -2,27 +2,23 @@ import { DefaultPrivacyLevel, findLast, noop } from '@datadog/browser-core'
 import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { createNewEvent, collectAsyncCalls, registerCleanupTask } from '@datadog/browser-core/test'
-import {
-  findElement,
-  findFullSnapshot,
-  findNode,
-  recordsPerFullSnapshot,
-  createRumFrustrationEvent,
-} from '../../../test'
+import { recordsPerFullSnapshot, createRumFrustrationEvent } from '../../../test'
 import type {
+  AddNodeChange,
+  BrowserChangeRecord,
   BrowserIncrementalSnapshotRecord,
   BrowserMutationData,
   BrowserRecord,
-  DocumentFragmentNode,
-  ElementNode,
+  Change,
   ScrollData,
 } from '../../types'
-import { NodeType, RecordType, IncrementalSource } from '../../types'
+import { RecordType, IncrementalSource, ChangeType } from '../../types'
 import { appendElement } from '../../../../rum-core/test'
 import { getReplayStats } from '../replayStats'
 import type { RecordAPI } from './record'
 import { record } from './record'
 import type { EmitRecordCallback } from './record.types'
+import { createChangeDecoder } from './serialization'
 
 describe('record', () => {
   let recordApi: RecordAPI
@@ -64,7 +60,7 @@ describe('record', () => {
 
     expect(records[i++].type).toEqual(RecordType.Meta)
     expect(records[i++].type).toEqual(RecordType.Focus)
-    expect(records[i++].type).toEqual(RecordType.FullSnapshot)
+    expect(records[i++].type).toEqual(RecordType.Change)
 
     if (window.visualViewport) {
       expect(records[i++].type).toEqual(RecordType.VisualViewport)
@@ -129,125 +125,99 @@ describe('record', () => {
 
     expect(records[i++].type).toEqual(RecordType.Meta)
     expect(records[i++].type).toEqual(RecordType.Focus)
-    expect(records[i++].type).toEqual(RecordType.FullSnapshot)
+    expect(records[i++].type).toEqual(RecordType.Change)
 
     if (window.visualViewport) {
       expect(records[i++].type).toEqual(RecordType.VisualViewport)
     }
-    expect(records[i].type).toEqual(RecordType.IncrementalSnapshot)
-    expect((records[i++] as BrowserIncrementalSnapshotRecord).data.source).toEqual(IncrementalSource.Mutation)
+    expect(records[i].type).toEqual(RecordType.Change)
+    expect((records[i++] as BrowserChangeRecord).data.map((change) => change[0])).toContain(ChangeType.AddNode)
     expect(records[i++].type).toEqual(RecordType.Meta)
     expect(records[i++].type).toEqual(RecordType.Focus)
-    expect(records[i++].type).toEqual(RecordType.FullSnapshot)
+    expect(records[i++].type).toEqual(RecordType.Change)
   })
 
   describe('Shadow dom', () => {
     it('should record a simple mutation inside a shadow root', () => {
       const element = appendElement('<hr class="toto" />', createShadow())
       startRecording()
-      expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
+      expect(getEmittedRecordCount()).toBe(recordsPerFullSnapshot())
 
       element.className = 'titi'
 
       recordApi.flushMutations()
-      expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot() + 1)
-      const innerMutationData = getLastIncrementalSnapshotData<BrowserMutationData>(
-        getEmittedRecords(),
-        IncrementalSource.Mutation
-      )
-      expect(innerMutationData.attributes[0].attributes.class).toBe('titi')
+      expect(getEmittedRecordCount()).toBe(recordsPerFullSnapshot() + 1)
+      const [, ...attributeMutations] = getLastChangeOfType(ChangeType.Attribute, getEmittedRecords())
+      expect(attributeMutations[0][1]).toEqual(['class', 'titi'])
     })
 
     it('should record a direct removal inside a shadow root', () => {
       const element = appendElement('<hr/>', createShadow())
       startRecording()
-      expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
+      expect(getEmittedRecordCount()).toBe(recordsPerFullSnapshot())
 
       element.remove()
-
       recordApi.flushMutations()
-      const fs = findFullSnapshot({ records: getEmittedRecords() })!
-      const shadowRootNode = findNode(
-        fs.data.node,
-        (node) => node.type === NodeType.DocumentFragment && node.isShadowRoot
-      )!
-      expect(shadowRootNode).toBeTruthy()
-      expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot() + 1)
-      const innerMutationData = getLastIncrementalSnapshotData<BrowserMutationData>(
-        getEmittedRecords(),
-        IncrementalSource.Mutation
-      )
-      expect(innerMutationData.removes.length).toBe(1)
-      expect(innerMutationData.removes[0].parentId).toBe(shadowRootNode.id)
+      expect(getEmittedRecordCount()).toBe(recordsPerFullSnapshot() + 1)
+
+      const records = getEmittedRecords()
+      const horizontalRuleId = findNodeId(records, (change) => change[1] === 'HR')
+      const [, ...removeMutations] = getLastChangeOfType(ChangeType.RemoveNode, records)
+      expect(removeMutations.length).toBe(1)
+      expect(removeMutations[0]).toBe(horizontalRuleId)
     })
 
     it('should record a direct addition inside a shadow root', () => {
       const shadowRoot = createShadow()
       appendElement('<hr/>', shadowRoot)
       startRecording()
-      expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
+      expect(getEmittedRecordCount()).toBe(recordsPerFullSnapshot())
 
       appendElement('<span></span>', shadowRoot)
-
       recordApi.flushMutations()
-      expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot() + 1)
-      const fs = findFullSnapshot({ records: getEmittedRecords() })!
-      const shadowRootNode = findNode(
-        fs.data.node,
-        (node) => node.type === NodeType.DocumentFragment && node.isShadowRoot
-      )!
-      expect(shadowRootNode).toBeTruthy()
-      const innerMutationData = getLastIncrementalSnapshotData<BrowserMutationData>(
-        getEmittedRecords(),
-        IncrementalSource.Mutation
-      )
-      expect(innerMutationData.adds.length).toBe(1)
-      expect(innerMutationData.adds[0].node.type).toBe(2)
-      expect(innerMutationData.adds[0].parentId).toBe(shadowRootNode.id)
-      const addedNode = innerMutationData.adds[0].node as ElementNode
-      expect(addedNode.tagName).toBe('span')
+      expect(getEmittedRecordCount()).toBe(recordsPerFullSnapshot() + 1)
+
+      const records = getEmittedRecords()
+      const [, ...addMutations] = getLastChangeOfType(ChangeType.AddNode, records)
+      expect(addMutations.length).toBe(1)
+      expect(addMutations[0][1]).toBe('SPAN')
     })
 
     it('should record mutation inside a shadow root added after the FS', () => {
       startRecording()
-      expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
+      expect(getEmittedRecordCount()).toBe(recordsPerFullSnapshot())
 
       // shadow DOM mutation
       const span = appendElement('<span class="toto"></span>', createShadow())
       recordApi.flushMutations()
-      expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot() + 1)
-      const hostMutationData = getLastIncrementalSnapshotData<BrowserMutationData>(
-        getEmittedRecords(),
-        IncrementalSource.Mutation
-      )
-      expect(hostMutationData.adds.length).toBe(1)
-      const hostNode = hostMutationData.adds[0].node as ElementNode
-      const shadowRoot = hostNode.childNodes[0] as DocumentFragmentNode
-      expect(shadowRoot.type).toBe(NodeType.DocumentFragment)
-      expect(shadowRoot.isShadowRoot).toBe(true)
+      expect(getEmittedRecordCount()).toBe(recordsPerFullSnapshot() + 1)
+
+      const [, ...addMutations] = getLastChangeOfType(ChangeType.AddNode, getEmittedRecords())
+      expect(addMutations.length).toBe(3)
+      expect(addMutations[0][1]).toBe('DIV')
+      expect(addMutations[1][1]).toBe('#shadow-root')
+      expect(addMutations[2][1]).toBe('SPAN')
 
       // inner mutation
       span.className = 'titi'
       recordApi.flushMutations()
-      expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot() + 2)
-      const innerMutationData = getLastIncrementalSnapshotData<BrowserMutationData>(
-        getEmittedRecords(),
-        IncrementalSource.Mutation
-      )
-      expect(innerMutationData.attributes.length).toBe(1)
-      expect(innerMutationData.attributes[0].attributes.class).toBe('titi')
+      expect(getEmittedRecordCount()).toBe(recordsPerFullSnapshot() + 2)
+
+      const [, ...attributeMutations] = getLastChangeOfType(ChangeType.Attribute, getEmittedRecords())
+      expect(attributeMutations[0][1]).toEqual(['class', 'titi'])
     })
 
     it('should record the change event inside a shadow root', () => {
       const radio = appendElement('<input type="radio"/>', createShadow()) as HTMLInputElement
       startRecording()
-      expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
+      expect(getEmittedRecordCount()).toBe(recordsPerFullSnapshot())
 
       // inner mutation
       radio.checked = true
       radio.dispatchEvent(createNewEvent('change', { target: radio, composed: false }))
 
       recordApi.flushMutations()
+
       const innerMutationData = getLastIncrementalSnapshotData<BrowserMutationData & { isChecked: boolean }>(
         getEmittedRecords(),
         IncrementalSource.Input
@@ -275,7 +245,7 @@ describe('record', () => {
     it('should record the scroll event inside a shadow root', () => {
       const div = appendElement('<div unique-selector="enabled"></div>', createShadow()) as HTMLDivElement
       startRecording()
-      expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
+      expect(getEmittedRecordCount()).toBe(recordsPerFullSnapshot())
 
       div.dispatchEvent(createNewEvent('scroll', { target: div, composed: false }))
 
@@ -286,12 +256,16 @@ describe('record', () => {
       )
       expect(scrollRecords.length).toBe(1)
 
+      const records = getEmittedRecords()
+      const scrollableNodeId = findNodeId(records, (change) => {
+        const [, , ...attributes]: AddNodeChange = change
+        return attributes.some(
+          (attribute) => Array.isArray(attribute) && attribute[0] === 'unique-selector' && attribute[1] === 'enabled'
+        )
+      })
+
       const scrollData = getLastIncrementalSnapshotData<ScrollData>(getEmittedRecords(), IncrementalSource.Scroll)
-
-      const fs = findFullSnapshot({ records: getEmittedRecords() })!
-      const scrollableNode = findElement(fs.data.node, (node) => node.attributes['unique-selector'] === 'enabled')!
-
-      expect(scrollData.id).toBe(scrollableNode.id)
+      expect(scrollData.id).toBe(scrollableNodeId)
     })
 
     it('should clean the state once the shadow dom is removed to avoid memory leak', () => {
@@ -300,17 +274,17 @@ describe('record', () => {
       startRecording()
       spyOn(recordApi.shadowRootsController, 'removeShadowRoot')
 
-      expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
+      expect(getEmittedRecordCount()).toBe(recordsPerFullSnapshot())
       expect(recordApi.shadowRootsController.removeShadowRoot).toHaveBeenCalledTimes(0)
+
       shadowRoot.host.remove()
       recordApi.flushMutations()
       expect(recordApi.shadowRootsController.removeShadowRoot).toHaveBeenCalledTimes(1)
-      expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot() + 1)
-      const mutationData = getLastIncrementalSnapshotData<BrowserMutationData>(
-        getEmittedRecords(),
-        IncrementalSource.Mutation
-      )
-      expect(mutationData.removes.length).toBe(1)
+      expect(getEmittedRecordCount()).toBe(recordsPerFullSnapshot() + 1)
+
+      const records = getEmittedRecords()
+      const [, ...removeMutations] = getLastChangeOfType(ChangeType.RemoveNode, records)
+      expect(removeMutations.length).toBe(1)
     })
 
     it('should clean the state when both the parent and the shadow host is removed to avoid memory leak', () => {
@@ -327,19 +301,18 @@ describe('record', () => {
 
       startRecording()
       spyOn(recordApi.shadowRootsController, 'removeShadowRoot')
-      expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
+      expect(getEmittedRecordCount()).toBe(recordsPerFullSnapshot())
       expect(recordApi.shadowRootsController.removeShadowRoot).toHaveBeenCalledTimes(0)
 
       parent.remove()
       grandParent.remove()
       recordApi.flushMutations()
       expect(recordApi.shadowRootsController.removeShadowRoot).toHaveBeenCalledTimes(1)
-      expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot() + 1)
-      const mutationData = getLastIncrementalSnapshotData<BrowserMutationData>(
-        getEmittedRecords(),
-        IncrementalSource.Mutation
-      )
-      expect(mutationData.removes.length).toBe(1)
+      expect(getEmittedRecordCount()).toBe(recordsPerFullSnapshot() + 1)
+
+      const records = getEmittedRecords()
+      const [, ...removeMutations] = getLastChangeOfType(ChangeType.RemoveNode, records)
+      expect(removeMutations.length).toBe(2)
     })
 
     function createShadow() {
@@ -466,8 +439,23 @@ describe('record', () => {
     } as ViewCreatedEvent)
   }
 
-  function getEmittedRecords() {
-    return emitSpy.calls.allArgs().map(([record]) => record)
+  function getEmittedRecordCount(): number {
+    return emitSpy.calls.allArgs().length
+  }
+
+  function getEmittedRecords(): BrowserRecord[] {
+    const changeDecoder = createChangeDecoder()
+
+    const decodedRecords: BrowserRecord[] = []
+    for (const [record] of emitSpy.calls.allArgs()) {
+      if (record.type === RecordType.Change) {
+        decodedRecords.push(changeDecoder.decode(record))
+      } else {
+        decodedRecords.push(record)
+      }
+    }
+
+    return decodedRecords
   }
 })
 
@@ -482,4 +470,45 @@ export function getLastIncrementalSnapshotData<T extends BrowserIncrementalSnaps
   )
   expect(record).toBeTruthy(`Could not find IncrementalSnapshot/${source} in ${records.length} records`)
   return record!.data
+}
+
+function isChangeOfType<T extends ChangeType>(changeType: T, change: Change): change is Extract<Change, [T, ...any[]]> {
+  return change[0] === changeType
+}
+
+export function getLastChangeOfType<T extends ChangeType>(
+  changeType: T,
+  records: BrowserRecord[]
+): Extract<Change, [T, ...any[]]> {
+  for (let i = records.length - 1; i >= 0; i--) {
+    const record = records[i]
+    if (record.type !== RecordType.Change) {
+      continue
+    }
+    for (const change of record.data) {
+      if (isChangeOfType(changeType, change)) {
+        return change
+      }
+    }
+  }
+  throw new Error(`Could not find Change of type ${changeType} in ${records.length} records`)
+}
+
+function findNodeId(records: BrowserRecord[], predicate: (change: AddNodeChange) => boolean): number {
+  for (const record of records) {
+    if (record.type !== RecordType.Change) {
+      continue
+    }
+
+    for (const change of record.data) {
+      if (!isChangeOfType(ChangeType.AddNode, change)) {
+        continue
+      }
+
+      const [, ...addMutations] = change
+      return addMutations.findIndex(predicate)
+    }
+  }
+
+  return -1
 }

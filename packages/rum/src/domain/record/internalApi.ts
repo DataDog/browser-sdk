@@ -1,15 +1,20 @@
 import { noop, timeStampNow } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { getNodePrivacyLevel, NodePrivacyLevel } from '@datadog/browser-rum-core'
-import type { BrowserRecord, SerializedNodeWithId } from '../../types'
+import type { BrowserRecord } from '../../types'
 import { takeFullSnapshot as doTakeFullSnapshot } from './startFullSnapshots'
 import type { ShadowRootsController } from './shadowRootsController'
 import type { RecordingScope } from './recordingScope'
 import { createRecordingScope } from './recordingScope'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { EmitRecordCallback } from './record.types'
-import type { SerializationTransaction } from './serialization'
-import { SerializationKind, serializeInTransaction, serializeNode } from './serialization'
+import type { ChangeSerializationTransaction } from './serialization'
+import {
+  createRootInsertionCursor,
+  SerializationKind,
+  serializeChangesInTransaction,
+  serializeNodeAsChange,
+} from './serialization'
 
 /**
  * Take a full snapshot of the document, generating the same records that the browser SDK
@@ -47,24 +52,29 @@ export function takeFullSnapshot({
 export function takeNodeSnapshot(
   node: Node,
   { configuration }: { configuration?: Partial<RumConfiguration> } = {}
-): SerializedNodeWithId | null {
-  let serializedNode: SerializedNodeWithId | null = null
+): BrowserRecord | undefined {
+  let nodeSnapshotRecord: BrowserRecord | undefined
+  const emitRecord = (record: BrowserRecord) => {
+    nodeSnapshotRecord = record
+  }
 
-  serializeInTransaction(
+  serializeChangesInTransaction(
     SerializationKind.INITIAL_FULL_SNAPSHOT,
-    noop,
+    emitRecord,
     noop,
     createTemporaryRecordingScope(configuration),
-    (transaction: SerializationTransaction): void => {
+    timeStampNow(),
+    (transaction: ChangeSerializationTransaction): void => {
       const privacyLevel = getNodePrivacyLevel(node, transaction.scope.configuration.defaultPrivacyLevel)
       if (privacyLevel === NodePrivacyLevel.HIDDEN || privacyLevel === NodePrivacyLevel.IGNORE) {
         return
       }
-      serializedNode = serializeNode(node, privacyLevel, transaction)
+      const cursor = createRootInsertionCursor(transaction.scope.nodeIds)
+      serializeNodeAsChange(cursor, node, privacyLevel, transaction)
     }
   )
 
-  return serializedNode
+  return nodeSnapshotRecord
 }
 
 function createTemporaryRecordingScope(configuration?: Partial<RumConfiguration>): RecordingScope {
