@@ -40,7 +40,7 @@ describe('cookieObservable', () => {
     // to ensure that the 'change' event is triggered when we write our cookie.
     // This was reported here: https://issues.chromium.org/issues/420405275
     const cookieStore = (window as CookieStoreWindow).cookieStore
-    if (cookieStore) {
+    if (cookieStore && typeof cookieStore.get === 'function') {
       // Wait for the cookieStore to be ready
       await cookieStore.get('some_cookie_name')
     }
