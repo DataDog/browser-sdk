@@ -62,7 +62,6 @@ cmd_woke () {
 }
 
 cmd_check_server_side_rendering_compatibility () {
-  yarn run build
   yarn run pack
   cd test/apps/vanilla
   rm -rf node_modules
