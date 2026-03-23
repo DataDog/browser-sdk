@@ -7,13 +7,13 @@ import { clearInterval, setInterval } from '../../tools/timer'
 import { mockable } from '../../tools/mockable'
 import { noop, throttle } from '../../tools/utils/functionUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
-import type { Configuration, InitConfiguration } from '../configuration'
+import type { Configuration } from '../configuration'
 import type { TrackingConsentState } from '../trackingConsent'
 import { isWorkerEnvironment } from '../../tools/globalObject'
 import { display } from '../../tools/display'
 import { isSampled } from '../sampler'
 import { monitorError } from '../../tools/monitor'
-import { SESSION_TIME_OUT_DELAY, SessionPersistence } from './sessionConstants'
+import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import type { SessionState } from './sessionState'
 import {
   expandSessionState,
@@ -21,10 +21,7 @@ import {
   isSessionInExpiredState,
   isSessionInNotStartedState,
 } from './sessionState'
-import type { SessionStoreStrategy, SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
-import { selectCookieStrategy, initCookieStrategy } from './storeStrategies/sessionInCookie'
-import { selectLocalStorageStrategy, initLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
-import { selectMemorySessionStoreStrategy, initMemorySessionStoreStrategy } from './storeStrategies/sessionInMemory'
+import { getSessionStoreStrategy } from './sessionStore'
 
 export interface SessionManager {
   findSession: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => SessionContext | undefined
@@ -45,82 +42,6 @@ export interface SessionContext {
 export const VISIBILITY_CHECK_DELAY = ONE_MINUTE
 const SESSION_CONTEXT_TIMEOUT_DELAY = SESSION_TIME_OUT_DELAY
 let stopCallbacks: Array<() => void> = []
-
-/**
- * Selects the correct session store strategy type based on the configuration and storage
- * availability. When an array is provided, tries each persistence type in order until one
- * successfully initializes.
- */
-export function selectSessionStoreStrategyType(
-  initConfiguration: InitConfiguration
-): SessionStoreStrategyType | undefined {
-  const persistenceList = normalizePersistenceList(initConfiguration.sessionPersistence)
-
-  for (const persistence of persistenceList) {
-    const strategyType = selectStrategyForPersistence(persistence, initConfiguration)
-    if (strategyType !== undefined) {
-      return strategyType
-    }
-  }
-
-  return undefined
-}
-
-function normalizePersistenceList(
-  sessionPersistence: SessionPersistence | SessionPersistence[] | undefined
-): SessionPersistence[] {
-  if (Array.isArray(sessionPersistence)) {
-    return sessionPersistence
-  }
-
-  if (sessionPersistence !== undefined) {
-    return [sessionPersistence]
-  }
-
-  // In worker environments, default to memory since cookie and localStorage are not available
-  // TODO: make it work when we start using Cookie Store API
-  // @see https://developer.mozilla.org/en-US/docs/Web/API/CookieStore
-  if (isWorkerEnvironment) {
-    return [SessionPersistence.MEMORY]
-  }
-
-  // Default behavior: cookie only
-  return [SessionPersistence.COOKIE]
-}
-
-function selectStrategyForPersistence(
-  persistence: SessionPersistence,
-  initConfiguration: InitConfiguration
-): SessionStoreStrategyType | undefined {
-  switch (persistence) {
-    case SessionPersistence.COOKIE:
-      return selectCookieStrategy(initConfiguration)
-
-    case SessionPersistence.LOCAL_STORAGE:
-      return selectLocalStorageStrategy()
-
-    case SessionPersistence.MEMORY:
-      return selectMemorySessionStoreStrategy()
-
-    default:
-      display.error(`Invalid session persistence '${String(persistence)}'`)
-      return undefined
-  }
-}
-
-export function getSessionStoreStrategy(
-  strategyType: SessionStoreStrategyType,
-  configuration: Configuration
-): SessionStoreStrategy {
-  switch (strategyType.type) {
-    case SessionPersistence.COOKIE:
-      return initCookieStrategy(strategyType.cookieOptions, configuration)
-    case SessionPersistence.LOCAL_STORAGE:
-      return initLocalStorageStrategy()
-    case SessionPersistence.MEMORY:
-      return initMemorySessionStoreStrategy()
-  }
-}
 
 // Session state helper functions
 
