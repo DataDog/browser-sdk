@@ -1,10 +1,10 @@
 import type { SessionManager } from '@datadog/browser-core'
-import { DISCARDED, HookNames, SKIPPED } from '@datadog/browser-core'
+import { DISCARDED, HookNames } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import { SessionReplayState, computeSessionReplayState } from '../sessionReplayState'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { RecorderApi } from '../../boot/rumPublicApi'
-import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
+import type { DefaultRumEventAttributes, Hooks } from '../hooks'
 import type { ViewHistory } from './viewHistory'
 
 export const enum SessionType {
@@ -47,20 +47,6 @@ export function startSessionContext(
         has_replay: hasReplay,
         sampled_for_replay: sampledForReplay,
         is_active: isActive,
-      },
-    }
-  })
-
-  hooks.register(HookNames.AssembleTelemetry, ({ startTime }): DefaultTelemetryEventAttributes | SKIPPED => {
-    const session = sessionManager.findTrackedSession(startTime)
-
-    if (!session) {
-      return SKIPPED
-    }
-
-    return {
-      session: {
-        id: session.id,
       },
     }
   })

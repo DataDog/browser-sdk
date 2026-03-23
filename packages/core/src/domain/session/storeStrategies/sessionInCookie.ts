@@ -1,8 +1,7 @@
 import { isEmptyObject } from '../../../tools/utils/objectUtils'
-import { isChromium } from '../../../tools/utils/browserDetection'
 import type { CookieOptions } from '../../../browser/cookie'
-import { getCurrentSite, areCookiesAuthorized, getCookies, setCookie } from '../../../browser/cookie'
-import type { InitConfiguration, Configuration } from '../../configuration'
+import { getCurrentSite, areCookiesAuthorized } from '../../../browser/cookie'
+import type { Configuration, InitConfiguration } from '../../configuration'
 import {
   SESSION_COOKIE_EXPIRATION_DELAY,
   SESSION_EXPIRATION_DELAY,
@@ -10,7 +9,9 @@ import {
   SessionPersistence,
 } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
-import { toSessionString, toSessionState, getExpiredSessionState } from '../sessionState'
+import { toSessionString, toSessionState } from '../sessionState'
+import { Observable } from '../../../tools/observable'
+import { createCookieAccess } from '../../../browser/cookieAccess'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
 
@@ -23,72 +24,91 @@ export function selectCookieStrategy(initConfiguration: InitConfiguration): Sess
     : undefined
 }
 
-export function initCookieStrategy(configuration: Configuration, cookieOptions: CookieOptions): SessionStoreStrategy {
-  const cookieStore = {
-    /**
-     * Lock strategy allows mitigating issues due to concurrent access to cookie.
-     * This issue concerns only chromium browsers and enabling this on firefox increases cookie write failures.
-     */
-    isLockEnabled: isChromium(),
-    persistSession: (sessionState: SessionState) =>
-      storeSessionCookie(cookieOptions, configuration, sessionState, SESSION_EXPIRATION_DELAY),
-    retrieveSession: () => retrieveSessionCookie(cookieOptions),
-    expireSession: (sessionState: SessionState) =>
-      storeSessionCookie(
-        cookieOptions,
-        configuration,
-        getExpiredSessionState(sessionState, configuration),
-        SESSION_TIME_OUT_DELAY
-      ),
-  }
+// Promise chain serializes calls when Web Locks are unavailable
+// eslint-disable-next-line local-rules/disallow-side-effects
+let pendingChain = Promise.resolve()
 
-  return cookieStore
-}
+export function initCookieStrategy(cookieOptions: CookieOptions, configuration: Configuration): SessionStoreStrategy {
+  const sessionObservable = new Observable<SessionState>()
 
-function storeSessionCookie(
-  options: CookieOptions,
-  configuration: Configuration,
-  sessionState: SessionState,
-  defaultTimeout: number
-) {
-  const sessionStateString = toSessionString({
-    ...sessionState,
-    // deleting a cookie is writing a new cookie with an empty value
-    // we don't want to store the cookie options in this case otherwise the cookie will not be deleted
-    ...(!isEmptyObject(sessionState) ? { c: encodeCookieOptions(options) } : {}),
-  })
-
-  setCookie(
-    SESSION_STORE_KEY,
-    sessionStateString,
-    configuration.trackAnonymousUser ? SESSION_COOKIE_EXPIRATION_DELAY : defaultTimeout,
-    options
-  )
-}
-
-/**
- * Retrieve the session state from the cookie that was set with the same cookie options
- * If there is no match, return the first cookie, because that's how `getCookie()` works
- */
-export function retrieveSessionCookie(cookieOptions: CookieOptions): SessionState {
-  const cookies = getCookies(SESSION_STORE_KEY)
+  const cookieAccess = createCookieAccess(SESSION_STORE_KEY, configuration, cookieOptions)
+  const trackAnonymousUser = !!configuration.trackAnonymousUser
   const opts = encodeCookieOptions(cookieOptions)
 
+  cookieAccess.observable.subscribe((cookieValue) => {
+    const state = parseAndStripCookieOptions(cookieValue)
+    sessionObservable.notify(state)
+  })
+
+  function applyAndWrite(fn: (state: SessionState) => SessionState) {
+    return cookieAccess.getAllAndSet((cookieValues) => {
+      const currentState = findMatchingSessionState(cookieValues, opts)
+      const newState = fn(currentState)
+      const sessionString = buildSessionString(newState, cookieOptions)
+      const expireDelay = computeExpireDelay(trackAnonymousUser, newState)
+
+      return { value: sessionString, expireDelay }
+    })
+  }
+
+  return {
+    async setSessionState(fn: (sessionState: SessionState) => SessionState): Promise<void> {
+      if (typeof navigator !== 'undefined' && navigator.locks) {
+        await navigator.locks.request(SESSION_STORE_KEY, () => applyAndWrite(fn))
+      } else {
+        pendingChain = pendingChain.then(() => applyAndWrite(fn))
+        await pendingChain
+      }
+    },
+    sessionObservable,
+  }
+}
+
+function parseAndStripCookieOptions(cookieValue: string | undefined): SessionState {
+  if (!cookieValue) {
+    return {}
+  }
+
+  // The cookieObservable gives us the raw cookie value. When multiple cookies exist with the same
+  // name (e.g. partitioned vs non-partitioned), document.cookie contains all of them but
+  // cookieStore/polling only gives us one value. Parse what we get and strip cookie options.
+  const state = toSessionState(cookieValue)
+  delete state.c
+  return state
+}
+
+function findMatchingSessionState(items: string[], opts: string): SessionState {
   let sessionState: SessionState | undefined
 
-  // reverse the cookies so that if there is no match, the cookie returned is the first one
-  for (const cookie of cookies.reverse()) {
-    sessionState = toSessionState(cookie)
-
+  for (const item of items.slice().reverse()) {
+    sessionState = toSessionState(item)
     if (sessionState.c === opts) {
       break
     }
   }
 
-  // remove the cookie options from the session state as this is not part of the session state
   delete sessionState?.c
-
   return sessionState ?? {}
+}
+
+function computeExpireDelay(trackAnonymousUser: boolean, sessionState: SessionState): number {
+  // Cookie expiration logic:
+  // - trackAnonymousUser=true: always use 1 year (keep cookie alive for device ID)
+  // - trackAnonymousUser=false + active session: 15 min (activity-based renewal)
+  // - trackAnonymousUser=false + expired session: 4h (absolute timeout)
+  return trackAnonymousUser
+    ? SESSION_COOKIE_EXPIRATION_DELAY
+    : sessionState.isExpired
+      ? SESSION_TIME_OUT_DELAY
+      : SESSION_EXPIRATION_DELAY
+}
+
+function buildSessionString(sessionState: SessionState, cookieOptions: CookieOptions): string {
+  const sessionStateWithOptions = {
+    ...sessionState,
+    ...(!isEmptyObject(sessionState) ? { c: encodeCookieOptions(cookieOptions) } : {}),
+  }
+  return toSessionString(sessionStateWithOptions)
 }
 
 export function buildCookieOptions(initConfiguration: InitConfiguration): CookieOptions | undefined {
@@ -115,10 +135,10 @@ function encodeCookieOptions(cookieOptions: CookieOptions): string {
 
   /* eslint-disable no-bitwise */
   let byte = 0
-  byte |= SESSION_COOKIE_VERSION << 5 // Store version in upper 3 bits
-  byte |= domainCount << 1 // Store domain count in next 4 bits
-  byte |= cookieOptions.crossSite ? 1 : 0 // Store useCrossSiteScripting in next bit
+  byte |= SESSION_COOKIE_VERSION << 5
+  byte |= domainCount << 1
+  byte |= cookieOptions.crossSite ? 1 : 0
   /* eslint-enable no-bitwise */
 
-  return byte.toString(16) // Convert to hex string
+  return byte.toString(16)
 }

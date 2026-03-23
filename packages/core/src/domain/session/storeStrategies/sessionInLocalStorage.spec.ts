@@ -1,75 +1,89 @@
-import type { Configuration } from '../../configuration'
-import { SessionPersistence } from '../sessionConstants'
-import { toSessionState } from '../sessionState'
+import { registerCleanupTask } from '../../../../test'
 import type { SessionState } from '../sessionState'
-import { selectLocalStorageStrategy, initLocalStorageStrategy } from './sessionInLocalStorage'
+import { toSessionString } from '../sessionState'
+import { initLocalStorageStrategy, selectLocalStorageStrategy } from './sessionInLocalStorage'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
-const DEFAULT_INIT_CONFIGURATION = { trackAnonymousUser: true } as Configuration
 
-function getSessionStateFromLocalStorage(SESSION_STORE_KEY: string): SessionState {
-  return toSessionState(window.localStorage.getItem(SESSION_STORE_KEY))
-}
-describe('session in local storage strategy', () => {
-  const sessionState: SessionState = { id: '123', created: '0' }
+describe('LocalStorage SessionStoreStrategy', () => {
+  let strategy: ReturnType<typeof initLocalStorageStrategy>
+
   beforeEach(() => {
-    spyOn(Math, 'random').and.returnValue(0)
-  })
-
-  afterEach(() => {
-    window.localStorage.clear()
-  })
-
-  it('should report local storage as available', () => {
-    const available = selectLocalStorageStrategy()
-    expect(available).toEqual({ type: SessionPersistence.LOCAL_STORAGE })
-  })
-
-  it('should report local storage as not available', () => {
-    spyOn(Storage.prototype, 'getItem').and.throwError('Unavailable')
-    const available = selectLocalStorageStrategy()
-    expect(available).toBeUndefined()
-  })
-
-  it('should persist a session in local storage', () => {
-    const localStorageStrategy = initLocalStorageStrategy(DEFAULT_INIT_CONFIGURATION)
-    localStorageStrategy.persistSession(sessionState)
-    const session = localStorageStrategy.retrieveSession()
-    expect(session).toEqual({ ...sessionState })
-    expect(getSessionStateFromLocalStorage(SESSION_STORE_KEY)).toEqual(sessionState)
-  })
-
-  it('should set `isExpired=1` to the local storage item holding the session', () => {
-    const localStorageStrategy = initLocalStorageStrategy(DEFAULT_INIT_CONFIGURATION)
-    localStorageStrategy.persistSession(sessionState)
-    localStorageStrategy.expireSession(sessionState)
-    const session = localStorageStrategy?.retrieveSession()
-    expect(session).toEqual({ isExpired: '1' })
-    expect(getSessionStateFromLocalStorage(SESSION_STORE_KEY)).toEqual({
-      isExpired: '1',
+    localStorage.removeItem(SESSION_STORE_KEY)
+    strategy = initLocalStorageStrategy()
+    registerCleanupTask(() => {
+      localStorage.removeItem(SESSION_STORE_KEY)
     })
   })
 
-  it('should not generate an anonymousId if not present', () => {
-    const localStorageStrategy = initLocalStorageStrategy(DEFAULT_INIT_CONFIGURATION)
-    localStorageStrategy.persistSession(sessionState)
-    const session = localStorageStrategy.retrieveSession()
-    expect(session).toEqual({ id: '123', created: '0' })
-    expect(getSessionStateFromLocalStorage(SESSION_STORE_KEY)).toEqual({ id: '123', created: '0' })
+  describe('selectLocalStorageStrategy', () => {
+    it('should return strategy type when localStorage is available', () => {
+      expect(selectLocalStorageStrategy()).toBeDefined()
+    })
   })
 
-  it('should return an empty object if session string is invalid', () => {
-    const localStorageStrategy = initLocalStorageStrategy(DEFAULT_INIT_CONFIGURATION)
-    window.localStorage.setItem(SESSION_STORE_KEY, '{test:42}')
-    const session = localStorageStrategy.retrieveSession()
-    expect(session).toEqual({})
+  describe('setSessionState', () => {
+    it('should read current state from localStorage, apply fn, and write back', () => {
+      void strategy.setSessionState((state) => ({ ...state, id: 'test-id' }))
+      expect(localStorage.getItem(SESSION_STORE_KEY)).toContain('id=test-id')
+    })
+
+    it('should start with empty state when nothing stored', () => {
+      void strategy.setSessionState((state) => {
+        expect(state).toEqual({})
+        return { ...state, id: 'new-id' }
+      })
+    })
+
+    it('should read existing state from localStorage', () => {
+      localStorage.setItem(SESSION_STORE_KEY, toSessionString({ id: 'existing' } as SessionState))
+
+      void strategy.setSessionState((state) => {
+        expect(state.id).toBe('existing')
+        return { ...state, expire: '999' }
+      })
+    })
+
+    it('should notify sessionObservable after write', () => {
+      const spy = jasmine.createSpy('observer')
+      const subscription = strategy.sessionObservable.subscribe(spy)
+      registerCleanupTask(() => subscription.unsubscribe())
+
+      void strategy.setSessionState((state) => ({ ...state, id: 'test-id' }))
+
+      expect(spy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ id: 'test-id' }))
+    })
   })
 
-  it('should not interfere with other keys present in local storage', () => {
-    window.localStorage.setItem('test', 'hello')
-    const localStorageStrategy = initLocalStorageStrategy(DEFAULT_INIT_CONFIGURATION)
-    localStorageStrategy.persistSession(sessionState)
-    localStorageStrategy.retrieveSession()
-    localStorageStrategy.expireSession(sessionState)
-    expect(window.localStorage.getItem('test')).toEqual('hello')
+  describe('sessionObservable', () => {
+    it('should emit on storage event from other tabs', () => {
+      const spy = jasmine.createSpy('observer')
+      const subscription = strategy.sessionObservable.subscribe(spy)
+      registerCleanupTask(() => subscription.unsubscribe())
+
+      // Simulate storage event (fired by other tabs)
+      const event = new StorageEvent('storage', {
+        key: SESSION_STORE_KEY,
+        newValue: toSessionString({ id: 'from-other-tab' } as SessionState),
+        storageArea: localStorage,
+      })
+      window.dispatchEvent(event)
+
+      expect(spy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ id: 'from-other-tab' }))
+    })
+
+    it('should ignore storage events for other keys', () => {
+      const spy = jasmine.createSpy('observer')
+      const subscription = strategy.sessionObservable.subscribe(spy)
+      registerCleanupTask(() => subscription.unsubscribe())
+
+      const event = new StorageEvent('storage', {
+        key: 'other-key',
+        newValue: 'value',
+        storageArea: localStorage,
+      })
+      window.dispatchEvent(event)
+
+      expect(spy).not.toHaveBeenCalled()
+    })
   })
 })

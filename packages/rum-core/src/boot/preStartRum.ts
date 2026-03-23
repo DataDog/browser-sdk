@@ -33,6 +33,7 @@ import {
   TelemetryService,
   mockable,
   isWorkerEnvironment,
+  startTelemetrySessionContext,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
@@ -140,7 +141,6 @@ export function createPreStartStrategy(
 
     // Update the exposed initConfiguration to reflect the bridge and remote configuration overrides
     cachedInitConfiguration = initConfiguration
-    addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
 
     if (cachedConfiguration) {
       displayAlreadyInitializedError('DD_RUM', initConfiguration)
@@ -188,6 +188,9 @@ export function createPreStartStrategy(
 
       const onSessionManagerReady = (newSessionManager: SessionManager) => {
         sessionManager = newSessionManager
+        startTelemetrySessionContext(hooks, sessionManager, { application: { id: configuration.applicationId } })
+        addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
+
         tryStartRum()
       }
       if (canUseEventBridge()) {

@@ -67,6 +67,7 @@ test.describe('telemetry', () => {
       const event = intakeRegistry.telemetryConfigurationEvents[0]
       expect(event.service).toEqual('browser-rum-sdk')
       expect(event.telemetry.configuration.track_user_interactions).toEqual(true)
+      expect(event.session!.id).toEqual(expect.any(String))
       expect(event.application!.id).toEqual(expect.any(String))
     })
 
