@@ -365,6 +365,20 @@ describe('startSessionManager', () => {
       const state = fakeStrategy.getInternalState()
       expect(state.isExpired).toBe(EXPIRED)
     })
+
+    it('should expire session after SESSION_EXPIRATION_DELAY without any activity in a hidden tab', async () => {
+      const sessionManager = await startSessionManagerWithDefaults()
+      const expireSpy = jasmine.createSpy('expire')
+      sessionManager.expireObservable.subscribe(expireSpy)
+
+      expect(sessionManager.findSession()).toBeDefined()
+
+      // Advance past the session expiration delay without any user activity
+      clock.tick(SESSION_EXPIRATION_DELAY + ONE_SECOND)
+
+      expect(expireSpy).toHaveBeenCalledTimes(1)
+      expect(sessionManager.findSession()).toBeUndefined()
+    })
   })
 
   describe('cross-tab changes (simulateExternalChange)', () => {

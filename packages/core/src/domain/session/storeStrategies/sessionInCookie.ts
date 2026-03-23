@@ -69,7 +69,6 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
   }
 }
 
-
 function findMatchingSessionState(items: string[], opts: string): SessionState {
   let sessionState: SessionState | undefined
 

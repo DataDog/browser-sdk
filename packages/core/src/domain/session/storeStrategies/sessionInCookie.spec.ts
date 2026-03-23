@@ -127,7 +127,7 @@ describe('session in cookie strategy', () => {
       expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
     })
 
-    it('should ignore observable updates from cookies with non-matching c marker', async () => {
+    it('should ignore observable updates from cookies with non-matching c marker', () => {
       const { strategy } = setupCookieStrategy()
       const spy = jasmine.createSpy<(state: SessionState) => void>('observer')
       const subscription = strategy.sessionObservable.subscribe(spy)

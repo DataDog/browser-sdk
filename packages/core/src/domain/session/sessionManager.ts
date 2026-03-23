@@ -3,7 +3,7 @@ import { createValueHistory } from '../../tools/valueHistory'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
 import { clocksOrigin, dateNow, ONE_MINUTE, ONE_SECOND, relativeNow } from '../../tools/utils/timeUtils'
 import { addEventListener, addEventListeners, DOM_EVENT } from '../../browser/addEventListener'
-import { clearInterval, setInterval } from '../../tools/timer'
+import { clearInterval, clearTimeout, setInterval, setTimeout } from '../../tools/timer'
 import { mockable } from '../../tools/mockable'
 import { noop, throttle } from '../../tools/utils/functionUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
@@ -149,15 +149,29 @@ export function startSessionManager(
     previousState = initialState
     sessionContextHistory.add(buildSessionContext(initialState), clocksOrigin().relative)
 
+    scheduleExpirationTimeout(initialState)
+
     const subscription = strategy.sessionObservable.subscribe((newState) => {
       if (isSessionInExpiredState(newState)) {
         newState = getExpiredSessionState(newState, configuration)
       }
+      scheduleExpirationTimeout(newState)
       handleStateChange(newState)
       previousState = newState
     })
     stopCallbacks.push(() => subscription.unsubscribe())
   }
+
+  let expirationTimeoutId: ReturnType<typeof setTimeout> | undefined
+
+  function scheduleExpirationTimeout(state: SessionState) {
+    clearTimeout(expirationTimeoutId)
+    if (state.expire && !isSessionInExpiredState(state)) {
+      const delay = Number(state.expire) - dateNow()
+      expirationTimeoutId = setTimeout(() => expire(), delay)
+    }
+  }
+  stopCallbacks.push(() => clearTimeout(expirationTimeoutId))
 
   function setupSessionTracking() {
     trackingConsentState.observable.subscribe(() => {
