@@ -219,11 +219,11 @@ test.describe('nextjs - errors', () => {
 
           await flushEvents()
 
-          const customErrors = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
-          expect(customErrors).toHaveLength(1)
-          expect(customErrors[0].error.message).toBe(clientErrorMessage)
-          expect(customErrors[0].error.handling_stack).toBeDefined()
-          expect(customErrors[0].context).toMatchObject({ framework: 'nextjs' })
+        const customErrors = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
+        expect(customErrors).toHaveLength(1)
+        expect(customErrors[0].error.message).toBe(clientErrorMessage)
+        expect(customErrors[0].error.handling_stack).toBeDefined()
+        expect(customErrors[0].context).toMatchObject({ framework: 'nextjs' })
 
           withBrowserLogs((browserLogs) => {
             expect(browserLogs.length).toBeGreaterThan(0)
@@ -240,13 +240,13 @@ test.describe('nextjs - errors', () => {
 
             await flushEvents()
 
-            const customErrors = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
-            expect(customErrors).toHaveLength(1)
-            expect(customErrors[0].error.handling_stack).toBeDefined()
-            expect(customErrors[0].context).toMatchObject({
-              framework: 'nextjs',
-              nextjs: { digest: expect.any(String) },
-            })
+        const customErrors = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
+        expect(customErrors).toHaveLength(1)
+        expect(customErrors[0].error.handling_stack).toBeDefined()
+        expect(customErrors[0].context).toMatchObject({
+          framework: 'nextjs',
+          nextjs: { digest: expect.any(String) },
+        })
 
             withBrowserLogs((browserLogs) => {
               expect(browserLogs.length).toBeGreaterThan(0)
@@ -262,10 +262,10 @@ test.describe('nextjs - errors', () => {
 
             await flushEvents()
 
-            const customErrors = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
-            expect(customErrors).toHaveLength(1)
-            expect(customErrors[0].error.handling_stack).toBeDefined()
-            expect(customErrors[0].context).toMatchObject({ framework: 'nextjs' })
+        const customErrors = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
+        expect(customErrors).toHaveLength(1)
+        expect(customErrors[0].error.handling_stack).toBeDefined()
+        expect(customErrors[0].context).toMatchObject({ framework: 'nextjs' })
 
             withBrowserLogs((browserLogs) => {
               expect(browserLogs.length).toBeGreaterThan(0)
