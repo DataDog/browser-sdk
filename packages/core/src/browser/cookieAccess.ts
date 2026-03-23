@@ -6,7 +6,6 @@ import { addEventListener, DOM_EVENT } from './addEventListener'
 import type { CookieOptions } from './cookie'
 import { getCookie, getCookies, setCookie } from './cookie'
 import type { CookieStoreWindow } from './browser.types'
-import type { CookieObservable } from './cookieObservable'
 
 export interface CookieAccessItem {
   value: string
@@ -16,7 +15,7 @@ export interface CookieAccessItem {
 
 export interface CookieAccess {
   getAllAndSet(cb: (value: string[]) => { value: string; expireDelay: number }): Promise<void>
-  observable: CookieObservable
+  observable: Observable<string | undefined>
 }
 
 export function createCookieAccess(
