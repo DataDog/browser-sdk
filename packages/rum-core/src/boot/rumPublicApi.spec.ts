@@ -64,7 +64,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const FAKE_WORKER = {} as DeflateWorker
 
-fdescribe('rum public api', () => {
+describe('rum public api', () => {
   describe('init', () => {
     describe('deflate worker', () => {
       let rumPublicApi: RumPublicApi
@@ -761,57 +761,44 @@ fdescribe('rum public api', () => {
   })
 
   describe('startDurationVital', () => {
-    it('should call startDurationVital on the startRum result', async () => {
-      const startDurationVitalSpy = jasmine.createSpy()
+    it('should call addDurationVital on the startRum result when stopped by name', async () => {
+      const addDurationVitalSpy = jasmine.createSpy()
       const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
         startRumResult: {
-          startDurationVital: startDurationVitalSpy,
-        },
-      })
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      rumPublicApi.startDurationVital('foo', { context: { foo: 'bar' }, description: 'description-value' })
-      await collectAsyncCalls(startRumSpy, 1)
-      expect(startDurationVitalSpy).toHaveBeenCalledWith('foo', {
-        description: 'description-value',
-        context: { foo: 'bar' },
-        handlingStack: jasmine.any(String),
-      })
-    })
-  })
-
-  describe('stopDurationVital', () => {
-    it('should call stopDurationVital with a name on the startRum result', async () => {
-      const stopDurationVitalSpy = jasmine.createSpy()
-      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
-        startRumResult: {
-          stopDurationVital: stopDurationVitalSpy,
+          addDurationVital: addDurationVitalSpy,
         },
       })
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.startDurationVital('foo', { context: { foo: 'bar' }, description: 'description-value' })
       rumPublicApi.stopDurationVital('foo', { context: { foo: 'bar' }, description: 'description-value' })
       await collectAsyncCalls(startRumSpy, 1)
-      expect(stopDurationVitalSpy).toHaveBeenCalledWith('foo', {
-        description: 'description-value',
-        context: { foo: 'bar' },
-      })
+      expect(addDurationVitalSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          name: 'foo',
+          description: 'description-value',
+          context: { foo: 'bar' },
+        })
+      )
     })
 
-    it('should call stopDurationVital with a reference on the startRum result', async () => {
-      const stopDurationVitalSpy = jasmine.createSpy()
+    it('should call addDurationVital on the startRum result when stopped by reference', async () => {
+      const addDurationVitalSpy = jasmine.createSpy()
       const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
         startRumResult: {
-          stopDurationVital: stopDurationVitalSpy,
+          addDurationVital: addDurationVitalSpy,
         },
       })
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       const ref = rumPublicApi.startDurationVital('foo', { context: { foo: 'bar' }, description: 'description-value' })
       rumPublicApi.stopDurationVital(ref, { context: { foo: 'bar' }, description: 'description-value' })
       await collectAsyncCalls(startRumSpy, 1)
-      expect(stopDurationVitalSpy).toHaveBeenCalledWith(ref, {
-        description: 'description-value',
-        context: { foo: 'bar' },
-      })
+      expect(addDurationVitalSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          name: 'foo',
+          description: 'description-value',
+          context: { foo: 'bar' },
+        })
+      )
     })
   })
 
