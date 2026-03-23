@@ -54,11 +54,13 @@ export const config: Config = {
       },
     },
     {
+      name: 'vue router app',
       stdout: 'pipe' as const,
       cwd: path.join(__dirname, '../apps/vue-router-app'),
       command: isLocal ? 'yarn dev' : 'yarn preview',
-      url: 'http://localhost:5175',
-      reuseExistingServer: !isCi,
+      wait: {
+        stdout: /Local:\s+http:\/\/localhost:(?<vue_router_app_port>\d+)/,
+      },
     },
   ],
 }
