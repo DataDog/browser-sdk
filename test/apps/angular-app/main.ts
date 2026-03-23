@@ -81,7 +81,7 @@ const routes: Routes = [
 // Bootstrap - dynamically create root element (E2E framework serves bare HTML)
 const rootElement = document.createElement('app-root')
 document.body.appendChild(rootElement)
-// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+
 void bootstrapApplication(AppComponent, {
   providers: [provideRouter(routes), provideDatadogRouter()],
 })

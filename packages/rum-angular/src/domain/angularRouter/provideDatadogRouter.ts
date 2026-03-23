@@ -1,9 +1,6 @@
 import type { EnvironmentProviders } from '@angular/core'
-// eslint-disable-next-line local-rules/disallow-side-effects
 import { ENVIRONMENT_INITIALIZER, inject, makeEnvironmentProviders } from '@angular/core'
-// eslint-disable-next-line local-rules/disallow-side-effects
 import { GuardsCheckEnd, Router } from '@angular/router'
-// eslint-disable-next-line local-rules/disallow-side-effects
 import { filter } from 'rxjs'
 import { startAngularView } from './startAngularView'
 

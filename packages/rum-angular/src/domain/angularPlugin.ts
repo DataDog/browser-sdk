@@ -56,8 +56,8 @@ export function angularPlugin(configuration: AngularPluginConfiguration = {}): R
     },
     onRumStart({ addError }) {
       globalAddError = addError
-      for (const subscriber of onRumStartSubscribers) {
-        if (addError) {
+      if (addError) {
+        for (const subscriber of onRumStartSubscribers) {
           subscriber(addError)
         }
       }

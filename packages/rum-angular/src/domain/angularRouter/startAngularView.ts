@@ -39,9 +39,5 @@ export function computeViewName(root: RouteSnapshot): string {
     current = current.children.find((child) => child.outlet === PRIMARY_OUTLET)
   }
 
-  if (segments.length === 0) {
-    return '/'
-  }
-
   return `/${segments.join('/')}`
 }
