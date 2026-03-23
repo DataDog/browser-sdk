@@ -1,10 +1,5 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import {
-  DOM_EVENT,
-  ONE_MINUTE,
-  addEventListeners,
-  findLast,
-} from '@datadog/browser-core'
+import { DOM_EVENT, ONE_MINUTE, addEventListeners, findLast } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import { findLcpResourceEntry, getNavigationEntry, sanitizeFirstByte } from '../../../browser/performanceUtils'

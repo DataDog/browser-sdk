@@ -1,11 +1,5 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
-import {
-  PageExitReason,
-  timeStampNow,
-  display,
-  relativeToClocks,
-  relativeNow,
-} from '@datadog/browser-core'
+import { PageExitReason, timeStampNow, display, relativeToClocks, relativeNow } from '@datadog/browser-core'
 
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask, createNewEvent } from '@datadog/browser-core/test'
