@@ -7,7 +7,7 @@
   "types": "cjs/entries/main.d.ts",
   "scripts": {
     "build": "node ../../scripts/build/build-package.ts --modules",
-    "prepack": "npm run build"
+    "prepack": "yarn build"
   },
   "dependencies": {
     "@datadog/browser-core": "6.31.0",
