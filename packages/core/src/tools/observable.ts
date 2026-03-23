@@ -52,8 +52,11 @@ export function mergeObservables<T>(...observables: Array<Observable<T>>) {
 export class BufferedObservable<T> extends Observable<T> {
   private buffer: T[] = []
 
-  constructor(private maxBufferSize: number) {
-    super()
+  constructor(
+    private maxBufferSize: number,
+    onFirstSubscribe?: (observable: Observable<T>) => (() => void) | void
+  ) {
+    super(onFirstSubscribe)
   }
 
   notify(data: T) {
@@ -66,28 +69,29 @@ export class BufferedObservable<T> extends Observable<T> {
 
   subscribe(observer: Observer<T>): Subscription {
     let closed = false
+    const bufferLength = this.buffer.length
 
-    const subscription = {
+    // Add observer synchronously so onFirstSubscribe fires immediately
+    this.addObserver(observer)
+
+    // Replay pre-existing buffered events via microtask
+    if (bufferLength > 0) {
+      queueMicrotask(() => {
+        for (let i = 0; i < bufferLength; i++) {
+          if (closed) {
+            return
+          }
+          observer(this.buffer[i])
+        }
+      })
+    }
+
+    return {
       unsubscribe: () => {
         closed = true
         this.removeObserver(observer)
       },
     }
-
-    queueMicrotask(() => {
-      for (const data of this.buffer) {
-        if (closed) {
-          return
-        }
-        observer(data)
-      }
-
-      if (!closed) {
-        this.addObserver(observer)
-      }
-    })
-
-    return subscription
   }
 
   /**

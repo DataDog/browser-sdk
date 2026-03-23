@@ -21,6 +21,9 @@ import {
   initFeatureFlags,
   addTelemetryConfiguration,
   initFetchObservable,
+  initXhrObservable,
+  initConsoleObservable,
+  ConsoleApiName,
   CustomerContextKey,
   buildAccountContextManager,
   buildGlobalContextManager,
@@ -169,11 +172,11 @@ export function createPreStartStrategy(
 
     cachedConfiguration = configuration
 
-    // Instrument fetch to track network requests
-    // This is needed in case the consent is not granted and some customer
-    // library (Apollo Client) is storing uninstrumented fetch to be used later
-    // The subscription is needed so that the instrumentation process is completed
+    // Instrument fetch, XHR and console.error early so events fired synchronously after
+    // init() are captured and buffered for replay when startRum() subscribes.
     initFetchObservable().subscribe(noop)
+    initXhrObservable(configuration).subscribe(noop)
+    initConsoleObservable([ConsoleApiName.error]).subscribe(noop)
 
     trackingConsentState.tryToInit(configuration.trackingConsent)
 

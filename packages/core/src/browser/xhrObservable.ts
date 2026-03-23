@@ -1,6 +1,7 @@
 import type { InstrumentedMethodCall } from '../tools/instrumentMethod'
 import { instrumentMethod } from '../tools/instrumentMethod'
-import { Observable } from '../tools/observable'
+import type { Observable } from '../tools/observable'
+import { BufferedObservable } from '../tools/observable'
 import type { Duration, ClocksState } from '../tools/utils/timeUtils'
 import { elapsed, clocksNow, timeStampNow } from '../tools/utils/timeUtils'
 import { normalizeUrl } from '../tools/utils/urlPolyfill'
@@ -32,7 +33,9 @@ export interface XhrCompleteContext extends Omit<XhrStartContext, 'state'> {
 
 export type XhrContext = XhrOpenContext | XhrStartContext | XhrCompleteContext
 
-let xhrObservable: Observable<XhrContext> | undefined
+const XHR_BUFFER_LIMIT = 500
+
+let xhrObservable: BufferedObservable<XhrContext> | undefined
 const xhrContexts = new WeakMap<XMLHttpRequest, XhrContext>()
 
 export function initXhrObservable(configuration: Configuration) {
@@ -43,7 +46,7 @@ export function initXhrObservable(configuration: Configuration) {
 }
 
 function createXhrObservable(configuration: Configuration) {
-  return new Observable<XhrContext>((observable) => {
+  return new BufferedObservable<XhrContext>(XHR_BUFFER_LIMIT, (observable) => {
     const { stop: stopInstrumentingStart } = instrumentMethod(XMLHttpRequest.prototype, 'open', openXhr)
 
     const { stop: stopInstrumentingSend } = instrumentMethod(

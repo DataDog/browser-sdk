@@ -6,6 +6,7 @@ import {
   displayAlreadyInitializedError,
   initFeatureFlags,
   initFetchObservable,
+  initConsoleObservable,
   noop,
   timeStampNow,
   buildAccountContextManager,
@@ -99,11 +100,12 @@ export function createPreStartStrategy(
 
       cachedConfiguration = configuration
 
-      // Instrument fetch to track network requests
-      // This is needed in case the consent is not granted and some customer
-      // library (Apollo Client) is storing uninstrumented fetch to be used later
-      // The subscrption is needed so that the instrumentation process is completed
+      // Instrument fetch and console early so events fired synchronously after
+      // init() are captured and buffered for replay when startLogs() subscribes.
       initFetchObservable().subscribe(noop)
+      if (configuration.forwardConsoleLogs.length) {
+        initConsoleObservable(configuration.forwardConsoleLogs).subscribe(noop)
+      }
 
       trackingConsentState.tryToInit(configuration.trackingConsent)
 
