@@ -335,6 +335,7 @@ export interface RawRumActionEvent {
         selector?: string
         width?: number
         height?: number
+        composed_path_selector?: string
       }
       name_source?: string
       position?: {
