@@ -16,9 +16,10 @@ export function createHandlingStack(
     | 'instrumented method'
     | 'log'
     | 'react error'
+    | 'nextjs error'
+    | 'vue error'
     | 'view'
     | 'vital'
-    | 'nextjs error'
 ): string {
   /**
    * Skip the two internal frames:
