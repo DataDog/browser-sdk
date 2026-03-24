@@ -33,7 +33,7 @@ test.describe('microfrontend', () => {
   test.describe('RUM', () => {
     test.describe('with beforeSend', () => {
       createTest('expose handling stack for fetch requests')
-        .withRum({ ...RUM_CONFIG, trackEarlyRequests: true })
+        .withRum(RUM_CONFIG)
         .withRumInit((configuration) => {
           window.DD_RUM!.init(configuration)
 
