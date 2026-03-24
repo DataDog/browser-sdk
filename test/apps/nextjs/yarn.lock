@@ -7,8 +7,8 @@ __metadata:
 
 "@datadog/browser-core@file:../../../packages/core/package.tgz::locator=nextjs%40workspace%3A.":
   version: 6.31.0
-  resolution: "@datadog/browser-core@file:../../../packages/core/package.tgz#../../../packages/core/package.tgz::hash=d35e3a&locator=nextjs%40workspace%3A."
-  checksum: 10c0/e35c0d98c72fa3ed46dcbd42615c156fcb13f4622681906145aac91630c291adc7a166861568e61a09f6301baed1adaf5c95b675b9407c72fbe936129f305253
+  resolution: "@datadog/browser-core@file:../../../packages/core/package.tgz#../../../packages/core/package.tgz::hash=6201e3&locator=nextjs%40workspace%3A."
+  checksum: 10c0/a019713374971a2dd35c63318cecd76e38d08348a24ca5b88abb8fca8501d17589e187bd4e68c7358f3523dd3fd08d110b307647854a620b0f3371f2c7db14ca
   languageName: node
   linkType: hard
 
@@ -42,7 +42,7 @@ __metadata:
 
 "@datadog/browser-rum-react@file:../../../packages/rum-react/package.tgz::locator=nextjs%40workspace%3A.":
   version: 6.31.0
-  resolution: "@datadog/browser-rum-react@file:../../../packages/rum-react/package.tgz#../../../packages/rum-react/package.tgz::hash=2dd471&locator=nextjs%40workspace%3A."
+  resolution: "@datadog/browser-rum-react@file:../../../packages/rum-react/package.tgz#../../../packages/rum-react/package.tgz::hash=ff7bfc&locator=nextjs%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.31.0"
     "@datadog/browser-rum-core": "npm:6.31.0"
@@ -67,7 +67,7 @@ __metadata:
 
 "@datadog/browser-rum@file:../../../packages/rum/package.tgz::locator=nextjs%40workspace%3A.":
   version: 6.31.0
-  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=439f60&locator=nextjs%40workspace%3A."
+  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=033900&locator=nextjs%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.31.0"
     "@datadog/browser-rum-core": "npm:6.31.0"
@@ -76,7 +76,7 @@ __metadata:
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
-  checksum: 10c0/be73607a3c5602407ad824b7e149c633c9bfebf3e6fd543b56598a4067afcbbf28e6324be430b6e846aef8bee0c588e4bd258ae3671a1419a3fdaa31efa5e3f1
+  checksum: 10c0/ac0080efb7f664a5664162a64e618b885d2c4d2d06426db0ad076c855dd02cbc84f1ba6fc30913db8db74d50a511d0a0a62ba1ad7bb9e8de5c3ef0c03e3f9c56
   languageName: node
   linkType: hard
 
