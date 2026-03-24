@@ -1,5 +1,5 @@
 import type { Duration, RelativeTime, TimeoutId } from '@datadog/browser-core'
-import { addEventListener, Observable, setTimeout, clearTimeout, monitor } from '@datadog/browser-core'
+import { addEventListener, noop, Observable, setTimeout, clearTimeout, monitor } from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 import { hasValidResourceEntryDuration, isAllowedRequestUrl } from '../domain/resource/resourceUtils'
 import { retrieveFirstInputTiming } from './firstInputPolyfill'
@@ -266,7 +266,8 @@ export function createPerformanceObservable<T extends RumPerformanceEntryType>(
     }
     isObserverInitializing = false
 
-    const stopManageResourceTimingBufferFull = manageResourceTimingBufferFull(configuration)
+    const stopManageResourceTimingBufferFull =
+      options.type === RumPerformanceEntryType.RESOURCE ? manageResourceTimingBufferFull(configuration) : noop
 
     let stopFirstInputTiming: (() => void) | undefined
     if (
