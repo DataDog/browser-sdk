@@ -7,6 +7,8 @@ import { elapsed, clocksNow, timeStampNow } from '../tools/utils/timeUtils'
 import { normalizeUrl } from '../tools/utils/urlPolyfill'
 import { shallowClone } from '../tools/utils/objectUtils'
 import type { Configuration } from '../domain/configuration'
+import { globalObject } from '../tools/globalObject'
+import { noop } from '../tools/utils/functionUtils'
 import { addEventListener } from './addEventListener'
 
 export interface XhrOpenContext {
@@ -46,6 +48,10 @@ export function initXhrObservable(configuration: Configuration) {
 }
 
 function createXhrObservable(configuration: Configuration) {
+  if (!('XMLHttpRequest' in globalObject)) {
+    return new BufferedObservable<XhrContext>(XHR_BUFFER_LIMIT, () => noop)
+  }
+
   return new BufferedObservable<XhrContext>(XHR_BUFFER_LIMIT, (observable) => {
     const { stop: stopInstrumentingStart } = instrumentMethod(XMLHttpRequest.prototype, 'open', openXhr)
 
