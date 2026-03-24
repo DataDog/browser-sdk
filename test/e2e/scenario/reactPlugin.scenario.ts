@@ -11,7 +11,7 @@ test.describe('react plugin', () => {
     test.describe(`with ${description}`, () => {
       createTest('should define a view name with createBrowserRouter')
         .withRum()
-        .withReactApp(appName)
+        .withApp(appName)
         .run(async ({ page, flushEvents, intakeRegistry }) => {
           await page.click('text=Go to User')
           await flushEvents()
@@ -23,7 +23,7 @@ test.describe('react plugin', () => {
 
       createTest('should send a react component render vital event')
         .withRum()
-        .withReactApp(appName)
+        .withApp(appName)
         .run(async ({ flushEvents, intakeRegistry, page }) => {
           await page.click('text=Go to Tracked')
 
@@ -35,7 +35,7 @@ test.describe('react plugin', () => {
 
       createTest('should capture react error from error boundary')
         .withRum()
-        .withReactApp(appName)
+        .withApp(appName)
         .run(async ({ page, flushEvents, intakeRegistry, browserName, withBrowserLogs }) => {
           await page.click('text=Go to Error')
           await page.click('#error-button')

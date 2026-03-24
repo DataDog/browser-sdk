@@ -15,7 +15,7 @@ import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
 import { getTestServers, waitForServersIdle } from './httpServers'
 import type { CallerLocation, SetupFactory, SetupOptions, UrlHook } from './pageSetups'
-import { html, DEFAULT_SETUPS, npmSetup, reactSetup, formatConfiguration } from './pageSetups'
+import { html, DEFAULT_SETUPS, npmSetup, appSetup, formatConfiguration } from './pageSetups'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
 import type { Extension } from './createExtension'
@@ -106,8 +106,8 @@ class TestBuilder {
     return this
   }
 
-  withReactApp(appName: string) {
-    this.setups = [{ factory: (options, servers) => reactSetup(options, servers, appName) }]
+  withApp(appName: string) {
+    this.setups = [{ factory: (options, servers) => appSetup(options, servers, appName) }]
     return this
   }
 
@@ -211,7 +211,7 @@ class TestBuilder {
         declareTestsForSetups('rum', this.setups, setupOptions, runner)
         declareTestsForSetups(
           'rum-slim',
-          this.setups.filter((setup) => setup.factory !== npmSetup && setup.factory !== reactSetup),
+          this.setups.filter((setup) => setup.factory !== npmSetup && setup.factory !== appSetup),
           { ...setupOptions, useRumSlim: true },
           runner
         )

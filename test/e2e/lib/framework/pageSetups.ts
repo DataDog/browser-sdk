@@ -188,7 +188,7 @@ export function npmSetup(options: SetupOptions, servers: Servers) {
   })
 }
 
-export function reactSetup(options: SetupOptions, servers: Servers, appName: string) {
+export function appSetup(options: SetupOptions, servers: Servers, appName: string) {
   let header = options.head || ''
   let body = options.body || ''
 

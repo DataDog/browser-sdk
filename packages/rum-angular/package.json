@@ -1,0 +1,39 @@
+{
+  "name": "@datadog/browser-rum-angular",
+  "private": true,
+  "license": "Apache-2.0",
+  "main": "cjs/entries/main.js",
+  "module": "esm/entries/main.js",
+  "types": "cjs/entries/main.d.ts",
+  "scripts": {
+    "build": "node ../../scripts/build/build-package.ts --modules",
+    "prepack": "npm run build"
+  },
+  "dependencies": {
+    "@datadog/browser-core": "7.0.0-alpha.0",
+    "@datadog/browser-rum-core": "7.0.0-alpha.0"
+  },
+  "peerDependencies": {
+    "@angular/core": ">=15 <=21",
+    "@angular/router": ">=15 <=21",
+    "rxjs": ">=7"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DataDog/browser-sdk.git",
+    "directory": "packages/rum-angular"
+  },
+  "volta": {
+    "extends": "../../package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@angular/common": "19.2.5",
+    "@angular/compiler": "19.2.5",
+    "@angular/core": "19.2.5",
+    "@angular/router": "19.2.5",
+    "rxjs": "7.8.2"
+  }
+}
