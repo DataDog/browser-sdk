@@ -99,6 +99,7 @@ export function createMockServerApp(servers: Servers, setup: string, setupOption
   })
 
   app.all('/ok-with-resource-headers', (req, res) => {
+    // Express will automatically append charset to the Content-Type header
     res.header('Content-Type', 'text/plain')
     res.header('Cache-Control', 'no-cache')
     res.header('x-custom-response', 'custom-value')
