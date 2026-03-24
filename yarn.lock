@@ -372,9 +372,11 @@ __metadata:
   dependencies:
     "@datadog/browser-core": "npm:6.31.0"
     "@datadog/browser-rum-core": "npm:6.31.0"
+    "@datadog/browser-rum-react": "npm:6.31.0"
     "@types/react": "npm:19.2.11"
     next: "npm:15.5.10"
     react: "npm:19.2.4"
+    react-dom: "npm:19.2.4"
   peerDependencies:
     next: ">=13.0.0"
     react: ">=18.0.0"
@@ -386,7 +388,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-rum-react@workspace:packages/rum-react":
+"@datadog/browser-rum-react@npm:6.31.0, @datadog/browser-rum-react@workspace:packages/rum-react":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-react@workspace:packages/rum-react"
   dependencies:
