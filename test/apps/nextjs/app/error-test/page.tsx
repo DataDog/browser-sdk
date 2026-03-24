@@ -14,7 +14,7 @@ export default function ErrorTestPage() {
 
   return (
     <div>
-      <Link href="/">← Back to Home</Link>
+      <Link href="/">Back to Home</Link>
       <h1>Error Test</h1>
       <button data-testid="trigger-error" onClick={() => setShouldThrow(true)}>
         Trigger Error

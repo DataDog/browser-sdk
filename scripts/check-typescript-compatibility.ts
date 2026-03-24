@@ -35,16 +35,17 @@ runMain(() => {
     {
       title: 'TypeScript latest compatibility',
       version: 'latest',
+      compilerOptions: { ignoreDeprecations: '6.0' },
     },
     {
       title: 'exactOptionalPropertyTypes compatibility',
       version: 'latest', // Not available in 3.8.2
-      compilerOptions: { exactOptionalPropertyTypes: true },
+      compilerOptions: { exactOptionalPropertyTypes: true, ignoreDeprecations: '6.0' },
     },
     {
       title: 'ESNext compatibility',
       version: 'latest',
-      compilerOptions: { lib: ['ESNext', 'DOM'] },
+      compilerOptions: { lib: ['ESNext', 'DOM'], ignoreDeprecations: '6.0' },
     },
   ]
 
