@@ -7,6 +7,8 @@ import {
   DefaultPrivacyLevel,
   Observable,
   PageExitReason,
+  addExperimentalFeatures,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock } from '@datadog/browser-core/test'
