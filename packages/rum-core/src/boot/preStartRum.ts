@@ -6,6 +6,7 @@ import type {
   BoundedBuffer,
   Telemetry,
   TimeStamp,
+  SessionManager,
 } from '@datadog/browser-core'
 import {
   createBoundedBuffer,
@@ -26,9 +27,12 @@ import {
   buildUserContextManager,
   monitorError,
   sanitize,
+  startSessionManager,
+  startSessionManagerStub,
   startTelemetry,
   TelemetryService,
   mockable,
+  isWorkerEnvironment,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
@@ -47,11 +51,13 @@ import type {
 } from '../domain/vital/vitalCollection'
 import { startDurationVital, stopDurationVital } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
+import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
 
 export type DoStartRum = (
   configuration: RumConfiguration,
+  sessionManager: SessionManager,
   deflateWorker: DeflateWorker | undefined,
   initialViewOptions: ViewOptions | undefined,
   telemetry: Telemetry,
@@ -83,6 +89,7 @@ export function createPreStartStrategy(
 
   let cachedInitConfiguration: RumInitConfiguration | undefined
   let cachedConfiguration: RumConfiguration | undefined
+  let sessionManager: SessionManager | undefined
   let telemetry: Telemetry | undefined
   const hooks = createHooks()
 
@@ -91,13 +98,8 @@ export function createPreStartStrategy(
   const emptyContext: Context = {}
 
   function tryStartRum() {
-    if (!cachedInitConfiguration || !cachedConfiguration || !trackingConsentState.isGranted()) {
+    if (!cachedInitConfiguration || !cachedConfiguration || !sessionManager || !telemetry) {
       return
-    }
-
-    // Start telemetry only once, when we have consent and configuration
-    if (!telemetry) {
-      telemetry = mockable(startTelemetry)(TelemetryService.RUM, cachedConfiguration, hooks)
     }
 
     trackingConsentStateSubscription.unsubscribe()
@@ -118,7 +120,14 @@ export function createPreStartStrategy(
       initialViewOptions = firstStartViewCall.options
     }
 
-    const startRumResult = doStartRum(cachedConfiguration, deflateWorker, initialViewOptions, telemetry, hooks)
+    const startRumResult = doStartRum(
+      cachedConfiguration,
+      sessionManager,
+      deflateWorker,
+      initialViewOptions,
+      telemetry,
+      hooks
+    )
 
     bufferApiCalls.drain(startRumResult)
   }
@@ -140,11 +149,6 @@ export function createPreStartStrategy(
 
     const configuration = validateAndBuildRumConfiguration(initConfiguration, errorStack)
     if (!configuration) {
-      return
-    }
-
-    if (!eventBridgeAvailable && !configuration.sessionStoreStrategyType) {
-      display.warn('No storage available for session. We will not send any data.')
       return
     }
 
@@ -172,7 +176,26 @@ export function createPreStartStrategy(
     initFetchObservable().subscribe(noop)
 
     trackingConsentState.tryToInit(configuration.trackingConsent)
-    tryStartRum()
+
+    trackingConsentState.onGrantedOnce(() => {
+      startTrackingConsentContext(hooks, trackingConsentState)
+      telemetry = mockable(startTelemetry)(TelemetryService.RUM, configuration, hooks)
+
+      if (isWorkerEnvironment) {
+        display.warn('The RUM SDK is not supported in a web or service worker environment.')
+        return
+      }
+
+      const onSessionManagerReady = (newSessionManager: SessionManager) => {
+        sessionManager = newSessionManager
+        tryStartRum()
+      }
+      if (canUseEventBridge()) {
+        startSessionManagerStub(onSessionManagerReady)
+      } else {
+        mockable(startSessionManager)(configuration, trackingConsentState, onSessionManagerReady)
+      }
+    })
   }
 
   const addDurationVital = (vital: DurationVital) => {

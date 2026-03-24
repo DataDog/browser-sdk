@@ -1,8 +1,6 @@
 import type { ClocksState, Duration } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
 import { trackFirstContentfulPaint } from './trackFirstContentfulPaint'
-import type { FirstInput } from './trackFirstInput'
-import { trackFirstInput } from './trackFirstInput'
 import type { NavigationTimings } from './trackNavigationTimings'
 import { trackNavigationTimings } from './trackNavigationTimings'
 import type { LargestContentfulPaint } from './trackLargestContentfulPaint'
@@ -13,7 +11,6 @@ export interface InitialViewMetrics {
   firstContentfulPaint?: Duration
   navigationTimings?: NavigationTimings
   largestContentfulPaint?: LargestContentfulPaint
-  firstInput?: FirstInput
 }
 
 export function trackInitialViewMetrics(
@@ -46,16 +43,10 @@ export function trackInitialViewMetrics(
     }
   )
 
-  const { stop: stopFIDTracking } = trackFirstInput(configuration, firstHidden, (firstInput) => {
-    initialViewMetrics.firstInput = firstInput
-    scheduleViewUpdate()
-  })
-
   function stop() {
     stopNavigationTracking()
     stopFCPTracking()
     stopLCPTracking()
-    stopFIDTracking()
     firstHidden.stop()
   }
 
