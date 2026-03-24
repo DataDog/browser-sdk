@@ -31,5 +31,8 @@
       "matchDepNames": ["react-router-dom"],
       "enabled": false
     }
-  ]
+  ],
+  "toolSettings": {
+    "nodeMaxMemory": 4096
+  }
 }
