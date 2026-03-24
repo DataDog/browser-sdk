@@ -41,4 +41,22 @@ describe('createTrackingConsentState', () => {
     trackingConsentState.tryToInit(TrackingConsent.NOT_GRANTED)
     expect(trackingConsentState.isGranted()).toBeTrue()
   })
+
+  describe('onGrantedOnce', () => {
+    it('calls onGrantedOnce when consent was already granted', () => {
+      const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
+      const spy = jasmine.createSpy()
+      trackingConsentState.onGrantedOnce(spy)
+      expect(spy).toHaveBeenCalledTimes(1)
+    })
+
+    it('calls onGrantedOnce when consent is granted', () => {
+      const trackingConsentState = createTrackingConsentState()
+      const spy = jasmine.createSpy()
+      trackingConsentState.onGrantedOnce(spy)
+      expect(spy).toHaveBeenCalledTimes(0)
+      trackingConsentState.update(TrackingConsent.GRANTED)
+      expect(spy).toHaveBeenCalledTimes(1)
+    })
+  })
 })

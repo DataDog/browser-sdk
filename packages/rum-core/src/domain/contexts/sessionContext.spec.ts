@@ -1,17 +1,17 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { clocksNow, DISCARDED, HookNames } from '@datadog/browser-core'
-import type { RumSessionManagerMock } from '../../../test'
-import { createRumSessionManagerMock, noopRecorderApi } from '../../../test'
-import { SessionType } from '../rumSessionManager'
+import type { SessionManagerMock } from '@datadog/browser-core/test'
+import { createSessionManagerMock } from '@datadog/browser-core/test'
+import { mockRumConfiguration, noopRecorderApi } from '../../../test'
 import type { AssembleHookParams, DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
-import { startSessionContext } from './sessionContext'
+import { SessionType, startSessionContext } from './sessionContext'
 import type { ViewHistory } from './viewHistory'
 
 describe('session context', () => {
   let hooks: Hooks
   let viewHistory: ViewHistory
-  let sessionManager: RumSessionManagerMock
+  let sessionManager: SessionManagerMock
   const fakeView = {
     id: '1',
     startClocks: clocksNow(),
@@ -26,18 +26,21 @@ describe('session context', () => {
     segments_total_raw_size: 1000,
   }
 
+  let configuration: ReturnType<typeof mockRumConfiguration>
+
   beforeEach(() => {
     viewHistory = { findView: () => undefined } as ViewHistory
     hooks = createHooks()
-    sessionManager = createRumSessionManagerMock()
-    sessionManager.setId('123')
+    sessionManager = createSessionManagerMock()
+    sessionManager.setId('00000000-0000-0000-0000-000000000123')
     const recorderApi = noopRecorderApi
 
     isRecordingSpy = spyOn(recorderApi, 'isRecording')
     getReplayStatsSpy = spyOn(recorderApi, 'getReplayStats')
     findViewSpy = spyOn(viewHistory, 'findView').and.returnValue(fakeView)
 
-    startSessionContext(hooks, sessionManager, recorderApi, viewHistory)
+    configuration = mockRumConfiguration({ sessionReplaySampleRate: 100 })
+    startSessionContext(hooks, configuration, sessionManager, recorderApi, viewHistory)
   })
 
   it('should set id and type', () => {
@@ -112,13 +115,13 @@ describe('session context', () => {
   })
 
   it('should set sampled_for_replay', () => {
-    sessionManager.setTrackedWithSessionReplay()
+    configuration.sessionReplaySampleRate = 100
     const eventSampleForReplay = hooks.triggerHook(HookNames.Assemble, {
       eventType: 'view',
       startTime: 0 as RelativeTime,
     } as AssembleHookParams) as DefaultRumEventAttributes
 
-    sessionManager.setTrackedWithoutSessionReplay()
+    configuration.sessionReplaySampleRate = 0
     const eventSampledOutForReplay = hooks.triggerHook(HookNames.Assemble, {
       eventType: 'view',
       startTime: 0 as RelativeTime,
@@ -154,7 +157,7 @@ describe('session context', () => {
         startTime: 0 as RelativeTime,
       }) as DefaultTelemetryEventAttributes
 
-      expect(telemetryEventAttributes.session?.id).toEqual('123')
+      expect(telemetryEventAttributes.session?.id).toEqual('00000000-0000-0000-0000-000000000123')
     })
 
     it('should not add session.id if no session', () => {

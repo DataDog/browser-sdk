@@ -1,19 +1,10 @@
-import { isSampled, resetSampleDecisionCache, sampleUsingKnuthFactor } from './sampler'
-
-// UUID known to yield a low hash value using the Knuth formula, making it more likely to be sampled
-const LOW_HASH_UUID = '29a4b5e3-9859-4290-99fa-4bc4a1a348b9'
-// UUID known to yield a high hash value using the Knuth formula, making it less likely to be
-// sampled
-const HIGH_HASH_UUID = '5321b54a-d6ec-4b24-996d-dd70c617e09a'
+import { HIGH_HASH_UUID, LOW_HASH_UUID } from '../../test'
+import { correctedChildSampleRate, isSampled, resetSampleDecisionCache, sampleUsingKnuthFactor } from './sampler'
 
 // UUID chosen arbitrarily, to be used when the test doesn't actually depend on it.
 const ARBITRARY_UUID = '1ff81c8c-6e32-473b-869b-55af08048323'
 
 describe('isSampled', () => {
-  beforeEach(() => {
-    resetSampleDecisionCache()
-  })
-
   it('returns true when sampleRate is 100', () => {
     expect(isSampled(ARBITRARY_UUID, 100)).toBeTrue()
   })
@@ -72,6 +63,28 @@ describe('isSampled', () => {
       expect(isSampled(ARBITRARY_UUID, 50)).toBeTrue()
       expect(isSampled(ARBITRARY_UUID, 50)).toBeTrue()
     })
+  })
+})
+
+describe('correctedChildSampleRate', () => {
+  it('should apply the correction formula', () => {
+    expect(correctedChildSampleRate(60, 20)).toBe(12)
+  })
+
+  it('should return the child rate unchanged when parent is 100%', () => {
+    expect(correctedChildSampleRate(100, 50)).toBe(50)
+  })
+
+  it('should return 0 when child rate is 0', () => {
+    expect(correctedChildSampleRate(60, 0)).toBe(0)
+  })
+
+  it('should return 0 when parent rate is 0', () => {
+    expect(correctedChildSampleRate(0, 50)).toBe(0)
+  })
+
+  it('should return the parent rate when child rate is 100%', () => {
+    expect(correctedChildSampleRate(60, 100)).toBe(60)
   })
 })
 

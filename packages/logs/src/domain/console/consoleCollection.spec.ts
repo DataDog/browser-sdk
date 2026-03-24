@@ -61,7 +61,7 @@ describe('console collection', () => {
 
   it('console error should have an error object defined', () => {
     ;({ stop: stopConsoleCollection } = startConsoleCollection(
-      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardErrorsToLogs: true })!,
+      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['error'] })!,
       lifeCycle
     ))
 
@@ -80,7 +80,7 @@ describe('console collection', () => {
 
   it('should retrieve fingerprint from console error', () => {
     ;({ stop: stopConsoleCollection } = startConsoleCollection(
-      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardErrorsToLogs: true })!,
+      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['error'] })!,
       lifeCycle
     ))
     interface DatadogError extends Error {
@@ -104,7 +104,7 @@ describe('console collection', () => {
 
   it('should retrieve dd_context from console', () => {
     ;({ stop: stopConsoleCollection } = startConsoleCollection(
-      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardErrorsToLogs: true })!,
+      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['error'] })!,
       lifeCycle
     ))
     interface DatadogError extends Error {
@@ -121,7 +121,7 @@ describe('console collection', () => {
 
   it('should retrieve causes from console error', () => {
     ;({ stop: stopConsoleCollection } = startConsoleCollection(
-      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardErrorsToLogs: true })!,
+      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['error'] })!,
       lifeCycle
     ))
     const error = new Error('High level error') as ErrorWithCause

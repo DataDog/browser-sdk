@@ -274,11 +274,11 @@ export function makeLogsPublicApi(): LogsPublicApi {
   let strategy = createPreStartStrategy(
     buildCommonContext,
     trackingConsentState,
-    (initConfiguration, configuration, hooks) => {
+    (initConfiguration, configuration, logsSessionManager, hooks) => {
       const startLogsResult = mockable(startLogs)(
         configuration,
+        logsSessionManager,
         buildCommonContext,
-        trackingConsentState,
         bufferedDataObservable,
         hooks
       )
