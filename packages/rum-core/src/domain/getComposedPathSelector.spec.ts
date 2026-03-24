@@ -120,7 +120,7 @@ describe('getSelectorFromComposedPath', () => {
 
         const result = getComposedPathSelector([element], undefined)
 
-        expect(result).toBe('SPAN[target=""];')
+        expect(result).toBe('SPAN;')
       })
 
       it('includes nthChild when element has siblings', () => {
@@ -132,7 +132,7 @@ describe('getSelectorFromComposedPath', () => {
 
         const result = getComposedPathSelector([element], undefined)
 
-        expect(result).toBe('SPAN[target=""]:nth-child(3):nth-of-type(2);')
+        expect(result).toBe('SPAN:nth-child(3):nth-of-type(2);')
       })
 
       it('calculates nthChild correctly for first child', () => {
@@ -143,7 +143,7 @@ describe('getSelectorFromComposedPath', () => {
 
         const result = getComposedPathSelector([element], undefined)
 
-        expect(result).toBe('SPAN[target=""]:nth-child(1);')
+        expect(result).toBe('SPAN:nth-child(1);')
       })
 
       it('does not include nthOfType when element is unique of its type', () => {
@@ -160,29 +160,29 @@ describe('getSelectorFromComposedPath', () => {
       it('includes nthOfType when the first element has same-type siblings', () => {
         const span1 = appendElement(`
           <div>
-          <span target></span>
-          <div></div>
-          <span></span>
+            <span target></span>
+            <div></div>
+            <span></span>
           </div>
         `)
 
         const result = getComposedPathSelector([span1], undefined)
 
-        expect(result).toBe('SPAN[target=""]:nth-child(1):nth-of-type(1);')
+        expect(result).toBe('SPAN:nth-child(1):nth-of-type(1);')
       })
 
       it('calculates nthOfType correctly among mixed siblings', () => {
         const button = appendElement(`
           <div>
-          <button></button>
-          <div></div>
-          <button target></button>
+            <button></button>
+            <div></div>
+            <button target></button>
           </div>
         `)
 
         const result = getComposedPathSelector([button], undefined)
 
-        expect(result).toBe('BUTTON[target=""]:nth-child(3):nth-of-type(2);')
+        expect(result).toBe('BUTTON:nth-child(3):nth-of-type(2);')
       })
 
       it('handles elements in composedPath with their position data', () => {
@@ -193,7 +193,7 @@ describe('getSelectorFromComposedPath', () => {
         const composedPath = [target, parent, grandparent]
         const result = getComposedPathSelector(composedPath, undefined)
 
-        expect(result).toBe('BUTTON;SECTION[target=""]:nth-child(1);DIV;')
+        expect(result).toBe('BUTTON;SECTION:nth-child(1);DIV;')
       })
 
       it('does not include nthChild or nthOfType for elements without parent', () => {
@@ -230,7 +230,7 @@ describe('getSelectorFromComposedPath', () => {
         const element = appendElement('<div><div target class="   "></div></div>')
 
         const result = getComposedPathSelector([element], undefined)
-        expect(result).toBe('DIV[target=""];')
+        expect(result).toBe('DIV;')
       })
 
       it('handles SVG elements', () => {
@@ -239,7 +239,7 @@ describe('getSelectorFromComposedPath', () => {
         const result = getComposedPathSelector([element], undefined)
 
         // tagName for SVG in HTML document is lowercase
-        expect(result).toBe('svg[data-testid="my-svg"][target=""];')
+        expect(result).toBe('svg[data-testid="my-svg"];')
       })
     })
   })
