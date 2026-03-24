@@ -1,6 +1,6 @@
 import type { ComponentInternalInstance, ComponentPublicInstance } from 'vue'
 import { callMonitored, clocksNow, createHandlingStack } from '@datadog/browser-core'
-import { onVueStart } from '../vuePlugin'
+import { onRumStart } from '../vuePlugin'
 
 /**
  * Add a Vue error to the RUM session.
@@ -19,7 +19,7 @@ import { onVueStart } from '../vuePlugin'
 export function addVueError(error: unknown, instance: ComponentPublicInstance | null, info: string) {
   const handlingStack = createHandlingStack('vue error')
   const startClocks = clocksNow()
-  onVueStart((addError) => {
+  onRumStart((addError) => {
     callMonitored(() => {
       addError({
         error,

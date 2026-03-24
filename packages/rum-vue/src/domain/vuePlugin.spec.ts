@@ -1,6 +1,6 @@
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '../../../core/test'
-import { onVueInit, vuePlugin, resetVuePlugin } from './vuePlugin'
+import { onRumInit, vuePlugin, resetVuePlugin } from './vuePlugin'
 
 const PUBLIC_API = {} as RumPublicApi
 const INIT_CONFIGURATION = {} as RumInitConfiguration
@@ -14,10 +14,10 @@ describe('vuePlugin', () => {
     expect(vuePlugin()).toEqual(jasmine.objectContaining({ name: 'vue' }))
   })
 
-  it('calls callbacks registered with onVueInit during onInit', () => {
+  it('calls callbacks registered with onRumInit during onInit', () => {
     const spy = jasmine.createSpy()
     const config = {}
-    onVueInit(spy)
+    onRumInit(spy)
     vuePlugin(config).onInit({ publicApi: PUBLIC_API, initConfiguration: INIT_CONFIGURATION })
     expect(spy).toHaveBeenCalledOnceWith(config, PUBLIC_API)
   })
@@ -26,7 +26,7 @@ describe('vuePlugin', () => {
     const spy = jasmine.createSpy()
     const config = {}
     vuePlugin(config).onInit({ publicApi: PUBLIC_API, initConfiguration: INIT_CONFIGURATION })
-    onVueInit(spy)
+    onRumInit(spy)
     expect(spy).toHaveBeenCalledOnceWith(config, PUBLIC_API)
   })
 

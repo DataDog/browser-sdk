@@ -1,9 +1,9 @@
 import { display } from '@datadog/browser-core'
 import type { RouteLocationMatched } from 'vue-router'
-import { onVueInit } from '../vuePlugin'
+import { onRumInit } from '../vuePlugin'
 
 export function startVueRouterView(matched: RouteLocationMatched[]) {
-  onVueInit((configuration, rumPublicApi) => {
+  onRumInit((configuration, rumPublicApi) => {
     if (!configuration.router) {
       display.warn('`router: true` is missing from the vue plugin configuration, the view will not be tracked.')
       return

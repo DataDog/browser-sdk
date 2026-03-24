@@ -27,24 +27,22 @@ describe('startVueRouterView', () => {
 })
 
 describe('computeViewName', () => {
-  it('returns empty string for empty matched array', () => {
-    expect(computeViewName([])).toBe('')
-  })
+  // prettier-ignore
+  const cases: Array<[string, Array<{ path: string }>, string]> = [
+    // description,                       matched paths,                                                    expected
+    ['empty matched array',               [],                                                               ''],
+    ['simple route',                      [{ path: '/users' }],                                            '/users'],
+    ['nested routes',                     [{ path: '/users' }, { path: '/users/:id' }],                   '/users/:id'],
+    ['ignores records without a path',    [{ path: '/users' }, { path: '' }, { path: '/users/:id' }],     '/users/:id'],
+    // Vue Router 4 catch-all routes use /:pathMatch(.*)*  (no bare * wildcard like React Router).
+    // We keep the route pattern as-is — it is already a meaningful identifier that groups all
+    // unmatched paths together, unlike React Router's * which needs substitution to be readable.
+    ['catch-all route',                   [{ path: '/:pathMatch(.*)*' }],                                 '/:pathMatch(.*)*'],
+  ]
 
-  it('returns the path for a simple route', () => {
-    expect(computeViewName([{ path: '/users' }] as unknown as RouteLocationMatched[])).toBe('/users')
-  })
-
-  it('returns the most specific matched path for nested routes', () => {
-    // Vue Router normalizes nested matched paths to absolute paths
-    expect(computeViewName([{ path: '/users' }, { path: '/users/:id' }] as unknown as RouteLocationMatched[])).toBe(
-      '/users/:id'
-    )
-  })
-
-  it('ignores records without a path', () => {
-    expect(
-      computeViewName([{ path: '/users' }, { path: '' }, { path: '/users/:id' }] as unknown as RouteLocationMatched[])
-    ).toBe('/users/:id')
+  cases.forEach(([description, matched, expected]) => {
+    it(`returns "${expected}" for ${description}`, () => {
+      expect(computeViewName(matched as unknown as RouteLocationMatched[])).toBe(expected)
+    })
   })
 })
