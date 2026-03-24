@@ -42,7 +42,7 @@ __metadata:
 
 "@datadog/browser-rum-react@file:../../../packages/rum-react/package.tgz::locator=nextjs%40workspace%3A.":
   version: 6.31.0
-  resolution: "@datadog/browser-rum-react@file:../../../packages/rum-react/package.tgz#../../../packages/rum-react/package.tgz::hash=ff7bfc&locator=nextjs%40workspace%3A."
+  resolution: "@datadog/browser-rum-react@file:../../../packages/rum-react/package.tgz#../../../packages/rum-react/package.tgz::hash=2dd471&locator=nextjs%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.31.0"
     "@datadog/browser-rum-core": "npm:6.31.0"
