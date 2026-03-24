@@ -95,7 +95,6 @@ describe('resourceCollection', () => {
         render_blocking_status: 'blocking',
         method: undefined,
         graphql: undefined,
-        response: undefined,
       },
       type: RumEventType.RESOURCE,
       _dd: {
@@ -143,7 +142,6 @@ describe('resourceCollection', () => {
         download: { duration: 100000000 as ServerDuration, start: 0 as ServerDuration },
         first_byte: { duration: 0 as ServerDuration, start: 0 as ServerDuration },
         graphql: undefined,
-        response: undefined,
       },
       type: RumEventType.RESOURCE,
       _dd: {
@@ -350,7 +348,6 @@ describe('resourceCollection', () => {
           download: { duration: 100000000 as ServerDuration, start: 0 as ServerDuration },
           first_byte: { duration: 0 as ServerDuration, start: 0 as ServerDuration },
           graphql: undefined,
-          response: undefined,
         },
         type: RumEventType.RESOURCE,
         _dd: {
@@ -466,7 +463,6 @@ describe('resourceCollection', () => {
         first_byte: { duration: 0 as ServerDuration, start: 0 as ServerDuration },
         url: 'https://resource.com/valid',
         graphql: undefined,
-        response: undefined,
       },
       type: RumEventType.RESOURCE,
       _dd: {

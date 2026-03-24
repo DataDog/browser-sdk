@@ -154,7 +154,7 @@ function assembleResource(
     : undefined
 
   const graphql = request && computeGraphQlMetaData(request, configuration)
-  const response = entry && computeResourceResponse(entry)
+  const contentTypeFromPerformanceEntry = entry && computeContentTypeFromPerformanceEntry(entry)
 
   const resourceEvent = combine(
     {
@@ -174,7 +174,6 @@ function assembleResource(
         protocol: entry && computeResourceEntryProtocol(entry),
         delivery_type: entry && computeResourceEntryDeliveryType(entry),
         graphql,
-        response,
       },
       type: RumEventType.RESOURCE,
       _dd: {
@@ -183,6 +182,7 @@ function assembleResource(
     },
     tracingInfo,
     entry && computeResourceEntryMetrics(entry),
+    contentTypeFromPerformanceEntry,
     networkHeaders
   )
 
@@ -206,13 +206,19 @@ function computeGraphQlMetaData(
   return extractGraphQlMetadata(request, graphQlConfig)
 }
 
-function computeResourceResponse(entry: RumPerformanceResourceTiming): ResourceResponse | undefined {
+function computeContentTypeFromPerformanceEntry(
+  entry: RumPerformanceResourceTiming
+): { resource: Pick<RawRumResourceEvent['resource'], 'response'> } | undefined {
   const contentType = entry.contentType
 
   if (contentType) {
     return {
-      headers: {
-        'content-type': contentType,
+      resource: {
+        response: {
+          headers: {
+            'content-type': contentType,
+          },
+        },
       },
     }
   }
