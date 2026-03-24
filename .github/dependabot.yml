@@ -1,22 +1,22 @@
-# Note: While we mainly use Renovate, Dependabot is used for security updates
+# # Note: While we mainly use Renovate, Dependabot is used for security updates
 
-version: 2
-updates:
-  - package-ecosystem: github-actions
-    directory: /
-    schedule:
-      interval: 'daily'
-    open-pull-requests-limit: 0
-    commit-message:
-      prefix: '👷'
+# version: 2
+# updates:
+#   - package-ecosystem: github-actions
+#     directory: /
+#     schedule:
+#       interval: 'daily'
+#     open-pull-requests-limit: 0
+#     commit-message:
+#       prefix: '👷'
 
-  - package-ecosystem: npm
-    directory: /
-    schedule:
-      interval: 'daily'
-    open-pull-requests-limit: 0
-    commit-message:
-      prefix: '👷'
-    ignore:
-      # update karma-webpack: RUM-3130
-      - dependency-name: 'karma-webpack'
+#   - package-ecosystem: npm
+#     directory: /
+#     schedule:
+#       interval: 'daily'
+#     open-pull-requests-limit: 0
+#     commit-message:
+#       prefix: '👷'
+#     ignore:
+#       # update karma-webpack: RUM-3130
+#       - dependency-name: 'karma-webpack'
