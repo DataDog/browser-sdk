@@ -34,6 +34,53 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@angular/common@npm:19.2.5":
+  version: 19.2.5
+  resolution: "@angular/common@npm:19.2.5"
+  dependencies:
+    tslib: "npm:^2.3.0"
+  peerDependencies:
+    "@angular/core": 19.2.5
+    rxjs: ^6.5.3 || ^7.4.0
+  checksum: 10c0/0aed8a84a6655215948a2d739f7c8059aa1e9f2e83eac9220a76f776b47401538b26d1c35695926a262c7d838a96accf56a72a0611c77e0335cfed56eef132bf
+  languageName: node
+  linkType: hard
+
+"@angular/compiler@npm:19.2.5":
+  version: 19.2.5
+  resolution: "@angular/compiler@npm:19.2.5"
+  dependencies:
+    tslib: "npm:^2.3.0"
+  checksum: 10c0/e65f84ef2d53eb1250d3085074eb1b3fbd8d3f8f9603e32be67c82194ae4f8a4a98f250d954f830a67e68c4d2f3b3d01da5c0f49157cc1746064a37d14b74a76
+  languageName: node
+  linkType: hard
+
+"@angular/core@npm:19.2.5":
+  version: 19.2.5
+  resolution: "@angular/core@npm:19.2.5"
+  dependencies:
+    tslib: "npm:^2.3.0"
+  peerDependencies:
+    rxjs: ^6.5.3 || ^7.4.0
+    zone.js: ~0.15.0
+  checksum: 10c0/102efc14698c9adea29af9ddc81297e8d41d061e3148a640713c2cdff0f91cf43b161b02790ab21f1bb551a0685d023b5a63e30740a62dcfde8a4c6e6c41d496
+  languageName: node
+  linkType: hard
+
+"@angular/router@npm:19.2.5":
+  version: 19.2.5
+  resolution: "@angular/router@npm:19.2.5"
+  dependencies:
+    tslib: "npm:^2.3.0"
+  peerDependencies:
+    "@angular/common": 19.2.5
+    "@angular/core": 19.2.5
+    "@angular/platform-browser": 19.2.5
+    rxjs: ^6.5.3 || ^7.4.0
+  checksum: 10c0/5eecadb52552633603fce5e5415c37275eb44451d2591fb78f9dd85fc5015a1d65014989b89e5fbdf9eacfc39420804b11c9d4774c28f3508bce4fee129c9f26
+  languageName: node
+  linkType: hard
+
 "@apidevtools/json-schema-ref-parser@npm:^11.5.5":
   version: 11.9.3
   resolution: "@apidevtools/json-schema-ref-parser@npm:11.9.3"
@@ -289,6 +336,24 @@ __metadata:
   peerDependenciesMeta:
     "@datadog/browser-rum":
       optional: true
+  languageName: unknown
+  linkType: soft
+
+"@datadog/browser-rum-angular@workspace:packages/rum-angular":
+  version: 0.0.0-use.local
+  resolution: "@datadog/browser-rum-angular@workspace:packages/rum-angular"
+  dependencies:
+    "@angular/common": "npm:19.2.5"
+    "@angular/compiler": "npm:19.2.5"
+    "@angular/core": "npm:19.2.5"
+    "@angular/router": "npm:19.2.5"
+    "@datadog/browser-core": "npm:6.31.0"
+    "@datadog/browser-rum-core": "npm:6.31.0"
+    rxjs: "npm:7.8.2"
+  peerDependencies:
+    "@angular/core": ">=15 <=21"
+    "@angular/router": ">=15 <=21"
+    rxjs: ">=7"
   languageName: unknown
   linkType: soft
 
@@ -13687,7 +13752,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rxjs@npm:^7.8.2":
+"rxjs@npm:7.8.2, rxjs@npm:^7.8.2":
   version: 7.8.2
   resolution: "rxjs@npm:7.8.2"
   dependencies:
