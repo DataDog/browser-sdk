@@ -1,17 +1,20 @@
+import type { EnvironmentInjector } from '@angular/core'
+import { ErrorHandler, Injector, createEnvironmentInjector } from '@angular/core'
 import { initializeAngularPlugin } from '../../../test/initializeAngularPlugin'
 import { provideDatadogErrorHandler } from './provideDatadogErrorHandler'
+
+function createErrorHandler(): ErrorHandler {
+  const injector = createEnvironmentInjector([provideDatadogErrorHandler()], Injector.NULL as EnvironmentInjector)
+  return injector.get(ErrorHandler)
+}
 
 describe('provideDatadogErrorHandler', () => {
   it('provides an ErrorHandler that reports errors to Datadog', () => {
     const addErrorSpy = jasmine.createSpy()
     initializeAngularPlugin({ addError: addErrorSpy })
 
-    const providers = provideDatadogErrorHandler()
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    const handler = new (providers as any).ɵproviders[0].useClass() as { handleError: (error: unknown) => void }
-
-    const error = new Error('test error')
-    handler.handleError(error)
+    const handler = createErrorHandler()
+    handler.handleError(new Error('test error'))
 
     expect(addErrorSpy).toHaveBeenCalled()
   })
@@ -19,13 +22,9 @@ describe('provideDatadogErrorHandler', () => {
   it('still logs the error to the console via default ErrorHandler', () => {
     initializeAngularPlugin()
 
-    const providers = provideDatadogErrorHandler()
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    const handler = new (providers as any).ɵproviders[0].useClass() as { handleError: (error: unknown) => void }
-
     const consoleErrorSpy = spyOn(console, 'error')
-    const error = new Error('test error')
-    handler.handleError(error)
+    const handler = createErrorHandler()
+    handler.handleError(new Error('test error'))
 
     expect(consoleErrorSpy).toHaveBeenCalled()
   })
