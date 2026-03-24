@@ -6,7 +6,8 @@
   "module": "esm/index.js",
   "types": "cjs/index.d.ts",
   "scripts": {
-    "build": "node ../../scripts/build/build-package.ts --modules"
+    "build": "node ../../scripts/build/build-package.ts --modules",
+    "prepack": "yarn build"
   },
   "dependencies": {
     "@datadog/browser-core": "6.31.0"
