@@ -53,9 +53,7 @@ import { angularPlugin, provideDatadogErrorHandler } from '@datadog/browser-rum-
 import { datadogRum } from '@datadog/browser-rum'
 
 datadogRum.init({
-  applicationId: '<APP_ID>',
-  clientToken: '<CLIENT_TOKEN>',
-  site: 'datadoghq.com',
+  ...
   plugins: [angularPlugin()],
 })
 
@@ -71,9 +69,7 @@ import { angularPlugin, provideDatadogErrorHandler } from '@datadog/browser-rum-
 import { datadogRum } from '@datadog/browser-rum'
 
 datadogRum.init({
-  applicationId: '<APP_ID>',
-  clientToken: '<CLIENT_TOKEN>',
-  site: 'datadoghq.com',
+  ...
   plugins: [angularPlugin()],
 })
 
@@ -112,9 +108,7 @@ import { angularPlugin, provideDatadogRouter } from '@datadog/browser-rum-angula
 import { datadogRum } from '@datadog/browser-rum'
 
 datadogRum.init({
-  applicationId: '<APP_ID>',
-  clientToken: '<CLIENT_TOKEN>',
-  site: 'datadoghq.com',
+  ...
   plugins: [angularPlugin({ router: true })],
 })
 
@@ -130,9 +124,7 @@ import { angularPlugin, provideDatadogRouter } from '@datadog/browser-rum-angula
 import { datadogRum } from '@datadog/browser-rum'
 
 datadogRum.init({
-  applicationId: '<APP_ID>',
-  clientToken: '<CLIENT_TOKEN>',
-  site: 'datadoghq.com',
+  ...
   plugins: [angularPlugin({ router: true })],
 })
 
