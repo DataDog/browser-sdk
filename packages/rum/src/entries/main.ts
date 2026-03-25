@@ -12,7 +12,6 @@ import type { RumPublicApi } from '@datadog/browser-rum-core'
 import { makeRumPublicApi } from '@datadog/browser-rum-core'
 import { makeRecorderApi } from '../boot/recorderApi'
 import { createDeflateEncoder, startDeflateWorker } from '../domain/deflate'
-import { lazyLoadRecorder } from '../boot/lazyLoadRecorder'
 import { makeProfilerApi } from '../boot/profilerApi'
 
 export type {
@@ -73,7 +72,7 @@ export type {
   RumLongTaskEventDomainContext,
 } from '@datadog/browser-rum-core'
 
-const recorderApi = makeRecorderApi(lazyLoadRecorder)
+const recorderApi = makeRecorderApi()
 
 const profilerApi = makeProfilerApi()
 
