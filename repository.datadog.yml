@@ -18,8 +18,10 @@ schema-version: v1
 kind: integration-branch
 name: v7
 team: rum-browser
+ephemeral: false
 update_automatically: false # update_automatically is updating the integration branch on a schedule, instead we're updating it in a CI job for any commit to the base branch.
 reset_pattern: '' # This branch should never be reseted
+hide_reset_branch_instructions_on_conflict: true
 contacts:
   - type: slack
     contact: browser-sdk-deploy
