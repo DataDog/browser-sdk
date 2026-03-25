@@ -1,26 +1,27 @@
 import { test, expect } from '@playwright/test'
-import { createTest } from '../lib/framework'
+import { createTest } from '../../lib/framework'
+import { runBasePluginTests } from './basePluginTests'
+
+runBasePluginTests([
+  {
+    name: 'vue',
+    loadApp: (b) => b.withVueApp(),
+    viewPrefix: '',
+    homeViewName: '/',
+    homeUrlPattern: '**/',
+    userRouteName: '/user/:id',
+    guidesRouteName: '/guides/:catchAll(.*)*',
+    clientErrorMessage: 'Error triggered by button click',
+  },
+])
 
 test.describe('vue plugin', () => {
-  createTest('should define a view name with createRouter')
-    .withRum()
-    .withVueApp()
-    .run(async ({ page, flushEvents, intakeRegistry }) => {
-      await page.click('text=User 42')
-      await flushEvents()
-
-      const viewEvents = intakeRegistry.rumViewEvents
-      expect(viewEvents.length).toBeGreaterThan(0)
-      const userView = viewEvents.find((e) => e.view.name === '/user/:id')
-      expect(userView).toBeDefined()
-    })
-
   createTest('should capture vue error from app.config.errorHandler')
     .withRum()
     .withVueApp()
     .run(async ({ page, flushEvents, intakeRegistry }) => {
       await page.click('text=Error')
-      await page.click('#error-button')
+      await page.click('[data-testid="trigger-error"]')
 
       await flushEvents()
 
