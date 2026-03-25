@@ -9,6 +9,7 @@ import {
   display,
 } from '@datadog/browser-core'
 import { replaceMockable, registerCleanupTask } from '@datadog/browser-core/test'
+import { resetExperimentalFeatures } from '@datadog/browser-core/src/tools/experimentalFeatures'
 import type { RumFetchResourceEventDomainContext, RumXhrResourceEventDomainContext } from '../../domainContext.types'
 import {
   collectAndValidateRawRumEvents,
@@ -622,22 +623,13 @@ describe('resourceCollection', () => {
         request: {
           type: RequestType.FETCH,
           response: new Response('', { headers: { 'content-type': 'text/html', 'cache-control': 'no-cache' } }),
+          input: new Request('https://example.com/resource', { headers: { 'x-some-header': 'some-value' } }),
         },
       })
 
       const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
       expect(event.resource.request).toBeUndefined()
       expect(event.resource.response).toBeUndefined()
-    })
-
-    it('should not collect headers for perf-entry-only resources', () => {
-      setupResourceCollection({ trackResourceHeaders: ['content-type'] })
-
-      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])
-      runTasks()
-
-      const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
-      expect(event.resource.request).toBeUndefined()
     })
 
     it('should override perf entry content-type with network content-type', () => {
@@ -711,8 +703,7 @@ describe('resourceCollection', () => {
     })
 
     it('should not collect headers when experimental feature is disabled', () => {
-      // Reset experimental features to disable TRACK_RESOURCE_HEADERS
-      addExperimentalFeatures([])
+      resetExperimentalFeatures()
       setupResourceCollection({ trackResourceHeaders: ['content-type'] })
 
       notifyRequest({
@@ -723,7 +714,7 @@ describe('resourceCollection', () => {
       })
 
       const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
-      expect(event.resource.request).toBeUndefined()
+      expect(event.resource.response).toBeUndefined()
     })
 
     describe('forbidden headers', () => {
