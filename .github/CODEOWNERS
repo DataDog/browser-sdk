@@ -10,4 +10,4 @@ packages/rum/src/domain/*.ts                    @Datadog/rum-browser @Datadog/se
 test/e2e/scenario/recorder/**                   @Datadog/rum-browser @Datadog/session-replay-sdk
 
 # Docs
-*README.md    @Datadog/rum-browser @DataDog/documentation
+/README.md    @Datadog/rum-browser @DataDog/documentation
