@@ -27,6 +27,7 @@ const APPS: AppConfig[] = [
   { name: 'microfrontend' },
   { name: 'nextjs' },
   { name: 'angular-app' },
+  { name: 'vue-router-app' },
 
   // React Router apps
   { name: 'react-router-v6-app' },

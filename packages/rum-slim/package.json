@@ -7,7 +7,8 @@
   "types": "cjs/entries/main.d.ts",
   "scripts": {
     "build": "node ../../scripts/build/build-package.ts --modules --bundle datadog-rum-slim.js",
-    "build:bundle": "node ../../scripts/build/build-package.ts --bundle datadog-rum-slim.js"
+    "build:bundle": "node ../../scripts/build/build-package.ts --bundle datadog-rum-slim.js",
+    "prepack": "yarn build"
   },
   "dependencies": {
     "@datadog/browser-core": "7.0.0-alpha.0",

@@ -15,7 +15,7 @@ yarn test:e2e
 yarn test:e2e -g "unhandled rejections"
 ```
 
-**Important**: `yarn test:e2e` does not build the SDK automatically. Run `yarn build:bundle` if you have made changes to the source code and `yarn build:apps` to rebuild the test Apps (because some of them are bundled with the SDK).
+**Important**: `yarn test:e2e` does not build the SDK automatically. Run `yarn build:apps` to rebuild the SDK and test apps if you have made changes to the source code.
 
 To rebuild only specific apps (faster during development):
 

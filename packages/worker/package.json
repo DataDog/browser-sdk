@@ -5,7 +5,8 @@
   "main": "bundle/worker.js",
   "scripts": {
     "build": "node ../../scripts/build/build-package.ts --bundle worker.js",
-    "build:bundle": "yarn build"
+    "build:bundle": "yarn build",
+    "prepack": "yarn build"
   },
   "dependencies": {
     "@datadog/browser-core": "7.0.0-alpha.0"

@@ -12,8 +12,7 @@ interface TypeScriptCheck {
 }
 
 runMain(() => {
-  printLog('Building project...')
-  command`yarn run build`.run()
+  printLog('Building and packing project...')
   command`yarn run pack`.run()
 
   printLog('Setting up test environment...')
