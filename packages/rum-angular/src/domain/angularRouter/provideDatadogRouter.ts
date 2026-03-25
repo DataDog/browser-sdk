@@ -42,6 +42,10 @@ export function provideDatadogRouter(): EnvironmentProviders {
           router.events
             .pipe(filter((event): event is GuardsCheckEnd => event instanceof GuardsCheckEnd))
             .subscribe((event) => {
+              if (!event.shouldActivate) {
+                return
+              }
+
               const url = event.urlAfterRedirects
               const path = url.replace(/[?#].*$/, '')
 
