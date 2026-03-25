@@ -102,6 +102,30 @@ describe('createRouter (wrapped)', () => {
       .catch(done.fail)
   })
 
+  it('substitutes catch-all pattern with the actual path', (done) => {
+    const startViewSpy = jasmine.createSpy()
+    initializeVuePlugin({
+      configuration: { router: true },
+      publicApi: { startView: startViewSpy },
+    })
+
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', component: {} },
+        { path: '/:pathMatch(.*)*', component: {} },
+      ],
+    })
+
+    router
+      .push('/unknown/page')
+      .then(() => {
+        expect(startViewSpy).toHaveBeenCalledWith('/unknown/page')
+        done()
+      })
+      .catch(done.fail)
+  })
+
   it('does not call startView when navigation is blocked', (done) => {
     const startViewSpy = jasmine.createSpy()
     initializeVuePlugin({

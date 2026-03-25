@@ -11,7 +11,10 @@ describe('startVueRouterView', () => {
       publicApi: { startView: startViewSpy },
     })
 
-    startVueRouterView([{ path: '/' }, { path: 'user' }, { path: ':id' }] as unknown as RouteLocationMatched[])
+    startVueRouterView(
+      [{ path: '/' }, { path: 'user' }, { path: ':id' }] as unknown as RouteLocationMatched[],
+      '/user/1'
+    )
 
     expect(startViewSpy).toHaveBeenCalledOnceWith('/user/:id')
   })
@@ -19,7 +22,7 @@ describe('startVueRouterView', () => {
   it('warns if router: true is missing from plugin config', () => {
     const warnSpy = spyOn(display, 'warn')
     initializeVuePlugin({ configuration: {} })
-    startVueRouterView([] as unknown as RouteLocationMatched[])
+    startVueRouterView([] as unknown as RouteLocationMatched[], '/')
     expect(warnSpy).toHaveBeenCalledOnceWith(
       '`router: true` is missing from the vue plugin configuration, the view will not be tracked.'
     )
@@ -28,21 +31,22 @@ describe('startVueRouterView', () => {
 
 describe('computeViewName', () => {
   // prettier-ignore
-  const cases: Array<[string, Array<{ path: string }>, string]> = [
-    // description,                       matched paths,                                                    expected
-    ['empty matched array',               [],                                                               ''],
-    ['simple route',                      [{ path: '/users' }],                                            '/users'],
-    ['nested routes',                     [{ path: '/users' }, { path: '/users/:id' }],                   '/users/:id'],
-    ['ignores records without a path',    [{ path: '/users' }, { path: '' }, { path: '/users/:id' }],     '/users/:id'],
+  const cases: Array<[string, Array<{ path: string }>, string, string]> = [
+    // description,                       matched paths,                                                    path,                expected
+    ['empty matched array',               [],                                                               '/',                 ''],
+    ['simple route',                      [{ path: '/users' }],                                            '/users',            '/users'],
+    ['nested routes',                     [{ path: '/users' }, { path: '/users/:id' }],                   '/users/1',          '/users/:id'],
+    ['ignores records without a path',    [{ path: '/users' }, { path: '' }, { path: '/users/:id' }],     '/users/1',          '/users/:id'],
     // Vue Router 4 catch-all routes use /:pathMatch(.*)*  (no bare * wildcard like React Router).
-    // We keep the route pattern as-is — it is already a meaningful identifier that groups all
-    // unmatched paths together, unlike React Router's * which needs substitution to be readable.
-    ['catch-all route',                   [{ path: '/:pathMatch(.*)*' }],                                 '/:pathMatch(.*)*'],
+    // We substitute the catch-all pattern with the actual path, aligning with how React Router
+    // replaces splats — it shows which specific path was visited instead of the raw regex.
+    ['catch-all route',                   [{ path: '/:pathMatch(.*)*' }],                                 '/unknown/page',     '/unknown/page'],
+    ['nested catch-all route',            [{ path: '/app' }, { path: '/app/:pathMatch(.*)*' }],            '/app/not-found',    '/app/not-found'],
   ]
 
-  cases.forEach(([description, matched, expected]) => {
+  cases.forEach(([description, matched, path, expected]) => {
     it(`returns "${expected}" for ${description}`, () => {
-      expect(computeViewName(matched as unknown as RouteLocationMatched[])).toBe(expected)
+      expect(computeViewName(matched as unknown as RouteLocationMatched[], path)).toBe(expected)
     })
   })
 })
