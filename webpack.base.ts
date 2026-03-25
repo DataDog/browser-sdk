@@ -28,7 +28,7 @@ export default ({
           // can redirect requests for them reliably.
           `chunks/[name]-${filename}`
         : // Include a content hash in chunk names in production.
-          `chunks/[name]-[contenthash]-${filename}`,
+          `chunks/[name]_[contenthash]-${filename}`,
     path: path.resolve('./bundle'),
     chunkFormat: 'module',
     chunkLoading: 'import',
