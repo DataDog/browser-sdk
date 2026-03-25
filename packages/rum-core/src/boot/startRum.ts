@@ -92,8 +92,11 @@ export function startRum(
   let pendingPageExitReason: PageExitReason | undefined
   const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => {
     pendingPageExitReason = event.reason
-    lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, event)
-    pendingPageExitReason = undefined
+    try {
+      lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, event)
+    } finally {
+      pendingPageExitReason = undefined
+    }
   })
   cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
 
