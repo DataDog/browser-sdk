@@ -1,0 +1,31 @@
+{
+  "name": "vue-router-app",
+  "private": true,
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@datadog/browser-rum": "file:../../../packages/rum/package.tgz",
+    "@datadog/browser-rum-vue": "file:../../../packages/rum-vue/package.tgz",
+    "vue": "3.5.29",
+    "vue-router": "4.6.4"
+  },
+  "resolutions": {
+    "@datadog/browser-rum-core": "file:../../../packages/rum-core/package.tgz",
+    "@datadog/browser-core": "file:../../../packages/core/package.tgz",
+    "@datadog/browser-rum": "file:../../../packages/rum/package.tgz",
+    "@datadog/browser-rum-vue": "file:../../../packages/rum-vue/package.tgz",
+    "@datadog/browser-rum-slim": "file:../../../packages/rum-slim/package.tgz",
+    "@datadog/browser-worker": "file:../../../packages/worker/package.tgz"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "5.x",
+    "typescript": "5.x",
+    "vite": "6.x"
+  },
+  "volta": {
+    "extends": "../../../package.json"
+  }
+}
