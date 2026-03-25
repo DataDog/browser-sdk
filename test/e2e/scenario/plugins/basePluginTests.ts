@@ -29,17 +29,15 @@ export function runBasePluginTests(configs: PluginTestConfig[]) {
 
     test.describe(name, () => {
       test.describe('router', () => {
-        loadApp(createTest('should track initial home view').withRum()).run(
-          async ({ flushEvents, intakeRegistry }) => {
-            await flushEvents()
+        loadApp(createTest('should track initial home view').withRum()).run(async ({ flushEvents, intakeRegistry }) => {
+          await flushEvents()
 
-            const viewEvents = intakeRegistry.rumViewEvents
-            expect(viewEvents.length).toBeGreaterThan(0)
-            const firstView = viewEvents[0]
-            expect(firstView.view.name).toBe(homeViewName)
-            expect(firstView.view.loading_type).toBe('initial_load')
-          }
-        )
+          const viewEvents = intakeRegistry.rumViewEvents
+          expect(viewEvents.length).toBeGreaterThan(0)
+          const firstView = viewEvents[0]
+          expect(firstView.view.name).toBe(homeViewName)
+          expect(firstView.view.loading_type).toBe('initial_load')
+        })
 
         loadApp(createTest('should normalize dynamic routes and preserve real URLs and referrers').withRum()).run(
           async ({ page, flushEvents, intakeRegistry, baseUrl }) => {
