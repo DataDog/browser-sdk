@@ -7,6 +7,7 @@ import type {
   BufferedData,
   BufferedObservable,
   Telemetry,
+  PageExitReason,
 } from '@datadog/browser-core'
 import {
   sendToExtension,
@@ -88,8 +89,11 @@ export function startRum(
   }
 
   const pageMayExitObservable = createPageMayExitObservable(configuration)
+  let pendingPageExitReason: PageExitReason | undefined
   const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => {
+    pendingPageExitReason = event.reason
     lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, event)
+    pendingPageExitReason = undefined
   })
   cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
 
@@ -104,7 +108,8 @@ export function startRum(
       reportError,
       pageMayExitObservable,
       session.expireObservable,
-      createEncoder
+      createEncoder,
+      () => pendingPageExitReason
     )
     cleanupTasks.push(() => batch.stop())
     startCustomerDataTelemetry(telemetry, lifeCycle, batch.flushController.flushObservable)

@@ -1,6 +1,6 @@
 import type { Clock } from '../../test'
 import { mockClock } from '../../test'
-import type { PageMayExitEvent } from '../browser/pageMayExitObservable'
+import type { PageMayExitEvent, PageExitReason } from '../browser/pageMayExitObservable'
 import { Observable } from '../tools/observable'
 import type { FlushController, FlushEvent } from './flushController'
 import { createFlushController, FLUSH_DURATION_LIMIT, MESSAGES_LIMIT } from './flushController'
@@ -100,6 +100,23 @@ describe('flushController', () => {
   })
 
   describe('bytes limit', () => {
+    it('uses the page exit reason as flush reason when getPageExitContext is provided', () => {
+      const pageExitReason: PageExitReason | undefined = 'before_unload'
+      const controller = createFlushController({
+        pageMayExitObservable,
+        sessionExpireObservable,
+        getPageExitContext: () => pageExitReason,
+      })
+      const spy = jasmine.createSpy<(event: FlushEvent) => void>()
+      controller.flushObservable.subscribe(spy)
+
+      controller.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
+      controller.notifyAfterAddMessage()
+      controller.notifyBeforeAddMessage(BYTES_LIMIT)
+
+      expect(spy.calls.first().args[0].reason).toBe('before_unload')
+    })
+
     it('notifies when the bytes limit is reached after adding a message', () => {
       flushController.notifyBeforeAddMessage(BYTES_LIMIT)
       flushController.notifyAfterAddMessage()
