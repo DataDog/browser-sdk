@@ -5,7 +5,6 @@ import type { BrowserRecord } from '../../types'
 import type { Tracker } from './trackers'
 import {
   trackFocus,
-  trackFrustration,
   trackInput,
   trackMediaInteraction,
   trackMouseInteraction,
@@ -74,7 +73,6 @@ export function record(options: RecordOptions): RecordAPI {
     trackStyleSheet(processRecord, scope),
     trackFocus(processRecord, scope),
     trackVisualViewportResize(processRecord, scope),
-    trackFrustration(lifeCycle, processRecord, scope),
     trackViewEnd(lifeCycle, processRecord, flushMutations),
   ]
 
