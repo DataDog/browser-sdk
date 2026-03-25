@@ -2,7 +2,7 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { globSync } from 'node:fs'
 import { minimatch } from 'minimatch'
-import { printLog, runMain, printWarning } from './lib/executionUtils.ts'
+import { printLog, runMain } from './lib/executionUtils.ts'
 import { command } from './lib/command.ts'
 import { checkPackageJsonFiles } from './lib/checkBrowserSdkPackageJsonFiles.ts'
 
@@ -19,17 +19,23 @@ runMain(() => {
 function checkBrowserSdkPackage(packagePath: string) {
   const packageJson = getPackageJson(packagePath)
 
-  if (packageJson?.private) {
-    printWarning(`Skipping private package ${packageJson.name}`)
-    return true
-  }
-
   printLog(`Checking ${packagePath}`)
 
   const packageFiles = getPackageFiles(packagePath)
 
+  checkExpectedFiles(packagePath, packageFiles)
   checkPackageJsonEntryPoints(packageJson, packageFiles)
   checkFilesField(packageJson, packageFiles)
+}
+
+function checkExpectedFiles(packagePath: string, packageFiles: string[]) {
+  const expectedFiles = ['package.json', 'README.md', 'LICENSE']
+
+  for (const file of expectedFiles) {
+    if (!packageFiles.includes(file)) {
+      throw new Error(`File ${file} is missing from ${packagePath}`)
+    }
+  }
 }
 
 function getPackageFiles(packagePath: string): string[] {
