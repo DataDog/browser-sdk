@@ -7,6 +7,7 @@
 packages/rum/src/domain/record/**               @Datadog/rum-browser @Datadog/session-replay-sdk
 packages/rum/src/domain/segmentCollection/**    @Datadog/rum-browser @Datadog/session-replay-sdk
 packages/rum/src/domain/*.ts                    @Datadog/rum-browser @Datadog/session-replay-sdk
+test/e2e/scenario/recorder/**                   @Datadog/rum-browser @Datadog/session-replay-sdk
 
 # Docs
 *README.md    @Datadog/rum-browser @DataDog/documentation
