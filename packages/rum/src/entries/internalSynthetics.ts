@@ -7,7 +7,6 @@
  */
 import { makeRumPublicApi } from '@datadog/browser-rum-core'
 import { makeRecorderApi } from '../boot/recorderApi'
-import { lazyLoadRecorder } from '../boot/lazyLoadRecorder'
 import { makeProfilerApi } from '../boot/profilerApi'
 
 export { DefaultPrivacyLevel } from '@datadog/browser-core'
@@ -15,7 +14,7 @@ export { DefaultPrivacyLevel } from '@datadog/browser-core'
 // Disable the rule that forbids potential side effects, because we know that those functions don't
 // have side effects.
 /* eslint-disable local-rules/disallow-side-effects */
-const recorderApi = makeRecorderApi(lazyLoadRecorder)
+const recorderApi = makeRecorderApi()
 const profilerApi = makeProfilerApi()
 export const datadogRum = makeRumPublicApi(recorderApi, profilerApi, {
   ignoreInitIfSyntheticsWillInjectRum: false,
