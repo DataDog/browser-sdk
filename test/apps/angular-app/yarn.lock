@@ -295,47 +295,47 @@ __metadata:
   linkType: hard
 
 "@datadog/browser-core@file:../../../packages/core/package.tgz::locator=angular-app%40workspace%3A.":
-  version: 6.31.0
-  resolution: "@datadog/browser-core@file:../../../packages/core/package.tgz#../../../packages/core/package.tgz::hash=6201e3&locator=angular-app%40workspace%3A."
-  checksum: 10c0/a019713374971a2dd35c63318cecd76e38d08348a24ca5b88abb8fca8501d17589e187bd4e68c7358f3523dd3fd08d110b307647854a620b0f3371f2c7db14ca
+  version: 7.0.0-alpha.0
+  resolution: "@datadog/browser-core@file:../../../packages/core/package.tgz#../../../packages/core/package.tgz::hash=09f6e8&locator=angular-app%40workspace%3A."
+  checksum: 10c0/0151bf11b57363886101dfad538499b913c6336b72b32b663b77074ab60afb8c3f74e88b534c6d3a8887781ed641bbcf28207ea93885c4a9b662fbe170751d60
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum-angular@file:../../../packages/rum-angular/package.tgz::locator=angular-app%40workspace%3A.":
-  version: 0.0.0
-  resolution: "@datadog/browser-rum-angular@file:../../../packages/rum-angular/package.tgz#../../../packages/rum-angular/package.tgz::hash=004229&locator=angular-app%40workspace%3A."
+  version: 7.0.0-alpha.0
+  resolution: "@datadog/browser-rum-angular@file:../../../packages/rum-angular/package.tgz#../../../packages/rum-angular/package.tgz::hash=836074&locator=angular-app%40workspace%3A."
   dependencies:
-    "@datadog/browser-core": "npm:6.31.0"
-    "@datadog/browser-rum-core": "npm:6.31.0"
+    "@datadog/browser-core": "npm:7.0.0-alpha.0"
+    "@datadog/browser-rum-core": "npm:7.0.0-alpha.0"
   peerDependencies:
     "@angular/core": ">=15 <=21"
     "@angular/router": ">=15 <=21"
     rxjs: ">=7"
-  checksum: 10c0/ec9054d51805f45cb4618bcbc6fa00049ba5d1597048aa3c354aea14a15a06275ee0ba06b3de7d77fbd0d2f009f74159a88e10f2f6b9e629eeed0a5ca30a27ae
+  checksum: 10c0/d1c683fa57db83d0f8008ddde9d27c7f0f1b560b8c00dfafa81d21119a071ad52a832acf0b959774806741b9a11eb150a201aff68de5773b69822427ae8803b8
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz::locator=angular-app%40workspace%3A.":
-  version: 6.31.0
-  resolution: "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz#../../../packages/rum-core/package.tgz::hash=0334b6&locator=angular-app%40workspace%3A."
+  version: 7.0.0-alpha.0
+  resolution: "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz#../../../packages/rum-core/package.tgz::hash=11f4e7&locator=angular-app%40workspace%3A."
   dependencies:
-    "@datadog/browser-core": "npm:6.31.0"
-  checksum: 10c0/3ece55e0ca0bc0691fd91c557433c806e2871b56e3a0008c01b6e369809c9130fa384952b22ee6464d49d182d3e4e5bd66f51b6b629d4024d6e482f7e64d13c8
+    "@datadog/browser-core": "npm:7.0.0-alpha.0"
+  checksum: 10c0/87ae47768a6bd82f856a7faedbf1834e57b5636d2e7df4a6a23becd90d3bcc34b2333a996a097d58ee27542ed968f40be4911554c6a902ba2ff7f33e0a5494fb
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum@file:../../../packages/rum/package.tgz::locator=angular-app%40workspace%3A.":
-  version: 6.31.0
-  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=033900&locator=angular-app%40workspace%3A."
+  version: 7.0.0-alpha.0
+  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=75375c&locator=angular-app%40workspace%3A."
   dependencies:
-    "@datadog/browser-core": "npm:6.31.0"
-    "@datadog/browser-rum-core": "npm:6.31.0"
+    "@datadog/browser-core": "npm:7.0.0-alpha.0"
+    "@datadog/browser-rum-core": "npm:7.0.0-alpha.0"
   peerDependencies:
-    "@datadog/browser-logs": 6.31.0
+    "@datadog/browser-logs": 7.0.0-alpha.0
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
-  checksum: 10c0/ac0080efb7f664a5664162a64e618b885d2c4d2d06426db0ad076c855dd02cbc84f1ba6fc30913db8db74d50a511d0a0a62ba1ad7bb9e8de5c3ef0c03e3f9c56
+  checksum: 10c0/e33c64cef98708477e899f4d57bab6ffedc479a7c65d254976bf6189871a4907e43a72ce98cac288ff3b2d9ce59447875b4d32b57e88d3d869ae2dde1e71f78e
   languageName: node
   linkType: hard
 
