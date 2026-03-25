@@ -60,9 +60,8 @@ test.describe('angular plugin', () => {
       await flushEvents()
 
       const viewEvents = intakeRegistry.rumViewEvents
-      const viewNames = viewEvents.map((event) => event.view.name)
       // Only the initial view should exist — the query param change should not create a new one
-      expect(viewNames.filter((name) => name === '/')).toHaveLength(1)
+      expect(viewEvents).toHaveLength(1)
     })
 
   createTest('should report errors caught by provideDatadogErrorHandler')
