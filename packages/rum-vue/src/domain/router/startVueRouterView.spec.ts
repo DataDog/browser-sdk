@@ -30,18 +30,45 @@ describe('startVueRouterView', () => {
 })
 
 describe('computeViewName', () => {
+  it('returns an empty string if there is no route match', () => {
+    expect(computeViewName([] as unknown as RouteLocationMatched[], '/')).toBe('')
+  })
+
+  it('ignores routes without a path', () => {
+    expect(
+      computeViewName(
+        [{ path: '/foo' }, { path: '' }, { path: '/foo/:id' }] as unknown as RouteLocationMatched[],
+        '/foo/1'
+      )
+    ).toBe('/foo/:id')
+  })
+
   // prettier-ignore
+  // Vue Router normalizes all matched paths to absolute paths, so unlike React Router there are
+  // no relative segments. The test structure mirrors the React Router spec for consistency.
   const cases: Array<[string, Array<{ path: string }>, string, string]> = [
-    // description,                       matched paths,                                                    path,                expected
-    ['empty matched array',               [],                                                               '/',                 ''],
-    ['simple route',                      [{ path: '/users' }],                                            '/users',            '/users'],
-    ['nested routes',                     [{ path: '/users' }, { path: '/users/:id' }],                   '/users/1',          '/users/:id'],
-    ['ignores records without a path',    [{ path: '/users' }, { path: '' }, { path: '/users/:id' }],     '/users/1',          '/users/:id'],
-    // Vue Router 4 catch-all routes use /:pathMatch(.*)*  (no bare * wildcard like React Router).
-    // We substitute the catch-all pattern with the actual path, aligning with how React Router
-    // replaces splats — it shows which specific path was visited instead of the raw regex.
-    ['catch-all route',                   [{ path: '/:pathMatch(.*)*' }],                                 '/unknown/page',     '/unknown/page'],
-    ['nested catch-all route',            [{ path: '/app' }, { path: '/app/:pathMatch(.*)*' }],            '/app/not-found',    '/app/not-found'],
+    // description,                         matched paths,                                                    path,                expected
+
+    // Simple paths
+    ['single static segment',               [{ path: '/foo' }],                                              '/foo',              '/foo'],
+    ['nested static segments',              [{ path: '/foo' }, { path: '/foo/bar' }],                        '/foo/bar',          '/foo/bar'],
+    ['nested with param',                   [{ path: '/foo' }, { path: '/foo/bar' }, { path: '/foo/bar/:p' }], '/foo/bar/1',      '/foo/bar/:p'],
+    ['root param',                          [{ path: '/:p' }],                                               '/foo',              '/:p'],
+    ['param in single segment',             [{ path: '/foo/:p' }],                                           '/foo/bar',          '/foo/:p'],
+    ['nested param',                        [{ path: '/foo' }, { path: '/foo/:p' }],                         '/foo/bar',          '/foo/:p'],
+    ['multiple params',                     [{ path: '/:a/:b' }],                                            '/foo/bar',          '/:a/:b'],
+    ['nested multiple params',              [{ path: '/:a' }, { path: '/:a/:b' }],                           '/foo/bar',          '/:a/:b'],
+    ['param with prefix',                   [{ path: '/foo-:a' }],                                           '/foo-1',            '/foo-:a'],
+    ['trailing slashes',                    [{ path: '/foo/' }, { path: '/foo/bar/' }, { path: '/foo/bar/:id/' }], '/foo/bar/1/',  '/foo/bar/:id/'],
+    ['absolute nested override',            [{ path: '/foo' }, { path: '/foo/bar' }, { path: '/foo/bar/:id' }], '/foo/bar/1',     '/foo/bar/:id'],
+
+    // Catch-all routes (Vue Router uses /:pathMatch(.*)* instead of bare * like React Router)
+    ['catch-all at root',                   [{ path: '/:pathMatch(.*)*' }],                                  '/foo/1',            '/foo/1'],
+    ['catch-all at root (index)',           [{ path: '/:pathMatch(.*)*' }],                                  '/',                 '/'],
+    ['nested catch-all',                    [{ path: '/foo' }, { path: '/foo/:pathMatch(.*)*' }],             '/foo/1',            '/foo/1'],
+    ['deeply nested catch-all',             [{ path: '/foo' }, { path: '/foo/bar' }, { path: '/foo/bar/:pathMatch(.*)*' }], '/foo/bar/baz', '/foo/bar/baz'],
+    ['static sibling before catch-all',     [{ path: '/foo' }, { path: '/foo/:pathMatch(.*)*' }],             '/foo/bar',          '/foo/bar'],
+    ['param before catch-all',              [{ path: '/foo/:p' }, { path: '/foo/:p/:pathMatch(.*)*' }],       '/foo/bar/baz',      '/foo/bar/baz'],
   ]
 
   cases.forEach(([description, matched, path, expected]) => {

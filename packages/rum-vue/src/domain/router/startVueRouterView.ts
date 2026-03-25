@@ -43,15 +43,18 @@ export function computeViewName(matched: RouteLocationMatched[], path: string): 
 
 /**
  * Vue Router catch-all routes use `/:pathMatch(.*)*` instead of bare `*` like React Router.
- * Keeping the raw pattern as the view name isn't helpful — it hides information about which
+ * Keeping the raw pattern as the view name isn't helpful, it hides information about which
  * path was actually visited. This function replaces the catch-all segment with the actual
  * URL path, aligning with how the React integration substitutes splats.
+ *
+ * We match the full `/:pathMatch(.*)*` pattern rather than just `:pathMatch(` to avoid
+ * false positives on custom regex params (e.g. `/:pathMatch([a-z]+)`).
  *
  * @example
  * substituteCatchAll('/:pathMatch(.*)*', '/unknown/page') // => '/unknown/page'
  */
 function substituteCatchAll(viewName: string, path: string): string {
-  if (!viewName.includes(':pathMatch(')) {
+  if (!viewName.includes(':pathMatch(.*)*')) {
     return viewName
   }
 
