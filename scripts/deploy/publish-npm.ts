@@ -13,7 +13,7 @@ runMain(() => {
   })
 
   printLog(dryRun ? 'Publishing (dry run)' : 'Publishing')
-  command`yarn workspaces foreach --verbose --all --topological --no-private npm publish --access public ${dryRun ? ['--dry-run'] : []}`
+  command`yarn workspaces foreach --verbose --all --topological --no-private npm publish --tolerate-republish --access public ${dryRun ? ['--dry-run'] : []}`
     .withEnvironment({
       YARN_NPM_AUTH_TOKEN: dryRun ? '' : getNpmToken(),
       BUILD_MODE: 'release',
