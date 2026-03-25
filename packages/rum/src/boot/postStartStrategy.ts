@@ -12,6 +12,7 @@ import { asyncRunOnReadyState, monitorError, Observable } from '@datadog/browser
 import { getSessionReplayLink } from '../domain/getSessionReplayLink'
 import { startRecorderInitTelemetry } from '../domain/startRecorderInitTelemetry'
 import type { startRecording } from './startRecording'
+import { lazyLoadRecorder } from './lazyLoadRecorder'
 
 export type StartRecording = typeof startRecording
 
@@ -48,7 +49,6 @@ export function createPostStartStrategy(
   lifeCycle: LifeCycle,
   sessionManager: RumSessionManager,
   viewHistory: ViewHistory,
-  loadRecorder: () => Promise<StartRecording | undefined>,
   getOrCreateDeflateEncoder: () => DeflateEncoder | undefined,
   telemetry: Telemetry
 ): Strategy {
@@ -75,7 +75,7 @@ export function createPostStartStrategy(
     observable.notify({ type: 'start', forced })
 
     const [startRecordingImpl] = await Promise.all([
-      notifyWhenSettled(observable, { type: 'recorder-settled' }, loadRecorder()),
+      notifyWhenSettled(observable, { type: 'recorder-settled' }, lazyLoadRecorder()),
       notifyWhenSettled(observable, { type: 'document-ready' }, asyncRunOnReadyState(configuration, 'interactive')),
     ])
 
