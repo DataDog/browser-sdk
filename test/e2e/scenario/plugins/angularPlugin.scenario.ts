@@ -1,23 +1,26 @@
 import { test, expect } from '@playwright/test'
-import { createTest } from '../lib/framework'
+import { createTest } from '../../lib/framework'
+import { runBasePluginTests } from './basePluginTests'
+
+const angularApp = 'angular-app'
+
+runBasePluginTests([
+  {
+    name: 'angular',
+    loadApp: (b) => b.withApp(angularApp),
+    viewPrefix: '',
+    homeViewName: '/',
+    homeUrlPattern: '**/',
+    userRouteName: '/user/:id',
+    guidesRouteName: '/guides/:slug',
+    clientErrorMessage: 'Error triggered by button click',
+  },
+])
 
 test.describe('angular plugin', () => {
-  createTest('should define a view name based on the route')
-    .withRum()
-    .withApp('angular-app')
-    .run(async ({ page, flushEvents, intakeRegistry }) => {
-      await page.click('text=Go to Parameterized Route')
-      await flushEvents()
-      const viewEvents = intakeRegistry.rumViewEvents
-      expect(viewEvents.length).toBeGreaterThan(0)
-      const lastView = viewEvents[viewEvents.length - 1]
-      expect(lastView.view.name).toBe('/parameterized/:id')
-      expect(lastView.view.url).toContain('/parameterized/42')
-    })
-
   createTest('should define a view name for nested routes')
     .withRum()
-    .withApp('angular-app')
+    .withApp(angularApp)
     .run(async ({ page, flushEvents, intakeRegistry }) => {
       await page.click('text=Go to Nested Route')
       await flushEvents()
@@ -30,7 +33,7 @@ test.describe('angular plugin', () => {
 
   createTest('should define a view name with the actual path for wildcard routes')
     .withRum()
-    .withApp('angular-app')
+    .withApp(angularApp)
     .run(async ({ page, flushEvents, intakeRegistry }) => {
       await page.click('text=Go to Wildcard Route')
       await flushEvents()
@@ -41,20 +44,9 @@ test.describe('angular plugin', () => {
       expect(lastView.view.url).toContain('/unknown/page')
     })
 
-  createTest('should define a view name for the initial route')
-    .withRum()
-    .withApp('angular-app')
-    .run(async ({ flushEvents, intakeRegistry }) => {
-      await flushEvents()
-      const viewEvents = intakeRegistry.rumViewEvents
-      expect(viewEvents.length).toBeGreaterThan(0)
-      const firstView = viewEvents[0]
-      expect(firstView.view.name).toBe('/')
-    })
-
   createTest('should report errors caught by provideDatadogErrorHandler')
     .withRum()
-    .withApp('angular-app')
+    .withApp(angularApp)
     .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
       await page.click('#throw-error')
       await flushEvents()
@@ -73,7 +65,7 @@ test.describe('angular plugin', () => {
 
   createTest('should merge dd_context from the error object into the event context')
     .withRum()
-    .withApp('angular-app')
+    .withApp(angularApp)
     .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
       await page.click('#throw-error-with-context')
       await flushEvents()

@@ -296,14 +296,14 @@ __metadata:
 
 "@datadog/browser-core@file:../../../packages/core/package.tgz::locator=angular-app%40workspace%3A.":
   version: 6.31.0
-  resolution: "@datadog/browser-core@file:../../../packages/core/package.tgz#../../../packages/core/package.tgz::hash=6201e3&locator=angular-app%40workspace%3A."
-  checksum: 10c0/a019713374971a2dd35c63318cecd76e38d08348a24ca5b88abb8fca8501d17589e187bd4e68c7358f3523dd3fd08d110b307647854a620b0f3371f2c7db14ca
+  resolution: "@datadog/browser-core@file:../../../packages/core/package.tgz#../../../packages/core/package.tgz::hash=4a435a&locator=angular-app%40workspace%3A."
+  checksum: 10c0/da2b754609fff173c27f662f97dedee9c20c5ad084f8fa1617f3cd7d7812ca3d9fe50c07bbe60f37b21350dba0a877e2ca35e69c3bf652ad3f725faa00862c52
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum-angular@file:../../../packages/rum-angular/package.tgz::locator=angular-app%40workspace%3A.":
   version: 0.0.0
-  resolution: "@datadog/browser-rum-angular@file:../../../packages/rum-angular/package.tgz#../../../packages/rum-angular/package.tgz::hash=004229&locator=angular-app%40workspace%3A."
+  resolution: "@datadog/browser-rum-angular@file:../../../packages/rum-angular/package.tgz#../../../packages/rum-angular/package.tgz::hash=37c8b8&locator=angular-app%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.31.0"
     "@datadog/browser-rum-core": "npm:6.31.0"
@@ -311,22 +311,22 @@ __metadata:
     "@angular/core": ">=15 <=21"
     "@angular/router": ">=15 <=21"
     rxjs: ">=7"
-  checksum: 10c0/ec9054d51805f45cb4618bcbc6fa00049ba5d1597048aa3c354aea14a15a06275ee0ba06b3de7d77fbd0d2f009f74159a88e10f2f6b9e629eeed0a5ca30a27ae
+  checksum: 10c0/9d630b9f835b8364e24c84c260d9397209f449f10dcbf735452d1b547c1a79b5267ac7aac2a4713cfb68157eb68cd4e2c5bc47066b0c0360bf2f165b81e7d315
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz::locator=angular-app%40workspace%3A.":
   version: 6.31.0
-  resolution: "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz#../../../packages/rum-core/package.tgz::hash=0334b6&locator=angular-app%40workspace%3A."
+  resolution: "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz#../../../packages/rum-core/package.tgz::hash=60b25d&locator=angular-app%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.31.0"
-  checksum: 10c0/3ece55e0ca0bc0691fd91c557433c806e2871b56e3a0008c01b6e369809c9130fa384952b22ee6464d49d182d3e4e5bd66f51b6b629d4024d6e482f7e64d13c8
+  checksum: 10c0/a8870d426d7b176a6c7c1a2312213d2b1c6d80b7325799f40cb5e1184b6c65eb2a18526813a4f4756e0d93b806ea854590ede5b83a45990bd2246d395cc551d3
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum@file:../../../packages/rum/package.tgz::locator=angular-app%40workspace%3A.":
   version: 6.31.0
-  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=033900&locator=angular-app%40workspace%3A."
+  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=6f7651&locator=angular-app%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.31.0"
     "@datadog/browser-rum-core": "npm:6.31.0"
@@ -335,7 +335,7 @@ __metadata:
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
-  checksum: 10c0/ac0080efb7f664a5664162a64e618b885d2c4d2d06426db0ad076c855dd02cbc84f1ba6fc30913db8db74d50a511d0a0a62ba1ad7bb9e8de5c3ef0c03e3f9c56
+  checksum: 10c0/b135923a330dc2f836a2889d407e3a97fbb4d39460d283ea8ab49e82238f2f4f04a42fdececbbc8ea7140fd95d443a8c765971eea649ce098899dd848e0627ff
   languageName: node
   linkType: hard
 
