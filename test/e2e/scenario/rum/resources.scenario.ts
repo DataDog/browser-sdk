@@ -389,10 +389,18 @@ test.describe('resource headers with trackResourceHeaders', () => {
     trackResourceHeaders: true,
   }
 
+  function okUrl(responseHeaders: Record<string, string>): string {
+    const params = new URLSearchParams(
+      Object.entries(responseHeaders).map(([name, value]) => [`response-headers[${name}]`, value])
+    )
+    return `/ok?${params}`
+  }
+
   createTest('collect default response headers for fetch when trackResourceHeaders is true')
     .withRum(TRACK_RESOURCE_HEADERS_CONFIG)
     .run(async ({ intakeRegistry, flushEvents, page }) => {
-      await page.evaluate(() => fetch('/ok-with-resource-headers'))
+      const url = okUrl({ 'Cache-Control': 'no-cache' })
+      await page.evaluate((u) => fetch(u), url)
 
       await flushEvents()
 
@@ -407,7 +415,7 @@ test.describe('resource headers with trackResourceHeaders', () => {
   createTest('collect default response headers for XHR when trackResourceHeaders is true')
     .withRum(TRACK_RESOURCE_HEADERS_CONFIG)
     .run(async ({ intakeRegistry, flushEvents, sendXhr }) => {
-      await sendXhr('/ok-with-resource-headers')
+      await sendXhr(okUrl({ 'Cache-Control': 'no-cache' }))
 
       await flushEvents()
 
@@ -423,7 +431,7 @@ test.describe('resource headers with trackResourceHeaders', () => {
     .withRum(TRACK_RESOURCE_HEADERS_CONFIG)
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() =>
-        fetch('/ok-with-resource-headers', {
+        fetch('/ok', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ key: 'value' }),
@@ -445,7 +453,8 @@ test.describe('resource headers with trackResourceHeaders', () => {
       trackResourceHeaders: ['x-custom-response'],
     })
     .run(async ({ intakeRegistry, flushEvents, page }) => {
-      await page.evaluate(() => fetch('/ok-with-resource-headers'))
+      const url = okUrl({ 'Cache-Control': 'no-cache', 'x-custom-response': 'custom-value' })
+      await page.evaluate((u) => fetch(u), url)
 
       await flushEvents()
 
@@ -464,7 +473,7 @@ test.describe('resource headers with trackResourceHeaders', () => {
       trackResourceHeaders: ['x-custom-response'],
     })
     .run(async ({ intakeRegistry, flushEvents, sendXhr }) => {
-      await sendXhr('/ok-with-resource-headers')
+      await sendXhr(okUrl({ 'Cache-Control': 'no-cache', 'x-custom-response': 'custom-value' }))
 
       await flushEvents()
 
@@ -484,7 +493,7 @@ test.describe('resource headers with trackResourceHeaders', () => {
     })
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() =>
-        fetch('/ok-with-resource-headers', {
+        fetch('/ok', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'x-custom-request': 'request-value' },
           body: JSON.stringify({ key: 'value' }),
@@ -504,8 +513,9 @@ test.describe('resource headers with trackResourceHeaders', () => {
   createTest('do not collect resource headers when trackResourceHeaders is not set')
     .withRum({ enableExperimentalFeatures: ['track_resource_headers'] })
     .run(async ({ intakeRegistry, flushEvents, sendXhr, page }) => {
-      await sendXhr('/ok-with-resource-headers')
-      await page.evaluate(() => fetch('/ok-with-resource-headers'))
+      const url = okUrl({ 'Cache-Control': 'no-cache' })
+      await sendXhr(url)
+      await page.evaluate((u) => fetch(u), url)
 
       await flushEvents()
 
