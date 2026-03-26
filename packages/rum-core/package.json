@@ -5,6 +5,13 @@
   "main": "cjs/index.js",
   "module": "esm/index.js",
   "types": "cjs/index.d.ts",
+  "files": [
+    "cjs",
+    "esm",
+    "src",
+    "!src/**/*.spec.ts",
+    "!src/**/*.specHelper.ts"
+  ],
   "scripts": {
     "build": "node ../../scripts/build/build-package.ts --modules",
     "prepack": "yarn build"

@@ -126,7 +126,10 @@ export function command(...templateArguments: [TemplateStringsArray, ...any[]]):
  *
  * [1]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#tagged_templates
  */
-function parseCommandTemplateArguments(templateStrings: TemplateStringsArray, ...templateVariables: any[]): string[] {
+export function parseCommandTemplateArguments(
+  templateStrings: TemplateStringsArray,
+  ...templateVariables: any[]
+): string[] {
   const parsedArguments: string[] = []
   for (let i = 0; i < templateStrings.length; i += 1) {
     if (i > 0) {
