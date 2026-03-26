@@ -142,6 +142,10 @@ export type RumActionEvent = CommonProperties &
            */
           readonly selector?: string
           /**
+           * Selector data based on the click event composed path
+           */
+          readonly composed_path_selector?: string
+          /**
            * Width of the target element (in pixels)
            */
           readonly width?: number
@@ -497,6 +501,16 @@ export type RumErrorEvent = CommonProperties &
      * Feature flags properties
      */
     readonly feature_flags?: {
+      [k: string]: unknown
+    }
+    /**
+     * Internal properties
+     */
+    readonly _dd?: {
+      /**
+       * Profiling context
+       */
+      profiling?: ProfilingInternalContextSchema
       [k: string]: unknown
     }
     [k: string]: unknown
@@ -1115,6 +1129,16 @@ export type RumVitalEventCommonProperties = CommonProperties &
       readonly description?: string
       [k: string]: unknown
     }
+    /**
+     * Internal properties
+     */
+    readonly _dd?: {
+      /**
+       * Profiling context
+       */
+      profiling?: ProfilingInternalContextSchema
+      [k: string]: unknown
+    }
     [k: string]: unknown
   }
 /**
@@ -1276,6 +1300,16 @@ export interface CommonProperties {
      * Name of the account
      */
     readonly name?: string
+    [k: string]: unknown
+  }
+  /**
+   * Tab properties
+   */
+  readonly tab?: {
+    /**
+     * UUID of the browser tab
+     */
+    readonly id: string
     [k: string]: unknown
   }
   /**
@@ -1869,7 +1903,7 @@ export interface ViewProperties {
       /**
        * Number of frustrations that occurred on the view
        */
-      readonly count?: number
+      readonly count: number
       [k: string]: unknown
     }
     /**
@@ -2107,7 +2141,7 @@ export interface ViewPerformanceData {
       /**
        * Event handler execution time
        */
-      readonly processing_time: number
+      readonly processing_duration: number
       /**
        * Rendering time happening after processing
        */
