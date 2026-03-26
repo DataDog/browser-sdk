@@ -382,13 +382,11 @@ function filterHeaders(headers: Headers, matchers: MatchOption[]): NetworkHeader
   let hasReachedMaxHeaderCount = false
 
   headers.forEach((value, name) => {
-    if (headerCount >= MAX_HEADER_COUNT) {
+    headerCount++;
+
+    if (headerCount > MAX_HEADER_COUNT) {
       if (hasReachedMaxHeaderCount === false) {
         display.warn(`Maximum number of headers (${MAX_HEADER_COUNT}) has been reached. Further headers are dropped.`)
-        // monitor-until: 2026-05-23
-        addTelemetryDebug('Maximum number of resource headers reached', {
-          limit: MAX_HEADER_COUNT,
-        })
         hasReachedMaxHeaderCount = true
       }
 
@@ -416,9 +414,12 @@ function filterHeaders(headers: Headers, matchers: MatchOption[]): NetworkHeader
       })
     }
     result[lowerName] = safeTruncate(value, MAX_HEADER_VALUE_LENGTH)
-    headerCount++
   })
 
+  // monitor-until: 2026-05-23
+  addTelemetryDebug('Maximum number of resource headers reached', {
+    headerCount,
+  })
   return headerCount > 0 ? result : undefined
 }
 
