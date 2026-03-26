@@ -38,8 +38,9 @@ export function initLocalStorageStrategy(configuration: Configuration): SessionS
       const currentState = toSessionState(localStorage.getItem(SESSION_STORE_KEY))
       const newState = fn(currentState)
       localStorage.setItem(SESSION_STORE_KEY, toSessionString(newState))
+      const result = Promise.resolve()
       sessionObservable.notify(newState)
-      return Promise.resolve()
+      return result
     },
     sessionObservable,
   }

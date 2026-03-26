@@ -19,8 +19,9 @@ export function createFakeSessionStoreStrategy({
       .createSpy('setSessionState')
       .and.callFake((fn: (state: SessionState) => SessionState): Promise<void> => {
         session = fn({ ...session })
+        const result = Promise.resolve()
         sessionObservable.notify({ ...session })
-        return Promise.resolve()
+        return result
       }),
     sessionObservable,
 
