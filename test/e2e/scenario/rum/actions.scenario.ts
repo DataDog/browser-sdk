@@ -123,6 +123,10 @@ test.describe('action collection', () => {
       </script>
     `)
     .run(async ({ intakeRegistry, flushEvents, page }) => {
+      test.skip(
+        test.info().project.name === 'android',
+        'On Android emulator, the XHR completes after the SDK closes the action due to higher latency'
+      )
       const button = page.locator('button')
       await button.click()
       await waitForServersIdle()

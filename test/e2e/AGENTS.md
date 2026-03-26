@@ -30,6 +30,28 @@ yarn build:apps --app vanilla
 yarn build:apps --app vanilla --app react-heavy-spa
 ```
 
+### Android E2E Tests
+
+```bash
+# Run E2E tests on an Android emulator
+yarn test:e2e:android
+
+# Use a specific AVD (defaults to "test_device")
+ANDROID_AVD="My_Device" yarn test:e2e:android
+```
+
+**Prerequisites:**
+
+- Android Studio installed
+- `emulator` and `adb` on `$PATH` — add this to your `~/.zshrc`:
+  ```bash
+  export ANDROID_HOME="$HOME/Library/Android/sdk"
+  export PATH="$PATH:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools"
+  ```
+- An AVD created (CI uses `test_device`, locally you can override with `ANDROID_AVD`)
+
+The global setup starts the emulator, sets up `adb reverse` port forwarding, and installs a recent Chromium. When running locally, the dev server and Next.js app are auto-started by the Playwright config (in CI they are started separately). Tests run sequentially on a single worker using the `bundle` setup only.
+
 ## Test Apps
 
 Located in `test/apps/`:

@@ -1,6 +1,10 @@
 import type { Page } from '@playwright/test'
+import { isAndroid } from './environment'
 import { getTestServers, waitForServersIdle } from './httpServers'
 import { waitForRequests } from './waitForRequests'
+
+// The Android emulator has higher latency over ADB, so we need longer delays
+const FLUSH_DURATION = isAndroid ? 500 : 200
 
 export async function flushEvents(page: Page) {
   await waitForRequests(page)
@@ -21,6 +25,6 @@ export async function flushEvents(page: Page) {
   // The issue mainly occurs with local e2e tests (not browserstack), because the network latency is
   // very low (same machine), so the request resolves very quickly. In real life conditions, this
   // issue is mitigated, because requests will likely take a few milliseconds to reach the server.
-  await page.goto(`${servers.base.origin}/ok?duration=200`)
+  await page.goto(`${servers.base.origin}/ok?duration=${FLUSH_DURATION}`)
   await waitForServersIdle()
 }
