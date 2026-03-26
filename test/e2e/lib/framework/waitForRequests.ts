@@ -3,7 +3,7 @@ import { isAndroid } from './environment'
 import { waitForServersIdle } from './httpServers'
 
 // The Android emulator has higher latency over ADB, so we need longer delays
-const WAIT_DELAY = isAndroid ? 500 : 200
+const WAIT_DELAY = isAndroid ? 900 : 200
 
 /**
  * Wait for browser requests to be sent and finished.
