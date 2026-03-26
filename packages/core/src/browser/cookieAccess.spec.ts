@@ -1,8 +1,8 @@
-import { mockClock, registerCleanupTask } from '../../test'
+import { mockClock, registerCleanupTask, replaceMockable } from '../../test'
 import type { Configuration } from '../domain/configuration'
 import { deleteCookie, getCookie, setCookie } from './cookie'
 import type { CookieStoreWindow } from './browser.types'
-import { createCookieAccess, WATCH_COOKIE_INTERVAL_DELAY } from './cookieAccess'
+import { createCookieAccess, getCookieStore, WATCH_COOKIE_INTERVAL_DELAY } from './cookieAccess'
 
 const COOKIE_NAME = 'test_cookie'
 const COOKIE_OPTIONS = { secure: false, crossSite: false, partitioned: false }
@@ -250,25 +250,9 @@ describe('cookieAccess', () => {
 })
 
 function disableCookieStore() {
-  const original = Object.getOwnPropertyDescriptor(window, 'cookieStore')
-  Object.defineProperty(window, 'cookieStore', { get: () => undefined, configurable: true })
-  registerCleanupTask(() => {
-    if (original) {
-      Object.defineProperty(window, 'cookieStore', original)
-    } else {
-      delete (window as CookieStoreWindow).cookieStore
-    }
-  })
+  replaceMockable(getCookieStore, () => undefined)
 }
 
 function enableMockCookieStore(mockStore: CookieStoreWindow['cookieStore']) {
-  const original = Object.getOwnPropertyDescriptor(window, 'cookieStore')
-  Object.defineProperty(window, 'cookieStore', { get: () => mockStore, configurable: true })
-  registerCleanupTask(() => {
-    if (original) {
-      Object.defineProperty(window, 'cookieStore', original)
-    } else {
-      delete (window as CookieStoreWindow).cookieStore
-    }
-  })
+  replaceMockable(getCookieStore, () => mockStore)
 }

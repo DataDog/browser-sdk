@@ -1,6 +1,7 @@
 import { setInterval, clearInterval } from '../tools/timer'
 import { dateNow, ONE_SECOND } from '../tools/utils/timeUtils'
 import { Observable } from '../tools/observable'
+import { mockable } from '../tools/mockable'
 import type { Configuration } from '../domain/configuration'
 import { addEventListener, DOM_EVENT } from './addEventListener'
 import type { CookieOptions } from './cookie'
@@ -23,7 +24,7 @@ export function createCookieAccess(
   configuration: Configuration,
   cookieOptions: CookieOptions
 ): CookieAccess {
-  const cookieStore = (window as CookieStoreWindow).cookieStore
+  const cookieStore = mockable(getCookieStore)()
   if (cookieStore) {
     return createCookieStoreAccess(cookieName, configuration, cookieOptions, cookieStore)
   }
@@ -107,3 +108,5 @@ function createDocumentCookieAccess(cookieName: string, cookieOptions: CookieOpt
     observable,
   }
 }
+
+export const getCookieStore = () => (window as CookieStoreWindow).cookieStore
