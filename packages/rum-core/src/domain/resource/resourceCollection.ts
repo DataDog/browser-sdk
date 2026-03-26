@@ -385,7 +385,7 @@ function filterHeaders(headers: Headers, matchers: MatchOption[]): NetworkHeader
     headerCount++;
 
     if (headerCount > MAX_HEADER_COUNT) {
-      if (hasReachedMaxHeaderCount === false) {
+      if (!hasReachedMaxHeaderCount) {
         display.warn(`Maximum number of headers (${MAX_HEADER_COUNT}) has been reached. Further headers are dropped.`)
         hasReachedMaxHeaderCount = true
       }
