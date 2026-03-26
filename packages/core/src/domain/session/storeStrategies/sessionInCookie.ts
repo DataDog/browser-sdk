@@ -25,8 +25,7 @@ export function selectCookieStrategy(initConfiguration: InitConfiguration): Sess
 }
 
 // Promise chain serializes calls when Web Locks are unavailable
-// eslint-disable-next-line local-rules/disallow-side-effects
-let pendingChain = Promise.resolve()
+let pendingChain: Promise<void> | undefined
 
 export function initCookieStrategy(cookieOptions: CookieOptions, configuration: Configuration): SessionStoreStrategy {
   const sessionObservable = new Observable<SessionState>()
@@ -61,7 +60,7 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
       if (typeof navigator !== 'undefined' && navigator.locks) {
         await navigator.locks.request(SESSION_STORE_KEY, () => applyAndWrite(fn))
       } else {
-        pendingChain = pendingChain.then(() => applyAndWrite(fn))
+        pendingChain = (pendingChain ?? Promise.resolve()).then(() => applyAndWrite(fn))
         await pendingChain
       }
     },
