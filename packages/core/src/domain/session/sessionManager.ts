@@ -16,10 +16,11 @@ import { monitorError } from '../../tools/monitor'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import type { SessionState } from './sessionState'
 import {
-  expandSessionState,
+  expandOnly,
+  expandOrRenew,
   getExpiredSessionState,
+  initializeSession,
   isSessionInExpiredState,
-  isSessionInNotStartedState,
 } from './sessionState'
 import { getSessionStoreStrategy } from './sessionStore'
 
@@ -42,45 +43,6 @@ export interface SessionContext {
 export const VISIBILITY_CHECK_DELAY = ONE_MINUTE
 const SESSION_CONTEXT_TIMEOUT_DELAY = SESSION_TIME_OUT_DELAY
 let stopCallbacks: Array<() => void> = []
-
-// Session state helper functions
-
-function initializeSession(state: SessionState, configuration: Configuration): SessionState {
-  if (isSessionInNotStartedState(state)) {
-    if (configuration.trackAnonymousUser) {
-      state.anonymousId = generateUUID()
-    }
-    return getExpiredSessionState(state, configuration)
-  }
-  return state
-}
-
-function expandOrRenew(state: SessionState, configuration: Configuration): SessionState {
-  if (isSessionInNotStartedState(state)) {
-    return state
-  }
-
-  if (!state.id) {
-    state.id = generateUUID()
-    state.created = String(dateNow())
-  }
-  if (configuration.trackAnonymousUser && !state.anonymousId) {
-    state.anonymousId = generateUUID()
-  }
-
-  delete state.isExpired
-  expandSessionState(state)
-
-  return state
-}
-
-function expandOnly(state: SessionState): SessionState {
-  if (isSessionInExpiredState(state) || isSessionInNotStartedState(state) || !state.id) {
-    return state
-  }
-  expandSessionState(state)
-  return state
-}
 
 export function startSessionManager(
   configuration: Configuration,

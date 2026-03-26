@@ -1,6 +1,7 @@
 import { isEmptyObject } from '../../tools/utils/objectUtils'
 import { objectEntries } from '../../tools/utils/polyfills'
 import { dateNow } from '../../tools/utils/timeUtils'
+import { generateUUID } from '../../tools/utils/stringUtils'
 import type { Configuration } from '../configuration'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { isValidSessionString, SESSION_ENTRY_REGEXP, SESSION_ENTRY_SEPARATOR } from './sessionStateValidation'
@@ -80,4 +81,41 @@ export function toSessionState(sessionString: string | undefined | null) {
     })
   }
   return session
+}
+
+export function initializeSession(state: SessionState, configuration: Configuration): SessionState {
+  if (isSessionInNotStartedState(state)) {
+    if (configuration.trackAnonymousUser) {
+      state.anonymousId = generateUUID()
+    }
+    return getExpiredSessionState(state, configuration)
+  }
+  return state
+}
+
+export function expandOrRenew(state: SessionState, configuration: Configuration): SessionState {
+  if (isSessionInNotStartedState(state)) {
+    return state
+  }
+
+  if (!state.id) {
+    state.id = generateUUID()
+    state.created = String(dateNow())
+  }
+  if (configuration.trackAnonymousUser && !state.anonymousId) {
+    state.anonymousId = generateUUID()
+  }
+
+  delete state.isExpired
+  expandSessionState(state)
+
+  return state
+}
+
+export function expandOnly(state: SessionState): SessionState {
+  if (isSessionInExpiredState(state) || isSessionInNotStartedState(state) || !state.id) {
+    return state
+  }
+  expandSessionState(state)
+  return state
 }
