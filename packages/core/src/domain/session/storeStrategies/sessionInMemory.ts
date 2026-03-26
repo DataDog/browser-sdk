@@ -6,11 +6,14 @@ import type { SessionState } from '../sessionState'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './sessionStoreStrategy'
 
 export const MEMORY_SESSION_STORE_KEY = '_DD_SESSION'
-const MEMORY_SESSION_OBSERVABLE_KEY = '_DD_SESSION_OBSERVABLE'
+
+interface MemorySession {
+  state?: SessionState
+  onChange?: (state: SessionState) => void
+}
 
 interface GlobalObjectWithSession {
-  [MEMORY_SESSION_STORE_KEY]?: SessionState
-  [MEMORY_SESSION_OBSERVABLE_KEY]?: Observable<SessionState>
+  [MEMORY_SESSION_STORE_KEY]?: MemorySession
 }
 
 export function selectMemorySessionStoreStrategy(): SessionStoreStrategyType {
@@ -21,18 +24,28 @@ export function initMemorySessionStoreStrategy(): SessionStoreStrategy {
   const globalObject = getGlobalObject<GlobalObjectWithSession>()
 
   // Share the observable across SDK instances (RUM + Logs)
-  if (!globalObject[MEMORY_SESSION_OBSERVABLE_KEY]) {
-    globalObject[MEMORY_SESSION_OBSERVABLE_KEY] = new Observable<SessionState>()
+  if (!globalObject[MEMORY_SESSION_STORE_KEY]) {
+    globalObject[MEMORY_SESSION_STORE_KEY] = {}
   }
-  const sessionObservable = globalObject[MEMORY_SESSION_OBSERVABLE_KEY]
+  const memorySession = globalObject[MEMORY_SESSION_STORE_KEY]
+
+  const sessionObservable = new Observable<SessionState>()
+
+  // Wire the local observable to the shared onChange callback so that
+  // multiple SDK instances (RUM + Logs) can observe each other's changes.
+  const previousOnChange = memorySession.onChange
+  memorySession.onChange = (state: SessionState) => {
+    previousOnChange?.(state)
+    sessionObservable.notify(state)
+  }
 
   return {
     setSessionState(fn: (sessionState: SessionState) => SessionState): Promise<void> {
-      const currentState = globalObject[MEMORY_SESSION_STORE_KEY] ?? {}
+      const currentState = memorySession.state ?? {}
       const newState = shallowClone(fn(currentState))
-      globalObject[MEMORY_SESSION_STORE_KEY] = newState
+      memorySession.state = newState
       const result = Promise.resolve()
-      sessionObservable.notify(newState)
+      memorySession.onChange?.(newState)
       return result
     },
     sessionObservable,

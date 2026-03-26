@@ -9,11 +9,9 @@ describe('Memory SessionStoreStrategy', () => {
   beforeEach(() => {
     const globalObject = getGlobalObject<Record<string, unknown>>()
     delete globalObject[MEMORY_SESSION_STORE_KEY]
-    delete globalObject._DD_SESSION_OBSERVABLE
     strategy = initMemorySessionStoreStrategy()
     registerCleanupTask(() => {
       delete globalObject[MEMORY_SESSION_STORE_KEY]
-      delete globalObject._DD_SESSION_OBSERVABLE
     })
   })
 
@@ -21,8 +19,8 @@ describe('Memory SessionStoreStrategy', () => {
     it('should read current state, apply fn, and write back', () => {
       void strategy.setSessionState((state) => ({ ...state, id: 'test-id' }))
 
-      const globalObject = getGlobalObject<Record<string, SessionState>>()
-      expect(globalObject[MEMORY_SESSION_STORE_KEY]?.id).toBe('test-id')
+      const globalObject = getGlobalObject<Record<string, { state?: SessionState }>>()
+      expect(globalObject[MEMORY_SESSION_STORE_KEY]?.state?.id).toBe('test-id')
     })
 
     it('should start with empty state when no session exists', () => {
