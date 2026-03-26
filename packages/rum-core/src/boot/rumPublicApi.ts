@@ -1,7 +1,6 @@
 import type {
   Context,
   TimeStamp,
-  RelativeTime,
   DeflateWorker,
   DeflateEncoderStreamId,
   DeflateEncoder,
@@ -226,10 +225,6 @@ export interface RumPublicApi extends PublicApi {
   /**
    * Add a custom timing relative to the start of the current view,
    * stored in `@view.custom_timings.<timing_name>`
-   *
-   * Note: passing a relative time is discouraged since it is actually used as-is but displayed relative to the view start.
-   * We currently don't provide a way to retrieve the view start time, so it can be challenging to provide a timing relative to the view start.
-   * see https://github.com/DataDog/browser-sdk/issues/2552
    *
    * @category Data Collection
    * @param name - Name of the custom timing
@@ -781,8 +776,7 @@ export function makeRumPublicApi(
     },
 
     addTiming: monitor((name, time) => {
-      // TODO: next major decide to drop relative time support or update its behaviour
-      strategy.addTiming(sanitize(name)!, time as RelativeTime | TimeStamp | undefined)
+      strategy.addTiming(sanitize(name)!, time as TimeStamp | undefined)
     }),
 
     setViewLoadingTime: monitor(() => {
