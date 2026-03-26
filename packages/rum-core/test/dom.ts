@@ -18,6 +18,12 @@ export function appendElement(html: string, container: Element | ShadowRoot = do
   const target = tmp.querySelector('[target]') || tmp.children[0]
   const nodes = Array.from(tmp.childNodes)
 
+  // Remove 'target' attributes as it's just used for easily selecting an element, but it might
+  // interfer with test assertions.
+  if (target?.getAttribute('target') === '') {
+    target.removeAttribute('target')
+  }
+
   nodes.forEach((node) => container.appendChild(node))
 
   registerCleanupTask(() => {

@@ -44,6 +44,29 @@ test.describe('angular plugin', () => {
       expect(lastView.view.url).toContain('/unknown/page')
     })
 
+  createTest('should define a view name for the initial route')
+    .withRum()
+    .withApp('angular-app')
+    .run(async ({ flushEvents, intakeRegistry }) => {
+      await flushEvents()
+      const viewEvents = intakeRegistry.rumViewEvents
+      expect(viewEvents.length).toBeGreaterThan(0)
+      const firstView = viewEvents[0]
+      expect(firstView.view.name).toBe('/')
+    })
+
+  createTest('should not create a new view on query param changes')
+    .withRum()
+    .withApp('angular-app')
+    .run(async ({ page, flushEvents, intakeRegistry }) => {
+      await page.click('#query-param-link')
+      await flushEvents()
+
+      const viewEvents = intakeRegistry.rumViewEvents
+      // Only the initial view should exist — the query param change should not create a new one
+      expect(viewEvents).toHaveLength(1)
+    })
+
   createTest('should report errors caught by provideDatadogErrorHandler')
     .withRum()
     .withApp(angularApp)

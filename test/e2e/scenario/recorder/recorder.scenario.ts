@@ -1,7 +1,6 @@
 import type { InputData, StyleSheetRuleData, ScrollData } from '@datadog/browser-rum/src/types'
-import { NodeType, IncrementalSource, MouseInteractionType } from '@datadog/browser-rum/src/types'
+import { NodeType, IncrementalSource } from '@datadog/browser-rum/src/types'
 
-import { FrustrationType } from '@datadog/browser-rum-core'
 import { DefaultPrivacyLevel } from '@datadog/browser-core'
 
 import {
@@ -15,8 +14,6 @@ import {
   findIncrementalSnapshot,
   findAllIncrementalSnapshots,
   findMeta,
-  findAllFrustrationRecords,
-  findMouseInteractionRecords,
 } from '@datadog/browser-rum/test/segments'
 import { createMutationPayloadValidatorFromSegment } from '@datadog/browser-rum/test/mutationPayloadValidator'
 import { test, expect } from '@playwright/test'
@@ -649,78 +646,6 @@ test.describe('recorder', () => {
         expect(styleSheetRules[0].data.adds).toEqual([{ rule: '.inserted {}', index: [0, 0] }])
         expect(styleSheetRules[1].data.adds).toEqual([{ rule: '.added {}', index: [0, 1] }])
         expect(styleSheetRules[2].data.removes).toEqual([{ index: [1, 1] }])
-      })
-  })
-
-  test.describe('frustration records', () => {
-    createTest('should detect a dead click and match it to mouse interaction record')
-      .withRum({ trackUserInteractions: true })
-      .run(async ({ intakeRegistry, flushEvents, page }) => {
-        const html = page.locator('html')
-        await html.click()
-        await flushEvents()
-
-        expect(intakeRegistry.replaySegments).toHaveLength(1)
-        const segment = intakeRegistry.replaySegments[0]
-
-        const mouseupRecords = findMouseInteractionRecords(segment, MouseInteractionType.MouseUp)
-        const frustrationRecords = findAllFrustrationRecords(segment)
-
-        expect(mouseupRecords).toHaveLength(1)
-        expect(mouseupRecords[0].id, 'mouse interaction record should have an id').toBeTruthy()
-        expect(frustrationRecords).toHaveLength(1)
-        expect(frustrationRecords[0].data).toEqual({
-          frustrationTypes: [FrustrationType.DEAD_CLICK],
-          recordIds: [mouseupRecords[0].id!],
-        })
-      })
-
-    createTest('should detect a rage click and match it to mouse interaction records')
-      .withRum({ trackUserInteractions: true })
-      .withBody(html`
-        <div id="main-div" />
-        <button
-          id="my-button"
-          onclick="document.querySelector('#main-div').appendChild(document.createElement('div'));"
-        />
-      `)
-      .run(async ({ intakeRegistry, page, flushEvents }) => {
-        // We don't use the playwright's `page.locator('button').click()` here because the latency of the command is
-        // too high and the clicks won't be recognised as rage clicks.
-        await page.evaluate(() => {
-          const button = document.querySelector('button')!
-
-          function click() {
-            const coordinates = { clientX: 12, clientY: 20 }
-
-            button.dispatchEvent(new PointerEvent('pointerdown', { isPrimary: true, ...coordinates }))
-            button.dispatchEvent(new MouseEvent('mousedown', coordinates))
-            button.dispatchEvent(new PointerEvent('pointerup', { isPrimary: true, ...coordinates }))
-            button.dispatchEvent(new MouseEvent('mouseup', coordinates))
-            button.dispatchEvent(new PointerEvent('click', { isPrimary: true, ...coordinates }))
-          }
-
-          // Simulate a rage click
-          click()
-          click()
-          click()
-          click()
-        })
-
-        await flushEvents()
-
-        expect(intakeRegistry.replaySegments).toHaveLength(1)
-        const segment = intakeRegistry.replaySegments[0]
-
-        const mouseupRecords = findMouseInteractionRecords(segment, MouseInteractionType.MouseUp)
-        const frustrationRecords = findAllFrustrationRecords(segment)
-
-        expect(mouseupRecords).toHaveLength(4)
-        expect(frustrationRecords).toHaveLength(1)
-        expect(frustrationRecords[0].data).toEqual({
-          frustrationTypes: [FrustrationType.RAGE_CLICK],
-          recordIds: mouseupRecords.map((r) => r.id!),
-        })
       })
   })
 

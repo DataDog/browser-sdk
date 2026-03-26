@@ -1,5 +1,4 @@
 import type { EnvironmentProviders } from '@angular/core'
-// eslint-disable-next-line local-rules/disallow-side-effects
 import { ErrorHandler, makeEnvironmentProviders } from '@angular/core'
 import { addAngularError } from './addAngularError'
 

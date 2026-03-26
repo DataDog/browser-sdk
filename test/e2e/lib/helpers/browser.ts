@@ -46,8 +46,9 @@ export class BrowserLogsManager {
 
   get() {
     return this.logs.filter((log) => {
-      if (IGNORE_LOG_MESSAGES.some((message) => log.message.includes(message))) {
-        addTag('test.fixme', `Unnexpected Console log message: "${log.message}"`)
+      const ignoredMessage = IGNORE_LOG_MESSAGES.find((message) => log.message.includes(message))
+      if (ignoredMessage) {
+        addTag('test.fixme', `Unexpected Console log message: "${ignoredMessage}"`)
         return false
       }
 

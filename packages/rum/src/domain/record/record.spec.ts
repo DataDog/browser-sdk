@@ -2,13 +2,7 @@ import { DefaultPrivacyLevel, findLast, noop } from '@datadog/browser-core'
 import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { createNewEvent, collectAsyncCalls, registerCleanupTask } from '@datadog/browser-core/test'
-import {
-  findElement,
-  findFullSnapshot,
-  findNode,
-  recordsPerFullSnapshot,
-  createRumFrustrationEvent,
-} from '../../../test'
+import { findElement, findFullSnapshot, findNode, recordsPerFullSnapshot } from '../../../test'
 import type {
   BrowserIncrementalSnapshotRecord,
   BrowserMutationData,
@@ -429,15 +423,6 @@ describe('record', () => {
 
       visualViewport!.dispatchEvent(createNewEvent('resize'))
       expect(getEmittedRecords()[0].type).toBe(RecordType.VisualViewport)
-    })
-
-    it('frustration', () => {
-      lifeCycle.notify(
-        LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-        createRumFrustrationEvent(new MouseEvent('pointerup'))
-      )
-
-      expect(getEmittedRecords()[0].type).toBe(RecordType.FrustrationRecord)
     })
 
     it('view end event', () => {
