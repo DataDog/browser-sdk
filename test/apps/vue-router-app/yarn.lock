@@ -42,23 +42,23 @@ __metadata:
 
 "@datadog/browser-core@file:../../../packages/core/package.tgz::locator=vue-router-app%40workspace%3A.":
   version: 6.31.0
-  resolution: "@datadog/browser-core@file:../../../packages/core/package.tgz#../../../packages/core/package.tgz::hash=4a435a&locator=vue-router-app%40workspace%3A."
-  checksum: 10c0/da2b754609fff173c27f662f97dedee9c20c5ad084f8fa1617f3cd7d7812ca3d9fe50c07bbe60f37b21350dba0a877e2ca35e69c3bf652ad3f725faa00862c52
+  resolution: "@datadog/browser-core@file:../../../packages/core/package.tgz#../../../packages/core/package.tgz::hash=b429a7&locator=vue-router-app%40workspace%3A."
+  checksum: 10c0/2f47eb3de4c24449aa0ac0f6623e7cccc20af93e53661a00e7e36067ce1f241450f16234c0987515043916453590c89064966ec1ad17d9509c44856b9998a6c7
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz::locator=vue-router-app%40workspace%3A.":
   version: 6.31.0
-  resolution: "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz#../../../packages/rum-core/package.tgz::hash=60b25d&locator=vue-router-app%40workspace%3A."
+  resolution: "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz#../../../packages/rum-core/package.tgz::hash=362ef7&locator=vue-router-app%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.31.0"
-  checksum: 10c0/a8870d426d7b176a6c7c1a2312213d2b1c6d80b7325799f40cb5e1184b6c65eb2a18526813a4f4756e0d93b806ea854590ede5b83a45990bd2246d395cc551d3
+  checksum: 10c0/2cfecdf9bad94d5ff0b6ef62c93e5870f5857e126c8522e4471359b4780d16fd502398e129ed4ba0bf3411a8d62710d976e46b0ee20fd4bf461299461c405572
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum-vue@file:../../../packages/rum-vue/package.tgz::locator=vue-router-app%40workspace%3A.":
   version: 0.0.0
-  resolution: "@datadog/browser-rum-vue@file:../../../packages/rum-vue/package.tgz#../../../packages/rum-vue/package.tgz::hash=48376c&locator=vue-router-app%40workspace%3A."
+  resolution: "@datadog/browser-rum-vue@file:../../../packages/rum-vue/package.tgz#../../../packages/rum-vue/package.tgz::hash=159f32&locator=vue-router-app%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.31.0"
     "@datadog/browser-rum-core": "npm:6.31.0"
@@ -74,13 +74,13 @@ __metadata:
       optional: true
     vue-router:
       optional: true
-  checksum: 10c0/179a67f9d4eff61c343ca79088b36bf68237e58b193f91bf7ec56e943b0b04ea3f2d830d773c73b4b3e68ee59a6b4f64bfa632e05729da57b9d83901d6d218de
+  checksum: 10c0/8ac31ddcd82613c90027923a0e8624187052097c3eb6138f457a851e7d74b68a0732b6a23e2254c02dc4ff4622a4712757d7c35e220c2e086f7daeafb2bd6c31
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum@file:../../../packages/rum/package.tgz::locator=vue-router-app%40workspace%3A.":
   version: 6.31.0
-  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=6f7651&locator=vue-router-app%40workspace%3A."
+  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=147515&locator=vue-router-app%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.31.0"
     "@datadog/browser-rum-core": "npm:6.31.0"
@@ -89,7 +89,7 @@ __metadata:
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
-  checksum: 10c0/b135923a330dc2f836a2889d407e3a97fbb4d39460d283ea8ab49e82238f2f4f04a42fdececbbc8ea7140fd95d443a8c765971eea649ce098899dd848e0627ff
+  checksum: 10c0/942584000ce8bc789c2eed5627fe06cecfa411d7be2e527c606194c9996f938bdcd0f4a68ee7dd9c93df7bc225ece695865a988a149cd6c132ad1f996abbf099
   languageName: node
   linkType: hard
 
