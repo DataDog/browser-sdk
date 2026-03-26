@@ -1,14 +1,23 @@
-import fs from 'node:fs'
+import { parseArgs } from 'node:util'
 import { printLog, runMain } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
 import { getNpmToken } from '../lib/secrets.ts'
 
 runMain(() => {
-  printLog('Building the project')
-  command`yarn build`.withEnvironment({ BUILD_MODE: 'release' }).run()
+  const {
+    values: { 'dry-run': dryRun },
+  } = parseArgs({
+    options: {
+      'dry-run': { type: 'boolean', default: false },
+    },
+  })
 
-  printLog('Publishing')
-  // eslint-disable-next-line no-template-curly-in-string
-  fs.writeFileSync('.npmrc', '//registry.npmjs.org/:_authToken=${NPM_TOKEN}')
-  command`yarn lerna publish from-package --yes`.withEnvironment({ NPM_TOKEN: getNpmToken() }).withLogs().run()
+  printLog(dryRun ? 'Publishing (dry run)' : 'Publishing')
+  command`yarn workspaces foreach --verbose --all --topological --no-private npm publish --tolerate-republish --access public ${dryRun ? ['--dry-run'] : []}`
+    .withEnvironment({
+      YARN_NPM_AUTH_TOKEN: dryRun ? '' : getNpmToken(),
+      BUILD_MODE: 'release',
+    })
+    .withLogs()
+    .run()
 })
