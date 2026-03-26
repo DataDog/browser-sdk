@@ -15,6 +15,18 @@ test.describe('vue plugin', () => {
       expect(userView).toBeDefined()
     })
 
+  createTest('should send a vue component render vital event')
+    .withRum()
+    .withVueApp()
+    .run(async ({ page, flushEvents, intakeRegistry }) => {
+      await page.click('text=Tracked')
+      await flushEvents()
+
+      const vitalEvent = intakeRegistry.rumVitalEvents[0]
+      expect(vitalEvent.vital.description).toBe('TrackedPage')
+      expect(vitalEvent.vital.duration).toEqual(expect.any(Number))
+    })
+
   createTest('should capture vue error from app.config.errorHandler')
     .withRum()
     .withVueApp()
