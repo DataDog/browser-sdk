@@ -553,11 +553,11 @@ function validateAndBuildTrackResourceHeaders(initConfiguration: RumInitConfigur
   }
 
   const userMatchers: MatchOption[] = []
-  option.forEach((item) => {
+  option.forEach((item, index) => {
     if (isMatchOption(item)) {
       userMatchers.push(typeof item === 'string' ? item.toLowerCase() : item)
     } else {
-      display.warn('trackResourceHeaders items should be a string, RegExp, or function')
+      display.warn(`trackResourceHeaders[${index}] should be a string, RegExp, or function`)
     }
   })
 
