@@ -56,42 +56,7 @@ describe('startSessionManager', () => {
     })
   })
 
-  /**
-   * Helper to start a session manager and activate a session via user activity.
-   * After initialization with a fresh (empty) strategy, the session starts in an expired
-   * state. A click event triggers `expandOrRenew`, which creates a real session ID.
-   */
-  async function startSessionManagerWithDefaults({
-    configuration,
-    trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED),
-  }: {
-    configuration?: Partial<Configuration>
-    trackingConsentState?: TrackingConsentState
-  } = {}): Promise<SessionManager> {
-    const sessionManager = await new Promise<SessionManager>((resolve) => {
-      startSessionManager(
-        {
-          sessionStoreStrategyType: STORE_TYPE,
-          sessionSampleRate: 100,
-          trackAnonymousUser: false,
-          ...configuration,
-        } as Configuration,
-        trackingConsentState,
-        resolve
-      )
-    })
-
-    // Trigger user activity to create an actual session (fresh init starts as expired)
-    document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
-
-    return sessionManager
-  }
-
-  /**
-   * Same as startSessionManagerWithDefaults but skips the automatic activity trigger.
-   * Used for tests that need to observe the raw initialization behavior.
-   */
-  function startSessionManagerRaw({
+  function startSessionManagerWithDefaults({
     configuration,
     trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED),
   }: {
@@ -103,7 +68,6 @@ describe('startSessionManager', () => {
         {
           sessionStoreStrategyType: STORE_TYPE,
           sessionSampleRate: 100,
-          trackAnonymousUser: false,
           ...configuration,
         } as Configuration,
         trackingConsentState,
@@ -128,7 +92,7 @@ describe('startSessionManager', () => {
     })
 
     it('should call setSessionState to initialize the session', async () => {
-      await startSessionManagerRaw()
+      await startSessionManagerWithDefaults()
 
       expect(fakeStrategy.setSessionState).toHaveBeenCalled()
     })
@@ -148,7 +112,7 @@ describe('startSessionManager', () => {
     })
 
     it('should start with an active session on fresh initialization', async () => {
-      await startSessionManagerRaw()
+      await startSessionManagerWithDefaults()
 
       // Fresh init creates a session immediately (initialize + expand)
       const state = fakeStrategy.getInternalState()
@@ -188,7 +152,7 @@ describe('startSessionManager', () => {
         },
       })
 
-      const sessionManager = await startSessionManagerRaw()
+      const sessionManager = await startSessionManagerWithDefaults()
 
       expect(sessionManager.findSession()!.id).toBe('existing-id')
     })
@@ -707,7 +671,7 @@ describe('startSessionManager', () => {
           },
         })
 
-        const sessionManager = await startSessionManagerRaw({
+        const sessionManager = await startSessionManagerWithDefaults({
           configuration: { sessionSampleRate: 1 },
         })
 
@@ -723,7 +687,7 @@ describe('startSessionManager', () => {
           },
         })
 
-        const sessionManager = await startSessionManagerRaw({
+        const sessionManager = await startSessionManagerWithDefaults({
           configuration: { sessionSampleRate: 99 },
         })
 
@@ -795,7 +759,7 @@ describe('startSessionManager', () => {
     it('should re-use the same session when sharing a strategy', async () => {
       const firstManager = await startSessionManagerWithDefaults()
       // Second manager shares the same fakeStrategy
-      const secondManager = await startSessionManagerRaw()
+      const secondManager = await startSessionManagerWithDefaults()
 
       // The second manager inherits the state from the strategy (which already has a session)
       expect(firstManager.findSession()!.id).toBe(secondManager.findSession()!.id)
@@ -803,7 +767,7 @@ describe('startSessionManager', () => {
 
     it('should notify expire observables on both managers when session expires externally', async () => {
       const firstManager = await startSessionManagerWithDefaults()
-      const secondManager = await startSessionManagerRaw()
+      const secondManager = await startSessionManagerWithDefaults()
 
       const expireSpy1 = jasmine.createSpy('expire1')
       const expireSpy2 = jasmine.createSpy('expire2')
