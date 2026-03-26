@@ -99,11 +99,9 @@ function computeExpireDelay(trackAnonymousUser: boolean, sessionState: SessionSt
 }
 
 function buildSessionString(sessionState: SessionState, cookieOptions: CookieOptions): string {
-  const sessionStateWithOptions = {
-    ...sessionState,
-    ...(!isEmptyObject(sessionState) ? { c: encodeCookieOptions(cookieOptions) } : {}),
-  }
-  return toSessionString(sessionStateWithOptions)
+  return toSessionString(
+    isEmptyObject(sessionState) ? sessionState : { ...sessionState, c: encodeCookieOptions(cookieOptions) }
+  )
 }
 
 export function buildCookieOptions(initConfiguration: InitConfiguration): CookieOptions | undefined {
