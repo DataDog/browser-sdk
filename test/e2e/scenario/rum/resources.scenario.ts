@@ -385,8 +385,8 @@ function expectToHaveValidTimings(resourceEvent: RumResourceEvent) {
 
 test.describe('resource headers with trackResourceHeaders', () => {
   const TRACK_RESOURCE_HEADERS_CONFIG = {
-    enableExperimentalFeatures: ['track_resource_headers'] as string[],
-    trackResourceHeaders: true as true | string[],
+    enableExperimentalFeatures: ['track_resource_headers'],
+    trackResourceHeaders: true,
   }
 
   createTest('collect default response headers for fetch when trackResourceHeaders is true')
