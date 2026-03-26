@@ -178,7 +178,7 @@ function getResourceDomainContext(
   request: RequestCompleteEvent | undefined
 ): RumResourceEventDomainContext {
   return {
-    performanceEntry: entry,
+    performanceEntry: entry as unknown as PerformanceResourceTiming | PerformanceNavigationTiming,
     isManual: false,
     isAborted: request ? request.isAborted : false,
     handlingStack: request?.handlingStack,
