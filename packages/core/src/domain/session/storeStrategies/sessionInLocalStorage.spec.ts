@@ -1,15 +1,18 @@
 import { registerCleanupTask } from '../../../../test'
+import type { Configuration } from '../../../domain/configuration'
 import type { SessionState } from '../sessionState'
 import { toSessionString } from '../sessionState'
 import { initLocalStorageStrategy, selectLocalStorageStrategy } from './sessionInLocalStorage'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
+
+const MOCK_CONFIGURATION = { allowUntrustedEvents: true } as Configuration
 
 describe('LocalStorage SessionStoreStrategy', () => {
   let strategy: ReturnType<typeof initLocalStorageStrategy>
 
   beforeEach(() => {
     localStorage.removeItem(SESSION_STORE_KEY)
-    strategy = initLocalStorageStrategy()
+    strategy = initLocalStorageStrategy(MOCK_CONFIGURATION)
     registerCleanupTask(() => {
       localStorage.removeItem(SESSION_STORE_KEY)
     })

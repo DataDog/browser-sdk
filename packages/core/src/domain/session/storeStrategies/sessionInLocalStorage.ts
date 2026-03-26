@@ -1,5 +1,7 @@
 import { generateUUID } from '../../../tools/utils/stringUtils'
 import { Observable } from '../../../tools/observable'
+import { addEventListener } from '../../../browser/addEventListener'
+import type { Configuration } from '../../configuration'
 import { SessionPersistence } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
 import { toSessionString, toSessionState } from '../sessionState'
@@ -21,20 +23,15 @@ export function selectLocalStorageStrategy(): SessionStoreStrategyType | undefin
   }
 }
 
-export function initLocalStorageStrategy(): SessionStoreStrategy {
-  const sessionObservable = new Observable<SessionState>((observable) => {
-    const listener = (event: StorageEvent) => {
-      if (event.key === SESSION_STORE_KEY && event.storageArea === localStorage) {
-        observable.notify(toSessionState(event.newValue))
-      }
-    }
-    // eslint-disable-next-line local-rules/disallow-zone-js-patched-values
-    window.addEventListener('storage', listener)
-    return () => {
-      // eslint-disable-next-line local-rules/disallow-zone-js-patched-values
-      window.removeEventListener('storage', listener)
-    }
-  })
+export function initLocalStorageStrategy(configuration: Configuration): SessionStoreStrategy {
+  const sessionObservable = new Observable<SessionState>(
+    (observable) =>
+      addEventListener(configuration, window, 'storage', (event) => {
+        if (event.key === SESSION_STORE_KEY && event.storageArea === localStorage) {
+          observable.notify(toSessionState(event.newValue))
+        }
+      }).stop
+  )
 
   return {
     setSessionState(fn: (sessionState: SessionState) => SessionState): Promise<void> {
