@@ -44,19 +44,30 @@ export function computeViewName(matched: RouteLocationMatched[], path: string): 
 /**
  * Vue Router catch-all routes use `/:pathMatch(.*)*` instead of bare `*` like React Router.
  * Keeping the raw pattern as the view name isn't helpful, it hides information about which
- * path was actually visited. This function replaces the catch-all segment with the actual
- * URL path, aligning with how the React integration substitutes splats.
+ * path was actually visited. This function replaces only the catch-all segment with the
+ * corresponding portion of the actual URL path, preserving any parameterized segments that
+ * precede it. This aligns with how the React integration substitutes splats.
  *
  * We match the full `/:pathMatch(.*)*` pattern rather than just `:pathMatch(` to avoid
  * false positives on custom regex params (e.g. `/:pathMatch([a-z]+)`).
  *
  * @example
  * substituteCatchAll('/:pathMatch(.*)*', '/unknown/page') // => '/unknown/page'
+ * substituteCatchAll('/org/:orgId/:pathMatch(.*)*', '/org/123/some/page') // => '/org/:orgId/some/page'
  */
 function substituteCatchAll(viewName: string, path: string): string {
-  if (!viewName.includes(':pathMatch(.*)*')) {
+  const catchAllIndex = viewName.indexOf('/:pathMatch(.*)*')
+  if (catchAllIndex === -1) {
     return viewName
   }
 
-  return path
+  // Keep parameterized segments before the catch-all intact
+  const prefix = viewName.substring(0, catchAllIndex)
+
+  // Count the number of path segments in the prefix to find the matching point in the actual path
+  const prefixSegmentCount = prefix === '' ? 0 : prefix.split('/').length - 1
+  const pathSegments = path.split('/')
+  const suffix = pathSegments.slice(prefixSegmentCount + 1).join('/')
+
+  return prefix + (suffix ? `/${suffix}` : '') || '/'
 }

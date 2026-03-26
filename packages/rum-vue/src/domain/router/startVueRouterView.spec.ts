@@ -68,7 +68,8 @@ describe('computeViewName', () => {
     ['nested catch-all',                    [{ path: '/foo' }, { path: '/foo/:pathMatch(.*)*' }],             '/foo/1',            '/foo/1'],
     ['deeply nested catch-all',             [{ path: '/foo' }, { path: '/foo/bar' }, { path: '/foo/bar/:pathMatch(.*)*' }], '/foo/bar/baz', '/foo/bar/baz'],
     ['static sibling before catch-all',     [{ path: '/foo' }, { path: '/foo/:pathMatch(.*)*' }],             '/foo/bar',          '/foo/bar'],
-    ['param before catch-all',              [{ path: '/foo/:p' }, { path: '/foo/:p/:pathMatch(.*)*' }],       '/foo/bar/baz',      '/foo/bar/baz'],
+    ['param before catch-all',              [{ path: '/foo/:p' }, { path: '/foo/:p/:pathMatch(.*)*' }],       '/foo/bar/baz',      '/foo/:p/baz'],
+    ['multiple params before catch-all',    [{ path: '/org/:orgId' }, { path: '/org/:orgId/:pathMatch(.*)*' }], '/org/123/some/page', '/org/:orgId/some/page'],
   ]
 
   cases.forEach(([description, matched, path, expected]) => {
