@@ -106,7 +106,7 @@ describe('trackInteractionToNextPaint', () => {
       value: 100 as Duration,
       targetSelector: undefined,
       time: 1 as RelativeTime,
-      subParts: undefined,
+      subParts: { inputDelay: 1099 as Duration, processingDuration: 0 as Duration, presentationDelay: 0 as Duration },
     })
   })
 
@@ -122,7 +122,11 @@ describe('trackInteractionToNextPaint', () => {
       value: MAX_INP_VALUE,
       targetSelector: undefined,
       time: 1 as RelativeTime,
-      subParts: undefined,
+      subParts: {
+        inputDelay: 1099 as Duration,
+        processingDuration: 100 as Duration,
+        presentationDelay: (MAX_INP_VALUE - 1199) as Duration,
+      },
     })
   })
 
@@ -139,7 +143,7 @@ describe('trackInteractionToNextPaint', () => {
       value: 98 as Duration,
       targetSelector: undefined,
       time: 98 as RelativeTime,
-      subParts: undefined,
+      subParts: { inputDelay: 1004 as Duration, processingDuration: 0 as Duration, presentationDelay: 0 as Duration },
     })
   })
 
@@ -161,7 +165,7 @@ describe('trackInteractionToNextPaint', () => {
       value: 40 as Duration,
       targetSelector: undefined,
       time: 1 as RelativeTime,
-      subParts: undefined,
+      subParts: { inputDelay: 1099 as Duration, processingDuration: 0 as Duration, presentationDelay: 0 as Duration },
     })
   })
 
@@ -179,7 +183,7 @@ describe('trackInteractionToNextPaint', () => {
       value: 100 as Duration,
       targetSelector: undefined,
       time: 100 as RelativeTime,
-      subParts: undefined,
+      subParts: { inputDelay: 1099 as Duration, processingDuration: 0 as Duration, presentationDelay: 0 as Duration },
     })
   })
 
