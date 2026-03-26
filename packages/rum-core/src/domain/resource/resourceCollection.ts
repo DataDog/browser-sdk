@@ -363,11 +363,7 @@ function getRequestHeaders(request: RequestCompleteEvent, matchers: MatchOption[
   let headers: Headers | undefined
 
   if (request.init?.headers) {
-    try {
       headers = new Headers(request.init.headers)
-    } catch {
-      // Ignore invalid headers
-    }
   } else if (request.input instanceof Request) {
     headers = request.input.headers
   }
