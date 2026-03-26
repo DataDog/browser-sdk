@@ -1,6 +1,5 @@
 import type { BufferedData, Payload } from '@datadog/browser-core'
 import { ErrorSource, display, BufferedObservable, FLUSH_DURATION_LIMIT } from '@datadog/browser-core'
-import { ONE_SECOND } from '@datadog/browser-core/src/tools/utils/timeUtils'
 import type { Clock, Request } from '@datadog/browser-core/test'
 import {
   interceptRequests,
@@ -170,7 +169,6 @@ describe('logs', () => {
       handleLog({ status: StatusType.info, message: 'message 1' }, logger)
 
       sessionManager.expire()
-      clock.tick(ONE_SECOND * 2)
 
       handleLog({ status: StatusType.info, message: 'message 2' }, logger)
 
