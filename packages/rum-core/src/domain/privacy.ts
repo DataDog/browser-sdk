@@ -252,8 +252,6 @@ export function getTextContent(textNode: Node, parentNodePrivacyLevel: NodePriva
     } else if (parentTagName === 'OPTION') {
       // <Option> has low entropy in charset + text length, so use `CENSORED_STRING_MARK` when masked
       textContent = CENSORED_STRING_MARK
-    } else if (nodePrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED) {
-      textContent = maskDisallowedTextContent(textContent)
     } else {
       textContent = censorText(textContent)
     }
