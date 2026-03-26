@@ -1,3 +1,4 @@
+import { appendElement } from 'packages/rum-core/test'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -5,7 +6,6 @@ import {
   PRIVACY_ATTR_VALUE_MASK,
   PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
   CENSORED_STRING_MARK,
-  TEXT_MASKING_CHAR,
 } from './privacyConstants'
 import {
   censorText,
@@ -17,7 +17,6 @@ import {
   maskDisallowedTextContent,
 } from './privacy'
 import { ACTION_NAME_MASK } from './action/actionNameConstants'
-import { appendElement } from 'packages/rum-core/test'
 
 describe('getNodePrivacyLevel', () => {
   it('returns the element privacy mode if it has one', () => {
