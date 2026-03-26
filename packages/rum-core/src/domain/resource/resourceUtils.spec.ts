@@ -1,6 +1,7 @@
 import { addExperimentalFeatures, type Duration, type RelativeTime, type ServerDuration } from '@datadog/browser-core'
 import { ExperimentalFeature } from '@datadog/browser-core'
-import { RumPerformanceEntryType, type RumPerformanceResourceTiming } from '../../browser/performanceObservable'
+import { RumPerformanceEntryType } from '../../browser/performanceObservable'
+import { createPerformanceEntry } from '../../../test'
 import {
   MAX_RESOURCE_VALUE_CHAR_LENGTH,
   computeResourceEntryDetails,
@@ -10,34 +11,21 @@ import {
   sanitizeIfLongDataUrl,
 } from './resourceUtils'
 
-function generateResourceWith(overrides: Partial<RumPerformanceResourceTiming>) {
-  const completeTiming: RumPerformanceResourceTiming = {
-    connectEnd: 17 as RelativeTime,
-    connectStart: 15 as RelativeTime,
-    domainLookupEnd: 14 as RelativeTime,
-    domainLookupStart: 13 as RelativeTime,
-    duration: 50 as Duration,
-    entryType: RumPerformanceEntryType.RESOURCE,
-    fetchStart: 12 as RelativeTime,
-    name: 'entry',
-    redirectEnd: 11 as RelativeTime,
-    redirectStart: 10 as RelativeTime,
-    requestStart: 20 as RelativeTime,
-    responseEnd: 60 as RelativeTime,
-    responseStart: 50 as RelativeTime,
-    secureConnectionStart: 16 as RelativeTime,
-    startTime: 10 as RelativeTime,
-    workerStart: 0 as RelativeTime,
-
-    initiatorType: 'script',
-    decodedBodySize: 0,
-    encodedBodySize: 0,
-    transferSize: 0,
-    toJSON: () => ({ ...completeTiming, toJSON: undefined }),
-
-    ...overrides,
-  }
-  return completeTiming
+// Timing values for a resource entry with valid, measurable timings for all detail fields
+const resourceWithDetailsOverrides = {
+  connectEnd: 17 as RelativeTime,
+  connectStart: 15 as RelativeTime,
+  domainLookupEnd: 14 as RelativeTime,
+  domainLookupStart: 13 as RelativeTime,
+  fetchStart: 12 as RelativeTime,
+  redirectEnd: 11 as RelativeTime,
+  redirectStart: 10 as RelativeTime,
+  requestStart: 20 as RelativeTime,
+  responseEnd: 60 as RelativeTime,
+  responseStart: 50 as RelativeTime,
+  secureConnectionStart: 16 as RelativeTime,
+  startTime: 10 as RelativeTime,
+  workerStart: 0 as RelativeTime,
 }
 
 describe('computeResourceEntryType', () => {
@@ -76,7 +64,7 @@ describe('computeResourceEntryType', () => {
       expected: string
     }) => {
       it(`should compute resource kind: ${description}`, () => {
-        const entry = generateResourceWith({ initiatorType, name })
+        const entry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { initiatorType, name })
         expect(computeResourceEntryType(entry)).toEqual(expected)
       })
     }
@@ -87,7 +75,7 @@ describe('computeResourceEntryDetails', () => {
   it('should not compute entry without detailed timings', () => {
     expect(
       computeResourceEntryDetails(
-        generateResourceWith({
+        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
           connectEnd: 0 as RelativeTime,
           connectStart: 0 as RelativeTime,
           domainLookupEnd: 0 as RelativeTime,
@@ -103,7 +91,11 @@ describe('computeResourceEntryDetails', () => {
   })
 
   it('should compute details from entry', () => {
-    expect(computeResourceEntryDetails(generateResourceWith({}))).toEqual({
+    expect(
+      computeResourceEntryDetails(
+        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, resourceWithDetailsOverrides)
+      )
+    ).toEqual({
       connect: { start: 5e6 as ServerDuration, duration: 2e6 as ServerDuration },
       dns: { start: 3e6 as ServerDuration, duration: 1e6 as ServerDuration },
       download: { start: 40e6 as ServerDuration, duration: 10e6 as ServerDuration },
@@ -114,18 +106,20 @@ describe('computeResourceEntryDetails', () => {
   })
 
   it('should compute worker timing when workerStart < fetchStart', () => {
-    const resourceTiming = generateResourceWith({
+    const entry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+      ...resourceWithDetailsOverrides,
       workerStart: 11 as RelativeTime,
       fetchStart: 12 as RelativeTime,
     })
-    const details = computeResourceEntryDetails(resourceTiming)
+    const details = computeResourceEntryDetails(entry)
     expect(details!.worker).toEqual({ start: 1e6 as ServerDuration, duration: 1e6 as ServerDuration })
   })
 
   it('should not compute redirect timing when no redirect', () => {
     expect(
       computeResourceEntryDetails(
-        generateResourceWith({
+        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+          ...resourceWithDetailsOverrides,
           fetchStart: 10 as RelativeTime,
           redirectEnd: 0 as RelativeTime,
           redirectStart: 0 as RelativeTime,
@@ -143,7 +137,8 @@ describe('computeResourceEntryDetails', () => {
   it('should not compute dns timing when persistent connection or cache', () => {
     expect(
       computeResourceEntryDetails(
-        generateResourceWith({
+        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+          ...resourceWithDetailsOverrides,
           domainLookupEnd: 12 as RelativeTime,
           domainLookupStart: 12 as RelativeTime,
           fetchStart: 12 as RelativeTime,
@@ -161,7 +156,8 @@ describe('computeResourceEntryDetails', () => {
   it('should not compute ssl timing when no secure connection', () => {
     expect(
       computeResourceEntryDetails(
-        generateResourceWith({
+        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+          ...resourceWithDetailsOverrides,
           secureConnectionStart: 0 as RelativeTime,
         })
       )
@@ -177,7 +173,8 @@ describe('computeResourceEntryDetails', () => {
   it('should not compute ssl timing when persistent connection', () => {
     expect(
       computeResourceEntryDetails(
-        generateResourceWith({
+        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+          ...resourceWithDetailsOverrides,
           connectEnd: 12 as RelativeTime,
           connectStart: 12 as RelativeTime,
           domainLookupEnd: 12 as RelativeTime,
@@ -196,7 +193,8 @@ describe('computeResourceEntryDetails', () => {
   it('should not compute connect timing when persistent connection', () => {
     expect(
       computeResourceEntryDetails(
-        generateResourceWith({
+        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+          ...resourceWithDetailsOverrides,
           connectEnd: 12 as RelativeTime,
           connectStart: 12 as RelativeTime,
           domainLookupEnd: 12 as RelativeTime,
@@ -250,14 +248,18 @@ describe('computeResourceEntryDetails', () => {
     },
   ].forEach(({ reason, ...overrides }) => {
     it(`should not compute entry when ${reason}`, () => {
-      expect(computeResourceEntryDetails(generateResourceWith(overrides))).toBeUndefined()
+      expect(
+        computeResourceEntryDetails(
+          createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { ...resourceWithDetailsOverrides, ...overrides })
+        )
+      ).toBeUndefined()
     })
   })
 
   it('should allow really fast document resource', () => {
     expect(
       computeResourceEntryDetails(
-        generateResourceWith({
+        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
           connectEnd: 10 as RelativeTime,
           connectStart: 10 as RelativeTime,
           domainLookupEnd: 10 as RelativeTime,
@@ -269,6 +271,7 @@ describe('computeResourceEntryDetails', () => {
           responseEnd: 50 as RelativeTime,
           responseStart: 40 as RelativeTime,
           secureConnectionStart: 0 as RelativeTime,
+          startTime: 10 as RelativeTime,
         })
       )
     ).toEqual({
@@ -280,11 +283,15 @@ describe('computeResourceEntryDetails', () => {
 
 describe('computeResourceEntryDuration', () => {
   it('should return the entry duration', () => {
-    expect(computeResourceEntryDuration(generateResourceWith({}))).toBe(50 as Duration)
+    expect(computeResourceEntryDuration(createPerformanceEntry(RumPerformanceEntryType.RESOURCE))).toBe(100 as Duration)
   })
 
   it('should use other available timing if the duration is 0', () => {
-    expect(computeResourceEntryDuration(generateResourceWith({ duration: 0 as Duration }))).toBe(50 as Duration)
+    expect(
+      computeResourceEntryDuration(
+        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { duration: 0 as Duration })
+      )
+    ).toBe(100 as Duration)
   })
 })
 
