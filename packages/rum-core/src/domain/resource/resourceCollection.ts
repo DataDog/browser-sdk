@@ -342,10 +342,10 @@ function getResponseHeaders(request: RequestCompleteEvent, matchers: MatchOption
   }
 
   if (request.type === RequestType.XHR && request.xhr) {
-    const rawHeaders = request.xhr.getAllResponseHeaders()
-    if (rawHeaders) {
+    const rawXhrHeaders = request.xhr.getAllResponseHeaders()
+    if (rawXhrHeaders) {
       try {
-        return filterHeaders(new Headers(parseRawHeaders(rawHeaders)), matchers)
+        return filterHeaders(new Headers(parseRawXhrHeaders(rawXhrHeaders)), matchers)
       } catch {
         // Ignore parsing errors
       }
@@ -423,9 +423,11 @@ function filterHeaders(headers: Headers, matchers: MatchOption[]): NetworkHeader
   return headerCount > 0 ? result : undefined
 }
 
-function parseRawHeaders(rawHeaders: string): Array<[string, string]> {
+// Input:  "content-type: application/json\r\ncache-control: no-cache"
+// Output: [["content-type", "application/json"], ["cache-control", "no-cache"]]
+function parseRawXhrHeaders(rawXhrheaders: string): Array<[string, string]> {
   const pairs: Array<[string, string]> = []
-  const lines = rawHeaders.trim().split(/\r?\n/)
+  const lines = rawXhrheaders.trim().split(/\r\n/)
   for (const line of lines) {
     const colonIndex = line.indexOf(':')
     if (colonIndex > 0) {
