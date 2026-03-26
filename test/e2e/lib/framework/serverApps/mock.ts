@@ -19,9 +19,7 @@ export function createMockServerApp(servers: Servers, setup: string, setupOption
   app.use(cors())
   app.disable('etag') // disable automatic resource caching
 
-  app.set('query parser', (str: string) =>
-    qs.parse(str)
-  )
+  app.set('query parser', (str: string) => qs.parse(str))
 
   app.get('/empty', (_req, res) => {
     res.end()

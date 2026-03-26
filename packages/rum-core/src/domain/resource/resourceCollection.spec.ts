@@ -784,6 +784,7 @@ describe('resourceCollection', () => {
       })
 
       it('should limit the number of collected headers', () => {
+        spyOn(display, 'warn')
         const headerNames = Array.from({ length: 101 }, (_, i) => `x-header-${i}`)
         setupResourceCollection({ trackResourceHeaders: headerNames })
 
@@ -804,6 +805,7 @@ describe('resourceCollection', () => {
       })
 
       it('should only count headers that pass filtering toward the limit', () => {
+        spyOn(display, 'warn')
         const allowedHeaders = Array.from({ length: 100 }, (_, i) => `x-header-${i}`)
         // Include a forbidden header name in the matchers - it won't be counted
         const allMatchers = [...allowedHeaders, 'authorization', 'x-extra']

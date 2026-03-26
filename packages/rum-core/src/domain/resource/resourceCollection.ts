@@ -363,7 +363,7 @@ function getRequestHeaders(request: RequestCompleteEvent, matchers: MatchOption[
   let headers: Headers | undefined
 
   if (request.init?.headers) {
-      headers = new Headers(request.init.headers)
+    headers = new Headers(request.init.headers)
   } else if (request.input instanceof Request) {
     headers = request.input.headers
   }
@@ -378,13 +378,14 @@ const MAX_HEADER_VALUE_LENGTH = 128
 
 function filterHeaders(headers: Headers, matchers: MatchOption[]): NetworkHeaders | undefined {
   const result: NetworkHeaders = {} as NetworkHeaders
-  let headerCount = 0
+  let collectedHeaderCount = 0
+  let totalHeaderCount = 0
   let hasReachedMaxHeaderCount = false
 
   headers.forEach((value, name) => {
-    headerCount++;
+    totalHeaderCount++
 
-    if (headerCount > MAX_HEADER_COUNT) {
+    if (collectedHeaderCount >= MAX_HEADER_COUNT) {
       if (!hasReachedMaxHeaderCount) {
         display.warn(`Maximum number of headers (${MAX_HEADER_COUNT}) has been reached. Further headers are dropped.`)
         hasReachedMaxHeaderCount = true
@@ -413,14 +414,18 @@ function filterHeaders(headers: Headers, matchers: MatchOption[]): NetworkHeader
         limit: MAX_HEADER_VALUE_LENGTH,
       })
     }
+
     result[lowerName] = safeTruncate(value, MAX_HEADER_VALUE_LENGTH)
+    collectedHeaderCount++
+    totalHeaderCount++
   })
 
   // monitor-until: 2026-05-23
   addTelemetryDebug('Maximum number of resource headers reached', {
-    headerCount,
+    collectedHeaderCount,
+    totalHeaderCount,
   })
-  return headerCount > 0 ? result : undefined
+  return collectedHeaderCount > 0 ? result : undefined
 }
 
 // Input:  "content-type: application/json\r\ncache-control: no-cache"

@@ -476,9 +476,7 @@ describe('validateAndBuildRumConfiguration', () => {
       })!.trackResourceHeaders
 
       expect(result).toEqual([...DEFAULT_TRACKED_RESOURCE_HEADERS, 'valid-header', 'another-valid'])
-      expect(displayWarnSpy).toHaveBeenCalledOnceWith(
-        'trackResourceHeaders items should be a string, RegExp, or function'
-      )
+      expect(displayWarnSpy).toHaveBeenCalledOnceWith('trackResourceHeaders[1] should be a string, RegExp, or function')
     })
   })
 
