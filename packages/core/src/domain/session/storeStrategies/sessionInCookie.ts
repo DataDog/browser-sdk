@@ -72,6 +72,7 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
 function findMatchingSessionState(items: string[], opts: string): SessionState {
   let sessionState: SessionState | undefined
 
+  // reverse the cookies so that if there is no match, the cookie returned is the first one
   for (const item of items.slice().reverse()) {
     sessionState = toSessionState(item)
     if (sessionState.c === opts) {
@@ -79,7 +80,9 @@ function findMatchingSessionState(items: string[], opts: string): SessionState {
     }
   }
 
+  // remove the cookie options from the session state as this is not part of the session state
   delete sessionState?.c
+
   return sessionState ?? {}
 }
 
@@ -127,10 +130,10 @@ function encodeCookieOptions(cookieOptions: CookieOptions): string {
 
   /* eslint-disable no-bitwise */
   let byte = 0
-  byte |= SESSION_COOKIE_VERSION << 5
-  byte |= domainCount << 1
-  byte |= cookieOptions.crossSite ? 1 : 0
+  byte |= SESSION_COOKIE_VERSION << 5 // Store version in upper 3 bits
+  byte |= domainCount << 1 // Store domain count in next 4 bits
+  byte |= cookieOptions.crossSite ? 1 : 0 // Store useCrossSiteScripting in next bit
   /* eslint-enable no-bitwise */
 
-  return byte.toString(16)
+  return byte.toString(16) // Convert to hex string
 }
