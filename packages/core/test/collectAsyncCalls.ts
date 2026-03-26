@@ -1,6 +1,8 @@
 import { getCurrentJasmineSpec } from './getCurrentJasmineSpec'
 
-const EXTRA_CALL_GUARD = Symbol('collectAsyncCalls.extraCallGuard')
+// Track guard functions set after resolution, so chained collectAsyncCalls
+// can detect and skip them instead of triggering a false "extra call" failure.
+const extraCallGuards = new WeakSet<() => void>()
 
 export function collectAsyncCalls<F extends jasmine.Func>(
   spy: jasmine.Spy<F>,
@@ -15,10 +17,8 @@ export function collectAsyncCalls<F extends jasmine.Func>(
 
     const checkCalls = () => {
       if (spy.calls.count() === expectedCallsCount) {
-        const guard = (() => {
-          extraCallDetected()
-        }) as F
-        ;(guard as any)[EXTRA_CALL_GUARD] = true
+        const guard = (() => extraCallDetected()) as F
+        extraCallGuards.add(guard)
         spy.and.callFake(guard)
         resolve(spy.calls)
       } else if (spy.calls.count() > expectedCallsCount) {
@@ -28,25 +28,14 @@ export function collectAsyncCalls<F extends jasmine.Func>(
 
     checkCalls()
 
-    // Preserve the spy's current behavior (return value, side effects) while
-    // adding call-count detection. Jasmine's internal `plan` property holds
-    // the function that the spy delegates to.
     const previousPlan: F = (spy.and as unknown as { plan: F }).plan
-    const shouldCallPreviousPlan = !(previousPlan as any)[EXTRA_CALL_GUARD]
 
     spy.and.callFake(((...args: Parameters<F>) => {
-      if (shouldCallPreviousPlan) {
-        try {
-          const result = previousPlan(...args)
-          checkCalls()
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-          return result
-        } catch (e) {
-          checkCalls()
-          throw e
-        }
-      }
       checkCalls()
+      if (!extraCallGuards.has(previousPlan)) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return previousPlan(...args)
+      }
     }) as F)
 
     function extraCallDetected() {
