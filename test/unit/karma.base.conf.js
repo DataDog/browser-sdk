@@ -21,6 +21,9 @@ if (testReportDirectory) {
 }
 
 const FILES = [
+  // Polyfill globalThis for older browsers (e.g. Chrome 63) that don't support it.
+  // Required because @angular/core uses globalThis internally.
+  { pattern: 'test/unit/globalThisPolyfill.js', watched: false },
   // Make sure 'forEach.spec' is the first file to be loaded, so its `beforeEach` hook is executed
   // before all other `beforeEach` hooks, and its `afterEach` hook is executed after all other
   // `afterEach` hooks.
@@ -126,7 +129,8 @@ function overrideTsLoaderRule(module) {
   // We use swc-loader to transpile some dependencies that are using syntax not compatible with browsers we use for testing
   module.rules.push({
     test: /\.m?js$/,
-    include: /node_modules\/(react|react-router-dom|react-dom|react-router|turbo-stream|vue-router)/,
+    include:
+      /node_modules\/(@angular\/core|react|react-router-dom|react-dom|react-router|turbo-stream|vue-router|@vue\/test-utils)/,
     use: {
       loader: 'swc-loader',
       options: {

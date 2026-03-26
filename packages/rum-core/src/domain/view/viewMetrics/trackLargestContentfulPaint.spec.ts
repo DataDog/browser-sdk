@@ -1,5 +1,5 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { clocksOrigin, DOM_EVENT, ExperimentalFeature, addExperimentalFeatures } from '@datadog/browser-core'
+import { clocksOrigin, DOM_EVENT } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
   setPageVisibility,
@@ -79,8 +79,6 @@ describe('trackLargestContentfulPaint', () => {
   }
 
   beforeEach(() => {
-    addExperimentalFeatures([ExperimentalFeature.LCP_SUBPARTS])
-
     lcpCallback = jasmine.createSpy()
     eventTarget = document.createElement('div') as unknown as Window
     // Mock clock and advance time so that responseStart: 789 passes the sanitizeFirstByte check

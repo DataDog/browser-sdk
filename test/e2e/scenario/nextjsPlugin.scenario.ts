@@ -14,6 +14,7 @@ const routerConfigs = [
     router: 'pages' as const,
     viewPrefix: '/pages-router',
     homeUrlPattern: /\/pages-router(\?|$)/,
+    clientErrorMessage: 'Pages Router error from NextjsErrorBoundary',
   },
 ]
 
@@ -200,71 +201,77 @@ test.describe('nextjs - router', () => {
 })
 
 test.describe('nextjs - errors', () => {
-  const { name, viewPrefix, clientErrorMessage, router } = routerConfigs[0]
+  routerConfigs.forEach(({ name, router, viewPrefix, clientErrorMessage }) => {
+    test.describe(name, () => {
+      createTest('should report client-side error')
+        .withRum()
+        .withNextjsApp(router)
+        .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs, browserName }) => {
+          test.skip(
+            browserName === 'firefox',
+            'firefox is sending the errors in two separate batches, however the last batch is delayed making the test setup to miss it'
+          )
+          await page.click('text=Go to Error Test')
+          await page.waitForURL(`**${viewPrefix}/error-test`)
 
-  test.describe(name, () => {
-    createTest('should report client-side error')
-      .withRum()
-      .withNextjsApp(router)
-      .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
-        await page.click('text=Go to Error Test')
-        await page.waitForURL(`**${viewPrefix}/error-test`)
+          await page.click('[data-testid="trigger-error"]')
+          await page.waitForSelector('[data-testid="error-boundary"]')
 
-        await page.click('[data-testid="trigger-error"]')
-        await page.waitForSelector('[data-testid="error-boundary"]')
+          await flushEvents()
 
-        await flushEvents()
+          const customErrors = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
+          expect(customErrors).toHaveLength(1)
+          expect(customErrors[0].error.message).toBe(clientErrorMessage)
+          expect(customErrors[0].error.handling_stack).toBeDefined()
+          expect(customErrors[0].context).toMatchObject({ framework: 'nextjs' })
 
-        const customErrors = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
-        expect(customErrors).toHaveLength(1)
-        expect(customErrors[0].error.message).toBe(clientErrorMessage)
-        expect(customErrors[0].error.handling_stack).toBeDefined()
-        expect(customErrors[0].context).toMatchObject({ framework: 'nextjs' })
-
-        withBrowserLogs((browserLogs) => {
-          expect(browserLogs.length).toBeGreaterThan(0)
-        })
-      })
-
-    createTest('should report a server error with digest via addNextjsError')
-      .withRum()
-      .withNextjsApp(router)
-      .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
-        await page.click('text=Go to Server Error')
-        await page.waitForSelector('[data-testid="error-boundary"]')
-
-        await flushEvents()
-
-        const customErrors = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
-        expect(customErrors).toHaveLength(1)
-        expect(customErrors[0].error.handling_stack).toBeDefined()
-        expect(customErrors[0].context).toMatchObject({
-          framework: 'nextjs',
-          nextjs: { digest: expect.any(String) },
+          withBrowserLogs((browserLogs) => {
+            expect(browserLogs.length).toBeGreaterThan(0)
+          })
         })
 
-        withBrowserLogs((browserLogs) => {
-          expect(browserLogs.length).toBeGreaterThan(0)
-        })
-      })
+      if (router === 'app') {
+        createTest('should report a server error with digest via addNextjsError')
+          .withRum()
+          .withNextjsApp(router)
+          .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
+            await page.click('text=Go to Server Error')
+            await page.waitForSelector('[data-testid="error-boundary"]')
 
-    createTest('should report global error via global-error.tsx')
-      .withRum()
-      .withNextjsApp(router)
-      .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
-        await page.click('text=Go to Global Error')
-        await page.waitForSelector('[data-testid="global-error-boundary"]')
+            await flushEvents()
 
-        await flushEvents()
+            const customErrors = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
+            expect(customErrors).toHaveLength(1)
+            expect(customErrors[0].error.handling_stack).toBeDefined()
+            expect(customErrors[0].context).toMatchObject({
+              framework: 'nextjs',
+              nextjs: { digest: expect.any(String) },
+            })
 
-        const customErrors = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
-        expect(customErrors).toHaveLength(1)
-        expect(customErrors[0].error.handling_stack).toBeDefined()
-        expect(customErrors[0].context).toMatchObject({ framework: 'nextjs' })
+            withBrowserLogs((browserLogs) => {
+              expect(browserLogs.length).toBeGreaterThan(0)
+            })
+          })
 
-        withBrowserLogs((browserLogs) => {
-          expect(browserLogs.length).toBeGreaterThan(0)
-        })
-      })
+        createTest('should report global error via global-error.tsx')
+          .withRum()
+          .withNextjsApp(router)
+          .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
+            await page.click('text=Go to Global Error')
+            await page.waitForSelector('[data-testid="global-error-boundary"]')
+
+            await flushEvents()
+
+            const customErrors = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
+            expect(customErrors).toHaveLength(1)
+            expect(customErrors[0].error.handling_stack).toBeDefined()
+            expect(customErrors[0].context).toMatchObject({ framework: 'nextjs' })
+
+            withBrowserLogs((browserLogs) => {
+              expect(browserLogs.length).toBeGreaterThan(0)
+            })
+          })
+      }
+    })
   })
 })

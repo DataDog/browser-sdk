@@ -3,9 +3,16 @@
   "version": "6.31.0",
   "license": "Apache-2.0",
   "main": "bundle/worker.js",
+  "files": [
+    "bundle/**/*.js",
+    "src",
+    "!src/**/*.spec.ts",
+    "!src/**/*.specHelper.ts"
+  ],
   "scripts": {
     "build": "node ../../scripts/build/build-package.ts --bundle worker.js",
-    "build:bundle": "yarn build"
+    "build:bundle": "yarn build",
+    "prepack": "yarn build"
   },
   "dependencies": {
     "@datadog/browser-core": "6.31.0"

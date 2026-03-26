@@ -9,13 +9,13 @@ import { BrowserLogsManager, deleteAllCookies, getBrowserName, sendXhr } from '.
 import { DEFAULT_LOGS_CONFIGURATION, DEFAULT_RUM_CONFIGURATION } from '../helpers/configuration'
 import { validateRumFormat } from '../helpers/validation'
 import type { BrowserConfiguration } from '../../../browsers.conf'
-import { NEXTJS_APP_ROUTER_PORT } from '../helpers/playwright'
+import { NEXTJS_APP_ROUTER_PORT, VUE_ROUTER_APP_PORT } from '../helpers/playwright'
 import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
 import { getTestServers, waitForServersIdle } from './httpServers'
 import type { CallerLocation, SetupFactory, SetupOptions, UrlHook } from './pageSetups'
-import { html, DEFAULT_SETUPS, npmSetup, reactSetup, formatConfiguration } from './pageSetups'
+import { html, DEFAULT_SETUPS, npmSetup, appSetup, formatConfiguration } from './pageSetups'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
 import type { Extension } from './createExtension'
@@ -106,8 +106,22 @@ class TestBuilder {
     return this
   }
 
-  withReactApp(appName: string) {
-    this.setups = [{ factory: (options, servers) => reactSetup(options, servers, appName) }]
+  withApp(appName: string) {
+    this.setups = [{ factory: (options, servers) => appSetup(options, servers, appName) }]
+    return this
+  }
+
+  withVueApp() {
+    this.baseUrlHooks.push((baseUrl, servers, { rum, context }) => {
+      baseUrl.port = VUE_ROUTER_APP_PORT
+      if (rum) {
+        baseUrl.searchParams.set('rum-config', formatConfiguration(rum, servers))
+      }
+      if (context) {
+        baseUrl.searchParams.set('rum-context', JSON.stringify(context))
+      }
+    })
+    this.setups = [{ factory: () => '' }]
     return this
   }
 
@@ -211,7 +225,7 @@ class TestBuilder {
         declareTestsForSetups('rum', this.setups, setupOptions, runner)
         declareTestsForSetups(
           'rum-slim',
-          this.setups.filter((setup) => setup.factory !== npmSetup && setup.factory !== reactSetup),
+          this.setups.filter((setup) => setup.factory !== npmSetup && setup.factory !== appSetup),
           { ...setupOptions, useRumSlim: true },
           runner
         )
@@ -329,9 +343,7 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     servers.intake.bindServerApp(createIntakeServerApp(testContext.intakeRegistry))
 
     const setup = factory(setupOptions, servers)
-    servers.base.bindServerApp(
-      createMockServerApp(servers, setup, setupOptions.remoteConfiguration, setupOptions.worker)
-    )
+    servers.base.bindServerApp(createMockServerApp(servers, setup, setupOptions))
     servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
 
     await setUpTest(browserLogs, testContext)
