@@ -254,12 +254,11 @@ export interface RumInitConfiguration extends InitConfiguration {
    * - `true`: collect a set of default headers (see {@link DEFAULT_TRACKED_RESOURCE_HEADERS})
    * - `MatchOption[]`: collect default headers PLUS headers matching any item in the list
    *
+   * @category Data Collection
+   * @defaultValue false (disabled)
    * @example
    * // Collect default headers plus custom ones
    * trackResourceHeaders: ['x-request-id', /^x-custom-.+/, (name) => name.startsWith('x-org-')]
-   *
-   * @category Data Collection
-   * @defaultValue false (disabled)
    * @hidden
    */
   trackResourceHeaders?: boolean | MatchOption[] | undefined
