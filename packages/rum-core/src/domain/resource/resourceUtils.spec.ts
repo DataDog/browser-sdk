@@ -293,6 +293,17 @@ describe('computeResourceEntryDuration', () => {
       )
     ).toBe(100 as Duration)
   })
+
+  it('should use responseEnd for navigation timing entries', () => {
+    expect(
+      computeResourceEntryDuration(
+        createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
+          responseEnd: 100 as RelativeTime,
+          duration: 200 as Duration,
+        })
+      )
+    ).toBe(100 as Duration)
+  })
 })
 
 describe('shouldTrackResource', () => {

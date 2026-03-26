@@ -62,7 +62,6 @@ export interface RumPerformanceResourceTiming {
   transferSize?: number
   nextHopProtocol?: string
   renderBlockingStatus?: string
-  traceId?: string
   deliveryType?: 'cache' | 'navigational-prefetch' | ''
   contentType?: string
   toJSON(): Omit<PerformanceEntry, 'toJSON'>
