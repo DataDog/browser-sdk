@@ -1,6 +1,6 @@
 {
   "name": "browser-sdk",
-  "version": "7.0.0-alpha.0",
+  "version": "6.31.0",
   "description": "browser SDK",
   "private": true,
   "workspaces": [
