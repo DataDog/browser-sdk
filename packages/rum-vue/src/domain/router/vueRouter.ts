@@ -19,7 +19,7 @@ export function createRouter(options: RouterOptions): Router {
     if (from.matched.length > 0 && to.path === from.path) {
       return
     }
-    startVueRouterView(to.matched)
+    startVueRouterView(to.matched, to.path)
   })
 
   return router
