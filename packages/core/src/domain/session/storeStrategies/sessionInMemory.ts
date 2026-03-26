@@ -1,8 +1,8 @@
 import { getGlobalObject } from '../../../tools/globalObject'
 import { Observable } from '../../../tools/observable'
+import { shallowClone } from '../../../tools/utils/objectUtils'
 import { SessionPersistence } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
-import { shallowClone } from '../../../tools/utils/objectUtils'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './sessionStoreStrategy'
 
 export const MEMORY_SESSION_STORE_KEY = '_DD_SESSION'
@@ -28,13 +28,11 @@ export function initMemorySessionStoreStrategy(): SessionStoreStrategy {
 
   return {
     setSessionState(fn: (sessionState: SessionState) => SessionState): Promise<void> {
-      const currentState = globalObject[MEMORY_SESSION_STORE_KEY]
-        ? shallowClone(globalObject[MEMORY_SESSION_STORE_KEY])
-        : {}
-      const newState = fn(currentState)
-      globalObject[MEMORY_SESSION_STORE_KEY] = shallowClone(newState)
+      const currentState = globalObject[MEMORY_SESSION_STORE_KEY] ?? {}
+      const newState = shallowClone(fn(currentState))
+      globalObject[MEMORY_SESSION_STORE_KEY] = newState
       const result = Promise.resolve()
-      sessionObservable.notify(shallowClone(newState))
+      sessionObservable.notify(newState)
       return result
     },
     sessionObservable,
