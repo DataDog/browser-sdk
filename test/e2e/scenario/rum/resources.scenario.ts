@@ -95,7 +95,12 @@ test.describe('rum resources', () => {
   test.describe('XHR abort support', () => {
     createTest('track aborted XHR')
       .withRum()
-      .run(async ({ intakeRegistry, flushEvents, page }) => {
+      .run(async ({ intakeRegistry, flushEvents, page, browserName }) => {
+        test.skip(
+          browserName === 'webkit',
+          'WebKit does not reporte a PerformanceResourceTiming entry for aborted XHRs'
+        )
+
         await page.evaluate(
           () =>
             new Promise<void>((resolve) => {
@@ -198,7 +203,12 @@ test.describe('rum resources', () => {
   test.describe('fetch abort support', () => {
     createTest('track aborted fetch')
       .withRum()
-      .run(async ({ intakeRegistry, flushEvents, page }) => {
+      .run(async ({ intakeRegistry, flushEvents, page, browserName }) => {
+        test.skip(
+          browserName === 'webkit',
+          'WebKit does not reporte a PerformanceResourceTiming entry for aborted fetches'
+        )
+
         await page.evaluate(
           () =>
             new Promise<void>((resolve) => {
