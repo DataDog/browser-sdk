@@ -1,31 +1,32 @@
 # RUM Browser Monitoring - NEXTJS integration
 
-> **Note**: This integration is in beta. Features and configuration may change.
+**Note**: This integration is in Preview. Features and configuration are subject to change.
 
 ## Overview
 
-With the Datadog RUM Next.js integration, resolve performance issues quickly in Next.js applications by:
+The Datadog RUM Next.js integration provides framework-specific instrumentation to help you monitor and debug Next.js applications. This integration adds:
 
-- Debugging the root cause of performance bottlenecks, such as a slow server response time, render-blocking resource, or an error inside a component
-- Automatically correlating web performance data with user journeys, HTTP calls, and logs
-- Alerting your engineering teams when crucial web performance metrics (such as Core Web Vitals) fall below a threshold that results in a poor user experience
+- **Automatic route change detection** for both the App Router and Pages Router
+- **View name normalization** that converts dynamic route segments into parameterized names (e.g. `/users/123` becomes `/users/[id]`)
+- **Error reporting** with built-in components for Next.js error boundaries
+- **Full-stack visibility** by correlating frontend performance with backend traces and logs
 
-Monitor your Next.js applications from end-to-end by:
-
-- Tracking and visualizing user journeys across your entire stack with automatic route change detection for both the App Router and Pages Router
-- Automatically normalizing dynamic route segments into parameterized view names (e.g. `/users/123` to `/users/[id]`)
-- Analyzing and contextualizing every user session with attributes such as user ID, email, name, and more
-- Unifying full-stack monitoring in one platform for frontend and backend development teams
+Combined with Datadog RUM's core capabilities, you can debug performance bottlenecks, track user journeys, monitor Core Web Vitals, and analyze every user session with context.
 
 ## Setup
 
-Start by setting up [Datadog RUM][2] in your Next.js application. If you're creating a new RUM application in the Datadog App, select Next.js as the application type. If you already have an existing RUM application, you can update its type to Next.js instead. Once configured, the Datadog App will provide instructions for integrating the [RUM-Next.js plugin][8] with the Browser SDK. If Next.js is not available as an option, select React and follow the steps below to integrate the plugin manually.
+Start by setting up [Datadog RUM][1] in your Next.js application:
 
-Both routers require **Next.js v15.3+**, which supports the [`instrumentation-client`][1] file convention.
+- If you are creating a RUM application, select **Next.js** as the application type.
+- If Next.js is not available as an option, select **React** and follow the steps below to integrate the plugin manually.
 
-# App Router Usage
+After configuration, the Datadog App provides instructions for integrating the [RUM-Next.js plugin][2] with the Browser SDK.
 
-## 1. Create an `instrumentation-client.js` file in the root of your Next.js project
+Both routers require **Next.js v15.3+**, which supports the [`instrumentation-client`][3] file convention.
+
+## App router usage
+
+### 1. Create an `instrumentation-client.js` file in the root of your Next.js project
 
 Initialize the Datadog RUM SDK with the `nextjsPlugin` and re-export `onRouterTransitionStart` so Next.js can call it on client-side navigations:
 
@@ -43,7 +44,7 @@ datadogRum.init({
 })
 ```
 
-## 2. Call the DatadogAppRouter component from your root layout.
+### 2. Call the DatadogAppRouter component from your root layout.
 
 ```tsx
 // app/layout.tsx
@@ -61,7 +62,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }
 ```
 
-## 3. Report errors from error boundaries
+### 3. Report errors from error boundaries
 
 Next.js uses [error boundaries](https://nextjs.org/docs/app/api-reference/file-conventions/error) (`error.tsx` files) to catch uncaught exceptions in each route segment. Use `addNextjsError` inside these boundaries to report errors to Datadog RUM.
 
@@ -107,9 +108,9 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
 }
 ```
 
-# Pages Router Usage
+## Pages router usage
 
-## 1. Create an `instrumentation-client.js` file in the root of your Next.js project
+### 1. Create an `instrumentation-client.js` file in the root of your Next.js project
 
 Initialize the Datadog RUM SDK with the `nextjsPlugin`. The `onRouterTransitionStart` export is **not needed** for Pages Router.
 
@@ -125,7 +126,7 @@ datadogRum.init({
 })
 ```
 
-## 2. Call the DatadogPagesRouter component from your custom App.
+### 2. Call the DatadogPagesRouter component from your custom App.
 
 ```tsx
 // pages/_app.tsx
@@ -142,7 +143,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
 }
 ```
 
-## 3. Report errors from error boundaries
+### 3. Report errors from error boundaries
 
 Use the `ErrorBoundary` component in your custom App to catch React rendering errors and report them to Datadog RUM:
 
@@ -170,7 +171,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
 }
 ```
 
-## Route Tracking
+## Route tracking
 
 The `DatadogPagesRouter` and `DatadogAppRouter` components automatically track route changes and normalize dynamic segments into parameterized view names:
 
@@ -181,35 +182,28 @@ The `DatadogPagesRouter` and `DatadogAppRouter` components automatically track r
 | `/users/123/posts/456` | `/users/[userId]/posts/[postId]` |
 | `/docs/a/b/c`          | `/docs/[...slug]`                |
 
-## Go Further with Datadog Next.js Integration
+## Go further with Datadog Next.js integration
 
 ### Traces
 
-Connect your RUM and trace data to get a complete view of your application's performance. See [Connect RUM and Traces][3].
+Connect your RUM and trace data to get a complete view of your application's performance. See [Connect RUM and Traces][4].
 
 ### Logs
 
-To start forwarding your Next.js application's logs to Datadog, see [JavaScript Logs Collection][4].
+To forward your Next.js application's logs to Datadog, see [JavaScript Logs Collection][5].
 
 ### Metrics
 
-To generate custom metrics from your RUM application, see [Generate Metrics][5].
+To generate custom metrics from your RUM application, see [Generate Metrics][6].
 
 ## Troubleshooting
 
-Need help? Contact [Datadog Support][6].
+Need help? Contact [Datadog Support][7].
 
-## Further Reading
-
-Additional helpful documentation, links, and articles:
-
-- [Next.js Monitoring][7]
-
-[1]: https://nextjs.org/docs/app/api-reference/file-conventions/instrumentation-client
-[2]: https://docs.datadoghq.com/real_user_monitoring/browser/setup/client
-[3]: https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum
-[4]: https://docs.datadoghq.com/logs/log_collection/javascript/
-[5]: https://docs.datadoghq.com/real_user_monitoring/generate_metrics
-[6]: https://docs.datadoghq.com/help/
-[7]: https://docs.datadoghq.com/real_user_monitoring/browser/monitoring_page_performance/
-[8]: https://www.npmjs.com/package/@datadog/browser-rum-nextjs
+[1]: https://docs.datadoghq.com/real_user_monitoring/browser/setup/client
+[2]: https://www.npmjs.com/package/@datadog/browser-rum-nextjs
+[3]: https://nextjs.org/docs/app/api-reference/file-conventions/instrumentation-client
+[4]: https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum
+[5]: https://docs.datadoghq.com/logs/log_collection/javascript/
+[6]: https://docs.datadoghq.com/real_user_monitoring/generate_metrics
+[7]: https://docs.datadoghq.com/help/
