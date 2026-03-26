@@ -4,7 +4,7 @@ import type { Telemetry, DeflateEncoder, SessionManager } from '@datadog/browser
 import { asyncRunOnReadyState, monitorError, Observable } from '@datadog/browser-core'
 import { getSessionReplayLink } from '../domain/getSessionReplayLink'
 import { startRecorderInitTelemetry } from '../domain/startRecorderInitTelemetry'
-import type { startRecording } from './datadog-recorder'
+import type { startRecording } from './datadogRecorder'
 import { lazyLoadRecorder } from './lazyLoadRecorder'
 
 export type StartRecording = typeof startRecording

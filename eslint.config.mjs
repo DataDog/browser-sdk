@@ -303,19 +303,6 @@ export default tseslint.config(
   },
 
   {
-    // These files use kebab-case intentionally: the filename controls the chunk name produced by
-    // bundlers (webpack, Vite, Rollup, esbuild), and we want "datadog-" in the chunk name.
-    files: [
-      'packages/rum/src/boot/datadog-recorder.ts',
-      'packages/rum/src/boot/datadog-recorder.spec.ts',
-      'packages/rum/src/domain/profiling/datadog-profiler.ts',
-    ],
-    rules: {
-      'unicorn/filename-case': 'off',
-    },
-  },
-
-  {
     files: ['**/*Event.types.ts'],
     rules: {
       '@typescript-eslint/naming-convention': [

@@ -16,8 +16,8 @@ interface BundleSizes {
 function getPackageName(file: string): string | undefined {
   if (file.includes('chunk')) {
     const { chunkName, packageName } =
-      file.match(/chunks\/(?<chunkName>[a-z-]+)_[a-z0-9]+-datadog-(?<packageName>[a-z-]*)\.js/)?.groups ?? {}
-    return `${packageName}_${chunkName.replace('datadog-', '')}`
+      file.match(/chunks\/(?<chunkName>[a-zA-Z0-9]*)-[a-z0-9]*-datadog-(?<packageName>[a-z-]*)\.js/)?.groups ?? {}
+    return `${packageName}_${chunkName.replace(/^datadog/, '').toLowerCase()}`
   }
 
   return file

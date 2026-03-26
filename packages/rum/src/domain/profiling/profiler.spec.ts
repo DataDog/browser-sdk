@@ -28,7 +28,7 @@ import { mockRumConfiguration, mockViewHistory } from '../../../../rum-core/test
 import { mockProfiler } from '../../../test'
 import type { BrowserProfilerTrace } from '../../types'
 import { mockedTrace } from './test-utils/mockedTrace'
-import { createRumProfiler } from './datadog-profiler'
+import { createRumProfiler } from './datadogProfiler'
 import type { ProfilerTrace } from './types'
 import type { ProfilingContextManager } from './profilingContext'
 import { startProfilingContext } from './profilingContext'
