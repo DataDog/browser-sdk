@@ -157,7 +157,6 @@ export function startSessionManager(
       }
       scheduleExpirationTimeout(newState)
       handleStateChange(newState)
-      previousState = newState
     })
     stopCallbacks.push(() => subscription.unsubscribe())
   }
@@ -243,6 +242,8 @@ export function startSessionManager(
         currentContext.isReplayForced = !!newState.forcedReplay
       }
     }
+
+    previousState = newState
   }
 
   function expire() {
@@ -253,7 +254,6 @@ export function startSessionManager(
       delete expiredState.anonymousId
     }
     handleStateChange(expiredState)
-    previousState = expiredState
     // Persist to storage asynchronously
     strategy
       .setSessionState((state) => {

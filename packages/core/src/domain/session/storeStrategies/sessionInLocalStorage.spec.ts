@@ -1,5 +1,5 @@
 import { registerCleanupTask } from '../../../../test'
-import type { Configuration } from '../../../domain/configuration'
+import type { Configuration } from '../../configuration'
 import type { SessionState } from '../sessionState'
 import { toSessionString } from '../sessionState'
 import { initLocalStorageStrategy, selectLocalStorageStrategy } from './sessionInLocalStorage'
