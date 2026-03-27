@@ -368,26 +368,6 @@ describe('startSessionManager', () => {
       expect(sessionManager.findSession()!.id).not.toBe(initialId)
     })
 
-    it('should fire sessionStateUpdateObservable when external change has same session ID with changed properties', async () => {
-      const sessionManager = await startSessionManagerWithDefaults()
-      const updateSpy = jasmine.createSpy('sessionStateUpdate')
-      sessionManager.sessionStateUpdateObservable.subscribe(updateSpy)
-
-      const currentId = sessionManager.findSession()!.id
-      const currentState = fakeStrategy.getInternalState()
-
-      fakeStrategy.simulateExternalChange({
-        ...currentState,
-        id: currentId,
-        forcedReplay: '1',
-      })
-
-      expect(updateSpy).toHaveBeenCalledTimes(1)
-      const { previousState, newState } = updateSpy.calls.argsFor(0)[0]
-      expect(previousState.forcedReplay).toBeUndefined()
-      expect(newState.forcedReplay).toBe('1')
-    })
-
     it('should update session context in history when forcedReplay changes externally', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
       const currentId = sessionManager.findSession()!.id
@@ -705,19 +685,6 @@ describe('startSessionManager', () => {
 
       expect(fakeStrategy.setSessionState.calls.count()).toBe(callCountBefore + 1)
       expect(fakeStrategy.getInternalState().extra).toBe('value')
-    })
-
-    it('should notify sessionStateUpdateObservable', async () => {
-      const sessionManager = await startSessionManagerWithDefaults()
-      const updateSpy = jasmine.createSpy('sessionStateUpdate')
-      sessionManager.sessionStateUpdateObservable.subscribe(updateSpy)
-
-      sessionManager.updateSessionState({ extra: 'extra' })
-
-      expect(updateSpy).toHaveBeenCalledTimes(1)
-      const { previousState, newState } = updateSpy.calls.argsFor(0)[0]
-      expect(previousState.extra).toBeUndefined()
-      expect(newState.extra).toBe('extra')
     })
 
     it('should rebuild session context when forcedReplay is updated', async () => {

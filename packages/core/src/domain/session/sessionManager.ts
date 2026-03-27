@@ -29,7 +29,6 @@ export interface SessionManager {
   findTrackedSession: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => SessionContext | undefined
   renewObservable: Observable<void>
   expireObservable: Observable<void>
-  sessionStateUpdateObservable: Observable<{ previousState: SessionState; newState: SessionState }>
   expire: () => void
   updateSessionState: (state: Partial<SessionState>) => void
 }
@@ -51,7 +50,6 @@ export function startSessionManager(
 ) {
   const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
-  const sessionStateUpdateObservable = new Observable<{ previousState: SessionState; newState: SessionState }>()
 
   if (!configuration.sessionStoreStrategyType) {
     display.warn('No storage available for session. We will not send any data.')
@@ -64,8 +62,6 @@ export function startSessionManager(
     expireDelay: SESSION_CONTEXT_TIMEOUT_DELAY,
   })
   stopCallbacks.push(() => sessionContextHistory.stop())
-
-  let previousState: SessionState = {}
 
   const { throttled: throttledExpandOrRenew, cancel: cancelExpandOrRenew } = throttle(() => {
     strategy.setSessionState((state) => expandOrRenew(state, configuration)).catch(monitorError)
@@ -108,7 +104,6 @@ export function startSessionManager(
   }
 
   function subscribeToSessionChanges(initialState: SessionState) {
-    previousState = initialState
     sessionContextHistory.add(buildSessionContext(initialState), clocksOrigin().relative)
 
     scheduleExpirationTimeout(initialState)
@@ -172,7 +167,6 @@ export function startSessionManager(
       },
       renewObservable,
       expireObservable,
-      sessionStateUpdateObservable,
       expire,
       updateSessionState: (partialState) => {
         strategy.setSessionState((state) => ({ ...state, ...partialState })).catch(monitorError)
@@ -181,9 +175,10 @@ export function startSessionManager(
   }
 
   function handleStateChange(newState: SessionState) {
-    const hadSession = previousState.id !== undefined
+    const previousSession = sessionContextHistory.find()
+    const hadSession = previousSession?.id !== undefined
     const hasSession = newState.id !== undefined
-    const sessionIdChanged = hadSession && hasSession && previousState.id !== newState.id
+    const sessionIdChanged = hadSession && hasSession && previousSession.id !== newState.id
 
     if (hadSession && (!hasSession || sessionIdChanged)) {
       // Session expired or replaced
@@ -196,22 +191,17 @@ export function startSessionManager(
       sessionContextHistory.add(buildSessionContext(newState), relativeNow())
       renewObservable.notify()
     } else if (hadSession && hasSession && !sessionIdChanged) {
-      // Same session, check for property changes
-      sessionStateUpdateObservable.notify({ previousState, newState })
+      // Same session,
       // Mutate the session context in the history for replay forced changes
-      const currentContext = sessionContextHistory.find()
-      if (currentContext) {
-        currentContext.isReplayForced = !!newState.forcedReplay
-      }
-    }
 
-    previousState = newState
+      previousSession.isReplayForced = !!newState.forcedReplay
+    }
   }
 
   function expire() {
     cancelExpandOrRenew()
     // Update in-memory state synchronously so events stop being collected immediately
-    const expiredState = getExpiredSessionState(previousState, configuration)
+    const expiredState = getExpiredSessionState(sessionContextHistory.find(), configuration)
     if (!trackingConsentState.isGranted()) {
       delete expiredState.anonymousId
     }
@@ -256,7 +246,6 @@ export function startSessionManagerStub(onReady: (sessionManager: SessionManager
     findTrackedSession: () => sessionContext,
     renewObservable: new Observable(),
     expireObservable: new Observable(),
-    sessionStateUpdateObservable: new Observable(),
     expire: noop,
     updateSessionState: (state) => {
       sessionContext = {

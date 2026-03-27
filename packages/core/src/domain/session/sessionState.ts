@@ -12,12 +12,13 @@ export interface SessionState {
   created?: string
   expire?: string
   isExpired?: typeof EXPIRED
+  anonymousId?: string
 
   [key: string]: string | undefined
 }
 
 export function getExpiredSessionState(
-  previousSessionState: SessionState | undefined,
+  previousSessionState: { anonymousId?: string } | undefined,
   configuration: Configuration
 ): SessionState {
   const expiredSessionState: SessionState = {
