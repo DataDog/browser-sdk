@@ -125,20 +125,6 @@ class TestBuilder {
     return this
   }
 
-  withVueApp() {
-    this.baseUrlHooks.push((baseUrl, servers, { rum, context }) => {
-      baseUrl.port = VUE_ROUTER_APP_PORT
-      if (rum) {
-        baseUrl.searchParams.set('rum-config', formatConfiguration(rum, servers))
-      }
-      if (context) {
-        baseUrl.searchParams.set('rum-context', JSON.stringify(context))
-      }
-    })
-    this.setups = [{ factory: () => '' }]
-    return this
-  }
-
   withNextjsApp(router: 'app' | 'pages') {
     const basePath = router === 'pages' ? '/pages-router' : ''
     this.baseUrlHooks.push((baseUrl, servers, { rum, context }) => {
