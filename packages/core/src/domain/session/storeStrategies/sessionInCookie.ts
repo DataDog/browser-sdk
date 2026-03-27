@@ -2,12 +2,7 @@ import { isEmptyObject } from '../../../tools/utils/objectUtils'
 import type { CookieOptions } from '../../../browser/cookie'
 import { getCurrentSite, areCookiesAuthorized } from '../../../browser/cookie'
 import type { Configuration, InitConfiguration } from '../../configuration'
-import {
-  SESSION_COOKIE_EXPIRATION_DELAY,
-  SESSION_EXPIRATION_DELAY,
-  SESSION_TIME_OUT_DELAY,
-  SessionPersistence,
-} from '../sessionConstants'
+import { SESSION_COOKIE_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY, SessionPersistence } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
 import { toSessionString, toSessionState } from '../sessionState'
 import { Observable } from '../../../tools/observable'
@@ -50,7 +45,7 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
       const currentState = findMatchingSessionState(cookieValues, opts)
       const newState = fn(currentState)
       const sessionString = buildSessionString(newState, cookieOptions)
-      const expireDelay = computeExpireDelay(trackAnonymousUser, newState)
+      const expireDelay = trackAnonymousUser ? SESSION_COOKIE_EXPIRATION_DELAY : SESSION_TIME_OUT_DELAY
 
       return { value: sessionString, expireDelay }
     })
@@ -84,18 +79,6 @@ function findMatchingSessionState(items: string[], opts: string): SessionState {
   delete sessionState?.c
 
   return sessionState ?? {}
-}
-
-function computeExpireDelay(trackAnonymousUser: boolean, sessionState: SessionState): number {
-  // Cookie expiration logic:
-  // - trackAnonymousUser=true: always use 1 year (keep cookie alive for device ID)
-  // - trackAnonymousUser=false + active session: 15 min (activity-based renewal)
-  // - trackAnonymousUser=false + expired session: 4h (absolute timeout)
-  return trackAnonymousUser
-    ? SESSION_COOKIE_EXPIRATION_DELAY
-    : sessionState.isExpired
-      ? SESSION_TIME_OUT_DELAY
-      : SESSION_EXPIRATION_DELAY
 }
 
 function buildSessionString(sessionState: SessionState, cookieOptions: CookieOptions): string {

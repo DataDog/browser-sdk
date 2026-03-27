@@ -3,7 +3,7 @@ import { createCookieAccess } from '../../../browser/cookieAccess'
 import { Observable } from '../../../tools/observable'
 import type { SessionState } from '../sessionState'
 import type { Configuration, InitConfiguration } from '../../configuration'
-import { SESSION_COOKIE_EXPIRATION_DELAY, SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from '../sessionConstants'
+import { SESSION_COOKIE_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from '../sessionConstants'
 import { buildCookieOptions, selectCookieStrategy, initCookieStrategy } from './sessionInCookie'
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'abc', trackAnonymousUser: true }
@@ -215,18 +215,10 @@ describe('session in cookie strategy', () => {
       expect(mockCookie.getLastExpireDelay()).toBe(SESSION_COOKIE_EXPIRATION_DELAY)
     })
 
-    it('should use 15 min expiration for active session when trackAnonymousUser=false', async () => {
+    it('should use 4h expiration when trackAnonymousUser=false', async () => {
       const { strategy, mockCookie } = setupCookieStrategy({ trackAnonymousUser: false })
 
       await strategy.setSessionState(() => ({ id: '123', created: '0' }))
-
-      expect(mockCookie.getLastExpireDelay()).toBe(SESSION_EXPIRATION_DELAY)
-    })
-
-    it('should use 4h expiration for expired session when trackAnonymousUser=false', async () => {
-      const { strategy, mockCookie } = setupCookieStrategy({ trackAnonymousUser: false })
-
-      await strategy.setSessionState(() => ({ isExpired: '1' }))
 
       expect(mockCookie.getLastExpireDelay()).toBe(SESSION_TIME_OUT_DELAY)
     })
