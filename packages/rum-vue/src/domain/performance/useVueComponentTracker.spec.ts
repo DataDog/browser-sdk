@@ -1,30 +1,52 @@
-import { defineComponent, h } from 'vue'
-import { mount } from '@vue/test-utils'
+import { createApp, defineComponent, h, nextTick, ref } from 'vue'
 import { initializeVuePlugin } from '../../../test/initializeVuePlugin'
-import { mockClock } from '../../../../core/test'
+import { mockClock, registerCleanupTask } from '../../../../core/test'
 // eslint-disable-next-line camelcase
 import { UNSTABLE_useVueComponentTracker } from './useVueComponentTracker'
 
 const MOUNT_DURATION = 50
 
+// Avoid @vue/test-utils to prevent Object.fromEntries compatibility issues on older browsers (Chrome 63)
+function mountTrackedComponent(renderFn?: () => ReturnType<typeof h>) {
+  const container = document.createElement('div')
+  document.body.appendChild(container)
+
+  const count = ref(0)
+
+  const TrackedComponent = defineComponent({
+    setup() {
+      UNSTABLE_useVueComponentTracker('MyComponent')
+      return { count }
+    },
+    render() {
+      if (renderFn) {
+        return renderFn()
+      }
+      return h('div', this.count)
+    },
+  })
+
+  const app = createApp(TrackedComponent)
+  app.mount(container)
+
+  registerCleanupTask(() => {
+    app.unmount()
+    container.remove()
+  })
+
+  return { count, app }
+}
+
 describe('UNSTABLE_useVueComponentTracker', () => {
-  it('reports a vueComponentRender vital on mount', async () => {
+  it('reports a vueComponentRender vital on mount', () => {
     const addDurationVitalSpy = jasmine.createSpy()
     const clock = mockClock()
     initializeVuePlugin({ publicApi: { addDurationVital: addDurationVitalSpy } })
 
-    const TrackedComponent = defineComponent({
-      setup() {
-        UNSTABLE_useVueComponentTracker('MyComponent')
-      },
-      render() {
-        clock.tick(MOUNT_DURATION)
-        return h('div')
-      },
+    mountTrackedComponent(() => {
+      clock.tick(MOUNT_DURATION)
+      return h('div')
     })
-
-    // eslint-disable-next-line @typescript-eslint/await-thenable
-    await mount(TrackedComponent)
 
     expect(addDurationVitalSpy).toHaveBeenCalledTimes(1)
     const [name, options] = addDurationVitalSpy.calls.mostRecent().args
@@ -44,19 +66,9 @@ describe('UNSTABLE_useVueComponentTracker', () => {
     const addDurationVitalSpy = jasmine.createSpy()
     initializeVuePlugin({ publicApi: { addDurationVital: addDurationVitalSpy } })
 
-    const TrackedComponent = defineComponent({
-      props: ['count'],
-      setup() {
-        UNSTABLE_useVueComponentTracker('MyComponent')
-      },
-      render() {
-        return h('div', this.count)
-      },
-    })
-
-    // eslint-disable-next-line @typescript-eslint/await-thenable
-    const wrapper = await mount(TrackedComponent, { props: { count: 0 } })
-    await wrapper.setProps({ count: 1 })
+    const { count } = mountTrackedComponent()
+    count.value++
+    await nextTick()
 
     expect(addDurationVitalSpy).toHaveBeenCalledTimes(2)
     const options = addDurationVitalSpy.calls.mostRecent().args[1]
