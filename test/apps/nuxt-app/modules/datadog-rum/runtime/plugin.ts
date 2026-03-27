@@ -15,6 +15,6 @@ export default defineNuxtPlugin((nuxtApp) => {
   startTrackingNuxtViews(useRouter())
 
   nuxtApp.hook('vue:error', (error, instance, info) => {
-    addNuxtError(error, instance as any, info as string)
+    addNuxtError(error, instance, info)
   })
 })

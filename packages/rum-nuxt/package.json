@@ -1,60 +1,60 @@
 {
-    "name": "@datadog/browser-rum-nuxt",
-    "license": "Apache-2.0",
-    "main": "cjs/entries/main.js",
-    "module": "esm/entries/main.js",
-    "types": "cjs/entries/main.d.ts",
-    "files": [
-        "cjs",
-        "esm",
-        "src",
-        "!src/**/*.spec.ts",
-        "!src/**/*.specHelper.ts"
-    ],
-    "scripts": {
-        "build": "node ../../scripts/build/build-package.ts --modules",
-        "prepack": "yarn build"
+  "name": "@datadog/browser-rum-nuxt",
+  "license": "Apache-2.0",
+  "main": "cjs/entries/main.js",
+  "module": "esm/entries/main.js",
+  "types": "cjs/entries/main.d.ts",
+  "files": [
+    "cjs",
+    "esm",
+    "src",
+    "!src/**/*.spec.ts",
+    "!src/**/*.specHelper.ts"
+  ],
+  "scripts": {
+    "build": "node ../../scripts/build/build-package.ts --modules",
+    "prepack": "yarn build"
+  },
+  "dependencies": {
+    "@datadog/browser-core": "6.32.0",
+    "@datadog/browser-rum-core": "6.32.0"
+  },
+  "peerDependencies": {
+    "nuxt": ">=3.0.0",
+    "vue": "^3.5.0",
+    "vue-router": "^4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@datadog/browser-rum": {
+      "optional": true
     },
-    "dependencies": {
-        "@datadog/browser-core": "6.32.0",
-        "@datadog/browser-rum-core": "6.32.0"
+    "@datadog/browser-rum-slim": {
+      "optional": true
     },
-    "peerDependencies": {
-        "nuxt": ">=3.0.0",
-        "vue": "^3.5.0",
-        "vue-router": "^4.0.0"
+    "nuxt": {
+      "optional": true
     },
-    "peerDependenciesMeta": {
-        "@datadog/browser-rum": {
-            "optional": true
-        },
-        "@datadog/browser-rum-slim": {
-            "optional": true
-        },
-        "nuxt": {
-            "optional": true
-        },
-        "vue": {
-            "optional": true
-        },
-        "vue-router": {
-            "optional": true
-        }
+    "vue": {
+      "optional": true
     },
-    "devDependencies": {
-        "vue": "3.5.29",
-        "vue-router": "4.6.4"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/DataDog/browser-sdk.git",
-        "directory": "packages/rum-nuxt"
-    },
-    "volta": {
-        "extends": "../../package.json"
-    },
-    "private": true,
-    "publishConfig": {
-        "access": "public"
+    "vue-router": {
+      "optional": true
     }
+  },
+  "devDependencies": {
+    "vue": "3.5.29",
+    "vue-router": "4.6.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DataDog/browser-sdk.git",
+    "directory": "packages/rum-nuxt"
+  },
+  "volta": {
+    "extends": "../../package.json"
+  },
+  "private": true,
+  "publishConfig": {
+    "access": "public"
+  }
 }
