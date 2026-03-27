@@ -16,8 +16,8 @@
         "prepack": "yarn build"
     },
     "dependencies": {
-        "@datadog/browser-core": "6.31.0",
-        "@datadog/browser-rum-core": "6.31.0"
+        "@datadog/browser-core": "6.32.0",
+        "@datadog/browser-rum-core": "6.32.0"
     },
     "peerDependencies": {
         "nuxt": ">=3.0.0",
