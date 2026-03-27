@@ -104,9 +104,6 @@ export function startSessionManager(
 
   function subscribeToSessionChanges() {
     const subscription = strategy.sessionObservable.subscribe((newState) => {
-      if (isSessionInExpiredState(newState)) {
-        newState = getExpiredSessionState(newState, configuration)
-      }
       scheduleExpirationTimeout(newState)
       handleStateChange(newState)
     })
