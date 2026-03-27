@@ -1,28 +1,41 @@
-import { mockClock, mockCookies, registerCleanupTask } from '../../../../test'
-import { deleteCookie, getCookie, setCookie } from '../../../browser/cookie'
+import { registerCleanupTask, replaceMockable, mockCookies } from '../../../../test'
+import { createCookieAccess } from '../../../browser/cookieAccess'
+import { Observable } from '../../../tools/observable'
 import type { SessionState } from '../sessionState'
 import type { Configuration, InitConfiguration } from '../../configuration'
-import { WATCH_COOKIE_INTERVAL_DELAY } from '../../../browser/cookieAccess'
 import { SESSION_COOKIE_EXPIRATION_DELAY, SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from '../sessionConstants'
 import { buildCookieOptions, selectCookieStrategy, initCookieStrategy } from './sessionInCookie'
-import { SESSION_STORE_KEY } from './sessionStoreStrategy'
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'abc', trackAnonymousUser: true }
 
-/**
- * Disable the CookieStore API so the cookie observable falls back to polling.
- * This makes the tests deterministic since we can control time with mockClock.
- */
-function disableCookieStore() {
-  const original = Object.getOwnPropertyDescriptor(window, 'cookieStore')
-  Object.defineProperty(window, 'cookieStore', { get: () => undefined, configurable: true })
-  registerCleanupTask(() => {
-    if (original) {
-      Object.defineProperty(window, 'cookieStore', original)
-    } else {
-      delete (window as { cookieStore?: unknown }).cookieStore
-    }
-  })
+function createMockCookieAccess() {
+  let storedValues: string[] = []
+  let lastExpireDelay: number | undefined
+  const observable = new Observable<string | undefined>()
+
+  return {
+    mockCookieAccess: {
+      getAllAndSet(cb: (values: string[]) => { value: string; expireDelay: number }): Promise<void> {
+        const { value, expireDelay } = cb(storedValues)
+        storedValues = value ? [value] : []
+        lastExpireDelay = expireDelay
+        observable.notify(value)
+        return Promise.resolve()
+      },
+      observable,
+    },
+    mockCookie: {
+      getStoredValues: () => storedValues,
+      getLastExpireDelay: () => lastExpireDelay,
+      simulateExternalChange: (value: string) => {
+        storedValues = value ? [value] : []
+        observable.notify(value)
+      },
+      setAllValues: (values: string[]) => {
+        storedValues = values
+      },
+    },
+  }
 }
 
 function setupCookieStrategy(partialInitConfiguration: Partial<InitConfiguration> = {}) {
@@ -34,29 +47,24 @@ function setupCookieStrategy(partialInitConfiguration: Partial<InitConfiguration
   const cookieOptions = buildCookieOptions(initConfiguration)!
   const configuration = { trackAnonymousUser: initConfiguration.trackAnonymousUser ?? true } as Configuration
 
-  registerCleanupTask(() => deleteCookie(SESSION_STORE_KEY, cookieOptions))
+  const { mockCookieAccess, mockCookie } = createMockCookieAccess()
+  replaceMockable(createCookieAccess, () => mockCookieAccess)
 
   return {
     strategy: initCookieStrategy(cookieOptions, configuration),
     cookieOptions,
+    mockCookie,
   }
 }
 
 describe('session in cookie strategy', () => {
-  let clock: ReturnType<typeof mockClock>
-
-  beforeEach(() => {
-    disableCookieStore()
-    clock = mockClock()
-  })
-
   describe('setSessionState', () => {
     it('should read cookie, apply fn, and write back', async () => {
-      const { strategy } = setupCookieStrategy()
+      const { strategy, mockCookie } = setupCookieStrategy()
 
       await strategy.setSessionState((state) => ({ ...state, id: 'abc123' }))
 
-      expect(getCookie(SESSION_STORE_KEY)).toContain('id=abc123')
+      expect(mockCookie.getStoredValues()[0]).toContain('id=abc123')
     })
 
     it('should start with empty state when nothing stored', async () => {
@@ -72,9 +80,8 @@ describe('session in cookie strategy', () => {
     })
 
     it('should read existing state from cookie', async () => {
-      const { strategy } = setupCookieStrategy()
-
-      await strategy.setSessionState(() => ({ id: 'existing', created: '0' }))
+      const { strategy, mockCookie } = setupCookieStrategy()
+      mockCookie.setAllValues(['id=123&c=0'])
 
       let capturedState: SessionState | undefined
       await strategy.setSessionState((state) => {
@@ -82,20 +89,20 @@ describe('session in cookie strategy', () => {
         return state
       })
 
-      expect(capturedState!.id).toBe('existing')
+      expect(capturedState!.id).toBe('123')
     })
 
     it('should add c=xxx to cookie on write', async () => {
-      const { strategy } = setupCookieStrategy()
+      const { strategy, mockCookie } = setupCookieStrategy()
 
       await strategy.setSessionState(() => ({ id: 'abc' }))
 
-      const cookieValue = getCookie(SESSION_STORE_KEY)
-      expect(cookieValue).toContain('c=0')
+      expect(mockCookie.getStoredValues()[0]).toContain('c=0')
     })
 
     it('should strip c from state passed to fn', async () => {
-      const { strategy } = setupCookieStrategy()
+      const { strategy, mockCookie } = setupCookieStrategy()
+      mockCookie.setAllValues(['id=123&c=0'])
 
       let capturedState: SessionState | undefined
       await strategy.setSessionState((state) => {
@@ -106,54 +113,54 @@ describe('session in cookie strategy', () => {
       expect(capturedState!.c).toBeUndefined()
     })
 
-    it('should strip c from state emitted via observable', async () => {
-      const { strategy } = setupCookieStrategy()
+    it('should strip c from state emitted via observable', () => {
+      const { strategy, mockCookie } = setupCookieStrategy()
       const spy = jasmine.createSpy<(state: SessionState) => void>('observer')
       const subscription = strategy.sessionObservable.subscribe(spy)
       registerCleanupTask(() => subscription.unsubscribe())
 
-      await strategy.setSessionState(() => ({ id: 'test' }))
-      clock.tick(WATCH_COOKIE_INTERVAL_DELAY)
+      // Simulate an external change that the cookie observable would report
+      mockCookie.simulateExternalChange('id=test&c=0')
 
-      expect(spy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ id: 'test' }))
-      expect(spy.calls.mostRecent().args[0].c).toBeUndefined()
+      expect(spy).toHaveBeenCalledOnceWith({ id: 'test' })
     })
 
     it('should not write c to cookie when state is empty (deletes cookie)', async () => {
-      const { strategy } = setupCookieStrategy()
+      const { strategy, mockCookie } = setupCookieStrategy()
+      mockCookie.setAllValues(['id=123&c=0'])
 
       await strategy.setSessionState(() => ({}))
 
-      expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
+      expect(mockCookie.getStoredValues()).toEqual([])
     })
 
     it('should ignore observable updates from cookies with non-matching c marker', () => {
-      const { strategy } = setupCookieStrategy()
+      const { strategy, mockCookie } = setupCookieStrategy()
       const spy = jasmine.createSpy<(state: SessionState) => void>('observer')
       const subscription = strategy.sessionObservable.subscribe(spy)
       registerCleanupTask(() => subscription.unsubscribe())
 
       // Simulate an external write with a different c marker (e.g. partitioned cookie)
-      setCookie(SESSION_STORE_KEY, 'id=foreign&c=ff', SESSION_EXPIRATION_DELAY)
-      clock.tick(WATCH_COOKIE_INTERVAL_DELAY)
+      mockCookie.simulateExternalChange('id=foreign&c=ff')
 
       expect(spy).not.toHaveBeenCalled()
     })
 
     it('should notify sessionObservable after write', async () => {
       const { strategy } = setupCookieStrategy()
-      const spy = jasmine.createSpy('observer')
+      const spy = jasmine.createSpy<(state: SessionState) => void>('observer')
       const subscription = strategy.sessionObservable.subscribe(spy)
       registerCleanupTask(() => subscription.unsubscribe())
 
-      await strategy.setSessionState((state) => ({ ...state, id: 'test-id' }))
-      clock.tick(WATCH_COOKIE_INTERVAL_DELAY)
+      // Simulate an external change matching our c marker
+      // mockCookie.simulateExternalChange('id=test-id&c=0')
+      await strategy.setSessionState(() => ({ id: '123' }))
 
-      expect(spy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ id: 'test-id' }))
+      expect(spy).toHaveBeenCalledOnceWith({ id: '123' })
     })
 
     it('should queue setSessionState calls and process them sequentially', async () => {
-      const { strategy } = setupCookieStrategy()
+      const { strategy, mockCookie } = setupCookieStrategy()
       const calls: string[] = []
 
       void strategy.setSessionState((state) => {
@@ -167,15 +174,14 @@ describe('session in cookie strategy', () => {
       })
 
       expect(calls).toEqual(['first', 'second'])
-      expect(getCookie(SESSION_STORE_KEY)).toContain('id=second')
+      expect(mockCookie.getStoredValues()[0]).toContain('id=second')
     })
   })
 
   describe('cookie options matching', () => {
     it('should match the cookie by c=xxx when multiple cookies exist', async () => {
-      spyOnProperty(document, 'cookie', 'get').and.returnValue('_dd_s=id=123&c=0;_dd_s=id=456&c=1;_dd_s=id=789&c=2')
-
-      const { strategy } = setupCookieStrategy({ usePartitionedCrossSiteSessionCookie: true })
+      const { strategy, mockCookie } = setupCookieStrategy({ usePartitionedCrossSiteSessionCookie: true })
+      mockCookie.setAllValues(['id=123&c=0', 'id=456&c=1', 'id=789&c=2'])
 
       let capturedState: SessionState = {}
       await strategy.setSessionState((state) => {
@@ -187,9 +193,8 @@ describe('session in cookie strategy', () => {
     })
 
     it('should return state from first cookie if there is no match', async () => {
-      spyOnProperty(document, 'cookie', 'get').and.returnValue('_dd_s=id=123&c=0;_dd_s=id=789&c=2')
-
-      const { strategy } = setupCookieStrategy({ usePartitionedCrossSiteSessionCookie: true })
+      const { strategy, mockCookie } = setupCookieStrategy()
+      mockCookie.setAllValues(['id=123&c=1', 'id=789&c=2'])
 
       let capturedState: SessionState = {}
       await strategy.setSessionState((state) => {
@@ -203,36 +208,27 @@ describe('session in cookie strategy', () => {
 
   describe('cookie expiration', () => {
     it('should use 1 year expiration when trackAnonymousUser=true', async () => {
-      const { strategy } = setupCookieStrategy({ trackAnonymousUser: true })
-      const cookieSetSpy = spyOnProperty(document, 'cookie', 'set')
+      const { strategy, mockCookie } = setupCookieStrategy({ trackAnonymousUser: true })
 
       await strategy.setSessionState(() => ({ id: '123', created: '0' }))
 
-      expect(cookieSetSpy.calls.argsFor(0)[0]).toContain(
-        new Date(clock.timeStamp(SESSION_COOKIE_EXPIRATION_DELAY)).toUTCString()
-      )
+      expect(mockCookie.getLastExpireDelay()).toBe(SESSION_COOKIE_EXPIRATION_DELAY)
     })
 
     it('should use 15 min expiration for active session when trackAnonymousUser=false', async () => {
-      const { strategy } = setupCookieStrategy({ trackAnonymousUser: false })
-      const cookieSetSpy = spyOnProperty(document, 'cookie', 'set')
+      const { strategy, mockCookie } = setupCookieStrategy({ trackAnonymousUser: false })
 
       await strategy.setSessionState(() => ({ id: '123', created: '0' }))
 
-      expect(cookieSetSpy.calls.argsFor(0)[0]).toContain(
-        new Date(clock.timeStamp(SESSION_EXPIRATION_DELAY)).toUTCString()
-      )
+      expect(mockCookie.getLastExpireDelay()).toBe(SESSION_EXPIRATION_DELAY)
     })
 
     it('should use 4h expiration for expired session when trackAnonymousUser=false', async () => {
-      const { strategy } = setupCookieStrategy({ trackAnonymousUser: false })
-      const cookieSetSpy = spyOnProperty(document, 'cookie', 'set')
+      const { strategy, mockCookie } = setupCookieStrategy({ trackAnonymousUser: false })
 
       await strategy.setSessionState(() => ({ isExpired: '1' }))
 
-      expect(cookieSetSpy.calls.argsFor(0)[0]).toContain(
-        new Date(clock.timeStamp(SESSION_TIME_OUT_DELAY)).toUTCString()
-      )
+      expect(mockCookie.getLastExpireDelay()).toBe(SESSION_TIME_OUT_DELAY)
     })
   })
 
@@ -275,22 +271,19 @@ describe('session in cookie strategy', () => {
 
   describe('c=xxx encoding', () => {
     it('should encode cookie options in the cookie value', async () => {
-      const cookieSetSpy = spyOnProperty(document, 'cookie', 'set')
-      const { strategy } = setupCookieStrategy({ usePartitionedCrossSiteSessionCookie: true })
+      const { strategy, mockCookie } = setupCookieStrategy({ usePartitionedCrossSiteSessionCookie: true })
 
       await strategy.setSessionState(() => ({ id: '123' }))
 
-      const calls = cookieSetSpy.calls.all()
-      const lastCall = calls[calls.length - 1]
-      expect(lastCall.args[0]).toMatch(/^_dd_s=id=123&c=1/)
+      expect(mockCookie.getStoredValues()[0]).toMatch(/^id=123&c=1/)
     })
 
     it('should not encode cookie options in the cookie value if the session is empty', async () => {
-      const { strategy } = setupCookieStrategy({ usePartitionedCrossSiteSessionCookie: true })
+      const { strategy, mockCookie } = setupCookieStrategy({ usePartitionedCrossSiteSessionCookie: true })
 
       await strategy.setSessionState(() => ({}))
 
-      expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
+      expect(mockCookie.getStoredValues()).toEqual([])
     })
   })
 })

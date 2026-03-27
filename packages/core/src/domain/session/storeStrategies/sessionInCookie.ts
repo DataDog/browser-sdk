@@ -11,6 +11,7 @@ import {
 import type { SessionState } from '../sessionState'
 import { toSessionString, toSessionState } from '../sessionState'
 import { Observable } from '../../../tools/observable'
+import { mockable } from '../../../tools/mockable'
 import { createCookieAccess } from '../../../browser/cookieAccess'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
@@ -30,7 +31,7 @@ let pendingChain: Promise<void> | undefined
 export function initCookieStrategy(cookieOptions: CookieOptions, configuration: Configuration): SessionStoreStrategy {
   const sessionObservable = new Observable<SessionState>()
 
-  const cookieAccess = createCookieAccess(SESSION_STORE_KEY, configuration, cookieOptions)
+  const cookieAccess = mockable(createCookieAccess)(SESSION_STORE_KEY, configuration, cookieOptions)
   const trackAnonymousUser = !!configuration.trackAnonymousUser
   const opts = encodeCookieOptions(cookieOptions)
 
