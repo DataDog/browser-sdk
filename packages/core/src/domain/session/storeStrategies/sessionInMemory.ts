@@ -7,7 +7,7 @@ import type { SessionStoreStrategy, SessionStoreStrategyType } from './sessionSt
 
 export const MEMORY_SESSION_STORE_KEY = '_DD_SESSION'
 
-interface MemorySession {
+export interface MemorySession {
   state?: SessionState
   onChange?: (state: SessionState) => void
 }
