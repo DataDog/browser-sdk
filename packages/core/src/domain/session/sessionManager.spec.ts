@@ -755,7 +755,7 @@ describe('startSessionManager', () => {
       setupFakeStrategy({
         initialSession: {
           id: 'old-session',
-          created: String(Date.now() - SESSION_TIME_OUT_DELAY),
+          created: String(Date.now() - SESSION_TIME_OUT_DELAY - 1),
           expire: String(Date.now() + SESSION_EXPIRATION_DELAY),
         },
       })

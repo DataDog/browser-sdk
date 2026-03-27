@@ -85,7 +85,9 @@ export function startSessionManager(
       return
     }
 
-    subscribeToSessionChanges(initialState)
+    sessionContextHistory.add(buildSessionContext(initialState), clocksOrigin().relative)
+    scheduleExpirationTimeout(initialState)
+    subscribeToSessionChanges()
     setupSessionTracking()
     onReady(buildSessionManager())
   })().catch(monitorError)
@@ -93,21 +95,14 @@ export function startSessionManager(
   async function resolveInitialState() {
     let state: SessionState = {}
     await strategy.setSessionState((currentState) => {
-      const init = initializeSession(currentState, configuration)
-      state = expandOrRenew(init, configuration)
+      const initialState = initializeSession(currentState, configuration)
+      state = expandOrRenew(initialState, configuration)
       return state
     })
-    if (isSessionInExpiredState(state)) {
-      state = getExpiredSessionState(state, configuration)
-    }
     return state
   }
 
-  function subscribeToSessionChanges(initialState: SessionState) {
-    sessionContextHistory.add(buildSessionContext(initialState), clocksOrigin().relative)
-
-    scheduleExpirationTimeout(initialState)
-
+  function subscribeToSessionChanges() {
     const subscription = strategy.sessionObservable.subscribe((newState) => {
       if (isSessionInExpiredState(newState)) {
         newState = getExpiredSessionState(newState, configuration)

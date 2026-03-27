@@ -27,6 +27,9 @@ export function getExpiredSessionState(
   if (configuration.trackAnonymousUser && previousSessionState?.anonymousId) {
     expiredSessionState.anonymousId = previousSessionState?.anonymousId
   }
+
+  // TODO: should we also keep forceReplay?
+
   return expiredSessionState
 }
 
@@ -95,22 +98,29 @@ export function initializeSession(state: SessionState, configuration: Configurat
 }
 
 export function expandOrRenew(state: SessionState, configuration: Configuration): SessionState {
+  // prevent renewing if state is altered by a 3rd party (e.g. adblocker deleting the cookie)
   if (isSessionInNotStartedState(state)) {
     return state
   }
 
-  if (!state.id) {
-    state.id = generateUUID()
-    state.created = String(dateNow())
-  }
-  if (configuration.trackAnonymousUser && !state.anonymousId) {
-    state.anonymousId = generateUUID()
+  let newState = state
+
+  if (isSessionInExpiredState(state)) {
+    newState = getExpiredSessionState(state, configuration)
   }
 
-  delete state.isExpired
-  expandSessionState(state)
+  if (!newState.id) {
+    newState.id = generateUUID()
+    newState.created = String(dateNow())
+  }
+  if (configuration.trackAnonymousUser && !newState.anonymousId) {
+    newState.anonymousId = generateUUID()
+  }
 
-  return state
+  delete newState.isExpired
+  expandSessionState(newState)
+
+  return newState
 }
 
 export function expandOnly(state: SessionState): SessionState {
