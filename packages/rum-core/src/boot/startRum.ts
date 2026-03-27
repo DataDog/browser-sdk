@@ -7,7 +7,6 @@ import type {
   BufferedData,
   BufferedObservable,
   Telemetry,
-  PageExitReason,
 } from '@datadog/browser-core'
 import {
   sendToExtension,
@@ -89,16 +88,6 @@ export function startRum(
   }
 
   const pageMayExitObservable = createPageMayExitObservable(configuration)
-  let pendingPageExitReason: PageExitReason | undefined
-  const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => {
-    pendingPageExitReason = event.reason
-    try {
-      lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, event)
-    } finally {
-      pendingPageExitReason = undefined
-    }
-  })
-  cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
 
   const session = !canUseEventBridge()
     ? startRumSessionManager(configuration, lifeCycle, trackingConsentState)
@@ -111,13 +100,20 @@ export function startRum(
       reportError,
       pageMayExitObservable,
       session.expireObservable,
-      createEncoder,
-      () => pendingPageExitReason
+      createEncoder
     )
+    const preparePageExitSubscription = batch.flushController.preparePageExitFlushObservable.subscribe((reason) => {
+      lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, { reason })
+    })
+    cleanupTasks.push(() => preparePageExitSubscription.unsubscribe())
     cleanupTasks.push(() => batch.stop())
     startCustomerDataTelemetry(telemetry, lifeCycle, batch.flushController.flushObservable)
   } else {
     startRumEventBridge(lifeCycle)
+    const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => {
+      lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, event)
+    })
+    cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
   }
 
   startTrackingConsentContext(hooks, trackingConsentState)

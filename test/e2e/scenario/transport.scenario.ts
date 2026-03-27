@@ -34,8 +34,6 @@ test.describe('transport', () => {
         // 2. The final view update batch, flushed due to beforeunload
         const [penultimateBatch, finalBatch] = intakeRegistry.rumRequests.slice(-2)
 
-        console.log(intakeRegistry.rumRequests.map((r) => r.events.map((e) => e.type)))
-
         // The action event should be present in one of the batches
         expect(
           penultimateBatch.events.some((e) => e.type === 'action') || finalBatch.events.some((e) => e.type === 'action')

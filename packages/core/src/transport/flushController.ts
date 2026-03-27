@@ -31,7 +31,6 @@ export interface FlushEvent {
 interface FlushControllerOptions {
   pageMayExitObservable: Observable<PageMayExitEvent>
   sessionExpireObservable: Observable<void>
-  getPageExitContext?: () => PageExitReason | undefined
 }
 
 /**
@@ -39,12 +38,18 @@ interface FlushControllerOptions {
  * to happen. The implementation is designed to support both synchronous and asynchronous usages,
  * but relies on invariants described in each method documentation to keep a coherent state.
  */
-export function createFlushController({
-  pageMayExitObservable,
-  sessionExpireObservable,
-  getPageExitContext,
-}: FlushControllerOptions) {
-  const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => flush(event.reason))
+export function createFlushController({ pageMayExitObservable, sessionExpireObservable }: FlushControllerOptions) {
+  let forcedFlushReason: FlushReason | undefined
+  const preparePageExitFlushObservable = new Observable<PageExitReason>()
+  const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => {
+    forcedFlushReason = event.reason
+    try {
+      preparePageExitFlushObservable.notify(event.reason)
+    } finally {
+      forcedFlushReason = undefined
+    }
+    flush(event.reason)
+  })
   const sessionExpireSubscription = sessionExpireObservable.subscribe(() => flush('session_expire'))
 
   const flushObservable = new Observable<FlushEvent>(() => () => {
@@ -90,6 +95,7 @@ export function createFlushController({
 
   return {
     flushObservable,
+    preparePageExitFlushObservable,
     get messagesCount() {
       return currentMessagesCount
     },
@@ -105,7 +111,7 @@ export function createFlushController({
      */
     notifyBeforeAddMessage(estimatedMessageBytesCount: number) {
       if (currentBytesCount + estimatedMessageBytesCount >= RECOMMENDED_REQUEST_BYTES_LIMIT) {
-        flush(getPageExitContext?.() ?? 'bytes_limit')
+        flush(forcedFlushReason ?? 'bytes_limit')
       }
       // Consider the message to be added now rather than in `notifyAfterAddMessage`, because if no
       // message was added yet and `notifyAfterAddMessage` is called asynchronously, we still want
@@ -128,9 +134,9 @@ export function createFlushController({
       currentBytesCount += messageBytesCountDiff
 
       if (currentMessagesCount >= MESSAGES_LIMIT) {
-        flush(getPageExitContext?.() ?? 'messages_limit')
+        flush(forcedFlushReason ?? 'messages_limit')
       } else if (currentBytesCount >= RECOMMENDED_REQUEST_BYTES_LIMIT) {
-        flush(getPageExitContext?.() ?? 'bytes_limit')
+        flush(forcedFlushReason ?? 'bytes_limit')
       }
     },
 

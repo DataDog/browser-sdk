@@ -1,4 +1,4 @@
-import type { Observable, RawError, PageMayExitEvent, PageExitReason, Encoder } from '@datadog/browser-core'
+import type { Observable, RawError, PageMayExitEvent, Encoder } from '@datadog/browser-core'
 import { createBatch, createFlushController, createHttpRequest, DeflateEncoderStreamId } from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -12,8 +12,7 @@ export function startRumBatch(
   reportError: (error: RawError) => void,
   pageMayExitObservable: Observable<PageMayExitEvent>,
   sessionExpireObservable: Observable<void>,
-  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
-  getPageExitContext: () => PageExitReason | undefined
+  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
 ) {
   const endpoints = [configuration.rumEndpointBuilder]
   if (configuration.replica) {
@@ -26,7 +25,6 @@ export function startRumBatch(
     flushController: createFlushController({
       pageMayExitObservable,
       sessionExpireObservable,
-      getPageExitContext,
     }),
   })
 
