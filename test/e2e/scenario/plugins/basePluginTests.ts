@@ -27,7 +27,7 @@ export function runBasePluginTests(configs: PluginTestConfig[]) {
       clientErrorMessage,
     } = config
 
-    test.describe(name, () => {
+    test.describe(`base plugin: ${name}`, () => {
       test.describe('router', () => {
         loadApp(createTest('should track initial home view').withRum()).run(async ({ flushEvents, intakeRegistry }) => {
           await flushEvents()

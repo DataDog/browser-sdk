@@ -34,6 +34,7 @@ export default tseslint.config(
       'test/apps/nextjs',
       'test/apps/angular-app',
       'test/apps/vue-router-app',
+      'test/apps/nuxt-app',
       'sandbox',
       'coverage',
       'rum-events-format',

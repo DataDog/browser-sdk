@@ -7,8 +7,8 @@ __metadata:
 
 "@datadog/browser-core@file:../../../packages/core/package.tgz::locator=nextjs%40workspace%3A.":
   version: 6.31.0
-  resolution: "@datadog/browser-core@file:../../../packages/core/package.tgz#../../../packages/core/package.tgz::hash=b429a7&locator=nextjs%40workspace%3A."
-  checksum: 10c0/2f47eb3de4c24449aa0ac0f6623e7cccc20af93e53661a00e7e36067ce1f241450f16234c0987515043916453590c89064966ec1ad17d9509c44856b9998a6c7
+  resolution: "@datadog/browser-core@file:../../../packages/core/package.tgz#../../../packages/core/package.tgz::hash=91c2bf&locator=nextjs%40workspace%3A."
+  checksum: 10c0/3514742b63356daf6b6247417fde1a40f1405925ffe11eea90c5c47982ee05befc5eb2d651067ecd4f24123c476ae6d8b9f51c34fcad02ac20f7e2fff55305e9
   languageName: node
   linkType: hard
 
