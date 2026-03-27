@@ -66,7 +66,6 @@ dev,karma-junit-reporter,MIT,Copyright (C) 2011-2013 Google, Inc.
 dev,karma-sourcemap-loader,MIT,Copyright 2013 Sergey Todyshev
 dev,karma-spec-reporter,MIT,Copyright 2015 Michael Lex
 dev,karma-webpack,MIT,Copyright JS Foundation and other contributors
-dev,lerna,MIT,Copyright 2015-present Lerna Contributors
 dev,minimatch,ISC,Copyright (c) Isaac Z. Schlueter and Contributors
 dev,next,MIT,Copyright (c) 2025 Vercel, Inc.
 dev,node-forge,BSD,Copyright (c) 2010, Digital Bazaar, Inc.
