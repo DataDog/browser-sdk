@@ -2,6 +2,50 @@ import { test, expect } from '@playwright/test'
 import { createTest } from '../lib/framework'
 
 test.describe('transport', () => {
+  test.describe('batch flushing on beforeunload', () => {
+    createTest('use sendBeacon for a batch flushed by bytes_limit during beforeunload')
+      // This test reproduces a bug where a batch near the size limit is flushed using fetch
+      // instead of sendBeacon when the beforeunload event fires.
+      //
+      // Scenario:
+      // 1. A batch is almost full (close to RECOMMENDED_REQUEST_BYTES_LIMIT = 16 KiB)
+      // 2. beforeunload fires and triggers a final view update
+      // 3. Adding the view update exceeds the limit → the batch is flushed due to bytes_limit
+      // 4. BUG: this flush uses fetch instead of sendBeacon, so it may be cancelled during unload
+      // 5. A new batch is created for the view update and flushed via sendBeacon
+      //
+      // Expected: the bytes_limit flush should use sendBeacon when triggered in the context of a
+      // page exit, so that it is not cancelled by the browser.
+      .withRum({ telemetrySampleRate: 0 })
+      .run(async ({ page, flushEvents, intakeRegistry }) => {
+        // Fill the batch close to the 16 KiB limit using a custom action. The action name is sized
+        // so that action event is almost at the limit 16KB limit → no flush yet.
+        await page.evaluate(() => {
+          window.DD_RUM!.addAction('x'.repeat(15000))
+        })
+
+        // Navigating away fires beforeunload, which triggers a final view update. Adding the view
+        // update (~2KB) to the near-full batch tips it over the limit and causes a bytes_limit
+        // flush, which the SDK issues via fetch — and that fetch gets cancelled on page unload.
+        await flushEvents()
+
+        // We expect two last RUM batches:
+        // 1. The near-full batch containing the large action, flushed due to bytes_limit
+        // 2. The final view update batch, flushed due to beforeunload
+        const [penultimateBatch, finalBatch] = intakeRegistry.rumRequests.slice(-2)
+
+        // The action event should be present in one of the batches
+        expect(
+          penultimateBatch.events.some((e) => e.type === 'action') || finalBatch.events.some((e) => e.type === 'action')
+        ).toBe(true)
+
+        // Both batches should use sendBeacon so they are not cancelled during page unload.
+        // With the bug, penultimateBatch.transport is 'fetch' instead of 'beacon'.
+        expect(penultimateBatch.transport).toBe('beacon')
+        expect(finalBatch.transport).toBe('beacon')
+      })
+  })
+
   test.describe('data compression', () => {
     createTest('send RUM data compressed')
       .withRum({
