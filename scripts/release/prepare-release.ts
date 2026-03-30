@@ -36,7 +36,6 @@ runMain(() => {
   command`yarn`.withLogs().run() // Just in case
 
   setVersionInPackageJsonFiles(version)
-  updateLernaJson(version)
   command`node ./scripts/release/generate-changelog/index.ts`.withLogs().run()
   command`yarn`.run() // Update lockfile
   command`git add -u`.run()
@@ -78,13 +77,6 @@ function setVersionInPackageJsonFiles(version: string) {
 
     fs.writeFileSync(absolutePath, `${JSON.stringify(content, null, 2)}\n`)
   }
-}
-
-function updateLernaJson(version: string) {
-  const lernaJsonPath = `${import.meta.dirname}/../../lerna.json`
-  const content = JSON.parse(fs.readFileSync(lernaJsonPath, 'utf8'))
-  content.version = version
-  fs.writeFileSync(lernaJsonPath, `${JSON.stringify(content, null, 2)}\n`)
 }
 
 function isSemanticVersion(input: string | undefined): boolean {
