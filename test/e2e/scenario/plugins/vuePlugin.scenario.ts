@@ -7,11 +7,15 @@ runBasePluginTests([
     name: 'vue',
     loadApp: (b) => b.withVueApp(),
     viewPrefix: '',
-    homeViewName: '/',
-    homeUrlPattern: '**/',
-    userRouteName: '/user/:id',
-    guidesRouteName: '/guides/:catchAll(.*)*',
-    clientErrorMessage: 'Error triggered by button click',
+    router: {
+      homeViewName: '/',
+      homeUrlPattern: '**/',
+      userRouteName: '/user/:id',
+      guidesRouteName: '/guides/:catchAll(.*)*',
+    },
+    error: {
+      clientErrorMessage: 'Error triggered by button click',
+    },
   },
 ])
 

@@ -9,11 +9,15 @@ runBasePluginTests([
     name: 'angular',
     loadApp: (b) => b.withApp(angularApp),
     viewPrefix: '',
-    homeViewName: '/',
-    homeUrlPattern: '**/',
-    userRouteName: '/user/:id',
-    guidesRouteName: '/guides/:slug',
-    clientErrorMessage: 'Error triggered by button click',
+    router: {
+      homeViewName: '/',
+      homeUrlPattern: '**/',
+      userRouteName: '/user/:id',
+      guidesRouteName: '/guides/:slug',
+    },
+    error: {
+      clientErrorMessage: 'Error triggered by button click',
+    },
   },
 ])
 

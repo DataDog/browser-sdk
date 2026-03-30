@@ -3,29 +3,28 @@ import { createTest } from '../../lib/framework'
 
 type TestBuilder = ReturnType<typeof createTest>
 
-export interface PluginTestConfig {
-  name: string
-  loadApp: (builder: TestBuilder) => TestBuilder
-  viewPrefix: string
+export interface RouterConfig {
   homeViewName: string
   homeUrlPattern: string | RegExp
   userRouteName: string
   guidesRouteName: string
+}
+
+export interface ErrorConfig {
   clientErrorMessage: string
 }
 
+export interface PluginTestConfig {
+  name: string
+  loadApp: (builder: TestBuilder) => TestBuilder
+  viewPrefix: string
+  router: RouterConfig
+  error?: ErrorConfig
+}
+
 export function runBasePluginTests(configs: PluginTestConfig[]) {
-  for (const config of configs) {
-    const {
-      name,
-      loadApp,
-      viewPrefix,
-      homeViewName,
-      homeUrlPattern,
-      userRouteName,
-      guidesRouteName,
-      clientErrorMessage,
-    } = config
+  for (const { name, loadApp, viewPrefix, router, error } of configs) {
+    const { homeViewName, homeUrlPattern, userRouteName, guidesRouteName } = router
 
     test.describe(name, () => {
       test.describe('router', () => {
@@ -156,34 +155,36 @@ export function runBasePluginTests(configs: PluginTestConfig[]) {
         })
       })
 
-      test.describe('errors', () => {
-        loadApp(createTest('should report client-side error').withRum()).run(
-          async ({ page, flushEvents, intakeRegistry, withBrowserLogs, browserName }) => {
-            test.skip(
-              browserName === 'firefox',
-              'firefox is sending the errors in two separate batches, however the last batch is delayed making the test setup to miss it'
-            )
+      if (error) {
+        test.describe('errors', () => {
+          loadApp(createTest('should report client-side error').withRum()).run(
+            async ({ page, flushEvents, intakeRegistry, withBrowserLogs, browserName }) => {
+              test.skip(
+                browserName === 'firefox',
+                'firefox is sending the errors in two separate batches, however the last batch is delayed making the test setup to miss it'
+              )
 
-            await page.click('text=Go to Error Test')
-            await page.waitForURL(`**${viewPrefix}/error-test`)
+              await page.click('text=Go to Error Test')
+              await page.waitForURL(`**${viewPrefix}/error-test`)
 
-            await page.click('[data-testid="trigger-error"]')
-            await page.waitForSelector('[data-testid="error-boundary"]')
+              await page.click('[data-testid="trigger-error"]')
+              await page.waitForSelector('[data-testid="error-boundary"]')
 
-            await flushEvents()
+              await flushEvents()
 
-            const errorEvent = intakeRegistry.rumErrorEvents.find(
-              (e) => e.error.source === 'custom' && e.error.message === clientErrorMessage
-            )
-            expect(errorEvent).toBeDefined()
+              const errorEvent = intakeRegistry.rumErrorEvents.find(
+                (e) => e.error.source === 'custom' && e.error.message === error.clientErrorMessage
+              )
+              expect(errorEvent).toBeDefined()
 
-            // Consume browser logs — some frameworks emit console errors during error capture
-            withBrowserLogs((_logs) => {
-              // expected
-            })
-          }
-        )
-      })
+              // Consume browser logs — some frameworks emit console errors during error capture
+              withBrowserLogs((_logs) => {
+                // expected
+              })
+            }
+          )
+        })
+      }
     })
   }
 }

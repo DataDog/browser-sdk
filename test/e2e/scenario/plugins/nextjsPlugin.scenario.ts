@@ -5,14 +5,14 @@ import { runBasePluginTests } from './basePluginTests'
 const routerConfigs = [
   {
     name: 'nextjs app router',
-    router: 'app' as const,
+    routerType: 'app' as const,
     viewPrefix: '',
     homeUrlPattern: '**/',
     clientErrorMessage: 'Client error from error-test',
   },
   {
     name: 'nextjs pages router',
-    router: 'pages' as const,
+    routerType: 'pages' as const,
     viewPrefix: '/pages-router',
     homeUrlPattern: /\/pages-router(\?|$)/,
     clientErrorMessage: 'Pages Router error from NextjsErrorBoundary',
@@ -20,15 +20,19 @@ const routerConfigs = [
 ]
 
 runBasePluginTests(
-  routerConfigs.map(({ name, router, viewPrefix, homeUrlPattern, clientErrorMessage }) => ({
+  routerConfigs.map(({ name, routerType, viewPrefix, homeUrlPattern, clientErrorMessage }) => ({
     name,
-    loadApp: (b) => b.withNextjsApp(router),
+    loadApp: (b) => b.withNextjsApp(routerType),
     viewPrefix,
-    homeViewName: viewPrefix || '/',
-    homeUrlPattern,
-    userRouteName: '/user/[id]',
-    guidesRouteName: '/guides/[...slug]',
-    clientErrorMessage,
+    router: {
+      homeViewName: viewPrefix || '/',
+      homeUrlPattern,
+      userRouteName: '/user/[id]',
+      guidesRouteName: '/guides/[...slug]',
+    },
+    error: {
+      clientErrorMessage,
+    },
   }))
 )
 
