@@ -88,10 +88,6 @@ export function startRum(
   }
 
   const pageMayExitObservable = createPageMayExitObservable(configuration)
-  const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => {
-    lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, event)
-  })
-  cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
 
   const session = !canUseEventBridge()
     ? startRumSessionManager(configuration, lifeCycle, trackingConsentState)
@@ -106,10 +102,18 @@ export function startRum(
       session.expireObservable,
       createEncoder
     )
+    const preparePageExitSubscription = batch.flushController.preparePageExitFlushObservable.subscribe((reason) => {
+      lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, { reason })
+    })
+    cleanupTasks.push(() => preparePageExitSubscription.unsubscribe())
     cleanupTasks.push(() => batch.stop())
     startCustomerDataTelemetry(telemetry, lifeCycle, batch.flushController.flushObservable)
   } else {
     startRumEventBridge(lifeCycle)
+    const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => {
+      lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, event)
+    })
+    cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
   }
 
   startTrackingConsentContext(hooks, trackingConsentState)
