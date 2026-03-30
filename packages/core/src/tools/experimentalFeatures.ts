@@ -23,6 +23,7 @@ export enum ExperimentalFeature {
   USE_INCREMENTAL_CHANGE_RECORDS = 'use_incremental_change_records',
   TOO_MANY_REQUESTS_INVESTIGATION = 'too_many_requests_investigation',
   COMPOSED_PATH_SELECTOR = 'composed_path_selector',
+  TRACK_RESOURCE_HEADERS = 'track_resource_headers',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()
