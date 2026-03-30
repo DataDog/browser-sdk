@@ -1277,7 +1277,7 @@ describe('BFCache views', () => {
   let viewTest: ViewTest
 
   beforeEach(() => {
-    viewTest = setupViewTest({ lifeCycle, partialConfig: { trackBfcacheViews: true } })
+    viewTest = setupViewTest({ lifeCycle })
 
     registerCleanupTask(() => {
       viewTest.stop()

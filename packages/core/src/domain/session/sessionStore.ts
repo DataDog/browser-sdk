@@ -5,6 +5,7 @@ import { throttle } from '../../tools/utils/functionUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import type { InitConfiguration, Configuration } from '../configuration'
 import { display } from '../../tools/display'
+import { isWorkerEnvironment } from '../../tools/globalObject'
 import { selectCookieStrategy, initCookieStrategy } from './storeStrategies/sessionInCookie'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
 import type { SessionState } from './sessionState'
@@ -16,11 +17,11 @@ import {
 } from './sessionState'
 import { initLocalStorageStrategy, selectLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
 import { processSessionStoreOperations } from './sessionStoreOperations'
-import { SESSION_NOT_TRACKED, SessionPersistence } from './sessionConstants'
+import { SessionPersistence } from './sessionConstants'
 import { initMemorySessionStoreStrategy, selectMemorySessionStoreStrategy } from './storeStrategies/sessionInMemory'
 
 export interface SessionStore {
-  expandOrRenewSession: () => void
+  expandOrRenewSession: (callback?: () => void) => void
   expandSession: () => void
   getSession: () => SessionState
   restartSession: () => void
@@ -49,7 +50,7 @@ export function selectSessionStoreStrategyType(
 ): SessionStoreStrategyType | undefined {
   const { sessionPersistence } = initConfiguration
 
-  const persistenceList = normalizePersistenceList(sessionPersistence, initConfiguration)
+  const persistenceList = normalizePersistenceList(sessionPersistence)
 
   for (const persistence of persistenceList) {
     const strategyType = selectStrategyForPersistence(persistence, initConfiguration)
@@ -62,21 +63,23 @@ export function selectSessionStoreStrategyType(
 }
 
 function normalizePersistenceList(
-  sessionPersistence: SessionPersistence | SessionPersistence[] | undefined,
-  initConfiguration: InitConfiguration
+  sessionPersistence: SessionPersistence | SessionPersistence[] | undefined
 ): SessionPersistence[] {
   if (Array.isArray(sessionPersistence)) {
     return sessionPersistence
   }
-
   if (sessionPersistence !== undefined) {
     return [sessionPersistence]
   }
 
-  // Legacy default behavior: cookie first, with optional localStorage fallback
-  return initConfiguration.allowFallbackToLocalStorage
-    ? [SessionPersistence.COOKIE, SessionPersistence.LOCAL_STORAGE]
-    : [SessionPersistence.COOKIE]
+  // In worker environments, default to memory since cookie and localStorage are not available
+  // TODO: make it work when we start using Cookie Store API
+  // @see https://developer.mozilla.org/en-US/docs/Web/API/CookieStore
+  if (isWorkerEnvironment) {
+    return [SessionPersistence.MEMORY]
+  }
+
+  return [SessionPersistence.COOKIE]
 }
 
 function selectStrategyForPersistence(
@@ -116,11 +119,9 @@ export function getSessionStoreStrategy(
  * - not tracked, the session does not have an id but it is updated along the user navigation
  * - inactive, no session in store or session expired, waiting for a renew session
  */
-export function startSessionStore<TrackingType extends string>(
+export function startSessionStore(
   sessionStoreStrategyType: SessionStoreStrategyType,
   configuration: Configuration,
-  productKey: string,
-  computeTrackingType: (rawTrackingType?: string) => TrackingType,
   sessionStoreStrategy: SessionStoreStrategy = getSessionStoreStrategy(sessionStoreStrategyType, configuration)
 ): SessionStore {
   const renewObservable = new Observable<void>()
@@ -130,30 +131,34 @@ export function startSessionStore<TrackingType extends string>(
   const watchSessionTimeoutId = setInterval(watchSession, STORAGE_POLL_DELAY)
   let sessionCache: SessionState
 
+  const { throttled: throttledExpandOrRenewSession, cancel: cancelExpandOrRenewSession } = throttle(
+    (callback?: () => void) => {
+      processSessionStoreOperations(
+        {
+          process: (sessionState) => {
+            if (isSessionInNotStartedState(sessionState)) {
+              return
+            }
+
+            const synchronizedSession = synchronizeSession(sessionState)
+            expandOrRenewSessionState(synchronizedSession)
+            return synchronizedSession
+          },
+          after: (sessionState) => {
+            if (isSessionStarted(sessionState) && !hasSessionInCache()) {
+              renewSessionInCache(sessionState)
+            }
+            sessionCache = sessionState
+            callback?.()
+          },
+        },
+        sessionStoreStrategy
+      )
+    },
+    STORAGE_POLL_DELAY
+  )
+
   startSession()
-
-  const { throttled: throttledExpandOrRenewSession, cancel: cancelExpandOrRenewSession } = throttle(() => {
-    processSessionStoreOperations(
-      {
-        process: (sessionState) => {
-          if (isSessionInNotStartedState(sessionState)) {
-            return
-          }
-
-          const synchronizedSession = synchronizeSession(sessionState)
-          expandOrRenewSessionState(synchronizedSession)
-          return synchronizedSession
-        },
-        after: (sessionState) => {
-          if (isSessionStarted(sessionState) && !hasSessionInCache()) {
-            renewSessionInCache(sessionState)
-          }
-          sessionCache = sessionState
-        },
-      },
-      sessionStoreStrategy
-    )
-  }, STORAGE_POLL_DELAY)
 
   function expandSession() {
     processSessionStoreOperations(
@@ -201,7 +206,7 @@ export function startSessionStore<TrackingType extends string>(
     return sessionState
   }
 
-  function startSession() {
+  function startSession(callback?: () => void) {
     processSessionStoreOperations(
       {
         process: (sessionState) => {
@@ -212,6 +217,7 @@ export function startSessionStore<TrackingType extends string>(
         },
         after: (sessionState) => {
           sessionCache = sessionState
+          callback?.()
         },
       },
       sessionStoreStrategy
@@ -223,24 +229,24 @@ export function startSessionStore<TrackingType extends string>(
       return false
     }
 
-    const trackingType = computeTrackingType(sessionState[productKey])
-    sessionState[productKey] = trackingType
-    delete sessionState.isExpired
-    if (trackingType !== SESSION_NOT_TRACKED && !sessionState.id) {
+    // Always store session ID for deterministic sampling
+    if (!sessionState.id) {
       sessionState.id = generateUUID()
       sessionState.created = String(dateNow())
     }
     if (configuration.trackAnonymousUser && !sessionState.anonymousId) {
       sessionState.anonymousId = generateUUID()
     }
+
+    delete sessionState.isExpired
   }
 
   function hasSessionInCache() {
-    return sessionCache?.[productKey] !== undefined
+    return sessionCache?.id !== undefined
   }
 
   function isSessionInCacheOutdated(sessionState: SessionState) {
-    return sessionCache.id !== sessionState.id || sessionCache[productKey] !== sessionState[productKey]
+    return sessionCache.id !== sessionState.id
   }
 
   function expireSessionInCache() {
