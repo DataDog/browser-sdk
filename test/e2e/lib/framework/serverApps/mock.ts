@@ -1,6 +1,7 @@
 import type { ServerResponse } from 'http'
 import * as url from 'url'
 import cors from 'cors'
+import qs from 'qs'
 import express from 'express'
 import { getSdkBundlePath, getTestAppBundlePath } from '../sdkBuilds'
 import type { MockServerApp, Servers } from '../httpServers'
@@ -17,6 +18,8 @@ export function createMockServerApp(servers: Servers, setup: string, setupOption
 
   app.use(cors())
   app.disable('etag') // disable automatic resource caching
+
+  app.set('query parser', (str: string) => qs.parse(str))
 
   app.get('/empty', (_req, res) => {
     res.end()
@@ -89,12 +92,24 @@ export function createMockServerApp(servers: Servers, setup: string, setupOption
     res.header('content-type', 'text/css').end()
   })
 
-  app.get('/ok', (req, res) => {
+  app.all('/ok', (req, res) => {
+    // Express will automatically append charset to the Content-Type header
     res.header('Content-Type', 'text/plain')
     if (req.query['timing-allow-origin'] === 'true') {
       res.set('Timing-Allow-Origin', '*')
     }
+
+    const responseHeaders = req.query['response-headers']
+    if (responseHeaders) {
+      for (const [header, value] of Object.entries(responseHeaders)) {
+        if (typeof value === 'string') {
+          res.header(header, value)
+        }
+      }
+    }
+
     const timeoutDuration = req.query.duration ? Number(req.query.duration) : 0
+
     setTimeout(() => res.send('ok'), timeoutDuration)
   })
 
