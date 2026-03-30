@@ -46,12 +46,12 @@ describe('LocalStorage SessionStoreStrategy', () => {
       })
     })
 
-    it('should notify sessionObservable after write', () => {
+    it('should notify sessionObservable after write', async () => {
       const spy = jasmine.createSpy('observer')
       const subscription = strategy.sessionObservable.subscribe(spy)
       registerCleanupTask(() => subscription.unsubscribe())
 
-      void strategy.setSessionState((state) => ({ ...state, id: 'test-id' }))
+      await strategy.setSessionState((state) => ({ ...state, id: 'test-id' }))
 
       expect(spy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ id: 'test-id' }))
     })

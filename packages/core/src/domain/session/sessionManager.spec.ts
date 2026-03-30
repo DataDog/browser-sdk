@@ -34,6 +34,7 @@ describe('startSessionManager', () => {
   const STORE_TYPE: SessionStoreStrategyType = { type: SessionPersistence.COOKIE, cookieOptions: {} }
   let fakeStrategy: ReturnType<typeof createFakeSessionStoreStrategy>
   let clock: Clock
+  let sessionObservableSpy!: jasmine.Spy
 
   /**
    * Creates a fresh fake strategy and updates the mockable reference.
@@ -45,8 +46,10 @@ describe('startSessionManager', () => {
   }
 
   beforeEach(() => {
+    sessionObservableSpy = jasmine.createSpy('sessionObservable')
     clock = mockClock()
     fakeStrategy = createFakeSessionStoreStrategy()
+    fakeStrategy.sessionObservable.subscribe(sessionObservableSpy)
     // Register the mockable once, pointing to a function that always returns the current fakeStrategy
     replaceMockable(getSessionStoreStrategy, () => fakeStrategy)
 
@@ -177,6 +180,8 @@ describe('startSessionManager', () => {
       // Activity triggers expandOrRenew
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
+      await collectAsyncCalls(sessionObservableSpy, 3) // 1 for initial session, 1 for expire, 1 for renew
+
       expect(renewSpy).toHaveBeenCalledTimes(1)
       expect(sessionManager.findSession()!.id).toBeDefined()
       expect(sessionManager.findSession()!.id).not.toBe(initialId)
@@ -268,6 +273,8 @@ describe('startSessionManager', () => {
       clock.tick(ONE_SECOND)
 
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+
+      await collectAsyncCalls(sessionObservableSpy, 3) // 1 for initial session, 1 for expire, 1 for renew
 
       expect(sessionManager.findSession()).toBeDefined()
       expect(sessionManager.findSession()!.id).not.toBe(initialId)
@@ -451,6 +458,8 @@ describe('startSessionManager', () => {
 
       trackingConsentState.update(TrackingConsent.GRANTED)
 
+      await collectAsyncCalls(sessionObservableSpy, 3) // 1 for initial session, 1 for expire, 1 for renew
+
       expect(sessionManager.findSession()).toBeDefined()
       expect(sessionManager.findSession()!.id).not.toBe(initialId)
     })
@@ -538,6 +547,8 @@ describe('startSessionManager', () => {
       clock.tick(10 * ONE_SECOND)
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
+      await collectAsyncCalls(sessionObservableSpy, 3) // 1 for initial session, 1 for expire, 1 for renew
+
       const secondId = sessionManager.findSession()!.id
 
       // Look up first session at t=5s
@@ -558,6 +569,8 @@ describe('startSessionManager', () => {
       sessionManager.expire()
       clock.tick(ONE_SECOND)
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+
+      await collectAsyncCalls(sessionObservableSpy, 3) // 1 for initial session, 1 for expire, 1 for renew
 
       expect(currentSession!).toBeDefined()
     })
@@ -623,6 +636,7 @@ describe('startSessionManager', () => {
       expect(sessionManager.findTrackedSession()!.isReplayForced).toBe(false)
 
       sessionManager.updateSessionState({ forcedReplay: '1' })
+      await collectAsyncCalls(sessionObservableSpy, 2) // 1 for initial session, 1 for updateSessionState
 
       expect(sessionManager.findTrackedSession()!.isReplayForced).toBe(true)
     })
@@ -693,6 +707,7 @@ describe('startSessionManager', () => {
       expect(sessionManager.findSession()!.isReplayForced).toBe(false)
 
       sessionManager.updateSessionState({ forcedReplay: '1' })
+      await collectAsyncCalls(sessionObservableSpy, 2) // 1 for initial session, 1 for updateSessionState
 
       expect(sessionManager.findSession()!.isReplayForced).toBe(true)
     })

@@ -17,11 +17,10 @@ export function createFakeSessionStoreStrategy({
   return {
     setSessionState: jasmine
       .createSpy('setSessionState')
-      .and.callFake((fn: (state: SessionState) => SessionState): Promise<void> => {
+      .and.callFake(async (fn: (state: SessionState) => SessionState): Promise<void> => {
         session = fn({ ...session })
-        const result = Promise.resolve()
+        await Promise.resolve()
         sessionObservable.notify({ ...session })
-        return result
       }),
     sessionObservable,
 

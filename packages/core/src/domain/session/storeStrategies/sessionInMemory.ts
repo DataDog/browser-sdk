@@ -40,13 +40,12 @@ export function initMemorySessionStoreStrategy(): SessionStoreStrategy {
   }
 
   return {
-    setSessionState(fn: (sessionState: SessionState) => SessionState): Promise<void> {
+    async setSessionState(fn: (sessionState: SessionState) => SessionState): Promise<void> {
       const currentState = memorySession.state ?? {}
       const newState = shallowClone(fn(currentState))
       memorySession.state = newState
-      const result = Promise.resolve()
+      await Promise.resolve()
       memorySession.onChange?.(newState)
-      return result
     },
     sessionObservable,
   }

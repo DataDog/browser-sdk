@@ -34,13 +34,12 @@ export function initLocalStorageStrategy(configuration: Configuration): SessionS
   )
 
   return {
-    setSessionState(fn: (sessionState: SessionState) => SessionState): Promise<void> {
+    async setSessionState(fn: (sessionState: SessionState) => SessionState): Promise<void> {
       const currentState = toSessionState(localStorage.getItem(SESSION_STORE_KEY))
       const newState = fn(currentState)
       localStorage.setItem(SESSION_STORE_KEY, toSessionString(newState))
-      const result = Promise.resolve()
+      await Promise.resolve()
       sessionObservable.notify(newState)
-      return result
     },
     sessionObservable,
   }

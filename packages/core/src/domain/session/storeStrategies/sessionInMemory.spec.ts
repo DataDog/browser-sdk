@@ -30,23 +30,23 @@ describe('Memory SessionStoreStrategy', () => {
       })
     })
 
-    it('should notify sessionObservable after write', () => {
+    it('should notify sessionObservable after write', async () => {
       const spy = jasmine.createSpy('observer')
       strategy.sessionObservable.subscribe(spy)
 
-      void strategy.setSessionState((state) => ({ ...state, id: 'test-id' }))
+      await strategy.setSessionState((state) => ({ ...state, id: 'test-id' }))
 
       expect(spy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ id: 'test-id' }))
     })
   })
 
   describe('sessionObservable', () => {
-    it('should be shared across strategy instances', () => {
+    it('should be shared across strategy instances', async () => {
       const strategy2 = initMemorySessionStoreStrategy()
       const spy = jasmine.createSpy('observer')
 
       strategy.sessionObservable.subscribe(spy)
-      void strategy2.setSessionState((state) => ({ ...state, id: 'from-strategy2' }))
+      await strategy2.setSessionState((state) => ({ ...state, id: 'from-strategy2' }))
 
       expect(spy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ id: 'from-strategy2' }))
     })
