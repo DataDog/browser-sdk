@@ -1,6 +1,7 @@
 import type { Clock } from '../../test'
 import { collectAsyncCalls, mockClock, registerCleanupTask, replaceMockable } from '../../test'
 import type { Configuration } from '../domain/configuration'
+import { detectVersion, isChromium } from '../tools/utils/browserDetection'
 import type { CookieOptions } from './cookie'
 import { deleteCookie, getCookie, setCookie } from './cookie'
 import type { CookieStoreWindow } from './browser.types'
@@ -97,6 +98,11 @@ describe('cookieAccess', () => {
         })
 
         it('should pass all cookie values to callback', async () => {
+          const browserVersion = detectVersion()
+          if (!isChromium() || (browserVersion !== undefined && browserVersion < 145)) {
+            pending('Only Recent Chromium supports multiple cookies with the same name with different options')
+          }
+
           setup()
           setCookieWithCleanup(COOKIE_NAME, 'value1', 1000)
           setCookieWithCleanup(COOKIE_NAME, 'value2', 1000, { secure: true, partitioned: true })
