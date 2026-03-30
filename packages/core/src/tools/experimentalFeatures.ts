@@ -23,7 +23,6 @@ export enum ExperimentalFeature {
   USE_CHANGE_RECORDS = 'use_change_records',
   USE_INCREMENTAL_CHANGE_RECORDS = 'use_incremental_change_records',
   TOO_MANY_REQUESTS_INVESTIGATION = 'too_many_requests_investigation',
-  COMPOSED_PATH_SELECTOR = 'composed_path_selector',
   PARTIAL_VIEW_UPDATES = 'partial_view_updates',
   PARTIAL_VIEW_UPDATES_NO_CHECKPOINT = 'partial_view_updates_no_checkpoint',
 }
