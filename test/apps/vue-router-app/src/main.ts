@@ -18,7 +18,6 @@ const router = createRouter({
     { path: '/', component: () => import('./pages/HomePage.vue') },
     { path: '/user/:id', component: () => import('./pages/UserPage.vue') },
     { path: '/guides/:catchAll(.*)*', component: () => import('./pages/GuidesPage.vue') },
-    { path: '/tracked', component: () => import('./pages/TrackedPage.vue') },
     { path: '/error-test', component: () => import('./pages/ErrorPage.vue') },
   ],
 })

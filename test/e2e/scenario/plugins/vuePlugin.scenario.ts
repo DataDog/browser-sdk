@@ -24,7 +24,7 @@ test.describe('plugin: vue', () => {
     .withRum()
     .withVueApp()
     .run(async ({ page, flushEvents, intakeRegistry }) => {
-      await page.click('text=Error')
+      await page.click('text=Go to Error Test')
       await page.click('[data-testid="trigger-error"]')
 
       await flushEvents()

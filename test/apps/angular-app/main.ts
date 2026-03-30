@@ -32,7 +32,6 @@ if (window.RUM_CONTEXT) {
     <a routerLink="/error-test">Go to Error Test</a><br />
     <a routerLink="/parent/nested">Go to Nested Route</a><br />
     <a routerLink="/unknown/page">Go to Wildcard Route</a><br />
-    <a id="query-param-link" [routerLink]="[]" [queryParams]="{ tab: 2 }">Change Query Param</a><br />
     <button id="throw-error" (click)="throwError()">Throw Error</button>
     <button id="throw-error-with-context" (click)="throwErrorWithContext()">Throw Error With Context</button>
   `,
@@ -112,13 +111,8 @@ class WildcardRouteComponent {}
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink],
-  template: `
-    <nav>
-      <a routerLink="/">Initial Route</a>
-    </nav>
-    <router-outlet></router-outlet>
-  `,
+  imports: [RouterOutlet],
+  template: '<router-outlet></router-outlet>',
 })
 class AppComponent {}
 
