@@ -36,12 +36,26 @@ export function provideDatadogRouter(): EnvironmentProviders {
         const router = inject(Router)
 
         return () => {
+          let currentPath: string | undefined
+
           // No unsubscribe needed as its for the full app lifecycle and because DestroyRef requires v16+
           router.events
             .pipe(filter((event): event is GuardsCheckEnd => event instanceof GuardsCheckEnd))
             .subscribe((event) => {
+              if (!event.shouldActivate) {
+                return
+              }
+
+              const url = event.urlAfterRedirects
+              const path = url.replace(/[?#].*$/, '')
+
+              if (path === currentPath) {
+                return
+              }
+              currentPath = path
+
               const root = event.state.root
-              startAngularView(root, event.urlAfterRedirects)
+              startAngularView(root, url)
             })
         }
       },

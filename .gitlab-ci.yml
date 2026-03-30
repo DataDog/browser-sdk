@@ -1,5 +1,5 @@
 variables:
-  CURRENT_STAGING: staging-13
+  CURRENT_STAGING: staging-14
   APP: 'browser-sdk'
   CURRENT_CI_IMAGE: 102
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
@@ -370,11 +370,10 @@ deploy-next-major-canary:
     - .next-major-branch
   script:
     - export BUILD_MODE=canary
-    - VERSION=$(node -p -e "require('./package.json').version")
     - yarn
     - yarn build:bundle
-    - node ./scripts/deploy/deploy.ts prod v${VERSION%%.*}-canary root
-    - node ./scripts/deploy/upload-source-maps.ts v${VERSION%%.*}-canary root
+    - node ./scripts/deploy/deploy.ts prod ${NEXT_MAJOR_BRANCH}-canary root
+    - node ./scripts/deploy/upload-source-maps.ts ${NEXT_MAJOR_BRANCH}-canary root
 
 deploy-manual:
   stage: deploy

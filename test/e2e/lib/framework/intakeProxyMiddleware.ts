@@ -11,6 +11,7 @@ import type { TelemetryEvent } from '@datadog/browser-core/src/domain/telemetry/
 interface BaseIntakeRequest {
   isBridge: boolean
   encoding: string | null
+  transport: string | null
 }
 
 export type LogsIntakeRequest = {
@@ -56,6 +57,7 @@ interface IntakeRequestInfos {
   isBridge: boolean
   intakeType: IntakeRequest['intakeType']
   encoding: string | null
+  transport: string | null
 }
 
 interface IntakeProxyOptions {
@@ -87,12 +89,14 @@ function computeIntakeRequestInfos(req: express.Request): IntakeRequestInfos {
   const { pathname, searchParams } = new URL(ddforward, 'https://example.org')
 
   const encoding = req.headers['content-encoding'] || searchParams.get('dd-evp-encoding')
+  const transport = searchParams.get('_dd.api')
 
   if (req.query.bridge === 'true') {
     const eventType = req.query.event_type
     return {
       isBridge: true,
       encoding,
+      transport,
       intakeType: eventType === 'log' ? 'logs' : eventType === 'record' ? 'replay' : 'rum',
     }
   }
@@ -108,6 +112,7 @@ function computeIntakeRequestInfos(req: express.Request): IntakeRequestInfos {
   return {
     isBridge: false,
     encoding,
+    transport,
     intakeType,
   }
 }

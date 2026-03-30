@@ -1,3 +1,4 @@
+import type { MatchOption } from '@datadog/browser-core'
 import {
   combine,
   generateUUID,
@@ -5,12 +6,19 @@ import {
   relativeToClocks,
   createTaskQueue,
   mockable,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
+  matchList,
+  safeTruncate,
+  display,
+  addTelemetryDebug,
+  RequestType,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType, createPerformanceObservable } from '../../browser/performanceObservable'
 import type { RumResourceEventDomainContext } from '../../domainContext.types'
-import type { RawRumResourceEvent, ResourceResponse } from '../../rawRumEvent.types'
+import type { NetworkHeaders, RawRumResourceEvent, ResourceRequest, ResourceResponse } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData, LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -91,6 +99,10 @@ function assembleResource(
   const startClocks = relativeToClocks(entry.startTime)
   const duration = computeResourceEntryDuration(entry)
 
+  const networkHeaders = isExperimentalFeatureEnabled(ExperimentalFeature.TRACK_RESOURCE_HEADERS)
+    ? computeNetworkHeaders(request, configuration)
+    : undefined
+
   const resourceEvent = combine(
     {
       date: startClocks.timeStamp,
@@ -104,7 +116,6 @@ function assembleResource(
         protocol: computeResourceEntryProtocol(entry),
         delivery_type: computeResourceEntryDeliveryType(entry),
         graphql: request && computeGraphQlMetaData(request, configuration),
-        response: computeResourceResponse(entry),
         render_blocking_status: entry.renderBlockingStatus,
         ...computeResourceEntrySize(entry),
         ...computeResourceEntryDetails(entry),
@@ -114,7 +125,9 @@ function assembleResource(
         discarded: !configuration.trackResources,
       },
     },
-    tracingInfo
+    tracingInfo,
+    computeContentTypeFromPerformanceEntry(entry),
+    networkHeaders
   )
 
   return {
@@ -137,13 +150,19 @@ function computeGraphQlMetaData(
   return extractGraphQlMetadata(request, graphQlConfig)
 }
 
-function computeResourceResponse(entry: RumPerformanceResourceTiming): ResourceResponse | undefined {
+function computeContentTypeFromPerformanceEntry(
+  entry: RumPerformanceResourceTiming
+): { resource: Pick<RawRumResourceEvent['resource'], 'response'> } | undefined {
   const contentType = entry.contentType
 
   if (contentType) {
     return {
-      headers: {
-        'content-type': contentType,
+      resource: {
+        response: {
+          headers: {
+            'content-type': contentType,
+          },
+        },
       },
     }
   }
@@ -202,4 +221,134 @@ function computeResourceEntryTracingInfo(entry: RumPerformanceResourceTiming, co
  */
 function discardZeroStatus(statusCode: number | undefined): number | undefined {
   return statusCode === 0 ? undefined : statusCode
+}
+
+function computeNetworkHeaders(
+  request: RequestCompleteEvent | undefined,
+  configuration: RumConfiguration
+): { resource: { request?: ResourceRequest; response?: ResourceResponse } } | undefined {
+  const matchers = configuration.trackResourceHeaders
+  if (matchers.length === 0 || !request) {
+    return undefined
+  }
+
+  const responseHeaders = getResponseHeaders(request, matchers)
+  const requestHeaders = getRequestHeaders(request, matchers)
+
+  if (!responseHeaders && !requestHeaders) {
+    return undefined
+  }
+
+  return {
+    resource: {
+      request: requestHeaders ? { headers: requestHeaders } : undefined,
+      response: responseHeaders ? { headers: responseHeaders } : undefined,
+    },
+  }
+}
+
+function getResponseHeaders(request: RequestCompleteEvent, matchers: MatchOption[]): NetworkHeaders | undefined {
+  if (request.type === RequestType.FETCH && request.response) {
+    return filterHeaders(request.response.headers, matchers)
+  }
+
+  if (request.type === RequestType.XHR && request.xhr) {
+    const rawXhrHeaders = request.xhr.getAllResponseHeaders()
+    if (rawXhrHeaders) {
+      try {
+        return filterHeaders(new Headers(parseRawXhrHeaders(rawXhrHeaders)), matchers)
+      } catch {
+        // Ignore parsing errors
+      }
+    }
+  }
+
+  return undefined
+}
+
+function getRequestHeaders(request: RequestCompleteEvent, matchers: MatchOption[]): NetworkHeaders | undefined {
+  if (request.type !== RequestType.FETCH) {
+    return undefined
+  }
+
+  let headers: Headers | undefined
+
+  if (request.init?.headers) {
+    headers = new Headers(request.init.headers)
+  } else if (request.input instanceof Request) {
+    headers = request.input.headers
+  }
+
+  return headers ? filterHeaders(headers, matchers) : undefined
+}
+
+const FORBIDDEN_HEADER_PATTERN =
+  /(token|cookie|secret|authorization|(api|secret|access|app).?key|(client|connecting|real).?ip|forwarded)/
+const MAX_HEADER_COUNT = 100
+const MAX_HEADER_VALUE_LENGTH = 128
+
+function filterHeaders(headers: Headers, matchers: MatchOption[]): NetworkHeaders | undefined {
+  const result: NetworkHeaders = {} as NetworkHeaders
+  let collectedHeaderCount = 0
+  let totalHeaderCount = 0
+  let hasReachedMaxHeaderCount = false
+
+  headers.forEach((value, name) => {
+    totalHeaderCount++
+
+    if (collectedHeaderCount >= MAX_HEADER_COUNT) {
+      if (!hasReachedMaxHeaderCount) {
+        display.warn(`Maximum number of headers (${MAX_HEADER_COUNT}) has been reached. Further headers are dropped.`)
+        hasReachedMaxHeaderCount = true
+      }
+
+      return
+    }
+
+    const lowerName = name.toLowerCase()
+
+    if (FORBIDDEN_HEADER_PATTERN.test(lowerName)) {
+      return
+    }
+    if (!matchList(matchers, lowerName)) {
+      return
+    }
+
+    if (value.length > MAX_HEADER_VALUE_LENGTH) {
+      display.warn(
+        `Header "${lowerName}" value was truncated from ${value.length} to ${MAX_HEADER_VALUE_LENGTH} characters.`
+      )
+      // monitor-until: 2026-05-23
+      addTelemetryDebug('Resource header value was truncated', {
+        header_name: lowerName,
+        original_length: value.length,
+        limit: MAX_HEADER_VALUE_LENGTH,
+      })
+    }
+
+    result[lowerName] = safeTruncate(value, MAX_HEADER_VALUE_LENGTH)
+    collectedHeaderCount++
+    totalHeaderCount++
+  })
+
+  // monitor-until: 2026-05-23
+  addTelemetryDebug('Maximum number of resource headers reached', {
+    collectedHeaderCount,
+    totalHeaderCount,
+  })
+  return collectedHeaderCount > 0 ? result : undefined
+}
+
+// Input:  "content-type: application/json\r\ncache-control: no-cache"
+// Output: [["content-type", "application/json"], ["cache-control", "no-cache"]]
+function parseRawXhrHeaders(rawXhrheaders: string): Array<[string, string]> {
+  const pairs: Array<[string, string]> = []
+  const lines = rawXhrheaders.trim().split(/\r\n/)
+  for (const line of lines) {
+    const colonIndex = line.indexOf(':')
+    if (colonIndex > 0) {
+      pairs.push([line.substring(0, colonIndex).trim(), line.substring(colonIndex + 1).trim()])
+    }
+  }
+  return pairs
 }

@@ -13,6 +13,7 @@ describe('provideDatadogErrorHandler', () => {
     const addErrorSpy = jasmine.createSpy()
     initializeAngularPlugin({ addError: addErrorSpy })
 
+    spyOn(console, 'error') // Mute console.errors
     const handler = createErrorHandler()
     handler.handleError(new Error('test error'))
 

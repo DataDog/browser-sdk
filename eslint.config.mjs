@@ -46,6 +46,12 @@ export default tseslint.config(
   },
 
   {
+    linterOptions: {
+      reportUnusedDisableDirectives: 'error',
+    },
+  },
+
+  {
     plugins: {
       unicorn: unicornPlugin,
       'local-rules': { rules: eslintLocalRules },

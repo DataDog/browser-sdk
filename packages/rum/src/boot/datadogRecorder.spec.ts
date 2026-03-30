@@ -28,7 +28,7 @@ import { setSegmentBytesLimit } from '../domain/segmentCollection'
 
 import { RecordType } from '../types'
 import { createDeflateEncoder, resetDeflateWorkerState, startDeflateWorker } from '../domain/deflate'
-import { startRecording } from './startRecording'
+import { startRecording } from './datadogRecorder'
 
 const VIEW_TIMESTAMP = 1 as TimeStamp
 

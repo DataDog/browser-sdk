@@ -1313,6 +1313,7 @@ __metadata:
     globals: "npm:17.3.0"
     react: "npm:19.2.4"
     react-dom: "npm:19.2.4"
+    react-is: "npm:19.2.4"
     react-router-dom: "npm:7.13.0"
     react-window: "npm:2.2.7"
     recharts: "npm:3.7.0"
@@ -1672,6 +1673,13 @@ __metadata:
   peerDependencies:
     react: ^19.2.4
   checksum: 10c0/f0c63f1794dedb154136d4d0f59af00b41907f4859571c155940296808f4b94bf9c0c20633db75b5b2112ec13d8d7dd4f9bf57362ed48782f317b11d05a44f35
+  languageName: node
+  linkType: hard
+
+"react-is@npm:19.2.4":
+  version: 19.2.4
+  resolution: "react-is@npm:19.2.4"
+  checksum: 10c0/477a7cfc900f24194606e315fa353856a3a13487ea8eca841678817cad4daef64339ea0d1e84e58459fc75dbe0d9ba00bb0cc626db3d07e0cf31edc64cb4fa37
   languageName: node
   linkType: hard
 

@@ -38,15 +38,6 @@ describe('endpointBuilder', () => {
       ).toContain('&dd-evp-encoding=deflate')
     })
 
-    it('should not start with ddsource for internal analytics mode', () => {
-      const url = createEndpointBuilder({ ...initConfiguration, internalAnalyticsSubdomain: 'foo' }, 'rum').build(
-        'fetch',
-        DEFAULT_PAYLOAD
-      )
-      expect(url).not.toContain('/rum?ddsource')
-      expect(url).toContain('ddsource=browser')
-    })
-
     it('accepts extra parameters', () => {
       const extraParameters = ['application.id=1234', 'application.version=1.0.0']
       const url = createEndpointBuilder(initConfiguration, 'rum', extraParameters).build('fetch', DEFAULT_PAYLOAD)

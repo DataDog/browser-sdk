@@ -33,7 +33,6 @@ export const EXHAUSTIVE_INIT_CONFIGURATION: Required<InitConfiguration> = {
     clientToken: 'yes',
   },
   datacenter: 'datacenter',
-  internalAnalyticsSubdomain: 'internal-analytics-subdomain.com',
   telemetryConfigurationSampleRate: 70,
   telemetryUsageSampleRate: 80,
   allowedTrackingOrigins: ['chrome-extension://example'],
@@ -79,7 +78,6 @@ export type MapInitConfigurationKey<Key extends string> =
           | 'env'
           | 'version'
           | 'datacenter'
-          | 'internalAnalyticsSubdomain'
           | 'replica'
           | 'enableExperimentalFeatures'
       ? never
