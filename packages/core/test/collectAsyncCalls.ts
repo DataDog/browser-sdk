@@ -1,8 +1,6 @@
 import { getCurrentJasmineSpec } from './getCurrentJasmineSpec'
 
-// Track guard functions set after resolution, so chained collectAsyncCalls
-// can detect and skip them instead of triggering a false "extra call" failure.
-const extraCallGuards = new WeakSet<() => void>()
+const originalPlanForGuard = new WeakMap<() => void, () => void>()
 
 export function collectAsyncCalls<F extends jasmine.Func>(
   spy: jasmine.Spy<F>,
@@ -17,31 +15,28 @@ export function collectAsyncCalls<F extends jasmine.Func>(
 
     const checkCalls = () => {
       if (spy.calls.count() === expectedCallsCount) {
-        const guard = (() => extraCallDetected()) as F
-        extraCallGuards.add(guard)
-        spy.and.callFake(guard)
         resolve(spy.calls)
       } else if (spy.calls.count() > expectedCallsCount) {
-        extraCallDetected()
+        const message = `Unexpected extra call for spec '${currentSpec.fullName}'`
+        fail(message)
+        reject(new Error(message))
       }
     }
 
     checkCalls()
 
-    const previousPlan: F = (spy.and as unknown as { plan: F }).plan
-
-    spy.and.callFake(((...args: Parameters<F>) => {
+    const originalPlan = getOriginalPlan(spy)
+    const guard = ((...args: Parameters<F>) => {
       checkCalls()
-      if (!extraCallGuards.has(previousPlan)) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return previousPlan(...args)
-      }
-    }) as F)
-
-    function extraCallDetected() {
-      const message = `Unexpected extra call for spec '${currentSpec!.fullName}'`
-      fail(message)
-      reject(new Error(message))
-    }
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return originalPlan(...args)
+    }) as F
+    originalPlanForGuard.set(guard, originalPlan)
+    spy.and.callFake(guard)
   })
+}
+
+function getOriginalPlan<F extends () => void>(spy: jasmine.Spy<F>): F {
+  const originalPlanOrGuard: F = (spy.and as unknown as { plan: F }).plan
+  return (originalPlanForGuard.get(originalPlanOrGuard) as F | undefined) ?? originalPlanOrGuard
 }
