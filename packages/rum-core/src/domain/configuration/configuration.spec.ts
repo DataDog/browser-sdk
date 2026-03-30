@@ -702,7 +702,6 @@ describe('serializeRumConfiguration', () => {
       trackFeatureFlagsForEvents: ['vital'],
       profilingSampleRate: 42,
       propagateTraceBaggage: true,
-      betaTrackActionsInShadowDom: true,
       trackResourceHeaders: true,
     }
 
@@ -718,8 +717,8 @@ describe('serializeRumConfiguration', () => {
         : Key extends 'trackLongTasks'
           ? 'track_long_task' // We forgot the s, keeping this for backward compatibility
           : // The following options are not reported as telemetry. Please avoid adding more of them.
-            // TODO: Add betaTrackActionsInShadowDom and trackResourceHeaders to rum-events-format telemetry schema and remove from this exclusion
-            Key extends 'applicationId' | 'subdomain' | 'betaTrackActionsInShadowDom' | 'trackResourceHeaders'
+            // TODO: Add trackResourceHeaders to rum-events-format telemetry schema and remove from this exclusion
+            Key extends 'applicationId' | 'subdomain' | 'trackResourceHeaders'
             ? never
             : CamelToSnakeCase<Key>
     // By specifying the type here, we can ensure that serializeConfiguration is returning an
