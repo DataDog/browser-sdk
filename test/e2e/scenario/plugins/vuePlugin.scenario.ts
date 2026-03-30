@@ -19,7 +19,7 @@ runBasePluginTests([
   },
 ])
 
-test.describe('vue plugin', () => {
+test.describe('plugin: vue', () => {
   createTest('should capture vue error from app.config.errorHandler')
     .withRum()
     .withVueApp()

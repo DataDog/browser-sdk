@@ -27,7 +27,7 @@ export function runBasePluginTests(configs: PluginTestConfig[]) {
   for (const { name, loadApp, viewPrefix, router, error } of configs) {
     const { homeViewName, homeUrlPattern, userRouteName, guidesRouteName } = router
 
-    test.describe(name, () => {
+    test.describe(`base plugin: ${name}`, () => {
       test.describe('router', () => {
         loadApp(createTest('should track initial home view').withRum()).run(async ({ flushEvents, intakeRegistry }) => {
           await flushEvents()

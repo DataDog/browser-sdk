@@ -37,7 +37,7 @@ runBasePluginTests(
   }))
 )
 
-test.describe('nextjs app router only', () => {
+test.describe('plugin: nextjs', () => {
   createTest('should not be affected by parallel routes')
     .withRum()
     .withNextjsApp('app')

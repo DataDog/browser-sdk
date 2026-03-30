@@ -25,7 +25,7 @@ runBasePluginTests(
   }))
 )
 
-test.describe('react plugin', () => {
+test.describe('plugin: react', () => {
   for (const { appName, description } of reactApps) {
     test.describe(`with ${description}`, () => {
       createTest('should send a react component render vital event')

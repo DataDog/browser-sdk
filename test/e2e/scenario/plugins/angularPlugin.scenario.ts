@@ -22,7 +22,7 @@ runBasePluginTests([
   },
 ])
 
-test.describe('angular plugin', () => {
+test.describe('plugin: angular', () => {
   createTest('should define a view name for nested routes')
     .withRum()
     .withApp(angularApp)
