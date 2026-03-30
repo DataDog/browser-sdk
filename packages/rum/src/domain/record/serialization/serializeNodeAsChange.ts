@@ -29,6 +29,11 @@ export function serializeNodeAsChange(
     return
   }
 
+  // Never serialize the descendants of HIDDEN or IGNORE'd elements.
+  if (parentPrivacyLevel === NodePrivacyLevel.HIDDEN || parentPrivacyLevel === NodePrivacyLevel.IGNORE) {
+    return
+  }
+
   let privacyLevel: NodePrivacyLevel
 
   const selfPrivacyLevel = getNodeSelfPrivacyLevel(node)
