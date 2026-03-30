@@ -20,6 +20,7 @@ runBasePluginTests(
     },
     error: {
       clientErrorMessage: 'Error triggered by button click',
+      expectsBrowserConsoleErrors: true,
     },
   }))
 )
@@ -72,8 +73,8 @@ test.describe('react plugin', () => {
           expect(errorEvent?.context?.framework).toBe('react')
           expect(errorEvent?.error.component_stack).toBeDefined()
 
-          withBrowserLogs((_logs) => {
-            // expected
+          withBrowserLogs((browserLogs) => {
+            expect(browserLogs.filter((log) => log.level === 'error').length).toBeGreaterThan(0)
           })
         })
     })

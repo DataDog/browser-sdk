@@ -17,6 +17,7 @@ runBasePluginTests([
     },
     error: {
       clientErrorMessage: 'Error triggered by button click',
+      expectsBrowserConsoleErrors: true,
     },
   },
 ])

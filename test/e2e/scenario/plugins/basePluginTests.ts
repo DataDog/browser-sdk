@@ -12,6 +12,7 @@ export interface RouterConfig {
 
 export interface ErrorConfig {
   clientErrorMessage: string
+  expectsBrowserConsoleErrors?: boolean
 }
 
 export interface PluginTestConfig {
@@ -177,9 +178,10 @@ export function runBasePluginTests(configs: PluginTestConfig[]) {
               )
               expect(errorEvent).toBeDefined()
 
-              // Consume browser logs — some frameworks emit console errors during error capture
-              withBrowserLogs((_logs) => {
-                // expected
+              withBrowserLogs((browserLogs) => {
+                if (error.expectsBrowserConsoleErrors) {
+                  expect(browserLogs.filter((log) => log.level === 'error').length).toBeGreaterThan(0)
+                }
               })
             }
           )

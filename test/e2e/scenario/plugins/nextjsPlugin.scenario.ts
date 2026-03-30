@@ -32,6 +32,7 @@ runBasePluginTests(
     },
     error: {
       clientErrorMessage,
+      expectsBrowserConsoleErrors: true,
     },
   }))
 )
