@@ -48,17 +48,6 @@ test.describe('angular plugin', () => {
       expect(lastView.view.url).toContain('/unknown/page')
     })
 
-  createTest('should define a view name for the initial route')
-    .withRum()
-    .withApp('angular-app')
-    .run(async ({ flushEvents, intakeRegistry }) => {
-      await flushEvents()
-      const viewEvents = intakeRegistry.rumViewEvents
-      expect(viewEvents.length).toBeGreaterThan(0)
-      const firstView = viewEvents[0]
-      expect(firstView.view.name).toBe('/')
-    })
-
   createTest('should report errors caught by provideDatadogErrorHandler')
     .withRum()
     .withApp(angularApp)

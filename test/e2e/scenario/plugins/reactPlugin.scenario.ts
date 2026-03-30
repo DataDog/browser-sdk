@@ -62,12 +62,6 @@ test.describe('react plugin', () => {
           await page.click('[data-testid="trigger-error"]')
           await page.waitForSelector('[data-testid="error-boundary"]')
 
-          // Firefox may delay dispatching error events from React error boundaries,
-          // causing flushEvents() to miss them, this timeout ensures the RUM event is captured.
-          if (browserName === 'firefox') {
-            await page.waitForTimeout(1000)
-          }
-
           await flushEvents()
 
           const errorEvent = intakeRegistry.rumErrorEvents.find(
