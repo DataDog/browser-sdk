@@ -28,8 +28,6 @@ export function getExpiredSessionState(
     expiredSessionState.anonymousId = previousSessionState?.anonymousId
   }
 
-  // TODO: should we also keep forceReplay?
-
   return expiredSessionState
 }
 
