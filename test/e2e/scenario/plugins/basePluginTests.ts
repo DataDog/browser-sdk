@@ -97,41 +97,29 @@ export function runBasePluginTests(configs: PluginTestConfig[]) {
           }
         )
 
-        loadApp(createTest('should not create a new view when only the hash changes').withRum()).run(
-          async ({ page, flushEvents, intakeRegistry }) => {
-            await page.click('text=Go to User 42')
-            await page.waitForURL('**/user/42?admin=true')
+        loadApp(
+          createTest('should not create a new view when only the hash changes or query params change').withRum()
+        ).run(async ({ page, flushEvents, intakeRegistry }) => {
+          await page.click('text=Go to User 42')
+          await page.waitForURL('**/user/42?admin=true')
 
-            await page.click('text=Go to Section')
-            await page.waitForURL('**/user/42#section')
+          await page.click('text=Go to Section')
+          await page.waitForURL('**/user/42#section')
 
-            await flushEvents()
+          await page.click('text=Change query params')
+          await page.waitForURL('**/user/42?admin=false')
 
-            const userView = intakeRegistry.rumViewEvents.find((e) => e.view.name === `${viewPrefix}${userRouteName}`)
-            expect(userView).toBeDefined()
+          await flushEvents()
 
-            const spuriousView = intakeRegistry.rumViewEvents.find((e) => e.view.url?.includes('#section'))
-            expect(spuriousView).toBeUndefined()
-          }
-        )
+          const userView = intakeRegistry.rumViewEvents.find((e) => e.view.name === `${viewPrefix}${userRouteName}`)
+          expect(userView).toBeDefined()
 
-        loadApp(createTest('should not create a new view when only query params change').withRum()).run(
-          async ({ page, flushEvents, intakeRegistry }) => {
-            await page.click('text=Go to User 42')
-            await page.waitForURL('**/user/42?admin=true')
+          const spuriousView = intakeRegistry.rumViewEvents.find((e) => e.view.url?.includes('#section'))
+          expect(spuriousView).toBeUndefined()
 
-            await page.click('text=Change query params')
-            await page.waitForURL('**/user/42?admin=false')
-
-            await flushEvents()
-
-            const userView = intakeRegistry.rumViewEvents.find((e) => e.view.name === `${viewPrefix}${userRouteName}`)
-            expect(userView).toBeDefined()
-
-            const spuriousView = intakeRegistry.rumViewEvents.find((e) => e.view.url?.includes('admin=false'))
-            expect(spuriousView).toBeUndefined()
-          }
-        )
+          const queryParamsView = intakeRegistry.rumViewEvents.find((e) => e.view.url?.includes('admin=false'))
+          expect(queryParamsView).toBeUndefined()
+        })
 
         loadApp(
           createTest('should track navigations between different concrete URLs of the same dynamic route').withRum()
@@ -159,12 +147,7 @@ export function runBasePluginTests(configs: PluginTestConfig[]) {
       if (error) {
         test.describe('errors', () => {
           loadApp(createTest('should report client-side error').withRum()).run(
-            async ({ page, flushEvents, intakeRegistry, withBrowserLogs, browserName }) => {
-              test.skip(
-                browserName === 'firefox',
-                'firefox is sending the errors in two separate batches, however the last batch is delayed making the test setup to miss it'
-              )
-
+            async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
               await page.click('text=Go to Error Test')
               await page.waitForURL(`**${viewPrefix}/error-test`)
 

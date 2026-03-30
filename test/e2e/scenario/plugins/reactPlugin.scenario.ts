@@ -57,7 +57,7 @@ test.describe('plugin: react', () => {
       createTest('should capture react error from error boundary')
         .withRum()
         .withApp(appName)
-        .run(async ({ page, flushEvents, intakeRegistry, browserName, withBrowserLogs }) => {
+        .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
           await page.click('text=Go to Error Test')
           await page.waitForURL('**/error-test')
           await page.click('[data-testid="trigger-error"]')
