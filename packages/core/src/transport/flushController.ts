@@ -39,7 +39,17 @@ interface FlushControllerOptions {
  * but relies on invariants described in each method documentation to keep a coherent state.
  */
 export function createFlushController({ pageMayExitObservable, sessionExpireObservable }: FlushControllerOptions) {
-  const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => flush(event.reason))
+  let forcedFlushReason: FlushReason | undefined
+  const preparePageExitFlushObservable = new Observable<PageExitReason>()
+  const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => {
+    forcedFlushReason = event.reason
+    try {
+      preparePageExitFlushObservable.notify(event.reason)
+    } finally {
+      forcedFlushReason = undefined
+    }
+    flush(event.reason)
+  })
   const sessionExpireSubscription = sessionExpireObservable.subscribe(() => flush('session_expire'))
 
   const flushObservable = new Observable<FlushEvent>(() => () => {
@@ -85,6 +95,7 @@ export function createFlushController({ pageMayExitObservable, sessionExpireObse
 
   return {
     flushObservable,
+    preparePageExitFlushObservable,
     get messagesCount() {
       return currentMessagesCount
     },
@@ -100,7 +111,7 @@ export function createFlushController({ pageMayExitObservable, sessionExpireObse
      */
     notifyBeforeAddMessage(estimatedMessageBytesCount: number) {
       if (currentBytesCount + estimatedMessageBytesCount >= RECOMMENDED_REQUEST_BYTES_LIMIT) {
-        flush('bytes_limit')
+        flush(forcedFlushReason ?? 'bytes_limit')
       }
       // Consider the message to be added now rather than in `notifyAfterAddMessage`, because if no
       // message was added yet and `notifyAfterAddMessage` is called asynchronously, we still want
@@ -123,9 +134,9 @@ export function createFlushController({ pageMayExitObservable, sessionExpireObse
       currentBytesCount += messageBytesCountDiff
 
       if (currentMessagesCount >= MESSAGES_LIMIT) {
-        flush('messages_limit')
+        flush(forcedFlushReason ?? 'messages_limit')
       } else if (currentBytesCount >= RECOMMENDED_REQUEST_BYTES_LIMIT) {
-        flush('bytes_limit')
+        flush(forcedFlushReason ?? 'bytes_limit')
       }
     },
 

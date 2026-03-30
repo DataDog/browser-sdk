@@ -100,6 +100,19 @@ describe('flushController', () => {
   })
 
   describe('bytes limit', () => {
+    it('uses the page exit reason as flush reason for intermediate flushes during page exit', () => {
+      flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
+      flushController.notifyAfterAddMessage()
+
+      flushController.preparePageExitFlushObservable.subscribe(() => {
+        flushController.notifyBeforeAddMessage(BYTES_LIMIT)
+      })
+
+      pageMayExitObservable.notify({ reason: 'before_unload' })
+
+      expect(flushSpy.calls.first().args[0].reason).toBe('before_unload')
+    })
+
     it('notifies when the bytes limit is reached after adding a message', () => {
       flushController.notifyBeforeAddMessage(BYTES_LIMIT)
       flushController.notifyAfterAddMessage()
