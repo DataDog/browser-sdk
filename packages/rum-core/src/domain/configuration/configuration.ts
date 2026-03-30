@@ -254,6 +254,11 @@ export interface RumInitConfiguration extends InitConfiguration {
    * - `true`: collect a set of default headers (see {@link DEFAULT_TRACKED_RESOURCE_HEADERS})
    * - `MatchOption[]`: collect default headers PLUS headers matching any item in the list
    *
+   * Headers whose names match a built-in sensitive-data pattern are always dropped, regardless
+   * of the configured matchers. The pattern blocks headers whose names contain: `token`, `cookie`,
+   * `secret`, `authorization`, `api-key`, `secret-key`, `access-key`, `app-key`, `client-ip`,
+   * `connecting-ip`, `real-ip`, or `forwarded`.
+   *
    * @category Data Collection
    * @defaultValue false (disabled)
    * @example
