@@ -369,6 +369,7 @@ export type RumErrorEvent = CommonProperties &
             | 'video'
           [k: string]: unknown
         }
+        readonly graphql?: RumGraphql
         [k: string]: unknown
       }
       /**
@@ -506,7 +507,7 @@ export type RumErrorEvent = CommonProperties &
     /**
      * Internal properties
      */
-    readonly _dd?: {
+    readonly _dd?: RumTrace & {
       /**
        * Profiling context
        */
@@ -878,86 +879,13 @@ export type RumResourceEvent = CommonProperties &
         }
         [k: string]: unknown
       }
-      /**
-       * GraphQL requests parameters
-       */
-      readonly graphql?: {
-        /**
-         * Type of the GraphQL operation
-         */
-        readonly operationType?: 'query' | 'mutation' | 'subscription'
-        /**
-         * Name of the GraphQL operation
-         */
-        readonly operationName?: string
-        /**
-         * Content of the GraphQL operation
-         */
-        payload?: string
-        /**
-         * String representation of the operation variables
-         */
-        variables?: string
-        /**
-         * Number of GraphQL errors in the response
-         */
-        readonly error_count?: number
-        /**
-         * Array of GraphQL errors from the response
-         */
-        readonly errors?: {
-          /**
-           * Error message
-           */
-          readonly message: string
-          /**
-           * Error code (used by some providers)
-           */
-          readonly code?: string
-          /**
-           * Array of error locations in the GraphQL query
-           */
-          readonly locations?: {
-            /**
-             * Line number where the error occurred
-             */
-            readonly line: number
-            /**
-             * Column number where the error occurred
-             */
-            readonly column: number
-            [k: string]: unknown
-          }[]
-          /**
-           * Path to the field that caused the error
-           */
-          readonly path?: (string | number)[]
-          [k: string]: unknown
-        }[]
-        [k: string]: unknown
-      }
+      readonly graphql?: RumGraphql
       [k: string]: unknown
     }
     /**
      * Internal properties
      */
-    readonly _dd?: {
-      /**
-       * span identifier in decimal format
-       */
-      readonly span_id?: string
-      /**
-       * parent span identifier in decimal format
-       */
-      readonly parent_span_id?: string
-      /**
-       * trace identifier, either a 64 bit decimal number or a 128 bit hexadecimal number padded with 0s
-       */
-      readonly trace_id?: string
-      /**
-       * trace sample rate in decimal format
-       */
-      readonly rule_psr?: number
+    readonly _dd?: RumTrace & {
       /**
        * Whether the resource should be discarded or indexed
        */
@@ -1615,6 +1543,86 @@ export interface ActionChildProperties {
     readonly id: string | string[]
     [k: string]: unknown
   }
+  [k: string]: unknown
+}
+/**
+ * GraphQL request parameters
+ */
+export interface RumGraphql {
+  /**
+   * Type of the GraphQL operation
+   */
+  readonly operationType?: 'query' | 'mutation' | 'subscription'
+  /**
+   * Name of the GraphQL operation
+   */
+  readonly operationName?: string
+  /**
+   * Content of the GraphQL operation
+   */
+  payload?: string
+  /**
+   * String representation of the operation variables
+   */
+  variables?: string
+  /**
+   * Number of GraphQL errors in the response
+   */
+  readonly error_count?: number
+  /**
+   * Array of GraphQL errors from the response
+   */
+  readonly errors?: {
+    /**
+     * Error message
+     */
+    readonly message: string
+    /**
+     * Error code (used by some providers)
+     */
+    readonly code?: string
+    /**
+     * Array of error locations in the GraphQL query
+     */
+    readonly locations?: {
+      /**
+       * Line number where the error occurred
+       */
+      readonly line: number
+      /**
+       * Column number where the error occurred
+       */
+      readonly column: number
+      [k: string]: unknown
+    }[]
+    /**
+     * Path to the field that caused the error
+     */
+    readonly path?: (string | number)[]
+    [k: string]: unknown
+  }[]
+  [k: string]: unknown
+}
+/**
+ * Trace context properties
+ */
+export interface RumTrace {
+  /**
+   * span identifier in decimal format
+   */
+  readonly span_id?: string
+  /**
+   * parent span identifier in decimal format
+   */
+  readonly parent_span_id?: string
+  /**
+   * trace identifier, either a 64 bit decimal number or a 128 bit hexadecimal number padded with 0s
+   */
+  readonly trace_id?: string
+  /**
+   * trace sample rate in decimal format
+   */
+  readonly rule_psr?: number
   [k: string]: unknown
 }
 /**
