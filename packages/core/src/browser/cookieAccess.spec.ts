@@ -5,14 +5,14 @@ import { detectVersion, isChromium } from '../tools/utils/browserDetection'
 import type { CookieOptions } from './cookie'
 import { deleteCookie, getCookie, setCookie } from './cookie'
 import type { CookieStoreWindow } from './browser.types'
-import { createCookieAccess, getCookieStore, WATCH_COOKIE_INTERVAL_DELAY } from './cookieAccess'
+import { createCookieAccess, WATCH_COOKIE_INTERVAL_DELAY } from './cookieAccess'
 
 const COOKIE_NAME = 'test_cookie'
 const COOKIE_OPTIONS = { secure: false, crossSite: false, partitioned: false }
 const MOCK_CONFIGURATION = { allowUntrustedEvents: true } as Configuration
 
 function disableCookieStore() {
-  replaceMockable(getCookieStore, () => undefined)
+  replaceMockable((window as CookieStoreWindow).cookieStore, undefined)
 }
 
 function setCookieWithCleanup(name: string, value: string, expireDelay: number = 0, options?: CookieOptions) {

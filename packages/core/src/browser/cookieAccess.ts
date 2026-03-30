@@ -24,7 +24,7 @@ export function createCookieAccess(
   configuration: Configuration,
   cookieOptions: CookieOptions
 ): CookieAccess {
-  const cookieStore = mockable(getCookieStore)()
+  const cookieStore = mockable((window as CookieStoreWindow).cookieStore)
   if (cookieStore) {
     return createCookieStoreAccess(cookieName, configuration, cookieOptions, cookieStore)
   }
@@ -108,5 +108,3 @@ function createDocumentCookieAccess(cookieName: string, cookieOptions: CookieOpt
     observable,
   }
 }
-
-export const getCookieStore = () => (window as CookieStoreWindow).cookieStore
