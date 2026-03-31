@@ -16,11 +16,7 @@ export function computeBytesCount(candidate: string): number {
     return candidate.length
   }
 
-  if (window.TextEncoder !== undefined) {
-    return new TextEncoder().encode(candidate).length
-  }
-
-  return new Blob([candidate]).size
+  return new TextEncoder().encode(candidate).length
 }
 
 export function concatBuffers(buffers: Uint8ArrayBuffer[]): Uint8ArrayBuffer {
