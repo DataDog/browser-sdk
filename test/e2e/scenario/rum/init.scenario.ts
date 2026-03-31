@@ -36,6 +36,10 @@ test.describe('API calls and events around init', () => {
       setTimeout(() => window.DD_RUM!.init(configuration), 30)
     })
     .run(async ({ intakeRegistry, flushEvents }) => {
+      test.skip(
+        test.info().project.name === 'android',
+        'Tight setTimeout sequencing (10/20/30ms) is unreliable under Android emulator ADB latency'
+      )
       await flushEvents()
 
       const initialView = intakeRegistry.rumViewEvents[0]
