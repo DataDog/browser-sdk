@@ -2,6 +2,7 @@ import { SESSION_STORE_KEY, MEMORY_SESSION_STORE_KEY } from '@datadog/browser-co
 import type { BrowserContext, Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
+import type { MemorySession } from 'packages/core/src/domain/session/storeStrategies/sessionInMemory'
 import { bundleSetup, createTest } from '../lib/framework'
 
 const DISABLE_LOCAL_STORAGE = '<script>Object.defineProperty(Storage.prototype, "getItem", { get: () => 42});</script>'
@@ -238,11 +239,11 @@ async function getSessionIdFromLocalStorage(page: Page): Promise<string | undefi
 }
 
 async function getSessionIdFromMemory(page: Page): Promise<string | undefined> {
-  const sessionState = await page.evaluate(
-    (key) => (window as any)[key] as { id: string } | undefined,
+  const memorySession = await page.evaluate(
+    (key) => (window as any)[key] as MemorySession | undefined,
     MEMORY_SESSION_STORE_KEY
   )
-  return sessionState?.id
+  return memorySession?.state?.id
 }
 
 async function getSessionIdFromCookie(browserContext: BrowserContext): Promise<string | undefined> {

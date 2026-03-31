@@ -1,11 +1,5 @@
 import type { BufferedData, Payload } from '@datadog/browser-core'
-import {
-  ErrorSource,
-  display,
-  STORAGE_POLL_DELAY,
-  BufferedObservable,
-  FLUSH_DURATION_LIMIT,
-} from '@datadog/browser-core'
+import { ErrorSource, display, BufferedObservable, FLUSH_DURATION_LIMIT } from '@datadog/browser-core'
 import type { Clock, Request } from '@datadog/browser-core/test'
 import {
   interceptRequests,
@@ -175,7 +169,6 @@ describe('logs', () => {
       handleLog({ status: StatusType.info, message: 'message 1' }, logger)
 
       sessionManager.expire()
-      clock.tick(STORAGE_POLL_DELAY * 2)
 
       handleLog({ status: StatusType.info, message: 'message 2' }, logger)
 
