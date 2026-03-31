@@ -37,7 +37,7 @@ export function startEventCollection(strategy: EventCollectionStrategy, onEvents
 function compareEvents(a: SdkEvent, b: SdkEvent) {
   // Sort events chronologically
   if (a.date !== b.date) {
-    return (b.date ?? 0) - (a.date ?? 0)
+    return b.date - a.date
   }
 
   // If two events have the same date, make sure to display type:view events last. This ensures that
@@ -48,7 +48,7 @@ function compareEvents(a: SdkEvent, b: SdkEvent) {
   // on the event date, events would be displayed in the order they are received, so the Resource
   // event would be displayed between the two type:view events, which is confusing. This ensures
   // that type:view events are grouped at the end.
-  return (isRumViewEvent(a) as any) - (isRumViewEvent(b) as any)
+  return Number(isRumViewEvent(a)) - Number(isRumViewEvent(b))
 }
 
 function listenEventsFromRequests(callback: (events: SdkEvent[]) => void) {

@@ -460,12 +460,5 @@ function Emphasis({ children }: { children: ReactNode }) {
 }
 
 function getViewName(view: { name?: string; url: string }) {
-  if (view.name) {
-    return view.name
-  }
-  try {
-    return new URL(view.url).pathname
-  } catch {
-    return view.url
-  }
+  return view.name ?? new URL(view.url).pathname
 }
