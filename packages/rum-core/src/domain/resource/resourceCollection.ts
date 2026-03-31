@@ -326,8 +326,12 @@ function computeNetworkHeaders(
     return undefined
   }
 
-  const responseMatchers = matchingRules.flatMap((r) => r.responseMatchers)
-  const requestMatchers = matchingRules.flatMap((r) => r.requestMatchers)
+  const responseMatchers: HeaderMatchOption[] = []
+  const requestMatchers: HeaderMatchOption[] = []
+  matchingRules.forEach((r) => {
+    responseMatchers.push(...r.responseMatchers)
+    requestMatchers.push(...r.requestMatchers)
+  })
 
   const responseHeaders = responseMatchers.length > 0 ? getResponseHeaders(request, responseMatchers) : undefined
   const requestHeaders = requestMatchers.length > 0 ? getRequestHeaders(request, requestMatchers) : undefined
