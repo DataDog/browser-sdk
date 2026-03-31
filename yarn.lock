@@ -388,6 +388,32 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@datadog/browser-rum-nuxt@workspace:packages/rum-nuxt":
+  version: 0.0.0-use.local
+  resolution: "@datadog/browser-rum-nuxt@workspace:packages/rum-nuxt"
+  dependencies:
+    "@datadog/browser-core": "npm:6.32.0"
+    "@datadog/browser-rum-core": "npm:6.32.0"
+    vue: "npm:3.5.29"
+    vue-router: "npm:4.6.4"
+  peerDependencies:
+    nuxt: ">=3.0.0"
+    vue: ^3.5.0
+    vue-router: ^4.0.0
+  peerDependenciesMeta:
+    "@datadog/browser-rum":
+      optional: true
+    "@datadog/browser-rum-slim":
+      optional: true
+    nuxt:
+      optional: true
+    vue:
+      optional: true
+    vue-router:
+      optional: true
+  languageName: unknown
+  linkType: soft
+
 "@datadog/browser-rum-react@npm:6.32.0, @datadog/browser-rum-react@workspace:packages/rum-react":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-react@workspace:packages/rum-react"

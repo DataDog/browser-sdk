@@ -1,0 +1,25 @@
+{
+  "name": "nuxt-app",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev --port 0",
+    "start": "nuxt preview"
+  },
+  "dependencies": {
+    "@datadog/browser-rum": "file:../../../packages/rum/package.tgz",
+    "@datadog/browser-rum-nuxt": "file:../../../packages/rum-nuxt/package.tgz",
+    "nuxt": "^3.0.0"
+  },
+  "resolutions": {
+    "@datadog/browser-rum-core": "file:../../../packages/rum-core/package.tgz",
+    "@datadog/browser-core": "file:../../../packages/core/package.tgz",
+    "@datadog/browser-rum": "file:../../../packages/rum/package.tgz",
+    "@datadog/browser-rum-nuxt": "file:../../../packages/rum-nuxt/package.tgz",
+    "@datadog/browser-rum-slim": "file:../../../packages/rum-slim/package.tgz",
+    "@datadog/browser-worker": "file:../../../packages/worker/package.tgz"
+  },
+  "volta": {
+    "extends": "../../../package.json"
+  }
+}
