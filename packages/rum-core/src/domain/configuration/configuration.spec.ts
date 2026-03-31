@@ -621,6 +621,15 @@ describe('validateAndBuildRumConfiguration', () => {
           'trackResourceHeaders[0].response[0].extractor should be a RegExp'
         )
       })
+
+      it('lowercases string names in HeaderMatchOption', () => {
+        const result = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackResourceHeaders: [{ url: /.*/, response: [{ name: 'Content-Type' }] }],
+        })!.trackResourceHeaders
+
+        expect(result[0].responseMatchers).toEqual([{ name: 'content-type' }])
+      })
     })
   })
 

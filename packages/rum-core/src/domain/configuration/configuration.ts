@@ -657,7 +657,7 @@ function normalizeDirection(
       if (item.extractor !== undefined && !(item.extractor instanceof RegExp)) {
         display.warn(`trackResourceHeaders[${ruleIndex}].${directionName}[${index}].extractor should be a RegExp`)
       } else {
-        matchers.push(item)
+        matchers.push({ ...item, name: typeof item.name === 'string' ? item.name.toLowerCase() : item.name })
       }
     } else if (isMatchOption(item)) {
       matchers.push({ name: typeof item === 'string' ? item.toLowerCase() : item })
