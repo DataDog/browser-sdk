@@ -436,6 +436,16 @@ describe('validateAndBuildRumConfiguration', () => {
       ).toEqual([])
     })
 
+    it('warns and returns empty array when set to an empty array', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResourceHeaders: [] })!
+          .trackResourceHeaders
+      ).toEqual([])
+      expect(displayWarnSpy).toHaveBeenCalledOnceWith(
+        'trackResourceHeaders is an empty array, no headers will be captured'
+      )
+    })
+
     it('adds defaults rule and user matcher rule when an array with MatchOption is provided', () => {
       const result = validateAndBuildRumConfiguration({
         ...DEFAULT_INIT_CONFIGURATION,

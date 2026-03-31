@@ -596,6 +596,11 @@ function validateAndBuildTrackResourceHeaders(initConfiguration: RumInitConfigur
     return []
   }
 
+  if (option.length === 0) {
+    display.warn('trackResourceHeaders is an empty array, no headers will be captured')
+    return []
+  }
+
   const rules: HeaderCaptureRule[] = []
   let hasAddedDefaultsRule = false
 
