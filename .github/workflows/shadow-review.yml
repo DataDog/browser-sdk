@@ -1,0 +1,51 @@
+# shadow-review.yml — Shadow Reviewer workflow for browser-sdk
+name: Shadow Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  push:
+    branches: [main]
+
+jobs:
+  # Sync fork on merge to main
+  sync-fork:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync shadow fork
+        env:
+          GITHUB_TOKEN: ${{ secrets.SHADOW_FORK_TOKEN }}
+        run: |
+          gh api \
+            --method POST \
+            "repos/${{ vars.SHADOW_FORK }}/merge-upstream" \
+            -f branch="main" || true
+
+  # Mirror PR to shadow fork (review + post-close disabled for now)
+  shadow-mirror:
+    if: >-
+      github.event_name == 'pull_request'
+      && github.event.pull_request.draft != true
+      && github.event.pull_request.user.type != 'Bot'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout rum-ai-toolkit
+        uses: actions/checkout@v4
+        with:
+          repository: DataDog/rum-ai-toolkit
+          ref: worktree-shadow-reviewer-spec  # TODO: change to main after merging rum-ai-toolkit PR #22
+          path: toolkit
+
+      - name: Mirror PR to shadow fork
+        env:
+          GITHUB_TOKEN: ${{ secrets.SHADOW_FORK_TOKEN }}
+        run: |
+          toolkit/tools/shadow-reviewer/scripts/mirror-pr.sh \
+            "${{ github.repository }}" \
+            "${{ vars.SHADOW_FORK }}" \
+            "${{ github.event.pull_request.number }}" \
+            "${{ github.event.pull_request.head.sha }}" \
+            "${{ github.event.pull_request.base.ref }}" \
+            "${{ github.event.pull_request.title }}" \
+            "${{ github.event.pull_request.body }}"
