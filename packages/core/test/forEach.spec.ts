@@ -1,3 +1,4 @@
+import { resetManageResourceTimingBufferFull } from '../../rum-core/src/browser/performanceObservable'
 import { resetExperimentalFeatures } from '../src/tools/experimentalFeatures'
 import { resetValueHistoryGlobals } from '../src/tools/valueHistory'
 import { resetFetchObservable } from '../src/browser/fetchObservable'
@@ -37,6 +38,7 @@ afterEach(() => {
   resetTelemetry()
   resetInteractionCountPolyfill()
   resetExperimentalFeatures()
+  resetManageResourceTimingBufferFull()
 })
 
 function clearAllCookies() {

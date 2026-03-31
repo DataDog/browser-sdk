@@ -67,16 +67,6 @@ step-6_publish-npm:
     - yarn
     - node ./scripts/deploy/publish-npm.ts
 
-step-6_publish-npm-legacy:
-  stage: deploy
-  extends:
-    - .base-configuration
-  when: manual
-  allow_failure: false
-  script:
-    - yarn
-    - node ./scripts/deploy/publish-npm-legacy.ts
-
 step-7_publish-developer-extension:
   stage: deploy
   extends:

@@ -8,8 +8,14 @@ import {
   relativeToClocks,
   createTaskQueue,
   mockable,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
+  matchList,
+  safeTruncate,
+  display,
+  addTelemetryDebug,
 } from '@datadog/browser-core'
-import type { RumConfiguration } from '../configuration'
+import type { HeaderMatchOption, RumConfiguration } from '../configuration'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType, createPerformanceObservable } from '../../browser/performanceObservable'
 import type {
@@ -17,7 +23,7 @@ import type {
   RumFetchResourceEventDomainContext,
   RumOtherResourceEventDomainContext,
 } from '../../domainContext.types'
-import type { RawRumResourceEvent, ResourceResponse } from '../../rawRumEvent.types'
+import type { NetworkHeaders, RawRumResourceEvent, ResourceRequest, ResourceResponse } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData, LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -143,8 +149,12 @@ function assembleResource(
     ? computeResourceEntryDuration(entry)
     : computeRequestDuration(pageStateHistory, startClocks, request!.duration)
 
+  const networkHeaders = isExperimentalFeatureEnabled(ExperimentalFeature.TRACK_RESOURCE_HEADERS)
+    ? computeNetworkHeaders(request, configuration)
+    : undefined
+
   const graphql = request && computeGraphQlMetaData(request, configuration)
-  const response = entry && computeResourceResponse(entry)
+  const contentTypeFromPerformanceEntry = entry && computeContentTypeFromPerformanceEntry(entry)
 
   const resourceEvent = combine(
     {
@@ -164,7 +174,6 @@ function assembleResource(
         protocol: entry && computeResourceEntryProtocol(entry),
         delivery_type: entry && computeResourceEntryDeliveryType(entry),
         graphql,
-        response,
       },
       type: RumEventType.RESOURCE,
       _dd: {
@@ -172,7 +181,9 @@ function assembleResource(
       },
     },
     tracingInfo,
-    entry && computeResourceEntryMetrics(entry)
+    entry && computeResourceEntryMetrics(entry),
+    contentTypeFromPerformanceEntry,
+    networkHeaders
   )
 
   return {
@@ -195,13 +206,19 @@ function computeGraphQlMetaData(
   return extractGraphQlMetadata(request, graphQlConfig)
 }
 
-function computeResourceResponse(entry: RumPerformanceResourceTiming): ResourceResponse | undefined {
+function computeContentTypeFromPerformanceEntry(
+  entry: RumPerformanceResourceTiming
+): { resource: Pick<RawRumResourceEvent['resource'], 'response'> } | undefined {
   const contentType = entry.contentType
 
   if (contentType) {
     return {
-      headers: {
-        'content-type': contentType,
+      resource: {
+        response: {
+          headers: {
+            'content-type': contentType,
+          },
+        },
       },
     }
   }
@@ -293,4 +310,162 @@ function computeRequestDuration(pageStateHistory: PageStateHistory, startClocks:
  */
 function discardZeroStatus(statusCode: number | undefined): number | undefined {
   return statusCode === 0 ? undefined : statusCode
+}
+
+function computeNetworkHeaders(
+  request: RequestCompleteEvent | undefined,
+  configuration: RumConfiguration
+): { resource: { request?: ResourceRequest; response?: ResourceResponse } } | undefined {
+  const rules = configuration.trackResourceHeaders
+  if (rules.length === 0 || !request) {
+    return undefined
+  }
+
+  const matchingRules = rules.filter((rule) => matchList([rule.url], request.url, true))
+  if (matchingRules.length === 0) {
+    return undefined
+  }
+
+  const responseMatchers: HeaderMatchOption[] = []
+  const requestMatchers: HeaderMatchOption[] = []
+  matchingRules.forEach((r) => {
+    responseMatchers.push(...r.responseMatchers)
+    requestMatchers.push(...r.requestMatchers)
+  })
+
+  const responseHeaders = responseMatchers.length > 0 ? getResponseHeaders(request, responseMatchers) : undefined
+  const requestHeaders = requestMatchers.length > 0 ? getRequestHeaders(request, requestMatchers) : undefined
+
+  if (!responseHeaders && !requestHeaders) {
+    return undefined
+  }
+
+  return {
+    resource: {
+      request: requestHeaders ? { headers: requestHeaders } : undefined,
+      response: responseHeaders ? { headers: responseHeaders } : undefined,
+    },
+  }
+}
+
+function getResponseHeaders(request: RequestCompleteEvent, matchers: HeaderMatchOption[]): NetworkHeaders | undefined {
+  if (request.type === RequestType.FETCH && request.response) {
+    return filterHeaders(request.response.headers, matchers)
+  }
+
+  if (request.type === RequestType.XHR && request.xhr) {
+    const rawXhrHeaders = request.xhr.getAllResponseHeaders()
+    if (rawXhrHeaders) {
+      try {
+        return filterHeaders(new Headers(parseRawXhrHeaders(rawXhrHeaders)), matchers)
+      } catch {
+        // Ignore parsing errors
+      }
+    }
+  }
+
+  return undefined
+}
+
+function getRequestHeaders(request: RequestCompleteEvent, matchers: HeaderMatchOption[]): NetworkHeaders | undefined {
+  if (request.type !== RequestType.FETCH) {
+    return undefined
+  }
+
+  let headers: Headers | undefined
+
+  if (request.init?.headers) {
+    headers = new Headers(request.init.headers)
+  } else if (request.input instanceof Request) {
+    headers = request.input.headers
+  }
+
+  return headers ? filterHeaders(headers, matchers) : undefined
+}
+
+const FORBIDDEN_HEADER_PATTERN =
+  /(token|cookie|secret|authorization|(api|secret|access|app).?key|(client|connecting|real).?ip|forwarded)/
+const MAX_HEADER_COUNT = 100
+const MAX_HEADER_VALUE_LENGTH = 128
+
+function filterHeaders(headers: Headers, matchers: HeaderMatchOption[]): NetworkHeaders | undefined {
+  const result: NetworkHeaders = {} as NetworkHeaders
+  let collectedHeaderCount = 0
+  let totalHeaderCount = 0
+  let hasReachedMaxHeaderCount = false
+
+  headers.forEach((value, name) => {
+    totalHeaderCount++
+
+    if (collectedHeaderCount >= MAX_HEADER_COUNT) {
+      if (!hasReachedMaxHeaderCount) {
+        display.warn(`Maximum number of headers (${MAX_HEADER_COUNT}) has been reached. Further headers are dropped.`)
+        hasReachedMaxHeaderCount = true
+      }
+
+      return
+    }
+
+    const lowerName = name.toLowerCase()
+
+    if (FORBIDDEN_HEADER_PATTERN.test(lowerName)) {
+      return
+    }
+
+    const headerMatcher = matchers.find((m) => matchList([m.name], lowerName))
+    if (!headerMatcher) {
+      return
+    }
+
+    const { extractor } = headerMatcher
+    const capturedValue = extractor ? applyExtractor(value, extractor) : value
+    if (capturedValue === undefined) {
+      return
+    }
+
+    if (capturedValue.length > MAX_HEADER_VALUE_LENGTH) {
+      display.warn(
+        `Header "${lowerName}" value was truncated from ${capturedValue.length} to ${MAX_HEADER_VALUE_LENGTH} characters.`
+      )
+      // monitor-until: 2026-05-23
+      addTelemetryDebug('Resource header value was truncated', {
+        header_name: lowerName,
+        original_length: capturedValue.length,
+        limit: MAX_HEADER_VALUE_LENGTH,
+      })
+    }
+
+    result[lowerName] = safeTruncate(capturedValue, MAX_HEADER_VALUE_LENGTH)
+    collectedHeaderCount++
+  })
+
+  // monitor-until: 2026-05-23
+  addTelemetryDebug('Maximum number of resource headers reached', {
+    collectedHeaderCount,
+    totalHeaderCount,
+  })
+  return collectedHeaderCount > 0 ? result : undefined
+}
+
+function applyExtractor(value: string, extractor: RegExp): string | undefined {
+  extractor.lastIndex = 0
+  const match = extractor.exec(value)
+  if (!match) {
+    return undefined
+  }
+  return match[1] ?? match[0]
+}
+
+// Input:  "content-type: application/json\r\ncache-control: no-cache"
+// Output: [["content-type", "application/json"], ["cache-control", "no-cache"]]
+function parseRawXhrHeaders(rawXhrheaders: string): Array<[string, string]> {
+  const pairs: Array<[string, string]> = []
+  const lines = rawXhrheaders.trim().split(/\r\n/)
+  for (const line of lines) {
+    const colonIndex = line.indexOf(':')
+    if (colonIndex > 0) {
+      pairs.push([line.substring(0, colonIndex).trim(), line.substring(colonIndex + 1).trim()])
+    }
+  }
+  return pairs
 }
