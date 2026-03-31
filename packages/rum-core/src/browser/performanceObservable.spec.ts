@@ -13,9 +13,6 @@ describe('performanceObservable', () => {
   let clock: Clock
 
   beforeEach(() => {
-    if (!window.PerformanceObserver) {
-      pending('PerformanceObserver not supported')
-    }
     observableCallback = jasmine.createSpy()
     clock = mockClock()
   })

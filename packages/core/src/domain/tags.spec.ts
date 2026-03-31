@@ -1,6 +1,6 @@
 import { display } from '../tools/display'
 import type { Configuration } from './configuration'
-import { buildTag, buildTags, supportUnicodePropertyEscapes, TAG_SIZE_LIMIT } from './tags'
+import { buildTag, buildTags, TAG_SIZE_LIMIT } from './tags'
 
 const LARGE_VALUE = Array(TAG_SIZE_LIMIT + 10).join('a')
 
@@ -20,10 +20,6 @@ describe('buildTags', () => {
 describe('buildTag warning', () => {
   let displaySpy: jasmine.Spy<typeof display.warn>
   beforeEach(() => {
-    if (!supportUnicodePropertyEscapes()) {
-      pending('Unicode property escapes are not supported')
-    }
-
     displaySpy = spyOn(display, 'warn')
   })
   ;(

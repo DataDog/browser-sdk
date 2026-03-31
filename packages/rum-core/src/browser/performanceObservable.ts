@@ -209,10 +209,6 @@ export function createPerformanceObservable<T extends RumPerformanceEntryType>(
   options: { type: T; buffered?: boolean; durationThreshold?: number }
 ) {
   return new Observable<Array<EntryTypeToReturnType[T]>>((observable) => {
-    if (!window.PerformanceObserver) {
-      return
-    }
-
     const handlePerformanceEntries = (entries: PerformanceEntryList) => {
       const rumPerformanceEntries = filterRumPerformanceEntries(entries as Array<EntryTypeToReturnType[T]>)
       if (rumPerformanceEntries.length > 0) {
@@ -267,11 +263,7 @@ function supportPerformanceObject() {
 }
 
 export function supportPerformanceTimingEvent(entryType: RumPerformanceEntryType) {
-  return (
-    window.PerformanceObserver &&
-    PerformanceObserver.supportedEntryTypes !== undefined &&
-    PerformanceObserver.supportedEntryTypes.includes(entryType)
-  )
+  return PerformanceObserver.supportedEntryTypes.includes(entryType)
 }
 
 function filterRumPerformanceEntries<T extends RumPerformanceEntryType>(entries: Array<EntryTypeToReturnType[T]>) {

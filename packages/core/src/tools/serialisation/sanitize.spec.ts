@@ -37,13 +37,8 @@ describe('sanitize', () => {
     })
 
     it('shoud handle symbols', () => {
-      const symbolFunction: (description: string) => any = (window as any).Symbol
-      if (typeof symbolFunction === 'function') {
-        const symbol = symbolFunction('description')
-        expect(sanitize(symbol)).toMatch(/\[Symbol\] (?:Symbol\()?description\)?/)
-      } else {
-        pending('Symbol is not supported on this browser')
-      }
+      const symbol = Symbol('description')
+      expect(sanitize(symbol)).toMatch(/\[Symbol\] (?:Symbol\()?description\)?/)
     })
   })
 
