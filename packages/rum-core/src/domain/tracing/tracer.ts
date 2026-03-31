@@ -102,9 +102,13 @@ export function startTracer(
         userContext,
         accountContext,
         (tracingHeaders: TracingHeaders) => {
-          Object.keys(tracingHeaders).forEach((name) => {
-            xhr.setRequestHeader(name, tracingHeaders[name])
-          })
+          try {
+            Object.keys(tracingHeaders).forEach((name) => {
+              xhr.setRequestHeader(name, tracingHeaders[name])
+            })
+          } catch {
+            // XHR may have already been sent (buffered replay via microtask)
+          }
         }
       ),
   }
