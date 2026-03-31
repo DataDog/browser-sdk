@@ -8,6 +8,6 @@ test/**/dist
 test/**/.next
 test/apps/nextjs/next-env.d.ts
 yarn.lock
-/docs
+/generated-docs
 /developer-extension/.output
 /developer-extension/.wxt

@@ -1,27 +1,25 @@
 import type { ServerResponse } from 'http'
 import * as url from 'url'
 import cors from 'cors'
+import qs from 'qs'
 import express from 'express'
-import type { RemoteConfiguration } from '@datadog/browser-rum-core'
 import { getSdkBundlePath, getTestAppBundlePath } from '../sdkBuilds'
 import type { MockServerApp, Servers } from '../httpServers'
 import { DEV_SERVER_BASE_URL } from '../../helpers/playwright'
-import type { WorkerOptions } from '../pageSetups'
+import type { SetupOptions } from '../pageSetups'
 import { workerSetup } from '../pageSetups'
 
 export const LARGE_RESPONSE_MIN_BYTE_SIZE = 100_000
 
-export function createMockServerApp(
-  servers: Servers,
-  setup: string,
-  remoteConfiguration?: RemoteConfiguration,
-  worker?: WorkerOptions
-): MockServerApp {
+export function createMockServerApp(servers: Servers, setup: string, setupOptions?: SetupOptions): MockServerApp {
+  const { remoteConfiguration, worker } = setupOptions ?? {}
   const app = express()
   let largeResponseBytesWritten = 0
 
   app.use(cors())
   app.disable('etag') // disable automatic resource caching
+
+  app.set('query parser', (str: string) => qs.parse(str))
 
   app.get('/empty', (_req, res) => {
     res.end()
@@ -48,14 +46,11 @@ export function createMockServerApp(
   })
 
   app.get('/sw.js', (_req, res) => {
-    const query = _req.query
-
     res.contentType('application/javascript').send(
       workerSetup(
         {
-          importScripts: Boolean(query.importScripts),
-          rumConfiguration: worker?.rumConfiguration,
-          logsConfiguration: worker?.logsConfiguration,
+          ...setupOptions!,
+          worker: { ...worker, importScripts: Boolean(_req.query.importScripts) },
         },
         servers
       )
@@ -97,12 +92,24 @@ export function createMockServerApp(
     res.header('content-type', 'text/css').end()
   })
 
-  app.get('/ok', (req, res) => {
+  app.all('/ok', (req, res) => {
+    // Express will automatically append charset to the Content-Type header
     res.header('Content-Type', 'text/plain')
     if (req.query['timing-allow-origin'] === 'true') {
       res.set('Timing-Allow-Origin', '*')
     }
+
+    const responseHeaders = req.query['response-headers']
+    if (responseHeaders) {
+      for (const [header, value] of Object.entries(responseHeaders)) {
+        if (typeof value === 'string') {
+          res.header(header, value)
+        }
+      }
+    }
+
     const timeoutDuration = req.query.duration ? Number(req.query.duration) : 0
+
     setTimeout(() => res.send('ok'), timeoutDuration)
   })
 
@@ -196,7 +203,7 @@ export function createMockServerApp(
     }
   })
 
-  app.get(/(?<appName>app|react-[\w-]+).js$/, (req, res) => {
+  app.get(/(?<appName>app|react-[\w-]+|angular-[\w-]+).js$/, (req, res) => {
     const { originalUrl, params } = req
     res.sendFile(getTestAppBundlePath(params.appName, originalUrl))
   })

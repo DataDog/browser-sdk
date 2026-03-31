@@ -1,14 +1,21 @@
 {
   "name": "@datadog/browser-worker",
-  "version": "7.0.0-alpha.0",
+  "version": "6.32.0",
   "license": "Apache-2.0",
   "main": "bundle/worker.js",
+  "files": [
+    "bundle/**/*.js",
+    "src",
+    "!src/**/*.spec.ts",
+    "!src/**/*.specHelper.ts"
+  ],
   "scripts": {
     "build": "node ../../scripts/build/build-package.ts --bundle worker.js",
-    "build:bundle": "yarn build"
+    "build:bundle": "yarn build",
+    "prepack": "yarn build"
   },
   "dependencies": {
-    "@datadog/browser-core": "7.0.0-alpha.0"
+    "@datadog/browser-core": "6.32.0"
   },
   "repository": {
     "type": "git",

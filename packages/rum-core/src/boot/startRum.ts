@@ -84,10 +84,6 @@ export function startRum(
   }
 
   const pageMayExitObservable = createPageMayExitObservable(configuration)
-  const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => {
-    lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, event)
-  })
-  cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
 
   if (!canUseEventBridge()) {
     const batch = startRumBatch(
@@ -98,10 +94,18 @@ export function startRum(
       sessionManager.expireObservable,
       createEncoder
     )
+    const preparePageExitSubscription = batch.flushController.preparePageExitFlushObservable.subscribe((reason) => {
+      lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, { reason })
+    })
+    cleanupTasks.push(() => preparePageExitSubscription.unsubscribe())
     cleanupTasks.push(() => batch.stop())
     startCustomerDataTelemetry(telemetry, lifeCycle, batch.flushController.flushObservable)
   } else {
     startRumEventBridge(lifeCycle)
+    const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => {
+      lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, event)
+    })
+    cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
   }
 
   const { stop: stopInitialViewMetricsTelemetry } = startInitialViewMetricsTelemetry(lifeCycle, telemetry)

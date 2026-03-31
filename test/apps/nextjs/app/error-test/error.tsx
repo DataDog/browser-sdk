@@ -17,7 +17,7 @@ export default function ErrorBoundary({ error, reset }: { error: Error & { diges
       {error.digest && <p data-testid="error-digest">Digest: {error.digest}</p>}
       <button onClick={reset}>Try again</button>
       <br />
-      <Link href="/">Go to Home</Link>
+      <Link href="/">Back to Home</Link>
     </div>
   )
 }

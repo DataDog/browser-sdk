@@ -1,15 +1,23 @@
 {
   "name": "@datadog/browser-rum-core",
-  "version": "7.0.0-alpha.0",
+  "version": "6.32.0",
   "license": "Apache-2.0",
   "main": "cjs/index.js",
   "module": "esm/index.js",
   "types": "cjs/index.d.ts",
+  "files": [
+    "cjs",
+    "esm",
+    "src",
+    "!src/**/*.spec.ts",
+    "!src/**/*.specHelper.ts"
+  ],
   "scripts": {
-    "build": "node ../../scripts/build/build-package.ts --modules"
+    "build": "node ../../scripts/build/build-package.ts --modules",
+    "prepack": "yarn build"
   },
   "dependencies": {
-    "@datadog/browser-core": "7.0.0-alpha.0"
+    "@datadog/browser-core": "6.32.0"
   },
   "devDependencies": {
     "ajv": "8.18.0"

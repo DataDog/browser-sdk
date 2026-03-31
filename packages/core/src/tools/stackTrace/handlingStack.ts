@@ -18,6 +18,7 @@ export function createHandlingStack(
     | 'react error'
     | 'nextjs error'
     | 'vue error'
+    | 'angular error'
     | 'view'
     | 'vital'
 ): string {

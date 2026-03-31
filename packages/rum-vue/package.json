@@ -1,16 +1,25 @@
 {
   "name": "@datadog/browser-rum-vue",
+  "version": "6.32.0",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
   "module": "esm/entries/main.js",
   "types": "cjs/entries/main.d.ts",
+  "files": [
+    "cjs",
+    "esm",
+    "src",
+    "vue-router-v4",
+    "!src/**/*.spec.ts",
+    "!src/**/*.specHelper.ts"
+  ],
   "scripts": {
     "build": "node ../../scripts/build/build-package.ts --modules",
     "prepack": "yarn build"
   },
   "dependencies": {
-    "@datadog/browser-core": "7.0.0-alpha.0",
-    "@datadog/browser-rum-core": "7.0.0-alpha.0"
+    "@datadog/browser-core": "6.32.0",
+    "@datadog/browser-rum-core": "6.32.0"
   },
   "peerDependencies": {
     "vue": "^3.5.0",
@@ -43,7 +52,6 @@
   "volta": {
     "extends": "../../package.json"
   },
-  "private": true,
   "publishConfig": {
     "access": "public"
   }

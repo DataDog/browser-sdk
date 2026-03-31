@@ -7,6 +7,8 @@ import {
   DefaultPrivacyLevel,
   Observable,
   PageExitReason,
+  addExperimentalFeatures,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock } from '@datadog/browser-core/test'
@@ -133,6 +135,7 @@ describe('trackClickActions', () => {
           selector: '#button',
           width: 100,
           height: 100,
+          composedPathSelector: undefined,
         },
         position: { x: 50, y: 50 },
         events: [domEvent],
@@ -674,6 +677,24 @@ describe('trackClickActions', () => {
       expect(events.length).toBe(1)
       expect(events[0].target?.selector).toContain(SHADOW_DOM_MARKER)
       expect(events[0].target?.selector).toContain('BUTTON')
+    })
+  })
+
+  describe('when composed path selector is enabled', () => {
+    it('should return a composed_path_selector', () => {
+      addExperimentalFeatures([ExperimentalFeature.COMPOSED_PATH_SELECTOR])
+      startClickActionsTracking()
+      emulateClick({
+        target: button,
+        activity: {},
+        eventProperty: {
+          composed: true,
+          composedPath: () => [button, document.body, document],
+        },
+      })
+
+      clock.tick(EXPIRE_DELAY)
+      expect(events[0].target?.composedPathSelector).toBeDefined()
     })
   })
 })

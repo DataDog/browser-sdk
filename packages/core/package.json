@@ -1,13 +1,21 @@
 {
   "name": "@datadog/browser-core",
-  "version": "7.0.0-alpha.0",
+  "version": "6.32.0",
   "license": "Apache-2.0",
   "main": "cjs/index.js",
   "module": "esm/index.js",
   "types": "cjs/index.d.ts",
   "sideEffects": false,
+  "files": [
+    "cjs",
+    "esm",
+    "src",
+    "!src/**/*.spec.ts",
+    "!src/**/*.specHelper.ts"
+  ],
   "scripts": {
-    "build": "node ../../scripts/build/build-package.ts --modules"
+    "build": "node ../../scripts/build/build-package.ts --modules",
+    "prepack": "yarn build"
   },
   "repository": {
     "type": "git",

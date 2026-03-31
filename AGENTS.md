@@ -60,6 +60,8 @@ packages/
 
 developer-extension/ # Chrome DevTools extension
 
+docs/                # Repository documentation
+
 test/
 ├── apps/            # Test apps for E2E and performance testing
 ├── e2e/             # Playwright E2E test scenarios
@@ -68,6 +70,17 @@ test/
 
 scripts/             # Build, deploy, release automation
 ```
+
+## Documentation
+
+For deeper context, see:
+
+- `docs/DEVELOPMENT.md` — commit conventions, dependency management, schema generation, TS compatibility
+- `docs/CONVENTIONS.md` — coding style, file organization, size control
+- `docs/ARCHITECTURE.md` — package dependencies, data pipeline
+- `docs/TESTING.md` — local testing strategies, debugging flaky tests
+- `scripts/AGENTS.md` — writing and organizing scripts in this codebase
+- `test/e2e/AGENTS.md` — E2E test writing guide (createTest builder, IntakeRegistry, patterns)
 
 ## Critical Patterns
 
@@ -104,29 +117,7 @@ scripts/             # Build, deploy, release automation
 
 ## Commit Messages
 
-Use gitmoji conventions (based on actual usage in this repo):
-
-### User-Facing Changes
-
-- ✨ **New feature** - New public API, behavior, event, property
-- 🐛 **Bug fix** - Fix bugs, regressions, crashes
-- ⚡️ **Performance** - Improve performance, reduce bundle size
-- 💥 **Breaking change** - Breaking API changes
-- 📝 **Documentation** - User-facing documentation
-- ⚗️ **Experimental** - New public feature behind a feature flag
-
-### Internal Changes
-
-- 👷 **Build/CI** - Dependencies, tooling, deployment, CI config
-- ♻️ **Refactor** - Code restructuring, architectural changes
-- 🎨 **Code structure** - Improve code structure, formatting
-- ✅ **Tests** - Add/fix/improve tests
-- 🔧 **Configuration** - Config files, project setup
-- 🔥 **Removal** - Remove code, features, deprecated items
-- 👌 **Code review** - Address code review feedback
-- 🚨 **Linting** - Add/fix linter rules
-- 🧹 **Cleanup** - Minor cleanup, housekeeping
-- 🔊 **Logging** - Add/modify debug logs, telemetry
+Use gitmoji conventions — see `docs/DEVELOPMENT.md` for the full reference.
 
 ## Manual Testing with Chrome MCP
 

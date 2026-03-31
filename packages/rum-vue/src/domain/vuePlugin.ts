@@ -43,7 +43,7 @@ export function vuePlugin(configuration: VuePluginConfiguration = {}): VuePlugin
   } satisfies RumPlugin
 }
 
-export function onVueInit(callback: InitSubscriber) {
+export function onRumInit(callback: InitSubscriber) {
   if (globalConfiguration && globalPublicApi) {
     callback(globalConfiguration, globalPublicApi)
   } else {
@@ -51,7 +51,7 @@ export function onVueInit(callback: InitSubscriber) {
   }
 }
 
-export function onVueStart(callback: StartSubscriber) {
+export function onRumStart(callback: StartSubscriber) {
   if (globalAddError) {
     callback(globalAddError)
   } else {

@@ -1,5 +1,5 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
-import { elapsed, ExperimentalFeature, isExperimentalFeatureEnabled, noop, ONE_MINUTE } from '@datadog/browser-core'
+import { elapsed, noop, ONE_MINUTE } from '@datadog/browser-core'
 import type { RumFirstInputTiming, RumPerformanceEventTiming } from '../../../browser/performanceObservable'
 import {
   createPerformanceObservable,
@@ -70,9 +70,7 @@ export function trackInteractionToNextPaint(
 
   const { getViewInteractionCount, stopViewInteractionCount } = trackViewInteractionCount(viewLoadingType)
   const longestInteractions = trackLongestInteractions(getViewInteractionCount)
-  const subPartsTracker = isExperimentalFeatureEnabled(ExperimentalFeature.INP_SUBPARTS)
-    ? createSubPartsTracker(longestInteractions)
-    : null
+  const subPartsTracker = createSubPartsTracker(longestInteractions)
   const firstInputSubscription = createPerformanceObservable(configuration, {
     type: RumPerformanceEntryType.FIRST_INPUT,
     buffered: true,
@@ -94,10 +92,10 @@ export function trackInteractionToNextPaint(
         entry.startTime <= viewEnd
       ) {
         longestInteractions.process(entry)
-        subPartsTracker?.process(entry)
+        subPartsTracker.process(entry)
       }
     }
-    subPartsTracker?.pruneUntracked()
+    subPartsTracker.pruneUntracked()
     const candidate = longestInteractions.estimateP98Interaction()
     if (candidate) {
       updateCurrentInp(candidate)
@@ -121,9 +119,7 @@ export function trackInteractionToNextPaint(
     }
     // Recomputed on every batch: the group for the p98 interaction may have been updated
     // with new min/max timing even when the p98 identity (duration, startTime) is unchanged.
-    if (subPartsTracker) {
-      currentInp.subParts = subPartsTracker.computeSubParts(candidate, sanitizeInpValue(currentInp.duration))
-    }
+    currentInp.subParts = subPartsTracker.computeSubParts(candidate, sanitizeInpValue(currentInp.duration))
   }
 
   return {
@@ -150,7 +146,7 @@ export function trackInteractionToNextPaint(
     stop: () => {
       eventSubscription.unsubscribe()
       firstInputSubscription.unsubscribe()
-      subPartsTracker?.stop()
+      subPartsTracker.stop()
     },
   }
 }

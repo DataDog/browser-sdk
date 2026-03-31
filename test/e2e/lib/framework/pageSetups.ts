@@ -188,7 +188,7 @@ export function npmSetup(options: SetupOptions, servers: Servers) {
   })
 }
 
-export function reactSetup(options: SetupOptions, servers: Servers, appName: string) {
+export function appSetup(options: SetupOptions, servers: Servers, appName: string) {
   let header = options.head || ''
   let body = options.body || ''
 
@@ -217,20 +217,23 @@ export function reactSetup(options: SetupOptions, servers: Servers, appName: str
   })
 }
 
-export function workerSetup(options: WorkerOptions, servers: Servers) {
+export function workerSetup(setupOptions: SetupOptions, servers: Servers) {
+  const { worker, context } = setupOptions
   let setup = ''
 
-  if (options.logsConfiguration) {
+  if (worker?.logsConfiguration) {
     setup += js`
-      ${options.importScripts ? js`importScripts('/datadog-logs.js');` : js`import '/datadog-logs.js';`}
-      DD_LOGS.init(${formatConfiguration(options.logsConfiguration, servers)})
+      ${worker.importScripts ? js`importScripts('/datadog-logs.js');` : js`import '/datadog-logs.js';`}
+      DD_LOGS.init(${formatConfiguration(worker.logsConfiguration, servers)})
+      DD_LOGS.setGlobalContext(${JSON.stringify(context)})
     `
   }
 
-  if (options.rumConfiguration) {
+  if (worker?.rumConfiguration) {
     setup += js`
-      ${options.importScripts ? js`importScripts('/datadog-rum.js');` : js`import '/datadog-rum.js';`}
-      DD_RUM.init(${formatConfiguration(options.rumConfiguration, servers)})
+      ${worker.importScripts ? js`importScripts('/datadog-rum.js');` : js`import '/datadog-rum.js';`}
+      DD_RUM.init(${formatConfiguration(worker.rumConfiguration, servers)})
+      DD_RUM.setGlobalContext(${JSON.stringify(context)})
     `
   }
 

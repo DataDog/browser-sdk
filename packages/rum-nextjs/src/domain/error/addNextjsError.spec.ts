@@ -1,21 +1,7 @@
-import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
-import { nextjsPlugin, resetNextjsPlugin } from '../nextjsPlugin'
+import { resetNextjsPlugin } from '../nextjsPlugin'
+import { initializeNextjsPlugin } from '../../../test/initializeNextjsPlugin'
 import { addNextjsError } from './addNextjsError'
-
-const INIT_CONFIGURATION = {} as RumInitConfiguration
-
-function initializeNextjsPlugin() {
-  const addErrorSpy = jasmine.createSpy()
-  const publicApi = { startView: jasmine.createSpy() } as unknown as RumPublicApi
-  const plugin = nextjsPlugin()
-  plugin.onInit({ publicApi, initConfiguration: { ...INIT_CONFIGURATION } })
-  plugin.onRumStart({ addError: addErrorSpy })
-  registerCleanupTask(() => {
-    resetNextjsPlugin()
-  })
-  return { addErrorSpy }
-}
 
 describe('addNextjsError', () => {
   it('does nothing when the plugin is not initialized', () => {
@@ -26,7 +12,8 @@ describe('addNextjsError', () => {
   })
 
   it('delegates the error to addError', () => {
-    const { addErrorSpy } = initializeNextjsPlugin()
+    const addErrorSpy = jasmine.createSpy()
+    initializeNextjsPlugin({ addError: addErrorSpy })
     const originalError = new Error('test error')
 
     addNextjsError(originalError, { componentStack: 'at ComponentSpy toto.js' })
@@ -41,7 +28,8 @@ describe('addNextjsError', () => {
   })
 
   it('merges dd_context from the original error with nextjs error context', () => {
-    const { addErrorSpy } = initializeNextjsPlugin()
+    const addErrorSpy = jasmine.createSpy()
+    initializeNextjsPlugin({ addError: addErrorSpy })
     const originalError = new Error('error message')
     ;(originalError as any).dd_context = { component: 'Menu', param: 123 }
 
@@ -60,7 +48,8 @@ describe('addNextjsError', () => {
   })
 
   it('adds nextjs.digest context when error.digest is present', () => {
-    const { addErrorSpy } = initializeNextjsPlugin()
+    const addErrorSpy = jasmine.createSpy()
+    initializeNextjsPlugin({ addError: addErrorSpy })
     const error = Object.assign(new Error('server error'), { digest: 'abc123' })
 
     addNextjsError(error, {})
@@ -73,7 +62,8 @@ describe('addNextjsError', () => {
   })
 
   it('omits nextjs key when digest is undefined', () => {
-    const { addErrorSpy } = initializeNextjsPlugin()
+    const addErrorSpy = jasmine.createSpy()
+    initializeNextjsPlugin({ addError: addErrorSpy })
     const error = new Error('client error')
 
     addNextjsError(error)
@@ -86,7 +76,8 @@ describe('addNextjsError', () => {
   })
 
   it('omits componentStack when errorInfo is missing', () => {
-    const { addErrorSpy } = initializeNextjsPlugin()
+    const addErrorSpy = jasmine.createSpy()
+    initializeNextjsPlugin({ addError: addErrorSpy })
     const error = new Error('client error')
 
     addNextjsError(error)
@@ -99,7 +90,8 @@ describe('addNextjsError', () => {
   })
 
   it('does not let error.dd_context overwrite framework', () => {
-    const { addErrorSpy } = initializeNextjsPlugin()
+    const addErrorSpy = jasmine.createSpy()
+    initializeNextjsPlugin({ addError: addErrorSpy })
     const error = Object.assign(new Error('test error'), { dd_context: { framework: 'from-dd-context' } })
 
     addNextjsError(error, {})

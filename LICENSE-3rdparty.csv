@@ -11,8 +11,15 @@ prod,clsx,MIT,Copyright (c) Luke Edwards <luke.edwards05@gmail.com> (lukeed.com)
 prod,react,MIT,Copyright (c) Facebook, Inc. and its affiliates.
 prod,react-dom,MIT,Copyright (c) Facebook, Inc. and its affiliates.
 dev,typedoc,Apache-2.0,TypeStrong
+dev,@angular/common,MIT,Copyright (c) 2010-2024 Google LLC
+dev,@angular/compiler,MIT,Copyright (c) 2010-2024 Google LLC
+dev,@angular/compiler-cli,MIT,Copyright (c) 2010-2024 Google LLC
+dev,@angular/core,MIT,Copyright (c) 2010-2024 Google LLC
+dev,@angular/platform-browser,MIT,Copyright (c) 2010-2024 Google LLC
+dev,@angular/router,MIT,Copyright (c) 2010-2024 Google LLC
 dev,@eslint/js,MIT,Copyright OpenJS Foundation and other contributors, <www.openjsf.org>
 dev,@jsdevtools/coverage-istanbul-loader,MIT,Copyright (c) 2015 James Messinger
+dev,@ngtools/webpack,MIT,Copyright (c) 2017 Google LLC
 dev,@playwright/test,Apache-2.0,Copyright Microsoft Corporation
 dev,@swc/core,Apache-2.0,Copyright (c) SWC Contributors
 dev,@types/chrome,MIT,Copyright Microsoft Corporation
@@ -27,9 +34,11 @@ dev,@types/react,MIT,Copyright Microsoft Corporation
 dev,@types/react-dom,MIT,Copyright Microsoft Corporation
 dev,@wxt-dev/module-react,MIT,Copyright (c) 2023 Aaron
 dev,@vitejs/plugin-react,MIT,Copyright (c) 2019-present Evan You & Vite Contributors
+dev,@vitejs/plugin-vue,MIT,Copyright (c) 2019-present, Yuxi (Evan) You and Vite contributors
 dev,@module-federation/enhanced,MIT, Copyright (c) 2020 ScriptedAlchemy LLC (Zack Jackson) Zhou Shaw (zhouxiao)
 dev,@vue/test-utils,MIT,Copyright (c) 2021-present vuejs
 dev,ajv,MIT,Copyright 2015-2017 Evgeny Poberezkin
+dev,babel-loader,MIT,Copyright (c) 2014-2019 Luís Couto <hello@luiscouto.pt>
 dev,browserstack-local,MIT,Copyright 2016 BrowserStack
 dev,chrome-webstore-upload,MIT,Copyright Federico Brigante <me@fregante.com> (https://fregante.com), 2020 Andrew Levine
 dev,busboy,MIT,Copyright Brian White
@@ -57,17 +66,18 @@ dev,karma-junit-reporter,MIT,Copyright (C) 2011-2013 Google, Inc.
 dev,karma-sourcemap-loader,MIT,Copyright 2013 Sergey Todyshev
 dev,karma-spec-reporter,MIT,Copyright 2015 Michael Lex
 dev,karma-webpack,MIT,Copyright JS Foundation and other contributors
-dev,lerna,MIT,Copyright 2015-present Lerna Contributors
 dev,minimatch,ISC,Copyright (c) Isaac Z. Schlueter and Contributors
 dev,next,MIT,Copyright (c) 2025 Vercel, Inc.
 dev,node-forge,BSD,Copyright (c) 2010, Digital Bazaar, Inc.
 dev,pako,MIT,(C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
 dev,prettier,MIT,Copyright James Long and contributors
 dev,puppeteer,Apache-2.0,Copyright 2017 Google Inc.
+dev,react-is,MIT,Copyright (c) Meta Platforms, Inc. and affiliates
 dev,react-router,MIT,Copyright (c) React Training LLC 2015-2019 Copyright (c) Remix Software Inc. 2020-2021 Copyright (c) Shopify Inc. 2022-2023
 dev,react-router-dom,MIT,Copyright (c) React Training LLC 2015-2019 Copyright (c) Remix Software Inc. 2020-2021 Copyright (c) Shopify Inc. 2022-2023
 dev,react-window,MIT,Copyright (c) 2018 Brian Vaughn
 dev,recharts,MIT,Copyright (c) 2015-present recharts
+dev,rxjs,Apache-2.0,Copyright (c) 2015-2022 Google LLC Ben Lesh and contributors
 dev,swc-loader,MIT,Copyright (c) SWC Contributors
 dev,terser-webpack-plugin,MIT,Copyright JS Foundation and other contributors
 dev,ts-loader,MIT,Copyright 2015 TypeStrong
@@ -82,3 +92,4 @@ dev,webpack,MIT,Copyright JS Foundation and other contributors
 dev,webpack-cli,MIT,Copyright JS Foundation and other contributors
 dev,webpack-dev-middleware,MIT,Copyright JS Foundation and other contributors
 dev,wxt,MIT,Copyright (c) 2023 Aaron
+dev,zone.js,MIT,Copyright (c) 2010-2024 Google LLC

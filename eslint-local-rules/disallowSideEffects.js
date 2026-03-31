@@ -35,10 +35,14 @@ const pathsWithSideEffect = new Set([
 const packagesWithoutSideEffect = new Set([
   '@datadog/browser-core',
   '@datadog/browser-rum-core',
+  '@datadog/browser-rum-react/internal',
   'react',
   'react-router-dom',
   'vue',
   'vue-router',
+  '@angular/core',
+  '@angular/router',
+  'rxjs',
 ])
 
 /**

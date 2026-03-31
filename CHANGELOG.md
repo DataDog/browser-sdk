@@ -2,27 +2,67 @@
 
 > **Legend**
 >
-> 💥 - Breaking change.
->
-> ✨ - New feature.
->
-> 🐛 - Bug fix.
->
-> ⚡️ - Performance improvement.
->
-> 📝 - Documentation.
->
-> ⚗ - Experimental.
+> - 💥 **Breaking change** - Breaking API changes
+> - ✨ **New feature** - New public API, behavior, event, property
+> - 🐛 **Bug fix** - Fix bugs, regressions, crashes
+> - ⚡️ **Performance** - Improve performance, reduce bundle size
+> - 📝 **Documentation** - User-facing documentation
+> - ⚗️ **Experimental** - New public feature behind a feature flag
 >
 > See [Gitmoji](https://gitmoji.dev/) for a guide on the emojis used.
 
 ---
 
-## v7.0.0-alpha.0
+## v6.32.0
+
+**Public Changes:**
+
+- ✨ feat: enable LCP subparts collection by default ([#4368](https://github.com/DataDog/browser-sdk/pull/4368)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-SLIM] [RUM-VUE] [WORKER]
+- ✨[RUM-15126] Allow updates of `error.handling_stack` ([#4357](https://github.com/DataDog/browser-sdk/pull/4357)) [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-SLIM] [RUM-VUE]
+- ✨ add vuePlugin and addVueError ([#4327](https://github.com/DataDog/browser-sdk/pull/4327)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-SLIM] [RUM-VUE] [WORKER]
+- ✨ NextJS- addNextjsError component ([#4343](https://github.com/DataDog/browser-sdk/pull/4343)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-SLIM] [RUM-VUE] [WORKER]
+- ✨ scaffold @datadog/browser-rum-vue package ([#4325](https://github.com/DataDog/browser-sdk/pull/4325)) [RUM-VUE]
+- 🐛 Fix changelog legend after doc move to docs/DEVELOPMENT.md ([#4400](https://github.com/DataDog/browser-sdk/pull/4400))
+- 🐛 Skip new view on query-param-only changes in Angular router ([#4392](https://github.com/DataDog/browser-sdk/pull/4392)) [RUM-ANGULAR]
+- 🐛 [RUM-11614][URL polyfill] Handle null iframe.contentWindow ([#4361](https://github.com/DataDog/browser-sdk/pull/4361)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-SLIM] [RUM-VUE] [WORKER]
 
 **Internal Changes:**
 
-- 👷 bump all packages to version to v7.0.0-alpha.0
+- 👷 replace lerna publish with yarn npm publish ([#4276](https://github.com/DataDog/browser-sdk/pull/4276)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 👷 [e2e] group ignored browser log tags by matched pattern ([#4389](https://github.com/DataDog/browser-sdk/pull/4389))
+- 👷📝 Move some internal doc inside the repo ([#4362](https://github.com/DataDog/browser-sdk/pull/4362))
+- 👷[Renovate] Bump node max memory ([#4374](https://github.com/DataDog/browser-sdk/pull/4374))
+- 👷 Fix TypeScript 6.x compatibility check deprecation errors ([#4373](https://github.com/DataDog/browser-sdk/pull/4373))
+- 👷 NextJS- Make NextJS plugin private ([#4346](https://github.com/DataDog/browser-sdk/pull/4346)) [RUM-NEXTJS]
+- 👷 add dev-server CLI + manual-testing skill ([#4337](https://github.com/DataDog/browser-sdk/pull/4337))
+- 👷 fix missing yarn.lock entries for rum-vue dependencies ([#4347](https://github.com/DataDog/browser-sdk/pull/4347)) [RUM-VUE]
+- 🔧 Add Vue documentation and make package public ([#4402](https://github.com/DataDog/browser-sdk/pull/4402)) [RUM-VUE]
+- 🔧 Add Next.js documentation and make package public ([#4384](https://github.com/DataDog/browser-sdk/pull/4384)) [RUM-NEXTJS]
+- 🔧 report unused eslint-disable directives as errors ([#4398](https://github.com/DataDog/browser-sdk/pull/4398)) [RUM-ANGULAR]
+- 🔧 update repository.datadog.yml integration branch config ([#4390](https://github.com/DataDog/browser-sdk/pull/4390))
+- 🔧 Prepare @datadog/browser-rum-angular for beta release ([#4386](https://github.com/DataDog/browser-sdk/pull/4386)) [RUM-ANGULAR]
+- 🔧 disable renovate ([#4381](https://github.com/DataDog/browser-sdk/pull/4381))
+- 🔧 add prepack script to all packages to build before packing ([#4366](https://github.com/DataDog/browser-sdk/pull/4366)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 🔧 make rum-vue package private until it's ready ([#4350](https://github.com/DataDog/browser-sdk/pull/4350)) [RUM-VUE]
+- 🎨 [PANA-6657] Make session replay team CODEOWNERS of recorder e2e tests ([#4388](https://github.com/DataDog/browser-sdk/pull/4388))
+- 🎨 [PANA-6365] Fix type definition for RumMutationRecord ([#4306](https://github.com/DataDog/browser-sdk/pull/4306)) [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-SLIM] [RUM-VUE]
+- ✅ allow running e2e tests offline ([#4336](https://github.com/DataDog/browser-sdk/pull/4336))
+- ♻️ substitute Vue Router catch-all pattern with actual path ([#4393](https://github.com/DataDog/browser-sdk/pull/4393)) [RUM-VUE]
+- [PANA-6072] follow up review #4211 ([#4367](https://github.com/DataDog/browser-sdk/pull/4367)) [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-SLIM] [RUM-VUE]
+- Update CODEOWNERS ([#4363](https://github.com/DataDog/browser-sdk/pull/4363))
+- ♻️ set global context in e2e worker setup ([#4380](https://github.com/DataDog/browser-sdk/pull/4380))
+- 🔥 [PANA-6634] Remove support for FrustrationRecords ([#4370](https://github.com/DataDog/browser-sdk/pull/4370)) [RUM]
+- ♻️ inline `lazyLoadRecorder` into `postStartStrategy` using `mockable()` ([#4326](https://github.com/DataDog/browser-sdk/pull/4326)) [RUM]
+- ⚗️ Angular- Add error handling integration ([#4358](https://github.com/DataDog/browser-sdk/pull/4358)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-SLIM] [RUM-VUE] [WORKER]
+- ⚗️ add Vue Router v4 view tracking ([#4328](https://github.com/DataDog/browser-sdk/pull/4328)) [RUM-VUE]
+- ⚗ NextJS- add nextjs error boundary component ([#4352](https://github.com/DataDog/browser-sdk/pull/4352)) [RUM-NEXTJS]
+- ⚗️ Add Angular Router integration ([#4315](https://github.com/DataDog/browser-sdk/pull/4315)) [RUM-ANGULAR]
+- ⚗️ Refactor nextjs plugin ([#4365](https://github.com/DataDog/browser-sdk/pull/4365)) [RUM-NEXTJS]
+- [PANA-6072] add composedPathSelector to click actions target behind FF ([#4211](https://github.com/DataDog/browser-sdk/pull/4211)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-SLIM] [RUM-VUE] [WORKER]
+- ♻️ refactor build-test-apps script with CLI arg support ([#4359](https://github.com/DataDog/browser-sdk/pull/4359))
+- ⬆️ update rum-events-format ([#4349](https://github.com/DataDog/browser-sdk/pull/4349))
+- 🔥 remove flagging package ([#4342](https://github.com/DataDog/browser-sdk/pull/4342)) [FLAGGING]
+- ♻️ React- Replace addEvent for AddError, Export Error Boundary ([#4317](https://github.com/DataDog/browser-sdk/pull/4317)) [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-SLIM] [RUM-VUE]
 
 ## v6.31.0
 
