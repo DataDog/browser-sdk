@@ -1,15 +1,19 @@
+import { appendElement } from 'packages/rum-core/test'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
   PRIVACY_ATTR_VALUE_HIDDEN,
   PRIVACY_ATTR_VALUE_MASK,
   PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
+  CENSORED_STRING_MARK,
 } from './privacyConstants'
 import {
+  censorText,
   getNodeSelfPrivacyLevel,
   reducePrivacyLevel,
   getNodePrivacyLevel,
   shouldMaskNode,
+  getTextContent,
   maskDisallowedTextContent,
 } from './privacy'
 import { ACTION_NAME_MASK } from './action/actionNameConstants'
@@ -484,6 +488,91 @@ describe('shouldMaskNode', () => {
           const span = document.createElement('span')
           expect(shouldMaskNode(span, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBeFalse()
         })
+      })
+    })
+  })
+})
+
+describe('getTextContent', () => {
+  interface BrowserWindow extends Window {
+    $DD_ALLOW?: Set<string>
+  }
+
+  describe('for text nodes inside form elements', () => {
+    let textNode: Text
+
+    beforeEach(() => {
+      const textarea = appendElement('<textarea>some text</textarea>')
+      textNode = textarea.firstChild as Text
+    })
+
+    afterEach(() => {
+      delete (window as BrowserWindow).$DD_ALLOW
+    })
+
+    it('returns original text if privacy level is ALLOW', () => {
+      expect(getTextContent(textNode, NodePrivacyLevel.ALLOW)).toBe('some text')
+    })
+
+    it('censors text if privacy level is MASK', () => {
+      expect(getTextContent(textNode, NodePrivacyLevel.MASK)).toBe(censorText('some text'))
+    })
+
+    it('censors text if privacy level is MASK_USER_INPUT', () => {
+      expect(getTextContent(textNode, NodePrivacyLevel.MASK_USER_INPUT)).toBe(censorText('some text'))
+    })
+
+    it('censors text if privacy level is MASK_UNLESS_ALLOWLISTED, even if the text is allowlisted', () => {
+      ;(window as BrowserWindow).$DD_ALLOW = new Set(['some text'])
+      expect(getTextContent(textNode, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBe(censorText('some text'))
+    })
+
+    it('returns CENSORED_STRING_MARK if privacy level is HIDDEN', () => {
+      expect(getTextContent(textNode, NodePrivacyLevel.HIDDEN)).toBe(CENSORED_STRING_MARK)
+    })
+  })
+
+  describe('for text nodes not inside form elements', () => {
+    let textNode: Text
+
+    beforeEach(() => {
+      const div = appendElement('<div>some text</div>')
+      textNode = div.firstChild as Text
+    })
+
+    afterEach(() => {
+      delete (window as BrowserWindow).$DD_ALLOW
+    })
+
+    it('returns original text if privacy level is ALLOW', () => {
+      expect(getTextContent(textNode, NodePrivacyLevel.ALLOW)).toBe('some text')
+    })
+
+    it('censors text if privacy level is MASK', () => {
+      expect(getTextContent(textNode, NodePrivacyLevel.MASK)).toBe(censorText('some text'))
+    })
+
+    it('returns original text if privacy level is MASK_USER_INPUT', () => {
+      expect(getTextContent(textNode, NodePrivacyLevel.MASK_USER_INPUT)).toBe('some text')
+    })
+
+    it('returns CENSORED_STRING_MARK if privacy level is HIDDEN', () => {
+      expect(getTextContent(textNode, NodePrivacyLevel.HIDDEN)).toBe(CENSORED_STRING_MARK)
+    })
+
+    describe('when privacy level is MASK_UNLESS_ALLOWLISTED', () => {
+      it('returns original text if the text is allowlisted', () => {
+        ;(window as BrowserWindow).$DD_ALLOW = new Set(['some text'])
+        expect(getTextContent(textNode, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBe('some text')
+      })
+
+      it('censors text if the text is not allowlisted', () => {
+        expect(getTextContent(textNode, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBe(censorText('some text'))
+      })
+
+      it('returns original text for whitespace-only content (treated as allowlisted)', () => {
+        textNode.textContent = '   '
+        expect(getTextContent(textNode, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBe('   ')
       })
     })
   })
