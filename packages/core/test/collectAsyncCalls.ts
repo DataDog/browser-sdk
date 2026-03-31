@@ -1,4 +1,5 @@
 import { getCurrentJasmineSpec } from './getCurrentJasmineSpec'
+import { registerCleanupTask } from './registerCleanupTask'
 
 const originalPlanForGuard = new WeakMap<() => void, () => void>()
 
@@ -33,6 +34,10 @@ export function collectAsyncCalls<F extends jasmine.Func>(
     }) as F
     originalPlanForGuard.set(guard, originalPlan)
     spy.and.callFake(guard)
+    registerCleanupTask(() => {
+      spy.and.callFake(originalPlan)
+      originalPlanForGuard.delete(guard)
+    })
   })
 }
 
