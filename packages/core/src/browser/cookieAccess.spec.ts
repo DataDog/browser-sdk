@@ -70,6 +70,8 @@ describe('cookieAccess', () => {
           clock,
           async flushObservable(this: void, spy: jasmine.Spy) {
             await collectAsyncCalls(spy, 1)
+            // Reset the spy calls to avoid throwing on unexpected calls during teardown
+            registerCleanupTask(() => spy.calls.reset())
           },
           async setCookieWithCleanup(
             this: void,
