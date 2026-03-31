@@ -65,9 +65,7 @@ export type {
   RumErrorEventDomainContext,
   RumActionEventDomainContext,
   RumVitalEventDomainContext,
-  RumFetchResourceEventDomainContext,
-  RumXhrResourceEventDomainContext,
-  RumOtherResourceEventDomainContext,
+  RumResourceEventDomainContext,
   RumLongTaskEventDomainContext,
 } from '@datadog/browser-rum-core'
 
