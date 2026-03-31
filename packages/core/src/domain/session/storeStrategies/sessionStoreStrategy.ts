@@ -1,6 +1,7 @@
 import type { CookieOptions } from '../../../browser/cookie'
 import type { SessionPersistence } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
+import type { Observable } from '../../../tools/observable'
 
 export const SESSION_STORE_KEY = '_dd_s'
 
@@ -10,8 +11,6 @@ export type SessionStoreStrategyType =
   | { type: typeof SessionPersistence.MEMORY }
 
 export interface SessionStoreStrategy {
-  isLockEnabled: boolean
-  persistSession: (session: SessionState) => void
-  retrieveSession: () => SessionState
-  expireSession: (previousSessionState: SessionState) => void
+  setSessionState(fn: (sessionState: SessionState) => SessionState): Promise<void>
+  sessionObservable: Observable<SessionState>
 }

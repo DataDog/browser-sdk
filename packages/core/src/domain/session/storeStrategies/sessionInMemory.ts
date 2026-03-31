@@ -1,47 +1,52 @@
 import { getGlobalObject } from '../../../tools/globalObject'
-import type { Configuration } from '../../configuration'
+import { Observable } from '../../../tools/observable'
+import { shallowClone } from '../../../tools/utils/objectUtils'
 import { SessionPersistence } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
-import { getExpiredSessionState } from '../sessionState'
-import { shallowClone } from '../../../tools/utils/objectUtils'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './sessionStoreStrategy'
 
-/**
- * Key used to store session state in the global object.
- * This allows RUM and Logs SDKs to share the same session when using memory storage.
- */
 export const MEMORY_SESSION_STORE_KEY = '_DD_SESSION'
 
+export interface MemorySession {
+  state?: SessionState
+  onChange?: (state: SessionState) => void
+}
+
 interface GlobalObjectWithSession {
-  [MEMORY_SESSION_STORE_KEY]?: SessionState
+  [MEMORY_SESSION_STORE_KEY]?: MemorySession
 }
 
 export function selectMemorySessionStoreStrategy(): SessionStoreStrategyType {
   return { type: SessionPersistence.MEMORY }
 }
 
-export function initMemorySessionStoreStrategy(configuration: Configuration): SessionStoreStrategy {
-  return {
-    expireSession: (sessionState: SessionState) => expireSessionFromMemory(sessionState, configuration),
-    isLockEnabled: false,
-    persistSession: persistInMemory,
-    retrieveSession: retrieveFromMemory,
-  }
-}
-
-function retrieveFromMemory(): SessionState {
+export function initMemorySessionStoreStrategy(): SessionStoreStrategy {
   const globalObject = getGlobalObject<GlobalObjectWithSession>()
+
+  // Share the observable across SDK instances (RUM + Logs)
   if (!globalObject[MEMORY_SESSION_STORE_KEY]) {
     globalObject[MEMORY_SESSION_STORE_KEY] = {}
   }
-  return shallowClone(globalObject[MEMORY_SESSION_STORE_KEY])
-}
+  const memorySession = globalObject[MEMORY_SESSION_STORE_KEY]
 
-function persistInMemory(state: SessionState): void {
-  const globalObject = getGlobalObject<GlobalObjectWithSession>()
-  globalObject[MEMORY_SESSION_STORE_KEY] = shallowClone(state)
-}
+  const sessionObservable = new Observable<SessionState>()
 
-function expireSessionFromMemory(previousSessionState: SessionState, configuration: Configuration) {
-  persistInMemory(getExpiredSessionState(previousSessionState, configuration))
+  // Wire the local observable to the shared onChange callback so that
+  // multiple SDK instances (RUM + Logs) can observe each other's changes.
+  const previousOnChange = memorySession.onChange
+  memorySession.onChange = (state: SessionState) => {
+    previousOnChange?.(state)
+    sessionObservable.notify(state)
+  }
+
+  return {
+    async setSessionState(fn: (sessionState: SessionState) => SessionState): Promise<void> {
+      const currentState = memorySession.state ?? {}
+      const newState = shallowClone(fn(currentState))
+      memorySession.state = newState
+      await Promise.resolve()
+      memorySession.onChange?.(newState)
+    },
+    sessionObservable,
+  }
 }

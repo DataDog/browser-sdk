@@ -1,40 +1,35 @@
 import { Observable } from '../../tools/observable'
 import { createValueHistory } from '../../tools/valueHistory'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
-import { clocksOrigin, dateNow, ONE_MINUTE, relativeNow } from '../../tools/utils/timeUtils'
+import { clocksOrigin, dateNow, ONE_MINUTE, ONE_SECOND, relativeNow } from '../../tools/utils/timeUtils'
 import { addEventListener, addEventListeners, DOM_EVENT } from '../../browser/addEventListener'
-import { clearInterval, setInterval } from '../../tools/timer'
+import { clearInterval, clearTimeout, setInterval, setTimeout } from '../../tools/timer'
+import { mockable } from '../../tools/mockable'
+import { noop, throttle } from '../../tools/utils/functionUtils'
+import { generateUUID } from '../../tools/utils/stringUtils'
 import type { Configuration } from '../configuration'
 import type { TrackingConsentState } from '../trackingConsent'
-import { addTelemetryDebug } from '../telemetry'
-import { isSyntheticsTest } from '../synthetics/syntheticsWorkerValues'
-import type { CookieStore } from '../../browser/browser.types'
-import { getCurrentSite } from '../../browser/cookie'
-import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
-import { findLast } from '../../tools/utils/polyfills'
-import { monitorError } from '../../tools/monitor'
 import { isWorkerEnvironment } from '../../tools/globalObject'
 import { display } from '../../tools/display'
-import { generateUUID } from '../../tools/utils/stringUtils'
-import { noop } from '../../tools/utils/functionUtils'
 import { isSampled } from '../sampler'
-import { SESSION_TIME_OUT_DELAY, SessionPersistence } from './sessionConstants'
-import { startSessionStore } from './sessionStore'
+import { monitorError } from '../../tools/monitor'
+import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import type { SessionState } from './sessionState'
-import { toSessionState } from './sessionState'
-import { retrieveSessionCookie } from './storeStrategies/sessionInCookie'
-import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
-import { retrieveSessionFromLocalStorage } from './storeStrategies/sessionInLocalStorage'
-import { resetSessionStoreOperations } from './sessionStoreOperations'
+import {
+  expandOnly,
+  expandOrRenew,
+  getExpiredSessionState,
+  initializeSession,
+  isSessionInExpiredState,
+} from './sessionState'
+import { getSessionStoreStrategy } from './sessionStore'
 
 export interface SessionManager {
   findSession: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => SessionContext | undefined
   findTrackedSession: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => SessionContext | undefined
   renewObservable: Observable<void>
   expireObservable: Observable<void>
-  sessionStateUpdateObservable: Observable<{ previousState: SessionState; newState: SessionState }>
   expire: () => void
-  // TODO: review difference between SessionState and SessionContext
   updateSessionState: (state: Partial<SessionState>) => void
 }
 
@@ -61,67 +56,97 @@ export function startSessionManager(
     return
   }
 
-  const sessionStore = startSessionStore(configuration.sessionStoreStrategyType, configuration)
-  stopCallbacks.push(() => sessionStore.stop())
+  const strategy = mockable(getSessionStoreStrategy)(configuration.sessionStoreStrategyType, configuration)
 
   const sessionContextHistory = createValueHistory<SessionContext>({
     expireDelay: SESSION_CONTEXT_TIMEOUT_DELAY,
   })
   stopCallbacks.push(() => sessionContextHistory.stop())
 
-  // Tracking consent is always granted when the session manager is started, but it may be revoked
-  // during the async initialization (e.g., while waiting for cookie lock). We check
-  // consent status in the callback to handle this case.
-  sessionStore.expandOrRenewSession(() => {
-    const hasConsent = trackingConsentState.isGranted()
-    if (!hasConsent) {
-      sessionStore.expire(hasConsent)
+  const { throttled: throttledExpandOrRenew, cancel: cancelExpandOrRenew } = throttle(() => {
+    strategy.setSessionState((state) => expandOrRenew(state, configuration)).catch(monitorError)
+  }, ONE_SECOND)
+  stopCallbacks.push(cancelExpandOrRenew)
+
+  let stopped = false
+  stopCallbacks.push(() => {
+    stopped = true
+  })
+  ;(async () => {
+    const initialState = await resolveInitialState()
+    if (stopped) {
       return
     }
 
-    sessionStore.renewObservable.subscribe(() => {
-      sessionContextHistory.add(buildSessionContext(), relativeNow())
-      renewObservable.notify()
-    })
-    sessionStore.expireObservable.subscribe(() => {
-      expireObservable.notify()
-      sessionContextHistory.closeActive(relativeNow())
-    })
-    sessionStore.sessionStateUpdateObservable.subscribe(({ newState }) => {
-      // mutate the session state in the history
-      const currentContext = sessionContextHistory.find()
-      if (currentContext) {
-        currentContext.isReplayForced = !!newState.forcedReplay
-      }
-    })
-
-    sessionContextHistory.add(buildSessionContext(), clocksOrigin().relative)
-    if (isExperimentalFeatureEnabled(ExperimentalFeature.SHORT_SESSION_INVESTIGATION)) {
-      const session = sessionStore.getSession()
-      if (session) {
-        detectSessionIdChange(configuration, session)
-      }
+    // Consent is always granted when the session manager is started, but it may
+    // be revoked during the async initialization (e.g., while waiting for cookie lock).
+    if (!trackingConsentState.isGranted()) {
+      expire()
+      return
     }
 
+    sessionContextHistory.add(buildSessionContext(initialState), clocksOrigin().relative)
+    scheduleExpirationTimeout(initialState)
+    subscribeToSessionChanges()
+    setupSessionTracking()
+    onReady(buildSessionManager())
+  })().catch(monitorError)
+
+  async function resolveInitialState() {
+    let state: SessionState = {}
+    await strategy.setSessionState((currentState) => {
+      const initialState = initializeSession(currentState, configuration)
+      state = expandOrRenew(initialState, configuration)
+      return state
+    })
+    return state
+  }
+
+  function subscribeToSessionChanges() {
+    const subscription = strategy.sessionObservable.subscribe((newState) => {
+      scheduleExpirationTimeout(newState)
+      handleStateChange(newState)
+    })
+    stopCallbacks.push(() => subscription.unsubscribe())
+  }
+
+  let expirationTimeoutId: ReturnType<typeof setTimeout> | undefined
+
+  function scheduleExpirationTimeout(state: SessionState) {
+    clearTimeout(expirationTimeoutId)
+    if (state.expire && !isSessionInExpiredState(state)) {
+      const delay = Number(state.expire) - dateNow()
+      expirationTimeoutId = setTimeout(() => expire(), delay)
+    }
+  }
+  stopCallbacks.push(() => clearTimeout(expirationTimeoutId))
+
+  function setupSessionTracking() {
     trackingConsentState.observable.subscribe(() => {
       if (trackingConsentState.isGranted()) {
-        sessionStore.expandOrRenewSession()
+        strategy.setSessionState((state) => expandOrRenew(state, configuration)).catch(monitorError)
       } else {
-        sessionStore.expire(false)
+        expire()
       }
     })
 
     if (!isWorkerEnvironment) {
       trackActivity(configuration, () => {
         if (trackingConsentState.isGranted()) {
-          sessionStore.expandOrRenewSession()
+          throttledExpandOrRenew()
         }
       })
-      trackVisibility(configuration, () => sessionStore.expandSession())
-      trackResume(configuration, () => sessionStore.restartSession())
+      trackVisibility(configuration, () => {
+        strategy.setSessionState((state) => expandOnly(state)).catch(monitorError)
+      })
+      trackResume(configuration, () => {
+        strategy.setSessionState((state) => initializeSession(state, configuration)).catch(monitorError)
+      })
     }
+  }
 
-    onReady({
+  function buildSessionManager(): SessionManager {
+    return {
       findSession: (startTime, options) => sessionContextHistory.find(startTime, options),
       findTrackedSession: (startTime, options) => {
         const session = sessionContextHistory.find(startTime, options)
@@ -134,18 +159,58 @@ export function startSessionManager(
       },
       renewObservable,
       expireObservable,
-      sessionStateUpdateObservable: sessionStore.sessionStateUpdateObservable,
-      expire: sessionStore.expire,
-      updateSessionState: sessionStore.updateSessionState,
-    })
-  })
+      expire,
+      updateSessionState: (partialState) => {
+        strategy.setSessionState((state) => ({ ...state, ...partialState })).catch(monitorError)
+      },
+    }
+  }
 
-  function buildSessionContext(): SessionContext {
-    const session = sessionStore.getSession()
+  function handleStateChange(newState: SessionState) {
+    const previousSession = sessionContextHistory.find()
+    const hadSession = previousSession?.id !== undefined
+    const hasSession = newState.id !== undefined
+    const sessionIdChanged = hadSession && hasSession && previousSession.id !== newState.id
 
-    if (!session?.id) {
-      reportUnexpectedSessionState(configuration).catch(() => void 0) // Ignore errors
+    if (hadSession && (!hasSession || sessionIdChanged)) {
+      // Session expired or replaced
+      expireObservable.notify()
+      sessionContextHistory.closeActive(relativeNow())
+    }
 
+    if (hasSession && (!hadSession || sessionIdChanged)) {
+      // New session appeared
+      sessionContextHistory.add(buildSessionContext(newState), relativeNow())
+      renewObservable.notify()
+    } else if (hadSession && hasSession && !sessionIdChanged) {
+      // Same session,
+      // Mutate the session context in the history for replay forced changes
+
+      previousSession.isReplayForced = !!newState.forcedReplay
+    }
+  }
+
+  function expire() {
+    cancelExpandOrRenew()
+    // Update in-memory state synchronously so events stop being collected immediately
+    const expiredState = getExpiredSessionState(sessionContextHistory.find(), configuration)
+    if (!trackingConsentState.isGranted()) {
+      delete expiredState.anonymousId
+    }
+    handleStateChange(expiredState)
+    // Persist to storage asynchronously
+    strategy
+      .setSessionState((state) => {
+        if (!trackingConsentState.isGranted()) {
+          delete state.anonymousId
+        }
+        return getExpiredSessionState(state, configuration)
+      })
+      .catch(monitorError)
+  }
+
+  function buildSessionContext(sessionState: SessionState): SessionContext {
+    if (!sessionState.id) {
       return {
         id: 'invalid',
         isReplayForced: false,
@@ -154,9 +219,9 @@ export function startSessionManager(
     }
 
     return {
-      id: session.id,
-      isReplayForced: !!session.forcedReplay,
-      anonymousId: session.anonymousId,
+      id: sessionState.id,
+      isReplayForced: !!sessionState.forcedReplay,
+      anonymousId: sessionState.anonymousId,
     }
   }
 }
@@ -173,7 +238,6 @@ export function startSessionManagerStub(onReady: (sessionManager: SessionManager
     findTrackedSession: () => sessionContext,
     renewObservable: new Observable(),
     expireObservable: new Observable(),
-    sessionStateUpdateObservable: new Observable(),
     expire: noop,
     updateSessionState: (state) => {
       sessionContext = {
@@ -187,7 +251,6 @@ export function startSessionManagerStub(onReady: (sessionManager: SessionManager
 export function stopSessionManager() {
   stopCallbacks.forEach((e) => e())
   stopCallbacks = []
-  resetSessionStoreOperations()
 }
 
 function trackActivity(configuration: Configuration, expandOrRenewSession: () => void) {
@@ -220,92 +283,4 @@ function trackVisibility(configuration: Configuration, expandSession: () => void
 function trackResume(configuration: Configuration, cb: () => void) {
   const { stop } = addEventListener(configuration, window, DOM_EVENT.RESUME, cb, { capture: true })
   stopCallbacks.push(stop)
-}
-
-async function reportUnexpectedSessionState(configuration: Configuration) {
-  const sessionStoreStrategyType = configuration.sessionStoreStrategyType
-  if (!sessionStoreStrategyType) {
-    return
-  }
-
-  let rawSession
-  let cookieContext
-
-  if (sessionStoreStrategyType.type === SessionPersistence.COOKIE) {
-    rawSession = retrieveSessionCookie(sessionStoreStrategyType.cookieOptions)
-
-    cookieContext = {
-      cookie: await getSessionCookies(),
-      currentDomain: `${window.location.protocol}//${window.location.hostname}`,
-    }
-  } else {
-    rawSession = retrieveSessionFromLocalStorage()
-  }
-  // monitor-until: forever, could be handy to troubleshoot issues until session manager rework
-  addTelemetryDebug('Unexpected session state', {
-    sessionStoreStrategyType: sessionStoreStrategyType.type,
-    session: rawSession,
-    isSyntheticsTest: isSyntheticsTest(),
-    createdTimestamp: rawSession?.created,
-    expireTimestamp: rawSession?.expire,
-    ...cookieContext,
-  })
-}
-
-function detectSessionIdChange(configuration: Configuration, initialSessionState: SessionState) {
-  if (!window.cookieStore || !initialSessionState.created) {
-    return
-  }
-
-  const sessionCreatedTime = Number(initialSessionState.created)
-  const sdkInitTime = dateNow()
-
-  const { stop } = addEventListener(configuration, cookieStore as CookieStore, DOM_EVENT.CHANGE, listener)
-  stopCallbacks.push(stop)
-
-  function listener(event: CookieChangeEvent) {
-    const changed = findLast(event.changed, (change): change is CookieListItem => change.name === SESSION_STORE_KEY)
-    if (!changed) {
-      return
-    }
-
-    const sessionAge = dateNow() - sessionCreatedTime
-    if (sessionAge > 14 * ONE_MINUTE) {
-      // The session might have expired just because it's too old or lack activity
-      stop()
-    } else {
-      const newSessionState = toSessionState(changed.value)
-      if (newSessionState.id && newSessionState.id !== initialSessionState.id) {
-        stop()
-        const time = dateNow() - sdkInitTime
-        getSessionCookies()
-          .then((cookie) => {
-            // monitor-until: 2026-04-01, after RUM-10845 investigation done
-            addTelemetryDebug('Session cookie changed', {
-              time,
-              session_age: sessionAge,
-              old: initialSessionState,
-              new: newSessionState,
-              cookie,
-            })
-          })
-          .catch(monitorError)
-      }
-    }
-  }
-}
-
-async function getSessionCookies(): Promise<{ count: number; domain: string }> {
-  let sessionCookies: string[] | Awaited<ReturnType<CookieStore['getAll']>>
-  if ('cookieStore' in window) {
-    sessionCookies = await (window as { cookieStore: CookieStore }).cookieStore.getAll(SESSION_STORE_KEY)
-  } else {
-    sessionCookies = document.cookie.split(/\s*;\s*/).filter((cookie) => cookie.startsWith(SESSION_STORE_KEY))
-  }
-
-  return {
-    count: sessionCookies.length,
-    domain: getCurrentSite() || 'undefined',
-    ...sessionCookies,
-  }
 }
