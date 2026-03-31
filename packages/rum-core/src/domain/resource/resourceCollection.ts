@@ -448,6 +448,7 @@ function filterHeaders(headers: Headers, matchers: HeaderMatchOption[]): Network
 }
 
 function applyExtractor(value: string, extractor: RegExp): string | undefined {
+  extractor.lastIndex = 0
   const match = extractor.exec(value)
   if (!match) {
     return undefined
