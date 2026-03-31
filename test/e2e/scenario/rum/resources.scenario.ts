@@ -383,6 +383,91 @@ function expectToHaveValidTimings(resourceEvent: RumResourceEvent) {
   }
 }
 
+test.describe('resource headers with trackResourceHeaders', () => {
+  const TRACK_RESOURCE_HEADERS_CONFIG = {
+    enableExperimentalFeatures: ['track_resource_headers'],
+    trackResourceHeaders: true,
+  }
+
+  function okUrl(responseHeaders: Record<string, string>): string {
+    const params = new URLSearchParams(
+      Object.entries(responseHeaders).map(([name, value]) => [`response-headers[${name}]`, value])
+    )
+    return `/ok?${params}`
+  }
+
+  createTest('collect response and request headers for fetch when trackResourceHeaders is on')
+    .withRum(TRACK_RESOURCE_HEADERS_CONFIG)
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      const url = okUrl({ 'Cache-Control': 'no-cache' })
+      await page.evaluate(
+        (u) =>
+          fetch(u, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: 'value' }),
+          }),
+        url
+      )
+
+      await flushEvents()
+
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.type === 'fetch')
+      expect(resourceEvent).toBeDefined()
+      expect(resourceEvent!.resource.response!.headers!['content-type']).toBe('text/plain; charset=utf-8')
+      expect(resourceEvent!.resource.response!.headers!['cache-control']).toBe('no-cache')
+      expect(resourceEvent!.resource.request!.headers!['content-type']).toBe('application/json')
+    })
+
+  createTest('collect response headers for XHR')
+    .withRum(TRACK_RESOURCE_HEADERS_CONFIG)
+    .run(async ({ intakeRegistry, flushEvents, sendXhr }) => {
+      await sendXhr(okUrl({ 'Cache-Control': 'no-cache' }))
+
+      await flushEvents()
+
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.type === 'xhr')
+      expect(resourceEvent).toBeDefined()
+      expect(resourceEvent!.resource.response!.headers!['content-type']).toBe('text/plain; charset=utf-8')
+      expect(resourceEvent!.resource.response!.headers!['cache-control']).toBe('no-cache')
+    })
+
+  createTest('collect headers when HeaderMatchOption uses mixed-case string name')
+    .withRum({
+      ...TRACK_RESOURCE_HEADERS_CONFIG,
+      trackResourceHeaders: [{ url: /.*/, response: [{ name: 'Content-Type' }] }],
+    })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate((u) => fetch(u), okUrl({ 'Cache-Control': 'no-cache' }))
+
+      await flushEvents()
+
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.type === 'fetch')
+      expect(resourceEvent).toBeDefined()
+      expect(resourceEvent!.resource.response!.headers!['content-type']).toBe('text/plain; charset=utf-8')
+    })
+
+  createTest('do not collect resource headers when trackResourceHeaders is not set')
+    .withRum({ ...TRACK_RESOURCE_HEADERS_CONFIG, trackResourceHeaders: undefined })
+    .run(async ({ intakeRegistry, flushEvents, sendXhr, page }) => {
+      const url = okUrl({ 'Cache-Control': 'no-cache' })
+      await sendXhr(url)
+      await page.evaluate((u) => fetch(u), url)
+
+      await flushEvents()
+
+      const xhrEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.type === 'xhr')
+      expect(xhrEvent).toBeDefined()
+      expect(xhrEvent!.resource.request).toBeUndefined()
+      expect(xhrEvent!.resource.response?.headers?.['cache-control']).toBeUndefined()
+
+      const fetchEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.type === 'fetch')
+      expect(fetchEvent).toBeDefined()
+      expect(fetchEvent!.resource.request).toBeUndefined()
+      expect(fetchEvent!.resource.response?.headers?.['cache-control']).toBeUndefined()
+    })
+})
+
 test.describe('manual resources with startResource/stopResource', () => {
   createTest('track a manual resource with startResource/stopResource')
     .withRum({ enableExperimentalFeatures: ['start_stop_resource'] })
