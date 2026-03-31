@@ -1,4 +1,4 @@
-import type { ClocksState, Duration, MatchOption } from '@datadog/browser-core'
+import type { ClocksState, Duration } from '@datadog/browser-core'
 import {
   combine,
   generateUUID,
@@ -15,7 +15,7 @@ import {
   display,
   addTelemetryDebug,
 } from '@datadog/browser-core'
-import type { RumConfiguration } from '../configuration'
+import type { HeaderMatchOption, RumConfiguration } from '../configuration'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType, createPerformanceObservable } from '../../browser/performanceObservable'
 import type {
@@ -316,13 +316,21 @@ function computeNetworkHeaders(
   request: RequestCompleteEvent | undefined,
   configuration: RumConfiguration
 ): { resource: { request?: ResourceRequest; response?: ResourceResponse } } | undefined {
-  const matchers = configuration.trackResourceHeaders
-  if (matchers.length === 0 || !request) {
+  const rules = configuration.trackResourceHeaders
+  if (rules.length === 0 || !request) {
     return undefined
   }
 
-  const responseHeaders = getResponseHeaders(request, matchers)
-  const requestHeaders = getRequestHeaders(request, matchers)
+  const matchingRules = rules.filter((rule) => matchList([rule.url], request.url, true))
+  if (matchingRules.length === 0) {
+    return undefined
+  }
+
+  const responseMatchers = matchingRules.flatMap((r) => r.responseMatchers)
+  const requestMatchers = matchingRules.flatMap((r) => r.requestMatchers)
+
+  const responseHeaders = responseMatchers.length > 0 ? getResponseHeaders(request, responseMatchers) : undefined
+  const requestHeaders = requestMatchers.length > 0 ? getRequestHeaders(request, requestMatchers) : undefined
 
   if (!responseHeaders && !requestHeaders) {
     return undefined
@@ -336,7 +344,7 @@ function computeNetworkHeaders(
   }
 }
 
-function getResponseHeaders(request: RequestCompleteEvent, matchers: MatchOption[]): NetworkHeaders | undefined {
+function getResponseHeaders(request: RequestCompleteEvent, matchers: HeaderMatchOption[]): NetworkHeaders | undefined {
   if (request.type === RequestType.FETCH && request.response) {
     return filterHeaders(request.response.headers, matchers)
   }
@@ -355,7 +363,7 @@ function getResponseHeaders(request: RequestCompleteEvent, matchers: MatchOption
   return undefined
 }
 
-function getRequestHeaders(request: RequestCompleteEvent, matchers: MatchOption[]): NetworkHeaders | undefined {
+function getRequestHeaders(request: RequestCompleteEvent, matchers: HeaderMatchOption[]): NetworkHeaders | undefined {
   if (request.type !== RequestType.FETCH) {
     return undefined
   }
@@ -376,7 +384,7 @@ const FORBIDDEN_HEADER_PATTERN =
 const MAX_HEADER_COUNT = 100
 const MAX_HEADER_VALUE_LENGTH = 128
 
-function filterHeaders(headers: Headers, matchers: MatchOption[]): NetworkHeaders | undefined {
+function filterHeaders(headers: Headers, matchers: HeaderMatchOption[]): NetworkHeaders | undefined {
   const result: NetworkHeaders = {} as NetworkHeaders
   let collectedHeaderCount = 0
   let totalHeaderCount = 0
@@ -399,25 +407,32 @@ function filterHeaders(headers: Headers, matchers: MatchOption[]): NetworkHeader
     if (FORBIDDEN_HEADER_PATTERN.test(lowerName)) {
       return
     }
-    if (!matchList(matchers, lowerName)) {
+
+    const headerMatcher = matchers.find((m) => matchList([m.name], lowerName))
+    if (!headerMatcher) {
       return
     }
 
-    if (value.length > MAX_HEADER_VALUE_LENGTH) {
+    const { extractor } = headerMatcher
+    const capturedValue = extractor ? applyExtractor(value, extractor) : value
+    if (capturedValue === undefined) {
+      return
+    }
+
+    if (capturedValue.length > MAX_HEADER_VALUE_LENGTH) {
       display.warn(
-        `Header "${lowerName}" value was truncated from ${value.length} to ${MAX_HEADER_VALUE_LENGTH} characters.`
+        `Header "${lowerName}" value was truncated from ${capturedValue.length} to ${MAX_HEADER_VALUE_LENGTH} characters.`
       )
       // monitor-until: 2026-05-23
       addTelemetryDebug('Resource header value was truncated', {
         header_name: lowerName,
-        original_length: value.length,
+        original_length: capturedValue.length,
         limit: MAX_HEADER_VALUE_LENGTH,
       })
     }
 
-    result[lowerName] = safeTruncate(value, MAX_HEADER_VALUE_LENGTH)
+    result[lowerName] = safeTruncate(capturedValue, MAX_HEADER_VALUE_LENGTH)
     collectedHeaderCount++
-    totalHeaderCount++
   })
 
   // monitor-until: 2026-05-23
@@ -426,6 +441,14 @@ function filterHeaders(headers: Headers, matchers: MatchOption[]): NetworkHeader
     totalHeaderCount,
   })
   return collectedHeaderCount > 0 ? result : undefined
+}
+
+function applyExtractor(value: string, extractor: RegExp): string | undefined {
+  const match = extractor.exec(value)
+  if (!match) {
+    return undefined
+  }
+  return match[1] ?? match[0]
 }
 
 // Input:  "content-type: application/json\r\ncache-control: no-cache"
