@@ -82,7 +82,7 @@ class GuidesRouteComponent {}
   template: `
     <h1>Error Test</h1>
     <button data-testid="trigger-error" (click)="triggerError()">Trigger Error</button>
-    <div *ngIf="hasError" data-testid="error-boundary">Error occurred</div>
+    <div *ngIf="hasError" data-testid="error-handled">Error occurred</div>
   `,
 })
 class ErrorTestRouteComponent {

@@ -14,7 +14,7 @@ function ErrorThrower() {
 }
 
 const ErrorFallback: ErrorBoundaryFallback = ({ error, resetError }) => (
-  <div data-testid="error-boundary">
+  <div data-testid="error-handled">
     <p>{error.message}</p>
     <button data-testid="reset-error" onClick={resetError}>
       Reset

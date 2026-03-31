@@ -14,6 +14,7 @@ export interface ErrorConfig {
   clientErrorMessage: string
   expectedFramework: string
   expectsBrowserConsoleErrors?: boolean
+  expectsComponentStack?: boolean
 }
 
 export interface PluginTestConfig {
@@ -153,20 +154,20 @@ export function runBasePluginTests(configs: PluginTestConfig[]) {
               await page.waitForURL(`**${viewPrefix}/error-test`)
 
               await page.click('[data-testid="trigger-error"]')
-              await page.waitForSelector('[data-testid="error-boundary"]')
+              await page.waitForSelector('[data-testid="error-handled"]')
 
               await flushEvents()
 
-              const errorEvent = intakeRegistry.rumErrorEvents.find(
-                (e) => e.error.source === 'custom' && e.error.message === error.clientErrorMessage
-              )
-              expect(errorEvent).toBeDefined()
+              const customErrors = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
+              expect(customErrors).toHaveLength(1)
+              expect(customErrors[0].error.message).toBe(error.clientErrorMessage)
+              expect(customErrors[0].error.handling_stack).toBeDefined()
+              expect(customErrors[0].error.stack).toBeDefined()
+              if (error.expectsComponentStack) {
+                expect(customErrors[0].error.component_stack).toBeDefined()
+              }
 
-              expect(errorEvent?.context).toEqual(
-                expect.objectContaining({
-                  framework: error.expectedFramework,
-                })
-              )
+              expect(customErrors[0].context?.framework).toEqual(error.expectedFramework)
 
               if (error.expectsBrowserConsoleErrors) {
                 withBrowserLogs((browserLogs) => {

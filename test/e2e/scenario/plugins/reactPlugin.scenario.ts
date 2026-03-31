@@ -22,6 +22,7 @@ runBasePluginTests(
       clientErrorMessage: 'Error triggered by button click',
       expectedFramework: 'react',
       expectsBrowserConsoleErrors: true,
+      expectsComponentStack: true,
     },
   }))
 )
@@ -62,7 +63,7 @@ test.describe('plugin: react', () => {
           await page.click('text=Go to Error Test')
           await page.waitForURL('**/error-test')
           await page.click('[data-testid="trigger-error"]')
-          await page.waitForSelector('[data-testid="error-boundary"]')
+          await page.waitForSelector('[data-testid="error-handled"]')
 
           await flushEvents()
 

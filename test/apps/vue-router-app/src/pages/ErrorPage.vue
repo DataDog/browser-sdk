@@ -10,6 +10,6 @@ function triggerError() {
   <div>
     <h1>Error Page</h1>
     <button data-testid="trigger-error" @click="triggerError">Trigger Error</button>
-    <div v-if="hasError" data-testid="error-boundary">Error occurred</div>
+    <div v-if="hasError" data-testid="error-handled">Error occurred</div>
   </div>
 </template>

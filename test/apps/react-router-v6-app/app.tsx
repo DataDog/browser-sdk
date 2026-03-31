@@ -115,7 +115,7 @@ function ErrorPage() {
       <h1>Error Page</h1>
       <ErrorBoundary
         fallback={({ error, resetError }) => (
-          <div data-testid="error-boundary">
+          <div data-testid="error-handled">
             <h2>Something went wrong</h2>
             <p>{error.message}</p>
             <button onClick={resetError}>Try again</button>
