@@ -251,8 +251,22 @@ export interface RumInitConfiguration extends InitConfiguration {
 
   /**
    * Enables collection of request and response headers on resource events.
-   * - `true`: collect a set of default headers (see {@link DEFAULT_TRACKED_RESOURCE_HEADERS})
-   * - `MatchOption[]`: collect default headers PLUS headers matching any item in the list
+   *
+   * - `true`: collect default headers (see {@link DEFAULT_TRACKED_RESOURCE_HEADERS}) for all URLs
+   * - `MatchOption[]`: collect default headers PLUS headers matching any item, for all URLs
+   * - `HeaderCaptureOption[]`: URL-scoped rules with independent request/response control
+   *
+   * A `HeaderCaptureOption` targets a specific URL pattern and lets you control which headers
+   * are captured per direction:
+   * - `url`: a {@link MatchOption} to scope the rule to matching resource URLs
+   * - `request` / `response`: `true` for default headers, `MatchOption[]` for custom header
+   * names, or `HeaderMatchOption[]` to also extract partial values via a RegExp
+   *
+   * A `HeaderMatchOption` pairs a header name matcher with an optional `extractor` RegExp.
+   * When set, only the first capture group (or the full match) is kept as the header value.
+   *
+   * Both formats can be mixed in the same array. Multiple rules can match the same URL; if two rules
+   * match a given header on a given URL, the first one applies.
    *
    * Headers whose names match a built-in sensitive-data pattern are always dropped, regardless
    * of the configured matchers. The pattern blocks headers whose names contain: `token`, `cookie`,
@@ -262,8 +276,14 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @category Data Collection
    * @defaultValue false (disabled)
    * @example
-   * // Collect default headers plus custom ones
-   * trackResourceHeaders: ['x-request-id', /^x-custom-.+/, (name) => name.startsWith('x-org-')]
+   * // Collect default headers plus custom ones for all URLs
+   * trackResourceHeaders: ['x-request-id', /^x-custom-.+/]
+   * @example
+   * // URL-scoped rule: capture specific response headers only for calls to /api
+   * trackResourceHeaders: [{ url: /\/api\//, response: ['x-request-id', 'cache-control'], request: false }]
+   * @example
+   * // Extract a partial value from a header
+   * trackResourceHeaders: [{ url: /\/api\//, response: [{ name: 'server-timing', extractor: /dur=(\d+)/ }] }]
    * @hidden
    */
   trackResourceHeaders?: boolean | Array<MatchOption | HeaderCaptureOption> | undefined
