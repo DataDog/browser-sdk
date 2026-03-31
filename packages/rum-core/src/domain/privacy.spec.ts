@@ -504,6 +504,9 @@ describe('getTextContent', () => {
     beforeEach(() => {
       const textarea = appendElement('<textarea>some text</textarea>')
       textNode = textarea.firstChild as Text
+    })
+
+    afterEach(() => {
       delete (window as BrowserWindow).$DD_ALLOW
     })
 
@@ -535,6 +538,9 @@ describe('getTextContent', () => {
     beforeEach(() => {
       const div = appendElement('<div>some text</div>')
       textNode = div.firstChild as Text
+    })
+
+    afterEach(() => {
       delete (window as BrowserWindow).$DD_ALLOW
     })
 
