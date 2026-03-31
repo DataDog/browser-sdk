@@ -233,36 +233,7 @@ export function createPerformanceObservable<T extends RumPerformanceEntryType>(
         }
       })
     )
-    try {
-      observer.observe(options)
-    } catch {
-      // Some old browser versions (<= chrome 74 ) don't support the PerformanceObserver type and buffered options
-      // In these cases, fallback to getEntriesByType and PerformanceObserver with entryTypes
-      // TODO: remove this fallback in the next major version
-      const fallbackSupportedEntryTypes = [
-        RumPerformanceEntryType.RESOURCE,
-        RumPerformanceEntryType.NAVIGATION,
-        RumPerformanceEntryType.LONG_TASK,
-        RumPerformanceEntryType.PAINT,
-      ]
-      if (fallbackSupportedEntryTypes.includes(options.type)) {
-        if (options.buffered) {
-          timeoutId = setTimeout(() => handlePerformanceEntries(performance.getEntriesByType(options.type)))
-        }
-        try {
-          observer.observe({ entryTypes: [options.type] })
-        } catch {
-          // Old versions of Safari are throwing "entryTypes contained only unsupported types"
-          // errors when observing only unsupported entry types.
-          //
-          // We could use `supportPerformanceTimingEvent` to make sure we don't invoke
-          // `observer.observe` with an unsupported entry type, but Safari 11 and 12 don't support
-          // `Performance.supportedEntryTypes`, so doing so would lose support for these versions
-          // even if they do support the entry type.
-          return
-        }
-      }
-    }
+    observer.observe(options)
     isObserverInitializing = false
 
     manageResourceTimingBufferFull(configuration)
