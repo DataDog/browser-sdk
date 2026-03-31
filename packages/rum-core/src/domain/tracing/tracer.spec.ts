@@ -65,6 +65,16 @@ describe('tracer', () => {
       expect(xhr.headers).toEqual(tracingHeadersFor(context.traceId!, context.spanId!, '1'))
     })
 
+    it('should not throw if setRequestHeader fails because the XHR has already been sent', () => {
+      const tracer = startTracerWithDefaults()
+      const context = { ...ALLOWED_DOMAIN_CONTEXT }
+      xhr.setRequestHeader = () => {
+        throw new DOMException("Failed to execute 'setRequestHeader' on 'XMLHttpRequest'", 'InvalidStateError')
+      }
+
+      expect(() => tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)).not.toThrow()
+    })
+
     it('should not trace request on disallowed domain', () => {
       const tracer = startTracerWithDefaults()
       const context = { ...DISALLOWED_DOMAIN_CONTEXT }
