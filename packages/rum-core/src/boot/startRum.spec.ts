@@ -25,7 +25,6 @@ import { SESSION_KEEP_ALIVE_INTERVAL } from '../domain/view/trackViews'
 import type { RumEvent, RumViewEvent } from '../rumEvent.types'
 import type { RumConfiguration } from '../domain/configuration'
 import { RumEventType } from '../rawRumEvent.types'
-import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { createHooks } from '../domain/hooks'
 import { startRum, startRumEventCollection } from './startRum'
 
@@ -52,7 +51,6 @@ function startRumStub(
     sessionManager,
     noopRecorderApi,
     undefined,
-    createCustomVitalsState(),
     new Observable(),
     undefined,
     reportError
@@ -164,7 +162,6 @@ describe('view events', () => {
       noopProfilerApi,
       undefined,
       createIdentityEncoder,
-      createCustomVitalsState(),
       new BufferedObservable<BufferedData>(100),
       createFakeTelemetryObject(),
       createHooks(),

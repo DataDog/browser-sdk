@@ -37,7 +37,6 @@ import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import { startCustomerDataTelemetry } from '../domain/startCustomerDataTelemetry'
 import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
 import { startDisplayContext } from '../domain/contexts/displayContext'
-import type { CustomVitalsState } from '../domain/vital/vitalCollection'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
 import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext'
 import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
@@ -63,7 +62,6 @@ export function startRum(
   profilerApi: ProfilerApi,
   initialViewOptions: ViewOptions | undefined,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
-  customVitalsState: CustomVitalsState,
   bufferedDataObservable: BufferedObservable<BufferedData>,
   telemetry: Telemetry,
   hooks: Hooks,
@@ -118,7 +116,6 @@ export function startRum(
     sessionManager,
     recorderApi,
     initialViewOptions,
-    customVitalsState,
     bufferedDataObservable,
     sdkName,
     reportError
@@ -149,7 +146,6 @@ export function startRumEventCollection(
   sessionManager: SessionManager,
   recorderApi: RecorderApi,
   initialViewOptions: ViewOptions | undefined,
-  customVitalsState: CustomVitalsState,
   bufferedDataObservable: Observable<BufferedData>,
   sdkName: SdkName | undefined,
   reportError: (error: RawError) => void
@@ -229,7 +225,7 @@ export function startRumEventCollection(
 
   startRequestCollection(lifeCycle, configuration, sessionManager, userContext, accountContext)
 
-  const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory, customVitalsState)
+  const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory)
 
   const internalContext = startInternalContext(
     configuration.applicationId,

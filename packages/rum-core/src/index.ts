@@ -63,12 +63,7 @@ export type { MouseEventOnElement } from './domain/action/listenActionEvents'
 export { supportPerformanceTimingEvent } from './browser/performanceObservable'
 export { RumPerformanceEntryType } from './browser/performanceObservable'
 export type { AllowedRawRumEvent } from './domain/event/eventCollection'
-export type {
-  DurationVitalReference,
-  DurationVitalStart,
-  AddDurationVitalOptions,
-  DurationVitalOptions,
-} from './domain/vital/vitalCollection'
+export type { DurationVitalStart, AddDurationVitalOptions, DurationVitalOptions } from './domain/vital/vitalCollection'
 export type { Hooks, DefaultRumEventAttributes, DefaultTelemetryEventAttributes } from './domain/hooks'
 export { createHooks } from './domain/hooks'
 export type { TracingOption, PropagatorType } from './domain/tracing/tracer.types'

@@ -47,13 +47,7 @@ import {
   serializeRumConfiguration,
 } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
-import type {
-  DurationVital,
-  CustomVitalsState,
-  FeatureOperationOptions,
-  FailureReason,
-} from '../domain/vital/vitalCollection'
-import { startDurationVital, stopDurationVital } from '../domain/vital/vitalCollection'
+import type { FeatureOperationOptions, FailureReason } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
 import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { StartRumResult } from './startRum'
@@ -71,7 +65,6 @@ export type DoStartRum = (
 export function createPreStartStrategy(
   { ignoreInitIfSyntheticsWillInjectRum = true, startDeflateWorker }: RumPublicApiOptions,
   trackingConsentState: TrackingConsentState,
-  customVitalsState: CustomVitalsState,
   doStartRum: DoStartRum
 ): Strategy {
   const bufferApiCalls = createBoundedBuffer<StartRumResult>()
@@ -202,10 +195,6 @@ export function createPreStartStrategy(
         mockable(startSessionManager)(configuration, trackingConsentState, onSessionManagerReady)
       }
     })
-  }
-
-  const addDurationVital = (vital: DurationVital) => {
-    bufferApiCalls.add((startRumResult) => startRumResult.addDurationVital(vital))
   }
 
   const addOperationStepVital = (
@@ -340,14 +329,18 @@ export function createPreStartStrategy(
     },
 
     startDurationVital(name, options) {
-      return startDurationVital(customVitalsState, name, options)
+      const startClocks = clocksNow()
+      bufferApiCalls.add((startRumResult) => startRumResult.startDurationVital(name, options, startClocks))
     },
 
     stopDurationVital(name, options) {
-      stopDurationVital(addDurationVital, customVitalsState, name, options)
+      const stopClocks = clocksNow()
+      bufferApiCalls.add((startRumResult) => startRumResult.stopDurationVital(name, options, stopClocks))
     },
 
-    addDurationVital,
+    addDurationVital(vital) {
+      bufferApiCalls.add((startRumResult) => startRumResult.addDurationVital(vital))
+    },
     addOperationStepVital,
   }
 

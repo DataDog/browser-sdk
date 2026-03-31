@@ -43,7 +43,6 @@ export type {
   StartRecordingOptions,
   AddDurationVitalOptions,
   DurationVitalOptions,
-  DurationVitalReference,
   TracingOption,
   RumPlugin,
   OnRumStartOptions,

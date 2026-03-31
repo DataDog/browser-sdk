@@ -33,7 +33,6 @@ import type { HybridInitConfiguration, RumInitConfiguration } from '../domain/co
 import type { ViewOptions } from '../domain/view/trackViews'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { RumPlugin } from '../domain/plugins'
-import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import type { ManualAction } from '../domain/action/trackManualActions'
 import type { RumPublicApi, RumPublicApiOptions, Strategy } from './rumPublicApi'
 import type { StartRumResult } from './startRum'
@@ -696,17 +695,20 @@ describe('preStartRum', () => {
     })
 
     it('startDurationVital', async () => {
-      const addDurationVitalSpy = jasmine.createSpy()
+      const startDurationVitalSpy = jasmine.createSpy()
+      const stopDurationVitalSpy = jasmine.createSpy()
       doStartRumSpy.and.returnValue({
-        addDurationVital: addDurationVitalSpy,
+        startDurationVital: startDurationVitalSpy,
+        stopDurationVital: stopDurationVitalSpy,
       } as unknown as StartRumResult)
 
       strategy.startDurationVital('timing')
       strategy.stopDurationVital('timing')
 
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
-      await collectAsyncCalls(addDurationVitalSpy, 1)
-      expect(addDurationVitalSpy).toHaveBeenCalled()
+      await collectAsyncCalls(stopDurationVitalSpy, 1)
+      expect(startDurationVitalSpy).toHaveBeenCalledWith('timing', undefined, jasmine.any(Object))
+      expect(stopDurationVitalSpy).toHaveBeenCalledWith('timing', undefined, jasmine.any(Object))
     })
 
     it('addDurationVital', async () => {
@@ -919,12 +921,7 @@ function createPreStartStrategyWithDefaults({
   const startTelemetrySpy = replaceMockableWithSpy(startTelemetry).and.callFake(createFakeTelemetryObject)
   replaceMockable(startSessionManager, createStartSessionManagerMock())
   return {
-    strategy: createPreStartStrategy(
-      rumPublicApiOptions,
-      trackingConsentState,
-      createCustomVitalsState(),
-      doStartRumSpy
-    ),
+    strategy: createPreStartStrategy(rumPublicApiOptions, trackingConsentState, doStartRumSpy),
     doStartRumSpy,
     startTelemetrySpy,
   }

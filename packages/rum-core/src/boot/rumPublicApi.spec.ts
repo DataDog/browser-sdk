@@ -23,7 +23,6 @@ import {
 } from '@datadog/browser-core/test'
 import { noopRecorderApi, noopProfilerApi } from '../../test'
 import { ActionType, VitalType } from '../rawRumEvent.types'
-import type { DurationVitalReference } from '../domain/vital/vitalCollection'
 import type { RumPublicApi, RecorderApi, ProfilerApi, RumPublicApiOptions } from './rumPublicApi'
 import { makeRumPublicApi } from './rumPublicApi'
 import type { StartRum } from './startRum'
@@ -46,7 +45,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   viewHistory: {} as any,
   sessionManager: {} as any,
   stopSession: () => undefined,
-  startDurationVital: () => ({}) as DurationVitalReference,
+  startDurationVital: () => undefined,
   stopDurationVital: () => undefined,
   addDurationVital: () => undefined,
   stop: () => undefined,
@@ -761,44 +760,70 @@ describe('rum public api', () => {
   })
 
   describe('startDurationVital', () => {
-    it('should call addDurationVital on the startRum result when stopped by name', async () => {
-      const addDurationVitalSpy = jasmine.createSpy()
+    it('should call startDurationVital on the startRum result', async () => {
+      const startDurationVitalSpy = jasmine.createSpy()
       const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
         startRumResult: {
-          addDurationVital: addDurationVitalSpy,
+          startDurationVital: startDurationVitalSpy,
         },
       })
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(startRumSpy, 1)
+      rumPublicApi.startDurationVital('foo', { context: { foo: 'bar' }, description: 'description-value' })
+      await collectAsyncCalls(startDurationVitalSpy, 1)
+      expect(startDurationVitalSpy).toHaveBeenCalledWith('foo', {
+        vitalKey: undefined,
+        description: 'description-value',
+        context: { foo: 'bar' },
+        handlingStack: jasmine.any(String),
+      })
+    })
+  })
+
+  describe('stopDurationVital', () => {
+    it('should call stopDurationVital with a name on the startRum result', async () => {
+      const stopDurationVitalSpy = jasmine.createSpy()
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
+        startRumResult: {
+          stopDurationVital: stopDurationVitalSpy,
+        },
+      })
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(startRumSpy, 1)
       rumPublicApi.startDurationVital('foo', { context: { foo: 'bar' }, description: 'description-value' })
       rumPublicApi.stopDurationVital('foo', { context: { foo: 'bar' }, description: 'description-value' })
-      await collectAsyncCalls(startRumSpy, 1)
-      expect(addDurationVitalSpy).toHaveBeenCalledWith(
-        jasmine.objectContaining({
-          name: 'foo',
-          description: 'description-value',
-          context: { foo: 'bar' },
-        })
-      )
+      expect(stopDurationVitalSpy).toHaveBeenCalledWith('foo', {
+        vitalKey: undefined,
+        description: 'description-value',
+        context: { foo: 'bar' },
+      })
     })
 
-    it('should call addDurationVital on the startRum result when stopped by reference', async () => {
-      const addDurationVitalSpy = jasmine.createSpy()
+    it('should call stopDurationVital with a vitalKey on the startRum result', async () => {
+      const stopDurationVitalSpy = jasmine.createSpy()
       const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
         startRumResult: {
-          addDurationVital: addDurationVitalSpy,
+          stopDurationVital: stopDurationVitalSpy,
         },
       })
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      const ref = rumPublicApi.startDurationVital('foo', { context: { foo: 'bar' }, description: 'description-value' })
-      rumPublicApi.stopDurationVital(ref, { context: { foo: 'bar' }, description: 'description-value' })
       await collectAsyncCalls(startRumSpy, 1)
-      expect(addDurationVitalSpy).toHaveBeenCalledWith(
-        jasmine.objectContaining({
-          name: 'foo',
-          description: 'description-value',
-          context: { foo: 'bar' },
-        })
-      )
+      rumPublicApi.startDurationVital('foo', {
+        vitalKey: 'my-key',
+        context: { foo: 'bar' },
+        description: 'description-value',
+      })
+      rumPublicApi.stopDurationVital('foo', {
+        vitalKey: 'my-key',
+        context: { foo: 'bar' },
+        description: 'description-value',
+      })
+      await collectAsyncCalls(stopDurationVitalSpy, 1)
+      expect(stopDurationVitalSpy).toHaveBeenCalledWith('foo', {
+        vitalKey: 'my-key',
+        description: 'description-value',
+        context: { foo: 'bar' },
+      })
     })
   })
 
@@ -1192,7 +1217,7 @@ describe('rum public api', () => {
 
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       const calls = await collectAsyncCalls(startRumSpy, 1)
-      const sdkName = calls.argsFor(0)[10]
+      const sdkName = calls.argsFor(0)[9]
       expect(sdkName).toBe('rum-slim')
     })
   })
