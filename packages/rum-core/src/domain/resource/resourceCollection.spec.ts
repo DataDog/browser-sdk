@@ -1120,6 +1120,38 @@ describe('resourceCollection', () => {
         expect(event.resource.response?.headers?.['cache-control']).toBeUndefined()
       })
 
+      it('should extract consistently when extractor has global flag', () => {
+        const globalExtractor = /max-age=(\d+)/g
+        setupResourceCollection({
+          trackResourceHeaders: [
+            {
+              url: () => true,
+              requestMatchers: [],
+              responseMatchers: [{ name: 'cache-control', extractor: globalExtractor }],
+            },
+          ],
+        })
+
+        notifyRequest({
+          request: {
+            type: RequestType.FETCH,
+            response: new Response('', { headers: { 'Cache-Control': 'public, max-age=3600' } }),
+          },
+        })
+
+        notifyRequest({
+          request: {
+            type: RequestType.FETCH,
+            response: new Response('', { headers: { 'Cache-Control': 'public, max-age=7200' } }),
+          },
+        })
+
+        const firstEvent = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+        const secondEvent = rawRumEvents[1].rawRumEvent as RawRumResourceEvent
+        expect(firstEvent.resource.response!.headers!['cache-control']).toBe('3600')
+        expect(secondEvent.resource.response!.headers!['cache-control']).toBe('7200')
+      })
+
       it('first matching matcher wins', () => {
         setupResourceCollection({
           trackResourceHeaders: [
