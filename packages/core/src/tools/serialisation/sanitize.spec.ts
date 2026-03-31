@@ -33,13 +33,7 @@ describe('sanitize', () => {
     })
 
     it('should handle bigint', () => {
-      const bigIntFunction: (val: number) => any = (window as any).BigInt
-      if (typeof bigIntFunction === 'function') {
-        const bigint = bigIntFunction(2)
-        expect(sanitize(bigint)).toEqual('[BigInt] 2')
-      } else {
-        pending('BigInt is not supported on this browser')
-      }
+      expect(sanitize(2n)).toEqual('[BigInt] 2')
     })
 
     it('shoud handle symbols', () => {

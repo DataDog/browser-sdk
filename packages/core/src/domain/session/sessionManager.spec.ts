@@ -650,12 +650,6 @@ describe('startSessionManager', () => {
     })
 
     describe('deterministic sampling', () => {
-      beforeEach(() => {
-        if (!window.BigInt) {
-          pending('BigInt is not supported')
-        }
-      })
-
       it('should track a session whose ID has a low hash, even with a low sessionSampleRate', async () => {
         setupFakeStrategy({
           initialSession: {

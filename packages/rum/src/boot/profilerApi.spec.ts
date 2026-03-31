@@ -12,12 +12,6 @@ import { makeProfilerApi } from './profilerApi'
 
 describe('profilerApi', () => {
   describe('deterministic sampling', () => {
-    beforeEach(() => {
-      if (!window.BigInt) {
-        pending('BigInt is not supported')
-      }
-    })
-
     it('should apply the correction factor for chained sampling on the profiling sample rate', () => {
       // MID_HASH_UUID has a hash of ~50.7%. With sessionSampleRate=60 and profilingSampleRate=60:
       // - Without correction: isSampled(id, 60) → true (50.7 < 60)
