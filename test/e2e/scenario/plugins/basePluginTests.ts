@@ -12,6 +12,7 @@ export interface RouterConfig {
 
 export interface ErrorConfig {
   clientErrorMessage: string
+  expectedFramework: string
   expectsBrowserConsoleErrors?: boolean
 }
 
@@ -161,11 +162,17 @@ export function runBasePluginTests(configs: PluginTestConfig[]) {
               )
               expect(errorEvent).toBeDefined()
 
-              withBrowserLogs((browserLogs) => {
-                if (error.expectsBrowserConsoleErrors) {
+              expect(errorEvent?.context).toEqual(
+                expect.objectContaining({
+                  framework: error.expectedFramework,
+                })
+              )
+
+              if (error.expectsBrowserConsoleErrors) {
+                withBrowserLogs((browserLogs) => {
                   expect(browserLogs.filter((log) => log.level === 'error').length).toBeGreaterThan(0)
-                }
-              })
+                })
+              }
             }
           )
         })

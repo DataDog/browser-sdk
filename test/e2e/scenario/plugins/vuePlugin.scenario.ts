@@ -15,6 +15,7 @@ runBasePluginTests([
     },
     error: {
       clientErrorMessage: 'Error triggered by button click',
+      expectedFramework: 'vue',
     },
   },
 ])

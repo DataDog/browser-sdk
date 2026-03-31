@@ -32,6 +32,7 @@ runBasePluginTests(
     },
     error: {
       clientErrorMessage,
+      expectedFramework: 'nextjs',
       expectsBrowserConsoleErrors: true,
     },
   }))

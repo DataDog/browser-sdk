@@ -20,6 +20,7 @@ runBasePluginTests(
     },
     error: {
       clientErrorMessage: 'Error triggered by button click',
+      expectedFramework: 'react',
       expectsBrowserConsoleErrors: true,
     },
   }))
