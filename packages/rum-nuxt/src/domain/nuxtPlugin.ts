@@ -10,14 +10,12 @@ const onRumStartSubscribers: StartSubscriber[] = []
 
 export type NuxtPlugin = Required<RumPlugin>
 
-export function nuxtRumPlugin(router?: Router): NuxtPlugin {
+export function nuxtRumPlugin(router: Router): NuxtPlugin {
   return {
     name: 'nuxt',
     onInit({ publicApi, initConfiguration }) {
       initConfiguration.trackViewsManually = true
-      if (router) {
-        startTrackingNuxtViews(publicApi, router)
-      }
+      startTrackingNuxtViews(publicApi, router)
     },
     onRumStart({ addError }) {
       globalAddError = addError
