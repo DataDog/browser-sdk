@@ -28,7 +28,7 @@ const FILES = [
   // before all other `beforeEach` hooks, and its `afterEach` hook is executed after all other
   // `afterEach` hooks.
   'packages/core/test/forEach.spec.ts',
-  'packages/rum/test/toto.css',
+  'packages/rum/test/record/toto.css',
 ]
 
 const FILES_SPECS = [

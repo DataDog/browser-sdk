@@ -1,6 +1,6 @@
 // Returns the textContent of a ElementNode, if any.
-import type { SerializedNodeWithId, ElementNode, SerializedNode, TextNode } from '../src/types'
-import { NodeType } from '../src/types'
+import type { SerializedNodeWithId, ElementNode, SerializedNode, TextNode } from '../../src/types'
+import { NodeType } from '../../src/types'
 
 export function findTextContent(elem: ElementNode): string | null {
   const text = elem.childNodes.find((child) => child.type === NodeType.Text) as TextNode
