@@ -23,8 +23,8 @@ import {
   waitNextMicrotask,
   replaceMockable,
 } from '@datadog/browser-core/test'
-import { createRumSessionManagerMock, mockRumConfiguration, mockViewHistory, createMockRumPipeline } from '../../../../rum-core/test'
-import { mockProfiler, bridgeLifeCycleToPipeline } from '../../../test'
+import { createRumSessionManagerMock, mockRumConfiguration, mockViewHistory } from '../../../../rum-core/test'
+import { mockProfiler } from '../../../test'
 import type { BrowserProfilerTrace } from '../../types'
 import { mockedTrace } from './test-utils/mockedTrace'
 import { createRumProfiler } from './profiler'
@@ -55,13 +55,10 @@ describe('profiler', () => {
   })
 
   let lifeCycle = new LifeCycle()
-  let pipeline: ReturnType<typeof createMockRumPipeline>
 
   function setupProfiler(currentView?: ViewHistoryEntry) {
     const sessionManager = createRumSessionManagerMock().setId('session-id-1')
     lifeCycle = new LifeCycle()
-    pipeline = createMockRumPipeline()
-    bridgeLifeCycleToPipeline(lifeCycle, pipeline)
     const hooks = createHooks()
     const profilingContextManager: ProfilingContextManager = startProfilingContext(hooks)
 
@@ -127,8 +124,7 @@ describe('profiler', () => {
         collectIntervalMs: 60000, // 1min
         minNumberOfSamples: 0,
         minProfileDurationMs: 0,
-      },
-      pipeline
+      }
     )
     return {
       profiler,

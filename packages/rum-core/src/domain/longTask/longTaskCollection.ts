@@ -1,6 +1,5 @@
 import type { ClocksState } from '@datadog/browser-core'
 import { toServerDuration, relativeToClocks, generateUUID } from '@datadog/browser-core'
-import type { Pipeline } from '@datadog/browser-core-next'
 import type { RawRumLongTaskEvent, RawRumLongAnimationFrameEvent } from '../../rawRumEvent.types'
 import { RumEventType, RumLongTaskEntryType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'
@@ -16,13 +15,8 @@ import type {
   RumPerformanceScriptTiming,
 } from '../../browser/performanceObservable'
 import type { RumConfiguration } from '../configuration'
-import type { RumCoreEvents } from '../pipeline/rumPipelineEvents'
 
-export function startLongTaskCollection(
-  lifeCycle: LifeCycle,
-  configuration: RumConfiguration,
-  pipeline?: Pipeline<RumCoreEvents>
-) {
+export function startLongTaskCollection(lifeCycle: LifeCycle, configuration: RumConfiguration) {
   const entryType = supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME)
     ? RumPerformanceEntryType.LONG_ANIMATION_FRAME
     : RumPerformanceEntryType.LONG_TASK
@@ -38,22 +32,13 @@ export function startLongTaskCollection(
 
       const startClocks = relativeToClocks(entry.startTime)
       const rawRumEvent = processEntry(entry, startClocks)
-      const rawEvent = {
+
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent,
         startClocks,
         duration: entry.duration,
         domainContext: { performanceEntry: entry },
-      }
-
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
-      if (pipeline) {
-        pipeline.publish('observation', {
-          type: rawEvent.rawRumEvent.type,
-          startTime: rawEvent.startClocks.relative,
-          duration: rawEvent.duration,
-          data: { ...rawEvent.rawRumEvent, ...rawEvent.domainContext } as unknown as Record<string, unknown>,
-        })
-      }
+      })
     }
   })
 

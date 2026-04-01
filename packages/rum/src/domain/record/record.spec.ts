@@ -3,6 +3,7 @@ import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-co
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { createNewEvent, collectAsyncCalls, registerCleanupTask } from '@datadog/browser-core/test'
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { findElement, findFullSnapshotInFormat, findNode, recordsPerFullSnapshot } from '../../../test'
 =======
 import {
@@ -15,6 +16,9 @@ import {
 } from '../../../test'
 import { createMockRumPipeline } from '../../../../rum-core/test'
 >>>>>>> 0fcc5ef31 (♻️ Migrate LifeCycle coordination event subscribers to pipeline signals)
+=======
+import { findElement, findFullSnapshot, findNode, recordsPerFullSnapshot } from '../../../test'
+>>>>>>> e3f6fb1f0 (🔥 Remove pipeline migration from existing packages, scope v8 changes to core-next only)
 import type {
   BrowserIncrementalSnapshotRecord,
   BrowserMutationData,
@@ -33,7 +37,6 @@ import type { EmitRecordCallback } from './record.types'
 describe('record', () => {
   let recordApi: RecordAPI
   let lifeCycle: LifeCycle
-  let pipeline: ReturnType<typeof createMockRumPipeline>
   let emitSpy: jasmine.Spy<EmitRecordCallback>
   const FAKE_VIEW_ID = '123'
 
@@ -447,8 +450,6 @@ describe('record', () => {
 
   function startRecording() {
     lifeCycle = new LifeCycle()
-    pipeline = createMockRumPipeline()
-    bridgeLifeCycleToPipeline(lifeCycle, pipeline)
     recordApi = record({
       emitRecord: emitSpy,
       emitStats: noop,
@@ -457,7 +458,6 @@ describe('record', () => {
       viewHistory: {
         findView: () => ({ id: FAKE_VIEW_ID, startClocks: {} }),
       } as any,
-      pipeline,
     })
   }
 

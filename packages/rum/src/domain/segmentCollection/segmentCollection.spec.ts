@@ -4,10 +4,10 @@ import type { ViewHistory, ViewHistoryEntry, RumConfiguration } from '@datadog/b
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask, restorePageVisibility } from '@datadog/browser-core/test'
-import { createRumSessionManagerMock, createMockRumPipeline } from '../../../../rum-core/test'
+import { createRumSessionManagerMock } from '../../../../rum-core/test'
 import type { BrowserRecord, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
-import { MockWorker, readMetadataFromReplayPayload, bridgeLifeCycleToPipeline } from '../../../test'
+import { MockWorker, readMetadataFromReplayPayload } from '../../../test'
 import { createDeflateEncoder } from '../deflate'
 import {
   computeSegmentContext,
@@ -33,7 +33,6 @@ describe('startSegmentCollection', () => {
   let stopSegmentCollection: () => void
   let clock: Clock
   let lifeCycle: LifeCycle
-  let pipeline: ReturnType<typeof createMockRumPipeline>
   let worker: MockWorker
   let httpRequestSpy: {
     observable: Observable<HttpRequestEvent<ReplayPayload>>
@@ -63,8 +62,6 @@ describe('startSegmentCollection', () => {
   beforeEach(() => {
     configuration = {} as RumConfiguration
     lifeCycle = new LifeCycle()
-    pipeline = createMockRumPipeline()
-    bridgeLifeCycleToPipeline(lifeCycle, pipeline)
     worker = new MockWorker()
     httpRequestSpy = {
       observable: new Observable<HttpRequestEvent<ReplayPayload>>(),
@@ -76,8 +73,7 @@ describe('startSegmentCollection', () => {
       lifeCycle,
       () => context,
       httpRequestSpy,
-      createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY),
-      pipeline
+      createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
     ))
 
     registerCleanupTask(() => {

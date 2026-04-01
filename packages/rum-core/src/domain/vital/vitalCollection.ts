@@ -9,14 +9,12 @@ import {
   sanitize,
   toServerDuration,
 } from '@datadog/browser-core'
-import type { Pipeline } from '@datadog/browser-core-next'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RawRumVitalEvent } from '../../rawRumEvent.types'
 import { RumEventType, VitalType } from '../../rawRumEvent.types'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
-import type { RumCoreEvents } from '../pipeline/rumPipelineEvents'
 
 /**
  * Vital options
@@ -104,8 +102,7 @@ export function createCustomVitalsState() {
 export function startVitalCollection(
   lifeCycle: LifeCycle,
   pageStateHistory: PageStateHistory,
-  customVitalsState: CustomVitalsState,
-  pipeline?: Pipeline<RumCoreEvents>
+  customVitalsState: CustomVitalsState
 ) {
   function isValid(vital: DurationVital) {
     return !pageStateHistory.wasInPageStateDuringPeriod(PageState.FROZEN, vital.startClocks.relative, vital.duration)
@@ -113,16 +110,7 @@ export function startVitalCollection(
 
   function addDurationVital(vital: DurationVital) {
     if (isValid(vital)) {
-      const rawEvent = processVital(vital)
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
-      if (pipeline) {
-        pipeline.publish('observation', {
-          type: rawEvent.rawRumEvent.type,
-          startTime: rawEvent.startClocks.relative,
-          duration: rawEvent.duration,
-          data: { ...rawEvent.rawRumEvent, ...(rawEvent.domainContext ?? {}) } as unknown as Record<string, unknown>,
-        })
-      }
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital))
     }
   }
 
@@ -149,16 +137,7 @@ export function startVitalCollection(
       description,
       handlingStack,
     }
-    const rawEvent = processVital(vital)
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
-    if (pipeline) {
-      pipeline.publish('observation', {
-        type: rawEvent.rawRumEvent.type,
-        startTime: rawEvent.startClocks.relative,
-        duration: rawEvent.duration,
-        data: { ...rawEvent.rawRumEvent, ...(rawEvent.domainContext ?? {}) } as unknown as Record<string, unknown>,
-      })
-    }
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital))
   }
 
   return {

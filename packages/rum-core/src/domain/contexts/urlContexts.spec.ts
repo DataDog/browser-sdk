@@ -7,8 +7,7 @@ import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { ViewCreatedEvent, ViewEndedEvent } from '../view/trackViews'
 import type { AssembleHookParams, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
-import type { Observation } from '../pipeline/rumPipelineEvents'
-import { startUrlContexts, urlContextsDecoratorFactory, type UrlContexts } from './urlContexts'
+import { startUrlContexts, type UrlContexts } from './urlContexts'
 
 describe('urlContexts', () => {
   const lifeCycle = new LifeCycle()
@@ -193,57 +192,6 @@ describe('urlContexts', () => {
     } as ViewEndedEvent)
 
     expect(urlContexts.findUrl()).toBeUndefined()
-  })
-
-  describe('urlContextsDecoratorFactory', () => {
-    it('should contribute url and referrer when url context is found', async () => {
-      const factory = urlContextsDecoratorFactory({
-        findUrlContext: () => ({ url: 'https://example.com/', referrer: 'https://referrer.com/' }),
-      })
-      const decorator = factory.create({})
-      const obs: Observation = { type: 'action', startTime: 0, data: {} }
-      const result = await decorator.decorate(obs, {})
-      expect(result.status).toBe('contributed')
-      if (result.status === 'contributed') {
-        expect((result.attributes as any).view.url).toBe('https://example.com/')
-        expect((result.attributes as any).view.referrer).toBe('https://referrer.com/')
-      }
-    })
-
-    it('should merge with existing view entry from accumulated', async () => {
-      const factory = urlContextsDecoratorFactory({
-        findUrlContext: () => ({ url: 'https://example.com/', referrer: 'https://referrer.com/' }),
-      })
-      const decorator = factory.create({})
-      const obs: Observation = { type: 'action', startTime: 0, data: {} }
-      const accumulated = { view: { id: 'view-1', name: 'Home' } } as any
-      const result = await decorator.decorate(obs, accumulated)
-      expect(result.status).toBe('contributed')
-      if (result.status === 'contributed') {
-        expect((result.attributes as any).view.id).toBe('view-1')
-        expect((result.attributes as any).view.name).toBe('Home')
-        expect((result.attributes as any).view.url).toBe('https://example.com/')
-        expect((result.attributes as any).view.referrer).toBe('https://referrer.com/')
-      }
-    })
-
-    it('should discard when no url context is found', async () => {
-      const factory = urlContextsDecoratorFactory({ findUrlContext: () => undefined })
-      const decorator = factory.create({})
-      const obs: Observation = { type: 'action', startTime: 0, data: {} }
-      const result = await decorator.decorate(obs, {})
-      expect(result.status).toBe('discarded')
-    })
-
-    it('should declare canDiscard: true', () => {
-      const factory = urlContextsDecoratorFactory({ findUrlContext: () => undefined })
-      expect(factory.capabilities.canDiscard).toBe(true)
-    })
-
-    it('should require view decorator to run before url', () => {
-      const factory = urlContextsDecoratorFactory({ findUrlContext: () => undefined })
-      expect(factory.requires).toContain('view')
-    })
   })
 
   describe('assemble hook', () => {

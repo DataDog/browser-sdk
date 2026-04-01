@@ -8,7 +8,6 @@ import {
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
 } from '@datadog/browser-core'
-import type { Pipeline } from '@datadog/browser-core-next'
 import { isNodeShadowHost } from '../../browser/htmlDomUtils'
 import type { FrustrationType } from '../../rawRumEvent.types'
 import { ActionType } from '../../rawRumEvent.types'
@@ -23,7 +22,6 @@ import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import { startEventTracker } from '../eventTracker'
 import type { StoppedEvent, DiscardedEvent, EventTracker } from '../eventTracker'
 import { getComposedPathSelector } from '../getComposedPathSelector'
-import type { RumCoreEvents } from '../pipeline/rumPipelineEvents'
 import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
@@ -64,21 +62,14 @@ export function trackClickActions(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
-  configuration: RumConfiguration,
-  pipeline?: Pipeline<RumCoreEvents>
+  configuration: RumConfiguration
 ) {
-  const actionTracker = startEventTracker<ClickActionBase>(lifeCycle, pipeline)
+  const actionTracker = startEventTracker<ClickActionBase>(lifeCycle)
   const stopObservable = new Observable<void>()
   let currentClickChain: ClickChain | undefined
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, stopClickChain)
-  if (pipeline) {
-    pipeline.subscribe('signal', (signal) => {
-      if (signal.type === 'pageMayExit') {
-        stopClickChain()
-      }
-    })
-  }
+  lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, stopClickChain)
 
   const { stop: stopActionEventsListener } = listenActionEvents<{
     clickActionBase: ClickActionBase
@@ -98,8 +89,7 @@ export function trackClickActions(
         clickActionBase,
         startEvent,
         getUserActivity,
-        hadActivityOnPointerDown,
-        pipeline
+        hadActivityOnPointerDown
       )
     },
   })
@@ -188,8 +178,7 @@ function startClickAction(
   clickActionBase: ClickActionBase,
   startEvent: MouseEventOnElement,
   getUserActivity: () => UserActivity,
-  hadActivityOnPointerDown: () => boolean,
-  pipeline?: Pipeline<RumCoreEvents>
+  hadActivityOnPointerDown: () => boolean
 ) {
   const click = newClick(lifeCycle, actionTracker, getUserActivity, clickActionBase, startEvent)
   appendClickToClickChain(click)
@@ -229,13 +218,9 @@ function startClickAction(
     click.stop(endClocks.timeStamp)
   })
 
-  const pageMayExitSubscription = pipeline
-    ? pipeline.subscribe('signal', (signal) => {
-        if (signal.type === 'pageMayExit') {
-          click.stop(timeStampNow())
-        }
-      })
-    : { unsubscribe: () => {} }
+  const pageMayExitSubscription = lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, () => {
+    click.stop(timeStampNow())
+  })
 
   const stopSubscription = stopObservable.subscribe(() => {
     click.stop()

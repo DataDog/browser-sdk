@@ -1,8 +1,7 @@
-import { getViewportDimension } from '@datadog/browser-rum-core'
-import type { LifeCycle, RumCoreEvents } from '@datadog/browser-rum-core'
-import { ExperimentalFeature, isExperimentalFeatureEnabled, timeStampNow } from '@datadog/browser-core'
+import { LifeCycleEventType, getViewportDimension } from '@datadog/browser-rum-core'
+import type { LifeCycle } from '@datadog/browser-rum-core'
+import { timeStampNow } from '@datadog/browser-core'
 import type { TimeStamp } from '@datadog/browser-core'
-import type { Pipeline } from '@datadog/browser-core-next'
 import { RecordType } from '../../types'
 import {
   isFullSnapshotChangeRecordsEnabled,
@@ -29,29 +28,24 @@ export function startFullSnapshots(
   emitStats: EmitStatsCallback,
   flushMutations: () => void,
   scope: RecordingScope,
-  serialize: SerializeFullSnapshotCallback = defaultSerializeFullSnapshotCallback(),
-  pipeline?: Pipeline<RumCoreEvents>
+  serialize: SerializeFullSnapshotCallback = defaultSerializeFullSnapshotCallback()
 ) {
   takeFullSnapshot(timeStampNow(), SerializationKind.INITIAL_FULL_SNAPSHOT, emitRecord, emitStats, scope, serialize)
 
-  const subscription = pipeline
-    ? pipeline.subscribe('signal', (signal) => {
-        if (signal.type === 'viewCreated') {
-          flushMutations()
-          takeFullSnapshot(
-            signal.startClocks.timeStamp,
-            SerializationKind.SUBSEQUENT_FULL_SNAPSHOT,
-            emitRecord,
-            emitStats,
-            scope,
-            serialize
-          )
-        }
-      })
-    : { unsubscribe: () => {} }
+  const { unsubscribe } = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
+    flushMutations()
+    takeFullSnapshot(
+      view.startClocks.timeStamp,
+      SerializationKind.SUBSEQUENT_FULL_SNAPSHOT,
+      emitRecord,
+      emitStats,
+      scope,
+      serialize
+    )
+  })
 
   return {
-    stop: subscription.unsubscribe,
+    stop: unsubscribe,
   }
 }
 

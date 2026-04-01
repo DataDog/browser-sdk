@@ -12,12 +12,11 @@ import {
   sendToExtension,
   createPageMayExitObservable,
   canUseEventBridge,
-  currentDrift,
-  timeStampNow,
   addTelemetryDebug,
   startAccountContext,
   startGlobalContext,
   startUserContext,
+<<<<<<< HEAD
 <<<<<<< HEAD
   startTabContext,
 =======
@@ -25,6 +24,8 @@ import {
   userContextDecoratorFactory,
   accountContextDecoratorFactory,
 >>>>>>> 120667891 (✨ Wire RUM pipeline with all decorator factories, seal in startRumEventCollection)
+=======
+>>>>>>> e3f6fb1f0 (🔥 Remove pipeline migration from existing packages, scope v8 changes to core-next only)
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { createWindowOpenObservable } from '../browser/windowOpenObservable'
@@ -32,39 +33,38 @@ import { startInternalContext } from '../domain/contexts/internalContext'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { startViewHistory } from '../domain/contexts/viewHistory'
 import { startRequestCollection } from '../domain/requestCollection'
-import { startActionCollection, actionContextDecoratorFactory } from '../domain/action/actionCollection'
+import { startActionCollection } from '../domain/action/actionCollection'
 import { startErrorCollection } from '../domain/error/errorCollection'
 import { startResourceCollection } from '../domain/resource/resourceCollection'
-import { startViewCollection, viewDecoratorFactory } from '../domain/view/viewCollection'
+import { startViewCollection } from '../domain/view/viewCollection'
 import type { RumSessionManager } from '../domain/rumSessionManager'
 import { startRumSessionManager, startRumSessionManagerStub } from '../domain/rumSessionManager'
 import { startRumBatch } from '../transport/startRumBatch'
 import { startRumEventBridge } from '../transport/startRumEventBridge'
-import { startUrlContexts, urlContextsDecoratorFactory } from '../domain/contexts/urlContexts'
+import { startUrlContexts } from '../domain/contexts/urlContexts'
 import { createLocationChangeObservable } from '../browser/locationChangeObservable'
 import type { RumConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
-import { startFeatureFlagContexts, featureFlagDecoratorFactory } from '../domain/contexts/featureFlagContext'
+import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import { startCustomerDataTelemetry } from '../domain/startCustomerDataTelemetry'
-import { startPageStateHistory, pageStateDecoratorFactory } from '../domain/contexts/pageStateHistory'
-import { startDisplayContext, displayDecoratorFactory } from '../domain/contexts/displayContext'
+import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
+import { startDisplayContext } from '../domain/contexts/displayContext'
 import type { CustomVitalsState } from '../domain/vital/vitalCollection'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
-import { startCiVisibilityContext, ciVisibilityDecoratorFactory } from '../domain/contexts/ciVisibilityContext'
+import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext'
 import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
-import { startSyntheticsContext, syntheticsDecoratorFactory } from '../domain/contexts/syntheticsContext'
+import { startSyntheticsContext } from '../domain/contexts/syntheticsContext'
 import { startRumAssembly } from '../domain/assembly'
-import { startSessionContext, sessionDecoratorFactory } from '../domain/contexts/sessionContext'
-import { startConnectivityContext, connectivityDecoratorFactory } from '../domain/contexts/connectivityContext'
+import { startSessionContext } from '../domain/contexts/sessionContext'
+import { startConnectivityContext } from '../domain/contexts/connectivityContext'
 import type { SdkName } from '../domain/contexts/defaultContext'
-import { startDefaultContext, defaultContextDecoratorFactory } from '../domain/contexts/defaultContext'
-import { startTrackingConsentContext, trackingConsentDecoratorFactory } from '../domain/contexts/trackingConsentContext'
+import { startDefaultContext } from '../domain/contexts/defaultContext'
+import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { Hooks } from '../domain/hooks'
 import { startEventCollection } from '../domain/event/eventCollection'
 import { startInitialViewMetricsTelemetry } from '../domain/view/viewMetrics/startInitialViewMetricsTelemetry'
-import { startSourceCodeContext, sourceCodeDecoratorFactory } from '../domain/contexts/sourceCodeContext'
+import { startSourceCodeContext } from '../domain/contexts/sourceCodeContext'
 import type { RecorderApi, ProfilerApi } from './rumPublicApi'
-import { createRumPipeline } from '../domain/pipeline/createRumPipeline'
 
 export type StartRum = typeof startRum
 export type StartRumResult = ReturnType<StartRum>
@@ -97,18 +97,10 @@ export function startRum(
     addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
   }
 
-  // Create the RUM pipeline early so it can be used by session manager and page exit signal publishing.
-  const rumPipeline = createRumPipeline()
-
   const pageMayExitObservable = createPageMayExitObservable(configuration)
-  const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => {
-    lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, event)
-    rumPipeline.publish('signal', { type: 'pageMayExit', reason: event.reason })
-  })
-  cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
 
   const session = !canUseEventBridge()
-    ? startRumSessionManager(configuration, lifeCycle, trackingConsentState, rumPipeline)
+    ? startRumSessionManager(configuration, lifeCycle, trackingConsentState)
     : startRumSessionManagerStub()
 
   if (!canUseEventBridge()) {
@@ -118,8 +110,7 @@ export function startRum(
       reportError,
       pageMayExitObservable,
       session.expireObservable,
-      createEncoder,
-      rumPipeline
+      createEncoder
     )
     const preparePageExitSubscription = batch.flushController.preparePageExitFlushObservable.subscribe((reason) => {
       lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, { reason })
@@ -150,9 +141,7 @@ export function startRum(
     customVitalsState,
     bufferedDataObservable,
     sdkName,
-    reportError,
-    trackingConsentState,
-    rumPipeline
+    reportError
   )
   cleanupTasks.push(stopRumEventCollection)
   bufferedDataObservable.unbuffer()
@@ -183,9 +172,7 @@ export function startRumEventCollection(
   customVitalsState: CustomVitalsState,
   bufferedDataObservable: Observable<BufferedData>,
   sdkName: SdkName | undefined,
-  reportError: (error: RawError) => void,
-  trackingConsentState: TrackingConsentState,
-  pipeline?: ReturnType<typeof createRumPipeline>
+  reportError: (error: RawError) => void
 ) {
   const cleanupTasks: Array<() => void> = []
 
@@ -194,14 +181,10 @@ export function startRumEventCollection(
   const { observable: windowOpenObservable, stop: stopWindowOpen } = createWindowOpenObservable()
   cleanupTasks.push(stopWindowOpen)
 
-  // Use the provided pipeline or create one (runs in parallel with the existing hooks-based assembly).
-  // The profiling decorator is registered by the rum package's startRum, not here.
-  const resolvedPipeline = pipeline ?? createRumPipeline()
-
   startDefaultContext(hooks, configuration, sdkName)
   const pageStateHistory = startPageStateHistory(hooks, configuration)
   cleanupTasks.push(() => pageStateHistory.stop())
-  const viewHistory = startViewHistory(lifeCycle, resolvedPipeline)
+  const viewHistory = startViewHistory(lifeCycle)
   cleanupTasks.push(() => viewHistory.stop())
   const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable)
   cleanupTasks.push(() => urlContexts.stop())
@@ -213,6 +196,15 @@ export function startRumEventCollection(
   const userContext = startUserContext(hooks, configuration, session, 'rum')
   const accountContext = startAccountContext(hooks, configuration, 'rum')
 
+  const actionCollection = startActionCollection(
+    lifeCycle,
+    hooks,
+    domMutationObservable,
+    windowOpenObservable,
+    configuration
+  )
+  cleanupTasks.push(actionCollection.stop)
+
   const eventCollection = startEventCollection(lifeCycle)
 
   const displayContext = startDisplayContext(hooks, configuration)
@@ -222,90 +214,6 @@ export function startRumEventCollection(
   startSyntheticsContext(hooks)
 
   startRumAssembly(configuration, lifeCycle, hooks, reportError)
-
-  const actionCollection = startActionCollection(
-    lifeCycle,
-    hooks,
-    domMutationObservable,
-    windowOpenObservable,
-    configuration,
-    resolvedPipeline
-  )
-  cleanupTasks.push(actionCollection.stop)
-
-  resolvedPipeline.decorate(
-    'observation',
-    trackingConsentDecoratorFactory({ hasConsent: () => trackingConsentState.isGranted() })
-  )
-  resolvedPipeline.decorate(
-    'observation',
-    sessionDecoratorFactory({ getSession: () => session.findTrackedSession() ?? null })
-  )
-  resolvedPipeline.decorate(
-    'observation',
-    defaultContextDecoratorFactory({
-      configuration,
-      getCurrentDrift: currentDrift,
-      getTimeStampNow: timeStampNow,
-      canUseEventBridge,
-      sdkName,
-    })
-  )
-  resolvedPipeline.decorate('observation', viewDecoratorFactory({ findView: (t) => viewHistory.findView(t) }))
-  resolvedPipeline.decorate(
-    'observation',
-    urlContextsDecoratorFactory({ findUrlContext: (t) => urlContexts.findUrl(t) })
-  )
-  resolvedPipeline.decorate(
-    'observation',
-    pageStateDecoratorFactory({
-      findAll: (t, d) => pageStateHistory.findAll(t, d),
-      wasInPageStateDuringPeriod: pageStateHistory.wasInPageStateDuringPeriod,
-    })
-  )
-  resolvedPipeline.decorate(
-    'observation',
-    featureFlagDecoratorFactory({
-      findFeatureFlags: (t) => featureFlagContexts.findFeatureFlags(t),
-      trackForEventType: (type) =>
-        (configuration.trackFeatureFlagsForEvents as string[]).concat(['view', 'error']).includes(type),
-    })
-  )
-  resolvedPipeline.decorate('observation', connectivityDecoratorFactory())
-  resolvedPipeline.decorate('observation', displayDecoratorFactory({ getViewport: () => displayContext.getViewport() }))
-  resolvedPipeline.decorate('observation', syntheticsDecoratorFactory())
-  resolvedPipeline.decorate(
-    'observation',
-    ciVisibilityDecoratorFactory({ getTestExecutionId: () => ciVisibilityContext.getTestExecutionId() })
-  )
-  resolvedPipeline.decorate(
-    'observation',
-    globalContextDecoratorFactory({ getContext: () => globalContext.getContext(), useContextNamespace: true })
-  )
-  resolvedPipeline.decorate(
-    'observation',
-    userContextDecoratorFactory({
-      getUser: () => userContext.getContext() as { id?: string; email?: string; name?: string; [key: string]: unknown },
-      getAnonymousId: () => session.findTrackedSession()?.anonymousId,
-      trackAnonymousUser: configuration.trackAnonymousUser ?? false,
-    })
-  )
-  resolvedPipeline.decorate(
-    'observation',
-    accountContextDecoratorFactory({
-      getAccount: () =>
-        accountContext.getContext() as { id: string; name?: string; [key: string]: unknown },
-    })
-  )
-  resolvedPipeline.decorate(
-    'observation',
-    actionContextDecoratorFactory({ findActionId: actionCollection.actionContexts.findActionId })
-  )
-  // TODO: sourceCodeDecoratorFactory needs access to event data (handlingStack, error stack) for
-  // accurate URL extraction — using a placeholder until Task 9 wires this properly.
-  resolvedPipeline.decorate('observation', sourceCodeDecoratorFactory({ findContext: () => undefined }))
-
-  resolvedPipeline.seal()
 
   const {
     addTiming,
@@ -325,7 +233,6 @@ export function startRumEventCollection(
     locationChangeObservable,
     recorderApi,
     viewHistory,
-    resolvedPipeline,
     initialViewOptions
   )
 
@@ -333,17 +240,17 @@ export function startRumEventCollection(
 
   cleanupTasks.push(stopViewCollection)
 
-  const resourceCollection = startResourceCollection(lifeCycle, configuration, pageStateHistory, resolvedPipeline)
+  const resourceCollection = startResourceCollection(lifeCycle, configuration, pageStateHistory)
   cleanupTasks.push(resourceCollection.stop)
 
-  const { stop: stopLongTaskCollection } = startLongTaskCollection(lifeCycle, configuration, resolvedPipeline)
+  const { stop: stopLongTaskCollection } = startLongTaskCollection(lifeCycle, configuration)
   cleanupTasks.push(stopLongTaskCollection)
 
-  const { addError } = startErrorCollection(lifeCycle, configuration, bufferedDataObservable, resolvedPipeline)
+  const { addError } = startErrorCollection(lifeCycle, configuration, bufferedDataObservable)
 
   startRequestCollection(lifeCycle, configuration, session, userContext, accountContext)
 
-  const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory, customVitalsState, resolvedPipeline)
+  const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory, customVitalsState)
 
   const internalContext = startInternalContext(
     configuration.applicationId,
@@ -378,7 +285,6 @@ export function startRumEventCollection(
     globalContext,
     userContext,
     accountContext,
-    pipeline: resolvedPipeline,
     stop: () => cleanupTasks.forEach((task) => task()),
   }
 }

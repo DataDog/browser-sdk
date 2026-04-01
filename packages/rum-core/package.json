@@ -17,7 +17,11 @@
     "prepack": "yarn build"
   },
   "dependencies": {
+<<<<<<< HEAD
     "@datadog/browser-core": "6.33.0"
+=======
+    "@datadog/browser-core": "6.32.0"
+>>>>>>> e3f6fb1f0 (🔥 Remove pipeline migration from existing packages, scope v8 changes to core-next only)
   },
   "devDependencies": {
     "ajv": "8.18.0"

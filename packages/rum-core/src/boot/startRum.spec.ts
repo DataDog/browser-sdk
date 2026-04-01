@@ -49,7 +49,7 @@ function startRumStub(
 ) {
   const hooks = createHooks()
 
-  const { stop: rumEventCollectionStop, pipeline } = startRumEventCollection(
+  const { stop: rumEventCollectionStop } = startRumEventCollection(
     lifeCycle,
     hooks,
     configuration,
@@ -59,12 +59,10 @@ function startRumStub(
     createCustomVitalsState(),
     new Observable(),
     undefined,
-    reportError,
-    createTrackingConsentState(TrackingConsent.GRANTED)
+    reportError
   )
 
   return {
-    pipeline,
     stop: () => {
       rumEventCollectionStop()
     },
@@ -75,31 +73,27 @@ describe('rum session', () => {
   let serverRumEvents: RumEvent[]
   let lifeCycle: LifeCycle
   let sessionManager: RumSessionManagerMock
-  let rumPipeline: ReturnType<typeof startRumStub>['pipeline']
 
   beforeEach(() => {
     lifeCycle = new LifeCycle()
     sessionManager = createRumSessionManagerMock().setId('42')
 
     serverRumEvents = collectServerEvents(lifeCycle)
-    const { stop, pipeline } = startRumStub(lifeCycle, mockRumConfiguration(), sessionManager, noop)
-    rumPipeline = pipeline
+    const { stop } = startRumStub(lifeCycle, mockRumConfiguration(), sessionManager, noop)
 
     registerCleanupTask(stop)
   })
 
-  it('when the session is renewed, a new view event should be sent', async () => {
+  it('when the session is renewed, a new view event should be sent', () => {
     expect(serverRumEvents.length).toEqual(1)
     expect(serverRumEvents[0].type).toEqual('view')
     expect(serverRumEvents[0].session.id).toEqual('42')
 
-    rumPipeline.publish('signal', { type: 'sessionExpired' })
-    await new Promise<void>((resolve) => setTimeout(resolve, 0))
+    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
     expect(serverRumEvents.length).toEqual(2)
 
     sessionManager.setId('43')
-    rumPipeline.publish('signal', { type: 'sessionRenewed', sessionId: '43' })
-    await new Promise<void>((resolve) => setTimeout(resolve, 0))
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
     expect(serverRumEvents.length).toEqual(3)
 
@@ -253,56 +247,5 @@ describe('view events', () => {
       (serverRumEvent): serverRumEvent is RumViewEvent => serverRumEvent.type === RumEventType.VIEW
     )!
     expect(lastRumViewEvent._dd.sdk_name).toBe('rum')
-  })
-})
-
-describe('pipeline', () => {
-  let lifeCycle: LifeCycle
-  let sessionManager: RumSessionManagerMock
-
-  beforeEach(() => {
-    lifeCycle = new LifeCycle()
-    sessionManager = createRumSessionManagerMock().setId('42')
-  })
-
-  it('should seal the pipeline during startRumEventCollection', () => {
-    const hooks = createHooks()
-    const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
-
-    const result = startRumEventCollection(
-      lifeCycle,
-      hooks,
-      mockRumConfiguration(),
-      sessionManager,
-      noopRecorderApi,
-      undefined,
-      createCustomVitalsState(),
-      new Observable(),
-      undefined,
-      noop,
-      trackingConsentState
-    )
-
-    registerCleanupTask(result.stop)
-
-    // The pipeline should be sealed: publishing an event should not throw
-    expect(() => {
-      result.pipeline.publish('observation', {
-        type: 'view',
-        startTime: 0,
-        data: {},
-      })
-    }).not.toThrow()
-
-    // Trying to add a decorator after sealing should throw
-    expect(() => {
-      result.pipeline.decorate('observation', {
-        name: 'test',
-        provides: [],
-        requires: [],
-        capabilities: { canDiscard: false },
-        create: () => ({ decorate: () => Promise.resolve({ status: 'skipped' as const }) }),
-      })
-    }).toThrow()
   })
 })

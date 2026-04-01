@@ -26,7 +26,6 @@
     "@datadog/browser-rum-core": "6.33.0"
 =======
     "@datadog/browser-core": "6.32.0",
-    "@datadog/browser-core-next": "workspace:*",
     "@datadog/browser-rum-core": "6.32.0"
 >>>>>>> 57b943796 (✨ Add profilingDecoratorFactory)
   },

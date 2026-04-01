@@ -2,13 +2,7 @@ import { DISCARDED, HookNames, Observable } from '@datadog/browser-core'
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RecorderApi } from '../../boot/rumPublicApi'
-import {
-  collectAndValidateRawRumEvents,
-  createMockRumPipeline,
-  mockRumConfiguration,
-  mockViewHistory,
-  noopRecorderApi,
-} from '../../../test'
+import { collectAndValidateRawRumEvents, mockRumConfiguration, mockViewHistory, noopRecorderApi } from '../../../test'
 import type { RawRumEvent, RawRumViewEvent } from '../../rawRumEvent.types'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
@@ -19,9 +13,7 @@ import type { ViewHistoryEntry } from '../contexts/viewHistory'
 import type { AssembleHookParams, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
-import { createRumPipeline } from '../pipeline/createRumPipeline'
-import type { Observation, RumSignal } from '../pipeline/rumPipelineEvents'
-import { startViewCollection, viewDecoratorFactory } from './viewCollection'
+import { startViewCollection } from './viewCollection'
 import type { ViewEvent } from './trackViews'
 
 const VIEW: ViewEvent = {
@@ -101,8 +93,7 @@ describe('viewCollection', () => {
         ...noopRecorderApi,
         getReplayStats: getReplayStatsSpy,
       },
-      viewHistory,
-      createMockRumPipeline()
+      viewHistory
     )
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
@@ -313,121 +304,5 @@ describe('viewCollection', () => {
 
       expect(telemetryEventAttributes.view?.id).toBeUndefined()
     })
-  })
-
-  describe('pipeline observation', () => {
-    it('should publish an observation on the pipeline when a view update is collected', async () => {
-      const localLifeCycle = new LifeCycle()
-      const localHooks = createHooks()
-      const pipeline = createRumPipeline()
-      const observations: Observation[] = []
-      pipeline.subscribe('observation', (obs) => observations.push(obs))
-      pipeline.seal()
-
-      const viewHistory = mockViewHistory()
-      const collectionResult = startViewCollection(
-        localLifeCycle,
-        localHooks,
-        mockRumConfiguration(),
-        new Observable<RumMutationRecord[]>(),
-        new Observable<void>(),
-        new Observable<LocationChange>(),
-        { ...noopRecorderApi, getReplayStats: jasmine.createSpy() },
-        viewHistory,
-        pipeline
-      )
-      registerCleanupTask(() => {
-        collectionResult.stop()
-        viewHistory.stop()
-      })
-
-      // Wait for initial auto-view events to drain
-      await new Promise<void>((resolve) => setTimeout(resolve, 0))
-      observations.length = 0
-
-      localLifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
-
-      // Pipeline processes events asynchronously
-      await new Promise<void>((resolve) => setTimeout(resolve, 0))
-
-      expect(observations.length).toBe(1)
-      expect(observations[0].type).toBe(RumEventType.VIEW)
-      expect(observations[0].startTime).toBe(1234 as RelativeTime)
-    })
-
-    it('should publish a viewCreated signal on the pipeline when a view is created', async () => {
-      const localLifeCycle = new LifeCycle()
-      const localHooks = createHooks()
-      const pipeline = createRumPipeline()
-      const signals: RumSignal[] = []
-      pipeline.subscribe('signal', (sig) => signals.push(sig))
-      pipeline.seal()
-
-      const viewHistory = mockViewHistory()
-      const collectionResult = startViewCollection(
-        localLifeCycle,
-        localHooks,
-        mockRumConfiguration(),
-        new Observable<RumMutationRecord[]>(),
-        new Observable<void>(),
-        new Observable<LocationChange>(),
-        { ...noopRecorderApi, getReplayStats: jasmine.createSpy() },
-        viewHistory,
-        pipeline
-      )
-      registerCleanupTask(() => {
-        collectionResult.stop()
-        viewHistory.stop()
-      })
-
-      // Wait for initial auto-view signal to be emitted by trackViews
-      await new Promise<void>((resolve) => setTimeout(resolve, 0))
-      signals.length = 0
-
-      // Start a new view via the view tracker to trigger a viewCreated signal from trackViews
-      collectionResult.startView({ name: 'TestView' })
-
-      // Pipeline processes events asynchronously
-      await new Promise<void>((resolve) => setTimeout(resolve, 0))
-
-      expect(signals.length).toBe(1)
-      expect(signals[0].type).toBe('viewCreated')
-      if (signals[0].type === 'viewCreated') {
-        expect(signals[0].name).toBe('TestView')
-      }
-    })
-  })
-})
-
-describe('viewDecoratorFactory', () => {
-  const fakeView: ViewHistoryEntry = {
-    id: 'view-abc',
-    name: 'HomePage',
-    startClocks: { relative: 0 as RelativeTime, timeStamp: 0 as TimeStamp },
-  }
-
-  it('should contribute view attributes when view is found', async () => {
-    const factory = viewDecoratorFactory({ findView: () => fakeView })
-    const decorator = factory.create({})
-    const obs: Observation = { type: 'action', startTime: 0, data: {} }
-    const result = await decorator.decorate(obs, {})
-    expect(result.status).toBe('contributed')
-    if (result.status === 'contributed') {
-      expect((result.attributes as any).view.id).toBe('view-abc')
-      expect((result.attributes as any).view.name).toBe('HomePage')
-    }
-  })
-
-  it('should discard when no view is found', async () => {
-    const factory = viewDecoratorFactory({ findView: () => undefined })
-    const decorator = factory.create({})
-    const obs: Observation = { type: 'action', startTime: 0, data: {} }
-    const result = await decorator.decorate(obs, {})
-    expect(result.status).toBe('discarded')
-  })
-
-  it('should declare canDiscard: true', () => {
-    const factory = viewDecoratorFactory({ findView: () => undefined })
-    expect(factory.capabilities.canDiscard).toBe(true)
   })
 })

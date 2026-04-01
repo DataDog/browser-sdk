@@ -4,8 +4,7 @@ import type { TimeStamp } from '@datadog/browser-core'
 import { addExperimentalFeatures, ExperimentalFeature, noop } from '@datadog/browser-core'
 import type { BrowserRecord } from '../../types'
 import { RecordType } from '../../types'
-import { appendElement, createMockRumPipeline } from '../../../../rum-core/test'
-import { bridgeLifeCycleToPipeline } from '../../../test'
+import { appendElement } from '../../../../rum-core/test'
 import { startFullSnapshots } from './startFullSnapshots'
 import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
 import { createRecordingScopeForTesting } from './test/recordingScope.specHelper'
@@ -13,21 +12,18 @@ import { createRecordingScopeForTesting } from './test/recordingScope.specHelper
 const describeStartFullSnapshotsWithExpectedSnapshot = (fullSnapshotRecord: jasmine.Expected<BrowserRecord>) => {
   const viewStartClock = { relative: 1, timeStamp: 1 as TimeStamp }
   let lifeCycle: LifeCycle
-  let pipeline: ReturnType<typeof createMockRumPipeline>
   let emitRecordCallback: jasmine.Spy<EmitRecordCallback>
   let emitStatsCallback: jasmine.Spy<EmitStatsCallback>
 
   beforeEach(() => {
     lifeCycle = new LifeCycle()
-    pipeline = createMockRumPipeline()
-    bridgeLifeCycleToPipeline(lifeCycle, pipeline)
     emitRecordCallback = jasmine.createSpy()
     emitStatsCallback = jasmine.createSpy()
 
     appendElement('<style>body { width: 100%; }</style>', document.head)
 
     const scope = createRecordingScopeForTesting()
-    startFullSnapshots(lifeCycle, emitRecordCallback, emitStatsCallback, noop, scope, undefined, pipeline)
+    startFullSnapshots(lifeCycle, emitRecordCallback, emitStatsCallback, noop, scope)
   })
 
   it('takes a full snapshot when startFullSnapshots is called', () => {

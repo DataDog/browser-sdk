@@ -15,9 +15,7 @@ import {
   display,
   addTelemetryDebug,
 } from '@datadog/browser-core'
-import type { Pipeline } from '@datadog/browser-core-next'
 import type { RumConfiguration } from '../configuration'
-import type { RumCoreEvents } from '../pipeline/rumPipelineEvents'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType, createPerformanceObservable } from '../../browser/performanceObservable'
 import type {
@@ -56,8 +54,7 @@ import { trackManualResources } from './trackManualResources'
 export function startResourceCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
-  pageStateHistory: PageStateHistory,
-  pipeline: Pipeline<RumCoreEvents>
+  pageStateHistory: PageStateHistory
 ) {
   const taskQueue = mockable(createTaskQueue)()
   let requestRegistry: RequestRegistry | undefined
@@ -91,12 +88,6 @@ export function startResourceCollection(
       const rawEvent = computeRawEvent()
       if (rawEvent) {
         lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
-        pipeline.publish('observation', {
-          type: rawEvent.rawRumEvent.type,
-          startTime: rawEvent.startClocks.relative,
-          duration: rawEvent.duration,
-          data: { ...rawEvent.rawRumEvent, ...rawEvent.domainContext } as unknown as Record<string, unknown>,
-        })
       }
     })
   }

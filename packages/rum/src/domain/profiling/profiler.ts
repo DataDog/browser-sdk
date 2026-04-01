@@ -20,10 +20,8 @@ import type {
   RumSessionManager,
   TransportPayload,
   ViewHistory,
-  RumCoreEvents,
 } from '@datadog/browser-rum-core'
-import { createFormDataTransport } from '@datadog/browser-rum-core'
-import type { Pipeline } from '@datadog/browser-core-next'
+import { createFormDataTransport, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { BrowserProfilerTrace, RumViewEntry } from '../../types'
 import type {
   RumProfilerInstance,
@@ -55,8 +53,7 @@ export function createRumProfiler(
   profilingContextManager: ProfilingContextManager,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
   viewHistory: ViewHistory,
-  profilerConfiguration: RUMProfilerConfiguration = DEFAULT_RUM_PROFILER_CONFIGURATION,
-  pipeline?: Pipeline<RumCoreEvents>
+  profilerConfiguration: RUMProfilerConfiguration = DEFAULT_RUM_PROFILER_CONFIGURATION
 ): RUMProfiler {
   const transport = createFormDataTransport(configuration, lifeCycle, createEncoder, DeflateEncoderStreamId.PROFILING)
 
@@ -70,19 +67,17 @@ export function createRumProfiler(
 
   let instance: RumProfilerInstance = { state: 'stopped', stateReason: 'initializing' }
 
-  if (pipeline) {
-    pipeline.subscribe('signal', (signal) => {
-      if (signal.type === 'sessionExpired') {
-        // Stops the profiler when session expires
-        stopProfiling('session-expired')
-      } else if (signal.type === 'sessionRenewed') {
-        // Start the profiler again when session is renewed
-        if (instance.state === 'stopped' && instance.stateReason === 'session-expired') {
-          start()
-        }
-      }
-    })
-  }
+  // Stops the profiler when session expires
+  lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
+    stopProfiling('session-expired')
+  })
+
+  // Start the profiler again when session is renewed
+  lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
+    if (instance.state === 'stopped' && instance.stateReason === 'session-expired') {
+      start()
+    }
+  })
 
   // Public API to start the profiler.
   function start(): void {
@@ -144,25 +139,21 @@ export function createRumProfiler(
     // Store clean-up tasks for this instance (tasks to be executed when the Profiler is stopped or paused.)
     const cleanupTasks = []
 
-    // Whenever the View is created, we add a views entry to the profiler instance.
-    const viewCreatedSubscription = pipeline
-      ? pipeline.subscribe('signal', (signal) => {
-          if (signal.type === 'viewCreated') {
-            const viewEntry = {
-              viewId: signal.viewId,
-              // Note: `viewName` is only filled when users use manual view creation via `startView` method.
-              viewName: getCustomOrDefaultViewName(signal.name, document.location.pathname),
-              startClocks: signal.startClocks,
-            }
+    // Whenever the View is updated, we add a views entry to the profiler instance.
+    const viewUpdatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
+      const viewEntry = {
+        viewId: view.id,
+        // Note: `viewName` is only filled when users use manual view creation via `startView` method.
+        viewName: getCustomOrDefaultViewName(view.name, document.location.pathname),
+        startClocks: view.startClocks,
+      }
 
-            collectViewEntry(viewEntry)
+      collectViewEntry(viewEntry)
 
-            // Update last view entry
-            lastViewEntry = viewEntry
-          }
-        })
-      : { unsubscribe: () => {} }
-    cleanupTasks.push(viewCreatedSubscription.unsubscribe)
+      // Update last view entry
+      lastViewEntry = viewEntry
+    })
+    cleanupTasks.push(viewUpdatedSubscription.unsubscribe)
 
     return {
       cleanupTasks,

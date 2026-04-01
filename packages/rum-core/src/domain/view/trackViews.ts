@@ -30,14 +30,12 @@ import {
 } from '@datadog/browser-core'
 import type { ViewCustomTimings } from '../../rawRumEvent.types'
 import { ViewLoadingType } from '../../rawRumEvent.types'
-import type { Pipeline } from '@datadog/browser-core-next'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { EventCounts } from '../trackEventCounts'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { RumConfiguration, RumInitConfiguration } from '../configuration'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
-import type { RumCoreEvents } from '../pipeline/rumPipelineEvents'
 import { trackViewEventCounts } from './trackViewEventCounts'
 import { trackInitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
 import type { InitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
@@ -115,7 +113,6 @@ export function trackViews(
   configuration: RumConfiguration,
   locationChangeObservable: Observable<LocationChange>,
   areViewsTrackedAutomatically: boolean,
-  pipeline: Pipeline<RumCoreEvents>,
   initialViewOptions?: ViewOptions
 ) {
   const activeViews: Set<ReturnType<typeof newView>> = new Set()
@@ -143,7 +140,6 @@ export function trackViews(
       windowOpenObservable,
       configuration,
       loadingType,
-      pipeline,
       startClocks,
       viewOptions
     )
@@ -155,18 +151,18 @@ export function trackViews(
   }
 
   function startViewLifeCycle() {
-    pipeline.subscribe('signal', (signal) => {
-      if (signal.type === 'sessionRenewed') {
-        // Renew view on session renewal
-        currentView = startNewView(ViewLoadingType.ROUTE_CHANGE, undefined, {
-          name: currentView.name,
-          service: currentView.service,
-          version: currentView.version,
-          context: currentView.contextManager.getContext(),
-        })
-      } else if (signal.type === 'sessionExpired') {
-        currentView.end({ sessionIsActive: false })
-      }
+    lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
+      // Renew view on session renewal
+      currentView = startNewView(ViewLoadingType.ROUTE_CHANGE, undefined, {
+        name: currentView.name,
+        service: currentView.service,
+        version: currentView.version,
+        context: currentView.contextManager.getContext(),
+      })
+    })
+
+    lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
+      currentView.end({ sessionIsActive: false })
     })
   }
 
@@ -218,7 +214,6 @@ function newView(
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
   loadingType: ViewLoadingType,
-  pipeline: Pipeline<RumCoreEvents>,
   startClocks: ClocksState = clocksNow(),
   viewOptions?: ViewOptions
 ) {
@@ -253,7 +248,6 @@ function newView(
   }
   lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, viewCreatedEvent)
   lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, viewCreatedEvent)
-  pipeline.publish('signal', { type: 'viewCreated', viewId: id, name, startClocks })
 
   // Update the view every time the measures are changing
   const { throttled, cancel: cancelScheduleViewUpdate } = throttle(triggerViewUpdate, THROTTLE_VIEW_UPDATE_PERIOD, {
@@ -292,7 +286,6 @@ function newView(
   // Session keep alive
   const keepAliveIntervalId = setInterval(triggerViewUpdate, SESSION_KEEP_ALIVE_INTERVAL)
 
-  // Subscribe to PAGE_MAY_EXIT via lifeCycle for synchronous view update (needed for correct ordering before batch flush)
   const pageMayExitSubscription = lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, (pageMayExitEvent) => {
     if (pageMayExitEvent.reason === PageExitReason.UNLOADING) {
       triggerViewUpdate()

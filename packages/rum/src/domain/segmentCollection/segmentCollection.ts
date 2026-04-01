@@ -1,8 +1,7 @@
 import type { DeflateEncoder, HttpRequest, TimeoutId } from '@datadog/browser-core'
 import { isPageExitReason, ONE_SECOND, clearTimeout, setTimeout } from '@datadog/browser-core'
-import type { LifeCycle, ViewHistory, RumSessionManager, RumConfiguration, RumCoreEvents } from '@datadog/browser-rum-core'
+import type { LifeCycle, ViewHistory, RumSessionManager, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
-import type { Pipeline } from '@datadog/browser-core-next'
 import type { BrowserRecord, CreationReason, SegmentContext } from '../../types'
 import type { SerializationStats } from '../record'
 import type { ReplayPayload } from './buildReplayPayload'
@@ -54,15 +53,13 @@ export function startSegmentCollection(
   sessionManager: RumSessionManager,
   viewHistory: ViewHistory,
   httpRequest: HttpRequest<ReplayPayload>,
-  encoder: DeflateEncoder,
-  pipeline?: Pipeline<RumCoreEvents>
+  encoder: DeflateEncoder
 ): SegmentCollector {
   return doStartSegmentCollection(
     lifeCycle,
     () => computeSegmentContext(configuration.applicationId, sessionManager, viewHistory),
     httpRequest,
-    encoder,
-    pipeline
+    encoder
   )
 }
 
@@ -89,26 +86,23 @@ export function doStartSegmentCollection(
   lifeCycle: LifeCycle,
   getSegmentContext: () => SegmentContext | undefined,
   httpRequest: HttpRequest<ReplayPayload>,
-  encoder: DeflateEncoder,
-  pipeline?: Pipeline<RumCoreEvents>
+  encoder: DeflateEncoder
 ): SegmentCollector {
   let state: SegmentCollectionState = {
     status: SegmentCollectionStatus.WaitingForInitialRecord,
     nextSegmentCreationReason: 'init',
   }
 
-  const signalSubscription = pipeline
-    ? pipeline.subscribe('signal', (signal) => {
-        if (signal.type === 'viewCreated') {
-          flushSegment('view_change')
-        } else if (signal.type === 'pageMayExit') {
-          // page_hide is a valid PageExitReason but not in the schema-generated FlushReason type
-          flushSegment(signal.reason as FlushReason)
-        }
-      })
-    : lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, (pageMayExitEvent) => {
-        flushSegment(pageMayExitEvent.reason as FlushReason)
-      })
+  const { unsubscribe: unsubscribeViewCreated } = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, () => {
+    flushSegment('view_change')
+  })
+
+  const { unsubscribe: unsubscribePageMayExit } = lifeCycle.subscribe(
+    LifeCycleEventType.PAGE_MAY_EXIT,
+    (pageMayExitEvent) => {
+      flushSegment(pageMayExitEvent.reason as FlushReason)
+    }
+  )
 
   function flushSegment(flushReason: FlushReason) {
     if (state.status === SegmentCollectionStatus.SegmentPending) {
@@ -172,9 +166,9 @@ export function doStartSegmentCollection(
 
     stop: () => {
       flushSegment('stop')
-      signalSubscription.unsubscribe()
+      unsubscribeViewCreated()
+      unsubscribePageMayExit()
     },
-
   }
 }
 

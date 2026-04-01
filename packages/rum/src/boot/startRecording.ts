@@ -1,8 +1,7 @@
 import type { RawError, HttpRequest, DeflateEncoder, Telemetry } from '@datadog/browser-core'
 import { createHttpRequest, addTelemetryDebug, canUseEventBridge, noop } from '@datadog/browser-core'
-import type { LifeCycle, ViewHistory, RumConfiguration, RumSessionManager, RumCoreEvents } from '@datadog/browser-rum-core'
+import type { LifeCycle, ViewHistory, RumConfiguration, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
-import type { Pipeline } from '@datadog/browser-core-next'
 
 import type { SerializationStats } from '../domain/record'
 import { record } from '../domain/record'
@@ -18,8 +17,7 @@ export function startRecording(
   viewHistory: ViewHistory,
   encoder: DeflateEncoder,
   telemetry: Telemetry,
-  httpRequest?: HttpRequest<ReplayPayload>,
-  pipeline?: Pipeline<RumCoreEvents>
+  httpRequest?: HttpRequest<ReplayPayload>
 ) {
   const cleanupTasks: Array<() => void> = []
 
@@ -42,8 +40,7 @@ export function startRecording(
       sessionManager,
       viewHistory,
       replayRequest,
-      encoder,
-      pipeline
+      encoder
     )
     addRecord = segmentCollection.addRecord
     addStats = segmentCollection.addStats
@@ -62,7 +59,6 @@ export function startRecording(
     configuration,
     lifeCycle,
     viewHistory,
-    pipeline,
   })
   cleanupTasks.push(stopRecording)
 

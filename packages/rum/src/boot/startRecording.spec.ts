@@ -13,9 +13,9 @@ import { LifeCycle, LifeCycleEventType, startViewHistory } from '@datadog/browse
 import { collectAsyncCalls, createNewEvent, mockEventBridge, registerCleanupTask } from '@datadog/browser-core/test'
 import type { ViewEndedEvent } from '../../../rum-core/src/domain/view/trackViews'
 import type { RumSessionManagerMock } from '../../../rum-core/test'
-import { appendElement, createRumSessionManagerMock, mockRumConfiguration, createMockRumPipeline } from '../../../rum-core/test'
+import { appendElement, createRumSessionManagerMock, mockRumConfiguration } from '../../../rum-core/test'
 
-import { recordsPerFullSnapshot, readReplayPayload, bridgeLifeCycleToPipeline } from '../../test'
+import { recordsPerFullSnapshot, readReplayPayload } from '../../test'
 import type { ReplayPayload } from '../domain/segmentCollection'
 import { setSegmentBytesLimit } from '../domain/segmentCollection'
 
@@ -27,7 +27,6 @@ const VIEW_TIMESTAMP = 1 as TimeStamp
 
 describe('startRecording', () => {
   const lifeCycle = new LifeCycle()
-  let pipeline: ReturnType<typeof createMockRumPipeline>
   let sessionManager: RumSessionManagerMock
   let viewId: string
   let textField: HTMLInputElement
@@ -45,11 +44,8 @@ describe('startRecording', () => {
       sendOnExit: requestSendSpy,
     }
 
-    pipeline = createMockRumPipeline()
-    bridgeLifeCycleToPipeline(lifeCycle, pipeline)
-
     const deflateEncoder = createDeflateEncoder(configuration, worker!, DeflateEncoderStreamId.REPLAY)
-    const viewHistory = startViewHistory(lifeCycle, pipeline)
+    const viewHistory = startViewHistory(lifeCycle)
     initialView(lifeCycle)
 
     const mockTelemetry = { enabled: true, metricsEnabled: true } as Telemetry
@@ -61,8 +57,7 @@ describe('startRecording', () => {
       viewHistory,
       deflateEncoder,
       mockTelemetry,
-      httpRequest,
-      pipeline
+      httpRequest
     )
     stopRecording = recording ? recording.stop : noop
 

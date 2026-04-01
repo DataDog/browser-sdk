@@ -1,6 +1,5 @@
 import type { Duration, Observable, RelativeTime } from '@datadog/browser-core'
 import { noop, toServerDuration, SKIPPED, HookNames, addDuration } from '@datadog/browser-core'
-import type { DecoratorFactory, Pipeline } from '@datadog/browser-core-next'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RawRumActionEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -9,7 +8,6 @@ import { LifeCycleEventType } from '../lifeCycle'
 import type { RumConfiguration } from '../configuration'
 import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
-import type { Observation, RumCoreEvents } from '../pipeline/rumPipelineEvents'
 import { trackClickActions } from './trackClickActions'
 import type { ClickAction } from './trackClickActions'
 import { trackManualActions } from './trackManualActions'
@@ -28,22 +26,12 @@ export function startActionCollection(
   hooks: Hooks,
   domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
-  configuration: RumConfiguration,
-  pipeline?: Pipeline<RumCoreEvents>
+  configuration: RumConfiguration
 ) {
   const { unsubscribe: unsubscribeAutoAction } = lifeCycle.subscribe(
     LifeCycleEventType.AUTO_ACTION_COMPLETED,
     (action) => {
-      const rawEvent = processAction(action)
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
-      if (pipeline) {
-        pipeline.publish('observation', {
-          type: rawEvent.rawRumEvent.type,
-          startTime: rawEvent.startClocks.relative,
-          duration: rawEvent.duration,
-          data: { ...rawEvent.rawRumEvent, ...(rawEvent.domainContext ?? {}) } as unknown as Record<string, unknown>,
-        })
-      }
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
     }
   )
 
@@ -51,20 +39,11 @@ export function startActionCollection(
   let clickActions: ReturnType<typeof trackClickActions> | undefined
 
   if (configuration.trackUserInteractions) {
-    clickActions = trackClickActions(lifeCycle, domMutationObservable, windowOpenObservable, configuration, pipeline)
+    clickActions = trackClickActions(lifeCycle, domMutationObservable, windowOpenObservable, configuration)
   }
 
   const manualActions = trackManualActions(lifeCycle, (action) => {
-    const rawEvent = processAction(action)
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
-    if (pipeline) {
-      pipeline.publish('observation', {
-        type: rawEvent.rawRumEvent.type,
-        startTime: rawEvent.startClocks.relative,
-        duration: rawEvent.duration,
-        data: { ...rawEvent.rawRumEvent, ...(rawEvent.domainContext ?? {}) } as unknown as Record<string, unknown>,
-      })
-    }
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
   })
 
   const actionContexts: ActionContexts = {
@@ -171,39 +150,4 @@ function processAction(action: AutoAction | ManualAction): RawRumEventCollectedD
 
 function isAutoAction(action: AutoAction | ManualAction): action is AutoAction {
   return 'events' in action
-}
-
-export function actionContextDecoratorFactory(deps: {
-  findActionId: (startTime?: RelativeTime) => string[]
-}): DecoratorFactory<Observation, { action?: { id: string[] } }> {
-  return {
-    name: 'actionContext',
-    provides: [],
-    requires: [],
-    capabilities: { canDiscard: false },
-    create: () => ({
-      decorate: (event, _accumulated) => {
-        if (
-          event.type !== RumEventType.ERROR &&
-          event.type !== RumEventType.RESOURCE &&
-          event.type !== RumEventType.LONG_TASK
-        ) {
-          return Promise.resolve({ status: 'skipped' as const })
-        }
-
-        const correctedStartTime =
-          event.type === RumEventType.LONG_TASK
-            ? addDuration(event.startTime as RelativeTime, LONG_TASK_START_TIME_CORRECTION)
-            : (event.startTime as RelativeTime)
-
-        const actionIds = deps.findActionId(correctedStartTime)
-
-        if (!actionIds || !actionIds.length) {
-          return Promise.resolve({ status: 'skipped' as const })
-        }
-
-        return Promise.resolve({ status: 'contributed' as const, attributes: { action: { id: actionIds } } })
-      },
-    }),
-  }
 }

@@ -2,10 +2,10 @@ import type { RelativeTime } from '@datadog/browser-core'
 import { clocksNow, DISCARDED, HookNames } from '@datadog/browser-core'
 import type { RumSessionManagerMock } from '../../../test'
 import { createRumSessionManagerMock, noopRecorderApi } from '../../../test'
-import { SessionReplayState, SessionType } from '../rumSessionManager'
+import { SessionType } from '../rumSessionManager'
 import type { AssembleHookParams, DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
-import { sessionDecoratorFactory, startSessionContext } from './sessionContext'
+import { startSessionContext } from './sessionContext'
 import type { ViewHistory } from './viewHistory'
 
 describe('session context', () => {
@@ -146,46 +146,6 @@ describe('session context', () => {
     } as AssembleHookParams)
 
     expect(defaultRumEventAttributes).toBe(DISCARDED)
-  })
-
-  describe('sessionDecoratorFactory', () => {
-    it('should contribute session attributes when session is active', async () => {
-      const factory = sessionDecoratorFactory({
-        getSession: () => ({ id: 'sess-123', sessionReplay: SessionReplayState.OFF }),
-      })
-      const decorator = factory.create({})
-      const obs = { type: 'error', startTime: 0, data: {} }
-      const result = await decorator.decorate(obs, {})
-      expect(result.status).toBe('contributed')
-      if (result.status === 'contributed') {
-        expect((result.attributes as any).session.id).toBe('sess-123')
-        expect((result.attributes as any).session.sessionReplay).toBe(SessionReplayState.OFF)
-      }
-    })
-
-    it('should discard when no active session', async () => {
-      const factory = sessionDecoratorFactory({ getSession: () => null })
-      const decorator = factory.create({})
-      const obs = { type: 'error', startTime: 0, data: {} }
-      const result = await decorator.decorate(obs, {})
-      expect(result.status).toBe('discarded')
-      expect((result as any).reason).toBe('no active session')
-    })
-
-    it('should declare name: "session"', () => {
-      const factory = sessionDecoratorFactory({ getSession: () => null })
-      expect(factory.name).toBe('session')
-    })
-
-    it('should declare provides: ["session"]', () => {
-      const factory = sessionDecoratorFactory({ getSession: () => null })
-      expect(factory.provides).toContain('session')
-    })
-
-    it('should declare canDiscard: true', () => {
-      const factory = sessionDecoratorFactory({ getSession: () => null })
-      expect(factory.capabilities.canDiscard).toBe(true)
-    })
   })
 
   describe('assemble telemetry hook', () => {

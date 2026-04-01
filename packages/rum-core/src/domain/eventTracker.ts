@@ -1,12 +1,10 @@
 import type { ClocksState, Duration, RelativeTime, ValueHistoryEntry } from '@datadog/browser-core'
 import { ONE_MINUTE, generateUUID, createValueHistory, elapsed, combine } from '@datadog/browser-core'
-import type { Pipeline } from '@datadog/browser-core-next'
 import type { RumActionEvent, RumErrorEvent, RumLongTaskEvent, RumResourceEvent } from '../rumEvent.types'
 import { LifeCycleEventType } from './lifeCycle'
 import type { LifeCycle } from './lifeCycle'
 import type { EventCounts } from './trackEventCounts'
 import { trackEventCounts } from './trackEventCounts'
-import type { RumCoreEvents } from './pipeline/rumPipelineEvents'
 
 export const EVENT_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
 
@@ -46,7 +44,7 @@ export interface TrackedEventData<TData> {
   eventCounts?: ReturnType<typeof trackEventCounts>
 }
 
-export function startEventTracker<TData>(lifeCycle: LifeCycle, pipeline?: Pipeline<RumCoreEvents>): EventTracker<TData> {
+export function startEventTracker<TData>(lifeCycle: LifeCycle): EventTracker<TData> {
   // Used by actions to associate events with actions.
   const history = createValueHistory<string>({ expireDelay: EVENT_CONTEXT_TIME_OUT_DELAY })
   // Used by manual actions and resources that use named keys to match the start and stop calls.
@@ -66,13 +64,7 @@ export function startEventTracker<TData>(lifeCycle: LifeCycle, pipeline?: Pipeli
     history.reset()
   }
 
-  const sessionRenewalSubscription = pipeline
-    ? pipeline.subscribe('signal', (signal) => {
-        if (signal.type === 'sessionRenewed') {
-          discardAll()
-        }
-      })
-    : { unsubscribe: () => {} }
+  const sessionRenewalSubscription = lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, discardAll)
 
   function start(key: string, startClocks: ClocksState, data: TData, options?: StartOptions): TrackedEventData<TData> {
     const id = generateUUID()

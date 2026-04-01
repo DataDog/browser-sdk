@@ -6,8 +6,6 @@ import type { RawRumErrorEvent, RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import { createRumPipeline } from '../pipeline/createRumPipeline'
-import type { Observation } from '../pipeline/rumPipelineEvents'
 import { doStartErrorCollection } from './errorCollection'
 
 describe('error collection', () => {
@@ -306,31 +304,6 @@ describe('error collection', () => {
         param: 123,
         user: 'john',
       })
-    })
-  })
-
-  describe('pipeline observation', () => {
-    it('should publish an observation on the pipeline when an error is collected', async () => {
-      const lifeCycle = new LifeCycle()
-      const pipeline = createRumPipeline()
-      const observations: Observation[] = []
-      pipeline.subscribe('observation', (obs) => observations.push(obs))
-      pipeline.seal()
-
-      const { addError: addErrorWithPipeline } = doStartErrorCollection(lifeCycle, pipeline)
-
-      addErrorWithPipeline({
-        error: new Error('test error'),
-        handlingStack: 'Error: handling',
-        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
-      })
-
-      // Pipeline processes events asynchronously
-      await new Promise<void>((resolve) => setTimeout(resolve, 0))
-
-      expect(observations.length).toBe(1)
-      expect(observations[0].type).toBe(RumEventType.ERROR)
-      expect(observations[0].startTime).toBe(1234 as RelativeTime)
     })
   })
 })

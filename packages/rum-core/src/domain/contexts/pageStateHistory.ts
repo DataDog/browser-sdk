@@ -10,13 +10,11 @@ import {
   DOM_EVENT,
   HookNames,
 } from '@datadog/browser-core'
-import type { DecoratorFactory } from '@datadog/browser-core-next'
 import type { RumConfiguration } from '../configuration'
 import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../browser/performanceObservable'
 import type { PageStateServerEntry } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { DefaultRumEventAttributes, Hooks } from '../hooks'
-import type { Observation } from '../pipeline/rumPipelineEvents'
 
 // Arbitrary value to cap number of element for memory consumption in the browser
 export const MAX_PAGE_STATE_ENTRIES = 4000
@@ -40,41 +38,8 @@ export interface PageStateEntry {
 
 export interface PageStateHistory {
   wasInPageStateDuringPeriod: (state: PageState, startTime: RelativeTime, duration: Duration) => boolean
-  findAll: (startTime: RelativeTime, duration?: Duration) => PageStateEntry[]
   addPageState(nextPageState: PageState, startTime?: RelativeTime): void
   stop: () => void
-}
-
-export function pageStateDecoratorFactory(deps: {
-  findAll: (startTime: RelativeTime, duration?: Duration) => PageStateEntry[]
-  wasInPageStateDuringPeriod: (state: PageState, startTime: RelativeTime, duration: Duration) => boolean
-}): DecoratorFactory<Observation, { pageStates?: PageStateServerEntry[]; inForeground?: boolean }> {
-  return {
-    name: 'pageState',
-    provides: [],
-    requires: [],
-    capabilities: { canDiscard: false },
-    create: () => ({
-      decorate: (event, _accumulated) => {
-        const startTime = event.startTime as RelativeTime
-        const duration = (event.duration ?? 0) as Duration
-        if (event.type === RumEventType.VIEW) {
-          const entries = deps.findAll(startTime, duration)
-          return Promise.resolve({
-            status: 'contributed' as const,
-            attributes: { pageStates: processPageStates(entries, startTime, MAX_PAGE_STATE_ENTRIES_SELECTABLE) },
-          })
-        }
-        if (event.type === RumEventType.ACTION || event.type === RumEventType.ERROR) {
-          return Promise.resolve({
-            status: 'contributed' as const,
-            attributes: { inForeground: deps.wasInPageStateDuringPeriod(PageState.ACTIVE, startTime, 0 as Duration) },
-          })
-        }
-        return Promise.resolve({ status: 'skipped' as const })
-      },
-    }),
-  }
 }
 
 export function startPageStateHistory(
@@ -158,7 +123,6 @@ export function startPageStateHistory(
 
   return {
     wasInPageStateDuringPeriod,
-    findAll: (startTime: RelativeTime, duration?: Duration) => pageStateEntryHistory.findAll(startTime, duration),
     addPageState,
     stop: () => {
       stopEventListeners()

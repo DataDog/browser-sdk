@@ -6,11 +6,9 @@ import type {
   ViewHistory,
   RumSession,
 } from '@datadog/browser-rum-core'
-import { SessionReplayState } from '@datadog/browser-rum-core'
+import { LifeCycleEventType, SessionReplayState } from '@datadog/browser-rum-core'
 import type { Telemetry, DeflateEncoder } from '@datadog/browser-core'
 import { asyncRunOnReadyState, monitorError, Observable } from '@datadog/browser-core'
-import type { Pipeline } from '@datadog/browser-core-next'
-import type { RumCoreEvents } from '@datadog/browser-rum-core'
 import { getSessionReplayLink } from '../domain/getSessionReplayLink'
 import { startRecorderInitTelemetry } from '../domain/startRecorderInitTelemetry'
 import type { startRecording } from './startRecording'
@@ -52,26 +50,23 @@ export function createPostStartStrategy(
   sessionManager: RumSessionManager,
   viewHistory: ViewHistory,
   getOrCreateDeflateEncoder: () => DeflateEncoder | undefined,
-  telemetry: Telemetry,
-  pipeline?: Pipeline<RumCoreEvents>
+  telemetry: Telemetry
 ): Strategy {
   let status = RecorderStatus.Stopped
   let stopRecording: () => void
 
-  if (pipeline) {
-    pipeline.subscribe('signal', (signal) => {
-      if (signal.type === 'sessionExpired') {
-        if (status === RecorderStatus.Starting || status === RecorderStatus.Started) {
-          stop()
-          status = RecorderStatus.IntentToStart
-        }
-      } else if (signal.type === 'sessionRenewed') {
-        if (status === RecorderStatus.IntentToStart) {
-          start()
-        }
-      }
-    })
-  }
+  lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
+    if (status === RecorderStatus.Starting || status === RecorderStatus.Started) {
+      stop()
+      status = RecorderStatus.IntentToStart
+    }
+  })
+
+  lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
+    if (status === RecorderStatus.IntentToStart) {
+      start()
+    }
+  })
 
   const observable = new Observable<RecorderInitEvent>()
   startRecorderInitTelemetry(telemetry, observable)
@@ -108,9 +103,7 @@ export function createPostStartStrategy(
       sessionManager,
       viewHistory,
       deflateEncoder,
-      telemetry,
-      undefined,
-      pipeline
+      telemetry
     ))
 
     status = RecorderStatus.Started

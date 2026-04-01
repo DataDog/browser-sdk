@@ -7,8 +7,7 @@ import type {
 } from '@datadog/browser-core'
 import { BridgeCapability, display } from '@datadog/browser-core'
 import type { RecorderApi, RumSessionManager } from '@datadog/browser-rum-core'
-import { LifeCycle } from '@datadog/browser-rum-core'
-import { createRumPipeline } from '../../../rum-core/src/domain/pipeline/createRumPipeline'
+import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { MockTelemetry } from '@datadog/browser-core/test'
 import {
   collectAsyncCalls,
@@ -42,7 +41,6 @@ describe('makeRecorderApi', () => {
   let mockWorker: MockWorker
   let createDeflateWorkerSpy: jasmine.Spy<CreateDeflateWorker>
   let rumInit: (options?: { worker?: DeflateWorker }) => void
-  let rumPipeline: ReturnType<typeof createRumPipeline>
   let telemetry: MockTelemetry
 
   function setupRecorderApi({
@@ -81,8 +79,6 @@ describe('makeRecorderApi', () => {
     })
 
     recorderApi = makeRecorderApi()
-    rumPipeline = createRumPipeline()
-    rumPipeline.seal()
     rumInit = ({ worker } = {}) => {
       recorderApi.onRumStart(
         lifeCycle,
@@ -90,8 +86,7 @@ describe('makeRecorderApi', () => {
         sessionManager ?? createRumSessionManagerMock().setId('1234'),
         mockViewHistory(),
         worker,
-        { enabled: true, metricsEnabled: true } as Telemetry,
-        rumPipeline
+        { enabled: true, metricsEnabled: true } as Telemetry
       )
     }
 
@@ -389,23 +384,21 @@ describe('makeRecorderApi', () => {
         it('starts recording if startSessionReplayRecording was called', async () => {
           rumInit()
           sessionManager.setTrackedWithSessionReplay()
-          rumPipeline.publish('signal', { type: 'sessionExpired' })
-          await new Promise<void>((resolve) => setTimeout(resolve, 0))
+          lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
           expect(startRecordingSpy).not.toHaveBeenCalled()
-          rumPipeline.publish('signal', { type: 'sessionRenewed', sessionId: '1234' })
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
           await collectAsyncCalls(startRecordingSpy, 1)
 
           expect(startRecordingSpy).toHaveBeenCalledTimes(1)
           expect(stopRecordingSpy).not.toHaveBeenCalled()
         })
 
-        it('does not starts recording if stopSessionReplayRecording was called', async () => {
+        it('does not starts recording if stopSessionReplayRecording was called', () => {
           rumInit()
           recorderApi.stop()
           sessionManager.setTrackedWithSessionReplay()
-          rumPipeline.publish('signal', { type: 'sessionExpired' })
-          rumPipeline.publish('signal', { type: 'sessionRenewed', sessionId: '1234' })
-          await new Promise<void>((resolve) => setTimeout(resolve, 0))
+          lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
           expect(importRecorderSpy).not.toHaveBeenCalled()
           expect(startRecordingSpy).not.toHaveBeenCalled()
@@ -417,12 +410,11 @@ describe('makeRecorderApi', () => {
           sessionManager.setTrackedWithoutSessionReplay()
         })
 
-        it('keeps not recording if startSessionReplayRecording was called', async () => {
+        it('keeps not recording if startSessionReplayRecording was called', () => {
           rumInit()
           sessionManager.setNotTracked()
-          rumPipeline.publish('signal', { type: 'sessionExpired' })
-          rumPipeline.publish('signal', { type: 'sessionRenewed', sessionId: '1234' })
-          await new Promise<void>((resolve) => setTimeout(resolve, 0))
+          lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
           expect(importRecorderSpy).not.toHaveBeenCalled()
           expect(startRecordingSpy).not.toHaveBeenCalled()
@@ -435,11 +427,10 @@ describe('makeRecorderApi', () => {
           sessionManager.setTrackedWithoutSessionReplay()
         })
 
-        it('keeps not recording if startSessionReplayRecording was called', async () => {
+        it('keeps not recording if startSessionReplayRecording was called', () => {
           rumInit()
-          rumPipeline.publish('signal', { type: 'sessionExpired' })
-          rumPipeline.publish('signal', { type: 'sessionRenewed', sessionId: '1234' })
-          await new Promise<void>((resolve) => setTimeout(resolve, 0))
+          lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
           expect(importRecorderSpy).not.toHaveBeenCalled()
           expect(startRecordingSpy).not.toHaveBeenCalled()
@@ -458,23 +449,20 @@ describe('makeRecorderApi', () => {
 
           expect(startRecordingSpy).toHaveBeenCalledTimes(1)
           sessionManager.setTrackedWithoutSessionReplay()
-          rumPipeline.publish('signal', { type: 'sessionExpired' })
-          await new Promise<void>((resolve) => setTimeout(resolve, 0))
+          lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
           expect(stopRecordingSpy).toHaveBeenCalled()
-          rumPipeline.publish('signal', { type: 'sessionRenewed', sessionId: '1234' })
-          await new Promise<void>((resolve) => setTimeout(resolve, 0))
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
           expect(importRecorderSpy).toHaveBeenCalledTimes(1)
           expect(startRecordingSpy).toHaveBeenCalledTimes(1)
         })
 
         // reassess this test
-        it('prevents session recording to start if the session is renewed before the DOM is loaded', async () => {
+        it('prevents session recording to start if the session is renewed before the DOM is loaded', () => {
           const { triggerOnDomLoaded } = mockDocumentReadyState()
           rumInit()
           sessionManager.setTrackedWithoutSessionReplay()
-          rumPipeline.publish('signal', { type: 'sessionExpired' })
-          rumPipeline.publish('signal', { type: 'sessionRenewed', sessionId: '1234' })
-          await new Promise<void>((resolve) => setTimeout(resolve, 0))
+          lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
           triggerOnDomLoaded()
           expect(importRecorderSpy).toHaveBeenCalled()
           expect(startRecordingSpy).not.toHaveBeenCalled()
@@ -491,11 +479,9 @@ describe('makeRecorderApi', () => {
           await collectAsyncCalls(startRecordingSpy, 1)
           expect(startRecordingSpy).toHaveBeenCalledTimes(1)
           sessionManager.setNotTracked()
-          rumPipeline.publish('signal', { type: 'sessionExpired' })
-          await new Promise<void>((resolve) => setTimeout(resolve, 0))
+          lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
           expect(stopRecordingSpy).toHaveBeenCalled()
-          rumPipeline.publish('signal', { type: 'sessionRenewed', sessionId: '1234' })
-          await new Promise<void>((resolve) => setTimeout(resolve, 0))
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
           expect(importRecorderSpy).toHaveBeenCalledTimes(1)
           expect(startRecordingSpy).toHaveBeenCalledTimes(1)
         })
@@ -510,10 +496,9 @@ describe('makeRecorderApi', () => {
           rumInit()
           await collectAsyncCalls(startRecordingSpy, 1)
           expect(startRecordingSpy).toHaveBeenCalledTimes(1)
-          rumPipeline.publish('signal', { type: 'sessionExpired' })
-          await new Promise<void>((resolve) => setTimeout(resolve, 0))
+          lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
           expect(stopRecordingSpy).toHaveBeenCalled()
-          rumPipeline.publish('signal', { type: 'sessionRenewed', sessionId: '1234' })
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
           await collectAsyncCalls(startRecordingSpy, 2)
 
           expect(importRecorderSpy).toHaveBeenCalledTimes(2)
@@ -526,9 +511,8 @@ describe('makeRecorderApi', () => {
           expect(startRecordingSpy).toHaveBeenCalledTimes(1)
           recorderApi.stop()
           expect(stopRecordingSpy).toHaveBeenCalledTimes(1)
-          rumPipeline.publish('signal', { type: 'sessionExpired' })
-          rumPipeline.publish('signal', { type: 'sessionRenewed', sessionId: '1234' })
-          await new Promise<void>((resolve) => setTimeout(resolve, 0))
+          lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
           expect(importRecorderSpy).toHaveBeenCalledTimes(1)
           expect(startRecordingSpy).toHaveBeenCalledTimes(1)
           expect(stopRecordingSpy).toHaveBeenCalledTimes(1)
@@ -543,8 +527,8 @@ describe('makeRecorderApi', () => {
         it('starts recording if startSessionReplayRecording was called', async () => {
           rumInit()
           sessionManager.setTrackedWithSessionReplay()
-          rumPipeline.publish('signal', { type: 'sessionExpired' })
-          rumPipeline.publish('signal', { type: 'sessionRenewed', sessionId: '1234' })
+          lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
           await collectAsyncCalls(startRecordingSpy, 1)
 
           expect(startRecordingSpy).toHaveBeenCalled()
@@ -552,13 +536,12 @@ describe('makeRecorderApi', () => {
           expect(stopRecordingSpy).not.toHaveBeenCalled()
         })
 
-        it('does not starts recording if stopSessionReplayRecording was called', async () => {
+        it('does not starts recording if stopSessionReplayRecording was called', () => {
           rumInit()
           recorderApi.stop()
           sessionManager.setTrackedWithSessionReplay()
-          rumPipeline.publish('signal', { type: 'sessionExpired' })
-          rumPipeline.publish('signal', { type: 'sessionRenewed', sessionId: '1234' })
-          await new Promise<void>((resolve) => setTimeout(resolve, 0))
+          lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
           expect(importRecorderSpy).not.toHaveBeenCalled()
           expect(startRecordingSpy).not.toHaveBeenCalled()
           expect(stopRecordingSpy).not.toHaveBeenCalled()
@@ -570,12 +553,11 @@ describe('makeRecorderApi', () => {
           sessionManager.setNotTracked()
         })
 
-        it('keeps not recording if startSessionReplayRecording was called', async () => {
+        it('keeps not recording if startSessionReplayRecording was called', () => {
           rumInit()
           sessionManager.setTrackedWithoutSessionReplay()
-          rumPipeline.publish('signal', { type: 'sessionExpired' })
-          rumPipeline.publish('signal', { type: 'sessionRenewed', sessionId: '1234' })
-          await new Promise<void>((resolve) => setTimeout(resolve, 0))
+          lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
           expect(importRecorderSpy).not.toHaveBeenCalled()
           expect(startRecordingSpy).not.toHaveBeenCalled()
           expect(stopRecordingSpy).not.toHaveBeenCalled()
@@ -587,11 +569,10 @@ describe('makeRecorderApi', () => {
           sessionManager.setNotTracked()
         })
 
-        it('keeps not recording if startSessionReplayRecording was called', async () => {
+        it('keeps not recording if startSessionReplayRecording was called', () => {
           rumInit()
-          rumPipeline.publish('signal', { type: 'sessionExpired' })
-          rumPipeline.publish('signal', { type: 'sessionRenewed', sessionId: '1234' })
-          await new Promise<void>((resolve) => setTimeout(resolve, 0))
+          lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
           expect(importRecorderSpy).not.toHaveBeenCalled()
           expect(startRecordingSpy).not.toHaveBeenCalled()
           expect(stopRecordingSpy).not.toHaveBeenCalled()

@@ -123,6 +123,7 @@ export { createContextManager } from './domain/context/contextManager'
 export { defineContextMethod, bufferContextCalls } from './domain/context/defineContextMethod'
 export { storeContextManager, removeStorageListeners } from './domain/context/storeContextManager'
 <<<<<<< HEAD
+<<<<<<< HEAD
 export { startAccountContext, buildAccountContextManager } from './domain/contexts/accountContext'
 export { startTabContext } from './domain/contexts/tabContext'
 export { startGlobalContext, buildGlobalContextManager } from './domain/contexts/globalContext'
@@ -132,6 +133,11 @@ export { startAccountContext, buildAccountContextManager, accountContextDecorato
 export { startGlobalContext, buildGlobalContextManager, globalContextDecoratorFactory } from './domain/contexts/globalContext'
 export { startUserContext, buildUserContextManager, userContextDecoratorFactory } from './domain/contexts/userContext'
 >>>>>>> 120667891 (✨ Wire RUM pipeline with all decorator factories, seal in startRumEventCollection)
+=======
+export { startAccountContext, buildAccountContextManager } from './domain/contexts/accountContext'
+export { startGlobalContext, buildGlobalContextManager } from './domain/contexts/globalContext'
+export { startUserContext, buildUserContextManager } from './domain/contexts/userContext'
+>>>>>>> e3f6fb1f0 (🔥 Remove pipeline migration from existing packages, scope v8 changes to core-next only)
 export type { User } from './domain/contexts/userContext'
 export type { Account } from './domain/contexts/accountContext'
 export type { RumInternalContext } from './domain/contexts/rumInternalContext.type'

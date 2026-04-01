@@ -8,11 +8,9 @@ import {
   performDraw,
   startSessionManager,
 } from '@datadog/browser-core'
-import type { Pipeline } from '@datadog/browser-core-next'
 import type { RumConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
-import type { RumCoreEvents } from './pipeline/rumPipelineEvents'
 
 export const enum SessionType {
   SYNTHETICS = 'synthetics',
@@ -50,8 +48,7 @@ export const enum SessionReplayState {
 export function startRumSessionManager(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
-  trackingConsentState: TrackingConsentState,
-  pipeline?: Pipeline<RumCoreEvents>
+  trackingConsentState: TrackingConsentState
 ): RumSessionManager {
   const sessionManager = startSessionManager(
     configuration,
@@ -62,19 +59,10 @@ export function startRumSessionManager(
 
   sessionManager.expireObservable.subscribe(() => {
     lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-    if (pipeline) {
-      pipeline.publish('signal', { type: 'sessionExpired' })
-    }
   })
 
   sessionManager.renewObservable.subscribe(() => {
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-    if (pipeline) {
-      const session = sessionManager.findSession()
-      if (session) {
-        pipeline.publish('signal', { type: 'sessionRenewed', sessionId: session.id })
-      }
-    }
   })
 
   sessionManager.sessionStateUpdateObservable.subscribe(({ previousState, newState }) => {

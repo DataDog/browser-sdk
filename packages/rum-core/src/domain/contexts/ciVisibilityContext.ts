@@ -1,35 +1,10 @@
 import { getInitCookie, HookNames, SKIPPED } from '@datadog/browser-core'
 import type { Configuration } from '@datadog/browser-core'
-import type { DecoratorFactory } from '@datadog/browser-core-next'
 import { createCookieObservable } from '../../browser/cookieObservable'
 import { SessionType } from '../rumSessionManager'
 import type { DefaultRumEventAttributes, Hooks } from '../hooks'
-import type { Observation } from '../pipeline/rumPipelineEvents'
 
 export const CI_VISIBILITY_TEST_ID_COOKIE_NAME = 'datadog-ci-visibility-test-execution-id'
-
-export function ciVisibilityDecoratorFactory(deps: {
-  getTestExecutionId: () => string | undefined
-}): DecoratorFactory<Observation, { ciTest?: { testExecutionId: string } }> {
-  return {
-    name: 'ciVisibility',
-    provides: [],
-    requires: [],
-    capabilities: { canDiscard: false },
-    create: () => ({
-      decorate: (_event, _accumulated) => {
-        const testExecutionId = deps.getTestExecutionId()
-        if (typeof testExecutionId !== 'string') {
-          return Promise.resolve({ status: 'skipped' as const })
-        }
-        return Promise.resolve({
-          status: 'contributed' as const,
-          attributes: { ciTest: { testExecutionId } },
-        })
-      },
-    }),
-  }
-}
 
 export interface CiTestWindow extends Window {
   Cypress?: {
@@ -68,7 +43,6 @@ export function startCiVisibilityContext(
   })
 
   return {
-    getTestExecutionId: () => testExecutionId,
     stop: () => {
       cookieObservableSubscription.unsubscribe()
     },

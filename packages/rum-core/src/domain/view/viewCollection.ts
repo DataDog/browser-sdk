@@ -1,6 +1,5 @@
-import type { Duration, RelativeTime, ServerDuration, Observable } from '@datadog/browser-core'
+import type { Duration, ServerDuration, Observable } from '@datadog/browser-core'
 import { getTimeZone, DISCARDED, HookNames, isEmptyObject, mapValues, toServerDuration } from '@datadog/browser-core'
-import type { DecoratorFactory, Pipeline } from '@datadog/browser-core-next'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import type { RawRumViewEvent, ViewPerformanceData } from '../../rawRumEvent.types'
@@ -9,10 +8,9 @@ import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { RumConfiguration } from '../configuration'
-import type { ViewHistory, ViewHistoryEntry } from '../contexts/viewHistory'
+import type { ViewHistory } from '../contexts/viewHistory'
 import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
-import type { Observation, RumCoreEvents } from '../pipeline/rumPipelineEvents'
 import { trackViews } from './trackViews'
 import type { ViewEvent, ViewOptions } from './trackViews'
 import type { CommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
@@ -27,19 +25,11 @@ export function startViewCollection(
   locationChangeObservable: Observable<LocationChange>,
   recorderApi: RecorderApi,
   viewHistory: ViewHistory,
-  pipeline: Pipeline<RumCoreEvents>,
   initialViewOptions?: ViewOptions
 ) {
-  lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) => {
-    const rawEvent = processViewUpdate(view, configuration, recorderApi)
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
-    pipeline.publish('observation', {
-      type: rawEvent.rawRumEvent.type,
-      startTime: rawEvent.startClocks.relative,
-      duration: rawEvent.duration,
-      data: { ...rawEvent.rawRumEvent, ...(rawEvent.domainContext ?? {}) } as unknown as Record<string, unknown>,
-    })
-  })
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processViewUpdate(view, configuration, recorderApi))
+  )
 
   hooks.register(HookNames.Assemble, ({ startTime, eventType }): DefaultRumEventAttributes | DISCARDED => {
     const view = viewHistory.findView(startTime)
@@ -76,7 +66,6 @@ export function startViewCollection(
     configuration,
     locationChangeObservable,
     !configuration.trackViewsManually,
-    pipeline,
     initialViewOptions
   )
 }
@@ -178,29 +167,6 @@ function processViewUpdate(
       location: view.location,
       handlingStack: view.handlingStack,
     },
-  }
-}
-
-export function viewDecoratorFactory(deps: {
-  findView: (startTime: RelativeTime) => ViewHistoryEntry | undefined
-}): DecoratorFactory<Observation, { view?: Pick<ViewHistoryEntry, 'id' | 'name'> }> {
-  return {
-    name: 'view',
-    provides: ['view'],
-    requires: ['session'],
-    capabilities: { canDiscard: true },
-    create: () => ({
-      decorate: (event, _accumulated) => {
-        const view = deps.findView(event.startTime as RelativeTime)
-        if (!view) {
-          return Promise.resolve({ status: 'discarded' as const, reason: 'no active view' })
-        }
-        return Promise.resolve({
-          status: 'contributed' as const,
-          attributes: { view: { id: view.id, name: view.name } },
-        })
-      },
-    }),
   }
 }
 

@@ -9,11 +9,9 @@ import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { AssembleHookParams, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
-import { createRumPipeline } from '../pipeline/createRumPipeline'
-import { LONG_TASK_START_TIME_CORRECTION, startActionCollection, actionContextDecoratorFactory } from './actionCollection'
+import { LONG_TASK_START_TIME_CORRECTION, startActionCollection } from './actionCollection'
 import { ActionNameSource } from './actionNameConstants'
 import type { ActionContexts } from './actionCollection'
-import type { Observation } from '../pipeline/rumPipelineEvents'
 
 describe('actionCollection', () => {
   const lifeCycle = new LifeCycle()
@@ -213,48 +211,6 @@ describe('actionCollection', () => {
     })
   })
 
-  describe('actionContextDecoratorFactory', () => {
-    it('should contribute action IDs for error event type', async () => {
-      const factory = actionContextDecoratorFactory({
-        findActionId: () => ['action-1', 'action-2'],
-      })
-      const obs: Observation = { type: RumEventType.ERROR, startTime: 0, data: {} }
-      const result = await factory.create({}).decorate(obs, {})
-      expect(result.status).toBe('contributed')
-      if (result.status === 'contributed') {
-        expect((result.attributes as any).action).toEqual({ id: ['action-1', 'action-2'] })
-      }
-    })
-
-    it('should skip for view event type', async () => {
-      const factory = actionContextDecoratorFactory({
-        findActionId: () => ['action-1'],
-      })
-      const obs: Observation = { type: RumEventType.VIEW, startTime: 0, data: {} }
-      const result = await factory.create({}).decorate(obs, {})
-      expect(result.status).toBe('skipped')
-    })
-
-    it('should skip when no action IDs found', async () => {
-      const factory = actionContextDecoratorFactory({
-        findActionId: () => [],
-      })
-      const obs: Observation = { type: RumEventType.ERROR, startTime: 0, data: {} }
-      const result = await factory.create({}).decorate(obs, {})
-      expect(result.status).toBe('skipped')
-    })
-
-    it('should declare canDiscard: false', () => {
-      const factory = actionContextDecoratorFactory({ findActionId: () => [] })
-      expect(factory.capabilities.canDiscard).toBe(false)
-    })
-
-    it('should declare name: "actionContext"', () => {
-      const factory = actionContextDecoratorFactory({ findActionId: () => [] })
-      expect(factory.name).toBe('actionContext')
-    })
-  })
-
   describe('assemble telemetry hook', () => {
     it('should add action id', () => {
       const actionId = ['1']
@@ -273,40 +229,6 @@ describe('actionCollection', () => {
       }) as DefaultTelemetryEventAttributes
 
       expect(telemetryEventAttributes.action?.id).toEqual([] as unknown as string)
-    })
-  })
-
-  describe('pipeline observation', () => {
-    it('should publish an observation on the pipeline when a manual action is collected', async () => {
-      const localLifeCycle = new LifeCycle()
-      const localHooks = createHooks()
-      const pipeline = createRumPipeline()
-      const observations: Observation[] = []
-      pipeline.subscribe('observation', (obs) => observations.push(obs))
-      pipeline.seal()
-
-      const actionCollection = startActionCollection(
-        localLifeCycle,
-        localHooks,
-        new Observable<RumMutationRecord[]>(),
-        new Observable<void>(),
-        mockRumConfiguration(),
-        pipeline
-      )
-      registerCleanupTask(actionCollection.stop)
-
-      actionCollection.addAction({
-        name: 'test action',
-        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
-        type: ActionType.CUSTOM,
-      })
-
-      // Pipeline processes events asynchronously
-      await new Promise<void>((resolve) => setTimeout(resolve, 0))
-
-      expect(observations.length).toBe(1)
-      expect(observations[0].type).toBe(RumEventType.ACTION)
-      expect(observations[0].startTime).toBe(1234 as RelativeTime)
     })
   })
 })

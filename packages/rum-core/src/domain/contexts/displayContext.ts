@@ -1,32 +1,10 @@
 import { HookNames, monitor } from '@datadog/browser-core'
-import type { DecoratorFactory } from '@datadog/browser-core-next'
 import type { RumConfiguration } from '../configuration'
 import type { ViewportDimension } from '../../browser/viewportObservable'
 import { getViewportDimension, initViewportObservable } from '../../browser/viewportObservable'
 import type { DefaultRumEventAttributes, Hooks } from '../hooks'
-import type { Observation } from '../pipeline/rumPipelineEvents'
 
 export type DisplayContext = ReturnType<typeof startDisplayContext>
-
-export function displayDecoratorFactory(deps: {
-  getViewport: () => ViewportDimension | undefined
-}): DecoratorFactory<Observation, { display: { viewport: ViewportDimension } | undefined }> {
-  return {
-    name: 'display',
-    provides: [],
-    requires: [],
-    capabilities: { canDiscard: false },
-    create: () => ({
-      decorate: (_event, _accumulated) => {
-        const viewport = deps.getViewport()
-        return Promise.resolve({
-          status: 'contributed' as const,
-          attributes: { display: viewport ? { viewport } : undefined },
-        })
-      },
-    }),
-  }
-}
 
 export function startDisplayContext(hooks: Hooks, configuration: RumConfiguration) {
   let viewport: ViewportDimension | undefined
@@ -50,7 +28,6 @@ export function startDisplayContext(hooks: Hooks, configuration: RumConfiguratio
   )
 
   return {
-    getViewport: () => viewport,
     stop: () => {
       unsubscribeViewport()
       if (animationFrameId) {
