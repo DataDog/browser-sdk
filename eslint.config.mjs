@@ -489,6 +489,11 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/array-type': ['error', { default: 'array' }],
       'import/exports-last': 'error',
+      // core-next is environment-agnostic — Zone.js is a browser-only concern
+      'local-rules/disallow-zone-js-patched-values': 'off',
+      'local-rules/disallow-url-constructor-patched-values': 'off',
+      // *-next packages use a class-based architecture for interface implementations
+      'no-restricted-syntax': 'off',
     },
   },
 
