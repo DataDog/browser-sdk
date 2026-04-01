@@ -22,3 +22,19 @@ export { enricher } from './domain/enricher'
 
 export { Pipeline } from './domain/pipeline'
 export type { Subscription } from './domain/pipeline'
+
+export type { Duration, ServerDuration, TimeStamp, RelativeTime, ClocksState } from './domain/time'
+export {
+  ONE_SECOND,
+  ONE_MINUTE,
+  ONE_HOUR,
+  ONE_DAY,
+  ONE_YEAR,
+  elapsed,
+  addDuration,
+  toServerDuration,
+  looksLikeRelativeTime,
+} from './domain/time'
+
+export type { Csp, StackFrame, StackTrace } from './domain/error'
+export { ErrorSource, ErrorHandling } from './domain/error'

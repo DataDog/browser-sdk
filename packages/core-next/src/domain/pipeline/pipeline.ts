@@ -25,8 +25,6 @@ export interface Subscription {
  * - If any enricher returns `null`, the event is discarded (subscribers are not notified).
  * - If an enricher throws, the event is skipped and processing continues with the next event.
  *
- * @typeParam TEventMap - A record mapping event type names to their data types.
- *
  * @example
  * ```ts
  * type Events = {
@@ -52,13 +50,14 @@ export interface Subscription {
  * pipeline.publish('observation', { type: 'error', startTime: 123 })
  * pipeline.publish('signal', { type: 'sessionExpired' })
  * ```
+ * @typeParam TEventMap - A record mapping event type names to their data types.
  */
 // eslint-disable-next-line no-restricted-syntax
 export class Pipeline<TEventMap extends Record<string, unknown>> {
-  private enrichers = new Map<keyof TEventMap, Array<Enricher<any, any, any>>>()
+  private enrichers = new Map<keyof TEventMap, Enricher<any, any, any>[]>()
   private chains = new Map<keyof TEventMap, (data: any) => Promise<any | null>>()
-  private handlers = new Map<keyof TEventMap, Array<(event: any) => void>>()
-  private queue: Array<{ type: keyof TEventMap; data: any }> = []
+  private handlers = new Map<keyof TEventMap, ((event: any) => void)[]>()
+  private queue: { type: keyof TEventMap; data: any }[] = []
   private processing = false
   private sealed = false
 
