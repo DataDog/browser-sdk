@@ -5,25 +5,10 @@ name: Shadow Review
 on:
   pull_request:
     types: [opened, synchronize]
-  push:
-    branches: [main]
 
 jobs:
-  # Sync fork on merge to main
-  sync-fork:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Sync shadow fork
-        env:
-          GITHUB_TOKEN: ${{ secrets.SHADOW_FORK_TOKEN }}
-        run: |
-          gh api \
-            --method POST \
-            "repos/${{ vars.SHADOW_FORK }}/merge-upstream" \
-            -f branch="main" || true
-
   # Mirror PR to shadow fork (review + post-close disabled for now)
+  # Fork sync not needed — each shadow PR targets its own base ref
   shadow-mirror:
     if: >-
       github.event_name == 'pull_request'
