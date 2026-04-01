@@ -36,7 +36,10 @@ describe('Memory SessionStoreStrategy', () => {
 
       await strategy.setSessionState((state) => ({ ...state, id: 'test-id' }))
 
-      expect(spy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ id: 'test-id' }))
+      expect(spy).toHaveBeenCalledOnceWith({
+        cookieValue: undefined,
+        sessionState: jasmine.objectContaining({ id: 'test-id' }),
+      })
     })
   })
 
@@ -48,7 +51,10 @@ describe('Memory SessionStoreStrategy', () => {
       strategy.sessionObservable.subscribe(spy)
       await strategy2.setSessionState((state) => ({ ...state, id: 'from-strategy2' }))
 
-      expect(spy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ id: 'from-strategy2' }))
+      expect(spy).toHaveBeenCalledOnceWith({
+        cookieValue: undefined,
+        sessionState: jasmine.objectContaining({ id: 'from-strategy2' }),
+      })
     })
   })
 

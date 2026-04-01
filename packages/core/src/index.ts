@@ -50,7 +50,7 @@ export {
 export { monitored, monitor, callMonitored, setDebugMode, monitorError } from './tools/monitor'
 export type { Subscription } from './tools/observable'
 export { Observable, BufferedObservable } from './tools/observable'
-export type { SessionManager, SessionContext } from './domain/session/sessionManager'
+export type { SessionManager, SessionContext, SessionRenewalEvent } from './domain/session/sessionManager'
 export { startSessionManager, startSessionManagerStub, stopSessionManager } from './domain/session/sessionManager'
 export {
   SESSION_TIME_OUT_DELAY, // Exposed for tests

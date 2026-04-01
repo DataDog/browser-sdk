@@ -347,6 +347,8 @@ describe('startSessionManager', () => {
       // Advance past the session expiration delay without any user activity
       clock.tick(SESSION_EXPIRATION_DELAY + ONE_SECOND)
 
+      await collectAsyncCalls(expireSpy, 1)
+
       expect(expireSpy).toHaveBeenCalledTimes(1)
       expect(sessionManager.findSession()).toBeUndefined()
     })

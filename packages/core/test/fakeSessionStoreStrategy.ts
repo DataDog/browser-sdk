@@ -1,6 +1,9 @@
 import { Observable } from '../src/tools/observable'
 import type { SessionState } from '../src/domain/session/sessionState'
-import type { SessionStoreStrategy } from '../src/domain/session/storeStrategies/sessionStoreStrategy'
+import type {
+  SessionStoreStrategy,
+  SessionObservableEvent,
+} from '../src/domain/session/storeStrategies/sessionStoreStrategy'
 
 export type FakeSessionStoreStrategy = SessionStoreStrategy & {
   setSessionState: jasmine.Spy<(fn: (state: SessionState) => SessionState) => Promise<void>>
@@ -12,7 +15,7 @@ export function createFakeSessionStoreStrategy({
   initialSession = {},
 }: { initialSession?: SessionState } = {}): FakeSessionStoreStrategy {
   let session: SessionState = initialSession
-  const sessionObservable = new Observable<SessionState>()
+  const sessionObservable = new Observable<SessionObservableEvent>()
 
   return {
     setSessionState: jasmine
@@ -20,7 +23,7 @@ export function createFakeSessionStoreStrategy({
       .and.callFake(async (fn: (state: SessionState) => SessionState): Promise<void> => {
         session = fn({ ...session })
         await Promise.resolve()
-        sessionObservable.notify({ ...session })
+        sessionObservable.notify({ cookieValue: undefined, sessionState: { ...session } })
       }),
     sessionObservable,
 
@@ -28,7 +31,7 @@ export function createFakeSessionStoreStrategy({
     getInternalState: () => ({ ...session }),
     simulateExternalChange: (state: SessionState) => {
       session = state
-      sessionObservable.notify({ ...session })
+      sessionObservable.notify({ cookieValue: undefined, sessionState: { ...session } })
     },
   }
 }

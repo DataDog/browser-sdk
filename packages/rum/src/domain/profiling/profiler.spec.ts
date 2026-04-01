@@ -1,6 +1,6 @@
 import type { ViewHistoryEntry } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType, RumPerformanceEntryType, createHooks } from '@datadog/browser-rum-core'
-import type { Duration } from '@datadog/browser-core'
+import type { Duration, SessionRenewalEvent } from '@datadog/browser-core'
 import {
   addDuration,
   clocksNow,
@@ -708,7 +708,7 @@ describe('profiler', () => {
     expect(interceptor.requests.length).toBe(1)
 
     // Notify that the session has been renewed
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
 
     // Wait for profiler to restart
     await waitForBoolean(() => profiler.isRunning())
@@ -745,7 +745,7 @@ describe('profiler', () => {
     await waitForBoolean(() => interceptor.requests.length >= 1)
     expect(interceptor.requests.length).toBe(1)
 
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
     await waitForBoolean(() => profiler.isRunning())
     expect(profilingContextManager.get()?.status).toBe('running')
 
@@ -757,7 +757,7 @@ describe('profiler', () => {
     await waitForBoolean(() => interceptor.requests.length >= 2)
     expect(interceptor.requests.length).toBe(2)
 
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
     await waitForBoolean(() => profiler.isRunning())
     expect(profilingContextManager.get()?.status).toBe('running')
 
@@ -787,7 +787,7 @@ describe('profiler', () => {
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
     // Notify that the session has been renewed
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
 
     // Wait a bit to ensure profiler doesn't restart
     await new Promise((resolve) => setTimeout(resolve, 100))
@@ -818,7 +818,7 @@ describe('profiler', () => {
     // Session renews IMMEDIATELY - even before async data collection completes
     // This simulates the scenario where user activity triggers renewal
     // while data is still being collected in the background
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
 
     // The profiler should restart because the sync state was already 'stopped'
     // when SESSION_RENEWED fired
@@ -854,7 +854,7 @@ describe('profiler', () => {
     expect(profiler.isStopped()).toBe(true)
 
     // Session is renewed — start() is called synchronously, so no need to wait
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
 
     // Profiler should remain stopped - user's explicit stop should take priority over session expiration
     expect(profiler.isStopped()).toBe(true)
@@ -936,7 +936,7 @@ describe('profiler', () => {
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
     // Session is renewed
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
 
     // Wait for profiler to restart
     await waitForBoolean(() => profiler.isRunning())
