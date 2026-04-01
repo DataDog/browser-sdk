@@ -75,6 +75,44 @@ interface BaseInitConfiguration {
 
 `enabled: false` means events are collected but not sent. When absent, defaults to `true`.
 
+### Module configuration — TypeScript module augmentation
+
+Each module extends `SdkInitConfiguration` via TypeScript module augmentation. Importing a module automatically adds its config fields to the init type:
+
+```ts
+// core-next defines the base — must be an interface, not a type alias
+interface SdkInitConfiguration {
+  clientToken: string
+  site: string
+  enabled?: boolean
+  // ...
+}
+
+// @datadog/rum-next augments it when imported:
+declare module '@datadog/core-next' {
+  interface SdkInitConfiguration {
+    rum?: RumInitConfiguration
+  }
+}
+
+// User code:
+import '@datadog/rum-next' // augments the type as a side-effect
+
+sdk.init({
+  clientToken: 'abc',
+  rum: { applicationId: 'xyz' }, // TypeScript knows about 'rum'
+})
+```
+
+Benefits:
+
+- `browser-sdk` never needs to know about module config types
+- Config changes only require updating the module package — no `browser-sdk` rebuild coupling
+- If a module isn't imported, its fields don't exist in the type
+- Each module owns its config definition completely
+
+**Constraint:** `SdkInitConfiguration` must remain an `interface` in `core-next` — module augmentation does not work with `type` aliases.
+
 ### Module extensions
 
 Each module provides a `ConfigExtension` that validates its own slice:
