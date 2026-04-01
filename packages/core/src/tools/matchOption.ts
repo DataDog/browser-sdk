@@ -19,6 +19,7 @@ export function matchList(list: MatchOption[], value: string, useStartsWith = fa
       if (typeof item === 'function') {
         return item(value)
       } else if (item instanceof RegExp) {
+        item.lastIndex = 0
         return item.test(value)
       } else if (typeof item === 'string') {
         return useStartsWith ? value.startsWith(item) : item === value
