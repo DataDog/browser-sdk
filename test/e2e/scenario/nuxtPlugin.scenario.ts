@@ -71,7 +71,7 @@ test.describe('nuxt - router', () => {
       expect(homeView?.view.loading_time).toBeGreaterThan(0)
     })
 
-  createTest('should not create a new view when only the hash changes')
+  createTest('should not create a new view when only the hash changes or query params change')
     .withRum()
     .withNuxtApp()
     .run(async ({ page, flushEvents, intakeRegistry }) => {
@@ -81,32 +81,22 @@ test.describe('nuxt - router', () => {
       await page.click('text=Go to Section')
       await page.waitForURL('**/user/42#section')
 
-      await flushEvents()
-
-      const userView = intakeRegistry.rumViewEvents.find((e) => e.view.name === '/user/[id]')
-      expect(userView).toBeDefined()
-
-      const spuriousView = intakeRegistry.rumViewEvents.find((e) => e.view.url?.includes('#section'))
-      expect(spuriousView).toBeUndefined()
-    })
-
-  createTest('should not create a new view when only query params change')
-    .withRum()
-    .withNuxtApp()
-    .run(async ({ page, flushEvents, intakeRegistry }) => {
-      await page.click('text=Go to User 42')
-      await page.waitForURL('**/user/42?admin=true')
-
       await page.click('text=Change query params')
       await page.waitForURL('**/user/42?admin=false')
 
+      await page.click('text=Back to Home')
+      await page.waitForURL('**/')
+
       await flushEvents()
 
       const userView = intakeRegistry.rumViewEvents.find((e) => e.view.name === '/user/[id]')
       expect(userView).toBeDefined()
 
-      const spuriousView = intakeRegistry.rumViewEvents.find((e) => e.view.url?.includes('admin=false'))
-      expect(spuriousView).toBeUndefined()
+      const hashSpuriousView = intakeRegistry.rumViewEvents.find((e) => e.view.url?.includes('#section'))
+      expect(hashSpuriousView).toBeUndefined()
+
+      const queryParamsSpuriousView = intakeRegistry.rumViewEvents.find((e) => e.view.url?.includes('admin=false'))
+      expect(queryParamsSpuriousView).toBeUndefined()
     })
 
   createTest('should track navigations between different concrete URLs of the same dynamic route')

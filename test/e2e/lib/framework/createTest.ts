@@ -145,8 +145,6 @@ class TestBuilder {
 
   withNuxtApp() {
     this.baseUrlHooks.push((baseUrl, servers, { rum, context }) => {
-      // Nuxt dev/preview only exposes localhost unless started with --host.
-      baseUrl.hostname = 'localhost'
       baseUrl.port = NUXT_APP_PORT
       if (rum) {
         baseUrl.searchParams.set('rum-config', formatConfiguration(rum, servers))

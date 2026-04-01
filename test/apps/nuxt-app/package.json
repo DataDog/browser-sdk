@@ -3,8 +3,8 @@
   "private": true,
   "scripts": {
     "build": "nuxt build",
-    "dev": "nuxt dev --port 0",
-    "start": "nuxt preview --port 0"
+    "dev": "nuxt dev --port 0 --host",
+    "start": "nuxt preview --port 0 --host"
   },
   "dependencies": {
     "@datadog/browser-rum": "file:../../../packages/rum/package.tgz",
