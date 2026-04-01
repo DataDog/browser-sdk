@@ -68,8 +68,10 @@ function setupAdbReverse() {
   console.log(`Forwarded ports: ${DEV_SERVER_PORT}, ${PORT_RANGE_START}-${PORT_RANGE_END}`)
 }
 
-const WEBVIEW_APP_PKG = 'com.example.webviewtest'
-const WEBVIEW_APK_PATH = path.join(__dirname, '../../apps/android-webview-app/app/build/outputs/apk/debug/app-debug.apk')
+const WEBVIEW_APK_PATH = path.join(
+  __dirname,
+  '../../apps/android-webview-app/app/build/outputs/apk/debug/app-debug.apk'
+)
 
 function installWebViewApp() {
   console.log('Installing WebView test app...')

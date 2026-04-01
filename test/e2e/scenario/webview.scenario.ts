@@ -1,12 +1,12 @@
 import { expect } from '@playwright/test'
-import { test } from '../android/webviewFixture'
+import { test as webviewTest } from '../android/webviewFixture'
 import { createTest } from '../lib/framework'
 
-test.describe('webview', () => {
+webviewTest.describe('webview', () => {
   createTest('send RUM events through the bridge')
     .withRum()
     .withEventBridge()
-    .withFixture(test)
+    .withFixture(webviewTest)
     .run(async ({ flushEvents, intakeRegistry }) => {
       await flushEvents()
 
@@ -17,7 +17,7 @@ test.describe('webview', () => {
   createTest('send logs through the bridge')
     .withLogs()
     .withEventBridge()
-    .withFixture(test)
+    .withFixture(webviewTest)
     .run(async ({ flushEvents, intakeRegistry, page }) => {
       await page.evaluate(() => {
         window.DD_LOGS!.logger.log('hello from webview')
