@@ -29,12 +29,9 @@ graph TD
 
 ## Initialization
 
-The product bundle assembles the SDK with its modules at build time. The user calls a single `init()`:
+The user calls a single `init()` with a flat config. Module keys drive which modules are loaded:
 
 ```ts
-// @datadog/browser-sdk
-const sdk = createSDK([rumModule, logsModule])
-
 sdk.init({
   clientToken: 'abc',
   site: 'datadoghq.com',
@@ -44,8 +41,17 @@ sdk.init({
 ```
 
 - The presence of a module key (e.g. `rum: { ... }`) activates that module automatically.
-- `createSDK([...modules])` infers the full init type from the module tuple — TypeScript catches missing or wrong fields at the call site.
+- An empty object (e.g. `rum: {}`) is enough to activate a module with defaults.
 - If a module key is absent, the module is skipped.
+
+### Module loading strategy (open decision)
+
+Two approaches are under consideration:
+
+- **Code splitting** — modules are part of the same bundle but lazy-loaded via dynamic `import()`. Simpler for developers, standard bundler feature, full type safety at compile time.
+- **Remote loading** — modules are separate scripts fetched from a CDN at runtime. More powerful for customers (true pay-for-what-you-use), but requires versioning infrastructure and more complex error handling.
+
+Both are compatible with the configuration design. The loading mechanism is an implementation detail that can be decided later.
 
 ## Configuration
 
