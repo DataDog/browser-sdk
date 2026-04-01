@@ -2,7 +2,7 @@
 
 import eslint from '@eslint/js'
 import * as tseslint from 'typescript-eslint'
-import importPlugin from 'eslint-plugin-import'
+import importPlugin from 'eslint-plugin-import-x'
 import unicornPlugin from 'eslint-plugin-unicorn'
 import jsdocPlugin from 'eslint-plugin-jsdoc'
 import jasmine from 'eslint-plugin-jasmine'
@@ -14,7 +14,7 @@ import { SCHEMAS } from './scripts/lib/generatedSchemaTypes.ts'
 const SPEC_FILES = '**/*.{spec,specHelper}.{ts,tsx,js}'
 const MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL = process.env.MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL || 'warn'
 
-// eslint-disable-next-line import/no-default-export
+// eslint-disable-next-line import-x/no-default-export
 export default tseslint.config(
   eslint.configs.recommended,
   tseslint.configs.recommendedTypeChecked,
@@ -61,6 +61,10 @@ export default tseslint.config(
     },
 
     settings: {
+      'import-x/resolver': {
+        typescript: true,
+      },
+      // eslint-module-utils (used by local rules) still reads the old key
       'import/resolver': {
         typescript: true,
       },
@@ -230,11 +234,11 @@ export default tseslint.config(
         { allowForKnownSafeCalls: [{ from: 'package', name: ['describe', 'it', 'test'], package: 'node:test' }] },
       ],
 
-      'import/no-cycle': 'error',
-      'import/no-default-export': 'error',
-      'import/no-duplicates': 'error',
-      'import/no-extraneous-dependencies': 'error',
-      'import/no-unresolved': [
+      'import-x/no-cycle': 'error',
+      'import-x/no-default-export': 'error',
+      'import-x/no-duplicates': 'error',
+      'import-x/no-extraneous-dependencies': 'error',
+      'import-x/no-unresolved': [
         'error',
         {
           commonjs: true,
@@ -245,13 +249,13 @@ export default tseslint.config(
           ],
         },
       ],
-      'import/no-useless-path-segments': 'error',
-      'import/order': [
+      'import-x/no-useless-path-segments': 'error',
+      'import-x/order': [
         'error',
         {
           // This is the default order plus 'internal', which is imports like
           // @datadog/browser-core/test (references a file/folder within a local package)
-          // https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/order.md#groups
+          // https://github.com/un-ts/eslint-plugin-import-x/blob/master/docs/rules/order.md#groups
           groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
         },
       ],
@@ -331,7 +335,7 @@ export default tseslint.config(
   {
     files: ['scripts/**'],
     rules: {
-      'import/extensions': ['error', 'ignorePackages'],
+      'import-x/extensions': ['error', 'ignorePackages'],
     },
   },
 
@@ -428,7 +432,7 @@ export default tseslint.config(
     files: ['packages/*/src/**/*.ts'],
     ignores: [SPEC_FILES],
     rules: {
-      'import/consistent-type-specifier-style': ['error', 'prefer-top-level'],
+      'import-x/consistent-type-specifier-style': ['error', 'prefer-top-level'],
     },
   },
 
@@ -453,7 +457,7 @@ export default tseslint.config(
     },
     rules: {
       '@typescript-eslint/no-require-imports': 'off',
-      'import/enforce-node-protocol-usage': ['error', 'always'],
+      'import-x/enforce-node-protocol-usage': ['error', 'always'],
       'no-restricted-imports': [
         'error',
         {
@@ -472,7 +476,7 @@ export default tseslint.config(
     files: ['**/webpack.*.{ts,mts}', 'eslint-local-rules/**/*.js'],
     rules: {
       // Webpack configuration files and eslint rules files are expected to use a default export.
-      'import/no-default-export': 'off',
+      'import-x/no-default-export': 'off',
     },
   },
 
@@ -480,7 +484,7 @@ export default tseslint.config(
     files: ['test/e2e/**/*.ts', 'test/performance/**/*.ts'],
     rules: {
       // E2E codebase is importing @datadog/browser-* packages referenced by tsconfig.
-      'import/no-extraneous-dependencies': 'off',
+      'import-x/no-extraneous-dependencies': 'off',
     },
   },
 
@@ -488,7 +492,8 @@ export default tseslint.config(
     files: ['packages/core-next/**/*.ts'],
     rules: {
       '@typescript-eslint/array-type': ['error', { default: 'array' }],
-      'import/exports-last': 'error',
+      'import-x/exports-last': 'error',
+      'import-x/group-exports': 'error',
       // core-next is environment-agnostic — Zone.js is a browser-only concern
       'local-rules/disallow-zone-js-patched-values': 'off',
       'local-rules/disallow-url-constructor-patched-values': 'off',

@@ -1,12 +1,10 @@
 import fs from 'node:fs'
 
 import moduleVisitorPackage from 'eslint-module-utils/moduleVisitor.js'
-import importTypePackage from 'eslint-plugin-import/lib/core/importType.js'
 import pkgUpPackage from 'eslint-module-utils/pkgUp.js'
 
 const moduleVisitor = moduleVisitorPackage.default
 const pkgUp = pkgUpPackage.default
-const importType = importTypePackage.default
 
 // The import/no-extraneous-dependencies rule cannot catch this issue[1] where we imported an
 // aliased package in production code, because it resolves[2] the alias to the real package name, and
@@ -36,9 +34,9 @@ export default {
     const packageJson = readPackageJson(pkgUp({ cwd: context.getFilename() }))
 
     return moduleVisitor((source) => {
-      const importTypeResult = importType(source.value, context)
       // Use an allow list instead of a deny list to make the rule more future-proof.
-      if (importTypeResult === 'parent' || importTypeResult === 'sibling') {
+      // Skip relative imports — only check package imports.
+      if (source.value.startsWith('.')) {
         return
       }
 

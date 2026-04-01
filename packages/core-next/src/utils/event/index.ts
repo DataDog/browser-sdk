@@ -1,4 +1,4 @@
-export class EventEmitter<TEvents extends object> {
+class EventEmitter<TEvents extends object> {
   private listeners = new Map<keyof TEvents, Set<(data: any) => void>>()
 
   on<K extends keyof TEvents>(event: K, listener: (data: TEvents[K]) => void): void {
@@ -16,3 +16,5 @@ export class EventEmitter<TEvents extends object> {
     this.listeners.get(event)?.forEach((listener) => listener(data))
   }
 }
+
+export { EventEmitter }

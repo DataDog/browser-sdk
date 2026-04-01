@@ -3,10 +3,7 @@ import { minimatch } from 'minimatch'
 
 import resolvePackage from 'eslint-module-utils/resolve.js'
 import moduleVisitorPackage from 'eslint-module-utils/moduleVisitor.js'
-import importTypePackage from 'eslint-plugin-import/lib/core/importType.js'
-
 const moduleVisitor = moduleVisitorPackage.default
-const importType = importTypePackage.default
 const resolve = resolvePackage.default
 
 export default {
@@ -47,7 +44,7 @@ export default {
 
 function getFirstProtectedDirectory(importedModule, context) {
   // only consider relative and absolute paths, no package or builtin imports
-  if (!['absolute', 'sibling', 'index', 'parent'].includes(importType(importedModule, context))) {
+  if (!importedModule.startsWith('.') && !importedModule.startsWith('/')) {
     return
   }
 
