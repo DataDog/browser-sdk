@@ -72,7 +72,9 @@ export const config: Config = {
       command: isLocal ? 'yarn dev' : 'yarn start',
       env: { NO_COLOR: '1' },
       wait: {
-        stdout: /Local:\s+http:\/\/localhost:(?<nuxt_app_port>\d+)/,
+        // yarn dev (Nuxt dev server) logs:  "Local:  http://localhost:PORT"
+        // yarn start (Nitro preview) logs:  "Listening on http://[::]:PORT"
+        stdout: /(?:Local:\s+http:\/\/localhost|Listening on http:\/\/(?:\[::\]|localhost)):(?<nuxt_app_port>\d+)/,
       },
     },
   ],

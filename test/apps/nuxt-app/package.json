@@ -4,7 +4,7 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev --port 0",
-    "start": "nuxt preview"
+    "start": "nuxt preview --port 0"
   },
   "dependencies": {
     "@datadog/browser-rum": "file:../../../packages/rum/package.tgz",
