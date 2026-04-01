@@ -1,4 +1,4 @@
-import { EventEmitter } from '../../utils'
+import { EventEmitter, throttle } from '../../utils'
 
 interface BatchOptions {
   maxSizeBytes: number
@@ -14,12 +14,20 @@ interface BatchEvents {
 class Batch extends EventEmitter<BatchEvents> {
   private buffer: string[] = []
   private currentSize = 0
-  private timer: ReturnType<typeof setTimeout> | undefined
   private readonly getSize: (message: string) => number
+  private readonly scheduleFlush: () => void
+  private readonly cancelScheduledFlush: () => void
 
   constructor(private readonly options: BatchOptions) {
     super()
     this.getSize = options.getMessageSize ?? ((msg) => msg.length)
+
+    const { throttled, cancel } = throttle(() => this.flush(), options.flushTimeoutMs, {
+      leading: false,
+      trailing: true,
+    })
+    this.scheduleFlush = throttled
+    this.cancelScheduledFlush = cancel
   }
 
   add(message: string): void {
@@ -39,14 +47,7 @@ class Batch extends EventEmitter<BatchEvents> {
     this.emit('flush', this.buffer)
     this.buffer = []
     this.currentSize = 0
-    clearTimeout(this.timer)
-    this.timer = undefined
-  }
-
-  private scheduleFlush(): void {
-    if (this.timer === undefined && this.options.flushTimeoutMs !== Infinity) {
-      this.timer = setTimeout(() => this.flush(), this.options.flushTimeoutMs)
-    }
+    this.cancelScheduledFlush()
   }
 }
 

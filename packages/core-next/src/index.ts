@@ -43,7 +43,7 @@ export type { Transport } from './domain/transport/transport'
 export type { BatchOptions } from './domain/transport/batch'
 export { Batch } from './domain/transport/batch'
 
-export { EventEmitter } from './utils'
+export { EventEmitter, throttle } from './utils'
 
 export type {
   SdkInitConfiguration,
