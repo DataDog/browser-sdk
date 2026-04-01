@@ -39,7 +39,16 @@ export {
 export type { Csp, StackFrame, StackTrace } from './domain/error'
 export { ErrorSource, ErrorHandling } from './domain/error'
 
-export type { Transport, BatchOptions } from './domain/transport/transport'
-export { Batch } from './domain/transport/transport'
+export type { Transport } from './domain/transport/transport'
+export type { BatchOptions } from './domain/transport/batch'
+export { Batch } from './domain/transport/batch'
 
 export { EventEmitter } from './utils'
+
+export type {
+  SdkInitConfiguration,
+  SdkConfiguration,
+  ConfigExtension,
+  ConfigReader,
+} from './domain/configuration/configuration'
+export { buildConfiguration, createConfigReader } from './domain/configuration/configuration'

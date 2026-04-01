@@ -1,16 +1,4 @@
-import { Batch } from './transport'
-import type { Transport } from './transport'
-
-function stubTransport(): Transport & { sent: string[] } {
-  const sent: string[] = []
-  return {
-    sent,
-    send(data) {
-      sent.push(data)
-    },
-    flush() {},
-  }
-}
+import { Batch } from './batch'
 
 describe('Batch', () => {
   it('should emit flush with messages when max count is reached', () => {
