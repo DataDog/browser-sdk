@@ -32,7 +32,16 @@ export default defineConfig({
   retries: 1,
   timeout: 60_000,
   reporter: reporters,
-  projects: [{ name: 'android' }],
+  projects: [
+    {
+      name: 'android',
+      testIgnore: ['**/webview.scenario.ts'],
+    },
+    {
+      name: 'android-webview',
+      testMatch: ['**/webview.scenario.ts'],
+    },
+  ],
   use: {
     trace: 'retain-on-failure',
   },
