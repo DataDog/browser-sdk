@@ -71,7 +71,7 @@ test.describe('plugin: nextjs', () => {
     .withNextjsApp('app')
     .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
       await page.click('text=Go to Server Error')
-      await page.waitForSelector('[data-testid="error-boundary"]')
+      await page.waitForSelector('[data-testid="error-handled"]')
 
       await flushEvents()
 
