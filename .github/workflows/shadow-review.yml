@@ -47,7 +47,31 @@ jobs:
           WORK_DIR=$(mktemp -d)
           trap 'rm -rf "${WORK_DIR}"' EXIT
 
-          echo "Mirroring PR #${PR_NUMBER} (${PR_HEAD_SHA}) to ${SHADOW_FORK}..."
+          echo "=== Pre-flight checks ==="
+          echo "SOURCE_REPO: ${SOURCE_REPO}"
+          echo "SHADOW_FORK: ${SHADOW_FORK}"
+          echo "PR_NUMBER: ${PR_NUMBER}"
+          echo "PR_HEAD_SHA: ${PR_HEAD_SHA}"
+          echo "PR_BASE_REF: ${PR_BASE_REF}"
+
+          # Verify shadow fork access
+          echo "Verifying access to shadow fork..."
+          if ! gh repo view "${SHADOW_FORK}" > /dev/null 2>&1; then
+            echo "ERROR: Cannot access shadow fork ${SHADOW_FORK}"
+            echo "Ensure SHADOW_FORK_TOKEN has repo access and SHADOW_FORK variable is set correctly"
+            exit 1
+          fi
+          echo "Shadow fork accessible"
+
+          # Verify source repo access
+          echo "Verifying access to source repo..."
+          if ! gh repo view "${SOURCE_REPO}" > /dev/null 2>&1; then
+            echo "ERROR: Cannot access source repo ${SOURCE_REPO}"
+            exit 1
+          fi
+          echo "Source repo accessible"
+
+          echo "=== Mirroring PR #${PR_NUMBER} (${PR_HEAD_SHA}) to ${SHADOW_FORK} ==="
 
           # Determine version number by counting existing shadow branches (exclude -base)
           VERSION=$(git ls-remote --heads "https://x-access-token:${GITHUB_TOKEN}@github.com/${SHADOW_FORK}.git" "shadow/${PR_NUMBER}/v*" 2>/dev/null \
@@ -59,9 +83,12 @@ jobs:
           BASE_BRANCH="shadow/${PR_NUMBER}/v${VERSION}-base"
 
           # Clone source repo and fetch PR ref
+          echo "Cloning source repo..."
           git clone --depth=1 --no-checkout "https://x-access-token:${GITHUB_TOKEN}@github.com/${SOURCE_REPO}.git" "${WORK_DIR}/repo"
           cd "${WORK_DIR}/repo"
+          echo "Fetching PR head..."
           git fetch origin "pull/${PR_NUMBER}/head:pr-head" --depth=50
+          echo "Fetching base ref..."
           git fetch origin "${PR_BASE_REF}:base-ref" --depth=50
 
           # Compute merge base
@@ -71,17 +98,20 @@ jobs:
           # Push base and head branches to shadow fork
           git remote add shadow "https://x-access-token:${GITHUB_TOKEN}@github.com/${SHADOW_FORK}.git"
 
-          git push shadow "${MERGE_BASE}:refs/heads/${BASE_BRANCH}" || {
+          echo "Pushing base branch..."
+          git push shadow "${MERGE_BASE}:refs/heads/${BASE_BRANCH}" 2>&1 || {
             echo "Push failed — retrying with incremented version..."
             VERSION=$((VERSION + 1))
             SHADOW_BRANCH="shadow/${PR_NUMBER}/v${VERSION}"
             BASE_BRANCH="shadow/${PR_NUMBER}/v${VERSION}-base"
-            git push shadow "${MERGE_BASE}:refs/heads/${BASE_BRANCH}"
+            git push shadow "${MERGE_BASE}:refs/heads/${BASE_BRANCH}" 2>&1
           }
 
-          git push shadow "${PR_HEAD_SHA}:refs/heads/${SHADOW_BRANCH}"
+          echo "Pushing head branch..."
+          git push shadow "${PR_HEAD_SHA}:refs/heads/${SHADOW_BRANCH}" 2>&1
 
           # Create shadow PR
+          echo "Creating shadow PR..."
           SHADOW_PR_URL=$(gh pr create \
             --repo "${SHADOW_FORK}" \
             --base "${BASE_BRANCH}" \
