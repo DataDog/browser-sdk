@@ -109,6 +109,9 @@ test.describe('nuxt - router', () => {
       await page.click('text=Go to User 999')
       await page.waitForURL('**/user/999?admin=true')
 
+      await page.click('text=Back to Home')
+      await page.waitForURL('**/')
+
       await flushEvents()
 
       const user42View = intakeRegistry.rumViewEvents.find(
