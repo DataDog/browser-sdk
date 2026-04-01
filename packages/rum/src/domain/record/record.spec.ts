@@ -2,7 +2,7 @@ import { DefaultPrivacyLevel, findLast, noop } from '@datadog/browser-core'
 import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { createNewEvent, collectAsyncCalls, registerCleanupTask } from '@datadog/browser-core/test'
-import { findElement, findFullSnapshot, findNode, recordsPerFullSnapshot } from '../../../test'
+import { findElement, findFullSnapshotInFormat, findNode, recordsPerFullSnapshot } from '../../../test'
 import type {
   BrowserIncrementalSnapshotRecord,
   BrowserMutationData,
@@ -11,7 +11,7 @@ import type {
   ElementNode,
   ScrollData,
 } from '../../types'
-import { NodeType, RecordType, IncrementalSource } from '../../types'
+import { NodeType, RecordType, IncrementalSource, SnapshotFormat } from '../../types'
 import { appendElement } from '../../../../rum-core/test'
 import { getReplayStats } from '../replayStats'
 import type { RecordAPI } from './record'
@@ -160,7 +160,7 @@ describe('record', () => {
       element.remove()
 
       recordApi.flushMutations()
-      const fs = findFullSnapshot({ records: getEmittedRecords() })!
+      const fs = findFullSnapshotInFormat(SnapshotFormat.V1, { records: getEmittedRecords() })!
       const shadowRootNode = findNode(
         fs.data.node,
         (node) => node.type === NodeType.DocumentFragment && node.isShadowRoot
@@ -185,7 +185,7 @@ describe('record', () => {
 
       recordApi.flushMutations()
       expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot() + 1)
-      const fs = findFullSnapshot({ records: getEmittedRecords() })!
+      const fs = findFullSnapshotInFormat(SnapshotFormat.V1, { records: getEmittedRecords() })!
       const shadowRootNode = findNode(
         fs.data.node,
         (node) => node.type === NodeType.DocumentFragment && node.isShadowRoot
@@ -282,7 +282,7 @@ describe('record', () => {
 
       const scrollData = getLastIncrementalSnapshotData<ScrollData>(getEmittedRecords(), IncrementalSource.Scroll)
 
-      const fs = findFullSnapshot({ records: getEmittedRecords() })!
+      const fs = findFullSnapshotInFormat(SnapshotFormat.V1, { records: getEmittedRecords() })!
       const scrollableNode = findElement(fs.data.node, (node) => node.attributes['unique-selector'] === 'enabled')!
 
       expect(scrollData.id).toBe(scrollableNode.id)

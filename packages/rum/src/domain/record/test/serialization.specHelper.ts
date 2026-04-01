@@ -1,9 +1,10 @@
 import type { TimeStamp } from '@datadog/browser-core'
 import { noop, timeStampNow } from '@datadog/browser-core'
-import { RecordType } from '../../../types'
+import { RecordType, SnapshotFormat } from '../../../types'
 import type {
   BrowserChangeRecord,
   BrowserFullSnapshotRecord,
+  BrowserFullSnapshotV1Record,
   BrowserRecord,
   DocumentNode,
   ElementNode,
@@ -62,6 +63,9 @@ export function takeFullSnapshotForTesting(scope: RecordingScope): DocumentNode 
     // Tests want to assert against the serialized node representation of the document,
     // not the record that would contain it if we emitted it, so we just extract it here.
     const fullSnapshotRecord = record as BrowserFullSnapshotRecord
+    if (fullSnapshotRecord.format === SnapshotFormat.Change) {
+      throw new Error('Full snapshot has unexpected format')
+    }
     node = fullSnapshotRecord.data.node as DocumentNode & SerializedNodeWithId
   }
 
@@ -124,7 +128,7 @@ export function serializeNodeAndVerifyChangeRecord(
     // match serializeNode() exactly.
     expect(changeRecord).not.toBeUndefined()
     const converter = createChangeConverter()
-    const convertedRecord = converter.convert(changeRecord!) as BrowserFullSnapshotRecord
+    const convertedRecord = converter.convert(changeRecord!) as BrowserFullSnapshotV1Record
     const convertedNode = convertedRecord.data.node
     expect(convertedNode).toEqual(serializedNode)
 
