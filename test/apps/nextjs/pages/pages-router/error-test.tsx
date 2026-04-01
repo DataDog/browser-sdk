@@ -1,6 +1,6 @@
 import { ErrorBoundary } from '@datadog/browser-rum-nextjs'
 import type { ErrorBoundaryFallback } from '@datadog/browser-rum-nextjs'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
 function ErrorThrower() {
@@ -13,14 +13,22 @@ function ErrorThrower() {
   )
 }
 
-const ErrorFallback: ErrorBoundaryFallback = ({ error, resetError }) => (
-  <div data-testid="error-boundary">
-    <p>{error.message}</p>
-    <button data-testid="reset-error" onClick={resetError}>
-      Reset
-    </button>
-  </div>
-)
+const ErrorFallback: ErrorBoundaryFallback = ({ error, resetError }) => {
+  const [errorReported, setErrorReported] = useState(false)
+
+  useEffect(() => {
+    setErrorReported(true)
+  }, [error])
+
+  return (
+    <div data-testid="error-boundary" data-error-reported={errorReported || undefined}>
+      <p>{error.message}</p>
+      <button data-testid="reset-error" onClick={resetError}>
+        Reset
+      </button>
+    </div>
+  )
+}
 
 export default function ErrorTestPage() {
   return (
