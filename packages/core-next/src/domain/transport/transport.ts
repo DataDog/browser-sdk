@@ -1,4 +1,4 @@
-import { EventEmitter } from '../eventEmitter/eventEmitter'
+import { EventEmitter } from '../../utils'
 
 interface Transport {
   send(data: string): void
