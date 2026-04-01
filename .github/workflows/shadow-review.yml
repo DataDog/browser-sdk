@@ -80,7 +80,7 @@ jobs:
 
           # Determine version number by counting existing shadow branches (exclude -base)
           VERSION=$(git ls-remote --heads "https://x-access-token:${SHADOW_FORK_TOKEN}@github.com/${SHADOW_FORK}.git" "shadow/${PR_NUMBER}/v*" 2>/dev/null \
-            | grep -v '\-base$' | wc -l | tr -d ' ')
+            | { grep -v '\-base$' || true; } | wc -l | tr -d ' ')
           VERSION=$((VERSION + 1))
           echo "Version: v${VERSION}"
 
