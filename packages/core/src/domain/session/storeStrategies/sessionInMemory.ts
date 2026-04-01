@@ -3,7 +3,7 @@ import { Observable } from '../../../tools/observable'
 import { shallowClone } from '../../../tools/utils/objectUtils'
 import { SessionPersistence } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
-import type { SessionStoreStrategy, SessionStoreStrategyType } from './sessionStoreStrategy'
+import type { SessionStoreStrategy, SessionStoreStrategyType, SessionObservableEvent } from './sessionStoreStrategy'
 
 export const MEMORY_SESSION_STORE_KEY = '_DD_SESSION'
 
@@ -29,14 +29,14 @@ export function initMemorySessionStoreStrategy(): SessionStoreStrategy {
   }
   const memorySession = globalObject[MEMORY_SESSION_STORE_KEY]
 
-  const sessionObservable = new Observable<SessionState>()
+  const sessionObservable = new Observable<SessionObservableEvent>()
 
   // Wire the local observable to the shared onChange callback so that
   // multiple SDK instances (RUM + Logs) can observe each other's changes.
   const previousOnChange = memorySession.onChange
   memorySession.onChange = (state: SessionState) => {
     previousOnChange?.(state)
-    sessionObservable.notify(state)
+    sessionObservable.notify({ cookieValue: undefined, sessionState: state })
   }
 
   return {

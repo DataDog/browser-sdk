@@ -8,7 +8,7 @@ import { toSessionString, toSessionState } from '../sessionState'
 import { Observable } from '../../../tools/observable'
 import { mockable } from '../../../tools/mockable'
 import { createCookieAccess } from '../../../browser/cookieAccess'
-import type { SessionStoreStrategy, SessionStoreStrategyType } from './sessionStoreStrategy'
+import type { SessionStoreStrategy, SessionStoreStrategyType, SessionObservableEvent } from './sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
 
 const SESSION_COOKIE_VERSION = 0
@@ -24,7 +24,7 @@ export function selectCookieStrategy(initConfiguration: InitConfiguration): Sess
 let pendingChain: Promise<void> | undefined
 
 export function initCookieStrategy(cookieOptions: CookieOptions, configuration: Configuration): SessionStoreStrategy {
-  const sessionObservable = new Observable<SessionState>()
+  const sessionObservable = new Observable<SessionObservableEvent>()
 
   const cookieAccess = mockable(createCookieAccess)(SESSION_STORE_KEY, configuration, cookieOptions)
   const trackAnonymousUser = !!configuration.trackAnonymousUser
@@ -37,7 +37,7 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
       return
     }
     delete state.c
-    sessionObservable.notify(state)
+    sessionObservable.notify({ cookieValue, sessionState: state })
   })
 
   function applyAndWrite(fn: (state: SessionState) => SessionState) {

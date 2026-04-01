@@ -10,7 +10,12 @@ export type SessionStoreStrategyType =
   | { type: typeof SessionPersistence.LOCAL_STORAGE }
   | { type: typeof SessionPersistence.MEMORY }
 
+export interface SessionObservableEvent {
+  cookieValue: string | undefined
+  sessionState: SessionState
+}
+
 export interface SessionStoreStrategy {
   setSessionState(fn: (sessionState: SessionState) => SessionState): Promise<void>
-  sessionObservable: Observable<SessionState>
+  sessionObservable: Observable<SessionObservableEvent>
 }

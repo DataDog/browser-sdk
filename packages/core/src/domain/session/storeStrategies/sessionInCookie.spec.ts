@@ -4,6 +4,7 @@ import { Observable } from '../../../tools/observable'
 import type { SessionState } from '../sessionState'
 import type { Configuration, InitConfiguration } from '../../configuration'
 import { SESSION_COOKIE_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from '../sessionConstants'
+import type { SessionObservableEvent } from './sessionStoreStrategy'
 import { buildCookieOptions, selectCookieStrategy, initCookieStrategy } from './sessionInCookie'
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'abc', trackAnonymousUser: true }
@@ -115,14 +116,14 @@ describe('session in cookie strategy', () => {
 
     it('should strip c from state emitted via observable', () => {
       const { strategy, mockCookie } = setupCookieStrategy()
-      const spy = jasmine.createSpy<(state: SessionState) => void>('observer')
+      const spy = jasmine.createSpy<(event: SessionObservableEvent) => void>('observer')
       const subscription = strategy.sessionObservable.subscribe(spy)
       registerCleanupTask(() => subscription.unsubscribe())
 
       // Simulate an external change that the cookie observable would report
       mockCookie.simulateExternalChange('id=test&c=0')
 
-      expect(spy).toHaveBeenCalledOnceWith({ id: 'test' })
+      expect(spy).toHaveBeenCalledOnceWith({ cookieValue: 'id=test&c=0', sessionState: { id: 'test' } })
     })
 
     it('should not write c to cookie when state is empty (deletes cookie)', async () => {
@@ -136,7 +137,7 @@ describe('session in cookie strategy', () => {
 
     it('should ignore observable updates from cookies with non-matching c marker', () => {
       const { strategy, mockCookie } = setupCookieStrategy()
-      const spy = jasmine.createSpy<(state: SessionState) => void>('observer')
+      const spy = jasmine.createSpy<(event: SessionObservableEvent) => void>('observer')
       const subscription = strategy.sessionObservable.subscribe(spy)
       registerCleanupTask(() => subscription.unsubscribe())
 
@@ -148,7 +149,7 @@ describe('session in cookie strategy', () => {
 
     it('should notify sessionObservable after write', async () => {
       const { strategy } = setupCookieStrategy()
-      const spy = jasmine.createSpy<(state: SessionState) => void>('observer')
+      const spy = jasmine.createSpy<(event: SessionObservableEvent) => void>('observer')
       const subscription = strategy.sessionObservable.subscribe(spy)
       registerCleanupTask(() => subscription.unsubscribe())
 
@@ -156,7 +157,7 @@ describe('session in cookie strategy', () => {
       // mockCookie.simulateExternalChange('id=test-id&c=0')
       await strategy.setSessionState(() => ({ id: '123' }))
 
-      expect(spy).toHaveBeenCalledOnceWith({ id: '123' })
+      expect(spy).toHaveBeenCalledOnceWith({ cookieValue: 'id=123&c=0', sessionState: { id: '123' } })
     })
 
     it('should queue setSessionState calls and process them sequentially', async () => {

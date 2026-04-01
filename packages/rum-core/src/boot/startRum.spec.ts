@@ -1,4 +1,4 @@
-import type { RawError, Duration, BufferedData, SessionManager } from '@datadog/browser-core'
+import type { RawError, Duration, BufferedData, SessionManager, SessionRenewalEvent } from '@datadog/browser-core'
 import {
   Observable,
   toServerDuration,
@@ -87,7 +87,7 @@ describe('rum session', () => {
     expect(serverRumEvents.length).toEqual(2)
 
     sessionManager.setId('43')
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
 
     expect(serverRumEvents.length).toEqual(3)
 
