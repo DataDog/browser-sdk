@@ -33,7 +33,7 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
   cookieAccess.observable.subscribe((cookieValue) => {
     const state = toSessionState(cookieValue ?? '')
     // Ignore updates from non-matching cookies (e.g. partitioned vs non-partitioned)
-    if (state.c && state.c !== opts) {
+    if (!isEmptyObject(state) && state.c !== opts) {
       return
     }
     delete state.c
