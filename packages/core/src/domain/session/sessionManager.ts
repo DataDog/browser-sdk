@@ -132,7 +132,21 @@ export function startSessionManager(
     clearTimeout(expirationTimeoutId)
     if (state.expire && !isSessionInExpiredState(state)) {
       const delay = Number(state.expire) - dateNow()
-      expirationTimeoutId = setTimeout(() => expire(), delay)
+      expirationTimeoutId = setTimeout(() => {
+        strategy
+          .setSessionState((state) => {
+            if (isSessionInExpiredState(state)) {
+              if (!trackingConsentState.isGranted()) {
+                delete state.anonymousId
+              }
+
+              return getExpiredSessionState(state, configuration)
+            }
+
+            return state
+          })
+          .catch(monitorError)
+      }, delay)
     }
   }
   stopCallbacks.push(() => clearTimeout(expirationTimeoutId))
