@@ -8,14 +8,14 @@ import {
   findElementWithIdAttribute,
   findTextContent,
   findElementWithTagName,
-} from '@datadog/browser-rum/test/nodes'
+} from '@datadog/browser-rum/test/record/nodes'
 import {
   findFullSnapshot,
   findIncrementalSnapshot,
   findAllIncrementalSnapshots,
   findMeta,
-} from '@datadog/browser-rum/test/segments'
-import { createMutationPayloadValidatorFromSegment } from '@datadog/browser-rum/test/mutationPayloadValidator'
+} from '@datadog/browser-rum/test/record/segments'
+import { createMutationPayloadValidatorFromSegment } from '@datadog/browser-rum/test/record/mutationPayloadValidator'
 import { test, expect } from '@playwright/test'
 import { wait } from '@datadog/browser-core/test/wait'
 import { createTest, html } from '../../lib/framework'

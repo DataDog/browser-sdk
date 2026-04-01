@@ -1,5 +1,5 @@
 import { getGlobalObject } from '@datadog/browser-core'
-import { NodeType, IncrementalSource } from '../src/types'
+import { NodeType, IncrementalSource } from '../../src/types'
 import type {
   SerializedNodeWithId,
   ElementNode,
@@ -9,7 +9,7 @@ import type {
   BrowserMutationPayload,
   BrowserSegment,
   BrowserMutationData,
-} from '../src/types'
+} from '../../src/types'
 import { findAllIncrementalSnapshots, findFullSnapshot } from './segments'
 import { findTextNode, findElementWithTagName, findElementWithIdAttribute } from './nodes'
 

@@ -8,8 +8,8 @@ import type {
   BrowserIncrementalSnapshotRecord,
   VisualViewportRecord,
   FrustrationRecord,
-} from '../src/types'
-import { RecordType, IncrementalSource } from '../src/types'
+} from '../../src/types'
+import { RecordType, IncrementalSource } from '../../src/types'
 
 export function findMeta(segment: BrowserSegment): MetaRecord | null {
   return segment.records.find((record) => record.type === RecordType.Meta) as MetaRecord
