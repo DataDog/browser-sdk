@@ -1,4 +1,4 @@
-import { EventEmitter } from '.'
+import { EventEmitter } from './event'
 
 interface TestEvents {
   data: string
