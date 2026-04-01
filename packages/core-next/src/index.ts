@@ -38,3 +38,8 @@ export {
 
 export type { Csp, StackFrame, StackTrace } from './domain/error'
 export { ErrorSource, ErrorHandling } from './domain/error'
+
+export type { Transport, BatchOptions } from './domain/transport/transport'
+export { Batch } from './domain/transport/transport'
+
+export { EventEmitter } from './domain/eventEmitter/eventEmitter'
