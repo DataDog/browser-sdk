@@ -13,7 +13,6 @@ import type { CookieStore } from '../../browser/browser.types'
 import { getCurrentSite } from '../../browser/cookie'
 import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
 import { findLast } from '../../tools/utils/polyfills'
-import { monitorError } from '../../tools/monitor'
 import { SESSION_NOT_TRACKED, SESSION_TIME_OUT_DELAY, SessionPersistence } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
 import type { SessionState } from './sessionState'
@@ -209,7 +208,6 @@ function detectSessionIdChange(configuration: Configuration, initialSessionState
   }
 
   const sessionCreatedTime = Number(initialSessionState.created)
-  const sdkInitTime = dateNow()
 
   const { stop } = addEventListener(configuration, cookieStore as CookieStore, DOM_EVENT.CHANGE, listener)
   stopCallbacks.push(stop)
@@ -228,19 +226,6 @@ function detectSessionIdChange(configuration: Configuration, initialSessionState
       const newSessionState = toSessionState(changed.value)
       if (newSessionState.id && newSessionState.id !== initialSessionState.id) {
         stop()
-        const time = dateNow() - sdkInitTime
-        getSessionCookies()
-          .then((cookie) => {
-            // monitor-until: 2026-04-01, after RUM-10845 investigation done
-            addTelemetryDebug('Session cookie changed', {
-              time,
-              session_age: sessionAge,
-              old: initialSessionState,
-              new: newSessionState,
-              cookie,
-            })
-          })
-          .catch(monitorError)
       }
     }
   }
