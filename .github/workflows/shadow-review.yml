@@ -44,6 +44,10 @@ jobs:
           PR_BODY: ${{ github.event.pull_request.body }}
         run: |
           set -euo pipefail
+          # Mask tokens in trace output
+          echo "::add-mask::${SHADOW_FORK_TOKEN}"
+          echo "::add-mask::${GITHUB_TOKEN}"
+          set -x
 
           WORK_DIR=$(mktemp -d)
           trap 'rm -rf "${WORK_DIR}"' EXIT
