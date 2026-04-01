@@ -4,7 +4,7 @@ import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-co
 import { registerCleanupTask } from '../../../core/test'
 import { nuxtRumPlugin, onRumStart, resetNuxtPlugin } from './nuxtPlugin'
 
-const PUBLIC_API = {} as RumPublicApi
+const PUBLIC_API = { startView: jasmine.createSpy() } as unknown as RumPublicApi
 const INIT_CONFIGURATION = {} as RumInitConfiguration
 
 function makeRouter(): Router {
