@@ -1,5 +1,5 @@
-# shadow-review.yml — Shadow Reviewer workflow for browser-sdk
-# Copy this file to .github/workflows/shadow-review.yml in the target SDK repo
+# shadow-review.yml — Shadow Reviewer workflow
+# Source: https://github.com/DataDog/rum-ai-toolkit
 name: Shadow Review
 
 on:
@@ -115,7 +115,7 @@ jobs:
 
           ---
 
-          ### Original PR Description
+          ## Original PR Description
 
           ${PR_BODY}")
 
