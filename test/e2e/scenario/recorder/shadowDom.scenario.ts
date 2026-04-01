@@ -6,19 +6,19 @@ import type {
 } from '@datadog/browser-rum/src/types'
 import { IncrementalSource, MouseInteractionType, NodeType } from '@datadog/browser-rum/src/types'
 
-import { createMutationPayloadValidatorFromSegment } from '@datadog/browser-rum/test/mutationPayloadValidator'
+import { createMutationPayloadValidatorFromSegment } from '@datadog/browser-rum/test/record/mutationPayloadValidator'
 import {
   findElementWithIdAttribute,
   findElementWithTagName,
   findNode,
   findTextContent,
   findTextNode,
-} from '@datadog/browser-rum/test/nodes'
+} from '@datadog/browser-rum/test/record/nodes'
 import {
   findFullSnapshot,
   findIncrementalSnapshot,
   findMouseInteractionRecords,
-} from '@datadog/browser-rum/test/segments'
+} from '@datadog/browser-rum/test/record/segments'
 
 import { test, expect } from '@playwright/test'
 import { createTest, html } from '../../lib/framework'
@@ -333,9 +333,9 @@ function findElementsInShadowDom(node: SerializedNodeWithId, id: string) {
   const input = findElementWithIdAttribute(node, `input-${id}`)
   expect(input).toBeTruthy()
 
-  const text = findElementWithIdAttribute(node, `label-${id}`)
+  const text = findElementWithIdAttribute(node, `label-${id}`)!
   expect(text).toBeTruthy()
-  const textContent = findTextContent(text!)
+  const textContent = findTextContent(text)
   expect(textContent).toBeTruthy()
   return { shadowHost, shadowRoot, input, text, textContent }
 }
