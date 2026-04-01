@@ -61,8 +61,12 @@ export class BrowserLogsManager {
   }
 }
 
-export function deleteAllCookies(context: BrowserContext) {
-  return context.clearCookies()
+export async function deleteAllCookies(context: BrowserContext) {
+  try {
+    await context.clearCookies()
+  } catch {
+    // WebView contexts don't support cookie management via CDP
+  }
 }
 
 export function setCookie(page: Page, name: string, value: string, expiresDelay: number = 0) {
