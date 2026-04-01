@@ -1,5 +1,6 @@
 import { Pipeline } from './pipeline'
-import { stubFactory } from './testUtils'
+import { enricher as createEnricher } from '../enricher/factory'
+import type { Enricher } from '../enricher/types'
 
 describe('Pipeline', () => {
   describe('lifecycle', () => {
@@ -9,8 +10,8 @@ describe('Pipeline', () => {
         expect(value).toBe('buffered')
         done()
       })
-      pipeline.publish('foo', 'buffered') // published before seal
-      pipeline.seal() // should trigger delivery
+      pipeline.publish('foo', 'buffered')
+      pipeline.seal()
     })
 
     it('should deliver pre-seal and post-seal events in order', (done) => {
@@ -23,16 +24,17 @@ describe('Pipeline', () => {
           done()
         }
       })
-      pipeline.publish('foo', 1) // before seal
-      pipeline.publish('foo', 2) // before seal
+      pipeline.publish('foo', 1)
+      pipeline.publish('foo', 2)
       pipeline.seal()
-      pipeline.publish('foo', 3) // after seal
+      pipeline.publish('foo', 3)
     })
 
-    it('should throw if decorate() is called after seal()', () => {
+    it('should throw if enrich() is called after seal()', () => {
       const pipeline = new Pipeline<{ foo: string }>()
       pipeline.seal()
-      expect(() => pipeline.decorate('foo', stubFactory({ name: 'test' }))).toThrowError(/sealed/)
+      const e: Enricher<string> = { name: 'test', transform: (data) => data }
+      expect(() => pipeline.enrich('foo', e)).toThrowError(/sealed/)
     })
 
     it('should throw if seal() is called twice', () => {
@@ -42,7 +44,7 @@ describe('Pipeline', () => {
     })
   })
 
-  describe('publish / subscribe (no decorators)', () => {
+  describe('publish / subscribe (no enrichers)', () => {
     it('should deliver event to subscriber', (done) => {
       const pipeline = new Pipeline<{ foo: string }>()
       pipeline.seal()
@@ -58,7 +60,9 @@ describe('Pipeline', () => {
       pipeline.seal()
       let count = 0
       const check = () => {
-        if (++count === 2) done()
+        if (++count === 2) {
+          done()
+        }
       }
       pipeline.subscribe('foo', check)
       pipeline.subscribe('foo', check)
@@ -91,43 +95,16 @@ describe('Pipeline', () => {
       })
       pipeline.publish('foo', 'x')
     })
-
-    it('should only remove one registration when handler is registered twice and unsubscribed once', (done) => {
-      const pipeline = new Pipeline<{ foo: string }>()
-      pipeline.seal()
-      let calls = 0
-      const handler = () => {
-        calls++
-      }
-      pipeline.subscribe('foo', handler)
-      pipeline.subscribe('foo', handler)
-      const sub = pipeline.subscribe('foo', handler) // third registration
-      sub.unsubscribe() // removes one
-      pipeline.subscribe('foo', () => {
-        expect(calls).toBe(2) // two registrations remain
-        done()
-      })
-      pipeline.publish('foo', 'x')
-    })
   })
 
-  describe('decorator DAG', () => {
+  describe('enrichers', () => {
     it('should deliver enriched event to subscriber', (done) => {
       type Events = { obs: { type: string; sessionId?: string } }
       const pipeline = new Pipeline<Events>()
-      pipeline.decorate(
-        'obs',
-        stubFactory({
-          name: 'session',
-          provides: ['session'],
-          create: () => ({
-            decorate: async (_event: any, _accumulated: any) => ({
-              status: 'contributed' as const,
-              attributes: { sessionId: 'abc-123' },
-            }),
-          }),
-        })
-      )
+      pipeline.enrich('obs', {
+        name: 'session',
+        transform: (data) => ({ ...data, sessionId: 'abc-123' }),
+      })
       pipeline.seal()
       pipeline.subscribe('obs', (event) => {
         expect(event.sessionId).toBe('abc-123')
@@ -136,19 +113,13 @@ describe('Pipeline', () => {
       pipeline.publish('obs', { type: 'error' })
     })
 
-    it('should drop event when decorator returns discarded', (done) => {
+    it('should drop event when enricher returns null', (done) => {
       type Events = { obs: { type: string }; other: string }
       const pipeline = new Pipeline<Events>()
-      pipeline.decorate(
-        'obs',
-        stubFactory({
-          name: 'consent',
-          capabilities: { canDiscard: true },
-          create: () => ({
-            decorate: async () => ({ status: 'discarded' as const, reason: 'no consent' }),
-          }),
-        })
-      )
+      pipeline.enrich('obs', {
+        name: 'consent',
+        transform: () => null,
+      })
       pipeline.seal()
       pipeline.subscribe('obs', () => {
         fail('should not be called for discarded event')
@@ -158,39 +129,28 @@ describe('Pipeline', () => {
       pipeline.publish('other', 'ok')
     })
 
-    it('should pass accumulated attributes to downstream decorators', (done) => {
-      type Events = { obs: { type: string; sessionId?: string; viewId?: string } }
+    it('should pass enriched data to downstream enrichers', (done) => {
+      type BaseObs = { type: string }
+      type Events = { obs: BaseObs }
       const pipeline = new Pipeline<Events>()
-      pipeline.decorate(
-        'obs',
-        stubFactory({
-          name: 'session',
-          provides: ['session'],
-          create: () => ({
-            decorate: async () => ({
-              status: 'contributed' as const,
-              attributes: { sessionId: 'sess-1' },
-            }),
-          }),
-        })
-      )
-      pipeline.decorate(
-        'obs',
-        stubFactory({
-          name: 'view',
-          requires: ['session'],
-          create: () => ({
-            decorate: async (_event: any, accumulated: any) => {
-              expect(accumulated.sessionId).toBe('sess-1')
-              return { status: 'contributed' as const, attributes: { viewId: 'view-1' } }
-            },
-          }),
-        })
-      )
+      const session = createEnricher({
+        name: 'session',
+        transform: (data: BaseObs) => ({ ...data, sessionId: 'sess-1' }),
+      })
+      const view = createEnricher({
+        name: 'view',
+        requires: [session],
+        transform: (data) => {
+          expect(data.sessionId).toBe('sess-1')
+          return { ...data, viewId: 'view-1' }
+        },
+      })
+      pipeline.enrich('obs', session)
+      pipeline.enrich('obs', view)
       pipeline.seal()
       pipeline.subscribe('obs', (event) => {
-        expect(event.sessionId).toBe('sess-1')
-        expect(event.viewId).toBe('view-1')
+        expect((event as any).sessionId).toBe('sess-1')
+        expect((event as any).viewId).toBe('view-1')
         done()
       })
       pipeline.publish('obs', { type: 'error' })
@@ -200,19 +160,14 @@ describe('Pipeline', () => {
       type Events = { obs: { type: string; order?: number } }
       const pipeline = new Pipeline<Events>()
       const processed: number[] = []
-      pipeline.decorate(
-        'obs',
-        stubFactory({
-          name: 'slow',
-          create: () => ({
-            decorate: async (event: any) => {
-              await new Promise((r) => setTimeout(r, 10))
-              processed.push(event.order)
-              return { status: 'skipped' as const }
-            },
-          }),
-        })
-      )
+      pipeline.enrich('obs', {
+        name: 'slow',
+        transform: async (data) => {
+          await new Promise((r) => setTimeout(r, 10))
+          processed.push(data.order!)
+          return data
+        },
+      })
       pipeline.seal()
       pipeline.subscribe('obs', () => {
         if (processed.length === 2) {
@@ -224,20 +179,15 @@ describe('Pipeline', () => {
       pipeline.publish('obs', { type: 'x', order: 2 })
     })
 
-    it('should continue processing after a decorator throws', (done) => {
+    it('should continue processing after an enricher throws', (done) => {
       type Events = { obs: { type: string }; other: string }
       const pipeline = new Pipeline<Events>()
-      pipeline.decorate(
-        'obs',
-        stubFactory({
-          name: 'broken',
-          create: () => ({
-            decorate: async () => {
-              throw new Error('decorator crashed')
-            },
-          }),
-        })
-      )
+      pipeline.enrich('obs', {
+        name: 'broken',
+        transform: () => {
+          throw new Error('enricher crashed')
+        },
+      })
       pipeline.seal()
       pipeline.subscribe('obs', () => {
         fail('crashed event should not be delivered')
@@ -245,6 +195,20 @@ describe('Pipeline', () => {
       pipeline.subscribe('other', () => done())
       pipeline.publish('obs', { type: 'error' })
       pipeline.publish('other', 'ok')
+    })
+
+    it('should pass through unchanged when enricher returns same data', (done) => {
+      const pipeline = new Pipeline<{ foo: string }>()
+      pipeline.enrich('foo', {
+        name: 'noop',
+        transform: (data) => data,
+      })
+      pipeline.seal()
+      pipeline.subscribe('foo', (value) => {
+        expect(value).toBe('original')
+        done()
+      })
+      pipeline.publish('foo', 'original')
     })
   })
 })

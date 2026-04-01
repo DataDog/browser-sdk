@@ -34,7 +34,7 @@ const pathsWithSideEffect = new Set([
 // Those packages are known to have no side effects when evaluated
 const packagesWithoutSideEffect = new Set([
   '@datadog/browser-core',
-  '@datadog/browser-core-next',
+  '@datadog/core-next',
   '@datadog/browser-rum-core',
   '@datadog/browser-rum-react/internal',
   'react',
@@ -187,6 +187,11 @@ function isAllowedCallExpression({ callee }) {
 
   // Allow ".concat()"
   if (callee.type === 'MemberExpression' && callee.property.name === 'concat') {
+    return true
+  }
+
+  // Allow "Symbol()" — pure ECMAScript function, creates a unique primitive with no side effects
+  if (callee.type === 'Identifier' && callee.name === 'Symbol') {
     return true
   }
 

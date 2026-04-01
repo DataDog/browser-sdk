@@ -485,6 +485,14 @@ export default tseslint.config(
   },
 
   {
+    files: ['packages/core-next/**/*.ts'],
+    rules: {
+      '@typescript-eslint/array-type': ['error', { default: 'array' }],
+      'import/exports-last': 'error',
+    },
+  },
+
+  {
     files: ['packages/core/src/tools/**/*.ts'],
     ignores: [SPEC_FILES],
     rules: {

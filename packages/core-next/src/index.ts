@@ -1,8 +1,24 @@
-// @datadog/browser-core-next
-// v8 replacement for @datadog/browser-core
-// Re-exports all @datadog/browser-core symbols for API parity during transition.
-// New additions: Pipeline infrastructure (domain/pipeline), expanded session exports.
+/**
+ * @datadog/core-next
+ *
+ * Environment-agnostic pipeline infrastructure for the Datadog SDK v8.
+ * Zero domain knowledge — provides typed pub/sub with enricher chains.
+ *
+ * ## Enricher API
+ * - {@link Enricher} — Interface for a named data transformer.
+ * - {@link enricher} — Factory function to create type-safe enrichers with dependency inference.
+ * - {@link chain} — Composes enrichers into a reusable processing function.
+ * - {@link topologicalSort} — Sorts enrichers by their dependency graph.
+ * - {@link OutputOf} — Extracts the output type from an enricher.
+ * - {@link MaybePromise} — Utility type for sync-or-async values.
+ *
+ * ## Pipeline API
+ * - {@link Pipeline} — Typed pub/sub event bus with enricher support.
+ * - {@link Subscription} — Handle to unsubscribe from a pipeline event.
+ */
 
-export * from '@datadog/browser-core'
+export type { Enricher } from './domain/enricher'
+export { enricher } from './domain/enricher'
 
-export * from './domain/pipeline'
+export { Pipeline } from './domain/pipeline'
+export type { Subscription } from './domain/pipeline'

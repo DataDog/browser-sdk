@@ -1,5 +1,5 @@
 {
-  "name": "@datadog/browser-core-next",
+  "name": "@datadog/core-next",
   "version": "0.0.0",
   "license": "Apache-2.0",
   "main": "cjs/index.js",
@@ -8,9 +8,6 @@
   "sideEffects": false,
   "scripts": {
     "build": "node ../../scripts/build/build-package.ts --modules"
-  },
-  "dependencies": {
-    "@datadog/browser-utils": "*"
   },
   "repository": {
     "type": "git",
