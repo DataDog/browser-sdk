@@ -34,16 +34,15 @@ jobs:
       - name: Mirror PR to shadow fork
         env:
           GITHUB_TOKEN: ${{ secrets.SHADOW_FORK_TOKEN }}
+          SOURCE_REPO: ${{ github.repository }}
+          SHADOW_FORK: ${{ vars.SHADOW_FORK }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
         run: |
           set -euo pipefail
-
-          SOURCE_REPO="${{ github.repository }}"
-          SHADOW_FORK="${{ vars.SHADOW_FORK }}"
-          PR_NUMBER="${{ github.event.pull_request.number }}"
-          PR_HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-          PR_BASE_REF="${{ github.event.pull_request.base.ref }}"
-          PR_TITLE="${{ github.event.pull_request.title }}"
-          PR_BODY="${{ github.event.pull_request.body }}"
 
           WORK_DIR=$(mktemp -d)
           trap 'rm -rf "${WORK_DIR}"' EXIT
