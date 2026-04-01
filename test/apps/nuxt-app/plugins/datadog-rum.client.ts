@@ -1,6 +1,6 @@
 import { datadogRum } from '@datadog/browser-rum'
 import { nuxtRumPlugin } from '@datadog/browser-rum-nuxt'
-import { defineNuxtPlugin, useRoute, useRouter } from '#imports'
+import { defineNuxtPlugin, useRoute, useRouter } from 'nuxt/app'
 
 export default defineNuxtPlugin(() => {
   const route = useRoute()
