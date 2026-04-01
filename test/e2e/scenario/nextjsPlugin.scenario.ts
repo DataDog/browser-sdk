@@ -206,16 +206,12 @@ test.describe('nextjs - errors', () => {
       createTest('should report client-side error')
         .withRum()
         .withNextjsApp(router)
-        .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs, browserName }) => {
-          test.skip(
-            browserName === 'firefox',
-            'firefox is sending the errors in two separate batches, however the last batch is delayed making the test setup to miss it'
-          )
+        .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
           await page.click('text=Go to Error Test')
           await page.waitForURL(`**${viewPrefix}/error-test`)
 
           await page.click('[data-testid="trigger-error"]')
-          await page.waitForSelector('[data-testid="error-boundary"]')
+          await page.waitForSelector('[data-testid="error-boundary"][data-error-reported]')
 
           await flushEvents()
 
@@ -236,7 +232,7 @@ test.describe('nextjs - errors', () => {
           .withNextjsApp(router)
           .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
             await page.click('text=Go to Server Error')
-            await page.waitForSelector('[data-testid="error-boundary"]')
+            await page.waitForSelector('[data-testid="error-boundary"][data-error-reported]')
 
             await flushEvents()
 
