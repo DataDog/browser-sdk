@@ -3,6 +3,7 @@ import { dateNow, ONE_SECOND } from '../tools/utils/timeUtils'
 import { Observable } from '../tools/observable'
 import { mockable } from '../tools/mockable'
 import type { Configuration } from '../domain/configuration'
+import { addTelemetryDebug } from '../domain/telemetry'
 import { addEventListener, DOM_EVENT } from './addEventListener'
 import type { CookieOptions } from './cookie'
 import { getCookie, getCookies, setCookie } from './cookie'
@@ -58,16 +59,33 @@ function createCookieStoreAccess(
       const currentValues = items.map((item) => item.value)
       const { value, expireDelay } = cb(currentValues)
 
-      return cookieStore.set({
-        name: cookieName,
-        value,
-        expires: dateNow() + expireDelay,
-        path: '/',
-        sameSite: cookieOptions.crossSite ? 'none' : 'strict',
-        domain: cookieOptions.domain,
-        secure: cookieOptions.secure,
-        partitioned: cookieOptions.partitioned,
-      })
+      try {
+        await cookieStore.set({
+          name: cookieName,
+          value,
+          expires: dateNow() + expireDelay,
+          path: '/',
+          sameSite: cookieOptions.crossSite ? 'none' : 'strict',
+          domain: cookieOptions.domain,
+          secure: cookieOptions.secure,
+          partitioned: cookieOptions.partitioned,
+        })
+      } catch (error) {
+        const documentCookies = getCookies(cookieName)
+        // monitor-until: 2026-07-01
+        addTelemetryDebug('Failed to set cookie using Cookie Store API', {
+          'error.message': (error as Error).message,
+          newValue: value,
+          cookieOptions: {
+            ...cookieOptions,
+          },
+          cookies: items.map((item) => ({
+            ...item,
+          })),
+          cookieCount: items.length,
+          documentCookies,
+        })
+      }
     },
 
     observable,
