@@ -1,1 +1,103 @@
-404: Not Found
+# shadow-review.yml — Shadow Reviewer workflow for browser-sdk
+# Copy this file to .github/workflows/shadow-review.yml in the target SDK repo
+name: Shadow Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  push:
+    branches: [main]
+
+jobs:
+  # Sync fork on merge to main
+  sync-fork:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync shadow fork
+        env:
+          GITHUB_TOKEN: ${{ secrets.SHADOW_FORK_TOKEN }}
+        run: |
+          gh api \
+            --method POST \
+            "repos/${{ vars.SHADOW_FORK }}/merge-upstream" \
+            -f branch="main" || true
+
+  # Mirror PR to shadow fork (review + post-close disabled for now)
+  shadow-mirror:
+    if: >-
+      github.event_name == 'pull_request'
+      && github.event.pull_request.draft != true
+      && github.event.pull_request.user.type != 'Bot'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mirror PR to shadow fork
+        env:
+          GITHUB_TOKEN: ${{ secrets.SHADOW_FORK_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          SOURCE_REPO="${{ github.repository }}"
+          SHADOW_FORK="${{ vars.SHADOW_FORK }}"
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          PR_HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          PR_BASE_REF="${{ github.event.pull_request.base.ref }}"
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          PR_BODY="${{ github.event.pull_request.body }}"
+
+          WORK_DIR=$(mktemp -d)
+          trap 'rm -rf "${WORK_DIR}"' EXIT
+
+          echo "Mirroring PR #${PR_NUMBER} (${PR_HEAD_SHA}) to ${SHADOW_FORK}..."
+
+          # Determine version number by counting existing shadow branches (exclude -base)
+          VERSION=$(git ls-remote --heads "https://x-access-token:${GITHUB_TOKEN}@github.com/${SHADOW_FORK}.git" "shadow/${PR_NUMBER}/v*" 2>/dev/null \
+            | grep -v '\-base$' | wc -l | tr -d ' ')
+          VERSION=$((VERSION + 1))
+          echo "Version: v${VERSION}"
+
+          SHADOW_BRANCH="shadow/${PR_NUMBER}/v${VERSION}"
+          BASE_BRANCH="shadow/${PR_NUMBER}/v${VERSION}-base"
+
+          # Clone source repo and fetch PR ref
+          git clone --depth=1 --no-checkout "https://x-access-token:${GITHUB_TOKEN}@github.com/${SOURCE_REPO}.git" "${WORK_DIR}/repo"
+          cd "${WORK_DIR}/repo"
+          git fetch origin "pull/${PR_NUMBER}/head:pr-head" --depth=50
+          git fetch origin "${PR_BASE_REF}:base-ref" --depth=50
+
+          # Compute merge base
+          MERGE_BASE=$(git merge-base pr-head base-ref)
+          echo "Merge base: ${MERGE_BASE}"
+
+          # Push base and head branches to shadow fork
+          git remote add shadow "https://x-access-token:${GITHUB_TOKEN}@github.com/${SHADOW_FORK}.git"
+
+          git push shadow "${MERGE_BASE}:refs/heads/${BASE_BRANCH}" || {
+            echo "Push failed — retrying with incremented version..."
+            VERSION=$((VERSION + 1))
+            SHADOW_BRANCH="shadow/${PR_NUMBER}/v${VERSION}"
+            BASE_BRANCH="shadow/${PR_NUMBER}/v${VERSION}-base"
+            git push shadow "${MERGE_BASE}:refs/heads/${BASE_BRANCH}"
+          }
+
+          git push shadow "${PR_HEAD_SHA}:refs/heads/${SHADOW_BRANCH}"
+
+          # Create shadow PR
+          SHADOW_PR_URL=$(gh pr create \
+            --repo "${SHADOW_FORK}" \
+            --base "${BASE_BRANCH}" \
+            --head "${SHADOW_BRANCH}" \
+            --title "Shadow: ${PR_TITLE} (v${VERSION})" \
+            --body "## Shadow Review — PR #${PR_NUMBER} v${VERSION}
+
+          **Source:** https://github.com/${SOURCE_REPO}/pull/${PR_NUMBER}
+          **Commit:** \`${PR_HEAD_SHA}\`
+          **Timestamp:** $(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+          ---
+
+          ### Original PR Description
+
+          ${PR_BODY}")
+
+          echo "Shadow PR created: ${SHADOW_PR_URL}"
