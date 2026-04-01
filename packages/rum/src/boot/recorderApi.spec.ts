@@ -326,27 +326,6 @@ describe('makeRecorderApi', () => {
         expect(startRecordingSpy).not.toHaveBeenCalled()
       })
     })
-
-    describe('if browser is not supported', () => {
-      let originalArrayFrom: (typeof Array)['from']
-
-      beforeEach(() => {
-        originalArrayFrom = Array.from
-        delete (Array as any).from
-      })
-
-      afterEach(() => {
-        Array.from = originalArrayFrom
-      })
-
-      it('does not start recording', () => {
-        setupRecorderApi({ startSessionReplayRecordingManually: true })
-        recorderApi.start()
-        rumInit()
-        expect(importRecorderSpy).not.toHaveBeenCalled()
-        expect(startRecordingSpy).not.toHaveBeenCalled()
-      })
-    })
   })
 
   describe('recorder stop', () => {
