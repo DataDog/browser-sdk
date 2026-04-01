@@ -37,6 +37,7 @@ export default async function globalSetup() {
   await waitForBoot()
   setupAdbReverse()
   await installChromium()
+  installWebViewApp()
 }
 
 async function waitForBoot() {
@@ -65,6 +66,25 @@ function setupAdbReverse() {
     execSync(`adb reverse tcp:${port} tcp:${port}`)
   }
   console.log(`Forwarded ports: ${DEV_SERVER_PORT}, ${PORT_RANGE_START}-${PORT_RANGE_END}`)
+}
+
+const WEBVIEW_APK_PATH = path.join(
+  __dirname,
+  '../../apps/android-webview-app/app/build/outputs/apk/debug/app-debug.apk'
+)
+
+function installWebViewApp() {
+  console.log('Installing WebView test app...')
+  try {
+    if (!fs.existsSync(WEBVIEW_APK_PATH)) {
+      console.log(`WebView APK not found at ${WEBVIEW_APK_PATH}, skipping WebView tests`)
+      return
+    }
+    const result = execSync(`adb install -r -d "${WEBVIEW_APK_PATH}"`, { encoding: 'utf-8', timeout: 30_000 })
+    console.log(`WebView app installed: ${result.trim()}`)
+  } catch (error) {
+    console.log('WebView app install failed (non-fatal):', error)
+  }
 }
 
 // The default Chrome on the emulator is too old for modern web APIs.

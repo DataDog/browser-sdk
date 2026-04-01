@@ -158,6 +158,11 @@ class TestBuilder {
     return this
   }
 
+  withFixture(fixture: typeof test) {
+    this.testFixture = fixture
+    return this
+  }
+
   withExtension(extension: Extension) {
     this.testFixture = extension.fixture
     this.extension.rumConfiguration = extension.rumConfiguration

@@ -1,0 +1,35 @@
+#!/bin/sh
+# Gradle wrapper script — downloads Gradle if needed
+
+APP_NAME="Gradle"
+APP_BASE_NAME=$(basename "$0")
+DIRNAME=$(dirname "$0")
+DEFAULT_JVM_OPTS='"-Xmx64m" "-Xms64m"'
+
+# Resolve JAVA_HOME
+if [ -n "$JAVA_HOME" ] ; then
+    JAVACMD="$JAVA_HOME/bin/java"
+else
+    JAVACMD="java"
+fi
+
+# Determine the distribution URL
+WRAPPER_PROPERTIES="$DIRNAME/gradle/wrapper/gradle-wrapper.properties"
+DIST_URL=$(grep "distributionUrl" "$WRAPPER_PROPERTIES" | sed 's/distributionUrl=//;s/\\:/:/g')
+
+# Download and cache Gradle
+GRADLE_USER_HOME="${GRADLE_USER_HOME:-$HOME/.gradle}"
+DIST_NAME=$(basename "$DIST_URL" .zip)
+GRADLE_HOME="$GRADLE_USER_HOME/wrapper/dists/$DIST_NAME"
+
+if [ ! -d "$GRADLE_HOME" ]; then
+    mkdir -p "$GRADLE_HOME"
+    echo "Downloading $DIST_URL"
+    curl -sL "$DIST_URL" -o "$GRADLE_HOME/gradle.zip"
+    unzip -qo "$GRADLE_HOME/gradle.zip" -d "$GRADLE_HOME"
+    rm "$GRADLE_HOME/gradle.zip"
+fi
+
+GRADLE_BIN=$(find "$GRADLE_HOME" -name "gradle" -path "*/bin/gradle" | head -1)
+
+exec "$GRADLE_BIN" "$@"
