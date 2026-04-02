@@ -53,7 +53,7 @@ function topologicalSort<T extends Enricher<any, any, any>>(enrichers: T[]): T[]
         )
       }
       if (requiredName === enricher.name) {
-        continue
+        throw new Error(`Enricher "${enricher.name}" cannot require itself`)
       }
       if (!adjacency.get(requiredName)!.has(enricher.name)) {
         adjacency.get(requiredName)!.add(enricher.name)

@@ -106,12 +106,11 @@ describe('topologicalSort', () => {
     expect(() => topologicalSort([a, b])).toThrowError(/Duplicate enricher name: "dup"/)
   })
 
-  it('handles self-reference in requires (ignored)', () => {
+  it('throws on self-reference in requires', () => {
     const f = stubEnricher({ name: 'self' })
     f.requires = [f]
 
-    const sorted = topologicalSort([f])
-    expect(sorted.map((f) => f.name)).toEqual(['self'])
+    expect(() => topologicalSort([f])).toThrowError(/cannot require itself/)
   })
 
   it('handles enrichers without requires', () => {
