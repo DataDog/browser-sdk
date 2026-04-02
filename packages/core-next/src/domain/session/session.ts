@@ -17,30 +17,40 @@ interface SessionStore {
   clear(): void
 }
 
+interface SessionOptions {
+  store: SessionStore
+  generateId: () => string
+  now: () => number
+}
+
 interface SessionEvents {
   expired: void
   renewed: void
 }
 
-function generateId(): string {
-  return crypto.randomUUID()
-}
-
 class Session extends EventEmitter<SessionEvents> {
   private state: SessionState
   private expired = false
+  private readonly generateId: () => string
+  private readonly now: () => number
+  private readonly store: SessionStore
 
-  constructor(private readonly store: SessionStore) {
+  constructor(options: SessionOptions) {
     super()
-    const existing = store.get()
+    this.store = options.store
+    this.generateId = options.generateId
+    this.now = options.now
+
+    const existing = this.store.get()
     if (existing) {
       this.state = existing
     } else {
+      const now = this.now()
       this.state = {
-        id: generateId(),
-        deviceId: generateId(),
-        created: Date.now(),
-        lastActivity: Date.now(),
+        id: this.generateId(),
+        deviceId: this.generateId(),
+        created: now,
+        lastActivity: now,
       }
       this.store.set(this.state)
     }
@@ -61,7 +71,7 @@ class Session extends EventEmitter<SessionEvents> {
     if (this.expired) {
       return true
     }
-    const now = Date.now()
+    const now = this.now()
     return now - this.state.created > SESSION_MAX_AGE || now - this.state.lastActivity > SESSION_INACTIVITY_TIMEOUT
   }
 
@@ -69,7 +79,7 @@ class Session extends EventEmitter<SessionEvents> {
     if (this.isExpired()) {
       return
     }
-    this.state = { ...this.state, lastActivity: Date.now() }
+    this.state = { ...this.state, lastActivity: this.now() }
     this.store.set(this.state)
   }
 
@@ -84,16 +94,17 @@ class Session extends EventEmitter<SessionEvents> {
 
   renew(): void {
     this.expired = false
+    const now = this.now()
     this.state = {
       ...this.state,
-      id: generateId(),
-      created: Date.now(),
-      lastActivity: Date.now(),
+      id: this.generateId(),
+      created: now,
+      lastActivity: now,
     }
     this.store.set(this.state)
     this.emit('renewed')
   }
 }
 
-export type { SessionState, SessionStore, SessionEvents }
+export type { SessionState, SessionStore, SessionOptions, SessionEvents }
 export { Session }

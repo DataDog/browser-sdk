@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import { ONE_HOUR, ONE_MINUTE } from '../time'
 import { Session } from './session'
-import type { SessionStore, SessionState } from './session'
+import type { SessionOptions, SessionState, SessionStore } from './session'
 
 const SESSION_MAX_AGE = 4 * ONE_HOUR
 const SESSION_INACTIVITY_TIMEOUT = 15 * ONE_MINUTE
@@ -8,69 +9,65 @@ const SESSION_INACTIVITY_TIMEOUT = 15 * ONE_MINUTE
 function stubStore(initial?: SessionState): SessionStore & { state: SessionState | undefined } {
   const stub = {
     state: initial,
-    get() {
-      return stub.state
-    },
-    set(state: SessionState) {
+    get: () => stub.state,
+    set: (state: SessionState) => {
       stub.state = state
     },
-    clear() {
+    clear: () => {
       stub.state = undefined
     },
   }
   return stub
 }
 
+function createSession(overrides: Partial<SessionOptions> = {}) {
+  let currentTime = 0
+  let idCounter = 0
+  const now = overrides.now ?? (() => currentTime)
+  const generateId = overrides.generateId ?? (() => `id-${idCounter++}`)
+  const store = (overrides.store as ReturnType<typeof stubStore>) ?? stubStore()
+
+  const session = new Session({ store, generateId, now })
+
+  return {
+    session,
+    store,
+    advance(ms: number) {
+      currentTime += ms
+    },
+  }
+}
+
 describe('Session', () => {
-  let clock: jasmine.Clock
-
-  beforeEach(() => {
-    clock = jasmine.clock()
-    clock.install()
-    clock.mockDate()
-  })
-
-  afterEach(() => {
-    clock.uninstall()
-  })
-
   describe('identity', () => {
     it('should generate a session ID on creation when store is empty', () => {
-      const session = new Session(stubStore())
+      const { session } = createSession()
 
-      expect(session.getId()).toBeDefined()
-      expect(session.getId()).toMatch(/^[a-f0-9-]+$/)
+      expect(session.getId()).toBe('id-0')
     })
 
     it('should restore session ID from store', () => {
-      const store = stubStore({
-        id: 'existing-id',
-        deviceId: 'device-1',
-        created: Date.now(),
-        lastActivity: Date.now(),
-      })
-      const session = new Session(store)
+      const store = stubStore({ id: 'existing-id', deviceId: 'device-1', created: 0, lastActivity: 0 })
+      const { session } = createSession({ store })
 
       expect(session.getId()).toBe('existing-id')
     })
 
     it('should generate a device ID on creation when store is empty', () => {
-      const session = new Session(stubStore())
+      const { session } = createSession()
 
-      expect(session.getDeviceId()).toBeDefined()
-      expect(session.getDeviceId()).toMatch(/^[a-f0-9-]+$/)
+      expect(session.getDeviceId()).toBe('id-1')
     })
 
     it('should restore device ID from store', () => {
-      const store = stubStore({ id: 'session-1', deviceId: 'device-1', created: Date.now(), lastActivity: Date.now() })
-      const session = new Session(store)
+      const store = stubStore({ id: 'session-1', deviceId: 'device-1', created: 0, lastActivity: 0 })
+      const { session } = createSession({ store })
 
       expect(session.getDeviceId()).toBe('device-1')
     })
 
     it('should persist session state to store on creation', () => {
-      const store = stubStore()
-      const session = new Session(store)
+      const { session, store } = createSession()
 
       expect(store.state).toBeDefined()
       expect(store.state!.id).toBe(session.getId())
@@ -80,59 +77,59 @@ describe('Session', () => {
 
   describe('expiry', () => {
     it('should not be expired when just created', () => {
-      const session = new Session(stubStore())
+      const { session } = createSession()
 
       expect(session.isExpired()).toBe(false)
     })
 
     it('should expire after max age', () => {
-      const session = new Session(stubStore())
+      const { session, advance } = createSession()
 
-      clock.tick(SESSION_MAX_AGE + 1)
+      advance(SESSION_MAX_AGE + 1)
 
       expect(session.isExpired()).toBe(true)
     })
 
     it('should expire after inactivity timeout', () => {
-      const session = new Session(stubStore())
+      const { session, advance } = createSession()
 
-      clock.tick(SESSION_INACTIVITY_TIMEOUT + 1)
+      advance(SESSION_INACTIVITY_TIMEOUT + 1)
 
       expect(session.isExpired()).toBe(true)
     })
 
     it('should not expire if activity is reported within timeout', () => {
-      const session = new Session(stubStore())
+      const { session, advance } = createSession()
 
-      clock.tick(SESSION_INACTIVITY_TIMEOUT - 1)
+      advance(SESSION_INACTIVITY_TIMEOUT - 1)
       session.touch()
-      clock.tick(SESSION_INACTIVITY_TIMEOUT - 1)
+      advance(SESSION_INACTIVITY_TIMEOUT - 1)
 
       expect(session.isExpired()).toBe(false)
     })
 
     it('should expire even with activity after max age', () => {
-      const session = new Session(stubStore())
+      const { session, advance } = createSession()
 
       for (let i = 0; i < 20; i++) {
-        clock.tick(SESSION_MAX_AGE / 20)
+        advance(SESSION_MAX_AGE / 20)
         session.touch()
       }
-      clock.tick(1)
+      advance(1)
 
       expect(session.isExpired()).toBe(true)
     })
 
     it('should return undefined ID when expired', () => {
-      const session = new Session(stubStore())
+      const { session, advance } = createSession()
 
-      clock.tick(SESSION_MAX_AGE + 1)
+      advance(SESSION_MAX_AGE + 1)
 
       expect(session.getId()).toBeUndefined()
     })
 
     it('should force expire when expire() is called', () => {
-      const session = new Session(stubStore())
+      const { session } = createSession()
 
       session.expire()
 
@@ -142,7 +139,7 @@ describe('Session', () => {
 
   describe('renewal', () => {
     it('should generate a new session ID on renew', () => {
-      const session = new Session(stubStore())
+      const { session } = createSession()
       const firstId = session.getId()
 
       session.renew()
@@ -152,7 +149,7 @@ describe('Session', () => {
     })
 
     it('should keep the same device ID on renew', () => {
-      const session = new Session(stubStore())
+      const { session } = createSession()
       const deviceId = session.getDeviceId()
 
       session.renew()
@@ -161,8 +158,8 @@ describe('Session', () => {
     })
 
     it('should not be expired after renew', () => {
-      const session = new Session(stubStore())
-      clock.tick(SESSION_MAX_AGE + 1)
+      const { session, advance } = createSession()
+      advance(SESSION_MAX_AGE + 1)
 
       session.renew()
 
@@ -170,8 +167,7 @@ describe('Session', () => {
     })
 
     it('should persist renewed state to store', () => {
-      const store = stubStore()
-      const session = new Session(store)
+      const { session, store } = createSession()
 
       session.renew()
 
@@ -181,7 +177,7 @@ describe('Session', () => {
 
   describe('signals', () => {
     it('should emit expired when session expires via expire()', () => {
-      const session = new Session(stubStore())
+      const { session } = createSession()
       const expiredSpy = jasmine.createSpy('expired')
       session.on('expired', expiredSpy)
 
@@ -191,7 +187,7 @@ describe('Session', () => {
     })
 
     it('should emit renewed when session is renewed', () => {
-      const session = new Session(stubStore())
+      const { session } = createSession()
       const renewedSpy = jasmine.createSpy('renewed')
       session.on('renewed', renewedSpy)
 
@@ -201,7 +197,7 @@ describe('Session', () => {
     })
 
     it('should not emit expired twice on consecutive expire() calls', () => {
-      const session = new Session(stubStore())
+      const { session } = createSession()
       const expiredSpy = jasmine.createSpy('expired')
       session.on('expired', expiredSpy)
 
@@ -214,11 +210,10 @@ describe('Session', () => {
 
   describe('touch', () => {
     it('should update lastActivity in store', () => {
-      const store = stubStore()
-      const session = new Session(store)
+      const { session, store, advance } = createSession()
       const initialActivity = store.state!.lastActivity
 
-      clock.tick(1000)
+      advance(1000)
       session.touch()
 
       expect(store.state!.lastActivity).toBeGreaterThan(initialActivity)
