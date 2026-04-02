@@ -95,6 +95,17 @@ describe('startSessionManager', () => {
       expect(fakeStrategy.setSessionState).toHaveBeenCalled()
     })
 
+    it('should resolve with undefined if session initialization fails', async () => {
+      fakeStrategy.setSessionState.and.returnValue(Promise.reject(new Error('storage failure')))
+
+      const sessionManager = await startSessionManager(
+        { sessionStoreStrategyType: STORE_TYPE, sessionSampleRate: 100, trackAnonymousUser: false } as Configuration,
+        createTrackingConsentState(TrackingConsent.GRANTED)
+      )
+
+      expect(sessionManager).toBeUndefined()
+    })
+
     it('should resolve after initialization', async () => {
       const sessionManager = await startSessionManager(
         { sessionStoreStrategyType: STORE_TYPE, sessionSampleRate: 100, trackAnonymousUser: false } as Configuration,

@@ -91,8 +91,8 @@ export async function startSessionManager(
     stopped = true
   })
 
-  const initialState = await resolveInitialState()
-  if (stopped) {
+  const initialState = await resolveInitialState().catch(monitorError)
+  if (!initialState || stopped) {
     return
   }
 
