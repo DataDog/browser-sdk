@@ -16,6 +16,9 @@ describe('buildConfiguration', () => {
       site: 'datadoghq.com',
       enabled: true,
       sessionSampleRate: 100,
+      telemetrySampleRate: 20,
+      telemetryConfigurationSampleRate: 5,
+      telemetryUsageSampleRate: 5,
     })
   })
 
@@ -99,6 +102,9 @@ describe('validateConfiguration', () => {
       site: 'datadoghq.com',
       enabled: true,
       sessionSampleRate: 100,
+      telemetrySampleRate: 20,
+      telemetryConfigurationSampleRate: 5,
+      telemetryUsageSampleRate: 5,
       rum: { applicationId: 'xyz' },
     })
   })

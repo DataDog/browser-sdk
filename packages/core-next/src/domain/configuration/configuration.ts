@@ -3,6 +3,9 @@ interface InitConfiguration {
   site: string
   enabled?: boolean
   sessionSampleRate?: number
+  telemetrySampleRate?: number
+  telemetryConfigurationSampleRate?: number
+  telemetryUsageSampleRate?: number
   env?: string
   service?: string
   version?: string
@@ -13,6 +16,9 @@ interface Configuration {
   site: string
   enabled: boolean
   sessionSampleRate: number
+  telemetrySampleRate: number
+  telemetryConfigurationSampleRate: number
+  telemetryUsageSampleRate: number
   env?: string
   service?: string
   version?: string
@@ -38,6 +44,9 @@ function buildConfiguration(
     site: init.site,
     enabled: init.enabled ?? true,
     sessionSampleRate: init.sessionSampleRate ?? 100,
+    telemetrySampleRate: init.telemetrySampleRate ?? 20,
+    telemetryConfigurationSampleRate: init.telemetryConfigurationSampleRate ?? 5,
+    telemetryUsageSampleRate: init.telemetryUsageSampleRate ?? 5,
     ...(init.env !== undefined && { env: init.env }),
     ...(init.service !== undefined && { service: init.service }),
     ...(init.version !== undefined && { version: init.version }),

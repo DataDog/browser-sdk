@@ -48,3 +48,6 @@ export { EventEmitter, throttle } from './utils'
 export type { InitConfiguration, Configuration, ConfigExtension } from './domain/configuration/configuration'
 export { buildConfiguration } from './domain/configuration/configuration'
 export { validateConfiguration } from './domain/configuration/validation'
+
+export type { TelemetryConfig, TelemetryEvent } from './domain/telemetry/telemetry'
+export { Telemetry } from './domain/telemetry/telemetry'
