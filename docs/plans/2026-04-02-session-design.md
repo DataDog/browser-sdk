@@ -2,7 +2,7 @@
 
 ## Context
 
-With deterministic session IDs, the session system simplifies dramatically compared to the legacy SDK. There is no state machine, no tracking types, and no product-specific state in the session. Sampling is decoupled and handled by each product module independently.
+With deterministic sampling, the session system simplifies dramatically compared to the legacy SDK. There is no state machine, no tracking types, and no product-specific state in the session. The session always has an ID — products derive their sampling decisions deterministically from it (e.g., `hash(sessionId) % 100 < sampleRate`). This means a given session ID always produces the same sampling result for each product.
 
 ## Design
 
@@ -10,7 +10,7 @@ With deterministic session IDs, the session system simplifies dramatically compa
 
 Two identities managed by the session:
 
-- **Session ID** — deterministic, always present when active. Derived from device ID + time window. Renewed on expiry.
+- **Session ID** — always present when active. Renewed on expiry. Products derive sampling decisions deterministically from it.
 - **Device ID** — long-lived, persists across sessions. Generated once, stored permanently.
 
 ### Session lifecycle
@@ -69,14 +69,13 @@ The session emits signals via the `EventEmitter`:
 
 - Cross-tab synchronization (browser-specific polling)
 - Cookie/localStorage/memory storage implementations
-- Session sampling (product-level concern)
+- Sampling logic (products derive it deterministically from the session ID)
 - Tracking types (removed — products decide independently)
-- Deterministic ID generation algorithm (depends on device ID + hashing — may need crypto APIs)
 - Activity detection (DOM events — browser-specific)
 
 ### Relationship with other domains
 
-- **Configuration** — reads `sessionSampleRate` (but sampling is applied by products, not session)
+- **Configuration** — `sessionSampleRate` is not a session concern. Products read it and derive sampling from the session ID.
 - **Transport** — `enabled: false` does not affect session. They are independent.
 - **Telemetry** — session ID is provided via context provider: `telemetry.registerContext(() => ({ sessionId: session.getId() }))`
 - **Enrichers** — a session enricher reads from the session and adds `sessionId` to observations
