@@ -1,6 +1,6 @@
-import { Pipeline } from './pipeline'
-import { enricher as createEnricher, DISCARD } from '../enricher'
+import { DISCARD, enricher as createEnricher } from '../enricher'
 import type { AnyEnricher } from '../enricher'
+import { Pipeline } from './pipeline'
 
 describe('Pipeline', () => {
   describe('lifecycle', () => {
@@ -99,7 +99,9 @@ describe('Pipeline', () => {
 
   describe('enrichers', () => {
     it('should deliver enriched event to subscriber', (done) => {
-      type Events = { obs: { type: string; sessionId?: string } }
+      interface Events {
+        obs: { type: string; sessionId?: string }
+      }
       const pipeline = new Pipeline<Events>()
       pipeline.enrich('obs', {
         name: 'session',
@@ -114,7 +116,10 @@ describe('Pipeline', () => {
     })
 
     it('should drop event when enricher returns DISCARD', (done) => {
-      type Events = { obs: { type: string }; other: string }
+      interface Events {
+        obs: { type: string }
+        other: string
+      }
       const pipeline = new Pipeline<Events>()
       pipeline.enrich('obs', {
         name: 'consent',
@@ -130,8 +135,12 @@ describe('Pipeline', () => {
     })
 
     it('should pass enriched data to downstream enrichers', (done) => {
-      type BaseObs = { type: string }
-      type Events = { obs: BaseObs }
+      interface BaseObs {
+        type: string
+      }
+      interface Events {
+        obs: BaseObs
+      }
       const pipeline = new Pipeline<Events>()
       const session = createEnricher({
         name: 'session',
@@ -157,14 +166,16 @@ describe('Pipeline', () => {
     })
 
     it('should process events sequentially (not concurrently)', (done) => {
-      type Events = { obs: { type: string; order?: number } }
+      interface Events {
+        obs: { type: string; order?: number }
+      }
       const pipeline = new Pipeline<Events>()
       const processed: number[] = []
       pipeline.enrich('obs', {
         name: 'slow',
         transform: async (data) => {
           await new Promise((r) => setTimeout(r, 10))
-          processed.push(data.order!)
+          processed.push(data.order)
           return data
         },
       })
@@ -180,7 +191,10 @@ describe('Pipeline', () => {
     })
 
     it('should continue processing after an enricher throws', (done) => {
-      type Events = { obs: { type: string }; other: string }
+      interface Events {
+        obs: { type: string }
+        other: string
+      }
       const pipeline = new Pipeline<Events>()
       pipeline.enrich('obs', {
         name: 'broken',
@@ -195,6 +209,31 @@ describe('Pipeline', () => {
       pipeline.subscribe('other', () => done())
       pipeline.publish('obs', { type: 'error' })
       pipeline.publish('other', 'ok')
+    })
+
+    it('should report enricher errors via onError callback', (done) => {
+      interface Events {
+        obs: { type: string }
+      }
+      const onError = jasmine.createSpy('onError')
+      const pipeline = new Pipeline<Events>({ onError })
+      pipeline.enrich('obs', {
+        name: 'broken',
+        transform: () => {
+          throw new Error('enricher crashed')
+        },
+      })
+      pipeline.seal()
+      pipeline.subscribe('obs', () => {
+        fail('crashed event should not be delivered')
+      })
+      pipeline.publish('obs', { type: 'error' })
+      setTimeout(() => {
+        expect(onError).toHaveBeenCalledTimes(1)
+        expect(onError.calls.first().args[0]).toBeInstanceOf(Error)
+        expect(onError.calls.first().args[0].message).toBe('enricher crashed')
+        done()
+      }, 10)
     })
 
     it('should pass through unchanged when enricher returns same data', (done) => {

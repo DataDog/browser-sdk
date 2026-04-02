@@ -1,2 +1,2 @@
+export type { Subscription, PipelineOptions } from './pipeline'
 export { Pipeline } from './pipeline'
-export type { Subscription } from './pipeline'

@@ -4,7 +4,7 @@ import { chain } from '../enricher'
 /**
  * Handle returned by {@link Pipeline.subscribe} to remove a subscription.
  */
-export interface Subscription {
+interface Subscription {
   /** Removes the subscription. The handler will no longer be called for new events. */
   unsubscribe: () => void
 }
@@ -52,13 +52,22 @@ export interface Subscription {
  * ```
  * @typeParam TEventMap - A record mapping event type names to their data types.
  */
-export class Pipeline<TEventMap extends Record<string, unknown>> {
+interface PipelineOptions {
+  onError?: (error: unknown) => void
+}
+
+class Pipeline<TEventMap extends Record<string, unknown>> {
   private enrichers = new Map<keyof TEventMap, AnyEnricher[]>()
   private chains = new Map<keyof TEventMap, (data: any) => Promise<any | null>>()
   private handlers = new Map<keyof TEventMap, ((event: any) => void)[]>()
   private queue: { type: keyof TEventMap; data: any }[] = []
   private processing = false
   private sealed = false
+  private readonly onError: ((error: unknown) => void) | undefined
+
+  constructor(options?: PipelineOptions) {
+    this.onError = options?.onError
+  }
 
   /**
    * Registers an enricher for the given event type.
@@ -145,10 +154,13 @@ export class Pipeline<TEventMap extends Record<string, unknown>> {
             handler(result)
           }
         }
-      } catch {
-        // An enricher threw — skip this event but continue processing the queue
+      } catch (error) {
+        this.onError?.(error)
       }
     }
     this.processing = false
   }
 }
+
+export type { Subscription, PipelineOptions }
+export { Pipeline }
