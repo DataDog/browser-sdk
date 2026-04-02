@@ -1,4 +1,4 @@
-import { buildConfiguration, createConfigReader } from './configuration'
+import { buildConfiguration } from './configuration'
 import type { ConfigExtension } from './configuration'
 
 const validBase = {
@@ -87,14 +87,5 @@ describe('buildConfiguration', () => {
 
     expect(config).not.toBeNull()
     expect((config as any).rum).toBeUndefined()
-  })
-})
-
-describe('createConfigReader', () => {
-  it('should return the config via get()', () => {
-    const config = buildConfiguration(validBase, [])!
-    const reader = createConfigReader(config)
-
-    expect(reader.get()).toBe(config)
   })
 })

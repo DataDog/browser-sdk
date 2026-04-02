@@ -1,4 +1,4 @@
-interface SdkInitConfiguration {
+interface InitConfiguration {
   clientToken: string
   site: string
   enabled?: boolean
@@ -8,7 +8,7 @@ interface SdkInitConfiguration {
   version?: string
 }
 
-interface SdkConfiguration {
+interface Configuration {
   clientToken: string
   site: string
   enabled: boolean
@@ -23,19 +23,15 @@ interface ConfigExtension<TKey extends string, TInit, TConfig> {
   validate(init: TInit | undefined): TConfig | null
 }
 
-interface ConfigReader<TConfig extends SdkConfiguration = SdkConfiguration> {
-  get(): TConfig
-}
-
 function buildConfiguration(
-  init: SdkInitConfiguration,
+  init: InitConfiguration,
   extensions: ConfigExtension<string, unknown, unknown>[]
-): (SdkConfiguration & Record<string, unknown>) | null {
+): (Configuration & Record<string, unknown>) | null {
   if (!init.clientToken || !init.site) {
     return null
   }
 
-  const base: SdkConfiguration = {
+  const base: Configuration = {
     clientToken: init.clientToken,
     site: init.site,
     enabled: init.enabled ?? true,
@@ -45,7 +41,7 @@ function buildConfiguration(
     ...(init.version !== undefined && { version: init.version }),
   }
 
-  const result: SdkConfiguration & Record<string, unknown> = { ...base }
+  const result: Configuration & Record<string, unknown> = { ...base }
 
   for (const extension of extensions) {
     const initSlice = (init as unknown as Record<string, unknown>)[extension.key]
@@ -62,11 +58,5 @@ function buildConfiguration(
   return result
 }
 
-function createConfigReader<TConfig extends SdkConfiguration>(config: TConfig): ConfigReader<TConfig> {
-  return {
-    get: () => config,
-  }
-}
-
-export type { SdkInitConfiguration, SdkConfiguration, ConfigExtension, ConfigReader }
-export { buildConfiguration, createConfigReader }
+export type { InitConfiguration, Configuration, ConfigExtension }
+export { buildConfiguration }

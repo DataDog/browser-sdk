@@ -45,10 +45,5 @@ export { Batch } from './domain/transport/batch'
 
 export { EventEmitter, throttle } from './utils'
 
-export type {
-  SdkInitConfiguration,
-  SdkConfiguration,
-  ConfigExtension,
-  ConfigReader,
-} from './domain/configuration/configuration'
-export { buildConfiguration, createConfigReader } from './domain/configuration/configuration'
+export type { InitConfiguration, Configuration, ConfigExtension } from './domain/configuration/configuration'
+export { buildConfiguration } from './domain/configuration/configuration'
