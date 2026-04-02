@@ -65,6 +65,8 @@ class Telemetry {
     config: TelemetryConfig,
     private readonly onEvent: (event: RawTelemetry & Record<string, unknown>) => void
   ) {
+    // Sampling is decided once at init and applies for the entire page load.
+    // All events of each type are either all sent or all dropped — no per-event sampling.
     const sampled = isSampled(config.telemetrySampleRate)
     this.enabled = !EXCLUDED_SITES.includes(config.site) && sampled
     this.usageEnabled = this.enabled && isSampled(config.telemetryUsageSampleRate)
