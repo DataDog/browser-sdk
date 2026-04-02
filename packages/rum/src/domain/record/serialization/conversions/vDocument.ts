@@ -2,6 +2,7 @@ import type {
   AddedNodeMutation,
   AttributeMutation,
   BrowserFullSnapshotRecord,
+  BrowserFullSnapshotV1Record,
   BrowserIncrementalSnapshotRecord,
   RemovedNodeMutation,
   TextMutation,
@@ -32,8 +33,8 @@ export interface VDocument {
   get mutations(): MutationLog
 
   naturalRendering(): BrowserFullSnapshotRecord['type'] | BrowserIncrementalSnapshotRecord['type']
-  render(options?: Partial<V1RenderOptions>): BrowserFullSnapshotRecord | BrowserIncrementalSnapshotRecord
-  renderAsFullSnapshot(options?: Partial<V1RenderOptions>): BrowserFullSnapshotRecord
+  render(options?: Partial<V1RenderOptions>): BrowserFullSnapshotV1Record | BrowserIncrementalSnapshotRecord
+  renderAsFullSnapshot(options?: Partial<V1RenderOptions>): BrowserFullSnapshotV1Record
   renderAsIncrementalSnapshot(options?: Partial<V1RenderOptions>): BrowserIncrementalSnapshotRecord
 
   root: VNode | undefined
@@ -131,14 +132,14 @@ export function createVDocument(): VDocument {
       return RecordType.IncrementalSnapshot
     },
 
-    render(options?: Partial<V1RenderOptions>): BrowserFullSnapshotRecord | BrowserIncrementalSnapshotRecord {
+    render(options?: Partial<V1RenderOptions>): BrowserFullSnapshotV1Record | BrowserIncrementalSnapshotRecord {
       if (self.naturalRendering() === RecordType.FullSnapshot) {
         return self.renderAsFullSnapshot(options)
       }
       return self.renderAsIncrementalSnapshot(options)
     },
 
-    renderAsFullSnapshot(renderOptions: Partial<V1RenderOptions> = {}): BrowserFullSnapshotRecord {
+    renderAsFullSnapshot(renderOptions: Partial<V1RenderOptions> = {}): BrowserFullSnapshotV1Record {
       const options = createV1RenderOptions(renderOptions)
 
       const root = self.root

@@ -1,5 +1,5 @@
 import { getGlobalObject } from '@datadog/browser-core'
-import { NodeType, IncrementalSource } from '../../src/types'
+import { NodeType, IncrementalSource, SnapshotFormat } from '../../src/types'
 import type {
   SerializedNodeWithId,
   ElementNode,
@@ -10,7 +10,7 @@ import type {
   BrowserSegment,
   BrowserMutationData,
 } from '../../src/types'
-import { findAllIncrementalSnapshots, findFullSnapshot } from './segments'
+import { findAllIncrementalSnapshots, findFullSnapshotInFormat } from './segments'
 import { findTextNode, findElementWithTagName, findElementWithIdAttribute } from './nodes'
 
 // Should match both jasmine and playwright 'expect' functions
@@ -210,7 +210,7 @@ export function createMutationPayloadValidator(initialDocument: SerializedNodeWi
  * add and remove mutations.
  */
 export function createMutationPayloadValidatorFromSegment(segment: BrowserSegment, options?: { expect?: Expect }) {
-  const fullSnapshot = findFullSnapshot(segment)!
+  const fullSnapshot = findFullSnapshotInFormat(SnapshotFormat.V1, segment)!
   if (!fullSnapshot) {
     throw new Error('Full snapshot not found')
   }

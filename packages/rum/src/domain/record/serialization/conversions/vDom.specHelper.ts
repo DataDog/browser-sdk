@@ -1,5 +1,6 @@
 import type {
   BrowserFullSnapshotRecord,
+  BrowserFullSnapshotV1Record,
   BrowserIncrementalSnapshotRecord,
   BrowserMutationPayload,
   SerializedNodeWithId,
@@ -63,14 +64,14 @@ export function expectMutations(
 
 export function expectFullSnapshotRendering(
   document: VDocument,
-  data: BrowserFullSnapshotRecord['data'],
+  data: BrowserFullSnapshotV1Record['data'],
   naturalRendering:
     | BrowserFullSnapshotRecord['type']
     | BrowserIncrementalSnapshotRecord['type'] = RecordType.FullSnapshot
 ): void {
   expect(document.naturalRendering()).toBe(naturalRendering)
 
-  const expectedRecord: BrowserFullSnapshotRecord = {
+  const expectedRecord: BrowserFullSnapshotV1Record = {
     data,
     type: RecordType.FullSnapshot,
     timestamp: 0,
@@ -87,7 +88,7 @@ export function expectFullSnapshotRendering(
 export function expectIncrementalSnapshotRendering(
   document: VDocument,
   incrementalSnapshotPayload: BrowserMutationPayload,
-  fullSnapshotData: BrowserFullSnapshotRecord['data']
+  fullSnapshotData: BrowserFullSnapshotV1Record['data']
 ): void {
   expect(document.naturalRendering()).toBe(RecordType.IncrementalSnapshot)
 

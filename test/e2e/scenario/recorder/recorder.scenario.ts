@@ -1,5 +1,5 @@
 import type { InputData, StyleSheetRuleData, ScrollData } from '@datadog/browser-rum/src/types'
-import { NodeType, IncrementalSource } from '@datadog/browser-rum/src/types'
+import { NodeType, IncrementalSource, SnapshotFormat } from '@datadog/browser-rum/src/types'
 
 import { DefaultPrivacyLevel } from '@datadog/browser-core'
 
@@ -14,6 +14,7 @@ import {
   findIncrementalSnapshot,
   findAllIncrementalSnapshots,
   findMeta,
+  findFullSnapshotInFormat,
 } from '@datadog/browser-rum/test/record/segments'
 import { createMutationPayloadValidatorFromSegment } from '@datadog/browser-rum/test/record/mutationPayloadValidator'
 import { test, expect } from '@playwright/test'
@@ -90,7 +91,7 @@ test.describe('recorder', () => {
 
         expect(intakeRegistry.replaySegments).toHaveLength(1)
 
-        const fullSnapshot = findFullSnapshot(intakeRegistry.replaySegments[0])!
+        const fullSnapshot = findFullSnapshotInFormat(SnapshotFormat.V1, intakeRegistry.replaySegments[0])!
 
         const node = findElementWithIdAttribute(fullSnapshot.data.node, 'not-obfuscated')
         expect(node).toBeTruthy()
@@ -501,7 +502,7 @@ test.describe('recorder', () => {
         expect((selectRecords[0].data as { text?: string }).text).toBe('2')
 
         function filterRecordsByIdAttribute(idAttribute: string) {
-          const fullSnapshot = findFullSnapshot({ records: intakeRegistry.replayRecords })!
+          const fullSnapshot = findFullSnapshotInFormat(SnapshotFormat.V1, { records: intakeRegistry.replayRecords })!
           const id = findElementWithIdAttribute(fullSnapshot.data.node, idAttribute)!.id
           const records = findAllIncrementalSnapshots(
             { records: intakeRegistry.replayRecords },
@@ -721,7 +722,7 @@ test.describe('recorder', () => {
         expect(intakeRegistry.replaySegments).toHaveLength(2)
         const firstSegment = intakeRegistry.replaySegments[0]
 
-        const firstFullSnapshot = findFullSnapshot(firstSegment)!
+        const firstFullSnapshot = findFullSnapshotInFormat(SnapshotFormat.V1, firstSegment)!
         let htmlElement = findElementWithTagName(firstFullSnapshot.data.node, 'html')!
         expect(htmlElement.attributes.rr_scrollTop).toBe(100)
         let containerElement = findElementWithIdAttribute(firstFullSnapshot.data.node, 'container')!
@@ -733,7 +734,7 @@ test.describe('recorder', () => {
         expect(windowScrollData.y).toEqual(150)
         expect(containerScrollData.x).toEqual(20)
 
-        const secondFullSnapshot = findFullSnapshot(intakeRegistry.replaySegments.at(-1)!)!
+        const secondFullSnapshot = findFullSnapshotInFormat(SnapshotFormat.V1, intakeRegistry.replaySegments.at(-1)!)!
         htmlElement = findElementWithTagName(secondFullSnapshot.data.node, 'html')!
         expect(htmlElement.attributes.rr_scrollTop).toBe(150)
         containerElement = findElementWithIdAttribute(secondFullSnapshot.data.node, 'container')!
