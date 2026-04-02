@@ -1,5 +1,5 @@
 import { Telemetry } from './telemetry'
-import type { TelemetryConfig, RawTelemetry } from './telemetry'
+import type { RawTelemetry, TelemetryConfig } from './telemetry'
 
 const EXCLUDED_SITE = 'us1.ddog-gov.com'
 
@@ -101,6 +101,18 @@ describe('Telemetry - deduplication', () => {
 
     telemetry.debug('message a')
     telemetry.debug('message b')
+
+    expect(events.length).toBe(2)
+  })
+
+  it('should allow same message when context changes', () => {
+    const { telemetry, events } = createTelemetry()
+    let sessionId = 'session-1'
+    telemetry.registerContext(() => ({ sessionId }))
+
+    telemetry.debug('same message')
+    sessionId = 'session-2'
+    telemetry.debug('same message')
 
     expect(events.length).toBe(2)
   })

@@ -120,7 +120,14 @@ class Telemetry {
       return
     }
 
-    const serialized = JSON.stringify(rawTelemetry)
+    const context = this.contextProviders.reduce<Record<string, unknown>>(
+      (acc, provider) => ({ ...acc, ...provider() }),
+      {}
+    )
+
+    const event = { ...rawTelemetry, ...context } as RawTelemetry & Record<string, unknown>
+
+    const serialized = JSON.stringify(event)
     let sent = this.sentEventsByKind.get(kind)
     if (!sent) {
       sent = new Set()
@@ -129,13 +136,6 @@ class Telemetry {
     if (sent.has(serialized)) {
       return
     }
-
-    const context = this.contextProviders.reduce<Record<string, unknown>>(
-      (acc, provider) => ({ ...acc, ...provider() }),
-      {}
-    )
-
-    const event = { ...rawTelemetry, ...context } as RawTelemetry & Record<string, unknown>
 
     this.eventCountByKind.set(kind, count + 1)
     sent.add(serialized)
