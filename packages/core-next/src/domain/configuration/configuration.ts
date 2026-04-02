@@ -11,7 +11,6 @@ interface InitConfiguration {
   env?: string
   service?: string
   version?: string
-  [key: string]: unknown
 }
 
 interface Configuration {
@@ -56,7 +55,7 @@ function buildConfiguration(
   const result: Configuration & Record<string, unknown> = { ...base }
 
   for (const extension of extensions) {
-    const initSlice = init[extension.key]
+    const initSlice = (init as unknown as Record<string, unknown>)[extension.key]
     if (initSlice === undefined) {
       continue
     }
