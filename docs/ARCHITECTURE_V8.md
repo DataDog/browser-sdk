@@ -156,7 +156,14 @@ flowchart TD
 
 ### Pipeline
 
-Typed pub/sub event bus. Collectors publish raw events. The pipeline runs them through the enricher chain before notifying subscribers.
+Typed pub/sub event bus with multiple tracks. Each track has different processing guarantees:
+
+| Track       | Ordering               | Enrichers        | Use case                                         |
+| ----------- | ---------------------- | ---------------- | ------------------------------------------------ |
+| **ordered** | Sequential, guaranteed | Async or sync    | RUM events, logs — view before action            |
+| **fast**    | None                   | Synchronous only | Telemetry — must never wait behind a stuck event |
+
+Collectors publish to a specific track. Fast-track events bypass the ordered queue entirely — a stuck RUM enricher cannot block telemetry signals.
 
 ### Enricher chain
 
@@ -173,6 +180,16 @@ Accumulates serialized messages, emits a `flush` event when size/count/timeout l
 ### Transport
 
 Pluggable interface — `browser-core` provides `HttpTransport` (fetch + beacon + retry). Any environment can provide its own implementation.
+
+## Telemetry
+
+Telemetry signals (errors, usage, debug) are published to the pipeline's **fast track**. This guarantees:
+
+- Telemetry is never blocked by stuck RUM/log events
+- No ordering requirements — a telemetry error doesn't need to wait for the current view
+- Enrichers on the fast track must be synchronous — no async that could hang
+
+Context (session ID, service, version) is provided by synchronous context providers registered specifically for the telemetry track.
 
 ## Tracking consent
 
