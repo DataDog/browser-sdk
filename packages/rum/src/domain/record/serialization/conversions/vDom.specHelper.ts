@@ -5,7 +5,7 @@ import type {
   BrowserMutationPayload,
   SerializedNodeWithId,
 } from '../../../../types'
-import { IncrementalSource, RecordType } from '../../../../types'
+import { IncrementalSource, RecordType, SnapshotFormat } from '../../../../types'
 import type { NodeId } from '../../itemIds'
 import { createV1RenderOptions } from './renderOptions'
 import type { VDocument } from './vDocument'
@@ -73,6 +73,7 @@ export function expectFullSnapshotRendering(
 
   const expectedRecord: BrowserFullSnapshotV1Record = {
     data,
+    format: SnapshotFormat.V1,
     type: RecordType.FullSnapshot,
     timestamp: 0,
   }
