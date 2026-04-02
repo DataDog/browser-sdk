@@ -1,28 +1,25 @@
+import type { RumPlugin, RumPublicApi } from '@datadog/browser-rum-core'
 import type { Router } from 'vue-router'
-import type { RumPlugin, StartRumResult } from '@datadog/browser-rum-core'
 import { startTrackingNuxtViews } from './router/nuxtRouter'
 
-type StartSubscriber = (addError: StartRumResult['addError']) => void
+export type NuxtPlugin = Pick<Required<RumPlugin>, 'name' | 'onInit' | 'getConfigurationTelemetry'>
 
-let globalAddError: StartRumResult['addError'] | undefined
+type InitSubscriber = (rumPublicApi: RumPublicApi) => void
 
-const onRumStartSubscribers: StartSubscriber[] = []
+let globalPublicApi: RumPublicApi | undefined
 
-export type NuxtPlugin = Required<RumPlugin>
+const onRumInitSubscribers: InitSubscriber[] = []
 
 export function nuxtRumPlugin(router: Router): NuxtPlugin {
   return {
     name: 'nuxt',
     onInit({ publicApi, initConfiguration }) {
+      globalPublicApi = publicApi
       initConfiguration.trackViewsManually = true
       startTrackingNuxtViews(publicApi, router)
-    },
-    onRumStart({ addError }) {
-      globalAddError = addError
-      if (addError) {
-        for (const subscriber of onRumStartSubscribers) {
-          subscriber(addError)
-        }
+
+      for (const subscriber of onRumInitSubscribers) {
+        subscriber(publicApi)
       }
     },
     getConfigurationTelemetry() {
@@ -31,15 +28,15 @@ export function nuxtRumPlugin(router: Router): NuxtPlugin {
   } satisfies RumPlugin
 }
 
-export function onRumStart(callback: StartSubscriber) {
-  if (globalAddError) {
-    callback(globalAddError)
+export function onRumInit(callback: InitSubscriber) {
+  if (globalPublicApi) {
+    callback(globalPublicApi)
   } else {
-    onRumStartSubscribers.push(callback)
+    onRumInitSubscribers.push(callback)
   }
 }
 
 export function resetNuxtPlugin() {
-  globalAddError = undefined
-  onRumStartSubscribers.length = 0
+  globalPublicApi = undefined
+  onRumInitSubscribers.length = 0
 }

@@ -6,7 +6,7 @@ export default defineNuxtPlugin(() => {
   const route = useRoute()
   const rumConfigParam = route.query['rum-config']
 
-  if (!datadogRum.getInitConfiguration() && rumConfigParam) {
+  if (rumConfigParam) {
     const raw = Array.isArray(rumConfigParam) ? rumConfigParam[0] : rumConfigParam
     if (raw) {
       const config = JSON.parse(raw)

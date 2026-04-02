@@ -2,7 +2,9 @@ import type { Router, RouteLocationMatched } from 'vue-router'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
 
 export function startTrackingNuxtViews(rumPublicApi: RumPublicApi, router: Router) {
-  rumPublicApi.startView(computeNuxtViewName(router.currentRoute.value.matched))
+  if (router.currentRoute.value.matched.length > 0) {
+    rumPublicApi.startView(computeNuxtViewName(router.currentRoute.value.matched))
+  }
 
   router.afterEach((to, from, failure) => {
     if (failure) {
