@@ -60,6 +60,12 @@ class Batch extends EventEmitter<BatchEvents> {
     this.currentSize = 0
     this.cancel()
   }
+
+  destroy(): void {
+    this.cancel()
+    this.buffer = []
+    this.currentSize = 0
+  }
 }
 
 export type { BatchOptions }

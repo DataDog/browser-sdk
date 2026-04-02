@@ -86,4 +86,18 @@ describe('Batch', () => {
       done()
     }, 50)
   })
+
+  it('should not flush after destroy', (done) => {
+    const listener = jasmine.createSpy('flush')
+    const batch = new Batch({ maxCount: Infinity, maxSizeBytes: Infinity, flushTimeoutMs: 20 })
+    batch.on('flush', listener)
+
+    batch.add('event-1')
+    batch.destroy()
+
+    setTimeout(() => {
+      expect(listener).not.toHaveBeenCalled()
+      done()
+    }, 50)
+  })
 })
