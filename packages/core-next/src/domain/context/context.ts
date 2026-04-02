@@ -1,36 +1,35 @@
 import { EventEmitter } from '../../utils'
 
-interface ContextEvents {
-  change: void
+type AnyObject = Record<string, unknown>
+
+type ContextEvents<T> = {
+  change: T
 }
 
-class ContextManager extends EventEmitter<ContextEvents> {
-  private context: Record<string, unknown> = {}
+class ContextManager<T extends AnyObject = AnyObject> extends EventEmitter<ContextEvents<T>> {
+  private context: T = {} as T
 
-  get(): Record<string, unknown> {
+  get(): T {
     return this.context
   }
 
-  set(context: Record<string, unknown>): void {
+  set(context: T): void {
     this.context = { ...context }
-    this.emit('change')
+    this.emit('change', this.context)
   }
 
-  setProperty(key: string, value: unknown): void {
-    this.context = { ...this.context, [key]: value }
-    this.emit('change')
+  setProperty<K extends keyof T>(key: K, value: T[K]): void {
+    this.set({ ...this.context, [key]: value })
   }
 
-  removeProperty(key: string): void {
+  removeProperty(key: keyof T): void {
     const copy = { ...this.context }
     delete copy[key]
-    this.context = copy
-    this.emit('change')
+    this.set(copy)
   }
 
   clear(): void {
-    this.context = {}
-    this.emit('change')
+    this.set({} as T)
   }
 }
 
