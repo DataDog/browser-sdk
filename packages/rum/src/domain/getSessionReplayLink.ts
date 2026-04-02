@@ -1,8 +1,6 @@
 import type { RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
 import { getSessionReplayUrl, SessionReplayState, computeSessionReplayState } from '@datadog/browser-rum-core'
 import type { SessionManager, SessionContext } from '@datadog/browser-core'
-import { isBrowserSupported } from '../boot/isBrowserSupported'
-
 export function getSessionReplayLink(
   configuration: RumConfiguration,
   sessionManager: SessionManager,
@@ -25,9 +23,6 @@ function getErrorType(
   session: SessionContext | undefined,
   isRecordingStarted: boolean
 ) {
-  if (!isBrowserSupported()) {
-    return 'browser-not-supported'
-  }
   if (!session) {
     // possibilities:
     // - rum sampled out

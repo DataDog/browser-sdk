@@ -20,12 +20,11 @@ import {
   getDeflateWorkerStatus,
   startDeflateWorker,
 } from '../domain/deflate'
-import { isBrowserSupported } from './isBrowserSupported'
 import { createPostStartStrategy } from './postStartStrategy'
 import { createPreStartStrategy } from './preStartStrategy'
 
 export function makeRecorderApi(): RecorderApi {
-  if ((canUseEventBridge() && !bridgeSupports(BridgeCapability.RECORDS)) || !isBrowserSupported()) {
+  if (canUseEventBridge() && !bridgeSupports(BridgeCapability.RECORDS)) {
     return {
       start: noop,
       stop: noop,

@@ -1,5 +1,5 @@
 import type { ViewHistory } from '@datadog/browser-rum-core'
-import { registerCleanupTask, createSessionManagerMock } from '@datadog/browser-core/test'
+import { createSessionManagerMock } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../../rum-core/test'
 import { getSessionReplayLink } from './getSessionReplayLink'
 import { addRecord } from './replayStats'
@@ -107,35 +107,5 @@ describe('getReplayLink', () => {
     expect(link).toBe(
       `https://app.datadoghq.com/rum/replay/sessions/${SESSION_ID}?error-type=replay-not-started&seed=view-id-1&from=123456`
     )
-  })
-
-  describe('browser not supported', () => {
-    beforeEach(() => {
-      // browser support function rely on Array.from being a function.
-      const original = Array.from
-      Array.from = undefined as any
-
-      registerCleanupTask(() => {
-        Array.from = original
-      })
-    })
-
-    it('should add a param if the browser is not supported', () => {
-      const sessionManager = createSessionManagerMock().setId(SESSION_ID)
-      const viewContexts = {
-        findView: () => ({
-          id: 'view-id-1',
-          startClocks: {
-            timeStamp: 123456,
-          },
-        }),
-      } as ViewHistory
-
-      const link = getSessionReplayLink(DEFAULT_CONFIGURATION, sessionManager, viewContexts, false)
-
-      expect(link).toBe(
-        `https://app.datadoghq.com/rum/replay/sessions/${SESSION_ID}?error-type=browser-not-supported&seed=view-id-1&from=123456`
-      )
-    })
   })
 })

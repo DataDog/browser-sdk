@@ -33,7 +33,7 @@ export default ({
     chunkFormat: 'module',
     chunkLoading: 'import',
   },
-  target: ['web', 'es2018'],
+  target: ['web', 'es2020'],
   devtool: false,
   module: {
     rules: [
@@ -69,7 +69,7 @@ export default ({
       new TerserPlugin({
         extractComments: false,
         terserOptions: {
-          ecma: 2018,
+          ecma: 2020,
           module: true,
           compress: {
             passes: 4,
