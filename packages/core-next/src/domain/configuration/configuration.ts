@@ -1,3 +1,5 @@
+import { validateConfiguration } from './validation'
+
 interface InitConfiguration {
   clientToken: string
   site: string
@@ -28,8 +30,6 @@ interface ConfigExtension<TKey extends string, TInit, TConfig> {
   key: TKey
   validate(init: TInit | undefined): TConfig | null
 }
-
-import { validateConfiguration } from './validation'
 
 function buildConfiguration(
   init: InitConfiguration,

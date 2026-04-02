@@ -1,5 +1,5 @@
-import type { Enricher } from '../enricher/types'
-import { chain } from '../enricher/chain'
+import type { AnyEnricher } from '../enricher'
+import { chain } from '../enricher'
 
 /**
  * Handle returned by {@link Pipeline.subscribe} to remove a subscription.
@@ -52,9 +52,8 @@ export interface Subscription {
  * ```
  * @typeParam TEventMap - A record mapping event type names to their data types.
  */
-// eslint-disable-next-line no-restricted-syntax
 export class Pipeline<TEventMap extends Record<string, unknown>> {
-  private enrichers = new Map<keyof TEventMap, Enricher<any, any, any>[]>()
+  private enrichers = new Map<keyof TEventMap, AnyEnricher[]>()
   private chains = new Map<keyof TEventMap, (data: any) => Promise<any | null>>()
   private handlers = new Map<keyof TEventMap, ((event: any) => void)[]>()
   private queue: { type: keyof TEventMap; data: any }[] = []
@@ -68,7 +67,7 @@ export class Pipeline<TEventMap extends Record<string, unknown>> {
    * @param eventType - The event type key from `TEventMap`.
    * @param enricher - The enricher to register.
    */
-  enrich<K extends keyof TEventMap>(eventType: K, enricher: Enricher<any, any, any>): void {
+  enrich<K extends keyof TEventMap>(eventType: K, enricher: AnyEnricher): void {
     if (this.sealed) {
       throw new Error('Cannot add enrichers after pipeline is sealed')
     }

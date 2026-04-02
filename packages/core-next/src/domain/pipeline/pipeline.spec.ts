@@ -1,6 +1,6 @@
 import { Pipeline } from './pipeline'
-import { enricher as createEnricher } from '../enricher/factory'
-import type { Enricher } from '../enricher/types'
+import { enricher as createEnricher, DISCARD } from '../enricher'
+import type { AnyEnricher } from '../enricher'
 
 describe('Pipeline', () => {
   describe('lifecycle', () => {
@@ -33,7 +33,7 @@ describe('Pipeline', () => {
     it('should throw if enrich() is called after seal()', () => {
       const pipeline = new Pipeline<{ foo: string }>()
       pipeline.seal()
-      const e: Enricher<string> = { name: 'test', transform: (data) => data }
+      const e: AnyEnricher = { name: 'test', transform: (data: string) => data }
       expect(() => pipeline.enrich('foo', e)).toThrowError(/sealed/)
     })
 
@@ -113,12 +113,12 @@ describe('Pipeline', () => {
       pipeline.publish('obs', { type: 'error' })
     })
 
-    it('should drop event when enricher returns null', (done) => {
+    it('should drop event when enricher returns DISCARD', (done) => {
       type Events = { obs: { type: string }; other: string }
       const pipeline = new Pipeline<Events>()
       pipeline.enrich('obs', {
         name: 'consent',
-        transform: () => null,
+        transform: () => DISCARD,
       })
       pipeline.seal()
       pipeline.subscribe('obs', () => {
