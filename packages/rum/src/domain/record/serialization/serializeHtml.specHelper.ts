@@ -2,7 +2,8 @@ import type { TimeStamp } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { forEachChildNodes, getNodePrivacyLevel } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from 'packages/core/test'
-import { RecordType, type BrowserChangeRecord, type BrowserRecord } from '../../../types'
+import type { BrowserFullSnapshotChangeRecord, BrowserChangeRecord, BrowserRecord } from '../../../types'
+import { RecordType, SnapshotFormat } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
 import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
 import type { ChangeSerializationTransaction } from './serializationTransaction'
@@ -53,7 +54,7 @@ export async function serializeHtmlAsChange(
     target?: (defaultTarget: Node) => Node
     whitespace?: 'discard' | 'keep'
   } = {}
-): Promise<BrowserChangeRecord | undefined> {
+): Promise<BrowserChangeRecord | BrowserFullSnapshotChangeRecord | undefined> {
   const content =
     input === 'document'
       ? html
@@ -115,7 +116,10 @@ export async function serializeHtmlAsChange(
     return undefined
   }
 
-  if (emittedRecord.type !== RecordType.Change) {
+  if (
+    emittedRecord.type !== RecordType.Change &&
+    (emittedRecord.type !== RecordType.FullSnapshot || emittedRecord.format !== SnapshotFormat.Change)
+  ) {
     throw new Error('Expected serialization to yield a BrowserChangeRecord')
   }
 

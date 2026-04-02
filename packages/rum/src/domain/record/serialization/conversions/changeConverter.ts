@@ -7,7 +7,8 @@ import type {
   AttachedStyleSheetsChange,
   AttributeChange,
   BrowserChangeRecord,
-  BrowserFullSnapshotRecord,
+  BrowserFullSnapshotChangeRecord,
+  BrowserFullSnapshotV1Record,
   BrowserIncrementalSnapshotRecord,
   MediaPlaybackStateChange,
   RemoveNodeChange,
@@ -26,9 +27,9 @@ import type { VNode } from './vNode'
 
 export interface ChangeConverter {
   convert(
-    record: BrowserChangeRecord,
+    record: BrowserChangeRecord | BrowserFullSnapshotChangeRecord,
     options?: Partial<V1RenderOptions>
-  ): BrowserFullSnapshotRecord | BrowserIncrementalSnapshotRecord
+  ): BrowserFullSnapshotV1Record | BrowserIncrementalSnapshotRecord
 
   document: VDocument
   stringTable: StringTable
@@ -37,9 +38,9 @@ export interface ChangeConverter {
 export function createChangeConverter(): ChangeConverter {
   const self: ChangeConverter = {
     convert(
-      record: BrowserChangeRecord,
+      record: BrowserChangeRecord | BrowserFullSnapshotChangeRecord,
       options: Partial<V1RenderOptions> = {}
-    ): BrowserFullSnapshotRecord | BrowserIncrementalSnapshotRecord {
+    ): BrowserFullSnapshotV1Record | BrowserIncrementalSnapshotRecord {
       applyChangeToVDOM(record, self.document, self.stringTable)
       return self.document.render({ timestamp: record.timestamp, ...options })
     },
@@ -51,7 +52,11 @@ export function createChangeConverter(): ChangeConverter {
   return self
 }
 
-function applyChangeToVDOM(record: BrowserChangeRecord, document: VDocument, stringTable: StringTable): void {
+function applyChangeToVDOM(
+  record: BrowserChangeRecord | BrowserFullSnapshotChangeRecord,
+  document: VDocument,
+  stringTable: StringTable
+): void {
   document.mutations.clear()
 
   for (const change of record.data) {

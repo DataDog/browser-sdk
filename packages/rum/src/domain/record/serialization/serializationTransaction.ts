@@ -1,7 +1,7 @@
 import type { TimeStamp } from '@datadog/browser-core'
 import { elapsed, timeStampNow } from '@datadog/browser-core'
 
-import { ChangeType, RecordType } from '../../../types'
+import { ChangeType, RecordType, SnapshotFormat } from '../../../types'
 import type {
   AddCDataSectionNodeChange,
   AddDocTypeNodeChange,
@@ -244,11 +244,20 @@ export function serializeChangesInTransaction(
 
   const changes = encoder.flush()
   if (changes.length > 0) {
-    emitRecord({
-      data: changes,
-      type: RecordType.Change,
-      timestamp,
-    })
+    if (kind === SerializationKind.INITIAL_FULL_SNAPSHOT || kind === SerializationKind.SUBSEQUENT_FULL_SNAPSHOT) {
+      emitRecord({
+        data: changes,
+        format: SnapshotFormat.Change,
+        type: RecordType.FullSnapshot,
+        timestamp,
+      })
+    } else {
+      emitRecord({
+        data: changes,
+        type: RecordType.Change,
+        timestamp,
+      })
+    }
   }
 
   emitStats(stats)

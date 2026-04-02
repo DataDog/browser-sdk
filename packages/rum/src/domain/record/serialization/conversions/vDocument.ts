@@ -7,7 +7,7 @@ import type {
   RemovedNodeMutation,
   TextMutation,
 } from '../../../../types'
-import { IncrementalSource, RecordType } from '../../../../types'
+import { IncrementalSource, RecordType, SnapshotFormat } from '../../../../types'
 import type { NodeId, StyleSheetId } from '../../itemIds'
 import type { MutationLog } from './mutationLog'
 import { createMutationLog } from './mutationLog'
@@ -159,6 +159,7 @@ export function createVDocument(): VDocument {
           node: root.render(options),
           initialOffset: { left: scrollLeft, top: scrollTop },
         },
+        format: SnapshotFormat.V1,
         type: RecordType.FullSnapshot,
         timestamp: options.timestamp,
       }

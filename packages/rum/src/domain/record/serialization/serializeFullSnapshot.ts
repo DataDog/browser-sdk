@@ -1,7 +1,7 @@
 import { getScrollX, getScrollY } from '@datadog/browser-rum-core'
 import type { TimeStamp } from '@datadog/browser-core'
 import type { BrowserFullSnapshotRecord } from '../../../types'
-import { RecordType } from '../../../types'
+import { RecordType, SnapshotFormat } from '../../../types'
 import type { EmitRecordCallback, EmitStatsCallback } from '../record.types'
 import type { RecordingScope } from '../recordingScope'
 import { serializeNode } from './serializeNode'
@@ -30,6 +30,7 @@ export function serializeFullSnapshot(
           top: getScrollY(),
         },
       },
+      format: SnapshotFormat.V1,
       type: RecordType.FullSnapshot,
       timestamp,
     }
