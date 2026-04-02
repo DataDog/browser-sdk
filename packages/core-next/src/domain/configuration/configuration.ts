@@ -23,11 +23,13 @@ interface ConfigExtension<TKey extends string, TInit, TConfig> {
   validate(init: TInit | undefined): TConfig | null
 }
 
+import { validateConfiguration } from './validation'
+
 function buildConfiguration(
   init: InitConfiguration,
   extensions: ConfigExtension<string, unknown, unknown>[]
 ): (Configuration & Record<string, unknown>) | null {
-  if (!init.clientToken || !init.site) {
+  if (!validateConfiguration(init)) {
     return null
   }
 

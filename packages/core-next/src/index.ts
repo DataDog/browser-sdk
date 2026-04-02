@@ -47,3 +47,4 @@ export { EventEmitter, throttle } from './utils'
 
 export type { InitConfiguration, Configuration, ConfigExtension } from './domain/configuration/configuration'
 export { buildConfiguration } from './domain/configuration/configuration'
+export { validateConfiguration } from './domain/configuration/validation'

@@ -1,4 +1,5 @@
 import { buildConfiguration } from './configuration'
+import { validateConfiguration } from './validation'
 import type { ConfigExtension } from './configuration'
 
 const validBase = {
@@ -28,6 +29,42 @@ describe('buildConfiguration', () => {
     const config = buildConfiguration({ clientToken: 'abc' } as any, [])
 
     expect(config).toBeNull()
+  })
+
+  it('should return null when sessionSampleRate is out of range', () => {
+    const config = buildConfiguration({ ...validBase, sessionSampleRate: 101 }, [])
+
+    expect(config).toBeNull()
+  })
+})
+
+describe('validateConfiguration', () => {
+  it('should return true for a valid configuration', () => {
+    expect(validateConfiguration(validBase)).toBe(true)
+  })
+
+  it('should return false when clientToken is missing', () => {
+    expect(validateConfiguration({ site: 'datadoghq.com' } as any)).toBe(false)
+  })
+
+  it('should return false when site is missing', () => {
+    expect(validateConfiguration({ clientToken: 'abc' } as any)).toBe(false)
+  })
+
+  it('should return false when sessionSampleRate is below 0', () => {
+    expect(validateConfiguration({ ...validBase, sessionSampleRate: -1 })).toBe(false)
+  })
+
+  it('should return false when sessionSampleRate is above 100', () => {
+    expect(validateConfiguration({ ...validBase, sessionSampleRate: 101 })).toBe(false)
+  })
+
+  it('should return true when sessionSampleRate is 0', () => {
+    expect(validateConfiguration({ ...validBase, sessionSampleRate: 0 })).toBe(true)
+  })
+
+  it('should return true when sessionSampleRate is 100', () => {
+    expect(validateConfiguration({ ...validBase, sessionSampleRate: 100 })).toBe(true)
   })
 
   it('should respect enabled: false', () => {
