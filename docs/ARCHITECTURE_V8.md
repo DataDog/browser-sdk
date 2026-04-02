@@ -191,6 +191,8 @@ Telemetry signals (errors, usage, debug) are published to the pipeline's **fast 
 
 Context (session ID, service, version) is provided by synchronous context providers registered specifically for the telemetry track.
 
+> **TODO:** The fast track requires pipeline changes not yet implemented. Until then, telemetry uses its own internal queue.
+
 ## Tracking consent
 
 Replaced by `enabled` in the configuration. No separate consent state machine.
