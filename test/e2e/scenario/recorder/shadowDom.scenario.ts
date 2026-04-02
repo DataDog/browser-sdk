@@ -4,7 +4,7 @@ import type {
   ScrollData,
   SerializedNodeWithId,
 } from '@datadog/browser-rum/src/types'
-import { IncrementalSource, MouseInteractionType, NodeType } from '@datadog/browser-rum/src/types'
+import { IncrementalSource, MouseInteractionType, NodeType, SnapshotFormat } from '@datadog/browser-rum/src/types'
 
 import { createMutationPayloadValidatorFromSegment } from '@datadog/browser-rum/test/record/mutationPayloadValidator'
 import {
@@ -15,7 +15,7 @@ import {
   findTextNode,
 } from '@datadog/browser-rum/test/record/nodes'
 import {
-  findFullSnapshot,
+  findFullSnapshotInFormat,
   findIncrementalSnapshot,
   findMouseInteractionRecords,
 } from '@datadog/browser-rum/test/record/segments'
@@ -175,7 +175,7 @@ test.describe('recorder with shadow DOM', () => {
 
       expect(intakeRegistry.replaySegments).toHaveLength(1)
 
-      const fullSnapshot = findFullSnapshot(intakeRegistry.replaySegments[0])!
+      const fullSnapshot = findFullSnapshotInFormat(SnapshotFormat.V1, intakeRegistry.replaySegments[0])!
       expect(fullSnapshot).toBeTruthy()
 
       const textNode = findTextNode(fullSnapshot.data.node, 'toto')
@@ -197,7 +197,7 @@ test.describe('recorder with shadow DOM', () => {
 
       expect(intakeRegistry.replaySegments).toHaveLength(1)
 
-      const fullSnapshot = findFullSnapshot(intakeRegistry.replaySegments[0])!
+      const fullSnapshot = findFullSnapshotInFormat(SnapshotFormat.V1, intakeRegistry.replaySegments[0])!
       expect(fullSnapshot).toBeTruthy()
       const shadowRoot = findNode(
         fullSnapshot.data.node,
@@ -219,7 +219,7 @@ test.describe('recorder with shadow DOM', () => {
 
       expect(intakeRegistry.replaySegments).toHaveLength(1)
 
-      const fullSnapshot = findFullSnapshot(intakeRegistry.replaySegments[0])!
+      const fullSnapshot = findFullSnapshotInFormat(SnapshotFormat.V1, intakeRegistry.replaySegments[0])!
       expect(fullSnapshot).toBeTruthy()
 
       const {
@@ -252,7 +252,7 @@ test.describe('recorder with shadow DOM', () => {
       await div.click()
       await flushEvents()
       expect(intakeRegistry.replaySegments).toHaveLength(1)
-      const fullSnapshot = findFullSnapshot(intakeRegistry.replaySegments[0])!
+      const fullSnapshot = findFullSnapshotInFormat(SnapshotFormat.V1, intakeRegistry.replaySegments[0])!
       const divNode = findElementWithTagName(fullSnapshot.data.node, 'div')!
       const mouseInteraction = findMouseInteractionRecords(
         intakeRegistry.replaySegments[0],
@@ -312,7 +312,7 @@ test.describe('recorder with shadow DOM', () => {
       await flushEvents()
       expect(intakeRegistry.replaySegments).toHaveLength(1)
       const scrollRecord = findIncrementalSnapshot(intakeRegistry.replaySegments[0], IncrementalSource.Scroll)
-      const fullSnapshot = findFullSnapshot(intakeRegistry.replaySegments[0])!
+      const fullSnapshot = findFullSnapshotInFormat(SnapshotFormat.V1, intakeRegistry.replaySegments[0])!
       const divNode = findElementWithIdAttribute(fullSnapshot.data.node, 'scrollable-div')!
 
       expect(scrollRecord).toBeTruthy()
