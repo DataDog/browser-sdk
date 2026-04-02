@@ -493,7 +493,14 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/array-type': ['error', { default: 'array' }],
       'import-x/exports-last': 'error',
-      'import-x/group-exports': 'error',
+      'import-x/order': [
+        'error',
+        {
+          groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
+          alphabetize: { order: 'asc', caseInsensitive: true },
+        },
+      ],
+      'sort-imports': ['error', { ignoreDeclarationSort: true, ignoreMemberSort: false }],
       // core-next is environment-agnostic — Zone.js is a browser-only concern
       'local-rules/disallow-zone-js-patched-values': 'off',
       'local-rules/disallow-url-constructor-patched-values': 'off',
