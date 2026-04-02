@@ -4,7 +4,7 @@ name: Shadow Review
 
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened, synchronize, ready_for_review]
 
 jobs:
   # Mirror PR to shadow fork (review + post-close disabled for now)
