@@ -58,7 +58,7 @@ describe('buildConfiguration', () => {
       validate: (init) => (init ? { applicationId: init.applicationId } : null),
     }
 
-    const config = buildConfiguration({ ...validBase, rum: { applicationId: 'xyz' } } as any, [rumExtension])
+    const config = buildConfiguration({ ...validBase, rum: { applicationId: 'xyz' } }, [rumExtension])
 
     expect(config).toEqual({
       clientToken: 'abc',
@@ -78,7 +78,7 @@ describe('buildConfiguration', () => {
       validate: () => null,
     }
 
-    expect(buildConfiguration({ ...validBase, rum: {} } as any, [failingExtension])).toBeNull()
+    expect(buildConfiguration({ ...validBase, rum: {} }, [failingExtension])).toBeNull()
   })
 
   it('should skip extension when its key is absent from init config', () => {
