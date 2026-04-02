@@ -51,3 +51,6 @@ export { validateConfiguration } from './domain/configuration/validation'
 
 export type { TelemetryConfig, RawTelemetry } from './domain/telemetry/telemetry'
 export { Telemetry } from './domain/telemetry/telemetry'
+
+export type { SessionState, SessionStore } from './domain/session/session'
+export { Session } from './domain/session/session'
