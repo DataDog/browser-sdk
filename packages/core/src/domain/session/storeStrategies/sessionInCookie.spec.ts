@@ -147,6 +147,29 @@ describe('session in cookie strategy', () => {
       expect(spy).not.toHaveBeenCalled()
     })
 
+    it('should ignore observable updates from non-empty cookies with no c marker', () => {
+      const { strategy, mockCookie } = setupCookieStrategy()
+      const spy = jasmine.createSpy<(event: SessionObservableEvent) => void>('observer')
+      const subscription = strategy.sessionObservable.subscribe(spy)
+      registerCleanupTask(() => subscription.unsubscribe())
+
+      // Simulate an external write from a cookie without a c marker
+      mockCookie.simulateExternalChange('id=old-session')
+
+      expect(spy).not.toHaveBeenCalled()
+    })
+
+    it('should notify observable when cookie is cleared', () => {
+      const { strategy, mockCookie } = setupCookieStrategy()
+      const spy = jasmine.createSpy<(event: SessionObservableEvent) => void>('observer')
+      const subscription = strategy.sessionObservable.subscribe(spy)
+      registerCleanupTask(() => subscription.unsubscribe())
+
+      mockCookie.simulateExternalChange('')
+
+      expect(spy).toHaveBeenCalledOnceWith({ cookieValue: '', sessionState: {} })
+    })
+
     it('should notify sessionObservable after write', async () => {
       const { strategy } = setupCookieStrategy()
       const spy = jasmine.createSpy<(event: SessionObservableEvent) => void>('observer')
