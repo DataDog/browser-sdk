@@ -1,26 +1,27 @@
 import { Batch } from './batch'
 
 describe('Batch', () => {
-  it('should emit flush with messages when max count is reached', () => {
+  it('should flush current batch and start a new one when max count is reached', () => {
     const messages: string[][] = []
     const batch = new Batch({ maxCount: 2, maxSizeBytes: Infinity, flushTimeoutMs: Infinity })
     batch.on('flush', (msgs) => messages.push(msgs))
 
     batch.add('event-1')
     batch.add('event-2')
+    batch.add('event-3') // triggers flush of [event-1, event-2], event-3 goes to new batch
 
     expect(messages).toEqual([['event-1', 'event-2']])
   })
 
-  it('should emit flush with messages when max size is exceeded', () => {
+  it('should flush current batch and start a new one when max size is exceeded', () => {
     const messages: string[][] = []
     const batch = new Batch({ maxCount: Infinity, maxSizeBytes: 10, flushTimeoutMs: Infinity })
     batch.on('flush', (msgs) => messages.push(msgs))
 
-    batch.add('hello') // 5 bytes
-    batch.add('world!!') // 7 bytes — exceeds 10
+    batch.add('hello') // 5 bytes — buffered
+    batch.add('world!!') // 7 bytes — would exceed 10, flush first then add to new batch
 
-    expect(messages).toEqual([['hello', 'world!!']])
+    expect(messages).toEqual([['hello']])
   })
 
   it('should emit flush on manual flush call', () => {
@@ -66,11 +67,11 @@ describe('Batch', () => {
     })
     batch.on('flush', (msgs) => messages.push(msgs))
 
-    batch.add('event-1')
-    batch.add('event-2')
-    batch.add('event-3')
+    batch.add('event-1') // size 1 — buffered
+    batch.add('event-2') // size 2 — buffered (at limit, not exceeded yet)
+    batch.add('event-3') // would exceed 2 — flush first, then add event-3
 
-    expect(messages).toEqual([['event-1', 'event-2', 'event-3']])
+    expect(messages).toEqual([['event-1', 'event-2']])
   })
 
   it('should emit flush after timeout', (done) => {
