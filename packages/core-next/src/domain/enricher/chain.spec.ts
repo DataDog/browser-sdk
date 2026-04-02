@@ -1,5 +1,5 @@
 import { chain } from './chain'
-import { enricher, SKIP, DISCARD } from './factory'
+import { DISCARD, SKIP, enricher } from './factory'
 
 describe('chain', () => {
   it('should pass data through enrichers in dependency order', async () => {

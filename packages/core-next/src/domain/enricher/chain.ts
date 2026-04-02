@@ -1,13 +1,6 @@
-import type { Enricher, TransformFunction } from './factory'
-import { SKIP, DISCARD } from './factory'
+import type { Enricher, OutputOf, UnionToIntersection } from './factory'
+import { DISCARD, SKIP } from './factory'
 import { topologicalSort } from './topologicalSort'
-
-type OutputOf<E extends { transform: TransformFunction<any, any> }> = Exclude<
-  Awaited<ReturnType<E['transform']>>,
-  typeof SKIP | typeof DISCARD
->
-
-type UnionToIntersection<U> = (U extends any ? (x: U) => void : never) extends (x: infer I) => void ? I : never
 
 type ChainOutput<T, Es extends Enricher<any, any, any>[]> = T & UnionToIntersection<Partial<OutputOf<Es[number]>>>
 

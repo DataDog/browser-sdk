@@ -1,5 +1,5 @@
-import { topologicalSort } from './topologicalSort'
 import type { AnyEnricher } from './factory'
+import { topologicalSort } from './topologicalSort'
 
 function stubEnricher(overrides: Partial<AnyEnricher> & Pick<AnyEnricher, 'name'>): AnyEnricher {
   return {

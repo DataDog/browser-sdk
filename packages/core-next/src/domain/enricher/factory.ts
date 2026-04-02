@@ -93,5 +93,5 @@ function enricher(config: { name: string; requires?: AnyEnricher[]; transform: (
   }
 }
 
-export type { Enricher, AnyEnricher, EnricherInput, MaybePromise, TransformFunction }
+export type { Enricher, AnyEnricher, EnricherInput, MaybePromise, TransformFunction, OutputOf, UnionToIntersection }
 export { SKIP, DISCARD, enricher }
