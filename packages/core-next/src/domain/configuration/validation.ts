@@ -1,22 +1,35 @@
-import type { InitConfiguration } from './configuration'
+import type { InitConfiguration } from '.'
 
 function isSampleRate(value: number | undefined): boolean {
   return value === undefined || (value >= 0 && value <= 100)
 }
 
-function validateConfiguration(init: InitConfiguration): boolean {
-  if (!init.clientToken || !init.site) {
+function validate(init: InitConfiguration): boolean {
+  if (!init.clientToken) {
+    console.error('clientToken is required')
     return false
   }
-  if (
-    !isSampleRate(init.sessionSampleRate) ||
-    !isSampleRate(init.telemetrySampleRate) ||
-    !isSampleRate(init.telemetryConfigurationSampleRate) ||
-    !isSampleRate(init.telemetryUsageSampleRate)
-  ) {
+  if (!init.site) {
+    console.error('site is required')
+    return false
+  }
+  if (!isSampleRate(init.sessionSampleRate)) {
+    console.warn('sessionSampleRate must be between 0 and 100')
+    return false
+  }
+  if (!isSampleRate(init.telemetrySampleRate)) {
+    console.warn('telemetrySampleRate must be between 0 and 100')
+    return false
+  }
+  if (!isSampleRate(init.telemetryConfigurationSampleRate)) {
+    console.warn('telemetryConfigurationSampleRate must be between 0 and 100')
+    return false
+  }
+  if (!isSampleRate(init.telemetryUsageSampleRate)) {
+    console.warn('telemetryUsageSampleRate must be between 0 and 100')
     return false
   }
   return true
 }
 
-export { validateConfiguration }
+export { validate }

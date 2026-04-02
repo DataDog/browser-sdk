@@ -1,4 +1,4 @@
-const CONFIGURATION_DEFAULTS = {
+const DEFAULTS = {
   enabled: true,
   sessionSampleRate: 100,
   telemetrySampleRate: 20,
@@ -6,4 +6,4 @@ const CONFIGURATION_DEFAULTS = {
   telemetryUsageSampleRate: 5,
 } as const
 
-export { CONFIGURATION_DEFAULTS }
+export { DEFAULTS }
