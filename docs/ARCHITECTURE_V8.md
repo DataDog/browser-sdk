@@ -185,34 +185,47 @@ flowchart TD
 
 ### Mapping from current SDK events
 
-| Current event             | v8 category | Rationale                                               |
-| ------------------------- | ----------- | ------------------------------------------------------- |
-| **RUM events**            |             |                                                         |
-| `RESOURCE`                | Resource    | Passive network data from browser APIs                  |
-| `ACTION`                  | Action      | User-initiated interactions                             |
-| `VIEW`                    | Observation | Enrichable page lifecycle data with accumulated metrics |
-| `ERROR`                   | Observation | Enrichable runtime failures                             |
-| `LONG_TASK`               | Observation | Enrichable performance bottlenecks                      |
-| `VITAL`                   | Observation | Enrichable custom measurements                          |
-| **Lifecycle events**      |             |                                                         |
-| `SESSION_EXPIRED`         | Signal      | Internal coordination for session cleanup               |
-| `SESSION_RENEWED`         | Signal      | Internal coordination for session refresh               |
-| `VIEW_CREATED`            | Signal      | Internal coordination for view context                  |
-| `VIEW_UPDATED`            | Signal      | Internal coordination for view metrics                  |
-| `VIEW_ENDED`              | Signal      | Internal coordination for view termination              |
-| `ACTION_STARTED`          | Signal      | Internal coordination for action lifecycle              |
-| `AUTO_ACTION_COMPLETED`   | Signal      | Internal coordination for action completion             |
-| `REQUEST_STARTED`         | Signal      | Internal coordination for request lifecycle             |
-| `REQUEST_COMPLETED`       | Signal      | Internal coordination for resource fetch completion     |
-| `PAGE_MAY_EXIT`           | Signal      | Internal coordination for page unload                   |
-| `RAW_RUM_EVENT_COLLECTED` | Signal      | Pipeline entry point (replaced by `pipeline.publish()`) |
-| `RUM_EVENT_COLLECTED`     | Signal      | Pipeline exit point (replaced by subscribers)           |
-| `RAW_ERROR_COLLECTED`     | Signal      | Error pipeline entry (replaced by `pipeline.publish()`) |
-| `VITAL_STARTED`           | Signal      | Internal coordination for vital lifecycle               |
-| **Telemetry**             |             |                                                         |
-| `LOG` (error/debug)       | Telemetry   | SDK diagnostic logs                                     |
-| `CONFIGURATION`           | Telemetry   | SDK init config snapshot                                |
-| `USAGE`                   | Telemetry   | Public API call tracking                                |
+| Current event                                                                          | v8 category | Rationale                                               |
+| -------------------------------------------------------------------------------------- | ----------- | ------------------------------------------------------- |
+| **RUM events**                                                                         |             |                                                         |
+| `RESOURCE`                                                                             | Resource    | Passive network data from browser APIs                  |
+| `ACTION`                                                                               | Action      | User-initiated interactions                             |
+| `VIEW`                                                                                 | Observation | Enrichable page lifecycle data with accumulated metrics |
+| `ERROR`                                                                                | Observation | Enrichable runtime failures                             |
+| `LONG_TASK`                                                                            | Observation | Enrichable performance bottlenecks                      |
+| `VITAL`                                                                                | Observation | Enrichable custom measurements                          |
+| **Lifecycle events**                                                                   |             |                                                         |
+| `SESSION_EXPIRED`                                                                      | Signal      | Internal coordination for session cleanup               |
+| `SESSION_RENEWED`                                                                      | Signal      | Internal coordination for session refresh               |
+| `VIEW_CREATED`                                                                         | Signal      | Internal coordination for view context                  |
+| `VIEW_UPDATED`                                                                         | Signal      | Internal coordination for view metrics                  |
+| `VIEW_ENDED`                                                                           | Signal      | Internal coordination for view termination              |
+| `ACTION_STARTED`                                                                       | Signal      | Internal coordination for action lifecycle              |
+| `AUTO_ACTION_COMPLETED`                                                                | Signal      | Internal coordination for action completion             |
+| `REQUEST_STARTED`                                                                      | Signal      | Internal coordination for request lifecycle             |
+| `REQUEST_COMPLETED`                                                                    | Signal      | Internal coordination for resource fetch completion     |
+| `PAGE_MAY_EXIT`                                                                        | Signal      | Internal coordination for page unload                   |
+| `RAW_RUM_EVENT_COLLECTED`                                                              | Signal      | Pipeline entry point (replaced by `pipeline.publish()`) |
+| `RUM_EVENT_COLLECTED`                                                                  | Signal      | Pipeline exit point (replaced by subscribers)           |
+| `RAW_ERROR_COLLECTED`                                                                  | Signal      | Error pipeline entry (replaced by `pipeline.publish()`) |
+| `VITAL_STARTED`                                                                        | Signal      | Internal coordination for vital lifecycle               |
+| **Internal observables** (not in LifeCycle, currently standalone Observable instances) |             |                                                         |
+| `sessionStateUpdateObservable`                                                         | Signal      | Session state synced across tabs                        |
+| `locationChangeObservable`                                                             | Signal      | URL/history navigation detected                         |
+| `domMutationObservable`                                                                | Signal      | DOM mutation detected                                   |
+| `windowOpenObservable`                                                                 | Signal      | `window.open()` called                                  |
+| `pageActivityObservable`                                                               | Signal      | Meta-signal combining DOM/network/user activity         |
+| `contextManager.changeObservable`                                                      | Signal      | Global/user/account context changed                     |
+| `trackClickActions.stopObservable`                                                     | Signal      | Click action tracking stopped                           |
+| `trackViews.stopObservable`                                                            | Signal      | View tracking stopped                                   |
+| `errorObservable`                                                                      | Signal      | Error collected from any source                         |
+| `flushObservable`                                                                      | Signal      | Batch flush triggered                                   |
+| `preparePageExitFlushObservable`                                                       | Signal      | Pre-exit flush preparation                              |
+| `trackingConsentObservable`                                                            | —           | Removed in v8 (replaced by `enabled` in config)         |
+| **Telemetry**                                                                          |             |                                                         |
+| `LOG` (error/debug)                                                                    | Telemetry   | SDK diagnostic logs                                     |
+| `CONFIGURATION`                                                                        | Telemetry   | SDK init config snapshot                                |
+| `USAGE`                                                                                | Telemetry   | Public API call tracking                                |
 
 > **Open question:** Who converts resources/actions into observations — the collector that produced them, or a dedicated subscriber that listens and publishes observations?
 
