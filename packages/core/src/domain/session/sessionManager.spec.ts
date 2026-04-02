@@ -59,14 +59,14 @@ describe('startSessionManager', () => {
     })
   })
 
-  function startSessionManagerWithDefaults({
+  async function startSessionManagerWithDefaults({
     configuration,
     trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED),
   }: {
     configuration?: Partial<Configuration>
     trackingConsentState?: TrackingConsentState
-  } = {}): Promise<SessionManager | undefined> {
-    return startSessionManager(
+  } = {}): Promise<SessionManager> {
+    const sessionManager = await startSessionManager(
       {
         sessionStoreStrategyType: STORE_TYPE,
         sessionSampleRate: 100,
@@ -74,6 +74,7 @@ describe('startSessionManager', () => {
       } as Configuration,
       trackingConsentState
     )
+    return sessionManager!
   }
 
   describe('initialization', () => {
@@ -127,8 +128,8 @@ describe('startSessionManager', () => {
     it('should create a session with a real id after user activity', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
 
-      expect(sessionManager?.findSession()).toBeDefined()
-      expect(sessionManager?.findSession()!.id).toMatch(/^[a-f0-9-]+$/)
+      expect(sessionManager.findSession()).toBeDefined()
+      expect(sessionManager.findSession()!.id).toMatch(/^[a-f0-9-]+$/)
     })
 
     it('should generate an anonymousId when trackAnonymousUser is enabled', async () => {
@@ -136,7 +137,7 @@ describe('startSessionManager', () => {
         configuration: { trackAnonymousUser: true },
       })
 
-      expect(sessionManager?.findSession()!.anonymousId).toMatch(/^[a-f0-9-]+$/)
+      expect(sessionManager.findSession()!.anonymousId).toMatch(/^[a-f0-9-]+$/)
     })
 
     it('should not generate an anonymousId when trackAnonymousUser is disabled', async () => {
@@ -144,7 +145,7 @@ describe('startSessionManager', () => {
         configuration: { trackAnonymousUser: false },
       })
 
-      expect(sessionManager?.findSession()!.anonymousId).toBeUndefined()
+      expect(sessionManager.findSession()!.anonymousId).toBeUndefined()
     })
 
     it('should keep existing session when strategy has an active session', async () => {
@@ -158,7 +159,7 @@ describe('startSessionManager', () => {
 
       const sessionManager = await startSessionManagerWithDefaults()
 
-      expect(sessionManager?.findSession()!.id).toBe('existing-id')
+      expect(sessionManager.findSession()!.id).toBe('existing-id')
     })
   })
 
@@ -166,12 +167,12 @@ describe('startSessionManager', () => {
     it('should renew on user activity after expiration', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
       const renewSpy = jasmine.createSpy('renew')
-      sessionManager?.renewObservable.subscribe(renewSpy)
+      sessionManager.renewObservable.subscribe(renewSpy)
 
-      const initialId = sessionManager?.findSession()!.id
+      const initialId = sessionManager.findSession()!.id
 
       // Expire the session
-      sessionManager?.expire()
+      sessionManager.expire()
 
       expect(renewSpy).not.toHaveBeenCalled()
 
@@ -184,8 +185,8 @@ describe('startSessionManager', () => {
       await collectAsyncCalls(sessionObservableSpy, 3) // 1 for initial session, 1 for expire, 1 for renew
 
       expect(renewSpy).toHaveBeenCalledTimes(1)
-      expect(sessionManager?.findSession()!.id).toBeDefined()
-      expect(sessionManager?.findSession()!.id).not.toBe(initialId)
+      expect(sessionManager.findSession()!.id).toBeDefined()
+      expect(sessionManager.findSession()!.id).not.toBe(initialId)
     })
 
     it('should not renew on visibility check after expiration', async () => {
@@ -194,9 +195,9 @@ describe('startSessionManager', () => {
 
       const sessionManager = await startSessionManagerWithDefaults()
       const renewSpy = jasmine.createSpy('renew')
-      sessionManager?.renewObservable.subscribe(renewSpy)
+      sessionManager.renewObservable.subscribe(renewSpy)
 
-      sessionManager?.expire()
+      sessionManager.expire()
 
       clock.tick(VISIBILITY_CHECK_DELAY)
 
@@ -232,9 +233,9 @@ describe('startSessionManager', () => {
     it('should fire expireObservable when session expires', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
       const expireSpy = jasmine.createSpy('expire')
-      sessionManager?.expireObservable.subscribe(expireSpy)
+      sessionManager.expireObservable.subscribe(expireSpy)
 
-      sessionManager?.expire()
+      sessionManager.expire()
 
       expect(expireSpy).toHaveBeenCalledTimes(1)
     })
@@ -242,10 +243,10 @@ describe('startSessionManager', () => {
     it('should only fire expireObservable once for multiple expire calls', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
       const expireSpy = jasmine.createSpy('expire')
-      sessionManager?.expireObservable.subscribe(expireSpy)
+      sessionManager.expireObservable.subscribe(expireSpy)
 
-      sessionManager?.expire()
-      sessionManager?.expire()
+      sessionManager.expire()
+      sessionManager.expire()
 
       expect(expireSpy).toHaveBeenCalledTimes(1)
     })
@@ -257,7 +258,7 @@ describe('startSessionManager', () => {
       expect(stateBefore.isExpired).toBeUndefined()
       expect(stateBefore.id).toBeDefined()
 
-      sessionManager?.expire()
+      sessionManager.expire()
 
       const stateAfter = fakeStrategy.getInternalState()
       expect(stateAfter.isExpired).toBe(EXPIRED)
@@ -265,10 +266,10 @@ describe('startSessionManager', () => {
 
     it('should renew on user activity after expire()', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
-      const initialId = sessionManager?.findSession()!.id
+      const initialId = sessionManager.findSession()!.id
 
-      sessionManager?.expire()
-      expect(sessionManager?.findSession()).toBeUndefined()
+      sessionManager.expire()
+      expect(sessionManager.findSession()).toBeUndefined()
 
       // Wait for throttle
       clock.tick(ONE_SECOND)
@@ -277,8 +278,8 @@ describe('startSessionManager', () => {
 
       await collectAsyncCalls(sessionObservableSpy, 3) // 1 for initial session, 1 for expire, 1 for renew
 
-      expect(sessionManager?.findSession()).toBeDefined()
-      expect(sessionManager?.findSession()!.id).not.toBe(initialId)
+      expect(sessionManager.findSession()).toBeDefined()
+      expect(sessionManager.findSession()!.id).not.toBe(initialId)
     })
   })
 
@@ -291,7 +292,7 @@ describe('startSessionManager', () => {
     it('should expand session duration on activity', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
 
-      expect(sessionManager?.findSession()).toBeDefined()
+      expect(sessionManager.findSession()).toBeDefined()
 
       clock.tick(SESSION_EXPIRATION_DELAY - 100)
 
@@ -311,7 +312,7 @@ describe('startSessionManager', () => {
 
       const sessionManager = await startSessionManagerWithDefaults()
 
-      expect(sessionManager?.findSession()).toBeDefined()
+      expect(sessionManager.findSession()).toBeDefined()
 
       const initialExpire = fakeStrategy.getInternalState().expire
 
@@ -326,7 +327,7 @@ describe('startSessionManager', () => {
       setPageVisibility('visible')
 
       const sessionManager = await startSessionManagerWithDefaults()
-      sessionManager?.expire()
+      sessionManager.expire()
 
       const stateAfterExpire = fakeStrategy.getInternalState()
       expect(stateAfterExpire.isExpired).toBe(EXPIRED)
@@ -341,9 +342,9 @@ describe('startSessionManager', () => {
     it('should expire session after SESSION_EXPIRATION_DELAY without any activity in a hidden tab', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
       const expireSpy = jasmine.createSpy('expire')
-      sessionManager?.expireObservable.subscribe(expireSpy)
+      sessionManager.expireObservable.subscribe(expireSpy)
 
-      expect(sessionManager?.findSession()).toBeDefined()
+      expect(sessionManager.findSession()).toBeDefined()
 
       // Advance past the session expiration delay without any user activity
       clock.tick(SESSION_EXPIRATION_DELAY + ONE_SECOND)
@@ -351,7 +352,7 @@ describe('startSessionManager', () => {
       await collectAsyncCalls(expireSpy, 1)
 
       expect(expireSpy).toHaveBeenCalledTimes(1)
-      expect(sessionManager?.findSession()).toBeUndefined()
+      expect(sessionManager.findSession()).toBeUndefined()
     })
   })
 
@@ -360,10 +361,10 @@ describe('startSessionManager', () => {
       const sessionManager = await startSessionManagerWithDefaults()
       const expireSpy = jasmine.createSpy('expire')
       const renewSpy = jasmine.createSpy('renew')
-      sessionManager?.expireObservable.subscribe(expireSpy)
-      sessionManager?.renewObservable.subscribe(renewSpy)
+      sessionManager.expireObservable.subscribe(expireSpy)
+      sessionManager.renewObservable.subscribe(renewSpy)
 
-      const initialId = sessionManager?.findSession()!.id
+      const initialId = sessionManager.findSession()!.id
 
       // Another tab changes the session
       fakeStrategy.simulateExternalChange({
@@ -374,16 +375,16 @@ describe('startSessionManager', () => {
 
       expect(expireSpy).toHaveBeenCalledTimes(1)
       expect(renewSpy).toHaveBeenCalledTimes(1)
-      expect(sessionManager?.findSession()!.id).toBe('other-tab-session')
-      expect(sessionManager?.findSession()!.id).not.toBe(initialId)
+      expect(sessionManager.findSession()!.id).toBe('other-tab-session')
+      expect(sessionManager.findSession()!.id).not.toBe(initialId)
     })
 
     it('should update session context in history when forcedReplay changes externally', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
-      const currentId = sessionManager?.findSession()!.id
+      const currentId = sessionManager.findSession()!.id
       const currentState = fakeStrategy.getInternalState()
 
-      expect(sessionManager?.findSession()!.isReplayForced).toBe(false)
+      expect(sessionManager.findSession()!.isReplayForced).toBe(false)
 
       fakeStrategy.simulateExternalChange({
         ...currentState,
@@ -391,27 +392,27 @@ describe('startSessionManager', () => {
         forcedReplay: '1',
       })
 
-      expect(sessionManager?.findSession()!.isReplayForced).toBe(true)
+      expect(sessionManager.findSession()!.isReplayForced).toBe(true)
     })
 
     it('should fire expireObservable when external change removes the session', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
       const expireSpy = jasmine.createSpy('expire')
-      sessionManager?.expireObservable.subscribe(expireSpy)
+      sessionManager.expireObservable.subscribe(expireSpy)
 
       fakeStrategy.simulateExternalChange({ isExpired: EXPIRED })
 
       expect(expireSpy).toHaveBeenCalledTimes(1)
-      expect(sessionManager?.findSession()).toBeUndefined()
+      expect(sessionManager.findSession()).toBeUndefined()
     })
 
     it('should fire renewObservable when external change creates a session from expired state', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
       const renewSpy = jasmine.createSpy('renew')
-      sessionManager?.renewObservable.subscribe(renewSpy)
+      sessionManager.renewObservable.subscribe(renewSpy)
 
       // First expire
-      sessionManager?.expire()
+      sessionManager.expire()
 
       // Then another tab creates a new session
       fakeStrategy.simulateExternalChange({
@@ -421,7 +422,7 @@ describe('startSessionManager', () => {
       })
 
       expect(renewSpy).toHaveBeenCalledTimes(1)
-      expect(sessionManager?.findSession()!.id).toBe('new-session-from-other-tab')
+      expect(sessionManager.findSession()!.id).toBe('new-session-from-other-tab')
     })
   })
 
@@ -430,11 +431,11 @@ describe('startSessionManager', () => {
       const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
       const sessionManager = await startSessionManagerWithDefaults({ trackingConsentState })
 
-      expect(sessionManager?.findSession()).toBeDefined()
+      expect(sessionManager.findSession()).toBeDefined()
 
       trackingConsentState.update(TrackingConsent.NOT_GRANTED)
 
-      expect(sessionManager?.findSession()).toBeUndefined()
+      expect(sessionManager.findSession()).toBeUndefined()
       expect(fakeStrategy.getInternalState().isExpired).toBe(EXPIRED)
     })
 
@@ -447,24 +448,24 @@ describe('startSessionManager', () => {
       clock.tick(ONE_SECOND)
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
-      expect(sessionManager?.findSession()).toBeUndefined()
+      expect(sessionManager.findSession()).toBeUndefined()
     })
 
     it('should renew the session when tracking consent is re-granted', async () => {
       const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
       const sessionManager = await startSessionManagerWithDefaults({ trackingConsentState })
-      const initialId = sessionManager?.findSession()!.id
+      const initialId = sessionManager.findSession()!.id
 
       trackingConsentState.update(TrackingConsent.NOT_GRANTED)
 
-      expect(sessionManager?.findSession()).toBeUndefined()
+      expect(sessionManager.findSession()).toBeUndefined()
 
       trackingConsentState.update(TrackingConsent.GRANTED)
 
       await collectAsyncCalls(sessionObservableSpy, 3) // 1 for initial session, 1 for expire, 1 for renew
 
-      expect(sessionManager?.findSession()).toBeDefined()
-      expect(sessionManager?.findSession()!.id).not.toBe(initialId)
+      expect(sessionManager.findSession()).toBeDefined()
+      expect(sessionManager.findSession()!.id).not.toBe(initialId)
     })
 
     it('should remove anonymousId when tracking consent is withdrawn', async () => {
@@ -523,7 +524,7 @@ describe('startSessionManager', () => {
     it('should return the current session when no startTime is provided', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
 
-      const session = sessionManager?.findSession()
+      const session = sessionManager.findSession()
       expect(session).toBeDefined()
       expect(session!.id).toBeDefined()
     })
@@ -531,43 +532,43 @@ describe('startSessionManager', () => {
     it('should return undefined when the session is expired and no startTime is provided', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
 
-      sessionManager?.expire()
+      sessionManager.expire()
 
-      expect(sessionManager?.findSession()).toBeUndefined()
+      expect(sessionManager.findSession()).toBeUndefined()
     })
 
     it('should return the session at the given startTime from history', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
 
-      const firstId = sessionManager?.findSession()!.id
+      const firstId = sessionManager.findSession()!.id
 
       // Advance time, expire, then renew
       clock.tick(10 * ONE_SECOND)
-      sessionManager?.expire()
+      sessionManager.expire()
 
       clock.tick(10 * ONE_SECOND)
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
       await collectAsyncCalls(sessionObservableSpy, 3) // 1 for initial session, 1 for expire, 1 for renew
 
-      const secondId = sessionManager?.findSession()!.id
+      const secondId = sessionManager.findSession()!.id
 
       // Look up first session at t=5s
-      expect(sessionManager?.findSession(clock.relative(5 * ONE_SECOND))!.id).toBe(firstId)
+      expect(sessionManager.findSession(clock.relative(5 * ONE_SECOND))!.id).toBe(firstId)
       // Look up gap at t=15s
-      expect(sessionManager?.findSession(clock.relative(15 * ONE_SECOND))).toBeUndefined()
+      expect(sessionManager.findSession(clock.relative(15 * ONE_SECOND))).toBeUndefined()
       // Look up second session at t=25s
-      expect(sessionManager?.findSession(clock.relative(25 * ONE_SECOND))!.id).toBe(secondId)
+      expect(sessionManager.findSession(clock.relative(25 * ONE_SECOND))!.id).toBe(secondId)
     })
 
     it('should return the current session context in the renewObservable callback', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
       let currentSession: ReturnType<SessionManager['findSession']>
-      sessionManager?.renewObservable.subscribe(() => {
-        currentSession = sessionManager?.findSession()
+      sessionManager.renewObservable.subscribe(() => {
+        currentSession = sessionManager.findSession()
       })
 
-      sessionManager?.expire()
+      sessionManager.expire()
       clock.tick(ONE_SECOND)
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
@@ -579,11 +580,11 @@ describe('startSessionManager', () => {
     it('should still return the session in the expireObservable callback (before history close)', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
       let currentSession: ReturnType<SessionManager['findSession']>
-      sessionManager?.expireObservable.subscribe(() => {
-        currentSession = sessionManager?.findSession()
+      sessionManager.expireObservable.subscribe(() => {
+        currentSession = sessionManager.findSession()
       })
 
-      sessionManager?.expire()
+      sessionManager.expire()
 
       // expireObservable fires before sessionContextHistory.closeActive, so the session is still findable
       expect(currentSession!).toBeDefined()
@@ -594,11 +595,11 @@ describe('startSessionManager', () => {
         const sessionManager = await startSessionManagerWithDefaults()
 
         clock.tick(10 * ONE_SECOND)
-        sessionManager?.expire()
+        sessionManager.expire()
         clock.tick(10 * ONE_SECOND)
 
-        expect(sessionManager?.findSession(clock.relative(15 * ONE_SECOND), { returnInactive: true })).toBeDefined()
-        expect(sessionManager?.findSession(clock.relative(15 * ONE_SECOND), { returnInactive: false })).toBeUndefined()
+        expect(sessionManager.findSession(clock.relative(15 * ONE_SECOND), { returnInactive: true })).toBeDefined()
+        expect(sessionManager.findSession(clock.relative(15 * ONE_SECOND), { returnInactive: false })).toBeUndefined()
       })
     })
   })
@@ -609,13 +610,13 @@ describe('startSessionManager', () => {
         configuration: { sessionSampleRate: 0 },
       })
 
-      expect(sessionManager?.findTrackedSession()).toBeUndefined()
+      expect(sessionManager.findTrackedSession()).toBeUndefined()
     })
 
     it('should return the session when sampled (sessionSampleRate: 100)', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
 
-      const session = sessionManager?.findTrackedSession()
+      const session = sessionManager.findTrackedSession()
       expect(session).toBeDefined()
       expect(session!.id).toBeDefined()
     })
@@ -624,30 +625,30 @@ describe('startSessionManager', () => {
       const sessionManager = await startSessionManagerWithDefaults()
 
       clock.tick(10 * ONE_SECOND)
-      sessionManager?.expire()
+      sessionManager.expire()
       clock.tick(10 * ONE_SECOND)
 
-      expect(sessionManager?.findTrackedSession(clock.relative(5 * ONE_SECOND))).toBeDefined()
-      expect(sessionManager?.findTrackedSession(clock.relative(15 * ONE_SECOND))).toBeUndefined()
+      expect(sessionManager.findTrackedSession(clock.relative(5 * ONE_SECOND))).toBeDefined()
+      expect(sessionManager.findTrackedSession(clock.relative(15 * ONE_SECOND))).toBeUndefined()
     })
 
     it('should return isReplayForced from the session context', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
 
-      expect(sessionManager?.findTrackedSession()!.isReplayForced).toBe(false)
+      expect(sessionManager.findTrackedSession()!.isReplayForced).toBe(false)
 
-      sessionManager?.updateSessionState({ forcedReplay: '1' })
+      sessionManager.updateSessionState({ forcedReplay: '1' })
       await collectAsyncCalls(sessionObservableSpy, 2) // 1 for initial session, 1 for updateSessionState
 
-      expect(sessionManager?.findTrackedSession()!.isReplayForced).toBe(true)
+      expect(sessionManager.findTrackedSession()!.isReplayForced).toBe(true)
     })
 
     it('should return the session if it has expired when returnInactive is true', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
 
-      sessionManager?.expire()
+      sessionManager.expire()
 
-      expect(sessionManager?.findTrackedSession(undefined, { returnInactive: true })).toBeDefined()
+      expect(sessionManager.findTrackedSession(undefined, { returnInactive: true })).toBeDefined()
     })
 
     describe('deterministic sampling', () => {
@@ -670,7 +671,7 @@ describe('startSessionManager', () => {
           configuration: { sessionSampleRate: 1 },
         })
 
-        expect(sessionManager?.findTrackedSession()).toBeDefined()
+        expect(sessionManager.findTrackedSession()).toBeDefined()
       })
 
       it('should not track a session whose ID has a high hash, even with a high sessionSampleRate', async () => {
@@ -686,7 +687,7 @@ describe('startSessionManager', () => {
           configuration: { sessionSampleRate: 99 },
         })
 
-        expect(sessionManager?.findTrackedSession()).toBeUndefined()
+        expect(sessionManager.findTrackedSession()).toBeUndefined()
       })
     })
   })
@@ -696,7 +697,7 @@ describe('startSessionManager', () => {
       const sessionManager = await startSessionManagerWithDefaults()
       const callCountBefore = fakeStrategy.setSessionState.calls.count()
 
-      sessionManager?.updateSessionState({ extra: 'value' })
+      sessionManager.updateSessionState({ extra: 'value' })
 
       expect(fakeStrategy.setSessionState.calls.count()).toBe(callCountBefore + 1)
       expect(fakeStrategy.getInternalState().extra).toBe('value')
@@ -705,23 +706,23 @@ describe('startSessionManager', () => {
     it('should rebuild session context when forcedReplay is updated', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
 
-      expect(sessionManager?.findSession()!.isReplayForced).toBe(false)
+      expect(sessionManager.findSession()!.isReplayForced).toBe(false)
 
-      sessionManager?.updateSessionState({ forcedReplay: '1' })
+      sessionManager.updateSessionState({ forcedReplay: '1' })
       await collectAsyncCalls(sessionObservableSpy, 2) // 1 for initial session, 1 for updateSessionState
 
-      expect(sessionManager?.findSession()!.isReplayForced).toBe(true)
+      expect(sessionManager.findSession()!.isReplayForced).toBe(true)
     })
   })
 
   describe('resume from frozen tab', () => {
     it('should do nothing when session is still active', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
-      const initialId = sessionManager?.findSession()!.id
+      const initialId = sessionManager.findSession()!.id
 
       window.dispatchEvent(createNewEvent(DOM_EVENT.RESUME))
 
-      expect(sessionManager?.findSession()!.id).toBe(initialId)
+      expect(sessionManager.findSession()!.id).toBe(initialId)
     })
 
     it('should reinitialize session in store when store is empty', async () => {
@@ -781,8 +782,8 @@ describe('startSessionManager', () => {
       const sessionManager = await startSessionManagerWithDefaults()
 
       // After user activity (from startSessionManagerWithDefaults), a new session is created
-      expect(sessionManager?.findSession()).toBeDefined()
-      expect(sessionManager?.findSession()!.id).not.toBe('old-session')
+      expect(sessionManager.findSession()).toBeDefined()
+      expect(sessionManager.findSession()!.id).not.toBe('old-session')
     })
   })
 
@@ -805,7 +806,7 @@ describe('startSessionManager', () => {
     it('should unsubscribe from strategy observable after stopSessionManager', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
       const renewSpy = jasmine.createSpy('renew')
-      sessionManager?.renewObservable.subscribe(renewSpy)
+      sessionManager.renewObservable.subscribe(renewSpy)
 
       stopSessionManager()
 
