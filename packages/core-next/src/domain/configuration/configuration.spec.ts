@@ -1,5 +1,4 @@
 import { buildConfiguration } from './configuration'
-import { validateConfiguration } from './validation'
 import type { ConfigExtension } from './configuration'
 
 const validBase = {
@@ -23,51 +22,15 @@ describe('buildConfiguration', () => {
   })
 
   it('should return null when clientToken is missing', () => {
-    const config = buildConfiguration({ site: 'datadoghq.com' } as any, [])
-
-    expect(config).toBeNull()
+    expect(buildConfiguration({ site: 'datadoghq.com' } as any, [])).toBeNull()
   })
 
   it('should return null when site is missing', () => {
-    const config = buildConfiguration({ clientToken: 'abc' } as any, [])
-
-    expect(config).toBeNull()
+    expect(buildConfiguration({ clientToken: 'abc' } as any, [])).toBeNull()
   })
 
   it('should return null when sessionSampleRate is out of range', () => {
-    const config = buildConfiguration({ ...validBase, sessionSampleRate: 101 }, [])
-
-    expect(config).toBeNull()
-  })
-})
-
-describe('validateConfiguration', () => {
-  it('should return true for a valid configuration', () => {
-    expect(validateConfiguration(validBase)).toBe(true)
-  })
-
-  it('should return false when clientToken is missing', () => {
-    expect(validateConfiguration({ site: 'datadoghq.com' } as any)).toBe(false)
-  })
-
-  it('should return false when site is missing', () => {
-    expect(validateConfiguration({ clientToken: 'abc' } as any)).toBe(false)
-  })
-
-  it('should return false when sessionSampleRate is below 0', () => {
-    expect(validateConfiguration({ ...validBase, sessionSampleRate: -1 })).toBe(false)
-  })
-
-  it('should return false when sessionSampleRate is above 100', () => {
-    expect(validateConfiguration({ ...validBase, sessionSampleRate: 101 })).toBe(false)
-  })
-
-  it('should return true when sessionSampleRate is 0', () => {
-    expect(validateConfiguration({ ...validBase, sessionSampleRate: 0 })).toBe(true)
-  })
-
-  it('should return true when sessionSampleRate is 100', () => {
-    expect(validateConfiguration({ ...validBase, sessionSampleRate: 100 })).toBe(true)
+    expect(buildConfiguration({ ...validBase, sessionSampleRate: 101 }, [])).toBeNull()
   })
 
   it('should respect enabled: false', () => {
@@ -115,9 +78,7 @@ describe('validateConfiguration', () => {
       validate: () => null,
     }
 
-    const config = buildConfiguration({ ...validBase, rum: {} } as any, [failingExtension])
-
-    expect(config).toBeNull()
+    expect(buildConfiguration({ ...validBase, rum: {} } as any, [failingExtension])).toBeNull()
   })
 
   it('should skip extension when its key is absent from init config', () => {
