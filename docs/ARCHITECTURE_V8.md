@@ -138,36 +138,98 @@ reader.get().applicationId // typed from rum module
 
 ## Data pipeline
 
+### Event taxonomy
+
+The pipeline carries five categories of data, each with different semantics:
+
+**Resource** — passive data points from browser APIs (PerformanceResourceTiming, fetch/XHR completions). Raw, minimal. Some transform into observations immediately, others are consumed directly by subscribers (e.g. profiling module).
+
+**Action** — active data points from user interactions (clicks, taps, custom actions). May accumulate child events (errors, resources) before becoming an observation. Also directly subscribable by other modules.
+
+**Observation** — the step before a final event. Domain-agnostic, enrichable. A resource that completed, an action that resolved, a view update, an error. Only observations go through the enricher chain and become events. This is what `beforeSend` receives after enrichment.
+
+**Signal** — internal SDK coordination (`sessionStarted`, `sessionExpired`, `viewCreated`, `pageMayExit`). No enrichment, instant delivery. Never serialized to the backend.
+
+**Telemetry** — SDK internal reporting (debug, error, usage, configuration). Fast track — separate from the ordered pipeline. Never blocked by stuck domain events.
+
+### Event lifecycle
+
 ```mermaid
 flowchart TD
-  collectors["collectors\n(views, actions, errors…)"]
-  pipeline["Pipeline\n(pub/sub)"]
-  enrichers["enricher chain\n(session, view, context…)"]
-  batch["Batch\n(accumulate messages)"]
-  transport["Transport\n(browser: fetch/beacon)"]
+  browser["Browser APIs"]
+  user["User input"]
+  resource["Resource\n(passive)"]
+  action["Action\n(active)"]
+  subscribers["Subscribers\n(profiling, etc.)"]
+  observation["Observation\n(enrichable)"]
+  enrichers["Enricher chain\n(session, view, context…)"]
+  event["Event\n(rum-events-format)"]
+  beforeSend["beforeSend"]
+  batch["Batch"]
+  transport["Transport"]
   intake["Datadog intake"]
 
-  collectors -->|"raw events"| pipeline
-  pipeline -->|"publish"| enrichers
-  enrichers -->|"enriched events"| batch
+  browser --> resource
+  user --> action
+  resource --> subscribers
+  action --> subscribers
+  resource -->|"some transform"| observation
+  action -->|"resolved"| observation
+  observation --> enrichers
+  enrichers --> event
+  event --> beforeSend
+  beforeSend --> batch
   batch -->|"flush"| transport
   transport --> intake
 ```
 
-### Pipeline
+### Mapping from current SDK events
 
-Typed pub/sub event bus with multiple tracks. Each track has different processing guarantees:
+| Current event             | v8 category | Rationale                                               |
+| ------------------------- | ----------- | ------------------------------------------------------- |
+| **RUM events**            |             |                                                         |
+| `RESOURCE`                | Resource    | Passive network data from browser APIs                  |
+| `ACTION`                  | Action      | User-initiated interactions                             |
+| `VIEW`                    | Observation | Enrichable page lifecycle data with accumulated metrics |
+| `ERROR`                   | Observation | Enrichable runtime failures                             |
+| `LONG_TASK`               | Observation | Enrichable performance bottlenecks                      |
+| `VITAL`                   | Observation | Enrichable custom measurements                          |
+| **Lifecycle events**      |             |                                                         |
+| `SESSION_EXPIRED`         | Signal      | Internal coordination for session cleanup               |
+| `SESSION_RENEWED`         | Signal      | Internal coordination for session refresh               |
+| `VIEW_CREATED`            | Signal      | Internal coordination for view context                  |
+| `VIEW_UPDATED`            | Signal      | Internal coordination for view metrics                  |
+| `VIEW_ENDED`              | Signal      | Internal coordination for view termination              |
+| `ACTION_STARTED`          | Signal      | Internal coordination for action lifecycle              |
+| `AUTO_ACTION_COMPLETED`   | Signal      | Internal coordination for action completion             |
+| `REQUEST_STARTED`         | Signal      | Internal coordination for request lifecycle             |
+| `REQUEST_COMPLETED`       | Signal      | Internal coordination for resource fetch completion     |
+| `PAGE_MAY_EXIT`           | Signal      | Internal coordination for page unload                   |
+| `RAW_RUM_EVENT_COLLECTED` | Signal      | Pipeline entry point (replaced by `pipeline.publish()`) |
+| `RUM_EVENT_COLLECTED`     | Signal      | Pipeline exit point (replaced by subscribers)           |
+| `RAW_ERROR_COLLECTED`     | Signal      | Error pipeline entry (replaced by `pipeline.publish()`) |
+| `VITAL_STARTED`           | Signal      | Internal coordination for vital lifecycle               |
+| **Telemetry**             |             |                                                         |
+| `LOG` (error/debug)       | Telemetry   | SDK diagnostic logs                                     |
+| `CONFIGURATION`           | Telemetry   | SDK init config snapshot                                |
+| `USAGE`                   | Telemetry   | Public API call tracking                                |
+
+> **Open question:** Who converts resources/actions into observations — the collector that produced them, or a dedicated subscriber that listens and publishes observations?
+
+### Pipeline tracks
+
+The pipeline supports multiple tracks with different processing guarantees:
 
 | Track       | Ordering               | Enrichers        | Use case                                         |
 | ----------- | ---------------------- | ---------------- | ------------------------------------------------ |
-| **ordered** | Sequential, guaranteed | Async or sync    | RUM events, logs — view before action            |
+| **ordered** | Sequential, guaranteed | Async or sync    | Observations — view before action                |
 | **fast**    | None                   | Synchronous only | Telemetry — must never wait behind a stuck event |
 
-Collectors publish to a specific track. Fast-track events bypass the ordered queue entirely — a stuck RUM enricher cannot block telemetry signals.
+Collectors publish to a specific track. Fast-track events bypass the ordered queue entirely — a stuck enricher cannot block telemetry signals.
 
 ### Enricher chain
 
-DAG-ordered enrichers transform events. Each enricher can:
+DAG-ordered enrichers transform observations into events. Each enricher can:
 
 - Return enriched data — chain continues
 - Return `SKIP` — enricher and its dependents are bypassed, event still reaches subscribers
