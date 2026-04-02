@@ -1,3 +1,4 @@
+import { CONFIGURATION_DEFAULTS } from './defaults'
 import { validateConfiguration } from './validation'
 
 interface InitConfiguration {
@@ -42,11 +43,12 @@ function buildConfiguration(
   const base: Configuration = {
     clientToken: init.clientToken,
     site: init.site,
-    enabled: init.enabled ?? true,
-    sessionSampleRate: init.sessionSampleRate ?? 100,
-    telemetrySampleRate: init.telemetrySampleRate ?? 20,
-    telemetryConfigurationSampleRate: init.telemetryConfigurationSampleRate ?? 5,
-    telemetryUsageSampleRate: init.telemetryUsageSampleRate ?? 5,
+    enabled: init.enabled ?? CONFIGURATION_DEFAULTS.enabled,
+    sessionSampleRate: init.sessionSampleRate ?? CONFIGURATION_DEFAULTS.sessionSampleRate,
+    telemetrySampleRate: init.telemetrySampleRate ?? CONFIGURATION_DEFAULTS.telemetrySampleRate,
+    telemetryConfigurationSampleRate:
+      init.telemetryConfigurationSampleRate ?? CONFIGURATION_DEFAULTS.telemetryConfigurationSampleRate,
+    telemetryUsageSampleRate: init.telemetryUsageSampleRate ?? CONFIGURATION_DEFAULTS.telemetryUsageSampleRate,
     ...(init.env !== undefined && { env: init.env }),
     ...(init.service !== undefined && { service: init.service }),
     ...(init.version !== undefined && { version: init.version }),
