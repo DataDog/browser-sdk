@@ -101,10 +101,11 @@ describe('preStartLogs', () => {
         mockEventBridge()
       })
 
-      it('init should accept empty client token', () => {
+      it('init should accept empty client token', async () => {
         const hybridInitConfiguration: HybridInitConfiguration = {}
         strategy.init(hybridInitConfiguration as LogsInitConfiguration)
 
+        await collectAsyncCalls(doStartLogsSpy, 1)
         expect(displaySpy).not.toHaveBeenCalled()
         expect(doStartLogsSpy).toHaveBeenCalled()
       })
@@ -135,9 +136,9 @@ describe('preStartLogs', () => {
   })
 
   describe('save context when submitting a log', () => {
-    it('saves the date', () => {
+    it('saves the date', async () => {
       mockEventBridge()
-      const { strategy, getLoggedMessage } = createPreStartStrategyWithDefaults()
+      const { strategy, getLoggedMessage, handleLogSpy } = createPreStartStrategyWithDefaults()
       strategy.handleLog(
         {
           status: StatusType.info,
@@ -147,6 +148,7 @@ describe('preStartLogs', () => {
       )
       clock.tick(ONE_SECOND)
       strategy.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(handleLogSpy, 1)
 
       expect(getLoggedMessage(0).savedDate).toEqual((Date.now() - ONE_SECOND) as TimeStamp)
     })

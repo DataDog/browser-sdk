@@ -148,10 +148,11 @@ describe('preStartRum', () => {
         )
       })
 
-      it('should initialize even if session cannot be handled', () => {
+      it('should initialize even if session cannot be handled', async () => {
         mockEventBridge()
         spyOnProperty(document, 'cookie', 'get').and.returnValue('')
         strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+        await collectAsyncCalls(doStartRumSpy, 1)
         expect(doStartRumSpy).toHaveBeenCalled()
       })
     })
@@ -252,7 +253,7 @@ describe('preStartRum', () => {
           expect(doStartRumSpy).not.toHaveBeenCalled()
         })
 
-        it('if message bridge is present, does not create a deflate worker instance', () => {
+        it('if message bridge is present, does not create a deflate worker instance', async () => {
           mockEventBridge()
 
           strategy.init(
@@ -263,6 +264,7 @@ describe('preStartRum', () => {
             PUBLIC_API
           )
 
+          await collectAsyncCalls(doStartRumSpy, 1)
           expect(startDeflateWorkerSpy).not.toHaveBeenCalled()
           expect(doStartRumSpy).toHaveBeenCalledTimes(1)
         })

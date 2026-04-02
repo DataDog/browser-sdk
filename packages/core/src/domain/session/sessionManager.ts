@@ -58,11 +58,10 @@ export const VISIBILITY_CHECK_DELAY = ONE_MINUTE
 const SESSION_CONTEXT_TIMEOUT_DELAY = SESSION_TIME_OUT_DELAY
 let stopCallbacks: Array<() => void> = []
 
-export function startSessionManager(
+export async function startSessionManager(
   configuration: Configuration,
-  trackingConsentState: TrackingConsentState,
-  onReady: (sessionManager: SessionManager) => void
-) {
+  trackingConsentState: TrackingConsentState
+): Promise<SessionManager | undefined> {
   const renewObservable = new Observable<SessionRenewalEvent>()
   const expireObservable = new Observable<void>()
   let expireContext: SessionDebugContext | undefined
@@ -84,29 +83,31 @@ export function startSessionManager(
   }, ONE_SECOND)
   stopCallbacks.push(cancelExpandOrRenew)
 
+  let expirationTimeoutId: ReturnType<typeof setTimeout> | undefined
+  stopCallbacks.push(() => clearTimeout(expirationTimeoutId))
+
   let stopped = false
   stopCallbacks.push(() => {
     stopped = true
   })
-  ;(async () => {
-    const initialState = await resolveInitialState()
-    if (stopped) {
-      return
-    }
 
-    // Consent is always granted when the session manager is started, but it may
-    // be revoked during the async initialization (e.g., while waiting for cookie lock).
-    if (!trackingConsentState.isGranted()) {
-      expire()
-      return
-    }
+  const initialState = await resolveInitialState()
+  if (stopped) {
+    return
+  }
 
-    sessionContextHistory.add(buildSessionContext(initialState), clocksOrigin().relative)
-    scheduleExpirationTimeout(initialState)
-    subscribeToSessionChanges()
-    setupSessionTracking()
-    onReady(buildSessionManager())
-  })().catch(monitorError)
+  // Consent is always granted when the session manager is started, but it may
+  // be revoked during the async initialization (e.g., while waiting for cookie lock).
+  if (!trackingConsentState.isGranted()) {
+    expire()
+    return
+  }
+
+  sessionContextHistory.add(buildSessionContext(initialState), clocksOrigin().relative)
+  scheduleExpirationTimeout(initialState)
+  subscribeToSessionChanges()
+  setupSessionTracking()
+  return buildSessionManager()
 
   async function resolveInitialState() {
     let state: SessionState = {}
@@ -125,8 +126,6 @@ export function startSessionManager(
     })
     stopCallbacks.push(() => subscription.unsubscribe())
   }
-
-  let expirationTimeoutId: ReturnType<typeof setTimeout> | undefined
 
   function scheduleExpirationTimeout(state: SessionState) {
     clearTimeout(expirationTimeoutId)
@@ -149,7 +148,6 @@ export function startSessionManager(
       }, delay)
     }
   }
-  stopCallbacks.push(() => clearTimeout(expirationTimeoutId))
 
   function setupSessionTracking() {
     trackingConsentState.observable.subscribe(() => {
@@ -276,14 +274,14 @@ export function startSessionManager(
   }
 }
 
-export function startSessionManagerStub(onReady: (sessionManager: SessionManager) => void): void {
+export function startSessionManagerStub(): Promise<SessionManager> {
   const stubSessionId = generateUUID()
   let sessionContext: SessionContext = {
     id: stubSessionId,
     isReplayForced: false,
     anonymousId: undefined,
   }
-  onReady({
+  return Promise.resolve({
     findSession: () => sessionContext,
     findTrackedSession: () => sessionContext,
     renewObservable: new Observable(),

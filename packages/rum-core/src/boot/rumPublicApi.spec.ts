@@ -169,11 +169,12 @@ describe('rum public api', () => {
       mockClock()
     })
 
-    it('allows sending actions before init', () => {
+    it('allows sending actions before init', async () => {
       rumPublicApi.addAction('foo', { bar: 'baz' })
 
       expect(addActionSpy).not.toHaveBeenCalled()
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(addActionSpy, 1)
 
       expect(addActionSpy).toHaveBeenCalledTimes(1)
       expect(addActionSpy.calls.argsFor(0)).toEqual([
@@ -187,7 +188,7 @@ describe('rum public api', () => {
       ])
     })
 
-    it('should generate a handling stack', () => {
+    it('should generate a handling stack', async () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
       function triggerAction() {
@@ -196,6 +197,7 @@ describe('rum public api', () => {
 
       triggerAction()
 
+      await collectAsyncCalls(addActionSpy, 1)
       expect(addActionSpy).toHaveBeenCalledTimes(1)
       const stacktrace = addActionSpy.calls.argsFor(0)[0].handlingStack
       expect(stacktrace).toMatch(/^HandlingStack: action\s+at triggerAction @/)
@@ -218,11 +220,12 @@ describe('rum public api', () => {
       }))
     })
 
-    it('allows capturing an error before init', () => {
+    it('allows capturing an error before init', async () => {
       rumPublicApi.addError(new Error('foo'))
 
       expect(addErrorSpy).not.toHaveBeenCalled()
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(addErrorSpy, 1)
 
       expect(addErrorSpy).toHaveBeenCalledTimes(1)
       expect(addErrorSpy.calls.argsFor(0)).toEqual([
@@ -235,7 +238,7 @@ describe('rum public api', () => {
       ])
     })
 
-    it('should generate a handling stack', () => {
+    it('should generate a handling stack', async () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
       function triggerError() {
@@ -243,18 +246,20 @@ describe('rum public api', () => {
       }
 
       triggerError()
+      await collectAsyncCalls(addErrorSpy, 1)
       expect(addErrorSpy).toHaveBeenCalledTimes(1)
       const stacktrace = addErrorSpy.calls.argsFor(0)[0].handlingStack
       expect(stacktrace).toMatch(/^HandlingStack: error\s+at triggerError (.|\n)*$/)
     })
 
     describe('save context when capturing an error', () => {
-      it('saves the date', () => {
+      it('saves the date', async () => {
         clock.tick(ONE_SECOND)
         rumPublicApi.addError(new Error('foo'))
 
         clock.tick(ONE_SECOND)
         rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+        await collectAsyncCalls(addErrorSpy, 1)
 
         expect(addErrorSpy.calls.argsFor(0)[0].startClocks.relative as number).toEqual(clock.relative(ONE_SECOND))
       })
