@@ -3,6 +3,7 @@ import { noop, timeStampNow } from '@datadog/browser-core'
 import { RecordType, SnapshotFormat } from '../../../types'
 import type {
   BrowserChangeRecord,
+  BrowserFullSnapshotChangeRecord,
   BrowserFullSnapshotRecord,
   BrowserFullSnapshotV1Record,
   BrowserRecord,
@@ -101,11 +102,14 @@ export function serializeNodeAndVerifyChangeRecord(
   const changeScope = createRecordingScopeForTesting()
   changeScope.elementsScrollPositions = transaction.scope.elementsScrollPositions
 
-  let changeRecord: BrowserChangeRecord | undefined
+  let changeRecord: BrowserChangeRecord | BrowserFullSnapshotChangeRecord | undefined
   serializeChangesInTransaction(
     transaction.kind,
     (record: BrowserRecord): void => {
-      if (record.type !== RecordType.Change) {
+      if (
+        record.type !== RecordType.Change &&
+        (record.type !== RecordType.FullSnapshot || record.format !== SnapshotFormat.Change)
+      ) {
         throw new Error(`Received unexpected record type: ${record.type}`)
       }
       changeRecord = record

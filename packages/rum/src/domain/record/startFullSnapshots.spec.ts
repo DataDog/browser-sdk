@@ -3,7 +3,7 @@ import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { TimeStamp } from '@datadog/browser-core'
 import { addExperimentalFeatures, ExperimentalFeature, noop } from '@datadog/browser-core'
 import type { BrowserRecord } from '../../types'
-import { RecordType } from '../../types'
+import { RecordType, SnapshotFormat } from '../../types'
 import { appendElement } from '../../../../rum-core/test'
 import { startFullSnapshots } from './startFullSnapshots'
 import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
@@ -101,7 +101,7 @@ const describeStartFullSnapshotsWithExpectedSnapshot = (fullSnapshotRecord: jasm
 }
 
 describe('startFullSnapshots', () => {
-  describe('when generating BrowserFullSnapshotRecord', () => {
+  describe('when generating BrowserFullSnapshotV1Record', () => {
     describeStartFullSnapshotsWithExpectedSnapshot({
       data: {
         node: jasmine.any(Object),
@@ -110,19 +110,21 @@ describe('startFullSnapshots', () => {
           top: jasmine.any(Number),
         },
       },
+      format: SnapshotFormat.V1,
       type: RecordType.FullSnapshot,
       timestamp: jasmine.any(Number),
     })
   })
 
-  describe('when generating BrowserChangeRecord', () => {
+  describe('when generating BrowserFullSnapshotChangeRecord', () => {
     beforeEach(() => {
       addExperimentalFeatures([ExperimentalFeature.USE_CHANGE_RECORDS])
     })
 
     describeStartFullSnapshotsWithExpectedSnapshot({
       data: jasmine.any(Array),
-      type: RecordType.Change,
+      format: SnapshotFormat.Change,
+      type: RecordType.FullSnapshot,
       timestamp: jasmine.any(Number),
     })
   })

@@ -1,4 +1,4 @@
-import { NodeType, RecordType } from '../../types'
+import { NodeType, RecordType, SnapshotFormat } from '../../types'
 import { appendElement } from '../../../../rum-core/test'
 import { takeFullSnapshot, takeNodeSnapshot } from './internalApi'
 
@@ -30,6 +30,7 @@ describe('takeFullSnapshot', () => {
               top: jasmine.any(Number),
             },
           },
+          format: SnapshotFormat.V1,
           type: RecordType.FullSnapshot,
           timestamp: jasmine.any(Number),
         },
