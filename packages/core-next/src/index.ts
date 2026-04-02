@@ -9,8 +9,6 @@
  * - {@link enricher} — Factory function to create type-safe enrichers with dependency inference.
  * - {@link chain} — Composes enrichers into a reusable processing function.
  * - {@link topologicalSort} — Sorts enrichers by their dependency graph.
- * - {@link OutputOf} — Extracts the output type from an enricher.
- * - {@link MaybePromise} — Utility type for sync-or-async values.
  *
  * ## Pipeline API
  * - {@link Pipeline} — Typed pub/sub event bus with enricher support.
