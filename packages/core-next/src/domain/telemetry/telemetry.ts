@@ -1,3 +1,5 @@
+import type { Configuration } from '../configuration/configuration'
+
 const MAX_EVENTS_PER_KIND = 15
 const EXCLUDED_SITES = ['us1.ddog-gov.com']
 const ALLOWED_FRAME_URLS = [
@@ -8,6 +10,30 @@ const ALLOWED_FRAME_URLS = [
   'http://localhost',
   '<anonymous>',
 ]
+
+type TelemetryConfig = Pick<
+  Configuration,
+  'site' | 'telemetrySampleRate' | 'telemetryConfigurationSampleRate' | 'telemetryUsageSampleRate'
+>
+
+interface RawTelemetryLog {
+  type: 'log'
+  status: 'debug' | 'error'
+  message: string
+  error?: { stack?: string; kind?: string }
+}
+
+interface RawTelemetryUsage {
+  type: 'usage'
+  usage: Record<string, unknown>
+}
+
+interface RawTelemetryConfiguration {
+  type: 'configuration'
+  configuration: object
+}
+
+type RawTelemetry = RawTelemetryLog | RawTelemetryUsage | RawTelemetryConfiguration
 
 function scrubStackTrace(stack: string): string {
   return stack
@@ -23,32 +49,6 @@ function extractStack(error: unknown): string | undefined {
   return scrubStackTrace(error.stack)
 }
 
-import type { Configuration } from '../configuration/configuration'
-
-type TelemetryConfig = Pick<
-  Configuration,
-  'site' | 'telemetrySampleRate' | 'telemetryConfigurationSampleRate' | 'telemetryUsageSampleRate'
->
-
-interface TelemetryLogEvent {
-  type: 'log'
-  status: 'debug' | 'error'
-  message: string
-  error?: unknown
-}
-
-interface TelemetryUsageEvent {
-  type: 'usage'
-  feature: string
-}
-
-interface TelemetryConfigurationEvent {
-  type: 'configuration'
-  configuration: object
-}
-
-type TelemetryEvent = (TelemetryLogEvent | TelemetryUsageEvent | TelemetryConfigurationEvent) & Record<string, unknown>
-
 function isSampled(rate: number) {
   return rate >= 100 || Math.random() * 100 < rate
 }
@@ -62,13 +62,13 @@ class Telemetry {
   private readonly contextProviders: (() => Record<string, unknown>)[] = []
 
   constructor(
-    private readonly config: TelemetryConfig,
-    private readonly onEvent: (event: TelemetryEvent) => void
+    config: TelemetryConfig,
+    private readonly onEvent: (event: RawTelemetry & Record<string, unknown>) => void
   ) {
     const sampled = isSampled(config.telemetrySampleRate)
     this.enabled = !EXCLUDED_SITES.includes(config.site) && sampled
-    this.usageEnabled = this.enabled && isSampled(config.telemetryUsageSampleRate ?? 100)
-    this.configurationEnabled = this.enabled && isSampled(config.telemetryConfigurationSampleRate ?? 100)
+    this.usageEnabled = this.enabled && isSampled(config.telemetryUsageSampleRate)
+    this.configurationEnabled = this.enabled && isSampled(config.telemetryConfigurationSampleRate)
   }
 
   registerContext(provider: () => Record<string, unknown>): void {
@@ -87,14 +87,20 @@ class Telemetry {
       return
     }
     const stack = extractStack(error)
-    this.send({ type: 'log', status: 'error', message, error, ...(stack !== undefined && { stack }) })
+    const kind = error instanceof Error ? error.name : undefined
+    this.send({
+      type: 'log',
+      status: 'error',
+      message,
+      ...(stack !== undefined || kind !== undefined ? { error: { stack, kind } } : {}),
+    })
   }
 
   usage(feature: string): void {
     if (!this.usageEnabled) {
       return
     }
-    this.send({ type: 'usage', feature })
+    this.send({ type: 'usage', usage: { [feature]: true } })
   }
 
   configuration(configuration: object): void {
@@ -104,15 +110,15 @@ class Telemetry {
     this.send({ type: 'configuration', configuration })
   }
 
-  private send(rawEvent: TelemetryLogEvent | TelemetryUsageEvent | TelemetryConfigurationEvent): void {
-    const kind = rawEvent.type === 'log' ? `log:${rawEvent.status}` : rawEvent.type
+  private send(rawTelemetry: RawTelemetry): void {
+    const kind = rawTelemetry.type === 'log' ? `log:${rawTelemetry.status}` : rawTelemetry.type
 
     const count = this.eventCountByKind.get(kind) ?? 0
     if (count >= MAX_EVENTS_PER_KIND) {
       return
     }
 
-    const serialized = JSON.stringify(rawEvent)
+    const serialized = JSON.stringify(rawTelemetry)
     let sent = this.sentEventsByKind.get(kind)
     if (!sent) {
       sent = new Set()
@@ -127,7 +133,7 @@ class Telemetry {
       {}
     )
 
-    const event = { ...rawEvent, ...context } as TelemetryEvent
+    const event = { ...rawTelemetry, ...context } as RawTelemetry & Record<string, unknown>
 
     this.eventCountByKind.set(kind, count + 1)
     sent.add(serialized)
@@ -135,5 +141,5 @@ class Telemetry {
   }
 }
 
-export type { TelemetryConfig, TelemetryEvent }
+export type { TelemetryConfig, RawTelemetry }
 export { Telemetry }

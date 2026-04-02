@@ -1,10 +1,10 @@
 import { Telemetry } from './telemetry'
-import type { TelemetryEvent } from './telemetry'
+import type { TelemetryConfig, RawTelemetry } from './telemetry'
 
 const EXCLUDED_SITE = 'us1.ddog-gov.com'
 
-function createTelemetry(overrides: Partial<ConstructorParameters<typeof Telemetry>[0]> = {}) {
-  const events: TelemetryEvent[] = []
+function createTelemetry(overrides: Partial<TelemetryConfig> = {}) {
+  const events: (RawTelemetry & Record<string, unknown>)[] = []
   const telemetry = new Telemetry(
     {
       site: 'datadoghq.com',
@@ -26,8 +26,8 @@ describe('Telemetry - basic reporting', () => {
 
     expect(events.length).toBe(1)
     expect(events[0].type).toBe('log')
-    expect(events[0].status).toBe('debug')
-    expect(events[0].message).toBe('internal message')
+    expect((events[0] as any).status).toBe('debug')
+    expect((events[0] as any).message).toBe('internal message')
   })
 
   it('should report an error event', () => {
@@ -37,8 +37,8 @@ describe('Telemetry - basic reporting', () => {
 
     expect(events.length).toBe(1)
     expect(events[0].type).toBe('log')
-    expect(events[0].status).toBe('error')
-    expect(events[0].message).toBe('something broke')
+    expect((events[0] as any).status).toBe('error')
+    expect((events[0] as any).message).toBe('something broke')
   })
 
   it('should report a usage event', () => {
@@ -48,7 +48,7 @@ describe('Telemetry - basic reporting', () => {
 
     expect(events.length).toBe(1)
     expect(events[0].type).toBe('usage')
-    expect(events[0].feature).toBe('startView')
+    expect((events[0] as any).usage).toEqual({ startView: true })
   })
 
   it('should report a configuration event', () => {
@@ -58,6 +58,7 @@ describe('Telemetry - basic reporting', () => {
 
     expect(events.length).toBe(1)
     expect(events[0].type).toBe('configuration')
+    expect((events[0] as any).configuration).toEqual({ sessionSampleRate: 100 })
   })
 })
 
@@ -151,7 +152,7 @@ describe('Telemetry - stack trace scrubbing', () => {
 
     telemetry.error('boom', new Error('original error'))
 
-    expect((events[0] as any).stack).toBeDefined()
+    expect((events[0] as any).error?.stack).toBeDefined()
   })
 
   it('should scrub customer frames from the stack trace', () => {
@@ -165,7 +166,7 @@ describe('Telemetry - stack trace scrubbing', () => {
 
     telemetry.error('boom', error)
 
-    const stack = (events[0] as any).stack as string
+    const stack = (events[0] as any).error?.stack as string
     expect(stack).not.toContain('customer-app.com')
     expect(stack).toContain('datadoghq-browser-agent.com')
   })
