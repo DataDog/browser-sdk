@@ -356,6 +356,10 @@ function getResponseHeaders(request: RequestCompleteEvent, matchers: MatchOption
 }
 
 function getRequestHeaders(request: RequestCompleteEvent, matchers: MatchOption[]): NetworkHeaders | undefined {
+  if (request.type === RequestType.XHR) {
+    return request.requestHeaders ? filterHeaders(request.requestHeaders, matchers) : undefined
+  }
+
   if (request.type !== RequestType.FETCH) {
     return undefined
   }

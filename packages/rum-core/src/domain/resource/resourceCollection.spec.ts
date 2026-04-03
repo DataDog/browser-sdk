@@ -600,8 +600,24 @@ describe('resourceCollection', () => {
         })
       })
 
-      // TODO: Remove this test when we support request headers for XHR
-      it('should not extract request headers from XHR', () => {
+      it('should extract matching request headers from XHR', () => {
+        setupResourceCollection({ trackResourceHeaders: ['x-custom'] })
+
+        const requestHeaders = new Headers()
+        requestHeaders.append('X-Custom', 'my-value')
+        requestHeaders.append('X-Other', 'ignored')
+
+        notifyRequest({
+          request: { type: RequestType.XHR, requestHeaders },
+        })
+
+        const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+        expect(event.resource.request).toEqual({
+          headers: { 'x-custom': 'my-value' },
+        })
+      })
+
+      it('should not extract request headers from XHR when requestHeaders is undefined', () => {
         setupResourceCollection({ trackResourceHeaders: ['content-type'] })
 
         const xhr = new XMLHttpRequest()
@@ -613,6 +629,39 @@ describe('resourceCollection', () => {
 
         const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
         expect(event.resource.request).toBeUndefined()
+      })
+
+      it('should filter forbidden request headers from XHR', () => {
+        setupResourceCollection({ trackResourceHeaders: ['authorization', 'x-custom'] })
+
+        const requestHeaders = new Headers()
+        requestHeaders.append('Authorization', 'Bearer secret')
+        requestHeaders.append('X-Custom', 'allowed')
+
+        notifyRequest({
+          request: { type: RequestType.XHR, requestHeaders },
+        })
+
+        const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+        expect(event.resource.request?.headers?.['authorization']).toBeUndefined()
+        expect(event.resource.request?.headers?.['x-custom']).toBe('allowed')
+      })
+
+      it('should truncate XHR request header values exceeding max length', () => {
+        const displaySpy = spyOn(display, 'warn')
+        setupResourceCollection({ trackResourceHeaders: ['x-long'] })
+
+        const longValue = 'a'.repeat(200)
+        const requestHeaders = new Headers()
+        requestHeaders.append('X-Long', longValue)
+
+        notifyRequest({
+          request: { type: RequestType.XHR, requestHeaders },
+        })
+
+        const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+        expect(event.resource.request!.headers!['x-long']).toBe('a'.repeat(128))
+        expect(displaySpy).toHaveBeenCalledOnceWith('Header "x-long" value was truncated from 200 to 128 characters.')
       })
     })
 

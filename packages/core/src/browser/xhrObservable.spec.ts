@@ -383,6 +383,63 @@ describe('xhr observable', () => {
     })
   })
 
+  describe('setRequestHeader', () => {
+    it('should capture request headers set before send', (done) => {
+      withXhr({
+        setup(xhr) {
+          xhr.open('POST', '/ok')
+          xhr.setRequestHeader('Content-Type', 'application/json')
+          xhr.send()
+          xhr.complete(200, 'ok')
+        },
+        onComplete() {
+          const request = requests[0]
+          expect(request.requestHeaders).toBeDefined()
+          expect(request.requestHeaders!.get('content-type')).toBe('application/json')
+          done()
+        },
+      })
+    })
+
+    it('should append multiple values for the same header name', (done) => {
+      withXhr({
+        setup(xhr) {
+          xhr.open('POST', '/ok')
+          xhr.setRequestHeader('X-Custom', 'value1')
+          xhr.setRequestHeader('X-Custom', 'value2')
+          xhr.send()
+          xhr.complete(200, 'ok')
+        },
+        onComplete() {
+          const request = requests[0]
+          expect(request.requestHeaders).toBeDefined()
+          expect(request.requestHeaders!.get('x-custom')).toBe('value1, value2')
+          done()
+        },
+      })
+    })
+
+    it('should not store headers when setRequestHeader is called before open', (done) => {
+      withXhr({
+        setup(xhr) {
+          try {
+            xhr.setRequestHeader('Content-Type', 'application/json')
+          } catch {
+            // Expected: setRequestHeader throws before open in real browsers
+          }
+          xhr.open('POST', '/ok')
+          xhr.send()
+          xhr.complete(200, 'ok')
+        },
+        onComplete() {
+          const request = requests[0]
+          expect(request.requestHeaders).toBeUndefined()
+          done()
+        },
+      })
+    })
+  })
+
   it('should track request with undefined or null methods', (done) => {
     withXhr({
       setup(xhr) {
