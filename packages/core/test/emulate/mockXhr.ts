@@ -46,7 +46,6 @@ export class MockXhr extends MockEventTarget {
     this.hasEnded = false
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   setRequestHeader(_name: string, _value: string) {
     // noop - headers are tracked via instrumentation
   }

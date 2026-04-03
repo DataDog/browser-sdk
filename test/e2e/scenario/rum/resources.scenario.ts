@@ -513,14 +513,15 @@ test.describe('resource headers with trackResourceHeaders', () => {
   createTest('collect default request headers for XHR when trackResourceHeaders is true')
     .withRum(TRACK_RESOURCE_HEADERS_CONFIG)
     .run(async ({ intakeRegistry, flushEvents, page }) => {
-      await page.evaluate(() =>
-        new Promise<void>((resolve) => {
-          const xhr = new XMLHttpRequest()
-          xhr.addEventListener('loadend', () => resolve())
-          xhr.open('POST', '/ok')
-          xhr.setRequestHeader('Content-Type', 'application/json')
-          xhr.send(JSON.stringify({ key: 'value' }))
-        })
+      await page.evaluate(
+        () =>
+          new Promise<void>((resolve) => {
+            const xhr = new XMLHttpRequest()
+            xhr.addEventListener('loadend', () => resolve())
+            xhr.open('POST', '/ok')
+            xhr.setRequestHeader('Content-Type', 'application/json')
+            xhr.send(JSON.stringify({ key: 'value' }))
+          })
       )
 
       await flushEvents()
@@ -538,15 +539,16 @@ test.describe('resource headers with trackResourceHeaders', () => {
       trackResourceHeaders: ['x-custom-request'],
     })
     .run(async ({ intakeRegistry, flushEvents, page }) => {
-      await page.evaluate(() =>
-        new Promise<void>((resolve) => {
-          const xhr = new XMLHttpRequest()
-          xhr.addEventListener('loadend', () => resolve())
-          xhr.open('POST', '/ok')
-          xhr.setRequestHeader('Content-Type', 'application/json')
-          xhr.setRequestHeader('x-custom-request', 'request-value')
-          xhr.send(JSON.stringify({ key: 'value' }))
-        })
+      await page.evaluate(
+        () =>
+          new Promise<void>((resolve) => {
+            const xhr = new XMLHttpRequest()
+            xhr.addEventListener('loadend', () => resolve())
+            xhr.open('POST', '/ok')
+            xhr.setRequestHeader('Content-Type', 'application/json')
+            xhr.setRequestHeader('x-custom-request', 'request-value')
+            xhr.send(JSON.stringify({ key: 'value' }))
+          })
       )
 
       await flushEvents()
