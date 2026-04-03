@@ -19,5 +19,8 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "dependencies": {
+    "rum-events-format": "workspace:rum-events-format/lib"
   }
 }

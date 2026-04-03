@@ -508,6 +508,8 @@ __metadata:
 "@datadog/core-next@workspace:packages/core-next":
   version: 0.0.0-use.local
   resolution: "@datadog/core-next@workspace:packages/core-next"
+  dependencies:
+    rum-events-format: "workspace:rum-events-format/lib"
   languageName: unknown
   linkType: soft
 
@@ -9937,6 +9939,12 @@ __metadata:
   checksum: 10c0/3279de7450c8eae2f6e095e9edacbdeec0abb5cb7249c6e719faa0db2dba43574b4fff5892d9220631c9abaff52dd3cad648cfea2aaace845e1a071915ac8867
   languageName: node
   linkType: hard
+
+"rum-events-format@workspace:rum-events-format/lib":
+  version: 0.0.0-use.local
+  resolution: "rum-events-format@workspace:rum-events-format/lib"
+  languageName: unknown
+  linkType: soft
 
 "run-applescript@npm:^7.0.0":
   version: 7.1.0
