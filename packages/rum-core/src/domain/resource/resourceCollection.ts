@@ -439,11 +439,14 @@ function filterHeaders(headers: Headers, matchers: HeaderMatchOption[]): Network
     collectedHeaderCount++
   })
 
-  // monitor-until: 2026-05-23
-  addTelemetryDebug('Maximum number of resource headers reached', {
-    collectedHeaderCount,
-    totalHeaderCount,
-  })
+  if (hasReachedMaxHeaderCount) {
+    // monitor-until: 2026-05-23
+    addTelemetryDebug('Maximum number of resource headers reached', {
+      collectedHeaderCount,
+      totalHeaderCount,
+    })
+  }
+
   return collectedHeaderCount > 0 ? result : undefined
 }
 
