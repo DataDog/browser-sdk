@@ -12,9 +12,10 @@ interface SessionState {
 }
 
 interface SessionStore {
-  get(): SessionState | undefined
-  set(state: SessionState): void
-  clear(): void
+  get(): Promise<SessionState | undefined>
+  set(state: SessionState): Promise<void>
+  clear(): Promise<void>
+  onExternalChange(callback: () => void): () => void
 }
 
 interface SessionOptions {
@@ -35,25 +36,29 @@ class Session extends EventEmitter<SessionEvents> {
   private readonly now: () => number
   private readonly store: SessionStore
 
-  constructor(options: SessionOptions) {
+  private constructor(state: SessionState, options: SessionOptions) {
     super()
+    this.state = state
     this.store = options.store
     this.generateId = options.generateId
     this.now = options.now
+  }
 
-    const existing = this.store.get()
+  static async create(options: SessionOptions): Promise<Session> {
+    const existing = await options.store.get()
     if (existing) {
-      this.state = existing
-    } else {
-      const now = this.now()
-      this.state = {
-        id: this.generateId(),
-        deviceId: this.generateId(),
-        created: now,
-        lastActivity: now,
-      }
-      this.store.set(this.state)
+      return new Session(existing, options)
     }
+
+    const now = options.now()
+    const state: SessionState = {
+      id: options.generateId(),
+      deviceId: options.generateId(),
+      created: now,
+      lastActivity: now,
+    }
+    await options.store.set(state)
+    return new Session(state, options)
   }
 
   getId(): string | undefined {
@@ -75,24 +80,24 @@ class Session extends EventEmitter<SessionEvents> {
     return now - this.state.created > SESSION_MAX_AGE || now - this.state.lastActivity > SESSION_INACTIVITY_TIMEOUT
   }
 
-  touch(): void {
+  async touch(): Promise<void> {
     if (this.isExpired()) {
       return
     }
     this.state = { ...this.state, lastActivity: this.now() }
-    this.store.set(this.state)
+    await this.store.set(this.state)
   }
 
-  expire(): void {
+  async expire(): Promise<void> {
     if (this.expired) {
       return
     }
     this.expired = true
-    this.store.clear()
+    await this.store.clear()
     this.emit('expired')
   }
 
-  renew(): void {
+  async renew(): Promise<void> {
     this.expired = false
     const now = this.now()
     this.state = {
@@ -101,7 +106,7 @@ class Session extends EventEmitter<SessionEvents> {
       created: now,
       lastActivity: now,
     }
-    this.store.set(this.state)
+    await this.store.set(this.state)
     this.emit('renewed')
   }
 }
