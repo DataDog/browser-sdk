@@ -8,7 +8,8 @@ import {
   ExperimentalFeature,
   display,
 } from '@datadog/browser-core'
-import { replaceMockable, registerCleanupTask } from '@datadog/browser-core/test'
+import type { MockTelemetry } from '@datadog/browser-core/test'
+import { replaceMockable, registerCleanupTask, startMockTelemetry } from '@datadog/browser-core/test'
 import { resetExperimentalFeatures } from '@datadog/browser-core/src/tools/experimentalFeatures'
 import type { RumFetchResourceEventDomainContext, RumXhrResourceEventDomainContext } from '../../domainContext.types'
 import {
@@ -842,8 +843,26 @@ describe('resourceCollection', () => {
         expect(collectedHeaders['authorization']).toBeUndefined()
       })
 
-      it('should warn when the max number of headers is reached', () => {
+      it('should not emit telemetry when the max number of headers has not been reached', async () => {
+        spyOn(display, 'warn')
+        const telemetry: MockTelemetry = startMockTelemetry()
+        setupResourceCollection({ trackResourceHeaders: buildCatchAllRules(['x-header-0', 'x-header-1']) })
+
+        notifyRequest({
+          request: {
+            type: RequestType.FETCH,
+            response: new Response('', { headers: { 'x-header-0': 'a', 'x-header-1': 'b' } }),
+          },
+        })
+
+        expect(await telemetry.getEvents()).not.toContain(
+          jasmine.objectContaining({ message: 'Maximum number of resource headers reached' })
+        )
+      })
+
+      it('should warn and emit telemetry when the max number of headers is reached', async () => {
         const displaySpy = spyOn(display, 'warn')
+        const telemetry: MockTelemetry = startMockTelemetry()
         const headerNames = Array.from({ length: 110 }, (_, i) => `x-header-${i}`)
         setupResourceCollection({ trackResourceHeaders: buildCatchAllRules(headerNames) })
 
@@ -851,16 +870,25 @@ describe('resourceCollection', () => {
         for (const name of headerNames) {
           headerEntries[name] = 'value'
         }
+        const response = new Response('', { headers: headerEntries })
 
         notifyRequest({
           request: {
             type: RequestType.FETCH,
-            response: new Response('', { headers: headerEntries }),
+            response,
           },
         })
 
         expect(displaySpy).toHaveBeenCalledOnceWith(
           'Maximum number of headers (100) has been reached. Further headers are dropped.'
+        )
+        expect(await telemetry.getEvents()).toContain(
+          jasmine.objectContaining({
+            message: 'Maximum number of resource headers reached',
+            collectedHeaderCount: 100,
+            // Account for automatically added content-type header
+            totalHeaderCount: Array.from(response.headers as unknown as ArrayLike<string>).length,
+          })
         )
       })
     })
