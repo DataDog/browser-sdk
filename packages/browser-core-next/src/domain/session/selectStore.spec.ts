@@ -50,14 +50,14 @@ describe('selectStore', () => {
     // Block cookies by making areCookiesAuthorized return false.
     // areCookiesAuthorized writes and reads back a test cookie; we prevent the
     // read from succeeding by intercepting document.cookie.
-    const originalDescriptor = Object.getOwnPropertyDescriptor(document, 'cookie')
+    const originalDescriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'cookie')!
 
     // Intercept cookie reads to make areCookiesAuthorized fail its check,
     // while still allowing our afterEach cleanup to run.
     let cookieBlocked = true
     const cookieStore: Record<string, string> = {}
 
-    Object.defineProperty(document, 'cookie', {
+    Object.defineProperty(Document.prototype, 'cookie', {
       get() {
         if (cookieBlocked) {
           return ''
@@ -85,25 +85,21 @@ describe('selectStore', () => {
 
       // Restore cookie access before asserting so afterEach cleanup works
       cookieBlocked = false
-      if (originalDescriptor) {
-        Object.defineProperty(document, 'cookie', originalDescriptor)
-      }
+      Object.defineProperty(Document.prototype, 'cookie', originalDescriptor)
 
       expect(localStorage.getItem(LOCAL_STORAGE_SESSION_KEY)).not.toBeNull()
       expect(getCookie(SESSION_COOKIE_NAME)).toBeUndefined()
     } finally {
       cookieBlocked = false
-      if (originalDescriptor) {
-        Object.defineProperty(document, 'cookie', originalDescriptor)
-      }
+      Object.defineProperty(Document.prototype, 'cookie', originalDescriptor)
     }
   })
 
   it('returns the memory store when cookies and localStorage are both unavailable', async () => {
-    const originalDescriptor = Object.getOwnPropertyDescriptor(document, 'cookie')
+    const originalDescriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'cookie')!
 
     // Block cookies
-    Object.defineProperty(document, 'cookie', {
+    Object.defineProperty(Document.prototype, 'cookie', {
       get: () => '',
       set: () => {},
       configurable: true,
@@ -120,9 +116,7 @@ describe('selectStore', () => {
       expect((globalThis as any)[MEMORY_SESSION_KEY]).toBeDefined()
       expect(localStorage.getItem(LOCAL_STORAGE_SESSION_KEY)).toBeNull()
     } finally {
-      if (originalDescriptor) {
-        Object.defineProperty(document, 'cookie', originalDescriptor)
-      }
+      Object.defineProperty(Document.prototype, 'cookie', originalDescriptor)
     }
   })
 })

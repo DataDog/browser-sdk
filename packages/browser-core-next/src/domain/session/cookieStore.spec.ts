@@ -15,6 +15,10 @@ function makeState(overrides: Partial<SessionState> = {}): SessionState {
 }
 
 describe('createCookieStore', () => {
+  beforeEach(() => {
+    deleteCookie(SESSION_COOKIE_NAME)
+  })
+
   afterEach(() => {
     deleteCookie(SESSION_COOKIE_NAME)
   })
