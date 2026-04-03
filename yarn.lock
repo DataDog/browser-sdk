@@ -317,6 +317,14 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@datadog/browser-core-next@workspace:packages/browser-core-next":
+  version: 0.0.0-use.local
+  resolution: "@datadog/browser-core-next@workspace:packages/browser-core-next"
+  peerDependencies:
+    "@datadog/core-next": "workspace:*"
+  languageName: unknown
+  linkType: soft
+
 "@datadog/browser-core@npm:6.32.0, @datadog/browser-core@workspace:*, @datadog/browser-core@workspace:packages/core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-core@workspace:packages/core"
