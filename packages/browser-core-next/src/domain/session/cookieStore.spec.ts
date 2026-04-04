@@ -1,6 +1,6 @@
 import type { SessionState } from '@datadog/core-next'
 import { deleteCookie, getCookie } from '../../browser/cookie'
-import { createCookieStore } from './cookieStore'
+import { CookieStore } from './cookieStore'
 
 const SESSION_COOKIE_NAME = '_dd_s'
 
@@ -14,7 +14,7 @@ function makeState(overrides: Partial<SessionState> = {}): SessionState {
   }
 }
 
-describe('createCookieStore', () => {
+describe('CookieStore', () => {
   beforeEach(() => {
     deleteCookie(SESSION_COOKIE_NAME)
   })
@@ -25,13 +25,13 @@ describe('createCookieStore', () => {
 
   describe('get()', () => {
     it('returns undefined when no session cookie exists', async () => {
-      const store = createCookieStore()
+      const store = new CookieStore()
 
       expect(await store.get()).toBeUndefined()
     })
 
     it('returns the stored state after set()', async () => {
-      const store = createCookieStore()
+      const store = new CookieStore()
       const state = makeState()
 
       await store.set(state)
@@ -42,7 +42,7 @@ describe('createCookieStore', () => {
     it('returns undefined when cookie contains invalid JSON', async () => {
       // Write a malformed cookie directly
       document.cookie = `${SESSION_COOKIE_NAME}=not-valid-json;path=/`
-      const store = createCookieStore()
+      const store = new CookieStore()
 
       expect(await store.get()).toBeUndefined()
     })
@@ -50,7 +50,7 @@ describe('createCookieStore', () => {
 
   describe('set()', () => {
     it('writes session state as a JSON cookie readable by get()', async () => {
-      const store = createCookieStore()
+      const store = new CookieStore()
       const state = makeState()
 
       await store.set(state)
@@ -60,7 +60,7 @@ describe('createCookieStore', () => {
     })
 
     it('uses Web Locks when navigator.locks is available', async () => {
-      const store = createCookieStore()
+      const store = new CookieStore()
       const state = makeState()
 
       const requestSpy = spyOn(navigator.locks, 'request').and.callThrough()
@@ -82,7 +82,7 @@ describe('createCookieStore', () => {
       })
 
       try {
-        const store = createCookieStore()
+        const store = new CookieStore()
         const state = makeState()
 
         await store.set(state)
@@ -100,7 +100,7 @@ describe('createCookieStore', () => {
 
   describe('clear()', () => {
     it('deletes the session cookie', async () => {
-      const store = createCookieStore()
+      const store = new CookieStore()
 
       await store.set(makeState())
       expect(getCookie(SESSION_COOKIE_NAME)).toBeDefined()
@@ -111,7 +111,7 @@ describe('createCookieStore', () => {
     })
 
     it('returns undefined from get() after clear()', async () => {
-      const store = createCookieStore()
+      const store = new CookieStore()
 
       await store.set(makeState())
       await store.clear()
@@ -136,7 +136,7 @@ describe('createCookieStore', () => {
     })
 
     it('fires callback when the cookie changes externally', (done) => {
-      const store = createCookieStore()
+      const store = new CookieStore()
 
       const unsubscribe = store.onExternalChange(() => {
         unsubscribe()
@@ -150,7 +150,7 @@ describe('createCookieStore', () => {
     })
 
     it('returns an unsubscribe function that stops polling', (done) => {
-      const store = createCookieStore()
+      const store = new CookieStore()
       const callback = jasmine.createSpy('callback')
 
       const unsubscribe = store.onExternalChange(callback)

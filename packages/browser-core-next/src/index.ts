@@ -1,8 +1,7 @@
 // Session stores
-export { createMemoryStore } from './domain/session'
-export { createCookieStore } from './domain/session'
-export type { CookieStoreOptions } from './domain/session'
-export { createLocalStorageStore } from './domain/session'
+export { MemoryStore } from './domain/session'
+export { CookieStore } from './domain/session'
+export { LocalStorageStore } from './domain/session'
 export { selectStore } from './domain/session'
 export type { SelectStoreOptions } from './domain/session'
 

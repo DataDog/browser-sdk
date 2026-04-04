@@ -2,25 +2,24 @@ import type { SessionState, SessionStore } from '@datadog/core-next'
 
 const SESSION_KEY = '_DD_SESSION'
 
-function createMemoryStore(): SessionStore {
-  return {
-    async get() {
-      return (globalThis as any)[SESSION_KEY] as SessionState | undefined
-    },
+class MemoryStore implements SessionStore {
+  async get(): Promise<SessionState | undefined> {
+    return (globalThis as any)[SESSION_KEY] as SessionState | undefined
+  }
 
-    async set(state: SessionState) {
-      ;(globalThis as any)[SESSION_KEY] = { ...state }
-    },
+  async set(state: SessionState): Promise<void> {
+    ;(globalThis as any)[SESSION_KEY] = { ...state }
+  }
 
-    async clear() {
-      delete (globalThis as any)[SESSION_KEY]
-    },
+  async clear(): Promise<void> {
+    delete (globalThis as any)[SESSION_KEY]
+  }
 
-    onExternalChange() {
-      // Memory store has no cross-tab sync
-      return () => {}
-    },
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  onExternalChange(_callback?: () => void): () => void {
+    // Memory store has no cross-tab sync
+    return () => {}
   }
 }
 
-export { createMemoryStore }
+export { MemoryStore }

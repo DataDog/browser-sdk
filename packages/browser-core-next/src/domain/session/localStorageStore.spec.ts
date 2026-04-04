@@ -1,5 +1,5 @@
 import type { SessionState } from '@datadog/core-next'
-import { createLocalStorageStore } from './localStorageStore'
+import { LocalStorageStore } from './localStorageStore'
 
 const SESSION_KEY = '_dd_s'
 
@@ -13,20 +13,20 @@ function makeState(overrides: Partial<SessionState> = {}): SessionState {
   }
 }
 
-describe('createLocalStorageStore', () => {
+describe('LocalStorageStore', () => {
   afterEach(() => {
     localStorage.removeItem(SESSION_KEY)
   })
 
   describe('get()', () => {
     it('returns undefined when no session key exists in localStorage', async () => {
-      const store = createLocalStorageStore()
+      const store = new LocalStorageStore()
 
       expect(await store.get()).toBeUndefined()
     })
 
     it('returns the stored state after set()', async () => {
-      const store = createLocalStorageStore()
+      const store = new LocalStorageStore()
       const state = makeState()
 
       await store.set(state)
@@ -36,7 +36,7 @@ describe('createLocalStorageStore', () => {
 
     it('returns undefined when localStorage contains invalid JSON', async () => {
       localStorage.setItem(SESSION_KEY, 'not-valid-json')
-      const store = createLocalStorageStore()
+      const store = new LocalStorageStore()
 
       expect(await store.get()).toBeUndefined()
     })
@@ -44,7 +44,7 @@ describe('createLocalStorageStore', () => {
 
   describe('set()', () => {
     it('writes session state as JSON to localStorage', async () => {
-      const store = createLocalStorageStore()
+      const store = new LocalStorageStore()
       const state = makeState()
 
       await store.set(state)
@@ -55,7 +55,7 @@ describe('createLocalStorageStore', () => {
 
   describe('clear()', () => {
     it('removes the session key from localStorage', async () => {
-      const store = createLocalStorageStore()
+      const store = new LocalStorageStore()
 
       await store.set(makeState())
       expect(localStorage.getItem(SESSION_KEY)).not.toBeNull()
@@ -66,7 +66,7 @@ describe('createLocalStorageStore', () => {
     })
 
     it('returns undefined from get() after clear()', async () => {
-      const store = createLocalStorageStore()
+      const store = new LocalStorageStore()
 
       await store.set(makeState())
       await store.clear()
@@ -77,7 +77,7 @@ describe('createLocalStorageStore', () => {
 
   describe('onExternalChange()', () => {
     it('fires callback when the session key changes', () => {
-      const store = createLocalStorageStore()
+      const store = new LocalStorageStore()
       const callback = jasmine.createSpy('callback')
 
       const unsubscribe = store.onExternalChange(callback)
@@ -90,7 +90,7 @@ describe('createLocalStorageStore', () => {
     })
 
     it('does not fire callback when a different key changes', () => {
-      const store = createLocalStorageStore()
+      const store = new LocalStorageStore()
       const callback = jasmine.createSpy('callback')
 
       const unsubscribe = store.onExternalChange(callback)
@@ -103,7 +103,7 @@ describe('createLocalStorageStore', () => {
     })
 
     it('returns an unsubscribe function that removes the listener', () => {
-      const store = createLocalStorageStore()
+      const store = new LocalStorageStore()
       const callback = jasmine.createSpy('callback')
 
       const unsubscribe = store.onExternalChange(callback)

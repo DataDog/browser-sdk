@@ -1,5 +1,5 @@
 import type { SessionState } from '@datadog/core-next'
-import { createMemoryStore } from './memoryStore'
+import { MemoryStore } from './memoryStore'
 
 const SESSION_KEY = '_DD_SESSION'
 
@@ -13,19 +13,19 @@ function makeState(overrides: Partial<SessionState> = {}): SessionState {
   }
 }
 
-describe('createMemoryStore', () => {
+describe('MemoryStore', () => {
   afterEach(() => {
     delete (globalThis as any)[SESSION_KEY]
   })
 
   it('returns undefined when nothing is stored', async () => {
-    const store = createMemoryStore()
+    const store = new MemoryStore()
 
     expect(await store.get()).toBeUndefined()
   })
 
   it('returns stored state after set()', async () => {
-    const store = createMemoryStore()
+    const store = new MemoryStore()
     const state = makeState()
 
     await store.set(state)
@@ -34,7 +34,7 @@ describe('createMemoryStore', () => {
   })
 
   it('stores a copy, not a reference', async () => {
-    const store = createMemoryStore()
+    const store = new MemoryStore()
     const state = makeState()
 
     await store.set(state)
@@ -44,7 +44,7 @@ describe('createMemoryStore', () => {
   })
 
   it('returns undefined after clear()', async () => {
-    const store = createMemoryStore()
+    const store = new MemoryStore()
 
     await store.set(makeState())
     await store.clear()
@@ -53,7 +53,7 @@ describe('createMemoryStore', () => {
   })
 
   it('stores state on globalThis._DD_SESSION', async () => {
-    const store = createMemoryStore()
+    const store = new MemoryStore()
     const state = makeState()
 
     await store.set(state)
@@ -62,8 +62,8 @@ describe('createMemoryStore', () => {
   })
 
   it('shares state across multiple instances', async () => {
-    const storeA = createMemoryStore()
-    const storeB = createMemoryStore()
+    const storeA = new MemoryStore()
+    const storeB = new MemoryStore()
     const state = makeState()
 
     await storeA.set(state)
@@ -72,7 +72,7 @@ describe('createMemoryStore', () => {
   })
 
   it('onExternalChange returns a no-op unsubscribe function', () => {
-    const store = createMemoryStore()
+    const store = new MemoryStore()
 
     const unsubscribe = store.onExternalChange(() => {})
 

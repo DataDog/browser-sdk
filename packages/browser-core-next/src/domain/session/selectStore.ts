@@ -1,9 +1,9 @@
 import type { SessionStore } from '@datadog/core-next'
 import { areCookiesAuthorized } from '../../browser/cookie'
 import type { CookieOptions } from '../../browser/cookie'
-import { createCookieStore } from './cookieStore'
-import { createLocalStorageStore } from './localStorageStore'
-import { createMemoryStore } from './memoryStore'
+import { CookieStore } from './cookieStore'
+import { LocalStorageStore } from './localStorageStore'
+import { MemoryStore } from './memoryStore'
 
 interface SelectStoreOptions {
   cookieOptions?: CookieOptions
@@ -22,12 +22,12 @@ function isLocalStorageAvailable(): boolean {
 
 function selectStore(options?: SelectStoreOptions): SessionStore {
   if (areCookiesAuthorized()) {
-    return createCookieStore({ cookieOptions: options?.cookieOptions })
+    return new CookieStore(options?.cookieOptions)
   }
   if (isLocalStorageAvailable()) {
-    return createLocalStorageStore()
+    return new LocalStorageStore()
   }
-  return createMemoryStore()
+  return new MemoryStore()
 }
 
 export { selectStore, isLocalStorageAvailable }
