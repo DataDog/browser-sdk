@@ -53,3 +53,5 @@ export type { SessionState, SessionStore, SessionOptions } from './domain/sessio
 export { Session } from './domain/session/session'
 
 export { ContextManager } from './domain/context/context'
+
+export { registerSdk, getSdk, unregisterSdk } from './domain/registry'
