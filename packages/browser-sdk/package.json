@@ -1,0 +1,27 @@
+{
+  "name": "@datadog/browser-sdk",
+  "version": "0.0.0",
+  "license": "Apache-2.0",
+  "main": "cjs/index.js",
+  "module": "esm/index.js",
+  "types": "cjs/index.d.ts",
+  "sideEffects": false,
+  "scripts": {
+    "build": "node ../../scripts/build/build-package.ts --modules"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DataDog/browser-sdk.git",
+    "directory": "packages/browser-sdk"
+  },
+  "volta": {
+    "extends": "../../package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "@datadog/browser-core-next": "workspace:*",
+    "@datadog/core-next": "workspace:*"
+  }
+}

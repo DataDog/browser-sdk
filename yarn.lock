@@ -504,6 +504,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@datadog/browser-sdk@workspace:packages/browser-sdk":
+  version: 0.0.0-use.local
+  resolution: "@datadog/browser-sdk@workspace:packages/browser-sdk"
+  peerDependencies:
+    "@datadog/browser-core-next": "workspace:*"
+    "@datadog/core-next": "workspace:*"
+  languageName: unknown
+  linkType: soft
+
 "@datadog/browser-worker@workspace:packages/worker":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-worker@workspace:packages/worker"
