@@ -57,3 +57,11 @@ export { ContextManager } from './domain/context/context'
 export { registerSdk, getSdk, unregisterSdk } from './domain/registry'
 
 export type { Module, ModuleContext } from './domain/module'
+
+export type {
+  ConsoleResource,
+  RuntimeErrorResource,
+  ReportResource,
+  NetworkRequestResource,
+  SdkEventMap,
+} from './domain/pipeline/events'
