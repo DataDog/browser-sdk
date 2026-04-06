@@ -146,7 +146,6 @@ export function startRumBatch(
   })
 
   let lastSentView: AssembledRumEvent | undefined
-  let currentViewId: string | undefined
   let viewUpdatesSinceCheckpoint = 0
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent: AssembledRumEvent) => {
@@ -165,8 +164,7 @@ export function startRumBatch(
     const viewId = serverRumEvent.view.id
 
     // New view started
-    if (viewId !== currentViewId) {
-      currentViewId = viewId
+    if (viewId !== lastSentView?.view.id) {
       lastSentView = serverRumEvent
       viewUpdatesSinceCheckpoint = 0
       batch.upsert(serverRumEvent, viewId)
@@ -175,7 +173,6 @@ export function startRumBatch(
 
     // View ended (is_active: false)
     if (!(serverRumEvent.view as any).is_active) {
-      currentViewId = undefined
       lastSentView = undefined
       viewUpdatesSinceCheckpoint = 0
       batch.upsert(serverRumEvent, viewId)
