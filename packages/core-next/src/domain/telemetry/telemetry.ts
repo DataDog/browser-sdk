@@ -1,4 +1,4 @@
-import type { Configuration } from '../configuration/configuration'
+import type { Configuration } from '../configuration'
 
 const MAX_EVENTS_PER_KIND = 15
 const EXCLUDED_SITES = ['us1.ddog-gov.com']

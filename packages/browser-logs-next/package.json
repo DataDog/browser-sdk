@@ -2,10 +2,13 @@
   "name": "@datadog/browser-logs-next",
   "version": "0.0.0",
   "license": "Apache-2.0",
-  "main": "cjs/index.js",
-  "module": "esm/index.js",
-  "types": "cjs/index.d.ts",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.cts",
   "sideEffects": false,
+  "scripts": {
+    "build": "tsdown"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/DataDog/browser-sdk.git",
