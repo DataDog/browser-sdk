@@ -69,6 +69,11 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
     batch.flush()
   })
 
+  // 8.5. Wire pipeline observations → batch
+  pipeline.subscribe('observation:log', (event) => {
+    batch.add(JSON.stringify(event))
+  })
+
   // 9. Initialize modules
   const sdk: Sdk = {}
   const context = { config, pipeline, session }

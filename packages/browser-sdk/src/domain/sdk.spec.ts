@@ -1,5 +1,5 @@
-import type { Module } from '@datadog/core-next'
-import { getSdk, unregisterSdk } from '@datadog/core-next'
+import type { Module, ModuleContext } from '@datadog/core-next'
+import { getSdk, unregisterSdk, Batch } from '@datadog/core-next'
 import { createSdk } from './sdk'
 
 // Stub session store that stores state in memory
@@ -112,5 +112,47 @@ describe('createSdk', () => {
 
     expect(sdk).toBeNull()
     expect(mod.init).not.toHaveBeenCalled()
+  })
+
+  it('should add observation:log events to the batch', async () => {
+    const batchAddSpy = spyOn(Batch.prototype, 'add')
+
+    const observationModule: Module = {
+      name: 'test',
+      extension: { key: 'test', validate: (init: unknown) => init ?? null },
+      init(context) {
+        // Publish before seal — event is buffered and processed after seal()
+        context.pipeline.publish('observation:log', { message: 'hello', status: 'info' })
+        return {}
+      },
+    }
+
+    await createSdk({ ...validInit, modules: [observationModule] })
+
+    // Wait a tick for the pipeline's async processQueue to drain
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(batchAddSpy).toHaveBeenCalledWith(jasmine.stringContaining('hello'))
+  })
+
+  it('should serialize observation:log events as JSON when adding to the batch', async () => {
+    const batchAddSpy = spyOn(Batch.prototype, 'add')
+
+    const observationModule: Module = {
+      name: 'test',
+      extension: { key: 'test', validate: (init: unknown) => init ?? null },
+      init(context) {
+        context.pipeline.publish('observation:log', { message: 'serialized', status: 'warn', level: 3 })
+        return {}
+      },
+    }
+
+    await createSdk({ ...validInit, modules: [observationModule] })
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(batchAddSpy).toHaveBeenCalledTimes(1)
+    const serialized = batchAddSpy.calls.mostRecent().args[0]
+    const parsed = JSON.parse(serialized)
+    expect(parsed).toEqual(jasmine.objectContaining({ message: 'serialized', status: 'warn', level: 3 }))
   })
 })
