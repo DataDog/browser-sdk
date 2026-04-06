@@ -1,1 +1,9 @@
-export {}
+export { logsModule } from './module'
+export type { LogsPublicApi, LoggerConfiguration } from './module'
+export { logsExtension } from './domain/configuration'
+export type { LogsInitConfig, LogsConfig, ConsoleApi, ReportType } from './domain/configuration'
+export { Logger, StatusType, HandlerType } from './domain/logger'
+export type { LogsMessage } from './domain/logger'
+export { startAssembly } from './domain/assembly'
+export type { LogEvent } from './domain/assembly'
+export { createRateLimiter } from './domain/rateLimiter'
