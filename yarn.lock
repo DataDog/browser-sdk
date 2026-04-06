@@ -363,6 +363,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@datadog/browser-network-next@workspace:packages/browser-network-next":
+  version: 0.0.0-use.local
+  resolution: "@datadog/browser-network-next@workspace:packages/browser-network-next"
+  peerDependencies:
+    "@datadog/core-next": "workspace:*"
+  languageName: unknown
+  linkType: soft
+
 "@datadog/browser-rum-angular@workspace:packages/rum-angular":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-angular@workspace:packages/rum-angular"
