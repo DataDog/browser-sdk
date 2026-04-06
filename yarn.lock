@@ -350,6 +350,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@datadog/browser-logs-next@workspace:packages/browser-logs-next":
+  version: 0.0.0-use.local
+  resolution: "@datadog/browser-logs-next@workspace:packages/browser-logs-next"
+  peerDependencies:
+    "@datadog/core-next": "workspace:*"
+  languageName: unknown
+  linkType: soft
+
 "@datadog/browser-logs@workspace:*, @datadog/browser-logs@workspace:packages/logs":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-logs@workspace:packages/logs"
