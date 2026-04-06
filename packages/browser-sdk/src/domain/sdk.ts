@@ -51,17 +51,19 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
   })
 
   // 7. Wire page exit → batch flush
+  const onVisibilityChange = () => {
+    if (document.visibilityState === 'hidden') {
+      batch.flush()
+    }
+  }
+  const onBeforeUnload = () => {
+    batch.flush()
+  }
   if (typeof document !== 'undefined') {
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden') {
-        batch.flush()
-      }
-    })
+    document.addEventListener('visibilitychange', onVisibilityChange)
   }
   if (typeof window !== 'undefined') {
-    window.addEventListener('beforeunload', () => {
-      batch.flush()
-    })
+    window.addEventListener('beforeunload', onBeforeUnload)
   }
 
   // 8. Wire session expire → batch flush
@@ -88,6 +90,17 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
   // 11. Register in registry
   const instanceId = init.instanceId ?? 'default'
   registerSdk(instanceId, sdk)
+
+  // Expose stop function for cleanup (used in tests and graceful shutdown)
+  ;(sdk as any).__stop = () => {
+    if (typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('beforeunload', onBeforeUnload)
+    }
+    batch.destroy()
+  }
 
   return sdk
 }
