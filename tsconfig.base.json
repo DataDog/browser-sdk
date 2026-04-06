@@ -20,6 +20,7 @@
       "@datadog/core-next": ["./packages/core-next/src"],
       "@datadog/browser-core-next": ["./packages/browser-core-next/src"],
       "@datadog/browser-console-next": ["./packages/browser-console-next/src"],
+      "@datadog/browser-errors-next": ["./packages/browser-errors-next/src"],
       "@datadog/browser-sdk": ["./packages/browser-sdk/src"],
 
       "@datadog/browser-logs": ["./packages/logs/src/entries/main"],
