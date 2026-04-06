@@ -23,6 +23,7 @@
     "lint": "NODE_OPTIONS='--max-old-space-size=4096' eslint .",
     "typecheck": "tsc -b --noEmit true",
     "dev": "yarn dev-server start",
+    "dev:v8": "vite sandbox/v8",
     "dev-server": "node scripts/dev-server/index.ts",
     "release": "node ./scripts/release/prepare-release.ts --push",
     "test": "yarn test:unit:watch",
@@ -99,6 +100,7 @@
     "typescript": "5.9.3",
     "typescript-eslint": "8.56.0",
     "undici": "7.24.0",
+    "vite": "8.0.5",
     "webpack": "5.105.2",
     "webpack-cli": "6.0.1",
     "webpack-dev-middleware": "7.4.5"
