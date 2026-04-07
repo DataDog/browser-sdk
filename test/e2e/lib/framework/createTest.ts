@@ -1,4 +1,5 @@
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
+import type { DebuggerInitConfiguration } from '@datadog/browser-debugger'
 import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
 import type { BrowserContext, Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
@@ -6,7 +7,11 @@ import { addTag, addTestOptimizationTags } from '../helpers/tags'
 import { getRunId } from '../../../envUtils'
 import type { BrowserLog } from '../helpers/browser'
 import { BrowserLogsManager, deleteAllCookies, getBrowserName, sendXhr } from '../helpers/browser'
-import { DEFAULT_LOGS_CONFIGURATION, DEFAULT_RUM_CONFIGURATION } from '../helpers/configuration'
+import {
+  DEFAULT_DEBUGGER_CONFIGURATION,
+  DEFAULT_LOGS_CONFIGURATION,
+  DEFAULT_RUM_CONFIGURATION,
+} from '../helpers/configuration'
 import { validateRumFormat } from '../helpers/validation'
 import type { BrowserConfiguration } from '../../../browsers.conf'
 import { NEXTJS_APP_ROUTER_PORT, NUXT_APP_PORT, VUE_ROUTER_APP_PORT } from '../helpers/playwright'
@@ -48,6 +53,7 @@ class TestBuilder {
   private rumConfiguration: RumInitConfiguration | undefined = undefined
   private alsoRunWithRumSlim = false
   private logsConfiguration: LogsInitConfiguration | undefined = undefined
+  private debuggerConfiguration: DebuggerInitConfiguration | undefined = undefined
   private remoteConfiguration?: RemoteConfiguration = undefined
   private head = ''
   private body = ''
@@ -88,6 +94,11 @@ class TestBuilder {
 
   withLogs(logsInitConfiguration?: Partial<LogsInitConfiguration>) {
     this.logsConfiguration = { ...DEFAULT_LOGS_CONFIGURATION, ...logsInitConfiguration }
+    return this
+  }
+
+  withDebugger(debuggerInitConfiguration?: Partial<DebuggerInitConfiguration>) {
+    this.debuggerConfiguration = { ...DEFAULT_DEBUGGER_CONFIGURATION, ...debuggerInitConfiguration }
     return this
   }
 
@@ -218,6 +229,7 @@ class TestBuilder {
       head: this.head,
       logs: this.logsConfiguration,
       rum: this.rumConfiguration,
+      debugger: this.debuggerConfiguration,
       remoteConfiguration: this.remoteConfiguration,
       rumInit: this.rumInit,
       logsInit: this.logsInit,
