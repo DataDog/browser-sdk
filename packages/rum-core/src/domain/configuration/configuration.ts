@@ -265,8 +265,10 @@ export interface RumInitConfiguration extends InitConfiguration {
    * A `HeaderMatchOption` pairs a header name matcher with an optional `extractor` RegExp.
    * When set, only the first capture group (or the full match) is kept as the header value.
    *
-   * Both formats can be mixed in the same array. Multiple rules can match the same URL; if two rules
-   * match a given header on a given URL, the first one applies.
+   * Both formats can be mixed in the same array. When multiple rules match the same URL, their
+   * matchers are merged: a rule that omits `request` contributes no request matchers, but does not
+   * suppress request matchers from other matching rules. When two matchers both match the same
+   * header name, the first matcher's extractor is used.
    *
    * Headers whose names match a built-in sensitive-data pattern are always dropped, regardless
    * of the configured matchers. The pattern blocks headers whose names contain: `token`, `cookie`,
@@ -280,7 +282,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    * trackResourceHeaders: ['x-request-id', /^x-custom-.+/]
    * @example
    * // URL-scoped rule: capture specific response headers only for calls to /api
-   * trackResourceHeaders: [{ url: /\/api\//, response: ['x-request-id', 'cache-control'], request: false }]
+   * trackResourceHeaders: [{ url: /\/api\//, response: ['x-request-id', 'cache-control'] }]
    * @example
    * // Extract a partial value from a header
    * trackResourceHeaders: [{ url: /\/api\//, response: [{ name: 'server-timing', extractor: /dur=(\d+)/ }] }]
@@ -360,8 +362,8 @@ export interface HeaderMatchOption {
 
 export interface HeaderCaptureOption {
   url: MatchOption
-  request?: boolean | MatchOption[] | HeaderMatchOption[]
-  response?: boolean | MatchOption[] | HeaderMatchOption[]
+  request?: true | MatchOption[] | HeaderMatchOption[]
+  response?: true | MatchOption[] | HeaderMatchOption[]
 }
 
 export interface HeaderCaptureRule {
@@ -585,10 +587,10 @@ function validateAndBuildTrackResourceHeaders(initConfiguration: RumInitConfigur
     return []
   }
 
-  const defaultHMOs: HeaderMatchOption[] = DEFAULT_TRACKED_RESOURCE_HEADERS.map((h) => ({ name: h }))
+  const defaultDirectionMatchers: HeaderMatchOption[] = DEFAULT_TRACKED_RESOURCE_HEADERS.map((h) => ({ name: h }))
 
   if (option === true) {
-    return [{ url: () => true, requestMatchers: defaultHMOs, responseMatchers: defaultHMOs }]
+    return [{ url: () => true, requestMatchers: defaultDirectionMatchers, responseMatchers: defaultDirectionMatchers }]
   }
 
   if (!Array.isArray(option)) {
@@ -608,13 +610,17 @@ function validateAndBuildTrackResourceHeaders(initConfiguration: RumInitConfigur
     if (isHeaderCaptureOption(item)) {
       rules.push({
         url: item.url,
-        requestMatchers: normalizeDirection('request', item.request, defaultHMOs, index),
-        responseMatchers: normalizeDirection('response', item.response, defaultHMOs, index),
+        requestMatchers: normalizeDirection('request', item.request, defaultDirectionMatchers, index),
+        responseMatchers: normalizeDirection('response', item.response, defaultDirectionMatchers, index),
       })
     } else if (isMatchOption(item)) {
       if (!hasAddedDefaultsRule) {
         hasAddedDefaultsRule = true
-        rules.push({ url: () => true, requestMatchers: defaultHMOs, responseMatchers: defaultHMOs })
+        rules.push({
+          url: () => true,
+          requestMatchers: defaultDirectionMatchers,
+          responseMatchers: defaultDirectionMatchers,
+        })
       }
       const name = typeof item === 'string' ? item.toLowerCase() : item
       rules.push({ url: () => true, requestMatchers: [{ name }], responseMatchers: [{ name }] })
@@ -646,9 +652,9 @@ function normalizeDirection(
     return defaultHMOs
   }
   if (!Array.isArray(config)) {
-    if (config !== undefined && config !== false) {
+    if (config !== undefined) {
       display.warn(
-        `trackResourceHeaders[${ruleIndex}].${direction} should be true, false, or an array of MatchOption or HeaderMatchOption`
+        `trackResourceHeaders[${ruleIndex}].${direction} should be true or an array of MatchOption or HeaderMatchOption`
       )
     }
     return []
