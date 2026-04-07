@@ -1,11 +1,11 @@
 import type { Module, InitConfiguration, Configuration } from '@datadog/core-next'
 import { build, Pipeline, Batch, Session, registerSdk, sessionEnricher } from '@datadog/core-next'
-import { selectStore, createHttpRequest } from '@datadog/browser-core-next'
+import { selectStore, createHttpRequest, createEndpointBuilder } from '@datadog/browser-core-next'
+import type { TrackType } from '@datadog/browser-core-next'
 
 interface SdkOptions {
   modules?: Module[]
   instanceId?: string
-  proxy?: string
 }
 
 type SdkInitConfiguration = InitConfiguration & SdkOptions & Record<string, unknown>
@@ -39,9 +39,15 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
   // 4.5. Register session enricher on all observation events
   pipeline.enrich('observation:*', sessionEnricher(session))
 
-  // 5. Create transport + batch
-  const endpointUrl = init.proxy ?? `https://${config.site}/api/v2/rum`
-  const transport = createHttpRequest({ endpointUrl })
+  // 5. Create endpoint builder + transport + batch
+  // TODO: support multiple track types when RUM is added
+  const endpoint = createEndpointBuilder({
+    clientToken: config.clientToken,
+    site: config.site,
+    trackType: 'logs' as TrackType,
+    proxy: config.proxy,
+  })
+  const transport = createHttpRequest({ endpointUrl: () => endpoint.build() })
   const batch = new Batch({
     maxSizeBytes: 16 * 1024,
     maxCount: 50,
@@ -51,6 +57,7 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
   // 6. Wire batch flush → transport
   batch.on('flush', (messages) => {
     const data = messages.join('\n')
+    // Build a fresh URL per flush (new request ID and batch_time)
     transport.send({ data, bytesCount: new Blob([data]).size })
   })
 

@@ -12,6 +12,8 @@ export type { Payload, RetryInfo, HttpRequest, HttpRequestOptions } from './doma
 export { createHttpRequest } from './domain/transport'
 export type { DatadogEventBridge } from './domain/transport'
 export { BridgeCapability, getEventBridge, canUseEventBridge, bridgeSupports } from './domain/transport'
+export type { EndpointBuilder, EndpointBuilderOptions, TrackType } from './domain/transport'
+export { createEndpointBuilder, buildIntakeHost } from './domain/transport'
 
 // Browser utilities
 export { getCookie, setCookie, deleteCookie, areCookiesAuthorized } from './browser/cookie'

@@ -1,5 +1,11 @@
 import type { DEFAULTS } from './defaults'
 
+/**
+ * Function that receives the intake request path and parameters and returns the final URL.
+ * Used to route SDK requests through a custom proxy.
+ */
+type ProxyFn = (options: { path: string; parameters: string }) => string
+
 interface InitConfiguration {
   /** Client token for authenticating requests to the Datadog intake API. */
   clientToken: string
@@ -11,6 +17,14 @@ interface InitConfiguration {
   enabled?: boolean
   /** Application environment tag (e.g. `production`, `staging`). */
   env?: string
+  /**
+   * Route SDK requests through a proxy. Can be a URL string or a function
+   * that receives `{ path, parameters }` and returns the final URL.
+   *
+   * When set as a string, the SDK appends the intake path and query parameters.
+   * When set as a function, the SDK delegates URL construction entirely.
+   */
+  proxy?: string | ProxyFn
   /** Service name tag forwarded with every event. */
   service?: string
   /**
@@ -56,7 +70,7 @@ interface Extension<TKey extends string, TInit, TConfig, TDerived = object> {
   validate(init: TInit | undefined): TConfig | null
 }
 
-export type { InitConfiguration, Configuration, Extension }
+export type { InitConfiguration, Configuration, Extension, ProxyFn }
 export { build } from './build'
 export { DEFAULTS } from './defaults'
 export { validate } from './validation'

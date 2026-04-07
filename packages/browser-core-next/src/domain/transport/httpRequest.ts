@@ -13,7 +13,7 @@ export interface RetryInfo {
 type TransportStatus = 'UP' | 'FAILURE_DETECTED' | 'DOWN'
 
 export interface HttpRequestOptions {
-  endpointUrl: string
+  endpointUrl: string | (() => string)
   bytesLimit?: number
 }
 
@@ -32,6 +32,8 @@ const MAX_BACKOFF_TIME = 60 * 1000 // 1 minute
 
 export function createHttpRequest(options: HttpRequestOptions): HttpRequest {
   const bytesLimit = options.bytesLimit ?? RECOMMENDED_BYTES_LIMIT
+  const resolveUrl =
+    typeof options.endpointUrl === 'function' ? options.endpointUrl : () => options.endpointUrl as string
 
   // Retry state
   let transportStatus: TransportStatus = 'UP'
@@ -57,7 +59,7 @@ export function createHttpRequest(options: HttpRequestOptions): HttpRequest {
   }
 
   function fetchSend(payload: Payload, onDone: (status: number) => void) {
-    fetch(options.endpointUrl, { method: 'POST', body: payload.data, mode: 'cors' as RequestMode })
+    fetch(resolveUrl(), { method: 'POST', body: payload.data, mode: 'cors' as RequestMode })
       .then((response) => onDone(response.status))
       .catch(() => onDone(0))
   }
@@ -176,15 +178,16 @@ export function createHttpRequest(options: HttpRequestOptions): HttpRequest {
     },
 
     sendOnExit(payload: Payload) {
+      const url = resolveUrl()
       if (payload.bytesCount < bytesLimit && navigator.sendBeacon) {
         try {
-          const queued = navigator.sendBeacon(options.endpointUrl, payload.data)
+          const queued = navigator.sendBeacon(url, payload.data)
           if (queued) return
         } catch {
           // fall through to fetch
         }
       }
-      fetch(options.endpointUrl, { method: 'POST', body: payload.data, mode: 'cors' as RequestMode }).catch(() => {})
+      fetch(url, { method: 'POST', body: payload.data, mode: 'cors' as RequestMode }).catch(() => {})
     },
   }
 }

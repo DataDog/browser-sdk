@@ -44,7 +44,7 @@ export { Batch } from './domain/transport/batch'
 
 export { EventEmitter, throttle } from './utils'
 
-export type { InitConfiguration, Configuration, Extension } from './domain/configuration'
+export type { InitConfiguration, Configuration, Extension, ProxyFn } from './domain/configuration'
 export { build, validate } from './domain/configuration'
 
 export type { TelemetryConfig, RawTelemetry } from './domain/telemetry/telemetry'
