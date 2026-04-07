@@ -6,6 +6,25 @@ import type { DEFAULTS } from './defaults'
  */
 type ProxyFn = (options: { path: string; parameters: string }) => string
 
+/** Known Datadog sites. Accepts any string for custom deployments. */
+type Site =
+  | 'datadoghq.com'
+  | 'us3.datadoghq.com'
+  | 'us5.datadoghq.com'
+  | 'datadoghq.eu'
+  | 'ddog-gov.com'
+  | 'ap1.datadoghq.com'
+  | 'ap2.datadoghq.com'
+  | (string & {})
+
+/** Configuration for dual-shipping events to a replica Datadog org. */
+interface ReplicaConfiguration {
+  /** Client token of the replica org. */
+  clientToken: string
+  /** Application ID for RUM events in the replica org. */
+  applicationId?: string
+}
+
 interface InitConfiguration {
   /** Client token for authenticating requests to the Datadog intake API. */
   clientToken: string
@@ -25,6 +44,11 @@ interface InitConfiguration {
    * When set as a function, the SDK delegates URL construction entirely.
    */
   proxy?: string | ProxyFn
+  /**
+   * Dual-ship events to a replica Datadog org for disaster recovery.
+   * The replica always targets `datadoghq.com` (US1).
+   */
+  replica?: ReplicaConfiguration
   /** Service name tag forwarded with every event. */
   service?: string
   /**
@@ -34,7 +58,13 @@ interface InitConfiguration {
    */
   sessionSampleRate?: number
   /** Datadog site to send data to (e.g. `datadoghq.com`, `datadoghq.eu`). */
-  site: string
+  site: Site
+  /**
+   * SDK source identifier. Overrides the `ddsource` query parameter.
+   *
+   * @default 'browser'
+   */
+  source?: 'browser' | 'flutter' | 'unity'
   /**
    * Percentage of configuration telemetry events to forward, between `0` and `100`.
    *
@@ -53,6 +83,12 @@ interface InitConfiguration {
    * @default 5
    */
   telemetryUsageSampleRate?: number
+  /**
+   * Use the PCI-compliant intake endpoint for logs. US1 only.
+   *
+   * @default false
+   */
+  usePciIntake?: boolean
   /** Application version tag forwarded with every event. */
   version?: string
 }
@@ -70,7 +106,7 @@ interface Extension<TKey extends string, TInit, TConfig, TDerived = object> {
   validate(init: TInit | undefined): TConfig | null
 }
 
-export type { InitConfiguration, Configuration, Extension, ProxyFn }
+export type { InitConfiguration, Configuration, Extension, ProxyFn, Site, ReplicaConfiguration }
 export { build } from './build'
 export { DEFAULTS } from './defaults'
 export { validate } from './validation'

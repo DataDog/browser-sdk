@@ -1,7 +1,7 @@
 import type { Module, InitConfiguration, Configuration } from '@datadog/core-next'
 import { build, Pipeline, Batch, Session, registerSdk, sessionEnricher } from '@datadog/core-next'
-import { selectStore, createHttpRequest, createEndpointBuilder } from '@datadog/browser-core-next'
-import type { TrackType } from '@datadog/browser-core-next'
+import { selectStore, createHttpRequest, createEndpointBuilder, INTAKE_SITE_US1 } from '@datadog/browser-core-next'
+import type { TrackType, HttpRequest } from '@datadog/browser-core-next'
 
 interface SdkOptions {
   modules?: Module[]
@@ -39,26 +39,57 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
   // 4.5. Register session enricher on all observation events
   pipeline.enrich('observation:*', sessionEnricher(session))
 
-  // 5. Create endpoint builder + transport + batch
-  // TODO: support multiple track types when RUM is added
-  const endpoint = createEndpointBuilder({
-    clientToken: config.clientToken,
-    site: config.site,
-    trackType: 'logs' as TrackType,
-    proxy: config.proxy,
-  })
-  const transport = createHttpRequest({ endpointUrl: () => endpoint.build() })
+  // 5. Create endpoint builders for each track type used by modules
+  const trackTypes: TrackType[] = ['logs', 'rum', 'replay']
+  const endpointBuilders = new Map<TrackType, ReturnType<typeof createEndpointBuilder>>()
+  const transports = new Map<TrackType, HttpRequest>()
+
+  for (const trackType of trackTypes) {
+    const builder = createEndpointBuilder({
+      clientToken: config.clientToken,
+      site: config.site,
+      trackType,
+      source: config.source,
+      proxy: config.proxy,
+      usePciIntake: config.usePciIntake,
+    })
+    endpointBuilders.set(trackType, builder)
+    transports.set(trackType, createHttpRequest({ endpointUrl: () => builder.build() }))
+  }
+
+  // 5.5. Create replica transports for disaster recovery
+  let replicaTransports: Map<TrackType, HttpRequest> | undefined
+  if (config.replica) {
+    replicaTransports = new Map()
+    for (const trackType of ['logs', 'rum'] as TrackType[]) {
+      const replicaBuilder = createEndpointBuilder({
+        clientToken: config.replica.clientToken,
+        site: INTAKE_SITE_US1,
+        trackType,
+        source: config.source,
+      })
+      replicaTransports.set(trackType, createHttpRequest({ endpointUrl: () => replicaBuilder.build() }))
+    }
+  }
+
   const batch = new Batch({
     maxSizeBytes: 16 * 1024,
     maxCount: 50,
     flushTimeoutMs: 30_000,
   })
 
-  // 6. Wire batch flush → transport
+  // 6. Wire batch flush → transport (primary + replica)
   batch.on('flush', (messages) => {
     const data = messages.join('\n')
-    // Build a fresh URL per flush (new request ID and batch_time)
-    transport.send({ data, bytesCount: new Blob([data]).size })
+    const payload = { data, bytesCount: new Blob([data]).size }
+
+    // Send to primary (logs endpoint for now, TODO: route by event type)
+    const primary = transports.get('logs')
+    primary?.send(payload)
+
+    // Send to replica if configured
+    const replica = replicaTransports?.get('logs')
+    replica?.send({ ...payload })
   })
 
   // 7. Wire page exit → batch flush
