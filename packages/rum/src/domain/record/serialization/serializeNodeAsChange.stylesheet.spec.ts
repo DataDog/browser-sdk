@@ -1,5 +1,5 @@
 import { isAdoptedStyleSheetsSupported } from 'packages/core/test'
-import { ChangeType } from '../../../types'
+import { ChangeType } from 'rum-events-format/session-replay-browser'
 import type { RecordingScope } from '../recordingScope'
 import type { SerializationStats } from './serializationStats'
 

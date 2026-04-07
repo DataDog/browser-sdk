@@ -11,7 +11,6 @@
   ],
   "type": "module",
   "scripts": {
-    "postinstall": "scripts/cli init_submodule",
     "build": "yarn workspaces foreach --all --parallel --topological run build",
     "build:bundle": "yarn workspaces foreach --all --parallel run build:bundle",
     "build:apps": "node scripts/build/build-test-apps.ts",
@@ -39,7 +38,6 @@
     "test:performance": "yarn test:e2e:init && playwright test --config test/performance/playwright.config.ts",
     "test:performance:debug": "playwright test --config test/performance/playwright.config.ts --debug",
     "test:performance:ui": "playwright test --config test/performance/playwright.config.ts --ui",
-    "json-schemas:sync": "scripts/cli update_submodule && yarn json-schemas:generate",
     "json-schemas:generate": "scripts/cli build_json2type && node scripts/generate-schema-types.ts",
     "size": "node scripts/show-bundle-size.ts",
     "woke": "scripts/cli woke",
@@ -89,6 +87,7 @@
     "node-forge": "1.3.3",
     "prettier": "3.8.1",
     "puppeteer": "24.37.5",
+    "rum-events-format": "github:DataDog/rum-events-format#commit=5a80fb9a3c054b28fba195fd301cadb094bccef8&workspace=rum-events-format",
     "swc-loader": "0.2.7",
     "terser-webpack-plugin": "5.3.16",
     "ts-loader": "9.5.4",

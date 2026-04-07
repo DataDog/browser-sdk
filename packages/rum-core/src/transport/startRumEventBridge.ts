@@ -1,7 +1,7 @@
 import { getEventBridge } from '@datadog/browser-core'
+import type { RumEvent } from 'rum-events-format/rum'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
-import type { RumEvent } from '../rumEvent.types'
 
 export function startRumEventBridge(lifeCycle: LifeCycle) {
   const bridge = getEventBridge<'rum', RumEvent>()!

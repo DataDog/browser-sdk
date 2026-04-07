@@ -1,4 +1,4 @@
-import type { TelemetryEvent, TelemetryConfigurationEvent, TelemetryUsageEvent } from './telemetryEvent.types'
+import type { TelemetryEvent, TelemetryConfigurationEvent, TelemetryUsageEvent } from 'rum-events-format/telemetry'
 
 export const TelemetryType = {
   LOG: 'log',

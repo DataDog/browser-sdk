@@ -1,7 +1,7 @@
 import { noop, timeStampNow } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { getNodePrivacyLevel, NodePrivacyLevel } from '@datadog/browser-rum-core'
-import type { BrowserRecord, SerializedNodeWithId } from '../../types'
+import type { BrowserRecord, SerializedNodeWithId } from 'rum-events-format/session-replay-browser'
 import { takeFullSnapshot as doTakeFullSnapshot } from './startFullSnapshots'
 import type { ShadowRootsController } from './shadowRootsController'
 import type { RecordingScope } from './recordingScope'

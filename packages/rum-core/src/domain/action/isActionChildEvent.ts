@@ -1,4 +1,4 @@
-import type { RumActionEvent, RumErrorEvent, RumLongTaskEvent, RumResourceEvent } from '../../rumEvent.types'
+import type { RumActionEvent, RumErrorEvent, RumLongTaskEvent, RumResourceEvent } from 'rum-events-format/rum'
 
 export function isActionChildEvent(id: string) {
   return (event: RumActionEvent | RumErrorEvent | RumLongTaskEvent | RumResourceEvent) =>

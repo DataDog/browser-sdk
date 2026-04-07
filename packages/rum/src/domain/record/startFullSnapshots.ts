@@ -2,7 +2,7 @@ import { LifeCycleEventType, getViewportDimension } from '@datadog/browser-rum-c
 import type { LifeCycle } from '@datadog/browser-rum-core'
 import { timeStampNow } from '@datadog/browser-core'
 import type { TimeStamp } from '@datadog/browser-core'
-import { RecordType } from '../../types'
+import { RecordType } from 'rum-events-format/session-replay-browser'
 import {
   isFullSnapshotChangeRecordsEnabled,
   SerializationKind,

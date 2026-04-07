@@ -59,13 +59,14 @@ Always use latest stable versions for new dependencies. Check with:
 npm view <package>@latest version
 ```
 
-## RUM Events Schema Management
+## REF Integration
 
-Types auto-generated from [rum-events-format](https://github.com/DataDog/rum-events-format) submodule → `src/rumEvent.types.ts` (committed).
+[rum-events-format](https://github.com/DataDog/rum-events-format) is consumed as a git dependency pinned in `package.json`. Browser-SDK imports the REF TypeScript surface directly and does not commit local copies of REF-owned types.
+
+## Generated Types
 
 ```bash
-yarn json-schemas:sync      # Update submodule + regenerate types
-yarn json-schemas:generate  # Regenerate types only
+yarn json-schemas:generate  # Regenerate remote configuration types
 ```
 
 **Fork dependency**: Uses `bcaudan/json-schema-to-typescript#bcaudan/add-readonly-support` (v11.0.1) for `readonly` modifier support. Built lazily when generating types (not during `yarn install`) to avoid CI rate limiting.

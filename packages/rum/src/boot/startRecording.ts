@@ -3,11 +3,11 @@ import { createHttpRequest, addTelemetryDebug, canUseEventBridge, noop } from '@
 import type { LifeCycle, ViewHistory, RumConfiguration, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 
+import type { BrowserRecord } from 'rum-events-format/session-replay-browser'
 import type { SerializationStats } from '../domain/record'
 import { record } from '../domain/record'
 import type { ReplayPayload } from '../domain/segmentCollection'
 import { startSegmentCollection, SEGMENT_BYTES_LIMIT, startSegmentTelemetry } from '../domain/segmentCollection'
-import type { BrowserRecord } from '../types'
 import { startRecordBridge } from '../domain/startRecordBridge'
 
 export function startRecording(

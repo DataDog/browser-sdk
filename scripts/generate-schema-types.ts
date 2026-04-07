@@ -19,7 +19,7 @@ runMain(async () => {
 
     const compiledTypes = await compileFromFile(absoluteSchemaPath, {
       cwd: path.dirname(absoluteSchemaPath),
-      bannerComment: '/**\n * DO NOT MODIFY IT BY HAND. Run `yarn json-schemas:sync` instead.\n*/',
+      bannerComment: '/**\n * DO NOT MODIFY IT BY HAND. Run `yarn json-schemas:generate` instead.\n*/',
       style: prettierConfig || {},
       ...options,
     })

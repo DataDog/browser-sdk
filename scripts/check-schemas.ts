@@ -16,10 +16,8 @@ runMain(() => {
     printLog(diff)
     printError(`
 Untracked changes detected.
-* If your PR requires rum-events-format changes, make sure to run \`yarn json-schemas:sync\`.
-* Else, you probably updated the rum-events-format submodule by mistake. To revert it, run something like:
-  git checkout $(git merge-base main HEAD) rum-events-format
-  git submodule update rum-events-format
+* If your PR changes remote configuration schemas, run \`yarn json-schemas:generate\`.
+* Else, revert the generated remote configuration types before merging.
 `)
 
     process.exit(1)

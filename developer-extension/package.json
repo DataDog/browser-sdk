@@ -24,6 +24,7 @@
     "clsx": "2.1.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "rum-events-format": "github:DataDog/rum-events-format#commit=5a80fb9a3c054b28fba195fd301cadb094bccef8&workspace=rum-events-format",
     "wxt": "0.20.18"
   },
   "volta": {

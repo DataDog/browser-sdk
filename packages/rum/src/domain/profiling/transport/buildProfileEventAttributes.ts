@@ -1,4 +1,8 @@
-import type { BrowserProfilerTrace, RumProfilerVitalEntry, RumViewEntry } from '../../../types'
+import type { BrowserProfiling } from 'rum-events-format/profiling'
+
+type BrowserProfilerTrace = BrowserProfiling.BrowserProfilerTrace
+type RumProfilerVitalEntry = BrowserProfiling.RumProfilerVitalEntry
+type RumViewEntry = BrowserProfiling.RumViewEntry
 
 export interface ProfileEventAttributes {
   application: {

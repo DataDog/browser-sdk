@@ -2,9 +2,15 @@ import type { DeflateEncoder, TimeStamp, Uint8ArrayBuffer } from '@datadog/brows
 import { noop, setDebugMode, DeflateEncoderStreamId } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
+import type {
+  CreationReason,
+  BrowserRecord,
+  SegmentContext,
+  BrowserSegment,
+  BrowserSegmentMetadata,
+} from 'rum-events-format/session-replay-browser'
+import { RecordType } from 'rum-events-format/session-replay-browser'
 import { MockWorker } from '../../../test'
-import type { CreationReason, BrowserRecord, SegmentContext, BrowserSegment, BrowserSegmentMetadata } from '../../types'
-import { RecordType } from '../../types'
 import { getReplayStats } from '../replayStats'
 import { createDeflateEncoder } from '../deflate'
 import type { SerializationStats } from '../record'

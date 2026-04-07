@@ -1,5 +1,5 @@
 import { getGlobalObject } from '@datadog/browser-core'
-import { NodeType, IncrementalSource, SnapshotFormat } from '../../src/types'
+import { NodeType, IncrementalSource, SnapshotFormat } from 'rum-events-format/session-replay-browser'
 import type {
   SerializedNodeWithId,
   ElementNode,
@@ -9,7 +9,7 @@ import type {
   BrowserMutationPayload,
   BrowserSegment,
   BrowserMutationData,
-} from '../../src/types'
+} from 'rum-events-format/session-replay-browser'
 import { findAllIncrementalSnapshots, findFullSnapshotInFormat } from './segments'
 import { findTextNode, findElementWithTagName, findElementWithIdAttribute } from './nodes'
 

@@ -1,6 +1,10 @@
 import { addEventListeners, DOM_EVENT, throttle } from '@datadog/browser-core'
-import type { BrowserIncrementalSnapshotRecord, MousemoveData, MousePosition } from '../../../types'
-import { IncrementalSource } from '../../../types'
+import type {
+  BrowserIncrementalSnapshotRecord,
+  MousemoveData,
+  MousePosition,
+} from 'rum-events-format/session-replay-browser'
+import { IncrementalSource } from 'rum-events-format/session-replay-browser'
 import { getEventTarget, isTouchEvent } from '../eventsUtils'
 import { convertMouseEventToLayoutCoordinates } from '../viewports'
 import { assembleIncrementalSnapshot } from '../assembly'

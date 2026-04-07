@@ -8,7 +8,7 @@ import type {
   TelemetryEvent,
 } from '@datadog/browser-core'
 import { abstractHooks } from '@datadog/browser-core'
-import type { RumEvent } from '../rumEvent.types'
+import type { RumEvent } from 'rum-events-format/rum'
 import type { RawRumEvent } from '../rawRumEvent.types'
 import type { RumEventDomainContext } from '../domainContext.types'
 

@@ -1,5 +1,5 @@
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
-import { RecordType } from '../../../types'
+import { RecordType } from 'rum-events-format/session-replay-browser'
 import type { EmitRecordCallback } from '../record.types'
 import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
 import { trackFocus } from './trackFocus'

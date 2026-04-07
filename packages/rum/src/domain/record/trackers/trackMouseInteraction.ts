@@ -1,7 +1,11 @@
 import { addEventListeners, DOM_EVENT } from '@datadog/browser-core'
 import { getNodePrivacyLevel, NodePrivacyLevel } from '@datadog/browser-rum-core'
-import type { MouseInteraction, MouseInteractionData, BrowserIncrementalSnapshotRecord } from '../../../types'
-import { IncrementalSource, MouseInteractionType } from '../../../types'
+import type {
+  MouseInteraction,
+  MouseInteractionData,
+  BrowserIncrementalSnapshotRecord,
+} from 'rum-events-format/session-replay-browser'
+import { IncrementalSource, MouseInteractionType } from 'rum-events-format/session-replay-browser'
 import { assembleIncrementalSnapshot } from '../assembly'
 import { getEventTarget } from '../eventsUtils'
 import type { RecordingScope } from '../recordingScope'

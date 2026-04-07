@@ -323,6 +323,7 @@ __metadata:
   dependencies:
     "@types/pako": "npm:2.0.4"
     pako: "npm:2.1.0"
+    rum-events-format: "github:DataDog/rum-events-format#commit=5a80fb9a3c054b28fba195fd301cadb094bccef8&workspace=rum-events-format"
   languageName: unknown
   linkType: soft
 
@@ -363,6 +364,7 @@ __metadata:
   dependencies:
     "@datadog/browser-core": "npm:6.32.0"
     ajv: "npm:8.18.0"
+    rum-events-format: "github:DataDog/rum-events-format#commit=5a80fb9a3c054b28fba195fd301cadb094bccef8&workspace=rum-events-format"
   languageName: unknown
   linkType: soft
 
@@ -465,6 +467,7 @@ __metadata:
     "@datadog/browser-rum-core": "npm:6.32.0"
     "@types/pako": "npm:2.0.4"
     pako: "npm:2.1.0"
+    rum-events-format: "github:DataDog/rum-events-format#commit=5a80fb9a3c054b28fba195fd301cadb094bccef8&workspace=rum-events-format"
   peerDependencies:
     "@datadog/browser-logs": 6.32.0
   peerDependenciesMeta:
@@ -491,6 +494,7 @@ __metadata:
     clsx: "npm:2.1.1"
     react: "npm:19.2.4"
     react-dom: "npm:19.2.4"
+    rum-events-format: "github:DataDog/rum-events-format#commit=5a80fb9a3c054b28fba195fd301cadb094bccef8&workspace=rum-events-format"
     typescript: "npm:5.9.3"
     wxt: "npm:0.20.18"
   languageName: unknown
@@ -3867,6 +3871,7 @@ __metadata:
     node-forge: "npm:1.3.3"
     prettier: "npm:3.8.1"
     puppeteer: "npm:24.37.5"
+    rum-events-format: "github:DataDog/rum-events-format#commit=5a80fb9a3c054b28fba195fd301cadb094bccef8&workspace=rum-events-format"
     swc-loader: "npm:0.2.7"
     terser-webpack-plugin: "npm:5.3.16"
     ts-loader: "npm:9.5.4"
@@ -10533,6 +10538,13 @@ __metadata:
     parseurl: "npm:^1.3.3"
     path-to-regexp: "npm:^8.0.0"
   checksum: 10c0/3279de7450c8eae2f6e095e9edacbdeec0abb5cb7249c6e719faa0db2dba43574b4fff5892d9220631c9abaff52dd3cad648cfea2aaace845e1a071915ac8867
+  languageName: node
+  linkType: hard
+
+"rum-events-format@github:DataDog/rum-events-format#commit=5a80fb9a3c054b28fba195fd301cadb094bccef8&workspace=rum-events-format":
+  version: 1.0.0
+  resolution: "rum-events-format@https://github.com/DataDog/rum-events-format.git#workspace=rum-events-format&commit=5a80fb9a3c054b28fba195fd301cadb094bccef8"
+  checksum: 10c0/76a3bdc7ddbacae24dfb52534da7c931057ecba4ce5f756bec6864e9c2dd6e67dac42b0d43523e13475120e7c33b25a3686fad64ffe8adfc0014fa3e558deff0
   languageName: node
   linkType: hard
 

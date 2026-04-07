@@ -1,5 +1,5 @@
-import type { SerializedNodeWithId } from '../../../../types'
-import { PlaybackState, NodeType } from '../../../../types'
+import type { SerializedNodeWithId } from 'rum-events-format/session-replay-browser'
+import { PlaybackState, NodeType } from 'rum-events-format/session-replay-browser'
 import type { NodeId } from '../../itemIds'
 import type { V1RenderOptions } from './renderOptions'
 import type { VDocument } from './vDocument'

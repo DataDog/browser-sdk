@@ -1,6 +1,6 @@
 import { instrumentMethod } from '@datadog/browser-core'
-import { IncrementalSource } from '../../../types'
-import type { BrowserIncrementalSnapshotRecord, StyleSheetRuleData } from '../../../types'
+import { IncrementalSource } from 'rum-events-format/session-replay-browser'
+import type { BrowserIncrementalSnapshotRecord, StyleSheetRuleData } from 'rum-events-format/session-replay-browser'
 import { assembleIncrementalSnapshot } from '../assembly'
 import type { RecordingScope } from '../recordingScope'
 import type { EmitRecordCallback } from '../record.types'

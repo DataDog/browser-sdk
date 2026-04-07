@@ -12,6 +12,7 @@ import type { ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType, startViewHistory } from '@datadog/browser-rum-core'
 import { collectAsyncCalls, createNewEvent, mockEventBridge, registerCleanupTask } from '@datadog/browser-core/test'
 import type { ViewEndedEvent } from 'packages/rum-core/src/domain/view/trackViews'
+import { RecordType } from 'rum-events-format/session-replay-browser'
 import type { RumSessionManagerMock } from '../../../rum-core/test'
 import { appendElement, createRumSessionManagerMock, mockRumConfiguration } from '../../../rum-core/test'
 
@@ -19,7 +20,6 @@ import { recordsPerFullSnapshot, readReplayPayload } from '../../test'
 import type { ReplayPayload } from '../domain/segmentCollection'
 import { setSegmentBytesLimit } from '../domain/segmentCollection'
 
-import { RecordType } from '../types'
 import { createDeflateEncoder, resetDeflateWorkerState, startDeflateWorker } from '../domain/deflate'
 import { startRecording } from './startRecording'
 

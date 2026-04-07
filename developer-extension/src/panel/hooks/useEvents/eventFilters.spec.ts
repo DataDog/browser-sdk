@@ -1,4 +1,4 @@
-import type { RumEvent } from '../../../../../packages/rum-core/src/rumEvent.types'
+import type { RumEvent } from 'rum-events-format/rum'
 import type { LogsEvent } from '../../../../../packages/logs/src/logsEvent.types'
 import { isSafari } from '../../../../../packages/core/src/tools/utils/browserDetection'
 import { parseQuery, matchWithWildcard, filterFacets } from './eventFilters'

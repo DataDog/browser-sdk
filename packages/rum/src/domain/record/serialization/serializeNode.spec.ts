@@ -10,8 +10,8 @@ import {
   PRIVACY_ATTR_VALUE_MASK_UNLESS_ALLOWLISTED,
   isAllowlisted,
 } from '@datadog/browser-rum-core'
-import type { SerializedNodeWithId } from '../../../types'
-import { NodeType } from '../../../types'
+import type { SerializedNodeWithId } from 'rum-events-format/session-replay-browser'
+import { NodeType } from 'rum-events-format/session-replay-browser'
 import { appendElement } from '../../../../../rum-core/test'
 import type { AddShadowRootCallBack } from '../shadowRootsController'
 import {

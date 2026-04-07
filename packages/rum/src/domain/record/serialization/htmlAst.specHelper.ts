@@ -1,6 +1,6 @@
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from '@datadog/browser-rum-core'
 import { display, objectValues } from '@datadog/browser-core'
-import type { SerializedNodeWithId } from '../../../types'
+import type { SerializedNodeWithId } from 'rum-events-format/session-replay-browser'
 import {
   createSerializationTransactionForTesting,
   serializeNodeAndVerifyChangeRecord as serializeNode,

@@ -1,6 +1,6 @@
 import { DOM_EVENT, addEventListeners, timeStampNow } from '@datadog/browser-core'
-import type { FocusRecord } from '../../../types'
-import { RecordType } from '../../../types'
+import type { FocusRecord } from 'rum-events-format/session-replay-browser'
+import { RecordType } from 'rum-events-format/session-replay-browser'
 import type { RecordingScope } from '../recordingScope'
 import type { EmitRecordCallback } from '../record.types'
 import type { Tracker } from './tracker.types'

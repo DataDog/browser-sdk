@@ -15,8 +15,8 @@ import type {
   ScrollPositionChange,
   SizeChange,
   TextChange,
-} from '../../../../types'
-import { ChangeType } from '../../../../types'
+} from 'rum-events-format/session-replay-browser'
+import { ChangeType } from 'rum-events-format/session-replay-browser'
 import type { NodeId, StyleSheetId } from '../../itemIds'
 import type { V1RenderOptions } from './renderOptions'
 import type { StringTable } from './stringTable'

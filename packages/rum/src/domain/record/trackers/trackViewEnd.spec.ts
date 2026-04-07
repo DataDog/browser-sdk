@@ -1,5 +1,5 @@
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
-import { RecordType } from '../../../types'
+import { RecordType } from 'rum-events-format/session-replay-browser'
 import type { EmitRecordCallback } from '../record.types'
 import { trackViewEnd } from './trackViewEnd'
 import type { Tracker } from './tracker.types'

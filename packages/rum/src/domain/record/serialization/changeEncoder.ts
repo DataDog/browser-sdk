@@ -1,5 +1,5 @@
-import type { Change } from '../../../types'
-import { ChangeType } from '../../../types'
+import type { Change } from 'rum-events-format/session-replay-browser'
+import { ChangeType } from 'rum-events-format/session-replay-browser'
 import type { StringIds } from '../itemIds'
 
 type ChangeData<T extends ChangeType> =

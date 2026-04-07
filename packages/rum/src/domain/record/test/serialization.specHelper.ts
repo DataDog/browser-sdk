@@ -1,16 +1,15 @@
 import type { TimeStamp } from '@datadog/browser-core'
 import { noop, timeStampNow } from '@datadog/browser-core'
-import { RecordType, SnapshotFormat } from '../../../types'
+import { RecordType, SnapshotFormat } from 'rum-events-format/session-replay-browser'
 import type {
   BrowserChangeRecord,
   BrowserFullSnapshotChangeRecord,
-  BrowserFullSnapshotRecord,
   BrowserFullSnapshotV1Record,
   BrowserRecord,
   DocumentNode,
   ElementNode,
   SerializedNodeWithId,
-} from '../../../types'
+} from 'rum-events-format/session-replay-browser'
 import type { NodeId } from '../itemIds'
 import type { RecordingScope } from '../recordingScope'
 import type {
@@ -63,10 +62,7 @@ export function takeFullSnapshotForTesting(scope: RecordingScope): DocumentNode 
   const emitRecord = (record: BrowserRecord) => {
     // Tests want to assert against the serialized node representation of the document,
     // not the record that would contain it if we emitted it, so we just extract it here.
-    const fullSnapshotRecord = record as BrowserFullSnapshotRecord
-    if (fullSnapshotRecord.format === SnapshotFormat.Change) {
-      throw new Error('Full snapshot has unexpected format')
-    }
+    const fullSnapshotRecord = record as BrowserFullSnapshotV1Record
     node = fullSnapshotRecord.data.node as DocumentNode & SerializedNodeWithId
   }
 

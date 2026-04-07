@@ -1,13 +1,13 @@
 import * as fs from 'node:fs'
 import * as util from 'node:util'
 import { parseArgs } from 'node:util'
-import type { RumEvent } from '@datadog/browser-rum-core/src/rumEvent.types'
+import type { RumEvent } from 'rum-events-format/rum'
 import type {
   TelemetryEvent,
   TelemetryErrorEvent,
   TelemetryConfigurationEvent,
   TelemetryUsageEvent,
-} from '@datadog/browser-core/src/domain/telemetry/telemetryEvent.types'
+} from 'rum-events-format/telemetry'
 import type {
   IntakeRequest,
   LogsIntakeRequest,

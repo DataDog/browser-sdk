@@ -17,6 +17,9 @@
     "build": "node ../../scripts/build/build-package.ts --modules",
     "prepack": "yarn build"
   },
+  "dependencies": {
+    "rum-events-format": "github:DataDog/rum-events-format#commit=5a80fb9a3c054b28fba195fd301cadb094bccef8&workspace=rum-events-format"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/DataDog/browser-sdk.git",

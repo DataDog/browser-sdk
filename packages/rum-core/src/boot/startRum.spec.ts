@@ -21,11 +21,11 @@ import {
   registerCleanupTask,
   createFakeTelemetryObject,
 } from '@datadog/browser-core/test'
+import type { RumEvent, RumViewEvent } from 'rum-events-format/rum'
 import type { RumSessionManagerMock } from '../../test'
 import { createRumSessionManagerMock, mockRumConfiguration, noopProfilerApi, noopRecorderApi } from '../../test'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { SESSION_KEEP_ALIVE_INTERVAL } from '../domain/view/trackViews'
-import type { RumEvent, RumViewEvent } from '../rumEvent.types'
 import type { RumConfiguration } from '../domain/configuration'
 import { RumEventType } from '../rawRumEvent.types'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'

@@ -1,5 +1,5 @@
-import type { ViewportResizeData, ScrollData } from '@datadog/browser-rum/src/types'
-import { IncrementalSource } from '@datadog/browser-rum/src/types'
+import type { ViewportResizeData, ScrollData } from 'rum-events-format/session-replay-browser'
+import { IncrementalSource } from 'rum-events-format/session-replay-browser'
 
 import { findAllIncrementalSnapshots, findAllVisualViewports } from '@datadog/browser-rum/test/record/segments'
 import type { Page } from '@playwright/test'

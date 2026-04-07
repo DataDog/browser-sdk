@@ -17,8 +17,8 @@ import type {
   DocumentTypeNode,
   ElementNode,
   TextNode,
-} from '../../../types'
-import { NodeType } from '../../../types'
+} from 'rum-events-format/session-replay-browser'
+import { NodeType } from 'rum-events-format/session-replay-browser'
 import { getValidTagName } from './serializationUtils'
 import type { ParentNodePrivacyLevel } from './serialization.types'
 import { serializeStyleSheets } from './serializeStyleSheets'

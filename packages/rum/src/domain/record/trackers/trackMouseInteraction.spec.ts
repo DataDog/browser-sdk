@@ -1,7 +1,7 @@
 import { DOM_EVENT } from '@datadog/browser-core'
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
+import { IncrementalSource, MouseInteractionType, RecordType } from 'rum-events-format/session-replay-browser'
 import { appendElement } from '../../../../../rum-core/test'
-import { IncrementalSource, MouseInteractionType, RecordType } from '../../../types'
 import type { EmitRecordCallback } from '../record.types'
 import type { RecordingScope } from '../recordingScope'
 import { takeFullSnapshotForTesting } from '../test/serialization.specHelper'

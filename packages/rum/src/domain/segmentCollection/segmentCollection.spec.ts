@@ -4,9 +4,9 @@ import type { ViewHistory, ViewHistoryEntry, RumConfiguration } from '@datadog/b
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask, restorePageVisibility } from '@datadog/browser-core/test'
+import type { BrowserRecord, SegmentContext } from 'rum-events-format/session-replay-browser'
+import { RecordType } from 'rum-events-format/session-replay-browser'
 import { createRumSessionManagerMock } from '../../../../rum-core/test'
-import type { BrowserRecord, SegmentContext } from '../../types'
-import { RecordType } from '../../types'
 import { MockWorker, readMetadataFromReplayPayload } from '../../../test'
 import { createDeflateEncoder } from '../deflate'
 import {

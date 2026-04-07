@@ -6,8 +6,8 @@ import type {
   BrowserIncrementalSnapshotRecord,
   RemovedNodeMutation,
   TextMutation,
-} from '../../../../types'
-import { IncrementalSource, RecordType, SnapshotFormat } from '../../../../types'
+} from 'rum-events-format/session-replay-browser'
+import { IncrementalSource, RecordType, SnapshotFormat } from 'rum-events-format/session-replay-browser'
 import type { NodeId, StyleSheetId } from '../../itemIds'
 import type { MutationLog } from './mutationLog'
 import { createMutationLog } from './mutationLog'

@@ -19,4 +19,4 @@ export type {
   TelemetryDebugEvent,
   TelemetryConfigurationEvent,
   TelemetryUsageEvent,
-} from './telemetryEvent.types'
+} from 'rum-events-format/telemetry'

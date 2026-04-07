@@ -15,14 +15,14 @@ import {
   isNodeShadowRoot,
 } from '@datadog/browser-rum-core'
 import type { TimeStamp } from '@datadog/browser-core'
-import { IncrementalSource } from '../../../types'
+import { IncrementalSource } from 'rum-events-format/session-replay-browser'
 import type {
   BrowserMutationData,
   AddedNodeMutation,
   AttributeMutation,
   RemovedNodeMutation,
   TextMutation,
-} from '../../../types'
+} from 'rum-events-format/session-replay-browser'
 import type { RecordingScope } from '../recordingScope'
 import type { RemoveShadowRootCallBack } from '../shadowRootsController'
 import { assembleIncrementalSnapshot } from '../assembly'

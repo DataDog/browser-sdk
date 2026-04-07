@@ -1,7 +1,7 @@
 import type { TimeStamp } from '@datadog/browser-core'
 import { timeStampNow } from '@datadog/browser-core'
-import type { BrowserIncrementalData, BrowserIncrementalSnapshotRecord } from '../../types'
-import { RecordType } from '../../types'
+import type { BrowserIncrementalData, BrowserIncrementalSnapshotRecord } from 'rum-events-format/session-replay-browser'
+import { RecordType } from 'rum-events-format/session-replay-browser'
 
 export function assembleIncrementalSnapshot<Data extends BrowserIncrementalData>(
   source: Data['source'],

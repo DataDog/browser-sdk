@@ -1,4 +1,4 @@
-import type { InsertionPoint } from '../../../types'
+import type { InsertionPoint } from 'rum-events-format/session-replay-browser'
 import type { NodeId, NodeIds } from '../itemIds'
 import { createNodeIds } from '../itemIds'
 import { createChildInsertionCursor, createRootInsertionCursor } from './insertionCursor'

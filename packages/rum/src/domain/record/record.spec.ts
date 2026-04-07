@@ -2,7 +2,6 @@ import { DefaultPrivacyLevel, findLast, noop } from '@datadog/browser-core'
 import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { createNewEvent, collectAsyncCalls, registerCleanupTask } from '@datadog/browser-core/test'
-import { findElement, findFullSnapshotInFormat, findNode, recordsPerFullSnapshot } from '../../../test'
 import type {
   BrowserIncrementalSnapshotRecord,
   BrowserMutationData,
@@ -10,8 +9,9 @@ import type {
   DocumentFragmentNode,
   ElementNode,
   ScrollData,
-} from '../../types'
-import { NodeType, RecordType, IncrementalSource, SnapshotFormat } from '../../types'
+} from 'rum-events-format/session-replay-browser'
+import { NodeType, RecordType, IncrementalSource, SnapshotFormat } from 'rum-events-format/session-replay-browser'
+import { findElement, findFullSnapshotInFormat, findNode, recordsPerFullSnapshot } from '../../../test'
 import { appendElement } from '../../../../rum-core/test'
 import { getReplayStats } from '../replayStats'
 import type { RecordAPI } from './record'

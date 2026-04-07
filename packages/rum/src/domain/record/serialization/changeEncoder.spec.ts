@@ -1,4 +1,4 @@
-import { ChangeType } from '../../../types'
+import { ChangeType } from 'rum-events-format/session-replay-browser'
 import type { StringId } from '../itemIds'
 import { createStringIds } from '../itemIds'
 import type { ChangeEncoder } from './changeEncoder'

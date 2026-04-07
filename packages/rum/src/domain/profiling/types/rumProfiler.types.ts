@@ -1,7 +1,9 @@
 import type { TimeoutId, ClocksState } from '@datadog/browser-core'
-import type { RumViewEntry } from '../../../types'
+import type { BrowserProfiling } from 'rum-events-format/profiling'
 import type { LongTaskContext } from '../longTaskHistory'
 import type { Profiler } from './profilerApi.types'
+
+type RumViewEntry = BrowserProfiling.RumViewEntry
 
 /**
  * Additional data recorded during profiling session

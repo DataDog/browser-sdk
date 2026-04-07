@@ -1,3 +1,4 @@
+import type { TelemetryEvent } from 'rum-events-format/telemetry'
 import type { Context } from '../../tools/serialisation/context'
 import { ConsoleApiName } from '../../tools/display'
 import { NO_ERROR_STACK_PRESENT_MESSAGE, isError } from '../error/error'
@@ -30,7 +31,6 @@ import type { AbstractHooks, RecursivePartial } from '../../tools/abstractHooks'
 import { HookNames, DISCARDED } from '../../tools/abstractHooks'
 import { globalObject, isWorkerEnvironment } from '../../tools/globalObject'
 import { noop } from '../../tools/utils/functionUtils'
-import type { TelemetryEvent } from './telemetryEvent.types'
 import type {
   RawTelemetryConfiguration,
   RawTelemetryEvent,

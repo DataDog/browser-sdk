@@ -3,8 +3,13 @@ import type {
   MouseInteractionData,
   ScrollData,
   SerializedNodeWithId,
-} from '@datadog/browser-rum/src/types'
-import { IncrementalSource, MouseInteractionType, NodeType, SnapshotFormat } from '@datadog/browser-rum/src/types'
+} from 'rum-events-format/session-replay-browser'
+import {
+  IncrementalSource,
+  MouseInteractionType,
+  NodeType,
+  SnapshotFormat,
+} from 'rum-events-format/session-replay-browser'
 
 import { createMutationPayloadValidatorFromSegment } from '@datadog/browser-rum/test/record/mutationPayloadValidator'
 import {

@@ -1,5 +1,5 @@
-import { IncrementalSource, RecordType } from '@datadog/browser-rum/src/types'
-import type { BrowserRecord } from '@datadog/browser-rum/src/types'
+import { IncrementalSource, RecordType } from 'rum-events-format/session-replay-browser'
+import type { BrowserRecord } from 'rum-events-format/session-replay-browser'
 import { createLogger } from '../../common/logger'
 import { onBackgroundMessage } from '../backgroundScriptConnection'
 import {

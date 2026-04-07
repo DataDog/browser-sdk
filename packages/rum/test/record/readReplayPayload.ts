@@ -1,5 +1,5 @@
 import type { Payload } from '@datadog/browser-core'
-import type { BrowserSegment } from '../../src/types'
+import type { BrowserSegment } from 'rum-events-format/session-replay-browser'
 import type { BrowserSegmentMetadataAndSegmentSizes } from '../../src/domain/segmentCollection'
 import { readFormData } from '../../../core/test'
 

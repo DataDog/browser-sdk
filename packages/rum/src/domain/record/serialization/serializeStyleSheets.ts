@@ -1,4 +1,4 @@
-import type { StyleSheet } from '../../../types'
+import type { StyleSheet } from 'rum-events-format/session-replay-browser'
 import type { SerializationTransaction } from './serializationTransaction'
 
 export function serializeStyleSheets(

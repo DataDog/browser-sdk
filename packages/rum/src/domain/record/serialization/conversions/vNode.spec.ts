@@ -1,4 +1,4 @@
-import { PlaybackState } from '../../../../types'
+import { PlaybackState } from 'rum-events-format/session-replay-browser'
 import type { NodeId } from '../../itemIds'
 import type { VDocument } from './vDocument'
 import { createVDocument } from './vDocument'

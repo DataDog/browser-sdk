@@ -22,7 +22,7 @@ import type {
   ViewHistory,
 } from '@datadog/browser-rum-core'
 import { createFormDataTransport, LifeCycleEventType } from '@datadog/browser-rum-core'
-import type { BrowserProfilerTrace, RumViewEntry } from '../../types'
+import type { BrowserProfiling } from 'rum-events-format/profiling'
 import type {
   RumProfilerInstance,
   RumProfilerRunningInstance,
@@ -38,6 +38,9 @@ import { assembleProfilingPayload } from './transport/assembly'
 import { createLongTaskHistory } from './longTaskHistory'
 import { createActionHistory } from './actionHistory'
 import { createVitalHistory } from './vitalHistory'
+
+type BrowserProfilerTrace = BrowserProfiling.BrowserProfilerTrace
+type RumViewEntry = BrowserProfiling.RumViewEntry
 
 export const DEFAULT_RUM_PROFILER_CONFIGURATION: RUMProfilerConfiguration = {
   sampleIntervalMs: 10, // Sample stack trace every 10ms
@@ -90,11 +93,11 @@ export function createRumProfiler(
     // Add initial view
     // Note: `viewEntry.name` is only filled when users use manual view creation via `startView` method.
     lastViewEntry = viewEntry
-      ? {
+      ? ({
           startClocks: viewEntry.startClocks,
           viewId: viewEntry.id,
           viewName: getCustomOrDefaultViewName(viewEntry.name, document.location.pathname),
-        }
+        } as unknown as RumViewEntry)
       : undefined
 
     // Add global clean-up tasks for listeners that are not specific to a profiler instance (eg. visibility change, before unload)
@@ -146,7 +149,7 @@ export function createRumProfiler(
         // Note: `viewName` is only filled when users use manual view creation via `startView` method.
         viewName: getCustomOrDefaultViewName(view.name, document.location.pathname),
         startClocks: view.startClocks,
-      }
+      } as unknown as RumViewEntry
 
       collectViewEntry(viewEntry)
 
@@ -257,7 +260,7 @@ export function createRumProfiler(
             vitals,
             views,
             sampleInterval: profilerConfiguration.sampleIntervalMs,
-          })
+          }) as unknown as BrowserProfilerTrace
         )
       })
       .catch(monitorError)

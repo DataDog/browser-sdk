@@ -8,7 +8,7 @@ import {
   getTextContent,
   NodePrivacyLevel,
 } from '@datadog/browser-rum-core'
-import type { AttributeChange } from '../../../types'
+import type { AttributeChange } from 'rum-events-format/session-replay-browser'
 import type { RecordingScope } from '../recordingScope'
 import type { EmitRecordCallback, EmitStatsCallback } from '../record.types'
 import type { NodeId, NodeIds } from '../itemIds'

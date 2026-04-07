@@ -1,5 +1,5 @@
-import type { InputData, StyleSheetRuleData, ScrollData } from '@datadog/browser-rum/src/types'
-import { NodeType, IncrementalSource, SnapshotFormat } from '@datadog/browser-rum/src/types'
+import type { InputData, StyleSheetRuleData, ScrollData } from 'rum-events-format/session-replay-browser'
+import { NodeType, IncrementalSource, SnapshotFormat } from 'rum-events-format/session-replay-browser'
 
 import { DefaultPrivacyLevel } from '@datadog/browser-core'
 

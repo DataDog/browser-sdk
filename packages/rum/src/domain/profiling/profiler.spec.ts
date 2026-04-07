@@ -23,9 +23,9 @@ import {
   waitNextMicrotask,
   replaceMockable,
 } from '@datadog/browser-core/test'
+import type { BrowserProfiling } from 'rum-events-format/profiling'
 import { createRumSessionManagerMock, mockRumConfiguration, mockViewHistory } from '../../../../rum-core/test'
 import { mockProfiler } from '../../../test'
-import type { BrowserProfilerTrace } from '../../types'
 import { mockedTrace } from './test-utils/mockedTrace'
 import { createRumProfiler } from './profiler'
 import type { ProfilerTrace } from './types'
@@ -37,6 +37,8 @@ import type { ActionContext } from './actionHistory'
 import { createActionHistory } from './actionHistory'
 import type { VitalContext } from './vitalHistory'
 import { createVitalHistory } from './vitalHistory'
+
+type BrowserProfilerTrace = BrowserProfiling.BrowserProfilerTrace
 
 describe('profiler', () => {
   // Store the original pathname
@@ -64,7 +66,7 @@ describe('profiler', () => {
 
     const mockProfilerTrace: ProfilerTrace = deepClone(mockedTrace)
 
-    const mockedRumProfilerTrace: BrowserProfilerTrace = Object.assign(mockProfilerTrace, {
+    const mockedRumProfilerTrace = Object.assign(mockProfilerTrace, {
       startClocks: {
         relative: relativeNow(),
         timeStamp: timeStampNow(),
@@ -79,7 +81,7 @@ describe('profiler', () => {
       views: [],
       actions: [],
       vitals: [],
-    })
+    }) as unknown as BrowserProfilerTrace
 
     const viewHistory = mockViewHistory(
       currentView ?? {

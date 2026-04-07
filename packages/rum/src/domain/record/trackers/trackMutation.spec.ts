@@ -6,7 +6,6 @@ import {
   PRIVACY_ATTR_VALUE_MASK,
   PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
 } from '@datadog/browser-rum-core'
-import { createMutationPayloadValidator } from '../../../../test'
 import type {
   AttributeMutation,
   Attributes,
@@ -14,8 +13,9 @@ import type {
   BrowserMutationPayload,
   DocumentNode,
   SerializedNodeWithId,
-} from '../../../types'
-import { NodeType } from '../../../types'
+} from 'rum-events-format/session-replay-browser'
+import { NodeType } from 'rum-events-format/session-replay-browser'
+import { createMutationPayloadValidator } from '../../../../test'
 import type { RecordingScope } from '../recordingScope'
 import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
 import type { AddShadowRootCallBack, RemoveShadowRootCallBack } from '../shadowRootsController'

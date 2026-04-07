@@ -2,11 +2,14 @@ import { createInflate, inflateSync } from 'node:zlib'
 import https from 'node:https'
 import type express from 'express'
 import createBusboy from 'busboy'
-import type { BrowserProfileEvent, BrowserProfilerTrace } from '@datadog/browser-rum/src/types/profiling'
-import type { BrowserSegment, BrowserSegmentMetadata } from '@datadog/browser-rum/src/types/sessionReplay'
+import type { BrowserProfiling } from 'rum-events-format/profiling'
+import type { BrowserSegment, BrowserSegmentMetadata } from 'rum-events-format/session-replay-browser'
 import type { LogsEvent } from '@datadog/browser-logs/src/logsEvent.types'
-import type { RumEvent } from '@datadog/browser-rum-core/src/rumEvent.types'
-import type { TelemetryEvent } from '@datadog/browser-core/src/domain/telemetry/telemetryEvent.types'
+import type { RumEvent } from 'rum-events-format/rum'
+import type { TelemetryEvent } from 'rum-events-format/telemetry'
+
+type BrowserProfileEvent = BrowserProfiling.BrowserProfileEvent
+type BrowserProfilerTrace = BrowserProfiling.BrowserProfilerTrace
 
 interface BaseIntakeRequest {
   isBridge: boolean

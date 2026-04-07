@@ -11,7 +11,7 @@ export type {
   RumLongTaskEvent,
   RumVitalEvent,
   ProfilingInternalContextSchema,
-} from './rumEvent.types'
+} from 'rum-events-format/rum'
 export type {
   RumLongTaskEventDomainContext,
   RumErrorEventDomainContext,

@@ -1,5 +1,6 @@
 import { round, ONE_SECOND, noop, elapsed } from '@datadog/browser-core'
 import type { Duration, RelativeTime, WeakRef, WeakRefConstructor } from '@datadog/browser-core'
+import type { RumRect } from 'rum-events-format/rum'
 import { isElementNode } from '../../../browser/htmlDomUtils'
 import type { RumLayoutShiftAttribution, RumLayoutShiftTiming } from '../../../browser/performanceObservable'
 import {
@@ -9,7 +10,6 @@ import {
 } from '../../../browser/performanceObservable'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import type { RumConfiguration } from '../../configuration'
-import type { RumRect } from '../../../rumEvent.types'
 import { getClsAttributionImpactedArea } from './getClsAttributionImpactedArea'
 
 declare const WeakRef: WeakRefConstructor

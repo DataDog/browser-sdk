@@ -9,7 +9,7 @@
  * viewport is being measured by the browser
  */
 
-import type { VisualViewportRecord } from '../../types'
+import type { VisualViewportRecord } from 'rum-events-format/session-replay-browser'
 
 // Scrollbar widths vary across properties on different devices and browsers
 const TOLERANCE = 25

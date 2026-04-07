@@ -1,8 +1,12 @@
 import { throttle, DOM_EVENT, addEventListeners, timeStampNow, noop } from '@datadog/browser-core'
 import type { ViewportDimension } from '@datadog/browser-rum-core'
 import { initViewportObservable } from '@datadog/browser-rum-core'
-import { IncrementalSource, RecordType } from '../../../types'
-import type { BrowserIncrementalSnapshotRecord, ViewportResizeData, VisualViewportRecord } from '../../../types'
+import { IncrementalSource, RecordType } from 'rum-events-format/session-replay-browser'
+import type {
+  BrowserIncrementalSnapshotRecord,
+  ViewportResizeData,
+  VisualViewportRecord,
+} from 'rum-events-format/session-replay-browser'
 import { getVisualViewport } from '../viewports'
 import { assembleIncrementalSnapshot } from '../assembly'
 import type { EmitRecordCallback } from '../record.types'

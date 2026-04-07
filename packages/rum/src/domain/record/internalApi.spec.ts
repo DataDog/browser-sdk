@@ -1,4 +1,4 @@
-import { NodeType, RecordType, SnapshotFormat } from '../../types'
+import { NodeType, RecordType, SnapshotFormat } from 'rum-events-format/session-replay-browser'
 import { appendElement } from '../../../../rum-core/test'
 import { takeFullSnapshot, takeNodeSnapshot } from './internalApi'
 

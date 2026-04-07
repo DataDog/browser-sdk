@@ -1,5 +1,5 @@
 import { noop } from '@datadog/browser-core'
-import { IncrementalSource, RecordType } from '../../types'
+import { IncrementalSource, RecordType } from 'rum-events-format/session-replay-browser'
 import type {
   AttributeMutation,
   BrowserChangeRecord,
@@ -7,7 +7,7 @@ import type {
   BrowserIncrementalSnapshotRecord,
   BrowserRecord,
   RemovedNodeMutation,
-} from '../../types'
+} from 'rum-events-format/session-replay-browser'
 import type { EmitRecordCallback, SerializeEvent } from './record.types'
 import { createRecordingScope } from './recordingScope'
 import type { RecordingScope } from './recordingScope'

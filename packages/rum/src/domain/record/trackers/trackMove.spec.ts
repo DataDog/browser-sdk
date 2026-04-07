@@ -1,5 +1,5 @@
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
-import { IncrementalSource, RecordType } from '../../../types'
+import { IncrementalSource, RecordType } from 'rum-events-format/session-replay-browser'
 import type { EmitRecordCallback } from '../record.types'
 import { takeFullSnapshotForTesting } from '../test/serialization.specHelper'
 import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'

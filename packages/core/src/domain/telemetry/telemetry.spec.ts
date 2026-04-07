@@ -1,4 +1,5 @@
 import type { TimeStamp } from '@datadog/browser-rum/internal'
+import type { TelemetryEvent } from 'rum-events-format/telemetry'
 import { NO_ERROR_STACK_PRESENT_MESSAGE } from '../error/error'
 import { callMonitored } from '../../tools/monitor'
 import type { ExperimentalFeature } from '../../tools/experimentalFeatures'
@@ -31,7 +32,6 @@ import {
   TelemetryMetrics,
   startTelemetryTransport,
 } from './telemetry'
-import type { TelemetryEvent } from './telemetryEvent.types'
 import { StatusType, TelemetryType } from './rawTelemetryEvent.types'
 
 function startAndSpyTelemetry(

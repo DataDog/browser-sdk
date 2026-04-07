@@ -1,7 +1,7 @@
 // Those types are coming from the Web-UI Session Replay Player. Please keep them as close as
 // possible to the original types.
 
-import type { BrowserRecord, RecordType } from '@datadog/browser-rum/src/types'
+import type { BrowserRecord, RecordType } from 'rum-events-format/session-replay-browser'
 
 export enum MessageBridgeUpType {
   READY = 'ready',

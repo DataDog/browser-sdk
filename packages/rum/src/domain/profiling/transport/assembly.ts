@@ -1,7 +1,10 @@
 import { buildTags, currentDrift } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import type { BrowserProfileEvent, BrowserProfilerTrace } from '../../../types'
+import type { BrowserProfiling } from 'rum-events-format/profiling'
 import { buildProfileEventAttributes } from './buildProfileEventAttributes'
+
+type BrowserProfileEvent = BrowserProfiling.BrowserProfileEvent
+type BrowserProfilerTrace = BrowserProfiling.BrowserProfilerTrace
 
 export interface ProfileEventPayload {
   event: BrowserProfileEvent

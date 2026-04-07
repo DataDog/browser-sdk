@@ -1,6 +1,6 @@
 import { deflate } from 'pako'
 import type { Uint8ArrayBuffer } from '@datadog/browser-core'
-import type { BrowserSegment, BrowserSegmentMetadata } from '../../types'
+import type { BrowserSegment, BrowserSegmentMetadata } from 'rum-events-format/session-replay-browser'
 import { readReplayPayload } from '../../../test'
 import type { SerializationStats } from '../record'
 import { buildReplayPayload } from './buildReplayPayload'

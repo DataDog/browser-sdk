@@ -12,8 +12,8 @@ import {
   isNonEmptyArray,
   isIndexableObject,
 } from '@datadog/browser-core'
+import type { RumEvent } from 'rum-events-format/rum'
 import type { RumEventDomainContext } from '../../domainContext.types'
-import type { RumEvent } from '../../rumEvent.types'
 import type { RumPlugin } from '../plugins'
 import type { PropagatorType, TracingOption } from '../tracing/tracer.types'
 

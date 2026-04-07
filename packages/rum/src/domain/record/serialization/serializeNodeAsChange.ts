@@ -11,7 +11,7 @@ import {
   getScrollY,
   isElementNode,
 } from '@datadog/browser-rum-core'
-import { MediaInteractionType } from '../../../types'
+import { MediaInteractionType } from 'rum-events-format/session-replay-browser'
 import type { NodeId, StyleSheetId } from '../itemIds'
 import type { InsertionCursor } from './insertionCursor'
 import type { ChangeSerializationTransaction } from './serializationTransaction'

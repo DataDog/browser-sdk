@@ -3,8 +3,6 @@ import { IconCopy, IconDotsVertical, IconColumnInsertRight } from '@tabler/icons
 import type { ComponentPropsWithoutRef, ReactNode } from 'react'
 import React, { useRef, useState } from 'react'
 import { default as clsx } from 'clsx'
-import type { TelemetryEvent } from '../../../../../../packages/core/src/domain/telemetry'
-import type { LogsEvent } from '../../../../../../packages/logs/src/logsEvent.types'
 import type {
   RumActionEvent,
   RumErrorEvent,
@@ -12,7 +10,9 @@ import type {
   RumResourceEvent,
   RumViewEvent,
   RumVitalEvent,
-} from '../../../../../../packages/rum-core/src/rumEvent.types'
+} from 'rum-events-format/rum'
+import type { TelemetryEvent } from '../../../../../../packages/core/src/domain/telemetry'
+import type { LogsEvent } from '../../../../../../packages/logs/src/logsEvent.types'
 import type { SdkEvent } from '../../../sdkEvent'
 import { isTelemetryEvent, isLogEvent, isRumEvent } from '../../../sdkEvent'
 import { formatDate, formatDuration } from '../../../formatNumber'

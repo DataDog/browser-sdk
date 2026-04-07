@@ -1,6 +1,11 @@
 import type { Encoder, EncoderResult, Uint8ArrayBuffer } from '@datadog/browser-core'
-import type { BrowserRecord, BrowserSegmentMetadata, CreationReason, SegmentContext } from '../../types'
-import { RecordType } from '../../types'
+import type {
+  BrowserRecord,
+  BrowserSegmentMetadata,
+  CreationReason,
+  SegmentContext,
+} from 'rum-events-format/session-replay-browser'
+import { RecordType } from 'rum-events-format/session-replay-browser'
 import * as replayStats from '../replayStats'
 import type { SerializationStats } from '../record'
 import { aggregateSerializationStats, createSerializationStats } from '../record'

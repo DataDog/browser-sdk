@@ -26,15 +26,6 @@ cmd_typecheck () {
   tsc -p "$project_path" --noEmit true
 }
 
-cmd_init_submodule () {
-  git submodule update --init
-}
-
-cmd_update_submodule () {
-  git submodule update --init
-  git submodule update --remote
-}
-
 # needed because using fork instead of the npm package
 # TODO remove me when json-schema-to-typescript natively supports readOnly
 cmd_build_json2type () {

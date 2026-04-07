@@ -1,7 +1,7 @@
 import { sendToExtension } from '@datadog/browser-core'
 import type { LifeCycle, RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
+import type { BrowserRecord } from 'rum-events-format/session-replay-browser'
 import * as replayStats from '../replayStats'
-import type { BrowserRecord } from '../../types'
 import type { Tracker } from './trackers'
 import {
   trackFocus,

@@ -1,4 +1,4 @@
-import { ChangeType } from '../../../../types'
+import { ChangeType } from 'rum-events-format/session-replay-browser'
 import type {
   AddDocTypeNodeChange,
   AddElementNodeChange,
@@ -12,7 +12,7 @@ import type {
   Change,
   StyleSheetRules,
   TextChange,
-} from '../../../../types'
+} from 'rum-events-format/session-replay-browser'
 import type { StringTable } from './stringTable'
 import { createStringTable } from './stringTable'
 

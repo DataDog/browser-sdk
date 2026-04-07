@@ -9,6 +9,7 @@ import {
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { registerCleanupTask, mockClock } from '@datadog/browser-core/test'
+import type { RumErrorEvent, RumEvent, RumResourceEvent } from 'rum-events-format/rum'
 import {
   createRumSessionManagerMock,
   createRawRumEvent,
@@ -19,7 +20,6 @@ import {
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
-import type { RumErrorEvent, RumEvent, RumResourceEvent } from '../rumEvent.types'
 import { startRumAssembly } from './assembly'
 import type { RawRumEventCollectedData } from './lifeCycle'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'

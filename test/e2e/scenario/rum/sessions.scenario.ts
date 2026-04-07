@@ -1,5 +1,5 @@
 import { SESSION_STORE_KEY, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
-import { RecordType } from '@datadog/browser-rum/src/types'
+import { RecordType } from 'rum-events-format/session-replay-browser'
 import { test, expect } from '@playwright/test'
 import { setCookie } from '../../lib/helpers/browser'
 import { expireSession, findSessionCookie, renewSession } from '../../lib/helpers/session'

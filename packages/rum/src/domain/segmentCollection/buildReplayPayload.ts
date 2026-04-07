@@ -1,5 +1,5 @@
 import type { Payload, Uint8ArrayBuffer } from '@datadog/browser-core'
-import type { BrowserSegmentMetadata } from '../../types'
+import type { BrowserSegmentMetadata } from 'rum-events-format/session-replay-browser'
 import type { SerializationMetric, SerializationStats } from '../record'
 
 export type BrowserSegmentMetadataAndSegmentSizes = BrowserSegmentMetadata & {

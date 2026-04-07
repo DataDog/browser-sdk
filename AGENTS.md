@@ -110,8 +110,8 @@ For deeper context, see:
 ### Auto-Generated Files
 
 - **NEVER manually edit auto-generated files.** They have a `DO NOT MODIFY IT BY HAND` comment at the top — respect it
-- Example: `telemetryEvent.types.ts` is generated from the `rum-events-format` schema repository
-- Any changes to these files require a **corresponding PR in the upstream source repo first**, then regeneration
+- Example: `remoteConfiguration.types.ts` is generated from `remote-configuration/rum-sdk-config.json`
+- Any changes to these files require updating the source schema first, then regeneration
 
 ## Commit Messages
 

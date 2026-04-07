@@ -1,6 +1,6 @@
 import { getEventBridge } from '@datadog/browser-core'
 import type { ViewHistory } from '@datadog/browser-rum-core'
-import type { BrowserRecord } from '../types'
+import type { BrowserRecord } from 'rum-events-format/session-replay-browser'
 
 export function startRecordBridge(viewHistory: ViewHistory) {
   const bridge = getEventBridge<'record', BrowserRecord>()!

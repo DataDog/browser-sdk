@@ -1,7 +1,7 @@
 import type { TimeStamp } from '@datadog/browser-core'
 import { elapsed, timeStampNow } from '@datadog/browser-core'
 
-import { ChangeType, RecordType, SnapshotFormat } from '../../../types'
+import { ChangeType, RecordType, SnapshotFormat } from 'rum-events-format/session-replay-browser'
 import type {
   AddCDataSectionNodeChange,
   AddDocTypeNodeChange,
@@ -18,7 +18,7 @@ import type {
   MediaInteractionType,
   StyleSheetMediaList,
   StyleSheetRules,
-} from '../../../types'
+} from 'rum-events-format/session-replay-browser'
 import type { NodeId, StyleSheetId } from '../itemIds'
 import type { EmitRecordCallback, EmitStatsCallback } from '../record.types'
 import type { RecordingScope } from '../recordingScope'

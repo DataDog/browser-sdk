@@ -1,4 +1,4 @@
-import type { InsertionPoint } from '../../../types'
+import type { InsertionPoint } from 'rum-events-format/session-replay-browser'
 import type { NodeId, NodeIds } from '../itemIds'
 
 /**

@@ -2,7 +2,7 @@ import type { DeflateEncoder, HttpRequest, TimeoutId } from '@datadog/browser-co
 import { isPageExitReason, ONE_SECOND, clearTimeout, setTimeout } from '@datadog/browser-core'
 import type { LifeCycle, ViewHistory, RumSessionManager, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
-import type { BrowserRecord, CreationReason, SegmentContext } from '../../types'
+import type { BrowserRecord, CreationReason, SegmentContext } from 'rum-events-format/session-replay-browser'
 import type { SerializationStats } from '../record'
 import type { ReplayPayload } from './buildReplayPayload'
 import { buildReplayPayload } from './buildReplayPayload'

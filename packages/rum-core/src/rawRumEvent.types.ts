@@ -10,8 +10,6 @@ import type {
   Csp,
   Context,
 } from '@datadog/browser-core'
-import type { GraphQlMetadata } from './domain/resource/graphql'
-import type { PageState } from './domain/contexts/pageStateHistory'
 import type {
   RumActionEvent,
   RumErrorEvent,
@@ -19,7 +17,9 @@ import type {
   RumResourceEvent,
   RumViewEvent,
   RumVitalEvent,
-} from './rumEvent.types'
+} from 'rum-events-format/rum'
+import type { GraphQlMetadata } from './domain/resource/graphql'
+import type { PageState } from './domain/contexts/pageStateHistory'
 
 export const RumEventType = {
   ACTION: 'action',

@@ -1,5 +1,5 @@
 import { isFirefox, registerCleanupTask } from '@datadog/browser-core/test'
-import { IncrementalSource, RecordType } from '../../../types'
+import { IncrementalSource, RecordType } from 'rum-events-format/session-replay-browser'
 import type { EmitRecordCallback } from '../record.types'
 import type { RecordingScope } from '../recordingScope'
 import { takeFullSnapshotForTesting } from '../test/serialization.specHelper'

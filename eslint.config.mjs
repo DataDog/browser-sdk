@@ -36,7 +36,6 @@ export default tseslint.config(
       'test/apps/vue-router-app',
       'sandbox',
       'coverage',
-      'rum-events-format',
       '.yarn',
       '**/playwright-report',
       'generated-docs',

@@ -7,7 +7,6 @@ import { getRunId } from '../../../envUtils'
 import type { BrowserLog } from '../helpers/browser'
 import { BrowserLogsManager, deleteAllCookies, getBrowserName, sendXhr } from '../helpers/browser'
 import { DEFAULT_LOGS_CONFIGURATION, DEFAULT_RUM_CONFIGURATION } from '../helpers/configuration'
-import { validateRumFormat } from '../helpers/validation'
 import type { BrowserConfiguration } from '../../../browsers.conf'
 import { NEXTJS_APP_ROUTER_PORT, VUE_ROUTER_APP_PORT } from '../helpers/playwright'
 import { IntakeRegistry } from './intakeRegistry'
@@ -437,7 +436,6 @@ async function setUpTest(browserLogsManager: BrowserLogsManager, { baseUrl, page
 
 function tearDownPassedTest({ intakeRegistry, withBrowserLogs }: TestContext) {
   expect(intakeRegistry.telemetryErrorEvents).toHaveLength(0)
-  expect(() => validateRumFormat(intakeRegistry.rumEvents)).not.toThrow()
   withBrowserLogs((logs) => {
     expect(logs.filter((log) => log.level === 'error')).toHaveLength(0)
   })

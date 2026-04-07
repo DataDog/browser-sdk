@@ -4,24 +4,29 @@ import type {
   MetaRecord,
   BrowserRecord,
   BrowserFullSnapshotRecord,
+  BrowserFullSnapshotV1Record,
+  BrowserFullSnapshotChangeRecord,
   MouseInteractionType,
   BrowserIncrementalSnapshotRecord,
   VisualViewportRecord,
   FrustrationRecord,
   SnapshotFormatV1,
-  BrowserFullSnapshotV1Record,
-  BrowserFullSnapshotChangeRecord,
   SnapshotFormatChange,
-} from '../../src/types'
-import { IncrementalSource, RecordType, SnapshotFormat } from '../../src/types'
+} from 'rum-events-format/session-replay-browser'
+import { RecordType, IncrementalSource, SnapshotFormat } from 'rum-events-format/session-replay-browser'
 
 export function findMeta(segment: BrowserSegment): MetaRecord | null {
   return segment.records.find((record) => record.type === RecordType.Meta) as MetaRecord
 }
 
 // Returns the first FullSnapshotRecord in a Segment, if any.
-export function findFullSnapshot({ records }: { records: BrowserRecord[] }): BrowserFullSnapshotRecord | null {
-  return records.find((record) => record.type === RecordType.FullSnapshot) as BrowserFullSnapshotRecord
+export function findFullSnapshot({ records }: { records: BrowserRecord[] }): BrowserFullSnapshotV1Record | null {
+  return (
+    records.find(
+      (record): record is BrowserFullSnapshotV1Record =>
+        record.type === RecordType.FullSnapshot && record.format !== SnapshotFormat.Change
+    ) ?? null
+  )
 }
 
 /** Returns the FullSnapshotRecord in the given format in a Segment, if any. */

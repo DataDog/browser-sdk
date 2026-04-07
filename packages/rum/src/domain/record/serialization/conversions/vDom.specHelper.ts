@@ -1,11 +1,10 @@
 import type {
-  BrowserFullSnapshotRecord,
   BrowserFullSnapshotV1Record,
   BrowserIncrementalSnapshotRecord,
   BrowserMutationPayload,
   SerializedNodeWithId,
-} from '../../../../types'
-import { IncrementalSource, RecordType, SnapshotFormat } from '../../../../types'
+} from 'rum-events-format/session-replay-browser'
+import { IncrementalSource, RecordType, SnapshotFormat } from 'rum-events-format/session-replay-browser'
 import type { NodeId } from '../../itemIds'
 import { createV1RenderOptions } from './renderOptions'
 import type { VDocument } from './vDocument'
@@ -66,7 +65,7 @@ export function expectFullSnapshotRendering(
   document: VDocument,
   data: BrowserFullSnapshotV1Record['data'],
   naturalRendering:
-    | BrowserFullSnapshotRecord['type']
+    | BrowserFullSnapshotV1Record['type']
     | BrowserIncrementalSnapshotRecord['type'] = RecordType.FullSnapshot
 ): void {
   expect(document.naturalRendering()).toBe(naturalRendering)

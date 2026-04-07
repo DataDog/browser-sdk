@@ -1,6 +1,6 @@
 import { noop } from '@datadog/browser-core'
+import type { RumActionEvent, RumErrorEvent, RumLongTaskEvent, RumResourceEvent } from 'rum-events-format/rum'
 import { RumEventType } from '../rawRumEvent.types'
-import type { RumActionEvent, RumErrorEvent, RumLongTaskEvent, RumResourceEvent } from '../rumEvent.types'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 

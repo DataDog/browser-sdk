@@ -6,7 +6,7 @@ import {
   PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
 } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from 'packages/core/test'
-import { ChangeType } from '../../../types'
+import { ChangeType } from 'rum-events-format/session-replay-browser'
 
 import { serializeHtmlAsChange } from './serializeHtml.specHelper'
 
