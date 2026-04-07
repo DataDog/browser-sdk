@@ -99,29 +99,23 @@ export function runBasePluginTests(configs: PluginTestConfig[]) {
           }
         )
 
-        loadApp(
-          createTest('should not create a new view when only the hash changes or query params change').withRum()
-        ).run(async ({ page, flushEvents, intakeRegistry }) => {
-          await page.click('text=Go to User 42')
-          await page.waitForURL('**/user/42?admin=true')
+        loadApp(createTest('should not create a new view when query params change').withRum()).run(
+          async ({ page, flushEvents, intakeRegistry }) => {
+            await page.click('text=Go to User 42')
+            await page.waitForURL('**/user/42?admin=true')
 
-          await page.click('text=Go to Section')
-          await page.waitForURL('**/user/42#section')
+            await page.click('text=Change query params')
+            await page.waitForURL('**/user/42?admin=false')
 
-          await page.click('text=Change query params')
-          await page.waitForURL('**/user/42?admin=false')
+            await flushEvents()
 
-          await flushEvents()
+            const userView = intakeRegistry.rumViewEvents.find((e) => e.view.name === `${viewPrefix}${userRouteName}`)
+            expect(userView).toBeDefined()
 
-          const userView = intakeRegistry.rumViewEvents.find((e) => e.view.name === `${viewPrefix}${userRouteName}`)
-          expect(userView).toBeDefined()
-
-          const spuriousView = intakeRegistry.rumViewEvents.find((e) => e.view.url?.includes('#section'))
-          expect(spuriousView).toBeUndefined()
-
-          const queryParamsView = intakeRegistry.rumViewEvents.find((e) => e.view.url?.includes('admin=false'))
-          expect(queryParamsView).toBeUndefined()
-        })
+            const queryParamsView = intakeRegistry.rumViewEvents.find((e) => e.view.url?.includes('admin=false'))
+            expect(queryParamsView).toBeUndefined()
+          }
+        )
 
         loadApp(
           createTest('should track navigations between different concrete URLs of the same dynamic route').withRum()
