@@ -1,24 +1,14 @@
+import { isIndexableObject } from '@datadog/browser-core'
+
 /**
  * Compare two values for deep equality
  */
 export function isEqual(a: unknown, b: unknown): boolean {
-  // Reference equality
   if (a === b) {
     return true
   }
 
-  // Handle null/undefined
-  if (a === null || b === null || a === undefined || b === undefined) {
-    return a === b
-  }
-
-  // Type mismatch
-  if (typeof a !== typeof b) {
-    return false
-  }
-
-  // Primitives
-  if (typeof a !== 'object') {
+  if (a === null || typeof a !== 'object' || b === null || typeof b !== 'object') {
     return a === b
   }
 
@@ -30,12 +20,11 @@ export function isEqual(a: unknown, b: unknown): boolean {
     return a.every((val, idx) => isEqual(val, b[idx]))
   }
 
-  // One is array, other is not
   if (Array.isArray(a) || Array.isArray(b)) {
     return false
   }
 
-  // Objects
+  // Plain objects
   const aObj = a as Record<string, unknown>
   const bObj = b as Record<string, unknown>
   const aKeys = Object.keys(aObj)
@@ -54,6 +43,7 @@ export function isEqual(a: unknown, b: unknown): boolean {
 export interface DiffMergeOptions {
   replaceKeys?: Set<string>
   appendKeys?: Set<string>
+  ignoreKeys?: Set<string>
 }
 
 /**
@@ -62,6 +52,7 @@ export interface DiffMergeOptions {
  *
  * Default strategy is REPLACE (isEqual check). Exceptions:
  * - Both values are plain objects and key is not in replaceKeys: recurse (MERGE)
+ *   Sub-paths (e.g. 'view.custom_timings') are propagated to the recursive call.
  * - Both values are arrays and key is in appendKeys: include only new trailing elements (APPEND)
  */
 export function diffMerge(
@@ -72,22 +63,23 @@ export function diffMerge(
   const result: Record<string, unknown> = {}
   const replaceKeys = options?.replaceKeys ?? new Set<string>()
   const appendKeys = options?.appendKeys ?? new Set<string>()
+  const ignoreKeys = options?.ignoreKeys ?? new Set<string>()
 
   for (const key of Object.keys(current)) {
+    if (ignoreKeys.has(key)) {
+      continue
+    }
+
     const currentVal = current[key]
     const lastSentVal = lastSent[key]
 
-    if (
-      !replaceKeys.has(key) &&
-      currentVal !== null &&
-      typeof currentVal === 'object' &&
-      !Array.isArray(currentVal) &&
-      lastSentVal !== null &&
-      typeof lastSentVal === 'object' &&
-      !Array.isArray(lastSentVal)
-    ) {
+    if (!replaceKeys.has(key) && isIndexableObject(currentVal) && isIndexableObject(lastSentVal)) {
       // Both are plain objects and not marked for replace: recurse (MERGE)
-      const nestedDiff = diffMerge(currentVal as Record<string, unknown>, lastSentVal as Record<string, unknown>)
+      const nestedDiff = diffMerge(currentVal, lastSentVal, {
+        replaceKeys: extractSubPaths(replaceKeys, key),
+        appendKeys: extractSubPaths(appendKeys, key),
+        ignoreKeys: extractSubPaths(ignoreKeys, key),
+      })
       if (nestedDiff) {
         result[key] = nestedDiff
       }
@@ -110,4 +102,14 @@ export function diffMerge(
   }
 
   return Object.keys(result).length > 0 ? result : undefined
+}
+
+function extractSubPaths(keys: Set<string>, prefix: string): Set<string> {
+  const result = new Set<string>()
+  for (const key of keys) {
+    if (key.startsWith(`${prefix}.`)) {
+      result.add(key.slice(prefix.length + 1))
+    }
+  }
+  return result
 }
