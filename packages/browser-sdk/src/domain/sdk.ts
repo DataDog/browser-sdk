@@ -36,8 +36,8 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
   // 4. Create pipeline
   const pipeline = new Pipeline<Record<string, unknown>>()
 
-  // 4.5. Register session enricher on observation events
-  pipeline.enrich('observation:log', sessionEnricher(session))
+  // 4.5. Register session enricher on all observation events
+  pipeline.enrich('observation:*', sessionEnricher(session))
 
   // 5. Create transport + batch
   const endpointUrl = init.proxy ?? `https://${config.site}/api/v2/rum`
@@ -75,8 +75,8 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
     batch.flush()
   })
 
-  // 8.5. Wire pipeline observations → batch
-  pipeline.subscribe('observation:log', (event) => {
+  // 8.5. Wire all pipeline observations → batch
+  pipeline.subscribe('observation:*', (event) => {
     batch.add(JSON.stringify(event))
   })
 

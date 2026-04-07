@@ -250,4 +250,121 @@ describe('Pipeline', () => {
       pipeline.publish('foo', 'original')
     })
   })
+
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- type alias needed for Record<string, unknown> constraint compatibility
+  describe('pattern matching', () => {
+    type Events = {
+      'observation:log': { message: string }
+      'observation:rum': { type: string }
+      'resource:console': { api: string }
+      'signal:expired': void
+    }
+
+    it('should deliver to wildcard subscriber (*) for any event type', (done) => {
+      const pipeline = new Pipeline<Events>()
+      pipeline.seal()
+      pipeline.subscribe('*', (event) => {
+        expect(event).toEqual({ message: 'test' })
+        done()
+      })
+      pipeline.publish('observation:log', { message: 'test' })
+    })
+
+    it('should deliver to prefix pattern subscriber (observation:*)', (done) => {
+      const pipeline = new Pipeline<Events>()
+      pipeline.seal()
+      const received: unknown[] = []
+      pipeline.subscribe('observation:*', (event) => {
+        received.push(event)
+        if (received.length === 2) {
+          expect(received).toEqual([{ message: 'test' }, { type: 'view' }])
+          done()
+        }
+      })
+      pipeline.publish('observation:log', { message: 'test' })
+      pipeline.publish('observation:rum', { type: 'view' })
+    })
+
+    it('should not deliver to prefix pattern for non-matching events', (done) => {
+      const pipeline = new Pipeline<Events>()
+      pipeline.seal()
+      pipeline.subscribe('observation:*', () => {
+        fail('should not be called for resource events')
+      })
+      pipeline.subscribe('resource:console', () => done())
+      pipeline.publish('resource:console', { api: 'error' })
+    })
+
+    it('should enrich all events with wildcard enricher (*)', (done) => {
+      const pipeline = new Pipeline<Events>()
+      pipeline.enrich('*', {
+        name: 'timestamp',
+        transform: (data: any) => ({ ...data, enriched: true }),
+      })
+      pipeline.seal()
+      pipeline.subscribe('observation:log', (event) => {
+        expect((event as any).enriched).toBe(true)
+        done()
+      })
+      pipeline.publish('observation:log', { message: 'test' })
+    })
+
+    it('should enrich matching events with prefix pattern enricher', (done) => {
+      const pipeline = new Pipeline<Events>()
+      pipeline.enrich('observation:*', {
+        name: 'session',
+        transform: (data: any) => ({ ...data, sessionId: 'abc' }),
+      })
+      pipeline.seal()
+      let calls = 0
+      pipeline.subscribe('observation:log', (event) => {
+        expect((event as any).sessionId).toBe('abc')
+        calls++
+      })
+      pipeline.subscribe('resource:console', (event) => {
+        expect((event as any).sessionId).toBeUndefined()
+        expect(calls).toBe(1)
+        done()
+      })
+      pipeline.publish('observation:log', { message: 'test' })
+      pipeline.publish('resource:console', { api: 'error' })
+    })
+
+    it('should combine exact and pattern enrichers', (done) => {
+      const pipeline = new Pipeline<Events>()
+      pipeline.enrich('*', {
+        name: 'global',
+        transform: (data: any) => ({ ...data, global: true }),
+      })
+      pipeline.enrich('observation:log', {
+        name: 'log-specific',
+        transform: (data: any) => ({ ...data, logSpecific: true }),
+      })
+      pipeline.seal()
+      pipeline.subscribe('observation:log', (event) => {
+        expect((event as any).global).toBe(true)
+        expect((event as any).logSpecific).toBe(true)
+        done()
+      })
+      pipeline.publish('observation:log', { message: 'test' })
+    })
+
+    it('should deliver to both exact and pattern subscribers', (done) => {
+      const pipeline = new Pipeline<Events>()
+      pipeline.seal()
+      let count = 0
+      pipeline.subscribe('observation:log', () => {
+        count++
+      })
+      pipeline.subscribe('observation:*', () => {
+        count++
+      })
+      pipeline.subscribe('*', () => {
+        count++
+        expect(count).toBe(3)
+        done()
+      })
+      pipeline.publish('observation:log', { message: 'test' })
+    })
+  })
 })
