@@ -585,6 +585,7 @@ export interface CommonTelemetryProperties {
     | 'kotlin-multiplatform'
     | 'electron'
     | 'rum-cpp'
+    | 'dd_debugger'
   /**
    * The version of the SDK generating the telemetry event
    */

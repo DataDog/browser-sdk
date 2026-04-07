@@ -7,6 +7,7 @@ export {
   isSampleRate,
   buildEndpointHost,
   isIntakeUrl,
+  computeTransportConfiguration,
 } from './domain/configuration'
 export * from './domain/intakeSites'
 export type { TrackingConsentState } from './domain/trackingConsent'
@@ -57,7 +58,7 @@ export {
   SESSION_NOT_TRACKED,
   SessionPersistence,
 } from './domain/session/sessionConstants'
-export type { BandwidthStats, HttpRequest, HttpRequestEvent, Payload, FlushEvent, FlushReason } from './transport'
+export type { Batch, BandwidthStats, HttpRequest, HttpRequestEvent, Payload, FlushEvent, FlushReason } from './transport'
 export {
   createHttpRequest,
   canUseEventBridge,
