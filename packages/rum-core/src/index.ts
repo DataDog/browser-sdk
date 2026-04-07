@@ -49,6 +49,8 @@ export type {
   RumBeforeSend,
   FeatureFlagsForEvents,
   RemoteConfiguration,
+  HeaderCaptureOption,
+  HeaderMatchOption,
 } from './domain/configuration'
 export { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './domain/action/actionNameConstants'
 export { STABLE_ATTRIBUTES } from './domain/getSelectorFromElement'
