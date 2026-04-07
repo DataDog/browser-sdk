@@ -198,12 +198,18 @@ function setupButtons() {
     datadogLogs.setGlobalContext({ env: 'playground', version: '0.0.1' })
     const v8 = (window as any).sdkV8?.logs as any
     v8?.setGlobalContext({ env: 'playground', version: '0.0.1' })
+    // Send a log so the context shows up in the payload
+    datadogLogs.logger.info('Log after setGlobalContext')
+    v8?.logger.info('Log after setGlobalContext')
   })
 
   document.getElementById('btn-set-user')?.addEventListener('click', () => {
     datadogLogs.setUser({ id: 'user-123', name: 'Test User', email: 'test@example.com' })
     const v8 = (window as any).sdkV8?.logs as any
     v8?.setUser({ id: 'user-123', name: 'Test User', email: 'test@example.com' })
+    // Send a log so the user shows up in the payload
+    datadogLogs.logger.info('Log after setUser')
+    v8?.logger.info('Log after setUser')
   })
 
   document.getElementById('btn-flush')?.addEventListener('click', () => {
