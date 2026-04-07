@@ -18,8 +18,8 @@ export interface SessionState {
   [key: string]: string | undefined
 }
 
-export function getExpiredSessionState(
-  previousSessionState: { anonymousId?: string } | undefined,
+export function createExpiredSessionState(
+  previousSessionState: SessionState,
   configuration: Configuration,
   trackingConsestState: TrackingConsentState
 ): SessionState {
@@ -33,12 +33,22 @@ export function getExpiredSessionState(
   return expiredSessionState
 }
 
-export function isSessionInNotStartedState(session: SessionState) {
-  return isEmptyObject(session)
+export function createNewSessionState(previousSessionState: SessionState, configuration: Configuration): SessionState {
+  const newSessionState = {
+    ...previousSessionState,
+    id: generateUUID(),
+    created: String(dateNow()),
+    expire: String(dateNow() + SESSION_EXPIRATION_DELAY),
+  }
+  if (configuration.trackAnonymousUser && !newSessionState.anonymousId) {
+    newSessionState.anonymousId = generateUUID()
+  }
+  delete newSessionState.isExpired
+  return newSessionState
 }
 
-export function isSessionStarted(session: SessionState) {
-  return !isSessionInNotStartedState(session)
+export function isSessionInNotStartedState(session: SessionState) {
+  return isEmptyObject(session)
 }
 
 export function isSessionInExpiredState(session: SessionState) {
@@ -85,53 +95,4 @@ export function toSessionState(sessionString: string | undefined | null) {
     })
   }
   return session
-}
-
-export function initializeSession(
-  state: SessionState,
-  configuration: Configuration,
-  trackingConsestState: TrackingConsentState
-): SessionState {
-  if (isSessionInNotStartedState(state)) {
-    return getExpiredSessionState(state, configuration, trackingConsestState)
-  }
-  return state
-}
-
-export function expandOrRenew(
-  state: SessionState,
-  configuration: Configuration,
-  trackingConsestState: TrackingConsentState
-): SessionState {
-  // prevent renewing if state is altered by a 3rd party (e.g. adblocker deleting the cookie)
-  if (isSessionInNotStartedState(state)) {
-    return state
-  }
-
-  let newState = state
-
-  if (isSessionInExpiredState(state)) {
-    newState = getExpiredSessionState(state, configuration, trackingConsestState)
-  }
-
-  if (!newState.id) {
-    newState.id = generateUUID()
-    newState.created = String(dateNow())
-    if (configuration.trackAnonymousUser && !newState.anonymousId) {
-      newState.anonymousId = generateUUID()
-    }
-  }
-
-  delete newState.isExpired
-  expandSessionState(newState)
-
-  return newState
-}
-
-export function expandOnly(state: SessionState): SessionState {
-  if (isSessionInExpiredState(state) || isSessionInNotStartedState(state) || !state.id) {
-    return state
-  }
-  expandSessionState(state)
-  return state
 }

@@ -17,10 +17,9 @@ import { getCookies } from '../../browser/cookie'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import type { SessionState } from './sessionState'
 import {
-  expandOnly,
-  expandOrRenew,
-  getExpiredSessionState,
-  initializeSession,
+  createNewSessionState,
+  expandSessionState,
+  createExpiredSessionState,
   isSessionInExpiredState,
   isSessionInNotStartedState,
 } from './sessionState'
@@ -126,8 +125,11 @@ export function startSessionManager(
   async function resolveInitialState() {
     let state: SessionState = {}
     await strategy.setSessionState((currentState) => {
-      const initialState = initializeSession(currentState, configuration, trackingConsentState)
-      state = expandOrRenew(initialState, configuration, trackingConsentState)
+      if (isSessionInExpiredState(currentState) || !currentState.id) {
+        state = createNewSessionState(state, configuration)
+      } else {
+        state = currentState
+      }
       return state
     })
     return state
@@ -145,7 +147,7 @@ export function startSessionManager(
 
   function scheduleExpirationTimeout(state: SessionState) {
     clearTimeout(expirationTimeoutId)
-    if (state.expire && !isSessionInExpiredState(state)) {
+    if (state.expire) {
       const delay = Number(state.expire) - dateNow()
       expirationTimeoutId = setTimeout(() => {
         scheduleOperation(OperationType.SoftExpire)
@@ -247,8 +249,10 @@ export function startSessionManager(
     // Persist to storage asynchronously
     scheduleOperation(OperationType.ForceExpire)
     // Update in-memory state synchronously so events stop being collected immediately
-    const expiredState = getExpiredSessionState(sessionContextHistory.find(), configuration, trackingConsentState)
-    handleStateChange(expiredState, { from: 'expire' })
+    if (sessionContextHistory.find()) {
+      expireObservable.notify()
+      sessionContextHistory.closeActive(relativeNow())
+    }
   }
 
   function scheduleOperation(type: OperationType) {
@@ -267,18 +271,29 @@ export function startSessionManager(
             return state
           }
 
+          // prevent renewing if state is altered by a 3rd party (e.g. adblocker deleting the cookie)
+          if (isSessionInNotStartedState(state)) {
+            return state
+          }
+
           switch (operation.type) {
             case OperationType.ExpandOnly:
-              return expandOnly(state)
+              if (!isSessionInExpiredState(state)) {
+                expandSessionState(state)
+              }
+              return state
             case OperationType.ExpandOrRenew:
-              return expandOrRenew(state, configuration, trackingConsentState)
+              if (isSessionInExpiredState(state)) {
+                return createNewSessionState(state, configuration)
+              }
+              return state
             case OperationType.SoftExpire:
               if (isSessionInExpiredState(state)) {
-                return getExpiredSessionState(state, configuration, trackingConsentState)
+                return createExpiredSessionState(state, configuration, trackingConsentState)
               }
               return state
             case OperationType.ForceExpire:
-              return getExpiredSessionState(state, configuration, trackingConsentState)
+              return createExpiredSessionState(state, configuration, trackingConsentState)
           }
         })
         .catch(monitorError)
