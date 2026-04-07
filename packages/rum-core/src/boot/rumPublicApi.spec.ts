@@ -639,10 +639,10 @@ describe('rum public api', () => {
     it('should add feature flag evaluation when ff feature_flags enabled', async () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.addFeatureFlagEvaluation('feature', 'foo')
-      await collectAsyncCalls(startRumSpy, 1)
+      const calls = await collectAsyncCalls(startRumSpy, 1)
 
-      expect(addFeatureFlagEvaluationSpy).toHaveBeenCalledTimes(1)
-      expect(addFeatureFlagEvaluationSpy.calls.argsFor(0)).toEqual(['feature', 'foo'])
+      const initialFeatureFlagCollection: Map<string, unknown> = calls.argsFor(0)[5]
+      expect(initialFeatureFlagCollection.get('feature')).toBe('foo')
       expect(displaySpy).not.toHaveBeenCalled()
     })
   })
@@ -1217,7 +1217,7 @@ describe('rum public api', () => {
 
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       const calls = await collectAsyncCalls(startRumSpy, 1)
-      const sdkName = calls.argsFor(0)[9]
+      const sdkName = calls.argsFor(0)[10]
       expect(sdkName).toBe('rum-slim')
     })
   })

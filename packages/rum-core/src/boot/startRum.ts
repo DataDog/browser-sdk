@@ -33,6 +33,7 @@ import { startUrlContexts } from '../domain/contexts/urlContexts'
 import { createLocationChangeObservable } from '../browser/locationChangeObservable'
 import type { RumConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
+import type { FeatureFlagCollection } from '../domain/contexts/featureFlagContext'
 import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import { startCustomerDataTelemetry } from '../domain/startCustomerDataTelemetry'
 import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
@@ -61,6 +62,7 @@ export function startRum(
   recorderApi: RecorderApi,
   profilerApi: ProfilerApi,
   initialViewOptions: ViewOptions | undefined,
+  initialFeatureFlagCollection: FeatureFlagCollection,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
   bufferedDataObservable: BufferedObservable<BufferedData>,
   telemetry: Telemetry,
@@ -116,6 +118,7 @@ export function startRum(
     sessionManager,
     recorderApi,
     initialViewOptions,
+    initialFeatureFlagCollection,
     bufferedDataObservable,
     sdkName,
     reportError
@@ -146,6 +149,7 @@ export function startRumEventCollection(
   sessionManager: SessionManager,
   recorderApi: RecorderApi,
   initialViewOptions: ViewOptions | undefined,
+  initialFeatureFlagCollection: FeatureFlagCollection,
   bufferedDataObservable: Observable<BufferedData>,
   sdkName: SdkName | undefined,
   reportError: (error: RawError) => void
@@ -164,7 +168,7 @@ export function startRumEventCollection(
   cleanupTasks.push(() => viewHistory.stop())
   const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable)
   cleanupTasks.push(() => urlContexts.stop())
-  const featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, configuration)
+  const featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, configuration, initialFeatureFlagCollection)
   startSessionContext(hooks, configuration, sessionManager, recorderApi, viewHistory)
   startConnectivityContext(hooks)
   const globalContext = startGlobalContext(hooks, configuration, 'rum', true)

@@ -681,17 +681,13 @@ describe('preStartRum', () => {
     })
 
     it('addFeatureFlagEvaluation', async () => {
-      const addFeatureFlagEvaluationSpy = jasmine.createSpy()
-      doStartRumSpy.and.returnValue({
-        addFeatureFlagEvaluation: addFeatureFlagEvaluationSpy,
-      } as unknown as StartRumResult)
-
       const key = 'foo'
       const value = 'bar'
       strategy.addFeatureFlagEvaluation(key, value)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
-      await collectAsyncCalls(addFeatureFlagEvaluationSpy, 1)
-      expect(addFeatureFlagEvaluationSpy).toHaveBeenCalledOnceWith(key, value)
+      await collectAsyncCalls(doStartRumSpy, 1)
+      const initialFeatureFlagCollection: Map<string, unknown> = doStartRumSpy.calls.argsFor(0)[6]
+      expect(initialFeatureFlagCollection.get(key)).toEqual(value)
     })
 
     it('startDurationVital', async () => {
