@@ -719,17 +719,35 @@ describe('startSessionManager', () => {
       expect(sessionManager.findSession()!.id).toBe(initialId)
     })
 
-    it('should reinitialize session in store when store is empty', async () => {
+    it('should soft-expire the session when it timed out during the freeze', async () => {
+      const sessionManager = await startSessionManagerWithDefaults()
+      const initialId = sessionManager.findSession()!.id
+
+      // Simulate the session timing out while the browser was frozen (expire in the past)
+      fakeStrategy.simulateExternalChange({
+        id: initialId,
+        expire: String(Date.now() - 1),
+        created: String(Date.now() - SESSION_TIME_OUT_DELAY),
+      })
+
+      window.dispatchEvent(createNewEvent(DOM_EVENT.RESUME))
+
+      const state = fakeStrategy.getInternalState()
+      expect(state.isExpired).toBe(EXPIRED)
+      expect(state.id).toBeUndefined()
+    })
+
+    it('should do nothing when store is empty (e.g. cleared by an ad blocker)', async () => {
       await startSessionManagerWithDefaults()
 
-      // Simulate store being cleared (e.g., by another tab or browser clearing storage)
+      // Simulate store being cleared (e.g., by an ad blocker)
       fakeStrategy.simulateExternalChange({})
 
       window.dispatchEvent(createNewEvent(DOM_EVENT.RESUME))
 
-      // initializeSession on empty state creates an expired state
+      // Store should remain empty — we bail out rather than reinitializing
       const state = fakeStrategy.getInternalState()
-      expect(state.isExpired).toBe(EXPIRED)
+      expect(state.isExpired).toBeUndefined()
     })
   })
 

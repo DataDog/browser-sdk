@@ -169,7 +169,9 @@ export function startSessionManager(
       })
       trackResume(configuration, () => {
         strategy
-          .setSessionState((state) => initializeSession(state, configuration, trackingConsentState))
+          .setSessionState((state) =>
+            isSessionInExpiredState(state) ? getExpiredSessionState(state, configuration, trackingConsentState) : state
+          )
           .catch(monitorError)
       })
     }
