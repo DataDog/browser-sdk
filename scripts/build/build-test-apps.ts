@@ -31,6 +31,7 @@ const APPS: AppConfig[] = [
 
   // React Router apps
   { name: 'react-router-v6-app' },
+  { name: 'tanstack-router-app' },
   { name: 'react-router-v7-app', builderFn: buildReactRouterv7App },
 
   // browser extensions
