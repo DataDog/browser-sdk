@@ -71,7 +71,7 @@ test.describe('nuxt - router', () => {
       expect(homeView?.view.loading_time).toBeGreaterThan(0)
     })
 
-  createTest('should not create a new view when only the hash changes or query params change')
+  createTest('should create a new view when the hash changes')
     .withRum()
     .withNuxtApp()
     .run(async ({ page, flushEvents, intakeRegistry }) => {
@@ -81,19 +81,35 @@ test.describe('nuxt - router', () => {
       await page.click('text=Go to Section')
       await page.waitForURL('**/user/42#section')
 
+      await flushEvents()
+
+      const initialUserView = intakeRegistry.rumViewEvents.find(
+        (e) => e.view.name === '/user/[id]' && e.view.url?.includes('/user/42?admin=true')
+      )
+      const hashUserView = intakeRegistry.rumViewEvents.find(
+        (e) => e.view.name === '/user/[id]' && e.view.url?.includes('/user/42#section')
+      )
+
+      expect(initialUserView).toBeDefined()
+      expect(hashUserView).toBeDefined()
+      expect(hashUserView?.view.loading_type).toBe('route_change')
+      expect(hashUserView?.view.id).not.toBe(initialUserView?.view.id)
+    })
+
+  createTest('should not create a new view when only query params change')
+    .withRum()
+    .withNuxtApp()
+    .run(async ({ page, flushEvents, intakeRegistry }) => {
+      await page.click('text=Go to User 42')
+      await page.waitForURL('**/user/42?admin=true')
+
       await page.click('text=Change query params')
       await page.waitForURL('**/user/42?admin=false')
-
-      await page.click('text=Back to Home')
-      await page.waitForURL('**/')
 
       await flushEvents()
 
       const userView = intakeRegistry.rumViewEvents.find((e) => e.view.name === '/user/[id]')
       expect(userView).toBeDefined()
-
-      const hashSpuriousView = intakeRegistry.rumViewEvents.find((e) => e.view.url?.includes('#section'))
-      expect(hashSpuriousView).toBeUndefined()
 
       const queryParamsSpuriousView = intakeRegistry.rumViewEvents.find((e) => e.view.url?.includes('admin=false'))
       expect(queryParamsSpuriousView).toBeUndefined()

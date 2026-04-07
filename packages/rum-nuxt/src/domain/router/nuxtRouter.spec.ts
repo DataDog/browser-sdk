@@ -118,6 +118,27 @@ describe('startTrackingNuxtViews', () => {
       })
       .catch(done.fail)
   })
+
+  it('tracks a new view when the hash changes', (done) => {
+    const startViewSpy = jasmine.createSpy()
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: '/products', component: {} }],
+    })
+
+    router
+      .push('/products?page=1')
+      .then(() => {
+        startTrackingNuxtViews(makePublicApi(startViewSpy), router)
+        startViewSpy.calls.reset()
+        return router.push('/products#details')
+      })
+      .then(() => {
+        expect(startViewSpy).toHaveBeenCalledOnceWith('/products')
+        done()
+      })
+      .catch(done.fail)
+  })
 })
 
 describe('computeNuxtViewName', () => {

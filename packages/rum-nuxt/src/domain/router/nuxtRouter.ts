@@ -10,7 +10,7 @@ export function startTrackingNuxtViews(rumPublicApi: RumPublicApi, router: Route
     if (failure) {
       return
     }
-    if (from.matched.length > 0 && to.path === from.path) {
+    if (from.matched.length > 0 && to.path === from.path && to.hash === from.hash) {
       return
     }
     rumPublicApi.startView(computeNuxtViewName(to.matched))
