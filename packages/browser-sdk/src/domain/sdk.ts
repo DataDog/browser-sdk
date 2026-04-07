@@ -5,6 +5,7 @@ import { selectStore, createHttpRequest } from '@datadog/browser-core-next'
 interface SdkOptions {
   modules?: Module[]
   instanceId?: string
+  proxy?: string
 }
 
 type SdkInitConfiguration = InitConfiguration & SdkOptions & Record<string, unknown>
@@ -36,7 +37,7 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
   const pipeline = new Pipeline<Record<string, unknown>>()
 
   // 5. Create transport + batch
-  const endpointUrl = `https://${config.site}/api/v2/rum`
+  const endpointUrl = init.proxy ?? `https://${config.site}/api/v2/rum`
   const transport = createHttpRequest({ endpointUrl })
   const batch = new Batch({
     maxSizeBytes: 16 * 1024,

@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SDK Comparison: v6 vs v8</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+        background: #1a1a2e;
+        color: #e0e0e0;
+        padding: 16px;
+        font-size: 13px;
+      }
+      h1 {
+        color: #7b2ff7;
+        margin-bottom: 4px;
+        font-size: 20px;
+      }
+      .subtitle {
+        color: #666;
+        margin-bottom: 16px;
+        font-size: 12px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 16px;
+        padding: 12px;
+        background: #16213e;
+        border-radius: 8px;
+      }
+      .actions h2 {
+        width: 100%;
+        color: #888;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 6px;
+      }
+      button {
+        background: #2a2a4a;
+        border: 1px solid #444;
+        color: #e0e0e0;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 12px;
+        transition: background 0.15s;
+      }
+      button:hover {
+        background: #3a3a6a;
+        border-color: #7b2ff7;
+      }
+      button.danger {
+        border-color: #f44336;
+      }
+      button.danger:hover {
+        background: #4a2a2a;
+      }
+
+      .comparison {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .panel {
+        background: #0d0d1a;
+        border: 1px solid #333;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+      .panel-header {
+        padding: 8px 12px;
+        border-bottom: 1px solid #333;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .panel-header h3 {
+        font-size: 14px;
+      }
+      .panel-header .badge {
+        font-size: 10px;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-weight: bold;
+        text-transform: uppercase;
+      }
+      .v6 .badge {
+        background: #1565c0;
+        color: #fff;
+      }
+      .v8 .badge {
+        background: #7b2ff7;
+        color: #fff;
+      }
+      .panel-header .status {
+        margin-left: auto;
+        font-size: 11px;
+        color: #666;
+      }
+
+      .requests {
+        flex: 1;
+        overflow-y: auto;
+        padding: 8px;
+        max-height: calc(100vh - 260px);
+        min-height: 300px;
+      }
+      .request {
+        margin-bottom: 8px;
+        border: 1px solid #222;
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      .request-header {
+        padding: 6px 10px;
+        background: #1a1a2e;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+      }
+      .request-header:hover {
+        background: #222244;
+      }
+      .request-header .method {
+        color: #4caf50;
+        font-weight: bold;
+      }
+      .request-header .url {
+        color: #888;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex: 1;
+      }
+      .request-header .status-code {
+        font-weight: bold;
+      }
+      .request-header .status-code.ok {
+        color: #4caf50;
+      }
+      .request-header .status-code.err {
+        color: #f44336;
+      }
+      .request-header .time {
+        color: #555;
+        font-size: 11px;
+      }
+      .request-body {
+        display: none;
+        padding: 8px 10px;
+        background: #0a0a14;
+        border-top: 1px solid #222;
+        max-height: 400px;
+        overflow-y: auto;
+      }
+      .request-body.open {
+        display: block;
+      }
+      .request-body pre {
+        white-space: pre-wrap;
+        word-break: break-all;
+        font-size: 11px;
+        line-height: 1.5;
+        color: #ccc;
+      }
+      .request-body .key {
+        color: #82aaff;
+      }
+      .request-body .string {
+        color: #c3e88d;
+      }
+      .request-body .number {
+        color: #f78c6c;
+      }
+      .request-body .boolean {
+        color: #ff5370;
+      }
+      .request-body .null {
+        color: #666;
+      }
+
+      .event-count {
+        font-size: 11px;
+        color: #888;
+        padding: 4px 12px;
+        border-top: 1px solid #222;
+        text-align: right;
+      }
+      .clear-btn {
+        font-size: 10px;
+        padding: 2px 6px;
+        background: transparent;
+        border-color: #555;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>SDK Comparison</h1>
+    <p class="subtitle">
+      Side-by-side v6 (browser-logs) vs v8 (browser-logs-next). Click a request to expand the payload.
+    </p>
+
+    <div class="actions">
+      <h2>Trigger actions (both SDKs receive the same action)</h2>
+      <button id="btn-info">logger.info()</button>
+      <button id="btn-warn">logger.warn()</button>
+      <button id="btn-error" class="danger">logger.error()</button>
+      <button id="btn-console-error" class="danger">console.error()</button>
+      <button id="btn-set-context">setGlobalContext()</button>
+      <button id="btn-set-user">setUser()</button>
+      <button id="btn-flush" style="border-color: #4caf50">Flush batches</button>
+      <button id="btn-clear" class="clear-btn">Clear</button>
+    </div>
+
+    <div class="comparison">
+      <div class="panel v6">
+        <div class="panel-header">
+          <span class="badge">v6</span>
+          <h3>@datadog/browser-logs</h3>
+          <span class="status" id="v6-status">initializing...</span>
+        </div>
+        <div class="requests" id="v6-requests"></div>
+        <div class="event-count" id="v6-count">0 events</div>
+      </div>
+      <div class="panel v8">
+        <div class="panel-header">
+          <span class="badge">v8</span>
+          <h3>@datadog/browser-logs-next</h3>
+          <span class="status" id="v8-status">initializing...</span>
+        </div>
+        <div class="requests" id="v8-requests"></div>
+        <div class="event-count" id="v8-count">0 events</div>
+      </div>
+    </div>
+
+    <script type="module" src="./app.ts"></script>
+  </body>
+</html>
