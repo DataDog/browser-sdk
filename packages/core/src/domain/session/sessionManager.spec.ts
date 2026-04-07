@@ -171,6 +171,7 @@ describe('startSessionManager', () => {
 
       // Expire the session
       sessionManager.expire()
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       expect(renewSpy).not.toHaveBeenCalled()
 
@@ -196,8 +197,10 @@ describe('startSessionManager', () => {
       sessionManager.renewObservable.subscribe(renewSpy)
 
       sessionManager.expire()
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       clock.tick(VISIBILITY_CHECK_DELAY)
+      await collectAsyncCalls(sessionObservableSpy, 3)
 
       expect(renewSpy).not.toHaveBeenCalled()
     })
@@ -213,14 +216,18 @@ describe('startSessionManager', () => {
 
       // Multiple rapid clicks within the throttle window
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+      await collectAsyncCalls(sessionObservableSpy, 2)
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+      await collectAsyncCalls(sessionObservableSpy, 2)
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       // Only one call (leading edge) should have fired immediately
       expect(fakeStrategy.setSessionState.calls.count() - callCountBefore).toBe(1)
 
       // After throttle delay, the trailing call fires (from the queued clicks)
       clock.tick(ONE_SECOND)
+      await collectAsyncCalls(sessionObservableSpy, 3)
 
       // Leading (1) + trailing (1) = 2 calls total
       expect(fakeStrategy.setSessionState.calls.count() - callCountBefore).toBe(2)
@@ -234,6 +241,7 @@ describe('startSessionManager', () => {
       sessionManager.expireObservable.subscribe(expireSpy)
 
       sessionManager.expire()
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       expect(expireSpy).toHaveBeenCalledTimes(1)
     })
@@ -245,6 +253,7 @@ describe('startSessionManager', () => {
 
       sessionManager.expire()
       sessionManager.expire()
+      await collectAsyncCalls(sessionObservableSpy, 3)
 
       expect(expireSpy).toHaveBeenCalledTimes(1)
     })
@@ -257,6 +266,7 @@ describe('startSessionManager', () => {
       expect(stateBefore.id).toBeDefined()
 
       sessionManager.expire()
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       const stateAfter = fakeStrategy.getInternalState()
       expect(stateAfter.isExpired).toBe(EXPIRED)
@@ -267,11 +277,13 @@ describe('startSessionManager', () => {
       const initialId = sessionManager.findSession()!.id
 
       sessionManager.expire()
+      await collectAsyncCalls(sessionObservableSpy, 2)
       expect(sessionManager.findSession()).toBeUndefined()
 
       // Wait for throttle
       clock.tick(ONE_SECOND)
 
+      await collectAsyncCalls(sessionObservableSpy, 2)
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
       await collectAsyncCalls(sessionObservableSpy, 3) // 1 for initial session, 1 for expire, 1 for renew
@@ -297,7 +309,11 @@ describe('startSessionManager', () => {
       // Wait for throttle to clear before dispatching activity
       clock.tick(ONE_SECOND)
 
+      await collectAsyncCalls(sessionObservableSpy, 2) // 1 for initial session, 1 for expire
+
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+
+      await collectAsyncCalls(sessionObservableSpy, 3) // 1 for renew
 
       // Session should still be active (expire time was extended)
       const state = fakeStrategy.getInternalState()
@@ -315,6 +331,7 @@ describe('startSessionManager', () => {
       const initialExpire = fakeStrategy.getInternalState().expire
 
       clock.tick(VISIBILITY_CHECK_DELAY)
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       // Visibility check should have expanded the session
       const newExpire = fakeStrategy.getInternalState().expire
@@ -326,11 +343,13 @@ describe('startSessionManager', () => {
 
       const sessionManager = await startSessionManagerWithDefaults()
       sessionManager.expire()
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       const stateAfterExpire = fakeStrategy.getInternalState()
       expect(stateAfterExpire.isExpired).toBe(EXPIRED)
 
       clock.tick(VISIBILITY_CHECK_DELAY)
+      await collectAsyncCalls(sessionObservableSpy, 3)
 
       // expandOnly should not modify an expired session
       const state = fakeStrategy.getInternalState()
@@ -411,6 +430,9 @@ describe('startSessionManager', () => {
 
       // First expire
       sessionManager.expire()
+      await collectAsyncCalls(sessionObservableSpy, 2)
+
+      sessionObservableSpy.calls.reset()
 
       // Then another tab creates a new session
       fakeStrategy.simulateExternalChange({
@@ -418,6 +440,7 @@ describe('startSessionManager', () => {
         expire: String(Date.now() + SESSION_EXPIRATION_DELAY),
         created: String(Date.now()),
       })
+      await collectAsyncCalls(sessionObservableSpy, 1)
 
       expect(renewSpy).toHaveBeenCalledTimes(1)
       expect(sessionManager.findSession()!.id).toBe('new-session-from-other-tab')
@@ -432,6 +455,7 @@ describe('startSessionManager', () => {
       expect(sessionManager.findSession()).toBeDefined()
 
       trackingConsentState.update(TrackingConsent.NOT_GRANTED)
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       expect(sessionManager.findSession()).toBeUndefined()
       expect(fakeStrategy.getInternalState().isExpired).toBe(EXPIRED)
@@ -442,6 +466,7 @@ describe('startSessionManager', () => {
       const sessionManager = await startSessionManagerWithDefaults({ trackingConsentState })
 
       trackingConsentState.update(TrackingConsent.NOT_GRANTED)
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       clock.tick(ONE_SECOND)
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
@@ -455,6 +480,7 @@ describe('startSessionManager', () => {
       const initialId = sessionManager.findSession()!.id
 
       trackingConsentState.update(TrackingConsent.NOT_GRANTED)
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       expect(sessionManager.findSession()).toBeUndefined()
 
@@ -476,6 +502,7 @@ describe('startSessionManager', () => {
       expect(fakeStrategy.getInternalState().anonymousId).toBeDefined()
 
       trackingConsentState.update(TrackingConsent.NOT_GRANTED)
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       expect(fakeStrategy.getInternalState().anonymousId).toBeUndefined()
     })
@@ -533,6 +560,7 @@ describe('startSessionManager', () => {
       const sessionManager = await startSessionManagerWithDefaults()
 
       sessionManager.expire()
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       expect(sessionManager.findSession()).toBeUndefined()
     })
@@ -545,8 +573,11 @@ describe('startSessionManager', () => {
       // Advance time, expire, then renew
       clock.tick(10 * ONE_SECOND)
       sessionManager.expire()
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       clock.tick(10 * ONE_SECOND)
+      await collectAsyncCalls(sessionObservableSpy, 2)
+
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
       await collectAsyncCalls(sessionObservableSpy, 3) // 1 for initial session, 1 for expire, 1 for renew
@@ -570,6 +601,8 @@ describe('startSessionManager', () => {
 
       sessionManager.expire()
       clock.tick(ONE_SECOND)
+      await collectAsyncCalls(sessionObservableSpy, 2)
+
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
       await collectAsyncCalls(sessionObservableSpy, 3) // 1 for initial session, 1 for expire, 1 for renew
@@ -585,6 +618,7 @@ describe('startSessionManager', () => {
       })
 
       sessionManager.expire()
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       // expireObservable fires before sessionContextHistory.closeActive, so the session is still findable
       expect(currentSession!).toBeDefined()
@@ -596,7 +630,9 @@ describe('startSessionManager', () => {
 
         clock.tick(10 * ONE_SECOND)
         sessionManager.expire()
+        await collectAsyncCalls(sessionObservableSpy, 2)
         clock.tick(10 * ONE_SECOND)
+        await collectAsyncCalls(sessionObservableSpy, 2)
 
         expect(sessionManager.findSession(clock.relative(15 * ONE_SECOND), { returnInactive: true })).toBeDefined()
         expect(sessionManager.findSession(clock.relative(15 * ONE_SECOND), { returnInactive: false })).toBeUndefined()
@@ -626,7 +662,9 @@ describe('startSessionManager', () => {
 
       clock.tick(10 * ONE_SECOND)
       sessionManager.expire()
+      await collectAsyncCalls(sessionObservableSpy, 2)
       clock.tick(10 * ONE_SECOND)
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       expect(sessionManager.findTrackedSession(clock.relative(5 * ONE_SECOND))).toBeDefined()
       expect(sessionManager.findTrackedSession(clock.relative(15 * ONE_SECOND))).toBeUndefined()
@@ -647,6 +685,7 @@ describe('startSessionManager', () => {
       const sessionManager = await startSessionManagerWithDefaults()
 
       sessionManager.expire()
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       expect(sessionManager.findTrackedSession(undefined, { returnInactive: true })).toBeDefined()
     })
@@ -692,6 +731,7 @@ describe('startSessionManager', () => {
       const callCountBefore = fakeStrategy.setSessionState.calls.count()
 
       sessionManager.updateSessionState({ extra: 'value' })
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       expect(fakeStrategy.setSessionState.calls.count()).toBe(callCountBefore + 1)
       expect(fakeStrategy.getInternalState().extra).toBe('value')
@@ -730,7 +770,11 @@ describe('startSessionManager', () => {
         created: String(Date.now() - SESSION_TIME_OUT_DELAY),
       })
 
+      await collectAsyncCalls(sessionObservableSpy, 2)
+
       window.dispatchEvent(createNewEvent(DOM_EVENT.RESUME))
+
+      await collectAsyncCalls(sessionObservableSpy, 3)
 
       const state = fakeStrategy.getInternalState()
       expect(state.isExpired).toBe(EXPIRED)
@@ -743,7 +787,11 @@ describe('startSessionManager', () => {
       // Simulate store being cleared (e.g., by an ad blocker)
       fakeStrategy.simulateExternalChange({})
 
+      await collectAsyncCalls(sessionObservableSpy, 2)
+
       window.dispatchEvent(createNewEvent(DOM_EVENT.RESUME))
+
+      await collectAsyncCalls(sessionObservableSpy, 3)
 
       // Store should remain empty — we bail out rather than reinitializing
       const state = fakeStrategy.getInternalState()

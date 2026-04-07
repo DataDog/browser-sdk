@@ -21,6 +21,7 @@ export function createFakeSessionStoreStrategy({
     setSessionState: jasmine
       .createSpy('setSessionState')
       .and.callFake(async (fn: (state: SessionState) => SessionState): Promise<void> => {
+        await Promise.resolve()
         session = fn({ ...session })
         await Promise.resolve()
         sessionObservable.notify({ cookieValue: undefined, sessionState: { ...session } })
