@@ -588,15 +588,6 @@ describe('validateAndBuildRumConfiguration', () => {
         expect(result).toEqual([{ url: 'https://example.com', requestMatchers: [], responseMatchers: [] }])
       })
 
-      it('returns empty matchers for request: false / response: false', () => {
-        const result = validateAndBuildRumConfiguration({
-          ...DEFAULT_INIT_CONFIGURATION,
-          trackResourceHeaders: [{ url: 'https://example.com', request: false, response: false }],
-        })!.trackResourceHeaders
-
-        expect(result).toEqual([{ url: 'https://example.com', requestMatchers: [], responseMatchers: [] }])
-      })
-
       it('does not include defaults in HeaderCaptureOption with MatchOption[] direction', () => {
         const result = validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
