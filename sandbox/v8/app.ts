@@ -95,7 +95,8 @@ function renderEvent(event: CapturedEvent) {
   const countEl = document.getElementById(`${event.version}-count`)!
 
   const pretty = JSON.stringify(event.body, null, 2)
-  const time = new Date(event.timestamp).toISOString().split('T')[1].slice(0, 12)
+  const eventDate = (event.body.date as number) ?? event.timestamp
+  const time = new Date(eventDate).toISOString().split('T')[1].slice(0, 12)
   const status = (event.body.status as string) ?? '?'
   const origin = (event.body.origin as string) ?? '?'
   const message = (event.body.message as string) ?? ''
