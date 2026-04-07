@@ -2,3 +2,5 @@ export type { Enricher, AnyEnricher, EnricherInput, MaybePromise, TransformFunct
 export { SKIP, DISCARD, enricher } from './factory'
 export { topologicalSort } from './topologicalSort'
 export { chain } from './chain'
+export { sessionEnricher } from './sessionEnricher'
+export type { SessionData } from './sessionEnricher'
