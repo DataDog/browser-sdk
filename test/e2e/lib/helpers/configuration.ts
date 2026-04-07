@@ -25,3 +25,9 @@ export const DEFAULT_LOGS_CONFIGURATION = {
   telemetryUsageSampleRate: 100,
   telemetryConfigurationSampleRate: 100,
 }
+
+export const DEFAULT_DEBUGGER_CONFIGURATION = {
+  applicationId: APPLICATION_ID,
+  clientToken: CLIENT_TOKEN,
+  service: 'browser-sdk-e2e-test',
+}
