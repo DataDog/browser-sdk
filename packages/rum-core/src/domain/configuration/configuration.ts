@@ -608,8 +608,8 @@ function validateAndBuildTrackResourceHeaders(initConfiguration: RumInitConfigur
     if (isHeaderCaptureOption(item)) {
       rules.push({
         url: item.url,
-        requestMatchers: normalizeDirection(item.request, defaultHMOs, index, 'request'),
-        responseMatchers: normalizeDirection(item.response, defaultHMOs, index, 'response'),
+        requestMatchers: normalizeDirection('request', item.request, defaultHMOs, index),
+        responseMatchers: normalizeDirection('response', item.response, defaultHMOs, index),
       })
     } else if (isMatchOption(item)) {
       if (!hasAddedDefaultsRule) {
@@ -634,28 +634,30 @@ function isHeaderMatchOption(item: unknown): item is HeaderMatchOption {
   return isIndexableObject(item) && 'name' in item && isMatchOption((item as unknown as HeaderMatchOption).name)
 }
 
+type DirectionConfig = HeaderCaptureOption['request']
+
 function normalizeDirection(
-  direction: boolean | MatchOption[] | HeaderMatchOption[] | undefined,
+  direction: 'request' | 'response',
+  config: DirectionConfig,
   defaultHMOs: HeaderMatchOption[],
-  ruleIndex: number,
-  directionName: string
+  ruleIndex: number
 ): HeaderMatchOption[] {
-  if (direction === true) {
+  if (config === true) {
     return defaultHMOs
   }
-  if (!Array.isArray(direction)) {
-    if (direction !== undefined && direction !== false) {
+  if (!Array.isArray(config)) {
+    if (config !== undefined && config !== false) {
       display.warn(
-        `trackResourceHeaders[${ruleIndex}].${directionName} should be true, false, or an array of MatchOption or HeaderMatchOption`
+        `trackResourceHeaders[${ruleIndex}].${direction} should be true, false, or an array of MatchOption or HeaderMatchOption`
       )
     }
     return []
   }
   const matchers: HeaderMatchOption[] = []
-  direction.forEach((item, index) => {
+  config.forEach((item, index) => {
     if (isHeaderMatchOption(item)) {
       if (item.extractor !== undefined && !(item.extractor instanceof RegExp)) {
-        display.warn(`trackResourceHeaders[${ruleIndex}].${directionName}[${index}].extractor should be a RegExp`)
+        display.warn(`trackResourceHeaders[${ruleIndex}].${direction}[${index}].extractor should be a RegExp`)
       } else {
         matchers.push({ ...item, name: typeof item.name === 'string' ? item.name.toLowerCase() : item.name })
       }
@@ -663,7 +665,7 @@ function normalizeDirection(
       matchers.push({ name: typeof item === 'string' ? item.toLowerCase() : item })
     } else {
       display.warn(
-        `trackResourceHeaders[${ruleIndex}].${directionName}[${index}] should be a MatchOption or HeaderMatchOption`
+        `trackResourceHeaders[${ruleIndex}].${direction}[${index}] should be a MatchOption or HeaderMatchOption`
       )
     }
   })
