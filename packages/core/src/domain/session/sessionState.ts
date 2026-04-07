@@ -3,6 +3,7 @@ import { objectEntries } from '../../tools/utils/polyfills'
 import { dateNow } from '../../tools/utils/timeUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import type { Configuration } from '../configuration'
+import type { TrackingConsentState } from '../trackingConsent'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { isValidSessionString, SESSION_ENTRY_REGEXP, SESSION_ENTRY_SEPARATOR } from './sessionStateValidation'
 export const EXPIRED = '1'
@@ -19,12 +20,13 @@ export interface SessionState {
 
 export function getExpiredSessionState(
   previousSessionState: { anonymousId?: string } | undefined,
-  configuration: Configuration
+  configuration: Configuration,
+  trackingConsestState: TrackingConsentState
 ): SessionState {
   const expiredSessionState: SessionState = {
     isExpired: EXPIRED,
   }
-  if (configuration.trackAnonymousUser && previousSessionState?.anonymousId) {
+  if (configuration.trackAnonymousUser && trackingConsestState.isGranted() && previousSessionState?.anonymousId) {
     expiredSessionState.anonymousId = previousSessionState?.anonymousId
   }
 
@@ -85,17 +87,22 @@ export function toSessionState(sessionString: string | undefined | null) {
   return session
 }
 
-export function initializeSession(state: SessionState, configuration: Configuration): SessionState {
+export function initializeSession(
+  state: SessionState,
+  configuration: Configuration,
+  trackingConsestState: TrackingConsentState
+): SessionState {
   if (isSessionInNotStartedState(state)) {
-    if (configuration.trackAnonymousUser) {
-      state.anonymousId = generateUUID()
-    }
-    return getExpiredSessionState(state, configuration)
+    return getExpiredSessionState(state, configuration, trackingConsestState)
   }
   return state
 }
 
-export function expandOrRenew(state: SessionState, configuration: Configuration): SessionState {
+export function expandOrRenew(
+  state: SessionState,
+  configuration: Configuration,
+  trackingConsestState: TrackingConsentState
+): SessionState {
   // prevent renewing if state is altered by a 3rd party (e.g. adblocker deleting the cookie)
   if (isSessionInNotStartedState(state)) {
     return state
@@ -104,15 +111,15 @@ export function expandOrRenew(state: SessionState, configuration: Configuration)
   let newState = state
 
   if (isSessionInExpiredState(state)) {
-    newState = getExpiredSessionState(state, configuration)
+    newState = getExpiredSessionState(state, configuration, trackingConsestState)
   }
 
   if (!newState.id) {
     newState.id = generateUUID()
     newState.created = String(dateNow())
-  }
-  if (configuration.trackAnonymousUser && !newState.anonymousId) {
-    newState.anonymousId = generateUUID()
+    if (configuration.trackAnonymousUser && !newState.anonymousId) {
+      newState.anonymousId = generateUUID()
+    }
   }
 
   delete newState.isExpired

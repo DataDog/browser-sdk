@@ -80,7 +80,7 @@ export function startSessionManager(
   stopCallbacks.push(() => sessionContextHistory.stop())
 
   const { throttled: throttledExpandOrRenew, cancel: cancelExpandOrRenew } = throttle(() => {
-    strategy.setSessionState((state) => expandOrRenew(state, configuration)).catch(monitorError)
+    strategy.setSessionState((state) => expandOrRenew(state, configuration, trackingConsentState)).catch(monitorError)
   }, ONE_SECOND)
   stopCallbacks.push(cancelExpandOrRenew)
 
@@ -111,8 +111,8 @@ export function startSessionManager(
   async function resolveInitialState() {
     let state: SessionState = {}
     await strategy.setSessionState((currentState) => {
-      const initialState = initializeSession(currentState, configuration)
-      state = expandOrRenew(initialState, configuration)
+      const initialState = initializeSession(currentState, configuration, trackingConsentState)
+      state = expandOrRenew(initialState, configuration, trackingConsentState)
       return state
     })
     return state
@@ -136,11 +136,7 @@ export function startSessionManager(
         strategy
           .setSessionState((state) => {
             if (isSessionInExpiredState(state)) {
-              if (!trackingConsentState.isGranted()) {
-                delete state.anonymousId
-              }
-
-              return getExpiredSessionState(state, configuration)
+              return getExpiredSessionState(state, configuration, trackingConsentState)
             }
 
             return state
@@ -154,7 +150,9 @@ export function startSessionManager(
   function setupSessionTracking() {
     trackingConsentState.observable.subscribe(() => {
       if (trackingConsentState.isGranted()) {
-        strategy.setSessionState((state) => expandOrRenew(state, configuration)).catch(monitorError)
+        strategy
+          .setSessionState((state) => expandOrRenew(state, configuration, trackingConsentState))
+          .catch(monitorError)
       } else {
         expire()
       }
@@ -170,7 +168,9 @@ export function startSessionManager(
         strategy.setSessionState((state) => expandOnly(state)).catch(monitorError)
       })
       trackResume(configuration, () => {
-        strategy.setSessionState((state) => initializeSession(state, configuration)).catch(monitorError)
+        strategy
+          .setSessionState((state) => initializeSession(state, configuration, trackingConsentState))
+          .catch(monitorError)
       })
     }
   }
@@ -243,19 +243,11 @@ export function startSessionManager(
   function expire() {
     cancelExpandOrRenew()
     // Update in-memory state synchronously so events stop being collected immediately
-    const expiredState = getExpiredSessionState(sessionContextHistory.find(), configuration)
-    if (!trackingConsentState.isGranted()) {
-      delete expiredState.anonymousId
-    }
+    const expiredState = getExpiredSessionState(sessionContextHistory.find(), configuration, trackingConsentState)
     handleStateChange(expiredState, { from: 'expire' })
     // Persist to storage asynchronously
     strategy
-      .setSessionState((state) => {
-        if (!trackingConsentState.isGranted()) {
-          delete state.anonymousId
-        }
-        return getExpiredSessionState(state, configuration)
-      })
+      .setSessionState((state) => getExpiredSessionState(state, configuration, trackingConsentState))
       .catch(monitorError)
   }
 
