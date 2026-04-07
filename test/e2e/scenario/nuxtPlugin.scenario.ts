@@ -111,8 +111,8 @@ test.describe('nuxt - router', () => {
       const userView = intakeRegistry.rumViewEvents.find((e) => e.view.name === '/user/[id]')
       expect(userView).toBeDefined()
 
-      const queryParamsSpuriousView = intakeRegistry.rumViewEvents.find((e) => e.view.url?.includes('admin=false'))
-      expect(queryParamsSpuriousView).toBeUndefined()
+      const queryParamsView = intakeRegistry.rumViewEvents.find((e) => e.view.url?.includes('admin=false'))
+      expect(queryParamsView).toBeUndefined()
     })
 
   createTest('should track navigations between different concrete URLs of the same dynamic route')
