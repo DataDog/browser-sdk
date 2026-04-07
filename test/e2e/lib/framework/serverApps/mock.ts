@@ -15,6 +15,7 @@ export function createMockServerApp(servers: Servers, setup: string, setupOption
   const { remoteConfiguration, worker } = setupOptions ?? {}
   const app = express()
   let largeResponseBytesWritten = 0
+  let debuggerProbes: object[] = []
 
   app.use(cors())
   app.disable('etag') // disable automatic resource caching
@@ -227,9 +228,16 @@ export function createMockServerApp(servers: Servers, setup: string, setupOption
     res.send(JSON.stringify(remoteConfiguration))
   })
 
+  app.post('/api/ui/debugger/probe-delivery', (_req, res) => {
+    res.json({ nextCursor: '', updates: debuggerProbes, deletions: [] })
+  })
+
   return Object.assign(app, {
     getLargeResponseWroteSize() {
       return largeResponseBytesWritten
+    },
+    setDebuggerProbes(probes: object[]) {
+      debuggerProbes = probes
     },
   })
 }

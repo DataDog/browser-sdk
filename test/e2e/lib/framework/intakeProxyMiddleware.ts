@@ -51,7 +51,17 @@ export type ProfileIntakeRequest = {
   }
 } & BaseIntakeRequest
 
-export type IntakeRequest = LogsIntakeRequest | RumIntakeRequest | ReplayIntakeRequest | ProfileIntakeRequest
+export type DebuggerIntakeRequest = {
+  intakeType: 'debugger'
+  events: Array<Record<string, unknown>>
+} & BaseIntakeRequest
+
+export type IntakeRequest =
+  | LogsIntakeRequest
+  | RumIntakeRequest
+  | ReplayIntakeRequest
+  | ProfileIntakeRequest
+  | DebuggerIntakeRequest
 
 interface IntakeRequestInfos {
   isBridge: boolean
@@ -104,7 +114,13 @@ function computeIntakeRequestInfos(req: express.Request): IntakeRequestInfos {
   let intakeType: IntakeRequest['intakeType']
   // pathname = /api/v2/rum
   const endpoint = pathname.split(/[/?]/)[3]
-  if (endpoint === 'logs' || endpoint === 'rum' || endpoint === 'replay' || endpoint === 'profile') {
+  if (
+    endpoint === 'logs' ||
+    endpoint === 'rum' ||
+    endpoint === 'replay' ||
+    endpoint === 'profile' ||
+    endpoint === 'debugger'
+  ) {
     intakeType = endpoint
   } else {
     throw new Error("Can't find intake type")
@@ -124,6 +140,9 @@ function readIntakeRequest(req: express.Request, infos: IntakeRequestInfos): Pro
   if (infos.intakeType === 'profile') {
     return readProfileIntakeRequest(req, infos as IntakeRequestInfos & { intakeType: 'profile' })
   }
+  if (infos.intakeType === 'debugger') {
+    return readDebuggerIntakeRequest(req, infos as IntakeRequestInfos & { intakeType: 'debugger' })
+  }
   return readRumOrLogsIntakeRequest(req, infos as IntakeRequestInfos & { intakeType: 'rum' | 'logs' })
 }
 
@@ -140,6 +159,23 @@ async function readRumOrLogsIntakeRequest(
       .toString('utf-8')
       .split('\n')
       .map((line): any => JSON.parse(line)),
+  }
+}
+
+async function readDebuggerIntakeRequest(
+  req: express.Request,
+  infos: IntakeRequestInfos & { intakeType: 'debugger' }
+): Promise<DebuggerIntakeRequest> {
+  const rawBody = await readStream(req)
+  const encodedBody = infos.encoding === 'deflate' ? inflateSync(rawBody) : rawBody
+
+  return {
+    ...infos,
+    events: encodedBody
+      .toString('utf-8')
+      .split('\n')
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      .map((line): Record<string, unknown> => JSON.parse(line)),
   }
 }
 

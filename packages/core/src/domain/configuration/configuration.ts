@@ -276,7 +276,7 @@ export interface InitConfiguration {
    *
    * @internal
    */
-  source?: 'browser' | 'flutter' | 'unity' | undefined
+  source?: 'browser' | 'flutter' | 'unity' | 'dd_debugger' | undefined
 
   /**
    * [Internal option] Additional configuration for the SDK.
@@ -311,6 +311,8 @@ export interface ReplicaUserConfiguration {
   clientToken: string
 }
 
+export type SdkSource = 'browser' | 'flutter' | 'unity'
+
 export interface Configuration extends TransportConfiguration {
   // Built from init configuration
   beforeSend: GenericBeforeSendCallback | undefined
@@ -331,8 +333,12 @@ export interface Configuration extends TransportConfiguration {
 
   // internal
   sdkVersion: string | undefined
-  source: 'browser' | 'flutter' | 'unity'
+  source: SdkSource
   variant: string | undefined
+}
+
+function toSdkSource(source: TransportConfiguration['source']): SdkSource {
+  return source === 'dd_debugger' ? 'browser' : source
 }
 
 function isString(tag: unknown, tagName: string): tag is string | undefined | null {
@@ -398,6 +404,8 @@ export function validateAndBuildConfiguration(
     return
   }
 
+  const transportConfiguration = computeTransportConfiguration(initConfiguration)
+
   return {
     beforeSend:
       initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
@@ -423,7 +431,8 @@ export function validateAndBuildConfiguration(
     variant: initConfiguration.variant,
     sdkVersion: initConfiguration.sdkVersion,
 
-    ...computeTransportConfiguration(initConfiguration),
+    ...transportConfiguration,
+    source: toSdkSource(transportConfiguration.source),
   }
 }
 

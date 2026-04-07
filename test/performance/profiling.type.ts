@@ -3,6 +3,10 @@ import type { RumPublicApi } from '@datadog/browser-rum-core'
 
 export interface BrowserWindow extends Window {
   DD_RUM?: RumPublicApi
+  DD_DEBUGGER?: {
+    init: () => void
+    version?: string
+  }
   __webVitalsMetrics__?: WebVitalsMetrics
 }
 

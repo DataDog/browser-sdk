@@ -20,6 +20,7 @@ export function startPerformanceServer(scenarioName: string): Promise<Server> {
     const appMap: Record<string, string> = {
       heavy: '../apps/react-heavy-spa/dist',
       shopistLike: '../apps/react-shopist-like/dist',
+      instrumentationOverhead: '../apps/instrumentation-overhead',
     }
 
     const distPath = path.resolve(import.meta.dirname, appMap[scenarioName])
