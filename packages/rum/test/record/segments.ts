@@ -8,8 +8,12 @@ import type {
   BrowserIncrementalSnapshotRecord,
   VisualViewportRecord,
   FrustrationRecord,
-} from '../src/types'
-import { RecordType, IncrementalSource } from '../src/types'
+  SnapshotFormatV1,
+  BrowserFullSnapshotV1Record,
+  BrowserFullSnapshotChangeRecord,
+  SnapshotFormatChange,
+} from '../../src/types'
+import { IncrementalSource, RecordType, SnapshotFormat } from '../../src/types'
 
 export function findMeta(segment: BrowserSegment): MetaRecord | null {
   return segment.records.find((record) => record.type === RecordType.Meta) as MetaRecord
@@ -18,6 +22,24 @@ export function findMeta(segment: BrowserSegment): MetaRecord | null {
 // Returns the first FullSnapshotRecord in a Segment, if any.
 export function findFullSnapshot({ records }: { records: BrowserRecord[] }): BrowserFullSnapshotRecord | null {
   return records.find((record) => record.type === RecordType.FullSnapshot) as BrowserFullSnapshotRecord
+}
+
+/** Returns the FullSnapshotRecord in the given format in a Segment, if any. */
+export function findFullSnapshotInFormat(
+  format: SnapshotFormatV1,
+  { records }: { records: BrowserRecord[] }
+): BrowserFullSnapshotV1Record | null
+export function findFullSnapshotInFormat(
+  format: SnapshotFormatChange,
+  { records }: { records: BrowserRecord[] }
+): BrowserFullSnapshotChangeRecord | null
+export function findFullSnapshotInFormat(
+  format: SnapshotFormat,
+  { records }: { records: BrowserRecord[] }
+): BrowserFullSnapshotRecord | null {
+  return records.find(
+    (record) => record.type === RecordType.FullSnapshot && (record.format ?? SnapshotFormat.V1) === format
+  ) as BrowserFullSnapshotRecord
 }
 
 // Returns all the VisualViewportRecords in a Segment, if any.

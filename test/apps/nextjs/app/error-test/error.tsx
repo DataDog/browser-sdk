@@ -4,15 +4,18 @@
 
 import { addNextjsError } from '@datadog/browser-rum-nextjs'
 import Link from 'next/link'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function ErrorBoundary({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+  const [errorReported, setErrorReported] = useState(false)
+
   useEffect(() => {
     addNextjsError(error)
+    setErrorReported(true)
   }, [error])
 
   return (
-    <div data-testid="error-handled">
+    <div data-testid="error-handled" data-error-reported={errorReported || undefined}>
       <h2>Something went wrong!</h2>
       {error.digest && <p data-testid="error-digest">Digest: {error.digest}</p>}
       <button onClick={reset}>Try again</button>

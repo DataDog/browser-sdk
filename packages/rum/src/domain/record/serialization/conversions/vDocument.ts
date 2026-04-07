@@ -2,11 +2,12 @@ import type {
   AddedNodeMutation,
   AttributeMutation,
   BrowserFullSnapshotRecord,
+  BrowserFullSnapshotV1Record,
   BrowserIncrementalSnapshotRecord,
   RemovedNodeMutation,
   TextMutation,
 } from '../../../../types'
-import { IncrementalSource, RecordType } from '../../../../types'
+import { IncrementalSource, RecordType, SnapshotFormat } from '../../../../types'
 import type { NodeId, StyleSheetId } from '../../itemIds'
 import type { MutationLog } from './mutationLog'
 import { createMutationLog } from './mutationLog'
@@ -32,8 +33,8 @@ export interface VDocument {
   get mutations(): MutationLog
 
   naturalRendering(): BrowserFullSnapshotRecord['type'] | BrowserIncrementalSnapshotRecord['type']
-  render(options?: Partial<V1RenderOptions>): BrowserFullSnapshotRecord | BrowserIncrementalSnapshotRecord
-  renderAsFullSnapshot(options?: Partial<V1RenderOptions>): BrowserFullSnapshotRecord
+  render(options?: Partial<V1RenderOptions>): BrowserFullSnapshotV1Record | BrowserIncrementalSnapshotRecord
+  renderAsFullSnapshot(options?: Partial<V1RenderOptions>): BrowserFullSnapshotV1Record
   renderAsIncrementalSnapshot(options?: Partial<V1RenderOptions>): BrowserIncrementalSnapshotRecord
 
   root: VNode | undefined
@@ -131,14 +132,14 @@ export function createVDocument(): VDocument {
       return RecordType.IncrementalSnapshot
     },
 
-    render(options?: Partial<V1RenderOptions>): BrowserFullSnapshotRecord | BrowserIncrementalSnapshotRecord {
+    render(options?: Partial<V1RenderOptions>): BrowserFullSnapshotV1Record | BrowserIncrementalSnapshotRecord {
       if (self.naturalRendering() === RecordType.FullSnapshot) {
         return self.renderAsFullSnapshot(options)
       }
       return self.renderAsIncrementalSnapshot(options)
     },
 
-    renderAsFullSnapshot(renderOptions: Partial<V1RenderOptions> = {}): BrowserFullSnapshotRecord {
+    renderAsFullSnapshot(renderOptions: Partial<V1RenderOptions> = {}): BrowserFullSnapshotV1Record {
       const options = createV1RenderOptions(renderOptions)
 
       const root = self.root
@@ -158,6 +159,7 @@ export function createVDocument(): VDocument {
           node: root.render(options),
           initialOffset: { left: scrollLeft, top: scrollTop },
         },
+        format: SnapshotFormat.V1,
         type: RecordType.FullSnapshot,
         timestamp: options.timestamp,
       }

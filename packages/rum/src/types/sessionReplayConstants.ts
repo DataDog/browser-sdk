@@ -128,3 +128,13 @@ export const MediaInteractionType = {
 } as const
 
 export type MediaInteractionType = (typeof MediaInteractionType)[keyof typeof MediaInteractionType]
+
+export const SnapshotFormat: {
+  V1: SessionReplay.SnapshotFormatV1
+  Change: SessionReplay.SnapshotFormatChange
+} = {
+  V1: 0,
+  Change: 1,
+} as const
+
+export type SnapshotFormat = (typeof SnapshotFormat)[keyof typeof SnapshotFormat]

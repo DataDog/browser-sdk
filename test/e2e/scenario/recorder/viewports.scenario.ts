@@ -1,7 +1,7 @@
 import type { ViewportResizeData, ScrollData } from '@datadog/browser-rum/src/types'
 import { IncrementalSource } from '@datadog/browser-rum/src/types'
 
-import { findAllIncrementalSnapshots, findAllVisualViewports } from '@datadog/browser-rum/test/segments'
+import { findAllIncrementalSnapshots, findAllVisualViewports } from '@datadog/browser-rum/test/record/segments'
 import type { Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
 import { wait } from '@datadog/browser-core/test/wait'
