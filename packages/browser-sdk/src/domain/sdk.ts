@@ -1,5 +1,5 @@
 import type { Module, InitConfiguration, Configuration } from '@datadog/core-next'
-import { build, Pipeline, Batch, Session, registerSdk } from '@datadog/core-next'
+import { build, Pipeline, Batch, Session, registerSdk, sessionEnricher } from '@datadog/core-next'
 import { selectStore, createHttpRequest } from '@datadog/browser-core-next'
 
 interface SdkOptions {
@@ -35,6 +35,9 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
 
   // 4. Create pipeline
   const pipeline = new Pipeline<Record<string, unknown>>()
+
+  // 4.5. Register session enricher on observation events
+  pipeline.enrich('observation:log', sessionEnricher(session))
 
   // 5. Create transport + batch
   const endpointUrl = init.proxy ?? `https://${config.site}/api/v2/rum`

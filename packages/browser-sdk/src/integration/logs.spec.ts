@@ -140,6 +140,29 @@ describe('logs integration', () => {
     expect(fetchSpy).not.toHaveBeenCalled()
   })
 
+  it('session enrichment: log events include session.id', async () => {
+    currentSdk = await createSdk({
+      clientToken: 'test-token',
+      site: 'datadoghq.com',
+      modules: [logsModule],
+      logs: {},
+    })
+
+    const logs = currentSdk!['logs'] as LogsPublicApi
+    logs.logger.info('with session')
+
+    await tick()
+    flushBatch()
+
+    expect(fetchSpy).toHaveBeenCalled()
+    const body = (fetchSpy.calls.mostRecent().args[1] as RequestInit).body as string
+    const event = JSON.parse(body)
+    expect(event.session).toBeDefined()
+    expect(event.session.id).toBeDefined()
+    expect(typeof event.session.id).toBe('string')
+    expect(event.session.id.length).toBeGreaterThan(0)
+  })
+
   it('global context enrichment: setGlobalContext properties appear in the fetch body', async () => {
     currentSdk = await createSdk({
       clientToken: 'test-token',
