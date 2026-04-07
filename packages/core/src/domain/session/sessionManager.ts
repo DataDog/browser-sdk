@@ -22,6 +22,7 @@ import {
   getExpiredSessionState,
   initializeSession,
   isSessionInExpiredState,
+  isSessionInNotStartedState,
 } from './sessionState'
 import { getSessionStoreStrategy } from './sessionStore'
 
@@ -58,6 +59,19 @@ export const VISIBILITY_CHECK_DELAY = ONE_MINUTE
 const SESSION_CONTEXT_TIMEOUT_DELAY = SESSION_TIME_OUT_DELAY
 let stopCallbacks: Array<() => void> = []
 
+// The order of this enum reflects the priority of operations: higher values take precedence when
+// multiple operations are scheduled before the storage write occurs.
+const enum OperationType {
+  // Extend the session expiry if already active (e.g. page still visible)
+  ExpandOnly,
+  // Extend the session expiry, or create a new session if expired (e.g. user activity)
+  ExpandOrRenew,
+  // Transition to expired state if the session has timed out (e.g. expiration timer fires or browser resumes)
+  SoftExpire,
+  // Force the session into expired state regardless of current state (e.g. consent revoked)
+  ForceExpire,
+}
+
 export function startSessionManager(
   configuration: Configuration,
   trackingConsentState: TrackingConsentState,
@@ -66,6 +80,7 @@ export function startSessionManager(
   const renewObservable = new Observable<SessionRenewalEvent>()
   const expireObservable = new Observable<void>()
   let expireContext: SessionDebugContext | undefined
+  let scheduledOperation: { type: OperationType; sessionId: string | undefined } | undefined
 
   if (!configuration.sessionStoreStrategyType) {
     display.warn('No storage available for session. We will not send any data.')
@@ -80,7 +95,7 @@ export function startSessionManager(
   stopCallbacks.push(() => sessionContextHistory.stop())
 
   const { throttled: throttledExpandOrRenew, cancel: cancelExpandOrRenew } = throttle(() => {
-    strategy.setSessionState((state) => expandOrRenew(state, configuration, trackingConsentState)).catch(monitorError)
+    scheduleOperation(OperationType.ExpandOrRenew)
   }, ONE_SECOND)
   stopCallbacks.push(cancelExpandOrRenew)
 
@@ -133,15 +148,7 @@ export function startSessionManager(
     if (state.expire && !isSessionInExpiredState(state)) {
       const delay = Number(state.expire) - dateNow()
       expirationTimeoutId = setTimeout(() => {
-        strategy
-          .setSessionState((state) => {
-            if (isSessionInExpiredState(state)) {
-              return getExpiredSessionState(state, configuration, trackingConsentState)
-            }
-
-            return state
-          })
-          .catch(monitorError)
+        scheduleOperation(OperationType.SoftExpire)
       }, delay)
     }
   }
@@ -150,9 +157,7 @@ export function startSessionManager(
   function setupSessionTracking() {
     trackingConsentState.observable.subscribe(() => {
       if (trackingConsentState.isGranted()) {
-        strategy
-          .setSessionState((state) => expandOrRenew(state, configuration, trackingConsentState))
-          .catch(monitorError)
+        scheduleOperation(OperationType.ExpandOrRenew)
       } else {
         expire()
       }
@@ -165,14 +170,10 @@ export function startSessionManager(
         }
       })
       trackVisibility(configuration, () => {
-        strategy.setSessionState((state) => expandOnly(state)).catch(monitorError)
+        scheduleOperation(OperationType.ExpandOnly)
       })
       trackResume(configuration, () => {
-        strategy
-          .setSessionState((state) =>
-            isSessionInExpiredState(state) ? getExpiredSessionState(state, configuration, trackingConsentState) : state
-          )
-          .catch(monitorError)
+        scheduleOperation(OperationType.SoftExpire)
       })
     }
   }
@@ -243,14 +244,45 @@ export function startSessionManager(
   }
 
   function expire() {
-    cancelExpandOrRenew()
+    // Persist to storage asynchronously
+    scheduleOperation(OperationType.ForceExpire)
     // Update in-memory state synchronously so events stop being collected immediately
     const expiredState = getExpiredSessionState(sessionContextHistory.find(), configuration, trackingConsentState)
     handleStateChange(expiredState, { from: 'expire' })
-    // Persist to storage asynchronously
-    strategy
-      .setSessionState((state) => getExpiredSessionState(state, configuration, trackingConsentState))
-      .catch(monitorError)
+  }
+
+  function scheduleOperation(type: OperationType) {
+    const hadOperationScheduled = !!scheduledOperation
+    if (!scheduledOperation || type >= scheduledOperation.type) {
+      scheduledOperation = { type, sessionId: sessionContextHistory.find()?.id }
+    }
+
+    if (!hadOperationScheduled) {
+      strategy
+        .setSessionState((state) => {
+          const operation = scheduledOperation!
+          scheduledOperation = undefined
+
+          if (state.id !== operation.sessionId) {
+            return state
+          }
+
+          switch (operation.type) {
+            case OperationType.ExpandOnly:
+              return expandOnly(state)
+            case OperationType.ExpandOrRenew:
+              return expandOrRenew(state, configuration, trackingConsentState)
+            case OperationType.SoftExpire:
+              if (isSessionInExpiredState(state)) {
+                return getExpiredSessionState(state, configuration, trackingConsentState)
+              }
+              return state
+            case OperationType.ForceExpire:
+              return getExpiredSessionState(state, configuration, trackingConsentState)
+          }
+        })
+        .catch(monitorError)
+    }
   }
 
   function buildSessionContext(sessionState: SessionState): SessionContext {
