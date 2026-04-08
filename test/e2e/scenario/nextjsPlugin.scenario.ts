@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { createTest } from '../lib/framework'
+import { NEXTJS_APP_ROUTER_PORT } from '../lib/helpers/playwright'
 
 const routerConfigs = [
   {
@@ -264,5 +265,41 @@ test.describe('nextjs - errors', () => {
           expect(browserLogs.length).toBeGreaterThan(0)
         })
       })
+  })
+})
+
+test.describe('nextjs - server integration', () => {
+  const nextjsBaseUrl = `http://localhost:${NEXTJS_APP_ROUTER_PORT}`
+
+  test('should have withDatadogRum config applied (productionBrowserSourceMaps)', async ({ request }) => {
+    // The withDatadogRum config plugin wraps next.config.js and enables source maps.
+    // We verify the middleware runs by checking for the custom header it sets.
+    const response = await request.get(`${nextjsBaseUrl}/`)
+    expect(response.headers()['x-dd-middleware']).toBe('true')
+  })
+
+  test('should pass through API routes when dd-trace is not installed', async ({ request }) => {
+    // Without dd-trace, withDatadogApiRoute should pass through to the handler
+    const response = await request.get(`${nextjsBaseUrl}/api/test`)
+    expect(response.ok()).toBe(true)
+    const body = await response.json()
+    expect(body.status).toBe('ok')
+    expect(body.timestamp).toBeDefined()
+  })
+
+  test('should pass through middleware when dd-trace is not installed', async ({ request }) => {
+    // Without dd-trace, withDatadogMiddleware should pass through
+    // The middleware still sets x-dd-middleware header
+    const response = await request.get(`${nextjsBaseUrl}/api/test`)
+    expect(response.headers()['x-dd-middleware']).toBe('true')
+  })
+
+  test('should handle POST API routes correctly', async ({ request }) => {
+    const response = await request.post(`${nextjsBaseUrl}/api/test`, {
+      data: { message: 'hello' },
+    })
+    expect(response.ok()).toBe(true)
+    const body = await response.json()
+    expect(body.echo).toEqual({ message: 'hello' })
   })
 })

@@ -1,9 +1,13 @@
 import { DatadogAppRouter } from '@datadog/browser-rum-nextjs'
+import { getDatadogTraceMetadata } from 'dd-trace/next'
 import type { Metadata } from 'next'
 
-export const metadata: Metadata = {
-  title: 'Next.js App Router Test',
-  description: 'Test app for Datadog RUM Next.js integration',
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: 'Next.js App Router Test',
+    description: 'Test app for Datadog RUM Next.js integration',
+    ...getDatadogTraceMetadata(),
+  }
 }
 
 export default function RootLayout({ children, sidebar }: { children: React.ReactNode; sidebar: React.ReactNode }) {

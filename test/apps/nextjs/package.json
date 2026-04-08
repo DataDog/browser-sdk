@@ -2,26 +2,28 @@
   "name": "nextjs",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "postinstall": "node scripts/patch-dd-trace-next.js",
+    "dev": "NODE_OPTIONS='--require dd-trace/init' next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "NODE_OPTIONS='--require dd-trace/init' next start"
   },
   "dependencies": {
-    "@datadog/browser-rum": "file:../../../packages/rum/package.tgz",
-    "@datadog/browser-rum-nextjs": "file:../../../packages/rum-nextjs/package.tgz",
-    "@datadog/browser-rum-react": "file:../../../packages/rum-react/package.tgz",
+    "@datadog/browser-rum": "file:./vendor/browser-rum.tgz",
+    "@datadog/browser-rum-nextjs": "file:./vendor/browser-rum-nextjs.tgz",
+    "@datadog/browser-rum-react": "file:./vendor/browser-rum-react.tgz",
+    "dd-trace": "^5.0.0",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },
   "resolutions": {
-    "@datadog/browser-rum-core": "file:../../../packages/rum-core/package.tgz",
-    "@datadog/browser-core": "file:../../../packages/core/package.tgz",
-    "@datadog/browser-rum": "file:../../../packages/rum/package.tgz",
-    "@datadog/browser-rum-nextjs": "file:../../../packages/rum-nextjs/package.tgz",
-    "@datadog/browser-rum-react": "file:../../../packages/rum-react/package.tgz",
-    "@datadog/browser-rum-slim": "file:../../../packages/rum-slim/package.tgz",
-    "@datadog/browser-worker": "file:../../../packages/worker/package.tgz"
+    "@datadog/browser-rum-core": "file:./vendor/browser-rum-core.tgz",
+    "@datadog/browser-core": "file:./vendor/browser-core.tgz",
+    "@datadog/browser-rum": "file:./vendor/browser-rum.tgz",
+    "@datadog/browser-rum-nextjs": "file:./vendor/browser-rum-nextjs.tgz",
+    "@datadog/browser-rum-react": "file:./vendor/browser-rum-react.tgz",
+    "@datadog/browser-rum-slim": "file:./vendor/browser-rum-slim.tgz",
+    "@datadog/browser-worker": "file:./vendor/browser-worker.tgz"
   },
   "devDependencies": {
     "@types/node": "22.16.0",
@@ -30,6 +32,7 @@
     "typescript": "5.9.3"
   },
   "volta": {
-    "extends": "../../../package.json"
+    "extends": "../../../package.json",
+    "node": "24.14.1"
   }
 }
