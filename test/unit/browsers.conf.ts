@@ -37,12 +37,15 @@ export const browserConfigurations: BrowserConfiguration[] = [
     os: 'android',
     osVersion: '12.0',
     device: 'Google Pixel 6 Pro',
+    realMobile: true,
   },
   {
     sessionName: 'Safari mobile',
-    name: 'safari',
+    // BrowserStack exposes Mobile Safari as the "iphone" browser on real devices.
+    name: 'iphone',
     os: 'ios',
     osVersion: '17',
     device: 'iPhone 15',
+    realMobile: true,
   },
 ]

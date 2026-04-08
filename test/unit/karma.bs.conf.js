@@ -17,8 +17,12 @@ export default function (config) {
     reporters: [...karmaBaseConf.reporters, 'BrowserStack'],
     browsers: browserConfigurations.map((configuration) => configuration.sessionName),
     concurrency: 5,
+    // BrowserStack sessions can take a while to reconnect after transient network hiccups.
+    browserDisconnectTimeout: 30 * 1000,
     browserDisconnectTolerance: 3,
     captureTimeout: 2 * 60 * 1000,
+    pingTimeout: 2 * 60 * 1000,
+    browserNoActivityTimeout: 2 * 60 * 1000,
     // BrowserStack recommends using bs-local.com for Safari/iOS local sessions instead of relying
     // on the localhost rewrite, which avoids capture failures on real iOS devices.
     hostname: browserStackHostname,
@@ -40,6 +44,7 @@ export default function (config) {
           browser: configuration.name,
           browser_version: configuration.version,
           device: configuration.device,
+          real_mobile: configuration.realMobile,
           name: configuration.sessionName,
         },
       ])
