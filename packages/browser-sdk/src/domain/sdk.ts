@@ -7,6 +7,7 @@ import {
   registerSdk,
   sessionEnricher,
   internalContextEnricher,
+  tagsEnricher,
 } from '@datadog/core-next'
 import { selectStore, createHttpRequest, createEndpointBuilder, INTAKE_SITE_US1 } from '@datadog/browser-core-next'
 import type { TrackType, HttpRequest } from '@datadog/browser-core-next'
@@ -47,6 +48,7 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
   // 4.5. Register core enrichers on all observation events
   pipeline.enrich('observation:*', sessionEnricher(session))
   pipeline.enrich('observation:*', internalContextEnricher())
+  pipeline.enrich('observation:*', tagsEnricher({ env: config.env, service: config.service, version: config.version }))
 
   // 5. Create endpoint builders for each track type used by modules
   const trackTypes: TrackType[] = ['logs', 'rum', 'replay']
