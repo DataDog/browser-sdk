@@ -1,5 +1,6 @@
 import { buildUrl } from '@datadog/browser-core'
 import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
+import { setupNextjsFetchLabeling } from './nextjsFetchLabeling'
 
 export type NextjsPlugin = Pick<Required<RumPlugin>, 'name' | 'onInit' | 'onRumStart'>
 
@@ -19,6 +20,7 @@ export function nextjsPlugin(): NextjsPlugin {
     onInit({ publicApi, initConfiguration }) {
       globalPublicApi = publicApi
       initConfiguration.trackViewsManually = true
+      setupNextjsFetchLabeling(initConfiguration)
 
       for (const subscriber of onRumInitSubscribers) {
         subscriber(publicApi)
