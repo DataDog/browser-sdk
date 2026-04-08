@@ -23,11 +23,10 @@ describe('tagsEnricher', () => {
     expect(result.ddtags).toContain('env:production')
   })
 
-  it('should include service tag and top-level service field', () => {
+  it('should include service tag', () => {
     const result = transform({ service: 'my-app', sdkVersion: '1.0.0' })
 
     expect(result.ddtags).toContain('service:my-app')
-    expect(result.service).toBe('my-app')
   })
 
   it('should include version tag', () => {
@@ -46,12 +45,6 @@ describe('tagsEnricher', () => {
     const result = transform({})
 
     expect(result.ddtags).toBe('')
-  })
-
-  it('should not add service field when service is not provided', () => {
-    const result = transform({ sdkVersion: '1.0.0' })
-
-    expect(result.service).toBeUndefined()
   })
 
   it('should preserve existing event fields', () => {

@@ -16,13 +16,15 @@
  */
 
 export type { Enricher } from './domain/enricher'
-export { enricher, sessionEnricher, internalContextEnricher, tagsEnricher } from './domain/enricher'
+export { enricher, sessionEnricher, internalContextEnricher, tagsEnricher, metadataEnricher } from './domain/enricher'
 export type {
   SessionData,
   InternalContext,
   InternalContextOptions,
   TagsData,
   TagsEnricherOptions,
+  Metadata,
+  MetadataEnricherOptions,
 } from './domain/enricher'
 
 export { Pipeline } from './domain/pipeline'

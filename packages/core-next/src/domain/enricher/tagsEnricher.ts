@@ -1,7 +1,6 @@
 import type { Enricher } from './factory'
 
 interface TagsData {
-  service?: string
   ddtags: string
 }
 
@@ -13,7 +12,7 @@ interface TagsEnricherOptions {
 }
 
 /**
- * Adds `service` and `ddtags` to events.
+ * Adds `ddtags` to events.
  *
  * Must be registered AFTER `internalContextEnricher` so that `_dd.browser_sdk_version`
  * is available for the `sdk_version` tag.
@@ -45,7 +44,6 @@ function tagsEnricher(
 
       return {
         ...data,
-        ...(options.service && { service: options.service }),
         ddtags: tags.join(','),
       }
     },
