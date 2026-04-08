@@ -493,7 +493,7 @@ describe('validateAndBuildRumConfiguration', () => {
           .trackResourceHeaders
       ).toEqual([])
       expect(displayWarnSpy).toHaveBeenCalledOnceWith(
-        'trackResourceHeaders should be true or an array of MatchOption or HeaderCaptureOption'
+        'trackResourceHeaders should be true or an array of MatchOption or HeaderCaptureByUrlOption'
       )
     })
 
@@ -512,12 +512,12 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(result[1].requestMatchers).toEqual([{ name: 'valid-header' }])
       expect(result[2].requestMatchers).toEqual([{ name: 'another-valid' }])
       expect(displayWarnSpy).toHaveBeenCalledOnceWith(
-        'trackResourceHeaders[1] should be a MatchOption or HeaderCaptureOption'
+        'trackResourceHeaders[1] should be a MatchOption or HeaderCaptureByUrlOption'
       )
     })
 
-    describe('HeaderCaptureOption', () => {
-      it('generates a URL-scoped rule from HeaderCaptureOption with response: true', () => {
+    describe('HeaderCaptureByUrlOption', () => {
+      it('generates a URL-scoped rule from HeaderCaptureByUrlOption with response: true', () => {
         const result = validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
           trackResourceHeaders: [{ url: 'https://api.example.com', response: true }],
@@ -539,7 +539,7 @@ describe('validateAndBuildRumConfiguration', () => {
         ])
       })
 
-      it('generates a URL-scoped rule with HeaderMatchOption containing extractor', () => {
+      it('generates a URL-scoped rule with HeaderMatcher containing extractor', () => {
         const extractor = /max-age=(\d+)/
         const result = validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
@@ -555,7 +555,7 @@ describe('validateAndBuildRumConfiguration', () => {
         ])
       })
 
-      it('preserves order of mixed MatchOption and HeaderCaptureOption items', () => {
+      it('preserves order of mixed MatchOption and HeaderCaptureByUrlOption items', () => {
         const result = validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
           trackResourceHeaders: ['x-global', { url: 'https://api.example.com', response: ['x-api'] }] as any,
@@ -588,7 +588,7 @@ describe('validateAndBuildRumConfiguration', () => {
         expect(result).toEqual([{ url: 'https://example.com', requestMatchers: [], responseMatchers: [] }])
       })
 
-      it('does not include defaults in HeaderCaptureOption with MatchOption[] direction', () => {
+      it('does not include defaults in HeaderCaptureByUrlOption with MatchOption[] direction', () => {
         const result = validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
           trackResourceHeaders: [{ url: 'https://example.com', response: ['x-custom'] }],
@@ -613,7 +613,7 @@ describe('validateAndBuildRumConfiguration', () => {
         )
       })
 
-      it('lowercases string names in HeaderMatchOption', () => {
+      it('lowercases string names in HeaderMatcher', () => {
         const result = validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
           trackResourceHeaders: [{ url: /.*/, response: [{ name: 'Content-Type' }] }],

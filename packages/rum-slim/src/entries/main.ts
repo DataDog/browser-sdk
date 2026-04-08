@@ -39,8 +39,8 @@ export type {
   OnRumStartOptions,
   PropagatorType,
   FeatureFlagsForEvents,
-  HeaderCaptureOption,
-  HeaderMatchOption,
+  HeaderCaptureByUrlOption,
+  HeaderMatcher,
 
   // Events
   CommonProperties,
