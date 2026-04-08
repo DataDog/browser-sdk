@@ -53,10 +53,9 @@ describe('LocalStorage SessionStoreStrategy', () => {
 
       await strategy.setSessionState((state) => ({ ...state, id: 'test-id' }))
 
-      expect(spy).toHaveBeenCalledOnceWith({
-        cookieValue: undefined,
-        sessionState: jasmine.objectContaining({ id: 'test-id' }),
-      })
+      expect(spy).toHaveBeenCalledOnceWith(
+        jasmine.objectContaining({ sessionState: jasmine.objectContaining({ id: 'test-id' }) })
+      )
     })
   })
 
@@ -74,10 +73,9 @@ describe('LocalStorage SessionStoreStrategy', () => {
       })
       window.dispatchEvent(event)
 
-      expect(spy).toHaveBeenCalledOnceWith({
-        cookieValue: undefined,
-        sessionState: jasmine.objectContaining({ id: 'from-other-tab' }),
-      })
+      expect(spy).toHaveBeenCalledOnceWith(
+        jasmine.objectContaining({ sessionState: jasmine.objectContaining({ id: 'from-other-tab' }) })
+      )
     })
 
     it('should ignore storage events for other keys', () => {

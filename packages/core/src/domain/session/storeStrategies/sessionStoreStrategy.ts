@@ -11,7 +11,7 @@ export type SessionStoreStrategyType =
   | { type: typeof SessionPersistence.MEMORY }
 
 export interface SessionObservableEvent {
-  cookieValue: string | undefined
+  cookieValues?: string[]
   sessionState: SessionState
 }
 

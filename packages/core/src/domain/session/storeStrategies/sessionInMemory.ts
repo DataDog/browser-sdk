@@ -36,7 +36,7 @@ export function initMemorySessionStoreStrategy(): SessionStoreStrategy {
   const previousOnChange = memorySession.onChange
   memorySession.onChange = (state: SessionState) => {
     previousOnChange?.(state)
-    sessionObservable.notify({ cookieValue: undefined, sessionState: state })
+    sessionObservable.notify({ sessionState: state })
   }
 
   return {

@@ -38,7 +38,7 @@ interface SessionDebugContext {
   previousSession?: SessionContext
   newState: SessionState
   from: string
-  cookieValue: string | undefined
+  cookieValues: string[] | undefined
   cookies: string[]
   locksAvailable: boolean
   cookieStoreAvailable: boolean
@@ -119,9 +119,9 @@ export function startSessionManager(
   }
 
   function subscribeToSessionChanges() {
-    const subscription = strategy.sessionObservable.subscribe(({ cookieValue, sessionState }) => {
+    const subscription = strategy.sessionObservable.subscribe(({ cookieValues, sessionState }) => {
       scheduleExpirationTimeout(sessionState)
-      handleStateChange(sessionState, { from: 'sessionObservable', cookieValue })
+      handleStateChange(sessionState, { from: 'sessionObservable', cookieValues })
     })
     stopCallbacks.push(() => subscription.unsubscribe())
   }
@@ -196,7 +196,10 @@ export function startSessionManager(
     }
   }
 
-  function handleStateChange(newState: SessionState, { from, cookieValue }: { from: string; cookieValue?: string }) {
+  function handleStateChange(
+    newState: SessionState,
+    { from, cookieValues }: { from: string; cookieValues?: string[] }
+  ) {
     const previousSession = sessionContextHistory.find()
     const hadSession = previousSession?.id !== undefined
     const hasSession = newState.id !== undefined
@@ -208,7 +211,7 @@ export function startSessionManager(
         previousSession: previousSession && { ...previousSession },
         newState: { ...newState },
         from,
-        cookieValue,
+        cookieValues,
         cookies: getCookies('_dd_s'),
         locksAvailable: Boolean(globalThis.navigator?.locks),
         cookieStoreAvailable: Boolean(globalThis.cookieStore),
@@ -226,7 +229,7 @@ export function startSessionManager(
           previousSession: previousSession && { ...previousSession },
           newState: { ...newState },
           from,
-          cookieValue,
+          cookieValues,
           cookies: getCookies('_dd_s'),
           locksAvailable: Boolean(globalThis.navigator?.locks),
           cookieStoreAvailable: Boolean(globalThis.cookieStore),

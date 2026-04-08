@@ -169,14 +169,14 @@ describe('cookieAccess', () => {
         it('should notify when cookie is changed externally', async () => {
           const { flushObservable, setCookieWithCleanup } = setup()
           const cookieAccess = createCookieAccess(COOKIE_NAME, MOCK_CONFIGURATION, COOKIE_OPTIONS)
-          const spy = jasmine.createSpy<(value: string | undefined) => void>('observer')
+          const spy = jasmine.createSpy('observer')
           const subscription = cookieAccess.observable.subscribe(spy)
           registerCleanupTask(() => subscription.unsubscribe())
 
           await setCookieWithCleanup(COOKIE_NAME, 'external', 1000)
           await flushObservable(spy)
 
-          expect(spy).toHaveBeenCalledWith('external')
+          expect(spy).toHaveBeenCalledTimes(1)
         })
 
         it('should notify when cookie is deleted externally', async () => {
@@ -184,14 +184,14 @@ describe('cookieAccess', () => {
           await setCookieWithCleanup(COOKIE_NAME, 'existing', 1000)
 
           const cookieAccess = createCookieAccess(COOKIE_NAME, MOCK_CONFIGURATION, COOKIE_OPTIONS)
-          const spy = jasmine.createSpy<(value: string | undefined) => void>('observer')
+          const spy = jasmine.createSpy('observer')
           const subscription = cookieAccess.observable.subscribe(spy)
           registerCleanupTask(() => subscription.unsubscribe())
 
           deleteCookie(COOKIE_NAME)
           await flushObservable(spy)
 
-          expect(spy).toHaveBeenCalledOnceWith(undefined)
+          expect(spy).toHaveBeenCalledTimes(1)
         })
 
         it('should not notify when cookie value is unchanged', async () => {
@@ -199,7 +199,7 @@ describe('cookieAccess', () => {
           await setCookieWithCleanup(COOKIE_NAME, 'stable', 1000)
 
           const cookieAccess = createCookieAccess(COOKIE_NAME, MOCK_CONFIGURATION, COOKIE_OPTIONS)
-          const spy = jasmine.createSpy<(value: string | undefined) => void>('observer')
+          const spy = jasmine.createSpy('observer')
           const subscription = cookieAccess.observable.subscribe(spy)
           registerCleanupTask(() => subscription.unsubscribe())
 
@@ -211,14 +211,14 @@ describe('cookieAccess', () => {
         it('should notify the observable after writing', async () => {
           const { flushObservable } = setup()
           const cookieAccess = createCookieAccess(COOKIE_NAME, MOCK_CONFIGURATION, COOKIE_OPTIONS)
-          const spy = jasmine.createSpy<(value: string | undefined) => void>('observer')
+          const spy = jasmine.createSpy('observer')
           const subscription = cookieAccess.observable.subscribe(spy)
           registerCleanupTask(() => subscription.unsubscribe())
 
           await cookieAccess.getAllAndSet(() => ({ value: 'written', expireDelay: 1000 }))
           await flushObservable(spy)
 
-          expect(spy).toHaveBeenCalledOnceWith('written')
+          expect(spy).toHaveBeenCalledTimes(1)
         })
       })
     })

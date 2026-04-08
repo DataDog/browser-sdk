@@ -28,7 +28,7 @@ export function initLocalStorageStrategy(configuration: Configuration): SessionS
     (observable) =>
       addEventListener(configuration, window, 'storage', (event) => {
         if (event.key === SESSION_STORE_KEY && event.storageArea === localStorage) {
-          observable.notify({ cookieValue: undefined, sessionState: toSessionState(event.newValue) })
+          observable.notify({ sessionState: toSessionState(event.newValue) })
         }
       }).stop
   )
@@ -39,7 +39,7 @@ export function initLocalStorageStrategy(configuration: Configuration): SessionS
       const newState = fn(currentState)
       localStorage.setItem(SESSION_STORE_KEY, toSessionString(newState))
       await Promise.resolve()
-      sessionObservable.notify({ cookieValue: undefined, sessionState: newState })
+      sessionObservable.notify({ sessionState: newState })
     },
     sessionObservable,
   }
