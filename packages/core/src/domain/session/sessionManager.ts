@@ -1,7 +1,15 @@
 import { Observable } from '../../tools/observable'
 import { createValueHistory } from '../../tools/valueHistory'
-import type { RelativeTime } from '../../tools/utils/timeUtils'
-import { clocksOrigin, dateNow, ONE_MINUTE, ONE_SECOND, relativeNow } from '../../tools/utils/timeUtils'
+import type { RelativeTime, TimeStamp } from '../../tools/utils/timeUtils'
+import {
+  clocksOrigin,
+  dateNow,
+  ONE_HOUR,
+  ONE_MINUTE,
+  ONE_SECOND,
+  relativeNow,
+  timeStampNow,
+} from '../../tools/utils/timeUtils'
 import { addEventListener, addEventListeners, DOM_EVENT } from '../../browser/addEventListener'
 import { clearInterval, clearTimeout, setInterval, setTimeout } from '../../tools/timer'
 import { mockable } from '../../tools/mockable'
@@ -19,6 +27,8 @@ import type { SessionState } from './sessionState'
 import {
   expandOnly,
   expandOrRenew,
+  getCreatedDate,
+  getExpireDate,
   getExpiredSessionState,
   initializeSession,
   isSessionInExpiredState,
@@ -52,10 +62,22 @@ export interface SessionContext {
   id: string
   anonymousId?: string | undefined
   isReplayForced?: boolean
+  createdAt: TimeStamp
 }
 
 export const VISIBILITY_CHECK_DELAY = ONE_MINUTE
 const SESSION_CONTEXT_TIMEOUT_DELAY = SESSION_TIME_OUT_DELAY
+
+// Maximum duration for which we can send data related to a session.
+//
+// The backend behavior depends on how old the session is when it receives an event:
+// - Session started < 4h ago: the backend updates the session normally.
+// - Session started between 4h and 24h ago: the backend ignores the event (safe).
+// - Session started > 24h ago: the backend recreates a session with that id (problematic).
+//
+// We choose 12h as a threshold — safely between 4h and 24h — to avoid both recreating
+// sessions and discarding too many legitimate late events.
+export const TRACKED_SESSION_MAX_AGE = ONE_HOUR * 12
 let stopCallbacks: Array<() => void> = []
 
 export function startSessionManager(
@@ -130,8 +152,9 @@ export function startSessionManager(
 
   function scheduleExpirationTimeout(state: SessionState) {
     clearTimeout(expirationTimeoutId)
-    if (state.expire && !isSessionInExpiredState(state)) {
-      const delay = Number(state.expire) - dateNow()
+    const expireDate = getExpireDate(state)
+    if (expireDate && !isSessionInExpiredState(state)) {
+      const delay = expireDate - dateNow()
       expirationTimeoutId = setTimeout(() => {
         strategy
           .setSessionState((state) => {
@@ -182,6 +205,10 @@ export function startSessionManager(
         const session = sessionContextHistory.find(startTime, options)
 
         if (!session || session.id === 'invalid' || !isSampled(session.id, configuration.sessionSampleRate)) {
+          return
+        }
+
+        if (dateNow() - session.createdAt > TRACKED_SESSION_MAX_AGE) {
           return
         }
 
@@ -260,11 +287,14 @@ export function startSessionManager(
   }
 
   function buildSessionContext(sessionState: SessionState): SessionContext {
+    const createdAt = getCreatedDate(sessionState) ?? timeStampNow()
+
     if (!sessionState.id) {
       return {
         id: 'invalid',
         isReplayForced: false,
         anonymousId: undefined,
+        createdAt,
       }
     }
 
@@ -272,6 +302,7 @@ export function startSessionManager(
       id: sessionState.id,
       isReplayForced: !!sessionState.forcedReplay,
       anonymousId: sessionState.anonymousId,
+      createdAt,
     }
   }
 }
@@ -282,6 +313,7 @@ export function startSessionManagerStub(onReady: (sessionManager: SessionManager
     id: stubSessionId,
     isReplayForced: false,
     anonymousId: undefined,
+    createdAt: timeStampNow(),
   }
   onReady({
     findSession: () => sessionContext,

@@ -1,5 +1,6 @@
 import { isEmptyObject } from '../../tools/utils/objectUtils'
 import { objectEntries } from '../../tools/utils/polyfills'
+import type { TimeStamp } from '../../tools/utils/timeUtils'
 import { dateNow } from '../../tools/utils/timeUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import type { Configuration } from '../configuration'
@@ -15,6 +16,14 @@ export interface SessionState {
   anonymousId?: string
 
   [key: string]: string | undefined
+}
+
+export function getCreatedDate(state: SessionState): TimeStamp | undefined {
+  return state.created ? (Number(state.created) as TimeStamp) : undefined
+}
+
+export function getExpireDate(state: SessionState): TimeStamp | undefined {
+  return state.expire ? (Number(state.expire) as TimeStamp) : undefined
 }
 
 export function getExpiredSessionState(
@@ -47,9 +56,11 @@ export function isSessionInExpiredState(session: SessionState) {
 function isActiveSession(sessionState: SessionState) {
   // created and expire can be undefined for versions which was not storing them
   // these checks could be removed when older versions will not be available/live anymore
+  const createdDate = getCreatedDate(sessionState)
+  const expireDate = getExpireDate(sessionState)
   return (
-    (sessionState.created === undefined || dateNow() - Number(sessionState.created) < SESSION_TIME_OUT_DELAY) &&
-    (sessionState.expire === undefined || dateNow() < Number(sessionState.expire))
+    (createdDate === undefined || dateNow() - createdDate < SESSION_TIME_OUT_DELAY) &&
+    (expireDate === undefined || dateNow() < expireDate)
   )
 }
 

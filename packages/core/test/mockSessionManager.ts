@@ -1,6 +1,7 @@
 import type { SessionManager, startSessionManager } from '@datadog/browser-core'
 import { Observable } from '../src/tools/observable'
 import { noop } from '../src/tools/utils/functionUtils'
+import { timeStampNow } from '../src/tools/utils/timeUtils'
 import { LOW_HASH_UUID } from './sampling'
 
 export interface SessionManagerMock extends SessionManager {
@@ -26,12 +27,12 @@ export function createSessionManagerMock(): SessionManagerMock {
   return {
     findSession: () => {
       if (sessionStatus === SessionStatus.TRACKED && sessionIsActive) {
-        return { id, isReplayForced: forcedReplay, anonymousId: 'device-123' }
+        return { id, isReplayForced: forcedReplay, anonymousId: 'device-123', createdAt: timeStampNow() }
       }
     },
     findTrackedSession: (_startTime, options) => {
       if (sessionStatus === SessionStatus.TRACKED && (sessionIsActive || options?.returnInactive)) {
-        return { id, anonymousId: 'device-123', isReplayForced: forcedReplay }
+        return { id, anonymousId: 'device-123', isReplayForced: forcedReplay, createdAt: timeStampNow() }
       }
     },
     expire() {

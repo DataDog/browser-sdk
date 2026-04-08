@@ -22,6 +22,7 @@ import {
   startSessionManager,
   startSessionManagerStub,
   stopSessionManager,
+  TRACKED_SESSION_MAX_AGE,
   VISIBILITY_CHECK_DELAY,
 } from './sessionManager'
 import { getSessionStoreStrategy } from './sessionStore'
@@ -649,6 +650,20 @@ describe('startSessionManager', () => {
       sessionManager.expire()
 
       expect(sessionManager.findTrackedSession(undefined, { returnInactive: true })).toBeDefined()
+    })
+
+    it('should return undefined when the session is older than TRACKED_SESSION_MAX_AGE', async () => {
+      const sessionManager = await startSessionManagerWithDefaults()
+
+      fakeStrategy.simulateExternalChange({
+        id: LOW_HASH_UUID,
+        created: String(Date.now() - TRACKED_SESSION_MAX_AGE - 1),
+        expire: String(Date.now() + SESSION_EXPIRATION_DELAY),
+      })
+
+      await collectAsyncCalls(sessionObservableSpy, 2) // 1 for initial session, 1 for external change
+
+      expect(sessionManager.findTrackedSession()).toBeUndefined()
     })
 
     describe('deterministic sampling', () => {
