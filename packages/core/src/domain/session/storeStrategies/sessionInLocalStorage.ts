@@ -33,16 +33,16 @@ export function initLocalStorageStrategy(configuration: Configuration): SessionS
       }).stop
   )
 
+  let isFirstCall = true
+
   return {
-    async setSessionState(
-      fn: (sessionState: SessionState) => SessionState,
-      options?: { migrate?: boolean }
-    ): Promise<void> {
+    async setSessionState(fn: (sessionState: SessionState) => SessionState): Promise<void> {
       let currentState = toSessionState(localStorage.getItem(SESSION_STORE_KEY))
 
-      if (options?.migrate && isSessionInNotStartedState(currentState)) {
+      if (isFirstCall && isSessionInNotStartedState(currentState)) {
         currentState = toSessionState(localStorage.getItem(LEGACY_SESSION_STORE_KEY))
       }
+      isFirstCall = false
 
       const newState = fn(currentState)
       localStorage.setItem(SESSION_STORE_KEY, toSessionString(newState))

@@ -111,14 +111,11 @@ export function startSessionManager(
 
   async function resolveInitialState() {
     let state: SessionState = {}
-    await strategy.setSessionState(
-      (currentState) => {
-        const initialState = initializeSession(currentState, configuration)
-        state = expandOrRenew(initialState, configuration)
-        return state
-      },
-      { migrate: true }
-    )
+    await strategy.setSessionState((currentState) => {
+      const initialState = initializeSession(currentState, configuration)
+      state = expandOrRenew(initialState, configuration)
+      return state
+    })
     return state
   }
 

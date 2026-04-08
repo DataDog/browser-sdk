@@ -17,6 +17,6 @@ export interface SessionObservableEvent {
 }
 
 export interface SessionStoreStrategy {
-  setSessionState(fn: (sessionState: SessionState) => SessionState, options?: { migrate?: boolean }): Promise<void>
+  setSessionState(fn: (sessionState: SessionState) => SessionState): Promise<void>
   sessionObservable: Observable<SessionObservableEvent>
 }

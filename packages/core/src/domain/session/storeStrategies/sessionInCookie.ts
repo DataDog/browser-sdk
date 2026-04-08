@@ -29,6 +29,7 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
   const opts = encodeCookieOptions(cookieOptions)
 
   const cookieAccess = mockable(createCookieAccess)(SESSION_STORE_KEY, configuration, cookieOptions)
+  let isFirstCall = true
 
   cookieAccess.observable.subscribe((cookieValue) => {
     const state = toSessionState(cookieValue ?? '')
@@ -40,13 +41,14 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
     sessionObservable.notify({ cookieValue, sessionState: state })
   })
 
-  function applyAndWrite(fn: (state: SessionState) => SessionState, migrate?: boolean) {
+  function applyAndWrite(fn: (state: SessionState) => SessionState) {
     return cookieAccess.getAllAndSet((cookieValues) => {
       let currentState = findMatchingSessionState(cookieValues, opts)
 
-      if (migrate && isEmptyObject(currentState)) {
+      if (isFirstCall && isEmptyObject(currentState)) {
         currentState = findMatchingSessionState(getCookies(LEGACY_SESSION_STORE_KEY), opts)
       }
+      isFirstCall = false
 
       const newState = fn(currentState)
       const sessionString = buildSessionString(newState, cookieOptions)
@@ -57,14 +59,11 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
   }
 
   return {
-    async setSessionState(
-      fn: (sessionState: SessionState) => SessionState,
-      options?: { migrate?: boolean }
-    ): Promise<void> {
+    async setSessionState(fn: (sessionState: SessionState) => SessionState): Promise<void> {
       if (typeof navigator !== 'undefined' && navigator.locks) {
-        await navigator.locks.request(SESSION_STORE_KEY, () => applyAndWrite(fn, options?.migrate))
+        await navigator.locks.request(SESSION_STORE_KEY, () => applyAndWrite(fn))
       } else {
-        pendingChain = (pendingChain ?? Promise.resolve()).then(() => applyAndWrite(fn, options?.migrate))
+        pendingChain = (pendingChain ?? Promise.resolve()).then(() => applyAndWrite(fn))
         await pendingChain
       }
     },
