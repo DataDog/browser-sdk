@@ -288,7 +288,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    * trackResourceHeaders: [{ url: /\/api\//, response: [{ name: 'server-timing', extractor: /dur=(\d+)/ }] }]
    * @hidden
    */
-  trackResourceHeaders?: boolean | Array<MatchOption | HeaderCaptureOption> | undefined
+  trackResourceHeaders?: boolean | Array<MatchOption | HeaderCaptureByUrlOption> | undefined
 
   /**
    * Enables collection of long task events.
@@ -355,21 +355,23 @@ export interface GraphQlUrlOption {
   trackResponseErrors?: boolean
 }
 
-export interface HeaderMatchOption {
+type HeaderMatchOption = true | Array<MatchOption | HeaderMatcher>
+
+export interface HeaderMatcher {
   name: MatchOption
   extractor?: RegExp
 }
 
-export interface HeaderCaptureOption {
+export interface HeaderCaptureByUrlOption {
   url: MatchOption
-  request?: true | MatchOption[] | HeaderMatchOption[]
-  response?: true | MatchOption[] | HeaderMatchOption[]
+  request?: HeaderMatchOption
+  response?: HeaderMatchOption
 }
 
 export interface HeaderCaptureRule {
   url: MatchOption
-  requestMatchers: HeaderMatchOption[]
-  responseMatchers: HeaderMatchOption[]
+  requestMatchers: HeaderMatcher[]
+  responseMatchers: HeaderMatcher[]
 }
 
 export interface RumConfiguration extends Configuration {
@@ -587,10 +589,12 @@ function validateAndBuildTrackResourceHeaders(initConfiguration: RumInitConfigur
     return []
   }
 
-  const defaultDirectionMatchers: HeaderMatchOption[] = DEFAULT_TRACKED_RESOURCE_HEADERS.map((h) => ({ name: h }))
+  const defaultMatchers: HeaderMatcher[] = DEFAULT_TRACKED_RESOURCE_HEADERS.map((h) => ({
+    name: h,
+  }))
 
   if (option === true) {
-    return [{ url: () => true, requestMatchers: defaultDirectionMatchers, responseMatchers: defaultDirectionMatchers }]
+    return [{ url: () => true, requestMatchers: defaultMatchers, responseMatchers: defaultMatchers }]
   }
 
   if (!Array.isArray(option)) {
@@ -610,16 +614,16 @@ function validateAndBuildTrackResourceHeaders(initConfiguration: RumInitConfigur
     if (isHeaderCaptureOption(item)) {
       rules.push({
         url: item.url,
-        requestMatchers: normalizeDirection('request', item.request, defaultDirectionMatchers, index),
-        responseMatchers: normalizeDirection('response', item.response, defaultDirectionMatchers, index),
+        requestMatchers: normalizeMatchers('request', item.request, defaultMatchers, index),
+        responseMatchers: normalizeMatchers('response', item.response, defaultMatchers, index),
       })
     } else if (isMatchOption(item)) {
       if (!hasAddedDefaultsRule) {
         hasAddedDefaultsRule = true
         rules.push({
           url: () => true,
-          requestMatchers: defaultDirectionMatchers,
-          responseMatchers: defaultDirectionMatchers,
+          requestMatchers: defaultMatchers,
+          responseMatchers: defaultMatchers,
         })
       }
       const name = typeof item === 'string' ? item.toLowerCase() : item
@@ -632,47 +636,43 @@ function validateAndBuildTrackResourceHeaders(initConfiguration: RumInitConfigur
   return rules
 }
 
-function isHeaderCaptureOption(item: unknown): item is HeaderCaptureOption {
-  return isIndexableObject(item) && 'url' in item && isMatchOption((item as unknown as HeaderCaptureOption).url)
+function isHeaderCaptureOption(item: unknown): item is HeaderCaptureByUrlOption {
+  return isIndexableObject(item) && 'url' in item && isMatchOption((item as unknown as HeaderCaptureByUrlOption).url)
 }
 
-function isHeaderMatchOption(item: unknown): item is HeaderMatchOption {
-  return isIndexableObject(item) && 'name' in item && isMatchOption((item as unknown as HeaderMatchOption).name)
+function isHeaderMatchOption(item: unknown): item is HeaderMatcher {
+  return isIndexableObject(item) && 'name' in item && isMatchOption((item as unknown as HeaderMatcher).name)
 }
 
-type DirectionConfig = HeaderCaptureOption['request']
-
-function normalizeDirection(
-  direction: 'request' | 'response',
-  config: DirectionConfig,
-  defaultHMOs: HeaderMatchOption[],
+function normalizeMatchers(
+  type: 'request' | 'response',
+  option: HeaderMatchOption | undefined,
+  defaultMatchers: HeaderMatcher[],
   ruleIndex: number
-): HeaderMatchOption[] {
-  if (config === true) {
-    return defaultHMOs
+): HeaderMatcher[] {
+  if (option === true) {
+    return defaultMatchers
   }
-  if (!Array.isArray(config)) {
-    if (config !== undefined) {
+  if (!Array.isArray(option)) {
+    if (option !== undefined) {
       display.warn(
-        `trackResourceHeaders[${ruleIndex}].${direction} should be true or an array of MatchOption or HeaderMatchOption`
+        `trackResourceHeaders[${ruleIndex}].${type} should be true or an array of MatchOption or HeaderMatcher`
       )
     }
     return []
   }
-  const matchers: HeaderMatchOption[] = []
-  config.forEach((item, index) => {
+  const matchers: HeaderMatcher[] = []
+  option.forEach((item, index) => {
     if (isHeaderMatchOption(item)) {
       if (item.extractor !== undefined && !(item.extractor instanceof RegExp)) {
-        display.warn(`trackResourceHeaders[${ruleIndex}].${direction}[${index}].extractor should be a RegExp`)
+        display.warn(`trackResourceHeaders[${ruleIndex}].${type}[${index}].extractor should be a RegExp`)
       } else {
         matchers.push({ ...item, name: typeof item.name === 'string' ? item.name.toLowerCase() : item.name })
       }
     } else if (isMatchOption(item)) {
       matchers.push({ name: typeof item === 'string' ? item.toLowerCase() : item })
     } else {
-      display.warn(
-        `trackResourceHeaders[${ruleIndex}].${direction}[${index}] should be a MatchOption or HeaderMatchOption`
-      )
+      display.warn(`trackResourceHeaders[${ruleIndex}].${type}[${index}] should be a MatchOption or HeaderMatcher`)
     }
   })
   return matchers

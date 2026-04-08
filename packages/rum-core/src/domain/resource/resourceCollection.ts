@@ -15,7 +15,7 @@ import {
   display,
   addTelemetryDebug,
 } from '@datadog/browser-core'
-import type { HeaderMatchOption, RumConfiguration } from '../configuration'
+import type { HeaderMatcher, RumConfiguration } from '../configuration'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType, createPerformanceObservable } from '../../browser/performanceObservable'
 import type {
@@ -344,7 +344,7 @@ function computeNetworkHeaders(
   }
 }
 
-function getResponseHeaders(request: RequestCompleteEvent, matchers: HeaderMatchOption[]): NetworkHeaders | undefined {
+function getResponseHeaders(request: RequestCompleteEvent, matchers: HeaderMatcher[]): NetworkHeaders | undefined {
   if (request.type === RequestType.FETCH && request.response) {
     return filterHeaders(request.response.headers, matchers)
   }
@@ -363,7 +363,7 @@ function getResponseHeaders(request: RequestCompleteEvent, matchers: HeaderMatch
   return undefined
 }
 
-function getRequestHeaders(request: RequestCompleteEvent, matchers: HeaderMatchOption[]): NetworkHeaders | undefined {
+function getRequestHeaders(request: RequestCompleteEvent, matchers: HeaderMatcher[]): NetworkHeaders | undefined {
   if (request.type !== RequestType.FETCH) {
     return undefined
   }
@@ -384,7 +384,7 @@ const FORBIDDEN_HEADER_PATTERN =
 const MAX_HEADER_COUNT = 100
 const MAX_HEADER_VALUE_LENGTH = 128
 
-function filterHeaders(headers: Headers, matchers: HeaderMatchOption[]): NetworkHeaders | undefined {
+function filterHeaders(headers: Headers, matchers: HeaderMatcher[]): NetworkHeaders | undefined {
   const result: NetworkHeaders = {} as NetworkHeaders
   let collectedHeaderCount = 0
   let totalHeaderCount = 0
