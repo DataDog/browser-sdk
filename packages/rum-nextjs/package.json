@@ -5,6 +5,23 @@
   "main": "cjs/entries/main.js",
   "module": "esm/entries/main.js",
   "types": "cjs/entries/main.d.ts",
+  "exports": {
+    ".": {
+      "require": "./cjs/entries/main.js",
+      "import": "./esm/entries/main.js",
+      "types": "./cjs/entries/main.d.ts"
+    },
+    "./config": {
+      "require": "./cjs/entries/config.js",
+      "import": "./esm/entries/config.js",
+      "types": "./cjs/entries/config.d.ts"
+    },
+    "./server": {
+      "require": "./cjs/entries/server.js",
+      "import": "./esm/entries/server.js",
+      "types": "./cjs/entries/server.d.ts"
+    }
+  },
   "scripts": {
     "build": "node ../../scripts/build/build-package.ts --modules",
     "prepack": "npm run build"

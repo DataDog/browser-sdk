@@ -38,6 +38,8 @@
       "@datadog/browser-rum-vue/vue-router-v4": ["./packages/rum-vue/src/entries/vueRouter"],
 
       "@datadog/browser-rum-nextjs": ["./packages/rum-nextjs/src/entries/main"],
+      "@datadog/browser-rum-nextjs/config": ["./packages/rum-nextjs/src/entries/config"],
+      "@datadog/browser-rum-nextjs/server": ["./packages/rum-nextjs/src/entries/server"],
 
       "@datadog/browser-worker": ["./packages/worker/src/entries/main"]
     }
