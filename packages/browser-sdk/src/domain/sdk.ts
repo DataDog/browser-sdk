@@ -126,8 +126,18 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
     batch.flush()
   })
 
-  // 8.5. Wire all pipeline observations → batch
+  // 8.5. Wire all pipeline observations → batch (with beforeSend gate)
   pipeline.subscribe('observation:*', (event) => {
+    // Collect beforeSend callbacks from module configs
+    const record = event as Record<string, unknown>
+    for (const mod of modules) {
+      const moduleConfig = (config as Record<string, unknown>)[mod.name] as Record<string, unknown> | undefined
+      const beforeSend = moduleConfig?.beforeSend as ((e: Record<string, unknown>) => boolean | void) | undefined
+      if (beforeSend) {
+        const result = beforeSend(record)
+        if (result === false) return
+      }
+    }
     batch.add(JSON.stringify(event))
   })
 

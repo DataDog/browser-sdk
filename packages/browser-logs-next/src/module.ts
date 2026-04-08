@@ -5,7 +5,6 @@ import type { LogsConfig } from './domain/configuration'
 import { Logger } from './domain/logger'
 import type { LogsMessage } from './domain/logger'
 import { startProcessor } from './domain/processor'
-import { beforeSendEnricher } from './domain/beforeSendEnricher'
 import { rateLimitEnricher } from './domain/rateLimitEnricher'
 
 interface LoggerConfiguration {
@@ -59,9 +58,6 @@ const logsModule: Module = {
     loggers.set('default', defaultLogger)
 
     // Register log-specific enrichers on observation:log
-    if (config.beforeSend) {
-      context.pipeline.enrich('observation:log', beforeSendEnricher(config.beforeSend))
-    }
     context.pipeline.enrich('observation:log', rateLimitEnricher())
 
     // Start the processor (subscribes to resources, transforms to observations)
