@@ -139,7 +139,7 @@ export function startRumBatch(
     // They intentionally bypass RAW_RUM_EVENT_COLLECTED → assembly → RUM_EVENT_COLLECTED, which
     // means they skip beforeSend entirely. view_update is an internal bandwidth optimization —
     // not a customer-visible event type, and not modifiable via beforeSend.
-    const diff = computeAssembledViewDiff(serverRumEvent, lastSentView!)
+    const diff = computeAssembledViewDiff(serverRumEvent, lastSentView)
     lastSentView = serverRumEvent
     if (diff) {
       sendToExtension('rum', diff)
