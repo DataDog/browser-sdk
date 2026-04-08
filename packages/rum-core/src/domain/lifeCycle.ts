@@ -1,4 +1,11 @@
-import type { ClocksState, Context, Duration, PageMayExitEvent, RawError } from '@datadog/browser-core'
+import type {
+  ClocksState,
+  Context,
+  Duration,
+  PageMayExitEvent,
+  RawError,
+  SessionRenewalEvent,
+} from '@datadog/browser-core'
 import { AbstractLifeCycle } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumEvent, AssembledRumEvent } from '../rawRumEvent.types'
@@ -89,7 +96,7 @@ export interface LifeCycleEventMap {
   [LifeCycleEventTypeAsConst.REQUEST_STARTED]: RequestStartEvent
   [LifeCycleEventTypeAsConst.REQUEST_COMPLETED]: RequestCompleteEvent
   [LifeCycleEventTypeAsConst.SESSION_EXPIRED]: void
-  [LifeCycleEventTypeAsConst.SESSION_RENEWED]: void
+  [LifeCycleEventTypeAsConst.SESSION_RENEWED]: SessionRenewalEvent
   [LifeCycleEventTypeAsConst.PAGE_MAY_EXIT]: PageMayExitEvent
   [LifeCycleEventTypeAsConst.RAW_RUM_EVENT_COLLECTED]: RawRumEventCollectedData
   [LifeCycleEventTypeAsConst.RUM_EVENT_COLLECTED]: AssembledRumEvent

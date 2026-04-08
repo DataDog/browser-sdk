@@ -42,17 +42,7 @@ export function mergeInto<D, S>(
   } else if (source instanceof Date) {
     return new Date(source.getTime()) as unknown as Merged<D, S>
   } else if (source instanceof RegExp) {
-    const flags =
-      source.flags ||
-      // old browsers compatibility
-      [
-        source.global ? 'g' : '',
-        source.ignoreCase ? 'i' : '',
-        source.multiline ? 'm' : '',
-        source.sticky ? 'y' : '',
-        source.unicode ? 'u' : '',
-      ].join('')
-    return new RegExp(source.source, flags) as unknown as Merged<D, S>
+    return new RegExp(source.source, source.flags) as unknown as Merged<D, S>
   }
 
   if (circularReferenceChecker.hasAlreadyBeenSeen(source)) {

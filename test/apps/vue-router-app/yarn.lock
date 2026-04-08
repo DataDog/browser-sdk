@@ -41,29 +41,29 @@ __metadata:
   linkType: hard
 
 "@datadog/browser-core@file:../../../packages/core/package.tgz::locator=vue-router-app%40workspace%3A.":
-  version: 6.30.1
-  resolution: "@datadog/browser-core@file:../../../packages/core/package.tgz#../../../packages/core/package.tgz::hash=83d0f7&locator=vue-router-app%40workspace%3A."
-  checksum: 10c0/6524102faf8dbb6f6b9f71e43ab3c17f39269f161e2b5628ea4eba65ae3977d101c1639d853505a4d312573c32c959267aa30e9982901de5291350abc94a8f66
+  version: 6.31.0
+  resolution: "@datadog/browser-core@file:../../../packages/core/package.tgz#../../../packages/core/package.tgz::hash=48aed0&locator=vue-router-app%40workspace%3A."
+  checksum: 10c0/56e4636fee5e5c5413eb47998499259fac7ff455e9668d951a25952af6322c689ff3c4049b56a663bc8f4ab8db6e68842ee66abd269e4d12a50ed91e25f9c5e5
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz::locator=vue-router-app%40workspace%3A.":
-  version: 6.30.1
-  resolution: "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz#../../../packages/rum-core/package.tgz::hash=acbd3f&locator=vue-router-app%40workspace%3A."
+  version: 6.31.0
+  resolution: "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz#../../../packages/rum-core/package.tgz::hash=9520e8&locator=vue-router-app%40workspace%3A."
   dependencies:
-    "@datadog/browser-core": "npm:6.30.1"
-  checksum: 10c0/4e2fe3cf78c7cbe16530bb4cf732922ae7866c8df233dfcbf1bd14380c348336c4abcf703b7f159fde344bbee0e5382169c58150e64f940a7949ded3e7cf6f81
+    "@datadog/browser-core": "npm:6.31.0"
+  checksum: 10c0/463662c6c24a0d50d6f4063f1ac72f4dd880aee902342624ac34e447d52d6b6865cc9544a3d69ca601491ff2a4cce39a42f49c2c2d6243141a63952970a2564a
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum-vue@file:../../../packages/rum-vue/package.tgz::locator=vue-router-app%40workspace%3A.":
-  version: 6.30.1
-  resolution: "@datadog/browser-rum-vue@file:../../../packages/rum-vue/package.tgz#../../../packages/rum-vue/package.tgz::hash=92f41c&locator=vue-router-app%40workspace%3A."
+  version: 0.0.0
+  resolution: "@datadog/browser-rum-vue@file:../../../packages/rum-vue/package.tgz#../../../packages/rum-vue/package.tgz::hash=48376c&locator=vue-router-app%40workspace%3A."
   dependencies:
-    "@datadog/browser-core": "npm:6.30.1"
-    "@datadog/browser-rum-core": "npm:6.30.1"
+    "@datadog/browser-core": "npm:6.31.0"
+    "@datadog/browser-rum-core": "npm:6.31.0"
   peerDependencies:
-    vue: ^3.0.0
+    vue: ^3.5.0
     vue-router: ^4.0.0
   peerDependenciesMeta:
     "@datadog/browser-rum":
@@ -74,22 +74,22 @@ __metadata:
       optional: true
     vue-router:
       optional: true
-  checksum: 10c0/4e4893bc111913cfbfce90fbe98c3fd717e6df83717121f086eb1cfe653e3a257ba42291ee9e8a07104f1d851113ba1e5f4b3f50e7e23acf0a70e1e97b44e4fe
+  checksum: 10c0/179a67f9d4eff61c343ca79088b36bf68237e58b193f91bf7ec56e943b0b04ea3f2d830d773c73b4b3e68ee59a6b4f64bfa632e05729da57b9d83901d6d218de
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum@file:../../../packages/rum/package.tgz::locator=vue-router-app%40workspace%3A.":
-  version: 6.30.1
-  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=9cfd3b&locator=vue-router-app%40workspace%3A."
+  version: 6.31.0
+  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=f881aa&locator=vue-router-app%40workspace%3A."
   dependencies:
-    "@datadog/browser-core": "npm:6.30.1"
-    "@datadog/browser-rum-core": "npm:6.30.1"
+    "@datadog/browser-core": "npm:6.31.0"
+    "@datadog/browser-rum-core": "npm:6.31.0"
   peerDependencies:
-    "@datadog/browser-logs": 6.30.1
+    "@datadog/browser-logs": 6.31.0
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
-  checksum: 10c0/95237d8e152fffc25e395f8b417eff467bd90c367ab9017d7bab90eb77f626dcc75820e7163354e154175c82c091318cbf3dd5ea5bbd5a0d903660c2f939fb4e
+  checksum: 10c0/6e1c6e4daa74f5b153d14f0dec10bdac159d936a7ca194bc25e067e9551e6d8487a6d39058fb0f982c0a72aadfa72be3bd0fcbb0585bb74c463bc7d8eef2edb4
   languageName: node
   linkType: hard
 
@@ -1435,14 +1435,6 @@ __metadata:
     vite: "npm:6.x"
     vue: "npm:3.5.29"
     vue-router: "npm:4.6.4"
-  peerDependencies:
-    "@datadog/browser-rum": "*"
-    "@datadog/browser-rum-vue": "*"
-  peerDependenciesMeta:
-    "@datadog/browser-rum":
-      optional: true
-    "@datadog/browser-rum-vue":
-      optional: true
   languageName: unknown
   linkType: soft
 

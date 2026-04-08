@@ -15,7 +15,6 @@ import { objectHasValue } from './utils/objectUtils'
 // eslint-disable-next-line no-restricted-syntax
 export enum ExperimentalFeature {
   TRACK_INTAKE_REQUESTS = 'track_intake_requests',
-  USE_TREE_WALKER_FOR_ACTION_NAME = 'use_tree_walker_for_action_name',
   FEATURE_OPERATION_VITAL = 'feature_operation_vital',
   START_STOP_ACTION = 'start_stop_action',
   START_STOP_RESOURCE = 'start_stop_resource',

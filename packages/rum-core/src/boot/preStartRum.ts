@@ -6,6 +6,7 @@ import type {
   BoundedBuffer,
   Telemetry,
   TimeStamp,
+  SessionManager,
 } from '@datadog/browser-core'
 import {
   createBoundedBuffer,
@@ -20,15 +21,22 @@ import {
   initFeatureFlags,
   addTelemetryConfiguration,
   initFetchObservable,
+  initXhrObservable,
+  initConsoleObservable,
+  ConsoleApiName,
   CustomerContextKey,
   buildAccountContextManager,
   buildGlobalContextManager,
   buildUserContextManager,
   monitorError,
   sanitize,
+  startSessionManager,
+  startSessionManagerStub,
   startTelemetry,
   TelemetryService,
   mockable,
+  isWorkerEnvironment,
+  startTelemetrySessionContext,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
@@ -39,19 +47,15 @@ import {
   serializeRumConfiguration,
 } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
-import type {
-  DurationVital,
-  CustomVitalsState,
-  FeatureOperationOptions,
-  FailureReason,
-} from '../domain/vital/vitalCollection'
-import { startDurationVital, stopDurationVital } from '../domain/vital/vitalCollection'
+import type { FeatureOperationOptions, FailureReason } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
+import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
 
 export type DoStartRum = (
   configuration: RumConfiguration,
+  sessionManager: SessionManager,
   deflateWorker: DeflateWorker | undefined,
   initialViewOptions: ViewOptions | undefined,
   telemetry: Telemetry,
@@ -61,7 +65,6 @@ export type DoStartRum = (
 export function createPreStartStrategy(
   { ignoreInitIfSyntheticsWillInjectRum = true, startDeflateWorker }: RumPublicApiOptions,
   trackingConsentState: TrackingConsentState,
-  customVitalsState: CustomVitalsState,
   doStartRum: DoStartRum
 ): Strategy {
   const bufferApiCalls = createBoundedBuffer<StartRumResult>()
@@ -83,6 +86,7 @@ export function createPreStartStrategy(
 
   let cachedInitConfiguration: RumInitConfiguration | undefined
   let cachedConfiguration: RumConfiguration | undefined
+  let sessionManager: SessionManager | undefined
   let telemetry: Telemetry | undefined
   const hooks = createHooks()
 
@@ -91,13 +95,8 @@ export function createPreStartStrategy(
   const emptyContext: Context = {}
 
   function tryStartRum() {
-    if (!cachedInitConfiguration || !cachedConfiguration || !trackingConsentState.isGranted()) {
+    if (!cachedInitConfiguration || !cachedConfiguration || !sessionManager || !telemetry) {
       return
-    }
-
-    // Start telemetry only once, when we have consent and configuration
-    if (!telemetry) {
-      telemetry = mockable(startTelemetry)(TelemetryService.RUM, cachedConfiguration, hooks)
     }
 
     trackingConsentStateSubscription.unsubscribe()
@@ -118,7 +117,14 @@ export function createPreStartStrategy(
       initialViewOptions = firstStartViewCall.options
     }
 
-    const startRumResult = doStartRum(cachedConfiguration, deflateWorker, initialViewOptions, telemetry, hooks)
+    const startRumResult = doStartRum(
+      cachedConfiguration,
+      sessionManager,
+      deflateWorker,
+      initialViewOptions,
+      telemetry,
+      hooks
+    )
 
     bufferApiCalls.drain(startRumResult)
   }
@@ -131,7 +137,6 @@ export function createPreStartStrategy(
 
     // Update the exposed initConfiguration to reflect the bridge and remote configuration overrides
     cachedInitConfiguration = initConfiguration
-    addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
 
     if (cachedConfiguration) {
       displayAlreadyInitializedError('DD_RUM', initConfiguration)
@@ -140,11 +145,6 @@ export function createPreStartStrategy(
 
     const configuration = validateAndBuildRumConfiguration(initConfiguration, errorStack)
     if (!configuration) {
-      return
-    }
-
-    if (!eventBridgeAvailable && !configuration.sessionStoreStrategyType) {
-      display.warn('No storage available for session. We will not send any data.')
       return
     }
 
@@ -165,18 +165,36 @@ export function createPreStartStrategy(
 
     cachedConfiguration = configuration
 
-    // Instrument fetch to track network requests
-    // This is needed in case the consent is not granted and some customer
-    // library (Apollo Client) is storing uninstrumented fetch to be used later
-    // The subscription is needed so that the instrumentation process is completed
+    // Instrument fetch, XHR and console.error early so events fired synchronously after
+    // init() are captured and buffered for replay when startRum() subscribes.
     initFetchObservable().subscribe(noop)
+    initXhrObservable(configuration).subscribe(noop)
+    initConsoleObservable([ConsoleApiName.error]).subscribe(noop)
 
     trackingConsentState.tryToInit(configuration.trackingConsent)
-    tryStartRum()
-  }
 
-  const addDurationVital = (vital: DurationVital) => {
-    bufferApiCalls.add((startRumResult) => startRumResult.addDurationVital(vital))
+    trackingConsentState.onGrantedOnce(() => {
+      startTrackingConsentContext(hooks, trackingConsentState)
+      telemetry = mockable(startTelemetry)(TelemetryService.RUM, configuration, hooks)
+
+      if (isWorkerEnvironment) {
+        display.warn('The RUM SDK is not supported in a web or service worker environment.')
+        return
+      }
+
+      const onSessionManagerReady = (newSessionManager: SessionManager) => {
+        sessionManager = newSessionManager
+        startTelemetrySessionContext(hooks, sessionManager, { application: { id: configuration.applicationId } })
+        addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
+
+        tryStartRum()
+      }
+      if (canUseEventBridge()) {
+        startSessionManagerStub(onSessionManagerReady)
+      } else {
+        mockable(startSessionManager)(configuration, trackingConsentState, onSessionManagerReady)
+      }
+    })
   }
 
   const addOperationStepVital = (
@@ -311,14 +329,18 @@ export function createPreStartStrategy(
     },
 
     startDurationVital(name, options) {
-      return startDurationVital(customVitalsState, name, options)
+      const startClocks = clocksNow()
+      bufferApiCalls.add((startRumResult) => startRumResult.startDurationVital(name, options, startClocks))
     },
 
     stopDurationVital(name, options) {
-      stopDurationVital(addDurationVital, customVitalsState, name, options)
+      const stopClocks = clocksNow()
+      bufferApiCalls.add((startRumResult) => startRumResult.stopDurationVital(name, options, stopClocks))
     },
 
-    addDurationVital,
+    addDurationVital(vital) {
+      bufferApiCalls.add((startRumResult) => startRumResult.addDurationVital(vital))
+    },
     addOperationStepVital,
   }
 

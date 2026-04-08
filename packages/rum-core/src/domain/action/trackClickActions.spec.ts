@@ -6,9 +6,9 @@ import {
   relativeNow,
   DefaultPrivacyLevel,
   Observable,
-  ExperimentalFeature,
   PageExitReason,
   addExperimentalFeatures,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock } from '@datadog/browser-core/test'
@@ -481,7 +481,6 @@ describe('trackClickActions', () => {
     })
 
     it('should mask action name when defaultPrivacyLevel is mask_unless_allowlisted and not in allowlist', () => {
-      addExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
       startClickActionsTracking({
         defaultPrivacyLevel: DefaultPrivacyLevel.MASK_UNLESS_ALLOWLISTED,
         enablePrivacyForActionName: true,
@@ -526,7 +525,6 @@ describe('trackClickActions', () => {
     })
 
     it('should use allowlist masking when defaultPrivacyLevel is allow and node privacy level is mask-unless-allowlisted', () => {
-      addExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
       button.setAttribute('data-dd-privacy', 'mask-unless-allowlisted')
       startClickActionsTracking({
         defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
@@ -646,8 +644,8 @@ describe('trackClickActions', () => {
       shadowHost.remove()
     })
 
-    it('with betaTrackActionsInShadowDom, gets action name from composedPath', () => {
-      startClickActionsTracking({ betaTrackActionsInShadowDom: true })
+    it('gets action name from composedPath', () => {
+      startClickActionsTracking()
 
       emulateClick({
         target: shadowHost,
@@ -663,8 +661,8 @@ describe('trackClickActions', () => {
       expect(events[0].name).toBe('Shadow Button')
     })
 
-    it('with betaTrackActionsInShadowDom, gets selector with shadow marker from composedPath', () => {
-      startClickActionsTracking({ betaTrackActionsInShadowDom: true })
+    it('gets selector with shadow marker from composedPath', () => {
+      startClickActionsTracking()
 
       emulateClick({
         target: shadowHost,
@@ -679,24 +677,6 @@ describe('trackClickActions', () => {
       expect(events.length).toBe(1)
       expect(events[0].target?.selector).toContain(SHADOW_DOM_MARKER)
       expect(events[0].target?.selector).toContain('BUTTON')
-    })
-
-    it('without betaTrackActionsInShadowDom, selector uses shadow host', () => {
-      startClickActionsTracking({ betaTrackActionsInShadowDom: false })
-
-      emulateClick({
-        target: shadowHost,
-        activity: {},
-        eventProperty: {
-          composed: true,
-          composedPath: () => [shadowButton, shadowHost.shadowRoot, shadowHost, document.body, document],
-        },
-      })
-      clock.tick(EXPIRE_DELAY)
-
-      expect(events.length).toBe(1)
-      expect(events[0].target?.selector).toBe('#shadow-host')
-      expect(events[0].target?.selector).not.toContain(SHADOW_DOM_MARKER)
     })
   })
 

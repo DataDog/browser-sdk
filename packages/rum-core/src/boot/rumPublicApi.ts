@@ -15,6 +15,7 @@ import type {
   Telemetry,
   Encoder,
   ResourceType,
+  SessionManager,
 } from '@datadog/browser-core'
 import {
   ContextManagerMethod,
@@ -42,19 +43,16 @@ import {
 
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewHistory } from '../domain/contexts/viewHistory'
-import type { RumSessionManager } from '../domain/rumSessionManager'
 import type { ReplayStats } from '../rawRumEvent.types'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
 import type {
   AddDurationVitalOptions,
-  DurationVitalReference,
   DurationVitalOptions,
   FeatureOperationOptions,
   FailureReason,
 } from '../domain/vital/vitalCollection'
-import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
 import type { Hooks } from '../domain/hooks'
 import type { SdkName } from '../domain/contexts/defaultContext'
@@ -465,23 +463,34 @@ export interface RumPublicApi extends PublicApi {
   /**
    * Start a custom duration vital.
    *
-   * If you plan to have multiple durations for the same vital, you should use the reference returned by this method.
+   * If you plan to have multiple durations for the same vital, use the `vitalKey` option to
+   * differentiate them. Provide the same key when calling `stopDurationVital`.
    *
    * @category Vital - Duration
    * @param name - Name of the custom vital
-   * @param options - Options for the custom vital (context, description)
-   * @returns reference to the custom vital
+   * @param options - Options for the custom vital (vitalKey, context, description)
+   * @example
+   * ```ts
+   * // Simple usage
+   * datadogRum.startDurationVital('my-vital')
+   * datadogRum.stopDurationVital('my-vital')
+   *
+   * // Multiple simultaneous vitals with the same name
+   * const key = crypto.randomUUID()
+   * datadogRum.startDurationVital('my-vital', { vitalKey: key })
+   * datadogRum.stopDurationVital('my-vital', { vitalKey: key })
+   * ```
    */
-  startDurationVital: (name: string, options?: DurationVitalOptions) => DurationVitalReference
+  startDurationVital: (name: string, options?: DurationVitalOptions) => void
 
   /**
    * Stop a custom duration vital
    *
    * @category Vital - Duration
-   * @param nameOrRef - Name or reference of the custom vital
-   * @param options - Options for the custom vital (operationKey, context, description)
+   * @param name - Name of the custom vital
+   * @param options - Options for the custom vital (vitalKey, context, description)
    */
-  stopDurationVital: (nameOrRef: string | DurationVitalReference, options?: DurationVitalOptions) => void
+  stopDurationVital: (name: string, options?: DurationVitalOptions) => void
 
   /**
    * start a feature operation
@@ -521,7 +530,7 @@ export interface RecorderApi {
   onRumStart: (
     lifeCycle: LifeCycle,
     configuration: RumConfiguration,
-    sessionManager: RumSessionManager,
+    sessionManager: SessionManager,
     viewHistory: ViewHistory,
     deflateWorker: DeflateWorker | undefined,
     telemetry: Telemetry
@@ -537,7 +546,7 @@ export interface ProfilerApi {
     lifeCycle: LifeCycle,
     hooks: Hooks,
     configuration: RumConfiguration,
-    sessionManager: RumSessionManager,
+    sessionManager: SessionManager,
     viewHistory: ViewHistory,
     createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
   ) => void
@@ -595,14 +604,12 @@ export function makeRumPublicApi(
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
   const trackingConsentState = createTrackingConsentState()
-  const customVitalsState = createCustomVitalsState()
   const bufferedDataObservable = startBufferingData().observable
 
   let strategy = createPreStartStrategy(
     options,
     trackingConsentState,
-    customVitalsState,
-    (configuration, deflateWorker, initialViewOptions, telemetry, hooks) => {
+    (configuration, sessionManager, deflateWorker, initialViewOptions, telemetry, hooks) => {
       const createEncoder =
         deflateWorker && options.createDeflateEncoder
           ? (streamId: DeflateEncoderStreamId) => options.createDeflateEncoder!(configuration, deflateWorker, streamId)
@@ -610,12 +617,11 @@ export function makeRumPublicApi(
 
       const startRumResult = mockable(startRum)(
         configuration,
+        sessionManager,
         recorderApi,
         profilerApi,
         initialViewOptions,
         createEncoder,
-        trackingConsentState,
-        customVitalsState,
         bufferedDataObservable,
         telemetry,
         hooks,
@@ -625,7 +631,7 @@ export function makeRumPublicApi(
       recorderApi.onRumStart(
         startRumResult.lifeCycle,
         configuration,
-        startRumResult.session,
+        sessionManager,
         startRumResult.viewHistory,
         deflateWorker,
         startRumResult.telemetry
@@ -635,7 +641,7 @@ export function makeRumPublicApi(
         startRumResult.lifeCycle,
         startRumResult.hooks,
         configuration,
-        startRumResult.session,
+        sessionManager,
         startRumResult.viewHistory,
         createEncoder
       )
@@ -643,7 +649,6 @@ export function makeRumPublicApi(
       strategy = createPostStartStrategy(strategy, startRumResult)
 
       callPluginsMethod(configuration.plugins, 'onRumStart', {
-        strategy, // TODO: remove this in the next major release
         addEvent: startRumResult.addEvent,
         addError: startRumResult.addError,
       })
@@ -927,19 +932,21 @@ export function makeRumPublicApi(
 
     startDurationVital: (name, options) => {
       const handlingStack = createHandlingStack('vital')
-      return callMonitored(() => {
+      callMonitored(() => {
         addTelemetryUsage({ feature: 'start-duration-vital' })
-        return strategy.startDurationVital(sanitize(name)!, {
+        strategy.startDurationVital(sanitize(name)!, {
+          vitalKey: options && options.vitalKey,
           context: sanitize(options && options.context) as Context,
           description: sanitize(options && options.description) as string | undefined,
           handlingStack,
         })
-      }) as DurationVitalReference
+      })
     },
 
-    stopDurationVital: monitor((nameOrRef, options) => {
+    stopDurationVital: monitor((name, options) => {
       addTelemetryUsage({ feature: 'stop-duration-vital' })
-      strategy.stopDurationVital(typeof nameOrRef === 'string' ? sanitize(nameOrRef)! : nameOrRef, {
+      strategy.stopDurationVital(sanitize(name)!, {
+        vitalKey: options && options.vitalKey,
         context: sanitize(options && options.context) as Context,
         description: sanitize(options && options.description) as string | undefined,
       })

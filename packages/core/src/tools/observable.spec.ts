@@ -226,6 +226,42 @@ describe('BufferedObservable', () => {
     expect(observer).not.toHaveBeenCalled()
   })
 
+  it('should execute onFirstSubscribe callback on first subscribe', () => {
+    const onFirstSubscribe = jasmine.createSpy('callback')
+    const observable = new BufferedObservable<string>(100, onFirstSubscribe)
+
+    const observer = jasmine.createSpy('observer')
+    observable.subscribe(observer)
+    expect(onFirstSubscribe).toHaveBeenCalledTimes(1)
+
+    observable.subscribe(jasmine.createSpy('observer2'))
+    expect(onFirstSubscribe).toHaveBeenCalledTimes(1)
+  })
+
+  it('should execute onLastUnsubscribe when all subscribers unsubscribe', () => {
+    const onLastUnsubscribe = jasmine.createSpy('callback')
+    const observable = new BufferedObservable<string>(100, () => onLastUnsubscribe)
+
+    const sub1 = observable.subscribe(jasmine.createSpy('observer1'))
+    const sub2 = observable.subscribe(jasmine.createSpy('observer2'))
+
+    sub1.unsubscribe()
+    expect(onLastUnsubscribe).not.toHaveBeenCalled()
+
+    sub2.unsubscribe()
+    expect(onLastUnsubscribe).toHaveBeenCalledTimes(1)
+  })
+
+  it('should deliver live events synchronously after subscribe', () => {
+    const observable = new BufferedObservable<string>(100)
+
+    const observer = jasmine.createSpy('observer')
+    observable.subscribe(observer)
+
+    observable.notify('live')
+    expect(observer).toHaveBeenCalledOnceWith('live')
+  })
+
   it('calling unbuffer() removes buffered data', async () => {
     const observable = new BufferedObservable<string>(2)
     observable.notify('first')

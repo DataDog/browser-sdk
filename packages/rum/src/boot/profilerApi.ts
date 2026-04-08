@@ -1,14 +1,6 @@
-import type {
-  LifeCycle,
-  ViewHistory,
-  RumSessionManager,
-  RumConfiguration,
-  ProfilerApi,
-  Hooks,
-} from '@datadog/browser-rum-core'
-import type { DeflateEncoderStreamId, Encoder } from '@datadog/browser-core'
-import { isSampled } from '@datadog/browser-rum-core'
-import { monitorError } from '@datadog/browser-core'
+import type { LifeCycle, ViewHistory, RumConfiguration, ProfilerApi, Hooks } from '@datadog/browser-rum-core'
+import type { SessionManager, DeflateEncoderStreamId, Encoder } from '@datadog/browser-core'
+import { monitorError, correctedChildSampleRate, isSampled, mockable } from '@datadog/browser-core'
 import type { RUMProfiler } from '../domain/profiling/types'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { startProfilingContext } from '../domain/profiling/profilingContext'
@@ -21,7 +13,7 @@ export function makeProfilerApi(): ProfilerApi {
     lifeCycle: LifeCycle,
     hooks: Hooks,
     configuration: RumConfiguration,
-    sessionManager: RumSessionManager,
+    sessionManager: SessionManager,
     viewHistory: ViewHistory,
     createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
   ) {
@@ -34,7 +26,12 @@ export function makeProfilerApi(): ProfilerApi {
     }
 
     // Sampling (sticky sampling based on session id)
-    if (!isSampled(session.id, configuration.profilingSampleRate)) {
+    if (
+      !isSampled(
+        session.id,
+        correctedChildSampleRate(configuration.sessionSampleRate, configuration.profilingSampleRate)
+      )
+    ) {
       // No sampling, no profiling.
       // Note: No Profiling context is set at this stage.
       return
@@ -44,7 +41,7 @@ export function makeProfilerApi(): ProfilerApi {
     const profilingContextManager = startProfilingContext(hooks)
 
     // Browser support check
-    if (!isProfilingSupported()) {
+    if (!mockable(isProfilingSupported)()) {
       profilingContextManager.set({
         status: 'error',
         error_reason: 'not-supported-by-browser',
