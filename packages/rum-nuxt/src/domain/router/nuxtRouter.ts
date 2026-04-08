@@ -1,6 +1,10 @@
 import type { Router, RouteLocationMatched } from 'vue-router'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
 
+const TERMINAL_CATCH_ALL_PARAM = '(.*)*'
+const NESTED_CATCH_ALL_PARAM = '([^/]*)*'
+const NORMALIZE_NUXT_PATH_REGEXP = /\\(.)|:([\w.]+)(\(\.\*\)\*|\(\[\^\/\]\*\)\*|\?|\(\))?/g
+
 export function startTrackingNuxtViews(rumPublicApi: RumPublicApi, router: Router) {
   if (router.currentRoute.value.matched.length > 0) {
     rumPublicApi.startView(computeNuxtViewName(router.currentRoute.value.matched))
@@ -18,36 +22,44 @@ export function startTrackingNuxtViews(rumPublicApi: RumPublicApi, router: Route
 }
 
 export function computeNuxtViewName(matched: RouteLocationMatched[]): string {
-  let name = computeViewName(matched)
-  // Transform catch-all params: :slug(.*)*  -> [...slug]
-  name = name.replace(/\/:([^(/]+)\([^)]*\)\*/g, '/[...$1]')
-  // Transform simple params: :id or :id() -> [id]
-  name = name.replace(/\/:([^(/[]+)(?:\([^)]*\))?/g, '/[$1]')
-  return name
+  const viewName = computeViewName(matched)
+  if (!viewName) {
+    return viewName
+  }
+
+  return normalizeNuxtPath(viewName)
 }
 
 function computeViewName(matched: RouteLocationMatched[]): string {
-  if (!matched || matched.length === 0) {
-    return ''
+  for (let index = matched.length - 1; index >= 0; index--) {
+    const path = matched[index].path
+    if (path) {
+      return path
+    }
   }
 
-  let viewName = '/'
+  return ''
+}
 
-  for (const routeRecord of matched) {
-    const path = routeRecord.path
-    if (!path) {
-      continue
-    }
-
-    if (path.startsWith('/')) {
-      viewName = path
-    } else {
-      if (!viewName.endsWith('/')) {
-        viewName += '/'
+// Nuxt generates Vue Router paths with parameter syntax (for example `:id()`, `:slug?`,
+// `:slug(.*)*`). Convert the normalized Vue Router path back to Nuxt's file-based syntax.
+function normalizeNuxtPath(path: string): string {
+  return path.replace(
+    NORMALIZE_NUXT_PATH_REGEXP,
+    (_match: string, escapedChar?: string, paramName?: string, suffix?: string): string => {
+      if (escapedChar !== undefined) {
+        return escapedChar
       }
-      viewName += path
+      if (!paramName) {
+        return ''
+      }
+      if (suffix === TERMINAL_CATCH_ALL_PARAM || suffix === NESTED_CATCH_ALL_PARAM) {
+        return `[...${paramName}]`
+      }
+      if (suffix === '?') {
+        return `[[${paramName}]]`
+      }
+      return `[${paramName}]`
     }
-  }
-
-  return viewName
+  )
 }

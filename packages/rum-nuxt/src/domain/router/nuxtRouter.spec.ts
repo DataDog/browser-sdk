@@ -149,9 +149,16 @@ describe('computeNuxtViewName', () => {
     ['static route',                      [{ path: '/about' }],                  '/about'],
     ['dynamic param',                     [{ path: '/user/:id' }],               '/user/[id]'],
     ['dynamic param with empty constraint',[{ path: '/user/:id()' }],            '/user/[id]'],
+    ['optional param',                    [{ path: '/:slug?' }],                 '/[[slug]]'],
+    ['optional nested param',             [{ path: '/blog/:slug?' }],            '/blog/[[slug]]'],
     ['catch-all param',                   [{ path: '/guides/:slug(.*)*' }],      '/guides/[...slug]'],
+    ['nested catch-all param',            [{ path: '/docs/:slug([^/]*)*/edit' }], '/docs/[...slug]/edit'],
     ['pathMatch catch-all',               [{ path: '/:pathMatch(.*)*' }],        '/[...pathMatch]'],
     ['multiple segments',                 [{ path: '/a/:b/:c' }],                '/a/[b]/[c]'],
+    ['mixed static and dynamic segment',  [{ path: '/users-:group()' }],         '/users-[group]'],
+    ['mixed static and optional segment', [{ path: '/users-:group?' }],          '/users-[[group]]'],
+    ['multiple mixed params in one segment', [{ path: '/users-:group()-:id()' }], '/users-[group]-[id]'],
+    ['mixed static and dynamic directories', [{ path: '/users-:group()/:id()' }], '/users-[group]/[id]'],
     ['static route unchanged',            [{ path: '/static/path' }],            '/static/path'],
   ]
 
