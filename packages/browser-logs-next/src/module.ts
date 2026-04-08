@@ -4,7 +4,7 @@ import { logsExtension } from './domain/configuration'
 import type { LogsConfig } from './domain/configuration'
 import { Logger } from './domain/logger'
 import type { LogsMessage } from './domain/logger'
-import { startAssembly } from './domain/assembly'
+import { startProcessor } from './domain/processor'
 
 interface LoggerConfiguration {
   level?: string
@@ -56,7 +56,7 @@ const logsModule: Module = {
     const defaultLogger = new Logger(handleLog)
     loggers.set('default', defaultLogger)
 
-    startAssembly({
+    startProcessor({
       pipeline: context.pipeline,
       config,
       globalContext,

@@ -1,5 +1,5 @@
 import { Pipeline } from '@datadog/core-next'
-import type { LogEvent } from './domain/assembly'
+import type { LogEvent } from './domain/processor'
 import { logsModule } from './module'
 import type { LogsPublicApi } from './module'
 

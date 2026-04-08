@@ -38,7 +38,7 @@ interface ActionLog {
   loggerName?: string
 }
 
-interface AssemblyDependencies {
+interface ProcessorDependencies {
   pipeline: Pipeline<Record<string, unknown>>
   config: LogsConfig
   globalContext: ContextManager
@@ -68,7 +68,7 @@ function extractCauses(error: Error | undefined): ErrorCause[] | undefined {
   return causes.length > 0 ? causes : undefined
 }
 
-function startAssembly({ pipeline, config, globalContext, userContext, accountContext }: AssemblyDependencies): void {
+function startProcessor({ pipeline, config, globalContext, userContext, accountContext }: ProcessorDependencies): void {
   const rateLimiter = createRateLimiter()
 
   function assembleAndPublish(event: Partial<LogEvent>): void {
@@ -203,5 +203,5 @@ function startAssembly({ pipeline, config, globalContext, userContext, accountCo
   }
 }
 
-export { startAssembly }
-export type { LogEvent, LogError, ActionLog, AssemblyDependencies }
+export { startProcessor }
+export type { LogEvent, LogError, ActionLog, ProcessorDependencies }
