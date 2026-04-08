@@ -206,16 +206,16 @@ packages/rum-<framework>/
 
 ## Skill Location
 
-Skills live in `.claude/skills/router-integration/`:
+Each skill lives in its own subdirectory under `.claude/skills/` with a `SKILL.md` entry point (Claude Code requires one `SKILL.md` per subdirectory):
 
 ```text
-.claude/skills/router-integration/
-├── pipeline.md          # /router:pipeline — orchestrator
-├── fetch-docs.md        # /router:fetch-docs
-├── analyze.md           # /router:analyze
-├── design.md            # /router:design
-├── generate.md          # /router:generate
-└── pr.md                # /router:pr
+.claude/skills/
+├── router-pipeline/SKILL.md       # /router:pipeline — orchestrator
+├── router-fetch-docs/SKILL.md     # /router:fetch-docs
+├── router-analyze/SKILL.md        # /router:analyze
+├── router-design/SKILL.md         # /router:design
+├── router-generate/SKILL.md       # /router:generate
+└── router-pr/SKILL.md             # /router:pr
 ```
 
 ## Stage Input Convention
