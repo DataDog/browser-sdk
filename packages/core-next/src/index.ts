@@ -16,8 +16,8 @@
  */
 
 export type { Enricher } from './domain/enricher'
-export { enricher, sessionEnricher } from './domain/enricher'
-export type { SessionData } from './domain/enricher'
+export { enricher, sessionEnricher, internalContextEnricher } from './domain/enricher'
+export type { SessionData, InternalContext, InternalContextOptions } from './domain/enricher'
 
 export { Pipeline } from './domain/pipeline'
 export type { Subscription } from './domain/pipeline'
