@@ -8,7 +8,6 @@ import type {
   ContextManager,
 } from '@datadog/core-next'
 import type { LogsConfig } from './configuration'
-import { createRateLimiter } from './rateLimiter'
 
 interface LogError {
   kind?: string
@@ -69,9 +68,7 @@ function extractCauses(error: Error | undefined): ErrorCause[] | undefined {
 }
 
 function startProcessor({ pipeline, config, globalContext, userContext, accountContext }: ProcessorDependencies): void {
-  const rateLimiter = createRateLimiter()
-
-  function assembleAndPublish(event: Partial<LogEvent>): void {
+  function process(event: Partial<LogEvent>): void {
     const accountCtx = accountContext.get()
     const hasAccount = Object.keys(accountCtx).length > 0
 
@@ -87,13 +84,6 @@ function startProcessor({ pipeline, config, globalContext, userContext, accountC
       ...(hasAccount && { account: accountCtx }),
     }
 
-    if (config.beforeSend) {
-      const result = config.beforeSend(logEvent)
-      if (result === false) return
-    }
-
-    if (rateLimiter.isLimitReached(logEvent.status)) return
-
     pipeline.publish('observation:log', logEvent)
   }
 
@@ -103,7 +93,7 @@ function startProcessor({ pipeline, config, globalContext, userContext, accountC
     const fingerprint = extractFingerprint(action.error)
     const causes = extractCauses(action.error)
 
-    assembleAndPublish({
+    process({
       message: action.message,
       status: action.status,
       origin: 'logger',
@@ -135,7 +125,7 @@ function startProcessor({ pipeline, config, globalContext, userContext, accountC
         error: 'error',
       }
 
-      assembleAndPublish({
+      process({
         message: resource.message,
         status: statusMap[resource.api] ?? 'info',
         origin: 'console',
@@ -156,7 +146,7 @@ function startProcessor({ pipeline, config, globalContext, userContext, accountC
   if (config.forwardErrorsToLogs) {
     pipeline.subscribe('resource:runtime_error', (data: unknown) => {
       const resource = data as RuntimeErrorResource
-      assembleAndPublish({
+      process({
         message: resource.message,
         status: 'error',
         origin: 'source',
@@ -177,7 +167,7 @@ function startProcessor({ pipeline, config, globalContext, userContext, accountC
       const resource = data as NetworkRequestResource
       if (resource.status !== 0 && resource.status < 400) return
 
-      assembleAndPublish({
+      process({
         message: `${resource.method} ${resource.url} ${resource.status}`,
         status: 'error',
         origin: 'network',
@@ -193,7 +183,7 @@ function startProcessor({ pipeline, config, globalContext, userContext, accountC
       const resource = data as ReportResource
       if (!config.forwardReports.includes(resource.type as any)) return
 
-      assembleAndPublish({
+      process({
         message: resource.message,
         status: resource.type === 'deprecation' ? 'warn' : 'error',
         origin: 'report',

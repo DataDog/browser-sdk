@@ -191,36 +191,6 @@ describe('startProcessor', () => {
     expect(observations[0]['usr']).toEqual({ id: 'user-123', name: 'Alice' })
   })
 
-  it('beforeSend returning false discards the event', async () => {
-    const { pipeline, observations } = createPipelineAndCapture()
-    const config: LogsConfig = { ...defaultConfig, beforeSend: () => false }
-    startProcessor({ pipeline, config, globalContext, userContext, accountContext })
-    pipeline.seal()
-
-    pipeline.publish('action:log', { message: 'discarded', status: 'info' })
-    await waitMicrotask()
-
-    expect(observations.length).toBe(0)
-  })
-
-  it('beforeSend can modify the event', async () => {
-    const { pipeline, observations } = createPipelineAndCapture()
-    const config: LogsConfig = {
-      ...defaultConfig,
-      beforeSend: (event) => {
-        ;(event as any).custom = 'injected'
-      },
-    }
-    startProcessor({ pipeline, config, globalContext, userContext, accountContext })
-    pipeline.seal()
-
-    pipeline.publish('action:log', { message: 'test', status: 'info' })
-    await waitMicrotask()
-
-    expect(observations.length).toBe(1)
-    expect(observations[0]['custom']).toBe('injected')
-  })
-
   it('respects forwardErrorsToLogs: false — no runtime_error or network_request subscriptions', async () => {
     const { pipeline, observations } = createPipelineAndCapture()
     const config: LogsConfig = { ...defaultConfig, forwardErrorsToLogs: false }
