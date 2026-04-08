@@ -2,6 +2,8 @@ import { getBuildInfos } from '../envUtils.ts'
 import { browserConfigurations } from './browsers.conf.ts'
 import karmaBaseConf from './karma.base.conf.js'
 
+const browserStackHostname = process.env.BROWSER_STACK_HOSTNAME || 'bs-local.com'
+
 // eslint-disable-next-line import/no-default-export
 export default function (config) {
   config.set({
@@ -17,6 +19,9 @@ export default function (config) {
     concurrency: 5,
     browserDisconnectTolerance: 3,
     captureTimeout: 2 * 60 * 1000,
+    // BrowserStack recommends using bs-local.com for Safari/iOS local sessions instead of relying
+    // on the localhost rewrite, which avoids capture failures on real iOS devices.
+    hostname: browserStackHostname,
     browserStack: {
       username: process.env.BS_USERNAME,
       accessKey: process.env.BS_ACCESS_KEY,
