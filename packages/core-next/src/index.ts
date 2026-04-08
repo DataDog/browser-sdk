@@ -75,6 +75,7 @@ export { registerSdk, getSdk, unregisterSdk } from './domain/registry'
 export type { Module, ModuleContext } from './domain/module'
 
 export type {
+  ErrorCause,
   ConsoleResource,
   RuntimeErrorResource,
   ReportResource,

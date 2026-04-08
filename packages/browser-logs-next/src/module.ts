@@ -26,6 +26,11 @@ interface LogsPublicApi extends Record<string, unknown> {
   setUserProperty(key: string, value: unknown): void
   removeUserProperty(key: string): void
   clearUser(): void
+  setAccount(account: object): void
+  getAccount(): Record<string, unknown>
+  setAccountProperty(key: string, value: unknown): void
+  removeAccountProperty(key: string): void
+  clearAccount(): void
 }
 
 const logsModule: Module = {
@@ -35,6 +40,7 @@ const logsModule: Module = {
     const config = (context.config as any).logs as LogsConfig
     const globalContext = new ContextManager()
     const userContext = new ContextManager()
+    const accountContext = new ContextManager()
     const loggers = new Map<string, Logger>()
 
     function handleLog(message: LogsMessage, logger: Logger) {
@@ -55,6 +61,7 @@ const logsModule: Module = {
       config,
       globalContext,
       userContext,
+      accountContext,
     })
 
     return {
@@ -106,6 +113,22 @@ const logsModule: Module = {
       },
       clearUser() {
         userContext.clear()
+      },
+
+      setAccount(account: object) {
+        accountContext.set(account as Record<string, unknown>)
+      },
+      getAccount() {
+        return accountContext.get()
+      },
+      setAccountProperty(key: string, value: unknown) {
+        accountContext.setProperty(key as never, value as never)
+      },
+      removeAccountProperty(key: string) {
+        accountContext.removeProperty(key as never)
+      },
+      clearAccount() {
+        accountContext.clear()
       },
     }
   },

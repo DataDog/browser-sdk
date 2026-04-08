@@ -5,5 +5,5 @@ export type { LogsInitConfig, LogsConfig, ConsoleApi, ReportType } from './domai
 export { Logger, StatusType, HandlerType } from './domain/logger'
 export type { LogsMessage } from './domain/logger'
 export { startAssembly } from './domain/assembly'
-export type { LogEvent } from './domain/assembly'
+export type { LogEvent, LogError } from './domain/assembly'
 export { createRateLimiter } from './domain/rateLimiter'

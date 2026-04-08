@@ -1,9 +1,21 @@
-import type { Pipeline } from '@datadog/core-next'
-import type { ConsoleResource } from '@datadog/core-next'
+import type { Pipeline, ConsoleResource, ErrorCause } from '@datadog/core-next'
 
 type ConsoleApi = 'log' | 'debug' | 'info' | 'warn' | 'error'
 
 const CONSOLE_APIS: ConsoleApi[] = ['log', 'debug', 'info', 'warn', 'error']
+
+function flattenCauses(error: Error): ErrorCause[] | undefined {
+  if (!('cause' in error)) return undefined
+
+  const causes: ErrorCause[] = []
+  let current: unknown = (error as any).cause
+  while (current instanceof Error) {
+    causes.push({ message: current.message, type: current.name, stack: current.stack })
+    current = (current as any).cause
+  }
+
+  return causes.length > 0 ? causes : undefined
+}
 
 function startConsoleCollection(pipeline: Pipeline<Record<string, unknown>>): () => void {
   const originalMethods = new Map<ConsoleApi, Function>()
@@ -21,8 +33,10 @@ function startConsoleCollection(pipeline: Pipeline<Record<string, unknown>>): ()
       // Extract Error if first arg is an Error
       const error = args[0] instanceof Error ? args[0] : undefined
       const stack = error?.stack
+      const fingerprint = error && 'dd_fingerprint' in error ? String((error as any).dd_fingerprint) : undefined
+      const causes = error ? flattenCauses(error) : undefined
 
-      const resource: ConsoleResource = { api, message, stack, error }
+      const resource: ConsoleResource = { api, message, stack, error, fingerprint, causes }
       pipeline.publish('resource:console', resource)
     }
   }

@@ -1,10 +1,19 @@
 // Resources — published by collector modules
 
+interface ErrorCause {
+  message: string
+  source?: string
+  type?: string
+  stack?: string
+}
+
 interface ConsoleResource {
   api: 'log' | 'debug' | 'info' | 'warn' | 'error'
   message: string
   stack?: string
   error?: Error
+  fingerprint?: string
+  causes?: ErrorCause[]
 }
 
 interface RuntimeErrorResource {
@@ -12,7 +21,8 @@ interface RuntimeErrorResource {
   stack?: string
   type?: string
   source: 'source'
-  causes?: Array<{ message: string; type?: string; stack?: string }>
+  fingerprint?: string
+  causes?: ErrorCause[]
 }
 
 interface ReportResource {
@@ -43,4 +53,4 @@ interface SdkEventMap {
   [key: string]: unknown
 }
 
-export type { ConsoleResource, RuntimeErrorResource, ReportResource, NetworkRequestResource, SdkEventMap }
+export type { ErrorCause, ConsoleResource, RuntimeErrorResource, ReportResource, NetworkRequestResource, SdkEventMap }
