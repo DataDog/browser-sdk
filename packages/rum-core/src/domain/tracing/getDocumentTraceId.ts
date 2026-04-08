@@ -5,24 +5,30 @@ import { isCommentNode, isTextNode } from '../../browser/htmlDomUtils'
 interface DocumentTraceData {
   traceId: string
   traceTime: TimeStamp
+  spanId?: string
 }
 
 export const INITIAL_DOCUMENT_OUTDATED_TRACE_ID_THRESHOLD = 2 * ONE_MINUTE
 
-export function getDocumentTraceId(document: Document): string | undefined {
+export function getDocumentTraceId(document: Document): DocumentTraceData | undefined {
   const data = getDocumentTraceDataFromMeta(document) || getDocumentTraceDataFromComment(document)
 
   if (!data || data.traceTime <= dateNow() - INITIAL_DOCUMENT_OUTDATED_TRACE_ID_THRESHOLD) {
     return undefined
   }
 
-  return data.traceId
+  return data
 }
 
 export function getDocumentTraceDataFromMeta(document: Document): DocumentTraceData | undefined {
   const traceIdMeta = document.querySelector<HTMLMetaElement>('meta[name=dd-trace-id]')
   const traceTimeMeta = document.querySelector<HTMLMetaElement>('meta[name=dd-trace-time]')
-  return createDocumentTraceData(traceIdMeta && traceIdMeta.content, traceTimeMeta && traceTimeMeta.content)
+  const spanIdMeta = document.querySelector<HTMLMetaElement>('meta[name=dd-root-span-id]')
+  return createDocumentTraceData(
+    traceIdMeta && traceIdMeta.content,
+    traceTimeMeta && traceTimeMeta.content,
+    spanIdMeta && spanIdMeta.content
+  )
 }
 
 export function getDocumentTraceDataFromComment(document: Document): DocumentTraceData | undefined {
@@ -38,7 +44,8 @@ export function getDocumentTraceDataFromComment(document: Document): DocumentTra
 
 export function createDocumentTraceData(
   traceId: string | undefined | null,
-  rawTraceTime: string | undefined | null
+  rawTraceTime: string | undefined | null,
+  spanId?: string | undefined | null
 ): DocumentTraceData | undefined {
   const traceTime = rawTraceTime && (Number(rawTraceTime) as TimeStamp)
   if (!traceId || !traceTime) {
@@ -48,6 +55,7 @@ export function createDocumentTraceData(
   return {
     traceId,
     traceTime,
+    spanId: spanId || undefined,
   }
 }
 

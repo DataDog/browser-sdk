@@ -25,7 +25,7 @@ describe('getDocumentTraceId', () => {
           </html>`
         )
       )
-    ).toEqual('foo')
+    ).toEqual(jasmine.objectContaining({ traceId: 'foo' }))
   })
 
   it('gets a trace id found from meta tags', () => {
@@ -43,7 +43,26 @@ describe('getDocumentTraceId', () => {
           </html>`
         )
       )
-    ).toEqual('foo')
+    ).toEqual(jasmine.objectContaining({ traceId: 'foo' }))
+  })
+
+  it('gets a span id found from meta tags', () => {
+    expect(
+      getDocumentTraceId(
+        createDocument(
+          `${HTML_DOCTYPE}
+          <html>
+            <head>
+              <meta name="dd-trace-id" content="foo" />
+              <meta name="dd-trace-time" content="${Date.now()}" />
+              <meta name="dd-root-span-id" content="bar" />
+            </head>
+            <body>
+            </body>
+          </html>`
+        )
+      )
+    ).toEqual(jasmine.objectContaining({ traceId: 'foo', spanId: 'bar' }))
   })
 
   it('uses the meta strategy in priority', () => {
@@ -62,7 +81,7 @@ describe('getDocumentTraceId', () => {
           </html>`
         )
       )
-    ).toEqual('meta')
+    ).toEqual(jasmine.objectContaining({ traceId: 'meta' }))
   })
 
   it('returns undefined if nothing is present', () => {
@@ -103,7 +122,7 @@ describe('getDocumentTraceDataFromMeta', () => {
           </html>`
         )
       )
-    ).toEqual({ traceId: '123', traceTime: 456 as TimeStamp })
+    ).toEqual({ traceId: '123', traceTime: 456 as TimeStamp, spanId: undefined })
   })
 
   it('returns undefined if a meta is missing', () => {
@@ -173,6 +192,15 @@ describe('createDocumentTraceData', () => {
     expect(createDocumentTraceData('123', '456')).toEqual({
       traceId: '123',
       traceTime: 456 as TimeStamp,
+      spanId: undefined,
+    })
+  })
+
+  it('parses a trace comment with span id', () => {
+    expect(createDocumentTraceData('123', '456', '789')).toEqual({
+      traceId: '123',
+      traceTime: 456 as TimeStamp,
+      spanId: '789',
     })
   })
 

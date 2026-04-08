@@ -275,7 +275,7 @@ function computeResourceEntryTracingInfo(entry: RumPerformanceResourceTiming, co
   return {
     _dd: {
       trace_id: entry.traceId,
-      span_id: createSpanIdentifier().toString(),
+      span_id: entry.spanId || createSpanIdentifier().toString(),
       rule_psr: configuration.rulePsr,
     },
   }

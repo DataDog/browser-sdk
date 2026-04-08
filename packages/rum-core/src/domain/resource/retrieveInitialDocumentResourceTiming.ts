@@ -12,13 +12,15 @@ export function retrieveInitialDocumentResourceTiming(
 ) {
   runOnReadyState(configuration, 'interactive', () => {
     const navigationEntry = mockable(getNavigationEntry)()
+    const documentTraceData = getDocumentTraceId(document)
     const entry: RumPerformanceResourceTiming = Object.assign(navigationEntry.toJSON(), {
       entryType: RumPerformanceEntryType.RESOURCE as const,
       initiatorType: FAKE_INITIAL_DOCUMENT,
       // The ResourceTiming duration entry should be `responseEnd - startTime`. With
       // NavigationTiming entries, `startTime` is always 0, so set it to `responseEnd`.
       duration: navigationEntry.responseEnd,
-      traceId: getDocumentTraceId(document),
+      traceId: documentTraceData?.traceId,
+      spanId: documentTraceData?.spanId,
       toJSON: () => ({ ...entry, toJSON: undefined }),
     })
     callback(entry)
