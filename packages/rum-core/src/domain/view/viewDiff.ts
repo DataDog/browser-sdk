@@ -51,8 +51,8 @@ export interface DiffMergeOptions {
  * Returns undefined if no changes.
  *
  * Default strategy is REPLACE (isEqual check). Exceptions:
- * - Both values are plain objects and key is not in replaceKeys: recurse (MERGE)
- *   Sub-paths (e.g. 'view.custom_timings') are propagated to the recursive call.
+ * - Both values are plain objects and key is not in replaceKeys: recurse (MERGE), sub-paths
+ * (e.g. 'view.custom_timings') are propagated to the recursive call.
  * - Both values are arrays and key is in appendKeys: include only new trailing elements (APPEND)
  */
 export function diffMerge(
