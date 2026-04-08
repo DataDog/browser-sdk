@@ -14,6 +14,7 @@ import { display } from '../../tools/display'
 import { isSampled } from '../sampler'
 import { monitorError } from '../../tools/monitor'
 import { getCookies } from '../../browser/cookie'
+import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import type { SessionState } from './sessionState'
 import {
@@ -110,11 +111,14 @@ export function startSessionManager(
 
   async function resolveInitialState() {
     let state: SessionState = {}
-    await strategy.setSessionState((currentState) => {
-      const initialState = initializeSession(currentState, configuration)
-      state = expandOrRenew(initialState, configuration)
-      return state
-    })
+    await strategy.setSessionState(
+      (currentState) => {
+        const initialState = initializeSession(currentState, configuration)
+        state = expandOrRenew(initialState, configuration)
+        return state
+      },
+      { migrate: true }
+    )
     return state
   }
 
@@ -209,7 +213,7 @@ export function startSessionManager(
         newState: { ...newState },
         from,
         cookieValue,
-        cookies: getCookies('_dd_s'),
+        cookies: getCookies(SESSION_STORE_KEY),
         locksAvailable: Boolean(globalThis.navigator?.locks),
         cookieStoreAvailable: Boolean(globalThis.cookieStore),
       }
@@ -227,7 +231,7 @@ export function startSessionManager(
           newState: { ...newState },
           from,
           cookieValue,
-          cookies: getCookies('_dd_s'),
+          cookies: getCookies(SESSION_STORE_KEY),
           locksAvailable: Boolean(globalThis.navigator?.locks),
           cookieStoreAvailable: Boolean(globalThis.cookieStore),
         },

@@ -136,7 +136,7 @@ test.describe('telemetry', () => {
         Object.defineProperty(Document.prototype, 'cookie', {
           get: () => originalDescriptor.get.call(document),
           set: (value) => {
-            if (value.includes('_dd_s=')) {
+            if (value.includes('_dd_s_v2=')) {
               throw new Error('expected error')
             }
             originalDescriptor.set.call(document, value)
