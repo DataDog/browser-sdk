@@ -27,6 +27,7 @@ export interface SetupOptions {
   }
   worker?: WorkerOptions
   callerLocation?: CallerLocation
+  mockClock: boolean
 }
 
 export interface CallerLocation {
