@@ -17,6 +17,7 @@ export function createHandlingStack(
     | 'log'
     | 'react error'
     | 'nextjs error'
+    | 'nuxt error'
     | 'vue error'
     | 'angular error'
     | 'view'

@@ -141,3 +141,49 @@ test.describe('nuxt - router', () => {
       expect(user999View?.view.referrer).toContain('/user/42')
     })
 })
+
+test.describe('nuxt - errors', () => {
+  createTest('should capture vue error from vueApp.config.errorHandler')
+    .withBasePath('/error-test')
+    .withRum()
+    .withNuxtApp()
+    .run(async ({ page, flushEvents, intakeRegistry }) => {
+      await page.waitForLoadState('networkidle')
+      await page.click('[data-testid="trigger-error"]')
+
+      await flushEvents()
+
+      expect(intakeRegistry.rumErrorEvents.length).toBeGreaterThan(0)
+      const errorEvent = intakeRegistry.rumErrorEvents[intakeRegistry.rumErrorEvents.length - 1]
+
+      expect(errorEvent.error.message).toBe('Nuxt error from vueApp.config.errorHandler')
+      expect(errorEvent.error.source).toBe('custom')
+      expect(errorEvent.error.handling_stack).toBeDefined()
+      expect(errorEvent.context).toMatchObject({
+        framework: 'nuxt',
+        nuxt: { source: 'vueApp.config.errorHandler' },
+      })
+    })
+
+  createTest('should capture app:error hook errors')
+    .withBasePath('/app-error')
+    .withRum()
+    .withNuxtApp()
+    .run(async ({ page, flushEvents, intakeRegistry }) => {
+      await page.waitForLoadState('networkidle')
+      await page.click('[data-testid="trigger-app-error"]')
+
+      await flushEvents()
+
+      expect(intakeRegistry.rumErrorEvents.length).toBeGreaterThan(0)
+      const errorEvent = intakeRegistry.rumErrorEvents[intakeRegistry.rumErrorEvents.length - 1]
+
+      expect(errorEvent.error.message).toBe('Nuxt app:error hook error')
+      expect(errorEvent.error.source).toBe('custom')
+      expect(errorEvent.error.handling_stack).toBeDefined()
+      expect(errorEvent.context).toMatchObject({
+        framework: 'nuxt',
+        nuxt: { source: 'app:error' },
+      })
+    })
+})
