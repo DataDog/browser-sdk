@@ -34,6 +34,7 @@ import {
   computeResourceEntrySize,
   computeResourceEntryProtocol,
   computeResourceEntryDeliveryType,
+  FAKE_INITIAL_DOCUMENT,
   isResourceEntryRequestType,
   sanitizeIfLongDataUrl,
 } from './resourceUtils'
@@ -115,8 +116,12 @@ function processResourceEntry(
   pageStateHistory: PageStateHistory,
   requestRegistry: RequestRegistry | undefined
 ): RawRumEventCollectedData<RawRumResourceEvent> | undefined {
+  // The initial document entry must never be matched to a request — its trace data comes
+  // from server-injected meta tags, not from SDK-instrumented fetch/XHR.
   const matchingRequest =
-    isResourceEntryRequestType(entry) && requestRegistry ? requestRegistry.getMatchingRequest(entry) : undefined
+    entry.initiatorType !== FAKE_INITIAL_DOCUMENT && isResourceEntryRequestType(entry) && requestRegistry
+      ? requestRegistry.getMatchingRequest(entry)
+      : undefined
   return assembleResource(entry, matchingRequest, pageStateHistory, configuration)
 }
 
@@ -131,9 +136,11 @@ function assembleResource(
     return
   }
 
-  const tracingInfo = request
-    ? computeRequestTracingInfo(request, configuration)
-    : computeResourceEntryTracingInfo(entry!, configuration)
+  // Server-injected trace data (from meta tags on the initial document) takes priority
+  // over RUM-generated trace data from fetch/XHR instrumentation.
+  const entryTracingInfo = entry ? computeResourceEntryTracingInfo(entry, configuration) : undefined
+  const tracingInfo = entryTracingInfo || (request ? computeRequestTracingInfo(request, configuration) : undefined)
+
   if (!configuration.trackResources && !tracingInfo) {
     return
   }
@@ -272,13 +279,19 @@ function computeResourceEntryTracingInfo(entry: RumPerformanceResourceTiming, co
   if (!hasBeenTraced) {
     return undefined
   }
-  return {
+  const tracingInfo: { _dd: Record<string, string | number | undefined> } = {
     _dd: {
       trace_id: entry.traceId,
       span_id: entry.spanId || createSpanIdentifier().toString(),
       rule_psr: configuration.rulePsr,
     },
   }
+  // 128-bit trace ID support: propagate the upper 64 bits so the backend
+  // can correlate with APM traces that use 128-bit IDs (dd-trace v5+).
+  if (entry.traceIdHigh) {
+    tracingInfo._dd['p.tid'] = entry.traceIdHigh
+  }
+  return tracingInfo
 }
 
 function computeRequestDuration(pageStateHistory: PageStateHistory, startClocks: ClocksState, duration: Duration) {

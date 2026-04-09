@@ -607,6 +607,87 @@ describe('resourceCollection', () => {
     })
   })
 
+  describe('initial document tracing', () => {
+    it('should use meta tag trace data on the initial document resource', () => {
+      setupResourceCollection()
+      notifyPerformanceEntries([
+        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+          initiatorType: 'initial_document',
+          traceId: '1234',
+          spanId: '5678',
+        }),
+      ])
+      runTasks()
+      const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
+      expect(privateFields.trace_id).toBe('1234')
+      expect(privateFields.span_id).toBe('5678')
+    })
+
+    it('should preserve meta tag trace data when trackEarlyRequests is enabled', () => {
+      setupResourceCollection({ trackResources: true, trackEarlyRequests: true })
+      notifyPerformanceEntries([
+        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+          initiatorType: 'initial_document',
+          traceId: '1234',
+          spanId: '5678',
+        }),
+      ])
+      runTasks()
+      const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
+      expect(privateFields.trace_id).toBe('1234')
+      expect(privateFields.span_id).toBe('5678')
+    })
+
+    it('should not override meta tag trace data with request trace data for the same URL', () => {
+      setupResourceCollection({ trackResources: true })
+
+      // Simulate a fetch request to the same URL that has RUM-generated trace data
+      notifyRequest({
+        request: {
+          traceSampled: true,
+          spanId: createSpanIdentifier(),
+          traceId: createTraceIdentifier(),
+          type: RequestType.FETCH,
+        },
+      })
+      const fetchTraceId = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.trace_id
+
+      // Now emit the initial document entry with server-injected trace data
+      notifyPerformanceEntries([
+        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+          initiatorType: 'initial_document',
+          traceId: '99887766',
+          spanId: '11223344',
+        }),
+      ])
+      runTasks()
+
+      // The document resource should have the server trace, not the fetch trace
+      const docEvent = rawRumEvents.find(
+        (e) => (e.rawRumEvent as RawRumResourceEvent).resource.type === ResourceType.DOCUMENT
+      )
+      expect(docEvent).toBeDefined()
+      const docPrivateFields = (docEvent!.rawRumEvent as RawRumResourceEvent)._dd
+      expect(docPrivateFields.trace_id).toBe('99887766')
+      expect(docPrivateFields.span_id).toBe('11223344')
+      expect(docPrivateFields.trace_id).not.toBe(fetchTraceId)
+    })
+
+    it('should generate a span_id when meta tags only provide trace_id', () => {
+      setupResourceCollection()
+      notifyPerformanceEntries([
+        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+          initiatorType: 'initial_document',
+          traceId: '1234',
+        }),
+      ])
+      runTasks()
+      const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
+      expect(privateFields.trace_id).toBe('1234')
+      expect(privateFields.span_id).toEqual(jasmine.any(String))
+    })
+  })
+
   it('should collect handlingStack from completed fetch request', () => {
     setupResourceCollection()
     const response = new Response()

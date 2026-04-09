@@ -105,8 +105,14 @@ export function startRumAssembly(
         return
       }
 
+      let ddtags = buildTags(configuration).join(',')
+      // Propagate 128-bit trace ID upper bits to ddtags for APM correlation
+      const rawDd = (rawRumEvent as any)._dd
+      if (rawDd?.['p.tid']) {
+        ddtags += `,_dd.p.tid:${rawDd['p.tid']}`
+      }
       const serverRumEvent = combine(defaultRumEventAttributes, rawRumEvent, {
-        ddtags: buildTags(configuration).join(','),
+        ddtags,
       }) as AssembledRumEvent
 
       if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, eventRateLimiters)) {

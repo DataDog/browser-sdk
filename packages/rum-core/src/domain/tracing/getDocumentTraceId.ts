@@ -6,6 +6,7 @@ interface DocumentTraceData {
   traceId: string
   traceTime: TimeStamp
   spanId?: string
+  traceIdHigh?: string
 }
 
 export const INITIAL_DOCUMENT_OUTDATED_TRACE_ID_THRESHOLD = 2 * ONE_MINUTE
@@ -24,10 +25,12 @@ export function getDocumentTraceDataFromMeta(document: Document): DocumentTraceD
   const traceIdMeta = document.querySelector<HTMLMetaElement>('meta[name=dd-trace-id]')
   const traceTimeMeta = document.querySelector<HTMLMetaElement>('meta[name=dd-trace-time]')
   const spanIdMeta = document.querySelector<HTMLMetaElement>('meta[name=dd-root-span-id]')
+  const traceIdHighMeta = document.querySelector<HTMLMetaElement>('meta[name=dd-trace-id-high]')
   return createDocumentTraceData(
     traceIdMeta && traceIdMeta.content,
     traceTimeMeta && traceTimeMeta.content,
-    spanIdMeta && spanIdMeta.content
+    spanIdMeta && spanIdMeta.content,
+    traceIdHighMeta && traceIdHighMeta.content
   )
 }
 
@@ -45,7 +48,8 @@ export function getDocumentTraceDataFromComment(document: Document): DocumentTra
 export function createDocumentTraceData(
   traceId: string | undefined | null,
   rawTraceTime: string | undefined | null,
-  spanId?: string | undefined | null
+  spanId?: string | undefined | null,
+  traceIdHigh?: string | undefined | null
 ): DocumentTraceData | undefined {
   const traceTime = rawTraceTime && (Number(rawTraceTime) as TimeStamp)
   if (!traceId || !traceTime) {
@@ -56,6 +60,7 @@ export function createDocumentTraceData(
     traceId,
     traceTime,
     spanId: spanId || undefined,
+    traceIdHigh: traceIdHigh || undefined,
   }
 }
 

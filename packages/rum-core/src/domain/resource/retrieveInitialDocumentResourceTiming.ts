@@ -21,6 +21,7 @@ export function retrieveInitialDocumentResourceTiming(
       duration: navigationEntry.responseEnd,
       traceId: documentTraceData?.traceId,
       spanId: documentTraceData?.spanId,
+      traceIdHigh: documentTraceData?.traceIdHigh,
       toJSON: () => ({ ...entry, toJSON: undefined }),
     })
     callback(entry)

@@ -15,9 +15,9 @@ if (!datadogRum.getInitConfiguration()) {
   } else {
     // Manual testing mode: use dev server proxy
     datadogRum.init({
-      applicationId: 'e6f7bf7e-75cc-4b53-99b4-3b2fbef0764a',
-      clientToken: 'pubb389563cdd39e3f55df877a2172e9cef',
-      site: 'datad0g.com',
+      applicationId: 'b3543353-4f56-4f57-aa43-c0124dfd94b9',
+      clientToken: 'pub20172ebfb1199be623cdc09998aa5a18',
+      site: 'datadoghq.com',
       service: 'nextjs-test',
       env: 'staging',
       version: '1.0.0',

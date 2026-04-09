@@ -65,6 +65,25 @@ describe('getDocumentTraceId', () => {
     ).toEqual(jasmine.objectContaining({ traceId: 'foo', spanId: 'bar' }))
   })
 
+  it('gets a trace id high found from meta tags', () => {
+    expect(
+      getDocumentTraceId(
+        createDocument(
+          `${HTML_DOCTYPE}
+          <html>
+            <head>
+              <meta name="dd-trace-id" content="foo" />
+              <meta name="dd-trace-time" content="${Date.now()}" />
+              <meta name="dd-trace-id-high" content="0000000065f5a123" />
+            </head>
+            <body>
+            </body>
+          </html>`
+        )
+      )
+    ).toEqual(jasmine.objectContaining({ traceId: 'foo', traceIdHigh: '0000000065f5a123' }))
+  })
+
   it('uses the meta strategy in priority', () => {
     expect(
       getDocumentTraceId(
@@ -122,7 +141,26 @@ describe('getDocumentTraceDataFromMeta', () => {
           </html>`
         )
       )
-    ).toEqual({ traceId: '123', traceTime: 456 as TimeStamp, spanId: undefined })
+    ).toEqual({ traceId: '123', traceTime: 456 as TimeStamp, spanId: undefined, traceIdHigh: undefined })
+  })
+
+  it('gets data from meta including trace id high', () => {
+    expect(
+      getDocumentTraceDataFromMeta(
+        createDocument(
+          `${HTML_DOCTYPE}
+          <html>
+            <head>
+              <meta name="dd-trace-id" content="123" />
+              <meta name="dd-trace-time" content="456" />
+              <meta name="dd-trace-id-high" content="abcdef0123456789" />
+            </head>
+            <body>
+            </body>
+          </html>`
+        )
+      )
+    ).toEqual({ traceId: '123', traceTime: 456 as TimeStamp, spanId: undefined, traceIdHigh: 'abcdef0123456789' })
   })
 
   it('returns undefined if a meta is missing', () => {
@@ -193,6 +231,7 @@ describe('createDocumentTraceData', () => {
       traceId: '123',
       traceTime: 456 as TimeStamp,
       spanId: undefined,
+      traceIdHigh: undefined,
     })
   })
 
@@ -201,6 +240,25 @@ describe('createDocumentTraceData', () => {
       traceId: '123',
       traceTime: 456 as TimeStamp,
       spanId: '789',
+      traceIdHigh: undefined,
+    })
+  })
+
+  it('parses a trace comment with trace id high', () => {
+    expect(createDocumentTraceData('123', '456', undefined, '0000000065f5a123')).toEqual({
+      traceId: '123',
+      traceTime: 456 as TimeStamp,
+      spanId: undefined,
+      traceIdHigh: '0000000065f5a123',
+    })
+  })
+
+  it('parses a trace comment with span id and trace id high', () => {
+    expect(createDocumentTraceData('123', '456', '789', 'abcdef0123456789')).toEqual({
+      traceId: '123',
+      traceTime: 456 as TimeStamp,
+      spanId: '789',
+      traceIdHigh: 'abcdef0123456789',
     })
   })
 

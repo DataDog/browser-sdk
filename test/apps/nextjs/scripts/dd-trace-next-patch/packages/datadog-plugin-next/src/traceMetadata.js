@@ -4,8 +4,10 @@
  * Returns Datadog trace metadata for RUM<>APM correlation.
  *
  * Call this from your `generateMetadata` function in the root layout to inject
- * `<meta name="dd-trace-id">` and `<meta name="dd-trace-time">` tags into the page.
- * The Datadog RUM SDK reads these on initial page load to link with the server APM trace.
+ * `<meta name="dd-trace-id">`, `<meta name="dd-trace-time">`,
+ * `<meta name="dd-trace-id-high">` (128-bit), and `<meta name="dd-root-span-id">`
+ * tags into the page. The Datadog RUM SDK reads these on initial page load to
+ * link with the server APM trace.
  *
  * Usage:
  * ```js
@@ -19,9 +21,6 @@
  *   }
  * }
  * ```
- *
- * Returns a Next.js Metadata-compatible object:
- * { other: { 'dd-trace-id': '<traceId>', 'dd-trace-time': '<timestamp>' } }
  */
 function getDatadogTraceMetadata () {
   const tracer = global._ddtrace
@@ -33,6 +32,10 @@ function getDatadogTraceMetadata () {
   const context = activeSpan.context()
   const traceId = context.toTraceId()
   const traceTime = String(Date.now())
+
+  // 128-bit trace ID: extract the upper 64 bits so the browser SDK can include
+  // _dd.p.tid in ddtags for backend correlation with APM traces (dd-trace v5+).
+  const traceIdHigh = context._trace && context._trace.tags && context._trace.tags['_dd.p.tid']
 
   // Generate a span ID that will be used by the browser SDK's document resource span.
   // By setting it as the server root span's parentId, the browser span becomes the
@@ -82,13 +85,17 @@ function getDatadogTraceMetadata () {
     context._parentId = browserSpanId
   }
 
-  return {
-    other: {
-      'dd-trace-id': traceId,
-      'dd-trace-time': traceTime,
-      'dd-root-span-id': browserSpanId.toString(10)
-    }
+  const meta = {
+    'dd-trace-id': traceId,
+    'dd-trace-time': traceTime,
+    'dd-root-span-id': browserSpanId.toString(10),
   }
+
+  if (traceIdHigh) {
+    meta['dd-trace-id-high'] = traceIdHigh
+  }
+
+  return { other: meta }
 }
 
 module.exports = { getDatadogTraceMetadata }

@@ -25,6 +25,12 @@ const ANONYMOUS_FUNCTION_EXPORT_RE = /export\s+default\s+(async\s+)?function\s*\
 const IDENTIFIER_EXPORT_RE = /export\s+default\s+(\w+)\s*$/m
 
 export default function serverComponentLoader(this: { resourcePath: string }, source: string): string {
+  // Skip files outside the app/ directory (e.g. middleware.ts, instrumentation.ts).
+  // Turbopack rules match all *.ts/*.tsx files, but only app/ files are server components.
+  if (!this.resourcePath || !this.resourcePath.replace(/\\/g, '/').includes('/app/')) {
+    return source
+  }
+
   // Skip client components
   if (USE_CLIENT_RE.test(source)) {
     return source

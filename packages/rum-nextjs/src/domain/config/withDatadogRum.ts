@@ -91,7 +91,10 @@ function applyDatadogConfig(config: NextConfig, options?: WithDatadogRumOptions)
       return originalWebpack ? originalWebpack(webpackConfig, context) : webpackConfig
     }
 
-    // Turbopack: add loader rules (omit `as` to preserve original module type)
+    // Turbopack: add loader rule using a wildcard glob with a path condition
+    // so that only files under app/ are transformed. The loader itself also has
+    // a path guard as a safety net. We use the Turbopack condition API documented
+    // at https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack
     result.turbopack = {
       ...result.turbopack,
       rules: {
