@@ -18,11 +18,11 @@ import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import type { SessionState } from './sessionState'
 import {
-  expandOnly,
-  expandOrRenew,
-  getExpiredSessionState,
-  initializeSession,
+  createNewSessionState,
+  expandSessionState,
+  createExpiredSessionState,
   isSessionInExpiredState,
+  isSessionInNotStartedState,
 } from './sessionState'
 import { getSessionStoreStrategy } from './sessionStore'
 
@@ -59,6 +59,19 @@ export const VISIBILITY_CHECK_DELAY = ONE_MINUTE
 const SESSION_CONTEXT_TIMEOUT_DELAY = SESSION_TIME_OUT_DELAY
 let stopCallbacks: Array<() => void> = []
 
+// The order of this enum reflects the priority of operations: higher values take precedence when
+// multiple operations are scheduled before the storage write occurs.
+const enum OperationType {
+  // Extend the session expiry if already active (e.g. page still visible)
+  ExpandOnly,
+  // Extend the session expiry, or create a new session if expired (e.g. user activity)
+  ExpandOrRenew,
+  // Transition to expired state if the session has timed out (e.g. expiration timer fires or browser resumes)
+  SoftExpire,
+  // Force the session into expired state regardless of current state (e.g. consent revoked)
+  ForceExpire,
+}
+
 export function startSessionManager(
   configuration: Configuration,
   trackingConsentState: TrackingConsentState,
@@ -67,6 +80,7 @@ export function startSessionManager(
   const renewObservable = new Observable<SessionRenewalEvent>()
   const expireObservable = new Observable<void>()
   let expireContext: SessionDebugContext | undefined
+  let scheduledOperation: { type: OperationType; sessionId: string | undefined } | undefined
 
   if (!configuration.sessionStoreStrategyType) {
     display.warn('No storage available for session. We will not send any data.')
@@ -81,7 +95,7 @@ export function startSessionManager(
   stopCallbacks.push(() => sessionContextHistory.stop())
 
   const { throttled: throttledExpandOrRenew, cancel: cancelExpandOrRenew } = throttle(() => {
-    strategy.setSessionState((state) => expandOrRenew(state, configuration)).catch(monitorError)
+    scheduleOperation(OperationType.ExpandOrRenew)
   }, ONE_SECOND)
   stopCallbacks.push(cancelExpandOrRenew)
 
@@ -112,8 +126,11 @@ export function startSessionManager(
   async function resolveInitialState() {
     let state: SessionState = {}
     await strategy.setSessionState((currentState) => {
-      const initialState = initializeSession(currentState, configuration)
-      state = expandOrRenew(initialState, configuration)
+      if (isSessionInExpiredState(currentState) || !currentState.id) {
+        state = createNewSessionState(state, configuration)
+      } else {
+        state = currentState
+      }
       return state
     })
     return state
@@ -131,22 +148,10 @@ export function startSessionManager(
 
   function scheduleExpirationTimeout(state: SessionState) {
     clearTimeout(expirationTimeoutId)
-    if (state.expire && !isSessionInExpiredState(state)) {
+    if (state.expire) {
       const delay = Number(state.expire) - dateNow()
       expirationTimeoutId = setTimeout(() => {
-        strategy
-          .setSessionState((state) => {
-            if (isSessionInExpiredState(state)) {
-              if (!trackingConsentState.isGranted()) {
-                delete state.anonymousId
-              }
-
-              return getExpiredSessionState(state, configuration)
-            }
-
-            return state
-          })
-          .catch(monitorError)
+        scheduleOperation(OperationType.SoftExpire)
       }, delay)
     }
   }
@@ -155,7 +160,7 @@ export function startSessionManager(
   function setupSessionTracking() {
     trackingConsentState.observable.subscribe(() => {
       if (trackingConsentState.isGranted()) {
-        strategy.setSessionState((state) => expandOrRenew(state, configuration)).catch(monitorError)
+        scheduleOperation(OperationType.ExpandOrRenew)
       } else {
         expire()
       }
@@ -168,10 +173,10 @@ export function startSessionManager(
         }
       })
       trackVisibility(configuration, () => {
-        strategy.setSessionState((state) => expandOnly(state)).catch(monitorError)
+        scheduleOperation(OperationType.ExpandOnly)
       })
       trackResume(configuration, () => {
-        strategy.setSessionState((state) => initializeSession(state, configuration)).catch(monitorError)
+        scheduleOperation(OperationType.SoftExpire)
       })
     }
   }
@@ -242,22 +247,58 @@ export function startSessionManager(
   }
 
   function expire() {
-    cancelExpandOrRenew()
-    // Update in-memory state synchronously so events stop being collected immediately
-    const expiredState = getExpiredSessionState(sessionContextHistory.find(), configuration)
-    if (!trackingConsentState.isGranted()) {
-      delete expiredState.anonymousId
-    }
-    handleStateChange(expiredState, { from: 'expire' })
     // Persist to storage asynchronously
-    strategy
-      .setSessionState((state) => {
-        if (!trackingConsentState.isGranted()) {
-          delete state.anonymousId
-        }
-        return getExpiredSessionState(state, configuration)
-      })
-      .catch(monitorError)
+    scheduleOperation(OperationType.ForceExpire)
+    // Update in-memory state synchronously so events stop being collected immediately
+    if (sessionContextHistory.find()) {
+      expireObservable.notify()
+      sessionContextHistory.closeActive(relativeNow())
+    }
+  }
+
+  function scheduleOperation(type: OperationType) {
+    const hadOperationScheduled = !!scheduledOperation
+    if (!scheduledOperation || type >= scheduledOperation.type) {
+      scheduledOperation = { type, sessionId: sessionContextHistory.find()?.id }
+    }
+
+    if (!hadOperationScheduled) {
+      strategy
+        .setSessionState((state) => {
+          const operation = scheduledOperation!
+          scheduledOperation = undefined
+
+          if (state.id !== operation.sessionId) {
+            return state
+          }
+
+          // prevent renewing if state is altered by a 3rd party (e.g. adblocker deleting the cookie)
+          if (isSessionInNotStartedState(state)) {
+            return state
+          }
+
+          switch (operation.type) {
+            case OperationType.ExpandOnly:
+              if (!isSessionInExpiredState(state)) {
+                expandSessionState(state)
+              }
+              return state
+            case OperationType.ExpandOrRenew:
+              if (isSessionInExpiredState(state)) {
+                return createNewSessionState(state, configuration)
+              }
+              return state
+            case OperationType.SoftExpire:
+              if (isSessionInExpiredState(state)) {
+                return createExpiredSessionState(state, configuration, trackingConsentState)
+              }
+              return state
+            case OperationType.ForceExpire:
+              return createExpiredSessionState(state, configuration, trackingConsentState)
+          }
+        })
+        .catch(monitorError)
+    }
   }
 
   function buildSessionContext(sessionState: SessionState): SessionContext {

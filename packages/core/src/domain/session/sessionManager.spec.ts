@@ -171,6 +171,7 @@ describe('startSessionManager', () => {
 
       // Expire the session
       sessionManager.expire()
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       expect(renewSpy).not.toHaveBeenCalled()
 
@@ -196,8 +197,10 @@ describe('startSessionManager', () => {
       sessionManager.renewObservable.subscribe(renewSpy)
 
       sessionManager.expire()
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       clock.tick(VISIBILITY_CHECK_DELAY)
+      await collectAsyncCalls(sessionObservableSpy, 3)
 
       expect(renewSpy).not.toHaveBeenCalled()
     })
@@ -213,14 +216,18 @@ describe('startSessionManager', () => {
 
       // Multiple rapid clicks within the throttle window
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+      await collectAsyncCalls(sessionObservableSpy, 2)
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+      await collectAsyncCalls(sessionObservableSpy, 2)
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       // Only one call (leading edge) should have fired immediately
       expect(fakeStrategy.setSessionState.calls.count() - callCountBefore).toBe(1)
 
       // After throttle delay, the trailing call fires (from the queued clicks)
       clock.tick(ONE_SECOND)
+      await collectAsyncCalls(sessionObservableSpy, 3)
 
       // Leading (1) + trailing (1) = 2 calls total
       expect(fakeStrategy.setSessionState.calls.count() - callCountBefore).toBe(2)
@@ -234,6 +241,7 @@ describe('startSessionManager', () => {
       sessionManager.expireObservable.subscribe(expireSpy)
 
       sessionManager.expire()
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       expect(expireSpy).toHaveBeenCalledTimes(1)
     })
@@ -245,6 +253,7 @@ describe('startSessionManager', () => {
 
       sessionManager.expire()
       sessionManager.expire()
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       expect(expireSpy).toHaveBeenCalledTimes(1)
     })
@@ -257,6 +266,7 @@ describe('startSessionManager', () => {
       expect(stateBefore.id).toBeDefined()
 
       sessionManager.expire()
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       const stateAfter = fakeStrategy.getInternalState()
       expect(stateAfter.isExpired).toBe(EXPIRED)
@@ -267,17 +277,92 @@ describe('startSessionManager', () => {
       const initialId = sessionManager.findSession()!.id
 
       sessionManager.expire()
+      await collectAsyncCalls(sessionObservableSpy, 2)
       expect(sessionManager.findSession()).toBeUndefined()
 
       // Wait for throttle
       clock.tick(ONE_SECOND)
 
+      await collectAsyncCalls(sessionObservableSpy, 2)
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
       await collectAsyncCalls(sessionObservableSpy, 3) // 1 for initial session, 1 for expire, 1 for renew
 
       expect(sessionManager.findSession()).toBeDefined()
       expect(sessionManager.findSession()!.id).not.toBe(initialId)
+    })
+  })
+
+  describe('operation scheduling', () => {
+    it('should apply ForceExpire instead of ExpandOrRenew when expire() is called while a storage write is pending', async () => {
+      // This simulates the race condition that motivated the scheduleOperation system:
+      // activity triggers an ExpandOrRenew (storage write queued but not yet executed, like
+      // when waiting for a navigator.locks acquisition), then expire() is called before
+      // the write completes. Without the scheduling system, the pending ExpandOrRenew
+      // would overwrite the session back to active, causing a spurious renewObservable.
+
+      const sessionManager = await startSessionManagerWithDefaults()
+      const renewSpy = jasmine.createSpy('renew')
+      sessionManager.renewObservable.subscribe(renewSpy)
+
+      // Activity triggers ExpandOrRenew — the fn is queued but hasn't run yet (async strategy)
+      document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+
+      // expire() is called before the fn runs, superseding ExpandOrRenew with ForceExpire
+      sessionManager.expire()
+      expect(sessionManager.findSession()).toBeUndefined() // in-memory already closed
+
+      // The deferred fn runs: reads ForceExpire (not ExpandOrRenew) from scheduledOperation
+      await collectAsyncCalls(sessionObservableSpy, 2)
+
+      expect(renewSpy).not.toHaveBeenCalled()
+      expect(fakeStrategy.getInternalState().isExpired).toBe(EXPIRED)
+    })
+
+    it('should apply ForceExpire even if ExpandOrRenew is scheduled after it', async () => {
+      // Reverse of the previous test: expire() is called first, then activity triggers
+      // ExpandOrRenew. ForceExpire has higher priority and should still win.
+
+      const sessionManager = await startSessionManagerWithDefaults()
+      const renewSpy = jasmine.createSpy('renew')
+      sessionManager.renewObservable.subscribe(renewSpy)
+
+      // expire() schedules ForceExpire — fn is deferred
+      sessionManager.expire()
+      expect(sessionManager.findSession()).toBeUndefined() // in-memory already closed
+
+      // Activity triggers ExpandOrRenew while ForceExpire is still pending
+      // It has lower priority so it does not supersede ForceExpire
+      document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+
+      // The deferred fn runs: applies ForceExpire (not ExpandOrRenew)
+      await collectAsyncCalls(sessionObservableSpy, 2)
+
+      expect(renewSpy).not.toHaveBeenCalled()
+      expect(fakeStrategy.getInternalState().isExpired).toBe(EXPIRED)
+    })
+
+    it('should ignore a pending operation if the session was externally expired before the write runs', async () => {
+      // If another tab expires the session between scheduling an operation and running it,
+      // the operation should be skipped — it was intended for a session that no longer exists.
+
+      const sessionManager = await startSessionManagerWithDefaults()
+      const renewSpy = jasmine.createSpy('renew')
+      sessionManager.renewObservable.subscribe(renewSpy)
+
+      // Activity triggers ExpandOrRenew for the current session — fn is deferred
+      document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+
+      // Another tab expires the session before the fn runs
+      fakeStrategy.simulateExternalChange({ isExpired: EXPIRED })
+      expect(sessionManager.findSession()).toBeUndefined()
+
+      // The deferred ExpandOrRenew fn runs: currentState.id (undefined) !== op.sessionId,
+      // so it is skipped — the expired session is left unchanged
+      await collectAsyncCalls(sessionObservableSpy, 3)
+
+      expect(renewSpy).not.toHaveBeenCalled()
+      expect(fakeStrategy.getInternalState().isExpired).toBe(EXPIRED)
     })
   })
 
@@ -297,7 +382,11 @@ describe('startSessionManager', () => {
       // Wait for throttle to clear before dispatching activity
       clock.tick(ONE_SECOND)
 
+      await collectAsyncCalls(sessionObservableSpy, 2) // 1 for initial session, 1 for expire
+
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+
+      await collectAsyncCalls(sessionObservableSpy, 3) // 1 for renew
 
       // Session should still be active (expire time was extended)
       const state = fakeStrategy.getInternalState()
@@ -315,6 +404,7 @@ describe('startSessionManager', () => {
       const initialExpire = fakeStrategy.getInternalState().expire
 
       clock.tick(VISIBILITY_CHECK_DELAY)
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       // Visibility check should have expanded the session
       const newExpire = fakeStrategy.getInternalState().expire
@@ -326,11 +416,13 @@ describe('startSessionManager', () => {
 
       const sessionManager = await startSessionManagerWithDefaults()
       sessionManager.expire()
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       const stateAfterExpire = fakeStrategy.getInternalState()
       expect(stateAfterExpire.isExpired).toBe(EXPIRED)
 
       clock.tick(VISIBILITY_CHECK_DELAY)
+      await collectAsyncCalls(sessionObservableSpy, 3)
 
       // expandOnly should not modify an expired session
       const state = fakeStrategy.getInternalState()
@@ -411,6 +503,9 @@ describe('startSessionManager', () => {
 
       // First expire
       sessionManager.expire()
+      await collectAsyncCalls(sessionObservableSpy, 2)
+
+      sessionObservableSpy.calls.reset()
 
       // Then another tab creates a new session
       fakeStrategy.simulateExternalChange({
@@ -418,6 +513,7 @@ describe('startSessionManager', () => {
         expire: String(Date.now() + SESSION_EXPIRATION_DELAY),
         created: String(Date.now()),
       })
+      await collectAsyncCalls(sessionObservableSpy, 1)
 
       expect(renewSpy).toHaveBeenCalledTimes(1)
       expect(sessionManager.findSession()!.id).toBe('new-session-from-other-tab')
@@ -432,6 +528,7 @@ describe('startSessionManager', () => {
       expect(sessionManager.findSession()).toBeDefined()
 
       trackingConsentState.update(TrackingConsent.NOT_GRANTED)
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       expect(sessionManager.findSession()).toBeUndefined()
       expect(fakeStrategy.getInternalState().isExpired).toBe(EXPIRED)
@@ -442,6 +539,7 @@ describe('startSessionManager', () => {
       const sessionManager = await startSessionManagerWithDefaults({ trackingConsentState })
 
       trackingConsentState.update(TrackingConsent.NOT_GRANTED)
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       clock.tick(ONE_SECOND)
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
@@ -455,6 +553,7 @@ describe('startSessionManager', () => {
       const initialId = sessionManager.findSession()!.id
 
       trackingConsentState.update(TrackingConsent.NOT_GRANTED)
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       expect(sessionManager.findSession()).toBeUndefined()
 
@@ -476,6 +575,7 @@ describe('startSessionManager', () => {
       expect(fakeStrategy.getInternalState().anonymousId).toBeDefined()
 
       trackingConsentState.update(TrackingConsent.NOT_GRANTED)
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       expect(fakeStrategy.getInternalState().anonymousId).toBeUndefined()
     })
@@ -533,6 +633,7 @@ describe('startSessionManager', () => {
       const sessionManager = await startSessionManagerWithDefaults()
 
       sessionManager.expire()
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       expect(sessionManager.findSession()).toBeUndefined()
     })
@@ -545,11 +646,14 @@ describe('startSessionManager', () => {
       // Advance time, expire, then renew
       clock.tick(10 * ONE_SECOND)
       sessionManager.expire()
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       clock.tick(10 * ONE_SECOND)
+      await collectAsyncCalls(sessionObservableSpy, 2)
+
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
-      await collectAsyncCalls(sessionObservableSpy, 3) // 1 for initial session, 1 for expire, 1 for renew
+      await collectAsyncCalls(sessionObservableSpy, 3)
 
       const secondId = sessionManager.findSession()!.id
 
@@ -570,9 +674,11 @@ describe('startSessionManager', () => {
 
       sessionManager.expire()
       clock.tick(ONE_SECOND)
+      await collectAsyncCalls(sessionObservableSpy, 2)
+
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
-      await collectAsyncCalls(sessionObservableSpy, 3) // 1 for initial session, 1 for expire, 1 for renew
+      await collectAsyncCalls(sessionObservableSpy, 3)
 
       expect(currentSession!).toBeDefined()
     })
@@ -585,6 +691,7 @@ describe('startSessionManager', () => {
       })
 
       sessionManager.expire()
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       // expireObservable fires before sessionContextHistory.closeActive, so the session is still findable
       expect(currentSession!).toBeDefined()
@@ -596,7 +703,9 @@ describe('startSessionManager', () => {
 
         clock.tick(10 * ONE_SECOND)
         sessionManager.expire()
+        await collectAsyncCalls(sessionObservableSpy, 2)
         clock.tick(10 * ONE_SECOND)
+        await collectAsyncCalls(sessionObservableSpy, 2)
 
         expect(sessionManager.findSession(clock.relative(15 * ONE_SECOND), { returnInactive: true })).toBeDefined()
         expect(sessionManager.findSession(clock.relative(15 * ONE_SECOND), { returnInactive: false })).toBeUndefined()
@@ -626,7 +735,9 @@ describe('startSessionManager', () => {
 
       clock.tick(10 * ONE_SECOND)
       sessionManager.expire()
+      await collectAsyncCalls(sessionObservableSpy, 2)
       clock.tick(10 * ONE_SECOND)
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       expect(sessionManager.findTrackedSession(clock.relative(5 * ONE_SECOND))).toBeDefined()
       expect(sessionManager.findTrackedSession(clock.relative(15 * ONE_SECOND))).toBeUndefined()
@@ -647,6 +758,7 @@ describe('startSessionManager', () => {
       const sessionManager = await startSessionManagerWithDefaults()
 
       sessionManager.expire()
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       expect(sessionManager.findTrackedSession(undefined, { returnInactive: true })).toBeDefined()
     })
@@ -692,6 +804,7 @@ describe('startSessionManager', () => {
       const callCountBefore = fakeStrategy.setSessionState.calls.count()
 
       sessionManager.updateSessionState({ extra: 'value' })
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       expect(fakeStrategy.setSessionState.calls.count()).toBe(callCountBefore + 1)
       expect(fakeStrategy.getInternalState().extra).toBe('value')
@@ -719,17 +832,43 @@ describe('startSessionManager', () => {
       expect(sessionManager.findSession()!.id).toBe(initialId)
     })
 
-    it('should reinitialize session in store when store is empty', async () => {
-      await startSessionManagerWithDefaults()
+    it('should soft-expire the session when it timed out during the freeze', async () => {
+      const sessionManager = await startSessionManagerWithDefaults()
+      const initialId = sessionManager.findSession()!.id
 
-      // Simulate store being cleared (e.g., by another tab or browser clearing storage)
-      fakeStrategy.simulateExternalChange({})
+      // Simulate the session timing out while the browser was frozen (expire in the past)
+      fakeStrategy.simulateExternalChange({
+        id: initialId,
+        expire: String(Date.now() - 1),
+        created: String(Date.now() - SESSION_TIME_OUT_DELAY),
+      })
+
+      await collectAsyncCalls(sessionObservableSpy, 2)
 
       window.dispatchEvent(createNewEvent(DOM_EVENT.RESUME))
 
-      // initializeSession on empty state creates an expired state
+      await collectAsyncCalls(sessionObservableSpy, 3)
+
       const state = fakeStrategy.getInternalState()
       expect(state.isExpired).toBe(EXPIRED)
+      expect(state.id).toBeUndefined()
+    })
+
+    it('should do nothing when store is empty (e.g. cleared by an ad blocker)', async () => {
+      await startSessionManagerWithDefaults()
+
+      // Simulate store being cleared (e.g., by an ad blocker)
+      fakeStrategy.simulateExternalChange({})
+
+      await collectAsyncCalls(sessionObservableSpy, 2)
+
+      window.dispatchEvent(createNewEvent(DOM_EVENT.RESUME))
+
+      await collectAsyncCalls(sessionObservableSpy, 3)
+
+      // Store should remain empty — we bail out rather than reinitializing
+      const state = fakeStrategy.getInternalState()
+      expect(state.isExpired).toBeUndefined()
     })
   })
 
