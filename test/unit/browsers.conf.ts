@@ -14,8 +14,8 @@ export const browserConfigurations: BrowserConfiguration[] = [
     sessionName: 'Firefox',
     name: 'Firefox',
     version: '67.0',
-    os: 'OS X',
-    osVersion: 'Mojave',
+    os: 'Windows',
+    osVersion: '11',
   },
   {
     sessionName: 'Safari desktop',
@@ -37,13 +37,5 @@ export const browserConfigurations: BrowserConfiguration[] = [
     os: 'android',
     osVersion: '12.0',
     device: 'Google Pixel 6 Pro',
-  },
-  {
-    sessionName: 'Safari mobile',
-    name: 'iphone',
-    os: 'ios',
-    osVersion: '26',
-    device: 'iPhone 14',
-    realMobile: true,
   },
 ]
