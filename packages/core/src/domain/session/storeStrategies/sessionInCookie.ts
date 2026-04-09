@@ -1,6 +1,6 @@
 import { isEmptyObject } from '../../../tools/utils/objectUtils'
 import type { CookieOptions } from '../../../browser/cookie'
-import { getCurrentSite, areCookiesAuthorized } from '../../../browser/cookie'
+import { getCurrentSite, areCookiesAuthorized, getCookies } from '../../../browser/cookie'
 import type { Configuration, InitConfiguration } from '../../configuration'
 import { SESSION_COOKIE_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY, SessionPersistence } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
@@ -9,7 +9,7 @@ import { Observable } from '../../../tools/observable'
 import { mockable } from '../../../tools/mockable'
 import { createCookieAccess } from '../../../browser/cookieAccess'
 import type { SessionStoreStrategy, SessionStoreStrategyType, SessionObservableEvent } from './sessionStoreStrategy'
-import { SESSION_STORE_KEY } from './sessionStoreStrategy'
+import { SESSION_STORE_KEY, LEGACY_SESSION_STORE_KEY } from './sessionStoreStrategy'
 
 const SESSION_COOKIE_VERSION = 0
 
@@ -25,10 +25,11 @@ let pendingChain: Promise<void> | undefined
 
 export function initCookieStrategy(cookieOptions: CookieOptions, configuration: Configuration): SessionStoreStrategy {
   const sessionObservable = new Observable<SessionObservableEvent>()
-
-  const cookieAccess = mockable(createCookieAccess)(SESSION_STORE_KEY, configuration, cookieOptions)
   const trackAnonymousUser = !!configuration.trackAnonymousUser
   const opts = encodeCookieOptions(cookieOptions)
+
+  const cookieAccess = mockable(createCookieAccess)(SESSION_STORE_KEY, configuration, cookieOptions)
+  let isFirstCall = true
 
   cookieAccess.observable.subscribe((cookieValue) => {
     const state = toSessionState(cookieValue ?? '')
@@ -42,7 +43,13 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
 
   function applyAndWrite(fn: (state: SessionState) => SessionState) {
     return cookieAccess.getAllAndSet((cookieValues) => {
-      const currentState = findMatchingSessionState(cookieValues, opts)
+      let currentState = findMatchingSessionState(cookieValues, opts)
+
+      if (isFirstCall && isEmptyObject(currentState)) {
+        currentState = findMatchingSessionState(getCookies(LEGACY_SESSION_STORE_KEY), opts)
+      }
+      isFirstCall = false
+
       const newState = fn(currentState)
       const sessionString = buildSessionString(newState, cookieOptions)
       const expireDelay = trackAnonymousUser ? SESSION_COOKIE_EXPIRATION_DELAY : SESSION_TIME_OUT_DELAY

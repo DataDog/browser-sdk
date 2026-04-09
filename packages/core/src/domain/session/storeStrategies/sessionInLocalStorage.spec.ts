@@ -3,7 +3,7 @@ import type { Configuration } from '../../configuration'
 import type { SessionState } from '../sessionState'
 import { toSessionString } from '../sessionState'
 import { initLocalStorageStrategy, selectLocalStorageStrategy } from './sessionInLocalStorage'
-import { SESSION_STORE_KEY } from './sessionStoreStrategy'
+import { LEGACY_SESSION_STORE_KEY, SESSION_STORE_KEY } from './sessionStoreStrategy'
 
 const MOCK_CONFIGURATION = { allowUntrustedEvents: true } as Configuration
 
@@ -12,9 +12,11 @@ describe('LocalStorage SessionStoreStrategy', () => {
 
   beforeEach(() => {
     localStorage.removeItem(SESSION_STORE_KEY)
+    localStorage.removeItem(LEGACY_SESSION_STORE_KEY)
     strategy = initLocalStorageStrategy(MOCK_CONFIGURATION)
     registerCleanupTask(() => {
       localStorage.removeItem(SESSION_STORE_KEY)
+      localStorage.removeItem(LEGACY_SESSION_STORE_KEY)
     })
   })
 
@@ -93,6 +95,53 @@ describe('LocalStorage SessionStoreStrategy', () => {
       window.dispatchEvent(event)
 
       expect(spy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('migration from legacy localStorage key', () => {
+    it('should read from legacy key on first call when new key is empty', async () => {
+      localStorage.setItem(LEGACY_SESSION_STORE_KEY, 'id=legacy-id&created=123')
+
+      let capturedState: SessionState | undefined
+      await strategy.setSessionState((state) => {
+        capturedState = state
+        return state
+      })
+
+      expect(capturedState!.id).toBe('legacy-id')
+      expect(capturedState!.created).toBe('123')
+    })
+
+    it('should not read from legacy key when new key has data', async () => {
+      localStorage.setItem(SESSION_STORE_KEY, toSessionString({ id: 'new-id' } as SessionState))
+      localStorage.setItem(LEGACY_SESSION_STORE_KEY, 'id=legacy-id')
+
+      let capturedState: SessionState | undefined
+      await strategy.setSessionState((state) => {
+        capturedState = state
+        return state
+      })
+
+      expect(capturedState!.id).toBe('new-id')
+    })
+
+    it('should not read from legacy key on subsequent calls', async () => {
+      localStorage.setItem(LEGACY_SESSION_STORE_KEY, 'id=legacy-id')
+
+      // First call triggers migration
+      await strategy.setSessionState((state) => state)
+
+      // Clear the new key to simulate empty state
+      localStorage.removeItem(SESSION_STORE_KEY)
+
+      // Second call should not read from legacy key
+      let capturedState: SessionState | undefined
+      await strategy.setSessionState((state) => {
+        capturedState = state
+        return state
+      })
+
+      expect(capturedState).toEqual({})
     })
   })
 })

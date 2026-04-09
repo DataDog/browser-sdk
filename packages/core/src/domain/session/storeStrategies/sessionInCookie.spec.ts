@@ -5,6 +5,7 @@ import type { SessionState } from '../sessionState'
 import type { Configuration, InitConfiguration } from '../../configuration'
 import { SESSION_COOKIE_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from '../sessionConstants'
 import type { SessionObservableEvent } from './sessionStoreStrategy'
+import { LEGACY_SESSION_STORE_KEY } from './sessionStoreStrategy'
 import { buildCookieOptions, selectCookieStrategy, initCookieStrategy } from './sessionInCookie'
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'abc', trackAnonymousUser: true }
@@ -282,6 +283,65 @@ describe('session in cookie strategy', () => {
       mockCookies()
       const strategy = selectCookieStrategy({ clientToken: 'abc' })
       expect(strategy).toBeDefined()
+    })
+  })
+
+  describe('migration from legacy cookie', () => {
+    function setLegacyCookie(value: string) {
+      const mock = mockCookies()
+      mock.getCookies().push({
+        name: LEGACY_SESSION_STORE_KEY,
+        value,
+        expires: Date.now() + 60_000,
+      })
+    }
+
+    it('should read from legacy cookie on first call when new cookie is empty', async () => {
+      setLegacyCookie('id=legacy-id&created=123&c=0')
+      const { strategy } = setupCookieStrategy()
+
+      let capturedState: SessionState | undefined
+      await strategy.setSessionState((state) => {
+        capturedState = state
+        return state
+      })
+
+      expect(capturedState!.id).toBe('legacy-id')
+      expect(capturedState!.created).toBe('123')
+    })
+
+    it('should not read from legacy cookie when new cookie has data', async () => {
+      setLegacyCookie('id=legacy-id&c=0')
+      const { strategy, mockCookie } = setupCookieStrategy()
+      mockCookie.setAllValues(['id=new-id&c=0'])
+
+      let capturedState: SessionState | undefined
+      await strategy.setSessionState((state) => {
+        capturedState = state
+        return state
+      })
+
+      expect(capturedState!.id).toBe('new-id')
+    })
+
+    it('should not read from legacy cookie on subsequent calls', async () => {
+      setLegacyCookie('id=legacy-id&c=0')
+      const { strategy, mockCookie } = setupCookieStrategy()
+
+      // First call triggers migration
+      await strategy.setSessionState((state) => state)
+
+      // Clear the new cookie to simulate empty state
+      mockCookie.setAllValues([])
+
+      // Second call should not read from legacy cookie
+      let capturedState: SessionState | undefined
+      await strategy.setSessionState((state) => {
+        capturedState = state
+        return state
+      })
+
+      expect(capturedState).toEqual({})
     })
   })
 
