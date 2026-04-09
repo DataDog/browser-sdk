@@ -2,10 +2,17 @@ import { getBuildInfos } from '../envUtils.ts'
 import { browserConfigurations } from './browsers.conf.ts'
 import karmaBaseConf from './karma.base.conf.js'
 
+const BROWSERSTACK_IOS_SAFE_HOSTNAME = 'bs-local.com'
+
 // eslint-disable-next-line import/no-default-export
 export default function (config) {
   config.set({
     ...karmaBaseConf,
+    // BrowserStack iOS sessions do not reliably capture Karma through localhost.
+    // Serve the unit test page through bs-local.com directly so Mobile Safari uses
+    // the BrowserStack local tunnel hostname instead of relying on the redirect.
+    hostname: BROWSERSTACK_IOS_SAFE_HOSTNAME,
+    listenAddress: '0.0.0.0',
     exclude: [
       // Exclude developer-extension from BrowserStack because it is is only compatible with Chrome
       // so there is no point to test it on other browsers.
