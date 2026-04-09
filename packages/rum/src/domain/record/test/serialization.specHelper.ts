@@ -1,9 +1,11 @@
 import type { TimeStamp } from '@datadog/browser-core'
 import { noop, timeStampNow } from '@datadog/browser-core'
-import { RecordType } from '../../../types'
+import { RecordType, SnapshotFormat } from '../../../types'
 import type {
   BrowserChangeRecord,
+  BrowserFullSnapshotChangeRecord,
   BrowserFullSnapshotRecord,
+  BrowserFullSnapshotV1Record,
   BrowserRecord,
   DocumentNode,
   ElementNode,
@@ -62,6 +64,9 @@ export function takeFullSnapshotForTesting(scope: RecordingScope): DocumentNode 
     // Tests want to assert against the serialized node representation of the document,
     // not the record that would contain it if we emitted it, so we just extract it here.
     const fullSnapshotRecord = record as BrowserFullSnapshotRecord
+    if (fullSnapshotRecord.format === SnapshotFormat.Change) {
+      throw new Error('Full snapshot has unexpected format')
+    }
     node = fullSnapshotRecord.data.node as DocumentNode & SerializedNodeWithId
   }
 
@@ -97,11 +102,14 @@ export function serializeNodeAndVerifyChangeRecord(
   const changeScope = createRecordingScopeForTesting()
   changeScope.elementsScrollPositions = transaction.scope.elementsScrollPositions
 
-  let changeRecord: BrowserChangeRecord | undefined
+  let changeRecord: BrowserChangeRecord | BrowserFullSnapshotChangeRecord | undefined
   serializeChangesInTransaction(
     transaction.kind,
     (record: BrowserRecord): void => {
-      if (record.type !== RecordType.Change) {
+      if (
+        record.type !== RecordType.Change &&
+        (record.type !== RecordType.FullSnapshot || record.format !== SnapshotFormat.Change)
+      ) {
         throw new Error(`Received unexpected record type: ${record.type}`)
       }
       changeRecord = record
@@ -124,7 +132,7 @@ export function serializeNodeAndVerifyChangeRecord(
     // match serializeNode() exactly.
     expect(changeRecord).not.toBeUndefined()
     const converter = createChangeConverter()
-    const convertedRecord = converter.convert(changeRecord!) as BrowserFullSnapshotRecord
+    const convertedRecord = converter.convert(changeRecord!) as BrowserFullSnapshotV1Record
     const convertedNode = convertedRecord.data.node
     expect(convertedNode).toEqual(serializedNode)
 

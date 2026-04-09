@@ -8,6 +8,7 @@ import type {
   AttributeAssignmentOrDeletion,
   AttributeChange,
   BrowserChangeRecord,
+  BrowserFullSnapshotChangeRecord,
   Change,
   StyleSheetRules,
   TextChange,
@@ -25,14 +26,18 @@ import { createStringTable } from './stringTable'
  * expectations against the record's content.
  */
 export interface ChangeDecoder {
-  decode(record: BrowserChangeRecord): BrowserChangeRecord
+  decode(
+    record: BrowserChangeRecord | BrowserFullSnapshotChangeRecord
+  ): BrowserChangeRecord | BrowserFullSnapshotChangeRecord
 
   stringTable: StringTable
 }
 
 export function createChangeDecoder(): ChangeDecoder {
   const self: ChangeDecoder = {
-    decode(record: BrowserChangeRecord): BrowserChangeRecord {
+    decode(
+      record: BrowserChangeRecord | BrowserFullSnapshotChangeRecord
+    ): BrowserChangeRecord | BrowserFullSnapshotChangeRecord {
       return decodeChangeRecord(record, self.stringTable)
     },
 
@@ -42,7 +47,10 @@ export function createChangeDecoder(): ChangeDecoder {
   return self
 }
 
-function decodeChangeRecord(record: BrowserChangeRecord, stringTable: StringTable): BrowserChangeRecord {
+function decodeChangeRecord(
+  record: BrowserChangeRecord | BrowserFullSnapshotChangeRecord,
+  stringTable: StringTable
+): BrowserChangeRecord | BrowserFullSnapshotChangeRecord {
   const decodedData: Change[] = []
 
   for (const change of record.data) {
