@@ -68,7 +68,6 @@ gh pr create --draft --title "✨ Add <framework> router integration" --body "$(
 Auto-generated router integration for <framework> using the router integration pipeline.
 
 - Router view tracking via `startView()` on route changes
-- Error handler integration
 - Unit tests for view name computation and navigation filtering
 
 ## Design Artifacts
