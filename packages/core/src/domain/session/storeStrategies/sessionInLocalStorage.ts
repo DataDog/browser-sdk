@@ -4,9 +4,9 @@ import { addEventListener } from '../../../browser/addEventListener'
 import type { Configuration } from '../../configuration'
 import { SessionPersistence } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
-import { toSessionString, toSessionState } from '../sessionState'
+import { isSessionInNotStartedState, toSessionString, toSessionState } from '../sessionState'
 import type { SessionStoreStrategy, SessionStoreStrategyType, SessionObservableEvent } from './sessionStoreStrategy'
-import { SESSION_STORE_KEY } from './sessionStoreStrategy'
+import { SESSION_STORE_KEY, LEGACY_SESSION_STORE_KEY } from './sessionStoreStrategy'
 
 const LOCAL_STORAGE_TEST_KEY = '_dd_test_'
 
@@ -33,9 +33,17 @@ export function initLocalStorageStrategy(configuration: Configuration): SessionS
       }).stop
   )
 
+  let isFirstCall = true
+
   return {
     async setSessionState(fn: (sessionState: SessionState) => SessionState): Promise<void> {
-      const currentState = toSessionState(localStorage.getItem(SESSION_STORE_KEY))
+      let currentState = toSessionState(localStorage.getItem(SESSION_STORE_KEY))
+
+      if (isFirstCall && isSessionInNotStartedState(currentState)) {
+        currentState = toSessionState(localStorage.getItem(LEGACY_SESSION_STORE_KEY))
+      }
+      isFirstCall = false
+
       const newState = fn(currentState)
       localStorage.setItem(SESSION_STORE_KEY, toSessionString(newState))
       await Promise.resolve()

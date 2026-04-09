@@ -14,6 +14,7 @@ import { display } from '../../tools/display'
 import { isSampled } from '../sampler'
 import { monitorError } from '../../tools/monitor'
 import { getCookies } from '../../browser/cookie'
+import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import type { SessionState } from './sessionState'
 import {
@@ -212,7 +213,7 @@ export function startSessionManager(
         newState: { ...newState },
         from,
         cookieValues,
-        cookies: getCookies('_dd_s'),
+        cookies: getCookies(SESSION_STORE_KEY),
         locksAvailable: Boolean(globalThis.navigator?.locks),
         cookieStoreAvailable: Boolean(globalThis.cookieStore),
       }
@@ -230,7 +231,7 @@ export function startSessionManager(
           newState: { ...newState },
           from,
           cookieValues,
-          cookies: getCookies('_dd_s'),
+          cookies: getCookies(SESSION_STORE_KEY),
           locksAvailable: Boolean(globalThis.navigator?.locks),
           cookieStoreAvailable: Boolean(globalThis.cookieStore),
         },
