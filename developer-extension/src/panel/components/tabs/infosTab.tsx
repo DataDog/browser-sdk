@@ -25,17 +25,17 @@ function buildLogExpression(descriptor: JsonValueDescriptor, sdkType: 'rum' | 'l
         console.warn('[${sdkName}] SDK not found');
         return;
       }
-      
+
       // Navigate the path to get the value
       let value = config;
       const pathParts = '${evaluationPath}'.split('.');
-      
+
       for (const key of pathParts) {
         if (!value || typeof value !== 'object') {
           console.warn('[${sdkName}] Property not found at path: ${evaluationPath}');
           return;
         }
-        
+
         // Handle array indices (numeric keys)
         if (Array.isArray(value)) {
           const index = parseInt(key, 10);
@@ -52,7 +52,7 @@ function buildLogExpression(descriptor: JsonValueDescriptor, sdkType: 'rum' | 'l
           value = value[key];
         }
       }
-      
+
       console.log('[${sdkName}] ${evaluationPath}:', value);
     })()
   `
@@ -105,7 +105,12 @@ export function InfosTab() {
               {infos.cookie.forcedReplay && <Entry name="Is Replay Forced" value={'True'} />}
               <Entry name="Created" value={infos.cookie.created && formatDate(Number(infos.cookie.created))} />
               <Entry name="Expire" value={infos.cookie.expire && formatDate(Number(infos.cookie.expire))} />
-              <Button color="violet" variant="light" onClick={endSession} className="dd-privacy-allow">
+              <Button
+                color="violet"
+                variant="light"
+                onClick={() => endSession(infos.sessionCookieName)}
+                className="dd-privacy-allow"
+              >
                 End current session
               </Button>
             </>
@@ -318,13 +323,13 @@ function formatSessionType(value: string, ...labels: string[]) {
   return !isNaN(index) && index >= 0 && index < labels.length ? labels[index] : value
 }
 
-function endSession() {
+function endSession(cookieName = '_dd_s') {
   const fourHours = 1000 * 60 * 60 * 4
   const expires = new Date(Date.now() + fourHours).toUTCString()
 
   evalInWindow(
     `
-      document.cookie = '_dd_s=isExpired=1; expires=${expires}; path=/'
+      document.cookie = '${cookieName}=isExpired=1; expires=${expires}; path=/'
     `
   ).catch((error) => logger.error('Error while ending session:', error))
 }

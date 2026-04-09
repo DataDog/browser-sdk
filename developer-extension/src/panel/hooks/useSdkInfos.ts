@@ -32,6 +32,7 @@ export interface SdkInfos {
     rum?: string
     forcedReplay?: '1'
   }
+  sessionCookieName?: string
   rumTrackingType?: string
   logsTrackingType?: string
 }
@@ -72,15 +73,6 @@ async function getInfos(): Promise<SdkInfos> {
           }))
         }
 
-        const cookieRawValue = document.cookie
-          .split(';')
-          .map(cookie => cookie.match(/(\\S*?)=(.*)/)?.slice(1) || [])
-          .find(([name, _]) => name === '_dd_s')
-          ?.[1]
-
-        const cookie = cookieRawValue && Object.fromEntries(
-          cookieRawValue.split('&').map(value => value.split('='))
-        )
         const rum = window.DD_RUM && {
           version: window.DD_RUM?.version,
           config: serializeWithFunctions(window.DD_RUM?.getInitConfiguration?.()),
@@ -94,7 +86,20 @@ async function getInfos(): Promise<SdkInfos> {
           globalContext: window.DD_LOGS?.getGlobalContext?.(),
           user: window.DD_LOGS?.getUser?.(),
         }
-        return { rum, logs, cookie }
+
+        const sdkVersion = (rum && rum.version) || (logs && logs.version)
+        const sessionCookieName = sdkVersion && parseInt(sdkVersion, 10) >= 7 ? '_dd_s_v2' : '_dd_s'
+
+        const cookieRawValue = document.cookie
+          .split(';')
+          .map(cookie => cookie.match(/(\\S*?)=(.*)/)?.slice(1) || [])
+          .find(([name]) => name === sessionCookieName)
+          ?.[1]
+
+        const cookie = cookieRawValue && Object.fromEntries(
+          cookieRawValue.split('&').map(value => value.split('='))
+        )
+        return { rum, logs, cookie, sessionCookieName }
       `
     )) as SdkInfos
   } catch (error) {

@@ -39,12 +39,10 @@ const buildEnvFactories: BuildEnvFactories = {
         return browserSdkVersion
       case 'canary': {
         const commitSha1 = execSync('git rev-parse HEAD').toString().trim()
-        // TODO when tags would allow '+' characters
-        //  use build separator (+) instead of prerelease separator (-)
         return `${browserSdkVersion}-${commitSha1}`
       }
       default:
-        return 'dev'
+        return `${browserSdkVersion}-dev`
     }
   },
   SDK_SETUP: () => getSdkSetup(),
