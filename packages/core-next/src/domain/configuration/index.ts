@@ -84,11 +84,48 @@ interface InitConfiguration {
    */
   telemetryUsageSampleRate?: number
   /**
+   * Automatically set `usr.anonymous_id` from the session's device ID.
+   *
+   * @default true
+   */
+  trackAnonymousUser?: boolean
+  /**
+   * Track sessions across subdomains of the same site by setting
+   * the cookie domain to the root domain.
+   *
+   * @default false
+   */
+  trackSessionAcrossSubdomains?: boolean
+  /**
+   * Allow the session to fall back to localStorage when cookies are not available.
+   *
+   * @default false
+   */
+  allowFallbackToLocalStorage?: boolean
+  /**
+   * Use the `Secure` flag on the session cookie. Required for HTTPS-only sites.
+   *
+   * @default false
+   */
+  useSecureSessionCookie?: boolean
+  /**
+   * Use the `Partitioned` attribute on the session cookie for cross-site contexts.
+   *
+   * @default false
+   */
+  usePartitionedCrossSiteSessionCookie?: boolean
+  /**
    * Use the PCI-compliant intake endpoint for logs. US1 only.
    *
    * @default false
    */
   usePciIntake?: boolean
+  /**
+   * Suppress errors when `init` is called more than once.
+   *
+   * @default false
+   */
+  silentMultipleInit?: boolean
   /** Application version tag forwarded with every event. */
   version?: string
 }

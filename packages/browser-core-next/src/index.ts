@@ -18,3 +18,4 @@ export { createEndpointBuilder, buildIntakeHost, isIntakeUrl, INTAKE_SITE_US1 } 
 // Browser utilities
 export { getCookie, setCookie, deleteCookie, areCookiesAuthorized } from './browser/cookie'
 export type { CookieOptions } from './browser/cookie'
+export { getCurrentSiteDomain } from './browser/domain'

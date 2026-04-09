@@ -5,13 +5,21 @@ import {
   Batch,
   Session,
   registerSdk,
+  getSdk,
+  unregisterSdk,
   sessionEnricher,
   internalContextEnricher,
   tagsEnricher,
   metadataEnricher,
   stackTraceEnricher,
 } from '@datadog/core-next'
-import { selectStore, createHttpRequest, createEndpointBuilder, INTAKE_SITE_US1 } from '@datadog/browser-core-next'
+import {
+  selectStore,
+  createHttpRequest,
+  createEndpointBuilder,
+  INTAKE_SITE_US1,
+  getCurrentSiteDomain,
+} from '@datadog/browser-core-next'
 import type { TrackType, HttpRequest } from '@datadog/browser-core-next'
 
 interface SdkOptions {
@@ -26,6 +34,15 @@ interface Sdk {
 }
 
 async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
+  // 0. Guard against multiple init calls
+  const instanceId = init.instanceId ?? 'default'
+  if (getSdk(instanceId)) {
+    if (!init.silentMultipleInit) {
+      console.error('Datadog Browser SDK is already initialized.')
+    }
+    return null
+  }
+
   // 1. Collect extensions from modules
   const modules = init.modules ?? []
   const extensions = modules.map((m) => m.extension)
@@ -36,8 +53,13 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
     return null
   }
 
-  // 3. Create session
-  const store = selectStore()
+  // 3. Create session with cookie options from config
+  const cookieOptions = {
+    secure: config.useSecureSessionCookie,
+    partitioned: config.usePartitionedCrossSiteSessionCookie,
+    domain: config.trackSessionAcrossSubdomains ? getCurrentSiteDomain() : undefined,
+  }
+  const store = selectStore({ cookieOptions })
   const session = await Session.create({
     store,
     generateId: () => crypto.randomUUID(),
@@ -56,6 +78,20 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
   pipeline.enrich('observation:*', sessionEnricher(session))
   pipeline.enrich('observation:*', internalContextEnricher())
   pipeline.enrich('observation:*', tagsEnricher({ env: config.env, service: config.service, version: config.version }))
+
+  // 4.7. Add anonymous_id to usr context when trackAnonymousUser is enabled (default: true)
+  if (config.trackAnonymousUser !== false) {
+    pipeline.enrich('observation:*', {
+      name: 'anonymousUser',
+      transform(data) {
+        const usr = (data.usr as Record<string, unknown>) ?? {}
+        if (!usr.anonymous_id) {
+          return { ...data, usr: { ...usr, anonymous_id: session.getDeviceId() } }
+        }
+        return data
+      },
+    })
+  }
 
   // 5. Create endpoint builders for each track type used by modules
   const trackTypes: TrackType[] = ['logs', 'rum', 'replay']
@@ -154,11 +190,13 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
     sdk[mod.name] = api
   }
 
-  // 10. Seal pipeline
+  // 10. Expose SDK utilities
+  sdk.getInitConfiguration = () => ({ ...init })
+
+  // 11. Seal pipeline
   pipeline.seal()
 
-  // 11. Register in registry
-  const instanceId = init.instanceId ?? 'default'
+  // 12. Register in registry
   registerSdk(instanceId, sdk)
 
   // Expose stop function for cleanup (used in tests and graceful shutdown)
@@ -170,6 +208,7 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
       window.removeEventListener('beforeunload', onBeforeUnload)
     }
     batch.destroy()
+    unregisterSdk(instanceId)
   }
 
   return sdk
