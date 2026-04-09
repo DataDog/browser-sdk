@@ -17,6 +17,14 @@ type Site =
   | 'ap2.datadoghq.com'
   | (string & {})
 
+const SessionPersistence = {
+  COOKIE: 'cookie',
+  LOCAL_STORAGE: 'local-storage',
+  MEMORY: 'memory',
+} as const
+
+type SessionPersistence = (typeof SessionPersistence)[keyof typeof SessionPersistence]
+
 /** Configuration for dual-shipping events to a replica Datadog org. */
 interface ReplicaConfiguration {
   /** Client token of the replica org. */
@@ -97,11 +105,19 @@ interface InitConfiguration {
    */
   trackSessionAcrossSubdomains?: boolean
   /**
-   * Allow the session to fall back to localStorage when cookies are not available.
+   * Which storage strategy to use for persisting sessions. Can be `'cookie'`, `'local-storage'`,
+   * or `'memory'`. When an array is provided, the SDK attempts each in order.
+   *
+   * @default 'cookie'
+   */
+  sessionPersistence?: SessionPersistence | SessionPersistence[]
+  /**
+   * Persist global context, user context, and account context across page loads
+   * using the selected session storage.
    *
    * @default false
    */
-  allowFallbackToLocalStorage?: boolean
+  storeContextsAcrossPages?: boolean
   /**
    * Use the `Secure` flag on the session cookie. Required for HTTPS-only sites.
    *
@@ -120,6 +136,11 @@ interface InitConfiguration {
    * @default false
    */
   usePciIntake?: boolean
+  /**
+   * Override the SDK version reported in `ddtags` and `_dd.browser_sdk_version`.
+   * Normally set at build time.
+   */
+  sdkVersion?: string
   /**
    * Suppress errors when `init` is called more than once.
    *
@@ -144,6 +165,7 @@ interface Extension<TKey extends string, TInit, TConfig, TDerived = object> {
 }
 
 export type { InitConfiguration, Configuration, Extension, ProxyFn, Site, ReplicaConfiguration }
+export { SessionPersistence }
 export { build } from './build'
 export { DEFAULTS } from './defaults'
 export { validate } from './validation'

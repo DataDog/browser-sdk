@@ -53,13 +53,13 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
     return null
   }
 
-  // 3. Create session with cookie options from config
+  // 3. Create session with cookie options and persistence from config
   const cookieOptions = {
     secure: config.useSecureSessionCookie,
     partitioned: config.usePartitionedCrossSiteSessionCookie,
     domain: config.trackSessionAcrossSubdomains ? getCurrentSiteDomain() : undefined,
   }
-  const store = selectStore({ cookieOptions })
+  const store = selectStore({ cookieOptions, sessionPersistence: config.sessionPersistence })
   const session = await Session.create({
     store,
     generateId: () => crypto.randomUUID(),
@@ -76,8 +76,11 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
   // 4.6. Register core enrichers on all observation events
   pipeline.enrich('observation:*', metadataEnricher({ service: config.service, source: config.source }))
   pipeline.enrich('observation:*', sessionEnricher(session))
-  pipeline.enrich('observation:*', internalContextEnricher())
-  pipeline.enrich('observation:*', tagsEnricher({ env: config.env, service: config.service, version: config.version }))
+  pipeline.enrich('observation:*', internalContextEnricher({ sdkVersion: config.sdkVersion }))
+  pipeline.enrich(
+    'observation:*',
+    tagsEnricher({ env: config.env, service: config.service, version: config.version, sdkVersion: config.sdkVersion })
+  )
 
   // 4.7. Add anonymous_id to usr context when trackAnonymousUser is enabled (default: true)
   if (config.trackAnonymousUser !== false) {
@@ -103,6 +106,7 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
       clientToken: config.clientToken,
       site: config.site,
       trackType,
+      sdkVersion: config.sdkVersion,
       source: config.source,
       proxy: config.proxy,
       usePciIntake: config.usePciIntake,
@@ -120,6 +124,7 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
         clientToken: config.replica.clientToken,
         site: INTAKE_SITE_US1,
         trackType,
+        sdkVersion: config.sdkVersion,
         source: config.source,
       })
       replicaTransports.set(trackType, createHttpRequest({ endpointUrl: () => replicaBuilder.build() }))

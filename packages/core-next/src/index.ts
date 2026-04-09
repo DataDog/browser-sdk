@@ -76,7 +76,7 @@ export type {
   Site,
   ReplicaConfiguration,
 } from './domain/configuration'
-export { build, validate } from './domain/configuration'
+export { build, validate, SessionPersistence } from './domain/configuration'
 
 export type { TelemetryConfig, RawTelemetry } from './domain/telemetry/telemetry'
 export { Telemetry } from './domain/telemetry/telemetry'
