@@ -15,13 +15,8 @@ const viewsProcessor: Module = {
   },
   init(context: ModuleContext): ViewsPublicApi {
     // Register enricher on both resource:navigation and action:start_view
-    // (no-op if pipeline is already sealed, e.g. in tests)
-    try {
-      context.pipeline.enrich('resource:navigation', navigationEnricher())
-      context.pipeline.enrich('action:start_view', navigationEnricher())
-    } catch {
-      // enrichers cannot be added after seal; skip gracefully
-    }
+    context.pipeline.enrich('resource:navigation', navigationEnricher())
+    context.pipeline.enrich('action:start_view', navigationEnricher())
 
     // Start processor (resource:navigation + action:start_view → observation:view + signal:view_changed)
     startProcessor(context.pipeline)

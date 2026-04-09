@@ -8,8 +8,8 @@ describe('viewsProcessor', () => {
 
   it('returns a public API with startView', () => {
     const pipeline = new Pipeline<Record<string, unknown>>()
+    const api = viewsProcessor.init({ pipeline, config: {} as any, session: {} as any })
     pipeline.seal()
-    const api = viewsProcessor.init({ pipeline, config: {}, session: {} as any })
     expect(typeof (api as any).startView).toBe('function')
   })
 
@@ -17,9 +17,9 @@ describe('viewsProcessor', () => {
     const pipeline = new Pipeline<Record<string, unknown>>()
     const actions: Record<string, unknown>[] = []
     pipeline.subscribe('action:start_view', (e) => actions.push(e as Record<string, unknown>))
-    pipeline.seal()
 
-    const api = viewsProcessor.init({ pipeline, config: {}, session: {} as any })
+    const api = viewsProcessor.init({ pipeline, config: {} as any, session: {} as any })
+    pipeline.seal()
     ;(api as any).startView('my-view')
 
     await new Promise((r) => setTimeout(r, 0))
