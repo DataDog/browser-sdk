@@ -20,6 +20,12 @@
   "publishConfig": {
     "access": "public"
   },
+  "dependencies": {
+    "@datadog/browser-console-next": "workspace:*",
+    "@datadog/browser-errors-next": "workspace:*",
+    "@datadog/browser-network-next": "workspace:*",
+    "@datadog/browser-views-next": "workspace:*"
+  },
   "peerDependencies": {
     "@datadog/browser-core-next": "workspace:*",
     "@datadog/core-next": "workspace:*"
