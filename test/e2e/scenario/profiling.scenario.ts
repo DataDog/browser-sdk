@@ -57,7 +57,9 @@ test.describe('profiling', () => {
         runtime: 'chrome',
         format: 'json',
         version: 4,
-        tags_profiler: 'sdk_version:dev,language:javascript,runtime:chrome,family:chrome,host:browser',
+        tags_profiler: expect.stringMatching(
+          /^sdk_version:\d+\.\d+\.\d+.*-dev,language:javascript,runtime:chrome,family:chrome,host:browser$/
+        ),
         _dd: {
           clock_drift: expect.any(Number),
         },
