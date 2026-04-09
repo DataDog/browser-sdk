@@ -1,3 +1,7 @@
+function getPrefix(browser) {
+  return `[${browser.name}] `
+}
+
 function KarmaDuplicateTestNameReporter(logger) {
   var log = logger.create('karma-duplicate-test-name')
 
@@ -19,8 +23,18 @@ function KarmaDuplicateTestNameReporter(logger) {
     }
   }
 
+  this.onBrowserStart = (browser) => {
+    const prefix = getPrefix(browser)
+    for (const name of testNames) {
+      if (name.startsWith(prefix)) {
+        testNames.delete(name)
+        duplicatedTestNames.delete(name)
+      }
+    }
+  }
+
   this.onSpecComplete = (browser, result) => {
-    const testName = `[${browser.name}] ${result.fullName}`
+    const testName = `${getPrefix(browser)}${result.fullName}`
 
     if (testNames.has(testName)) {
       if (!duplicatedTestNames.has(testName)) {

@@ -14,6 +14,18 @@
     "rxjs": "7.8.2",
     "zone.js": "0.12.0"
   },
+  "peerDependencies": {
+    "@datadog/browser-rum": "*",
+    "@datadog/browser-rum-angular": "*"
+  },
+  "peerDependenciesMeta": {
+    "@datadog/browser-rum": {
+      "optional": true
+    },
+    "@datadog/browser-rum-angular": {
+      "optional": true
+    }
+  },
   "resolutions": {
     "@datadog/browser-rum-core": "file:../../../packages/rum-core/package.tgz",
     "@datadog/browser-core": "file:../../../packages/core/package.tgz",
@@ -23,8 +35,6 @@
     "@datadog/browser-worker": "file:../../../packages/worker/package.tgz"
   },
   "devDependencies": {
-    "@datadog/browser-rum": "file:../../../packages/rum/package.tgz",
-    "@datadog/browser-rum-angular": "file:../../../packages/rum-angular/package.tgz",
     "@ngtools/webpack": "15.2.11",
     "babel-loader": "9.2.1",
     "typescript": "4.9.5",

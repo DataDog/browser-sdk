@@ -7,10 +7,20 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@datadog/browser-rum": "file:../../../packages/rum/package.tgz",
-    "@datadog/browser-rum-vue": "file:../../../packages/rum-vue/package.tgz",
     "vue": "3.5.29",
     "vue-router": "4.6.4"
+  },
+  "peerDependencies": {
+    "@datadog/browser-rum": "*",
+    "@datadog/browser-rum-vue": "*"
+  },
+  "peerDependenciesMeta": {
+    "@datadog/browser-rum": {
+      "optional": true
+    },
+    "@datadog/browser-rum-vue": {
+      "optional": true
+    }
   },
   "resolutions": {
     "@datadog/browser-rum-core": "file:../../../packages/rum-core/package.tgz",

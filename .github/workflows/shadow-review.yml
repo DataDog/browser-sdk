@@ -1,0 +1,125 @@
+# shadow-review.yml — Shadow Reviewer workflow
+# Source: https://github.com/DataDog/rum-ai-toolkit
+name: Shadow Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+
+jobs:
+  # Mirror PR to shadow fork (review + post-close disabled for now)
+  # Fork sync not needed — each shadow PR targets its own base ref
+  shadow-mirror:
+    if: >-
+      github.event_name == 'pull_request'
+      && github.event.pull_request.draft != true
+      && github.event.pull_request.user.type != 'Bot'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mirror PR to shadow fork
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SHADOW_FORK_TOKEN: ${{ secrets.SHADOW_FORK_TOKEN }}
+          SOURCE_REPO: ${{ github.repository }}
+          SHADOW_FORK: ${{ vars.SHADOW_FORK }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          set -euo pipefail
+          # Mask tokens in trace output
+          echo "::add-mask::${SHADOW_FORK_TOKEN}"
+          echo "::add-mask::${GITHUB_TOKEN}"
+          set -x
+
+          WORK_DIR=$(mktemp -d)
+          trap 'rm -rf "${WORK_DIR}"' EXIT
+
+          echo "=== Pre-flight checks ==="
+          echo "SOURCE_REPO: ${SOURCE_REPO}"
+          echo "SHADOW_FORK: ${SHADOW_FORK}"
+          echo "PR_NUMBER: ${PR_NUMBER}"
+          echo "PR_HEAD_SHA: ${PR_HEAD_SHA}"
+          echo "PR_BASE_REF: ${PR_BASE_REF}"
+
+          # Verify shadow fork access (using shadow fork token)
+          echo "Verifying access to shadow fork..."
+          if ! GITHUB_TOKEN="${SHADOW_FORK_TOKEN}" gh repo view "${SHADOW_FORK}" > /dev/null 2>&1; then
+            echo "ERROR: Cannot access shadow fork ${SHADOW_FORK}"
+            echo "Ensure SHADOW_FORK_TOKEN has repo access and SHADOW_FORK variable is set correctly"
+            exit 1
+          fi
+          echo "Shadow fork accessible"
+
+          # Verify source repo access (using default token)
+          echo "Verifying access to source repo..."
+          if ! gh repo view "${SOURCE_REPO}" > /dev/null 2>&1; then
+            echo "ERROR: Cannot access source repo ${SOURCE_REPO}"
+            exit 1
+          fi
+          echo "Source repo accessible"
+
+          echo "=== Mirroring PR #${PR_NUMBER} (${PR_HEAD_SHA}) to ${SHADOW_FORK} ==="
+
+          # Determine version number by counting existing shadow branches (exclude -base)
+          VERSION=$(git ls-remote --heads "https://x-access-token:${SHADOW_FORK_TOKEN}@github.com/${SHADOW_FORK}.git" "shadow/${PR_NUMBER}/v*" 2>/dev/null \
+            | { grep -v '\-base$' || true; } | wc -l | tr -d ' ')
+          VERSION=$((VERSION + 1))
+          echo "Version: v${VERSION}"
+
+          SHADOW_BRANCH="shadow/${PR_NUMBER}/v${VERSION}"
+          BASE_BRANCH="shadow/${PR_NUMBER}/v${VERSION}-base"
+
+          # Clone source repo and fetch PR ref
+          echo "Cloning source repo..."
+          git clone --no-checkout "https://x-access-token:${GITHUB_TOKEN}@github.com/${SOURCE_REPO}.git" "${WORK_DIR}/repo"
+          cd "${WORK_DIR}/repo"
+          echo "Fetching PR head..."
+          git fetch origin "pull/${PR_NUMBER}/head:pr-head"
+          echo "Fetching base ref..."
+          git fetch origin "${PR_BASE_REF}:base-ref"
+
+          # Compute merge base
+          MERGE_BASE=$(git merge-base pr-head base-ref)
+          echo "Merge base: ${MERGE_BASE}"
+
+          # Push base and head branches to shadow fork
+          git remote add shadow "https://x-access-token:${SHADOW_FORK_TOKEN}@github.com/${SHADOW_FORK}.git"
+
+          echo "Pushing base branch..."
+          git push shadow "${MERGE_BASE}:refs/heads/${BASE_BRANCH}" 2>&1 || {
+            echo "Push failed — retrying with incremented version..."
+            VERSION=$((VERSION + 1))
+            SHADOW_BRANCH="shadow/${PR_NUMBER}/v${VERSION}"
+            BASE_BRANCH="shadow/${PR_NUMBER}/v${VERSION}-base"
+            git push shadow "${MERGE_BASE}:refs/heads/${BASE_BRANCH}" 2>&1
+          }
+
+          echo "Pushing head branch..."
+          git push shadow "${PR_HEAD_SHA}:refs/heads/${SHADOW_BRANCH}" 2>&1
+
+          # Create shadow PR
+          # Escape #123-style references to prevent GitHub cross-linking
+          ESCAPED_PR_BODY=$(echo "${PR_BODY}" | sed -E 's/#([0-9]+)/`#\1`/g')
+
+          echo "Creating shadow PR..."
+          SHADOW_PR_URL=$(GITHUB_TOKEN="${SHADOW_FORK_TOKEN}" gh pr create \
+            --repo "${SHADOW_FORK}" \
+            --base "${BASE_BRANCH}" \
+            --head "${SHADOW_BRANCH}" \
+            --title "Shadow: ${PR_TITLE} (v${VERSION})" \
+            --body "## Shadow Review — PR \`#${PR_NUMBER}\` v${VERSION}
+
+          **Source:** \`${SOURCE_REPO}#${PR_NUMBER}\`
+          **Commit:** \`${PR_HEAD_SHA}\`
+          **Timestamp:** $(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+          ---
+
+          ## Original PR Description
+
+          ${ESCAPED_PR_BODY}")
+
+          echo "Shadow PR created: ${SHADOW_PR_URL}"

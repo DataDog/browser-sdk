@@ -216,7 +216,9 @@ function isFormElement(node: Node | null): boolean {
  * Text censoring non-destructively maintains whitespace characters in order to preserve text shape
  * during replay.
  */
-const censorText = (text: string) => text.replace(/\S/g, TEXT_MASKING_CHAR)
+export function censorText(text: string): string {
+  return text.replace(/\S/g, TEXT_MASKING_CHAR)
+}
 
 export function getTextContent(textNode: Node, parentNodePrivacyLevel: NodePrivacyLevel): string | undefined {
   // The parent node may not be a html element which has a tagName attribute.
@@ -252,8 +254,6 @@ export function getTextContent(textNode: Node, parentNodePrivacyLevel: NodePriva
     } else if (parentTagName === 'OPTION') {
       // <Option> has low entropy in charset + text length, so use `CENSORED_STRING_MARK` when masked
       textContent = CENSORED_STRING_MARK
-    } else if (nodePrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED) {
-      textContent = maskDisallowedTextContent(textContent)
     } else {
       textContent = censorText(textContent)
     }
