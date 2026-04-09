@@ -32,6 +32,7 @@ import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
 import { createSpanIdentifier } from '../tracing/identifier'
 import { startEventTracker } from '../eventTracker'
+import { extractRegexMatch } from '../extractRegexMatch'
 import { matchRequestResourceEntry } from './matchRequestResourceEntry'
 import {
   computeResourceEntryDetails,
@@ -419,7 +420,7 @@ function filterHeaders(headers: Headers, matchers: HeaderMatcher[]): NetworkHead
     }
 
     const { extractor } = headerMatcher
-    const capturedValue = extractor ? applyExtractor(value, extractor) : value
+    const capturedValue = extractor ? extractRegexMatch(value, extractor) : value
     if (capturedValue === undefined) {
       return
     }
@@ -449,16 +450,6 @@ function filterHeaders(headers: Headers, matchers: HeaderMatcher[]): NetworkHead
   }
 
   return collectedHeaderCount > 0 ? result : undefined
-}
-
-function applyExtractor(value: string, extractor: RegExp): string | undefined {
-  // Prevent stateful matching
-  extractor.lastIndex = 0
-  const match = extractor.exec(value)
-  if (!match) {
-    return undefined
-  }
-  return match[1] ?? match[0]
 }
 
 // Input:  "content-type: application/json\r\ncache-control: no-cache"
