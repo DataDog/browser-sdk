@@ -37,7 +37,7 @@ describe('startTanStackRouterView', () => {
     )
   })
 
-  fdescribe('computeViewName', () => {
+  describe('computeViewName', () => {
     it('returns an empty string if there is no route match', () => {
       expect(computeViewName([])).toBe('')
     })
