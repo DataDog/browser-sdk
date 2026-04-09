@@ -52,7 +52,14 @@ export {
 } from './domain/time'
 
 export type { Csp, StackFrame, StackTrace } from './domain/error'
-export { ErrorSource, ErrorHandling } from './domain/error'
+export {
+  ErrorSource,
+  ErrorHandling,
+  computeStackTrace,
+  formatStackTrace,
+  formatErrorMessage,
+  formatFrame,
+} from './domain/error'
 
 export type { Transport } from './domain/transport/transport'
 export type { BatchOptions } from './domain/transport/batch'

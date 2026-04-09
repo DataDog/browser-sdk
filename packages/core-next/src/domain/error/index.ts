@@ -36,3 +36,6 @@ export interface StackTrace {
   incomplete?: boolean
   partial?: boolean
 }
+
+export { computeStackTrace } from './computeStackTrace'
+export { formatStackTrace, formatErrorMessage, formatFrame } from './formatStackTrace'

@@ -77,7 +77,8 @@ describe('startConsoleCollection', () => {
     const err = new Error('with stack')
     console.error(err)
     await new Promise((resolve) => setTimeout(resolve, 0))
-    expect(collected[0].stack).toBe(err.stack)
+    expect(collected[0].stack).toContain('Error: with stack')
+    expect(collected[0].stack).toContain('  at ')
   })
 
   it('stop() restores original console methods', () => {

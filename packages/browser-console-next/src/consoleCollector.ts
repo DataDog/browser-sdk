@@ -1,4 +1,5 @@
 import type { Pipeline, ConsoleResource, ErrorCause } from '@datadog/core-next'
+import { computeStackTrace, formatStackTrace } from '@datadog/core-next'
 
 type ConsoleApi = 'log' | 'debug' | 'info' | 'warn' | 'error'
 
@@ -32,7 +33,8 @@ function startConsoleCollection(pipeline: Pipeline<Record<string, unknown>>): ()
 
       // Extract Error if first arg is an Error
       const error = args[0] instanceof Error ? args[0] : undefined
-      const stack = error?.stack
+      const trace = error ? computeStackTrace(error) : undefined
+      const stack = trace ? formatStackTrace(trace) : undefined
       const fingerprint = error && 'dd_fingerprint' in error ? String((error as any).dd_fingerprint) : undefined
       const causes = error ? flattenCauses(error) : undefined
 

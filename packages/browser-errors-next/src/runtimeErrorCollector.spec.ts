@@ -34,7 +34,8 @@ describe('startRuntimeErrorCollection', () => {
     const err = new Error('boom')
     window.dispatchEvent(new ErrorEvent('error', { error: err, message: 'boom' }))
     expect(collected[0].message).toBe('boom')
-    expect(collected[0].stack).toBe(err.stack)
+    expect(collected[0].stack).toContain('Error: boom')
+    expect(collected[0].stack).toContain('  at ')
   })
 
   it('includes error type/name', () => {
