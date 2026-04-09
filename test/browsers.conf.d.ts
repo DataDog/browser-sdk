@@ -5,5 +5,4 @@ export interface BrowserConfiguration {
   os: string
   osVersion: string
   device?: string
-  realMobile?: boolean
 }
