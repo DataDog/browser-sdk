@@ -21,6 +21,10 @@ import {
   getCurrentSiteDomain,
 } from '@datadog/browser-core-next'
 import type { TrackType, HttpRequest } from '@datadog/browser-core-next'
+import { startCollectors as startConsoleCollectors } from '@datadog/browser-console-next/collectors'
+import { startCollectors as startErrorCollectors } from '@datadog/browser-errors-next/collectors'
+import { startCollectors as startNetworkCollectors } from '@datadog/browser-network-next/collectors'
+import { startCollectors as startViewCollectors } from '@datadog/browser-views-next/collectors'
 
 interface SdkOptions {
   modules?: Module[]
@@ -68,6 +72,12 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
 
   // 4. Create pipeline
   const pipeline = new Pipeline<Record<string, unknown>>()
+
+  // 4.1. Start bundled collectors (always active, regardless of which modules are loaded)
+  const stopConsoleCollectors = startConsoleCollectors(pipeline)
+  const stopErrorCollectors = startErrorCollectors(pipeline)
+  const stopNetworkCollectors = startNetworkCollectors(pipeline)
+  const stopViewCollectors = startViewCollectors(pipeline)
 
   // 4.5. Register stack trace enricher on resource events
   pipeline.enrich('resource:console', stackTraceEnricher())
@@ -206,6 +216,10 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
 
   // Expose stop function for cleanup (used in tests and graceful shutdown)
   ;(sdk as any).__stop = () => {
+    stopConsoleCollectors()
+    stopErrorCollectors()
+    stopNetworkCollectors()
+    stopViewCollectors()
     if (typeof document !== 'undefined') {
       document.removeEventListener('visibilitychange', onVisibilityChange)
     }
