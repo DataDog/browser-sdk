@@ -1,7 +1,5 @@
 import { createSdk } from '../domain/sdk'
-import { consoleModule } from '@datadog/browser-console-next'
-import { errorsModule } from '@datadog/browser-errors-next'
-import { logsModule } from '@datadog/browser-logs-next'
+import { logsProcessor } from '@datadog/browser-logs-next/processor'
 import { unregisterSdk } from '@datadog/core-next'
 import type { LogsPublicApi } from '@datadog/browser-logs-next'
 
@@ -30,7 +28,7 @@ function flushBatch(): void {
 const baseConfig = {
   clientToken: 'test-token',
   site: 'datadoghq.com',
-  modules: [consoleModule, errorsModule, logsModule],
+  modules: [logsProcessor],
   logs: {
     forwardErrorsToLogs: true,
     forwardConsoleLogs: 'all' as const,
@@ -66,7 +64,7 @@ describe('logs integration', () => {
     currentSdk = await createSdk({
       clientToken: 'test-token',
       site: 'datadoghq.com',
-      modules: [logsModule],
+      modules: [logsProcessor],
       logs: {},
     })
 
@@ -125,7 +123,7 @@ describe('logs integration', () => {
     currentSdk = await createSdk({
       clientToken: 'test-token',
       site: 'datadoghq.com',
-      modules: [logsModule],
+      modules: [logsProcessor],
       logs: {
         beforeSend: () => false,
       },
@@ -144,7 +142,7 @@ describe('logs integration', () => {
     currentSdk = await createSdk({
       clientToken: 'test-token',
       site: 'datadoghq.com',
-      modules: [logsModule],
+      modules: [logsProcessor],
       logs: {},
     })
 
@@ -167,7 +165,7 @@ describe('logs integration', () => {
     currentSdk = await createSdk({
       clientToken: 'test-token',
       site: 'datadoghq.com',
-      modules: [logsModule],
+      modules: [logsProcessor],
       logs: {},
     })
 

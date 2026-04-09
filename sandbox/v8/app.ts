@@ -3,9 +3,7 @@ import { datadogLogs } from '@datadog/browser-logs'
 
 // === V8 SDK ===
 import { createSdk } from '@datadog/browser-sdk'
-import { consoleModule } from '@datadog/browser-console-next'
-import { errorsModule } from '@datadog/browser-errors-next'
-import { logsModule } from '@datadog/browser-logs-next'
+import { logsProcessor } from '@datadog/browser-logs-next/processor'
 
 // ─── Request capture via XHR monkey-patch ──────────────────────────────
 //
@@ -148,7 +146,7 @@ async function initV8() {
       clientToken: 'pub_playground_v8',
       site: 'datadoghq.com',
       proxy: '/intake/v8/api/v2/logs',
-      modules: [consoleModule, errorsModule, logsModule],
+      modules: [logsProcessor],
       logs: {
         forwardErrorsToLogs: true,
         forwardConsoleLogs: 'all' as const,

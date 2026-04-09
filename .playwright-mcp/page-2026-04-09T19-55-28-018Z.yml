@@ -1,0 +1,35 @@
+- generic [ref=e1]:
+  - heading "SDK Comparison" [level=1] [ref=e2]
+  - paragraph [ref=e3]: Side-by-side v6 (browser-logs) vs v8 (browser-logs-next). Click a request to expand the payload.
+  - generic [ref=e4]:
+    - heading "Trigger actions (both SDKs receive the same action)" [level=2] [ref=e5]
+    - button "logger.info()" [ref=e6] [cursor=pointer]
+    - button "logger.warn()" [ref=e7] [cursor=pointer]
+    - button "logger.error()" [ref=e8] [cursor=pointer]
+    - button "console.error()" [ref=e9] [cursor=pointer]
+    - button "setGlobalContext()" [active] [ref=e10] [cursor=pointer]
+    - button "setUser()" [ref=e11] [cursor=pointer]
+    - button "Flush batches" [ref=e12] [cursor=pointer]
+    - button "Clear" [ref=e13] [cursor=pointer]
+  - generic [ref=e14]:
+    - generic [ref=e15]:
+      - generic [ref=e16]:
+        - generic [ref=e17]: v6
+        - heading "@datadog/browser-logs" [level=3] [ref=e18]
+        - generic [ref=e19]: ready
+      - generic [ref=e21]: 0 events
+    - generic [ref=e22]:
+      - generic [ref=e23]:
+        - generic [ref=e24]: v8
+        - heading "@datadog/browser-logs-next" [level=3] [ref=e25]
+        - generic [ref=e26]: ready
+      - generic [ref=e27]:
+        - generic [ref=e30] [cursor=pointer]:
+          - generic [ref=e31]: "[error]"
+          - generic [ref=e32]: "console: Console error from playground"
+          - generic [ref=e33]: 19:55:04.555
+        - generic [ref=e35] [cursor=pointer]:
+          - generic [ref=e36]: "[info]"
+          - generic [ref=e37]: "logger: Test info message"
+          - generic [ref=e38]: 19:55:00.293
+      - generic [ref=e28]: 2 events
