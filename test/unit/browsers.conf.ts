@@ -40,9 +40,10 @@ export const browserConfigurations: BrowserConfiguration[] = [
   },
   {
     sessionName: 'Safari mobile',
-    name: 'safari',
+    name: 'iphone',
     os: 'ios',
     osVersion: '26',
     device: 'iPhone 14',
+    realMobile: true,
   },
 ]
