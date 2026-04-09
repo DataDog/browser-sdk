@@ -635,11 +635,11 @@ function validateAndBuildTrackResourceHeaders(initConfiguration: RumInitConfigur
 }
 
 function isHeaderCaptureByUrlOption(item: unknown): item is HeaderCaptureByUrlOption {
-  return isIndexableObject(item) && 'url' in item && isMatchOption((item as unknown as HeaderCaptureByUrlOption).url)
+  return isIndexableObject(item) && isMatchOption(item.url)
 }
 
 function isHeaderMatcher(item: unknown): item is HeaderMatcher {
-  return isIndexableObject(item) && 'name' in item && isMatchOption((item as unknown as HeaderMatcher).name)
+  return isIndexableObject(item) && isMatchOption(item.name)
 }
 
 function toHeaderMatcher(
