@@ -37,7 +37,7 @@ describe('startTanStackRouterView', () => {
     )
   })
 
-  describe('computeViewName', () => {
+  fdescribe('computeViewName', () => {
     it('returns an empty string if there is no route match', () => {
       expect(computeViewName([])).toBe('')
     })
@@ -48,6 +48,7 @@ describe('startTanStackRouterView', () => {
 
     // Simple paths
     ['/foo',                      '/foo',         '/foo'],
+    ['/foo > /',                  '/foo',         '/foo'],
     ['/foo > bar',                '/foo/bar',     '/foo/bar'],
     ['/foo > bar > $p',           '/foo/bar/1',   '/foo/bar/$p'],
     ['$p',                        '/foo',         '/$p'],

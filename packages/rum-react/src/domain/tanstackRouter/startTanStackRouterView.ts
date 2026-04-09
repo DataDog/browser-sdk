@@ -28,6 +28,11 @@ export function computeViewName(routeMatches: AnyTanStackRouteMatch[]) {
   // consistent with how the React Router integration handles "*" splats.
   viewName = substitutePathSplats(viewName, lastMatch.params)
 
+  // Remove trailing slash (e.g. "/posts/" → "/posts") happening when the last match is an index route
+  if (viewName.endsWith('/')) {
+    viewName = viewName.slice(0, -1)
+  }
+
   return viewName || '/'
 }
 

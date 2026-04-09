@@ -1,5 +1,5 @@
 import ReactDOM from 'react-dom/client'
-import { RouterProvider, Link, Outlet, useParams, createRootRoute, createRoute } from '@tanstack/react-router'
+import { RouterProvider, Link, Outlet, useParams, createRootRoute, createRoute, redirect } from '@tanstack/react-router'
 import { datadogRum } from '@datadog/browser-rum'
 import { reactPlugin } from '@datadog/browser-rum-react'
 import { createRouter } from '@datadog/browser-rum-react/tanstack-router'
@@ -33,6 +33,12 @@ const rootRoute = createRootRoute({
         <Link to="/" search={{ tab: 'settings' } as Record<string, string>}>
           Query Param
         </Link>
+        {' | '}
+        <Link to="/files/$" params={{ _splat: 'path/to/file' }}>
+          Splat
+        </Link>
+        {' | '}
+        <Link to="/old-posts">Redirect</Link>
       </nav>
       <hr />
       <Outlet />
@@ -74,7 +80,30 @@ const postRoute = createRoute({
   component: PostDetail,
 })
 
-const routeTree = rootRoute.addChildren([indexRoute, postsRoute.addChildren([postsIndexRoute, postRoute])])
+const filesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/files/$',
+  component: () => {
+    const { _splat } = useParams({ strict: false })
+    return <h1>File: {_splat}</h1>
+  },
+})
+
+const oldPostsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/old-posts',
+  beforeLoad: () => {
+    // eslint-disable-next-line @typescript-eslint/only-throw-error
+    throw redirect({ to: '/posts' })
+  },
+})
+
+const routeTree = rootRoute.addChildren([
+  indexRoute,
+  postsRoute.addChildren([postsIndexRoute, postRoute]),
+  filesRoute,
+  oldPostsRoute,
+])
 
 // Cast needed because local .tgz packaging creates separate type declarations.
 // End users installing from npm won't need this — same pattern as react-router-v6-app.
