@@ -14,8 +14,8 @@ export const browserConfigurations: BrowserConfiguration[] = [
     sessionName: 'Firefox',
     name: 'Firefox',
     version: '67.0',
-    os: 'Windows',
-    osVersion: '11',
+    os: 'OS X',
+    osVersion: 'Mojave',
   },
   {
     sessionName: 'Safari desktop',
