@@ -35,6 +35,7 @@ export default function (config) {
           browser: configuration.name,
           browser_version: configuration.version,
           device: configuration.device,
+          real_mobile: configuration.realMobile,
           name: configuration.sessionName,
         },
       ])
