@@ -443,7 +443,11 @@ async function setUpTest(
   })
 
   if (mockClock) {
-    await page.clock.install()
+    try {
+      await page.clock.install()
+    } catch (e) {
+      test.skip(true, `Mock clock is not supported in this browser: ${String(e)}`)
+    }
   }
   await page.goto(baseUrl)
   await waitForServersIdle()
