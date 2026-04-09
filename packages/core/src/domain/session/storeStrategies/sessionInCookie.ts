@@ -7,6 +7,7 @@ import type { SessionState } from '../sessionState'
 import { toSessionString, toSessionState } from '../sessionState'
 import { Observable } from '../../../tools/observable'
 import { mockable } from '../../../tools/mockable'
+import { monitorError } from '../../../tools/monitor'
 import { createCookieAccess } from '../../../browser/cookieAccess'
 import type { SessionStoreStrategy, SessionStoreStrategyType, SessionObservableEvent } from './sessionStoreStrategy'
 import { SESSION_STORE_KEY, LEGACY_SESSION_STORE_KEY } from './sessionStoreStrategy'
@@ -27,18 +28,16 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
   const sessionObservable = new Observable<SessionObservableEvent>()
   const trackAnonymousUser = !!configuration.trackAnonymousUser
   const opts = encodeCookieOptions(cookieOptions)
-
   const cookieAccess = mockable(createCookieAccess)(SESSION_STORE_KEY, configuration, cookieOptions)
   let isFirstCall = true
 
-  cookieAccess.observable.subscribe((cookieValue) => {
-    const state = toSessionState(cookieValue ?? '')
-    // Ignore updates from non-matching cookies (e.g. partitioned vs non-partitioned)
-    if (!isEmptyObject(state) && state.c !== opts) {
-      return
-    }
-    delete state.c
-    sessionObservable.notify({ cookieValue, sessionState: state })
+  cookieAccess.observable.subscribe(() => {
+    cookieAccess
+      .getAll()
+      .then((cookieValues) => {
+        sessionObservable.notify({ cookieValues, sessionState: findMatchingSessionState(cookieValues, opts) })
+      })
+      .catch(monitorError)
   })
 
   function applyAndWrite(fn: (state: SessionState) => SessionState) {

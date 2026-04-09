@@ -6,7 +6,7 @@ import type { Configuration } from '../domain/configuration'
 import { addTelemetryDebug } from '../domain/telemetry'
 import { addEventListener, DOM_EVENT } from './addEventListener'
 import type { CookieOptions } from './cookie'
-import { getCookie, getCookies, setCookie } from './cookie'
+import { getCookies, setCookie } from './cookie'
 import type { CookieStoreWindow } from './browser.types'
 
 export interface CookieAccessItem {
@@ -16,8 +16,9 @@ export interface CookieAccessItem {
 }
 
 export interface CookieAccess {
+  getAll(): Promise<string[]>
   getAllAndSet(cb: (value: string[]) => { value: string; expireDelay: number }): Promise<void>
-  observable: Observable<string | undefined>
+  observable: Observable<void>
 }
 
 export function createCookieAccess(
@@ -38,21 +39,26 @@ function createCookieStoreAccess(
   cookieOptions: CookieOptions,
   cookieStore: NonNullable<CookieStoreWindow['cookieStore']>
 ): CookieAccess {
-  const observable = new Observable<string | undefined>(() => {
+  const observable = new Observable<void>(() => {
     const listener = addEventListener(configuration, cookieStore, DOM_EVENT.CHANGE, (event) => {
       // Based on our experimentation, we're assuming that entries for the same cookie cannot be in both the 'changed' and 'deleted' arrays.
       // However, due to ambiguity in the specification, we asked for clarification: https://github.com/WICG/cookie-store/issues/226
       const changeEvent =
-        event.changed.find((event) => event.name === cookieName) ||
-        event.deleted.find((event) => event.name === cookieName)
+        event.changed.some((event) => event.name === cookieName) ||
+        event.deleted.some((event) => event.name === cookieName)
       if (changeEvent) {
-        observable.notify(changeEvent.value)
+        observable.notify()
       }
     })
     return listener.stop
   })
 
   return {
+    async getAll() {
+      const items = await cookieStore.getAll(cookieName)
+      return items.map((item) => item.value)
+    },
+
     async getAllAndSet(cb: (value: string[]) => { value: string; expireDelay: number }) {
       const items = await cookieStore.getAll(cookieName)
 
@@ -94,12 +100,12 @@ function createCookieStoreAccess(
 
 export const WATCH_COOKIE_INTERVAL_DELAY = ONE_SECOND
 function createDocumentCookieAccess(cookieName: string, cookieOptions: CookieOptions): CookieAccess {
-  let previousCookieValue = getCookie(cookieName)
+  let previousCookieValues = getCookies(cookieName)
 
-  const observable = new Observable<string | undefined>(() => {
+  const observable = new Observable<void>(() => {
     const watchCookieIntervalId = setInterval(() => {
-      const cookieValue = getCookie(cookieName)
-      notifyCookieValueIfChanged(cookieValue)
+      const cookieValues = getCookies(cookieName)
+      notifyCookieValueIfChanged(cookieValues)
     }, WATCH_COOKIE_INTERVAL_DELAY)
 
     return () => {
@@ -107,20 +113,24 @@ function createDocumentCookieAccess(cookieName: string, cookieOptions: CookieOpt
     }
   })
 
-  function notifyCookieValueIfChanged(cookieValue: string | undefined) {
-    if (cookieValue !== previousCookieValue) {
-      previousCookieValue = cookieValue
-      observable.notify(cookieValue)
+  function notifyCookieValueIfChanged(cookieValues: string[]) {
+    if (String(cookieValues) !== String(previousCookieValues)) {
+      previousCookieValues = cookieValues
+      observable.notify()
     }
   }
 
   return {
+    getAll() {
+      return Promise.resolve(getCookies(cookieName))
+    },
+
     async getAllAndSet(cb: (value: string[]) => { value: string; expireDelay: number }) {
       const currentValue = getCookies(cookieName)
       const { value, expireDelay } = cb(currentValue)
       setCookie(cookieName, value, expireDelay, cookieOptions)
       await Promise.resolve()
-      notifyCookieValueIfChanged(value)
+      notifyCookieValueIfChanged([value])
     },
 
     observable,
