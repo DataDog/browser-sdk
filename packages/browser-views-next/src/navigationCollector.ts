@@ -18,12 +18,12 @@ function hasViewChanged(currentHref: string, newHref: string): boolean {
 function startNavigationCollection(pipeline: Pipeline<Record<string, unknown>>): () => void {
   let currentUrl = window.location.href
 
-  function publishNavigation(loadingType: ViewLoadingType, startTime: number): void {
+  function publishNavigation(loadingType: ViewLoadingType, startTime: number, startDate: number): void {
     const newUrl = window.location.href
     const resource: NavigationResource = {
       url: newUrl,
       startTime,
-      startDate: Date.now(),
+      startDate,
       referrer: currentUrl,
       loadingType,
     }
@@ -35,9 +35,10 @@ function startNavigationCollection(pipeline: Pipeline<Record<string, unknown>>):
   const originalPushState = history.pushState
   history.pushState = function (...args: Parameters<typeof history.pushState>) {
     const startTime = performance.now()
+    const startDate = Date.now()
     originalPushState.apply(history, args)
     if (hasViewChanged(currentUrl, window.location.href)) {
-      publishNavigation('route_change', startTime)
+      publishNavigation('route_change', startTime, startDate)
     }
   }
 
@@ -45,30 +46,31 @@ function startNavigationCollection(pipeline: Pipeline<Record<string, unknown>>):
   const originalReplaceState = history.replaceState
   history.replaceState = function (...args: Parameters<typeof history.replaceState>) {
     const startTime = performance.now()
+    const startDate = Date.now()
     originalReplaceState.apply(history, args)
     if (hasViewChanged(currentUrl, window.location.href)) {
-      publishNavigation('route_change', startTime)
+      publishNavigation('route_change', startTime, startDate)
     }
   }
 
   // Listen to popstate (back/forward navigation)
   const handlePopstate = () => {
     if (hasViewChanged(currentUrl, window.location.href)) {
-      publishNavigation('route_change', performance.now())
+      publishNavigation('route_change', performance.now(), Date.now())
     }
   }
 
   // Listen to hashchange (hash-only routing)
   const handleHashchange = () => {
     if (hasViewChanged(currentUrl, window.location.href)) {
-      publishNavigation('route_change', performance.now())
+      publishNavigation('route_change', performance.now(), Date.now())
     }
   }
 
   // Listen to pageshow for BFCache restore
   const handlePageshow = (event: PageTransitionEvent) => {
     if (event.persisted) {
-      publishNavigation('bf_cache', performance.now())
+      publishNavigation('bf_cache', performance.now(), Date.now())
     }
   }
 

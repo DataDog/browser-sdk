@@ -84,12 +84,30 @@ describe('startNavigationCollection', () => {
     expect(collected.length).toBe(0)
   })
 
+  it('publishes route_change when pathname changes via replaceState', async () => {
+    stop = startNavigationCollection(pipeline)
+    const originalHref = window.location.href
+
+    history.replaceState({}, '', '/replaced-path')
+    await tick()
+
+    expect(collected.length).toBe(1)
+    expect(collected[0].loadingType).toBe('route_change')
+    expect(collected[0].url).toContain('/replaced-path')
+    expect(collected[0].referrer).toBe(originalHref)
+
+    history.pushState({}, '', '/')
+  })
+
   it('restores original pushState and replaceState on stop', () => {
     const originalPushState = history.pushState
+    const originalReplaceState = history.replaceState
     stop = startNavigationCollection(pipeline)
     expect(history.pushState).not.toBe(originalPushState)
+    expect(history.replaceState).not.toBe(originalReplaceState)
 
     stop()
     expect(history.pushState).toBe(originalPushState)
+    expect(history.replaceState).toBe(originalReplaceState)
   })
 })
