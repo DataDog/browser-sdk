@@ -21,6 +21,7 @@ interface RuntimeErrorResource {
   stack?: string
   type?: string
   source: 'source'
+  error?: Error
   fingerprint?: string
   causes?: ErrorCause[]
 }

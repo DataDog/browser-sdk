@@ -30,12 +30,11 @@ describe('startRuntimeErrorCollection', () => {
     expect(collected.length).toBe(1)
   })
 
-  it('includes message and stack from the Error object', () => {
+  it('includes message and raw error object', () => {
     const err = new Error('boom')
     window.dispatchEvent(new ErrorEvent('error', { error: err, message: 'boom' }))
     expect(collected[0].message).toBe('boom')
-    expect(collected[0].stack).toContain('Error: boom')
-    expect(collected[0].stack).toContain('  at ')
+    expect(collected[0].error).toBe(err)
   })
 
   it('includes error type/name', () => {

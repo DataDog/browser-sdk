@@ -73,12 +73,11 @@ describe('startConsoleCollection', () => {
     expect(collected[0].error).toBe(err)
   })
 
-  it('includes stack trace for error calls', async () => {
+  it('includes raw error object for stack trace enrichment', async () => {
     const err = new Error('with stack')
     console.error(err)
     await new Promise((resolve) => setTimeout(resolve, 0))
-    expect(collected[0].stack).toContain('Error: with stack')
-    expect(collected[0].stack).toContain('  at ')
+    expect(collected[0].error).toBe(err)
   })
 
   it('stop() restores original console methods', () => {

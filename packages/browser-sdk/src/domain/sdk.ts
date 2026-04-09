@@ -9,6 +9,7 @@ import {
   internalContextEnricher,
   tagsEnricher,
   metadataEnricher,
+  stackTraceEnricher,
 } from '@datadog/core-next'
 import { selectStore, createHttpRequest, createEndpointBuilder, INTAKE_SITE_US1 } from '@datadog/browser-core-next'
 import type { TrackType, HttpRequest } from '@datadog/browser-core-next'
@@ -46,7 +47,11 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
   // 4. Create pipeline
   const pipeline = new Pipeline<Record<string, unknown>>()
 
-  // 4.5. Register core enrichers on all observation events
+  // 4.5. Register stack trace enricher on resource events
+  pipeline.enrich('resource:console', stackTraceEnricher())
+  pipeline.enrich('resource:runtime_error', stackTraceEnricher())
+
+  // 4.6. Register core enrichers on all observation events
   pipeline.enrich('observation:*', metadataEnricher({ service: config.service, source: config.source }))
   pipeline.enrich('observation:*', sessionEnricher(session))
   pipeline.enrich('observation:*', internalContextEnricher())

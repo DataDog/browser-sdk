@@ -24,6 +24,7 @@ export {
   internalContextEnricher,
   tagsEnricher,
   metadataEnricher,
+  stackTraceEnricher,
 } from './domain/enricher'
 export type {
   SessionData,

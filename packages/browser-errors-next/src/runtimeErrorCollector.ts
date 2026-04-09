@@ -1,5 +1,4 @@
 import type { Pipeline, RuntimeErrorResource, ErrorCause } from '@datadog/core-next'
-import { computeStackTrace, formatStackTrace } from '@datadog/core-next'
 
 function flattenCauses(error: Error): ErrorCause[] | undefined {
   if (!('cause' in error)) return undefined
@@ -22,12 +21,11 @@ function extractFingerprint(error: Error | undefined): string | undefined {
 function startRuntimeErrorCollection(pipeline: Pipeline<Record<string, unknown>>): () => void {
   const handleError = (event: ErrorEvent) => {
     const error = event.error as Error | undefined
-    const trace = error ? computeStackTrace(error) : undefined
     const resource: RuntimeErrorResource = {
       message: error?.message ?? event.message ?? 'Unknown error',
-      stack: trace ? formatStackTrace(trace) : undefined,
       type: error?.name,
       source: 'source',
+      error,
       fingerprint: extractFingerprint(error),
       causes: error ? flattenCauses(error) : undefined,
     }
@@ -37,12 +35,11 @@ function startRuntimeErrorCollection(pipeline: Pipeline<Record<string, unknown>>
   const handleRejection = (event: PromiseRejectionEvent) => {
     const reason = event.reason
     const error = reason instanceof Error ? reason : undefined
-    const trace = error ? computeStackTrace(error) : undefined
     const resource: RuntimeErrorResource = {
       message: error?.message ?? String(reason),
-      stack: trace ? formatStackTrace(trace) : undefined,
       type: error?.name ?? 'Unhandled Rejection',
       source: 'source',
+      error,
       fingerprint: extractFingerprint(error),
       causes: error ? flattenCauses(error) : undefined,
     }
