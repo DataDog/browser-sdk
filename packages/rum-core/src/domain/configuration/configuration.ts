@@ -252,7 +252,7 @@ export interface RumInitConfiguration extends InitConfiguration {
   /**
    * Enables collection of request and response headers on resource events.
    *
-   * - `true`: collect default headers (see {@link DEFAULT_TRACKED_RESOURCE_HEADERS}) for all URLs
+   * - `true`: collect for all URLs the default headers: 'cache-control', 'etag', 'age', 'expires', 'content-type', 'content-encoding', 'vary', 'content-length', 'server-timing', 'x-cache'.
    * - `MatchOption[]`: collect default headers PLUS headers matching any item, for all URLs
    * - `HeaderCaptureByUrlOption[]`: URL-scoped rules with independent request/response control
    *
