@@ -38,11 +38,4 @@ export const browserConfigurations: BrowserConfiguration[] = [
     osVersion: '12.0',
     device: 'Google Pixel 6 Pro',
   },
-  {
-    sessionName: 'Safari mobile',
-    name: 'safari',
-    os: 'ios',
-    osVersion: '16',
-    device: 'iPhone 14',
-  },
 ]
