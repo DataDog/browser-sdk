@@ -55,6 +55,7 @@ class TestBuilder {
   private eventBridge = false
   private setups: Array<{ factory: SetupFactory; name?: string }> = DEFAULT_SETUPS
   private testFixture: typeof test = test
+  private mockClock = false
   private extension: {
     rumConfiguration?: RumInitConfiguration
     logsConfiguration?: LogsInitConfiguration
@@ -108,6 +109,11 @@ class TestBuilder {
 
   withApp(appName: string) {
     this.setups = [{ factory: (options, servers) => appSetup(options, servers, appName) }]
+    return this
+  }
+
+  withMockClock() {
+    this.mockClock = true
     return this
   }
 
@@ -218,6 +224,7 @@ class TestBuilder {
       extension: this.extension,
       worker: this.worker,
       callerLocation: this.callerLocation,
+      mockClock: this.mockClock,
     }
 
     if (this.alsoRunWithRumSlim) {
@@ -346,7 +353,7 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     servers.base.bindServerApp(createMockServerApp(servers, setup, setupOptions))
     servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
 
-    await setUpTest(browserLogs, testContext)
+    await setUpTest(browserLogs, setupOptions, testContext)
 
     try {
       await runner(testContext)
@@ -412,7 +419,11 @@ function createTestContext(
   }
 }
 
-async function setUpTest(browserLogsManager: BrowserLogsManager, { baseUrl, page, browserContext }: TestContext) {
+async function setUpTest(
+  browserLogsManager: BrowserLogsManager,
+  { mockClock }: SetupOptions,
+  { baseUrl, page, browserContext }: TestContext
+) {
   browserContext.on('console', (msg) => {
     browserLogsManager.add({
       level: msg.type() as BrowserLog['level'],
@@ -431,6 +442,13 @@ async function setUpTest(browserLogsManager: BrowserLogsManager, { baseUrl, page
     })
   })
 
+  if (mockClock) {
+    try {
+      await page.clock.install()
+    } catch (e) {
+      test.skip(true, `Mock clock is not supported in this browser: ${String(e)}`)
+    }
+  }
   await page.goto(baseUrl)
   await waitForServersIdle()
 }

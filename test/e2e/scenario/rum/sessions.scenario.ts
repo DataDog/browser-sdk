@@ -1,4 +1,4 @@
-import { SESSION_STORE_KEY, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
+import { ONE_HOUR, ONE_MINUTE, SESSION_STORE_KEY, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
 import { RecordType } from '@datadog/browser-rum/src/types'
 import { test, expect } from '@playwright/test'
 import { setCookie } from '../../lib/helpers/browser'
@@ -37,6 +37,34 @@ test.describe('rum sessions', () => {
         expect(segment.records[1].type).toBe(RecordType.Focus)
         expect(segment.records[2].type).toBe(RecordType.FullSnapshot)
         expect(segment.records.slice(3).every((record) => record.type !== RecordType.FullSnapshot)).toBe(true)
+      })
+  })
+
+  test.describe('session freeze/resume', () => {
+    createTest('does not send a view update with stale session data when the session expires while the page is frozen')
+      .withRum()
+      .withMockClock()
+      .run(async ({ intakeRegistry, flushEvents, page }) => {
+        const initialDate = await page.evaluate(() => Date.now())
+
+        // Fast forward 10 minutes: the view should still be active at this point.
+        await page.clock.fastForward('10:00')
+
+        // Simulate a 24-hour page freeze by jumping time without firing timers.
+        await page.clock.fastForward('24:00:00')
+
+        await flushEvents()
+
+        // No requests were sent after the 24-hour freeze.
+        for (const request of intakeRegistry.rumRequests) {
+          expect(request.batchTime).toBeLessThan(initialDate + ONE_HOUR)
+        }
+
+        // View events should only contain data from before the freeze (< 11 minutes of time_spent)
+        expect(intakeRegistry.rumViewEvents).not.toHaveLength(0)
+        for (const view of intakeRegistry.rumViewEvents) {
+          expect(view.view.time_spent / 1e6 / ONE_MINUTE).toBeLessThan(11)
+        }
       })
   })
 
