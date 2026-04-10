@@ -17,18 +17,18 @@ describe('nuxtRumPlugin', () => {
   })
 
   it('returns a plugin object with name "nuxt"', () => {
-    expect(nuxtRumPlugin(makeRouter())).toEqual(jasmine.objectContaining({ name: 'nuxt' }))
+    expect(nuxtRumPlugin({ router: makeRouter() })).toEqual(jasmine.objectContaining({ name: 'nuxt' }))
   })
 
   it('sets trackViewsManually to true', () => {
     const initConfiguration = { ...INIT_CONFIGURATION }
 
-    nuxtRumPlugin(makeRouter()).onInit({ publicApi: PUBLIC_API, initConfiguration })
+    nuxtRumPlugin({ router: makeRouter() }).onInit({ publicApi: PUBLIC_API, initConfiguration })
 
     expect(initConfiguration.trackViewsManually).toBe(true)
   })
 
   it('returns configuration telemetry', () => {
-    expect(nuxtRumPlugin(makeRouter()).getConfigurationTelemetry()).toEqual({ router: true, nuxt: true })
+    expect(nuxtRumPlugin({ router: makeRouter() }).getConfigurationTelemetry()).toEqual({ router: true, nuxt: true })
   })
 })

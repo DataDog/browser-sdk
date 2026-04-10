@@ -1,2 +1,2 @@
-export type { NuxtPlugin } from '../domain/nuxtPlugin'
+export type { NuxtPlugin, NuxtPluginConfiguration } from '../domain/nuxtPlugin'
 export { nuxtRumPlugin } from '../domain/nuxtPlugin'
