@@ -606,10 +606,8 @@ function validateAndBuildTrackResourceHeaders(initConfiguration: RumInitConfigur
     }
 
     result.push({
+      ...item,
       name: typeof item.name === 'string' ? item.name.toLowerCase() : (item.name as MatchOption),
-      ...(item.url !== undefined && { url: item.url }),
-      ...(item.extractor !== undefined && { extractor: item.extractor }),
-      ...(item.location !== undefined && { location: item.location }),
     })
   })
 
