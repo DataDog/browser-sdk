@@ -25,6 +25,7 @@ export interface ViewObservation {
   loadingType: ViewLoadingType
   startTime: number
   startDate: number
+  date: number
   name?: string
 }
 

@@ -26,6 +26,8 @@ import { startCollectors as startErrorCollectors } from '@datadog/browser-errors
 import { startCollectors as startNetworkCollectors } from '@datadog/browser-network-next/collectors'
 import { startCollectors as startViewCollectors } from '@datadog/browser-views-next/collectors'
 
+declare const __BUILD_ENV__SDK_VERSION__: string
+
 interface SdkOptions {
   modules?: Module[]
   instanceId?: string
@@ -51,8 +53,8 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
   const modules = init.modules ?? []
   const extensions = modules.map((m) => m.extension)
 
-  // 2. Build configuration
-  const config = build(init, extensions)
+  // 2. Build configuration — inject SDK version from build environment
+  const config = build({ ...init, sdkVersion: init.sdkVersion ?? __BUILD_ENV__SDK_VERSION__ }, extensions)
   if (!config) {
     return null
   }
