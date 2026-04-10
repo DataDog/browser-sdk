@@ -212,17 +212,26 @@
   <body>
     <h1>SDK Comparison</h1>
     <p class="subtitle">
-      Side-by-side v6 (browser-logs) vs v8 (browser-logs-next). Click a request to expand the payload.
+      Side-by-side v6 (browser-logs + browser-rum) vs v8 (browser-logs-next + browser-views-next). Click a request to
+      expand the payload.
     </p>
 
     <div class="actions">
-      <h2>Trigger actions (both SDKs receive the same action)</h2>
+      <h2>Logs</h2>
       <button id="btn-info">logger.info()</button>
       <button id="btn-warn">logger.warn()</button>
       <button id="btn-error" class="danger">logger.error()</button>
       <button id="btn-console-error" class="danger">console.error()</button>
       <button id="btn-set-context">setGlobalContext()</button>
       <button id="btn-set-user">setUser()</button>
+    </div>
+
+    <div class="actions">
+      <h2>Views</h2>
+      <button id="btn-start-view" style="border-color: #9c27b0">startView('manual-view')</button>
+      <button id="btn-navigate-a" style="border-color: #2196f3">navigate → /page-a</button>
+      <button id="btn-navigate-b" style="border-color: #2196f3">navigate → /page-b</button>
+      <button id="btn-navigate-back" style="border-color: #2196f3">history.back()</button>
       <button id="btn-flush" style="border-color: #4caf50">Flush batches</button>
       <button id="btn-clear" class="clear-btn">Clear</button>
     </div>
@@ -231,7 +240,7 @@
       <div class="panel v6">
         <div class="panel-header">
           <span class="badge">v6</span>
-          <h3>@datadog/browser-logs</h3>
+          <h3>browser-logs + browser-rum</h3>
           <span class="status" id="v6-status">initializing...</span>
         </div>
         <div class="requests" id="v6-requests"></div>
@@ -240,7 +249,7 @@
       <div class="panel v8">
         <div class="panel-header">
           <span class="badge">v8</span>
-          <h3>@datadog/browser-logs-next</h3>
+          <h3>browser-logs-next + browser-views-next</h3>
           <span class="status" id="v8-status">initializing...</span>
         </div>
         <div class="requests" id="v8-requests"></div>

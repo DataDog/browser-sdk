@@ -1,17 +1,14 @@
 // === V6 SDK ===
 import { datadogLogs } from '@datadog/browser-logs'
+import { datadogRum } from '@datadog/browser-rum'
 
 // === V8 SDK ===
 import { createSdk } from '@datadog/browser-sdk'
 import { logsProcessor } from '@datadog/browser-logs-next/processor'
+import { viewsProcessor } from '@datadog/browser-views-next/processor'
+import type { ViewsPublicApi } from '@datadog/browser-views-next'
 
-// ─── Request capture via XHR monkey-patch ──────────────────────────────
-//
-// Both SDKs monkey-patch fetch, so we can't reliably intercept at that
-// level. Instead, we hook into XMLHttpRequest (which the v6 SDK uses as
-// fallback after sendBeacon) AND we patch fetch at the very beginning
-// before any SDK code runs. We save a reference to the real fetch and
-// wrap it to capture requests going to /intake/*.
+// ─── Request capture ────────────────────────────────────────────────────
 
 const _realFetch = window.fetch.bind(window)
 const _realSendBeacon = navigator.sendBeacon.bind(navigator)
@@ -49,7 +46,12 @@ window.fetch = function (input: RequestInfo | URL, init?: RequestInit): Promise<
   const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
   const version = classifyUrl(url)
   if (version && init?.body) {
-    captureBody(version, url, typeof init.body === 'string' ? init.body : '')
+    const body = init.body
+    if (typeof body === 'string') {
+      captureBody(version, url, body)
+    } else if (body instanceof Blob) {
+      body.text().then((text) => captureBody(version, url, text))
+    }
   }
   return _realFetch(input, init)
 } as typeof fetch
@@ -62,7 +64,6 @@ navigator.sendBeacon = function (url: string, data?: BodyInit | null): boolean {
     if (body) {
       captureBody(version, url, body)
     } else if (data instanceof Blob) {
-      // Read blob async, render when ready
       data.text().then((text) => captureBody(version, url, text))
     }
   }
@@ -88,23 +89,77 @@ function syntaxHighlight(json: string): string {
   )
 }
 
+function getEventSummary(body: Record<string, unknown>): { tag: string; tagColor: string; label: string } {
+  // V8 view event (has loadingType at top level)
+  if (body.loadingType) {
+    const loadingType = body.loadingType as string
+    const url = (body.url as string) ?? ''
+    const name = (body.name as string) ?? ''
+    const pathname = (() => {
+      try {
+        return new URL(url).pathname
+      } catch {
+        return url
+      }
+    })()
+    return {
+      tag: loadingType,
+      tagColor: loadingType === 'initial_load' ? '#2196f3' : loadingType === 'bf_cache' ? '#ff9800' : '#9c27b0',
+      label: name ? `${pathname} (${name})` : pathname,
+    }
+  }
+  // V6 view event (has type: "view" and a nested view object)
+  if (body.type === 'view') {
+    const view = (body.view as Record<string, unknown>) ?? {}
+    const loadingType = (view.loading_type as string) ?? 'route_change'
+    const url = (view.url as string) ?? ''
+    const name = (view.name as string) ?? ''
+    const pathname = (() => {
+      try {
+        return new URL(url).pathname
+      } catch {
+        return url
+      }
+    })()
+    return {
+      tag: loadingType,
+      tagColor: loadingType === 'initial_load' ? '#2196f3' : loadingType === 'bf_cache' ? '#ff9800' : '#9c27b0',
+      label: name ? `${pathname} (${name})` : pathname,
+    }
+  }
+  // Log event
+  const status = (body.status as string) ?? '?'
+  const origin = (body.origin as string) ?? '?'
+  const message = (body.message as string) ?? ''
+  return {
+    tag: status,
+    tagColor: status === 'error' ? '#f44336' : status === 'warn' ? '#ff9800' : '#4caf50',
+    label: `${origin}: ${message.slice(0, 60)}`,
+  }
+}
+
+function isInteresting(body: Record<string, unknown>): boolean {
+  // Skip v6 RUM resource/action/long_task events — too noisy, not relevant for this comparison
+  if (body.type === 'resource' || body.type === 'action' || body.type === 'long_task') return false
+  return true
+}
+
 function renderEvent(event: CapturedEvent) {
+  if (!isInteresting(event.body)) return
   const container = document.getElementById(`${event.version}-requests`)!
   const countEl = document.getElementById(`${event.version}-count`)!
 
   const pretty = JSON.stringify(event.body, null, 2)
   const eventDate = (event.body.date as number) ?? event.timestamp
   const time = new Date(eventDate).toISOString().split('T')[1].slice(0, 12)
-  const status = (event.body.status as string) ?? '?'
-  const origin = (event.body.origin as string) ?? '?'
-  const message = (event.body.message as string) ?? ''
+  const { tag, tagColor, label } = getEventSummary(event.body)
 
   const el = document.createElement('div')
   el.className = 'request'
   el.innerHTML = `
     <div class="request-header">
-      <span class="method">[${status}]</span>
-      <span class="url">${origin}: ${message.slice(0, 60)}</span>
+      <span class="method" style="color: ${tagColor}">[${tag}]</span>
+      <span class="url">${label}</span>
       <span class="time">${time}</span>
     </div>
     <div class="request-body"><pre>${syntaxHighlight(pretty)}</pre></div>
@@ -131,6 +186,13 @@ function initV6() {
       forwardErrorsToLogs: true,
       forwardConsoleLogs: ['log', 'debug', 'info', 'warn', 'error'],
     })
+    datadogRum.init({
+      clientToken: 'pub_playground_v6',
+      applicationId: 'playground-app-v6',
+      site: 'datadoghq.com',
+      proxy: (options) => `/intake/v6${options.path}?${options.parameters}`,
+      trackViewsManually: false,
+    })
     el.textContent = 'ready'
     el.style.color = '#4CAF50'
   } catch (e) {
@@ -146,12 +208,13 @@ async function initV8() {
       clientToken: 'pub_playground_v8',
       site: 'datadoghq.com',
       proxy: '/intake/v8/api/v2/logs',
-      modules: [logsProcessor],
+      modules: [logsProcessor, viewsProcessor],
       logs: {
         forwardErrorsToLogs: true,
         forwardConsoleLogs: 'all' as const,
         forwardReports: 'all' as const,
       },
+      views: {},
     })
     if (!sdk) {
       el.textContent = 'init returned null'
@@ -170,6 +233,7 @@ async function initV8() {
 // ─── Button handlers ────────────────────────────────────────────────────
 
 function setupButtons() {
+  // ── Logs ──
   document.getElementById('btn-info')?.addEventListener('click', () => {
     datadogLogs.logger.info('Test info message', { source: 'playground' })
     const v8 = (window as any).sdkV8?.logs as any
@@ -196,7 +260,6 @@ function setupButtons() {
     datadogLogs.setGlobalContext({ env: 'playground', version: '0.0.1' })
     const v8 = (window as any).sdkV8?.logs as any
     v8?.setGlobalContext({ env: 'playground', version: '0.0.1' })
-    // Send a log so the context shows up in the payload
     datadogLogs.logger.info('Log after setGlobalContext')
     v8?.logger.info('Log after setGlobalContext')
   })
@@ -205,13 +268,31 @@ function setupButtons() {
     datadogLogs.setUser({ id: 'user-123', name: 'Test User', email: 'test@example.com' })
     const v8 = (window as any).sdkV8?.logs as any
     v8?.setUser({ id: 'user-123', name: 'Test User', email: 'test@example.com' })
-    // Send a log so the user shows up in the payload
     datadogLogs.logger.info('Log after setUser')
     v8?.logger.info('Log after setUser')
   })
 
+  // ── Views ──
+  document.getElementById('btn-start-view')?.addEventListener('click', () => {
+    datadogRum.startView({ name: 'manual-view' })
+    const v8Views = (window as any).sdkV8?.views as ViewsPublicApi | undefined
+    v8Views?.startView('manual-view')
+  })
+
+  document.getElementById('btn-navigate-a')?.addEventListener('click', () => {
+    history.pushState({}, '', '/page-a')
+  })
+
+  document.getElementById('btn-navigate-b')?.addEventListener('click', () => {
+    history.pushState({}, '', '/page-b')
+  })
+
+  document.getElementById('btn-navigate-back')?.addEventListener('click', () => {
+    history.back()
+  })
+
+  // ── Shared ──
   document.getElementById('btn-flush')?.addEventListener('click', () => {
-    // Simulate page hide to trigger both SDKs to flush their batches
     Object.defineProperty(document, 'visibilityState', { value: 'hidden', writable: true, configurable: true })
     document.dispatchEvent(new Event('visibilitychange'))
     setTimeout(() => {

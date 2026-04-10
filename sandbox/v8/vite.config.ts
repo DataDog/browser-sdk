@@ -48,6 +48,8 @@ export default defineConfig({
       // V6 packages
       '@datadog/browser-logs': path.resolve(__dirname, '../../packages/logs/src/entries/main'),
       '@datadog/browser-core': path.resolve(__dirname, '../../packages/core/src'),
+      '@datadog/browser-rum-core': path.resolve(__dirname, '../../packages/rum-core/src'),
+      '@datadog/browser-rum': path.resolve(__dirname, '../../packages/rum/src/entries/main'),
       // V8 packages
       '@datadog/core-next': path.resolve(__dirname, '../../packages/core-next/src'),
       '@datadog/browser-core-next': path.resolve(__dirname, '../../packages/browser-core-next/src'),
@@ -56,6 +58,7 @@ export default defineConfig({
       '@datadog/browser-console-next': path.resolve(__dirname, '../../packages/browser-console-next/src'),
       '@datadog/browser-errors-next': path.resolve(__dirname, '../../packages/browser-errors-next/src'),
       '@datadog/browser-network-next': path.resolve(__dirname, '../../packages/browser-network-next/src'),
+      '@datadog/browser-views-next': path.resolve(__dirname, '../../packages/browser-views-next/src'),
     },
   },
   server: {
