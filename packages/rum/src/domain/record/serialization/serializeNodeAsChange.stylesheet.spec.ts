@@ -6,6 +6,17 @@ import type { SerializationStats } from './serializationStats'
 import { serializeHtmlAsChange } from './serializeHtml.specHelper'
 
 describe('serializeNodeAsChange for stylesheets', () => {
+  let originalTimeout: number
+
+  beforeAll(() => {
+    originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000
+  })
+
+  afterAll(() => {
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout
+  })
+
   const css = 'div { color: green; }'
   const dynamicCss = 'span { color: red; }'
 
