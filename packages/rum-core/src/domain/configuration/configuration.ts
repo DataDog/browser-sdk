@@ -19,7 +19,7 @@ import type { PropagatorType, TracingOption } from '../tracing/tracer.types'
 
 export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'datadog']
 
-export const DEFAULT_TRACKED_RESOURCE_HEADERS: MatchOption[] = [
+export const DEFAULT_TRACKED_RESOURCE_HEADERS: readonly string[] = [
   'cache-control',
   'etag',
   'age',
@@ -252,23 +252,11 @@ export interface RumInitConfiguration extends InitConfiguration {
   /**
    * Enables collection of request and response headers on resource events.
    *
-   * - `true`: collect for all URLs the default headers: 'cache-control', 'etag', 'age', 'expires', 'content-type', 'content-encoding', 'vary', 'content-length', 'server-timing', 'x-cache'.
-   * - `MatchOption[]`: collect default headers PLUS headers matching any item, for all URLs
-   * - `HeaderCaptureByUrlOption[]`: URL-scoped rules with independent request/response control
-   *
-   * A `HeaderCaptureByUrlOption` targets a specific URL pattern and lets you control which headers
-   * are captured per direction:
-   * - `url`: a {@link MatchOption} to scope the rule to matching resource URLs
-   * - `request` / `response`: `true` for default headers, `MatchOption[]` for custom header
-   * names, or `HeaderMatcher[]` to also extract partial values via a RegExp
-   *
-   * A `HeaderMatcher` pairs a header name matcher with an optional `extractor` RegExp.
-   * When set, only the first capture group (or the full match) is kept as the header value.
-   *
-   * Both formats can be mixed in the same array. When multiple rules match the same URL, their
-   * matchers are merged: a rule that omits `request` contributes no request matchers, but does not
-   * suppress request matchers from other matching rules. When two matchers both match the same
-   * header name, the first matcher's extractor is used.
+   * - `true`: collect {@link DEFAULT_TRACKED_RESOURCE_HEADERS} for all URLs, both directions
+   * - `MatchHeader[]`: each {@link MatchHeader} targets a header name, with optional URL scope
+   * (`url`), value extraction (`extractor`), and `location`. By default, both request and
+   * response headers are captured; set `location` to `'request'` or `'response'` to restrict
+   * to one.
    *
    * Headers whose names match a built-in sensitive-data pattern are always dropped, regardless
    * of the configured matchers. The pattern blocks headers whose names contain: `token`, `cookie`,
@@ -279,16 +267,19 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @defaultValue false (disabled)
    * @example
    * // Collect default headers plus custom ones for all URLs
-   * trackResourceHeaders: ['x-request-id', /^x-custom-.+/]
+   * trackResourceHeaders: [
+   *   { name: (h) => DEFAULT_TRACKED_RESOURCE_HEADERS.includes(h) },
+   *   { name: 'x-request-id' },
+   * ]
    * @example
    * // URL-scoped rule: capture specific response headers only for calls to /api
-   * trackResourceHeaders: [{ url: /\/api\//, response: ['x-request-id', 'cache-control'] }]
+   * trackResourceHeaders: [{ url: /\/api\//, name: 'cache-control', location: 'response' }]
    * @example
    * // Extract a partial value from a header
-   * trackResourceHeaders: [{ url: /\/api\//, response: [{ name: 'server-timing', extractor: /dur=(\d+)/ }] }]
+   * trackResourceHeaders: [{ url: /\/api\//, name: 'server-timing', extractor: /dur=(\d+)/, location: 'response' }]
    * @hidden
    */
-  trackResourceHeaders?: boolean | Array<MatchOption | HeaderCaptureByUrlOption> | undefined
+  trackResourceHeaders?: boolean | MatchHeader[] | undefined
 
   /**
    * Enables collection of long task events.
@@ -355,23 +346,11 @@ export interface GraphQlUrlOption {
   trackResponseErrors?: boolean
 }
 
-export interface HeaderMatcher {
+export interface MatchHeader {
+  url?: MatchOption
   name: MatchOption
   extractor?: RegExp
-}
-
-type HeaderMatchOption = true | MatchOption[] | HeaderMatcher[]
-
-export interface HeaderCaptureByUrlOption {
-  url: MatchOption
-  request?: HeaderMatchOption
-  response?: HeaderMatchOption
-}
-
-export interface HeaderCaptureRule {
-  url: MatchOption
-  requestMatchers: HeaderMatcher[]
-  responseMatchers: HeaderMatcher[]
+  location?: 'request' | 'response' | 'any'
 }
 
 export interface RumConfiguration extends Configuration {
@@ -392,7 +371,7 @@ export interface RumConfiguration extends Configuration {
   trackUserInteractions: boolean
   trackViewsManually: boolean
   trackResources: boolean
-  trackResourceHeaders: HeaderCaptureRule[]
+  trackResourceHeaders: MatchHeader[]
   trackLongTasks: boolean
   trackBfcacheViews: boolean
   trackEarlyRequests: boolean
@@ -583,20 +562,21 @@ function validateAndBuildGraphQlOptions(initConfiguration: RumInitConfiguration)
   return graphQlOptions
 }
 
-function validateAndBuildTrackResourceHeaders(initConfiguration: RumInitConfiguration): HeaderCaptureRule[] {
+const VALID_HEADER_LOCATIONS = ['request', 'response', 'any']
+
+function validateAndBuildTrackResourceHeaders(initConfiguration: RumInitConfiguration): MatchHeader[] {
   const option = initConfiguration.trackResourceHeaders
+
   if (option === undefined || option === false) {
     return []
   }
 
-  const defaultMatchers: HeaderMatcher[] = DEFAULT_TRACKED_RESOURCE_HEADERS.map((h) => ({ name: h }))
-
   if (option === true) {
-    return [{ url: () => true, requestMatchers: defaultMatchers, responseMatchers: defaultMatchers }]
+    return DEFAULT_TRACKED_RESOURCE_HEADERS.map((name) => ({ name }))
   }
 
   if (!Array.isArray(option)) {
-    display.warn('trackResourceHeaders should be true or an array of MatchOption or HeaderCaptureByUrlOption')
+    display.warn('trackResourceHeaders should be true or an array of MatchHeader')
     return []
   }
 
@@ -605,75 +585,35 @@ function validateAndBuildTrackResourceHeaders(initConfiguration: RumInitConfigur
     return []
   }
 
-  const rules: HeaderCaptureRule[] = []
-  let hasAddedDefaultsRule = false
+  const result: MatchHeader[] = []
 
   option.forEach((item, index) => {
-    if (isHeaderCaptureByUrlOption(item)) {
-      rules.push({
-        url: item.url,
-        requestMatchers: toHeaderMatcher('request', item.request, defaultMatchers, index),
-        responseMatchers: toHeaderMatcher('response', item.response, defaultMatchers, index),
-      })
-    } else if (isMatchOption(item)) {
-      if (!hasAddedDefaultsRule) {
-        hasAddedDefaultsRule = true
-        rules.push({
-          url: () => true,
-          requestMatchers: defaultMatchers,
-          responseMatchers: defaultMatchers,
-        })
-      }
-      const name = typeof item === 'string' ? item.toLowerCase() : item
-      rules.push({ url: () => true, requestMatchers: [{ name }], responseMatchers: [{ name }] })
-    } else {
-      display.warn(`trackResourceHeaders[${index}] should be a MatchOption or HeaderCaptureByUrlOption`)
+    if (!isIndexableObject(item) || !isMatchOption(item.name)) {
+      display.warn(`trackResourceHeaders[${index}] should be a MatchHeader object with a 'name' property`)
+      return
     }
+    if (item.url !== undefined && !isMatchOption(item.url)) {
+      display.warn(`trackResourceHeaders[${index}].url should be a MatchOption`)
+      return
+    }
+    if (item.extractor !== undefined && !(item.extractor instanceof RegExp)) {
+      display.warn(`trackResourceHeaders[${index}].extractor should be a RegExp`)
+      return
+    }
+    if (item.location !== undefined && !VALID_HEADER_LOCATIONS.includes(item.location as string)) {
+      display.warn(`trackResourceHeaders[${index}].location should be 'request', 'response', or 'any'`)
+      return
+    }
+
+    result.push({
+      name: typeof item.name === 'string' ? item.name.toLowerCase() : (item.name as MatchOption),
+      ...(item.url !== undefined && { url: item.url }),
+      ...(item.extractor !== undefined && { extractor: item.extractor }),
+      ...(item.location !== undefined && { location: item.location }),
+    })
   })
 
-  return rules
-}
-
-function isHeaderCaptureByUrlOption(item: unknown): item is HeaderCaptureByUrlOption {
-  return isIndexableObject(item) && isMatchOption(item.url)
-}
-
-function isHeaderMatcher(item: unknown): item is HeaderMatcher {
-  return isIndexableObject(item) && isMatchOption(item.name)
-}
-
-function toHeaderMatcher(
-  type: 'request' | 'response',
-  option: HeaderMatchOption | undefined,
-  defaultMatchers: HeaderMatcher[],
-  ruleIndex: number
-): HeaderMatcher[] {
-  if (option === true) {
-    return defaultMatchers
-  }
-  if (!Array.isArray(option)) {
-    if (option !== undefined) {
-      display.warn(
-        `trackResourceHeaders[${ruleIndex}].${type} should be true or an array of MatchOption or HeaderMatcher`
-      )
-    }
-    return []
-  }
-  const matchers: HeaderMatcher[] = []
-  option.forEach((item, index) => {
-    if (isHeaderMatcher(item)) {
-      if (item.extractor !== undefined && !(item.extractor instanceof RegExp)) {
-        display.warn(`trackResourceHeaders[${ruleIndex}].${type}[${index}].extractor should be a RegExp`)
-      } else {
-        matchers.push({ ...item, name: typeof item.name === 'string' ? item.name.toLowerCase() : item.name })
-      }
-    } else if (isMatchOption(item)) {
-      matchers.push({ name: typeof item === 'string' ? item.toLowerCase() : item })
-    } else {
-      display.warn(`trackResourceHeaders[${ruleIndex}].${type}[${index}] should be a MatchOption or HeaderMatcher`)
-    }
-  })
-  return matchers
+  return result
 }
 
 function hasGraphQlPayloadTracking(allowedGraphQlUrls: RumInitConfiguration['allowedGraphQlUrls']): boolean {

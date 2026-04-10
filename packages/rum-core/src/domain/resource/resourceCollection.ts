@@ -15,7 +15,7 @@ import {
   display,
   addTelemetryDebug,
 } from '@datadog/browser-core'
-import type { HeaderMatcher, RumConfiguration } from '../configuration'
+import type { MatchHeader, RumConfiguration } from '../configuration'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType, createPerformanceObservable } from '../../browser/performanceObservable'
 import type {
@@ -317,23 +317,22 @@ function computeNetworkHeaders(
   request: RequestCompleteEvent | undefined,
   configuration: RumConfiguration
 ): { resource: { request?: ResourceRequest; response?: ResourceResponse } } | undefined {
-  const rules = configuration.trackResourceHeaders
-  if (rules.length === 0 || !request) {
+  const matchers = configuration.trackResourceHeaders
+  if (matchers.length === 0 || !request) {
     return undefined
   }
 
-  const matchingRules = rules.filter((rule) => matchList([rule.url], request.url, true))
-  if (matchingRules.length === 0) {
+  const urlMatchers = matchers.filter((m) => (m.url !== undefined ? matchList([m.url], request.url, true) : true))
+  if (urlMatchers.length === 0) {
     return undefined
   }
 
-  // TODO(next-major): use flatMap
-  const responseMatchers: HeaderMatcher[] = []
-  const requestMatchers: HeaderMatcher[] = []
-  matchingRules.forEach((r) => {
-    responseMatchers.push(...r.responseMatchers)
-    requestMatchers.push(...r.requestMatchers)
-  })
+  const responseMatchers = urlMatchers.filter(
+    (m) => m.location === undefined || m.location === 'any' || m.location === 'response'
+  )
+  const requestMatchers = urlMatchers.filter(
+    (m) => m.location === undefined || m.location === 'any' || m.location === 'request'
+  )
 
   const responseHeaders = responseMatchers.length > 0 ? getResponseHeaders(request, responseMatchers) : undefined
   const requestHeaders = requestMatchers.length > 0 ? getRequestHeaders(request, requestMatchers) : undefined
@@ -350,7 +349,7 @@ function computeNetworkHeaders(
   }
 }
 
-function getResponseHeaders(request: RequestCompleteEvent, matchers: HeaderMatcher[]): NetworkHeaders | undefined {
+function getResponseHeaders(request: RequestCompleteEvent, matchers: MatchHeader[]): NetworkHeaders | undefined {
   if (request.type === RequestType.FETCH && request.response) {
     return filterHeaders(request.response.headers, matchers)
   }
@@ -369,7 +368,7 @@ function getResponseHeaders(request: RequestCompleteEvent, matchers: HeaderMatch
   return undefined
 }
 
-function getRequestHeaders(request: RequestCompleteEvent, matchers: HeaderMatcher[]): NetworkHeaders | undefined {
+function getRequestHeaders(request: RequestCompleteEvent, matchers: MatchHeader[]): NetworkHeaders | undefined {
   if (request.type !== RequestType.FETCH) {
     return undefined
   }
@@ -390,7 +389,7 @@ const FORBIDDEN_HEADER_PATTERN =
 const MAX_HEADER_COUNT = 100
 const MAX_HEADER_VALUE_LENGTH = 128
 
-function filterHeaders(headers: Headers, matchers: HeaderMatcher[]): NetworkHeaders | undefined {
+function filterHeaders(headers: Headers, matchers: MatchHeader[]): NetworkHeaders | undefined {
   const result: NetworkHeaders = {} as NetworkHeaders
   let collectedHeaderCount = 0
   let totalHeaderCount = 0
@@ -414,12 +413,12 @@ function filterHeaders(headers: Headers, matchers: HeaderMatcher[]): NetworkHead
       return
     }
 
-    const headerMatcher = matchers.find((m) => matchList([m.name], lowerName))
-    if (!headerMatcher) {
+    const matchHeader = matchers.find((m) => matchList([m.name], lowerName))
+    if (!matchHeader) {
       return
     }
 
-    const { extractor } = headerMatcher
+    const { extractor } = matchHeader
     const capturedValue = extractor ? extractRegexMatch(value, extractor) : value
     if (capturedValue === undefined) {
       return

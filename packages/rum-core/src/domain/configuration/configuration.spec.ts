@@ -412,214 +412,163 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('trackResourceHeaders', () => {
-    const defaultMatchers = DEFAULT_TRACKED_RESOURCE_HEADERS.map((h) => ({ name: h }))
-
-    it('defaults to empty array', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackResourceHeaders).toEqual([])
-    })
-
-    it('returns default headers when set to true', () => {
-      const result = validateAndBuildRumConfiguration({
-        ...DEFAULT_INIT_CONFIGURATION,
-        trackResourceHeaders: true,
-      })!.trackResourceHeaders
-
-      expect(result).toEqual([
-        { url: jasmine.any(Function), requestMatchers: defaultMatchers, responseMatchers: defaultMatchers },
-      ])
-    })
-
-    it('returns empty array when set to false', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResourceHeaders: false })!
-          .trackResourceHeaders
-      ).toEqual([])
-    })
-
-    it('warns and returns empty array when set to an empty array', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResourceHeaders: [] })!
-          .trackResourceHeaders
-      ).toEqual([])
-      expect(displayWarnSpy).toHaveBeenCalledOnceWith(
-        'trackResourceHeaders is an empty array, no headers will be captured'
-      )
-    })
-
-    it('adds defaults rule and user matcher rule when an array with MatchOption is provided', () => {
-      const result = validateAndBuildRumConfiguration({
-        ...DEFAULT_INIT_CONFIGURATION,
-        trackResourceHeaders: ['x-custom-header'],
-      })!.trackResourceHeaders
-
-      expect(result.length).toBe(2)
-      expect(result[0]).toEqual({
-        url: jasmine.any(Function),
-        requestMatchers: defaultMatchers,
-        responseMatchers: defaultMatchers,
+    describe('disabled', () => {
+      it('defaults to empty array', () => {
+        expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackResourceHeaders).toEqual([])
       })
-      expect(result[1]).toEqual({
-        url: jasmine.any(Function),
-        requestMatchers: [{ name: 'x-custom-header' }],
-        responseMatchers: [{ name: 'x-custom-header' }],
+
+      it('returns empty array when set to false', () => {
+        expect(
+          validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResourceHeaders: false })!
+            .trackResourceHeaders
+        ).toEqual([])
       })
     })
 
-    it('lowercases string matchers from user input', () => {
-      const result = validateAndBuildRumConfiguration({
-        ...DEFAULT_INIT_CONFIGURATION,
-        trackResourceHeaders: ['X-Custom-Header'],
-      })!.trackResourceHeaders
-
-      expect(result[1].requestMatchers).toContain(jasmine.objectContaining({ name: 'x-custom-header' }))
-    })
-
-    it('accepts RegExp and function matchers', () => {
-      const regexpMatcher = /x-custom-.*/i
-      const fnMatcher = (header: string) => header.startsWith('x-')
-
-      const result = validateAndBuildRumConfiguration({
-        ...DEFAULT_INIT_CONFIGURATION,
-        trackResourceHeaders: [regexpMatcher, fnMatcher],
-      })!.trackResourceHeaders
-
-      expect(result[1].requestMatchers).toContain(jasmine.objectContaining({ name: regexpMatcher }))
-      expect(result[2].requestMatchers).toContain(jasmine.objectContaining({ name: fnMatcher }))
-    })
-
-    it('warns and returns empty array for invalid value', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResourceHeaders: 42 as any })!
-          .trackResourceHeaders
-      ).toEqual([])
-      expect(displayWarnSpy).toHaveBeenCalledOnceWith(
-        'trackResourceHeaders should be true or an array of MatchOption or HeaderCaptureByUrlOption'
-      )
-    })
-
-    it('warns and filters invalid items in array', () => {
-      const result = validateAndBuildRumConfiguration({
-        ...DEFAULT_INIT_CONFIGURATION,
-        trackResourceHeaders: ['valid-header', 42 as any, 'another-valid'] as any,
-      })!.trackResourceHeaders
-
-      expect(result.length).toBe(3)
-      expect(result[0]).toEqual({
-        url: jasmine.any(Function),
-        requestMatchers: defaultMatchers,
-        responseMatchers: defaultMatchers,
-      })
-      expect(result[1].requestMatchers).toEqual([{ name: 'valid-header' }])
-      expect(result[2].requestMatchers).toEqual([{ name: 'another-valid' }])
-      expect(displayWarnSpy).toHaveBeenCalledOnceWith(
-        'trackResourceHeaders[1] should be a MatchOption or HeaderCaptureByUrlOption'
-      )
-    })
-
-    describe('HeaderCaptureByUrlOption', () => {
-      it('generates a URL-scoped rule from HeaderCaptureByUrlOption with response: true', () => {
+    describe('enabled with regular usage', () => {
+      it('returns default headers as MatchHeader[] when set to true', () => {
         const result = validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
-          trackResourceHeaders: [{ url: 'https://api.example.com', response: true }],
+          trackResourceHeaders: true,
         })!.trackResourceHeaders
 
-        expect(result).toEqual([
-          { url: 'https://api.example.com', requestMatchers: [], responseMatchers: defaultMatchers },
-        ])
+        expect(result).toEqual(DEFAULT_TRACKED_RESOURCE_HEADERS.map((name) => ({ name })))
       })
 
-      it('generates a URL-scoped rule with request MatchOption[] and response: true', () => {
+      it('accepts a MatchHeader with only name', () => {
         const result = validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
-          trackResourceHeaders: [{ url: /api/, request: ['x-request-id'], response: true }],
+          trackResourceHeaders: [{ name: 'x-custom' }],
         })!.trackResourceHeaders
 
-        expect(result).toEqual([
-          { url: /api/, requestMatchers: [{ name: 'x-request-id' }], responseMatchers: defaultMatchers },
-        ])
+        expect(result).toEqual([{ name: 'x-custom' }])
       })
 
-      it('generates a URL-scoped rule with HeaderMatcher containing extractor', () => {
+      it('lowercases string name', () => {
+        const result = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackResourceHeaders: [{ name: 'X-Custom-Header' }],
+        })!.trackResourceHeaders
+
+        expect(result[0].name).toBe('x-custom-header')
+      })
+
+      it('accepts RegExp and function name matchers', () => {
+        const regexpMatcher = /x-custom-.*/i
+        const fnMatcher = (header: string) => header.startsWith('x-')
+
+        const result = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackResourceHeaders: [{ name: regexpMatcher }, { name: fnMatcher }],
+        })!.trackResourceHeaders
+
+        expect(result).toEqual([{ name: regexpMatcher }, { name: fnMatcher }])
+      })
+
+      it('preserves url', () => {
+        const result = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackResourceHeaders: [{ url: /api/, name: 'x-id' }],
+        })!.trackResourceHeaders
+
+        expect(result).toEqual([{ url: /api/, name: 'x-id' }])
+      })
+
+      it('preserves location', () => {
+        const result = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackResourceHeaders: [{ name: 'x-id', location: 'response' }],
+        })!.trackResourceHeaders
+
+        expect(result).toEqual([{ name: 'x-id', location: 'response' }])
+      })
+
+      it('preserves extractor', () => {
         const extractor = /max-age=(\d+)/
         const result = validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
-          trackResourceHeaders: [{ url: 'https://cdn.example.com', response: [{ name: 'cache-control', extractor }] }],
+          trackResourceHeaders: [{ name: 'cache-control', extractor }],
         })!.trackResourceHeaders
 
-        expect(result).toEqual([
-          {
-            url: 'https://cdn.example.com',
-            requestMatchers: [],
-            responseMatchers: [{ name: 'cache-control', extractor }],
-          },
-        ])
+        expect(result).toEqual([{ name: 'cache-control', extractor }])
       })
+    })
 
-      it('preserves order of mixed MatchOption and HeaderCaptureByUrlOption items', () => {
-        const result = validateAndBuildRumConfiguration({
-          ...DEFAULT_INIT_CONFIGURATION,
-          trackResourceHeaders: ['x-global', { url: 'https://api.example.com', response: ['x-api'] }] as any,
-        })!.trackResourceHeaders
-
-        expect(result.length).toBe(3)
-        expect(result[0]).toEqual({
-          url: jasmine.any(Function),
-          requestMatchers: defaultMatchers,
-          responseMatchers: defaultMatchers,
-        })
-        expect(result[1]).toEqual({
-          url: jasmine.any(Function),
-          requestMatchers: [{ name: 'x-global' }],
-          responseMatchers: [{ name: 'x-global' }],
-        })
-        expect(result[2]).toEqual({
-          url: 'https://api.example.com',
-          requestMatchers: [],
-          responseMatchers: [{ name: 'x-api' }],
-        })
-      })
-
-      it('returns empty matchers for omitted request/response', () => {
-        const result = validateAndBuildRumConfiguration({
-          ...DEFAULT_INIT_CONFIGURATION,
-          trackResourceHeaders: [{ url: 'https://example.com' }],
-        })!.trackResourceHeaders
-
-        expect(result).toEqual([{ url: 'https://example.com', requestMatchers: [], responseMatchers: [] }])
-      })
-
-      it('does not include defaults in HeaderCaptureByUrlOption with MatchOption[] direction', () => {
-        const result = validateAndBuildRumConfiguration({
-          ...DEFAULT_INIT_CONFIGURATION,
-          trackResourceHeaders: [{ url: 'https://example.com', response: ['x-custom'] }],
-        })!.trackResourceHeaders
-
-        expect(result).toEqual([
-          { url: 'https://example.com', requestMatchers: [], responseMatchers: [{ name: 'x-custom' }] },
-        ])
-      })
-
-      it('warns when extractor is not a RegExp', () => {
-        const result = validateAndBuildRumConfiguration({
-          ...DEFAULT_INIT_CONFIGURATION,
-          trackResourceHeaders: [
-            { url: 'https://example.com', response: [{ name: 'x-foo', extractor: 'bad' as any }] },
-          ],
-        })!.trackResourceHeaders
-
-        expect(result).toEqual([{ url: 'https://example.com', requestMatchers: [], responseMatchers: [] }])
+    describe('enabled with incorrect usage', () => {
+      it('warns and returns empty array for invalid value', () => {
+        expect(
+          validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResourceHeaders: 42 as any })!
+            .trackResourceHeaders
+        ).toEqual([])
         expect(displayWarnSpy).toHaveBeenCalledOnceWith(
-          'trackResourceHeaders[0].response[0].extractor should be a RegExp'
+          'trackResourceHeaders should be true or an array of MatchHeader'
         )
       })
 
-      it('lowercases string names in HeaderMatcher', () => {
+      it('warns and returns empty array when set to an empty array', () => {
+        expect(
+          validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResourceHeaders: [] })!
+            .trackResourceHeaders
+        ).toEqual([])
+        expect(displayWarnSpy).toHaveBeenCalledOnceWith(
+          'trackResourceHeaders is an empty array, no headers will be captured'
+        )
+      })
+
+      it('keeps valid items and skips invalid ones', () => {
         const result = validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
-          trackResourceHeaders: [{ url: /.*/, response: [{ name: 'Content-Type' }] }],
+          trackResourceHeaders: [{ name: 'x-valid' }, 42 as any, { name: 'x-also-valid' }],
         })!.trackResourceHeaders
 
-        expect(result[0].responseMatchers).toEqual([{ name: 'content-type' }])
+        expect(result).toEqual([{ name: 'x-valid' }, { name: 'x-also-valid' }])
+        expect(displayWarnSpy).toHaveBeenCalledOnceWith(
+          "trackResourceHeaders[1] should be a MatchHeader object with a 'name' property"
+        )
+      })
+
+      it('warns and skips item without name', () => {
+        const result = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackResourceHeaders: [{ url: 'https://example.com' } as any],
+        })!.trackResourceHeaders
+
+        expect(result).toEqual([])
+        expect(displayWarnSpy).toHaveBeenCalledOnceWith(
+          "trackResourceHeaders[0] should be a MatchHeader object with a 'name' property"
+        )
+      })
+
+      it('warns and skips item with invalid url', () => {
+        const result = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackResourceHeaders: [{ name: 'x-foo', url: 42 as any }],
+        })!.trackResourceHeaders
+
+        expect(result).toEqual([])
+        expect(displayWarnSpy).toHaveBeenCalledOnceWith('trackResourceHeaders[0].url should be a MatchOption')
+      })
+
+      it('warns and skips item with invalid location', () => {
+        const result = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackResourceHeaders: [{ name: 'x-foo', location: 'invalid' as any }],
+        })!.trackResourceHeaders
+
+        expect(result).toEqual([])
+        expect(displayWarnSpy).toHaveBeenCalledOnceWith(
+          "trackResourceHeaders[0].location should be 'request', 'response', or 'any'"
+        )
+      })
+
+      it('warns and skips item with invalid extractor', () => {
+        const result = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackResourceHeaders: [{ name: 'x-foo', extractor: 'bad' as any }],
+        })!.trackResourceHeaders
+
+        expect(result).toEqual([])
+        expect(displayWarnSpy).toHaveBeenCalledOnceWith('trackResourceHeaders[0].extractor should be a RegExp')
       })
     })
   })

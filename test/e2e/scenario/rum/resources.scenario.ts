@@ -432,10 +432,10 @@ test.describe('resource headers with trackResourceHeaders', () => {
       expect(resourceEvent!.resource.response!.headers!['cache-control']).toBe('no-cache')
     })
 
-  createTest('collect headers when HeaderMatchOption uses mixed-case string name')
+  createTest('collect headers when MatchHeader uses mixed-case string name')
     .withRum({
       ...TRACK_RESOURCE_HEADERS_CONFIG,
-      trackResourceHeaders: [{ url: /.*/, response: [{ name: 'Content-Type' }] }],
+      trackResourceHeaders: [{ name: 'Content-Type', location: 'response' }],
     })
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate((u) => fetch(u), okUrl({ 'Cache-Control': 'no-cache' }))

@@ -24,7 +24,7 @@ import { RumEventType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { RequestCompleteEvent } from '../requestCollection'
-import type { RumConfiguration, HeaderCaptureRule } from '../configuration'
+import type { RumConfiguration, MatchHeader } from '../configuration'
 import { validateAndBuildRumConfiguration } from '../configuration'
 import type { RumPerformanceEntry, RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
@@ -32,14 +32,8 @@ import { createSpanIdentifier, createTraceIdentifier } from '../tracing/identifi
 import { startResourceCollection } from './resourceCollection'
 import { retrieveInitialDocumentResourceTiming } from './retrieveInitialDocumentResourceTiming'
 
-function buildCatchAllRules(headerNames: MatchOption[]): HeaderCaptureRule[] {
-  return [
-    {
-      url: () => true,
-      requestMatchers: headerNames.map((name) => ({ name })),
-      responseMatchers: headerNames.map((name) => ({ name })),
-    },
-  ]
+function buildMatchHeadersForAllUrls(headerNames: MatchOption[]): MatchHeader[] {
+  return headerNames.map((name) => ({ name }))
 }
 
 const HANDLING_STACK_REGEX = /^Error: \n\s+at <anonymous> @/
@@ -534,7 +528,9 @@ describe('resourceCollection', () => {
 
     describe('Fetch', () => {
       it('should extract matching response headers from Fetch', () => {
-        setupResourceCollection({ trackResourceHeaders: buildCatchAllRules(['content-type', 'cache-control']) })
+        setupResourceCollection({
+          trackResourceHeaders: buildMatchHeadersForAllUrls(['content-type', 'cache-control']),
+        })
 
         notifyRequest({
           request: {
@@ -555,7 +551,7 @@ describe('resourceCollection', () => {
       })
 
       it('should extract matching request headers from Fetch', () => {
-        setupResourceCollection({ trackResourceHeaders: buildCatchAllRules(['x-custom']) })
+        setupResourceCollection({ trackResourceHeaders: buildMatchHeadersForAllUrls(['x-custom']) })
 
         notifyRequest({
           request: {
@@ -572,7 +568,7 @@ describe('resourceCollection', () => {
       })
 
       it('should extract request headers from Fetch Request input', () => {
-        setupResourceCollection({ trackResourceHeaders: buildCatchAllRules(['x-custom']) })
+        setupResourceCollection({ trackResourceHeaders: buildMatchHeadersForAllUrls(['x-custom']) })
 
         notifyRequest({
           request: {
@@ -591,7 +587,9 @@ describe('resourceCollection', () => {
 
     describe('XHR', () => {
       it('should extract matching response headers from XHR', () => {
-        setupResourceCollection({ trackResourceHeaders: buildCatchAllRules(['content-type', 'cache-control']) })
+        setupResourceCollection({
+          trackResourceHeaders: buildMatchHeadersForAllUrls(['content-type', 'cache-control']),
+        })
 
         const xhr = new XMLHttpRequest()
         spyOn(xhr, 'getAllResponseHeaders').and.returnValue(
@@ -613,7 +611,7 @@ describe('resourceCollection', () => {
 
       // TODO: Remove this test when we support request headers for XHR
       it('should not extract request headers from XHR', () => {
-        setupResourceCollection({ trackResourceHeaders: buildCatchAllRules(['content-type']) })
+        setupResourceCollection({ trackResourceHeaders: buildMatchHeadersForAllUrls(['content-type']) })
 
         const xhr = new XMLHttpRequest()
         spyOn(xhr, 'getAllResponseHeaders').and.returnValue('Content-Type: text/html\r\n')
@@ -644,7 +642,7 @@ describe('resourceCollection', () => {
     })
 
     it('should override perf entry content-type with network content-type', () => {
-      setupResourceCollection({ trackResourceHeaders: buildCatchAllRules(['content-type']) })
+      setupResourceCollection({ trackResourceHeaders: buildMatchHeadersForAllUrls(['content-type']) })
 
       notifyRequest({
         request: {
@@ -659,7 +657,7 @@ describe('resourceCollection', () => {
     })
 
     it('should preserve perf entry content-type when no request object', () => {
-      setupResourceCollection({ trackResourceHeaders: buildCatchAllRules(['content-type']) })
+      setupResourceCollection({ trackResourceHeaders: buildMatchHeadersForAllUrls(['content-type']) })
 
       notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { contentType: 'image/png' })])
       runTasks()
@@ -669,7 +667,7 @@ describe('resourceCollection', () => {
     })
 
     it('should lowercase header names', () => {
-      setupResourceCollection({ trackResourceHeaders: buildCatchAllRules(['x-custom-header']) })
+      setupResourceCollection({ trackResourceHeaders: buildMatchHeadersForAllUrls(['x-custom-header']) })
 
       notifyRequest({
         request: {
@@ -683,7 +681,7 @@ describe('resourceCollection', () => {
     })
 
     it('should support RegExp matchers', () => {
-      setupResourceCollection({ trackResourceHeaders: buildCatchAllRules([/^x-custom/]) })
+      setupResourceCollection({ trackResourceHeaders: buildMatchHeadersForAllUrls([/^x-custom/]) })
 
       notifyRequest({
         request: {
@@ -699,7 +697,9 @@ describe('resourceCollection', () => {
     })
 
     it('should support function matchers', () => {
-      setupResourceCollection({ trackResourceHeaders: buildCatchAllRules([(name: string) => name.startsWith('x-')]) })
+      setupResourceCollection({
+        trackResourceHeaders: buildMatchHeadersForAllUrls([(name: string) => name.startsWith('x-')]),
+      })
 
       notifyRequest({
         request: {
@@ -715,7 +715,7 @@ describe('resourceCollection', () => {
 
     it('should not collect headers when experimental feature is disabled', () => {
       resetExperimentalFeatures()
-      setupResourceCollection({ trackResourceHeaders: buildCatchAllRules(['content-type']) })
+      setupResourceCollection({ trackResourceHeaders: buildMatchHeadersForAllUrls(['content-type']) })
 
       notifyRequest({
         request: {
@@ -746,7 +746,7 @@ describe('resourceCollection', () => {
 
       forbiddenHeaders.forEach((header) => {
         it(`should not capture forbidden response header: ${header}`, () => {
-          setupResourceCollection({ trackResourceHeaders: buildCatchAllRules(forbiddenHeaders) })
+          setupResourceCollection({ trackResourceHeaders: buildMatchHeadersForAllUrls(forbiddenHeaders) })
 
           notifyRequest({
             request: {
@@ -760,7 +760,7 @@ describe('resourceCollection', () => {
         })
 
         it(`should not capture forbidden request header: ${header}`, () => {
-          setupResourceCollection({ trackResourceHeaders: buildCatchAllRules(forbiddenHeaders) })
+          setupResourceCollection({ trackResourceHeaders: buildMatchHeadersForAllUrls(forbiddenHeaders) })
 
           notifyRequest({
             request: {
@@ -779,7 +779,7 @@ describe('resourceCollection', () => {
     describe('limit headers size', () => {
       it('should truncate header values exceeding the max length', () => {
         const displaySpy = spyOn(display, 'warn')
-        setupResourceCollection({ trackResourceHeaders: buildCatchAllRules(['x-long']) })
+        setupResourceCollection({ trackResourceHeaders: buildMatchHeadersForAllUrls(['x-long']) })
         const longValue = 'a'.repeat(200)
 
         notifyRequest({
@@ -797,7 +797,7 @@ describe('resourceCollection', () => {
       it('should limit the number of collected headers', () => {
         spyOn(display, 'warn')
         const headerNames = Array.from({ length: 101 }, (_, i) => `x-header-${i}`)
-        setupResourceCollection({ trackResourceHeaders: buildCatchAllRules(headerNames) })
+        setupResourceCollection({ trackResourceHeaders: buildMatchHeadersForAllUrls(headerNames) })
 
         const headerEntries: Record<string, string> = {}
         for (const name of headerNames) {
@@ -820,7 +820,7 @@ describe('resourceCollection', () => {
         const allowedHeaders = Array.from({ length: 100 }, (_, i) => `x-header-${i}`)
         // Include a forbidden header name in the matchers - it won't be counted
         const allMatchers = [...allowedHeaders, 'authorization', 'x-extra']
-        setupResourceCollection({ trackResourceHeaders: buildCatchAllRules(allMatchers) })
+        setupResourceCollection({ trackResourceHeaders: buildMatchHeadersForAllUrls(allMatchers) })
 
         const headerEntries: Record<string, string> = {}
         // The forbidden header comes first but should not count toward the limit
@@ -846,7 +846,7 @@ describe('resourceCollection', () => {
       it('should not emit telemetry when the max number of headers has not been reached', async () => {
         spyOn(display, 'warn')
         const telemetry: MockTelemetry = startMockTelemetry()
-        setupResourceCollection({ trackResourceHeaders: buildCatchAllRules(['x-header-0', 'x-header-1']) })
+        setupResourceCollection({ trackResourceHeaders: buildMatchHeadersForAllUrls(['x-header-0', 'x-header-1']) })
 
         notifyRequest({
           request: {
@@ -864,7 +864,7 @@ describe('resourceCollection', () => {
         const displaySpy = spyOn(display, 'warn')
         const telemetry: MockTelemetry = startMockTelemetry()
         const headerNames = Array.from({ length: 110 }, (_, i) => `x-header-${i}`)
-        setupResourceCollection({ trackResourceHeaders: buildCatchAllRules(headerNames) })
+        setupResourceCollection({ trackResourceHeaders: buildMatchHeadersForAllUrls(headerNames) })
 
         const headerEntries: Record<string, string> = {}
         for (const name of headerNames) {
@@ -896,13 +896,7 @@ describe('resourceCollection', () => {
     describe('URL-scoped filtering', () => {
       it('should only capture matching headers for a given URL', () => {
         setupResourceCollection({
-          trackResourceHeaders: [
-            {
-              url: 'https://resource.com',
-              requestMatchers: [{ name: 'x-api-version' }],
-              responseMatchers: [{ name: 'x-api-version' }],
-            },
-          ],
+          trackResourceHeaders: [{ url: 'https://resource.com', name: 'x-api-version' }],
         })
 
         notifyRequest({
@@ -934,13 +928,7 @@ describe('resourceCollection', () => {
 
       it('should not capture headers when no URL rule matches', () => {
         setupResourceCollection({
-          trackResourceHeaders: [
-            {
-              url: 'https://other.example.com',
-              requestMatchers: [{ name: 'content-type' }],
-              responseMatchers: [{ name: 'content-type' }],
-            },
-          ],
+          trackResourceHeaders: [{ url: 'https://other.example.com', name: 'content-type' }],
         })
 
         notifyRequest({
@@ -957,16 +945,8 @@ describe('resourceCollection', () => {
       it('should merge matchers from multiple matching rules', () => {
         setupResourceCollection({
           trackResourceHeaders: [
-            {
-              url: 'https://resource.com',
-              requestMatchers: [],
-              responseMatchers: [{ name: 'x-first' }],
-            },
-            {
-              url: /resource\.com/,
-              requestMatchers: [],
-              responseMatchers: [{ name: 'x-second' }],
-            },
+            { url: 'https://resource.com', name: 'x-first', location: 'response' },
+            { url: /resource\.com/, name: 'x-second', location: 'response' },
           ],
         })
 
@@ -984,13 +964,7 @@ describe('resourceCollection', () => {
 
       it('should use startsWith for string URL matchers', () => {
         setupResourceCollection({
-          trackResourceHeaders: [
-            {
-              url: 'https://resource.com',
-              requestMatchers: [],
-              responseMatchers: [{ name: 'x-test' }],
-            },
-          ],
+          trackResourceHeaders: [{ url: 'https://resource.com', name: 'x-test', location: 'response' }],
         })
 
         notifyRequest({
@@ -1006,15 +980,9 @@ describe('resourceCollection', () => {
     })
 
     describe('per-direction filtering', () => {
-      it('should capture only response headers when request matchers are empty', () => {
+      it('should capture only response headers when location is response', () => {
         setupResourceCollection({
-          trackResourceHeaders: [
-            {
-              url: () => true,
-              requestMatchers: [],
-              responseMatchers: [{ name: 'content-type' }],
-            },
-          ],
+          trackResourceHeaders: [{ name: 'content-type', location: 'response' }],
         })
 
         notifyRequest({
@@ -1030,15 +998,9 @@ describe('resourceCollection', () => {
         expect(event.resource.request).toBeUndefined()
       })
 
-      it('should capture only request headers when response matchers are empty', () => {
+      it('should capture only request headers when location is request', () => {
         setupResourceCollection({
-          trackResourceHeaders: [
-            {
-              url: () => true,
-              requestMatchers: [{ name: 'x-custom' }],
-              responseMatchers: [],
-            },
-          ],
+          trackResourceHeaders: [{ name: 'x-custom', location: 'request' }],
         })
 
         notifyRequest({
@@ -1057,11 +1019,8 @@ describe('resourceCollection', () => {
       it('should apply different matchers per direction', () => {
         setupResourceCollection({
           trackResourceHeaders: [
-            {
-              url: () => true,
-              requestMatchers: [{ name: 'x-request-id' }],
-              responseMatchers: [{ name: 'content-type' }],
-            },
+            { name: 'x-request-id', location: 'request' },
+            { name: 'content-type', location: 'response' },
           ],
         })
 
@@ -1084,13 +1043,7 @@ describe('resourceCollection', () => {
     describe('extractor', () => {
       it('should extract value with RegExp capture group', () => {
         setupResourceCollection({
-          trackResourceHeaders: [
-            {
-              url: () => true,
-              requestMatchers: [],
-              responseMatchers: [{ name: 'cache-control', extractor: /max-age=(\d+)/ }],
-            },
-          ],
+          trackResourceHeaders: [{ name: 'cache-control', extractor: /max-age=(\d+)/, location: 'response' }],
         })
 
         notifyRequest({
@@ -1106,13 +1059,7 @@ describe('resourceCollection', () => {
 
       it('should use full match when no capture group', () => {
         setupResourceCollection({
-          trackResourceHeaders: [
-            {
-              url: () => true,
-              requestMatchers: [],
-              responseMatchers: [{ name: 'cache-control', extractor: /max-age=\d+/ }],
-            },
-          ],
+          trackResourceHeaders: [{ name: 'cache-control', extractor: /max-age=\d+/, location: 'response' }],
         })
 
         notifyRequest({
@@ -1128,13 +1075,7 @@ describe('resourceCollection', () => {
 
       it('should skip header when extractor does not match', () => {
         setupResourceCollection({
-          trackResourceHeaders: [
-            {
-              url: () => true,
-              requestMatchers: [],
-              responseMatchers: [{ name: 'cache-control', extractor: /max-age=(\d+)/ }],
-            },
-          ],
+          trackResourceHeaders: [{ name: 'cache-control', extractor: /max-age=(\d+)/, location: 'response' }],
         })
 
         notifyRequest({
@@ -1151,13 +1092,7 @@ describe('resourceCollection', () => {
       it('should extract consistently when extractor has global flag', () => {
         const globalExtractor = /max-age=(\d+)/g
         setupResourceCollection({
-          trackResourceHeaders: [
-            {
-              url: () => true,
-              requestMatchers: [],
-              responseMatchers: [{ name: 'cache-control', extractor: globalExtractor }],
-            },
-          ],
+          trackResourceHeaders: [{ name: 'cache-control', extractor: globalExtractor, location: 'response' }],
         })
 
         notifyRequest({
@@ -1183,11 +1118,8 @@ describe('resourceCollection', () => {
       it('first matching matcher wins', () => {
         setupResourceCollection({
           trackResourceHeaders: [
-            {
-              url: () => true,
-              requestMatchers: [],
-              responseMatchers: [{ name: 'cache-control', extractor: /max-age=(\d+)/ }, { name: 'cache-control' }],
-            },
+            { name: 'cache-control', extractor: /max-age=(\d+)/, location: 'response' },
+            { name: 'cache-control', location: 'response' },
           ],
         })
 
