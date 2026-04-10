@@ -74,12 +74,12 @@ jobs:
 
           # Clone source repo and fetch PR ref
           echo "Cloning source repo..."
-          git clone --depth=1 --no-checkout "https://x-access-token:${GITHUB_TOKEN}@github.com/${SOURCE_REPO}.git" "${WORK_DIR}/repo"
+          git clone --no-checkout "https://x-access-token:${GITHUB_TOKEN}@github.com/${SOURCE_REPO}.git" "${WORK_DIR}/repo"
           cd "${WORK_DIR}/repo"
           echo "Fetching PR head..."
-          git fetch origin "pull/${PR_NUMBER}/head:pr-head" --depth=50
+          git fetch origin "pull/${PR_NUMBER}/head:pr-head"
           echo "Fetching base ref..."
-          git fetch origin "${PR_BASE_REF}:base-ref" --depth=50
+          git fetch origin "${PR_BASE_REF}:base-ref"
 
           # Compute merge base
           MERGE_BASE=$(git merge-base pr-head base-ref)
@@ -101,15 +101,18 @@ jobs:
           git push shadow "${PR_HEAD_SHA}:refs/heads/${SHADOW_BRANCH}" 2>&1
 
           # Create shadow PR
+          # Escape #123-style references to prevent GitHub cross-linking
+          ESCAPED_PR_BODY=$(echo "${PR_BODY}" | sed -E 's/#([0-9]+)/`#\1`/g')
+
           echo "Creating shadow PR..."
           SHADOW_PR_URL=$(GITHUB_TOKEN="${SHADOW_FORK_TOKEN}" gh pr create \
             --repo "${SHADOW_FORK}" \
             --base "${BASE_BRANCH}" \
             --head "${SHADOW_BRANCH}" \
             --title "Shadow: ${PR_TITLE} (v${VERSION})" \
-            --body "## Shadow Review — PR #${PR_NUMBER} v${VERSION}
+            --body "## Shadow Review — PR \`#${PR_NUMBER}\` v${VERSION}
 
-          **Source:** https://github.com/${SOURCE_REPO}/pull/${PR_NUMBER}
+          **Source:** \`${SOURCE_REPO}#${PR_NUMBER}\`
           **Commit:** \`${PR_HEAD_SHA}\`
           **Timestamp:** $(date -u +%Y-%m-%dT%H:%M:%SZ)
 
@@ -117,6 +120,6 @@ jobs:
 
           ## Original PR Description
 
-          ${PR_BODY}")
+          ${ESCAPED_PR_BODY}")
 
           echo "Shadow PR created: ${SHADOW_PR_URL}"
