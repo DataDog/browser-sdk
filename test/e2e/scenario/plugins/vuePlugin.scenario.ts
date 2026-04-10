@@ -1,18 +1,29 @@
 import { test, expect } from '@playwright/test'
 import { createTest } from '../../lib/framework'
-import { runBasePluginTests } from './basePluginTests'
+import { runBasePluginErrorTests } from './basePluginErrorTests'
+import { runBasePluginRouterTests } from './basePluginRouterTests'
 
-runBasePluginTests([
+const vueBasePluginConfig = {
+  name: 'vue',
+  loadApp: (b: ReturnType<typeof createTest>) => b.withVueApp(),
+  viewPrefix: '',
+}
+
+runBasePluginRouterTests([
   {
-    name: 'vue',
-    loadApp: (b) => b.withVueApp(),
-    viewPrefix: '',
+    ...vueBasePluginConfig,
     router: {
       homeViewName: '/',
       homeUrlPattern: '**/',
       userRouteName: '/user/:id',
       guidesRouteName: '/guides/:catchAll(.*)*',
     },
+  },
+])
+
+runBasePluginErrorTests([
+  {
+    ...vueBasePluginConfig,
     error: {
       clientErrorMessage: 'Error triggered by button click',
       expectedFramework: 'vue',

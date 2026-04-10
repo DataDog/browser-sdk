@@ -1,23 +1,38 @@
 import { test, expect } from '@playwright/test'
 import { createTest } from '../../lib/framework'
-import { runBasePluginTests } from './basePluginTests'
+import { runBasePluginErrorTests } from './basePluginErrorTests'
+import { runBasePluginRouterTests } from './basePluginRouterTests'
 
 const reactApps = [
   { appName: 'react-router-v6-app', description: 'React Router v6' },
   { appName: 'react-router-v7-app', description: 'React Router v7' },
 ]
 
-runBasePluginTests(
-  reactApps.map(({ appName, description }) => ({
-    name: `with ${description}`,
-    loadApp: (b) => b.withApp(appName),
-    viewPrefix: '',
+const reactPluginApps = reactApps.map(({ appName, description }) => ({
+  name: `with ${description}`,
+  loadApp: (b: ReturnType<typeof createTest>) => b.withApp(appName),
+  viewPrefix: '',
+}))
+
+runBasePluginRouterTests(
+  reactPluginApps.map(({ name, loadApp, viewPrefix }) => ({
+    name,
+    loadApp,
+    viewPrefix,
     router: {
       homeViewName: '/',
       homeUrlPattern: '**/',
       userRouteName: '/user/:id',
       guidesRouteName: '/guides/:slug',
     },
+  }))
+)
+
+runBasePluginErrorTests(
+  reactPluginApps.map(({ name, loadApp, viewPrefix }) => ({
+    name,
+    loadApp,
+    viewPrefix,
     error: {
       clientErrorMessage: 'Error triggered by button click',
       expectedFramework: 'react',

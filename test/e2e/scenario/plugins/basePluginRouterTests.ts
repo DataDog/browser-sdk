@@ -3,30 +3,22 @@ import { createTest } from '../../lib/framework'
 
 type TestBuilder = ReturnType<typeof createTest>
 
-export interface RouterConfig {
+interface RouterConfig {
   homeViewName: string
   homeUrlPattern: string | RegExp
   userRouteName: string
   guidesRouteName: string
 }
 
-export interface ErrorConfig {
-  clientErrorMessage: string
-  expectedFramework: string
-  expectsBrowserConsoleErrors?: boolean
-  expectsComponentStack?: boolean
-}
-
-export interface PluginTestConfig {
+interface RouterPluginTestConfig {
   name: string
   loadApp: (builder: TestBuilder) => TestBuilder
   viewPrefix: string
   router: RouterConfig
-  error?: ErrorConfig
 }
 
-export function runBasePluginTests(configs: PluginTestConfig[]) {
-  for (const { name, loadApp, viewPrefix, router, error } of configs) {
+export function runBasePluginRouterTests(configs: RouterPluginTestConfig[]) {
+  for (const { name, loadApp, viewPrefix, router } of configs) {
     const { homeViewName, homeUrlPattern, userRouteName, guidesRouteName } = router
 
     test.describe(`base plugin: ${name}`, () => {
@@ -139,39 +131,6 @@ export function runBasePluginTests(configs: PluginTestConfig[]) {
           expect(user999View?.view.referrer).toContain('/user/42')
         })
       })
-
-      if (error) {
-        test.describe('errors', () => {
-          loadApp(createTest('should report client-side error').withRum()).run(
-            async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
-              await page.click('text=Go to Error Test')
-              await page.waitForURL(`**${viewPrefix}/error-test`)
-
-              await page.click('[data-testid="trigger-error"]')
-              await page.waitForSelector('[data-testid="error-handled"]')
-
-              await flushEvents()
-
-              const customErrors = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
-              expect(customErrors).toHaveLength(1)
-              expect(customErrors[0].error.message).toBe(error.clientErrorMessage)
-              expect(customErrors[0].error.handling_stack).toBeDefined()
-              expect(customErrors[0].error.stack).toBeDefined()
-              if (error.expectsComponentStack) {
-                expect(customErrors[0].error.component_stack).toBeDefined()
-              }
-
-              expect(customErrors[0].context?.framework).toEqual(error.expectedFramework)
-
-              if (error.expectsBrowserConsoleErrors) {
-                withBrowserLogs((browserLogs) => {
-                  expect(browserLogs.filter((log) => log.level === 'error').length).toBeGreaterThan(0)
-                })
-              }
-            }
-          )
-        })
-      }
     })
   }
 }

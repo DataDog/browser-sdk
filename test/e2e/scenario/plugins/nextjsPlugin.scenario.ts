@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test'
 import { createTest } from '../../lib/framework'
-import { runBasePluginTests } from './basePluginTests'
+import { runBasePluginErrorTests } from './basePluginErrorTests'
+import { runBasePluginRouterTests } from './basePluginRouterTests'
 
-const routerConfigs = [
+const nextjsVariants = [
   {
     name: 'nextjs app router',
     routerType: 'app' as const,
@@ -19,10 +20,10 @@ const routerConfigs = [
   },
 ]
 
-runBasePluginTests(
-  routerConfigs.map(({ name, routerType, viewPrefix, homeUrlPattern, clientErrorMessage }) => ({
+runBasePluginRouterTests(
+  nextjsVariants.map(({ name, routerType, viewPrefix, homeUrlPattern }) => ({
     name,
-    loadApp: (b) => b.withNextjsApp(routerType),
+    loadApp: (b: ReturnType<typeof createTest>) => b.withNextjsApp(routerType),
     viewPrefix,
     router: {
       homeViewName: viewPrefix || '/',
@@ -30,6 +31,14 @@ runBasePluginTests(
       userRouteName: '/user/[id]',
       guidesRouteName: '/guides/[...slug]',
     },
+  }))
+)
+
+runBasePluginErrorTests(
+  nextjsVariants.map(({ name, routerType, viewPrefix, clientErrorMessage }) => ({
+    name,
+    loadApp: (b: ReturnType<typeof createTest>) => b.withNextjsApp(routerType),
+    viewPrefix,
     error: {
       clientErrorMessage,
       expectedFramework: 'nextjs',

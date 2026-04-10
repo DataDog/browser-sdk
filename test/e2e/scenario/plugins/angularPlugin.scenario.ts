@@ -1,20 +1,30 @@
 import { test, expect } from '@playwright/test'
 import { createTest } from '../../lib/framework'
-import { runBasePluginTests } from './basePluginTests'
+import { runBasePluginErrorTests } from './basePluginErrorTests'
+import { runBasePluginRouterTests } from './basePluginRouterTests'
 
-const angularApp = 'angular-app'
+const angularAppName = 'angular-app'
+const angularBasePluginConfig = {
+  name: angularAppName,
+  loadApp: (b: ReturnType<typeof createTest>) => b.withApp(angularAppName),
+  viewPrefix: '',
+}
 
-runBasePluginTests([
+runBasePluginRouterTests([
   {
-    name: 'angular',
-    loadApp: (b) => b.withApp(angularApp),
-    viewPrefix: '',
+    ...angularBasePluginConfig,
     router: {
       homeViewName: '/',
       homeUrlPattern: '**/',
       userRouteName: '/user/:id',
       guidesRouteName: '/guides/:slug',
     },
+  },
+])
+
+runBasePluginErrorTests([
+  {
+    ...angularBasePluginConfig,
     error: {
       clientErrorMessage: 'Error triggered by button click',
       expectedFramework: 'angular',
@@ -26,7 +36,7 @@ runBasePluginTests([
 test.describe('plugin: angular', () => {
   createTest('should define a view name for nested routes')
     .withRum()
-    .withApp(angularApp)
+    .withApp(angularAppName)
     .run(async ({ page, flushEvents, intakeRegistry }) => {
       await page.click('text=Go to Nested Route')
       await flushEvents()
@@ -39,7 +49,7 @@ test.describe('plugin: angular', () => {
 
   createTest('should define a view name with the actual path for wildcard routes')
     .withRum()
-    .withApp(angularApp)
+    .withApp(angularAppName)
     .run(async ({ page, flushEvents, intakeRegistry }) => {
       await page.click('text=Go to Wildcard Route')
       await flushEvents()
@@ -52,7 +62,7 @@ test.describe('plugin: angular', () => {
 
   createTest('should report errors caught by provideDatadogErrorHandler')
     .withRum()
-    .withApp(angularApp)
+    .withApp(angularAppName)
     .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
       await page.click('#throw-error')
       await flushEvents()
@@ -71,7 +81,7 @@ test.describe('plugin: angular', () => {
 
   createTest('should merge dd_context from the error object into the event context')
     .withRum()
-    .withApp(angularApp)
+    .withApp(angularAppName)
     .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
       await page.click('#throw-error-with-context')
       await flushEvents()
