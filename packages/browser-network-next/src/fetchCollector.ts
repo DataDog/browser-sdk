@@ -1,4 +1,5 @@
 import type { Pipeline, NetworkRequestResource } from '@datadog/core-next'
+import { isIntakeUrl } from '@datadog/browser-core-next'
 
 function startFetchCollection(pipeline: Pipeline<Record<string, unknown>>): () => void {
   const originalFetch = window.fetch
@@ -10,6 +11,7 @@ function startFetchCollection(pipeline: Pipeline<Record<string, unknown>>): () =
 
     return originalFetch.apply(this, arguments as any).then(
       (response: Response) => {
+        if (isIntakeUrl(url)) return response
         const resource: NetworkRequestResource = {
           method,
           url,
@@ -21,15 +23,17 @@ function startFetchCollection(pipeline: Pipeline<Record<string, unknown>>): () =
         return response
       },
       (error: unknown) => {
-        const resource: NetworkRequestResource = {
-          method,
-          url,
-          status: 0,
-          isAborted: error instanceof DOMException && error.name === 'AbortError',
-          duration: Date.now() - startTime,
-          error: error instanceof Error ? error.message : String(error),
+        if (!isIntakeUrl(url)) {
+          const resource: NetworkRequestResource = {
+            method,
+            url,
+            status: 0,
+            isAborted: error instanceof DOMException && error.name === 'AbortError',
+            duration: Date.now() - startTime,
+            error: error instanceof Error ? error.message : String(error),
+          }
+          pipeline.publish('resource:network_request', resource)
         }
-        pipeline.publish('resource:network_request', resource)
         throw error
       }
     )

@@ -1,4 +1,5 @@
 import type { Pipeline, NetworkRequestResource } from '@datadog/core-next'
+import { isIntakeUrl } from '@datadog/browser-core-next'
 
 function startXhrCollection(pipeline: Pipeline<Record<string, unknown>>): () => void {
   const originalOpen = XMLHttpRequest.prototype.open
@@ -15,15 +16,18 @@ function startXhrCollection(pipeline: Pipeline<Record<string, unknown>>): () => 
     const xhr = this
 
     const onComplete = () => {
-      const duration = Date.now() - ((xhr as any)._dd_startTime ?? Date.now())
-      const resource: NetworkRequestResource = {
-        method: (xhr as any)._dd_method ?? 'GET',
-        url: (xhr as any)._dd_url ?? '',
-        status: xhr.status,
-        isAborted: xhr.status === 0 && xhr.readyState !== 4,
-        duration,
+      const url: string = (xhr as any)._dd_url ?? ''
+      if (!isIntakeUrl(url)) {
+        const duration = Date.now() - ((xhr as any)._dd_startTime ?? Date.now())
+        const resource: NetworkRequestResource = {
+          method: (xhr as any)._dd_method ?? 'GET',
+          url,
+          status: xhr.status,
+          isAborted: xhr.status === 0 && xhr.readyState !== 4,
+          duration,
+        }
+        pipeline.publish('resource:network_request', resource)
       }
-      pipeline.publish('resource:network_request', resource)
       xhr.removeEventListener('loadend', onComplete)
     }
 
