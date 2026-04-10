@@ -19,7 +19,7 @@ import type { PropagatorType, TracingOption } from '../tracing/tracer.types'
 
 export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'datadog']
 
-export const DEFAULT_TRACKED_RESOURCE_HEADERS: readonly string[] = [
+export const DefaultTrackedResourceHeaders = [
   'cache-control',
   'etag',
   'age',
@@ -30,7 +30,7 @@ export const DEFAULT_TRACKED_RESOURCE_HEADERS: readonly string[] = [
   'content-length',
   'server-timing',
   'x-cache',
-]
+] as const
 
 /**
  * Init Configuration for the RUM browser SDK.
@@ -252,7 +252,7 @@ export interface RumInitConfiguration extends InitConfiguration {
   /**
    * Enables collection of request and response headers on resource events.
    *
-   * - `true`: collect {@link DEFAULT_TRACKED_RESOURCE_HEADERS} for all URLs, both directions
+   * - `true`: collect {@link DefaultTrackedResourceHeaders} for all URLs, both directions
    * - `MatchHeader[]`: each {@link MatchHeader} targets a header name, with optional URL scope
    * (`url`), value extraction (`extractor`), and `location`. By default, both request and
    * response headers are captured; set `location` to `'request'` or `'response'` to restrict
@@ -268,7 +268,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @example
    * // Collect default headers plus custom ones for all URLs
    * trackResourceHeaders: [
-   *   { name: (h) => DEFAULT_TRACKED_RESOURCE_HEADERS.includes(h) },
+   *   { name: (h) => DefaultTrackedResourceHeaders.includes(h) },
    *   { name: 'x-request-id' },
    * ]
    * @example
@@ -572,7 +572,7 @@ function validateAndBuildTrackResourceHeaders(initConfiguration: RumInitConfigur
   }
 
   if (option === true) {
-    return DEFAULT_TRACKED_RESOURCE_HEADERS.map((name) => ({ name }))
+    return DefaultTrackedResourceHeaders.map((name) => ({ name }))
   }
 
   if (!Array.isArray(option)) {

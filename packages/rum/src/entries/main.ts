@@ -50,7 +50,6 @@ export type {
   PropagatorType,
   FeatureFlagsForEvents,
   MatchHeader,
-  DEFAULT_TRACKED_RESOURCE_HEADERS,
 
   // Events
   CommonProperties,
@@ -73,6 +72,8 @@ export type {
   RumOtherResourceEventDomainContext,
   RumLongTaskEventDomainContext,
 } from '@datadog/browser-rum-core'
+
+export { DefaultTrackedResourceHeaders } from '@datadog/browser-rum-core'
 
 const recorderApi = makeRecorderApi()
 
