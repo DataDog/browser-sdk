@@ -1,5 +1,5 @@
 import type { Payload } from '@datadog/browser-core'
-import { RequestType } from '@datadog/browser-core'
+import { RequestType, startBufferingData } from '@datadog/browser-core'
 import type { MockFetch, MockFetchManager } from '@datadog/browser-core/test'
 import { registerCleanupTask, SPEC_ENDPOINTS, mockFetch, mockXhr, withXhr } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../test'
@@ -22,6 +22,7 @@ describe('collect fetch', () => {
 
   beforeEach(() => {
     mockFetchManager = mockFetch()
+    const { observable: bufferedDataObservable, stop: stopBuffering } = startBufferingData()
 
     startSpy = jasmine.createSpy('requestStart')
     completeSpy = jasmine.createSpy('requestComplete')
@@ -35,12 +36,18 @@ describe('collect fetch', () => {
         context.spanId = createSpanIdentifier()
       },
     }
-    ;({ stop: stopFetchTracking } = trackFetch(lifeCycle, mockRumConfiguration(), tracerStub as Tracer))
+    ;({ stop: stopFetchTracking } = trackFetch(
+      lifeCycle,
+      mockRumConfiguration(),
+      tracerStub as Tracer,
+      bufferedDataObservable
+    ))
 
     fetch = window.fetch as MockFetch
 
     registerCleanupTask(() => {
       stopFetchTracking()
+      stopBuffering()
     })
   })
 
@@ -181,8 +188,9 @@ describe('collect xhr', () => {
   let stopXhrTracking: () => void
 
   beforeEach(() => {
-    const configuration = mockRumConfiguration()
     mockXhr()
+    const { observable: bufferedDataObservable, stop: stopBuffering } = startBufferingData()
+
     startSpy = jasmine.createSpy('requestStart')
     completeSpy = jasmine.createSpy('requestComplete')
     const lifeCycle = new LifeCycle()
@@ -195,10 +203,16 @@ describe('collect xhr', () => {
         context.spanId = createSpanIdentifier()
       },
     }
-    ;({ stop: stopXhrTracking } = trackXhr(lifeCycle, configuration, tracerStub as Tracer))
+    ;({ stop: stopXhrTracking } = trackXhr(
+      lifeCycle,
+      mockRumConfiguration(),
+      tracerStub as Tracer,
+      bufferedDataObservable
+    ))
 
     registerCleanupTask(() => {
       stopXhrTracking()
+      stopBuffering()
     })
   })
 
@@ -348,10 +362,12 @@ describe('GraphQL response text collection', () => {
     const configuration = mockRumConfiguration({
       allowedGraphQlUrls: [{ match: /\/graphql$/, trackResponseErrors }],
     })
+    const { observable: bufferedDataObservable, stop: stopBuffering } = startBufferingData()
     const tracerStub: Partial<Tracer> = { clearTracingIfNeeded, traceFetch: jasmine.createSpy() }
-    const { stop } = trackFetch(lifeCycle, configuration, tracerStub as Tracer)
+    const { stop } = trackFetch(lifeCycle, configuration, tracerStub as Tracer, bufferedDataObservable)
     registerCleanupTask(() => {
       stop()
+      stopBuffering()
     })
 
     return { mockFetchManager, completeSpy, fetch: window.fetch as MockFetch }

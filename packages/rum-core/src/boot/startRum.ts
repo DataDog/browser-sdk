@@ -223,7 +223,7 @@ export function startRumEventCollection(
 
   const { addError } = startErrorCollection(lifeCycle, configuration, bufferedDataObservable)
 
-  startRequestCollection(lifeCycle, configuration, sessionManager, userContext, accountContext)
+  startRequestCollection(lifeCycle, configuration, sessionManager, userContext, accountContext, bufferedDataObservable)
 
   const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory)
 

@@ -18,7 +18,6 @@ import {
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
-  callbackAddsInstrumentation,
   collectAsyncCalls,
   interceptRequests,
   mockClock,
@@ -787,24 +786,6 @@ describe('preStartRum', () => {
     beforeEach(() => {
       trackingConsentState = createTrackingConsentState()
       ;({ strategy, doStartRumSpy } = createPreStartStrategyWithDefaults({ trackingConsentState }))
-    })
-
-    describe('basic methods instrumentation', () => {
-      it('should instrument fetch even if tracking consent is not granted', () => {
-        expect(
-          callbackAddsInstrumentation(() => {
-            strategy.init(
-              {
-                ...DEFAULT_INIT_CONFIGURATION,
-                trackingConsent: TrackingConsent.NOT_GRANTED,
-              },
-              PUBLIC_API
-            )
-          })
-            .toMethod(window, 'fetch')
-            .whenCalled()
-        ).toBeTrue()
-      })
     })
 
     it('does not start rum if tracking consent is not granted at init', () => {
