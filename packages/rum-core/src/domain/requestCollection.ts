@@ -61,6 +61,7 @@ export interface RequestCompleteEvent {
   isAbortedOnStart: boolean
   handlingStack?: string
   requestBody?: unknown
+  requestHeaders?: Headers
   responseBody?: string
 }
 

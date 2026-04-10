@@ -12,6 +12,7 @@ export interface XhrOpenContext {
   state: 'open'
   method: string
   url: string
+  requestHeaders?: Headers
 }
 
 export interface XhrStartContext extends Omit<XhrOpenContext, 'state'> {
@@ -46,6 +47,12 @@ function createXhrObservable(configuration: Configuration) {
   return new Observable<XhrContext>((observable) => {
     const { stop: stopInstrumentingStart } = instrumentMethod(XMLHttpRequest.prototype, 'open', openXhr)
 
+    const { stop: stopInstrumentingSetRequestHeader } = instrumentMethod(
+      XMLHttpRequest.prototype,
+      'setRequestHeader',
+      setRequestHeaderXhr
+    )
+
     const { stop: stopInstrumentingSend } = instrumentMethod(
       XMLHttpRequest.prototype,
       'send',
@@ -59,6 +66,7 @@ function createXhrObservable(configuration: Configuration) {
 
     return () => {
       stopInstrumentingStart()
+      stopInstrumentingSetRequestHeader()
       stopInstrumentingSend()
       stopInstrumentingAbort()
     }
@@ -70,6 +78,23 @@ function openXhr({ target: xhr, parameters: [method, url] }: InstrumentedMethodC
     state: 'open',
     method: String(method).toUpperCase(),
     url: normalizeUrl(String(url)),
+  })
+}
+
+function setRequestHeaderXhr({
+  target: xhr,
+  parameters: [name, value],
+  onPostCall,
+}: InstrumentedMethodCall<XMLHttpRequest, 'setRequestHeader'>) {
+  onPostCall(() => {
+    const context = xhrContexts.get(xhr)
+    if (!context || context.state !== 'open') {
+      return
+    }
+    if (!context.requestHeaders) {
+      context.requestHeaders = new Headers()
+    }
+    context.requestHeaders.append(String(name), String(value))
   })
 }
 

@@ -46,6 +46,10 @@ export class MockXhr extends MockEventTarget {
     this.hasEnded = false
   }
 
+  setRequestHeader(_name: string, _value: string) {
+    // noop - headers are tracked via instrumentation
+  }
+
   send() {
     MockXhr.onSend?.(this)
   }

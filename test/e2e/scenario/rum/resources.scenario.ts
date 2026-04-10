@@ -510,6 +510,57 @@ test.describe('resource headers with trackResourceHeaders', () => {
       expect(resourceEvent!.resource.request!.headers!['x-custom-request']).toBe('request-value')
     })
 
+  createTest('collect default request headers for XHR when trackResourceHeaders is true')
+    .withRum(TRACK_RESOURCE_HEADERS_CONFIG)
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(
+        () =>
+          new Promise<void>((resolve) => {
+            const xhr = new XMLHttpRequest()
+            xhr.addEventListener('loadend', () => resolve())
+            xhr.open('POST', '/ok')
+            xhr.setRequestHeader('Content-Type', 'application/json')
+            xhr.send(JSON.stringify({ key: 'value' }))
+          })
+      )
+
+      await flushEvents()
+
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.type === 'xhr')
+      expect(resourceEvent).toBeDefined()
+      expect(resourceEvent!.resource.request).toBeDefined()
+      expect(resourceEvent!.resource.request!.headers).toBeDefined()
+      expect(resourceEvent!.resource.request!.headers!['content-type']).toBe('application/json')
+    })
+
+  createTest('collect default and custom request headers for XHR when trackResourceHeaders includes a custom header')
+    .withRum({
+      ...TRACK_RESOURCE_HEADERS_CONFIG,
+      trackResourceHeaders: ['x-custom-request'],
+    })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(
+        () =>
+          new Promise<void>((resolve) => {
+            const xhr = new XMLHttpRequest()
+            xhr.addEventListener('loadend', () => resolve())
+            xhr.open('POST', '/ok')
+            xhr.setRequestHeader('Content-Type', 'application/json')
+            xhr.setRequestHeader('x-custom-request', 'request-value')
+            xhr.send(JSON.stringify({ key: 'value' }))
+          })
+      )
+
+      await flushEvents()
+
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.type === 'xhr')
+      expect(resourceEvent).toBeDefined()
+      expect(resourceEvent!.resource.request).toBeDefined()
+      expect(resourceEvent!.resource.request!.headers).toBeDefined()
+      expect(resourceEvent!.resource.request!.headers!['content-type']).toBe('application/json')
+      expect(resourceEvent!.resource.request!.headers!['x-custom-request']).toBe('request-value')
+    })
+
   createTest('do not collect resource headers when trackResourceHeaders is not set')
     .withRum({ enableExperimentalFeatures: ['track_resource_headers'] })
     .run(async ({ intakeRegistry, flushEvents, sendXhr, page }) => {
