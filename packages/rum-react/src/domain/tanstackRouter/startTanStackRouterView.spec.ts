@@ -1,6 +1,4 @@
 import { display } from '@datadog/browser-core'
-import type { AnyRoute } from '@tanstack/react-router'
-import { createRouter, createRootRoute, createRoute, createMemoryHistory } from '@tanstack/react-router'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import { startTanStackRouterView, computeViewName } from './startTanStackRouterView'
 import type { AnyTanStackRouteMatch } from './types'
@@ -67,11 +65,10 @@ describe('startTanStackRouterView', () => {
   ] as const
 
     cases.forEach(([routePaths, path, expectedViewName]) => {
-      it(`returns "${expectedViewName}" for route "${path}" and config "${routePaths}"`, async () => {
+      it(`returns "${expectedViewName}" for route "${path}" and config "${routePaths}"`, () => {
         const router = buildRouter(routePaths, path)
-        await router.load()
 
-        expect(computeViewName(router.state.matches as unknown as AnyTanStackRouteMatch[])).toEqual(expectedViewName)
+        expect(computeViewName(router.state.matches)).toEqual(expectedViewName)
       })
     })
 
@@ -87,31 +84,41 @@ describe('startTanStackRouterView', () => {
 })
 
 /**
- * Convert the routePaths representing nested route paths delimited by ' > ' to an actual
- * TanStack Router instance. Example: '/foo > bar > $p' would be turned into
- * a root route with children: /foo -> bar -> $p
+ * Build a mock router that mimics TanStack Router's resolved state for a given route config and
+ * path. The routePaths string uses ' > ' to delimit nested route segments (e.g. '/foo > bar > $p').
  */
 function buildRouter(routePaths: string, path: string) {
   const segments = routePaths.split(' > ')
-  const root = createRootRoute()
-  const routes: AnyRoute[] = []
-
-  for (let i = 0; i < segments.length; i++) {
-    const parent = i === 0 ? root : routes[i - 1]
-    const route = createRoute({ getParentRoute: () => parent, path: segments[i] })
-
-    routes.push(route)
-
-    if (i > 0) {
-      routes[i - 1].addChildren([route])
+  let fullPath = ''
+  for (const segment of segments) {
+    if (segment === '/') {
+      fullPath += '/'
+    } else if (segment.startsWith('/')) {
+      fullPath += segment
+    } else {
+      fullPath += `/${segment}`
     }
   }
 
-  const routeTree = root.addChildren([routes[0]])
+  const params: Record<string, string> = {}
+  const templateParts = fullPath.split('/')
+  const pathParts = path.split('/')
 
-  return createRouter({
-    routeTree,
-    history: createMemoryHistory({ initialEntries: [path] }),
-    isServer: true,
-  })
+  let pathIdx = 0
+  for (let i = 0; i < templateParts.length; i++) {
+    const tpl = templateParts[i]
+    if (tpl === '$') {
+      params._splat = pathParts.slice(pathIdx).join('/')
+      break
+    } else if (tpl.startsWith('$')) {
+      params[tpl.slice(1)] = pathParts[pathIdx] || ''
+    }
+    pathIdx++
+  }
+
+  return {
+    state: {
+      matches: [{ fullPath, pathname: path, params }] as AnyTanStackRouteMatch[],
+    },
+  }
 }
