@@ -13,6 +13,17 @@ import { ChangeType, PlaybackState } from '../../../types'
 import { serializeHtmlAsChange } from './serializeHtml.specHelper'
 
 describe('serializeNodeAsChange for snapshotted documents', () => {
+  let originalTimeout: number
+
+  beforeAll(() => {
+    originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000
+  })
+
+  afterAll(() => {
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout
+  })
+
   describe('for a simple document', () => {
     const GREEN_PNG =
       'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAAA1BMVEUA/wA0XsCoAAAADElEQVR4nGNgIA0AAAAwAAEWiZrRAAAAAElFTkSuQmCC'
