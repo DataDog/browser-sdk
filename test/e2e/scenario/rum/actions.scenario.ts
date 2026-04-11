@@ -123,6 +123,10 @@ test.describe('action collection', () => {
       </script>
     `)
     .run(async ({ intakeRegistry, flushEvents, page }) => {
+      test.skip(
+        test.info().project.name === 'android',
+        'On Android emulator, the XHR completes after the SDK closes the action due to higher latency'
+      )
       const button = page.locator('button')
       await button.click()
       await waitForServersIdle()
@@ -697,6 +701,10 @@ test.describe('custom actions with startAction/stopAction', () => {
   createTest('track multiple concurrent custom actions with actionKey')
     .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
     .run(async ({ intakeRegistry, flushEvents, page }) => {
+      test.skip(
+        test.info().project.name === 'android',
+        'Custom action events are not reliably flushed before navigation under Android emulator ADB latency'
+      )
       await page.evaluate(() => {
         window.DD_RUM!.startAction('click', { actionKey: 'button1' })
         window.DD_RUM!.startAction('click', { actionKey: 'button2' })

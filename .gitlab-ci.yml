@@ -238,6 +238,25 @@ e2e:
   after_script:
     - node ./scripts/test/export-test-result.ts e2e
 
+e2e-android:
+  extends:
+    - .base-configuration
+    - .feature-branches
+  tags:
+    - 'macos:sonoma'
+    - 'specific:true'
+  interruptible: true
+  timeout: 40 minutes
+  artifacts:
+    when: always
+    reports:
+      junit: test-report/e2e-android/*.xml
+  script:
+    - yarn
+    - yarn build
+    - yarn build:apps
+    - FORCE_COLOR=1 CI_JOB_NAME=e2e-android yarn test:e2e:android
+
 check-licenses:
   extends:
     - .base-configuration

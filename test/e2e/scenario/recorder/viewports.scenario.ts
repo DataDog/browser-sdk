@@ -283,7 +283,7 @@ async function layoutScrollTo(page: Page, scrollX: number, scrollY: number) {
     { scrollX, scrollY }
   )
   const { scrollX: nextScrollX, scrollY: nextScrollY } = await getWindowScroll(page)
-  // Ensure our methods are applied correctly
-  expect(scrollX).toBe(nextScrollX)
-  expect(scrollY).toBe(nextScrollY)
+  // Use toBeCloseTo because mobile DPI can cause sub-pixel scroll differences
+  expect(nextScrollX).toBeCloseTo(scrollX, 0)
+  expect(nextScrollY).toBeCloseTo(scrollY, 0)
 }

@@ -10,6 +10,7 @@ import { DEFAULT_LOGS_CONFIGURATION, DEFAULT_RUM_CONFIGURATION } from '../helper
 import { validateRumFormat } from '../helpers/validation'
 import type { BrowserConfiguration } from '../../../browsers.conf'
 import { NEXTJS_APP_ROUTER_PORT, VUE_ROUTER_APP_PORT } from '../helpers/playwright'
+import { test as androidTest } from '../../android/androidFixture'
 import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
@@ -20,7 +21,7 @@ import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
 import type { Extension } from './createExtension'
 import type { Worker } from './createWorker'
-import { isBrowserStack } from './environment'
+import { isAndroid, isBrowserStack } from './environment'
 
 export function createTest(title: string) {
   return new TestBuilder(title, captureCallerLocation())
@@ -54,7 +55,7 @@ class TestBuilder {
   private baseUrlHooks: UrlHook[] = []
   private eventBridge = false
   private setups: Array<{ factory: SetupFactory; name?: string }> = DEFAULT_SETUPS
-  private testFixture: typeof test = test
+  private testFixture: typeof test = isAndroid ? androidTest : test
   private extension: {
     rumConfiguration?: RumInitConfiguration
     logsConfiguration?: LogsInitConfiguration

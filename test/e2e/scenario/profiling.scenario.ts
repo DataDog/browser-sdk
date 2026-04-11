@@ -137,6 +137,10 @@ test.describe('profiling', () => {
     .withRum({ profilingSampleRate: 100, compressIntakeRequests: true })
     .withBasePath('/?js-profiling=true')
     .run(async ({ intakeRegistry, flushEvents, page }) => {
+      test.skip(
+        test.info().project.name === 'android',
+        'CompressionStream is not reliable on Android emulator Chromium'
+      )
       await generateLongTask(page)
 
       await flushEvents()

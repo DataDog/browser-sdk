@@ -1,5 +1,9 @@
 import type { Page } from '@playwright/test'
+import { isAndroid } from './environment'
 import { waitForServersIdle } from './httpServers'
+
+// The Android emulator has higher latency over ADB, so we need longer delays
+const WAIT_DELAY = isAndroid ? 900 : 200
 
 /**
  * Wait for browser requests to be sent and finished.
@@ -13,12 +17,13 @@ import { waitForServersIdle } from './httpServers'
  */
 export async function waitForRequests(page: Page) {
   await page.evaluate(
-    () =>
+    (delay) =>
       new Promise((resolve) => {
         setTimeout(() => {
           resolve(undefined)
-        }, 200)
-      })
+        }, delay)
+      }),
+    WAIT_DELAY
   )
   await waitForServersIdle()
 }
