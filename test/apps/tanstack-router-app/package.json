@@ -1,0 +1,43 @@
+{
+  "name": "tanstack-router-app",
+  "private": true,
+  "scripts": {
+    "build": "webpack"
+  },
+  "dependencies": {
+    "@tanstack/react-router": "1.168.7",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "peerDependencies": {
+    "@datadog/browser-rum": "*",
+    "@datadog/browser-rum-react": "*"
+  },
+  "peerDependenciesMeta": {
+    "@datadog/browser-rum": {
+      "optional": true
+    },
+    "@datadog/browser-rum-react": {
+      "optional": true
+    }
+  },
+  "resolutions": {
+    "@datadog/browser-rum-core": "file:../../../packages/rum-core/package.tgz",
+    "@datadog/browser-core": "file:../../../packages/core/package.tgz",
+    "@datadog/browser-rum": "file:../../../packages/rum/package.tgz",
+    "@datadog/browser-rum-react": "file:../../../packages/rum-react/package.tgz",
+    "@datadog/browser-rum-slim": "file:../../../packages/rum-slim/package.tgz",
+    "@datadog/browser-worker": "file:../../../packages/worker/package.tgz"
+  },
+  "devDependencies": {
+    "@datadog/browser-rum": "6.32.0",
+    "@datadog/browser-rum-react": "6.32.0",
+    "ts-loader": "9.5.4",
+    "typescript": "5.9.3",
+    "webpack": "5.105.2",
+    "webpack-cli": "6.0.1"
+  },
+  "volta": {
+    "extends": "../../../package.json"
+  }
+}

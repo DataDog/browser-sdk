@@ -1,13 +1,5 @@
 import type { Duration, ClocksState, TimeStamp } from '@datadog/browser-core'
-import {
-  timeStampNow,
-  Observable,
-  timeStampToClocks,
-  relativeToClocks,
-  generateUUID,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
-} from '@datadog/browser-core'
+import { timeStampNow, Observable, timeStampToClocks, relativeToClocks, generateUUID } from '@datadog/browser-core'
 import { isNodeShadowHost } from '../../browser/htmlDomUtils'
 import type { FrustrationType } from '../../rawRumEvent.types'
 import { ActionType } from '../../rawRumEvent.types'
@@ -242,10 +234,7 @@ function computeClickActionBase(
   const rect = target.getBoundingClientRect()
   const selector = getSelectorFromElement(target, configuration.actionNameAttribute)
 
-  const composedPathSelector =
-    isExperimentalFeatureEnabled(ExperimentalFeature.COMPOSED_PATH_SELECTOR) && typeof event.composedPath === 'function'
-      ? getComposedPathSelector(event.composedPath(), configuration.actionNameAttribute)
-      : undefined
+  const composedPathSelector = getComposedPathSelector(event.composedPath(), configuration.actionNameAttribute)
 
   if (selector) {
     updateInteractionSelector(event.timeStamp, selector)

@@ -1,10 +1,4 @@
 import { DatadogAppRouter } from '@datadog/browser-rum-nextjs'
-import type { Metadata } from 'next'
-
-export const metadata: Metadata = {
-  title: 'Next.js App Router Test',
-  description: 'Test app for Datadog RUM Next.js integration',
-}
 
 export default function RootLayout({ children, sidebar }: { children: React.ReactNode; sidebar: React.ReactNode }) {
   return (
