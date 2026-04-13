@@ -308,6 +308,28 @@ describe('fetch proxy with ResponseBodyAction', () => {
     })
   })
 
+  it('should not collect response body when body is already used', (done) => {
+    setupFetchTracking(() => ResponseBodyAction.COLLECT)
+
+    fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'response body content', bodyUsed: true })
+
+    mockFetchManager.whenAllComplete(() => {
+      expect(requests[0].responseBody).toBeUndefined()
+      done()
+    })
+  })
+
+  it('should not collect response body when body is disturbed', (done) => {
+    setupFetchTracking(() => ResponseBodyAction.COLLECT)
+
+    fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'response body content', bodyDisturbed: true })
+
+    mockFetchManager.whenAllComplete(() => {
+      expect(requests[0].responseBody).toBeUndefined()
+      done()
+    })
+  })
+
   it('should use the highest priority action when multiple getters are registered', (done) => {
     setupFetchTracking(() => ResponseBodyAction.IGNORE)
 
