@@ -412,71 +412,164 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('trackResourceHeaders', () => {
-    it('defaults to empty array', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackResourceHeaders).toEqual([])
+    describe('disabled', () => {
+      it('defaults to empty array', () => {
+        expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackResourceHeaders).toEqual([])
+      })
+
+      it('returns empty array when set to false', () => {
+        expect(
+          validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResourceHeaders: false })!
+            .trackResourceHeaders
+        ).toEqual([])
+      })
     })
 
-    it('returns default headers when set to true', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResourceHeaders: true })!
-          .trackResourceHeaders
-      ).toEqual(DEFAULT_TRACKED_RESOURCE_HEADERS)
+    describe('enabled with regular usage', () => {
+      it('returns default headers as MatchHeader[] when set to true', () => {
+        const result = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackResourceHeaders: true,
+        })!.trackResourceHeaders
+
+        expect(result).toEqual(DEFAULT_TRACKED_RESOURCE_HEADERS.map((name) => ({ name })))
+      })
+
+      it('accepts a MatchHeader with only name', () => {
+        const result = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackResourceHeaders: [{ name: 'x-custom' }],
+        })!.trackResourceHeaders
+
+        expect(result).toEqual([{ name: 'x-custom' }])
+      })
+
+      it('lowercases string name', () => {
+        const result = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackResourceHeaders: [{ name: 'X-Custom-Header' }],
+        })!.trackResourceHeaders
+
+        expect(result[0].name).toBe('x-custom-header')
+      })
+
+      it('accepts RegExp and function name matchers', () => {
+        const regexpMatcher = /x-custom-.*/i
+        const fnMatcher = (header: string) => header.startsWith('x-')
+
+        const result = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackResourceHeaders: [{ name: regexpMatcher }, { name: fnMatcher }],
+        })!.trackResourceHeaders
+
+        expect(result).toEqual([{ name: regexpMatcher }, { name: fnMatcher }])
+      })
+
+      it('preserves url', () => {
+        const result = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackResourceHeaders: [{ url: /api/, name: 'x-id' }],
+        })!.trackResourceHeaders
+
+        expect(result).toEqual([{ url: /api/, name: 'x-id' }])
+      })
+
+      it('preserves location', () => {
+        const result = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackResourceHeaders: [{ name: 'x-id', location: 'response' }],
+        })!.trackResourceHeaders
+
+        expect(result).toEqual([{ name: 'x-id', location: 'response' }])
+      })
+
+      it('preserves extractor', () => {
+        const extractor = /max-age=(\d+)/
+        const result = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackResourceHeaders: [{ name: 'cache-control', extractor }],
+        })!.trackResourceHeaders
+
+        expect(result).toEqual([{ name: 'cache-control', extractor }])
+      })
     })
 
-    it('returns empty array when set to false', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResourceHeaders: false })!
-          .trackResourceHeaders
-      ).toEqual([])
-    })
+    describe('enabled with incorrect usage', () => {
+      it('warns and returns empty array for invalid value', () => {
+        expect(
+          validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResourceHeaders: 42 as any })!
+            .trackResourceHeaders
+        ).toEqual([])
+        expect(displayWarnSpy).toHaveBeenCalledOnceWith(
+          'trackResourceHeaders should be true or an array of MatchHeader'
+        )
+      })
 
-    it('merges user matchers with defaults when an array is provided', () => {
-      const result = validateAndBuildRumConfiguration({
-        ...DEFAULT_INIT_CONFIGURATION,
-        trackResourceHeaders: ['x-custom-header'],
-      })!.trackResourceHeaders
+      it('warns and returns empty array when set to an empty array', () => {
+        expect(
+          validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResourceHeaders: [] })!
+            .trackResourceHeaders
+        ).toEqual([])
+        expect(displayWarnSpy).toHaveBeenCalledOnceWith(
+          'trackResourceHeaders is an empty array, no headers will be captured'
+        )
+      })
 
-      expect(result).toEqual([...DEFAULT_TRACKED_RESOURCE_HEADERS, 'x-custom-header'])
-    })
+      it('keeps valid items and skips invalid ones', () => {
+        const result = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackResourceHeaders: [{ name: 'x-valid' }, 42 as any, { name: 'x-also-valid' }],
+        })!.trackResourceHeaders
 
-    it('lowercases string matchers from user input', () => {
-      const result = validateAndBuildRumConfiguration({
-        ...DEFAULT_INIT_CONFIGURATION,
-        trackResourceHeaders: ['X-Custom-Header'],
-      })!.trackResourceHeaders
+        expect(result).toEqual([{ name: 'x-valid' }, { name: 'x-also-valid' }])
+        expect(displayWarnSpy).toHaveBeenCalledOnceWith(
+          "trackResourceHeaders[1] should be a MatchHeader object with a 'name' property"
+        )
+      })
 
-      expect(result).toContain('x-custom-header')
-    })
+      it('warns and skips item without name', () => {
+        const result = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackResourceHeaders: [{ url: 'https://example.com' } as any],
+        })!.trackResourceHeaders
 
-    it('accepts RegExp and function matchers', () => {
-      const regexpMatcher = /x-custom-.*/i
-      const fnMatcher = (header: string) => header.startsWith('x-')
+        expect(result).toEqual([])
+        expect(displayWarnSpy).toHaveBeenCalledOnceWith(
+          "trackResourceHeaders[0] should be a MatchHeader object with a 'name' property"
+        )
+      })
 
-      const result = validateAndBuildRumConfiguration({
-        ...DEFAULT_INIT_CONFIGURATION,
-        trackResourceHeaders: [regexpMatcher, fnMatcher],
-      })!.trackResourceHeaders
+      it('warns and skips item with invalid url', () => {
+        const result = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackResourceHeaders: [{ name: 'x-foo', url: 42 as any }],
+        })!.trackResourceHeaders
 
-      expect(result).toContain(regexpMatcher)
-      expect(result).toContain(fnMatcher)
-    })
+        expect(result).toEqual([])
+        expect(displayWarnSpy).toHaveBeenCalledOnceWith('trackResourceHeaders[0].url should be a MatchOption')
+      })
 
-    it('warns and returns empty array for invalid value', () => {
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResourceHeaders: 42 as any })!
-          .trackResourceHeaders
-      ).toEqual([])
-      expect(displayWarnSpy).toHaveBeenCalledOnceWith('trackResourceHeaders should be true or an array of MatchOption')
-    })
+      it('warns and skips item with invalid location', () => {
+        const result = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackResourceHeaders: [{ name: 'x-foo', location: 'invalid' as any }],
+        })!.trackResourceHeaders
 
-    it('warns and filters invalid items in array', () => {
-      const result = validateAndBuildRumConfiguration({
-        ...DEFAULT_INIT_CONFIGURATION,
-        trackResourceHeaders: ['valid-header', 42 as any, 'another-valid'] as any,
-      })!.trackResourceHeaders
+        expect(result).toEqual([])
+        expect(displayWarnSpy).toHaveBeenCalledOnceWith(
+          "trackResourceHeaders[0].location should be 'request', 'response', or 'any'"
+        )
+      })
 
-      expect(result).toEqual([...DEFAULT_TRACKED_RESOURCE_HEADERS, 'valid-header', 'another-valid'])
-      expect(displayWarnSpy).toHaveBeenCalledOnceWith('trackResourceHeaders[1] should be a string, RegExp, or function')
+      it('warns and skips item with invalid extractor', () => {
+        const result = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackResourceHeaders: [{ name: 'x-foo', extractor: 'bad' as any }],
+        })!.trackResourceHeaders
+
+        expect(result).toEqual([])
+        expect(displayWarnSpy).toHaveBeenCalledOnceWith('trackResourceHeaders[0].extractor should be a RegExp')
+      })
     })
   })
 
