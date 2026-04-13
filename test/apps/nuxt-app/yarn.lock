@@ -388,7 +388,7 @@ __metadata:
 
 "@datadog/browser-rum@file:../../../packages/rum/package.tgz::locator=nuxt-app%40workspace%3A.":
   version: 6.32.0
-  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=4dd931&locator=nuxt-app%40workspace%3A."
+  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=4e6058&locator=nuxt-app%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.32.0"
     "@datadog/browser-rum-core": "npm:6.32.0"
@@ -397,7 +397,7 @@ __metadata:
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
-  checksum: 10c0/44d0c4f36b69ef20e26d5af5aa78038b36f659f1c80fb93f468d88106f8e9f6b5dc9dc4cf51999529fa749887b294ca3f9d09b6a39bf00020f3b3e5838c1dbf6
+  checksum: 10c0/d4467b27a7030f691b21dddf7d0064907415b22d5bbb2ce519a6206d2c56bd9b6585d771cfbc4ace3076285cdcc5a26458c473f0bb007cd475d63798db0ce7f8
   languageName: node
   linkType: hard
 
