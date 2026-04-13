@@ -1,11 +1,14 @@
 import type { InstrumentedMethodCall } from '../tools/instrumentMethod'
 import { instrumentMethod } from '../tools/instrumentMethod'
-import { Observable } from '../tools/observable'
+import type { Observable } from '../tools/observable'
+import { BufferedObservable } from '../tools/observable'
 import type { Duration, ClocksState } from '../tools/utils/timeUtils'
 import { elapsed, clocksNow, timeStampNow } from '../tools/utils/timeUtils'
 import { normalizeUrl } from '../tools/utils/urlPolyfill'
 import { shallowClone } from '../tools/utils/objectUtils'
 import type { Configuration } from '../domain/configuration'
+import { globalObject } from '../tools/globalObject'
+import { noop } from '../tools/utils/functionUtils'
 import { addEventListener } from './addEventListener'
 
 export interface XhrOpenContext {
@@ -32,7 +35,9 @@ export interface XhrCompleteContext extends Omit<XhrStartContext, 'state'> {
 
 export type XhrContext = XhrOpenContext | XhrStartContext | XhrCompleteContext
 
-let xhrObservable: Observable<XhrContext> | undefined
+const XHR_BUFFER_LIMIT = 500
+
+let xhrObservable: BufferedObservable<XhrContext> | undefined
 const xhrContexts = new WeakMap<XMLHttpRequest, XhrContext>()
 
 export function initXhrObservable(configuration: Configuration) {
@@ -43,7 +48,11 @@ export function initXhrObservable(configuration: Configuration) {
 }
 
 function createXhrObservable(configuration: Configuration) {
-  return new Observable<XhrContext>((observable) => {
+  if (!('XMLHttpRequest' in globalObject)) {
+    return new BufferedObservable<XhrContext>(XHR_BUFFER_LIMIT, () => noop)
+  }
+
+  return new BufferedObservable<XhrContext>(XHR_BUFFER_LIMIT, (observable) => {
     const { stop: stopInstrumentingStart } = instrumentMethod(XMLHttpRequest.prototype, 'open', openXhr)
 
     const { stop: stopInstrumentingSend } = instrumentMethod(

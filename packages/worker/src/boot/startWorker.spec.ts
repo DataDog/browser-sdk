@@ -172,9 +172,6 @@ describe('startWorker', () => {
   })
 
   it('reports an error when an unexpected exception occurs while writing on a stream', () => {
-    if (!window.TextEncoder) {
-      pending('No TextEncoder support')
-    }
     spyOn(TextEncoder.prototype, 'encode').and.callFake(() => {
       throw new Error('Something went wrong!')
     })

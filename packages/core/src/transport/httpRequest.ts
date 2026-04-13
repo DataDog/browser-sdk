@@ -107,7 +107,7 @@ export function createHttpRequest<Body extends Payload = Payload>(
 }
 
 function sendBeaconStrategy(endpointBuilder: EndpointBuilder, bytesLimit: number, payload: Payload) {
-  const canUseBeacon = !!navigator.sendBeacon && payload.bytesCount < bytesLimit
+  const canUseBeacon = payload.bytesCount < bytesLimit
   if (canUseBeacon) {
     try {
       const beaconUrl = endpointBuilder.build('beacon', payload)
