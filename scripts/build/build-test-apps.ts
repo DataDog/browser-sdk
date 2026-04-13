@@ -28,6 +28,7 @@ const APPS: AppConfig[] = [
   { name: 'nextjs' },
   { name: 'angular-app' },
   { name: 'vue-router-app' },
+  { name: 'nuxt-app' },
 
   // React Router apps
   { name: 'react-router-v6-app' },

@@ -65,5 +65,17 @@ export const config: Config = {
         stdout: /Local:\s+http:\/\/localhost:(?<vue_router_app_port>\d+)/,
       },
     },
+    {
+      name: 'nuxt app',
+      stdout: 'pipe' as const,
+      cwd: path.join(__dirname, '../apps/nuxt-app'),
+      command: isLocal ? 'yarn dev' : 'yarn start',
+      env: { NO_COLOR: '1' },
+      wait: {
+        // yarn dev logs:   "➜ Local:  http://localhost:PORT"
+        // yarn start logs: "Listening on http://[::]:PORT"
+        stdout: /(?:Local:\s+http:\/\/localhost|Listening on http:\/\/(?:\[[^\]]+\]|[^:]+)):(?<nuxt_app_port>\d+)/,
+      },
+    },
   ],
 }
