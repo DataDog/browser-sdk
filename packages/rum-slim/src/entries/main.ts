@@ -62,7 +62,7 @@ export type {
   RumOtherResourceEventDomainContext,
   RumLongTaskEventDomainContext,
 } from '@datadog/browser-rum-core'
-export { DefaultTrackedResourceHeaders } from '@datadog/browser-rum-core'
+export { DEFAULT_TRACKED_RESOURCE_HEADERS } from '@datadog/browser-rum-core'
 export { DefaultPrivacyLevel } from '@datadog/browser-core'
 
 /**

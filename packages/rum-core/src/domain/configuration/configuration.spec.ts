@@ -9,7 +9,7 @@ import { EXHAUSTIVE_INIT_CONFIGURATION, SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION
 import type { RumInitConfiguration } from './configuration'
 import {
   DEFAULT_PROPAGATOR_TYPES,
-  DefaultTrackedResourceHeaders,
+  DEFAULT_TRACKED_RESOURCE_HEADERS,
   serializeRumConfiguration,
   validateAndBuildRumConfiguration,
 } from './configuration'
@@ -432,7 +432,7 @@ describe('validateAndBuildRumConfiguration', () => {
           trackResourceHeaders: true,
         })!.trackResourceHeaders
 
-        expect(result).toEqual(DefaultTrackedResourceHeaders.map((name) => ({ name })))
+        expect(result).toEqual(DEFAULT_TRACKED_RESOURCE_HEADERS.map((name) => ({ name })))
       })
 
       it('accepts a MatchHeader with only name', () => {

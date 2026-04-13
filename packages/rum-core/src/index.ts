@@ -51,7 +51,7 @@ export type {
   RemoteConfiguration,
   MatchHeader,
 } from './domain/configuration'
-export { DefaultTrackedResourceHeaders } from './domain/configuration'
+export { DEFAULT_TRACKED_RESOURCE_HEADERS } from './domain/configuration'
 export { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './domain/action/actionNameConstants'
 export { STABLE_ATTRIBUTES } from './domain/getSelectorFromElement'
 export * from './browser/htmlDomUtils'
