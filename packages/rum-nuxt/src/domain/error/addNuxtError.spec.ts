@@ -1,7 +1,9 @@
 import type { ComponentInternalInstance, ComponentPublicInstance } from 'vue'
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import { noop } from '@datadog/browser-core'
+import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 import { initializeNuxtPlugin } from '../../../test/initializeNuxtPlugin'
-import { resetNuxtPlugin } from '../nuxtPlugin'
+import { nuxtRumPlugin, resetNuxtPlugin } from '../nuxtPlugin'
 import { addNuxtError } from './addNuxtError'
 
 describe('addNuxtError', () => {
@@ -85,5 +87,28 @@ describe('addNuxtError', () => {
         },
       })
     )
+  })
+
+  it('computes startClocks when replaying vue errors after RUM start', () => {
+    const clock = mockClock()
+    const addErrorSpy = jasmine.createSpy()
+    const plugin = nuxtRumPlugin({
+      router: jasmine.createSpyObj('router', ['afterEach'], { currentRoute: { value: { matched: [] } } }),
+    })
+
+    plugin.onInit({
+      publicApi: { startView: noop } as RumPublicApi,
+      initConfiguration: {} as RumInitConfiguration,
+    })
+
+    addNuxtError(new Error('startup failed'), null, 'mounted hook')
+    clock.tick(100)
+
+    plugin.onRumStart({ addError: addErrorSpy })
+
+    expect(addErrorSpy.calls.mostRecent().args[0].startClocks).toEqual({
+      relative: clock.relative(100),
+      timeStamp: clock.timeStamp(100),
+    })
   })
 })

@@ -1,6 +1,8 @@
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import { noop } from '@datadog/browser-core'
+import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 import { initializeNuxtPlugin } from '../../../test/initializeNuxtPlugin'
-import { resetNuxtPlugin } from '../nuxtPlugin'
+import { nuxtRumPlugin, resetNuxtPlugin } from '../nuxtPlugin'
 import { addNuxtAppError } from './addNuxtAppError'
 
 describe('addNuxtAppError', () => {
@@ -53,5 +55,28 @@ describe('addNuxtAppError', () => {
         },
       })
     )
+  })
+
+  it('computes startClocks when replaying errors after RUM start', () => {
+    const clock = mockClock()
+    const addErrorSpy = jasmine.createSpy()
+    const plugin = nuxtRumPlugin({
+      router: jasmine.createSpyObj('router', ['afterEach'], { currentRoute: { value: { matched: [] } } }),
+    })
+
+    plugin.onInit({
+      publicApi: { startView: noop } as RumPublicApi,
+      initConfiguration: {} as RumInitConfiguration,
+    })
+
+    addNuxtAppError(new Error('startup failed'))
+    clock.tick(100)
+
+    plugin.onRumStart({ addError: addErrorSpy })
+
+    expect(addErrorSpy.calls.mostRecent().args[0].startClocks).toEqual({
+      relative: clock.relative(100),
+      timeStamp: clock.timeStamp(100),
+    })
   })
 })
