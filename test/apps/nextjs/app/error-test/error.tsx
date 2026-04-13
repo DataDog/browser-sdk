@@ -15,7 +15,7 @@ export default function ErrorBoundary({ error, reset }: { error: Error & { diges
   }, [error])
 
   return (
-    <div data-testid="error-boundary" data-error-reported={errorReported || undefined}>
+    <div data-testid="error-handled" data-error-reported={errorReported || undefined}>
       <h2>Something went wrong!</h2>
       {error.digest && <p data-testid="error-digest">Digest: {error.digest}</p>}
       <button onClick={reset}>Try again</button>

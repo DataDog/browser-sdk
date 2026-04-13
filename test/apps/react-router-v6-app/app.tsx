@@ -25,11 +25,15 @@ function HomePage() {
   return (
     <div>
       <h1>Home</h1>
-      <Link to="/user/42">Go to User</Link>
+      <Link to="/user/42?admin=true">Go to User 42</Link>
+      <br />
+      <Link to="/guides/123">Go to Guides 123</Link>
+      <br />
+      <Link to="/wildcard/foo/bar">Go to Wildcard</Link>
+      <br />
+      <Link to="/error-test">Go to Error Test</Link>
       <br />
       <Link to="/tracked">Go to Tracked</Link>
-      <br />
-      <Link to="/error">Go to Error Component</Link>
     </div>
   )
 }
@@ -39,6 +43,32 @@ function UserPage() {
   return (
     <div>
       <h1>User {id}</h1>
+      <Link to="/">Back to Home</Link>
+      <br />
+      <Link to={`/user/${id}#section`}>Go to Section</Link>
+      <br />
+      <Link to={`/user/${id}?admin=false`}>Change query params</Link>
+      <br />
+      <Link to="/user/999?admin=true">Go to User 999</Link>
+    </div>
+  )
+}
+
+function GuidesPage() {
+  return (
+    <div>
+      <h1>Guides</h1>
+      <Link to="/">Back to Home</Link>
+    </div>
+  )
+}
+
+function WildcardPage() {
+  const splatPath = useParams()['*']
+  return (
+    <div>
+      <h1>Wildcard: {splatPath}</h1>
+      <Link to="/">Back to Home</Link>
     </div>
   )
 }
@@ -48,7 +78,6 @@ function Layout() {
     <div>
       <nav>
         <Link to="/">Home</Link>
-        <Link to="/user/42">Go to User</Link>
       </nav>
       <Outlet />
     </div>
@@ -73,7 +102,7 @@ function ComponentWithErrorButton() {
   return (
     <div>
       <h1>Component with Error Button</h1>
-      <button id="error-button" onClick={() => setShouldError(true)}>
+      <button data-testid="trigger-error" onClick={() => setShouldError(true)}>
         Trigger Error
       </button>
     </div>
@@ -86,7 +115,7 @@ function ErrorPage() {
       <h1>Error Page</h1>
       <ErrorBoundary
         fallback={({ error, resetError }) => (
-          <div>
+          <div data-testid="error-handled">
             <h2>Something went wrong</h2>
             <p>{error.message}</p>
             <button onClick={resetError}>Try again</button>
@@ -113,11 +142,19 @@ const router = createBrowserRouter([
         Component: UserPage,
       },
       {
+        path: 'guides/:slug',
+        Component: GuidesPage,
+      },
+      {
+        path: 'wildcard/*',
+        Component: WildcardPage,
+      },
+      {
         path: 'tracked',
         Component: TrackedPage,
       },
       {
-        path: 'error',
+        path: 'error-test',
         Component: ErrorPage,
       },
     ],
