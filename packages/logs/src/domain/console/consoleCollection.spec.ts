@@ -125,31 +125,7 @@ describe('console collection', () => {
     })
   })
 
-  it('should retrieve fingerprint from console error', () => {
-    ;({ stop: stopConsoleCollection } = startConsoleCollection(
-      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['error'] })!,
-      lifeCycle,
-      bufferedDataObservable
-    ))
-
-    notifyConsole({
-      api: ConsoleApiName.error,
-      message: 'Error: foo',
-      handlingStack: '',
-      error: makeRawError({ type: 'Error', stack: 'Error: foo\n    at ...', fingerprint: 'my-fingerprint' }),
-    })
-
-    expect(rawLogsEvents[0].rawLogsEvent.error).toEqual({
-      stack: jasmine.any(String),
-      fingerprint: 'my-fingerprint',
-      causes: undefined,
-      handling: ErrorHandling.HANDLED,
-      kind: 'Error',
-      message: undefined,
-    })
-  })
-
-  it('should retrieve dd_context from console', () => {
+  it('should use error context as message context', () => {
     ;({ stop: stopConsoleCollection } = startConsoleCollection(
       validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['error'] })!,
       lifeCycle,
@@ -164,60 +140,6 @@ describe('console collection', () => {
     })
 
     expect(rawLogsEvents[0].messageContext).toEqual({ foo: 'bar' })
-  })
-
-  it('should retrieve causes from console error', () => {
-    ;({ stop: stopConsoleCollection } = startConsoleCollection(
-      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['error'] })!,
-      lifeCycle,
-      bufferedDataObservable
-    ))
-
-    notifyConsole({
-      api: ConsoleApiName.error,
-      message: 'Error: High level error',
-      handlingStack: '',
-      error: makeRawError({
-        type: 'Error',
-        stack: 'Error: High level error',
-        causes: [
-          {
-            source: ErrorSource.CONSOLE,
-            type: 'Error',
-            stack: 'Error: Mid level error',
-            message: 'Mid level error',
-          },
-          {
-            source: ErrorSource.CONSOLE,
-            type: 'TypeError',
-            stack: 'TypeError: Low level error',
-            message: 'Low level error',
-          },
-        ],
-      }),
-    })
-
-    expect(rawLogsEvents[0].rawLogsEvent.error).toEqual({
-      stack: jasmine.any(String),
-      handling: ErrorHandling.HANDLED,
-      causes: [
-        {
-          source: ErrorSource.CONSOLE,
-          type: 'Error',
-          stack: jasmine.any(String),
-          message: 'Mid level error',
-        },
-        {
-          source: ErrorSource.CONSOLE,
-          type: 'TypeError',
-          stack: jasmine.any(String),
-          message: 'Low level error',
-        },
-      ],
-      fingerprint: undefined,
-      kind: 'Error',
-      message: undefined,
-    })
   })
 })
 
