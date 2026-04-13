@@ -18,13 +18,14 @@ import { onRumStart } from '../nuxtPlugin'
  */
 export function addNuxtAppError(error: unknown) {
   const handlingStack = createHandlingStack('nuxt error')
+  const startClocks = clocksNow()
   onRumStart((addError) => {
     callMonitored(() => {
       addError({
         error,
         handlingStack,
         componentStack: undefined,
-        startClocks: clocksNow(),
+        startClocks,
         context: {
           ...(typeof error === 'object' && error !== null ? (error as { dd_context?: object }).dd_context : undefined),
           framework: 'nuxt',

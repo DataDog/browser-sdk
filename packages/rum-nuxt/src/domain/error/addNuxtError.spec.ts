@@ -89,7 +89,7 @@ describe('addNuxtError', () => {
     )
   })
 
-  it('computes startClocks when replaying vue errors after RUM start', () => {
+  it('captures startClocks before queueing vue errors until RUM start', () => {
     const clock = mockClock()
     const addErrorSpy = jasmine.createSpy()
     const plugin = nuxtRumPlugin({
@@ -107,8 +107,8 @@ describe('addNuxtError', () => {
     plugin.onRumStart({ addError: addErrorSpy })
 
     expect(addErrorSpy.calls.mostRecent().args[0].startClocks).toEqual({
-      relative: clock.relative(100),
-      timeStamp: clock.timeStamp(100),
+      relative: clock.relative(0),
+      timeStamp: clock.timeStamp(0),
     })
   })
 })

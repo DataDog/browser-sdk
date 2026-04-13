@@ -25,8 +25,10 @@ export default defineNuxtPlugin((nuxtApp) => {
     addNuxtAppError(error)
   })
 
+  const previousErrorHandler = nuxtApp.vueApp.config.errorHandler
   nuxtApp.vueApp.config.errorHandler = (error, instance, info) => {
     addNuxtError(error, instance, info)
+    previousErrorHandler?.(error, instance, info)
   }
 
   datadogRum.init({
