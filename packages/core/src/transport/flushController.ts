@@ -139,23 +139,5 @@ export function createFlushController({ pageMayExitObservable, sessionExpireObse
         flush(forcedFlushReason ?? 'bytes_limit')
       }
     },
-
-    /**
-     * Notifies that a message was removed from a pool of pending messages waiting to be flushed.
-     *
-     * This function needs to be called synchronously, right after removing the message, so no flush
-     * event can happen after removing the message and before `notifyAfterRemoveMessage`.
-     *
-     * @param messageBytesCount - the message bytes count that was added to the pool. Should
-     * correspond to the sum of bytes counts passed to `notifyBeforeAddMessage` and
-     * `notifyAfterAddMessage`.
-     */
-    notifyAfterRemoveMessage(messageBytesCount: number) {
-      currentBytesCount -= messageBytesCount
-      currentMessagesCount -= 1
-      if (currentMessagesCount === 0) {
-        cancelDurationLimitTimeout()
-      }
-    },
   }
 }

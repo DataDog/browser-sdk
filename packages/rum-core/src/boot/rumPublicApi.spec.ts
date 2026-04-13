@@ -8,12 +8,21 @@ import {
   ResourceType,
   startTelemetry,
   addExperimentalFeatures,
+  startSessionManager,
+  getTimeStamp,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { createFakeTelemetryObject, mockClock, replaceMockableWithSpy } from '@datadog/browser-core/test'
+import {
+  collectAsyncCalls,
+  mockClock,
+  mockEventBridge,
+  createFakeTelemetryObject,
+  replaceMockable,
+  replaceMockableWithSpy,
+  createStartSessionManagerMock,
+} from '@datadog/browser-core/test'
 import { noopRecorderApi, noopProfilerApi } from '../../test'
 import { ActionType, VitalType } from '../rawRumEvent.types'
-import type { DurationVitalReference } from '../domain/vital/vitalCollection'
 import type { RumPublicApi, RecorderApi, ProfilerApi, RumPublicApiOptions } from './rumPublicApi'
 import { makeRumPublicApi } from './rumPublicApi'
 import type { StartRum } from './startRum'
@@ -34,9 +43,9 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   getInternalContext: () => undefined,
   lifeCycle: {} as any,
   viewHistory: {} as any,
-  session: {} as any,
+  sessionManager: {} as any,
   stopSession: () => undefined,
-  startDurationVital: () => ({}) as DurationVitalReference,
+  startDurationVital: () => undefined,
   stopDurationVital: () => undefined,
   addDurationVital: () => undefined,
   stop: () => undefined,
@@ -72,7 +81,7 @@ describe('rum public api', () => {
         }))
       })
 
-      it('passes addError to plugins on rum start', () => {
+      it('passes addError to plugins on rum start', async () => {
         const plugin = { name: 'test-plugin', onRumStart: jasmine.createSpy() }
 
         rumPublicApi.init({
@@ -80,6 +89,7 @@ describe('rum public api', () => {
           plugins: [plugin],
         })
 
+        await collectAsyncCalls(plugin.onRumStart, 1)
         expect(plugin.onRumStart).toHaveBeenCalledWith(
           jasmine.objectContaining({
             addError: jasmine.any(Function),
@@ -87,11 +97,12 @@ describe('rum public api', () => {
         )
       })
 
-      it('pass the worker to the recorder API', () => {
+      it('pass the worker to the recorder API', async () => {
         rumPublicApi.init({
           ...DEFAULT_INIT_CONFIGURATION,
           compressIntakeRequests: true,
         })
+        await collectAsyncCalls(recorderApiOnRumStartSpy, 1)
         expect(recorderApiOnRumStartSpy.calls.mostRecent().args[4]).toBe(FAKE_WORKER)
       })
     })
@@ -100,28 +111,31 @@ describe('rum public api', () => {
   describe('getInternalContext', () => {
     let getInternalContextSpy: jasmine.Spy<ReturnType<StartRum>['getInternalContext']>
     let rumPublicApi: RumPublicApi
+    let startRumSpy: jasmine.Spy<StartRum>
 
     beforeEach(() => {
       getInternalContextSpy = jasmine.createSpy().and.callFake(() => ({
         application_id: '123',
         session_id: '123',
       }))
-      ;({ rumPublicApi } = makeRumPublicApiWithDefaults({
+      ;({ rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
         startRumResult: {
           getInternalContext: getInternalContextSpy,
         },
       }))
     })
 
-    it('returns the internal context after init', () => {
+    it('returns the internal context after init', async () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(startRumSpy, 1)
 
       expect(rumPublicApi.getInternalContext()).toEqual({ application_id: '123', session_id: '123' })
       expect(getInternalContextSpy).toHaveBeenCalled()
     })
 
-    it('uses the startTime if specified', () => {
+    it('uses the startTime if specified', async () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(startRumSpy, 1)
 
       const startTime = 234832890
       expect(rumPublicApi.getInternalContext(startTime)).toEqual({ application_id: '123', session_id: '123' })
@@ -145,6 +159,7 @@ describe('rum public api', () => {
     let rumPublicApi: RumPublicApi
 
     beforeEach(() => {
+      mockEventBridge()
       addActionSpy = jasmine.createSpy()
       ;({ rumPublicApi } = makeRumPublicApiWithDefaults({
         startRumResult: {
@@ -193,13 +208,14 @@ describe('rum public api', () => {
     let clock: Clock
 
     beforeEach(() => {
+      mockEventBridge()
+      clock = mockClock()
       addErrorSpy = jasmine.createSpy()
       ;({ rumPublicApi } = makeRumPublicApiWithDefaults({
         startRumResult: {
           addError: addErrorSpy,
         },
       }))
-      clock = mockClock()
     })
 
     it('allows capturing an error before init', () => {
@@ -539,32 +555,36 @@ describe('rum public api', () => {
     let addTimingSpy: jasmine.Spy<ReturnType<StartRum>['addTiming']>
     let displaySpy: jasmine.Spy<() => void>
     let rumPublicApi: RumPublicApi
+    let startRumSpy: ReturnType<typeof makeRumPublicApiWithDefaults>['startRumSpy']
 
     beforeEach(() => {
       addTimingSpy = jasmine.createSpy()
       displaySpy = spyOn(display, 'error')
-      ;({ rumPublicApi } = makeRumPublicApiWithDefaults({
+      ;({ rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
         startRumResult: {
           addTiming: addTimingSpy,
         },
       }))
     })
 
-    it('should add custom timings', () => {
+    it('should add custom timings', async () => {
+      const clock = mockClock()
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
       rumPublicApi.addTiming('foo')
+      await collectAsyncCalls(startRumSpy, 1)
 
+      expect(addTimingSpy).toHaveBeenCalledTimes(1)
       expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('foo')
-      expect(addTimingSpy.calls.argsFor(0)[1]).toBeUndefined()
+      expect(addTimingSpy.calls.argsFor(0)[1]).toBe(getTimeStamp(clock.relative(0)))
       expect(displaySpy).not.toHaveBeenCalled()
     })
 
-    it('adds custom timing with provided time', () => {
+    it('adds custom timing with provided time', async () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
+      await collectAsyncCalls(startRumSpy, 1)
       rumPublicApi.addTiming('foo', 12)
 
+      expect(addTimingSpy).toHaveBeenCalledTimes(1)
       expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('foo')
       expect(addTimingSpy.calls.argsFor(0)[1]).toBe(12 as RelativeTime)
       expect(displaySpy).not.toHaveBeenCalled()
@@ -584,11 +604,12 @@ describe('rum public api', () => {
       }))
     })
 
-    it('should call setLoadingTime with timestamp', () => {
+    it('should call setLoadingTime with timestamp', async () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
       rumPublicApi.setViewLoadingTime()
 
+      await collectAsyncCalls(setLoadingTimeSpy, 1)
       expect(setLoadingTimeSpy).toHaveBeenCalledOnceWith(jasmine.any(Number))
     })
 
@@ -603,43 +624,46 @@ describe('rum public api', () => {
     let addFeatureFlagEvaluationSpy: jasmine.Spy<ReturnType<StartRum>['addFeatureFlagEvaluation']>
     let displaySpy: jasmine.Spy<() => void>
     let rumPublicApi: RumPublicApi
+    let startRumSpy: ReturnType<typeof makeRumPublicApiWithDefaults>['startRumSpy']
 
     beforeEach(() => {
       addFeatureFlagEvaluationSpy = jasmine.createSpy()
       displaySpy = spyOn(display, 'error')
-      ;({ rumPublicApi } = makeRumPublicApiWithDefaults({
+      ;({ rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
         startRumResult: {
           addFeatureFlagEvaluation: addFeatureFlagEvaluationSpy,
         },
       }))
     })
 
-    it('should add feature flag evaluation when ff feature_flags enabled', () => {
+    it('should add feature flag evaluation when ff feature_flags enabled', async () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
       rumPublicApi.addFeatureFlagEvaluation('feature', 'foo')
+      await collectAsyncCalls(startRumSpy, 1)
 
+      expect(addFeatureFlagEvaluationSpy).toHaveBeenCalledTimes(1)
       expect(addFeatureFlagEvaluationSpy.calls.argsFor(0)).toEqual(['feature', 'foo'])
       expect(displaySpy).not.toHaveBeenCalled()
     })
   })
 
   describe('stopSession', () => {
-    it('calls stopSession on the startRum result', () => {
+    it('calls stopSession on the startRum result', async () => {
       const stopSessionSpy = jasmine.createSpy()
-      const { rumPublicApi } = makeRumPublicApiWithDefaults({
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
         startRumResult: {
           stopSession: stopSessionSpy,
         },
       })
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(startRumSpy, 1)
       rumPublicApi.stopSession()
       expect(stopSessionSpy).toHaveBeenCalled()
     })
   })
 
   describe('startView', () => {
-    it('should call RUM results startView with the view name', () => {
+    it('should call RUM results startView with the view name', async () => {
       const startViewSpy = jasmine.createSpy()
       const { rumPublicApi } = makeRumPublicApiWithDefaults({
         startRumResult: {
@@ -648,10 +672,11 @@ describe('rum public api', () => {
       })
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.startView('foo')
-      expect(startViewSpy.calls.argsFor(0)[0]).toEqual({ name: 'foo', handlingStack: jasmine.any(String) })
+      const calls = await collectAsyncCalls(startViewSpy, 1)
+      expect(calls.argsFor(0)[0]).toEqual({ name: 'foo', handlingStack: jasmine.any(String) })
     })
 
-    it('should call RUM results startView with the view options', () => {
+    it('should call RUM results startView with the view options', async () => {
       const startViewSpy = jasmine.createSpy()
       const { rumPublicApi } = makeRumPublicApiWithDefaults({
         startRumResult: {
@@ -660,7 +685,8 @@ describe('rum public api', () => {
       })
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.startView({ name: 'foo', service: 'bar', version: 'baz', context: { foo: 'bar' } })
-      expect(startViewSpy.calls.argsFor(0)[0]).toEqual({
+      const calls = await collectAsyncCalls(startViewSpy, 1)
+      expect(calls.argsFor(0)[0]).toEqual({
         name: 'foo',
         service: 'bar',
         version: 'baz',
@@ -672,6 +698,7 @@ describe('rum public api', () => {
 
   describe('recording', () => {
     let rumPublicApi: RumPublicApi
+    let startRumSpy: ReturnType<typeof makeRumPublicApiWithDefaults>['startRumSpy']
     let recorderApi: {
       onRumStart: jasmine.Spy<RecorderApi['onRumStart']>
       start: jasmine.Spy
@@ -686,19 +713,21 @@ describe('rum public api', () => {
         stop: jasmine.createSpy(),
         getSessionReplayLink: jasmine.createSpy(),
       }
-      ;({ rumPublicApi } = makeRumPublicApiWithDefaults({ recorderApi }))
+      ;({ rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({ recorderApi }))
     })
 
-    it('is started with the default defaultPrivacyLevel', () => {
+    it('is started with the default defaultPrivacyLevel', async () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      expect(recorderApi.onRumStart.calls.mostRecent().args[1].defaultPrivacyLevel).toBe(DefaultPrivacyLevel.MASK)
+      const calls = await collectAsyncCalls(recorderApi.onRumStart, 1)
+      expect(calls.mostRecent().args[1].defaultPrivacyLevel).toBe(DefaultPrivacyLevel.MASK_USER_INPUT)
     })
 
-    it('is started with the configured defaultPrivacyLevel', () => {
+    it('is started with the configured defaultPrivacyLevel', async () => {
       rumPublicApi.init({
         ...DEFAULT_INIT_CONFIGURATION,
         defaultPrivacyLevel: DefaultPrivacyLevel.MASK_USER_INPUT,
       })
+      await collectAsyncCalls(startRumSpy, 1)
       expect(recorderApi.onRumStart.calls.mostRecent().args[1].defaultPrivacyLevel).toBe(
         DefaultPrivacyLevel.MASK_USER_INPUT
       )
@@ -714,31 +743,36 @@ describe('rum public api', () => {
       expect(recorderApi.getSessionReplayLink).toHaveBeenCalledTimes(1)
     })
 
-    it('is started with the default startSessionReplayRecordingManually', () => {
+    it('is started with the default startSessionReplayRecordingManually', async () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      expect(recorderApi.onRumStart.calls.mostRecent().args[1].startSessionReplayRecordingManually).toBe(true)
+      const calls = await collectAsyncCalls(recorderApi.onRumStart, 1)
+      expect(calls.mostRecent().args[1].startSessionReplayRecordingManually).toBe(true)
     })
 
-    it('is started with the configured startSessionReplayRecordingManually', () => {
+    it('is started with the configured startSessionReplayRecordingManually', async () => {
       rumPublicApi.init({
         ...DEFAULT_INIT_CONFIGURATION,
         startSessionReplayRecordingManually: false,
       })
-      expect(recorderApi.onRumStart.calls.mostRecent().args[1].startSessionReplayRecordingManually).toBe(false)
+      const calls = await collectAsyncCalls(recorderApi.onRumStart, 1)
+      expect(calls.mostRecent().args[1].startSessionReplayRecordingManually).toBe(false)
     })
   })
 
   describe('startDurationVital', () => {
-    it('should call startDurationVital on the startRum result', () => {
+    it('should call startDurationVital on the startRum result', async () => {
       const startDurationVitalSpy = jasmine.createSpy()
-      const { rumPublicApi } = makeRumPublicApiWithDefaults({
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
         startRumResult: {
           startDurationVital: startDurationVitalSpy,
         },
       })
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(startRumSpy, 1)
       rumPublicApi.startDurationVital('foo', { context: { foo: 'bar' }, description: 'description-value' })
+      await collectAsyncCalls(startDurationVitalSpy, 1)
       expect(startDurationVitalSpy).toHaveBeenCalledWith('foo', {
+        vitalKey: undefined,
         description: 'description-value',
         context: { foo: 'bar' },
         handlingStack: jasmine.any(String),
@@ -747,33 +781,46 @@ describe('rum public api', () => {
   })
 
   describe('stopDurationVital', () => {
-    it('should call stopDurationVital with a name on the startRum result', () => {
+    it('should call stopDurationVital with a name on the startRum result', async () => {
       const stopDurationVitalSpy = jasmine.createSpy()
-      const { rumPublicApi } = makeRumPublicApiWithDefaults({
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
         startRumResult: {
           stopDurationVital: stopDurationVitalSpy,
         },
       })
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(startRumSpy, 1)
       rumPublicApi.startDurationVital('foo', { context: { foo: 'bar' }, description: 'description-value' })
       rumPublicApi.stopDurationVital('foo', { context: { foo: 'bar' }, description: 'description-value' })
       expect(stopDurationVitalSpy).toHaveBeenCalledWith('foo', {
+        vitalKey: undefined,
         description: 'description-value',
         context: { foo: 'bar' },
       })
     })
 
-    it('should call stopDurationVital with a reference on the startRum result', () => {
+    it('should call stopDurationVital with a vitalKey on the startRum result', async () => {
       const stopDurationVitalSpy = jasmine.createSpy()
-      const { rumPublicApi } = makeRumPublicApiWithDefaults({
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
         startRumResult: {
           stopDurationVital: stopDurationVitalSpy,
         },
       })
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      const ref = rumPublicApi.startDurationVital('foo', { context: { foo: 'bar' }, description: 'description-value' })
-      rumPublicApi.stopDurationVital(ref, { context: { foo: 'bar' }, description: 'description-value' })
-      expect(stopDurationVitalSpy).toHaveBeenCalledWith(ref, {
+      await collectAsyncCalls(startRumSpy, 1)
+      rumPublicApi.startDurationVital('foo', {
+        vitalKey: 'my-key',
+        context: { foo: 'bar' },
+        description: 'description-value',
+      })
+      rumPublicApi.stopDurationVital('foo', {
+        vitalKey: 'my-key',
+        context: { foo: 'bar' },
+        description: 'description-value',
+      })
+      await collectAsyncCalls(stopDurationVitalSpy, 1)
+      expect(stopDurationVitalSpy).toHaveBeenCalledWith('foo', {
+        vitalKey: 'my-key',
         description: 'description-value',
         context: { foo: 'bar' },
       })
@@ -781,12 +828,13 @@ describe('rum public api', () => {
   })
 
   describe('startAction / stopAction', () => {
-    it('should call startAction and stopAction on the strategy', () => {
+    it('should call startAction and stopAction on the strategy', async () => {
+      const clock = mockClock()
       addExperimentalFeatures([ExperimentalFeature.START_STOP_ACTION])
 
-      const startActionSpy = jasmine.createSpy()
-      const stopActionSpy = jasmine.createSpy()
-      const { rumPublicApi } = makeRumPublicApiWithDefaults({
+      const startActionSpy = jasmine.createSpy('startAction')
+      const stopActionSpy = jasmine.createSpy('stopAction')
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
         startRumResult: {
           startAction: startActionSpy,
           stopAction: stopActionSpy,
@@ -802,26 +850,32 @@ describe('rum public api', () => {
         context: { total: 100 },
       })
 
+      await collectAsyncCalls(startRumSpy, 1)
+
       expect(startActionSpy).toHaveBeenCalledWith(
         'purchase',
         jasmine.objectContaining({
           type: ActionType.CUSTOM,
           context: { cart: 'abc' },
-        })
+          actionKey: undefined,
+        }),
+        { relative: clock.relative(0), timeStamp: clock.timeStamp(0) }
       )
       expect(stopActionSpy).toHaveBeenCalledWith(
         'purchase',
         jasmine.objectContaining({
           context: { total: 100 },
-        })
+          actionKey: undefined,
+        }),
+        { relative: clock.relative(0), timeStamp: clock.timeStamp(0) }
       )
     })
 
-    it('should sanitize startAction and stopAction inputs', () => {
+    it('should sanitize startAction and stopAction inputs', async () => {
       addExperimentalFeatures([ExperimentalFeature.START_STOP_ACTION])
 
       const startActionSpy = jasmine.createSpy()
-      const { rumPublicApi } = makeRumPublicApiWithDefaults({
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
         startRumResult: {
           startAction: startActionSpy,
         },
@@ -834,6 +888,8 @@ describe('rum public api', () => {
         actionKey: 'action_key',
       })
 
+      await collectAsyncCalls(startRumSpy, 1)
+
       expect(startActionSpy.calls.argsFor(0)[1]).toEqual(
         jasmine.objectContaining({
           type: ActionType.CUSTOM,
@@ -843,10 +899,10 @@ describe('rum public api', () => {
       )
     })
 
-    it('should not call startAction/stopAction when feature flag is disabled', () => {
+    it('should not call startAction/stopAction when feature flag is disabled', async () => {
       const startActionSpy = jasmine.createSpy()
       const stopActionSpy = jasmine.createSpy()
-      const { rumPublicApi } = makeRumPublicApiWithDefaults({
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
         startRumResult: {
           startAction: startActionSpy,
           stopAction: stopActionSpy,
@@ -856,6 +912,7 @@ describe('rum public api', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.startAction('purchase', { type: ActionType.CUSTOM })
       rumPublicApi.stopAction('purchase')
+      await collectAsyncCalls(startRumSpy, 1)
 
       expect(startActionSpy).not.toHaveBeenCalled()
       expect(stopActionSpy).not.toHaveBeenCalled()
@@ -863,12 +920,13 @@ describe('rum public api', () => {
   })
 
   describe('startResource / stopResource', () => {
-    it('should call startResource and stopResource on the strategy', () => {
+    it('should call startResource and stopResource on the strategy', async () => {
+      const clock = mockClock()
       addExperimentalFeatures([ExperimentalFeature.START_STOP_RESOURCE])
 
-      const startResourceSpy = jasmine.createSpy()
-      const stopResourceSpy = jasmine.createSpy()
-      const { rumPublicApi } = makeRumPublicApiWithDefaults({
+      const startResourceSpy = jasmine.createSpy('startResource')
+      const stopResourceSpy = jasmine.createSpy('stopResource')
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
         startRumResult: {
           startResource: startResourceSpy,
           stopResource: stopResourceSpy,
@@ -887,6 +945,7 @@ describe('rum public api', () => {
         size: 1024,
         context: { requestId: 'abc' },
       })
+      await collectAsyncCalls(startRumSpy, 1)
 
       expect(startResourceSpy).toHaveBeenCalledWith(
         'https://api.example.com/data',
@@ -894,7 +953,9 @@ describe('rum public api', () => {
           type: ResourceType.FETCH,
           method: 'POST',
           context: { requestId: 'abc' },
-        })
+          resourceKey: undefined,
+        }),
+        { relative: clock.relative(0), timeStamp: clock.timeStamp(0) }
       )
       expect(stopResourceSpy).toHaveBeenCalledWith(
         'https://api.example.com/data',
@@ -903,15 +964,17 @@ describe('rum public api', () => {
           statusCode: 200,
           size: 1024,
           context: { requestId: 'abc' },
-        })
+          resourceKey: undefined,
+        }),
+        { relative: clock.relative(0), timeStamp: clock.timeStamp(0) }
       )
     })
 
-    it('should sanitize startResource and stopResource inputs', () => {
+    it('should sanitize startResource and stopResource inputs', async () => {
       addExperimentalFeatures([ExperimentalFeature.START_STOP_RESOURCE])
 
       const startResourceSpy = jasmine.createSpy()
-      const { rumPublicApi } = makeRumPublicApiWithDefaults({
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
         startRumResult: {
           startResource: startResourceSpy,
         },
@@ -924,6 +987,7 @@ describe('rum public api', () => {
         context: { count: 123, nested: { foo: 'bar' } } as any,
         resourceKey: 'resource_key',
       })
+      await collectAsyncCalls(startRumSpy, 1)
 
       expect(startResourceSpy.calls.argsFor(0)[1]).toEqual(
         jasmine.objectContaining({
@@ -935,10 +999,10 @@ describe('rum public api', () => {
       )
     })
 
-    it('should not call startResource/stopResource when feature flag is disabled', () => {
+    it('should not call startResource/stopResource when feature flag is disabled', async () => {
       const startResourceSpy = jasmine.createSpy()
       const stopResourceSpy = jasmine.createSpy()
-      const { rumPublicApi } = makeRumPublicApiWithDefaults({
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
         startRumResult: {
           startResource: startResourceSpy,
           stopResource: stopResourceSpy,
@@ -948,6 +1012,7 @@ describe('rum public api', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.startResource('https://api.example.com/data', { type: ResourceType.FETCH })
       rumPublicApi.stopResource('https://api.example.com/data')
+      await collectAsyncCalls(startRumSpy, 1)
 
       expect(startResourceSpy).not.toHaveBeenCalled()
       expect(stopResourceSpy).not.toHaveBeenCalled()
@@ -955,9 +1020,9 @@ describe('rum public api', () => {
   })
 
   describe('addDurationVital', () => {
-    it('should call addDurationVital on the startRum result', () => {
+    it('should call addDurationVital on the startRum result', async () => {
       const addDurationVitalSpy = jasmine.createSpy()
-      const { rumPublicApi } = makeRumPublicApiWithDefaults({
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
         startRumResult: {
           addDurationVital: addDurationVitalSpy,
         },
@@ -970,6 +1035,8 @@ describe('rum public api', () => {
         context: { foo: 'bar' },
         description: 'description-value',
       })
+      await collectAsyncCalls(startRumSpy, 1)
+
       expect(addDurationVitalSpy).toHaveBeenCalledWith({
         id: jasmine.any(String),
         name: 'foo',
@@ -984,48 +1051,61 @@ describe('rum public api', () => {
   })
 
   describe('startFeatureOperation', () => {
-    it('should call addOperationStepVital on the startRum result with start status', () => {
+    it('should call addOperationStepVital on the startRum result with start status', async () => {
       const addOperationStepVitalSpy = jasmine.createSpy()
-      const { rumPublicApi } = makeRumPublicApiWithDefaults({
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
         startRumResult: {
           addOperationStepVital: addOperationStepVitalSpy,
         },
       })
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.startFeatureOperation('foo', { operationKey: '00000000-0000-0000-0000-000000000000' })
-      expect(addOperationStepVitalSpy).toHaveBeenCalledWith('foo', 'start', {
-        operationKey: '00000000-0000-0000-0000-000000000000',
-        handlingStack: jasmine.any(String),
-      })
+      await collectAsyncCalls(startRumSpy, 1)
+      expect(addOperationStepVitalSpy).toHaveBeenCalledWith(
+        'foo',
+        'start',
+        {
+          operationKey: '00000000-0000-0000-0000-000000000000',
+          handlingStack: jasmine.any(String),
+        },
+        undefined
+      )
     })
   })
 
   describe('succeedFeatureOperation', () => {
-    it('should call addOperationStepVital on the startRum result with end status', () => {
+    it('should call addOperationStepVital on the startRum result with end status', async () => {
       const addOperationStepVitalSpy = jasmine.createSpy()
-      const { rumPublicApi } = makeRumPublicApiWithDefaults({
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
         startRumResult: {
           addOperationStepVital: addOperationStepVitalSpy,
         },
       })
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.succeedFeatureOperation('foo', { operationKey: '00000000-0000-0000-0000-000000000000' })
-      expect(addOperationStepVitalSpy).toHaveBeenCalledWith('foo', 'end', {
-        operationKey: '00000000-0000-0000-0000-000000000000',
-      })
+      await collectAsyncCalls(startRumSpy, 1)
+      expect(addOperationStepVitalSpy).toHaveBeenCalledWith(
+        'foo',
+        'end',
+        {
+          operationKey: '00000000-0000-0000-0000-000000000000',
+        },
+        undefined
+      )
     })
   })
 
   describe('failFeatureOperation', () => {
-    it('should call addOperationStepVital on the startRum result with end status and failure reason', () => {
+    it('should call addOperationStepVital on the startRum result with end status and failure reason', async () => {
       const addOperationStepVitalSpy = jasmine.createSpy()
-      const { rumPublicApi } = makeRumPublicApiWithDefaults({
+      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
         startRumResult: {
           addOperationStepVital: addOperationStepVitalSpy,
         },
       })
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.failFeatureOperation('foo', 'error', { operationKey: '00000000-0000-0000-0000-000000000000' })
+      await collectAsyncCalls(startRumSpy, 1)
       expect(addOperationStepVitalSpy).toHaveBeenCalledWith(
         'foo',
         'end',
@@ -1053,9 +1133,10 @@ describe('rum public api', () => {
       }))
     })
 
-    it('should set the view name', () => {
+    it('should set the view name', async () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.setViewName('foo')
+      await collectAsyncCalls(setViewNameSpy, 1)
 
       expect(setViewNameSpy).toHaveBeenCalledWith('foo')
     })
@@ -1065,6 +1146,7 @@ describe('rum public api', () => {
     let rumPublicApi: RumPublicApi
     let setViewContextSpy: jasmine.Spy<ReturnType<StartRum>['setViewContext']>
     let setViewContextPropertySpy: jasmine.Spy<ReturnType<StartRum>['setViewContextProperty']>
+
     beforeEach(() => {
       setViewContextSpy = jasmine.createSpy()
       setViewContextPropertySpy = jasmine.createSpy()
@@ -1076,18 +1158,20 @@ describe('rum public api', () => {
       }))
     })
 
-    it('should set view specific context with setViewContext', () => {
+    it('should set view specific context with setViewContext', async () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       /* eslint-disable @typescript-eslint/no-unsafe-call */
       ;(rumPublicApi as any).setViewContext({ foo: 'bar' })
+      await collectAsyncCalls(setViewContextSpy, 1)
 
       expect(setViewContextSpy).toHaveBeenCalledWith({ foo: 'bar' })
     })
 
-    it('should set view specific context with setViewContextProperty', () => {
+    it('should set view specific context with setViewContextProperty', async () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       /* eslint-disable @typescript-eslint/no-unsafe-call */
       ;(rumPublicApi as any).setViewContextProperty('foo', 'bar')
+      await collectAsyncCalls(setViewContextPropertySpy, 1)
 
       expect(setViewContextPropertySpy).toHaveBeenCalledWith('foo', 'bar')
     })
@@ -1096,20 +1180,22 @@ describe('rum public api', () => {
   describe('getViewContext', () => {
     let getViewContextSpy: jasmine.Spy<ReturnType<StartRum>['getViewContext']>
     let rumPublicApi: RumPublicApi
+    let startRumSpy: jasmine.Spy<StartRum>
 
     beforeEach(() => {
       getViewContextSpy = jasmine.createSpy().and.callFake(() => ({
         foo: 'bar',
       }))
-      ;({ rumPublicApi } = makeRumPublicApiWithDefaults({
+      ;({ rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
         startRumResult: {
           getViewContext: getViewContextSpy,
         },
       }))
     })
 
-    it('should return the view context after init', () => {
+    it('should return the view context after init', async () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(startRumSpy, 1)
 
       expect(rumPublicApi.getViewContext()).toEqual({ foo: 'bar' })
       expect(getViewContextSpy).toHaveBeenCalled()
@@ -1122,7 +1208,7 @@ describe('rum public api', () => {
   })
 
   describe('it should pass down the sdk name to startRum', () => {
-    it('should return the sdk name', () => {
+    it('should return the sdk name', async () => {
       const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
         rumPublicApiOptions: {
           sdkName: 'rum-slim',
@@ -1130,7 +1216,8 @@ describe('rum public api', () => {
       })
 
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      const sdkName = startRumSpy.calls.argsFor(0)[10]
+      const calls = await collectAsyncCalls(startRumSpy, 1)
+      const sdkName = calls.argsFor(0)[9]
       expect(sdkName).toBe('rum-slim')
     })
   })
@@ -1152,12 +1239,15 @@ function makeRumPublicApiWithDefaults({
     ...startRumResult,
   }))
   replaceMockableWithSpy(startTelemetry).and.callFake(createFakeTelemetryObject)
+  replaceMockable(startSessionManager, createStartSessionManagerMock())
+  const rumPublicApi = makeRumPublicApi(
+    { ...noopRecorderApi, ...recorderApi },
+    { ...noopProfilerApi, ...profilerApi },
+    rumPublicApiOptions
+  )
+
   return {
     startRumSpy,
-    rumPublicApi: makeRumPublicApi(
-      { ...noopRecorderApi, ...recorderApi },
-      { ...noopProfilerApi, ...profilerApi },
-      rumPublicApiOptions
-    ),
+    rumPublicApi,
   }
 }

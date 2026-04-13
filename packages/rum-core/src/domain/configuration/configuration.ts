@@ -159,7 +159,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    * See [Replay Privacy Options](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser/privacy_options) for further information.
    *
    * @category Privacy
-   * @defaultValue mask
+   * @defaultValue mask-user-input
    */
   defaultPrivacyLevel?: DefaultPrivacyLevel | undefined
 
@@ -194,8 +194,9 @@ export interface RumInitConfiguration extends InitConfiguration {
    * Enables privacy control for action names.
    *
    * @category Privacy
+   * @defaultValue true
    */
-  enablePrivacyForActionName?: boolean | undefined // TODO next major: remove this option and make privacy for action name the default behavior
+  enablePrivacyForActionName?: boolean | undefined
 
   /**
    * Enables automatic collection of users actions.
@@ -216,15 +217,6 @@ export interface RumInitConfiguration extends InitConfiguration {
    */
   actionNameAttribute?: string | undefined
 
-  /**
-   * Enables accurate action names for clicks inside Shadow DOM elements.
-   * ⚠️ This is a beta feature and will be updated in the future with selector tracking.
-   *
-   * @category Beta
-   * @defaultValue false
-   */
-  betaTrackActionsInShadowDom?: boolean | undefined
-
   // view options
   /**
    * Allows you to control RUM views creation. See [Override default RUM view names](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/?tab=npm#override-default-rum-view-names) for further information.
@@ -232,14 +224,6 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @category Data Collection
    */
   trackViewsManually?: boolean | undefined
-
-  /**
-   * Enable the creation of dedicated views for pages restored from the Back-Forward cache.
-   *
-   * @category Data Collection
-   * @defaultValue false
-   */
-  trackBfcacheViews?: boolean | undefined
 
   /**
    * Enables collection of resource events.
@@ -275,14 +259,6 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @defaultValue true
    */
   trackLongTasks?: boolean | undefined
-
-  /**
-   * Enables early request collection before resource timing entries are available.
-   *
-   * @category Data Collection
-   * @defaultValue false
-   */
-  trackEarlyRequests?: boolean | undefined
 
   /**
    * List of plugins to enable. The plugins API is unstable and experimental, and may change without
@@ -336,7 +312,6 @@ export interface GraphQlUrlOption {
 export interface RumConfiguration extends Configuration {
   // Built from init configuration
   actionNameAttribute: string | undefined
-  betaTrackActionsInShadowDom: boolean
   traceSampleRate: number
   rulePsr: number | undefined
   allowedTracingUrls: TracingOption[]
@@ -353,8 +328,6 @@ export interface RumConfiguration extends Configuration {
   trackResources: boolean
   trackResourceHeaders: MatchOption[]
   trackLongTasks: boolean
-  trackBfcacheViews: boolean
-  trackEarlyRequests: boolean
   subdomain?: string
   traceContextInjection: TraceContextInjection
   plugins: RumPlugin[]
@@ -410,7 +383,6 @@ export function validateAndBuildRumConfiguration(
   return {
     applicationId: initConfiguration.applicationId,
     actionNameAttribute: initConfiguration.actionNameAttribute,
-    betaTrackActionsInShadowDom: !!initConfiguration.betaTrackActionsInShadowDom,
     sessionReplaySampleRate,
     startSessionReplayRecordingManually:
       initConfiguration.startSessionReplayRecordingManually !== undefined
@@ -427,20 +399,18 @@ export function validateAndBuildRumConfiguration(
     trackResources: !!(initConfiguration.trackResources ?? true),
     trackResourceHeaders: validateAndBuildTrackResourceHeaders(initConfiguration),
     trackLongTasks: !!(initConfiguration.trackLongTasks ?? true),
-    trackBfcacheViews: !!initConfiguration.trackBfcacheViews,
-    trackEarlyRequests: !!initConfiguration.trackEarlyRequests,
     subdomain: initConfiguration.subdomain,
     defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
       ? initConfiguration.defaultPrivacyLevel
-      : DefaultPrivacyLevel.MASK,
-    enablePrivacyForActionName: !!initConfiguration.enablePrivacyForActionName,
+      : DefaultPrivacyLevel.MASK_USER_INPUT,
+    enablePrivacyForActionName: initConfiguration.enablePrivacyForActionName !== false,
     traceContextInjection: objectHasValue(TraceContextInjection, initConfiguration.traceContextInjection)
       ? initConfiguration.traceContextInjection
       : TraceContextInjection.SAMPLED,
     plugins: initConfiguration.plugins || [],
     trackFeatureFlagsForEvents: initConfiguration.trackFeatureFlagsForEvents || [],
     profilingSampleRate: initConfiguration.profilingSampleRate ?? 0,
-    propagateTraceBaggage: !!initConfiguration.propagateTraceBaggage,
+    propagateTraceBaggage: initConfiguration.propagateTraceBaggage !== false,
     allowedGraphQlUrls,
     ...baseConfiguration,
   }
@@ -606,8 +576,6 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     track_user_interactions: configuration.trackUserInteractions,
     track_resources: configuration.trackResources,
     track_long_task: configuration.trackLongTasks,
-    track_bfcache_views: configuration.trackBfcacheViews,
-    track_early_requests: configuration.trackEarlyRequests,
     plugins: configuration.plugins?.map((plugin) => ({
       name: plugin.name,
       ...plugin.getConfigurationTelemetry?.(),

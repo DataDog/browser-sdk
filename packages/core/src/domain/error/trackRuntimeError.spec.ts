@@ -30,10 +30,6 @@ describe('trackRuntimeError', () => {
   })
 
   it('should collect unhandled rejection', async () => {
-    if (!('onunhandledrejection' in window)) {
-      pending('onunhandledrejection not supported')
-    }
-
     const error = await errorViaTrackRuntimeError(() => {
       // Reject with a string instead of an Error here because Jasmine forwards the
       // unhandled rejection to the onerror handler with the wrong argument structure if
@@ -279,10 +275,6 @@ describe('instrumentUnhandledRejection', () => {
   const ERROR_MESSAGE = 'foo'
 
   const spyViaInstrumentOnUnhandledRejection = async (callback: () => void) => {
-    if (!('onunhandledrejection' in window)) {
-      pending('onunhandledrejection not supported')
-    }
-
     const onUnhandledRejectionSpy = spyOn(window as any, 'onunhandledrejection')
     const callbackSpy = jasmine.createSpy<UnhandledErrorCallback>()
     const { stop } = instrumentUnhandledRejection(callbackSpy)

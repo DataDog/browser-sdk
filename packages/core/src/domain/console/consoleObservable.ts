@@ -1,5 +1,6 @@
 import { isError, computeRawError } from '../error/error'
-import { mergeObservables, Observable } from '../../tools/observable'
+import type { Observable } from '../../tools/observable'
+import { BufferedObservable, mergeObservables } from '../../tools/observable'
 import { ConsoleApiName, globalConsole } from '../../tools/display'
 import { callMonitored } from '../../tools/monitor'
 import { sanitize } from '../../tools/serialisation/sanitize'
@@ -49,8 +50,10 @@ export function resetConsoleObservable() {
   consoleObservablesByApi = {}
 }
 
+const CONSOLE_BUFFER_LIMIT = 500
+
 function createConsoleObservable(api: ConsoleApiName) {
-  return new Observable<ConsoleLog>((observable) => {
+  return new BufferedObservable<ConsoleLog>(CONSOLE_BUFFER_LIMIT, (observable) => {
     const originalConsoleApi = globalConsole[api]
 
     globalConsole[api] = (...params: unknown[]) => {

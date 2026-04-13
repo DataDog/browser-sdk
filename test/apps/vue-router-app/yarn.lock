@@ -64,6 +64,7 @@ __metadata:
     "@datadog/browser-rum-core": "npm:6.32.0"
   peerDependencies:
     vue: ^3.5.0
+    vue: ^3.5.0
     vue-router: ^4.0.0
   peerDependenciesMeta:
     "@datadog/browser-rum":
