@@ -6,6 +6,8 @@ rum-events-format
 .yarn
 test/**/dist
 test/**/.next
+test/**/.nuxt
+test/**/.output
 test/apps/nextjs/next-env.d.ts
 yarn.lock
 /generated-docs

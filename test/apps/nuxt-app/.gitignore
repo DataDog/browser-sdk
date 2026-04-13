@@ -1,0 +1,6 @@
+.next
+node_modules
+.yarn/*
+next-env.d.ts
+.output/*
+.nuxt/*
