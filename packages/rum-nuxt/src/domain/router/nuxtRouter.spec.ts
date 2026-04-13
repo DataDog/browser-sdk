@@ -8,7 +8,7 @@ function makePublicApi(startViewSpy: jasmine.Spy) {
 }
 
 describe('startTrackingNuxtViews', () => {
-  it('tracks the initial view immediately when router is not yet ready', (done) => {
+  it('tracks the initial view when the router becomes ready', (done) => {
     const startViewSpy = jasmine.createSpy()
     const router = createRouter({
       history: createMemoryHistory(),
@@ -16,12 +16,36 @@ describe('startTrackingNuxtViews', () => {
     })
 
     startTrackingNuxtViews(makePublicApi(startViewSpy), router)
-    expect(startViewSpy).toHaveBeenCalledOnceWith('/')
+    expect(startViewSpy).not.toHaveBeenCalled()
 
     router
       .push('/')
       .then(() => {
         expect(startViewSpy).toHaveBeenCalledTimes(1)
+        expect(startViewSpy).toHaveBeenCalledWith('/')
+        done()
+      })
+      .catch(done.fail)
+  })
+
+  it('does not emit a spurious root view before the initial deep-link navigation resolves', (done) => {
+    const startViewSpy = jasmine.createSpy()
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', component: {} },
+        { path: '/user/:id', component: {} },
+      ],
+    })
+
+    startTrackingNuxtViews(makePublicApi(startViewSpy), router)
+    expect(startViewSpy).not.toHaveBeenCalled()
+
+    router
+      .push('/user/42?admin=true')
+      .then(() => {
+        expect(startViewSpy).toHaveBeenCalledTimes(1)
+        expect(startViewSpy).toHaveBeenCalledWith('/user/[id]')
         done()
       })
       .catch(done.fail)

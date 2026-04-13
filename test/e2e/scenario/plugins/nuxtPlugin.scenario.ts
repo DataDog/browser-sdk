@@ -21,6 +21,25 @@ runBasePluginRouterTests([
 ])
 
 test.describe('plugin: nuxt', () => {
+  createTest('should track the direct-entry route as the initial view')
+    .withBasePath('/user/42?admin=true')
+    .withRum()
+    .withNuxtApp()
+    .run(async ({ page, flushEvents, intakeRegistry }) => {
+      await page.waitForLoadState('networkidle')
+      await flushEvents()
+
+      const initialViews = intakeRegistry.rumViewEvents.filter((e) => e.view.loading_type === 'initial_load')
+      expect(initialViews).toHaveLength(1)
+      expect(initialViews[0].view.name).toBe('/user/[id]')
+      expect(initialViews[0].view.url).toContain('/user/42?admin=true')
+
+      const spuriousHomeView = intakeRegistry.rumViewEvents.find(
+        (e) => e.view.name === '/' && e.view.loading_type === 'initial_load'
+      )
+      expect(spuriousHomeView).toBeUndefined()
+    })
+
   createTest('should create a new view when the hash changes')
     .withRum()
     .withNuxtApp()
