@@ -265,6 +265,60 @@ describe('rum assembly', () => {
         })
       })
 
+      describe('resource headers on Resource events', () => {
+        it('should allow modification of resource request and response headers', () => {
+          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+            partialConfiguration: {
+              beforeSend: (event) => {
+                event.resource!.request!.headers!['x-request-id'] = 'REDACTED'
+                event.resource!.response!.headers!['x-powered-by'] = 'REDACTED'
+              },
+            },
+          })
+
+          notifyRawRumEvent(lifeCycle, {
+            rawRumEvent: createRawRumEvent(RumEventType.RESOURCE, {
+              resource: {
+                request: { headers: { 'x-request-id': 'abc-123', 'content-type': 'application/json' } },
+                response: { headers: { 'x-powered-by': 'Express', 'content-type': 'text/html' } },
+              },
+            }),
+          })
+
+          const resource = (serverRumEvents[0] as RumResourceEvent).resource
+          expect(resource.request!.headers!['x-request-id']).toBe('REDACTED')
+          expect(resource.request!.headers!['content-type']).toBe('application/json')
+          expect(resource.response!.headers!['x-powered-by']).toBe('REDACTED')
+          expect(resource.response!.headers!['content-type']).toBe('text/html')
+        })
+
+        it('should allow deletion of resource request and response headers', () => {
+          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+            partialConfiguration: {
+              beforeSend: (event) => {
+                delete event.resource!.request!.headers!['x-request-id']
+                delete event.resource!.response!.headers!['x-powered-by']
+              },
+            },
+          })
+
+          notifyRawRumEvent(lifeCycle, {
+            rawRumEvent: createRawRumEvent(RumEventType.RESOURCE, {
+              resource: {
+                request: { headers: { 'x-request-id': 'abc-123', 'content-type': 'application/json' } },
+                response: { headers: { 'x-powered-by': 'Express', 'content-type': 'text/html' } },
+              },
+            }),
+          })
+
+          const resource = (serverRumEvents[0] as RumResourceEvent).resource
+          expect(resource.request!.headers!['x-request-id']).toBeUndefined()
+          expect(resource.request!.headers!['content-type']).toBe('application/json')
+          expect(resource.response!.headers!['x-powered-by']).toBeUndefined()
+          expect(resource.response!.headers!['content-type']).toBe('text/html')
+        })
+      })
+
       it('should reject modification of field not sensitive, context or customer provided', () => {
         const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
           partialConfiguration: {
