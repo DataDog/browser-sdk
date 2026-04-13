@@ -45,4 +45,48 @@ test.describe('plugin: nuxt', () => {
       expect(hashUserView?.view.loading_type).toBe('route_change')
       expect(hashUserView?.view.id).not.toBe(initialUserView?.view.id)
     })
+
+  createTest('should capture vue error from vueApp.config.errorHandler')
+    .withBasePath('/error-test')
+    .withRum()
+    .withNuxtApp()
+    .run(async ({ page, flushEvents, intakeRegistry }) => {
+      await page.waitForLoadState('networkidle')
+      await page.click('[data-testid="trigger-error"]')
+
+      await flushEvents()
+
+      expect(intakeRegistry.rumErrorEvents.length).toBeGreaterThan(0)
+      const errorEvent = intakeRegistry.rumErrorEvents[intakeRegistry.rumErrorEvents.length - 1]
+
+      expect(errorEvent.error.message).toBe('Nuxt error from vueApp.config.errorHandler')
+      expect(errorEvent.error.source).toBe('custom')
+      expect(errorEvent.error.handling_stack).toBeDefined()
+      expect(errorEvent.context).toMatchObject({
+        framework: 'nuxt',
+        nuxt: { source: 'vueApp.config.errorHandler' },
+      })
+    })
+
+  createTest('should capture app:error hook errors')
+    .withBasePath('/app-error')
+    .withRum()
+    .withNuxtApp()
+    .run(async ({ page, flushEvents, intakeRegistry }) => {
+      await page.waitForLoadState('networkidle')
+      await page.click('[data-testid="trigger-app-error"]')
+
+      await flushEvents()
+
+      expect(intakeRegistry.rumErrorEvents.length).toBeGreaterThan(0)
+      const errorEvent = intakeRegistry.rumErrorEvents[intakeRegistry.rumErrorEvents.length - 1]
+
+      expect(errorEvent.error.message).toBe('Nuxt app:error hook error')
+      expect(errorEvent.error.source).toBe('custom')
+      expect(errorEvent.error.handling_stack).toBeDefined()
+      expect(errorEvent.context).toMatchObject({
+        framework: 'nuxt',
+        nuxt: { source: 'app:error' },
+      })
+    })
 })
