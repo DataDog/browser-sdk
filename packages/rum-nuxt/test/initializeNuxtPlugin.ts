@@ -7,7 +7,7 @@ import { registerCleanupTask } from '../../core/test'
 
 export function initializeNuxtPlugin({
   initConfiguration = {},
-  publicApi = {},
+  publicApi = { startView: noop },
   addError = noop,
   router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/', component: {} }] }),
 }: {
@@ -20,7 +20,7 @@ export function initializeNuxtPlugin({
   const plugin = nuxtRumPlugin({ router })
 
   plugin.onInit({
-    publicApi: publicApi as RumPublicApi,
+    publicApi: { startView: noop, ...publicApi } as RumPublicApi,
     initConfiguration: initConfiguration as RumInitConfiguration,
   })
   plugin.onRumStart({

@@ -8,7 +8,7 @@ function makePublicApi(startViewSpy: jasmine.Spy) {
 }
 
 describe('startTrackingNuxtViews', () => {
-  it('tracks the initial view via afterEach when router is not yet ready', (done) => {
+  it('tracks the initial view immediately when router is not yet ready', (done) => {
     const startViewSpy = jasmine.createSpy()
     const router = createRouter({
       history: createMemoryHistory(),
@@ -16,12 +16,12 @@ describe('startTrackingNuxtViews', () => {
     })
 
     startTrackingNuxtViews(makePublicApi(startViewSpy), router)
-    expect(startViewSpy).not.toHaveBeenCalled()
+    expect(startViewSpy).toHaveBeenCalledOnceWith('/')
 
     router
       .push('/')
       .then(() => {
-        expect(startViewSpy).toHaveBeenCalledOnceWith('/')
+        expect(startViewSpy).toHaveBeenCalledTimes(1)
         done()
       })
       .catch(done.fail)

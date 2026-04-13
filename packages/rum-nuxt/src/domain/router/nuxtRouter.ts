@@ -6,15 +6,16 @@ const NESTED_CATCH_ALL_PARAM = '([^/]*)*'
 const NORMALIZE_NUXT_PATH_REGEXP = /\\(.)|:([\w.]+)(\(\.\*\)\*|\(\[\^\/\]\*\)\*|\?|\(\))?/g
 
 export function startTrackingNuxtViews(rumPublicApi: RumPublicApi, router: Router) {
-  if (router.currentRoute.value.matched.length > 0) {
-    rumPublicApi.startView(computeNuxtViewName(router.currentRoute.value.matched))
+  const initialRoute = router.resolve(router.currentRoute.value.fullPath || router.currentRoute.value.path)
+  if (initialRoute.matched.length > 0) {
+    rumPublicApi.startView(computeNuxtViewName(initialRoute.matched))
   }
 
   router.afterEach((to, from, failure) => {
     if (failure) {
       return
     }
-    if (from.matched.length > 0 && to.path === from.path && to.hash === from.hash) {
+    if (to.path === from.path && to.hash === from.hash) {
       return
     }
     rumPublicApi.startView(computeNuxtViewName(to.matched))
