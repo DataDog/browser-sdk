@@ -22,6 +22,7 @@ dev,@jsdevtools/coverage-istanbul-loader,MIT,Copyright (c) 2015 James Messinger
 dev,@ngtools/webpack,MIT,Copyright (c) 2017 Google LLC
 dev,@playwright/test,Apache-2.0,Copyright Microsoft Corporation
 dev,@swc/core,Apache-2.0,Copyright (c) SWC Contributors
+dev,@tanstack/react-router,MIT,Copyright (c) 2021-present Tanner Linsley
 dev,@types/chrome,MIT,Copyright Microsoft Corporation
 dev,@types/busboy,MIT,Copyright Microsoft Corporation
 dev,@types/cors,MIT,Copyright Microsoft Corporation

@@ -4,7 +4,7 @@
 
 ## Overview
 
-The Datadog RUM Nuxt integration provides framework-specific instrumentation for Nuxt 3 applications. This integration adds:
+The Datadog RUM Nuxt integration provides framework-specific instrumentation for Nuxt 3 and 4 applications. This integration adds:
 
 - Automatic route change detection using the Nuxt router
 - View name normalization for dynamic Nuxt routes such as `/user/42` to `/user/[id]`
@@ -33,7 +33,7 @@ export default defineNuxtPlugin((nuxtApp) => {
     applicationId: '<APP_ID>',
     clientToken: '<CLIENT_TOKEN>',
     site: 'datadoghq.com',
-    plugins: [nuxtRumPlugin(useRouter())],
+    plugins: [nuxtRumPlugin({ router: useRouter() })],
   })
 })
 ```
@@ -49,7 +49,7 @@ Because this package is client-only, it does not report SSR-side `app:error` or 
 
 ## Route Tracking
 
-The `nuxtRumPlugin(useRouter())` plugin tracks client-side route changes and normalizes dynamic routes:
+The `nuxtRumPlugin({ router: useRouter() })` plugin tracks client-side route changes and normalizes dynamic routes:
 
 | Actual URL  | View name           |
 | ----------- | ------------------- |

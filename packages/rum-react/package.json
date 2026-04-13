@@ -12,6 +12,7 @@
     "internal",
     "react-router-v6",
     "react-router-v7",
+    "tanstack-router",
     "!src/**/*.spec.*",
     "!src/**/*.specHelper.*"
   ],
@@ -24,6 +25,7 @@
     "@datadog/browser-rum-core": "6.32.0"
   },
   "peerDependencies": {
+    "@tanstack/react-router": ">=1.64.0 <2",
     "react": "18 || 19",
     "react-router": "6 || 7",
     "react-router-dom": "6 || 7"
@@ -33,6 +35,9 @@
       "optional": true
     },
     "@datadog/browser-rum-slim": {
+      "optional": true
+    },
+    "@tanstack/react-router": {
       "optional": true
     },
     "react": {
@@ -46,6 +51,7 @@
     }
   },
   "devDependencies": {
+    "@tanstack/react-router": "1.168.7",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "react": "19.2.4",

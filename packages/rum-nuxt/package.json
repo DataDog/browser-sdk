@@ -20,7 +20,7 @@
     "@datadog/browser-rum-core": "6.32.0"
   },
   "peerDependencies": {
-    "nuxt": ">=3.0.0",
+    "nuxt": "3 || 4",
     "vue": "^3.5.0",
     "vue-router": "^4.0.0"
   },

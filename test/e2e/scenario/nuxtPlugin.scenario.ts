@@ -31,6 +31,7 @@ test.describe('nuxt - router', () => {
       await page.waitForURL('**/user/42?admin=true')
 
       await page.click('text=Back to Home')
+      await page.waitForURL('**/')
 
       await flushEvents()
 
