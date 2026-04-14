@@ -1,5 +1,5 @@
 ---
-name: router:design
+name: router-design
 description: 'Stage 3: Produce design decisions document from router concepts and SDK mapping. Reads 01 and 02 artifacts.'
 ---
 

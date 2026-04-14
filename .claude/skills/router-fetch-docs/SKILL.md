@@ -1,5 +1,5 @@
 ---
-name: router:fetch-docs
+name: router-fetch-docs
 description: 'Stage 1: Fetch framework router documentation and extract structured routing concepts. Reads input from docs/integrations/<framework>/00-pipeline-input.md.'
 ---
 
@@ -7,7 +7,9 @@ description: 'Stage 1: Fetch framework router documentation and extract structur
 
 ## Context
 
-You are Stage 1 of the router integration pipeline. Your job is to fetch framework router documentation, extract structured routing concepts, and assess compatibility with the Browser SDK router integration model.
+You are Stage 1 of the router integration pipeline. Your job is to fetch framework router documentation and extract structured routing concepts as factual reference material for later stages.
+
+Do NOT analyze which hooks the SDK should use, recommend approaches, or compare with existing SDK integrations. Only document what the framework provides.
 
 ## Input
 
@@ -25,11 +27,18 @@ Before fetching the provided URLs directly, try to find LLM-friendly versions of
 
 Use the WebFetch tool for all fetches. If a URL fails, note it and continue with remaining URLs. If all URLs fail, write EXIT.md and stop.
 
+**Prefer over-fetching to under-fetching.** Fetch every routing-related page you can find — API references, guides, tutorials. It is better to fetch a page and not need it than to miss information that a later stage requires. When in doubt, fetch it.
+
 ### 2. Extract Router Concepts
 
-Analyze the fetched documentation and produce a structured summary covering these sections. Every factual claim MUST be inline-linked to the source URL and section where you found it.
+Analyze the fetched documentation and produce a structured summary covering these sections.
 
-Unsourced claims must be marked as _inferred: \<reasoning\>_.
+#### Sourcing Rules
+
+- Every API name (class, interface, function, event, type) MUST be a clickable link to its API reference page (e.g. `[GuardsCheckEnd](https://angular.dev/api/router/GuardsCheckEnd)`).
+- Do NOT use generic `([source](url))` links. Instead, make the API name itself the link.
+- Every factual claim MUST be linked — either via an API link on the relevant name, or via a `([guide](url))` / `([commit](url))` link for non-API content.
+- Unsourced claims must be marked as _inferred: \<reasoning\>_.
 
 #### Required Sections
 
@@ -50,25 +59,14 @@ List every navigation lifecycle event/hook the framework exposes, in the order t
 - Whether it can cancel/redirect navigation
 
 **Navigation Lifecycle Timing**
-This is the most critical section. Determine:
+Document the order of operations during a navigation. For each phase, state:
 
 - Where in the lifecycle do **redirects** resolve?
 - Where do **data fetches** (loaders, resolvers) execute?
 - Where does **component rendering** begin?
+- Which hooks fire between each phase?
 
-The SDK wants to start a view **as early as possible** but:
-
-1. **After redirects** — so the view name reflects the final destination
-2. **Before data fetches** — so loader/resolver network requests are attributed to the correct view
-3. **Before component rendering** — so rendering work is attributed to the correct view
-
-Identify the ideal hook point. If no single hook satisfies all three constraints, document the trade-off and rank the available options from best to worst, explaining what is lost with each.
-
-Reference how existing integrations solve this:
-
-- Angular uses [`GuardsCheckEnd`](packages/rum-angular/src/domain/angularRouter/provideDatadogRouter.ts) (after guards/redirects, before resolvers)
-- Vue uses [`afterEach`](packages/rum-vue/src/domain/router/vueRouter.ts) (after everything including render)
-- React uses [`subscribe`](packages/rum-react/src/domain/reactRouter/createRouter.ts) (after state change)
+Include a timeline or ordered list showing the sequence: redirect resolution → guard evaluation → data fetching → component rendering, mapped to the specific hooks/events from the previous section.
 
 **Route Matching Model**
 How the framework matches URLs to routes: nested vs flat, layout routes, named outlets/slots, parallel routes.

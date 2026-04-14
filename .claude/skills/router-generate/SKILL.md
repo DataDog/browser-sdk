@@ -1,5 +1,5 @@
 ---
-name: router:generate
+name: router-generate
 description: 'Stage 4: Generate the complete router integration package from design artifacts and reference implementations.'
 ---
 

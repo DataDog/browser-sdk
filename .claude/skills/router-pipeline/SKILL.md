@@ -1,6 +1,6 @@
 ---
-name: router:pipeline
-description: Fully automated pipeline that generates a draft Browser SDK router integration PR from an npm package URL. Usage: /router:pipeline <npm-package-url>
+name: router-pipeline
+description: Fully automated pipeline that generates a draft Browser SDK router integration PR from an npm package URL. Usage: /router-pipeline <npm-package-url>
 ---
 
 # Router Integration Pipeline
@@ -11,7 +11,7 @@ You are an orchestrator that chains five stage skills to generate a complete Bro
 
 The single argument is an npm package URL (e.g. `https://www.npmjs.com/package/@angular/router`).
 
-Example: `/router:pipeline https://www.npmjs.com/package/vue-router`
+Example: `/router-pipeline https://www.npmjs.com/package/vue-router`
 
 ## Step 1: Resolve Package Metadata & Initialize
 
@@ -48,9 +48,9 @@ Write `docs/integrations/<framework>/00-pipeline-input.md`:
 **Initiated:** <ISO timestamp>
 ```
 
-## Step 2: Invoke /router:fetch-docs
+## Step 2: Invoke /router-fetch-docs
 
-Use the Skill tool to invoke `router:fetch-docs`.
+Use the Skill tool to invoke `router-fetch-docs`.
 
 After completion, read `docs/integrations/<framework>/01-router-concepts.md` and check the `compatible` field.
 
@@ -62,9 +62,9 @@ If `compatible: false`, write `docs/integrations/<framework>/EXIT.md` with:
 
 Then stop and report the exit to the user.
 
-## Step 3: Invoke /router:analyze
+## Step 3: Invoke /router-analyze
 
-Use the Skill tool to invoke `router:analyze`.
+Use the Skill tool to invoke `router-analyze`.
 
 After completion, read `docs/integrations/<framework>/02-sdk-mapping.md` and check for any concept marked `unmapped` with severity `critical`.
 
@@ -76,17 +76,17 @@ If critical unmapped concepts exist, write `EXIT.md` with:
 
 Then stop and report the exit to the user.
 
-## Step 4: Invoke /router:design
+## Step 4: Invoke /router-design
 
-Use the Skill tool to invoke `router:design`.
+Use the Skill tool to invoke `router-design`.
 
-## Step 5: Invoke /router:generate
+## Step 5: Invoke /router-generate
 
-Use the Skill tool to invoke `router:generate`.
+Use the Skill tool to invoke `router-generate`.
 
-## Step 6: Invoke /router:pr
+## Step 6: Invoke /router-pr
 
-Use the Skill tool to invoke `router:pr`.
+Use the Skill tool to invoke `router-pr`.
 
 ## Error Handling
 

@@ -1,5 +1,5 @@
 ---
-name: router:analyze
+name: router-analyze
 description: 'Stage 2: Map framework router concepts to existing SDK patterns. Reads 01-router-concepts.md and reference implementations.'
 ---
 

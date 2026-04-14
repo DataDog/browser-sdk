@@ -1,5 +1,5 @@
 ---
-name: router:pr
+name: router-pr
 description: 'Stage 5: Create a git branch, commit artifacts and generated code, and open a draft PR on GitHub.'
 ---
 
