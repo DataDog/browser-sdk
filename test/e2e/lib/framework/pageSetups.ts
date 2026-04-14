@@ -27,6 +27,7 @@ export interface SetupOptions {
   }
   worker?: WorkerOptions
   callerLocation?: CallerLocation
+  mockClock: boolean
 }
 
 export interface CallerLocation {
@@ -56,8 +57,8 @@ export const DEFAULT_SETUPS =
       ]
 
 export function asyncSetup(options: SetupOptions, servers: Servers) {
-  let body = options.body || ''
   let header = options.head || ''
+  let footer = ''
 
   if (options.eventBridge) {
     header += setupEventBridge(servers)
@@ -78,32 +79,29 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
   const { logsScriptUrl, rumScriptUrl } = createCrossOriginScriptUrls(servers, options)
 
   if (options.logs) {
-    body += html`
-      <script>
-        ${formatSnippet(logsScriptUrl, 'DD_LOGS')}
-        DD_LOGS.onReady(function () {
-          DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
-          ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
-        })
-      </script>
-    `
+    footer += html`<script>
+      ${formatSnippet(logsScriptUrl, 'DD_LOGS')}
+      DD_LOGS.onReady(function () {
+        DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
+        ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
+      })
+    </script>`
   }
 
   if (options.rum) {
-    body += html`
-      <script type="text/javascript">
-        ${formatSnippet(rumScriptUrl, 'DD_RUM')}
-        DD_RUM.onReady(function () {
-          DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
-          ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
-        })
-      </script>
-    `
+    footer += html`<script type="text/javascript">
+      ${formatSnippet(rumScriptUrl, 'DD_RUM')}
+      DD_RUM.onReady(function () {
+        DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
+        ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
+      })
+    </script>`
   }
 
   return basePage({
-    body,
     header,
+    body: options.body,
+    footer,
   })
 }
 
@@ -121,23 +119,19 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
   const { logsScriptUrl, rumScriptUrl } = createCrossOriginScriptUrls(servers, options)
 
   if (options.logs) {
-    header += html`
-      <script type="text/javascript" src="${logsScriptUrl}" crossorigin></script>
-      <script type="text/javascript">
-        DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
-        ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
-      </script>
-    `
+    header += html`<script type="text/javascript" src="${logsScriptUrl}" crossorigin></script>`
+    header += html`<script type="text/javascript">
+      DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
+      ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
+    </script>`
   }
 
   if (options.rum) {
-    header += html`
-      <script type="text/javascript" src="${rumScriptUrl}" crossorigin></script>
-      <script type="text/javascript">
-        DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
-        ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
-      </script>
-    `
+    header += html`<script type="text/javascript" src="${rumScriptUrl}" crossorigin></script>`
+    header += html`<script type="text/javascript">
+      DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
+      ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
+    </script>`
   }
 
   return basePage({
@@ -148,7 +142,6 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
 
 export function npmSetup(options: SetupOptions, servers: Servers) {
   let header = options.head || ''
-  const body = options.body || ''
 
   if (options.eventBridge) {
     header += setupEventBridge(servers)
@@ -159,38 +152,33 @@ export function npmSetup(options: SetupOptions, servers: Servers) {
   }
 
   if (options.logs) {
-    header += html`
-      <script type="text/javascript">
-        window.LOGS_INIT = () => {
-          window.DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
-          ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
-        }
-      </script>
-    `
+    header += html`<script type="text/javascript">
+      window.LOGS_INIT = () => {
+        window.DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
+        ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
+      }
+    </script>`
   }
 
   if (options.rum) {
-    header += html`
-      <script type="text/javascript">
-        window.RUM_INIT = () => {
-          window.DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
-          ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
-        }
-      </script>
-    `
+    header += html`<script type="text/javascript">
+      window.RUM_INIT = () => {
+        window.DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
+        ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
+      }
+    </script>`
   }
 
-  header += html` <script type="text/javascript" src="./app.js"></script> `
+  header += html`<script type="text/javascript" src="./app.js"></script>`
 
   return basePage({
     header,
-    body,
+    body: options.body,
   })
 }
 
 export function appSetup(options: SetupOptions, servers: Servers, appName: string) {
   let header = options.head || ''
-  let body = options.body || ''
 
   if (options.eventBridge) {
     header += setupEventBridge(servers)
@@ -201,19 +189,18 @@ export function appSetup(options: SetupOptions, servers: Servers, appName: strin
   }
 
   if (options.rum) {
-    header += html`
-      <script type="text/javascript">
-        window.RUM_CONFIGURATION = ${formatConfiguration(options.rum, servers)}
-        window.RUM_CONTEXT = ${JSON.stringify(options.context)}
-      </script>
-    `
+    header += html`<script type="text/javascript">
+      window.RUM_CONFIGURATION = ${formatConfiguration(options.rum, servers)}
+      window.RUM_CONTEXT = ${JSON.stringify(options.context)}
+    </script>`
   }
 
-  body += html` <script type="text/javascript" src="./${appName}.js"></script> `
+  const footer = html`<script type="text/javascript" src="./${appName}.js"></script>`
 
   return basePage({
     header,
-    body,
+    body: options.body,
+    footer,
   })
 }
 
@@ -250,7 +237,6 @@ export function workerSetup(setupOptions: SetupOptions, servers: Servers) {
 
 export function microfrontendSetup(options: SetupOptions, servers: Servers) {
   let header = options.head || ''
-  const body = options.body || ''
 
   if (options.eventBridge) {
     header += setupEventBridge(servers)
@@ -263,35 +249,24 @@ export function microfrontendSetup(options: SetupOptions, servers: Servers) {
   const { rumScriptUrl } = createCrossOriginScriptUrls(servers, options)
 
   if (options.rum) {
-    header += html`
-      <script type="text/javascript" src="${rumScriptUrl}" crossorigin></script>
-      <script type="text/javascript">
-        DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
-        ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
-      </script>
-    `
+    header += html`<script type="text/javascript" src="${rumScriptUrl}" crossorigin></script>`
+    header += html`<script type="text/javascript">
+      DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
+      ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
+    </script>`
   }
 
-  header += html` <script type="module" src="/microfrontend/shell.js"></script> `
+  header += html`<script type="module" src="/microfrontend/shell.js"></script>`
 
   return basePage({
     header,
-    body,
+    body: options.body,
   })
 }
 
-export function basePage({ header, body }: { header?: string; body?: string }) {
-  return html`
-    <!doctype html>
-    <html>
-      <head>
-        ${header || ''}
-      </head>
-      <body>
-        ${body || ''}
-      </body>
-    </html>
-  `
+function basePage({ header, body, footer }: { header?: string; body?: string; footer?: string }) {
+  // prettier-ignore
+  return html`<!doctype html><html><head>${header || ''}</head><body>${body || ''}</body>${footer || ''}</html>`
 }
 
 // html is a simple template string tag to allow prettier to format various setups as HTML
@@ -314,27 +289,25 @@ function setupEventBridge(servers: Servers) {
     bridge: 'true',
   }).toString()}`
 
-  return html`
-    <script type="text/javascript">
-      window.DatadogEventBridge = {
-        getCapabilities() {
-          return '["records"]'
-        },
-        getPrivacyLevel() {
-          return 'mask'
-        },
-        getAllowedWebViewHosts() {
-          return '["${baseHostname}"]'
-        },
-        send(e) {
-          const { eventType, event } = JSON.parse(e)
-          const request = new XMLHttpRequest()
-          request.open('POST', ${JSON.stringify(eventBridgeIntake)} + '&event_type=' + eventType, true)
-          request.send(JSON.stringify(event))
-        },
-      }
-    </script>
-  `
+  return html`<script type="text/javascript">
+    window.DatadogEventBridge = {
+      getCapabilities() {
+        return '["records"]'
+      },
+      getPrivacyLevel() {
+        return 'mask'
+      },
+      getAllowedWebViewHosts() {
+        return '["${baseHostname}"]'
+      },
+      send(e) {
+        const { eventType, event } = JSON.parse(e)
+        const request = new XMLHttpRequest()
+        request.open('POST', ${JSON.stringify(eventBridgeIntake)} + '&event_type=' + eventType, true)
+        request.send(JSON.stringify(event))
+      },
+    }
+  </script>`
 }
 
 function setupExtension(options: SetupOptions, servers: Servers) {
@@ -343,30 +316,32 @@ function setupExtension(options: SetupOptions, servers: Servers) {
   const { rumScriptUrl, logsScriptUrl } = createCrossOriginScriptUrls(servers, { ...options, useRumSlim: false })
 
   if (options.extension?.rumConfiguration) {
-    header += html`
-      <script type="text/javascript">
-        window.RUM_BUNDLE_URL = '${rumScriptUrl}'
-        window.RUM_CONTEXT = ${JSON.stringify(options.context)}
-        window.EXT_RUM_CONFIGURATION = ${formatConfiguration(options.extension.rumConfiguration, servers)}
-      </script>
-    `
+    header += html`<script type="text/javascript">
+      window.RUM_BUNDLE_URL = '${rumScriptUrl}'
+      window.RUM_CONTEXT = ${JSON.stringify(options.context)}
+      window.EXT_RUM_CONFIGURATION = ${formatConfiguration(options.extension.rumConfiguration, servers)}
+    </script>`
   }
 
   if (options.extension?.logsConfiguration) {
-    header += html`
-      <script type="text/javascript">
-        window.LOGS_BUNDLE_URL = '${logsScriptUrl}'
-        window.LOGS_CONTEXT = ${JSON.stringify(options.context)}
-        window.EXT_LOGS_CONFIGURATION = ${formatConfiguration(options.extension.logsConfiguration, servers)}
-      </script>
-    `
+    header += html`<script type="text/javascript">
+      window.LOGS_BUNDLE_URL = '${logsScriptUrl}'
+      window.LOGS_CONTEXT = ${JSON.stringify(options.context)}
+      window.EXT_LOGS_CONFIGURATION = ${formatConfiguration(options.extension.logsConfiguration, servers)}
+    </script>`
   }
 
   return header
 }
 
+type JsonIncompatibleValue = ((...args: any[]) => any) | RegExp
+
+function isJsonIncompatibleValue(value: unknown): value is JsonIncompatibleValue {
+  return typeof value === 'function' || value instanceof RegExp
+}
+
 export function formatConfiguration(initConfiguration: LogsInitConfiguration | RumInitConfiguration, servers: Servers) {
-  const fns = new Map<string, () => void>()
+  const jsonIncompatibles = new Map<string, JsonIncompatibleValue>()
 
   let result = JSON.stringify(
     {
@@ -375,9 +350,9 @@ export function formatConfiguration(initConfiguration: LogsInitConfiguration | R
       remoteConfigurationProxy: `${servers.base.origin}/config`,
     },
     (_key, value) => {
-      if (typeof value === 'function') {
+      if (isJsonIncompatibleValue(value)) {
         const id = generateUUID()
-        fns.set(id, value)
+        jsonIncompatibles.set(id, value)
 
         return id
       }
@@ -389,8 +364,8 @@ export function formatConfiguration(initConfiguration: LogsInitConfiguration | R
 
   result = result.replace('"LOCATION_ORIGIN"', 'location.origin')
 
-  for (const [id, fn] of fns) {
-    result = result.replace(`"${id}"`, fn.toString())
+  for (const [id, value] of jsonIncompatibles) {
+    result = result.replace(`"${id}"`, String(value))
   }
 
   return result

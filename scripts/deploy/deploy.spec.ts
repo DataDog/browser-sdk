@@ -162,6 +162,80 @@ describe('deploy', () => {
     ])
   })
 
+  it('should deploy canary packages', async () => {
+    await deploy('prod', 'canary', ['root'])
+
+    assert.deepEqual(getS3Commands(), [
+      {
+        command:
+          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/logs/bundle/datadog-logs.js s3://browser-agent-artifacts-prod/datadog-logs-canary.js',
+        env,
+      },
+      {
+        command: `aws s3 cp --cache-control max-age=900, s-maxage=60 packages/rum/bundle/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js s3://browser-agent-artifacts-prod/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js`,
+        env,
+      },
+      {
+        command: `aws s3 cp --cache-control max-age=900, s-maxage=60 packages/rum/bundle/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum.js s3://browser-agent-artifacts-prod/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum.js`,
+        env,
+      },
+      {
+        command:
+          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/rum/bundle/datadog-rum.js s3://browser-agent-artifacts-prod/datadog-rum-canary.js',
+        env,
+      },
+      {
+        command:
+          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/rum-slim/bundle/datadog-rum-slim.js s3://browser-agent-artifacts-prod/datadog-rum-slim-canary.js',
+        env,
+      },
+    ])
+
+    assert.deepEqual(getCloudfrontCommands(), [
+      {
+        command: `aws cloudfront create-invalidation --distribution-id EGB08BYCT1DD9 --paths /datadog-logs-canary.js,/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/datadog-rum-canary.js,/datadog-rum-slim-canary.js`,
+        env,
+      },
+    ])
+  })
+
+  it('should deploy next major canary packages', async () => {
+    await deploy('prod', 'v7-canary', ['root'])
+
+    assert.deepEqual(getS3Commands(), [
+      {
+        command:
+          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/logs/bundle/datadog-logs.js s3://browser-agent-artifacts-prod/datadog-logs-v7-canary.js',
+        env,
+      },
+      {
+        command: `aws s3 cp --cache-control max-age=900, s-maxage=60 packages/rum/bundle/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js s3://browser-agent-artifacts-prod/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js`,
+        env,
+      },
+      {
+        command: `aws s3 cp --cache-control max-age=900, s-maxage=60 packages/rum/bundle/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum.js s3://browser-agent-artifacts-prod/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum.js`,
+        env,
+      },
+      {
+        command:
+          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/rum/bundle/datadog-rum.js s3://browser-agent-artifacts-prod/datadog-rum-v7-canary.js',
+        env,
+      },
+      {
+        command:
+          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/rum-slim/bundle/datadog-rum-slim.js s3://browser-agent-artifacts-prod/datadog-rum-slim-v7-canary.js',
+        env,
+      },
+    ])
+
+    assert.deepEqual(getCloudfrontCommands(), [
+      {
+        command: `aws cloudfront create-invalidation --distribution-id EGB08BYCT1DD9 --paths /datadog-logs-v7-canary.js,/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/datadog-rum-v7-canary.js,/datadog-rum-slim-v7-canary.js`,
+        env,
+      },
+    ])
+  })
+
   it('should deploy PR packages', async () => {
     // mock the PR number fetch
     fetchPRMock.mock.mockImplementation(() => Promise.resolve({ ['number']: 123 }))

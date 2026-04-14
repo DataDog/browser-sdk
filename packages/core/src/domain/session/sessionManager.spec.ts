@@ -22,6 +22,7 @@ import {
   startSessionManager,
   startSessionManagerStub,
   stopSessionManager,
+  TRACKED_SESSION_MAX_AGE,
   VISIBILITY_CHECK_DELAY,
 } from './sessionManager'
 import { getSessionStoreStrategy } from './sessionStore'
@@ -406,7 +407,7 @@ describe('startSessionManager', () => {
       expect(sessionManager.findSession()).toBeUndefined()
     })
 
-    it('should fire renewObservable when external change creates a session from expired state', async () => {
+    it('should not adopt a session created by another tab after expiry', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
       const renewSpy = jasmine.createSpy('renew')
       sessionManager.renewObservable.subscribe(renewSpy)
@@ -421,8 +422,8 @@ describe('startSessionManager', () => {
         created: String(Date.now()),
       })
 
-      expect(renewSpy).toHaveBeenCalledTimes(1)
-      expect(sessionManager.findSession()!.id).toBe('new-session-from-other-tab')
+      expect(renewSpy).not.toHaveBeenCalled()
+      expect(sessionManager.findSession()).toBeUndefined()
     })
   })
 
@@ -651,13 +652,21 @@ describe('startSessionManager', () => {
       expect(sessionManager.findTrackedSession(undefined, { returnInactive: true })).toBeDefined()
     })
 
-    describe('deterministic sampling', () => {
-      beforeEach(() => {
-        if (!window.BigInt) {
-          pending('BigInt is not supported')
-        }
+    it('should return undefined when the session is older than TRACKED_SESSION_MAX_AGE', async () => {
+      const sessionManager = await startSessionManagerWithDefaults()
+
+      fakeStrategy.simulateExternalChange({
+        id: LOW_HASH_UUID,
+        created: String(Date.now() - TRACKED_SESSION_MAX_AGE - 1),
+        expire: String(Date.now() + SESSION_EXPIRATION_DELAY),
       })
 
+      await collectAsyncCalls(sessionObservableSpy, 2) // 1 for initial session, 1 for external change
+
+      expect(sessionManager.findTrackedSession()).toBeUndefined()
+    })
+
+    describe('deterministic sampling', () => {
       it('should track a session whose ID has a low hash, even with a low sessionSampleRate', async () => {
         setupFakeStrategy({
           initialSession: {

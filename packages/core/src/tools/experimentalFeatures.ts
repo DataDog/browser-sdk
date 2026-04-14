@@ -16,13 +16,11 @@ import { objectHasValue } from './utils/objectUtils'
 export enum ExperimentalFeature {
   TRACK_INTAKE_REQUESTS = 'track_intake_requests',
   FEATURE_OPERATION_VITAL = 'feature_operation_vital',
-  SHORT_SESSION_INVESTIGATION = 'short_session_investigation',
   START_STOP_ACTION = 'start_stop_action',
   START_STOP_RESOURCE = 'start_stop_resource',
   USE_CHANGE_RECORDS = 'use_change_records',
   USE_INCREMENTAL_CHANGE_RECORDS = 'use_incremental_change_records',
   TOO_MANY_REQUESTS_INVESTIGATION = 'too_many_requests_investigation',
-  COMPOSED_PATH_SELECTOR = 'composed_path_selector',
   TRACK_RESOURCE_HEADERS = 'track_resource_headers',
 }
 

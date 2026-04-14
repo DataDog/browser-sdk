@@ -3,7 +3,7 @@ import type { RumPlugin, AllowedRawRumEvent } from '@datadog/browser-rum-core'
 import { ActionType, RumEventType } from '@datadog/browser-rum-core'
 import type { ServerDuration, TimeStamp } from '@datadog/browser-core'
 import { clocksNow, generateUUID } from '@datadog/browser-core'
-import { createTest } from '../lib/framework'
+import { createTest } from '../../lib/framework'
 
 declare global {
   interface Window {

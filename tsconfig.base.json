@@ -8,7 +8,7 @@
     "module": "ES2020",
     "resolveJsonModule": true,
     "strict": true,
-    "target": "ES2018",
+    "target": "ES2020",
     "sourceMap": true,
     "jsx": "react",
     "skipLibCheck": true,
@@ -36,6 +36,8 @@
 
       "@datadog/browser-rum-vue": ["./packages/rum-vue/src/entries/main"],
       "@datadog/browser-rum-vue/vue-router-v4": ["./packages/rum-vue/src/entries/vueRouter"],
+
+      "@datadog/browser-rum-nuxt": ["./packages/rum-nuxt/src/entries/main"],
 
       "@datadog/browser-rum-nextjs": ["./packages/rum-nextjs/src/entries/main"],
 

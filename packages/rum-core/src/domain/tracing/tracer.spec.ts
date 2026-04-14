@@ -270,10 +270,6 @@ describe('tracer', () => {
     })
 
     it('should apply the correction factor for chained sampling on the trace sample rate', () => {
-      if (!window.BigInt) {
-        pending('BigInt is not supported')
-      }
-
       // MID_HASH_UUID has a hash of ~50.7%. With sessionSampleRate=60 and traceSampleRate=60:
       // - Without correction: isSampled(id, 60) → true (50.7 < 60)
       // - With correction: isSampled(id, 60*60/100=36) → false (50.7 > 36)

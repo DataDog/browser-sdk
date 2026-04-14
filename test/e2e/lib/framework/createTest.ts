@@ -9,7 +9,7 @@ import { BrowserLogsManager, deleteAllCookies, getBrowserName, sendXhr } from '.
 import { DEFAULT_LOGS_CONFIGURATION, DEFAULT_RUM_CONFIGURATION } from '../helpers/configuration'
 import { validateRumFormat } from '../helpers/validation'
 import type { BrowserConfiguration } from '../../../browsers.conf'
-import { NEXTJS_APP_ROUTER_PORT, VUE_ROUTER_APP_PORT } from '../helpers/playwright'
+import { NEXTJS_APP_ROUTER_PORT, NUXT_APP_PORT, VUE_ROUTER_APP_PORT } from '../helpers/playwright'
 import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
@@ -55,6 +55,7 @@ class TestBuilder {
   private eventBridge = false
   private setups: Array<{ factory: SetupFactory; name?: string }> = DEFAULT_SETUPS
   private testFixture: typeof test = test
+  private mockClock = false
   private extension: {
     rumConfiguration?: RumInitConfiguration
     logsConfiguration?: LogsInitConfiguration
@@ -111,6 +112,11 @@ class TestBuilder {
     return this
   }
 
+  withMockClock() {
+    this.mockClock = true
+    return this
+  }
+
   withVueApp() {
     this.baseUrlHooks.push((baseUrl, servers, { rum, context }) => {
       baseUrl.port = VUE_ROUTER_APP_PORT
@@ -132,6 +138,20 @@ class TestBuilder {
       if (basePath) {
         baseUrl.pathname = basePath + (baseUrl.pathname === '/' ? '' : baseUrl.pathname)
       }
+      if (rum) {
+        baseUrl.searchParams.set('rum-config', formatConfiguration(rum, servers))
+      }
+      if (context) {
+        baseUrl.searchParams.set('rum-context', JSON.stringify(context))
+      }
+    })
+    this.setups = [{ factory: () => '' }]
+    return this
+  }
+
+  withNuxtApp() {
+    this.baseUrlHooks.push((baseUrl, servers, { rum, context }) => {
+      baseUrl.port = NUXT_APP_PORT
       if (rum) {
         baseUrl.searchParams.set('rum-config', formatConfiguration(rum, servers))
       }
@@ -218,6 +238,7 @@ class TestBuilder {
       extension: this.extension,
       worker: this.worker,
       callerLocation: this.callerLocation,
+      mockClock: this.mockClock,
     }
 
     if (this.alsoRunWithRumSlim) {
@@ -346,7 +367,7 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     servers.base.bindServerApp(createMockServerApp(servers, setup, setupOptions))
     servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
 
-    await setUpTest(browserLogs, testContext)
+    await setUpTest(browserLogs, setupOptions, testContext)
 
     try {
       await runner(testContext)
@@ -412,7 +433,11 @@ function createTestContext(
   }
 }
 
-async function setUpTest(browserLogsManager: BrowserLogsManager, { baseUrl, page, browserContext }: TestContext) {
+async function setUpTest(
+  browserLogsManager: BrowserLogsManager,
+  { mockClock }: SetupOptions,
+  { baseUrl, page, browserContext }: TestContext
+) {
   browserContext.on('console', (msg) => {
     browserLogsManager.add({
       level: msg.type() as BrowserLog['level'],
@@ -431,6 +456,13 @@ async function setUpTest(browserLogsManager: BrowserLogsManager, { baseUrl, page
     })
   })
 
+  if (mockClock) {
+    try {
+      await page.clock.install()
+    } catch (e) {
+      test.skip(true, `Mock clock is not supported in this browser: ${String(e)}`)
+    }
+  }
   await page.goto(baseUrl)
   await waitForServersIdle()
 }

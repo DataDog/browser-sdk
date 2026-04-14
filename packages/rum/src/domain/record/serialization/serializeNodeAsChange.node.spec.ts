@@ -1,6 +1,6 @@
 import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN, PRIVACY_ATTR_VALUE_MASK } from '@datadog/browser-rum-core'
 import { DefaultPrivacyLevel } from '@datadog/browser-core'
-import type { BrowserChangeRecord } from '../../../types'
+import type { BrowserChangeRecord, BrowserFullSnapshotChangeRecord } from '../../../types'
 import { ChangeType, PlaybackState } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
 import type { ScrollPositions } from '../elementsScrollPositions'
@@ -9,6 +9,17 @@ import { SerializationKind } from './serializationTransaction'
 import { serializeHtmlAsChange } from './serializeHtml.specHelper'
 
 describe('serializeNodeAsChange for DOM nodes', () => {
+  let originalTimeout: number
+
+  beforeAll(() => {
+    originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000
+  })
+
+  afterAll(() => {
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout
+  })
+
   describe('for #cdata-section nodes', () => {
     it('serializes the node', async () => {
       const record = await serializeHtmlAsChange('<div></div>', {
@@ -330,7 +341,7 @@ describe('serializeNodeAsChange for DOM nodes', () => {
 
     function serializeScrollableElement(
       scrollPositions: ScrollPositions | undefined
-    ): Promise<BrowserChangeRecord | undefined> {
+    ): Promise<BrowserChangeRecord | BrowserFullSnapshotChangeRecord | undefined> {
       return serializeHtmlAsChange(scrollableElement, {
         before(target: Node): void {
           if (scrollPositions) {

@@ -13,21 +13,21 @@ export const browserConfigurations: BrowserConfiguration[] = [
   {
     sessionName: 'Firefox',
     name: 'Firefox',
-    version: '67.0',
+    version: '78.0',
     os: 'Windows',
     osVersion: '11',
   },
   {
     sessionName: 'Safari desktop',
     name: 'Safari',
-    version: '12.1',
+    version: '14.0',
     os: 'OS X',
-    osVersion: 'Mojave',
+    osVersion: 'Big Sur',
   },
   {
     sessionName: 'Chrome desktop',
     name: 'Chrome',
-    version: '63.0',
+    version: '80.0',
     os: 'Windows',
     osVersion: '11',
   },
@@ -37,12 +37,5 @@ export const browserConfigurations: BrowserConfiguration[] = [
     os: 'android',
     osVersion: '12.0',
     device: 'Google Pixel 6 Pro',
-  },
-  {
-    sessionName: 'Safari mobile',
-    name: 'safari',
-    os: 'ios',
-    osVersion: '16',
-    device: 'iPhone 14',
   },
 ]

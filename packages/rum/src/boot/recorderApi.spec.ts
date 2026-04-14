@@ -327,27 +327,6 @@ describe('makeRecorderApi', () => {
         expect(startRecordingSpy).not.toHaveBeenCalled()
       })
     })
-
-    describe('if browser is not supported', () => {
-      let originalArrayFrom: (typeof Array)['from']
-
-      beforeEach(() => {
-        originalArrayFrom = Array.from
-        delete (Array as any).from
-      })
-
-      afterEach(() => {
-        Array.from = originalArrayFrom
-      })
-
-      it('does not start recording', () => {
-        setupRecorderApi({ startSessionReplayRecordingManually: true })
-        recorderApi.start()
-        rumInit()
-        expect(importRecorderSpy).not.toHaveBeenCalled()
-        expect(startRecordingSpy).not.toHaveBeenCalled()
-      })
-    })
   })
 
   describe('recorder stop', () => {
@@ -385,10 +364,6 @@ describe('makeRecorderApi', () => {
     describe('when session renewal change the tracking type', () => {
       describe('from WITHOUT_REPLAY to WITH_REPLAY', () => {
         beforeEach(() => {
-          // These tests rely on deterministic hash-based sampling which requires BigInt
-          if (typeof BigInt === 'undefined') {
-            pending('BigInt not supported')
-          }
           sessionManager.setId(HIGH_HASH_UUID)
           setupRecorderApi({ sessionManager, sessionReplaySampleRate: 50 })
         })
@@ -452,9 +427,6 @@ describe('makeRecorderApi', () => {
 
       describe('from WITH_REPLAY to WITHOUT_REPLAY', () => {
         beforeEach(() => {
-          if (typeof BigInt === 'undefined') {
-            pending('BigInt not supported')
-          }
           setupRecorderApi({ sessionManager, sessionReplaySampleRate: 50 })
         })
 
@@ -564,9 +536,6 @@ describe('makeRecorderApi', () => {
 
       describe('from untracked to WITHOUT_REPLAY', () => {
         beforeEach(() => {
-          if (typeof BigInt === 'undefined') {
-            pending('BigInt not supported')
-          }
           sessionManager.setNotTracked()
           setupRecorderApi({ sessionManager, sessionReplaySampleRate: 50 })
         })

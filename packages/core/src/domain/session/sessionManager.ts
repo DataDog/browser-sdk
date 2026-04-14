@@ -1,7 +1,15 @@
 import { Observable } from '../../tools/observable'
 import { createValueHistory } from '../../tools/valueHistory'
-import type { RelativeTime } from '../../tools/utils/timeUtils'
-import { clocksOrigin, dateNow, ONE_MINUTE, ONE_SECOND, relativeNow } from '../../tools/utils/timeUtils'
+import type { RelativeTime, TimeStamp } from '../../tools/utils/timeUtils'
+import {
+  clocksOrigin,
+  dateNow,
+  ONE_HOUR,
+  ONE_MINUTE,
+  ONE_SECOND,
+  relativeNow,
+  timeStampNow,
+} from '../../tools/utils/timeUtils'
 import { addEventListener, addEventListeners, DOM_EVENT } from '../../browser/addEventListener'
 import { clearInterval, clearTimeout, setInterval, setTimeout } from '../../tools/timer'
 import { mockable } from '../../tools/mockable'
@@ -14,11 +22,14 @@ import { display } from '../../tools/display'
 import { isSampled } from '../sampler'
 import { monitorError } from '../../tools/monitor'
 import { getCookies } from '../../browser/cookie'
+import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import type { SessionState } from './sessionState'
 import {
   expandOnly,
   expandOrRenew,
+  getCreatedDate,
+  getExpireDate,
   getExpiredSessionState,
   initializeSession,
   isSessionInExpiredState,
@@ -38,7 +49,7 @@ interface SessionDebugContext {
   previousSession?: SessionContext
   newState: SessionState
   from: string
-  cookieValue: string | undefined
+  cookieValues: string[] | undefined
   cookies: string[]
   locksAvailable: boolean
   cookieStoreAvailable: boolean
@@ -52,10 +63,22 @@ export interface SessionContext {
   id: string
   anonymousId?: string | undefined
   isReplayForced?: boolean
+  createdAt: TimeStamp
 }
 
 export const VISIBILITY_CHECK_DELAY = ONE_MINUTE
 const SESSION_CONTEXT_TIMEOUT_DELAY = SESSION_TIME_OUT_DELAY
+
+// Maximum duration for which we can send data related to a session.
+//
+// The backend behavior depends on how old the session is when it receives an event:
+// - Session started < 4h ago: the backend updates the session normally.
+// - Session started between 4h and 24h ago: the backend ignores the event (safe).
+// - Session started > 24h ago: the backend recreates a session with that id (problematic).
+//
+// We choose 12h as a threshold — safely between 4h and 24h — to avoid both recreating
+// sessions and discarding too many legitimate late events.
+export const TRACKED_SESSION_MAX_AGE = ONE_HOUR * 12
 let stopCallbacks: Array<() => void> = []
 
 export async function startSessionManager(
@@ -78,7 +101,10 @@ export async function startSessionManager(
   })
   stopCallbacks.push(() => sessionContextHistory.stop())
 
+  let sessionExpired = false
+
   const { throttled: throttledExpandOrRenew, cancel: cancelExpandOrRenew } = throttle(() => {
+    sessionExpired = false
     strategy.setSessionState((state) => expandOrRenew(state, configuration)).catch(monitorError)
   }, ONE_SECOND)
   stopCallbacks.push(cancelExpandOrRenew)
@@ -120,17 +146,18 @@ export async function startSessionManager(
   }
 
   function subscribeToSessionChanges() {
-    const subscription = strategy.sessionObservable.subscribe(({ cookieValue, sessionState }) => {
+    const subscription = strategy.sessionObservable.subscribe(({ cookieValues, sessionState }) => {
       scheduleExpirationTimeout(sessionState)
-      handleStateChange(sessionState, { from: 'sessionObservable', cookieValue })
+      handleStateChange(sessionState, { from: 'sessionObservable', cookieValues })
     })
     stopCallbacks.push(() => subscription.unsubscribe())
   }
 
   function scheduleExpirationTimeout(state: SessionState) {
     clearTimeout(expirationTimeoutId)
-    if (state.expire && !isSessionInExpiredState(state)) {
-      const delay = Number(state.expire) - dateNow()
+    const expireDate = getExpireDate(state)
+    if (expireDate && !isSessionInExpiredState(state)) {
+      const delay = expireDate - dateNow()
       expirationTimeoutId = setTimeout(() => {
         strategy
           .setSessionState((state) => {
@@ -152,6 +179,7 @@ export async function startSessionManager(
   function setupSessionTracking() {
     trackingConsentState.observable.subscribe(() => {
       if (trackingConsentState.isGranted()) {
+        sessionExpired = false
         strategy.setSessionState((state) => expandOrRenew(state, configuration)).catch(monitorError)
       } else {
         expire()
@@ -183,6 +211,10 @@ export async function startSessionManager(
           return
         }
 
+        if (dateNow() - session.createdAt > TRACKED_SESSION_MAX_AGE) {
+          return
+        }
+
         return session
       },
       renewObservable,
@@ -194,7 +226,10 @@ export async function startSessionManager(
     }
   }
 
-  function handleStateChange(newState: SessionState, { from, cookieValue }: { from: string; cookieValue?: string }) {
+  function handleStateChange(
+    newState: SessionState,
+    { from, cookieValues }: { from: string; cookieValues?: string[] }
+  ) {
     const previousSession = sessionContextHistory.find()
     const hadSession = previousSession?.id !== undefined
     const hasSession = newState.id !== undefined
@@ -206,16 +241,23 @@ export async function startSessionManager(
         previousSession: previousSession && { ...previousSession },
         newState: { ...newState },
         from,
-        cookieValue,
-        cookies: getCookies('_dd_s'),
+        cookieValues,
+        cookies: getCookies(SESSION_STORE_KEY),
         locksAvailable: Boolean(globalThis.navigator?.locks),
         cookieStoreAvailable: Boolean(globalThis.cookieStore),
+      }
+      if (!hasSession) {
+        sessionExpired = true
       }
       expireObservable.notify()
       sessionContextHistory.closeActive(relativeNow())
     }
 
     if (hasSession && (!hadSession || sessionIdChanged)) {
+      if (sessionExpired) {
+        // Don't adopt another tab's session — this tab needs its own user interaction to renew
+        return
+      }
       // New session appeared
       sessionContextHistory.add(buildSessionContext(newState), relativeNow())
       renewObservable.notify({
@@ -224,8 +266,8 @@ export async function startSessionManager(
           previousSession: previousSession && { ...previousSession },
           newState: { ...newState },
           from,
-          cookieValue,
-          cookies: getCookies('_dd_s'),
+          cookieValues,
+          cookies: getCookies(SESSION_STORE_KEY),
           locksAvailable: Boolean(globalThis.navigator?.locks),
           cookieStoreAvailable: Boolean(globalThis.cookieStore),
         },
@@ -258,11 +300,14 @@ export async function startSessionManager(
   }
 
   function buildSessionContext(sessionState: SessionState): SessionContext {
+    const createdAt = getCreatedDate(sessionState) ?? timeStampNow()
+
     if (!sessionState.id) {
       return {
         id: 'invalid',
         isReplayForced: false,
         anonymousId: undefined,
+        createdAt,
       }
     }
 
@@ -270,6 +315,7 @@ export async function startSessionManager(
       id: sessionState.id,
       isReplayForced: !!sessionState.forcedReplay,
       anonymousId: sessionState.anonymousId,
+      createdAt,
     }
   }
 }
@@ -280,6 +326,7 @@ export function startSessionManagerStub(): Promise<SessionManager> {
     id: stubSessionId,
     isReplayForced: false,
     anonymousId: undefined,
+    createdAt: timeStampNow(),
   }
   return Promise.resolve({
     findSession: () => sessionContext,

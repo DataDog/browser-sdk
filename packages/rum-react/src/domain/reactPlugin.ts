@@ -16,9 +16,10 @@ const onRumStartSubscribers: StartSubscriber[] = []
  */
 export interface ReactPluginConfiguration {
   /**
-   * Enable react-router integration. Make sure to use functions from
-   * {@link @datadog/browser-rum-react/react-router-v6! | @datadog/browser-rum-react/react-router-v6} or
-   * {@link @datadog/browser-rum-react/react-router-v7! | @datadog/browser-rum-react/react-router-v7}
+   * Enable router integration. Make sure to use functions from
+   * {@link @datadog/browser-rum-react/react-router-v6! | @datadog/browser-rum-react/react-router-v6},
+   * {@link @datadog/browser-rum-react/react-router-v7! | @datadog/browser-rum-react/react-router-v7}, or
+   * {@link @datadog/browser-rum-react/tanstack-router! | @datadog/browser-rum-react/tanstack-router}
    * to create the router.
    * ```
    */

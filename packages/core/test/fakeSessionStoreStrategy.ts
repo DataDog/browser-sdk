@@ -23,7 +23,7 @@ export function createFakeSessionStoreStrategy({
       .and.callFake(async (fn: (state: SessionState) => SessionState): Promise<void> => {
         session = fn({ ...session })
         await Promise.resolve()
-        sessionObservable.notify({ cookieValue: undefined, sessionState: { ...session } })
+        sessionObservable.notify({ sessionState: { ...session } })
       }),
     sessionObservable,
 
@@ -31,7 +31,7 @@ export function createFakeSessionStoreStrategy({
     getInternalState: () => ({ ...session }),
     simulateExternalChange: (state: SessionState) => {
       session = state
-      sessionObservable.notify({ cookieValue: undefined, sessionState: { ...session } })
+      sessionObservable.notify({ sessionState: { ...session } })
     },
   }
 }

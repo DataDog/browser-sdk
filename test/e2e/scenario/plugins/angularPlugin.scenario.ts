@@ -1,23 +1,42 @@
 import { test, expect } from '@playwright/test'
-import { createTest } from '../lib/framework'
+import { createTest } from '../../lib/framework'
+import { runBasePluginErrorTests } from './basePluginErrorTests'
+import { runBasePluginRouterTests } from './basePluginRouterTests'
 
-test.describe('angular plugin', () => {
-  createTest('should define a view name based on the route')
-    .withRum()
-    .withApp('angular-app')
-    .run(async ({ page, flushEvents, intakeRegistry }) => {
-      await page.click('text=Go to Parameterized Route')
-      await flushEvents()
-      const viewEvents = intakeRegistry.rumViewEvents
-      expect(viewEvents.length).toBeGreaterThan(0)
-      const lastView = viewEvents[viewEvents.length - 1]
-      expect(lastView.view.name).toBe('/parameterized/:id')
-      expect(lastView.view.url).toContain('/parameterized/42')
-    })
+const angularAppName = 'angular-app'
+const angularBasePluginConfig = {
+  name: angularAppName,
+  loadApp: (b: ReturnType<typeof createTest>) => b.withApp(angularAppName),
+  viewPrefix: '',
+}
 
+runBasePluginRouterTests([
+  {
+    ...angularBasePluginConfig,
+    router: {
+      homeViewName: '/',
+      homeUrlPattern: '**/',
+      userRouteName: '/user/:id',
+      guidesRouteName: '/guides/:slug',
+    },
+  },
+])
+
+runBasePluginErrorTests([
+  {
+    ...angularBasePluginConfig,
+    error: {
+      clientErrorMessage: 'Error triggered by button click',
+      expectedFramework: 'angular',
+      expectsBrowserConsoleErrors: true,
+    },
+  },
+])
+
+test.describe('plugin: angular', () => {
   createTest('should define a view name for nested routes')
     .withRum()
-    .withApp('angular-app')
+    .withApp(angularAppName)
     .run(async ({ page, flushEvents, intakeRegistry }) => {
       await page.click('text=Go to Nested Route')
       await flushEvents()
@@ -30,7 +49,7 @@ test.describe('angular plugin', () => {
 
   createTest('should define a view name with the actual path for wildcard routes')
     .withRum()
-    .withApp('angular-app')
+    .withApp(angularAppName)
     .run(async ({ page, flushEvents, intakeRegistry }) => {
       await page.click('text=Go to Wildcard Route')
       await flushEvents()
@@ -41,32 +60,9 @@ test.describe('angular plugin', () => {
       expect(lastView.view.url).toContain('/unknown/page')
     })
 
-  createTest('should define a view name for the initial route')
-    .withRum()
-    .withApp('angular-app')
-    .run(async ({ flushEvents, intakeRegistry }) => {
-      await flushEvents()
-      const viewEvents = intakeRegistry.rumViewEvents
-      expect(viewEvents.length).toBeGreaterThan(0)
-      const firstView = viewEvents[0]
-      expect(firstView.view.name).toBe('/')
-    })
-
-  createTest('should not create a new view on query param changes')
-    .withRum()
-    .withApp('angular-app')
-    .run(async ({ page, flushEvents, intakeRegistry }) => {
-      await page.click('#query-param-link')
-      await flushEvents()
-
-      const viewEvents = intakeRegistry.rumViewEvents
-      // Only the initial view should exist — the query param change should not create a new one
-      expect(viewEvents).toHaveLength(1)
-    })
-
   createTest('should report errors caught by provideDatadogErrorHandler')
     .withRum()
-    .withApp('angular-app')
+    .withApp(angularAppName)
     .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
       await page.click('#throw-error')
       await flushEvents()
@@ -85,7 +81,7 @@ test.describe('angular plugin', () => {
 
   createTest('should merge dd_context from the error object into the event context')
     .withRum()
-    .withApp('angular-app')
+    .withApp(angularAppName)
     .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
       await page.click('#throw-error-with-context')
       await flushEvents()
