@@ -7,6 +7,7 @@ import {
   initFeatureFlags,
   initFetchObservable,
   initConsoleObservable,
+  monitorError,
   noop,
   timeStampNow,
   buildAccountContextManager,
@@ -116,15 +117,17 @@ export function createPreStartStrategy(
           ? startSessionManagerStub()
           : mockable(startSessionManager)(configuration, trackingConsentState)
 
-        void sessionManagerPromise.then((newSessionManager) => {
-          if (!newSessionManager) {
-            return
-          }
-          sessionManager = newSessionManager
-          startTelemetrySessionContext(hooks, sessionManager)
-          addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
-          tryStartLogs()
-        })
+        void sessionManagerPromise
+          .then((newSessionManager) => {
+            if (!newSessionManager) {
+              return
+            }
+            sessionManager = newSessionManager
+            startTelemetrySessionContext(hooks, sessionManager)
+            addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
+            tryStartLogs()
+          })
+          .catch(monitorError)
       })
     },
 

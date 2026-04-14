@@ -158,6 +158,15 @@ describe('preStartRum', () => {
     })
   })
 
+  it('should not start when session manager initialization fails', async () => {
+    const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults({
+      startSessionManagerMock: () => Promise.reject(new Error('Session init failed')),
+    })
+    strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+    await collectAsyncCalls(doStartRumSpy, 0)
+    expect(doStartRumSpy).not.toHaveBeenCalled()
+  })
+
   describe('init', () => {
     describe('skipInitIfSyntheticsWillInjectRum option', () => {
       it('when true, ignores init() call if Synthetics will inject its own instance of RUM', () => {
@@ -915,13 +924,15 @@ describe('preStartRum', () => {
 function createPreStartStrategyWithDefaults({
   rumPublicApiOptions = {},
   trackingConsentState = createTrackingConsentState(),
+  startSessionManagerMock = createStartSessionManagerMock(),
 }: {
   rumPublicApiOptions?: RumPublicApiOptions
   trackingConsentState?: TrackingConsentState
+  startSessionManagerMock?: typeof startSessionManager
 } = {}) {
   const doStartRumSpy = jasmine.createSpy<DoStartRum>()
   const startTelemetrySpy = replaceMockableWithSpy(startTelemetry).and.callFake(createFakeTelemetryObject)
-  replaceMockable(startSessionManager, createStartSessionManagerMock())
+  replaceMockable(startSessionManager, startSessionManagerMock)
   return {
     strategy: createPreStartStrategy(rumPublicApiOptions, trackingConsentState, doStartRumSpy),
     doStartRumSpy,

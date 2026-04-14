@@ -186,16 +186,18 @@ export function createPreStartStrategy(
         ? startSessionManagerStub()
         : mockable(startSessionManager)(configuration, trackingConsentState)
 
-      void sessionManagerPromise.then((newSessionManager) => {
-        if (!newSessionManager) {
-          return
-        }
-        sessionManager = newSessionManager
-        startTelemetrySessionContext(hooks, sessionManager, { application: { id: configuration.applicationId } })
-        addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
+      void sessionManagerPromise
+        .then((newSessionManager) => {
+          if (!newSessionManager) {
+            return
+          }
+          sessionManager = newSessionManager
+          startTelemetrySessionContext(hooks, sessionManager, { application: { id: configuration.applicationId } })
+          addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
 
-        tryStartRum()
-      })
+          tryStartRum()
+        })
+        .catch(monitorError)
     })
   }
 
