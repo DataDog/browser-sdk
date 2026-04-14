@@ -48,6 +48,7 @@ export function runBasePluginRouterTests(configs: RouterPluginTestConfig[]) {
             await page.waitForURL('**/user/42?admin=true')
 
             await page.click('text=Back to Home')
+            await page.waitForURL(homeUrlPattern)
 
             await flushEvents()
 
@@ -77,6 +78,7 @@ export function runBasePluginRouterTests(configs: RouterPluginTestConfig[]) {
             await page.waitForURL('**/user/42?admin=true')
 
             await page.click('text=Back to Home')
+            await page.waitForURL(homeUrlPattern)
 
             await flushEvents()
 
@@ -99,6 +101,9 @@ export function runBasePluginRouterTests(configs: RouterPluginTestConfig[]) {
             await page.click('text=Change query params')
             await page.waitForURL('**/user/42?admin=false')
 
+            await page.click('text=Back to Home')
+            await page.waitForURL(homeUrlPattern)
+
             await flushEvents()
 
             const userView = intakeRegistry.rumViewEvents.find((e) => e.view.name === `${viewPrefix}${userRouteName}`)
@@ -117,6 +122,9 @@ export function runBasePluginRouterTests(configs: RouterPluginTestConfig[]) {
 
           await page.click('text=Go to User 999')
           await page.waitForURL('**/user/999?admin=true')
+
+          await page.click('text=Back to Home')
+          await page.waitForURL(homeUrlPattern)
 
           await flushEvents()
 

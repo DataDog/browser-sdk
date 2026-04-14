@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { createTest } from '../../lib/framework'
 import { runBasePluginRouterTests } from './basePluginRouterTests'
+import { runBasePluginErrorTests } from './basePluginErrorTests'
 
 const nuxtBasePluginConfig = {
   name: 'nuxt',
@@ -20,7 +21,18 @@ runBasePluginRouterTests([
   },
 ])
 
-test.describe('plugin: nuxt', () => {
+runBasePluginErrorTests([
+  {
+    ...nuxtBasePluginConfig,
+    error: {
+      clientErrorMessage: 'Error triggered by button click',
+      expectedFramework: 'nuxt',
+      expectsComponentStack: true,
+    },
+  },
+])
+
+test.describe('plugin: nuxt router', () => {
   createTest('should create a new view when the hash changes')
     .withRum()
     .withNuxtApp()
@@ -44,5 +56,27 @@ test.describe('plugin: nuxt', () => {
       expect(hashUserView).toBeDefined()
       expect(hashUserView?.view.loading_type).toBe('route_change')
       expect(hashUserView?.view.id).not.toBe(initialUserView?.view.id)
+    })
+})
+
+test.describe('plugin: nuxt error', () => {
+  createTest('should report startup errors via app:error hook')
+    .withRum()
+    .withNuxtApp()
+    .run(async ({ page, flushEvents, intakeRegistry, baseUrl, flushBrowserLogs }) => {
+      const url = new URL(baseUrl)
+      url.searchParams.set('startup-error', '1')
+      await page.goto(url.toString())
+
+      await flushEvents()
+
+      const startupErrors = intakeRegistry.rumErrorEvents.filter(
+        (e) => e.error.source === 'custom' && e.error.message === 'Startup error triggered by plugin'
+      )
+      expect(startupErrors).toHaveLength(1)
+      expect(startupErrors[0].context?.framework).toEqual('nuxt')
+      expect(startupErrors[0].error.component_stack).toBeUndefined()
+
+      flushBrowserLogs()
     })
 })
