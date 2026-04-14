@@ -14,8 +14,7 @@ export default defineNuxtPlugin({
       const raw = Array.isArray(rumConfigParam) ? rumConfigParam[0] : rumConfigParam
       if (raw) {
         const config = JSON.parse(raw)
-        datadogRum.init({ ...config, plugins: [nuxtRumPlugin({ router: useRouter() })] })
-        setupNuxtErrorHandling(useNuxtApp())
+        datadogRum.init({ ...config, plugins: [nuxtRumPlugin({ router: useRouter(), nuxtApp: useNuxtApp() })] })
       }
     }
   },

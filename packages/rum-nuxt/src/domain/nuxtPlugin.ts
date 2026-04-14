@@ -1,11 +1,14 @@
 import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
 import type { Router } from 'vue-router'
 import { startTrackingNuxtViews } from './router/nuxtRouter'
+import type { NuxtApp } from './error/setupNuxtErrorHandling'
+import { reportNuxtError, setupNuxtErrorHandling } from './error/setupNuxtErrorHandling'
 
 export type NuxtPlugin = Pick<Required<RumPlugin>, 'name' | 'onInit' | 'onRumStart' | 'getConfigurationTelemetry'>
 
 export interface NuxtPluginConfiguration {
   router: Router
+  nuxtApp?: NuxtApp
 }
 
 type InitSubscriber = (rumPublicApi: RumPublicApi) => void
@@ -24,6 +27,13 @@ export function nuxtRumPlugin(configuration: NuxtPluginConfiguration): NuxtPlugi
       globalPublicApi = publicApi
       initConfiguration.trackViewsManually = true
       startTrackingNuxtViews(publicApi, configuration.router)
+      if (configuration.nuxtApp) {
+        setupNuxtErrorHandling(configuration.nuxtApp, (error, instance, info) => {
+          onRumStart((addError) => {
+            reportNuxtError(addError, error, instance, info)
+          })
+        })
+      }
 
       for (const subscriber of onRumInitSubscribers) {
         subscriber(publicApi)
