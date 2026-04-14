@@ -102,7 +102,10 @@ export function startSessionManager(
   })
   stopCallbacks.push(() => sessionContextHistory.stop())
 
+  let sessionExpired = false
+
   const { throttled: throttledExpandOrRenew, cancel: cancelExpandOrRenew } = throttle(() => {
+    sessionExpired = false
     strategy.setSessionState((state) => expandOrRenew(state, configuration)).catch(monitorError)
   }, ONE_SECOND)
   stopCallbacks.push(cancelExpandOrRenew)
@@ -178,6 +181,7 @@ export function startSessionManager(
   function setupSessionTracking() {
     trackingConsentState.observable.subscribe(() => {
       if (trackingConsentState.isGranted()) {
+        sessionExpired = false
         strategy.setSessionState((state) => expandOrRenew(state, configuration)).catch(monitorError)
       } else {
         expire()
@@ -244,11 +248,18 @@ export function startSessionManager(
         locksAvailable: Boolean(globalThis.navigator?.locks),
         cookieStoreAvailable: Boolean(globalThis.cookieStore),
       }
+      if (!hasSession) {
+        sessionExpired = true
+      }
       expireObservable.notify()
       sessionContextHistory.closeActive(relativeNow())
     }
 
     if (hasSession && (!hadSession || sessionIdChanged)) {
+      if (sessionExpired) {
+        // Don't adopt another tab's session — this tab needs its own user interaction to renew
+        return
+      }
       // New session appeared
       sessionContextHistory.add(buildSessionContext(newState), relativeNow())
       renewObservable.notify({

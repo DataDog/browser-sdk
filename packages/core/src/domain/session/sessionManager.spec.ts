@@ -405,7 +405,7 @@ describe('startSessionManager', () => {
       expect(sessionManager.findSession()).toBeUndefined()
     })
 
-    it('should fire renewObservable when external change creates a session from expired state', async () => {
+    it('should not adopt a session created by another tab after expiry', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
       const renewSpy = jasmine.createSpy('renew')
       sessionManager.renewObservable.subscribe(renewSpy)
@@ -420,8 +420,8 @@ describe('startSessionManager', () => {
         created: String(Date.now()),
       })
 
-      expect(renewSpy).toHaveBeenCalledTimes(1)
-      expect(sessionManager.findSession()!.id).toBe('new-session-from-other-tab')
+      expect(renewSpy).not.toHaveBeenCalled()
+      expect(sessionManager.findSession()).toBeUndefined()
     })
   })
 
