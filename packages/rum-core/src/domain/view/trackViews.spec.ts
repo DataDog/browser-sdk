@@ -222,6 +222,15 @@ describe('view lifecycle', () => {
       expect(getViewCreateCount()).toBe(2)
     })
 
+    it('should use session_renewal loading type for the new view', () => {
+      const { getViewUpdate, getViewUpdateCount } = viewTest
+
+      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
+
+      expect(getViewUpdate(getViewUpdateCount() - 1).loadingType).toBe(ViewLoadingType.SESSION_RENEWAL)
+    })
+
     it('should use the current view name, service and version for the new view', () => {
       const { getViewCreateCount, getViewCreate, startView } = viewTest
       lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)

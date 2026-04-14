@@ -154,8 +154,8 @@ export function trackViews(
       context.is_session_renewal = true
       context.renew_event = event as any
 
-      // Renew view on session renewal
-      currentView = startNewView(ViewLoadingType.ROUTE_CHANGE, undefined, {
+      currentView = startNewView(ViewLoadingType.SESSION_RENEWAL, undefined, {
+        // Renew view on session renewal
         name: currentView.name,
         service: currentView.service,
         version: currentView.version,
