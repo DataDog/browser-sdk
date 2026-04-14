@@ -38,9 +38,6 @@ test.describe('multi-tab sessions', () => {
       expect(tab1Renewed).toBeDefined()
       expect(tab1Renewed).not.toBe(tab1Session)
 
-      // Wait for Tab 2's poll cycle to pick up the cookie change
-      await page2.waitForTimeout(1100)
-
       // Tab 2 should NOT have adopted the new session (no user interaction in Tab 2)
       const tab2AfterRenewal = await page2.evaluate(() => window.DD_RUM!.getInternalContext()?.session_id)
       expect(tab2AfterRenewal).toBeUndefined()
