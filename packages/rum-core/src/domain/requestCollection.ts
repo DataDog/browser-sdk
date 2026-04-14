@@ -95,7 +95,7 @@ export function trackXhr(
     initXhrObservable(configuration).subscribe((context) => {
       if (context.state === 'start' && isAllowedRequestUrl(context.url)) {
         tracer.traceXhr(context, context.xhr)
-        ;(context as RumXhrStartContext).requestIndex = getNextRequestIndex()
+        assignRequestIndex(context as RumXhrStartContext)
       }
     })
   )
@@ -112,6 +112,7 @@ export function trackXhr(
 
       switch (context.state) {
         case 'start':
+          assignRequestIndex(context)
           lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
             requestIndex: context.requestIndex,
             url: context.url,
@@ -140,7 +141,6 @@ export function trackFetch(
 ) {
   const subscriptions: Subscription[] = []
 
-  // Register responseBodyAction getter (no subscription needed)
   subscriptions.push(
     initFetchObservable({
       responseBodyAction: (context) => {
@@ -152,7 +152,7 @@ export function trackFetch(
     }).subscribe((context) => {
       if (context.state === 'start' && isAllowedRequestUrl(context.url)) {
         tracer.traceFetch(context)
-        ;(context as RumFetchStartContext).requestIndex = getNextRequestIndex()
+        assignRequestIndex(context as RumFetchStartContext)
       }
     })
   )
@@ -169,8 +169,7 @@ export function trackFetch(
 
       switch (context.state) {
         case 'start':
-          context.requestIndex = getNextRequestIndex()
-
+          assignRequestIndex(context)
           lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
             requestIndex: context.requestIndex,
             url: context.url,
@@ -191,8 +190,8 @@ export function trackFetch(
   return { stop: () => subscriptions.forEach((subscription) => subscription.unsubscribe()) }
 }
 
-function getNextRequestIndex() {
-  const result = nextRequestIndex
-  nextRequestIndex += 1
-  return result
+function assignRequestIndex(context: CustomContext) {
+  if (!context.requestIndex) {
+    context.requestIndex = nextRequestIndex++
+  }
 }
