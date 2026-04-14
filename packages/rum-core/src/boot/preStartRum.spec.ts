@@ -148,13 +148,23 @@ describe('preStartRum', () => {
         )
       })
 
-      it('should initialize even if session cannot be handled', () => {
+      it('should initialize even if session cannot be handled', async () => {
         mockEventBridge()
         spyOnProperty(document, 'cookie', 'get').and.returnValue('')
         strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+        await collectAsyncCalls(doStartRumSpy, 1)
         expect(doStartRumSpy).toHaveBeenCalled()
       })
     })
+  })
+
+  it('should not start when session manager initialization fails', async () => {
+    const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults({
+      startSessionManagerMock: () => Promise.reject(new Error('Session init failed')),
+    })
+    strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+    await collectAsyncCalls(doStartRumSpy, 0)
+    expect(doStartRumSpy).not.toHaveBeenCalled()
   })
 
   describe('init', () => {
@@ -252,7 +262,7 @@ describe('preStartRum', () => {
           expect(doStartRumSpy).not.toHaveBeenCalled()
         })
 
-        it('if message bridge is present, does not create a deflate worker instance', () => {
+        it('if message bridge is present, does not create a deflate worker instance', async () => {
           mockEventBridge()
 
           strategy.init(
@@ -263,6 +273,7 @@ describe('preStartRum', () => {
             PUBLIC_API
           )
 
+          await collectAsyncCalls(doStartRumSpy, 1)
           expect(startDeflateWorkerSpy).not.toHaveBeenCalled()
           expect(doStartRumSpy).toHaveBeenCalledTimes(1)
         })
@@ -913,13 +924,15 @@ describe('preStartRum', () => {
 function createPreStartStrategyWithDefaults({
   rumPublicApiOptions = {},
   trackingConsentState = createTrackingConsentState(),
+  startSessionManagerMock = createStartSessionManagerMock(),
 }: {
   rumPublicApiOptions?: RumPublicApiOptions
   trackingConsentState?: TrackingConsentState
+  startSessionManagerMock?: typeof startSessionManager
 } = {}) {
   const doStartRumSpy = jasmine.createSpy<DoStartRum>()
   const startTelemetrySpy = replaceMockableWithSpy(startTelemetry).and.callFake(createFakeTelemetryObject)
-  replaceMockable(startSessionManager, createStartSessionManagerMock())
+  replaceMockable(startSessionManager, startSessionManagerMock)
   return {
     strategy: createPreStartStrategy(rumPublicApiOptions, trackingConsentState, doStartRumSpy),
     doStartRumSpy,

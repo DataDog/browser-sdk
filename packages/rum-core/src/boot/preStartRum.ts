@@ -182,18 +182,22 @@ export function createPreStartStrategy(
         return
       }
 
-      const onSessionManagerReady = (newSessionManager: SessionManager) => {
-        sessionManager = newSessionManager
-        startTelemetrySessionContext(hooks, sessionManager, { application: { id: configuration.applicationId } })
-        addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
+      const sessionManagerPromise = canUseEventBridge()
+        ? startSessionManagerStub()
+        : mockable(startSessionManager)(configuration, trackingConsentState)
 
-        tryStartRum()
-      }
-      if (canUseEventBridge()) {
-        startSessionManagerStub(onSessionManagerReady)
-      } else {
-        mockable(startSessionManager)(configuration, trackingConsentState, onSessionManagerReady)
-      }
+      void sessionManagerPromise
+        .then((newSessionManager) => {
+          if (!newSessionManager) {
+            return
+          }
+          sessionManager = newSessionManager
+          startTelemetrySessionContext(hooks, sessionManager, { application: { id: configuration.applicationId } })
+          addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
+
+          tryStartRum()
+        })
+        .catch(monitorError)
     })
   }
 
