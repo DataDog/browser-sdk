@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { createTest } from '../../lib/framework'
 import { runBasePluginRouterTests } from './basePluginRouterTests'
-import { runBasePluginErrorTests } from './basePluginErrorTests'
 
 const nuxtBasePluginConfig = {
   name: 'nuxt',
@@ -17,17 +16,6 @@ runBasePluginRouterTests([
       homeUrlPattern: '**/',
       userRouteName: '/user/[id]',
       guidesRouteName: '/guides/[...slug]',
-    },
-  },
-])
-
-runBasePluginErrorTests([
-  {
-    ...nuxtBasePluginConfig,
-    error: {
-      clientErrorMessage: 'Nuxt error from vueApp.config.errorHandler',
-      expectedFramework: 'nuxt',
-      expectsComponentStack: true,
     },
   },
 ])
@@ -60,7 +48,7 @@ test.describe('plugin: nuxt router', () => {
 })
 
 test.describe('plugin: nuxt error', () => {
-  createTest('should capture vue error from vueApp.config.errorHandler without duplicates')
+  createTest('should report client-side error')
     .withBasePath('/error-test')
     .withRum()
     .withNuxtApp()
@@ -75,6 +63,8 @@ test.describe('plugin: nuxt error', () => {
       expect(errorEvents[0].error.message).toBe('Nuxt error from vueApp.config.errorHandler')
       expect(errorEvents[0].error.source).toBe('custom')
       expect(errorEvents[0].error.handling_stack).toBeDefined()
+      expect(errorEvents[0].error.stack).toBeDefined()
+      expect(errorEvents[0].error.component_stack).toBeDefined()
       expect(errorEvents[0].context).toMatchObject({ framework: 'nuxt' })
     })
 
