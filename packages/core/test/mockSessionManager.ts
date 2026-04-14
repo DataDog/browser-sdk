@@ -62,7 +62,5 @@ export function createSessionManagerMock(): SessionManagerMock {
 }
 
 export function createStartSessionManagerMock(): typeof startSessionManager {
-  return (_config, _consent, onReady) => {
-    void Promise.resolve().then(() => onReady(createSessionManagerMock()))
-  }
+  return () => Promise.resolve(createSessionManagerMock())
 }

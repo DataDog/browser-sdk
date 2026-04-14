@@ -100,14 +100,24 @@ describe('preStartLogs', () => {
         mockEventBridge()
       })
 
-      it('init should accept empty client token', () => {
+      it('init should accept empty client token', async () => {
         const hybridInitConfiguration: HybridInitConfiguration = {}
         strategy.init(hybridInitConfiguration as LogsInitConfiguration)
 
+        await collectAsyncCalls(doStartLogsSpy, 1)
         expect(displaySpy).not.toHaveBeenCalled()
         expect(doStartLogsSpy).toHaveBeenCalled()
       })
     })
+  })
+
+  it('should not start when session manager initialization fails', async () => {
+    const { strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults({
+      startSessionManagerMock: () => Promise.reject(new Error('Session init failed')),
+    })
+    strategy.init(DEFAULT_INIT_CONFIGURATION)
+    await collectAsyncCalls(doStartLogsSpy, 0)
+    expect(doStartLogsSpy).not.toHaveBeenCalled()
   })
 
   it('allows sending logs', async () => {
@@ -134,9 +144,9 @@ describe('preStartLogs', () => {
   })
 
   describe('save context when submitting a log', () => {
-    it('saves the date', () => {
+    it('saves the date', async () => {
       mockEventBridge()
-      const { strategy, getLoggedMessage } = createPreStartStrategyWithDefaults()
+      const { strategy, getLoggedMessage, handleLogSpy } = createPreStartStrategyWithDefaults()
       strategy.handleLog(
         {
           status: StatusType.info,
@@ -146,6 +156,7 @@ describe('preStartLogs', () => {
       )
       clock.tick(ONE_SECOND)
       strategy.init(DEFAULT_INIT_CONFIGURATION)
+      await collectAsyncCalls(handleLogSpy, 1)
 
       expect(getLoggedMessage(0).savedDate).toEqual((Date.now() - ONE_SECOND) as TimeStamp)
     })
@@ -273,8 +284,10 @@ describe('preStartLogs', () => {
 
 function createPreStartStrategyWithDefaults({
   trackingConsentState = createTrackingConsentState(),
+  startSessionManagerMock = createStartSessionManagerMock(),
 }: {
   trackingConsentState?: TrackingConsentState
+  startSessionManagerMock?: typeof startSessionManager
 } = {}) {
   const handleLogSpy = jasmine.createSpy()
   const doStartLogsSpy = jasmine.createSpy<DoStartLogs>().and.returnValue({
@@ -282,7 +295,7 @@ function createPreStartStrategyWithDefaults({
   } as unknown as StartLogsResult)
   const getCommonContextSpy = jasmine.createSpy<() => CommonContext>()
   const startTelemetrySpy = replaceMockableWithSpy(startTelemetry).and.callFake(createFakeTelemetryObject)
-  replaceMockable(startSessionManager, createStartSessionManagerMock())
+  replaceMockable(startSessionManager, startSessionManagerMock)
 
   return {
     strategy: createPreStartStrategy(getCommonContextSpy, trackingConsentState, doStartLogsSpy),

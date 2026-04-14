@@ -5,6 +5,7 @@ import {
   display,
   displayAlreadyInitializedError,
   initFeatureFlags,
+  monitorError,
   noop,
   timeStampNow,
   buildAccountContextManager,
@@ -103,17 +104,21 @@ export function createPreStartStrategy(
       trackingConsentState.onGrantedOnce(() => {
         startTrackingConsentContext(hooks, trackingConsentState)
         mockable(startTelemetry)(TelemetryService.LOGS, configuration, hooks)
-        const onSessionManagerReady = (newSessionManager: SessionManager) => {
-          sessionManager = newSessionManager
-          startTelemetrySessionContext(hooks, sessionManager)
-          addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
-          tryStartLogs()
-        }
-        if (canUseEventBridge()) {
-          startSessionManagerStub(onSessionManagerReady)
-        } else {
-          mockable(startSessionManager)(configuration, trackingConsentState, onSessionManagerReady)
-        }
+        const sessionManagerPromise = canUseEventBridge()
+          ? startSessionManagerStub()
+          : mockable(startSessionManager)(configuration, trackingConsentState)
+
+        void sessionManagerPromise
+          .then((newSessionManager) => {
+            if (!newSessionManager) {
+              return
+            }
+            sessionManager = newSessionManager
+            startTelemetrySessionContext(hooks, sessionManager)
+            addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
+            tryStartLogs()
+          })
+          .catch(monitorError)
       })
     },
 

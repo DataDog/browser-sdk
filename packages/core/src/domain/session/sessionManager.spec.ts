@@ -60,39 +60,35 @@ describe('startSessionManager', () => {
     })
   })
 
-  function startSessionManagerWithDefaults({
+  async function startSessionManagerWithDefaults({
     configuration,
     trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED),
   }: {
     configuration?: Partial<Configuration>
     trackingConsentState?: TrackingConsentState
   } = {}): Promise<SessionManager> {
-    return new Promise<SessionManager>((resolve) => {
-      startSessionManager(
-        {
-          sessionStoreStrategyType: STORE_TYPE,
-          sessionSampleRate: 100,
-          ...configuration,
-        } as Configuration,
-        trackingConsentState,
-        resolve
-      )
-    })
+    const sessionManager = await startSessionManager(
+      {
+        sessionStoreStrategyType: STORE_TYPE,
+        sessionSampleRate: 100,
+        ...configuration,
+      } as Configuration,
+      trackingConsentState
+    )
+    return sessionManager!
   }
 
   describe('initialization', () => {
-    it('should not start if no session store strategy type is configured', () => {
+    it('should not start if no session store strategy type is configured', async () => {
       const displayWarnSpy = spyOn(display, 'warn')
-      const onReadySpy = jasmine.createSpy('onReady')
 
-      startSessionManager(
+      const sessionManager = await startSessionManager(
         { sessionStoreStrategyType: undefined } as Configuration,
-        createTrackingConsentState(TrackingConsent.GRANTED),
-        onReadySpy
+        createTrackingConsentState(TrackingConsent.GRANTED)
       )
 
       expect(displayWarnSpy).toHaveBeenCalledWith('No storage available for session. We will not send any data.')
-      expect(onReadySpy).not.toHaveBeenCalled()
+      expect(sessionManager).toBeUndefined()
     })
 
     it('should call setSessionState to initialize the session', async () => {
@@ -101,18 +97,24 @@ describe('startSessionManager', () => {
       expect(fakeStrategy.setSessionState).toHaveBeenCalled()
     })
 
-    it('should fire onReady after initialization', async () => {
-      const onReadySpy = jasmine.createSpy('onReady')
+    it('should resolve with undefined if session initialization fails', async () => {
+      fakeStrategy.setSessionState.and.returnValue(Promise.reject(new Error('storage failure')))
 
-      startSessionManager(
+      const sessionManager = await startSessionManager(
         { sessionStoreStrategyType: STORE_TYPE, sessionSampleRate: 100, trackAnonymousUser: false } as Configuration,
-        createTrackingConsentState(TrackingConsent.GRANTED),
-        onReadySpy
+        createTrackingConsentState(TrackingConsent.GRANTED)
       )
 
-      expect(onReadySpy).not.toHaveBeenCalled()
-      await collectAsyncCalls(onReadySpy, 1)
-      expect(onReadySpy).toHaveBeenCalledTimes(1)
+      expect(sessionManager).toBeUndefined()
+    })
+
+    it('should resolve after initialization', async () => {
+      const sessionManager = await startSessionManager(
+        { sessionStoreStrategyType: STORE_TYPE, sessionSampleRate: 100, trackAnonymousUser: false } as Configuration,
+        createTrackingConsentState(TrackingConsent.GRANTED)
+      )
+
+      expect(sessionManager).toBeDefined()
     })
 
     it('should start with an active session on fresh initialization', async () => {
@@ -498,15 +500,13 @@ describe('startSessionManager', () => {
 
       fakeStrategy = delayedStrategy
 
-      const onReadySpy = jasmine.createSpy('onReady')
-      startSessionManager(
+      const sessionManagerPromise = startSessionManager(
         {
           sessionStoreStrategyType: STORE_TYPE,
           sessionSampleRate: 100,
           trackAnonymousUser: false,
         } as Configuration,
-        trackingConsentState,
-        onReadySpy
+        trackingConsentState
       )
 
       // Consent revoked while initialization promise is pending
@@ -514,10 +514,10 @@ describe('startSessionManager', () => {
 
       // Resolve the initialization promise
       resolveInit()
-      await Promise.resolve()
 
-      // onReady should not have been called because consent was revoked
-      expect(onReadySpy).not.toHaveBeenCalled()
+      // Should resolve with undefined because consent was revoked
+      const sessionManager = await sessionManagerPromise
+      expect(sessionManager).toBeUndefined()
     })
   })
 
@@ -755,7 +755,7 @@ describe('startSessionManager', () => {
       const secondManager = await startSessionManagerWithDefaults()
 
       // The second manager inherits the state from the strategy (which already has a session)
-      expect(firstManager.findSession()!.id).toBe(secondManager.findSession()!.id)
+      expect(firstManager?.findSession()!.id).toBe(secondManager?.findSession()!.id)
     })
 
     it('should notify expire observables on both managers when session expires externally', async () => {
@@ -765,8 +765,8 @@ describe('startSessionManager', () => {
       const expireSpy1 = jasmine.createSpy('expire1')
       const expireSpy2 = jasmine.createSpy('expire2')
 
-      firstManager.expireObservable.subscribe(expireSpy1)
-      secondManager.expireObservable.subscribe(expireSpy2)
+      firstManager?.expireObservable.subscribe(expireSpy1)
+      secondManager?.expireObservable.subscribe(expireSpy2)
 
       // Expire via external change
       fakeStrategy.simulateExternalChange({ isExpired: EXPIRED })
@@ -832,23 +832,17 @@ describe('startSessionManager', () => {
 })
 
 describe('startSessionManagerStub', () => {
-  it('should always return a tracked session', () => {
-    let sessionManager: SessionManager | undefined
-    startSessionManagerStub((sm) => {
-      sessionManager = sm
-    })
-    expect(sessionManager!.findTrackedSession()).toBeDefined()
-    expect(sessionManager!.findTrackedSession()!.id).toBeDefined()
+  it('should always return a tracked session', async () => {
+    const sessionManager = await startSessionManagerStub()
+    expect(sessionManager.findTrackedSession()).toBeDefined()
+    expect(sessionManager.findTrackedSession()!.id).toBeDefined()
   })
 
-  it('should allow updating session state', () => {
-    let sessionManager: SessionManager | undefined
-    startSessionManagerStub((sm) => {
-      sessionManager = sm
-    })
+  it('should allow updating session state', async () => {
+    const sessionManager = await startSessionManagerStub()
 
-    sessionManager!.updateSessionState({ extra: 'value' })
+    sessionManager.updateSessionState({ extra: 'value' })
 
-    expect(sessionManager!.findSession()).toBeDefined()
+    expect(sessionManager.findSession()).toBeDefined()
   })
 })
