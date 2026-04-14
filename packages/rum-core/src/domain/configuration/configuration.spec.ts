@@ -635,6 +635,43 @@ describe('validateAndBuildRumConfiguration', () => {
         expect(serializeRumConfiguration(wrongTracingConfig).selected_tracing_propagators).toEqual([])
       })
     })
+
+    describe('use_track_resource_headers telemetry', () => {
+      it('should omit use_track_resource_headers when trackResourceHeaders is undefined or false', () => {
+        expect(serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION).use_track_resource_headers).toBeUndefined()
+        expect(
+          serializeRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResourceHeaders: false })
+            .use_track_resource_headers
+        ).toBeUndefined()
+      })
+
+      it('should set use_track_resource_headers to default_headers when trackResourceHeaders is true', () => {
+        expect(
+          serializeRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResourceHeaders: true })
+            .use_track_resource_headers
+        ).toBe('default_headers')
+      })
+
+      it('should set use_track_resource_headers to custom when trackResourceHeaders is an array', () => {
+        expect(
+          serializeRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResourceHeaders: [] })
+            .use_track_resource_headers
+        ).toBe('custom')
+        expect(
+          serializeRumConfiguration({
+            ...DEFAULT_INIT_CONFIGURATION,
+            trackResourceHeaders: [{ name: 'x-foo' }],
+          }).use_track_resource_headers
+        ).toBe('custom')
+      })
+
+      it('should omit use_track_resource_headers when trackResourceHeaders has an unexpected type', () => {
+        expect(
+          serializeRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResourceHeaders: 42 as any })
+            .use_track_resource_headers
+        ).toBeUndefined()
+      })
+    })
   })
 
   describe('workerUrl', () => {
@@ -812,19 +849,23 @@ describe('serializeRumConfiguration', () => {
         ? `use_${CamelToSnakeCase<Key>}`
         : Key extends 'trackLongTasks'
           ? 'track_long_task' // We forgot the s, keeping this for backward compatibility
-          : // The following options are not reported as telemetry. Please avoid adding more of them.
-            // TODO: Add betaTrackActionsInShadowDom and trackResourceHeaders to rum-events-format telemetry schema and remove from this exclusion
-            Key extends 'applicationId' | 'subdomain' | 'betaTrackActionsInShadowDom' | 'trackResourceHeaders'
-            ? never
-            : CamelToSnakeCase<Key>
+          : Key extends 'trackResourceHeaders'
+            ? 'use_track_resource_headers'
+            : // The following options are not reported as telemetry. Please avoid adding more of them.
+              // TODO: Add betaTrackActionsInShadowDom to rum-events-format telemetry schema and remove from this exclusion
+              Key extends 'applicationId' | 'subdomain' | 'betaTrackActionsInShadowDom'
+              ? never
+              : CamelToSnakeCase<Key>
     // By specifying the type here, we can ensure that serializeConfiguration is returning an
     // object containing all expected properties.
-    const serializedConfiguration: ExtractTelemetryConfiguration<
+    const serializedConfiguration = serializeRumConfiguration(
+      exhaustiveRumInitConfiguration
+    ) as ExtractTelemetryConfiguration<
       | MapRumInitConfigurationKey<keyof RumInitConfiguration>
       | 'selected_tracing_propagators'
       | 'use_track_graph_ql_payload'
       | 'use_track_graph_ql_response_errors'
-    > = serializeRumConfiguration(exhaustiveRumInitConfiguration)
+    >
 
     expect(serializedConfiguration).toEqual({
       ...SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION,
@@ -855,6 +896,7 @@ describe('serializeRumConfiguration', () => {
       remote_configuration_id: '123',
       use_remote_configuration_proxy: true,
       profiling_sample_rate: 42,
+      use_track_resource_headers: 'default_headers',
     })
   })
 })
