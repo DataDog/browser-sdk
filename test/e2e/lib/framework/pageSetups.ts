@@ -334,8 +334,14 @@ function setupExtension(options: SetupOptions, servers: Servers) {
   return header
 }
 
+type JsonIncompatibleValue = ((...args: any[]) => any) | RegExp
+
+function isJsonIncompatibleValue(value: unknown): value is JsonIncompatibleValue {
+  return typeof value === 'function' || value instanceof RegExp
+}
+
 export function formatConfiguration(initConfiguration: LogsInitConfiguration | RumInitConfiguration, servers: Servers) {
-  const fns = new Map<string, () => void>()
+  const jsonIncompatibles = new Map<string, JsonIncompatibleValue>()
 
   let result = JSON.stringify(
     {
@@ -344,9 +350,9 @@ export function formatConfiguration(initConfiguration: LogsInitConfiguration | R
       remoteConfigurationProxy: `${servers.base.origin}/config`,
     },
     (_key, value) => {
-      if (typeof value === 'function') {
+      if (isJsonIncompatibleValue(value)) {
         const id = generateUUID()
-        fns.set(id, value)
+        jsonIncompatibles.set(id, value)
 
         return id
       }
@@ -358,8 +364,8 @@ export function formatConfiguration(initConfiguration: LogsInitConfiguration | R
 
   result = result.replace('"LOCATION_ORIGIN"', 'location.origin')
 
-  for (const [id, fn] of fns) {
-    result = result.replace(`"${id}"`, fn.toString())
+  for (const [id, value] of jsonIncompatibles) {
+    result = result.replace(`"${id}"`, String(value))
   }
 
   return result
