@@ -129,11 +129,14 @@ async function afterSend(
   try {
     response = await responsePromise
   } catch (error) {
-    context.status = 0
-    context.isAborted =
-      context.init?.signal?.aborted || (error instanceof DOMException && error.code === DOMException.ABORT_ERR)
-    context.error = error as Error
-    observable.notify({ ...context, state: 'resolve' })
+    observable.notify({
+      ...context,
+      state: 'resolve',
+      status: 0,
+      isAborted:
+        context.init?.signal?.aborted || (error instanceof DOMException && error.code === DOMException.ABORT_ERR),
+      error: error as Error,
+    })
     return
   }
 

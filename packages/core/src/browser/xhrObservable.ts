@@ -4,7 +4,6 @@ import { Observable } from '../tools/observable'
 import type { Duration, ClocksState } from '../tools/utils/timeUtils'
 import { elapsed, clocksNow, timeStampNow } from '../tools/utils/timeUtils'
 import { normalizeUrl } from '../tools/utils/urlPolyfill'
-import { shallowClone } from '../tools/utils/objectUtils'
 import { globalObject } from '../tools/globalObject'
 import { addEventListener } from './addEventListener'
 
@@ -121,7 +120,7 @@ function sendXhr(
     if (typeof xhr.response === 'string') {
       completeContext.responseBody = xhr.response
     }
-    observable.notify({ ...shallowClone(completeContext), state: 'complete' })
+    observable.notify({ ...completeContext, state: 'complete' })
   }
 
   const { stop: unsubscribeLoadEndListener } = addEventListener(configuration, xhr, 'loadend', onEnd)
