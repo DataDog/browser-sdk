@@ -123,14 +123,10 @@ function processPointerDown(
   pointerDownEvent: MouseEventOnElement,
   windowOpenObservable: Observable<void>
 ) {
-  const targetForPrivacy = configuration.betaTrackActionsInShadowDom
-    ? getEventTarget(pointerDownEvent)
-    : pointerDownEvent.target
-
   let nodePrivacyLevel: NodePrivacyLevel
 
   if (configuration.enablePrivacyForActionName) {
-    nodePrivacyLevel = getNodePrivacyLevel(targetForPrivacy, configuration.defaultPrivacyLevel)
+    nodePrivacyLevel = getNodePrivacyLevel(getEventTarget(pointerDownEvent), configuration.defaultPrivacyLevel)
   } else {
     nodePrivacyLevel = NodePrivacyLevel.ALLOW
   }
@@ -233,7 +229,7 @@ function computeClickActionBase(
   nodePrivacyLevel: NodePrivacyLevel,
   configuration: RumConfiguration
 ): ClickActionBase {
-  const target = configuration.betaTrackActionsInShadowDom ? getEventTarget(event) : event.target
+  const target = getEventTarget(event)
 
   const rect = target.getBoundingClientRect()
   const selector = getSelectorFromElement(target, configuration.actionNameAttribute)

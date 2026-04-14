@@ -175,19 +175,11 @@ function loadSdkScriptFromURL(url: string) {
   if (xhr.status === 200) {
     let sdkCode = xhr.responseText
 
-    // Webpack expects the script to be loaded with a `<script src="...">` tag to get its URL to
-    // know where to load the relative chunks. By loading it with an XHR and evaluating it in an
-    // inline script tag, Webpack does not know where to load the chunks from.
-    //
-    // Let's replace Webpack logic that breaks with our own logic to define the URL. It's not
-    // pretty, but loading the script this way isn't either, so...
-    //
-    // We'll probably have to revisit when using actual `import()` expressions instead of relying on
-    // Webpack runtime to load the chunks.
-    sdkCode = sdkCode.replace(
-      'if (!scriptUrl) throw new Error("Automatic publicPath is not supported in this browser");',
-      `if (!scriptUrl) scriptUrl = ${JSON.stringify(url)};`
-    )
+    // Webpack chunks are loaded via ESM dynamic imports with relative paths (e.g. `import('./chunks/...')`).
+    // Since this script is injected inline rather than loaded via `<script src>`, relative import()
+    // paths would resolve against the page URL instead of the SDK URL. Replace them with absolute URLs.
+    const baseUrl = url.slice(0, url.lastIndexOf('/') + 1)
+    sdkCode = sdkCode.replaceAll(/\bimport\(['"]\.\/['"]/g, `import('${baseUrl}'`)
 
     const script = document.createElement('script')
     script.type = 'text/javascript'

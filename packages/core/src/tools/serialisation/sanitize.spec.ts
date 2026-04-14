@@ -33,23 +33,12 @@ describe('sanitize', () => {
     })
 
     it('should handle bigint', () => {
-      const bigIntFunction: (val: number) => any = (window as any).BigInt
-      if (typeof bigIntFunction === 'function') {
-        const bigint = bigIntFunction(2)
-        expect(sanitize(bigint)).toEqual('[BigInt] 2')
-      } else {
-        pending('BigInt is not supported on this browser')
-      }
+      expect(sanitize(2n)).toEqual('[BigInt] 2')
     })
 
     it('shoud handle symbols', () => {
-      const symbolFunction: (description: string) => any = (window as any).Symbol
-      if (typeof symbolFunction === 'function') {
-        const symbol = symbolFunction('description')
-        expect(sanitize(symbol)).toMatch(/\[Symbol\] (?:Symbol\()?description\)?/)
-      } else {
-        pending('Symbol is not supported on this browser')
-      }
+      const symbol = Symbol('description')
+      expect(sanitize(symbol)).toMatch(/\[Symbol\] (?:Symbol\()?description\)?/)
     })
   })
 
