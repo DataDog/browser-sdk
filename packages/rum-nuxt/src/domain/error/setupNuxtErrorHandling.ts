@@ -17,12 +17,7 @@ export function setupNuxtErrorHandling(nuxtApp: NuxtApp): void {
     original?.(error, instance, info)
   }
 
-  // Only capture plain JS errors via app:error, not HTTP error-page flows.
-  // showError() / createError() produce H3Errors with a statusCode; plain errors do not.
   nuxtApp.hook('app:error', (err) => {
-    if (err !== null && typeof err === 'object' && 'statusCode' in err) {
-      return
-    }
     deduplicatedAddNuxtError(err, null, '')
   })
 }
