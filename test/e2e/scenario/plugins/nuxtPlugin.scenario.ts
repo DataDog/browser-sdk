@@ -60,7 +60,7 @@ test.describe('plugin: nuxt router', () => {
 })
 
 test.describe('plugin: nuxt error', () => {
-    createTest('should capture vue error from vueApp.config.errorHandler without duplicates')
+  createTest('should capture vue error from vueApp.config.errorHandler without duplicates')
     .withBasePath('/error-test')
     .withRum()
     .withNuxtApp()
@@ -69,9 +69,7 @@ test.describe('plugin: nuxt error', () => {
 
       await flushEvents()
 
-      const errorEvents = intakeRegistry.rumErrorEvents.filter(
-        (e) => e.error.source === 'custom'
-      )
+      const errorEvents = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
       expect(errorEvents).toHaveLength(1)
 
       expect(errorEvents[0].error.message).toBe('Nuxt error from vueApp.config.errorHandler')
@@ -89,9 +87,7 @@ test.describe('plugin: nuxt error', () => {
 
       await flushEvents()
 
-      const errorEvents = intakeRegistry.rumErrorEvents.filter(
-        (e) => e.error.source === 'custom'
-      )
+      const errorEvents = intakeRegistry.rumErrorEvents.filter((e) => e.error.source === 'custom')
       expect(errorEvents).toHaveLength(1)
 
       expect(errorEvents[0].error.source).toBe('custom')
