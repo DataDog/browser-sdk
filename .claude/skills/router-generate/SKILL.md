@@ -1,20 +1,19 @@
 ---
 name: router-generate
-description: 'Stage 4: Generate the complete router integration package from design artifacts and reference implementations.'
+description: 'Stage 3: Generate the complete router integration package from design artifacts and reference implementations.'
 ---
 
-# Stage 4: Generate Package
+# Stage 3: Generate Package
 
 ## Context
 
-You are Stage 4 of the router integration pipeline. Your job is to generate a complete, working Browser SDK router integration package based on the design decisions from Stage 3 and the patterns from reference implementations.
+You are Stage 3 of the router integration pipeline. Your job is to generate a complete, working Browser SDK router integration package based on the design decisions from Stage 2 and the patterns from reference implementations.
 
 ## Input
 
 1. Read `docs/integrations/<framework>/01-router-concepts.md`
-2. Read `docs/integrations/<framework>/02-sdk-mapping.md`
-3. Read `docs/integrations/<framework>/03-design-decisions.md` — this is your primary guide
-4. Read reference implementations for code patterns (read the actual source files, not summaries):
+2. Read `docs/integrations/<framework>/02-design-decisions.md` — this is your primary guide
+3. Read reference implementations for code patterns (read the actual source files, not summaries):
    - The reference implementation identified as "closest" in the design doc
    - Plugin: e.g. `packages/rum-vue/src/domain/vuePlugin.ts`
    - Router: e.g. `packages/rum-vue/src/domain/router/`
@@ -29,10 +28,10 @@ Find the `<framework>` directory by listing `docs/integrations/`.
 
 ### 1. Generate Each File
 
-Follow the file structure defined in `03-design-decisions.md`. For each file:
+Follow the file structure defined in `02-design-decisions.md`. For each file:
 
 1. Read the corresponding reference implementation file
-2. Adapt it to the target framework using the mappings from `02-sdk-mapping.md` and decisions from `03-design-decisions.md`
+2. Adapt it to the target framework using the decisions from `02-design-decisions.md`
 3. Write the file using the Write tool
 
 **Code conventions** (from `AGENTS.md`):
@@ -60,13 +59,13 @@ Follow the file structure defined in `03-design-decisions.md`. For each file:
 - Follow Jasmine conventions: `describe`/`it` blocks
 - Use `registerCleanupTask()` for cleanup, NOT `afterEach()`
 - Use the test helper for plugin initialization
-- Cover every test case listed in `03-design-decisions.md`
+- Cover every test case listed in `02-design-decisions.md`
 
 **package.json**:
 
 - Follow the reference `package.json` structure exactly
 - Set version to match current monorepo version (read from a reference package)
-- Set correct peer dependencies from `02-sdk-mapping.md`
+- Set correct peer dependencies from `02-design-decisions.md`
 - Include both ESM and CJS entry points
 
 **tsconfig.json**:
@@ -76,11 +75,11 @@ Follow the file structure defined in `03-design-decisions.md`. For each file:
 **README.md**:
 
 - Follow the reference README structure
-- Include setup instructions matching the public API from `03-design-decisions.md`
+- Include setup instructions matching the public API from `02-design-decisions.md`
 
 ### 2. Write Generation Manifest
 
-After all files are generated, write `docs/integrations/<framework>/04-generation-manifest.md`:
+After all files are generated, write `docs/integrations/<framework>/03-generation-manifest.md`:
 
 ```markdown
 # Generation Manifest
@@ -98,4 +97,4 @@ For each file, link to the reference file it was modeled after. If there are dev
 ## Output
 
 - Generated package in `packages/rum-<framework>/`
-- Manifest at `docs/integrations/<framework>/04-generation-manifest.md`
+- Manifest at `docs/integrations/<framework>/03-generation-manifest.md`

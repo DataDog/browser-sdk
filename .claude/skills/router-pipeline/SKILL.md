@@ -5,7 +5,7 @@ description: Fully automated pipeline that generates a draft Browser SDK router 
 
 # Router Integration Pipeline
 
-You are an orchestrator that chains five stage skills to generate a complete Browser SDK router integration package and draft PR.
+You are an orchestrator that chains four stage skills to generate a complete Browser SDK router integration package and draft PR.
 
 ## Input
 
@@ -62,29 +62,25 @@ If `compatible: false`, write `docs/integrations/<framework>/EXIT.md` with:
 
 Then stop and report the exit to the user.
 
-## Step 3: Invoke /router-analyze
-
-Use the Skill tool to invoke `router-analyze`.
-
-After completion, read `docs/integrations/<framework>/02-sdk-mapping.md` and check for any concept marked `unmapped` with severity `critical`.
-
-If critical unmapped concepts exist, write `EXIT.md` with:
-
-- Stage: analyze
-- Reason: which critical concepts could not be mapped and why
-- Artifacts produced: 00-pipeline-input.md, 01-router-concepts.md, 02-sdk-mapping.md
-
-Then stop and report the exit to the user.
-
-## Step 4: Invoke /router-design
+## Step 3: Invoke /router-design
 
 Use the Skill tool to invoke `router-design`.
 
-## Step 5: Invoke /router-generate
+After completion, read `docs/integrations/<framework>/02-design-decisions.md` and check for any concept marked `unmapped` with severity `critical`.
+
+If critical unmapped concepts exist, write `EXIT.md` with:
+
+- Stage: design
+- Reason: which critical concepts could not be mapped and why
+- Artifacts produced: 00-pipeline-input.md, 01-router-concepts.md, 02-design-decisions.md
+
+Then stop and report the exit to the user.
+
+## Step 4: Invoke /router-generate
 
 Use the Skill tool to invoke `router-generate`.
 
-## Step 6: Invoke /router-pr
+## Step 5: Invoke /router-pr
 
 Use the Skill tool to invoke `router-pr`.
 
