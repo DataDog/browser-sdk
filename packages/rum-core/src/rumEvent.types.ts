@@ -1732,6 +1732,8 @@ export interface ViewProperties {
       | 'fragment_redisplay'
       | 'view_controller_display'
       | 'view_controller_redisplay'
+      | 'session_renewal'
+      | 'bf_cache'
     /**
      * Time spent on the view in ns
      */
