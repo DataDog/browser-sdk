@@ -1,4 +1,3 @@
-
 import {
   combine,
   generateUUID,
@@ -25,6 +24,7 @@ import { LifeCycleEventType } from '../lifeCycle'
 import type { RequestCompleteEvent } from '../requestCollection'
 import { createSpanIdentifier } from '../tracing/identifier'
 import { startEventTracker } from '../eventTracker'
+import { extractRegexMatch } from '../extractRegexMatch'
 import {
   computeResourceEntryDetails,
   computeResourceEntryDuration,
