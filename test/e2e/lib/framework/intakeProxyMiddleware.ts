@@ -12,6 +12,7 @@ interface BaseIntakeRequest {
   isBridge: boolean
   encoding: string | null
   transport: string | null
+  batchTime: number | null
 }
 
 export type LogsIntakeRequest = {
@@ -58,6 +59,7 @@ interface IntakeRequestInfos {
   intakeType: IntakeRequest['intakeType']
   encoding: string | null
   transport: string | null
+  batchTime: number | null
 }
 
 interface IntakeProxyOptions {
@@ -90,6 +92,8 @@ function computeIntakeRequestInfos(req: express.Request): IntakeRequestInfos {
 
   const encoding = req.headers['content-encoding'] || searchParams.get('dd-evp-encoding')
   const transport = searchParams.get('_dd.api')
+  const batchTimeRaw = searchParams.get('batch_time')
+  const batchTime = batchTimeRaw ? Number(batchTimeRaw) : null
 
   if (req.query.bridge === 'true') {
     const eventType = req.query.event_type
@@ -97,6 +101,7 @@ function computeIntakeRequestInfos(req: express.Request): IntakeRequestInfos {
       isBridge: true,
       encoding,
       transport,
+      batchTime,
       intakeType: eventType === 'log' ? 'logs' : eventType === 'record' ? 'replay' : 'rum',
     }
   }
@@ -113,6 +118,7 @@ function computeIntakeRequestInfos(req: express.Request): IntakeRequestInfos {
     isBridge: false,
     encoding,
     transport,
+    batchTime,
     intakeType,
   }
 }

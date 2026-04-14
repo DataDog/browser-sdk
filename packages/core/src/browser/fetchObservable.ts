@@ -1,7 +1,8 @@
 import type { InstrumentedMethodCall } from '../tools/instrumentMethod'
 import { instrumentMethod } from '../tools/instrumentMethod'
 import { monitorError } from '../tools/monitor'
-import { Observable } from '../tools/observable'
+import type { Observable } from '../tools/observable'
+import { BufferedObservable } from '../tools/observable'
 import type { ClocksState } from '../tools/utils/timeUtils'
 import { clocksNow } from '../tools/utils/timeUtils'
 import { normalizeUrl } from '../tools/utils/urlPolyfill'
@@ -44,13 +45,12 @@ type ResponseBodyActionGetter = (context: FetchResolveContext) => ResponseBodyAc
  */
 export const enum ResponseBodyAction {
   IGNORE = 0,
-  // TODO(next-major): Remove the "WAIT" action when `trackEarlyRequests` is removed, as the
-  // duration of fetch requests will always come from PerformanceResourceTiming
-  WAIT = 1,
-  COLLECT = 2,
+  COLLECT = 1,
 }
 
-let fetchObservable: Observable<FetchContext> | undefined
+const FETCH_BUFFER_LIMIT = 500
+
+let fetchObservable: BufferedObservable<FetchContext> | undefined
 const responseBodyActionGetters: ResponseBodyActionGetter[] = []
 
 export function initFetchObservable({ responseBodyAction }: { responseBodyAction?: ResponseBodyActionGetter } = {}) {
@@ -69,7 +69,7 @@ export function resetFetchObservable() {
 }
 
 function createFetchObservable() {
-  return new Observable<FetchContext>((observable) => {
+  return new BufferedObservable<FetchContext>(FETCH_BUFFER_LIMIT, (observable) => {
     // eslint-disable-next-line local-rules/disallow-zone-js-patched-values
     if (!globalObject.fetch) {
       return
@@ -151,14 +151,12 @@ async function afterSend(
     ResponseBodyAction.IGNORE
   ) as ResponseBodyAction
 
-  if (responseBodyCondition !== ResponseBodyAction.IGNORE) {
+  if (responseBodyCondition === ResponseBodyAction.COLLECT) {
     const clonedResponse = tryToClone(response)
     if (clonedResponse && clonedResponse.body) {
       try {
-        const bytes = await readBytesFromStream(clonedResponse.body, {
-          collectStreamBody: responseBodyCondition === ResponseBodyAction.COLLECT,
-        })
-        context.responseBody = bytes && new TextDecoder().decode(bytes)
+        const bytes = await readBytesFromStream(clonedResponse.body)
+        context.responseBody = new TextDecoder().decode(bytes)
       } catch {
         // Ignore errors when reading the response body (e.g., stream aborted, network errors)
         // This is not critical and should not be reported as an SDK error

@@ -27,6 +27,7 @@ export interface SetupOptions {
   }
   worker?: WorkerOptions
   callerLocation?: CallerLocation
+  mockClock: boolean
 }
 
 export interface CallerLocation {
@@ -70,7 +71,7 @@ export function asyncSetup(options: SetupOptions, servers: Servers) {
   function formatSnippet(url: string, globalName: string) {
     return `(function(h,o,u,n,d) {
 h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}}
-d=o.createElement(u);d.async=1;d.src=n
+d=o.createElement(u);d.async=1;d.src=n;d.crossOrigin=''
 n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
 })(window,document,'script','${url}','${globalName}')`
   }
@@ -118,7 +119,7 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
   const { logsScriptUrl, rumScriptUrl } = createCrossOriginScriptUrls(servers, options)
 
   if (options.logs) {
-    header += html`<script type="text/javascript" src="${logsScriptUrl}"></script>`
+    header += html`<script type="text/javascript" src="${logsScriptUrl}" crossorigin></script>`
     header += html`<script type="text/javascript">
       DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
       ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
@@ -126,7 +127,7 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
   }
 
   if (options.rum) {
-    header += html`<script type="text/javascript" src="${rumScriptUrl}"></script>`
+    header += html`<script type="text/javascript" src="${rumScriptUrl}" crossorigin></script>`
     header += html`<script type="text/javascript">
       DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
       ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
@@ -248,7 +249,7 @@ export function microfrontendSetup(options: SetupOptions, servers: Servers) {
   const { rumScriptUrl } = createCrossOriginScriptUrls(servers, options)
 
   if (options.rum) {
-    header += html`<script type="text/javascript" src="${rumScriptUrl}"></script>`
+    header += html`<script type="text/javascript" src="${rumScriptUrl}" crossorigin></script>`
     header += html`<script type="text/javascript">
       DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
       ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})

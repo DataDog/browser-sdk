@@ -1,17 +1,10 @@
-import type {
-  LifeCycle,
-  RumConfiguration,
-  RumSessionManager,
-  StartRecordingOptions,
-  ViewHistory,
-  RumSession,
-} from '@datadog/browser-rum-core'
-import { LifeCycleEventType, SessionReplayState } from '@datadog/browser-rum-core'
-import type { Telemetry, DeflateEncoder } from '@datadog/browser-core'
+import type { LifeCycle, RumConfiguration, StartRecordingOptions, ViewHistory } from '@datadog/browser-rum-core'
+import { LifeCycleEventType, SessionReplayState, computeSessionReplayState } from '@datadog/browser-rum-core'
+import type { Telemetry, DeflateEncoder, SessionManager } from '@datadog/browser-core'
 import { asyncRunOnReadyState, monitorError, Observable } from '@datadog/browser-core'
 import { getSessionReplayLink } from '../domain/getSessionReplayLink'
 import { startRecorderInitTelemetry } from '../domain/startRecorderInitTelemetry'
-import type { startRecording } from './startRecording'
+import type { startRecording } from './datadogRecorder'
 import { lazyLoadRecorder } from './lazyLoadRecorder'
 
 export type StartRecording = typeof startRecording
@@ -47,7 +40,7 @@ export interface Strategy {
 export function createPostStartStrategy(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
-  sessionManager: RumSessionManager,
+  sessionManager: SessionManager,
   viewHistory: ViewHistory,
   getOrCreateDeflateEncoder: () => DeflateEncoder | undefined,
   telemetry: Telemetry
@@ -112,7 +105,9 @@ export function createPostStartStrategy(
 
   function start(options?: StartRecordingOptions) {
     const session = sessionManager.findTrackedSession()
-    if (canStartRecording(session, options)) {
+    const replayState = session ? computeSessionReplayState(session, configuration) : undefined
+
+    if (!canStartRecording(replayState, options)) {
       status = RecorderStatus.IntentToStart
       return
     }
@@ -123,13 +118,13 @@ export function createPostStartStrategy(
 
     status = RecorderStatus.Starting
 
-    const forced = shouldForceReplay(session!, options) || false
+    const forced = shouldForceReplay(replayState, options) || false
 
     // Intentionally not awaiting doStart() to keep it asynchronous
     doStart(forced).catch(monitorError)
 
     if (forced) {
-      sessionManager.setForcedReplay()
+      sessionManager.updateSessionState({ forcedReplay: '1' })
     }
   }
 
@@ -151,16 +146,16 @@ export function createPostStartStrategy(
   }
 }
 
-function canStartRecording(session: RumSession | undefined, options?: StartRecordingOptions) {
-  return !session || (session.sessionReplay === SessionReplayState.OFF && (!options || !options.force))
+function canStartRecording(replayState: SessionReplayState | undefined, options?: StartRecordingOptions) {
+  return replayState !== undefined && (replayState !== SessionReplayState.OFF || options?.force)
 }
 
 function isRecordingInProgress(status: RecorderStatus) {
   return status === RecorderStatus.Starting || status === RecorderStatus.Started
 }
 
-function shouldForceReplay(session: RumSession, options?: StartRecordingOptions) {
-  return options && options.force && session.sessionReplay === SessionReplayState.OFF
+function shouldForceReplay(replayState: SessionReplayState | undefined, options?: StartRecordingOptions) {
+  return options && options.force && replayState === SessionReplayState.OFF
 }
 
 async function notifyWhenSettled<Event, Result>(

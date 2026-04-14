@@ -1,6 +1,8 @@
 import { isEmptyObject } from '../../tools/utils/objectUtils'
 import { objectEntries } from '../../tools/utils/polyfills'
+import type { TimeStamp } from '../../tools/utils/timeUtils'
 import { dateNow } from '../../tools/utils/timeUtils'
+import { generateUUID } from '../../tools/utils/stringUtils'
 import type { Configuration } from '../configuration'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { isValidSessionString, SESSION_ENTRY_REGEXP, SESSION_ENTRY_SEPARATOR } from './sessionStateValidation'
@@ -11,12 +13,21 @@ export interface SessionState {
   created?: string
   expire?: string
   isExpired?: typeof EXPIRED
+  anonymousId?: string
 
   [key: string]: string | undefined
 }
 
+export function getCreatedDate(state: SessionState): TimeStamp | undefined {
+  return state.created ? (Number(state.created) as TimeStamp) : undefined
+}
+
+export function getExpireDate(state: SessionState): TimeStamp | undefined {
+  return state.expire ? (Number(state.expire) as TimeStamp) : undefined
+}
+
 export function getExpiredSessionState(
-  previousSessionState: SessionState | undefined,
+  previousSessionState: { anonymousId?: string } | undefined,
   configuration: Configuration
 ): SessionState {
   const expiredSessionState: SessionState = {
@@ -25,6 +36,7 @@ export function getExpiredSessionState(
   if (configuration.trackAnonymousUser && previousSessionState?.anonymousId) {
     expiredSessionState.anonymousId = previousSessionState?.anonymousId
   }
+
   return expiredSessionState
 }
 
@@ -44,9 +56,11 @@ export function isSessionInExpiredState(session: SessionState) {
 function isActiveSession(sessionState: SessionState) {
   // created and expire can be undefined for versions which was not storing them
   // these checks could be removed when older versions will not be available/live anymore
+  const createdDate = getCreatedDate(sessionState)
+  const expireDate = getExpireDate(sessionState)
   return (
-    (sessionState.created === undefined || dateNow() - Number(sessionState.created) < SESSION_TIME_OUT_DELAY) &&
-    (sessionState.expire === undefined || dateNow() < Number(sessionState.expire))
+    (createdDate === undefined || dateNow() - createdDate < SESSION_TIME_OUT_DELAY) &&
+    (expireDate === undefined || dateNow() < expireDate)
   )
 }
 
@@ -80,4 +94,48 @@ export function toSessionState(sessionString: string | undefined | null) {
     })
   }
   return session
+}
+
+export function initializeSession(state: SessionState, configuration: Configuration): SessionState {
+  if (isSessionInNotStartedState(state)) {
+    if (configuration.trackAnonymousUser) {
+      state.anonymousId = generateUUID()
+    }
+    return getExpiredSessionState(state, configuration)
+  }
+  return state
+}
+
+export function expandOrRenew(state: SessionState, configuration: Configuration): SessionState {
+  // prevent renewing if state is altered by a 3rd party (e.g. adblocker deleting the cookie)
+  if (isSessionInNotStartedState(state)) {
+    return state
+  }
+
+  let newState = state
+
+  if (isSessionInExpiredState(state)) {
+    newState = getExpiredSessionState(state, configuration)
+  }
+
+  if (!newState.id) {
+    newState.id = generateUUID()
+    newState.created = String(dateNow())
+  }
+  if (configuration.trackAnonymousUser && !newState.anonymousId) {
+    newState.anonymousId = generateUUID()
+  }
+
+  delete newState.isExpired
+  expandSessionState(newState)
+
+  return newState
+}
+
+export function expandOnly(state: SessionState): SessionState {
+  if (isSessionInExpiredState(state) || isSessionInNotStartedState(state) || !state.id) {
+    return state
+  }
+  expandSessionState(state)
+  return state
 }

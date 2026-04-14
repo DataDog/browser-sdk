@@ -22,12 +22,6 @@ export function createMockFlushController() {
       .and.callFake((messageBytesCountDiff = 0) => {
         currentBytesCount += messageBytesCountDiff
       }),
-    notifyAfterRemoveMessage: jasmine
-      .createSpy<FlushController['notifyAfterRemoveMessage']>()
-      .and.callFake((messageBytesCount) => {
-        currentBytesCount -= messageBytesCount
-        currentMessagesCount -= 1
-      }),
     get messagesCount() {
       return currentMessagesCount
     },

@@ -50,8 +50,8 @@ export {
 export { monitored, monitor, callMonitored, setDebugMode, monitorError } from './tools/monitor'
 export type { Subscription } from './tools/observable'
 export { Observable, BufferedObservable } from './tools/observable'
-export type { SessionManager } from './domain/session/sessionManager'
-export { startSessionManager, stopSessionManager } from './domain/session/sessionManager'
+export type { SessionManager, SessionContext, SessionRenewalEvent } from './domain/session/sessionManager'
+export { startSessionManager, startSessionManagerStub, stopSessionManager } from './domain/session/sessionManager'
 export {
   SESSION_TIME_OUT_DELAY, // Exposed for tests
   SESSION_NOT_TRACKED,
@@ -133,7 +133,6 @@ export type { ValueHistory, ValueHistoryEntry } from './tools/valueHistory'
 export { createValueHistory, CLEAR_OLD_VALUES_INTERVAL } from './tools/valueHistory'
 export { readBytesFromStream } from './tools/readBytesFromStream'
 export type { SessionState } from './domain/session/sessionState'
-export { STORAGE_POLL_DELAY } from './domain/session/sessionStore'
 export { SESSION_STORE_KEY } from './domain/session/storeStrategies/sessionStoreStrategy'
 export { MEMORY_SESSION_STORE_KEY } from './domain/session/storeStrategies/sessionInMemory'
 export {
@@ -164,3 +163,5 @@ export * from './domain/connectivity'
 export * from './tools/stackTrace/handlingStack'
 export * from './tools/abstractHooks'
 export * from './domain/tags'
+export { correctedChildSampleRate, isSampled, resetSampleDecisionCache, sampleUsingKnuthFactor } from './domain/sampler'
+export { startTelemetrySessionContext } from './domain/contexts/telemetrySessionContext'

@@ -11,5 +11,3 @@ export class Deflate {
 export const constants: {
   [name: string]: number
 }
-
-export function string2buf(input: string): Uint8ArrayBuffer
