@@ -2,13 +2,10 @@ import type { ComponentInternalInstance, ComponentPublicInstance } from 'vue'
 import { callMonitored, clocksNow, createHandlingStack } from '@datadog/browser-core'
 import { onRumStart } from '../nuxtPlugin'
 
-const reportedErrors = new WeakSet<object>()
-
 /**
  * Add a Nuxt error to the RUM session.
  *
  * Compatible with both Vue's `app.config.errorHandler` and Nuxt's `app:error` hook.
- * Deduplicates errors automatically when both hooks fire for the same error instance.
  *
  * @category Error
  * @example
@@ -24,14 +21,8 @@ const reportedErrors = new WeakSet<object>()
  * })
  * ```
  */
-export function addNuxtError(error: unknown, instance: ComponentPublicInstance | null, info: string) {
-  if (error !== null && typeof error === 'object') {
-    if (reportedErrors.has(error)) {
-      return
-    }
-    reportedErrors.add(error)
-  }
 
+export function addNuxtError(error: unknown, instance: ComponentPublicInstance | null, info: string) {
   const handlingStack = createHandlingStack('nuxt error')
   const startClocks = clocksNow()
   onRumStart((addError) => {

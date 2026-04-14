@@ -2,7 +2,7 @@ import { defineNuxtPlugin, useRoute } from 'nuxt/app'
 
 export default defineNuxtPlugin(() => {
   const route = useRoute()
-  if (route.query['startup-error']) {
-    throw new Error('Startup error triggered by plugin')
+  if (route.path === '/startup-error') {
+    throw new Error('Nuxt startup error from app:error')
   }
 })

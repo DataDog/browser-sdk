@@ -25,7 +25,7 @@ runBasePluginErrorTests([
   {
     ...nuxtBasePluginConfig,
     error: {
-      clientErrorMessage: 'Error triggered by button click',
+      clientErrorMessage: 'Nuxt error from vueApp.config.errorHandler',
       expectedFramework: 'nuxt',
       expectsComponentStack: true,
     },
@@ -60,23 +60,46 @@ test.describe('plugin: nuxt router', () => {
 })
 
 test.describe('plugin: nuxt error', () => {
-  createTest('should report startup errors via app:error hook')
+    createTest('should capture vue error from vueApp.config.errorHandler without duplicates')
+    .withBasePath('/error-test')
     .withRum()
     .withNuxtApp()
-    .run(async ({ page, flushEvents, intakeRegistry, baseUrl, flushBrowserLogs }) => {
-      const url = new URL(baseUrl)
-      url.searchParams.set('startup-error', '1')
-      await page.goto(url.toString())
+    .run(async ({ page, flushEvents, intakeRegistry }) => {
+      await page.click('[data-testid="trigger-error"]')
 
       await flushEvents()
 
-      const startupErrors = intakeRegistry.rumErrorEvents.filter(
-        (e) => e.error.source === 'custom' && e.error.message === 'Startup error triggered by plugin'
+      const errorEvents = intakeRegistry.rumErrorEvents.filter(
+        (e) => e.error.source === 'custom'
       )
-      expect(startupErrors).toHaveLength(1)
-      expect(startupErrors[0].context?.framework).toEqual('nuxt')
-      expect(startupErrors[0].error.component_stack).toBeUndefined()
+      expect(errorEvents).toHaveLength(1)
 
-      flushBrowserLogs()
+      expect(errorEvents[0].error.message).toBe('Nuxt error from vueApp.config.errorHandler')
+      expect(errorEvents[0].error.source).toBe('custom')
+      expect(errorEvents[0].error.handling_stack).toBeDefined()
+      expect(errorEvents[0].context).toMatchObject({ framework: 'nuxt' })
+    })
+
+  createTest('should capture startup errors via app:error without duplicates')
+    .withBasePath('/startup-error')
+    .withRum()
+    .withNuxtApp()
+    .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
+      await page.waitForLoadState('networkidle')
+
+      await flushEvents()
+
+      const errorEvents = intakeRegistry.rumErrorEvents.filter(
+        (e) => e.error.source === 'custom'
+      )
+      expect(errorEvents).toHaveLength(1)
+
+      expect(errorEvents[0].error.source).toBe('custom')
+      expect(errorEvents[0].error.handling_stack).toBeDefined()
+      expect(errorEvents[0].context).toMatchObject({ framework: 'nuxt' })
+
+      withBrowserLogs((browserLogs) => {
+        expect(browserLogs.filter((log) => log.level === 'error').length).toBeGreaterThan(0)
+      })
     })
 })

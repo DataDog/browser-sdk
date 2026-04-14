@@ -3,7 +3,7 @@ import { ref } from 'vue'
 const hasError = ref(false)
 function triggerError() {
   hasError.value = true
-  throw new Error('Error triggered by button click')
+  throw new Error('Nuxt error from vueApp.config.errorHandler')
 }
 </script>
 <template>

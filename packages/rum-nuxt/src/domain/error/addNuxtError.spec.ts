@@ -62,15 +62,4 @@ describe('addNuxtError', () => {
       param: 123,
     })
   })
-
-  it('does not report the same error instance twice', () => {
-    const addErrorSpy = jasmine.createSpy()
-    initializeNuxtPlugin({ addError: addErrorSpy })
-
-    const error = new Error('duplicate')
-    addNuxtError(error, null, '')
-    addNuxtError(error, null, '')
-
-    expect(addErrorSpy).toHaveBeenCalledTimes(1)
-  })
 })
