@@ -9,6 +9,7 @@ import {
   isIndexableObject,
   fetch,
 } from '@datadog/browser-core'
+import { extractRegexMatch } from '../extractRegexMatch'
 import type { RumInitConfiguration } from './configuration'
 import type { RumSdkConfig, DynamicOption, ContextItem } from './remoteConfiguration.types'
 import { parseJsonPath } from './jsonPathParser'
@@ -272,12 +273,7 @@ function extractValue(extractor: SerializedRegex, candidate: string) {
   if (resolvedExtractor === undefined) {
     return
   }
-  const regexResult = resolvedExtractor.exec(candidate)
-  if (regexResult === null) {
-    return
-  }
-  const [match, capture] = regexResult
-  return capture ? capture : match
+  return extractRegexMatch(candidate, resolvedExtractor)
 }
 
 type FetchRemoteConfigurationResult = { ok: true; value: RumRemoteConfiguration } | { ok: false; error: Error }

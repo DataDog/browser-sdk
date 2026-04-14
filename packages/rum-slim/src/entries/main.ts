@@ -38,6 +38,7 @@ export type {
   OnRumStartOptions,
   PropagatorType,
   FeatureFlagsForEvents,
+  MatchHeader,
 
   // Events
   CommonProperties,
@@ -58,6 +59,7 @@ export type {
   RumResourceEventDomainContext,
   RumLongTaskEventDomainContext,
 } from '@datadog/browser-rum-core'
+export { DEFAULT_TRACKED_RESOURCE_HEADERS } from '@datadog/browser-rum-core'
 export { DefaultPrivacyLevel } from '@datadog/browser-core'
 
 /**

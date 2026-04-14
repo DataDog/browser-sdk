@@ -21,7 +21,7 @@ const ErrorFallback: ErrorBoundaryFallback = ({ error, resetError }) => {
   }, [error])
 
   return (
-    <div data-testid="error-boundary" data-error-reported={errorReported || undefined}>
+    <div data-testid="error-handled" data-error-reported={errorReported || undefined}>
       <p>{error.message}</p>
       <button data-testid="reset-error" onClick={resetError}>
         Reset

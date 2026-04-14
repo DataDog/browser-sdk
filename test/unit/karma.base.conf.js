@@ -130,7 +130,7 @@ function overrideTsLoaderRule(module) {
   module.rules.push({
     test: /\.m?js$/,
     include:
-      /node_modules\/(@angular\/core|react|react-router-dom|react-dom|react-router|turbo-stream|vue-router|@vue\/test-utils)/,
+      /node_modules\/(@angular\/core|react|react-router-dom|react-dom|react-router|turbo-stream|vue-router|@vue\/test-utils|@tanstack\/.*)/,
     use: {
       loader: 'swc-loader',
       options: {

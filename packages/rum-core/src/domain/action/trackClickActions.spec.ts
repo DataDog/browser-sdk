@@ -7,8 +7,6 @@ import {
   DefaultPrivacyLevel,
   Observable,
   PageExitReason,
-  addExperimentalFeatures,
-  ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock } from '@datadog/browser-core/test'
@@ -135,7 +133,7 @@ describe('trackClickActions', () => {
           selector: '#button',
           width: 100,
           height: 100,
-          composedPathSelector: undefined,
+          composedPathSelector: jasmine.any(String),
         },
         position: { x: 50, y: 50 },
         events: [domEvent],
@@ -682,7 +680,6 @@ describe('trackClickActions', () => {
 
   describe('when composed path selector is enabled', () => {
     it('should return a composed_path_selector', () => {
-      addExperimentalFeatures([ExperimentalFeature.COMPOSED_PATH_SELECTOR])
       startClickActionsTracking()
       emulateClick({
         target: button,

@@ -238,6 +238,7 @@ export interface PageStateServerEntry {
 export const ViewLoadingType = {
   INITIAL_LOAD: 'initial_load',
   ROUTE_CHANGE: 'route_change',
+  SESSION_RENEWAL: 'session_renewal',
   BF_CACHE: 'bf_cache',
 } as const
 
