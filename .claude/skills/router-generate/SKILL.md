@@ -1,6 +1,6 @@
 ---
 name: router:generate
-description: "Stage 4: Generate the complete router integration package from design artifacts and reference implementations."
+description: 'Stage 4: Generate the complete router integration package from design artifacts and reference implementations.'
 ---
 
 # Stage 4: Generate Package
@@ -36,38 +36,45 @@ Follow the file structure defined in `03-design-decisions.md`. For each file:
 3. Write the file using the Write tool
 
 **Code conventions** (from `AGENTS.md`):
+
 - Use **camelCase** for all internal variables and object properties
 - Conversion to snake_case happens at serialization boundary only
 - Use TypeScript type narrowing over runtime assertions
 - Follow existing patterns exactly — match import style, export style, comment style
 
 **Plugin file** (`<framework>Plugin.ts`):
+
 - Follow the exact pattern from the reference: global state, subscriber arrays, `onRumInit`/`onRumStart` exports, `reset<Framework>Plugin` for tests
 - Plugin name must be the framework name in lowercase
 - Configuration interface with `router?: boolean`
 - `getConfigurationTelemetry` returning `{ router: !!configuration.router }`
 
 **Router integration files**:
+
 - `types.ts`: minimal interface for route-related types, avoiding runtime framework imports where possible
 - `start<Framework>View.ts`: `computeViewName()` + `start<Framework>RouterView()` calling `onRumInit`
 - Integration point file: the framework-specific wrapper/provider/hook
 
 **Test files**:
+
 - Follow Jasmine conventions: `describe`/`it` blocks
 - Use `registerCleanupTask()` for cleanup, NOT `afterEach()`
 - Use the test helper for plugin initialization
 - Cover every test case listed in `03-design-decisions.md`
 
 **package.json**:
+
 - Follow the reference `package.json` structure exactly
 - Set version to match current monorepo version (read from a reference package)
 - Set correct peer dependencies from `02-sdk-mapping.md`
 - Include both ESM and CJS entry points
 
 **tsconfig.json**:
+
 - Copy from nearest reference package, adjust paths
 
 **README.md**:
+
 - Follow the reference README structure
 - Include setup instructions matching the public API from `03-design-decisions.md`
 
@@ -80,10 +87,10 @@ After all files are generated, write `docs/integrations/<framework>/04-generatio
 
 ## Generated Files
 
-| File | Purpose | Modeled After | Deviations |
-|------|---------|---------------|------------|
-| `packages/rum-<fw>/src/domain/<fw>Plugin.ts` | Plugin + subscriber pattern | [`vuePlugin.ts`](packages/rum-vue/src/domain/vuePlugin.ts) | None |
-| ... | ... | ... | ... |
+| File                                         | Purpose                     | Modeled After                                              | Deviations |
+| -------------------------------------------- | --------------------------- | ---------------------------------------------------------- | ---------- |
+| `packages/rum-<fw>/src/domain/<fw>Plugin.ts` | Plugin + subscriber pattern | [`vuePlugin.ts`](packages/rum-vue/src/domain/vuePlugin.ts) | None       |
+| ...                                          | ...                         | ...                                                        | ...        |
 ```
 
 For each file, link to the reference file it was modeled after. If there are deviations from the reference pattern, explain why.

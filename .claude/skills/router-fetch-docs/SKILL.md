@@ -1,6 +1,6 @@
 ---
 name: router:fetch-docs
-description: "Stage 1: Fetch framework router documentation and extract structured routing concepts. Reads input from docs/integrations/<framework>/00-pipeline-input.md."
+description: 'Stage 1: Fetch framework router documentation and extract structured routing concepts. Reads input from docs/integrations/<framework>/00-pipeline-input.md.'
 ---
 
 # Stage 1: Fetch Router Documentation
@@ -29,7 +29,7 @@ Use the WebFetch tool for all fetches. If a URL fails, note it and continue with
 
 Analyze the fetched documentation and produce a structured summary covering these sections. Every factual claim MUST be inline-linked to the source URL and section where you found it.
 
-Unsourced claims must be marked as *inferred: \<reasoning\>*.
+Unsourced claims must be marked as _inferred: \<reasoning\>_.
 
 #### Required Sections
 
@@ -44,17 +44,20 @@ What syntax the framework uses for catch-all or wildcard routes (e.g. `*`, `**`,
 
 **Navigation Lifecycle Hooks**
 List every navigation lifecycle event/hook the framework exposes, in the order they fire. For each, describe:
+
 - When it fires relative to other hooks
 - What data is available at that point
 - Whether it can cancel/redirect navigation
 
 **Navigation Lifecycle Timing**
 This is the most critical section. Determine:
+
 - Where in the lifecycle do **redirects** resolve?
 - Where do **data fetches** (loaders, resolvers) execute?
 - Where does **component rendering** begin?
 
 The SDK wants to start a view **as early as possible** but:
+
 1. **After redirects** — so the view name reflects the final destination
 2. **Before data fetches** — so loader/resolver network requests are attributed to the correct view
 3. **Before component rendering** — so rendering work is attributed to the correct view
@@ -62,6 +65,7 @@ The SDK wants to start a view **as early as possible** but:
 Identify the ideal hook point. If no single hook satisfies all three constraints, document the trade-off and rank the available options from best to worst, explaining what is lost with each.
 
 Reference how existing integrations solve this:
+
 - Angular uses [`GuardsCheckEnd`](packages/rum-angular/src/domain/angularRouter/provideDatadogRouter.ts) (after guards/redirects, before resolvers)
 - Vue uses [`afterEach`](packages/rum-vue/src/domain/router/vueRouter.ts) (after everything including render)
 - React uses [`subscribe`](packages/rum-react/src/domain/reactRouter/createRouter.ts) (after state change)
@@ -72,7 +76,34 @@ How the framework matches URLs to routes: nested vs flat, layout routes, named o
 **Programmatic Navigation API**
 How the router exposes current route state and navigation methods. What objects/hooks are available to read the current route, its params, and matched route records.
 
-### 3. Compatibility Assessment
+### 3. Major Version History (Last 2 Years)
+
+Fetch the framework router's release/changelog information to identify major versions released within the last 2 years (since April 2024).
+
+**How to find versions:**
+
+Use GitHub Releases to identify major versions. Fetch `https://github.com/<org>/<repo>/releases` and filter to major versions (semver X.0.0) released after April 2024. For each major version found, fetch its individual release page to get the full release notes and breaking changes.
+
+**For each major version, document:**
+
+- **Version number and release date**
+- **Breaking changes** — list every breaking change from the release notes. Quote or link to the source. Do not filter, assess, or editorialize — just list them verbatim.
+
+**Output format:**
+
+```markdown
+## Major Versions (Last 2 Years)
+
+### vX.0.0 (YYYY-MM-DD)
+
+**Breaking Changes:**
+- Change description ([source](url))
+- ...
+```
+
+If no major versions were released in the last 2 years, state that explicitly.
+
+### 4. Compatibility Assessment
 
 At the end of the document, include a `## Compatibility` section with:
 
@@ -80,12 +111,14 @@ At the end of the document, include a `## Compatibility` section with:
 - If false, a `reason:` field explaining why
 
 A framework is **incompatible** if it lacks:
+
 - A client-side route tree or route matching mechanism
 - Dynamic segment parameters
 - Navigation lifecycle events that can be hooked into
 - Examples: Shopify Hydrogen (server-only loaders), Salesforce Lightning (proprietary component model)
 
 A framework is **compatible** even if:
+
 - It uses file-based routing (as long as there's a runtime route representation)
 - Some hooks fire later than ideal (trade-off is documented, not a blocker)
 

@@ -1,6 +1,6 @@
 ---
 name: router:analyze
-description: "Stage 2: Map framework router concepts to existing SDK patterns. Reads 01-router-concepts.md and reference implementations."
+description: 'Stage 2: Map framework router concepts to existing SDK patterns. Reads 01-router-concepts.md and reference implementations.'
 ---
 
 # Stage 2: Analyze and Map to SDK Patterns
@@ -24,6 +24,7 @@ Find the `<framework>` directory by listing `docs/integrations/`.
 ## Process
 
 For each concept in `01-router-concepts.md`, find the closest equivalent in the reference implementations. Every mapping MUST include inline links to both:
+
 - The framework doc source (from 01-router-concepts.md links)
 - The specific file and line range in the reference implementation
 
@@ -34,6 +35,7 @@ Which framework hook/event to subscribe to, and which reference implementation i
 
 **View Name Computation**
 How to build the `computeViewName()` function:
+
 - How to access the matched route records after navigation
 - How dynamic segments appear in the route definition (and whether they need normalization)
 - How catch-all/wildcard routes should be substituted with actual path segments
@@ -41,6 +43,7 @@ How to build the `computeViewName()` function:
 
 **Wrapping Strategy**
 How the integration hooks into the framework:
+
 - Angular: [`ENVIRONMENT_INITIALIZER` provider](packages/rum-angular/src/domain/angularRouter/provideDatadogRouter.ts)
 - React: [wrapper around `createRouter`](packages/rum-react/src/domain/reactRouter/createRouter.ts) and [`useRoutes` hook](packages/rum-react/src/domain/reactRouter/useRoutes.ts)
 - Vue: [wrapper around `createRouter`](packages/rum-vue/src/domain/router/vueRouter.ts)
@@ -52,6 +55,7 @@ Whether to define minimal local types (like Angular's [`RouteSnapshot`](packages
 
 **Plugin Configuration**
 How the plugin will be configured. All reference implementations use the same pattern:
+
 - [`VuePluginConfiguration`](packages/rum-vue/src/domain/vuePlugin.ts) with `router?: boolean`
 - `onInit` sets `trackViewsManually = true` when `router: true`
 
@@ -60,12 +64,14 @@ Which framework packages are required as peer dependencies, with version ranges.
 
 **Navigation Filtering**
 How to handle:
+
 - Failed navigations (guards blocking, cancellations)
 - Duplicate navigations (same path)
 - Query-only changes
 - Initial navigation
 
 Reference the filtering logic in existing implementations:
+
 - Vue: [lines 15-22 of vueRouter.ts](packages/rum-vue/src/domain/router/vueRouter.ts)
 - React: subscribe callback in [createRouter.ts](packages/rum-react/src/domain/reactRouter/createRouter.ts)
 

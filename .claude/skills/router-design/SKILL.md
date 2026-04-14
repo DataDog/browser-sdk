@@ -1,6 +1,6 @@
 ---
 name: router:design
-description: "Stage 3: Produce design decisions document from router concepts and SDK mapping. Reads 01 and 02 artifacts."
+description: 'Stage 3: Produce design decisions document from router concepts and SDK mapping. Reads 01 and 02 artifacts.'
 ---
 
 # Stage 3: Design Decisions
@@ -33,6 +33,7 @@ Produce a design document with these sections. Every decision MUST link back to 
 
 **Public API**
 Exactly what the user imports and calls. Show the complete setup code example:
+
 ```typescript
 // What the user writes in their app
 import { ... } from '@datadog/browser-rum-<framework>'
@@ -40,6 +41,7 @@ import { ... } from '@datadog/browser-rum-<framework>'
 
 **File Structure**
 The exact file tree for `packages/rum-<framework>/` with one-line descriptions per file. Follow the convention from reference packages:
+
 - `src/entries/main.ts` — public exports
 - `src/domain/<framework>Plugin.ts` — plugin + subscriber pattern
 - `src/domain/<framework>Router/` — router integration files
@@ -51,6 +53,7 @@ Which hook to use, with the full trade-off analysis from Stage 1 and the mapping
 
 **View Name Algorithm**
 Pseudocode or step-by-step description of how `computeViewName()` will work for this framework. Cover:
+
 - Normal routes
 - Dynamic segments
 - Nested routes
@@ -58,6 +61,7 @@ Pseudocode or step-by-step description of how `computeViewName()` will work for 
 - Edge cases specific to this framework
 
 IMPORTANT: The navigation hook choice directly affects what data is available to `computeViewName()`. Different hooks may expose different route objects, matched route arrays, or URL representations. If the framework has multiple candidate hooks (from the Navigation Hook Decision section), show how the view name computation differs for each option:
+
 - What route data each hook provides (e.g. matched route records vs. raw URL vs. route config)
 - How that changes the `computeViewName()` implementation
 - Whether one hook gives better data for view name computation (e.g. access to parameterized route patterns vs. only resolved URLs)
@@ -69,6 +73,7 @@ How failed, duplicate, query-only, and initial navigations are handled.
 
 **Test Strategy**
 List every test case to implement, grouped by file:
+
 - `<framework>Plugin.spec.ts`: plugin structure, subscriber callbacks, telemetry, trackViewsManually
 - `start<Framework>View.spec.ts`: all view name computation cases (static, dynamic, nested, catch-all, edge cases)
 - Router integration spec: navigation event handling, filtering, deduplication
