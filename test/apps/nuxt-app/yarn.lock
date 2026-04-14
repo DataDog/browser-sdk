@@ -363,7 +363,7 @@ __metadata:
 
 "@datadog/browser-rum-nuxt@file:../../../packages/rum-nuxt/package.tgz::locator=nuxt-app%40workspace%3A.":
   version: 0.0.0
-  resolution: "@datadog/browser-rum-nuxt@file:../../../packages/rum-nuxt/package.tgz#../../../packages/rum-nuxt/package.tgz::hash=ccbe07&locator=nuxt-app%40workspace%3A."
+  resolution: "@datadog/browser-rum-nuxt@file:../../../packages/rum-nuxt/package.tgz#../../../packages/rum-nuxt/package.tgz::hash=c434e3&locator=nuxt-app%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.32.0"
     "@datadog/browser-rum-core": "npm:6.32.0"
@@ -382,7 +382,7 @@ __metadata:
       optional: true
     vue-router:
       optional: true
-  checksum: 10c0/5d5e8aa4d96992d12836518b66cc33eb6dd6e8e6c2e08b980a88bb6b39fe0ef0b8114305b5db9f0b1f93b28b43c7456724bd2dbcd57d90b7af28d5d1733ab1e5
+  checksum: 10c0/6b153227d55345b551b404bd1ab95247199361728691f0d44403b52cdd33a3328d7eea6e6d8eda785f164d963cc25cb4add0b95864da00565838a17f90273d92
   languageName: node
   linkType: hard
 

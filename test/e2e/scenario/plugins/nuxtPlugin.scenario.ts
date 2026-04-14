@@ -20,7 +20,7 @@ runBasePluginRouterTests([
   },
 ])
 
-test.describe('plugin: nuxt', () => {
+test.describe('plugin: nuxt router', () => {
   createTest('should track the direct-entry route as the initial view')
     .withBasePath('/user/42?admin=true')
     .withRum()
@@ -30,9 +30,11 @@ test.describe('plugin: nuxt', () => {
       await flushEvents()
 
       const initialViews = intakeRegistry.rumViewEvents.filter((e) => e.view.loading_type === 'initial_load')
-      expect(initialViews).toHaveLength(1)
-      expect(initialViews[0].view.name).toBe('/user/[id]')
-      expect(initialViews[0].view.url).toContain('/user/42?admin=true')
+      expect(new Set(initialViews.map((event) => event.view.id)).size).toBe(1)
+
+      const initialUserView = initialViews.find((event) => event.view.name === '/user/[id]')
+      expect(initialUserView).toBeDefined()
+      expect(initialUserView?.view.url).toContain('/user/42?admin=true')
 
       const spuriousHomeView = intakeRegistry.rumViewEvents.find(
         (e) => e.view.name === '/' && e.view.loading_type === 'initial_load'
@@ -64,13 +66,14 @@ test.describe('plugin: nuxt', () => {
       expect(hashUserView?.view.loading_type).toBe('route_change')
       expect(hashUserView?.view.id).not.toBe(initialUserView?.view.id)
     })
+})
 
+test.describe('plugin: nuxt error', () => {
   createTest('should capture vue error from vueApp.config.errorHandler')
     .withBasePath('/error-test')
     .withRum()
     .withNuxtApp()
     .run(async ({ page, flushEvents, intakeRegistry }) => {
-      await page.waitForLoadState('networkidle')
       await page.click('[data-testid="trigger-error"]')
 
       await flushEvents()
@@ -87,12 +90,38 @@ test.describe('plugin: nuxt', () => {
       })
     })
 
+  createTest('should capture startup errors via app:error without duplicates')
+    .withBasePath('/startup-error')
+    .withRum()
+    .withNuxtApp()
+    .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
+      await page.waitForLoadState('networkidle')
+
+      await flushEvents()
+
+      const errorEvents = intakeRegistry.rumErrorEvents.filter(
+        (event) => event.error.message === 'Nuxt startup error from app:error'
+      )
+      expect(errorEvents).toHaveLength(1)
+      const [errorEvent] = errorEvents
+
+      expect(errorEvent.error.source).toBe('custom')
+      expect(errorEvent.error.handling_stack).toBeDefined()
+      expect(errorEvent.context).toMatchObject({
+        framework: 'nuxt',
+        nuxt: { source: 'vueApp.config.errorHandler' },
+      })
+
+      withBrowserLogs((browserLogs) => {
+        expect(browserLogs.filter((log) => log.level === 'error').length).toBeGreaterThan(0)
+      })
+    })
+
   createTest('should capture app:error hook errors')
     .withBasePath('/app-error')
     .withRum()
     .withNuxtApp()
     .run(async ({ page, flushEvents, intakeRegistry }) => {
-      await page.waitForLoadState('networkidle')
       await page.click('[data-testid="trigger-app-error"]')
 
       await flushEvents()

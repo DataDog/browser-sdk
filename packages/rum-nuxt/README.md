@@ -14,38 +14,28 @@ This package is client-only. Use it from a Nuxt `.client` plugin. Server-side SS
 
 ## Setup
 
-Create a client plugin in `app/plugins/datadog-rum.client.ts` and wire both Nuxt error surfaces before initializing RUM:
+Create a client plugin in `app/plugins/datadog-rum.client.ts`:
 
 ```ts
 import { datadogRum } from '@datadog/browser-rum'
-import { addNuxtAppError, addNuxtError, nuxtRumPlugin } from '@datadog/browser-rum-nuxt'
+import { nuxtRumPlugin } from '@datadog/browser-rum-nuxt'
 
 export default defineNuxtPlugin((nuxtApp) => {
-  nuxtApp.hook('app:error', (error) => {
-    addNuxtAppError(error)
-  })
-
-  const previousErrorHandler = nuxtApp.vueApp.config.errorHandler
-  nuxtApp.vueApp.config.errorHandler = (error, instance, info) => {
-    addNuxtError(error, instance, info)
-    previousErrorHandler?.(error, instance, info)
-  }
-
   datadogRum.init({
     applicationId: '<APP_ID>',
     clientToken: '<CLIENT_TOKEN>',
     site: 'datadoghq.com',
-    plugins: [nuxtRumPlugin({ router: useRouter() })],
+    plugins: [nuxtRumPlugin({ router: useRouter(), nuxtApp })],
   })
 })
 ```
 
 ## Error Reporting
 
-Use both Nuxt reporting surfaces in the same `.client` plugin:
+Passing `nuxtApp` to `nuxtRumPlugin` automatically wires up both Nuxt error surfaces:
 
-- `vueApp.config.errorHandler` captures client-side Vue errors, including ones that Vue already handled.
-- `app:error` captures client-side Nuxt app/plugin startup failures that reach Nuxt's app-level error hook.
+- `vueApp.config.errorHandler` — captures client-side Vue errors with component context (instance, info).
+- `app:error` — captures client-side Nuxt app/plugin startup failures that reach Nuxt's app-level error hook.
 
 Because this package is client-only, it does not report SSR-side `app:error` or server startup failures.
 

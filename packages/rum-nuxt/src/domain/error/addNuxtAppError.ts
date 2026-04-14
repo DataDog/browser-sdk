@@ -1,5 +1,4 @@
-import { callMonitored, clocksNow, createHandlingStack } from '@datadog/browser-core'
-import { onRumStart } from '../nuxtPlugin'
+import { queueNuxtError } from './queueNuxtError'
 
 /**
  * Add a Nuxt app-level error to the RUM session.
@@ -17,21 +16,9 @@ import { onRumStart } from '../nuxtPlugin'
  * ```
  */
 export function addNuxtAppError(error: unknown) {
-  const handlingStack = createHandlingStack('nuxt error')
-  const startClocks = clocksNow()
-  onRumStart((addError) => {
-    callMonitored(() => {
-      addError({
-        error,
-        handlingStack,
-        componentStack: undefined,
-        startClocks,
-        context: {
-          ...(typeof error === 'object' && error !== null ? (error as { dd_context?: object }).dd_context : undefined),
-          framework: 'nuxt',
-          nuxt: { source: 'app:error' },
-        },
-      })
-    })
+  queueNuxtError(error, undefined, {
+    ...(typeof error === 'object' && error !== null ? (error as { dd_context?: object }).dd_context : undefined),
+    framework: 'nuxt',
+    nuxt: { source: 'app:error' },
   })
 }

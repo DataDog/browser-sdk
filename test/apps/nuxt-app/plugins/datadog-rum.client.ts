@@ -1,5 +1,5 @@
 import { datadogRum } from '@datadog/browser-rum'
-import { addNuxtAppError, addNuxtError, nuxtRumPlugin } from '@datadog/browser-rum-nuxt'
+import { nuxtRumPlugin } from '@datadog/browser-rum-nuxt'
 import { defineNuxtPlugin, useRoute, useRouter } from 'nuxt/app'
 
 export default defineNuxtPlugin((nuxtApp) => {
@@ -9,17 +9,8 @@ export default defineNuxtPlugin((nuxtApp) => {
   if (rumConfigParam) {
     const raw = Array.isArray(rumConfigParam) ? rumConfigParam[0] : rumConfigParam
     if (raw) {
-      nuxtApp.hook('app:error', (error) => {
-        addNuxtAppError(error)
-      })
-      const previousErrorHandler = nuxtApp.vueApp.config.errorHandler
-      nuxtApp.vueApp.config.errorHandler = (error, instance, info) => {
-        addNuxtError(error, instance, info)
-        previousErrorHandler?.(error, instance, info)
-      }
-
       const config = JSON.parse(raw)
-      datadogRum.init({ ...config, plugins: [nuxtRumPlugin({ router: useRouter() })] })
+      datadogRum.init({ ...config, plugins: [nuxtRumPlugin({ router: useRouter(), nuxtApp })] })
     }
   }
 })

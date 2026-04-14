@@ -1,40 +1,42 @@
-import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
+import type { RumPlugin } from '@datadog/browser-rum-core'
+import type { AppConfig } from 'vue'
 import type { Router } from 'vue-router'
 import { startTrackingNuxtViews } from './router/nuxtRouter'
+import { addNuxtAppError } from './error/addNuxtAppError'
+import { addNuxtError } from './error/addNuxtError'
+import { setRumAddError, setRumPublicApi } from './nuxtPluginBus'
+
+export type { InitSubscriber, StartSubscriber } from './nuxtPluginBus'
+export { onRumInit, onRumStart, resetNuxtPlugin } from './nuxtPluginBus'
 
 export type NuxtPlugin = Pick<Required<RumPlugin>, 'name' | 'onInit' | 'onRumStart' | 'getConfigurationTelemetry'>
 
-export interface NuxtPluginConfiguration {
-  router: Router
+interface NuxtApp {
+  vueApp: {
+    config: Pick<AppConfig, 'errorHandler'>
+  }
+  hook(name: 'app:error', fn: (error: unknown) => void): void
 }
 
-type InitSubscriber = (rumPublicApi: RumPublicApi) => void
-type StartSubscriber = (addError: StartRumResult['addError']) => void
-
-let globalPublicApi: RumPublicApi | undefined
-let globalAddError: StartRumResult['addError'] | undefined
-
-const onRumInitSubscribers: InitSubscriber[] = []
-const onRumStartSubscribers: StartSubscriber[] = []
+export interface NuxtPluginConfiguration {
+  router: Router
+  nuxtApp?: NuxtApp
+}
 
 export function nuxtRumPlugin(configuration: NuxtPluginConfiguration): NuxtPlugin {
   return {
     name: 'nuxt',
     onInit({ publicApi, initConfiguration }) {
-      globalPublicApi = publicApi
       initConfiguration.trackViewsManually = true
       startTrackingNuxtViews(publicApi, configuration.router)
-
-      for (const subscriber of onRumInitSubscribers) {
-        subscriber(publicApi)
+      if (configuration.nuxtApp) {
+        startTrackingNuxtErrors(configuration.nuxtApp)
       }
+      setRumPublicApi(publicApi)
     },
     onRumStart({ addError }) {
-      globalAddError = addError
       if (addError) {
-        for (const subscriber of onRumStartSubscribers) {
-          subscriber(addError)
-        }
+        setRumAddError(addError)
       }
     },
     getConfigurationTelemetry() {
@@ -43,25 +45,22 @@ export function nuxtRumPlugin(configuration: NuxtPluginConfiguration): NuxtPlugi
   } satisfies RumPlugin
 }
 
-export function onRumInit(callback: InitSubscriber) {
-  if (globalPublicApi) {
-    callback(globalPublicApi)
-  } else {
-    onRumInitSubscribers.push(callback)
-  }
-}
+function startTrackingNuxtErrors(nuxtApp: NuxtApp) {
+  const seenErrors = new WeakSet<object>()
 
-export function onRumStart(callback: StartSubscriber) {
-  if (globalAddError) {
-    callback(globalAddError)
-  } else {
-    onRumStartSubscribers.push(callback)
+  const previousErrorHandler = nuxtApp.vueApp.config.errorHandler
+  nuxtApp.vueApp.config.errorHandler = (error, instance, info) => {
+    if (error && typeof error === 'object') {
+      seenErrors.add(error)
+    }
+    addNuxtError(error, instance, info)
+    previousErrorHandler?.(error, instance, info)
   }
-}
 
-export function resetNuxtPlugin() {
-  globalPublicApi = undefined
-  globalAddError = undefined
-  onRumInitSubscribers.length = 0
-  onRumStartSubscribers.length = 0
+  nuxtApp.hook('app:error', (error) => {
+    if (error && typeof error === 'object' && seenErrors.has(error)) {
+      return
+    }
+    addNuxtAppError(error)
+  })
 }
