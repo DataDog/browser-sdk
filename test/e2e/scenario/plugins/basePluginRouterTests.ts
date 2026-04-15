@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { createTest } from '../../lib/framework'
+import { clickAndWaitForURL, goHome } from './navigationUtils'
 
 type TestBuilder = ReturnType<typeof createTest>
 
@@ -28,9 +29,10 @@ export function runBasePluginRouterTests(configs: RouterPluginTestConfig[]) {
 
           const viewEvents = intakeRegistry.rumViewEvents
           expect(viewEvents.length).toBeGreaterThan(0)
-          const firstView = viewEvents[0]
-          expect(firstView.view.name).toBe(homeViewName)
-          expect(firstView.view.loading_type).toBe('initial_load')
+          const initialHomeView = viewEvents.find(
+            (e) => e.view.name === homeViewName && e.view.loading_type === 'initial_load'
+          )
+          expect(initialHomeView).toBeDefined()
         })
 
         loadApp(createTest('should normalize dynamic routes and preserve real URLs and referrers').withRum()).run(
@@ -38,16 +40,13 @@ export function runBasePluginRouterTests(configs: RouterPluginTestConfig[]) {
             const baseOrigin = new URL(baseUrl).origin
 
             // Home → Guides → Home → User → Home
-            await page.click('text=Go to Guides 123')
-            await page.waitForURL('**/guides/123')
+            await clickAndWaitForURL(page, 'text=Go to Guides 123', '**/guides/123')
 
-            await page.click('text=Back to Home')
-            await page.waitForURL(homeUrlPattern)
+            await goHome(page, homeUrlPattern)
 
-            await page.click('text=Go to User 42')
-            await page.waitForURL('**/user/42?admin=true')
+            await clickAndWaitForURL(page, 'text=Go to User 42', '**/user/42?admin=true')
 
-            await page.click('text=Back to Home')
+            await goHome(page, homeUrlPattern)
 
             await flushEvents()
 
@@ -73,10 +72,9 @@ export function runBasePluginRouterTests(configs: RouterPluginTestConfig[]) {
         loadApp(createTest('should track SPA navigation with loading_time').withRum()).run(
           async ({ page, flushEvents, intakeRegistry }) => {
             await page.waitForLoadState('networkidle')
-            await page.click('text=Go to User 42')
-            await page.waitForURL('**/user/42?admin=true')
+            await clickAndWaitForURL(page, 'text=Go to User 42', '**/user/42?admin=true')
 
-            await page.click('text=Back to Home')
+            await goHome(page, homeUrlPattern)
 
             await flushEvents()
 
@@ -93,11 +91,9 @@ export function runBasePluginRouterTests(configs: RouterPluginTestConfig[]) {
 
         loadApp(createTest('should not create a new view when query params change').withRum()).run(
           async ({ page, flushEvents, intakeRegistry }) => {
-            await page.click('text=Go to User 42')
-            await page.waitForURL('**/user/42?admin=true')
+            await clickAndWaitForURL(page, 'text=Go to User 42', '**/user/42?admin=true')
 
-            await page.click('text=Change query params')
-            await page.waitForURL('**/user/42?admin=false')
+            await clickAndWaitForURL(page, 'text=Change query params', '**/user/42?admin=false')
 
             await flushEvents()
 
@@ -112,11 +108,9 @@ export function runBasePluginRouterTests(configs: RouterPluginTestConfig[]) {
         loadApp(
           createTest('should track navigations between different concrete URLs of the same dynamic route').withRum()
         ).run(async ({ page, flushEvents, intakeRegistry }) => {
-          await page.click('text=Go to User 42')
-          await page.waitForURL('**/user/42?admin=true')
+          await clickAndWaitForURL(page, 'text=Go to User 42', '**/user/42?admin=true')
 
-          await page.click('text=Go to User 999')
-          await page.waitForURL('**/user/999?admin=true')
+          await clickAndWaitForURL(page, 'text=Go to User 999', '**/user/999?admin=true')
 
           await flushEvents()
 

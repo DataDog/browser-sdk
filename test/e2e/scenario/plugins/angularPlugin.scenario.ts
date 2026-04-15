@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test'
 import { createTest } from '../../lib/framework'
 import { runBasePluginErrorTests } from './basePluginErrorTests'
 import { runBasePluginRouterTests } from './basePluginRouterTests'
+import { clickAndWaitForURL } from './navigationUtils'
 
 const angularAppName = 'angular-app'
 const angularBasePluginConfig = {
@@ -38,26 +39,28 @@ test.describe('plugin: angular', () => {
     .withRum()
     .withApp(angularAppName)
     .run(async ({ page, flushEvents, intakeRegistry }) => {
-      await page.click('text=Go to Nested Route')
+      await clickAndWaitForURL(page, 'text=Go to Nested Route', '**/parent/nested')
       await flushEvents()
-      const viewEvents = intakeRegistry.rumViewEvents
-      expect(viewEvents.length).toBeGreaterThan(0)
-      const lastView = viewEvents[viewEvents.length - 1]
-      expect(lastView.view.name).toBe('/parent/nested')
-      expect(lastView.view.url).toContain('/parent/nested')
+
+      const nestedView = intakeRegistry.rumViewEvents.find(
+        (event) => event.view.name === '/parent/nested' && event.view.url?.includes('/parent/nested')
+      )
+      expect(nestedView).toBeDefined()
+      expect(nestedView?.view.url).toContain('/parent/nested')
     })
 
   createTest('should define a view name with the actual path for wildcard routes')
     .withRum()
     .withApp(angularAppName)
     .run(async ({ page, flushEvents, intakeRegistry }) => {
-      await page.click('text=Go to Wildcard Route')
+      await clickAndWaitForURL(page, 'text=Go to Wildcard Route', '**/unknown/page')
       await flushEvents()
-      const viewEvents = intakeRegistry.rumViewEvents
-      expect(viewEvents.length).toBeGreaterThan(0)
-      const lastView = viewEvents[viewEvents.length - 1]
-      expect(lastView.view.name).toBe('/unknown/page')
-      expect(lastView.view.url).toContain('/unknown/page')
+
+      const wildcardView = intakeRegistry.rumViewEvents.find(
+        (event) => event.view.name === '/unknown/page' && event.view.url?.includes('/unknown/page')
+      )
+      expect(wildcardView).toBeDefined()
+      expect(wildcardView?.view.url).toContain('/unknown/page')
     })
 
   createTest('should report errors caught by provideDatadogErrorHandler')

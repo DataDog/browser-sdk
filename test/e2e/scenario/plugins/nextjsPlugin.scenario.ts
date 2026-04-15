@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test'
 import { createTest } from '../../lib/framework'
 import { runBasePluginErrorTests } from './basePluginErrorTests'
 import { runBasePluginRouterTests } from './basePluginRouterTests'
+import { clickAndWaitForURL, goHome } from './navigationUtils'
 
 const nextjsVariants = [
   {
@@ -55,12 +56,11 @@ test.describe('plugin: nextjs', () => {
       await page.waitForSelector('[data-testid="sidebar"]')
       expect(await page.textContent('[data-testid="sidebar"]')).toContain('Sidebar: Home')
 
-      await page.click('text=Go to User 42')
-      await page.waitForURL('**/user/42?admin=true')
+      await clickAndWaitForURL(page, 'text=Go to User 42', '**/user/42?admin=true')
 
       expect(await page.textContent('[data-testid="sidebar"]')).toContain('Sidebar: User 42')
 
-      await page.click('text=Back to Home')
+      await goHome(page, '**/')
 
       await flushEvents()
 
