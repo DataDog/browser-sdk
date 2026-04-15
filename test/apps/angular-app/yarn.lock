@@ -66,15 +66,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@angular/core@npm:15.2.10":
-  version: 15.2.10
-  resolution: "@angular/core@npm:15.2.10"
+"@angular/core@npm:19.2.20":
+  version: 19.2.20
+  resolution: "@angular/core@npm:19.2.20"
   dependencies:
     tslib: "npm:^2.3.0"
   peerDependencies:
     rxjs: ^6.5.3 || ^7.4.0
-    zone.js: ~0.11.4 || ~0.12.0 || ~0.13.0
-  checksum: 10c0/d0c3c4e97ac56867b4459f9299571442a4a928c2b7a2bec6018ed242dee323b7f470abf9272edb16b6e60dd3c8de11ee2596662bcd08cd87e852ecb0abbee52e
+    zone.js: ~0.15.0
+  checksum: 10c0/07eece4075472ce0aca9cc6c2a5448e79da264b233c4021665076ebb4dbfed4cc4cb16d5ad2d028b640d4df544380c8b16443a10335235fb0d687938d3a55188
   languageName: node
   linkType: hard
 
@@ -236,7 +236,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/parser@npm:^7.19.3":
+"@babel/parser@npm:^7.19.3, @babel/parser@npm:^7.28.6, @babel/parser@npm:^7.29.0":
   version: 7.29.2
   resolution: "@babel/parser@npm:7.29.2"
   dependencies:
@@ -244,17 +244,6 @@ __metadata:
   bin:
     parser: ./bin/babel-parser.js
   checksum: 10c0/e5a4e69e3ac7acdde995f37cf299a68458cfe7009dff66bd0962fd04920bef287201169006af365af479c08ff216bfefbb595e331f87f6ae7283858aebbc3317
-  languageName: node
-  linkType: hard
-
-"@babel/parser@npm:^7.28.6, @babel/parser@npm:^7.29.0":
-  version: 7.29.0
-  resolution: "@babel/parser@npm:7.29.0"
-  dependencies:
-    "@babel/types": "npm:^7.29.0"
-  bin:
-    parser: ./bin/babel-parser.js
-  checksum: 10c0/333b2aa761264b91577a74bee86141ef733f9f9f6d4fc52548e4847dc35dfbf821f58c46832c637bfa761a6d9909d6a68f7d1ed59e17e4ffbb958dc510c17b62
   languageName: node
   linkType: hard
 
@@ -291,59 +280,6 @@ __metadata:
     "@babel/helper-string-parser": "npm:^7.27.1"
     "@babel/helper-validator-identifier": "npm:^7.28.5"
   checksum: 10c0/23cc3466e83bcbfab8b9bd0edaafdb5d4efdb88b82b3be6728bbade5ba2f0996f84f63b1c5f7a8c0d67efded28300898a5f930b171bb40b311bca2029c4e9b4f
-  languageName: node
-  linkType: hard
-
-"@datadog/browser-core@file:../../../packages/core/package.tgz::locator=angular-app%40workspace%3A.":
-  version: 6.32.0
-  resolution: "@datadog/browser-core@file:../../../packages/core/package.tgz#../../../packages/core/package.tgz::hash=b976bd&locator=angular-app%40workspace%3A."
-  checksum: 10c0/c5376e0387f55a36796e44c9ed300d626115ee5c237fea6020baf6b01a9850bc3978ede8f25af984226b7dd10ff490e19699d418496dec3ce3782a5a077ce791
-  languageName: node
-  linkType: hard
-
-"@datadog/browser-rum-angular@file:../../../packages/rum-angular/package.tgz::locator=angular-app%40workspace%3A.":
-  version: 6.32.0
-  resolution: "@datadog/browser-rum-angular@file:../../../packages/rum-angular/package.tgz#../../../packages/rum-angular/package.tgz::hash=142dd6&locator=angular-app%40workspace%3A."
-  version: 6.32.0
-  resolution: "@datadog/browser-rum-angular@file:../../../packages/rum-angular/package.tgz#../../../packages/rum-angular/package.tgz::hash=142dd6&locator=angular-app%40workspace%3A."
-  dependencies:
-    "@datadog/browser-core": "npm:6.32.0"
-    "@datadog/browser-rum-core": "npm:6.32.0"
-    "@datadog/browser-core": "npm:6.32.0"
-    "@datadog/browser-rum-core": "npm:6.32.0"
-  peerDependencies:
-    "@angular/core": ">=15 <=21"
-    "@angular/router": ">=15 <=21"
-    rxjs: ">=7"
-  checksum: 10c0/97ce5ce978ed7087cc30c1978dab7059fbfc3e5e031b241fae99effb0ba8590074f750e8daed0eb69f29608d26840e58342ea5ef95785f4cdfeda84583e1134b
-  checksum: 10c0/97ce5ce978ed7087cc30c1978dab7059fbfc3e5e031b241fae99effb0ba8590074f750e8daed0eb69f29608d26840e58342ea5ef95785f4cdfeda84583e1134b
-  languageName: node
-  linkType: hard
-
-"@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz::locator=angular-app%40workspace%3A.":
-  version: 6.32.0
-  resolution: "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz#../../../packages/rum-core/package.tgz::hash=15f0f9&locator=angular-app%40workspace%3A."
-  dependencies:
-    "@datadog/browser-core": "npm:6.32.0"
-  checksum: 10c0/c3e61f4cd3c728f1982d8c011780ab5e491adfc8080a445c7e00e7964f4e06ce914ede69dec9486d78817607d65342b2aea330ed9862416fd99d65dda6811b86
-  languageName: node
-  linkType: hard
-
-"@datadog/browser-rum@file:../../../packages/rum/package.tgz::locator=angular-app%40workspace%3A.":
-  version: 6.32.0
-  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=1363c2&locator=angular-app%40workspace%3A."
-  dependencies:
-    "@datadog/browser-core": "npm:6.32.0"
-    "@datadog/browser-rum-core": "npm:6.32.0"
-    "@datadog/browser-core": "npm:6.32.0"
-    "@datadog/browser-rum-core": "npm:6.32.0"
-  peerDependencies:
-    "@datadog/browser-logs": 6.32.0
-    "@datadog/browser-logs": 6.32.0
-  peerDependenciesMeta:
-    "@datadog/browser-logs":
-      optional: true
-  checksum: 10c0/5d9bf73141ecf4c150e8ce9c8a298205740208386814183ec61ca7e2dac5baba7270e1869003fcaf0e4a414930bbc242574d33a37f05c5aeef257d7ef03c655d
   languageName: node
   linkType: hard
 
@@ -766,11 +702,9 @@ __metadata:
     "@angular/common": "npm:15.2.10"
     "@angular/compiler": "npm:15.2.10"
     "@angular/compiler-cli": "npm:15.2.10"
-    "@angular/core": "npm:15.2.10"
+    "@angular/core": "npm:19.2.20"
     "@angular/platform-browser": "npm:15.2.10"
     "@angular/router": "npm:15.2.10"
-    "@datadog/browser-rum": "file:../../../packages/rum/package.tgz"
-    "@datadog/browser-rum-angular": "file:../../../packages/rum-angular/package.tgz"
     "@ngtools/webpack": "npm:15.2.11"
     babel-loader: "npm:9.2.1"
     rxjs: "npm:7.8.2"
@@ -778,6 +712,14 @@ __metadata:
     webpack: "npm:5.105.2"
     webpack-cli: "npm:6.0.1"
     zone.js: "npm:0.12.0"
+  peerDependencies:
+    "@datadog/browser-rum": "*"
+    "@datadog/browser-rum-angular": "*"
+  peerDependenciesMeta:
+    "@datadog/browser-rum":
+      optional: true
+    "@datadog/browser-rum-angular":
+      optional: true
   languageName: unknown
   linkType: soft
 

@@ -55,15 +55,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@angular/core@npm:19.2.5":
-  version: 19.2.5
-  resolution: "@angular/core@npm:19.2.5"
+"@angular/core@npm:19.2.20":
+  version: 19.2.20
+  resolution: "@angular/core@npm:19.2.20"
   dependencies:
     tslib: "npm:^2.3.0"
   peerDependencies:
     rxjs: ^6.5.3 || ^7.4.0
     zone.js: ~0.15.0
-  checksum: 10c0/102efc14698c9adea29af9ddc81297e8d41d061e3148a640713c2cdff0f91cf43b161b02790ab21f1bb551a0685d023b5a63e30740a62dcfde8a4c6e6c41d496
+  checksum: 10c0/07eece4075472ce0aca9cc6c2a5448e79da264b233c4021665076ebb4dbfed4cc4cb16d5ad2d028b640d4df544380c8b16443a10335235fb0d687938d3a55188
   languageName: node
   linkType: hard
 
@@ -345,7 +345,7 @@ __metadata:
   dependencies:
     "@angular/common": "npm:19.2.5"
     "@angular/compiler": "npm:19.2.5"
-    "@angular/core": "npm:19.2.5"
+    "@angular/core": "npm:19.2.20"
     "@angular/router": "npm:19.2.5"
     "@datadog/browser-core": "npm:6.32.0"
     "@datadog/browser-rum-core": "npm:6.32.0"
