@@ -626,22 +626,14 @@ describe('rum public api', () => {
   })
 
   describe('addFeatureFlagEvaluation', () => {
-    let addFeatureFlagEvaluationSpy: jasmine.Spy<ReturnType<StartRum>['addFeatureFlagEvaluation']>
-    let displaySpy: jasmine.Spy<() => void>
-    let rumPublicApi: RumPublicApi
-    let startRumSpy: ReturnType<typeof makeRumPublicApiWithDefaults>['startRumSpy']
-
-    beforeEach(() => {
-      addFeatureFlagEvaluationSpy = jasmine.createSpy()
-      displaySpy = spyOn(display, 'error')
-      ;({ rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
+    it('should add feature flag evaluation when ff feature_flags enabled', async () => {
+      const addFeatureFlagEvaluationSpy = jasmine.createSpy()
+      const displaySpy = spyOn(display, 'error')
+      const { rumPublicApi } = makeRumPublicApiWithDefaults({
         startRumResult: {
           addFeatureFlagEvaluation: addFeatureFlagEvaluationSpy,
         },
-      }))
-    })
-
-    it('should add feature flag evaluation when ff feature_flags enabled', async () => {
+      })
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.addFeatureFlagEvaluation('feature', 'foo')
       await collectAsyncCalls(addFeatureFlagEvaluationSpy, 1)
