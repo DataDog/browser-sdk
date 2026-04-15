@@ -32,7 +32,6 @@ export default tseslint.config(
       'test/apps/react-shopist-like',
       'test/apps/microfrontend',
       'test/apps/nextjs',
-      'test/apps/angular-app',
       'test/apps/vue-router-app',
       'sandbox',
       'coverage',

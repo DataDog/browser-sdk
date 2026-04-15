@@ -26,7 +26,6 @@ const APPS: AppConfig[] = [
   { name: 'react-shopist-like' },
   { name: 'microfrontend' },
   { name: 'nextjs' },
-  { name: 'angular-app' },
   { name: 'vue-router-app' },
 
   // React Router apps
