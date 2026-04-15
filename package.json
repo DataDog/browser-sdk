@@ -98,8 +98,8 @@
     "typescript-eslint": "8.58.2",
     "undici": "7.25.0",
     "webpack": "5.106.2",
-    "webpack-cli": "6.0.1",
-    "webpack-dev-middleware": "7.4.5"
+    "webpack-cli": "7.0.2",
+    "webpack-dev-middleware": "8.0.3"
   },
   "resolutions": {
     "puppeteer-core@npm:21.11.0/ws": "8.17.1"
