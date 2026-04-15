@@ -51,13 +51,13 @@
     }
   },
   "devDependencies": {
-    "@tanstack/react-router": "1.168.7",
+    "@tanstack/react-router": "1.168.10",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "react-router": "7.13.0",
-    "react-router-dom": "7.13.0",
+    "react-router": "7.14.0",
+    "react-router-dom": "7.14.0",
     "react-router-dom-6": "npm:react-router-dom@6.30.3"
   },
   "repository": {
