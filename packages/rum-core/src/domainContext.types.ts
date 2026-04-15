@@ -30,7 +30,7 @@ export interface RumActionEventDomainContext {
 
 export interface RumResourceEventDomainContext {
   isManual: false
-  performanceEntry: PerformanceEntry
+  performanceEntry: PerformanceResourceTiming | PerformanceNavigationTiming
   xhr: XMLHttpRequest | undefined
   isAborted: boolean
   handlingStack: string | undefined

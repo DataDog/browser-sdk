@@ -1,9 +1,10 @@
 import type { Duration, RelativeTime, ServerDuration, TaskQueue, TimeStamp, MatchOption } from '@datadog/browser-core'
 import {
   createTaskQueue,
-  noop,
+  elapsed,
   RequestType,
   ResourceType,
+  toServerDuration,
   addExperimentalFeatures,
   ExperimentalFeature,
   display,
@@ -15,6 +16,7 @@ import type { RumResourceEventDomainContext } from '../../domainContext.types'
 import {
   collectAndValidateRawRumEvents,
   createPerformanceEntry,
+  mockDocumentReadyState,
   mockPerformanceObserver,
   mockRumConfiguration,
 } from '../../../test'
@@ -28,8 +30,9 @@ import { validateAndBuildRumConfiguration } from '../configuration'
 import type { RumPerformanceEntry, RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import { createSpanIdentifier, createTraceIdentifier } from '../tracing/identifier'
+import { getDocumentTraceId } from '../tracing/getDocumentTraceId'
+import { getNavigationEntry } from '../../browser/performanceUtils'
 import { startResourceCollection } from './resourceCollection'
-import { retrieveInitialDocumentResourceTiming } from './retrieveInitialDocumentResourceTiming'
 
 function buildMatchHeadersForAllUrls(headerNames: MatchOption[]): MatchHeader[] {
   return headerNames.map((name) => ({ name }))
@@ -45,7 +48,7 @@ describe('resourceCollection', () => {
   let taskQueuePushSpy: jasmine.Spy<TaskQueue['push']>
 
   function setupResourceCollection(partialConfig: Partial<RumConfiguration> = { trackResources: true }) {
-    replaceMockable(retrieveInitialDocumentResourceTiming, noop)
+    const { triggerOnDomLoaded } = mockDocumentReadyState()
     lifeCycle = new LifeCycle()
     const taskQueue = createTaskQueue()
     replaceMockable(createTaskQueue, () => taskQueue)
@@ -57,6 +60,8 @@ describe('resourceCollection', () => {
     registerCleanupTask(() => {
       startResult.stop()
     })
+
+    return { triggerOnDomLoaded }
   }
 
   beforeEach(() => {
@@ -405,10 +410,11 @@ describe('resourceCollection', () => {
     })
 
     describe('and resource is traced', () => {
-      it('should collect a resource from a performance entry', () => {
-        setupResourceCollection({ trackResources: false })
+      it('should collect the initial document navigation entry', () => {
+        replaceMockable(getDocumentTraceId, () => '1234')
+        const { triggerOnDomLoaded } = setupResourceCollection({ trackResources: false })
 
-        notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { traceId: '1234' })])
+        triggerOnDomLoaded()
         runTasks()
 
         expect(rawRumEvents.length).toBe(1)
@@ -1142,9 +1148,12 @@ describe('resourceCollection', () => {
 
   describe('tracing info', () => {
     it('should be processed from traced initial document', () => {
-      setupResourceCollection()
-      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { traceId: '1234' })])
+      replaceMockable(getDocumentTraceId, () => '1234')
+      const { triggerOnDomLoaded } = setupResourceCollection()
+
+      triggerOnDomLoaded()
       runTasks()
+
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields).toBeDefined()
       expect(privateFields.trace_id).toBe('1234')
@@ -1253,6 +1262,28 @@ describe('resourceCollection', () => {
     const domainContext = rawRumEvents[0].domainContext as RumResourceEventDomainContext
 
     expect(domainContext.handlingStack).toMatch(HANDLING_STACK_REGEX)
+  })
+
+  describe('initial document resource', () => {
+    it('should wait until the document is interactive', () => {
+      const { triggerOnDomLoaded } = setupResourceCollection()
+
+      expect(taskQueuePushSpy).not.toHaveBeenCalled()
+      triggerOnDomLoaded()
+      expect(taskQueuePushSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('should use responseEnd as duration', () => {
+      const { triggerOnDomLoaded } = setupResourceCollection()
+
+      triggerOnDomLoaded()
+      runTasks()
+
+      const navigationEntry = getNavigationEntry()
+      expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.duration).toBe(
+        toServerDuration(elapsed(navigationEntry.startTime, navigationEntry.responseEnd))
+      )
+    })
   })
 
   it('collects handle resources in different tasks', () => {

@@ -5,6 +5,7 @@ import {
   relativeToClocks,
   createTaskQueue,
   mockable,
+  runOnReadyState,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
   matchList,
@@ -14,7 +15,6 @@ import {
   RequestType,
 } from '@datadog/browser-core'
 import type { MatchHeader, RumConfiguration } from '../configuration'
-import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType, createPerformanceObservable } from '../../browser/performanceObservable'
 import type { RumResourceEventDomainContext } from '../../domainContext.types'
 import type { NetworkHeaders, RawRumResourceEvent, ResourceRequest, ResourceResponse } from '../../rawRumEvent.types'
@@ -23,6 +23,8 @@ import type { RawRumEventCollectedData, LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RequestCompleteEvent } from '../requestCollection'
 import { createSpanIdentifier } from '../tracing/identifier'
+import { getDocumentTraceId } from '../tracing/getDocumentTraceId'
+import { getNavigationEntry } from '../../browser/performanceUtils'
 import { startEventTracker } from '../eventTracker'
 import { extractRegexMatch } from '../extractRegexMatch'
 import {
@@ -35,7 +37,7 @@ import {
   isResourceEntryRequestType,
   sanitizeIfLongDataUrl,
 } from './resourceUtils'
-import { retrieveInitialDocumentResourceTiming } from './retrieveInitialDocumentResourceTiming'
+import type { ResourceLikeEntry } from './resourceUtils'
 import type { RequestRegistry } from './requestRegistry'
 import { createRequestRegistry } from './requestRegistry'
 import type { GraphQlMetadata } from './graphql'
@@ -56,8 +58,8 @@ export function startResourceCollection(lifeCycle: LifeCycle, configuration: Rum
     }
   })
 
-  mockable(retrieveInitialDocumentResourceTiming)(configuration, (timing) => {
-    handleResource(() => assembleResource(timing, requestRegistry, configuration))
+  const { stop: stopRunOnReadyState } = runOnReadyState(configuration, 'interactive', () => {
+    handleResource(() => assembleResource(getNavigationEntry(), requestRegistry, configuration))
   })
 
   function handleResource(computeRawEvent: () => RawRumEventCollectedData<RawRumResourceEvent> | undefined) {
@@ -76,6 +78,7 @@ export function startResourceCollection(lifeCycle: LifeCycle, configuration: Rum
     startResource: manualResources.startResource,
     stopResource: manualResources.stopResource,
     stop: () => {
+      stopRunOnReadyState()
       taskQueue.stop()
       performanceResourceSubscription.unsubscribe()
       resourceTracker.stopAll()
@@ -84,7 +87,7 @@ export function startResourceCollection(lifeCycle: LifeCycle, configuration: Rum
 }
 
 function assembleResource(
-  entry: RumPerformanceResourceTiming,
+  entry: ResourceLikeEntry,
   requestRegistry: RequestRegistry,
   configuration: RumConfiguration
 ): RawRumEventCollectedData<RawRumResourceEvent> | undefined {
@@ -151,7 +154,7 @@ function computeGraphQlMetaData(
 }
 
 function computeContentTypeFromPerformanceEntry(
-  entry: RumPerformanceResourceTiming
+  entry: ResourceLikeEntry
 ): { resource: Pick<RawRumResourceEvent['resource'], 'response'> } | undefined {
   const contentType = entry.contentType
 
@@ -171,11 +174,11 @@ function computeContentTypeFromPerformanceEntry(
 }
 
 function getResourceDomainContext(
-  entry: RumPerformanceResourceTiming,
+  entry: ResourceLikeEntry,
   request: RequestCompleteEvent | undefined
 ): RumResourceEventDomainContext {
   return {
-    performanceEntry: entry,
+    performanceEntry: entry as unknown as PerformanceResourceTiming | PerformanceNavigationTiming,
     isManual: false,
     isAborted: request ? request.isAborted : false,
     handlingStack: request?.handlingStack,
@@ -201,14 +204,17 @@ function computeRequestTracingInfo(request: RequestCompleteEvent, configuration:
   }
 }
 
-function computeResourceEntryTracingInfo(entry: RumPerformanceResourceTiming, configuration: RumConfiguration) {
-  const hasBeenTraced = entry.traceId
-  if (!hasBeenTraced) {
+function computeResourceEntryTracingInfo(entry: ResourceLikeEntry, configuration: RumConfiguration) {
+  if (entry.initiatorType !== 'navigation') {
+    return undefined
+  }
+  const traceId = mockable(getDocumentTraceId)(document)
+  if (!traceId) {
     return undefined
   }
   return {
     _dd: {
-      trace_id: entry.traceId,
+      trace_id: traceId,
       span_id: createSpanIdentifier().toString(),
       rule_psr: configuration.rulePsr,
     },
