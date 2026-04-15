@@ -35,6 +35,7 @@ export function retrieveFirstInputTiming(
         name: '',
         cancelable: false,
         target: null,
+        interactionId: 0,
         toJSON: () => ({}),
       }
 

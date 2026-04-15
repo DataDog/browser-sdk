@@ -1,10 +1,11 @@
 {
   "compilerOptions": {
     "outDir": "./dist/",
+    "rootDir": "./src",
     "strict": true,
     "module": "commonjs",
-    "moduleResolution": "node",
-    "target": "es5",
+    "moduleResolution": "bundler",
+    "target": "es2015",
     "lib": ["ES2015", "DOM"],
     "types": []
   }
