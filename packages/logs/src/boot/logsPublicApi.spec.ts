@@ -81,6 +81,20 @@ describe('logs entry', () => {
     })
   })
 
+  it('buffered calls should be replayed before microtasks scheduled after init', async () => {
+    const { logsPublicApi, handleLogSpy, getLoggedMessage } = makeLogsPublicApiWithDefaults()
+    logsPublicApi.logger.log('before_init')
+    logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+    // Simulate user code scheduling a microtask right after init
+    void Promise.resolve().then(() => logsPublicApi.logger.log('after_init'))
+
+    await collectAsyncCalls(handleLogSpy, 2)
+
+    expect(getLoggedMessage(0).message.message).toBe('before_init')
+    expect(getLoggedMessage(1).message.message).toBe('after_init')
+  })
+
   describe('post start API usages', () => {
     let logsPublicApi: LogsPublicApi
     let getLoggedMessage: ReturnType<typeof makeLogsPublicApiWithDefaults>['getLoggedMessage']
@@ -260,6 +274,7 @@ function makeLogsPublicApiWithDefaults({
 
   return {
     startLogsSpy,
+    handleLogSpy,
     logsPublicApi: makeLogsPublicApi(),
     getLoggedMessage,
   }

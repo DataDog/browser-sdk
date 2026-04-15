@@ -560,12 +560,11 @@ describe('rum public api', () => {
     let addTimingSpy: jasmine.Spy<ReturnType<StartRum>['addTiming']>
     let displaySpy: jasmine.Spy<() => void>
     let rumPublicApi: RumPublicApi
-    let startRumSpy: ReturnType<typeof makeRumPublicApiWithDefaults>['startRumSpy']
 
     beforeEach(() => {
       addTimingSpy = jasmine.createSpy()
       displaySpy = spyOn(display, 'error')
-      ;({ rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
+      ;({ rumPublicApi } = makeRumPublicApiWithDefaults({
         startRumResult: {
           addTiming: addTimingSpy,
         },
@@ -584,10 +583,23 @@ describe('rum public api', () => {
       expect(displaySpy).not.toHaveBeenCalled()
     })
 
+    it('buffered calls should be replayed before microtasks scheduled after init', async () => {
+      rumPublicApi.addTiming('before_init')
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+      // Simulate user code scheduling a microtask right after init
+      void Promise.resolve().then(() => rumPublicApi.addTiming('after_init'))
+
+      await collectAsyncCalls(addTimingSpy, 2)
+
+      expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('before_init')
+      expect(addTimingSpy.calls.argsFor(1)[0]).toEqual('after_init')
+    })
+
     it('adds custom timing with provided time', async () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      await collectAsyncCalls(startRumSpy, 1)
       rumPublicApi.addTiming('foo', 12)
+      await collectAsyncCalls(addTimingSpy, 1)
 
       expect(addTimingSpy).toHaveBeenCalledTimes(1)
       expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('foo')
@@ -768,12 +780,16 @@ describe('rum public api', () => {
       await collectAsyncCalls(startRumSpy, 1)
       rumPublicApi.startDurationVital('foo', { context: { foo: 'bar' }, description: 'description-value' })
       await collectAsyncCalls(startDurationVitalSpy, 1)
-      expect(startDurationVitalSpy).toHaveBeenCalledWith('foo', {
-        vitalKey: undefined,
-        description: 'description-value',
-        context: { foo: 'bar' },
-        handlingStack: jasmine.any(String),
-      })
+      expect(startDurationVitalSpy).toHaveBeenCalledWith(
+        'foo',
+        {
+          vitalKey: undefined,
+          description: 'description-value',
+          context: { foo: 'bar' },
+          handlingStack: jasmine.any(String),
+        },
+        jasmine.objectContaining({ relative: jasmine.any(Number), timeStamp: jasmine.any(Number) })
+      )
     })
   })
 
@@ -789,11 +805,16 @@ describe('rum public api', () => {
       await collectAsyncCalls(startRumSpy, 1)
       rumPublicApi.startDurationVital('foo', { context: { foo: 'bar' }, description: 'description-value' })
       rumPublicApi.stopDurationVital('foo', { context: { foo: 'bar' }, description: 'description-value' })
-      expect(stopDurationVitalSpy).toHaveBeenCalledWith('foo', {
-        vitalKey: undefined,
-        description: 'description-value',
-        context: { foo: 'bar' },
-      })
+      await collectAsyncCalls(stopDurationVitalSpy, 1)
+      expect(stopDurationVitalSpy).toHaveBeenCalledWith(
+        'foo',
+        {
+          vitalKey: undefined,
+          description: 'description-value',
+          context: { foo: 'bar' },
+        },
+        jasmine.objectContaining({ relative: jasmine.any(Number), timeStamp: jasmine.any(Number) })
+      )
     })
 
     it('should call stopDurationVital with a vitalKey on the startRum result', async () => {
@@ -816,11 +837,15 @@ describe('rum public api', () => {
         description: 'description-value',
       })
       await collectAsyncCalls(stopDurationVitalSpy, 1)
-      expect(stopDurationVitalSpy).toHaveBeenCalledWith('foo', {
-        vitalKey: 'my-key',
-        description: 'description-value',
-        context: { foo: 'bar' },
-      })
+      expect(stopDurationVitalSpy).toHaveBeenCalledWith(
+        'foo',
+        {
+          vitalKey: 'my-key',
+          description: 'description-value',
+          context: { foo: 'bar' },
+        },
+        jasmine.objectContaining({ relative: jasmine.any(Number), timeStamp: jasmine.any(Number) })
+      )
     })
   })
 

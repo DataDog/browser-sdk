@@ -976,10 +976,15 @@ export function makeRumPublicApi(
 
 function createPostStartStrategy(preStartStrategy: Strategy, startRumResult: StartRumResult): Strategy {
   return {
+    ...preStartStrategy,
     init: (initConfiguration: RumInitConfiguration) => {
       displayAlreadyInitializedError('DD_RUM', initConfiguration)
     },
-    initConfiguration: preStartStrategy.initConfiguration,
-    ...startRumResult,
+    getInternalContext: startRumResult.getInternalContext,
+    stopSession: startRumResult.stopSession,
+    getViewContext: startRumResult.getViewContext,
+    globalContext: startRumResult.globalContext,
+    userContext: startRumResult.userContext,
+    accountContext: startRumResult.accountContext,
   }
 }

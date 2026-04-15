@@ -94,8 +94,10 @@ export function createPreStartStrategy(
 
   const emptyContext: Context = {}
 
+  let started = false
+
   function tryStartRum() {
-    if (!cachedInitConfiguration || !cachedConfiguration || !sessionManager || !telemetry) {
+    if (started || !cachedInitConfiguration || !cachedConfiguration || !sessionManager || !telemetry) {
       return
     }
 
@@ -126,6 +128,8 @@ export function createPreStartStrategy(
       telemetry,
       hooks
     )
+
+    started = true
 
     bufferApiCalls.subscribe((callback) => {
       if (callback !== callbackToSkip) {

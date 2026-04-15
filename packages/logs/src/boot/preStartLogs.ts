@@ -32,7 +32,6 @@ import type { Strategy } from './logsPublicApi'
 import type { StartLogsResult } from './startLogs'
 
 export type DoStartLogs = (
-  initConfiguration: LogsInitConfiguration,
   configuration: LogsConfiguration,
   sessionManager: SessionManager,
   hooks: Hooks
@@ -71,7 +70,7 @@ export function createPreStartStrategy(
     }
 
     trackingConsentStateSubscription.unsubscribe()
-    const startLogsResult = doStartLogs(cachedInitConfiguration, cachedConfiguration, sessionManager, hooks)
+    const startLogsResult = doStartLogs(cachedConfiguration, sessionManager, hooks)
 
     bufferApiCalls.subscribe((callback) => callback(startLogsResult))
     bufferApiCalls.unbuffer()
