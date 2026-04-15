@@ -50,4 +50,16 @@ test.describe('plugin: vue', () => {
       expect(errorEvent.error.stack).toBeDefined()
       expect(errorEvent.context?.framework).toBe('vue')
     })
+
+  createTest('should send a vue component render vital event')
+    .withRum()
+    .withVueApp()
+    .run(async ({ page, flushEvents, intakeRegistry }) => {
+      await page.click('text=Go to Tracked')
+      await flushEvents()
+
+      const vitalEvent = intakeRegistry.rumVitalEvents[0]
+      expect(vitalEvent.vital.description).toBe('TrackedPage')
+      expect(vitalEvent.vital.duration).toEqual(expect.any(Number))
+    })
 })
