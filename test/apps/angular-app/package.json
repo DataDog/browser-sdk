@@ -6,7 +6,7 @@
   },
   "dependencies": {
     "@angular/common": "15.2.10",
-    "@angular/compiler": "15.2.10",
+    "@angular/compiler": "19.2.20",
     "@angular/compiler-cli": "15.2.10",
     "@angular/core": "15.2.10",
     "@angular/platform-browser": "15.2.10",

@@ -46,12 +46,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@angular/compiler@npm:19.2.5":
-  version: 19.2.5
-  resolution: "@angular/compiler@npm:19.2.5"
+"@angular/compiler@npm:19.2.20":
+  version: 19.2.20
+  resolution: "@angular/compiler@npm:19.2.20"
   dependencies:
     tslib: "npm:^2.3.0"
-  checksum: 10c0/e65f84ef2d53eb1250d3085074eb1b3fbd8d3f8f9603e32be67c82194ae4f8a4a98f250d954f830a67e68c4d2f3b3d01da5c0f49157cc1746064a37d14b74a76
+  checksum: 10c0/067ed805c550485f74437d38c9a8168e9b92cab8d5660b068e038e50c2ec2f3f3223cf2ffc267b80e9fb107c57880026800ba4d7a92a193167042af3ba7a0b17
   languageName: node
   linkType: hard
 
@@ -344,7 +344,7 @@ __metadata:
   resolution: "@datadog/browser-rum-angular@workspace:packages/rum-angular"
   dependencies:
     "@angular/common": "npm:19.2.5"
-    "@angular/compiler": "npm:19.2.5"
+    "@angular/compiler": "npm:19.2.20"
     "@angular/core": "npm:19.2.5"
     "@angular/router": "npm:19.2.5"
     "@datadog/browser-core": "npm:6.32.0"
