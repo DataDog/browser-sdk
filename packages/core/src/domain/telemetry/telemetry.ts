@@ -69,6 +69,7 @@ export const enum TelemetryMetrics {
   RECORDER_INIT_METRICS_TELEMETRY_NAME = 'Recorder init metrics',
   SEGMENT_METRICS_TELEMETRY_NAME = 'Segment network request metrics',
   INITIAL_VIEW_METRICS_TELEMETRY_NAME = 'Initial view metrics',
+  SESSION_MANAGER_INIT_METRICS_TELEMETRY_NAME = 'Session manager init metrics',
 }
 
 const METRIC_SAMPLE_RATE = 1
