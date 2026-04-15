@@ -604,7 +604,7 @@ export function makeRumPublicApi(
   options: RumPublicApiOptions = {}
 ): RumPublicApi {
   const trackingConsentState = createTrackingConsentState()
-  const bufferedDataObservable = startBufferingData().observable
+  const bufferedData = startBufferingData()
 
   let strategy = createPreStartStrategy(
     options,
@@ -622,7 +622,7 @@ export function makeRumPublicApi(
         profilerApi,
         initialViewOptions,
         createEncoder,
-        bufferedDataObservable,
+        bufferedData.observable,
         telemetry,
         hooks,
         options.sdkName

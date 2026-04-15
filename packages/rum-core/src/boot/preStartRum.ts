@@ -20,10 +20,6 @@ import {
   getEventBridge,
   initFeatureFlags,
   addTelemetryConfiguration,
-  initFetchObservable,
-  initXhrObservable,
-  initConsoleObservable,
-  ConsoleApiName,
   CustomerContextKey,
   buildAccountContextManager,
   buildGlobalContextManager,
@@ -164,12 +160,6 @@ export function createPreStartStrategy(
     }
 
     cachedConfiguration = configuration
-
-    // Instrument fetch, XHR and console.error early so events fired synchronously after
-    // init() are captured and buffered for replay when startRum() subscribes.
-    initFetchObservable().subscribe(noop)
-    initXhrObservable(configuration).subscribe(noop)
-    initConsoleObservable([ConsoleApiName.error]).subscribe(noop)
 
     trackingConsentState.tryToInit(configuration.trackingConsent)
 

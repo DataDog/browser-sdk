@@ -1,8 +1,7 @@
 import type { InstrumentedMethodCall } from '../tools/instrumentMethod'
 import { instrumentMethod } from '../tools/instrumentMethod'
 import { monitorError } from '../tools/monitor'
-import type { Observable } from '../tools/observable'
-import { BufferedObservable } from '../tools/observable'
+import { Observable } from '../tools/observable'
 import type { ClocksState } from '../tools/utils/timeUtils'
 import { clocksNow } from '../tools/utils/timeUtils'
 import { normalizeUrl } from '../tools/utils/urlPolyfill'
@@ -48,9 +47,7 @@ export const enum ResponseBodyAction {
   COLLECT = 1,
 }
 
-const FETCH_BUFFER_LIMIT = 500
-
-let fetchObservable: BufferedObservable<FetchContext> | undefined
+let fetchObservable: Observable<FetchContext> | undefined
 const responseBodyActionGetters: ResponseBodyActionGetter[] = []
 
 export function initFetchObservable({ responseBodyAction }: { responseBodyAction?: ResponseBodyActionGetter } = {}) {
@@ -69,7 +66,7 @@ export function resetFetchObservable() {
 }
 
 function createFetchObservable() {
-  return new BufferedObservable<FetchContext>(FETCH_BUFFER_LIMIT, (observable) => {
+  return new Observable<FetchContext>((observable) => {
     // eslint-disable-next-line local-rules/disallow-zone-js-patched-values
     if (!globalObject.fetch) {
       return
@@ -126,18 +123,20 @@ async function afterSend(
   startContext: FetchStartContext
 ) {
   const context = startContext as unknown as FetchResolveContext
-  context.state = 'resolve'
 
   let response: Response
 
   try {
     response = await responsePromise
   } catch (error) {
-    context.status = 0
-    context.isAborted =
-      context.init?.signal?.aborted || (error instanceof DOMException && error.code === DOMException.ABORT_ERR)
-    context.error = error as Error
-    observable.notify(context)
+    observable.notify({
+      ...context,
+      state: 'resolve',
+      status: 0,
+      isAborted:
+        context.init?.signal?.aborted || (error instanceof DOMException && error.code === DOMException.ABORT_ERR),
+      error: error as Error,
+    })
     return
   }
 
@@ -164,5 +163,5 @@ async function afterSend(
     }
   }
 
-  observable.notify(context)
+  observable.notify({ ...context, state: 'resolve' })
 }

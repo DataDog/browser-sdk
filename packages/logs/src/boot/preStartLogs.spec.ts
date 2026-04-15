@@ -1,5 +1,4 @@
 import {
-  callbackAddsInstrumentation,
   collectAsyncCalls,
   type Clock,
   mockClock,
@@ -213,21 +212,6 @@ describe('preStartLogs', () => {
     beforeEach(() => {
       trackingConsentState = createTrackingConsentState()
       ;({ strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults({ trackingConsentState }))
-    })
-
-    describe('basic methods instrumentation', () => {
-      it('should instrument fetch even if tracking consent is not granted', () => {
-        expect(
-          callbackAddsInstrumentation(() => {
-            strategy.init({
-              ...DEFAULT_INIT_CONFIGURATION,
-              trackingConsent: TrackingConsent.NOT_GRANTED,
-            })
-          })
-            .toMethod(window, 'fetch')
-            .whenCalled()
-        ).toBeTrue()
-      })
     })
 
     it('does not start logs if tracking consent is not granted at init', () => {

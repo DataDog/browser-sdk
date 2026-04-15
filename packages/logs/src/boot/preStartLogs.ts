@@ -5,8 +5,6 @@ import {
   display,
   displayAlreadyInitializedError,
   initFeatureFlags,
-  initFetchObservable,
-  initConsoleObservable,
   monitorError,
   noop,
   timeStampNow,
@@ -100,13 +98,6 @@ export function createPreStartStrategy(
       }
 
       cachedConfiguration = configuration
-
-      // Instrument fetch and console early so events fired synchronously after
-      // init() are captured and buffered for replay when startLogs() subscribes.
-      initFetchObservable().subscribe(noop)
-      if (configuration.forwardConsoleLogs.length) {
-        initConsoleObservable(configuration.forwardConsoleLogs).subscribe(noop)
-      }
 
       trackingConsentState.tryToInit(configuration.trackingConsent)
 

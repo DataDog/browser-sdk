@@ -1,14 +1,10 @@
 import type { InstrumentedMethodCall } from '../tools/instrumentMethod'
 import { instrumentMethod } from '../tools/instrumentMethod'
-import type { Observable } from '../tools/observable'
-import { BufferedObservable } from '../tools/observable'
+import { Observable } from '../tools/observable'
 import type { Duration, ClocksState } from '../tools/utils/timeUtils'
 import { elapsed, clocksNow, timeStampNow } from '../tools/utils/timeUtils'
 import { normalizeUrl } from '../tools/utils/urlPolyfill'
-import { shallowClone } from '../tools/utils/objectUtils'
-import type { Configuration } from '../domain/configuration'
 import { globalObject } from '../tools/globalObject'
-import { noop } from '../tools/utils/functionUtils'
 import { addEventListener } from './addEventListener'
 
 export interface XhrOpenContext {
@@ -35,24 +31,22 @@ export interface XhrCompleteContext extends Omit<XhrStartContext, 'state'> {
 
 export type XhrContext = XhrOpenContext | XhrStartContext | XhrCompleteContext
 
-const XHR_BUFFER_LIMIT = 500
-
-let xhrObservable: BufferedObservable<XhrContext> | undefined
+let xhrObservable: Observable<XhrContext> | undefined
 const xhrContexts = new WeakMap<XMLHttpRequest, XhrContext>()
 
-export function initXhrObservable(configuration: Configuration) {
+export function initXhrObservable(configuration: { allowUntrustedEvents?: boolean | undefined }) {
   if (!xhrObservable) {
     xhrObservable = createXhrObservable(configuration)
   }
   return xhrObservable
 }
 
-function createXhrObservable(configuration: Configuration) {
+function createXhrObservable(configuration: { allowUntrustedEvents?: boolean | undefined }) {
   if (!('XMLHttpRequest' in globalObject)) {
-    return new BufferedObservable<XhrContext>(XHR_BUFFER_LIMIT, () => noop)
+    return new Observable<XhrContext>()
   }
 
-  return new BufferedObservable<XhrContext>(XHR_BUFFER_LIMIT, (observable) => {
+  return new Observable<XhrContext>((observable) => {
     const { stop: stopInstrumentingStart } = instrumentMethod(XMLHttpRequest.prototype, 'open', openXhr)
 
     const { stop: stopInstrumentingSend } = instrumentMethod(
@@ -84,7 +78,7 @@ function openXhr({ target: xhr, parameters: [method, url] }: InstrumentedMethodC
 
 function sendXhr(
   { target: xhr, parameters: [body], handlingStack }: InstrumentedMethodCall<XMLHttpRequest, 'send'>,
-  configuration: Configuration,
+  configuration: { allowUntrustedEvents?: boolean | undefined },
   observable: Observable<XhrContext>
 ) {
   const context = xhrContexts.get(xhr)
@@ -121,13 +115,12 @@ function sendXhr(
     hasBeenReported = true
 
     const completeContext = context as XhrCompleteContext
-    completeContext.state = 'complete'
     completeContext.duration = elapsed(startContext.startClocks.timeStamp, timeStampNow())
     completeContext.status = xhr.status
     if (typeof xhr.response === 'string') {
       completeContext.responseBody = xhr.response
     }
-    observable.notify(shallowClone(completeContext))
+    observable.notify({ ...completeContext, state: 'complete' })
   }
 
   const { stop: unsubscribeLoadEndListener } = addEventListener(configuration, xhr, 'loadend', onEnd)

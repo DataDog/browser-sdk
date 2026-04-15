@@ -51,10 +51,10 @@ export function startLogs(
   const globalContext = startGlobalContext(hooks, configuration, LOGS_STORAGE_KEY, false)
   startRUMInternalContext(hooks)
 
-  startNetworkErrorCollection(configuration, lifeCycle)
+  startNetworkErrorCollection(configuration, lifeCycle, bufferedDataObservable)
   startRuntimeErrorCollection(configuration, lifeCycle, bufferedDataObservable)
+  startConsoleCollection(configuration, lifeCycle, bufferedDataObservable)
   bufferedDataObservable.unbuffer()
-  startConsoleCollection(configuration, lifeCycle)
   startReportCollection(configuration, lifeCycle)
   const { handleLog } = startLoggerCollection(lifeCycle)
 
