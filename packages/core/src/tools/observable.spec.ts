@@ -256,4 +256,42 @@ describe('BufferedObservable', () => {
     expect(observer).toHaveBeenCalledWith('first')
     expect(observer).toHaveBeenCalledWith('second')
   })
+
+  it('calls onDrop with the number of dropped items when unbuffering', async () => {
+    const onDrop = jasmine.createSpy('onDrop')
+    const observable = new BufferedObservable<string>(2, onDrop)
+    observable.notify('first') // dropped
+    observable.notify('second') // dropped
+    observable.notify('third')
+    observable.notify('fourth')
+
+    observable.unbuffer()
+    await waitNextMicrotask()
+
+    expect(onDrop).toHaveBeenCalledOnceWith(2)
+  })
+
+  it('does not call onDrop when no data was dropped', async () => {
+    const onDrop = jasmine.createSpy('onDrop')
+    const observable = new BufferedObservable<string>(2, onDrop)
+    observable.notify('first')
+    observable.notify('second')
+
+    observable.unbuffer()
+    await waitNextMicrotask()
+
+    expect(onDrop).not.toHaveBeenCalled()
+  })
+
+  it('does not call onDrop when no callback is provided', async () => {
+    const observable = new BufferedObservable<string>(2)
+    observable.notify('first') // dropped
+    observable.notify('second')
+    observable.notify('third')
+
+    expect(() => {
+      observable.unbuffer()
+    }).not.toThrow()
+    await waitNextMicrotask()
+  })
 })
