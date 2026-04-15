@@ -8,4 +8,5 @@ export async function clickAndWaitForURL(page: Page, selector: string, urlPatter
 
 export async function goHome(page: Page, homeUrlPattern: UrlPattern) {
   await clickAndWaitForURL(page, 'text=Back to Home', homeUrlPattern)
+  await page.waitForSelector('text=Go to User 42')
 }
