@@ -34,50 +34,72 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@angular/common@npm:19.2.20":
-  version: 19.2.20
-  resolution: "@angular/common@npm:19.2.20"
+"@angular/common@npm:21.2.8":
+  version: 21.2.8
+  resolution: "@angular/common@npm:21.2.8"
   dependencies:
     tslib: "npm:^2.3.0"
   peerDependencies:
-    "@angular/core": 19.2.20
+    "@angular/core": 21.2.8
     rxjs: ^6.5.3 || ^7.4.0
-  checksum: 10c0/88076e1dd755eeec82cc81c1b40c0dd13facf0218b0e17adcb424f2a4238789b7f516d943ea4c3dea7b980ce63ea1ef44b01b1d59ce62baab43911608ebfd305
+  checksum: 10c0/ba6a15a4c60760140df17f026a05dc72a2379615b0df7639ea9a94222a5d70354664788a6e437e747ff6f5d60bcb181383b30ebfc7cdbba2de70c4a147ca5c42
   languageName: node
   linkType: hard
 
-"@angular/compiler@npm:19.2.20":
-  version: 19.2.20
-  resolution: "@angular/compiler@npm:19.2.20"
+"@angular/compiler@npm:21.2.8":
+  version: 21.2.8
+  resolution: "@angular/compiler@npm:21.2.8"
   dependencies:
     tslib: "npm:^2.3.0"
-  checksum: 10c0/067ed805c550485f74437d38c9a8168e9b92cab8d5660b068e038e50c2ec2f3f3223cf2ffc267b80e9fb107c57880026800ba4d7a92a193167042af3ba7a0b17
+  checksum: 10c0/bca58c86c7b822a6aaab1eb450d765c8c8f6c1e449f7f44d0ad73d23f39e3fbf848fe543274ae08f9f51cb5828fdb30268206ba59475528b55f9954f2cab4a38
   languageName: node
   linkType: hard
 
-"@angular/core@npm:19.2.20":
-  version: 19.2.20
-  resolution: "@angular/core@npm:19.2.20"
-  dependencies:
-    tslib: "npm:^2.3.0"
-  peerDependencies:
-    rxjs: ^6.5.3 || ^7.4.0
-    zone.js: ~0.15.0
-  checksum: 10c0/07eece4075472ce0aca9cc6c2a5448e79da264b233c4021665076ebb4dbfed4cc4cb16d5ad2d028b640d4df544380c8b16443a10335235fb0d687938d3a55188
-  languageName: node
-  linkType: hard
-
-"@angular/router@npm:19.2.20":
-  version: 19.2.20
-  resolution: "@angular/router@npm:19.2.20"
+"@angular/core@npm:21.2.8":
+  version: 21.2.8
+  resolution: "@angular/core@npm:21.2.8"
   dependencies:
     tslib: "npm:^2.3.0"
   peerDependencies:
-    "@angular/common": 19.2.20
-    "@angular/core": 19.2.20
-    "@angular/platform-browser": 19.2.20
+    "@angular/compiler": 21.2.8
     rxjs: ^6.5.3 || ^7.4.0
-  checksum: 10c0/ae80de211f7fd3061946acd48c67a30ca5953b65bf5c0e6f8b777f5cb2920e74bd402cf166fe6c845f685a00ad2943531bc62c0e67bde6f879cb6e59273d9272
+    zone.js: ~0.15.0 || ~0.16.0
+  peerDependenciesMeta:
+    "@angular/compiler":
+      optional: true
+    zone.js:
+      optional: true
+  checksum: 10c0/6744f1fe1d728ae5c4c84c38d7f9b89ef35ceb8c160ae906c17ef779ae18a52b3704c93dd4b71758f0fe755706dc8cbf70ae00028c78ff069525f8e73a3d71da
+  languageName: node
+  linkType: hard
+
+"@angular/platform-browser@npm:21.2.8":
+  version: 21.2.8
+  resolution: "@angular/platform-browser@npm:21.2.8"
+  dependencies:
+    tslib: "npm:^2.3.0"
+  peerDependencies:
+    "@angular/animations": 21.2.8
+    "@angular/common": 21.2.8
+    "@angular/core": 21.2.8
+  peerDependenciesMeta:
+    "@angular/animations":
+      optional: true
+  checksum: 10c0/665765c3961d6aabca008d07099680a151c5a3285cb56a5ded5553e175081fb3f0f1d54e26fb9f935ef6cc44844417ac80810a8bc89f453c25a5ba05497c019e
+  languageName: node
+  linkType: hard
+
+"@angular/router@npm:21.2.8":
+  version: 21.2.8
+  resolution: "@angular/router@npm:21.2.8"
+  dependencies:
+    tslib: "npm:^2.3.0"
+  peerDependencies:
+    "@angular/common": 21.2.8
+    "@angular/core": 21.2.8
+    "@angular/platform-browser": 21.2.8
+    rxjs: ^6.5.3 || ^7.4.0
+  checksum: 10c0/f30994fb04b10a98cea1fe17f466b112eae7c984d48fa8a3fa2cf5a24d85e48e1fadc743faa21f16fa0c3510ce321b55e34ceef8822098efa064c4cb0ca5e354
   languageName: node
   linkType: hard
 
@@ -314,10 +336,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-angular@workspace:packages/rum-angular"
   dependencies:
-    "@angular/common": "npm:19.2.20"
-    "@angular/compiler": "npm:19.2.20"
-    "@angular/core": "npm:19.2.20"
-    "@angular/router": "npm:19.2.20"
+    "@angular/common": "npm:21.2.8"
+    "@angular/compiler": "npm:21.2.8"
+    "@angular/core": "npm:21.2.8"
+    "@angular/platform-browser": "npm:21.2.8"
+    "@angular/router": "npm:21.2.8"
     "@datadog/browser-core": "npm:6.32.0"
     "@datadog/browser-rum-core": "npm:6.32.0"
     rxjs: "npm:7.8.2"
