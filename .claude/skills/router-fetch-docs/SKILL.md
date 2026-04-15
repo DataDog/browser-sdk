@@ -35,10 +35,23 @@ Analyze the fetched documentation and produce a structured summary covering thes
 
 #### Sourcing Rules
 
-- Every API name (class, interface, function, event, type) MUST be a clickable link to its API reference page (e.g. `[GuardsCheckEnd](https://angular.dev/api/router/GuardsCheckEnd)`).
-- Do NOT use generic `([source](url))` links. Instead, make the API name itself the link.
-- Every factual claim MUST be linked — either via an API link on the relevant name, or via a `([guide](url))` / `([commit](url))` link for non-API content.
-- Unsourced claims must be marked as _inferred: \<reasoning\>_.
+**Core rule: if the docs have a page or anchor for it, link to it.** API names, file names, config properties, hook names, type names, CLI flags, table entries — everything.
+
+- **Always link a word already in the sentence** — never append a suffix like `([guide](url))` or `([source](url))`. Pick the most relevant word or name and make it the link.
+- **Discover anchors before linking.** Fetch each doc page to find exact anchor IDs (e.g. `#page-page.svelte`, `#Server-hooks-handle`) — do not guess them.
+- **Unsourced claims** must be marked _inferred: \<reasoning\>_.
+
+```markdown
+<!-- ✅ Good: link is on a word in the sentence -->
+
+SvelteKit uses a [filesystem-based router](https://svelte.dev/docs/kit/routing)
+| [`+page.svelte`](https://svelte.dev/docs/kit/routing#page-page.svelte) | Page component |
+
+<!-- ❌ Bad: trailing suffix -->
+
+SvelteKit uses a filesystem-based router ([guide](https://svelte.dev/docs/kit/routing))
+| `+page.svelte` ([source](https://svelte.dev/docs/kit/routing)) | Page component |
+```
 
 #### Required Sections
 
@@ -95,6 +108,7 @@ Use GitHub Releases to identify major versions. Fetch `https://github.com/<org>/
 ### vX.0.0 (YYYY-MM-DD)
 
 **Breaking Changes:**
+
 - Change description ([source](url))
 - ...
 ```
