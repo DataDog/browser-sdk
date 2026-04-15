@@ -2,14 +2,12 @@ import type {
   TrackingConsentState,
   DeflateWorker,
   Context,
-  ContextManager,
-  BoundedBuffer,
   Telemetry,
   TimeStamp,
   SessionManager,
 } from '@datadog/browser-core'
 import {
-  createBoundedBuffer,
+  BufferedObservable,
   display,
   canUseEventBridge,
   displayAlreadyInitializedError,
@@ -24,6 +22,7 @@ import {
   buildAccountContextManager,
   buildGlobalContextManager,
   buildUserContextManager,
+  bufferContextCalls,
   monitorError,
   sanitize,
   startSessionManager,
@@ -33,6 +32,7 @@ import {
   mockable,
   isWorkerEnvironment,
   startTelemetrySessionContext,
+  addTelemetryDebug,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
@@ -63,7 +63,11 @@ export function createPreStartStrategy(
   trackingConsentState: TrackingConsentState,
   doStartRum: DoStartRum
 ): Strategy {
-  const bufferApiCalls = createBoundedBuffer<StartRumResult>()
+  const BUFFER_LIMIT = 500
+  const bufferApiCalls = new BufferedObservable<(startRumResult: StartRumResult) => void>(BUFFER_LIMIT, (count) => {
+    // monitor-until: 2026-10-14
+    addTelemetryDebug('preStartRum buffer data lost', { count })
+  })
 
   // TODO next major: remove the globalContextManager, userContextManager and accountContextManager from preStartStrategy and use an empty context instead
   const globalContext = buildGlobalContextManager()
@@ -107,11 +111,12 @@ export function createPreStartStrategy(
       // When tracking views automatically, any startView call before RUM start creates an extra
       // view.
       // When tracking views manually, we use the ViewOptions from the first startView call as the
-      // initial view options, and we remove the actual startView call so we don't create an extra
+      // initial view options, and we skip the actual startView callback so we don't create an extra
       // view.
-      bufferApiCalls.remove(firstStartViewCall.callback)
       initialViewOptions = firstStartViewCall.options
     }
+
+    const callbackToSkip = cachedConfiguration.trackViewsManually ? firstStartViewCall?.callback : undefined
 
     const startRumResult = doStartRum(
       cachedConfiguration,
@@ -122,7 +127,12 @@ export function createPreStartStrategy(
       hooks
     )
 
-    bufferApiCalls.drain(startRumResult)
+    bufferApiCalls.subscribe((callback) => {
+      if (callback !== callbackToSkip) {
+        callback(startRumResult)
+      }
+    })
+    bufferApiCalls.unbuffer()
   }
 
   function doInit(initConfiguration: RumInitConfiguration, errorStack?: string) {
@@ -197,7 +207,7 @@ export function createPreStartStrategy(
     options?: FeatureOperationOptions,
     failureReason?: FailureReason
   ) => {
-    bufferApiCalls.add((startRumResult) =>
+    bufferApiCalls.notify((startRumResult) =>
       startRumResult.addOperationStepVital(
         sanitize(name)!,
         stepType,
@@ -251,18 +261,18 @@ export function createPreStartStrategy(
     stopSession: noop,
 
     addTiming(name, time = timeStampNow()) {
-      bufferApiCalls.add((startRumResult) => startRumResult.addTiming(name, time))
+      bufferApiCalls.notify((startRumResult) => startRumResult.addTiming(name, time))
     },
 
     setLoadingTime: ((callTimestamp: TimeStamp) => {
-      bufferApiCalls.add((startRumResult) => startRumResult.setLoadingTime(callTimestamp))
+      bufferApiCalls.notify((startRumResult) => startRumResult.setLoadingTime(callTimestamp))
     }) as Strategy['setLoadingTime'],
 
     startView(options, startClocks = clocksNow()) {
       const callback = (startRumResult: StartRumResult) => {
         startRumResult.startView(options, startClocks)
       }
-      bufferApiCalls.add(callback)
+      bufferApiCalls.notify(callback)
 
       if (!firstStartViewCall) {
         firstStartViewCall = { options, callback }
@@ -271,17 +281,17 @@ export function createPreStartStrategy(
     },
 
     setViewName(name) {
-      bufferApiCalls.add((startRumResult) => startRumResult.setViewName(name))
+      bufferApiCalls.notify((startRumResult) => startRumResult.setViewName(name))
     },
 
     // View context APIs
 
     setViewContext(context) {
-      bufferApiCalls.add((startRumResult) => startRumResult.setViewContext(context))
+      bufferApiCalls.notify((startRumResult) => startRumResult.setViewContext(context))
     },
 
     setViewContextProperty(key, value) {
-      bufferApiCalls.add((startRumResult) => startRumResult.setViewContextProperty(key, value))
+      bufferApiCalls.notify((startRumResult) => startRumResult.setViewContextProperty(key, value))
     },
 
     getViewContext: () => emptyContext,
@@ -291,49 +301,49 @@ export function createPreStartStrategy(
     accountContext,
 
     addAction(action) {
-      bufferApiCalls.add((startRumResult) => startRumResult.addAction(action))
+      bufferApiCalls.notify((startRumResult) => startRumResult.addAction(action))
     },
 
     startAction(name, options) {
       const startClocks = clocksNow()
-      bufferApiCalls.add((startRumResult) => startRumResult.startAction(name, options, startClocks))
+      bufferApiCalls.notify((startRumResult) => startRumResult.startAction(name, options, startClocks))
     },
 
     stopAction(name, options) {
       const stopClocks = clocksNow()
-      bufferApiCalls.add((startRumResult) => startRumResult.stopAction(name, options, stopClocks))
+      bufferApiCalls.notify((startRumResult) => startRumResult.stopAction(name, options, stopClocks))
     },
 
     startResource(url, options) {
       const startClocks = clocksNow()
-      bufferApiCalls.add((startRumResult) => startRumResult.startResource(url, options, startClocks))
+      bufferApiCalls.notify((startRumResult) => startRumResult.startResource(url, options, startClocks))
     },
 
     stopResource(url, options) {
       const stopClocks = clocksNow()
-      bufferApiCalls.add((startRumResult) => startRumResult.stopResource(url, options, stopClocks))
+      bufferApiCalls.notify((startRumResult) => startRumResult.stopResource(url, options, stopClocks))
     },
 
     addError(providedError) {
-      bufferApiCalls.add((startRumResult) => startRumResult.addError(providedError))
+      bufferApiCalls.notify((startRumResult) => startRumResult.addError(providedError))
     },
 
     addFeatureFlagEvaluation(key, value) {
-      bufferApiCalls.add((startRumResult) => startRumResult.addFeatureFlagEvaluation(key, value))
+      bufferApiCalls.notify((startRumResult) => startRumResult.addFeatureFlagEvaluation(key, value))
     },
 
     startDurationVital(name, options) {
       const startClocks = clocksNow()
-      bufferApiCalls.add((startRumResult) => startRumResult.startDurationVital(name, options, startClocks))
+      bufferApiCalls.notify((startRumResult) => startRumResult.startDurationVital(name, options, startClocks))
     },
 
     stopDurationVital(name, options) {
       const stopClocks = clocksNow()
-      bufferApiCalls.add((startRumResult) => startRumResult.stopDurationVital(name, options, stopClocks))
+      bufferApiCalls.notify((startRumResult) => startRumResult.stopDurationVital(name, options, stopClocks))
     },
 
     addDurationVital(vital) {
-      bufferApiCalls.add((startRumResult) => startRumResult.addDurationVital(vital))
+      bufferApiCalls.notify((startRumResult) => startRumResult.addDurationVital(vital))
     },
     addOperationStepVital,
   }
@@ -349,15 +359,4 @@ function overrideInitConfigurationForBridge(initConfiguration: RumInitConfigurat
     sessionSampleRate: 100,
     defaultPrivacyLevel: initConfiguration.defaultPrivacyLevel ?? getEventBridge()?.getPrivacyLevel(),
   }
-}
-
-function bufferContextCalls(
-  preStartContextManager: ContextManager,
-  name: CustomerContextKey,
-  bufferApiCalls: BoundedBuffer<StartRumResult>
-) {
-  preStartContextManager.changeObservable.subscribe(() => {
-    const context = preStartContextManager.getContext()
-    bufferApiCalls.add((startRumResult) => startRumResult[name].setContext(context))
-  })
 }

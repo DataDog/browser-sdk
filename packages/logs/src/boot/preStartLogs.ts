@@ -1,6 +1,6 @@
 import type { TrackingConsentState, SessionManager } from '@datadog/browser-core'
 import {
-  createBoundedBuffer,
+  BufferedObservable,
   canUseEventBridge,
   display,
   displayAlreadyInitializedError,
@@ -12,6 +12,7 @@ import {
   CustomerContextKey,
   bufferContextCalls,
   addTelemetryConfiguration,
+  addTelemetryDebug,
   buildGlobalContextManager,
   buildUserContextManager,
   startSessionManager,
@@ -42,7 +43,11 @@ export function createPreStartStrategy(
   trackingConsentState: TrackingConsentState,
   doStartLogs: DoStartLogs
 ): Strategy {
-  const bufferApiCalls = createBoundedBuffer<StartLogsResult>()
+  const BUFFER_LIMIT = 500
+  const bufferApiCalls = new BufferedObservable<(startLogsResult: StartLogsResult) => void>(BUFFER_LIMIT, (count) => {
+    // monitor-until: 2026-10-14
+    addTelemetryDebug('preStartLogs buffer data lost', { count })
+  })
 
   // TODO next major: remove the globalContext, accountContextManager, userContext from preStartStrategy and use an empty context instead
   const globalContext = buildGlobalContextManager()
@@ -68,7 +73,8 @@ export function createPreStartStrategy(
     trackingConsentStateSubscription.unsubscribe()
     const startLogsResult = doStartLogs(cachedInitConfiguration, cachedConfiguration, sessionManager, hooks)
 
-    bufferApiCalls.drain(startLogsResult)
+    bufferApiCalls.subscribe((callback) => callback(startLogsResult))
+    bufferApiCalls.unbuffer()
   }
 
   return {
@@ -133,7 +139,7 @@ export function createPreStartStrategy(
     getInternalContext: noop as () => undefined,
 
     handleLog(message, statusType, handlingStack, context = getCommonContext(), date = timeStampNow()) {
-      bufferApiCalls.add((startLogsResult) =>
+      bufferApiCalls.notify((startLogsResult) =>
         startLogsResult.handleLog(message, statusType, handlingStack, context, date)
       )
     },
