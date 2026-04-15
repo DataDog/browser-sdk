@@ -4,6 +4,7 @@ import type { RelativeTime, TimeStamp } from '../../tools/utils/timeUtils'
 import {
   clocksOrigin,
   dateNow,
+  elapsed,
   ONE_HOUR,
   ONE_MINUTE,
   ONE_SECOND,
@@ -20,6 +21,7 @@ import type { TrackingConsentState } from '../trackingConsent'
 import { isWorkerEnvironment } from '../../tools/globalObject'
 import { display } from '../../tools/display'
 import { isSampled } from '../sampler'
+import { TelemetryMetrics, addTelemetryMetrics } from '../telemetry'
 import { monitorError } from '../../tools/monitor'
 import { getCookies } from '../../browser/cookie'
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
@@ -85,6 +87,7 @@ export async function startSessionManager(
   configuration: Configuration,
   trackingConsentState: TrackingConsentState
 ): Promise<SessionManager | undefined> {
+  const startTime = relativeNow()
   const renewObservable = new Observable<SessionRenewalEvent>()
   const expireObservable = new Observable<void>()
   let expireContext: SessionDebugContext | undefined
@@ -133,6 +136,12 @@ export async function startSessionManager(
   scheduleExpirationTimeout(initialState)
   subscribeToSessionChanges()
   setupSessionTracking()
+
+  // monitor-until: 2026-10-15
+  addTelemetryMetrics(TelemetryMetrics.SESSION_MANAGER_INIT_METRICS_TELEMETRY_NAME, {
+    metrics: { duration: elapsed(startTime, relativeNow()) },
+  })
+
   return buildSessionManager()
 
   async function resolveInitialState() {
