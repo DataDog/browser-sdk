@@ -37,9 +37,9 @@
     "access": "public"
   },
   "devDependencies": {
-    "@angular/common": "19.2.5",
-    "@angular/compiler": "19.2.5",
-    "@angular/core": "19.2.5",
+    "@angular/common": "19.2.20",
+    "@angular/compiler": "19.2.20",
+    "@angular/core": "19.2.20",
     "@angular/router": "19.2.20",
     "rxjs": "7.8.2"
   }
