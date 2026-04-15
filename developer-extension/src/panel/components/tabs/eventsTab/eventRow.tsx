@@ -130,7 +130,7 @@ export const EventRow = React.memo(
                   }}
                 >
                   <EventDescription event={event} />
-                  <LazyCollapse in={!isCollapsed}>
+                  <LazyCollapse expanded={!isCollapsed}>
                     <Json
                       ref={jsonRef}
                       value={event}
