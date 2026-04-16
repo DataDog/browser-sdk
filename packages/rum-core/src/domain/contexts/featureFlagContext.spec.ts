@@ -9,7 +9,7 @@ import { RumEventType } from '../../rawRumEvent.types'
 import type { AssembleHookParams, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import type { FeatureFlagContexts } from './featureFlagContext'
-import { startFeatureFlagContexts } from './featureFlagContext'
+import { createFeatureFlagCollection, startFeatureFlagContexts } from './featureFlagContext'
 
 describe('featureFlagContexts', () => {
   const lifeCycle = new LifeCycle()
@@ -22,9 +22,14 @@ describe('featureFlagContexts', () => {
     clock = mockClock()
     hooks = createHooks()
     trackFeatureFlagsForEvents = []
-    featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, {
-      trackFeatureFlagsForEvents,
-    } as unknown as RumConfiguration)
+    featureFlagContexts = startFeatureFlagContexts(
+      lifeCycle,
+      hooks,
+      {
+        trackFeatureFlagsForEvents,
+      } as unknown as RumConfiguration,
+      new Map()
+    )
   })
 
   describe('assemble hook', () => {
@@ -152,6 +157,60 @@ describe('featureFlagContexts', () => {
       } as AssembleHookParams)
 
       expect(defaultRumEventAttributes).toBeUndefined()
+    })
+
+    it('should initialize the first view with the initial collection', () => {
+      const initialCollection = createFeatureFlagCollection()
+      initialCollection.set('feature', 'initial')
+      featureFlagContexts = startFeatureFlagContexts(
+        lifeCycle,
+        hooks,
+        {
+          trackFeatureFlagsForEvents,
+        } as unknown as RumConfiguration,
+        initialCollection
+      )
+
+      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
+        startClocks: relativeToClocks(0 as RelativeTime),
+      } as ViewCreatedEvent)
+
+      expect(
+        hooks.triggerHook(HookNames.Assemble, {
+          eventType: 'view',
+          startTime: 0 as RelativeTime,
+        } as AssembleHookParams)
+      ).toEqual({ type: 'view', feature_flags: { feature: 'initial' } })
+    })
+
+    it('should not carry over the initial collection to subsequent views', () => {
+      const initialCollection = createFeatureFlagCollection()
+      initialCollection.set('feature', 'initial')
+      featureFlagContexts = startFeatureFlagContexts(
+        lifeCycle,
+        hooks,
+        {
+          trackFeatureFlagsForEvents,
+        } as unknown as RumConfiguration,
+        initialCollection
+      )
+
+      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
+        startClocks: relativeToClocks(0 as RelativeTime),
+      } as ViewCreatedEvent)
+      lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, {
+        endClocks: relativeToClocks(10 as RelativeTime),
+      } as ViewEndedEvent)
+      lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
+        startClocks: relativeToClocks(10 as RelativeTime),
+      } as ViewCreatedEvent)
+
+      expect(
+        hooks.triggerHook(HookNames.Assemble, {
+          eventType: 'view',
+          startTime: 10 as RelativeTime,
+        } as AssembleHookParams)
+      ).toBeUndefined()
     })
 
     it('should replace existing feature flag evaluations for the current view', () => {

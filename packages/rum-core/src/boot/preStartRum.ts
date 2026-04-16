@@ -46,6 +46,8 @@ import type { ViewOptions } from '../domain/view/trackViews'
 import type { FeatureOperationOptions, FailureReason } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
 import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
+import { createFeatureFlagCollection } from '../domain/contexts/featureFlagContext'
+import type { FeatureFlagCollection } from '../domain/contexts/featureFlagContext'
 import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
 
@@ -55,7 +57,8 @@ export type DoStartRum = (
   deflateWorker: DeflateWorker | undefined,
   initialViewOptions: ViewOptions | undefined,
   telemetry: Telemetry,
-  hooks: Hooks
+  hooks: Hooks,
+  initialFeatureFlagCollection: FeatureFlagCollection
 ) => StartRumResult
 
 export function createPreStartStrategy(
@@ -64,6 +67,7 @@ export function createPreStartStrategy(
   doStartRum: DoStartRum
 ): Strategy {
   const bufferApiCalls = createBoundedBuffer<StartRumResult>()
+  const initialFeatureFlagCollection = createFeatureFlagCollection()
 
   // TODO next major: remove the globalContextManager, userContextManager and accountContextManager from preStartStrategy and use an empty context instead
   const globalContext = buildGlobalContextManager()
@@ -119,7 +123,8 @@ export function createPreStartStrategy(
       deflateWorker,
       initialViewOptions,
       telemetry,
-      hooks
+      hooks,
+      initialFeatureFlagCollection
     )
 
     bufferApiCalls.drain(startRumResult)
@@ -318,8 +323,13 @@ export function createPreStartStrategy(
       bufferApiCalls.add((startRumResult) => startRumResult.addError(providedError))
     },
 
+    // Intentionally not using bufferApiCalls here: feature flag evaluations can be called very
+    // frequently before RUM starts (e.g. by flag evaluation frameworks on page load), which would
+    // exhaust the BoundedBuffer and silently drop other buffered calls such as setUser.
+    // Trade-off: we lose per-call granularity (only the last value per key is kept), but we avoid
+    // storing an unbounded call history in memory.
     addFeatureFlagEvaluation(key, value) {
-      bufferApiCalls.add((startRumResult) => startRumResult.addFeatureFlagEvaluation(key, value))
+      initialFeatureFlagCollection.set(key, value)
     },
 
     startDurationVital(name, options) {

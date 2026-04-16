@@ -609,7 +609,15 @@ export function makeRumPublicApi(
   let strategy = createPreStartStrategy(
     options,
     trackingConsentState,
-    (configuration, sessionManager, deflateWorker, initialViewOptions, telemetry, hooks) => {
+    (
+      configuration,
+      sessionManager,
+      deflateWorker,
+      initialViewOptions,
+      telemetry,
+      hooks,
+      initialFeatureFlagCollection
+    ) => {
       const createEncoder =
         deflateWorker && options.createDeflateEncoder
           ? (streamId: DeflateEncoderStreamId) => options.createDeflateEncoder!(configuration, deflateWorker, streamId)
@@ -621,6 +629,7 @@ export function makeRumPublicApi(
         recorderApi,
         profilerApi,
         initialViewOptions,
+        initialFeatureFlagCollection,
         createEncoder,
         bufferedData.observable,
         telemetry,

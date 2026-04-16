@@ -51,6 +51,7 @@ function startRumStub(
     sessionManager,
     noopRecorderApi,
     undefined,
+    new Map(),
     new Observable(),
     undefined,
     reportError
@@ -161,6 +162,7 @@ describe('view events', () => {
       noopRecorderApi,
       noopProfilerApi,
       undefined,
+      new Map(),
       createIdentityEncoder,
       new BufferedObservable<BufferedData>(100),
       createFakeTelemetryObject(),

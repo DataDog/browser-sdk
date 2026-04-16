@@ -1,5 +1,5 @@
-import type { ContextValue, Context } from '@datadog/browser-core'
-import { HookNames, SESSION_TIME_OUT_DELAY, SKIPPED, createValueHistory, isEmptyObject } from '@datadog/browser-core'
+import type { ContextValue } from '@datadog/browser-core'
+import { HookNames, SESSION_TIME_OUT_DELAY, SKIPPED, createValueHistory } from '@datadog/browser-core'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -9,10 +9,14 @@ import type { DefaultRumEventAttributes, Hooks } from '../hooks'
 export const FEATURE_FLAG_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 export const BYTES_COMPUTATION_THROTTLING_DELAY = 200
 
-export type FeatureFlagContext = Context
+export type FeatureFlagCollection = Map<string, ContextValue>
 
 export interface FeatureFlagContexts {
   addFeatureFlagEvaluation: (key: string, value: ContextValue) => void
+}
+
+export function createFeatureFlagCollection(): FeatureFlagCollection {
+  return new Map()
 }
 
 /**
@@ -26,14 +30,18 @@ export interface FeatureFlagContexts {
 export function startFeatureFlagContexts(
   lifeCycle: LifeCycle,
   hooks: Hooks,
-  configuration: RumConfiguration
+  configuration: RumConfiguration,
+  initialCollection: FeatureFlagCollection
 ): FeatureFlagContexts {
-  const featureFlagContexts = createValueHistory<FeatureFlagContext>({
+  const featureFlagContexts = createValueHistory<FeatureFlagCollection>({
     expireDelay: FEATURE_FLAG_CONTEXT_TIME_OUT_DELAY,
   })
 
+  let isFirstView = true
   lifeCycle.subscribe(LifeCycleEventType.BEFORE_VIEW_CREATED, ({ startClocks }) => {
-    featureFlagContexts.add({}, startClocks.relative)
+    const collection = isFirstView ? initialCollection : createFeatureFlagCollection()
+    isFirstView = false
+    featureFlagContexts.add(collection, startClocks.relative)
   })
 
   lifeCycle.subscribe(LifeCycleEventType.AFTER_VIEW_ENDED, ({ endClocks }) => {
@@ -50,21 +58,21 @@ export function startFeatureFlagContexts(
     }
 
     const featureFlagContext = featureFlagContexts.find(startTime)
-    if (!featureFlagContext || isEmptyObject(featureFlagContext)) {
+    if (!featureFlagContext || featureFlagContext.size === 0) {
       return SKIPPED
     }
 
     return {
       type: eventType,
-      feature_flags: featureFlagContext,
+      feature_flags: Object.fromEntries(featureFlagContext),
     }
   })
 
   return {
     addFeatureFlagEvaluation: (key: string, value: ContextValue) => {
-      const currentContext = featureFlagContexts.find()
-      if (currentContext) {
-        currentContext[key] = value
+      const currentCollection = featureFlagContexts.find()
+      if (currentCollection) {
+        currentCollection.set(key, value)
       }
     },
   }
