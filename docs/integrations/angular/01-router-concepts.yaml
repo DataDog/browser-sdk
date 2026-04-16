@@ -1,0 +1,263 @@
+# 01-router-concepts.yaml
+# Framework: angular
+# Generated: 2026-04-16T00:00:00Z
+# Source URLs:
+#   - https://angular.dev/guide/routing
+#   - https://angular.dev/guide/routing/define-routes
+#   - https://angular.dev/guide/routing/lifecycle-and-events
+#   - https://angular.dev/guide/routing/read-route-state
+#   - https://angular.dev/guide/routing/common-router-tasks
+#   - https://angular.dev/guide/routing/navigate-to-routes
+#   - https://angular.dev/guide/routing/loading-strategies
+#   - https://angular.dev/guide/routing/routing-with-urlmatcher
+#   - https://angular.dev/api/router/Router
+#   - https://angular.dev/api/router/NavigationEnd
+#   - https://angular.dev/api/router/NavigationStart
+#   - https://angular.dev/api/router/RoutesRecognized
+#   - https://angular.dev/api/router/RouterStateSnapshot
+#   - https://angular.dev/api/router/ActivatedRouteSnapshot
+
+routeDefinition:
+  styles:
+    - "config-object"                        # https://angular.dev/guide/routing/define-routes — Routes array of Route objects
+  historyStrategies:
+    - "path"                                 # PathLocationStrategy (default) — https://angular.dev/guide/routing/common-router-tasks
+    - "hash"                                 # HashLocationStrategy via withHashLocation() — https://angular.dev/guide/routing/common-router-tasks
+
+routeSyntax:
+  concepts:
+    - static-path                            # https://angular.dev/guide/routing/define-routes — e.g. "admin", "blog"
+    - dynamic-segments                       # https://angular.dev/guide/routing/define-routes — :paramName syntax
+    - catch-all                              # https://angular.dev/guide/routing/define-routes — ** wildcard
+    - nested-routes                          # https://angular.dev/guide/routing/define-routes — children array
+  examples:
+    - route: "admin"
+      path: "/admin"
+      viewName: "/admin"
+      note: "Static path — exact match"
+    - route: "user/:id"
+      path: "/user/42"
+      viewName: "/user/:id"
+      note: "Dynamic segment — :id captured as route param"
+    - route: "user/:id/:social-media"
+      path: "/user/42/twitter"
+      viewName: "/user/:id/:social-media"
+      note: "Multiple dynamic segments in one route"
+    - route: "**"
+      path: "/non/existent/path"
+      viewName: "/**"
+      note: "Catch-all wildcard — must be last route (first-match-wins ordering)"
+    - route: "product/:id > children: [info, reviews]"
+      path: "/product/42/info"
+      viewName: "/product/:id/info"
+      note: "Nested route — parent has <router-outlet>, child path appended"
+    - route: "articles -> redirectTo: /blog"
+      path: "/articles"
+      viewName: "/blog"
+      note: "Redirect — navigates to target path, not a view itself"
+
+ssr:
+  supported: true                            # https://angular.dev/guide/ssr — @angular/ssr package
+  clientDetection: "isPlatformBrowser(inject(PLATFORM_ID))" # https://angular.dev/api/core/PLATFORM_ID — though Angular recommends afterNextRender/platform-specific providers instead
+
+hooks:
+  - name: "NavigationStart"
+    afterCancellation: false                 # fires at the very beginning — guards haven't run yet
+    afterRedirects: false                    # fires before route recognition and redirect resolution
+    afterFetch: false                        # fires before resolvers
+    afterRender: false                       # fires before component activation
+    access: "Router.events observable, injected via Angular DI: inject(Router).events"  # https://angular.dev/api/router/Router
+    availableApi:
+      - name: "event.id"
+        description: "Unique navigation ID assigned by router"
+      - name: "event.url"
+        description: "Destination URL string for this navigation"
+      - name: "event.navigationTrigger"
+        description: "'imperative' (navigate/navigateByUrl), 'popstate' (back/forward), or 'hashchange'"
+      - name: "event.restoredState"
+        description: "State from prior pushState when triggered by browser back/forward (null otherwise)"
+
+  - name: "RoutesRecognized"
+    afterCancellation: false                 # fires before guards — navigation can still be cancelled
+    afterRedirects: true                     # fires after route matching and config-level redirects resolved — urlAfterRedirects available
+    afterFetch: false                        # fires before resolvers
+    afterRender: false
+    access: "Router.events observable, injected via Angular DI: inject(Router).events"  # https://angular.dev/api/router/RoutesRecognized
+    availableApi:
+      - name: "event.id"
+        description: "Unique navigation ID"
+      - name: "event.url"
+        description: "Original destination URL"
+      - name: "event.urlAfterRedirects"
+        description: "URL after config-level redirects have been applied"
+      - name: "event.state"
+        description: "RouterStateSnapshot — tree of ActivatedRouteSnapshot with url, params, data, outlet, component, routeConfig, pathFromRoot"
+
+  - name: "GuardsCheckStart"
+    afterCancellation: false                 # this IS the start of guard evaluation
+    afterRedirects: true                     # config redirects already resolved
+    afterFetch: false
+    afterRender: false
+    access: "Router.events observable, injected via Angular DI: inject(Router).events"
+    availableApi:
+      - name: "event.id"
+        description: "Unique navigation ID"
+      - name: "event.url"
+        description: "Original destination URL"
+      - name: "event.urlAfterRedirects"
+        description: "URL after config redirects"
+      - name: "event.state"
+        description: "RouterStateSnapshot at guard check start"
+
+  - name: "GuardsCheckEnd"
+    afterCancellation: true                  # guards have completed — if we reach this event, shouldActivate is true (or navigation was cancelled via NavigationCancel)
+    afterRedirects: true                     # config redirects resolved; guard redirects (UrlTree returns) cancel navigation and start a new one
+    afterFetch: false                        # resolvers haven't run yet
+    afterRender: false
+    access: "Router.events observable, injected via Angular DI: inject(Router).events"
+    availableApi:
+      - name: "event.id"
+        description: "Unique navigation ID"
+      - name: "event.url"
+        description: "Original destination URL"
+      - name: "event.urlAfterRedirects"
+        description: "URL after config redirects"
+      - name: "event.shouldActivate"
+        description: "Boolean — whether all guards allowed the navigation"
+
+  - name: "ResolveStart"
+    afterCancellation: true                  # only fires if guards passed
+    afterRedirects: true                     # config redirects and guard redirects resolved
+    afterFetch: false                        # this IS the start of data resolution
+    afterRender: false
+    access: "Router.events observable, injected via Angular DI: inject(Router).events"
+    availableApi:
+      - name: "event.id"
+        description: "Unique navigation ID"
+      - name: "event.url"
+        description: "Original destination URL"
+      - name: "event.urlAfterRedirects"
+        description: "URL after redirects"
+      - name: "event.state"
+        description: "RouterStateSnapshot at resolve start"
+
+  - name: "ResolveEnd"
+    afterCancellation: true                  # guards passed
+    afterRedirects: true                     # all redirects resolved
+    afterFetch: true                         # resolvers have completed — data is available
+    afterRender: false                       # components not yet activated
+    access: "Router.events observable, injected via Angular DI: inject(Router).events"
+    availableApi:
+      - name: "event.id"
+        description: "Unique navigation ID"
+      - name: "event.url"
+        description: "Original destination URL"
+      - name: "event.urlAfterRedirects"
+        description: "URL after redirects"
+      - name: "event.state"
+        description: "RouterStateSnapshot with resolved data"
+
+  - name: "ActivationStart"
+    afterCancellation: true                  # guards passed
+    afterRedirects: true                     # all redirects resolved
+    afterFetch: true                         # resolvers completed
+    afterRender: false                       # fires as component activation begins, before DOM update
+    access: "Router.events observable, injected via Angular DI: inject(Router).events"
+    availableApi:
+      - name: "event.snapshot"
+        description: "ActivatedRouteSnapshot for the route being activated — includes routeConfig, url, params, data, outlet, component, pathFromRoot"
+
+  - name: "ActivationEnd"
+    afterCancellation: true
+    afterRedirects: true
+    afterFetch: true
+    afterRender: true                        # fires after component activation completes
+    access: "Router.events observable, injected via Angular DI: inject(Router).events"
+    availableApi:
+      - name: "event.snapshot"
+        description: "ActivatedRouteSnapshot for the route that was activated"
+
+  - name: "NavigationEnd"
+    afterCancellation: true                  # only fires for successful navigations
+    afterRedirects: true                     # urlAfterRedirects provides final URL
+    afterFetch: true                         # resolvers completed
+    afterRender: true                        # components activated and rendered
+    access: "Router.events observable, injected via Angular DI: inject(Router).events"  # https://angular.dev/api/router/NavigationEnd
+    availableApi:
+      - name: "event.id"
+        description: "Unique navigation ID"
+      - name: "event.url"
+        description: "Original destination URL"
+      - name: "event.urlAfterRedirects"
+        description: "Final URL after all redirects — this is the definitive URL for the completed navigation"
+
+  - name: "NavigationCancel"
+    afterCancellation: false                 # this IS the cancellation event — fires when guards return false or UrlTree
+    afterRedirects: false                    # navigation was cancelled, redirect may not have completed  # _inferred: cancellation can happen at various points
+    afterFetch: false
+    afterRender: false
+    access: "Router.events observable, injected via Angular DI: inject(Router).events"
+    availableApi:
+      - name: "event.id"
+        description: "Unique navigation ID"
+      - name: "event.url"
+        description: "URL that was being navigated to"
+      - name: "event.reason"
+        description: "Human-readable cancellation reason string"
+
+  - name: "NavigationError"
+    afterCancellation: false                 # _inferred: errors can occur at various lifecycle phases
+    afterRedirects: false
+    afterFetch: false
+    afterRender: false
+    access: "Router.events observable, injected via Angular DI: inject(Router).events"
+    availableApi:
+      - name: "event.id"
+        description: "Unique navigation ID"
+      - name: "event.url"
+        description: "URL that was being navigated to"
+      - name: "event.error"
+        description: "The error object that caused navigation failure"
+
+  - name: "NavigationSkipped"
+    afterCancellation: false                 # _inferred: skipped navigations bypass the full lifecycle
+    afterRedirects: false
+    afterFetch: false
+    afterRender: false
+    access: "Router.events observable, injected via Angular DI: inject(Router).events"
+    availableApi:
+      - name: "event.id"
+        description: "Unique navigation ID"
+      - name: "event.url"
+        description: "URL that was skipped (e.g. same-URL navigation)"
+
+versions:
+  entries: []                                # No routing-specific breaking changes in last 2 years; Angular v17-v21 preserved Router API stability
+
+notes: |
+  Angular Router event lifecycle order (successful navigation):
+    NavigationStart → RoutesRecognized → GuardsCheckStart → GuardsCheckEnd →
+    ResolveStart → ResolveEnd → ActivationStart → ActivationEnd → NavigationEnd
+
+  Guard redirect behavior: when a guard returns a UrlTree, the current navigation
+  is cancelled (NavigationCancel fires) and a new navigation starts to the UrlTree
+  destination. The cancelled navigation never reaches NavigationEnd.
+
+  Angular does NOT support optional route segments natively. The common workaround
+  is to define multiple routes for with/without the optional segment. There is no
+  :param? syntax like in other frameworks.
+
+  Route matching is first-match-wins — order matters. Wildcard ** must be last.
+
+  ActivatedRouteSnapshot.routeConfig.path gives the route pattern string (e.g.
+  "user/:id"), while pathFromRoot provides the full chain from root to current route.
+  Concatenating pathFromRoot[].routeConfig.path segments reconstructs the full
+  route pattern for view naming.
+
+  The Router service is available via Angular's dependency injection: inject(Router).
+  All events are accessed via Router.events observable — subscribe with
+  takeUntilDestroyed() for automatic cleanup.
+
+  Router.url gives the current URL as a string at any point.
+  Router.routerState.snapshot gives the full RouterStateSnapshot tree.
+  Router.lastSuccessfulNavigation (Signal) tracks the most recent successful navigation.

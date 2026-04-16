@@ -1,0 +1,105 @@
+# 02-design-decisions.yaml
+# Framework: angular
+# Generated: 2026-04-16T00:00:00Z
+# Input: 01-router-concepts.yaml
+
+selectedHook:
+  name: "ResolveStart"
+  rationale: >
+    Candidates with afterCancellation: true:
+      GuardsCheckEnd, ResolveStart, ResolveEnd, ActivationStart, ActivationEnd, NavigationEnd.
+    All six have afterRedirects: true (rule 2 satisfied by all).
+    Rule 3 (afterFetch: false AND afterRender: false):
+      GuardsCheckEnd: afterFetch=false, afterRender=false — PASS
+      ResolveStart:   afterFetch=false, afterRender=false — PASS
+      ResolveEnd:     afterFetch=true  — FAIL
+      ActivationStart: afterFetch=true — FAIL
+      ActivationEnd:  afterFetch=true, afterRender=true — FAIL
+      NavigationEnd:  afterFetch=true, afterRender=true — FAIL
+    Tiebreak between GuardsCheckEnd and ResolveStart (both pass all three rules):
+      GuardsCheckEnd fires earlier in lifecycle, but lacks event.state
+      (RouterStateSnapshot) — essential for matched-records view naming via
+      pathFromRoot[].routeConfig.path. It also fires when shouldActivate=false
+      (guard-rejected navigations), requiring extra filtering.
+      ResolveStart fires immediately after GuardsCheckEnd, provides event.state
+      with the full ActivatedRouteSnapshot tree, and only fires when guards
+      passed — a cleaner afterCancellation signal with negligible timing cost.
+
+wrappingStrategy:
+  pattern: "provider"
+  target: "provideDatadogRouter() returning EnvironmentProviders, using ENVIRONMENT_INITIALIZER with inject(Router)"
+  rationale: >
+    Angular's DI system is the standard integration point. Modern Angular
+    libraries expose provide* functions (provideRouter, provideHttpClient,
+    provideAnimations). A provideDatadogRouter() function that returns an
+    ENVIRONMENT_INITIALIZER provider is the idiomatic pattern — it injects
+    Router, subscribes to Router.events, and requires no component wrappers
+    or factory interception.
+
+viewNameAlgorithm:
+  family: "matched-records"
+  rationale: >
+    ResolveStart provides event.state (RouterStateSnapshot) containing a tree
+    of ActivatedRouteSnapshot nodes. Each node has routeConfig.path (the
+    parameterized pattern, e.g. "user/:id") and pathFromRoot (array from root
+    to leaf). Concatenating pathFromRoot[].routeConfig.path segments
+    reconstructs the full route template. Catch-all ** wildcard needs
+    substitution with the actual path. This is the same family as Vue
+    (to.matched[].path) and React (state.matches[].route.path).
+
+targetPackage:
+  mode: "new-package"
+  package: "rum-angular"
+
+referenceImplementation:
+  primary: "rum-vue"
+  rationale: >
+    Closest match across all three dimensions:
+    (1) Hook subscription — both subscribe to a single event/hook on the router
+        instance (Vue: router.afterEach, Angular: Router.events.pipe(filter)),
+        not component-based like Next.js.
+    (2) View name algorithm — both use matched-records (Vue: to.matched[].path,
+        Angular: pathFromRoot[].routeConfig.path). React also uses matched-records
+        but with a different subscription model.
+    (3) New standalone package — both are the primary router for their framework
+        (not an alternative router extending an existing package).
+
+ssr:
+  handling: >
+    Guard the ENVIRONMENT_INITIALIZER factory with isPlatformBrowser(inject(PLATFORM_ID)).
+    When running on the server, skip Router.events subscription entirely —
+    no RUM views should be started during SSR. The RUM SDK itself requires
+    browser APIs and won't call onRumStart server-side, but the guard prevents
+    unnecessary subscription setup and avoids any server-side side effects.
+
+notes: |
+  Angular-specific considerations for Stage 3:
+
+  1. Router.events is an Observable. Use pipe(filter(e => e instanceof ResolveStart))
+     to isolate the target event. The subscription must be cleaned up — use
+     DestroyRef with takeUntilDestroyed() or track the Subscription for manual
+     unsubscribe in the plugin's cleanup path.
+
+  2. View name construction from pathFromRoot:
+     - Iterate event.state.root's pathFromRoot (or traverse the tree to the
+       deepest activated child)
+     - Skip segments with empty routeConfig.path (unnamed parent routes)
+     - Concatenate with "/" separator
+     - Replace ** catch-all with the actual URL path segment
+
+  3. GuardsCheckEnd was the strict deterministic winner (fires one step earlier)
+     but was passed over because it lacks event.state and requires shouldActivate
+     filtering. If future Angular versions add state to GuardsCheckEnd, it
+     would become the preferred hook.
+
+  4. Initial navigation: Angular fires the full event lifecycle for the initial
+     route on app bootstrap. The integration must track this first navigation
+     as a view. Unlike Vue Router (which has a synthetic START_LOCATION), Angular
+     fires real events for the initial navigation — no special-casing needed.
+
+  5. Peer dependencies: @angular/core and @angular/router. Target Angular >=17
+     (standalone APIs stable, ENVIRONMENT_INITIALIZER available). Signals-based
+     Router APIs (v19+) are additive and don't affect the events-based approach.
+
+  6. The provider function should accept configuration (e.g., a custom view name
+     mapping function) following the pattern of Angular's provideRouter(routes, ...features).
