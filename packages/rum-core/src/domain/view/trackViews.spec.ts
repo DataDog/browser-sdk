@@ -735,19 +735,6 @@ describe('view custom timings', () => {
     })
   })
 
-  it('should add custom timing with a specific relative time', () => {
-    const { getViewUpdate, addTiming } = viewTest
-
-    clock.tick(1234)
-    addTiming('foo', relativeNow())
-
-    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
-
-    expect(getViewUpdate(1).customTimings).toEqual({
-      foo: clock.relative(1234),
-    })
-  })
-
   it('should sanitized timing name', () => {
     const { getViewUpdate, addTiming } = viewTest
 
@@ -772,7 +759,7 @@ describe('view custom timings', () => {
 
     expect(getViewUpdateCount()).toBe(2)
 
-    addTiming('foo', relativeNow())
+    addTiming('foo', timeStampNow())
 
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
