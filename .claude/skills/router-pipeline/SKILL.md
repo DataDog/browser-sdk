@@ -57,7 +57,7 @@ Write `docs/integrations/<framework>/00-pipeline-input.md`:
 Run in a fresh context window:
 
 ```bash
-claude -p "You are the router-fetch-docs agent. Read .claude/agents/router-fetch-docs.md for your full instructions. Framework: <framework>. Artifact directory: docs/integrations/<framework>/." --allowedTools Read,Write,Bash,Glob,Grep,WebFetch,WebSearch
+claude -p "Read .claude/skills/router-fetch-docs/SKILL.md for your instructions. Framework: <framework>. Artifact directory: docs/integrations/<framework>/." --allowedTools Read,Write,Bash,Glob,Grep,WebFetch,WebSearch
 ```
 
 After completion, check if `docs/integrations/<framework>/EXIT.md` exists.
@@ -71,7 +71,7 @@ Otherwise, verify `docs/integrations/<framework>/01-router-concepts.yaml` was cr
 Run in a fresh context window:
 
 ```bash
-claude -p "You are the router-design agent. Read .claude/agents/router-design.md for your full instructions. Framework: <framework>. Artifact directory: docs/integrations/<framework>/." --model opus --allowedTools Read,Write,Bash,Glob,Grep
+claude -p "Read .claude/skills/router-design/SKILL.md for your instructions. Framework: <framework>. Artifact directory: docs/integrations/<framework>/." --model opus --allowedTools Read,Write,Bash,Glob,Grep
 ```
 
 After completion, check if `docs/integrations/<framework>/EXIT.md` exists.
@@ -85,7 +85,7 @@ Otherwise, verify `docs/integrations/<framework>/02-design-decisions.yaml` was c
 Run in a fresh context window:
 
 ```bash
-claude -p "You are the router-generate agent. Read .claude/agents/router-generate.md for your full instructions. Framework: <framework>. Artifact directory: docs/integrations/<framework>/." --model opus --allowedTools Read,Write,Edit,Bash,Glob,Grep
+claude -p "Read .claude/skills/router-generate/SKILL.md for your instructions. Framework: <framework>. Artifact directory: docs/integrations/<framework>/." --model opus --allowedTools Read,Write,Edit,Bash,Glob,Grep
 ```
 
 After completion, verify `docs/integrations/<framework>/03-generation-manifest.md` was created.
@@ -95,7 +95,7 @@ After completion, verify `docs/integrations/<framework>/03-generation-manifest.m
 Run in a fresh context window:
 
 ```bash
-claude -p "You are the router-pr agent. Read .claude/agents/router-pr.md for your full instructions. Framework: <framework>. Artifact directory: docs/integrations/<framework>/." --allowedTools Read,Bash
+claude -p "Read .claude/skills/router-pr/SKILL.md for your instructions. Framework: <framework>. Artifact directory: docs/integrations/<framework>/." --allowedTools Read,Bash
 ```
 
 Report the PR URL to the user when done.
