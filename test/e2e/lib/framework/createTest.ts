@@ -457,8 +457,10 @@ function tearDownPassedTest({ intakeRegistry, withBrowserLogs }: TestContext) {
   })
 }
 
-async function tearDownTest({ flushEvents, deleteAllCookies }: TestContext) {
-  await flushEvents()
+async function tearDownTest({ page, flushEvents, deleteAllCookies }: TestContext) {
+  if (!page.url().includes('/flush')) {
+    await flushEvents()
+  }
   await deleteAllCookies()
 
   if (test.info().status === 'passed' && test.info().retry > 0) {
