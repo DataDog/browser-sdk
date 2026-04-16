@@ -266,7 +266,8 @@ export function microfrontendSetup(options: SetupOptions, servers: Servers) {
 
 function basePage({ header, body, footer }: { header?: string; body?: string; footer?: string }) {
   // prettier-ignore
-  return html`<!doctype html><html><head>${header || ''}</head><body>${body || ''}</body>${footer || ''}</html>`
+  // The empty favicon avoids a /favicon.ico request from the browser.
+  return html`<!doctype html><html><head><link rel="icon" href="data:,"/>${header || ''}</head><body>${body || ''}</body>${footer || ''}</html>`
 }
 
 // html is a simple template string tag to allow prettier to format various setups as HTML
