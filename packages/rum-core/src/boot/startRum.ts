@@ -13,6 +13,7 @@ import {
   createPageMayExitObservable,
   canUseEventBridge,
   addTelemetryDebug,
+  isEmptyObject,
   startAccountContext,
   startGlobalContext,
   startUserContext,
@@ -55,6 +56,7 @@ import { startEventCollection } from '../domain/event/eventCollection'
 import { startInitialViewMetricsTelemetry } from '../domain/view/viewMetrics/startInitialViewMetricsTelemetry'
 import { startSourceCodeContext } from '../domain/contexts/sourceCodeContext'
 import type { RecorderApi, ProfilerApi } from './rumPublicApi'
+import type { InitialContexts } from './preStartRum'
 
 export type StartRum = typeof startRum
 export type StartRumResult = ReturnType<StartRum>
@@ -74,7 +76,8 @@ export function startRum(
   bufferedDataObservable: BufferedObservable<BufferedData>,
   telemetry: Telemetry,
   hooks: Hooks,
-  sdkName?: SdkName
+  sdkName?: SdkName,
+  initialContexts?: InitialContexts
 ) {
   const cleanupTasks: Array<() => void> = []
   const lifeCycle = new LifeCycle()
@@ -131,7 +134,8 @@ export function startRum(
     customVitalsState,
     bufferedDataObservable,
     sdkName,
-    reportError
+    reportError,
+    initialContexts
   )
   cleanupTasks.push(stopRumEventCollection)
   bufferedDataObservable.unbuffer()
@@ -162,7 +166,8 @@ export function startRumEventCollection(
   customVitalsState: CustomVitalsState,
   bufferedDataObservable: Observable<BufferedData>,
   sdkName: SdkName | undefined,
-  reportError: (error: RawError) => void
+  reportError: (error: RawError) => void,
+  initialContexts?: InitialContexts
 ) {
   const cleanupTasks: Array<() => void> = []
 
@@ -184,6 +189,16 @@ export function startRumEventCollection(
   const globalContext = startGlobalContext(hooks, configuration, 'rum', true)
   const userContext = startUserContext(hooks, configuration, session, 'rum')
   const accountContext = startAccountContext(hooks, configuration, 'rum')
+
+  // Initialize context managers with pre-start values so the first view event
+  // includes any context set before init() was called (see #3935)
+  if (initialContexts) {
+    globalContext.setContext(initialContexts.globalContext)
+    userContext.setContext(initialContexts.userContext)
+    if (!isEmptyObject(initialContexts.accountContext)) {
+      accountContext.setContext(initialContexts.accountContext)
+    }
+  }
 
   const actionCollection = startActionCollection(
     lifeCycle,
