@@ -5,7 +5,9 @@ description: Fully automated pipeline that generates a draft Browser SDK router 
 
 # Router Integration Pipeline
 
-You are an orchestrator that chains four stage skills to generate a complete Browser SDK router integration package and draft PR.
+You are an orchestrator that spawns a fresh `claude -p` process for each stage to generate a complete Browser SDK router integration package and draft PR.
+
+Each stage runs in a completely fresh context window via `claude -p`. Stages communicate through YAML artifacts on disk.
 
 ## Input
 
@@ -14,6 +16,8 @@ The single argument is an npm package URL (e.g. `https://www.npmjs.com/package/@
 Example: `/router-pipeline https://www.npmjs.com/package/vue-router`
 
 ## Step 1: Resolve Package Metadata & Initialize
+
+This step runs in the orchestrator (you), not a subprocess.
 
 1. **Fetch npm package page** — Use WebFetch on the provided URL to extract:
    - Package name (e.g. `vue-router`, `@angular/router`)
@@ -48,37 +52,57 @@ Write `docs/integrations/<framework>/00-pipeline-input.md`:
 **Initiated:** <ISO timestamp>
 ```
 
-## Step 2: Invoke /router-fetch-docs
+## Step 2: Stage 1 — Fetch Docs
 
-Use the Skill tool to invoke `router-fetch-docs`.
+Run in a fresh context window:
 
-After completion, check if `docs/integrations/<framework>/EXIT.md` exists (Stage 1 writes it if the framework is incompatible).
+```bash
+claude -p "You are the router-fetch-docs agent. Read .claude/agents/router-fetch-docs.md for your full instructions. Framework: <framework>. Artifact directory: docs/integrations/<framework>/." --allowedTools Read,Write,Bash,Glob,Grep,WebFetch,WebSearch
+```
+
+After completion, check if `docs/integrations/<framework>/EXIT.md` exists.
 
 If EXIT.md exists, read it and report the exit to the user. Stop.
 
 Otherwise, verify `docs/integrations/<framework>/01-router-concepts.yaml` was created.
 
-## Step 3: Invoke /router-design
+## Step 3: Stage 2 — Design Decisions
 
-Use the Skill tool to invoke `router-design`.
+Run in a fresh context window:
 
-After completion, check if `docs/integrations/<framework>/EXIT.md` exists (Stage 2 writes it if critical issues are found).
+```bash
+claude -p "You are the router-design agent. Read .claude/agents/router-design.md for your full instructions. Framework: <framework>. Artifact directory: docs/integrations/<framework>/." --model opus --allowedTools Read,Write,Bash,Glob,Grep
+```
+
+After completion, check if `docs/integrations/<framework>/EXIT.md` exists.
 
 If EXIT.md exists, read it and report the exit to the user. Stop.
 
 Otherwise, verify `docs/integrations/<framework>/02-design-decisions.yaml` was created.
 
-## Step 4: Invoke /router-generate
+## Step 4: Stage 3 — Generate Code
 
-Use the Skill tool to invoke `router-generate`.
+Run in a fresh context window:
 
-## Step 5: Invoke /router-pr
+```bash
+claude -p "You are the router-generate agent. Read .claude/agents/router-generate.md for your full instructions. Framework: <framework>. Artifact directory: docs/integrations/<framework>/." --model opus --allowedTools Read,Write,Edit,Bash,Glob,Grep
+```
 
-Use the Skill tool to invoke `router-pr`.
+After completion, verify `docs/integrations/<framework>/03-generation-manifest.md` was created.
+
+## Step 5: Stage 4 — Create PR
+
+Run in a fresh context window:
+
+```bash
+claude -p "You are the router-pr agent. Read .claude/agents/router-pr.md for your full instructions. Framework: <framework>. Artifact directory: docs/integrations/<framework>/." --allowedTools Read,Bash
+```
+
+Report the PR URL to the user when done.
 
 ## Error Handling
 
-If any stage fails (fetch timeout, parse error, tool failure), write `EXIT.md` with:
+If any `claude -p` process fails (non-zero exit code), check the artifacts written so far. Write `EXIT.md` with:
 
 - Stage: which stage failed
 - Reason: error details
