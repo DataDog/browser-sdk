@@ -60,7 +60,7 @@ Dispatch a subagent:
 Agent({
   description: "Stage 1: Fetch <framework> router docs",
   model: "sonnet",
-  prompt: "Read .claude/skills/router-fetch-docs/SKILL.md for your instructions. Framework: <framework>. Artifact directory: docs/integrations/<framework>/."
+  prompt: "Invoke the router-fetch-docs skill using the Skill tool. Framework: <framework>. Artifact directory: docs/integrations/<framework>/."
 })
 ```
 
@@ -78,7 +78,7 @@ Dispatch a subagent:
 Agent({
   description: "Stage 2: Design <framework> router integration",
   model: "opus",
-  prompt: "Read .claude/skills/router-design/SKILL.md for your instructions. Framework: <framework>. Artifact directory: docs/integrations/<framework>/."
+  prompt: "Invoke the router-design skill using the Skill tool. Framework: <framework>. Artifact directory: docs/integrations/<framework>/."
 })
 ```
 
@@ -96,7 +96,7 @@ Dispatch a subagent:
 Agent({
   description: "Stage 3: Generate <framework> router package",
   model: "opus",
-  prompt: "Read .claude/skills/router-generate/SKILL.md for your instructions. Framework: <framework>. Artifact directory: docs/integrations/<framework>/."
+  prompt: "Invoke the router-generate skill using the Skill tool. Framework: <framework>. Artifact directory: docs/integrations/<framework>/."
 })
 ```
 
@@ -110,7 +110,7 @@ Dispatch a subagent:
 Agent({
   description: "Stage 4: Create <framework> router PR",
   model: "sonnet",
-  prompt: "Read .claude/skills/router-pr/SKILL.md for your instructions. Framework: <framework>. Artifact directory: docs/integrations/<framework>/."
+  prompt: "Invoke the router-pr skill using the Skill tool. Framework: <framework>. Artifact directory: docs/integrations/<framework>/."
 })
 ```
 
