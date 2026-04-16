@@ -10,18 +10,17 @@ const ROOT = resolve(import.meta.dirname, '../..')
 // eslint-disable-next-line import/no-default-export
 export default defineConfig({
   test: {
+    include: ['packages/*/@(src|test)/**/*.spec.@(ts|tsx)', 'developer-extension/@(src|test)/**/*.spec.@(ts|tsx)'],
+
     browser: {
       enabled: true,
       provider: playwright(),
       instances: [{ browser: 'chromium' }],
     },
 
-    setupFiles: [
-      resolve(import.meta.dirname, 'vitest.setup.ts'),
-      // Global beforeEach/afterEach hooks that reset SDK module state between tests (mirrors Karma setup)
-      resolve(ROOT, 'packages/core/test/forEach.spec.ts'),
-    ],
+    setupFiles: [resolve(import.meta.dirname, 'vitest.setup.ts')],
     restoreMocks: true,
+    isolate: true, // speedup tests
     onUnhandledError(error): boolean | void {
       if (error.message === 'expected error') {
         return false
@@ -62,10 +61,14 @@ export default defineConfig({
       { find: /^@datadog\/browser-([^\\/]+)$/, replacement: `${ROOT}/packages/$1/src` },
       { find: /^@datadog\/browser-(.+\/.*)$/, replacement: `${ROOT}/packages/$1` },
       { find: /^packages\/(.*)$/, replacement: `${ROOT}/packages/$1` },
-      { find: /^\.\/allJsonSchemas$/, replacement: resolve(import.meta.dirname, 'allJsonSchemas.ts') },
+      { find: /.*\/allJsonSchemas$/, replacement: resolve(import.meta.dirname, 'allJsonSchemas.ts') },
       {
-        find: /^(.+\/)?getCurrentJasmineSpec$/,
+        find: /.*\/getCurrentJasmineSpec$/,
         replacement: resolve(import.meta.dirname, 'getCurrentJasmineSpec.ts'),
+      },
+      {
+        find: /.*\/registerCleanupTask$/,
+        replacement: resolve(import.meta.dirname, 'registerCleanupTask.ts'),
       },
     ],
   },

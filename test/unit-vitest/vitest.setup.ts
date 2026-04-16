@@ -8,13 +8,28 @@ const env = jasmineLib.getEnv()
 
 // Create a standalone SpyRegistry that doesn't require a jasmine execution context.
 // vitest's afterEach (registered below) will clear it between tests.
+let v = fetch
+Object.defineProperty(window, 'fetch', {
+  get() {
+    return v
+  },
+  set(value) {
+    debugger
+    v = value
+  },
+})
 const spiesForCurrentTest: any[] = []
 const spyRegistry = new jasmineLib.SpyRegistry({
-  currentSpies: () => spiesForCurrentTest,
+  currentSpies: () => {
+    return spiesForCurrentTest
+  },
   createSpy: (name: string, fn: Function) => env.createSpy(name, fn),
 })
 
-window.spyOn = (object, method) => spyRegistry.spyOn(object, method)
+window.spyOn = (object, method) => {
+  console.log('SPY')
+  return spyRegistry.spyOn(object, method)
+}
 window.spyOnProperty = (object, property, accessType) => spyRegistry.spyOnProperty(object, property, accessType)
 
 window.jasmine = {
@@ -27,13 +42,15 @@ window.jasmine = {
 // Wrap test/hook functions to support Jasmine's `done` callback pattern, which Vitest v4 dropped.
 // If a function accepts 1+ parameters, we assume the first is `done` and wrap it in a Promise.
 function supportDone(fn: Function): Function {
-  if (fn.length === 0) return fn
+  if (fn.length === 0) {
+    return fn
+  }
   return () =>
     new Promise<void>((resolve, reject) => {
       const done: any = (error?: any) => (error ? reject(error) : resolve())
       done.fail = (error?: any) => reject(error instanceof Error ? error : new Error(String(error)))
       const result = fn(done)
-      if (result && typeof (result as any).then === 'function') {
+      if (result && typeof result.then === 'function') {
         ;(result as Promise<void>).then(resolve, reject)
       }
     })
@@ -76,7 +93,12 @@ window.expect = ((actual: any) =>
     },
   })) as unknown as typeof window.expect
 
+console.log('A')
 vitest.afterEach(() => {
+  console.log('CLEAR')
+  debugger
   spyRegistry.clearSpies()
   spiesForCurrentTest.length = 0
 })
+
+await import('../../packages/core/test/forEach.ts')

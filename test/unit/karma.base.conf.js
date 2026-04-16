@@ -24,7 +24,7 @@ const FILES = [
   // Make sure 'forEach.spec' is the first file to be loaded, so its `beforeEach` hook is executed
   // before all other `beforeEach` hooks, and its `afterEach` hook is executed after all other
   // `afterEach` hooks.
-  'packages/core/test/forEach.spec.ts',
+  'packages/core/test/forEach.ts',
   'packages/rum/test/toto.css',
 ]
 
