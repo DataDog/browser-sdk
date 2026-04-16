@@ -124,7 +124,9 @@ function buildApp(appName: string) {
   if (packageJson.peerDependencies) {
     // For each peer dependency, install it
     for (const [name] of Object.entries(packageJson.peerDependencies)) {
-      command`yarn add -D ${name}`.withCurrentWorkingDirectory(appPath).run()
+      const resolution = packageJson.resolutions?.[name]
+      const specifier = resolution ? `${name}@${resolution}` : name
+      command`yarn add -D ${specifier}`.withCurrentWorkingDirectory(appPath).run()
     }
     // revert package.json & yarn.lock changes if they are versioned
     const areFilesVersioned = command`git ls-files package.json yarn.lock`.withCurrentWorkingDirectory(appPath).run()
