@@ -26,11 +26,13 @@ See the updated setup documentation for full snippet examples.
 
 Minimum supported versions: Chrome 80+, Firefox 78+, Safari 14+.
 
+**Session store key renamed from `_dd_s` to `_dd_s_v2`.** The new session manager uses an incompatible storage format, so a new key is used to avoid conflicts. On upgrade, existing sessions are automatically migrated from `_dd_s`. Note: rolling back to v6 after migration will start a new session (the v6 SDK won't read the `_dd_s_v2` key). If you have CSP or cookie policies that allowlist specific cookie names, add `_dd_s_v2`.
+
 **Removed options:**
 
-| Option | Replacement |
-|--------|-------------|
-| `betaEncodeCookieOptions` | Cookie encoding is now always enabled. |
+| Option                        | Replacement                                            |
+| ----------------------------- | ------------------------------------------------------ |
+| `betaEncodeCookieOptions`     | Cookie encoding is now always enabled.                 |
 | `allowFallbackToLocalStorage` | Use `sessionPersistence: ['cookie', 'local-storage']`. |
 
 ### RUM
@@ -53,17 +55,9 @@ datadogRum.startDurationVital('myVital', { vitalKey: 'uniqueKey' })
 datadogRum.stopDurationVital('myVital', { vitalKey: 'uniqueKey' })
 ```
 
-**`addTiming` no longer accepts relative times.** `addTiming` previously accepted either an epoch timestamp or a relative time (milliseconds since page load), but there was no way to retrieve the view start time from the SDK, making relative times impractical. Only epoch timestamps are now accepted:
+**New `session_renewal` view loading type.** When a session expires and is renewed, the new view is now created with `@view.loading_type:session_renewal` instead of `route_change`. Update any dashboards or monitors that filter on `@view.loading_type` if they should also include session-renewed views.
 
-```js
-// Before (relative time — no longer works)
-datadogRum.addTiming('my-timing', 1500)
-
-// After (epoch timestamp)
-datadogRum.addTiming('my-timing', Date.now())
-// or omit the second argument to use the current time
-datadogRum.addTiming('my-timing')
-```
+**Document resource timing is now based on real `PerformanceNavigationTiming`.** The initial document resource event previously used a synthetic timing entry. It now uses the browser's native `PerformanceNavigationTiming` directly, which may result in slightly different `resource.duration` values for the document resource. The `initiatorType` for the document resource changes from `"initial_document"` to `"navigation"`. If you use plugins or domain context handlers that inspect `performanceEntry` for document resources, update them to expect a `PerformanceNavigationTiming` instead of `PerformanceResourceTiming`.
 
 **First Input Delay (FID) removed.** Google replaced FID with INP (Interaction to Next Paint) as a Core Web Vital. FID has been removed from the SDK to reduce bundle size. Use INP instead.
 
@@ -94,11 +88,10 @@ DD_LOGS.init({
 
 **Removed options:**
 
-| Option | Replacement |
-|--------|-------------|
+| Option         | Replacement                                                          |
+| -------------- | -------------------------------------------------------------------- |
 | `usePciIntake` | The standard intake is now PCI compliant. Update your CSP if needed. |
 
 ### Session Replay
 
 **New serialization algorithm.** The new DOM mutation serialization algorithm (Change Records) is now the default. It produces more accurate recordings and significantly reduces bandwidth usage. The segment format has changed — if you depend on the raw segment format, you will need to update your integration.
-
