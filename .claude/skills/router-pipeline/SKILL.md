@@ -52,29 +52,21 @@ Write `docs/integrations/<framework>/00-pipeline-input.md`:
 
 Use the Skill tool to invoke `router-fetch-docs`.
 
-After completion, read `docs/integrations/<framework>/01-router-concepts.md` and check the `compatible` field.
+After completion, check if `docs/integrations/<framework>/EXIT.md` exists (Stage 1 writes it if the framework is incompatible).
 
-If `compatible: false`, write `docs/integrations/<framework>/EXIT.md` with:
+If EXIT.md exists, read it and report the exit to the user. Stop.
 
-- Stage: fetch-docs
-- Reason: the incompatibility reason from 01-router-concepts.md
-- Artifacts produced: 00-pipeline-input.md, 01-router-concepts.md
-
-Then stop and report the exit to the user.
+Otherwise, verify `docs/integrations/<framework>/01-router-concepts.yaml` was created.
 
 ## Step 3: Invoke /router-design
 
 Use the Skill tool to invoke `router-design`.
 
-After completion, read `docs/integrations/<framework>/02-design-decisions.md` and check for any concept marked `unmapped` with severity `critical`.
+After completion, check if `docs/integrations/<framework>/EXIT.md` exists (Stage 2 writes it if critical issues are found).
 
-If critical unmapped concepts exist, write `EXIT.md` with:
+If EXIT.md exists, read it and report the exit to the user. Stop.
 
-- Stage: design
-- Reason: which critical concepts could not be mapped and why
-- Artifacts produced: 00-pipeline-input.md, 01-router-concepts.md, 02-design-decisions.md
-
-Then stop and report the exit to the user.
+Otherwise, verify `docs/integrations/<framework>/02-design-decisions.yaml` was created.
 
 ## Step 4: Invoke /router-generate
 

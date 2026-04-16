@@ -1,13 +1,13 @@
 ---
 name: router-fetch-docs
-description: 'Stage 1: Fetch framework router documentation and extract structured routing concepts. Reads input from docs/integrations/<framework>/00-pipeline-input.md.'
+description: 'Stage 1: Fetch framework router documentation and extract structured routing concepts into a YAML schema. Reads input from docs/integrations/<framework>/00-pipeline-input.md.'
 ---
 
 # Stage 1: Fetch Router Documentation
 
 ## Context
 
-You are Stage 1 of the router integration pipeline. Your job is to fetch framework router documentation and extract structured routing concepts as factual reference material for later stages.
+You are Stage 1 of the router integration pipeline. Your job is to fetch framework router documentation and extract structured routing concepts as **factual data** for later stages.
 
 Do NOT analyze which hooks the SDK should use, recommend approaches, or compare with existing SDK integrations. Only document what the framework provides.
 
@@ -29,111 +29,36 @@ Use the WebFetch tool for all fetches. If a URL fails, note it and continue with
 
 **Prefer over-fetching to under-fetching.** Fetch every routing-related page you can find — API references, guides, tutorials. It is better to fetch a page and not need it than to miss information that a later stage requires. When in doubt, fetch it.
 
-### 2. Extract Router Concepts
+### 2. Extract Router Concepts into YAML Schema
 
-Analyze the fetched documentation and produce a structured summary covering these sections.
+Analyze the fetched documentation and fill in the following YAML schema. Every field must be populated from the documentation. Use `null` for features the framework does not support.
 
 #### Sourcing Rules
 
-**Core rule: if the docs have a page or anchor for it, link to it.** API names, file names, config properties, hook names, type names, CLI flags, table entries — everything.
+**Core rule: if the docs have a page or anchor for it, add the source URL.** API names, hook names, type names — everything factual must be traceable to documentation.
 
-- **Always link a word already in the sentence** — never append a suffix like `([guide](url))` or `([source](url))`. Pick the most relevant word or name and make it the link.
-- **Discover anchors before linking.** Fetch each doc page to find exact anchor IDs (e.g. `#page-page.svelte`, `#Server-hooks-handle`) — do not guess them.
-- **Unsourced claims** must be marked _inferred: \<reasoning\>_.
+- Claims that cannot be traced to documentation must include a comment: `# _inferred: <reasoning>`
+- When a field value comes from a specific doc page, add the source URL as a YAML comment on the same line
 
-```markdown
-<!-- ✅ Good: link is on a word in the sentence -->
+#### YAML Schema
 
-SvelteKit uses a [filesystem-based router](https://svelte.dev/docs/kit/routing)
-| [`+page.svelte`](https://svelte.dev/docs/kit/routing#page-page.svelte) | Page component |
+Read `output.schema.yaml` (next to this SKILL.md) for the schema and field descriptions. See `docs/integrations/_example/01-router-concepts.yaml` for a filled-in example.
 
-<!-- ❌ Bad: trailing suffix -->
+Produce a YAML file conforming to this schema. Fill in every field. Use `null` for features the framework does not support.
 
-SvelteKit uses a filesystem-based router ([guide](https://svelte.dev/docs/kit/routing))
-| `+page.svelte` ([source](https://svelte.dev/docs/kit/routing)) | Page component |
-```
-
-#### Required Sections
-
-**Route Definition Format**
-How routes are declared: config object, file-based routing, decorators, or other. Include code examples from the docs.
-
-**Dynamic Segment Syntax**
-What syntax the framework uses for parameterized route segments (e.g. `:id`, `[id]`, `{id}`). Include examples.
-
-**Catch-All / Wildcard Syntax**
-What syntax the framework uses for catch-all or wildcard routes (e.g. `*`, `**`, `[...slug]`, `/:pathMatch(.*)*`). Include examples. If the framework has no catch-all syntax, state that explicitly.
-
-**Navigation Lifecycle Hooks**
-List every navigation lifecycle event/hook the framework exposes, in the order they fire. For each, describe:
-
-- When it fires relative to other hooks
-- What data is available at that point
-- Whether it can cancel/redirect navigation
-
-**Navigation Lifecycle Timing**
-Document the order of operations during a navigation. For each phase, state:
-
-- Where in the lifecycle do **redirects** resolve?
-- Where do **data fetches** (loaders, resolvers) execute?
-- Where does **component rendering** begin?
-- Which hooks fire between each phase?
-
-Include a timeline or ordered list showing the sequence: redirect resolution → guard evaluation → data fetching → component rendering, mapped to the specific hooks/events from the previous section.
-
-**Route Matching Model**
-How the framework matches URLs to routes: nested vs flat, layout routes, named outlets/slots, parallel routes.
-
-**Programmatic Navigation API**
-How the router exposes current route state and navigation methods. What objects/hooks are available to read the current route, its params, and matched route records.
-
-### 3. Major Version History (Last 2 Years)
-
-Fetch the framework router's release/changelog information to identify major versions released within the last 2 years (since April 2024).
-
-**How to find versions:**
-
-Use GitHub Releases to identify major versions. Fetch `https://github.com/<org>/<repo>/releases` and filter to major versions (semver X.0.0) released after April 2024. For each major version found, fetch its individual release page to get the full release notes and breaking changes.
-
-**For each major version, document:**
-
-- **Version number and release date**
-- **Breaking changes** — list every breaking change from the release notes. Quote or link to the source. Do not filter, assess, or editorialize — just list them verbatim.
-
-**Output format:**
-
-```markdown
-## Major Versions (Last 2 Years)
-
-### vX.0.0 (YYYY-MM-DD)
-
-**Breaking Changes:**
-
-- Change description ([source](url))
-- ...
-```
-
-If no major versions were released in the last 2 years, state that explicitly.
-
-### 4. Compatibility Assessment
-
-At the end of the document, include a `## Compatibility` section with:
-
-- `compatible: true` or `compatible: false`
-- If false, a `reason:` field explaining why
+### 3. Compatibility Assessment
 
 A framework is **incompatible** if it lacks:
-
 - A client-side route tree or route matching mechanism
 - Dynamic segment parameters
 - Navigation lifecycle events that can be hooked into
-- Examples: Shopify Hydrogen (server-only loaders), Salesforce Lightning (proprietary component model)
+
+If incompatible: do NOT write the YAML file. Instead write `docs/integrations/<framework>/EXIT.md` with the reason and stop.
 
 A framework is **compatible** even if:
-
 - It uses file-based routing (as long as there's a runtime route representation)
 - Some hooks fire later than ideal (trade-off is documented, not a blocker)
 
 ## Output
 
-Write the result to `docs/integrations/<framework>/01-router-concepts.md`.
+Write the result to `docs/integrations/<framework>/01-router-concepts.yaml`.

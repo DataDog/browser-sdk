@@ -1,0 +1,83 @@
+# Schema for 02-design-decisions.yaml
+# Stage 2 fills this schema from Stage 1 data + reference implementations.
+# Field descriptions serve as instructions for the LLM filling it in.
+
+selectedHook:
+  name:
+    type: string
+    description: Hook name from 01-router-concepts.yaml, selected by the deterministic priority rules.
+  rationale:
+    type: string
+    description: Which rules each candidate passed/failed and why the selected hook won.
+
+wrappingStrategy:
+  pattern:
+    type: string
+    enum: [wrap-factory, renderless-component, provider, wrap-hook, other]
+    description: >
+      wrap-factory: Wrap the router creation function, subscribe to hook inside.
+      renderless-component: Component that calls the hook during lifecycle.
+      provider: DI provider that injects the router and subscribes to events.
+      wrap-hook: Wrap a user-facing hook to intercept route data.
+      other: Escape hatch for unknown patterns.
+  target:
+    type: string
+    description: >
+      What specifically to wrap/provide.
+      E.g. "createRouter from vue-router", "ENVIRONMENT_INITIALIZER with inject(Router)".
+  rationale:
+    type: string
+    description: Why this is idiomatic for the framework.
+
+viewNameAlgorithm:
+  family:
+    type: string
+    enum: [route-id, matched-records, param-substitution]
+    description: >
+      route-id: Framework provides parameterized route pattern as string. Minimal post-processing.
+      matched-records: Framework provides matched route records. Iterate and concatenate path segments.
+      param-substitution: Framework provides evaluated pathname + params. Reconstruct route template. Least preferred.
+  rationale:
+    type: string
+    description: Why this family, based on the hook's availableApi.
+
+targetPackage:
+  mode:
+    type: string
+    enum: [new-package, extend-existing]
+    description: >
+      new-package: Create a new packages/rum-<framework>/ from scratch.
+      extend-existing: Add router support to an existing package (e.g. adding TanStack Router to rum-react).
+  package:
+    type: string
+    description: >
+      Target package directory name. For new-package: "rum-<framework>".
+      For extend-existing: the existing package (e.g. "rum-react").
+  subpath:
+    type: string
+    required: false
+    description: >
+      Only for extend-existing. The subdirectory for this router's files within the existing package.
+      E.g. "src/domain/tanstackRouter/" within packages/rum-react/.
+
+referenceImplementation:
+  primary:
+    type: string
+    description: >
+      Which packages/rum-* to model after (e.g. "rum-vue").
+      Stage 3 reads this implementation as its primary source for code patterns.
+  rationale:
+    type: string
+    description: Why this is the closest match.
+
+ssr:
+  handling:
+    type: string
+    description: >
+      How to ensure client-side-only execution. "N/A" if ssr.supported is false in Stage 1.
+
+notes:
+  type: string
+  description: >
+    Free text for additional design context, trade-offs, unmapped concepts,
+    or anything Stage 3 needs to know.

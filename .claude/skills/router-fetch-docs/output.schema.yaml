@@ -1,0 +1,103 @@
+# Schema for 01-router-concepts.yaml
+# Stage 1 fills this schema from framework documentation.
+# Field descriptions serve as instructions for the LLM filling it in.
+
+routeDefinition:
+  styles:
+    type: array
+    items: { enum: [file-based, config-object, other] }
+    description: >
+      How routes are declared. file-based = filesystem convention (SvelteKit, Next.js).
+      config-object = explicit route configuration array (Vue, React, Angular).
+      other = escape hatch. Array because a framework may support multiple styles.
+  historyStrategies:
+    type: array
+    items: { enum: [path, hash, memory] }
+    description: >
+      URL strategies the router supports. path = browser History API (pushState).
+      hash = hash-based (#/route). memory = in-memory (SSR, testing).
+
+routeSyntax:
+  concepts:
+    type: array
+    items:
+      enum: [static-path, dynamic-segments, optional-segments, catch-all, nested-routes]
+    description: >
+      Which routing concepts the framework supports. Use this enum to flag
+      concepts so later stages never forget to handle them.
+  examples:
+    type: array
+    description: >
+      Behavioral examples showing route pattern, actual URL, and expected view name.
+      Must cover every concept listed above. Include framework-specific quirks.
+    items:
+      route: { type: string, description: Route pattern as declared }
+      path: { type: string, description: Example URL that matches }
+      viewName: { type: string, description: Expected view name (pattern with placeholders) }
+      note: { type: string, required: false, description: Explain non-obvious behavior }
+
+ssr:
+  supported:
+    type: boolean
+    description: Whether the framework supports server-side rendering.
+  clientDetection:
+    type: [string, 'null']
+    description: >
+      Framework's idiomatic API for detecting client-side execution.
+      Used by Stage 3 to generate guards when needed.
+
+hooks:
+  type: array
+  description: ALL candidate navigation lifecycle hooks (client-side).
+  items:
+    name:
+      type: string
+      description: Hook/event name as it appears in the framework API.
+    afterCancellation:
+      type: boolean
+      description: >
+        At this hook, is the navigation guaranteed to have survived all cancellation points?
+        Guard redirects (e.g. Angular returning a UrlTree) cancel the current navigation
+        and start a new one — the hook fires only for the final, non-cancelled navigation.
+    afterRedirects:
+      type: boolean
+      description: >
+        At this hook, is the observed route guaranteed to be the final destination?
+        Config redirects resolved before this hook, and programmatic redirects that
+        cancel+restart navigation, both count as "after" if the cancelled navigation
+        never reaches this hook.
+    afterFetch:
+      type: boolean
+      description: Fires after data loading (resolvers, load functions).
+    afterRender:
+      type: boolean
+      description: Fires after DOM mutation / component rendering.
+    access:
+      type: string
+      description: >
+        What runtime context is needed to call this hook.
+        Examples: "Return value of createRouter()", "Must be called during
+        Svelte component init", "Router service injected via Angular DI".
+    availableApi:
+      type: array
+      description: Data accessible at hook invocation time.
+      items:
+        name: { type: string, description: 'API path (e.g. to.matched, navigation.to.route.id)' }
+        description: { type: string, description: What this data contains }
+
+versions:
+  entries:
+    type: array
+    description: Routing-relevant breaking changes only, max 2 years old.
+    items:
+      version: { type: string, description: Semver version string }
+      date: { type: string, description: 'Release date (YYYY-MM-DD)' }
+      routingChanges:
+        type: array
+        items: { type: string }
+        description: Breaking changes affecting routing.
+
+notes:
+  type: string
+  description: >
+    Free text for framework-specific context that doesn't fit the schema above.
