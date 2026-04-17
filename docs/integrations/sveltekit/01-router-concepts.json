@@ -1,0 +1,297 @@
+{
+  "structured_output": {
+    "metadata": {
+      "framework": {
+        "value": "sveltekit",
+        "source": "inferred: @sveltejs/kit → sveltekit (package is the SvelteKit framework itself)"
+      },
+      "npmPackage": {
+        "value": "@sveltejs/kit",
+        "source": "https://registry.npmjs.org/@sveltejs/kit/latest"
+      }
+    },
+    "routeDefinition": {
+      "styles": [
+        {
+          "value": "file-based",
+          "source": "https://svelte.dev/docs/kit/routing"
+        }
+      ],
+      "historyStrategies": [
+        {
+          "value": "path",
+          "source": "https://svelte.dev/docs/kit/configuration"
+        },
+        {
+          "value": "hash",
+          "source": "https://svelte.dev/docs/kit/configuration"
+        }
+      ]
+    },
+    "routeSyntax": {
+      "concepts": [
+        {
+          "value": "static-path",
+          "source": "https://svelte.dev/docs/kit/routing"
+        },
+        {
+          "value": "dynamic-segments",
+          "source": "https://svelte.dev/docs/kit/advanced-routing"
+        },
+        {
+          "value": "optional-segments",
+          "source": "https://svelte.dev/docs/kit/advanced-routing"
+        },
+        {
+          "value": "catch-all",
+          "source": "https://svelte.dev/docs/kit/advanced-routing"
+        },
+        {
+          "value": "nested-routes",
+          "source": "https://svelte.dev/docs/kit/routing"
+        }
+      ],
+      "examples": [
+        {
+          "route": "src/routes/about/+page.svelte",
+          "path": "/about",
+          "viewName": "/about",
+          "source": "https://svelte.dev/docs/kit/routing"
+        },
+        {
+          "route": "src/routes/blog/[slug]/+page.svelte",
+          "path": "/blog/hello-world",
+          "viewName": "/blog/[slug]",
+          "note": "Dynamic segment [slug] is accessible via params.slug in load functions and components.",
+          "source": "https://svelte.dev/docs/kit/routing"
+        },
+        {
+          "route": "src/routes/[[lang]]/home/+page.svelte",
+          "path": "/home",
+          "viewName": "/home",
+          "note": "Optional segment [[lang]] makes the prefix optional; both /home and /en/home resolve to this route.",
+          "source": "https://svelte.dev/docs/kit/advanced-routing"
+        },
+        {
+          "route": "src/routes/[[lang]]/home/+page.svelte",
+          "path": "/en/home",
+          "viewName": "/[[lang]]/home",
+          "note": "Same file handles both /home and /en/home due to the optional segment.",
+          "source": "https://svelte.dev/docs/kit/advanced-routing"
+        },
+        {
+          "route": "src/routes/[...rest]/+page.svelte",
+          "path": "/any/nested/path",
+          "viewName": "/[...rest]",
+          "note": "Rest segment captures multiple path parts into a single params.rest string.",
+          "source": "https://svelte.dev/docs/kit/advanced-routing"
+        },
+        {
+          "route": "src/routes/settings/+layout.svelte with src/routes/settings/profile/+page.svelte",
+          "path": "/settings/profile",
+          "viewName": "/settings/profile",
+          "note": "Layout at src/routes/settings/+layout.svelte is inherited by all child routes under /settings/.",
+          "source": "https://svelte.dev/docs/kit/routing"
+        },
+        {
+          "route": "src/routes/(app)/dashboard/+page.svelte",
+          "path": "/dashboard",
+          "viewName": "/dashboard",
+          "note": "Route group (app) is purely organizational — parentheses are stripped from the URL.",
+          "source": "https://svelte.dev/docs/kit/advanced-routing"
+        },
+        {
+          "route": "src/routes/fruits/[page=fruit]/+page.svelte",
+          "path": "/fruits/apple",
+          "viewName": "/fruits/[page]",
+          "note": "Parameter matcher [page=fruit] validates the segment against src/params/fruit.js before matching.",
+          "source": "https://svelte.dev/docs/kit/advanced-routing"
+        }
+      ]
+    },
+    "ssr": {
+      "supported": {
+        "value": true,
+        "source": "https://svelte.dev/docs/kit/page-options"
+      },
+      "clientDetection": {
+        "value": "import { browser } from '$app/environment'; if (browser) { ... }",
+        "source": "https://svelte.dev/docs/kit/load"
+      }
+    },
+    "hooks": [
+      {
+        "name": "beforeNavigate",
+        "afterCancellation": false,
+        "afterRedirects": false,
+        "afterFetch": false,
+        "afterRender": false,
+        "access": "Must be called during Svelte component initialization (imported from $app/navigation)",
+        "availableApi": [
+          {
+            "name": "navigation.from",
+            "description": "Route information for the origin of the navigation (url, params, route.id).",
+            "source": "https://svelte.dev/docs/kit/$app-navigation"
+          },
+          {
+            "name": "navigation.to",
+            "description": "Route information for the navigation destination (url, params, route.id). Null for non-SvelteKit routes.",
+            "source": "https://svelte.dev/docs/kit/$app-navigation"
+          },
+          {
+            "name": "navigation.type",
+            "description": "Navigation type: 'link', 'goto', 'popstate', 'enter', 'leave', 'back', 'forward'.",
+            "source": "https://svelte.dev/docs/kit/$app-navigation"
+          },
+          {
+            "name": "navigation.willUnload",
+            "description": "Boolean — true when the document will fully unload (e.g. navigating to an external URL).",
+            "source": "https://svelte.dev/docs/kit/$app-navigation"
+          },
+          {
+            "name": "navigation.cancel()",
+            "description": "Call to prevent the navigation. For 'leave' navigations, triggers the browser's native unload dialog.",
+            "source": "https://svelte.dev/docs/kit/$app-navigation"
+          }
+        ],
+        "source": "https://svelte.dev/docs/kit/$app-navigation"
+      },
+      {
+        "name": "onNavigate",
+        "afterCancellation": true,
+        "afterRedirects": true,
+        "afterFetch": false,
+        "afterRender": false,
+        "access": "Must be called during Svelte component initialization (imported from $app/navigation)",
+        "availableApi": [
+          {
+            "name": "navigation.from",
+            "description": "Route information for the origin of the navigation.",
+            "source": "https://svelte.dev/docs/kit/$app-navigation"
+          },
+          {
+            "name": "navigation.to",
+            "description": "Route information for the navigation destination.",
+            "source": "https://svelte.dev/docs/kit/$app-navigation"
+          },
+          {
+            "name": "navigation.type",
+            "description": "Navigation type string.",
+            "source": "https://svelte.dev/docs/kit/$app-navigation"
+          },
+          {
+            "name": "callback return value",
+            "description": "Optionally return a function; SvelteKit calls it after DOM updates complete. Used for view transitions via document.startViewTransition.",
+            "source": "https://svelte.dev/docs/kit/$app-navigation"
+          }
+        ],
+        "source": "https://svelte.dev/docs/kit/$app-navigation"
+      },
+      {
+        "name": "afterNavigate",
+        "afterCancellation": true,
+        "afterRedirects": true,
+        "afterFetch": true,
+        "afterRender": true,
+        "access": "Must be called during Svelte component initialization (imported from $app/navigation). Also fires on component mount.",
+        "availableApi": [
+          {
+            "name": "navigation.from",
+            "description": "Route information for the origin of the navigation. Null on initial page load.",
+            "source": "https://svelte.dev/docs/kit/$app-navigation"
+          },
+          {
+            "name": "navigation.to",
+            "description": "Route information for the completed navigation destination.",
+            "source": "https://svelte.dev/docs/kit/$app-navigation"
+          },
+          {
+            "name": "navigation.type",
+            "description": "Navigation type string.",
+            "source": "https://svelte.dev/docs/kit/$app-navigation"
+          }
+        ],
+        "source": "https://svelte.dev/docs/kit/$app-navigation"
+      },
+      {
+        "name": "navigating (store/$app/state)",
+        "afterCancellation": false,
+        "afterRedirects": false,
+        "afterFetch": false,
+        "afterRender": false,
+        "access": "Import navigating from '$app/state' (Svelte 5 / SvelteKit 2.12+) or '$app/stores' (legacy). Reactive — subscribe or use with $derived.",
+        "availableApi": [
+          {
+            "name": "navigating.from",
+            "description": "Origin route of the in-progress navigation.",
+            "source": "https://svelte.dev/docs/kit/$app-state"
+          },
+          {
+            "name": "navigating.to",
+            "description": "Destination route of the in-progress navigation.",
+            "source": "https://svelte.dev/docs/kit/$app-state"
+          },
+          {
+            "name": "navigating.type",
+            "description": "Navigation type string.",
+            "source": "https://svelte.dev/docs/kit/$app-state"
+          },
+          {
+            "name": "navigating.delta",
+            "description": "History delta (for popstate navigations).",
+            "source": "https://svelte.dev/docs/kit/$app-state"
+          }
+        ],
+        "source": "https://svelte.dev/docs/kit/$app-state"
+      },
+      {
+        "name": "reroute (universal hook)",
+        "afterCancellation": false,
+        "afterRedirects": false,
+        "afterFetch": false,
+        "afterRender": false,
+        "access": "Defined in src/hooks.js (or src/hooks.ts) as an exported reroute function. Not a component-level hook.",
+        "availableApi": [
+          {
+            "name": "url",
+            "description": "The URL object for the incoming request. The hook returns a pathname string to redirect to a different route without changing the browser address bar.",
+            "source": "https://svelte.dev/docs/kit/hooks"
+          }
+        ],
+        "source": "https://svelte.dev/docs/kit/hooks"
+      }
+    ],
+    "versions": {
+      "entries": [
+        {
+          "version": "2.0.0",
+          "date": "2023-12-14",
+          "routingChanges": [
+            "resolvePath removed in favour of resolveRoute from $app/paths",
+            "depends() now requires a colon as part of the string",
+            "Top-level promise awaiting in load functions no longer supported",
+            "goto() can no longer navigate to external URLs"
+          ],
+          "source": "https://raw.githubusercontent.com/sveltejs/kit/main/packages/kit/CHANGELOG.md"
+        },
+        {
+          "version": "2.12.0",
+          "date": "2024-10-01",
+          "routingChanges": [
+            "$app/state module introduced as replacement for $app/stores, providing page, navigating, and updated reactive state objects with Svelte 5 runes support"
+          ],
+          "source": "https://raw.githubusercontent.com/sveltejs/kit/main/packages/kit/CHANGELOG.md"
+        },
+        {
+          "version": "2.18.0",
+          "date": "2025-01-01",
+          "routingChanges": [
+            "reroute hook now supports async operations including data fetching"
+          ],
+          "source": "https://raw.githubusercontent.com/sveltejs/kit/main/packages/kit/CHANGELOG.md"
+        }
+      ]
+    },
+    "notes": "SvelteKit uses filesystem-based routing exclusively — there is no config-object style. Routes live under src/routes/. Special files use a '+' prefix: +page.svelte, +layout.svelte, +server.js, etc. Route groups use (groupName) directory syntax and have no effect on URLs. Parameter matchers in src/params/ can constrain dynamic segments. The router.type config option ('pathname' | 'hash') selects the history strategy; hash mode disables SSR and prerendering. $app/stores is deprecated in SvelteKit 2.12+ in favour of $app/state (Svelte 5 runes). The onNavigate hook supports returning a callback that fires post-DOM-update, making it suitable for View Transitions API integration. afterNavigate fires on the initial component mount as well as subsequent navigations."
+  }
+}

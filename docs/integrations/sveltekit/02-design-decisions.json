@@ -1,0 +1,29 @@
+{
+  "structured_output": {
+    "selectedHook": {
+      "name": "onNavigate",
+      "rationale": "Five hooks were evaluated. Rule 1 (afterCancellation: true) eliminates beforeNavigate (false), navigating/store (false), and reroute (false). Two candidates remain: onNavigate and afterNavigate. Rule 2 (afterRedirects: true): both pass. Rule 3 (afterFetch: false AND afterRender: false): onNavigate passes (both false); afterNavigate fails (both true). onNavigate satisfies all three priority rules and is selected. Additionally, onNavigate fires before DOM updates, ensuring RUM events during the new view's lifetime (fetches, long tasks, interactions) are attributed to the correct view rather than the previous one."
+    },
+    "wrappingStrategy": {
+      "pattern": "renderless-component",
+      "target": "A renderless Svelte component (e.g. DatadogRumRouter) that calls onNavigate from $app/navigation during component initialization and forwards navigation.to.route.id to startView. Users add <DatadogRumRouter /> to their root +layout.svelte.",
+      "rationale": "onNavigate must be called during Svelte component initialization — it cannot be called outside a component context. The idiomatic SvelteKit pattern for app-wide lifecycle side effects is a renderless component placed in the root layout. This mirrors how libraries like svelte-query and svelte-i18n expose app-level setup. It requires no router instance wrapping (unlike Vue/React factory wrap) and no DI (unlike Angular). The component self-registers on mount and cleans up on destroy."
+    },
+    "viewNameAlgorithm": {
+      "family": "route-id",
+      "rationale": "The onNavigate hook exposes navigation.to.route.id, which is SvelteKit's canonical parameterized route pattern string (e.g. '/blog/[slug]', '/[[lang]]/home', '/[...rest]'). This maps directly to the desired view name with minimal post-processing. Route groups such as (app) are already stripped from route.id by SvelteKit. Optional segment brackets [[...]] and rest segment brackets [...rest] should be preserved as-is since they are already the parameterized form. Parameter matchers (e.g. [page=fruit]) should strip the matcher suffix to normalize to [page]. This is strictly a route-id family — no segment concatenation or param back-substitution is needed."
+    },
+    "targetPackage": {
+      "mode": "new-package",
+      "package": "rum-sveltekit"
+    },
+    "referenceImplementation": {
+      "primary": "rum-vue",
+      "rationale": "rum-vue is the closest structural match: (1) it uses a plugin + separate router integration component/utility pattern; (2) the hook subscription (afterEach) is analogous to onNavigate in that it fires after a successful navigation and provides route information; (3) it is a non-React framework with its own component model, mirroring SvelteKit's Svelte component model; (4) it also requires client-side-only SSR guarding. The view name algorithm diverges (route-id vs matched-records) but the overall architecture — plugin registers RUM, router component calls startView — is directly reusable as a template."
+    },
+    "ssr": {
+      "handling": "SvelteKit's onNavigate lifecycle hook only runs in the browser — it is never invoked during SSR. However, the plugin module and any module-level code must guard against server-side execution using `import { browser } from '$app/environment'` where needed (e.g. wrapping any window/document access). The renderless component itself is inherently client-side since Svelte component lifecycle hooks do not run on the server."
+    },
+    "notes": "1. route.id post-processing: SvelteKit route.id uses double-bracket notation for optional segments ([[lang]]) and spread notation for rest segments ([...rest]). These are already parameterized and should be passed through verbatim as the view name. The only transformation needed is stripping parameter matchers: '[page=fruit]' → '[page]'. 2. Initial navigation: afterNavigate fires on component mount (initial page load), but onNavigate does NOT fire on the initial render — it only fires for subsequent client-side navigations. The integration must handle the initial view by reading page.route.id from '$app/state' (SvelteKit 2.12+) or the page store from '$app/stores' (legacy) at component mount time to start the first view. 3. The 'leave' navigation type (user navigating away from the SvelteKit app entirely) should be ignored since there is no destination route.id in that case (navigation.to will be null). 4. Svelte 5 runes / SvelteKit 2.12+: prefer $app/state over $app/stores for reading current page state, but remain compatible with both via try/catch or version detection if needed. 5. The package should declare @sveltejs/kit as a peerDependency (optional) and svelte as a peerDependency."
+  }
+}
