@@ -1,4 +1,4 @@
-import { mockClock, mockRequestIdleCallback } from '../../test'
+import { mockClock, mockRequestIdleCallback, registerCleanupTask } from '../../test'
 import { createTaskQueue, MAX_EXECUTION_TIME_ON_TIMEOUT } from './taskQueue'
 
 describe('createTaskQueue', () => {
@@ -57,4 +57,37 @@ describe('createTaskQueue', () => {
     expect(task2).toHaveBeenCalled()
     expect(task3).not.toHaveBeenCalled()
   })
+
+  it('runs pending tasks when requestIdleCallback invokes the callback with no deadline', () => {
+    const clock = mockClock()
+    replaceRequestIdleCallbackWithPolyfillShim()
+
+    const taskQueue = createTaskQueue()
+    const task1 = jasmine.createSpy('task1')
+    const task2 = jasmine.createSpy('task2')
+    const task3 = jasmine.createSpy('task3')
+
+    taskQueue.push(task1)
+    taskQueue.push(task2)
+    taskQueue.push(task3)
+
+    clock.tick(0)
+
+    expect(task1).toHaveBeenCalled()
+    expect(task2).toHaveBeenCalled()
+    expect(task3).toHaveBeenCalled()
+  })
 })
+
+function replaceRequestIdleCallbackWithPolyfillShim() {
+  const originalRequestIdleCallback = window.requestIdleCallback
+  const originalCancelIdleCallback = window.cancelIdleCallback
+  // Reproduces `(cb) => setTimeout(cb, 0)` — invokes the callback with no argument.
+  window.requestIdleCallback = ((cb: () => void) =>
+    setTimeout(() => cb(), 0) as unknown as number) as typeof window.requestIdleCallback
+  window.cancelIdleCallback = ((id: number) => clearTimeout(id)) as typeof window.cancelIdleCallback
+  registerCleanupTask(() => {
+    window.requestIdleCallback = originalRequestIdleCallback
+    window.cancelIdleCallback = originalCancelIdleCallback
+  })
+}
