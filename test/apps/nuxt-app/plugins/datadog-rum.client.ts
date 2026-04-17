@@ -1,5 +1,5 @@
 import { datadogRum } from '@datadog/browser-rum'
-import { nuxtRumPlugin, setupNuxtErrorHandling } from '@datadog/browser-rum-nuxt'
+import { nuxtRumPlugin } from '@datadog/browser-rum-nuxt'
 import { defineNuxtPlugin, useNuxtApp, useRoute, useRouter } from 'nuxt/app'
 
 export default defineNuxtPlugin({

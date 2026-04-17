@@ -33,7 +33,7 @@ export function reportNuxtError(
 }
 
 export function setupNuxtErrorHandling(nuxtApp: NuxtApp, reportError: NuxtErrorReporter): void {
-  const deduplicatedReportError = callOnce(reportError)
+  const deduplicatedReportError = deduplicateByError(reportError)
 
   // Wrap existing errorHandler rather than replacing it, so Nuxt's own
   // handleVueError (which drives the error page) is still called.
@@ -48,7 +48,7 @@ export function setupNuxtErrorHandling(nuxtApp: NuxtApp, reportError: NuxtErrorR
   })
 }
 
-function callOnce(func: NuxtErrorReporter) {
+function deduplicateByError(func: NuxtErrorReporter) {
   const seen = new WeakSet<object>()
   return (error: unknown, instance: ComponentPublicInstance | null, info: string) => {
     if (error !== null && typeof error === 'object') {
