@@ -846,26 +846,23 @@ describe('serializeRumConfiguration', () => {
             | 'excludedActivityUrls'
             | 'remoteConfigurationProxy'
             | 'allowedGraphQlUrls'
+            | 'trackResourceHeaders'
         ? `use_${CamelToSnakeCase<Key>}`
         : Key extends 'trackLongTasks'
           ? 'track_long_task' // We forgot the s, keeping this for backward compatibility
-          : Key extends 'trackResourceHeaders'
-            ? 'use_track_resource_headers'
-            : // The following options are not reported as telemetry. Please avoid adding more of them.
-              // TODO: Add betaTrackActionsInShadowDom to rum-events-format telemetry schema and remove from this exclusion
-              Key extends 'applicationId' | 'subdomain' | 'betaTrackActionsInShadowDom'
-              ? never
-              : CamelToSnakeCase<Key>
+          : // The following options are not reported as telemetry. Please avoid adding more of them.
+            // TODO: Add betaTrackActionsInShadowDom to rum-events-format telemetry schema and remove from this exclusion
+            Key extends 'applicationId' | 'subdomain' | 'betaTrackActionsInShadowDom'
+            ? never
+            : CamelToSnakeCase<Key>
     // By specifying the type here, we can ensure that serializeConfiguration is returning an
     // object containing all expected properties.
-    const serializedConfiguration = serializeRumConfiguration(
-      exhaustiveRumInitConfiguration
-    ) as ExtractTelemetryConfiguration<
+    const serializedConfiguration: ExtractTelemetryConfiguration<
       | MapRumInitConfigurationKey<keyof RumInitConfiguration>
       | 'selected_tracing_propagators'
       | 'use_track_graph_ql_payload'
       | 'use_track_graph_ql_response_errors'
-    >
+    > = serializeRumConfiguration(exhaustiveRumInitConfiguration)
 
     expect(serializedConfiguration).toEqual({
       ...SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION,
