@@ -6,6 +6,7 @@ import {
   startAccountContext,
   startGlobalContext,
   startUserContext,
+  startTabContext,
 } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../domain/configuration'
 import { startLogsAssembly } from '../domain/assembly'
@@ -50,6 +51,7 @@ export function startLogs(
   const userContext = startUserContext(hooks, configuration, sessionManager, LOGS_STORAGE_KEY)
   const globalContext = startGlobalContext(hooks, configuration, LOGS_STORAGE_KEY, false)
   startRUMInternalContext(hooks)
+  startTabContext(hooks)
 
   startNetworkErrorCollection(configuration, lifeCycle, bufferedDataObservable)
   startRuntimeErrorCollection(configuration, lifeCycle, bufferedDataObservable)

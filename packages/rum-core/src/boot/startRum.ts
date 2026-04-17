@@ -16,6 +16,7 @@ import {
   startAccountContext,
   startGlobalContext,
   startUserContext,
+  startTabContext,
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { createWindowOpenObservable } from '../browser/windowOpenObservable'
@@ -167,6 +168,7 @@ export function startRumEventCollection(
   const featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, configuration)
   startSessionContext(hooks, configuration, sessionManager, recorderApi, viewHistory)
   startConnectivityContext(hooks)
+  startTabContext(hooks)
   const globalContext = startGlobalContext(hooks, configuration, 'rum', true)
   const userContext = startUserContext(hooks, configuration, sessionManager, 'rum')
   const accountContext = startAccountContext(hooks, configuration, 'rum')

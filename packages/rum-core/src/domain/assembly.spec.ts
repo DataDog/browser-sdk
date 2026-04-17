@@ -6,6 +6,7 @@ import {
   display,
   relativeToClocks,
   startGlobalContext,
+  startTabContext,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { registerCleanupTask, mockClock, createSessionManagerMock } from '@datadog/browser-core/test'
@@ -502,6 +503,18 @@ describe('rum assembly', () => {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION, { context: { foo: 'customer context' } }),
       })
       expect(serverRumEvents[0].context).toEqual({ foo: 'customer context' })
+    })
+
+    it('should include tab.id from tabContext', () => {
+      const { lifeCycle, hooks, serverRumEvents } = setupAssemblyTestWithDefaults()
+
+      startTabContext(hooks)
+
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+      })
+
+      expect((serverRumEvents[0] as any).tab.id).toEqual(jasmine.any(String))
     })
   })
 
