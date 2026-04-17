@@ -6,6 +6,7 @@ import { initFetchObservable } from '../browser/fetchObservable'
 import type { XhrContext } from '../browser/xhrObservable'
 import { initXhrObservable } from '../browser/xhrObservable'
 import { ConsoleApiName } from '../tools/display'
+import { addTelemetryDebug } from './telemetry'
 import type { RawError } from './error/error.types'
 import { trackRuntimeError } from './error/trackRuntimeError'
 import type { ConsoleLog } from './console/consoleObservable'
@@ -27,7 +28,12 @@ export type BufferedData =
   | { type: BufferedDataType.CONSOLE; data: ConsoleLog }
 
 export function startBufferingData() {
-  const observable = new BufferedObservable<BufferedData>(BUFFER_LIMIT)
+  const observable = new BufferedObservable<BufferedData>(BUFFER_LIMIT, (count) => {
+    // monitor-until: 2026-10-14
+    addTelemetryDebug('Early data collection dropped data on unbuffer', {
+      count,
+    })
+  })
   const subscriptions: Subscription[] = []
 
   function subscribe<T extends BufferedDataType>(
