@@ -1,0 +1,8 @@
+{
+  "name": "@datadog/browser-rum-sveltekit/sveltekit-router",
+  "private": true,
+  "main": "../cjs/entries/svelteKitRouter.js",
+  "module": "../esm/entries/svelteKitRouter.js",
+  "types": "../cjs/entries/svelteKitRouter.d.ts",
+  "svelte": "../src/domain/svelteKitRouter/DatadogRumRouter.svelte"
+}

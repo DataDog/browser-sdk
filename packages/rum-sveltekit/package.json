@@ -1,0 +1,53 @@
+{
+  "name": "@datadog/browser-rum-sveltekit",
+  "version": "6.32.0",
+  "license": "Apache-2.0",
+  "main": "cjs/entries/main.js",
+  "module": "esm/entries/main.js",
+  "types": "cjs/entries/main.d.ts",
+  "files": [
+    "cjs",
+    "esm",
+    "src",
+    "sveltekit-router",
+    "!src/**/*.spec.ts",
+    "!src/**/*.specHelper.ts"
+  ],
+  "scripts": {
+    "build": "node ../../scripts/build/build-package.ts --modules",
+    "prepack": "yarn build"
+  },
+  "dependencies": {
+    "@datadog/browser-core": "6.32.0",
+    "@datadog/browser-rum-core": "6.32.0"
+  },
+  "peerDependencies": {
+    "@sveltejs/kit": "^2.12.0",
+    "svelte": "^5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@datadog/browser-rum": {
+      "optional": true
+    },
+    "@datadog/browser-rum-slim": {
+      "optional": true
+    },
+    "@sveltejs/kit": {
+      "optional": true
+    },
+    "svelte": {
+      "optional": true
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DataDog/browser-sdk.git",
+    "directory": "packages/rum-sveltekit"
+  },
+  "volta": {
+    "extends": "../../package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
