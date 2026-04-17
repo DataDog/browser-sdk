@@ -34,6 +34,74 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@angular/common@npm:17.3.12":
+  version: 17.3.12
+  resolution: "@angular/common@npm:17.3.12"
+  dependencies:
+    tslib: "npm:^2.3.0"
+  peerDependencies:
+    "@angular/core": 17.3.12
+    rxjs: ^6.5.3 || ^7.4.0
+  checksum: 10c0/f40d76081b04bacb3efd4389b0aa4dcfa742a4954e38a76a434dab1ae226b3192241077be5d0032cb011cc1625cb04043449cd5956f8ba44da99f8f7a3bbe83a
+  languageName: node
+  linkType: hard
+
+"@angular/compiler@npm:17.3.12":
+  version: 17.3.12
+  resolution: "@angular/compiler@npm:17.3.12"
+  dependencies:
+    tslib: "npm:^2.3.0"
+  peerDependencies:
+    "@angular/core": 17.3.12
+  peerDependenciesMeta:
+    "@angular/core":
+      optional: true
+  checksum: 10c0/e044b2cdd30deb43eda84b49ec0c9261d1745517927b0a7eacf0f1390ba9c8463a78945e10d888f209344085cde6d99495431f4c5401af412876e0e2141797b3
+  languageName: node
+  linkType: hard
+
+"@angular/core@npm:17.3.12":
+  version: 17.3.12
+  resolution: "@angular/core@npm:17.3.12"
+  dependencies:
+    tslib: "npm:^2.3.0"
+  peerDependencies:
+    rxjs: ^6.5.3 || ^7.4.0
+    zone.js: ~0.14.0
+  checksum: 10c0/0a2119daf7efdb81660c81dee1476b14e1f5456aee94e3f504cfbc1d98107dd7716374f9594837a5789d004b5c4b49aa7c553ef0dc87797cd581628bbfcd6858
+  languageName: node
+  linkType: hard
+
+"@angular/platform-browser@npm:17.3.12":
+  version: 17.3.12
+  resolution: "@angular/platform-browser@npm:17.3.12"
+  dependencies:
+    tslib: "npm:^2.3.0"
+  peerDependencies:
+    "@angular/animations": 17.3.12
+    "@angular/common": 17.3.12
+    "@angular/core": 17.3.12
+  peerDependenciesMeta:
+    "@angular/animations":
+      optional: true
+  checksum: 10c0/ef0066f481920b4c778f7b342145790a6486f59faba4b88ad3216edb9e207f9a25d607d90e5b911654d092bf772261ab31de3c918a7b73fe8a507bdb6bfe54e1
+  languageName: node
+  linkType: hard
+
+"@angular/router@npm:17.3.12":
+  version: 17.3.12
+  resolution: "@angular/router@npm:17.3.12"
+  dependencies:
+    tslib: "npm:^2.3.0"
+  peerDependencies:
+    "@angular/common": 17.3.12
+    "@angular/core": 17.3.12
+    "@angular/platform-browser": 17.3.12
+    rxjs: ^6.5.3 || ^7.4.0
+  checksum: 10c0/b7d832804daa6c0777a2a09b4a53ae8c797e92e4224cc089bf8c05fb767b714c64e9feecaa5f0d4e3f72e86c487eddb23ebc0dc7a1a960b24e0ce96db99b4610
+  languageName: node
+  linkType: hard
+
 "@apidevtools/json-schema-ref-parser@npm:^11.5.5":
   version: 11.9.3
   resolution: "@apidevtools/json-schema-ref-parser@npm:11.9.3"
@@ -288,6 +356,41 @@ __metadata:
     "@datadog/browser-rum": 6.32.0
   peerDependenciesMeta:
     "@datadog/browser-rum":
+      optional: true
+  languageName: unknown
+  linkType: soft
+
+"@datadog/browser-rum-angular@workspace:packages/rum-angular":
+  version: 0.0.0-use.local
+  resolution: "@datadog/browser-rum-angular@workspace:packages/rum-angular"
+  dependencies:
+    "@angular/common": "npm:17.3.12"
+    "@angular/compiler": "npm:17.3.12"
+    "@angular/core": "npm:17.3.12"
+    "@angular/platform-browser": "npm:17.3.12"
+    "@angular/router": "npm:17.3.12"
+    "@datadog/browser-core": "npm:6.32.0"
+    "@datadog/browser-rum-core": "npm:6.32.0"
+    rxjs: "npm:7.8.1"
+    tslib: "npm:2.8.1"
+    zone.js: "npm:0.14.10"
+  peerDependencies:
+    "@angular/common": ">=17.0.0"
+    "@angular/core": ">=17.0.0"
+    "@angular/router": ">=17.0.0"
+    rxjs: ">=7.0.0"
+  peerDependenciesMeta:
+    "@angular/common":
+      optional: true
+    "@angular/core":
+      optional: true
+    "@angular/router":
+      optional: true
+    "@datadog/browser-rum":
+      optional: true
+    "@datadog/browser-rum-slim":
+      optional: true
+    rxjs:
       optional: true
   languageName: unknown
   linkType: soft
@@ -10487,6 +10590,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"rxjs@npm:7.8.1":
+  version: 7.8.1
+  resolution: "rxjs@npm:7.8.1"
+  dependencies:
+    tslib: "npm:^2.1.0"
+  checksum: 10c0/3c49c1ecd66170b175c9cacf5cef67f8914dcbc7cd0162855538d365c83fea631167cacb644b3ce533b2ea0e9a4d0b12175186985f89d75abe73dbd8f7f06f68
+  languageName: node
+  linkType: hard
+
 "safe-array-concat@npm:^1.1.3":
   version: 1.1.3
   resolution: "safe-array-concat@npm:1.1.3"
@@ -11684,7 +11796,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:^2.0.0, tslib@npm:^2.0.1, tslib@npm:^2.0.3, tslib@npm:^2.1.0, tslib@npm:^2.4.0, tslib@npm:^2.8.0":
+"tslib@npm:2.8.1, tslib@npm:^2.0.0, tslib@npm:^2.0.1, tslib@npm:^2.0.3, tslib@npm:^2.1.0, tslib@npm:^2.3.0, tslib@npm:^2.4.0, tslib@npm:^2.8.0":
   version: 2.8.1
   resolution: "tslib@npm:2.8.1"
   checksum: 10c0/9c4759110a19c53f992d9aae23aac5ced636e99887b51b9e61def52611732872ff7668757d4e4c61f19691e36f4da981cd9485e869b4a7408d689f6bf1f14e62
@@ -12989,5 +13101,12 @@ __metadata:
   version: 3.25.76
   resolution: "zod@npm:3.25.76"
   checksum: 10c0/5718ec35e3c40b600316c5b4c5e4976f7fee68151bc8f8d90ec18a469be9571f072e1bbaace10f1e85cf8892ea12d90821b200e980ab46916a6166a4260a983c
+  languageName: node
+  linkType: hard
+
+"zone.js@npm:0.14.10":
+  version: 0.14.10
+  resolution: "zone.js@npm:0.14.10"
+  checksum: 10c0/61283d152cb1eff899bae61621dccd572aa9f47e0c60c04b249bf86b43e3e4ba627bf6dba371b725023a4f302f39e554d7bf2d25bbf40c869c6c52f774b17e8b
   languageName: node
   linkType: hard

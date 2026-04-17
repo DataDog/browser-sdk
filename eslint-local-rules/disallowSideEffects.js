@@ -40,6 +40,9 @@ const packagesWithoutSideEffect = new Set([
   'react-router-dom',
   'vue',
   'vue-router',
+  '@angular/common',
+  '@angular/core',
+  '@angular/router',
 ])
 
 /**

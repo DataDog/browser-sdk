@@ -1,0 +1,7 @@
+{
+  "name": "@datadog/browser-rum-angular/angular-router",
+  "private": true,
+  "main": "../cjs/entries/angularRouter.js",
+  "module": "../esm/entries/angularRouter.js",
+  "types": "../cjs/entries/angularRouter.d.ts"
+}
