@@ -5,7 +5,7 @@
     "build": "webpack"
   },
   "dependencies": {
-    "@angular/common": "15.2.10",
+    "@angular/common": "19.2.16",
     "@angular/compiler": "15.2.10",
     "@angular/compiler-cli": "15.2.10",
     "@angular/core": "15.2.10",
