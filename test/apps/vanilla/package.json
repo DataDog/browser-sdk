@@ -28,9 +28,9 @@
     "@datadog/browser-worker": "file:../../../packages/worker/package.tgz"
   },
   "devDependencies": {
-    "ts-loader": "9.5.4",
-    "typescript": "3.8.2",
-    "webpack": "5.105.2"
+    "ts-loader": "9.5.7",
+    "typescript": "6.0.2",
+    "webpack": "5.105.4"
   },
   "volta": {
     "extends": "../../../package.json"

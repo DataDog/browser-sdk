@@ -154,7 +154,7 @@ function JsonFunctionValue({ descriptor, metadata }: { descriptor: JsonValueDesc
           >
             {showSource ? '▾ hide source' : '▸ show source'}
           </Text>
-          <Collapse in={showSource}>
+          <Collapse expanded={showSource}>
             <Box
               p="xs"
               bg={`gray.${colorScheme === 'dark' ? 8 - descriptor.depth : descriptor.depth + 1}`}
@@ -291,7 +291,7 @@ function JsonValueChildren({ children, descriptor }: { children: ReactNode; desc
           </span>
         )}
       </JsonLine>
-      <Collapse in={!isCollapsed}>{children}</Collapse>
+      <Collapse expanded={!isCollapsed}>{children}</Collapse>
     </div>
   )
 }

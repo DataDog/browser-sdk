@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it, mock } from 'node:test'
-import { type fetch } from 'undici'
+import type { fetch, Response } from 'undici'
 import { mockModule } from '../../deploy/lib/testHelpers.ts'
 
 describe('PrComment', () => {
