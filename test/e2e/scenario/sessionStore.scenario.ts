@@ -1,8 +1,8 @@
+import type { MemorySession } from '@datadog/browser-core'
 import { SESSION_STORE_KEY, MEMORY_SESSION_STORE_KEY } from '@datadog/browser-core'
 import type { BrowserContext, Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
-import type { MemorySession } from 'packages/core/src/domain/session/storeStrategies/sessionInMemory'
 import { bundleSetup, createTest } from '../lib/framework'
 
 const DISABLE_LOCAL_STORAGE = '<script>Object.defineProperty(Storage.prototype, "getItem", { get: () => 42});</script>'

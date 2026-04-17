@@ -132,7 +132,7 @@ export { createValueHistory, CLEAR_OLD_VALUES_INTERVAL } from './tools/valueHist
 export { readBytesFromStream } from './tools/readBytesFromStream'
 export type { SessionState } from './domain/session/sessionState'
 export { SESSION_STORE_KEY } from './domain/session/storeStrategies/sessionStoreStrategy'
-export { MEMORY_SESSION_STORE_KEY } from './domain/session/storeStrategies/sessionInMemory'
+export { MEMORY_SESSION_STORE_KEY, MemorySession } from './domain/session/storeStrategies/sessionInMemory'
 export {
   willSyntheticsInjectRum,
   getSyntheticsContext,
