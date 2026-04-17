@@ -5,7 +5,9 @@ description: Fully automated pipeline that generates a draft Browser SDK router 
 
 # Router Integration Pipeline
 
-You are an orchestrator that chains four stage skills to generate a complete Browser SDK router integration package and draft PR.
+You are an orchestrator that dispatches `claude -p` processes for each stage to generate a complete Browser SDK router integration package and draft PR.
+
+Each stage runs as a dedicated `claude -p` process with its own context window. Stages 1 and 2 use `--output-format json --json-schema <schema>`. The full CLI wrapper JSON (including `structured_output`, `is_error`, `duration_ms`, cost, etc.) is persisted as the reviewable artifact under `docs/integrations/<framework>/`. Downstream stages extract `.structured_output` with `jq` when they read the data. Stages 3 and 4 produce code and markdown via normal tool calls.
 
 ## Input
 
@@ -13,83 +15,64 @@ The single argument is an npm package URL (e.g. `https://www.npmjs.com/package/@
 
 Example: `/router-pipeline https://www.npmjs.com/package/vue-router`
 
-## Step 1: Resolve Package Metadata & Initialize
+## Step 1: Stage 1 — Fetch Docs (structured JSON)
 
-1. **Fetch npm package page** — Use WebFetch on the provided URL to extract:
-   - Package name (e.g. `vue-router`, `@angular/router`)
-   - Framework name — derive a lowercase identifier from the package name (e.g. `vue-router` → `vue`, `@angular/router` → `angular`, `@tanstack/react-router` → `tanstack-react-router`, `svelte` → `svelte`)
-   - Homepage / repository URL
-   - Keywords and description
+The skill instructs the model to emit a JSON object conforming to `.claude/skills/router-fetch-docs/output.schema.json`. The harness validates it and exposes it on `.structured_output`.
 
-2. **Find router documentation URLs** — From the npm page metadata (homepage, repository links), locate the framework's official routing documentation:
-   - Check the homepage URL for docs links
-   - Check the GitHub repository README for documentation links
-   - Look for `/docs/`, `/guide/`, `/routing` paths on the framework's site
-   - Collect 1-3 relevant documentation URLs focused on routing
-
-3. **Create artifact directory and input file:**
+The framework name isn't known yet, so write the artifact to a real temp file first, then move it under `docs/integrations/<framework>/` once stage 1 resolves it.
 
 ```bash
-mkdir -p docs/integrations/<framework>
+SCHEMA_1=$(cat .claude/skills/router-fetch-docs/output.schema.json)
+
+STAGE1_OUT=/tmp/router-stage1.json
+
+claude -p "/router-fetch-docs <npm-url>" \
+  --model opus \
+  --output-format json \
+  --json-schema "$SCHEMA_1" \
+  --permission-mode auto \
+  > "$STAGE1_OUT"
+
+FRAMEWORK=$(jq -r '.structured_output.metadata.framework.value' "$STAGE1_OUT")
+mkdir -p "docs/integrations/$FRAMEWORK"
+mv "$STAGE1_OUT" "docs/integrations/$FRAMEWORK/01-router-concepts.json"
 ```
 
-Write `docs/integrations/<framework>/00-pipeline-input.md`:
+The file committed under `docs/integrations/$FRAMEWORK/01-router-concepts.json` is the full CLI wrapper: `{type, subtype, is_error, duration_ms, result, structured_output, usage, total_cost_usd, ...}`. Downstream stages use `jq '.structured_output' <file>` to read the schema-shaped payload.
 
-```markdown
-# Pipeline Input
+## Step 2: Stage 2 — Design Decisions (structured JSON)
 
-**Framework:** <framework>
-**npm package:** <npm-url>
-**Documentation URLs:**
+```bash
+SCHEMA_2=$(cat .claude/skills/router-design/output.schema.json)
 
-- <url1>
-- <url2>
-
-**Initiated:** <ISO timestamp>
+claude -p "/router-design $FRAMEWORK" \
+  --model opus \
+  --output-format json \
+  --json-schema "$SCHEMA_2" \
+  --permission-mode auto \
+  > "docs/integrations/$FRAMEWORK/02-design-decisions.json"
 ```
 
-## Step 2: Invoke /router-fetch-docs
+## Step 3: Stage 3 — Generate Code
 
-Use the Skill tool to invoke `router-fetch-docs`.
+Stage 3 produces source code and a markdown manifest via normal tool calls — no structured output.
 
-After completion, read `docs/integrations/<framework>/01-router-concepts.md` and check the `compatible` field.
+```bash
+claude -p "/router-generate $FRAMEWORK" \
+  --model opus \
+  --permission-mode auto
+```
 
-If `compatible: false`, write `docs/integrations/<framework>/EXIT.md` with:
+Verify `docs/integrations/$FRAMEWORK/03-generation-manifest.md`
 
-- Stage: fetch-docs
-- Reason: the incompatibility reason from 01-router-concepts.md
-- Artifacts produced: 00-pipeline-input.md, 01-router-concepts.md
+Check the **Validation** section in the manifest. If `**Status:** fail`, stop the pipeline and report the failures to the user. Do not proceed to Stage 4.
 
-Then stop and report the exit to the user.
+## Step 4: Stage 4 — Create PR
 
-## Step 3: Invoke /router-design
+```bash
+claude -p "/router-pr $FRAMEWORK" \
+  --model opus \
+  --permission-mode auto
+```
 
-Use the Skill tool to invoke `router-design`.
-
-After completion, read `docs/integrations/<framework>/02-design-decisions.md` and check for any concept marked `unmapped` with severity `critical`.
-
-If critical unmapped concepts exist, write `EXIT.md` with:
-
-- Stage: design
-- Reason: which critical concepts could not be mapped and why
-- Artifacts produced: 00-pipeline-input.md, 01-router-concepts.md, 02-design-decisions.md
-
-Then stop and report the exit to the user.
-
-## Step 4: Invoke /router-generate
-
-Use the Skill tool to invoke `router-generate`.
-
-## Step 5: Invoke /router-pr
-
-Use the Skill tool to invoke `router-pr`.
-
-## Error Handling
-
-If any stage fails (fetch timeout, parse error, tool failure), write `EXIT.md` with:
-
-- Stage: which stage failed
-- Reason: error details
-- Artifacts produced: list of files written before failure
-
-All artifacts written before the failure are preserved. Stop and report the failure to the user.
+Report the PR URL to the user when done.

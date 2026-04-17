@@ -1,145 +1,106 @@
 ---
 name: router-design
-description: 'Stage 2: Analyze reference implementations and produce design decisions document from router concepts. Reads 01-router-concepts.md and reference code.'
+description: 'Stage 2: Analyze reference implementations and produce design decisions from the stage 1 JSON. Reads 01-router-concepts.json and reference code, emits JSON conforming to output.schema.json.'
 ---
 
 # Stage 2: Design Decisions
 
 ## Context
 
-You are Stage 2 of the router integration pipeline. Your job is to read the router concepts extracted in Stage 1, analyze the existing reference implementations, and produce a concrete design document that will guide code generation.
+You are Stage 2 of the router integration pipeline. Your job is to read the structured router concepts from Stage 1, analyze the existing reference implementations, and produce explicit design decisions that will guide code generation in Stage 3.
+
+The pipeline invokes you with `claude -p --output-format json --json-schema .claude/skills/router-design/output.schema.json`. Your final message must be a single JSON object conforming to that schema; the harness validates it and writes the CLI wrapper to `docs/integrations/<framework>/02-design-decisions.json` with the payload on `.structured_output`.
 
 ## Input
 
-1. Read `docs/integrations/<framework>/01-router-concepts.md`
-2. Read the reference implementations to understand the SDK contract:
-   - Plugin interface: `packages/rum-core/src/domain/plugins.ts`
-   - Public API: `packages/rum-core/src/boot/rumPublicApi.ts`
-   - Angular router: `packages/rum-angular/src/domain/angularRouter/` (all files)
-   - React router: `packages/rum-react/src/domain/reactRouter/` (all files)
-   - Vue router: `packages/rum-vue/src/domain/router/` (all files)
-3. Read reference entry points and package configs:
-   - Angular entry point: `packages/rum-angular/src/entries/main.ts`
-   - Vue entry point: `packages/rum-vue/src/entries/main.ts`
-   - React entry point: `packages/rum-react/src/entries/main.ts`
-   - Vue package.json: `packages/rum-vue/package.json`
-   - Angular package.json: `packages/rum-angular/package.json`
+You receive a **framework identifier** as skill param (e.g. `angular`, `vue`, `tanstack-react-router`).
 
-Find the `<framework>` directory by listing `docs/integrations/`.
+Read:
+
+1. `docs/integrations/<framework>/01-router-concepts.json` — stage 1 CLI wrapper. Extract the router-concepts payload with `jq '.structured_output' <file>`.
+2. Reference implementations (to understand SDK patterns):
+   - Plugin files: `packages/rum-vue/src/domain/vuePlugin.ts`, `packages/rum-react/src/domain/reactPlugin.ts`, `packages/rum-nextjs/src/domain/nextjsPlugin.ts`
+   - Vue router: `packages/rum-vue/src/domain/router/` (all `.ts` files)
+   - React router: `packages/rum-react/src/domain/reactRouter/` (all `.ts` files)
+   - Next.js router: `packages/rum-nextjs/src/domain/nextJSRouter/` (all `.ts` files)
+   - Entry points: `packages/rum-vue/src/entries/main.ts`, `packages/rum-react/src/entries/main.ts`, `packages/rum-nextjs/src/entries/main.ts`
+   - Package configs: `packages/rum-vue/package.json`, `packages/rum-react/package.json`, `packages/rum-nextjs/package.json`
+   - Plugin interface: `packages/rum-core/src/domain/plugins.ts`
 
 ## Process
 
-For each concept in `01-router-concepts.md`, find the closest equivalent in the reference implementations. Every mapping MUST include inline links to both:
+### 1. Hook Selection (Deterministic)
 
-- The framework doc source (from 01-router-concepts.md links)
-- The specific file and line range in the reference implementation
+Apply these priority rules to the `hooks` array from `01-router-concepts.json`.
 
-### Required Sections
+**The integration must be client-side only.** Only consider hooks that fire on the client. Use the `access` field and `ssr` section from `01-router-concepts.json` to determine this.
 
-**Architecture Overview**
-2-3 sentences describing the overall approach. Which reference implementation is closest and why.
+**Priority rules (in order):**
 
-**Public API**
-Exactly what the user imports and calls. Show the complete setup code example:
+1. `afterCancellation: true` — **required**. Never start a RUM view for a navigation that didn't occur.
+2. `afterRedirects: true` — **prefer**. Report the final destination, not intermediate routes.
+3. `afterFetch: false` AND `afterRender: false` — **prefer**. Start the view before data loading and DOM mutation so RUM events (fetch resources, long tasks, interactions) are attributed to the new view, not the previous one.
 
-```typescript
-// What the user writes in their app
-import { ... } from '@datadog/browser-rum-<framework>'
-```
+Apply in order:
 
-**File Structure**
-The exact file tree for `packages/rum-<framework>/` with one-line descriptions per file. Follow the convention from reference packages:
+- Filter to `afterCancellation: true`. If no hooks pass, flag as critical issue and stop.
+- Among those, prefer `afterRedirects: true`.
+- Among those, prefer `afterFetch: false` AND `afterRender: false`.
+- If rules conflict (no hook satisfies all), higher-priority rule wins.
+- If multiple hooks still tie, prefer the one that fires earliest in the lifecycle.
 
-- `src/entries/main.ts` — public exports
-- `src/domain/<framework>Plugin.ts` — plugin + subscriber pattern
-- `src/domain/<framework>Router/` — router integration files
-- `src/test/` — test helpers
-- `package.json`, `tsconfig.json`, `README.md`
+Document which hooks were considered, which rules each passed/failed, and why the selected hook won.
 
-**Navigation Hook Decision**
-Which framework hook/event to subscribe to, and which reference implementation it's most similar to. Justify the choice based on the lifecycle timing analysis from Stage 1 (after redirects, before data fetches, before render).
+### 2. Wrapping Strategy (LLM Judgment)
 
-IMPORTANT: The navigation hook choice directly affects what data is available to `computeViewName()`. Different hooks may expose different route objects, matched route arrays, or URL representations. If the framework has multiple candidate hooks, show how the view name computation differs for each option:
+Read the selected hook's `access` field from `01-router-concepts.json`. Determine the most idiomatic way for users to integrate the plugin in this framework.
 
-- What route data each hook provides (e.g. matched route records vs. raw URL vs. route config)
-- How that changes the `computeViewName()` implementation
-- Whether one hook gives better data for view name computation (e.g. access to parameterized route patterns vs. only resolved URLs)
+Consider:
 
-This analysis should reinforce or challenge the hook choice — if a hook that fires later provides significantly better route data, that trade-off must be documented.
+- How existing plugins/libraries are typically added in this framework's ecosystem
+- Whether the hook needs a router instance (→ wrap the factory that creates it)
+- Whether the hook needs component context (→ renderless component or hook)
+- Whether the hook needs DI (→ provider registration)
 
-**View Name Algorithm**
-Pseudocode or step-by-step description of how `computeViewName()` will work for this framework. Cover:
+Reference patterns from existing implementations:
 
-- How to access the matched route records after navigation
-- How dynamic segments appear in the route definition (and whether they need normalization)
-- How catch-all/wildcard routes should be substituted with actual path segments
-- Normal routes, dynamic segments, nested routes, catch-all/wildcard routes
-- Edge cases specific to this framework
-- Link to the most similar existing `computeViewName` implementation and note differences
+- Vue: wraps `createRouter()` factory to get router instance for `afterEach`
+- React: wraps `createBrowserRouter()` factory OR wraps `useRoutes()` hook
+- Angular: provider with `inject(Router)` for `router.events` observable
 
-**Wrapping Strategy**
-How the integration hooks into the framework. Reference implementations:
+### 3. View Name Algorithm (LLM Classification)
 
-- Angular: [`ENVIRONMENT_INITIALIZER` provider](packages/rum-angular/src/domain/angularRouter/provideDatadogRouter.ts)
-- React: [wrapper around `createRouter`](packages/rum-react/src/domain/reactRouter/createRouter.ts) and [`useRoutes` hook](packages/rum-react/src/domain/reactRouter/useRoutes.ts)
-- Vue: [wrapper around `createRouter`](packages/rum-vue/src/domain/router/vueRouter.ts)
+Read the selected hook's `availableApi` from `01-router-concepts.json`. Classify into one of three families (in preference order):
 
-Determine which pattern fits this framework and why.
+- **`route-id`** — Framework provides the parameterized route pattern as a string. Minimal post-processing needed (e.g. strip route groups). Example: SvelteKit `route.id`.
+- **`matched-records`** — Framework provides matched route records (array or tree). Iterate and concatenate path segments. Handle catch-all substitution. Example: Vue `to.matched[]`, React `state.matches[]`.
+- **`param-substitution`** — Framework provides only the evaluated pathname + params object. Must reconstruct the route template by substituting values back with placeholders. Least preferred — heuristic and fragile. Example: Next.js `useParams()` + `usePathname()`.
 
-**Type Strategy**
-Whether to define minimal local types (like Angular's [`RouteSnapshot`](packages/rum-angular/src/domain/angularRouter/types.ts)) to avoid runtime framework imports, or import types directly from the framework package.
+### 4. Target Package (LLM Judgment)
 
-**Plugin Configuration**
-How the plugin will be configured. All reference implementations use the same pattern:
+Determine whether this router needs a new package or extends an existing one.
 
-- [`VuePluginConfiguration`](packages/rum-vue/src/domain/vuePlugin.ts) with `router?: boolean`
-- `onInit` sets `trackViewsManually = true` when `router: true`
+- **`new-package`** — The router belongs to a framework with no existing SDK package (e.g., SvelteKit, Angular). Create `packages/rum-<framework>/`.
+- **`extend-existing`** — The router is an alternative router for a framework that already has an SDK package (e.g., TanStack Router is a React router → extends `rum-react`). Add files under a subdirectory within the existing package.
 
-**Peer Dependencies**
-Which framework packages are required as peer dependencies, with version ranges.
+To decide: check if `packages/rum-*` already has a package for the same UI framework (React, Vue, etc.). If yes, extend it. If no, create new.
 
-**Navigation Filtering**
-How to handle:
+For extend-existing, also determine the subdirectory path for the new router files (e.g., `src/domain/tanstackRouter/`).
 
-- Failed navigations (guards blocking, cancellations)
-- Duplicate navigations (same path)
-- Query-only changes
-- Initial navigation
+### 5. Reference Implementation
 
-Reference the filtering logic in existing implementations:
+Select the `packages/rum-*` implementation that is closest across:
 
-- Vue: [lines 15-22 of vueRouter.ts](packages/rum-vue/src/domain/router/vueRouter.ts)
-- React: subscribe callback in [createRouter.ts](packages/rum-react/src/domain/reactRouter/createRouter.ts)
+- Hook subscription pattern
+- Wrapping strategy
+- Algorithm family
 
-**Test Strategy**
-List every test case to implement, grouped by file:
+Stage 3 reads this implementation as its primary model for code generation.
 
-- `<framework>Plugin.spec.ts`: plugin structure, subscriber callbacks, telemetry, trackViewsManually
-- `start<Framework>View.spec.ts`: all view name computation cases (static, dynamic, nested, catch-all, edge cases)
-- Router integration spec: navigation event handling, filtering, deduplication
+### 6. SSR Handling (LLM Judgment)
 
-**Trade-offs and Alternatives**
-Document any decisions where multiple valid approaches existed. For each, state what was chosen, what was rejected, and why.
+If `ssr.supported: true` in `01-router-concepts.json`, describe how the integration should ensure client-side-only execution. Use the `clientDetection` API from Stage 1 if available.
 
-### Unmapped Concepts
+## Output Schema
 
-For any framework concept that has no SDK equivalent, create a section:
-
-```markdown
-### Unmapped: <concept name>
-
-**Severity:** critical | minor
-**Reason:** <why there's no equivalent>
-**Impact:** <what this means for the integration>
-```
-
-- `critical`: the integration cannot work without this (e.g. no way to get route matches) — **stop the pipeline**
-- `minor`: the integration works but this feature isn't supported (e.g. named outlets not tracked)
-
-## Exit Criteria
-
-If any unmapped concept has severity `critical`, stop the pipeline. Write an exit note at the top of the output explaining which concepts could not be mapped and why.
-
-## Output
-
-Write the result to `docs/integrations/<framework>/02-design-decisions.md`.
+Return the populated object as your final message. The pipeline invokes you with `--output-format json --json-schema output.schema.json`; the harness validates the object and writes the full CLI wrapper (with the object on `.structured_output`) to `docs/integrations/<framework>/02-design-decisions.json`. Do not write files yourself.
