@@ -22,15 +22,17 @@ runMain(() => {
     {
       title: 'TypeScript 3.8.2 compatibility',
       version: '3.8.2',
+      compilerOptions: { moduleResolution: 'node' },
     },
     {
       title: 'TypeScript isolated modules compatibility',
-      compilerOptions: { isolatedModules: true },
+      compilerOptions: { isolatedModules: true, moduleResolution: 'node' },
       version: '3.8.2',
     },
     {
       title: 'TypeScript 4.1.6 compatibility',
       version: '4.1.6',
+      compilerOptions: { moduleResolution: 'node' },
     },
     {
       title: 'TypeScript latest compatibility',

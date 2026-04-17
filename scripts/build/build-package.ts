@@ -92,12 +92,12 @@ async function buildModules({ outDir, module, verbose }: { outDir: string; modul
   const diagnostics = buildWithTypeScript({
     extends: '../../tsconfig.base.json',
     compilerOptions: {
-      baseUrl: '.',
       declaration: true,
       allowJs: true,
       module,
       rootDir: './src/',
       outDir,
+      paths: {},
     },
     include: ['./src'],
     exclude: ['./src/**/*.spec.*', './src/**/*.specHelper.*'],
