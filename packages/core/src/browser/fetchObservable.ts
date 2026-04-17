@@ -44,10 +44,7 @@ type ResponseBodyActionGetter = (context: FetchResolveContext) => ResponseBodyAc
  */
 export const enum ResponseBodyAction {
   IGNORE = 0,
-  // TODO(next-major): Remove the "WAIT" action when `trackEarlyRequests` is removed, as the
-  // duration of fetch requests will always come from PerformanceResourceTiming
-  WAIT = 1,
-  COLLECT = 2,
+  COLLECT = 1,
 }
 
 let fetchObservable: Observable<FetchContext> | undefined
@@ -126,18 +123,20 @@ async function afterSend(
   startContext: FetchStartContext
 ) {
   const context = startContext as unknown as FetchResolveContext
-  context.state = 'resolve'
 
   let response: Response
 
   try {
     response = await responsePromise
   } catch (error) {
-    context.status = 0
-    context.isAborted =
-      context.init?.signal?.aborted || (error instanceof DOMException && error.code === DOMException.ABORT_ERR)
-    context.error = error as Error
-    observable.notify(context)
+    observable.notify({
+      ...context,
+      state: 'resolve',
+      status: 0,
+      isAborted:
+        context.init?.signal?.aborted || (error instanceof DOMException && error.code === DOMException.ABORT_ERR),
+      error: error as Error,
+    })
     return
   }
 
@@ -151,14 +150,12 @@ async function afterSend(
     ResponseBodyAction.IGNORE
   ) as ResponseBodyAction
 
-  if (responseBodyCondition !== ResponseBodyAction.IGNORE) {
+  if (responseBodyCondition === ResponseBodyAction.COLLECT) {
     const clonedResponse = tryToClone(response)
     if (clonedResponse && clonedResponse.body) {
       try {
-        const bytes = await readBytesFromStream(clonedResponse.body, {
-          collectStreamBody: responseBodyCondition === ResponseBodyAction.COLLECT,
-        })
-        context.responseBody = bytes && new TextDecoder().decode(bytes)
+        const bytes = await readBytesFromStream(clonedResponse.body)
+        context.responseBody = new TextDecoder().decode(bytes)
       } catch {
         // Ignore errors when reading the response body (e.g., stream aborted, network errors)
         // This is not critical and should not be reported as an SDK error
@@ -166,5 +163,5 @@ async function afterSend(
     }
   }
 
-  observable.notify(context)
+  observable.notify({ ...context, state: 'resolve' })
 }

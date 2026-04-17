@@ -124,13 +124,11 @@ export function trackViews(
   let locationChangeSubscription: Subscription
   if (areViewsTrackedAutomatically) {
     locationChangeSubscription = renewViewOnLocationChange(locationChangeObservable)
-    if (configuration.trackBfcacheViews) {
-      stopOnBFCacheRestore = onBFCacheRestore(configuration, (pageshowEvent) => {
-        currentView.end()
-        const startClocks = relativeToClocks(pageshowEvent.timeStamp as RelativeTime)
-        currentView = startNewView(ViewLoadingType.BF_CACHE, startClocks, undefined)
-      })
-    }
+    stopOnBFCacheRestore = onBFCacheRestore(configuration, (pageshowEvent) => {
+      currentView.end()
+      const startClocks = relativeToClocks(pageshowEvent.timeStamp as RelativeTime)
+      currentView = startNewView(ViewLoadingType.BF_CACHE, startClocks, undefined)
+    })
   }
 
   function startNewView(loadingType: ViewLoadingType, startClocks?: ClocksState, viewOptions?: ViewOptions) {
@@ -151,13 +149,17 @@ export function trackViews(
   }
 
   function startViewLifeCycle() {
-    lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-      // Renew view on session renewal
-      currentView = startNewView(ViewLoadingType.ROUTE_CHANGE, undefined, {
+    lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, (event) => {
+      const context = currentView.contextManager.getContext()
+      context.is_session_renewal = true
+      context.renew_event = event as any
+
+      currentView = startNewView(ViewLoadingType.SESSION_RENEWAL, undefined, {
+        // Renew view on session renewal
         name: currentView.name,
         service: currentView.service,
         version: currentView.version,
-        context: currentView.contextManager.getContext(),
+        context,
       })
     })
 

@@ -132,9 +132,6 @@ export interface RawRumViewEvent {
     loading_type: ViewLoadingType
     first_byte?: ServerDuration
     first_contentful_paint?: ServerDuration
-    first_input_delay?: ServerDuration
-    first_input_time?: ServerDuration
-    first_input_target_selector?: string
     interaction_to_next_paint?: ServerDuration
     interaction_to_next_paint_time?: ServerDuration
     interaction_to_next_paint_target_selector?: string
@@ -203,11 +200,6 @@ export interface ViewPerformanceData {
   fcp?: {
     timestamp: number
   }
-  fid?: {
-    duration: ServerDuration
-    timestamp: ServerDuration
-    target_selector?: string
-  }
   inp?: {
     duration: ServerDuration
     timestamp?: ServerDuration
@@ -246,6 +238,7 @@ export interface PageStateServerEntry {
 export const ViewLoadingType = {
   INITIAL_LOAD: 'initial_load',
   ROUTE_CHANGE: 'route_change',
+  SESSION_RENEWAL: 'session_renewal',
   BF_CACHE: 'bf_cache',
 } as const
 

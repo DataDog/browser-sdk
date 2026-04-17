@@ -4,8 +4,7 @@ import { Observable } from '../tools/observable'
 import type { Duration, ClocksState } from '../tools/utils/timeUtils'
 import { elapsed, clocksNow, timeStampNow } from '../tools/utils/timeUtils'
 import { normalizeUrl } from '../tools/utils/urlPolyfill'
-import { shallowClone } from '../tools/utils/objectUtils'
-import type { Configuration } from '../domain/configuration'
+import { globalObject } from '../tools/globalObject'
 import { addEventListener } from './addEventListener'
 
 export interface XhrOpenContext {
@@ -35,14 +34,18 @@ export type XhrContext = XhrOpenContext | XhrStartContext | XhrCompleteContext
 let xhrObservable: Observable<XhrContext> | undefined
 const xhrContexts = new WeakMap<XMLHttpRequest, XhrContext>()
 
-export function initXhrObservable(configuration: Configuration) {
+export function initXhrObservable(configuration: { allowUntrustedEvents?: boolean | undefined }) {
   if (!xhrObservable) {
     xhrObservable = createXhrObservable(configuration)
   }
   return xhrObservable
 }
 
-function createXhrObservable(configuration: Configuration) {
+function createXhrObservable(configuration: { allowUntrustedEvents?: boolean | undefined }) {
+  if (!('XMLHttpRequest' in globalObject)) {
+    return new Observable<XhrContext>()
+  }
+
   return new Observable<XhrContext>((observable) => {
     const { stop: stopInstrumentingStart } = instrumentMethod(XMLHttpRequest.prototype, 'open', openXhr)
 
@@ -75,7 +78,7 @@ function openXhr({ target: xhr, parameters: [method, url] }: InstrumentedMethodC
 
 function sendXhr(
   { target: xhr, parameters: [body], handlingStack }: InstrumentedMethodCall<XMLHttpRequest, 'send'>,
-  configuration: Configuration,
+  configuration: { allowUntrustedEvents?: boolean | undefined },
   observable: Observable<XhrContext>
 ) {
   const context = xhrContexts.get(xhr)
@@ -112,13 +115,12 @@ function sendXhr(
     hasBeenReported = true
 
     const completeContext = context as XhrCompleteContext
-    completeContext.state = 'complete'
     completeContext.duration = elapsed(startContext.startClocks.timeStamp, timeStampNow())
     completeContext.status = xhr.status
     if (typeof xhr.response === 'string') {
       completeContext.responseBody = xhr.response
     }
-    observable.notify(shallowClone(completeContext))
+    observable.notify({ ...completeContext, state: 'complete' })
   }
 
   const { stop: unsubscribeLoadEndListener } = addEventListener(configuration, xhr, 'loadend', onEnd)

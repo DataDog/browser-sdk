@@ -16,7 +16,6 @@ export const EXHAUSTIVE_INIT_CONFIGURATION: Required<InitConfiguration> = {
   telemetrySampleRate: 60,
   silentMultipleInit: true,
   sessionPersistence: 'cookie',
-  allowFallbackToLocalStorage: true,
   allowUntrustedEvents: true,
   storeContextsAcrossPages: true,
   trackingConsent: 'not-granted',
@@ -34,11 +33,9 @@ export const EXHAUSTIVE_INIT_CONFIGURATION: Required<InitConfiguration> = {
     clientToken: 'yes',
   },
   datacenter: 'datacenter',
-  internalAnalyticsSubdomain: 'internal-analytics-subdomain.com',
   telemetryConfigurationSampleRate: 70,
   telemetryUsageSampleRate: 80,
   allowedTrackingOrigins: ['chrome-extension://example'],
-  betaEncodeCookieOptions: true,
   source: 'browser',
   sdkVersion: '1.0.0',
   variant: 'variant',
@@ -56,13 +53,11 @@ export const SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION = {
   use_proxy: true,
   silent_multiple_init: true,
   track_session_across_subdomains: true,
-  allow_fallback_to_local_storage: true,
   store_contexts_across_pages: true,
   allow_untrusted_events: true,
   tracking_consent: 'not-granted' as const,
   track_anonymous_user: true,
   use_allowed_tracking_origins: true,
-  beta_encode_cookie_options: true,
   source: 'browser',
   sdk_version: '1.0.0',
   variant: 'variant',
@@ -83,7 +78,6 @@ export type MapInitConfigurationKey<Key extends string> =
           | 'env'
           | 'version'
           | 'datacenter'
-          | 'internalAnalyticsSubdomain'
           | 'replica'
           | 'enableExperimentalFeatures'
       ? never

@@ -3,8 +3,12 @@ import { DeflateEncoderStreamId, Observable, PageExitReason } from '@datadog/bro
 import type { ViewHistory, ViewHistoryEntry, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, registerCleanupTask, restorePageVisibility } from '@datadog/browser-core/test'
-import { createRumSessionManagerMock } from '../../../../rum-core/test'
+import {
+  mockClock,
+  registerCleanupTask,
+  restorePageVisibility,
+  createSessionManagerMock,
+} from '@datadog/browser-core/test'
 import type { BrowserRecord, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
 import { MockWorker, readMetadataFromReplayPayload } from '../../../test'
@@ -294,7 +298,7 @@ describe('startSegmentCollection', () => {
 
 describe('computeSegmentContext', () => {
   const DEFAULT_VIEW_CONTEXT: ViewHistoryEntry = { id: '123', startClocks: {} as ClocksState }
-  const DEFAULT_SESSION = createRumSessionManagerMock().setId('456')
+  const DEFAULT_SESSION = createSessionManagerMock().setId('456')
 
   it('returns a segment context', () => {
     expect(computeSegmentContext('appid', DEFAULT_SESSION, mockViewHistory(DEFAULT_VIEW_CONTEXT))).toEqual({
@@ -310,11 +314,7 @@ describe('computeSegmentContext', () => {
 
   it('returns undefined if the session is not tracked', () => {
     expect(
-      computeSegmentContext(
-        'appid',
-        createRumSessionManagerMock().setNotTracked(),
-        mockViewHistory(DEFAULT_VIEW_CONTEXT)
-      )
+      computeSegmentContext('appid', createSessionManagerMock().setNotTracked(), mockViewHistory(DEFAULT_VIEW_CONTEXT))
     ).toBeUndefined()
   })
 

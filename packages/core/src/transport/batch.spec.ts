@@ -68,16 +68,17 @@ describe('batch', () => {
       )
     })
 
-    it('should remove the estimated message bytes count when replacing a message', () => {
+    it('should adjust the bytes count when replacing a message with the same key', () => {
       batch.add(SMALL_MESSAGE)
       batch.upsert(SMALL_MESSAGE, 'a')
 
       flushController.notifyBeforeAddMessage.calls.reset()
+      flushController.notifyAfterAddMessage.calls.reset()
 
       batch.upsert(SMALL_MESSAGE, 'a')
 
-      expect(flushController.notifyAfterRemoveMessage).toHaveBeenCalledOnceWith(SMALL_MESSAGE_BYTES_COUNT)
-      expect(flushController.notifyBeforeAddMessage).toHaveBeenCalledOnceWith(SMALL_MESSAGE_BYTES_COUNT)
+      expect(flushController.notifyBeforeAddMessage).not.toHaveBeenCalled()
+      expect(flushController.notifyAfterAddMessage).toHaveBeenCalledOnceWith(0) // same size, diff = 0
       expect(flushController.bytesCount).toEqual(
         // Note: contrary to added messages (see test above), we don't take separators into account
         // when upserting messages, because it's irrelevant: upserted messages size are not yet

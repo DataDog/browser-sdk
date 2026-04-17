@@ -6,16 +6,20 @@ import type {
   FetchStartContext,
   FetchResolveContext,
   ContextManager,
+  SessionManager,
+  Observable,
+  BufferedData,
+  Subscription,
 } from '@datadog/browser-core'
 import {
   RequestType,
   ResponseBodyAction,
+  BufferedDataType,
   elapsed,
   initFetchObservable,
-  initXhrObservable,
   timeStampNow,
+  initXhrObservable,
 } from '@datadog/browser-core'
-import type { RumSessionManager } from '..'
 import type { RumConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
@@ -69,86 +73,125 @@ let nextRequestIndex = 1
 export function startRequestCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
-  sessionManager: RumSessionManager,
+  sessionManager: SessionManager,
   userContext: ContextManager,
-  accountContext: ContextManager
+  accountContext: ContextManager,
+  bufferedDataObservable: Observable<BufferedData>
 ) {
   const tracer = startTracer(configuration, sessionManager, userContext, accountContext)
-  trackXhr(lifeCycle, configuration, tracer)
-  trackFetch(lifeCycle, configuration, tracer)
+  trackXhr(lifeCycle, configuration, tracer, bufferedDataObservable)
+  trackFetch(lifeCycle, configuration, tracer, bufferedDataObservable)
 }
 
-export function trackXhr(lifeCycle: LifeCycle, configuration: RumConfiguration, tracer: Tracer) {
-  const subscription = initXhrObservable(configuration).subscribe((rawContext) => {
-    const context = rawContext as RumXhrStartContext | RumXhrCompleteContext
-    if (!isAllowedRequestUrl(context.url)) {
-      return
-    }
+export function trackXhr(
+  lifeCycle: LifeCycle,
+  configuration: RumConfiguration,
+  tracer: Tracer,
+  bufferedDataObservable: Observable<BufferedData>
+) {
+  const subscriptions: Subscription[] = []
 
-    switch (context.state) {
-      case 'start':
+  subscriptions.push(
+    initXhrObservable(configuration).subscribe((context) => {
+      if (context.state === 'start' && isAllowedRequestUrl(context.url)) {
         tracer.traceXhr(context, context.xhr)
-        context.requestIndex = getNextRequestIndex()
-
-        lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
-          requestIndex: context.requestIndex,
-          url: context.url,
-        })
-        break
-      case 'complete':
-        tracer.clearTracingIfNeeded(context)
-        lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
-          ...context,
-          type: RequestType.XHR,
-          isAbortedOnStart: false,
-        })
-        break
-    }
-  })
-
-  return { stop: () => subscription.unsubscribe() }
-}
-
-export function trackFetch(lifeCycle: LifeCycle, configuration: RumConfiguration, tracer: Tracer) {
-  const subscription = initFetchObservable({
-    responseBodyAction: (context) => {
-      if (findGraphQlConfiguration(context.url, configuration)?.trackResponseErrors) {
-        return ResponseBodyAction.COLLECT
+        assignRequestIndex(context as RumXhrStartContext)
       }
-      return ResponseBodyAction.WAIT
-    },
-  }).subscribe((rawContext) => {
-    const context = rawContext as RumFetchResolveContext | RumFetchStartContext
-    if (!isAllowedRequestUrl(context.url)) {
-      return
-    }
+    })
+  )
 
-    switch (context.state) {
-      case 'start':
-        tracer.traceFetch(context)
-        context.requestIndex = getNextRequestIndex()
+  subscriptions.push(
+    bufferedDataObservable.subscribe(({ data, type }) => {
+      if (type !== BufferedDataType.XHR) {
+        return
+      }
+      const context = data as RumXhrStartContext | RumXhrCompleteContext
+      if (!isAllowedRequestUrl(context.url)) {
+        return
+      }
 
-        lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
-          requestIndex: context.requestIndex,
-          url: context.url,
-        })
-        break
-      case 'resolve':
-        tracer.clearTracingIfNeeded(context)
-        lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
-          ...context,
-          duration: elapsed(context.startClocks.timeStamp, timeStampNow()),
-          type: RequestType.FETCH,
-          requestBody: context.init?.body,
-        })
-        break
-    }
-  })
-  return { stop: () => subscription.unsubscribe() }
+      switch (context.state) {
+        case 'start':
+          assignRequestIndex(context)
+          lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
+            requestIndex: context.requestIndex,
+            url: context.url,
+          })
+          break
+        case 'complete':
+          tracer.clearTracingIfNeeded(context)
+          lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
+            ...context,
+            type: RequestType.XHR,
+            isAbortedOnStart: false,
+          })
+          break
+      }
+    })
+  )
+
+  return { stop: () => subscriptions.forEach((subscription) => subscription.unsubscribe()) }
 }
 
-function getNextRequestIndex() {
-  const result = nextRequestIndex
-  nextRequestIndex += 1
-  return result
+export function trackFetch(
+  lifeCycle: LifeCycle,
+  configuration: RumConfiguration,
+  tracer: Tracer,
+  bufferedDataObservable: Observable<BufferedData>
+) {
+  const subscriptions: Subscription[] = []
+
+  subscriptions.push(
+    initFetchObservable({
+      responseBodyAction: (context) => {
+        if (findGraphQlConfiguration(context.url, configuration)?.trackResponseErrors) {
+          return ResponseBodyAction.COLLECT
+        }
+        return ResponseBodyAction.IGNORE
+      },
+    }).subscribe((context) => {
+      if (context.state === 'start' && isAllowedRequestUrl(context.url)) {
+        tracer.traceFetch(context)
+        assignRequestIndex(context as RumFetchStartContext)
+      }
+    })
+  )
+
+  subscriptions.push(
+    bufferedDataObservable.subscribe(({ data, type }) => {
+      if (type !== BufferedDataType.FETCH) {
+        return
+      }
+      const context = data as RumFetchResolveContext | RumFetchStartContext
+      if (!isAllowedRequestUrl(context.url)) {
+        return
+      }
+
+      switch (context.state) {
+        case 'start':
+          assignRequestIndex(context)
+          lifeCycle.notify(LifeCycleEventType.REQUEST_STARTED, {
+            requestIndex: context.requestIndex,
+            url: context.url,
+          })
+          break
+        case 'resolve':
+          tracer.clearTracingIfNeeded(context)
+          lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
+            ...context,
+            duration: elapsed(context.startClocks.timeStamp, timeStampNow()),
+            type: RequestType.FETCH,
+            requestBody: context.init?.body,
+          })
+          break
+      }
+    })
+  )
+  return { stop: () => subscriptions.forEach((subscription) => subscription.unsubscribe()) }
+}
+
+function assignRequestIndex(context: CustomContext) {
+  if (!context.requestIndex) {
+    context.requestIndex = nextRequestIndex++
+  }
 }

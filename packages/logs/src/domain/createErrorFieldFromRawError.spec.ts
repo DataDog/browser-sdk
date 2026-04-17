@@ -15,7 +15,20 @@ describe('createErrorFieldFromRawError', () => {
     type: 'qux',
     message: 'quux',
     stack: 'quuz',
-    causes: [],
+    causes: [
+      {
+        source: ErrorSource.CONSOLE,
+        type: 'Error',
+        stack: 'Error: Mid level error',
+        message: 'Mid level error',
+      },
+      {
+        source: ErrorSource.CONSOLE,
+        type: 'TypeError',
+        stack: 'TypeError: Low level error',
+        message: 'Low level error',
+      },
+    ],
     fingerprint: 'corge',
     csp: {
       disposition: 'enforce',
@@ -30,7 +43,20 @@ describe('createErrorFieldFromRawError', () => {
       message: undefined,
       kind: 'qux',
       stack: 'quuz',
-      causes: [],
+      causes: [
+        {
+          source: ErrorSource.CONSOLE,
+          type: 'Error',
+          stack: 'Error: Mid level error',
+          message: 'Mid level error',
+        },
+        {
+          source: ErrorSource.CONSOLE,
+          type: 'TypeError',
+          stack: 'TypeError: Low level error',
+          message: 'Low level error',
+        },
+      ],
       fingerprint: 'corge',
       handling: ErrorHandling.HANDLED,
     })

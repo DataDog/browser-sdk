@@ -274,16 +274,16 @@ export function makeLogsPublicApi(): LogsPublicApi {
   let strategy = createPreStartStrategy(
     buildCommonContext,
     trackingConsentState,
-    (initConfiguration, configuration, hooks) => {
+    (configuration, logsSessionManager, hooks) => {
       const startLogsResult = mockable(startLogs)(
         configuration,
+        logsSessionManager,
         buildCommonContext,
-        trackingConsentState,
         bufferedDataObservable,
         hooks
       )
 
-      strategy = createPostStartStrategy(initConfiguration, startLogsResult)
+      strategy = createPostStartStrategy(strategy, startLogsResult)
       return startLogsResult
     }
   )
@@ -396,12 +396,15 @@ export function makeLogsPublicApi(): LogsPublicApi {
   })
 }
 
-function createPostStartStrategy(initConfiguration: LogsInitConfiguration, startLogsResult: StartLogsResult): Strategy {
+function createPostStartStrategy(preStartStrategy: Strategy, startLogsResult: StartLogsResult): Strategy {
   return {
+    ...preStartStrategy,
     init: (initConfiguration: LogsInitConfiguration) => {
       displayAlreadyInitializedError('DD_LOGS', initConfiguration)
     },
-    initConfiguration,
-    ...startLogsResult,
+    getInternalContext: startLogsResult.getInternalContext,
+    globalContext: startLogsResult.globalContext,
+    userContext: startLogsResult.userContext,
+    accountContext: startLogsResult.accountContext,
   }
 }
