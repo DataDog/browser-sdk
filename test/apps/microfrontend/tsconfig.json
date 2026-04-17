@@ -3,7 +3,7 @@
     "target": "ES2018",
     "module": "esnext",
     "lib": ["ES2018", "DOM"],
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "esModuleInterop": true,
     "skipLibCheck": true
   }

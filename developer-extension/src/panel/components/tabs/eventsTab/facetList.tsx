@@ -125,7 +125,7 @@ function FacetValue({
 
   const childFacets = facet.values?.[facetValue]?.facets
   const children = childFacets && (
-    <Collapse in={isCollapsed || isOnly}>
+    <Collapse expanded={isCollapsed || isOnly}>
       <Box className={classes.facetChildren} data-top-level={isTopLevel ? true : undefined}>
         {childFacets.map((facet) => (
           <FacetField

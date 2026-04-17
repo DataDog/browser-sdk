@@ -41,8 +41,8 @@
   },
   "devDependencies": {
     "@vue/test-utils": "2.4.6",
-    "vue": "3.5.29",
-    "vue-router": "4.6.4"
+    "vue": "3.5.32",
+    "vue-router": "5.0.4"
   },
   "repository": {
     "type": "git",

@@ -19,7 +19,7 @@ import {
   createSessionManagerMock,
   MOCK_SESSION_ID,
 } from '@datadog/browser-core/test'
-import type { ViewEndedEvent } from 'packages/rum-core/src/domain/view/trackViews'
+import type { ViewEndedEvent } from '../../../rum-core/src/domain/view/trackViews'
 import { appendElement, mockRumConfiguration } from '../../../rum-core/test'
 
 import { recordsPerFullSnapshot, readReplayPayload } from '../../test'
