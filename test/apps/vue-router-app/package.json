@@ -33,7 +33,7 @@
   "devDependencies": {
     "@vitejs/plugin-vue": "5.x",
     "typescript": "5.x",
-    "vite": "6.x"
+    "vite": "7.x"
   },
   "volta": {
     "extends": "../../../package.json"
