@@ -88,6 +88,7 @@ export interface DebuggerPublicApi extends PublicApi {
    *   service: 'my-app',
    *   site: 'datadoghq.com',
    *   env: 'production'
+   *   version: 'my-deployed-build-version',
    * })
    * ```
    */
