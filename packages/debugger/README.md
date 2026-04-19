@@ -16,11 +16,13 @@ datadogDebugger.init({
   site: '<DATADOG_SITE>',
   service: 'my-web-application',
   //  env: 'production',
-  //  version: '1.0.0',
+  //  version: 'my-deployed-build-version',
 })
 ```
 
 When you also use the Datadog Live Debugger build plugin, `init().version` defaults to the build-time `liveDebugger.version` metadata injected into the bundle. If you pass both values explicitly and they differ, the SDK keeps the `init()` value and logs a warning.
+
+If provided, `version` should be set to the immutable deployed browser build identifier used for source map upload and browser build resolution. If omitted, debugger delivery and snapshots still work, but browser build lookup and source-aware resolution may be unavailable.
 
 If [Datadog RUM][3] is also initialized on the page, debugger snapshots automatically include RUM context (session, view, user action) without any additional configuration.
 
