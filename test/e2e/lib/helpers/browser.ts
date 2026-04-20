@@ -7,7 +7,7 @@ import type {
   PlaywrightWorkerOptions,
   TestType,
 } from '@playwright/test'
-import type { BrowserConfiguration } from 'test/browsers.conf'
+import type { BrowserConfiguration } from '../../../browsers.conf'
 import { addTag } from './tags'
 
 export function getBrowserName(name: string) {

@@ -1,4 +1,4 @@
-import { isAdoptedStyleSheetsSupported } from 'packages/core/test'
+import { isAdoptedStyleSheetsSupported } from '../../../../../core/test'
 import { ChangeType } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
 import type { SerializationStats } from './serializationStats'

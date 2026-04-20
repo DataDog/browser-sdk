@@ -28,9 +28,11 @@ type Task = () => void
 export function createTaskQueue(): TaskQueue {
   const pendingTasks: Task[] = []
 
-  function run(deadline: IdleDeadline) {
+  function run(deadline: IdleDeadline | null) {
     let executionTimeRemaining: () => number
-    if (deadline.didTimeout) {
+    // `deadline` can be null when `requestIdleCallback` is replaced by a page-injected polyfill
+    // (e.g. `setTimeout(cb, 0)` in some WKWebViews) that invokes the callback with no argument.
+    if (!deadline || deadline.didTimeout) {
       const start = performance.now()
       executionTimeRemaining = () => MAX_EXECUTION_TIME_ON_TIMEOUT - (performance.now() - start)
     } else {

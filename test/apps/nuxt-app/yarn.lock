@@ -5052,9 +5052,15 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "nuxt-app@workspace:."
   dependencies:
-    "@datadog/browser-rum": "file:../../../packages/rum/package.tgz"
-    "@datadog/browser-rum-nuxt": "file:../../../packages/rum-nuxt/package.tgz"
     nuxt: "npm:^3.0.0"
+  peerDependencies:
+    "@datadog/browser-rum": "*"
+    "@datadog/browser-rum-nuxt": "*"
+  peerDependenciesMeta:
+    "@datadog/browser-rum":
+      optional: true
+    "@datadog/browser-rum-nuxt":
+      optional: true
   languageName: unknown
   linkType: soft
 

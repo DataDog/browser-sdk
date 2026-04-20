@@ -5,7 +5,7 @@
     "skipLibCheck": true,
     "experimentalDecorators": true,
     "esModuleInterop": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "target": "ES2022",
     "lib": ["ES2022", "DOM"],

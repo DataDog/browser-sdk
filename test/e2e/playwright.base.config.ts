@@ -23,6 +23,7 @@ export const config: Config = {
   tsconfig: './tsconfig.json',
   fullyParallel: true,
   forbidOnly: isCi,
+  maxFailures: isCi ? 1 : 0,
   retries: isCi ? 2 : 0,
   workers: 5,
   reporter: reporters,

@@ -236,7 +236,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/parser@npm:^7.19.3":
+"@babel/parser@npm:^7.19.3, @babel/parser@npm:^7.28.6, @babel/parser@npm:^7.29.0":
   version: 7.29.2
   resolution: "@babel/parser@npm:7.29.2"
   dependencies:
@@ -244,17 +244,6 @@ __metadata:
   bin:
     parser: ./bin/babel-parser.js
   checksum: 10c0/e5a4e69e3ac7acdde995f37cf299a68458cfe7009dff66bd0962fd04920bef287201169006af365af479c08ff216bfefbb595e331f87f6ae7283858aebbc3317
-  languageName: node
-  linkType: hard
-
-"@babel/parser@npm:^7.28.6, @babel/parser@npm:^7.29.0":
-  version: 7.29.0
-  resolution: "@babel/parser@npm:7.29.0"
-  dependencies:
-    "@babel/types": "npm:^7.29.0"
-  bin:
-    parser: ./bin/babel-parser.js
-  checksum: 10c0/333b2aa761264b91577a74bee86141ef733f9f9f6d4fc52548e4847dc35dfbf821f58c46832c637bfa761a6d9909d6a68f7d1ed59e17e4ffbb958dc510c17b62
   languageName: node
   linkType: hard
 
@@ -291,59 +280,6 @@ __metadata:
     "@babel/helper-string-parser": "npm:^7.27.1"
     "@babel/helper-validator-identifier": "npm:^7.28.5"
   checksum: 10c0/23cc3466e83bcbfab8b9bd0edaafdb5d4efdb88b82b3be6728bbade5ba2f0996f84f63b1c5f7a8c0d67efded28300898a5f930b171bb40b311bca2029c4e9b4f
-  languageName: node
-  linkType: hard
-
-"@datadog/browser-core@file:../../../packages/core/package.tgz::locator=angular-app%40workspace%3A.":
-  version: 6.32.0
-  resolution: "@datadog/browser-core@file:../../../packages/core/package.tgz#../../../packages/core/package.tgz::hash=b976bd&locator=angular-app%40workspace%3A."
-  checksum: 10c0/c5376e0387f55a36796e44c9ed300d626115ee5c237fea6020baf6b01a9850bc3978ede8f25af984226b7dd10ff490e19699d418496dec3ce3782a5a077ce791
-  languageName: node
-  linkType: hard
-
-"@datadog/browser-rum-angular@file:../../../packages/rum-angular/package.tgz::locator=angular-app%40workspace%3A.":
-  version: 6.32.0
-  resolution: "@datadog/browser-rum-angular@file:../../../packages/rum-angular/package.tgz#../../../packages/rum-angular/package.tgz::hash=142dd6&locator=angular-app%40workspace%3A."
-  version: 6.32.0
-  resolution: "@datadog/browser-rum-angular@file:../../../packages/rum-angular/package.tgz#../../../packages/rum-angular/package.tgz::hash=142dd6&locator=angular-app%40workspace%3A."
-  dependencies:
-    "@datadog/browser-core": "npm:6.32.0"
-    "@datadog/browser-rum-core": "npm:6.32.0"
-    "@datadog/browser-core": "npm:6.32.0"
-    "@datadog/browser-rum-core": "npm:6.32.0"
-  peerDependencies:
-    "@angular/core": ">=15 <=21"
-    "@angular/router": ">=15 <=21"
-    rxjs: ">=7"
-  checksum: 10c0/97ce5ce978ed7087cc30c1978dab7059fbfc3e5e031b241fae99effb0ba8590074f750e8daed0eb69f29608d26840e58342ea5ef95785f4cdfeda84583e1134b
-  checksum: 10c0/97ce5ce978ed7087cc30c1978dab7059fbfc3e5e031b241fae99effb0ba8590074f750e8daed0eb69f29608d26840e58342ea5ef95785f4cdfeda84583e1134b
-  languageName: node
-  linkType: hard
-
-"@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz::locator=angular-app%40workspace%3A.":
-  version: 6.32.0
-  resolution: "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz#../../../packages/rum-core/package.tgz::hash=15f0f9&locator=angular-app%40workspace%3A."
-  dependencies:
-    "@datadog/browser-core": "npm:6.32.0"
-  checksum: 10c0/c3e61f4cd3c728f1982d8c011780ab5e491adfc8080a445c7e00e7964f4e06ce914ede69dec9486d78817607d65342b2aea330ed9862416fd99d65dda6811b86
-  languageName: node
-  linkType: hard
-
-"@datadog/browser-rum@file:../../../packages/rum/package.tgz::locator=angular-app%40workspace%3A.":
-  version: 6.32.0
-  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=1363c2&locator=angular-app%40workspace%3A."
-  dependencies:
-    "@datadog/browser-core": "npm:6.32.0"
-    "@datadog/browser-rum-core": "npm:6.32.0"
-    "@datadog/browser-core": "npm:6.32.0"
-    "@datadog/browser-rum-core": "npm:6.32.0"
-  peerDependencies:
-    "@datadog/browser-logs": 6.32.0
-    "@datadog/browser-logs": 6.32.0
-  peerDependenciesMeta:
-    "@datadog/browser-logs":
-      optional: true
-  checksum: 10c0/5d9bf73141ecf4c150e8ce9c8a298205740208386814183ec61ca7e2dac5baba7270e1869003fcaf0e4a414930bbc242574d33a37f05c5aeef257d7ef03c655d
   languageName: node
   linkType: hard
 
@@ -706,7 +642,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"acorn@npm:^8.15.0":
+"acorn@npm:^8.15.0, acorn@npm:^8.16.0":
   version: 8.16.0
   resolution: "acorn@npm:8.16.0"
   bin:
@@ -769,15 +705,21 @@ __metadata:
     "@angular/core": "npm:15.2.10"
     "@angular/platform-browser": "npm:15.2.10"
     "@angular/router": "npm:15.2.10"
-    "@datadog/browser-rum": "file:../../../packages/rum/package.tgz"
-    "@datadog/browser-rum-angular": "file:../../../packages/rum-angular/package.tgz"
     "@ngtools/webpack": "npm:15.2.11"
     babel-loader: "npm:9.2.1"
     rxjs: "npm:7.8.2"
     typescript: "npm:4.9.5"
-    webpack: "npm:5.105.2"
+    webpack: "npm:5.105.4"
     webpack-cli: "npm:6.0.1"
-    zone.js: "npm:0.12.0"
+    zone.js: "npm:0.16.1"
+  peerDependencies:
+    "@datadog/browser-rum": "*"
+    "@datadog/browser-rum-angular": "*"
+  peerDependenciesMeta:
+    "@datadog/browser-rum":
+      optional: true
+    "@datadog/browser-rum-angular":
+      optional: true
   languageName: unknown
   linkType: soft
 
@@ -1059,13 +1001,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"enhanced-resolve@npm:^5.19.0":
-  version: 5.20.0
-  resolution: "enhanced-resolve@npm:5.20.0"
+"enhanced-resolve@npm:^5.20.0":
+  version: 5.20.1
+  resolution: "enhanced-resolve@npm:5.20.1"
   dependencies:
     graceful-fs: "npm:^4.2.4"
     tapable: "npm:^2.3.0"
-  checksum: 10c0/4ed5f38406fc9ad74c58a3d63b8215862243ab0ed6b0efc51ccdb72cdcedd3ac8638abe298680b279d7a83c3cb140e5eea7a5f8bd99696c74588f07ad89a95a7
+  checksum: 10c0/c6503ee1b2d725843e047e774445ecb12b779aa52db25d11ebe18d4b3adc148d3d993d2038b3d0c38ad836c9c4b3930fbc55df42f72b44785e2f94e5530eda69
   languageName: node
   linkType: hard
 
@@ -2176,7 +2118,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"terser-webpack-plugin@npm:^5.3.16":
+"terser-webpack-plugin@npm:^5.3.17":
   version: 5.4.0
   resolution: "terser-webpack-plugin@npm:5.4.0"
   dependencies:
@@ -2347,16 +2289,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack-sources@npm:^3.3.3":
+"webpack-sources@npm:^3.3.4":
   version: 3.3.4
   resolution: "webpack-sources@npm:3.3.4"
   checksum: 10c0/94a42508531338eb41939cf1d48a4a8a6db97f3a47e5453cff2133a68d3169ca779d4bcbe9dfed072ce16611959eba1e16f085bc2dc56714e1a1c1783fd661a3
   languageName: node
   linkType: hard
 
-"webpack@npm:5.105.2":
-  version: 5.105.2
-  resolution: "webpack@npm:5.105.2"
+"webpack@npm:5.105.4":
+  version: 5.105.4
+  resolution: "webpack@npm:5.105.4"
   dependencies:
     "@types/eslint-scope": "npm:^3.7.7"
     "@types/estree": "npm:^1.0.8"
@@ -2364,11 +2306,11 @@ __metadata:
     "@webassemblyjs/ast": "npm:^1.14.1"
     "@webassemblyjs/wasm-edit": "npm:^1.14.1"
     "@webassemblyjs/wasm-parser": "npm:^1.14.1"
-    acorn: "npm:^8.15.0"
+    acorn: "npm:^8.16.0"
     acorn-import-phases: "npm:^1.0.3"
     browserslist: "npm:^4.28.1"
     chrome-trace-event: "npm:^1.0.2"
-    enhanced-resolve: "npm:^5.19.0"
+    enhanced-resolve: "npm:^5.20.0"
     es-module-lexer: "npm:^2.0.0"
     eslint-scope: "npm:5.1.1"
     events: "npm:^3.2.0"
@@ -2380,15 +2322,15 @@ __metadata:
     neo-async: "npm:^2.6.2"
     schema-utils: "npm:^4.3.3"
     tapable: "npm:^2.3.0"
-    terser-webpack-plugin: "npm:^5.3.16"
+    terser-webpack-plugin: "npm:^5.3.17"
     watchpack: "npm:^2.5.1"
-    webpack-sources: "npm:^3.3.3"
+    webpack-sources: "npm:^3.3.4"
   peerDependenciesMeta:
     webpack-cli:
       optional: true
   bin:
     webpack: bin/webpack.js
-  checksum: 10c0/565df8072c00d72e0a22e136971862b7eac7beb8b8d39a2ae4ab00838941ea58acc5b49dd7ea268e3d839810756cb86ba5c272b3a25904f6db7807cfa8ed0b29
+  checksum: 10c0/e9896d20bac351b119d59942b7efae5b117056ecf203acc0d1a84ecbf0a5a9a80ca733735f96bd163e3530be6ab7f615cd67e5320bd3c47d709c9bfe376c3280
   languageName: node
   linkType: hard
 
@@ -2489,11 +2431,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zone.js@npm:0.12.0":
-  version: 0.12.0
-  resolution: "zone.js@npm:0.12.0"
-  dependencies:
-    tslib: "npm:^2.3.0"
-  checksum: 10c0/827efca5e0139644882aef6fa2c26c38beba5fa488613fc0a98d8bdd103d35b73b89d8a4b9d9de4ebab1f9cde32b17b9e19aff0824883af427988e5043621351
+"zone.js@npm:0.16.1":
+  version: 0.16.1
+  resolution: "zone.js@npm:0.16.1"
+  checksum: 10c0/6f3638310e89697b0a21a4e7282b2505f26fb32dabb6ca1f09b721279e8512436efff199db0c7e3c7b7d11400dd42c88fa5cffc85984db56b9ac497a0050fe11
   languageName: node
   linkType: hard

@@ -42,9 +42,9 @@
     "extends": "../../package.json"
   },
   "devDependencies": {
-    "@types/react": "19.2.11",
-    "next": "15.5.10",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "@types/react": "19.2.14",
+    "next": "16.2.3",
+    "react": "19.2.5",
+    "react-dom": "19.2.5"
   }
 }

@@ -543,7 +543,7 @@ function mockInteractionCount() {
       if (originalInteractionCount) {
         Object.defineProperty(window.performance, 'interactionCount', originalInteractionCount)
       } else {
-        delete (window as BrowserWindow).performance.interactionCount
+        delete ((window as BrowserWindow).performance as { interactionCount?: number }).interactionCount
       }
     },
   }

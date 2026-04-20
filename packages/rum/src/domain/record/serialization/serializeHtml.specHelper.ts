@@ -1,7 +1,7 @@
 import type { TimeStamp } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { forEachChildNodes, getNodePrivacyLevel } from '@datadog/browser-rum-core'
-import { registerCleanupTask } from 'packages/core/test'
+import { registerCleanupTask } from '../../../../../core/test'
 import type { BrowserFullSnapshotChangeRecord, BrowserChangeRecord, BrowserRecord } from '../../../types'
 import { RecordType, SnapshotFormat } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
