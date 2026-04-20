@@ -5,8 +5,6 @@ export {
   aggregateSerializationStats,
   createChangeDecoder,
   createSerializationStats,
-  isFullSnapshotChangeRecordsEnabled,
-  isIncrementalSnapshotChangeRecordsEnabled,
   serializeNode,
 } from './serialization'
 export { createElementsScrollPositions } from './elementsScrollPositions'

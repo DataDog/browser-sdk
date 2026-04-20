@@ -1,13 +1,5 @@
 import type { TimeStamp, HttpRequest, HttpRequestEvent, Telemetry } from '@datadog/browser-core'
-import {
-  PageExitReason,
-  DefaultPrivacyLevel,
-  noop,
-  DeflateEncoderStreamId,
-  Observable,
-  ExperimentalFeature,
-  addExperimentalFeatures,
-} from '@datadog/browser-core'
+import { PageExitReason, DefaultPrivacyLevel, noop, DeflateEncoderStreamId, Observable } from '@datadog/browser-core'
 import type { ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType, startViewHistory } from '@datadog/browser-rum-core'
 import type { SessionManagerMock } from '@datadog/browser-core/test'
@@ -111,35 +103,6 @@ describe('startRecording', () => {
     })
   })
 
-  it('sends recorded segments with valid context when Change records are enabled', async () => {
-    addExperimentalFeatures([ExperimentalFeature.USE_CHANGE_RECORDS])
-    setupStartRecording()
-    flushSegment(lifeCycle)
-
-    const requests = await readSentRequests(1)
-    expect(requests[0].segment).toEqual(jasmine.any(Object))
-    expect(requests[0].event).toEqual({
-      application: {
-        id: 'appId',
-      },
-      creation_reason: 'init',
-      end: jasmine.stringMatching(/^\d{13}$/),
-      has_full_snapshot: true,
-      records_count: recordsPerFullSnapshot(),
-      session: {
-        id: MOCK_SESSION_ID,
-      },
-      start: jasmine.any(Number),
-      raw_segment_size: jasmine.any(Number),
-      compressed_segment_size: jasmine.any(Number),
-      view: {
-        id: 'view-id',
-      },
-      index_in_view: 0,
-      source: 'browser',
-    })
-  })
-
   it('flushes the segment when its compressed data reaches the segment bytes limit', async () => {
     setupStartRecording()
     const inputCount = 150
@@ -196,7 +159,7 @@ describe('startRecording', () => {
 
     const requests = await readSentRequests(2)
     const firstSegment = requests[0].segment
-    expect(firstSegment.records[firstSegment.records.length - 2].type).toBe(RecordType.IncrementalSnapshot)
+    expect(firstSegment.records[firstSegment.records.length - 2].type).toBe(RecordType.Change)
     expect(firstSegment.records[firstSegment.records.length - 1].type).toBe(RecordType.ViewEnd)
 
     const secondSegment = requests[1].segment

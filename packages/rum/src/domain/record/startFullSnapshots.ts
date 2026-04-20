@@ -3,12 +3,7 @@ import type { LifeCycle } from '@datadog/browser-rum-core'
 import { timeStampNow } from '@datadog/browser-core'
 import type { TimeStamp } from '@datadog/browser-core'
 import { RecordType } from '../../types'
-import {
-  isFullSnapshotChangeRecordsEnabled,
-  SerializationKind,
-  serializeFullSnapshotAsChange,
-  serializeFullSnapshot,
-} from './serialization'
+import { SerializationKind, serializeFullSnapshotAsChange } from './serialization'
 import { getVisualViewport } from './viewports'
 import type { RecordingScope } from './recordingScope'
 import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
@@ -28,7 +23,7 @@ export function startFullSnapshots(
   emitStats: EmitStatsCallback,
   flushMutations: () => void,
   scope: RecordingScope,
-  serialize: SerializeFullSnapshotCallback = defaultSerializeFullSnapshotCallback()
+  serialize: SerializeFullSnapshotCallback = serializeFullSnapshotAsChange
 ) {
   takeFullSnapshot(timeStampNow(), SerializationKind.INITIAL_FULL_SNAPSHOT, emitRecord, emitStats, scope, serialize)
 
@@ -55,7 +50,7 @@ export function takeFullSnapshot(
   emitRecord: EmitRecordCallback,
   emitStats: EmitStatsCallback,
   scope: RecordingScope,
-  serialize: SerializeFullSnapshotCallback = defaultSerializeFullSnapshotCallback()
+  serialize: SerializeFullSnapshotCallback = serializeFullSnapshotAsChange
 ): void {
   const { width, height } = getViewportDimension()
   emitRecord({
@@ -85,8 +80,4 @@ export function takeFullSnapshot(
       timestamp,
     })
   }
-}
-
-function defaultSerializeFullSnapshotCallback(): SerializeFullSnapshotCallback {
-  return isFullSnapshotChangeRecordsEnabled() ? serializeFullSnapshotAsChange : serializeFullSnapshot
 }
