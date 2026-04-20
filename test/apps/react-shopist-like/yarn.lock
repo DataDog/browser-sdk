@@ -209,6 +209,65 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@datadog/browser-core@file:../../../packages/core/package.tgz::locator=react-shopist%40workspace%3A.":
+  version: 6.32.0
+  resolution: "@datadog/browser-core@file:../../../packages/core/package.tgz#../../../packages/core/package.tgz::hash=9df5f7&locator=react-shopist%40workspace%3A."
+  checksum: 10c0/3a1ccffb95ea4a7d21d47a355ec10477406ac5c74d9a5e293d48d38a67ca2e08ecf271df9da46edbc3f82412182eae9e229127ce6dbe96a4ab51fe358e8da989
+  languageName: node
+  linkType: hard
+
+"@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz::locator=react-shopist%40workspace%3A.":
+  version: 6.32.0
+  resolution: "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz#../../../packages/rum-core/package.tgz::hash=2d3348&locator=react-shopist%40workspace%3A."
+  dependencies:
+    "@datadog/browser-core": "npm:6.32.0"
+  checksum: 10c0/5b8924dbdba0cdbe25c9bc9516cdd5c57ebfc3c2d8a23428ac6dac6bcf2dd71682a5702175805509c3ec73e94069d865bca1bd1c4abfefb51a46cc1bbbdee74c
+  languageName: node
+  linkType: hard
+
+"@datadog/browser-rum-react@file:../../../packages/rum-react/package.tgz::locator=react-shopist%40workspace%3A.":
+  version: 6.32.0
+  resolution: "@datadog/browser-rum-react@file:../../../packages/rum-react/package.tgz#../../../packages/rum-react/package.tgz::hash=4bac83&locator=react-shopist%40workspace%3A."
+  dependencies:
+    "@datadog/browser-core": "npm:6.32.0"
+    "@datadog/browser-rum-core": "npm:6.32.0"
+  peerDependencies:
+    "@tanstack/react-router": ">=1.64.0 <2"
+    react: 18 || 19
+    react-router: 6 || 7
+    react-router-dom: 6 || 7
+  peerDependenciesMeta:
+    "@datadog/browser-rum":
+      optional: true
+    "@datadog/browser-rum-slim":
+      optional: true
+    "@tanstack/react-router":
+      optional: true
+    react:
+      optional: true
+    react-router:
+      optional: true
+    react-router-dom:
+      optional: true
+  checksum: 10c0/21d8b73636de3233306bd052af81a1b6f466e1576235558e5a74b5bc6adeb387b3eddbf34e01551ce3ffd356a09d2d2435d736ea0ec4c93d95ea8489f6d6ef47
+  languageName: node
+  linkType: hard
+
+"@datadog/browser-rum@file:../../../packages/rum/package.tgz::locator=react-shopist%40workspace%3A.":
+  version: 6.26.0
+  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=e63302&locator=react-shopist%40workspace%3A."
+  dependencies:
+    "@datadog/browser-core": "npm:6.26.0"
+    "@datadog/browser-rum-core": "npm:6.26.0"
+  peerDependencies:
+    "@datadog/browser-logs": 6.26.0
+  peerDependenciesMeta:
+    "@datadog/browser-logs":
+      optional: true
+  checksum: 10c0/0ea8df9b0be160b29aba10aebe8a0ace321c12269c121db7627192f5bcad555880aee413c10ed642a7af498e05c8e044aef1c9b45753d5899753a018dbd62e82
+  languageName: node
+  linkType: hard
+
 "@esbuild/aix-ppc64@npm:0.27.2":
   version: 0.27.2
   resolution: "@esbuild/aix-ppc64@npm:0.27.2"
@@ -1427,6 +1486,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "react-shopist@workspace:."
   dependencies:
+    "@datadog/browser-rum": "npm:*"
+    "@datadog/browser-rum-react": "npm:*"
     "@types/react": "npm:19.2.14"
     "@types/react-dom": "npm:19.2.3"
     "@vitejs/plugin-react": "npm:5.1.4"

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { ReactProfiler } from '@datadog/browser-rum-react'
 import { Product } from '../data/products'
 
 interface ProductCardProps {
@@ -8,6 +9,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   return (
+    <ReactProfiler name="ProductCard">
     <Link to={`/product/${product.id}`} className="product-card">
       <div className="product-image-container">
         <img src={product.image} alt={product.name} className="product-image" />
@@ -18,5 +20,6 @@ export function ProductCard({ product }: ProductCardProps) {
         <div className="product-price">${product.price.toFixed(2)}</div>
       </div>
     </Link>
+    </ReactProfiler>
   )
 }
