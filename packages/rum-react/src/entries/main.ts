@@ -5,7 +5,8 @@ export type { ErrorBoundaryFallback, ErrorBoundaryProps } from '../domain/error'
 export type { ReactPluginConfiguration, ReactPlugin } from '../domain/reactPlugin'
 export { reactPlugin } from '../domain/reactPlugin'
 // eslint-disable-next-line camelcase
-export { UNSTABLE_ReactComponentTracker } from '../domain/performance'
+export { UNSTABLE_ReactComponentTracker, ReactProfiler } from '../domain/performance'
+export type { ReactProfilerContext } from '../domain/performance'
 
 /**
  * @deprecated Use {@link ErrorBoundaryProps} instead.

@@ -471,6 +471,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       propagate_trace_baggage?: boolean
       /**
+       * How the SDK tracks resource request/response headers
+       */
+      use_track_resource_headers?: 'default_headers' | 'custom'
+      /**
        * Whether the beta encode cookie options is enabled
        */
       beta_encode_cookie_options?: boolean
@@ -981,6 +985,6 @@ export interface AndroidNetworkInstrumentation {
   /**
    * The network instrumentation API used
    */
-  type: 'CRONET' | 'OKHTTP'
+  type: 'CRONET' | 'OKHTTP' | 'LEGACY_OKHTTP'
   [k: string]: unknown
 }

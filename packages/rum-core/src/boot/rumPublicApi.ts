@@ -646,6 +646,12 @@ export function makeRumPublicApi(
         strategy, // TODO: remove this in the next major release
         addEvent: startRumResult.addEvent,
         addError: startRumResult.addError,
+        profilingEndpointBuilder: configuration.profilingEndpointBuilder,
+        configuration,
+        lifeCycle: startRumResult.lifeCycle,
+        session: startRumResult.session,
+        viewHistory: startRumResult.viewHistory,
+        createEncoder,
       })
 
       return startRumResult
@@ -788,9 +794,12 @@ export function makeRumPublicApi(
 
     setViewLoadingTime: monitor(() => {
       const callTimestamp = timeStampNow()
-      strategy.setLoadingTime(callTimestamp)
+      const result = strategy.setLoadingTime(callTimestamp)
       addTelemetryUsage({
         feature: 'addViewLoadingTime',
+        no_view: result?.noView ?? false,
+        no_active_view: result?.noActiveView ?? false,
+        overwritten: result?.overwritten ?? false,
       })
     }),
 

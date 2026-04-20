@@ -1,8 +1,13 @@
 import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
+import { isSampled } from '@datadog/browser-rum-core'
+import type { ReactProfilingController } from './createReactProfiler'
+import { createReactProfiler } from './createReactProfiler'
 
 let globalPublicApi: RumPublicApi | undefined
 let globalConfiguration: ReactPluginConfiguration | undefined
 let globalAddError: StartRumResult['addError'] | undefined
+let globalReactProfiler: ReactProfilingController | undefined
+
 type InitSubscriber = (configuration: ReactPluginConfiguration, rumPublicApi: RumPublicApi) => void
 type StartSubscriber = (addError: StartRumResult['addError']) => void
 
@@ -66,8 +71,18 @@ export function reactPlugin(configuration: ReactPluginConfiguration = {}): React
         initConfiguration.trackViewsManually = true
       }
     },
-    onRumStart({ addError }) {
+    onRumStart({ addError, configuration: rumConfiguration, lifeCycle, session, viewHistory, createEncoder }) {
       globalAddError = addError
+
+      if (rumConfiguration && lifeCycle && session && viewHistory && createEncoder) {
+        const sessionData = session.findTrackedSession()
+        if (sessionData && isSampled(sessionData.id, rumConfiguration.profilingSampleRate)) {
+          const profiler = createReactProfiler(rumConfiguration, lifeCycle, session, createEncoder, viewHistory)
+          globalReactProfiler = profiler
+          profiler.start()
+        }
+      }
+
       for (const subscriber of onRumStartSubscribers) {
         if (addError) {
           subscriber(addError)
@@ -96,10 +111,20 @@ export function onRumStart(callback: StartSubscriber) {
   }
 }
 
+export function isReactProfilingRunning() {
+  return globalReactProfiler?.isRunning() ?? false
+}
+
+export function getRunningReactProfiler(): ReactProfilingController | undefined {
+  return globalReactProfiler?.isRunning() ? globalReactProfiler : undefined
+}
+
 export function resetReactPlugin() {
   globalPublicApi = undefined
   globalConfiguration = undefined
   globalAddError = undefined
+  globalReactProfiler?.stop()
+  globalReactProfiler = undefined
   onRumInitSubscribers.length = 0
   onRumStartSubscribers.length = 0
 }

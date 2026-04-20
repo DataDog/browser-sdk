@@ -29,4 +29,12 @@ export const SCHEMAS: SchemaConfig[] = [
     typesPath: 'packages/rum-core/src/domain/configuration/remoteConfiguration.types.ts',
     schemaPath: 'remote-configuration/rum-sdk-config.json',
   },
+  {
+    typesPath: 'packages/rum-react/src/types/reactProfiling.ts',
+    schemaPath: 'rum-events-format/schemas/react-profiling-browser-schema.json',
+  },
+  {
+    typesPath: 'packages/rum-react/src/types/reactProfileTrace.ts',
+    schemaPath: 'rum-events-format/schemas/profiling/react/react-profile-trace-schema.json',
+  },
 ]
