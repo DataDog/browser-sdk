@@ -106,6 +106,7 @@ For deeper context, see:
 
 - `addTelemetryUsage` tracks **which public API the customer calls and which options they pass** (static call-site information)
 - Do NOT include runtime state analysis (e.g., whether a view was active, whether a value was overwritten) in telemetry usage — that belongs elsewhere
+- In serialized telemetry configuration, the `use_` prefix is reserved for boolean fields that track whether a complex configuration option is used (e.g. `use_allowed_tracing_urls`)
 
 ### Auto-Generated Files
 

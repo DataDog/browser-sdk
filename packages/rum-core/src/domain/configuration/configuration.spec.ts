@@ -636,39 +636,38 @@ describe('validateAndBuildRumConfiguration', () => {
       })
     })
 
-    describe('use_track_resource_headers telemetry', () => {
-      it('should omit use_track_resource_headers when trackResourceHeaders is undefined or false', () => {
-        expect(serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION).use_track_resource_headers).toBeUndefined()
+    describe('track_resource_headers telemetry', () => {
+      it('should omit track_resource_headers when trackResourceHeaders is undefined or false', () => {
+        expect(serializeRumConfiguration(DEFAULT_INIT_CONFIGURATION).track_resource_headers).toBeUndefined()
         expect(
           serializeRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResourceHeaders: false })
-            .use_track_resource_headers
+            .track_resource_headers
         ).toBeUndefined()
       })
 
-      it('should set use_track_resource_headers to default_headers when trackResourceHeaders is true', () => {
+      it('should set track_resource_headers to default_headers when trackResourceHeaders is true', () => {
         expect(
           serializeRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResourceHeaders: true })
-            .use_track_resource_headers
+            .track_resource_headers
         ).toBe('default_headers')
       })
 
-      it('should set use_track_resource_headers to custom when trackResourceHeaders is an array', () => {
+      it('should set track_resource_headers to custom when trackResourceHeaders is an array', () => {
         expect(
-          serializeRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResourceHeaders: [] })
-            .use_track_resource_headers
+          serializeRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResourceHeaders: [] }).track_resource_headers
         ).toBe('custom')
         expect(
           serializeRumConfiguration({
             ...DEFAULT_INIT_CONFIGURATION,
             trackResourceHeaders: [{ name: 'x-foo' }],
-          }).use_track_resource_headers
+          }).track_resource_headers
         ).toBe('custom')
       })
 
-      it('should omit use_track_resource_headers when trackResourceHeaders has an unexpected type', () => {
+      it('should omit track_resource_headers when trackResourceHeaders has an unexpected type', () => {
         expect(
           serializeRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResourceHeaders: 42 as any })
-            .use_track_resource_headers
+            .track_resource_headers
         ).toBeUndefined()
       })
     })
@@ -846,7 +845,6 @@ describe('serializeRumConfiguration', () => {
             | 'excludedActivityUrls'
             | 'remoteConfigurationProxy'
             | 'allowedGraphQlUrls'
-            | 'trackResourceHeaders'
         ? `use_${CamelToSnakeCase<Key>}`
         : Key extends 'trackLongTasks'
           ? 'track_long_task' // We forgot the s, keeping this for backward compatibility
@@ -893,7 +891,7 @@ describe('serializeRumConfiguration', () => {
       remote_configuration_id: '123',
       use_remote_configuration_proxy: true,
       profiling_sample_rate: 42,
-      use_track_resource_headers: 'default_headers',
+      track_resource_headers: 'default_headers',
     })
   })
 })
