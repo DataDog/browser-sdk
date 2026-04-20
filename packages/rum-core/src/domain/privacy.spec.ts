@@ -1,4 +1,4 @@
-import { appendElement } from 'packages/rum-core/test'
+import { appendElement } from '../../test'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,

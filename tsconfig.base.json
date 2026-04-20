@@ -1,10 +1,9 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
     "experimentalDecorators": true,
     "esModuleInterop": true,
     "importHelpers": false,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "module": "ES2020",
     "resolveJsonModule": true,
     "strict": true,

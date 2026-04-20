@@ -4,7 +4,7 @@ import { callMonitored } from '../../tools/monitor'
 import type { ExperimentalFeature } from '../../tools/experimentalFeatures'
 import { addExperimentalFeatures } from '../../tools/experimentalFeatures'
 import { validateAndBuildConfiguration, type Configuration } from '../configuration'
-import { INTAKE_SITE_US1_FED, INTAKE_SITE_US1 } from '../intakeSites'
+import { INTAKE_SITE_US1_FED, INTAKE_SITE_US2_FED, INTAKE_SITE_US1 } from '../intakeSites'
 import {
   setNavigatorOnLine,
   setNavigatorConnection,
@@ -424,6 +424,7 @@ describe('telemetry', () => {
   describe('excluded sites', () => {
     ;[
       { site: INTAKE_SITE_US1_FED, enabled: false },
+      { site: INTAKE_SITE_US2_FED, enabled: false },
       { site: INTAKE_SITE_US1, enabled: true },
     ].forEach(({ site, enabled }) => {
       it(`should be ${enabled ? 'enabled' : 'disabled'} on ${site}`, async () => {

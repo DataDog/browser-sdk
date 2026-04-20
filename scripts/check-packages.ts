@@ -13,6 +13,10 @@ runMain(() => {
     checkBrowserSdkPackage(packagePath)
   }
 
+  for (const packagePath of globSync('test/apps/*')) {
+    checkTestAppPackage(packagePath)
+  }
+
   printLog('Packages check done.')
 })
 
@@ -92,6 +96,25 @@ function checkFilesField(packageJson: PackageJson, packageFiles: string[]) {
   }
 }
 
+function checkTestAppPackage(packagePath: string) {
+  const packageJson = getPackageJson(packagePath)
+
+  if (!packageJson) {
+    return
+  }
+
+  printLog(`Checking ${packagePath}`)
+
+  const datadogDeps = Object.keys(packageJson.dependencies ?? {}).filter((name) => name.startsWith('@datadog/'))
+
+  if (datadogDeps.length > 0) {
+    throw new Error(
+      `${packagePath} has @datadog/* packages in "dependencies": ${datadogDeps.join(', ')}. ` +
+        'Use "peerDependencies" instead (see other test apps for the pattern).'
+    )
+  }
+}
+
 function getPackageJson(packagePath: string) {
   return globSync(path.join(packagePath, 'package.json')).map(
     (packageJsonFile) => JSON.parse(fs.readFileSync(packageJsonFile, 'utf8')) as PackageJson
@@ -105,4 +128,5 @@ interface PackageJson {
   module: string
   types: string
   files?: string[]
+  dependencies?: Record<string, string>
 }

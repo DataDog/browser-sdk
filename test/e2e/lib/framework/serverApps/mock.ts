@@ -92,6 +92,14 @@ export function createMockServerApp(servers: Servers, setup: string, setupOption
     res.header('content-type', 'text/css').end()
   })
 
+  app.get('/flush', (_req, res) => {
+    // The RUM session replay recorder uses a Web Worker to format request data, so it cannot send
+    // its last segment during the "beforeunload" event — only a few milliseconds after. If the next
+    // page loads too quickly, the segment may be lost. /flush responds after 200ms to give the
+    // recorder time to send, and returns HTML with an empty favicon to avoid a spurious favicon request.
+    setTimeout(() => res.send('<!doctype html><html><head><link rel="icon" href="data:,"/></head></html>'), 200)
+  })
+
   app.all('/ok', (req, res) => {
     // Express will automatically append charset to the Content-Type header
     res.header('Content-Type', 'text/plain')

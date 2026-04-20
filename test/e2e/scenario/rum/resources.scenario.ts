@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 import type { RumResourceEvent } from '@datadog/browser-rum'
-import { isContentTypeAvailableInPerformanceEntry } from 'test/e2e/lib/helpers/browser'
+import { isContentTypeAvailableInPerformanceEntry } from '../../lib/helpers/browser'
 import type { IntakeRegistry } from '../../lib/framework'
 import { createTest, html } from '../../lib/framework'
 

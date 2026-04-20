@@ -7,9 +7,19 @@
     "start": "nuxt preview --port 0 --host"
   },
   "dependencies": {
-    "@datadog/browser-rum": "file:../../../packages/rum/package.tgz",
-    "@datadog/browser-rum-nuxt": "file:../../../packages/rum-nuxt/package.tgz",
     "nuxt": "^3.0.0"
+  },
+  "peerDependencies": {
+    "@datadog/browser-rum": "*",
+    "@datadog/browser-rum-nuxt": "*"
+  },
+  "peerDependenciesMeta": {
+    "@datadog/browser-rum": {
+      "optional": true
+    },
+    "@datadog/browser-rum-nuxt": {
+      "optional": true
+    }
   },
   "resolutions": {
     "@datadog/browser-rum-core": "file:../../../packages/rum-core/package.tgz",

@@ -7,24 +7,24 @@
     "dev": "wxt"
   },
   "devDependencies": {
-    "@types/chrome": "0.1.37",
+    "@types/chrome": "0.1.40",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
-    "@wxt-dev/module-react": "1.1.5",
-    "typescript": "5.9.3"
+    "@wxt-dev/module-react": "1.2.2",
+    "typescript": "6.0.2"
   },
   "dependencies": {
     "@datadog/browser-core": "workspace:*",
     "@datadog/browser-logs": "workspace:*",
     "@datadog/browser-rum": "workspace:*",
     "@datadog/browser-rum-core": "workspace:*",
-    "@mantine/core": "8.3.15",
-    "@mantine/hooks": "8.3.15",
-    "@tabler/icons-react": "3.37.1",
+    "@mantine/core": "9.0.2",
+    "@mantine/hooks": "9.0.2",
+    "@tabler/icons-react": "3.41.1",
     "clsx": "2.1.1",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
-    "wxt": "0.20.18"
+    "react": "19.2.5",
+    "react-dom": "19.2.5",
+    "wxt": "0.20.22"
   },
   "volta": {
     "extends": "../package.json"
