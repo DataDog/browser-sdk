@@ -67,7 +67,6 @@ import { addNuxtError } from '@datadog/browser-rum-nuxt'
 
 onErrorCaptured((error, instance, info) => {
   addNuxtError(error, instance, info)
-  return false
 })
 </script>
 ```
