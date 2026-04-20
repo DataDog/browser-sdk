@@ -8,7 +8,9 @@ export default function GuidesPage() {
 
   return (
     <div>
-      <Link href="/pages-router">← Back to Home</Link>
+      <Link data-testid="back-to-home" href="/pages-router">
+        ← Back to Home
+      </Link>
       <h1>Guides: {slugParts.join('/')}</h1>
     </div>
   )

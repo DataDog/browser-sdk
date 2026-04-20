@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { createTest } from '../../lib/framework'
 import { runBasePluginErrorTests } from './basePluginErrorTests'
-import { runBasePluginRouterTests } from './basePluginRouterTests'
+import { createBasePluginRouterConfig, runBasePluginRouterTests } from './basePluginRouterTests'
 import { clickAndWaitForURL } from './navigationUtils'
 
 const angularAppName = 'angular-app'
@@ -14,12 +14,13 @@ const angularBasePluginConfig = {
 runBasePluginRouterTests([
   {
     ...angularBasePluginConfig,
-    router: {
+    router: createBasePluginRouterConfig({
       homeViewName: '/',
       homeUrlPattern: '**/',
       userRouteName: '/user/:id',
       guidesRouteName: '/guides/:slug',
-    },
+      viewPrefix: '',
+    }),
   },
 ])
 
@@ -39,7 +40,7 @@ test.describe('plugin: angular', () => {
     .withRum()
     .withApp(angularAppName)
     .run(async ({ page, flushEvents, intakeRegistry }) => {
-      await clickAndWaitForURL(page, 'text=Go to Nested Route', '**/parent/nested')
+      await clickAndWaitForURL(page, '[data-testid="go-to-nested-route"]', '**/parent/nested')
       await flushEvents()
 
       const nestedView = intakeRegistry.rumViewEvents.find(
@@ -53,7 +54,7 @@ test.describe('plugin: angular', () => {
     .withRum()
     .withApp(angularAppName)
     .run(async ({ page, flushEvents, intakeRegistry }) => {
-      await clickAndWaitForURL(page, 'text=Go to Wildcard Route', '**/unknown/page')
+      await clickAndWaitForURL(page, '[data-testid="go-to-wildcard"]', '**/unknown/page')
       await flushEvents()
 
       const wildcardView = intakeRegistry.rumViewEvents.find(

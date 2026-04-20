@@ -92,7 +92,7 @@ test.describe('browser extensions', () => {
    */
   createTest('should not warn - edge case simulating NextJs with an extension that override `appendChild`')
     .withExtension(createExtension(path.join(BASE_PATH, 'appendChild-extension')))
-    .withRum()
+    .withRum({ sessionReplaySampleRate: 0 })
     .withLogs()
     .withSetup((options, servers) => {
       const { rumScriptUrl, logsScriptUrl } = createCrossOriginScriptUrls(servers, options)

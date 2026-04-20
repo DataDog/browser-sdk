@@ -5,7 +5,9 @@ export default async function GuidesPage({ params }: { params: Promise<{ slug: s
 
   return (
     <div>
-      <Link href="/">Back to Home</Link>
+      <Link data-testid="back-to-home" href="/">
+        Back to Home
+      </Link>
       <h1>Guides: {slug.join('/')}</h1>
     </div>
   )

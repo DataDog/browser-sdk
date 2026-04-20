@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { createTest } from '../../lib/framework'
-import { runBasePluginRouterTests } from './basePluginRouterTests'
+import { createBasePluginRouterConfig, runBasePluginRouterTests } from './basePluginRouterTests'
 
 const nuxtBasePluginConfig = {
   name: 'nuxt',
@@ -11,12 +11,13 @@ const nuxtBasePluginConfig = {
 runBasePluginRouterTests([
   {
     ...nuxtBasePluginConfig,
-    router: {
+    router: createBasePluginRouterConfig({
       homeViewName: '/',
       homeUrlPattern: '**/',
       userRouteName: '/user/[id]',
       guidesRouteName: '/guides/[...slug]',
-    },
+      viewPrefix: '',
+    }),
   },
 ])
 
@@ -25,10 +26,10 @@ test.describe('plugin: nuxt router', () => {
     .withRum()
     .withNuxtApp()
     .run(async ({ page, flushEvents, intakeRegistry }) => {
-      await page.click('text=Go to User 42')
+      await page.click('[data-testid="go-to-user"]')
       await page.waitForURL('**/user/42?admin=true')
 
-      await page.click('text=Go to Section')
+      await page.click('[data-testid="go-to-section"]')
       await page.waitForURL('**/user/42#section')
 
       await flushEvents()

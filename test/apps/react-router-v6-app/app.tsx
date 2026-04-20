@@ -25,15 +25,25 @@ function HomePage() {
   return (
     <div>
       <h1>Home</h1>
-      <Link to="/user/42?admin=true">Go to User 42</Link>
+      <Link data-testid="go-to-user" to="/user/42?admin=true">
+        Go to User 42
+      </Link>
       <br />
-      <Link to="/guides/123">Go to Guides 123</Link>
+      <Link data-testid="go-to-guides" to="/guides/123">
+        Go to Guides 123
+      </Link>
       <br />
-      <Link to="/wildcard/foo/bar">Go to Wildcard</Link>
+      <Link data-testid="go-to-wildcard" to="/wildcard/foo/bar">
+        Go to Wildcard
+      </Link>
       <br />
-      <Link to="/error-test">Go to Error Test</Link>
+      <Link data-testid="go-to-error-test" to="/error-test">
+        Go to Error Test
+      </Link>
       <br />
-      <Link to="/tracked">Go to Tracked</Link>
+      <Link data-testid="go-to-tracked" to="/tracked">
+        Go to Tracked
+      </Link>
     </div>
   )
 }
@@ -43,13 +53,21 @@ function UserPage() {
   return (
     <div>
       <h1>User {id}</h1>
-      <Link to="/">Back to Home</Link>
+      <Link data-testid="back-to-home" to="/">
+        Back to Home
+      </Link>
       <br />
-      <Link to={`/user/${id}#section`}>Go to Section</Link>
+      <Link data-testid="go-to-section" to={`/user/${id}#section`}>
+        Go to Section
+      </Link>
       <br />
-      <Link to={`/user/${id}?admin=false`}>Change query params</Link>
+      <Link data-testid="change-query-params" to={`/user/${id}?admin=false`}>
+        Change query params
+      </Link>
       <br />
-      <Link to="/user/999?admin=true">Go to User 999</Link>
+      <Link data-testid="go-to-other-user" to="/user/999?admin=true">
+        Go to User 999
+      </Link>
     </div>
   )
 }
@@ -58,7 +76,9 @@ function GuidesPage() {
   return (
     <div>
       <h1>Guides</h1>
-      <Link to="/">Back to Home</Link>
+      <Link data-testid="back-to-home" to="/">
+        Back to Home
+      </Link>
     </div>
   )
 }
@@ -68,7 +88,9 @@ function WildcardPage() {
   return (
     <div>
       <h1>Wildcard: {splatPath}</h1>
-      <Link to="/">Back to Home</Link>
+      <Link data-testid="back-to-home" to="/">
+        Back to Home
+      </Link>
     </div>
   )
 }

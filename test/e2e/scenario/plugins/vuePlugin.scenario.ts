@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test'
 import { createTest } from '../../lib/framework'
 import { runBasePluginErrorTests } from './basePluginErrorTests'
-import { runBasePluginRouterTests } from './basePluginRouterTests'
+import { createBasePluginRouterConfig, runBasePluginRouterTests } from './basePluginRouterTests'
+import { clickAndWait, clickAndWaitForURL } from './navigationUtils'
 
 const vueBasePluginConfig = {
   name: 'vue',
@@ -12,12 +13,13 @@ const vueBasePluginConfig = {
 runBasePluginRouterTests([
   {
     ...vueBasePluginConfig,
-    router: {
+    router: createBasePluginRouterConfig({
       homeViewName: '/',
       homeUrlPattern: '**/',
       userRouteName: '/user/:id',
       guidesRouteName: '/guides/:catchAll(.*)*',
-    },
+      viewPrefix: '',
+    }),
   },
 ])
 
@@ -37,8 +39,13 @@ test.describe('plugin: vue', () => {
     .withRum()
     .withVueApp()
     .run(async ({ page, flushEvents, intakeRegistry }) => {
-      await page.click('text=Go to Error Test')
-      await page.click('[data-testid="trigger-error"]')
+      await clickAndWaitForURL(
+        page,
+        '[data-testid="go-to-error-test"]',
+        '**/error-test',
+        '[data-testid="trigger-error"]'
+      )
+      await clickAndWait(page, '[data-testid="trigger-error"]', { readySelector: '[data-testid="error-handled"]' })
 
       await flushEvents()
 

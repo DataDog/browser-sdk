@@ -5,16 +5,24 @@ export default async function UserPage({ params }: { params: Promise<{ id: strin
 
   return (
     <div>
-      <Link href="/">← Back to Home</Link>
+      <Link data-testid="back-to-home" href="/">
+        ← Back to Home
+      </Link>
       <h1>User {id}</h1>
       <div>
-        <Link href="/user/999?admin=true">Go to User 999</Link>
+        <Link data-testid="go-to-other-user" href="/user/999?admin=true">
+          Go to User 999
+        </Link>
       </div>
       <div>
-        <Link href={`/user/${id}?admin=false`}>Change query params</Link>
+        <Link data-testid="change-query-params" href={`/user/${id}?admin=false`}>
+          Change query params
+        </Link>
       </div>
       <div>
-        <Link href={`/user/${id}#section`}>Go to Section</Link>
+        <Link data-testid="go-to-section" href={`/user/${id}#section`}>
+          Go to Section
+        </Link>
       </div>
     </div>
   )

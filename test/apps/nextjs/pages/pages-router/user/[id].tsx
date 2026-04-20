@@ -7,16 +7,24 @@ export default function UserPage() {
 
   return (
     <div>
-      <Link href="/pages-router">← Back to Home</Link>
+      <Link data-testid="back-to-home" href="/pages-router">
+        ← Back to Home
+      </Link>
       <h1>User {id}</h1>
       <div>
-        <Link href="/pages-router/user/999?admin=true">Go to User 999</Link>
+        <Link data-testid="go-to-other-user" href="/pages-router/user/999?admin=true">
+          Go to User 999
+        </Link>
       </div>
       <div>
-        <Link href={`/pages-router/user/${id}?admin=false`}>Change query params</Link>
+        <Link data-testid="change-query-params" href={`/pages-router/user/${id}?admin=false`}>
+          Change query params
+        </Link>
       </div>
       <div>
-        <Link href={`/pages-router/user/${id}#section`}>Go to Section</Link>
+        <Link data-testid="go-to-section" href={`/pages-router/user/${id}#section`}>
+          Go to Section
+        </Link>
       </div>
     </div>
   )

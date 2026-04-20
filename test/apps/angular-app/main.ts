@@ -27,11 +27,11 @@ if (window.RUM_CONTEXT) {
   imports: [RouterLink],
   template: `
     <h1>Initial Route</h1>
-    <a routerLink="/user/42" [queryParams]="{ admin: 'true' }">Go to User 42</a><br />
-    <a routerLink="/guides/123">Go to Guides 123</a><br />
-    <a routerLink="/error-test">Go to Error Test</a><br />
-    <a routerLink="/parent/nested">Go to Nested Route</a><br />
-    <a routerLink="/unknown/page">Go to Wildcard Route</a><br />
+    <a data-testid="go-to-user" routerLink="/user/42" [queryParams]="{ admin: 'true' }">Go to User 42</a><br />
+    <a data-testid="go-to-guides" routerLink="/guides/123">Go to Guides 123</a><br />
+    <a data-testid="go-to-error-test" routerLink="/error-test">Go to Error Test</a><br />
+    <a data-testid="go-to-nested-route" routerLink="/parent/nested">Go to Nested Route</a><br />
+    <a data-testid="go-to-wildcard" routerLink="/unknown/page">Go to Wildcard Route</a><br />
     <button id="throw-error" (click)="throwError()">Throw Error</button>
     <button id="throw-error-with-context" (click)="throwErrorWithContext()">Throw Error With Context</button>
   `,
@@ -54,10 +54,14 @@ class InitialRouteComponent {
   imports: [RouterLink],
   template: `
     <h1>User Page</h1>
-    <a routerLink="/">Back to Home</a><br />
-    <a [routerLink]="['/user', id]" fragment="section">Go to Section</a><br />
-    <a [routerLink]="['/user', id]" [queryParams]="{ admin: 'false' }">Change query params</a><br />
-    <a [routerLink]="['/user', '999']" [queryParams]="{ admin: 'true' }">Go to User 999</a>
+    <a data-testid="back-to-home" routerLink="/">Back to Home</a><br />
+    <a data-testid="go-to-section" [routerLink]="['/user', id]" fragment="section">Go to Section</a><br />
+    <a data-testid="change-query-params" [routerLink]="['/user', id]" [queryParams]="{ admin: 'false' }"
+      >Change query params</a
+    ><br />
+    <a data-testid="go-to-other-user" [routerLink]="['/user', '999']" [queryParams]="{ admin: 'true' }"
+      >Go to User 999</a
+    >
   `,
 })
 class UserRouteComponent {
@@ -70,7 +74,7 @@ class UserRouteComponent {
   imports: [RouterLink],
   template: `
     <h1>Guides</h1>
-    <a routerLink="/">Back to Home</a>
+    <a data-testid="back-to-home" routerLink="/">Back to Home</a>
   `,
 })
 class GuidesRouteComponent {}

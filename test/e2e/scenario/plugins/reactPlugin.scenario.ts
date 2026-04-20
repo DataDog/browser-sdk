@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test'
 import { createTest } from '../../lib/framework'
 import { runBasePluginErrorTests } from './basePluginErrorTests'
-import { runBasePluginRouterTests } from './basePluginRouterTests'
+import { createBasePluginRouterConfig, runBasePluginRouterTests } from './basePluginRouterTests'
+import { clickAndWait, clickAndWaitForURL } from './navigationUtils'
 
 const reactApps = [
   { appName: 'react-router-v6-app', description: 'React Router v6' },
@@ -19,12 +20,13 @@ runBasePluginRouterTests(
     name,
     loadApp,
     viewPrefix,
-    router: {
+    router: createBasePluginRouterConfig({
       homeViewName: '/',
       homeUrlPattern: '**/',
       userRouteName: '/user/:id',
       guidesRouteName: '/guides/:slug',
-    },
+      viewPrefix,
+    }),
   }))
 )
 
@@ -49,7 +51,7 @@ test.describe('plugin: react', () => {
         .withRum()
         .withApp(appName)
         .run(async ({ flushEvents, intakeRegistry, page }) => {
-          await page.click('text=Go to Tracked')
+          await page.click('[data-testid="go-to-tracked"]')
 
           await flushEvents()
           const vitalEvents = intakeRegistry.rumVitalEvents[0]
@@ -61,8 +63,12 @@ test.describe('plugin: react', () => {
         .withRum()
         .withApp(appName)
         .run(async ({ page, flushEvents, intakeRegistry }) => {
-          await page.click('text=Go to Wildcard')
-          await page.waitForURL('**/wildcard/foo/bar')
+          await clickAndWaitForURL(
+            page,
+            '[data-testid="go-to-wildcard"]',
+            '**/wildcard/foo/bar',
+            '[data-testid="back-to-home"]'
+          )
 
           await flushEvents()
 
@@ -75,10 +81,13 @@ test.describe('plugin: react', () => {
         .withRum()
         .withApp(appName)
         .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
-          await page.click('text=Go to Error Test')
-          await page.waitForURL('**/error-test')
-          await page.click('[data-testid="trigger-error"]')
-          await page.waitForSelector('[data-testid="error-handled"]')
+          await clickAndWaitForURL(
+            page,
+            '[data-testid="go-to-error-test"]',
+            '**/error-test',
+            '[data-testid="trigger-error"]'
+          )
+          await clickAndWait(page, '[data-testid="trigger-error"]', { readySelector: '[data-testid="error-handled"]' })
 
           await flushEvents()
 
