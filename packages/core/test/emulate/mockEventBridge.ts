@@ -19,7 +19,7 @@ export function mockEventBridge({
     getAllowedWebViewHosts: () => JSON.stringify(allowedWebViewHosts),
     getCapabilities: () => JSON.stringify(capabilities),
     getPrivacyLevel: () => privacyLevel,
-    getIsTraceSampled: isTraceSampled !== undefined ? () => String(isTraceSampled) : undefined,
+    getIsTraceSampled: isTraceSampled !== undefined ? () => isTraceSampled : undefined,
   }
 
   ;(window as BrowserWindowWithEventBridge).DatadogEventBridge = eventBridge

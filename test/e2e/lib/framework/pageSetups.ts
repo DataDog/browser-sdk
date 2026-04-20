@@ -296,7 +296,7 @@ function setupEventBridge(servers: Servers, options: EventBridgeOptions = {}) {
   const isTraceSampledMethod =
     options.isTraceSampled !== undefined
       ? `getIsTraceSampled() {
-        return '${options.isTraceSampled}'
+        return ${options.isTraceSampled}
       },`
       : ''
 
