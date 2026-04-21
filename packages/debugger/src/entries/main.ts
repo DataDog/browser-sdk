@@ -60,6 +60,30 @@ export interface DebuggerInitConfiguration {
    * @defaultValue 60000
    */
   pollInterval?: number
+
+  /**
+   * Maximum number of snapshot events allowed globally per second
+   *
+   * @category Data Collection
+   * @defaultValue 25
+   */
+  maxSnapshotsPerSecondGlobally?: number
+
+  /**
+   * Default maximum number of snapshot events allowed per probe per second
+   *
+   * @category Data Collection
+   * @defaultValue 1
+   */
+  maxSnapshotsPerSecondPerProbe?: number
+
+  /**
+   * Default maximum number of non-snapshot events allowed per probe per second
+   *
+   * @category Data Collection
+   * @defaultValue 5000
+   */
+  maxNonSnapshotsPerSecondPerProbe?: number
 }
 
 /**

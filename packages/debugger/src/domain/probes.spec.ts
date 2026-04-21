@@ -1,6 +1,14 @@
 import { display } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
-import { initializeProbe, getProbes, addProbe, removeProbe, checkGlobalSnapshotBudget, clearProbes } from './probes'
+import {
+  initializeProbe,
+  getProbes,
+  addProbe,
+  removeProbe,
+  checkGlobalSnapshotBudget,
+  clearProbes,
+  resetProbeBudgetConfiguration,
+} from './probes'
 import type { Probe } from './probes'
 
 interface TemplateWithCache {
@@ -11,6 +19,7 @@ interface TemplateWithCache {
 describe('probes', () => {
   beforeEach(() => {
     clearProbes()
+    resetProbeBudgetConfiguration()
 
     registerCleanupTask(() => clearProbes())
   })

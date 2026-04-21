@@ -7,11 +7,21 @@ describe('api', () => {
   let mockBatchAdd: jasmine.Spy
   let mockRumGetInternalContext: jasmine.Spy
 
+  function initTransport(overrides: Record<string, unknown> = {}) {
+    resetDebuggerTransport()
+    initDebuggerTransport(
+      { service: 'test-service', env: 'test-env', ...overrides } as any,
+      {
+        add: mockBatchAdd,
+      } as any
+    )
+  }
+
   beforeEach(() => {
     clearProbes()
 
     mockBatchAdd = jasmine.createSpy('batchAdd')
-    initDebuggerTransport({ service: 'test-service', env: 'test-env' } as any, { add: mockBatchAdd } as any)
+    initTransport()
 
     // Mock DD_RUM global for context
     mockRumGetInternalContext = jasmine.createSpy('getInternalContext').and.returnValue({
@@ -549,6 +559,85 @@ describe('api', () => {
 
       // Should only get 25 calls (global limit)
       expect(mockBatchAdd).toHaveBeenCalledTimes(25)
+    })
+
+    it('should respect configured global snapshot rate limit', () => {
+      initTransport({ maxSnapshotsPerSecondGlobally: 2 })
+
+      for (let i = 0; i < 3; i++) {
+        const probe: Probe = {
+          id: `configured-global-probe-${i}`,
+          version: 0,
+          type: 'LOG_PROBE',
+          where: { typeName: 'TestClass', methodName: `configuredGlobal${i}` },
+          template: 'Test',
+          captureSnapshot: true,
+          capture: {},
+          sampling: { snapshotsPerSecond: 5000 },
+          evaluateAt: 'ENTRY',
+        }
+        addProbe(probe)
+      }
+
+      for (let i = 0; i < 3; i++) {
+        const probes = getProbes(`TestClass;configuredGlobal${i}`)!
+        onEntry(probes, {}, {})
+        onReturn(probes, null, {}, {}, {})
+      }
+
+      expect(mockBatchAdd).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  describe('configured per-second budgets', () => {
+    it('should respect configured default snapshot per-probe rate limit', () => {
+      initTransport({ maxSnapshotsPerSecondPerProbe: 0.5 })
+
+      const probe: Probe = {
+        id: 'configured-snapshot-rate-probe',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'configuredSnapshotRate' },
+        template: 'Test',
+        captureSnapshot: true,
+        capture: { maxReferenceDepth: 1 },
+        sampling: {},
+        evaluateAt: 'ENTRY',
+      }
+      addProbe(probe)
+
+      const probes = getProbes('TestClass;configuredSnapshotRate')!
+      onEntry(probes, {}, {})
+      onReturn(probes, null, {}, {}, {})
+      onEntry(probes, {}, {})
+      onReturn(probes, null, {}, {}, {})
+
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+    })
+
+    it('should respect configured default non-snapshot per-probe rate limit', () => {
+      initTransport({ maxNonSnapshotsPerSecondPerProbe: 1 })
+
+      const probe: Probe = {
+        id: 'configured-non-snapshot-rate-probe',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'configuredNonSnapshotRate' },
+        template: 'Test',
+        captureSnapshot: false,
+        capture: {},
+        sampling: {},
+        evaluateAt: 'ENTRY',
+      }
+      addProbe(probe)
+
+      const probes = getProbes('TestClass;configuredNonSnapshotRate')!
+      onEntry(probes, {}, {})
+      onReturn(probes, null, {}, {}, {})
+      onEntry(probes, {}, {})
+      onReturn(probes, null, {}, {}, {})
+
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
     })
   })
 
