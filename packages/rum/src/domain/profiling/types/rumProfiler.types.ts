@@ -18,7 +18,7 @@ export interface RumProfilerEnrichmentData {
  */
 export interface RumProfilerStoppedInstance {
   readonly state: 'stopped'
-  readonly stateReason: 'session-expired' | 'stopped-by-user' | 'initializing'
+  readonly stateReason: 'session-expired' | 'stopped-by-user' | 'initializing' | 'quota-exceeded'
 }
 
 /**
