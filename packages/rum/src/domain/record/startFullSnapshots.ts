@@ -8,24 +8,14 @@ import { getVisualViewport } from './viewports'
 import type { RecordingScope } from './recordingScope'
 import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
 
-export type SerializeFullSnapshotCallback = (
-  timestamp: TimeStamp,
-  kind: SerializationKind,
-  document: Document,
-  emitRecord: EmitRecordCallback,
-  emitStats: EmitStatsCallback,
-  scope: RecordingScope
-) => void
-
 export function startFullSnapshots(
   lifeCycle: LifeCycle,
   emitRecord: EmitRecordCallback,
   emitStats: EmitStatsCallback,
   flushMutations: () => void,
-  scope: RecordingScope,
-  serialize: SerializeFullSnapshotCallback = serializeFullSnapshotAsChange
+  scope: RecordingScope
 ) {
-  takeFullSnapshot(timeStampNow(), SerializationKind.INITIAL_FULL_SNAPSHOT, emitRecord, emitStats, scope, serialize)
+  takeFullSnapshot(timeStampNow(), SerializationKind.INITIAL_FULL_SNAPSHOT, emitRecord, emitStats, scope)
 
   const { unsubscribe } = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
     flushMutations()
@@ -34,8 +24,7 @@ export function startFullSnapshots(
       SerializationKind.SUBSEQUENT_FULL_SNAPSHOT,
       emitRecord,
       emitStats,
-      scope,
-      serialize
+      scope
     )
   })
 
@@ -49,8 +38,7 @@ export function takeFullSnapshot(
   kind: SerializationKind,
   emitRecord: EmitRecordCallback,
   emitStats: EmitStatsCallback,
-  scope: RecordingScope,
-  serialize: SerializeFullSnapshotCallback = serializeFullSnapshotAsChange
+  scope: RecordingScope
 ): void {
   const { width, height } = getViewportDimension()
   emitRecord({
@@ -71,7 +59,7 @@ export function takeFullSnapshot(
     timestamp,
   })
 
-  serialize(timestamp, kind, document, emitRecord, emitStats, scope)
+  serializeFullSnapshotAsChange(timestamp, kind, document, emitRecord, emitStats, scope)
 
   if (window.visualViewport) {
     emitRecord({
