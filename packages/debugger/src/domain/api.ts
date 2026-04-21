@@ -4,7 +4,7 @@ import { timeStampNow, display, buildTag, generateUUID, getGlobalObject } from '
 import type { BrowserWindow, DebuggerInitConfiguration } from '../entries/main'
 import { capture, captureFields } from './capture'
 import type { InitializedProbe } from './probes'
-import { checkGlobalSnapshotBudget } from './probes'
+import { checkGlobalSnapshotBudget, resetProbeBudgetConfiguration, setProbeBudgetConfiguration } from './probes'
 import type { ActiveEntry } from './activeEntries'
 import { active } from './activeEntries'
 import { captureStackTrace, parseStackTrace } from './stacktrace'
@@ -23,6 +23,7 @@ export function initDebuggerTransport(config: DebuggerInitConfiguration, batch: 
   debuggerConfig = config
   debuggerBatch = batch
   cachedDDtags = undefined
+  setProbeBudgetConfiguration(config)
 }
 
 export function resetDebuggerTransport(): void {
@@ -30,6 +31,7 @@ export function resetDebuggerTransport(): void {
   debuggerConfig = undefined
   cachedDDtags = undefined
   active.clear()
+  resetProbeBudgetConfiguration()
 }
 
 /**
