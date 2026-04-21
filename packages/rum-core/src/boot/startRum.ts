@@ -42,6 +42,7 @@ import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
 import { startDisplayContext } from '../domain/contexts/displayContext'
 import type { CustomVitalsState } from '../domain/vital/vitalCollection'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
+import { startAiAgentContext } from '../domain/contexts/aiAgentContext'
 import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext'
 import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
 import { startSyntheticsContext } from '../domain/contexts/syntheticsContext'
@@ -200,6 +201,7 @@ export function startRumEventCollection(
 
   const displayContext = startDisplayContext(hooks, configuration)
   cleanupTasks.push(displayContext.stop)
+  startAiAgentContext(hooks)
   const ciVisibilityContext = startCiVisibilityContext(configuration, hooks)
   cleanupTasks.push(ciVisibilityContext.stop)
   startSyntheticsContext(hooks)
