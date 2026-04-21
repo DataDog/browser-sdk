@@ -1,5 +1,10 @@
 import { mockClock } from '@datadog/browser-core/test'
-import { interceptRequests, DEFAULT_FETCH_MOCK, TOO_MANY_REQUESTS_FETCH_MOCK, NETWORK_ERROR_FETCH_MOCK } from '@datadog/browser-core/test'
+import {
+  interceptRequests,
+  DEFAULT_FETCH_MOCK,
+  TOO_MANY_REQUESTS_FETCH_MOCK,
+  NETWORK_ERROR_FETCH_MOCK,
+} from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../../../rum-core/test'
 import { checkProfilingQuota } from './quotaCheck'
 
@@ -43,10 +48,7 @@ describe('checkProfilingQuota', () => {
 
   it('builds the URL with site, session_id and dd-api-key', async () => {
     interceptor.withFetch(DEFAULT_FETCH_MOCK)
-    await checkProfilingQuota(
-      mockRumConfiguration({ site: 'datadoghq.com', clientToken: 'my-token' }),
-      'session-abc'
-    )
+    await checkProfilingQuota(mockRumConfiguration({ site: 'datadoghq.com', clientToken: 'my-token' }), 'session-abc')
     expect(interceptor.requests[0].url).toBe(
       'https://api.datadoghq.com/api/unstable/profiling/admission?session_id=session-abc&dd-api-key=my-token'
     )
