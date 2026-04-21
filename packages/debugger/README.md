@@ -20,6 +20,8 @@ datadogDebugger.init({
 })
 ```
 
+When you also use the Datadog Live Debugger build plugin, `init().version` defaults to the build-time `liveDebugger.version` metadata injected into the bundle. If you pass both values explicitly and they differ, the SDK keeps the `init()` value and logs a warning.
+
 If [Datadog RUM][3] is also initialized on the page, debugger snapshots automatically include RUM context (session, view, user action) without any additional configuration.
 
 ## Troubleshooting
