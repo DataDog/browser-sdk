@@ -2,7 +2,6 @@ import { test, expect } from '@playwright/test'
 import { createTest } from '../../lib/framework'
 import { runBasePluginErrorTests } from './basePluginErrorTests'
 import { createBasePluginRouterConfig, runBasePluginRouterTests } from './basePluginRouterTests'
-import { clickAndWaitForURL } from './navigationUtils'
 
 const angularAppName = 'angular-app'
 const angularBasePluginConfig = {
@@ -40,7 +39,7 @@ test.describe('plugin: angular', () => {
     .withRum()
     .withApp(angularAppName)
     .run(async ({ page, flushEvents, intakeRegistry }) => {
-      await clickAndWaitForURL(page, '[data-testid="go-to-nested-route"]', '**/parent/nested')
+      await page.click('[data-testid="go-to-nested-route"]')
       await flushEvents()
 
       const nestedView = intakeRegistry.rumViewEvents.find(
@@ -54,7 +53,7 @@ test.describe('plugin: angular', () => {
     .withRum()
     .withApp(angularAppName)
     .run(async ({ page, flushEvents, intakeRegistry }) => {
-      await clickAndWaitForURL(page, '[data-testid="go-to-wildcard"]', '**/unknown/page')
+      await page.click('[data-testid="go-to-wildcard"]')
       await flushEvents()
 
       const wildcardView = intakeRegistry.rumViewEvents.find(

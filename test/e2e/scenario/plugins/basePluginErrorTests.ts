@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test'
 import { createTest } from '../../lib/framework'
-import { clickAndWait, clickAndWaitForURL } from './navigationUtils'
 
 type TestBuilder = ReturnType<typeof createTest>
 
@@ -15,26 +14,20 @@ interface ErrorConfig {
 interface ErrorPluginTestConfig {
   name: string
   loadApp: (builder: TestBuilder) => TestBuilder
-  viewPrefix: string
   error: ErrorConfig
 }
 
 export function runBasePluginErrorTests(configs: ErrorPluginTestConfig[]) {
-  for (const { name, loadApp, viewPrefix, error } of configs) {
+  for (const { name, loadApp, error } of configs) {
     test.describe(`base plugin: ${name}`, () => {
       test.describe('errors', () => {
         loadApp(createTest('should report client-side error').withRum()).run(
           async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
-            await clickAndWaitForURL(
-              page,
-              '[data-testid="go-to-error-test"]',
-              `**${viewPrefix}/error-test`,
-              '[data-testid="trigger-error"]'
-            )
+            await page.click('[data-testid="go-to-error-test"]')
+            await page.waitForSelector('[data-testid="trigger-error"]')
 
-            await clickAndWait(page, '[data-testid="trigger-error"]', {
-              readySelector: error.errorHandledSelector ?? '[data-testid="error-handled"]',
-            })
+            await page.click('[data-testid="trigger-error"]')
+            await page.waitForSelector(error.errorHandledSelector ?? '[data-testid="error-handled"]')
 
             await flushEvents()
 

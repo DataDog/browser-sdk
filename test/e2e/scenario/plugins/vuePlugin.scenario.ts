@@ -2,7 +2,6 @@ import { test, expect } from '@playwright/test'
 import { createTest } from '../../lib/framework'
 import { runBasePluginErrorTests } from './basePluginErrorTests'
 import { createBasePluginRouterConfig, runBasePluginRouterTests } from './basePluginRouterTests'
-import { clickAndWait, clickAndWaitForURL } from './navigationUtils'
 
 const vueBasePluginConfig = {
   name: 'vue',
@@ -39,13 +38,10 @@ test.describe('plugin: vue', () => {
     .withRum()
     .withVueApp()
     .run(async ({ page, flushEvents, intakeRegistry }) => {
-      await clickAndWaitForURL(
-        page,
-        '[data-testid="go-to-error-test"]',
-        '**/error-test',
-        '[data-testid="trigger-error"]'
-      )
-      await clickAndWait(page, '[data-testid="trigger-error"]', { readySelector: '[data-testid="error-handled"]' })
+      await page.click('[data-testid="go-to-error-test"]')
+      await page.waitForSelector('[data-testid="trigger-error"]')
+      await page.click('[data-testid="trigger-error"]')
+      await page.waitForSelector('[data-testid="error-handled"]')
 
       await flushEvents()
 

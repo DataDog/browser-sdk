@@ -2,7 +2,6 @@ import { test, expect } from '@playwright/test'
 import { createTest } from '../../lib/framework'
 import { runBasePluginErrorTests } from './basePluginErrorTests'
 import { createBasePluginRouterConfig, runBasePluginRouterTests } from './basePluginRouterTests'
-import { clickAndWait, clickAndWaitForURL } from './navigationUtils'
 
 const reactApps = [
   { appName: 'react-router-v6-app', description: 'React Router v6' },
@@ -63,12 +62,8 @@ test.describe('plugin: react', () => {
         .withRum()
         .withApp(appName)
         .run(async ({ page, flushEvents, intakeRegistry }) => {
-          await clickAndWaitForURL(
-            page,
-            '[data-testid="go-to-wildcard"]',
-            '**/wildcard/foo/bar',
-            '[data-testid="back-to-home"]'
-          )
+          await page.click('[data-testid="go-to-wildcard"]')
+          await page.waitForSelector('[data-testid="back-to-home"]')
 
           await flushEvents()
 
@@ -81,13 +76,10 @@ test.describe('plugin: react', () => {
         .withRum()
         .withApp(appName)
         .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
-          await clickAndWaitForURL(
-            page,
-            '[data-testid="go-to-error-test"]',
-            '**/error-test',
-            '[data-testid="trigger-error"]'
-          )
-          await clickAndWait(page, '[data-testid="trigger-error"]', { readySelector: '[data-testid="error-handled"]' })
+          await page.click('[data-testid="go-to-error-test"]')
+          await page.waitForSelector('[data-testid="trigger-error"]')
+          await page.click('[data-testid="trigger-error"]')
+          await page.waitForSelector('[data-testid="error-handled"]')
 
           await flushEvents()
 

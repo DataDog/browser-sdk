@@ -1,10 +1,13 @@
-import type { Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
 import { createTest } from '../../lib/framework'
-import type { NavigationTarget, UrlPattern } from './navigationUtils'
-import { clickAndWaitForURL, goHome } from './navigationUtils'
+
+type UrlPattern = string | RegExp
 
 type TestBuilder = ReturnType<typeof createTest>
+
+interface NavigationTarget {
+  clickSelector: string
+}
 
 interface RouteNavigation extends NavigationTarget {
   urlPattern: UrlPattern
@@ -66,7 +69,6 @@ export function createBasePluginRouterConfig({
     homeNavigation: {
       clickSelector: '[data-testid="back-to-home"]',
       urlPattern: homeUrlPattern,
-      readySelector: '[data-testid="go-to-user"]',
     },
     userRouteName,
     guidesRouteName,
@@ -74,12 +76,10 @@ export function createBasePluginRouterConfig({
       guides: {
         clickSelector: '[data-testid="go-to-guides"]',
         urlPattern: `**${viewPrefix}/guides/${guideSlug}`,
-        readySelector: '[data-testid="back-to-home"]',
       },
       user: {
         clickSelector: '[data-testid="go-to-user"]',
         urlPattern: `**${viewPrefix}/user/${userId}?admin=true`,
-        readySelector: '[data-testid="back-to-home"]',
       },
       queryChange: {
         clickSelector: '[data-testid="change-query-params"]',
@@ -91,10 +91,6 @@ export function createBasePluginRouterConfig({
       },
     },
   }
-}
-
-async function clickAndWaitForNavigation(page: Page, navigation: RouteNavigation) {
-  await clickAndWaitForURL(page, navigation.clickSelector, navigation.urlPattern, navigation.readySelector)
 }
 
 export function runBasePluginRouterTests(configs: RouterPluginTestConfig[]) {
@@ -119,13 +115,17 @@ export function runBasePluginRouterTests(configs: RouterPluginTestConfig[]) {
             const baseOrigin = new URL(baseUrl).origin
 
             // Home → Guides → Home → User → Home
-            await clickAndWaitForNavigation(page, navigation.guides)
+            await page.click(navigation.guides.clickSelector)
+            await page.waitForURL(navigation.guides.urlPattern)
 
-            await goHome(page, homeNavigation)
+            await page.click(homeNavigation.clickSelector)
+            await page.waitForURL(homeNavigation.urlPattern)
 
-            await clickAndWaitForNavigation(page, navigation.user)
+            await page.click(navigation.user.clickSelector)
+            await page.waitForURL(navigation.user.urlPattern)
 
-            await goHome(page, homeNavigation)
+            await page.click(homeNavigation.clickSelector)
+            await page.waitForURL(homeNavigation.urlPattern)
 
             await flushEvents()
 
@@ -151,9 +151,11 @@ export function runBasePluginRouterTests(configs: RouterPluginTestConfig[]) {
         loadApp(createTest('should track SPA navigation with loading_time').withRum()).run(
           async ({ page, flushEvents, intakeRegistry }) => {
             await page.waitForLoadState('networkidle')
-            await clickAndWaitForNavigation(page, navigation.user)
+            await page.click(navigation.user.clickSelector)
+            await page.waitForURL(navigation.user.urlPattern)
 
-            await goHome(page, homeNavigation)
+            await page.click(homeNavigation.clickSelector)
+            await page.waitForURL(homeNavigation.urlPattern)
 
             await flushEvents()
 
@@ -170,9 +172,11 @@ export function runBasePluginRouterTests(configs: RouterPluginTestConfig[]) {
 
         loadApp(createTest('should not create a new view when query params change').withRum()).run(
           async ({ page, flushEvents, intakeRegistry }) => {
-            await clickAndWaitForNavigation(page, navigation.user)
+            await page.click(navigation.user.clickSelector)
+            await page.waitForURL(navigation.user.urlPattern)
 
-            await clickAndWaitForNavigation(page, navigation.queryChange)
+            await page.click(navigation.queryChange.clickSelector)
+            await page.waitForURL(navigation.queryChange.urlPattern)
 
             await flushEvents()
 
@@ -187,9 +191,11 @@ export function runBasePluginRouterTests(configs: RouterPluginTestConfig[]) {
         loadApp(
           createTest('should track navigations between different concrete URLs of the same dynamic route').withRum()
         ).run(async ({ page, flushEvents, intakeRegistry }) => {
-          await clickAndWaitForNavigation(page, navigation.user)
+          await page.click(navigation.user.clickSelector)
+          await page.waitForURL(navigation.user.urlPattern)
 
-          await clickAndWaitForNavigation(page, navigation.otherUser)
+          await page.click(navigation.otherUser.clickSelector)
+          await page.waitForURL(navigation.otherUser.urlPattern)
 
           await flushEvents()
 

@@ -2,7 +2,6 @@ import { test, expect } from '@playwright/test'
 import { createTest } from '../../lib/framework'
 import { runBasePluginErrorTests } from './basePluginErrorTests'
 import { createBasePluginRouterConfig, runBasePluginRouterTests } from './basePluginRouterTests'
-import { clickAndWaitForURL, goHome } from './navigationUtils'
 
 const nextjsVariants = [
   {
@@ -58,20 +57,13 @@ test.describe('plugin: nextjs', () => {
       await page.waitForSelector('[data-testid="sidebar"]')
       expect(await page.textContent('[data-testid="sidebar"]')).toContain('Sidebar: Home')
 
-      await clickAndWaitForURL(
-        page,
-        '[data-testid="go-to-user"]',
-        '**/user/42?admin=true',
-        '[data-testid="change-query-params"]'
-      )
+      await page.click('[data-testid="go-to-user"]')
+      await page.waitForSelector('[data-testid="change-query-params"]')
 
       expect(await page.textContent('[data-testid="sidebar"]')).toContain('Sidebar: User 42')
 
-      await goHome(page, {
-        clickSelector: '[data-testid="back-to-home"]',
-        urlPattern: '**/',
-        readySelector: '[data-testid="go-to-user"]',
-      })
+      await page.click('[data-testid="back-to-home"]')
+      await page.waitForSelector('[data-testid="go-to-user"]')
 
       await flushEvents()
 
@@ -90,12 +82,8 @@ test.describe('plugin: nextjs', () => {
     .withRum()
     .withNextjsApp('app')
     .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
-      await clickAndWaitForURL(
-        page,
-        '[data-testid="go-to-server-error"]',
-        '**/error-test/server-error?throw=true',
-        '[data-testid="error-handled"][data-error-reported]'
-      )
+      await page.click('[data-testid="go-to-server-error"]')
+      await page.waitForSelector('[data-testid="error-handled"][data-error-reported]')
 
       await flushEvents()
 
@@ -116,12 +104,8 @@ test.describe('plugin: nextjs', () => {
     .withRum()
     .withNextjsApp('app')
     .run(async ({ page, flushEvents, intakeRegistry, withBrowserLogs }) => {
-      await clickAndWaitForURL(
-        page,
-        '[data-testid="go-to-global-error"]',
-        '**/global-error-test?throw=true',
-        '[data-testid="global-error-boundary"]'
-      )
+      await page.click('[data-testid="go-to-global-error"]')
+      await page.waitForSelector('[data-testid="global-error-boundary"]')
 
       await flushEvents()
 
