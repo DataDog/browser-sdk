@@ -1,4 +1,4 @@
-import { getInitCookie, HookNames, isSyntheticsTest, SKIPPED } from '@datadog/browser-core'
+import { getInitCookie, HookNames, isSyntheticsTest, mockable, SKIPPED } from '@datadog/browser-core'
 import { SessionType } from '../rumSessionManager'
 import type { DefaultRumEventAttributes, Hooks } from '../hooks'
 
@@ -39,6 +39,8 @@ const AI_AGENT_UA_PATTERNS: Array<{ pattern: RegExp; name: string }> = [
   { pattern: /Applebot-Extended/i, name: 'applebot' },
 ]
 
+const SOFTWARE_RENDERER_PATTERNS = [/swiftshader/i, /llvmpipe/i, /softpipe/i]
+
 export function startAiAgentContext(hooks: Hooks) {
   const aiAgentContext = detectAiAgent()
 
@@ -64,11 +66,16 @@ export function detectAiAgent(): AiAgentContext | undefined {
   }
 
   return (
+    // Tier 1: zero false positives
     detectCooperativeGlobal() ??
     detectCooperativeCookie() ??
     detectWebdriver() ??
     detectAiAgentUserAgent() ??
-    detectAutomationFramework()
+    detectAutomationFramework() ??
+    // Tier 2: low false positives
+    mockable(detectSoftwareRenderer)() ??
+    mockable(detectHeadlessEnvironment)() ??
+    mockable(detectCDP)()
   )
 }
 
@@ -112,4 +119,59 @@ function detectAutomationFramework(): AiAgentContext | undefined {
   if ('_selenium' in win || '_Selenium_IDE_Recorder' in win) {
     return { detection_method: 'automation_framework', framework: 'selenium' }
   }
+}
+
+export function detectSoftwareRenderer(): AiAgentContext | undefined {
+  try {
+    const canvas = document.createElement('canvas')
+    const gl = canvas.getContext('webgl')
+    if (!gl) {
+      return undefined
+    }
+    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info')
+    if (!debugInfo) {
+      return undefined
+    }
+    const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)
+    if (typeof renderer === 'string' && SOFTWARE_RENDERER_PATTERNS.some((pattern) => pattern.test(renderer))) {
+      return { detection_method: 'webgl_renderer' }
+    }
+  } catch {
+    // WebGL not available
+  }
+  return undefined
+}
+
+export function detectHeadlessEnvironment(): AiAgentContext | undefined {
+  if (window.outerHeight === 0 && window.outerWidth === 0) {
+    return { detection_method: 'headless_environment' }
+  }
+  if (typeof navigator.languages === 'object' && navigator.languages.length === 0) {
+    return { detection_method: 'headless_environment' }
+  }
+  return undefined
+}
+
+// CDP Runtime.enable causes Chrome to enumerate console method arguments during
+// serialization. A Proxy trap detects this enumeration, revealing an active CDP
+// connection. Note: also triggers when DevTools is open (acceptable for Tier 2).
+export function detectCDP(): AiAgentContext | undefined {
+  if (typeof Proxy === 'undefined') {
+    return undefined
+  }
+  let detected = false
+  const obj: Record<string, unknown> = {}
+  try {
+    const proxy = new Proxy(obj, {
+      ownKeys() {
+        detected = true
+        return Reflect.ownKeys(obj)
+      },
+    })
+    // eslint-disable-next-line no-console
+    console.debug(proxy)
+  } catch {
+    // Ignore errors
+  }
+  return detected ? { detection_method: 'cdp' } : undefined
 }

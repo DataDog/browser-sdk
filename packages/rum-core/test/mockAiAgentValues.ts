@@ -1,8 +1,20 @@
 import { ONE_MINUTE, resetInitCookies, deleteCookie, setCookie } from '@datadog/browser-core'
-import { registerCleanupTask } from '@datadog/browser-core/test'
-import { AI_AGENT_COOKIE_NAME, type AiAgentWindow } from '../src/domain/contexts/aiAgentContext'
+import { registerCleanupTask, replaceMockable } from '@datadog/browser-core/test'
+import {
+  AI_AGENT_COOKIE_NAME,
+  detectCDP,
+  detectHeadlessEnvironment,
+  detectSoftwareRenderer,
+  type AiAgentWindow,
+} from '../src/domain/contexts/aiAgentContext'
 
 const COOKIE_DURATION = ONE_MINUTE
+
+export function disableTier2Detection() {
+  replaceMockable(detectSoftwareRenderer, () => undefined)
+  replaceMockable(detectHeadlessEnvironment, () => undefined)
+  replaceMockable(detectCDP, () => undefined)
+}
 
 export function mockAiAgentCooperativeGlobal(context: { name: string }) {
   ;(window as AiAgentWindow)._DATADOG_AI_AGENT = context
