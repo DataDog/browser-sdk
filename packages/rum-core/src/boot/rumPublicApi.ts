@@ -412,6 +412,16 @@ export interface RumPublicApi extends PublicApi {
   stopSession(): void
 
   /**
+   * Set the trace sampling decision for the current session. When called, overrides the
+   * configured `traceSampleRate` for all subsequent requests.
+   * A native mobile SDKs should call this function to update the sampling decision on
+   * a session rollover.
+   *
+   * @param sampled - Whether traces should be sampled (true) or not (false).
+   */
+  setTraceSampled(sampled: boolean): void
+
+  /**
    * Add a feature flag evaluation,
    * stored in `@feature_flags.<feature_flag_key>`
    *
@@ -563,6 +573,7 @@ export interface Strategy {
   initConfiguration: RumInitConfiguration | undefined
   getInternalContext: StartRumResult['getInternalContext']
   stopSession: StartRumResult['stopSession']
+  setTraceSampled: StartRumResult['setTraceSampled']
   addTiming: StartRumResult['addTiming']
   setLoadingTime: StartRumResult['setLoadingTime']
   startView: StartRumResult['startView']
@@ -892,6 +903,10 @@ export function makeRumPublicApi(
     stopSession: monitor(() => {
       strategy.stopSession()
       addTelemetryUsage({ feature: 'stop-session' })
+    }),
+
+    setTraceSampled: monitor((sampled: boolean) => {
+      strategy.setTraceSampled(sampled)
     }),
 
     addFeatureFlagEvaluation: monitor((key, value) => {

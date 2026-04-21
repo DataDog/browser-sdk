@@ -237,6 +237,7 @@ export function createPreStartStrategy(
     getInternalContext: noop as () => undefined,
 
     stopSession: noop,
+    setTraceSampled: noop,
 
     addTiming(name, time = timeStampNow()) {
       bufferApiCalls.add((startRumResult) => startRumResult.addTiming(name, time))

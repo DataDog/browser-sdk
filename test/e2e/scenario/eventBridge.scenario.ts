@@ -128,6 +128,33 @@ test.describe('bridge present', () => {
       expect(xhrResources[0]._dd?.trace_id).toBeUndefined()
     })
 
+  createTest('dynamically update trace sampling decision with setTraceSampled')
+    .withRum({ service: 'service', traceSampleRate: 100, allowedTracingUrls: ['LOCATION_ORIGIN'] })
+    .withEventBridge({ isTraceSampled: true })
+    .run(async ({ flushEvents, intakeRegistry, sendXhr, page }) => {
+      // First request: should be traced (bridge provides isTraceSampled: true → traceSampleRate: 100)
+      await sendXhr('/headers')
+
+      // Dynamically switch to not sampled, simulating a native session rollover
+      await page.evaluate(() => {
+        window.DD_RUM!.setTraceSampled(false)
+      })
+
+      // Second request: should NOT be traced
+      await sendXhr('/headers')
+
+      // Flush once and verify both requests
+      await flushEvents()
+
+      const xhrResources = intakeRegistry.rumResourceEvents.filter((event) => event.resource.type === 'xhr')
+      expect(xhrResources).toHaveLength(2)
+
+      // The first request should have been traced
+      expect(xhrResources[0]._dd?.trace_id).toBeDefined()
+      // The second request should not have been traced
+      expect(xhrResources[1]._dd?.trace_id).toBeUndefined()
+    })
+
   createTest('do not send records when the recording is stopped')
     .withRum()
     .withEventBridge()

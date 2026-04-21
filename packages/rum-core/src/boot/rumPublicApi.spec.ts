@@ -36,6 +36,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   viewHistory: {} as any,
   session: {} as any,
   stopSession: () => undefined,
+  setTraceSampled: () => undefined,
   startDurationVital: () => ({}) as DurationVitalReference,
   stopDurationVital: () => undefined,
   addDurationVital: () => undefined,
@@ -635,6 +636,20 @@ describe('rum public api', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.stopSession()
       expect(stopSessionSpy).toHaveBeenCalled()
+    })
+  })
+
+  describe('setTraceSampled', () => {
+    it('calls setTraceSampled on the startRum result', () => {
+      const setTraceSampledSpy = jasmine.createSpy()
+      const { rumPublicApi } = makeRumPublicApiWithDefaults({
+        startRumResult: {
+          setTraceSampled: setTraceSampledSpy,
+        },
+      })
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.setTraceSampled(true)
+      expect(setTraceSampledSpy).toHaveBeenCalledWith(true)
     })
   })
 

@@ -145,6 +145,9 @@ export function startRum(
     lifeCycle,
     session,
     stopSession: () => session.expire(),
+    setTraceSampled: (sampled: boolean) => {
+      configuration.traceSampleRate = sampled ? 100 : 0
+    },
     telemetry,
     stop: () => {
       cleanupTasks.forEach((task) => task())
