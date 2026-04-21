@@ -862,7 +862,7 @@ export type RumResourceEvent = CommonProperties &
         /**
          * HTTP headers of the resource request
          */
-        readonly headers?: {
+        headers?: {
           [k: string]: string
         }
         [k: string]: unknown
@@ -874,7 +874,7 @@ export type RumResourceEvent = CommonProperties &
         /**
          * HTTP headers of the resource response
          */
-        readonly headers?: {
+        headers?: {
           [k: string]: string
         }
         [k: string]: unknown
@@ -1732,6 +1732,8 @@ export interface ViewProperties {
       | 'fragment_redisplay'
       | 'view_controller_display'
       | 'view_controller_redisplay'
+      | 'session_renewal'
+      | 'bf_cache'
     /**
      * Time spent on the view in ns
      */
