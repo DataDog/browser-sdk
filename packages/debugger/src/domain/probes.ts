@@ -11,6 +11,8 @@ import type { CaptureOptions } from './capture'
 const DEFAULT_MAX_SNAPSHOTS_PER_SECOND_GLOBALLY = 25
 const DEFAULT_MAX_SNAPSHOTS_PER_SECOND_PER_PROBE = 1
 const DEFAULT_MAX_NON_SNAPSHOTS_PER_SECOND_PER_PROBE = 5000
+const DEFAULT_MAX_SNAPSHOTS_PER_PROBE_LIFETIME = 1000
+const DEFAULT_MAX_NON_SNAPSHOTS_PER_PROBE_LIFETIME = 50000
 
 // Global snapshot rate limiting
 let globalSnapshotSamplingRateWindowStart = 0
@@ -36,6 +38,8 @@ export interface ProbeBudgetConfiguration {
   maxSnapshotsPerSecondGlobally?: number
   maxSnapshotsPerSecondPerProbe?: number
   maxNonSnapshotsPerSecondPerProbe?: number
+  maxSnapshotsPerProbeLifetime?: number
+  maxNonSnapshotsPerProbeLifetime?: number
 }
 
 export interface Probe {
@@ -63,6 +67,8 @@ export interface InitializedProbe extends Probe {
   condition?: CompiledCondition
   msBetweenSampling: number
   lastCaptureMs: number
+  eventsSentInLifetime: number
+  lifetimeBudgetWarningEmitted: boolean
 }
 
 // Pre-populate with a placeholder key to help V8 optimize property lookups.
@@ -80,6 +86,8 @@ let currentProbeBudgetConfiguration: Required<ProbeBudgetConfiguration> = {
   maxSnapshotsPerSecondGlobally: DEFAULT_MAX_SNAPSHOTS_PER_SECOND_GLOBALLY,
   maxSnapshotsPerSecondPerProbe: DEFAULT_MAX_SNAPSHOTS_PER_SECOND_PER_PROBE,
   maxNonSnapshotsPerSecondPerProbe: DEFAULT_MAX_NON_SNAPSHOTS_PER_SECOND_PER_PROBE,
+  maxSnapshotsPerProbeLifetime: DEFAULT_MAX_SNAPSHOTS_PER_PROBE_LIFETIME,
+  maxNonSnapshotsPerProbeLifetime: DEFAULT_MAX_NON_SNAPSHOTS_PER_PROBE_LIFETIME,
 }
 
 export function setProbeBudgetConfiguration(configuration: ProbeBudgetConfiguration = {}): void {
@@ -95,6 +103,14 @@ export function setProbeBudgetConfiguration(configuration: ProbeBudgetConfigurat
     maxNonSnapshotsPerSecondPerProbe: normalizeProbeBudgetRate(
       configuration.maxNonSnapshotsPerSecondPerProbe,
       DEFAULT_MAX_NON_SNAPSHOTS_PER_SECOND_PER_PROBE
+    ),
+    maxSnapshotsPerProbeLifetime: normalizeProbeLifetimeLimit(
+      configuration.maxSnapshotsPerProbeLifetime,
+      DEFAULT_MAX_SNAPSHOTS_PER_PROBE_LIFETIME
+    ),
+    maxNonSnapshotsPerProbeLifetime: normalizeProbeLifetimeLimit(
+      configuration.maxNonSnapshotsPerProbeLifetime,
+      DEFAULT_MAX_NON_SNAPSHOTS_PER_PROBE_LIFETIME
     ),
   }
 }
@@ -243,6 +259,26 @@ export function checkGlobalSnapshotBudget(now: number, captureSnapshot: boolean)
   return true
 }
 
+export function hasProbeLifetimeBudgetRemaining(probe: InitializedProbe): boolean {
+  if (isProbeLifetimeBudgetExhausted(probe)) {
+    if (!probe.lifetimeBudgetWarningEmitted) {
+      probe.lifetimeBudgetWarningEmitted = true
+      display.warn(
+        `Debugger: Probe ${probe.id} version ${probe.version} reached max ${
+          probe.captureSnapshot ? 'snapshot' : 'non-snapshot'
+        } events per lifetime: ${getMaxProbeLifetimeEvents(probe)}`
+      )
+    }
+    return false
+  }
+
+  return true
+}
+
+export function isProbeLifetimeBudgetExhausted(probe: InitializedProbe): boolean {
+  return probe.eventsSentInLifetime >= getMaxProbeLifetimeEvents(probe)
+}
+
 /**
  * Initialize a probe by preprocessing template segments, conditions, and sampling
  *
@@ -306,8 +342,20 @@ export function initializeProbe(probe: Probe): asserts probe is InitializedProbe
       : currentProbeBudgetConfiguration.maxNonSnapshotsPerSecondPerProbe)
   ;(probe as InitializedProbe).msBetweenSampling = (1 / snapshotsPerSecond) * 1000 // Convert to milliseconds
   ;(probe as InitializedProbe).lastCaptureMs = -Infinity // Initialize to -Infinity to allow first call
+  ;(probe as InitializedProbe).eventsSentInLifetime = 0
+  ;(probe as InitializedProbe).lifetimeBudgetWarningEmitted = false
+}
+
+function normalizeProbeLifetimeLimit(limit: number | undefined, defaultLimit: number): number {
+  return typeof limit === 'number' && Number.isFinite(limit) && limit >= 0 ? limit : defaultLimit
 }
 
 function normalizeProbeBudgetRate(rate: number | undefined, defaultRate: number): number {
   return typeof rate === 'number' && Number.isFinite(rate) && rate > 0 ? rate : defaultRate
+}
+
+function getMaxProbeLifetimeEvents(probe: InitializedProbe): number {
+  return probe.captureSnapshot
+    ? currentProbeBudgetConfiguration.maxSnapshotsPerProbeLifetime
+    : currentProbeBudgetConfiguration.maxNonSnapshotsPerProbeLifetime
 }
