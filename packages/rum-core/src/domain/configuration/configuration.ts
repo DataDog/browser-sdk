@@ -642,7 +642,7 @@ function getTrackResourceHeadersTelemetryValue(
 export function serializeRumConfiguration(configuration: RumInitConfiguration) {
   const baseSerializedConfiguration = serializeConfiguration(configuration)
 
-  // `use_` prefix is for boolean telemetry options that track complex configuration options
+  // `use_` prefix is for telemetry options that track usage of a configuration option as a boolean to avoid capturing customer data
   return {
     session_replay_sample_rate: configuration.sessionReplaySampleRate,
     start_session_replay_recording_manually: configuration.startSessionReplayRecordingManually,
