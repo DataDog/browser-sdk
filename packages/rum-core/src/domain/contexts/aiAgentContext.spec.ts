@@ -1,7 +1,8 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { HookNames } from '@datadog/browser-core'
-import { mockSyntheticsWorkerValues } from '../../../../core/test'
+import { mockSyntheticsWorkerValues, replaceMockable } from '../../../../core/test'
 import {
+  disableTier2Detection,
   mockAiAgentCooperativeGlobal,
   mockAiAgentCooperativeCookie,
   mockNavigatorWebdriver,
@@ -11,7 +12,12 @@ import {
 import { SessionType } from '../rumSessionManager'
 import type { AssembleHookParams, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
-import { startAiAgentContext } from './aiAgentContext'
+import {
+  detectCDP,
+  detectHeadlessEnvironment,
+  detectSoftwareRenderer,
+  startAiAgentContext,
+} from './aiAgentContext'
 
 // Return type is 'any' because SessionType.AI_AGENT is not yet in the auto-generated rum-events-format schema
 describe('aiAgentContext', () => {
@@ -47,6 +53,7 @@ describe('aiAgentContext', () => {
 
     it('should not detect via cooperative global if the name is missing', () => {
       mockNavigatorWebdriver(false)
+      disableTier2Detection()
       ;(window as any)._DATADOG_AI_AGENT = { version: '1.0' }
       startAiAgentContext(hooks)
 
@@ -56,6 +63,7 @@ describe('aiAgentContext', () => {
 
     it('should not detect via cooperative global if it is not an object', () => {
       mockNavigatorWebdriver(false)
+      disableTier2Detection()
       ;(window as any)._DATADOG_AI_AGENT = 'claude-code'
       startAiAgentContext(hooks)
 
@@ -100,6 +108,7 @@ describe('aiAgentContext', () => {
 
     it('should not detect when navigator.webdriver is false', () => {
       mockNavigatorWebdriver(false)
+      disableTier2Detection()
       startAiAgentContext(hooks)
 
       expect(triggerAssembleHook()).toBeUndefined()
@@ -109,6 +118,7 @@ describe('aiAgentContext', () => {
   describe('user-agent detection', () => {
     beforeEach(() => {
       mockNavigatorWebdriver(false)
+      disableTier2Detection()
     })
 
     it('should detect ClaudeBot user agent', () => {
@@ -154,6 +164,7 @@ describe('aiAgentContext', () => {
   describe('automation framework detection', () => {
     beforeEach(() => {
       mockNavigatorWebdriver(false)
+      disableTier2Detection()
     })
 
     it('should detect Playwright globals', () => {
@@ -205,13 +216,103 @@ describe('aiAgentContext', () => {
     })
   })
 
+  describe('WebGL software renderer detection', () => {
+    beforeEach(() => {
+      mockNavigatorWebdriver(false)
+    })
+
+    it('should detect SwiftShader renderer', () => {
+      replaceMockable(detectSoftwareRenderer, () => ({ detection_method: 'webgl_renderer' as const }))
+      replaceMockable(detectHeadlessEnvironment, () => undefined)
+      replaceMockable(detectCDP, () => undefined)
+      startAiAgentContext(hooks)
+
+      expect(triggerAssembleHook()).toEqual({
+        type: 'view',
+        session: {
+          type: SessionType.AI_AGENT,
+        },
+        ai_agent: {
+          detection_method: 'webgl_renderer',
+        },
+      })
+    })
+
+    it('should not detect with a hardware-accelerated renderer', () => {
+      disableTier2Detection()
+      startAiAgentContext(hooks)
+
+      expect(triggerAssembleHook()).toBeUndefined()
+    })
+  })
+
+  describe('headless environment detection', () => {
+    beforeEach(() => {
+      mockNavigatorWebdriver(false)
+      replaceMockable(detectSoftwareRenderer, () => undefined)
+      replaceMockable(detectCDP, () => undefined)
+    })
+
+    it('should detect zero outer dimensions', () => {
+      replaceMockable(detectHeadlessEnvironment, () => ({ detection_method: 'headless_environment' as const }))
+      startAiAgentContext(hooks)
+
+      expect(triggerAssembleHook()).toEqual({
+        type: 'view',
+        session: {
+          type: SessionType.AI_AGENT,
+        },
+        ai_agent: {
+          detection_method: 'headless_environment',
+        },
+      })
+    })
+
+    it('should not detect in a normal browser environment', () => {
+      replaceMockable(detectHeadlessEnvironment, () => undefined)
+      startAiAgentContext(hooks)
+
+      expect(triggerAssembleHook()).toBeUndefined()
+    })
+  })
+
+  describe('CDP detection', () => {
+    beforeEach(() => {
+      mockNavigatorWebdriver(false)
+      replaceMockable(detectSoftwareRenderer, () => undefined)
+      replaceMockable(detectHeadlessEnvironment, () => undefined)
+    })
+
+    it('should detect active CDP connection', () => {
+      replaceMockable(detectCDP, () => ({ detection_method: 'cdp' as const }))
+      startAiAgentContext(hooks)
+
+      expect(triggerAssembleHook()).toEqual({
+        type: 'view',
+        session: {
+          type: SessionType.AI_AGENT,
+        },
+        ai_agent: {
+          detection_method: 'cdp',
+        },
+      })
+    })
+
+    it('should not detect without CDP connection', () => {
+      replaceMockable(detectCDP, () => undefined)
+      startAiAgentContext(hooks)
+
+      expect(triggerAssembleHook()).toBeUndefined()
+    })
+  })
+
   describe('detection priority', () => {
     it('should prioritize cooperative global over webdriver', () => {
       mockAiAgentCooperativeGlobal({ name: 'claude-code' })
       mockNavigatorWebdriver(true)
       startAiAgentContext(hooks)
 
-      const result = triggerAssembleHook() as any
+      const result = triggerAssembleHook()
       expect(result.ai_agent.detection_method).toBe('cooperative')
       expect(result.ai_agent.name).toBe('claude-code')
     })
@@ -221,7 +322,7 @@ describe('aiAgentContext', () => {
       mockNavigatorWebdriver(true)
       startAiAgentContext(hooks)
 
-      const result = triggerAssembleHook() as any
+      const result = triggerAssembleHook()
       expect(result.ai_agent.detection_method).toBe('cooperative')
       expect(result.ai_agent.name).toBe('devin')
     })
@@ -231,7 +332,7 @@ describe('aiAgentContext', () => {
       mockUserAgent('Mozilla/5.0 GPTBot/1.0')
       startAiAgentContext(hooks)
 
-      const result = triggerAssembleHook() as any
+      const result = triggerAssembleHook()
       expect(result.ai_agent.detection_method).toBe('webdriver')
     })
 
@@ -240,8 +341,42 @@ describe('aiAgentContext', () => {
       mockAutomationFrameworkGlobal('playwright')
       startAiAgentContext(hooks)
 
-      const result = triggerAssembleHook() as any
+      const result = triggerAssembleHook()
       expect(result.ai_agent.detection_method).toBe('ua_match')
+    })
+
+    it('should prioritize automation framework over Tier 2 signals', () => {
+      mockNavigatorWebdriver(false)
+      mockAutomationFrameworkGlobal('playwright')
+      replaceMockable(detectSoftwareRenderer, () => ({ detection_method: 'webgl_renderer' as const }))
+      replaceMockable(detectHeadlessEnvironment, () => undefined)
+      replaceMockable(detectCDP, () => undefined)
+      startAiAgentContext(hooks)
+
+      const result = triggerAssembleHook()
+      expect(result.ai_agent.detection_method).toBe('automation_framework')
+    })
+
+    it('should prioritize WebGL renderer over headless environment', () => {
+      mockNavigatorWebdriver(false)
+      replaceMockable(detectSoftwareRenderer, () => ({ detection_method: 'webgl_renderer' as const }))
+      replaceMockable(detectHeadlessEnvironment, () => ({ detection_method: 'headless_environment' as const }))
+      replaceMockable(detectCDP, () => ({ detection_method: 'cdp' as const }))
+      startAiAgentContext(hooks)
+
+      const result = triggerAssembleHook()
+      expect(result.ai_agent.detection_method).toBe('webgl_renderer')
+    })
+
+    it('should prioritize headless environment over CDP', () => {
+      mockNavigatorWebdriver(false)
+      replaceMockable(detectSoftwareRenderer, () => undefined)
+      replaceMockable(detectHeadlessEnvironment, () => ({ detection_method: 'headless_environment' as const }))
+      replaceMockable(detectCDP, () => ({ detection_method: 'cdp' as const }))
+      startAiAgentContext(hooks)
+
+      const result = triggerAssembleHook()
+      expect(result.ai_agent.detection_method).toBe('headless_environment')
     })
   })
 
@@ -258,6 +393,7 @@ describe('aiAgentContext', () => {
   describe('no detection', () => {
     it('should not set AI agent context when no signals are present', () => {
       mockNavigatorWebdriver(false)
+      disableTier2Detection()
       startAiAgentContext(hooks)
 
       expect(triggerAssembleHook()).toBeUndefined()
