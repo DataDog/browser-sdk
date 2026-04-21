@@ -32,6 +32,7 @@
       "@datadog/browser-rum-react/internal": ["./packages/rum-react/src/entries/internal"],
       "@datadog/browser-rum-react/react-router-v6": ["./packages/rum-react/src/entries/reactRouterV6"],
       "@datadog/browser-rum-react/react-router-v7": ["./packages/rum-react/src/entries/reactRouterV7"],
+      "@datadog/browser-rum-react/tanstack-router": ["./packages/rum-react/src/entries/tanstackRouter"],
 
       "@datadog/browser-rum-vue": ["./packages/rum-vue/src/entries/main"],
       "@datadog/browser-rum-vue/vue-router-v4": ["./packages/rum-vue/src/entries/vueRouter"],
