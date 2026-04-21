@@ -1,4 +1,9 @@
 import { capture, captureFields } from './capture'
+import type { CaptureContext } from './capture'
+
+function noTimeout(): CaptureContext {
+  return { deadline: Infinity, timedOut: false }
+}
 
 describe('capture', () => {
   const defaultOpts = {
@@ -10,29 +15,29 @@ describe('capture', () => {
 
   describe('primitive types', () => {
     it('should capture null', () => {
-      const result = capture(null, defaultOpts)
+      const result = capture(null, defaultOpts, noTimeout())
       expect(result).toEqual({ type: 'null', isNull: true })
     })
 
     it('should capture undefined', () => {
-      const result = capture(undefined, defaultOpts)
+      const result = capture(undefined, defaultOpts, noTimeout())
       expect(result).toEqual({ type: 'undefined' })
     })
 
     it('should capture boolean', () => {
-      expect(capture(true, defaultOpts)).toEqual({ type: 'boolean', value: 'true' })
-      expect(capture(false, defaultOpts)).toEqual({ type: 'boolean', value: 'false' })
+      expect(capture(true, defaultOpts, noTimeout())).toEqual({ type: 'boolean', value: 'true' })
+      expect(capture(false, defaultOpts, noTimeout())).toEqual({ type: 'boolean', value: 'false' })
     })
 
     it('should capture number', () => {
-      expect(capture(42, defaultOpts)).toEqual({ type: 'number', value: '42' })
-      expect(capture(3.14, defaultOpts)).toEqual({ type: 'number', value: '3.14' })
-      expect(capture(NaN, defaultOpts)).toEqual({ type: 'number', value: 'NaN' })
-      expect(capture(Infinity, defaultOpts)).toEqual({ type: 'number', value: 'Infinity' })
+      expect(capture(42, defaultOpts, noTimeout())).toEqual({ type: 'number', value: '42' })
+      expect(capture(3.14, defaultOpts, noTimeout())).toEqual({ type: 'number', value: '3.14' })
+      expect(capture(NaN, defaultOpts, noTimeout())).toEqual({ type: 'number', value: 'NaN' })
+      expect(capture(Infinity, defaultOpts, noTimeout())).toEqual({ type: 'number', value: 'Infinity' })
     })
 
     it('should capture string', () => {
-      const result = capture('hello', defaultOpts)
+      const result = capture('hello', defaultOpts, noTimeout())
       expect(result).toEqual({ type: 'string', value: 'hello' })
     })
 
@@ -41,7 +46,7 @@ describe('capture', () => {
         pending('BigInt is not supported in this browser')
         return
       }
-      const result = capture(BigInt(123), defaultOpts)
+      const result = capture(BigInt(123), defaultOpts, noTimeout())
       expect(result).toEqual({ type: 'bigint', value: '123' })
     })
 
@@ -51,13 +56,13 @@ describe('capture', () => {
         return
       }
       const sym = Symbol('test')
-      const result = capture(sym, defaultOpts)
+      const result = capture(sym, defaultOpts, noTimeout())
       expect(result).toEqual({ type: 'symbol', value: 'test' })
     })
 
     it('should capture symbol without description', () => {
       const sym = Symbol()
-      const result = capture(sym, defaultOpts)
+      const result = capture(sym, defaultOpts, noTimeout())
       expect(result).toEqual({ type: 'symbol', value: '' })
     })
   })
@@ -65,7 +70,7 @@ describe('capture', () => {
   describe('string truncation', () => {
     it('should truncate long strings', () => {
       const longString = 'a'.repeat(300)
-      const result = capture(longString, { ...defaultOpts, maxLength: 10 })
+      const result = capture(longString, { ...defaultOpts, maxLength: 10 }, noTimeout())
 
       expect(result).toEqual({
         type: 'string',
@@ -76,7 +81,7 @@ describe('capture', () => {
     })
 
     it('should not truncate strings under maxLength', () => {
-      const result = capture('short', { ...defaultOpts, maxLength: 10 })
+      const result = capture('short', { ...defaultOpts, maxLength: 10 }, noTimeout())
       expect(result).toEqual({ type: 'string', value: 'short' })
     })
   })
@@ -84,25 +89,25 @@ describe('capture', () => {
   describe('built-in objects', () => {
     it('should capture Date', () => {
       const date = new Date('2024-01-01T00:00:00.000Z')
-      const result = capture(date, defaultOpts)
+      const result = capture(date, defaultOpts, noTimeout())
       expect(result).toEqual({ type: 'Date', value: '2024-01-01T00:00:00.000Z' })
     })
 
     it('should capture invalid Date without throwing', () => {
       const date = new Date('invalid')
-      const result = capture(date, defaultOpts)
+      const result = capture(date, defaultOpts, noTimeout())
       expect(result).toEqual({ type: 'Date', value: 'Invalid Date' })
     })
 
     it('should capture RegExp', () => {
       const regex = /test/gi
-      const result = capture(regex, defaultOpts)
+      const result = capture(regex, defaultOpts, noTimeout())
       expect(result).toEqual({ type: 'RegExp', value: '/test/gi' })
     })
 
     it('should capture Error', () => {
       const error = new Error('test error')
-      const result = capture(error, defaultOpts) as any
+      const result = capture(error, defaultOpts, noTimeout()) as any
 
       expect(result).toEqual({
         type: 'Error',
@@ -122,7 +127,7 @@ describe('capture', () => {
         }
       }
       const error = new CustomError('custom error')
-      const result = capture(error, defaultOpts) as any
+      const result = capture(error, defaultOpts, noTimeout()) as any
 
       expect(result.type).toBe('CustomError')
       expect(result.fields.name).toEqual({ type: 'string', value: 'CustomError' })
@@ -136,7 +141,7 @@ describe('capture', () => {
         pending('Error cause is not supported in this browser')
         return
       }
-      const result = capture(error, defaultOpts) as any
+      const result = capture(error, defaultOpts, noTimeout()) as any
 
       expect(result.fields.cause).toEqual({
         type: 'Error',
@@ -150,7 +155,7 @@ describe('capture', () => {
 
     it('should capture Promise', () => {
       const promise = Promise.resolve(42)
-      const result = capture(promise, defaultOpts)
+      const result = capture(promise, defaultOpts, noTimeout())
       expect(result).toEqual({ type: 'Promise', notCapturedReason: 'Promise state cannot be inspected' })
     })
   })
@@ -158,7 +163,7 @@ describe('capture', () => {
   describe('arrays', () => {
     it('should capture array', () => {
       const arr = [1, 'two', true]
-      const result = capture(arr, defaultOpts) as any
+      const result = capture(arr, defaultOpts, noTimeout()) as any
 
       expect(result.type).toBe('Array')
       expect(result.elements).toEqual([
@@ -170,7 +175,7 @@ describe('capture', () => {
 
     it('should truncate large arrays', () => {
       const arr = Array(200).fill(1)
-      const result = capture(arr, { ...defaultOpts, maxCollectionSize: 3 }) as any
+      const result = capture(arr, { ...defaultOpts, maxCollectionSize: 3 }, noTimeout()) as any
 
       expect(result.type).toBe('Array')
       expect(result.elements.length).toBe(3)
@@ -183,7 +188,7 @@ describe('capture', () => {
         [1, 2],
         [3, 4],
       ]
-      const result = capture(arr, defaultOpts) as any
+      const result = capture(arr, defaultOpts, noTimeout()) as any
 
       expect(result.type).toBe('Array')
       expect(result.elements[0].type).toBe('Array')
@@ -200,7 +205,7 @@ describe('capture', () => {
         ['key1', 'value1'],
         ['key2', 42],
       ])
-      const result = capture(map, defaultOpts) as any
+      const result = capture(map, defaultOpts, noTimeout()) as any
 
       expect(result.type).toBe('Map')
       expect(result.entries).toEqual([
@@ -220,7 +225,7 @@ describe('capture', () => {
       for (let i = 0; i < 200; i++) {
         map.set(`key${i}`, i)
       }
-      const result = capture(map, { ...defaultOpts, maxCollectionSize: 3 }) as any
+      const result = capture(map, { ...defaultOpts, maxCollectionSize: 3 }, noTimeout()) as any
 
       expect(result.entries.length).toBe(3)
       expect(result.notCapturedReason).toBe('collectionSize')
@@ -229,7 +234,7 @@ describe('capture', () => {
 
     it('should capture Set', () => {
       const set = new Set([1, 'two', true])
-      const result = capture(set, defaultOpts) as any
+      const result = capture(set, defaultOpts, noTimeout()) as any
 
       expect(result.type).toBe('Set')
       expect(result.elements).toEqual([
@@ -244,7 +249,7 @@ describe('capture', () => {
       for (let i = 0; i < 200; i++) {
         set.add(i)
       }
-      const result = capture(set, { ...defaultOpts, maxCollectionSize: 3 }) as any
+      const result = capture(set, { ...defaultOpts, maxCollectionSize: 3 }, noTimeout()) as any
 
       expect(result.elements.length).toBe(3)
       expect(result.notCapturedReason).toBe('collectionSize')
@@ -253,13 +258,13 @@ describe('capture', () => {
 
     it('should handle WeakMap', () => {
       const weakMap = new WeakMap()
-      const result = capture(weakMap, defaultOpts)
+      const result = capture(weakMap, defaultOpts, noTimeout())
       expect(result).toEqual({ type: 'WeakMap', notCapturedReason: 'WeakMap contents cannot be enumerated' })
     })
 
     it('should handle WeakSet', () => {
       const weakSet = new WeakSet()
-      const result = capture(weakSet, defaultOpts)
+      const result = capture(weakSet, defaultOpts, noTimeout())
       expect(result).toEqual({ type: 'WeakSet', notCapturedReason: 'WeakSet contents cannot be enumerated' })
     })
   })
@@ -267,7 +272,7 @@ describe('capture', () => {
   describe('objects', () => {
     it('should capture plain object', () => {
       const obj = { a: 1, b: 'two' }
-      const result = capture(obj, defaultOpts) as any
+      const result = capture(obj, defaultOpts, noTimeout()) as any
 
       expect(result.type).toBe('Object')
       expect(result.fields.a).toEqual({ type: 'number', value: '1' })
@@ -276,7 +281,7 @@ describe('capture', () => {
 
     it('should capture nested objects', () => {
       const obj = { outer: { inner: 'value' } }
-      const result = capture(obj, defaultOpts) as any
+      const result = capture(obj, defaultOpts, noTimeout()) as any
 
       expect(result.fields.outer.type).toBe('Object')
       expect(result.fields.outer.fields.inner).toEqual({ type: 'string', value: 'value' })
@@ -284,7 +289,7 @@ describe('capture', () => {
 
     it('should respect maxReferenceDepth', () => {
       const obj = { level1: { level2: { level3: { level4: 'deep' } } } }
-      const result = capture(obj, { ...defaultOpts, maxReferenceDepth: 2 }) as any
+      const result = capture(obj, { ...defaultOpts, maxReferenceDepth: 2 }, noTimeout()) as any
 
       expect(result.fields.level1.fields.level2.notCapturedReason).toBe('depth')
     })
@@ -294,7 +299,7 @@ describe('capture', () => {
       for (let i = 0; i < 30; i++) {
         obj[`field${i}`] = i
       }
-      const result = capture(obj, { ...defaultOpts, maxFieldCount: 5 }) as any
+      const result = capture(obj, { ...defaultOpts, maxFieldCount: 5 }, noTimeout()) as any
 
       expect(Object.keys(result.fields).length).toBe(5)
       expect(result.notCapturedReason).toBe('fieldCount')
@@ -308,14 +313,14 @@ describe('capture', () => {
       }
       const sym = Symbol('test')
       const obj = { [sym]: 'value' }
-      const result = capture(obj, defaultOpts) as any
+      const result = capture(obj, defaultOpts, noTimeout()) as any
 
       expect(result.fields.test).toEqual({ type: 'string', value: 'value' })
     })
 
     it('should escape dots in field names', () => {
       const obj = { 'field.with.dots': 'value' }
-      const result = capture(obj, defaultOpts) as any
+      const result = capture(obj, defaultOpts, noTimeout()) as any
 
       expect(result.fields.field_with_dots).toEqual({ type: 'string', value: 'value' })
     })
@@ -326,7 +331,7 @@ describe('capture', () => {
           throw new Error('getter error')
         },
       }
-      const result = capture(obj, defaultOpts) as any
+      const result = capture(obj, defaultOpts, noTimeout()) as any
 
       expect(result.fields.throwing).toEqual({
         type: 'undefined',
@@ -339,7 +344,7 @@ describe('capture', () => {
         public field = 'value'
       }
       const instance = new MyClass()
-      const result = capture(instance, defaultOpts) as any
+      const result = capture(instance, defaultOpts, noTimeout()) as any
 
       expect(result.type).toBe('MyClass')
       expect(result.fields.field).toEqual({ type: 'string', value: 'value' })
@@ -349,28 +354,28 @@ describe('capture', () => {
   describe('functions', () => {
     it('should capture function', () => {
       function myFunc() {} // eslint-disable-line @typescript-eslint/no-empty-function
-      const result = capture(myFunc, defaultOpts) as any
+      const result = capture(myFunc, defaultOpts, noTimeout()) as any
 
       expect(result.type).toBe('Function')
     })
 
     it('should capture class as class', () => {
       class MyClass {}
-      const result = capture(MyClass, defaultOpts)
+      const result = capture(MyClass, defaultOpts, noTimeout())
 
       expect(result.type).toBe('class MyClass')
     })
 
     it('should capture anonymous class', () => {
       const AnonymousClass = class {}
-      const result = capture(AnonymousClass, defaultOpts)
+      const result = capture(AnonymousClass, defaultOpts, noTimeout())
 
       expect(result.type).toBe('class')
     })
 
     it('should respect depth for functions', () => {
       function myFunc() {} // eslint-disable-line @typescript-eslint/no-empty-function
-      const result = capture(myFunc, { ...defaultOpts, maxReferenceDepth: 0 })
+      const result = capture(myFunc, { ...defaultOpts, maxReferenceDepth: 0 }, noTimeout())
 
       expect(result).toEqual({ type: 'Function', notCapturedReason: 'depth' })
     })
@@ -379,7 +384,7 @@ describe('capture', () => {
   describe('binary data', () => {
     it('should capture ArrayBuffer', () => {
       const buffer = new ArrayBuffer(16)
-      const result = capture(buffer, defaultOpts)
+      const result = capture(buffer, defaultOpts, noTimeout())
 
       expect(result).toEqual({
         type: 'ArrayBuffer',
@@ -393,7 +398,7 @@ describe('capture', () => {
         return
       }
       const buffer = new SharedArrayBuffer(16)
-      const result = capture(buffer, defaultOpts)
+      const result = capture(buffer, defaultOpts, noTimeout())
 
       expect(result).toEqual({
         type: 'SharedArrayBuffer',
@@ -404,7 +409,7 @@ describe('capture', () => {
     it('should capture DataView', () => {
       const buffer = new ArrayBuffer(16)
       const view = new DataView(buffer, 4, 8)
-      const result = capture(view, defaultOpts) as any
+      const result = capture(view, defaultOpts, noTimeout()) as any
 
       expect(result.type).toBe('DataView')
       expect(result.fields.byteLength).toEqual({ type: 'number', value: '8' })
@@ -414,7 +419,7 @@ describe('capture', () => {
 
     it('should capture Uint8Array', () => {
       const arr = new Uint8Array([1, 2, 3])
-      const result = capture(arr, defaultOpts) as any
+      const result = capture(arr, defaultOpts, noTimeout()) as any
 
       expect(result.type).toBe('Uint8Array')
       expect(result.elements).toEqual([
@@ -428,7 +433,7 @@ describe('capture', () => {
 
     it('should truncate large TypedArrays', () => {
       const arr = new Uint8Array(200)
-      const result = capture(arr, { ...defaultOpts, maxCollectionSize: 3 }) as any
+      const result = capture(arr, { ...defaultOpts, maxCollectionSize: 3 }, noTimeout()) as any
 
       expect(result.elements.length).toBe(3)
       expect(result.notCapturedReason).toBe('collectionSize')
@@ -440,7 +445,7 @@ describe('capture', () => {
     it('should handle circular references by respecting depth limit', () => {
       const obj: any = { name: 'root' }
       obj.self = obj
-      const result = capture(obj, { ...defaultOpts, maxReferenceDepth: 1 }) as any
+      const result = capture(obj, { ...defaultOpts, maxReferenceDepth: 1 }, noTimeout()) as any
 
       expect(result.fields.name).toEqual({ type: 'string', value: 'root' })
       expect(result.fields.self.notCapturedReason).toBe('depth')
@@ -458,7 +463,7 @@ describe('captureFields', () => {
 
   it('should return fields directly without wrapper', () => {
     const obj = { a: 1, b: 'hello', c: true }
-    const result = captureFields(obj, defaultOpts)
+    const result = captureFields(obj, defaultOpts, noTimeout())
 
     // Should be Record<string, CapturedValue>, not CapturedValue
     expect(result).toEqual({
@@ -477,7 +482,7 @@ describe('captureFields', () => {
       name: 'test',
       nested: { value: 42 },
     }
-    const result = captureFields(obj, defaultOpts)
+    const result = captureFields(obj, defaultOpts, noTimeout())
 
     expect(result).toEqual({
       name: { type: 'string', value: 'test' },
@@ -492,7 +497,7 @@ describe('captureFields', () => {
 
   it('should respect maxFieldCount', () => {
     const obj = { a: 1, b: 2, c: 3, d: 4, e: 5 }
-    const result = captureFields(obj, { ...defaultOpts, maxFieldCount: 3 })
+    const result = captureFields(obj, { ...defaultOpts, maxFieldCount: 3 }, noTimeout())
 
     const keys = Object.keys(result)
     expect(keys.length).toBe(3)
@@ -506,7 +511,7 @@ describe('captureFields', () => {
         },
       },
     }
-    const result = captureFields(obj, { ...defaultOpts, maxReferenceDepth: 2 })
+    const result = captureFields(obj, { ...defaultOpts, maxReferenceDepth: 2 }, noTimeout())
 
     expect(result.level1).toEqual({
       type: 'Object',
@@ -521,7 +526,7 @@ describe('captureFields', () => {
 
   it('should handle properties with dots in names', () => {
     const obj = { 'some.property': 'value' }
-    const result = captureFields(obj, defaultOpts)
+    const result = captureFields(obj, defaultOpts, noTimeout())
 
     expect(result['some_property']).toEqual({ type: 'string', value: 'value' })
   })
@@ -533,7 +538,7 @@ describe('captureFields', () => {
     }
     const sym = Symbol('test')
     const obj = { [sym]: 'symbolValue' }
-    const result = captureFields(obj, defaultOpts)
+    const result = captureFields(obj, defaultOpts, noTimeout())
 
     expect(result.test).toEqual({ type: 'string', value: 'symbolValue' })
   })
@@ -546,11 +551,97 @@ describe('captureFields', () => {
       },
       enumerable: true,
     })
-    const result = captureFields(obj, defaultOpts)
+    const result = captureFields(obj, defaultOpts, noTimeout())
 
     expect(result.throwing).toEqual({
       type: 'undefined',
       notCapturedReason: 'Error accessing property',
     })
+  })
+})
+
+describe('capture timeout', () => {
+  const defaultOpts = {
+    maxReferenceDepth: 3,
+    maxCollectionSize: 100,
+    maxFieldCount: 20,
+    maxLength: 255,
+  }
+
+  it('should return timeout value with real type when already timed out', () => {
+    const ctx: CaptureContext = { deadline: 0, timedOut: true }
+
+    expect(capture({ a: 1 }, defaultOpts, ctx)).toEqual({ type: 'object', notCapturedReason: 'timeout' })
+    expect(capture('hello', defaultOpts, ctx)).toEqual({ type: 'string', notCapturedReason: 'timeout' })
+    expect(capture(42, defaultOpts, ctx)).toEqual({ type: 'number', notCapturedReason: 'timeout' })
+    expect(capture(null, defaultOpts, ctx)).toEqual({ type: 'null', notCapturedReason: 'timeout' })
+    expect(capture(undefined, defaultOpts, ctx)).toEqual({ type: 'undefined', notCapturedReason: 'timeout' })
+  })
+
+  it('should stop traversing object properties when deadline is exceeded', () => {
+    let callCount = 0
+    const originalNow = performance.now.bind(performance)
+    spyOn(performance, 'now').and.callFake(() => {
+      callCount++
+      // First call is the deadline check at the start of captureValue,
+      // subsequent calls are from isTimedOut checks during property iteration.
+      // Return past-deadline after a few calls to simulate timeout mid-traversal.
+      if (callCount <= 3) {
+        return originalNow()
+      }
+      return Infinity
+    })
+
+    const obj: Record<string, number> = {}
+    for (let i = 0; i < 20; i++) {
+      obj[`field${i}`] = i
+    }
+
+    const ctx: CaptureContext = { deadline: performance.now() + 10, timedOut: false }
+    const result = capture(obj, defaultOpts, ctx)
+
+    expect(ctx.timedOut).toBe(true)
+    const capturedFieldCount = Object.keys((result as any).fields || {}).length
+    expect(capturedFieldCount).toBeLessThan(20)
+  })
+
+  it('should stop traversing array elements when deadline is exceeded', () => {
+    let callCount = 0
+    spyOn(performance, 'now').and.callFake(() => {
+      callCount++
+      if (callCount <= 4) {
+        return 100
+      }
+      return Infinity
+    })
+
+    const arr = Array(50).fill({ nested: 'value' })
+    const ctx: CaptureContext = { deadline: 200, timedOut: false }
+    const result = capture(arr, defaultOpts, ctx)
+
+    expect(ctx.timedOut).toBe(true)
+    expect((result as any).elements.length).toBeLessThan(50)
+  })
+
+  it('should stop captureFields traversal when deadline is exceeded', () => {
+    let callCount = 0
+    spyOn(performance, 'now').and.callFake(() => {
+      callCount++
+      if (callCount <= 2) {
+        return 100
+      }
+      return Infinity
+    })
+
+    const obj: Record<string, number> = {}
+    for (let i = 0; i < 20; i++) {
+      obj[`field${i}`] = i
+    }
+
+    const ctx: CaptureContext = { deadline: 200, timedOut: false }
+    const result = captureFields(obj, defaultOpts, ctx)
+
+    expect(ctx.timedOut).toBe(true)
+    expect(Object.keys(result).length).toBeLessThan(20)
   })
 })

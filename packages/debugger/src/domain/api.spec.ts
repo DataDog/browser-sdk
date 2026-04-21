@@ -632,6 +632,246 @@ describe('api', () => {
     })
   })
 
+  describe('snapshot timeout', () => {
+    function createSnapshotProbe(methodName: string): Probe {
+      return {
+        id: `timeout-probe-${methodName}`,
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName },
+        template: 'Test',
+        captureSnapshot: true,
+        capture: { maxReferenceDepth: 3 },
+        sampling: { snapshotsPerSecond: 5000 },
+        evaluateAt: 'ENTRY',
+      }
+    }
+
+    it('should drop snapshot when entry capture exceeds timeout', () => {
+      const probe = createSnapshotProbe('entryTimeout')
+      addProbe(probe)
+
+      let callCount = 0
+      const realNow = performance.now.bind(performance)
+      spyOn(performance, 'now').and.callFake(() => {
+        callCount++
+        // Let the first few calls (start time, deadline creation) use real time,
+        // then jump past the deadline to simulate slow capture.
+        if (callCount <= 3) {
+          return realNow()
+        }
+        return realNow() + 20
+      })
+
+      const probes = getProbes('TestClass;entryTimeout')!
+      const deepObj = { level1: { level2: { level3: { level4: 'deep' } } } }
+      onEntry(probes, {}, { arg: deepObj })
+      onReturn(probes, null, {}, { arg: deepObj }, {})
+
+      // The entry capture timed out, so onEntry pushed null.
+      // onReturn still gets an active entry from its own onEntry call, but
+      // the entry snapshot is dropped. The return capture has its own timeout.
+      // Since performance.now is still returning future values, the return
+      // capture also times out and no snapshot is sent.
+      expect(mockBatchAdd).not.toHaveBeenCalled()
+    })
+
+    it('should drop snapshot when return capture exceeds timeout', () => {
+      const probe = createSnapshotProbe('returnTimeout')
+      addProbe(probe)
+
+      const probes = getProbes('TestClass;returnTimeout')!
+
+      // Let onEntry succeed with real time
+      onEntry(probes, {}, { x: 1 })
+
+      // Now make performance.now jump forward so the return capture times out
+      let callCount = 0
+      const realNow = performance.now.bind(performance)
+      spyOn(performance, 'now').and.callFake(() => {
+        callCount++
+        if (callCount <= 2) {
+          return realNow()
+        }
+        return realNow() + 20
+      })
+
+      onReturn(probes, null, {}, { x: 1 }, { local: 'value' })
+
+      expect(mockBatchAdd).not.toHaveBeenCalled()
+    })
+
+    it('should drop snapshot when throw capture exceeds timeout', () => {
+      const probe = createSnapshotProbe('throwTimeout')
+      addProbe(probe)
+
+      const probes = getProbes('TestClass;throwTimeout')!
+
+      // Let onEntry succeed with real time
+      onEntry(probes, {}, { x: 1 })
+
+      // Now make performance.now jump forward so the throw capture times out
+      let callCount = 0
+      const realNow = performance.now.bind(performance)
+      spyOn(performance, 'now').and.callFake(() => {
+        callCount++
+        if (callCount <= 2) {
+          return realNow()
+        }
+        return realNow() + 20
+      })
+
+      onThrow(probes, new Error('test'), {}, { x: 1 })
+
+      expect(mockBatchAdd).not.toHaveBeenCalled()
+    })
+
+    it('should not affect non-snapshot probes', () => {
+      const probe: Probe = {
+        id: 'non-snapshot-timeout',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'nonSnapshot' },
+        template: 'Test',
+        captureSnapshot: false,
+        capture: {},
+        sampling: { snapshotsPerSecond: 5000 },
+        evaluateAt: 'ENTRY',
+      }
+      addProbe(probe)
+
+      // Spike performance.now to simulate slow execution
+      let callCount = 0
+      const realNow = performance.now.bind(performance)
+      spyOn(performance, 'now').and.callFake(() => {
+        callCount++
+        if (callCount <= 2) {
+          return realNow()
+        }
+        return realNow() + 20
+      })
+
+      const probes = getProbes('TestClass;nonSnapshot')!
+      onEntry(probes, {}, {})
+      onReturn(probes, null, {}, {}, {})
+
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+    })
+
+    it('should not leak active entries when entry capture times out', () => {
+      const probe = createSnapshotProbe('entryLeakTest')
+      addProbe(probe)
+
+      let shouldTimeout = true
+      let callCount = 0
+      const realNow = performance.now.bind(performance)
+      spyOn(performance, 'now').and.callFake(() => {
+        callCount++
+        if (!shouldTimeout || callCount <= 3) {
+          return realNow()
+        }
+        return realNow() + 20
+      })
+
+      const probes = getProbes('TestClass;entryLeakTest')!
+      // This onEntry will time out and push null
+      onEntry(probes, {}, { x: 1 })
+
+      // onReturn should handle the null entry gracefully (no snapshot sent)
+      shouldTimeout = false
+      callCount = 0
+      onReturn(probes, null, {}, { x: 1 }, {})
+
+      expect(mockBatchAdd).not.toHaveBeenCalled()
+    })
+
+    it('should skip subsequent snapshot probes after timeout but still process non-snapshot probes', () => {
+      const snapshotProbe1: Probe = {
+        id: 'timeout-shared-1',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'sharedDeadline' },
+        template: 'Snapshot probe',
+        captureSnapshot: true,
+        capture: { maxReferenceDepth: 3 },
+        sampling: { snapshotsPerSecond: 5000 },
+        evaluateAt: 'ENTRY',
+      }
+      const nonSnapshotProbe: Probe = {
+        id: 'timeout-shared-2',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'sharedDeadline' },
+        template: 'Non-snapshot probe',
+        captureSnapshot: false,
+        capture: {},
+        sampling: { snapshotsPerSecond: 5000 },
+        evaluateAt: 'ENTRY',
+      }
+      const snapshotProbe2: Probe = {
+        id: 'timeout-shared-3',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'sharedDeadline' },
+        template: 'Second snapshot probe',
+        captureSnapshot: true,
+        capture: { maxReferenceDepth: 3 },
+        sampling: { snapshotsPerSecond: 5000 },
+        evaluateAt: 'ENTRY',
+      }
+      addProbe(snapshotProbe1)
+      addProbe(nonSnapshotProbe)
+      addProbe(snapshotProbe2)
+
+      let callCount = 0
+      const realNow = performance.now.bind(performance)
+      spyOn(performance, 'now').and.callFake(() => {
+        callCount++
+        if (callCount <= 3) {
+          return realNow()
+        }
+        return realNow() + 20
+      })
+
+      const probes = getProbes('TestClass;sharedDeadline')!
+      onEntry(probes, {}, { x: 1 })
+      onReturn(probes, null, {}, { x: 1 }, {})
+
+      // The non-snapshot probe should still send, but both snapshot probes should be dropped
+      const calls = mockBatchAdd.calls.allArgs()
+      expect(calls.length).toBe(1)
+      expect(calls[0][0].message).toBe('Non-snapshot probe')
+    })
+
+    it('should share deadline across probes so second snapshot probe exits immediately', () => {
+      const probe1 = createSnapshotProbe('sharedDeadline1')
+      const probe2: Probe = {
+        ...createSnapshotProbe('sharedDeadline2'),
+        id: 'timeout-probe-sharedDeadline2',
+        where: { typeName: 'TestClass', methodName: 'sharedDeadline1' },
+      }
+      addProbe(probe1)
+      addProbe(probe2)
+
+      let callCount = 0
+      const realNow = performance.now.bind(performance)
+      spyOn(performance, 'now').and.callFake(() => {
+        callCount++
+        if (callCount <= 3) {
+          return realNow()
+        }
+        return realNow() + 20
+      })
+
+      const probes = getProbes('TestClass;sharedDeadline1')!
+      onEntry(probes, {}, { x: 1 })
+      onReturn(probes, null, {}, { x: 1 }, {})
+
+      // Both snapshot probes share the deadline -- neither should send
+      expect(mockBatchAdd).not.toHaveBeenCalled()
+    })
+  })
+
   describe('error handling', () => {
     it('should handle missing DD_RUM gracefully', () => {
       delete (window as any).DD_RUM
