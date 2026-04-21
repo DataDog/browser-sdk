@@ -1,3 +1,4 @@
+import { checkProfilingQuota } from './quotaCheck'
 import type { ViewHistoryEntry } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType, RumPerformanceEntryType, createHooks } from '@datadog/browser-rum-core'
 import type { Duration } from '@datadog/browser-core'
@@ -22,6 +23,7 @@ import {
   mockClock,
   waitNextMicrotask,
   replaceMockable,
+  replaceMockableWithSpy,
 } from '@datadog/browser-core/test'
 import { createRumSessionManagerMock, mockRumConfiguration, mockViewHistory } from '../../../../rum-core/test'
 import { mockProfiler } from '../../../test'
@@ -42,10 +44,14 @@ describe('profiler', () => {
   // Store the original pathname
   const originalPathname = document.location.pathname
   let interceptor: ReturnType<typeof interceptRequests>
+  let checkProfilingQuotaSpy: jasmine.Spy
 
   beforeEach(() => {
     interceptor = interceptRequests()
     interceptor.withFetch(DEFAULT_FETCH_MOCK, DEFAULT_FETCH_MOCK, DEFAULT_FETCH_MOCK)
+    // Default: quota always ok. Individual quota-check tests can reconfigure via spy.and.callFake(...)
+    checkProfilingQuotaSpy = replaceMockableWithSpy(checkProfilingQuota)
+    checkProfilingQuotaSpy.and.returnValue(Promise.resolve('quota-ok'))
   })
 
   afterEach(() => {
@@ -944,6 +950,187 @@ describe('profiler', () => {
     // Clean up
     profiler.stop()
     expect(profiler.isStopped()).toBe(true)
+  })
+
+  describe('quota check', () => {
+  it('should stop profiler and set quota-exceeded context when quota check returns quota-exceeded', async () => {
+    checkProfilingQuotaSpy.and.returnValue(Promise.resolve('quota-exceeded'))
+    const { profiler, profilingContextManager } = setupProfiler()
+
+    profiler.start()
+    await waitForBoolean(() => profiler.isStopped())
+
+    expect(profilingContextManager.get()).toEqual({ status: 'stopped', error_reason: 'quota-exceeded' })
+    expect(interceptor.requests.length).toBe(0) // no data sent
+  })
+
+  it('should keep profiler running when quota check returns quota-ok', async () => {
+    // default spy already returns quota-ok
+    const { profiler, profilingContextManager } = setupProfiler()
+
+    profiler.start()
+    await waitForBoolean(() => profiler.isRunning())
+
+    expect(profiler.isRunning()).toBe(true)
+    expect(profilingContextManager.get()?.status).toBe('running')
+
+    profiler.stop()
+  })
+
+  it('should not call quota check and proceed when sessionId is undefined at start', async () => {
+    // default spy already returns quota-ok; we just verify it's never called
+    mockProfiler(deepClone(mockedTrace) as any)
+    const hooks = createHooks()
+    const profilingContextManager = startProfilingContext(hooks)
+    const noSessionManager = createRumSessionManagerMock()
+    spyOn(noSessionManager, 'findTrackedSession').and.returnValue(undefined)
+    const profilerNoSession = createRumProfiler(
+      mockRumConfiguration({ profilingSampleRate: 100 }),
+      new LifeCycle(),
+      noSessionManager,
+      profilingContextManager,
+      createIdentityEncoder,
+      mockViewHistory(),
+      { sampleIntervalMs: 10, collectIntervalMs: 60000, minNumberOfSamples: 0, minProfileDurationMs: 0 }
+    )
+
+    profilerNoSession.start()
+    await waitForBoolean(() => profilerNoSession.isRunning())
+
+    expect(checkProfilingQuotaSpy).not.toHaveBeenCalled()
+    expect(profilerNoSession.isRunning()).toBe(true)
+
+    profilerNoSession.stop()
+  })
+
+  it('should discard quota-exceeded result when profiler was already stopped by user', async () => {
+    let resolveQuota!: (result: 'quota-ok' | 'quota-exceeded') => void
+    checkProfilingQuotaSpy.and.callFake(() => new Promise((resolve) => { resolveQuota = resolve }))
+    const { profiler, profilingContextManager } = setupProfiler()
+
+    profiler.start()
+    await waitForBoolean(() => profiler.isRunning())
+
+    profiler.stop()
+    expect(profiler.isStopped()).toBe(true)
+    expect(profilingContextManager.get()?.status).toBe('stopped')
+    expect(profilingContextManager.get()?.error_reason).toBeUndefined()
+
+    resolveQuota('quota-exceeded')
+    await waitNextMicrotask()
+
+    expect(profilingContextManager.get()?.error_reason).toBeUndefined()
+  })
+
+  it('should discard quota-exceeded result when SESSION_EXPIRED fired before quota resolved', async () => {
+    let resolveQuota!: (result: 'quota-ok' | 'quota-exceeded') => void
+    checkProfilingQuotaSpy.and.callFake(() => new Promise((resolve) => { resolveQuota = resolve }))
+    const { profiler, profilingContextManager } = setupProfiler()
+
+    profiler.start()
+    await waitForBoolean(() => profiler.isRunning())
+
+    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+    expect(profiler.isStopped()).toBe(true)
+
+    resolveQuota('quota-exceeded')
+    await waitNextMicrotask()
+
+    expect(profilingContextManager.get()?.error_reason).toBeUndefined()
+
+    // data IS sent (normal session-expired collection happens)
+    await waitForBoolean(() => interceptor.requests.length >= 1)
+    expect(interceptor.requests.length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('should stop profiler and not resume when quota-exceeded resolves while paused', async () => {
+    let resolveQuota!: (result: 'quota-ok' | 'quota-exceeded') => void
+    checkProfilingQuotaSpy.and.callFake(() => new Promise((resolve) => { resolveQuota = resolve }))
+    const { profiler, profilingContextManager } = setupProfiler()
+
+    profiler.start()
+    await waitForBoolean(() => profiler.isRunning())
+
+    setVisibilityState('hidden')
+    await waitForBoolean(() => profiler.isPaused())
+
+    resolveQuota('quota-exceeded')
+    await waitNextMicrotask()
+
+    expect(profiler.isStopped()).toBe(true)
+    expect(profilingContextManager.get()).toEqual({ status: 'stopped', error_reason: 'quota-exceeded' })
+
+    setVisibilityState('visible')
+    await waitNextMicrotask()
+
+    expect(profiler.isStopped()).toBe(true)
+  })
+
+  it('should discard stale quota result when SESSION_RENEWED restarts the profiler', async () => {
+    let resolveOldQuota!: (result: 'quota-ok' | 'quota-exceeded') => void
+    let callCount = 0
+    checkProfilingQuotaSpy.and.callFake(() => {
+      callCount++
+      if (callCount === 1) {
+        return new Promise((resolve) => { resolveOldQuota = resolve })
+      }
+      return Promise.resolve('quota-ok')
+    })
+    const { profiler, profilingContextManager } = setupProfiler()
+
+    profiler.start()
+    await waitForBoolean(() => profiler.isRunning())
+
+    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+    await waitForBoolean(() => profiler.isRunning())
+
+    resolveOldQuota('quota-exceeded')
+    await waitNextMicrotask()
+
+    expect(profiler.isRunning()).toBe(true)
+    expect(profilingContextManager.get()?.status).toBe('running')
+
+    profiler.stop()
+  })
+
+  it('should restart profiler and re-check quota on SESSION_RENEWED after quota-exceeded', async () => {
+    let callCount = 0
+    checkProfilingQuotaSpy.and.callFake(() => {
+      callCount++
+      return Promise.resolve(callCount === 1 ? 'quota-exceeded' : 'quota-ok')
+    })
+    const { profiler } = setupProfiler()
+
+    profiler.start()
+    await waitForBoolean(() => profiler.isStopped())
+
+    expect(callCount).toBe(1)
+
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+    await waitForBoolean(() => profiler.isRunning())
+
+    expect(callCount).toBe(2)
+    expect(profiler.isRunning()).toBe(true)
+
+    profiler.stop()
+  })
+
+  it('should NOT restart profiler on SESSION_RENEWED after stopped-by-user', async () => {
+    // default spy already returns quota-ok
+    const { profiler } = setupProfiler()
+
+    profiler.start()
+    await waitForBoolean(() => profiler.isRunning())
+
+    profiler.stop()
+    expect(profiler.isStopped()).toBe(true)
+
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+    await waitNextMicrotask()
+
+    expect(profiler.isStopped()).toBe(true)
+  })
   })
 })
 
