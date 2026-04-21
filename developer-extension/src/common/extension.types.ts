@@ -13,8 +13,9 @@ export interface DevtoolsToBackgroundMessage {
   options: NetRequestRulesOptions
 }
 
-export type DevBundlesOverride = false | 'cdn' | 'npm'
+export type DevBundlesOverride = false | 'npm'
 
+export type InjectCdnProd = 'off' | 'on'
 export interface NetRequestRulesOptions {
   tabId: number
   useDevBundles: DevBundlesOverride
@@ -57,4 +58,5 @@ export interface Settings {
   logsConfigurationOverride: object | null
   debugMode: boolean
   datadogMode: boolean
+  injectCdnProd: InjectCdnProd
 }

@@ -1,5 +1,4 @@
 import type { NetRequestRulesOptions } from '../../common/extension.types'
-import { DEV_RUM_SLIM_URL, DEV_RUM_URL, DEV_SERVER_ORIGIN } from '../../common/packagesUrlConstants'
 import { INTAKE_DOMAINS } from '../../common/intakeDomainConstants'
 import { createLogger } from '../../common/logger'
 import { onDevtoolsDisconnection, onDevtoolsMessage } from '../devtoolsPanelConnection'
@@ -51,26 +50,11 @@ async function getExistingRulesInfos(tabId: number) {
   return { tabRuleIds, nextRuleId }
 }
 
-function buildRules(
-  { tabId, useDevBundles, useRumSlim, blockIntakeRequests }: NetRequestRulesOptions,
-  nextRuleId: number
-) {
+function buildRules({ tabId, useRumSlim, blockIntakeRequests }: NetRequestRulesOptions, nextRuleId: number) {
   const rules: chrome.declarativeNetRequest.Rule[] = []
   let id = nextRuleId
 
-  if (useDevBundles === 'cdn') {
-    const devRumUrl = useRumSlim ? DEV_RUM_SLIM_URL : DEV_RUM_URL
-    logger.log('add redirect to dev bundles rules')
-    rules.push(
-      createRedirectRule(/^https:\/\/.*\/datadog-(rum|rum-slim|logs)(-[\w-]+)?\.js$/, {
-        regexSubstitution: `${DEV_SERVER_ORIGIN}/datadog-\\1.js`,
-      }),
-      createRedirectRule(/^https:\/\/.*\/chunks\/(\w+)(-\w+)?-datadog-rum.js$/, {
-        regexSubstitution: `${DEV_SERVER_ORIGIN}/chunks/\\1-datadog-rum.js`,
-      }),
-      createRedirectRule('https://localhost:8443/static/datadog-rum-hotdog.js', { url: devRumUrl })
-    )
-  } else if (useRumSlim) {
+  if (useRumSlim) {
     logger.log('add redirect to rum slim rule')
     rules.push(createRedirectRule(/^(https:\/\/.*\/datadog-rum)(-slim)?/, { regexSubstitution: '\\1-slim' }))
   }
