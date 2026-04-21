@@ -21,6 +21,7 @@ import {
   getDeflateWorkerStatus,
   startDeflateWorker,
 } from '../domain/deflate'
+import { setAiAgentBehaviorCallback } from '../domain/record/aiAgentBehavioralAnalyzer'
 import { isBrowserSupported } from './isBrowserSupported'
 import { createPostStartStrategy } from './postStartStrategy'
 import { createPreStartStrategy } from './preStartStrategy'
@@ -80,8 +81,12 @@ export function makeRecorderApi(): RecorderApi {
     sessionManager: RumSessionManager,
     viewHistory: ViewHistory,
     worker: DeflateWorker | undefined,
-    telemetry: Telemetry
+    telemetry: Telemetry,
+    updateBehavioralDetection?: (context: import('@datadog/browser-rum-core').AiAgentContext) => void
   ) {
+    if (updateBehavioralDetection) {
+      setAiAgentBehaviorCallback(updateBehavioralDetection)
+    }
     let cachedDeflateEncoder: DeflateEncoder | undefined
 
     function getOrCreateDeflateEncoder() {

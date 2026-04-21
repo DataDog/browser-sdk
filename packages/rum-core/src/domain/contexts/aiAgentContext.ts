@@ -42,9 +42,11 @@ const AI_AGENT_UA_PATTERNS: Array<{ pattern: RegExp; name: string }> = [
 const SOFTWARE_RENDERER_PATTERNS = [/swiftshader/i, /llvmpipe/i, /softpipe/i]
 
 export function startAiAgentContext(hooks: Hooks) {
-  const aiAgentContext = detectAiAgent()
+  const staticDetection = detectAiAgent()
+  let behavioralDetection: AiAgentContext | undefined
 
   hooks.register(HookNames.Assemble, ({ eventType }): DefaultRumEventAttributes | SKIPPED => {
+    const aiAgentContext = staticDetection ?? behavioralDetection
     if (!aiAgentContext) {
       return SKIPPED
     }
@@ -58,6 +60,14 @@ export function startAiAgentContext(hooks: Hooks) {
       ai_agent: aiAgentContext,
     } as unknown as DefaultRumEventAttributes
   })
+
+  return {
+    updateBehavioralDetection(context: AiAgentContext) {
+      if (!staticDetection) {
+        behavioralDetection = context
+      }
+    },
+  }
 }
 
 export function detectAiAgent(): AiAgentContext | undefined {

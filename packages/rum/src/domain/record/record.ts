@@ -16,6 +16,7 @@ import {
   trackViewportResize,
   trackVisualViewportResize,
 } from './trackers'
+import { createBehavioralAnalyzer } from './aiAgentBehavioralAnalyzer'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
 import { initShadowRootsController } from './shadowRootsController'
@@ -44,11 +45,14 @@ export function record(options: RecordOptions): RecordAPI {
     throw new Error('emit functions are required')
   }
 
+  const behavioralAnalyzer = createBehavioralAnalyzer()
+
   const processRecord: EmitRecordCallback = (record: BrowserRecord) => {
     emitRecord(record)
     sendToExtension('record', { record })
     const view = options.viewHistory.findView()!
     replayStats.addRecord(view.id)
+    behavioralAnalyzer?.processRecord(record)
   }
 
   const shadowRootsController = initShadowRootsController(processRecord, emitStats)

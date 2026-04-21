@@ -524,7 +524,8 @@ export interface RecorderApi {
     sessionManager: RumSessionManager,
     viewHistory: ViewHistory,
     deflateWorker: DeflateWorker | undefined,
-    telemetry: Telemetry
+    telemetry: Telemetry,
+    updateBehavioralDetection?: (context: import('../domain/contexts/aiAgentContext').AiAgentContext) => void
   ) => void
   isRecording: () => boolean
   getReplayStats: (viewId: string) => ReplayStats | undefined
@@ -628,7 +629,8 @@ export function makeRumPublicApi(
         startRumResult.session,
         startRumResult.viewHistory,
         deflateWorker,
-        startRumResult.telemetry
+        startRumResult.telemetry,
+        startRumResult.updateBehavioralDetection
       )
 
       profilerApi.onRumStart(

@@ -201,7 +201,7 @@ export function startRumEventCollection(
 
   const displayContext = startDisplayContext(hooks, configuration)
   cleanupTasks.push(displayContext.stop)
-  startAiAgentContext(hooks)
+  const aiAgentContext = startAiAgentContext(hooks)
   const ciVisibilityContext = startCiVisibilityContext(configuration, hooks)
   cleanupTasks.push(ciVisibilityContext.stop)
   startSyntheticsContext(hooks)
@@ -278,6 +278,7 @@ export function startRumEventCollection(
     globalContext,
     userContext,
     accountContext,
+    updateBehavioralDetection: aiAgentContext.updateBehavioralDetection,
     stop: () => cleanupTasks.forEach((task) => task()),
   }
 }
