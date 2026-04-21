@@ -598,9 +598,21 @@ function hasGraphQlResponseErrorsTracking(allowedGraphQlUrls: RumInitConfigurati
   )
 }
 
+function getTrackResourceHeadersTelemetryValue(
+  trackResourceHeaders: RumInitConfiguration['trackResourceHeaders']
+): 'default_headers' | 'custom' | undefined {
+  if (trackResourceHeaders === true) {
+    return 'default_headers'
+  }
+  if (Array.isArray(trackResourceHeaders)) {
+    return 'custom'
+  }
+}
+
 export function serializeRumConfiguration(configuration: RumInitConfiguration) {
   const baseSerializedConfiguration = serializeConfiguration(configuration)
 
+  // `use_` prefix is for telemetry options that track usage of a configuration option as a boolean to avoid capturing customer data
   return {
     session_replay_sample_rate: configuration.sessionReplaySampleRate,
     start_session_replay_recording_manually: configuration.startSessionReplayRecordingManually,
@@ -630,6 +642,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     remote_configuration_id: configuration.remoteConfigurationId,
     profiling_sample_rate: configuration.profilingSampleRate,
     use_remote_configuration_proxy: !!configuration.remoteConfigurationProxy,
+    track_resource_headers: getTrackResourceHeadersTelemetryValue(configuration.trackResourceHeaders),
     ...baseSerializedConfiguration,
   } satisfies RawTelemetryConfiguration
 }
