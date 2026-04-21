@@ -60,6 +60,22 @@ describe('startXhrCollection', () => {
     })
   })
 
+  it('includes startTime, startDate, and duration', (done) => {
+    const beforeStart = performance.now()
+    const beforeDate = Date.now()
+    const xhr = new XMLHttpRequest()
+    xhr.open('GET', '/base/karma.js')
+    xhr.send()
+    xhr.addEventListener('loadend', () => {
+      setTimeout(() => {
+        expect(collected[0].startTime).toBeGreaterThanOrEqual(beforeStart)
+        expect(collected[0].startDate).toBeGreaterThanOrEqual(beforeDate)
+        expect(collected[0].duration).toBeGreaterThanOrEqual(0)
+        done()
+      }, 0)
+    })
+  })
+
   it('stop() restores original XHR methods', () => {
     const patchedOpen = XMLHttpRequest.prototype.open
     const patchedSend = XMLHttpRequest.prototype.send

@@ -51,6 +51,22 @@ describe('startFetchCollection', () => {
     })
   })
 
+  it('includes startTime, startDate, and duration', (done) => {
+    window.fetch = () => Promise.resolve(new Response(null, { status: 200 }))
+    const beforeStart = performance.now()
+    const beforeDate = Date.now()
+    stop = startFetchCollection(pipeline)
+
+    window.fetch('/test-url').then(() => {
+      setTimeout(() => {
+        expect(collected[0].startTime).toBeGreaterThanOrEqual(beforeStart)
+        expect(collected[0].startDate).toBeGreaterThanOrEqual(beforeDate)
+        expect(collected[0].duration).toBeGreaterThanOrEqual(0)
+        done()
+      }, 0)
+    })
+  })
+
   it('publishes with status: 0 when fetch rejects', (done) => {
     window.fetch = () => Promise.reject(new Error('network error'))
     stop = startFetchCollection(pipeline)

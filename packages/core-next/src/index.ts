@@ -52,7 +52,7 @@ export {
   looksLikeRelativeTime,
 } from './domain/time'
 
-export type { Csp, StackFrame, StackTrace } from './domain/error'
+export type { Csp, ErrorCause, StackFrame, StackTrace } from './domain/error'
 export {
   ErrorSource,
   ErrorHandling,
@@ -60,6 +60,8 @@ export {
   formatStackTrace,
   formatErrorMessage,
   formatFrame,
+  flattenCauses,
+  extractFingerprint,
 } from './domain/error'
 
 export type { Transport } from './domain/transport/transport'
@@ -91,7 +93,6 @@ export { registerSdk, getSdk, unregisterSdk } from './domain/registry'
 export type { Module, ModuleContext } from './domain/module'
 
 export type {
-  ErrorCause,
   ConsoleResource,
   RuntimeErrorResource,
   ReportResource,

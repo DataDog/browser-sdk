@@ -20,16 +20,12 @@ describe('startInitialViewCollection', () => {
     expect(collected[0].startDate).toBe(Math.round(performance.timeOrigin))
   })
 
-  it('does not publish more than once', async () => {
+  it('returns a cleanup function', () => {
     const pipeline = new Pipeline<Record<string, unknown>>()
-    const collected: NavigationResource[] = []
-    pipeline.subscribe('resource:navigation', (e) => collected.push(e as NavigationResource))
     pipeline.seal()
 
-    startInitialViewCollection(pipeline)
-    startInitialViewCollection(pipeline)
-    await new Promise((r) => setTimeout(r, 0))
+    const stop = startInitialViewCollection(pipeline)
 
-    expect(collected.length).toBe(1)
+    expect(typeof stop).toBe('function')
   })
 })

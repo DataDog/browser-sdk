@@ -39,3 +39,28 @@ export interface StackTrace {
 
 export { computeStackTrace } from './computeStackTrace'
 export { formatStackTrace, formatErrorMessage, formatFrame } from './formatStackTrace'
+
+export interface ErrorCause {
+  message: string
+  source?: string
+  type?: string
+  stack?: string
+}
+
+export function flattenCauses(error: Error): ErrorCause[] | undefined {
+  if (!('cause' in error)) return undefined
+
+  const causes: ErrorCause[] = []
+  let current: unknown = (error as any).cause
+  while (current instanceof Error) {
+    causes.push({ message: current.message, type: current.name, stack: current.stack })
+    current = (current as any).cause
+  }
+
+  return causes.length > 0 ? causes : undefined
+}
+
+export function extractFingerprint(error: Error | undefined): string | undefined {
+  if (!error) return undefined
+  return 'dd_fingerprint' in error ? String((error as any).dd_fingerprint) : undefined
+}

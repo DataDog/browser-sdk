@@ -7,6 +7,7 @@ import type {
   ErrorCause,
   ContextManager,
 } from '@datadog/core-next'
+import { flattenCauses, extractFingerprint } from '@datadog/core-next'
 import type { LogsConfig } from './configuration'
 
 interface LogError {
@@ -45,28 +46,6 @@ interface ProcessorDependencies {
   accountContext: ContextManager
 }
 
-function extractFingerprint(error: Error | undefined): string | undefined {
-  if (!error) return undefined
-  return (error as any).dd_fingerprint ? String((error as any).dd_fingerprint) : undefined
-}
-
-function extractCauses(error: Error | undefined): ErrorCause[] | undefined {
-  if (!error || !('cause' in error)) return undefined
-
-  const causes: ErrorCause[] = []
-  let current: unknown = error.cause
-  while (current instanceof Error) {
-    causes.push({
-      message: current.message,
-      type: current.name,
-      stack: current.stack,
-    })
-    current = (current as any).cause
-  }
-
-  return causes.length > 0 ? causes : undefined
-}
-
 function startProcessor({ pipeline, config, globalContext, userContext, accountContext }: ProcessorDependencies): void {
   function process(event: Partial<LogEvent>): void {
     const accountCtx = accountContext.get()
@@ -91,7 +70,7 @@ function startProcessor({ pipeline, config, globalContext, userContext, accountC
   pipeline.subscribe('action:log', (data: unknown) => {
     const action = data as ActionLog
     const fingerprint = extractFingerprint(action.error)
-    const causes = extractCauses(action.error)
+    const causes = action.error ? flattenCauses(action.error) : undefined
 
     process({
       message: action.message,

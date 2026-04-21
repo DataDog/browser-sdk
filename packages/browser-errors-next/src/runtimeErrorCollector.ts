@@ -1,22 +1,5 @@
-import type { Pipeline, RuntimeErrorResource, ErrorCause } from '@datadog/core-next'
-
-function flattenCauses(error: Error): ErrorCause[] | undefined {
-  if (!('cause' in error)) return undefined
-
-  const causes: ErrorCause[] = []
-  let current: unknown = (error as any).cause
-  while (current instanceof Error) {
-    causes.push({ message: current.message, type: current.name, stack: current.stack })
-    current = (current as any).cause
-  }
-
-  return causes.length > 0 ? causes : undefined
-}
-
-function extractFingerprint(error: Error | undefined): string | undefined {
-  if (!error) return undefined
-  return 'dd_fingerprint' in error ? String((error as any).dd_fingerprint) : undefined
-}
+import type { Pipeline, RuntimeErrorResource } from '@datadog/core-next'
+import { flattenCauses, extractFingerprint } from '@datadog/core-next'
 
 function startRuntimeErrorCollection(pipeline: Pipeline<Record<string, unknown>>): () => void {
   const handleError = (event: ErrorEvent) => {

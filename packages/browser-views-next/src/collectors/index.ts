@@ -3,9 +3,12 @@ import { startInitialViewCollection } from '../initialViewCollector'
 import { startNavigationCollection } from '../navigationCollector'
 
 function startCollectors(pipeline: Pipeline<Record<string, unknown>>): () => void {
-  startInitialViewCollection(pipeline)
+  const stopInitial = startInitialViewCollection(pipeline)
   const stopNavigation = startNavigationCollection(pipeline)
-  return stopNavigation
+  return () => {
+    stopInitial()
+    stopNavigation()
+  }
 }
 
 export { startCollectors }

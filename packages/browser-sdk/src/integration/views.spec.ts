@@ -90,4 +90,52 @@ describe('views integration', () => {
     expect(event.session).toBeDefined()
     expect(typeof event.session.id).toBe('string')
   })
+
+  it('view observation includes global context set via public API', async () => {
+    currentSdk = await createSdk({
+      clientToken: 'test-token',
+      site: 'datadoghq.com',
+      modules: [viewsProcessor],
+      views: {},
+    })
+
+    const views = currentSdk!['views'] as ViewsPublicApi
+    views.setGlobalContext({ deployment: 'canary' })
+
+    fetchSpy.calls.reset()
+    views.startView('with-context')
+
+    await tick()
+    flushBatch()
+
+    expect(fetchSpy).toHaveBeenCalled()
+    const body = (fetchSpy.calls.mostRecent().args[1] as RequestInit).body as string
+    const lines = body.trim().split('\n')
+    const lastEvent = JSON.parse(lines[lines.length - 1])
+    expect(lastEvent.deployment).toBe('canary')
+  })
+
+  it('view observation includes user context set via public API', async () => {
+    currentSdk = await createSdk({
+      clientToken: 'test-token',
+      site: 'datadoghq.com',
+      modules: [viewsProcessor],
+      views: {},
+    })
+
+    const views = currentSdk!['views'] as ViewsPublicApi
+    views.setUser({ id: 'user-42', name: 'Ada' })
+
+    fetchSpy.calls.reset()
+    views.startView('with-user')
+
+    await tick()
+    flushBatch()
+
+    expect(fetchSpy).toHaveBeenCalled()
+    const body = (fetchSpy.calls.mostRecent().args[1] as RequestInit).body as string
+    const lines = body.trim().split('\n')
+    const lastEvent = JSON.parse(lines[lines.length - 1])
+    expect(lastEvent.usr).toEqual(jasmine.objectContaining({ id: 'user-42', name: 'Ada' }))
+  })
 })

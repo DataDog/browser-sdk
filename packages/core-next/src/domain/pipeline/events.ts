@@ -1,11 +1,6 @@
 // Resources — published by collector modules
 
-interface ErrorCause {
-  message: string
-  source?: string
-  type?: string
-  stack?: string
-}
+import type { ErrorCause } from '../error'
 
 interface ConsoleResource {
   api: 'log' | 'debug' | 'info' | 'warn' | 'error'
@@ -38,6 +33,8 @@ interface NetworkRequestResource {
   url: string
   status: number
   isAborted: boolean
+  startTime: number
+  startDate: number
   duration: number
   responseBody?: string
   error?: string
@@ -54,4 +51,5 @@ interface SdkEventMap {
   [key: string]: unknown
 }
 
-export type { ErrorCause, ConsoleResource, RuntimeErrorResource, ReportResource, NetworkRequestResource, SdkEventMap }
+export type { ConsoleResource, RuntimeErrorResource, ReportResource, NetworkRequestResource, SdkEventMap }
+export type { ErrorCause } from '../error'

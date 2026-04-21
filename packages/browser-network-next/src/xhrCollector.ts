@@ -8,7 +8,8 @@ function startXhrCollection(pipeline: Pipeline<Record<string, unknown>>): () => 
   XMLHttpRequest.prototype.open = function (method: string, url: string | URL) {
     ;(this as any)._dd_method = method
     ;(this as any)._dd_url = String(url)
-    ;(this as any)._dd_startTime = Date.now()
+    ;(this as any)._dd_startTime = performance.now()
+    ;(this as any)._dd_startDate = Date.now()
     return originalOpen.apply(this, arguments as any)
   }
 
@@ -18,12 +19,16 @@ function startXhrCollection(pipeline: Pipeline<Record<string, unknown>>): () => 
     const onComplete = () => {
       const url: string = (xhr as any)._dd_url ?? ''
       if (!isIntakeUrl(url)) {
-        const duration = Date.now() - ((xhr as any)._dd_startTime ?? Date.now())
+        const startTime: number = (xhr as any)._dd_startTime ?? performance.now()
+        const startDate: number = (xhr as any)._dd_startDate ?? Date.now()
+        const duration = performance.now() - startTime
         const resource: NetworkRequestResource = {
           method: (xhr as any)._dd_method ?? 'GET',
           url,
           status: xhr.status,
           isAborted: xhr.status === 0 && xhr.readyState !== 4,
+          startTime,
+          startDate,
           duration,
         }
         pipeline.publish('resource:network_request', resource)

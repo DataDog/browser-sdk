@@ -7,7 +7,8 @@ function startFetchCollection(pipeline: Pipeline<Record<string, unknown>>): () =
   window.fetch = function (input: RequestInfo | URL, init?: RequestInit) {
     const method = init?.method ?? (input instanceof Request ? input.method : 'GET')
     const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
-    const startTime = Date.now()
+    const startTime = performance.now()
+    const startDate = Date.now()
 
     return originalFetch.apply(this, arguments as any).then(
       (response: Response) => {
@@ -17,7 +18,9 @@ function startFetchCollection(pipeline: Pipeline<Record<string, unknown>>): () =
           url,
           status: response.status,
           isAborted: false,
-          duration: Date.now() - startTime,
+          startTime,
+          startDate,
+          duration: performance.now() - startTime,
         }
         pipeline.publish('resource:network_request', resource)
         return response
@@ -29,7 +32,9 @@ function startFetchCollection(pipeline: Pipeline<Record<string, unknown>>): () =
             url,
             status: 0,
             isAborted: error instanceof DOMException && error.name === 'AbortError',
-            duration: Date.now() - startTime,
+            startTime,
+            startDate,
+            duration: performance.now() - startTime,
             error: error instanceof Error ? error.message : String(error),
           }
           pipeline.publish('resource:network_request', resource)
