@@ -57,39 +57,26 @@ describe('validateAndBuildLogsConfiguration', () => {
   })
 
   describe('forwardConsoleLogs', () => {
-    it('contains "error" when forwardErrorsToLogs is enabled', () => {
+    it('does not contain "error" when forwardConsoleLogs is disabled and forwardErrorsToLogs is explicitly enabled', () => {
       expect(
         validateAndBuildLogsConfiguration({ ...DEFAULT_INIT_CONFIGURATION, forwardErrorsToLogs: true })!
           .forwardConsoleLogs
-      ).toEqual(['error'])
+      ).not.toContain('error')
     })
 
-    it('contains "error" once when both forwardErrorsToLogs and forwardConsoleLogs are enabled', () => {
+    it('does not contain "error" when forwardConsoleLogs is disabled and forwardErrorsToLogs is omitted', () => {
+      expect(validateAndBuildLogsConfiguration({ ...DEFAULT_INIT_CONFIGURATION })!.forwardConsoleLogs).not.toContain(
+        'error'
+      )
+    })
+
+    it('contains "error" when forwardConsoleLogs contains "error"', () => {
       expect(
         validateAndBuildLogsConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
           forwardConsoleLogs: ['error'],
-          forwardErrorsToLogs: true,
         })!.forwardConsoleLogs
       ).toEqual(['error'])
-    })
-  })
-
-  describe('PCI compliant intake option', () => {
-    let warnSpy: jasmine.Spy<typeof display.warn>
-
-    beforeEach(() => {
-      warnSpy = spyOn(display, 'warn')
-    })
-    it('should display warning with wrong PCI intake configuration', () => {
-      validateAndBuildLogsConfiguration({
-        ...DEFAULT_INIT_CONFIGURATION,
-        site: 'us3.datadoghq.com',
-        usePciIntake: true,
-      })
-      expect(warnSpy).toHaveBeenCalledOnceWith(
-        'PCI compliance for Logs is only available for Datadog organizations in the US1 site. Default intake will be used.'
-      )
     })
   })
 })
@@ -137,7 +124,6 @@ describe('serializeLogsConfiguration', () => {
       forwardErrorsToLogs: true,
       forwardConsoleLogs: 'all',
       forwardReports: 'all',
-      usePciIntake: false,
     }
 
     type MapLogsInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
@@ -155,7 +141,6 @@ describe('serializeLogsConfiguration', () => {
       forward_errors_to_logs: true,
       forward_console_logs: 'all',
       forward_reports: 'all',
-      use_pci_intake: false,
     })
   })
 })

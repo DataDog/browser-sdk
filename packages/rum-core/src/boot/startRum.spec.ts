@@ -1,18 +1,15 @@
-import type { RawError, Duration, BufferedData } from '@datadog/browser-core'
+import type { RawError, Duration, BufferedData, SessionManager, SessionRenewalEvent } from '@datadog/browser-core'
 import {
   Observable,
-  stopSessionManager,
   toServerDuration,
   ONE_SECOND,
   findLast,
   noop,
   relativeNow,
   createIdentityEncoder,
-  createTrackingConsentState,
-  TrackingConsent,
   BufferedObservable,
 } from '@datadog/browser-core'
-import type { Clock } from '@datadog/browser-core/test'
+import type { Clock, SessionManagerMock } from '@datadog/browser-core/test'
 import {
   createNewEvent,
   interceptRequests,
@@ -20,17 +17,15 @@ import {
   mockEventBridge,
   registerCleanupTask,
   createFakeTelemetryObject,
+  createSessionManagerMock,
 } from '@datadog/browser-core/test'
-import type { RumSessionManagerMock } from '../../test'
-import { createRumSessionManagerMock, mockRumConfiguration, noopProfilerApi, noopRecorderApi } from '../../test'
+import { mockRumConfiguration, noopProfilerApi, noopRecorderApi } from '../../test'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { SESSION_KEEP_ALIVE_INTERVAL } from '../domain/view/trackViews'
 import type { RumEvent, RumViewEvent } from '../rumEvent.types'
 import type { RumConfiguration } from '../domain/configuration'
 import { RumEventType } from '../rawRumEvent.types'
-import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { createHooks } from '../domain/hooks'
-import type { RumSessionManager } from '../domain/rumSessionManager'
 import { startRum, startRumEventCollection } from './startRum'
 
 function collectServerEvents(lifeCycle: LifeCycle) {
@@ -44,7 +39,7 @@ function collectServerEvents(lifeCycle: LifeCycle) {
 function startRumStub(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
-  sessionManager: RumSessionManager,
+  sessionManager: SessionManager,
   reportError: (error: RawError) => void
 ) {
   const hooks = createHooks()
@@ -56,7 +51,6 @@ function startRumStub(
     sessionManager,
     noopRecorderApi,
     undefined,
-    createCustomVitalsState(),
     new Observable(),
     undefined,
     reportError
@@ -72,11 +66,11 @@ function startRumStub(
 describe('rum session', () => {
   let serverRumEvents: RumEvent[]
   let lifeCycle: LifeCycle
-  let sessionManager: RumSessionManagerMock
+  let sessionManager: SessionManagerMock
 
   beforeEach(() => {
     lifeCycle = new LifeCycle()
-    sessionManager = createRumSessionManagerMock().setId('42')
+    sessionManager = createSessionManagerMock().setId('42')
 
     serverRumEvents = collectServerEvents(lifeCycle)
     const { stop } = startRumStub(lifeCycle, mockRumConfiguration(), sessionManager, noop)
@@ -93,7 +87,7 @@ describe('rum session', () => {
     expect(serverRumEvents.length).toEqual(2)
 
     sessionManager.setId('43')
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
 
     expect(serverRumEvents.length).toEqual(3)
 
@@ -107,13 +101,13 @@ describe('rum session', () => {
 describe('rum session keep alive', () => {
   let lifeCycle: LifeCycle
   let clock: Clock
-  let sessionManager: RumSessionManagerMock
+  let sessionManager: SessionManagerMock
   let serverRumEvents: RumEvent[]
 
   beforeEach(() => {
     lifeCycle = new LifeCycle()
     clock = mockClock()
-    sessionManager = createRumSessionManagerMock().setId('1234')
+    sessionManager = createSessionManagerMock().setId('1234')
 
     serverRumEvents = collectServerEvents(lifeCycle)
     const { stop } = startRumStub(lifeCycle, mockRumConfiguration(), sessionManager, noop)
@@ -163,12 +157,11 @@ describe('view events', () => {
   function setupViewCollectionTest() {
     const startResult = startRum(
       mockRumConfiguration(),
+      createSessionManagerMock(),
       noopRecorderApi,
       noopProfilerApi,
       undefined,
       createIdentityEncoder,
-      createTrackingConsentState(TrackingConsent.GRANTED),
-      createCustomVitalsState(),
       new BufferedObservable<BufferedData>(100),
       createFakeTelemetryObject(),
       createHooks(),
@@ -184,7 +177,6 @@ describe('view events', () => {
 
     registerCleanupTask(() => {
       stop()
-      stopSessionManager()
     })
   })
 

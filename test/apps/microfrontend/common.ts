@@ -57,8 +57,8 @@ export function createApp(id: string, title: string, borderColor: string) {
   })
 
   createButton(container, 'vital', () => {
-    const ref = window.DD_RUM.startDurationVital(`${id}-vital`)
-    window.DD_RUM.stopDurationVital(ref)
+    window.DD_RUM.startDurationVital(`${id}-vital`)
+    window.DD_RUM.stopDurationVital(`${id}-vital`)
   })
 
   createButton(container, 'feature-operation', () => {

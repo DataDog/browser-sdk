@@ -24,7 +24,7 @@ export function startRuntimeErrorCollection(
 
   const rawErrorSubscription = bufferedDataObservable.subscribe((bufferedData) => {
     if (bufferedData.type === BufferedDataType.RUNTIME_ERROR) {
-      const error = bufferedData.error
+      const error = bufferedData.data
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
         rawLogsEvent: {
           message: error.message,

@@ -38,15 +38,6 @@ describe('endpointBuilder', () => {
       ).toContain('&dd-evp-encoding=deflate')
     })
 
-    it('should not start with ddsource for internal analytics mode', () => {
-      const url = createEndpointBuilder({ ...initConfiguration, internalAnalyticsSubdomain: 'foo' }, 'rum').build(
-        'fetch',
-        DEFAULT_PAYLOAD
-      )
-      expect(url).not.toContain('/rum?ddsource')
-      expect(url).toContain('ddsource=browser')
-    })
-
     it('accepts extra parameters', () => {
       const extraParameters = ['application.id=1234', 'application.version=1.0.0']
       const url = createEndpointBuilder(initConfiguration, 'rum', extraParameters).build('fetch', DEFAULT_PAYLOAD)
@@ -116,39 +107,6 @@ describe('endpointBuilder', () => {
           },
         })
       ).not.toContain('_dd.api=fetch&_dd.retry_count=5&_dd.retry_after=408')
-    })
-  })
-
-  describe('PCI compliance intake with option', () => {
-    it('should return PCI compliance intake endpoint if site is us1', () => {
-      const config: InitConfiguration & { usePciIntake?: boolean } = {
-        clientToken,
-        usePciIntake: true,
-        site: 'datadoghq.com',
-      }
-      expect(createEndpointBuilder(config, 'logs').build('fetch', DEFAULT_PAYLOAD)).toContain(
-        'https://pci.browser-intake-datadoghq.com'
-      )
-    })
-    it('should not return PCI compliance intake endpoint if site is not us1', () => {
-      const config: InitConfiguration & { usePciIntake?: boolean } = {
-        clientToken,
-        usePciIntake: true,
-        site: 'ap1.datadoghq.com',
-      }
-      expect(createEndpointBuilder(config, 'logs').build('fetch', DEFAULT_PAYLOAD)).not.toContain(
-        'https://pci.browser-intake-datadoghq.com'
-      )
-    })
-    it('should not return PCI compliance intake endpoint if and site is us1 and track is not logs', () => {
-      const config: InitConfiguration & { usePciIntake?: boolean } = {
-        clientToken,
-        usePciIntake: true,
-        site: 'datadoghq.com',
-      }
-      expect(createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)).not.toContain(
-        'https://pci.browser-intake-datadoghq.com'
-      )
     })
   })
 

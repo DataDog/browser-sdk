@@ -67,6 +67,7 @@ test.describe('telemetry', () => {
       const event = intakeRegistry.telemetryConfigurationEvents[0]
       expect(event.service).toEqual('browser-rum-sdk')
       expect(event.telemetry.configuration.track_user_interactions).toEqual(true)
+      expect(event.session!.id).toEqual(expect.any(String))
       expect(event.application!.id).toEqual(expect.any(String))
     })
 
@@ -135,7 +136,7 @@ test.describe('telemetry', () => {
         Object.defineProperty(Document.prototype, 'cookie', {
           get: () => originalDescriptor.get.call(document),
           set: (value) => {
-            if (value.includes('_dd_s=')) {
+            if (value.includes('_dd_s_v2=')) {
               throw new Error('expected error')
             }
             originalDescriptor.set.call(document, value)

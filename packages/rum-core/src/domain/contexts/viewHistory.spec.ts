@@ -1,4 +1,4 @@
-import type { Context, RelativeTime } from '@datadog/browser-core'
+import type { Context, RelativeTime, SessionRenewalEvent } from '@datadog/browser-core'
 import { relativeToClocks, CLEAR_OLD_VALUES_INTERVAL } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
@@ -136,7 +136,7 @@ describe('ViewHistory', () => {
       expect(viewHistory.findView(15 as RelativeTime)).toBeDefined()
       expect(viewHistory.findView(25 as RelativeTime)).toBeDefined()
 
-      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
 
       expect(viewHistory.findView(15 as RelativeTime)).toBeUndefined()
       expect(viewHistory.findView(25 as RelativeTime)).toBeUndefined()

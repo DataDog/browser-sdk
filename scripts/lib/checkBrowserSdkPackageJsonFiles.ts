@@ -1,4 +1,4 @@
-import { browserSdkVersion as releaseVersion } from './browserSdkVersion.ts'
+import { releaseVersion } from './browserSdkVersion.ts'
 import { printLog } from './executionUtils.ts'
 import type { PackageJsonInfo } from './filesUtils.ts'
 import { findPackageJsonFiles } from './filesUtils.ts'

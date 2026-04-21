@@ -16,7 +16,7 @@ describe('user context', () => {
     findTrackedSession: () =>
       ({
         anonymousId: 'device-123',
-      }) as SessionContext<string>,
+      }) as SessionContext,
   }
 
   beforeEach(() => {
@@ -97,18 +97,6 @@ describe('user context', () => {
           id: '123',
           anonymous_id: 'foo',
         },
-      })
-    })
-  })
-
-  describe('assemble telemetry hook', () => {
-    it('should set the anonymous_id', () => {
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
-        startTime: 0 as RelativeTime,
-      })
-
-      expect(defaultRumEventAttributes).toEqual({
-        anonymous_id: 'device-123',
       })
     })
   })

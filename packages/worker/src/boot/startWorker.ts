@@ -1,6 +1,6 @@
 import type { DeflateWorkerAction, DeflateWorkerResponse, Uint8ArrayBuffer } from '@datadog/browser-core'
 import { concatBuffers } from '@datadog/browser-core'
-import { Deflate, constants, string2buf } from '../domain/deflate'
+import { Deflate, constants } from '../domain/deflate'
 
 declare const __BUILD_ENV__SDK_VERSION__: string
 
@@ -60,8 +60,7 @@ function handleAction(streams: Map<number, Deflate>, message: DeflateWorkerActio
       }
       const previousChunksLength = deflate.chunks.length
 
-      // TextEncoder is not supported on old browser version like Edge 18, therefore we use string2buf
-      const binaryData = string2buf(message.data)
+      const binaryData = new TextEncoder().encode(message.data)
       deflate.push(binaryData, constants.Z_SYNC_FLUSH)
 
       return {

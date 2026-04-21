@@ -1,6 +1,6 @@
 import { mockable } from '@datadog/browser-core'
 import { reportScriptLoadingError } from '../domain/scriptLoadingError'
-import type { createRumProfiler } from '../domain/profiling/profiler'
+import type { createRumProfiler } from '../domain/profiling/datadogProfiler'
 
 export async function lazyLoadProfiler(): Promise<typeof createRumProfiler | undefined> {
   try {
@@ -15,6 +15,6 @@ export async function lazyLoadProfiler(): Promise<typeof createRumProfiler | und
 }
 
 export async function importProfiler() {
-  const module = await import(/* webpackChunkName: "profiler" */ '../domain/profiling/profiler')
+  const module = await import(/* webpackChunkName: "datadogProfiler" */ '../domain/profiling/datadogProfiler')
   return module.createRumProfiler
 }

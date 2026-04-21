@@ -1,6 +1,6 @@
-import type { RawError, HttpRequest, DeflateEncoder, Telemetry } from '@datadog/browser-core'
+import type { RawError, HttpRequest, DeflateEncoder, Telemetry, SessionManager } from '@datadog/browser-core'
 import { createHttpRequest, addTelemetryDebug, canUseEventBridge, noop } from '@datadog/browser-core'
-import type { LifeCycle, ViewHistory, RumConfiguration, RumSessionManager } from '@datadog/browser-rum-core'
+import type { LifeCycle, ViewHistory, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 
 import type { SerializationStats } from '../domain/record'
@@ -13,7 +13,7 @@ import { startRecordBridge } from '../domain/startRecordBridge'
 export function startRecording(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
-  sessionManager: RumSessionManager,
+  sessionManager: SessionManager,
   viewHistory: ViewHistory,
   encoder: DeflateEncoder,
   telemetry: Telemetry,

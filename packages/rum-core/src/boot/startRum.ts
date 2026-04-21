@@ -3,10 +3,10 @@ import type {
   RawError,
   DeflateEncoderStreamId,
   Encoder,
-  TrackingConsentState,
   BufferedData,
   BufferedObservable,
   Telemetry,
+  SessionManager,
 } from '@datadog/browser-core'
 import {
   sendToExtension,
@@ -28,8 +28,6 @@ import { startActionCollection } from '../domain/action/actionCollection'
 import { startErrorCollection } from '../domain/error/errorCollection'
 import { startResourceCollection } from '../domain/resource/resourceCollection'
 import { startViewCollection } from '../domain/view/viewCollection'
-import type { RumSessionManager } from '../domain/rumSessionManager'
-import { startRumSessionManager, startRumSessionManagerStub } from '../domain/rumSessionManager'
 import { startRumBatch } from '../transport/startRumBatch'
 import { startRumEventBridge } from '../transport/startRumEventBridge'
 import { startUrlContexts } from '../domain/contexts/urlContexts'
@@ -40,7 +38,6 @@ import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import { startCustomerDataTelemetry } from '../domain/startCustomerDataTelemetry'
 import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
 import { startDisplayContext } from '../domain/contexts/displayContext'
-import type { CustomVitalsState } from '../domain/vital/vitalCollection'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
 import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext'
 import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
@@ -50,7 +47,6 @@ import { startSessionContext } from '../domain/contexts/sessionContext'
 import { startConnectivityContext } from '../domain/contexts/connectivityContext'
 import type { SdkName } from '../domain/contexts/defaultContext'
 import { startDefaultContext } from '../domain/contexts/defaultContext'
-import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { Hooks } from '../domain/hooks'
 import { startEventCollection } from '../domain/event/eventCollection'
 import { startInitialViewMetricsTelemetry } from '../domain/view/viewMetrics/startInitialViewMetricsTelemetry'
@@ -62,16 +58,11 @@ export type StartRumResult = ReturnType<StartRum>
 
 export function startRum(
   configuration: RumConfiguration,
+  sessionManager: SessionManager,
   recorderApi: RecorderApi,
   profilerApi: ProfilerApi,
   initialViewOptions: ViewOptions | undefined,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
-
-  // `startRum` and its subcomponents assume tracking consent is granted initially and starts
-  // collecting logs unconditionally. As such, `startRum` should be called with a
-  // `trackingConsentState` set to "granted".
-  trackingConsentState: TrackingConsentState,
-  customVitalsState: CustomVitalsState,
   bufferedDataObservable: BufferedObservable<BufferedData>,
   telemetry: Telemetry,
   hooks: Hooks,
@@ -82,6 +73,9 @@ export function startRum(
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event) => sendToExtension('rum', event))
 
+  sessionManager.expireObservable.subscribe(() => lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED))
+  sessionManager.renewObservable.subscribe((event) => lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, event))
+
   const reportError = (error: RawError) => {
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
     // monitor-until: forever, to keep an eye on the errors reported to customers
@@ -90,17 +84,13 @@ export function startRum(
 
   const pageMayExitObservable = createPageMayExitObservable(configuration)
 
-  const session = !canUseEventBridge()
-    ? startRumSessionManager(configuration, lifeCycle, trackingConsentState)
-    : startRumSessionManagerStub()
-
   if (!canUseEventBridge()) {
     const batch = startRumBatch(
       configuration,
       lifeCycle,
       reportError,
       pageMayExitObservable,
-      session.expireObservable,
+      sessionManager.expireObservable,
       createEncoder
     )
     const preparePageExitSubscription = batch.flushController.preparePageExitFlushObservable.subscribe((reason) => {
@@ -117,8 +107,6 @@ export function startRum(
     cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
   }
 
-  startTrackingConsentContext(hooks, trackingConsentState)
-
   const { stop: stopInitialViewMetricsTelemetry } = startInitialViewMetricsTelemetry(lifeCycle, telemetry)
   cleanupTasks.push(stopInitialViewMetricsTelemetry)
 
@@ -126,10 +114,9 @@ export function startRum(
     lifeCycle,
     hooks,
     configuration,
-    session,
+    sessionManager,
     recorderApi,
     initialViewOptions,
-    customVitalsState,
     bufferedDataObservable,
     sdkName,
     reportError
@@ -143,8 +130,8 @@ export function startRum(
   return {
     ...startRumEventCollectionResult,
     lifeCycle,
-    session,
-    stopSession: () => session.expire(),
+    sessionManager,
+    stopSession: () => sessionManager.expire(),
     telemetry,
     stop: () => {
       cleanupTasks.forEach((task) => task())
@@ -157,10 +144,9 @@ export function startRumEventCollection(
   lifeCycle: LifeCycle,
   hooks: Hooks,
   configuration: RumConfiguration,
-  session: RumSessionManager,
+  sessionManager: SessionManager,
   recorderApi: RecorderApi,
   initialViewOptions: ViewOptions | undefined,
-  customVitalsState: CustomVitalsState,
   bufferedDataObservable: Observable<BufferedData>,
   sdkName: SdkName | undefined,
   reportError: (error: RawError) => void
@@ -180,11 +166,11 @@ export function startRumEventCollection(
   const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable)
   cleanupTasks.push(() => urlContexts.stop())
   const featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, configuration)
-  startSessionContext(hooks, session, recorderApi, viewHistory)
+  startSessionContext(hooks, configuration, sessionManager, recorderApi, viewHistory)
   startConnectivityContext(hooks)
   startTabContext(hooks)
   const globalContext = startGlobalContext(hooks, configuration, 'rum', true)
-  const userContext = startUserContext(hooks, configuration, session, 'rum')
+  const userContext = startUserContext(hooks, configuration, sessionManager, 'rum')
   const accountContext = startAccountContext(hooks, configuration, 'rum')
 
   const actionCollection = startActionCollection(
@@ -231,7 +217,7 @@ export function startRumEventCollection(
 
   cleanupTasks.push(stopViewCollection)
 
-  const resourceCollection = startResourceCollection(lifeCycle, configuration, pageStateHistory)
+  const resourceCollection = startResourceCollection(lifeCycle, configuration)
   cleanupTasks.push(resourceCollection.stop)
 
   const { stop: stopLongTaskCollection } = startLongTaskCollection(lifeCycle, configuration)
@@ -239,13 +225,13 @@ export function startRumEventCollection(
 
   const { addError } = startErrorCollection(lifeCycle, configuration, bufferedDataObservable)
 
-  startRequestCollection(lifeCycle, configuration, session, userContext, accountContext)
+  startRequestCollection(lifeCycle, configuration, sessionManager, userContext, accountContext, bufferedDataObservable)
 
-  const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory, customVitalsState)
+  const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory)
 
   const internalContext = startInternalContext(
     configuration.applicationId,
-    session,
+    sessionManager,
     viewHistory,
     actionCollection.actionContexts,
     urlContexts
@@ -268,6 +254,8 @@ export function startRumEventCollection(
     getViewContext,
     setViewName,
     viewHistory,
+    sessionManager,
+    stopSession: () => sessionManager.expire(),
     getInternalContext: internalContext.get,
     startDurationVital: vitalCollection.startDurationVital,
     stopDurationVital: vitalCollection.stopDurationVital,

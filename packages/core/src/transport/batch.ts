@@ -30,27 +30,22 @@ export function createBatch({
   const flushSubscription = flushController.flushObservable.subscribe((event) => flush(event))
 
   function push(serializedMessage: string, estimatedMessageBytesCount: number, key?: string) {
-    flushController.notifyBeforeAddMessage(estimatedMessageBytesCount)
-
     if (key !== undefined) {
+      let bytesDiff: number
+      if (upsertBuffer[key] !== undefined) {
+        bytesDiff = estimatedMessageBytesCount - encoder.estimateEncodedBytesCount(upsertBuffer[key])
+      } else {
+        flushController.notifyBeforeAddMessage(estimatedMessageBytesCount)
+        bytesDiff = 0
+      }
       upsertBuffer[key] = serializedMessage
-      flushController.notifyAfterAddMessage()
+      flushController.notifyAfterAddMessage(bytesDiff)
     } else {
+      flushController.notifyBeforeAddMessage(estimatedMessageBytesCount)
       encoder.write(encoder.isEmpty ? serializedMessage : `\n${serializedMessage}`, (realMessageBytesCount) => {
         flushController.notifyAfterAddMessage(realMessageBytesCount - estimatedMessageBytesCount)
       })
     }
-  }
-
-  function hasMessageFor(key?: string): key is string {
-    return key !== undefined && upsertBuffer[key] !== undefined
-  }
-
-  function remove(key: string) {
-    const removedMessage = upsertBuffer[key]
-    delete upsertBuffer[key]
-    const messageBytesCount = encoder.estimateEncodedBytesCount(removedMessage)
-    flushController.notifyAfterRemoveMessage(messageBytesCount)
   }
 
   function addOrUpdate(message: Context, key?: string) {
@@ -63,10 +58,6 @@ export function createBatch({
         `Discarded a message whose size was bigger than the maximum allowed size ${MESSAGE_BYTES_LIMIT / ONE_KIBI_BYTE}KiB. ${MORE_DETAILS} ${DOCS_TROUBLESHOOTING}/#technical-limitations`
       )
       return
-    }
-
-    if (hasMessageFor(key)) {
-      remove(key)
     }
 
     push(serializedMessage, estimatedMessageBytesCount, key)

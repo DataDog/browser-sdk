@@ -1,5 +1,5 @@
-import type { Context, ClocksState, ConsoleLog } from '@datadog/browser-core'
-import { timeStampNow, ConsoleApiName, ErrorSource, initConsoleObservable } from '@datadog/browser-core'
+import type { Context, ClocksState, Observable, BufferedData } from '@datadog/browser-core'
+import { BufferedDataType, timeStampNow, ConsoleApiName, ErrorSource } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../configuration'
 import type { LifeCycle, RawLogsEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -21,8 +21,16 @@ export const LogStatusForApi = {
   [ConsoleApiName.warn]: StatusType.warn,
   [ConsoleApiName.error]: StatusType.error,
 }
-export function startConsoleCollection(configuration: LogsConfiguration, lifeCycle: LifeCycle) {
-  const consoleSubscription = initConsoleObservable(configuration.forwardConsoleLogs).subscribe((log: ConsoleLog) => {
+
+export function startConsoleCollection(
+  configuration: LogsConfiguration,
+  lifeCycle: LifeCycle,
+  bufferedDataObservable: Observable<BufferedData>
+) {
+  const subscription = bufferedDataObservable.subscribe(({ data: log, type }) => {
+    if (type !== BufferedDataType.CONSOLE || !configuration.forwardConsoleLogs.includes(log.api)) {
+      return
+    }
     const collectedData: RawLogsEventCollectedData<RawLogsEvent> = {
       rawLogsEvent: {
         date: timeStampNow(),
@@ -40,9 +48,5 @@ export function startConsoleCollection(configuration: LogsConfiguration, lifeCyc
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, collectedData)
   })
 
-  return {
-    stop: () => {
-      consoleSubscription.unsubscribe()
-    },
-  }
+  return { stop: () => subscription.unsubscribe() }
 }

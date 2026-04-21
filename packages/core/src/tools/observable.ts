@@ -51,8 +51,12 @@ export function mergeObservables<T>(...observables: Array<Observable<T>>) {
 // eslint-disable-next-line no-restricted-syntax
 export class BufferedObservable<T> extends Observable<T> {
   private buffer: T[] = []
+  private droppedCount = 0
 
-  constructor(private maxBufferSize: number) {
+  constructor(
+    private maxBufferSize: number,
+    private onDrop?: (count: number) => void
+  ) {
     super()
   }
 
@@ -60,6 +64,7 @@ export class BufferedObservable<T> extends Observable<T> {
     this.buffer.push(data)
     if (this.buffer.length > this.maxBufferSize) {
       this.buffer.shift()
+      this.droppedCount++
     }
     super.notify(data)
   }
@@ -98,6 +103,9 @@ export class BufferedObservable<T> extends Observable<T> {
    */
   unbuffer() {
     queueMicrotask(() => {
+      if (this.droppedCount > 0 && this.onDrop) {
+        this.onDrop(this.droppedCount)
+      }
       this.maxBufferSize = this.buffer.length = 0
     })
   }

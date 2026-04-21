@@ -10,7 +10,6 @@ import type { SessionPersistence } from '../session/sessionConstants'
 import type { MatchOption } from '../../tools/matchOption'
 import { isAllowedTrackingOrigins } from '../allowedTrackingOrigins'
 import type { Site } from '../intakeSites'
-import { isWorkerEnvironment } from '../../tools/globalObject'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
 
@@ -95,17 +94,6 @@ export interface InitConfiguration {
    * @defaultValue "cookie"
    */
   sessionPersistence?: SessionPersistence | SessionPersistence[] | undefined
-
-  /**
-   * Allows the use of localStorage when cookies cannot be set. This enables the RUM Browser SDK to run in environments that do not provide cookie support.
-   *
-   * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
-   * See [Monitor Electron Applications Using the Browser SDK](https://docs.datadoghq.com/real_user_monitoring/guide/monitor-electron-applications-using-browser-sdk) for further information.
-   *
-   * @category Session Persistence
-   * @deprecated use `sessionPersistence: local-storage` where you want to use localStorage instead
-   */
-  allowFallbackToLocalStorage?: boolean | undefined
 
   /**
    * Allow listening to DOM events dispatched programmatically ([untrusted events](https://developer.mozilla.org/en-US/docs/Web/API/Event/isTrusted)). Enabling this option can be useful if you heavily rely on programmatic events, such as in an automated UI test environment.
@@ -216,15 +204,6 @@ export interface InitConfiguration {
    */
   trackAnonymousUser?: boolean | undefined
 
-  /**
-   * Encode cookie options in the cookie value. This can be used as a mitigation for microssession issues.
-   * ⚠️ This is a beta feature and may be changed or removed in the future.
-   *
-   * @category Beta
-   * @defaultValue false
-   */
-  betaEncodeCookieOptions?: boolean | undefined
-
   // internal options
   /**
    * [Internal option] Enable experimental features
@@ -246,14 +225,6 @@ export interface InitConfiguration {
    * @internal
    */
   datacenter?: string
-
-  /**
-   * [Internal option] Datadog internal analytics subdomain
-   *
-   * @internal
-   */
-  // TODO next major: remove this option and replace usages by proxyFn
-  internalAnalyticsSubdomain?: string
 
   /**
    * [Internal option] The percentage of telemetry configuration sent. A value between 0 and 100.
@@ -327,7 +298,6 @@ export interface Configuration extends TransportConfiguration {
   trackingConsent: TrackingConsent
   storeContextsAcrossPages: boolean
   trackAnonymousUser?: boolean
-  betaEncodeCookieOptions: boolean
 
   // internal
   sdkVersion: string | undefined
@@ -401,7 +371,7 @@ export function validateAndBuildConfiguration(
   return {
     beforeSend:
       initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
-    sessionStoreStrategyType: isWorkerEnvironment ? undefined : selectSessionStoreStrategyType(initConfiguration),
+    sessionStoreStrategyType: selectSessionStoreStrategyType(initConfiguration),
     sessionSampleRate: initConfiguration.sessionSampleRate ?? 100,
     telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
     telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,
@@ -415,7 +385,6 @@ export function validateAndBuildConfiguration(
     trackingConsent: initConfiguration.trackingConsent ?? TrackingConsent.GRANTED,
     trackAnonymousUser: initConfiguration.trackAnonymousUser ?? true,
     storeContextsAcrossPages: !!initConfiguration.storeContextsAcrossPages,
-    betaEncodeCookieOptions: !!initConfiguration.betaEncodeCookieOptions,
 
     /**
      * The source of the SDK, used for support plugins purposes.
@@ -443,12 +412,10 @@ export function serializeConfiguration(initConfiguration: InitConfiguration) {
     session_persistence: Array.isArray(initConfiguration.sessionPersistence)
       ? initConfiguration.sessionPersistence[0]
       : initConfiguration.sessionPersistence,
-    allow_fallback_to_local_storage: !!initConfiguration.allowFallbackToLocalStorage,
     store_contexts_across_pages: !!initConfiguration.storeContextsAcrossPages,
     allow_untrusted_events: !!initConfiguration.allowUntrustedEvents,
     tracking_consent: initConfiguration.trackingConsent,
     use_allowed_tracking_origins: Array.isArray(initConfiguration.allowedTrackingOrigins),
-    beta_encode_cookie_options: initConfiguration.betaEncodeCookieOptions,
     source: initConfiguration.source,
     sdk_version: initConfiguration.sdkVersion,
     variant: initConfiguration.variant,

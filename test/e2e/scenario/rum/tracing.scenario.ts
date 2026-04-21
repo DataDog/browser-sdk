@@ -69,11 +69,10 @@ test.describe('tracing', () => {
       checkTraceAssociatedToRumEvent(intakeRegistry)
     })
 
-  createTest('propagate trace baggage')
+  createTest('propagate trace baggage with user and account')
     .withRum({
       service: 'service',
       allowedTracingUrls: ['LOCATION_ORIGIN'],
-      propagateTraceBaggage: true,
       enableExperimentalFeatures: ['user_account_trace_header'],
     })
     .run(async ({ intakeRegistry, flushEvents, page }) => {
@@ -88,7 +87,28 @@ test.describe('tracing', () => {
           .catch(() => new Error('Fetch request failed!'))
       )
       const headers = parseHeaders(rawHeaders)
-      checkRequestHeaders(headers, { withBaggage: true })
+      checkRequestHeaders(headers)
+      expect(headers['baggage']).toMatch(/user\.id=p1745/)
+      expect(headers['baggage']).toMatch(/account\.id=c9wpq8xrvd9t/)
+      await flushEvents()
+      checkTraceAssociatedToRumEvent(intakeRegistry)
+    })
+
+  createTest('do not propagate trace baggage when disabled')
+    .withRum({
+      service: 'service',
+      allowedTracingUrls: ['LOCATION_ORIGIN'],
+      propagateTraceBaggage: false,
+    })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      const rawHeaders = await page.evaluate(() =>
+        window
+          .fetch('/headers')
+          .then((response) => response.text())
+          .catch(() => new Error('Fetch request failed!'))
+      )
+      const headers = parseHeaders(rawHeaders)
+      checkRequestHeaders(headers, { withBaggage: false })
       await flushEvents()
       checkTraceAssociatedToRumEvent(intakeRegistry)
     })
@@ -107,18 +127,18 @@ test.describe('tracing', () => {
     return JSON.parse(rawHeaders)
   }
 
-  // By default, we send both Datadog and W3C tracecontext headers
+  // By default, we send both Datadog and W3C tracecontext headers, and baggage with session.id
   function checkRequestHeaders(
     headers: ParsedHeaders,
-    { withBaggage }: { withBaggage: boolean } = { withBaggage: false }
+    { withBaggage }: { withBaggage: boolean } = { withBaggage: true }
   ) {
     expect(headers['x-datadog-trace-id']).toMatch(/\d+/)
     expect(headers['x-datadog-origin']).toBe('rum')
     expect(headers['traceparent']).toMatch(/^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-01$/)
     if (withBaggage) {
-      expect(headers['baggage']).toMatch(/^session.id=.*,user.id=.*,account.id=.*$/)
+      expect(headers['baggage']).toMatch(/session\.id=\S+/)
     } else {
-      expect(headers['baggage']).not.toBeDefined()
+      expect(headers['baggage']).toBeUndefined()
     }
   }
 
