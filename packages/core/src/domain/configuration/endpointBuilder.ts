@@ -8,7 +8,11 @@ import type { InitConfiguration } from './configuration'
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
 
-export type TrackType = 'logs' | 'rum' | 'replay' | 'profile' | 'exposures'
+// Note: 'flagevaluation' is intentionally not wired into TransportConfiguration or computeEndpointBuilders.
+// It is used by external SDK packages (e.g. @datadog/openfeature-browser) that call createEndpointBuilder
+// directly to build their own endpoint. Adding it here makes the cast unnecessary and the intake path
+// (/api/v2/flagevaluation) an explicit part of the contract.
+export type TrackType = 'logs' | 'rum' | 'replay' | 'profile' | 'exposures' | 'flagevaluation'
 export type ApiType =
   | 'fetch-keepalive'
   | 'fetch'
