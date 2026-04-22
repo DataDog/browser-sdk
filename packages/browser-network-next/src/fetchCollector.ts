@@ -1,5 +1,5 @@
 import type { Pipeline, NetworkRequestResource } from '@datadog/core-next'
-import { isIntakeUrl } from '@datadog/browser-core-next'
+import { isIntakeUrl } from '@datadog/browser-sdk'
 
 function startFetchCollection(pipeline: Pipeline<Record<string, unknown>>): () => void {
   const originalFetch = window.fetch

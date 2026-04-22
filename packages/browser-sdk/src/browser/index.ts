@@ -16,6 +16,6 @@ export type { EndpointBuilder, EndpointBuilderOptions, TrackType } from './domai
 export { createEndpointBuilder, buildIntakeHost, isIntakeUrl, INTAKE_SITE_US1 } from './domain/transport'
 
 // Browser utilities
-export { getCookie, setCookie, deleteCookie, areCookiesAuthorized } from './browser/cookie'
-export type { CookieOptions } from './browser/cookie'
-export { getCurrentSiteDomain } from './browser/domain'
+export { getCookie, setCookie, deleteCookie, areCookiesAuthorized } from './cookie'
+export type { CookieOptions } from './cookie'
+export { getCurrentSiteDomain } from './domain'

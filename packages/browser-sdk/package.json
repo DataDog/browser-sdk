@@ -28,7 +28,6 @@
     "@datadog/browser-views-next": "workspace:*"
   },
   "peerDependencies": {
-    "@datadog/browser-core-next": "workspace:*",
     "@datadog/core-next": "workspace:*"
   }
 }

@@ -1,5 +1,5 @@
 import type { SessionState } from '@datadog/core-next'
-import { deleteCookie, getCookie } from '../../browser/cookie'
+import { deleteCookie, getCookie } from '../../cookie'
 import { CookieStore } from './cookieStore'
 
 const SESSION_COOKIE_NAME = '_dd_s'

@@ -1,6 +1,6 @@
 import type { SessionState, SessionStore } from '@datadog/core-next'
-import { getCookie, setCookie, deleteCookie } from '../../browser/cookie'
-import type { CookieOptions } from '../../browser/cookie'
+import { getCookie, setCookie, deleteCookie } from '../../cookie'
+import type { CookieOptions } from '../../cookie'
 
 const SESSION_COOKIE_NAME = '_dd_s'
 const SESSION_EXPIRY_MS = 4 * 60 * 60 * 1000 // 4 hours

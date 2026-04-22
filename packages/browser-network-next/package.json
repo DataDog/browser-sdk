@@ -43,7 +43,7 @@
     "access": "public"
   },
   "peerDependencies": {
-    "@datadog/browser-core-next": "workspace:*",
+    "@datadog/browser-sdk": "workspace:*",
     "@datadog/core-next": "workspace:*"
   }
 }

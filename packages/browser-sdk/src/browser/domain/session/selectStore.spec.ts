@@ -1,4 +1,4 @@
-import { deleteCookie, getCookie } from '../../browser/cookie'
+import { deleteCookie, getCookie } from '../../cookie'
 import { isLocalStorageAvailable, selectStore } from './selectStore'
 
 const SESSION_COOKIE_NAME = '_dd_s'
