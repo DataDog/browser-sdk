@@ -18,8 +18,6 @@ export enum ExperimentalFeature {
   FEATURE_OPERATION_VITAL = 'feature_operation_vital',
   START_STOP_ACTION = 'start_stop_action',
   START_STOP_RESOURCE = 'start_stop_resource',
-  USE_CHANGE_RECORDS = 'use_change_records',
-  USE_INCREMENTAL_CHANGE_RECORDS = 'use_incremental_change_records',
   TOO_MANY_REQUESTS_INVESTIGATION = 'too_many_requests_investigation',
   TRACK_RESOURCE_HEADERS = 'track_resource_headers',
 }
