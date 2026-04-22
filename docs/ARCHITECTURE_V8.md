@@ -7,8 +7,9 @@ Documents the new SDK architecture being built in the `*-next` packages.
 - **Environment-agnostic core** — `core-next` has zero browser dependencies. Browser-specific I/O lives in `browser-sdk`.
 - **Modules, not packages** — RUM, Logs, and other products are modules loaded into a single SDK, not standalone packages.
 - **Pipeline-based processing** — events flow through an enricher chain (DAG-ordered) before reaching the transport.
+- **Async by default** — module processors load asynchronously. The pipeline buffers events until all modules are ready.
 - **Classes allowed** — `*-next` packages use class-based architecture for interface implementations (unlike legacy packages).
-- **Every event is timestamped** — all events published to the pipeline carry both a monotonic clock (`startTime`) and a wall clock (`startDate`). Publishers set both when they know exactly when the event occurred. A timestamp enricher registered on `*` fills in defaults for events that don't.
+- **Every event is timestamped** — all events published to the pipeline carry both a monotonic clock (`startTime`) and a wall clock (`startDate`).
 
 ## Package structure
 
@@ -19,7 +20,8 @@ core-next              → environment-agnostic infrastructure
 browser-sdk            → browser runtime + SDK orchestration
                          cookie/localStorage stores, HTTP transport, encoders,
                          core collectors (console, errors, network),
-                         createSdk assembler, public API surface
+                         createSdk assembler, SDK-level public API (init, setUser, etc.),
+                         module extensions (bundled for config validation)
 
 browser-logs-next      → logs product module
 
@@ -30,41 +32,60 @@ browser-rum-next       → rum product module
 
 There is no `browser-core-next` — `browser-sdk` owns both the browser building blocks and the SDK assembly. There is no `browser-views-next` or `browser-performance-next` — views and performance observers are internal to the RUM module.
 
+## Module entry points
+
+Each module has three entry points:
+
+```
+@datadog/browser-rum-next/extension   → config validation (bundled in browser-sdk)
+@datadog/browser-rum-next/processor   → heavy async chunk (processors, enrichers, collectors)
+@datadog/browser-rum-next             → public API (lightweight bridge)
+```
+
+**`/extension`** — contains the module's config extension (`validate` function). Bundled into `browser-sdk` at build time so `init()` can validate config synchronously. Tiny — just a type and a validation function.
+
+**`/processor`** — the heavy chunk. Contains processors, enrichers, and module-specific collectors. Loaded asynchronously by `init()` when the module's config key is present. This is where domain logic lives.
+
+**Default (public API)** — lightweight bridge that publishes events to the pipeline. Imported by the customer directly. Registers itself in the SDK registry at import time. Does not import the processor.
+
 ## Overall architecture
 
 ```
 Developer app
-  import { createSdk } from '@datadog/browser-sdk'
-  import { logsProcessor } from '@datadog/browser-logs-next/processor'
-  import { rumProcessor } from '@datadog/browser-rum-next/processor'
+  import { init, setUser } from '@datadog/browser-sdk'
+  import { datadogRum } from '@datadog/browser-rum-next'
+  import { datadogLogs } from '@datadog/browser-logs-next'
         │
-        │  DD.init({ clientToken: '...', logs: {...}, rum: {...} })
-        │  DD.setUser({ id: '42', name: 'Ada' })
-        │  DD.logs.logger.info('hello')
-        │  DD.rum.addAction('checkout')
+        │  init({ clientToken: '...', logs: {...}, rum: {...} })
+        │  setUser({ id: '42', name: 'Ada' })
+        │  datadogRum.startView('checkout')
+        │  datadogLogs.logger.info('hello')
         │
         ▼
 ┌──────────────────────────────────────────────────────────────────┐
 │                          browser-sdk                             │
 │                                                                  │
-│   createSdk · session · transport · batch · contexts             │
+│   init() · session · transport · batch · context managers        │
+│                                                                  │
+│   SDK-level API: init, setUser, setGlobalContext, setAccount     │
+│   beforeSend (global, one callback for all observations)         │
+│   core enrichers on observation:*                                │
 │                                                                  │
 │   core collectors (always active):                               │
 │     console → resource:console                                   │
 │     errors  → resource:runtime_error, resource:report            │
 │     network → resource:network_request                           │
 │                                                                  │
-│   context managers (setUser, setGlobalContext, setAccount)        │
-│   beforeSend (global, one callback for all observations)         │
-│   core enrichers on observation:*                                │
+│   bundled extensions (for config validation):                    │
+│     rumExtension, logsExtension                                  │
 │                    │                                             │
 │                    ▼                                             │
 │               [ pipeline ]                                       │
 └──────────────────────────────────────────────────────────────────┘
                        │
-     dynamically loaded when config key detected:
-     import('@datadog/browser-logs-next/processor')
-     import('@datadog/browser-rum-next/processor')
+     async loaded when config key detected:
+     resolveModule('rum')  → @datadog/browser-rum-next/processor
+     resolveModule('logs') → @datadog/browser-logs-next/processor
                        │
                        ▼
 ┌──────────────────────────────────────────────────────────────────┐
@@ -72,9 +93,8 @@ Developer app
 │                                                                  │
 │  browser-logs-next/processor    browser-rum-next/processor       │
 │  ───────────────────────────    ─────────────────────────────    │
-│  processor + enrichers          processor + enrichers            │
-│  resource:* → observation:log   starts view + perf collectors    │
-│                                 resource:* → observation:view    │
+│  processor + enrichers          starts view + perf collectors    │
+│  resource:* → observation:log   resource:* → observation:view    │
 │                                 resource:* → observation:resource│
 │                                 resource:* → observation:error   │
 │                                 resource:* → observation:long_task│
@@ -82,41 +102,112 @@ Developer app
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-## Collector placement
+## Module loading
 
-Collectors are split between the SDK core and product modules based on who needs them:
+Async loading is the default for both CDN and npm. Module processors are loaded after `init()` creates the pipeline and validates config.
 
-**SDK core collectors** (always active, live in `browser-sdk`):
-- Console collector — captures `console.*` calls. Used by both logs and RUM.
-- Error collector — captures `window.error` and `unhandledrejection`. Used by both logs and RUM.
-- Network collector — captures fetch/XHR. Used by both logs and RUM.
+### resolveModule
 
-**RUM-owned collectors** (start inside RUM's module init):
-- View collectors — patches `history.pushState`/`replaceState`, observes navigations. Only useful if RUM is loaded.
-- Performance collectors — `PerformanceObserver` for resource timing, long tasks, long animation frames. Only useful if RUM is loaded.
+`createSdk` accepts a `resolveModule: (name: string) => Promise<Module>` parameter. The entry point (CDN or npm) provides the implementation:
 
-If a customer loads only logs, view and performance collectors don't run. No wasted patching.
+**CDN build** — fetches scripts from CDN URLs:
+```javascript
+const resolveModule = (name) => loadScript(`https://cdn.datadoghq.com/v8/modules/${name}.js`)
+```
+
+**npm build** — uses dynamic imports:
+```javascript
+const resolveModule = (name) => import(`@datadog/browser-${name}-next/processor`)
+```
+
+The customer never sees `resolveModule`. It's wired internally by the entry point.
+
+**npm inline optimization:** npm users can optionally pass modules directly via the `modules` field in init config. When present, those modules are used directly without async loading. This is an optimization for speed, not the default path.
+
+### Version compatibility
+
+Modules follow semver. A module declares a compatible core version range via `peerDependencies` (e.g., `"@datadog/core-next": "^8.0.0"`). npm enforces this at install time. CDN uses the same contract via URL convention — the SDK constructs module URLs from its own major version.
+
+### Loading flow
+
+1. Module public APIs are imported — they register themselves in the SDK registry and buffer events locally
+2. `init()` is called — creates pipeline, session, transport, enrichers, starts core collectors
+3. `init()` connects each registered public API to the pipeline — local buffers drain into the pipeline
+4. `init()` loads module processors async via `resolveModule` for each detected config key
+5. Modules init: register enrichers, processors, transport routes
+6. `pipeline.seal()` — pipeline buffer drains through the full enricher chain
+7. If a module fails to load (network error), the SDK seals without it. Errors go to telemetry.
+
+### Pre-init buffering
+
+Two buffering stages ensure no events are lost between import and seal:
+
+**Module local buffer** (import time → `init()`): Each module public API has a lightweight buffer. Events published before `init()` are queued. When `init()` calls `connect(pipeline)`, they drain into the pipeline.
+
+**Pipeline buffer** (`init()` → `seal()`): After `init()` creates the pipeline but before `seal()`, events are buffered in the pipeline. Core collectors start publishing immediately. When all async modules finish loading, `seal()` drains through enrichers.
+
+```
+Import time          init() called          Modules loaded         seal()
+     │                    │                      │                   │
+     │  module local      │  pipeline            │  pipeline         │  events flow
+     │  buffers events    │  buffers events      │  buffers events   │  through enrichers
+     │                    │                      │                   │
+     ▼                    ▼                      ▼                   ▼
+  [local buf] ──drain──► [pipeline buf] ─────────────────drain────► [enrichers → transport]
+```
+
+### Pre-init telemetry (open decision)
+
+Core collectors start at `init()` time, not at import time. Browser events before `init()` (uncaught errors, network requests) are not captured. This is the same as v6. After `init()`, the SDK measures the delta between page load and init time via telemetry to understand how many events are missed.
 
 ## Public API
 
-The SDK returns a unified object. Context methods are top-level. Product-specific methods are namespaced under the module name.
+`browser-sdk` exports SDK-level functions. Module packages export product-specific APIs.
 
 ```javascript
-DD.init({ clientToken: '...', logs: { ... }, rum: { ... } })
+import { init, setUser, setGlobalContext, setAccount } from '@datadog/browser-sdk'
+import { datadogRum } from '@datadog/browser-rum-next'
+import { datadogLogs } from '@datadog/browser-logs-next'
 
 // SDK-level (owned by browser-sdk)
-DD.setUser({ id: '42', name: 'Ada' })
-DD.setGlobalContext({ deployment: 'canary' })
-DD.setAccount({ id: 'acct-1' })
+init({ clientToken: '...', logs: { ... }, rum: { ... } })
+setUser({ id: '42', name: 'Ada' })
+setGlobalContext({ deployment: 'canary' })
+setAccount({ id: 'acct-1' })
 
 // Module-specific (owned by each module)
-DD.logs.logger.info('hello')
-DD.rum.addAction('checkout')
-DD.rum.startView('checkout')
-DD.rum.addError(new Error('boom'))
+datadogRum.startView('checkout')
+datadogRum.addAction('click')
+datadogRum.addError(new Error('boom'))
+datadogLogs.logger.info('hello')
 ```
 
-Context managers (`setUser`, `setGlobalContext`, `setAccount`) are owned by `createSdk`. Modules read context through enrichers, they don't create their own context managers.
+`init()` only exists on `browser-sdk`. Module public APIs do not expose `init`.
+
+Context managers (`setUser`, `setGlobalContext`, `setAccount`) are owned by `createSdk`. Modules read context through enrichers — they don't create their own context managers.
+
+### CDN global
+
+The CDN build sets `window.DD` as the global object:
+
+```javascript
+DD.init({ clientToken: '...', rum: { ... }, logs: { ... } })
+DD.setUser({ id: '42' })
+DD.rum.startView('checkout')
+DD.logs.logger.info('hello')
+```
+
+No legacy globals (`datadogRum`, `datadogLogs`). v8 is a breaking change.
+
+### CDN bundles
+
+```
+datadog-sdk.js           → browser-sdk + all extensions + all public API bridges
+datadog-rum.js           → rum processor chunk (views, perf, enrichers)
+datadog-logs.js          → logs processor chunk
+```
+
+The base script sets up the `DD` global, registers public APIs. When `init()` is called, it fetches processor chunks for the detected config keys.
 
 ## Configuration
 
@@ -124,47 +215,26 @@ Configuration is assembled at init time by merging a base config with each modul
 
 ### Base configuration (`core-next`)
 
-Fields every SDK needs:
-
 ```ts
 interface BaseInitConfiguration {
   clientToken: string
   site: string
-  enabled?: boolean // replaces trackingConsent — defaults to true
+  enabled?: boolean       // replaces trackingConsent — defaults to true
   env?: string
   service?: string
   version?: string
   beforeSend?: (event: Record<string, unknown>) => boolean | void
+  modules?: Module[]      // optional: inline modules for npm speed optimization
 }
 ```
 
-`beforeSend` is global — one callback for all observations. The customer filters by event type if needed:
-
-```javascript
-DD.init({
-  clientToken: '...',
-  beforeSend: (event) => {
-    if (event.type === 'log' && event.status === 'debug') return false
-    if (event.type === 'resource' && event.resource.url.includes('/health')) return false
-    return true
-  },
-  logs: { ... },
-  rum: { ... },
-})
-```
+`beforeSend` is global — one callback for all observations. The customer filters by event type if needed.
 
 ### Module configuration — TypeScript module augmentation
 
-Each module extends `SdkInitConfiguration` via TypeScript module augmentation. Importing a module automatically adds its config fields to the init type:
+Each module extends `SdkInitConfiguration` via TypeScript module augmentation:
 
 ```ts
-// core-next defines the base — must be an interface, not a type alias
-interface SdkInitConfiguration {
-  clientToken: string
-  site: string
-  enabled?: boolean
-}
-
 // @datadog/browser-rum-next augments it when imported:
 declare module '@datadog/core-next' {
   interface SdkInitConfiguration {
@@ -173,12 +243,14 @@ declare module '@datadog/core-next' {
 }
 ```
 
+The presence of a config key (`rum: {}`) activates the module. Extensions are bundled in `browser-sdk` for synchronous validation during `init()`. Adding a new first-party module requires updating `browser-sdk` to bundle its extension.
+
 ### Session sampling
 
 Per-module, deterministic. The session ID is used as a seed to compute whether each module is sampled for that session. Same session, but each module independently decides based on its own sample rate.
 
 ```javascript
-DD.init({
+init({
   logs: { sessionSampleRate: 100 },  // all sessions log
   rum: { sessionSampleRate: 10 },    // 10% of sessions get RUM
 })
@@ -187,19 +259,6 @@ DD.init({
 The session is always created. Sampling is a module-level decision, not a session-level one.
 
 ## Data pipeline
-
-### Base event shape
-
-Every event published to the pipeline carries two timestamps:
-
-```ts
-interface BaseEvent {
-  startTime: number // performance.now() at the moment the event occurred
-  startDate: number // Date.now() at the moment the event occurred
-}
-```
-
-**Why both?** `startTime` is monotonic and high-precision for ordering and duration. `startDate` is the absolute wall clock. Comparing deltas reveals clock freezes (device suspend).
 
 ### Event taxonomy
 
@@ -226,7 +285,7 @@ observation:*                 — matches all observations
 *                             — matches everything
 ```
 
-No partial string wildcards. `observation:rum_*` is not valid. Observation types have simple names:
+No partial string wildcards. Observation types have simple names:
 
 ```
 observation:log               → logs endpoint
@@ -239,9 +298,13 @@ observation:long_task         → rum endpoint
 ### Event lifecycle
 
 ```
+Public API bridges (datadogRum.startView, datadogLogs.logger.info)
+  └─ action:* (published to pipeline)
+
 Collectors (browser APIs)
-  └─ resource:* / action:*
-       └─ Module processors
+  └─ resource:*
+
+       └─ Module processors (subscribe to resource/action, publish observations)
             └─ observation:*
                  └─ Core enrichers (session, metadata, tags, context)
                       └─ Module enrichers (rate limit, view context)
@@ -265,13 +328,28 @@ Core enrichers registered by `createSdk` on `observation:*`:
 4. `tagsEnricher` — `ddtags`
 5. `contextEnricher` — merges global context, user context, account context from shared context managers
 
-Module-specific enrichers are registered during module init. RUM's `viewContextEnricher` registers on `observation:*` (not just RUM observations) so that log observations also get view context when RUM is loaded.
+Module-specific enrichers register on exactly the types they care about. RUM's `viewContextEnricher` is an exception — it registers on `observation:*` so log observations also get view context when RUM is loaded.
+
+## ModuleContext
+
+Passed to each module's `init()` function:
+
+```typescript
+interface ModuleContext {
+  config: Configuration
+  pipeline: Pipeline
+  session: Session
+  transport: Transport
+}
+```
+
+Context managers are NOT in `ModuleContext`. The SDK registers a `contextEnricher` on `observation:*` that stamps global/user/account context. Modules publish observations with their domain data; enrichers add the rest. If a module ever needs direct read access to context managers, we can add it later.
 
 ## Transport
 
 The transport is a component that modules register their routes with during init. It owns batching, flushing, and delivery.
 
-```ts
+```typescript
 // During module init:
 transport.route('observation:log', 'logs')       // logs module
 transport.route('observation:view', 'rum')        // rum module
@@ -280,7 +358,7 @@ transport.route('observation:error', 'rum')       // rum module
 transport.route('observation:long_task', 'rum')   // rum module
 ```
 
-The transport subscribes to the pipeline once, looks up the registered route for each event type, and sends it to the correct batch/endpoint. Batches and endpoints are only created for tracks that have registered routes.
+The transport subscribes to the pipeline once, looks up the registered route for each event type, and sends it to the correct batch/endpoint. Batches and endpoints are only created for tracks that have registered routes. If only logs is loaded, no RUM batch or endpoint is created.
 
 `ModuleContext` includes the transport so modules can call `transport.route()` during init.
 
@@ -291,6 +369,21 @@ Accumulates serialized messages, emits a `flush` event when size/count/timeout l
 ### HTTP Transport
 
 Pluggable interface — `browser-sdk` provides fetch with keepalive + XHR fallback + retry. Any environment can provide its own implementation.
+
+## Collector placement
+
+Collectors are split between the SDK core and product modules based on who needs them:
+
+**SDK core collectors** (always active, live in `browser-sdk`):
+- Console collector — captures `console.*` calls. Used by both logs and RUM.
+- Error collector — captures `window.error` and `unhandledrejection`. Used by both logs and RUM.
+- Network collector — captures fetch/XHR. Used by both logs and RUM.
+
+**RUM-owned collectors** (start inside RUM's module init):
+- View collectors — patches `history.pushState`/`replaceState`, observes navigations. Only useful if RUM is loaded.
+- Performance collectors — `PerformanceObserver` for resource timing, long tasks, long animation frames. Only useful if RUM is loaded.
+
+If a customer loads only logs, view and performance collectors don't run.
 
 ## RUM module internals
 
@@ -311,7 +404,7 @@ The RUM module (`browser-rum-next`) contains:
 
 ## Telemetry
 
-Telemetry signals (errors, usage, debug) are published to the pipeline's **fast track**. This guarantees:
+Telemetry signals (errors, usage, debug) are published to the pipeline's **fast track**:
 
 - Telemetry is never blocked by stuck RUM/log events
 - No ordering requirements
@@ -325,3 +418,10 @@ Replaced by `enabled` in the configuration. No separate consent state machine.
 
 - `enabled: true` (default) — collect and send events
 - `enabled: false` — collect events but do not send
+
+## Open decisions
+
+- **Session Replay** — where does it fit in the module model? Likely a separate module with its own processor and large collector (DOM serialization).
+- **Error recovery** — what happens if the pipeline gets stuck? Timeout mechanism? Circuit breaker?
+- **Remote configuration** — does v8 support dynamic config changes after init?
+- **Pre-init event capture** — currently no browser events are captured before `init()`. Telemetry will measure the gap to inform whether this needs solving.
