@@ -1,4 +1,4 @@
-import { fetch, setTimeout, clearTimeout } from '@datadog/browser-core'
+import { fetch, setTimeout, clearTimeout, addTelemetryDebug } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 
 export function checkProfilingQuota(
@@ -14,16 +14,23 @@ export function checkProfilingQuota(
   const fetchPromise = fetch(url, { signal: controller.signal })
     .then((response): 'quota-ok' | 'quota-exceeded' => {
       clearTimeout(timeoutId)
-      return response.status === 429 ? 'quota-exceeded' : 'quota-ok'
+      const result = response.status === 429 ? 'quota-exceeded' : 'quota-ok'
+      addTelemetryDebug('Profiling quota check result', { result, status: response.status })
+      return result
     })
-    .catch((): 'quota-ok' => {
+    .catch((error): 'quota-ok' => {
       clearTimeout(timeoutId)
+      // AbortErrors come from our own timeout and are logged there; only log genuine network errors
+      if (!(error instanceof DOMException && error.name === 'AbortError')) {
+        addTelemetryDebug('Profiling quota check network error', { result: 'quota-ok' })
+      }
       return 'quota-ok'
     })
 
   const timeoutPromise = new Promise<'quota-ok'>((resolve) => {
     timeoutId = setTimeout(() => {
       controller.abort()
+      addTelemetryDebug('Profiling quota check timed out', { result: 'quota-ok' })
       resolve('quota-ok')
     }, timeoutMs)
   })
