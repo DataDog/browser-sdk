@@ -26,9 +26,10 @@ interface Subscription {
  * - If an enricher throws, the event is skipped and processing continues with the next event.
  *
  * **Pattern matching:**
- * - `'*'` matches all event types.
- * - `'observation:*'` matches all event types starting with `observation:`.
- * - Exact keys match only the specific event type.
+   * - `'*'` matches all event types.
+   * - `'observation:*'` matches all event types starting with `observation:`.
+   * - `'observation:rum_*'` matches all event types starting with `observation:rum_`.
+   * - Exact keys match only the specific event type.
  *
  * @example
  * ```ts
@@ -53,7 +54,7 @@ function matchesPattern(pattern: string, eventType: string): boolean {
   if (pattern === '*') {
     return true
   }
-  if (pattern.endsWith(':*')) {
+  if (pattern.endsWith('*')) {
     return eventType.startsWith(pattern.slice(0, -1))
   }
   return pattern === eventType
@@ -80,7 +81,7 @@ class Pipeline<TEventMap extends Record<string, unknown>> {
    * Registers an enricher for the given event type or pattern.
    * Must be called before {@link seal}. Throws if the pipeline is already sealed.
    *
-   * Supports patterns: `'*'` for all events, `'observation:*'` for prefix matching.
+   * Supports patterns: `'*'` for all events, `'observation:*'` or `'observation:rum_*'` for prefix matching.
    *
    * @param eventType - The event type key or pattern.
    * @param enricher - The enricher to register.

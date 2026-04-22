@@ -429,7 +429,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-performance-next@workspace:packages/browser-performance-next":
+"@datadog/browser-performance-next@workspace:*, @datadog/browser-performance-next@workspace:packages/browser-performance-next":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-performance-next@workspace:packages/browser-performance-next"
   peerDependencies:
@@ -610,6 +610,7 @@ __metadata:
     "@datadog/browser-console-next": "workspace:*"
     "@datadog/browser-errors-next": "workspace:*"
     "@datadog/browser-network-next": "workspace:*"
+    "@datadog/browser-performance-next": "workspace:*"
     "@datadog/browser-views-next": "workspace:*"
   peerDependencies:
     "@datadog/browser-core-next": "workspace:*"

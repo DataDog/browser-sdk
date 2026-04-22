@@ -24,6 +24,7 @@ import type { TrackType, HttpRequest } from '@datadog/browser-core-next'
 import { startCollectors as startConsoleCollectors } from '@datadog/browser-console-next/collectors'
 import { startCollectors as startErrorCollectors } from '@datadog/browser-errors-next/collectors'
 import { startCollectors as startNetworkCollectors } from '@datadog/browser-network-next/collectors'
+import { startCollectors as startPerformanceCollectors } from '@datadog/browser-performance-next/collectors'
 import { startCollectors as startViewCollectors } from '@datadog/browser-views-next/collectors'
 
 declare const __BUILD_ENV__SDK_VERSION__: string
@@ -79,6 +80,7 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
   const stopConsoleCollectors = startConsoleCollectors(pipeline)
   const stopErrorCollectors = startErrorCollectors(pipeline)
   const stopNetworkCollectors = startNetworkCollectors(pipeline)
+  const stopPerformanceCollectors = startPerformanceCollectors(pipeline)
   const stopViewCollectors = startViewCollectors(pipeline)
 
   // 4.5. Register stack trace enricher on resource events
@@ -234,6 +236,7 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
     stopConsoleCollectors()
     stopErrorCollectors()
     stopNetworkCollectors()
+    stopPerformanceCollectors()
     stopViewCollectors()
     if (typeof document !== 'undefined') {
       document.removeEventListener('visibilitychange', onVisibilityChange)
