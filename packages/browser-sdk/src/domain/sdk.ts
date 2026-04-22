@@ -36,6 +36,7 @@ declare const __BUILD_ENV__SDK_VERSION__: string
 
 interface SdkOptions {
   modules?: Module[]
+  resolveModule?: (name: string) => Promise<Module>
   instanceId?: string
 }
 
@@ -59,7 +60,7 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
   // Module-specific config keys (e.g. `logs`, `rum`) are validated against their extensions
   // regardless of whether the module itself is loaded inline or dynamically.
   const bundledExtensions = [logsExtension, rumExtension]
-  const modules = init.modules ?? []
+  const inlineModules = init.modules ?? []
 
   // 2. Build configuration — inject SDK version from build environment
   const config = build({ ...init, sdkVersion: init.sdkVersion ?? __BUILD_ENV__SDK_VERSION__ }, bundledExtensions)
@@ -162,9 +163,10 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
   }
 
   // 6. Build beforeSend gate from module configs
+  // Uses bundled extensions to determine which module keys might have beforeSend
   function applyBeforeSend(event: Record<string, unknown>): boolean {
-    for (const mod of modules) {
-      const moduleConfig = (config as Record<string, unknown>)[mod.name] as Record<string, unknown> | undefined
+    for (const ext of bundledExtensions) {
+      const moduleConfig = (config as Record<string, unknown>)[ext.key] as Record<string, unknown> | undefined
       const beforeSend = moduleConfig?.beforeSend as ((e: Record<string, unknown>) => boolean | void) | undefined
       if (beforeSend && beforeSend(event) === false) return false
     }
@@ -221,10 +223,33 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
     flushAll()
   })
 
-  // 9. Initialize modules (modules register their routes via context.transport.route())
+  // 9. Resolve and initialize modules.
+  // Inline modules (options.modules) are used directly.
+  // For config keys that don't have an inline module, resolveModule is called if provided.
   const sdk: Sdk = {}
   const context = { config, pipeline, session, transport: { route: router.route.bind(router) } }
-  for (const mod of modules) {
+  const allModules: Module[] = [...inlineModules]
+
+  if (init.resolveModule) {
+    const inlineNames = new Set(inlineModules.map((m) => m.name))
+    // Detect which modules are requested by checking config keys against bundled extensions
+    const moduleNamesToResolve = bundledExtensions
+      .map((ext) => ext.key)
+      .filter((name) => (config as Record<string, unknown>)[name] !== undefined && !inlineNames.has(name))
+
+    const results = await Promise.allSettled(moduleNamesToResolve.map((name) => init.resolveModule!(name)))
+
+    for (const result of results) {
+      if (result.status === 'fulfilled') {
+        allModules.push(result.value)
+      } else {
+        // Log to console — telemetry integration can be added later
+        console.warn('Failed to load module:', result.reason)
+      }
+    }
+  }
+
+  for (const mod of allModules) {
     const api = mod.init(context)
     sdk[mod.name] = api
   }
@@ -249,7 +274,7 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
   sdk.removeAccountProperty = (key: string) => accountContext.removeProperty(key)
   sdk.clearAccount = () => accountContext.clear()
 
-  // 11. Seal pipeline
+  // 11. Seal pipeline — after all modules have registered their enrichers and routes
   pipeline.seal()
 
   // 12. Register in registry
@@ -263,7 +288,7 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
     stopFetchCollectors()
     stopXhrCollectors()
     // Call __stop on each module API if it exposes one (e.g. for module-owned collectors)
-    for (const mod of modules) {
+    for (const mod of allModules) {
       const api = sdk[mod.name] as Record<string, unknown> | undefined
       if (api && typeof (api as any).__stop === 'function') {
         ;(api as any).__stop()
