@@ -14,6 +14,8 @@ import {
   stackTraceEnricher,
   contextEnricher,
 } from '@datadog/core-next'
+import { logsExtension } from '@datadog/browser-logs-next/extension'
+import { rumExtension } from '@datadog/browser-rum-next/extension'
 import { TransportRouter } from './transportRouter'
 import {
   selectStore,
@@ -52,12 +54,14 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
     return null
   }
 
-  // 1. Collect extensions from modules
+  // 1. Collect extensions — bundled extensions are always registered for config validation.
+  // Module-specific config keys (e.g. `logs`, `rum`) are validated against their extensions
+  // regardless of whether the module itself is loaded inline or dynamically.
+  const bundledExtensions = [logsExtension, rumExtension]
   const modules = init.modules ?? []
-  const extensions = modules.map((m) => m.extension)
 
   // 2. Build configuration — inject SDK version from build environment
-  const config = build({ ...init, sdkVersion: init.sdkVersion ?? __BUILD_ENV__SDK_VERSION__ }, extensions)
+  const config = build({ ...init, sdkVersion: init.sdkVersion ?? __BUILD_ENV__SDK_VERSION__ }, bundledExtensions)
   if (!config) {
     return null
   }

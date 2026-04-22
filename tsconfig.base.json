@@ -20,8 +20,10 @@
       "@datadog/core-next": ["./packages/core-next/src"],
       "@datadog/browser-logs-next": ["./packages/browser-logs-next/src"],
       "@datadog/browser-logs-next/processor": ["./packages/browser-logs-next/src/processor"],
+      "@datadog/browser-logs-next/extension": ["./packages/browser-logs-next/src/extension"],
       "@datadog/browser-rum-next": ["./packages/browser-rum-next/src"],
       "@datadog/browser-rum-next/processor": ["./packages/browser-rum-next/src/processor"],
+      "@datadog/browser-rum-next/extension": ["./packages/browser-rum-next/src/extension"],
       "@datadog/browser-sdk": ["./packages/browser-sdk/src"],
 
       "@datadog/browser-logs": ["./packages/logs/src/entries/main"],

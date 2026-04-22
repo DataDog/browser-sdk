@@ -25,6 +25,10 @@
         "types": "./dist/processor/index.d.cts",
         "default": "./dist/processors/index.cjs"
       }
+    },
+    "./extension": {
+      "import": "./dist/extension.mjs",
+      "types": "./dist/extension.d.mts"
     }
   },
   "sideEffects": false,
