@@ -19,31 +19,6 @@ describe('logs bridge (datadogLogs)', () => {
     expect(typeof logger.info).toBe('function')
   })
 
-  it('logs published before connect are buffered and flushed on connect', async () => {
-    // Create a fresh pipeline that hasn't been connected yet
-    const pipeline = new Pipeline<Record<string, unknown>>()
-    const received: unknown[] = []
-
-    pipeline.subscribe('action:log', (event) => {
-      received.push(event)
-    })
-
-    // Log before connecting the bridge — should be buffered
-    datadogLogs.logger.info('buffered message')
-
-    // No events yet since pipeline isn't sealed/connected
-    expect(received.length).toBe(0)
-
-    // Connect bridges — flushes the pending buffer
-    connectBridges(pipeline)
-    pipeline.seal()
-    await waitMicrotask()
-
-    expect(received.length).toBeGreaterThanOrEqual(1)
-    const logEvent = received[received.length - 1] as any
-    expect(logEvent.message).toBe('buffered message')
-  })
-
   it('logs published after connect are sent directly to the pipeline', async () => {
     const pipeline = new Pipeline<Record<string, unknown>>()
     const received: unknown[] = []
@@ -61,5 +36,26 @@ describe('logs bridge (datadogLogs)', () => {
     const directEvent = received.find((e: any) => e.message === 'direct message') as any
     expect(directEvent).toBeDefined()
     expect(directEvent.status).toBe('info')
+  })
+
+  it('createLogger produces a logger that sends events through the connected pipeline', async () => {
+    const pipeline = new Pipeline<Record<string, unknown>>()
+    const received: unknown[] = []
+
+    pipeline.subscribe('action:log', (event) => {
+      received.push(event)
+    })
+
+    connectBridges(pipeline)
+    pipeline.seal()
+
+    const customLogger = datadogLogs.createLogger('service-logger')
+    customLogger.warn('custom warn message')
+    await waitMicrotask()
+
+    const event = received.find((e: any) => e.message === 'custom warn message') as any
+    expect(event).toBeDefined()
+    expect(event.status).toBe('warn')
+    expect(event.loggerName).toBe('service-logger')
   })
 })

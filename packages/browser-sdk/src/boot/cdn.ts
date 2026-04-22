@@ -2,6 +2,16 @@ import { createSdk } from '../domain/sdk'
 import type { SdkInitConfiguration } from '../domain/sdk'
 import type { Module } from '@datadog/core-next'
 
+// The global DD namespace exposed on window for CDN usage.
+// Module bridges (e.g. datadogRum, datadogLogs) can extend this after import.
+interface DdGlobal {
+  init(config: SdkInitConfiguration): void
+  setUser?(user: object): void
+  setGlobalContext?(ctx: object): void
+  setAccount?(account: object): void
+  [key: string]: unknown
+}
+
 function getTargetGlobal(): string {
   const script = document.currentScript as HTMLScriptElement | null
   if (script?.src) {
@@ -48,4 +58,14 @@ function initCdn(config: SdkInitConfiguration): void {
   })
 }
 
-export { getTargetGlobal, initCdn, resolveModuleFromCdn }
+// Populate window.DD with the SDK public API for CDN usage.
+// Module bridges (e.g. DD.rum = datadogRum) are added separately when each module script loads.
+function setupDdGlobal(): void {
+  const dd: DdGlobal = {
+    init: initCdn,
+  }
+  ;(globalThis as any).DD = dd
+}
+
+export { getTargetGlobal, initCdn, resolveModuleFromCdn, setupDdGlobal }
+export type { DdGlobal }

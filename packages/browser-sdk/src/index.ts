@@ -1,5 +1,7 @@
 export { createSdk } from './domain/sdk'
 export type { Sdk, SdkOptions, SdkInitConfiguration } from './domain/sdk'
 export { loadModules, MODULE_MAP } from './domain/moduleLoader'
-export { getTargetGlobal, initCdn } from './boot/cdn'
+export { getTargetGlobal, initCdn, setupDdGlobal, resolveModuleFromCdn } from './boot/cdn'
+export type { DdGlobal } from './boot/cdn'
+export { init, resolveModule } from './boot/npm'
 export * from './browser'

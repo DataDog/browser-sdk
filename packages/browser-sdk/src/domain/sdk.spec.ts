@@ -99,21 +99,76 @@ describe('createSdk', () => {
     expect(getSdk('default')).toBeUndefined()
   })
 
-  it('should return null when module extension validation fails', async () => {
+  it('should return null when a bundled extension validation fails (missing required field)', async () => {
+    // Config validation now uses bundled extensions, not module extensions.
+    // A known key with an invalid value causes bundled extension validation to fail.
+    // forwardConsoleLogs with an invalid value causes logsExtension.validate to return null.
+    const sdk = await createSdk({
+      ...validInit,
+      logs: { forwardConsoleLogs: ['invalid_api'] },
+    } as any)
+
+    expect(sdk).toBeNull()
+  })
+
+  it('module extension on Module is not used for config validation (bundled extensions are used instead)', async () => {
     const mod: Module = {
       name: 'rum',
       extension: {
         key: 'rum',
-        validate: () => null,
+        validate: () => null, // Would reject if used
       },
       init: jasmine.createSpy('init').and.returnValue({}),
     }
 
-    // Extension validation only fails when the key is present in init and validate returns null
-    const sdk = await createSdk({ ...validInit, rum: { applicationId: 'xyz' }, modules: [mod] } as any)
+    // Config validation uses bundled rumExtension, not the module's own extension.
+    // rumExtension accepts any non-null rum config, so init should be called.
+    const sdk = await createSdk({ ...validInit, rum: {}, modules: [mod] } as any)
 
-    expect(sdk).toBeNull()
-    expect(mod.init).not.toHaveBeenCalled()
+    expect(sdk).not.toBeNull()
+    expect(mod.init).toHaveBeenCalledTimes(1)
+  })
+
+  it('should call resolveModule for config keys not covered by inline modules', async () => {
+    const dynamicMod = stubModule('logs')
+    const resolveModuleSpy = jasmine.createSpy('resolveModule').and.returnValue(Promise.resolve(dynamicMod))
+
+    await createSdk({ ...validInit, logs: {}, resolveModule: resolveModuleSpy } as any)
+
+    expect(resolveModuleSpy).toHaveBeenCalledWith('logs')
+    expect(dynamicMod.init).toHaveBeenCalledTimes(1)
+  })
+
+  it('should not call resolveModule for config keys already covered by inline modules', async () => {
+    const inlineMod = stubModule('logs')
+    const resolveModuleSpy = jasmine.createSpy('resolveModule').and.returnValue(Promise.resolve(stubModule('logs')))
+
+    await createSdk({ ...validInit, logs: {}, modules: [inlineMod], resolveModule: resolveModuleSpy } as any)
+
+    expect(resolveModuleSpy).not.toHaveBeenCalled()
+    expect(inlineMod.init).toHaveBeenCalledTimes(1)
+  })
+
+  it('should continue initializing other modules when resolveModule rejects for one', async () => {
+    const resolveModuleSpy = jasmine.createSpy('resolveModule').and.callFake((name: string) => {
+      if (name === 'logs') return Promise.reject(new Error('logs failed'))
+      return Promise.resolve(stubModule(name))
+    })
+
+    const consoleSpy = spyOn(console, 'warn')
+
+    const sdk = await createSdk({
+      ...validInit,
+      logs: {},
+      rum: {},
+      resolveModule: resolveModuleSpy,
+    } as any)
+
+    expect(sdk).not.toBeNull()
+    expect(consoleSpy).toHaveBeenCalled()
+    // rum module should still be initialized
+    expect(sdk!['rum']).toBeDefined()
+    expect(sdk!['logs']).toBeUndefined()
   })
 
   it('should add observation:log events to the batch when route is registered', async () => {

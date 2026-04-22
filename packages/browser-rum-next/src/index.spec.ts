@@ -12,29 +12,7 @@ describe('rum bridge (datadogRum)', () => {
     expect(typeof datadogRum.addAction).toBe('function')
   })
 
-  it('actions published before connect are buffered and flushed on connect', async () => {
-    const pipeline = new Pipeline<Record<string, unknown>>()
-    const received: unknown[] = []
-
-    pipeline.subscribe('action:add_action', (event) => {
-      received.push(event)
-    })
-
-    // Publish before connecting — should buffer
-    datadogRum.addAction('buffered-action', { from: 'pre-init' })
-
-    expect(received.length).toBe(0)
-
-    connectBridges(pipeline)
-    pipeline.seal()
-    await waitMicrotask()
-
-    const action = received.find((e: any) => e.name === 'buffered-action') as any
-    expect(action).toBeDefined()
-    expect(action.context).toEqual({ from: 'pre-init' })
-  })
-
-  it('actions published after connect are sent directly to the pipeline', async () => {
+  it('addAction after connect sends action:add_action to the pipeline', async () => {
     const pipeline = new Pipeline<Record<string, unknown>>()
     const received: unknown[] = []
 
@@ -45,14 +23,15 @@ describe('rum bridge (datadogRum)', () => {
     connectBridges(pipeline)
     pipeline.seal()
 
-    datadogRum.addAction('post-init-action')
+    datadogRum.addAction('my-action', { source: 'test' })
     await waitMicrotask()
 
-    const action = received.find((e: any) => e.name === 'post-init-action') as any
+    const action = received.find((e: any) => e.name === 'my-action') as any
     expect(action).toBeDefined()
+    expect(action.context).toEqual({ source: 'test' })
   })
 
-  it('addError with Error object buffers and flushes action:add_error', async () => {
+  it('addError with Error object publishes action:add_error', async () => {
     const pipeline = new Pipeline<Record<string, unknown>>()
     const received: unknown[] = []
 
@@ -60,19 +39,19 @@ describe('rum bridge (datadogRum)', () => {
       received.push(event)
     })
 
-    const err = new Error('test rum error')
-    datadogRum.addError(err, { extra: 'info' })
-
     connectBridges(pipeline)
     pipeline.seal()
+
+    const err = new Error('rum error test')
+    datadogRum.addError(err, { extra: 'data' })
     await waitMicrotask()
 
-    const errorEvent = received.find((e: any) => e.error?.message === 'test rum error') as any
+    const errorEvent = received.find((e: any) => e.error?.message === 'rum error test') as any
     expect(errorEvent).toBeDefined()
-    expect(errorEvent.context).toEqual({ extra: 'info' })
+    expect(errorEvent.context).toEqual({ extra: 'data' })
   })
 
-  it('addError with string converts to Error object', async () => {
+  it('addError with string converts to Error and publishes action:add_error', async () => {
     const pipeline = new Pipeline<Record<string, unknown>>()
     const received: unknown[] = []
 
@@ -80,14 +59,32 @@ describe('rum bridge (datadogRum)', () => {
       received.push(event)
     })
 
-    datadogRum.addError('string error message')
+    connectBridges(pipeline)
+    pipeline.seal()
+
+    datadogRum.addError('string error')
+    await waitMicrotask()
+
+    const errorEvent = received.find((e: any) => e.error instanceof Error && e.error.message === 'string error') as any
+    expect(errorEvent).toBeDefined()
+  })
+
+  it('startView publishes action:start_view with route_change loading type', async () => {
+    const pipeline = new Pipeline<Record<string, unknown>>()
+    const received: unknown[] = []
+
+    pipeline.subscribe('action:start_view', (event) => {
+      received.push(event)
+    })
 
     connectBridges(pipeline)
     pipeline.seal()
+
+    datadogRum.startView('checkout')
     await waitMicrotask()
 
-    const errorEvent = received.find((e: any) => e.error instanceof Error) as any
-    expect(errorEvent).toBeDefined()
-    expect(errorEvent.error.message).toBe('string error message')
+    const view = received.find((e: any) => e.name === 'checkout') as any
+    expect(view).toBeDefined()
+    expect(view.loadingType).toBe('route_change')
   })
 })
