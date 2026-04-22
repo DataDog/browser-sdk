@@ -205,8 +205,7 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
 
   pipeline.subscribe('observation:view', (event) => {
     if (!applyBeforeSend(event as Record<string, unknown>)) return
-    const viewId = (event as Record<string, unknown>).id as string
-    rumBatch.upsert(viewId, JSON.stringify(event))
+    rumBatch.add(JSON.stringify(event))
   })
 
   pipeline.subscribe('observation:rum_*', (event) => {
