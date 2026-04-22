@@ -1,6 +1,5 @@
 import { monitor } from '../tools/monitor'
 import { getZoneJsOriginalValue } from '../tools/getZoneJsOriginalValue'
-import { noop } from '../tools/utils/functionUtils'
 import type { CookieStore, CookieStoreEventMap, VisualViewport, VisualViewportEventMap } from './browser.types'
 
 export type TrustableEvent<E extends Event = Event> = E & { __ddIsTrusted?: boolean }
@@ -133,31 +132,11 @@ export function addEventListeners<Target extends EventTarget, EventName extends 
     window.EventTarget && eventTarget instanceof EventTarget ? window.EventTarget.prototype : eventTarget
 
   const add = getZoneJsOriginalValue(listenerTarget, 'addEventListener')
-  console.log('datadogRUM: add', add)
-  if (typeof add !== 'function') {
-    return {
-      stop: noop,
-    }
-  }
-
-  try {
-    eventNames.forEach((eventName) => add.call(eventTarget, eventName, listenerWithMonitor, options))
-  } catch {
-    return {
-      stop: noop,
-    }
-  }
+  eventNames.forEach((eventName) => add.call(eventTarget, eventName, listenerWithMonitor, options))
 
   function stop() {
     const remove = getZoneJsOriginalValue(listenerTarget, 'removeEventListener')
-    if (typeof remove !== 'function') {
-      return
-    }
-    try {
-      eventNames.forEach((eventName) => remove.call(eventTarget, eventName, listenerWithMonitor, options))
-    } catch {
-      // Ignore cleanup errors on runtimes exposing partial EventTarget implementations.
-    }
+    eventNames.forEach((eventName) => remove.call(eventTarget, eventName, listenerWithMonitor, options))
   }
 
   return {

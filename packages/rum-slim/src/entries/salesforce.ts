@@ -59,11 +59,6 @@ export { DefaultPrivacyLevel } from '@datadog/browser-core'
 // eslint-disable-next-line local-rules/disallow-side-effects
 const baseRum = makeRumPublicApi(makeRecorderApiStub(), makeProfilerApiStub(), {
   sdkName: 'rum-slim',
-  runtimeCapabilities: {
-    requestCollection: false,
-    runtimeErrors: false,
-    viewMetrics: false,
-  },
 })
 
 export const datadogRum: RumPublicApi = {

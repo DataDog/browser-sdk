@@ -1134,28 +1134,6 @@ describe('rum public api', () => {
       expect(sdkName).toBe('rum-slim')
     })
   })
-
-  describe('runtime capabilities', () => {
-    it('passes them down to startRum', () => {
-      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
-        rumPublicApiOptions: {
-          runtimeCapabilities: {
-            requestCollection: false,
-            runtimeErrors: false,
-            viewMetrics: false,
-          },
-        },
-      })
-
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-      expect(startRumSpy.calls.argsFor(0)[11]).toEqual({
-        requestCollection: false,
-        runtimeErrors: false,
-        viewMetrics: false,
-      })
-    })
-  })
 })
 
 function makeRumPublicApiWithDefaults({

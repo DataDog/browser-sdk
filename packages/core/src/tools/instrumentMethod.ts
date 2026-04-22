@@ -74,7 +74,6 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
   { computeHandlingStack }: { computeHandlingStack?: boolean } = {}
 ) {
   let original = targetPrototype[method]
-  const propertyDescriptor = findPropertyDescriptor(targetPrototype, method)
 
   if (typeof original !== 'function') {
     if (method in targetPrototype && typeof method === 'string' && method.startsWith('on')) {
@@ -82,14 +81,6 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
     } else {
       return { stop: noop }
     }
-  }
-
-  if (
-    propertyDescriptor &&
-    (('writable' in propertyDescriptor && propertyDescriptor.writable === false) ||
-      ('set' in propertyDescriptor && propertyDescriptor.set === undefined))
-  ) {
-    return { stop: noop }
   }
 
   let stopped = false
@@ -126,43 +117,17 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
     return result
   }
 
-  try {
-    targetPrototype[method] = instrumentation as TARGET[METHOD]
-  } catch {
-    return { stop: noop }
-  }
+  targetPrototype[method] = instrumentation as TARGET[METHOD]
 
   return {
     stop: () => {
       stopped = true
       // If the instrumentation has been removed by a third party, keep the last one
-      try {
-        if (targetPrototype[method] === instrumentation) {
-          targetPrototype[method] = original
-        }
-      } catch {
-        // Some runtimes expose instrumentable methods as readonly. In that case, the
-        // instrumentation is already inert thanks to the `stopped` flag above.
+      if (targetPrototype[method] === instrumentation) {
+        targetPrototype[method] = original
       }
     },
   }
-}
-
-function findPropertyDescriptor<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET>(
-  target: TARGET,
-  method: METHOD
-): PropertyDescriptor | undefined {
-  let currentTarget: object | null = target
-
-  while (currentTarget) {
-    const descriptor = Object.getOwnPropertyDescriptor(currentTarget, method)
-    if (descriptor) {
-      return descriptor
-    }
-    currentTarget = Object.getPrototypeOf(currentTarget)
-  }
-
-  return undefined
 }
 
 export function instrumentSetter<TARGET extends { [key: string]: any }, PROPERTY extends keyof TARGET>(

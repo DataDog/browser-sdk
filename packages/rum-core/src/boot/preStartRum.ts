@@ -59,11 +59,7 @@ export type DoStartRum = (
 ) => StartRumResult
 
 export function createPreStartStrategy(
-  {
-    ignoreInitIfSyntheticsWillInjectRum = true,
-    startDeflateWorker,
-    runtimeCapabilities,
-  }: RumPublicApiOptions,
+  { ignoreInitIfSyntheticsWillInjectRum = true, startDeflateWorker }: RumPublicApiOptions,
   trackingConsentState: TrackingConsentState,
   customVitalsState: CustomVitalsState,
   doStartRum: DoStartRum
@@ -173,9 +169,7 @@ export function createPreStartStrategy(
     // This is needed in case the consent is not granted and some customer
     // library (Apollo Client) is storing uninstrumented fetch to be used later
     // The subscription is needed so that the instrumentation process is completed
-    if (runtimeCapabilities?.requestCollection !== false) {
-      initFetchObservable().subscribe(noop)
-    }
+    initFetchObservable().subscribe(noop)
 
     trackingConsentState.tryToInit(configuration.trackingConsent)
     tryStartRum()

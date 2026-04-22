@@ -25,8 +25,7 @@ export function startViewCollection(
   locationChangeObservable: Observable<LocationChange>,
   recorderApi: RecorderApi,
   viewHistory: ViewHistory,
-  initialViewOptions?: ViewOptions,
-  collectViewMetrics: boolean = true
+  initialViewOptions?: ViewOptions
 ) {
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processViewUpdate(view, configuration, recorderApi))
@@ -67,8 +66,7 @@ export function startViewCollection(
     configuration,
     locationChangeObservable,
     !configuration.trackViewsManually,
-    initialViewOptions,
-    collectViewMetrics
+    initialViewOptions
   )
 }
 

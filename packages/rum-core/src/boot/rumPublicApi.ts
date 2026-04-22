@@ -15,7 +15,6 @@ import type {
   Telemetry,
   Encoder,
   ResourceType,
-  BufferedData,
 } from '@datadog/browser-core'
 import {
   ContextManagerMethod,
@@ -39,7 +38,6 @@ import {
   mockable,
   generateUUID,
   timeStampNow,
-  BufferedObservable,
 } from '@datadog/browser-core'
 
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -65,8 +63,6 @@ import type { ResourceOptions, ResourceStopOptions } from '../domain/resource/tr
 import { createPreStartStrategy } from './preStartRum'
 import type { StartRumResult } from './startRum'
 import { startRum } from './startRum'
-import type { RumRuntimeCapabilities } from './runtimeCapabilities'
-import { resolveRumRuntimeCapabilities } from './runtimeCapabilities'
 
 export interface StartRecordingOptions {
   force: boolean
@@ -560,7 +556,6 @@ export interface RumPublicApiOptions {
     streamId: DeflateEncoderStreamId
   ) => DeflateEncoder
   sdkName?: SdkName
-  runtimeCapabilities?: RumRuntimeCapabilities
 }
 
 export interface Strategy {
@@ -601,10 +596,7 @@ export function makeRumPublicApi(
 ): RumPublicApi {
   const trackingConsentState = createTrackingConsentState()
   const customVitalsState = createCustomVitalsState()
-  const runtimeCapabilities = resolveRumRuntimeCapabilities(options.runtimeCapabilities)
-  const bufferedDataObservable = runtimeCapabilities.runtimeErrors
-    ? startBufferingData().observable
-    : new BufferedObservable<BufferedData>(0)
+  const bufferedDataObservable = startBufferingData().observable
 
   let strategy = createPreStartStrategy(
     options,
@@ -627,8 +619,7 @@ export function makeRumPublicApi(
         bufferedDataObservable,
         telemetry,
         hooks,
-        options.sdkName,
-        runtimeCapabilities
+        options.sdkName
       )
 
       recorderApi.onRumStart(

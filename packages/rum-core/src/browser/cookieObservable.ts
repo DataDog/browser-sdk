@@ -7,7 +7,6 @@ import {
   ONE_SECOND,
   findCommaSeparatedValue,
   DOM_EVENT,
-  getZoneJsOriginalValue,
 } from '@datadog/browser-core'
 
 export interface CookieStoreWindow {
@@ -28,10 +27,6 @@ export function createCookieObservable(configuration: Configuration, cookieName:
 
 function listenToCookieStoreChange(configuration: Configuration) {
   return (cookieName: string, callback: (event: string | undefined) => void) => {
-    if (!canListenToCookieStoreChanges()) {
-      return watchCookieFallback(cookieName, callback)
-    }
-
     const listener = addEventListener(
       configuration,
       (window as CookieStoreWindow).cookieStore!,
@@ -48,25 +43,6 @@ function listenToCookieStoreChange(configuration: Configuration) {
       }
     )
     return listener.stop
-  }
-}
-
-function canListenToCookieStoreChanges() {
-  const cookieStore = (window as CookieStoreWindow).cookieStore
-  const add = cookieStore && getZoneJsOriginalValue(cookieStore, 'addEventListener')
-  const remove = cookieStore && getZoneJsOriginalValue(cookieStore, 'removeEventListener')
-
-  if (typeof add !== 'function' || typeof remove !== 'function') {
-    return false
-  }
-
-  const noopListener = () => undefined
-  try {
-    add.call(cookieStore, DOM_EVENT.CHANGE, noopListener)
-    remove.call(cookieStore, DOM_EVENT.CHANGE, noopListener)
-    return true
-  } catch {
-    return false
   }
 }
 

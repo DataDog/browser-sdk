@@ -21,18 +21,11 @@ export function getPlaywrightConfigBrowserName(name: string): PlaywrightWorkerOp
 }
 
 export function getEncodedCapabilities(configuration: BrowserConfiguration) {
-  return getEncodedCapabilitiesWithOptions(configuration)
-}
-
-export function getEncodedCapabilitiesWithOptions(
-  configuration: BrowserConfiguration,
-  { localTesting = true }: { localTesting?: boolean } = {}
-) {
-  return encodeURIComponent(JSON.stringify(getCapabilities(configuration, { localTesting })))
+  return encodeURIComponent(JSON.stringify(getCapabilities(configuration)))
 }
 
 // see: https://www.browserstack.com/docs/automate/playwright/playwright-capabilities
-function getCapabilities(configuration: BrowserConfiguration, { localTesting }: { localTesting: boolean }) {
+function getCapabilities(configuration: BrowserConfiguration) {
   const playwrightVersion = resolvePlaywrightVersionFromPackageJson()
   return {
     os: configuration.os,
@@ -44,7 +37,7 @@ function getCapabilities(configuration: BrowserConfiguration, { localTesting }: 
     project: 'browser sdk e2e',
     build: getBuildInfos(),
     name: configuration.sessionName,
-    'browserstack.local': localTesting,
+    'browserstack.local': true,
     'browserstack.playwrightVersion': playwrightVersion,
     'client.playwrightVersion': playwrightVersion,
     'browserstack.debug': false,
