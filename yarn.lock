@@ -464,6 +464,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@datadog/browser-rum-next@workspace:packages/browser-rum-next":
+  version: 0.0.0-use.local
+  resolution: "@datadog/browser-rum-next@workspace:packages/browser-rum-next"
+  peerDependencies:
+    "@datadog/browser-performance-next": "workspace:*"
+    "@datadog/core-next": "workspace:*"
+  languageName: unknown
+  linkType: soft
+
 "@datadog/browser-rum-nextjs@workspace:packages/rum-nextjs":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-nextjs@workspace:packages/rum-nextjs"
