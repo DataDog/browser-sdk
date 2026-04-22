@@ -15,6 +15,11 @@ interface Rum {
   getInternalContext?: () => RumInternalContext | undefined
 }
 
+interface TraceCorrelationContext extends Context {
+  trace_id: string
+  span_id: string
+}
+
 // Cache hostname at module initialization since it won't change during the app lifetime
 const globalObj = getGlobalObject<BrowserWindow & { DD_RUM?: Rum }>() // eslint-disable-line local-rules/disallow-side-effects
 const hostname = 'location' in globalObj ? globalObj.location.hostname : 'unknown'
@@ -273,7 +278,6 @@ function sendDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): voi
         : undefined,
   }
 
-  const rumApi = globalObj.DD_RUM
   const debuggerApi = globalObj.DD_DEBUGGER!
 
   // TODO: Fill out logger with the right information
@@ -286,11 +290,7 @@ function sendDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): voi
   }
 
   // Get the RUM internal context for trace correlation
-  const rumContext = rumApi?.getInternalContext?.()
-  const dd = {
-    trace_id: rumContext?.session_id,
-    span_id: rumContext?.user_action?.id || rumContext?.view?.id,
-  }
+  const dd = getTraceCorrelationContext()
 
   const ddtags = [
     buildTag('sdk_version', debuggerApi.version),
@@ -307,7 +307,7 @@ function sendDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): voi
     service: debuggerConfig.service,
     ddtags: ddtags.join(','),
     logger,
-    dd,
+    ...(dd ? { dd } : {}),
     debugger: { snapshot },
   }
 
@@ -325,6 +325,24 @@ function detectThreadName() {
     return 'web-worker'
   }
   return 'unknown'
+}
+
+function getTraceCorrelationContext(): TraceCorrelationContext | undefined {
+  const rumContext = globalObj.DD_RUM?.getInternalContext?.()
+  const traceId = getStringContextValue(rumContext, 'trace_id')
+  const spanId = getStringContextValue(rumContext, 'span_id')
+
+  return traceId && spanId
+    ? {
+        trace_id: traceId,
+        span_id: spanId,
+      }
+    : undefined
+}
+
+function getStringContextValue(context: Context | undefined, key: string): string | undefined {
+  const value = context?.[key]
+  return typeof value === 'string' && value !== '' ? value : undefined
 }
 
 declare const ServiceWorkerGlobalScope: typeof EventTarget
