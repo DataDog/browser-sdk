@@ -960,7 +960,7 @@ describe('profiler', () => {
       profiler.start()
       await waitForBoolean(() => profiler.isStopped())
 
-      expect(profilingContextManager.get()).toEqual({ status: 'stopped', error_reason: 'quota-exceeded' })
+      expect(profilingContextManager.get()).toEqual({ status: 'stopped', error_reason: 'quota-exceeded' } as any)
       expect(interceptor.requests.length).toBe(0) // no data sent
     })
 
@@ -1073,7 +1073,7 @@ describe('profiler', () => {
       await waitNextMicrotask()
 
       expect(profiler.isStopped()).toBe(true)
-      expect(profilingContextManager.get()).toEqual({ status: 'stopped', error_reason: 'quota-exceeded' })
+      expect(profilingContextManager.get()).toEqual({ status: 'stopped', error_reason: 'quota-exceeded' } as any)
 
       setVisibilityState('visible')
       await waitNextMicrotask()
