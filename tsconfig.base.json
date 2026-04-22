@@ -18,13 +18,9 @@
     "paths": {
       "@datadog/browser-core": ["./packages/core/src"],
       "@datadog/core-next": ["./packages/core-next/src"],
-      "@datadog/browser-core-next": ["./packages/browser-sdk/src/browser"],
-      "@datadog/browser-performance-next": ["./packages/browser-performance-next/src"],
-      "@datadog/browser-performance-next/collectors": ["./packages/browser-performance-next/src/collectors"],
       "@datadog/browser-logs-next": ["./packages/browser-logs-next/src"],
       "@datadog/browser-logs-next/processor": ["./packages/browser-logs-next/src/processor"],
       "@datadog/browser-rum-next": ["./packages/browser-rum-next/src"],
-      "@datadog/browser-rum-next/collectors": ["./packages/browser-rum-next/src/collectors"],
       "@datadog/browser-rum-next/processor": ["./packages/browser-rum-next/src/processor"],
       "@datadog/browser-sdk": ["./packages/browser-sdk/src"],
 

@@ -52,13 +52,8 @@ export default defineConfig({
       '@datadog/browser-rum': path.resolve(__dirname, '../../packages/rum/src/entries/main'),
       // V8 packages
       '@datadog/core-next': path.resolve(__dirname, '../../packages/core-next/src'),
-      '@datadog/browser-core-next': path.resolve(__dirname, '../../packages/browser-core-next/src'),
       '@datadog/browser-sdk': path.resolve(__dirname, '../../packages/browser-sdk/src'),
       '@datadog/browser-logs-next': path.resolve(__dirname, '../../packages/browser-logs-next/src'),
-      '@datadog/browser-console-next': path.resolve(__dirname, '../../packages/browser-console-next/src'),
-      '@datadog/browser-errors-next': path.resolve(__dirname, '../../packages/browser-errors-next/src'),
-      '@datadog/browser-network-next': path.resolve(__dirname, '../../packages/browser-network-next/src'),
-      '@datadog/browser-views-next': path.resolve(__dirname, '../../packages/browser-views-next/src'),
     },
   },
   server: {

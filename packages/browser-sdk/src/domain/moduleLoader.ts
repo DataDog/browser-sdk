@@ -3,7 +3,6 @@ import type { Module } from '@datadog/core-next'
 const MODULE_MAP: Record<string, string> = {
   rum: '@datadog/browser-rum-next/processor',
   logs: '@datadog/browser-logs-next/processor',
-  views: '@datadog/browser-views-next/processor',
 }
 
 async function loadModules(configKeys: string[], explicitModules: Module[] = []): Promise<Module[]> {
