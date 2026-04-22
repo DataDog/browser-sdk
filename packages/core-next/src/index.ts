@@ -89,7 +89,8 @@ export { Session } from './domain/session/session'
 
 export { ContextManager } from './domain/context/context'
 
-export { registerSdk, getSdk, unregisterSdk } from './domain/registry'
+export { registerSdk, getSdk, unregisterSdk, registerBridge, connectBridges } from './domain/registry'
+export type { Bridge } from './domain/registry'
 
 export type { Module, ModuleContext } from './domain/module'
 

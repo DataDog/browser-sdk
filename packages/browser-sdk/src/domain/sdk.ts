@@ -13,6 +13,7 @@ import {
   metadataEnricher,
   stackTraceEnricher,
   contextEnricher,
+  connectBridges,
 } from '@datadog/core-next'
 import { logsExtension } from '@datadog/browser-logs-next/extension'
 import { rumExtension } from '@datadog/browser-rum-next/extension'
@@ -86,6 +87,9 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
 
   // 4. Create pipeline
   const pipeline = new Pipeline<Record<string, unknown>>()
+
+  // 4.0. Connect bridges — flush any events buffered before SDK init (pre-init buffering)
+  connectBridges(pipeline)
 
   // 4.1. Start bundled collectors (always active, regardless of which modules are loaded)
   const stopConsoleCollectors = startConsoleCollectors(pipeline)
