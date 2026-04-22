@@ -66,7 +66,7 @@ describe('RUM integration', () => {
     delete (globalThis as any)._DD_SESSION
   })
 
-  it('observation:rum_error is sent on runtime error', async () => {
+  it('observation:error is sent on runtime error', async () => {
     currentSdk = await createSdk({
       clientToken: 'test-token',
       site: 'datadoghq.com',
@@ -83,7 +83,7 @@ describe('RUM integration', () => {
     expect(errorLines.length).toBeGreaterThan(0)
   })
 
-  it('addError sends observation:rum_error', async () => {
+  it('addError sends observation:error', async () => {
     currentSdk = await createSdk({
       clientToken: 'test-token',
       site: 'datadoghq.com',

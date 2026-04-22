@@ -17,7 +17,7 @@ function startProcessor({ pipeline, config }: ProcessorDependencies): void {
     matcher.add(data as NetworkRequestResource)
   })
 
-  // Performance entries → observation:rum_resource
+  // Performance entries → observation:resource
   if (config.trackResources) {
     pipeline.subscribe('resource:performance_entry', (data) => {
       const entry = data as ResourceTimingEntry
@@ -48,17 +48,17 @@ function startProcessor({ pipeline, config }: ProcessorDependencies): void {
         },
       }
 
-      pipeline.publish('observation:rum_resource', resource)
+      pipeline.publish('observation:resource', resource)
     })
   }
 
-  // Runtime errors → observation:rum_error
+  // Runtime errors → observation:error
   if (config.trackErrors) {
     pipeline.subscribe('resource:runtime_error', (data) => {
       const error = data as Record<string, unknown>
       const errorObj = error.error as Error | undefined
 
-      pipeline.publish('observation:rum_error', {
+      pipeline.publish('observation:error', {
         type: 'error',
         date: Date.now(),
         error: {
@@ -73,11 +73,11 @@ function startProcessor({ pipeline, config }: ProcessorDependencies): void {
     })
   }
 
-  // Long tasks → observation:rum_long_task
+  // Long tasks → observation:long_task
   if (config.trackLongTasks) {
     pipeline.subscribe('resource:long_task', (data) => {
       const entry = data as { startTime: number; duration: number }
-      pipeline.publish('observation:rum_long_task', {
+      pipeline.publish('observation:long_task', {
         type: 'long_task',
         date: Math.round(performance.timeOrigin + entry.startTime),
         long_task: { duration: entry.duration },
@@ -104,7 +104,7 @@ function startProcessor({ pipeline, config }: ProcessorDependencies): void {
         }>
       }
 
-      pipeline.publish('observation:rum_long_task', {
+      pipeline.publish('observation:long_task', {
         type: 'long_task',
         date: Math.round(performance.timeOrigin + entry.startTime),
         long_task: {

@@ -49,9 +49,9 @@ interface SdkEventMap {
   'resource:performance_entry': unknown
   'resource:long_task': unknown
   'resource:long_animation_frame': unknown
-  'observation:rum_resource': unknown
-  'observation:rum_error': unknown
-  'observation:rum_long_task': unknown
+  'observation:resource': unknown
+  'observation:error': unknown
+  'observation:long_task': unknown
   'signal:session_expired': void
   'signal:session_renewed': void
   [key: string]: unknown

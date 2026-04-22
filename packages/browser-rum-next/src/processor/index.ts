@@ -37,11 +37,11 @@ const rumProcessor: Module = {
     // Start view processor (resource:navigation + action:start_view → observation:view + signal:view_changed)
     startViewProcessor({ pipeline: context.pipeline })
 
-    // Register RUM enrichers on all observation:rum_* events
-    context.pipeline.enrich('observation:rum_*', viewContextEnricher(context.pipeline))
-    context.pipeline.enrich('observation:rum_*', displayEnricher())
-    context.pipeline.enrich('observation:rum_*', connectivityEnricher())
-    context.pipeline.enrich('observation:rum_*', pageStateEnricher())
+    // Register RUM enrichers on all observation:* events
+    context.pipeline.enrich('observation:*', viewContextEnricher(context.pipeline))
+    context.pipeline.enrich('observation:*', displayEnricher())
+    context.pipeline.enrich('observation:*', connectivityEnricher())
+    context.pipeline.enrich('observation:*', pageStateEnricher())
 
     // Start the processor (subscribes to resources, transforms to observations)
     startProcessor({
@@ -70,7 +70,7 @@ const rumProcessor: Module = {
       addError(error: Error | string, errorContext?: object) {
         const errorObj = error instanceof Error ? error : undefined
         const message = error instanceof Error ? error.message : error
-        context.pipeline.publish('observation:rum_error', {
+        context.pipeline.publish('observation:error', {
           type: 'error',
           date: Date.now(),
           error: {

@@ -65,11 +65,11 @@ describe('rumProcessor', () => {
     expect(typeof actions[0].startDate).toBe('number')
   })
 
-  it('addError publishes observation:rum_error', async () => {
+  it('addError publishes observation:error', async () => {
     const { pipeline, config } = createTestContext()
     const observations: unknown[] = []
 
-    pipeline.subscribe('observation:rum_error', (data) => observations.push(data))
+    pipeline.subscribe('observation:error', (data) => observations.push(data))
 
     const api = init({ pipeline, config })
     pipeline.seal()
@@ -89,7 +89,7 @@ describe('rumProcessor', () => {
     const { pipeline, config } = createTestContext()
     const observations: unknown[] = []
 
-    pipeline.subscribe('observation:rum_error', (data) => observations.push(data))
+    pipeline.subscribe('observation:error', (data) => observations.push(data))
 
     const api = init({ pipeline, config })
     pipeline.seal()

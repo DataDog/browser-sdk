@@ -216,7 +216,17 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
     rumBatch.add(JSON.stringify(event))
   })
 
-  pipeline.subscribe('observation:rum_*', (event) => {
+  pipeline.subscribe('observation:resource', (event) => {
+    if (!applyBeforeSend(event as Record<string, unknown>)) return
+    rumBatch.add(JSON.stringify(event))
+  })
+
+  pipeline.subscribe('observation:error', (event) => {
+    if (!applyBeforeSend(event as Record<string, unknown>)) return
+    rumBatch.add(JSON.stringify(event))
+  })
+
+  pipeline.subscribe('observation:long_task', (event) => {
     if (!applyBeforeSend(event as Record<string, unknown>)) return
     rumBatch.add(JSON.stringify(event))
   })

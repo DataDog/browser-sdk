@@ -28,7 +28,7 @@ interface Subscription {
  * **Pattern matching:**
    * - `'*'` matches all event types.
    * - `'observation:*'` matches all event types starting with `observation:`.
-   * - `'observation:rum_*'` matches all event types starting with `observation:rum_`.
+   * - `'observation:resource'`, `'observation:error'`, `'observation:long_task'` for specific observation types.
    * - Exact keys match only the specific event type.
  *
  * @example
@@ -81,7 +81,7 @@ class Pipeline<TEventMap extends Record<string, unknown>> {
    * Registers an enricher for the given event type or pattern.
    * Must be called before {@link seal}. Throws if the pipeline is already sealed.
    *
-   * Supports patterns: `'*'` for all events, `'observation:*'` or `'observation:rum_*'` for prefix matching.
+   * Supports patterns: `'*'` for all events, `'observation:*'` for prefix matching.
    *
    * @param eventType - The event type key or pattern.
    * @param enricher - The enricher to register.

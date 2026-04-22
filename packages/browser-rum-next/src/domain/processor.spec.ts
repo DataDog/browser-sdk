@@ -64,9 +64,9 @@ describe('startProcessor', () => {
     pipeline = new Pipeline<Record<string, unknown>>()
   })
 
-  it('transforms resource:performance_entry into observation:rum_resource', async () => {
+  it('transforms resource:performance_entry into observation:resource', async () => {
     const observations: unknown[] = []
-    pipeline.subscribe('observation:rum_resource', (data) => observations.push(data))
+    pipeline.subscribe('observation:resource', (data) => observations.push(data))
 
     startProcessor({ pipeline, config: makeConfig() })
     pipeline.seal()
@@ -89,7 +89,7 @@ describe('startProcessor', () => {
 
   it('enriches rum_resource with matched network_request data', async () => {
     const observations: unknown[] = []
-    pipeline.subscribe('observation:rum_resource', (data) => observations.push(data))
+    pipeline.subscribe('observation:resource', (data) => observations.push(data))
 
     startProcessor({ pipeline, config: makeConfig() })
     pipeline.seal()
@@ -106,7 +106,7 @@ describe('startProcessor', () => {
 
   it('publishes rum_resource without network match', async () => {
     const observations: unknown[] = []
-    pipeline.subscribe('observation:rum_resource', (data) => observations.push(data))
+    pipeline.subscribe('observation:resource', (data) => observations.push(data))
 
     startProcessor({ pipeline, config: makeConfig() })
     pipeline.seal()
@@ -119,9 +119,9 @@ describe('startProcessor', () => {
     expect(resource.method).toBeUndefined()
   })
 
-  it('transforms resource:runtime_error into observation:rum_error', async () => {
+  it('transforms resource:runtime_error into observation:error', async () => {
     const observations: unknown[] = []
-    pipeline.subscribe('observation:rum_error', (data) => observations.push(data))
+    pipeline.subscribe('observation:error', (data) => observations.push(data))
 
     startProcessor({ pipeline, config: makeConfig() })
     pipeline.seal()
@@ -143,9 +143,9 @@ describe('startProcessor', () => {
     expect(error.source).toBe('source')
   })
 
-  it('transforms resource:long_task into observation:rum_long_task', async () => {
+  it('transforms resource:long_task into observation:long_task', async () => {
     const observations: unknown[] = []
-    pipeline.subscribe('observation:rum_long_task', (data) => observations.push(data))
+    pipeline.subscribe('observation:long_task', (data) => observations.push(data))
 
     startProcessor({ pipeline, config: makeConfig() })
     pipeline.seal()
@@ -162,7 +162,7 @@ describe('startProcessor', () => {
 
   it('does not publish resources when trackResources is false', async () => {
     const observations: unknown[] = []
-    pipeline.subscribe('observation:rum_resource', (data) => observations.push(data))
+    pipeline.subscribe('observation:resource', (data) => observations.push(data))
 
     startProcessor({ pipeline, config: makeConfig({ trackResources: false }) })
     pipeline.seal()
