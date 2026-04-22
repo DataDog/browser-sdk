@@ -35,6 +35,12 @@ describe('views integration', () => {
     delete (globalThis as any)._DD_SESSION
   })
 
+  function getRumBody(): string {
+    const rumCalls = fetchSpy.calls.all().filter((c) => String(c.args[0]).includes('/api/v2/rum'))
+    expect(rumCalls.length).toBeGreaterThan(0)
+    return (rumCalls[rumCalls.length - 1].args[1] as RequestInit).body as string
+  }
+
   it('initial view: observation:view is sent on SDK init', async () => {
     currentSdk = await createSdk({
       clientToken: 'test-token',
@@ -46,8 +52,7 @@ describe('views integration', () => {
     await tick()
     flushBatch()
 
-    expect(fetchSpy).toHaveBeenCalled()
-    const body = (fetchSpy.calls.mostRecent().args[1] as RequestInit).body as string
+    const body = getRumBody()
     expect(body).toContain('"loadingType":"initial_load"')
     expect(body).toContain('"url"')
   })
@@ -68,8 +73,7 @@ describe('views integration', () => {
     await tick()
     flushBatch()
 
-    expect(fetchSpy).toHaveBeenCalled()
-    const body = (fetchSpy.calls.mostRecent().args[1] as RequestInit).body as string
+    const body = getRumBody()
     expect(body).toContain('"loadingType":"route_change"')
     expect(body).toContain('"name":"checkout"')
   })
@@ -85,7 +89,7 @@ describe('views integration', () => {
     await tick()
     flushBatch()
 
-    const body = (fetchSpy.calls.mostRecent().args[1] as RequestInit).body as string
+    const body = getRumBody()
     const event = JSON.parse(body)
     expect(event.session).toBeDefined()
     expect(typeof event.session.id).toBe('string')
@@ -108,8 +112,7 @@ describe('views integration', () => {
     await tick()
     flushBatch()
 
-    expect(fetchSpy).toHaveBeenCalled()
-    const body = (fetchSpy.calls.mostRecent().args[1] as RequestInit).body as string
+    const body = getRumBody()
     const lines = body.trim().split('\n')
     const lastEvent = JSON.parse(lines[lines.length - 1])
     expect(lastEvent.deployment).toBe('canary')
@@ -132,8 +135,7 @@ describe('views integration', () => {
     await tick()
     flushBatch()
 
-    expect(fetchSpy).toHaveBeenCalled()
-    const body = (fetchSpy.calls.mostRecent().args[1] as RequestInit).body as string
+    const body = getRumBody()
     const lines = body.trim().split('\n')
     const lastEvent = JSON.parse(lines[lines.length - 1])
     expect(lastEvent.usr).toEqual(jasmine.objectContaining({ id: 'user-42', name: 'Ada' }))

@@ -143,34 +143,36 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
     }
   }
 
-  const batch = new Batch({
-    maxSizeBytes: 16 * 1024,
-    maxCount: 50,
-    flushTimeoutMs: 30_000,
-  })
+  const logsBatch = new Batch({ maxSizeBytes: 16 * 1024, maxCount: 50, flushTimeoutMs: 30_000 })
+  const rumBatch = new Batch({ maxSizeBytes: 16 * 1024, maxCount: 50, flushTimeoutMs: 30_000 })
 
   // 6. Wire batch flush → transport (primary + replica)
-  batch.on('flush', (messages) => {
+  logsBatch.on('flush', (messages) => {
     const data = messages.join('\n')
     const payload = { data, bytesCount: new Blob([data]).size }
+    transports.get('logs')?.send(payload)
+    replicaTransports?.get('logs')?.send({ ...payload })
+  })
 
-    // Send to primary (logs endpoint for now, TODO: route by event type)
-    const primary = transports.get('logs')
-    primary?.send(payload)
-
-    // Send to replica if configured
-    const replica = replicaTransports?.get('logs')
-    replica?.send({ ...payload })
+  rumBatch.on('flush', (messages) => {
+    const data = messages.join('\n')
+    const payload = { data, bytesCount: new Blob([data]).size }
+    transports.get('rum')?.send(payload)
+    replicaTransports?.get('rum')?.send({ ...payload })
   })
 
   // 7. Wire page exit → batch flush
+  const flushAll = () => {
+    logsBatch.flush()
+    rumBatch.flush()
+  }
   const onVisibilityChange = () => {
     if (document.visibilityState === 'hidden') {
-      batch.flush()
+      flushAll()
     }
   }
   const onBeforeUnload = () => {
-    batch.flush()
+    flushAll()
   }
   if (typeof document !== 'undefined') {
     document.addEventListener('visibilitychange', onVisibilityChange)
@@ -181,22 +183,33 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
 
   // 8. Wire session expire → batch flush
   session.on('expired', () => {
-    batch.flush()
+    flushAll()
   })
 
-  // 8.5. Wire all pipeline observations → batch (with beforeSend gate)
-  pipeline.subscribe('observation:*', (event) => {
-    // Collect beforeSend callbacks from module configs
-    const record = event as Record<string, unknown>
+  // 8.5. Wire pipeline observations → batches by type (with beforeSend gate)
+  function applyBeforeSend(event: Record<string, unknown>): boolean {
     for (const mod of modules) {
       const moduleConfig = (config as Record<string, unknown>)[mod.name] as Record<string, unknown> | undefined
       const beforeSend = moduleConfig?.beforeSend as ((e: Record<string, unknown>) => boolean | void) | undefined
-      if (beforeSend) {
-        const result = beforeSend(record)
-        if (result === false) return
-      }
+      if (beforeSend && beforeSend(event) === false) return false
     }
-    batch.add(JSON.stringify(event))
+    return true
+  }
+
+  pipeline.subscribe('observation:log', (event) => {
+    if (!applyBeforeSend(event as Record<string, unknown>)) return
+    logsBatch.add(JSON.stringify(event))
+  })
+
+  pipeline.subscribe('observation:view', (event) => {
+    if (!applyBeforeSend(event as Record<string, unknown>)) return
+    const viewId = (event as Record<string, unknown>).id as string
+    rumBatch.upsert(viewId, JSON.stringify(event))
+  })
+
+  pipeline.subscribe('observation:rum_*', (event) => {
+    if (!applyBeforeSend(event as Record<string, unknown>)) return
+    rumBatch.add(JSON.stringify(event))
   })
 
   // 9. Initialize modules
@@ -228,7 +241,8 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
     if (typeof window !== 'undefined') {
       window.removeEventListener('beforeunload', onBeforeUnload)
     }
-    batch.destroy()
+    logsBatch.destroy()
+    rumBatch.destroy()
     unregisterSdk(instanceId)
   }
 
