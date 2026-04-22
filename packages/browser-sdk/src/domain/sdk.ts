@@ -26,7 +26,6 @@ import { startRuntimeErrorCollection } from '../collectors/runtimeErrorCollector
 import { startReportCollection } from '../collectors/reportCollector'
 import { startFetchCollection } from '../collectors/fetchCollector'
 import { startXhrCollection } from '../collectors/xhrCollector'
-import { startCollectors as startPerformanceCollectors } from '@datadog/browser-performance-next/collectors'
 
 declare const __BUILD_ENV__SDK_VERSION__: string
 
@@ -83,7 +82,6 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
   const stopReportCollectors = startReportCollection(pipeline)
   const stopFetchCollectors = startFetchCollection(pipeline)
   const stopXhrCollectors = startXhrCollection(pipeline)
-  const stopPerformanceCollectors = startPerformanceCollectors(pipeline)
 
   // 4.5. Register stack trace enricher on resource events
   pipeline.enrich('resource:console', stackTraceEnricher())
@@ -239,7 +237,6 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
     stopReportCollectors()
     stopFetchCollectors()
     stopXhrCollectors()
-    stopPerformanceCollectors()
     // Call __stop on each module API if it exposes one (e.g. for module-owned collectors)
     for (const mod of modules) {
       const api = sdk[mod.name] as Record<string, unknown> | undefined

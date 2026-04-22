@@ -20,9 +20,6 @@
   "publishConfig": {
     "access": "public"
   },
-  "dependencies": {
-    "@datadog/browser-performance-next": "workspace:*"
-  },
   "peerDependencies": {
     "@datadog/core-next": "workspace:*"
   }

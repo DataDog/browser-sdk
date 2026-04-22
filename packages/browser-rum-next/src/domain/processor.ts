@@ -1,6 +1,6 @@
 import type { Pipeline, ContextManager, NetworkRequestResource } from '@datadog/core-next'
 import { flattenCauses, extractFingerprint } from '@datadog/core-next'
-import type { ResourceTimingEntry } from '@datadog/browser-performance-next'
+import type { ResourceTimingEntry } from '../performance/types'
 import type { RumConfig } from './configuration'
 import { ResourceMatcher } from './resourceMatcher'
 

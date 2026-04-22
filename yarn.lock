@@ -396,14 +396,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-performance-next@workspace:*, @datadog/browser-performance-next@workspace:packages/browser-performance-next":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-performance-next@workspace:packages/browser-performance-next"
-  peerDependencies:
-    "@datadog/core-next": "workspace:*"
-  languageName: unknown
-  linkType: soft
-
 "@datadog/browser-rum-angular@workspace:packages/rum-angular":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-angular@workspace:packages/rum-angular"
@@ -435,7 +427,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-next@workspace:packages/browser-rum-next"
   peerDependencies:
-    "@datadog/browser-performance-next": "workspace:*"
     "@datadog/core-next": "workspace:*"
   languageName: unknown
   linkType: soft
@@ -573,8 +564,6 @@ __metadata:
 "@datadog/browser-sdk@workspace:packages/browser-sdk":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-sdk@workspace:packages/browser-sdk"
-  dependencies:
-    "@datadog/browser-performance-next": "workspace:*"
   peerDependencies:
     "@datadog/core-next": "workspace:*"
   languageName: unknown

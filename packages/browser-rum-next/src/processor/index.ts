@@ -8,6 +8,7 @@ import { displayEnricher } from '../domain/enrichers/displayEnricher'
 import { connectivityEnricher } from '../domain/enrichers/connectivityEnricher'
 import { pageStateEnricher } from '../domain/enrichers/pageStateEnricher'
 import { startViewCollectors } from '../views/collectors'
+import { startCollectors as startPerformanceCollectors } from '../performance/collectors'
 import { navigationEnricher } from '../views/navigationEnricher'
 import { startProcessor as startViewProcessor } from '../views/processor'
 import type { StartViewAction } from '../views/types'
@@ -42,6 +43,9 @@ const rumProcessor: Module = {
     const userContext = new ContextManager()
     const accountContext = new ContextManager()
 
+    // Start performance collectors (resource timing + long tasks)
+    const stopPerformanceCollectors = startPerformanceCollectors(context.pipeline)
+
     // Start view collectors (initial + navigation)
     const stopViewCollectors = startViewCollectors(context.pipeline)
 
@@ -69,6 +73,7 @@ const rumProcessor: Module = {
 
     return {
       __stop() {
+        stopPerformanceCollectors()
         stopViewCollectors()
       },
 

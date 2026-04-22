@@ -16,16 +16,6 @@
         "default": "./dist/index.cjs"
       }
     },
-    "./collectors": {
-      "import": {
-        "types": "./dist/collectors/index.d.mts",
-        "default": "./dist/collectors/index.mjs"
-      },
-      "require": {
-        "types": "./dist/collectors/index.d.cts",
-        "default": "./dist/collectors/index.cjs"
-      }
-    },
     "./processor": {
       "import": {
         "types": "./dist/processor/index.d.mts",
@@ -53,7 +43,6 @@
     "access": "public"
   },
   "peerDependencies": {
-    "@datadog/browser-performance-next": "workspace:*",
     "@datadog/core-next": "workspace:*"
   }
 }
