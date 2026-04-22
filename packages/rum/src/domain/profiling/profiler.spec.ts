@@ -1,4 +1,3 @@
-import { checkProfilingQuota } from './quotaCheck'
 import type { ViewHistoryEntry } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType, RumPerformanceEntryType, createHooks } from '@datadog/browser-rum-core'
 import type { Duration, SessionRenewalEvent } from '@datadog/browser-core'
@@ -29,6 +28,7 @@ import {
 import { mockRumConfiguration, mockViewHistory } from '../../../../rum-core/test'
 import { mockProfiler } from '../../../test'
 import type { BrowserProfilerTrace } from '../../types'
+import { checkProfilingQuota } from './quotaCheck'
 import { mockedTrace } from './test-utils/mockedTrace'
 import { createRumProfiler } from './datadogProfiler'
 import type { ProfilerTrace, RUMProfilerConfiguration } from './types'

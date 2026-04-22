@@ -1,5 +1,5 @@
-import { mockClock } from '@datadog/browser-core/test'
 import {
+  mockClock,
   interceptRequests,
   DEFAULT_FETCH_MOCK,
   TOO_MANY_REQUESTS_FETCH_MOCK,
@@ -38,6 +38,7 @@ describe('checkProfilingQuota', () => {
   it('returns quota-ok when fetch times out', async () => {
     const clock = mockClock() // auto-cleaned via registerCleanupTask — no manual cleanup needed
     // Never-resolving fetch
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     interceptor.withFetch(() => new Promise(() => {}))
     // Use a short timeout (100ms) so clock.tick() stays well under Jasmine's 5000ms async limit
     const promise = checkProfilingQuota(mockRumConfiguration(), 'session-123', 100)
