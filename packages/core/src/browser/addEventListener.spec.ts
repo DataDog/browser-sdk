@@ -87,6 +87,29 @@ describe('addEventListener', () => {
     expect(customEventTarget.removeEventListener).toHaveBeenCalled()
   })
 
+  it('does not break stop() when removeEventListener is missing', () => {
+    const customEventTarget = {
+      addEventListener: jasmine.createSpy(),
+    } as unknown as HTMLElement
+
+    const { stop } = addEventListener({ allowUntrustedEvents: false }, customEventTarget, 'change', noop)
+
+    expect(customEventTarget.addEventListener).toHaveBeenCalled()
+    expect(stop).not.toThrow()
+  })
+
+  it('skips registration when addEventListener is missing', () => {
+    const listener = jasmine.createSpy()
+    const customEventTarget = {
+      removeEventListener: jasmine.createSpy(),
+    } as unknown as HTMLElement
+
+    const { stop } = addEventListener({ allowUntrustedEvents: false }, customEventTarget, 'change', listener)
+
+    expect(stop).not.toThrow()
+    expect(customEventTarget.removeEventListener).not.toHaveBeenCalled()
+  })
+
   describe('Untrusted event', () => {
     beforeEach(() => {
       configuration = { allowUntrustedEvents: false } as Configuration

@@ -56,7 +56,9 @@ export type {
 export { DEFAULT_TRACKED_RESOURCE_HEADERS } from '@datadog/browser-rum-core'
 export { DefaultPrivacyLevel } from '@datadog/browser-core'
 
-// eslint-disable-next-line local-rules/disallow-side-effects
+const salesforceGlobal = getGlobalObject<BrowserWindow>()
+sdkLog('global-object-ready', describeGlobalCandidates())
+
 const baseRum = makeRumPublicApi(makeRecorderApiStub(), makeProfilerApiStub(), {
   sdkName: 'rum-slim',
 })
@@ -72,5 +74,46 @@ interface BrowserWindow extends Window {
   DD_RUM?: RumPublicApi
 }
 
-// eslint-disable-next-line local-rules/disallow-side-effects
-defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_RUM', datadogRum)
+sdkLog('define-global:start', describeGlobalCandidates())
+defineGlobal(salesforceGlobal, 'DD_RUM', datadogRum)
+sdkLog('define-global:done', describeRegisteredGlobal())
+
+function describeGlobalCandidates() {
+  return {
+    hasGlobalThis: typeof globalThis === 'object',
+    hasSelf: typeof self === 'object',
+    hasWindow: typeof window === 'object',
+    salesforceGlobalTag: safeCall(() => Object.prototype.toString.call(salesforceGlobal)),
+    salesforceGlobalHasDdRum: Boolean(safeGet(salesforceGlobal, 'DD_RUM')),
+  }
+}
+
+function describeRegisteredGlobal() {
+  return {
+    salesforceGlobalHasDdRum: Boolean(safeGet(salesforceGlobal, 'DD_RUM')),
+    globalThisHasDdRum: typeof globalThis === 'object' ? Boolean(safeGet(globalThis, 'DD_RUM')) : undefined,
+    selfHasDdRum: typeof self === 'object' ? Boolean(safeGet(self, 'DD_RUM')) : undefined,
+    windowHasDdRum: typeof window === 'object' ? Boolean(safeGet(window, 'DD_RUM')) : undefined,
+  }
+}
+
+function sdkLog(message: string, payload?: unknown) {
+  if (typeof payload === 'undefined') {
+    console.info(`[DD_RUM Salesforce] ${message}`)
+    return
+  }
+
+  console.info(`[DD_RUM Salesforce] ${message}`, payload)
+}
+
+function safeGet(value: unknown, propertyName: string | symbol) {
+  return safeCall(() => Reflect.get(value as object, propertyName))
+}
+
+function safeCall<T>(callback: () => T, fallbackValue?: T) {
+  try {
+    return callback()
+  } catch {
+    return fallbackValue as T
+  }
+}
