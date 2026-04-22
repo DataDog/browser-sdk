@@ -30,7 +30,9 @@ function createTestContext() {
     },
   }
 
-  return { pipeline, session, config }
+  const transport = { route: jasmine.createSpy('route') }
+
+  return { pipeline, session, config, transport }
 }
 
 function waitMicrotask(): Promise<void> {
@@ -41,27 +43,29 @@ function initModule(context: {
   pipeline: Pipeline<Record<string, unknown>>
   session: any
   config: any
+  transport: { route: jasmine.Spy }
 }): LogsPublicApi {
   return logsModule.init(context as any) as unknown as LogsPublicApi
 }
 
 describe('logsModule', () => {
   it('init returns a public API with a logger property', () => {
-    const { pipeline, session, config } = createTestContext()
-    const api = initModule({ pipeline, session, config })
+    const context = createTestContext()
+    const api = initModule(context)
 
     expect(api.logger).toBeDefined()
   })
 
   it('logger.info publishes action:log which is transformed to observation:log', async () => {
-    const { pipeline, session, config } = createTestContext()
+    const context = createTestContext()
+    const { pipeline } = context
     const observations: LogEvent[] = []
 
     pipeline.subscribe('observation:log', (event) => {
       observations.push(event as LogEvent)
     })
 
-    const api = initModule({ pipeline, session, config })
+    const api = initModule(context)
     pipeline.seal()
 
     api.logger.info('test message')
@@ -73,14 +77,15 @@ describe('logsModule', () => {
   })
 
   it('createLogger creates a named logger that can send logs', async () => {
-    const { pipeline, session, config } = createTestContext()
+    const context = createTestContext()
+    const { pipeline } = context
     const observations: LogEvent[] = []
 
     pipeline.subscribe('observation:log', (event) => {
       observations.push(event as LogEvent)
     })
 
-    const api = initModule({ pipeline, session, config })
+    const api = initModule(context)
     pipeline.seal()
 
     const myLogger = api.createLogger('my-service')
@@ -93,9 +98,9 @@ describe('logsModule', () => {
   })
 
   it('getLogger retrieves a previously created logger', () => {
-    const { pipeline, session, config } = createTestContext()
-    const api = initModule({ pipeline, session, config })
-    pipeline.seal()
+    const context = createTestContext()
+    const api = initModule(context)
+    context.pipeline.seal()
 
     api.createLogger('my-service')
     const retrieved = api.getLogger('my-service')
@@ -104,12 +109,19 @@ describe('logsModule', () => {
   })
 
   it('getLogger returns undefined for unknown names', () => {
-    const { pipeline, session, config } = createTestContext()
-    const api = initModule({ pipeline, session, config })
-    pipeline.seal()
+    const context = createTestContext()
+    const api = initModule(context)
+    context.pipeline.seal()
 
     const result = api.getLogger('unknown')
 
     expect(result).toBeUndefined()
+  })
+
+  it('registers route for observation:log during init', () => {
+    const context = createTestContext()
+    initModule(context)
+
+    expect(context.transport.route).toHaveBeenCalledWith('observation:log', 'logs')
   })
 })

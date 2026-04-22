@@ -1,4 +1,4 @@
-import type { Module, ModuleContext } from '@datadog/core-next'
+import type { Module } from '@datadog/core-next'
 import { getSdk, unregisterSdk, Batch } from '@datadog/core-next'
 import { createSdk } from './sdk'
 
@@ -63,7 +63,7 @@ describe('createSdk', () => {
     expect(mod2.init).toHaveBeenCalledTimes(1)
   })
 
-  it('should pass config, pipeline, and session in the module context', async () => {
+  it('should pass config, pipeline, session, and transport in the module context', async () => {
     const mod = stubModule('rum')
 
     await createSdk({ ...validInit, modules: [mod] })
@@ -73,6 +73,8 @@ describe('createSdk', () => {
     expect(context.config.clientToken).toBe('test-token')
     expect(context.pipeline).toBeDefined()
     expect(context.session).toBeDefined()
+    expect(context.transport).toBeDefined()
+    expect(typeof context.transport.route).toBe('function')
   })
 
   it('should attach module API return value under sdk[module.name]', async () => {
@@ -114,13 +116,15 @@ describe('createSdk', () => {
     expect(mod.init).not.toHaveBeenCalled()
   })
 
-  it('should add observation:log events to the batch', async () => {
+  it('should add observation:log events to the batch when route is registered', async () => {
     const batchAddSpy = spyOn(Batch.prototype, 'add')
 
     const observationModule: Module = {
       name: 'test',
       extension: { key: 'test', validate: (init: unknown) => init ?? null },
       init(context) {
+        // Register the route so the router creates a batch for 'logs'
+        context.transport.route('observation:log', 'logs')
         // Publish before seal — event is buffered and processed after seal()
         context.pipeline.publish('observation:log', { message: 'hello', status: 'info' })
         return {}
@@ -142,6 +146,8 @@ describe('createSdk', () => {
       name: 'test',
       extension: { key: 'test', validate: (init: unknown) => init ?? null },
       init(context) {
+        // Register the route so the router creates a batch for 'logs'
+        context.transport.route('observation:log', 'logs')
         context.pipeline.publish('observation:log', { message: 'serialized', status: 'warn', level: 3 })
         return {}
       },

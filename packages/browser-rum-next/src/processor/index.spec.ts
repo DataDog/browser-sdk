@@ -15,10 +15,15 @@ function createTestContext() {
       trackErrors: true,
     },
   }
-  return { pipeline, config }
+  const transport = { route: jasmine.createSpy('route') }
+  return { pipeline, config, transport }
 }
 
-function initModule(context: { pipeline: Pipeline<Record<string, unknown>>; config: any }): RumPublicApi {
+function initModule(context: {
+  pipeline: Pipeline<Record<string, unknown>>
+  config: any
+  transport: { route: jasmine.Spy }
+}): RumPublicApi {
   return rumProcessor.init(context as any) as unknown as RumPublicApi
 }
 
@@ -30,7 +35,11 @@ describe('rumProcessor', () => {
     _api = undefined
   })
 
-  function init(context: { pipeline: Pipeline<Record<string, unknown>>; config: any }): RumPublicApi {
+  function init(context: {
+    pipeline: Pipeline<Record<string, unknown>>
+    config: any
+    transport: { route: jasmine.Spy }
+  }): RumPublicApi {
     _api = initModule(context)
     return _api
   }
@@ -39,8 +48,8 @@ describe('rumProcessor', () => {
   })
 
   it('init returns public API with expected methods', () => {
-    const { pipeline, config } = createTestContext()
-    const api = init({ pipeline, config })
+    const context = createTestContext()
+    const api = init(context)
 
     expect(typeof api.startView).toBe('function')
     expect(typeof api.addError).toBe('function')
@@ -48,11 +57,12 @@ describe('rumProcessor', () => {
   })
 
   it('startView publishes action:start_view to the pipeline', async () => {
-    const { pipeline, config } = createTestContext()
+    const context = createTestContext()
+    const { pipeline } = context
     const actions: Record<string, unknown>[] = []
     pipeline.subscribe('action:start_view', (e) => actions.push(e as Record<string, unknown>))
 
-    const api = init({ pipeline, config })
+    const api = init(context)
     pipeline.seal()
     api.startView('checkout')
     await tick()
@@ -66,12 +76,13 @@ describe('rumProcessor', () => {
   })
 
   it('addError publishes observation:error', async () => {
-    const { pipeline, config } = createTestContext()
+    const context = createTestContext()
+    const { pipeline } = context
     const observations: unknown[] = []
 
     pipeline.subscribe('observation:error', (data) => observations.push(data))
 
-    const api = init({ pipeline, config })
+    const api = init(context)
     pipeline.seal()
 
     api.addError('something went wrong')
@@ -86,12 +97,13 @@ describe('rumProcessor', () => {
   })
 
   it('addError accepts an Error object', async () => {
-    const { pipeline, config } = createTestContext()
+    const context = createTestContext()
+    const { pipeline } = context
     const observations: unknown[] = []
 
     pipeline.subscribe('observation:error', (data) => observations.push(data))
 
-    const api = init({ pipeline, config })
+    const api = init(context)
     pipeline.seal()
 
     api.addError(new TypeError('type mismatch'))
@@ -105,11 +117,21 @@ describe('rumProcessor', () => {
   })
 
   it('getInternalContext returns an object', () => {
-    const { pipeline, config } = createTestContext()
-    const api = init({ pipeline, config })
+    const context = createTestContext()
+    const api = init(context)
 
     const ctx = api.getInternalContext()
 
     expect(ctx).toEqual(jasmine.any(Object))
+  })
+
+  it('registers routes for all RUM observation types during init', () => {
+    const context = createTestContext()
+    init(context)
+
+    expect(context.transport.route).toHaveBeenCalledWith('observation:view', 'rum')
+    expect(context.transport.route).toHaveBeenCalledWith('observation:resource', 'rum')
+    expect(context.transport.route).toHaveBeenCalledWith('observation:error', 'rum')
+    expect(context.transport.route).toHaveBeenCalledWith('observation:long_task', 'rum')
   })
 })

@@ -41,6 +41,9 @@ const logsProcessor: Module = {
     // Register log-specific enrichers on observation:log
     context.pipeline.enrich('observation:log', rateLimitEnricher())
 
+    // Register route: observation:log events go to the 'logs' track
+    context.transport.route('observation:log', 'logs')
+
     // Start the processor (subscribes to resources, transforms to observations)
     startProcessor({
       pipeline: context.pipeline,

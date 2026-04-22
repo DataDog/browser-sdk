@@ -43,6 +43,12 @@ const rumProcessor: Module = {
     context.pipeline.enrich('observation:*', connectivityEnricher())
     context.pipeline.enrich('observation:*', pageStateEnricher())
 
+    // Register routes: all RUM observation types go to the 'rum' track
+    context.transport.route('observation:view', 'rum')
+    context.transport.route('observation:resource', 'rum')
+    context.transport.route('observation:error', 'rum')
+    context.transport.route('observation:long_task', 'rum')
+
     // Start the processor (subscribes to resources, transforms to observations)
     startProcessor({
       pipeline: context.pipeline,

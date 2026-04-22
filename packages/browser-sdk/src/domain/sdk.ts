@@ -2,7 +2,6 @@ import type { Module, InitConfiguration, Configuration } from '@datadog/core-nex
 import {
   build,
   Pipeline,
-  Batch,
   Session,
   ContextManager,
   registerSdk,
@@ -15,6 +14,7 @@ import {
   stackTraceEnricher,
   contextEnricher,
 } from '@datadog/core-next'
+import { TransportRouter } from './transportRouter'
 import {
   selectStore,
   createHttpRequest,
@@ -153,29 +153,46 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
     }
   }
 
-  const logsBatch = new Batch({ maxSizeBytes: 16 * 1024, maxCount: 50, flushTimeoutMs: 30_000 })
-  const rumBatch = new Batch({ maxSizeBytes: 16 * 1024, maxCount: 50, flushTimeoutMs: 30_000 })
-
-  // 6. Wire batch flush → transport (primary + replica)
-  logsBatch.on('flush', (messages) => {
-    const data = messages.join('\n')
-    const payload = { data, bytesCount: new Blob([data]).size }
-    transports.get('logs')?.send(payload)
-    replicaTransports?.get('logs')?.send({ ...payload })
-  })
-
-  rumBatch.on('flush', (messages) => {
-    const data = messages.join('\n')
-    const payload = { data, bytesCount: new Blob([data]).size }
-    transports.get('rum')?.send(payload)
-    replicaTransports?.get('rum')?.send({ ...payload })
-  })
-
-  // 7. Wire page exit → batch flush
-  const flushAll = () => {
-    logsBatch.flush()
-    rumBatch.flush()
+  // 6. Build beforeSend gate from module configs
+  function applyBeforeSend(event: Record<string, unknown>): boolean {
+    for (const mod of modules) {
+      const moduleConfig = (config as Record<string, unknown>)[mod.name] as Record<string, unknown> | undefined
+      const beforeSend = moduleConfig?.beforeSend as ((e: Record<string, unknown>) => boolean | void) | undefined
+      if (beforeSend && beforeSend(event) === false) return false
+    }
+    return true
   }
+
+  // 6.5. Create router with primary transports — replica wiring happens via a wrapping transport
+  const routerTransports = new Map<string, HttpRequest>()
+  for (const [trackType, primaryTransport] of transports) {
+    const replicaTransport = replicaTransports?.get(trackType as TrackType)
+    if (replicaTransport) {
+      // Wrap primary + replica into a single transport so the router only sees one
+      routerTransports.set(trackType, {
+        send(payload) {
+          primaryTransport.send(payload)
+          replicaTransport.send({ ...payload })
+        },
+        sendOnExit(payload) {
+          primaryTransport.sendOnExit(payload)
+          replicaTransport.sendOnExit({ ...payload })
+        },
+      })
+    } else {
+      routerTransports.set(trackType, primaryTransport)
+    }
+  }
+
+  const router = new TransportRouter({
+    pipeline,
+    transports: routerTransports,
+    batchOptions: { maxSizeBytes: 16 * 1024, maxCount: 50, flushTimeoutMs: 30_000 },
+    beforeSend: applyBeforeSend,
+  })
+
+  // 7. Wire page exit → router flush
+  const flushAll = () => router.flush()
   const onVisibilityChange = () => {
     if (document.visibilityState === 'hidden') {
       flushAll()
@@ -191,49 +208,14 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
     window.addEventListener('beforeunload', onBeforeUnload)
   }
 
-  // 8. Wire session expire → batch flush
+  // 8. Wire session expire → router flush
   session.on('expired', () => {
     flushAll()
   })
 
-  // 8.5. Wire pipeline observations → batches by type (with beforeSend gate)
-  function applyBeforeSend(event: Record<string, unknown>): boolean {
-    for (const mod of modules) {
-      const moduleConfig = (config as Record<string, unknown>)[mod.name] as Record<string, unknown> | undefined
-      const beforeSend = moduleConfig?.beforeSend as ((e: Record<string, unknown>) => boolean | void) | undefined
-      if (beforeSend && beforeSend(event) === false) return false
-    }
-    return true
-  }
-
-  pipeline.subscribe('observation:log', (event) => {
-    if (!applyBeforeSend(event as Record<string, unknown>)) return
-    logsBatch.add(JSON.stringify(event))
-  })
-
-  pipeline.subscribe('observation:view', (event) => {
-    if (!applyBeforeSend(event as Record<string, unknown>)) return
-    rumBatch.add(JSON.stringify(event))
-  })
-
-  pipeline.subscribe('observation:resource', (event) => {
-    if (!applyBeforeSend(event as Record<string, unknown>)) return
-    rumBatch.add(JSON.stringify(event))
-  })
-
-  pipeline.subscribe('observation:error', (event) => {
-    if (!applyBeforeSend(event as Record<string, unknown>)) return
-    rumBatch.add(JSON.stringify(event))
-  })
-
-  pipeline.subscribe('observation:long_task', (event) => {
-    if (!applyBeforeSend(event as Record<string, unknown>)) return
-    rumBatch.add(JSON.stringify(event))
-  })
-
-  // 9. Initialize modules
+  // 9. Initialize modules (modules register their routes via context.transport.route())
   const sdk: Sdk = {}
-  const context = { config, pipeline, session }
+  const context = { config, pipeline, session, transport: { route: router.route.bind(router) } }
   for (const mod of modules) {
     const api = mod.init(context)
     sdk[mod.name] = api
@@ -285,8 +267,7 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
     if (typeof window !== 'undefined') {
       window.removeEventListener('beforeunload', onBeforeUnload)
     }
-    logsBatch.destroy()
-    rumBatch.destroy()
+    router.destroy()
     unregisterSdk(instanceId)
   }
 
