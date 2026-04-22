@@ -276,6 +276,10 @@ function sendDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): voi
             return: result.return,
           }
         : undefined,
+    build: {
+      applicationId: debuggerConfig.applicationId,
+      version: debuggerConfig.version,
+    },
   }
 
   const debuggerApi = globalObj.DD_DEBUGGER!
@@ -296,17 +300,14 @@ function sendDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): voi
     buildTag('sdk_version', debuggerApi.version),
     buildTag('env', debuggerConfig.env),
     buildTag('service', debuggerConfig.service),
-    buildTag('version', debuggerConfig.version),
     buildTag('debugger_version', debuggerApi.version),
     buildTag('host_name', hostname),
-    buildTag('application_id', debuggerConfig.applicationId),
   ]
 
   const payload: Context = {
     message: result.message || '',
     hostname,
     service: debuggerConfig.service,
-    application_id: debuggerConfig.applicationId,
     ddtags: ddtags.join(','),
     logger,
     ...(dd ? { dd } : {}),

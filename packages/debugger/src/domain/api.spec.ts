@@ -321,9 +321,9 @@ describe('api', () => {
       expect(snapshot.duration).toBeGreaterThanOrEqual(10000000) // Should be in nanoseconds (>= 10ms)
     })
 
-    it('should include applicationId in snapshot payload and tags', () => {
+    it('should include build identity inside the snapshot payload', () => {
       initDebuggerTransport(
-        { service: 'test-service', env: 'test-env', applicationId: 'app-123' } as any,
+        { service: 'test-service', env: 'test-env', applicationId: 'app-123', version: '1.2.3' } as any,
         { add: mockBatchAdd } as any
       )
 
@@ -345,8 +345,10 @@ describe('api', () => {
       onReturn(probes, null, {}, {}, {})
 
       const payload = mockBatchAdd.calls.mostRecent().args[0]
-      expect(payload.application_id).toBe('app-123')
-      expect(payload.ddtags).toContain('application_id:app-123')
+      expect(payload.debugger.snapshot.build).toEqual({
+        applicationId: 'app-123',
+        version: '1.2.3',
+      })
     })
 
     it('should omit trace correlation when no active span context is available', () => {
