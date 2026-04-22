@@ -321,6 +321,34 @@ describe('api', () => {
       expect(snapshot.duration).toBeGreaterThanOrEqual(10000000) // Should be in nanoseconds (>= 10ms)
     })
 
+    it('should include applicationId in snapshot payload and tags', () => {
+      initDebuggerTransport(
+        { service: 'test-service', env: 'test-env', applicationId: 'app-123' } as any,
+        { add: mockBatchAdd } as any
+      )
+
+      const probe: Probe = {
+        id: 'test-probe',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'appIdTest' },
+        template: 'Test',
+        captureSnapshot: false,
+        capture: {},
+        sampling: { snapshotsPerSecond: 5000 },
+        evaluateAt: 'ENTRY',
+      }
+      addProbe(probe)
+
+      const probes = getProbes('TestClass;appIdTest')!
+      onEntry(probes, {}, {})
+      onReturn(probes, null, {}, {}, {})
+
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      expect(payload.application_id).toBe('app-123')
+      expect(payload.ddtags).toContain('application_id:app-123')
+    })
+
     it('should omit trace correlation when no active span context is available', () => {
       const probe: Probe = {
         id: 'test-probe',
