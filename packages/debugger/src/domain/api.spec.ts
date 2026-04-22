@@ -321,7 +321,7 @@ describe('api', () => {
       expect(snapshot.duration).toBeGreaterThanOrEqual(10000000) // Should be in nanoseconds (>= 10ms)
     })
 
-    it('should include RUM context in logger', () => {
+    it('should omit trace correlation when no active span context is available', () => {
       const probe: Probe = {
         id: 'test-probe',
         version: 0,
@@ -341,10 +341,41 @@ describe('api', () => {
       onReturn(probes, null, {}, {}, {})
 
       const payload = mockBatchAdd.calls.mostRecent().args[0]
-      const dd = payload.dd
-      expect(dd).toEqual({
-        trace_id: 'test-session',
-        span_id: 'test-action',
+      expect(payload.dd).toBeUndefined()
+    })
+
+    it('should include trace correlation when active span context is available', () => {
+      mockRumGetInternalContext.and.returnValue({
+        session_id: 'test-session',
+        view: { id: 'test-view' },
+        user_action: { id: 'test-action' },
+        application_id: 'test-app-id',
+        trace_id: 'test-trace',
+        span_id: 'test-span',
+      })
+
+      const probe: Probe = {
+        id: 'test-probe',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'traceContext' },
+        template: 'Test',
+        segments: [{ str: 'Test' }],
+        captureSnapshot: false,
+        capture: {},
+        sampling: {},
+        evaluateAt: 'ENTRY',
+      }
+      addProbe(probe)
+
+      const probes = getProbes('TestClass;traceContext')!
+      onEntry(probes, {}, {})
+      onReturn(probes, null, {}, {}, {})
+
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      expect(payload.dd).toEqual({
+        trace_id: 'test-trace',
+        span_id: 'test-span',
       })
     })
   })

@@ -278,7 +278,7 @@ test.describe('debugger', () => {
       expect(intakeRegistry.debuggerEvents[0].message).toBe('Probe hit')
     })
 
-  createTest('include RUM correlation data when RUM is active')
+  createTest('omit trace correlation data when no active span is available')
     .withRum()
     .withDebugger()
     .run(async ({ intakeRegistry, flushEvents, page, browserName, servers }) => {
@@ -299,8 +299,6 @@ test.describe('debugger', () => {
       expect(intakeRegistry.debuggerEvents.length).toBeGreaterThanOrEqual(1)
 
       const event = intakeRegistry.debuggerEvents[0]
-      const dd = event.dd as { trace_id?: string; span_id?: string }
-      expect(dd.trace_id).toBeDefined()
-      expect(dd.trace_id).not.toBe('')
+      expect(event.dd).toBeUndefined()
     })
 })
