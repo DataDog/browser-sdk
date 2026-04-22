@@ -21,7 +21,7 @@ import {
   getCurrentSiteDomain,
 } from '../browser'
 import type { TrackType, HttpRequest } from '../browser'
-import { startCollectors as startConsoleCollectors } from '@datadog/browser-console-next/collectors'
+import { startConsoleCollection as startConsoleCollectors } from '../collectors/consoleCollector'
 import { startCollectors as startErrorCollectors } from '@datadog/browser-errors-next/collectors'
 import { startCollectors as startNetworkCollectors } from '@datadog/browser-network-next/collectors'
 import { startCollectors as startPerformanceCollectors } from '@datadog/browser-performance-next/collectors'
