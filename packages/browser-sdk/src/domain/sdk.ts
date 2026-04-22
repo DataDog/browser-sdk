@@ -22,7 +22,8 @@ import {
 } from '../browser'
 import type { TrackType, HttpRequest } from '../browser'
 import { startConsoleCollection as startConsoleCollectors } from '../collectors/consoleCollector'
-import { startCollectors as startErrorCollectors } from '@datadog/browser-errors-next/collectors'
+import { startRuntimeErrorCollection } from '../collectors/runtimeErrorCollector'
+import { startReportCollection } from '../collectors/reportCollector'
 import { startCollectors as startNetworkCollectors } from '@datadog/browser-network-next/collectors'
 import { startCollectors as startPerformanceCollectors } from '@datadog/browser-performance-next/collectors'
 import { startCollectors as startViewCollectors } from '@datadog/browser-views-next/collectors'
@@ -78,7 +79,8 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
 
   // 4.1. Start bundled collectors (always active, regardless of which modules are loaded)
   const stopConsoleCollectors = startConsoleCollectors(pipeline)
-  const stopErrorCollectors = startErrorCollectors(pipeline)
+  const stopRuntimeErrorCollectors = startRuntimeErrorCollection(pipeline)
+  const stopReportCollectors = startReportCollection(pipeline)
   const stopNetworkCollectors = startNetworkCollectors(pipeline)
   const stopPerformanceCollectors = startPerformanceCollectors(pipeline)
   const stopViewCollectors = startViewCollectors(pipeline)
@@ -233,7 +235,8 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
   // Expose stop function for cleanup (used in tests and graceful shutdown)
   ;(sdk as any).__stop = () => {
     stopConsoleCollectors()
-    stopErrorCollectors()
+    stopRuntimeErrorCollectors()
+    stopReportCollectors()
     stopNetworkCollectors()
     stopPerformanceCollectors()
     stopViewCollectors()

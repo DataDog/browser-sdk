@@ -21,7 +21,6 @@
     "access": "public"
   },
   "dependencies": {
-    "@datadog/browser-errors-next": "workspace:*",
     "@datadog/browser-network-next": "workspace:*",
     "@datadog/browser-performance-next": "workspace:*",
     "@datadog/browser-views-next": "workspace:*"
