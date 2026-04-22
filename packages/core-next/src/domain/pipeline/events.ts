@@ -46,6 +46,12 @@ interface SdkEventMap {
   'resource:runtime_error': RuntimeErrorResource
   'resource:report': ReportResource
   'resource:network_request': NetworkRequestResource
+  'resource:performance_entry': unknown
+  'resource:long_task': unknown
+  'resource:long_animation_frame': unknown
+  'observation:rum_resource': unknown
+  'observation:rum_error': unknown
+  'observation:rum_long_task': unknown
   'signal:session_expired': void
   'signal:session_renewed': void
   [key: string]: unknown
