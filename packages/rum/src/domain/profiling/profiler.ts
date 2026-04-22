@@ -119,8 +119,12 @@ export function createRumProfiler(
     if (sessionId) {
       mockable(checkProfilingQuota)(configuration, sessionId)
         .then((result) => {
-          if (checkGeneration !== quotaCheckGeneration) return
-          if (instance.state !== 'running' && instance.state !== 'paused') return
+          if (checkGeneration !== quotaCheckGeneration) {
+            return
+          }
+          if (instance.state !== 'running' && instance.state !== 'paused') {
+            return
+          }
           if (result === 'quota-exceeded') {
             stopProfiling('quota-exceeded')
           }
