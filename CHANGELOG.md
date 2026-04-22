@@ -13,6 +13,56 @@
 
 ---
 
+## v6.33.0
+
+**Public Changes:**
+
+- ✨ Add tab.id to all RUM and Logs events ([#4184](https://github.com/DataDog/browser-sdk/pull/4184)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- ✨ Allow more granularity on trackResourceHeaders ([#4421](https://github.com/DataDog/browser-sdk/pull/4421)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- ✨ Add TanStack Router integration to browser-rum-react ([#4414](https://github.com/DataDog/browser-sdk/pull/4414)) [RUM-NEXTJS]
+- ✨ feat: enable INP subparts collection by default ([#4371](https://github.com/DataDog/browser-sdk/pull/4371)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 🐛 Handle null deadline in taskQueue requestIdleCallback ([#4497](https://github.com/DataDog/browser-sdk/pull/4497)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 🐛 [PANA-6774] Make the new data format compatible with existing mobile SDKs ([#4441](https://github.com/DataDog/browser-sdk/pull/4441)) [RUM]
+- 🐛 Fix false duplicate test name reports on browser restart ([#4439](https://github.com/DataDog/browser-sdk/pull/4439))
+- 🐛 [PANA-6683] Prevent MASK_UNLESS_ALLOWLISTED from unmasking form element children ([#4409](https://github.com/DataDog/browser-sdk/pull/4409)) [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE]
+- 🐛 Fix yarn.lock modifications on test apps rebuild ([#4387](https://github.com/DataDog/browser-sdk/pull/4387))
+- 🐛 [RUM-15239] Fix penultimate batch lost on unload when batch is near size limit ([#4385](https://github.com/DataDog/browser-sdk/pull/4385)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 🐛 [PANA-6683] Never serialize descendants of hidden or ignored elements ([#4408](https://github.com/DataDog/browser-sdk/pull/4408)) [RUM]
+- 📝 Add README for rum-nuxt package ([#4506](https://github.com/DataDog/browser-sdk/pull/4506)) [RUM-NUXT]
+
+**Internal Changes:**
+
+- 👷 Update dependency vite to v7.3.2 [SECURITY] ([#4487](https://github.com/DataDog/browser-sdk/pull/4487))
+- 👷 Ensure test apps use peerDependencies for @datadog/\* packages ([#4491](https://github.com/DataDog/browser-sdk/pull/4491))
+- 👷 Remove safari mobile from browsers.conf ([#4467](https://github.com/DataDog/browser-sdk/pull/4467))
+- 🔧 Add dd-devflow[bot] to CLA allowlist ([#4440](https://github.com/DataDog/browser-sdk/pull/4440))
+- Revert "🔧 disable renovate ([#4381](https://github.com/DataDog/browser-sdk/pull/4381))" ([#4427](https://github.com/DataDog/browser-sdk/pull/4427))
+- 🎨 [PANA-6846] Make whitespace consistent between different E2E setups ([#4450](https://github.com/DataDog/browser-sdk/pull/4450))
+- 🎨 [PANA-6776] Separate session replay test helpers and update CODEOWNERS ([#4435](https://github.com/DataDog/browser-sdk/pull/4435)) [RUM]
+- 🎨 [PANA-6682] Add independent tests for serializeNodeAsChange ([#4410](https://github.com/DataDog/browser-sdk/pull/4410)) [RUM]
+- ✅ improve E2E test reliability on BrowserStack ([#4494](https://github.com/DataDog/browser-sdk/pull/4494))
+- ✅ Create basePlugin tests ([#4395](https://github.com/DataDog/browser-sdk/pull/4395))
+- ✅ [PANA-6831] Support the Change data format in E2E tests ([#4447](https://github.com/DataDog/browser-sdk/pull/4447)) [RUM]
+- ✅ [PANA-6863] Increase timeout for session replay serialization tests ([#4456](https://github.com/DataDog/browser-sdk/pull/4456)) [RUM]
+- ✅ Fix NextJS flaky tests, cleanup Firefox skip. ([#4426](https://github.com/DataDog/browser-sdk/pull/4426))
+- ✅ remove unit tests spam ([#4419](https://github.com/DataDog/browser-sdk/pull/4419)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- [RUM-15273] 🔊 Add telemetry for trackResourceHeaders ([#4492](https://github.com/DataDog/browser-sdk/pull/4492)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- Remove shadow reviewer workflow ([#4517](https://github.com/DataDog/browser-sdk/pull/4517))
+- Fix TanStack Router lint resolution in test app ([#4513](https://github.com/DataDog/browser-sdk/pull/4513))
+- ⚗️ Add Nuxt error tracking ([#4477](https://github.com/DataDog/browser-sdk/pull/4477)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- ⬆️ upgrade dependencies ([#4490](https://github.com/DataDog/browser-sdk/pull/4490)) [RUM-ANGULAR] [RUM] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- RUM-15488: add US2_FED intake site ([#4495](https://github.com/DataDog/browser-sdk/pull/4495)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- [PANA-6266] Remove ExperimentalFlag composed_path_selector 🚩 ([#4396](https://github.com/DataDog/browser-sdk/pull/4396)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- ⚗️ Add Nuxt plugin with router tracking ([#4424](https://github.com/DataDog/browser-sdk/pull/4424)) [RUM-NUXT]
+- Fix shadow reviewer cross-references and depth limits ([#4455](https://github.com/DataDog/browser-sdk/pull/4455))
+- Add shadow reviewer workflow ([#4430](https://github.com/DataDog/browser-sdk/pull/4430))
+- 🧹 Cleanup session manager telemetry ([#4434](https://github.com/DataDog/browser-sdk/pull/4434)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- ⬆️ [PANA-6792] Bump replay sandbox version to support data format changes ([#4442](https://github.com/DataDog/browser-sdk/pull/4442))
+- 🚧 [PANA-6774] Update FullSnapshotRecord definition from rum-events-format ([#4436](https://github.com/DataDog/browser-sdk/pull/4436)) [RUM]
+- 🔥 remove lerna ([#4412](https://github.com/DataDog/browser-sdk/pull/4412))
+- ⚗️ [RUM-15226] Capture network headers ([#4372](https://github.com/DataDog/browser-sdk/pull/4372)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 🧹 Sync Rum-Events-Format for GraphQL ([#4417](https://github.com/DataDog/browser-sdk/pull/4417)) [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE]
+
 ## v6.32.0
 
 **Public Changes:**
