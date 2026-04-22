@@ -1,6 +1,6 @@
 import { Pipeline, ContextManager } from '@datadog/core-next'
 import { startProcessor } from './processor'
-import type { ViewObservation, ViewChangedSignal } from '../types'
+import type { ViewObservation, ViewChangedSignal } from './types'
 
 async function tick() {
   return new Promise((r) => setTimeout(r, 0))

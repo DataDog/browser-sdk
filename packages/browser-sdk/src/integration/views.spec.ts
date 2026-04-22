@@ -1,7 +1,7 @@
 import { createSdk } from '../domain/sdk'
-import { viewsProcessor } from '@datadog/browser-views-next/processor'
+import { rumProcessor } from '@datadog/browser-rum-next/processor'
+import type { RumPublicApi } from '@datadog/browser-rum-next/processor'
 import { unregisterSdk } from '@datadog/core-next'
-import type { ViewsPublicApi } from '@datadog/browser-views-next'
 
 function tick(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0))
@@ -35,62 +35,85 @@ describe('views integration', () => {
     delete (globalThis as any)._DD_SESSION
   })
 
+  function getRumLines(): string[] {
+    return fetchSpy.calls
+      .all()
+      .filter((c) => String(c.args[0]).includes('/api/v2/rum'))
+      .flatMap((c) => {
+        const body = (c.args[1] as RequestInit).body as string
+        return body
+          .trim()
+          .split('\n')
+          .filter((l) => l.length > 0)
+      })
+  }
+
   function getRumBody(): string {
-    const rumCalls = fetchSpy.calls.all().filter((c) => String(c.args[0]).includes('/api/v2/rum'))
-    expect(rumCalls.length).toBeGreaterThan(0)
-    return (rumCalls[rumCalls.length - 1].args[1] as RequestInit).body as string
+    const lines = getRumLines()
+    expect(lines.length).toBeGreaterThan(0)
+    return lines.join('\n')
+  }
+
+  function getViewLines(): string[] {
+    return getRumLines().filter((l) => l.includes('"loadingType"'))
   }
 
   it('initial view: observation:view is sent on SDK init', async () => {
     currentSdk = await createSdk({
       clientToken: 'test-token',
       site: 'datadoghq.com',
-      modules: [viewsProcessor],
-      views: {},
+      modules: [rumProcessor],
+      rum: {},
     })
 
     await tick()
     flushBatch()
 
-    const body = getRumBody()
-    expect(body).toContain('"loadingType":"initial_load"')
-    expect(body).toContain('"url"')
+    const viewLines = getViewLines()
+    expect(viewLines.length).toBeGreaterThan(0)
+    expect(viewLines[0]).toContain('"loadingType":"initial_load"')
+    expect(viewLines[0]).toContain('"url"')
   })
 
   it('manual view: startView() sends observation:view with route_change', async () => {
     currentSdk = await createSdk({
       clientToken: 'test-token',
       site: 'datadoghq.com',
-      modules: [viewsProcessor],
-      views: {},
+      modules: [rumProcessor],
+      rum: {},
     })
 
+    // Flush the initial view first so it doesn't pollute the assertions below
+    await tick()
+    flushBatch()
     fetchSpy.calls.reset()
 
-    const views = currentSdk!['views'] as ViewsPublicApi
-    views.startView('checkout')
+    const rum = currentSdk!['rum'] as RumPublicApi
+    rum.startView('checkout')
 
     await tick()
     flushBatch()
 
-    const body = getRumBody()
-    expect(body).toContain('"loadingType":"route_change"')
-    expect(body).toContain('"name":"checkout"')
+    const viewLines = getViewLines()
+    expect(viewLines.length).toBeGreaterThan(0)
+    expect(viewLines[0]).toContain('"loadingType":"route_change"')
+    expect(viewLines[0]).toContain('"name":"checkout"')
   })
 
   it('view observation includes session.id from core enricher', async () => {
     currentSdk = await createSdk({
       clientToken: 'test-token',
       site: 'datadoghq.com',
-      modules: [viewsProcessor],
-      views: {},
+      modules: [rumProcessor],
+      rum: {},
     })
 
     await tick()
     flushBatch()
 
-    const body = getRumBody()
-    const event = JSON.parse(body)
+    const viewLines = getViewLines()
+    expect(viewLines.length).toBeGreaterThan(0)
+    const event = JSON.parse(viewLines[0])
     expect(event.session).toBeDefined()
     expect(typeof event.session.id).toBe('string')
   })
@@ -99,45 +122,49 @@ describe('views integration', () => {
     currentSdk = await createSdk({
       clientToken: 'test-token',
       site: 'datadoghq.com',
-      modules: [viewsProcessor],
-      views: {},
+      modules: [rumProcessor],
+      rum: {},
     })
 
-    const views = currentSdk!['views'] as ViewsPublicApi
-    views.setGlobalContext({ deployment: 'canary' })
-
+    await tick()
+    flushBatch()
     fetchSpy.calls.reset()
-    views.startView('with-context')
+
+    const rum = currentSdk!['rum'] as RumPublicApi
+    rum.setGlobalContext({ deployment: 'canary' })
+    rum.startView('with-context')
 
     await tick()
     flushBatch()
 
-    const body = getRumBody()
-    const lines = body.trim().split('\n')
-    const lastEvent = JSON.parse(lines[lines.length - 1])
-    expect(lastEvent.deployment).toBe('canary')
+    const viewLines = getViewLines()
+    expect(viewLines.length).toBeGreaterThan(0)
+    const event = JSON.parse(viewLines[0])
+    expect(event.deployment).toBe('canary')
   })
 
   it('view observation includes user context set via public API', async () => {
     currentSdk = await createSdk({
       clientToken: 'test-token',
       site: 'datadoghq.com',
-      modules: [viewsProcessor],
-      views: {},
+      modules: [rumProcessor],
+      rum: {},
     })
 
-    const views = currentSdk!['views'] as ViewsPublicApi
-    views.setUser({ id: 'user-42', name: 'Ada' })
-
+    await tick()
+    flushBatch()
     fetchSpy.calls.reset()
-    views.startView('with-user')
+
+    const rum = currentSdk!['rum'] as RumPublicApi
+    rum.setUser({ id: 'user-42', name: 'Ada' })
+    rum.startView('with-user')
 
     await tick()
     flushBatch()
 
-    const body = getRumBody()
-    const lines = body.trim().split('\n')
-    const lastEvent = JSON.parse(lines[lines.length - 1])
-    expect(lastEvent.usr).toEqual(jasmine.objectContaining({ id: 'user-42', name: 'Ada' }))
+    const viewLines = getViewLines()
+    expect(viewLines.length).toBeGreaterThan(0)
+    const event = JSON.parse(viewLines[0])
+    expect(event.usr).toEqual(jasmine.objectContaining({ id: 'user-42', name: 'Ada' }))
   })
 })

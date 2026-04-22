@@ -26,9 +26,6 @@
       "@datadog/browser-rum-next": ["./packages/browser-rum-next/src"],
       "@datadog/browser-rum-next/collectors": ["./packages/browser-rum-next/src/collectors"],
       "@datadog/browser-rum-next/processor": ["./packages/browser-rum-next/src/processor"],
-      "@datadog/browser-views-next": ["./packages/browser-views-next/src"],
-      "@datadog/browser-views-next/collectors": ["./packages/browser-views-next/src/collectors"],
-      "@datadog/browser-views-next/processor": ["./packages/browser-views-next/src/processor"],
       "@datadog/browser-sdk": ["./packages/browser-sdk/src"],
 
       "@datadog/browser-logs": ["./packages/logs/src/entries/main"],

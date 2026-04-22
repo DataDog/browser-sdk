@@ -1,5 +1,5 @@
 import type { Pipeline, ContextManager } from '@datadog/core-next'
-import type { ViewObservation, ViewChangedSignal } from '../types'
+import type { ViewObservation, ViewChangedSignal } from './types'
 
 interface ProcessorDependencies {
   pipeline: Pipeline<Record<string, unknown>>

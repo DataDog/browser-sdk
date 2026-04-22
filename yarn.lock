@@ -575,15 +575,6 @@ __metadata:
   resolution: "@datadog/browser-sdk@workspace:packages/browser-sdk"
   dependencies:
     "@datadog/browser-performance-next": "workspace:*"
-    "@datadog/browser-views-next": "workspace:*"
-  peerDependencies:
-    "@datadog/core-next": "workspace:*"
-  languageName: unknown
-  linkType: soft
-
-"@datadog/browser-views-next@workspace:*, @datadog/browser-views-next@workspace:packages/browser-views-next":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-views-next@workspace:packages/browser-views-next"
   peerDependencies:
     "@datadog/core-next": "workspace:*"
   languageName: unknown

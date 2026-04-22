@@ -5,8 +5,8 @@ import { datadogRum } from '@datadog/browser-rum'
 // === V8 SDK ===
 import { createSdk } from '@datadog/browser-sdk'
 import { logsProcessor } from '@datadog/browser-logs-next/processor'
-import { viewsProcessor } from '@datadog/browser-views-next/processor'
-import type { ViewsPublicApi } from '@datadog/browser-views-next'
+import { rumProcessor } from '@datadog/browser-rum-next/processor'
+import type { RumPublicApi } from '@datadog/browser-rum-next/processor'
 
 // ─── Request capture ────────────────────────────────────────────────────
 
@@ -208,13 +208,13 @@ async function initV8() {
       clientToken: 'pub_playground_v8',
       site: 'datadoghq.com',
       proxy: '/intake/v8/api/v2/logs',
-      modules: [logsProcessor, viewsProcessor],
+      modules: [logsProcessor, rumProcessor],
       logs: {
         forwardErrorsToLogs: true,
         forwardConsoleLogs: 'all' as const,
         forwardReports: 'all' as const,
       },
-      views: {},
+      rum: {},
     })
     if (!sdk) {
       el.textContent = 'init returned null'
@@ -275,8 +275,8 @@ function setupButtons() {
   // ── Views ──
   document.getElementById('btn-start-view')?.addEventListener('click', () => {
     datadogRum.startView({ name: 'manual-view' })
-    const v8Views = (window as any).sdkV8?.views as ViewsPublicApi | undefined
-    v8Views?.startView('manual-view')
+    const v8Rum = (window as any).sdkV8?.rum as RumPublicApi | undefined
+    v8Rum?.startView('manual-view')
   })
 
   document.getElementById('btn-navigate-a')?.addEventListener('click', () => {

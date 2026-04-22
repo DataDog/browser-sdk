@@ -27,7 +27,6 @@ import { startReportCollection } from '../collectors/reportCollector'
 import { startFetchCollection } from '../collectors/fetchCollector'
 import { startXhrCollection } from '../collectors/xhrCollector'
 import { startCollectors as startPerformanceCollectors } from '@datadog/browser-performance-next/collectors'
-import { startCollectors as startViewCollectors } from '@datadog/browser-views-next/collectors'
 
 declare const __BUILD_ENV__SDK_VERSION__: string
 
@@ -85,7 +84,6 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
   const stopFetchCollectors = startFetchCollection(pipeline)
   const stopXhrCollectors = startXhrCollection(pipeline)
   const stopPerformanceCollectors = startPerformanceCollectors(pipeline)
-  const stopViewCollectors = startViewCollectors(pipeline)
 
   // 4.5. Register stack trace enricher on resource events
   pipeline.enrich('resource:console', stackTraceEnricher())
@@ -242,7 +240,13 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
     stopFetchCollectors()
     stopXhrCollectors()
     stopPerformanceCollectors()
-    stopViewCollectors()
+    // Call __stop on each module API if it exposes one (e.g. for module-owned collectors)
+    for (const mod of modules) {
+      const api = sdk[mod.name] as Record<string, unknown> | undefined
+      if (api && typeof (api as any).__stop === 'function') {
+        ;(api as any).__stop()
+      }
+    }
     if (typeof document !== 'undefined') {
       document.removeEventListener('visibilitychange', onVisibilityChange)
     }

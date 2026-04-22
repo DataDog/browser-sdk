@@ -1,6 +1,5 @@
 import { createSdk } from '../domain/sdk'
 import { rumProcessor } from '@datadog/browser-rum-next/processor'
-import { viewsProcessor } from '@datadog/browser-views-next/processor'
 import { logsProcessor } from '@datadog/browser-logs-next/processor'
 import { unregisterSdk } from '@datadog/core-next'
 
@@ -71,9 +70,8 @@ describe('RUM integration', () => {
     currentSdk = await createSdk({
       clientToken: 'test-token',
       site: 'datadoghq.com',
-      modules: [rumProcessor, viewsProcessor],
+      modules: [rumProcessor],
       rum: {},
-      views: {},
     })
 
     window.dispatchEvent(new ErrorEvent('error', { error: new Error('test'), message: 'test' }))
@@ -89,9 +87,8 @@ describe('RUM integration', () => {
     currentSdk = await createSdk({
       clientToken: 'test-token',
       site: 'datadoghq.com',
-      modules: [rumProcessor, viewsProcessor],
+      modules: [rumProcessor],
       rum: {},
-      views: {},
     })
 
     currentSdk!['rum'].addError(new Error('test'))
@@ -107,9 +104,8 @@ describe('RUM integration', () => {
     currentSdk = await createSdk({
       clientToken: 'test-token',
       site: 'datadoghq.com',
-      modules: [rumProcessor, viewsProcessor],
+      modules: [rumProcessor],
       rum: {},
-      views: {},
     })
 
     window.dispatchEvent(new ErrorEvent('error', { error: new Error('test'), message: 'test' }))
@@ -129,10 +125,9 @@ describe('RUM integration', () => {
     currentSdk = await createSdk({
       clientToken: 'test-token',
       site: 'datadoghq.com',
-      modules: [logsProcessor, rumProcessor, viewsProcessor],
+      modules: [logsProcessor, rumProcessor],
       logs: { forwardErrorsToLogs: true },
       rum: {},
-      views: {},
     })
 
     window.dispatchEvent(new ErrorEvent('error', { error: new Error('coexist'), message: 'coexist' }))

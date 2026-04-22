@@ -27,6 +27,7 @@ export interface ViewObservation {
   startDate: number
   date: number
   name?: string
+  [key: string]: unknown
 }
 
 export interface ViewChangedSignal {

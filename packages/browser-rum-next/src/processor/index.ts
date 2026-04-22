@@ -7,8 +7,13 @@ import { viewContextEnricher } from '../domain/enrichers/viewContextEnricher'
 import { displayEnricher } from '../domain/enrichers/displayEnricher'
 import { connectivityEnricher } from '../domain/enrichers/connectivityEnricher'
 import { pageStateEnricher } from '../domain/enrichers/pageStateEnricher'
+import { startViewCollectors } from '../views/collectors'
+import { navigationEnricher } from '../views/navigationEnricher'
+import { startProcessor as startViewProcessor } from '../views/processor'
+import type { StartViewAction } from '../views/types'
 
 interface RumPublicApi extends Record<string, unknown> {
+  startView(name?: string): void
   addError(error: Error | string, context?: object): void
   getInternalContext(): Record<string, unknown>
   setGlobalContext(context: object): void
@@ -37,6 +42,16 @@ const rumProcessor: Module = {
     const userContext = new ContextManager()
     const accountContext = new ContextManager()
 
+    // Start view collectors (initial + navigation)
+    const stopViewCollectors = startViewCollectors(context.pipeline)
+
+    // Register navigation enricher (adds id UUID) on resource:navigation and action:start_view
+    context.pipeline.enrich('resource:navigation', navigationEnricher())
+    context.pipeline.enrich('action:start_view', navigationEnricher())
+
+    // Start view processor (resource:navigation + action:start_view → observation:view + signal:view_changed)
+    startViewProcessor({ pipeline: context.pipeline, globalContext, userContext, accountContext })
+
     // Register RUM enrichers on all observation:rum_* events
     context.pipeline.enrich('observation:rum_*', viewContextEnricher(context.pipeline))
     context.pipeline.enrich('observation:rum_*', displayEnricher())
@@ -53,6 +68,22 @@ const rumProcessor: Module = {
     })
 
     return {
+      __stop() {
+        stopViewCollectors()
+      },
+
+      startView(name?: string) {
+        const action: StartViewAction = {
+          url: window.location.href,
+          startTime: performance.now(),
+          startDate: Date.now(),
+          referrer: '',
+          loadingType: 'route_change',
+          name,
+        }
+        context.pipeline.publish('action:start_view', action)
+      },
+
       addError(error: Error | string, errorContext?: object) {
         const errorObj = error instanceof Error ? error : undefined
         const message = error instanceof Error ? error.message : error
