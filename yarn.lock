@@ -366,28 +366,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@datadog/browser-console-next@workspace:*, @datadog/browser-console-next@workspace:packages/browser-console-next":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-console-next@workspace:packages/browser-console-next"
-  peerDependencies:
-    "@datadog/core-next": "workspace:*"
-  languageName: unknown
-  linkType: soft
-
 "@datadog/browser-core@npm:6.32.0, @datadog/browser-core@workspace:*, @datadog/browser-core@workspace:packages/core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-core@workspace:packages/core"
   dependencies:
     "@types/pako": "npm:2.0.4"
     pako: "npm:2.1.0"
-  languageName: unknown
-  linkType: soft
-
-"@datadog/browser-errors-next@workspace:*, @datadog/browser-errors-next@workspace:packages/browser-errors-next":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-errors-next@workspace:packages/browser-errors-next"
-  peerDependencies:
-    "@datadog/core-next": "workspace:*"
   languageName: unknown
   linkType: soft
 
@@ -409,15 +393,6 @@ __metadata:
   peerDependenciesMeta:
     "@datadog/browser-rum":
       optional: true
-  languageName: unknown
-  linkType: soft
-
-"@datadog/browser-network-next@workspace:*, @datadog/browser-network-next@workspace:packages/browser-network-next":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-network-next@workspace:packages/browser-network-next"
-  peerDependencies:
-    "@datadog/browser-sdk": "workspace:*"
-    "@datadog/core-next": "workspace:*"
   languageName: unknown
   linkType: soft
 
@@ -599,9 +574,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-sdk@workspace:packages/browser-sdk"
   dependencies:
-    "@datadog/browser-console-next": "workspace:*"
-    "@datadog/browser-errors-next": "workspace:*"
-    "@datadog/browser-network-next": "workspace:*"
     "@datadog/browser-performance-next": "workspace:*"
     "@datadog/browser-views-next": "workspace:*"
   peerDependencies:

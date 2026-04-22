@@ -1,0 +1,5 @@
+export { startConsoleCollection } from './consoleCollector'
+export { startRuntimeErrorCollection } from './runtimeErrorCollector'
+export { startReportCollection } from './reportCollector'
+export { startFetchCollection } from './fetchCollector'
+export { startXhrCollection } from './xhrCollector'

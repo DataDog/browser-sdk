@@ -24,7 +24,8 @@ import type { TrackType, HttpRequest } from '../browser'
 import { startConsoleCollection as startConsoleCollectors } from '../collectors/consoleCollector'
 import { startRuntimeErrorCollection } from '../collectors/runtimeErrorCollector'
 import { startReportCollection } from '../collectors/reportCollector'
-import { startCollectors as startNetworkCollectors } from '@datadog/browser-network-next/collectors'
+import { startFetchCollection } from '../collectors/fetchCollector'
+import { startXhrCollection } from '../collectors/xhrCollector'
 import { startCollectors as startPerformanceCollectors } from '@datadog/browser-performance-next/collectors'
 import { startCollectors as startViewCollectors } from '@datadog/browser-views-next/collectors'
 
@@ -81,7 +82,8 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
   const stopConsoleCollectors = startConsoleCollectors(pipeline)
   const stopRuntimeErrorCollectors = startRuntimeErrorCollection(pipeline)
   const stopReportCollectors = startReportCollection(pipeline)
-  const stopNetworkCollectors = startNetworkCollectors(pipeline)
+  const stopFetchCollectors = startFetchCollection(pipeline)
+  const stopXhrCollectors = startXhrCollection(pipeline)
   const stopPerformanceCollectors = startPerformanceCollectors(pipeline)
   const stopViewCollectors = startViewCollectors(pipeline)
 
@@ -237,7 +239,8 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
     stopConsoleCollectors()
     stopRuntimeErrorCollectors()
     stopReportCollectors()
-    stopNetworkCollectors()
+    stopFetchCollectors()
+    stopXhrCollectors()
     stopPerformanceCollectors()
     stopViewCollectors()
     if (typeof document !== 'undefined') {

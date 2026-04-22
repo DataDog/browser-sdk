@@ -1,5 +1,5 @@
 import type { Pipeline, NetworkRequestResource } from '@datadog/core-next'
-import { isIntakeUrl } from '@datadog/browser-sdk'
+import { isIntakeUrl } from '../browser'
 
 function startXhrCollection(pipeline: Pipeline<Record<string, unknown>>): () => void {
   const originalOpen = XMLHttpRequest.prototype.open
