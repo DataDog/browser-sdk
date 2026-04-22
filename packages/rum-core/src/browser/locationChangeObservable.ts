@@ -7,22 +7,22 @@ export interface LocationChange {
 }
 
 export function createLocationChangeObservable(configuration: RumConfiguration) {
-  let currentLocation = shallowClone(location)
+  let currentLocation = getLocationSnapshot()
 
   return new Observable<LocationChange>((observable) => {
     const { stop: stopHistoryTracking } = trackHistory(configuration, onLocationChange)
     const { stop: stopHashTracking } = trackHash(configuration, onLocationChange)
 
     function onLocationChange() {
-      if (currentLocation.href === location.href) {
+      const nextLocation = getLocationSnapshot()
+      if (currentLocation.href === nextLocation.href) {
         return
       }
-      const newLocation = shallowClone(location)
       observable.notify({
-        newLocation,
+        newLocation: nextLocation,
         oldLocation: currentLocation,
       })
-      currentLocation = newLocation
+      currentLocation = nextLocation
     }
 
     return () => {
@@ -30,6 +30,22 @@ export function createLocationChangeObservable(configuration: RumConfiguration) 
       stopHashTracking()
     }
   })
+}
+
+function getLocationSnapshot(): Readonly<Location> {
+  const currentLocation = window.location
+  return shallowClone({
+    ancestorOrigins: currentLocation?.ancestorOrigins,
+    hash: currentLocation?.hash ?? '',
+    host: currentLocation?.host ?? '',
+    hostname: currentLocation?.hostname ?? '',
+    href: currentLocation?.href ?? 'about:blank',
+    origin: currentLocation?.origin ?? '',
+    pathname: currentLocation?.pathname ?? '/',
+    port: currentLocation?.port ?? '',
+    protocol: currentLocation?.protocol ?? '',
+    search: currentLocation?.search ?? '',
+  }) as unknown as Readonly<Location>
 }
 
 function trackHistory(configuration: RumConfiguration, onHistoryChange: () => void) {

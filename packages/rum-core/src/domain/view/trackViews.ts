@@ -113,7 +113,8 @@ export function trackViews(
   configuration: RumConfiguration,
   locationChangeObservable: Observable<LocationChange>,
   areViewsTrackedAutomatically: boolean,
-  initialViewOptions?: ViewOptions
+  initialViewOptions?: ViewOptions,
+  collectViewMetrics: boolean = true
 ) {
   const activeViews: Set<ReturnType<typeof newView>> = new Set()
   let currentView = startNewView(ViewLoadingType.INITIAL_LOAD, clocksOrigin(), initialViewOptions)
@@ -141,7 +142,8 @@ export function trackViews(
       configuration,
       loadingType,
       startClocks,
-      viewOptions
+      viewOptions,
+      collectViewMetrics
     )
     activeViews.add(newlyCreatedView)
     newlyCreatedView.stopObservable.subscribe(() => {
@@ -215,7 +217,8 @@ function newView(
   configuration: RumConfiguration,
   loadingType: ViewLoadingType,
   startClocks: ClocksState = clocksNow(),
-  viewOptions?: ViewOptions
+  viewOptions?: ViewOptions,
+  collectViewMetrics: boolean = true
 ) {
   // Setup initial values
   const id = generateUUID()
@@ -254,6 +257,7 @@ function newView(
     leading: false,
   })
 
+  const emptyCommonViewMetrics: CommonViewMetrics = {}
   const {
     setLoadEvent,
     setViewEnd,
@@ -261,23 +265,32 @@ function newView(
     stopINPTracking,
     getCommonViewMetrics,
     setLoadingTime,
-  } = trackCommonViewMetrics(
-    lifeCycle,
-    domMutationObservable,
-    windowOpenObservable,
-    configuration,
-    scheduleViewUpdate,
-    loadingType,
-    startClocks
-  )
+  } = collectViewMetrics
+    ? trackCommonViewMetrics(
+        lifeCycle,
+        domMutationObservable,
+        windowOpenObservable,
+        configuration,
+        scheduleViewUpdate,
+        loadingType,
+        startClocks
+      )
+    : {
+        setLoadEvent: noop,
+        setViewEnd: noop,
+        stop: noop,
+        stopINPTracking: noop,
+        getCommonViewMetrics: () => emptyCommonViewMetrics,
+        setLoadingTime: noop,
+      }
 
   const { stop: stopInitialViewMetricsTracking, initialViewMetrics } =
-    loadingType === ViewLoadingType.INITIAL_LOAD
+    collectViewMetrics && loadingType === ViewLoadingType.INITIAL_LOAD
       ? trackInitialViewMetrics(configuration, startClocks, setLoadEvent, scheduleViewUpdate)
       : { stop: noop, initialViewMetrics: {} as InitialViewMetrics }
 
   // Start BFCache-specific metrics when restoring from BFCache
-  if (loadingType === ViewLoadingType.BF_CACHE) {
+  if (collectViewMetrics && loadingType === ViewLoadingType.BF_CACHE) {
     trackBfcacheMetrics(startClocks, initialViewMetrics, scheduleViewUpdate)
   }
 

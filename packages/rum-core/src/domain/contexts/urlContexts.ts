@@ -41,7 +41,7 @@ export function startUrlContexts(
   let previousViewUrl: string | undefined
 
   lifeCycle.subscribe(LifeCycleEventType.BEFORE_VIEW_CREATED, ({ startClocks, url }) => {
-    const locationHref = mockable(location).href
+    const locationHref = getLocationHref()
     const viewUrl = url !== undefined ? buildUrl(url, locationHref).href : locationHref
     urlContextHistory.add(
       buildUrlContext({
@@ -102,4 +102,9 @@ export function startUrlContexts(
       urlContextHistory.stop()
     },
   }
+}
+
+function getLocationHref() {
+  const href = mockable(() => window.location?.href)()
+  return typeof href === 'string' && href.trim() ? href : 'about:blank'
 }

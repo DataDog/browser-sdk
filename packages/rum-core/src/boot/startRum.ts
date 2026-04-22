@@ -17,6 +17,7 @@ import {
   startGlobalContext,
   startUserContext,
   startTabContext,
+  noop,
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { createWindowOpenObservable } from '../browser/windowOpenObservable'
@@ -25,7 +26,7 @@ import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { startViewHistory } from '../domain/contexts/viewHistory'
 import { startRequestCollection } from '../domain/requestCollection'
 import { startActionCollection } from '../domain/action/actionCollection'
-import { startErrorCollection } from '../domain/error/errorCollection'
+import { doStartErrorCollection, startErrorCollection } from '../domain/error/errorCollection'
 import { startResourceCollection } from '../domain/resource/resourceCollection'
 import { startViewCollection } from '../domain/view/viewCollection'
 import type { RumSessionManager } from '../domain/rumSessionManager'
@@ -56,6 +57,8 @@ import { startEventCollection } from '../domain/event/eventCollection'
 import { startInitialViewMetricsTelemetry } from '../domain/view/viewMetrics/startInitialViewMetricsTelemetry'
 import { startSourceCodeContext } from '../domain/contexts/sourceCodeContext'
 import type { RecorderApi, ProfilerApi } from './rumPublicApi'
+import type { ResolvedRumRuntimeCapabilities } from './runtimeCapabilities'
+import { DEFAULT_RUM_RUNTIME_CAPABILITIES } from './runtimeCapabilities'
 
 export type StartRum = typeof startRum
 export type StartRumResult = ReturnType<StartRum>
@@ -75,7 +78,8 @@ export function startRum(
   bufferedDataObservable: BufferedObservable<BufferedData>,
   telemetry: Telemetry,
   hooks: Hooks,
-  sdkName?: SdkName
+  sdkName?: SdkName,
+  runtimeCapabilities: ResolvedRumRuntimeCapabilities = DEFAULT_RUM_RUNTIME_CAPABILITIES
 ) {
   const cleanupTasks: Array<() => void> = []
   const lifeCycle = new LifeCycle()
@@ -119,7 +123,9 @@ export function startRum(
 
   startTrackingConsentContext(hooks, trackingConsentState)
 
-  const { stop: stopInitialViewMetricsTelemetry } = startInitialViewMetricsTelemetry(lifeCycle, telemetry)
+  const { stop: stopInitialViewMetricsTelemetry } = runtimeCapabilities.viewMetrics
+    ? startInitialViewMetricsTelemetry(lifeCycle, telemetry)
+    : { stop: noop }
   cleanupTasks.push(stopInitialViewMetricsTelemetry)
 
   const { stop: stopRumEventCollection, ...startRumEventCollectionResult } = startRumEventCollection(
@@ -132,7 +138,8 @@ export function startRum(
     customVitalsState,
     bufferedDataObservable,
     sdkName,
-    reportError
+    reportError,
+    runtimeCapabilities
   )
   cleanupTasks.push(stopRumEventCollection)
   bufferedDataObservable.unbuffer()
@@ -163,7 +170,8 @@ export function startRumEventCollection(
   customVitalsState: CustomVitalsState,
   bufferedDataObservable: Observable<BufferedData>,
   sdkName: SdkName | undefined,
-  reportError: (error: RawError) => void
+  reportError: (error: RawError) => void,
+  runtimeCapabilities: ResolvedRumRuntimeCapabilities = DEFAULT_RUM_RUNTIME_CAPABILITIES
 ) {
   const cleanupTasks: Array<() => void> = []
 
@@ -224,7 +232,8 @@ export function startRumEventCollection(
     locationChangeObservable,
     recorderApi,
     viewHistory,
-    initialViewOptions
+    initialViewOptions,
+    runtimeCapabilities.viewMetrics
   )
 
   startSourceCodeContext(hooks)
@@ -237,9 +246,13 @@ export function startRumEventCollection(
   const { stop: stopLongTaskCollection } = startLongTaskCollection(lifeCycle, configuration)
   cleanupTasks.push(stopLongTaskCollection)
 
-  const { addError } = startErrorCollection(lifeCycle, configuration, bufferedDataObservable)
+  const { addError } = runtimeCapabilities.runtimeErrors
+    ? startErrorCollection(lifeCycle, configuration, bufferedDataObservable)
+    : doStartErrorCollection(lifeCycle)
 
-  startRequestCollection(lifeCycle, configuration, session, userContext, accountContext)
+  if (runtimeCapabilities.requestCollection) {
+    startRequestCollection(lifeCycle, configuration, session, userContext, accountContext)
+  }
 
   const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory, customVitalsState)
 

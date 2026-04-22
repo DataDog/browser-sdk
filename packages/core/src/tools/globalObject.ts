@@ -17,6 +17,12 @@ export function getGlobalObject<T = typeof globalThis>(): T {
   if (typeof globalThis === 'object') {
     return globalThis as unknown as T
   }
+  if (typeof self === 'object') {
+    return self as unknown as T
+  }
+  if (typeof window === 'object') {
+    return window as unknown as T
+  }
   Object.defineProperty(Object.prototype, '_dd_temp_', {
     get() {
       return this as object
@@ -30,13 +36,7 @@ export function getGlobalObject<T = typeof globalThis>(): T {
   if (typeof globalObject !== 'object') {
     // on safari _dd_temp_ is available on window but not globally
     // fallback on other browser globals check
-    if (typeof self === 'object') {
-      globalObject = self
-    } else if (typeof window === 'object') {
-      globalObject = window
-    } else {
-      globalObject = {}
-    }
+    globalObject = {}
   }
   return globalObject as T
 }

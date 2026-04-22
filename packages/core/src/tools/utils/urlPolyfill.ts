@@ -1,7 +1,7 @@
 import { globalObject } from '../globalObject'
 
 export function normalizeUrl(url: string) {
-  return buildUrl(url, location.href).href
+  return buildUrl(url, getLocationHref()).href
 }
 
 export function isValidUrl(url: string) {
@@ -25,6 +25,11 @@ export function buildUrl(url: string, base?: string) {
   } catch (error) {
     throw new Error(`Failed to construct URL: ${String(error)}`)
   }
+}
+
+function getLocationHref() {
+  const href = (globalObject as Window & typeof globalThis).location?.href
+  return typeof href === 'string' && href.trim() ? href : undefined
 }
 
 /**
