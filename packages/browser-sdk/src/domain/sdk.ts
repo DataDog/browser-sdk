@@ -4,6 +4,7 @@ import {
   Pipeline,
   Batch,
   Session,
+  ContextManager,
   registerSdk,
   getSdk,
   unregisterSdk,
@@ -12,6 +13,7 @@ import {
   tagsEnricher,
   metadataEnricher,
   stackTraceEnricher,
+  contextEnricher,
 } from '@datadog/core-next'
 import {
   selectStore,
@@ -73,6 +75,11 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
     now: () => Date.now(),
   })
 
+  // 4. Create context managers (shared across all modules)
+  const globalContext = new ContextManager()
+  const userContext = new ContextManager()
+  const accountContext = new ContextManager()
+
   // 4. Create pipeline
   const pipeline = new Pipeline<Record<string, unknown>>()
 
@@ -95,6 +102,7 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
     'observation:*',
     tagsEnricher({ env: config.env, service: config.service, version: config.version, sdkVersion: config.sdkVersion })
   )
+  pipeline.enrich('observation:*', contextEnricher(globalContext, userContext, accountContext))
 
   // 4.7. Add anonymous_id to usr context when trackAnonymousUser is enabled (default: true)
   if (config.trackAnonymousUser !== false) {
@@ -223,6 +231,23 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
 
   // 10. Expose SDK utilities
   sdk.getInitConfiguration = () => ({ ...init })
+
+  // 10.1. Expose context CRUD methods at SDK level
+  sdk.setUser = (user: object) => userContext.set(user as Record<string, unknown>)
+  sdk.getUser = () => userContext.get()
+  sdk.setUserProperty = (key: string, value: unknown) => userContext.setProperty(key, value)
+  sdk.removeUserProperty = (key: string) => userContext.removeProperty(key)
+  sdk.clearUser = () => userContext.clear()
+  sdk.setGlobalContext = (ctx: object) => globalContext.set(ctx as Record<string, unknown>)
+  sdk.getGlobalContext = () => globalContext.get()
+  sdk.setGlobalContextProperty = (key: string, value: unknown) => globalContext.setProperty(key, value)
+  sdk.removeGlobalContextProperty = (key: string) => globalContext.removeProperty(key)
+  sdk.clearGlobalContext = () => globalContext.clear()
+  sdk.setAccount = (account: object) => accountContext.set(account as Record<string, unknown>)
+  sdk.getAccount = () => accountContext.get()
+  sdk.setAccountProperty = (key: string, value: unknown) => accountContext.setProperty(key, value)
+  sdk.removeAccountProperty = (key: string) => accountContext.removeProperty(key)
+  sdk.clearAccount = () => accountContext.clear()
 
   // 11. Seal pipeline
   pipeline.seal()

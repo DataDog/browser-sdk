@@ -1,4 +1,4 @@
-import { Pipeline, ContextManager } from '@datadog/core-next'
+import { Pipeline } from '@datadog/core-next'
 import type { LogsConfig } from './configuration'
 import { startProcessor } from './processor'
 import type { LogEvent } from './processor'
@@ -23,19 +23,9 @@ function waitMicrotask(): Promise<void> {
 }
 
 describe('startProcessor', () => {
-  let globalContext: ContextManager
-  let userContext: ContextManager
-  let accountContext: ContextManager
-
-  beforeEach(() => {
-    globalContext = new ContextManager()
-    userContext = new ContextManager()
-    accountContext = new ContextManager()
-  })
-
   it('transforms action:log into observation:log with origin=logger', async () => {
     const { pipeline, observations } = createPipelineAndCapture()
-    startProcessor({ pipeline, config: defaultConfig, globalContext, userContext, accountContext })
+    startProcessor({ pipeline, config: defaultConfig })
     pipeline.seal()
 
     pipeline.publish('action:log', { message: 'hello', status: 'info' })
@@ -49,7 +39,7 @@ describe('startProcessor', () => {
 
   it('transforms resource:console into observation:log with origin=console', async () => {
     const { pipeline, observations } = createPipelineAndCapture()
-    startProcessor({ pipeline, config: defaultConfig, globalContext, userContext, accountContext })
+    startProcessor({ pipeline, config: defaultConfig })
     pipeline.seal()
 
     pipeline.publish('resource:console', { api: 'log', message: 'console message' })
@@ -62,7 +52,7 @@ describe('startProcessor', () => {
 
   it('maps console.warn to status=warn', async () => {
     const { pipeline, observations } = createPipelineAndCapture()
-    startProcessor({ pipeline, config: defaultConfig, globalContext, userContext, accountContext })
+    startProcessor({ pipeline, config: defaultConfig })
     pipeline.seal()
 
     pipeline.publish('resource:console', { api: 'warn', message: 'a warning' })
@@ -73,7 +63,7 @@ describe('startProcessor', () => {
 
   it('maps console.error to status=error', async () => {
     const { pipeline, observations } = createPipelineAndCapture()
-    startProcessor({ pipeline, config: defaultConfig, globalContext, userContext, accountContext })
+    startProcessor({ pipeline, config: defaultConfig })
     pipeline.seal()
 
     pipeline.publish('resource:console', { api: 'error', message: 'an error' })
@@ -84,7 +74,7 @@ describe('startProcessor', () => {
 
   it('transforms resource:runtime_error into observation:log with origin=source and status=error', async () => {
     const { pipeline, observations } = createPipelineAndCapture()
-    startProcessor({ pipeline, config: defaultConfig, globalContext, userContext, accountContext })
+    startProcessor({ pipeline, config: defaultConfig })
     pipeline.seal()
 
     pipeline.publish('resource:runtime_error', {
@@ -104,7 +94,7 @@ describe('startProcessor', () => {
 
   it('transforms resource:network_request with status 500 into observation:log with origin=network', async () => {
     const { pipeline, observations } = createPipelineAndCapture()
-    startProcessor({ pipeline, config: defaultConfig, globalContext, userContext, accountContext })
+    startProcessor({ pipeline, config: defaultConfig })
     pipeline.seal()
 
     pipeline.publish('resource:network_request', {
@@ -124,7 +114,7 @@ describe('startProcessor', () => {
 
   it('skips resource:network_request with status 200 (not an error)', async () => {
     const { pipeline, observations } = createPipelineAndCapture()
-    startProcessor({ pipeline, config: defaultConfig, globalContext, userContext, accountContext })
+    startProcessor({ pipeline, config: defaultConfig })
     pipeline.seal()
 
     pipeline.publish('resource:network_request', {
@@ -141,7 +131,7 @@ describe('startProcessor', () => {
 
   it('transforms resource:report into observation:log with origin=report', async () => {
     const { pipeline, observations } = createPipelineAndCapture()
-    startProcessor({ pipeline, config: defaultConfig, globalContext, userContext, accountContext })
+    startProcessor({ pipeline, config: defaultConfig })
     pipeline.seal()
 
     pipeline.publish('resource:report', {
@@ -157,7 +147,7 @@ describe('startProcessor', () => {
 
   it('enriches with view URL (window.location.href)', async () => {
     const { pipeline, observations } = createPipelineAndCapture()
-    startProcessor({ pipeline, config: defaultConfig, globalContext, userContext, accountContext })
+    startProcessor({ pipeline, config: defaultConfig })
     pipeline.seal()
 
     pipeline.publish('action:log', { message: 'test', status: 'info' })
@@ -166,35 +156,10 @@ describe('startProcessor', () => {
     expect(observations[0].view).toEqual({ url: window.location.href })
   })
 
-  it('enriches with global context', async () => {
-    const { pipeline, observations } = createPipelineAndCapture()
-    globalContext.set({ env: 'production', version: '1.0' } as any)
-    startProcessor({ pipeline, config: defaultConfig, globalContext, userContext, accountContext })
-    pipeline.seal()
-
-    pipeline.publish('action:log', { message: 'test', status: 'info' })
-    await waitMicrotask()
-
-    expect(observations[0]['env']).toBe('production')
-    expect(observations[0]['version']).toBe('1.0')
-  })
-
-  it('enriches with user context', async () => {
-    const { pipeline, observations } = createPipelineAndCapture()
-    userContext.set({ id: 'user-123', name: 'Alice' } as any)
-    startProcessor({ pipeline, config: defaultConfig, globalContext, userContext, accountContext })
-    pipeline.seal()
-
-    pipeline.publish('action:log', { message: 'test', status: 'info' })
-    await waitMicrotask()
-
-    expect(observations[0]['usr']).toEqual({ id: 'user-123', name: 'Alice' })
-  })
-
   it('respects forwardErrorsToLogs: false — no runtime_error or network_request subscriptions', async () => {
     const { pipeline, observations } = createPipelineAndCapture()
     const config: LogsConfig = { ...defaultConfig, forwardErrorsToLogs: false }
-    startProcessor({ pipeline, config, globalContext, userContext, accountContext })
+    startProcessor({ pipeline, config })
     pipeline.seal()
 
     pipeline.publish('resource:runtime_error', {
@@ -216,7 +181,7 @@ describe('startProcessor', () => {
   it('respects forwardConsoleLogs filter — only forwards matching APIs', async () => {
     const { pipeline, observations } = createPipelineAndCapture()
     const config: LogsConfig = { ...defaultConfig, forwardConsoleLogs: ['error'] }
-    startProcessor({ pipeline, config, globalContext, userContext, accountContext })
+    startProcessor({ pipeline, config })
     pipeline.seal()
 
     pipeline.publish('resource:console', { api: 'log', message: 'not forwarded' })

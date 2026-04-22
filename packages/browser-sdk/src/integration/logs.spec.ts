@@ -169,8 +169,8 @@ describe('logs integration', () => {
       logs: {},
     })
 
+    ;(currentSdk as any).setGlobalContext({ env: 'prod' })
     const logs = currentSdk!['logs'] as LogsPublicApi
-    logs.setGlobalContext({ env: 'prod' })
     logs.logger.info('test')
 
     await tick()

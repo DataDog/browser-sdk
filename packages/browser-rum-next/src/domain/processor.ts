@@ -1,4 +1,4 @@
-import type { Pipeline, ContextManager, NetworkRequestResource } from '@datadog/core-next'
+import type { Pipeline, NetworkRequestResource } from '@datadog/core-next'
 import { flattenCauses, extractFingerprint } from '@datadog/core-next'
 import type { ResourceTimingEntry } from '../performance/types'
 import type { RumConfig } from './configuration'
@@ -7,23 +7,10 @@ import { ResourceMatcher } from './resourceMatcher'
 interface ProcessorDependencies {
   pipeline: Pipeline<Record<string, unknown>>
   config: RumConfig
-  globalContext: ContextManager
-  userContext: ContextManager
-  accountContext: ContextManager
 }
 
-function startProcessor({ pipeline, config, globalContext, userContext, accountContext }: ProcessorDependencies): void {
+function startProcessor({ pipeline, config }: ProcessorDependencies): void {
   const matcher = new ResourceMatcher()
-
-  function mergeContext(): Record<string, unknown> {
-    const accountCtx = accountContext.get()
-    const hasAccount = Object.keys(accountCtx).length > 0
-    return {
-      ...globalContext.get(),
-      usr: userContext.get(),
-      ...(hasAccount && { account: accountCtx }),
-    }
-  }
 
   // Buffer network requests for correlation
   pipeline.subscribe('resource:network_request', (data) => {
@@ -59,7 +46,6 @@ function startProcessor({ pipeline, config, globalContext, userContext, accountC
           first_byte: computePhase(entry.requestStart, entry.responseStart),
           download: computePhase(entry.responseStart, entry.responseEnd),
         },
-        ...mergeContext(),
       }
 
       pipeline.publish('observation:rum_resource', resource)
@@ -83,7 +69,6 @@ function startProcessor({ pipeline, config, globalContext, userContext, accountC
           fingerprint: extractFingerprint(errorObj),
           causes: errorObj ? flattenCauses(errorObj) : undefined,
         },
-        ...mergeContext(),
       })
     })
   }
@@ -96,7 +81,6 @@ function startProcessor({ pipeline, config, globalContext, userContext, accountC
         type: 'long_task',
         date: Math.round(performance.timeOrigin + entry.startTime),
         long_task: { duration: entry.duration },
-        ...mergeContext(),
       })
     })
 
@@ -140,7 +124,6 @@ function startProcessor({ pipeline, config, globalContext, userContext, accountC
           forced_style_and_layout_duration: s.forcedStyleAndLayoutDuration,
           window_attribution: s.windowAttribution,
         })),
-        ...mergeContext(),
       })
     })
   }

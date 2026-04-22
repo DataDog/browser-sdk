@@ -45,12 +45,6 @@ describe('rumProcessor', () => {
     expect(typeof api.startView).toBe('function')
     expect(typeof api.addError).toBe('function')
     expect(typeof api.getInternalContext).toBe('function')
-    expect(typeof api.setGlobalContext).toBe('function')
-    expect(typeof api.getGlobalContext).toBe('function')
-    expect(typeof api.setUser).toBe('function')
-    expect(typeof api.getUser).toBe('function')
-    expect(typeof api.setAccount).toBe('function')
-    expect(typeof api.getAccount).toBe('function')
   })
 
   it('startView publishes action:start_view to the pipeline', async () => {
@@ -110,53 +104,12 @@ describe('rumProcessor', () => {
     expect(error.type).toBe('TypeError')
   })
 
-  it('getInternalContext returns global and user context', () => {
+  it('getInternalContext returns an object', () => {
     const { pipeline, config } = createTestContext()
     const api = init({ pipeline, config })
-
-    api.setGlobalContext({ env: 'test' })
-    api.setUser({ id: 'user-1' })
 
     const ctx = api.getInternalContext()
 
-    expect(ctx.env).toBe('test')
-    expect(ctx.usr).toEqual({ id: 'user-1' })
-  })
-
-  it('setGlobalContext / getGlobalContext round-trips', () => {
-    const { pipeline, config } = createTestContext()
-    const api = init({ pipeline, config })
-
-    api.setGlobalContext({ version: '2.0.0' })
-
-    expect(api.getGlobalContext()).toEqual({ version: '2.0.0' })
-  })
-
-  it('setUser / getUser round-trips', () => {
-    const { pipeline, config } = createTestContext()
-    const api = init({ pipeline, config })
-
-    api.setUser({ id: 'u-42', name: 'Alice' })
-
-    expect(api.getUser()).toEqual({ id: 'u-42', name: 'Alice' })
-  })
-
-  it('clearUser empties the user context', () => {
-    const { pipeline, config } = createTestContext()
-    const api = init({ pipeline, config })
-
-    api.setUser({ id: 'u-42' })
-    api.clearUser()
-
-    expect(api.getUser()).toEqual({})
-  })
-
-  it('setAccount / getAccount round-trips', () => {
-    const { pipeline, config } = createTestContext()
-    const api = init({ pipeline, config })
-
-    api.setAccount({ id: 'acct-1', name: 'Acme' })
-
-    expect(api.getAccount()).toEqual({ id: 'acct-1', name: 'Acme' })
+    expect(ctx).toEqual(jasmine.any(Object))
   })
 })

@@ -1,4 +1,4 @@
-import { Pipeline, ContextManager } from '@datadog/core-next'
+import { Pipeline } from '@datadog/core-next'
 import { startProcessor } from './processor'
 import type { ViewObservation, ViewChangedSignal } from './types'
 
@@ -10,20 +10,14 @@ describe('startProcessor', () => {
   let pipeline: Pipeline<Record<string, unknown>>
   let observations: ViewObservation[]
   let signals: ViewChangedSignal[]
-  let globalContext: ContextManager
-  let userContext: ContextManager
-  let accountContext: ContextManager
 
   beforeEach(() => {
     pipeline = new Pipeline<Record<string, unknown>>()
     observations = []
     signals = []
-    globalContext = new ContextManager()
-    userContext = new ContextManager()
-    accountContext = new ContextManager()
     pipeline.subscribe('observation:view', (e) => observations.push(e as ViewObservation))
     pipeline.subscribe('signal:view_changed', (e) => signals.push(e as ViewChangedSignal))
-    startProcessor({ pipeline, globalContext, userContext, accountContext })
+    startProcessor({ pipeline })
     pipeline.seal()
   })
 
@@ -92,67 +86,5 @@ describe('startProcessor', () => {
 
     expect(signals.length).toBe(1)
     expect(signals[0].viewId).toBe('view-xyz')
-  })
-
-  it('merges global context into observation:view', async () => {
-    globalContext.set({ customKey: 'customValue' } as any)
-
-    pipeline.publish('resource:navigation', {
-      id: 'view-ctx',
-      url: 'http://example.com/',
-      startTime: 0,
-      startDate: 1000,
-      referrer: '',
-      loadingType: 'initial_load',
-    })
-    await tick()
-
-    expect((observations[0] as any).customKey).toBe('customValue')
-  })
-
-  it('merges user context into observation:view', async () => {
-    userContext.set({ id: 'user-1', email: 'test@example.com' } as any)
-
-    pipeline.publish('resource:navigation', {
-      id: 'view-usr',
-      url: 'http://example.com/',
-      startTime: 0,
-      startDate: 1000,
-      referrer: '',
-      loadingType: 'initial_load',
-    })
-    await tick()
-
-    expect((observations[0] as any).usr).toEqual({ id: 'user-1', email: 'test@example.com' })
-  })
-
-  it('merges account context into observation:view when set', async () => {
-    accountContext.set({ id: 'acct-1', name: 'Acme' } as any)
-
-    pipeline.publish('resource:navigation', {
-      id: 'view-acct',
-      url: 'http://example.com/',
-      startTime: 0,
-      startDate: 1000,
-      referrer: '',
-      loadingType: 'initial_load',
-    })
-    await tick()
-
-    expect((observations[0] as any).account).toEqual({ id: 'acct-1', name: 'Acme' })
-  })
-
-  it('does not include account when account context is empty', async () => {
-    pipeline.publish('resource:navigation', {
-      id: 'view-no-acct',
-      url: 'http://example.com/',
-      startTime: 0,
-      startDate: 1000,
-      referrer: '',
-      loadingType: 'initial_load',
-    })
-    await tick()
-
-    expect((observations[0] as any).account).toBeUndefined()
   })
 })

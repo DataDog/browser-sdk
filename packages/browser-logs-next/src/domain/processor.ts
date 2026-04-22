@@ -5,7 +5,6 @@ import type {
   NetworkRequestResource,
   ReportResource,
   ErrorCause,
-  ContextManager,
 } from '@datadog/core-next'
 import { flattenCauses, extractFingerprint } from '@datadog/core-next'
 import type { LogsConfig } from './configuration'
@@ -41,16 +40,10 @@ interface ActionLog {
 interface ProcessorDependencies {
   pipeline: Pipeline<Record<string, unknown>>
   config: LogsConfig
-  globalContext: ContextManager
-  userContext: ContextManager
-  accountContext: ContextManager
 }
 
-function startProcessor({ pipeline, config, globalContext, userContext, accountContext }: ProcessorDependencies): void {
+function startProcessor({ pipeline, config }: ProcessorDependencies): void {
   function process(event: Partial<LogEvent>): void {
-    const accountCtx = accountContext.get()
-    const hasAccount = Object.keys(accountCtx).length > 0
-
     const logEvent: LogEvent = {
       date: Date.now(),
       message: event.message ?? '',
@@ -58,9 +51,6 @@ function startProcessor({ pipeline, config, globalContext, userContext, accountC
       origin: event.origin ?? 'logger',
       view: { url: window.location.href },
       ...event,
-      ...globalContext.get(),
-      usr: userContext.get(),
-      ...(hasAccount && { account: accountCtx }),
     }
 
     pipeline.publish('observation:log', logEvent)

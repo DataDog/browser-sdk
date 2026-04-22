@@ -1,4 +1,4 @@
-import { Pipeline, ContextManager } from '@datadog/core-next'
+import { Pipeline } from '@datadog/core-next'
 import type { NetworkRequestResource } from '@datadog/core-next'
 import type { RumConfig } from './configuration'
 import { startProcessor } from './processor'
@@ -59,22 +59,16 @@ function makeConfig(overrides: Partial<RumConfig> = {}): RumConfig {
 
 describe('startProcessor', () => {
   let pipeline: Pipeline<Record<string, unknown>>
-  let globalContext: ContextManager
-  let userContext: ContextManager
-  let accountContext: ContextManager
 
   beforeEach(() => {
     pipeline = new Pipeline<Record<string, unknown>>()
-    globalContext = new ContextManager()
-    userContext = new ContextManager()
-    accountContext = new ContextManager()
   })
 
   it('transforms resource:performance_entry into observation:rum_resource', async () => {
     const observations: unknown[] = []
     pipeline.subscribe('observation:rum_resource', (data) => observations.push(data))
 
-    startProcessor({ pipeline, config: makeConfig(), globalContext, userContext, accountContext })
+    startProcessor({ pipeline, config: makeConfig() })
     pipeline.seal()
 
     pipeline.publish('resource:performance_entry', makePerformanceEntry())
@@ -97,7 +91,7 @@ describe('startProcessor', () => {
     const observations: unknown[] = []
     pipeline.subscribe('observation:rum_resource', (data) => observations.push(data))
 
-    startProcessor({ pipeline, config: makeConfig(), globalContext, userContext, accountContext })
+    startProcessor({ pipeline, config: makeConfig() })
     pipeline.seal()
 
     pipeline.publish('resource:network_request', makeNetworkRequest({ method: 'POST', status: 201, url: 'https://example.com/api/data', startTime: 100 }))
@@ -114,7 +108,7 @@ describe('startProcessor', () => {
     const observations: unknown[] = []
     pipeline.subscribe('observation:rum_resource', (data) => observations.push(data))
 
-    startProcessor({ pipeline, config: makeConfig(), globalContext, userContext, accountContext })
+    startProcessor({ pipeline, config: makeConfig() })
     pipeline.seal()
 
     pipeline.publish('resource:performance_entry', makePerformanceEntry())
@@ -129,7 +123,7 @@ describe('startProcessor', () => {
     const observations: unknown[] = []
     pipeline.subscribe('observation:rum_error', (data) => observations.push(data))
 
-    startProcessor({ pipeline, config: makeConfig(), globalContext, userContext, accountContext })
+    startProcessor({ pipeline, config: makeConfig() })
     pipeline.seal()
 
     pipeline.publish('resource:runtime_error', {
@@ -153,7 +147,7 @@ describe('startProcessor', () => {
     const observations: unknown[] = []
     pipeline.subscribe('observation:rum_long_task', (data) => observations.push(data))
 
-    startProcessor({ pipeline, config: makeConfig(), globalContext, userContext, accountContext })
+    startProcessor({ pipeline, config: makeConfig() })
     pipeline.seal()
 
     pipeline.publish('resource:long_task', { startTime: 500, duration: 150 })
@@ -170,34 +164,12 @@ describe('startProcessor', () => {
     const observations: unknown[] = []
     pipeline.subscribe('observation:rum_resource', (data) => observations.push(data))
 
-    startProcessor({ pipeline, config: makeConfig({ trackResources: false }), globalContext, userContext, accountContext })
+    startProcessor({ pipeline, config: makeConfig({ trackResources: false }) })
     pipeline.seal()
 
     pipeline.publish('resource:performance_entry', makePerformanceEntry())
     await tick()
 
     expect(observations.length).toBe(0)
-  })
-
-  it('merges global context into observations', async () => {
-    const observations: unknown[] = []
-    pipeline.subscribe('observation:rum_error', (data) => observations.push(data))
-
-    globalContext.set({ env: 'production', version: '1.0.0' })
-
-    startProcessor({ pipeline, config: makeConfig(), globalContext, userContext, accountContext })
-    pipeline.seal()
-
-    pipeline.publish('resource:runtime_error', {
-      message: 'Test error',
-      type: 'Error',
-      source: 'source',
-    })
-    await tick()
-
-    expect(observations.length).toBe(1)
-    const obs = observations[0] as Record<string, unknown>
-    expect(obs.env).toBe('production')
-    expect(obs.version).toBe('1.0.0')
   })
 })

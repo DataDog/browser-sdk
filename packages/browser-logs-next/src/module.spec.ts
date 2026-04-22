@@ -112,41 +112,4 @@ describe('logsModule', () => {
 
     expect(result).toBeUndefined()
   })
-
-  it('global context is included in log events', async () => {
-    const { pipeline, session, config } = createTestContext()
-    const observations: LogEvent[] = []
-
-    pipeline.subscribe('observation:log', (event) => {
-      observations.push(event as LogEvent)
-    })
-
-    const api = initModule({ pipeline, session, config })
-    pipeline.seal()
-
-    api.setGlobalContext({ env: 'production', version: '1.0.0' })
-    api.logger.info('test')
-    await waitMicrotask()
-
-    expect(observations[0]['env']).toBe('production')
-    expect(observations[0]['version']).toBe('1.0.0')
-  })
-
-  it('user context is included in log events under usr key', async () => {
-    const { pipeline, session, config } = createTestContext()
-    const observations: LogEvent[] = []
-
-    pipeline.subscribe('observation:log', (event) => {
-      observations.push(event as LogEvent)
-    })
-
-    const api = initModule({ pipeline, session, config })
-    pipeline.seal()
-
-    api.setUser({ id: 'user-42', name: 'Alice' })
-    api.logger.info('user log')
-    await waitMicrotask()
-
-    expect(observations[0]['usr']).toEqual({ id: 'user-42', name: 'Alice' })
-  })
 })

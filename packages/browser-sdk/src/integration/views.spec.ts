@@ -3,6 +3,7 @@ import { rumProcessor } from '@datadog/browser-rum-next/processor'
 import type { RumPublicApi } from '@datadog/browser-rum-next/processor'
 import { unregisterSdk } from '@datadog/core-next'
 
+
 function tick(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0))
 }
@@ -130,8 +131,8 @@ describe('views integration', () => {
     flushBatch()
     fetchSpy.calls.reset()
 
+    ;(currentSdk as any).setGlobalContext({ deployment: 'canary' })
     const rum = currentSdk!['rum'] as RumPublicApi
-    rum.setGlobalContext({ deployment: 'canary' })
     rum.startView('with-context')
 
     await tick()
@@ -155,8 +156,8 @@ describe('views integration', () => {
     flushBatch()
     fetchSpy.calls.reset()
 
+    ;(currentSdk as any).setUser({ id: 'user-42', name: 'Ada' })
     const rum = currentSdk!['rum'] as RumPublicApi
-    rum.setUser({ id: 'user-42', name: 'Ada' })
     rum.startView('with-user')
 
     await tick()
