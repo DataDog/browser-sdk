@@ -47,11 +47,19 @@ describe('checkProfilingQuota', () => {
     expect(result).toBe('quota-ok')
   })
 
-  it('builds the URL with site, session_id and dd-api-key', async () => {
+  it('builds the URL with site and session_id', async () => {
     interceptor.withFetch(DEFAULT_FETCH_MOCK)
     await checkProfilingQuota(mockRumConfiguration({ site: 'datadoghq.com', clientToken: 'my-token' }), 'session-abc')
     expect(interceptor.requests[0].url).toBe(
-      'https://api.datadoghq.com/api/unstable/profiling/admission?session_id=session-abc&dd-api-key=my-token'
+      'https://app.datadoghq.com/api/unstable/profiling/admission?session_id=session-abc'
+    )
+  })
+
+  it('uses the dd.datad0g.com base URL for datad0g.com site', async () => {
+    interceptor.withFetch(DEFAULT_FETCH_MOCK)
+    await checkProfilingQuota(mockRumConfiguration({ site: 'datad0g.com', clientToken: 'my-token' }), 'session-abc')
+    expect(interceptor.requests[0].url).toBe(
+      'https://dd.datad0g.com/api/unstable/profiling/admission?session_id=session-abc'
     )
   })
 })
