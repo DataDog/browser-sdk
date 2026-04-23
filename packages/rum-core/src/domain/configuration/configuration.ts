@@ -268,7 +268,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @example
    * // Collect default headers plus custom ones for all URLs
    * trackResourceHeaders: [
-   *   { name: (h) => DEFAULT_TRACKED_RESOURCE_HEADERS.includes(h) },
+   *   ...DEFAULT_TRACKED_RESOURCE_HEADERS.map((h) => ({ name: h })),
    *   { name: 'x-request-id' },
    * ]
    * @example
