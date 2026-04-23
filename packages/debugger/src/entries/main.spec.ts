@@ -46,7 +46,6 @@ describe('datadogDebugger', () => {
     const startDeliveryApiPollingSpy = replaceMockableWithSpy(startDeliveryApiPolling)
 
     datadogDebugger.init({
-      applicationId: 'app-id',
       clientToken: 'client-token',
       service: 'service-name',
       env: 'staging',
@@ -79,7 +78,6 @@ describe('datadogDebugger', () => {
     const warnSpy = spyOn(display, 'warn')
 
     datadogDebugger.init({
-      applicationId: 'app-id',
       clientToken: 'client-token',
       service: 'service-name',
       env: 'staging',

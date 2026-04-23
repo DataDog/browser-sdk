@@ -276,10 +276,6 @@ function sendDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): voi
             return: result.return,
           }
         : undefined,
-    build: {
-      applicationId: debuggerConfig.applicationId,
-      version: debuggerConfig.version,
-    },
   }
 
   const debuggerApi = globalObj.DD_DEBUGGER!

@@ -24,8 +24,6 @@ When you also use the Datadog Live Debugger build plugin, `init().version` defau
 
 If provided, `version` should be set to the immutable deployed browser build identifier used for source map upload and browser build resolution. If omitted, debugger delivery and snapshots still work, but browser build lookup and source-aware resolution may be unavailable.
 
-> **Prerequisites for source-code resolution.** The `applicationId` passed to `init()` must correspond to a [RUM application](https://docs.datadoghq.com/real_user_monitoring/browser) with a `service` tag configured. The backend uses this to map `applicationId + version` to the repository URL and commit SHA uploaded with your sourcemaps. If the RUM application is missing or has no `service` tag, source-code resolution will gracefully degrade.
-
 If [Datadog RUM][3] is also initialized on the page, debugger snapshots automatically include RUM context (session, view, user action) without any additional configuration.
 
 ## Troubleshooting
