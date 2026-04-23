@@ -1,21 +1,35 @@
-import type { TimeoutId } from '@datadog/browser-core'
-import { display, fetch, getGlobalObject, mockable, setInterval, clearInterval } from '@datadog/browser-core'
+import type { TimeoutId, Site } from '@datadog/browser-core'
+import {
+  display,
+  fetch,
+  getGlobalObject,
+  mockable,
+  setInterval,
+  clearInterval,
+  INTAKE_SITE_US1,
+} from '@datadog/browser-core'
 import { addProbe, removeProbe } from './probes'
 import type { Probe } from './probes'
 
 declare const __BUILD_ENV__SDK_VERSION__: string
 
-const DELIVERY_API_PATH = '/api/ui/debugger/probe-delivery'
-const DEFAULT_HEADERS: Record<string, string> = {
-  'Content-Type': 'application/json; charset=utf-8',
-  Accept: 'application/vnd.datadog.debugger-probes+json; version=1',
-}
+const DELIVERY_API_PATH = '/api/unstable/debugger/frontend/probes'
 
 export interface DeliveryApiConfiguration {
   service: string
+  clientToken: string
+  site?: Site
+  proxy?: string
   env?: string
   version?: string
   pollInterval?: number
+}
+
+export function buildDeliveryApiUrl(site: Site = INTAKE_SITE_US1, proxy?: string): string {
+  if (proxy) {
+    return `${proxy}${DELIVERY_API_PATH}`
+  }
+  return `https://api.${site}${DELIVERY_API_PATH}`
 }
 
 interface DeliveryApiResponse {
@@ -31,9 +45,8 @@ let knownProbeIds = new Set<string>()
 /**
  * Start polling the Datadog Delivery API for probe updates.
  *
- * This is designed for dogfooding the Live Debugger inside the Datadog web UI,
- * where the user is already authenticated via session cookies (ValidUser auth).
- * Requests are same-origin, so no explicit domain is needed.
+ * Requests are authenticated via `dd-client-token` header (ClientTokenAuth)
+ * against the public Smart Edge route.
  */
 export function startDeliveryApiPolling(config: DeliveryApiConfiguration): void {
   if (!('location' in mockable(getGlobalObject)())) {
@@ -46,6 +59,12 @@ export function startDeliveryApiPolling(config: DeliveryApiConfiguration): void 
   }
 
   const pollInterval = config.pollInterval || 60_000
+  const url = buildDeliveryApiUrl(config.site, config.proxy)
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json; charset=utf-8',
+    Accept: 'application/vnd.datadog.debugger-probes+json; version=1',
+    'dd-client-token': config.clientToken,
+  }
 
   const baseRequestBody = {
     service: config.service,
@@ -62,11 +81,10 @@ export function startDeliveryApiPolling(config: DeliveryApiConfiguration): void 
         body.nextCursor = currentCursor
       }
 
-      const response = await fetch(DELIVERY_API_PATH, {
+      const response = await fetch(url, {
         method: 'POST',
-        headers: { ...DEFAULT_HEADERS },
+        headers,
         body: JSON.stringify(body),
-        credentials: 'same-origin',
       })
 
       if (!response.ok) {

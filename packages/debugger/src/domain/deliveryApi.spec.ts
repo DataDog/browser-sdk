@@ -3,8 +3,53 @@ import { registerCleanupTask, mockClock, replaceMockable } from '@datadog/browse
 import type { Clock } from '@datadog/browser-core/test'
 import { getProbes, clearProbes } from './probes'
 import type { Probe } from './probes'
-import { startDeliveryApiPolling, stopDeliveryApiPolling, clearDeliveryApiState } from './deliveryApi'
+import {
+  buildDeliveryApiUrl,
+  startDeliveryApiPolling,
+  stopDeliveryApiPolling,
+  clearDeliveryApiState,
+} from './deliveryApi'
 import type { DeliveryApiConfiguration } from './deliveryApi'
+
+describe('buildDeliveryApiUrl', () => {
+  it('should default to datadoghq.com', () => {
+    expect(buildDeliveryApiUrl()).toBe('https://api.datadoghq.com/api/unstable/debugger/frontend/probes')
+  })
+
+  it('should build URL for US1 site', () => {
+    expect(buildDeliveryApiUrl('datadoghq.com')).toBe('https://api.datadoghq.com/api/unstable/debugger/frontend/probes')
+  })
+
+  it('should build URL for EU1 site', () => {
+    expect(buildDeliveryApiUrl('datadoghq.eu')).toBe('https://api.datadoghq.eu/api/unstable/debugger/frontend/probes')
+  })
+
+  it('should build URL for US3 site', () => {
+    expect(buildDeliveryApiUrl('us3.datadoghq.com')).toBe(
+      'https://api.us3.datadoghq.com/api/unstable/debugger/frontend/probes'
+    )
+  })
+
+  it('should build URL for staging site', () => {
+    expect(buildDeliveryApiUrl('datad0g.com')).toBe('https://api.datad0g.com/api/unstable/debugger/frontend/probes')
+  })
+
+  it('should build URL for gov site', () => {
+    expect(buildDeliveryApiUrl('ddog-gov.com')).toBe('https://api.ddog-gov.com/api/unstable/debugger/frontend/probes')
+  })
+
+  it('should use proxy as origin when provided', () => {
+    expect(buildDeliveryApiUrl('datadoghq.com', 'http://localhost:9000')).toBe(
+      'http://localhost:9000/api/unstable/debugger/frontend/probes'
+    )
+  })
+
+  it('should ignore site when proxy is provided', () => {
+    expect(buildDeliveryApiUrl('datadoghq.eu', 'http://proxy.example.com')).toBe(
+      'http://proxy.example.com/api/unstable/debugger/frontend/probes'
+    )
+  })
+})
 
 describe('deliveryApi', () => {
   let fetchSpy: jasmine.Spy
@@ -13,6 +58,7 @@ describe('deliveryApi', () => {
   function makeConfig(overrides: Partial<DeliveryApiConfiguration> = {}): DeliveryApiConfiguration {
     return {
       service: 'test-service',
+      clientToken: 'test-client-token',
       env: 'staging',
       version: '1.0.0',
       pollInterval: 5000,
@@ -57,11 +103,19 @@ describe('deliveryApi', () => {
 
       expect(fetchSpy).toHaveBeenCalledTimes(1)
       const [url, options] = fetchSpy.calls.mostRecent().args
-      expect(url).toBe('/api/ui/debugger/probe-delivery')
+      expect(url).toBe('https://api.datadoghq.com/api/unstable/debugger/frontend/probes')
       expect(options.method).toBe('POST')
-      expect(options.credentials).toBe('same-origin')
+      expect(options.credentials).toBeUndefined()
       expect(options.headers['Content-Type']).toBe('application/json; charset=utf-8')
       expect(options.headers['Accept']).toBe('application/vnd.datadog.debugger-probes+json; version=1')
+      expect(options.headers['dd-client-token']).toBe('test-client-token')
+    })
+
+    it('should use the configured site for the request URL', () => {
+      startDeliveryApiPolling(makeConfig({ site: 'datadoghq.eu' }))
+
+      const [url] = fetchSpy.calls.mostRecent().args
+      expect(url).toBe('https://api.datadoghq.eu/api/unstable/debugger/frontend/probes')
     })
 
     it('should send the correct request body', () => {

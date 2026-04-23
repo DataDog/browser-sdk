@@ -14,6 +14,9 @@ export type ServerApp = (req: http.IncomingMessage, res: http.ServerResponse) =>
 
 export type MockServerApp = ServerApp & {
   getLargeResponseWroteSize(): number
+}
+
+export type IntakeServerApp = ServerApp & {
   setDebuggerProbes(probes: object[]): void
 }
 
@@ -26,7 +29,7 @@ export interface Server<App extends ServerApp> {
 
 export interface Servers {
   base: Server<MockServerApp>
-  intake: Server<ServerApp>
+  intake: Server<IntakeServerApp>
   crossOrigin: Server<MockServerApp>
 }
 

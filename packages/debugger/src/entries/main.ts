@@ -60,6 +60,15 @@ export interface DebuggerInitConfiguration {
    * @defaultValue 60000
    */
   pollInterval?: number
+
+  /**
+   * A proxy URL for routing SDK requests. When set, delivery API requests are
+   * sent to `{proxy}/api/unstable/debugger/frontend/probes` instead of the
+   * default Datadog API host derived from `site`.
+   *
+   * @category Transport
+   */
+  proxy?: string
 }
 
 /**
@@ -106,6 +115,9 @@ function makeDebuggerPublicApi(): DebuggerPublicApi {
 
       startDeliveryApiPolling({
         service: initConfiguration.service,
+        clientToken: initConfiguration.clientToken,
+        site: initConfiguration.site,
+        proxy: initConfiguration.proxy,
         env: initConfiguration.env,
         version: initConfiguration.version,
         pollInterval: initConfiguration.pollInterval,
