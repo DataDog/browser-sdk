@@ -84,6 +84,22 @@ export interface DebuggerInitConfiguration {
    * @defaultValue 5000
    */
   maxNonSnapshotsPerSecondPerProbe?: number
+
+  /**
+   * Maximum number of snapshot events a single probe version can send during the page lifetime
+   *
+   * @category Data Collection
+   * @defaultValue 1000
+   */
+  maxSnapshotsPerProbeLifetime?: number
+
+  /**
+   * Maximum number of non-snapshot events a single probe version can send during the page lifetime
+   *
+   * @category Data Collection
+   * @defaultValue 50000
+   */
+  maxNonSnapshotsPerProbeLifetime?: number
 }
 
 /**

@@ -4,7 +4,13 @@ import { timeStampNow, display, buildTag, generateUUID, getGlobalObject } from '
 import type { BrowserWindow, DebuggerInitConfiguration } from '../entries/main'
 import { capture, captureFields } from './capture'
 import type { InitializedProbe } from './probes'
-import { checkGlobalSnapshotBudget, resetProbeBudgetConfiguration, setProbeBudgetConfiguration } from './probes'
+import {
+  checkGlobalSnapshotBudget,
+  hasProbeLifetimeBudgetRemaining,
+  removeProbe,
+  resetProbeBudgetConfiguration,
+  setProbeBudgetConfiguration,
+} from './probes'
 import type { ActiveEntry } from './activeEntries'
 import { active } from './activeEntries'
 import { captureStackTrace, parseStackTrace } from './stacktrace'
@@ -314,6 +320,11 @@ function sendDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): voi
   }
 
   debuggerBatch.add(payload)
+  probe.eventsSentInLifetime++
+
+  if (!hasProbeLifetimeBudgetRemaining(probe)) {
+    removeProbe(probe.id)
+  }
 }
 
 function detectThreadName() {

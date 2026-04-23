@@ -641,6 +641,117 @@ describe('api', () => {
     })
   })
 
+  describe('probe lifetime budgets', () => {
+    it('should stop sending snapshot events after maxSnapshotsPerProbeLifetime', () => {
+      initTransport({ maxSnapshotsPerProbeLifetime: 1 })
+
+      const probe: Probe = {
+        id: 'snapshot-lifetime-probe',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'snapshotLifetime' },
+        template: 'Test',
+        captureSnapshot: true,
+        capture: { maxReferenceDepth: 1 },
+        sampling: { snapshotsPerSecond: 5000 },
+        evaluateAt: 'ENTRY',
+      }
+      addProbe(probe)
+
+      const probes = getProbes('TestClass;snapshotLifetime')!
+      onEntry(probes, {}, {})
+      onReturn(probes, null, {}, {}, {})
+
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+      expect(getProbes('TestClass;snapshotLifetime')).toBeUndefined()
+    })
+
+    it('should skip snapshot collection once the lifetime budget is exhausted', () => {
+      initTransport({ maxSnapshotsPerProbeLifetime: 1 })
+
+      const getterSpy = jasmine.createSpy('argGetter').and.returnValue('value')
+      const args = {}
+      Object.defineProperty(args, 'arg', {
+        enumerable: true,
+        get: getterSpy,
+      })
+      const probe: Probe = {
+        id: 'snapshot-lifetime-collection-probe',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'snapshotLifetimeCollection' },
+        template: 'Test',
+        captureSnapshot: true,
+        capture: { maxReferenceDepth: 1 },
+        sampling: { snapshotsPerSecond: 5000 },
+        evaluateAt: 'ENTRY',
+      }
+      addProbe(probe)
+
+      const probes = getProbes('TestClass;snapshotLifetimeCollection')!
+      onEntry(probes, {}, args)
+      onReturn(probes, null, {}, args, {})
+      onEntry(probes, {}, args)
+      onReturn(probes, null, {}, args, {})
+
+      expect(getterSpy).toHaveBeenCalledTimes(3)
+    })
+
+    it('should stop sending non-snapshot events after maxNonSnapshotsPerProbeLifetime', () => {
+      initTransport({ maxNonSnapshotsPerProbeLifetime: 1 })
+
+      const probe: Probe = {
+        id: 'non-snapshot-lifetime-probe',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'nonSnapshotLifetime' },
+        template: 'Test',
+        captureSnapshot: false,
+        capture: {},
+        sampling: {},
+        evaluateAt: 'ENTRY',
+      }
+      addProbe(probe)
+
+      const probes = getProbes('TestClass;nonSnapshotLifetime')!
+      onEntry(probes, {}, {})
+      onReturn(probes, null, {}, {}, {})
+
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+      expect(getProbes('TestClass;nonSnapshotLifetime')).toBeUndefined()
+    })
+
+    it('should reset the lifetime budget when a new probe version is delivered', () => {
+      initTransport({ maxSnapshotsPerProbeLifetime: 1 })
+
+      const probe: Probe = {
+        id: 'versioned-lifetime-probe',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'versionedLifetime' },
+        template: 'Test',
+        captureSnapshot: true,
+        capture: { maxReferenceDepth: 1 },
+        sampling: { snapshotsPerSecond: 5000 },
+        evaluateAt: 'ENTRY',
+      }
+      addProbe(probe)
+
+      let probes = getProbes('TestClass;versionedLifetime')!
+      onEntry(probes, {}, {})
+      onReturn(probes, null, {}, {}, {})
+
+      expect(getProbes('TestClass;versionedLifetime')).toBeUndefined()
+      addProbe({ ...probe, version: 1 })
+
+      probes = getProbes('TestClass;versionedLifetime')!
+      onEntry(probes, {}, {})
+      onReturn(probes, null, {}, {}, {})
+
+      expect(mockBatchAdd).toHaveBeenCalledTimes(2)
+    })
+  })
+
   describe('active entries cleanup', () => {
     function createProbe(id: string, methodName: string): Probe {
       return {
