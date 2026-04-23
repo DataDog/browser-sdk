@@ -296,7 +296,6 @@ function sendDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): voi
     buildTag('sdk_version', debuggerApi.version),
     buildTag('env', debuggerConfig.env),
     buildTag('service', debuggerConfig.service),
-    buildTag('version', debuggerConfig.version),
     buildTag('debugger_version', debuggerApi.version),
     buildTag('host_name', hostname),
   ]
