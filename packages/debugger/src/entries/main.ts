@@ -13,6 +13,13 @@ import { startDeliveryApiPolling } from '../domain/deliveryApi'
 import { getProbes } from '../domain/probes'
 import { startDebuggerBatch } from '../transport/startDebuggerBatch'
 
+type DebuggerInstrumentationGlobal = typeof globalThis & {
+  $dd_entry?: typeof onEntry
+  $dd_return?: typeof onReturn
+  $dd_throw?: typeof onThrow
+  $dd_probes?: typeof getProbes
+}
+
 /**
  * Configuration options for initializing the Live Debugger SDK
  */
@@ -98,10 +105,11 @@ function makeDebuggerPublicApi(): DebuggerPublicApi {
 
       // Expose internal hooks on globalThis for instrumented code
       if (typeof globalThis !== 'undefined') {
-        ;(globalThis as any).$dd_entry = onEntry
-        ;(globalThis as any).$dd_return = onReturn
-        ;(globalThis as any).$dd_throw = onThrow
-        ;(globalThis as any).$dd_probes = getProbes
+        const debuggerGlobal = globalThis as DebuggerInstrumentationGlobal
+        debuggerGlobal.$dd_entry = onEntry
+        debuggerGlobal.$dd_return = onReturn
+        debuggerGlobal.$dd_throw = onThrow
+        debuggerGlobal.$dd_probes = getProbes
       }
 
       startDeliveryApiPolling({
