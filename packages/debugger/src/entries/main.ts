@@ -18,13 +18,6 @@ import { startDebuggerBatch } from '../transport/startDebuggerBatch'
  */
 export interface DebuggerInitConfiguration {
   /**
-   * The RUM application ID.
-   *
-   * @category Delivery API
-   */
-  applicationId: string
-
-  /**
    * The client token for Datadog. Required for authenticating your application with Datadog.
    *
    * @category Authentication
@@ -83,7 +76,6 @@ export interface DebuggerPublicApi extends PublicApi {
    * @example
    * ```ts
    * datadogDebugger.init({
-   *   applicationId: '<DATADOG_APPLICATION_ID>',
    *   clientToken: '<DATADOG_CLIENT_TOKEN>',
    *   service: 'my-app',
    *   site: 'datadoghq.com',
@@ -113,7 +105,7 @@ function makeDebuggerPublicApi(): DebuggerPublicApi {
       }
 
       startDeliveryApiPolling({
-        applicationId: initConfiguration.applicationId,
+        service: initConfiguration.service,
         env: initConfiguration.env,
         version: initConfiguration.version,
         pollInterval: initConfiguration.pollInterval,

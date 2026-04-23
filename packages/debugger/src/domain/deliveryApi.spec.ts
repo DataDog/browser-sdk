@@ -12,7 +12,7 @@ describe('deliveryApi', () => {
 
   function makeConfig(overrides: Partial<DeliveryApiConfiguration> = {}): DeliveryApiConfiguration {
     return {
-      applicationId: 'test-app-id',
+      service: 'test-service',
       env: 'staging',
       version: '1.0.0',
       pollInterval: 5000,
@@ -70,7 +70,7 @@ describe('deliveryApi', () => {
       const [, options] = fetchSpy.calls.mostRecent().args
       const body = JSON.parse(options.body)
       expect(body).toEqual({
-        applicationId: 'test-app-id',
+        service: 'test-service',
         clientName: 'browser',
         clientVersion: jasmine.stringMatching(/.+/),
         env: 'staging',

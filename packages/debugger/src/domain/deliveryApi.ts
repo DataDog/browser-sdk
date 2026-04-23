@@ -12,7 +12,7 @@ const DEFAULT_HEADERS: Record<string, string> = {
 }
 
 export interface DeliveryApiConfiguration {
-  applicationId: string
+  service: string
   env?: string
   version?: string
   pollInterval?: number
@@ -48,7 +48,7 @@ export function startDeliveryApiPolling(config: DeliveryApiConfiguration): void 
   const pollInterval = config.pollInterval || 60_000
 
   const baseRequestBody = {
-    applicationId: config.applicationId,
+    service: config.service,
     clientName: 'browser',
     clientVersion: __BUILD_ENV__SDK_VERSION__,
     env: config.env,
