@@ -27,7 +27,6 @@ export const DEFAULT_LOGS_CONFIGURATION = {
 }
 
 export const DEFAULT_DEBUGGER_CONFIGURATION = {
-  applicationId: APPLICATION_ID,
   clientToken: CLIENT_TOKEN,
   service: 'browser-sdk-e2e-test',
 }

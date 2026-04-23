@@ -12,7 +12,6 @@ To start collecting data, add [`@datadog/browser-debugger`][2] to your `package.
 import { datadogDebugger } from '@datadog/browser-debugger'
 
 datadogDebugger.init({
-  applicationId: '<DATADOG_APPLICATION_ID>',
   clientToken: '<DATADOG_CLIENT_TOKEN>',
   site: '<DATADOG_SITE>',
   service: 'my-web-application',
