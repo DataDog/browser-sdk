@@ -17,6 +17,15 @@ export interface CapturedValue {
   entries?: Array<[CapturedValue, CapturedValue]>
 }
 
+/**
+ * Mutable context threaded through the capture walker so that a single
+ * `performance.now()` deadline can cooperatively abort deep traversals.
+ */
+export interface CaptureContext {
+  deadline: number
+  timedOut: boolean
+}
+
 const hasReplaceAll = typeof (String.prototype as any).replaceAll === 'function'
 const replaceDots = hasReplaceAll
   ? (str: string) => (str as string & { replaceAll: (s: string, r: string) => string }).replaceAll('.', '_')
@@ -27,6 +36,17 @@ const DEFAULT_MAX_COLLECTION_SIZE = 100
 const DEFAULT_MAX_FIELD_COUNT = 20
 const DEFAULT_MAX_LENGTH = 255
 
+function isTimedOut(ctx: CaptureContext): boolean {
+  if (ctx.timedOut) {
+    return true
+  }
+  if (performance.now() >= ctx.deadline) {
+    ctx.timedOut = true
+    return true
+  }
+  return false
+}
+
 /**
  * Capture the value of the given object with configurable limits
  *
@@ -36,6 +56,7 @@ const DEFAULT_MAX_LENGTH = 255
  * @param opts.maxCollectionSize - The maximum size of collections to capture
  * @param opts.maxFieldCount - The maximum number of fields to capture
  * @param opts.maxLength - The maximum length of strings to capture
+ * @param ctx - Capture context with a deadline for cooperative timeout
  * @returns The captured value representation
  */
 export function capture(
@@ -45,9 +66,10 @@ export function capture(
     maxCollectionSize = DEFAULT_MAX_COLLECTION_SIZE,
     maxFieldCount = DEFAULT_MAX_FIELD_COUNT,
     maxLength = DEFAULT_MAX_LENGTH,
-  }: CaptureOptions
+  }: CaptureOptions,
+  ctx: CaptureContext
 ): CapturedValue {
-  return captureValue(value, 0, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength)
+  return captureValue(value, 0, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx)
 }
 
 /**
@@ -59,6 +81,7 @@ export function capture(
  * @param opts.maxCollectionSize - The maximum size of collections to capture
  * @param opts.maxFieldCount - The maximum number of fields to capture
  * @param opts.maxLength - The maximum length of strings to capture
+ * @param ctx - Capture context with a deadline for cooperative timeout
  * @returns A record mapping property names to their captured values
  */
 export function captureFields(
@@ -68,9 +91,10 @@ export function captureFields(
     maxCollectionSize = DEFAULT_MAX_COLLECTION_SIZE,
     maxFieldCount = DEFAULT_MAX_FIELD_COUNT,
     maxLength = DEFAULT_MAX_LENGTH,
-  }: CaptureOptions
+  }: CaptureOptions,
+  ctx: CaptureContext
 ): Record<string, CapturedValue> {
-  return captureObjectPropertiesFields(obj, 0, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength)
+  return captureObjectPropertiesFields(obj, 0, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx)
 }
 
 function captureValue(
@@ -79,8 +103,13 @@ function captureValue(
   maxReferenceDepth: number,
   maxCollectionSize: number,
   maxFieldCount: number,
-  maxLength: number
+  maxLength: number,
+  ctx: CaptureContext
 ): CapturedValue {
+  if (isTimedOut(ctx)) {
+    return { type: value === null ? 'null' : typeof value, notCapturedReason: 'timeout' }
+  }
+
   // Handle null first as typeof null === 'object'
   if (value === null) {
     return { type: 'null', isNull: true }
@@ -102,10 +131,17 @@ function captureValue(
     case 'bigint':
       return { type: 'bigint', value: String(value) } // eslint-disable-line @typescript-eslint/no-base-to-string
     case 'function':
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-      return captureFunction(value as Function, depth, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength)
+      return captureFunction(
+        value as Function, // eslint-disable-line @typescript-eslint/no-unsafe-function-type
+        depth,
+        maxReferenceDepth,
+        maxCollectionSize,
+        maxFieldCount,
+        maxLength,
+        ctx
+      )
     case 'object':
-      return captureObject(value as object, depth, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength)
+      return captureObject(value as object, depth, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx)
     default:
       return { type: String(type), notCapturedReason: 'Unsupported type' }
   }
@@ -132,7 +168,8 @@ function captureFunction(
   maxReferenceDepth: number,
   maxCollectionSize: number,
   maxFieldCount: number,
-  maxLength: number
+  maxLength: number,
+  ctx: CaptureContext
 ): CapturedValue {
   // Check if it's a class by converting to string and checking for 'class' keyword
   const fnStr = Function.prototype.toString.call(fn)
@@ -156,7 +193,8 @@ function captureFunction(
     maxReferenceDepth,
     maxCollectionSize,
     maxFieldCount,
-    maxLength
+    maxLength,
+    ctx
   )
 }
 
@@ -166,7 +204,8 @@ function captureObject(
   maxReferenceDepth: number,
   maxCollectionSize: number,
   maxFieldCount: number,
-  maxLength: number
+  maxLength: number,
+  ctx: CaptureContext
 ): CapturedValue {
   if (depth >= maxReferenceDepth) {
     return { type: (obj as any).constructor?.name ?? 'Object', notCapturedReason: 'depth' }
@@ -184,7 +223,7 @@ function captureObject(
     return { type: 'RegExp', value: obj.toString() }
   }
   if (obj instanceof Error) {
-    return captureError(obj, depth, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength)
+    return captureError(obj, depth, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx)
   }
   if (obj instanceof Promise) {
     return { type: 'Promise', notCapturedReason: 'Promise state cannot be inspected' }
@@ -192,13 +231,13 @@ function captureObject(
 
   // Collections
   if (Array.isArray(obj)) {
-    return captureArray(obj, depth, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength)
+    return captureArray(obj, depth, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx)
   }
   if (obj instanceof Map) {
-    return captureMap(obj, depth, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength)
+    return captureMap(obj, depth, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx)
   }
   if (obj instanceof Set) {
-    return captureSet(obj, depth, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength)
+    return captureSet(obj, depth, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx)
   }
   if (obj instanceof WeakMap) {
     return { type: 'WeakMap', notCapturedReason: 'WeakMap contents cannot be enumerated' }
@@ -218,12 +257,29 @@ function captureObject(
     return captureDataView(obj)
   }
   if (ArrayBuffer.isView(obj) && !(obj instanceof DataView)) {
-    return captureTypedArray(obj as TypedArray, depth, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength)
+    return captureTypedArray(
+      obj as TypedArray,
+      depth,
+      maxReferenceDepth,
+      maxCollectionSize,
+      maxFieldCount,
+      maxLength,
+      ctx
+    )
   }
 
   // Custom objects
   const typeName = (obj as any).constructor?.name ?? 'Object'
-  return captureObjectProperties(obj, typeName, depth, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength)
+  return captureObjectProperties(
+    obj,
+    typeName,
+    depth,
+    maxReferenceDepth,
+    maxCollectionSize,
+    maxFieldCount,
+    maxLength,
+    ctx
+  )
 }
 
 function captureObjectPropertiesFields(
@@ -232,7 +288,8 @@ function captureObjectPropertiesFields(
   maxReferenceDepth: number,
   maxCollectionSize: number,
   maxFieldCount: number,
-  maxLength: number
+  maxLength: number,
+  ctx: CaptureContext
 ): Record<string, CapturedValue> {
   const keys = Object.getOwnPropertyNames(obj)
   const symbolKeys = Object.getOwnPropertySymbols(obj)
@@ -242,6 +299,10 @@ function captureObjectPropertiesFields(
 
   const fields: Record<string, CapturedValue> = {}
   for (const key of keysToCapture) {
+    if (isTimedOut(ctx)) {
+      break
+    }
+
     const keyStr = String(key)
     const keyName =
       typeof key === 'symbol' ? key.description || key.toString() : keyStr.includes('.') ? replaceDots(keyStr) : keyStr
@@ -254,7 +315,8 @@ function captureObjectPropertiesFields(
         maxReferenceDepth,
         maxCollectionSize,
         maxFieldCount,
-        maxLength
+        maxLength,
+        ctx
       )
     } catch {
       // Handle getters that throw or other access errors
@@ -272,7 +334,8 @@ function captureObjectProperties(
   maxReferenceDepth: number,
   maxCollectionSize: number,
   maxFieldCount: number,
-  maxLength: number
+  maxLength: number,
+  ctx: CaptureContext
 ): CapturedValue {
   const keys = Object.getOwnPropertyNames(obj)
   const symbolKeys = Object.getOwnPropertySymbols(obj)
@@ -285,7 +348,8 @@ function captureObjectProperties(
     maxReferenceDepth,
     maxCollectionSize,
     maxFieldCount,
-    maxLength
+    maxLength,
+    ctx
   )
 
   const result: CapturedValue = { type: typeName, fields }
@@ -304,14 +368,18 @@ function captureArray(
   maxReferenceDepth: number,
   maxCollectionSize: number,
   maxFieldCount: number,
-  maxLength: number
+  maxLength: number,
+  ctx: CaptureContext
 ): CapturedValue {
   const totalSize = arr.length
   const itemsToCapture = Math.min(totalSize, maxCollectionSize)
 
   const elements: CapturedValue[] = []
   for (let i = 0; i < itemsToCapture; i++) {
-    elements.push(captureValue(arr[i], depth + 1, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength))
+    if (isTimedOut(ctx)) {
+      break
+    }
+    elements.push(captureValue(arr[i], depth + 1, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx))
   }
 
   const result: CapturedValue = { type: 'Array', elements }
@@ -330,7 +398,8 @@ function captureMap(
   maxReferenceDepth: number,
   maxCollectionSize: number,
   maxFieldCount: number,
-  maxLength: number
+  maxLength: number,
+  ctx: CaptureContext
 ): CapturedValue {
   const totalSize = map.size
   const entriesToCapture = Math.min(totalSize, maxCollectionSize)
@@ -338,12 +407,12 @@ function captureMap(
   const entries: Array<[CapturedValue, CapturedValue]> = []
   let count = 0
   for (const [key, value] of map) {
-    if (count >= entriesToCapture) {
+    if (count >= entriesToCapture || isTimedOut(ctx)) {
       break
     }
     entries.push([
-      captureValue(key, depth + 1, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength),
-      captureValue(value, depth + 1, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength),
+      captureValue(key, depth + 1, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx),
+      captureValue(value, depth + 1, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx),
     ])
     count++
   }
@@ -364,7 +433,8 @@ function captureSet(
   maxReferenceDepth: number,
   maxCollectionSize: number,
   maxFieldCount: number,
-  maxLength: number
+  maxLength: number,
+  ctx: CaptureContext
 ): CapturedValue {
   const totalSize = set.size
   const itemsToCapture = Math.min(totalSize, maxCollectionSize)
@@ -372,10 +442,10 @@ function captureSet(
   const elements: CapturedValue[] = []
   let count = 0
   for (const value of set) {
-    if (count >= itemsToCapture) {
+    if (count >= itemsToCapture || isTimedOut(ctx)) {
       break
     }
-    elements.push(captureValue(value, depth + 1, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength))
+    elements.push(captureValue(value, depth + 1, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx))
     count++
   }
 
@@ -395,16 +465,25 @@ function captureError(
   maxReferenceDepth: number,
   maxCollectionSize: number,
   maxFieldCount: number,
-  maxLength: number
+  maxLength: number,
+  ctx: CaptureContext
 ): CapturedValue {
   const typeName = (err as any).constructor?.name ?? 'Error'
   const fields: Record<string, CapturedValue> = {
-    message: captureValue(err.message, depth + 1, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength),
-    name: captureValue(err.name, depth + 1, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength),
+    message: captureValue(err.message, depth + 1, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx),
+    name: captureValue(err.name, depth + 1, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx),
   }
 
   if (err.stack !== undefined) {
-    fields.stack = captureValue(err.stack, depth + 1, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength)
+    fields.stack = captureValue(
+      err.stack,
+      depth + 1,
+      maxReferenceDepth,
+      maxCollectionSize,
+      maxFieldCount,
+      maxLength,
+      ctx
+    )
   }
 
   if ((err as any).cause !== undefined) {
@@ -414,7 +493,8 @@ function captureError(
       maxReferenceDepth,
       maxCollectionSize,
       maxFieldCount,
-      maxLength
+      maxLength,
+      ctx
     )
   }
 
@@ -465,7 +545,8 @@ function captureTypedArray(
   maxReferenceDepth: number,
   maxCollectionSize: number,
   maxFieldCount: number,
-  maxLength: number
+  maxLength: number,
+  ctx: CaptureContext
 ): CapturedValue {
   const typeName = typedArray.constructor?.name ?? 'TypedArray'
   const totalSize = typedArray.length
@@ -473,8 +554,11 @@ function captureTypedArray(
 
   const elements: CapturedValue[] = []
   for (let i = 0; i < itemsToCapture; i++) {
+    if (isTimedOut(ctx)) {
+      break
+    }
     elements.push(
-      captureValue(typedArray[i], depth + 1, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength)
+      captureValue(typedArray[i], depth + 1, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx)
     )
   }
 
