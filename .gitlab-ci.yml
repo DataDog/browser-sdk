@@ -7,7 +7,7 @@ variables:
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
   MAIN_BRANCH: 'main'
   NEXT_MAJOR_BRANCH: 'v7'
-  CHROME_PACKAGE_VERSION: 146.0.7680.71-1
+  CHROME_PACKAGE_VERSION: 147.0.7727.55-1
   FF_TIMESTAMPS: 'true' # Enable timestamps for gitlab-ci logs
 
 cache:
