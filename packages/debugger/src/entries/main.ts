@@ -67,7 +67,7 @@ export interface DebuggerInitConfiguration {
  *
  * @category Main
  */
-export interface DebuggerPublicApi extends PublicApi {
+export interface DatadogDebugger extends PublicApi {
   /**
    * Initialize the Live Debugger SDK
    *
@@ -89,8 +89,8 @@ export interface DebuggerPublicApi extends PublicApi {
 /**
  * Create the public API for the Live Debugger
  */
-function makeDebuggerPublicApi(): DebuggerPublicApi {
-  return makePublicApi<DebuggerPublicApi>({
+function makeDebuggerPublicApi(): DatadogDebugger {
+  return makePublicApi<DatadogDebugger>({
     init: (initConfiguration: DebuggerInitConfiguration) => {
       // Initialize debugger's own transport
       const batch = startDebuggerBatch(initConfiguration)
@@ -118,13 +118,13 @@ function makeDebuggerPublicApi(): DebuggerPublicApi {
  * The global Live Debugger instance. Use this to call Live Debugger methods.
  *
  * @category Main
- * @see {@link DebuggerPublicApi}
+ * @see {@link DatadogDebugger}
  * @see [Live Debugger Documentation](https://docs.datadoghq.com/tracing/live_debugger/)
  */
 export const datadogDebugger = makeDebuggerPublicApi()
 
 export interface BrowserWindow extends Window {
-  DD_DEBUGGER?: DebuggerPublicApi
+  DD_DEBUGGER?: DatadogDebugger
 }
 
 defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_DEBUGGER', datadogDebugger)
