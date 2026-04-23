@@ -13,6 +13,14 @@
 
 ---
 
+## Unreleased
+
+**Public Changes:**
+
+- ⚗️🐛 fix(rum): validate `startFeatureOperation` / `succeedFeatureOperation` / `failFeatureOperation` `name`. Blank/empty names are dropped with a warning (matches the backend's own non-empty precondition). Names that fail the backend-accepted character-set pattern `[\w.@$-]*` also warn via `display.warn` but are still emitted, so a future backend policy relaxation does not force an SDK bump. Still gated behind the `feature_operation_vital` experimental flag. [RUM]
+
+---
+
 ## v6.32.0
 
 **Public Changes:**

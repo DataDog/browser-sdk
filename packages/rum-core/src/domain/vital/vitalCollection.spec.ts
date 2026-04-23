@@ -1,6 +1,6 @@
 import type { Duration } from '@datadog/browser-core'
 import { mockClock, type Clock } from '@datadog/browser-core/test'
-import { addExperimentalFeatures, clocksNow, ExperimentalFeature, generateUUID } from '@datadog/browser-core'
+import { addExperimentalFeatures, clocksNow, display, ExperimentalFeature, generateUUID } from '@datadog/browser-core'
 import { collectAndValidateRawRumEvents, mockPageStateHistory } from '../../../test'
 import type { RawRumEvent, RawRumVitalEvent } from '../../rawRumEvent.types'
 import { VitalType, RumEventType } from '../../rawRumEvent.types'
@@ -268,6 +268,60 @@ describe('vitalCollection', () => {
 
         expect(rawRumEvents[0].domainContext).toEqual({
           handlingStack: 'Error\n    at foo\n    at bar',
+        })
+      })
+
+      // Mirrors the backend's `[\w.@$-]*` server-side validation regex. Names
+      // that fail the pattern generate a `display.warn` but the event is
+      // still emitted — the backend is the single source of truth, so a
+      // client-side drop would force a customer SDK bump if the policy is
+      // ever relaxed. Blank/empty names are dropped with a warning instead,
+      // matching the backend's own non-empty precondition.
+      describe('operation name character set', () => {
+        beforeEach(() => {
+          addExperimentalFeatures([ExperimentalFeature.FEATURE_OPERATION_VITAL])
+          spyOn(display, 'warn')
+        })
+        ;['user login', 'api/v1', 'checkout:step', 'a,b', 'login!', 'login\ttwo', 'ログイン', 'login🔐'].forEach(
+          (invalidName) => {
+            it(`should warn but still emit on name outside the backend pattern: ${JSON.stringify(invalidName)}`, () => {
+              vitalCollection.addOperationStepVital(invalidName, 'start')
+
+              expect(rawRumEvents.length).toBe(1)
+              expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.name).toBe(invalidName)
+              expect(display.warn).toHaveBeenCalledTimes(1)
+              expect((display.warn as jasmine.Spy).calls.mostRecent().args[0]).toContain('does not match')
+              expect((display.warn as jasmine.Spy).calls.mostRecent().args[0]).toContain('still be sent')
+            })
+          }
+        )
+        ;['', '   ', '\t\n'].forEach((blankName) => {
+          it(`should reject and warn on blank name: ${JSON.stringify(blankName)}`, () => {
+            vitalCollection.addOperationStepVital(blankName, 'start')
+
+            expect(rawRumEvents.length).toBe(0)
+            expect(display.warn).toHaveBeenCalledTimes(1)
+            expect((display.warn as jasmine.Spy).calls.mostRecent().args[0]).toContain('cannot be empty or blank')
+          })
+        })
+        ;['login', 'step42', 'login-v2', 'user_login', 'login.v2', 'login@prod', 'login$1', 'LoginV2'].forEach(
+          (validName) => {
+            it(`should accept name that matches the backend pattern without warning: ${JSON.stringify(validName)}`, () => {
+              vitalCollection.addOperationStepVital(validName, 'start')
+
+              expect(rawRumEvents.length).toBe(1)
+              expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.name).toBe(validName)
+              expect(display.warn).not.toHaveBeenCalled()
+            })
+          }
+        )
+
+        it('should not restrict operationKey to the same character set', () => {
+          vitalCollection.addOperationStepVital('foo', 'start', { operationKey: 'session 42 / user foo' })
+
+          expect(rawRumEvents.length).toBe(1)
+          expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.operation_key).toBe('session 42 / user foo')
+          expect(display.warn).not.toHaveBeenCalled()
         })
       })
 
