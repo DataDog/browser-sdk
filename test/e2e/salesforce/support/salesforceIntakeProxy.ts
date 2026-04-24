@@ -183,7 +183,8 @@ function findMissingViews(intakeRegistry: IntakeRegistry, expectedViews: Expecte
   return expectedViews.filter(
     ({ path, loadingType }) =>
       !intakeRegistry.rumViewEvents.some(
-        (event) => normalizePathname(event.view.url) === normalizePathname(path) && event.view.loading_type === loadingType
+        (event) =>
+          normalizePathname(event.view.url) === normalizePathname(path) && event.view.loading_type === loadingType
       )
   )
 }

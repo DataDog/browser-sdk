@@ -78,9 +78,10 @@ function createSalesforceDatadogRum(): RumPublicApi {
     baseInit(buildSalesforceInitConfiguration(initConfiguration))
 
     if (!stopSalesforceViewTracking) {
-      stopSalesforceViewTracking = startSalesforceViewTracking({
+      const salesforceViewTracking = startSalesforceViewTracking({
         getRumPublicApi: () => baseRum,
-      }).stop
+      })
+      stopSalesforceViewTracking = () => salesforceViewTracking.stop()
     }
   }
 

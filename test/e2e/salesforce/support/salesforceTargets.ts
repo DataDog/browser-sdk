@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process'
 
 let cachedTargets: SalesforceTargets | undefined
+const ANSI_ESCAPE_SEQUENCE = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, 'g')
 
 export interface SalesforceTargets {
   loginUrl: string
@@ -17,7 +18,8 @@ export function getSalesforceTargets() {
     return cachedTargets
   }
 
-  const { NO_COLOR: _ignoredNoColor, ...environment } = process.env
+  const environment = { ...process.env }
+  delete environment.NO_COLOR
   const stdout = execFileSync(
     'sf',
     ['org', 'open', '-o', 'ebikes', '--url-only', '--path', '/lightning/page/home', '--json'],
@@ -52,5 +54,5 @@ export function getSalesforceTargets() {
 }
 
 function stripAnsi(candidate: string) {
-  return candidate.replace(/\u001b\[[0-9;]*m/g, '')
+  return candidate.replace(ANSI_ESCAPE_SEQUENCE, '')
 }

@@ -1,4 +1,4 @@
-import { Observable, relativeToClocks } from '@datadog/browser-core'
+import { clocksOrigin, Observable } from '@datadog/browser-core'
 import { registerCleanupTask, replaceMockable } from '@datadog/browser-core/test'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
@@ -22,7 +22,7 @@ describe('urlContexts LWS compatibility', () => {
 
     expect(() => {
       lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
-        startClocks: relativeToClocks(0),
+        startClocks: clocksOrigin(),
         url: 'https://example.com/lightning/page/home',
       } as ViewCreatedEvent)
     }).not.toThrow()

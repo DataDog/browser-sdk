@@ -15,7 +15,7 @@ describe('getGlobalObject', () => {
     })
 
     try {
-      expect(getGlobalObject()).toBe(window)
+      expect(getGlobalObject() === window).toBe(true)
     } finally {
       Object.defineProperty(window, 'globalThis', globalThisDescriptor!)
     }
@@ -37,7 +37,7 @@ describe('getGlobalObject', () => {
     const definePropertySpy = spyOn(Object, 'defineProperty').and.callThrough()
 
     try {
-      expect(getGlobalObject()).toBe(window)
+      expect(getGlobalObject() === window).toBe(true)
       expect(definePropertySpy).not.toHaveBeenCalledWith(Object.prototype, '_dd_temp_', jasmine.any(Object))
     } finally {
       Object.defineProperty(window, 'globalThis', globalThisDescriptor!)

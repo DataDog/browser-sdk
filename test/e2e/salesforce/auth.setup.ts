@@ -1,6 +1,6 @@
-import { expect, test as setup } from '@playwright/test'
 import { mkdirSync } from 'node:fs'
 import path from 'node:path'
+import { test as setup } from '@playwright/test'
 import { getSalesforceTargets } from './support/salesforceTargets'
 
 const authDirectory = path.resolve(__dirname, '../test-results/.auth')

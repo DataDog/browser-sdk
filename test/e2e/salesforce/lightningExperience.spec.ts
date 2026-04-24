@@ -7,9 +7,7 @@ import {
 } from './support/salesforceIntakeProxy'
 import { getSalesforceTargets } from './support/salesforceTargets'
 
-test('lightning experience emits an initial home view and a route-change Product Explorer view', async ({
-  page,
-}) => {
+test('lightning experience emits an initial home view and a route-change Product Explorer view', async ({ page }) => {
   const targets = getSalesforceTargets()
   const intakeProxy = await startSalesforceIntakeProxy()
   const productExplorerContent = page.getByText('DYNAMO X1')

@@ -1,4 +1,4 @@
-import { clearInterval, setInterval } from '@datadog/browser-core'
+import { buildUrl, clearInterval, setInterval } from '@datadog/browser-core'
 import type { TimeoutId } from '@datadog/browser-core'
 import type { RumPublicApi, ViewOptions } from '@datadog/browser-rum-core'
 
@@ -94,7 +94,7 @@ function getPathnameFromHref(href: string | undefined) {
   }
 
   try {
-    return normalizePathname(new URL(href).pathname)
+    return normalizePathname(buildUrl(href).pathname)
   } catch {
     return undefined
   }
@@ -124,7 +124,7 @@ function normalizeLocationHref(href: unknown) {
   }
 
   try {
-    return new URL(href).href
+    return buildUrl(href).href
   } catch {
     return undefined
   }
