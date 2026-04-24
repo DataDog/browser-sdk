@@ -264,7 +264,7 @@ function sendDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): voi
   ]
 
   const payload: Context = {
-    message: result.message || '',
+    message: result.message,
     service: debuggerConfig.service,
     ddtags: ddtags.join(','),
     // TODO: Fill out logger with the right information
