@@ -256,8 +256,6 @@ function processVital(vital: DurationVital | OperationStepVital): RawRumEventCol
 }
 
 /**
- * Validates a feature-operation `vital.name`.
- *
  * Blank / empty names are rejected (the backend rejects them with its own
  * non-empty precondition before evaluating the character-set regex). Names
  * that fail the backend's `[\w.@$-]*` character-set regex trigger a warning
