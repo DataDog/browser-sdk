@@ -27,15 +27,18 @@ const threadName = detectThreadName() // eslint-disable-line local-rules/disallo
 
 let debuggerBatch: Batch | undefined
 let debuggerConfig: DebuggerInitConfiguration | undefined
+let cachedDDtags: string | undefined
 
 export function initDebuggerTransport(config: DebuggerInitConfiguration, batch: Batch): void {
   debuggerConfig = config
   debuggerBatch = batch
+  cachedDDtags = undefined
 }
 
 export function resetDebuggerTransport(): void {
   debuggerBatch = undefined
   debuggerConfig = undefined
+  cachedDDtags = undefined
   active.clear()
 }
 
@@ -253,25 +256,17 @@ function sendDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): voi
     return
   }
 
-  const debuggerApi = globalObj.DD_DEBUGGER!
-
-  const ddtags = [
-    buildTag('sdk_version', debuggerApi.version),
-    buildTag('debugger_version', debuggerApi.version),
-    buildTag('env', debuggerConfig.env),
-    buildTag('service', debuggerConfig.service),
-    buildTag('version', debuggerConfig.version),
-  ]
+  const version = globalObj.DD_DEBUGGER!.version
 
   const payload: Context = {
     message: result.message,
     service: debuggerConfig.service,
-    ddtags: ddtags.join(','),
+    ddtags: getDebuggerDDtags(version),
     // TODO: Fill out logger with the right information
     logger: {
       name: probe.where.typeName,
       method: probe.where.methodName,
-      version: debuggerApi.version,
+      version,
       // thread_id: 1,
       thread_name: threadName,
     },
@@ -304,6 +299,20 @@ function sendDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): voi
   }
 
   debuggerBatch.add(payload)
+}
+
+function getDebuggerDDtags(debuggerVersion: string): string {
+  if (!cachedDDtags) {
+    cachedDDtags = [
+      buildTag('sdk_version', debuggerVersion),
+      buildTag('debugger_version', debuggerVersion),
+      buildTag('env', debuggerConfig?.env),
+      buildTag('service', debuggerConfig?.service),
+      buildTag('version', debuggerConfig?.version),
+    ].join(',')
+  }
+
+  return cachedDDtags
 }
 
 function detectThreadName() {
