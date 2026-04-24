@@ -254,43 +254,7 @@ function sendDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): voi
     return
   }
 
-  const snapshot = {
-    id: generateUUID(),
-    timestamp: result.timestamp!,
-    probe: {
-      id: probe.id,
-      version: probe.version,
-      location: {
-        // TODO: Are our hardcoded where.* keys correct according to the spec?
-        method: probe.where.methodName,
-        type: probe.where.typeName,
-      },
-    },
-    stack: result.stack,
-    language: 'javascript',
-    duration: result.duration! * 1e6, // to nanoseconds
-    captures:
-      result.entry || result.return
-        ? {
-            entry: result.entry,
-            return: result.return,
-          }
-        : undefined,
-  }
-
   const debuggerApi = globalObj.DD_DEBUGGER!
-
-  // TODO: Fill out logger with the right information
-  const logger = {
-    name: probe.where.typeName,
-    method: probe.where.methodName,
-    version: debuggerApi.version,
-    // thread_id: 1,
-    thread_name: threadName,
-  }
-
-  // Get the RUM internal context for trace correlation
-  const dd = getTraceCorrelationContext()
 
   const ddtags = [
     buildTag('sdk_version', debuggerApi.version),
@@ -306,9 +270,40 @@ function sendDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): voi
     hostname,
     service: debuggerConfig.service,
     ddtags: ddtags.join(','),
-    logger,
-    ...(dd ? { dd } : {}),
-    debugger: { snapshot },
+    // TODO: Fill out logger with the right information
+    logger: {
+      name: probe.where.typeName,
+      method: probe.where.methodName,
+      version: debuggerApi.version,
+      // thread_id: 1,
+      thread_name: threadName,
+    },
+    dd: getTraceCorrelationContext(),
+    debugger: {
+      snapshot: {
+        id: generateUUID(),
+        timestamp: result.timestamp!,
+        probe: {
+          id: probe.id,
+          version: probe.version,
+          location: {
+            // TODO: Are our hardcoded where.* keys correct according to the spec?
+            method: probe.where.methodName,
+            type: probe.where.typeName,
+          },
+        },
+        stack: result.stack,
+        language: 'javascript',
+        duration: result.duration! * 1e6, // to nanoseconds
+        captures:
+          result.entry || result.return
+            ? {
+                entry: result.entry,
+                return: result.return,
+              }
+            : undefined,
+      }
+    },
   }
 
   debuggerBatch.add(payload)
