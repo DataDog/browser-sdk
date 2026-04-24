@@ -23,7 +23,18 @@ runMain(async () => {
     throw new Error('CI_COMMIT_REF_NAME is not set; cannot determine current branch.')
   }
 
-  const pr = await fetchPR(LOCAL_BRANCH)
+  let pr: Awaited<ReturnType<typeof fetchPR>>
+  try {
+    pr = await fetchPR(LOCAL_BRANCH)
+  } catch (error) {
+    // Multiple open PRs for a single branch is ambiguous; leave the job manual
+    // rather than fail the pipeline. See scripts/lib/gitUtils.ts `fetchPR`.
+    if (error instanceof Error && error.message.includes('Multiple pull requests')) {
+      printLog(`Multiple open PRs for this branch; ${jobName} remains manual.`)
+      return
+    }
+    throw error
+  }
 
   if (!pr || pr.draft) {
     printLog(
