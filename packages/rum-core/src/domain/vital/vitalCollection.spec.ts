@@ -271,12 +271,6 @@ describe('vitalCollection', () => {
         })
       })
 
-      // Mirrors the backend's `[\w.@$-]*` server-side validation regex. Names
-      // that fail the pattern generate a `display.warn` but the event is
-      // still emitted — the backend is the single source of truth, so a
-      // client-side drop would force a customer SDK bump if the policy is
-      // ever relaxed. Blank/empty names are dropped with a warning instead,
-      // matching the backend's own non-empty precondition.
       describe('operation name character set', () => {
         beforeEach(() => {
           addExperimentalFeatures([ExperimentalFeature.FEATURE_OPERATION_VITAL])
