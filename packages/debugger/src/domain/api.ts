@@ -22,7 +22,6 @@ interface TraceCorrelationContext extends Context {
 
 // Cache hostname at module initialization since it won't change during the app lifetime
 const globalObj = getGlobalObject<BrowserWindow & { DD_RUM?: Rum }>() // eslint-disable-line local-rules/disallow-side-effects
-const hostname = 'location' in globalObj ? globalObj.location.hostname : 'unknown'
 
 const threadName = detectThreadName() // eslint-disable-line local-rules/disallow-side-effects
 
@@ -262,12 +261,10 @@ function sendDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): voi
     buildTag('service', debuggerConfig.service),
     buildTag('version', debuggerConfig.version),
     buildTag('debugger_version', debuggerApi.version),
-    buildTag('host_name', hostname),
   ]
 
   const payload: Context = {
     message: result.message || '',
-    hostname,
     service: debuggerConfig.service,
     ddtags: ddtags.join(','),
     // TODO: Fill out logger with the right information
