@@ -16,9 +16,10 @@ that:
 
 - keeps the standard public API: `DD_RUM.init(...)` and `DD_RUM.startView(...)`
 - forces manual view tracking
+- starts and updates views automatically by polling `window.location.pathname`
 - disables request collection, runtime error collection, and view metrics by design
 
-The Salesforce wrapper is responsible for observing route changes and calling `startView()` with the
-normalized pathname and current URL.
+The Salesforce wrapper should only load the bundle and initialize RUM once. The bundle emits the
+initial view during `init()` and starts a lightweight pathname watcher to emit route-change views.
 
 [1]: https://docs.datadoghq.com/real_user_monitoring/browser/setup/client/?tab=rum#initialization-parameters:~:text=compressIntakeRequests
