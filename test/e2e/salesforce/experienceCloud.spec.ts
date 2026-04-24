@@ -1,13 +1,21 @@
 import { expect, test } from '@playwright/test'
-import { createSalesforceRumRegistry } from './support/salesforceRumRegistry'
+import {
+  flushSalesforceRumEvents,
+  installSalesforceRumProxy,
+  startSalesforceIntakeProxy,
+  waitForRumProxyInitialization,
+} from './support/salesforceIntakeProxy'
 import { getSalesforceTargets } from './support/salesforceTargets'
 
-test('experience cloud emits a home RUM view before navigating to Product Explorer', async ({ page }) => {
+test('experience cloud emits an initial home view and a route-change Product Explorer view', async ({ page }) => {
   const targets = getSalesforceTargets()
-  const rumRegistry = createSalesforceRumRegistry(page)
+  const intakeProxy = await startSalesforceIntakeProxy()
+  const productExplorerContent = page.getByText('DYNAMO X1')
 
   try {
+    await installSalesforceRumProxy(page.context(), intakeProxy.origin)
     await page.goto(targets.experienceUrl, { waitUntil: 'domcontentloaded' })
+    await waitForRumProxyInitialization(page, intakeProxy.origin)
     const productExplorerLink = page.getByRole('link', { name: 'Product Explorer' })
 
     await expect(productExplorerLink).toBeVisible()
@@ -15,8 +23,15 @@ test('experience cloud emits a home RUM view before navigating to Product Explor
 
     await productExplorerLink.click()
     await expect(page).toHaveURL(targets.experienceProductExplorerUrl)
-    await expect.poll(() => rumRegistry.hasViewPath('/ebikes/s'), { timeout: 40_000 }).toBe(true)
-    } finally {
-    rumRegistry.stop()
+    await expect(productExplorerContent).toBeVisible()
+
+    await flushSalesforceRumEvents(page)
+
+    await intakeProxy.waitForViews([
+      { path: '/ebikes/s', loadingType: 'initial_load' },
+      { path: '/ebikes/s/product-explorer', loadingType: 'route_change' },
+    ])
+  } finally {
+    await intakeProxy.stop()
   }
 })

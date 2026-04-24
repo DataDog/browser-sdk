@@ -13,6 +13,12 @@ export default defineConfig({
   workers: 1,
   reporter: [['line'], ['./noticeReporter.ts'], ['html']],
   use: {
+    // So we can send to the intake from the Salesforce Domain.
+    bypassCSP: true,
+    // We'll ignore HTTPS errors since we're using self-signed certificates.
+    ignoreHTTPSErrors: true,
+    // So we can send to the intake from the Salesforce Domain.
+    permissions: ['local-network-access'],
     trace: 'retain-on-failure',
   },
   projects: [
