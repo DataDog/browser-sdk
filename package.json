@@ -88,7 +88,7 @@
     "minimatch": "10.2.5",
     "node-forge": "1.4.0",
     "prettier": "3.8.3",
-    "puppeteer": "24.40.0",
+    "puppeteer": "24.41.0",
     "swc-loader": "0.2.7",
     "terser-webpack-plugin": "5.4.0",
     "ts-loader": "9.5.7",

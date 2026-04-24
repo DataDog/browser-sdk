@@ -5,8 +5,8 @@
     "build": "webpack"
   },
   "dependencies": {
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
+    "react": "19.2.5",
+    "react-dom": "19.2.5",
     "react-router-dom": "6.30.0"
   },
   "peerDependencies": {
@@ -32,7 +32,7 @@
   "devDependencies": {
     "ts-loader": "9.5.7",
     "typescript": "5.9.3",
-    "webpack": "5.105.4"
+    "webpack": "5.106.2"
   },
   "volta": {
     "extends": "../../../package.json"
