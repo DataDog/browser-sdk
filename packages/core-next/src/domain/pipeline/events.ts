@@ -49,6 +49,12 @@ interface SdkEventMap {
   'resource:performance_entry': unknown
   'resource:long_task': unknown
   'resource:long_animation_frame': unknown
+  'resource:paint': unknown
+  'resource:largest_contentful_paint': unknown
+  'resource:layout_shift': unknown
+  'resource:performance_event': unknown
+  'resource:first_input': unknown
+  'resource:navigation_timing': unknown
   'observation:resource': unknown
   'observation:error': unknown
   'observation:long_task': unknown
