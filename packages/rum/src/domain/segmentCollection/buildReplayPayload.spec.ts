@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { deflate } from 'pako'
 import type { Uint8ArrayBuffer } from '@datadog/browser-core'
 import type { BrowserSegment, BrowserSegmentMetadata } from '../../types'

@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { getCookie, setCookie } from '../src/browser/cookie'
 import { toSessionState } from '../src/domain/session/sessionState'
 import { SESSION_STORE_KEY } from '../src/domain/session/storeStrategies/sessionStoreStrategy'
@@ -30,12 +31,18 @@ interface Cookie {
 export function mockCookies({ filter }: { filter?: (cookie: Cookie) => boolean } = {}) {
   let cookies: Cookie[] = []
 
-  const getter = jasmine.createSpy('document.cookie getter').and.callFake(() => {
+  const documentPrototype =
+    'cookie' in Document.prototype
+      ? Document.prototype
+      : // Firefox 67 doesn't define `cookie` on `Document.prototype`
+        HTMLDocument.prototype
+
+  const getter = vi.spyOn(documentPrototype, 'cookie', 'get').mockImplementation(() => {
     removeExpiredCookies()
     return cookies.map((cookie) => `${cookie.name}=${cookie.value}`).join(';')
   })
 
-  const setter = jasmine.createSpy('document.cookie setter').and.callFake((cookieString: string) => {
+  const setter = vi.spyOn(documentPrototype, 'cookie', 'set').mockImplementation((cookieString) => {
     const cookie = parseSingleCookieString(cookieString)
 
     if (filter && !filter(cookie)) {

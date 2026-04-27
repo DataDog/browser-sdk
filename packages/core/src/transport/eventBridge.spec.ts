@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { mockEventBridge } from '../../test'
 import { DefaultPrivacyLevel } from '../domain/configuration'
 import type { BrowserWindowWithEventBridge } from './eventBridge'
@@ -8,35 +9,35 @@ describe('canUseEventBridge', () => {
 
   it('should detect when the bridge is present and the webView host is allowed', () => {
     mockEventBridge({ allowedWebViewHosts })
-    expect(canUseEventBridge('foo.bar')).toBeTrue()
-    expect(canUseEventBridge('baz.foo.bar')).toBeTrue()
-    expect(canUseEventBridge('www.foo.bar')).toBeTrue()
-    expect(canUseEventBridge('www.qux.foo.bar')).toBeTrue()
+    expect(canUseEventBridge('foo.bar')).toBe(true)
+    expect(canUseEventBridge('baz.foo.bar')).toBe(true)
+    expect(canUseEventBridge('www.foo.bar')).toBe(true)
+    expect(canUseEventBridge('www.qux.foo.bar')).toBe(true)
   })
 
   it('should not detect when the bridge is present and the webView host is not allowed', () => {
     mockEventBridge({ allowedWebViewHosts })
-    expect(canUseEventBridge('foo.com')).toBeFalse()
-    expect(canUseEventBridge('foo.bar.baz')).toBeFalse()
-    expect(canUseEventBridge('bazfoo.bar')).toBeFalse()
+    expect(canUseEventBridge('foo.com')).toBe(false)
+    expect(canUseEventBridge('foo.bar.baz')).toBe(false)
+    expect(canUseEventBridge('bazfoo.bar')).toBe(false)
   })
 
   it('should not detect when the bridge on the parent domain if only the subdomain is allowed', () => {
     mockEventBridge({ allowedWebViewHosts: ['baz.foo.bar'] })
-    expect(canUseEventBridge('foo.bar')).toBeFalse()
+    expect(canUseEventBridge('foo.bar')).toBe(false)
   })
 
   it('should not detect when the bridge is absent', () => {
-    expect(canUseEventBridge()).toBeFalse()
+    expect(canUseEventBridge()).toBe(false)
   })
 })
 
 describe('event bridge send', () => {
-  let sendSpy: jasmine.Spy<(msg: string) => void>
+  let sendSpy: Mock<(msg: string) => void>
 
   beforeEach(() => {
     const eventBridge = mockEventBridge()
-    sendSpy = spyOn(eventBridge, 'send')
+    sendSpy = vi.spyOn(eventBridge, 'send')
   })
 
   it('should serialize sent events without view', () => {
@@ -44,7 +45,8 @@ describe('event bridge send', () => {
 
     eventBridge.send('view', { foo: 'bar' })
 
-    expect(sendSpy).toHaveBeenCalledOnceWith('{"eventType":"view","event":{"foo":"bar"}}')
+    expect(sendSpy).toHaveBeenCalledTimes(1)
+    expect(sendSpy).toHaveBeenCalledWith('{"eventType":"view","event":{"foo":"bar"}}')
   })
 
   it('should serialize sent events with view', () => {
@@ -52,7 +54,8 @@ describe('event bridge send', () => {
 
     eventBridge.send('view', { foo: 'bar' }, '123')
 
-    expect(sendSpy).toHaveBeenCalledOnceWith('{"eventType":"view","event":{"foo":"bar"},"view":{"id":"123"}}')
+    expect(sendSpy).toHaveBeenCalledTimes(1)
+    expect(sendSpy).toHaveBeenCalledWith('{"eventType":"view","event":{"foo":"bar"},"view":{"id":"123"}}')
   })
 })
 
@@ -79,12 +82,12 @@ describe('event bridge getPrivacyLevel', () => {
   describe('bridgeSupports', () => {
     it('should returns true when the bridge supports a capability', () => {
       mockEventBridge({ capabilities: [BridgeCapability.RECORDS] })
-      expect(bridgeSupports(BridgeCapability.RECORDS)).toBeTrue()
+      expect(bridgeSupports(BridgeCapability.RECORDS)).toBe(true)
     })
 
     it('should returns false when the bridge does not support a capability', () => {
       mockEventBridge({ capabilities: [] })
-      expect(bridgeSupports(BridgeCapability.RECORDS)).toBeFalse()
+      expect(bridgeSupports(BridgeCapability.RECORDS)).toBe(false)
     })
   })
 })

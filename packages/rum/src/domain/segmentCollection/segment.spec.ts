@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it } from 'vitest'
 import type { DeflateEncoder, TimeStamp, Uint8ArrayBuffer } from '@datadog/browser-core'
 import { noop, setDebugMode, DeflateEncoderStreamId } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
@@ -49,8 +50,8 @@ describe('Segment', () => {
   })
 
   it('writes a segment', () => {
-    const addRecordCallbackSpy = jasmine.createSpy<AddRecordCallback>()
-    const flushCallbackSpy = jasmine.createSpy<FlushCallback>()
+    const addRecordCallbackSpy = vi.fn<AddRecordCallback>()
+    const flushCallbackSpy = vi.fn<FlushCallback>()
     const segment = createTestSegment()
     segment.addRecord(RECORD, addRecordCallbackSpy)
 
@@ -63,7 +64,7 @@ describe('Segment', () => {
     expect(addRecordCallbackSpy).toHaveBeenCalledTimes(1)
     expect(flushCallbackSpy).toHaveBeenCalledTimes(1)
 
-    expect(parseSegment(flushCallbackSpy.calls.mostRecent().args[2].output)).toEqual({
+    expect(parseSegment(flushCallbackSpy.mock.lastCall![2].output)).toEqual({
       source: 'browser' as const,
       creation_reason: 'init' as const,
       end: 10,
@@ -82,22 +83,22 @@ describe('Segment', () => {
   })
 
   it('compressed bytes count is updated when a record is added', () => {
-    const addRecordCallbackSpy = jasmine.createSpy<AddRecordCallback>()
+    const addRecordCallbackSpy = vi.fn<AddRecordCallback>()
     const segment = createTestSegment()
     segment.addRecord(RECORD, addRecordCallbackSpy)
     worker.processAllMessages()
-    expect(addRecordCallbackSpy).toHaveBeenCalledOnceWith(
-      ENCODED_SEGMENT_HEADER_BYTES_COUNT + ENCODED_RECORD_BYTES_COUNT
-    )
+    expect(addRecordCallbackSpy).toHaveBeenCalledTimes(1)
+    expect(addRecordCallbackSpy).toHaveBeenCalledWith(ENCODED_SEGMENT_HEADER_BYTES_COUNT + ENCODED_RECORD_BYTES_COUNT)
   })
 
   it('calls the flush callback with metadata and encoder output as argument', () => {
-    const flushCallbackSpy = jasmine.createSpy<FlushCallback>()
+    const flushCallbackSpy = vi.fn<FlushCallback>()
     const segment = createTestSegment()
     segment.addRecord(RECORD, noop)
     segment.flush(flushCallbackSpy)
     worker.processAllMessages()
-    expect(flushCallbackSpy).toHaveBeenCalledOnceWith(
+    expect(flushCallbackSpy).toHaveBeenCalledTimes(1)
+    expect(flushCallbackSpy).toHaveBeenCalledWith(
       {
         start: 10,
         end: 10,
@@ -110,7 +111,7 @@ describe('Segment', () => {
       },
       RECORD_STATS,
       {
-        output: jasmine.any(Uint8Array) as unknown as Uint8ArrayBuffer,
+        output: expect.any(Uint8Array) as unknown as Uint8ArrayBuffer,
         outputBytesCount:
           ENCODED_SEGMENT_HEADER_BYTES_COUNT +
           ENCODED_RECORD_BYTES_COUNT +
@@ -123,7 +124,7 @@ describe('Segment', () => {
   })
 
   it('resets the encoder when a segment is flushed', () => {
-    const flushCallbackSpy = jasmine.createSpy<FlushCallback>()
+    const flushCallbackSpy = vi.fn<FlushCallback>()
 
     const segment1 = createTestSegment({ creationReason: 'init' })
     const stats1: SerializationStats = {
@@ -144,10 +145,10 @@ describe('Segment', () => {
     segment2.flush(flushCallbackSpy)
 
     worker.processAllMessages()
-    expect(flushCallbackSpy.calls.argsFor(0)[1]).toEqual(stats1)
-    expect(parseSegment(flushCallbackSpy.calls.argsFor(0)[2].output).records.length).toBe(1)
-    expect(flushCallbackSpy.calls.argsFor(1)[1]).toEqual(stats2)
-    expect(parseSegment(flushCallbackSpy.calls.argsFor(1)[2].output).records.length).toBe(1)
+    expect(flushCallbackSpy.mock.calls[0][1]).toEqual(stats1)
+    expect(parseSegment(flushCallbackSpy.mock.calls[0][2].output).records.length).toBe(1)
+    expect(flushCallbackSpy.mock.calls[1][1]).toEqual(stats2)
+    expect(parseSegment(flushCallbackSpy.mock.calls[1][2].output).records.length).toBe(1)
   })
 
   it('throws when trying to flush an empty segment', () => {
@@ -302,7 +303,7 @@ describe('Segment', () => {
       createTestSegment()
       worker.processAllMessages()
       expect(getReplayStats('b')).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           segments_count: 1,
           records_count: 0,
           segments_total_raw_size: 0,
@@ -316,7 +317,7 @@ describe('Segment', () => {
       segment.flush(noop)
       worker.processAllMessages()
       expect(getReplayStats('b')).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           segments_count: 1,
           segments_total_raw_size:
             ENCODED_SEGMENT_HEADER_BYTES_COUNT + ENCODED_RECORD_BYTES_COUNT + ENCODED_META_BYTES_COUNT,

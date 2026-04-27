@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { getType, isIndexableObject } from './typeUtils'
 
 describe('typeUtils', () => {
@@ -25,23 +26,23 @@ describe('typeUtils', () => {
 
   describe('isIndexableObject', () => {
     it('returns true for plain objects', () => {
-      expect(isIndexableObject({})).toBeTrue()
+      expect(isIndexableObject({})).toBe(true)
     })
 
     it('returns false for primitives', () => {
-      expect(isIndexableObject(null)).toBeFalse()
-      expect(isIndexableObject(undefined)).toBeFalse()
-      expect(isIndexableObject('')).toBeFalse()
-      expect(isIndexableObject(0)).toBeFalse()
-      expect(isIndexableObject(false)).toBeFalse()
+      expect(isIndexableObject(null)).toBe(false)
+      expect(isIndexableObject(undefined)).toBe(false)
+      expect(isIndexableObject('')).toBe(false)
+      expect(isIndexableObject(0)).toBe(false)
+      expect(isIndexableObject(false)).toBe(false)
     })
 
     it("returned value don't matter too much for non-plain objects", () => {
       // This test assertions are not strictly relevent. The goal of this function is to be able to
       // use the value as a plain object. Using an array or a date as a plain object is fine, but
       // it doesn't make much sense, so we don't really care.
-      expect(isIndexableObject([])).toBeFalse()
-      expect(isIndexableObject(new Date())).toBeTrue()
+      expect(isIndexableObject([])).toBe(false)
+      expect(isIndexableObject(new Date())).toBe(true)
     })
   })
 })

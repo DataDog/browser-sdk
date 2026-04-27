@@ -1,3 +1,4 @@
+import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { Clock, RequestIdleCallbackMock } from '@datadog/browser-core/test'
 import { mockClock, mockRequestIdleCallback } from '@datadog/browser-core/test'
 import type { RumMutationRecord } from '@datadog/browser-rum-core'
@@ -5,14 +6,14 @@ import { MUTATION_PROCESS_MIN_DELAY, createMutationBatch } from './mutationBatch
 
 describe('createMutationBatch', () => {
   let mutationBatch: ReturnType<typeof createMutationBatch>
-  let processMutationBatchSpy: jasmine.Spy<(mutations: RumMutationRecord[]) => void>
+  let processMutationBatchSpy: Mock<(mutations: RumMutationRecord[]) => void>
   let clock: Clock
   let requestIdleCallbackMock: RequestIdleCallbackMock
 
   beforeEach(() => {
     clock = mockClock()
     requestIdleCallbackMock = mockRequestIdleCallback()
-    processMutationBatchSpy = jasmine.createSpy()
+    processMutationBatchSpy = vi.fn()
     mutationBatch = createMutationBatch(processMutationBatchSpy)
   })
 
@@ -36,7 +37,8 @@ describe('createMutationBatch', () => {
     mutationBatch.addMutations([mutation])
     mutationBatch.flush()
 
-    expect(processMutationBatchSpy).toHaveBeenCalledOnceWith([mutation])
+    expect(processMutationBatchSpy).toHaveBeenCalledTimes(1)
+    expect(processMutationBatchSpy).toHaveBeenCalledWith([mutation])
   })
 
   it('appends mutations to the batch when adding more mutations', () => {
@@ -47,12 +49,14 @@ describe('createMutationBatch', () => {
     mutationBatch.addMutations([mutation2, mutation3])
     mutationBatch.flush()
 
-    expect(processMutationBatchSpy).toHaveBeenCalledOnceWith([mutation1, mutation2, mutation3])
+    expect(processMutationBatchSpy).toHaveBeenCalledTimes(1)
+    expect(processMutationBatchSpy).toHaveBeenCalledWith([mutation1, mutation2, mutation3])
   })
 
   it('calls the callback on flush even if there is no pending mutation', () => {
     mutationBatch.flush()
 
-    expect(processMutationBatchSpy).toHaveBeenCalledOnceWith([])
+    expect(processMutationBatchSpy).toHaveBeenCalledTimes(1)
+    expect(processMutationBatchSpy).toHaveBeenCalledWith([])
   })
 })

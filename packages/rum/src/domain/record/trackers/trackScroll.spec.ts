@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import { appendElement } from '../../../../../rum-core/test'
 import { IncrementalSource, RecordType } from '../../../types'
@@ -9,7 +10,7 @@ import type { Tracker } from './tracker.types'
 
 describe('trackScroll', () => {
   let scrollTracker: Tracker
-  let emitRecordCallback: jasmine.Spy<EmitRecordCallback>
+  let emitRecordCallback: Mock<EmitRecordCallback>
   let div: HTMLDivElement
 
   beforeEach(() => {
@@ -18,7 +19,7 @@ describe('trackScroll', () => {
     const scope = createRecordingScopeForTesting()
     takeFullSnapshotForTesting(scope)
 
-    emitRecordCallback = jasmine.createSpy()
+    emitRecordCallback = vi.fn()
     scrollTracker = trackScroll(document, emitRecordCallback, scope)
     registerCleanupTask(() => {
       scrollTracker.stop()
@@ -28,14 +29,15 @@ describe('trackScroll', () => {
   it('collects scrolls', () => {
     div.dispatchEvent(createNewEvent('scroll', { target: div }))
 
-    expect(emitRecordCallback).toHaveBeenCalledOnceWith({
+    expect(emitRecordCallback).toHaveBeenCalledTimes(1)
+    expect(emitRecordCallback).toHaveBeenCalledWith({
       type: RecordType.IncrementalSnapshot,
-      timestamp: jasmine.any(Number),
+      timestamp: expect.any(Number),
       data: {
         source: IncrementalSource.Scroll,
-        id: jasmine.any(Number),
-        x: jasmine.any(Number),
-        y: jasmine.any(Number),
+        id: expect.any(Number),
+        x: expect.any(Number),
+        y: expect.any(Number),
       },
     })
   })

@@ -1,5 +1,7 @@
+import { vi, beforeEach, describe, expect, it } from 'vitest'
 import React, { act } from 'react'
-
+import { RumEventType } from '@datadog/browser-rum-core'
+import { computeStackTrace, toStackTraceString } from '@datadog/browser-core'
 import { disableJasmineUncaughtExceptionTracking, ignoreConsoleLogs } from '../../../../core/test'
 import { appendComponent } from '../../../test/appendComponent'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
@@ -24,8 +26,10 @@ describe('ErrorBoundary', () => {
   })
 
   it('renders the fallback function component when an error occurs', () => {
-    const fallbackSpy = jasmine.createSpy<FallbackFunctionComponent>().and.returnValue('fallback')
-    const ComponentSpy = jasmine.createSpy().and.throwError(new Error('error'))
+    const fallbackSpy = vi.fn<FallbackFunctionComponent>().mockReturnValue('fallback')
+    const ComponentSpy = vi.fn().mockImplementation(() => {
+      throw new Error('error')
+    })
     const container = appendComponent(
       <ErrorBoundary fallback={fallbackSpy}>
         <ComponentSpy />
@@ -33,10 +37,10 @@ describe('ErrorBoundary', () => {
     )
     expect(fallbackSpy).toHaveBeenCalled()
     // React calls the component multiple times while rendering
-    fallbackSpy.calls.all().forEach(({ args }) => {
+    fallbackSpy.mock.calls.forEach((args) => {
       expect(args[0]).toEqual({
         error: new Error('error'),
-        resetError: jasmine.any(Function),
+        resetError: expect.any(Function),
       })
     })
     expect(container.innerHTML).toBe('fallback')
@@ -46,7 +50,7 @@ describe('ErrorBoundary', () => {
     class FallbackComponent extends React.Component<{ error: Error; resetError: () => void }> {
       constructor(props: { error: Error; resetError: () => void }) {
         super(props)
-        expect(props).toEqual({ error: new Error('error'), resetError: jasmine.any(Function) })
+        expect(props).toEqual({ error: new Error('error'), resetError: expect.any(Function) })
       }
 
       render() {
@@ -54,7 +58,9 @@ describe('ErrorBoundary', () => {
       }
     }
 
-    const ComponentSpy = jasmine.createSpy().and.throwError(new Error('error'))
+    const ComponentSpy = vi.fn().mockImplementation(() => {
+      throw new Error('error')
+    })
     const container = appendComponent(
       <ErrorBoundary fallback={FallbackComponent}>
         <ComponentSpy />
@@ -64,8 +70,10 @@ describe('ErrorBoundary', () => {
   })
 
   it('resets the error when resetError is called', () => {
-    const fallbackSpy = jasmine.createSpy<FallbackFunctionComponent>().and.returnValue('fallback')
-    const ComponentSpy = jasmine.createSpy().and.throwError(new Error('error'))
+    const fallbackSpy = vi.fn<FallbackFunctionComponent>().mockReturnValue('fallback')
+    const ComponentSpy = vi.fn().mockImplementation(() => {
+      throw new Error('error')
+    })
     const container = appendComponent(
       <ErrorBoundary fallback={fallbackSpy}>
         <ComponentSpy />
@@ -73,9 +81,9 @@ describe('ErrorBoundary', () => {
     )
 
     // Don't throw the second time
-    ComponentSpy.and.returnValue('bar')
+    ComponentSpy.mockReturnValue('bar')
 
-    const { resetError } = fallbackSpy.calls.mostRecent().args[0]
+    const { resetError } = fallbackSpy.mock.lastCall![0]
     act(() => {
       resetError()
     })
@@ -83,13 +91,15 @@ describe('ErrorBoundary', () => {
     expect(container.innerHTML).toBe('bar')
   })
 
-  it('reports the error through addReactError', () => {
-    const addErrorSpy = jasmine.createSpy()
+  it('reports the error to the SDK', () => {
+    const addEventSpy = vi.fn()
     initializeReactPlugin({
-      addError: addErrorSpy,
+      addError: addEventSpy,
     })
     const originalError = new Error('error')
-    const ComponentSpy = jasmine.createSpy().and.throwError(originalError)
+    const ComponentSpy = vi.fn().mockImplementation(() => {
+      throw originalError
+    })
     ;(ComponentSpy as any).displayName = 'ComponentSpy'
 
     appendComponent(
@@ -98,16 +108,30 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     )
 
-    expect(addErrorSpy).toHaveBeenCalledOnceWith(
-      jasmine.objectContaining({
-        error: originalError,
-        handlingStack: jasmine.any(String),
-        startClocks: jasmine.any(Object),
+    expect(addEventSpy).toHaveBeenCalledTimes(1)
+    expect(addEventSpy).toHaveBeenCalledWith(
+      expect.any(Number),
+      {
+        type: RumEventType.ERROR,
+        date: expect.any(Number),
+        error: expect.objectContaining({
+          id: expect.any(String),
+          type: originalError.name,
+          message: originalError.message,
+          stack: toStackTraceString(computeStackTrace(originalError)),
+          handling_stack: expect.any(String),
+          component_stack: expect.stringContaining('ComponentSpy'),
+          source_type: 'browser',
+          handling: 'handled',
+        }),
         context: {
           framework: 'react',
         },
-        componentStack: jasmine.stringContaining('ComponentSpy'),
-      })
+      },
+      {
+        error: originalError,
+        handlingStack: expect.any(String),
+      }
     )
   })
 })

@@ -1,11 +1,12 @@
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { display } from './display'
 import { callMonitored, monitor, monitored, startMonitorErrorCollection, setDebugMode } from './monitor'
 
 describe('monitor', () => {
-  let onMonitorErrorCollectedSpy: jasmine.Spy<(error: unknown) => void>
+  let onMonitorErrorCollectedSpy: Mock<(error: unknown) => void>
 
   beforeEach(() => {
-    onMonitorErrorCollectedSpy = jasmine.createSpy()
+    onMonitorErrorCollectedSpy = vi.fn()
   })
 
   describe('decorator', () => {
@@ -67,19 +68,22 @@ describe('monitor', () => {
       it('should report error', () => {
         candidate.monitoredThrowing()
 
-        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith(new Error('monitored'))
+        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledTimes(1)
+        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledWith(new Error('monitored'))
       })
 
       it('should report string error', () => {
         candidate.monitoredStringErrorThrowing()
 
-        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith('string error')
+        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledTimes(1)
+        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledWith('string error')
       })
 
       it('should report object error', () => {
         candidate.monitoredObjectErrorThrowing()
 
-        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith({ foo: 'bar' })
+        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledTimes(1)
+        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledWith({ foo: 'bar' })
       })
     })
   })
@@ -106,7 +110,8 @@ describe('monitor', () => {
       it('should report error', () => {
         callMonitored(throwing)
 
-        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith(new Error('error'))
+        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledTimes(1)
+        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledWith(new Error('error'))
       })
     })
 
@@ -124,16 +129,17 @@ describe('monitor', () => {
       it('should report error', () => {
         monitor(throwing)()
 
-        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith(new Error('error'))
+        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledTimes(1)
+        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledWith(new Error('error'))
       })
     })
   })
 
   describe('setDebugMode', () => {
-    let displaySpy: jasmine.Spy
+    let displaySpy: Mock
 
     beforeEach(() => {
-      displaySpy = spyOn(display, 'error')
+      displaySpy = vi.spyOn(display, 'error')
     })
 
     it('when not called, should not display error', () => {
@@ -151,12 +157,15 @@ describe('monitor', () => {
         throw new Error('message')
       })
 
-      expect(displaySpy).toHaveBeenCalledOnceWith('[MONITOR]', new Error('message'))
+      expect(displaySpy).toHaveBeenCalledTimes(1)
+      expect(displaySpy).toHaveBeenCalledWith('[MONITOR]', new Error('message'))
     })
 
     it('displays errors thrown by the onMonitorErrorCollected callback', () => {
       setDebugMode(true)
-      onMonitorErrorCollectedSpy.and.throwError(new Error('unexpected'))
+      onMonitorErrorCollectedSpy.mockImplementation(() => {
+        throw new Error('unexpected')
+      })
       startMonitorErrorCollection(onMonitorErrorCollectedSpy)
 
       callMonitored(() => {

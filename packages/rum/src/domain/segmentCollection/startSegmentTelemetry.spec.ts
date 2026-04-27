@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import type { Telemetry, HttpRequestEvent, BandwidthStats } from '@datadog/browser-core'
 import { addExperimentalFeatures, ExperimentalFeature, Observable } from '@datadog/browser-core'
 import type { MockTelemetry } from '@datadog/browser-core/test'
@@ -66,7 +67,7 @@ describe('segmentTelemetry', () => {
         generateReplayRequest({ result, isFullSnapshot: true })
 
         expect(await telemetry.getEvents()).toEqual([
-          jasmine.objectContaining({
+          expect.objectContaining({
             type: 'log',
             status: 'debug',
             message: 'Segment network request metrics',
@@ -112,7 +113,7 @@ describe('segmentTelemetry', () => {
       generateReplayRequest({ result, isFullSnapshot: false })
 
       expect(await telemetry.getEvents()).toEqual([
-        jasmine.objectContaining({
+        expect.objectContaining({
           type: 'log',
           status: 'debug',
           message: 'Segment network request metrics',

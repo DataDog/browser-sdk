@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { clocksNow, Observable, timeStampNow } from '@datadog/browser-core'
 import { createNewEvent } from '@datadog/browser-core/test'
 import type { Click } from '../src/domain/action/trackClickActions'
@@ -30,8 +31,8 @@ export function createFakeClick({
       isStopped = true
       stopObservable.notify()
     },
-    discard: jasmine.createSpy(),
-    validate: jasmine.createSpy(),
+    discard: vi.fn(),
+    validate: vi.fn(),
     startClocks: clocksNow(),
     hasError,
     hasPageActivity,
@@ -41,8 +42,8 @@ export function createFakeClick({
       scroll: false,
       ...userActivity,
     }),
-    addFrustration: jasmine.createSpy<Click['addFrustration']>(),
-    clone: jasmine.createSpy<typeof clone>().and.callFake(clone),
+    addFrustration: vi.fn<Click['addFrustration']>(),
+    clone: vi.fn<typeof clone>().mockImplementation(clone),
 
     event: createNewEvent('pointerup', {
       clientX: 100,

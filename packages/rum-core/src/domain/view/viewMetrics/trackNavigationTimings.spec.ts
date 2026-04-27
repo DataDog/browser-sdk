@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { relativeNow, type Duration, type RelativeTime } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask, replaceMockable } from '@datadog/browser-core/test'
@@ -23,12 +24,12 @@ const FAKE_INCOMPLETE_NAVIGATION_ENTRY: RelevantNavigationTiming = {
 }
 
 describe('trackNavigationTimings', () => {
-  let navigationTimingsCallback: jasmine.Spy<(timings: NavigationTimings) => void>
+  let navigationTimingsCallback: Mock<(timings: NavigationTimings) => void>
   let stop: () => void
   let clock: Clock
 
   beforeEach(() => {
-    navigationTimingsCallback = jasmine.createSpy()
+    navigationTimingsCallback = vi.fn()
     clock = mockClock()
 
     registerCleanupTask(() => {
@@ -42,7 +43,8 @@ describe('trackNavigationTimings', () => {
 
     clock.tick(0)
 
-    expect(navigationTimingsCallback).toHaveBeenCalledOnceWith({
+    expect(navigationTimingsCallback).toHaveBeenCalledTimes(1)
+    expect(navigationTimingsCallback).toHaveBeenCalledWith({
       firstByte: 123 as Duration,
       domComplete: 456 as Duration,
       domContentLoaded: 345 as Duration,
@@ -60,7 +62,7 @@ describe('trackNavigationTimings', () => {
 
     clock.tick(0)
 
-    expect(navigationTimingsCallback.calls.mostRecent().args[0].firstByte).toBeUndefined()
+    expect(navigationTimingsCallback.mock.lastCall![0].firstByte).toBeUndefined()
   })
 
   it('does not report "firstByte" if "responseStart" is in the future', () => {
@@ -72,7 +74,7 @@ describe('trackNavigationTimings', () => {
 
     clock.tick(0)
 
-    expect(navigationTimingsCallback.calls.mostRecent().args[0].firstByte).toBeUndefined()
+    expect(navigationTimingsCallback.mock.lastCall![0].firstByte).toBeUndefined()
   })
 
   it('wait for the load event to provide navigation timing', () => {

@@ -1,11 +1,13 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import type { RumLayoutShiftAttribution } from '../../../browser/performanceObservable'
 import { getClsAttributionImpactedArea } from './getClsAttributionImpactedArea'
 import { isLayoutShiftSupported } from './trackCumulativeLayoutShift'
 
 describe('getClsAttributionImpactedArea', () => {
-  beforeEach(() => {
+  beforeEach((ctx) => {
     if (!isLayoutShiftSupported()) {
-      pending('No LayoutShift API support')
+      ctx.skip()
+      return
     }
   })
   it('should calculate the impacted area when rectangles do not overlap', () => {

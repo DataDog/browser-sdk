@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { ContextManager } from '@datadog/browser-core'
 import { monitor, display, createContextManager, TrackingConsent, startTelemetry } from '@datadog/browser-core'
 import { HandlerType } from '../domain/logger'
@@ -15,7 +16,7 @@ const getInternalContext = () => ({ session_id: mockSessionId })
 
 describe('logs entry', () => {
   it('should add a `_setDebug` that works', () => {
-    const displaySpy = spyOn(display, 'error')
+    const displaySpy = vi.spyOn(display, 'error')
     const { logsPublicApi } = makeLogsPublicApiWithDefaults()
     const setDebug: (debug: boolean) => void = (logsPublicApi as any)._setDebug
     expect(!!setDebug).toEqual(true)
@@ -47,7 +48,7 @@ describe('logs entry', () => {
 
   describe('common context', () => {
     let logsPublicApi: LogsPublicApi
-    let startLogsSpy: jasmine.Spy<StartLogs>
+    let startLogsSpy: Mock<StartLogs>
 
     beforeEach(() => {
       ;({ logsPublicApi, startLogsSpy } = makeLogsPublicApiWithDefaults())
@@ -57,7 +58,7 @@ describe('logs entry', () => {
     it('should have the current date, view and global context', () => {
       logsPublicApi.setGlobalContextProperty('foo', 'bar')
 
-      const getCommonContext = startLogsSpy.calls.mostRecent().args[1]
+      const getCommonContext = startLogsSpy.mock.lastCall![1]
       expect(getCommonContext()).toEqual({
         view: {
           referrer: document.referrer,
@@ -166,25 +167,25 @@ describe('logs entry', () => {
 
     describe('user', () => {
       it('should call setContext', () => {
-        spyOn(userContext, 'setContext')
+        vi.spyOn(userContext, 'setContext')
         logsPublicApi.setUser(2 as any)
         expect(userContext.setContext).toHaveBeenCalledTimes(1)
       })
 
       it('should call setContextProperty', () => {
-        spyOn(userContext, 'setContextProperty')
+        vi.spyOn(userContext, 'setContextProperty')
         logsPublicApi.setUserProperty('foo', 'bar')
         expect(userContext.setContextProperty).toHaveBeenCalledTimes(1)
       })
 
       it('should call removeContextProperty', () => {
-        spyOn(userContext, 'removeContextProperty')
+        vi.spyOn(userContext, 'removeContextProperty')
         logsPublicApi.removeUserProperty('foo')
         expect(userContext.removeContextProperty).toHaveBeenCalledTimes(1)
       })
 
       it('should call clearContext', () => {
-        spyOn(userContext, 'clearContext')
+        vi.spyOn(userContext, 'clearContext')
         logsPublicApi.clearUser()
         expect(userContext.clearContext).toHaveBeenCalledTimes(1)
       })
@@ -192,25 +193,25 @@ describe('logs entry', () => {
 
     describe('account', () => {
       it('should call setContext', () => {
-        spyOn(accountContext, 'setContext')
+        vi.spyOn(accountContext, 'setContext')
         logsPublicApi.setAccount(2 as any)
         expect(accountContext.setContext).toHaveBeenCalledTimes(1)
       })
 
       it('should call setContextProperty', () => {
-        spyOn(accountContext, 'setContextProperty')
+        vi.spyOn(accountContext, 'setContextProperty')
         logsPublicApi.setAccountProperty('foo', 'bar')
         expect(accountContext.setContextProperty).toHaveBeenCalledTimes(1)
       })
 
       it('should call removeContextProperty', () => {
-        spyOn(accountContext, 'removeContextProperty')
+        vi.spyOn(accountContext, 'removeContextProperty')
         logsPublicApi.removeAccountProperty('foo')
         expect(accountContext.removeContextProperty).toHaveBeenCalledTimes(1)
       })
 
       it('should call clearContext', () => {
-        spyOn(accountContext, 'clearContext')
+        vi.spyOn(accountContext, 'clearContext')
         logsPublicApi.clearAccount()
         expect(accountContext.clearContext).toHaveBeenCalledTimes(1)
       })
@@ -223,8 +224,8 @@ function makeLogsPublicApiWithDefaults({
 }: {
   startLogsResult?: Partial<StartLogsResult>
 } = {}) {
-  const handleLogSpy = jasmine.createSpy<StartLogsResult['handleLog']>()
-  const startLogsSpy = replaceMockableWithSpy(startLogs).and.callFake(() => ({
+  const handleLogSpy = vi.fn<StartLogsResult['handleLog']>()
+  const startLogsSpy = replaceMockableWithSpy(startLogs).mockImplementation(() => ({
     handleLog: handleLogSpy,
     getInternalContext,
     accountContext: {} as any,
@@ -235,7 +236,7 @@ function makeLogsPublicApiWithDefaults({
   }))
 
   function getLoggedMessage(index: number) {
-    const [message, logger, savedCommonContext, savedDate] = handleLogSpy.calls.argsFor(index)
+    const [message, logger, savedCommonContext, savedDate] = handleLogSpy.mock.calls[index]
     return { message, logger, savedCommonContext, savedDate }
   }
 

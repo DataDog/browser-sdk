@@ -1,9 +1,10 @@
+import { vi, describe, expect, it } from 'vitest'
 import { performDraw, round } from './numberUtils'
 
 describe('numberUtils', () => {
   it('should perform a draw', () => {
     let random = 0
-    spyOn(Math, 'random').and.callFake(() => random)
+    vi.spyOn(Math, 'random').mockImplementation(() => random)
 
     expect(performDraw(0)).toBe(false)
     expect(performDraw(100)).toEqual(true)

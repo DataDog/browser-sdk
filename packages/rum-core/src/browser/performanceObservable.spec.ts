@@ -1,3 +1,4 @@
+import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { Duration, Subscription } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
@@ -9,14 +10,15 @@ describe('performanceObservable', () => {
   const configuration = mockRumConfiguration()
   const forbiddenUrl = 'https://forbidden.url/abce?ddsource=browser&dd-api-key=xxxx&dd-request-id=1234567890'
   const allowedUrl = 'https://allowed.url'
-  let observableCallback: jasmine.Spy
+  let observableCallback: Mock
   let clock: Clock
 
-  beforeEach(() => {
+  beforeEach((ctx) => {
     if (!window.PerformanceObserver) {
-      pending('PerformanceObserver not supported')
+      ctx.skip()
+      return
     }
-    observableCallback = jasmine.createSpy()
+    observableCallback = vi.fn()
     clock = mockClock()
   })
 
@@ -33,7 +35,7 @@ describe('performanceObservable', () => {
       performanceSubscription = performanceResourceObservable.subscribe(observableCallback)
 
       notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: allowedUrl })])
-      expect(observableCallback).toHaveBeenCalledWith([jasmine.objectContaining({ name: allowedUrl })])
+      expect(observableCallback).toHaveBeenCalledWith([expect.objectContaining({ name: allowedUrl })])
     })
 
     it('should not notify performance resources with intake url', () => {
@@ -69,7 +71,7 @@ describe('performanceObservable', () => {
       performanceSubscription = performanceResourceObservable.subscribe(observableCallback)
       expect(observableCallback).not.toHaveBeenCalled()
       clock.tick(0)
-      expect(observableCallback).toHaveBeenCalledWith([jasmine.objectContaining({ name: allowedUrl })])
+      expect(observableCallback).toHaveBeenCalledWith([expect.objectContaining({ name: allowedUrl })])
     })
   })
 
@@ -82,7 +84,7 @@ describe('performanceObservable', () => {
       performanceSubscription = performanceResourceObservable.subscribe(observableCallback)
 
       notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: allowedUrl })])
-      expect(observableCallback).toHaveBeenCalledWith([jasmine.objectContaining({ name: allowedUrl })])
+      expect(observableCallback).toHaveBeenCalledWith([expect.objectContaining({ name: allowedUrl })])
     })
 
     it('should notify buffered performance resources when type not supported', () => {
@@ -97,7 +99,7 @@ describe('performanceObservable', () => {
       performanceSubscription = performanceResourceObservable.subscribe(observableCallback)
       expect(observableCallback).not.toHaveBeenCalled()
       clock.tick(0)
-      expect(observableCallback).toHaveBeenCalledWith([jasmine.objectContaining({ name: allowedUrl })])
+      expect(observableCallback).toHaveBeenCalledWith([expect.objectContaining({ name: allowedUrl })])
     })
 
     it('should handle exceptions coming from performance observer .observe()', () => {

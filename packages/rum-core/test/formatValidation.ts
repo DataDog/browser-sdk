@@ -82,7 +82,7 @@ function validateRumFormat(rumEvent: Context) {
         return `  event${error.instancePath || ''} ${message}`
       })
       .join('\n')
-    fail(`Invalid RUM event format:\n${errors}`)
+    throw new Error(`Invalid RUM event format:\n${errors}`)
   }
 }
 

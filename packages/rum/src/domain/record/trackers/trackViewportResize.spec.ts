@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import { RecordType } from '../../../types'
 import type { EmitRecordCallback } from '../record.types'
@@ -8,14 +9,15 @@ import type { Tracker } from './tracker.types'
 
 describe('trackViewportResize', () => {
   let viewportResizeTracker: Tracker
-  let emitRecordCallback: jasmine.Spy<EmitRecordCallback>
+  let emitRecordCallback: Mock<EmitRecordCallback>
 
-  beforeEach(() => {
+  beforeEach((ctx) => {
     if (!window.visualViewport) {
-      pending('visualViewport not supported')
+      ctx.skip()
+      return
     }
 
-    emitRecordCallback = jasmine.createSpy()
+    emitRecordCallback = vi.fn()
     const scope = createRecordingScopeForTesting()
     takeFullSnapshotForTesting(scope)
 
@@ -28,17 +30,18 @@ describe('trackViewportResize', () => {
   it('collects visual viewport on resize', () => {
     visualViewport!.dispatchEvent(createNewEvent('resize'))
 
-    expect(emitRecordCallback).toHaveBeenCalledOnceWith({
+    expect(emitRecordCallback).toHaveBeenCalledTimes(1)
+    expect(emitRecordCallback).toHaveBeenCalledWith({
       type: RecordType.VisualViewport,
-      timestamp: jasmine.any(Number),
+      timestamp: expect.any(Number),
       data: {
-        scale: jasmine.any(Number),
-        offsetLeft: jasmine.any(Number),
-        offsetTop: jasmine.any(Number),
-        pageLeft: jasmine.any(Number),
-        pageTop: jasmine.any(Number),
-        height: jasmine.any(Number),
-        width: jasmine.any(Number),
+        scale: expect.any(Number),
+        offsetLeft: expect.any(Number),
+        offsetTop: expect.any(Number),
+        pageLeft: expect.any(Number),
+        pageTop: expect.any(Number),
+        height: expect.any(Number),
+        width: expect.any(Number),
       },
     })
   })
@@ -46,17 +49,18 @@ describe('trackViewportResize', () => {
   it('collects visual viewport on scroll', () => {
     visualViewport!.dispatchEvent(createNewEvent('scroll'))
 
-    expect(emitRecordCallback).toHaveBeenCalledOnceWith({
+    expect(emitRecordCallback).toHaveBeenCalledTimes(1)
+    expect(emitRecordCallback).toHaveBeenCalledWith({
       type: RecordType.VisualViewport,
-      timestamp: jasmine.any(Number),
+      timestamp: expect.any(Number),
       data: {
-        scale: jasmine.any(Number),
-        offsetLeft: jasmine.any(Number),
-        offsetTop: jasmine.any(Number),
-        pageLeft: jasmine.any(Number),
-        pageTop: jasmine.any(Number),
-        height: jasmine.any(Number),
-        width: jasmine.any(Number),
+        scale: expect.any(Number),
+        offsetLeft: expect.any(Number),
+        offsetTop: expect.any(Number),
+        pageLeft: expect.any(Number),
+        pageTop: expect.any(Number),
+        height: expect.any(Number),
+        width: expect.any(Number),
       },
     })
   })

@@ -36,6 +36,9 @@ dev,@types/react-dom,MIT,Copyright Microsoft Corporation
 dev,@wxt-dev/module-react,MIT,Copyright (c) 2023 Aaron
 dev,@vitejs/plugin-react,MIT,Copyright (c) 2019-present Evan You & Vite Contributors
 dev,@vitejs/plugin-vue,MIT,Copyright (c) 2019-present, Yuxi (Evan) You and Vite contributors
+dev,@vitest/browser,MIT,Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
+dev,@vitest/browser-playwright,MIT,Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
+dev,@vitest/coverage-istanbul,MIT,Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
 dev,@module-federation/enhanced,MIT, Copyright (c) 2020 ScriptedAlchemy LLC (Zack Jackson) Zhou Shaw (zhouxiao)
 dev,@vue/test-utils,MIT,Copyright (c) 2021-present vuejs
 dev,ajv,MIT,Copyright 2015-2017 Evgeny Poberezkin
@@ -87,6 +90,7 @@ dev,typescript,Apache-2.0,Copyright Microsoft Corporation
 dev,typescript-eslint,MIT,Copyright (c) 2019 typescript-eslint and other contributors
 dev,undici,MIT,Copyright (c) Matteo Collina and Undici contributors
 dev,vite,MIT,Copyright (c) 2019-present, VoidZero Inc. and Vite contributors
+dev,vitest,MIT,Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
 dev,vue,MIT,Copyright (c) 2018-present, Yuxi (Evan) You
 dev,nuxt,MIT,Copyright (c) 2016-present Nuxt Team
 dev,vue-router,MIT,Copyright (c) 2019-present Eduardo San Martin Morote

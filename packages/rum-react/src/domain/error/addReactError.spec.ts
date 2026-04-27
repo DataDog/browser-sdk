@@ -1,40 +1,58 @@
+import { vi, describe, expect, it } from 'vitest'
+import { RumEventType } from '@datadog/browser-rum-core'
+import { computeStackTrace, toStackTraceString } from '@datadog/browser-core'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import { addReactError } from './addReactError'
 
 describe('addReactError', () => {
-  it('delegates the error to addError', () => {
-    const addErrorSpy = jasmine.createSpy()
+  it('reports the error to the SDK', () => {
+    const addEventSpy = vi.fn()
     initializeReactPlugin({
-      addError: addErrorSpy,
+      addError: addEventSpy,
     })
     const originalError = new Error('error message')
 
     addReactError(originalError, { componentStack: 'at ComponentSpy toto.js' })
 
-    expect(addErrorSpy).toHaveBeenCalledOnceWith({
-      error: originalError,
-      handlingStack: jasmine.any(String),
-      componentStack: 'at ComponentSpy toto.js',
-      startClocks: jasmine.any(Object),
-      context: {
-        framework: 'react',
+    expect(addEventSpy).toHaveBeenCalledTimes(1)
+    expect(addEventSpy).toHaveBeenCalledWith(
+      expect.any(Number),
+      {
+        type: RumEventType.ERROR,
+        date: expect.any(Number),
+        error: expect.objectContaining({
+          id: expect.any(String),
+          type: originalError.name,
+          message: originalError.message,
+          stack: toStackTraceString(computeStackTrace(originalError)),
+          handling_stack: expect.any(String),
+          component_stack: expect.stringContaining('at ComponentSpy'),
+          source_type: 'browser',
+          handling: 'handled',
+        }),
+        context: {
+          framework: 'react',
+        },
       },
-    })
+      {
+        error: originalError,
+        handlingStack: expect.any(String),
+      }
+    )
   })
 
   it('should merge dd_context from the original error with react error context', () => {
-    const addErrorSpy = jasmine.createSpy()
+    const addEventSpy = vi.fn()
     initializeReactPlugin({
-      addError: addErrorSpy,
+      addError: addEventSpy,
     })
     const originalError = new Error('error message')
     ;(originalError as any).dd_context = { component: 'Menu', param: 123 }
 
     addReactError(originalError, {})
 
-    expect(addErrorSpy).toHaveBeenCalledWith(
-      jasmine.objectContaining({
-        error: originalError,
+    expect(addEventSpy.mock.lastCall![1]).toEqual(
+      expect.objectContaining({
         context: {
           framework: 'react',
           component: 'Menu',

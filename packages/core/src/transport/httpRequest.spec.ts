@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Request } from '../../test'
 import {
   collectAsyncCalls,
@@ -77,23 +78,25 @@ describe('httpRequest', () => {
   })
 
   describe('fetchStrategy onResponse', () => {
-    it('should be called with intake response', (done) => {
-      interceptor.withFetch(DEFAULT_FETCH_MOCK)
+    it('should be called with intake response', () =>
+      new Promise<void>((resolve) => {
+        interceptor.withFetch(DEFAULT_FETCH_MOCK)
 
-      fetchStrategy(endpointBuilder, { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 }, (response) => {
-        expect(response).toEqual({ status: 200, type: 'cors' })
-        done()
-      })
-    })
+        fetchStrategy(endpointBuilder, { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 }, (response) => {
+          expect(response).toEqual({ status: 200, type: 'cors' })
+          resolve()
+        })
+      }))
 
-    it('should be called with status 0 when fetch fails', (done) => {
-      interceptor.withFetch(NETWORK_ERROR_FETCH_MOCK)
+    it('should be called with status 0 when fetch fails', () =>
+      new Promise<void>((resolve) => {
+        interceptor.withFetch(NETWORK_ERROR_FETCH_MOCK)
 
-      fetchStrategy(endpointBuilder, { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 }, (response) => {
-        expect(response).toEqual({ status: 0 })
-        done()
-      })
-    })
+        fetchStrategy(endpointBuilder, { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 }, (response) => {
+          expect(response).toEqual({ status: 0 })
+          resolve()
+        })
+      }))
   })
 
   describe('sendOnExit', () => {
@@ -110,9 +113,10 @@ describe('httpRequest', () => {
       expect(requests[0].body).toEqual('{"foo":"bar1"}\n{"foo":"bar2"}')
     })
 
-    it('should use sendBeacon when the bytes count is correct', () => {
+    it('should use sendBeacon when the bytes count is correct', (ctx) => {
       if (!interceptor.isSendBeaconSupported()) {
-        pending('no sendBeacon support')
+        ctx.skip()
+        return
       }
 
       request.sendOnExit({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
@@ -130,9 +134,10 @@ describe('httpRequest', () => {
       expect(requests[0].type).toBe('fetch')
     })
 
-    it('should fallback to fetch when sendBeacon is not queued', async () => {
+    it('should fallback to fetch when sendBeacon is not queued', async (ctx) => {
       if (!interceptor.isSendBeaconSupported()) {
-        pending('no sendBeacon support')
+        ctx.skip()
+        return
       }
       interceptor.withSendBeacon(() => false)
 
@@ -144,9 +149,10 @@ describe('httpRequest', () => {
       expect(requests[0].type).toBe('fetch')
     })
 
-    it('should fallback to fetch when sendBeacon throws', async () => {
+    it('should fallback to fetch when sendBeacon throws', async (ctx) => {
       if (!interceptor.isSendBeaconSupported()) {
-        pending('no sendBeacon support')
+        ctx.skip()
+        return
       }
       let sendBeaconCalled = false
       interceptor.withSendBeacon(() => {

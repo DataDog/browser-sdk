@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { DeflateWorkerAction, DeflateWorkerResponse } from '@datadog/browser-core'
 import type { WorkerScope } from './startWorker'
 import { startWorker } from './startWorker'
@@ -32,26 +33,27 @@ const FOO_BAZ_COMPRESSED_TRAILER = [3, 0, 8, 179, 2, 130]
 
 describe('startWorker', () => {
   let workerScope: {
-    addEventListener: jasmine.Spy<WorkerScope['addEventListener']>
-    postMessage: jasmine.Spy<WorkerScope['postMessage']>
+    addEventListener: Mock<WorkerScope['addEventListener']>
+    postMessage: Mock<WorkerScope['postMessage']>
   }
 
   beforeEach(() => {
     workerScope = {
-      addEventListener: jasmine.createSpy(),
-      postMessage: jasmine.createSpy(),
+      addEventListener: vi.fn(),
+      postMessage: vi.fn(),
     }
     startWorker(workerScope)
   })
 
   function emulateAction(message: DeflateWorkerAction): DeflateWorkerResponse {
-    workerScope.postMessage.calls.reset()
-    workerScope.addEventListener.calls.allArgs().forEach(([eventName, listener]) => {
+    workerScope.postMessage.mockClear()
+    workerScope.addEventListener.mock.calls.forEach(([eventName, listener]) => {
       if (eventName === 'message') {
         listener({ data: message } as MessageEvent)
       }
     })
-    return workerScope.postMessage.calls.mostRecent()?.args[0]
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return workerScope.postMessage.mock.lastCall?.[0] as any
   }
 
   it('buffers data and responds with the buffer deflated result when writing', () => {
@@ -166,16 +168,17 @@ describe('startWorker', () => {
   it('reports an error when an unexpected exception occurs', () => {
     expect(emulateAction(null as any)).toEqual({
       type: 'errored',
-      error: jasmine.any(TypeError),
+      error: expect.any(TypeError),
       streamId: undefined,
     })
   })
 
-  it('reports an error when an unexpected exception occurs while writing on a stream', () => {
+  it('reports an error when an unexpected exception occurs while writing on a stream', (ctx) => {
     if (!window.TextEncoder) {
-      pending('No TextEncoder support')
+      ctx.skip()
+      return
     }
-    spyOn(TextEncoder.prototype, 'encode').and.callFake(() => {
+    vi.spyOn(TextEncoder.prototype, 'encode').mockImplementation(() => {
       throw new Error('Something went wrong!')
     })
     expect(
@@ -193,14 +196,14 @@ describe('startWorker', () => {
   })
 
   it('use the string representation of the error when it fails to send it through postMessage', () => {
-    workerScope.postMessage.and.callFake((response) => {
+    workerScope.postMessage.mockImplementation((response) => {
       if (response.type === 'errored' && response.error instanceof Error) {
         throw new DOMException("Failed to execute 'postMessage' on 'WorkerScope'")
       }
     })
     expect(emulateAction(null as any)).toEqual({
       type: 'errored',
-      error: jasmine.stringContaining('TypeError'),
+      error: expect.stringContaining('TypeError'),
       streamId: undefined,
     })
   })

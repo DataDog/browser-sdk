@@ -1,3 +1,4 @@
+import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import { createFakeClick } from '../../../test'
@@ -7,11 +8,11 @@ import { MAX_DISTANCE_BETWEEN_CLICKS, MAX_DURATION_BETWEEN_CLICKS, createClickCh
 describe('createClickChain', () => {
   let clickChain: ClickChain | undefined
   let clock: Clock
-  let onFinalizeSpy: jasmine.Spy
+  let onFinalizeSpy: Mock
 
   beforeEach(() => {
     clock = mockClock()
-    onFinalizeSpy = jasmine.createSpy('onFinalize')
+    onFinalizeSpy = vi.fn()
   })
 
   afterEach(() => {
@@ -21,8 +22,8 @@ describe('createClickChain', () => {
   it('creates a click chain', () => {
     clickChain = createClickChain(createFakeClick(), onFinalizeSpy)
     expect(clickChain).toEqual({
-      tryAppend: jasmine.any(Function),
-      stop: jasmine.any(Function),
+      tryAppend: expect.any(Function),
+      stop: expect.any(Function),
     })
   })
 

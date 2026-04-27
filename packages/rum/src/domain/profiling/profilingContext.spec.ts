@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { RumEventType, createHooks } from '@datadog/browser-rum-core'
 import type { RelativeTime } from '@datadog/browser-core'
 import { HookNames } from '@datadog/browser-core'
@@ -20,7 +21,7 @@ describe('Profiling Context', () => {
       } as AssembleHookParams)
 
       expect(eventAttributes).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           _dd: {
             profiling: { status: 'running' },
           },

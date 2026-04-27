@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { InitConfiguration } from '@datadog/browser-core'
 import { display } from '@datadog/browser-core'
 import {
@@ -19,40 +20,40 @@ const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx' }
 describe('validateAndBuildLogsConfiguration', () => {
   describe('forwardErrorsToLogs', () => {
     it('defaults to true if the option is not provided', () => {
-      expect(validateAndBuildLogsConfiguration(DEFAULT_INIT_CONFIGURATION)!.forwardErrorsToLogs).toBeTrue()
+      expect(validateAndBuildLogsConfiguration(DEFAULT_INIT_CONFIGURATION)!.forwardErrorsToLogs).toBe(true)
     })
 
     it('is set to provided value', () => {
       expect(
         validateAndBuildLogsConfiguration({ ...DEFAULT_INIT_CONFIGURATION, forwardErrorsToLogs: true })!
           .forwardErrorsToLogs
-      ).toBeTrue()
+      ).toBe(true)
       expect(
         validateAndBuildLogsConfiguration({ ...DEFAULT_INIT_CONFIGURATION, forwardErrorsToLogs: false })!
           .forwardErrorsToLogs
-      ).toBeFalse()
+      ).toBe(false)
     })
 
     it('the provided value is cast to boolean', () => {
       expect(
         validateAndBuildLogsConfiguration({ ...DEFAULT_INIT_CONFIGURATION, forwardErrorsToLogs: 'foo' as any })!
           .forwardErrorsToLogs
-      ).toBeTrue()
+      ).toBe(true)
     })
 
     it('is set to true for falsy values other than `false`', () => {
       expect(
         validateAndBuildLogsConfiguration({ ...DEFAULT_INIT_CONFIGURATION, forwardErrorsToLogs: null as any })!
           .forwardErrorsToLogs
-      ).toBeTrue()
+      ).toBe(true)
       expect(
         validateAndBuildLogsConfiguration({ ...DEFAULT_INIT_CONFIGURATION, forwardErrorsToLogs: '' as any })!
           .forwardErrorsToLogs
-      ).toBeTrue()
+      ).toBe(true)
       expect(
         validateAndBuildLogsConfiguration({ ...DEFAULT_INIT_CONFIGURATION, forwardErrorsToLogs: 0 as any })!
           .forwardErrorsToLogs
-      ).toBeTrue()
+      ).toBe(true)
     })
   })
 
@@ -76,10 +77,10 @@ describe('validateAndBuildLogsConfiguration', () => {
   })
 
   describe('PCI compliant intake option', () => {
-    let warnSpy: jasmine.Spy<typeof display.warn>
+    let warnSpy: Mock<typeof display.warn>
 
     beforeEach(() => {
-      warnSpy = spyOn(display, 'warn')
+      warnSpy = vi.spyOn(display, 'warn')
     })
     it('should display warning with wrong PCI intake configuration', () => {
       validateAndBuildLogsConfiguration({
@@ -87,7 +88,8 @@ describe('validateAndBuildLogsConfiguration', () => {
         site: 'us3.datadoghq.com',
         usePciIntake: true,
       })
-      expect(warnSpy).toHaveBeenCalledOnceWith(
+      expect(warnSpy).toHaveBeenCalledTimes(1)
+      expect(warnSpy).toHaveBeenCalledWith(
         'PCI compliance for Logs is only available for Datadog organizations in the US1 site. Default intake will be used.'
       )
     })
@@ -95,25 +97,27 @@ describe('validateAndBuildLogsConfiguration', () => {
 })
 
 describe('validateAndBuildForwardOption', () => {
-  let displaySpy: jasmine.Spy<typeof display.error>
+  let displaySpy: Mock<typeof display.error>
   const allowedValues = ['foo', 'bar']
   const label = 'Label'
   const errorMessage = 'Label should be "all" or an array with allowed values "foo", "bar"'
 
   beforeEach(() => {
-    displaySpy = spyOn(display, 'error')
+    displaySpy = vi.spyOn(display, 'error')
   })
 
   it('does not validate the configuration if an incorrect string is provided', () => {
     validateAndBuildForwardOption('foo' as any, allowedValues, label)
 
-    expect(displaySpy).toHaveBeenCalledOnceWith(errorMessage)
+    expect(displaySpy).toHaveBeenCalledTimes(1)
+    expect(displaySpy).toHaveBeenCalledWith(errorMessage)
   })
 
   it('does not validate the configuration if an incorrect api is provided', () => {
     validateAndBuildForwardOption(['dir'], allowedValues, label)
 
-    expect(displaySpy).toHaveBeenCalledOnceWith(errorMessage)
+    expect(displaySpy).toHaveBeenCalledTimes(1)
+    expect(displaySpy).toHaveBeenCalledWith(errorMessage)
   })
 
   it('defaults to an empty array', () => {

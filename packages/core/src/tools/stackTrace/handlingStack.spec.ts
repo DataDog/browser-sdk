@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { createHandlingStack } from './handlingStack'
 
 describe('createHandlingStack', () => {
