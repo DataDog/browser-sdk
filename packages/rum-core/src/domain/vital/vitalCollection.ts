@@ -2,6 +2,7 @@ import type { ClocksState, Duration } from '@datadog/browser-core'
 import {
   clocksNow,
   combine,
+  display,
   elapsed,
   ExperimentalFeature,
   generateUUID,
@@ -121,6 +122,10 @@ export function startVitalCollection(
     failureReason?: FailureReason
   ) {
     if (!isExperimentalFeatureEnabled(ExperimentalFeature.FEATURE_OPERATION_VITAL)) {
+      return
+    }
+
+    if (!validateOperationName(name)) {
       return
     }
 
@@ -248,4 +253,29 @@ function processVital(vital: DurationVital | OperationStepVital): RawRumEventCol
     duration: type === VitalType.DURATION ? vital.duration : undefined,
     domainContext: handlingStack ? { handlingStack } : {},
   }
+}
+
+/**
+ * Blank / empty names are rejected (the backend rejects them with its own
+ * non-empty precondition before evaluating the character-set regex). Names
+ * that fail the backend's `[\w.@$-]*` character-set regex trigger a warning
+ * but the event is still emitted — the backend is the source of truth on
+ * character-set policy, so client-side drop would force a customer SDK bump
+ * if the rule is ever relaxed.
+ *
+ * Returns `true` when the event should be emitted.
+ */
+const BACKEND_OPERATION_NAME_REGEX = /^[\w.@$-]*$/
+
+function validateOperationName(name: string): boolean {
+  if (typeof name !== 'string' || name.trim().length === 0) {
+    display.warn('Feature operation name cannot be empty or blank. Event will not be sent.')
+    return false
+  }
+  if (!BACKEND_OPERATION_NAME_REGEX.test(name)) {
+    display.warn(
+      `Feature operation name '${name}' does not match the backend-accepted pattern [\\w.@$-]* (letters, digits, _ . @ $ -). The event will still be sent and may be rejected by the backend.`
+    )
+  }
+  return true
 }
