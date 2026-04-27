@@ -65,10 +65,7 @@ function createEndpointUrlWithParametersBuilder(
  * packages (e.g. @datadog/openfeature-browser) that need to send flag evaluation data to the
  * Datadog intake without depending on internal browser-core APIs.
  */
-export function createFlagEvaluationEndpointBuilder(
-  initConfiguration: InitConfiguration,
-  extraParameters?: string[]
-) {
+export function createFlagEvaluationEndpointBuilder(initConfiguration: InitConfiguration, extraParameters?: string[]) {
   return createEndpointBuilder(initConfiguration, 'flagevaluation', extraParameters)
 }
 
