@@ -19,6 +19,14 @@
       "groupName": "all non-major dependencies",
       "groupSlug": "all-minor-patch",
       "matchUpdateTypes": ["minor", "patch"],
+      "matchFileNames": ["package.json", "packages/**", "developer-extension/**"],
+      "matchPackageNames": ["!karma-webpack", "!@playwright/test"]
+    },
+    {
+      "groupName": "all non-major test-app dependencies",
+      "groupSlug": "all-minor-patch-test-apps",
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchFileNames": ["test/apps/**"],
       "matchPackageNames": ["!karma-webpack", "!@playwright/test"]
     },
     {
