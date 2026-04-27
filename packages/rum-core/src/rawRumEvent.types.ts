@@ -18,6 +18,7 @@ import type {
   RumLongTaskEvent,
   RumResourceEvent,
   RumViewEvent,
+  RumViewUpdateEvent,
   RumVitalEvent,
 } from './rumEvent.types'
 
@@ -26,6 +27,7 @@ export const RumEventType = {
   ERROR: 'error',
   LONG_TASK: 'long_task',
   VIEW: 'view',
+  VIEW_UPDATE: 'view_update',
   RESOURCE: 'resource',
   VITAL: 'vital',
 } as const
@@ -34,6 +36,7 @@ export type RumEventType = (typeof RumEventType)[keyof typeof RumEventType]
 
 export type AssembledRumEvent = (
   | RumViewEvent
+  | RumViewUpdateEvent
   | RumActionEvent
   | RumResourceEvent
   | RumErrorEvent
@@ -181,6 +184,19 @@ export interface RawRumViewEvent {
     locales?: readonly string[]
     time_zone?: string
   }
+}
+
+export interface RawRumViewUpdateEvent {
+  date: TimeStamp
+  type: typeof RumEventType.VIEW_UPDATE
+  view: Partial<RawRumViewEvent['view']>
+  _dd: Partial<RawRumViewEvent['_dd']> & {
+    document_version: number
+  }
+  display?: Partial<ViewDisplay>
+  privacy?: RawRumViewEvent['privacy']
+  device?: RawRumViewEvent['device']
+  feature_flags?: Context
 }
 
 interface ViewDisplay {
@@ -410,6 +426,7 @@ export type RawRumEvent =
   | RawRumErrorEvent
   | RawRumResourceEvent
   | RawRumViewEvent
+  | RawRumViewUpdateEvent
   | RawRumLongTaskEvent
   | RawRumLongAnimationFrameEvent
   | RawRumActionEvent
