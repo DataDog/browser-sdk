@@ -13,6 +13,7 @@ export interface TransportConfiguration {
   flagEvaluationEndpointBuilder: EndpointBuilder
   datacenter?: string | undefined
   replica?: ReplicaConfiguration
+  clientToken: string
   site: Site
   source: 'browser' | 'flutter' | 'unity'
 }
@@ -30,6 +31,7 @@ export function computeTransportConfiguration(initConfiguration: InitConfigurati
   const replicaConfiguration = computeReplicaConfiguration({ ...initConfiguration, site, source })
 
   return {
+    clientToken: initConfiguration.clientToken,
     replica: replicaConfiguration,
     site,
     source,
