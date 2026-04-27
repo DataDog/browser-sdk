@@ -1,4 +1,4 @@
-export type { Configuration, InitConfiguration, EndpointBuilder, ProxyFn } from './domain/configuration'
+export type { Configuration, InitConfiguration, EndpointBuilder, TrackType, ProxyFn } from './domain/configuration'
 export {
   validateAndBuildConfiguration,
   DefaultPrivacyLevel,
@@ -6,6 +6,7 @@ export {
   serializeConfiguration,
   isSampleRate,
   buildEndpointHost,
+  createEndpointBuilder,
   isIntakeUrl,
 } from './domain/configuration'
 export * from './domain/intakeSites'
