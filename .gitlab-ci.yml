@@ -283,6 +283,7 @@ unit-bs:
     - .bs-allowed-branches
   interruptible: true
   resource_group: browserstack
+  when: manual
   artifacts:
     reports:
       junit: test-report/unit-bs/*.xml
@@ -302,6 +303,7 @@ e2e-bs:
   interruptible: true
   resource_group: browserstack
   timeout: 35 minutes
+  when: manual
   artifacts:
     when: always
     reports:
@@ -311,6 +313,28 @@ e2e-bs:
     - FORCE_COLOR=1 node scripts/test/ci-bs.ts test:e2e:ci
   after_script:
     - node ./scripts/test/export-test-result.ts e2e-bs
+
+unit-bs-auto-play:
+  stage: browserstack
+  needs: ['unit']
+  extends:
+    - .base-configuration
+    - .bs-allowed-branches
+  interruptible: true
+  script:
+    - yarn
+    - node scripts/test/play-bs-job.ts unit-bs
+
+e2e-bs-auto-play:
+  stage: browserstack
+  needs: ['e2e']
+  extends:
+    - .base-configuration
+    - .bs-allowed-branches
+  interruptible: true
+  script:
+    - yarn
+    - node scripts/test/play-bs-job.ts e2e-bs
 
 script-tests:
   extends:

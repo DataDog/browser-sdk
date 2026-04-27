@@ -15,6 +15,7 @@ interface GitHubPR {
   number: number
   title: string
   body: string
+  draft: boolean
   base: {
     ref: string
   }
