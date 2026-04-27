@@ -516,7 +516,7 @@ export interface RumPublicApi extends PublicApi {
   failFeatureOperation: (name: string, failureReason: FailureReason, options?: FeatureOperationOptions) => void
 
   /**
-   * List of default headers to use in the {@link RumInitConfiguration.trackResourceHeaders | trackResourceHeaders} option.
+   * List of default headers used by the {@link RumInitConfiguration.trackResourceHeaders | trackResourceHeaders} option. See configuration example for extending them.
    *
    * @hidden
    */
