@@ -1,34 +1,39 @@
-import type { TrackingConsentState } from '@datadog/browser-core'
+import type { TrackingConsentState, SessionManager } from '@datadog/browser-core'
 import {
-  createBoundedBuffer,
+  BufferedObservable,
   canUseEventBridge,
   display,
   displayAlreadyInitializedError,
   initFeatureFlags,
-  initFetchObservable,
+  monitorError,
   noop,
   timeStampNow,
   buildAccountContextManager,
   CustomerContextKey,
   bufferContextCalls,
   addTelemetryConfiguration,
+  addTelemetryDebug,
   buildGlobalContextManager,
   buildUserContextManager,
+  startSessionManager,
+  startSessionManagerStub,
   startTelemetry,
   TelemetryService,
   mockable,
+  startTelemetrySessionContext,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
 import { serializeLogsConfiguration, validateAndBuildLogsConfiguration } from '../domain/configuration'
 import type { CommonContext } from '../rawLogsEvent.types'
+import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { Strategy } from './logsPublicApi'
 import type { StartLogsResult } from './startLogs'
 
 export type DoStartLogs = (
-  initConfiguration: LogsInitConfiguration,
   configuration: LogsConfiguration,
+  sessionManager: SessionManager,
   hooks: Hooks
 ) => StartLogsResult
 
@@ -37,7 +42,11 @@ export function createPreStartStrategy(
   trackingConsentState: TrackingConsentState,
   doStartLogs: DoStartLogs
 ): Strategy {
-  const bufferApiCalls = createBoundedBuffer<StartLogsResult>()
+  const BUFFER_LIMIT = 500
+  const bufferApiCalls = new BufferedObservable<(startLogsResult: StartLogsResult) => void>(BUFFER_LIMIT, (count) => {
+    // monitor-until: 2026-10-14
+    addTelemetryDebug('preStartLogs buffer data lost', { count })
+  })
 
   // TODO next major: remove the globalContext, accountContextManager, userContext from preStartStrategy and use an empty context instead
   const globalContext = buildGlobalContextManager()
@@ -51,20 +60,20 @@ export function createPreStartStrategy(
 
   let cachedInitConfiguration: LogsInitConfiguration | undefined
   let cachedConfiguration: LogsConfiguration | undefined
+  let sessionManager: SessionManager | undefined
   const hooks = createHooks()
   const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartLogs)
 
   function tryStartLogs() {
-    if (!cachedConfiguration || !cachedInitConfiguration || !trackingConsentState.isGranted()) {
+    if (!cachedConfiguration || !cachedInitConfiguration || !sessionManager) {
       return
     }
 
-    mockable(startTelemetry)(TelemetryService.LOGS, cachedConfiguration, hooks)
-
     trackingConsentStateSubscription.unsubscribe()
-    const startLogsResult = doStartLogs(cachedInitConfiguration, cachedConfiguration, hooks)
+    const startLogsResult = doStartLogs(cachedConfiguration, sessionManager, hooks)
 
-    bufferApiCalls.drain(startLogsResult)
+    bufferApiCalls.subscribe((callback) => callback(startLogsResult))
+    bufferApiCalls.unbuffer()
   }
 
   return {
@@ -82,7 +91,6 @@ export function createPreStartStrategy(
 
       // Expose the initial configuration regardless of initialization success.
       cachedInitConfiguration = initConfiguration
-      addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
 
       if (cachedConfiguration) {
         displayAlreadyInitializedError('DD_LOGS', initConfiguration)
@@ -96,14 +104,27 @@ export function createPreStartStrategy(
 
       cachedConfiguration = configuration
 
-      // Instrument fetch to track network requests
-      // This is needed in case the consent is not granted and some customer
-      // library (Apollo Client) is storing uninstrumented fetch to be used later
-      // The subscrption is needed so that the instrumentation process is completed
-      initFetchObservable().subscribe(noop)
-
       trackingConsentState.tryToInit(configuration.trackingConsent)
-      tryStartLogs()
+
+      trackingConsentState.onGrantedOnce(() => {
+        startTrackingConsentContext(hooks, trackingConsentState)
+        mockable(startTelemetry)(TelemetryService.LOGS, configuration, hooks)
+        const sessionManagerPromise = canUseEventBridge()
+          ? startSessionManagerStub()
+          : mockable(startSessionManager)(configuration, trackingConsentState)
+
+        void sessionManagerPromise
+          .then((newSessionManager) => {
+            if (!newSessionManager) {
+              return
+            }
+            sessionManager = newSessionManager
+            startTelemetrySessionContext(hooks, sessionManager)
+            addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
+            tryStartLogs()
+          })
+          .catch(monitorError)
+      })
     },
 
     get initConfiguration() {
@@ -117,7 +138,7 @@ export function createPreStartStrategy(
     getInternalContext: noop as () => undefined,
 
     handleLog(message, statusType, handlingStack, context = getCommonContext(), date = timeStampNow()) {
-      bufferApiCalls.add((startLogsResult) =>
+      bufferApiCalls.notify((startLogsResult) =>
         startLogsResult.handleLog(message, statusType, handlingStack, context, date)
       )
     },

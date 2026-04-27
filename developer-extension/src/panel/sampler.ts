@@ -1,4 +1,4 @@
-import { isSampled } from '@datadog/browser-rum-core'
+import { isSampled } from '@datadog/browser-core'
 
 export function computeRumTrackingType(
   sessionId: string,

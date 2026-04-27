@@ -1,10 +1,5 @@
 import type { ErrorWithCause } from '@datadog/browser-core'
-import {
-  display,
-  ErrorHandling,
-  NO_ERROR_STACK_PRESENT_MESSAGE,
-  supportUnicodePropertyEscapes,
-} from '@datadog/browser-core'
+import { display, ErrorHandling, NO_ERROR_STACK_PRESENT_MESSAGE } from '@datadog/browser-core'
 import type { LogsMessage } from './logger'
 import { HandlerType, Logger, STATUSES } from './logger'
 import { StatusType } from './logger/isAuthorized'
@@ -195,11 +190,9 @@ describe('Logger', () => {
   describe('tags', () => {
     let displaySpy: jasmine.Spy<typeof display.warn>
     function expectWarning() {
-      if (supportUnicodePropertyEscapes()) {
-        expect(displaySpy).toHaveBeenCalledOnceWith(
-          jasmine.stringMatching("Tag .* doesn't meet tag requirements and will be sanitized")
-        )
-      }
+      expect(displaySpy).toHaveBeenCalledOnceWith(
+        jasmine.stringMatching("Tag .* doesn't meet tag requirements and will be sanitized")
+      )
     }
 
     beforeEach(() => {

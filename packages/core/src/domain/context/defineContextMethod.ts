@@ -1,7 +1,7 @@
 import type { RawTelemetryUsage, RawTelemetryUsageFeature } from '../telemetry'
 import { addTelemetryUsage } from '../telemetry'
 import { monitor } from '../../tools/monitor'
-import type { BoundedBuffer } from '../../tools/boundedBuffer'
+import type { BufferedObservable } from '../../tools/observable'
 import type { ContextManager } from './contextManager'
 import type { ContextManagerMethod, CustomerContextKey } from './contextConstants'
 
@@ -22,10 +22,10 @@ export function defineContextMethod<MethodName extends ContextManagerMethod, Key
 export function bufferContextCalls<Key extends string, StartResult extends Record<Key, ContextManager>>(
   preStartContextManager: ContextManager,
   name: Key,
-  bufferApiCalls: BoundedBuffer<StartResult>
+  bufferApiCalls: BufferedObservable<(startResult: StartResult) => void>
 ) {
   preStartContextManager.changeObservable.subscribe(() => {
     const context = preStartContextManager.getContext()
-    bufferApiCalls.add((startResult) => startResult[name].setContext(context))
+    bufferApiCalls.notify((startResult) => startResult[name].setContext(context))
   })
 }

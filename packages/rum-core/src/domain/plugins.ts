@@ -1,4 +1,4 @@
-import type { RumPublicApi, Strategy } from '../boot/rumPublicApi'
+import type { RumPublicApi } from '../boot/rumPublicApi'
 import type { StartRumResult } from '../boot/startRum'
 import type { RumInitConfiguration } from './configuration'
 
@@ -8,10 +8,6 @@ import type { RumInitConfiguration } from './configuration'
  * @experimental
  */
 export interface OnRumStartOptions {
-  /**
-   * @deprecated Use `addEvent` instead.
-   */
-  strategy?: Strategy
   /**
    * Add an event to the RUM browser SDK.
    */

@@ -1,19 +1,18 @@
 import type { TimeStamp, HttpRequest, HttpRequestEvent, Telemetry } from '@datadog/browser-core'
-import {
-  PageExitReason,
-  DefaultPrivacyLevel,
-  noop,
-  DeflateEncoderStreamId,
-  Observable,
-  ExperimentalFeature,
-  addExperimentalFeatures,
-} from '@datadog/browser-core'
+import { PageExitReason, DefaultPrivacyLevel, noop, DeflateEncoderStreamId, Observable } from '@datadog/browser-core'
 import type { ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType, startViewHistory } from '@datadog/browser-rum-core'
-import { collectAsyncCalls, createNewEvent, mockEventBridge, registerCleanupTask } from '@datadog/browser-core/test'
+import type { SessionManagerMock } from '@datadog/browser-core/test'
+import {
+  collectAsyncCalls,
+  createNewEvent,
+  mockEventBridge,
+  registerCleanupTask,
+  createSessionManagerMock,
+  MOCK_SESSION_ID,
+} from '@datadog/browser-core/test'
 import type { ViewEndedEvent } from '../../../rum-core/src/domain/view/trackViews'
-import type { RumSessionManagerMock } from '../../../rum-core/test'
-import { appendElement, createRumSessionManagerMock, mockRumConfiguration } from '../../../rum-core/test'
+import { appendElement, mockRumConfiguration } from '../../../rum-core/test'
 
 import { recordsPerFullSnapshot, readReplayPayload } from '../../test'
 import type { ReplayPayload } from '../domain/segmentCollection'
@@ -21,13 +20,13 @@ import { setSegmentBytesLimit } from '../domain/segmentCollection'
 
 import { RecordType } from '../types'
 import { createDeflateEncoder, resetDeflateWorkerState, startDeflateWorker } from '../domain/deflate'
-import { startRecording } from './startRecording'
+import { startRecording } from './datadogRecorder'
 
 const VIEW_TIMESTAMP = 1 as TimeStamp
 
 describe('startRecording', () => {
   const lifeCycle = new LifeCycle()
-  let sessionManager: RumSessionManagerMock
+  let sessionManager: SessionManagerMock
   let viewId: string
   let textField: HTMLInputElement
   let requestSendSpy: jasmine.Spy<HttpRequest['sendOnExit']>
@@ -70,7 +69,7 @@ describe('startRecording', () => {
   }
 
   beforeEach(() => {
-    sessionManager = createRumSessionManagerMock()
+    sessionManager = createSessionManagerMock()
     viewId = 'view-id'
 
     textField = appendElement('<input />') as HTMLInputElement
@@ -91,36 +90,7 @@ describe('startRecording', () => {
       has_full_snapshot: true,
       records_count: recordsPerFullSnapshot(),
       session: {
-        id: 'session-id',
-      },
-      start: jasmine.any(Number),
-      raw_segment_size: jasmine.any(Number),
-      compressed_segment_size: jasmine.any(Number),
-      view: {
-        id: 'view-id',
-      },
-      index_in_view: 0,
-      source: 'browser',
-    })
-  })
-
-  it('sends recorded segments with valid context when Change records are enabled', async () => {
-    addExperimentalFeatures([ExperimentalFeature.USE_CHANGE_RECORDS])
-    setupStartRecording()
-    flushSegment(lifeCycle)
-
-    const requests = await readSentRequests(1)
-    expect(requests[0].segment).toEqual(jasmine.any(Object))
-    expect(requests[0].event).toEqual({
-      application: {
-        id: 'appId',
-      },
-      creation_reason: 'init',
-      end: jasmine.stringMatching(/^\d{13}$/),
-      has_full_snapshot: true,
-      records_count: recordsPerFullSnapshot(),
-      session: {
-        id: 'session-id',
+        id: MOCK_SESSION_ID,
       },
       start: jasmine.any(Number),
       raw_segment_size: jasmine.any(Number),
@@ -169,7 +139,7 @@ describe('startRecording', () => {
 
     document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))
 
-    sessionManager.setId('new-session-id').setTrackedWithSessionReplay()
+    sessionManager.setId('00000000-0000-0000-0000-000000000001').setTracked()
     flushSegment(lifeCycle)
     document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))
 
@@ -177,7 +147,7 @@ describe('startRecording', () => {
 
     const requests = await readSentRequests(1)
     expect(requests[0].event.records_count).toBe(1)
-    expect(requests[0].event.session.id).toBe('new-session-id')
+    expect(requests[0].event.session.id).toBe('00000000-0000-0000-0000-000000000001')
   })
 
   it('flushes pending mutations before ending the view', async () => {
@@ -189,7 +159,7 @@ describe('startRecording', () => {
 
     const requests = await readSentRequests(2)
     const firstSegment = requests[0].segment
-    expect(firstSegment.records[firstSegment.records.length - 2].type).toBe(RecordType.IncrementalSnapshot)
+    expect(firstSegment.records[firstSegment.records.length - 2].type).toBe(RecordType.Change)
     expect(firstSegment.records[firstSegment.records.length - 1].type).toBe(RecordType.ViewEnd)
 
     const secondSegment = requests[1].segment

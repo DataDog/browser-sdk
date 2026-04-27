@@ -1,5 +1,14 @@
-import type { Context, ErrorWithCause } from '@datadog/browser-core'
-import { ErrorHandling, ErrorSource, noop, objectEntries } from '@datadog/browser-core'
+import type { BufferedData, ConsoleLog, RawError, Context } from '@datadog/browser-core'
+import {
+  BufferedDataType,
+  ConsoleApiName,
+  ErrorHandling,
+  ErrorSource,
+  Observable,
+  clocksNow,
+  noop,
+  objectEntries,
+} from '@datadog/browser-core'
 import type { RawConsoleLogsEvent } from '../../rawLogsEvent.types'
 import { validateAndBuildLogsConfiguration } from '../configuration'
 import type { RawLogsEventCollectedData } from '../lifeCycle'
@@ -8,25 +17,38 @@ import { startConsoleCollection, LogStatusForApi } from './consoleCollection'
 
 describe('console collection', () => {
   const initConfiguration = { clientToken: 'xxx', service: 'service' }
-  let consoleSpies: { [key: string]: jasmine.Spy }
   let stopConsoleCollection: () => void
   let lifeCycle: LifeCycle
   let rawLogsEvents: Array<RawLogsEventCollectedData<RawConsoleLogsEvent>>
+  let bufferedDataObservable: Observable<BufferedData>
+
+  function notifyConsole(log: ConsoleLog) {
+    bufferedDataObservable.notify({ type: BufferedDataType.CONSOLE, data: log })
+  }
+
+  function makeRawError(overrides: Partial<RawError> = {}): RawError {
+    return {
+      startClocks: clocksNow(),
+      message: 'error message',
+      source: ErrorSource.CONSOLE,
+      handling: ErrorHandling.HANDLED,
+      type: undefined,
+      stack: undefined,
+      causes: undefined,
+      fingerprint: undefined,
+      context: undefined,
+      ...overrides,
+    }
+  }
 
   beforeEach(() => {
     rawLogsEvents = []
     lifeCycle = new LifeCycle()
+    bufferedDataObservable = new Observable<BufferedData>()
     lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLogsEvent) =>
       rawLogsEvents.push(rawLogsEvent as RawLogsEventCollectedData<RawConsoleLogsEvent>)
     )
     stopConsoleCollection = noop
-    consoleSpies = {
-      log: spyOn(console, 'log').and.callFake(() => true),
-      debug: spyOn(console, 'debug').and.callFake(() => true),
-      info: spyOn(console, 'info').and.callFake(() => true),
-      warn: spyOn(console, 'warn').and.callFake(() => true),
-      error: spyOn(console, 'error').and.callFake(() => true),
-    }
   })
 
   afterEach(() => {
@@ -37,11 +59,16 @@ describe('console collection', () => {
     it(`should collect ${status} logs from console.${api}`, () => {
       ;({ stop: stopConsoleCollection } = startConsoleCollection(
         validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: 'all' })!,
-        lifeCycle
+        lifeCycle,
+        bufferedDataObservable
       ))
 
-      /* eslint-disable-next-line no-console */
-      console[api as keyof typeof LogStatusForApi]('foo', 'bar')
+      notifyConsole({
+        api: api as ConsoleApiName,
+        message: 'foo bar',
+        handlingStack: 'at foo',
+        error: undefined,
+      } as ConsoleLog)
 
       expect(rawLogsEvents[0].rawLogsEvent).toEqual({
         date: jasmine.any(Number),
@@ -54,19 +81,39 @@ describe('console collection', () => {
       expect(rawLogsEvents[0].domainContext).toEqual({
         handlingStack: jasmine.any(String),
       })
+    })
 
-      expect(consoleSpies[api]).toHaveBeenCalled()
+    it(`should not collect logs from console.${api} if not configured`, () => {
+      ;({ stop: stopConsoleCollection } = startConsoleCollection(
+        validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: [] })!,
+        lifeCycle,
+        bufferedDataObservable
+      ))
+
+      notifyConsole({
+        api: api as ConsoleApiName,
+        message: 'foo bar',
+        handlingStack: 'at foo',
+        error: undefined,
+      } as ConsoleLog)
+
+      expect(rawLogsEvents.length).toBe(0)
     })
   })
 
   it('console error should have an error object defined', () => {
     ;({ stop: stopConsoleCollection } = startConsoleCollection(
-      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardErrorsToLogs: true })!,
-      lifeCycle
+      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['error'] })!,
+      lifeCycle,
+      bufferedDataObservable
     ))
 
-    /* eslint-disable-next-line no-console */
-    console.error('foo', 'bar')
+    notifyConsole({
+      api: ConsoleApiName.error,
+      message: 'foo bar',
+      handlingStack: '',
+      error: makeRawError(),
+    })
 
     expect(rawLogsEvents[0].rawLogsEvent.error).toEqual({
       stack: undefined,
@@ -78,88 +125,21 @@ describe('console collection', () => {
     })
   })
 
-  it('should retrieve fingerprint from console error', () => {
+  it('should use error context as message context', () => {
     ;({ stop: stopConsoleCollection } = startConsoleCollection(
-      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardErrorsToLogs: true })!,
-      lifeCycle
+      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['error'] })!,
+      lifeCycle,
+      bufferedDataObservable
     ))
-    interface DatadogError extends Error {
-      dd_fingerprint?: string
-    }
-    const error = new Error('foo')
-    ;(error as DatadogError).dd_fingerprint = 'my-fingerprint'
 
-    // eslint-disable-next-line no-console
-    console.error(error)
-
-    expect(rawLogsEvents[0].rawLogsEvent.error).toEqual({
-      stack: jasmine.any(String),
-      fingerprint: 'my-fingerprint',
-      causes: undefined,
-      handling: ErrorHandling.HANDLED,
-      kind: 'Error',
-      message: undefined,
+    notifyConsole({
+      api: ConsoleApiName.error,
+      message: 'Error: foo',
+      handlingStack: '',
+      error: makeRawError({ context: { foo: 'bar' } as Context }),
     })
-  })
-
-  it('should retrieve dd_context from console', () => {
-    ;({ stop: stopConsoleCollection } = startConsoleCollection(
-      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardErrorsToLogs: true })!,
-      lifeCycle
-    ))
-    interface DatadogError extends Error {
-      dd_context?: Context
-    }
-    const error = new Error('foo')
-    ;(error as DatadogError).dd_context = { foo: 'bar' }
-
-    // eslint-disable-next-line no-console
-    console.error(error)
 
     expect(rawLogsEvents[0].messageContext).toEqual({ foo: 'bar' })
-  })
-
-  it('should retrieve causes from console error', () => {
-    ;({ stop: stopConsoleCollection } = startConsoleCollection(
-      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardErrorsToLogs: true })!,
-      lifeCycle
-    ))
-    const error = new Error('High level error') as ErrorWithCause
-    error.stack = 'Error: High level error'
-
-    const nestedError = new Error('Mid level error') as ErrorWithCause
-    nestedError.stack = 'Error: Mid level error'
-
-    const deepNestedError = new TypeError('Low level error') as ErrorWithCause
-    deepNestedError.stack = 'TypeError: Low level error'
-
-    nestedError.cause = deepNestedError
-    error.cause = nestedError
-
-    // eslint-disable-next-line no-console
-    console.error(error)
-
-    expect(rawLogsEvents[0].rawLogsEvent.error).toEqual({
-      stack: jasmine.any(String),
-      handling: ErrorHandling.HANDLED,
-      causes: [
-        {
-          source: ErrorSource.CONSOLE,
-          type: 'Error',
-          stack: jasmine.any(String),
-          message: 'Mid level error',
-        },
-        {
-          source: ErrorSource.CONSOLE,
-          type: 'TypeError',
-          stack: jasmine.any(String),
-          message: 'Low level error',
-        },
-      ],
-      fingerprint: undefined,
-      kind: 'Error',
-      message: undefined,
-    })
   })
 })
 

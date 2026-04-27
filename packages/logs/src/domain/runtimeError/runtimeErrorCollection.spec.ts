@@ -57,7 +57,7 @@ describe('runtime error collection', () => {
 
     bufferedDataObservable.notify({
       type: BufferedDataType.RUNTIME_ERROR,
-      error: RAW_ERROR,
+      data: RAW_ERROR,
     })
 
     expect(rawLogsEvents[0].rawLogsEvent).toEqual({
@@ -81,7 +81,7 @@ describe('runtime error collection', () => {
 
     bufferedDataObservable.notify({
       type: BufferedDataType.RUNTIME_ERROR,
-      error: {
+      data: {
         ...RAW_ERROR,
         message: 'High level error',
         causes: [
@@ -137,7 +137,7 @@ describe('runtime error collection', () => {
 
     bufferedDataObservable.notify({
       type: BufferedDataType.RUNTIME_ERROR,
-      error: RAW_ERROR,
+      data: RAW_ERROR,
     })
 
     expect(rawLogsEvents.length).toEqual(0)
@@ -148,7 +148,7 @@ describe('runtime error collection', () => {
 
     bufferedDataObservable.notify({
       type: BufferedDataType.RUNTIME_ERROR,
-      error: {
+      data: {
         ...RAW_ERROR,
         context: { foo: 'bar' },
       },

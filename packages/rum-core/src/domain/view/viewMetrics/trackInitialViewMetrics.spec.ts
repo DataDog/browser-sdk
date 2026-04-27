@@ -1,4 +1,4 @@
-import type { Duration, RelativeTime } from '@datadog/browser-core'
+import type { Duration } from '@datadog/browser-core'
 import { clocksOrigin } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
@@ -36,28 +36,19 @@ describe('trackInitialViewMetrics', () => {
     notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
       createPerformanceEntry(RumPerformanceEntryType.PAINT),
-      createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT),
     ])
 
     clock.tick(0)
 
-    expect(scheduleViewUpdateSpy).toHaveBeenCalledTimes(3)
+    expect(scheduleViewUpdateSpy).toHaveBeenCalledTimes(2)
     expect(trackInitialViewMetricsResult.initialViewMetrics).toEqual({
       navigationTimings: jasmine.any(Object),
       firstContentfulPaint: 123 as Duration,
-      firstInput: {
-        delay: 100 as Duration,
-        time: 1000 as RelativeTime,
-        targetSelector: undefined,
-      },
     })
   })
 
   it('calls the `setLoadEvent` callback when the loadEvent timing is known', () => {
-    notifyPerformanceEntries([
-      createPerformanceEntry(RumPerformanceEntryType.PAINT),
-      createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT),
-    ])
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.PAINT)])
 
     clock.tick(0)
 

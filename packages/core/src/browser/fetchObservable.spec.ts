@@ -79,10 +79,6 @@ describe('fetch proxy', () => {
   })
 
   it('should track fetch aborted by AbortController', (done) => {
-    if (!window.AbortController) {
-      pending('AbortController is not supported')
-    }
-
     const controller = new AbortController()
     void fetch(FAKE_URL, { signal: controller.signal })
     controller.abort('AbortError')
@@ -301,8 +297,8 @@ describe('fetch proxy with ResponseBodyAction', () => {
     })
   })
 
-  it('should not collect response body with WAIT or IGNORE action', (done) => {
-    setupFetchTracking(() => ResponseBodyAction.WAIT)
+  it('should not collect response body with IGNORE action', (done) => {
+    setupFetchTracking(() => ResponseBodyAction.IGNORE)
 
     fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'response body content' })
 
@@ -312,8 +308,30 @@ describe('fetch proxy with ResponseBodyAction', () => {
     })
   })
 
+  it('should not collect response body when body is already used', (done) => {
+    setupFetchTracking(() => ResponseBodyAction.COLLECT)
+
+    fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'response body content', bodyUsed: true })
+
+    mockFetchManager.whenAllComplete(() => {
+      expect(requests[0].responseBody).toBeUndefined()
+      done()
+    })
+  })
+
+  it('should not collect response body when body is disturbed', (done) => {
+    setupFetchTracking(() => ResponseBodyAction.COLLECT)
+
+    fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'response body content', bodyDisturbed: true })
+
+    mockFetchManager.whenAllComplete(() => {
+      expect(requests[0].responseBody).toBeUndefined()
+      done()
+    })
+  })
+
   it('should use the highest priority action when multiple getters are registered', (done) => {
-    setupFetchTracking(() => ResponseBodyAction.WAIT)
+    setupFetchTracking(() => ResponseBodyAction.IGNORE)
 
     initFetchObservable({
       responseBodyAction: () => ResponseBodyAction.COLLECT,
