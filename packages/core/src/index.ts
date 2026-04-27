@@ -7,6 +7,7 @@ export {
   isSampleRate,
   buildEndpointHost,
   isIntakeUrl,
+  createFlagEvaluationEndpointBuilder,
 } from './domain/configuration'
 export * from './domain/intakeSites'
 export type { TrackingConsentState } from './domain/trackingConsent'
