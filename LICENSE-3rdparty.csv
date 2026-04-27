@@ -38,6 +38,7 @@ dev,@vitejs/plugin-react,MIT,Copyright (c) 2019-present Evan You & Vite Contribu
 dev,@vitejs/plugin-vue,MIT,Copyright (c) 2019-present, Yuxi (Evan) You and Vite contributors
 dev,@module-federation/enhanced,MIT, Copyright (c) 2020 ScriptedAlchemy LLC (Zack Jackson) Zhou Shaw (zhouxiao)
 dev,@vue/test-utils,MIT,Copyright (c) 2021-present vuejs
+dev,acorn,MIT,Copyright (C) 2012-2022 by various contributors (see AUTHORS)
 dev,ajv,MIT,Copyright 2015-2017 Evgeny Poberezkin
 dev,babel-loader,MIT,Copyright (c) 2014-2019 Luís Couto <hello@luiscouto.pt>
 dev,browserstack-local,MIT,Copyright 2016 BrowserStack

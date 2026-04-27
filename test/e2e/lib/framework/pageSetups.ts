@@ -1,6 +1,7 @@
 import { generateUUID, INTAKE_URL_PARAMETERS } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
+import type { DebuggerInitConfiguration } from '@datadog/browser-debugger'
 import type test from '@playwright/test'
 import { isBrowserStack, isContinuousIntegration } from './environment'
 import type { Servers } from './httpServers'
@@ -11,6 +12,7 @@ export interface SetupOptions {
   logs?: LogsInitConfiguration
   logsInit: (initConfiguration: LogsInitConfiguration) => void
   rumInit: (initConfiguration: RumInitConfiguration) => void
+  debugger?: DebuggerInitConfiguration
   remoteConfiguration?: RemoteConfiguration
   eventBridge: boolean
   head?: string
@@ -75,7 +77,7 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
 })(window,document,'script','${url}','${globalName}')`
   }
 
-  const { logsScriptUrl, rumScriptUrl } = createCrossOriginScriptUrls(servers, options)
+  const { logsScriptUrl, rumScriptUrl, debuggerScriptUrl } = createCrossOriginScriptUrls(servers, options)
 
   if (options.logs) {
     footer += html`<script>
@@ -93,6 +95,15 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
       DD_RUM.onReady(function () {
         DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
         ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
+      })
+    </script>`
+  }
+
+  if (options.debugger) {
+    footer += html`<script type="text/javascript">
+      ${formatSnippet(debuggerScriptUrl, 'DD_DEBUGGER')}
+      DD_DEBUGGER.onReady(function () {
+        DD_DEBUGGER.init(${formatConfiguration(options.debugger, servers)})
       })
     </script>`
   }
@@ -115,7 +126,7 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
     header += setupExtension(options, servers)
   }
 
-  const { logsScriptUrl, rumScriptUrl } = createCrossOriginScriptUrls(servers, options)
+  const { logsScriptUrl, rumScriptUrl, debuggerScriptUrl } = createCrossOriginScriptUrls(servers, options)
 
   if (options.logs) {
     header += html`<script type="text/javascript" src="${logsScriptUrl}"></script>`
@@ -131,6 +142,15 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
       DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
       ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
     </script>`
+  }
+
+  if (options.debugger) {
+    header += html`
+      <script type="text/javascript" src="${debuggerScriptUrl}"></script>
+      <script type="text/javascript">
+        DD_DEBUGGER.init(${formatConfiguration(options.debugger, servers)})
+      </script>
+    `
   }
 
   return basePage({
@@ -164,6 +184,14 @@ export function npmSetup(options: SetupOptions, servers: Servers) {
       window.RUM_INIT = () => {
         window.DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
         ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
+      }
+    </script>`
+  }
+
+  if (options.debugger) {
+    header += html`<script type="text/javascript">
+      window.DEBUGGER_INIT = () => {
+        window.DD_DEBUGGER.init(${formatConfiguration(options.debugger, servers)})
       }
     </script>`
   }
@@ -340,7 +368,10 @@ function isJsonIncompatibleValue(value: unknown): value is JsonIncompatibleValue
   return typeof value === 'function' || value instanceof RegExp
 }
 
-export function formatConfiguration(initConfiguration: LogsInitConfiguration | RumInitConfiguration, servers: Servers) {
+export function formatConfiguration(
+  initConfiguration: LogsInitConfiguration | RumInitConfiguration | DebuggerInitConfiguration,
+  servers: Servers
+) {
   const jsonIncompatibles = new Map<string, JsonIncompatibleValue>()
 
   let result = JSON.stringify(
@@ -375,5 +406,6 @@ export function createCrossOriginScriptUrls(servers: Servers, options: SetupOpti
   return {
     logsScriptUrl: `${servers.crossOrigin.origin}/datadog-logs.js`,
     rumScriptUrl: `${servers.crossOrigin.origin}/${options.useRumSlim ? 'datadog-rum-slim.js' : 'datadog-rum.js'}`,
+    debuggerScriptUrl: `${servers.crossOrigin.origin}/datadog-debugger.js`,
   }
 }
