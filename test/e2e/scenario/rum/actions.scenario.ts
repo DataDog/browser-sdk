@@ -1,5 +1,9 @@
 import { test, expect } from '@playwright/test'
-import { createTest, html, waitForServersIdle } from '../../lib/framework'
+import { createTest, html, waitForServersIdle, waitForRequests } from '../../lib/framework'
+
+function hasActionId(event: { action?: { id?: string | string[] } }, actionId: string): boolean {
+  return [event.action?.id].flat().includes(actionId)
+}
 
 test.describe('action collection', () => {
   createTest('track a click action')
@@ -152,6 +156,60 @@ test.describe('action collection', () => {
       // resource action id should contain the collected action id + the discarded rage click id
       expect(resourceEvents[0].action!.id).toHaveLength(2)
       expect(resourceEvents[0].action!.id).toContain(actionEvents[0].action.id!)
+    })
+
+  createTest('associate a long tasks to its action')
+    .withRum({ trackUserInteractions: true })
+    .withBody(html`
+      <button>click me</button>
+      <script>
+        const button = document.querySelector('button')
+        button.addEventListener('click', () => {
+          const end = performance.now() + 55
+          while (performance.now() < end) {} // block the handler for ~55ms to trigger a long task
+          fetch('/ok') // fire a fetch to extend the action duration
+        })
+      </script>
+    `)
+    .run(async ({ intakeRegistry, flushEvents, page, browserName }) => {
+      test.skip(browserName !== 'chromium', 'Non-Chromium browsers do not support long tasks')
+
+      const button = page.locator('button')
+      await button.click()
+      await waitForServersIdle()
+      await flushEvents()
+      const actionEvents = intakeRegistry.rumActionEvents
+      const longTaskEvents = intakeRegistry.rumLongTaskEvents.filter((event) =>
+        event.long_task.scripts?.[0]?.invoker?.includes('BUTTON.onclick')
+      )
+
+      expect(actionEvents).toHaveLength(1)
+      expect(actionEvents[0].action).toEqual({
+        error: {
+          count: 0,
+        },
+        id: expect.any(String) as unknown as string,
+        loading_time: expect.any(Number),
+        long_task: {
+          count: 1,
+        },
+
+        resource: {
+          count: expect.any(Number) as unknown as number,
+        },
+        target: {
+          name: 'click me',
+        },
+        type: 'click',
+        frustration: {
+          type: [],
+        },
+      })
+
+      expect(longTaskEvents).toHaveLength(1)
+      // long task action id should contain the collected action id + the discarded rage click id
+      expect(longTaskEvents[0].action!.id).toHaveLength(2)
+      expect(longTaskEvents[0].action!.id).toContain(actionEvents[0].action.id!)
     })
 
   createTest('increment the view.action.count of the view active when the action started')
@@ -453,5 +511,296 @@ test.describe('action collection', () => {
         // A failing test would have a log with message "Uncaught RangeError: Maximum call stack size exceeded"
         expect(logs).toHaveLength(0)
       })
+    })
+})
+
+test.describe('action collection with shadow DOM', () => {
+  createTest('without betaTrackActionsInShadowDom, click inside shadow DOM uses shadow host as target')
+    .withRum({ trackUserInteractions: true })
+    .withBody(html`
+      <my-button id="shadow-host"></my-button>
+      <script>
+        class MyButton extends HTMLElement {
+          constructor() {
+            super()
+            this.attachShadow({ mode: 'open' })
+            const button = document.createElement('button')
+            button.textContent = 'Shadow Button'
+            this.shadowRoot.appendChild(button)
+          }
+        }
+        customElements.define('my-button', MyButton)
+      </script>
+    `)
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      const button = page.locator('my-button').first().locator('button')
+      await button.click()
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      expect(actionEvents).toHaveLength(1)
+      expect(actionEvents[0].action?.target?.name).toBe('')
+      expect(actionEvents[0]._dd.action?.target?.selector).toBe('#shadow-host')
+    })
+
+  createTest('with betaTrackActionsInShadowDom, get action name from element inside shadow DOM')
+    .withRum({ trackUserInteractions: true, betaTrackActionsInShadowDom: true })
+    .withBody(html`
+      <my-button id="shadow-host"></my-button>
+      <script>
+        class MyButton extends HTMLElement {
+          constructor() {
+            super()
+            this.attachShadow({ mode: 'open' })
+            const button = document.createElement('button')
+            button.textContent = 'Shadow Button'
+            this.shadowRoot.appendChild(button)
+          }
+        }
+        customElements.define('my-button', MyButton)
+      </script>
+    `)
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      const button = page.locator('my-button').first().locator('button')
+      await button.click()
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      expect(actionEvents).toHaveLength(1)
+      expect(actionEvents[0].action?.target?.name).toBe('Shadow Button')
+      expect(actionEvents[0]._dd.action?.target?.selector).toEqual('#shadow-host::shadow BUTTON')
+    })
+
+  createTest('with betaTrackActionsInShadowDom, traverse shadow boundary for data-dd-action-name')
+    .withRum({ trackUserInteractions: true, betaTrackActionsInShadowDom: true })
+    .withBody(html`
+      <my-button id="shadow-host" data-dd-action-name="Custom Shadow Action"></my-button>
+      <script>
+        class MyButton extends HTMLElement {
+          constructor() {
+            super()
+            this.attachShadow({ mode: 'open' })
+            const button = document.createElement('button')
+            button.textContent = 'Click me'
+            this.shadowRoot.appendChild(button)
+          }
+        }
+        customElements.define('my-button', MyButton)
+      </script>
+    `)
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      const button = page.locator('my-button').first().locator('button')
+      await button.click()
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      expect(actionEvents).toHaveLength(1)
+      expect(actionEvents[0].action?.target?.name).toBe('Custom Shadow Action')
+    })
+
+  createTest('with betaTrackActionsInShadowDom, selector includes stable attributes from inside shadow DOM')
+    .withRum({ trackUserInteractions: true, betaTrackActionsInShadowDom: true })
+    .withBody(html`
+      <my-button id="shadow-host"></my-button>
+      <script>
+        class MyButton extends HTMLElement {
+          constructor() {
+            super()
+            this.attachShadow({ mode: 'open' })
+            const button = document.createElement('button')
+            button.setAttribute('data-testid', 'shadow-btn')
+            button.textContent = 'Test Button'
+            this.shadowRoot.appendChild(button)
+          }
+        }
+        customElements.define('my-button', MyButton)
+      </script>
+    `)
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      const button = page.locator('my-button').first().locator('button')
+      await button.click()
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      expect(actionEvents).toHaveLength(1)
+      expect(actionEvents[0]._dd.action?.target?.selector).toEqual(
+        '#shadow-host::shadow BUTTON[data-testid="shadow-btn"]'
+      )
+    })
+})
+
+test.describe('custom actions with startAction/stopAction', () => {
+  createTest('track a custom action with startAction/stopAction')
+    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_RUM!.startAction('checkout')
+        window.DD_RUM!.stopAction('checkout')
+      })
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      expect(actionEvents).toHaveLength(1)
+      expect(actionEvents[0].action.target?.name).toBe('checkout')
+      expect(actionEvents[0].action.type).toBe('custom')
+      expect(actionEvents[0].action.id).toBeDefined()
+    })
+
+  createTest('associate an error to a custom action')
+    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_RUM!.startAction('checkout')
+        window.DD_RUM!.addError(new Error('Payment failed'))
+        window.DD_RUM!.stopAction('checkout')
+      })
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      const errorEvents = intakeRegistry.rumErrorEvents
+
+      expect(actionEvents).toHaveLength(1)
+      expect(actionEvents[0].action.error?.count).toBe(1)
+      expect(actionEvents[0].action.frustration?.type).toContain('error_click')
+      expect(errorEvents.length).toBeGreaterThanOrEqual(1)
+
+      const actionId = actionEvents[0].action.id
+      const relatedError = errorEvents.find((e) => hasActionId(e, actionId!))
+      expect(relatedError).toBeDefined()
+    })
+
+  createTest('associate a resource to a custom action')
+    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_RUM!.startAction('load-data')
+        void fetch('/ok')
+      })
+      await waitForRequests(page)
+      await page.evaluate(() => {
+        window.DD_RUM!.stopAction('load-data')
+      })
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      const resourceEvents = intakeRegistry.rumResourceEvents.filter((e) => e.resource.type === 'fetch')
+
+      expect(actionEvents).toHaveLength(1)
+      expect(actionEvents[0].action.resource?.count).toBe(1)
+      expect(actionEvents[0].action.frustration?.type).toEqual([])
+
+      const actionId = actionEvents[0].action.id
+      const relatedResource = resourceEvents.find((e) => hasActionId(e, actionId!))
+      expect(relatedResource).toBeDefined()
+    })
+
+  createTest('track multiple concurrent custom actions with actionKey')
+    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_RUM!.startAction('click', { actionKey: 'button1' })
+        window.DD_RUM!.startAction('click', { actionKey: 'button2' })
+        window.DD_RUM!.stopAction('click', { actionKey: 'button2' })
+        window.DD_RUM!.stopAction('click', { actionKey: 'button1' })
+      })
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      expect(actionEvents).toHaveLength(2)
+      expect(actionEvents[0].action.id).not.toBe(actionEvents[1].action.id)
+    })
+
+  createTest('merge contexts from start and stop')
+    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_RUM!.startAction('purchase', { context: { cart_id: 'abc123' } })
+        window.DD_RUM!.stopAction('purchase', { context: { total: 99.99 } })
+      })
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      expect(actionEvents).toHaveLength(1)
+      expect(actionEvents[0].context).toEqual(
+        expect.objectContaining({
+          cart_id: 'abc123',
+          total: 99.99,
+        })
+      )
+    })
+
+  createTest('preserve timing when startAction is called before init')
+    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
+    .withRumInit((configuration) => {
+      window.DD_RUM!.startAction('pre_init_action')
+
+      setTimeout(() => {
+        window.DD_RUM!.init(configuration)
+        window.DD_RUM!.stopAction('pre_init_action')
+      }, 50)
+    })
+    .run(async ({ intakeRegistry, flushEvents }) => {
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      expect(actionEvents).toHaveLength(1)
+      expect(actionEvents[0].action.target?.name).toBe('pre_init_action')
+      expect(actionEvents[0].action.loading_time).toBeGreaterThanOrEqual(40 * 1e6)
+    })
+
+  createTest('attribute errors and resources to action started before init')
+    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
+    .withRumInit((configuration) => {
+      window.DD_RUM!.startAction('pre_init_action')
+
+      setTimeout(() => {
+        window.DD_RUM!.init(configuration)
+
+        window.DD_RUM!.addError(new Error('Test error'))
+        void fetch('/ok')
+      }, 10)
+    })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await waitForRequests(page)
+
+      await page.evaluate(() => {
+        window.DD_RUM!.stopAction('pre_init_action')
+      })
+
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      expect(actionEvents).toHaveLength(1)
+
+      const actionId = actionEvents[0].action.id
+      const relatedError = intakeRegistry.rumErrorEvents.find((e) => hasActionId(e, actionId!))
+      expect(relatedError).toBeDefined()
+
+      const fetchResources = intakeRegistry.rumResourceEvents.filter((e) => e.resource.type === 'fetch')
+      const relatedFetch = fetchResources.find((e) => hasActionId(e, actionId!))
+      expect(relatedFetch).toBeDefined()
+    })
+})
+
+test.describe('action collection with composed path selector', () => {
+  createTest('should return a composed_path_selector if flag is enabled')
+    .withRum({
+      trackUserInteractions: true,
+      enableExperimentalFeatures: ['composed_path_selector'],
+    })
+    .withBody(html`
+      <button>Click</button>
+      <button id="my-button" data-test-id="test-btn" data-random="secret" class="foo bar baz">Click me</button>
+    `)
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      const button = page.locator('#my-button')
+      await button.click()
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      expect(actionEvents).toHaveLength(1)
+      expect(actionEvents[0]._dd.action?.target?.composed_path_selector).toBe(
+        'BUTTON#my-button[data-test-id="test-btn"].bar.baz.foo:nth-child(2):nth-of-type(2);'
+      )
     })
 })

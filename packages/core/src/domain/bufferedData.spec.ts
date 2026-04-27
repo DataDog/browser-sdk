@@ -1,13 +1,15 @@
-import { registerCleanupTask } from '../../test'
+import { replaceMockable, registerCleanupTask } from '../../test'
 import { Observable } from '../tools/observable'
 import { clocksNow } from '../tools/utils/timeUtils'
 import { BufferedDataType, startBufferingData } from './bufferedData'
 import { ErrorHandling, ErrorSource, type RawError } from './error/error.types'
+import { trackRuntimeError } from './error/trackRuntimeError'
 
 describe('startBufferingData', () => {
   it('collects runtime errors', (done) => {
     const runtimeErrorObservable = new Observable<RawError>()
-    const { observable, stop } = startBufferingData(() => runtimeErrorObservable)
+    replaceMockable(trackRuntimeError, () => runtimeErrorObservable)
+    const { observable, stop } = startBufferingData()
     registerCleanupTask(stop)
 
     const rawError = {

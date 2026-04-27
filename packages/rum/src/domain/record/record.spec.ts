@@ -1,14 +1,8 @@
-import { DefaultPrivacyLevel, findLast } from '@datadog/browser-core'
+import { DefaultPrivacyLevel, findLast, noop } from '@datadog/browser-core'
 import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { createNewEvent, collectAsyncCalls, registerCleanupTask } from '@datadog/browser-core/test'
-import {
-  findElement,
-  findFullSnapshot,
-  findNode,
-  recordsPerFullSnapshot,
-  createRumFrustrationEvent,
-} from '../../../test'
+import { findElement, findFullSnapshotInFormat, findNode, recordsPerFullSnapshot } from '../../../test'
 import type {
   BrowserIncrementalSnapshotRecord,
   BrowserMutationData,
@@ -17,16 +11,17 @@ import type {
   ElementNode,
   ScrollData,
 } from '../../types'
-import { NodeType, RecordType, IncrementalSource } from '../../types'
+import { NodeType, RecordType, IncrementalSource, SnapshotFormat } from '../../types'
 import { appendElement } from '../../../../rum-core/test'
-import { getReplayStats, resetReplayStats } from '../replayStats'
+import { getReplayStats } from '../replayStats'
 import type { RecordAPI } from './record'
 import { record } from './record'
+import type { EmitRecordCallback } from './record.types'
 
 describe('record', () => {
   let recordApi: RecordAPI
   let lifeCycle: LifeCycle
-  let emitSpy: jasmine.Spy<(record: BrowserRecord) => void>
+  let emitSpy: jasmine.Spy<EmitRecordCallback>
   const FAKE_VIEW_ID = '123'
 
   beforeEach(() => {
@@ -165,7 +160,7 @@ describe('record', () => {
       element.remove()
 
       recordApi.flushMutations()
-      const fs = findFullSnapshot({ records: getEmittedRecords() })!
+      const fs = findFullSnapshotInFormat(SnapshotFormat.V1, { records: getEmittedRecords() })!
       const shadowRootNode = findNode(
         fs.data.node,
         (node) => node.type === NodeType.DocumentFragment && node.isShadowRoot
@@ -190,7 +185,7 @@ describe('record', () => {
 
       recordApi.flushMutations()
       expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot() + 1)
-      const fs = findFullSnapshot({ records: getEmittedRecords() })!
+      const fs = findFullSnapshotInFormat(SnapshotFormat.V1, { records: getEmittedRecords() })!
       const shadowRootNode = findNode(
         fs.data.node,
         (node) => node.type === NodeType.DocumentFragment && node.isShadowRoot
@@ -287,7 +282,7 @@ describe('record', () => {
 
       const scrollData = getLastIncrementalSnapshotData<ScrollData>(getEmittedRecords(), IncrementalSource.Scroll)
 
-      const fs = findFullSnapshot({ records: getEmittedRecords() })!
+      const fs = findFullSnapshotInFormat(SnapshotFormat.V1, { records: getEmittedRecords() })!
       const scrollableNode = findElement(fs.data.node, (node) => node.attributes['unique-selector'] === 'enabled')!
 
       expect(scrollData.id).toBe(scrollableNode.id)
@@ -350,7 +345,6 @@ describe('record', () => {
 
   describe('updates record replay stats', () => {
     it('when recording new records', () => {
-      resetReplayStats()
       startRecording()
 
       const records = getEmittedRecords()
@@ -431,15 +425,6 @@ describe('record', () => {
       expect(getEmittedRecords()[0].type).toBe(RecordType.VisualViewport)
     })
 
-    it('frustration', () => {
-      lifeCycle.notify(
-        LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-        createRumFrustrationEvent(new MouseEvent('pointerup'))
-      )
-
-      expect(getEmittedRecords()[0].type).toBe(RecordType.FrustrationRecord)
-    })
-
     it('view end event', () => {
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, {} as any)
 
@@ -450,7 +435,8 @@ describe('record', () => {
   function startRecording() {
     lifeCycle = new LifeCycle()
     recordApi = record({
-      emit: emitSpy,
+      emitRecord: emitSpy,
+      emitStats: noop,
       configuration: { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration,
       lifeCycle,
       viewHistory: {

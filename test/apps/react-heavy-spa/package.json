@@ -1,0 +1,27 @@
+{
+  "name": "heavy-spa",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --open",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-is": "19.2.4",
+    "react-router-dom": "7.14.0",
+    "react-window": "2.2.7",
+    "recharts": "3.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "25.5.2",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "5.2.0",
+    "globals": "17.4.0",
+    "typescript": "5.9.3",
+    "vite": "7.3.2"
+  }
+}

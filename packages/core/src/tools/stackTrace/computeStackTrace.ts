@@ -4,6 +4,8 @@
  * Reference implementation: https://github.com/csnover/TraceKit/blob/04530298073c3823de72deb0b97e7b38ca7bcb59/tracekit.js
  */
 
+import { isIndexableObject } from '../utils/typeUtils'
+
 export interface StackFrame {
   url?: string
   func?: string
@@ -111,7 +113,11 @@ function parseChromeLine(line: string): StackFrame | undefined {
   }
 }
 
-const CHROME_ANONYMOUS_FUNCTION_RE = new RegExp(`^\\s*at ?${fileUrl}${filePosition}?${filePosition}??\\s*$`, 'i')
+const htmlAnonymousPart = '(?:(.*)?(?: @))'
+const CHROME_ANONYMOUS_FUNCTION_RE = new RegExp(
+  `^\\s*at\\s*${htmlAnonymousPart}?\\s*${fileUrl}${filePosition}?${filePosition}??\\s*$`,
+  'i'
+)
 
 function parseChromeAnonymousLine(line: string): StackFrame | undefined {
   const parts = CHROME_ANONYMOUS_FUNCTION_RE.exec(line)
@@ -122,10 +128,10 @@ function parseChromeAnonymousLine(line: string): StackFrame | undefined {
 
   return {
     args: [],
-    column: parts[3] ? +parts[3] : undefined,
-    func: UNKNOWN_FUNCTION,
-    line: parts[2] ? +parts[2] : undefined,
-    url: parts[1],
+    column: parts[4] ? +parts[4] : undefined,
+    func: parts[1] || UNKNOWN_FUNCTION,
+    line: parts[3] ? +parts[3] : undefined,
+    url: parts[2],
   }
 }
 
@@ -177,11 +183,7 @@ function parseGeckoLine(line: string): StackFrame | undefined {
 }
 
 function tryToGetString(candidate: unknown, property: string) {
-  if (typeof candidate !== 'object' || !candidate || !(property in candidate)) {
-    return undefined
-  }
-  const value = (candidate as { [k: string]: unknown })[property]
-  return typeof value === 'string' ? value : undefined
+  return isIndexableObject(candidate) && typeof candidate[property] === 'string' ? candidate[property] : undefined
 }
 
 export function computeStackTraceFromOnErrorMessage(

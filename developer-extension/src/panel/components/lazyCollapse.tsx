@@ -6,26 +6,26 @@ import React, { forwardRef, useRef, useState } from 'react'
  * Dropin replacement for mantine Collapse component but does not render children when collapsed.
  */
 export const LazyCollapse = forwardRef<HTMLDivElement, CollapseProps>(
-  ({ children, in: inProp, onTransitionEnd, ...otherProps }, ref) => {
+  ({ children, expanded: expandedProp, onTransitionEnd, ...otherProps }, ref) => {
     const [isTransitioning, setIsTransitioning] = useState(false)
-    const previousInRef = useRef(inProp)
+    const previousExpandedRef = useRef(expandedProp)
 
-    if (previousInRef.current !== inProp) {
+    if (previousExpandedRef.current !== expandedProp) {
       setIsTransitioning(true)
-      previousInRef.current = inProp
+      previousExpandedRef.current = expandedProp
     }
 
     return (
       <MantineCollapse
         ref={ref}
-        in={inProp}
+        expanded={expandedProp}
         {...otherProps}
         onTransitionEnd={() => {
           setIsTransitioning(false)
           onTransitionEnd?.()
         }}
       >
-        {(inProp || isTransitioning) && children}
+        {(expandedProp || isTransitioning) && children}
       </MantineCollapse>
     )
   }

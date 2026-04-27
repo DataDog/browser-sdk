@@ -1,21 +1,25 @@
 import path from 'path'
-import { expect } from '@playwright/test'
-import { createTest } from '../../lib/framework'
+import { expect, test } from '@playwright/test'
+import { createExtension, createTest } from '../../lib/framework'
 
-createTest('should switch between tabs')
-  .withExtension(path.join(process.cwd(), 'developer-extension', 'dist'))
-  .run(async ({ page, getExtensionId, flushBrowserLogs }) => {
-    const extensionId = await getExtensionId()
+const developerExtensionPath = path.join(process.cwd(), 'developer-extension/dist/chrome-mv3')
 
-    await page.goto(`chrome-extension://${extensionId}/panel.html`)
+test.describe('developer extension', () => {
+  createTest('should switch between tabs')
+    .withExtension(createExtension(developerExtensionPath))
+    .run(async ({ page, getExtensionId, flushBrowserLogs }) => {
+      const extensionId = await getExtensionId()
 
-    const getSelectedTab = () => page.getByRole('tab', { selected: true })
-    const getTab = (name: string) => page.getByRole('tab', { name })
+      await page.goto(`chrome-extension://${extensionId}/panel.html`)
 
-    expect(await getSelectedTab().innerText()).toEqual('Events')
+      const getSelectedTab = () => page.getByRole('tab', { selected: true })
+      const getTab = (name: string) => page.getByRole('tab', { name })
 
-    await getTab('Infos').click()
-    expect(await getSelectedTab().innerText()).toEqual('Infos')
+      expect(await getSelectedTab().innerText()).toEqual('Events')
 
-    flushBrowserLogs()
-  })
+      await getTab('Infos').click()
+      expect(await getSelectedTab().innerText()).toEqual('Infos')
+
+      flushBrowserLogs()
+    })
+})

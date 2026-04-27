@@ -28,12 +28,12 @@ describe('eventCollection', () => {
         duration: 100,
       },
     }
-    const domainContext: RumEventDomainContext = { custom: 'context' }
+    const domainContext: RumEventDomainContext = {}
 
     eventCollection.addEvent(startTime, event, domainContext, duration)
 
     expect(notifySpy).toHaveBeenCalledWith(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-      startTime,
+      startClocks: { relative: startTime, timeStamp: jasmine.any(Number) },
       rawRumEvent: event,
       domainContext,
       duration,

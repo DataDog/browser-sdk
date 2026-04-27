@@ -18,7 +18,7 @@ export interface AnyRouteMatch {
   route: AnyRouteObject
   params: Record<string, string | undefined>
 }
-export type AnyLocation = { pathname: string } | string
+export type AnyLocation = { pathname?: string } | string
 export type AnyCreateRouter<Options> = (
   routes: AnyRouteObject[],
   options?: Options

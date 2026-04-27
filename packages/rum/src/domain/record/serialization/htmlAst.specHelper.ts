@@ -1,13 +1,10 @@
-import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from '@datadog/browser-rum-core'
-import { display, noop, objectValues } from '@datadog/browser-core'
+import { display, objectValues } from '@datadog/browser-core'
 import type { SerializedNodeWithId } from '../../../types'
 import {
-  serializeNodeWithId,
-  SerializationContextStatus,
-  createElementsScrollPositions,
-  createSerializationStats,
-} from '..'
+  createSerializationTransactionForTesting,
+  serializeNodeAndVerifyChangeRecord as serializeNode,
+} from '../test/serialization.specHelper'
 
 export const makeHtmlDoc = (htmlContent: string, privacyTag: string) => {
   try {
@@ -31,26 +28,11 @@ export const removeIdFieldsRecursivelyClone = (thing: Record<string, unknown>): 
   return thing
 }
 
-const DEFAULT_SHADOW_ROOT_CONTROLLER = {
-  flush: noop,
-  stop: noop,
-  addShadowRoot: noop,
-  removeShadowRoot: noop,
-}
-
 export const generateLeanSerializedDoc = (htmlContent: string, privacyTag: string) => {
+  const transaction = createSerializationTransactionForTesting()
   const newDoc = makeHtmlDoc(htmlContent, privacyTag)
   const serializedDoc = removeIdFieldsRecursivelyClone(
-    serializeNodeWithId(newDoc, {
-      parentNodePrivacyLevel: NodePrivacyLevel.ALLOW,
-      serializationContext: {
-        serializationStats: createSerializationStats(),
-        shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
-        status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
-        elementsScrollPositions: createElementsScrollPositions(),
-      },
-      configuration: {} as RumConfiguration,
-    })! as unknown as Record<string, unknown>
+    serializeNode(newDoc, NodePrivacyLevel.ALLOW, transaction) as unknown as Record<string, unknown>
   ) as unknown as SerializedNodeWithId
   return serializedDoc
 }
@@ -74,10 +56,15 @@ export const HTML = `
       Click https://private.com/path/nested?query=param#hash
     </a>
     <img src='https://private.com/path/nested?query=param#hash'>
+    <video controls>
+      <source src="https://private.com/path/nested?query=param#hash" type="video/webm">
+      <source src="https://private.com/path/nested?query=param#hash" type="video/mp4">
+      <p>Your browser cannot play the provided video file.</p>
+    </video>
     <select>
-      <option>private option A</option>
-      <option>private option B</option>
-      <option>private option C</option>
+      <option aria-label='A'>private option A</option>
+      <option aria-label='B'>private option B</option>
+      <option aria-label='C'>private option C</option>
     </select>
     <input type="password">
     <input type="text">
@@ -265,6 +252,65 @@ export const AST_MASK = {
             },
             {
               type: 2,
+              tagName: 'video',
+              attributes: {
+                controls: '',
+                rr_mediaState: 'paused',
+              },
+              childNodes: [
+                {
+                  type: 3,
+                  textContent: '\n      ',
+                },
+                {
+                  type: 2,
+                  tagName: 'source',
+                  attributes: {
+                    src: 'data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==',
+                    type: 'video/webm',
+                  },
+                  childNodes: [],
+                },
+                {
+                  type: 3,
+                  textContent: '\n      ',
+                },
+                {
+                  type: 2,
+                  tagName: 'source',
+                  attributes: {
+                    src: 'data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==',
+                    type: 'video/mp4',
+                  },
+                  childNodes: [],
+                },
+                {
+                  type: 3,
+                  textContent: '\n      ',
+                },
+                {
+                  type: 2,
+                  tagName: 'p',
+                  attributes: {},
+                  childNodes: [
+                    {
+                      type: 3,
+                      textContent: 'xxxx xxxxxxx xxxxxx xxxx xxx xxxxxxxx xxxxx xxxxx',
+                    },
+                  ],
+                },
+                {
+                  type: 3,
+                  textContent: '\n    ',
+                },
+              ],
+            },
+            {
+              type: 3,
+              textContent: '\n    ',
+            },
+            {
+              type: 2,
               tagName: 'select',
               attributes: {
                 value: '***',
@@ -273,7 +319,9 @@ export const AST_MASK = {
                 {
                   type: 2,
                   tagName: 'option',
-                  attributes: {},
+                  attributes: {
+                    'aria-label': '***',
+                  },
                   childNodes: [
                     {
                       type: 3,
@@ -284,7 +332,9 @@ export const AST_MASK = {
                 {
                   type: 2,
                   tagName: 'option',
-                  attributes: {},
+                  attributes: {
+                    'aria-label': '***',
+                  },
                   childNodes: [
                     {
                       type: 3,
@@ -295,7 +345,9 @@ export const AST_MASK = {
                 {
                   type: 2,
                   tagName: 'option',
-                  attributes: {},
+                  attributes: {
+                    'aria-label': '***',
+                  },
                   childNodes: [
                     {
                       type: 3,
@@ -338,7 +390,7 @@ export const AST_MASK = {
               tagName: 'input',
               attributes: {
                 type: 'checkbox',
-                name: 'inputFoo',
+                name: '***',
                 value: '***',
               },
               childNodes: [],
@@ -369,7 +421,7 @@ export const AST_MASK = {
               tagName: 'input',
               attributes: {
                 type: 'radio',
-                name: 'radioGroup',
+                name: '***',
                 value: '***',
               },
               childNodes: [],
@@ -382,7 +434,7 @@ export const AST_MASK = {
               type: 2,
               tagName: 'textarea',
               attributes: {
-                name: 'baz',
+                name: '***',
                 rows: '2',
                 cols: '20',
                 value: '***',
@@ -572,6 +624,65 @@ export const AST_MASK_USER_INPUT = {
             },
             {
               type: 2,
+              tagName: 'video',
+              attributes: {
+                controls: '',
+                rr_mediaState: 'paused',
+              },
+              childNodes: [
+                {
+                  type: 3,
+                  textContent: '\n      ',
+                },
+                {
+                  type: 2,
+                  tagName: 'source',
+                  attributes: {
+                    src: 'https://private.com/path/nested?query=param#hash',
+                    type: 'video/webm',
+                  },
+                  childNodes: [],
+                },
+                {
+                  type: 3,
+                  textContent: '\n      ',
+                },
+                {
+                  type: 2,
+                  tagName: 'source',
+                  attributes: {
+                    src: 'https://private.com/path/nested?query=param#hash',
+                    type: 'video/mp4',
+                  },
+                  childNodes: [],
+                },
+                {
+                  type: 3,
+                  textContent: '\n      ',
+                },
+                {
+                  type: 2,
+                  tagName: 'p',
+                  attributes: {},
+                  childNodes: [
+                    {
+                      type: 3,
+                      textContent: 'Your browser cannot play the provided video file.',
+                    },
+                  ],
+                },
+                {
+                  type: 3,
+                  textContent: '\n    ',
+                },
+              ],
+            },
+            {
+              type: 3,
+              textContent: '\n    ',
+            },
+            {
+              type: 2,
               tagName: 'select',
               attributes: {
                 value: '***',
@@ -580,7 +691,9 @@ export const AST_MASK_USER_INPUT = {
                 {
                   type: 2,
                   tagName: 'option',
-                  attributes: {},
+                  attributes: {
+                    'aria-label': 'A',
+                  },
                   childNodes: [
                     {
                       type: 3,
@@ -591,7 +704,9 @@ export const AST_MASK_USER_INPUT = {
                 {
                   type: 2,
                   tagName: 'option',
-                  attributes: {},
+                  attributes: {
+                    'aria-label': 'B',
+                  },
                   childNodes: [
                     {
                       type: 3,
@@ -602,7 +717,9 @@ export const AST_MASK_USER_INPUT = {
                 {
                   type: 2,
                   tagName: 'option',
-                  attributes: {},
+                  attributes: {
+                    'aria-label': 'C',
+                  },
                   childNodes: [
                     {
                       type: 3,
@@ -852,7 +969,7 @@ export const AST_MASK_UNLESS_ALLOWLISTED = {
               type: 2,
               tagName: 'a',
               attributes: {
-                href: 'https://private.com/path/nested?query=param#hash',
+                href: '***',
               },
               childNodes: [
                 {
@@ -869,9 +986,68 @@ export const AST_MASK_UNLESS_ALLOWLISTED = {
               type: 2,
               tagName: 'img',
               attributes: {
-                src: 'https://private.com/path/nested?query=param#hash',
+                src: 'data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==',
               },
               childNodes: [],
+            },
+            {
+              type: 3,
+              textContent: '\n    ',
+            },
+            {
+              type: 2,
+              tagName: 'video',
+              attributes: {
+                controls: '',
+                rr_mediaState: 'paused',
+              },
+              childNodes: [
+                {
+                  type: 3,
+                  textContent: '\n      ',
+                },
+                {
+                  type: 2,
+                  tagName: 'source',
+                  attributes: {
+                    src: 'data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==',
+                    type: 'video/webm',
+                  },
+                  childNodes: [],
+                },
+                {
+                  type: 3,
+                  textContent: '\n      ',
+                },
+                {
+                  type: 2,
+                  tagName: 'source',
+                  attributes: {
+                    src: 'data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==',
+                    type: 'video/mp4',
+                  },
+                  childNodes: [],
+                },
+                {
+                  type: 3,
+                  textContent: '\n      ',
+                },
+                {
+                  type: 2,
+                  tagName: 'p',
+                  attributes: {},
+                  childNodes: [
+                    {
+                      type: 3,
+                      textContent: 'xxxx xxxxxxx xxxxxx xxxx xxx xxxxxxxx xxxxx xxxxx',
+                    },
+                  ],
+                },
+                {
+                  type: 3,
+                  textContent: '\n    ',
+                },
+              ],
             },
             {
               type: 3,
@@ -887,7 +1063,9 @@ export const AST_MASK_UNLESS_ALLOWLISTED = {
                 {
                   type: 2,
                   tagName: 'option',
-                  attributes: {},
+                  attributes: {
+                    'aria-label': '***',
+                  },
                   childNodes: [
                     {
                       type: 3,
@@ -898,7 +1076,9 @@ export const AST_MASK_UNLESS_ALLOWLISTED = {
                 {
                   type: 2,
                   tagName: 'option',
-                  attributes: {},
+                  attributes: {
+                    'aria-label': '***',
+                  },
                   childNodes: [
                     {
                       type: 3,
@@ -909,7 +1089,9 @@ export const AST_MASK_UNLESS_ALLOWLISTED = {
                 {
                   type: 2,
                   tagName: 'option',
-                  attributes: {},
+                  attributes: {
+                    'aria-label': '***',
+                  },
                   childNodes: [
                     {
                       type: 3,
@@ -952,7 +1134,7 @@ export const AST_MASK_UNLESS_ALLOWLISTED = {
               tagName: 'input',
               attributes: {
                 type: 'checkbox',
-                name: 'inputFoo',
+                name: '***',
                 value: '***',
               },
               childNodes: [],
@@ -983,7 +1165,7 @@ export const AST_MASK_UNLESS_ALLOWLISTED = {
               tagName: 'input',
               attributes: {
                 type: 'radio',
-                name: 'radioGroup',
+                name: '***',
                 value: '***',
               },
               childNodes: [],
@@ -996,7 +1178,7 @@ export const AST_MASK_UNLESS_ALLOWLISTED = {
               type: 2,
               tagName: 'textarea',
               attributes: {
-                name: 'baz',
+                name: '***',
                 rows: '2',
                 cols: '20',
                 value: '***',
@@ -1186,6 +1368,65 @@ export const AST_ALLOW = {
             },
             {
               type: 2,
+              tagName: 'video',
+              attributes: {
+                controls: '',
+                rr_mediaState: 'paused',
+              },
+              childNodes: [
+                {
+                  type: 3,
+                  textContent: '\n      ',
+                },
+                {
+                  type: 2,
+                  tagName: 'source',
+                  attributes: {
+                    src: 'https://private.com/path/nested?query=param#hash',
+                    type: 'video/webm',
+                  },
+                  childNodes: [],
+                },
+                {
+                  type: 3,
+                  textContent: '\n      ',
+                },
+                {
+                  type: 2,
+                  tagName: 'source',
+                  attributes: {
+                    src: 'https://private.com/path/nested?query=param#hash',
+                    type: 'video/mp4',
+                  },
+                  childNodes: [],
+                },
+                {
+                  type: 3,
+                  textContent: '\n      ',
+                },
+                {
+                  type: 2,
+                  tagName: 'p',
+                  attributes: {},
+                  childNodes: [
+                    {
+                      type: 3,
+                      textContent: 'Your browser cannot play the provided video file.',
+                    },
+                  ],
+                },
+                {
+                  type: 3,
+                  textContent: '\n    ',
+                },
+              ],
+            },
+            {
+              type: 3,
+              textContent: '\n    ',
+            },
+            {
+              type: 2,
               tagName: 'select',
               attributes: {
                 value: 'private option A',
@@ -1199,7 +1440,8 @@ export const AST_ALLOW = {
                   type: 2,
                   tagName: 'option',
                   attributes: {
-                    selected: true,
+                    selected: '',
+                    'aria-label': 'A',
                     value: 'private option A',
                   },
                   childNodes: [
@@ -1217,6 +1459,7 @@ export const AST_ALLOW = {
                   type: 2,
                   tagName: 'option',
                   attributes: {
+                    'aria-label': 'B',
                     value: 'private option B',
                   },
                   childNodes: [
@@ -1234,6 +1477,7 @@ export const AST_ALLOW = {
                   type: 2,
                   tagName: 'option',
                   attributes: {
+                    'aria-label': 'C',
                     value: 'private option C',
                   },
                   childNodes: [
@@ -1284,7 +1528,7 @@ export const AST_ALLOW = {
                 type: 'checkbox',
                 name: 'inputFoo',
                 value: 'on',
-                checked: true,
+                checked: '',
               },
               childNodes: [],
             },
@@ -1316,7 +1560,6 @@ export const AST_ALLOW = {
                 type: 'radio',
                 name: 'radioGroup',
                 value: 'bar-private',
-                checked: false,
               },
               childNodes: [],
             },

@@ -6,7 +6,7 @@ import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { ViewCreatedEvent, ViewEndedEvent } from '../view/trackViews'
 import type { RumConfiguration } from '../configuration'
 import { RumEventType } from '../../rawRumEvent.types'
-import type { Hooks } from '../hooks'
+import type { AssembleHookParams, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import type { FeatureFlagContexts } from './featureFlagContext'
 import { startFeatureFlagContexts } from './featureFlagContext'
@@ -38,11 +38,11 @@ describe('featureFlagContexts', () => {
       const defaultViewAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 0 as RelativeTime,
-      })
+      } as AssembleHookParams)
       const defaultErrorAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'error',
         startTime: 0 as RelativeTime,
-      })
+      } as AssembleHookParams)
 
       expect(defaultViewAttributes).toEqual({
         type: 'view',
@@ -70,7 +70,7 @@ describe('featureFlagContexts', () => {
         const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
           eventType,
           startTime: 0 as RelativeTime,
-        })
+        } as AssembleHookParams)
 
         expect(defaultRumEventAttributes).toEqual({
           type: eventType,
@@ -94,7 +94,7 @@ describe('featureFlagContexts', () => {
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 0 as RelativeTime,
-      })
+      } as AssembleHookParams)
 
       expect(defaultRumEventAttributes).toEqual({
         type: 'view',
@@ -127,11 +127,11 @@ describe('featureFlagContexts', () => {
       const defaultEventOneAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 5 as RelativeTime,
-      })
+      } as AssembleHookParams)
       const defaultEventTwoAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 15 as RelativeTime,
-      })
+      } as AssembleHookParams)
 
       expect(defaultEventOneAttributes).toEqual({ type: 'view', feature_flags: { feature: 'one' } })
       expect(defaultEventTwoAttributes).toEqual({ type: 'view', feature_flags: { feature: 'two' } })
@@ -149,7 +149,7 @@ describe('featureFlagContexts', () => {
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 0 as RelativeTime,
-      })
+      } as AssembleHookParams)
 
       expect(defaultRumEventAttributes).toBeUndefined()
     })
@@ -166,7 +166,7 @@ describe('featureFlagContexts', () => {
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 0 as RelativeTime,
-      })
+      } as AssembleHookParams)
 
       expect(defaultRumEventAttributes).toEqual({ type: 'view', feature_flags: { feature: 'bar', feature2: 'baz' } })
     })

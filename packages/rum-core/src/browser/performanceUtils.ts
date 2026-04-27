@@ -1,5 +1,6 @@
 import type { RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { getRelativeTime, isNumber } from '@datadog/browser-core'
+import { findLast, getRelativeTime, isNumber, relativeNow } from '@datadog/browser-core'
+import type { RelevantNavigationTiming } from '../domain/view/viewMetrics/trackNavigationTimings'
 import type { RumPerformanceNavigationTiming } from './performanceObservable'
 import { RumPerformanceEntryType, supportPerformanceTimingEvent } from './performanceObservable'
 
@@ -47,4 +48,43 @@ export function computeTimingsFromDeprecatedPerformanceTiming() {
     }
   }
   return result as TimingsFromDeprecatedPerformanceTiming
+}
+
+export function sanitizeFirstByte(entry: RelevantNavigationTiming) {
+  // In some cases the value reported is negative or is larger
+  // than the current page time. Ignore these cases:
+  // https://github.com/GoogleChrome/web-vitals/issues/137
+  // https://github.com/GoogleChrome/web-vitals/issues/162
+  return entry.responseStart >= 0 && entry.responseStart <= relativeNow() ? entry.responseStart : undefined
+}
+
+export function getResourceEntries() {
+  if (supportPerformanceTimingEvent(RumPerformanceEntryType.RESOURCE)) {
+    return performance.getEntriesByType(RumPerformanceEntryType.RESOURCE)
+  }
+
+  return undefined
+}
+
+/**
+ * Find the most relevant resource entry for an LCP element.
+ *
+ * Resource entries persist for the entire page lifetime and can include multiple requests
+ * for the same URL (preloads, cache-busting reloads, SPA route changes, etc.).
+ * This function returns the most recent matching entry that started before the LCP time,
+ * which is most likely the one that triggered the LCP paint.
+ */
+export function findLcpResourceEntry(
+  resourceUrl: string,
+  lcpStartTime: RelativeTime
+): PerformanceResourceTiming | undefined {
+  const entries = getResourceEntries()
+  if (!entries) {
+    return undefined
+  }
+
+  return findLast(
+    entries,
+    (entry): entry is PerformanceResourceTiming => entry.name === resourceUrl && entry.startTime <= lcpStartTime
+  )
 }

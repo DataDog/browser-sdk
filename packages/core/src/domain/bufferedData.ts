@@ -1,4 +1,5 @@
 import { BufferedObservable } from '../tools/observable'
+import { mockable } from '../tools/mockable'
 import type { RawError } from './error/error.types'
 import { trackRuntimeError } from './error/trackRuntimeError'
 
@@ -13,10 +14,10 @@ export interface BufferedData {
   error: RawError
 }
 
-export function startBufferingData(trackRuntimeErrorImpl = trackRuntimeError) {
+export function startBufferingData() {
   const observable = new BufferedObservable<BufferedData>(BUFFER_LIMIT)
 
-  const runtimeErrorSubscription = trackRuntimeErrorImpl().subscribe((error) => {
+  const runtimeErrorSubscription = mockable(trackRuntimeError)().subscribe((error) => {
     observable.notify({
       type: BufferedDataType.RUNTIME_ERROR,
       error,

@@ -1,6 +1,5 @@
-import type { Context } from '@datadog/browser-core'
 import { objectValues } from '@datadog/browser-core'
-import type { RumEvent } from '../rumEvent.types'
+import type { AssembledRumEvent } from '../rawRumEvent.types'
 import { FrustrationType, RumEventType } from '../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { trackEventCounts } from './trackEventCounts'
@@ -12,8 +11,8 @@ describe('trackEventCounts', () => {
     lifeCycle = new LifeCycle()
   })
 
-  function notifyCollectedRawRumEvent(partialEvent: Partial<RumEvent>) {
-    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, partialEvent as RumEvent & Context)
+  function notifyCollectedRawRumEvent(partialEvent: Partial<AssembledRumEvent>) {
+    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, partialEvent as AssembledRumEvent)
   }
 
   it('tracks errors', () => {

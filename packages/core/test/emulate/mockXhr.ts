@@ -32,7 +32,7 @@ export function withXhr({
 }
 
 export class MockXhr extends MockEventTarget {
-  public static onSend: (xhr: MockXhr) => void | undefined
+  public static onSend: (xhr: MockXhr) => void
   public response: string | undefined = undefined
   public responseText: string | undefined = undefined
   public status: number | undefined = undefined

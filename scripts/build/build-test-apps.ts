@@ -1,35 +1,140 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import { parseArgs } from 'node:util'
 
 import { printLog, runMain } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
 import { modifyFile } from '../lib/filesUtils.ts'
 
-interface ExtensionConfig {
-  name: string
-  initParameter: string
-}
+type AppConfig<T extends AppBuilderOptions = AppBuilderOptions> =
+  | {
+      name: string
+      deps?: string[]
+    }
+  | {
+      name: string
+      builderFn(appName: string, options?: T): Promise<void> | void
+      options?: T
+      deps?: string[]
+    }
 
-const EXTRA_EXTENSIONS: ExtensionConfig[] = [
-  { name: 'allowed-tracking-origin', initParameter: 'allowedTrackingOrigins: [/^chrome-extension:\\/\\//],' },
-  { name: 'invalid-tracking-origin', initParameter: "allowedTrackingOrigins: ['https://app.example.com']," },
+type AppBuilderOptions = Record<string, unknown>
+
+const APPS: AppConfig[] = [
+  { name: 'vanilla' },
+  { name: 'react-heavy-spa' },
+  { name: 'react-shopist-like' },
+  { name: 'microfrontend' },
+  { name: 'nextjs' },
+  { name: 'angular-app' },
+  { name: 'vue-router-app' },
+  { name: 'nuxt-app' },
+
+  // React Router apps
+  { name: 'react-router-v6-app' },
+  { name: 'tanstack-router-app' },
+  { name: 'react-router-v7-app', builderFn: buildReactRouterv7App },
+
+  // browser extensions
+  { name: 'base-extension' },
+  {
+    name: 'cdn-extension',
+    builderFn: buildExtension,
+    deps: ['base-extension'],
+  },
+  {
+    name: 'appendChild-extension',
+    builderFn: buildExtension,
+    options: { runAt: 'document_start' },
+    deps: ['base-extension'],
+  },
 ]
 
 runMain(async () => {
-  printLog('Packing packages...')
-  command`yarn lerna run pack`.run()
+  const { values } = parseArgs({
+    options: {
+      app: {
+        type: 'string',
+        multiple: true,
+        short: 'a',
+      },
+      help: {
+        type: 'boolean',
+        short: 'h',
+      },
+    },
+  })
 
-  buildApp('test/apps/vanilla')
-  buildApp('test/apps/react-router-v6-app')
-  await buildReactRouterv7App()
-  await buildExtensions()
+  if (values.help) {
+    showHelpAndExit()
+  }
+
+  const appsToBuild = values.app ? APPS.filter((app) => values.app!.includes(app.name)) : APPS
+
+  if (appsToBuild.length === 0) {
+    printLog('No valid app specified. Use --help to see available options.')
+    process.exit(1)
+  }
+
+  printLog('Packing packages...')
+  command`yarn run pack`.run()
+
+  const built = new Set<string>()
+  for (const app of appsToBuild) {
+    for (const dep of app.deps ?? []) {
+      if (!built.has(dep)) {
+        buildApp(dep)
+        built.add(dep)
+      }
+    }
+    if ('builderFn' in app) {
+      await app.builderFn(app.name, app.options)
+    } else {
+      buildApp(app.name)
+    }
+    built.add(app.name)
+  }
 
   printLog('Test apps and extensions built successfully.')
 })
 
-function buildApp(appPath: string) {
+function showHelpAndExit() {
+  console.log('Usage: node build-test-apps.ts [--app <name>] [--help]')
+  console.log('')
+  console.log('Options:')
+  console.log('  --app, -a  Build a specific app (can be repeated for multiple apps)')
+  console.log('  --help, -h  Show this help message')
+  console.log('')
+  console.log('Available apps:')
+  for (const app of APPS) {
+    console.log(`  ${app.name}`)
+  }
+  process.exit(0)
+}
+
+function buildApp(appName: string) {
+  const appPath = `test/apps/${appName}`
   printLog(`Building app at ${appPath}...`)
   command`yarn install --no-immutable`.withCurrentWorkingDirectory(appPath).run()
+
+  // install peer dependencies if any
+  // intent: renovate does not allow to generate local packages before install
+  // so local packages are marked as optional peer dependencies and only installed when we build the test apps
+  const packageJson = JSON.parse(fs.readFileSync(path.join(appPath, 'package.json'), 'utf-8'))
+  if (packageJson.peerDependencies) {
+    // For each peer dependency, install it
+    for (const [name] of Object.entries(packageJson.peerDependencies)) {
+      const resolution = packageJson.resolutions?.[name]
+      const specifier = resolution ? `${name}@${resolution}` : name
+      command`yarn add -D ${specifier}`.withCurrentWorkingDirectory(appPath).run()
+    }
+    // revert package.json & yarn.lock changes if they are versioned
+    const areFilesVersioned = command`git ls-files package.json yarn.lock`.withCurrentWorkingDirectory(appPath).run()
+    if (areFilesVersioned) {
+      command`git checkout package.json yarn.lock`.withCurrentWorkingDirectory(appPath).run()
+    }
+  }
+
   command`yarn build`.withCurrentWorkingDirectory(appPath).run()
 }
 
@@ -58,25 +163,26 @@ async function buildReactRouterv7App() {
       .replace('react-router-v6-app.js', 'react-router-v7-app.js')
   )
 
-  buildApp(appPath)
+  buildApp('react-router-v7-app')
 }
 
-async function buildExtensions(): Promise<void> {
+async function buildExtension(appName: string, options?: { runAt?: string }): Promise<void> {
   const baseExtDir = 'test/apps/base-extension'
+  const targetDir = `test/apps/${appName}`
 
-  buildApp(baseExtDir)
+  printLog(`Building app at ${targetDir}...`)
 
-  for (const { name, initParameter } of EXTRA_EXTENSIONS) {
-    const targetDir = path.join('test/apps', name)
+  fs.rmSync(targetDir, { recursive: true, force: true })
+  fs.cpSync(baseExtDir, targetDir, { recursive: true })
 
-    fs.rmSync(targetDir, { recursive: true, force: true })
-    fs.cpSync(baseExtDir, targetDir, { recursive: true })
+  const manifestPath = path.join(targetDir, 'manifest.json')
+  await modifyFile(manifestPath, (originalContent: string) => {
+    const filename = appName.replace('-extension', '')
+    let content = originalContent.replace('dist/base.js', `dist/${filename}.js`)
 
-    const contentScriptPath = path.join(targetDir, 'src/contentScript.ts')
-    await modifyFile(contentScriptPath, (content: string) =>
-      content.replace(/\/\* EXTENSION_INIT_PARAMETER \*\//g, initParameter)
-    )
-
-    buildApp(targetDir)
-  }
+    if (options?.runAt) {
+      content = content.replace('document_end', options.runAt)
+    }
+    return content
+  })
 }

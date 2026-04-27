@@ -7,10 +7,15 @@ import {
   toServerDuration,
   relativeToClocks,
   createTaskQueue,
+  mockable,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
+  matchList,
+  safeTruncate,
+  display,
+  addTelemetryDebug,
 } from '@datadog/browser-core'
-import type { RumConfiguration } from '../configuration'
+import type { MatchHeader, RumConfiguration } from '../configuration'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType, createPerformanceObservable } from '../../browser/performanceObservable'
 import type {
@@ -18,7 +23,7 @@ import type {
   RumFetchResourceEventDomainContext,
   RumOtherResourceEventDomainContext,
 } from '../../domainContext.types'
-import type { RawRumResourceEvent } from '../../rawRumEvent.types'
+import type { NetworkHeaders, RawRumResourceEvent, ResourceRequest, ResourceResponse } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData, LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -26,6 +31,8 @@ import type { RequestCompleteEvent } from '../requestCollection'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
 import { createSpanIdentifier } from '../tracing/identifier'
+import { startEventTracker } from '../eventTracker'
+import { extractRegexMatch } from '../extractRegexMatch'
 import { matchRequestResourceEntry } from './matchRequestResourceEntry'
 import {
   computeResourceEntryDetails,
@@ -40,16 +47,19 @@ import {
 import { retrieveInitialDocumentResourceTiming } from './retrieveInitialDocumentResourceTiming'
 import type { RequestRegistry } from './requestRegistry'
 import { createRequestRegistry } from './requestRegistry'
+import type { GraphQlMetadata } from './graphql'
+import { extractGraphQlMetadata, findGraphQlConfiguration } from './graphql'
+import type { ManualResourceData } from './trackManualResources'
+import { trackManualResources } from './trackManualResources'
 
 export function startResourceCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
-  pageStateHistory: PageStateHistory,
-  taskQueue = createTaskQueue(),
-  retrieveInitialDocumentResourceTimingImpl = retrieveInitialDocumentResourceTiming
+  pageStateHistory: PageStateHistory
 ) {
+  const taskQueue = mockable(createTaskQueue)()
   let requestRegistry: RequestRegistry | undefined
-  const isEarlyRequestCollectionEnabled = isExperimentalFeatureEnabled(ExperimentalFeature.EARLY_REQUEST_COLLECTION)
+  const isEarlyRequestCollectionEnabled = configuration.trackEarlyRequests
 
   if (isEarlyRequestCollectionEnabled) {
     requestRegistry = createRequestRegistry(lifeCycle)
@@ -70,7 +80,7 @@ export function startResourceCollection(
     }
   })
 
-  retrieveInitialDocumentResourceTimingImpl(configuration, (timing) => {
+  mockable(retrieveInitialDocumentResourceTiming)(configuration, (timing) => {
     handleResource(() => processResourceEntry(timing, configuration, pageStateHistory, requestRegistry))
   })
 
@@ -83,9 +93,16 @@ export function startResourceCollection(
     })
   }
 
+  const resourceTracker = startEventTracker<ManualResourceData>(lifeCycle)
+  const manualResources = trackManualResources(lifeCycle, resourceTracker)
+
   return {
+    startResource: manualResources.startResource,
+    stopResource: manualResources.stopResource,
     stop: () => {
+      taskQueue.stop()
       performanceResourceSubscription.unsubscribe()
+      resourceTracker.stopAll()
     },
   }
 }
@@ -133,6 +150,13 @@ function assembleResource(
     ? computeResourceEntryDuration(entry)
     : computeRequestDuration(pageStateHistory, startClocks, request!.duration)
 
+  const networkHeaders = isExperimentalFeatureEnabled(ExperimentalFeature.TRACK_RESOURCE_HEADERS)
+    ? computeNetworkHeaders(request, configuration)
+    : undefined
+
+  const graphql = request && computeGraphQlMetaData(request, configuration)
+  const contentTypeFromPerformanceEntry = entry && computeContentTypeFromPerformanceEntry(entry)
+
   const resourceEvent = combine(
     {
       date: startClocks.timeStamp,
@@ -150,6 +174,7 @@ function assembleResource(
         url: request ? sanitizeIfLongDataUrl(request.url) : entry!.name,
         protocol: entry && computeResourceEntryProtocol(entry),
         delivery_type: entry && computeResourceEntryDeliveryType(entry),
+        graphql,
       },
       type: RumEventType.RESOURCE,
       _dd: {
@@ -157,15 +182,49 @@ function assembleResource(
       },
     },
     tracingInfo,
-    entry && computeResourceEntryMetrics(entry)
+    entry && computeResourceEntryMetrics(entry),
+    contentTypeFromPerformanceEntry,
+    networkHeaders
   )
 
   return {
-    startTime: startClocks.relative,
+    startClocks,
     duration,
     rawRumEvent: resourceEvent,
     domainContext: getResourceDomainContext(entry, request),
   }
+}
+
+function computeGraphQlMetaData(
+  request: RequestCompleteEvent,
+  configuration: RumConfiguration
+): GraphQlMetadata | undefined {
+  const graphQlConfig = findGraphQlConfiguration(request.url, configuration)
+  if (!graphQlConfig) {
+    return
+  }
+
+  return extractGraphQlMetadata(request, graphQlConfig)
+}
+
+function computeContentTypeFromPerformanceEntry(
+  entry: RumPerformanceResourceTiming
+): { resource: Pick<RawRumResourceEvent['resource'], 'response'> } | undefined {
+  const contentType = entry.contentType
+
+  if (contentType) {
+    return {
+      resource: {
+        response: {
+          headers: {
+            'content-type': contentType,
+          },
+        },
+      },
+    }
+  }
+
+  return undefined
 }
 
 function getResourceDomainContext(
@@ -252,4 +311,156 @@ function computeRequestDuration(pageStateHistory: PageStateHistory, startClocks:
  */
 function discardZeroStatus(statusCode: number | undefined): number | undefined {
   return statusCode === 0 ? undefined : statusCode
+}
+
+function computeNetworkHeaders(
+  request: RequestCompleteEvent | undefined,
+  configuration: RumConfiguration
+): { resource: { request?: ResourceRequest; response?: ResourceResponse } } | undefined {
+  const matchers = configuration.trackResourceHeaders
+  if (matchers.length === 0 || !request) {
+    return undefined
+  }
+
+  const urlMatchers = matchers.filter((m) => (m.url !== undefined ? matchList([m.url], request.url, true) : true))
+  if (urlMatchers.length === 0) {
+    return undefined
+  }
+
+  const responseMatchers = urlMatchers.filter(
+    (m) => m.location === undefined || m.location === 'any' || m.location === 'response'
+  )
+  const requestMatchers = urlMatchers.filter(
+    (m) => m.location === undefined || m.location === 'any' || m.location === 'request'
+  )
+
+  const responseHeaders = responseMatchers.length > 0 ? getResponseHeaders(request, responseMatchers) : undefined
+  const requestHeaders = requestMatchers.length > 0 ? getRequestHeaders(request, requestMatchers) : undefined
+
+  if (!responseHeaders && !requestHeaders) {
+    return undefined
+  }
+
+  return {
+    resource: {
+      request: requestHeaders ? { headers: requestHeaders } : undefined,
+      response: responseHeaders ? { headers: responseHeaders } : undefined,
+    },
+  }
+}
+
+function getResponseHeaders(request: RequestCompleteEvent, matchers: MatchHeader[]): NetworkHeaders | undefined {
+  if (request.type === RequestType.FETCH && request.response) {
+    return filterHeaders(request.response.headers, matchers)
+  }
+
+  if (request.type === RequestType.XHR && request.xhr) {
+    const rawXhrHeaders = request.xhr.getAllResponseHeaders()
+    if (rawXhrHeaders) {
+      try {
+        return filterHeaders(new Headers(parseRawXhrHeaders(rawXhrHeaders)), matchers)
+      } catch {
+        // Ignore parsing errors
+      }
+    }
+  }
+
+  return undefined
+}
+
+function getRequestHeaders(request: RequestCompleteEvent, matchers: MatchHeader[]): NetworkHeaders | undefined {
+  if (request.type !== RequestType.FETCH) {
+    return undefined
+  }
+
+  let headers: Headers | undefined
+
+  if (request.init?.headers) {
+    headers = new Headers(request.init.headers)
+  } else if (request.input instanceof Request) {
+    headers = request.input.headers
+  }
+
+  return headers ? filterHeaders(headers, matchers) : undefined
+}
+
+const FORBIDDEN_HEADER_PATTERN =
+  /(token|cookie|secret|authorization|(api|secret|access|app).?key|(client|connecting|real).?ip|forwarded)/
+const MAX_HEADER_COUNT = 100
+const MAX_HEADER_VALUE_LENGTH = 128
+
+function filterHeaders(headers: Headers, matchers: MatchHeader[]): NetworkHeaders | undefined {
+  const result: NetworkHeaders = {} as NetworkHeaders
+  let collectedHeaderCount = 0
+  let totalHeaderCount = 0
+  let hasReachedMaxHeaderCount = false
+
+  headers.forEach((value, name) => {
+    totalHeaderCount++
+
+    if (collectedHeaderCount >= MAX_HEADER_COUNT) {
+      if (!hasReachedMaxHeaderCount) {
+        display.warn(`Maximum number of headers (${MAX_HEADER_COUNT}) has been reached. Further headers are dropped.`)
+        hasReachedMaxHeaderCount = true
+      }
+
+      return
+    }
+
+    const lowerName = name.toLowerCase()
+
+    if (FORBIDDEN_HEADER_PATTERN.test(lowerName)) {
+      return
+    }
+
+    const matchHeader = matchers.find((m) => matchList([m.name], lowerName))
+    if (!matchHeader) {
+      return
+    }
+
+    const { extractor } = matchHeader
+    const capturedValue = extractor ? extractRegexMatch(value, extractor) : value
+    if (capturedValue === undefined) {
+      return
+    }
+
+    if (capturedValue.length > MAX_HEADER_VALUE_LENGTH) {
+      display.warn(
+        `Header "${lowerName}" value was truncated from ${capturedValue.length} to ${MAX_HEADER_VALUE_LENGTH} characters.`
+      )
+      // monitor-until: 2026-05-23
+      addTelemetryDebug('Resource header value was truncated', {
+        header_name: lowerName,
+        original_length: capturedValue.length,
+        limit: MAX_HEADER_VALUE_LENGTH,
+      })
+    }
+
+    result[lowerName] = safeTruncate(capturedValue, MAX_HEADER_VALUE_LENGTH)
+    collectedHeaderCount++
+  })
+
+  if (hasReachedMaxHeaderCount) {
+    // monitor-until: 2026-05-23
+    addTelemetryDebug('Maximum number of resource headers reached', {
+      collectedHeaderCount,
+      totalHeaderCount,
+    })
+  }
+
+  return collectedHeaderCount > 0 ? result : undefined
+}
+
+// Input:  "content-type: application/json\r\ncache-control: no-cache"
+// Output: [["content-type", "application/json"], ["cache-control", "no-cache"]]
+function parseRawXhrHeaders(rawXhrheaders: string): Array<[string, string]> {
+  const pairs: Array<[string, string]> = []
+  const lines = rawXhrheaders.trim().split(/\r\n/)
+  for (const line of lines) {
+    const colonIndex = line.indexOf(':')
+    if (colonIndex > 0) {
+      pairs.push([line.substring(0, colonIndex).trim(), line.substring(colonIndex + 1).trim()])
+    }
+  }
+  return pairs
 }

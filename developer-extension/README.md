@@ -2,31 +2,9 @@
 
 Browser extension to investigate your Browser SDK integration.
 
-## Getting started
+## Installation
 
-### From the Chrome Web Store
-
-The extension is available to **Datadog employees** on the [Chrome Web Store](https://chrome.google.com/webstore/detail/datadog-browser-sdk-devel/boceobohkgenpcpogecpjlnmnfbdigda).
-
-### By loading the extension unpacked
-
-The packed extension is not (yet?) published publicly. You will need to clone this repository and
-build the extension manually.
-
-```
-$ git clone https://github.com/DataDog/browser-sdk
-$ cd browser-sdk
-$ yarn
-$ yarn build
-```
-
-Then, in Google Chrome:
-
-- Open the _Extension Management_ page by navigating to [chrome://extensions](chrome://extensions).
-- Enable _Developer Mode_ by clicking the toggle switch next to _Developer mode_.
-- Click the _LOAD UNPACKED_ button and select the `browser-sdk/developer-extension/dist`
-  directory.
-- Open devtools and the extension features are located on the `Browser SDK` panel.
+The extension is available on the [Chrome Web Store](https://chrome.google.com/webstore/detail/datadog-browser-sdk-devel/boceobohkgenpcpogecpjlnmnfbdigda).
 
 ## Features
 
@@ -85,14 +63,26 @@ Info tab contains information about Session and RUM SDK configurations
 
 - **Debug Mode**: This option enables debug mode from the developer extension to display errors happening in RUM and LOGS in the developer console.
 
-## Contribution tips
+## Contribution
 
-To work on the developer extension and debug it easily:
+To get up to speed with WebExtensions for devtools, read the [Extend the developer tools](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Extending_the_developer_tools) MDN guide. Pay special attention to the various entrypoints (`panel.html`, `devtools.html`) and the content script communication, as it's not straightforward.
 
-1. In a terminal, cd into the `developer-extension` folder.
+### Development setup
 
-2. Run `yarn dev`.
+From the `developer-extension` folder, run `yarn build` then `yarn dev`.
 
-3. In Chrome, load the `developer-extension/dist` folder as an unpacked extension.
+There are two ways to work with the extension:
 
-4. After you make a change, right-click on the extension UI and “Reload frame”.
+#### Option A: Use the auto-launched browser (recommended)
+
+A Chrome window opens automatically with the extension loaded, DevTools open, and the [Browser SDK test playground](https://datadoghq.dev/browser-sdk-test-playground/) ready to use.
+
+#### Option B: Load the extension into your own Chrome profile
+
+1. In Chrome, navigate to [chrome://extensions](chrome://extensions) and enable _Developer Mode_.
+2. Click _Load unpacked_ and select the `dist/chrome-mv3/` folder.
+3. Open DevTools — the extension is available in the **Browser SDK** panel.
+
+> **Tip:** You can also load the `dist/chrome-mv3-dev/` folder for a development build with hot reload.
+
+After making a change, right-click the extension UI and select **Reload frame** to see your updates.

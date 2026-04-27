@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { ExperimentalFeature } from '@datadog/browser-core'
 import { createTest } from '../../lib/framework'
 
 test.describe('vital collection', () => {
@@ -19,5 +20,20 @@ test.describe('vital collection', () => {
       expect(intakeRegistry.rumVitalEvents).toHaveLength(1)
       expect(intakeRegistry.rumVitalEvents[0].vital.name).toEqual('foo')
       expect(intakeRegistry.rumVitalEvents[0].vital.duration).toEqual(expect.any(Number))
+    })
+
+  createTest('send operation step vital')
+    .withRum({
+      enableExperimentalFeatures: [ExperimentalFeature.FEATURE_OPERATION_VITAL],
+    })
+    .run(async ({ flushEvents, intakeRegistry, page }) => {
+      await page.evaluate(() => {
+        window.DD_RUM!.startFeatureOperation('foo')
+      })
+      await flushEvents()
+
+      expect(intakeRegistry.rumVitalEvents).toHaveLength(1)
+      expect(intakeRegistry.rumVitalEvents[0].vital.name).toEqual('foo')
+      expect(intakeRegistry.rumVitalEvents[0].vital.step_type).toEqual('start')
     })
 })

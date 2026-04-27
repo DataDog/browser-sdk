@@ -1,0 +1,7 @@
+{
+  "name": "@datadog/browser-rum-react/internal",
+  "private": true,
+  "main": "../cjs/entries/internal.js",
+  "module": "../esm/entries/internal.js",
+  "types": "../cjs/entries/internal.d.ts"
+}

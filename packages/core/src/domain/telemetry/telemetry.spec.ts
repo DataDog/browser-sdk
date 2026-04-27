@@ -1,17 +1,25 @@
+import type { TimeStamp } from '@datadog/browser-rum/internal'
 import { NO_ERROR_STACK_PRESENT_MESSAGE } from '../error/error'
 import { callMonitored } from '../../tools/monitor'
 import type { ExperimentalFeature } from '../../tools/experimentalFeatures'
-import { resetExperimentalFeatures, addExperimentalFeatures } from '../../tools/experimentalFeatures'
-import type { Configuration } from '../configuration'
-import { INTAKE_SITE_US1_FED, INTAKE_SITE_US1 } from '../intakeSites'
-import { setNavigatorOnLine, setNavigatorConnection, createHooks, waitNextMicrotask } from '../../../test'
+import { addExperimentalFeatures } from '../../tools/experimentalFeatures'
+import { validateAndBuildConfiguration, type Configuration } from '../configuration'
+import { INTAKE_SITE_US1_FED, INTAKE_SITE_US2_FED, INTAKE_SITE_US1 } from '../intakeSites'
+import {
+  setNavigatorOnLine,
+  setNavigatorConnection,
+  createHooks,
+  waitNextMicrotask,
+  interceptRequests,
+  registerCleanupTask,
+  createNewEvent,
+} from '../../../test'
 import type { Context } from '../../tools/serialisation/context'
 import { Observable } from '../../tools/observable'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { HookNames } from '../../tools/abstractHooks'
 import {
   addTelemetryError,
-  resetTelemetry,
   scrubCustomerFrames,
   formatError,
   addTelemetryConfiguration,
@@ -20,14 +28,19 @@ import {
   startTelemetryCollection,
   addTelemetryMetrics,
   addTelemetryDebug,
+  TelemetryMetrics,
+  startTelemetryTransport,
 } from './telemetry'
 import type { TelemetryEvent } from './telemetryEvent.types'
 import { StatusType, TelemetryType } from './rawTelemetryEvent.types'
 
-const NETWORK_METRICS_KIND = 'Network metrics'
-const PERFORMANCE_METRICS_KIND = 'Performance metrics'
-
-function startAndSpyTelemetry(configuration?: Partial<Configuration>) {
+function startAndSpyTelemetry(
+  configuration?: Partial<Configuration>,
+  {
+    metricSampleRate,
+    maxTelemetryEventsPerPage,
+  }: { metricSampleRate?: number; maxTelemetryEventsPerPage?: number } = {}
+) {
   const observable = new Observable<TelemetryEvent & Context>()
 
   const events: TelemetryEvent[] = []
@@ -36,13 +49,14 @@ function startAndSpyTelemetry(configuration?: Partial<Configuration>) {
   const telemetry = startTelemetryCollection(
     TelemetryService.RUM,
     {
-      maxTelemetryEventsPerPage: 7,
       telemetrySampleRate: 100,
       telemetryUsageSampleRate: 100,
       ...configuration,
     } as Configuration,
     hooks,
-    observable
+    observable,
+    metricSampleRate,
+    maxTelemetryEventsPerPage
   )
 
   return {
@@ -56,10 +70,6 @@ function startAndSpyTelemetry(configuration?: Partial<Configuration>) {
 }
 
 describe('telemetry', () => {
-  afterEach(() => {
-    resetTelemetry()
-  })
-
   it('collects "monitor" errors', async () => {
     const { getTelemetryEvents } = startAndSpyTelemetry()
     callMonitored(() => {
@@ -77,10 +87,6 @@ describe('telemetry', () => {
   })
 
   describe('addTelemetryConfiguration', () => {
-    afterEach(() => {
-      resetExperimentalFeatures()
-    })
-
     it('should collects configuration when sampled', async () => {
       const { getTelemetryEvents } = startAndSpyTelemetry({
         telemetrySampleRate: 100,
@@ -157,25 +163,33 @@ describe('telemetry', () => {
 
   describe('addTelemetryMetrics', () => {
     it('should collect metrics when sampled', async () => {
-      const { getTelemetryEvents } = startAndSpyTelemetry({ telemetrySampleRate: 100 })
+      const { getTelemetryEvents } = startAndSpyTelemetry({ telemetrySampleRate: 100 }, { metricSampleRate: 100 })
 
-      addTelemetryMetrics(PERFORMANCE_METRICS_KIND, { speed: 1000 })
+      addTelemetryMetrics(TelemetryMetrics.CUSTOMER_DATA_METRIC_NAME, { speed: 1000 })
 
       expect(await getTelemetryEvents()).toEqual([
         jasmine.objectContaining({
           telemetry: jasmine.objectContaining({
             type: TelemetryType.LOG,
-            message: PERFORMANCE_METRICS_KIND,
+            message: TelemetryMetrics.CUSTOMER_DATA_METRIC_NAME,
             status: StatusType.debug,
           }),
         }),
       ])
     })
 
-    it('should not notify metrics when not sampled', async () => {
-      const { getTelemetryEvents } = startAndSpyTelemetry({ telemetrySampleRate: 0 })
+    it('should not notify metrics when telemetry not sampled', async () => {
+      const { getTelemetryEvents } = startAndSpyTelemetry({ telemetrySampleRate: 0 }, { metricSampleRate: 100 })
 
-      addTelemetryMetrics(PERFORMANCE_METRICS_KIND, { speed: 1000 })
+      addTelemetryMetrics(TelemetryMetrics.CUSTOMER_DATA_METRIC_NAME, { speed: 1000 })
+
+      expect(await getTelemetryEvents()).toEqual([])
+    })
+
+    it('should not notify metrics when metric not sampled', async () => {
+      const { getTelemetryEvents } = startAndSpyTelemetry({ telemetrySampleRate: 100 }, { metricSampleRate: 0 })
+
+      addTelemetryMetrics(TelemetryMetrics.CUSTOMER_DATA_METRIC_NAME, { speed: 1000 })
 
       expect(await getTelemetryEvents()).toEqual([])
     })
@@ -225,6 +239,18 @@ describe('telemetry', () => {
     const { getTelemetryEvents } = startAndSpyTelemetry({ telemetrySampleRate: 100, telemetryUsageSampleRate: 100 })
 
     expect((await getTelemetryEvents()).length).toBe(1)
+  })
+
+  it('should collect ddtags', async () => {
+    const { getTelemetryEvents } = startAndSpyTelemetry({
+      service: 'foo',
+      env: 'bar',
+      version: '123',
+    })
+
+    addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: 'granted' })
+
+    expect((await getTelemetryEvents())[0].ddtags).toEqual('sdk_version:test,env:bar,service:foo,version:123')
   })
 
   describe('assemble telemetry hook', () => {
@@ -322,7 +348,7 @@ describe('telemetry', () => {
     })
 
     it('should not consider a discarded event for the maxTelemetryEventsPerPage', async () => {
-      const { getTelemetryEvents } = startAndSpyTelemetry({ maxTelemetryEventsPerPage: 2 })
+      const { getTelemetryEvents } = startAndSpyTelemetry(undefined, { maxTelemetryEventsPerPage: 2 })
 
       addTelemetryUsage({ feature: 'stop-session' })
       addTelemetryUsage({ feature: 'stop-session' })
@@ -337,7 +363,7 @@ describe('telemetry', () => {
 
   describe('maxTelemetryEventsPerPage', () => {
     it('should be enforced', async () => {
-      const { getTelemetryEvents } = startAndSpyTelemetry({ maxTelemetryEventsPerPage: 2 })
+      const { getTelemetryEvents } = startAndSpyTelemetry(undefined, { maxTelemetryEventsPerPage: 2 })
 
       addTelemetryUsage({ feature: 'stop-session' })
       addTelemetryUsage({ feature: 'start-session-replay-recording' })
@@ -350,43 +376,46 @@ describe('telemetry', () => {
     })
 
     it('should be enforced separately for different kinds of telemetry', async () => {
-      const { getTelemetryEvents } = startAndSpyTelemetry({ maxTelemetryEventsPerPage: 2 })
+      const { getTelemetryEvents } = startAndSpyTelemetry(undefined, {
+        metricSampleRate: 100,
+        maxTelemetryEventsPerPage: 2,
+      })
 
       // Group 1. These are all distinct kinds of telemetry, so these should all be sent.
       addTelemetryDebug('debug 1')
       addTelemetryError(new Error('error 1'))
-      addTelemetryMetrics(NETWORK_METRICS_KIND, { bandwidth: 500 })
-      addTelemetryMetrics(PERFORMANCE_METRICS_KIND, { speed: 1000 })
+      addTelemetryMetrics(TelemetryMetrics.SEGMENT_METRICS_TELEMETRY_NAME, { bandwidth: 500 })
+      addTelemetryMetrics(TelemetryMetrics.CUSTOMER_DATA_METRIC_NAME, { speed: 1000 })
       addTelemetryUsage({ feature: 'stop-session' })
 
       // Group 2. Again, these should all be sent.
       addTelemetryDebug('debug 2')
       addTelemetryError(new Error('error 2'))
-      addTelemetryMetrics(NETWORK_METRICS_KIND, { latency: 50 })
-      addTelemetryMetrics(PERFORMANCE_METRICS_KIND, { jank: 50 })
+      addTelemetryMetrics(TelemetryMetrics.SEGMENT_METRICS_TELEMETRY_NAME, { latency: 50 })
+      addTelemetryMetrics(TelemetryMetrics.CUSTOMER_DATA_METRIC_NAME, { jank: 50 })
       addTelemetryUsage({ feature: 'start-session-replay-recording' })
 
       // Group 3. Each of these events should hit the limit for their respective kind of
       // telemetry, so none of them should be sent.
       addTelemetryDebug('debug 3')
       addTelemetryError(new Error('error 3'))
-      addTelemetryMetrics(NETWORK_METRICS_KIND, { packet_loss: 99 })
-      addTelemetryMetrics(PERFORMANCE_METRICS_KIND, { latency: 500 })
+      addTelemetryMetrics(TelemetryMetrics.SEGMENT_METRICS_TELEMETRY_NAME, { packet_loss: 99 })
+      addTelemetryMetrics(TelemetryMetrics.CUSTOMER_DATA_METRIC_NAME, { latency: 500 })
       addTelemetryUsage({ feature: 'start-view' })
 
       expect((await getTelemetryEvents()).map((event) => event.telemetry)).toEqual([
         // Group 1.
         jasmine.objectContaining({ message: 'debug 1' }),
         jasmine.objectContaining({ message: 'error 1' }),
-        jasmine.objectContaining({ message: NETWORK_METRICS_KIND, bandwidth: 500 }),
-        jasmine.objectContaining({ message: PERFORMANCE_METRICS_KIND, speed: 1000 }),
+        jasmine.objectContaining({ message: TelemetryMetrics.SEGMENT_METRICS_TELEMETRY_NAME, bandwidth: 500 }),
+        jasmine.objectContaining({ message: TelemetryMetrics.CUSTOMER_DATA_METRIC_NAME, speed: 1000 }),
         jasmine.objectContaining({ usage: jasmine.objectContaining({ feature: 'stop-session' }) }),
 
         // Group 2.
         jasmine.objectContaining({ message: 'debug 2' }),
         jasmine.objectContaining({ message: 'error 2' }),
-        jasmine.objectContaining({ message: NETWORK_METRICS_KIND, latency: 50 }),
-        jasmine.objectContaining({ message: PERFORMANCE_METRICS_KIND, jank: 50 }),
+        jasmine.objectContaining({ message: TelemetryMetrics.SEGMENT_METRICS_TELEMETRY_NAME, latency: 50 }),
+        jasmine.objectContaining({ message: TelemetryMetrics.CUSTOMER_DATA_METRIC_NAME, jank: 50 }),
         jasmine.objectContaining({ usage: jasmine.objectContaining({ feature: 'start-session-replay-recording' }) }),
       ])
     })
@@ -395,6 +424,7 @@ describe('telemetry', () => {
   describe('excluded sites', () => {
     ;[
       { site: INTAKE_SITE_US1_FED, enabled: false },
+      { site: INTAKE_SITE_US2_FED, enabled: false },
       { site: INTAKE_SITE_US1, enabled: true },
     ].forEach(({ site, enabled }) => {
       it(`should be ${enabled ? 'enabled' : 'disabled'} on ${site}`, async () => {
@@ -412,6 +442,46 @@ describe('telemetry', () => {
         }
       })
     })
+  })
+})
+
+describe('startTelemetryTransport', () => {
+  it('should send telemetry events through transport', () => {
+    const interceptor = interceptRequests()
+    const telemetryObservable = new Observable<TelemetryEvent & Context>()
+
+    const { stop } = startTelemetryTransport(
+      validateAndBuildConfiguration({ clientToken: 'xxx' })!,
+      telemetryObservable
+    )
+
+    registerCleanupTask(stop)
+
+    // Trigger a telemetry event by notifying the observable
+    telemetryObservable.notify({
+      type: 'telemetry',
+      date: 123 as TimeStamp,
+      service: TelemetryService.RUM,
+      version: '0.0.0',
+      source: 'browser',
+      telemetry: {
+        type: TelemetryType.LOG,
+        status: StatusType.error,
+        message: 'test error',
+      },
+      _dd: {
+        format_version: 2,
+      },
+    })
+
+    // Force the batch to flush by emulating a beforeunload event
+    window.dispatchEvent(createNewEvent('beforeunload'))
+
+    expect(interceptor.requests.length).toBe(1)
+    const telemetryEvent = JSON.parse(interceptor.requests[0].body)
+    expect(telemetryEvent.type).toBe('telemetry')
+    expect(telemetryEvent.telemetry.type).toBe(TelemetryType.LOG)
+    expect(telemetryEvent.telemetry.status).toBe(StatusType.error)
   })
 })
 

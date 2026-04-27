@@ -34,6 +34,8 @@ const RUM_EVENT_TYPE_COLOR = {
   resource: 'cyan',
   telemetry: 'teal',
   vital: 'orange',
+  transition: 'green',
+  view_update: 'blue',
 }
 
 const LOG_STATUS_COLOR = {
@@ -128,7 +130,7 @@ export const EventRow = React.memo(
                   }}
                 >
                   <EventDescription event={event} />
-                  <LazyCollapse in={!isCollapsed}>
+                  <LazyCollapse expanded={!isCollapsed}>
                     <Json
                       ref={jsonRef}
                       value={event}
@@ -371,7 +373,7 @@ function LongTaskDescription({ event }: { event: RumLongTaskEvent }) {
 
 function VitalDescription({ event }: { event: RumVitalEvent }) {
   const vitalName = event.vital.name
-  const vitalValue = event.vital.duration
+  const vitalValue = (event.vital as { duration?: number }).duration
   const vitalDescription = event.vital.description
   return (
     <>

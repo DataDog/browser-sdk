@@ -9,8 +9,15 @@ export function generateUUID(placeholder?: string): string {
     : `${1e7}-${1e3}-${4e3}-${8e3}-${1e11}`.replace(/[018]/g, generateUUID)
 }
 
-const COMMA_SEPARATED_KEY_VALUE = /([\w-]+)\s*=\s*([^;]+)/g
+// Assuming input string is following the HTTP Cookie format defined in
+// https://www.ietf.org/rfc/rfc2616.txt and https://www.ietf.org/rfc/rfc6265.txt, we don't need to
+// be too strict with this regex.
+const COMMA_SEPARATED_KEY_VALUE = /(\S+?)\s*=\s*(.+?)(?:;|$)/g
 
+/**
+ * Returns the value of the key with the given name
+ * If there are multiple values with the same key, returns the first one
+ */
 export function findCommaSeparatedValue(rawString: string, name: string): string | undefined {
   COMMA_SEPARATED_KEY_VALUE.lastIndex = 0
   while (true) {
@@ -25,6 +32,36 @@ export function findCommaSeparatedValue(rawString: string, name: string): string
   }
 }
 
+/**
+ * Returns a map of all the values with the given key
+ * If there are multiple values with the same key, returns all the values
+ */
+export function findAllCommaSeparatedValues(rawString: string): Map<string, string[]> {
+  const result = new Map<string, string[]>()
+  COMMA_SEPARATED_KEY_VALUE.lastIndex = 0
+  while (true) {
+    const match = COMMA_SEPARATED_KEY_VALUE.exec(rawString)
+    if (match) {
+      const key = match[1]
+      const value = match[2]
+      if (result.has(key)) {
+        result.get(key)!.push(value)
+      } else {
+        result.set(key, [value])
+      }
+    } else {
+      break
+    }
+  }
+  return result
+}
+
+/**
+ * Returns a map of the values with the given key
+ * ⚠️ If there are multiple values with the same key, returns the LAST one
+ *
+ * @deprecated use `findAllCommaSeparatedValues()` instead
+ */
 export function findCommaSeparatedValues(rawString: string): Map<string, string> {
   const result = new Map<string, string>()
   COMMA_SEPARATED_KEY_VALUE.lastIndex = 0

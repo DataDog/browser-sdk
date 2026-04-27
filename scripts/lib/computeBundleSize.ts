@@ -1,9 +1,8 @@
-import path from 'path'
-import fs from 'fs'
-import zlib from 'zlib'
-import { glob } from 'glob'
+import path from 'node:path'
+import fs from 'node:fs'
+import zlib from 'node:zlib'
 
-const packages = ['rum', 'logs', 'flagging', 'rum-slim', 'worker'] as const
+const packages = ['rum', 'logs', 'rum-slim', 'worker'] as const
 
 interface BundleSize {
   uncompressed: number
@@ -52,7 +51,7 @@ function getPackageSize(packageName: string): BundleSizes {
   const bundleSizes: BundleSizes = {}
   const packagePath = path.join(import.meta.dirname, `../../packages/${packageName}/bundle/`)
 
-  for (const file of glob.sync('**/*.js', { cwd: packagePath })) {
+  for (const file of fs.globSync('**/*.js', { cwd: packagePath })) {
     const name = getPackageName(file)
 
     if (!name) {
@@ -78,16 +77,4 @@ export function calculateBundleSizes(): BundleSizes {
   }
 
   return bundleSizes
-}
-
-export function formatSize(bytes: number | null): string {
-  if (bytes === null) {
-    return 'N/A'
-  }
-
-  if (bytes < 1024) {
-    return `${Math.round(bytes)} B`
-  }
-
-  return `${(bytes / 1024).toFixed(2)} KiB`
 }

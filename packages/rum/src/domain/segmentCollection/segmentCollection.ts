@@ -42,7 +42,8 @@ export let SEGMENT_BYTES_LIMIT = 60_000
 // indicating why the session has been created.
 
 interface SegmentCollector {
-  addRecord(this: void, record: BrowserRecord, stats?: SerializationStats): void
+  addRecord(this: void, record: BrowserRecord): void
+  addStats(this: void, stats: SerializationStats): void
   stop(this: void): void
 }
 
@@ -130,7 +131,7 @@ export function doStartSegmentCollection(
   }
 
   return {
-    addRecord: (record: BrowserRecord, stats?: SerializationStats) => {
+    addRecord: (record: BrowserRecord) => {
       if (state.status === SegmentCollectionStatus.Stopped) {
         return
       }
@@ -150,11 +151,17 @@ export function doStartSegmentCollection(
         }
       }
 
-      state.segment.addRecord(record, stats, (encodedBytesCount) => {
+      state.segment.addRecord(record, (encodedBytesCount) => {
         if (encodedBytesCount > SEGMENT_BYTES_LIMIT) {
           flushSegment('segment_bytes_limit')
         }
       })
+    },
+
+    addStats: (stats: SerializationStats) => {
+      if (state.status === SegmentCollectionStatus.SegmentPending) {
+        state.segment.addStats(stats)
+      }
     },
 
     stop: () => {

@@ -49,10 +49,11 @@ function listenToCookieStoreChange(configuration: Configuration) {
 export const WATCH_COOKIE_INTERVAL_DELAY = ONE_SECOND
 
 function watchCookieFallback(cookieName: string, callback: (event: string | undefined) => void) {
-  const previousCookieValue = findCommaSeparatedValue(document.cookie, cookieName)
+  let previousCookieValue = findCommaSeparatedValue(document.cookie, cookieName)
   const watchCookieIntervalId = setInterval(() => {
     const cookieValue = findCommaSeparatedValue(document.cookie, cookieName)
     if (cookieValue !== previousCookieValue) {
+      previousCookieValue = cookieValue
       callback(cookieValue)
     }
   }, WATCH_COOKIE_INTERVAL_DELAY)

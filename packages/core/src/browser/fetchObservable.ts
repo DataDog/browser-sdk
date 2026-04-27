@@ -1,10 +1,14 @@
 import type { InstrumentedMethodCall } from '../tools/instrumentMethod'
 import { instrumentMethod } from '../tools/instrumentMethod'
-import { monitor } from '../tools/monitor'
+import { monitorError } from '../tools/monitor'
 import { Observable } from '../tools/observable'
 import type { ClocksState } from '../tools/utils/timeUtils'
 import { clocksNow } from '../tools/utils/timeUtils'
 import { normalizeUrl } from '../tools/utils/urlPolyfill'
+import type { GlobalObject } from '../tools/globalObject'
+import { globalObject } from '../tools/globalObject'
+import { readBytesFromStream } from '../tools/readBytesFromStream'
+import { tryToClone } from '../tools/utils/responseUtils'
 
 interface FetchContextBase {
   method: string
@@ -13,6 +17,7 @@ interface FetchContextBase {
   init?: RequestInit
   url: string
   handlingStack?: string
+  isAbortedOnStart: boolean
 }
 
 export interface FetchStartContext extends FetchContextBase {
@@ -23,6 +28,7 @@ export interface FetchResolveContext extends FetchContextBase {
   state: 'resolve'
   status: number
   response?: Response
+  responseBody?: string
   responseType?: string
   isAborted: boolean
   error?: Error
@@ -30,9 +36,27 @@ export interface FetchResolveContext extends FetchContextBase {
 
 export type FetchContext = FetchStartContext | FetchResolveContext
 
-let fetchObservable: Observable<FetchContext> | undefined
+type ResponseBodyActionGetter = (context: FetchResolveContext) => ResponseBodyAction
 
-export function initFetchObservable() {
+/**
+ * Action to take with the response body of a fetch request.
+ * Values are ordered by priority: higher values take precedence when multiple actions are requested.
+ */
+export const enum ResponseBodyAction {
+  IGNORE = 0,
+  // TODO(next-major): Remove the "WAIT" action when `trackEarlyRequests` is removed, as the
+  // duration of fetch requests will always come from PerformanceResourceTiming
+  WAIT = 1,
+  COLLECT = 2,
+}
+
+let fetchObservable: Observable<FetchContext> | undefined
+const responseBodyActionGetters: ResponseBodyActionGetter[] = []
+
+export function initFetchObservable({ responseBodyAction }: { responseBodyAction?: ResponseBodyActionGetter } = {}) {
+  if (responseBodyAction) {
+    responseBodyActionGetters.push(responseBodyAction)
+  }
   if (!fetchObservable) {
     fetchObservable = createFetchObservable()
   }
@@ -41,15 +65,17 @@ export function initFetchObservable() {
 
 export function resetFetchObservable() {
   fetchObservable = undefined
+  responseBodyActionGetters.length = 0
 }
 
 function createFetchObservable() {
   return new Observable<FetchContext>((observable) => {
-    if (!window.fetch) {
+    // eslint-disable-next-line local-rules/disallow-zone-js-patched-values
+    if (!globalObject.fetch) {
       return
     }
 
-    const { stop } = instrumentMethod(window, 'fetch', (call) => beforeSend(call, observable), {
+    const { stop } = instrumentMethod(globalObject, 'fetch', (call) => beforeSend(call, observable), {
       computeHandlingStack: true,
     })
 
@@ -58,7 +84,7 @@ function createFetchObservable() {
 }
 
 function beforeSend(
-  { parameters, onPostCall, handlingStack }: InstrumentedMethodCall<Window, 'fetch'>,
+  { parameters, onPostCall, handlingStack }: InstrumentedMethodCall<GlobalObject, 'fetch'>,
   observable: Observable<FetchContext>
 ) {
   const [input, init] = parameters
@@ -80,6 +106,7 @@ function beforeSend(
     startClocks,
     url,
     handlingStack,
+    isAbortedOnStart: (input instanceof Request && input.signal?.aborted) || init?.signal?.aborted || false,
   }
 
   observable.notify(context)
@@ -88,38 +115,56 @@ function beforeSend(
   parameters[0] = context.input as RequestInfo | URL
   parameters[1] = context.init
 
-  onPostCall((responsePromise) => afterSend(observable, responsePromise, context))
+  onPostCall((responsePromise) => {
+    afterSend(observable, responsePromise, context).catch(monitorError)
+  })
 }
 
-function afterSend(
+async function afterSend(
   observable: Observable<FetchContext>,
   responsePromise: Promise<Response>,
   startContext: FetchStartContext
 ) {
   const context = startContext as unknown as FetchResolveContext
+  context.state = 'resolve'
 
-  function reportFetch(partialContext: Partial<FetchResolveContext>) {
-    context.state = 'resolve'
-    Object.assign(context, partialContext)
+  let response: Response
+
+  try {
+    response = await responsePromise
+  } catch (error) {
+    context.status = 0
+    context.isAborted =
+      context.init?.signal?.aborted || (error instanceof DOMException && error.code === DOMException.ABORT_ERR)
+    context.error = error as Error
     observable.notify(context)
+    return
   }
 
-  responsePromise.then(
-    monitor((response) => {
-      reportFetch({
-        response,
-        responseType: response.type,
-        status: response.status,
-        isAborted: false,
-      })
-    }),
-    monitor((error: Error) => {
-      reportFetch({
-        status: 0,
-        isAborted:
-          context.init?.signal?.aborted || (error instanceof DOMException && error.code === DOMException.ABORT_ERR),
-        error,
-      })
-    })
-  )
+  context.response = response
+  context.status = response.status
+  context.responseType = response.type
+  context.isAborted = false
+
+  const responseBodyCondition = responseBodyActionGetters.reduce(
+    (action, getter) => Math.max(action, getter(context)),
+    ResponseBodyAction.IGNORE
+  ) as ResponseBodyAction
+
+  if (responseBodyCondition !== ResponseBodyAction.IGNORE) {
+    const clonedResponse = tryToClone(response)
+    if (clonedResponse && clonedResponse.body) {
+      try {
+        const bytes = await readBytesFromStream(clonedResponse.body, {
+          collectStreamBody: responseBodyCondition === ResponseBodyAction.COLLECT,
+        })
+        context.responseBody = bytes && new TextDecoder().decode(bytes)
+      } catch {
+        // Ignore errors when reading the response body (e.g., stream aborted, network errors)
+        // This is not critical and should not be reported as an SDK error
+      }
+    }
+  }
+
+  observable.notify(context)
 }

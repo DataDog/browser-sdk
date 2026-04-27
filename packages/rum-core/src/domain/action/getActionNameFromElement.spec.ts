@@ -1,5 +1,4 @@
-import { ExperimentalFeature } from '@datadog/browser-core'
-import { mockExperimentalFeatures } from '../../../../core/test'
+import { addExperimentalFeatures, ExperimentalFeature } from '@datadog/browser-core'
 import { appendElement, mockRumConfiguration } from '../../../test'
 import { NodePrivacyLevel } from '../privacyConstants'
 import { getNodeSelfPrivacyLevel } from '../privacy'
@@ -115,7 +114,7 @@ describe('getActionNameFromElement', () => {
   })
 
   it('should introduce whitespace for block-level display values', () => {
-    mockExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
+    addExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
     const testCases = [
       { display: 'block', expected: 'space' },
       { display: 'inline-block', expected: 'no-space' },
@@ -484,7 +483,7 @@ describe('getActionNameFromElement', () => {
     })
 
     it('removes only the child with programmatic action name in textual content', () => {
-      mockExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
+      addExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
       const { name, nameSource } = getActionNameFromElement(
         appendElement('<div>Foobar Baz<div data-dd-action-name="custom action">bar<div></div>'),
         defaultConfiguration
@@ -512,7 +511,7 @@ describe('getActionNameFromElement', () => {
     }
 
     it('preserves privacy level of the element when defaultPrivacyLevel is mask-unless-allowlisted', () => {
-      mockExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
+      addExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
       const { name, nameSource } = getActionNameFromElement(
         appendElement(`
         <div data-dd-privacy="mask">
@@ -643,9 +642,30 @@ describe('getActionNameFromElement', () => {
           expectedName: 'foo bar baz',
           expectedNameSource: 'text_content',
         },
+        {
+          html: `
+          <div data-dd-privacy="mask-unless-allowlisted" alt="bar" target>
+            <span>bar</span>
+          </div>
+          `,
+          defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+          expectedName: 'Masked Element',
+          expectedNameSource: 'standard_attribute',
+        },
+        {
+          html: `
+          <div data-dd-privacy="mask-unless-allowlisted" alt="foo" target>
+            <span>bar</span>
+          </div>
+          `,
+          defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+          allowlist: ['foo'],
+          expectedName: 'foo',
+          expectedNameSource: 'standard_attribute',
+        },
       ]
       testCases.forEach(({ html, defaultPrivacyLevel, allowlist, expectedName, expectedNameSource }) => {
-        mockExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
+        addExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
         ;(window as BrowserWindow).$DD_ALLOW = new Set(allowlist)
         const target = appendElement(html)
         const { name, nameSource } = getActionNameFromElement(
@@ -862,7 +882,7 @@ describe('getActionNameFromElement', () => {
       })
 
       it('inherit privacy level and remove only the masked child', () => {
-        mockExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
+        addExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
         expect(
           getActionNameFromElement(
             appendElement(`
@@ -907,6 +927,89 @@ describe('getActionNameFromElement', () => {
           )
         ).toEqual({ name: 'bar foo', nameSource: ActionNameSource.TEXT_CONTENT })
       })
+    })
+  })
+
+  describe('shadow DOM support', () => {
+    it('extracts text content from element inside shadow DOM', () => {
+      const host = appendElement('<div></div>')
+      const shadowRoot = host.attachShadow({ mode: 'open' })
+      const button = document.createElement('button')
+      button.textContent = 'Shadow Button'
+      shadowRoot.appendChild(button)
+
+      const { name, nameSource } = getActionNameFromElement(button, defaultConfiguration)
+      expect(name).toBe('Shadow Button')
+      expect(nameSource).toBe('text_content')
+    })
+
+    it('finds data-dd-action-name on shadow host when element is inside shadow DOM', () => {
+      const host = appendElement('<div data-dd-action-name="Custom Action"></div>')
+      const shadowRoot = host.attachShadow({ mode: 'open' })
+      const target = document.createElement('button')
+      shadowRoot.appendChild(target)
+
+      const { name, nameSource } = getActionNameFromElement(target, defaultConfiguration)
+      expect(name).toBe('Custom Action')
+      expect(nameSource).toBe('custom_attribute')
+    })
+
+    it('traverses parent elements across shadow boundary to find action name', () => {
+      const host = appendElement('<div></div>')
+      const shadowRoot = host.attachShadow({ mode: 'open' })
+      const wrapper = document.createElement('div')
+      wrapper.setAttribute('title', 'Parent Title')
+      const target = document.createElement('span')
+      wrapper.appendChild(target)
+      shadowRoot.appendChild(wrapper)
+
+      const { name, nameSource } = getActionNameFromElement(target, defaultConfiguration)
+      expect(name).toBe('Parent Title')
+      expect(nameSource).toBe('standard_attribute')
+    })
+
+    it('finds aria-labelledby element inside the same shadow DOM', () => {
+      const host = appendElement('<div></div>')
+      const shadowRoot = host.attachShadow({ mode: 'open' })
+
+      const label = document.createElement('span')
+      label.id = 'shadow-label'
+      label.textContent = 'Save Data'
+      shadowRoot.appendChild(label)
+
+      const button = document.createElement('button')
+      button.setAttribute('aria-labelledby', 'shadow-label')
+      shadowRoot.appendChild(button)
+
+      const { name, nameSource } = getActionNameFromElement(button, defaultConfiguration)
+      expect(name).toBe('Save Data')
+      expect(nameSource).toBe('text_content')
+    })
+
+    it('falls back to document when aria-labelledby references an element outside shadow DOM', () => {
+      appendElement('<span id="light-dom-label">External Label</span>')
+
+      const host = appendElement('<div></div>')
+      const shadowRoot = host.attachShadow({ mode: 'open' })
+
+      const button = document.createElement('button')
+      button.setAttribute('aria-labelledby', 'light-dom-label')
+      shadowRoot.appendChild(button)
+
+      const { name, nameSource } = getActionNameFromElement(button, defaultConfiguration)
+      expect(name).toBe('External Label')
+      expect(nameSource).toBe('text_content')
+    })
+
+    it('respects privacy settings for elements inside shadow DOM', () => {
+      const host = appendElement('<div></div>')
+      const shadowRoot = host.attachShadow({ mode: 'open' })
+      const button = document.createElement('button')
+      button.textContent = 'Secret Button'
+      shadowRoot.appendChild(button)
+
+      const { name } = getActionNameFromElement(button, defaultConfiguration, NodePrivacyLevel.MASK)
+      expect(name).toBe('Masked Element')
     })
   })
 })

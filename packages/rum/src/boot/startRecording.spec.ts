@@ -1,9 +1,17 @@
 import type { TimeStamp, HttpRequest, HttpRequestEvent, Telemetry } from '@datadog/browser-core'
-import { PageExitReason, DefaultPrivacyLevel, noop, DeflateEncoderStreamId, Observable } from '@datadog/browser-core'
+import {
+  PageExitReason,
+  DefaultPrivacyLevel,
+  noop,
+  DeflateEncoderStreamId,
+  Observable,
+  ExperimentalFeature,
+  addExperimentalFeatures,
+} from '@datadog/browser-core'
 import type { ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType, startViewHistory } from '@datadog/browser-rum-core'
 import { collectAsyncCalls, createNewEvent, mockEventBridge, registerCleanupTask } from '@datadog/browser-core/test'
-import type { ViewEndedEvent } from 'packages/rum-core/src/domain/view/trackViews'
+import type { ViewEndedEvent } from '../../../rum-core/src/domain/view/trackViews'
 import type { RumSessionManagerMock } from '../../../rum-core/test'
 import { appendElement, createRumSessionManagerMock, mockRumConfiguration } from '../../../rum-core/test'
 
@@ -12,7 +20,6 @@ import type { ReplayPayload } from '../domain/segmentCollection'
 import { setSegmentBytesLimit } from '../domain/segmentCollection'
 
 import { RecordType } from '../types'
-import { resetReplayStats } from '../domain/replayStats'
 import { createDeflateEncoder, resetDeflateWorkerState, startDeflateWorker } from '../domain/deflate'
 import { startRecording } from './startRecording'
 
@@ -28,7 +35,6 @@ describe('startRecording', () => {
 
   function setupStartRecording() {
     const configuration = mockRumConfiguration({ defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW })
-    resetReplayStats()
     const worker = startDeflateWorker(configuration, 'Session Replay', noop)
 
     requestSendSpy = jasmine.createSpy()
@@ -42,7 +48,7 @@ describe('startRecording', () => {
     const viewHistory = startViewHistory(lifeCycle)
     initialView(lifeCycle)
 
-    const mockTelemetry = { enabled: true } as Telemetry
+    const mockTelemetry = { enabled: true, metricsEnabled: true } as Telemetry
 
     const recording = startRecording(
       lifeCycle,
@@ -76,7 +82,36 @@ describe('startRecording', () => {
 
     const requests = await readSentRequests(1)
     expect(requests[0].segment).toEqual(jasmine.any(Object))
-    expect(requests[0].metadata).toEqual({
+    expect(requests[0].event).toEqual({
+      application: {
+        id: 'appId',
+      },
+      creation_reason: 'init',
+      end: jasmine.stringMatching(/^\d{13}$/),
+      has_full_snapshot: true,
+      records_count: recordsPerFullSnapshot(),
+      session: {
+        id: 'session-id',
+      },
+      start: jasmine.any(Number),
+      raw_segment_size: jasmine.any(Number),
+      compressed_segment_size: jasmine.any(Number),
+      view: {
+        id: 'view-id',
+      },
+      index_in_view: 0,
+      source: 'browser',
+    })
+  })
+
+  it('sends recorded segments with valid context when Change records are enabled', async () => {
+    addExperimentalFeatures([ExperimentalFeature.USE_CHANGE_RECORDS])
+    setupStartRecording()
+    flushSegment(lifeCycle)
+
+    const requests = await readSentRequests(1)
+    expect(requests[0].segment).toEqual(jasmine.any(Object))
+    expect(requests[0].event).toEqual({
       application: {
         id: 'appId',
       },
@@ -110,7 +145,7 @@ describe('startRecording', () => {
     }
 
     const requests = await readSentRequests(1)
-    expect(requests[0].metadata.records_count).toBe(inputCount + recordsPerFullSnapshot())
+    expect(requests[0].event.records_count).toBe(inputCount + recordsPerFullSnapshot())
   })
 
   it('stops sending new segment when the session is expired', async () => {
@@ -125,7 +160,7 @@ describe('startRecording', () => {
     flushSegment(lifeCycle)
 
     const requests = await readSentRequests(1)
-    expect(requests[0].metadata.records_count).toBe(1 + recordsPerFullSnapshot())
+    expect(requests[0].event.records_count).toBe(1 + recordsPerFullSnapshot())
   })
 
   it('restarts sending segments when the session is renewed', async () => {
@@ -141,8 +176,8 @@ describe('startRecording', () => {
     flushSegment(lifeCycle)
 
     const requests = await readSentRequests(1)
-    expect(requests[0].metadata.records_count).toBe(1)
-    expect(requests[0].metadata.session.id).toBe('new-session-id')
+    expect(requests[0].event.records_count).toBe(1)
+    expect(requests[0].event.session.id).toBe('new-session-id')
   })
 
   it('flushes pending mutations before ending the view', async () => {
@@ -195,7 +230,7 @@ describe('startRecording', () => {
       flushSegment(lifeCycle)
 
       const requests = await readSentRequests(1)
-      expect(requests[0].metadata.records_count).toBe(1 + recordsPerFullSnapshot())
+      expect(requests[0].event.records_count).toBe(1 + recordsPerFullSnapshot())
     })
 
     it('stops taking full snapshots on view creation', async () => {
@@ -206,7 +241,7 @@ describe('startRecording', () => {
       flushSegment(lifeCycle)
 
       const requests = await readSentRequests(1)
-      expect(requests[0].metadata.records_count).toBe(recordsPerFullSnapshot())
+      expect(requests[0].event.records_count).toBe(recordsPerFullSnapshot())
     })
   })
 

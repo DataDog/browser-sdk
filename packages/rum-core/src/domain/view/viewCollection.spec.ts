@@ -10,7 +10,7 @@ import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { RumConfiguration } from '../configuration'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { ViewHistoryEntry } from '../contexts/viewHistory'
-import type { DefaultTelemetryEventAttributes, Hooks } from '../hooks'
+import type { AssembleHookParams, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import { startViewCollection } from './viewCollection'
@@ -86,7 +86,6 @@ describe('viewCollection', () => {
       lifeCycle,
       hooks,
       mockRumConfiguration(partialConfiguration),
-      location,
       domMutationObservable,
       windowOpenObservable,
       locationChangeObservable,
@@ -110,7 +109,7 @@ describe('viewCollection', () => {
     setupViewCollection()
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
 
-    expect(rawRumEvents[rawRumEvents.length - 1].startTime).toBe(1234 as RelativeTime)
+    expect(rawRumEvents[rawRumEvents.length - 1].startClocks.relative).toBe(1234 as RelativeTime)
     expect(rawRumEvents[rawRumEvents.length - 1].rawRumEvent).toEqual({
       _dd: {
         document_version: 3,
@@ -180,11 +179,13 @@ describe('viewCollection', () => {
             duration: (10 * 1e6) as ServerDuration,
             timestamp: (100 * 1e6) as ServerDuration,
             target_selector: undefined,
+            sub_parts: undefined,
           },
           lcp: {
             timestamp: (10 * 1e6) as ServerDuration,
             target_selector: undefined,
             resource_url: undefined,
+            sub_parts: undefined,
           },
         },
         resource: {
@@ -257,7 +258,7 @@ describe('viewCollection', () => {
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 0 as RelativeTime,
-      })
+      } as AssembleHookParams)
 
       expect(defaultRumEventAttributes).toEqual(
         jasmine.objectContaining({
@@ -278,7 +279,7 @@ describe('viewCollection', () => {
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 0 as RelativeTime,
-      })
+      } as AssembleHookParams)
 
       expect(defaultRumEventAttributes).toBe(DISCARDED)
     })

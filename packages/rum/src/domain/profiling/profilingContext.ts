@@ -7,15 +7,18 @@ export interface ProfilingContextManager {
   get: () => ProfilingInternalContextSchema | undefined
 }
 
-export const startProfilingContext = (hooks: Hooks): ProfilingContextManager => {
-  // Default status is `starting`.
+export function startProfilingContext(hooks: Hooks): ProfilingContextManager {
   let currentContext: ProfilingInternalContextSchema = {
     status: 'starting',
   }
 
-  // Register the assemble hook to add the profiling context to the event attributes.
   hooks.register(HookNames.Assemble, ({ eventType }) => {
-    if (eventType !== RumEventType.VIEW && eventType !== RumEventType.LONG_TASK) {
+    if (
+      eventType !== RumEventType.VIEW &&
+      eventType !== RumEventType.LONG_TASK &&
+      eventType !== RumEventType.ACTION &&
+      eventType !== RumEventType.VITAL
+    ) {
       return SKIPPED
     }
 

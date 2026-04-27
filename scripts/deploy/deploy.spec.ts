@@ -14,7 +14,7 @@ interface PullRequest {
   ['number']: number
 }
 
-void describe('deploy', () => {
+describe('deploy', () => {
   const commandMock = mock.fn()
   const fetchPRMock = mock.fn<() => Promise<PullRequest>>()
   let deploy: (env: string, version: string, uploadPathTypes: string[]) => Promise<void>
@@ -45,7 +45,7 @@ void describe('deploy', () => {
     commands = mockCommandImplementation(commandMock)
   })
 
-  void it('should deploy root packages', async () => {
+  it('should deploy root packages', async () => {
     await deploy('prod', 'v6', ['root'])
 
     assert.deepEqual(getS3Commands(), [
@@ -87,7 +87,7 @@ void describe('deploy', () => {
     ])
   })
 
-  void it('should deploy datacenter packages', async () => {
+  it('should deploy datacenter packages', async () => {
     await deploy('prod', 'v6', ['us1'])
 
     assert.deepEqual(getS3Commands(), [
@@ -124,7 +124,7 @@ void describe('deploy', () => {
     ])
   })
 
-  void it('should deploy staging packages', async () => {
+  it('should deploy staging packages', async () => {
     await deploy('staging', 'staging', ['root'])
 
     assert.deepEqual(getS3Commands(), [
@@ -162,7 +162,7 @@ void describe('deploy', () => {
     ])
   })
 
-  void it('should deploy PR packages', async () => {
+  it('should deploy PR packages', async () => {
     // mock the PR number fetch
     fetchPRMock.mock.mockImplementation(() => Promise.resolve({ ['number']: 123 }))
 

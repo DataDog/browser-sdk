@@ -631,6 +631,16 @@ describe('startSessionManager', () => {
       expectSessionIdToBeDefined(sessionManager)
       expect(sessionManager.findSession()!.id).not.toBe(initialSessionId)
     })
+
+    it('Remove anonymousId when tracking consent is withdrawn', () => {
+      const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
+      const sessionManager = startSessionManagerWithDefaults({ trackingConsentState })
+      const session = sessionManager.findSession()!
+
+      trackingConsentState.update(TrackingConsent.NOT_GRANTED)
+
+      expect(session.anonymousId).toBeUndefined()
+    })
   })
 
   describe('session state update', () => {

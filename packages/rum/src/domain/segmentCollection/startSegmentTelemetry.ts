@@ -1,15 +1,17 @@
 import type { BandwidthStats, Context, HttpRequestEvent, Observable, Telemetry } from '@datadog/browser-core'
-import { performDraw, addTelemetryMetrics, noop } from '@datadog/browser-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
+import { TelemetryMetrics, addTelemetryMetrics, noop } from '@datadog/browser-core'
+import { isFullSnapshotChangeRecordsEnabled, isIncrementalSnapshotChangeRecordsEnabled } from '../record'
 import type { ReplayPayload } from './buildReplayPayload'
-
-const SEGMENT_METRICS_TELEMETRY_NAME = 'Segment network request metrics'
 
 interface SegmentMetrics extends Context {
   cssText: {
     count: number
     max: number
     sum: number
+  }
+  encoding: {
+    fullSnapshot: 'v1' | 'change'
+    incrementalSnapshot: 'v1' | 'change'
   }
   isFullSnapshot: boolean
   ongoingRequests: {
@@ -30,12 +32,10 @@ interface SegmentMetrics extends Context {
 }
 
 export function startSegmentTelemetry(
-  configuration: RumConfiguration,
   telemetry: Telemetry,
   requestObservable: Observable<HttpRequestEvent<ReplayPayload>>
 ) {
-  const segmentTelemetryEnabled = telemetry.enabled && performDraw(configuration.replayTelemetrySampleRate)
-  if (!segmentTelemetryEnabled) {
+  if (!telemetry.metricsEnabled) {
     return { stop: noop }
   }
 
@@ -46,7 +46,8 @@ export function startSegmentTelemetry(
       (requestEvent.type === 'success' && requestEvent.payload.isFullSnapshot)
     ) {
       const metrics = createSegmentMetrics(requestEvent.type, requestEvent.bandwidth, requestEvent.payload)
-      addTelemetryMetrics(SEGMENT_METRICS_TELEMETRY_NAME, { metrics })
+      // monitor-until: 2026-07-01
+      addTelemetryMetrics(TelemetryMetrics.SEGMENT_METRICS_TELEMETRY_NAME, { metrics })
     }
   })
 
@@ -65,6 +66,10 @@ function createSegmentMetrics(
       count: payload.cssText.count,
       max: payload.cssText.max,
       sum: payload.cssText.sum,
+    },
+    encoding: {
+      fullSnapshot: isFullSnapshotChangeRecordsEnabled() ? 'change' : 'v1',
+      incrementalSnapshot: isIncrementalSnapshotChangeRecordsEnabled() ? 'change' : 'v1',
     },
     isFullSnapshot: payload.isFullSnapshot,
     ongoingRequests: {

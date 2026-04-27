@@ -1,24 +1,22 @@
-import type { Context, RawError, EventRateLimiter } from '@datadog/browser-core'
+import type { RawError, EventRateLimiter } from '@datadog/browser-core'
 import {
   combine,
   isEmptyObject,
   display,
   createEventRateLimiter,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
   HookNames,
   DISCARDED,
   buildTags,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
+import type { AssembledRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
-import type { RumEvent } from '../rumEvent.types'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import type { RumConfiguration } from './configuration'
 import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
-import type { Hooks } from './hooks'
+import type { Hooks, AssembleHookParams } from './hooks'
 
 const VIEW_MODIFIABLE_FIELD_PATHS: ModifiableFieldPaths = {
   'view.name': 'string',
@@ -41,7 +39,8 @@ export function startRumAssembly(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   hooks: Hooks,
-  reportError: (error: RawError) => void
+  reportError: (error: RawError) => void,
+  eventRateLimit?: number
 ) {
   modifiableFieldPathsByEvent = {
     [RumEventType.VIEW]: {
@@ -53,6 +52,7 @@ export function startRumAssembly(
     [RumEventType.ERROR]: {
       'error.message': 'string',
       'error.stack': 'string',
+      'error.handling_stack': 'string',
       'error.resource.url': 'string',
       'error.fingerprint': 'string',
       ...USER_CUSTOMIZABLE_FIELD_PATHS,
@@ -61,9 +61,9 @@ export function startRumAssembly(
     },
     [RumEventType.RESOURCE]: {
       'resource.url': 'string',
-      ...(isExperimentalFeatureEnabled(ExperimentalFeature.WRITABLE_RESOURCE_GRAPHQL)
-        ? { 'resource.graphql': 'object' }
-        : {}),
+      'resource.graphql.variables': 'string',
+      'resource.request.headers': 'object',
+      'resource.response.headers': 'object',
       ...USER_CUSTOMIZABLE_FIELD_PATHS,
       ...VIEW_MODIFIABLE_FIELD_PATHS,
       ...ROOT_MODIFIABLE_FIELD_PATHS,
@@ -88,31 +88,21 @@ export function startRumAssembly(
     },
   }
   const eventRateLimiters = {
-    [RumEventType.ERROR]: createEventRateLimiter(
-      RumEventType.ERROR,
-      configuration.eventRateLimiterThreshold,
-      reportError
-    ),
-    [RumEventType.ACTION]: createEventRateLimiter(
-      RumEventType.ACTION,
-      configuration.eventRateLimiterThreshold,
-      reportError
-    ),
-    [RumEventType.VITAL]: createEventRateLimiter(
-      RumEventType.VITAL,
-      configuration.eventRateLimiterThreshold,
-      reportError
-    ),
+    [RumEventType.ERROR]: createEventRateLimiter(RumEventType.ERROR, reportError, eventRateLimit),
+    [RumEventType.ACTION]: createEventRateLimiter(RumEventType.ACTION, reportError, eventRateLimit),
+    [RumEventType.VITAL]: createEventRateLimiter(RumEventType.VITAL, reportError, eventRateLimit),
   }
 
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-    ({ startTime, duration, rawRumEvent, domainContext }) => {
+    ({ startClocks, duration, rawRumEvent, domainContext }) => {
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: rawRumEvent.type,
-        startTime,
+        rawRumEvent,
+        domainContext,
+        startTime: startClocks.relative,
         duration,
-      })!
+      } as AssembleHookParams)!
 
       if (defaultRumEventAttributes === DISCARDED) {
         return
@@ -120,7 +110,7 @@ export function startRumAssembly(
 
       const serverRumEvent = combine(defaultRumEventAttributes, rawRumEvent, {
         ddtags: buildTags(configuration).join(','),
-      }) as RumEvent & Context
+      }) as AssembledRumEvent
 
       if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, eventRateLimiters)) {
         if (isEmptyObject(serverRumEvent.context!)) {
@@ -133,7 +123,7 @@ export function startRumAssembly(
 }
 
 function shouldSend(
-  event: RumEvent & Context,
+  event: AssembledRumEvent,
   beforeSend: RumConfiguration['beforeSend'],
   domainContext: RumEventDomainContext,
   eventRateLimiters: { [key in RumEventType]?: EventRateLimiter }

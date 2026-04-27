@@ -1,5 +1,13 @@
 import type { RelativeTime, Observable } from '@datadog/browser-core'
-import { SESSION_TIME_OUT_DELAY, relativeNow, createValueHistory, HookNames, DISCARDED } from '@datadog/browser-core'
+import {
+  SESSION_TIME_OUT_DELAY,
+  relativeNow,
+  createValueHistory,
+  HookNames,
+  DISCARDED,
+  mockable,
+  buildUrl,
+} from '@datadog/browser-core'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -26,15 +34,15 @@ export interface UrlContexts {
 export function startUrlContexts(
   lifeCycle: LifeCycle,
   hooks: Hooks,
-  locationChangeObservable: Observable<LocationChange>,
-  location: Location
+  locationChangeObservable: Observable<LocationChange>
 ) {
   const urlContextHistory = createValueHistory<UrlContext>({ expireDelay: URL_CONTEXT_TIME_OUT_DELAY })
 
   let previousViewUrl: string | undefined
 
-  lifeCycle.subscribe(LifeCycleEventType.BEFORE_VIEW_CREATED, ({ startClocks }) => {
-    const viewUrl = location.href
+  lifeCycle.subscribe(LifeCycleEventType.BEFORE_VIEW_CREATED, ({ startClocks, url }) => {
+    const locationHref = mockable(location).href
+    const viewUrl = url !== undefined ? buildUrl(url, locationHref).href : locationHref
     urlContextHistory.add(
       buildUrlContext({
         url: viewUrl,

@@ -1,4 +1,4 @@
-import { jsonStringify } from '../serialisation/jsonStringify'
+import { globalObject } from '../globalObject'
 
 export function normalizeUrl(url: string) {
   return buildUrl(url, location.href).href
@@ -23,7 +23,7 @@ export function buildUrl(url: string, base?: string) {
   try {
     return base !== undefined ? new URL(url, base) : new URL(url)
   } catch (error) {
-    throw new Error(`Failed to construct URL: ${String(error)} ${jsonStringify({ url, base })!}`)
+    throw new Error(`Failed to construct URL: ${String(error)}`)
   }
 }
 
@@ -42,9 +42,9 @@ export function getPristineWindow() {
       iframe = document.createElement('iframe')
       iframe.style.display = 'none'
       document.body.appendChild(iframe)
-      pristineWindow = iframe.contentWindow as Window & typeof globalThis
+      pristineWindow = (iframe.contentWindow ?? globalObject) as Window & typeof globalThis
     } catch {
-      pristineWindow = window
+      pristineWindow = globalObject as unknown as Window & typeof globalThis
     }
     getPristineGlobalObjectCache = {
       URL: pristineWindow.URL,

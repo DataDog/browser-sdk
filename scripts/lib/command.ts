@@ -1,5 +1,5 @@
-import childProcess from 'child_process'
-import { printError } from './executionUtils.ts'
+import childProcess from 'node:child_process'
+import { printDebug, printError } from './executionUtils.ts'
 
 interface CommandOptions {
   cwd?: string
@@ -57,6 +57,9 @@ export function command(...templateArguments: [TemplateStringsArray, ...any[]]):
     },
 
     run(): string {
+      const formattedCommand = `${commandName} ${commandArguments.join(' ')}`
+      printDebug(`Running command: ${formattedCommand}`)
+
       const commandResult = childProcess.spawnSync(commandName, commandArguments, {
         input,
         env: { ...process.env, ...env },
@@ -65,7 +68,6 @@ export function command(...templateArguments: [TemplateStringsArray, ...any[]]):
       })
 
       if (commandResult.status !== 0) {
-        const formattedCommand = `${commandName} ${commandArguments.join(' ')}`
         const formattedStderr = commandResult.stderr ? `\n---- stderr: ----\n${commandResult.stderr}\n----` : ''
         const formattedStdout = commandResult.stdout ? `\n---- stdout: ----\n${commandResult.stdout}\n----` : ''
         const exitCause =
@@ -124,7 +126,10 @@ export function command(...templateArguments: [TemplateStringsArray, ...any[]]):
  *
  * [1]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#tagged_templates
  */
-function parseCommandTemplateArguments(templateStrings: TemplateStringsArray, ...templateVariables: any[]): string[] {
+export function parseCommandTemplateArguments(
+  templateStrings: TemplateStringsArray,
+  ...templateVariables: any[]
+): string[] {
   const parsedArguments: string[] = []
   for (let i = 0; i < templateStrings.length; i += 1) {
     if (i > 0) {

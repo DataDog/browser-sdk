@@ -1,5 +1,5 @@
-import os from 'os'
-import fs from 'fs'
+import os from 'node:os'
+import fs from 'node:fs'
 import { command } from './command.ts'
 import {
   getGithubDeployKey,
@@ -8,7 +8,7 @@ import {
   getGithubPullRequestToken,
   type OctoStsToken,
 } from './secrets.ts'
-import { fetchHandlingError } from './executionUtils.ts'
+import { FetchError, fetchHandlingError, findError } from './executionUtils.ts'
 
 interface GitHubPR {
   // eslint-disable-next-line id-denylist
@@ -51,28 +51,19 @@ export async function createGitHubRelease({ version, body }: GitHubReleaseParams
     await callGitHubApi('GET', `releases/tags/${version}`, readToken)
     throw new Error(`Release ${version} already exists`)
   } catch (error) {
-    if ((error as any).status !== 404) {
+    const fetchError = findError(error, FetchError)
+    if (!fetchError || fetchError.response.status !== 404) {
       throw error
     }
   }
 
   // content write
   using releaseToken = getGithubReleaseToken()
-  return callGitHubApi<GitHubRelease>('POST', 'releases', releaseToken, {
+  return await callGitHubApi<GitHubRelease>('POST', 'releases', releaseToken, {
     tag_name: version,
     name: version,
     body,
   })
-}
-
-export async function getPrComments(prNumber: number): Promise<Array<{ id: number; body: string }>> {
-  using readToken = getGithubReadToken()
-  const response = await callGitHubApi<Array<{ id: number; body: string }>>(
-    'GET',
-    `issues/${prNumber}/comments`,
-    readToken
-  )
-  return response
 }
 
 export function createPullRequest(mainBranch: string) {
@@ -86,8 +77,7 @@ export function getLastCommonCommit(baseBranch: string): string {
   try {
     command`git fetch --depth=100 origin ${baseBranch}`.run()
     const commandOutput = command`git merge-base origin/${baseBranch} HEAD`.run()
-    // SHA commit is truncated to 8 characters as bundle sizes commit are exported in short format to logs for convenience and readability.
-    return commandOutput.trim().substring(0, 8)
+    return commandOutput.trim()
   } catch (error) {
     throw new Error('Failed to get last common commit', { cause: error })
   }
@@ -110,13 +100,17 @@ export function initGitConfig(repository: string): void {
 export const LOCAL_BRANCH = process.env.CI_COMMIT_REF_NAME
 
 async function callGitHubApi<T>(method: string, path: string, token: OctoStsToken, body?: any): Promise<T> {
-  const response = await fetchHandlingError(`https://api.github.com/repos/DataDog/browser-sdk/${path}`, {
-    method,
-    headers: {
-      Authorization: `token ${token.value}`,
-      'X-GitHub-Api-Version': '2022-11-28',
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  })
-  return (await response.json()) as Promise<T>
+  try {
+    const response = await fetchHandlingError(`https://api.github.com/repos/DataDog/browser-sdk/${path}`, {
+      method,
+      headers: {
+        Authorization: `token ${token.value}`,
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    })
+    return (await response.json()) as Promise<T>
+  } catch (error) {
+    throw new Error(`Failed to call GitHub API: ${method} ${path}`, { cause: error })
+  }
 }

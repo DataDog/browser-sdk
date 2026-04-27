@@ -1,4 +1,3 @@
-import type { LogsEvent } from '@datadog/browser-logs'
 import type {
   RumEvent,
   RumActionEvent,
@@ -6,6 +5,7 @@ import type {
   RumResourceEvent,
   RumViewEvent,
   RumVitalEvent,
+  RumLongTaskEvent,
 } from '@datadog/browser-rum'
 import type {
   TelemetryEvent,
@@ -13,36 +13,13 @@ import type {
   TelemetryConfigurationEvent,
   TelemetryUsageEvent,
 } from '@datadog/browser-core'
-import type { BrowserSegment } from '@datadog/browser-rum/src/types'
-import type { BrowserSegmentMetadataAndSegmentSizes } from '@datadog/browser-rum/src/domain/segmentCollection'
-
-interface BaseIntakeRequest {
-  isBridge: boolean
-  encoding: string | null
-}
-
-export type LogsIntakeRequest = {
-  intakeType: 'logs'
-  events: LogsEvent[]
-} & BaseIntakeRequest
-
-export type RumIntakeRequest = {
-  intakeType: 'rum'
-  events: Array<RumEvent | TelemetryEvent>
-} & BaseIntakeRequest
-
-export type ReplayIntakeRequest = {
-  intakeType: 'replay'
-  segment: BrowserSegment
-  metadata: BrowserSegmentMetadataAndSegmentSizes
-  segmentFile: {
-    filename: string
-    encoding: string
-    mimetype: string
-  }
-} & BaseIntakeRequest
-
-export type IntakeRequest = LogsIntakeRequest | RumIntakeRequest | ReplayIntakeRequest
+import type {
+  IntakeRequest,
+  LogsIntakeRequest,
+  ProfileIntakeRequest,
+  ReplayIntakeRequest,
+  RumIntakeRequest,
+} from './intakeProxyMiddleware'
 
 /**
  * Store data sent to the intake and expose helpers to access it.
@@ -102,6 +79,10 @@ export class IntakeRegistry {
     return this.rumEvents.filter(isRumResourceEvent)
   }
 
+  get rumLongTaskEvents() {
+    return this.rumEvents.filter(isRumLongTaskEvent)
+  }
+
   get rumViewEvents() {
     return this.rumEvents.filter(isRumViewEvent)
   }
@@ -145,6 +126,18 @@ export class IntakeRegistry {
   get replayRecords() {
     return this.replayRequests.flatMap((request) => request.segment.records)
   }
+
+  //
+  // Profiling
+  //
+
+  get profileRequests() {
+    return this.requests.filter(isProfileIntakeRequest)
+  }
+
+  get profileEvents() {
+    return this.profileRequests.map((request) => request.event)
+  }
 }
 
 function isLogsIntakeRequest(request: IntakeRequest): request is LogsIntakeRequest {
@@ -159,6 +152,10 @@ function isReplayIntakeRequest(request: IntakeRequest): request is ReplayIntakeR
   return request.intakeType === 'replay'
 }
 
+function isProfileIntakeRequest(request: IntakeRequest): request is ProfileIntakeRequest {
+  return request.intakeType === 'profile'
+}
+
 function isRumEvent(event: RumEvent | TelemetryEvent): event is RumEvent {
   return !isTelemetryEvent(event)
 }
@@ -169,6 +166,10 @@ function isRumResourceEvent(event: RumEvent): event is RumResourceEvent {
 
 function isRumActionEvent(event: RumEvent): event is RumActionEvent {
   return event.type === 'action'
+}
+
+function isRumLongTaskEvent(event: RumEvent): event is RumLongTaskEvent {
+  return event.type === 'long_task'
 }
 
 function isRumViewEvent(event: RumEvent): event is RumViewEvent {

@@ -3,20 +3,21 @@
   <head>
     <meta charset="UTF-8" />
     <title>Sandbox</title>
-    <script src="http://localhost:8080/datadog-rum.js"></script>
-    <script src="http://localhost:8080/datadog-logs.js"></script>
-    <script src="http://localhost:8080/datadog-flagging.js"></script>
+    <script src="/datadog-rum.js"></script>
+    <script src="/datadog-logs.js"></script>
     <script>
       DD_RUM.init({
         clientToken: 'xxx',
         applicationId: 'xxx',
         sessionReplaySampleRate: 100,
+        profilingSampleRate: 100,
         trackResources: true,
         trackLongTasks: true,
         telemetrySampleRate: 100,
         telemetryConfigurationSampleRate: 100,
         telemetryUsageSampleRate: 100,
         enableExperimentalFeatures: [],
+        proxy: '/proxy',
       })
       DD_LOGS.init({
         clientToken: 'xxx',
@@ -24,8 +25,8 @@
         telemetryConfigurationSampleRate: 100,
         telemetryUsageSampleRate: 100,
         enableExperimentalFeatures: [],
+        proxy: '/proxy',
       })
-      DD_FLAGGING.init()
     </script>
   </head>
 

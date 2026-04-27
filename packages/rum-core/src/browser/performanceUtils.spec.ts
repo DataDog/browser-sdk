@@ -1,7 +1,8 @@
 import { type RelativeTime } from '@datadog/browser-core'
+import { createPerformanceEntry, mockGlobalPerformanceBuffer } from '../../test'
 import type { RumPerformanceNavigationTiming } from './performanceObservable'
-import { RumPerformanceEntryType } from './performanceObservable'
-import { getNavigationEntry } from './performanceUtils'
+import { RumPerformanceEntryType, supportPerformanceTimingEvent } from './performanceObservable'
+import { findLcpResourceEntry, getNavigationEntry } from './performanceUtils'
 
 describe('getNavigationEntry', () => {
   it('returns the navigation entry', () => {
@@ -49,5 +50,92 @@ describe('getNavigationEntry', () => {
     if (navigationEntry.transferSize) {
       expect(navigationEntry.transferSize).toEqual(jasmine.any(Number))
     }
+  })
+})
+
+describe('findLcpResourceEntry', () => {
+  beforeEach(() => {
+    if (!supportPerformanceTimingEvent(RumPerformanceEntryType.RESOURCE)) {
+      pending('Resource Timing Event is not supported in this browser')
+    }
+  })
+
+  it('should return undefined when no resource entries exist', () => {
+    mockGlobalPerformanceBuffer([])
+
+    const result = findLcpResourceEntry('https://example.com/image.jpg', 1000 as RelativeTime)
+
+    expect(result).toBeUndefined()
+  })
+
+  it('should return undefined when no matching URL is found', () => {
+    mockGlobalPerformanceBuffer([
+      createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+        name: 'https://example.com/foo.jpg',
+        startTime: 100 as RelativeTime,
+      }),
+    ])
+
+    const result = findLcpResourceEntry('https://example.com/image.jpg', 1000 as RelativeTime)
+
+    expect(result).toBeUndefined()
+  })
+
+  it('should return the matching resource entry', () => {
+    mockGlobalPerformanceBuffer([
+      createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+        name: 'https://example.com/image.jpg',
+        startTime: 100 as RelativeTime,
+      }),
+    ])
+
+    const result = findLcpResourceEntry('https://example.com/image.jpg', 1000 as RelativeTime)
+
+    expect(result).toBeDefined()
+    expect(result!.name).toBe('https://example.com/image.jpg')
+  })
+
+  it('should return the most recent matching entry when multiple entries exist for the same URL', () => {
+    mockGlobalPerformanceBuffer([
+      createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+        name: 'https://example.com/image.jpg',
+        startTime: 100 as RelativeTime,
+        responseEnd: 200 as RelativeTime,
+      }),
+      createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+        name: 'https://example.com/image.jpg',
+        startTime: 500 as RelativeTime,
+        responseEnd: 600 as RelativeTime,
+      }),
+    ])
+
+    const result = findLcpResourceEntry('https://example.com/image.jpg', 1000 as RelativeTime)
+
+    expect(result).toBeDefined()
+    expect(result!.startTime).toBe(500 as RelativeTime)
+  })
+
+  it('should ignore resource entries that started after LCP time', () => {
+    mockGlobalPerformanceBuffer([
+      createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+        name: 'https://example.com/image.jpg',
+        startTime: 100 as RelativeTime,
+        responseEnd: 200 as RelativeTime,
+      }),
+      createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+        name: 'https://example.com/image.jpg',
+        startTime: 1500 as RelativeTime,
+        responseEnd: 1600 as RelativeTime,
+      }),
+      createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+        name: 'https://example.com/image.jpg',
+        startTime: 1500 as RelativeTime,
+      }),
+    ])
+
+    const result = findLcpResourceEntry('https://example.com/image.jpg', 1000 as RelativeTime)
+
+    expect(result).toBeDefined()
+    expect(result!.startTime).toBe(100 as RelativeTime)
   })
 })

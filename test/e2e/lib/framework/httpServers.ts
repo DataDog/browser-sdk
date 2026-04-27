@@ -1,5 +1,7 @@
 import * as http from 'http'
 import type { AddressInfo } from 'net'
+import { test } from '@playwright/test'
+import type { Browser } from '@playwright/test'
 import { getIp } from '../../../envUtils'
 
 const MAX_SERVER_CREATION_RETRY = 5
@@ -15,7 +17,7 @@ export type MockServerApp = ServerApp & {
 }
 
 export interface Server<App extends ServerApp> {
-  url: string
+  origin: string
   app: App
   bindServerApp(serverApp: App): void
   waitForIdle(): Promise<void>
@@ -41,18 +43,25 @@ export async function getTestServers() {
 }
 
 export async function waitForServersIdle() {
+  // Wait for `idleWaitDuration` ms before checking idle state, to account for requests that may
+  // still be in-flight from the browser and haven't reached the server yet.
+  await new Promise((resolve) => setTimeout(resolve, idleWaitDuration))
   const servers = await getTestServers()
-  return Promise.all([servers.base.waitForIdle(), servers.crossOrigin.waitForIdle(), servers.intake.waitForIdle()])
+  await Promise.all([servers.base.waitForIdle(), servers.crossOrigin.waitForIdle(), servers.intake.waitForIdle()])
 }
 
 async function createServer<App extends ServerApp>(): Promise<Server<App>> {
   const server = await instantiateServer()
-  const { address, port } = server.address() as AddressInfo
+  const address = getIp()
+  const { port } = server.address() as AddressInfo
   let serverApp: App | undefined
 
   server.on('request', (req: http.IncomingMessage, res: http.ServerResponse) => {
     if (serverApp) {
       serverApp(req, res)
+    } else {
+      res.writeHead(202)
+      res.end()
     }
   })
 
@@ -66,7 +75,7 @@ async function createServer<App extends ServerApp>(): Promise<Server<App>> {
       }
       return serverApp
     },
-    url: `http://${address}:${port}`,
+    origin: `http://${address}:${port}`,
     waitForIdle: createServerIdleWaiter(server),
   }
 }
@@ -92,7 +101,7 @@ function instantiateServerOnPort(port: number): Promise<http.Server> {
   return new Promise((resolve, reject) => {
     const server = http.createServer()
     server.on('error', reject)
-    server.listen(port, getIp(), () => {
+    server.listen(port, () => {
       resolve(server)
     })
   })
@@ -108,7 +117,25 @@ function createServerIdleWaiter(server: http.Server) {
   return () => idleWaiter.idlePromise
 }
 
-const IDLE_WAIT_DURATION = 500
+let idleWaitDuration = 500
+
+test.beforeAll(async ({ browser }) => {
+  const latency = await measureServerLatency(browser)
+  idleWaitDuration = Math.max(500, latency * 1.5)
+  console.log(`Server latency: ${latency}ms`)
+})
+
+async function measureServerLatency(browser: Browser): Promise<number> {
+  // We measure the round-trip time to the test server to calibrate how long we wait after the
+  // last pending request before considering the server idle. In BrowserStack, the browser runs
+  // remotely, so this latency can be significant.
+  const { intake: server } = await getTestServers()
+  const page = await browser.newPage()
+  const start = Date.now()
+  await page.goto(server.origin)
+  return Date.now() - start
+}
+
 function createIdleWaiter() {
   let idlePromise = Promise.resolve()
 
@@ -138,7 +165,7 @@ function createIdleWaiter() {
           waitTimeoutId = setTimeout(() => {
             resolveIdlePromise!()
             resolveIdlePromise = undefined
-          }, IDLE_WAIT_DURATION)
+          }, idleWaitDuration)
         }
       })
     },

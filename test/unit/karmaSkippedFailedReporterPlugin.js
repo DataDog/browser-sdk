@@ -13,6 +13,7 @@ function KarmaSkippedFailedReporter(logger) {
 
 KarmaSkippedFailedReporter.$inject = ['logger']
 
-module.exports = {
+// eslint-disable-next-line import/no-default-export
+export default {
   'reporter:karma-skipped-failed': ['type', KarmaSkippedFailedReporter],
 }

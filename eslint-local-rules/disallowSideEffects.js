@@ -1,6 +1,6 @@
-const path = require('path')
+import path from 'node:path'
 
-module.exports = {
+export default {
   meta: {
     docs: {
       description:
@@ -22,12 +22,11 @@ module.exports = {
   },
 }
 
-const packagesRoot = path.resolve(__dirname, '..', 'packages')
+const packagesRoot = path.resolve(import.meta.dirname, '..', 'packages')
 
 // Those modules are known to have side effects when evaluated
 const pathsWithSideEffect = new Set([
   `${packagesRoot}/logs/src/entries/main.ts`,
-  `${packagesRoot}/flagging/src/entries/main.ts`,
   `${packagesRoot}/rum/src/entries/main.ts`,
   `${packagesRoot}/rum-slim/src/entries/main.ts`,
 ])
@@ -36,8 +35,14 @@ const pathsWithSideEffect = new Set([
 const packagesWithoutSideEffect = new Set([
   '@datadog/browser-core',
   '@datadog/browser-rum-core',
+  '@datadog/browser-rum-react/internal',
   'react',
   'react-router-dom',
+  'vue',
+  'vue-router',
+  '@angular/core',
+  '@angular/router',
+  'rxjs',
 ])
 
 /**
@@ -117,6 +122,7 @@ function reportPotentialSideEffect(context, node) {
       reportPotentialSideEffect(context, node.object)
       reportPotentialSideEffect(context, node.property)
       return
+    case 'ConditionalExpression':
     case 'FunctionExpression':
     case 'ArrowFunctionExpression':
     case 'FunctionDeclaration':

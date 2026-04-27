@@ -1,9 +1,9 @@
 import { ExperimentalFeature, isExperimentalFeatureEnabled, safeTruncate } from '@datadog/browser-core'
 import { getPrivacySelector, NodePrivacyLevel } from '../privacyConstants'
-import { getNodePrivacyLevel, shouldMaskNode } from '../privacy'
+import { getNodePrivacyLevel, maskDisallowedTextContent, shouldMaskNode, shouldMaskAttribute } from '../privacy'
 import type { NodePrivacyLevelCache } from '../privacy'
 import type { RumConfiguration } from '../configuration'
-import { isElementNode } from '../../browser/htmlDomUtils'
+import { isElementNode, getParentElement } from '../../browser/htmlDomUtils'
 import {
   ActionNameSource,
   DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE,
@@ -16,6 +16,8 @@ export function getActionNameFromElement(
   rumConfiguration: RumConfiguration,
   nodePrivacyLevel: NodePrivacyLevel = NodePrivacyLevel.ALLOW
 ): ActionName {
+  const nodePrivacyLevelCache: NodePrivacyLevelCache = new Map()
+
   const { actionNameAttribute: userProgrammaticAttribute } = rumConfiguration
 
   // Proceed to get the action name in two steps:
@@ -36,8 +38,8 @@ export function getActionNameFromElement(
   }
 
   return (
-    getActionNameFromElementForStrategies(element, priorityStrategies, rumConfiguration) ||
-    getActionNameFromElementForStrategies(element, fallbackStrategies, rumConfiguration) || {
+    getActionNameFromElementForStrategies(element, priorityStrategies, rumConfiguration, nodePrivacyLevelCache) ||
+    getActionNameFromElementForStrategies(element, fallbackStrategies, rumConfiguration, nodePrivacyLevelCache) || {
       name: '',
       nameSource: ActionNameSource.BLANK,
     }
@@ -47,7 +49,7 @@ export function getActionNameFromElement(
 function getActionNameFromElementProgrammatically(targetElement: Element, programmaticAttribute: string) {
   // We don't use getActionNameFromElementForStrategies here, because we want to consider all parents,
   // without limit. It is up to the user to declare a relevant naming strategy.
-  const elementWithAttribute = targetElement.closest(`[${programmaticAttribute}]`)
+  const elementWithAttribute = closestShadowAware(targetElement, `[${programmaticAttribute}]`)
 
   if (!elementWithAttribute) {
     return
@@ -56,16 +58,28 @@ function getActionNameFromElementProgrammatically(targetElement: Element, progra
   return truncate(normalizeWhitespace(name.trim()))
 }
 
+function closestShadowAware(element: Element, selector: string): Element | null {
+  let current: Element | null = element
+  while (current) {
+    if (current.matches(selector)) {
+      return current
+    }
+    current = getParentElement(current)
+  }
+  return null
+}
+
 type NameStrategy = (
   element: Element | HTMLElement | HTMLInputElement | HTMLSelectElement,
-  rumConfiguration: RumConfiguration
+  rumConfiguration: RumConfiguration,
+  nodePrivacyLevelCache: NodePrivacyLevelCache
 ) => ActionName | undefined | null
 
 const priorityStrategies: NameStrategy[] = [
   // associated LABEL text
-  (element, rumConfiguration) => {
+  (element, rumConfiguration, nodePrivacyLevelCache) => {
     if ('labels' in element && element.labels && element.labels.length > 0) {
-      return getActionNameFromTextualContent(element.labels[0], rumConfiguration)
+      return getActionNameFromTextualContent(element.labels[0], rumConfiguration, nodePrivacyLevelCache)
     }
   },
   // INPUT button (and associated) value
@@ -79,14 +93,15 @@ const priorityStrategies: NameStrategy[] = [
     }
   },
   // BUTTON, LABEL or button-like element text
-  (element, rumConfiguration) => {
+  (element, rumConfiguration, nodePrivacyLevelCache) => {
     if (element.nodeName === 'BUTTON' || element.nodeName === 'LABEL' || element.getAttribute('role') === 'button') {
-      return getActionNameFromTextualContent(element, rumConfiguration)
+      return getActionNameFromTextualContent(element, rumConfiguration, nodePrivacyLevelCache)
     }
   },
-  (element) => getActionNameFromStandardAttribute(element, 'aria-label'),
+  (element, rumConfiguration, nodePrivacyLevelCache) =>
+    getActionNameFromStandardAttribute(element, 'aria-label', rumConfiguration, nodePrivacyLevelCache),
   // associated element text designated by the aria-labelledby attribute
-  (element, rumConfiguration) => {
+  (element, rumConfiguration, nodePrivacyLevelCache) => {
     const labelledByAttribute = element.getAttribute('aria-labelledby')
     if (labelledByAttribute) {
       return {
@@ -94,26 +109,31 @@ const priorityStrategies: NameStrategy[] = [
           .split(/\s+/)
           .map((id) => getElementById(element, id))
           .filter((label): label is HTMLElement => Boolean(label))
-          .map((element) => getTextualContent(element, rumConfiguration))
+          .map((element) => getTextualContent(element, rumConfiguration, nodePrivacyLevelCache))
           .join(' '),
         nameSource: ActionNameSource.TEXT_CONTENT,
       }
     }
   },
-  (element) => getActionNameFromStandardAttribute(element, 'alt'),
-  (element) => getActionNameFromStandardAttribute(element, 'name'),
-  (element) => getActionNameFromStandardAttribute(element, 'title'),
-  (element) => getActionNameFromStandardAttribute(element, 'placeholder'),
+  (element, rumConfiguration, nodePrivacyLevelCache) =>
+    getActionNameFromStandardAttribute(element, 'alt', rumConfiguration, nodePrivacyLevelCache),
+  (element, rumConfiguration, nodePrivacyLevelCache) =>
+    getActionNameFromStandardAttribute(element, 'name', rumConfiguration, nodePrivacyLevelCache),
+  (element, rumConfiguration, nodePrivacyLevelCache) =>
+    getActionNameFromStandardAttribute(element, 'title', rumConfiguration, nodePrivacyLevelCache),
+  (element, rumConfiguration, nodePrivacyLevelCache) =>
+    getActionNameFromStandardAttribute(element, 'placeholder', rumConfiguration, nodePrivacyLevelCache),
   // SELECT first OPTION text
-  (element, rumConfiguration) => {
+  (element, rumConfiguration, nodePrivacyLevelCache) => {
     if ('options' in element && element.options.length > 0) {
-      return getActionNameFromTextualContent(element.options[0], rumConfiguration)
+      return getActionNameFromTextualContent(element.options[0], rumConfiguration, nodePrivacyLevelCache)
     }
   },
 ]
 
 const fallbackStrategies: NameStrategy[] = [
-  (element, rumConfiguration) => getActionNameFromTextualContent(element, rumConfiguration),
+  (element, rumConfiguration, nodePrivacyLevelCache) =>
+    getActionNameFromTextualContent(element, rumConfiguration, nodePrivacyLevelCache),
 ]
 
 /**
@@ -124,7 +144,8 @@ const MAX_PARENTS_TO_CONSIDER = 10
 function getActionNameFromElementForStrategies(
   targetElement: Element,
   strategies: NameStrategy[],
-  rumConfiguration: RumConfiguration
+  rumConfiguration: RumConfiguration,
+  nodePrivacyLevelCache: NodePrivacyLevelCache
 ) {
   let element: Element | null = targetElement
   let recursionCounter = 0
@@ -136,7 +157,7 @@ function getActionNameFromElementForStrategies(
     element.nodeName !== 'HEAD'
   ) {
     for (const strategy of strategies) {
-      const actionName = strategy(element, rumConfiguration)
+      const actionName = strategy(element, rumConfiguration, nodePrivacyLevelCache)
       if (actionName) {
         const { name, nameSource } = actionName
         const trimmedName = name && name.trim()
@@ -150,7 +171,7 @@ function getActionNameFromElementForStrategies(
     if (element.nodeName === 'FORM') {
       break
     }
-    element = element.parentElement
+    element = getParentElement(element)
     recursionCounter += 1
   }
 }
@@ -163,30 +184,59 @@ function truncate(s: string) {
   return s.length > 100 ? `${safeTruncate(s, 100)} [...]` : s
 }
 
-function getElementById(refElement: Element, id: string) {
+function getElementById(refElement: Element, id: string): HTMLElement | null {
+  const rootNode = refElement.getRootNode()
+  if (rootNode instanceof ShadowRoot) {
+    const shadowElement = rootNode.getElementById(id)
+    if (shadowElement) {
+      return shadowElement
+    }
+  }
+
   // Use the element ownerDocument here, because tests are executed in an iframe, so
   // document.getElementById won't work.
   return refElement.ownerDocument ? refElement.ownerDocument.getElementById(id) : null
 }
 
-function getActionNameFromStandardAttribute(element: Element | HTMLElement, attribute: string): ActionName {
+function getActionNameFromStandardAttribute(
+  element: Element | HTMLElement,
+  attribute: string,
+  rumConfiguration: RumConfiguration,
+  nodePrivacyLevelCache: NodePrivacyLevelCache
+): ActionName {
+  const { enablePrivacyForActionName, defaultPrivacyLevel } = rumConfiguration
+  let attributeValue = element.getAttribute(attribute)
+  if (attributeValue && enablePrivacyForActionName) {
+    const nodePrivacyLevel = getNodePrivacyLevel(element, defaultPrivacyLevel, nodePrivacyLevelCache)
+    if (shouldMaskAttribute(element.tagName, attribute, attributeValue, nodePrivacyLevel, rumConfiguration)) {
+      attributeValue = maskDisallowedTextContent(attributeValue, ACTION_NAME_PLACEHOLDER)
+    }
+  } else if (!attributeValue) {
+    attributeValue = ''
+  }
+
   return {
-    name: element.getAttribute(attribute) || '',
+    name: attributeValue,
     nameSource: ActionNameSource.STANDARD_ATTRIBUTE,
   }
 }
 
 function getActionNameFromTextualContent(
   element: Element | HTMLElement,
-  rumConfiguration: RumConfiguration
+  rumConfiguration: RumConfiguration,
+  nodePrivacyLevelCache: NodePrivacyLevelCache
 ): ActionName {
   return {
-    name: getTextualContent(element, rumConfiguration) || '',
+    name: getTextualContent(element, rumConfiguration, nodePrivacyLevelCache) || '',
     nameSource: ActionNameSource.TEXT_CONTENT,
   }
 }
 
-function getTextualContent(element: Element, rumConfiguration: RumConfiguration) {
+function getTextualContent(
+  element: Element,
+  rumConfiguration: RumConfiguration,
+  nodePrivacyLevelCache: NodePrivacyLevelCache
+) {
   if ((element as HTMLElement).isContentEditable) {
     return
   }
@@ -202,7 +252,8 @@ function getTextualContent(element: Element, rumConfiguration: RumConfiguration)
       element,
       userProgrammaticAttribute,
       enablePrivacyForActionName,
-      defaultPrivacyLevel
+      defaultPrivacyLevel,
+      nodePrivacyLevelCache
     )
   }
 
@@ -246,10 +297,9 @@ function getTextualContentWithTreeWalker(
   element: Element,
   userProgrammaticAttribute: string | undefined,
   privacyEnabledActionName: boolean,
-  defaultPrivacyLevel: NodePrivacyLevel
+  defaultPrivacyLevel: NodePrivacyLevel,
+  nodePrivacyLevelCache: NodePrivacyLevelCache
 ) {
-  const nodePrivacyLevelCache: NodePrivacyLevelCache = new Map()
-
   const walker = document.createTreeWalker(
     element,
     // eslint-disable-next-line no-bitwise

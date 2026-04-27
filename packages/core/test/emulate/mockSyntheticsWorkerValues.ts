@@ -1,10 +1,11 @@
 import { ONE_MINUTE } from '../../src/tools/utils/timeUtils'
 import { deleteCookie, resetInitCookies, setCookie } from '../../src/browser/cookie'
-import type { BrowserWindow } from '../../src/domain/synthetics/syntheticsWorkerValues'
+import type { BrowserWindow, SyntheticsContext } from '../../src/domain/synthetics/syntheticsWorkerValues'
 import {
   SYNTHETICS_INJECTS_RUM_COOKIE_NAME,
-  SYNTHETICS_RESULT_ID_COOKIE_NAME,
+  SYNTHETICS_CONTEXT_COOKIE_NAME,
   SYNTHETICS_TEST_ID_COOKIE_NAME,
+  SYNTHETICS_RESULT_ID_COOKIE_NAME,
 } from '../../src/domain/synthetics/syntheticsWorkerValues'
 import { registerCleanupTask } from '../registerCleanupTask'
 
@@ -12,40 +13,55 @@ import { registerCleanupTask } from '../registerCleanupTask'
 const COOKIE_DURATION = ONE_MINUTE
 
 export function mockSyntheticsWorkerValues(
-  { publicId, resultId, injectsRum }: { publicId?: any; resultId?: any; injectsRum?: any } = {
-    publicId: 'synthetics_public_id',
-    resultId: 'synthetics_result_id',
+  {
+    injectsRum,
+    context,
+    publicId,
+    resultId,
+  }: {
+    injectsRum?: any
+    context?: SyntheticsContext
+    publicId?: any
+    resultId?: any
+  } = {
+    context: { test_id: 'synthetics_public_id', result_id: 'synthetics_result_id' },
     injectsRum: false,
   },
   method: 'globals' | 'cookies' = 'globals'
 ) {
   switch (method) {
     case 'globals':
+      ;(window as BrowserWindow)._DATADOG_SYNTHETICS_INJECTS_RUM = injectsRum
+      ;(window as BrowserWindow)._DATADOG_SYNTHETICS_RUM_CONTEXT = context
       ;(window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID = publicId
       ;(window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID = resultId
-      ;(window as BrowserWindow)._DATADOG_SYNTHETICS_INJECTS_RUM = injectsRum
       break
     case 'cookies':
+      if (injectsRum !== undefined) {
+        setCookie(SYNTHETICS_INJECTS_RUM_COOKIE_NAME, injectsRum, COOKIE_DURATION)
+      }
+      if (context !== undefined) {
+        setCookie(SYNTHETICS_CONTEXT_COOKIE_NAME, encodeURIComponent(JSON.stringify(context)), COOKIE_DURATION)
+      }
       if (publicId !== undefined) {
         setCookie(SYNTHETICS_TEST_ID_COOKIE_NAME, publicId, COOKIE_DURATION)
       }
       if (resultId !== undefined) {
         setCookie(SYNTHETICS_RESULT_ID_COOKIE_NAME, resultId, COOKIE_DURATION)
       }
-      if (injectsRum !== undefined) {
-        setCookie(SYNTHETICS_INJECTS_RUM_COOKIE_NAME, injectsRum, COOKIE_DURATION)
-      }
       break
   }
   resetInitCookies()
 
   registerCleanupTask(() => {
+    delete (window as BrowserWindow)._DATADOG_SYNTHETICS_INJECTS_RUM
+    delete (window as BrowserWindow)._DATADOG_SYNTHETICS_RUM_CONTEXT
     delete (window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID
     delete (window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID
-    delete (window as BrowserWindow)._DATADOG_SYNTHETICS_INJECTS_RUM
+    deleteCookie(SYNTHETICS_INJECTS_RUM_COOKIE_NAME)
+    deleteCookie(SYNTHETICS_CONTEXT_COOKIE_NAME)
     deleteCookie(SYNTHETICS_TEST_ID_COOKIE_NAME)
     deleteCookie(SYNTHETICS_RESULT_ID_COOKIE_NAME)
-    deleteCookie(SYNTHETICS_INJECTS_RUM_COOKIE_NAME)
     resetInitCookies()
   })
 }

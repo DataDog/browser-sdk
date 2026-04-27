@@ -1,62 +1,60 @@
-import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-core'
+import type { ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { TimeStamp } from '@datadog/browser-core'
-import { noop } from '@datadog/browser-core'
-import { RecordType, type BrowserRecord } from '../../types'
+import { addExperimentalFeatures, ExperimentalFeature, noop } from '@datadog/browser-core'
+import type { BrowserRecord } from '../../types'
+import { RecordType, SnapshotFormat } from '../../types'
 import { appendElement } from '../../../../rum-core/test'
 import { startFullSnapshots } from './startFullSnapshots'
-import { createElementsScrollPositions } from './elementsScrollPositions'
-import type { ShadowRootsController } from './shadowRootsController'
-import type { SerializationStats } from './serialization'
+import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
+import { createRecordingScopeForTesting } from './test/recordingScope.specHelper'
 
-describe('startFullSnapshots', () => {
+const describeStartFullSnapshotsWithExpectedSnapshot = (fullSnapshotRecord: jasmine.Expected<BrowserRecord>) => {
   const viewStartClock = { relative: 1, timeStamp: 1 as TimeStamp }
   let lifeCycle: LifeCycle
-  let emitCallback: jasmine.Spy<(record: BrowserRecord, stats?: SerializationStats) => void>
+  let emitRecordCallback: jasmine.Spy<EmitRecordCallback>
+  let emitStatsCallback: jasmine.Spy<EmitStatsCallback>
 
   beforeEach(() => {
     lifeCycle = new LifeCycle()
-    emitCallback = jasmine.createSpy()
+    emitRecordCallback = jasmine.createSpy()
+    emitStatsCallback = jasmine.createSpy()
+
     appendElement('<style>body { width: 100%; }</style>', document.head)
-    startFullSnapshots(
-      createElementsScrollPositions(),
-      {} as ShadowRootsController,
-      lifeCycle,
-      {} as RumConfiguration,
-      noop,
-      emitCallback
-    )
+
+    const scope = createRecordingScopeForTesting()
+    startFullSnapshots(lifeCycle, emitRecordCallback, emitStatsCallback, noop, scope)
   })
 
   it('takes a full snapshot when startFullSnapshots is called', () => {
-    expect(emitCallback).toHaveBeenCalled()
+    expect(emitRecordCallback).toHaveBeenCalled()
   })
 
   it('takes a full snapshot when the view changes', () => {
-    emitCallback.calls.reset()
+    emitRecordCallback.calls.reset()
 
     lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
       startClocks: viewStartClock,
     } as Partial<ViewCreatedEvent> as any)
 
-    expect(emitCallback).toHaveBeenCalled()
+    expect(emitRecordCallback).toHaveBeenCalled()
   })
 
   it('full snapshot related records should have the view change date', () => {
-    emitCallback.calls.reset()
+    emitRecordCallback.calls.reset()
 
     lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
       startClocks: viewStartClock,
     } as Partial<ViewCreatedEvent> as any)
 
-    const records = emitCallback.calls.allArgs().map((args) => args[0])
+    const records = emitRecordCallback.calls.allArgs().map((args) => args[0])
     expect(records[0].timestamp).toEqual(1)
     expect(records[1].timestamp).toEqual(1)
     expect(records[2].timestamp).toEqual(1)
   })
 
   it('full snapshot records should contain Meta, Focus, FullSnapshot', () => {
-    const records = emitCallback.calls.allArgs().map((args) => args[0])
+    const records = emitRecordCallback.calls.allArgs().map((args) => args[0])
 
     expect(records).toEqual(
       jasmine.arrayContaining([
@@ -76,17 +74,7 @@ describe('startFullSnapshots', () => {
           type: RecordType.Focus,
           timestamp: jasmine.any(Number),
         },
-        {
-          data: {
-            node: jasmine.any(Object),
-            initialOffset: {
-              left: jasmine.any(Number),
-              top: jasmine.any(Number),
-            },
-          },
-          type: RecordType.FullSnapshot,
-          timestamp: jasmine.any(Number),
-        },
+        fullSnapshotRecord,
       ])
     )
   })
@@ -95,7 +83,7 @@ describe('startFullSnapshots', () => {
     if (!window.visualViewport) {
       pending('visualViewport not supported')
     }
-    const record = emitCallback.calls.mostRecent().args[0]
+    const record = emitRecordCallback.calls.mostRecent().args[0]
 
     expect(record).toEqual({
       data: jasmine.any(Object),
@@ -105,10 +93,39 @@ describe('startFullSnapshots', () => {
   })
 
   it('full snapshot records should be emitted with serialization stats', () => {
-    const fullSnapshotEmits = emitCallback.calls.allArgs().filter((args) => args[0].type === RecordType.FullSnapshot)
-    expect(fullSnapshotEmits[0][1]).toEqual({
+    expect(emitStatsCallback.calls.mostRecent().args[0]).toEqual({
       cssText: { count: 1, max: 21, sum: 21 },
       serializationDuration: jasmine.anything(),
+    })
+  })
+}
+
+describe('startFullSnapshots', () => {
+  describe('when generating BrowserFullSnapshotV1Record', () => {
+    describeStartFullSnapshotsWithExpectedSnapshot({
+      data: {
+        node: jasmine.any(Object),
+        initialOffset: {
+          left: jasmine.any(Number),
+          top: jasmine.any(Number),
+        },
+      },
+      format: SnapshotFormat.V1,
+      type: RecordType.FullSnapshot,
+      timestamp: jasmine.any(Number),
+    })
+  })
+
+  describe('when generating BrowserFullSnapshotChangeRecord', () => {
+    beforeEach(() => {
+      addExperimentalFeatures([ExperimentalFeature.USE_CHANGE_RECORDS])
+    })
+
+    describeStartFullSnapshotsWithExpectedSnapshot({
+      data: jasmine.any(Array),
+      format: SnapshotFormat.Change,
+      type: RecordType.FullSnapshot,
+      timestamp: jasmine.any(Number),
     })
   })
 })

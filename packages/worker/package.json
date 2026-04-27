@@ -1,14 +1,21 @@
 {
   "name": "@datadog/browser-worker",
-  "version": "6.19.0",
+  "version": "6.33.0",
   "license": "Apache-2.0",
   "main": "bundle/worker.js",
+  "files": [
+    "bundle/**/*.js",
+    "src",
+    "!src/**/*.spec.ts",
+    "!src/**/*.specHelper.ts"
+  ],
   "scripts": {
-    "pack": "yarn pack",
-    "build": "rm -rf bundle && webpack --disable-interpret --mode=production"
+    "build": "node ../../scripts/build/build-package.ts --bundle worker.js",
+    "build:bundle": "yarn build",
+    "prepack": "yarn build"
   },
   "dependencies": {
-    "@datadog/browser-core": "6.19.0"
+    "@datadog/browser-core": "6.33.0"
   },
   "repository": {
     "type": "git",
@@ -22,6 +29,6 @@
     "access": "public"
   },
   "devDependencies": {
-    "webpack": "5.101.3"
+    "webpack": "5.106.2"
   }
 }

@@ -1,7 +1,7 @@
 import type { Context } from '@datadog/browser-core'
 import { test, expect } from '@playwright/test'
-import type { IntakeRegistry } from '../../lib/framework'
-import { createTest } from '../../lib/framework'
+import type { IntakeRegistry, BrowserLog } from '../../lib/framework'
+import { createTest, createWorker } from '../../lib/framework'
 
 test.describe('API calls and events around init', () => {
   createTest('should display a console log when calling init without configuration')
@@ -117,6 +117,29 @@ test.describe('API calls and events around init', () => {
         { name: 'before manual view', viewId: initialView.view.id },
         { name: 'after manual view', viewId: initialView.view.id, viewName: 'after manual view' }
       )
+    })
+
+  createTest('should use the provided url option instead of location')
+    .withRum()
+    .withRumSlim()
+    .withRumInit((configuration) => {
+      window.DD_RUM!.init(configuration)
+
+      setTimeout(
+        () =>
+          window.DD_RUM!.startView({
+            name: 'manual view',
+            url: 'https://example.com/overridden-path',
+          }),
+        10
+      )
+    })
+    .run(async ({ intakeRegistry, flushEvents }) => {
+      await flushEvents()
+
+      const manualView = intakeRegistry.rumViewEvents.find((event) => event.view.name === 'manual view')!
+      expect(manualView).toBeTruthy()
+      expect(manualView.view.url).toBe('https://example.com/overridden-path')
     })
 
   createTest('should be able to set view context')
@@ -314,7 +337,92 @@ test.describe('Synthetics Browser Test', () => {
       await flushEvents()
       expect(intakeRegistry.rumViewEvents).toHaveLength(0)
     })
+
+  createTest('enriches events with the synthetics context from the global variable')
+    .withRum()
+    .withRumInit((configuration) => {
+      ;(window as any)._DATADOG_SYNTHETICS_RUM_CONTEXT = {
+        test_id: 'test-abc',
+        result_id: 'result-xyz',
+        run_type: 'scheduled',
+      }
+      window.DD_RUM!.init(configuration)
+    })
+    .run(async ({ intakeRegistry, flushEvents }) => {
+      await flushEvents()
+      expect(intakeRegistry.rumViewEvents[0]).toEqual(
+        expect.objectContaining({
+          session: expect.objectContaining({ type: 'synthetics' }),
+          synthetics: {
+            test_id: 'test-abc',
+            result_id: 'result-xyz',
+            run_type: 'scheduled',
+            injected: false,
+          },
+        })
+      )
+    })
+
+  createTest('enriches events with the synthetics context from the cookie')
+    .withRum()
+    .withRumInit((configuration) => {
+      const context = { test_id: 'test-abc', result_id: 'result-xyz', run_type: 'scheduled' }
+      document.cookie = `datadog-synthetics-rum-context=${encodeURIComponent(JSON.stringify(context))}`
+      window.DD_RUM!.init(configuration)
+    })
+    .run(async ({ intakeRegistry, flushEvents }) => {
+      await flushEvents()
+      expect(intakeRegistry.rumViewEvents[0]).toEqual(
+        expect.objectContaining({
+          session: expect.objectContaining({ type: 'synthetics' }),
+          synthetics: {
+            test_id: 'test-abc',
+            result_id: 'result-xyz',
+            run_type: 'scheduled',
+            injected: false,
+          },
+        })
+      )
+    })
 })
+
+test.describe('Service workers Rum', () => {
+  createTest('service worker with worker rum - esm')
+    .withWorker(createWorker().withRum())
+    .run(async ({ flushEvents, intakeRegistry, browserName, withBrowserLogs }) => {
+      test.skip(browserName !== 'chromium', 'Non-Chromium browsers do not support ES modules in Service Workers')
+
+      await flushEvents()
+
+      expect(intakeRegistry.rumEvents).toHaveLength(0)
+      withBrowserLogs((logs) => expectNoSessionWarning(browserName, logs))
+    })
+
+  createTest('service worker with worker rum - importScripts')
+    .withWorker(createWorker({ importScripts: true }).withRum())
+    .run(async ({ flushEvents, intakeRegistry, browserName, withBrowserLogs }) => {
+      test.skip(
+        browserName === 'webkit',
+        'BrowserStack overrides the localhost URL with bs-local.com and cannot be used to install a Service Worker'
+      )
+
+      await flushEvents()
+
+      expect(intakeRegistry.rumEvents).toHaveLength(0)
+      withBrowserLogs((logs) => expectNoSessionWarning(browserName, logs))
+    })
+})
+
+const NO_SESSION_WARNING = 'Datadog Browser SDK: No storage available for session. We will not send any data'
+
+function expectNoSessionWarning(browserName: string, logs: BrowserLog[]) {
+  // Firefox does not propagate the service worker's console to the main page's console
+  if (browserName !== 'firefox') {
+    expect(logs.filter((log) => log.message.includes(NO_SESSION_WARNING) && log.level === 'warning')).toHaveLength(1)
+  }
+
+  expect(logs.filter((log) => log.level === 'error')).toHaveLength(0)
+}
 
 function expectToHaveErrors(
   events: IntakeRegistry,

@@ -1,14 +1,14 @@
 import type { RawError, HttpRequest, DeflateEncoder, Telemetry } from '@datadog/browser-core'
-import { createHttpRequest, addTelemetryDebug, canUseEventBridge } from '@datadog/browser-core'
+import { createHttpRequest, addTelemetryDebug, canUseEventBridge, noop } from '@datadog/browser-core'
 import type { LifeCycle, ViewHistory, RumConfiguration, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 
 import type { SerializationStats } from '../domain/record'
 import { record } from '../domain/record'
+import type { ReplayPayload } from '../domain/segmentCollection'
 import { startSegmentCollection, SEGMENT_BYTES_LIMIT, startSegmentTelemetry } from '../domain/segmentCollection'
 import type { BrowserRecord } from '../types'
 import { startRecordBridge } from '../domain/startRecordBridge'
-import type { ReplayPayload } from '../domain/segmentCollection'
 
 export function startRecording(
   lifeCycle: LifeCycle,
@@ -23,13 +23,15 @@ export function startRecording(
 
   const reportError = (error: RawError) => {
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
+    // monitor-until: forever, to keep an eye on the errors reported to customers
     addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
   }
 
   const replayRequest =
-    httpRequest || createHttpRequest([configuration.sessionReplayEndpointBuilder], SEGMENT_BYTES_LIMIT, reportError)
+    httpRequest || createHttpRequest([configuration.sessionReplayEndpointBuilder], reportError, SEGMENT_BYTES_LIMIT)
 
-  let addRecord: (record: BrowserRecord, stats?: SerializationStats) => void
+  let addRecord: (record: BrowserRecord) => void
+  let addStats: (stats: SerializationStats) => void
 
   if (!canUseEventBridge()) {
     const segmentCollection = startSegmentCollection(
@@ -41,16 +43,19 @@ export function startRecording(
       encoder
     )
     addRecord = segmentCollection.addRecord
+    addStats = segmentCollection.addStats
     cleanupTasks.push(segmentCollection.stop)
 
-    const segmentTelemetry = startSegmentTelemetry(configuration, telemetry, replayRequest.observable)
+    const segmentTelemetry = startSegmentTelemetry(telemetry, replayRequest.observable)
     cleanupTasks.push(segmentTelemetry.stop)
   } else {
     ;({ addRecord } = startRecordBridge(viewHistory))
+    addStats = noop
   }
 
   const { stop: stopRecording } = record({
-    emit: addRecord,
+    emitRecord: addRecord,
+    emitStats: addStats,
     configuration,
     lifeCycle,
     viewHistory,

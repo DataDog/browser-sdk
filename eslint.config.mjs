@@ -1,7 +1,7 @@
 // @ts-check .ts config files are still experimental: https://github.com/eslint/eslint/discussions/17726
 
 import eslint from '@eslint/js'
-import tseslint from 'typescript-eslint'
+import * as tseslint from 'typescript-eslint'
 import importPlugin from 'eslint-plugin-import'
 import unicornPlugin from 'eslint-plugin-unicorn'
 import jsdocPlugin from 'eslint-plugin-jsdoc'
@@ -9,8 +9,10 @@ import jasmine from 'eslint-plugin-jasmine'
 import globals from 'globals'
 // eslint-disable-next-line local-rules/disallow-protected-directory-import
 import eslintLocalRules from './eslint-local-rules/index.js'
+import { SCHEMAS } from './scripts/lib/generatedSchemaTypes.ts'
 
 const SPEC_FILES = '**/*.{spec,specHelper}.{ts,tsx,js}'
+const MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL = process.env.MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL || 'warn'
 
 // eslint-disable-next-line import/no-default-export
 export default tseslint.config(
@@ -20,18 +22,34 @@ export default tseslint.config(
   importPlugin.flatConfigs.typescript,
   {
     ignores: [
+      ...SCHEMAS.map((schema) => schema.typesPath),
       'packages/*/bundle',
       'packages/*/cjs',
       'packages/*/esm',
-      'developer-extension/dist',
       'test/**/dist',
+      'test/**/.next',
+      'test/apps/react-heavy-spa',
+      'test/apps/react-shopist-like',
+      'test/apps/microfrontend',
+      'test/apps/nextjs',
+      'test/apps/angular-app',
+      'test/apps/vue-router-app',
+      'test/apps/nuxt-app',
       'sandbox',
       'coverage',
       'rum-events-format',
       '.yarn',
-      'playwright-report',
-      'docs',
+      '**/playwright-report',
+      'generated-docs',
+      'developer-extension/.wxt',
+      'developer-extension/dist',
     ],
+  },
+
+  {
+    linterOptions: {
+      reportUnusedDisableDirectives: 'error',
+    },
   },
 
   {
@@ -42,15 +60,21 @@ export default tseslint.config(
       jasmine,
     },
 
+    settings: {
+      'import/resolver': {
+        typescript: true,
+      },
+    },
+
     languageOptions: {
       parserOptions: {
         project: [
           './tsconfig.default.json',
           './tsconfig.scripts.json',
-          './developer-extension/tsconfig.webpack.json',
+          './developer-extension/tsconfig.json',
+          './packages/rum-nextjs/tsconfig.json',
           './test/e2e/tsconfig.json',
-          './performances/tsconfig.json',
-
+          './test/performance/tsconfig.json',
           './test/apps/**/tsconfig.json',
         ],
         sourceType: 'module',
@@ -105,7 +129,6 @@ export default tseslint.config(
       'no-inner-declarations': 'error',
       'no-new-func': 'error',
       'no-new-wrappers': 'error',
-      'no-return-await': 'error',
       'no-sequences': 'error',
       'no-template-curly-in-string': 'error',
       'no-undef-init': 'error',
@@ -202,6 +225,10 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unused-vars': ['error', { args: 'all', argsIgnorePattern: '^_', vars: 'all' }],
       '@typescript-eslint/triple-slash-reference': ['error', { path: 'always', types: 'prefer-import', lib: 'always' }],
+      '@typescript-eslint/no-floating-promises': [
+        'error',
+        { allowForKnownSafeCalls: [{ from: 'package', name: ['describe', 'it', 'test'], package: 'node:test' }] },
+      ],
 
       'import/no-cycle': 'error',
       'import/no-default-export': 'error',
@@ -212,12 +239,6 @@ export default tseslint.config(
         {
           commonjs: true,
           ignore: [
-            // typescript-eslint package has no 'main' field, only 'exports', but
-            // eslint-plugin-import doesn't support it. See:
-            // * https://github.com/import-js/eslint-plugin-import/issues/3088#issuecomment-2425233952
-            // * https://github.com/browserify/resolve/issues/222
-            'typescript-eslint',
-
             // The json-schema-to-typescript is built on demand (see scripts/cli build_json2type)
             // and is not always available in the node_modules. Skip the import check.
             'json-schema-to-typescript',
@@ -225,7 +246,15 @@ export default tseslint.config(
         },
       ],
       'import/no-useless-path-segments': 'error',
-      'import/order': 'error',
+      'import/order': [
+        'error',
+        {
+          // This is the default order plus 'internal', which is imports like
+          // @datadog/browser-core/test (references a file/folder within a local package)
+          // https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/order.md#groups
+          groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
+        },
+      ],
 
       'jasmine/no-focused-tests': 'error',
       'jsdoc/check-alignment': 'error',
@@ -325,7 +354,7 @@ export default tseslint.config(
 
   {
     // JS files. Allow weaker typings since TS can't infer types as accurately as TS files.
-    files: ['**/*.js', '**/*.mjs'],
+    files: ['**/*.{js,mjs}'],
     rules: {
       '@typescript-eslint/no-unsafe-call': 'off',
       '@typescript-eslint/no-unsafe-return': 'off',
@@ -354,6 +383,9 @@ export default tseslint.config(
     files: ['packages/*/src/**/*.ts'],
     ignores: [SPEC_FILES],
     rules: {
+      'local-rules/enforce-monitor-until-comment': 'error',
+      // @ts-expect-error - MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL is either 'warn' or 'error'
+      'local-rules/monitor-until-comment-expired': MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL,
       'local-rules/disallow-side-effects': 'error',
       'local-rules/disallow-zone-js-patched-values': 'error',
       'local-rules/disallow-url-constructor-patched-values': 'error',
@@ -374,6 +406,11 @@ export default tseslint.config(
         {
           selector: 'TSEnumDeclaration:not([const=true])',
           message: 'When possible, use `const enum` as it produces less code when transpiled.',
+        },
+
+        {
+          selector: 'TSModuleDeclaration[kind=global]',
+          message: 'Never declare global types as it will leak to the user app global scope.',
         },
       ],
     },
@@ -396,7 +433,7 @@ export default tseslint.config(
   },
 
   {
-    files: ['packages/{rum,logs,flagging,rum-slim}/src/entries/*.ts'],
+    files: ['packages/{rum,logs,rum-slim}/src/entries/*.ts'],
     rules: {
       'local-rules/disallow-enum-exports': 'error',
     },
@@ -416,19 +453,31 @@ export default tseslint.config(
     },
     rules: {
       '@typescript-eslint/no-require-imports': 'off',
+      'import/enforce-node-protocol-usage': ['error', 'always'],
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'glob',
+              message: 'Use node:fs or node:fs/promises (fs.glob) instead.',
+            },
+          ],
+        },
+      ],
     },
   },
 
   {
-    files: ['**/webpack.*.ts'],
+    files: ['**/webpack.*.{ts,mts}', 'eslint-local-rules/**/*.js'],
     rules: {
-      // Webpack configuration files are expected to use a default export.
+      // Webpack configuration files and eslint rules files are expected to use a default export.
       'import/no-default-export': 'off',
     },
   },
 
   {
-    files: ['test/e2e/**/*.ts'],
+    files: ['test/e2e/**/*.ts', 'test/performance/**/*.ts'],
     rules: {
       // E2E codebase is importing @datadog/browser-* packages referenced by tsconfig.
       'import/no-extraneous-dependencies': 'off',

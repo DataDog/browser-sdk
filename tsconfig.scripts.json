@@ -15,5 +15,5 @@
     "checkJs": false,
     "allowImportingTsExtensions": true
   },
-  "include": ["scripts", "**/webpack.*.ts"]
+  "include": ["scripts", "**/webpack.*.mts", "test/envUtils.ts"]
 }

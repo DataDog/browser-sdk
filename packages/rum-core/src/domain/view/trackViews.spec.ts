@@ -1,18 +1,11 @@
-import type { Context, Duration, RelativeTime } from '@datadog/browser-core'
-import {
-  PageExitReason,
-  timeStampNow,
-  display,
-  relativeToClocks,
-  relativeNow,
-  resetExperimentalFeatures,
-} from '@datadog/browser-core'
+import type { Duration, RelativeTime } from '@datadog/browser-core'
+import { PageExitReason, timeStampNow, display, relativeToClocks, relativeNow } from '@datadog/browser-core'
 
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask, createNewEvent } from '@datadog/browser-core/test'
 import { createPerformanceEntry, mockPerformanceObserver } from '../../../test'
+import type { AssembledRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
-import type { RumEvent } from '../../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { RumPerformanceEntry } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
@@ -27,9 +20,12 @@ describe('track views automatically', () => {
   const lifeCycle = new LifeCycle()
   let changeLocation: (to: string) => void
   let viewTest: ViewTest
+  let clock: Clock
 
   beforeEach(() => {
-    viewTest = setupViewTest({ lifeCycle, initialLocation: '/foo' }, { name: 'initial view name' })
+    clock = mockClock()
+
+    viewTest = setupViewTest({ lifeCycle, initialLocation: 'http://foo.com/foo' }, { name: 'initial view name' })
     changeLocation = viewTest.changeLocation
 
     registerCleanupTask(() => {
@@ -93,6 +89,45 @@ describe('track views automatically', () => {
       changeLocation('/foo#bar')
 
       expect(getViewCreateCount()).toBe(2)
+    })
+
+    it('should keep the same URL when updating a view ended by a URL change', () => {
+      const { getViewUpdateCount, getViewUpdate } = viewTest
+      expect(getViewUpdateCount()).toEqual(1)
+
+      changeLocation('/bar')
+
+      expect(getViewUpdateCount()).toEqual(3)
+      expect(getViewUpdate(0).location.href).toEqual('http://foo.com/foo')
+      expect(getViewUpdate(1).location.href).toEqual('http://foo.com/foo')
+      expect(getViewUpdate(2).location.href).toEqual('http://foo.com/bar')
+    })
+
+    it('should ignore URL parameter changes', () => {
+      expect(viewTest.getViewUpdateCount()).toEqual(1)
+
+      changeLocation('/foo?bar=bar')
+      changeLocation('/foo?bar=qux')
+
+      expect(viewTest.getViewUpdateCount()).toEqual(1)
+      expect(viewTest.getViewUpdate(0).location.href).toEqual('http://foo.com/foo')
+    })
+
+    it('should keep the same URL when updating an ended view', () => {
+      const initialView = viewTest.getViewUpdate(0)
+      changeLocation('/bar')
+      expect(viewTest.getViewUpdateCount()).toEqual(3)
+
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
+        type: RumEventType.ERROR,
+        view: { id: initialView.id },
+      } as AssembledRumEvent)
+
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+      expect(viewTest.getViewUpdateCount()).toEqual(4)
+      expect(viewTest.getViewUpdate(3).location.href).toEqual(initialView.location.href)
+      expect(viewTest.getViewUpdate(3).id).toEqual(initialView.id)
     })
   })
 })
@@ -546,7 +581,16 @@ describe('view metrics', () => {
           jasmine.objectContaining({
             firstContentfulPaint: 123 as Duration,
             navigationTimings: jasmine.any(Object),
-            largestContentfulPaint: { value: 789 as Duration, targetSelector: undefined, resourceUrl: undefined },
+            largestContentfulPaint: {
+              value: 789 as Duration,
+              targetSelector: undefined,
+              resourceUrl: undefined,
+              subParts: {
+                loadDelay: 0,
+                loadTime: 0,
+                renderDelay: 666,
+              },
+            },
           })
         )
       })
@@ -727,6 +771,206 @@ describe('view custom timings', () => {
   })
 })
 
+describe('manual loading time', () => {
+  const lifeCycle = new LifeCycle()
+  let clock: Clock
+  let viewTest: ViewTest
+
+  beforeEach(() => {
+    clock = mockClock()
+    viewTest = setupViewTest({ lifeCycle })
+
+    registerCleanupTask(() => {
+      viewTest.stop()
+    })
+  })
+
+  it('should set loading time on the current view', () => {
+    const { getViewUpdate, getViewUpdateCount, setLoadingTime } = viewTest
+
+    clock.tick(500)
+    setLoadingTime()
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
+    expect(lastUpdate.commonViewMetrics.loadingTime).toBe(clock.relative(500))
+  })
+
+  it('should overwrite loading time on subsequent calls (last-call-wins)', () => {
+    const { getViewUpdate, getViewUpdateCount, setLoadingTime } = viewTest
+
+    clock.tick(100)
+    setLoadingTime()
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+    const firstValue = getViewUpdate(getViewUpdateCount() - 1).commonViewMetrics.loadingTime
+
+    clock.tick(200)
+    setLoadingTime()
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
+    expect(lastUpdate.commonViewMetrics.loadingTime).not.toBe(firstValue)
+  })
+
+  it('should not set loading time when the session has expired', () => {
+    clock.tick(0) // run immediate timeouts (mostly for `trackNavigationTimings`)
+    const { getViewUpdateCount, setLoadingTime } = viewTest
+
+    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+
+    const previousCount = getViewUpdateCount()
+
+    setLoadingTime()
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    expect(getViewUpdateCount()).toBe(previousCount)
+  })
+
+  it('should compute loading time relative to route-change view start', () => {
+    const { getViewUpdate, getViewUpdateCount, startView, setLoadingTime } = viewTest
+
+    clock.tick(2000)
+    startView()
+
+    clock.tick(500)
+    setLoadingTime()
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
+    expect(lastUpdate.loadingType).toBe(ViewLoadingType.ROUTE_CHANGE)
+    expect(lastUpdate.commonViewMetrics.loadingTime).toBe(500 as Duration)
+  })
+
+  it('should suppress auto-detected loading time after manual call', () => {
+    const { getViewUpdate, getViewUpdateCount, setLoadingTime } = viewTest
+
+    clock.tick(100)
+    setLoadingTime()
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+    const manualValue = getViewUpdate(getViewUpdateCount() - 1).commonViewMetrics.loadingTime
+
+    clock.tick(PAGE_ACTIVITY_END_DELAY)
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
+    expect(lastUpdate.commonViewMetrics.loadingTime).toBe(manualValue)
+  })
+
+  it('should start with clean loading time state on new view', () => {
+    const { getViewUpdate, getViewUpdateCount, startView, setLoadingTime } = viewTest
+
+    clock.tick(100)
+    setLoadingTime()
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    startView()
+
+    clock.tick(200)
+    setLoadingTime()
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
+    expect(lastUpdate.loadingType).toBe(ViewLoadingType.ROUTE_CHANGE)
+    expect(lastUpdate.commonViewMetrics.loadingTime).toBeDefined()
+  })
+
+  it('should trigger a view update after setLoadingTime', () => {
+    const { getViewUpdateCount, setLoadingTime } = viewTest
+
+    const countBefore = getViewUpdateCount()
+
+    setLoadingTime()
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    expect(getViewUpdateCount()).toBeGreaterThan(countBefore)
+  })
+
+  it('should stop auto-detection tracking after first manual loading time', () => {
+    const { getViewUpdate, getViewUpdateCount, setLoadingTime } = viewTest
+
+    clock.tick(100)
+    setLoadingTime() // first call -- should stop auto-detection tracking
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+    const firstValue = getViewUpdate(getViewUpdateCount() - 1).commonViewMetrics.loadingTime
+
+    clock.tick(200)
+    setLoadingTime() // second call
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+    const secondValue = getViewUpdate(getViewUpdateCount() - 1).commonViewMetrics.loadingTime
+
+    // Let page activity end fire (would set auto-detected loading time if tracking wasn't stopped)
+    clock.tick(PAGE_ACTIVITY_END_DELAY)
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    // Auto-detection should not have replaced the second value
+    const finalUpdate = getViewUpdate(getViewUpdateCount() - 1)
+    expect(finalUpdate.commonViewMetrics.loadingTime).toBe(secondValue)
+    expect(finalUpdate.commonViewMetrics.loadingTime).not.toBe(firstValue)
+  })
+
+  it('should replace loading time on a route-change view with correct elapsed time', () => {
+    const { getViewUpdate, getViewUpdateCount, startView, setLoadingTime } = viewTest
+
+    clock.tick(2000) // 2s into session
+    startView() // new route-change view starts
+
+    clock.tick(300) // 300ms into new view
+    setLoadingTime() // first manual set: 300ms from view start
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+    const firstValue = getViewUpdate(getViewUpdateCount() - 1).commonViewMetrics.loadingTime
+
+    clock.tick(200) // 200ms later (500ms + THROTTLE total from view start)
+    setLoadingTime() // second call replaces previous value
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
+    expect(lastUpdate.loadingType).toBe(ViewLoadingType.ROUTE_CHANGE)
+    expect(lastUpdate.commonViewMetrics.loadingTime).not.toBe(firstValue)
+    // Loading time should be relative to view start, not time origin
+    // Value = 300 + THROTTLE_VIEW_UPDATE_PERIOD + 200 (all ms from view start)
+    expect(lastUpdate.commonViewMetrics.loadingTime).toBe((300 + THROTTLE_VIEW_UPDATE_PERIOD + 200) as Duration)
+  })
+
+  it('should allow multiple calls, each replacing the previous value (last-call-wins)', () => {
+    const { getViewUpdate, getViewUpdateCount, setLoadingTime } = viewTest
+
+    clock.tick(100)
+    setLoadingTime() // first call: 100ms
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+    const firstValue = getViewUpdate(getViewUpdateCount() - 1).commonViewMetrics.loadingTime
+
+    clock.tick(200)
+    setLoadingTime() // second call
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+    const secondValue = getViewUpdate(getViewUpdateCount() - 1).commonViewMetrics.loadingTime
+
+    clock.tick(300)
+    setLoadingTime() // third call
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+    const thirdValue = getViewUpdate(getViewUpdateCount() - 1).commonViewMetrics.loadingTime
+
+    // Each value should be larger than the previous (more time elapsed)
+    expect(secondValue).toBeGreaterThan(firstValue as number)
+    expect(thirdValue).toBeGreaterThan(secondValue as number)
+    // Final value should be the cumulative elapsed time from time origin (initial view uses clocksOrigin)
+    expect(thirdValue).toBe(clock.relative(100 + THROTTLE_VIEW_UPDATE_PERIOD + 200 + THROTTLE_VIEW_UPDATE_PERIOD + 300))
+  })
+})
+
 describe('start view', () => {
   const lifeCycle = new LifeCycle()
   let clock: Clock
@@ -822,6 +1066,15 @@ describe('start view', () => {
     expect(getViewUpdate(1).duration).toBe(50 as Duration)
     expect(getViewUpdate(2).startClocks.relative).toBe(50 as RelativeTime)
   })
+
+  it('should create view with handling stack', () => {
+    const { startView, getViewUpdate } = viewTest
+
+    startView({ name: 'foo', handlingStack: 'Error\n    at foo\n    at bar' })
+
+    // The new view is at index 2 (after the initial view end and the new view start)
+    expect(getViewUpdate(2).handlingStack).toBe('Error\n    at foo\n    at bar')
+  })
 })
 
 describe('view event count', () => {
@@ -834,7 +1087,6 @@ describe('view event count', () => {
 
     registerCleanupTask(() => {
       viewTest.stop()
-      resetExperimentalFeatures()
     })
   })
 
@@ -874,7 +1126,7 @@ describe('view event count', () => {
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
       type: RumEventType.RESOURCE,
       view: { id: firstView.id },
-    } as RumEvent & Context)
+    } as AssembledRumEvent)
 
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
@@ -895,7 +1147,7 @@ describe('view event count', () => {
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
       type: RumEventType.RESOURCE,
       view: { id: firstView.id },
-    } as RumEvent & Context)
+    } as AssembledRumEvent)
 
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
@@ -908,7 +1160,7 @@ describe('view event count', () => {
       type: RumEventType.ACTION,
       action: {},
       view: viewTest.getLatestViewContext(),
-    } as RumEvent & Context
+    } as AssembledRumEvent
   }
 
   describe('view specific context', () => {
@@ -992,7 +1244,6 @@ describe('service and version', () => {
 
     registerCleanupTask(() => {
       viewTest.stop()
-      resetExperimentalFeatures()
     })
   })
 

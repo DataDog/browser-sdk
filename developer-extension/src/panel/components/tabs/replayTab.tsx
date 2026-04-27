@@ -18,15 +18,17 @@ export function ReplayTab() {
     return <Alert level="error" message="No RUM SDK present in the page." />
   }
 
-  if (!infos.cookie?.rum) {
+  const { rumTrackingType } = infos
+
+  if (!rumTrackingType) {
     return <Alert level="error" message="No RUM session." />
   }
 
-  if (infos.cookie.rum === '0') {
+  if (rumTrackingType === '0') {
     return <Alert level="error" message="RUM session sampled out." />
   }
 
-  if (infos.cookie.rum === '2' && infos.cookie.forcedReplay !== '1') {
+  if (rumTrackingType === '2' && infos.cookie?.forcedReplay !== '1') {
     return <Alert level="error" message="RUM session plan does not include replay." />
   }
 

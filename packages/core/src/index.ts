@@ -8,9 +8,6 @@ export {
   buildEndpointHost,
   createEndpointBuilder,
   isIntakeUrl,
-  buildTags,
-  buildTag,
-  sanitizeTag,
 } from './domain/configuration'
 export * from './domain/intakeSites'
 export type { TrackingConsentState } from './domain/trackingConsent'
@@ -18,7 +15,6 @@ export { TrackingConsent, createTrackingConsentState } from './domain/trackingCo
 export {
   isExperimentalFeatureEnabled,
   addExperimentalFeatures,
-  resetExperimentalFeatures,
   getExperimentalFeatures,
   initFeatureFlags,
   ExperimentalFeature,
@@ -46,8 +42,8 @@ export {
   startTelemetry,
   addTelemetryDebug,
   addTelemetryError,
-  resetTelemetry,
   TelemetryService,
+  TelemetryMetrics,
   addTelemetryConfiguration,
   addTelemetryUsage,
   addTelemetryMetrics,
@@ -71,6 +67,7 @@ export {
   BridgeCapability,
   createBatch,
   createFlushController,
+  FLUSH_DURATION_LIMIT,
 } from './transport'
 export * from './tools/display'
 export type { Encoder, EncoderResult } from './tools/encoder'
@@ -79,13 +76,14 @@ export * from './tools/utils/urlPolyfill'
 export * from './tools/utils/timeUtils'
 export * from './tools/utils/arrayUtils'
 export * from './tools/serialisation/sanitize'
-export * from './tools/getGlobalObject'
+export * from './tools/globalObject'
 export { AbstractLifeCycle } from './tools/abstractLifeCycle'
 export * from './domain/eventRateLimiter/createEventRateLimiter'
 export * from './tools/utils/browserDetection'
 export { sendToExtension } from './tools/sendToExtension'
 export { runOnReadyState, asyncRunOnReadyState } from './browser/runOnReadyState'
 export { getZoneJsOriginalValue } from './tools/getZoneJsOriginalValue'
+export { mockable } from './tools/mockable'
 export type { InstrumentedMethodCall } from './tools/instrumentMethod'
 export { instrumentMethod, instrumentSetter } from './tools/instrumentMethod'
 export {
@@ -108,7 +106,8 @@ export type { CookieStore, WeakRef, WeakRefConstructor } from './browser/browser
 export type { XhrCompleteContext, XhrStartContext } from './browser/xhrObservable'
 export { initXhrObservable } from './browser/xhrObservable'
 export type { FetchResolveContext, FetchStartContext, FetchContext } from './browser/fetchObservable'
-export { initFetchObservable, resetFetchObservable } from './browser/fetchObservable'
+export { initFetchObservable, ResponseBodyAction } from './browser/fetchObservable'
+export { fetch } from './browser/fetch'
 export type { PageMayExitEvent } from './browser/pageMayExitObservable'
 export { createPageMayExitObservable, PageExitReason, isPageExitReason } from './browser/pageMayExitObservable'
 export * from './browser/addEventListener'
@@ -116,7 +115,7 @@ export { requestIdleCallback } from './tools/requestIdleCallback'
 export * from './tools/taskQueue'
 export * from './tools/timer'
 export type { ConsoleLog } from './domain/console/consoleObservable'
-export { initConsoleObservable, resetConsoleObservable } from './domain/console/consoleObservable'
+export { initConsoleObservable } from './domain/console/consoleObservable'
 export type { BoundedBuffer } from './tools/boundedBuffer'
 export { createBoundedBuffer } from './tools/boundedBuffer'
 export { catchUserErrors } from './tools/catchUserErrors'
@@ -125,6 +124,7 @@ export { createContextManager } from './domain/context/contextManager'
 export { defineContextMethod, bufferContextCalls } from './domain/context/defineContextMethod'
 export { storeContextManager, removeStorageListeners } from './domain/context/storeContextManager'
 export { startAccountContext, buildAccountContextManager } from './domain/contexts/accountContext'
+export { startTabContext } from './domain/contexts/tabContext'
 export { startGlobalContext, buildGlobalContextManager } from './domain/contexts/globalContext'
 export { startUserContext, buildUserContextManager } from './domain/contexts/userContext'
 export type { User } from './domain/contexts/userContext'
@@ -137,12 +137,13 @@ export { readBytesFromStream } from './tools/readBytesFromStream'
 export type { SessionState } from './domain/session/sessionState'
 export { STORAGE_POLL_DELAY } from './domain/session/sessionStore'
 export { SESSION_STORE_KEY } from './domain/session/storeStrategies/sessionStoreStrategy'
+export { MEMORY_SESSION_STORE_KEY } from './domain/session/storeStrategies/sessionInMemory'
 export {
   willSyntheticsInjectRum,
-  getSyntheticsTestId,
-  getSyntheticsResultId,
+  getSyntheticsContext,
   isSyntheticsTest,
 } from './domain/synthetics/syntheticsWorkerValues'
+export type { SyntheticsContext } from './domain/synthetics/syntheticsWorkerValues'
 export { checkContext } from './domain/context/contextUtils'
 export * from './domain/resourceUtils'
 export * from './domain/bufferedData'
@@ -164,3 +165,4 @@ export * from './domain/deflate'
 export * from './domain/connectivity'
 export * from './tools/stackTrace/handlingStack'
 export * from './tools/abstractHooks'
+export * from './domain/tags'

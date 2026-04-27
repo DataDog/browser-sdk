@@ -1,23 +1,23 @@
+import type { LogsInitConfiguration } from '@datadog/browser-logs'
+import type { RumInitConfiguration } from '@datadog/browser-rum'
 import type { Settings } from '../common/extension.types'
 import { EventListeners } from '../common/eventListeners'
 import { DEV_LOGS_URL, DEV_RUM_SLIM_URL, DEV_RUM_URL } from '../common/packagesUrlConstants'
 import { SESSION_STORAGE_SETTINGS_KEY } from '../common/sessionKeyConstant'
 
-declare global {
-  interface Window extends EventTarget {
-    DD_RUM?: SdkPublicApi
-    DD_LOGS?: SdkPublicApi
-    __ddBrowserSdkExtensionCallback?: (message: unknown) => void
-  }
+const windowWithSdkGlobals = window as Window & {
+  DD_RUM?: SdkPublicApi
+  DD_LOGS?: SdkPublicApi
+  __ddBrowserSdkExtensionCallback?: (message: unknown) => void
 }
 
 interface SdkPublicApi {
   [key: string]: (...args: any[]) => unknown
 }
 
-function main() {
+export function main() {
   // Prevent multiple executions when the devetools are reconnecting
-  if (window.__ddBrowserSdkExtensionCallback) {
+  if (windowWithSdkGlobals.__ddBrowserSdkExtensionCallback) {
     return
   }
 
@@ -54,12 +54,10 @@ function main() {
   }
 }
 
-main()
-
 function sendEventsToExtension() {
   // This script is executed in the "main" execution world, the same world as the webpage. Thus, it
   // can define a global callback variable to listen to SDK events.
-  window.__ddBrowserSdkExtensionCallback = (message: unknown) => {
+  windowWithSdkGlobals.__ddBrowserSdkExtensionCallback = (message: unknown) => {
     // Relays any message to the "isolated" content-script via a custom event.
     window.dispatchEvent(
       new CustomEvent('__ddBrowserSdkMessage', {
@@ -82,7 +80,7 @@ function getSettings() {
 }
 
 function noBrowserSdkLoaded() {
-  return !window.DD_RUM && !window.DD_LOGS
+  return !windowWithSdkGlobals.DD_RUM && !windowWithSdkGlobals.DD_LOGS
 }
 
 function injectDevBundle(url: string, global: GlobalInstrumentation) {
@@ -104,16 +102,64 @@ function setDebug(global: GlobalInstrumentation) {
   })
 }
 
-function overrideInitConfiguration(global: GlobalInstrumentation, configurationOverride: object) {
+function overrideInitConfiguration(
+  global: GlobalInstrumentation,
+  configurationOverride: Partial<RumInitConfiguration | LogsInitConfiguration>
+) {
   global.onSet((sdkInstance) => {
     // Ensure the sdkInstance has an 'init' method, excluding async stubs.
     if ('init' in sdkInstance) {
       const originalInit = sdkInstance.init
-      sdkInstance.init = (config: any) => {
-        originalInit({ ...config, ...configurationOverride })
+      sdkInstance.init = (config: RumInitConfiguration | LogsInitConfiguration) => {
+        originalInit({
+          ...config,
+          ...restoreFunctions(config, configurationOverride),
+          allowedTrackingOrigins: [location.origin],
+        })
       }
     }
   })
+}
+
+type SDKInitConfiguration = RumInitConfiguration | LogsInitConfiguration
+function restoreFunctions(
+  original: SDKInitConfiguration,
+  override: Partial<SDKInitConfiguration>
+): Partial<SDKInitConfiguration> {
+  // Clone the override to avoid mutating the input
+  const result = (Array.isArray(override) ? [...override] : { ...override }) as Record<string, unknown>
+
+  // Add back any missing functions from original
+  for (const key in original) {
+    if (!Object.prototype.hasOwnProperty.call(original, key)) {
+      continue
+    }
+
+    const originalValue = original[key as keyof typeof original]
+    const resultValue = result[key]
+
+    // If it's a function and missing in result, restore it
+    if (typeof originalValue === 'function' && !(key in result)) {
+      result[key] = originalValue
+    }
+    // If both are objects, recurse to restore functions at deeper levels
+    else if (
+      key in result &&
+      originalValue &&
+      typeof originalValue === 'object' &&
+      !Array.isArray(originalValue) &&
+      resultValue &&
+      typeof resultValue === 'object' &&
+      !Array.isArray(resultValue)
+    ) {
+      result[key] = restoreFunctions(
+        originalValue as SDKInitConfiguration,
+        resultValue as Partial<SDKInitConfiguration>
+      )
+    }
+  }
+
+  return result as Partial<SDKInitConfiguration>
 }
 
 function loadSdkScriptFromURL(url: string) {
@@ -167,7 +213,7 @@ function instrumentGlobal(global: 'DD_RUM' | 'DD_LOGS') {
   })
 
   return {
-    get: () => window[global],
+    get: () => windowWithSdkGlobals[global],
     onSet: (callback: (sdkInstance: SdkPublicApi) => void) => {
       eventListeners.subscribe(callback)
     },

@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react'
+import type { RumInternalContext, Context } from '@datadog/browser-core'
+import type { LogsInitConfiguration } from '@datadog/browser-logs'
+import type { RumInitConfiguration } from '@datadog/browser-rum'
 import { createLogger } from '../../common/logger'
 import { evalInWindow } from '../evalInWindow'
+import { computeLogsTrackingType, computeRumTrackingType } from '../sampler'
 
 const logger = createLogger('useSdkInfos')
 
@@ -9,16 +13,16 @@ const REFRESH_INFOS_INTERVAL = 2000
 export interface SdkInfos {
   rum?: {
     version?: string
-    config?: object & { site?: string }
-    internalContext?: object & { session: { id: string } }
-    globalContext?: object
-    user: object
+    config?: RumInitConfiguration
+    internalContext?: RumInternalContext
+    globalContext?: Context
+    user: Context
   }
   logs?: {
     version?: string
-    config?: object & { site?: string }
-    globalContext?: object
-    user: object
+    config?: LogsInitConfiguration
+    globalContext?: Context
+    user: Context
   }
   cookie?: {
     id?: string
@@ -28,6 +32,8 @@ export interface SdkInfos {
     rum?: string
     forcedReplay?: '1'
   }
+  rumTrackingType?: string
+  logsTrackingType?: string
 }
 
 export function useSdkInfos() {
@@ -48,9 +54,24 @@ export function useSdkInfos() {
 }
 
 async function getInfos(): Promise<SdkInfos> {
+  let raw: SdkInfos
   try {
-    return (await evalInWindow(
+    raw = (await evalInWindow(
       `
+        // Helper to serialize objects while preserving function metadata
+        function serializeWithFunctions(obj) {
+          return JSON.parse(JSON.stringify(obj, function(key, value) {
+            if (typeof value === 'function') {
+              return {
+                __type: 'function',
+                __name: value.name || '(anonymous)',
+                __source: value.toString()
+              }
+            }
+            return value
+          }))
+        }
+
         const cookieRawValue = document.cookie
           .split(';')
           .map(cookie => cookie.match(/(\\S*?)=(.*)/)?.slice(1) || [])
@@ -62,14 +83,14 @@ async function getInfos(): Promise<SdkInfos> {
         )
         const rum = window.DD_RUM && {
           version: window.DD_RUM?.version,
-          config: window.DD_RUM?.getInitConfiguration?.(),
+          config: serializeWithFunctions(window.DD_RUM?.getInitConfiguration?.()),
           internalContext: window.DD_RUM?.getInternalContext?.(),
           globalContext: window.DD_RUM?.getGlobalContext?.(),
           user: window.DD_RUM?.getUser?.(),
         }
         const logs = window.DD_LOGS && {
           version: window.DD_LOGS?.version,
-          config: window.DD_LOGS?.getInitConfiguration?.(),
+          config: serializeWithFunctions(window.DD_LOGS?.getInitConfiguration?.()),
           globalContext: window.DD_LOGS?.getGlobalContext?.(),
           user: window.DD_LOGS?.getUser?.(),
         }
@@ -78,8 +99,19 @@ async function getInfos(): Promise<SdkInfos> {
     )) as SdkInfos
   } catch (error) {
     logger.error('Error while getting SDK infos:', error)
+    return {}
   }
-  return {}
+
+  const sessionId = raw.cookie?.id
+  return {
+    ...raw,
+    rumTrackingType:
+      (raw.cookie?.rum ?? (sessionId && raw.rum?.config && computeRumTrackingType(sessionId, raw.rum.config))) ||
+      undefined,
+    logsTrackingType:
+      (raw.cookie?.logs ?? (sessionId && raw.logs?.config && computeLogsTrackingType(sessionId, raw.logs.config))) ||
+      undefined,
+  }
 }
 
 function deepEqual(a: unknown, b: unknown) {

@@ -1,11 +1,21 @@
-const path = require('path')
+const path = require('node:path')
 
 module.exports = {
   mode: 'production',
   target: ['web', 'es2018'],
   entry: {
-    'content-script': './src/contentScript.ts',
-    background: './src/background.ts',
+    base: './src/base.ts',
+    cdn: './src/cdn.ts',
+    appendChild: './src/appendChild.ts',
+  },
+  module: {
+    rules: [
+      {
+        test: /\.ts$/,
+        use: 'ts-loader',
+        exclude: /node_modules/,
+      },
+    ],
   },
   output: {
     filename: '[name].js',

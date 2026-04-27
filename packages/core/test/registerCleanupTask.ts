@@ -1,9 +1,13 @@
-const cleanupTasks: Array<() => void> = []
+type CleanupTask = () => unknown
 
-export function registerCleanupTask(task: () => void) {
+const cleanupTasks: CleanupTask[] = []
+
+export function registerCleanupTask(task: CleanupTask) {
   cleanupTasks.unshift(task)
 }
 
-afterEach(() => {
-  cleanupTasks.splice(0).forEach((task) => task())
+afterEach(async () => {
+  for (const task of cleanupTasks.splice(0)) {
+    await task()
+  }
 })

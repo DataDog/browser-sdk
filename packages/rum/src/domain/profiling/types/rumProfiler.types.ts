@@ -1,46 +1,16 @@
-import type { TimeoutId, ClocksState, Duration } from '@datadog/browser-core'
-import type { ViewHistoryEntry } from '@datadog/browser-rum-core'
-import type { ProfilerTrace, Profiler } from './profilerApi.types'
-
-export interface RumViewEntry {
-  /** Detected start time of view */
-  readonly startClocks: ClocksState
-  /** RUM view id */
-  readonly viewId: string
-  /** RUM view name */
-  readonly viewName: string | undefined
-}
-
-export interface RUMProfilerLongTaskEntry {
-  /** RUM Long Task id */
-  readonly id: string | undefined
-  /** RUM Long Task duration */
-  readonly duration: Duration
-  /** RUM Long Task entry type */
-  readonly entryType: string
-  /** RUM Long Task start time */
-  readonly startClocks: ClocksState
-}
+import type { TimeoutId, ClocksState } from '@datadog/browser-core'
+import type { RumViewEntry } from '../../../types'
+import type { LongTaskContext } from '../longTaskHistory'
+import type { Profiler } from './profilerApi.types'
 
 /**
  * Additional data recorded during profiling session
  */
 export interface RumProfilerEnrichmentData {
   /** List of detected long tasks */
-  readonly longTasks: RUMProfilerLongTaskEntry[]
+  readonly longTasks: LongTaskContext[]
   /** List of detected navigation entries */
   readonly views: RumViewEntry[]
-}
-
-export interface RumProfilerTrace extends ProfilerTrace, RumProfilerEnrichmentData {
-  /** High resolution time when profiler trace started, relative to the profiling session's time origin */
-  readonly startClocks: ClocksState
-  /** High resolution time when profiler trace ended, relative to the profiling session's time origin */
-  readonly endClocks: ClocksState
-  /** Time origin of the profiling session */
-  readonly clocksOrigin: ClocksState
-  /** Sample interval in milliseconds */
-  readonly sampleInterval: number
 }
 
 /**
@@ -48,6 +18,7 @@ export interface RumProfilerTrace extends ProfilerTrace, RumProfilerEnrichmentDa
  */
 export interface RumProfilerStoppedInstance {
   readonly state: 'stopped'
+  readonly stateReason: 'session-expired' | 'stopped-by-user' | 'initializing'
 }
 
 /**
@@ -71,15 +42,13 @@ export interface RumProfilerRunningInstance extends RumProfilerEnrichmentData {
   readonly timeoutId: TimeoutId
   /** Clean-up tasks to execute after running the Profiler */
   readonly cleanupTasks: Array<() => void>
-  /** Performance observer to detect long tasks */
-  readonly observer: PerformanceObserver | undefined
 }
 
 export type RumProfilerInstance = RumProfilerStoppedInstance | RumProfilerPausedInstance | RumProfilerRunningInstance
 
 export interface RUMProfiler {
-  start: (viewEntry: ViewHistoryEntry | undefined) => void
-  stop: () => Promise<void>
+  start: () => void
+  stop: () => void
   isStopped: () => boolean
   isRunning: () => boolean
   isPaused: () => boolean

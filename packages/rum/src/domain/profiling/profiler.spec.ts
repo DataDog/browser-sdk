@@ -1,37 +1,51 @@
+import type { ViewHistoryEntry } from '@datadog/browser-rum-core'
+import { LifeCycle, LifeCycleEventType, RumPerformanceEntryType, createHooks } from '@datadog/browser-rum-core'
+import type { Duration } from '@datadog/browser-core'
 import {
-  LifeCycle,
-  LifeCycleEventType,
-  RumEventType,
-  RumPerformanceEntryType,
-  createHooks,
-} from '@datadog/browser-rum-core'
-import type { RelativeTime } from '@datadog/browser-core'
-import { clocksOrigin, deepClone, relativeNow, timeStampNow } from '@datadog/browser-core'
-import { setPageVisibility, restorePageVisibility, createNewEvent } from '@datadog/browser-core/test'
-import type { RumPerformanceEntry } from 'packages/rum-core/src/browser/performanceObservable'
+  addDuration,
+  clocksNow,
+  clocksOrigin,
+  createIdentityEncoder,
+  createValueHistory,
+  deepClone,
+  ONE_DAY,
+  relativeNow,
+  timeStampNow,
+} from '@datadog/browser-core'
 import {
-  createPerformanceEntry,
-  createRawRumEvent,
-  createRumSessionManagerMock,
-  mockPerformanceObserver,
-  mockRumConfiguration,
-} from '../../../../rum-core/test'
+  setPageVisibility,
+  restorePageVisibility,
+  createNewEvent,
+  interceptRequests,
+  DEFAULT_FETCH_MOCK,
+  readFormDataRequest,
+  mockClock,
+  waitNextMicrotask,
+  replaceMockable,
+} from '@datadog/browser-core/test'
+import { createRumSessionManagerMock, mockRumConfiguration, mockViewHistory } from '../../../../rum-core/test'
 import { mockProfiler } from '../../../test'
+import type { BrowserProfilerTrace } from '../../types'
 import { mockedTrace } from './test-utils/mockedTrace'
-import { transport } from './transport/transport'
 import { createRumProfiler } from './profiler'
-import type { ProfilerTrace, RUMProfiler, RumProfilerTrace } from './types'
+import type { ProfilerTrace } from './types'
 import type { ProfilingContextManager } from './profilingContext'
 import { startProfilingContext } from './profilingContext'
+import type { ProfileEventPayload } from './transport/assembly'
+import { createLongTaskHistory, type LongTaskContext } from './longTaskHistory'
+import type { ActionContext } from './actionHistory'
+import { createActionHistory } from './actionHistory'
+import type { VitalContext } from './vitalHistory'
+import { createVitalHistory } from './vitalHistory'
 
 describe('profiler', () => {
   // Store the original pathname
   const originalPathname = document.location.pathname
-  let sendProfileSpy: jasmine.Spy<typeof transport.sendProfile>
+  let interceptor: ReturnType<typeof interceptRequests>
 
   beforeEach(() => {
-    // Spy on transport.sendProfile to avoid sending data to the server, and check what's sent.
-    sendProfileSpy = spyOn(transport, 'sendProfile')
+    interceptor = interceptRequests()
+    interceptor.withFetch(DEFAULT_FETCH_MOCK, DEFAULT_FETCH_MOCK, DEFAULT_FETCH_MOCK)
   })
 
   afterEach(() => {
@@ -42,21 +56,15 @@ describe('profiler', () => {
 
   let lifeCycle = new LifeCycle()
 
-  function setupProfiler(): {
-    profiler: RUMProfiler
-    notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
-    profilingContextManager: ProfilingContextManager
-    mockedRumProfilerTrace: RumProfilerTrace
-  } {
+  function setupProfiler(currentView?: ViewHistoryEntry) {
     const sessionManager = createRumSessionManagerMock().setId('session-id-1')
     lifeCycle = new LifeCycle()
     const hooks = createHooks()
     const profilingContextManager: ProfilingContextManager = startProfilingContext(hooks)
-    const { notifyPerformanceEntries } = mockPerformanceObserver()
 
     const mockProfilerTrace: ProfilerTrace = deepClone(mockedTrace)
 
-    const mockedRumProfilerTrace: RumProfilerTrace = Object.assign(mockProfilerTrace, {
+    const mockedRumProfilerTrace: BrowserProfilerTrace = Object.assign(mockProfilerTrace, {
       startClocks: {
         relative: relativeNow(),
         timeStamp: timeStampNow(),
@@ -69,10 +77,38 @@ describe('profiler', () => {
       sampleInterval: 10,
       longTasks: [],
       views: [],
+      actions: [],
+      vitals: [],
     })
+
+    const viewHistory = mockViewHistory(
+      currentView ?? {
+        id: 'view-id-1',
+        name: 'view-name-1',
+        startClocks: {
+          relative: relativeNow(),
+          timeStamp: timeStampNow(),
+        },
+      }
+    )
 
     // Replace Browser's Profiler with a mock for testing purpose.
     mockProfiler(mockProfilerTrace)
+
+    const longTaskHistory = createValueHistory<LongTaskContext>({
+      expireDelay: ONE_DAY,
+    })
+    replaceMockable(createLongTaskHistory, () => longTaskHistory)
+
+    const actionHistory = createValueHistory<ActionContext>({
+      expireDelay: ONE_DAY,
+    })
+    replaceMockable(createActionHistory, () => actionHistory)
+
+    const vitalHistory = createValueHistory<VitalContext>({
+      expireDelay: ONE_DAY,
+    })
+    replaceMockable(createVitalHistory, () => vitalHistory)
 
     // Start collection of profile.
     const profiler = createRumProfiler(
@@ -80,6 +116,8 @@ describe('profiler', () => {
       lifeCycle,
       sessionManager,
       profilingContextManager,
+      createIdentityEncoder,
+      viewHistory,
       // Overrides default configuration for testing purpose.
       {
         sampleIntervalMs: 10,
@@ -88,7 +126,20 @@ describe('profiler', () => {
         minProfileDurationMs: 0,
       }
     )
-    return { profiler, notifyPerformanceEntries, profilingContextManager, mockedRumProfilerTrace }
+    return {
+      profiler,
+      profilingContextManager,
+      mockedRumProfilerTrace,
+      addLongTask: (longTask: LongTaskContext) => {
+        longTaskHistory.add(longTask, relativeNow()).close(addDuration(relativeNow(), longTask.duration))
+      },
+      addAction: (action: ActionContext) => {
+        actionHistory.add(action, relativeNow()).close(addDuration(relativeNow(), action.duration ?? (0 as Duration)))
+      },
+      addVital: (vital: VitalContext) => {
+        vitalHistory.add(vital, relativeNow()).close(addDuration(relativeNow(), vital.duration ?? (0 as Duration)))
+      },
+    }
   }
 
   it('should start profiling collection and collect data on stop', async () => {
@@ -96,45 +147,33 @@ describe('profiler', () => {
 
     expect(profilingContextManager.get()?.status).toBe('starting')
 
-    profiler.start({
-      id: 'view-id-1',
-      name: 'view-name-1',
-      startClocks: {
-        relative: relativeNow(),
-        timeStamp: timeStampNow(),
-      },
-    })
+    profiler.start()
 
     // Wait for start of collection.
     await waitForBoolean(() => profiler.isRunning())
 
     expect(profilingContextManager.get()?.status).toBe('running')
 
-    // Stop collection of profile.
-    await profiler.stop()
+    // Stop collection of profile (sync - state changes immediately)
+    profiler.stop()
 
-    // Wait for stop of collection.
-    await waitForBoolean(() => profiler.isStopped())
-
+    expect(profiler.isStopped()).toBe(true)
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
-    expect(sendProfileSpy).toHaveBeenCalledTimes(1)
+    // Wait for data collection to complete (async fire-and-forget)
+    await waitForBoolean(() => interceptor.requests.length >= 1)
 
-    // Check the the sendProfilesSpy was called with the mocked trace
-    expect(sendProfileSpy).toHaveBeenCalledWith(mockedRumProfilerTrace, jasmine.any(Object), 'session-id-1')
+    expect(interceptor.requests.length).toBe(1)
+
+    const request = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[0])
+    expect(request.event.session?.id).toBe('session-id-1')
+    expect(request['wall-time.json']).toEqual(mockedRumProfilerTrace)
   })
 
   it('should pause profiling collection on hidden visibility and restart on visible visibility', async () => {
     const { profiler, profilingContextManager, mockedRumProfilerTrace } = setupProfiler()
 
-    profiler.start({
-      id: 'view-id-1',
-      name: 'view-name-1',
-      startClocks: {
-        relative: relativeNow(),
-        timeStamp: timeStampNow(),
-      },
-    })
+    profiler.start()
 
     // Wait for start of collection.
     await waitForBoolean(() => profiler.isRunning())
@@ -149,8 +188,11 @@ describe('profiler', () => {
     // From an external point of view, the profiler is still running, but it's not collecting data.
     expect(profilingContextManager.get()?.status).toBe('running')
 
+    // Wait for data collection to complete (async fire-and-forget)
+    await waitForBoolean(() => interceptor.requests.length >= 1)
+
     // Assert that the profiler has collected data on pause.
-    expect(sendProfileSpy).toHaveBeenCalledTimes(1)
+    expect(interceptor.requests.length).toBe(1)
 
     // Change back to visible
     setVisibilityState('visible')
@@ -160,88 +202,312 @@ describe('profiler', () => {
     await waitForBoolean(() => profiler.isRunning())
     expect(profilingContextManager.get()?.status).toBe('running')
 
-    // Stop collection of profile.
-    await profiler.stop()
+    // Stop collection of profile (sync - state changes immediately)
+    profiler.stop()
 
-    // Wait for stop of collection.
-    await waitForBoolean(() => profiler.isStopped())
+    expect(profiler.isStopped()).toBe(true)
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
-    expect(sendProfileSpy).toHaveBeenCalledTimes(2)
+    // Wait for data collection to complete (async fire-and-forget)
+    await waitForBoolean(() => interceptor.requests.length >= 2)
+
+    expect(interceptor.requests.length).toBe(2)
 
     // Check the the sendProfilesSpy was called with the mocked trace
-    expect(sendProfileSpy).toHaveBeenCalledWith(mockedRumProfilerTrace, jasmine.any(Object), 'session-id-1')
+    const request = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[1])
+
+    expect(request.event.session?.id).toBe('session-id-1')
+    expect(request['wall-time.json']).toEqual(mockedRumProfilerTrace)
   })
 
-  it('should collect long task from core and then attach long task id to the Profiler trace', async () => {
-    const { profiler, notifyPerformanceEntries, profilingContextManager } = setupProfiler()
+  it('should collect long task happening during a profiling session', async () => {
+    const clock = mockClock()
+    const { profiler, profilingContextManager, addLongTask } = setupProfiler()
 
-    profiler.start({
-      id: 'view-id-1',
-      name: 'view-name-1',
-      startClocks: {
-        relative: relativeNow(),
-        timeStamp: timeStampNow(),
-      },
-    })
-
+    // Start collection of profile.
+    profiler.start()
     await waitForBoolean(() => profiler.isRunning())
 
     expect(profilingContextManager.get()?.status).toBe('running')
+    addLongTask({
+      id: 'long-task-id-1',
+      startClocks: clocksNow(),
+      duration: 50 as Duration,
+      entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
+    })
+    clock.tick(50)
 
-    // Generate a Long Task RUM event
-    const longTaskRumEvent = createRawRumEvent(RumEventType.LONG_TASK, {
-      long_task: {
-        id: 'long-task-id-1',
-        duration: 1000,
-        startTime: 12345 as RelativeTime,
-      },
+    addLongTask({
+      id: 'long-task-id-2',
+      startClocks: clocksNow(),
+      duration: 100 as Duration,
+      entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
     })
 
-    // Notify Profiler that a Long Task RUM event has been collected (via its LifeCycle)
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-      rawRumEvent: longTaskRumEvent,
-      startTime: 12345 as RelativeTime,
-      domainContext: {},
+    // Stop first profiling session (sync - state changes immediately)
+    clock.tick(105)
+    profiler.stop()
+    expect(profiler.isStopped()).toBe(true)
+
+    // Flush microtasks for first session's data collection
+    await waitNextMicrotask()
+
+    // start a new profiling session
+    profiler.start()
+    await waitForBoolean(() => profiler.isRunning())
+
+    addLongTask({
+      id: 'long-task-id-3',
+      startClocks: clocksNow(),
+      duration: 100 as Duration,
+      entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
     })
 
-    // Notify Profiler that some long tasks have been collected (via its PerformanceObserver)
-    notifyPerformanceEntries([
-      createPerformanceEntry(RumPerformanceEntryType.LONG_ANIMATION_FRAME, {
-        startTime: 12345 as RelativeTime,
-        entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
-      }),
-    ])
+    clock.tick(500)
 
-    // Stop collection of profile.
-    await profiler.stop()
-
-    // Wait for stop of collection.
-    await waitForBoolean(() => profiler.isStopped())
-
+    // stop the second profiling session (sync - state changes immediately)
+    profiler.stop()
+    expect(profiler.isStopped()).toBe(true)
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
-    const lastCall: RumProfilerTrace = sendProfileSpy.calls.mostRecent().args[0]
+    // Data collection uses Promises (microtasks), not setTimeout.
+    // With mockClock(), we can't use waitForBoolean (which polls via setTimeout).
+    // Flush microtasks: one for profiler.stop() Promise, one for transport.send()
+    await waitNextMicrotask()
+    await waitNextMicrotask()
 
-    expect(lastCall.longTasks.length).toBe(1)
-    expect(lastCall.longTasks[0].id).toBeDefined()
-    expect(lastCall.longTasks[0].startClocks.relative).toBe(12345 as RelativeTime)
+    expect(interceptor.requests.length).toBe(2)
+
+    const requestOne = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[0])
+    const requestTwo = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[1])
+
+    const traceOne = requestOne['wall-time.json']
+    const traceTwo = requestTwo['wall-time.json']
+
+    expect(requestOne.event.long_task?.id.length).toBe(2)
+    expect(traceOne.longTasks).toEqual([
+      {
+        id: 'long-task-id-2',
+        startClocks: jasmine.any(Object),
+        duration: 100 as Duration,
+        entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
+      },
+      {
+        id: 'long-task-id-1',
+        startClocks: jasmine.any(Object),
+        duration: 50 as Duration,
+        entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
+      },
+    ])
+
+    expect(requestTwo.event.long_task?.id.length).toBe(1)
+    expect(traceTwo.longTasks).toEqual([
+      {
+        id: 'long-task-id-3',
+        startClocks: jasmine.any(Object),
+        duration: 100 as Duration,
+        entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
+      },
+    ])
+  })
+
+  it('should collect actions happening during a profiling session', async () => {
+    const clock = mockClock()
+    const { profiler, profilingContextManager, addAction } = setupProfiler()
+
+    // Start collection of profile.
+    profiler.start()
+    await waitForBoolean(() => profiler.isRunning())
+
+    expect(profilingContextManager.get()?.status).toBe('running')
+    addAction({
+      id: 'action-id-1',
+      label: 'action-label-1',
+      startClocks: clocksNow(),
+      duration: 50 as Duration,
+    })
+    clock.tick(50)
+
+    addAction({
+      id: 'action-id-2',
+      label: 'action-label-2',
+      startClocks: clocksNow(),
+      duration: 100 as Duration,
+    })
+
+    // Stop first profiling session (sync - state changes immediately)
+    clock.tick(105)
+    profiler.stop()
+    expect(profiler.isStopped()).toBe(true)
+
+    // Flush microtasks for first session's data collection
+    await waitNextMicrotask()
+
+    // start a new profiling session
+    profiler.start()
+    await waitForBoolean(() => profiler.isRunning())
+
+    addAction({
+      id: 'action-id-3',
+      label: 'action-label-3',
+      startClocks: clocksNow(),
+      duration: 100 as Duration,
+    })
+
+    clock.tick(500)
+
+    // stop the second profiling session (sync - state changes immediately)
+    profiler.stop()
+    expect(profiler.isStopped()).toBe(true)
+    expect(profilingContextManager.get()?.status).toBe('stopped')
+
+    // Data collection uses Promises (microtasks), not setTimeout.
+    // With mockClock(), we can't use waitForBoolean (which polls via setTimeout).
+    // Flush microtasks: one for profiler.stop() Promise, one for transport.send()
+    await waitNextMicrotask()
+    await waitNextMicrotask()
+
+    expect(interceptor.requests.length).toBe(2)
+
+    const requestOne = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[0])
+    const requestTwo = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[1])
+
+    const traceOne = requestOne['wall-time.json']
+    const traceTwo = requestTwo['wall-time.json']
+
+    expect(requestOne.event.action?.id.length).toBe(2)
+    expect(traceOne.actions).toEqual([
+      {
+        id: 'action-id-2',
+        startClocks: jasmine.any(Object),
+        duration: 100 as Duration,
+        label: 'action-label-2',
+      },
+      {
+        id: 'action-id-1',
+        startClocks: jasmine.any(Object),
+        duration: 50 as Duration,
+        label: 'action-label-1',
+      },
+    ])
+
+    expect(requestTwo.event.action?.id.length).toBe(1)
+    expect(traceTwo.actions).toEqual([
+      {
+        id: 'action-id-3',
+        startClocks: jasmine.any(Object),
+        duration: 100 as Duration,
+        label: 'action-label-3',
+      },
+    ])
+  })
+
+  it('should collect vitals happening during a profiling session', async () => {
+    const clock = mockClock()
+    const { profiler, profilingContextManager, addVital } = setupProfiler()
+
+    // Start collection of profile.
+    profiler.start()
+    await waitForBoolean(() => profiler.isRunning())
+
+    expect(profilingContextManager.get()?.status).toBe('running')
+    addVital({
+      id: 'vital-id-1',
+      label: 'vital-label-1',
+      startClocks: clocksNow(),
+      duration: 50 as Duration,
+    })
+    clock.tick(50)
+
+    addVital({
+      id: 'vital-id-2',
+      label: 'vital-label-2',
+      startClocks: clocksNow(),
+      duration: 100 as Duration,
+    })
+
+    // Stop first profiling session (sync - state changes immediately)
+    clock.tick(105)
+    profiler.stop()
+    expect(profiler.isStopped()).toBe(true)
+
+    // Flush microtasks for first session's data collection
+    await waitNextMicrotask()
+
+    // start a new profiling session
+    profiler.start()
+    await waitForBoolean(() => profiler.isRunning())
+
+    addVital({
+      id: 'vital-id-3',
+      label: 'vital-label-3',
+      startClocks: clocksNow(),
+      duration: 100 as Duration,
+    })
+
+    clock.tick(500)
+
+    // stop the second profiling session (sync - state changes immediately)
+    profiler.stop()
+    expect(profiler.isStopped()).toBe(true)
+    expect(profilingContextManager.get()?.status).toBe('stopped')
+
+    // Data collection uses Promises (microtasks), not setTimeout.
+    // With mockClock(), we can't use waitForBoolean (which polls via setTimeout).
+    // Flush microtasks: one for profiler.stop() Promise, one for transport.send()
+    await waitNextMicrotask()
+    await waitNextMicrotask()
+
+    expect(interceptor.requests.length).toBe(2)
+
+    const requestOne = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[0])
+    const requestTwo = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[1])
+
+    const traceOne = requestOne['wall-time.json']
+    const traceTwo = requestTwo['wall-time.json']
+
+    expect(requestOne.event.vital?.id.length).toBe(2)
+    expect(traceOne.vitals).toEqual([
+      {
+        id: 'vital-id-2',
+        startClocks: jasmine.any(Object),
+        duration: 100 as Duration,
+        label: 'vital-label-2',
+      },
+      {
+        id: 'vital-id-1',
+        startClocks: jasmine.any(Object),
+        duration: 50 as Duration,
+        label: 'vital-label-1',
+      },
+    ])
+
+    expect(requestTwo.event.vital?.id.length).toBe(1)
+    expect(traceTwo.vitals).toEqual([
+      {
+        id: 'vital-id-3',
+        startClocks: jasmine.any(Object),
+        duration: 100 as Duration,
+        label: 'vital-label-3',
+      },
+    ])
   })
 
   it('should collect views and set default view name in the Profile', async () => {
-    const { profiler, profilingContextManager } = setupProfiler()
-
-    // Navigate to the user view
-    history.pushState({}, '', '/user/123')
-
-    profiler.start({
+    const initialViewEntry = {
       id: 'view-user',
       name: '', // no custom view name, should fallback to default view name
       startClocks: {
         relative: relativeNow(),
         timeStamp: timeStampNow(),
       },
-    })
+    }
+    const { profiler, profilingContextManager } = setupProfiler(initialViewEntry)
+
+    // Navigate to the user view
+    history.pushState({}, '', '/user/123')
+
+    profiler.start()
 
     await waitForBoolean(() => profiler.isRunning())
 
@@ -260,29 +526,26 @@ describe('profiler', () => {
       },
     })
 
-    // Stop collection of profile.
-    await profiler.stop()
+    // Stop collection of profile (sync - state changes immediately)
+    profiler.stop()
 
-    // Wait for stop of collection.
-    await waitForBoolean(() => profiler.isStopped())
-
+    expect(profiler.isStopped()).toBe(true)
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
-    const lastCall: RumProfilerTrace = sendProfileSpy.calls.mostRecent().args[0]
+    // Wait for data collection to complete (async fire-and-forget)
+    await waitForBoolean(() => interceptor.requests.length >= 1)
 
-    expect(lastCall.views.length).toBe(2)
-    expect(lastCall.views[0].viewId).toBe('view-user')
-    expect(lastCall.views[0].viewName).toBe('/user/?')
-    expect(lastCall.views[1].viewId).toBe('view-profile')
-    expect(lastCall.views[1].viewName).toBe('/v1/user/?/profile')
+    const request = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[0])
+    const views = request['wall-time.json'].views
+
+    expect(views.length).toBe(2)
+    expect(views[0].viewId).toBe('view-user')
+    expect(views[0].viewName).toBe('/user/?')
+    expect(views[1].viewId).toBe('view-profile')
+    expect(views[1].viewName).toBe('/v1/user/?/profile')
   })
 
   it('should keep track of the latest view in the Profiler', async () => {
-    const { profiler, profilingContextManager, mockedRumProfilerTrace } = setupProfiler()
-
-    // Navigate to the user view
-    history.pushState({}, '', '/user/123')
-
     const initialViewEntry = {
       id: 'view-initial',
       name: 'view-initial',
@@ -292,7 +555,12 @@ describe('profiler', () => {
       },
     }
 
-    profiler.start(initialViewEntry)
+    const { profiler, profilingContextManager, mockedRumProfilerTrace } = setupProfiler(initialViewEntry)
+
+    // Navigate to the user view
+    history.pushState({}, '', '/user/123')
+
+    profiler.start()
 
     await waitForBoolean(() => profiler.isRunning())
     expect(profilingContextManager.get()?.status).toBe('running')
@@ -318,29 +586,26 @@ describe('profiler', () => {
     // Wait for profiler to pause
     await waitForBoolean(() => profiler.isPaused())
 
-    // Assert that the profiler has collected data on pause.
-    expect(sendProfileSpy).toHaveBeenCalledTimes(1)
+    // Wait for data collection to complete (async fire-and-forget)
+    await waitForBoolean(() => interceptor.requests.length >= 1)
 
-    // Check the the sendProfilesSpy was called with the mocked trace
-    expect(sendProfileSpy).toHaveBeenCalledWith(
+    // Assert that the profiler has collected data on pause.
+    expect(interceptor.requests.length).toBe(1)
+
+    const request = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[0])
+    expect(request.event.session?.id).toBe('session-id-1')
+    expect(request['wall-time.json'].views).toEqual([
       {
-        ...mockedRumProfilerTrace,
-        views: [
-          {
-            viewId: initialViewEntry.id,
-            viewName: initialViewEntry.name,
-            startClocks: initialViewEntry.startClocks,
-          },
-          {
-            viewId: nextViewEntry.id,
-            viewName: nextViewEntry.name,
-            startClocks: nextViewEntry.startClocks,
-          },
-        ],
+        viewId: initialViewEntry.id,
+        viewName: initialViewEntry.name,
+        startClocks: initialViewEntry.startClocks,
       },
-      jasmine.any(Object),
-      'session-id-1'
-    )
+      {
+        viewId: nextViewEntry.id,
+        viewName: nextViewEntry.name,
+        startClocks: nextViewEntry.startClocks,
+      },
+    ])
 
     // Change back to visible
     setVisibilityState('visible')
@@ -350,30 +615,335 @@ describe('profiler', () => {
     await waitForBoolean(() => profiler.isRunning())
     expect(profilingContextManager.get()?.status).toBe('running')
 
-    // Stop collection of profile.
-    await profiler.stop()
+    // Stop collection of profile (sync - state changes immediately)
+    profiler.stop()
 
-    // Wait for stop of collection.
-    await waitForBoolean(() => profiler.isStopped())
+    expect(profiler.isStopped()).toBe(true)
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
-    expect(sendProfileSpy).toHaveBeenCalledTimes(2)
+    // Wait for data collection to complete (async fire-and-forget)
+    await waitForBoolean(() => interceptor.requests.length >= 2)
+
+    expect(interceptor.requests.length).toBe(2)
 
     // Check the the sendProfilesSpy was called with the mocked trace
-    expect(sendProfileSpy).toHaveBeenCalledWith(
-      {
-        ...mockedRumProfilerTrace,
-        views: [
-          {
-            viewId: nextViewEntry.id, // The view id should be the last one collected (in this case the "next" view)
-            viewName: nextViewEntry.name,
-            startClocks: nextViewEntry.startClocks,
-          },
-        ],
-      },
-      jasmine.any(Object),
-      'session-id-1'
-    )
+    const request2 = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[1])
+    expect(request2.event.session?.id).toBe('session-id-1')
+    expect(request2['wall-time.json']).toEqual(mockedRumProfilerTrace)
+  })
+
+  it('should stop profiling when session expires', async () => {
+    const { profiler, profilingContextManager } = setupProfiler()
+
+    profiler.start()
+
+    // Wait for start of collection.
+    await waitForBoolean(() => profiler.isRunning())
+
+    expect(profilingContextManager.get()?.status).toBe('running')
+
+    // Notify that the session has expired (sync - state changes immediately)
+    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+
+    expect(profiler.isStopped()).toBe(true)
+    expect(profilingContextManager.get()?.status).toBe('stopped')
+
+    // Wait for data collection to complete (async fire-and-forget)
+    await waitForBoolean(() => interceptor.requests.length >= 1)
+
+    // Verify that profiler collected data before stopping
+    expect(interceptor.requests.length).toBe(1)
+  })
+
+  it('should not restart profiling after session expiration when visibility changes', async () => {
+    const { profiler, profilingContextManager } = setupProfiler()
+
+    profiler.start()
+
+    // Wait for start of collection.
+    await waitForBoolean(() => profiler.isRunning())
+
+    expect(profilingContextManager.get()?.status).toBe('running')
+
+    // Notify that the session has expired (sync - state changes immediately)
+    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+
+    expect(profiler.isStopped()).toBe(true)
+    expect(profilingContextManager.get()?.status).toBe('stopped')
+
+    // Change visibility to hidden and back to visible
+    setVisibilityState('hidden')
+
+    setVisibilityState('visible')
+
+    // Wait a bit to ensure profiler doesn't restart
+    await new Promise((resolve) => setTimeout(resolve, 100))
+
+    // Profiler should remain stopped, not paused or running
+    expect(profiler.isStopped()).toBe(true)
+    expect(profilingContextManager.get()?.status).toBe('stopped')
+  })
+
+  it('should restart profiling when session is renewed', async () => {
+    const { profiler, profilingContextManager } = setupProfiler()
+
+    profiler.start()
+
+    // Wait for start of collection.
+    await waitForBoolean(() => profiler.isRunning())
+
+    expect(profilingContextManager.get()?.status).toBe('running')
+
+    // Notify that the session has expired (sync - state changes immediately)
+    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+
+    expect(profiler.isStopped()).toBe(true)
+    expect(profilingContextManager.get()?.status).toBe('stopped')
+
+    // Wait for data collection to complete (async fire-and-forget)
+    await waitForBoolean(() => interceptor.requests.length >= 1)
+
+    // Verify that profiler collected data before stopping
+    expect(interceptor.requests.length).toBe(1)
+
+    // Notify that the session has been renewed
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+    // Wait for profiler to restart
+    await waitForBoolean(() => profiler.isRunning())
+
+    expect(profilingContextManager.get()?.status).toBe('running')
+
+    // Stop profiler and verify it collected data from the new session (sync)
+    profiler.stop()
+
+    expect(profiler.isStopped()).toBe(true)
+
+    // Wait for data collection to complete (async fire-and-forget)
+    await waitForBoolean(() => interceptor.requests.length >= 2)
+
+    // Should have collected data from both sessions (before expiration and after renewal)
+    expect(interceptor.requests.length).toBe(2)
+  })
+
+  it('should handle multiple session expiration and renewal cycles', async () => {
+    const { profiler, profilingContextManager } = setupProfiler()
+
+    profiler.start()
+
+    // Wait for start of collection.
+    await waitForBoolean(() => profiler.isRunning())
+
+    expect(profilingContextManager.get()?.status).toBe('running')
+
+    // First cycle: expire and renew (sync - state changes immediately)
+    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+    expect(profiler.isStopped()).toBe(true)
+    expect(profilingContextManager.get()?.status).toBe('stopped')
+
+    await waitForBoolean(() => interceptor.requests.length >= 1)
+    expect(interceptor.requests.length).toBe(1)
+
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+    await waitForBoolean(() => profiler.isRunning())
+    expect(profilingContextManager.get()?.status).toBe('running')
+
+    // Second cycle: expire and renew again (sync)
+    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+    expect(profiler.isStopped()).toBe(true)
+    expect(profilingContextManager.get()?.status).toBe('stopped')
+
+    await waitForBoolean(() => interceptor.requests.length >= 2)
+    expect(interceptor.requests.length).toBe(2)
+
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+    await waitForBoolean(() => profiler.isRunning())
+    expect(profilingContextManager.get()?.status).toBe('running')
+
+    // Stop profiler (sync)
+    profiler.stop()
+    expect(profiler.isStopped()).toBe(true)
+
+    // Should have collected data from: initial session + first renewal + second renewal = 3 profiles
+    await waitForBoolean(() => interceptor.requests.length >= 3)
+    expect(interceptor.requests.length).toBe(3)
+  })
+
+  it('should not restart profiling on session renewal if profiler was manually stopped', async () => {
+    const { profiler, profilingContextManager } = setupProfiler()
+
+    profiler.start()
+
+    // Wait for start of collection.
+    await waitForBoolean(() => profiler.isRunning())
+
+    expect(profilingContextManager.get()?.status).toBe('running')
+
+    // Manually stop the profiler (not via session expiration) - sync
+    profiler.stop()
+
+    expect(profiler.isStopped()).toBe(true)
+    expect(profilingContextManager.get()?.status).toBe('stopped')
+
+    // Notify that the session has been renewed
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+    // Wait a bit to ensure profiler doesn't restart
+    await new Promise((resolve) => setTimeout(resolve, 100))
+
+    // Profiler should remain stopped - manual stop should not be overridden by session renewal
+    expect(profiler.isStopped()).toBe(true)
+    expect(profilingContextManager.get()?.status).toBe('stopped')
+  })
+
+  it('should restart profiling when session renews while stop is still in progress', async () => {
+    const { profiler, profilingContextManager } = setupProfiler()
+
+    profiler.start()
+
+    // Wait for start of collection.
+    await waitForBoolean(() => profiler.isRunning())
+
+    expect(profilingContextManager.get()?.status).toBe('running')
+
+    // Session expires while profiler is running
+    // With sync state changes, the profiler state becomes 'stopped' immediately
+    // while data collection continues in the background (fire-and-forget)
+    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+
+    // State is immediately 'stopped' (sync), even though data collection is async
+    expect(profiler.isStopped()).toBe(true)
+
+    // Session renews IMMEDIATELY - even before async data collection completes
+    // This simulates the scenario where user activity triggers renewal
+    // while data is still being collected in the background
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+    // The profiler should restart because the sync state was already 'stopped'
+    // when SESSION_RENEWED fired
+    await waitForBoolean(() => profiler.isRunning())
+
+    expect(profiler.isRunning()).toBe(true)
+    expect(profilingContextManager.get()?.status).toBe('running')
+
+    // Clean up
+    profiler.stop()
+    expect(profiler.isStopped()).toBe(true)
+  })
+
+  it('should not restart profiling on session renewal if user called stop after session expiration', async () => {
+    const { profiler, profilingContextManager } = setupProfiler()
+
+    profiler.start()
+
+    // Wait for start of collection.
+    await waitForBoolean(() => profiler.isRunning())
+
+    expect(profilingContextManager.get()?.status).toBe('running')
+
+    // Session expires (sync - state changes immediately)
+    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+
+    expect(profiler.isStopped()).toBe(true)
+    expect(profilingContextManager.get()?.status).toBe('stopped')
+
+    // User explicitly stops the profiler after session expiration
+    profiler.stop()
+
+    expect(profiler.isStopped()).toBe(true)
+
+    // Session is renewed — start() is called synchronously, so no need to wait
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+    // Profiler should remain stopped - user's explicit stop should take priority over session expiration
+    expect(profiler.isStopped()).toBe(true)
+    expect(profilingContextManager.get()?.status).toBe('stopped')
+  })
+
+  it('should not include long tasks outside the profiling window when clocks drift', async () => {
+    const clock = mockClock()
+    const timeOrigin = performance.timing.navigationStart
+    const { profiler, addLongTask } = setupProfiler()
+
+    profiler.start()
+    expect(profiler.isRunning()).toBe(true)
+
+    // Add a long task at T=100ms (inside the profile window)
+    clock.tick(100)
+    addLongTask({
+      id: 'long-task-inside',
+      startClocks: clocksNow(),
+      duration: 50 as Duration,
+      entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
+    })
+
+    // Add a long task at T=1000ms (outside the actual profile relative window)
+    clock.tick(900)
+    addLongTask({
+      id: 'long-task-outside',
+      startClocks: clocksNow(),
+      duration: 50 as Duration,
+      entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
+    })
+
+    // Advance to T=1100ms
+    clock.tick(100)
+
+    // Simulate clock drift: Date.now() drifted 1000ms ahead of performance.now()
+    // This mimics NTP sync or system clock adjustments in production
+    ;(performance.now as jasmine.Spy).and.callFake(() => Date.now() - timeOrigin - 1000)
+
+    // Stop profiler — state changes synchronously, data collection is async via Promise
+    profiler.stop()
+    expect(profiler.isStopped()).toBe(true)
+
+    // Flush microtasks for profiler.stop() Promise and transport.send()
+    await waitNextMicrotask()
+    await waitNextMicrotask()
+
+    expect(interceptor.requests.length).toBe(1)
+    const request = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[0])
+    const trace = request['wall-time.json']
+
+    // Should only include the long task that occurred during the actual profiling window.
+    // Without the fix (using timeStamp for duration), both long tasks would be included
+    // because the inflated timeStamp-based duration extends the query window.
+    expect(trace.longTasks.length).toBe(1)
+    expect(trace.longTasks[0].id).toBe('long-task-inside')
+  })
+
+  it('should restart profiling when session expires while paused and then renews', async () => {
+    const { profiler, profilingContextManager } = setupProfiler()
+
+    profiler.start()
+
+    // Wait for start of collection.
+    await waitForBoolean(() => profiler.isRunning())
+
+    expect(profilingContextManager.get()?.status).toBe('running')
+
+    // Pause the profiler by hiding the tab
+    setVisibilityState('hidden')
+
+    // Wait for profiler to pause
+    await waitForBoolean(() => profiler.isPaused())
+
+    // Session expires while profiler is paused (sync - state changes immediately)
+    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+
+    expect(profiler.isStopped()).toBe(true)
+    expect(profilingContextManager.get()?.status).toBe('stopped')
+
+    // Session is renewed
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+    // Wait for profiler to restart
+    await waitForBoolean(() => profiler.isRunning())
+    expect(profilingContextManager.get()?.status).toBe('running')
+
+    // Clean up
+    profiler.stop()
+    expect(profiler.isStopped()).toBe(true)
   })
 })
 

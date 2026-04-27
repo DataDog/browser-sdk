@@ -4,7 +4,12 @@ esm
 coverage
 rum-events-format
 .yarn
-developer-extension/dist
 test/**/dist
+test/**/.next
+test/**/.nuxt
+test/**/.output
+test/apps/nextjs/next-env.d.ts
 yarn.lock
-/docs
+/generated-docs
+/developer-extension/.output
+/developer-extension/.wxt

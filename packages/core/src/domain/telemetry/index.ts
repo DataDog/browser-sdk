@@ -1,6 +1,7 @@
 export type { Telemetry } from './telemetry'
 export {
   TelemetryService,
+  TelemetryMetrics,
   addTelemetryDebug,
   addTelemetryError,
   resetTelemetry,

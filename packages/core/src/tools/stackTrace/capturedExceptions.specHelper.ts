@@ -247,6 +247,13 @@ export const CHROME_111_SNIPPET = {
 at snippet:///snippet_file:1:13`,
 }
 
+export const CHROME_141_HTML_ANONYMOUS_LISTENER = {
+  message: 'message string',
+  name: 'Error',
+  stack: `Error: message string
+at HTMLButtonElement.<anonymous> @  http://path/to/file.js:1:4287`,
+}
+
 export const PHANTOMJS_1_19 = {
   stack: `Error: foo
     at file:///path/to/file.js:878

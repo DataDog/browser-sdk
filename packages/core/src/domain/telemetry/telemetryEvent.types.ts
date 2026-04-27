@@ -1,4 +1,3 @@
-/* eslint-disable */
 /**
  * DO NOT MODIFY IT BY HAND. Run `yarn json-schemas:sync` instead.
  */
@@ -158,6 +157,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       track_resources?: boolean
       /**
+       * Whether early requests are tracked
+       */
+      track_early_requests?: boolean
+      /**
        * Whether long tasks are tracked
        */
       track_long_task?: boolean
@@ -184,7 +187,7 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
       /**
        * Configure the storage strategy for persisting sessions
        */
-      session_persistence?: 'local-storage' | 'cookie'
+      session_persistence?: 'local-storage' | 'cookie' | 'memory'
       /**
        * Whether contexts are stored in local storage
        */
@@ -205,6 +208,18 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        * Whether the allowed tracing urls list is used
        */
       use_allowed_tracing_urls?: boolean
+      /**
+       * Whether the allowed GraphQL urls list is used
+       */
+      use_allowed_graph_ql_urls?: boolean
+      /**
+       * Whether GraphQL payload tracking is used for at least one GraphQL endpoint
+       */
+      use_track_graph_ql_payload?: boolean
+      /**
+       * Whether GraphQL response errors tracking is used for at least one GraphQL endpoint
+       */
+      use_track_graph_ql_response_errors?: boolean
       /**
        * A list of selected tracing propagators
        */
@@ -443,6 +458,26 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        * The id of the remote configuration
        */
       remote_configuration_id?: string
+      /**
+       * Whether a proxy is used for remote configuration
+       */
+      use_remote_configuration_proxy?: boolean
+      /**
+       * The percentage of sessions with Profiling enabled
+       */
+      profiling_sample_rate?: number
+      /**
+       * Whether trace baggage is propagated to child spans
+       */
+      propagate_trace_baggage?: boolean
+      /**
+       * How the SDK tracks resource request/response headers
+       */
+      track_resource_headers?: 'default_headers' | 'custom'
+      /**
+       * Whether the beta encode cookie options is enabled
+       */
+      beta_encode_cookie_options?: boolean
       [k: string]: unknown
     }
     [k: string]: unknown
@@ -496,6 +531,8 @@ export type TelemetryCommonFeaturesUsage =
   | ClearAccount
   | AddFeatureFlagEvaluation
   | AddOperationStepVital
+  | GraphQLRequest
+  | AddViewLoadingTime
 /**
  * Schema of browser specific features usage
  */
@@ -504,10 +541,14 @@ export type TelemetryBrowserFeaturesUsage =
   | StartDurationVital
   | StopDurationVital
   | AddDurationVital
+  | StartAction
+  | StopAction
+  | StartResource
+  | StopResource
 /**
  * Schema of mobile specific features usage
  */
-export type TelemetryMobileFeaturesUsage = AddViewLoadingTime
+export type TelemetryMobileFeaturesUsage = TrackWebView | AndroidNetworkInstrumentation
 
 /**
  * Schema of common properties of Telemetry events
@@ -538,7 +579,16 @@ export interface CommonTelemetryProperties {
   /**
    * The source of this event
    */
-  readonly source: 'android' | 'ios' | 'browser' | 'flutter' | 'react-native' | 'unity' | 'kotlin-multiplatform'
+  readonly source:
+    | 'android'
+    | 'ios'
+    | 'browser'
+    | 'flutter'
+    | 'react-native'
+    | 'unity'
+    | 'kotlin-multiplatform'
+    | 'electron'
+    | 'rum-cpp'
   /**
    * The version of the SDK generating the telemetry event
    */
@@ -608,6 +658,18 @@ export interface CommonTelemetryProperties {
        * Model of the device
        */
       model?: string
+      /**
+       * Number of logical CPU cores available for scheduling on the device at runtime, as reported by the operating system.
+       */
+      readonly logical_cpu_count?: number
+      /**
+       * Total RAM in megabytes
+       */
+      readonly total_ram?: number
+      /**
+       * Whether the device is considered a low RAM device (Android)
+       */
+      readonly is_low_ram?: boolean
       [k: string]: unknown
     }
     /**
@@ -817,9 +879,35 @@ export interface AddOperationStepVital {
    */
   feature: 'add-operation-step-vital'
   /**
-   * Feature operations action type
+   * Operations step type
    */
   action_type: 'start' | 'succeed' | 'fail'
+  [k: string]: unknown
+}
+export interface GraphQLRequest {
+  /**
+   * GraphQL request detected
+   */
+  feature: 'graphql-request'
+  [k: string]: unknown
+}
+export interface AddViewLoadingTime {
+  /**
+   * addViewLoadingTime API
+   */
+  feature: 'addViewLoadingTime'
+  /**
+   * Whether the view is not available
+   */
+  no_view?: boolean
+  /**
+   * Whether the available view is not active
+   */
+  no_active_view?: boolean
+  /**
+   * Whether this call overwrote a previously set loading time
+   */
+  overwritten?: boolean
   [k: string]: unknown
 }
 export interface StartSessionReplayRecording {
@@ -854,22 +942,49 @@ export interface AddDurationVital {
   feature: 'add-duration-vital'
   [k: string]: unknown
 }
-export interface AddViewLoadingTime {
+export interface StartAction {
   /**
-   * addViewLoadingTime API
+   * startAction API
    */
-  feature: 'addViewLoadingTime'
+  feature: 'start-action'
+  [k: string]: unknown
+}
+export interface StopAction {
   /**
-   * Whether the view is not available
+   * stopAction API
    */
-  no_view: boolean
+  feature: 'stop-action'
+  [k: string]: unknown
+}
+export interface StartResource {
   /**
-   * Whether the available view is not active
+   * startResource API
    */
-  no_active_view: boolean
+  feature: 'start-resource'
+  [k: string]: unknown
+}
+export interface StopResource {
   /**
-   * Whether the loading time was overwritten
+   * stopResource API
    */
-  overwritten: boolean
+  feature: 'stop-resource'
+  [k: string]: unknown
+}
+export interface TrackWebView {
+  /**
+   * trackWebView API
+   */
+  feature: 'trackWebView'
+  [k: string]: unknown
+}
+export interface AndroidNetworkInstrumentation {
+  /**
+   * Android network instrumentation
+   */
+  feature: 'androidNetworkInstrumentation'
+  /**
+   * The network instrumentation API used
+   */
+  type: 'CRONET' | 'OKHTTP' | 'LEGACY_OKHTTP'
   [k: string]: unknown
 }

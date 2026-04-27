@@ -1,4 +1,14 @@
+import { isNodeShadowRoot } from '../browser/htmlDomUtils'
 import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './action/actionNameConstants'
+
+/**
+ * Marker used to indicate shadow DOM boundaries in selectors.
+ * Named after the deprecated Shadow DOM v0 '::shadow' pseudo-element which served the same
+ * purpose of marking entry into a shadow root.
+ * Note: This is NOT a valid CSS selector, it's an internal marker that requires custom
+ * parsing logic.
+ */
+export const SHADOW_DOM_MARKER = '::shadow '
 
 /**
  * Stable attributes are attributes that are commonly used to identify parts of a UI (ex:
@@ -37,6 +47,11 @@ const UNIQUE_AMONG_CHILDREN_SELECTOR_GETTERS: SelectorGetter[] = [
   getTagNameSelector,
 ]
 
+interface SubtreeTarget {
+  rootNode: Document | ShadowRoot
+  target: Element
+}
+
 export function getSelectorFromElement(
   targetElement: Element,
   actionNameAttribute: string | undefined
@@ -46,38 +61,85 @@ export function getSelectorFromElement(
     // parents, and we cannot determine if it's unique in the document.
     return
   }
-  let targetElementSelector: string | undefined
+
+  const subtrees = getAllSubtreeTargets(targetElement)
+  const selectorParts: string[] = []
+
+  for (const { rootNode, target } of subtrees) {
+    const selector = getSelectorFromElementWithinSubtree(target, rootNode, actionNameAttribute)
+    if (!selector) {
+      return undefined
+    }
+    selectorParts.push(selector)
+  }
+
+  return selectorParts.join(SHADOW_DOM_MARKER)
+}
+
+/**
+ * Returns all (rootNode, target) pairs from the document down to the element.
+ */
+function getAllSubtreeTargets(element: Element): SubtreeTarget[] {
+  const result: SubtreeTarget[] = []
+  let currentTarget: Element | undefined = element
+
+  while (currentTarget) {
+    const rootNode = currentTarget.getRootNode() as Document | ShadowRoot
+    result.push({ rootNode, target: currentTarget })
+
+    if (isNodeShadowRoot(rootNode)) {
+      currentTarget = rootNode.host
+    } else {
+      break
+    }
+  }
+
+  return result.reverse()
+}
+
+/**
+ * Computes a CSS selector for an element within a specific subtree (document or shadow root).
+ */
+function getSelectorFromElementWithinSubtree(
+  targetElement: Element,
+  rootNode: Document | ShadowRoot,
+  actionNameAttribute: string | undefined
+): string | undefined {
+  let currentSelector: string | undefined
   let currentElement: Element | null = targetElement
 
   while (currentElement && currentElement.nodeName !== 'HTML') {
     const globallyUniqueSelector = findSelector(
       currentElement,
+      rootNode,
       GLOBALLY_UNIQUE_SELECTOR_GETTERS,
-      isSelectorUniqueGlobally,
+      isSelectorUniqueWithinRoot,
       actionNameAttribute,
-      targetElementSelector
+      currentSelector
     )
     if (globallyUniqueSelector) {
-      return globallyUniqueSelector
+      return combineSelector(globallyUniqueSelector, currentSelector)
     }
 
     const uniqueSelectorAmongChildren = findSelector(
       currentElement,
+      rootNode,
       UNIQUE_AMONG_CHILDREN_SELECTOR_GETTERS,
       isSelectorUniqueAmongSiblings,
       actionNameAttribute,
-      targetElementSelector
+      currentSelector
     )
-    targetElementSelector =
-      uniqueSelectorAmongChildren || combineSelector(getPositionSelector(currentElement), targetElementSelector)
+
+    const elementSelector = uniqueSelectorAmongChildren || getPositionSelector(currentElement)
+    currentSelector = combineSelector(elementSelector, currentSelector)
 
     currentElement = currentElement.parentElement
   }
 
-  return targetElementSelector
+  return currentSelector
 }
 
-function isGeneratedValue(value: string) {
+export function isGeneratedValue(value: string) {
   // To compute the "URL path group", the backend replaces every URL path parts as a question mark
   // if it thinks the part is an identifier. The condition it uses is to checks whether a digit is
   // present.
@@ -88,7 +150,7 @@ function isGeneratedValue(value: string) {
   return /[0-9]/.test(value)
 }
 
-function getIDSelector(element: Element): string | undefined {
+export function getIDSelector(element: Element): string | undefined {
   if (element.id && !isGeneratedValue(element.id)) {
     return `#${CSS.escape(element.id)}`
   }
@@ -109,7 +171,7 @@ function getClassSelector(element: Element): string | undefined {
   }
 }
 
-function getTagNameSelector(element: Element): string {
+export function getTagNameSelector(element: Element): string {
   return CSS.escape(element.tagName)
 }
 
@@ -130,29 +192,48 @@ function getStableAttributeSelector(element: Element, actionNameAttribute: strin
 
   function getAttributeSelector(attributeName: string) {
     if (element.hasAttribute(attributeName)) {
-      return `${CSS.escape(element.tagName)}[${attributeName}="${CSS.escape(element.getAttribute(attributeName)!)}"]`
+      return `${CSS.escape(element.tagName)}${getAttributeValueSelector(attributeName, element.getAttribute(attributeName)!)}`
     }
   }
 }
 
+export function getAttributeValueSelector(attributeName: string, attributeValue: string) {
+  return `[${attributeName}="${CSS.escape(attributeValue)}"]`
+}
+
 function getPositionSelector(element: Element): string {
-  let sibling = element.parentElement!.firstElementChild
-  let elementIndex = 1
+  const nthOfType = getNthOfTypeSelector(element)
+
+  return `${CSS.escape(element.tagName)}:nth-of-type(${nthOfType})`
+}
+
+export function getNthOfTypeSelector(element: Element): number {
+  const parent = element.parentNode!
+
+  let sibling = parent.firstElementChild
+
+  let nthOfType = 1
 
   while (sibling && sibling !== element) {
     if (sibling.tagName === element.tagName) {
-      elementIndex += 1
+      nthOfType += 1
     }
     sibling = sibling.nextElementSibling
   }
 
-  return `${CSS.escape(element.tagName)}:nth-of-type(${elementIndex})`
+  return nthOfType
 }
 
 function findSelector(
   element: Element,
+  rootNode: Document | ShadowRoot,
   selectorGetters: SelectorGetter[],
-  predicate: (element: Element, elementSelector: string, childSelector: string | undefined) => boolean,
+  predicate: (
+    element: Element,
+    rootNode: Document | ShadowRoot,
+    elementSelector: string,
+    childSelector: string | undefined
+  ) => boolean,
   actionNameAttribute: string | undefined,
   childSelector: string | undefined
 ) {
@@ -161,21 +242,22 @@ function findSelector(
     if (!elementSelector) {
       continue
     }
-    if (predicate(element, elementSelector, childSelector)) {
-      return combineSelector(elementSelector, childSelector)
+    if (predicate(element, rootNode, elementSelector, childSelector)) {
+      return elementSelector
     }
   }
 }
 
 /**
- * Check whether the selector is unique among the whole document.
+ * Check whether the selector is unique within the root node (document or shadow root).
  */
-function isSelectorUniqueGlobally(
-  element: Element,
+function isSelectorUniqueWithinRoot(
+  _element: Element,
+  rootNode: Document | ShadowRoot,
   elementSelector: string,
   childSelector: string | undefined
 ): boolean {
-  return element.ownerDocument.querySelectorAll(combineSelector(elementSelector, childSelector)).length === 1
+  return rootNode.querySelectorAll(combineSelector(elementSelector, childSelector)).length === 1
 }
 
 /**
@@ -184,6 +266,7 @@ function isSelectorUniqueGlobally(
  *
  * @param currentElement - the element being considered while iterating over the target
  * element ancestors.
+ * @param _rootNode - the root node (document or shadow root) - unused but required for predicate signature.
  * @param currentElementSelector - a selector that matches the current element. That
  * selector is not a composed selector (i.e. it might be a single tag name, class name...).
  * @param childSelector - child selector is a selector that targets a descendant
@@ -234,6 +317,7 @@ function isSelectorUniqueGlobally(
  */
 export function isSelectorUniqueAmongSiblings(
   currentElement: Element,
+  _rootNode: Document | ShadowRoot,
   currentElementSelector: string,
   childSelector: string | undefined
 ): boolean {
@@ -249,10 +333,22 @@ export function isSelectorUniqueAmongSiblings(
     isSiblingMatching = (sibling) => sibling.querySelector(scopedSelector) !== null
   }
 
-  const parent = currentElement.parentElement!
-  let sibling = parent.firstElementChild
+  // Check siblings by iterating directly through previousElementSibling and nextElementSibling.
+  // This works even when parentElement is null (e.g., when parent is a DocumentFragment).
+
+  // Check previous siblings
+  let sibling = currentElement.previousElementSibling
   while (sibling) {
-    if (sibling !== currentElement && isSiblingMatching(sibling)) {
+    if (isSiblingMatching(sibling)) {
+      return false
+    }
+    sibling = sibling.previousElementSibling
+  }
+
+  // Check next siblings
+  sibling = currentElement.nextElementSibling
+  while (sibling) {
+    if (isSiblingMatching(sibling)) {
       return false
     }
     sibling = sibling.nextElementSibling

@@ -11,6 +11,8 @@ import {
   createTrackingConsentState,
   defineContextMethod,
   startBufferingData,
+  callMonitored,
+  mockable,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import type { HandlerType } from '../domain/logger'
@@ -18,7 +20,8 @@ import type { StatusType } from '../domain/logger/isAuthorized'
 import { Logger } from '../domain/logger'
 import { buildCommonContext } from '../domain/contexts/commonContext'
 import type { InternalContext } from '../domain/contexts/internalContext'
-import type { StartLogs, StartLogsResult } from './startLogs'
+import type { StartLogsResult } from './startLogs'
+import { startLogs } from './startLogs'
 import { createPreStartStrategy } from './preStartLogs'
 
 export interface LoggerConfiguration {
@@ -32,7 +35,7 @@ export interface LoggerConfiguration {
  *
  * See [Browser Log Collection](https://docs.datadoghq.com/logs/log_collection/javascript) for further information.
  *
- * @category API
+ * @category Main
  */
 export interface LogsPublicApi extends PublicApi {
   /**
@@ -64,7 +67,7 @@ export interface LogsPublicApi extends PublicApi {
    *
    * See [User tracking consent](https://docs.datadoghq.com/logs/log_collection/javascript/#user-tracking-consent) for further information.
    *
-   * @category Tracking Consent
+   * @category Privacy
    * @param trackingConsent - The user tracking consent
    */
   setTrackingConsent: (trackingConsent: TrackingConsent) => void
@@ -73,7 +76,7 @@ export interface LogsPublicApi extends PublicApi {
    * Set the global context information to all events, stored in `@context`
    * See [Global context](https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context) for further information.
    *
-   * @category Global Context
+   * @category Context - Global Context
    * @param context - Global context
    */
   setGlobalContext: (context: any) => void
@@ -83,7 +86,7 @@ export interface LogsPublicApi extends PublicApi {
    *
    * See [Global context](https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context) for further information.
    *
-   * @category Global Context
+   * @category Context - Global Context
    */
   getGlobalContext: () => Context
 
@@ -92,7 +95,7 @@ export interface LogsPublicApi extends PublicApi {
    *
    * See [Global context](https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context) for further information.
    *
-   * @category Global Context
+   * @category Context - Global Context
    * @param key - Key of the property
    * @param value - Value of the property
    */
@@ -103,7 +106,7 @@ export interface LogsPublicApi extends PublicApi {
    *
    * See [Global context](https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context) for further information.
    *
-   * @category Global Context
+   * @category Context - Global Context
    */
   removeGlobalContextProperty: (key: any) => void
 
@@ -112,7 +115,7 @@ export interface LogsPublicApi extends PublicApi {
    *
    * See [Global context](https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context) for further information.
    *
-   * @category Global Context
+   * @category Context - Global Context
    */
   clearGlobalContext: () => void
 
@@ -121,7 +124,7 @@ export interface LogsPublicApi extends PublicApi {
    *
    * See [User session](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.
    *
-   * @category User
+   * @category Context - User
    * @param newUser - User information
    */
   setUser(newUser: User & { id: string }): void
@@ -129,7 +132,7 @@ export interface LogsPublicApi extends PublicApi {
   /**
    * Set user information to all events, stored in `@usr`
    *
-   * @category User
+   * @category Context - User
    * @deprecated You must specify a user id, favor using {@link setUser} instead
    * @param newUser - User information with optional id
    */
@@ -140,7 +143,7 @@ export interface LogsPublicApi extends PublicApi {
    *
    * See [User session](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.
    *
-   * @category User
+   * @category Context - User
    * @returns User information
    */
   getUser: () => Context
@@ -150,7 +153,7 @@ export interface LogsPublicApi extends PublicApi {
    *
    * See [User session](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.
    *
-   * @category User
+   * @category Context - User
    * @param key - Key of the property
    * @param property - Value of the property
    */
@@ -159,7 +162,7 @@ export interface LogsPublicApi extends PublicApi {
   /**
    * Remove a user property
    *
-   * @category User
+   * @category Context - User
    * @param key - Key of the property to remove
    * @see [User session](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.
    */
@@ -170,14 +173,14 @@ export interface LogsPublicApi extends PublicApi {
    *
    * See [User session](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.
    *
-   * @category User
+   * @category Context - User
    */
   clearUser: () => void
 
   /**
    * Set account information to all events, stored in `@account`
    *
-   * @category Account
+   * @category Context - Account
    * @param newAccount - Account information
    */
   setAccount: (newAccount: Account) => void
@@ -185,7 +188,7 @@ export interface LogsPublicApi extends PublicApi {
   /**
    * Get account information
    *
-   * @category Account
+   * @category Context - Account
    * @returns Account information
    */
   getAccount: () => Context
@@ -193,7 +196,7 @@ export interface LogsPublicApi extends PublicApi {
   /**
    * Set or update the account property, stored in `@account.<key>`
    *
-   * @category Account
+   * @category Context - Account
    * @param key - Key of the property
    * @param property - Value of the property
    */
@@ -202,7 +205,7 @@ export interface LogsPublicApi extends PublicApi {
   /**
    * Remove an account property
    *
-   * @category Account
+   * @category Context - Account
    * @param key - Key of the property to remove
    */
   removeAccountProperty: (key: string) => void
@@ -210,7 +213,7 @@ export interface LogsPublicApi extends PublicApi {
   /**
    * Clear all account information
    *
-   * @category Account
+   * @category Context - Account
    * @returns Clear all account information
    */
   clearAccount: () => void
@@ -255,7 +258,7 @@ export interface LogsPublicApi extends PublicApi {
 }
 
 export interface Strategy {
-  init: (initConfiguration: LogsInitConfiguration) => void
+  init: (initConfiguration: LogsInitConfiguration, errorStack?: string) => void
   initConfiguration: LogsInitConfiguration | undefined
   globalContext: ContextManager
   accountContext: ContextManager
@@ -264,19 +267,20 @@ export interface Strategy {
   handleLog: StartLogsResult['handleLog']
 }
 
-export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
+export function makeLogsPublicApi(): LogsPublicApi {
   const trackingConsentState = createTrackingConsentState()
   const bufferedDataObservable = startBufferingData().observable
 
   let strategy = createPreStartStrategy(
     buildCommonContext,
     trackingConsentState,
-    (initConfiguration, configuration) => {
-      const startLogsResult = startLogsImpl(
+    (initConfiguration, configuration, hooks) => {
+      const startLogsResult = mockable(startLogs)(
         configuration,
         buildCommonContext,
         trackingConsentState,
-        bufferedDataObservable
+        bufferedDataObservable,
+        hooks
       )
 
       strategy = createPostStartStrategy(initConfiguration, startLogsResult)
@@ -293,7 +297,10 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
   return makePublicApi<LogsPublicApi>({
     logger: mainLogger,
 
-    init: monitor((initConfiguration) => strategy.init(initConfiguration)),
+    init: (initConfiguration) => {
+      const errorStack = new Error().stack
+      callMonitored(() => strategy.init(initConfiguration, errorStack))
+    },
 
     setTrackingConsent: monitor((trackingConsent) => {
       trackingConsentState.update(trackingConsent)

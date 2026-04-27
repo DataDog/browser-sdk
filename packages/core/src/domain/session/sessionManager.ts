@@ -11,10 +11,12 @@ import { addTelemetryDebug } from '../telemetry'
 import { isSyntheticsTest } from '../synthetics/syntheticsWorkerValues'
 import type { CookieStore } from '../../browser/browser.types'
 import { getCurrentSite } from '../../browser/cookie'
-import { SESSION_NOT_TRACKED, SESSION_TIME_OUT_DELAY } from './sessionConstants'
+import { SESSION_NOT_TRACKED, SESSION_TIME_OUT_DELAY, SessionPersistence } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
 import type { SessionState } from './sessionState'
 import { retrieveSessionCookie } from './storeStrategies/sessionInCookie'
+import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
+import { retrieveSessionFromLocalStorage } from './storeStrategies/sessionInLocalStorage'
 
 export interface SessionManager<TrackingType extends string> {
   findSession: (
@@ -80,7 +82,7 @@ export function startSessionManager<TrackingType extends string>(
     if (trackingConsentState.isGranted()) {
       sessionStore.expandOrRenewSession()
     } else {
-      sessionStore.expire()
+      sessionStore.expire(false)
     }
   })
 
@@ -96,7 +98,7 @@ export function startSessionManager<TrackingType extends string>(
     const session = sessionStore.getSession()
 
     if (!session) {
-      reportUnexpectedSessionState().catch(() => void 0) // Ignore errors
+      reportUnexpectedSessionState(configuration).catch(() => void 0) // Ignore errors
 
       return {
         id: 'invalid',
@@ -161,26 +163,47 @@ function trackResume(configuration: Configuration, cb: () => void) {
   stopCallbacks.push(stop)
 }
 
-async function reportUnexpectedSessionState() {
-  const rawSession = retrieveSessionCookie()
-  let sessionCookies: string[] | Awaited<ReturnType<CookieStore['getAll']>> = []
-
-  if ('cookieStore' in window) {
-    sessionCookies = await (window as { cookieStore: CookieStore }).cookieStore.getAll('_dd_s')
-  } else {
-    sessionCookies = document.cookie.split(/\s*;\s*/).filter((cookie) => cookie.startsWith('_dd_s'))
+async function reportUnexpectedSessionState(configuration: Configuration) {
+  const sessionStoreStrategyType = configuration.sessionStoreStrategyType
+  if (!sessionStoreStrategyType) {
+    return
   }
 
+  let rawSession
+  let cookieContext
+
+  if (sessionStoreStrategyType.type === SessionPersistence.COOKIE) {
+    rawSession = retrieveSessionCookie(sessionStoreStrategyType.cookieOptions, configuration)
+
+    cookieContext = {
+      cookie: await getSessionCookies(),
+      currentDomain: `${window.location.protocol}//${window.location.hostname}`,
+    }
+  } else {
+    rawSession = retrieveSessionFromLocalStorage()
+  }
+  // monitor-until: forever, could be handy to troubleshoot issues until session manager rework
   addTelemetryDebug('Unexpected session state', {
+    sessionStoreStrategyType: sessionStoreStrategyType.type,
     session: rawSession,
     isSyntheticsTest: isSyntheticsTest(),
     createdTimestamp: rawSession?.created,
     expireTimestamp: rawSession?.expire,
-    cookie: {
-      count: sessionCookies.length,
-      domain: getCurrentSite(),
-      ...sessionCookies,
-    },
-    currentDomain: `${window.location.protocol}//${window.location.hostname}`,
+    ...cookieContext,
   })
+}
+
+async function getSessionCookies(): Promise<{ count: number; domain: string }> {
+  let sessionCookies: string[] | Awaited<ReturnType<CookieStore['getAll']>>
+  if ('cookieStore' in window) {
+    sessionCookies = await (window as { cookieStore: CookieStore }).cookieStore.getAll(SESSION_STORE_KEY)
+  } else {
+    sessionCookies = document.cookie.split(/\s*;\s*/).filter((cookie) => cookie.startsWith(SESSION_STORE_KEY))
+  }
+
+  return {
+    count: sessionCookies.length,
+    domain: getCurrentSite() || 'undefined',
+    ...sessionCookies,
+  }
 }

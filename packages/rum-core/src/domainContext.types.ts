@@ -9,7 +9,11 @@ export type RumEventDomainContext<T extends RumEventType = any> = T extends type
   : T extends typeof RumEventType.ACTION
     ? RumActionEventDomainContext
     : T extends typeof RumEventType.RESOURCE
-      ? RumFetchResourceEventDomainContext | RumXhrResourceEventDomainContext | RumOtherResourceEventDomainContext
+      ?
+          | RumFetchResourceEventDomainContext
+          | RumXhrResourceEventDomainContext
+          | RumOtherResourceEventDomainContext
+          | RumManualResourceEventDomainContext
       : T extends typeof RumEventType.ERROR
         ? RumErrorEventDomainContext
         : T extends typeof RumEventType.LONG_TASK
@@ -20,6 +24,7 @@ export type RumEventDomainContext<T extends RumEventType = any> = T extends type
 
 export interface RumViewEventDomainContext {
   location: Readonly<Location>
+  handlingStack?: string
 }
 
 export interface RumActionEventDomainContext {
@@ -48,6 +53,14 @@ export interface RumOtherResourceEventDomainContext {
   performanceEntry: PerformanceEntry
 }
 
+export interface RumManualResourceEventDomainContext {
+  /**
+   * Manual resources created via startResource/stopResource do not have
+   * a performance entry or request/response objects.
+   */
+  isManual: true
+}
+
 export interface RumErrorEventDomainContext {
   error: unknown
   handlingStack?: string
@@ -57,5 +70,6 @@ export interface RumLongTaskEventDomainContext {
   performanceEntry: PerformanceEntry
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface RumVitalEventDomainContext {}
+export interface RumVitalEventDomainContext {
+  handlingStack?: string
+}

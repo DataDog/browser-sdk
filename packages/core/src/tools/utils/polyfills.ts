@@ -1,6 +1,6 @@
 export function findLast<T, S extends T>(
-  array: T[],
-  predicate: (item: T, index: number, array: T[]) => item is S
+  array: readonly T[],
+  predicate: (item: T, index: number, array: readonly T[]) => item is S
 ): S | undefined {
   for (let i = array.length - 1; i >= 0; i -= 1) {
     const item = array[i]

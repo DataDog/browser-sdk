@@ -7,6 +7,10 @@ export type ModifiableFieldPaths = Record<string, 'string' | 'object'>
  * Allows declaring and enforcing modifications to specific fields of an object.
  * Only supports modifying properties of an object (even if nested in an array).
  * Does not support array manipulation (adding/removing items).
+ *
+ * Modifications of the object are sanitized only if the field was actually changed by the modifier function (i.e., value is different).
+ * This ensures consistent SDK behavior regardless of whether limitModification is called.
+ * Only string fields are handled this way, object fields are sanitized regardless of whether the modifier function was called or not.
  */
 export function limitModification<T extends Context, Result>(
   object: T,
@@ -52,6 +56,10 @@ function setNestedValue(
   value: unknown,
   fieldType: 'string' | 'object'
 ) {
+  if (object[field] === value) {
+    return
+  }
+
   const newType = getType(value)
 
   if (newType === fieldType) {

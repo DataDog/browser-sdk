@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "outDir": "./dist/",
+    "strict": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "@datadog/browser-rum-react/tanstack-router": ["../../../packages/rum-react/src/entries/tanstackRouter"]
+    },
+    "esModuleInterop": true,
+    "jsx": "react-jsx",
+    "target": "ES2018",
+    "lib": ["ES2018", "DOM"],
+    "types": []
+  }
+}

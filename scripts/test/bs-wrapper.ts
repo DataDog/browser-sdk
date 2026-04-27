@@ -13,7 +13,7 @@
 // after killing it. There might be a better way of prematurely aborting the test command if we need
 // to in the future.
 
-import { spawn, type ChildProcess } from 'child_process'
+import { spawn, type ChildProcess } from 'node:child_process'
 import browserStack from 'browserstack-local'
 import { printLog, runMain, timeout, printError } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'

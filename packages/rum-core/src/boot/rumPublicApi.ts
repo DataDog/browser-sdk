@@ -13,6 +13,8 @@ import type {
   Account,
   RumInternalContext,
   Telemetry,
+  Encoder,
+  ResourceType,
 } from '@datadog/browser-core'
 import {
   ContextManagerMethod,
@@ -31,6 +33,11 @@ import {
   CustomerContextKey,
   defineContextMethod,
   startBufferingData,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
+  mockable,
+  generateUUID,
+  timeStampNow,
 } from '@datadog/browser-core'
 
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -42,14 +49,20 @@ import type { RumConfiguration, RumInitConfiguration } from '../domain/configura
 import type { ViewOptions } from '../domain/view/trackViews'
 import type {
   AddDurationVitalOptions,
-  DurationVitalOptions,
   DurationVitalReference,
+  DurationVitalOptions,
+  FeatureOperationOptions,
+  FailureReason,
 } from '../domain/vital/vitalCollection'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
 import type { Hooks } from '../domain/hooks'
+import type { SdkName } from '../domain/contexts/defaultContext'
+import type { ActionOptions } from '../domain/action/trackManualActions'
+import type { ResourceOptions, ResourceStopOptions } from '../domain/resource/trackManualResources'
 import { createPreStartStrategy } from './preStartRum'
-import type { StartRum, StartRumResult } from './startRum'
+import type { StartRumResult } from './startRum'
+import { startRum } from './startRum'
 
 export interface StartRecordingOptions {
   force: boolean
@@ -60,7 +73,7 @@ export interface StartRecordingOptions {
  *
  * See [RUM Browser Monitoring Setup](https://docs.datadoghq.com/real_user_monitoring/browser) for further information.
  *
- * @category API
+ * @category Main
  */
 export interface RumPublicApi extends PublicApi {
   /**
@@ -70,20 +83,13 @@ export interface RumPublicApi extends PublicApi {
    *
    * @category Init
    * @param initConfiguration - Configuration options of the SDK
-   * @example Init RUM Browser SDK example
+   * @example
    * ```ts
    * datadogRum.init({
    *   applicationId: '<DATADOG_APPLICATION_ID>',
    *   clientToken: '<DATADOG_CLIENT_TOKEN>',
    *   site: '<DATADOG_SITE>',
-   *   //  service: 'my-web-application',
-   *   //  env: 'production',
-   *   //  version: '1.0.0',
-   *   sessionSampleRate: 100,
-   *   sessionReplaySampleRate: 100,
-   *   trackResources: true,
-   *   trackLongTasks: true,
-   *   trackUserInteractions: true,
+   *   // ...
    * })
    * ```
    */
@@ -101,7 +107,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [User tracking consent](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-tracking-consent) for further information.
    *
-   * @category Tracking Consent
+   * @category Privacy
    * @param trackingConsent - The user tracking consent
    */
   setTrackingConsent: (trackingConsent: TrackingConsent) => void
@@ -112,7 +118,7 @@ export interface RumPublicApi extends PublicApi {
    * Enable to manually change the name of the current view.
    * See [Override default RUM view names](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#override-default-rum-view-names) for further information.
    *
-   * @category View
+   * @category Context - View
    * @param name - Name of the view
    */
   setViewName: (name: string) => void
@@ -122,7 +128,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * Enable to manually set the context of the current view.
    *
-   * @category View
+   * @category Context - View
    * @param context - Context of the view
    */
   setViewContext: (context: Context) => void
@@ -131,7 +137,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * Enable to manually set a property of the context of the current view.
    *
-   * @category View
+   * @category Context - View
    * @param key - key of the property
    * @param value - value of the property
    */
@@ -140,7 +146,7 @@ export interface RumPublicApi extends PublicApi {
   /**
    * Get View Context.
    *
-   * @category View
+   * @category Context - View
    */
   getViewContext(): Context
 
@@ -155,6 +161,7 @@ export interface RumPublicApi extends PublicApi {
    * Get the init configuration
    *
    * @category Init
+   * @returns RumInitConfiguration | undefined
    */
   getInitConfiguration: () => RumInitConfiguration | undefined
 
@@ -163,18 +170,54 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [Send RUM Custom Actions](https://docs.datadoghq.com/real_user_monitoring/guide/send-rum-custom-actions) for further information.
    *
-   * @category Custom Actions
+   * @category Data Collection
    * @param name - Name of the action
    * @param context - Context of the action
    */
   addAction: (name: string, context?: object) => void
 
   /**
+   * [Experimental] Start an action, stored in `@action`
+   *
+   * @category Data Collection
+   * @param name - Name of the action
+   * @param options - Options of the action (@default type: 'custom')
+   */
+  startAction: (name: string, options?: ActionOptions) => void
+
+  /**
+   * [Experimental] Stop an action, stored in `@action`
+   *
+   * @category Data Collection
+   * @param name - Name of the action
+   * @param options - Options of the action
+   */
+  stopAction: (name: string, options?: ActionOptions) => void
+
+  /**
+   * [Experimental] Start tracking a resource, stored in `@resource`
+   *
+   * @category Data Collection
+   * @param url - URL of the resource
+   * @param options - Options of the resource (@default type: 'other')
+   */
+  startResource: (url: string, options?: ResourceOptions) => void
+
+  /**
+   * [Experimental] Stop tracking a resource, stored in `@resource`
+   *
+   * @category Data Collection
+   * @param url - URL of the resource
+   * @param options - Options of the resource
+   */
+  stopResource: (url: string, options?: ResourceStopOptions) => void
+
+  /**
    * Add a custom error, stored in `@error`.
    *
    * See [Send RUM Custom Actions](https://docs.datadoghq.com/real_user_monitoring/guide/send-rum-custom-actions) for further information.
    *
-   * @category Custom Errors
+   * @category Data Collection
    * @param error - Error. Favor sending a [Javascript Error](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) to have a stack trace attached to the error event.
    * @param context - Context of the error
    */
@@ -188,17 +231,27 @@ export interface RumPublicApi extends PublicApi {
    * We currently don't provide a way to retrieve the view start time, so it can be challenging to provide a timing relative to the view start.
    * see https://github.com/DataDog/browser-sdk/issues/2552
    *
-   * @category Custom Timings
+   * @category Data Collection
    * @param name - Name of the custom timing
    * @param [time] - Epoch timestamp of the custom timing (if not set, will use current time)
    */
   addTiming: (name: string, time?: number) => void
 
   /**
+   * [Experimental] Manually set the current view's loading time.
+   *
+   * Call this method when the view has finished loading. The loading time is computed as the
+   * elapsed time since the view started. Each call replaces any previously set value (last-call-wins).
+   *
+   * @category Data Collection
+   */
+  setViewLoadingTime: () => void
+
+  /**
    * Set the global context information to all events, stored in `@context`
    * See [Global context](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context) for further information.
    *
-   * @category Global Context
+   * @category Context - Global Context
    * @param context - Global context
    */
   setGlobalContext: (context: Context) => void
@@ -208,7 +261,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [Global context](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context) for further information.
    *
-   * @category Global Context
+   * @category Context - Global Context
    */
   getGlobalContext: () => Context
 
@@ -217,7 +270,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [Global context](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context) for further information.
    *
-   * @category Global Context
+   * @category Context - Global Context
    * @param key - Key of the property
    * @param value - Value of the property
    */
@@ -228,7 +281,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [Global context](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context) for further information.
    *
-   * @category Global Context
+   * @category Context - Global Context
    */
   removeGlobalContextProperty: (key: any) => void
 
@@ -237,7 +290,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [Global context](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context) for further information.
    *
-   * @category Global Context
+   * @category Context - Global Context
    */
   clearGlobalContext(): void
 
@@ -246,7 +299,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.
    *
-   * @category User
+   * @category Context - User
    * @param newUser - User information
    */
   setUser(newUser: User & { id: string }): void
@@ -254,7 +307,7 @@ export interface RumPublicApi extends PublicApi {
   /**
    * Set user information to all events, stored in `@usr`
    *
-   * @category User
+   * @category Context - User
    * @deprecated You must specify a user id, favor using {@link setUser} instead
    * @param newUser - User information with optional id
    */
@@ -265,7 +318,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.
    *
-   * @category User
+   * @category Context - User
    * @returns User information
    */
   getUser: () => Context
@@ -275,7 +328,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.
    *
-   * @category User
+   * @category Context - User
    * @param key - Key of the property
    * @param property - Value of the property
    */
@@ -284,7 +337,7 @@ export interface RumPublicApi extends PublicApi {
   /**
    * Remove a user property
    *
-   * @category User
+   * @category Context - User
    * @param key - Key of the property to remove
    * @see [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.
    */
@@ -295,14 +348,14 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.
    *
-   * @category User
+   * @category Context - User
    */
   clearUser: () => void
 
   /**
    * Set account information to all events, stored in `@account`
    *
-   * @category Account
+   * @category Context - Account
    * @param newAccount - Account information
    */
   setAccount: (newAccount: Account) => void
@@ -310,7 +363,7 @@ export interface RumPublicApi extends PublicApi {
   /**
    * Get account information
    *
-   * @category Account
+   * @category Context - Account
    * @returns Account information
    */
   getAccount: () => Context
@@ -318,7 +371,7 @@ export interface RumPublicApi extends PublicApi {
   /**
    * Set or update the account property, stored in `@account.<key>`
    *
-   * @category Account
+   * @category Context - Account
    * @param key - Key of the property
    * @param property - Value of the property
    */
@@ -327,7 +380,7 @@ export interface RumPublicApi extends PublicApi {
   /**
    * Remove an account property
    *
-   * @category Account
+   * @category Context - Account
    * @param key - Key of the property to remove
    */
   removeAccountProperty: (key: string) => void
@@ -335,7 +388,7 @@ export interface RumPublicApi extends PublicApi {
   /**
    * Clear all account information
    *
-   * @category Account
+   * @category Context - Account
    * @returns Clear all account information
    */
   clearAccount: () => void
@@ -345,8 +398,9 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [Override default RUM view names](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#override-default-rum-view-names) for further information.
    *
-   * @category View
-   * @param nameOrOptions - Name or options (name, service, version) for the view
+   * Context - @category Data Collection
+   *
+   * @param nameOrOptions - The view name, or a {@link ViewOptions} object to configure the view
    */
   startView(nameOrOptions?: string | ViewOptions): void
 
@@ -365,6 +419,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [Feature Flag Tracking](https://docs.datadoghq.com/real_user_monitoring/feature_flag_tracking/) for further information.
    *
+   * @category Data Collection
    * @param key - The key of the feature flag.
    * @param value - The value of the feature flag.
    */
@@ -401,7 +456,7 @@ export interface RumPublicApi extends PublicApi {
   /**
    * Add a custom duration vital
    *
-   * @category Vital
+   * @category Vital - Duration
    * @param name - Name of the custom vital
    * @param options - Options for the custom vital (startTime, duration, context, description)
    */
@@ -412,7 +467,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * If you plan to have multiple durations for the same vital, you should use the reference returned by this method.
    *
-   * @category Vital
+   * @category Vital - Duration
    * @param name - Name of the custom vital
    * @param options - Options for the custom vital (context, description)
    * @returns reference to the custom vital
@@ -422,11 +477,42 @@ export interface RumPublicApi extends PublicApi {
   /**
    * Stop a custom duration vital
    *
-   * @category Vital
+   * @category Vital - Duration
    * @param nameOrRef - Name or reference of the custom vital
-   * @param options - Options for the custom vital (context, description)
+   * @param options - Options for the custom vital (operationKey, context, description)
    */
   stopDurationVital: (nameOrRef: string | DurationVitalReference, options?: DurationVitalOptions) => void
+
+  /**
+   * start a feature operation
+   *
+   * @category Vital - Feature Operation
+   * @param name - Name of the operation step
+   * @param options - Options for the operation step (operationKey, context, description)
+   * @hidden // TODO: replace by @since when GA
+   */
+  startFeatureOperation: (name: string, options?: FeatureOperationOptions) => void
+
+  /**
+   * succeed a feature operation
+   *
+   * @category Vital - Feature Operation
+   * @param name - Name of the operation step
+   * @param options - Options for the operation step (operationKey, context, description)
+   * @hidden // TODO: replace by @since when GA
+   */
+  succeedFeatureOperation: (name: string, options?: FeatureOperationOptions) => void
+
+  /**
+   * fail a feature operation
+   *
+   * @category Vital - Feature Operation
+   * @param name - Name of the operation step
+   * @param failureReason - Reason for the failure
+   * @param options - Options for the operation step (operationKey, context, description)
+   * @hidden // TODO: replace by @since when GA
+   */
+  failFeatureOperation: (name: string, failureReason: FailureReason, options?: FeatureOperationOptions) => void
 }
 
 export interface RecorderApi {
@@ -452,7 +538,8 @@ export interface ProfilerApi {
     hooks: Hooks,
     configuration: RumConfiguration,
     sessionManager: RumSessionManager,
-    viewHistory: ViewHistory
+    viewHistory: ViewHistory,
+    createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
   ) => void
 }
 
@@ -468,15 +555,16 @@ export interface RumPublicApiOptions {
     worker: DeflateWorker,
     streamId: DeflateEncoderStreamId
   ) => DeflateEncoder
-  sdkName?: 'rum' | 'rum-slim' | 'rum-synthetics'
+  sdkName?: SdkName
 }
 
 export interface Strategy {
-  init: (initConfiguration: RumInitConfiguration, publicApi: RumPublicApi) => void
+  init: (initConfiguration: RumInitConfiguration, publicApi: RumPublicApi, errorStack?: string) => void
   initConfiguration: RumInitConfiguration | undefined
   getInternalContext: StartRumResult['getInternalContext']
   stopSession: StartRumResult['stopSession']
   addTiming: StartRumResult['addTiming']
+  setLoadingTime: StartRumResult['setLoadingTime']
   startView: StartRumResult['startView']
   setViewName: StartRumResult['setViewName']
 
@@ -489,15 +577,19 @@ export interface Strategy {
   accountContext: ContextManager
 
   addAction: StartRumResult['addAction']
+  startAction: StartRumResult['startAction']
+  stopAction: StartRumResult['stopAction']
+  startResource: StartRumResult['startResource']
+  stopResource: StartRumResult['stopResource']
   addError: StartRumResult['addError']
   addFeatureFlagEvaluation: StartRumResult['addFeatureFlagEvaluation']
   startDurationVital: StartRumResult['startDurationVital']
   stopDurationVital: StartRumResult['stopDurationVital']
   addDurationVital: StartRumResult['addDurationVital']
+  addOperationStepVital: StartRumResult['addOperationStepVital']
 }
 
 export function makeRumPublicApi(
-  startRumImpl: StartRum,
   recorderApi: RecorderApi,
   profilerApi: ProfilerApi,
   options: RumPublicApiOptions = {}
@@ -510,18 +602,23 @@ export function makeRumPublicApi(
     options,
     trackingConsentState,
     customVitalsState,
-    (configuration, deflateWorker, initialViewOptions) => {
-      const startRumResult = startRumImpl(
+    (configuration, deflateWorker, initialViewOptions, telemetry, hooks) => {
+      const createEncoder =
+        deflateWorker && options.createDeflateEncoder
+          ? (streamId: DeflateEncoderStreamId) => options.createDeflateEncoder!(configuration, deflateWorker, streamId)
+          : createIdentityEncoder
+
+      const startRumResult = mockable(startRum)(
         configuration,
         recorderApi,
         profilerApi,
         initialViewOptions,
-        deflateWorker && options.createDeflateEncoder
-          ? (streamId) => options.createDeflateEncoder!(configuration, deflateWorker, streamId)
-          : createIdentityEncoder,
+        createEncoder,
         trackingConsentState,
         customVitalsState,
         bufferedDataObservable,
+        telemetry,
+        hooks,
         options.sdkName
       )
 
@@ -539,7 +636,8 @@ export function makeRumPublicApi(
         startRumResult.hooks,
         configuration,
         startRumResult.session,
-        startRumResult.viewHistory
+        startRumResult.viewHistory,
+        createEncoder
       )
 
       strategy = createPostStartStrategy(strategy, startRumResult)
@@ -547,6 +645,7 @@ export function makeRumPublicApi(
       callPluginsMethod(configuration.plugins, 'onRumStart', {
         strategy, // TODO: remove this in the next major release
         addEvent: startRumResult.addEvent,
+        addError: startRumResult.addError,
       })
 
       return startRumResult
@@ -557,16 +656,20 @@ export function makeRumPublicApi(
   const startView: {
     (name?: string): void
     (options: ViewOptions): void
-  } = monitor((options?: string | ViewOptions) => {
-    const sanitizedOptions = typeof options === 'object' ? options : { name: options }
-    strategy.startView(sanitizedOptions)
-    addTelemetryUsage({ feature: 'start-view' })
-  })
+  } = (options?: string | ViewOptions) => {
+    const handlingStack = createHandlingStack('view')
+    callMonitored(() => {
+      const sanitizedOptions = typeof options === 'object' ? options : { name: options }
+      strategy.startView({ ...sanitizedOptions, handlingStack })
+      addTelemetryUsage({ feature: 'start-view' })
+    })
+  }
 
   const rumPublicApi: RumPublicApi = makePublicApi<RumPublicApi>({
-    init: monitor((initConfiguration) => {
-      strategy.init(initConfiguration, rumPublicApi)
-    }),
+    init: (initConfiguration) => {
+      const errorStack = new Error().stack
+      callMonitored(() => strategy.init(initConfiguration, rumPublicApi, errorStack))
+    },
 
     setTrackingConsent: monitor((trackingConsent) => {
       trackingConsentState.update(trackingConsent)
@@ -612,6 +715,59 @@ export function makeRumPublicApi(
       })
     },
 
+    startAction: monitor((name, options) => {
+      // Check feature flag only after init; pre-init calls should be buffered
+      if (strategy.initConfiguration && !isExperimentalFeatureEnabled(ExperimentalFeature.START_STOP_ACTION)) {
+        return
+      }
+      // addTelemetryUsage({ feature: 'start-action' })
+      strategy.startAction(sanitize(name)!, {
+        type: sanitize(options && options.type) as ActionType | undefined,
+        context: sanitize(options && options.context) as Context,
+        actionKey: options && options.actionKey,
+      })
+    }),
+
+    stopAction: monitor((name, options) => {
+      if (strategy.initConfiguration && !isExperimentalFeatureEnabled(ExperimentalFeature.START_STOP_ACTION)) {
+        return
+      }
+      // addTelemetryUsage({ feature: 'stop-action' })
+      strategy.stopAction(sanitize(name)!, {
+        type: sanitize(options && options.type) as ActionType | undefined,
+        context: sanitize(options && options.context) as Context,
+        actionKey: options && options.actionKey,
+      })
+    }),
+
+    startResource: monitor((url, options) => {
+      // Check feature flag only after init; pre-init calls should be buffered
+      if (strategy.initConfiguration && !isExperimentalFeatureEnabled(ExperimentalFeature.START_STOP_RESOURCE)) {
+        return
+      }
+      // addTelemetryUsage({ feature: 'start-resource' })
+      strategy.startResource(sanitize(url)!, {
+        type: sanitize(options && options.type) as ResourceType | undefined,
+        method: sanitize(options && options.method) as string | undefined,
+        context: sanitize(options && options.context) as Context,
+        resourceKey: options && options.resourceKey,
+      })
+    }),
+
+    stopResource: monitor((url, options) => {
+      if (strategy.initConfiguration && !isExperimentalFeatureEnabled(ExperimentalFeature.START_STOP_RESOURCE)) {
+        return
+      }
+      // addTelemetryUsage({ feature: 'stop-resource' })
+      strategy.stopResource(sanitize(url)!, {
+        type: sanitize(options && options.type) as ResourceType | undefined,
+        statusCode: options && options.statusCode,
+        size: options && options.size,
+        context: sanitize(options && options.context) as Context,
+        resourceKey: options && options.resourceKey,
+      })
+    }),
+
     addError: (error, context) => {
       const handlingStack = createHandlingStack('error')
       callMonitored(() => {
@@ -628,6 +784,14 @@ export function makeRumPublicApi(
     addTiming: monitor((name, time) => {
       // TODO: next major decide to drop relative time support or update its behaviour
       strategy.addTiming(sanitize(name)!, time as RelativeTime | TimeStamp | undefined)
+    }),
+
+    setViewLoadingTime: monitor(() => {
+      const callTimestamp = timeStampNow()
+      strategy.setLoadingTime(callTimestamp)
+      addTelemetryUsage({
+        feature: 'addViewLoadingTime',
+      })
     }),
 
     setGlobalContext: defineContextMethod(
@@ -744,25 +908,34 @@ export function makeRumPublicApi(
 
     stopSessionReplayRecording: monitor(() => recorderApi.stop()),
 
-    addDurationVital: monitor((name, options) => {
-      addTelemetryUsage({ feature: 'add-duration-vital' })
-      strategy.addDurationVital({
-        name: sanitize(name)!,
-        type: VitalType.DURATION,
-        startClocks: timeStampToClocks(options.startTime as TimeStamp),
-        duration: options.duration as Duration,
-        context: sanitize(options && options.context) as Context,
-        description: sanitize(options && options.description) as string | undefined,
+    addDurationVital: (name, options) => {
+      const handlingStack = createHandlingStack('vital')
+      callMonitored(() => {
+        addTelemetryUsage({ feature: 'add-duration-vital' })
+        strategy.addDurationVital({
+          id: generateUUID(),
+          name: sanitize(name)!,
+          type: VitalType.DURATION,
+          startClocks: timeStampToClocks(options.startTime as TimeStamp),
+          duration: options.duration as Duration,
+          context: sanitize(options && options.context) as Context,
+          description: sanitize(options && options.description) as string | undefined,
+          handlingStack,
+        })
       })
-    }),
+    },
 
-    startDurationVital: monitor((name, options) => {
-      addTelemetryUsage({ feature: 'start-duration-vital' })
-      return strategy.startDurationVital(sanitize(name)!, {
-        context: sanitize(options && options.context) as Context,
-        description: sanitize(options && options.description) as string | undefined,
-      })
-    }),
+    startDurationVital: (name, options) => {
+      const handlingStack = createHandlingStack('vital')
+      return callMonitored(() => {
+        addTelemetryUsage({ feature: 'start-duration-vital' })
+        return strategy.startDurationVital(sanitize(name)!, {
+          context: sanitize(options && options.context) as Context,
+          description: sanitize(options && options.description) as string | undefined,
+          handlingStack,
+        })
+      }) as DurationVitalReference
+    },
 
     stopDurationVital: monitor((nameOrRef, options) => {
       addTelemetryUsage({ feature: 'stop-duration-vital' })
@@ -770,6 +943,24 @@ export function makeRumPublicApi(
         context: sanitize(options && options.context) as Context,
         description: sanitize(options && options.description) as string | undefined,
       })
+    }),
+
+    startFeatureOperation: (name, options) => {
+      const handlingStack = createHandlingStack('vital')
+      callMonitored(() => {
+        addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'start' })
+        strategy.addOperationStepVital(name, 'start', { ...options, handlingStack })
+      })
+    },
+
+    succeedFeatureOperation: monitor((name, options) => {
+      addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'succeed' })
+      strategy.addOperationStepVital(name, 'end', options)
+    }),
+
+    failFeatureOperation: monitor((name, failureReason, options) => {
+      addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'fail' })
+      strategy.addOperationStepVital(name, 'end', options, failureReason)
     }),
   })
 

@@ -3,6 +3,7 @@ import * as rrdom6 from 'react-router-dom-6'
 import * as rrdom7 from 'react-router-dom'
 import { appendComponent } from '../../../test/appendComponent'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
+import { initReactOldBrowsersSupport } from '../../../test/reactOldBrowsersSupport'
 import { ignoreConsoleLogs } from '../../../../core/test'
 import type { AnyRouteObject } from './types'
 import { ignoreReactRouterDeprecationWarnings } from './reactRouter.specHelper'
@@ -32,6 +33,8 @@ const versions = [
 ]
 
 versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
+  type NavigateFunction = ReturnType<typeof useNavigate>
+
   function RoutesRenderer({
     routes,
     location,
@@ -47,6 +50,7 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
 
     beforeEach(() => {
       ignoreReactRouterDeprecationWarnings()
+      initReactOldBrowsersSupport()
       startViewSpy = jasmine.createSpy()
       initializeReactPlugin({
         configuration: {
@@ -123,8 +127,8 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
       expect(startViewSpy).toHaveBeenCalledTimes(1)
     })
 
-    it('starts a new view on navigation', () => {
-      let navigate: (path: string) => void
+    it('starts a new view on navigation', async () => {
+      let navigate: NavigateFunction
 
       function NavBar() {
         navigate = useNavigate()
@@ -145,15 +149,15 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
 
       startViewSpy.calls.reset()
 
-      act(() => {
-        navigate!('/bar')
+      await act(async () => {
+        await navigate!('/bar')
       })
 
       expect(startViewSpy).toHaveBeenCalledOnceWith('/bar')
     })
 
-    it('does not start a new view if the URL is the same', () => {
-      let navigate: (path: string) => void
+    it('does not start a new view if the URL is the same', async () => {
+      let navigate: NavigateFunction
 
       function NavBar() {
         navigate = useNavigate()
@@ -169,15 +173,15 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
 
       startViewSpy.calls.reset()
 
-      act(() => {
-        navigate!('/foo')
+      await act(async () => {
+        await navigate!('/foo')
       })
 
       expect(startViewSpy).not.toHaveBeenCalled()
     })
 
-    it('does not start a new view if the path is the same but with different parameters', () => {
-      let navigate: (path: string) => void
+    it('does not start a new view if the path is the same but with different parameters', async () => {
+      let navigate: NavigateFunction
 
       function NavBar() {
         navigate = useNavigate()
@@ -193,8 +197,8 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
 
       startViewSpy.calls.reset()
 
-      act(() => {
-        navigate!('/foo?bar=baz')
+      await act(async () => {
+        await navigate!('/foo?bar=baz')
       })
 
       expect(startViewSpy).not.toHaveBeenCalled()

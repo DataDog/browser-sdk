@@ -1,15 +1,27 @@
 import { isAdoptedStyleSheetsSupported } from '@datadog/browser-core/test'
+import { createSerializationTransactionForTesting } from '../test/serialization.specHelper'
 import { serializeStyleSheets } from './serializeStyleSheets'
+import type { SerializationStats } from './serializationStats'
+import { createSerializationStats } from './serializationStats'
+import type { SerializationTransaction } from './serializationTransaction'
 
 describe('serializeStyleSheets', () => {
+  let stats: SerializationStats
+  let transaction: SerializationTransaction
+
   beforeEach(() => {
     if (!isAdoptedStyleSheetsSupported()) {
       pending('no adoptedStyleSheets support')
     }
+    stats = createSerializationStats()
+    transaction = createSerializationTransactionForTesting({ stats })
   })
+
   it('should return undefined if no stylesheets', () => {
-    expect(serializeStyleSheets(undefined)).toBe(undefined)
-    expect(serializeStyleSheets([])).toBe(undefined)
+    expect(serializeStyleSheets(undefined, transaction)).toBe(undefined)
+    expect(stats.cssText).toEqual({ count: 0, max: 0, sum: 0 })
+    expect(serializeStyleSheets([], transaction)).toBe(undefined)
+    expect(stats.cssText).toEqual({ count: 0, max: 0, sum: 0 })
   })
 
   it('should return serialized stylesheet', () => {
@@ -18,9 +30,10 @@ describe('serializeStyleSheets', () => {
     const printStylesheet = new CSSStyleSheet({ disabled: false, media: 'print' })
     printStylesheet.insertRule('a { color: red; }')
 
-    expect(serializeStyleSheets([disabledStylesheet, printStylesheet])).toEqual([
+    expect(serializeStyleSheets([disabledStylesheet, printStylesheet], transaction)).toEqual([
       { cssRules: ['div { width: 100%; }'], disabled: true, media: undefined },
       { cssRules: ['a { color: red; }'], disabled: undefined, media: ['print'] },
     ])
+    expect(stats.cssText).toEqual({ count: 2, max: 20, sum: 37 })
   })
 })

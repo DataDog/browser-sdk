@@ -1,11 +1,74 @@
-import { DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT } from '@datadog/browser-logs/cjs/domain/configuration'
+import type { DatadogLogs } from '@datadog/browser-logs'
+import { DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT } from '@datadog/browser-logs/src/domain/configuration'
 import { test, expect } from '@playwright/test'
-import { createTest } from '../lib/framework'
+import { createTest, createWorker } from '../lib/framework'
 import { APPLICATION_ID } from '../lib/helpers/configuration'
 
 const UNREACHABLE_URL = 'http://localhost:9999/unreachable'
 
+declare global {
+  interface Window {
+    myServiceWorker: ServiceWorkerRegistration
+  }
+  // Used in evaluateInWorker callbacks (code runs in the service worker global scope)
+  var DD_LOGS: DatadogLogs | undefined
+}
+
 test.describe('logs', () => {
+  test.describe('service workers', () => {
+    createTest('service worker with worker logs - esm')
+      .withWorker(createWorker().withLogs())
+      .run(async ({ flushEvents, intakeRegistry, browserName, evaluateInWorker }) => {
+        test.skip(browserName !== 'chromium', 'Non-Chromium browsers do not support ES modules in Service Workers')
+
+        await evaluateInWorker(() => {
+          DD_LOGS!.logger.log('Some message')
+        })
+
+        await flushEvents()
+
+        expect(intakeRegistry.logsRequests).toHaveLength(1)
+        expect(intakeRegistry.logsEvents[0].message).toBe('Some message')
+      })
+
+    createTest('service worker with worker logs - importScripts')
+      .withWorker(createWorker({ importScripts: true }).withLogs())
+      .run(async ({ flushEvents, intakeRegistry, browserName, evaluateInWorker }) => {
+        test.skip(
+          browserName === 'webkit',
+          'BrowserStack overrides the localhost URL with bs-local.com and cannot be used to install a Service Worker'
+        )
+
+        await evaluateInWorker(() => {
+          DD_LOGS!.logger.log('Other message')
+        })
+
+        await flushEvents()
+
+        expect(intakeRegistry.logsRequests).toHaveLength(1)
+        expect(intakeRegistry.logsEvents[0].message).toBe('Other message')
+      })
+
+    createTest('service worker console forwarding')
+      .withWorker(createWorker({ importScripts: true }).withLogs({ forwardConsoleLogs: 'all' }))
+      .run(async ({ flushEvents, intakeRegistry, evaluateInWorker, browserName }) => {
+        test.skip(
+          browserName === 'webkit',
+          'BrowserStack overrides the localhost URL with bs-local.com and cannot be used to install a Service Worker'
+        )
+
+        await evaluateInWorker(() => {
+          console.log('SW console log test')
+        })
+
+        await flushEvents()
+
+        // Expect logs for console, error, and report events from service worker
+        expect(intakeRegistry.logsRequests).toHaveLength(1)
+        expect(intakeRegistry.logsEvents[0].message).toBe('SW console log test')
+      })
+  })
+
   createTest('send logs')
     .withLogs()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
@@ -101,7 +164,7 @@ test.describe('logs', () => {
 
       await flushEvents()
       expect(intakeRegistry.logsEvents).toHaveLength(1)
-      expect(intakeRegistry.logsEvents[0].message).toBe(`Fetch error GET ${baseUrl}/throw-large-response`)
+      expect(intakeRegistry.logsEvents[0].message).toBe(`Fetch error GET ${new URL('/throw-large-response', baseUrl)}`)
       expect(intakeRegistry.logsEvents[0].origin).toBe('network')
 
       const ellipsisSize = 3
@@ -160,7 +223,7 @@ test.describe('logs', () => {
       const unreachableRequest = intakeRegistry.logsEvents.find((log) => log.http!.url.includes('/unreachable'))!
       const throwRequest = intakeRegistry.logsEvents.find((log) => log.http!.url.includes('/throw'))!
 
-      expect(throwRequest.message).toEqual(`Fetch error GET ${baseUrl}/throw`)
+      expect(throwRequest.message).toEqual(`Fetch error GET ${new URL('/throw', baseUrl)}`)
       expect(throwRequest.http!.status_code).toEqual(500)
       expect(throwRequest.error!.stack).toMatch(/Server error/)
 

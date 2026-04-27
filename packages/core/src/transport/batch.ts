@@ -4,9 +4,11 @@ import { objectValues } from '../tools/utils/polyfills'
 import { isPageExitReason } from '../browser/pageMayExitObservable'
 import { jsonStringify } from '../tools/serialisation/jsonStringify'
 import type { Encoder, EncoderResult } from '../tools/encoder'
-import { computeBytesCount } from '../tools/utils/byteUtils'
+import { computeBytesCount, ONE_KIBI_BYTE } from '../tools/utils/byteUtils'
 import type { HttpRequest, Payload } from './httpRequest'
 import type { FlushController, FlushEvent } from './flushController'
+
+export const MESSAGE_BYTES_LIMIT = 256 * ONE_KIBI_BYTE
 
 export interface Batch {
   flushController: FlushController
@@ -19,12 +21,10 @@ export function createBatch({
   encoder,
   request,
   flushController,
-  messageBytesLimit,
 }: {
   encoder: Encoder
   request: HttpRequest
   flushController: FlushController
-  messageBytesLimit: number
 }): Batch {
   let upsertBuffer: { [key: string]: string } = {}
   const flushSubscription = flushController.flushObservable.subscribe((event) => flush(event))
@@ -58,9 +58,9 @@ export function createBatch({
 
     const estimatedMessageBytesCount = encoder.estimateEncodedBytesCount(serializedMessage)
 
-    if (estimatedMessageBytesCount >= messageBytesLimit) {
+    if (estimatedMessageBytesCount >= MESSAGE_BYTES_LIMIT) {
       display.warn(
-        `Discarded a message whose size was bigger than the maximum allowed size ${messageBytesLimit}KB. ${MORE_DETAILS} ${DOCS_TROUBLESHOOTING}/#technical-limitations`
+        `Discarded a message whose size was bigger than the maximum allowed size ${MESSAGE_BYTES_LIMIT / ONE_KIBI_BYTE}KiB. ${MORE_DETAILS} ${DOCS_TROUBLESHOOTING}/#technical-limitations`
       )
       return
     }

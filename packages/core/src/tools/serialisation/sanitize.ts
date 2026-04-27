@@ -6,7 +6,7 @@ import { detachToJsonMethod } from './jsonStringify'
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 type PrimitivesAndFunctions = string | number | boolean | undefined | null | symbol | bigint | Function
-type ExtendedContextValue = PrimitivesAndFunctions | object | ExtendedContext | ExtendedContextArray
+type ExtendedContextValue = PrimitivesAndFunctions | ExtendedContext | ExtendedContextArray
 interface ExtendedContext {
   [key: string]: ExtendedContextValue
 }
@@ -27,7 +27,7 @@ interface SanitizedEvent extends Context {
 
 // The maximum size of a single event is 256KiB. By default, we ensure that user-provided data
 // going through sanitize fits inside our events, while leaving room for other contexts, metadata, ...
-const SANITIZE_DEFAULT_MAX_CHARACTER_COUNT = 220 * ONE_KIBI_BYTE
+export const SANITIZE_DEFAULT_MAX_CHARACTER_COUNT = 220 * ONE_KIBI_BYTE
 
 // Symbol for the root element of the JSONPath used for visited objects
 const JSON_PATH_ROOT_ELEMENT = '$'
@@ -177,7 +177,7 @@ function sanitizeProcessor(
   const currentPath = key !== undefined ? `${parentPath}.${key}` : parentPath
   const target = Array.isArray(sourceToSanitize) ? ([] as ContextArray) : ({} as Context)
   visitedObjectsWithPath.set(sourceAsObject, currentPath)
-  queue.push({ source: sourceToSanitize as ExtendedContext | ExtendedContextArray, target, path: currentPath })
+  queue.push({ source: sourceToSanitize, target, path: currentPath })
 
   return target
 }

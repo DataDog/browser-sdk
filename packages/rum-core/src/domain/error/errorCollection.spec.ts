@@ -65,10 +65,11 @@ describe('error collection', () => {
       it(`notifies a raw rum error event from ${testCase}`, () => {
         setupErrorCollection()
 
+        const startClocks = { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp }
         addError({
           error,
           handlingStack: 'Error: handling foo',
-          startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+          startClocks,
         })
 
         expect(rawRumEvents.length).toBe(1)
@@ -92,7 +93,7 @@ describe('error collection', () => {
             type: RumEventType.ERROR,
             context: undefined,
           },
-          startTime: 1234 as RelativeTime,
+          startClocks,
           domainContext: {
             error,
             handlingStack: 'Error: handling foo',
@@ -124,6 +125,27 @@ describe('error collection', () => {
       expect(error?.causes?.[0].source).toEqual(ErrorSource.CUSTOM)
       expect(error?.causes?.[1].message).toEqual('biz')
       expect(error?.causes?.[1].source).toEqual(ErrorSource.CUSTOM)
+    })
+
+    it('should extract non-Error causes with consistent structure', () => {
+      setupErrorCollection()
+      const error = new Error('RSA key generation failed') as ErrorWithCause
+      error.cause = { code: 'NonInteger', values: [3.14, 2.71] }
+
+      addError({
+        error,
+        handlingStack: 'Error: handling',
+        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+      })
+
+      const { error: rumError } = rawRumEvents[0].rawRumEvent as RawRumErrorEvent
+      expect(rumError.causes?.length).toBe(1)
+      expect(rumError.causes?.[0]).toEqual({
+        message: '{"code":"NonInteger","values":[3.14,2.71]}',
+        source: ErrorSource.CUSTOM,
+        type: undefined,
+        stack: undefined,
+      })
     })
 
     it('should extract fingerprint from error', () => {
@@ -218,7 +240,7 @@ describe('error collection', () => {
         },
       })
 
-      expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
+      expect(rawRumEvents[0].startClocks.relative).toBe(1234 as RelativeTime)
       expect(rawRumEvents[0].rawRumEvent).toEqual({
         date: jasmine.any(Number),
         error: {

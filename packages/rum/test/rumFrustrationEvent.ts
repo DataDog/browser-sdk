@@ -1,10 +1,10 @@
-import { relativeNow, timeStampNow } from '@datadog/browser-core'
+import { clocksNow, timeStampNow } from '@datadog/browser-core'
 import type { RawRumActionEvent, RawRumEventCollectedData } from '@datadog/browser-rum-core'
 import { ActionType, FrustrationType, RumEventType } from '@datadog/browser-rum-core'
 
 export function createRumFrustrationEvent(mouseEvent: MouseEvent): RawRumEventCollectedData<RawRumActionEvent> {
   return {
-    startTime: relativeNow(),
+    startClocks: clocksNow(),
     rawRumEvent: {
       date: timeStampNow(),
       type: RumEventType.ACTION,

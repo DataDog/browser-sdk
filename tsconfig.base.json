@@ -1,10 +1,9 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
     "experimentalDecorators": true,
     "esModuleInterop": true,
     "importHelpers": false,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "module": "ES2020",
     "resolveJsonModule": true,
     "strict": true,
@@ -14,15 +13,35 @@
     "skipLibCheck": true,
 
     "types": [],
-    "lib": ["ES2020", "DOM"],
+    "lib": ["ES2020", "DOM", "WebWorker"],
 
     "paths": {
       "@datadog/browser-core": ["./packages/core/src"],
+
+      "@datadog/browser-logs": ["./packages/logs/src/entries/main"],
+
       "@datadog/browser-rum-core": ["./packages/rum-core/src"],
+
+      "@datadog/browser-rum": ["./packages/rum/src/entries/main"],
+      "@datadog/browser-rum/internal": ["./packages/rum/src/entries/internal"],
+      "@datadog/browser-rum/internal-synthetics": ["./packages/rum/src/entries/internalSynthetics"],
+
+      "@datadog/browser-rum-slim": ["./packages/rum-slim/src/entries/main"],
+
       "@datadog/browser-rum-react": ["./packages/rum-react/src/entries/main"],
+      "@datadog/browser-rum-react/internal": ["./packages/rum-react/src/entries/internal"],
       "@datadog/browser-rum-react/react-router-v6": ["./packages/rum-react/src/entries/reactRouterV6"],
       "@datadog/browser-rum-react/react-router-v7": ["./packages/rum-react/src/entries/reactRouterV7"],
-      "@datadog/browser-flagging": ["./packages/flagging/src/entries/main"]
+      "@datadog/browser-rum-react/tanstack-router": ["./packages/rum-react/src/entries/tanstackRouter"],
+
+      "@datadog/browser-rum-vue": ["./packages/rum-vue/src/entries/main"],
+      "@datadog/browser-rum-vue/vue-router-v4": ["./packages/rum-vue/src/entries/vueRouter"],
+
+      "@datadog/browser-rum-nuxt": ["./packages/rum-nuxt/src/entries/main"],
+
+      "@datadog/browser-rum-nextjs": ["./packages/rum-nextjs/src/entries/main"],
+
+      "@datadog/browser-worker": ["./packages/worker/src/entries/main"]
     }
   }
 }

@@ -52,4 +52,15 @@ export function initInteractionCountPolyfill() {
  * or the polyfill estimate in this module.
  */
 export const getInteractionCount = () =>
-  observer ? interactionCountEstimate : (window as BrowserWindow).performance.interactionCount! || 0
+  observer ? interactionCountEstimate : (window as BrowserWindow).performance.interactionCount || 0
+
+export function resetInteractionCountPolyfill() {
+  if (observer) {
+    observer.disconnect()
+
+    observer = undefined
+    interactionCountEstimate = 0
+    minKnownInteractionId = Infinity
+    maxKnownInteractionId = 0
+  }
+}

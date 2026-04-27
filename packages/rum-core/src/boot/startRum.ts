@@ -6,19 +6,18 @@ import type {
   TrackingConsentState,
   BufferedData,
   BufferedObservable,
+  Telemetry,
 } from '@datadog/browser-core'
 import {
   sendToExtension,
   createPageMayExitObservable,
-  TelemetryService,
-  startTelemetry,
   canUseEventBridge,
   addTelemetryDebug,
   startAccountContext,
   startGlobalContext,
   startUserContext,
+  startTabContext,
 } from '@datadog/browser-core'
-import type { RumMutationRecord } from '../browser/domMutationObservable'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { createWindowOpenObservable } from '../browser/windowOpenObservable'
 import { startInternalContext } from '../domain/contexts/internalContext'
@@ -29,6 +28,7 @@ import { startActionCollection } from '../domain/action/actionCollection'
 import { startErrorCollection } from '../domain/error/errorCollection'
 import { startResourceCollection } from '../domain/resource/resourceCollection'
 import { startViewCollection } from '../domain/view/viewCollection'
+import type { RumSessionManager } from '../domain/rumSessionManager'
 import { startRumSessionManager, startRumSessionManagerStub } from '../domain/rumSessionManager'
 import { startRumBatch } from '../transport/startRumBatch'
 import { startRumEventBridge } from '../transport/startRumEventBridge'
@@ -38,25 +38,23 @@ import type { RumConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
 import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import { startCustomerDataTelemetry } from '../domain/startCustomerDataTelemetry'
-import type { PageStateHistory } from '../domain/contexts/pageStateHistory'
 import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
 import { startDisplayContext } from '../domain/contexts/displayContext'
 import type { CustomVitalsState } from '../domain/vital/vitalCollection'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
 import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext'
-import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/longAnimationFrameCollection'
-import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../browser/performanceObservable'
 import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
 import { startSyntheticsContext } from '../domain/contexts/syntheticsContext'
 import { startRumAssembly } from '../domain/assembly'
 import { startSessionContext } from '../domain/contexts/sessionContext'
 import { startConnectivityContext } from '../domain/contexts/connectivityContext'
+import type { SdkName } from '../domain/contexts/defaultContext'
 import { startDefaultContext } from '../domain/contexts/defaultContext'
 import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { Hooks } from '../domain/hooks'
-import { createHooks } from '../domain/hooks'
 import { startEventCollection } from '../domain/event/eventCollection'
 import { startInitialViewMetricsTelemetry } from '../domain/view/viewMetrics/startInitialViewMetricsTelemetry'
+import { startSourceCodeContext } from '../domain/contexts/sourceCodeContext'
 import type { RecorderApi, ProfilerApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -75,34 +73,22 @@ export function startRum(
   trackingConsentState: TrackingConsentState,
   customVitalsState: CustomVitalsState,
   bufferedDataObservable: BufferedObservable<BufferedData>,
-  sdkName: 'rum' | 'rum-slim' | 'rum-synthetics' | undefined
+  telemetry: Telemetry,
+  hooks: Hooks,
+  sdkName?: SdkName
 ) {
   const cleanupTasks: Array<() => void> = []
   const lifeCycle = new LifeCycle()
-  const hooks = createHooks()
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event) => sendToExtension('rum', event))
 
   const reportError = (error: RawError) => {
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
+    // monitor-until: forever, to keep an eye on the errors reported to customers
     addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
   }
 
   const pageMayExitObservable = createPageMayExitObservable(configuration)
-  const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => {
-    lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, event)
-  })
-  cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
-
-  const telemetry = startTelemetry(
-    TelemetryService.RUM,
-    configuration,
-    hooks,
-    reportError,
-    pageMayExitObservable,
-    createEncoder
-  )
-  cleanupTasks.push(telemetry.stop)
 
   const session = !canUseEventBridge()
     ? startRumSessionManager(configuration, lifeCycle, trackingConsentState)
@@ -117,128 +103,48 @@ export function startRum(
       session.expireObservable,
       createEncoder
     )
+    const preparePageExitSubscription = batch.flushController.preparePageExitFlushObservable.subscribe((reason) => {
+      lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, { reason })
+    })
+    cleanupTasks.push(() => preparePageExitSubscription.unsubscribe())
     cleanupTasks.push(() => batch.stop())
-    startCustomerDataTelemetry(configuration, telemetry, lifeCycle, batch.flushController.flushObservable)
+    startCustomerDataTelemetry(telemetry, lifeCycle, batch.flushController.flushObservable)
   } else {
     startRumEventBridge(lifeCycle)
+    const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => {
+      lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, event)
+    })
+    cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
   }
 
-  const domMutationObservable = createDOMMutationObservable()
-  const locationChangeObservable = createLocationChangeObservable(configuration, location)
-  const { observable: windowOpenObservable, stop: stopWindowOpen } = createWindowOpenObservable()
-  cleanupTasks.push(stopWindowOpen)
-
-  startDefaultContext(hooks, configuration, sdkName)
-  const pageStateHistory = startPageStateHistory(hooks, configuration)
-  const viewHistory = startViewHistory(lifeCycle)
-  cleanupTasks.push(() => viewHistory.stop())
-  const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable, location)
-  cleanupTasks.push(() => urlContexts.stop())
-  const featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, configuration)
-  startSessionContext(hooks, session, recorderApi, viewHistory)
-  startConnectivityContext(hooks)
   startTrackingConsentContext(hooks, trackingConsentState)
-  const globalContext = startGlobalContext(hooks, configuration, 'rum', true)
-  const userContext = startUserContext(hooks, configuration, session, 'rum')
-  const accountContext = startAccountContext(hooks, configuration, 'rum')
 
-  const {
-    actionContexts,
-    addAction,
-    addEvent,
-    stop: stopRumEventCollection,
-  } = startRumEventCollection(
+  const { stop: stopInitialViewMetricsTelemetry } = startInitialViewMetricsTelemetry(lifeCycle, telemetry)
+  cleanupTasks.push(stopInitialViewMetricsTelemetry)
+
+  const { stop: stopRumEventCollection, ...startRumEventCollectionResult } = startRumEventCollection(
     lifeCycle,
     hooks,
     configuration,
-    pageStateHistory,
-    domMutationObservable,
-    windowOpenObservable,
+    session,
+    recorderApi,
+    initialViewOptions,
+    customVitalsState,
+    bufferedDataObservable,
+    sdkName,
     reportError
   )
   cleanupTasks.push(stopRumEventCollection)
-
-  const {
-    addTiming,
-    startView,
-    setViewName,
-    setViewContext,
-    setViewContextProperty,
-    getViewContext,
-    stop: stopViewCollection,
-  } = startViewCollection(
-    lifeCycle,
-    hooks,
-    configuration,
-    location,
-    domMutationObservable,
-    windowOpenObservable,
-    locationChangeObservable,
-    recorderApi,
-    viewHistory,
-    initialViewOptions
-  )
-
-  cleanupTasks.push(stopViewCollection)
-
-  const { stop: stopInitialViewMetricsTelemetry } = startInitialViewMetricsTelemetry(
-    configuration,
-    lifeCycle,
-    telemetry
-  )
-  cleanupTasks.push(stopInitialViewMetricsTelemetry)
-
-  const { stop: stopResourceCollection } = startResourceCollection(lifeCycle, configuration, pageStateHistory)
-  cleanupTasks.push(stopResourceCollection)
-
-  if (configuration.trackLongTasks) {
-    if (supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME)) {
-      const { stop: stopLongAnimationFrameCollection } = startLongAnimationFrameCollection(lifeCycle, configuration)
-      cleanupTasks.push(stopLongAnimationFrameCollection)
-    } else {
-      startLongTaskCollection(lifeCycle, configuration)
-    }
-  }
-
-  const { addError } = startErrorCollection(lifeCycle, configuration, bufferedDataObservable)
   bufferedDataObservable.unbuffer()
-
-  startRequestCollection(lifeCycle, configuration, session, userContext, accountContext)
-
-  const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory, customVitalsState)
-  const internalContext = startInternalContext(
-    configuration.applicationId,
-    session,
-    viewHistory,
-    actionContexts,
-    urlContexts
-  )
 
   // Add Clean-up tasks for Profiler API.
   cleanupTasks.push(() => profilerApi.stop())
 
   return {
-    addAction,
-    addEvent,
-    addError,
-    addTiming,
-    addFeatureFlagEvaluation: featureFlagContexts.addFeatureFlagEvaluation,
-    startView,
-    setViewContext,
-    setViewContextProperty,
-    getViewContext,
-    setViewName,
+    ...startRumEventCollectionResult,
     lifeCycle,
-    viewHistory,
     session,
     stopSession: () => session.expire(),
-    getInternalContext: internalContext.get,
-    startDurationVital: vitalCollection.startDurationVital,
-    stopDurationVital: vitalCollection.stopDurationVital,
-    addDurationVital: vitalCollection.addDurationVital,
-    globalContext,
-    userContext,
-    accountContext,
     telemetry,
     stop: () => {
       cleanupTasks.forEach((task) => task())
@@ -251,11 +157,36 @@ export function startRumEventCollection(
   lifeCycle: LifeCycle,
   hooks: Hooks,
   configuration: RumConfiguration,
-  pageStateHistory: PageStateHistory,
-  domMutationObservable: Observable<RumMutationRecord[]>,
-  windowOpenObservable: Observable<void>,
+  session: RumSessionManager,
+  recorderApi: RecorderApi,
+  initialViewOptions: ViewOptions | undefined,
+  customVitalsState: CustomVitalsState,
+  bufferedDataObservable: Observable<BufferedData>,
+  sdkName: SdkName | undefined,
   reportError: (error: RawError) => void
 ) {
+  const cleanupTasks: Array<() => void> = []
+
+  const domMutationObservable = createDOMMutationObservable()
+  const locationChangeObservable = createLocationChangeObservable(configuration)
+  const { observable: windowOpenObservable, stop: stopWindowOpen } = createWindowOpenObservable()
+  cleanupTasks.push(stopWindowOpen)
+
+  startDefaultContext(hooks, configuration, sdkName)
+  const pageStateHistory = startPageStateHistory(hooks, configuration)
+  cleanupTasks.push(() => pageStateHistory.stop())
+  const viewHistory = startViewHistory(lifeCycle)
+  cleanupTasks.push(() => viewHistory.stop())
+  const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable)
+  cleanupTasks.push(() => urlContexts.stop())
+  const featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, configuration)
+  startSessionContext(hooks, session, recorderApi, viewHistory)
+  startConnectivityContext(hooks)
+  startTabContext(hooks)
+  const globalContext = startGlobalContext(hooks, configuration, 'rum', true)
+  const userContext = startUserContext(hooks, configuration, session, 'rum')
+  const accountContext = startAccountContext(hooks, configuration, 'rum')
+
   const actionCollection = startActionCollection(
     lifeCycle,
     hooks,
@@ -263,25 +194,88 @@ export function startRumEventCollection(
     windowOpenObservable,
     configuration
   )
+  cleanupTasks.push(actionCollection.stop)
 
   const eventCollection = startEventCollection(lifeCycle)
 
   const displayContext = startDisplayContext(hooks, configuration)
+  cleanupTasks.push(displayContext.stop)
   const ciVisibilityContext = startCiVisibilityContext(configuration, hooks)
+  cleanupTasks.push(ciVisibilityContext.stop)
   startSyntheticsContext(hooks)
 
   startRumAssembly(configuration, lifeCycle, hooks, reportError)
 
+  const {
+    addTiming,
+    setLoadingTime,
+    startView,
+    setViewName,
+    setViewContext,
+    setViewContextProperty,
+    getViewContext,
+    stop: stopViewCollection,
+  } = startViewCollection(
+    lifeCycle,
+    hooks,
+    configuration,
+    domMutationObservable,
+    windowOpenObservable,
+    locationChangeObservable,
+    recorderApi,
+    viewHistory,
+    initialViewOptions
+  )
+
+  startSourceCodeContext(hooks)
+
+  cleanupTasks.push(stopViewCollection)
+
+  const resourceCollection = startResourceCollection(lifeCycle, configuration, pageStateHistory)
+  cleanupTasks.push(resourceCollection.stop)
+
+  const { stop: stopLongTaskCollection } = startLongTaskCollection(lifeCycle, configuration)
+  cleanupTasks.push(stopLongTaskCollection)
+
+  const { addError } = startErrorCollection(lifeCycle, configuration, bufferedDataObservable)
+
+  startRequestCollection(lifeCycle, configuration, session, userContext, accountContext)
+
+  const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory, customVitalsState)
+
+  const internalContext = startInternalContext(
+    configuration.applicationId,
+    session,
+    viewHistory,
+    actionCollection.actionContexts,
+    urlContexts
+  )
+
   return {
-    pageStateHistory,
     addAction: actionCollection.addAction,
+    startAction: actionCollection.startAction,
+    stopAction: actionCollection.stopAction,
+    startResource: resourceCollection.startResource,
+    stopResource: resourceCollection.stopResource,
     addEvent: eventCollection.addEvent,
-    actionContexts: actionCollection.actionContexts,
-    stop: () => {
-      actionCollection.stop()
-      ciVisibilityContext.stop()
-      displayContext.stop()
-      pageStateHistory.stop()
-    },
+    addError,
+    addTiming,
+    setLoadingTime,
+    addFeatureFlagEvaluation: featureFlagContexts.addFeatureFlagEvaluation,
+    startView,
+    setViewContext,
+    setViewContextProperty,
+    getViewContext,
+    setViewName,
+    viewHistory,
+    getInternalContext: internalContext.get,
+    startDurationVital: vitalCollection.startDurationVital,
+    stopDurationVital: vitalCollection.stopDurationVital,
+    addDurationVital: vitalCollection.addDurationVital,
+    addOperationStepVital: vitalCollection.addOperationStepVital,
+    globalContext,
+    userContext,
+    accountContext,
+    stop: () => cleanupTasks.forEach((task) => task()),
   }
 }

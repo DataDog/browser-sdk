@@ -6,7 +6,7 @@ export type LogsEventDomainContext<T extends ErrorSource = any> = T extends type
     ? ConsoleLogsEventDomainContext
     : T extends typeof ErrorSource.LOGGER
       ? LoggerLogsEventDomainContext
-      : never
+      : undefined
 
 export interface NetworkLogsEventDomainContext {
   isAborted: boolean

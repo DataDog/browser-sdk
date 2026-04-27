@@ -1,10 +1,6 @@
-import { getReplayStats, resetReplayStats, MAX_STATS_HISTORY, addSegment, addRecord, addWroteData } from './replayStats'
+import { getReplayStats, MAX_STATS_HISTORY, addSegment, addRecord, addWroteData } from './replayStats'
 
 describe('replayStats', () => {
-  afterEach(() => {
-    resetReplayStats()
-  })
-
   describe('getReplayStats', () => {
     it('returns undefined for new views', () => {
       expect(getReplayStats('view-id')).toBeUndefined()

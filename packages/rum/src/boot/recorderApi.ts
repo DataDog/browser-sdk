@@ -15,7 +15,6 @@ import type {
   StartRecordingOptions,
 } from '@datadog/browser-rum-core'
 import { getReplayStats as getReplayStatsImpl } from '../domain/replayStats'
-import type { CreateDeflateWorker } from '../domain/deflate'
 import {
   createDeflateEncoder,
   DeflateWorkerStatus,
@@ -23,14 +22,10 @@ import {
   startDeflateWorker,
 } from '../domain/deflate'
 import { isBrowserSupported } from './isBrowserSupported'
-import type { StartRecording } from './postStartStrategy'
 import { createPostStartStrategy } from './postStartStrategy'
 import { createPreStartStrategy } from './preStartStrategy'
 
-export function makeRecorderApi(
-  loadRecorder: () => Promise<StartRecording | undefined>,
-  createDeflateWorkerImpl?: CreateDeflateWorker
-): RecorderApi {
+export function makeRecorderApi(): RecorderApi {
   if ((canUseEventBridge() && !bridgeSupports(BridgeCapability.RECORDS)) || !isBrowserSupported()) {
     return {
       start: noop,
@@ -91,14 +86,7 @@ export function makeRecorderApi(
 
     function getOrCreateDeflateEncoder() {
       if (!cachedDeflateEncoder) {
-        worker ??= startDeflateWorker(
-          configuration,
-          'Datadog Session Replay',
-          () => {
-            strategy.stop()
-          },
-          createDeflateWorkerImpl
-        )
+        worker ??= startDeflateWorker(configuration, 'Datadog Session Replay', () => strategy.stop())
 
         if (worker) {
           cachedDeflateEncoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
@@ -112,7 +100,6 @@ export function makeRecorderApi(
       lifeCycle,
       sessionManager,
       viewHistory,
-      loadRecorder,
       getOrCreateDeflateEncoder,
       telemetry
     )

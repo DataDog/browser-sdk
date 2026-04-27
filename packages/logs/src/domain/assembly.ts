@@ -21,12 +21,13 @@ export function startLogsAssembly(
   lifeCycle: LifeCycle,
   hooks: Hooks,
   getCommonContext: () => CommonContext,
-  reportError: (error: RawError) => void
+  reportError: (error: RawError) => void,
+  eventRateLimit?: number
 ) {
   const statusWithCustom = (STATUSES as string[]).concat(['custom'])
   const logRateLimiters: { [key: string]: EventRateLimiter } = {}
   statusWithCustom.forEach((status) => {
-    logRateLimiters[status] = createEventRateLimiter(status, configuration.eventRateLimiterThreshold, reportError)
+    logRateLimiters[status] = createEventRateLimiter(status, reportError, eventRateLimit)
   })
 
   lifeCycle.subscribe(

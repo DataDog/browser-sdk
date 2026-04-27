@@ -1,7 +1,7 @@
 // Keep the following in sync with packages/rum/src/entries/main.ts
 import { defineGlobal, getGlobalObject } from '@datadog/browser-core'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
-import { makeRumPublicApi, startRum } from '@datadog/browser-rum-core'
+import { makeRumPublicApi } from '@datadog/browser-rum-core'
 import { makeRecorderApiStub } from '../boot/stubRecorderApi'
 import { makeProfilerApiStub } from '../boot/stubProfilerApi'
 
@@ -20,9 +20,15 @@ export type {
   RumInternalContext,
 } from '@datadog/browser-core'
 
+/**
+ * @deprecated Use {@link DatadogRum} instead
+ */
+export type RumGlobal = RumPublicApi
+
 export type {
-  RumPublicApi as RumGlobal,
+  RumPublicApi as DatadogRum,
   RumInitConfiguration,
+  RumBeforeSend,
   ViewOptions,
   StartRecordingOptions,
   AddDurationVitalOptions,
@@ -33,6 +39,7 @@ export type {
   OnRumStartOptions,
   PropagatorType,
   FeatureFlagsForEvents,
+  MatchHeader,
 
   // Events
   CommonProperties,
@@ -55,9 +62,17 @@ export type {
   RumOtherResourceEventDomainContext,
   RumLongTaskEventDomainContext,
 } from '@datadog/browser-rum-core'
+export { DEFAULT_TRACKED_RESOURCE_HEADERS } from '@datadog/browser-rum-core'
 export { DefaultPrivacyLevel } from '@datadog/browser-core'
 
-export const datadogRum = makeRumPublicApi(startRum, makeRecorderApiStub(), makeProfilerApiStub(), {
+/**
+ * The global RUM instance. Use this to call RUM methods.
+ *
+ * @category Main
+ * @see {@link DatadogRum}
+ * @see [RUM Browser Monitoring Setup](https://docs.datadoghq.com/real_user_monitoring/browser/)
+ */
+export const datadogRum = makeRumPublicApi(makeRecorderApiStub(), makeProfilerApiStub(), {
   sdkName: 'rum-slim',
 })
 

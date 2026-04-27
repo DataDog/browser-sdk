@@ -1,3 +1,4 @@
+import { relativeToClocks } from '@datadog/browser-core'
 import type { Context, Duration, RelativeTime } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../../domainContext.types'
 import type { LifeCycle } from '../lifeCycle'
@@ -43,7 +44,7 @@ export function startEventCollection(lifeCycle: LifeCycle) {
       }
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-        startTime,
+        startClocks: relativeToClocks(startTime),
         rawRumEvent: event,
         domainContext,
         duration,

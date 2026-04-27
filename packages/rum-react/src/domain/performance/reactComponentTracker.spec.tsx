@@ -1,6 +1,7 @@
 import React, { useEffect, useLayoutEffect, act } from 'react'
 import { appendComponent } from '../../../test/appendComponent'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
+import { initReactOldBrowsersSupport } from '../../../test/reactOldBrowsersSupport'
 import type { Clock } from '../../../../core/test'
 import { mockClock } from '../../../../core/test'
 import { UNSTABLE_ReactComponentTracker as ReactComponentTracker } from './reactComponentTracker'
@@ -22,6 +23,7 @@ describe('UNSTABLE_ReactComponentTracker', () => {
 
   beforeEach(() => {
     clock = mockClock()
+    initReactOldBrowsersSupport()
   })
 
   it('should call addDurationVital after the component rendering', () => {

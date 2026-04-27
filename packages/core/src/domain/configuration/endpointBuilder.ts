@@ -14,7 +14,6 @@ declare const __BUILD_ENV__SDK_VERSION__: string
 // (/api/v2/flagevaluation) an explicit part of the contract.
 export type TrackType = 'logs' | 'rum' | 'replay' | 'profile' | 'exposures' | 'flagevaluation'
 export type ApiType =
-  | 'fetch-keepalive'
   | 'fetch'
   | 'beacon'
   // 'manual' reflects that the request have been sent manually, outside of the SDK (ex: via curl or
@@ -59,6 +58,18 @@ function createEndpointUrlWithParametersBuilder(
   }
   const host = buildEndpointHost(trackType, initConfiguration)
   return (parameters) => `https://${host}${path}?${parameters}`
+}
+
+/**
+ * Build an EndpointBuilder for the flagevaluation intake track. Intended for use by external SDK
+ * packages (e.g. @datadog/openfeature-browser) that need to send flag evaluation data to the
+ * Datadog intake without depending on internal browser-core APIs.
+ */
+export function createFlagEvaluationEndpointBuilder(
+  initConfiguration: InitConfiguration,
+  extraParameters?: string[]
+) {
+  return createEndpointBuilder(initConfiguration, 'flagevaluation', extraParameters)
 }
 
 export function buildEndpointHost(

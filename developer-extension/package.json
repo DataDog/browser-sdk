@@ -1,39 +1,30 @@
 {
   "name": "@datadog/browser-sdk-developer-extension",
-  "version": "6.19.0",
+  "version": "6.33.0",
   "private": true,
   "scripts": {
-    "build": "rm -rf dist && webpack --disable-interpret --mode production",
-    "dev": "rm -rf dist && webpack --disable-interpret --mode development && webpack serve --mode development --config-name=panel --hot"
+    "build": "wxt build",
+    "dev": "wxt"
   },
   "devDependencies": {
-    "@pmmmwh/react-refresh-webpack-plugin": "^0.6.0",
-    "@types/chrome": "0.1.4",
-    "@types/react": "19.1.12",
-    "@types/react-dom": "19.1.9",
-    "@types/webpack-env": "^1.18.4",
-    "@webextension-toolbox/webpack-webextension-plugin": "3.3.1",
-    "copy-webpack-plugin": "13.0.1",
-    "css-loader": "7.1.2",
-    "html-webpack-plugin": "5.6.4",
-    "react-refresh": "^0.17.0",
-    "react-refresh-typescript": "^2.0.9",
-    "style-loader": "4.0.0",
-    "typescript": "5.9.2",
-    "webpack": "5.101.3",
-    "webpack-cli": "^6.0.0",
-    "webpack-dev-server": "^5.0.4"
+    "@types/chrome": "0.1.40",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@wxt-dev/module-react": "1.2.2",
+    "typescript": "6.0.2"
   },
   "dependencies": {
     "@datadog/browser-core": "workspace:*",
     "@datadog/browser-logs": "workspace:*",
     "@datadog/browser-rum": "workspace:*",
-    "@mantine/core": "8.2.8",
-    "@mantine/hooks": "8.2.8",
-    "@tabler/icons-react": "3.34.1",
+    "@datadog/browser-rum-core": "workspace:*",
+    "@mantine/core": "9.0.2",
+    "@mantine/hooks": "9.0.2",
+    "@tabler/icons-react": "3.41.1",
     "clsx": "2.1.1",
-    "react": "19.1.1",
-    "react-dom": "19.1.1"
+    "react": "19.2.5",
+    "react-dom": "19.2.5",
+    "wxt": "0.20.22"
   },
   "volta": {
     "extends": "../package.json"

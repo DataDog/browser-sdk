@@ -5,7 +5,10 @@ import {
   CENSORED_STRING_MARK,
   getPrivacySelector,
   TEXT_MASKING_CHAR,
+  PRIVACY_ATTR_NAME,
 } from './privacyConstants'
+import { STABLE_ATTRIBUTES } from './getSelectorFromElement'
+import type { RumConfiguration } from './configuration'
 
 export type NodePrivacyLevelCache = Map<Node, NodePrivacyLevel>
 
@@ -150,6 +153,48 @@ export function shouldMaskNode(node: Node, privacyLevel: NodePrivacyLevel) {
   }
 }
 
+export function shouldMaskAttribute(
+  tagName: string,
+  attributeName: string,
+  attributeValue: string | null,
+  nodePrivacyLevel: NodePrivacyLevel,
+  configuration: RumConfiguration
+) {
+  if (nodePrivacyLevel !== NodePrivacyLevel.MASK && nodePrivacyLevel !== NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED) {
+    return false
+  }
+  if (
+    attributeName === PRIVACY_ATTR_NAME ||
+    STABLE_ATTRIBUTES.includes(attributeName) ||
+    attributeName === configuration.actionNameAttribute
+  ) {
+    return false
+  }
+
+  switch (attributeName) {
+    case 'title':
+    case 'alt':
+    case 'placeholder':
+    case 'aria-label':
+    case 'name':
+      return true
+  }
+  if (tagName === 'A' && attributeName === 'href') {
+    return true
+  }
+  if (tagName === 'IFRAME' && attributeName === 'srcdoc') {
+    return true
+  }
+  if (attributeValue && attributeName.startsWith('data-')) {
+    return true
+  }
+  if ((tagName === 'IMG' || tagName === 'SOURCE') && (attributeName === 'src' || attributeName === 'srcset')) {
+    return true
+  }
+
+  return false
+}
+
 function isFormElement(node: Node | null): boolean {
   if (!node || node.nodeType !== node.ELEMENT_NODE) {
     return false
@@ -171,19 +216,18 @@ function isFormElement(node: Node | null): boolean {
  * Text censoring non-destructively maintains whitespace characters in order to preserve text shape
  * during replay.
  */
-const censorText = (text: string) => text.replace(/\S/g, TEXT_MASKING_CHAR)
+export function censorText(text: string): string {
+  return text.replace(/\S/g, TEXT_MASKING_CHAR)
+}
 
-export function getTextContent(
-  textNode: Node,
-  ignoreWhiteSpace: boolean,
-  parentNodePrivacyLevel: NodePrivacyLevel
-): string | undefined {
+export function getTextContent(textNode: Node, parentNodePrivacyLevel: NodePrivacyLevel): string | undefined {
   // The parent node may not be a html element which has a tagName attribute.
   // So just let it be undefined which is ok in this use case.
   const parentTagName = textNode.parentElement?.tagName
   let textContent = textNode.textContent || ''
 
-  if (ignoreWhiteSpace && !textContent.trim()) {
+  const shouldIgnoreWhiteSpace = parentTagName === 'HEAD'
+  if (shouldIgnoreWhiteSpace && !textContent.trim()) {
     return
   }
 
@@ -210,8 +254,6 @@ export function getTextContent(
     } else if (parentTagName === 'OPTION') {
       // <Option> has low entropy in charset + text length, so use `CENSORED_STRING_MARK` when masked
       textContent = CENSORED_STRING_MARK
-    } else if (nodePrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED) {
-      textContent = maskDisallowedTextContent(textContent)
     } else {
       textContent = censorText(textContent)
     }

@@ -67,7 +67,7 @@ function setup() {
 
   history.pushState({}, '', '/foo')
 
-  const observable = createLocationChangeObservable({} as RumConfiguration, location)
+  const observable = createLocationChangeObservable({} as RumConfiguration)
   const observer = jasmine.createSpy('obs')
   const subscription = observable.subscribe(observer)
 

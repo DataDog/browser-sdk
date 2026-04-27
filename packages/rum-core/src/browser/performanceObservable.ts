@@ -65,6 +65,7 @@ export interface RumPerformanceResourceTiming {
   renderBlockingStatus?: string
   traceId?: string
   deliveryType?: 'cache' | 'navigational-prefetch' | ''
+  contentType?: string
   toJSON(): Omit<PerformanceEntry, 'toJSON'>
 }
 
@@ -287,7 +288,7 @@ export function createPerformanceObservable<T extends RumPerformanceEntryType>(
   })
 }
 
-let resourceTimingBufferFullListener: { stop: () => void }
+let resourceTimingBufferFullListener: { stop: () => void } | undefined
 function manageResourceTimingBufferFull(configuration: RumConfiguration) {
   if (!resourceTimingBufferFullListener && supportPerformanceObject() && 'addEventListener' in performance) {
     // https://bugzilla.mozilla.org/show_bug.cgi?id=1559377
@@ -295,8 +296,12 @@ function manageResourceTimingBufferFull(configuration: RumConfiguration) {
       performance.clearResourceTimings()
     })
   }
-  return () => {
-    resourceTimingBufferFullListener?.stop()
+}
+
+export function resetManageResourceTimingBufferFull() {
+  if (resourceTimingBufferFullListener) {
+    resourceTimingBufferFullListener.stop()
+    resourceTimingBufferFullListener = undefined
   }
 }
 

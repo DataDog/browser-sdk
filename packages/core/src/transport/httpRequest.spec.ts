@@ -1,3 +1,4 @@
+import type { Request } from '../../test'
 import {
   collectAsyncCalls,
   mockEndpointBuilder,
@@ -7,15 +8,13 @@ import {
   NETWORK_ERROR_FETCH_MOCK,
   wait,
 } from '../../test'
-import type { Request } from '../../test'
 import type { EndpointBuilder } from '../domain/configuration'
 import { createEndpointBuilder } from '../domain/configuration'
 import { noop } from '../tools/utils/functionUtils'
-import { createHttpRequest, fetchKeepAliveStrategy, fetchStrategy } from './httpRequest'
 import type { HttpRequest, HttpRequestEvent } from './httpRequest'
+import { createHttpRequest, fetchStrategy, RECOMMENDED_REQUEST_BYTES_LIMIT } from './httpRequest'
 
 describe('httpRequest', () => {
-  const BATCH_BYTES_LIMIT = 100
   const ENDPOINT_URL = 'http://my.website'
   let interceptor: ReturnType<typeof interceptRequests>
   let requests: Request[]
@@ -26,63 +25,30 @@ describe('httpRequest', () => {
     interceptor = interceptRequests()
     requests = interceptor.requests
     endpointBuilder = mockEndpointBuilder(ENDPOINT_URL)
-    request = createHttpRequest([endpointBuilder], BATCH_BYTES_LIMIT, noop)
+    request = createHttpRequest([endpointBuilder], noop)
   })
 
   describe('send', () => {
-    it('should use fetch when fetch keepalive is not available', async () => {
-      interceptor.withRequest(false)
-
-      request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
+    it('should use fetch to send intake payload to the endpoint', async () => {
+      const payloadData = '{"foo":"bar1"}\n{"foo":"bar2"}'
+      request.send({ data: payloadData, bytesCount: 10 })
       await interceptor.waitForAllFetchCalls()
 
       expect(requests.length).toEqual(1)
       expect(requests[0].type).toBe('fetch')
       expect(requests[0].url).toContain(ENDPOINT_URL)
-      expect(requests[0].body).toEqual('{"foo":"bar1"}\n{"foo":"bar2"}')
+      expect(requests[0].body).toEqual(payloadData)
     })
 
-    it('should use fetch keepalive when the bytes count is correct', async () => {
-      if (!interceptor.isFetchKeepAliveSupported()) {
-        pending('no fetch keepalive support')
-      }
-
-      request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
-      await interceptor.waitForAllFetchCalls()
-
-      expect(requests.length).toEqual(1)
-      expect(requests[0].type).toBe('fetch-keepalive')
-    })
-
-    it('should use fetch over fetch keepalive when the bytes count is too high', async () => {
-      request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: BATCH_BYTES_LIMIT })
+    it('should use fetch for payloads exceeding the bytes limit', async () => {
+      request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: RECOMMENDED_REQUEST_BYTES_LIMIT })
       await interceptor.waitForAllFetchCalls()
 
       expect(requests.length).toEqual(1)
       expect(requests[0].type).toBe('fetch')
     })
 
-    it('should fallback to fetch when fetch keepalive is not queued', async () => {
-      if (!interceptor.isFetchKeepAliveSupported()) {
-        pending('no fetch keepalive support')
-      }
-
-      const fetchSpy = interceptor.withFetch(NETWORK_ERROR_FETCH_MOCK, DEFAULT_FETCH_MOCK)
-
-      request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
-
-      await interceptor.waitForAllFetchCalls()
-      await collectAsyncCalls(fetchSpy, 2)
-      expect(requests.length).toEqual(2)
-      expect(requests[0].type).toBe('fetch-keepalive')
-      expect(requests[1].type).toBe('fetch')
-    })
-
     it('should use retry strategy', async () => {
-      if (!interceptor.isFetchKeepAliveSupported()) {
-        pending('no fetch keepalive support')
-      }
-
       const fetchSpy = interceptor.withFetch(TOO_MANY_REQUESTS_FETCH_MOCK, DEFAULT_FETCH_MOCK)
 
       request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
@@ -94,7 +60,7 @@ describe('httpRequest', () => {
     it('sends the payload to multiple endpoints', async () => {
       const endpointBuilder2 = mockEndpointBuilder('http://my.website2')
 
-      request = createHttpRequest([endpointBuilder, endpointBuilder2], BATCH_BYTES_LIMIT, noop)
+      request = createHttpRequest([endpointBuilder, endpointBuilder2], noop)
 
       interceptor.withFetch(DEFAULT_FETCH_MOCK, DEFAULT_FETCH_MOCK)
 
@@ -107,58 +73,6 @@ describe('httpRequest', () => {
       expect(requests[0].body).toEqual(payloadData)
       expect(requests[1].url).toContain('http://my.website2')
       expect(requests[1].body).toEqual(payloadData)
-    })
-  })
-
-  describe('fetchKeepAliveStrategy onResponse', () => {
-    it('should be called with intake response when fetch is used', (done) => {
-      if (!interceptor.isFetchKeepAliveSupported()) {
-        pending('no fetch keepalive support')
-      }
-
-      interceptor.withFetch(TOO_MANY_REQUESTS_FETCH_MOCK)
-
-      fetchKeepAliveStrategy(
-        endpointBuilder,
-        BATCH_BYTES_LIMIT,
-        { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 },
-        (response) => {
-          expect(response).toEqual({ status: 429, type: 'cors' })
-          done()
-        }
-      )
-    })
-
-    it('should be called with intake response when fallback to fetch due fetch keepalive not queued', (done) => {
-      if (!interceptor.isFetchKeepAliveSupported()) {
-        pending('no fetch keepalive support')
-      }
-
-      interceptor.withFetch(NETWORK_ERROR_FETCH_MOCK, TOO_MANY_REQUESTS_FETCH_MOCK)
-
-      fetchKeepAliveStrategy(
-        endpointBuilder,
-        BATCH_BYTES_LIMIT,
-        { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 },
-        (response) => {
-          expect(response).toEqual({ status: 429, type: 'cors' })
-          done()
-        }
-      )
-    })
-
-    it('should be called with intake response when fallback to fetch due to size', (done) => {
-      interceptor.withFetch(TOO_MANY_REQUESTS_FETCH_MOCK)
-
-      fetchKeepAliveStrategy(
-        endpointBuilder,
-        BATCH_BYTES_LIMIT,
-        { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: BATCH_BYTES_LIMIT },
-        (response) => {
-          expect(response).toEqual({ status: 429, type: 'cors' })
-          done()
-        }
-      )
     })
   })
 
@@ -208,7 +122,7 @@ describe('httpRequest', () => {
     })
 
     it('should use fetch over sendBeacon when the bytes count is too high', async () => {
-      request.sendOnExit({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: BATCH_BYTES_LIMIT })
+      request.sendOnExit({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: RECOMMENDED_REQUEST_BYTES_LIMIT })
 
       await interceptor.waitForAllFetchCalls()
 
@@ -321,7 +235,6 @@ describe('httpRequest', () => {
 
 describe('httpRequest intake parameters', () => {
   const clientToken = 'some_client_token'
-  const BATCH_BYTES_LIMIT = 100
   let interceptor: ReturnType<typeof interceptRequests>
   let requests: Request[]
   let endpointBuilder: EndpointBuilder
@@ -331,7 +244,7 @@ describe('httpRequest intake parameters', () => {
     interceptor = interceptRequests()
     requests = interceptor.requests
     endpointBuilder = createEndpointBuilder({ clientToken }, 'logs')
-    request = createHttpRequest([endpointBuilder], BATCH_BYTES_LIMIT, noop)
+    request = createHttpRequest([endpointBuilder], noop)
   })
 
   it('should have a unique request id', async () => {

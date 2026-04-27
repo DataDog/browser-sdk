@@ -9,7 +9,13 @@ import { BridgeCapability, display } from '@datadog/browser-core'
 import type { RecorderApi, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { MockTelemetry } from '@datadog/browser-core/test'
-import { collectAsyncCalls, mockEventBridge, registerCleanupTask, startMockTelemetry } from '@datadog/browser-core/test'
+import {
+  collectAsyncCalls,
+  mockEventBridge,
+  replaceMockableWithSpy,
+  registerCleanupTask,
+  startMockTelemetry,
+} from '@datadog/browser-core/test'
 import type { RumSessionManagerMock } from '../../../rum-core/test'
 import {
   createRumSessionManagerMock,
@@ -18,18 +24,19 @@ import {
   mockViewHistory,
 } from '../../../rum-core/test'
 import type { CreateDeflateWorker } from '../domain/deflate'
+import { resetDeflateWorkerState, createDeflateWorker } from '../domain/deflate'
 import { MockWorker } from '../../test'
-import { resetDeflateWorkerState } from '../domain/deflate'
 import * as replayStats from '../domain/replayStats'
-import type { RecorderInitMetrics } from '../domain/startRecorderInitTelemetry'
+import { type RecorderInitMetrics } from '../domain/startRecorderInitTelemetry'
 import { makeRecorderApi } from './recorderApi'
 import type { StartRecording } from './postStartStrategy'
+import { importRecorder } from './lazyLoadRecorder'
 
 describe('makeRecorderApi', () => {
   let lifeCycle: LifeCycle
   let recorderApi: RecorderApi
   let startRecordingSpy: jasmine.Spy
-  let loadRecorderSpy: jasmine.Spy<() => Promise<StartRecording>>
+  let importRecorderSpy: jasmine.Spy<() => Promise<StartRecording>>
   let stopRecordingSpy: jasmine.Spy<() => void>
   let mockWorker: MockWorker
   let createDeflateWorkerSpy: jasmine.Spy<CreateDeflateWorker>
@@ -38,32 +45,40 @@ describe('makeRecorderApi', () => {
 
   function setupRecorderApi({
     sessionManager,
+    loadRecorderError,
     startSessionReplayRecordingManually,
-  }: { sessionManager?: RumSessionManager; startSessionReplayRecordingManually?: boolean } = {}) {
+  }: {
+    sessionManager?: RumSessionManager
+    loadRecorderError?: boolean
+    startSessionReplayRecordingManually?: boolean
+  } = {}) {
     telemetry = startMockTelemetry()
     mockWorker = new MockWorker()
-    createDeflateWorkerSpy = jasmine.createSpy('createDeflateWorkerSpy').and.callFake(() => mockWorker)
+    createDeflateWorkerSpy = replaceMockableWithSpy(createDeflateWorker).and.callFake(() => mockWorker)
     spyOn(display, 'error')
 
     lifeCycle = new LifeCycle()
     stopRecordingSpy = jasmine.createSpy('stopRecording')
     startRecordingSpy = jasmine.createSpy('startRecording')
+    importRecorderSpy = replaceMockableWithSpy(importRecorder)
 
-    // Workaround because using resolveTo(startRecordingSpy) was not working
-    loadRecorderSpy = jasmine.createSpy('loadRecorder').and.resolveTo((...args: any) => {
-      startRecordingSpy(...args)
-      return {
-        stop: stopRecordingSpy,
-      }
-    })
+    if (loadRecorderError) {
+      importRecorderSpy.and.resolveTo(undefined)
+    } else {
+      // Workaround because using resolveTo(startRecordingSpy) was not working
+      importRecorderSpy.and.resolveTo((...args: any) => {
+        startRecordingSpy(...args)
+        return {
+          stop: stopRecordingSpy,
+        }
+      })
+    }
 
     const configuration = mockRumConfiguration({
-      replayTelemetrySampleRate: 100,
       startSessionReplayRecordingManually: startSessionReplayRecordingManually ?? false,
-      telemetrySampleRate: 100,
     })
 
-    recorderApi = makeRecorderApi(loadRecorderSpy, createDeflateWorkerSpy)
+    recorderApi = makeRecorderApi()
     rumInit = ({ worker } = {}) => {
       recorderApi.onRumStart(
         lifeCycle,
@@ -71,13 +86,12 @@ describe('makeRecorderApi', () => {
         sessionManager ?? createRumSessionManagerMock().setId('1234'),
         mockViewHistory(),
         worker,
-        { enabled: true } as Telemetry
+        { enabled: true, metricsEnabled: true } as Telemetry
       )
     }
 
     registerCleanupTask(() => {
       resetDeflateWorkerState()
-      replayStats.resetReplayStats()
     })
   }
 
@@ -85,7 +99,7 @@ describe('makeRecorderApi', () => {
     describe('with automatic start', () => {
       it('starts recording when init() is called', async () => {
         setupRecorderApi()
-        expect(loadRecorderSpy).not.toHaveBeenCalled()
+        expect(importRecorderSpy).not.toHaveBeenCalled()
         expect(startRecordingSpy).not.toHaveBeenCalled()
         expect(await telemetry.hasEvents()).toEqual(false)
         rumInit()
@@ -99,7 +113,7 @@ describe('makeRecorderApi', () => {
         const { triggerOnDomLoaded } = mockDocumentReadyState()
         rumInit()
 
-        expect(loadRecorderSpy).toHaveBeenCalled()
+        expect(importRecorderSpy).toHaveBeenCalled()
         expect(startRecordingSpy).not.toHaveBeenCalled()
         expect(await telemetry.hasEvents()).toEqual(false)
 
@@ -114,11 +128,11 @@ describe('makeRecorderApi', () => {
     describe('with manual start', () => {
       it('does not start recording when init() is called', async () => {
         setupRecorderApi({ startSessionReplayRecordingManually: true })
-        expect(loadRecorderSpy).not.toHaveBeenCalled()
+        expect(importRecorderSpy).not.toHaveBeenCalled()
         expect(startRecordingSpy).not.toHaveBeenCalled()
         expect(await telemetry.hasEvents()).toEqual(false)
         rumInit()
-        expect(loadRecorderSpy).not.toHaveBeenCalled()
+        expect(importRecorderSpy).not.toHaveBeenCalled()
         expect(startRecordingSpy).not.toHaveBeenCalled()
         expect(await telemetry.hasEvents()).toEqual(false)
       })
@@ -127,11 +141,11 @@ describe('makeRecorderApi', () => {
         setupRecorderApi({ startSessionReplayRecordingManually: true })
         const { triggerOnDomLoaded } = mockDocumentReadyState()
         rumInit()
-        expect(loadRecorderSpy).not.toHaveBeenCalled()
+        expect(importRecorderSpy).not.toHaveBeenCalled()
         expect(startRecordingSpy).not.toHaveBeenCalled()
         expect(await telemetry.hasEvents()).toEqual(false)
         triggerOnDomLoaded()
-        expect(loadRecorderSpy).not.toHaveBeenCalled()
+        expect(importRecorderSpy).not.toHaveBeenCalled()
         expect(startRecordingSpy).not.toHaveBeenCalled()
         expect(await telemetry.hasEvents()).toEqual(false)
       })
@@ -170,7 +184,7 @@ describe('makeRecorderApi', () => {
       rumInit()
       recorderApi.start()
 
-      expect(loadRecorderSpy).not.toHaveBeenCalled()
+      expect(importRecorderSpy).not.toHaveBeenCalled()
       expect(startRecordingSpy).not.toHaveBeenCalled()
     })
 
@@ -181,7 +195,7 @@ describe('makeRecorderApi', () => {
       })
       rumInit()
       recorderApi.start()
-      expect(loadRecorderSpy).not.toHaveBeenCalled()
+      expect(importRecorderSpy).not.toHaveBeenCalled()
       expect(startRecordingSpy).not.toHaveBeenCalled()
     })
 
@@ -215,6 +229,18 @@ describe('makeRecorderApi', () => {
       expect(startRecordingSpy).toHaveBeenCalled()
     })
 
+    it('does not start recording if load fails', async () => {
+      setupRecorderApi({ loadRecorderError: true })
+      rumInit()
+
+      expect(importRecorderSpy).toHaveBeenCalled()
+
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+
+      const events = await telemetry.getEvents()
+      expect(events).toEqual([expectedRecorderInitTelemetry({ result: 'recorder-load-failed' })])
+    })
+
     it('does not start recording if worker creation fails', async () => {
       setupRecorderApi({ startSessionReplayRecordingManually: true })
       rumInit()
@@ -222,7 +248,7 @@ describe('makeRecorderApi', () => {
       createDeflateWorkerSpy.and.throwError('Crash')
       recorderApi.start()
 
-      expect(loadRecorderSpy).toHaveBeenCalled()
+      expect(importRecorderSpy).toHaveBeenCalled()
       await collectAsyncCalls(createDeflateWorkerSpy, 1)
 
       expect(startRecordingSpy).not.toHaveBeenCalled()
@@ -239,7 +265,7 @@ describe('makeRecorderApi', () => {
       setupRecorderApi({ startSessionReplayRecordingManually: true })
       rumInit()
       recorderApi.start()
-      expect(loadRecorderSpy).toHaveBeenCalled()
+      expect(importRecorderSpy).toHaveBeenCalled()
 
       await collectAsyncCalls(startRecordingSpy, 1)
       mockWorker.dispatchErrorEvent()
@@ -290,7 +316,7 @@ describe('makeRecorderApi', () => {
         rumInit()
         recorderApi.start()
 
-        expect(loadRecorderSpy).not.toHaveBeenCalled()
+        expect(importRecorderSpy).not.toHaveBeenCalled()
         expect(startRecordingSpy).not.toHaveBeenCalled()
       })
     })
@@ -311,7 +337,7 @@ describe('makeRecorderApi', () => {
         setupRecorderApi({ startSessionReplayRecordingManually: true })
         recorderApi.start()
         rumInit()
-        expect(loadRecorderSpy).not.toHaveBeenCalled()
+        expect(importRecorderSpy).not.toHaveBeenCalled()
         expect(startRecordingSpy).not.toHaveBeenCalled()
       })
     })
@@ -336,7 +362,7 @@ describe('makeRecorderApi', () => {
       recorderApi.stop()
       triggerOnDomLoaded()
 
-      await collectAsyncCalls(loadRecorderSpy, 1)
+      await collectAsyncCalls(importRecorderSpy, 1)
 
       expect(startRecordingSpy).not.toHaveBeenCalled()
     })
@@ -374,7 +400,7 @@ describe('makeRecorderApi', () => {
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
           lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
-          expect(loadRecorderSpy).not.toHaveBeenCalled()
+          expect(importRecorderSpy).not.toHaveBeenCalled()
           expect(startRecordingSpy).not.toHaveBeenCalled()
         })
       })
@@ -390,7 +416,7 @@ describe('makeRecorderApi', () => {
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
           lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
-          expect(loadRecorderSpy).not.toHaveBeenCalled()
+          expect(importRecorderSpy).not.toHaveBeenCalled()
           expect(startRecordingSpy).not.toHaveBeenCalled()
           expect(stopRecordingSpy).not.toHaveBeenCalled()
         })
@@ -406,7 +432,7 @@ describe('makeRecorderApi', () => {
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
           lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
-          expect(loadRecorderSpy).not.toHaveBeenCalled()
+          expect(importRecorderSpy).not.toHaveBeenCalled()
           expect(startRecordingSpy).not.toHaveBeenCalled()
           expect(stopRecordingSpy).not.toHaveBeenCalled()
         })
@@ -426,7 +452,7 @@ describe('makeRecorderApi', () => {
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
           expect(stopRecordingSpy).toHaveBeenCalled()
           lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-          expect(loadRecorderSpy).toHaveBeenCalledTimes(1)
+          expect(importRecorderSpy).toHaveBeenCalledTimes(1)
           expect(startRecordingSpy).toHaveBeenCalledTimes(1)
         })
 
@@ -438,7 +464,7 @@ describe('makeRecorderApi', () => {
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
           lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
           triggerOnDomLoaded()
-          expect(loadRecorderSpy).toHaveBeenCalled()
+          expect(importRecorderSpy).toHaveBeenCalled()
           expect(startRecordingSpy).not.toHaveBeenCalled()
         })
       })
@@ -456,7 +482,7 @@ describe('makeRecorderApi', () => {
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
           expect(stopRecordingSpy).toHaveBeenCalled()
           lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-          expect(loadRecorderSpy).toHaveBeenCalledTimes(1)
+          expect(importRecorderSpy).toHaveBeenCalledTimes(1)
           expect(startRecordingSpy).toHaveBeenCalledTimes(1)
         })
       })
@@ -475,7 +501,7 @@ describe('makeRecorderApi', () => {
           lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
           await collectAsyncCalls(startRecordingSpy, 2)
 
-          expect(loadRecorderSpy).toHaveBeenCalledTimes(2)
+          expect(importRecorderSpy).toHaveBeenCalledTimes(2)
           expect(startRecordingSpy).toHaveBeenCalledTimes(2)
         })
 
@@ -487,7 +513,7 @@ describe('makeRecorderApi', () => {
           expect(stopRecordingSpy).toHaveBeenCalledTimes(1)
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
           lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-          expect(loadRecorderSpy).toHaveBeenCalledTimes(1)
+          expect(importRecorderSpy).toHaveBeenCalledTimes(1)
           expect(startRecordingSpy).toHaveBeenCalledTimes(1)
           expect(stopRecordingSpy).toHaveBeenCalledTimes(1)
         })
@@ -516,7 +542,7 @@ describe('makeRecorderApi', () => {
           sessionManager.setTrackedWithSessionReplay()
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
           lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-          expect(loadRecorderSpy).not.toHaveBeenCalled()
+          expect(importRecorderSpy).not.toHaveBeenCalled()
           expect(startRecordingSpy).not.toHaveBeenCalled()
           expect(stopRecordingSpy).not.toHaveBeenCalled()
         })
@@ -532,7 +558,7 @@ describe('makeRecorderApi', () => {
           sessionManager.setTrackedWithoutSessionReplay()
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
           lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-          expect(loadRecorderSpy).not.toHaveBeenCalled()
+          expect(importRecorderSpy).not.toHaveBeenCalled()
           expect(startRecordingSpy).not.toHaveBeenCalled()
           expect(stopRecordingSpy).not.toHaveBeenCalled()
         })
@@ -547,7 +573,7 @@ describe('makeRecorderApi', () => {
           rumInit()
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
           lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-          expect(loadRecorderSpy).not.toHaveBeenCalled()
+          expect(importRecorderSpy).not.toHaveBeenCalled()
           expect(startRecordingSpy).not.toHaveBeenCalled()
           expect(stopRecordingSpy).not.toHaveBeenCalled()
         })

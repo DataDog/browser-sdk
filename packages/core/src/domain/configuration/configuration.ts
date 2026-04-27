@@ -1,10 +1,7 @@
 import { catchUserErrors } from '../../tools/catchUserErrors'
 import { DOCS_ORIGIN, MORE_DETAILS, display } from '../../tools/display'
 import type { RawTelemetryConfiguration } from '../telemetry'
-import type { Duration } from '../../tools/utils/timeUtils'
-import { ONE_SECOND } from '../../tools/utils/timeUtils'
 import { isPercentage } from '../../tools/utils/numberUtils'
-import { ONE_KIBI_BYTE } from '../../tools/utils/byteUtils'
 import { objectHasValue } from '../../tools/utils/objectUtils'
 import { selectSessionStoreStrategyType } from '../session/sessionStore'
 import type { SessionStoreStrategyType } from '../session/storeStrategies/sessionStoreStrategy'
@@ -13,6 +10,7 @@ import type { SessionPersistence } from '../session/sessionConstants'
 import type { MatchOption } from '../../tools/matchOption'
 import { isAllowedTrackingOrigins } from '../allowedTrackingOrigins'
 import type { Site } from '../intakeSites'
+import { isWorkerEnvironment } from '../../tools/globalObject'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
 
@@ -50,24 +48,34 @@ export type TraceContextInjection = (typeof TraceContextInjection)[keyof typeof 
 export interface InitConfiguration {
   /**
    * The client token for Datadog. Required for authenticating your application with Datadog.
+   *
+   * @category Authentication
    */
   clientToken: string
+
   /**
    * A callback function that can be used to modify events before they are sent to Datadog.
+   *
+   * @category Data Collection
    */
   beforeSend?: GenericBeforeSendCallback | undefined
+
   /**
    * The percentage of sessions tracked. A value between 0 and 100.
    *
+   * @category Data Collection
    * @defaultValue 100
    */
   sessionSampleRate?: number | undefined
+
   /**
    * The percentage of telemetry events sent. A value between 0 and 100.
    *
+   * @category Data Collection
    * @defaultValue 20
    */
   telemetrySampleRate?: number | undefined
+
   /**
    * Initialization fails silently if the RUM Browser SDK is already initialized on the page.
    *
@@ -76,13 +84,17 @@ export interface InitConfiguration {
   silentMultipleInit?: boolean | undefined
 
   /**
-   * Which storage strategy to use for persisting sessions. Can be either 'cookie' or 'local-storage'.
+   * Which storage strategy to use for persisting sessions. Can be 'cookie', 'local-storage', or 'memory'.
+   * When an array is provided, the SDK will attempt each persistence type in the order specified.
    *
    * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
    *
+   * Note: 'memory' option is only for use with single-page applications. All page loads will start a new session, likely resulting in an increase in total number of RUM sessions
+   *
+   * @category Session Persistence
    * @defaultValue "cookie"
    */
-  sessionPersistence?: SessionPersistence | undefined
+  sessionPersistence?: SessionPersistence | SessionPersistence[] | undefined
 
   /**
    * Allows the use of localStorage when cookies cannot be set. This enables the RUM Browser SDK to run in environments that do not provide cookie support.
@@ -90,6 +102,7 @@ export interface InitConfiguration {
    * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
    * See [Monitor Electron Applications Using the Browser SDK](https://docs.datadoghq.com/real_user_monitoring/guide/monitor-electron-applications-using-browser-sdk) for further information.
    *
+   * @category Session Persistence
    * @deprecated use `sessionPersistence: local-storage` where you want to use localStorage instead
    */
   allowFallbackToLocalStorage?: boolean | undefined
@@ -100,6 +113,7 @@ export interface InitConfiguration {
    * @defaultValue false
    */
   allowUntrustedEvents?: boolean | undefined
+
   /**
    * Store global context and user context in localStorage to preserve them along the user navigation.
    * See [Contexts life cycle](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/?tab=npm#contexts-life-cycle) for further information.
@@ -107,10 +121,12 @@ export interface InitConfiguration {
    * @defaultValue false
    */
   storeContextsAcrossPages?: boolean | undefined
+
   /**
    * Set the initial user tracking consent state.
    * See [User tracking consent](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/?tab=npm#user-tracking-consent) for further information.
    *
+   * @category Privacy
    * @defaultValue granted
    */
   trackingConsent?: TrackingConsent | undefined
@@ -118,7 +134,7 @@ export interface InitConfiguration {
   /**
    * List of origins where the SDK is allowed to run when used in a browser extension context.
    * Matches urls against the extensions origin.
-   * If not provided and the SDK is running in a browser extension, a warning will be displayed.
+   * If not provided and the SDK is running in a browser extension, the SDK will not run.
    */
   allowedTrackingOrigins?: MatchOption[] | undefined
 
@@ -126,11 +142,15 @@ export interface InitConfiguration {
   /**
    * Optional proxy URL, for example: https://www.proxy.com/path.
    * See [Proxy Your Browser RUM Data](https://docs.datadoghq.com/real_user_monitoring/guide/proxy-rum-data) for further information.
+   *
+   * @category Transport
    */
   proxy?: string | ProxyFn | undefined
+
   /**
    * The Datadog [site](https://docs.datadoghq.com/getting_started/site) parameter of your organization.
    *
+   * @category Transport
    * @defaultValue datadoghq.com
    */
   site?: Site | undefined
@@ -138,15 +158,22 @@ export interface InitConfiguration {
   // tag and context options
   /**
    * The service name for your application. Follows the [tag syntax requirements](https://docs.datadoghq.com/getting_started/tagging/#define-tags).
+   *
+   * @category Data Collection
    */
   service?: string | undefined | null
+
   /**
    * The application’s environment, for example: prod, pre-prod, and staging. Follows the [tag syntax requirements](https://docs.datadoghq.com/getting_started/tagging/#define-tags).
    *
+   * @category Data Collection
    */
   env?: string | undefined | null
+
   /**
    * The application’s version, for example: 1.2.3, 6c44da20, and 2020.02.13. Follows the [tag syntax requirements](https://docs.datadoghq.com/getting_started/tagging/#define-tags).
+   *
+   * @category Data Collection
    */
   version?: string | undefined | null
 
@@ -156,31 +183,48 @@ export interface InitConfiguration {
    *
    * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
    *
+   * @category Session Persistence
    * @defaultValue false
    */
   usePartitionedCrossSiteSessionCookie?: boolean | undefined
+
   /**
    * Use a secure session cookie. This disables RUM events sent on insecure (non-HTTPS) connections.
    *
    * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
    *
+   * @category Session Persistence
    * @defaultValue false
    */
   useSecureSessionCookie?: boolean | undefined
+
   /**
    * Preserve the session across subdomains for the same site.
    *
    * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
    *
+   * @category Session Persistence
    * @defaultValue false
    */
   trackSessionAcrossSubdomains?: boolean | undefined
+
   /**
    * Track anonymous user for the same site and extend cookie expiration date
    *
+   * @category Data Collection
    * @defaultValue true
    */
   trackAnonymousUser?: boolean | undefined
+
+  /**
+   * Encode cookie options in the cookie value. This can be used as a mitigation for microssession issues.
+   * ⚠️ This is a beta feature and may be changed or removed in the future.
+   *
+   * @category Beta
+   * @defaultValue false
+   */
+  betaEncodeCookieOptions?: boolean | undefined
+
   // internal options
   /**
    * [Internal option] Enable experimental features
@@ -188,14 +232,21 @@ export interface InitConfiguration {
    * @internal
    */
   enableExperimentalFeatures?: string[] | undefined
+
   /**
    * [Internal option] Configure the dual shipping to another datacenter
+   *
+   * @internal
    */
   replica?: ReplicaUserConfiguration | undefined
+
   /**
    * [Internal option] Set the datacenter from where the data is dual shipped
+   *
+   * @internal
    */
   datacenter?: string
+
   /**
    * [Internal option] Datadog internal analytics subdomain
    *
@@ -203,6 +254,7 @@ export interface InitConfiguration {
    */
   // TODO next major: remove this option and replace usages by proxyFn
   internalAnalyticsSubdomain?: string
+
   /**
    * [Internal option] The percentage of telemetry configuration sent. A value between 0 and 100.
    *
@@ -210,6 +262,7 @@ export interface InitConfiguration {
    * @defaultValue 5
    */
   telemetryConfigurationSampleRate?: number
+
   /**
    * [Internal option] The percentage of telemetry usage sent. A value between 0 and 100.
    *
@@ -223,7 +276,7 @@ export interface InitConfiguration {
    *
    * @internal
    */
-  source?: 'browser' | 'flutter' | undefined
+  source?: 'browser' | 'flutter' | 'unity' | undefined
 
   /**
    * [Internal option] Additional configuration for the SDK.
@@ -274,19 +327,11 @@ export interface Configuration extends TransportConfiguration {
   trackingConsent: TrackingConsent
   storeContextsAcrossPages: boolean
   trackAnonymousUser?: boolean
-  // Event limits
-  eventRateLimiterThreshold: number // Limit the maximum number of actions, errors and logs per minutes
-  maxTelemetryEventsPerPage: number
-
-  // Batch configuration
-  batchBytesLimit: number
-  flushTimeout: Duration
-  batchMessagesLimit: number
-  messageBytesLimit: number
+  betaEncodeCookieOptions: boolean
 
   // internal
   sdkVersion: string | undefined
-  source: 'browser' | 'flutter'
+  source: 'browser' | 'flutter' | 'unity'
   variant: string | undefined
 }
 
@@ -314,7 +359,10 @@ export function isSampleRate(sampleRate: unknown, name: string) {
   return true
 }
 
-export function validateAndBuildConfiguration(initConfiguration: InitConfiguration): Configuration | undefined {
+export function validateAndBuildConfiguration(
+  initConfiguration: InitConfiguration,
+  errorStack?: string
+): Configuration | undefined {
   if (!initConfiguration || !initConfiguration.clientToken) {
     display.error('Client Token is not configured, we will not send any data.')
     return
@@ -337,7 +385,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     !isString(initConfiguration.version, 'Version') ||
     !isString(initConfiguration.env, 'Env') ||
     !isString(initConfiguration.service, 'Service') ||
-    !isAllowedTrackingOrigins(initConfiguration)
+    !isAllowedTrackingOrigins(initConfiguration, errorStack ?? '')
   ) {
     return
   }
@@ -353,7 +401,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
   return {
     beforeSend:
       initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
-    sessionStoreStrategyType: selectSessionStoreStrategyType(initConfiguration),
+    sessionStoreStrategyType: isWorkerEnvironment ? undefined : selectSessionStoreStrategyType(initConfiguration),
     sessionSampleRate: initConfiguration.sessionSampleRate ?? 100,
     telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
     telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,
@@ -367,26 +415,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     trackingConsent: initConfiguration.trackingConsent ?? TrackingConsent.GRANTED,
     trackAnonymousUser: initConfiguration.trackAnonymousUser ?? true,
     storeContextsAcrossPages: !!initConfiguration.storeContextsAcrossPages,
-    /**
-     * beacon payload max queue size implementation is 64kb
-     * ensure that we leave room for logs, rum and potential other users
-     */
-    batchBytesLimit: 16 * ONE_KIBI_BYTE,
-
-    eventRateLimiterThreshold: 3000,
-    maxTelemetryEventsPerPage: 15,
-
-    /**
-     * flush automatically, aim to be lower than ALB connection timeout
-     * to maximize connection reuse.
-     */
-    flushTimeout: (30 * ONE_SECOND) as Duration,
-
-    /**
-     * Logs intake limit
-     */
-    batchMessagesLimit: 50,
-    messageBytesLimit: 256 * ONE_KIBI_BYTE,
+    betaEncodeCookieOptions: !!initConfiguration.betaEncodeCookieOptions,
 
     /**
      * The source of the SDK, used for support plugins purposes.
@@ -411,12 +440,15 @@ export function serializeConfiguration(initConfiguration: InitConfiguration) {
     silent_multiple_init: initConfiguration.silentMultipleInit,
     track_session_across_subdomains: initConfiguration.trackSessionAcrossSubdomains,
     track_anonymous_user: initConfiguration.trackAnonymousUser,
-    session_persistence: initConfiguration.sessionPersistence,
+    session_persistence: Array.isArray(initConfiguration.sessionPersistence)
+      ? initConfiguration.sessionPersistence[0]
+      : initConfiguration.sessionPersistence,
     allow_fallback_to_local_storage: !!initConfiguration.allowFallbackToLocalStorage,
     store_contexts_across_pages: !!initConfiguration.storeContextsAcrossPages,
     allow_untrusted_events: !!initConfiguration.allowUntrustedEvents,
     tracking_consent: initConfiguration.trackingConsent,
     use_allowed_tracking_origins: Array.isArray(initConfiguration.allowedTrackingOrigins),
+    beta_encode_cookie_options: initConfiguration.betaEncodeCookieOptions,
     source: initConfiguration.source,
     sdk_version: initConfiguration.sdkVersion,
     variant: initConfiguration.variant,

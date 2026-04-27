@@ -1,7 +1,6 @@
-import type { Context } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
-import type { RumEvent } from '../../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
+import type { AssembledRumEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import { trackViewEventCounts } from './trackViewEventCounts'
 
@@ -20,7 +19,7 @@ describe('trackViewEventCounts', () => {
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
       type: RumEventType.ERROR,
       view: { id: 'view-id' },
-    } as RumEvent & Context)
+    } as AssembledRumEvent)
 
     expect(onChange).toHaveBeenCalledTimes(1)
   })
@@ -29,7 +28,7 @@ describe('trackViewEventCounts', () => {
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
       type: RumEventType.ERROR,
       view: { id: 'unrelated-view-id' },
-    } as RumEvent & Context)
+    } as AssembledRumEvent)
 
     expect(onChange).not.toHaveBeenCalled()
   })

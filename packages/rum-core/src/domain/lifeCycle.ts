@@ -1,11 +1,13 @@
-import type { Context, Duration, PageMayExitEvent, RawError, RelativeTime } from '@datadog/browser-core'
+import type { ClocksState, Context, Duration, PageMayExitEvent, RawError } from '@datadog/browser-core'
 import { AbstractLifeCycle } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
-import type { RawRumEvent } from '../rawRumEvent.types'
-import type { RumEvent } from '../rumEvent.types'
+import type { RawRumEvent, AssembledRumEvent } from '../rawRumEvent.types'
 import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import type { AutoAction } from './action/actionCollection'
 import type { ViewEvent, ViewCreatedEvent, ViewEndedEvent, BeforeViewUpdateEvent } from './view/trackViews'
+import type { DurationVitalStart } from './vital/vitalCollection'
+import type { TrackedEventData } from './eventTracker'
+import type { ActionEventData } from './action/trackManualActions'
 
 export const enum LifeCycleEventType {
   // Contexts (like viewHistory) should be opened using prefixed BEFORE_XXX events and closed using prefixed AFTER_XXX events
@@ -36,6 +38,8 @@ export const enum LifeCycleEventType {
   RAW_RUM_EVENT_COLLECTED,
   RUM_EVENT_COLLECTED,
   RAW_ERROR_COLLECTED,
+  ACTION_STARTED,
+  VITAL_STARTED,
 }
 
 // This is a workaround for an issue occurring when the Browser SDK is included in a TypeScript
@@ -52,6 +56,7 @@ export const enum LifeCycleEventType {
 // * https://github.com/DataDog/browser-sdk/issues/2208
 // * https://github.com/microsoft/TypeScript/issues/54152
 declare const LifeCycleEventTypeAsConst: {
+  ACTION_STARTED: LifeCycleEventType.ACTION_STARTED
   AUTO_ACTION_COMPLETED: LifeCycleEventType.AUTO_ACTION_COMPLETED
   BEFORE_VIEW_CREATED: LifeCycleEventType.BEFORE_VIEW_CREATED
   VIEW_CREATED: LifeCycleEventType.VIEW_CREATED
@@ -67,11 +72,13 @@ declare const LifeCycleEventTypeAsConst: {
   RAW_RUM_EVENT_COLLECTED: LifeCycleEventType.RAW_RUM_EVENT_COLLECTED
   RUM_EVENT_COLLECTED: LifeCycleEventType.RUM_EVENT_COLLECTED
   RAW_ERROR_COLLECTED: LifeCycleEventType.RAW_ERROR_COLLECTED
+  VITAL_STARTED: LifeCycleEventType.VITAL_STARTED
 }
 
 // Note: this interface needs to be exported even if it is not used outside of this module, else TS
 // fails to build the rum-core package with error TS4058
 export interface LifeCycleEventMap {
+  [LifeCycleEventTypeAsConst.ACTION_STARTED]: TrackedEventData<ActionEventData>
   [LifeCycleEventTypeAsConst.AUTO_ACTION_COMPLETED]: AutoAction
   [LifeCycleEventTypeAsConst.BEFORE_VIEW_CREATED]: ViewCreatedEvent
   [LifeCycleEventTypeAsConst.VIEW_CREATED]: ViewCreatedEvent
@@ -85,15 +92,16 @@ export interface LifeCycleEventMap {
   [LifeCycleEventTypeAsConst.SESSION_RENEWED]: void
   [LifeCycleEventTypeAsConst.PAGE_MAY_EXIT]: PageMayExitEvent
   [LifeCycleEventTypeAsConst.RAW_RUM_EVENT_COLLECTED]: RawRumEventCollectedData
-  [LifeCycleEventTypeAsConst.RUM_EVENT_COLLECTED]: RumEvent & Context
+  [LifeCycleEventTypeAsConst.RUM_EVENT_COLLECTED]: AssembledRumEvent
   [LifeCycleEventTypeAsConst.RAW_ERROR_COLLECTED]: {
     error: RawError
     customerContext?: Context
   }
+  [LifeCycleEventTypeAsConst.VITAL_STARTED]: DurationVitalStart
 }
 
 export interface RawRumEventCollectedData<E extends RawRumEvent = RawRumEvent> {
-  startTime: RelativeTime
+  startClocks: ClocksState
   duration?: Duration
   rawRumEvent: E
   domainContext: RumEventDomainContext<E['type']>

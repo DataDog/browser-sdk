@@ -1,4 +1,7 @@
-import type { RelativeTime } from '@datadog/browser-core'
+import type { Duration, RelativeTime, TimeStamp } from '@datadog/browser-core'
+import { addExperimentalFeatures, ExperimentalFeature, RequestType } from '@datadog/browser-core'
+import type { Clock, MockTelemetry } from '@datadog/browser-core/test'
+import { mockClock, startMockTelemetry } from '@datadog/browser-core/test'
 import { createPerformanceEntry } from '../../../test'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
@@ -61,16 +64,109 @@ describe('RequestRegistry', () => {
     expect(requestRegistry.getMatchingRequest(createResourceEntry({ startTime: 0 }))).toBeUndefined()
   })
 
+  describe('when the registry overflows', () => {
+    let telemetry: MockTelemetry
+    let lifeCycle: LifeCycle
+
+    beforeEach(() => {
+      telemetry = startMockTelemetry()
+      lifeCycle = new LifeCycle()
+      createRequestRegistry(lifeCycle)
+    })
+
+    it('fires "Too many requests" telemetry only once', async () => {
+      for (let i = 0; i < MAX_REQUESTS + 3; i++) {
+        lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createRequestCompleteEvent({ startTime: i }))
+      }
+      expect(await telemetry.getEvents()).toEqual([jasmine.objectContaining({ message: 'Too many requests' })])
+    })
+
+    it('includes debug context when TOO_MANY_REQUESTS_INVESTIGATION is enabled', async () => {
+      const clock: Clock = mockClock()
+      addExperimentalFeatures([ExperimentalFeature.TOO_MANY_REQUESTS_INVESTIGATION])
+      let fetchCount = 0
+      let xhrCount = 0
+      let abortedCount = 0
+      let abortedOnStartCount = 0
+
+      // oldest request: created at t=0, FETCH, takes 50ms
+      lifeCycle.notify(
+        LifeCycleEventType.REQUEST_COMPLETED,
+        createRequestCompleteEvent({ startTime: 0, timeStamp: clock.timeStamp(0), duration: 50 as Duration })
+      )
+      fetchCount++
+
+      clock.tick(1000)
+
+      // 1 XHR request
+      lifeCycle.notify(
+        LifeCycleEventType.REQUEST_COMPLETED,
+        createRequestCompleteEvent({ startTime: MAX_REQUESTS - 1, type: RequestType.XHR })
+      )
+      xhrCount++
+
+      // aborted
+      lifeCycle.notify(
+        LifeCycleEventType.REQUEST_COMPLETED,
+        createRequestCompleteEvent({ startTime: MAX_REQUESTS, isAborted: true })
+      )
+      fetchCount++
+      abortedCount++
+
+      // aborted on start
+      lifeCycle.notify(
+        LifeCycleEventType.REQUEST_COMPLETED,
+        createRequestCompleteEvent({ startTime: MAX_REQUESTS, isAborted: true, isAbortedOnStart: true })
+      )
+      fetchCount++
+      abortedCount++
+      abortedOnStartCount++
+
+      // trigger requests until we reach the limit
+      while (fetchCount + xhrCount <= MAX_REQUESTS) {
+        lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createRequestCompleteEvent({ startTime: 10 }))
+        fetchCount++
+      }
+
+      expect(await telemetry.getEvents()).toEqual([
+        jasmine.objectContaining({
+          message: 'Too many requests',
+          abortedCount,
+          abortedOnStartCount,
+          xhrCount,
+          fetchCount,
+          oldestRequestAge: 1000,
+          oldestRequestEndAge: 950,
+          withoutMatchingEntryCount: MAX_REQUESTS + 1,
+        }),
+      ])
+    })
+  })
+
   function createRequestCompleteEvent({
     startTime,
     url = URL,
+    timeStamp,
+    duration = 0 as Duration,
+    type = RequestType.FETCH,
+    isAborted = false,
+    isAbortedOnStart = false,
   }: {
     startTime: number
     url?: string
+    timeStamp?: TimeStamp
+    duration?: Duration
+    type?: RequestType
+    isAborted?: boolean
+    isAbortedOnStart?: boolean
   }): RequestCompleteEvent {
     return {
-      startClocks: { relative: startTime as RelativeTime },
+      startClocks: { relative: startTime as RelativeTime, timeStamp },
       url,
+      duration,
+      type,
+      isAborted,
+      isAbortedOnStart,
     } as RequestCompleteEvent
   }
 

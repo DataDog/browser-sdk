@@ -1,16 +1,25 @@
 import { printLog, printError, runMain } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
-import { initGitConfig } from '../lib/gitUtils.ts'
+import { fetchPR, initGitConfig } from '../lib/gitUtils.ts'
 
 const REPOSITORY = process.env.GIT_REPOSITORY
 const CI_COMMIT_SHA = process.env.CI_COMMIT_SHA
 const CI_COMMIT_SHORT_SHA = process.env.CI_COMMIT_SHORT_SHA
 const CI_COMMIT_REF_NAME = process.env.CI_COMMIT_REF_NAME
 const MAIN_BRANCH = process.env.MAIN_BRANCH
+const NEXT_MAJOR_BRANCH = process.env.NEXT_MAJOR_BRANCH
 
-runMain(() => {
+runMain(async () => {
   if (!REPOSITORY || !CI_COMMIT_SHA || !CI_COMMIT_SHORT_SHA || !CI_COMMIT_REF_NAME || !MAIN_BRANCH) {
     throw new Error('Missing required environment variables')
+  }
+
+  if (NEXT_MAJOR_BRANCH) {
+    const pr = await fetchPR(CI_COMMIT_REF_NAME)
+    if (pr?.base.ref === NEXT_MAJOR_BRANCH) {
+      printLog(`PR targets ${NEXT_MAJOR_BRANCH}, skipping staging merge check.`)
+      return
+    }
   }
 
   initGitConfig(REPOSITORY)

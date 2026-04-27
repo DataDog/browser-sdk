@@ -10,10 +10,11 @@ export interface TransportConfiguration {
   sessionReplayEndpointBuilder: EndpointBuilder
   profilingEndpointBuilder: EndpointBuilder
   exposuresEndpointBuilder: EndpointBuilder
+  flagEvaluationEndpointBuilder: EndpointBuilder
   datacenter?: string | undefined
   replica?: ReplicaConfiguration
   site: Site
-  source: 'browser' | 'flutter'
+  source: 'browser' | 'flutter' | 'unity'
 }
 
 export interface ReplicaConfiguration {
@@ -23,7 +24,7 @@ export interface ReplicaConfiguration {
 
 export function computeTransportConfiguration(initConfiguration: InitConfiguration): TransportConfiguration {
   const site = initConfiguration.site || INTAKE_SITE_US1
-  const source = initConfiguration.source === 'flutter' ? 'flutter' : 'browser'
+  const source = validateSource(initConfiguration.source)
 
   const endpointBuilders = computeEndpointBuilders({ ...initConfiguration, site, source })
   const replicaConfiguration = computeReplicaConfiguration({ ...initConfiguration, site, source })
@@ -36,6 +37,13 @@ export function computeTransportConfiguration(initConfiguration: InitConfigurati
   }
 }
 
+function validateSource(source: string | undefined) {
+  if (source === 'flutter' || source === 'unity') {
+    return source
+  }
+  return 'browser'
+}
+
 function computeEndpointBuilders(initConfiguration: InitConfiguration) {
   return {
     logsEndpointBuilder: createEndpointBuilder(initConfiguration, 'logs'),
@@ -43,6 +51,7 @@ function computeEndpointBuilders(initConfiguration: InitConfiguration) {
     profilingEndpointBuilder: createEndpointBuilder(initConfiguration, 'profile'),
     sessionReplayEndpointBuilder: createEndpointBuilder(initConfiguration, 'replay'),
     exposuresEndpointBuilder: createEndpointBuilder(initConfiguration, 'exposures'),
+    flagEvaluationEndpointBuilder: createEndpointBuilder(initConfiguration, 'flagevaluation'),
   }
 }
 

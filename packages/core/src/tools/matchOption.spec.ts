@@ -28,6 +28,13 @@ describe('matchList', () => {
     expect(matchList(list, 'http://my.domain.com/action', true)).toBe(true)
   })
 
+  it('should match consistently when regexp has global flag', () => {
+    const list = [/foo/g]
+    expect(matchList(list, 'foobar')).toBe(true)
+    expect(matchList(list, 'foobar')).toBe(true)
+    expect(matchList(list, 'foobar')).toBe(true)
+  })
+
   it('should catch error from provided function', () => {
     spyOn(display, 'error')
     const list = [

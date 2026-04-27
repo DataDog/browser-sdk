@@ -1,6 +1,6 @@
-const path = require('path')
+import path from 'node:path'
 
-module.exports = {
+export default {
   meta: {
     docs: {
       description: 'Disallow the use of too generic utility file names',

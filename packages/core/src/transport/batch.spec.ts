@@ -4,13 +4,11 @@ import { createMockFlushController } from '../../test'
 import { display } from '../tools/display'
 import type { Encoder } from '../tools/encoder'
 import { createIdentityEncoder } from '../tools/encoder'
-import { createBatch, type Batch } from './batch'
+import { createBatch, MESSAGE_BYTES_LIMIT, type Batch } from './batch'
 import type { HttpRequest, HttpRequestEvent } from './httpRequest'
 
 describe('batch', () => {
-  const MESSAGE_BYTES_LIMIT = 50
-
-  const BIG_MESSAGE_OVER_BYTES_LIMIT = { message: 'hello xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' }
+  const BIG_MESSAGE_OVER_BYTES_LIMIT = { message: 'x'.repeat(MESSAGE_BYTES_LIMIT + 1) }
   const SMALL_MESSAGE = { message: 'hello' }
   const SMALL_MESSAGE_BYTES_COUNT = 19
   const SEPARATOR_BYTES_COUNT = 1
@@ -33,7 +31,7 @@ describe('batch', () => {
     } satisfies HttpRequest
     flushController = createMockFlushController()
     encoder = createIdentityEncoder()
-    batch = createBatch({ encoder, request: transport, flushController, messageBytesLimit: MESSAGE_BYTES_LIMIT })
+    batch = createBatch({ encoder, request: transport, flushController })
   })
 
   it('should send a message', () => {

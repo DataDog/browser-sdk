@@ -10,7 +10,6 @@ import { startViewHistory, VIEW_CONTEXT_TIME_OUT_DELAY } from './viewHistory'
 describe('ViewHistory', () => {
   const FAKE_ID = 'fake'
   const startClocks = relativeToClocks(10 as RelativeTime)
-  const lifeCycle = new LifeCycle()
 
   function buildViewCreatedEvent(partialViewCreatedEvent: Partial<ViewCreatedEvent> = {}): ViewCreatedEvent {
     return {
@@ -21,10 +20,12 @@ describe('ViewHistory', () => {
   }
 
   let clock: Clock
+  let lifeCycle: LifeCycle
   let viewHistory: ViewHistory
 
   beforeEach(() => {
     clock = mockClock()
+    lifeCycle = new LifeCycle()
     viewHistory = startViewHistory(lifeCycle)
 
     registerCleanupTask(() => {

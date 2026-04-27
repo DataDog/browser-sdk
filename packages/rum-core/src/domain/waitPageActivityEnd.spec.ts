@@ -1,7 +1,7 @@
 import type { Subscription } from '@datadog/browser-core'
 import { Observable, ONE_SECOND } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock } from '@datadog/browser-core/test'
+import { mockClock, replaceMockable } from '@datadog/browser-core/test'
 import {
   appendElement,
   createMutationRecord,
@@ -18,7 +18,7 @@ import type { PageActivityEvent, PageActivityEndEvent } from './waitPageActivity
 import {
   PAGE_ACTIVITY_END_DELAY,
   PAGE_ACTIVITY_VALIDATION_DELAY,
-  doWaitPageActivityEnd,
+  waitPageActivityEnd,
   createPageActivityObservable,
   EXCLUDED_MUTATIONS_ATTRIBUTE,
 } from './waitPageActivityEnd'
@@ -236,17 +236,26 @@ describe('createPageActivityObservable', () => {
   })
 })
 
-describe('doWaitPageActivityEnd', () => {
+describe('waitPageActivityEnd', () => {
   let clock: Clock
   let idlPageActivityCallbackSpy: jasmine.Spy<(event: PageActivityEndEvent) => void>
+  let activityObservable: Observable<PageActivityEvent>
 
   beforeEach(() => {
     idlPageActivityCallbackSpy = jasmine.createSpy()
     clock = mockClock()
+    activityObservable = new Observable<PageActivityEvent>()
+    replaceMockable(createPageActivityObservable, () => activityObservable)
   })
 
   it('should notify the callback after `EXPIRE_DELAY` when there is no activity', () => {
-    doWaitPageActivityEnd(new Observable(), idlPageActivityCallbackSpy)
+    waitPageActivityEnd(
+      new LifeCycle(),
+      new Observable(),
+      new Observable(),
+      RUM_CONFIGURATION,
+      idlPageActivityCallbackSpy
+    )
 
     clock.tick(EXPIRE_DELAY)
 
@@ -256,9 +265,13 @@ describe('doWaitPageActivityEnd', () => {
   })
 
   it('should notify the callback with the last activity timestamp', () => {
-    const activityObservable = new Observable<PageActivityEvent>()
-
-    doWaitPageActivityEnd(activityObservable, idlPageActivityCallbackSpy)
+    waitPageActivityEnd(
+      new LifeCycle(),
+      new Observable(),
+      new Observable(),
+      RUM_CONFIGURATION,
+      idlPageActivityCallbackSpy
+    )
 
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
     activityObservable.notify({ isBusy: false })
@@ -273,11 +286,16 @@ describe('doWaitPageActivityEnd', () => {
 
   describe('extend with activities', () => {
     it('is extended while there is page activities', () => {
-      const activityObservable = new Observable<PageActivityEvent>()
       // Extend the action 10 times
       const extendCount = 10
 
-      doWaitPageActivityEnd(activityObservable, idlPageActivityCallbackSpy)
+      waitPageActivityEnd(
+        new LifeCycle(),
+        new Observable(),
+        new Observable(),
+        RUM_CONFIGURATION,
+        idlPageActivityCallbackSpy
+      )
 
       for (let i = 0; i < extendCount; i += 1) {
         clock.tick(BEFORE_PAGE_ACTIVITY_END_DELAY)
@@ -293,7 +311,6 @@ describe('doWaitPageActivityEnd', () => {
     })
 
     it('expires after a maximum duration', () => {
-      const activityObservable = new Observable<PageActivityEvent>()
       let stop = false
 
       // Extend the action until it's more than MAX_DURATION
@@ -302,7 +319,14 @@ describe('doWaitPageActivityEnd', () => {
       idlPageActivityCallbackSpy.and.callFake(() => {
         stop = true
       })
-      doWaitPageActivityEnd(activityObservable, idlPageActivityCallbackSpy, MAX_DURATION)
+      waitPageActivityEnd(
+        new LifeCycle(),
+        new Observable(),
+        new Observable(),
+        RUM_CONFIGURATION,
+        idlPageActivityCallbackSpy,
+        MAX_DURATION
+      )
 
       for (let i = 0; i < extendCount && !stop; i += 1) {
         clock.tick(BEFORE_PAGE_ACTIVITY_END_DELAY)
@@ -320,8 +344,13 @@ describe('doWaitPageActivityEnd', () => {
 
   describe('busy activities', () => {
     it('is extended while the page is busy', () => {
-      const activityObservable = new Observable<PageActivityEvent>()
-      doWaitPageActivityEnd(activityObservable, idlPageActivityCallbackSpy)
+      waitPageActivityEnd(
+        new LifeCycle(),
+        new Observable(),
+        new Observable(),
+        RUM_CONFIGURATION,
+        idlPageActivityCallbackSpy
+      )
 
       clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
       activityObservable.notify({ isBusy: true })
@@ -338,8 +367,14 @@ describe('doWaitPageActivityEnd', () => {
     })
 
     it('expires is the page is busy for too long', () => {
-      const activityObservable = new Observable<PageActivityEvent>()
-      doWaitPageActivityEnd(activityObservable, idlPageActivityCallbackSpy, MAX_DURATION)
+      waitPageActivityEnd(
+        new LifeCycle(),
+        new Observable(),
+        new Observable(),
+        RUM_CONFIGURATION,
+        idlPageActivityCallbackSpy,
+        MAX_DURATION
+      )
 
       clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
       activityObservable.notify({ isBusy: true })

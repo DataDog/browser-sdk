@@ -1,3 +1,4 @@
+import { type RequestInit } from 'undici'
 import { fetchHandlingError } from './executionUtils.ts'
 
 interface BrowserStackRequestOptions extends RequestInit {

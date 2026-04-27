@@ -1,35 +1,36 @@
 import { DOM_EVENT, addEventListeners } from '@datadog/browser-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel, getNodePrivacyLevel } from '@datadog/browser-rum-core'
-import type { BrowserIncrementalSnapshotRecord, MediaInteractionData } from '../../../types'
+import type { MediaInteractionData, BrowserIncrementalSnapshotRecord } from '../../../types'
 import { IncrementalSource, MediaInteractionType } from '../../../types'
 import { getEventTarget } from '../eventsUtils'
-import { getSerializedNodeId, hasSerializedNode } from '../serialization'
 import { assembleIncrementalSnapshot } from '../assembly'
+import type { EmitRecordCallback } from '../record.types'
+import type { RecordingScope } from '../recordingScope'
 import type { Tracker } from './tracker.types'
 
-export type MediaInteractionCallback = (incrementalSnapshotRecord: BrowserIncrementalSnapshotRecord) => void
-
 export function trackMediaInteraction(
-  configuration: RumConfiguration,
-  mediaInteractionCb: MediaInteractionCallback
+  emitRecord: EmitRecordCallback<BrowserIncrementalSnapshotRecord>,
+  scope: RecordingScope
 ): Tracker {
   return addEventListeners(
-    configuration,
+    scope.configuration,
     document,
     [DOM_EVENT.PLAY, DOM_EVENT.PAUSE],
     (event) => {
       const target = getEventTarget(event)
+      if (!target) {
+        return
+      }
+      const id = scope.nodeIds.get(target)
       if (
-        !target ||
-        getNodePrivacyLevel(target, configuration.defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN ||
-        !hasSerializedNode(target)
+        id === undefined ||
+        getNodePrivacyLevel(target, scope.configuration.defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN
       ) {
         return
       }
-      mediaInteractionCb(
+      emitRecord(
         assembleIncrementalSnapshot<MediaInteractionData>(IncrementalSource.MediaInteraction, {
-          id: getSerializedNodeId(target),
+          id,
           type: event.type === DOM_EVENT.PLAY ? MediaInteractionType.Play : MediaInteractionType.Pause,
         })
       )

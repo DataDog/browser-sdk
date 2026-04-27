@@ -1,3 +1,5 @@
+import { globalObject } from './globalObject'
+
 interface BrowserWindow {
   __ddBrowserSdkExtensionCallback?: (message: unknown) => void
 }
@@ -5,7 +7,7 @@ interface BrowserWindow {
 type ExtensionMessageType = 'logs' | 'record' | 'rum' | 'telemetry'
 
 export function sendToExtension(type: ExtensionMessageType, payload: unknown) {
-  const callback = (window as BrowserWindow).__ddBrowserSdkExtensionCallback
+  const callback = (globalObject as BrowserWindow).__ddBrowserSdkExtensionCallback
   if (callback) {
     callback({ type, payload })
   }

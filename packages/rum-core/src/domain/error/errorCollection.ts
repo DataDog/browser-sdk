@@ -98,7 +98,7 @@ function processError(error: RawError): RawRumEventCollectedData<RawRumErrorEven
 
   return {
     rawRumEvent,
-    startTime: error.startClocks.relative,
+    startClocks: error.startClocks,
     domainContext,
   }
 }

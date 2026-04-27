@@ -6,7 +6,7 @@ import type {
   EncoderResult,
   Uint8ArrayBuffer,
 } from '@datadog/browser-core'
-import { addEventListener, addTelemetryDebug, concatBuffers } from '@datadog/browser-core'
+import { addEventListener, concatBuffers } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 
 export function createDeflateEncoder(
@@ -51,8 +51,8 @@ export function createDeflateEncoder(
             nextPendingAction.finishCallback()
           }
         } else if (nextPendingAction.id < workerResponse.id) {
+          // Worker responses received out of order
           removeMessageListener()
-          addTelemetryDebug('Worker responses received out of order.')
         }
       }
     }

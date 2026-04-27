@@ -1,6 +1,6 @@
-import fs from 'fs'
-import path from 'path'
-import fsPromises from 'fs/promises'
+import fs from 'node:fs'
+import path from 'node:path'
+import fsPromises from 'node:fs/promises'
 import { command } from './command.ts'
 
 export const CI_FILE = '.gitlab-ci.yml'
@@ -50,13 +50,22 @@ export async function modifyFile(
   return false
 }
 
-interface PackageJsonInfo {
+export interface PackageJsonInfo {
   relativePath: string
   path: string
-  content: any
+  content: PackageJson
 }
 
-export function findBrowserSdkPackageJsonFiles(): PackageJsonInfo[] {
+interface PackageJson {
+  name?: string
+  private?: boolean
+  version?: string
+  dependencies?: Record<string, string>
+  devDependencies?: Record<string, string>
+  peerDependencies?: Record<string, string>
+}
+
+export function findPackageJsonFiles(): PackageJsonInfo[] {
   const manifestPaths = command`git ls-files -- package.json */package.json`.run()
   return manifestPaths
     .trim()

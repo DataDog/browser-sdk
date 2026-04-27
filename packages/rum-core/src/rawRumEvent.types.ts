@@ -10,7 +10,16 @@ import type {
   Csp,
   Context,
 } from '@datadog/browser-core'
+import type { GraphQlMetadata } from './domain/resource/graphql'
 import type { PageState } from './domain/contexts/pageStateHistory'
+import type {
+  RumActionEvent,
+  RumErrorEvent,
+  RumLongTaskEvent,
+  RumResourceEvent,
+  RumViewEvent,
+  RumVitalEvent,
+} from './rumEvent.types'
 
 export const RumEventType = {
   ACTION: 'action',
@@ -22,6 +31,16 @@ export const RumEventType = {
 } as const
 
 export type RumEventType = (typeof RumEventType)[keyof typeof RumEventType]
+
+export type AssembledRumEvent = (
+  | RumViewEvent
+  | RumActionEvent
+  | RumResourceEvent
+  | RumErrorEvent
+  | RumVitalEvent
+  | RumLongTaskEvent
+) &
+  Context
 
 export const RumLongTaskEntryType = {
   LONG_TASK: 'long-task',
@@ -54,14 +73,28 @@ export interface RawRumResourceEvent {
     download?: ResourceEntryDetailsElement
     protocol?: string
     delivery_type?: DeliveryType
+    graphql?: GraphQlMetadata
+    request?: ResourceRequest
+    response?: ResourceResponse
   }
   _dd: {
     trace_id?: string
     span_id?: string // not available for initial document tracing
     rule_psr?: number
-    discarded: boolean
+    discarded?: boolean
     page_states?: PageStateServerEntry[]
   }
+  context?: Context
+}
+
+export type NetworkHeaders = Record<string, string>
+
+export interface ResourceRequest {
+  headers?: NetworkHeaders
+}
+
+export interface ResourceResponse {
+  headers?: NetworkHeaders
 }
 
 export interface ResourceEntryDetailsElement {
@@ -179,11 +212,21 @@ export interface ViewPerformanceData {
     duration: ServerDuration
     timestamp?: ServerDuration
     target_selector?: string
+    sub_parts?: {
+      input_delay: ServerDuration
+      processing_duration: ServerDuration
+      presentation_delay: ServerDuration
+    }
   }
   lcp?: {
     timestamp: ServerDuration
     target_selector?: string
     resource_url?: string
+    sub_parts?: {
+      load_delay: ServerDuration
+      load_time: ServerDuration
+      render_delay: ServerDuration
+    }
   }
 }
 
@@ -302,6 +345,7 @@ export interface RawRumActionEvent {
         selector?: string
         width?: number
         height?: number
+        composed_path_selector?: string
       }
       name_source?: string
       position?: {
@@ -317,6 +361,11 @@ export interface RawRumActionEvent {
 export const ActionType = {
   CLICK: 'click',
   CUSTOM: 'custom',
+  TAP: 'tap',
+  SCROLL: 'scroll',
+  SWIPE: 'swipe',
+  APPLICATION_START: 'application_start',
+  BACK: 'back',
 } as const
 
 export type ActionType = (typeof ActionType)[keyof typeof ActionType]
@@ -336,8 +385,11 @@ export interface RawRumVitalEvent {
     id: string
     name: string
     type: VitalType
+    step_type?: string
+    operation_key?: string
+    failure_reason?: string
     description?: string
-    duration: number
+    duration?: number
   }
   _dd?: {
     vital: {
@@ -349,6 +401,7 @@ export interface RawRumVitalEvent {
 
 export const VitalType = {
   DURATION: 'duration',
+  OPERATION_STEP: 'operation_step',
 } as const
 
 export type VitalType = (typeof VitalType)[keyof typeof VitalType]

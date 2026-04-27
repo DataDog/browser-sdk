@@ -1,6 +1,10 @@
 import type { ErrorWithCause } from '@datadog/browser-core'
-import { display, ErrorHandling, NO_ERROR_STACK_PRESENT_MESSAGE } from '@datadog/browser-core'
-import { supportUnicodePropertyEscapes } from '@datadog/browser-core/src/domain/configuration/tags'
+import {
+  display,
+  ErrorHandling,
+  NO_ERROR_STACK_PRESENT_MESSAGE,
+  supportUnicodePropertyEscapes,
+} from '@datadog/browser-core'
 import type { LogsMessage } from './logger'
 import { HandlerType, Logger, STATUSES } from './logger'
 import { StatusType } from './logger/isAuthorized'

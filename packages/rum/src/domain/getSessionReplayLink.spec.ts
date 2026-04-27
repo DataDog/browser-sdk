@@ -2,16 +2,13 @@ import type { RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { createRumSessionManagerMock } from '../../../rum-core/test'
 import { getSessionReplayLink } from './getSessionReplayLink'
-import { addRecord, resetReplayStats } from './replayStats'
+import { addRecord } from './replayStats'
 
 const DEFAULT_CONFIGURATION = {
   site: 'datadoghq.com',
 } as RumConfiguration
 
 describe('getReplayLink', () => {
-  afterEach(() => {
-    resetReplayStats()
-  })
   it('should return url without query param if no view', () => {
     const sessionManager = createRumSessionManagerMock().setId('session-id-1')
     const viewHistory = { findView: () => undefined } as ViewHistory

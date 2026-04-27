@@ -1,4 +1,4 @@
-import type { Context, Duration } from '@datadog/browser-core'
+import type { Duration, RelativeTime } from '@datadog/browser-core'
 import {
   addDuration,
   clocksNow,
@@ -7,18 +7,20 @@ import {
   DefaultPrivacyLevel,
   Observable,
   ExperimentalFeature,
+  PageExitReason,
+  addExperimentalFeatures,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { createNewEvent, mockClock, mockExperimentalFeatures } from '@datadog/browser-core/test'
+import { createNewEvent, mockClock } from '@datadog/browser-core/test'
 import { createFakeClick, createMutationRecord, mockRumConfiguration } from '../../../test'
+import type { AssembledRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ActionType, FrustrationType } from '../../rawRumEvent.types'
-import type { RumEvent } from '../../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { PAGE_ACTIVITY_VALIDATION_DELAY } from '../waitPageActivityEnd'
 import type { RumConfiguration } from '../configuration'
 import type { BrowserWindow } from '../privacy'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
-import type { ActionContexts } from './actionCollection'
+import { SHADOW_DOM_MARKER } from '../getSelectorFromElement'
 import type { ClickAction } from './trackClickActions'
 import { finalizeClicks, trackClickActions } from './trackClickActions'
 import { MAX_DURATION_BETWEEN_CLICKS } from './clickChain'
@@ -55,11 +57,12 @@ describe('trackClickActions', () => {
   let button: HTMLButtonElement
   let emptyElement: HTMLHRElement
   let input: HTMLInputElement
-  let findActionId: ActionContexts['findActionId']
+  let findActionId: (startTime?: RelativeTime) => string[]
   let stopClickActionsTracking: () => void
 
   function startClickActionsTracking(partialConfig: Partial<RumConfiguration> = {}) {
     const subscription = lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
+
     const trackClickActionsResult = trackClickActions(
       lifeCycle,
       domMutationObservable,
@@ -67,7 +70,7 @@ describe('trackClickActions', () => {
       mockRumConfiguration(partialConfig)
     )
 
-    findActionId = trackClickActionsResult.actionContexts.findActionId
+    findActionId = trackClickActionsResult.findActionId
     stopClickActionsTracking = () => {
       trackClickActionsResult.stop()
       subscription.unsubscribe()
@@ -111,12 +114,12 @@ describe('trackClickActions', () => {
     clock.tick(EXPIRE_DELAY)
     const domEvent = createNewEvent('pointerup', { target: document.createElement('button') })
     expect(events).toEqual([
-      {
-        counts: {
+      jasmine.objectContaining({
+        counts: jasmine.objectContaining({
           errorCount: 0,
           longTaskCount: 0,
           resourceCount: 0,
-        },
+        }),
         duration: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY as Duration,
         id: jasmine.any(String),
         name: 'Click me',
@@ -132,10 +135,11 @@ describe('trackClickActions', () => {
           selector: '#button',
           width: 100,
           height: 100,
+          composedPathSelector: jasmine.any(String),
         },
         position: { x: 50, y: 50 },
         events: [domEvent],
-      },
+      }),
     ])
   })
 
@@ -162,11 +166,13 @@ describe('trackClickActions', () => {
 
     expect(events.length).toBe(1)
     const clickAction = events[0]
-    expect(clickAction.counts).toEqual({
-      errorCount: 2,
-      longTaskCount: 0,
-      resourceCount: 0,
-    })
+    expect(clickAction.counts).toEqual(
+      jasmine.objectContaining({
+        errorCount: 2,
+        longTaskCount: 0,
+        resourceCount: 0,
+      })
+    )
   })
 
   it('does not count child events unrelated to the click action', () => {
@@ -177,7 +183,7 @@ describe('trackClickActions', () => {
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
       type: RumEventType.RESOURCE,
       action: { id: 'unrelated-action-id' },
-    } as RumEvent & Context)
+    } as AssembledRumEvent)
 
     clock.tick(EXPIRE_DELAY)
 
@@ -200,7 +206,7 @@ describe('trackClickActions', () => {
   it('discards any click action with a negative duration', () => {
     startClickActionsTracking()
     emulateClick({ activity: { delay: -1 } })
-    expect(findActionId()!.length).toEqual(2)
+    expect(findActionId().length).toEqual(2)
     clock.tick(EXPIRE_DELAY)
 
     expect(events).toEqual([])
@@ -219,6 +225,21 @@ describe('trackClickActions', () => {
 
     expect(events.length).toBe(1)
     expect(events[0].duration).toBe((2 * BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY) as Duration)
+  })
+
+  it('ongoing click action is stopped on page exit', () => {
+    startClickActionsTracking()
+    emulateClick()
+
+    clock.tick(12)
+
+    lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, {
+      reason: PageExitReason.HIDDEN,
+    })
+
+    expect(events.length).toBe(1)
+    expect(events[0].duration).toBe(12 as Duration)
+    expect(events[0].frustrationTypes).toEqual([])
   })
 
   it('collect click actions even if another one is ongoing', () => {
@@ -257,7 +278,7 @@ describe('trackClickActions', () => {
   it('collect click actions even if it fails to find a name', () => {
     startClickActionsTracking()
     emulateClick({ activity: {}, target: emptyElement })
-    expect(findActionId()!.length).toBeGreaterThan(0)
+    expect(findActionId().length).toBeGreaterThan(0)
     clock.tick(EXPIRE_DELAY)
 
     expect(events.length).toBe(1)
@@ -460,7 +481,7 @@ describe('trackClickActions', () => {
     })
 
     it('should mask action name when defaultPrivacyLevel is mask_unless_allowlisted and not in allowlist', () => {
-      mockExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
+      addExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
       startClickActionsTracking({
         defaultPrivacyLevel: DefaultPrivacyLevel.MASK_UNLESS_ALLOWLISTED,
         enablePrivacyForActionName: true,
@@ -505,7 +526,7 @@ describe('trackClickActions', () => {
     })
 
     it('should use allowlist masking when defaultPrivacyLevel is allow and node privacy level is mask-unless-allowlisted', () => {
-      mockExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
+      addExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
       button.setAttribute('data-dd-privacy', 'mask-unless-allowlisted')
       startClickActionsTracking({
         defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
@@ -568,22 +589,21 @@ describe('trackClickActions', () => {
     const targetPosition = target.getBoundingClientRect()
     const offsetX = targetPosition.width / 2
     const offsetY = targetPosition.height / 2
-    const eventProperties = {
+    const baseEventProperties = {
       target,
       clientX: targetPosition.left + offsetX,
       clientY: targetPosition.top + offsetY,
       offsetX,
       offsetY,
-      timeStamp: timeStampNow(),
       isPrimary: true,
       ...eventProperty,
     }
-    target.dispatchEvent(createNewEvent('pointerdown', eventProperties))
+    target.dispatchEvent(createNewEvent('pointerdown', { ...baseEventProperties, timeStamp: relativeNow() }))
     emulateActivityIfNeeded('pointerdown')
     clock!.tick(EMULATED_CLICK_DURATION)
-    target.dispatchEvent(createNewEvent('pointerup', eventProperties))
+    target.dispatchEvent(createNewEvent('pointerup', { ...baseEventProperties, timeStamp: relativeNow() }))
     emulateActivityIfNeeded('pointerup')
-    target.dispatchEvent(createNewEvent('click', eventProperties))
+    target.dispatchEvent(createNewEvent('click', { ...baseEventProperties, timeStamp: relativeNow() }))
     emulateActivityIfNeeded('click')
 
     function emulateActivityIfNeeded(event: 'pointerdown' | 'pointerup' | 'click') {
@@ -602,8 +622,100 @@ describe('trackClickActions', () => {
   }
 
   function createFakeErrorEvent() {
-    return { type: RumEventType.ERROR, action: { id: findActionId() } } as RumEvent & Context
+    return { type: RumEventType.ERROR, action: { id: findActionId() } } as AssembledRumEvent
   }
+
+  describe('shadow DOM support', () => {
+    let shadowHost: HTMLElement
+    let shadowButton: HTMLButtonElement
+
+    beforeEach(() => {
+      shadowHost = document.createElement('div')
+      shadowHost.id = 'shadow-host'
+      shadowHost.style.width = '100px'
+      shadowHost.style.height = '100px'
+      document.body.appendChild(shadowHost)
+
+      const shadowRoot = shadowHost.attachShadow({ mode: 'open' })
+      shadowButton = document.createElement('button')
+      shadowButton.textContent = 'Shadow Button'
+      shadowRoot.appendChild(shadowButton)
+    })
+
+    afterEach(() => {
+      shadowHost.remove()
+    })
+
+    it('with betaTrackActionsInShadowDom, gets action name from composedPath', () => {
+      startClickActionsTracking({ betaTrackActionsInShadowDom: true })
+
+      emulateClick({
+        target: shadowHost,
+        activity: {},
+        eventProperty: {
+          composed: true,
+          composedPath: () => [shadowButton, shadowHost.shadowRoot, shadowHost, document.body, document],
+        },
+      })
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events.length).toBe(1)
+      expect(events[0].name).toBe('Shadow Button')
+    })
+
+    it('with betaTrackActionsInShadowDom, gets selector with shadow marker from composedPath', () => {
+      startClickActionsTracking({ betaTrackActionsInShadowDom: true })
+
+      emulateClick({
+        target: shadowHost,
+        activity: {},
+        eventProperty: {
+          composed: true,
+          composedPath: () => [shadowButton, shadowHost.shadowRoot, shadowHost, document.body, document],
+        },
+      })
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events.length).toBe(1)
+      expect(events[0].target?.selector).toContain(SHADOW_DOM_MARKER)
+      expect(events[0].target?.selector).toContain('BUTTON')
+    })
+
+    it('without betaTrackActionsInShadowDom, selector uses shadow host', () => {
+      startClickActionsTracking({ betaTrackActionsInShadowDom: false })
+
+      emulateClick({
+        target: shadowHost,
+        activity: {},
+        eventProperty: {
+          composed: true,
+          composedPath: () => [shadowButton, shadowHost.shadowRoot, shadowHost, document.body, document],
+        },
+      })
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events.length).toBe(1)
+      expect(events[0].target?.selector).toBe('#shadow-host')
+      expect(events[0].target?.selector).not.toContain(SHADOW_DOM_MARKER)
+    })
+  })
+
+  describe('when composed path selector is enabled', () => {
+    it('should return a composed_path_selector', () => {
+      startClickActionsTracking()
+      emulateClick({
+        target: button,
+        activity: {},
+        eventProperty: {
+          composed: true,
+          composedPath: () => [button, document.body, document],
+        },
+      })
+
+      clock.tick(EXPIRE_DELAY)
+      expect(events[0].target?.composedPathSelector).toBeDefined()
+    })
+  })
 })
 
 describe('finalizeClicks', () => {
