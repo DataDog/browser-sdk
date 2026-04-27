@@ -18,6 +18,29 @@ export interface StartViewAction {
   name?: string
 }
 
+export interface LargestContentfulPaint {
+  value: number
+  targetSelector?: string
+}
+
+export interface CumulativeLayoutShift {
+  value: number
+  targetSelector?: string
+}
+
+export interface InteractionToNextPaint {
+  value: number
+  targetSelector?: string
+}
+
+export interface NavigationTimings {
+  domComplete: number
+  domContentLoaded: number
+  domInteractive: number
+  loadEvent: number
+  firstByte: number
+}
+
 export interface ViewObservation {
   id: string
   url: string
@@ -26,7 +49,20 @@ export interface ViewObservation {
   startTime: number
   startDate: number
   date: number
+  duration: number
+  documentVersion: number
+  isActive: boolean
   name?: string
+
+  // Core Web Vitals
+  firstContentfulPaint?: number
+  largestContentfulPaint?: LargestContentfulPaint
+  cumulativeLayoutShift?: CumulativeLayoutShift
+  interactionToNextPaint?: InteractionToNextPaint
+
+  // Navigation timings (initial load only)
+  navigationTimings?: NavigationTimings
+
   [key: string]: unknown
 }
 
