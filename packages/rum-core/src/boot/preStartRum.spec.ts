@@ -141,6 +141,27 @@ describe('preStartRum', () => {
         )
       })
 
+      it('should set traceSampleRate to 100 when the bridge reports trace is sampled', () => {
+        mockEventBridge({ isTraceSampled: true })
+        const hybridInitConfiguration: HybridInitConfiguration = {}
+        strategy.init(hybridInitConfiguration as RumInitConfiguration, PUBLIC_API)
+        expect((strategy.initConfiguration as RumInitConfiguration)?.traceSampleRate).toEqual(100)
+      })
+
+      it('should set traceSampleRate to 0 when the bridge reports trace is not sampled', () => {
+        mockEventBridge({ isTraceSampled: false })
+        const hybridInitConfiguration: HybridInitConfiguration = {}
+        strategy.init(hybridInitConfiguration as RumInitConfiguration, PUBLIC_API)
+        expect((strategy.initConfiguration as RumInitConfiguration)?.traceSampleRate).toEqual(0)
+      })
+
+      it('should preserve the original traceSampleRate when the bridge does not provide isTraceSampled', () => {
+        mockEventBridge()
+        const hybridInitConfiguration: HybridInitConfiguration = { traceSampleRate: 50 }
+        strategy.init(hybridInitConfiguration as RumInitConfiguration, PUBLIC_API)
+        expect((strategy.initConfiguration as RumInitConfiguration)?.traceSampleRate).toEqual(50)
+      })
+
       it('should initialize even if session cannot be handled', () => {
         mockEventBridge()
         spyOnProperty(document, 'cookie', 'get').and.returnValue('')

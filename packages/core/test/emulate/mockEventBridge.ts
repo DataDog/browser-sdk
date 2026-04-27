@@ -7,12 +7,19 @@ export function mockEventBridge({
   allowedWebViewHosts = [window.location.hostname],
   privacyLevel = DefaultPrivacyLevel.MASK,
   capabilities = [BridgeCapability.RECORDS],
-}: { allowedWebViewHosts?: string[]; privacyLevel?: DefaultPrivacyLevel; capabilities?: BridgeCapability[] } = {}) {
+  isTraceSampled,
+}: {
+  allowedWebViewHosts?: string[]
+  privacyLevel?: DefaultPrivacyLevel
+  capabilities?: BridgeCapability[]
+  isTraceSampled?: boolean
+} = {}) {
   const eventBridge: DatadogEventBridge = {
     send: (_msg: string) => undefined,
     getAllowedWebViewHosts: () => JSON.stringify(allowedWebViewHosts),
     getCapabilities: () => JSON.stringify(capabilities),
     getPrivacyLevel: () => privacyLevel,
+    getIsTraceSampled: isTraceSampled !== undefined ? () => isTraceSampled : undefined,
   }
 
   ;(window as BrowserWindowWithEventBridge).DatadogEventBridge = eventBridge
