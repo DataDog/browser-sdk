@@ -381,7 +381,16 @@ Collectors are split between the SDK core and product modules based on who needs
 
 **RUM-owned collectors** (start inside RUM's module init):
 - View collectors — patches `history.pushState`/`replaceState`, observes navigations. Only useful if RUM is loaded.
-- Performance collectors — `PerformanceObserver` for resource timing, long tasks, long animation frames. Only useful if RUM is loaded.
+- Performance collectors — `PerformanceObserver` for multiple entry types. Only useful if RUM is loaded. Observed entry types:
+  - `resource` → `resource:performance_entry` (network resource timing)
+  - `longtask` → `resource:long_task`
+  - `long-animation-frame` → `resource:long_animation_frame`
+  - `paint` → `resource:paint` (for FCP)
+  - `largest-contentful-paint` → `resource:largest_contentful_paint`
+  - `layout-shift` → `resource:layout_shift` (for CLS)
+  - `event` (40ms threshold) → `resource:performance_event` (for INP)
+  - `first-input` → `resource:first_input` (for INP)
+  - `navigation` → `resource:navigation_timing`
 
 If a customer loads only logs, view and performance collectors don't run.
 
@@ -390,9 +399,15 @@ If a customer loads only logs, view and performance collectors don't run.
 The RUM module (`browser-rum-next`) contains:
 
 - **View collectors** — patches `history.pushState`/`replaceState`, observes navigations and initial page load
-- **Performance collectors** — `PerformanceObserver` for resource timing (`resource`), long tasks (`longtask`), and long animation frames (`long-animation-frame`)
+- **Performance collectors** — `PerformanceObserver` for all entry types listed above (resource timing, long tasks, web vitals, navigation). Single collector file, thin dispatcher.
 - **Resource matcher** — correlates `resource:network_request` (from SDK core collector) with `resource:performance_entry` (from RUM's performance collector). Performance entries are the source of truth; network requests provide supplementary data (abort status, response body). Network requests are always buffered first, performance entries trigger the lookup.
-- **View processor** — `resource:navigation` → `observation:view` + `signal:view_changed`
+- **View processor** — stateful accumulator. Maintains a `currentView` object that metrics write into. Subscribes to `resource:navigation`, `action:start_view`, and all web vital pipeline events. On each metric change, publishes `observation:view` with the full accumulated state and increments `documentVersion`. Multiple `observation:view` events per view — the backend deduplicates by view ID and document version. No throttling — the transport layer handles batching.
+- **View metrics** (computed inside the view processor):
+  - **FCP** — from `resource:paint` (initial load only)
+  - **LCP** — from `resource:largest_contentful_paint` (initial load only, stops on first interaction or visibility hidden)
+  - **CLS** — from `resource:layout_shift` (all view types, sliding session window algorithm: 1s gap, 5s max window)
+  - **INP** — from `resource:performance_event` and `resource:first_input` (all view types, P98 of top 10 longest interactions)
+  - **Navigation timings** — from `resource:navigation_timing` (initial load only, DNS/TCP/TLS/TTFB/DOM phases)
 - **Resource processor** — `resource:performance_entry` + optional network match → `observation:resource`
 - **Error processor** — `resource:runtime_error` → `observation:error`
 - **Long task processor** — `resource:long_task` / `resource:long_animation_frame` → `observation:long_task`
