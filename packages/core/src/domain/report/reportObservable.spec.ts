@@ -68,4 +68,18 @@ describe('report observable', () => {
       csp: { disposition: 'enforce' },
     })
   })
+
+  it(`should ignore ${RawReportType.cspViolation} when the environment rejects the event listener`, () => {
+    ;(EventTarget.prototype.addEventListener as jasmine.Spy).and.callFake((type: string) => {
+      if (type === 'securitypolicyviolation') {
+        throw new Error('unsupported event listener')
+      }
+    })
+
+    expect(() => {
+      consoleSubscription = initReportObservable(configuration, [RawReportType.cspViolation]).subscribe(notifyReport)
+    }).not.toThrow()
+
+    expect(notifyReport).not.toHaveBeenCalled()
+  })
 })

@@ -73,6 +73,11 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
   onPreCall: (this: null, callInfos: InstrumentedMethodCall<TARGET, METHOD>) => void,
   { computeHandlingStack }: { computeHandlingStack?: boolean } = {}
 ) {
+  const methodDescriptor = findDescriptorInPrototypeChain(targetPrototype, method)
+  if (methodDescriptor && !canAssignDescriptor(methodDescriptor)) {
+    return { stop: noop }
+  }
+
   let original = targetPrototype[method]
 
   if (typeof original !== 'function') {
@@ -117,14 +122,22 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
     return result
   }
 
-  targetPrototype[method] = instrumentation as TARGET[METHOD]
+  try {
+    targetPrototype[method] = instrumentation as TARGET[METHOD]
+  } catch {
+    return { stop: noop }
+  }
 
   return {
     stop: () => {
       stopped = true
       // If the instrumentation has been removed by a third party, keep the last one
       if (targetPrototype[method] === instrumentation) {
-        targetPrototype[method] = original
+        try {
+          targetPrototype[method] = original
+        } catch {
+          // Ignore restore failures on readonly properties.
+        }
       }
     },
   }
@@ -167,4 +180,26 @@ export function instrumentSetter<TARGET extends { [key: string]: any }, PROPERTY
       instrumentation = stoppedInstrumentation
     },
   }
+}
+
+function findDescriptorInPrototypeChain(target: object, property: PropertyKey): PropertyDescriptor | undefined {
+  let currentTarget: object | null = target
+
+  while (currentTarget) {
+    const descriptor = Object.getOwnPropertyDescriptor(currentTarget, property)
+    if (descriptor) {
+      return descriptor
+    }
+    currentTarget = Object.getPrototypeOf(currentTarget)
+  }
+
+  return undefined
+}
+
+function canAssignDescriptor(descriptor: PropertyDescriptor) {
+  if ('writable' in descriptor) {
+    return descriptor.writable !== false
+  }
+
+  return typeof descriptor.set === 'function'
 }

@@ -108,4 +108,27 @@ describe('cookieObservable', () => {
 
     expect(cookieChanges).toEqual(['foo', 'bar'])
   })
+
+  it('should fallback to polling when cookieStore rejects change listeners', () => {
+    Object.defineProperty(window, 'cookieStore', {
+      configurable: true,
+      get: () => ({
+        addEventListener: () => {
+          throw new Error("Lightning Web Security: Cannot add 'change' event listener to CookieStore object.")
+        },
+        removeEventListener: () => undefined,
+      }),
+    })
+    const observable = createCookieObservable(mockRumConfiguration(), COOKIE_NAME)
+
+    let cookieChange: string | undefined
+    expect(() => {
+      subscription = observable.subscribe((change) => (cookieChange = change))
+    }).not.toThrow()
+
+    setCookie(COOKIE_NAME, 'foo', COOKIE_DURATION)
+    clock.tick(WATCH_COOKIE_INTERVAL_DELAY)
+
+    expect(cookieChange).toEqual('foo')
+  })
 })

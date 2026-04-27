@@ -62,16 +62,18 @@ interface IntakeRequestInfos {
 
 interface IntakeProxyOptions {
   onRequest?: (request: IntakeRequest) => void
+  forward?: boolean
 }
 
 export function createIntakeProxyMiddleware(options: IntakeProxyOptions): express.RequestHandler {
   return async (req, res) => {
     const infos = computeIntakeRequestInfos(req)
+    const shouldForward = options.forward ?? true
 
     try {
       const [intakeRequest] = await Promise.all([
         readIntakeRequest(req, infos),
-        !infos.isBridge && forwardIntakeRequestToDatadog(req),
+        shouldForward && !infos.isBridge && forwardIntakeRequestToDatadog(req),
       ])
       options.onRequest?.(intakeRequest)
     } catch (error) {

@@ -16,6 +16,7 @@
   "scripts": {
     "build": "node ../../scripts/build/build-package.ts --modules --bundle datadog-rum-slim.js",
     "build:bundle": "node ../../scripts/build/build-package.ts --bundle datadog-rum-slim.js",
+    "build:salesforce": "node ../../scripts/build/build-package.ts --bundle datadog-rum-slim-salesforce.js --entry ./src/entries/salesforce.ts",
     "prepack": "yarn build"
   },
   "dependencies": {

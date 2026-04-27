@@ -19,6 +19,9 @@ runMain(async () => {
       bundle: {
         type: 'string',
       },
+      entry: {
+        type: 'string',
+      },
       verbose: {
         type: 'boolean',
         default: false,
@@ -43,6 +46,7 @@ runMain(async () => {
   if (values.bundle) {
     printLog('Building bundle...')
     await buildBundle({
+      entry: values.entry ?? './src/entries/main.ts',
       filename: values.bundle,
       verbose: values.verbose,
     })
@@ -51,13 +55,13 @@ runMain(async () => {
   printLog('Done.')
 })
 
-async function buildBundle({ filename, verbose }: { filename: string; verbose: boolean }) {
+async function buildBundle({ entry, filename, verbose }: { entry: string; filename: string; verbose: boolean }) {
   await fs.rm('./bundle', { recursive: true, force: true })
   return new Promise<void>((resolve, reject) => {
     webpack(
       webpackBase({
         mode: 'production',
-        entry: './src/entries/main.ts',
+        entry,
         filename,
       }),
       (error, stats) => {

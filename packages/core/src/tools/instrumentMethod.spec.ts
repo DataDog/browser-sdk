@@ -57,6 +57,43 @@ describe('instrumentMethod', () => {
     expect('onevent' in object).toBeFalse()
   })
 
+  it('skips instrumentation on readonly methods', () => {
+    const originalMethod = () => 1
+    const object = {} as { method: () => number }
+    Object.defineProperty(object, 'method', {
+      value: originalMethod,
+      writable: false,
+      configurable: true,
+    })
+
+    const instrumentationSpy = jasmine.createSpy()
+    const { stop } = instrumentMethod(object, 'method', instrumentationSpy)
+
+    expect(object.method).toBe(originalMethod)
+    expect(object.method()).toBe(1)
+    expect(instrumentationSpy).not.toHaveBeenCalled()
+    expect(stop).not.toThrow()
+  })
+
+  it('skips instrumentation on readonly methods defined on the prototype chain', () => {
+    const originalMethod = jasmine.createSpy().and.returnValue(1)
+    const prototype = {} as { method: () => number }
+    Object.defineProperty(prototype, 'method', {
+      value: originalMethod,
+      writable: false,
+      configurable: true,
+    })
+    const object = Object.create(prototype) as { method: () => number }
+
+    const instrumentationSpy = jasmine.createSpy()
+    const { stop } = instrumentMethod(object, 'method', instrumentationSpy)
+
+    expect(object.method()).toBe(1)
+    expect(instrumentationSpy).not.toHaveBeenCalled()
+    expect(Object.prototype.hasOwnProperty.call(object, 'method')).toBeFalse()
+    expect(stop).not.toThrow()
+  })
+
   it('calls the instrumentation with method target and parameters', () => {
     const object = { method: (a: number, b: number) => a + b }
     const instrumentationSpy = jasmine.createSpy<(call: InstrumentedMethodCall<typeof object, 'method'>) => void>()
