@@ -55,9 +55,16 @@ interface SdkEventMap {
   'resource:performance_event': unknown
   'resource:first_input': unknown
   'resource:navigation_timing': unknown
+  'resource:dom_mutation': unknown
+  'action:click': unknown
+  'action:add_action': unknown
+  'action:start_action': unknown
+  'action:stop_action': unknown
+  'signal:network_request_start': unknown
   'observation:resource': unknown
   'observation:error': unknown
   'observation:long_task': unknown
+  'observation:action': unknown
   'signal:session_expired': void
   'signal:session_renewed': void
   [key: string]: unknown
