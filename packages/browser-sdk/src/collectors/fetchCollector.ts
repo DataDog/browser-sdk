@@ -10,6 +10,10 @@ function startFetchCollection(pipeline: Pipeline<Record<string, unknown>>): () =
     const startTime = performance.now()
     const startDate = Date.now()
 
+    if (!isIntakeUrl(url)) {
+      pipeline.publish('signal:network_request_start', { url, method })
+    }
+
     return originalFetch.apply(this, arguments as any).then(
       (response: Response) => {
         if (isIntakeUrl(url)) return response

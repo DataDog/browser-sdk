@@ -90,6 +90,23 @@ describe('startXhrCollection', () => {
     stop = () => {} // noop, originals already restored
   })
 
+  it('publishes signal:network_request_start when request begins', (done) => {
+    let captured: { url: string; method: string } | undefined
+    pipeline.subscribe('signal:network_request_start', (event) => {
+      captured = event as { url: string; method: string }
+    })
+
+    const xhr = new XMLHttpRequest()
+    xhr.open('GET', '/base/karma.js')
+    xhr.send()
+    xhr.addEventListener('loadend', () => {
+      setTimeout(() => {
+        expect(captured).toEqual({ url: '/base/karma.js', method: 'GET' })
+        done()
+      }, 0)
+    })
+  })
+
   it('does not publish after stop() is called', (done) => {
     stop()
 

@@ -37,6 +37,12 @@ function startXhrCollection(pipeline: Pipeline<Record<string, unknown>>): () => 
     }
 
     xhr.addEventListener('loadend', onComplete)
+
+    const url: string = (this as any)._dd_url ?? ''
+    if (!isIntakeUrl(url)) {
+      pipeline.publish('signal:network_request_start', { url, method: (this as any)._dd_method ?? 'GET' })
+    }
+
     return originalSend.apply(this, arguments as any)
   }
 

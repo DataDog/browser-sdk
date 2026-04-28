@@ -107,6 +107,20 @@ describe('startFetchCollection', () => {
     stop = () => {}
   })
 
+  it('publishes signal:network_request_start when request begins', (done) => {
+    let captured: { url: string; method: string } | undefined
+    pipeline.subscribe('signal:network_request_start', (event) => {
+      captured = event as { url: string; method: string }
+    })
+    window.fetch = () => Promise.resolve(new Response(null, { status: 200 }))
+    stop = startFetchCollection(pipeline)
+
+    window.fetch('/test-url', { method: 'POST' }).then(() => {
+      expect(captured).toEqual({ url: '/test-url', method: 'POST' })
+      done()
+    })
+  })
+
   it('does not publish after stop() is called', (done) => {
     window.fetch = () => Promise.resolve(new Response(null, { status: 200 }))
     stop = startFetchCollection(pipeline)
