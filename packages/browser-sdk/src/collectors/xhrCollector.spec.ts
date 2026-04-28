@@ -1,6 +1,7 @@
 import { Pipeline } from '@datadog/core-next'
 import type { NetworkRequestResource } from '@datadog/core-next'
 import { startXhrCollection } from './xhrCollector'
+import type { CollectorTracingConfig } from './fetchCollector'
 
 describe('startXhrCollection', () => {
   let pipeline: Pipeline<Record<string, unknown>>
@@ -122,5 +123,111 @@ describe('startXhrCollection', () => {
 
     // Restart for afterEach to call stop() again without side effects
     stop = () => {}
+  })
+
+  describe('with tracing config', () => {
+    const tracingConfig: CollectorTracingConfig = {
+      tracingOptions: [{ match: /.*/, propagatorTypes: ['datadog', 'tracecontext'] }],
+      traceSampleRate: 100,
+      traceContextInjection: 'sampled',
+      sessionId: 'test-session-123',
+    }
+
+    it('injects tracing headers when URL matches', (done) => {
+      stop()
+      const setRequestHeaderCalls: Array<[string, string]> = []
+      const originalSetRequestHeader = XMLHttpRequest.prototype.setRequestHeader
+      XMLHttpRequest.prototype.setRequestHeader = function (name: string, value: string) {
+        setRequestHeaderCalls.push([name, value])
+        return originalSetRequestHeader.call(this, name, value)
+      }
+
+      stop = startXhrCollection(pipeline, tracingConfig)
+
+      const xhr = new XMLHttpRequest()
+      xhr.open('GET', '/base/karma.js')
+      xhr.send()
+      xhr.addEventListener('loadend', () => {
+        setTimeout(() => {
+          XMLHttpRequest.prototype.setRequestHeader = originalSetRequestHeader
+          const headerNames = setRequestHeaderCalls.map(([name]) => name.toLowerCase())
+          expect(headerNames).toContain('x-datadog-trace-id')
+          expect(headerNames).toContain('x-datadog-parent-id')
+          expect(headerNames).toContain('traceparent')
+          done()
+        }, 0)
+      })
+    })
+
+    it('does not inject headers when URL does not match', (done) => {
+      stop()
+      const config: CollectorTracingConfig = {
+        ...tracingConfig,
+        tracingOptions: [{ match: 'https://other.com', propagatorTypes: ['datadog'] }],
+      }
+      const setRequestHeaderCalls: Array<[string, string]> = []
+      const originalSetRequestHeader = XMLHttpRequest.prototype.setRequestHeader
+      XMLHttpRequest.prototype.setRequestHeader = function (name: string, value: string) {
+        setRequestHeaderCalls.push([name, value])
+        return originalSetRequestHeader.call(this, name, value)
+      }
+
+      stop = startXhrCollection(pipeline, config)
+
+      const xhr = new XMLHttpRequest()
+      xhr.open('GET', '/base/karma.js')
+      xhr.send()
+      xhr.addEventListener('loadend', () => {
+        setTimeout(() => {
+          XMLHttpRequest.prototype.setRequestHeader = originalSetRequestHeader
+          const headerNames = setRequestHeaderCalls.map(([name]) => name.toLowerCase())
+          expect(headerNames).not.toContain('x-datadog-trace-id')
+          expect(headerNames).not.toContain('traceparent')
+          done()
+        }, 0)
+      })
+    })
+
+    it('includes traceId and spanId in published event', (done) => {
+      stop()
+      stop = startXhrCollection(pipeline, tracingConfig)
+
+      const xhr = new XMLHttpRequest()
+      xhr.open('GET', '/base/karma.js')
+      xhr.send()
+      xhr.addEventListener('loadend', () => {
+        setTimeout(() => {
+          expect(collected[0].traceId).toBeDefined()
+          expect(collected[0].spanId).toBeDefined()
+          done()
+        }, 0)
+      })
+    })
+
+    it('does not inject headers when tracingConfig is undefined', (done) => {
+      stop()
+      const setRequestHeaderCalls: Array<[string, string]> = []
+      const originalSetRequestHeader = XMLHttpRequest.prototype.setRequestHeader
+      XMLHttpRequest.prototype.setRequestHeader = function (name: string, value: string) {
+        setRequestHeaderCalls.push([name, value])
+        return originalSetRequestHeader.call(this, name, value)
+      }
+
+      stop = startXhrCollection(pipeline)
+
+      const xhr = new XMLHttpRequest()
+      xhr.open('GET', '/base/karma.js')
+      xhr.send()
+      xhr.addEventListener('loadend', () => {
+        setTimeout(() => {
+          XMLHttpRequest.prototype.setRequestHeader = originalSetRequestHeader
+          const headerNames = setRequestHeaderCalls.map(([name]) => name.toLowerCase())
+          expect(headerNames).not.toContain('x-datadog-trace-id')
+          expect(collected[0].traceId).toBeUndefined()
+          expect(collected[0].spanId).toBeUndefined()
+          done()
+        }, 0)
+      })
+    })
   })
 })

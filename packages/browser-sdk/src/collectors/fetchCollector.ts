@@ -1,7 +1,29 @@
 import type { Pipeline, NetworkRequestResource } from '@datadog/core-next'
+import { createIdentifier, makeTracingHeaders, findTracingOption } from '@datadog/core-next'
+import type { TracingOption, Identifier } from '@datadog/core-next'
 import { isIntakeUrl } from '../browser'
 
-function startFetchCollection(pipeline: Pipeline<Record<string, unknown>>): () => void {
+interface CollectorTracingConfig {
+  tracingOptions: TracingOption[]
+  traceSampleRate: number
+  traceContextInjection: 'sampled' | 'all'
+  sessionId: string
+}
+
+function isSampled(sessionId: string, sampleRate: number): boolean {
+  if (sampleRate === 100) return true
+  if (sampleRate === 0) return false
+  let hash = 0
+  for (let i = 0; i < sessionId.length; i++) {
+    hash = (hash * 31 + sessionId.charCodeAt(i)) | 0
+  }
+  return Math.abs(hash % 100) < sampleRate
+}
+
+function startFetchCollection(
+  pipeline: Pipeline<Record<string, unknown>>,
+  tracingConfig?: CollectorTracingConfig
+): () => void {
   const originalFetch = window.fetch
 
   window.fetch = function (input: RequestInfo | URL, init?: RequestInit) {
@@ -10,13 +32,35 @@ function startFetchCollection(pipeline: Pipeline<Record<string, unknown>>): () =
     const startTime = performance.now()
     const startDate = Date.now()
 
-    if (!isIntakeUrl(url)) {
-      pipeline.publish('signal:network_request_start', { url, method })
+    if (isIntakeUrl(url)) {
+      return originalFetch.call(this, input, init)
     }
 
-    return originalFetch.apply(this, arguments as any).then(
+    pipeline.publish('signal:network_request_start', { url, method })
+
+    let traceId: Identifier | undefined
+    let spanId: Identifier | undefined
+
+    if (tracingConfig) {
+      const option = findTracingOption(url, tracingConfig.tracingOptions)
+      if (option) {
+        const sampled = isSampled(tracingConfig.sessionId, tracingConfig.traceSampleRate)
+        if (sampled || tracingConfig.traceContextInjection === 'all') {
+          traceId = createIdentifier(64)
+          spanId = createIdentifier(63)
+          const headers = makeTracingHeaders(traceId, spanId, sampled, option.propagatorTypes)
+
+          const existingHeaders = new Headers(init?.headers)
+          for (const [name, value] of Object.entries(headers)) {
+            existingHeaders.set(name, value)
+          }
+          init = { ...init, headers: existingHeaders }
+        }
+      }
+    }
+
+    return originalFetch.call(this, input, init).then(
       (response: Response) => {
-        if (isIntakeUrl(url)) return response
         const resource: NetworkRequestResource = {
           method,
           url,
@@ -25,24 +69,26 @@ function startFetchCollection(pipeline: Pipeline<Record<string, unknown>>): () =
           startTime,
           startDate,
           duration: performance.now() - startTime,
+          traceId,
+          spanId,
         }
         pipeline.publish('resource:network_request', resource)
         return response
       },
       (error: unknown) => {
-        if (!isIntakeUrl(url)) {
-          const resource: NetworkRequestResource = {
-            method,
-            url,
-            status: 0,
-            isAborted: error instanceof DOMException && error.name === 'AbortError',
-            startTime,
-            startDate,
-            duration: performance.now() - startTime,
-            error: error instanceof Error ? error.message : String(error),
-          }
-          pipeline.publish('resource:network_request', resource)
+        const resource: NetworkRequestResource = {
+          method,
+          url,
+          status: 0,
+          isAborted: error instanceof DOMException && error.name === 'AbortError',
+          startTime,
+          startDate,
+          duration: performance.now() - startTime,
+          error: error instanceof Error ? error.message : String(error),
+          traceId,
+          spanId,
         }
+        pipeline.publish('resource:network_request', resource)
         throw error
       }
     )
@@ -54,3 +100,4 @@ function startFetchCollection(pipeline: Pipeline<Record<string, unknown>>): () =
 }
 
 export { startFetchCollection }
+export type { CollectorTracingConfig }

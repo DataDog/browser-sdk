@@ -1,6 +1,7 @@
 import { Pipeline } from '@datadog/core-next'
 import type { NetworkRequestResource } from '@datadog/core-next'
 import { startFetchCollection } from './fetchCollector'
+import type { CollectorTracingConfig } from './fetchCollector'
 
 describe('startFetchCollection', () => {
   let pipeline: Pipeline<Record<string, unknown>>
@@ -137,5 +138,88 @@ describe('startFetchCollection', () => {
 
     // noop for afterEach
     stop = () => {}
+  })
+
+  describe('with tracing config', () => {
+    const tracingConfig: CollectorTracingConfig = {
+      tracingOptions: [{ match: /.*/, propagatorTypes: ['datadog', 'tracecontext'] }],
+      traceSampleRate: 100,
+      traceContextInjection: 'sampled',
+      sessionId: 'test-session-123',
+    }
+
+    it('injects tracing headers when URL matches', (done) => {
+      let capturedInit: RequestInit | undefined
+      window.fetch = (_input: any, init?: RequestInit) => {
+        capturedInit = init
+        return Promise.resolve(new Response(null, { status: 200 }))
+      }
+      stop = startFetchCollection(pipeline, tracingConfig)
+
+      window.fetch('/api/test').then(() => {
+        setTimeout(() => {
+          expect(capturedInit).toBeDefined()
+          const headers = new Headers(capturedInit!.headers)
+          expect(headers.get('x-datadog-trace-id')).toBeTruthy()
+          expect(headers.get('x-datadog-parent-id')).toBeTruthy()
+          expect(headers.get('traceparent')).toBeTruthy()
+          done()
+        }, 0)
+      })
+    })
+
+    it('does not inject headers when URL does not match', (done) => {
+      const config: CollectorTracingConfig = {
+        ...tracingConfig,
+        tracingOptions: [{ match: 'https://other.com', propagatorTypes: ['datadog'] }],
+      }
+      let capturedInit: RequestInit | undefined
+      window.fetch = (_input: any, init?: RequestInit) => {
+        capturedInit = init
+        return Promise.resolve(new Response(null, { status: 200 }))
+      }
+      stop = startFetchCollection(pipeline, config)
+
+      window.fetch('/api/test').then(() => {
+        setTimeout(() => {
+          const headers = capturedInit ? new Headers(capturedInit.headers) : new Headers()
+          expect(headers.get('x-datadog-trace-id')).toBeNull()
+          expect(headers.get('traceparent')).toBeNull()
+          done()
+        }, 0)
+      })
+    })
+
+    it('includes traceId and spanId in published event', (done) => {
+      window.fetch = () => Promise.resolve(new Response(null, { status: 200 }))
+      stop = startFetchCollection(pipeline, tracingConfig)
+
+      window.fetch('/api/test').then(() => {
+        setTimeout(() => {
+          expect(collected[0].traceId).toBeDefined()
+          expect(collected[0].spanId).toBeDefined()
+          done()
+        }, 0)
+      })
+    })
+
+    it('does not inject headers when tracingConfig is undefined', (done) => {
+      let capturedInit: RequestInit | undefined
+      window.fetch = (_input: any, init?: RequestInit) => {
+        capturedInit = init
+        return Promise.resolve(new Response(null, { status: 200 }))
+      }
+      stop = startFetchCollection(pipeline)
+
+      window.fetch('/api/test').then(() => {
+        setTimeout(() => {
+          const headers = capturedInit ? new Headers(capturedInit.headers) : new Headers()
+          expect(headers.get('x-datadog-trace-id')).toBeNull()
+          expect(collected[0].traceId).toBeUndefined()
+          expect(collected[0].spanId).toBeUndefined()
+          done()
+        }, 0)
+      })
+    })
   })
 })
