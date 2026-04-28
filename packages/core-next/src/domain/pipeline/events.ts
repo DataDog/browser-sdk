@@ -38,6 +38,8 @@ interface NetworkRequestResource {
   duration: number
   responseBody?: string
   error?: string
+  traceId?: unknown // Identifier from tracing module
+  spanId?: unknown
 }
 
 // The shared event map used by createSdk
