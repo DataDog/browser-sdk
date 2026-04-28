@@ -96,9 +96,9 @@ describe('views integration', () => {
     flushBatch()
 
     const viewLines = getViewLines()
-    expect(viewLines.length).toBeGreaterThan(0)
-    expect(viewLines[0]).toContain('"loadingType":"route_change"')
-    expect(viewLines[0]).toContain('"name":"checkout"')
+    const routeChangeLines = viewLines.filter((l) => l.includes('"loadingType":"route_change"'))
+    expect(routeChangeLines.length).toBeGreaterThan(0)
+    expect(routeChangeLines[0]).toContain('"name":"checkout"')
   })
 
   it('view observation includes session.id from core enricher', async () => {
@@ -167,5 +167,99 @@ describe('views integration', () => {
     expect(viewLines.length).toBeGreaterThan(0)
     const event = JSON.parse(viewLines[0])
     expect(event.usr).toEqual(jasmine.objectContaining({ id: 'user-42', name: 'Ada' }))
+  })
+
+  it('view observation includes documentVersion >= 1', async () => {
+    currentSdk = await createSdk({
+      clientToken: 'test-token',
+      site: 'datadoghq.com',
+      modules: [rumProcessor],
+      rum: {},
+    })
+
+    await tick()
+    flushBatch()
+
+    const viewLines = getViewLines()
+    expect(viewLines.length).toBeGreaterThan(0)
+    const event = JSON.parse(viewLines[0])
+    expect(typeof event.documentVersion).toBe('number')
+    expect(event.documentVersion).toBeGreaterThanOrEqual(1)
+  })
+
+  it('view observation includes isActive true for the current view', async () => {
+    currentSdk = await createSdk({
+      clientToken: 'test-token',
+      site: 'datadoghq.com',
+      modules: [rumProcessor],
+      rum: {},
+    })
+
+    await tick()
+    flushBatch()
+
+    const viewLines = getViewLines()
+    expect(viewLines.length).toBeGreaterThan(0)
+    const event = JSON.parse(viewLines[0])
+    expect(event.isActive).toBe(true)
+  })
+
+  it('multiple view observations may be emitted with increasing documentVersion', async () => {
+    currentSdk = await createSdk({
+      clientToken: 'test-token',
+      site: 'datadoghq.com',
+      modules: [rumProcessor],
+      rum: {},
+    })
+
+    // Give extra time for buffered PerformanceObserver entries to fire
+    await tick()
+    await tick()
+    flushBatch()
+
+    const viewLines = getViewLines()
+    expect(viewLines.length).toBeGreaterThan(0)
+
+    // All view events must have valid documentVersion and isActive fields
+    for (const line of viewLines) {
+      const event = JSON.parse(line)
+      expect(typeof event.documentVersion).toBe('number')
+      expect(event.documentVersion).toBeGreaterThanOrEqual(1)
+      expect(typeof event.isActive).toBe('boolean')
+    }
+
+    // If multiple events arrived, documentVersions must be monotonically increasing
+    if (viewLines.length > 1) {
+      const versions = viewLines.map((l) => JSON.parse(l).documentVersion as number)
+      for (let i = 1; i < versions.length; i++) {
+        expect(versions[i]).toBeGreaterThan(versions[i - 1])
+      }
+    }
+  })
+
+  it('previous view is finalized (isActive: false) when a new view starts', async () => {
+    currentSdk = await createSdk({
+      clientToken: 'test-token',
+      site: 'datadoghq.com',
+      modules: [rumProcessor],
+      rum: {},
+    })
+
+    await tick()
+    flushBatch()
+    fetchSpy.calls.reset()
+
+    const rum = currentSdk!['rum'] as RumPublicApi
+    rum.startView('page2')
+
+    await tick()
+    flushBatch()
+
+    const viewLines = getViewLines()
+    expect(viewLines.length).toBeGreaterThan(0)
+
+    const events = viewLines.map((l) => JSON.parse(l))
+    const finalizedView = events.find((e: any) => e.isActive === false)
+    expect(finalizedView).toBeDefined()
   })
 })
