@@ -68,6 +68,63 @@ test.describe('rum sessions', () => {
       })
   })
 
+  test.describe('cross-tab session isolation', () => {
+    createTest('a tab should not collect events under another tab session until an interaction happens')
+      .withRum()
+      .run(async ({ page, intakeRegistry, flushEvents }) => {
+        await expireSession(page, page.context())
+
+        // Simulate another tab opening a fresh session
+        const otherSessionId = '00000000-0000-0000-0000-000000000000'
+        await setCookie(
+          page,
+          SESSION_STORE_KEY,
+          `id=${otherSessionId}&created=${Date.now()}&expire=${Date.now() + 15 * ONE_MINUTE}`,
+          ONE_HOUR
+        )
+
+        await page.evaluate(() => {
+          window.DD_RUM!.addAction('not collected')
+        })
+
+        // Makes the tab picks up the new session
+        await page.locator('html').click()
+
+        await page.evaluate(() => {
+          window.DD_RUM!.addAction('collected')
+        })
+
+        await flushEvents()
+
+        const actionEvents = intakeRegistry.rumActionEvents
+        expect(actionEvents).toHaveLength(1)
+        expect(actionEvents[0].action.target!.name).toBe('collected')
+        expect(actionEvents[0].session.id).toBe(otherSessionId)
+      })
+
+    createTest('a visible tab with an expired session should not extend another tab session')
+      .withRum()
+      .withMockClock()
+      .run(async ({ page, browserContext }) => {
+        // Expire the current session
+        await expireSession(page, browserContext)
+
+        // Simulate another tab opening a fresh session
+        const otherTabExpire = Date.now() + 15 * ONE_MINUTE
+        await setCookie(
+          page,
+          SESSION_STORE_KEY,
+          `id=other-tab-session&created=${Date.now()}&expire=${otherTabExpire}`,
+          ONE_HOUR
+        )
+
+        await page.clock.fastForward(ONE_MINUTE)
+
+        const cookie = await findSessionCookie(browserContext)
+        expect(Number(cookie?.expire)).toEqual(otherTabExpire)
+      })
+  })
+
   test.describe('session expiration', () => {
     createTest("don't send events when session is expired")
       // prevent recording start to generate late events

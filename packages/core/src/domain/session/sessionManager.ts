@@ -202,7 +202,9 @@ export async function startSessionManager(
         }
       })
       trackVisibility(configuration, () => {
-        strategy.setSessionState((state) => expandOnly(state)).catch(monitorError)
+        if (!sessionExpired) {
+          strategy.setSessionState((state) => expandOnly(state)).catch(monitorError)
+        }
       })
       trackResume(configuration, () => {
         strategy.setSessionState((state) => initializeSession(state, configuration)).catch(monitorError)

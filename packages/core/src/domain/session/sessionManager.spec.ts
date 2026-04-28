@@ -340,6 +340,24 @@ describe('startSessionManager', () => {
       expect(state.isExpired).toBe(EXPIRED)
     })
 
+    it('should not expand another tab session via visibility check after expiration', async () => {
+      const sessionManager = await startSessionManagerWithDefaults()
+      sessionManager.expire()
+
+      // Simulate another tab writing its own session to the shared store
+      const otherTabExpire = String(Date.now() + SESSION_EXPIRATION_DELAY)
+      fakeStrategy.simulateExternalChange({
+        id: 'other-tab-session',
+        created: String(Date.now()),
+        expire: otherTabExpire,
+      })
+
+      clock.tick(VISIBILITY_CHECK_DELAY)
+
+      // The other tab's expire should not have been pushed forward
+      expect(fakeStrategy.getInternalState().expire).toBe(otherTabExpire)
+    })
+
     it('should expire session after SESSION_EXPIRATION_DELAY without any activity in a hidden tab', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
       const expireSpy = jasmine.createSpy('expire')
