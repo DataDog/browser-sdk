@@ -5,8 +5,8 @@ import {
   Observable,
   addEventListener,
   ONE_SECOND,
-  findCommaSeparatedValue,
   DOM_EVENT,
+  getCookie,
 } from '@datadog/browser-core'
 
 export interface CookieStoreWindow {
@@ -49,9 +49,9 @@ function listenToCookieStoreChange(configuration: Configuration) {
 export const WATCH_COOKIE_INTERVAL_DELAY = ONE_SECOND
 
 function watchCookieFallback(cookieName: string, callback: (event: string | undefined) => void) {
-  let previousCookieValue = findCommaSeparatedValue(document.cookie, cookieName)
+  let previousCookieValue = getCookie(cookieName)
   const watchCookieIntervalId = setInterval(() => {
-    const cookieValue = findCommaSeparatedValue(document.cookie, cookieName)
+    const cookieValue = getCookie(cookieName)
     if (cookieValue !== previousCookieValue) {
       previousCookieValue = cookieValue
       callback(cookieValue)
