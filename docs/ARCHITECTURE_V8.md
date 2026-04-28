@@ -408,14 +408,37 @@ The RUM module (`browser-rum-next`) contains:
   - **CLS** — from `resource:layout_shift` (all view types, sliding session window algorithm: 1s gap, 5s max window)
   - **INP** — from `resource:performance_event` and `resource:first_input` (all view types, P98 of top 10 longest interactions)
   - **Navigation timings** — from `resource:navigation_timing` (initial load only, DNS/TCP/TLS/TTFB/DOM phases)
-- **Resource processor** — `resource:performance_entry` + optional network match → `observation:resource`
+- **Resource processor** — `resource:performance_entry` + optional network match → `observation:resource`. When the matched network request has trace context (from header injection), the observation includes `_dd.trace_id`, `_dd.span_id`, `_dd.rule_psr`.
 - **Error processor** — `resource:runtime_error` → `observation:error`
 - **Long task processor** — `resource:long_task` / `resource:long_animation_frame` → `observation:long_task`
+- **Action processor** — subscribes to `action:click`, manages click chains and page activity detection, computes frustration (rage/dead/error clicks), publishes `observation:action`. Also handles manual actions (`action:add_action`, `action:start_action`, `action:stop_action`).
+- **Click collector** — RUM-owned. Listens to `pointerdown`/`pointerup`, extracts action name from DOM, publishes `action:click`.
+- **DOM mutation collector** — RUM-owned. `MutationObserver` on document, publishes `resource:dom_mutation`. Used by the page activity detector.
+- **Document trace extraction** — reads `<meta name="dd-trace-id">` or HTML comments from the initial document to correlate with server-side traces.
 - **RUM enrichers:**
   - `viewContextEnricher` — registered on `observation:*`, stamps `view.id` and `view.name` on all observations (including logs)
   - `displayEnricher` — viewport dimensions
   - `connectivityEnricher` — network type from `navigator.connection`
   - `pageStateEnricher` — `document.visibilityState` at event time
+
+## Distributed tracing
+
+Trace context is injected into outgoing fetch/XHR requests by the core network collectors in `browser-sdk`. The collectors read tracing config from the merged SDK configuration (contributed by the RUM module extension).
+
+**ID generation** lives in `core-next/src/domain/tracing/`. A generic `createIdentifier(bits)` function produces 64-bit (trace) or 63-bit (span) random IDs using `crypto.getRandomValues`. IDs support `toString(radix)` for both decimal (Datadog headers) and hexadecimal (W3C/B3 headers).
+
+**Four propagation formats** supported: `datadog`, `tracecontext` (W3C), `b3` (single header), `b3multi`. Configurable per URL via `allowedTracingUrls`. Default: `['tracecontext', 'datadog']`.
+
+**Header injection flow:**
+1. Before each fetch/XHR, check if URL matches `allowedTracingUrls`
+2. If yes, compute sampling decision (deterministic Knuth hash of session ID + `traceSampleRate`)
+3. Generate trace/span IDs, build headers for the URL's propagator types
+4. Inject headers into the request
+5. Attach trace/span IDs to the `resource:network_request` event for the resource processor
+
+**Tracing sampling** is independent from RUM session sampling. Configured via `traceSampleRate` (0-100, default 100). With `traceContextInjection: 'all'`, headers are always injected with sampling bit 0, letting the backend decide.
+
+**Document trace:** Server-side trace context extracted from `<meta>` tags or HTML comments in the initial document. Valid for 2 minutes. Applied to the initial document resource event.
 
 ## Telemetry
 
