@@ -2,6 +2,10 @@ import path from 'node:path'
 import { defineConfig, devices } from '@playwright/test'
 
 const lightningStorageState = path.resolve(__dirname, 'test-results/.auth/salesforce-lightning.json')
+const dreamhouseAuraLightningStorageState = path.resolve(
+  __dirname,
+  'test-results/.auth/salesforce-dreamhouse-aura-lightning.json'
+)
 
 // eslint-disable-next-line import/no-default-export
 export default defineConfig({
@@ -45,6 +49,25 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         storageState: lightningStorageState,
+      },
+    },
+    {
+      name: 'dreamhouse-aura-setup',
+      testMatch: ['**/dreamhouseAuraAuth.setup.ts'],
+      use: {
+        ...devices['Desktop Chrome'],
+        trace: 'off',
+        screenshot: 'off',
+        video: 'off',
+      },
+    },
+    {
+      name: 'dreamhouse-aura-lightning-chromium',
+      dependencies: ['dreamhouse-aura-setup'],
+      testMatch: ['**/dreamhouseAuraLightningExperience.spec.ts'],
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: dreamhouseAuraLightningStorageState,
       },
     },
   ],
