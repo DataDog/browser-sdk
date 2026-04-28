@@ -6,7 +6,7 @@ async function tick() {
   return new Promise((r) => setTimeout(r, 0))
 }
 
-describe('startProcessor', () => {
+describe('view processor', () => {
   let pipeline: Pipeline<Record<string, unknown>>
   let observations: ViewObservation[]
   let signals: ViewChangedSignal[]
@@ -86,5 +86,146 @@ describe('startProcessor', () => {
 
     expect(signals.length).toBe(1)
     expect(signals[0].viewId).toBe('view-xyz')
+  })
+
+  it('includes duration and documentVersion in observation:view', async () => {
+    pipeline.publish('resource:navigation', {
+      url: '/',
+      startTime: performance.now(),
+      startDate: Date.now(),
+      referrer: '',
+      loadingType: 'initial_load',
+    })
+    await tick()
+
+    expect(observations[0].duration).toBeGreaterThanOrEqual(0)
+    expect(observations[0].documentVersion).toBe(1)
+  })
+
+  it('accumulates FCP on initial load', async () => {
+    pipeline.publish('resource:navigation', { url: '/', startTime: 0, startDate: 1000, referrer: '', loadingType: 'initial_load' })
+    await tick()
+    pipeline.publish('resource:paint', { name: 'first-contentful-paint', startTime: 450 })
+    await tick()
+
+    const latest = observations[observations.length - 1]
+    expect(latest.firstContentfulPaint).toBe(450)
+    expect(latest.documentVersion).toBe(2)
+  })
+
+  it('does not accumulate FCP on route_change', async () => {
+    pipeline.publish('resource:navigation', { url: '/', startTime: 0, startDate: 1000, referrer: '', loadingType: 'route_change' })
+    await tick()
+    pipeline.publish('resource:paint', { name: 'first-contentful-paint', startTime: 450 })
+    await tick()
+
+    const latest = observations[observations.length - 1]
+    expect(latest.firstContentfulPaint).toBeUndefined()
+  })
+
+  it('accumulates LCP on initial load', async () => {
+    pipeline.publish('resource:navigation', { url: '/', startTime: 0, startDate: 1000, referrer: '', loadingType: 'initial_load' })
+    await tick()
+    pipeline.publish('resource:largest_contentful_paint', { startTime: 800, size: 5000 })
+    await tick()
+
+    const latest = observations[observations.length - 1]
+    expect(latest.largestContentfulPaint).toBeDefined()
+    expect(latest.largestContentfulPaint!.value).toBe(800)
+  })
+
+  it('stops LCP after first interaction', async () => {
+    pipeline.publish('resource:navigation', { url: '/', startTime: 0, startDate: 1000, referrer: '', loadingType: 'initial_load' })
+    await tick()
+    pipeline.publish('resource:largest_contentful_paint', { startTime: 800, size: 5000 })
+    await tick()
+    pipeline.publish('resource:performance_event', { duration: 50, startTime: 1000, processingStart: 1010, processingEnd: 1040, interactionId: 1 })
+    await tick()
+    pipeline.publish('resource:largest_contentful_paint', { startTime: 1500, size: 8000 })
+    await tick()
+
+    const latest = observations[observations.length - 1]
+    expect(latest.largestContentfulPaint!.value).toBe(800) // not 1500
+  })
+
+  it('accumulates CLS from layout shifts', async () => {
+    pipeline.publish('resource:navigation', { url: '/', startTime: 0, startDate: 1000, referrer: '', loadingType: 'initial_load' })
+    await tick()
+    pipeline.publish('resource:layout_shift', { value: 0.1, hadRecentInput: false, startTime: 500 })
+    await tick()
+
+    const latest = observations[observations.length - 1]
+    expect(latest.cumulativeLayoutShift).toBeDefined()
+    expect(latest.cumulativeLayoutShift!.value).toBe(0.1)
+  })
+
+  it('ignores layout shifts with recent input', async () => {
+    pipeline.publish('resource:navigation', { url: '/', startTime: 0, startDate: 1000, referrer: '', loadingType: 'initial_load' })
+    await tick()
+    pipeline.publish('resource:layout_shift', { value: 0.5, hadRecentInput: true, startTime: 500 })
+    await tick()
+
+    // Only the initial observation:view, no metric update
+    expect(observations.length).toBe(1)
+    expect(observations[0].cumulativeLayoutShift).toBeUndefined()
+  })
+
+  it('accumulates INP from performance events', async () => {
+    pipeline.publish('resource:navigation', { url: '/', startTime: 0, startDate: 1000, referrer: '', loadingType: 'initial_load' })
+    await tick()
+    pipeline.publish('resource:performance_event', { duration: 120, startTime: 2000, processingStart: 2010, processingEnd: 2100, interactionId: 1 })
+    await tick()
+
+    const latest = observations[observations.length - 1]
+    expect(latest.interactionToNextPaint).toBeDefined()
+    expect(latest.interactionToNextPaint!.value).toBe(120)
+  })
+
+  it('accumulates navigation timings on initial load', async () => {
+    pipeline.publish('resource:navigation', { url: '/', startTime: 0, startDate: 1000, referrer: '', loadingType: 'initial_load' })
+    await tick()
+    pipeline.publish('resource:navigation_timing', {
+      responseStart: 100,
+      domInteractive: 200,
+      domContentLoadedEventEnd: 250,
+      domComplete: 400,
+      loadEventEnd: 450,
+    })
+    await tick()
+
+    const latest = observations[observations.length - 1]
+    expect(latest.navigationTimings).toEqual({
+      firstByte: 100,
+      domInteractive: 200,
+      domContentLoaded: 250,
+      domComplete: 400,
+      loadEvent: 450,
+    })
+  })
+
+  it('finalizes previous view when new navigation arrives', async () => {
+    pipeline.publish('resource:navigation', { url: '/page1', startTime: 0, startDate: 1000, referrer: '', loadingType: 'initial_load' })
+    await tick()
+    const firstViewId = observations[0].id
+    pipeline.publish('resource:navigation', { url: '/page2', startTime: 100, startDate: 1100, referrer: '/page1', loadingType: 'route_change' })
+    await tick()
+
+    // Find the finalized first view (isActive: false)
+    const finalized = observations.find((o) => o.id === firstViewId && !o.isActive)
+    expect(finalized).toBeDefined()
+    expect(finalized!.isActive).toBe(false)
+  })
+
+  it('resets metrics for new view', async () => {
+    pipeline.publish('resource:navigation', { url: '/', startTime: 0, startDate: 1000, referrer: '', loadingType: 'initial_load' })
+    await tick()
+    pipeline.publish('resource:layout_shift', { value: 0.3, hadRecentInput: false, startTime: 200 })
+    await tick()
+    // Start new view
+    pipeline.publish('resource:navigation', { url: '/page2', startTime: 1000, startDate: 2000, referrer: '/', loadingType: 'route_change' })
+    await tick()
+
+    const newView = observations[observations.length - 1]
+    expect(newView.cumulativeLayoutShift).toBeUndefined() // reset
   })
 })
