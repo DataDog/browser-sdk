@@ -2,6 +2,7 @@ import { normalizeTracingOptions } from '@datadog/core-next'
 import type { Extension, TracingOption, PropagatorType } from '@datadog/core-next'
 
 interface RumInitConfiguration {
+  applicationId?: string
   trackResources?: boolean
   trackLongTasks?: boolean
   trackErrors?: boolean
@@ -15,6 +16,7 @@ interface RumInitConfiguration {
 }
 
 interface RumConfig {
+  applicationId?: string
   trackResources: boolean
   trackLongTasks: boolean
   trackErrors: boolean
@@ -34,6 +36,7 @@ const rumExtension: Extension<'rum', RumInitConfiguration, RumConfig> = {
     }
 
     return {
+      applicationId: init.applicationId,
       trackResources: init.trackResources !== false,
       trackLongTasks: init.trackLongTasks !== false,
       trackErrors: init.trackErrors !== false,

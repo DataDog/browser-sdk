@@ -121,7 +121,15 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
   // 4.6. Register core enrichers on all observation events
   pipeline.enrich('observation:*', metadataEnricher({ service: config.service, source: config.source }))
   pipeline.enrich('observation:*', sessionEnricher(session))
-  pipeline.enrich('observation:*', internalContextEnricher({ sdkVersion: config.sdkVersion }))
+  pipeline.enrich(
+    'observation:*',
+    internalContextEnricher({
+      sdkVersion: config.sdkVersion,
+      applicationId: (rumConfig as any)?.applicationId,
+      sessionSampleRate: config.sessionSampleRate,
+      traceSampleRate: (rumConfig as any)?.traceSampleRate,
+    })
+  )
   pipeline.enrich(
     'observation:*',
     tagsEnricher({ env: config.env, service: config.service, version: config.version, sdkVersion: config.sdkVersion })
