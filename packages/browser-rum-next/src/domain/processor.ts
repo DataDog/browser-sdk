@@ -47,6 +47,14 @@ function startProcessor({ pipeline, config }: ProcessorDependencies): void {
         },
       }
 
+      if (networkMatch?.traceId && networkMatch?.spanId) {
+        resource._dd = {
+          trace_id: String(networkMatch.traceId),
+          span_id: String(networkMatch.spanId),
+          rule_psr: config.traceSampleRate !== undefined ? config.traceSampleRate / 100 : undefined,
+        }
+      }
+
       pipeline.publish('observation:resource', resource)
     })
   }

@@ -53,6 +53,9 @@ function makeConfig(overrides: Partial<RumConfig> = {}): RumConfig {
     trackResources: true,
     trackLongTasks: true,
     trackErrors: true,
+    tracingOptions: [],
+    traceSampleRate: 100,
+    traceContextInjection: 'sampled',
     ...overrides,
   }
 }
@@ -158,6 +161,82 @@ describe('startProcessor', () => {
     expect(obs.type).toBe('long_task')
     const longTask = obs.long_task as Record<string, unknown>
     expect(longTask.duration).toBe(150)
+  })
+
+  it('includes _dd.trace_id and _dd.span_id when network match has traceId and spanId', async () => {
+    const observations: unknown[] = []
+    pipeline.subscribe('observation:resource', (data) => observations.push(data))
+
+    startProcessor({ pipeline, config: makeConfig({ traceSampleRate: 50 }) })
+    pipeline.seal()
+
+    pipeline.publish(
+      'resource:network_request',
+      makeNetworkRequest({ traceId: 'abc123' as any, spanId: 'def456' as any })
+    )
+    pipeline.publish('resource:performance_entry', makePerformanceEntry())
+    await tick()
+
+    expect(observations.length).toBe(1)
+    const obs = observations[0] as Record<string, unknown>
+    const dd = obs._dd as Record<string, unknown>
+    expect(dd).toBeDefined()
+    expect(dd.trace_id).toBe('abc123')
+    expect(dd.span_id).toBe('def456')
+    expect(dd.rule_psr).toBe(0.5)
+  })
+
+  it('does not include _dd when network match has no traceId', async () => {
+    const observations: unknown[] = []
+    pipeline.subscribe('observation:resource', (data) => observations.push(data))
+
+    startProcessor({ pipeline, config: makeConfig() })
+    pipeline.seal()
+
+    pipeline.publish('resource:network_request', makeNetworkRequest())
+    pipeline.publish('resource:performance_entry', makePerformanceEntry())
+    await tick()
+
+    expect(observations.length).toBe(1)
+    const obs = observations[0] as Record<string, unknown>
+    expect(obs._dd).toBeUndefined()
+  })
+
+  it('does not include _dd when there is no network match', async () => {
+    const observations: unknown[] = []
+    pipeline.subscribe('observation:resource', (data) => observations.push(data))
+
+    startProcessor({ pipeline, config: makeConfig() })
+    pipeline.seal()
+
+    pipeline.publish('resource:performance_entry', makePerformanceEntry())
+    await tick()
+
+    expect(observations.length).toBe(1)
+    const obs = observations[0] as Record<string, unknown>
+    expect(obs._dd).toBeUndefined()
+  })
+
+  it('rule_psr is between 0 and 1', async () => {
+    const observations: unknown[] = []
+    pipeline.subscribe('observation:resource', (data) => observations.push(data))
+
+    startProcessor({ pipeline, config: makeConfig({ traceSampleRate: 75 }) })
+    pipeline.seal()
+
+    pipeline.publish(
+      'resource:network_request',
+      makeNetworkRequest({ traceId: 'tid' as any, spanId: 'sid' as any })
+    )
+    pipeline.publish('resource:performance_entry', makePerformanceEntry())
+    await tick()
+
+    const obs = observations[0] as Record<string, unknown>
+    const dd = obs._dd as Record<string, unknown>
+    const rulePsr = dd.rule_psr as number
+    expect(rulePsr).toBeGreaterThanOrEqual(0)
+    expect(rulePsr).toBeLessThanOrEqual(1)
+    expect(rulePsr).toBe(0.75)
   })
 
   it('does not publish resources when trackResources is false', async () => {
