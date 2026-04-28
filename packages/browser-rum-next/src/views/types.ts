@@ -41,6 +41,14 @@ export interface NavigationTimings {
   firstByte: number
 }
 
+export interface EventCounts {
+  actionCount: number
+  errorCount: number
+  resourceCount: number
+  longTaskCount: number
+  frustrationCount: number
+}
+
 export interface ViewObservation {
   id: string
   url: string
@@ -62,6 +70,9 @@ export interface ViewObservation {
 
   // Navigation timings (initial load only)
   navigationTimings?: NavigationTimings
+
+  // Event counts
+  eventCounts?: EventCounts
 
   [key: string]: unknown
 }

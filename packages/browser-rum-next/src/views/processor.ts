@@ -1,5 +1,5 @@
 import type { Pipeline } from '@datadog/core-next'
-import type { ViewObservation, ViewChangedSignal, ViewLoadingType } from './types'
+import type { ViewObservation, ViewChangedSignal, ViewLoadingType, EventCounts } from './types'
 import { trackCls } from './metrics/trackCls'
 import { trackFcp } from './metrics/trackFcp'
 import { trackLcp } from './metrics/trackLcp'
@@ -15,6 +15,10 @@ function generateViewId(): string {
   return crypto.randomUUID ? crypto.randomUUID() : `view-${++viewIdCounter}-${Date.now()}`
 }
 
+function createEmptyEventCounts(): EventCounts {
+  return { actionCount: 0, errorCount: 0, resourceCount: 0, longTaskCount: 0, frustrationCount: 0 }
+}
+
 function startProcessor({ pipeline }: ProcessorDependencies): void {
   let currentView: ViewObservation | undefined
   let cls = trackCls()
@@ -22,6 +26,7 @@ function startProcessor({ pipeline }: ProcessorDependencies): void {
   let lcp = trackLcp()
   let inp = trackInp()
   let navTimings = trackNavigationTimings()
+  let eventCounts = createEmptyEventCounts()
 
   function createView(data: Record<string, unknown>): void {
     // Finalize previous view
@@ -38,6 +43,7 @@ function startProcessor({ pipeline }: ProcessorDependencies): void {
     lcp = trackLcp()
     inp = trackInp()
     navTimings = trackNavigationTimings()
+    eventCounts = createEmptyEventCounts()
 
     currentView = {
       id: (data.id as string) || generateViewId(),
@@ -66,6 +72,7 @@ function startProcessor({ pipeline }: ProcessorDependencies): void {
     // Collect current metric values
     currentView.cumulativeLayoutShift = cls.get()
     currentView.interactionToNextPaint = inp.get()
+    currentView.eventCounts = { ...eventCounts }
 
     if (currentView.loadingType === 'initial_load') {
       currentView.firstContentfulPaint = fcp.get()
@@ -122,6 +129,32 @@ function startProcessor({ pipeline }: ProcessorDependencies): void {
   pipeline.subscribe('resource:navigation_timing', (data) => {
     if (!currentView || currentView.loadingType !== 'initial_load') return
     navTimings.process(data as any)
+    publishUpdate()
+  })
+
+  // Event count subscriptions
+  pipeline.subscribe('observation:action', (data) => {
+    eventCounts.actionCount++
+    const action = (data as Record<string, unknown>).action as Record<string, unknown> | undefined
+    const frustration = action?.frustration as { type: string[] } | undefined
+    if (frustration && frustration.type.length > 0) {
+      eventCounts.frustrationCount++
+    }
+    publishUpdate()
+  })
+
+  pipeline.subscribe('observation:error', () => {
+    eventCounts.errorCount++
+    publishUpdate()
+  })
+
+  pipeline.subscribe('observation:resource', () => {
+    eventCounts.resourceCount++
+    publishUpdate()
+  })
+
+  pipeline.subscribe('observation:long_task', () => {
+    eventCounts.longTaskCount++
     publishUpdate()
   })
 }

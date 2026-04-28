@@ -228,4 +228,61 @@ describe('view processor', () => {
     const newView = observations[observations.length - 1]
     expect(newView.cumulativeLayoutShift).toBeUndefined() // reset
   })
+
+  describe('event counts', () => {
+    it('view counts actions when observation:action is published', async () => {
+      pipeline.publish('resource:navigation', { url: '/', startTime: 0, startDate: 1000, referrer: '', loadingType: 'initial_load' })
+      await tick()
+
+      pipeline.publish('observation:action', { type: 'action', date: Date.now(), action: { type: 'custom', target: { name: 'checkout' } } })
+      await tick()
+
+      const latest = observations[observations.length - 1]
+      expect(latest.eventCounts).toBeDefined()
+      expect(latest.eventCounts!.actionCount).toBe(1)
+    })
+
+    it('view counts errors when observation:error is published', async () => {
+      pipeline.publish('resource:navigation', { url: '/', startTime: 0, startDate: 1000, referrer: '', loadingType: 'initial_load' })
+      await tick()
+
+      pipeline.publish('observation:error', { type: 'error', date: Date.now(), error: { message: 'oops' } })
+      await tick()
+
+      const latest = observations[observations.length - 1]
+      expect(latest.eventCounts!.errorCount).toBe(1)
+    })
+
+    it('frustration increments frustrationCount', async () => {
+      pipeline.publish('resource:navigation', { url: '/', startTime: 0, startDate: 1000, referrer: '', loadingType: 'initial_load' })
+      await tick()
+
+      pipeline.publish('observation:action', {
+        type: 'action',
+        date: Date.now(),
+        action: { type: 'click', target: { name: 'btn' }, frustration: { type: ['rage_click'] } },
+      })
+      await tick()
+
+      const latest = observations[observations.length - 1]
+      expect(latest.eventCounts!.actionCount).toBe(1)
+      expect(latest.eventCounts!.frustrationCount).toBe(1)
+    })
+
+    it('event counts reset on new view', async () => {
+      pipeline.publish('resource:navigation', { url: '/page1', startTime: 0, startDate: 1000, referrer: '', loadingType: 'initial_load' })
+      await tick()
+
+      pipeline.publish('observation:action', { type: 'action', date: Date.now(), action: { type: 'custom', target: { name: 'click' } } })
+      await tick()
+
+      // Start new view
+      pipeline.publish('resource:navigation', { url: '/page2', startTime: 500, startDate: 1500, referrer: '/', loadingType: 'route_change' })
+      await tick()
+
+      const newView = observations[observations.length - 1]
+      expect(newView.eventCounts!.actionCount).toBe(0)
+      expect(newView.eventCounts!.errorCount).toBe(0)
+    })
+  })
 })
