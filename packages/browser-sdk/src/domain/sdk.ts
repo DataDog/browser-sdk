@@ -30,6 +30,7 @@ import { startConsoleCollection as startConsoleCollectors } from '../collectors/
 import { startRuntimeErrorCollection } from '../collectors/runtimeErrorCollector'
 import { startReportCollection } from '../collectors/reportCollector'
 import { startFetchCollection } from '../collectors/fetchCollector'
+import type { CollectorTracingConfig } from '../collectors/fetchCollector'
 import { startXhrCollection } from '../collectors/xhrCollector'
 
 declare const __BUILD_ENV__SDK_VERSION__: string
@@ -92,12 +93,26 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
   // 4.0. Connect bridges — flush any events buffered before SDK init (pre-init buffering)
   connectBridges(pipeline)
 
-  // 4.1. Start bundled collectors (always active, regardless of which modules are loaded)
+  // 4.1. Extract tracing config from RUM extension config (if present)
+  const rumConfig = (config as Record<string, unknown>).rum as
+    | { tracingOptions?: unknown[]; traceSampleRate?: number; traceContextInjection?: string }
+    | undefined
+  const tracingConfig: CollectorTracingConfig | undefined =
+    rumConfig?.tracingOptions?.length
+      ? {
+          tracingOptions: rumConfig.tracingOptions as CollectorTracingConfig['tracingOptions'],
+          traceSampleRate: rumConfig.traceSampleRate ?? 100,
+          traceContextInjection: (rumConfig.traceContextInjection ?? 'sampled') as 'sampled' | 'all',
+          sessionId: session.getId() ?? '',
+        }
+      : undefined
+
+  // 4.2. Start bundled collectors (always active, regardless of which modules are loaded)
   const stopConsoleCollectors = startConsoleCollectors(pipeline)
   const stopRuntimeErrorCollectors = startRuntimeErrorCollection(pipeline)
   const stopReportCollectors = startReportCollection(pipeline)
-  const stopFetchCollectors = startFetchCollection(pipeline)
-  const stopXhrCollectors = startXhrCollection(pipeline)
+  const stopFetchCollectors = startFetchCollection(pipeline, tracingConfig)
+  const stopXhrCollectors = startXhrCollection(pipeline, tracingConfig)
 
   // 4.5. Register stack trace enricher on resource events
   pipeline.enrich('resource:console', stackTraceEnricher())
