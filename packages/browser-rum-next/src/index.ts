@@ -30,6 +30,12 @@ const datadogRum = {
   addAction(name: string, context?: object) {
     publish('action:add_action', { name, context })
   },
+  startAction(name: string, options?: { actionKey?: string; context?: object }) {
+    publish('action:start_action', { name, ...options })
+  },
+  stopAction(name?: string, options?: { actionKey?: string; context?: object }) {
+    publish('action:stop_action', { name, ...options })
+  },
 }
 
 registerBridge('rum', {

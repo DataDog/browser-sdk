@@ -87,4 +87,47 @@ describe('rum bridge (datadogRum)', () => {
     expect(view).toBeDefined()
     expect(view.loadingType).toBe('route_change')
   })
+
+  it('datadogRum exposes startAction and stopAction', () => {
+    expect(typeof (datadogRum as any).startAction).toBe('function')
+    expect(typeof (datadogRum as any).stopAction).toBe('function')
+  })
+
+  it('startAction publishes action:start_action to the pipeline', async () => {
+    const pipeline = new Pipeline<Record<string, unknown>>()
+    const received: unknown[] = []
+
+    pipeline.subscribe('action:start_action', (event) => {
+      received.push(event)
+    })
+
+    connectBridges(pipeline)
+    pipeline.seal()
+
+    ;(datadogRum as any).startAction('checkout', { actionKey: 'checkout-btn' })
+    await waitMicrotask()
+
+    const action = received.find((e: any) => e.name === 'checkout') as any
+    expect(action).toBeDefined()
+    expect(action.actionKey).toBe('checkout-btn')
+  })
+
+  it('stopAction publishes action:stop_action to the pipeline', async () => {
+    const pipeline = new Pipeline<Record<string, unknown>>()
+    const received: unknown[] = []
+
+    pipeline.subscribe('action:stop_action', (event) => {
+      received.push(event)
+    })
+
+    connectBridges(pipeline)
+    pipeline.seal()
+
+    ;(datadogRum as any).stopAction('checkout', { actionKey: 'checkout-btn', context: { revenue: 100 } })
+    await waitMicrotask()
+
+    const action = received.find((e: any) => e.name === 'checkout') as any
+    expect(action).toBeDefined()
+    expect(action.actionKey).toBe('checkout-btn')
+  })
 })
