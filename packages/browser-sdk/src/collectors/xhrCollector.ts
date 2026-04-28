@@ -1,18 +1,8 @@
 import type { Pipeline, NetworkRequestResource } from '@datadog/core-next'
-import { createIdentifier, makeTracingHeaders, findTracingOption } from '@datadog/core-next'
+import { createIdentifier, makeTracingHeaders, findTracingOption, isSampled } from '@datadog/core-next'
 import type { Identifier } from '@datadog/core-next'
 import { isIntakeUrl } from '../browser'
 import type { CollectorTracingConfig } from './fetchCollector'
-
-function isSampled(sessionId: string, sampleRate: number): boolean {
-  if (sampleRate === 100) return true
-  if (sampleRate === 0) return false
-  let hash = 0
-  for (let i = 0; i < sessionId.length; i++) {
-    hash = (hash * 31 + sessionId.charCodeAt(i)) | 0
-  }
-  return Math.abs(hash % 100) < sampleRate
-}
 
 function startXhrCollection(
   pipeline: Pipeline<Record<string, unknown>>,

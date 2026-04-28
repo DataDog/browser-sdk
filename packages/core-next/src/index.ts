@@ -111,3 +111,5 @@ export {
   DEFAULT_PROPAGATOR_TYPES,
 } from './domain/tracing'
 export type { Identifier, PropagatorType, TracingOption, MatchOption } from './domain/tracing'
+
+export { isSampled } from './domain/sampler'

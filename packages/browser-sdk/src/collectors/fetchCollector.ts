@@ -1,5 +1,5 @@
 import type { Pipeline, NetworkRequestResource } from '@datadog/core-next'
-import { createIdentifier, makeTracingHeaders, findTracingOption } from '@datadog/core-next'
+import { createIdentifier, makeTracingHeaders, findTracingOption, isSampled } from '@datadog/core-next'
 import type { TracingOption, Identifier } from '@datadog/core-next'
 import { isIntakeUrl } from '../browser'
 
@@ -8,16 +8,6 @@ interface CollectorTracingConfig {
   traceSampleRate: number
   traceContextInjection: 'sampled' | 'all'
   sessionId: string
-}
-
-function isSampled(sessionId: string, sampleRate: number): boolean {
-  if (sampleRate === 100) return true
-  if (sampleRate === 0) return false
-  let hash = 0
-  for (let i = 0; i < sessionId.length; i++) {
-    hash = (hash * 31 + sessionId.charCodeAt(i)) | 0
-  }
-  return Math.abs(hash % 100) < sampleRate
 }
 
 function startFetchCollection(
