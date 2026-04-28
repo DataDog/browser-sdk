@@ -48,21 +48,27 @@ describe('startNavigationCollection', () => {
     history.pushState({}, '', '/')
   })
 
-  it('publishes route_change on popstate when pathname changes', async () => {
+  it('publishes route_change on popstate when pathname changes', (done) => {
     history.pushState({}, '', '/page-a')
     history.pushState({}, '', '/page-b')
     stop = startNavigationCollection(pipeline)
 
+    // Wait for popstate to fire before asserting
+    window.addEventListener(
+      'popstate',
+      () => {
+        // Give pipeline time to process the event
+        setTimeout(() => {
+          expect(collected.length).toBe(1)
+          expect(collected[0].loadingType).toBe('route_change')
+          history.pushState({}, '', '/')
+          done()
+        }, 0)
+      },
+      { once: true }
+    )
+
     history.back()
-    await tick()
-
-    // popstate fires asynchronously — wait a bit
-    await new Promise((r) => setTimeout(r, 100))
-
-    expect(collected.length).toBe(1)
-    expect(collected[0].loadingType).toBe('route_change')
-
-    history.pushState({}, '', '/')
   })
 
   it('publishes bf_cache on pageshow with persisted=true', async () => {
