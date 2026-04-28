@@ -165,7 +165,7 @@ export async function startSessionManager(
   function scheduleExpirationTimeout(state: SessionState) {
     clearTimeout(expirationTimeoutId)
     const expireDate = getExpireDate(state)
-    if (expireDate && !isSessionInExpiredState(state)) {
+    if (expireDate) {
       const delay = expireDate - dateNow()
       expirationTimeoutId = setTimeout(() => {
         strategy

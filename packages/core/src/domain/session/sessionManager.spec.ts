@@ -373,6 +373,29 @@ describe('startSessionManager', () => {
       expect(expireSpy).toHaveBeenCalledTimes(1)
       expect(sessionManager.findSession()).toBeUndefined()
     })
+
+    it('should expire session after SESSION_TIME_OUT_DELAY even on a continuously visible page', async () => {
+      setPageVisibility('visible')
+      const sessionManager = await startSessionManagerWithDefaults()
+      const expireSpy = jasmine.createSpy('expire')
+      sessionManager.expireObservable.subscribe(expireSpy)
+
+      expect(sessionManager.findSession()).toBeDefined()
+
+      // Fast forward to the end of the session
+      clock.tick(SESSION_TIME_OUT_DELAY)
+      // Drain the pending setSessionState microtasks so that scheduleExpirationTimeout runs
+      // and registers the 0ms expiry timeout.
+      await Promise.resolve()
+      // Fire the 0ms expiry timeout.
+      clock.tick(0)
+
+      await collectAsyncCalls(expireSpy, 1)
+
+      expect(fakeStrategy.getInternalState()).toEqual({ isExpired: EXPIRED })
+      expect(expireSpy).toHaveBeenCalledTimes(1)
+      expect(sessionManager.findSession()).toBeUndefined()
+    })
   })
 
   describe('cross-tab changes (simulateExternalChange)', () => {
