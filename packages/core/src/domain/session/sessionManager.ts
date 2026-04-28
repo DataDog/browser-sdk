@@ -257,9 +257,7 @@ export async function startSessionManager(
         locksAvailable: Boolean(globalThis.navigator?.locks),
         cookieStoreAvailable: Boolean(globalThis.cookieStore),
       }
-      if (!hasSession) {
-        sessionExpired = true
-      }
+      sessionExpired = true
       expireObservable.notify()
       sessionContextHistory.closeActive(relativeNow())
     }

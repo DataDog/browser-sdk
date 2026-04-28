@@ -399,26 +399,20 @@ describe('startSessionManager', () => {
   })
 
   describe('cross-tab changes (simulateExternalChange)', () => {
-    it('should fire expireObservable and renewObservable when external change has a different session ID', async () => {
+    it('should not adopt a session created by another tab when it replaces our session directly', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
-      const expireSpy = jasmine.createSpy('expire')
       const renewSpy = jasmine.createSpy('renew')
-      sessionManager.expireObservable.subscribe(expireSpy)
       sessionManager.renewObservable.subscribe(renewSpy)
 
-      const initialId = sessionManager.findSession()!.id
-
-      // Another tab changes the session
+      // Another tab expires our session and immediately starts a new one
       fakeStrategy.simulateExternalChange({
         id: 'other-tab-session',
         expire: String(Date.now() + SESSION_EXPIRATION_DELAY),
         created: String(Date.now()),
       })
 
-      expect(expireSpy).toHaveBeenCalledTimes(1)
-      expect(renewSpy).toHaveBeenCalledTimes(1)
-      expect(sessionManager.findSession()!.id).toBe('other-tab-session')
-      expect(sessionManager.findSession()!.id).not.toBe(initialId)
+      expect(renewSpy).not.toHaveBeenCalled()
+      expect(sessionManager.findSession()).toBeUndefined()
     })
 
     it('should update session context in history when forcedReplay changes externally', async () => {
