@@ -45,6 +45,7 @@ import type { ViewHistory } from '../domain/contexts/viewHistory'
 import type { RumSessionManager } from '../domain/rumSessionManager'
 import type { ReplayStats } from '../rawRumEvent.types'
 import { ActionType, VitalType } from '../rawRumEvent.types'
+import { DEFAULT_TRACKED_RESOURCE_HEADERS } from '../domain/configuration'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
 import type {
@@ -513,6 +514,13 @@ export interface RumPublicApi extends PublicApi {
    * @hidden // TODO: replace by @since when GA
    */
   failFeatureOperation: (name: string, failureReason: FailureReason, options?: FeatureOperationOptions) => void
+
+  /**
+   * List of default headers used by the {@link RumInitConfiguration.trackResourceHeaders | trackResourceHeaders} option. See configuration example for extending them.
+   *
+   * @hidden
+   */
+  DEFAULT_TRACKED_RESOURCE_HEADERS: typeof DEFAULT_TRACKED_RESOURCE_HEADERS
 }
 
 export interface RecorderApi {
@@ -962,6 +970,7 @@ export function makeRumPublicApi(
       addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'fail' })
       strategy.addOperationStepVital(name, 'end', options, failureReason)
     }),
+    DEFAULT_TRACKED_RESOURCE_HEADERS,
   })
 
   return rumPublicApi

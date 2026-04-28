@@ -466,6 +466,33 @@ test.describe('resource headers with trackResourceHeaders', () => {
       expect(fetchEvent!.resource.request).toBeUndefined()
       expect(fetchEvent!.resource.response?.headers?.['cache-control']).toBeUndefined()
     })
+
+  createTest('collect default and custom headers using DEFAULT_TRACKED_RESOURCE_HEADERS pattern')
+    .withRum({ enableExperimentalFeatures: ['track_resource_headers'] })
+    .withRumInit((configuration) => {
+      configuration.trackResourceHeaders = [
+        ...window.DD_RUM!.DEFAULT_TRACKED_RESOURCE_HEADERS.map((name) => ({ name })),
+        { name: 'x-request-id' },
+      ]
+      window.DD_RUM!.init(configuration)
+    })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      const url = okUrl({
+        'Cache-Control': 'no-cache',
+        ETag: 'abc123',
+        'X-Request-Id': 'req-1',
+      })
+      await page.evaluate((u) => fetch(u), url)
+
+      await flushEvents()
+
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.type === 'fetch')
+      expect(resourceEvent).toBeDefined()
+      const headers = resourceEvent!.resource.response!.headers!
+      expect(headers['cache-control']).toBe('no-cache')
+      expect(headers['etag']).toBe('abc123')
+      expect(headers['x-request-id']).toBe('req-1')
+    })
 })
 
 test.describe('manual resources with startResource/stopResource', () => {

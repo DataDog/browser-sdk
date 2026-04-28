@@ -19,6 +19,35 @@ import type { PropagatorType, TracingOption } from '../tracing/tracer.types'
 
 export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'datadog']
 
+/**
+ * Default list of headers collected on resource events when {@link RumInitConfiguration.trackResourceHeaders | trackResourceHeaders}
+ * is set to `true`. Re-exported by the `@datadog/browser-rum` and `@datadog/browser-rum-slim` packages, and exposed on the
+ * `DD_RUM` global object when the SDK is loaded via the CDN, so it can be referenced when building a custom matcher list.
+ *
+ * @example NPM
+ * ```ts
+ * import { datadogRum, DEFAULT_TRACKED_RESOURCE_HEADERS } from '@datadog/browser-rum'
+ *
+ * datadogRum.init({
+ *   // ...
+ *   trackResourceHeaders: [
+ *     ...DEFAULT_TRACKED_RESOURCE_HEADERS.map((name) => ({ name })),
+ *     { name: 'x-request-id' },
+ *   ],
+ * })
+ * ```
+ * @example CDN
+ * ```ts
+ * DD_RUM.init({
+ *   // ...
+ *   trackResourceHeaders: [
+ *     ...DD_RUM.DEFAULT_TRACKED_RESOURCE_HEADERS.map((name) => ({ name })),
+ *     { name: 'x-request-id' },
+ *   ],
+ * })
+ * ```
+ * @hidden
+ */
 export const DEFAULT_TRACKED_RESOURCE_HEADERS = [
   'cache-control',
   'etag',
@@ -268,7 +297,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @example
    * // Collect default headers plus custom ones for all URLs
    * trackResourceHeaders: [
-   *   { name: (h) => DEFAULT_TRACKED_RESOURCE_HEADERS.includes(h) },
+   *   ...DEFAULT_TRACKED_RESOURCE_HEADERS.map((h) => ({ name: h })),
    *   { name: 'x-request-id' },
    * ]
    * @example
