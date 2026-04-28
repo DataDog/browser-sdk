@@ -1,4 +1,5 @@
 import type { Module, ModuleContext } from '@datadog/core-next'
+import { createIdentifier, enricher } from '@datadog/core-next'
 import { rumExtension } from '../domain/configuration'
 import type { RumConfig } from '../domain/configuration'
 import { startProcessor } from '../domain/processor'
@@ -14,6 +15,7 @@ import type { StartViewAction } from '../views/types'
 import { startClickCollection } from '../actions/clickCollector'
 import { startDomMutationCollection } from '../actions/domMutationCollector'
 import { startActionProcessor } from '../actions/actionProcessor'
+import { getDocumentTraceId } from '../domain/getDocumentTraceId'
 
 interface RumPublicApi extends Record<string, unknown> {
   startView(name?: string): void
@@ -65,6 +67,34 @@ const rumProcessor: Module = {
       pipeline: context.pipeline,
       config,
     })
+
+    // Wire document trace ID into the initial navigation resource
+    const documentTraceId = getDocumentTraceId(document)
+    if (documentTraceId) {
+      let applied = false
+      context.pipeline.enrich(
+        'observation:resource',
+        enricher({
+          name: 'documentTrace',
+          transform: (data: Record<string, unknown>) => {
+            if (applied) return data
+            const resource = data.resource as Record<string, unknown> | undefined
+            if (resource?.initiatorType === 'navigation' || resource?.url === window.location.href) {
+              applied = true
+              return {
+                ...data,
+                _dd: {
+                  ...((data._dd as Record<string, unknown>) || {}),
+                  trace_id: documentTraceId,
+                  span_id: createIdentifier(63).toString(10),
+                },
+              }
+            }
+            return data
+          },
+        })
+      )
+    }
 
     return {
       __stop() {
