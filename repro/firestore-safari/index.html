@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Issue #4524 — Safari + RUM SDK + streaming XHR</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        max-width: 760px;
+        margin: 2em auto;
+        padding: 0 1em;
+        line-height: 1.45;
+      }
+      h2 {
+        margin-top: 1.6em;
+      }
+      button {
+        margin: 0.3em 0.4em 0.3em 0;
+        padding: 0.55em 0.95em;
+        font-size: 14px;
+      }
+      input[type='text'],
+      textarea {
+        font-family: ui-monospace, SFMono-Regular, monospace;
+        font-size: 12px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      label {
+        display: block;
+        margin: 0.4em 0;
+      }
+      #log {
+        background: #111;
+        color: #eee;
+        padding: 0.8em 1em;
+        height: 360px;
+        overflow: auto;
+        font-family: ui-monospace, SFMono-Regular, monospace;
+        font-size: 12px;
+        white-space: pre-wrap;
+        border-radius: 4px;
+      }
+      .ok {
+        color: #6f6;
+      }
+      .err {
+        color: #f66;
+      }
+      .muted {
+        color: #888;
+      }
+      .status {
+        margin-left: 0.6em;
+        font-size: 13px;
+        color: #555;
+      }
+      details {
+        margin: 1em 0;
+        padding: 0.6em;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      code {
+        background: #f4f4f4;
+        padding: 0 0.25em;
+        border-radius: 3px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Issue #4524 — Safari + RUM SDK + streaming XHR</h1>
+    <p>
+      Open <strong>Web Inspector → Console</strong> before clicking. Watch for
+      <em>"XMLHttpRequest cannot load … due to access control checks"</em>.
+    </p>
+
+    <h2>1. RUM initialization</h2>
+    <p class="muted">
+      Initialize <code>datadogRum</code> first so its <code>XMLHttpRequest.prototype.open/send/abort</code> patches are
+      installed before the streaming requests run. Use "Skip" as a control to confirm whether the failure is
+      SDK-induced.
+    </p>
+    <button id="init-rum">Init datadogRum</button>
+    <button id="skip-rum">Skip (control)</button>
+    <span class="status" id="rum-status">— not initialized</span>
+
+    <h2>2. Synthetic streaming XHR (cross-origin)</h2>
+    <p class="muted">
+      Hits <code>__CROSS_ORIGIN__/streaming-xhr</code> and reads <code>responseText</code> on every
+      <code>progress</code> event — same shape as Firestore's WebChannel reads.
+    </p>
+    <button id="run-get">GET (chunked)</button>
+    <button id="run-post">POST (with preflight)</button>
+
+    <h2>3. Real Firebase Firestore (long-polling forced)</h2>
+    <p class="muted">
+      Loads <code>firebase-js-sdk</code> from the gstatic CDN and calls Firestore with
+      <code>experimentalForceLongPolling: true</code> — the path the original report blames.
+    </p>
+    <details open>
+      <summary>Paste your Firebase web config to enable</summary>
+      <label
+        >Firebase config (JSON):
+        <textarea
+          id="fb-config"
+          rows="9"
+          placeholder='{
+  "apiKey": "…",
+  "authDomain": "your-project.firebaseapp.com",
+  "projectId": "your-project",
+  "appId": "…"
+}'
+        ></textarea>
+      </label>
+      <label>Collection path: <input type="text" id="fb-path" value="repro-test" /></label>
+      <label><input type="checkbox" id="fb-force-long-polling" checked /> experimentalForceLongPolling</label>
+      <label
+        ><input type="checkbox" id="fb-no-fetch-streams" checked /> useFetchStreams: false (forces XHR transport)</label
+      >
+      <button id="run-firestore">Read collection (one-shot)</button>
+      <button id="run-firestore-snapshot">Open snapshot listener (keeps channel open)</button>
+      <button id="run-firestore-write">Write a doc (POST channel)</button>
+    </details>
+
+    <h2>Log</h2>
+    <div id="log"></div>
+    <button id="clear">Clear log</button>
+
+    __SDK_SCRIPT__
+    <script>
+      const log = document.getElementById('log')
+      function append(msg, cls) {
+        const line = document.createElement('div')
+        if (cls) line.className = cls
+        line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`
+        log.appendChild(line)
+        log.scrollTop = log.scrollHeight
+        // eslint-disable-next-line no-console
+        console.log(msg)
+      }
+
+      window.addEventListener('error', (e) => {
+        append(`window.onerror: ${e.message}`, 'err')
+      })
+      window.addEventListener('unhandledrejection', (e) => {
+        append(`unhandledrejection: ${e.reason && e.reason.message ? e.reason.message : e.reason}`, 'err')
+      })
+
+      document.getElementById('clear').onclick = () => {
+        log.innerHTML = ''
+      }
+
+      const CROSS = '__CROSS_ORIGIN__'
+      let rumInitialized = false
+
+      document.getElementById('init-rum').onclick = () => {
+        if (rumInitialized) {
+          append('RUM already initialized')
+          return
+        }
+        if (!window.DD_RUM) {
+          append('window.DD_RUM is not available — did the SDK script fail to load?', 'err')
+          return
+        }
+        window.DD_RUM.init({
+          applicationId: '00000000-0000-0000-0000-000000000000',
+          clientToken: 'pub00000000000000000000000000000000',
+          site: 'datadoghq.com',
+          service: 'firestore-safari-repro',
+          env: 'repro',
+          sessionSampleRate: 100,
+          trackResources: true,
+          trackUserInteractions: true,
+        })
+        rumInitialized = true
+        document.getElementById('rum-status').textContent = '— RUM initialized (XHR.prototype patched)'
+        append('RUM initialized — XHR.prototype.open/send/abort are now wrapped', 'ok')
+      }
+
+      document.getElementById('skip-rum').onclick = () => {
+        document.getElementById('rum-status').textContent = '— RUM intentionally NOT initialized'
+        append('RUM init skipped — running as control')
+      }
+
+      function streamingXhr(variant) {
+        return new Promise((resolve) => {
+          const xhr = new XMLHttpRequest()
+          const result = { chunks: 0, status: -1, errorEvent: false, finalLength: 0, readyStateAtEnd: -1 }
+
+          xhr.addEventListener('progress', () => {
+            try {
+              const text = xhr.responseText
+              if (text && text.length > result.finalLength) {
+                result.chunks += 1
+                result.finalLength = text.length
+                append(`  progress: chunk #${result.chunks}, ${result.finalLength} bytes total`)
+              }
+            } catch (e) {
+              append(`  progress threw: ${e.message}`, 'err')
+            }
+          })
+          xhr.addEventListener('error', () => {
+            result.errorEvent = true
+            append(`  error event fired`, 'err')
+          })
+          xhr.addEventListener('loadend', () => {
+            try {
+              result.status = xhr.status
+            } catch (e) {
+              append(`  reading xhr.status threw: ${e.message}`, 'err')
+            }
+            result.readyStateAtEnd = xhr.readyState
+            const cls = result.errorEvent || result.status !== 200 ? 'err' : 'ok'
+            append(
+              `  loadend: status=${result.status}, errorEvent=${result.errorEvent}, chunks=${result.chunks}, readyState=${result.readyStateAtEnd}`,
+              cls
+            )
+            resolve(result)
+          })
+
+          if (variant === 'post') {
+            xhr.open('POST', `${CROSS}/streaming-xhr`)
+            xhr.setRequestHeader('X-WebChannel-Content-Type', 'application/x-www-form-urlencoded')
+            xhr.responseType = 'text'
+            xhr.send('count=5&ofs=0&req0___data__=hello')
+          } else {
+            xhr.open('GET', `${CROSS}/streaming-xhr`)
+            xhr.send()
+          }
+
+          setTimeout(() => {
+            if (result.status === -1) {
+              append(`  hard timeout reached`, 'err')
+            }
+          }, 6000)
+        })
+      }
+
+      document.getElementById('run-get').onclick = async () => {
+        append('--- GET chunked streaming XHR ---')
+        await streamingXhr('get')
+      }
+      document.getElementById('run-post').onclick = async () => {
+        append('--- POST + preflight streaming XHR ---')
+        await streamingXhr('post')
+      }
+
+      let firestoreModulesPromise
+      function loadFirestoreModules() {
+        if (!firestoreModulesPromise) {
+          firestoreModulesPromise = Promise.all([
+            import('https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js'),
+            import('https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js'),
+          ]).then(([appMod, fsMod]) => ({ appMod, fsMod }))
+        }
+        return firestoreModulesPromise
+      }
+
+      function buildFirestoreSettings() {
+        const settings = {}
+        if (document.getElementById('fb-force-long-polling').checked) {
+          settings.experimentalForceLongPolling = true
+        }
+        if (document.getElementById('fb-no-fetch-streams').checked) {
+          settings.useFetchStreams = false
+        }
+        return settings
+      }
+
+      async function setupFirestore() {
+        const cfgText = document.getElementById('fb-config').value.trim()
+        if (!cfgText) {
+          append('Paste a Firebase web config first', 'err')
+          return null
+        }
+        let cfg
+        try {
+          cfg = JSON.parse(cfgText)
+        } catch (e) {
+          append(`Invalid JSON: ${e.message}`, 'err')
+          return null
+        }
+        const collectionPath = document.getElementById('fb-path').value || 'repro-test'
+        const { appMod, fsMod } = await loadFirestoreModules()
+        const settings = buildFirestoreSettings()
+        const app = appMod.initializeApp(cfg, `repro-${Date.now()}`)
+        const db = fsMod.initializeFirestore(app, settings)
+        append(`  initialized firestore with ${JSON.stringify(settings)}`)
+        return { fsMod, db, collectionPath }
+      }
+
+      document.getElementById('run-firestore').onclick = async () => {
+        append('--- Firestore one-shot read ---')
+        try {
+          const ctx = await setupFirestore()
+          if (!ctx) return
+          const { fsMod, db, collectionPath } = ctx
+          const snap = await fsMod.getDocs(fsMod.collection(db, collectionPath))
+          append(`  read ${snap.size} doc(s) successfully`, 'ok')
+        } catch (e) {
+          append(`  Firestore call threw: ${e && e.message ? e.message : e}`, 'err')
+          // eslint-disable-next-line no-console
+          console.error(e)
+        }
+      }
+
+      let activeUnsubscribe = null
+      document.getElementById('run-firestore-snapshot').onclick = async () => {
+        if (activeUnsubscribe) {
+          activeUnsubscribe()
+          activeUnsubscribe = null
+          append('  previous snapshot listener detached')
+        }
+        append('--- Firestore onSnapshot listener (long-lived stream) ---')
+        try {
+          const ctx = await setupFirestore()
+          if (!ctx) return
+          const { fsMod, db, collectionPath } = ctx
+          activeUnsubscribe = fsMod.onSnapshot(
+            fsMod.collection(db, collectionPath),
+            (snap) => append(`  snapshot: ${snap.size} doc(s), fromCache=${snap.metadata.fromCache}`, 'ok'),
+            (err) => append(`  snapshot error: ${err.message}`, 'err')
+          )
+          append('  listener attached — channel should now stay open. Click again to detach.')
+        } catch (e) {
+          append(`  onSnapshot threw: ${e && e.message ? e.message : e}`, 'err')
+          // eslint-disable-next-line no-console
+          console.error(e)
+        }
+      }
+
+      document.getElementById('run-firestore-write').onclick = async () => {
+        append('--- Firestore write ---')
+        try {
+          const ctx = await setupFirestore()
+          if (!ctx) return
+          const { fsMod, db, collectionPath } = ctx
+          const ref = await fsMod.addDoc(fsMod.collection(db, collectionPath), {
+            createdAt: new Date().toISOString(),
+            note: 'repro-#4524',
+          })
+          append(`  wrote doc id=${ref.id}`, 'ok')
+        } catch (e) {
+          append(`  write threw: ${e && e.message ? e.message : e}`, 'err')
+          // eslint-disable-next-line no-console
+          console.error(e)
+        }
+      }
+    </script>
+  </body>
+</html>
