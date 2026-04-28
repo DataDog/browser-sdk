@@ -26,6 +26,8 @@ import { createStringTable } from './stringTable'
  * expectations against the record's content.
  */
 export interface ChangeDecoder {
+  decode(record: BrowserChangeRecord): BrowserChangeRecord
+  decode(record: BrowserFullSnapshotChangeRecord): BrowserFullSnapshotChangeRecord
   decode(
     record: BrowserChangeRecord | BrowserFullSnapshotChangeRecord
   ): BrowserChangeRecord | BrowserFullSnapshotChangeRecord
@@ -34,7 +36,7 @@ export interface ChangeDecoder {
 }
 
 export function createChangeDecoder(): ChangeDecoder {
-  const self: ChangeDecoder = {
+  const self = {
     decode(
       record: BrowserChangeRecord | BrowserFullSnapshotChangeRecord
     ): BrowserChangeRecord | BrowserFullSnapshotChangeRecord {
@@ -42,7 +44,7 @@ export function createChangeDecoder(): ChangeDecoder {
     },
 
     stringTable: createStringTable(),
-  }
+  } as ChangeDecoder
 
   return self
 }
