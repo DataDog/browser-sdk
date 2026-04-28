@@ -133,5 +133,26 @@ describe('rumProcessor', () => {
     expect(context.transport.route).toHaveBeenCalledWith('observation:resource', 'rum')
     expect(context.transport.route).toHaveBeenCalledWith('observation:error', 'rum')
     expect(context.transport.route).toHaveBeenCalledWith('observation:long_task', 'rum')
+    expect(context.transport.route).toHaveBeenCalledWith('observation:action', 'rum')
+  })
+
+  it('action:add_action publishes observation:action via action processor', async () => {
+    const context = createTestContext()
+    const { pipeline } = context
+    const observations: unknown[] = []
+
+    pipeline.subscribe('observation:action', (data) => observations.push(data))
+
+    init(context)
+    pipeline.seal()
+
+    pipeline.publish('action:add_action', { name: 'checkout', context: { source: 'test' } })
+    await tick()
+
+    expect(observations.length).toBe(1)
+    const obs = observations[0] as Record<string, unknown>
+    expect(obs.type).toBe('action')
+    const action = obs.action as Record<string, unknown>
+    expect((action.target as any).name).toBe('checkout')
   })
 })

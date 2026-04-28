@@ -11,6 +11,9 @@ import { startCollectors as startPerformanceCollectors } from '../performance/co
 import { navigationEnricher } from '../views/navigationEnricher'
 import { startProcessor as startViewProcessor } from '../views/processor'
 import type { StartViewAction } from '../views/types'
+import { startClickCollection } from '../actions/clickCollector'
+import { startDomMutationCollection } from '../actions/domMutationCollector'
+import { startActionProcessor } from '../actions/actionProcessor'
 
 interface RumPublicApi extends Record<string, unknown> {
   startView(name?: string): void
@@ -30,6 +33,13 @@ const rumProcessor: Module = {
     // Start view collectors (initial + navigation)
     const stopViewCollectors = startViewCollectors(context.pipeline)
 
+    // Start action collectors
+    const stopClickCollection = startClickCollection(context.pipeline)
+    const stopDomMutationCollection = startDomMutationCollection(context.pipeline)
+
+    // Start action processor (click → observation:action, add_action → observation:action)
+    startActionProcessor(context.pipeline)
+
     // Register navigation enricher (adds id UUID) on resource:navigation and action:start_view
     context.pipeline.enrich('resource:navigation', navigationEnricher())
     context.pipeline.enrich('action:start_view', navigationEnricher())
@@ -48,6 +58,7 @@ const rumProcessor: Module = {
     context.transport.route('observation:resource', 'rum')
     context.transport.route('observation:error', 'rum')
     context.transport.route('observation:long_task', 'rum')
+    context.transport.route('observation:action', 'rum')
 
     // Start the processor (subscribes to resources, transforms to observations)
     startProcessor({
@@ -59,6 +70,8 @@ const rumProcessor: Module = {
       __stop() {
         stopPerformanceCollectors()
         stopViewCollectors()
+        stopClickCollection()
+        stopDomMutationCollection()
       },
 
       startView(name?: string) {
