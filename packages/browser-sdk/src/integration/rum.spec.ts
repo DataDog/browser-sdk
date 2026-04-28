@@ -161,6 +161,25 @@ describe('RUM integration', () => {
     expect(actionEvent.action.type).toBe('custom')
   })
 
+  it('initializes with tracing config without errors', async () => {
+    currentSdk = await createSdk({
+      clientToken: 'test-token',
+      site: 'datadoghq.com',
+      modules: [rumProcessor],
+      rum: {
+        allowedTracingUrls: ['https://api.example.com'],
+        traceSampleRate: 100,
+      },
+    })
+
+    await tick()
+    flushBatch()
+
+    // SDK initialized successfully, view events are still sent
+    const rumLines = getRumLines(fetchSpy)
+    expect(rumLines.length).toBeGreaterThan(0)
+  })
+
   it('addAction increments view action count', async () => {
     currentSdk = await createSdk({
       clientToken: 'test-token',
