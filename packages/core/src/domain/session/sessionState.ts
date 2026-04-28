@@ -23,7 +23,11 @@ export function getCreatedDate(state: SessionState): TimeStamp | undefined {
 }
 
 export function getExpireDate(state: SessionState): TimeStamp | undefined {
-  return state.expire ? (Number(state.expire) as TimeStamp) : undefined
+  const expireDate = state.expire && (Number(state.expire) as TimeStamp)
+  const createdDate = getCreatedDate(state)
+  if (expireDate && createdDate) {
+    return Math.min(expireDate, createdDate + SESSION_TIME_OUT_DELAY) as TimeStamp
+  }
 }
 
 export function getExpiredSessionState(
@@ -54,14 +58,8 @@ export function isSessionInExpiredState(session: SessionState) {
 
 // An active session is a session in either `Tracked` or `NotTracked` state
 function isActiveSession(sessionState: SessionState) {
-  // created and expire can be undefined for versions which was not storing them
-  // these checks could be removed when older versions will not be available/live anymore
-  const createdDate = getCreatedDate(sessionState)
   const expireDate = getExpireDate(sessionState)
-  return (
-    (createdDate === undefined || dateNow() - createdDate < SESSION_TIME_OUT_DELAY) &&
-    (expireDate === undefined || dateNow() < expireDate)
-  )
+  return expireDate ? dateNow() < expireDate : false
 }
 
 export function expandSessionState(session: SessionState) {
