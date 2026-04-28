@@ -312,6 +312,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@datadog/browser-debugger@workspace:packages/debugger":
+  version: 0.0.0-use.local
+  resolution: "@datadog/browser-debugger@workspace:packages/debugger"
+  dependencies:
+    "@datadog/browser-core": "npm:6.32.0"
+    acorn: "npm:8.16.0"
+  languageName: unknown
+  linkType: soft
+
 "@datadog/browser-logs@workspace:*, @datadog/browser-logs@workspace:packages/logs":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-logs@workspace:packages/logs"
@@ -3209,7 +3218,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"acorn@npm:^8.15.0, acorn@npm:^8.16.0":
+"acorn@npm:8.16.0, acorn@npm:^8.15.0, acorn@npm:^8.16.0":
   version: 8.16.0
   resolution: "acorn@npm:8.16.0"
   bin:

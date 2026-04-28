@@ -12,3 +12,10 @@ test/e2e/scenario/recorder/**                   @Datadog/rum-browser @Datadog/se
 
 # Docs
 /README.md    @Datadog/rum-browser @DataDog/documentation
+
+# Debugger
+packages/debugger                                               @Datadog/rum-browser @DataDog/debugger
+packages/debugger/README.md                                     @Datadog/rum-browser @DataDog/debugger @DataDog/documentation
+test/apps/instrumentation-overhead                              @Datadog/rum-browser @DataDog/debugger
+test/e2e/scenario/debugger.scenario.ts                          @Datadog/rum-browser @DataDog/debugger
+test/performance/scenarios/instrumentationOverhead.scenario.ts  @Datadog/rum-browser @DataDog/debugger
