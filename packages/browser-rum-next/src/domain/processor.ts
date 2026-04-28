@@ -3,6 +3,30 @@ import { flattenCauses, extractFingerprint } from '@datadog/core-next'
 import type { RumConfig } from './configuration'
 import { ResourceMatcher } from './resourceMatcher'
 
+interface PerformanceEntryData {
+  name: string
+  startTime: number
+  duration: number
+  initiatorType: string
+  responseStatus?: number
+  decodedBodySize?: number
+  encodedBodySize?: number
+  transferSize?: number
+  nextHopProtocol?: string
+  deliveryType?: string
+  renderBlockingStatus?: string
+  redirectStart: number
+  redirectEnd: number
+  domainLookupStart: number
+  domainLookupEnd: number
+  connectStart: number
+  connectEnd: number
+  secureConnectionStart: number
+  requestStart: number
+  responseStart: number
+  responseEnd: number
+}
+
 interface ProcessorDependencies {
   pipeline: Pipeline<Record<string, unknown>>
   config: RumConfig
@@ -19,7 +43,7 @@ function startProcessor({ pipeline, config }: ProcessorDependencies): void {
   // Performance entries → observation:resource
   if (config.trackResources) {
     pipeline.subscribe('resource:performance_entry', (data) => {
-      const entry = data as Record<string, unknown>
+      const entry = data as PerformanceEntryData
       const networkMatch = matcher.match(entry.name, entry.startTime)
 
       const resource: Record<string, unknown> = {

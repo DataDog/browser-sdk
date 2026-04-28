@@ -1,5 +1,11 @@
 import { ErrorHandling, ErrorSource, flattenCauses, extractFingerprint } from '.'
 
+function createErrorWithCause(message: string, cause: unknown): Error {
+  const error = new Error(message)
+  ;(error as any).cause = cause
+  return error
+}
+
 describe('error primitives', () => {
   describe('ErrorSource', () => {
     it('should define all expected source values', () => {
@@ -27,7 +33,7 @@ describe('error primitives', () => {
 
     it('should flatten a single cause', () => {
       const cause = new Error('root cause')
-      const error = new Error('top', { cause })
+      const error = createErrorWithCause('top', cause)
 
       const causes = flattenCauses(error)
 
@@ -36,8 +42,8 @@ describe('error primitives', () => {
 
     it('should flatten a chain of causes', () => {
       const root = new Error('root')
-      const mid = new Error('mid', { cause: root })
-      const top = new Error('top', { cause: mid })
+      const mid = createErrorWithCause('mid', root)
+      const top = createErrorWithCause('top', mid)
 
       const causes = flattenCauses(top)
 
@@ -47,14 +53,14 @@ describe('error primitives', () => {
     })
 
     it('should stop traversal when cause is not an Error', () => {
-      const error = new Error('top', { cause: 'string cause' as any })
+      const error = createErrorWithCause('top', 'string cause')
 
       expect(flattenCauses(error)).toBeUndefined()
     })
 
     it('should preserve error type name', () => {
       const cause = new TypeError('bad type')
-      const error = new Error('top', { cause })
+      const error = createErrorWithCause('top', cause)
 
       const causes = flattenCauses(error)
 

@@ -40,7 +40,9 @@ const rumExtension: Extension<'rum', RumInitConfiguration, RumConfig> = {
       trackResources: init.trackResources !== false,
       trackLongTasks: init.trackLongTasks !== false,
       trackErrors: init.trackErrors !== false,
-      tracingOptions: init.allowedTracingUrls ? normalizeTracingOptions(init.allowedTracingUrls) : [],
+      tracingOptions: init.allowedTracingUrls
+        ? normalizeTracingOptions(init.allowedTracingUrls as Parameters<typeof normalizeTracingOptions>[0])
+        : [],
       traceSampleRate,
       traceContextInjection: init.traceContextInjection ?? 'sampled',
     }
