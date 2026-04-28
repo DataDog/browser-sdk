@@ -101,3 +101,13 @@ export type {
   NetworkRequestResource,
   SdkEventMap,
 } from './domain/pipeline/events'
+
+export {
+  createIdentifier,
+  toPaddedHexadecimalString,
+  makeTracingHeaders,
+  normalizeTracingOptions,
+  findTracingOption,
+  DEFAULT_PROPAGATOR_TYPES,
+} from './domain/tracing'
+export type { Identifier, PropagatorType, TracingOption, MatchOption } from './domain/tracing'

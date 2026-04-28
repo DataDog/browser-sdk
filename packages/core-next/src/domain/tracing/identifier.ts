@@ -19,7 +19,7 @@ export function createIdentifier(bits: 64 | 63): Identifier {
       }
 
       // Decimal: use BigInt to avoid precision loss
-      const value = (BigInt(high >>> 0) << 32n) | BigInt(low >>> 0)
+      const value = (BigInt(high >>> 0) << BigInt(32)) | BigInt(low >>> 0)
       return value.toString(10)
     },
   }
