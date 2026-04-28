@@ -32,6 +32,8 @@ export function getEventBridge<T, E>() {
       return eventBridgeGlobal.getPrivacyLevel?.()
     },
     getIsTraceSampled() {
+      // Normalize null (explicit "no decision") and undefined (method missing) to undefined.
+      // In this case, the decision is based on the browser SDK config, not the bridge.
       const value = eventBridgeGlobal.getIsTraceSampled?.()
       if (value === true || value === false) {
         return value

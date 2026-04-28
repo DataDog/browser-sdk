@@ -237,7 +237,6 @@ export function createPreStartStrategy(
     getInternalContext: noop as () => undefined,
 
     stopSession: noop,
-    setTraceSampled: noop,
 
     addTiming(name, time = timeStampNow()) {
       bufferApiCalls.add((startRumResult) => startRumResult.addTiming(name, time))
@@ -327,15 +326,12 @@ export function createPreStartStrategy(
 }
 
 function overrideInitConfigurationForBridge(initConfiguration: RumInitConfiguration): RumInitConfiguration {
-  const bridge = getEventBridge()
-  const isTraceSampled = bridge?.getIsTraceSampled()
   return {
     ...initConfiguration,
     applicationId: '00000000-aaaa-0000-aaaa-000000000000',
     clientToken: 'empty',
     sessionSampleRate: 100,
-    defaultPrivacyLevel: initConfiguration.defaultPrivacyLevel ?? bridge?.getPrivacyLevel(),
-    traceSampleRate: isTraceSampled !== undefined ? (isTraceSampled ? 100 : 0) : initConfiguration.traceSampleRate,
+    defaultPrivacyLevel: initConfiguration.defaultPrivacyLevel ?? getEventBridge()?.getPrivacyLevel(),
   }
 }
 
