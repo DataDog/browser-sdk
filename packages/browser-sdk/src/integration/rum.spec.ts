@@ -1,6 +1,7 @@
 import { createSdk } from '../domain/sdk'
 import { rumProcessor } from '@datadog/browser-rum-next/processor'
 import { logsProcessor } from '@datadog/browser-logs-next/processor'
+import { datadogRum } from '@datadog/browser-rum-next'
 import { unregisterSdk } from '@datadog/core-next'
 
 async function tick(n = 3): Promise<void> {
@@ -137,5 +138,51 @@ describe('RUM integration', () => {
 
     expect(getRumLines(fetchSpy).filter((l) => l.includes('"type":"error"')).length).toBeGreaterThan(0)
     expect(getLogLines(fetchSpy).length).toBeGreaterThan(0)
+  })
+
+  it('manual addAction sends observation:action to RUM endpoint', async () => {
+    currentSdk = await createSdk({
+      clientToken: 'test-token',
+      site: 'datadoghq.com',
+      modules: [rumProcessor],
+      rum: {},
+    })
+
+    datadogRum.addAction('checkout')
+
+    await tick()
+    flushBatch()
+
+    const actionLines = getRumLines(fetchSpy).filter((l) => l.includes('"type":"action"'))
+    expect(actionLines.length).toBeGreaterThan(0)
+    const actionEvent = JSON.parse(actionLines[0])
+    expect(actionEvent.action).toBeDefined()
+    expect(actionEvent.action.target.name).toBe('checkout')
+    expect(actionEvent.action.type).toBe('custom')
+  })
+
+  it('addAction increments view action count', async () => {
+    currentSdk = await createSdk({
+      clientToken: 'test-token',
+      site: 'datadoghq.com',
+      modules: [rumProcessor],
+      rum: {},
+    })
+
+    // Flush initial view
+    await tick()
+    flushBatch()
+    fetchSpy.calls.reset()
+
+    datadogRum.addAction('buy')
+
+    await tick()
+    flushBatch()
+
+    const viewLines = getRumLines(fetchSpy).filter((l) => l.includes('"loadingType"'))
+    expect(viewLines.length).toBeGreaterThan(0)
+    const viewEvent = JSON.parse(viewLines[viewLines.length - 1])
+    expect(viewEvent.eventCounts).toBeDefined()
+    expect(viewEvent.eventCounts.actionCount).toBeGreaterThanOrEqual(1)
   })
 })
