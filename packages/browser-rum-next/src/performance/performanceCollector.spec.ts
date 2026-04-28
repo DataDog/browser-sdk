@@ -1,11 +1,11 @@
 import { Pipeline } from '@datadog/core-next'
-import { startResourceTimingCollection } from './resourceTimingCollector'
+import { startPerformanceCollection } from './performanceCollector'
 
-describe('startResourceTimingCollection', () => {
+describe('startPerformanceCollection', () => {
   it('returns a cleanup function', () => {
     const pipeline = new Pipeline<Record<string, unknown>>()
     pipeline.seal()
-    const stop = startResourceTimingCollection(pipeline)
+    const stop = startPerformanceCollection(pipeline)
     expect(typeof stop).toBe('function')
     stop()
   })

@@ -1,6 +1,5 @@
 import type { Pipeline, NetworkRequestResource } from '@datadog/core-next'
 import { flattenCauses, extractFingerprint } from '@datadog/core-next'
-import type { ResourceTimingEntry } from '../performance/types'
 import type { RumConfig } from './configuration'
 import { ResourceMatcher } from './resourceMatcher'
 
@@ -20,7 +19,7 @@ function startProcessor({ pipeline, config }: ProcessorDependencies): void {
   // Performance entries → observation:resource
   if (config.trackResources) {
     pipeline.subscribe('resource:performance_entry', (data) => {
-      const entry = data as ResourceTimingEntry
+      const entry = data as Record<string, unknown>
       const networkMatch = matcher.match(entry.name, entry.startTime)
 
       const resource: Record<string, unknown> = {
