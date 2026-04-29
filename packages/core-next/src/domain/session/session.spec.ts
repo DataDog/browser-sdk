@@ -6,7 +6,11 @@ import type { SessionOptions, SessionState, SessionStore } from './session'
 const SESSION_MAX_AGE = 4 * ONE_HOUR
 const SESSION_INACTIVITY_TIMEOUT = 15 * ONE_MINUTE
 
-function stubStore(initial?: SessionState): SessionStore & { state: SessionState | undefined } {
+function stubStore(initial?: SessionState): SessionStore & {
+  state: SessionState | undefined
+  triggerExternalChange: () => void
+} {
+  let externalCallback: (() => void) | undefined
   const stub = {
     state: initial,
     get: async () => stub.state,
@@ -16,7 +20,15 @@ function stubStore(initial?: SessionState): SessionStore & { state: SessionState
     clear: async () => {
       stub.state = undefined
     },
-    onExternalChange: () => () => {},
+    onExternalChange: (callback: () => void) => {
+      externalCallback = callback
+      return () => {
+        externalCallback = undefined
+      }
+    },
+    triggerExternalChange: () => {
+      externalCallback?.()
+    },
   }
   return stub
 }
@@ -218,6 +230,84 @@ describe('Session', () => {
       await session.touch()
 
       expect(store.state!.lastActivity).toBeGreaterThan(initialActivity)
+    })
+  })
+
+  describe('cross-tab synchronization', () => {
+    it('should emit renewed when another tab changes the session ID', async () => {
+      const { session, store } = await createSession()
+      const renewedSpy = jasmine.createSpy('renewed')
+      session.on('renewed', renewedSpy)
+      const originalId = session.getId()
+
+      // Simulate another tab renewing the session
+      store.state = { ...store.state!, id: 'new-session-from-other-tab' }
+      store.triggerExternalChange()
+
+      // Wait for async handler
+      await new Promise((r) => setTimeout(r, 0))
+
+      expect(renewedSpy).toHaveBeenCalledTimes(1)
+      expect(session.getId()).toBe('new-session-from-other-tab')
+      expect(session.getId()).not.toBe(originalId)
+    })
+
+    it('should emit expired when another tab clears the session', async () => {
+      const { session, store } = await createSession()
+      const expiredSpy = jasmine.createSpy('expired')
+      session.on('expired', expiredSpy)
+
+      // Simulate another tab clearing the session
+      store.state = undefined
+      store.triggerExternalChange()
+
+      await new Promise((r) => setTimeout(r, 0))
+
+      expect(expiredSpy).toHaveBeenCalledTimes(1)
+      expect(session.getId()).toBeUndefined()
+    })
+
+    it('should sync state when another tab updates lastActivity', async () => {
+      const { session, store } = await createSession()
+
+      // Simulate another tab touching the session
+      store.state = { ...store.state!, lastActivity: 99999 }
+      store.triggerExternalChange()
+
+      await new Promise((r) => setTimeout(r, 0))
+
+      // Session should have the updated state (no event emitted, just sync)
+      expect(session.getId()).toBe(store.state!.id)
+    })
+
+    it('should not emit expired twice from external changes', async () => {
+      const { session, store } = await createSession()
+      const expiredSpy = jasmine.createSpy('expired')
+      session.on('expired', expiredSpy)
+
+      store.state = undefined
+      store.triggerExternalChange()
+      await new Promise((r) => setTimeout(r, 0))
+
+      store.triggerExternalChange()
+      await new Promise((r) => setTimeout(r, 0))
+
+      expect(expiredSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('should stop watching on destroy()', async () => {
+      const { session, store } = await createSession()
+      const renewedSpy = jasmine.createSpy('renewed')
+      session.on('renewed', renewedSpy)
+
+      session.destroy()
+
+      // External change after destroy should not trigger event
+      store.state = { ...store.state!, id: 'after-destroy' }
+      store.triggerExternalChange()
+      await new Promise((r) => setTimeout(r, 0))
+
+      expect(renewedSpy).not.toHaveBeenCalled()
     })
   })
 })

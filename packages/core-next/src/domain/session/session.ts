@@ -44,21 +44,51 @@ class Session extends EventEmitter<SessionEvents> {
     this.now = options.now
   }
 
+  private stopWatching?: () => void
+
   static async create(options: SessionOptions): Promise<Session> {
     const existing = await options.store.get()
+    let session: Session
+
     if (existing) {
-      return new Session(existing, options)
+      session = new Session(existing, options)
+    } else {
+      const now = options.now()
+      const state: SessionState = {
+        id: options.generateId(),
+        deviceId: options.generateId(),
+        created: now,
+        lastActivity: now,
+      }
+      await options.store.set(state)
+      session = new Session(state, options)
     }
 
-    const now = options.now()
-    const state: SessionState = {
-      id: options.generateId(),
-      deviceId: options.generateId(),
-      created: now,
-      lastActivity: now,
-    }
-    await options.store.set(state)
-    return new Session(state, options)
+    // Watch for external changes (other tabs modifying the session)
+    session.stopWatching = options.store.onExternalChange(async () => {
+      const externalState = await options.store.get()
+
+      if (!externalState) {
+        // Session was cleared by another tab
+        if (!session.expired) {
+          session.expired = true
+          session.emit('expired')
+        }
+        return
+      }
+
+      if (externalState.id !== session.state.id) {
+        // Another tab renewed the session
+        session.state = externalState
+        session.expired = false
+        session.emit('renewed')
+      } else {
+        // Same session, sync the state (e.g., lastActivity updated by another tab)
+        session.state = externalState
+      }
+    })
+
+    return session
   }
 
   getId(): string | undefined {
@@ -108,6 +138,11 @@ class Session extends EventEmitter<SessionEvents> {
     }
     await this.store.set(this.state)
     this.emit('renewed')
+  }
+
+  destroy(): void {
+    this.stopWatching?.()
+    this.stopWatching = undefined
   }
 }
 
