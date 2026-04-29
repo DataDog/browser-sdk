@@ -433,7 +433,7 @@ export default tseslint.config(
   },
 
   {
-    files: ['packages/{rum,logs,rum-slim}/src/entries/*.ts'],
+    files: ['packages/{rum,logs,rum-slim,salesforce}/src/entries/*.ts'],
     rules: {
       'local-rules/disallow-enum-exports': 'error',
     },

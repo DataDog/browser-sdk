@@ -22,6 +22,9 @@ runMain(async () => {
       entry: {
         type: 'string',
       },
+      'single-bundle': {
+        type: 'boolean',
+      },
       verbose: {
         type: 'boolean',
         default: false,
@@ -48,6 +51,7 @@ runMain(async () => {
     await buildBundle({
       entry: values.entry ?? './src/entries/main.ts',
       filename: values.bundle,
+      singleBundle: !!values['single-bundle'],
       verbose: values.verbose,
     })
   }
@@ -55,7 +59,17 @@ runMain(async () => {
   printLog('Done.')
 })
 
-async function buildBundle({ entry, filename, verbose }: { entry: string; filename: string; verbose: boolean }) {
+async function buildBundle({
+  entry,
+  filename,
+  singleBundle,
+  verbose,
+}: {
+  entry: string
+  filename: string
+  singleBundle: boolean
+  verbose: boolean
+}) {
   await fs.rm('./bundle', { recursive: true, force: true })
   return new Promise<void>((resolve, reject) => {
     webpack(
@@ -63,6 +77,7 @@ async function buildBundle({ entry, filename, verbose }: { entry: string; filena
         mode: 'production',
         entry,
         filename,
+        plugins: singleBundle ? [new webpack.optimize.LimitChunkCountPlugin({ maxChunks: 1 })] : undefined,
       }),
       (error, stats) => {
         if (error) {

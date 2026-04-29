@@ -2,7 +2,7 @@ import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import { buildSalesforceInitConfiguration } from './salesforceInitConfiguration'
 
 describe('salesforce init configuration', () => {
-  it('forces the slim salesforce bundle into manual view tracking mode', () => {
+  it('forces the salesforce bundle into manual view tracking mode', () => {
     const initConfiguration = buildSalesforceInitConfiguration({
       applicationId: 'app-id',
       clientToken: 'client-token',

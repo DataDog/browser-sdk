@@ -1,9 +1,7 @@
 import { defineGlobal, getGlobalObject } from '@datadog/browser-core'
-import type { RumPublicApi, RumInitConfiguration } from '@datadog/browser-rum-core'
-import { makeRumPublicApi } from '@datadog/browser-rum-core'
+import { datadogRum as baseDatadogRum } from '@datadog/browser-rum'
+import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 import { buildSalesforceInitConfiguration } from '../boot/salesforceInitConfiguration'
-import { makeProfilerApiStub } from '../boot/stubProfilerApi'
-import { makeRecorderApiStub } from '../boot/stubRecorderApi'
 import { startSalesforceViewTracking } from '../domain/salesforceViewTracker'
 
 export type {
@@ -20,8 +18,15 @@ export type {
   ContextArray,
   RumInternalContext,
 } from '@datadog/browser-core'
+export { DefaultPrivacyLevel } from '@datadog/browser-core'
+
+/**
+ * @deprecated Use {@link DatadogRum} instead
+ */
+export type RumGlobal = RumPublicApi
 
 export type {
+  RumPublicApi as DatadogRum,
   RumInitConfiguration,
   RumBeforeSend,
   ViewOptions,
@@ -35,6 +40,8 @@ export type {
   PropagatorType,
   FeatureFlagsForEvents,
   MatchHeader,
+
+  // Events
   CommonProperties,
   RumEvent,
   RumActionEvent,
@@ -43,6 +50,8 @@ export type {
   RumResourceEvent,
   RumViewEvent,
   RumVitalEvent,
+
+  // Events context
   RumEventDomainContext,
   RumViewEventDomainContext,
   RumErrorEventDomainContext,
@@ -53,24 +62,27 @@ export type {
   RumOtherResourceEventDomainContext,
   RumLongTaskEventDomainContext,
 } from '@datadog/browser-rum-core'
+
 export { DEFAULT_TRACKED_RESOURCE_HEADERS } from '@datadog/browser-rum-core'
-export { DefaultPrivacyLevel } from '@datadog/browser-core'
-export type { RumPublicApi as DatadogRum } from '@datadog/browser-rum-core'
 
 const salesforceGlobal = getGlobalObject<BrowserWindow>()
 
-export const datadogRum = createSalesforceDatadogRum()
-
-defineGlobal(salesforceGlobal, 'DD_RUM', datadogRum)
+/**
+ * The global RUM instance. Use this to call RUM methods.
+ *
+ * @category Main
+ * @see {@link DatadogRum}
+ * @see [RUM Browser Monitoring Setup](https://docs.datadoghq.com/real_user_monitoring/browser/)
+ */
+export const datadogRum = createSalesforceDatadogRum(baseDatadogRum)
 
 interface BrowserWindow extends Window {
   DD_RUM?: RumPublicApi
 }
 
-function createSalesforceDatadogRum(): RumPublicApi {
-  const baseRum = makeRumPublicApi(makeRecorderApiStub(), makeProfilerApiStub(), {
-    sdkName: 'rum-slim',
-  })
+defineGlobal(salesforceGlobal, 'DD_RUM', datadogRum)
+
+function createSalesforceDatadogRum(baseRum: RumPublicApi): RumPublicApi {
   const baseInit = baseRum.init
   let stopSalesforceViewTracking: (() => void) | undefined
 
@@ -87,5 +99,3 @@ function createSalesforceDatadogRum(): RumPublicApi {
 
   return baseRum
 }
-
-// sssr shim

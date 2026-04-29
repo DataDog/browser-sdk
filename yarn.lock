@@ -436,6 +436,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@datadog/browser-rum-salesforce@workspace:packages/salesforce":
+  version: 0.0.0-use.local
+  resolution: "@datadog/browser-rum-salesforce@workspace:packages/salesforce"
+  dependencies:
+    "@datadog/browser-core": "npm:6.32.0"
+    "@datadog/browser-rum": "npm:6.32.0"
+    "@datadog/browser-rum-core": "npm:6.32.0"
+  peerDependencies:
+    "@datadog/browser-logs": 6.32.0
+  peerDependenciesMeta:
+    "@datadog/browser-logs":
+      optional: true
+  languageName: unknown
+  linkType: soft
+
 "@datadog/browser-rum-slim@workspace:packages/rum-slim":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-slim@workspace:packages/rum-slim"
@@ -474,7 +489,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-rum@workspace:*, @datadog/browser-rum@workspace:packages/rum":
+"@datadog/browser-rum@npm:6.32.0, @datadog/browser-rum@workspace:*, @datadog/browser-rum@workspace:packages/rum":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum@workspace:packages/rum"
   dependencies:

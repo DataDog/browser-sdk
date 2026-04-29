@@ -11,6 +11,7 @@ graph TD
   core["@datadog/browser-core\n(shared utilities)"]
   rum-core["@datadog/browser-rum-core\n(core RUM)"]
   rum["@datadog/browser-rum\n(full RUM)"]
+  salesforce["@datadog/browser-rum-salesforce\n(Salesforce RUM)"]
   rum-slim["@datadog/browser-rum-slim\n(lightweight RUM)"]
   rum-react["@datadog/browser-rum-react\n(React integration)"]
   logs["@datadog/browser-logs"]
@@ -19,6 +20,7 @@ graph TD
   core --> rum-core
   core --> logs
   rum-core --> rum
+  rum --> salesforce
   rum-core --> rum-slim
   rum --> rum-react
 ```

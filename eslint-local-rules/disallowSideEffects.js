@@ -28,8 +28,8 @@ const packagesRoot = path.resolve(import.meta.dirname, '..', 'packages')
 const pathsWithSideEffect = new Set([
   `${packagesRoot}/logs/src/entries/main.ts`,
   `${packagesRoot}/rum/src/entries/main.ts`,
+  `${packagesRoot}/salesforce/src/entries/main.ts`,
   `${packagesRoot}/rum-slim/src/entries/main.ts`,
-  `${packagesRoot}/rum-slim/src/entries/salesforce.ts`,
 ])
 
 // Those packages are known to have no side effects when evaluated
