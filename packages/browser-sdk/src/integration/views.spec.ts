@@ -56,7 +56,7 @@ describe('views integration', () => {
   }
 
   function getViewLines(): string[] {
-    return getRumLines().filter((l) => l.includes('"loadingType"'))
+    return getRumLines().filter((l) => l.includes('"loading_type"'))
   }
 
   it('initial view: observation:view is sent on SDK init', async () => {
@@ -72,7 +72,7 @@ describe('views integration', () => {
 
     const viewLines = getViewLines()
     expect(viewLines.length).toBeGreaterThan(0)
-    expect(viewLines[0]).toContain('"loadingType":"initial_load"')
+    expect(viewLines[0]).toContain('"loading_type":"initial_load"')
     expect(viewLines[0]).toContain('"url"')
   })
 
@@ -96,7 +96,7 @@ describe('views integration', () => {
     flushBatch()
 
     const viewLines = getViewLines()
-    const routeChangeLines = viewLines.filter((l) => l.includes('"loadingType":"route_change"'))
+    const routeChangeLines = viewLines.filter((l) => l.includes('"loading_type":"route_change"'))
     expect(routeChangeLines.length).toBeGreaterThan(0)
     expect(routeChangeLines[0]).toContain('"name":"checkout"')
   })
@@ -183,8 +183,8 @@ describe('views integration', () => {
     const viewLines = getViewLines()
     expect(viewLines.length).toBeGreaterThan(0)
     const event = JSON.parse(viewLines[0])
-    expect(typeof event.documentVersion).toBe('number')
-    expect(event.documentVersion).toBeGreaterThanOrEqual(1)
+    expect(typeof event._dd.document_version).toBe('number')
+    expect(event._dd.document_version).toBeGreaterThanOrEqual(1)
   })
 
   it('view observation includes isActive true for the current view', async () => {
@@ -201,7 +201,7 @@ describe('views integration', () => {
     const viewLines = getViewLines()
     expect(viewLines.length).toBeGreaterThan(0)
     const event = JSON.parse(viewLines[0])
-    expect(event.isActive).toBe(true)
+    expect(event.view.is_active).toBe(true)
   })
 
   it('multiple view observations may be emitted with increasing documentVersion', async () => {
@@ -223,14 +223,14 @@ describe('views integration', () => {
     // All view events must have valid documentVersion and isActive fields
     for (const line of viewLines) {
       const event = JSON.parse(line)
-      expect(typeof event.documentVersion).toBe('number')
-      expect(event.documentVersion).toBeGreaterThanOrEqual(1)
-      expect(typeof event.isActive).toBe('boolean')
+      expect(typeof event._dd.document_version).toBe('number')
+      expect(event._dd.document_version).toBeGreaterThanOrEqual(1)
+      expect(typeof event.view.is_active).toBe('boolean')
     }
 
     // If multiple events arrived, documentVersions must be monotonically increasing
     if (viewLines.length > 1) {
-      const versions = viewLines.map((l) => JSON.parse(l).documentVersion as number)
+      const versions = viewLines.map((l) => JSON.parse(l)._dd.document_version as number)
       for (let i = 1; i < versions.length; i++) {
         expect(versions[i]).toBeGreaterThan(versions[i - 1])
       }
@@ -259,7 +259,7 @@ describe('views integration', () => {
     expect(viewLines.length).toBeGreaterThan(0)
 
     const events = viewLines.map((l) => JSON.parse(l))
-    const finalizedView = events.find((e: any) => e.isActive === false)
+    const finalizedView = events.find((e: any) => e.view?.is_active === false)
     expect(finalizedView).toBeDefined()
   })
 })

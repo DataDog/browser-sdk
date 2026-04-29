@@ -198,10 +198,10 @@ describe('RUM integration', () => {
     await tick()
     flushBatch()
 
-    const viewLines = getRumLines(fetchSpy).filter((l) => l.includes('"loadingType"'))
+    const viewLines = getRumLines(fetchSpy).filter((l) => l.includes('"loading_type"'))
     expect(viewLines.length).toBeGreaterThan(0)
     const viewEvent = JSON.parse(viewLines[viewLines.length - 1])
-    expect(viewEvent.eventCounts).toBeDefined()
-    expect(viewEvent.eventCounts.actionCount).toBeGreaterThanOrEqual(1)
+    expect(viewEvent.view?.action).toBeDefined()
+    expect(viewEvent.view.action.count).toBeGreaterThanOrEqual(1)
   })
 })
