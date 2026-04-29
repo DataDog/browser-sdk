@@ -18,12 +18,15 @@ export function getGlobalObject<T = typeof globalThis>(): T {
     return globalThis as unknown as T
   }
 
-  if (typeof window === 'object') {
-    return window as unknown as T
-  }
-
+  // Under Lightning Web Security, third-party code should rely on `self` to
+  // access the sandbox global object. The Object.prototype fallback below can
+  // also fail there because Object.prototype is sealed.
   if (typeof self === 'object') {
     return self as unknown as T
+  }
+
+  if (typeof window === 'object') {
+    return window as unknown as T
   }
 
   let globalObject: unknown
