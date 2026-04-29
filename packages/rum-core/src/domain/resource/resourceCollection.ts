@@ -6,8 +6,6 @@ import {
   createTaskQueue,
   mockable,
   runOnReadyState,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
   matchList,
   safeTruncate,
   display,
@@ -102,9 +100,7 @@ function assembleResource(
   const startClocks = relativeToClocks(entry.startTime)
   const duration = computeResourceEntryDuration(entry)
 
-  const networkHeaders = isExperimentalFeatureEnabled(ExperimentalFeature.TRACK_RESOURCE_HEADERS)
-    ? computeNetworkHeaders(request, configuration)
-    : undefined
+  const networkHeaders = computeNetworkHeaders(request, configuration)
 
   const resourceEvent = combine(
     {

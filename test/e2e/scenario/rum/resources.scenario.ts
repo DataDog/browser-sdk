@@ -395,7 +395,6 @@ function expectToHaveValidTimings(resourceEvent: RumResourceEvent) {
 
 test.describe('resource headers with trackResourceHeaders', () => {
   const TRACK_RESOURCE_HEADERS_CONFIG = {
-    enableExperimentalFeatures: ['track_resource_headers'],
     trackResourceHeaders: true,
   }
 
@@ -478,7 +477,7 @@ test.describe('resource headers with trackResourceHeaders', () => {
     })
 
   createTest('collect default and custom headers using DEFAULT_TRACKED_RESOURCE_HEADERS pattern')
-    .withRum({ enableExperimentalFeatures: ['track_resource_headers'] })
+    .withRum()
     .withRumInit((configuration) => {
       configuration.trackResourceHeaders = [
         ...window.DD_RUM!.DEFAULT_TRACKED_RESOURCE_HEADERS.map((name) => ({ name })),

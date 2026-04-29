@@ -46,7 +46,6 @@ export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'data
  *   ],
  * })
  * ```
- * @hidden
  */
 export const DEFAULT_TRACKED_RESOURCE_HEADERS = [
   'cache-control',
@@ -290,7 +289,6 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @example
    * // Extract a partial value from a header
    * trackResourceHeaders: [{ url: /\/api\//, name: 'server-timing', extractor: /dur=(\d+)/, location: 'response' }]
-   * @hidden
    */
   trackResourceHeaders?: boolean | MatchHeader[] | undefined
 

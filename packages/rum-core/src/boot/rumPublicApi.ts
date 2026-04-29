@@ -526,8 +526,6 @@ export interface RumPublicApi extends PublicApi {
 
   /**
    * List of default headers used by the {@link RumInitConfiguration.trackResourceHeaders | trackResourceHeaders} option. See configuration example for extending them.
-   *
-   * @hidden
    */
   DEFAULT_TRACKED_RESOURCE_HEADERS: typeof DEFAULT_TRACKED_RESOURCE_HEADERS
 }

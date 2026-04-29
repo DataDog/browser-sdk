@@ -1,18 +1,7 @@
-import type { Duration, RelativeTime, ServerDuration, TaskQueue, TimeStamp, MatchOption } from '@datadog/browser-core'
-import {
-  createTaskQueue,
-  elapsed,
-  RequestType,
-  ResourceType,
-  toServerDuration,
-  addExperimentalFeatures,
-  ExperimentalFeature,
-  display,
-} from '@datadog/browser-core'
+import type { Duration, MatchOption, RelativeTime, ServerDuration, TaskQueue, TimeStamp } from '@datadog/browser-core'
+import { createTaskQueue, display, elapsed, RequestType, ResourceType, toServerDuration } from '@datadog/browser-core'
 import type { MockTelemetry } from '@datadog/browser-core/test'
-import { replaceMockable, registerCleanupTask, startMockTelemetry } from '@datadog/browser-core/test'
-import { resetExperimentalFeatures } from '@datadog/browser-core/src/tools/experimentalFeatures'
-import type { RumResourceEventDomainContext } from '../../domainContext.types'
+import { registerCleanupTask, replaceMockable, startMockTelemetry } from '@datadog/browser-core/test'
 import {
   collectAndValidateRawRumEvents,
   createPerformanceEntry,
@@ -20,18 +9,19 @@ import {
   mockPerformanceObserver,
   mockRumConfiguration,
 } from '../../../test'
+import type { RumPerformanceEntry, RumPerformanceResourceTiming } from '../../browser/performanceObservable'
+import { RumPerformanceEntryType } from '../../browser/performanceObservable'
+import { getNavigationEntry } from '../../browser/performanceUtils'
+import type { RumResourceEventDomainContext } from '../../domainContext.types'
 import type { RawRumEvent, RawRumResourceEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
+import type { MatchHeader, RumConfiguration } from '../configuration'
+import { validateAndBuildRumConfiguration } from '../configuration'
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { RequestCompleteEvent } from '../requestCollection'
-import type { RumConfiguration, MatchHeader } from '../configuration'
-import { validateAndBuildRumConfiguration } from '../configuration'
-import type { RumPerformanceEntry, RumPerformanceResourceTiming } from '../../browser/performanceObservable'
-import { RumPerformanceEntryType } from '../../browser/performanceObservable'
-import { createSpanIdentifier, createTraceIdentifier } from '../tracing/identifier'
 import { getDocumentTraceId } from '../tracing/getDocumentTraceId'
-import { getNavigationEntry } from '../../browser/performanceUtils'
+import { createSpanIdentifier, createTraceIdentifier } from '../tracing/identifier'
 import { startResourceCollection } from './resourceCollection'
 
 function buildMatchHeadersForAllUrls(headerNames: MatchOption[]): MatchHeader[] {
@@ -532,10 +522,6 @@ describe('resourceCollection', () => {
   })
 
   describe('network headers', () => {
-    beforeEach(() => {
-      addExperimentalFeatures([ExperimentalFeature.TRACK_RESOURCE_HEADERS])
-    })
-
     describe('Fetch', () => {
       it('should extract matching response headers from Fetch', () => {
         setupResourceCollection({
@@ -721,21 +707,6 @@ describe('resourceCollection', () => {
       const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
       expect(event.resource.response!.headers!['x-foo']).toBe('bar')
       expect(event.resource.response!.headers!['content-type']).toBeUndefined()
-    })
-
-    it('should not collect headers when experimental feature is disabled', () => {
-      resetExperimentalFeatures()
-      setupResourceCollection({ trackResourceHeaders: buildMatchHeadersForAllUrls(['content-type']) })
-
-      notifyRequest({
-        request: {
-          type: RequestType.FETCH,
-          response: new Response('', { headers: { 'Content-Type': 'text/html' } }),
-        },
-      })
-
-      const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
-      expect(event.resource.response).toBeUndefined()
     })
 
     describe('forbidden headers', () => {
