@@ -16,6 +16,8 @@ import { startClickCollection } from '../actions/clickCollector'
 import { startDomMutationCollection } from '../actions/domMutationCollector'
 import { startActionProcessor } from '../actions/actionProcessor'
 import { getDocumentTraceId } from '../domain/getDocumentTraceId'
+import { startVitalProcessor } from '../domain/vitals'
+import { startManualResourceProcessor } from '../domain/manualResource'
 
 interface RumPublicApi extends Record<string, unknown> {
   startView(name?: string): void
@@ -42,6 +44,12 @@ const rumProcessor: Module = {
     // Start action processor (click → observation:action, add_action → observation:action)
     startActionProcessor(context.pipeline)
 
+    // Start vital processor (start_vital + stop_vital + add_vital → observation:vital)
+    startVitalProcessor(context.pipeline)
+
+    // Start manual resource processor (start_resource + stop_resource → observation:resource)
+    startManualResourceProcessor(context.pipeline)
+
     // Register navigation enricher (adds id UUID) on resource:navigation and action:start_view
     context.pipeline.enrich('resource:navigation', navigationEnricher())
     context.pipeline.enrich('action:start_view', navigationEnricher())
@@ -61,6 +69,7 @@ const rumProcessor: Module = {
     context.transport.route('observation:error', 'rum')
     context.transport.route('observation:long_task', 'rum')
     context.transport.route('observation:action', 'rum')
+    context.transport.route('observation:vital', 'rum')
 
     // Start the processor (subscribes to resources, transforms to observations)
     startProcessor({

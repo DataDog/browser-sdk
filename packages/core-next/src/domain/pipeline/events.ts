@@ -40,6 +40,7 @@ interface NetworkRequestResource {
   error?: string
   traceId?: unknown // Identifier from tracing module
   spanId?: unknown
+  responseHeaders?: Array<{ name: string; value: string }>
 }
 
 // The shared event map used by createSdk
@@ -62,11 +63,17 @@ interface SdkEventMap {
   'action:add_action': unknown
   'action:start_action': unknown
   'action:stop_action': unknown
+  'action:start_vital': unknown
+  'action:stop_vital': unknown
+  'action:add_vital': unknown
+  'action:start_resource': unknown
+  'action:stop_resource': unknown
   'signal:network_request_start': unknown
   'observation:resource': unknown
   'observation:error': unknown
   'observation:long_task': unknown
   'observation:action': unknown
+  'observation:vital': unknown
   'signal:session_expired': void
   'signal:session_renewed': void
   [key: string]: unknown

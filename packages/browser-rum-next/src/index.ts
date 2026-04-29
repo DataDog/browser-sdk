@@ -36,6 +36,21 @@ const datadogRum = {
   stopAction(name?: string, options?: { actionKey?: string; context?: object }) {
     publish('action:stop_action', { name, ...options })
   },
+  startDurationVital(name: string, options?: { vitalKey?: string; context?: object }) {
+    publish('action:start_vital', { name, ...options })
+  },
+  stopDurationVital(name?: string, options?: { vitalKey?: string; context?: object }) {
+    publish('action:stop_vital', { name, ...options })
+  },
+  addDurationVital(name: string, value: number, options?: { context?: object }) {
+    publish('action:add_vital', { name, value, ...options })
+  },
+  startResource(name: string, options?: { resourceKey?: string; context?: object }) {
+    publish('action:start_resource', { name, ...options })
+  },
+  stopResource(name?: string, options?: { resourceKey?: string; context?: object }) {
+    publish('action:stop_resource', { name, ...options })
+  },
 }
 
 registerBridge('rum', {
