@@ -136,6 +136,30 @@ describe('rumProcessor', () => {
     expect(context.transport.route).toHaveBeenCalledWith('observation:action', 'rum')
   })
 
+  it('addFeatureFlagEvaluation is exposed on the public API', () => {
+    const context = createTestContext()
+    const api = init(context)
+
+    expect(typeof api.addFeatureFlagEvaluation).toBe('function')
+  })
+
+  it('addFeatureFlagEvaluation publishes action:add_feature_flag', async () => {
+    const context = createTestContext()
+    const { pipeline } = context
+    const actions: unknown[] = []
+
+    pipeline.subscribe('action:add_feature_flag', (e) => actions.push(e))
+
+    const api = init(context)
+    pipeline.seal()
+
+    api.addFeatureFlagEvaluation('my-flag', true)
+    await tick()
+
+    expect(actions.length).toBe(1)
+    expect(actions[0]).toEqual({ key: 'my-flag', value: true })
+  })
+
   it('action:add_action publishes observation:action via action processor', async () => {
     const context = createTestContext()
     const { pipeline } = context

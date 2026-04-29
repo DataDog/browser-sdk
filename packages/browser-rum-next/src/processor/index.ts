@@ -7,6 +7,11 @@ import { viewContextEnricher } from '../domain/enrichers/viewContextEnricher'
 import { displayEnricher } from '../domain/enrichers/displayEnricher'
 import { connectivityEnricher } from '../domain/enrichers/connectivityEnricher'
 import { pageStateEnricher } from '../domain/enrichers/pageStateEnricher'
+import { urlContextsEnricher } from '../domain/enrichers/urlContextsEnricher'
+import { featureFlagEnricher } from '../domain/enrichers/featureFlagEnricher'
+import { syntheticsEnricher } from '../domain/enrichers/syntheticsEnricher'
+import { ciVisibilityEnricher } from '../domain/enrichers/ciVisibilityEnricher'
+import { sourceCodeEnricher } from '../domain/enrichers/sourceCodeEnricher'
 import { startViewCollectors } from '../views/collectors'
 import { startCollectors as startPerformanceCollectors } from '../performance/collectors'
 import { navigationEnricher } from '../views/navigationEnricher'
@@ -22,6 +27,7 @@ import { startManualResourceProcessor } from '../domain/manualResource'
 interface RumPublicApi extends Record<string, unknown> {
   startView(name?: string): void
   addError(error: Error | string, context?: object): void
+  addFeatureFlagEvaluation(key: string, value: unknown): void
   getInternalContext(): Record<string, unknown>
 }
 
@@ -62,6 +68,22 @@ const rumProcessor: Module = {
     context.pipeline.enrich('observation:*', displayEnricher())
     context.pipeline.enrich('observation:*', connectivityEnricher())
     context.pipeline.enrich('observation:*', pageStateEnricher())
+    context.pipeline.enrich('observation:*', urlContextsEnricher())
+
+    // Feature flags
+    const featureFlags = featureFlagEnricher()
+    context.pipeline.enrich('observation:*', featureFlags.enricher)
+    context.pipeline.subscribe('action:add_feature_flag', (data) => {
+      const flag = data as { key: string; value: unknown }
+      featureFlags.addEvaluation(flag.key, flag.value)
+    })
+
+    // Synthetics and CI visibility
+    context.pipeline.enrich('observation:*', syntheticsEnricher())
+    context.pipeline.enrich('observation:*', ciVisibilityEnricher())
+
+    // Source code (error events only)
+    context.pipeline.enrich('observation:error', sourceCodeEnricher())
 
     // Register routes: all RUM observation types go to the 'rum' track
     context.transport.route('observation:view', 'rum')
@@ -123,6 +145,10 @@ const rumProcessor: Module = {
           name,
         }
         context.pipeline.publish('action:start_view', action)
+      },
+
+      addFeatureFlagEvaluation(key: string, value: unknown) {
+        context.pipeline.publish('action:add_feature_flag', { key, value })
       },
 
       addError(error: Error | string, errorContext?: object) {
