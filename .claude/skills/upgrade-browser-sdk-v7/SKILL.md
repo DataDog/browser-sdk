@@ -17,7 +17,7 @@ Systematic migration guide from v6 to v7. Follow steps 1-6 in order. Each step i
 | `datadoghq-browser-agent.com/us1/v6/datadog-logs.js`     | `datadoghq-browser-agent.com/us1/v7/datadog-logs.js`     |
 | `datadoghq-browser-agent.com/us1/v6/datadog-rum-slim.js` | `datadoghq-browser-agent.com/us1/v7/datadog-rum-slim.js` |
 
-Replace `us1` with your site: `eu1`, `us3`, `us5`, `ap1`. For US1-FED, the pattern is flat: `datadog-rum-v7.js` (no site prefix).
+Replace `us1` with your site: `eu1`, `us3`, `us5`, `ap1`, `ap2`. For US1-FED, the pattern is flat: `datadog-rum-v7.js` (no site prefix).
 
 Search: `grep -r "datadoghq-browser-agent.com.*v6" --include="*.html" --include="*.js" --include="*.ts" --include="*.tsx"`
 
@@ -80,7 +80,7 @@ Search init calls for these options and apply replacements:
 | -------------- | ----------------------------------------------------------------------------------------------------- |
 | `usePciIntake` | Delete. Standard intake is now PCI compliant. Update CSP if you had PCI-specific domains allowlisted. |
 
-Search: `grep -rn "betaEncodeCookieOptions\|allowFallbackToLocalStorage\|trackBfcacheViews\|trackEarlyRequests\|betaTrackActionsInShadowDom\|usePciIntake" --include="*.js" --include="*.ts" --include="*.tsx" --include="*.html"`
+Search: `grep -rn 'betaEncodeCookieOptions|allowFallbackToLocalStorage|trackBfcacheViews|trackEarlyRequests|betaTrackActionsInShadowDom|usePciIntake' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.html"`
 
 ## Step 4: Update changed APIs
 
@@ -113,7 +113,7 @@ DD_RUM.startDurationVital('checkout', { vitalKey: 'checkout-key' })
 DD_RUM.stopDurationVital('checkout', { vitalKey: 'checkout-key' })
 ```
 
-Search: `grep -rn "startDurationVital\|stopDurationVital\|DurationVitalReference" --include="*.js" --include="*.ts" --include="*.tsx"`
+Search: `grep -rn 'startDurationVital|stopDurationVital|DurationVitalReference' --include="*.js" --include="*.ts" --include="*.tsx"`
 
 ### 4c. Plugin API: `strategy` removed (RUM)
 
@@ -138,11 +138,14 @@ These are **default changes** — no code breaks, but behavior differs from v6:
 | Cancelled request errors removed (Logs)                              | Aborted fetch/XHR no longer generate network error logs.                                   | No action needed — reduces noise.                                                                                    |
 | Logs always requires session storage                                 | Without cookies or localStorage, Logs SDK won't start.                                     | Use `sessionPersistence: 'memory'` for worker environments.                                                          |
 | Session Replay: Change Records                                       | New serialization format. More accurate, less bandwidth.                                   | Update if you depend on raw segment format.                                                                          |
-| Async chunk names prefixed with `datadog`                            | e.g., `datadog-rum-recorder.js`.                                                           | Update CSP `script-src` rules or caching configs.                                                                    |
+| Async chunk names prefixed with `datadog`                            | e.g., `datadogRecorder-<hash>-datadog-rum.js`, `datadogProfiler-<hash>-datadog-rum.js`.    | Update CSP `script-src` rules or caching configs (allow `datadog*-datadog-rum.js`).                                  |
 
 ## Step 6: Update infrastructure
 
-- **CSP**: Add `crossorigin` to script-src. Update chunk names (`datadog-rum-recorder.js`). If you removed `usePciIntake`, update CSP for standard intake domain.
+- **CSP**:
+  - Add `crossorigin` to script-src.
+  - Update chunk names like `datadog*-datadog-rum.js` (e.g. `datadogRecorder`, `datadogProfiler`).
+  - If you removed `usePciIntake`, update CSP for standard intake domain.
 - **Cookies**: Add `_dd_s_v2` to cookie allowlists. The SDK auto-migrates from `_dd_s` on first load. Rollback to v6 starts new sessions.
 - **CORS** (if using `allowedTracingUrls`): Add `"baggage"` to `Access-Control-Allow-Headers` on traced origins — or set `propagateTraceBaggage: false`.
 - **Browser support**: Minimum Chrome 80+, Firefox 78+, Safari 14+ (ES2020). ~0.048% less coverage.
