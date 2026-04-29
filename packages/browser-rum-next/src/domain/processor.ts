@@ -26,6 +26,12 @@ interface PerformanceEntryData {
   requestStart: number
   responseStart: number
   responseEnd: number
+  workerStart?: number
+  fetchStart?: number
+}
+
+function generateId(prefix: string): string {
+  return typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${prefix}-${Date.now()}`
 }
 
 interface ProcessorDependencies {
@@ -47,10 +53,17 @@ function startProcessor({ pipeline, config }: ProcessorDependencies): void {
       const entry = data as PerformanceEntryData
       const networkMatch = matcher.match(entry.name, entry.startTime)
 
+      // Worker timing: service worker processing between workerStart and fetchStart
+      let workerTiming: { start: number; duration: number } | undefined
+      if (entry.workerStart && entry.fetchStart && entry.workerStart > 0 && entry.workerStart < entry.fetchStart) {
+        workerTiming = { start: entry.workerStart, duration: entry.fetchStart - entry.workerStart }
+      }
+
       const resource: Record<string, unknown> = {
         type: 'resource',
         date: Math.round(performance.timeOrigin + entry.startTime),
         resource: {
+          id: generateId('res'),
           url: entry.name,
           type: entry.initiatorType,
           duration: entry.duration,
@@ -69,6 +82,7 @@ function startProcessor({ pipeline, config }: ProcessorDependencies): void {
           ssl: computePhase(entry.secureConnectionStart, entry.connectEnd),
           first_byte: computePhase(entry.requestStart, entry.responseStart),
           download: computePhase(entry.responseStart, entry.responseEnd),
+          ...(workerTiming && { worker: workerTiming }),
         },
       }
 
@@ -101,13 +115,38 @@ function startProcessor({ pipeline, config }: ProcessorDependencies): void {
         type: 'error',
         date: Date.now(),
         error: {
+          id: generateId('err'),
           message: error.message,
           type: error.type,
           stack: error.stack,
           source: 'source',
+          handling: 'unhandled',
           fingerprint: extractFingerprint(errorObj),
           causes: errorObj ? flattenCauses(errorObj) : undefined,
         },
+        view: { in_foreground: typeof document !== 'undefined' && document.visibilityState === 'visible' },
+      })
+    })
+
+    pipeline.subscribe('action:add_error', (data) => {
+      const error = data as Record<string, unknown>
+      const errorObj = error.error as Error | undefined
+
+      pipeline.publish('observation:error', {
+        type: 'error',
+        date: Date.now(),
+        error: {
+          id: generateId('err'),
+          message: error.message,
+          type: error.type,
+          stack: error.stack,
+          source: 'custom',
+          handling: 'handled',
+          fingerprint: extractFingerprint(errorObj),
+          causes: errorObj ? flattenCauses(errorObj) : undefined,
+        },
+        view: { in_foreground: typeof document !== 'undefined' && document.visibilityState === 'visible' },
+        ...(error.context ? { context: error.context as object } : {}),
       })
     })
   }
@@ -119,7 +158,12 @@ function startProcessor({ pipeline, config }: ProcessorDependencies): void {
       pipeline.publish('observation:long_task', {
         type: 'long_task',
         date: Math.round(performance.timeOrigin + entry.startTime),
-        long_task: { duration: entry.duration },
+        long_task: {
+          id: generateId('lt'),
+          entry_type: 'long-task',
+          duration: entry.duration,
+          start_time: entry.startTime,
+        },
       })
     })
 
@@ -130,6 +174,7 @@ function startProcessor({ pipeline, config }: ProcessorDependencies): void {
         blockingDuration: number
         renderStart: number
         styleAndLayoutStart: number
+        firstUIEventTimestamp?: number
         scripts: Array<{
           sourceURL: string
           sourceFunctionName: string
@@ -147,10 +192,14 @@ function startProcessor({ pipeline, config }: ProcessorDependencies): void {
         type: 'long_task',
         date: Math.round(performance.timeOrigin + entry.startTime),
         long_task: {
+          id: generateId('lt'),
+          entry_type: 'long-animation-frame',
           duration: entry.duration,
+          start_time: entry.startTime,
           blocking_duration: entry.blockingDuration,
           render_start: entry.renderStart,
           style_and_layout_start: entry.styleAndLayoutStart,
+          ...(entry.firstUIEventTimestamp !== undefined && { first_ui_event_timestamp: entry.firstUIEventTimestamp }),
         },
         scripts: entry.scripts?.map((s) => ({
           source_url: s.sourceURL,

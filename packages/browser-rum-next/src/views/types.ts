@@ -57,6 +57,7 @@ export interface ViewObservation {
   startTime: number
   startDate: number
   date: number
+  /** @deprecated Use view.time_spent in serialized output */
   duration: number
   documentVersion: number
   isActive: boolean
@@ -86,6 +87,55 @@ export interface ViewObservation {
   [key: string]: unknown
 }
 
+/**
+ * Serialized view event — matches v6 wire format.
+ * Published to 'observation:view' in place of ViewObservation.
+ */
+export interface SerializedViewEvent {
+  type: 'view'
+  date: number
+  view: {
+    id: string
+    name?: string
+    url: string
+    referrer: string
+    loading_type: ViewLoadingType
+    is_active: boolean
+    time_spent: number
+    // Flat navigation timings
+    first_byte?: number
+    dom_interactive?: number
+    dom_content_loaded?: number
+    dom_complete?: number
+    load_event?: number
+    // Flat web vitals
+    first_contentful_paint?: number
+    largest_contentful_paint?: number
+    largest_contentful_paint_target_selector?: string
+    cumulative_layout_shift?: number
+    cumulative_layout_shift_target_selector?: string
+    interaction_to_next_paint?: number
+    interaction_to_next_paint_target_selector?: string
+    loading_time?: number
+    // Event counts
+    error: { count: number }
+    action: { count: number }
+    resource: { count: number }
+    long_task: { count: number }
+    frustration: { count: number }
+  }
+  _dd: {
+    document_version: number
+  }
+  /** Performance detail sub-object for deeper drill-down */
+  performance?: {
+    fcp?: { timestamp: number }
+    lcp?: { timestamp: number; target_selector?: string }
+    cls?: { score: number; timestamp?: number; target_selector?: string }
+    inp?: { duration: number; timestamp?: number; target_selector?: string }
+  }
+}
+
 export interface ViewChangedSignal {
   viewId: string
 }
@@ -95,7 +145,7 @@ declare module '@datadog/core-next' {
   interface SdkEventMap {
     'resource:navigation': NavigationResource
     'action:start_view': StartViewAction
-    'observation:view': ViewObservation
+    'observation:view': SerializedViewEvent
     'signal:view_changed': ViewChangedSignal
   }
 }

@@ -1,5 +1,5 @@
 import type { Pipeline } from '@datadog/core-next'
-import type { ViewObservation, ViewChangedSignal, ViewLoadingType, EventCounts } from './types'
+import type { ViewObservation, SerializedViewEvent, ViewChangedSignal, ViewLoadingType, EventCounts } from './types'
 import { trackCls } from './metrics/trackCls'
 import { trackFcp } from './metrics/trackFcp'
 import { trackLcp } from './metrics/trackLcp'
@@ -44,7 +44,7 @@ function startProcessor({ pipeline }: ProcessorDependencies): void {
       currentView.isActive = false
       currentView.duration = performance.now() - currentView.startTime
       currentView.documentVersion++
-      pipeline.publish('observation:view', { ...currentView })
+      publishSerializedView(currentView)
     }
 
     // Reset trackers
@@ -110,7 +110,74 @@ function startProcessor({ pipeline }: ProcessorDependencies): void {
       currentView.navigationTimings = navTimings.get()
     }
 
-    pipeline.publish('observation:view', { ...currentView })
+    publishSerializedView(currentView)
+  }
+
+  function publishSerializedView(view: ViewObservation): void {
+    const clsMetric = view.cumulativeLayoutShift
+    const lcpMetric = view.largestContentfulPaint
+    const inpMetric = view.interactionToNextPaint
+    const fcpValue = view.firstContentfulPaint
+    const navTiming = view.navigationTimings
+    const counts = view.eventCounts ?? createEmptyEventCounts()
+
+    const event: SerializedViewEvent = {
+      type: 'view',
+      date: view.startDate,
+      view: {
+        id: view.id,
+        name: view.name,
+        url: view.url,
+        referrer: view.referrer,
+        loading_type: view.loadingType,
+        is_active: view.isActive,
+        time_spent: view.duration,
+        // Flat navigation timings
+        first_byte: navTiming?.firstByte,
+        dom_interactive: navTiming?.domInteractive,
+        dom_content_loaded: navTiming?.domContentLoaded,
+        dom_complete: navTiming?.domComplete,
+        load_event: navTiming?.loadEvent,
+        // Flat web vitals
+        first_contentful_paint: fcpValue,
+        largest_contentful_paint: lcpMetric?.value,
+        largest_contentful_paint_target_selector: lcpMetric?.targetSelector,
+        cumulative_layout_shift: clsMetric?.value,
+        cumulative_layout_shift_target_selector: clsMetric?.targetSelector,
+        interaction_to_next_paint: inpMetric?.value,
+        interaction_to_next_paint_target_selector: inpMetric?.targetSelector,
+        loading_time: view.loadingTime,
+        // Event counts
+        error: { count: counts.errorCount },
+        action: { count: counts.actionCount },
+        resource: { count: counts.resourceCount },
+        long_task: { count: counts.longTaskCount },
+        frustration: { count: counts.frustrationCount },
+      },
+      _dd: {
+        document_version: view.documentVersion,
+      },
+    }
+
+    // Performance detail sub-object
+    const performance: SerializedViewEvent['performance'] = {}
+    if (fcpValue !== undefined) {
+      performance.fcp = { timestamp: fcpValue }
+    }
+    if (lcpMetric) {
+      performance.lcp = { timestamp: lcpMetric.value, target_selector: lcpMetric.targetSelector }
+    }
+    if (clsMetric) {
+      performance.cls = { score: clsMetric.value, target_selector: clsMetric.targetSelector }
+    }
+    if (inpMetric) {
+      performance.inp = { duration: inpMetric.value, target_selector: inpMetric.targetSelector }
+    }
+    if (Object.keys(performance).length > 0) {
+      event.performance = performance
+    }
+
+    pipeline.publish('observation:view', event)
   }
 
   // Navigation events → new view

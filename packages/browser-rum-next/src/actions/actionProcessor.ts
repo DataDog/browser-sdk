@@ -101,6 +101,7 @@ function startActionProcessor(pipeline: Pipeline<Record<string, unknown>>): void
             frustration: { type: frustrationTypes },
           }),
         },
+        view: { in_foreground: typeof document !== 'undefined' && document.visibilityState === 'visible' },
         _dd: {
           action: {
             target: {
@@ -122,7 +123,7 @@ function startActionProcessor(pipeline: Pipeline<Record<string, unknown>>): void
   const trackedActions = new Map<string, { startTime: number; startDate: number }>()
 
   pipeline.subscribe('action:add_action', (data) => {
-    const action = data as { name: string; context?: object }
+    const action = data as { name: string; type?: string; context?: object }
     const observation: Record<string, unknown> = {
       type: 'action',
       date: Date.now(),
@@ -131,12 +132,13 @@ function startActionProcessor(pipeline: Pipeline<Record<string, unknown>>): void
           typeof crypto !== 'undefined' && crypto.randomUUID
             ? crypto.randomUUID()
             : `action-${Date.now()}`,
-        type: 'custom',
+        type: action.type || 'custom',
         target: { name: action.name },
         error: { count: 0 },
         long_task: { count: 0 },
         resource: { count: 0 },
       },
+      view: { in_foreground: typeof document !== 'undefined' && document.visibilityState === 'visible' },
     }
     if (action.context) {
       observation.context = action.context
@@ -172,6 +174,7 @@ function startActionProcessor(pipeline: Pipeline<Record<string, unknown>>): void
         long_task: { count: 0 },
         resource: { count: 0 },
       },
+      view: { in_foreground: typeof document !== 'undefined' && document.visibilityState === 'visible' },
     }
     if (action.context) {
       observation.context = action.context

@@ -26,6 +26,19 @@ describe('startActionProcessor', () => {
       expect((actions[0].action as any).target.name).toBe('checkout')
     })
 
+    it('addAction with explicit type uses that type', async () => {
+      pipeline.publish('action:add_action', { name: 'swipe-left', type: 'swipe' })
+      await tick()
+      expect(actions.length).toBe(1)
+      expect((actions[0].action as any).type).toBe('swipe')
+    })
+
+    it('addAction includes view.in_foreground', async () => {
+      pipeline.publish('action:add_action', { name: 'checkout' })
+      await tick()
+      expect(typeof (actions[0] as any).view.in_foreground).toBe('boolean')
+    })
+
     it('addAction includes context when provided', async () => {
       pipeline.publish('action:add_action', { name: 'buy', context: { item: 'shoes' } })
       await tick()
@@ -228,6 +241,34 @@ describe('startActionProcessor', () => {
       pipeline.publish('action:add_action', { name: 'test' })
       await tick()
       expect((actions[0].action as any).type).toBe('custom')
+    })
+
+    it('click action includes view.in_foreground', (done) => {
+      jasmine.clock().install()
+
+      pipeline.publish('action:click', {
+        name: 'Click',
+        nameSource: 'text_content',
+        targetSelector: 'button',
+        targetWidth: 100,
+        targetHeight: 40,
+        positionX: 50,
+        positionY: 20,
+        pointerUpDelay: 5,
+        startTime: performance.now(),
+        startDate: Date.now(),
+      })
+
+      jasmine.clock().tick(150)
+      jasmine.clock().tick(1100)
+
+      setTimeout(() => {
+        expect(actions.length).toBe(1)
+        expect(typeof (actions[0] as any).view.in_foreground).toBe('boolean')
+        jasmine.clock().uninstall()
+        done()
+      }, 0)
+      jasmine.clock().tick(1)
     })
   })
 })

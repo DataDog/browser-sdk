@@ -54,6 +54,8 @@ export default defineConfig({
       '@datadog/core-next': path.resolve(__dirname, '../../packages/core-next/src'),
       '@datadog/browser-sdk': path.resolve(__dirname, '../../packages/browser-sdk/src'),
       '@datadog/browser-logs-next': path.resolve(__dirname, '../../packages/browser-logs-next/src'),
+      '@datadog/browser-rum-next/processor': path.resolve(__dirname, '../../packages/browser-rum-next/src/processor'),
+      '@datadog/browser-rum-next': path.resolve(__dirname, '../../packages/browser-rum-next/src'),
     },
   },
   server: {

@@ -144,6 +144,31 @@ describe('startProcessor', () => {
     expect(error.message).toBe('Something went wrong')
     expect(error.type).toBe('TypeError')
     expect(error.source).toBe('source')
+    expect(error.id).toBeDefined()
+    expect(error.handling).toBe('unhandled')
+    const view = obs.view as Record<string, unknown>
+    expect(typeof view.in_foreground).toBe('boolean')
+  })
+
+  it('action:add_error publishes handled error', async () => {
+    const observations: unknown[] = []
+    pipeline.subscribe('observation:error', (data) => observations.push(data))
+
+    startProcessor({ pipeline, config: makeConfig() })
+    pipeline.seal()
+
+    pipeline.publish('action:add_error', {
+      message: 'User caught this',
+      type: 'Error',
+    })
+    await tick()
+
+    expect(observations.length).toBe(1)
+    const obs = observations[0] as Record<string, unknown>
+    const error = obs.error as Record<string, unknown>
+    expect(error.handling).toBe('handled')
+    expect(error.source).toBe('custom')
+    expect(error.id).toBeDefined()
   })
 
   it('transforms resource:long_task into observation:long_task', async () => {
@@ -161,6 +186,84 @@ describe('startProcessor', () => {
     expect(obs.type).toBe('long_task')
     const longTask = obs.long_task as Record<string, unknown>
     expect(longTask.duration).toBe(150)
+    expect(longTask.id).toBeDefined()
+    expect(longTask.entry_type).toBe('long-task')
+    expect(longTask.start_time).toBe(500)
+  })
+
+  it('transforms resource:long_animation_frame into observation:long_task with entry_type long-animation-frame', async () => {
+    const observations: unknown[] = []
+    pipeline.subscribe('observation:long_task', (data) => observations.push(data))
+
+    startProcessor({ pipeline, config: makeConfig() })
+    pipeline.seal()
+
+    pipeline.publish('resource:long_animation_frame', {
+      startTime: 1000,
+      duration: 200,
+      blockingDuration: 150,
+      renderStart: 1050,
+      styleAndLayoutStart: 1080,
+      firstUIEventTimestamp: 1010,
+      scripts: [],
+    })
+    await tick()
+
+    expect(observations.length).toBe(1)
+    const obs = observations[0] as Record<string, unknown>
+    expect(obs.type).toBe('long_task')
+    const longTask = obs.long_task as Record<string, unknown>
+    expect(longTask.id).toBeDefined()
+    expect(longTask.entry_type).toBe('long-animation-frame')
+    expect(longTask.duration).toBe(200)
+    expect(longTask.start_time).toBe(1000)
+    expect(longTask.first_ui_event_timestamp).toBe(1010)
+  })
+
+  it('resource observation includes resource.id', async () => {
+    const observations: unknown[] = []
+    pipeline.subscribe('observation:resource', (data) => observations.push(data))
+
+    startProcessor({ pipeline, config: makeConfig() })
+    pipeline.seal()
+
+    pipeline.publish('resource:performance_entry', makePerformanceEntry())
+    await tick()
+
+    const resource = (observations[0] as Record<string, unknown>).resource as Record<string, unknown>
+    expect(resource.id).toBeDefined()
+    expect(typeof resource.id).toBe('string')
+  })
+
+  it('resource observation includes worker timing when workerStart < fetchStart', async () => {
+    const observations: unknown[] = []
+    pipeline.subscribe('observation:resource', (data) => observations.push(data))
+
+    startProcessor({ pipeline, config: makeConfig() })
+    pipeline.seal()
+
+    pipeline.publish('resource:performance_entry', makePerformanceEntry({ workerStart: 5, fetchStart: 15 }))
+    await tick()
+
+    const resource = (observations[0] as Record<string, unknown>).resource as Record<string, unknown>
+    expect(resource.worker).toBeDefined()
+    const worker = resource.worker as Record<string, unknown>
+    expect(worker.start).toBe(5)
+    expect(worker.duration).toBe(10)
+  })
+
+  it('resource observation omits worker timing when workerStart is 0', async () => {
+    const observations: unknown[] = []
+    pipeline.subscribe('observation:resource', (data) => observations.push(data))
+
+    startProcessor({ pipeline, config: makeConfig() })
+    pipeline.seal()
+
+    pipeline.publish('resource:performance_entry', makePerformanceEntry({ workerStart: 0, fetchStart: 15 }))
+    await tick()
+
+    const resource = (observations[0] as Record<string, unknown>).resource as Record<string, unknown>
+    expect(resource.worker).toBeUndefined()
   })
 
   it('includes _dd.trace_id and _dd.span_id when network match has traceId and spanId', async () => {

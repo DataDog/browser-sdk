@@ -15,12 +15,12 @@ function stubSession(id: string | undefined): Session {
 }
 
 describe('sessionEnricher', () => {
-  it('should add session.id to the event', () => {
+  it('should add session.id and session.type to the event', () => {
     const enricher = sessionEnricher(stubSession('session-123'))
 
     const result = enricher.transform({ message: 'test' })
 
-    expect(result).toEqual({ message: 'test', session: { id: 'session-123' } })
+    expect(result).toEqual({ message: 'test', session: { id: 'session-123', type: 'user' } })
   })
 
   it('should discard events when session is expired', () => {
@@ -36,7 +36,15 @@ describe('sessionEnricher', () => {
 
     const result = enricher.transform({ message: 'test', status: 'info', origin: 'logger' })
 
-    expect(result).toEqual({ message: 'test', status: 'info', origin: 'logger', session: { id: 'abc' } })
+    expect(result).toEqual({ message: 'test', status: 'info', origin: 'logger', session: { id: 'abc', type: 'user' } })
+  })
+
+  it('should set session.type to user', () => {
+    const enricher = sessionEnricher(stubSession('abc'))
+
+    const result = enricher.transform({}) as Record<string, unknown>
+
+    expect((result.session as Record<string, unknown>).type).toBe('user')
   })
 
   it('should have name "session"', () => {
