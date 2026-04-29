@@ -2,6 +2,7 @@ import type { Pipeline, NetworkRequestResource } from '@datadog/core-next'
 import { flattenCauses, extractFingerprint } from '@datadog/core-next'
 import type { RumConfig } from './configuration'
 import { ResourceMatcher } from './resourceMatcher'
+import { extractGraphQLMetadata } from './graphql'
 
 interface PerformanceEntryData {
   name: string
@@ -76,6 +77,13 @@ function startProcessor({ pipeline, config }: ProcessorDependencies): void {
           trace_id: String(networkMatch.traceId),
           span_id: String(networkMatch.spanId),
           rule_psr: config.traceSampleRate !== undefined ? config.traceSampleRate / 100 : undefined,
+        }
+      }
+
+      if (entry.name.toLowerCase().includes('graphql')) {
+        const graphql = extractGraphQLMetadata(entry.name)
+        if (graphql.operationType || graphql.operationName) {
+          ;(resource.resource as Record<string, unknown>).graphql = graphql
         }
       }
 
