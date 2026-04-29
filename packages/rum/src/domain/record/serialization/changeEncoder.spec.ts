@@ -1,6 +1,6 @@
 import { ChangeType } from '../../../types'
 import type { StringId } from '../itemIds'
-import { createStringIds } from '../itemIds'
+import { createStringIds, StringIdConstants } from '../itemIds'
 import type { ChangeEncoder } from './changeEncoder'
 import { createChangeEncoder } from './changeEncoder'
 
@@ -144,7 +144,7 @@ describe('ChangeEncoder', () => {
   describe('soft max size of the string table', () => {
     // Simulates a full string table without actually inserting a million entries.
     const simulateFullStringTable = () => {
-      Object.defineProperty(stringIds, 'size', { get: () => 1_000_000, configurable: true })
+      Object.defineProperty(stringIds, 'size', { get: () => StringIdConstants.SOFT_MAX_SIZE, configurable: true })
     }
 
     it('does not add new strings to the table once the soft max size is reached', () => {
