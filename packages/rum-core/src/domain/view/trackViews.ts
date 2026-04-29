@@ -151,8 +151,10 @@ export function trackViews(
   function startViewLifeCycle() {
     lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, (event) => {
       const context = currentView.contextManager.getContext()
-      context.is_session_renewal = true
-      context.renew_event = event as any
+      if (event) {
+        context.is_session_renewal = true
+        context.renew_event = event as any
+      }
 
       currentView = startNewView(ViewLoadingType.SESSION_RENEWAL, undefined, {
         // Renew view on session renewal

@@ -24,6 +24,7 @@ import { isSampled } from '../sampler'
 import { TelemetryMetrics, addTelemetryMetrics } from '../telemetry'
 import { monitorError } from '../../tools/monitor'
 import { getCookies } from '../../browser/cookie'
+import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import type { SessionState } from './sessionState'
@@ -41,7 +42,7 @@ import { getSessionStoreStrategy } from './sessionStore'
 export interface SessionManager {
   findSession: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => SessionContext | undefined
   findTrackedSession: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => SessionContext | undefined
-  renewObservable: Observable<SessionRenewalEvent>
+  renewObservable: Observable<SessionRenewalEvent | undefined>
   expireObservable: Observable<void>
   expire: () => void
   updateSessionState: (state: Partial<SessionState>) => void
@@ -88,7 +89,7 @@ export async function startSessionManager(
   trackingConsentState: TrackingConsentState
 ): Promise<SessionManager | undefined> {
   const startTime = relativeNow()
-  const renewObservable = new Observable<SessionRenewalEvent>()
+  const renewObservable = new Observable<SessionRenewalEvent | undefined>()
   const expireObservable = new Observable<void>()
   let expireContext: SessionDebugContext | undefined
 
@@ -248,14 +249,16 @@ export async function startSessionManager(
 
     if (hadSession && (!hasSession || sessionIdChanged)) {
       // Session expired or replaced
-      expireContext = {
-        previousSession: previousSession && { ...previousSession },
-        newState: { ...newState },
-        from,
-        cookieValues,
-        cookies: getCookies(SESSION_STORE_KEY),
-        locksAvailable: Boolean(globalThis.navigator?.locks),
-        cookieStoreAvailable: Boolean(globalThis.cookieStore),
+      if (isExperimentalFeatureEnabled(ExperimentalFeature.SESSION_RENEWAL_DEBUG_CONTEXT)) {
+        expireContext = {
+          previousSession: previousSession && { ...previousSession },
+          newState: { ...newState },
+          from,
+          cookieValues,
+          cookies: getCookies(SESSION_STORE_KEY),
+          locksAvailable: Boolean(globalThis.navigator?.locks),
+          cookieStoreAvailable: Boolean(globalThis.cookieStore),
+        }
       }
       if (!hasSession) {
         sessionExpired = true
@@ -271,18 +274,22 @@ export async function startSessionManager(
       }
       // New session appeared
       sessionContextHistory.add(buildSessionContext(newState), relativeNow())
-      renewObservable.notify({
-        expire: expireContext,
-        renew: {
-          previousSession: previousSession && { ...previousSession },
-          newState: { ...newState },
-          from,
-          cookieValues,
-          cookies: getCookies(SESSION_STORE_KEY),
-          locksAvailable: Boolean(globalThis.navigator?.locks),
-          cookieStoreAvailable: Boolean(globalThis.cookieStore),
-        },
-      })
+      renewObservable.notify(
+        isExperimentalFeatureEnabled(ExperimentalFeature.SESSION_RENEWAL_DEBUG_CONTEXT)
+          ? {
+              expire: expireContext,
+              renew: {
+                previousSession: previousSession && { ...previousSession },
+                newState: { ...newState },
+                from,
+                cookieValues,
+                cookies: getCookies(SESSION_STORE_KEY),
+                locksAvailable: Boolean(globalThis.navigator?.locks),
+                cookieStoreAvailable: Boolean(globalThis.cookieStore),
+              },
+            }
+          : undefined
+      )
     } else if (hadSession && hasSession && !sessionIdChanged) {
       // Same session,
       // Mutate the session context in the history for replay forced changes

@@ -96,7 +96,7 @@ export interface LifeCycleEventMap {
   [LifeCycleEventTypeAsConst.REQUEST_STARTED]: RequestStartEvent
   [LifeCycleEventTypeAsConst.REQUEST_COMPLETED]: RequestCompleteEvent
   [LifeCycleEventTypeAsConst.SESSION_EXPIRED]: void
-  [LifeCycleEventTypeAsConst.SESSION_RENEWED]: SessionRenewalEvent
+  [LifeCycleEventTypeAsConst.SESSION_RENEWED]: SessionRenewalEvent | undefined
   [LifeCycleEventTypeAsConst.PAGE_MAY_EXIT]: PageMayExitEvent
   [LifeCycleEventTypeAsConst.RAW_RUM_EVENT_COLLECTED]: RawRumEventCollectedData
   [LifeCycleEventTypeAsConst.RUM_EVENT_COLLECTED]: AssembledRumEvent
