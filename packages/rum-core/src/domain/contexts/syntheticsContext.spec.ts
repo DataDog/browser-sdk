@@ -12,6 +12,10 @@ describe('getSyntheticsContext', () => {
     hooks = createHooks()
   })
 
+  afterEach(() => {
+    delete (window as unknown as { DD_RUM?: unknown }).DD_RUM
+  })
+
   describe('assemble hook', () => {
     it('should set the synthetics context defined by global variables', () => {
       mockSyntheticsWorkerValues({ context: { test_id: 'foo', result_id: 'bar' } }, 'globals')
@@ -169,6 +173,76 @@ describe('getSyntheticsContext', () => {
       } as AssembleHookParams)
 
       expect(defaultRumEventAttributes).toBeUndefined()
+    })
+
+    describe('original_application_id', () => {
+      beforeEach(() => {
+        mockSyntheticsWorkerValues({ context: { test_id: 'foo', result_id: 'bar' } }, 'globals')
+        startSyntheticsContext(hooks)
+      })
+
+      it('should include original_application_id when DD_RUM.getInitConfiguration returns an applicationId', () => {
+        ;(window as unknown as { DD_RUM: unknown }).DD_RUM = {
+          getInitConfiguration: () => ({ applicationId: 'cust-app-id' }),
+        }
+
+        const result = hooks.triggerHook(HookNames.Assemble, {
+          eventType: 'view',
+          startTime: 0 as RelativeTime,
+        } as AssembleHookParams)
+
+        expect((result as any).synthetics.original_application_id).toBe('cust-app-id')
+      })
+
+      it('should not include original_application_id when DD_RUM is absent', () => {
+        const result = hooks.triggerHook(HookNames.Assemble, {
+          eventType: 'view',
+          startTime: 0 as RelativeTime,
+        } as AssembleHookParams)
+
+        expect((result as any).synthetics).not.toEqual(
+          jasmine.objectContaining({ original_application_id: jasmine.anything() })
+        )
+      })
+
+      it('should not include original_application_id when getInitConfiguration returns no applicationId', () => {
+        ;(window as unknown as { DD_RUM: unknown }).DD_RUM = {
+          getInitConfiguration: () => ({}),
+        }
+
+        const result = hooks.triggerHook(HookNames.Assemble, {
+          eventType: 'view',
+          startTime: 0 as RelativeTime,
+        } as AssembleHookParams)
+
+        expect((result as any).synthetics).not.toEqual(
+          jasmine.objectContaining({ original_application_id: jasmine.anything() })
+        )
+      })
+
+      it('should not throw and should not include original_application_id when getInitConfiguration throws', () => {
+        ;(window as unknown as { DD_RUM: unknown }).DD_RUM = {
+          getInitConfiguration: () => {
+            throw new Error('not ready')
+          },
+        }
+
+        expect(() => {
+          hooks.triggerHook(HookNames.Assemble, {
+            eventType: 'view',
+            startTime: 0 as RelativeTime,
+          } as AssembleHookParams)
+        }).not.toThrow()
+
+        const result = hooks.triggerHook(HookNames.Assemble, {
+          eventType: 'view',
+          startTime: 0 as RelativeTime,
+        } as AssembleHookParams)
+
+        expect((result as any).synthetics).not.toEqual(
+          jasmine.objectContaining({ original_application_id: jasmine.anything() })
+        )
+      })
     })
   })
 })
