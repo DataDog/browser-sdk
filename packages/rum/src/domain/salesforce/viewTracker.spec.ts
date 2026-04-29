@@ -1,6 +1,6 @@
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
-import { startSalesforceViewTracking } from './salesforceViewTracker'
+import { startSalesforceViewTracking } from './viewTracker'
 
 describe('salesforce view tracker', () => {
   let clock: Clock
