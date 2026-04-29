@@ -129,6 +129,7 @@ describe('profiler', () => {
     return {
       profiler,
       profilingContextManager,
+      sessionManager,
       mockedRumProfilerTrace,
       addLongTask: (longTask: LongTaskContext) => {
         longTaskHistory.add(longTask, relativeNow()).close(addDuration(relativeNow(), longTask.duration))
@@ -910,6 +911,26 @@ describe('profiler', () => {
     // because the inflated timeStamp-based duration extends the query window.
     expect(trace.longTasks.length).toBe(1)
     expect(trace.longTasks[0].id).toBe('long-task-inside')
+  })
+
+  it('should use the profiling start time when looking up the session id', async () => {
+    const clock = mockClock()
+    const { profiler, sessionManager } = setupProfiler()
+    const findTrackedSessionSpy = spyOn(sessionManager, 'findTrackedSession').and.callThrough()
+
+    profiler.start()
+    expect(profiler.isRunning()).toBe(true)
+
+    const expectedStartTime = relativeNow()
+
+    clock.tick(1000)
+
+    profiler.stop()
+
+    await waitNextMicrotask()
+    await waitNextMicrotask()
+
+    expect(findTrackedSessionSpy).toHaveBeenCalledWith(expectedStartTime)
   })
 
   it('should restart profiling when session expires while paused and then renews', async () => {
