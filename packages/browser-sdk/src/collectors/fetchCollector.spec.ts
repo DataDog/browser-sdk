@@ -1,7 +1,7 @@
 import { Pipeline } from '@datadog/core-next'
 import type { NetworkRequestResource } from '@datadog/core-next'
 import { startFetchCollection } from './fetchCollector'
-import type { CollectorTracingConfig } from './fetchCollector'
+import type { CollectorTracingConfig, FetchCollectorConfig } from './fetchCollector'
 
 describe('startFetchCollection', () => {
   let pipeline: Pipeline<Record<string, unknown>>
@@ -217,6 +217,121 @@ describe('startFetchCollection', () => {
           expect(headers.get('x-datadog-trace-id')).toBeNull()
           expect(collected[0].traceId).toBeUndefined()
           expect(collected[0].spanId).toBeUndefined()
+          done()
+        }, 0)
+      })
+    })
+  })
+
+  describe('response header collection', () => {
+    it('does not collect headers when allowedResponseHeaders is not configured', (done) => {
+      window.fetch = () =>
+        Promise.resolve(
+          new Response(null, {
+            status: 200,
+            headers: { 'content-type': 'application/json', 'x-request-id': 'abc123' },
+          })
+        )
+      stop = startFetchCollection(pipeline)
+
+      window.fetch('/api/test').then(() => {
+        setTimeout(() => {
+          expect(collected[0].responseHeaders).toBeUndefined()
+          done()
+        }, 0)
+      })
+    })
+
+    it('collects allowed response headers', (done) => {
+      window.fetch = () =>
+        Promise.resolve(
+          new Response(null, {
+            status: 200,
+            headers: { 'content-type': 'application/json', 'x-request-id': 'abc123' },
+          })
+        )
+      stop = startFetchCollection(pipeline, undefined, { allowedResponseHeaders: ['content-type', 'x-request-id'] })
+
+      window.fetch('/api/test').then(() => {
+        setTimeout(() => {
+          expect(collected[0].responseHeaders).toBeDefined()
+          const headers = collected[0].responseHeaders!
+          const names = headers.map((h) => h.name.toLowerCase())
+          expect(names).toContain('content-type')
+          expect(names).toContain('x-request-id')
+          done()
+        }, 0)
+      })
+    })
+
+    it('does not collect headers not in the allowlist', (done) => {
+      window.fetch = () =>
+        Promise.resolve(
+          new Response(null, {
+            status: 200,
+            headers: { 'content-type': 'application/json', 'x-custom-header': 'value' },
+          })
+        )
+      stop = startFetchCollection(pipeline, undefined, { allowedResponseHeaders: ['content-type'] })
+
+      window.fetch('/api/test').then(() => {
+        setTimeout(() => {
+          const headers = collected[0].responseHeaders!
+          const names = headers.map((h) => h.name.toLowerCase())
+          expect(names).not.toContain('x-custom-header')
+          done()
+        }, 0)
+      })
+    })
+
+    it('blocks sensitive headers even if they are in the allowlist', (done) => {
+      window.fetch = () =>
+        Promise.resolve(
+          new Response(null, {
+            status: 200,
+            headers: { authorization: 'Bearer secret', 'content-type': 'application/json' },
+          })
+        )
+      stop = startFetchCollection(pipeline, undefined, {
+        allowedResponseHeaders: ['authorization', 'content-type'],
+      })
+
+      window.fetch('/api/test').then(() => {
+        setTimeout(() => {
+          const headers = collected[0].responseHeaders ?? []
+          const names = headers.map((h) => h.name.toLowerCase())
+          expect(names).not.toContain('authorization')
+          done()
+        }, 0)
+      })
+    })
+
+    it('returns undefined responseHeaders when no allowed headers are present in response', (done) => {
+      window.fetch = () =>
+        Promise.resolve(new Response(null, { status: 200, headers: { 'x-other': 'value' } }))
+      stop = startFetchCollection(pipeline, undefined, { allowedResponseHeaders: ['content-type'] })
+
+      window.fetch('/api/test').then(() => {
+        setTimeout(() => {
+          expect(collected[0].responseHeaders).toBeUndefined()
+          done()
+        }, 0)
+      })
+    })
+
+    it('supports case-insensitive header matching in allowlist', (done) => {
+      window.fetch = () =>
+        Promise.resolve(
+          new Response(null, {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          })
+        )
+      stop = startFetchCollection(pipeline, undefined, { allowedResponseHeaders: ['CONTENT-TYPE'] })
+
+      window.fetch('/api/test').then(() => {
+        setTimeout(() => {
+          expect(collected[0].responseHeaders).toBeDefined()
           done()
         }, 0)
       })

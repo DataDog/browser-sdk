@@ -3,6 +3,17 @@ import { createIdentifier, makeTracingHeaders, findTracingOption, isSampled } fr
 import type { TracingOption, Identifier } from '@datadog/core-next'
 import { isIntakeUrl } from '../browser'
 
+const SENSITIVE_HEADERS = new Set([
+  'authorization',
+  'cookie',
+  'set-cookie',
+  'x-auth-token',
+  'x-api-key',
+  'x-csrf-token',
+  'proxy-authorization',
+  'www-authenticate',
+])
+
 interface CollectorTracingConfig {
   tracingOptions: TracingOption[]
   traceSampleRate: number
@@ -10,10 +21,39 @@ interface CollectorTracingConfig {
   sessionId: string
 }
 
+interface FetchCollectorConfig {
+  tracingConfig?: CollectorTracingConfig
+  allowedResponseHeaders?: string[]
+}
+
+function collectResponseHeaders(
+  response: Response,
+  allowlist: string[]
+): Array<{ name: string; value: string }> | undefined {
+  if (allowlist.length === 0) return undefined
+
+  const normalizedAllowlist = allowlist.map((h) => h.toLowerCase())
+  const headers: Array<{ name: string; value: string }> = []
+
+  response.headers.forEach((value, name) => {
+    const lower = name.toLowerCase()
+    if (SENSITIVE_HEADERS.has(lower)) return
+    if (normalizedAllowlist.includes(lower)) {
+      headers.push({ name, value })
+    }
+  })
+
+  return headers.length > 0 ? headers : undefined
+}
+
 function startFetchCollection(
   pipeline: Pipeline<Record<string, unknown>>,
-  tracingConfig?: CollectorTracingConfig
+  tracingConfig?: CollectorTracingConfig,
+  collectorConfig?: FetchCollectorConfig
 ): () => void {
+  // Support both legacy signature (tracingConfig) and new config object
+  const resolvedTracingConfig = collectorConfig?.tracingConfig ?? tracingConfig
+  const allowedResponseHeaders = collectorConfig?.allowedResponseHeaders
   const originalFetch = window.fetch
 
   window.fetch = function (input: RequestInfo | URL, init?: RequestInit) {
@@ -31,11 +71,11 @@ function startFetchCollection(
     let traceId: Identifier | undefined
     let spanId: Identifier | undefined
 
-    if (tracingConfig) {
-      const option = findTracingOption(url, tracingConfig.tracingOptions)
+    if (resolvedTracingConfig) {
+      const option = findTracingOption(url, resolvedTracingConfig.tracingOptions)
       if (option) {
-        const sampled = isSampled(tracingConfig.sessionId, tracingConfig.traceSampleRate)
-        if (sampled || tracingConfig.traceContextInjection === 'all') {
+        const sampled = isSampled(resolvedTracingConfig.sessionId, resolvedTracingConfig.traceSampleRate)
+        if (sampled || resolvedTracingConfig.traceContextInjection === 'all') {
           traceId = createIdentifier(64)
           spanId = createIdentifier(63)
           const headers = makeTracingHeaders(traceId, spanId, sampled, option.propagatorTypes)
@@ -51,6 +91,11 @@ function startFetchCollection(
 
     return originalFetch.call(this, input, init).then(
       (response: Response) => {
+        const responseHeaders =
+          allowedResponseHeaders && allowedResponseHeaders.length > 0
+            ? collectResponseHeaders(response, allowedResponseHeaders)
+            : undefined
+
         const resource: NetworkRequestResource = {
           method,
           url,
@@ -61,6 +106,7 @@ function startFetchCollection(
           duration: performance.now() - startTime,
           traceId,
           spanId,
+          ...(responseHeaders ? { responseHeaders } : {}),
         }
         pipeline.publish('resource:network_request', resource)
         return response
@@ -90,4 +136,4 @@ function startFetchCollection(
 }
 
 export { startFetchCollection }
-export type { CollectorTracingConfig }
+export type { CollectorTracingConfig, FetchCollectorConfig }
