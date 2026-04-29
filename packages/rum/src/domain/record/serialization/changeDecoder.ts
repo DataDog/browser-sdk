@@ -1,4 +1,4 @@
-import { ChangeType } from '../../../../types'
+import { ChangeType } from '../../../types'
 import type {
   AddDocTypeNodeChange,
   AddElementNodeChange,
@@ -12,7 +12,7 @@ import type {
   Change,
   StyleSheetRules,
   TextChange,
-} from '../../../../types'
+} from '../../../types'
 import type { StringTable } from './stringTable'
 import { createStringTable } from './stringTable'
 
