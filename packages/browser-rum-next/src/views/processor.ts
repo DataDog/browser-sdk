@@ -5,6 +5,12 @@ import { trackFcp } from './metrics/trackFcp'
 import { trackLcp } from './metrics/trackLcp'
 import { trackInp } from './metrics/trackInp'
 import { trackNavigationTimings } from './metrics/trackNavigationTimings'
+import { trackLoadingTime } from './metrics/trackLoadingTime'
+import { trackScroll } from './metrics/trackScroll'
+import { trackBfcache } from './metrics/trackBfcache'
+import type { LoadingTimeTracker } from './metrics/trackLoadingTime'
+import type { ScrollTracker } from './metrics/trackScroll'
+import type { BfcacheTracker } from './metrics/trackBfcache'
 
 interface ProcessorDependencies {
   pipeline: Pipeline<Record<string, unknown>>
@@ -26,11 +32,15 @@ function startProcessor({ pipeline }: ProcessorDependencies): void {
   let lcp = trackLcp()
   let inp = trackInp()
   let navTimings = trackNavigationTimings()
+  let loadingTime: LoadingTimeTracker = trackLoadingTime('initial_load')
+  let scroll: ScrollTracker = trackScroll()
+  let bfcache: BfcacheTracker | undefined
   let eventCounts = createEmptyEventCounts()
 
   function createView(data: Record<string, unknown>): void {
     // Finalize previous view
     if (currentView) {
+      scroll.stop()
       currentView.isActive = false
       currentView.duration = performance.now() - currentView.startTime
       currentView.documentVersion++
@@ -43,14 +53,26 @@ function startProcessor({ pipeline }: ProcessorDependencies): void {
     lcp = trackLcp()
     inp = trackInp()
     navTimings = trackNavigationTimings()
+    loadingTime = trackLoadingTime(data.loadingType as ViewLoadingType)
+    scroll = trackScroll()
+    bfcache = undefined
     eventCounts = createEmptyEventCounts()
+
+    const loadingType = data.loadingType as ViewLoadingType
+    const startTime = data.startTime as number
+
+    if (loadingType === 'bf_cache') {
+      bfcache = trackBfcache(startTime)
+    }
+
+    scroll.start()
 
     currentView = {
       id: (data.id as string) || generateViewId(),
       url: data.url as string,
       referrer: data.referrer as string,
-      loadingType: data.loadingType as ViewLoadingType,
-      startTime: data.startTime as number,
+      loadingType,
+      startTime,
       startDate: data.startDate as number,
       date: data.startDate as number,
       name: data.name as string | undefined,
@@ -73,8 +95,16 @@ function startProcessor({ pipeline }: ProcessorDependencies): void {
     currentView.cumulativeLayoutShift = cls.get()
     currentView.interactionToNextPaint = inp.get()
     currentView.eventCounts = { ...eventCounts }
+    currentView.loadingTime = loadingTime.get()
+    currentView.scroll = scroll.get()
 
-    if (currentView.loadingType === 'initial_load') {
+    if (currentView.loadingType === 'bf_cache' && bfcache) {
+      const bfMetrics = bfcache.get()
+      if (bfMetrics) {
+        currentView.firstContentfulPaint = bfMetrics.firstContentfulPaint
+        currentView.largestContentfulPaint = bfMetrics.largestContentfulPaint
+      }
+    } else if (currentView.loadingType === 'initial_load') {
       currentView.firstContentfulPaint = fcp.get()
       currentView.largestContentfulPaint = lcp.get()
       currentView.navigationTimings = navTimings.get()
@@ -128,6 +158,10 @@ function startProcessor({ pipeline }: ProcessorDependencies): void {
 
   pipeline.subscribe('resource:navigation_timing', (data) => {
     if (!currentView || currentView.loadingType !== 'initial_load') return
+    const timing = data as { loadEventEnd?: number }
+    if (timing.loadEventEnd !== undefined) {
+      loadingTime.setLoadEvent(timing.loadEventEnd)
+    }
     navTimings.process(data as any)
     publishUpdate()
   })

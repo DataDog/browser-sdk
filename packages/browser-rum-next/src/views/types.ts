@@ -71,6 +71,15 @@ export interface ViewObservation {
   // Navigation timings (initial load only)
   navigationTimings?: NavigationTimings
 
+  // Loading time
+  loadingTime?: number
+
+  // Scroll metrics
+  scroll?: {
+    maxDepth: number
+    maxScrollHeight: number
+  }
+
   // Event counts
   eventCounts?: EventCounts
 

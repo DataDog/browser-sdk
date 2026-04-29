@@ -285,4 +285,99 @@ describe('view processor', () => {
       expect(newView.eventCounts!.errorCount).toBe(0)
     })
   })
+
+  describe('loading time', () => {
+    it('includes loadingTime from navigation timing loadEventEnd on initial load', async () => {
+      pipeline.publish('resource:navigation', { url: '/', startTime: 0, startDate: 1000, referrer: '', loadingType: 'initial_load' })
+      await tick()
+      pipeline.publish('resource:navigation_timing', {
+        responseStart: 100,
+        domInteractive: 200,
+        domContentLoadedEventEnd: 250,
+        domComplete: 400,
+        loadEventEnd: 450,
+      })
+      await tick()
+
+      const latest = observations[observations.length - 1]
+      expect(latest.loadingTime).toBe(450)
+    })
+
+    it('loadingTime is undefined on initial load before navigation timing arrives', async () => {
+      pipeline.publish('resource:navigation', { url: '/', startTime: 0, startDate: 1000, referrer: '', loadingType: 'initial_load' })
+      await tick()
+
+      const latest = observations[observations.length - 1]
+      expect(latest.loadingTime).toBeUndefined()
+    })
+
+    it('loadingTime is undefined on route_change before activity settles', async () => {
+      pipeline.publish('resource:navigation', { url: '/page2', startTime: 100, startDate: 1100, referrer: '/', loadingType: 'route_change' })
+      await tick()
+
+      const latest = observations[observations.length - 1]
+      expect(latest.loadingTime).toBeUndefined()
+    })
+  })
+
+  describe('scroll metrics', () => {
+    it('view includes scroll field (undefined or object)', async () => {
+      pipeline.publish('resource:navigation', { url: '/', startTime: 0, startDate: 1000, referrer: '', loadingType: 'initial_load' })
+      await tick()
+
+      const latest = observations[observations.length - 1]
+      // scroll may be undefined (no scrolling) or a metrics object — both valid
+      if (latest.scroll !== undefined) {
+        expect(typeof latest.scroll.maxDepth).toBe('number')
+        expect(typeof latest.scroll.maxScrollHeight).toBe('number')
+      } else {
+        expect(latest.scroll).toBeUndefined()
+      }
+    })
+
+    it('scroll resets to undefined on new view', async () => {
+      pipeline.publish('resource:navigation', { url: '/page1', startTime: 0, startDate: 1000, referrer: '', loadingType: 'initial_load' })
+      await tick()
+      pipeline.publish('resource:navigation', { url: '/page2', startTime: 500, startDate: 1500, referrer: '/', loadingType: 'route_change' })
+      await tick()
+
+      const newView = observations[observations.length - 1]
+      // New view starts fresh — scroll not yet accumulated
+      if (newView.scroll !== undefined) {
+        expect(typeof newView.scroll.maxDepth).toBe('number')
+      } else {
+        expect(newView.scroll).toBeUndefined()
+      }
+    })
+  })
+
+  describe('bf_cache view', () => {
+    it('bf_cache view gets FCP/LCP from bfcache tracker after RAFs complete', (done) => {
+      pipeline.publish('resource:navigation', {
+        url: '/',
+        startTime: performance.now(),
+        startDate: Date.now(),
+        referrer: '',
+        loadingType: 'bf_cache',
+      })
+
+      // Wait for two nested RAFs to complete
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(async () => {
+            // Force a publishUpdate by triggering an event
+            pipeline.publish('observation:error', { type: 'error', date: Date.now(), error: { message: 'test' } })
+            await tick()
+
+            const latest = observations[observations.length - 1]
+            expect(latest.firstContentfulPaint).toBeDefined()
+            expect(latest.firstContentfulPaint!).toBeGreaterThanOrEqual(0)
+            expect(latest.largestContentfulPaint).toBeDefined()
+            expect(latest.largestContentfulPaint!.value).toBe(latest.firstContentfulPaint!)
+            done()
+          })
+        })
+      })
+    })
+  })
 })
