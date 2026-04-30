@@ -141,7 +141,7 @@ describe('views integration', () => {
     const viewLines = getViewLines()
     expect(viewLines.length).toBeGreaterThan(0)
     const event = JSON.parse(viewLines[0])
-    expect(event.deployment).toBe('canary')
+    expect(event.context.deployment).toBe('canary')
   })
 
   it('view observation includes user context set via public API', async () => {

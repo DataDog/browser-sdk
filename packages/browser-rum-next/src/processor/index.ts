@@ -69,7 +69,7 @@ const rumProcessor: Module = {
     context.pipeline.enrich('observation:*', viewContextEnricher(context.pipeline))
     context.pipeline.enrich('observation:*', displayEnricher())
     context.pipeline.enrich('observation:*', connectivityEnricher())
-    context.pipeline.enrich('observation:*', pageStateEnricher())
+    context.pipeline.enrich('observation:view', pageStateEnricher())
     context.pipeline.enrich('observation:*', urlContextsEnricher())
 
     // Feature flags

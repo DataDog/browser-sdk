@@ -17,8 +17,8 @@ describe('contextEnricher', () => {
     const enricherInstance = contextEnricher(globalContext, userContext, accountContext)
     const result = enricherInstance.transform({ message: 'hello' })
 
-    expect((result as any).env).toBe('production')
-    expect((result as any).version).toBe('1.0.0')
+    expect((result as any).context.env).toBe('production')
+    expect((result as any).context.version).toBe('1.0.0')
     expect((result as any).message).toBe('hello')
   })
 
@@ -53,12 +53,13 @@ describe('contextEnricher', () => {
     expect((result as any).origin).toBe('logger')
   })
 
-  it('global context properties override existing event fields', () => {
-    globalContext.set({ status: 'overridden' })
+  it('global context goes into context namespace without overriding event fields', () => {
+    globalContext.set({ status: 'custom' })
     const enricherInstance = contextEnricher(globalContext, userContext, accountContext)
     const result = enricherInstance.transform({ status: 'original' })
 
-    expect((result as any).status).toBe('overridden')
+    expect((result as any).status).toBe('original')
+    expect((result as any).context.status).toBe('custom')
   })
 
   it('has name "context"', () => {
