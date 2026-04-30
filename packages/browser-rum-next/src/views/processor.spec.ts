@@ -108,7 +108,7 @@ describe('view processor', () => {
     await tick()
 
     const latest = observations[observations.length - 1]
-    expect(latest.view.first_contentful_paint).toBe(450)
+    expect(latest.view.first_contentful_paint).toBe(450_000_000)
     expect(latest._dd.document_version).toBe(2)
   })
 
@@ -119,7 +119,7 @@ describe('view processor', () => {
     await tick()
 
     const latest = observations[observations.length - 1]
-    expect(latest.performance?.fcp?.timestamp).toBe(450)
+    expect(latest.performance?.fcp?.timestamp).toBe(450_000_000)
   })
 
   it('does not accumulate FCP on route_change', async () => {
@@ -139,7 +139,7 @@ describe('view processor', () => {
     await tick()
 
     const latest = observations[observations.length - 1]
-    expect(latest.view.largest_contentful_paint).toBe(800)
+    expect(latest.view.largest_contentful_paint).toBe(800_000_000)
   })
 
   it('includes lcp in performance sub-object', async () => {
@@ -149,7 +149,7 @@ describe('view processor', () => {
     await tick()
 
     const latest = observations[observations.length - 1]
-    expect(latest.performance?.lcp?.timestamp).toBe(800)
+    expect(latest.performance?.lcp?.timestamp).toBe(800_000_000)
   })
 
   it('stops LCP after first interaction', async () => {
@@ -163,7 +163,7 @@ describe('view processor', () => {
     await tick()
 
     const latest = observations[observations.length - 1]
-    expect(latest.view.largest_contentful_paint).toBe(800) // not 1500
+    expect(latest.view.largest_contentful_paint).toBe(800_000_000) // not 1500
   })
 
   it('accumulates CLS from layout shifts', async () => {
@@ -204,7 +204,7 @@ describe('view processor', () => {
     await tick()
 
     const latest = observations[observations.length - 1]
-    expect(latest.view.interaction_to_next_paint).toBe(120)
+    expect(latest.view.interaction_to_next_paint).toBe(120_000_000)
   })
 
   it('includes inp in performance sub-object', async () => {
@@ -214,7 +214,7 @@ describe('view processor', () => {
     await tick()
 
     const latest = observations[observations.length - 1]
-    expect(latest.performance?.inp?.duration).toBe(120)
+    expect(latest.performance?.inp?.duration).toBe(120_000_000)
   })
 
   it('accumulates navigation timings on initial load', async () => {
@@ -230,11 +230,11 @@ describe('view processor', () => {
     await tick()
 
     const latest = observations[observations.length - 1]
-    expect(latest.view.first_byte).toBe(100)
-    expect(latest.view.dom_interactive).toBe(200)
-    expect(latest.view.dom_content_loaded).toBe(250)
-    expect(latest.view.dom_complete).toBe(400)
-    expect(latest.view.load_event).toBe(450)
+    expect(latest.view.first_byte).toBe(100_000_000)
+    expect(latest.view.dom_interactive).toBe(200_000_000)
+    expect(latest.view.dom_content_loaded).toBe(250_000_000)
+    expect(latest.view.dom_complete).toBe(400_000_000)
+    expect(latest.view.load_event).toBe(450_000_000)
   })
 
   it('finalizes previous view when new navigation arrives', async () => {
@@ -333,7 +333,7 @@ describe('view processor', () => {
       await tick()
 
       const latest = observations[observations.length - 1]
-      expect(latest.view.loading_time).toBe(450)
+      expect(latest.view.loading_time).toBe(450_000_000)
     })
 
     it('view.loading_time is undefined on initial load before navigation timing arrives', async () => {
