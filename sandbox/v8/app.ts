@@ -215,7 +215,7 @@ async function initV8() {
         forwardConsoleLogs: 'all' as const,
         forwardReports: 'all' as const,
       },
-      rum: {},
+      rum: { applicationId: 'playground-app-v8' },
     })
     if (!sdk) {
       el.textContent = 'init returned null'
