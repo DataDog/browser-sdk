@@ -20,7 +20,7 @@ describe('sessionEnricher', () => {
 
     const result = enricher.transform({ message: 'test' })
 
-    expect(result).toEqual({ message: 'test', session: { id: 'session-123', type: 'user' } })
+    expect(result).toEqual({ message: 'test', session: { id: 'session-123', type: 'user', is_active: true } })
   })
 
   it('should discard events when session is expired', () => {
@@ -36,7 +36,7 @@ describe('sessionEnricher', () => {
 
     const result = enricher.transform({ message: 'test', status: 'info', origin: 'logger' })
 
-    expect(result).toEqual({ message: 'test', status: 'info', origin: 'logger', session: { id: 'abc', type: 'user' } })
+    expect(result).toEqual({ message: 'test', status: 'info', origin: 'logger', session: { id: 'abc', type: 'user', is_active: true } })
   })
 
   it('should set session.type to user', () => {
