@@ -144,7 +144,7 @@ function startProcessor({ pipeline, config }: ProcessorDependencies): void {
           type: errorObj?.name,
           stack: resource.stack as string | undefined,
           source: 'console',
-          handling: 'unhandled',
+          handling: 'handled',
           fingerprint: resource.fingerprint as string | undefined,
           causes: errorObj ? flattenCauses(errorObj) : undefined,
         },

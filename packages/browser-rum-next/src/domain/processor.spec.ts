@@ -170,7 +170,7 @@ describe('startProcessor', () => {
     const error = obs.error as Record<string, unknown>
     expect(error.message).toBe('Console error from playground')
     expect(error.source).toBe('console')
-    expect(error.handling).toBe('unhandled')
+    expect(error.handling).toBe('handled')
   })
 
   it('does not forward non-error console messages to RUM', async () => {
