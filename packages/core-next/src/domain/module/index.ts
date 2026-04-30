@@ -4,6 +4,7 @@ import type { Session } from '../session/session'
 
 interface ModuleTransport {
   route(eventType: string, trackType: string): void
+  routeWithDedup(eventType: string, trackType: string, keyFn: (event: Record<string, unknown>) => string): void
 }
 
 interface ModuleContext {

@@ -239,7 +239,15 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
   // Inline modules (options.modules) are used directly.
   // For config keys that don't have an inline module, resolveModule is called if provided.
   const sdk: Sdk = {}
-  const context = { config, pipeline, session, transport: { route: router.route.bind(router) } }
+  const context = {
+    config,
+    pipeline,
+    session,
+    transport: {
+      route: router.route.bind(router),
+      routeWithDedup: router.routeWithDedup.bind(router),
+    },
+  }
   const allModules: Module[] = [...inlineModules]
 
   if (init.resolveModule) {

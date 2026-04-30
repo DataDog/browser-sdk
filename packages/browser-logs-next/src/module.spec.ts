@@ -30,7 +30,7 @@ function createTestContext() {
     },
   }
 
-  const transport = { route: jasmine.createSpy('route') }
+  const transport = { route: jasmine.createSpy('route'), routeWithDedup: jasmine.createSpy('routeWithDedup') }
 
   return { pipeline, session, config, transport }
 }
@@ -43,7 +43,7 @@ function initModule(context: {
   pipeline: Pipeline<Record<string, unknown>>
   session: any
   config: any
-  transport: { route: jasmine.Spy }
+  transport: { route: jasmine.Spy; routeWithDedup: jasmine.Spy }
 }): LogsPublicApi {
   return logsModule.init(context as any) as unknown as LogsPublicApi
 }

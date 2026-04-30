@@ -88,7 +88,7 @@ const rumProcessor: Module = {
     context.pipeline.enrich('observation:error', sourceCodeEnricher())
 
     // Register routes: all RUM observation types go to the 'rum' track
-    context.transport.route('observation:view', 'rum')
+    context.transport.routeWithDedup('observation:view', 'rum', (event) => (event.view as any)?.id ?? 'unknown')
     context.transport.route('observation:resource', 'rum')
     context.transport.route('observation:error', 'rum')
     context.transport.route('observation:long_task', 'rum')

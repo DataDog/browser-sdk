@@ -15,14 +15,14 @@ function createTestContext() {
       trackErrors: true,
     },
   }
-  const transport = { route: jasmine.createSpy('route') }
+  const transport = { route: jasmine.createSpy('route'), routeWithDedup: jasmine.createSpy('routeWithDedup') }
   return { pipeline, config, transport }
 }
 
 function initModule(context: {
   pipeline: Pipeline<Record<string, unknown>>
   config: any
-  transport: { route: jasmine.Spy }
+  transport: { route: jasmine.Spy; routeWithDedup: jasmine.Spy }
 }): RumPublicApi {
   return rumProcessor.init(context as any) as unknown as RumPublicApi
 }
@@ -38,7 +38,7 @@ describe('rumProcessor', () => {
   function init(context: {
     pipeline: Pipeline<Record<string, unknown>>
     config: any
-    transport: { route: jasmine.Spy }
+    transport: { route: jasmine.Spy; routeWithDedup: jasmine.Spy }
   }): RumPublicApi {
     _api = initModule(context)
     return _api
@@ -129,7 +129,7 @@ describe('rumProcessor', () => {
     const context = createTestContext()
     init(context)
 
-    expect(context.transport.route).toHaveBeenCalledWith('observation:view', 'rum')
+    expect(context.transport.routeWithDedup).toHaveBeenCalledWith('observation:view', 'rum', jasmine.any(Function))
     expect(context.transport.route).toHaveBeenCalledWith('observation:resource', 'rum')
     expect(context.transport.route).toHaveBeenCalledWith('observation:error', 'rum')
     expect(context.transport.route).toHaveBeenCalledWith('observation:long_task', 'rum')
