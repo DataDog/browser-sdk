@@ -9,6 +9,7 @@ import { MemoryStore } from './memoryStore'
 interface SelectStoreOptions {
   cookieOptions?: CookieOptions
   sessionPersistence?: string | string[]
+  sessionCookieName?: string
 }
 
 function isLocalStorageAvailable(): boolean {
@@ -22,10 +23,10 @@ function isLocalStorageAvailable(): boolean {
   }
 }
 
-function createStoreForType(type: string, cookieOptions?: CookieOptions): SessionStore | undefined {
+function createStoreForType(type: string, cookieOptions?: CookieOptions, cookieName?: string): SessionStore | undefined {
   switch (type) {
     case SessionPersistence.COOKIE:
-      return areCookiesAuthorized() ? new CookieStore(cookieOptions) : undefined
+      return areCookiesAuthorized() ? new CookieStore({ cookieOptions, cookieName }) : undefined
     case SessionPersistence.LOCAL_STORAGE:
       return isLocalStorageAvailable() ? new LocalStorageStore() : undefined
     case SessionPersistence.MEMORY:
@@ -41,14 +42,14 @@ function selectStore(options?: SelectStoreOptions): SessionStore {
   if (persistence) {
     const types = Array.isArray(persistence) ? persistence : [persistence]
     for (const type of types) {
-      const store = createStoreForType(type, options?.cookieOptions)
+      const store = createStoreForType(type, options?.cookieOptions, options?.sessionCookieName)
       if (store) return store
     }
   }
 
   // Default: cookie → localStorage → memory
   if (areCookiesAuthorized()) {
-    return new CookieStore(options?.cookieOptions)
+    return new CookieStore({ cookieOptions: options?.cookieOptions, cookieName: options?.sessionCookieName })
   }
   if (isLocalStorageAvailable()) {
     return new LocalStorageStore()

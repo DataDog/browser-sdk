@@ -105,6 +105,13 @@ interface InitConfiguration {
    */
   trackSessionAcrossSubdomains?: boolean
   /**
+   * Custom cookie name for session persistence.
+   * Useful when running multiple SDK instances on the same page.
+   *
+   * @default '_dd_s'
+   */
+  sessionCookieName?: string
+  /**
    * Which storage strategy to use for persisting sessions. Can be `'cookie'`, `'local-storage'`,
    * or `'memory'`. When an array is provided, the SDK attempts each in order.
    *

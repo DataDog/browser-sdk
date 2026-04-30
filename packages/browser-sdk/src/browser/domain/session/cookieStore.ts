@@ -2,19 +2,28 @@ import type { SessionState, SessionStore } from '@datadog/core-next'
 import { getCookie, setCookie, deleteCookie } from '../../cookie'
 import type { CookieOptions } from '../../cookie'
 
-const SESSION_COOKIE_NAME = '_dd_s'
+const DEFAULT_SESSION_COOKIE_NAME = '_dd_s'
 const SESSION_EXPIRY_MS = 4 * 60 * 60 * 1000 // 4 hours
-const LOCK_NAME = 'dd_session_lock'
+const DEFAULT_LOCK_NAME = 'dd_session_lock'
+
+interface CookieStoreOptions {
+  cookieOptions?: CookieOptions
+  cookieName?: string
+}
 
 class CookieStore implements SessionStore {
   private readonly cookieOptions?: CookieOptions
+  private readonly cookieName: string
+  private readonly lockName: string
 
-  constructor(cookieOptions?: CookieOptions) {
-    this.cookieOptions = cookieOptions
+  constructor(options?: CookieStoreOptions) {
+    this.cookieOptions = options?.cookieOptions
+    this.cookieName = options?.cookieName || DEFAULT_SESSION_COOKIE_NAME
+    this.lockName = options?.cookieName ? `dd_session_lock_${options.cookieName}` : DEFAULT_LOCK_NAME
   }
 
   async get(): Promise<SessionState | undefined> {
-    const raw = getCookie(SESSION_COOKIE_NAME)
+    const raw = getCookie(this.cookieName)
     if (!raw) {
       return undefined
     }
@@ -27,17 +36,17 @@ class CookieStore implements SessionStore {
 
   async set(state: SessionState): Promise<void> {
     const write = () => {
-      setCookie(SESSION_COOKIE_NAME, JSON.stringify(state), SESSION_EXPIRY_MS, this.cookieOptions)
+      setCookie(this.cookieName, JSON.stringify(state), SESSION_EXPIRY_MS, this.cookieOptions)
     }
     if (navigator.locks) {
-      await navigator.locks.request(LOCK_NAME, write)
+      await navigator.locks.request(this.lockName, write)
     } else {
       write()
     }
   }
 
   async clear(): Promise<void> {
-    deleteCookie(SESSION_COOKIE_NAME, this.cookieOptions)
+    deleteCookie(this.cookieName, this.cookieOptions)
   }
 
   onExternalChange(callback: () => void): () => void {
@@ -47,7 +56,7 @@ class CookieStore implements SessionStore {
       const handler = (event: any) => {
         const changed = event.changed || []
         const deleted = event.deleted || []
-        const relevant = [...changed, ...deleted].some((cookie: any) => cookie.name === SESSION_COOKIE_NAME)
+        const relevant = [...changed, ...deleted].some((cookie: any) => cookie.name === this.cookieName)
         if (relevant) {
           callback()
         }
@@ -57,9 +66,9 @@ class CookieStore implements SessionStore {
     }
 
     // Fallback: poll document.cookie
-    let lastValue = getCookie(SESSION_COOKIE_NAME)
+    let lastValue = getCookie(this.cookieName)
     const interval = setInterval(() => {
-      const current = getCookie(SESSION_COOKIE_NAME)
+      const current = getCookie(this.cookieName)
       if (current !== lastValue) {
         lastValue = current
         callback()

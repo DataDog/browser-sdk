@@ -207,6 +207,7 @@ async function initV8() {
     const sdk = await createSdk({
       clientToken: 'pub_playground_v8',
       site: 'datadoghq.com',
+      sessionCookieName: '_dd_s_v8',
       proxy: (options: { path: string; parameters: string }) =>
         `/intake/v8${options.path}?${options.parameters}`,
       modules: [logsProcessor, rumProcessor],

@@ -76,7 +76,11 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
     partitioned: config.usePartitionedCrossSiteSessionCookie,
     domain: config.trackSessionAcrossSubdomains ? getCurrentSiteDomain() : undefined,
   }
-  const store = selectStore({ cookieOptions, sessionPersistence: config.sessionPersistence })
+  const store = selectStore({
+    cookieOptions,
+    sessionPersistence: config.sessionPersistence,
+    sessionCookieName: config.sessionCookieName,
+  })
   const session = await Session.create({
     store,
     generateId: () => crypto.randomUUID(),
