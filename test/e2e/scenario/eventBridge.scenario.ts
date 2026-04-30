@@ -102,6 +102,32 @@ test.describe('bridge present', () => {
       expect(intakeRegistry.hasOnlyBridgeRequests).toBe(true)
     })
 
+  createTest('override trace sample rate when bridge provides isTraceSampled true')
+    .withRum({ service: 'service', traceSampleRate: 0, allowedTracingUrls: ['LOCATION_ORIGIN'] })
+    .withEventBridge({ isTraceSampled: true })
+    .run(async ({ flushEvents, intakeRegistry, sendXhr }) => {
+      await sendXhr('/headers')
+      await flushEvents()
+
+      const tracedResources = intakeRegistry.rumResourceEvents.filter(
+        (event) => event.resource.type === 'xhr' && event._dd?.trace_id
+      )
+      expect(tracedResources).toHaveLength(1)
+      expect(tracedResources[0]._dd.trace_id).toMatch(/\d+/)
+    })
+
+  createTest('override trace sample rate when bridge provides isTraceSampled false')
+    .withRum({ service: 'service', traceSampleRate: 100, allowedTracingUrls: ['LOCATION_ORIGIN'] })
+    .withEventBridge({ isTraceSampled: false })
+    .run(async ({ flushEvents, intakeRegistry, sendXhr }) => {
+      await sendXhr('/headers')
+      await flushEvents()
+
+      const xhrResources = intakeRegistry.rumResourceEvents.filter((event) => event.resource.type === 'xhr')
+      expect(xhrResources).toHaveLength(1)
+      expect(xhrResources[0]._dd?.trace_id).toBeUndefined()
+    })
+
   createTest('do not send records when the recording is stopped')
     .withRum()
     .withEventBridge()

@@ -12,7 +12,7 @@ export interface SetupOptions {
   logsInit: (initConfiguration: LogsInitConfiguration) => void
   rumInit: (initConfiguration: RumInitConfiguration) => void
   remoteConfiguration?: RemoteConfiguration
-  eventBridge: boolean
+  eventBridge?: EventBridgeOptions
   head?: string
   body?: string
   baseUrlHooks: UrlHook[]
@@ -41,6 +41,10 @@ export interface WorkerOptions {
   logsConfiguration?: LogsInitConfiguration
 }
 
+export interface EventBridgeOptions {
+  isTraceSampled?: boolean
+}
+
 export type SetupFactory = (options: SetupOptions, servers: Servers) => string
 export type UrlHook = (baseUrl: URL, servers: Servers, options: SetupOptions) => void
 
@@ -60,7 +64,7 @@ export function asyncSetup(options: SetupOptions, servers: Servers) {
   let footer = ''
 
   if (options.eventBridge) {
-    header += setupEventBridge(servers)
+    header += setupEventBridge(servers, options.eventBridge)
   }
 
   if (options.extension) {
@@ -108,7 +112,7 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
   let header = options.head || ''
 
   if (options.eventBridge) {
-    header += setupEventBridge(servers)
+    header += setupEventBridge(servers, options.eventBridge)
   }
 
   if (options.extension) {
@@ -143,7 +147,7 @@ export function npmSetup(options: SetupOptions, servers: Servers) {
   let header = options.head || ''
 
   if (options.eventBridge) {
-    header += setupEventBridge(servers)
+    header += setupEventBridge(servers, options.eventBridge)
   }
 
   if (options.extension) {
@@ -180,7 +184,7 @@ export function appSetup(options: SetupOptions, servers: Servers, appName: strin
   let header = options.head || ''
 
   if (options.eventBridge) {
-    header += setupEventBridge(servers)
+    header += setupEventBridge(servers, options.eventBridge)
   }
 
   if (options.extension) {
@@ -238,7 +242,7 @@ export function microfrontendSetup(options: SetupOptions, servers: Servers) {
   let header = options.head || ''
 
   if (options.eventBridge) {
-    header += setupEventBridge(servers)
+    header += setupEventBridge(servers, options.eventBridge)
   }
 
   if (options.extension) {
@@ -278,7 +282,7 @@ function js(parts: readonly string[], ...vars: string[]) {
   return parts.reduce((full, part, index) => full + vars[index - 1] + part)
 }
 
-function setupEventBridge(servers: Servers) {
+function setupEventBridge(servers: Servers, options: EventBridgeOptions = {}) {
   const baseHostname = new URL(servers.base.origin).hostname
 
   // Send EventBridge events to the intake so we can inspect them in our E2E test cases. The URL
@@ -289,6 +293,13 @@ function setupEventBridge(servers: Servers) {
     bridge: 'true',
   }).toString()}`
 
+  const isTraceSampledMethod =
+    options.isTraceSampled !== undefined
+      ? `getIsTraceSampled() {
+        return '${options.isTraceSampled}'
+      },`
+      : ''
+
   return html`<script type="text/javascript">
     window.DatadogEventBridge = {
       getCapabilities() {
@@ -297,6 +308,7 @@ function setupEventBridge(servers: Servers) {
       getPrivacyLevel() {
         return 'mask'
       },
+      ${isTraceSampledMethod}
       getAllowedWebViewHosts() {
         return '["${baseHostname}"]'
       },

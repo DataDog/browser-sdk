@@ -1,5 +1,12 @@
 import type { ContextManager } from '@datadog/browser-core'
-import { objectEntries, shallowClone, matchList, TraceContextInjection } from '@datadog/browser-core'
+import {
+  objectEntries,
+  shallowClone,
+  matchList,
+  TraceContextInjection,
+  canUseEventBridge,
+  getEventBridge,
+} from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type {
   RumFetchResolveContext,
@@ -125,7 +132,9 @@ function injectHeadersIfTracingAllowed(
     return
   }
 
-  const traceSampled = isSampled(session.id, configuration.traceSampleRate)
+  const traceSampled = canUseEventBridge()
+    ? (getEventBridge()?.getIsTraceSampled() ?? isSampled(session.id, configuration.traceSampleRate))
+    : isSampled(session.id, configuration.traceSampleRate)
 
   const shouldInjectHeaders = traceSampled || configuration.traceContextInjection === TraceContextInjection.ALL
   if (!shouldInjectHeaders) {

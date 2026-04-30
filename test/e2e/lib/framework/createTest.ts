@@ -14,7 +14,7 @@ import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
 import { getTestServers, waitForServersIdle } from './httpServers'
-import type { CallerLocation, SetupFactory, SetupOptions, UrlHook } from './pageSetups'
+import type { CallerLocation, EventBridgeOptions, SetupFactory, SetupOptions, UrlHook } from './pageSetups'
 import { html, DEFAULT_SETUPS, npmSetup, appSetup, formatConfiguration } from './pageSetups'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
@@ -52,7 +52,7 @@ class TestBuilder {
   private head = ''
   private body = ''
   private baseUrlHooks: UrlHook[] = []
-  private eventBridge = false
+  private eventBridge: EventBridgeOptions | undefined
   private setups: Array<{ factory: SetupFactory; name?: string }> = DEFAULT_SETUPS
   private testFixture: typeof test = test
   private extension: {
@@ -101,8 +101,8 @@ class TestBuilder {
     return this
   }
 
-  withEventBridge() {
-    this.eventBridge = true
+  withEventBridge(options: EventBridgeOptions = {}) {
+    this.eventBridge = options
     return this
   }
 
