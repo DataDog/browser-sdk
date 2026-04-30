@@ -13,6 +13,7 @@ import {
   metadataEnricher,
   stackTraceEnricher,
   contextEnricher,
+  timingEnricher,
   connectBridges,
 } from '@datadog/core-next'
 import { logsExtension } from '@datadog/browser-logs-next/extension'
@@ -135,6 +136,7 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
     tagsEnricher({ env: config.env, service: config.service, version: config.version, sdkVersion: config.sdkVersion })
   )
   pipeline.enrich('observation:*', contextEnricher(globalContext, userContext, accountContext))
+  pipeline.enrich('observation:*', timingEnricher())
 
   // 4.7. Add anonymous_id to usr context when trackAnonymousUser is enabled (default: true)
   if (config.trackAnonymousUser !== false) {
