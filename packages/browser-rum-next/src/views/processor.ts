@@ -171,13 +171,25 @@ function startProcessor({ pipeline }: ProcessorDependencies): void {
       performance.lcp = { timestamp: lcpMetric.value, target_selector: lcpMetric.targetSelector }
     }
     if (clsMetric) {
-      performance.cls = { score: clsMetric.value, target_selector: clsMetric.targetSelector }
+      performance.cls = { score: clsMetric.value, timestamp: clsMetric.time, target_selector: clsMetric.targetSelector }
     }
     if (inpMetric) {
       performance.inp = { duration: inpMetric.value, target_selector: inpMetric.targetSelector }
     }
     if (Object.keys(performance).length > 0) {
       ;(event.view as any).performance = performance
+    }
+
+    // Scroll metrics go into display.scroll (matching v6 structure)
+    const scrollMetrics = view.scroll
+    if (scrollMetrics) {
+      ;(event as any).display = {
+        ...((event as any).display || {}),
+        scroll: {
+          max_depth: scrollMetrics.maxDepth,
+          max_scroll_height: scrollMetrics.maxScrollHeight,
+        },
+      }
     }
 
     pipeline.publish('observation:view', event)

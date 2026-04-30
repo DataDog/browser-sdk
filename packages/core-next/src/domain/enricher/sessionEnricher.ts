@@ -3,7 +3,7 @@ import type { Enricher } from './factory'
 import { DISCARD } from './factory'
 
 interface SessionData {
-  session: { id: string; type: 'user'; is_active: boolean }
+  session: { id: string; type: 'user' }
 }
 
 function sessionEnricher(session: Session): Enricher<Record<string, unknown>, Record<string, unknown> & SessionData> {
@@ -14,7 +14,7 @@ function sessionEnricher(session: Session): Enricher<Record<string, unknown>, Re
       if (!id) {
         return DISCARD
       }
-      return { ...data, session: { id, type: 'user' as const, is_active: !session.isExpired() } }
+      return { ...data, session: { id, type: 'user' as const } }
     },
   }
 }

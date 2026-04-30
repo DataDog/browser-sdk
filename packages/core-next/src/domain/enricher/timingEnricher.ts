@@ -16,9 +16,10 @@ const DURATION_PATHS = [
   'view.interaction_to_next_paint_time',
   'view.loading_time',
   'view.cumulative_layout_shift_time',
-  'performance.fcp.timestamp',
-  'performance.lcp.timestamp',
-  'performance.inp.duration',
+  'view.performance.cls.timestamp',
+  'view.performance.fcp.timestamp',
+  'view.performance.lcp.timestamp',
+  'view.performance.inp.duration',
   // Resource
   'resource.duration',
   'resource.redirect.duration',
