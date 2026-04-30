@@ -8,7 +8,7 @@ export interface BrowserWindowWithEventBridge extends Window {
 export interface DatadogEventBridge {
   getCapabilities?(): string
   getPrivacyLevel?(): DefaultPrivacyLevel
-  getIsTraceSampled?(): string
+  getIsTraceSampled?(): 'true' | 'false' | 'null'
   getAllowedWebViewHosts(): string
   send(msg: string): void
 }
@@ -32,15 +32,7 @@ export function getEventBridge<T, E>() {
       return eventBridgeGlobal.getPrivacyLevel?.()
     },
     getIsTraceSampled() {
-      // Bridge returns 'true', 'false', or no decision ('null', null, undefined, missing method).
-      // Normalize to boolean or undefined so callers only check one thing.
-      const value = eventBridgeGlobal.getIsTraceSampled?.()
-      if (value === 'true') {
-        return true
-      }
-      if (value === 'false') {
-        return false
-      }
+      return JSON.parse(eventBridgeGlobal.getIsTraceSampled?.() || 'null') as boolean | null
     },
     getAllowedWebViewHosts() {
       return JSON.parse(eventBridgeGlobal.getAllowedWebViewHosts()) as string[]
