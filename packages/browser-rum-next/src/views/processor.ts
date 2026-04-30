@@ -144,6 +144,7 @@ function startProcessor({ pipeline }: ProcessorDependencies): void {
         largest_contentful_paint_target_selector: lcpMetric?.targetSelector,
         cumulative_layout_shift: clsMetric?.value,
         cumulative_layout_shift_target_selector: clsMetric?.targetSelector,
+        cumulative_layout_shift_time: clsMetric?.time,
         interaction_to_next_paint: inpMetric?.value,
         interaction_to_next_paint_target_selector: inpMetric?.targetSelector,
         loading_time: view.loadingTime,

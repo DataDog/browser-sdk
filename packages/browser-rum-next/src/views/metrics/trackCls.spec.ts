@@ -9,7 +9,7 @@ describe('trackCls', () => {
   it('computes value from single shift', () => {
     const tracker = trackCls()
     tracker.process({ value: 0.1, hadRecentInput: false, startTime: 100 })
-    expect(tracker.get()).toEqual({ value: 0.1 })
+    expect(tracker.get()).toEqual({ value: 0.1, time: 100 })
   })
 
   it('accumulates shifts within same session window', () => {

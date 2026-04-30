@@ -22,6 +22,7 @@ export interface ClsTracker {
 
 export function trackCls(): ClsTracker {
   let maxWindowValue = 0
+  let maxWindowTime = 0
   let maxWindowTargetNode: Element | undefined
   let currentWindow: SessionWindow | undefined
 
@@ -54,6 +55,7 @@ export function trackCls(): ClsTracker {
 
       if (currentWindow.value > maxWindowValue) {
         maxWindowValue = currentWindow.value
+        maxWindowTime = currentWindow.lastTime
         maxWindowTargetNode = currentWindow.largestShiftNode
       }
     },
@@ -62,7 +64,7 @@ export function trackCls(): ClsTracker {
       if (maxWindowValue === 0 && currentWindow === undefined) {
         return undefined
       }
-      const result: CumulativeLayoutShift = { value: maxWindowValue }
+      const result: CumulativeLayoutShift = { value: maxWindowValue, time: maxWindowTime }
       const tagName = maxWindowTargetNode?.tagName
       if (tagName) {
         result.targetSelector = tagName.toLowerCase()

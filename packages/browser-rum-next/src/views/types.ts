@@ -26,6 +26,7 @@ export interface LargestContentfulPaint {
 export interface CumulativeLayoutShift {
   value: number
   targetSelector?: string
+  time?: number
 }
 
 export interface InteractionToNextPaint {
