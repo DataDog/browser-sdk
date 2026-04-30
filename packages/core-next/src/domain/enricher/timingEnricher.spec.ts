@@ -56,4 +56,20 @@ describe('timingEnricher', () => {
     const result = e.transform({ type: 'view', view: { first_byte: undefined } })
     expect((result as any).view.first_byte).toBeUndefined()
   })
+
+  it('converts _dd.page_states[].start from ms to ns', () => {
+    const e = timingEnricher()
+    const result = e.transform({
+      _dd: {
+        page_states: [
+          { state: 'active', start: 0 },
+          { state: 'passive', start: 5000 },
+        ],
+      },
+    })
+    const states = (result as any)._dd.page_states
+    expect(states[0].start).toBe(0)
+    expect(states[1].start).toBe(5_000_000_000)
+    expect(states[0].state).toBe('active')
+  })
 })

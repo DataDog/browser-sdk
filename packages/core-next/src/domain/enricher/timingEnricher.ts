@@ -84,6 +84,21 @@ function timingEnricher() {
         })
       }
 
+      // Convert _dd.page_states[].start
+      const dd = result._dd as Record<string, unknown> | undefined
+      if (dd) {
+        const pageStates = dd.page_states as Array<Record<string, unknown>> | undefined
+        if (Array.isArray(pageStates)) {
+          dd.page_states = pageStates.map((entry) => {
+            const converted = { ...entry }
+            if (typeof converted.start === 'number') {
+              converted.start = toServerDuration(converted.start as Duration)
+            }
+            return converted
+          })
+        }
+      }
+
       return result
     },
   })
