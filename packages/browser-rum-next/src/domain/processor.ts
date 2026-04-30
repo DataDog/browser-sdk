@@ -105,6 +105,19 @@ function startProcessor({ pipeline, config }: ProcessorDependencies): void {
     })
   }
 
+  // Capture the current call stack for error handling attribution
+  function captureHandlingStack(label: string): string {
+    try {
+      throw new Error()
+    } catch (e) {
+      const stack = (e as Error).stack || ''
+      // Replace the first line with a label
+      const lines = stack.split('\n')
+      lines[0] = `HandlingStack: ${label}`
+      return lines.slice(0, 5).join('\n')
+    }
+  }
+
   // Runtime errors → observation:error
   if (config.trackErrors) {
     pipeline.subscribe('resource:runtime_error', (data) => {
@@ -120,7 +133,9 @@ function startProcessor({ pipeline, config }: ProcessorDependencies): void {
           type: error.type,
           stack: error.stack,
           source: 'source',
+          source_type: 'browser',
           handling: 'unhandled',
+          handling_stack: captureHandlingStack('runtime error'),
           fingerprint: extractFingerprint(errorObj),
           causes: errorObj ? flattenCauses(errorObj) : undefined,
         },
@@ -144,7 +159,9 @@ function startProcessor({ pipeline, config }: ProcessorDependencies): void {
           type: errorObj?.name,
           stack: resource.stack as string | undefined,
           source: 'console',
+          source_type: 'browser',
           handling: 'handled',
+          handling_stack: captureHandlingStack('console error'),
           fingerprint: resource.fingerprint as string | undefined,
           causes: errorObj ? flattenCauses(errorObj) : undefined,
         },
@@ -165,7 +182,9 @@ function startProcessor({ pipeline, config }: ProcessorDependencies): void {
           type: error.type,
           stack: error.stack,
           source: 'custom',
+          source_type: 'browser',
           handling: 'handled',
+          handling_stack: captureHandlingStack('custom error'),
           fingerprint: extractFingerprint(errorObj),
           causes: errorObj ? flattenCauses(errorObj) : undefined,
         },
