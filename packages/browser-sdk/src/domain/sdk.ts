@@ -211,6 +211,11 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
     transports: routerTransports,
     batchOptions: { maxSizeBytes: 16 * 1024, maxCount: 50, flushTimeoutMs: 30_000 },
     beforeSend: applyBeforeSend,
+    onEventReady: (event) => {
+      if (typeof window !== 'undefined' && typeof (window as any).__ddBrowserSdkExtensionCallback === 'function') {
+        ;(window as any).__ddBrowserSdkExtensionCallback({ type: 'rum', payload: event })
+      }
+    },
   })
 
   // 7. Wire page exit → router flush

@@ -2,11 +2,14 @@ import { Batch } from '@datadog/core-next'
 import type { Pipeline } from '@datadog/core-next'
 import type { HttpRequest } from '../browser'
 
+type EventInterceptor = (event: Record<string, unknown>) => boolean | void
+
 interface TransportRouterOptions {
   pipeline: Pipeline<Record<string, unknown>>
   transports: Map<string, HttpRequest>
   batchOptions: { maxSizeBytes: number; maxCount: number; flushTimeoutMs: number }
-  beforeSend?: (event: Record<string, unknown>) => boolean | void
+  beforeSend?: EventInterceptor
+  onEventReady?: (event: Record<string, unknown>) => void
 }
 
 class TransportRouter {
@@ -18,13 +21,36 @@ class TransportRouter {
     this.options = options
   }
 
+  /**
+   * Process an event through the transport chain:
+   * 1. beforeSend — customer can discard
+   * 2. onEventReady — dev tools / extension callback
+   * 3. Return serialized JSON for batching
+   *
+   * Returns undefined if the event was discarded.
+   */
+  private processEvent(event: unknown): string | undefined {
+    const record = event as Record<string, unknown>
+
+    // 1. beforeSend gate
+    if (this.options.beforeSend && this.options.beforeSend(record) === false) {
+      return undefined
+    }
+
+    // 2. Extension callback (dev tools hook)
+    this.options.onEventReady?.(record)
+
+    // 3. Serialize
+    return JSON.stringify(event)
+  }
+
   route(eventType: string, trackType: string): void {
     this.ensureBatch(trackType)
     this.options.pipeline.subscribe(eventType, (event) => {
-      if (this.options.beforeSend && this.options.beforeSend(event as Record<string, unknown>) === false) {
-        return
+      const serialized = this.processEvent(event)
+      if (serialized) {
+        this.batches.get(trackType)?.add(serialized)
       }
-      this.batches.get(trackType)?.add(JSON.stringify(event))
     })
   }
 
@@ -32,9 +58,6 @@ class TransportRouter {
    * Route events with deduplication. Events with the same key (extracted by keyFn)
    * replace the previous event in the buffer. Only the latest event per key is
    * included when the batch flushes.
-   *
-   * This is a workaround for view events that update progressively — the backend
-   * only needs the latest state per view ID.
    */
   routeWithDedup(
     eventType: string,
@@ -49,16 +72,16 @@ class TransportRouter {
     const dedupBuffer = this.dedupBuffers.get(trackType)!
 
     this.options.pipeline.subscribe(eventType, (event) => {
-      if (this.options.beforeSend && this.options.beforeSend(event as Record<string, unknown>) === false) {
-        return
+      const serialized = this.processEvent(event)
+      if (serialized) {
+        const key = keyFn(event as Record<string, unknown>)
+        dedupBuffer.set(key, serialized)
       }
-      const key = keyFn(event as Record<string, unknown>)
-      dedupBuffer.set(key, JSON.stringify(event))
     })
   }
 
   flush(): void {
-    // Flush dedup buffers into batches before flushing
+    // Drain dedup buffers into batches before flushing
     for (const [trackType, dedupBuffer] of this.dedupBuffers) {
       const batch = this.batches.get(trackType)
       if (batch && dedupBuffer.size > 0) {
