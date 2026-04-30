@@ -204,4 +204,23 @@ describe('RUM integration', () => {
     expect(viewEvent.view?.action).toBeDefined()
     expect(viewEvent.view.action.count).toBeGreaterThanOrEqual(1)
   })
+
+  it('view observation includes usr.anonymous_id', async () => {
+    currentSdk = await createSdk({
+      clientToken: 'test-token',
+      site: 'datadoghq.com',
+      modules: [rumProcessor],
+      rum: {},
+    })
+
+    await tick()
+    flushBatch()
+
+    const viewLines = getRumLines(fetchSpy).filter((l) => l.includes('"loading_type"'))
+    expect(viewLines.length).toBeGreaterThan(0)
+    const event = JSON.parse(viewLines[0])
+    expect(event.usr).toBeDefined()
+    expect(event.usr.anonymous_id).toBeDefined()
+    expect(typeof event.usr.anonymous_id).toBe('string')
+  })
 })

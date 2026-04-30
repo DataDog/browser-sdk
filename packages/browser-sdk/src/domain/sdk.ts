@@ -135,22 +135,9 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
     'observation:*',
     tagsEnricher({ env: config.env, service: config.service, version: config.version, sdkVersion: config.sdkVersion })
   )
-  pipeline.enrich('observation:*', contextEnricher(globalContext, userContext, accountContext))
+  const anonymousId = config.trackAnonymousUser !== false ? session.getDeviceId() : undefined
+  pipeline.enrich('observation:*', contextEnricher(globalContext, userContext, accountContext, anonymousId))
   pipeline.enrich('observation:*', timingEnricher())
-
-  // 4.7. Add anonymous_id to usr context when trackAnonymousUser is enabled (default: true)
-  if (config.trackAnonymousUser !== false) {
-    pipeline.enrich('observation:*', {
-      name: 'anonymousUser',
-      transform(data) {
-        const usr = (data.usr as Record<string, unknown>) ?? {}
-        if (!usr.anonymous_id) {
-          return { ...data, usr: { ...usr, anonymous_id: session.getDeviceId() } }
-        }
-        return data
-      },
-    })
-  }
 
   // 5. Create endpoint builders for each track type used by modules
   const trackTypes: TrackType[] = ['logs', 'rum', 'replay']

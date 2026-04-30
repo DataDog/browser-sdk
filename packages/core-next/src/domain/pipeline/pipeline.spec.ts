@@ -368,3 +368,34 @@ describe('Pipeline', () => {
     })
   })
 })
+
+describe('enricher chain passes data to subscribers', () => {
+  it('subscriber receives output of all enrichers', async () => {
+    const pipeline = new Pipeline<Record<string, unknown>>()
+    const events: any[] = []
+
+    pipeline.enrich('observation:*', {
+      name: 'first',
+      transform(data: Record<string, unknown>) {
+        return { ...data, usr: {} }
+      },
+    })
+
+    pipeline.enrich('observation:*', {
+      name: 'second',
+      transform(data: Record<string, unknown>) {
+        const usr = (data.usr as Record<string, unknown>) ?? {}
+        return { ...data, usr: { ...usr, anonymous_id: 'device-123' } }
+      },
+    })
+
+    pipeline.subscribe('observation:view', (e) => events.push(e))
+    pipeline.seal()
+    pipeline.publish('observation:view', { type: 'view' })
+
+    await new Promise((r) => setTimeout(r, 50))
+
+    expect(events.length).toBe(1)
+    expect(events[0].usr.anonymous_id).toBe('device-123')
+  })
+})
