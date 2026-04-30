@@ -12,6 +12,7 @@ import { featureFlagEnricher } from '../domain/enrichers/featureFlagEnricher'
 import { syntheticsEnricher } from '../domain/enrichers/syntheticsEnricher'
 import { ciVisibilityEnricher } from '../domain/enrichers/ciVisibilityEnricher'
 import { sourceCodeEnricher } from '../domain/enrichers/sourceCodeEnricher'
+import { deviceEnricher } from '../domain/enrichers/deviceEnricher'
 import { startViewCollectors } from '../views/collectors'
 import { startCollectors as startPerformanceCollectors } from '../performance/collectors'
 import { navigationEnricher } from '../views/navigationEnricher'
@@ -64,6 +65,7 @@ const rumProcessor: Module = {
     startViewProcessor({ pipeline: context.pipeline })
 
     // Register RUM enrichers on all observation:* events
+    context.pipeline.enrich('observation:*', deviceEnricher())
     context.pipeline.enrich('observation:*', viewContextEnricher(context.pipeline))
     context.pipeline.enrich('observation:*', displayEnricher())
     context.pipeline.enrich('observation:*', connectivityEnricher())
