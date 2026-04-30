@@ -128,6 +128,30 @@ function startProcessor({ pipeline, config }: ProcessorDependencies): void {
       })
     })
 
+    // Console errors → observation:error (same as v6 default behavior)
+    pipeline.subscribe('resource:console', (data) => {
+      const resource = data as Record<string, unknown>
+      if (resource.api !== 'error') return
+
+      const errorObj = resource.error as Error | undefined
+
+      pipeline.publish('observation:error', {
+        type: 'error',
+        date: Date.now(),
+        error: {
+          id: generateId('err'),
+          message: resource.message as string,
+          type: errorObj?.name,
+          stack: resource.stack as string | undefined,
+          source: 'console',
+          handling: 'unhandled',
+          fingerprint: resource.fingerprint as string | undefined,
+          causes: errorObj ? flattenCauses(errorObj) : undefined,
+        },
+        view: { in_foreground: typeof document !== 'undefined' && document.visibilityState === 'visible' },
+      })
+    })
+
     pipeline.subscribe('action:add_error', (data) => {
       const error = data as Record<string, unknown>
       const errorObj = error.error as Error | undefined

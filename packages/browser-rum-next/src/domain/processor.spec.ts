@@ -150,6 +150,43 @@ describe('startProcessor', () => {
     expect(typeof view.in_foreground).toBe('boolean')
   })
 
+  it('transforms resource:console error into observation:error', async () => {
+    const observations: unknown[] = []
+    pipeline.subscribe('observation:error', (data) => observations.push(data))
+
+    startProcessor({ pipeline, config: makeConfig() })
+    pipeline.seal()
+
+    pipeline.publish('resource:console', {
+      api: 'error',
+      message: 'Console error from playground',
+      error: new Error('console error'),
+    })
+    await tick()
+
+    expect(observations.length).toBe(1)
+    const obs = observations[0] as Record<string, unknown>
+    expect(obs.type).toBe('error')
+    const error = obs.error as Record<string, unknown>
+    expect(error.message).toBe('Console error from playground')
+    expect(error.source).toBe('console')
+    expect(error.handling).toBe('unhandled')
+  })
+
+  it('does not forward non-error console messages to RUM', async () => {
+    const observations: unknown[] = []
+    pipeline.subscribe('observation:error', (data) => observations.push(data))
+
+    startProcessor({ pipeline, config: makeConfig() })
+    pipeline.seal()
+
+    pipeline.publish('resource:console', { api: 'log', message: 'just a log' })
+    pipeline.publish('resource:console', { api: 'warn', message: 'just a warning' })
+    await tick()
+
+    expect(observations.length).toBe(0)
+  })
+
   it('action:add_error publishes handled error', async () => {
     const observations: unknown[] = []
     pipeline.subscribe('observation:error', (data) => observations.push(data))
