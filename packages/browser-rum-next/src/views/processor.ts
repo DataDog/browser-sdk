@@ -147,6 +147,7 @@ function startProcessor({ pipeline }: ProcessorDependencies): void {
         cumulative_layout_shift_time: clsMetric?.time,
         interaction_to_next_paint: inpMetric?.value,
         interaction_to_next_paint_target_selector: inpMetric?.targetSelector,
+        interaction_to_next_paint_time: inpMetric?.time,
         loading_time: view.loadingTime,
         // Event counts
         error: { count: counts.errorCount },
@@ -157,6 +158,7 @@ function startProcessor({ pipeline }: ProcessorDependencies): void {
       },
       _dd: {
         document_version: view.documentVersion,
+        ...(clsMetric && { cls: { device_pixel_ratio: window.devicePixelRatio } }),
       },
     }
 

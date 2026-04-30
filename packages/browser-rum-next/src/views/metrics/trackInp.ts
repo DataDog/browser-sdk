@@ -18,9 +18,9 @@ export interface InpTracker {
 
 export function trackInp(): InpTracker {
   // Map from interactionId to max duration + target
-  const interactions = new Map<number, { duration: number; target?: Element }>()
+  const interactions = new Map<number, { duration: number; startTime: number; target?: Element }>()
   // Sorted list of top interactions by duration (descending)
-  let topInteractions: Array<{ duration: number; target?: Element }> = []
+  let topInteractions: Array<{ duration: number; startTime: number; target?: Element }> = []
 
   function updateTopInteractions(): void {
     const all = Array.from(interactions.values()).sort((a, b) => b.duration - a.duration)
@@ -37,6 +37,7 @@ export function trackInp(): InpTracker {
       if (existing === undefined || entry.duration > existing.duration) {
         interactions.set(entry.interactionId, {
           duration: entry.duration,
+          startTime: entry.startTime,
           target: entry.target,
         })
         updateTopInteractions()
@@ -52,7 +53,7 @@ export function trackInp(): InpTracker {
       const index = Math.max(0, Math.min(Math.floor(n - 1 - n * 0.02), n - 1))
       const interaction = topInteractions[index]
 
-      const result: InteractionToNextPaint = { value: interaction.duration }
+      const result: InteractionToNextPaint = { value: interaction.duration, time: interaction.startTime }
       const tagName = interaction.target?.tagName
       if (tagName) {
         result.targetSelector = tagName.toLowerCase()

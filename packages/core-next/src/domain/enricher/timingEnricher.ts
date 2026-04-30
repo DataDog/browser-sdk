@@ -13,6 +13,7 @@ const DURATION_PATHS = [
   'view.first_contentful_paint',
   'view.largest_contentful_paint',
   'view.interaction_to_next_paint',
+  'view.interaction_to_next_paint_time',
   'view.loading_time',
   'view.cumulative_layout_shift_time',
   'performance.fcp.timestamp',

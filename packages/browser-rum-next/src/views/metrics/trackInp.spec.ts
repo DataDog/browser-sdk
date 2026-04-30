@@ -9,7 +9,7 @@ describe('trackInp', () => {
   it('tracks single interaction', () => {
     const tracker = trackInp()
     tracker.process({ duration: 200, startTime: 0, processingStart: 0, processingEnd: 200, interactionId: 1 })
-    expect(tracker.get()).toEqual({ value: 200 })
+    expect(tracker.get()).toEqual({ value: 200, time: 0 })
   })
 
   it('groups entries by interactionId and takes max duration', () => {

@@ -32,6 +32,7 @@ export interface CumulativeLayoutShift {
 export interface InteractionToNextPaint {
   value: number
   targetSelector?: string
+  time?: number
 }
 
 export interface NavigationTimings {
