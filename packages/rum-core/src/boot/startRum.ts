@@ -16,16 +16,7 @@ import {
   startAccountContext,
   startGlobalContext,
   startUserContext,
-<<<<<<< HEAD
-<<<<<<< HEAD
   startTabContext,
-=======
-  globalContextDecoratorFactory,
-  userContextDecoratorFactory,
-  accountContextDecoratorFactory,
->>>>>>> 120667891 (✨ Wire RUM pipeline with all decorator factories, seal in startRumEventCollection)
-=======
->>>>>>> e3f6fb1f0 (🔥 Remove pipeline migration from existing packages, scope v8 changes to core-next only)
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { createWindowOpenObservable } from '../browser/windowOpenObservable'

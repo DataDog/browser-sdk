@@ -7,14 +7,7 @@ import {
   startAccountContext,
   startGlobalContext,
   startUserContext,
-<<<<<<< HEAD
-<<<<<<< HEAD
   startTabContext,
-=======
-  getRelativeTime,
->>>>>>> b5df58311 (✨ Migrate Logs package to Pipeline architecture)
-=======
->>>>>>> e3f6fb1f0 (🔥 Remove pipeline migration from existing packages, scope v8 changes to core-next only)
 } from '@datadog/browser-core'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration } from '../domain/configuration'

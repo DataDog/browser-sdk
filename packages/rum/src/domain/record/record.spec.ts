@@ -2,23 +2,7 @@ import { DefaultPrivacyLevel, findLast, noop } from '@datadog/browser-core'
 import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { createNewEvent, collectAsyncCalls, registerCleanupTask } from '@datadog/browser-core/test'
-<<<<<<< HEAD
-<<<<<<< HEAD
 import { findElement, findFullSnapshotInFormat, findNode, recordsPerFullSnapshot } from '../../../test'
-=======
-import {
-  findElement,
-  findFullSnapshot,
-  findNode,
-  recordsPerFullSnapshot,
-  createRumFrustrationEvent,
-  bridgeLifeCycleToPipeline,
-} from '../../../test'
-import { createMockRumPipeline } from '../../../../rum-core/test'
->>>>>>> 0fcc5ef31 (♻️ Migrate LifeCycle coordination event subscribers to pipeline signals)
-=======
-import { findElement, findFullSnapshot, findNode, recordsPerFullSnapshot } from '../../../test'
->>>>>>> e3f6fb1f0 (🔥 Remove pipeline migration from existing packages, scope v8 changes to core-next only)
 import type {
   BrowserIncrementalSnapshotRecord,
   BrowserMutationData,
