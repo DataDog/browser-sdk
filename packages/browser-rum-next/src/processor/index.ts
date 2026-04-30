@@ -65,7 +65,7 @@ const rumProcessor: Module = {
     startViewProcessor({ pipeline: context.pipeline })
 
     // Register RUM enrichers on all observation:* events
-    context.pipeline.enrich('observation:*', deviceEnricher())
+    context.pipeline.enrich('observation:view', deviceEnricher())
     context.pipeline.enrich('observation:*', viewContextEnricher(context.pipeline))
     context.pipeline.enrich('observation:*', displayEnricher())
     context.pipeline.enrich('observation:*', connectivityEnricher())
