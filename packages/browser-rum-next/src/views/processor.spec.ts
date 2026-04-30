@@ -119,7 +119,7 @@ describe('view processor', () => {
     await tick()
 
     const latest = observations[observations.length - 1]
-    expect(latest.performance?.fcp?.timestamp).toBe(450)
+    expect(latest.view.performance?.fcp?.timestamp).toBe(450)
   })
 
   it('does not accumulate FCP on route_change', async () => {
@@ -149,7 +149,7 @@ describe('view processor', () => {
     await tick()
 
     const latest = observations[observations.length - 1]
-    expect(latest.performance?.lcp?.timestamp).toBe(800)
+    expect(latest.view.performance?.lcp?.timestamp).toBe(800)
   })
 
   it('stops LCP after first interaction', async () => {
@@ -183,7 +183,7 @@ describe('view processor', () => {
     await tick()
 
     const latest = observations[observations.length - 1]
-    expect(latest.performance?.cls?.score).toBe(0.1)
+    expect(latest.view.performance?.cls?.score).toBe(0.1)
   })
 
   it('ignores layout shifts with recent input', async () => {
@@ -214,7 +214,7 @@ describe('view processor', () => {
     await tick()
 
     const latest = observations[observations.length - 1]
-    expect(latest.performance?.inp?.duration).toBe(120)
+    expect(latest.view.performance?.inp?.duration).toBe(120)
   })
 
   it('accumulates navigation timings on initial load', async () => {

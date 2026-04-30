@@ -175,7 +175,7 @@ function startProcessor({ pipeline }: ProcessorDependencies): void {
       performance.inp = { duration: inpMetric.value, target_selector: inpMetric.targetSelector }
     }
     if (Object.keys(performance).length > 0) {
-      event.performance = performance
+      ;(event.view as any).performance = performance
     }
 
     pipeline.publish('observation:view', event)

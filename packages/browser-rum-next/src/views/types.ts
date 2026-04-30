@@ -124,16 +124,17 @@ export interface SerializedViewEvent {
     resource: { count: number }
     long_task: { count: number }
     frustration: { count: number }
+    cumulative_layout_shift_time?: number
+    /** Performance detail sub-object for deeper drill-down */
+    performance?: {
+      fcp?: { timestamp: number }
+      lcp?: { timestamp: number; target_selector?: string }
+      cls?: { score: number; timestamp?: number; target_selector?: string }
+      inp?: { duration: number; timestamp?: number; target_selector?: string }
+    }
   }
   _dd: {
     document_version: number
-  }
-  /** Performance detail sub-object for deeper drill-down */
-  performance?: {
-    fcp?: { timestamp: number }
-    lcp?: { timestamp: number; target_selector?: string }
-    cls?: { score: number; timestamp?: number; target_selector?: string }
-    inp?: { duration: number; timestamp?: number; target_selector?: string }
   }
 }
 
