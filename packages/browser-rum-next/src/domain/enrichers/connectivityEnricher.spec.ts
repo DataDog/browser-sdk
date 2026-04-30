@@ -22,22 +22,21 @@ describe('connectivityEnricher', () => {
     expect(enricher.name).toBe('connectivity')
   })
 
-  it('should return data unchanged when navigator.connection is not available', () => {
+  it('should stamp connectivity.status even when navigator.connection is not available', () => {
     withConnection(undefined, () => {
       const enricher = connectivityEnricher()
-      const data = { type: 'error' }
-      const result = enricher.transform(data)
+      const result = enricher.transform({ type: 'error' }) as Record<string, unknown>
 
-      expect(result).toEqual(data)
+      expect((result.connectivity as any).status).toBe('connected')
     })
   })
 
-  it('should stamp connectivity when navigator.connection is available', () => {
+  it('should stamp connectivity with status and connection details when available', () => {
     withConnection({ effectiveType: '4g', type: 'wifi' }, () => {
       const enricher = connectivityEnricher()
       const result = enricher.transform({ type: 'error' }) as Record<string, unknown>
 
-      expect(result.connectivity).toEqual({ effective_type: '4g', type: 'wifi' })
+      expect(result.connectivity).toEqual({ status: 'connected', effective_type: '4g', type: 'wifi' })
     })
   })
 
