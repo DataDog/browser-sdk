@@ -207,7 +207,8 @@ async function initV8() {
     const sdk = await createSdk({
       clientToken: 'pub_playground_v8',
       site: 'datadoghq.com',
-      proxy: '/intake/v8/api/v2/logs',
+      proxy: (options: { path: string; parameters: string }) =>
+        `/intake/v8${options.path}?${options.parameters}`,
       modules: [logsProcessor, rumProcessor],
       logs: {
         forwardErrorsToLogs: true,
@@ -236,20 +237,20 @@ function setupButtons() {
   // ── Logs ──
   document.getElementById('btn-info')?.addEventListener('click', () => {
     datadogLogs.logger.info('Test info message', { source: 'playground' })
-    const v8 = (window as any).sdkV8?.logs as any
-    v8?.logger.info('Test info message', { source: 'playground' })
+    const v8Logs = (window as any).sdkV8?.logs as any
+    v8Logs?.logger.info('Test info message', { source: 'playground' })
   })
 
   document.getElementById('btn-warn')?.addEventListener('click', () => {
     datadogLogs.logger.warn('Test warning message', { source: 'playground' })
-    const v8 = (window as any).sdkV8?.logs as any
-    v8?.logger.warn('Test warning message', { source: 'playground' })
+    const v8Logs = (window as any).sdkV8?.logs as any
+    v8Logs?.logger.warn('Test warning message', { source: 'playground' })
   })
 
   document.getElementById('btn-error')?.addEventListener('click', () => {
     datadogLogs.logger.error('Test error message', { source: 'playground' }, new Error('playground error'))
-    const v8 = (window as any).sdkV8?.logs as any
-    v8?.logger.error('Test error message', { source: 'playground' }, new Error('playground error'))
+    const v8Logs = (window as any).sdkV8?.logs as any
+    v8Logs?.logger.error('Test error message', { source: 'playground' }, new Error('playground error'))
   })
 
   document.getElementById('btn-console-error')?.addEventListener('click', () => {
@@ -258,18 +259,22 @@ function setupButtons() {
 
   document.getElementById('btn-set-context')?.addEventListener('click', () => {
     datadogLogs.setGlobalContext({ env: 'playground', version: '0.0.1' })
-    const v8 = (window as any).sdkV8?.logs as any
-    v8?.setGlobalContext({ env: 'playground', version: '0.0.1' })
+    // v8: context methods are SDK-level, not module-level
+    const v8Sdk = (window as any).sdkV8
+    v8Sdk?.setGlobalContext({ env: 'playground', version: '0.0.1' })
     datadogLogs.logger.info('Log after setGlobalContext')
-    v8?.logger.info('Log after setGlobalContext')
+    const v8Logs = (window as any).sdkV8?.logs as any
+    v8Logs?.logger.info('Log after setGlobalContext')
   })
 
   document.getElementById('btn-set-user')?.addEventListener('click', () => {
     datadogLogs.setUser({ id: 'user-123', name: 'Test User', email: 'test@example.com' })
-    const v8 = (window as any).sdkV8?.logs as any
-    v8?.setUser({ id: 'user-123', name: 'Test User', email: 'test@example.com' })
+    // v8: context methods are SDK-level
+    const v8Sdk = (window as any).sdkV8
+    v8Sdk?.setUser({ id: 'user-123', name: 'Test User', email: 'test@example.com' })
     datadogLogs.logger.info('Log after setUser')
-    v8?.logger.info('Log after setUser')
+    const v8Logs = (window as any).sdkV8?.logs as any
+    v8Logs?.logger.info('Log after setUser')
   })
 
   // ── Views ──

@@ -6,14 +6,26 @@ function intakeProxy(): Plugin {
   return {
     name: 'intake-proxy',
     configureServer(server) {
-      server.middlewares.use('/intake', (req, res) => {
+      // Handle CORS preflight
+      server.middlewares.use('/intake', (req, res, next) => {
+        if (req.method === 'OPTIONS') {
+          res.writeHead(200, {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+            'Access-Control-Allow-Headers': '*',
+          })
+          res.end()
+          return
+        }
+
         let body = ''
         req.on('data', (chunk: Buffer) => {
           body += chunk.toString()
         })
         req.on('end', () => {
           const version = req.url?.startsWith('/v6') ? 'v6' : 'v8'
-          console.log(`\n📦 [${version}] ${req.method} ${req.url}`)
+          const track = req.url?.includes('/rum') ? 'rum' : req.url?.includes('/logs') ? 'logs' : 'other'
+          console.log(`\n📦 [${version}] [${track}] ${req.method} ${req.url?.slice(0, 80)}`)
           if (body) {
             try {
               const events = body
@@ -21,8 +33,12 @@ function intakeProxy(): Plugin {
                 .filter(Boolean)
                 .map((line: string) => JSON.parse(line))
               for (const event of events) {
-                const msg = event.message ?? JSON.stringify(event).slice(0, 80)
-                console.log(`  → [${event.status ?? '?'}] ${event.origin ?? '?'}: ${msg}`)
+                // RUM events have a type field (view, action, error, resource, long_task)
+                const rumType = event.type ?? event.view?.loading_type
+                const msg = event.message ?? rumType ?? JSON.stringify(event).slice(0, 80)
+                const viewId = event.view?.id?.slice(0, 8) ?? ''
+                const extra = viewId ? ` [view:${viewId}]` : ''
+                console.log(`  → [${event.status ?? rumType ?? '?'}]${extra} ${msg}`)
               }
             } catch {
               console.log(`  → raw: ${body.slice(0, 200)}`)
