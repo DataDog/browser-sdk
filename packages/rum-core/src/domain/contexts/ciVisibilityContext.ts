@@ -1,5 +1,5 @@
-import { getInitCookie, HookNames, SKIPPED } from '@datadog/browser-core'
 import type { Configuration } from '@datadog/browser-core'
+import { display, getInitCookie, HookNames, SKIPPED } from '@datadog/browser-core'
 import { createCookieObservable } from '../../browser/cookieObservable'
 import { SessionType } from '../rumSessionManager'
 import type { DefaultRumEventAttributes, Hooks } from '../hooks'
@@ -19,8 +19,7 @@ export function startCiVisibilityContext(
   hooks: Hooks,
   cookieObservable = createCookieObservable(configuration, CI_VISIBILITY_TEST_ID_COOKIE_NAME)
 ) {
-  let testExecutionId =
-    getInitCookie(CI_VISIBILITY_TEST_ID_COOKIE_NAME) || (window as CiTestWindow).Cypress?.env('traceId')
+  let testExecutionId = getInitCookie(CI_VISIBILITY_TEST_ID_COOKIE_NAME) || readCypressTraceId()
 
   const cookieObservableSubscription = cookieObservable.subscribe((value) => {
     testExecutionId = value
@@ -46,5 +45,20 @@ export function startCiVisibilityContext(
     stop: () => {
       cookieObservableSubscription.unsubscribe()
     },
+  }
+}
+
+function readCypressTraceId(): string | undefined {
+  const cypress = (window as CiTestWindow).Cypress
+  if (!cypress) {
+    return undefined
+  }
+  try {
+    return cypress.env('traceId')
+  } catch {
+    display.warn(
+      'Failed to read Cypress test execution id via Cypress.env(). Upgrade dd-trace-js to >= 5.88.0 to keep RUM ↔ test correlation working.'
+    )
+    return undefined
   }
 }
