@@ -33,7 +33,7 @@
     "@datadog/browser-rum": "6.33.0",
     "@datadog/browser-rum-react": "6.33.0",
     "ts-loader": "9.5.7",
-    "typescript": "5.9.3",
+    "typescript": "6.0.3",
     "webpack": "5.105.4",
     "webpack-cli": "6.0.1"
   },
