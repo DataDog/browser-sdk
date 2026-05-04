@@ -171,7 +171,13 @@ function startProcessor({ pipeline }: ProcessorDependencies): void {
       performance.lcp = { timestamp: lcpMetric.value, target_selector: lcpMetric.targetSelector }
     }
     if (clsMetric) {
-      performance.cls = { score: clsMetric.value, timestamp: clsMetric.time, target_selector: clsMetric.targetSelector }
+      performance.cls = {
+        score: clsMetric.value,
+        timestamp: clsMetric.time,
+        target_selector: clsMetric.targetSelector,
+        previous_rect: clsMetric.previousRect,
+        current_rect: clsMetric.currentRect,
+      }
     }
     if (inpMetric) {
       performance.inp = { duration: inpMetric.value, target_selector: inpMetric.targetSelector }

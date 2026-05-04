@@ -15,6 +15,7 @@ interface PendingClick {
   errorCount: number
   resourceCount: number
   longTaskCount: number
+  actionId: string
 }
 
 const MAX_CLICK_GAP = 1000

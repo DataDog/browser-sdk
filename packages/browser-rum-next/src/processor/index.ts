@@ -21,6 +21,7 @@ import type { StartViewAction } from '../views/types'
 import { startClickCollection } from '../actions/clickCollector'
 import { startDomMutationCollection } from '../actions/domMutationCollector'
 import { startActionProcessor } from '../actions/actionProcessor'
+import { actionContextEnricher } from '../domain/enrichers/actionContextEnricher'
 import { getDocumentTraceId } from '../domain/getDocumentTraceId'
 import { startVitalProcessor } from '../domain/vitals'
 import { startManualResourceProcessor } from '../domain/manualResource'
@@ -49,7 +50,12 @@ const rumProcessor: Module = {
     const stopDomMutationCollection = startDomMutationCollection(context.pipeline)
 
     // Start action processor (click → observation:action, add_action → observation:action)
-    startActionProcessor(context.pipeline)
+    const actionContexts = startActionProcessor(context.pipeline)
+
+    // Stamp action.id on error/resource/long_task events when an action is active
+    context.pipeline.enrich('observation:error', actionContextEnricher(actionContexts))
+    context.pipeline.enrich('observation:resource', actionContextEnricher(actionContexts))
+    context.pipeline.enrich('observation:long_task', actionContextEnricher(actionContexts))
 
     // Start vital processor (start_vital + stop_vital + add_vital → observation:vital)
     startVitalProcessor(context.pipeline)

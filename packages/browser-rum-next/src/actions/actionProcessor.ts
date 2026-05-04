@@ -6,7 +6,17 @@ import type { PendingClick } from './clickChain'
 import { computeFrustration } from './computeFrustration'
 import type { ClickEvent } from './clickCollector'
 
-function startActionProcessor(pipeline: Pipeline<Record<string, unknown>>): void {
+interface ActionContexts {
+  getCurrentActionIds(): string[]
+}
+
+function generateActionId(): string {
+  return typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `action-${Date.now()}-${Math.random()}`
+}
+
+function startActionProcessor(pipeline: Pipeline<Record<string, unknown>>): ActionContexts {
   let currentChain: ReturnType<typeof createClickChain> | undefined
   let clickCounter = 0
 
@@ -15,6 +25,10 @@ function startActionProcessor(pipeline: Pipeline<Record<string, unknown>>): void
   let activeActionErrorCount = 0
   let activeActionResourceCount = 0
   let activeActionLongTaskCount = 0
+
+  // Track currently active action IDs for stamping on error/resource/long_task events
+  let currentClickActionId: string | undefined
+  const activeManualActionIds = new Map<string, string>()
 
   pipeline.subscribe('observation:error', () => {
     activeActionErrorCount++
@@ -30,6 +44,10 @@ function startActionProcessor(pipeline: Pipeline<Record<string, unknown>>): void
   pipeline.subscribe('action:click', (data) => {
     const clickEvent = data as ClickEvent
     const clickId = ++clickCounter
+
+    // Generate action ID immediately so it can be stamped on concurrent events
+    const actionId = generateActionId()
+    currentClickActionId = actionId
 
     // Reset event counts for this action
     activeActionErrorCount = 0
@@ -49,6 +67,7 @@ function startActionProcessor(pipeline: Pipeline<Record<string, unknown>>): void
       pointerUpDelay: clickEvent.pointerUpDelay,
       startTime: clickEvent.startTime,
       startDate: clickEvent.startDate,
+      actionId,
       errorCount: 0,
       resourceCount: 0,
       longTaskCount: 0,
@@ -58,6 +77,11 @@ function startActionProcessor(pipeline: Pipeline<Record<string, unknown>>): void
     void clickId
 
     detector.onComplete((result: ActivityResult) => {
+      // Clear the current click action ID once activity detection is done
+      if (currentClickActionId === actionId) {
+        currentClickActionId = undefined
+      }
+
       const completedClick: PendingClick = {
         ...(pendingClick as PendingClick),
         activity: result,
@@ -87,10 +111,7 @@ function startActionProcessor(pipeline: Pipeline<Record<string, unknown>>): void
         type: 'action',
         date: click.startDate,
         action: {
-          id:
-            typeof crypto !== 'undefined' && crypto.randomUUID
-              ? crypto.randomUUID()
-              : `action-${Date.now()}-${Math.random()}`,
+          id: click.actionId,
           type: 'click',
           target: { name: click.name },
           loading_time: click.activity.hadActivity ? click.activity.endTime! - click.startTime : undefined,
@@ -120,7 +141,7 @@ function startActionProcessor(pipeline: Pipeline<Record<string, unknown>>): void
   }
 
   // --- Manual actions ---
-  const trackedActions = new Map<string, { startTime: number; startDate: number }>()
+  const trackedActions = new Map<string, { startTime: number; startDate: number; actionId: string }>()
 
   pipeline.subscribe('action:add_action', (data) => {
     const action = data as { name: string; type?: string; context?: object }
@@ -128,10 +149,7 @@ function startActionProcessor(pipeline: Pipeline<Record<string, unknown>>): void
       type: 'action',
       date: Date.now(),
       action: {
-        id:
-          typeof crypto !== 'undefined' && crypto.randomUUID
-            ? crypto.randomUUID()
-            : `action-${Date.now()}`,
+        id: generateActionId(),
         type: action.type || 'custom',
         target: { name: action.name },
         error: { count: 0 },
@@ -149,7 +167,9 @@ function startActionProcessor(pipeline: Pipeline<Record<string, unknown>>): void
   pipeline.subscribe('action:start_action', (data) => {
     const action = data as { name: string; actionKey?: string }
     const key = action.actionKey ?? action.name
-    trackedActions.set(key, { startTime: performance.now(), startDate: Date.now() })
+    const actionId = generateActionId()
+    trackedActions.set(key, { startTime: performance.now(), startDate: Date.now(), actionId })
+    activeManualActionIds.set(key, actionId)
   })
 
   pipeline.subscribe('action:stop_action', (data) => {
@@ -158,15 +178,13 @@ function startActionProcessor(pipeline: Pipeline<Record<string, unknown>>): void
     const tracked = trackedActions.get(key)
     if (!tracked) return
     trackedActions.delete(key)
+    activeManualActionIds.delete(key)
 
     const observation: Record<string, unknown> = {
       type: 'action',
       date: tracked.startDate,
       action: {
-        id:
-          typeof crypto !== 'undefined' && crypto.randomUUID
-            ? crypto.randomUUID()
-            : `action-${Date.now()}`,
+        id: tracked.actionId,
         type: 'custom',
         target: { name: key },
         loading_time: performance.now() - tracked.startTime,
@@ -181,6 +199,16 @@ function startActionProcessor(pipeline: Pipeline<Record<string, unknown>>): void
     }
     pipeline.publish('observation:action', observation)
   })
+
+  return {
+    getCurrentActionIds() {
+      const ids: string[] = []
+      if (currentClickActionId) ids.push(currentClickActionId)
+      for (const id of activeManualActionIds.values()) ids.push(id)
+      return ids
+    },
+  }
 }
 
 export { startActionProcessor }
+export type { ActionContexts }

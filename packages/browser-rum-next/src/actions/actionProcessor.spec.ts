@@ -17,6 +17,123 @@ describe('startActionProcessor', () => {
     pipeline.seal()
   })
 
+  describe('getCurrentActionIds', () => {
+    let pipeline2: Pipeline<Record<string, unknown>>
+
+    beforeEach(() => {
+      pipeline2 = new Pipeline<Record<string, unknown>>()
+    })
+
+    function makeClickEvent(overrides: Partial<Record<string, unknown>> = {}): Record<string, unknown> {
+      return {
+        name: 'Click',
+        nameSource: 'text_content',
+        targetSelector: 'div.card',
+        targetWidth: 200,
+        targetHeight: 100,
+        positionX: 100,
+        positionY: 50,
+        pointerUpDelay: 10,
+        startTime: performance.now(),
+        startDate: Date.now(),
+        ...overrides,
+      }
+    }
+
+    it('returns empty array when no action is active', () => {
+      const contexts = startActionProcessor(pipeline2)
+      pipeline2.seal()
+      expect(contexts.getCurrentActionIds()).toEqual([])
+    })
+
+    it('returns click action ID immediately after click event', () => {
+      jasmine.clock().install()
+      const contexts = startActionProcessor(pipeline2)
+      pipeline2.seal()
+
+      pipeline2.publish('action:click', makeClickEvent())
+      const ids = contexts.getCurrentActionIds()
+      expect(ids.length).toBe(1)
+      expect(typeof ids[0]).toBe('string')
+      expect(ids[0].length).toBeGreaterThan(0)
+
+      jasmine.clock().uninstall()
+    })
+
+    it('clears click action ID after activity detection completes', (done) => {
+      jasmine.clock().install()
+      const contexts = startActionProcessor(pipeline2)
+      pipeline2.seal()
+
+      pipeline2.publish('action:click', makeClickEvent())
+      expect(contexts.getCurrentActionIds().length).toBe(1)
+
+      // Advance past validation delay + click chain timeout
+      jasmine.clock().tick(150)
+      jasmine.clock().tick(1100)
+
+      setTimeout(() => {
+        expect(contexts.getCurrentActionIds()).toEqual([])
+        jasmine.clock().uninstall()
+        done()
+      }, 0)
+      jasmine.clock().tick(1)
+    })
+
+    it('returns manual action ID between start and stop', async () => {
+      const contexts = startActionProcessor(pipeline2)
+      pipeline2.seal()
+
+      pipeline2.publish('action:start_action', { name: 'upload' })
+      await tick()
+
+      const ids = contexts.getCurrentActionIds()
+      expect(ids.length).toBe(1)
+      expect(typeof ids[0]).toBe('string')
+    })
+
+    it('clears manual action ID after stop', async () => {
+      const contexts = startActionProcessor(pipeline2)
+      pipeline2.seal()
+
+      pipeline2.publish('action:start_action', { name: 'upload' })
+      pipeline2.publish('action:stop_action', { name: 'upload' })
+      await tick()
+
+      expect(contexts.getCurrentActionIds()).toEqual([])
+    })
+
+    it('manual action ID matches the ID in the published observation', async () => {
+      const obs: Record<string, unknown>[] = []
+      pipeline2.subscribe('observation:action', (e) => obs.push(e as Record<string, unknown>))
+      const contexts = startActionProcessor(pipeline2)
+      pipeline2.seal()
+
+      pipeline2.publish('action:start_action', { name: 'upload' })
+      const activeId = contexts.getCurrentActionIds()[0]
+
+      pipeline2.publish('action:stop_action', { name: 'upload' })
+      await tick()
+
+      expect(obs.length).toBe(1)
+      expect((obs[0].action as any).id).toBe(activeId)
+    })
+
+    it('returns IDs for both click and manual actions when both are active', () => {
+      jasmine.clock().install()
+      const contexts = startActionProcessor(pipeline2)
+      pipeline2.seal()
+
+      pipeline2.publish('action:start_action', { name: 'upload' })
+      pipeline2.publish('action:click', makeClickEvent())
+
+      const ids = contexts.getCurrentActionIds()
+      expect(ids.length).toBe(2)
+
+      jasmine.clock().uninstall()
+    })
+  })
+
   describe('manual actions', () => {
     it('addAction publishes observation:action immediately', async () => {
       pipeline.publish('action:add_action', { name: 'checkout' })

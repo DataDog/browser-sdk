@@ -23,10 +23,19 @@ export interface LargestContentfulPaint {
   targetSelector?: string
 }
 
+export interface RumRect {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
 export interface CumulativeLayoutShift {
   value: number
   targetSelector?: string
   time?: number
+  previousRect?: RumRect
+  currentRect?: RumRect
 }
 
 export interface InteractionToNextPaint {
@@ -130,7 +139,7 @@ export interface SerializedViewEvent {
     performance?: {
       fcp?: { timestamp: number }
       lcp?: { timestamp: number; target_selector?: string }
-      cls?: { score: number; timestamp?: number; target_selector?: string }
+      cls?: { score: number; timestamp?: number; target_selector?: string; previous_rect?: RumRect; current_rect?: RumRect }
       inp?: { duration: number; timestamp?: number; target_selector?: string }
     }
   }

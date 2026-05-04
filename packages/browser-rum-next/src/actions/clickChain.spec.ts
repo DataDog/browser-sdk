@@ -17,6 +17,7 @@ function makeClick(overrides: Partial<PendingClick> = {}): PendingClick {
     errorCount: 0,
     resourceCount: 0,
     longTaskCount: 0,
+    actionId: 'test-action-id',
     ...overrides,
   }
 }

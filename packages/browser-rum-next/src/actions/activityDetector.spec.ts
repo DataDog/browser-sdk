@@ -110,6 +110,22 @@ describe('createActivityDetector', () => {
     expect(result).toBeUndefined()
   })
 
+  it('detects activity from performance resource entries', () => {
+    let result: ActivityResult | undefined
+    const detector = createActivityDetector(pipeline)
+    detector.onComplete((r) => {
+      result = r
+    })
+
+    pipeline.publish('resource:performance_entry', {})
+
+    jasmine.clock().tick(END_DELAY)
+
+    expect(result).toBeDefined()
+    expect(result!.hadActivity).toBe(true)
+    expect(result!.endTime).toBeDefined()
+  })
+
   it('stop() unsubscribes from pipeline events', () => {
     let result: ActivityResult | undefined
     const detector = createActivityDetector(pipeline)

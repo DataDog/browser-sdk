@@ -71,6 +71,13 @@ function createActivityDetector(pipeline: Pipeline<Record<string, unknown>>): Ac
     })
   )
 
+  // Performance resource entries as activity signal (matches v6 behavior)
+  subscriptions.push(
+    pipeline.subscribe('resource:performance_entry', () => {
+      onActivity()
+    })
+  )
+
   validationTimer = setTimeout(() => {
     if (!activityDetected) {
       tryComplete({ hadActivity: false })
