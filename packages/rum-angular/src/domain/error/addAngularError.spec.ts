@@ -1,9 +1,10 @@
+import { describe, it, expect, vi } from 'vitest'
 import { initializeAngularPlugin } from '../../../test/initializeAngularPlugin'
 import { addAngularError } from './addAngularError'
 
 describe('addAngularError', () => {
   it('delegates the error to addError', () => {
-    const addErrorSpy = jasmine.createSpy()
+    const addErrorSpy = vi.fn()
     initializeAngularPlugin({
       addError: addErrorSpy,
     })
@@ -11,10 +12,11 @@ describe('addAngularError', () => {
 
     addAngularError(originalError)
 
-    expect(addErrorSpy).toHaveBeenCalledOnceWith({
+    expect(addErrorSpy).toHaveBeenCalledTimes(1)
+    expect(addErrorSpy).toHaveBeenCalledWith({
       error: originalError,
-      handlingStack: jasmine.any(String),
-      startClocks: jasmine.any(Object),
+      handlingStack: expect.any(String),
+      startClocks: expect.any(Object),
       context: {
         framework: 'angular',
       },
@@ -22,7 +24,7 @@ describe('addAngularError', () => {
   })
 
   it('should merge dd_context from the original error with angular error context', () => {
-    const addErrorSpy = jasmine.createSpy()
+    const addErrorSpy = vi.fn()
     initializeAngularPlugin({
       addError: addErrorSpy,
     })
@@ -32,7 +34,7 @@ describe('addAngularError', () => {
     addAngularError(originalError)
 
     expect(addErrorSpy).toHaveBeenCalledWith(
-      jasmine.objectContaining({
+      expect.objectContaining({
         error: originalError,
         context: {
           framework: 'angular',
@@ -44,18 +46,19 @@ describe('addAngularError', () => {
   })
 
   it('handles non-Error values', () => {
-    const addErrorSpy = jasmine.createSpy()
+    const addErrorSpy = vi.fn()
     initializeAngularPlugin({
       addError: addErrorSpy,
     })
 
     addAngularError('string error')
 
-    expect(addErrorSpy).toHaveBeenCalledOnceWith(
-      jasmine.objectContaining({
+    expect(addErrorSpy).toHaveBeenCalledTimes(1)
+    expect(addErrorSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
         error: 'string error',
-        handlingStack: jasmine.any(String),
-        startClocks: jasmine.any(Object),
+        handlingStack: expect.any(String),
+        startClocks: expect.any(Object),
         context: { framework: 'angular' },
       })
     )

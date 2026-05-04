@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import type { Hooks } from '../../../test'
 import { createHooks, registerCleanupTask } from '../../../test'
 import { mockRumConfiguration } from '../../../../rum-core/test'

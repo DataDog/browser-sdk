@@ -1,3 +1,4 @@
+import { vi, describe, expect, it, type Mock } from 'vitest'
 import { noop, type RelativeTime } from '@datadog/browser-core'
 import { buildLocation } from '@datadog/browser-core/test'
 import { createRumSessionManagerMock } from '../../../test'
@@ -8,15 +9,15 @@ import type { ViewHistory } from './viewHistory'
 import type { UrlContexts } from './urlContexts'
 
 describe('internal context', () => {
-  let findUrlSpy: jasmine.Spy<UrlContexts['findUrl']>
-  let findSessionSpy: jasmine.Spy<RumSessionManager['findTrackedSession']>
+  let findUrlSpy: Mock<UrlContexts['findUrl']>
+  let findSessionSpy: Mock<RumSessionManager['findTrackedSession']>
   let fakeLocation: Location
   let viewHistory: ViewHistory
   let actionContexts: ActionContexts
 
   function setupInternalContext(sessionManager: RumSessionManager) {
     viewHistory = {
-      findView: jasmine.createSpy('findView').and.returnValue({
+      findView: vi.fn().mockReturnValue({
         id: 'abcde',
         name: 'foo',
       }),
@@ -24,7 +25,7 @@ describe('internal context', () => {
     }
 
     actionContexts = {
-      findActionId: jasmine.createSpy('findActionId').and.returnValue('7890'),
+      findActionId: vi.fn().mockReturnValue('7890'),
     }
 
     fakeLocation = buildLocation('/foo')
@@ -36,8 +37,8 @@ describe('internal context', () => {
       }),
       stop: noop,
     }
-    findSessionSpy = spyOn(sessionManager, 'findTrackedSession').and.callThrough()
-    findUrlSpy = spyOn(urlContexts, 'findUrl').and.callThrough()
+    findSessionSpy = vi.spyOn(sessionManager, 'findTrackedSession')
+    findUrlSpy = vi.spyOn(urlContexts, 'findUrl')
 
     return startInternalContext('appId', sessionManager, viewHistory, actionContexts, urlContexts)
   }

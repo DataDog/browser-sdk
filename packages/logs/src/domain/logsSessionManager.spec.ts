@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { RelativeTime } from '@datadog/browser-core'
 import {
   STORAGE_POLL_DELAY,

@@ -1,3 +1,4 @@
+import { vi, afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { BufferedData, Payload } from '@datadog/browser-core'
 import {
   ErrorSource,
@@ -46,6 +47,13 @@ declare global {
     DD_RUM_SYNTHETICS?: Rum
   }
 }
+
+// Safari on BrowserStack cannot access cookies because vitest runs tests in an iframe
+// and BrowserStack replaces localhost with bs-local.com, triggering Safari's ITP restrictions.
+// https://www.browserstack.com/support/faq/local-testing/local-exceptions/i-face-issues-while-testing-localhost-urls-or-private-servers-in-safari-on-macos-os-x-and-ios
+beforeEach((ctx) => {
+  ctx.skip(navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome'), 'Safari on BrowserStack')
+})
 
 const DEFAULT_MESSAGE = { status: StatusType.info, message: 'message' }
 const COMMON_CONTEXT = {
@@ -110,14 +118,14 @@ describe('logs', () => {
       expect(requests.length).toEqual(1)
       expect(requests[0].url).toContain(endpointBuilder.build('fetch', DEFAULT_PAYLOAD))
       expect(getLoggedMessage(requests, 0)).toEqual({
-        date: jasmine.any(Number),
+        date: expect.any(Number),
         foo: 'bar',
         message: 'message',
         service: 'service',
         ddtags: 'sdk_version:test,service:service',
-        session_id: jasmine.any(String),
+        session_id: expect.any(String),
         session: {
-          id: jasmine.any(String),
+          id: expect.any(String),
         },
         status: StatusType.warn,
         view: {
@@ -126,10 +134,10 @@ describe('logs', () => {
         },
         origin: ErrorSource.LOGGER,
         usr: {
-          anonymous_id: jasmine.any(String),
+          anonymous_id: expect.any(String),
         },
         tab: {
-          id: jasmine.any(String),
+          id: expect.any(String),
         },
       })
     })
@@ -148,7 +156,7 @@ describe('logs', () => {
     })
 
     it('should send bridge event when bridge is present', () => {
-      const sendSpy = spyOn(mockEventBridge(), 'send')
+      const sendSpy = vi.spyOn(mockEventBridge(), 'send')
       const { handleLog, logger } = startLogsWithDefaults()
 
       handleLog(DEFAULT_MESSAGE, logger)
@@ -156,18 +164,18 @@ describe('logs', () => {
       clock.tick(FLUSH_DURATION_LIMIT)
 
       expect(requests.length).toEqual(0)
-      const [message] = sendSpy.calls.mostRecent().args
+      const [message] = sendSpy.mock.lastCall!
       const parsedMessage = JSON.parse(message)
       expect(parsedMessage).toEqual({
         eventType: 'log',
-        event: jasmine.objectContaining({ message: 'message' }),
+        event: expect.objectContaining({ message: 'message' }),
       })
     })
   })
 
   describe('sampling', () => {
     it('should be applied when event bridge is present (rate 0)', () => {
-      const sendSpy = spyOn(mockEventBridge(), 'send')
+      const sendSpy = vi.spyOn(mockEventBridge(), 'send')
 
       const { handleLog, logger } = startLogsWithDefaults({
         configuration: { sessionSampleRate: 0 },
@@ -178,7 +186,7 @@ describe('logs', () => {
     })
 
     it('should be applied when event bridge is present (rate 100)', () => {
-      const sendSpy = spyOn(mockEventBridge(), 'send')
+      const sendSpy = vi.spyOn(mockEventBridge(), 'send')
 
       const { handleLog, logger } = startLogsWithDefaults({
         configuration: { sessionSampleRate: 100 },
@@ -190,8 +198,8 @@ describe('logs', () => {
   })
 
   it('should not print the log twice when console handler is enabled', () => {
-    const consoleLogSpy = spyOn(console, 'log')
-    const displayLogSpy = spyOn(display, 'log')
+    const consoleLogSpy = vi.spyOn(console, 'log')
+    const displayLogSpy = vi.spyOn(display, 'log')
     startLogsWithDefaults({
       configuration: { forwardConsoleLogs: ['log'] },
     })
@@ -287,7 +295,7 @@ describe('logs', () => {
       clock.tick(FLUSH_DURATION_LIMIT)
 
       const firstRequest = getLoggedMessage(requests, 0)
-      expect(firstRequest.usr).toEqual(jasmine.objectContaining({ id: 'from-global-context' }))
+      expect(firstRequest.usr).toEqual(expect.objectContaining({ id: 'from-global-context' }))
     })
 
     it('RUM context should take precedence over global context', () => {

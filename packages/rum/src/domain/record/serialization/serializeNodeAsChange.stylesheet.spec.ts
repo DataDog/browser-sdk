@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest'
 import { isAdoptedStyleSheetsSupported } from '../../../../../core/test'
 import { ChangeType } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
@@ -6,17 +7,6 @@ import type { SerializationStats } from './serializationStats'
 import { serializeHtmlAsChange } from './serializeHtml.specHelper'
 
 describe('serializeNodeAsChange for stylesheets', () => {
-  let originalTimeout: number
-
-  beforeAll(() => {
-    originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000
-  })
-
-  afterAll(() => {
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout
-  })
-
   const css = 'div { color: green; }'
   const dynamicCss = 'span { color: red; }'
 
@@ -26,7 +16,7 @@ describe('serializeNodeAsChange for stylesheets', () => {
         after(_target: Node, _scope: RecordingScope, stats: SerializationStats): void {
           expect(stats).toEqual({
             cssText: { count: 0, max: 0, sum: 0 },
-            serializationDuration: jasmine.anything(),
+            serializationDuration: expect.anything(),
           })
         },
       })
@@ -45,7 +35,7 @@ describe('serializeNodeAsChange for stylesheets', () => {
           after(_target: Node, _scope: RecordingScope, stats: SerializationStats): void {
             expect(stats).toEqual({
               cssText: { count: 2, max: 21, sum: 42 },
-              serializationDuration: jasmine.anything(),
+              serializationDuration: expect.anything(),
             })
           },
         }
@@ -62,7 +52,7 @@ describe('serializeNodeAsChange for stylesheets', () => {
         after(_target: Node, _scope: RecordingScope, stats: SerializationStats): void {
           expect(stats).toEqual({
             cssText: { count: 1, max: 21, sum: 21 },
-            serializationDuration: jasmine.anything(),
+            serializationDuration: expect.anything(),
           })
         },
       })
@@ -81,7 +71,7 @@ describe('serializeNodeAsChange for stylesheets', () => {
         after(_target: Node, _scope: RecordingScope, stats: SerializationStats): void {
           expect(stats).toEqual({
             cssText: { count: 1, max: 20, sum: 20 },
-            serializationDuration: jasmine.anything(),
+            serializationDuration: expect.anything(),
           })
         },
       })
@@ -100,7 +90,7 @@ describe('serializeNodeAsChange for stylesheets', () => {
         after(_target: Node, _scope: RecordingScope, stats: SerializationStats): void {
           expect(stats).toEqual({
             cssText: { count: 1, max: 41, sum: 41 },
-            serializationDuration: jasmine.anything(),
+            serializationDuration: expect.anything(),
           })
         },
       })
@@ -122,7 +112,7 @@ describe('serializeNodeAsChange for stylesheets', () => {
         after(_target: Node, _scope: RecordingScope, stats: SerializationStats): void {
           expect(stats).toEqual({
             cssText: { count: 1, max: 20, sum: 20 },
-            serializationDuration: jasmine.anything(),
+            serializationDuration: expect.anything(),
           })
         },
       })
@@ -164,7 +154,7 @@ describe('serializeNodeAsChange for stylesheets', () => {
         after(_target: Node, _scope: RecordingScope, stats: SerializationStats): void {
           expect(stats).toEqual({
             cssText: { count: 1, max: 21, sum: 21 },
-            serializationDuration: jasmine.anything(),
+            serializationDuration: expect.anything(),
           })
         },
       })
@@ -180,7 +170,7 @@ describe('serializeNodeAsChange for stylesheets', () => {
         after(_target: Node, _scope: RecordingScope, stats: SerializationStats): void {
           expect(stats).toEqual({
             cssText: { count: 0, max: 0, sum: 0 },
-            serializationDuration: jasmine.anything(),
+            serializationDuration: expect.anything(),
           })
         },
       })
@@ -210,7 +200,7 @@ describe('serializeNodeAsChange for stylesheets', () => {
         after(_target: Node, _scope: RecordingScope, stats: SerializationStats): void {
           expect(stats).toEqual({
             cssText: { count: 0, max: 0, sum: 0 },
-            serializationDuration: jasmine.anything(),
+            serializationDuration: expect.anything(),
           })
         },
       })
@@ -221,9 +211,9 @@ describe('serializeNodeAsChange for stylesheets', () => {
   })
 
   describe('for documents with adopted stylesheets', () => {
-    it('serializes the stylesheet', async () => {
+    it('serializes the stylesheet', async (ctx) => {
       if (!isAdoptedStyleSheetsSupported()) {
-        pending('No adoptedStyleSheets support.')
+        ctx.skip()
       }
 
       const record = await serializeHtmlAsChange(
@@ -243,7 +233,7 @@ describe('serializeNodeAsChange for stylesheets', () => {
           after(_target: Node, _scope: RecordingScope, stats: SerializationStats): void {
             expect(stats).toEqual({
               cssText: { count: 1, max: 21, sum: 21 },
-              serializationDuration: jasmine.anything(),
+              serializationDuration: expect.anything(),
             })
           },
         }

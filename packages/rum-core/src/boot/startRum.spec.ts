@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it } from 'vitest'
 import type { RawError, Duration, BufferedData } from '@datadog/browser-core'
 import {
   Observable,
@@ -6,7 +7,6 @@ import {
   ONE_SECOND,
   findLast,
   noop,
-  relativeNow,
   createIdentityEncoder,
   createTrackingConsentState,
   TrackingConsent,
@@ -156,7 +156,6 @@ describe('rum session keep alive', () => {
 })
 
 describe('view events', () => {
-  let clock: Clock
   let interceptor: ReturnType<typeof interceptRequests>
   let stop: () => void
 
@@ -180,7 +179,7 @@ describe('view events', () => {
   }
 
   beforeEach(() => {
-    clock = mockClock()
+    mockClock()
 
     registerCleanupTask(() => {
       stop()
@@ -197,7 +196,7 @@ describe('view events', () => {
 
     setupViewCollectionTest()
 
-    clock.tick(VIEW_DURATION - relativeNow())
+    vi.setSystemTime(performance.timing.navigationStart + VIEW_DURATION)
     window.dispatchEvent(createNewEvent('beforeunload'))
 
     const lastRumEvents = interceptor.requests[interceptor.requests.length - 1].body
@@ -213,16 +212,16 @@ describe('view events', () => {
 
   it('sends a view update on page unload when bridge is present', () => {
     const eventBridge = mockEventBridge()
-    const sendSpy = spyOn(eventBridge, 'send')
+    const sendSpy = vi.spyOn(eventBridge, 'send')
 
     const VIEW_DURATION = ONE_SECOND as Duration
 
     setupViewCollectionTest()
 
-    clock.tick(VIEW_DURATION - relativeNow())
+    vi.setSystemTime(performance.timing.navigationStart + VIEW_DURATION)
     window.dispatchEvent(createNewEvent('beforeunload'))
 
-    const lastBridgeMessage = JSON.parse(sendSpy.calls.mostRecent().args[0]) as {
+    const lastBridgeMessage = JSON.parse(sendSpy.mock.lastCall![0]) as {
       eventType: 'rum'
       event: RumEvent
     }
@@ -236,7 +235,7 @@ describe('view events', () => {
 
     setupViewCollectionTest()
 
-    clock.tick(VIEW_DURATION - relativeNow())
+    vi.setSystemTime(performance.timing.navigationStart + VIEW_DURATION)
     window.dispatchEvent(createNewEvent('beforeunload'))
 
     const lastRumEvents = interceptor.requests[interceptor.requests.length - 1].body

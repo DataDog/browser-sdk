@@ -1,3 +1,4 @@
+import { vi, describe, expect, it } from 'vitest'
 import { buildUrl, getPathName, isValidUrl, normalizeUrl, getPristineWindow } from './urlPolyfill'
 
 describe('normalize url', () => {
@@ -42,7 +43,9 @@ describe('isValidUrl', () => {
 
   it('should return the same result if the URL has been wrongfully overridden between calls', () => {
     expect(isValidUrl('http://www.datadoghq.com')).toBe(true)
-    spyOn(window, 'URL').and.throwError('wrong URL override')
+    vi.spyOn(window, 'URL').mockImplementation(() => {
+      throw new Error('wrong URL override')
+    })
     expect(isValidUrl('http://www.datadoghq.com')).toBe(true)
   })
 })

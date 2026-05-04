@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import { registerCleanupTask } from '../../../../test'
 import { getGlobalObject } from '../../../tools/globalObject'
 import type { Configuration } from '../../configuration'

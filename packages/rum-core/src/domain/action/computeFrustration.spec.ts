@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import { ONE_SECOND } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
@@ -18,8 +19,8 @@ describe('computeFrustration', () => {
   })
 
   it('returns whether the clicks are considered as rage', () => {
-    expect(computeFrustration(clicksConsideredAsRage, rageClick).isRage).toBeTrue()
-    expect(computeFrustration(clicks, rageClick).isRage).toBeFalse()
+    expect(computeFrustration(clicksConsideredAsRage, rageClick).isRage).toBe(true)
+    expect(computeFrustration(clicks, rageClick).isRage).toBe(false)
   })
 
   describe('if clicks are considered as rage', () => {
@@ -76,7 +77,7 @@ describe('computeFrustration', () => {
   })
 
   function getFrustrations(click: FakeClick) {
-    return click.addFrustration.calls.allArgs().map((args) => args[0])
+    return click.addFrustration.mock.calls.map((args) => args[0])
   }
 })
 

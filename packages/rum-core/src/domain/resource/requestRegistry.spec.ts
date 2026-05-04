@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import type { Duration, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import { addExperimentalFeatures, ExperimentalFeature, RequestType } from '@datadog/browser-core'
 import type { Clock, MockTelemetry } from '@datadog/browser-core/test'
@@ -78,7 +79,7 @@ describe('RequestRegistry', () => {
       for (let i = 0; i < MAX_REQUESTS + 3; i++) {
         lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createRequestCompleteEvent({ startTime: i }))
       }
-      expect(await telemetry.getEvents()).toEqual([jasmine.objectContaining({ message: 'Too many requests' })])
+      expect(await telemetry.getEvents()).toEqual([expect.objectContaining({ message: 'Too many requests' })])
     })
 
     it('includes debug context when TOO_MANY_REQUESTS_INVESTIGATION is enabled', async () => {
@@ -129,7 +130,7 @@ describe('RequestRegistry', () => {
       }
 
       expect(await telemetry.getEvents()).toEqual([
-        jasmine.objectContaining({
+        expect.objectContaining({
           message: 'Too many requests',
           abortedCount,
           abortedOnStartCount,

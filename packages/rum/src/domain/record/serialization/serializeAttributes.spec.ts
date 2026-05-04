@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import { isSafari } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import {
@@ -242,7 +243,7 @@ describe('serializeDOMAttributes', () => {
         const attributes = serializeDOMAttributes(element, privacyLevel, transaction)
         const actual = attributes[attribute.name] as boolean | string | undefined
         const expected = expectedValueForPrivacyLevel(testCase, element, attribute, privacyLevel)
-        expect(actual).withContext(`${testCase.html} for ${privacyLevel}`).toEqual(expected)
+        expect(actual).toEqual(expected)
       }
     }
 
@@ -346,7 +347,7 @@ describe('serializeVirtualAttributes', () => {
     for (const privacyLevel of PRIVACY_LEVELS) {
       const actual = serializeVirtualAttributes(element, privacyLevel, transaction)
       const expected = privacyLevel === NodePrivacyLevel.HIDDEN ? {} : expectedWhenNotHidden
-      expect(actual).withContext(`${element.tagName} ${privacyLevel}`).toEqual(expected)
+      expect(actual).toEqual(expected)
       after?.(privacyLevel)
     }
   }
@@ -532,9 +533,14 @@ describe('getCssRulesString', () => {
     styleNode.sheet!.insertRule(`@import url("${CSS_FILE_URL}");`)
 
     // Simulates an accessible external stylesheet
-    spyOnProperty(styleNode.sheet!.cssRules[0] as CSSImportRule, 'styleSheet').and.returnValue({
-      cssRules: [{ cssText: 'p { margin: 0; }' } as CSSRule] as unknown as CSSRuleList,
-    } as CSSStyleSheet)
+    // Use Object.defineProperty instead of vi.spyOn — native CSSImportRule getters
+    // throw "Illegal invocation" when proxied through vi.spyOn.
+    Object.defineProperty(styleNode.sheet!.cssRules[0], 'styleSheet', {
+      get: () => ({
+        cssRules: [{ cssText: 'p { margin: 0; }' } as CSSRule] as unknown as CSSRuleList,
+      }),
+      configurable: true,
+    })
 
     expect(getCssRulesString(styleNode.sheet)).toBe('p { margin: 0; }')
   })
@@ -543,11 +549,16 @@ describe('getCssRulesString', () => {
     styleNode.sheet!.insertRule(`@import url("${CSS_FILE_URL}");`)
 
     // Simulates an inaccessible external stylesheet
-    spyOnProperty(styleNode.sheet!.cssRules[0] as CSSImportRule, 'styleSheet').and.returnValue({
-      get cssRules(): CSSRuleList {
-        throw new Error('Cannot access rules')
-      },
-    } as CSSStyleSheet)
+    // Use Object.defineProperty instead of vi.spyOn — native CSSImportRule getters
+    // throw "Illegal invocation" when proxied through vi.spyOn.
+    Object.defineProperty(styleNode.sheet!.cssRules[0], 'styleSheet', {
+      get: () => ({
+        get cssRules(): CSSRuleList {
+          throw new Error('Cannot access rules')
+        },
+      }),
+      configurable: true,
+    })
 
     expect(getCssRulesString(styleNode.sheet)).toBe(`@import url("${CSS_FILE_URL}");`)
   })

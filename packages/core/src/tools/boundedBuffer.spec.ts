@@ -1,22 +1,23 @@
+import { vi, describe, expect, it } from 'vitest'
 import { createBoundedBuffer } from './boundedBuffer'
 
 describe('BoundedBuffer', () => {
   it('collect and drain the callbacks', () => {
-    const spy = jasmine.createSpy<() => void>()
+    const spy = vi.fn<() => void>()
     const buffered = createBoundedBuffer()
 
     buffered.add(spy)
-    expect(spy.calls.count()).toBe(0)
+    expect(spy.mock.calls.length).toBe(0)
 
     buffered.drain()
-    expect(spy.calls.count()).toBe(1)
+    expect(spy.mock.calls.length).toBe(1)
 
     buffered.drain()
-    expect(spy.calls.count()).toBe(1)
+    expect(spy.mock.calls.length).toBe(1)
   })
 
   it('store at most 500 callbacks', () => {
-    const spy = jasmine.createSpy<() => void>()
+    const spy = vi.fn<() => void>()
     const buffered = createBoundedBuffer()
     const limit = 500
 
@@ -25,11 +26,11 @@ describe('BoundedBuffer', () => {
     }
 
     buffered.drain()
-    expect(spy.calls.count()).toEqual(limit)
+    expect(spy.mock.calls.length).toEqual(limit)
   })
 
   it('removes a callback', () => {
-    const spy = jasmine.createSpy<() => void>()
+    const spy = vi.fn<() => void>()
     const buffered = createBoundedBuffer()
 
     buffered.add(spy)

@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { Payload } from '@datadog/browser-core'
 import { RequestType } from '@datadog/browser-core'
 import type { MockFetch, MockFetchManager } from '@datadog/browser-core/test'
@@ -16,15 +17,15 @@ describe('collect fetch', () => {
   const FAKE_URL = 'http://fake-url/'
   let fetch: MockFetch
   let mockFetchManager: MockFetchManager
-  let startSpy: jasmine.Spy<(requestStartEvent: RequestStartEvent) => void>
-  let completeSpy: jasmine.Spy<(requestCompleteEvent: RequestCompleteEvent) => void>
+  let startSpy: Mock<(requestStartEvent: RequestStartEvent) => void>
+  let completeSpy: Mock<(requestCompleteEvent: RequestCompleteEvent) => void>
   let stopFetchTracking: () => void
 
   beforeEach(() => {
     mockFetchManager = mockFetch()
 
-    startSpy = jasmine.createSpy('requestStart')
-    completeSpy = jasmine.createSpy('requestComplete')
+    startSpy = vi.fn()
+    completeSpy = vi.fn()
     const lifeCycle = new LifeCycle()
     lifeCycle.subscribe(LifeCycleEventType.REQUEST_STARTED, startSpy)
     lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, completeSpy)
@@ -44,147 +45,157 @@ describe('collect fetch', () => {
     })
   })
 
-  it('should notify on request start', (done) => {
-    fetch(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
+  it('should notify on request start', () =>
+    new Promise<void>((resolve) => {
+      fetch(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
-    mockFetchManager.whenAllComplete(() => {
-      expect(startSpy).toHaveBeenCalledWith({ requestIndex: jasmine.any(Number) as unknown as number, url: FAKE_URL })
-      done()
-    })
-  })
+      mockFetchManager.whenAllComplete(() => {
+        expect(startSpy).toHaveBeenCalledWith({ requestIndex: expect.any(Number) as unknown as number, url: FAKE_URL })
+        resolve()
+      })
+    }))
 
-  it('should notify on request without body', (done) => {
-    fetch(FAKE_URL).resolveWith({ status: 200 })
+  it('should notify on request without body', () =>
+    new Promise<void>((resolve) => {
+      fetch(FAKE_URL).resolveWith({ status: 200 })
 
-    mockFetchManager.whenAllComplete(() => {
-      const request = completeSpy.calls.argsFor(0)[0]
+      mockFetchManager.whenAllComplete(() => {
+        const request = completeSpy.mock.calls[0][0]
 
-      expect(request.type).toEqual(RequestType.FETCH)
-      expect(request.method).toEqual('GET')
-      expect(request.url).toEqual(FAKE_URL)
-      expect(request.status).toEqual(200)
-      expect(request.handlingStack).toBeDefined()
-      done()
-    })
-  })
+        expect(request.type).toEqual(RequestType.FETCH)
+        expect(request.method).toEqual('GET')
+        expect(request.url).toEqual(FAKE_URL)
+        expect(request.status).toEqual(200)
+        expect(request.handlingStack).toBeDefined()
+        resolve()
+      })
+    }))
 
-  it('should notify on request with body used by another instrumentation', (done) => {
-    fetch(FAKE_URL).resolveWith({ status: 200, bodyUsed: true })
+  it('should notify on request with body used by another instrumentation', () =>
+    new Promise<void>((resolve) => {
+      fetch(FAKE_URL).resolveWith({ status: 200, bodyUsed: true })
 
-    mockFetchManager.whenAllComplete(() => {
-      const request = completeSpy.calls.argsFor(0)[0]
+      mockFetchManager.whenAllComplete(() => {
+        const request = completeSpy.mock.calls[0][0]
 
-      expect(request.type).toEqual(RequestType.FETCH)
-      expect(request.method).toEqual('GET')
-      expect(request.url).toEqual(FAKE_URL)
-      expect(request.status).toEqual(200)
-      expect(request.handlingStack).toBeDefined()
-      done()
-    })
-  })
+        expect(request.type).toEqual(RequestType.FETCH)
+        expect(request.method).toEqual('GET')
+        expect(request.url).toEqual(FAKE_URL)
+        expect(request.status).toEqual(200)
+        expect(request.handlingStack).toBeDefined()
+        resolve()
+      })
+    }))
 
-  it('should notify on request with body disturbed', (done) => {
-    fetch(FAKE_URL).resolveWith({ status: 200, bodyDisturbed: true })
+  it('should notify on request with body disturbed', () =>
+    new Promise<void>((resolve) => {
+      fetch(FAKE_URL).resolveWith({ status: 200, bodyDisturbed: true })
 
-    mockFetchManager.whenAllComplete(() => {
-      const request = completeSpy.calls.argsFor(0)[0]
+      mockFetchManager.whenAllComplete(() => {
+        const request = completeSpy.mock.calls[0][0]
 
-      expect(request.type).toEqual(RequestType.FETCH)
-      expect(request.method).toEqual('GET')
-      expect(request.url).toEqual(FAKE_URL)
-      expect(request.status).toEqual(200)
-      expect(request.handlingStack).toBeDefined()
-      done()
-    })
-  })
+        expect(request.type).toEqual(RequestType.FETCH)
+        expect(request.method).toEqual('GET')
+        expect(request.url).toEqual(FAKE_URL)
+        expect(request.status).toEqual(200)
+        expect(request.handlingStack).toBeDefined()
+        resolve()
+      })
+    }))
 
-  it('should notify on request complete', (done) => {
-    fetch(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
+  it('should notify on request complete', () =>
+    new Promise<void>((resolve) => {
+      fetch(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
-    mockFetchManager.whenAllComplete(() => {
-      const request = completeSpy.calls.argsFor(0)[0]
+      mockFetchManager.whenAllComplete(() => {
+        const request = completeSpy.mock.calls[0][0]
 
-      expect(request.type).toEqual(RequestType.FETCH)
-      expect(request.method).toEqual('GET')
-      expect(request.url).toEqual(FAKE_URL)
-      expect(request.status).toEqual(500)
-      expect(request.handlingStack).toBeDefined()
-      done()
-    })
-  })
+        expect(request.type).toEqual(RequestType.FETCH)
+        expect(request.method).toEqual('GET')
+        expect(request.url).toEqual(FAKE_URL)
+        expect(request.status).toEqual(500)
+        expect(request.handlingStack).toBeDefined()
+        resolve()
+      })
+    }))
 
-  it('should assign a request id', (done) => {
-    fetch(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
+  it('should assign a request id', () =>
+    new Promise<void>((resolve) => {
+      fetch(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
-    mockFetchManager.whenAllComplete(() => {
-      const startRequestIndex = startSpy.calls.argsFor(0)[0].requestIndex
-      const completeRequestIndex = completeSpy.calls.argsFor(0)[0].requestIndex
+      mockFetchManager.whenAllComplete(() => {
+        const startRequestIndex = startSpy.mock.calls[0][0].requestIndex
+        const completeRequestIndex = completeSpy.mock.calls[0][0].requestIndex
 
-      expect(completeRequestIndex).toBe(startRequestIndex)
-      done()
-    })
-  })
+        expect(completeRequestIndex).toBe(startRequestIndex)
+        resolve()
+      })
+    }))
 
-  it('should ignore intake requests', (done) => {
-    fetch(SPEC_ENDPOINTS.rumEndpointBuilder.build('fetch', DEFAULT_PAYLOAD)).resolveWith({
-      status: 200,
-      responseText: 'foo',
-    })
+  it('should ignore intake requests', () =>
+    new Promise<void>((resolve) => {
+      fetch(SPEC_ENDPOINTS.rumEndpointBuilder.build('fetch', DEFAULT_PAYLOAD)).resolveWith({
+        status: 200,
+        responseText: 'foo',
+      })
 
-    mockFetchManager.whenAllComplete(() => {
-      expect(startSpy).not.toHaveBeenCalled()
-      expect(completeSpy).not.toHaveBeenCalled()
-      done()
-    })
-  })
+      mockFetchManager.whenAllComplete(() => {
+        expect(startSpy).not.toHaveBeenCalled()
+        expect(completeSpy).not.toHaveBeenCalled()
+        resolve()
+      })
+    }))
 
   describe('tracing', () => {
-    it('should trace requests by default', (done) => {
-      fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'ok' })
+    it('should trace requests by default', () =>
+      new Promise<void>((resolve) => {
+        fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'ok' })
 
-      mockFetchManager.whenAllComplete(() => {
-        const request = completeSpy.calls.argsFor(0)[0]
+        mockFetchManager.whenAllComplete(() => {
+          const request = completeSpy.mock.calls[0][0]
 
-        expect(request.traceId).toBeDefined()
-        done()
-      })
-    })
+          expect(request.traceId).toBeDefined()
+          resolve()
+        })
+      }))
 
-    it('should trace aborted requests', (done) => {
-      fetch(FAKE_URL).abort()
+    it('should trace aborted requests', () =>
+      new Promise<void>((resolve) => {
+        fetch(FAKE_URL).abort()
 
-      mockFetchManager.whenAllComplete(() => {
-        const request = completeSpy.calls.argsFor(0)[0]
+        mockFetchManager.whenAllComplete(() => {
+          const request = completeSpy.mock.calls[0][0]
 
-        expect(request.traceId).toBeDefined()
-        done()
-      })
-    })
+          expect(request.traceId).toBeDefined()
+          resolve()
+        })
+      }))
 
-    it('should not trace requests ending with status 0', (done) => {
-      fetch(FAKE_URL).resolveWith({ status: 0, responseText: 'fetch cancelled' })
+    it('should not trace requests ending with status 0', () =>
+      new Promise<void>((resolve) => {
+        fetch(FAKE_URL).resolveWith({ status: 0, responseText: 'fetch cancelled' })
 
-      mockFetchManager.whenAllComplete(() => {
-        const request = completeSpy.calls.argsFor(0)[0]
+        mockFetchManager.whenAllComplete(() => {
+          const request = completeSpy.mock.calls[0][0]
 
-        expect(request.status).toEqual(0)
-        expect(request.traceId).toBeUndefined()
-        done()
-      })
-    })
+          expect(request.status).toEqual(0)
+          expect(request.traceId).toBeUndefined()
+          resolve()
+        })
+      }))
   })
 })
 
 describe('collect xhr', () => {
-  let startSpy: jasmine.Spy<(requestStartEvent: RequestStartEvent) => void>
-  let completeSpy: jasmine.Spy<(requestCompleteEvent: RequestCompleteEvent) => void>
+  let startSpy: Mock<(requestStartEvent: RequestStartEvent) => void>
+  let completeSpy: Mock<(requestCompleteEvent: RequestCompleteEvent) => void>
   let stopXhrTracking: () => void
 
   beforeEach(() => {
     const configuration = mockRumConfiguration()
     mockXhr()
-    startSpy = jasmine.createSpy('requestStart')
-    completeSpy = jasmine.createSpy('requestComplete')
+    startSpy = vi.fn()
+    completeSpy = vi.fn()
     const lifeCycle = new LifeCycle()
     lifeCycle.subscribe(LifeCycleEventType.REQUEST_STARTED, startSpy)
     lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, completeSpy)
@@ -202,93 +213,8 @@ describe('collect xhr', () => {
     })
   })
 
-  it('should notify on request start', (done) => {
-    withXhr({
-      setup(xhr) {
-        xhr.open('GET', '/ok')
-        xhr.send()
-        xhr.complete(200)
-      },
-      onComplete() {
-        expect(startSpy).toHaveBeenCalledWith({
-          requestIndex: jasmine.any(Number) as unknown as number,
-          url: jasmine.stringMatching(/\/ok$/) as unknown as string,
-        })
-        done()
-      },
-    })
-  })
-
-  it('should notify on request complete', (done) => {
-    withXhr({
-      setup(xhr) {
-        xhr.open('GET', '/ok')
-        xhr.send()
-        xhr.complete(200, 'ok')
-      },
-      onComplete() {
-        const request = completeSpy.calls.argsFor(0)[0]
-
-        expect(request.type).toEqual(RequestType.XHR)
-        expect(request.method).toEqual('GET')
-        expect(request.url).toContain('/ok')
-        expect(request.status).toEqual(200)
-        expect(request.handlingStack).toBeDefined()
-        done()
-      },
-    })
-  })
-
-  it('should assign a request id', (done) => {
-    withXhr({
-      setup(xhr) {
-        xhr.open('GET', '/ok')
-        xhr.send()
-        xhr.complete(200)
-      },
-      onComplete() {
-        const startRequestIndex = startSpy.calls.argsFor(0)[0].requestIndex
-        const completeRequestIndex = completeSpy.calls.argsFor(0)[0].requestIndex
-
-        expect(completeRequestIndex).toBe(startRequestIndex)
-        done()
-      },
-    })
-  })
-
-  it('should ignore intake requests', (done) => {
-    withXhr({
-      setup(xhr) {
-        xhr.open('GET', SPEC_ENDPOINTS.rumEndpointBuilder.build('fetch', DEFAULT_PAYLOAD))
-        xhr.send()
-        xhr.complete(200)
-      },
-      onComplete() {
-        expect(startSpy).not.toHaveBeenCalled()
-        expect(completeSpy).not.toHaveBeenCalled()
-        done()
-      },
-    })
-  })
-
-  it('should not trace cancelled requests', (done) => {
-    withXhr({
-      setup(xhr) {
-        xhr.open('GET', '/ok')
-        xhr.send()
-        xhr.complete(0)
-      },
-      onComplete() {
-        const request = completeSpy.calls.argsFor(0)[0]
-        expect(request.status).toEqual(0)
-        expect(request.traceId).toEqual(undefined)
-        done()
-      },
-    })
-  })
-
-  describe('tracing', () => {
-    it('should trace requests by default', (done) => {
+  it('should notify on request start', () =>
+    new Promise<void>((resolve) => {
       withXhr({
         setup(xhr) {
           xhr.open('GET', '/ok')
@@ -296,29 +222,72 @@ describe('collect xhr', () => {
           xhr.complete(200)
         },
         onComplete() {
-          const request = completeSpy.calls.argsFor(0)[0]
-          expect(request.traceId).toBeDefined()
-          done()
+          expect(startSpy).toHaveBeenCalledWith({
+            requestIndex: expect.any(Number) as unknown as number,
+            url: expect.stringMatching(/\/ok$/) as unknown as string,
+          })
+          resolve()
         },
       })
-    })
+    }))
 
-    it('should trace aborted requests', (done) => {
+  it('should notify on request complete', () =>
+    new Promise<void>((resolve) => {
       withXhr({
         setup(xhr) {
           xhr.open('GET', '/ok')
           xhr.send()
-          xhr.abort()
+          xhr.complete(200, 'ok')
         },
         onComplete() {
-          const request = completeSpy.calls.argsFor(0)[0]
-          expect(request.traceId).toBeDefined()
-          done()
+          const request = completeSpy.mock.calls[0][0]
+
+          expect(request.type).toEqual(RequestType.XHR)
+          expect(request.method).toEqual('GET')
+          expect(request.url).toContain('/ok')
+          expect(request.status).toEqual(200)
+          expect(request.handlingStack).toBeDefined()
+          resolve()
         },
       })
-    })
+    }))
 
-    it('should not trace requests ending with status 0', (done) => {
+  it('should assign a request id', () =>
+    new Promise<void>((resolve) => {
+      withXhr({
+        setup(xhr) {
+          xhr.open('GET', '/ok')
+          xhr.send()
+          xhr.complete(200)
+        },
+        onComplete() {
+          const startRequestIndex = startSpy.mock.calls[0][0].requestIndex
+          const completeRequestIndex = completeSpy.mock.calls[0][0].requestIndex
+
+          expect(completeRequestIndex).toBe(startRequestIndex)
+          resolve()
+        },
+      })
+    }))
+
+  it('should ignore intake requests', () =>
+    new Promise<void>((resolve) => {
+      withXhr({
+        setup(xhr) {
+          xhr.open('GET', SPEC_ENDPOINTS.rumEndpointBuilder.build('fetch', DEFAULT_PAYLOAD))
+          xhr.send()
+          xhr.complete(200)
+        },
+        onComplete() {
+          expect(startSpy).not.toHaveBeenCalled()
+          expect(completeSpy).not.toHaveBeenCalled()
+          resolve()
+        },
+      })
+    }))
+
+  it('should not trace cancelled requests', () =>
+    new Promise<void>((resolve) => {
       withXhr({
         setup(xhr) {
           xhr.open('GET', '/ok')
@@ -326,13 +295,63 @@ describe('collect xhr', () => {
           xhr.complete(0)
         },
         onComplete() {
-          const request = completeSpy.calls.argsFor(0)[0]
+          const request = completeSpy.mock.calls[0][0]
           expect(request.status).toEqual(0)
-          expect(request.traceId).toBeUndefined()
-          done()
+          expect(request.traceId).toEqual(undefined)
+          resolve()
         },
       })
-    })
+    }))
+
+  describe('tracing', () => {
+    it('should trace requests by default', () =>
+      new Promise<void>((resolve) => {
+        withXhr({
+          setup(xhr) {
+            xhr.open('GET', '/ok')
+            xhr.send()
+            xhr.complete(200)
+          },
+          onComplete() {
+            const request = completeSpy.mock.calls[0][0]
+            expect(request.traceId).toBeDefined()
+            resolve()
+          },
+        })
+      }))
+
+    it('should trace aborted requests', () =>
+      new Promise<void>((resolve) => {
+        withXhr({
+          setup(xhr) {
+            xhr.open('GET', '/ok')
+            xhr.send()
+            xhr.abort()
+          },
+          onComplete() {
+            const request = completeSpy.mock.calls[0][0]
+            expect(request.traceId).toBeDefined()
+            resolve()
+          },
+        })
+      }))
+
+    it('should not trace requests ending with status 0', () =>
+      new Promise<void>((resolve) => {
+        withXhr({
+          setup(xhr) {
+            xhr.open('GET', '/ok')
+            xhr.send()
+            xhr.complete(0)
+          },
+          onComplete() {
+            const request = completeSpy.mock.calls[0][0]
+            expect(request.status).toEqual(0)
+            expect(request.traceId).toBeUndefined()
+            resolve()
+          },
+        })
+      }))
   })
 })
 
@@ -341,14 +360,14 @@ describe('GraphQL response text collection', () => {
 
   function setupGraphQlFetchTest(trackResponseErrors: boolean) {
     const mockFetchManager = mockFetch()
-    const completeSpy = jasmine.createSpy('requestComplete')
+    const completeSpy = vi.fn()
     const lifeCycle = new LifeCycle()
     lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, completeSpy)
 
     const configuration = mockRumConfiguration({
       allowedGraphQlUrls: [{ match: /\/graphql$/, trackResponseErrors }],
     })
-    const tracerStub: Partial<Tracer> = { clearTracingIfNeeded, traceFetch: jasmine.createSpy() }
+    const tracerStub: Partial<Tracer> = { clearTracingIfNeeded, traceFetch: vi.fn() }
     const { stop } = trackFetch(lifeCycle, configuration, tracerStub as Tracer)
     registerCleanupTask(() => {
       stop()
@@ -357,49 +376,51 @@ describe('GraphQL response text collection', () => {
     return { mockFetchManager, completeSpy, fetch: window.fetch as MockFetch }
   }
 
-  it('should collect responseBody when trackResponseErrors is enabled', (done) => {
-    const { mockFetchManager, completeSpy, fetch } = setupGraphQlFetchTest(true)
+  it('should collect responseBody when trackResponseErrors is enabled', () =>
+    new Promise<void>((resolve) => {
+      const { mockFetchManager, completeSpy, fetch } = setupGraphQlFetchTest(true)
 
-    const responseBody = JSON.stringify({
-      data: null,
-      errors: [{ message: 'Not found' }, { message: 'Unauthorized' }],
-    })
+      const responseBody = JSON.stringify({
+        data: null,
+        errors: [{ message: 'Not found' }, { message: 'Unauthorized' }],
+      })
 
-    fetch(FAKE_GRAPHQL_URL, {
-      method: 'POST',
-      body: JSON.stringify({ query: 'query Test { test }' }),
-    }).resolveWith({
-      status: 200,
-      responseText: responseBody,
-    })
+      fetch(FAKE_GRAPHQL_URL, {
+        method: 'POST',
+        body: JSON.stringify({ query: 'query Test { test }' }),
+      }).resolveWith({
+        status: 200,
+        responseText: responseBody,
+      })
 
-    mockFetchManager.whenAllComplete(() => {
-      const request = completeSpy.calls.argsFor(0)[0]
-      expect(request.responseBody).toBe(responseBody)
-      done()
-    })
-  })
+      mockFetchManager.whenAllComplete(() => {
+        const request = completeSpy.mock.calls[0][0]
+        expect(request.responseBody).toBe(responseBody)
+        resolve()
+      })
+    }))
 
-  it('should not collect responseBody when trackResponseErrors is disabled', (done) => {
-    const { mockFetchManager, completeSpy, fetch } = setupGraphQlFetchTest(false)
+  it('should not collect responseBody when trackResponseErrors is disabled', () =>
+    new Promise<void>((resolve) => {
+      const { mockFetchManager, completeSpy, fetch } = setupGraphQlFetchTest(false)
 
-    const responseBody = JSON.stringify({
-      data: null,
-      errors: [{ message: 'Not found' }],
-    })
+      const responseBody = JSON.stringify({
+        data: null,
+        errors: [{ message: 'Not found' }],
+      })
 
-    fetch(FAKE_GRAPHQL_URL, {
-      method: 'POST',
-      body: JSON.stringify({ query: 'query Test { test }' }),
-    }).resolveWith({
-      status: 200,
-      responseText: responseBody,
-    })
+      fetch(FAKE_GRAPHQL_URL, {
+        method: 'POST',
+        body: JSON.stringify({ query: 'query Test { test }' }),
+      }).resolveWith({
+        status: 200,
+        responseText: responseBody,
+      })
 
-    mockFetchManager.whenAllComplete(() => {
-      const request = completeSpy.calls.argsFor(0)[0]
-      expect(request.responseBody).toBeUndefined()
-      done()
-    })
-  })
+      mockFetchManager.whenAllComplete(() => {
+        const request = completeSpy.mock.calls[0][0]
+        expect(request.responseBody).toBeUndefined()
+        resolve()
+      })
+    }))
 })

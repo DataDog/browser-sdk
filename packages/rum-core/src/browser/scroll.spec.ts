@@ -1,4 +1,5 @@
-import { waitAfterNextPaint } from '../../../core/test'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { waitAfterNextPaint } from '@datadog/browser-core/test'
 import { getScrollX, getScrollY } from './scroll'
 
 describe('scroll', () => {
@@ -24,7 +25,12 @@ describe('scroll', () => {
       expect(getScrollY()).toBe(window.scrollY || window.pageYOffset)
     })
 
-    it('normalized scroll updates when scrolled', () => {
+    it('normalized scroll updates when scrolled', (ctx) => {
+      ctx.skip(
+        navigator.userAgent.includes('Firefox'),
+        'Firefox on BrowserStack returns subpixel scroll values (e.g. 99.95 instead of 100)'
+      )
+
       const SCROLL_DOWN_PX = 100
 
       window.scrollTo(0, SCROLL_DOWN_PX)

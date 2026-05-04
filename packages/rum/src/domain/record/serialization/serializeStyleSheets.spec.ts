@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import { isAdoptedStyleSheetsSupported } from '@datadog/browser-core/test'
 import { createSerializationTransactionForTesting } from '../test/serialization.specHelper'
 import { serializeStyleSheets } from './serializeStyleSheets'
@@ -9,9 +10,10 @@ describe('serializeStyleSheets', () => {
   let stats: SerializationStats
   let transaction: SerializationTransaction
 
-  beforeEach(() => {
+  beforeEach((ctx) => {
     if (!isAdoptedStyleSheetsSupported()) {
-      pending('no adoptedStyleSheets support')
+      ctx.skip()
+      return
     }
     stats = createSerializationStats()
     transaction = createSerializationTransactionForTesting({ stats })

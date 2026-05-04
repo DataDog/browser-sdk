@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach } from 'vitest'
 import type { StyleSheetId } from '../../itemIds'
 import type { VDocument } from './vDocument'
 import { createVDocument } from './vDocument'

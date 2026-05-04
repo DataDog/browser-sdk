@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach } from 'vitest'
 import { noop, relativeToClocks, type Duration, type RelativeTime } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType, RumEventType } from '@datadog/browser-rum-core'
 import { createRawRumEvent } from '@datadog/browser-rum-core/test'

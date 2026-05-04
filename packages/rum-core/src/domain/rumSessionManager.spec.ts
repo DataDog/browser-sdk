@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { RelativeTime } from '@datadog/browser-core'
 import {
   STORAGE_POLL_DELAY,
@@ -31,17 +32,24 @@ import {
   startRumSessionManagerStub,
 } from './rumSessionManager'
 
+// Safari on BrowserStack cannot access cookies because vitest runs tests in an iframe
+// and BrowserStack replaces localhost with bs-local.com, triggering Safari's ITP restrictions.
+// https://www.browserstack.com/support/faq/local-testing/local-exceptions/i-face-issues-while-testing-localhost-urls-or-private-servers-in-safari-on-macos-os-x-and-ios
+beforeEach((ctx) => {
+  ctx.skip(navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome'), 'Safari on BrowserStack')
+})
+
 describe('rum session manager', () => {
   const DURATION = 123456
   let lifeCycle: LifeCycle
-  let expireSessionSpy: jasmine.Spy
-  let renewSessionSpy: jasmine.Spy
+  let expireSessionSpy: Mock
+  let renewSessionSpy: Mock
   let clock: Clock
 
   beforeEach(() => {
     clock = mockClock()
-    expireSessionSpy = jasmine.createSpy('expireSessionSpy')
-    renewSessionSpy = jasmine.createSpy('renewSessionSpy')
+    expireSessionSpy = vi.fn()
+    renewSessionSpy = vi.fn()
     lifeCycle = new LifeCycle()
     lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, expireSessionSpy)
     lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, renewSessionSpy)

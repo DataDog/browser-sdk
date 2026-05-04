@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest'
 import type { BrowserWindow } from '@datadog/browser-rum-core'
 import {
   PRIVACY_ATTR_NAME,
@@ -11,17 +12,6 @@ import { ChangeType } from '../../../types'
 import { serializeHtmlAsChange } from './serializeHtml.specHelper'
 
 describe('serializeNodeAsChange for form elements', () => {
-  let originalTimeout: number
-
-  beforeAll(() => {
-    originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000
-  })
-
-  afterAll(() => {
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout
-  })
-
   describe('<input type="button">', () => {
     it('serializes the element', async () => {
       const record = await serializeHtmlAsChange('<input type="button" value="Click here"></input>')

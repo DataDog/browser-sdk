@@ -1,3 +1,4 @@
+import { vi, describe, expect, it } from 'vitest'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { createLocationChangeObservable } from './locationChangeObservable'
@@ -8,26 +9,27 @@ describe('locationChangeObservable', () => {
 
     history.pushState({}, '', '/foo?bar=qux')
 
-    const locationChanges = observer.calls.argsFor(0)[0]
+    const locationChanges = observer.mock.calls[0][0]
     expect(locationChanges.oldLocation.href).toMatch(/\/foo$/)
     expect(locationChanges.newLocation.href).toMatch(/\/foo\?bar=qux$/)
   })
 
-  it('should notify observers on hashchange', (done) => {
-    const observer = setup()
+  it('should notify observers on hashchange', () =>
+    new Promise<void>((resolve) => {
+      const observer = setup()
 
-    function hashChangeCallback() {
-      const locationChanges = observer.calls.argsFor(0)[0]
-      expect(locationChanges.oldLocation.href).toMatch(/\/foo$/)
-      expect(locationChanges.newLocation.href).toMatch(/\/foo#bar$/)
+      function hashChangeCallback() {
+        const locationChanges = observer.mock.calls[0][0]
+        expect(locationChanges.oldLocation.href).toMatch(/\/foo$/)
+        expect(locationChanges.newLocation.href).toMatch(/\/foo#bar$/)
 
-      window.removeEventListener('hashchange', hashChangeCallback)
-      done()
-    }
-    window.addEventListener('hashchange', hashChangeCallback)
+        window.removeEventListener('hashchange', hashChangeCallback)
+        resolve()
+      }
+      window.addEventListener('hashchange', hashChangeCallback)
 
-    window.location.hash = '#bar'
-  })
+      window.location.hash = '#bar'
+    }))
 
   it('should not notify if the url has not changed', () => {
     const observer = setup()
@@ -43,7 +45,7 @@ describe('locationChangeObservable', () => {
 
     history.pushState({}, '', '/foo?bar=qux')
 
-    const locationChanges = observer.calls.argsFor(0)[0]
+    const locationChanges = observer.mock.calls[0][0]
     expect(locationChanges.oldLocation.href).toMatch(/\/foo$/)
     expect(locationChanges.newLocation.href).toMatch(/\/foo\?bar=qux$/)
     expect(wrapperSpy).toHaveBeenCalled()
@@ -55,7 +57,7 @@ describe('locationChangeObservable', () => {
 
     history.pushState({}, '', '/foo?bar=qux')
 
-    const locationChanges = observer.calls.argsFor(0)[0]
+    const locationChanges = observer.mock.calls[0][0]
     expect(locationChanges.oldLocation.href).toMatch(/\/foo$/)
     expect(locationChanges.newLocation.href).toMatch(/\/foo\?bar=qux$/)
     expect(wrapperSpy).toHaveBeenCalled()
@@ -68,7 +70,7 @@ function setup() {
   history.pushState({}, '', '/foo')
 
   const observable = createLocationChangeObservable({} as RumConfiguration)
-  const observer = jasmine.createSpy('obs')
+  const observer = vi.fn()
   const subscription = observable.subscribe(observer)
 
   registerCleanupTask(() => {
@@ -80,7 +82,7 @@ function setup() {
 }
 
 function setupHistoryInstancePushStateWrapper() {
-  const wrapperSpy = jasmine.createSpy('wrapperSpy')
+  const wrapperSpy = vi.fn()
   const originalPushState = history.pushState.bind(history)
 
   history.pushState = (...args) => {
@@ -97,7 +99,7 @@ function setupHistoryInstancePushStateWrapper() {
 }
 
 function setupHistoryPrototypePushStateWrapper() {
-  const wrapperSpy = jasmine.createSpy('wrapperSpy')
+  const wrapperSpy = vi.fn()
   const originalPushState = History.prototype.pushState.bind(history)
 
   History.prototype.pushState = (...args) => {

@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { replaceMockable, registerCleanupTask } from '../../test'
 import { Observable } from '../tools/observable'
 import { clocksNow } from '../tools/utils/timeUtils'
@@ -6,31 +7,32 @@ import { ErrorHandling, ErrorSource, type RawError } from './error/error.types'
 import { trackRuntimeError } from './error/trackRuntimeError'
 
 describe('startBufferingData', () => {
-  it('collects runtime errors', (done) => {
-    const runtimeErrorObservable = new Observable<RawError>()
-    replaceMockable(trackRuntimeError, () => runtimeErrorObservable)
-    const { observable, stop } = startBufferingData()
-    registerCleanupTask(stop)
+  it('collects runtime errors', () =>
+    new Promise<void>((resolve) => {
+      const runtimeErrorObservable = new Observable<RawError>()
+      replaceMockable(trackRuntimeError, () => runtimeErrorObservable)
+      const { observable, stop } = startBufferingData()
+      registerCleanupTask(stop)
 
-    const rawError = {
-      startClocks: clocksNow(),
-      source: ErrorSource.SOURCE,
-      type: 'Error',
-      stack: 'Error: error!',
-      handling: ErrorHandling.UNHANDLED,
-      causes: undefined,
-      fingerprint: undefined,
-      message: 'error!',
-    }
+      const rawError = {
+        startClocks: clocksNow(),
+        source: ErrorSource.SOURCE,
+        type: 'Error',
+        stack: 'Error: error!',
+        handling: ErrorHandling.UNHANDLED,
+        causes: undefined,
+        fingerprint: undefined,
+        message: 'error!',
+      }
 
-    runtimeErrorObservable.notify(rawError)
+      runtimeErrorObservable.notify(rawError)
 
-    observable.subscribe((data) => {
-      expect(data).toEqual({
-        type: BufferedDataType.RUNTIME_ERROR,
-        error: rawError,
+      observable.subscribe((data) => {
+        expect(data).toEqual({
+          type: BufferedDataType.RUNTIME_ERROR,
+          error: rawError,
+        })
+        resolve()
       })
-      done()
-    })
-  })
+    }))
 })

@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it } from 'vitest'
 import type { Duration } from '@datadog/browser-core'
 import { clocksOrigin, Observable } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
@@ -18,14 +19,14 @@ describe('trackCommonViewMetrics', () => {
   let clock: Clock
   let domMutationObservable: Observable<RumMutationRecord[]>
   let windowOpenObservable: Observable<void>
-  let scheduleViewUpdateSpy: jasmine.Spy
+  let scheduleViewUpdateSpy: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
     mockGlobalPerformanceBuffer()
     clock = mockClock()
     domMutationObservable = new Observable()
     windowOpenObservable = new Observable()
-    scheduleViewUpdateSpy = jasmine.createSpy('scheduleViewUpdate')
+    scheduleViewUpdateSpy = vi.fn()
   })
 
   describe('manual loading time suppresses auto-detected loading time callback', () => {
@@ -35,7 +36,7 @@ describe('trackCommonViewMetrics', () => {
         domMutationObservable,
         windowOpenObservable,
         mockRumConfiguration(),
-        scheduleViewUpdateSpy,
+        scheduleViewUpdateSpy as unknown as () => void,
         ViewLoadingType.INITIAL_LOAD,
         clocksOrigin()
       )

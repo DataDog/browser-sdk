@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { aggregateSerializationStats, createSerializationStats, updateSerializationStats } from './serializationStats'
 
 describe('serializationStats', () => {

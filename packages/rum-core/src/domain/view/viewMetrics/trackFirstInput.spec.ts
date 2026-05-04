@@ -1,3 +1,4 @@
+import { vi, describe, expect, it, type Mock } from 'vitest'
 import { clocksOrigin, type Duration, type RelativeTime } from '@datadog/browser-core'
 import { registerCleanupTask, restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
 import {
@@ -14,14 +15,14 @@ import { trackFirstInput } from './trackFirstInput'
 import { trackFirstHidden } from './trackFirstHidden'
 
 describe('firstInputTimings', () => {
-  let fitCallback: jasmine.Spy<(firstInput: FirstInput) => void>
+  let fitCallback: Mock<(firstInput: FirstInput) => void>
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
 
   function startFirstInputTracking() {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
 
     const configuration = mockRumConfiguration()
-    fitCallback = jasmine.createSpy()
+    fitCallback = vi.fn()
 
     const firstHidden = trackFirstHidden(configuration, clocksOrigin())
     const firstInputTimings = trackFirstInput(configuration, firstHidden, fitCallback)
@@ -37,7 +38,8 @@ describe('firstInputTimings', () => {
     startFirstInputTracking()
     notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.FIRST_INPUT)])
 
-    expect(fitCallback).toHaveBeenCalledOnceWith({
+    expect(fitCallback).toHaveBeenCalledTimes(1)
+    expect(fitCallback).toHaveBeenCalledWith({
       delay: 100 as Duration,
       time: 1000 as RelativeTime,
       targetSelector: undefined,
@@ -52,8 +54,9 @@ describe('firstInputTimings', () => {
       }),
     ])
 
-    expect(fitCallback).toHaveBeenCalledOnceWith(
-      jasmine.objectContaining({
+    expect(fitCallback).toHaveBeenCalledTimes(1)
+    expect(fitCallback).toHaveBeenCalledWith(
+      expect.objectContaining({
         targetSelector: '#fid-target-element',
       })
     )
@@ -68,7 +71,7 @@ describe('firstInputTimings', () => {
     ])
 
     expect(fitCallback).toHaveBeenCalledWith(
-      jasmine.objectContaining({
+      expect.objectContaining({
         targetSelector: undefined,
       })
     )
@@ -93,8 +96,9 @@ describe('firstInputTimings', () => {
       }),
     ])
 
-    expect(fitCallback).toHaveBeenCalledOnceWith(
-      jasmine.objectContaining({
+    expect(fitCallback).toHaveBeenCalledTimes(1)
+    expect(fitCallback).toHaveBeenCalledWith(
+      expect.objectContaining({
         delay: 0,
         time: 1000,
       })

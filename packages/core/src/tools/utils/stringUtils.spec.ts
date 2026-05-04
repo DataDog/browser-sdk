@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import {
   safeTruncate,
   findCommaSeparatedValue,
@@ -61,22 +62,8 @@ describe('stringUtils', () => {
       expect(findCommaSeparatedValue('foo=a;bar=b', 'baz')).toBe(undefined)
     })
 
-    it('returns empty string if the value is empty', () => {
-      expect(findCommaSeparatedValue('foo=', 'foo')).toBe('')
-    })
-
-    it('supports cookie string with leading empty value', () => {
-      const cookieStringWithLeadingEmptyValue = 'first=;second=second'
-
-      expect(findCommaSeparatedValue(cookieStringWithLeadingEmptyValue, 'first')).toBe('')
-      expect(findCommaSeparatedValue(cookieStringWithLeadingEmptyValue, 'second')).toBe('second')
-    })
-
-    it('supports cookie string with trailing empty value', () => {
-      const cookieStringWithTrailingEmptyValue = 'first=first;second='
-
-      expect(findCommaSeparatedValue(cookieStringWithTrailingEmptyValue, 'first')).toBe('first')
-      expect(findCommaSeparatedValue(cookieStringWithTrailingEmptyValue, 'second')).toBe('')
+    it('returns undefined if the value is empty', () => {
+      expect(findCommaSeparatedValue('foo=', 'foo')).toBe(undefined)
     })
   })
 

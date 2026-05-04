@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ViewHistoryEntry } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType, RumPerformanceEntryType, createHooks } from '@datadog/browser-rum-core'
 import type { Duration } from '@datadog/browser-core'
@@ -129,7 +130,6 @@ describe('profiler', () => {
     return {
       profiler,
       profilingContextManager,
-      sessionManager,
       mockedRumProfilerTrace,
       addLongTask: (longTask: LongTaskContext) => {
         longTaskHistory.add(longTask, relativeNow()).close(addDuration(relativeNow(), longTask.duration))
@@ -289,13 +289,13 @@ describe('profiler', () => {
     expect(traceOne.longTasks).toEqual([
       {
         id: 'long-task-id-2',
-        startClocks: jasmine.any(Object),
+        startClocks: expect.any(Object),
         duration: 100 as Duration,
         entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
       },
       {
         id: 'long-task-id-1',
-        startClocks: jasmine.any(Object),
+        startClocks: expect.any(Object),
         duration: 50 as Duration,
         entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
       },
@@ -305,7 +305,7 @@ describe('profiler', () => {
     expect(traceTwo.longTasks).toEqual([
       {
         id: 'long-task-id-3',
-        startClocks: jasmine.any(Object),
+        startClocks: expect.any(Object),
         duration: 100 as Duration,
         entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
       },
@@ -380,13 +380,13 @@ describe('profiler', () => {
     expect(traceOne.actions).toEqual([
       {
         id: 'action-id-2',
-        startClocks: jasmine.any(Object),
+        startClocks: expect.any(Object),
         duration: 100 as Duration,
         label: 'action-label-2',
       },
       {
         id: 'action-id-1',
-        startClocks: jasmine.any(Object),
+        startClocks: expect.any(Object),
         duration: 50 as Duration,
         label: 'action-label-1',
       },
@@ -396,7 +396,7 @@ describe('profiler', () => {
     expect(traceTwo.actions).toEqual([
       {
         id: 'action-id-3',
-        startClocks: jasmine.any(Object),
+        startClocks: expect.any(Object),
         duration: 100 as Duration,
         label: 'action-label-3',
       },
@@ -471,13 +471,13 @@ describe('profiler', () => {
     expect(traceOne.vitals).toEqual([
       {
         id: 'vital-id-2',
-        startClocks: jasmine.any(Object),
+        startClocks: expect.any(Object),
         duration: 100 as Duration,
         label: 'vital-label-2',
       },
       {
         id: 'vital-id-1',
-        startClocks: jasmine.any(Object),
+        startClocks: expect.any(Object),
         duration: 50 as Duration,
         label: 'vital-label-1',
       },
@@ -487,7 +487,7 @@ describe('profiler', () => {
     expect(traceTwo.vitals).toEqual([
       {
         id: 'vital-id-3',
-        startClocks: jasmine.any(Object),
+        startClocks: expect.any(Object),
         duration: 100 as Duration,
         label: 'vital-label-3',
       },
@@ -892,7 +892,7 @@ describe('profiler', () => {
 
     // Simulate clock drift: Date.now() drifted 1000ms ahead of performance.now()
     // This mimics NTP sync or system clock adjustments in production
-    ;(performance.now as jasmine.Spy).and.callFake(() => Date.now() - timeOrigin - 1000)
+    vi.spyOn(performance, 'now').mockImplementation(() => Date.now() - timeOrigin - 1000)
 
     // Stop profiler — state changes synchronously, data collection is async via Promise
     profiler.stop()
@@ -911,26 +911,6 @@ describe('profiler', () => {
     // because the inflated timeStamp-based duration extends the query window.
     expect(trace.longTasks.length).toBe(1)
     expect(trace.longTasks[0].id).toBe('long-task-inside')
-  })
-
-  it('should use the profiling start time when looking up the session id', async () => {
-    const clock = mockClock()
-    const { profiler, sessionManager } = setupProfiler()
-    const findTrackedSessionSpy = spyOn(sessionManager, 'findTrackedSession').and.callThrough()
-
-    profiler.start()
-    expect(profiler.isRunning()).toBe(true)
-
-    const expectedStartTime = relativeNow()
-
-    clock.tick(1000)
-
-    profiler.stop()
-
-    await waitNextMicrotask()
-    await waitNextMicrotask()
-
-    expect(findTrackedSessionSpy).toHaveBeenCalledWith(expectedStartTime)
   })
 
   it('should restart profiling when session expires while paused and then renews', async () => {

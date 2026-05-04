@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import type { Hooks } from '../../../test'
 import type { LogsConfiguration } from '../../../../logs/src/domain/configuration'
 import type { ContextManager } from '../context/contextManager'

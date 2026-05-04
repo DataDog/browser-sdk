@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest'
 import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN, PRIVACY_ATTR_VALUE_MASK } from '@datadog/browser-rum-core'
 import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import type { BrowserChangeRecord, BrowserFullSnapshotChangeRecord } from '../../../types'
@@ -9,17 +10,6 @@ import { SerializationKind } from './serializationTransaction'
 import { serializeHtmlAsChange } from './serializeHtml.specHelper'
 
 describe('serializeNodeAsChange for DOM nodes', () => {
-  let originalTimeout: number
-
-  beforeAll(() => {
-    originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000
-  })
-
-  afterAll(() => {
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout
-  })
-
   describe('for #cdata-section nodes', () => {
     it('serializes the node', async () => {
       const record = await serializeHtmlAsChange('<div></div>', {
@@ -311,7 +301,7 @@ describe('serializeNodeAsChange for DOM nodes', () => {
       `)
       expect(record?.data).toEqual([
         [ChangeType.AddNode, [null, 'DIV', ['data-dd-privacy', 'hidden']]],
-        [ChangeType.Size, [0, jasmine.any(Number), jasmine.any(Number)]],
+        [ChangeType.Size, [0, expect.any(Number), expect.any(Number)]],
       ])
     })
   })
