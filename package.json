@@ -32,6 +32,8 @@
     "test:unit:bs": "node --env-file-if-exists=.env ./scripts/test/bs-wrapper.ts karma start test/unit/karma.bs.conf.js",
     "test:e2e:init": "yarn build && yarn build:apps && yarn playwright install chromium --with-deps",
     "test:e2e": "playwright test --config test/e2e/playwright.local.config.ts --project chromium",
+    "test:e2e:pinned:init": "PLAYWRIGHT_BROWSERS_PATH=\"$PWD/test/e2e/.pinned-browsers\" yarn dlx -p playwright@1.40.1 playwright install firefox webkit",
+    "test:e2e:pinned": "playwright test --config test/e2e/playwright.pinned.config.ts",
     "test:e2e:bs": "node --env-file-if-exists=.env ./scripts/test/bs-wrapper.ts playwright test --config test/e2e/playwright.bs.config.ts",
     "test:e2e:ci": "yarn test:e2e:init && yarn test:e2e",
     "test:e2e:ci:bs": "yarn build && yarn build:apps && yarn test:e2e:bs",
