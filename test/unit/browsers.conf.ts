@@ -2,7 +2,7 @@
 
 import type { BrowserConfiguration } from '../browsers.conf'
 
-export const browserConfigurations: BrowserConfiguration[] = [
+const allBrowserConfigurations: BrowserConfiguration[] = [
   {
     sessionName: 'Edge',
     name: 'Edge',
@@ -39,3 +39,5 @@ export const browserConfigurations: BrowserConfiguration[] = [
     device: 'Google Pixel 6 Pro',
   },
 ]
+
+export const browserConfigurations = allBrowserConfigurations

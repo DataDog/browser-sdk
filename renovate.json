@@ -33,6 +33,6 @@
     }
   ],
   "toolSettings": {
-    "nodeMaxMemory": 2048
+    "nodeMaxMemory": 4096
   }
 }
