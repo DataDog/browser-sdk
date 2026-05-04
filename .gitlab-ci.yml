@@ -25,4 +25,6 @@ hello-world:
     - .base-configuration
   stage: test
   script:
-    - echo "Hello world"
+    - yarn
+    - yarn build:bundle
+    - du -sh packages/rum/bundle/datadog-rum.js
