@@ -1,3 +1,5 @@
+<!-- DO NOT MODIFY IT BY HAND. This file is generated automatically during the release process. -->
+
 # Changelog
 
 > **Legend**
