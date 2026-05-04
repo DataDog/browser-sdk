@@ -1,3 +1,4 @@
+import { beforeEach, afterEach } from 'vitest'
 import { resetManageResourceTimingBufferFull } from '../../rum-core/src/browser/performanceObservable'
 import { resetExperimentalFeatures } from '../src/tools/experimentalFeatures'
 import { resetValueHistoryGlobals } from '../src/tools/valueHistory'

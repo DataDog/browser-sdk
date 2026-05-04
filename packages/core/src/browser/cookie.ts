@@ -31,13 +31,7 @@ export function setCookie(name: string, value: string, expireDelay: number = 0, 
  * If there are multiple cookies with the same name, returns the first one
  */
 export function getCookie(name: string) {
-  const value = findCommaSeparatedValue(document.cookie, name)
-
-  if (value === '') {
-    return
-  }
-
-  return value
+  return findCommaSeparatedValue(document.cookie, name)
 }
 
 /**

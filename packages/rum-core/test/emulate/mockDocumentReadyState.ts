@@ -1,9 +1,10 @@
+import { vi } from 'vitest'
 import { DOM_EVENT } from '@datadog/browser-core'
 import { createNewEvent } from '../../../core/test'
 
 export function mockDocumentReadyState() {
   let readyState: DocumentReadyState = 'loading'
-  spyOnProperty(Document.prototype, 'readyState', 'get').and.callFake(() => readyState)
+  vi.spyOn(Document.prototype, 'readyState', 'get').mockImplementation(() => readyState)
   return {
     triggerOnDomLoaded: () => {
       readyState = 'interactive'

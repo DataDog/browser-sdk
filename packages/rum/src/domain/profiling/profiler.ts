@@ -1,4 +1,4 @@
-import type { Encoder, RelativeTime } from '@datadog/browser-core'
+import type { Encoder } from '@datadog/browser-core'
 import {
   addEventListener,
   clearTimeout,
@@ -257,8 +257,7 @@ export function createRumProfiler(
             vitals,
             views,
             sampleInterval: profilerConfiguration.sampleIntervalMs,
-          }),
-          startClocks.relative
+          })
         )
       })
       .catch(monitorError)
@@ -319,8 +318,9 @@ export function createRumProfiler(
     instance.views.push(viewEntry)
   }
 
-  function handleProfilerTrace(trace: BrowserProfilerTrace, startTime: RelativeTime): void {
-    const sessionId = session.findTrackedSession(startTime)?.id
+  function handleProfilerTrace(trace: BrowserProfilerTrace): void {
+    // Find current session to assign it to the Profile.
+    const sessionId = session.findTrackedSession()?.id
     const payload = assembleProfilingPayload(trace, configuration, sessionId)
 
     void transport.send(payload as unknown as TransportPayload)

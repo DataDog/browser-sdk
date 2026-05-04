@@ -1,3 +1,4 @@
+import { expect } from 'vitest'
 import type {
   BrowserFullSnapshotRecord,
   BrowserFullSnapshotV1Record,
@@ -82,8 +83,7 @@ export function expectFullSnapshotRendering(
 
   const expectedSerialization = JSON.stringify(expectedRecord)
   const actualSerialization = JSON.stringify(actualRecord)
-  const context = stringMismatchContext(expectedSerialization, actualSerialization)
-  expect(actualSerialization).withContext(context).toBe(expectedSerialization)
+  expect(actualSerialization).toBe(expectedSerialization)
 }
 
 export function expectIncrementalSnapshotRendering(
@@ -106,8 +106,7 @@ export function expectIncrementalSnapshotRendering(
 
   const expectedSerialization = JSON.stringify(expectedRecord)
   const actualSerialization = JSON.stringify(actualRecord)
-  const context = stringMismatchContext(expectedSerialization, actualSerialization)
-  expect(actualSerialization).withContext(context).toBe(expectedSerialization)
+  expect(actualSerialization).toBe(expectedSerialization)
 
   expectFullSnapshotRendering(document, fullSnapshotData, RecordType.IncrementalSnapshot)
 }
@@ -118,27 +117,5 @@ export function expectNodeRendering(node: VNode, expectedSerializedNode: Seriali
 
   const expectedSerialization = JSON.stringify(expectedSerializedNode)
   const actualSerialization = JSON.stringify(actualSerializedNode)
-  const context = stringMismatchContext(expectedSerialization, actualSerialization)
-  expect(actualSerialization).withContext(context).toBe(expectedSerialization)
-}
-
-function stringMismatchContext(expected: string, actual: string): string {
-  if (expected === actual) {
-    return '(equal)'
-  }
-
-  let firstDifferenceIndex = 0
-  while (expected[firstDifferenceIndex] === actual[firstDifferenceIndex]) {
-    firstDifferenceIndex++
-  }
-
-  const expectedContext = getStringNearPosition(expected, firstDifferenceIndex)
-  const actualContext = getStringNearPosition(actual, firstDifferenceIndex)
-  return JSON.stringify({ expected: expectedContext, actual: actualContext }, null, 2)
-}
-
-function getStringNearPosition(str: string, index: number): string {
-  const leftContextStart = Math.max(index - 50, 0)
-  const rightContextEnd = Math.min(index + 150, str.length)
-  return `${str.substring(leftContextStart, index)}(!)${str.substring(index, rightContextEnd)}`
+  expect(actualSerialization).toBe(expectedSerialization)
 }
