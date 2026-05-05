@@ -1,4 +1,3 @@
-import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { addEventListeners, dateNow, DOM_EVENT, relativeNow } from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 
@@ -30,8 +29,8 @@ export function retrieveFirstInputTiming(
         entryType: 'first-input',
         processingStart: relativeNow(),
         processingEnd: relativeNow(),
-        startTime: evt.timeStamp as RelativeTime,
-        duration: 0 as Duration, // arbitrary value to avoid nullable duration and simplify INP logic
+        startTime: evt.timeStamp,
+        duration: 0, // arbitrary value to avoid nullable duration and simplify INP logic
         name: '',
         cancelable: false,
         target: null,

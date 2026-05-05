@@ -6,7 +6,7 @@ import {
   createFakeTelemetryObject,
   replaceMockableWithSpy,
 } from '@datadog/browser-core/test'
-import type { TimeStamp, TrackingConsentState } from '@datadog/browser-core'
+import type { TrackingConsentState } from '@datadog/browser-core'
 import { ONE_SECOND, TrackingConsent, createTrackingConsentState, display, startTelemetry } from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { HybridInitConfiguration, LogsInitConfiguration } from '../domain/configuration'
@@ -134,7 +134,7 @@ describe('preStartLogs', () => {
       clock.tick(ONE_SECOND)
       strategy.init(DEFAULT_INIT_CONFIGURATION)
 
-      expect(getLoggedMessage(0).savedDate).toEqual((Date.now() - ONE_SECOND) as TimeStamp)
+      expect(getLoggedMessage(0).savedDate).toEqual(Date.now() - ONE_SECOND)
     })
 
     it('saves the URL', () => {

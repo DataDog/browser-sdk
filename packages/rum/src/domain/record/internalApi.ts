@@ -3,7 +3,6 @@ import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { getNodePrivacyLevel, NodePrivacyLevel } from '@datadog/browser-rum-core'
 import type { BrowserRecord, SerializedNodeWithId } from '../../types'
 import { takeFullSnapshot as doTakeFullSnapshot } from './startFullSnapshots'
-import type { ShadowRootsController } from './shadowRootsController'
 import type { RecordingScope } from './recordingScope'
 import { createRecordingScope } from './recordingScope'
 import { createElementsScrollPositions } from './elementsScrollPositions'
@@ -79,6 +78,6 @@ function createTemporaryRecordingScope(configuration?: Partial<RumConfiguration>
       removeShadowRoot: noop,
       flush: noop,
       stop: noop,
-    } as ShadowRootsController
+    }
   )
 }

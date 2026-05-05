@@ -29,7 +29,7 @@ describe('trackFirstContentfulPaint', () => {
     startTrackingFCP()
     notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.PAINT)])
 
-    expect(fcpCallback).toHaveBeenCalledTimes(1 as RelativeTime)
+    expect(fcpCallback).toHaveBeenCalledTimes(1)
     expect(fcpCallback).toHaveBeenCalledWith(123 as RelativeTime)
   })
 

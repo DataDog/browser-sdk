@@ -921,7 +921,7 @@ describe('rum public api', () => {
       rumPublicApi.startResource('https://api.example.com/data', {
         type: ResourceType.XHR,
         method: 'GET',
-        context: { count: 123, nested: { foo: 'bar' } } as any,
+        context: { count: 123, nested: { foo: 'bar' } },
         resourceKey: 'resource_key',
       })
 

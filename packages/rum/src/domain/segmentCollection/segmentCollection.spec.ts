@@ -1,4 +1,4 @@
-import type { ClocksState, HttpRequest, HttpRequestEvent, TimeStamp } from '@datadog/browser-core'
+import type { ClocksState, HttpRequest, HttpRequestEvent } from '@datadog/browser-core'
 import { DeflateEncoderStreamId, Observable, PageExitReason } from '@datadog/browser-core'
 import type { ViewHistory, ViewHistoryEntry, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
@@ -18,12 +18,12 @@ import {
 import type { ReplayPayload } from './buildReplayPayload'
 
 const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, session: { id: 'c' } }
-const RECORD: BrowserRecord = { type: RecordType.ViewEnd, timestamp: 10 as TimeStamp }
+const RECORD: BrowserRecord = { type: RecordType.ViewEnd, timestamp: 10 }
 
 // A record that will make the segment size reach the SEGMENT_BYTES_LIMIT
 const VERY_BIG_RECORD: BrowserRecord = {
   type: RecordType.FullSnapshot,
-  timestamp: 10 as TimeStamp,
+  timestamp: 10,
   data: Array(SEGMENT_BYTES_LIMIT).join('a') as any,
 }
 

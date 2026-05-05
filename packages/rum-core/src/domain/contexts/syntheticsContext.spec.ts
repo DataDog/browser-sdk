@@ -64,7 +64,7 @@ describe('getSyntheticsContext', () => {
             test_id: 'foo',
             result_id: 'bar',
             run_type: 'scheduled',
-            suite_ids: ['abc'] as any,
+            suite_ids: ['abc'],
           },
         },
         'globals'

@@ -1,4 +1,3 @@
-import type { TimeStamp } from '@datadog/browser-rum/internal'
 import { NO_ERROR_STACK_PRESENT_MESSAGE } from '../error/error'
 import { callMonitored } from '../../tools/monitor'
 import type { ExperimentalFeature } from '../../tools/experimentalFeatures'
@@ -460,7 +459,7 @@ describe('startTelemetryTransport', () => {
     // Trigger a telemetry event by notifying the observable
     telemetryObservable.notify({
       type: 'telemetry',
-      date: 123 as TimeStamp,
+      date: 123,
       service: TelemetryService.RUM,
       version: '0.0.0',
       source: 'browser',

@@ -4,7 +4,7 @@ import type { RelativeTime } from '@datadog/browser-core'
 import { clocksNow, DISCARDED, HookNames, relativeToClocks } from '@datadog/browser-core'
 import { setupLocationObserver } from '../../../test'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import type { ViewCreatedEvent, ViewEndedEvent } from '../view/trackViews'
+import type { ViewCreatedEvent } from '../view/trackViews'
 import type { AssembleHookParams, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { startUrlContexts, type UrlContexts } from './urlContexts'
@@ -125,7 +125,7 @@ describe('urlContexts', () => {
     changeLocation('/foo')
     lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, {
       endClocks: relativeToClocks(10 as RelativeTime),
-    } as ViewEndedEvent)
+    })
     lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
       startClocks: relativeToClocks(10 as RelativeTime),
     } as ViewCreatedEvent)
@@ -144,7 +144,7 @@ describe('urlContexts', () => {
     changeLocation('/foo')
     lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, {
       endClocks: clocksNow(),
-    } as ViewEndedEvent)
+    })
     lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
       startClocks: clocksNow(),
     } as ViewCreatedEvent)
@@ -156,7 +156,7 @@ describe('urlContexts', () => {
     changeLocation('/qux')
     lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, {
       endClocks: clocksNow(),
-    } as ViewEndedEvent)
+    })
     lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
       startClocks: clocksNow(),
     } as ViewCreatedEvent)
@@ -189,7 +189,7 @@ describe('urlContexts', () => {
     } as ViewCreatedEvent)
     lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, {
       endClocks: relativeToClocks(10 as RelativeTime),
-    } as ViewEndedEvent)
+    })
 
     expect(urlContexts.findUrl()).toBeUndefined()
   })

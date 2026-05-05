@@ -152,14 +152,11 @@ function restoreFunctions(
       typeof resultValue === 'object' &&
       !Array.isArray(resultValue)
     ) {
-      result[key] = restoreFunctions(
-        originalValue as SDKInitConfiguration,
-        resultValue as Partial<SDKInitConfiguration>
-      )
+      result[key] = restoreFunctions(originalValue, resultValue)
     }
   }
 
-  return result as Partial<SDKInitConfiguration>
+  return result
 }
 
 function loadSdkScriptFromURL(url: string) {

@@ -100,7 +100,7 @@ describe('sourceCodeContext', () => {
           ],
         },
       } as RawRumLongAnimationFrameEvent,
-    } as AssembleHookParams)
+    })
 
     expect(result).toEqual({
       type: 'long_task',

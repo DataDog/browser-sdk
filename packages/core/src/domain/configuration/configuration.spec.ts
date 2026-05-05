@@ -63,9 +63,7 @@ describe('validateAndBuildConfiguration', () => {
       expect(displaySpy).toHaveBeenCalledOnceWith('Session Sample Rate should be a number between 0 and 100')
 
       displaySpy.calls.reset()
-      expect(
-        validateAndBuildConfiguration({ clientToken, sessionSampleRate: 200 } as unknown as InitConfiguration)
-      ).toBeUndefined()
+      expect(validateAndBuildConfiguration({ clientToken, sessionSampleRate: 200 })).toBeUndefined()
       expect(displaySpy).toHaveBeenCalledOnceWith('Session Sample Rate should be a number between 0 and 100')
 
       displaySpy.calls.reset()
@@ -80,9 +78,7 @@ describe('validateAndBuildConfiguration', () => {
       expect(displaySpy).toHaveBeenCalledOnceWith('Telemetry Sample Rate should be a number between 0 and 100')
 
       displaySpy.calls.reset()
-      expect(
-        validateAndBuildConfiguration({ clientToken, telemetrySampleRate: 200 } as unknown as InitConfiguration)
-      ).toBeUndefined()
+      expect(validateAndBuildConfiguration({ clientToken, telemetrySampleRate: 200 })).toBeUndefined()
       expect(displaySpy).toHaveBeenCalledOnceWith('Telemetry Sample Rate should be a number between 0 and 100')
 
       displaySpy.calls.reset()
@@ -201,7 +197,7 @@ describe('validateAndBuildConfiguration', () => {
 
   describe('site parameter validation', () => {
     it('should validate the site parameter', () => {
-      validateAndBuildConfiguration({ clientToken, site: 'foo.com' as any })
+      validateAndBuildConfiguration({ clientToken, site: 'foo.com' })
       expect(displaySpy).toHaveBeenCalledOnceWith(
         `Site should be a valid Datadog site. ${MORE_DETAILS} ${DOCS_ORIGIN}/getting_started/site/.`
       )

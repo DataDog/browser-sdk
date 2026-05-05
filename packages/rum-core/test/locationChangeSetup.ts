@@ -12,7 +12,7 @@ export function setupLocationObserver(initialLocation?: string) {
     const currentLocation = { ...fakeLocation }
     Object.assign(fakeLocation, buildLocation(to, fakeLocation.href))
     locationChangeObservable.notify({
-      oldLocation: currentLocation as Location,
+      oldLocation: currentLocation,
       newLocation: fakeLocation,
     })
   }

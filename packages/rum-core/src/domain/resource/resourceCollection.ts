@@ -390,7 +390,7 @@ const MAX_HEADER_COUNT = 100
 const MAX_HEADER_VALUE_LENGTH = 128
 
 function filterHeaders(headers: Headers, matchers: MatchHeader[]): NetworkHeaders | undefined {
-  const result: NetworkHeaders = {} as NetworkHeaders
+  const result: NetworkHeaders = {}
   let collectedHeaderCount = 0
   let totalHeaderCount = 0
   let hasReachedMaxHeaderCount = false
