@@ -16,14 +16,13 @@ import { config as baseConfig } from './playwright.base.config'
 const PINNED_WS_ENDPOINT = 'ws://127.0.0.1:5400/'
 
 const proxyDir = path.join(__dirname, 'scripts')
-const browsersDir = path.join(__dirname, '.pinned-browsers')
 
 const pinnedWebServers = [
   {
     name: 'pinned playwright run-server',
     stdout: 'pipe' as const,
     cwd: proxyDir,
-    command: `PLAYWRIGHT_BROWSERS_PATH=${JSON.stringify(browsersDir)} yarn dlx -p playwright@1.40.1 playwright run-server --port 5401`,
+    command: 'yarn dlx -p playwright@1.40.1 playwright run-server --port 5401',
     wait: { stdout: /Listening on/ },
   },
   {
