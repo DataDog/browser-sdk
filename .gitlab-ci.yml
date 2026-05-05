@@ -27,4 +27,4 @@ hello-world:
   script:
     - yarn
     - yarn build:bundle
-    - du -sh packages/rum/bundle/datadog-rum.js
+    - du -sh packages/rum/bundle/datadog-rum.js packages/rum/bundle/chunks/*.js
