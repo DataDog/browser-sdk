@@ -1,3 +1,4 @@
+import { vi, describe, expect, it } from 'vitest'
 import { disableJasmineUncaughtExceptionTracking, wait } from '../../../test'
 import type { UnhandledErrorCallback } from './trackRuntimeError'
 import { instrumentOnError, instrumentUnhandledRejection, trackRuntimeError } from './trackRuntimeError'
@@ -30,6 +31,13 @@ describe('trackRuntimeError', () => {
   })
 
   it('should collect unhandled rejection', async () => {
+<<<<<<< HEAD
+=======
+    if (!('onunhandledrejection' in window)) {
+      return // skip: 'onunhandledrejection not supported'
+    }
+
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
     const error = await errorViaTrackRuntimeError(() => {
       // Reject with a string instead of an Error here because Jasmine forwards the
       // unhandled rejection to the onerror handler with the wrong argument structure if
@@ -40,7 +48,7 @@ describe('trackRuntimeError', () => {
       // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
       void Promise.reject(ERROR_MESSAGE)
     })
-    expect(error.message).toEqual(jasmine.stringContaining(ERROR_MESSAGE))
+    expect(error.message).toEqual(expect.stringContaining(ERROR_MESSAGE))
   })
 })
 
@@ -50,13 +58,13 @@ describe('instrumentOnError', () => {
   const ERROR_MESSAGE = 'foo'
 
   const spyViaInstrumentOnError = async (callback: () => void) => {
-    const onErrorSpy = spyOn(window as any, 'onerror')
-    const callbackSpy = jasmine.createSpy<UnhandledErrorCallback>()
+    const callbackSpy = vi.fn<UnhandledErrorCallback>()
     const { stop } = instrumentOnError(callbackSpy)
 
     try {
       await invokeAndWaitForErrorHandlers(callback)
-      expect(onErrorSpy).toHaveBeenCalled()
+      // instrumentOnError patches window.onerror, so we verify its callback was invoked
+      expect(callbackSpy).toHaveBeenCalled()
       return callbackSpy
     } finally {
       stop()
@@ -77,7 +85,7 @@ describe('instrumentOnError', () => {
       throw error
     })
 
-    const [originalError, stack] = spy.calls.mostRecent().args
+    const [originalError, stack] = spy.mock.lastCall!
     expect(originalError).toBe(error)
     expect(stack).toBeUndefined()
   })
@@ -88,7 +96,7 @@ describe('instrumentOnError', () => {
       throw error
     })
 
-    const [originalError, stack] = spy.calls.mostRecent().args
+    const [originalError, stack] = spy.mock.lastCall!
     expect(originalError).toBe(error)
     expect(stack).toBeDefined()
   })
@@ -99,7 +107,7 @@ describe('instrumentOnError', () => {
       throw error
     })
 
-    const [originalError, stack] = spy.calls.mostRecent().args
+    const [originalError, stack] = spy.mock.lastCall!
     expect(originalError).toBe(error)
     expect(stack).toBeDefined()
   })
@@ -124,7 +132,7 @@ describe('instrumentOnError', () => {
       expect(spy).toHaveBeenCalledTimes(1)
       await wait(1000)
       expect(spy).toHaveBeenCalledTimes(1)
-      const [reportedError] = spy.calls.mostRecent().args
+      const [reportedError] = spy.mock.lastCall!
       expect(reportedError).toEqual(exception)
     })
   })
@@ -136,7 +144,7 @@ describe('instrumentOnError', () => {
         window.onerror!(error, 'http://example.com', testLineNo, testColNo)
       })
 
-      const [originalError, stack] = spy.calls.mostRecent().args
+      const [originalError, stack] = spy.mock.lastCall!
       expect(originalError).toBe(error)
       expect(stack).toBeDefined()
     })
@@ -149,7 +157,7 @@ describe('instrumentOnError', () => {
           window.onerror!(undefined!, undefined, testLineNo)
         })
 
-        const [, stack] = spy.calls.mostRecent().args
+        const [, stack] = spy.mock.lastCall!
         expect(stack).toBeUndefined()
       })
     })
@@ -160,7 +168,7 @@ describe('instrumentOnError', () => {
           window.onerror!('ReferenceError: foo is undefined', 'http://example.com', testLineNo)
         })
 
-        const [, stack] = spy.calls.mostRecent().args
+        const [, stack] = spy.mock.lastCall!
         expect(stack!.name).toEqual('ReferenceError')
         expect(stack!.message).toEqual('foo is undefined')
       })
@@ -171,7 +179,7 @@ describe('instrumentOnError', () => {
           window.onerror!('Uncaught ReferenceError: foo is undefined', 'http://example.com', testLineNo)
         })
 
-        const [, stack] = spy.calls.mostRecent().args
+        const [, stack] = spy.mock.lastCall!
         expect(stack!.name).toEqual('ReferenceError')
         expect(stack!.message).toEqual('foo is undefined')
       })
@@ -185,7 +193,7 @@ describe('instrumentOnError', () => {
           )
         })
 
-        const [, stack] = spy.calls.mostRecent().args
+        const [, stack] = spy.mock.lastCall!
         expect(stack!.name).toEqual('ReferenceError')
         expect(stack!.message).toEqual('Undefined variable: foo')
       })
@@ -199,7 +207,7 @@ describe('instrumentOnError', () => {
           )
         })
 
-        const [, stack] = spy.calls.mostRecent().args
+        const [, stack] = spy.mock.lastCall!
         expect(stack!.message).toEqual("foo is not a function. (In 'my.function(\n foo)")
         expect(stack!.name).toEqual('TypeError')
       })
@@ -210,7 +218,7 @@ describe('instrumentOnError', () => {
         })
 
         // TODO: should we attempt to parse this?
-        const [, stack] = spy.calls.mostRecent().args
+        const [, stack] = spy.mock.lastCall!
         expect(stack!.name).toEqual(undefined)
         expect(stack!.message).toEqual('CustomError: woo scary')
       })
@@ -220,7 +228,7 @@ describe('instrumentOnError', () => {
           window.onerror!('all work and no play makes homer: something something', 'http://example.com', testLineNo)
         })
 
-        const [, stack] = spy.calls.mostRecent().args
+        const [, stack] = spy.mock.lastCall!
         expect(stack!.name).toEqual(undefined)
         expect(stack!.message).toEqual('all work and no play makes homer: something something')
       })
@@ -230,7 +238,7 @@ describe('instrumentOnError', () => {
           window.onerror!({ foo: 'bar' } as any, 'http://example.com', testLineNo, testColNo)
         })
 
-        const [error, stack] = spy.calls.mostRecent().args
+        const [error, stack] = spy.mock.lastCall!
         expect(stack!.message).toBeUndefined()
         expect(error).toEqual({ foo: 'bar' }) // consider the message as initial error
       })
@@ -248,7 +256,7 @@ describe('instrumentOnError', () => {
           )
         })
 
-        const [error, stack] = spy.calls.mostRecent().args
+        const [error, stack] = spy.mock.lastCall!
         expect(stack!.message).toBe('Any error message')
         expect(stack!.stack).toEqual([{ url: 'https://example.com', column: testColNo, line: testLineNo }])
         expect(error).toEqual('Actual Error Message')
@@ -262,7 +270,7 @@ describe('instrumentOnError', () => {
           } as any)
         })
 
-        const [error, stack] = spy.calls.mostRecent().args
+        const [error, stack] = spy.mock.lastCall!
         expect(stack!.message).toBe('Any error message')
         expect(stack!.stack).toEqual([{ url: 'https://example.com', column: testColNo, line: testLineNo }])
         expect(error).toEqual({ message: 'SyntaxError', data: 'foo' })
@@ -275,13 +283,21 @@ describe('instrumentUnhandledRejection', () => {
   const ERROR_MESSAGE = 'foo'
 
   const spyViaInstrumentOnUnhandledRejection = async (callback: () => void) => {
+<<<<<<< HEAD
     const onUnhandledRejectionSpy = spyOn(window as any, 'onunhandledrejection')
     const callbackSpy = jasmine.createSpy<UnhandledErrorCallback>()
+=======
+    if (!('onunhandledrejection' in window)) {
+      return // skip: 'onunhandledrejection not supported'
+    }
+
+    const callbackSpy = vi.fn<UnhandledErrorCallback>()
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
     const { stop } = instrumentUnhandledRejection(callbackSpy)
 
     try {
       await invokeAndWaitForErrorHandlers(callback)
-      expect(onUnhandledRejectionSpy).toHaveBeenCalled()
+      expect(callbackSpy).toHaveBeenCalled()
       return callbackSpy
     } finally {
       stop()
@@ -305,7 +321,7 @@ describe('instrumentUnhandledRejection', () => {
       window.onunhandledrejection!({ reason } as PromiseRejectionEvent)
     })
 
-    const [originalError, stack] = spy.calls.mostRecent().args
+    const [originalError, stack] = spy!.mock.lastCall!
     expect(originalError).toBe(reason)
     expect(stack).toBeUndefined()
   })

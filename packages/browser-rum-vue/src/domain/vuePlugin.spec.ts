@@ -1,3 +1,4 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '../../../browser-core/test'
 import { onRumInit, vuePlugin, resetVuePlugin } from './vuePlugin'
@@ -11,23 +12,25 @@ describe('vuePlugin', () => {
   })
 
   it('returns a plugin object with name "vue"', () => {
-    expect(vuePlugin()).toEqual(jasmine.objectContaining({ name: 'vue' }))
+    expect(vuePlugin()).toEqual(expect.objectContaining({ name: 'vue' }))
   })
 
   it('calls callbacks registered with onRumInit during onInit', () => {
-    const spy = jasmine.createSpy()
+    const spy = vi.fn()
     const config = {}
     onRumInit(spy)
     vuePlugin(config).onInit({ publicApi: PUBLIC_API, initConfiguration: INIT_CONFIGURATION })
-    expect(spy).toHaveBeenCalledOnceWith(config, PUBLIC_API)
+    expect(spy).toHaveBeenCalledTimes(1)
+    expect(spy).toHaveBeenCalledWith(config, PUBLIC_API)
   })
 
   it('calls callbacks immediately if onInit was already invoked', () => {
-    const spy = jasmine.createSpy()
+    const spy = vi.fn()
     const config = {}
     vuePlugin(config).onInit({ publicApi: PUBLIC_API, initConfiguration: INIT_CONFIGURATION })
     onRumInit(spy)
-    expect(spy).toHaveBeenCalledOnceWith(config, PUBLIC_API)
+    expect(spy).toHaveBeenCalledTimes(1)
+    expect(spy).toHaveBeenCalledWith(config, PUBLIC_API)
   })
 
   it('sets trackViewsManually when router is true', () => {

@@ -1,5 +1,5 @@
-import type { HttpRequest, HttpRequestEvent, Telemetry } from '@datadog/browser-core'
-import type { TimeStamp } from '@datadog/js-core/time'
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
+import type { TimeStamp, HttpRequest, HttpRequestEvent, Telemetry } from '@datadog/browser-core'
 import { PageExitReason, DefaultPrivacyLevel, noop, DeflateEncoderStreamId, Observable } from '@datadog/browser-core'
 import type { ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType, startViewHistory } from '@datadog/browser-rum-core'
@@ -12,8 +12,12 @@ import {
   createSessionManagerMock,
   MOCK_SESSION_ID,
 } from '@datadog/browser-core/test'
-import type { ViewEndedEvent } from '../../../browser-rum-core/src/domain/view/trackViews'
-import { appendElement, mockRumConfiguration } from '../../../browser-rum-core/test'
+import type { ViewEndedEvent } from '../../../rum-core/src/domain/view/trackViews'
+import { appendElement, mockRumConfiguration } from '../../../rum-core/test'
+import { collectAsyncCalls, createNewEvent, mockEventBridge, registerCleanupTask } from '@datadog/browser-core/test'
+import type { ViewEndedEvent } from '@datadog/browser-rum-core/src/domain/view/trackViews'
+import type { RumSessionManagerMock } from '../../../rum-core/test'
+import { appendElement, createRumSessionManagerMock, mockRumConfiguration } from '../../../rum-core/test'
 
 import { recordsPerFullSnapshot, readReplayPayload } from '../../test'
 import type { ReplayPayload } from '../domain/segmentCollection'
@@ -23,21 +27,25 @@ import { RecordType } from '../types'
 import { createDeflateEncoder, resetDeflateWorkerState, startDeflateWorker } from '../domain/deflate'
 import { startRecording } from './datadogRecorder'
 
+declare const __BUILD_ENV__WORKER_STRING__: string
+
 const VIEW_TIMESTAMP = 1 as TimeStamp
 
-describe('startRecording', () => {
+// These tests require the deflate worker to be built. When the worker string is empty
+// (unit test default), the deflate pipeline never produces results and tests hang.
+describe.skipIf(!__BUILD_ENV__WORKER_STRING__)('startRecording', () => {
   const lifeCycle = new LifeCycle()
   let sessionManager: SessionManagerMock
   let viewId: string
   let textField: HTMLInputElement
-  let requestSendSpy: jasmine.Spy<HttpRequest['sendOnExit']>
+  let requestSendSpy: Mock<HttpRequest['sendOnExit']>
   let stopRecording: () => void
 
   function setupStartRecording() {
     const configuration = mockRumConfiguration({ defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW })
     const worker = startDeflateWorker(configuration, 'Session Replay', noop)
 
-    requestSendSpy = jasmine.createSpy()
+    requestSendSpy = vi.fn()
     const httpRequest = {
       observable: new Observable<HttpRequestEvent<ReplayPayload>>(),
       send: requestSendSpy,
@@ -81,21 +89,50 @@ describe('startRecording', () => {
     flushSegment(lifeCycle)
 
     const requests = await readSentRequests(1)
-    expect(requests[0].segment).toEqual(jasmine.any(Object))
+    expect(requests[0].segment).toEqual(expect.any(Object))
     expect(requests[0].event).toEqual({
       application: {
         id: 'appId',
       },
       creation_reason: 'init',
-      end: jasmine.stringMatching(/^\d{13}$/),
+      end: expect.stringMatching(/^\d{13}$/),
       has_full_snapshot: true,
       records_count: recordsPerFullSnapshot(),
       session: {
-        id: MOCK_SESSION_ID,
+        id: 'session-id',
       },
-      start: jasmine.any(Number),
-      raw_segment_size: jasmine.any(Number),
-      compressed_segment_size: jasmine.any(Number),
+      start: expect.any(Number),
+      raw_segment_size: expect.any(Number),
+      compressed_segment_size: expect.any(Number),
+      view: {
+        id: 'view-id',
+      },
+      index_in_view: 0,
+      source: 'browser',
+    })
+  })
+
+  it('sends recorded segments with valid context when Change records are enabled', async () => {
+    addExperimentalFeatures([ExperimentalFeature.USE_CHANGE_RECORDS])
+    setupStartRecording()
+    flushSegment(lifeCycle)
+
+    const requests = await readSentRequests(1)
+    expect(requests[0].segment).toEqual(expect.any(Object))
+    expect(requests[0].event).toEqual({
+      application: {
+        id: 'appId',
+      },
+      creation_reason: 'init',
+      end: expect.stringMatching(/^\d{13}$/),
+      has_full_snapshot: true,
+      records_count: recordsPerFullSnapshot(),
+      session: {
+        id: 'session-id',
+      },
+      start: expect.any(Number),
+      raw_segment_size: expect.any(Number),
+      compressed_segment_size: expect.any(Number),
       view: {
         id: 'view-id',
       },
@@ -219,7 +256,7 @@ describe('startRecording', () => {
   it('should send records through the bridge when it is present', () => {
     const eventBridge = mockEventBridge()
     setupStartRecording()
-    const sendSpy = spyOn(eventBridge, 'send')
+    const sendSpy = vi.spyOn(eventBridge, 'send')
 
     // send click record
     document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))
@@ -227,25 +264,25 @@ describe('startRecording', () => {
     // send view end record and meta record
     changeView(lifeCycle)
 
-    const record1 = JSON.parse(sendSpy.calls.argsFor(0)[0])
-    const record2 = JSON.parse(sendSpy.calls.argsFor(1)[0])
-    const record3 = JSON.parse(sendSpy.calls.argsFor(2)[0])
+    const record1 = JSON.parse(sendSpy.mock.calls[0][0])
+    const record2 = JSON.parse(sendSpy.mock.calls[1][0])
+    const record3 = JSON.parse(sendSpy.mock.calls[2][0])
 
     expect(record1).toEqual({
       eventType: 'record',
-      event: jasmine.objectContaining({ type: RecordType.IncrementalSnapshot }),
+      event: expect.objectContaining({ type: RecordType.IncrementalSnapshot }),
       view: { id: 'view-id' },
     })
 
     expect(record2).toEqual({
       eventType: 'record',
-      event: jasmine.objectContaining({ type: RecordType.ViewEnd }),
+      event: expect.objectContaining({ type: RecordType.ViewEnd }),
       view: { id: 'view-id' },
     })
 
     expect(record3).toEqual({
       eventType: 'record',
-      event: jasmine.objectContaining({ type: RecordType.Meta }),
+      event: expect.objectContaining({ type: RecordType.Meta }),
       view: { id: 'view-id-2' },
     })
   })

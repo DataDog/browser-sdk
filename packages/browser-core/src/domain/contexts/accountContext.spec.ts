@@ -1,21 +1,22 @@
-import type { RelativeTime } from '@datadog/js-core/time'
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { Hooks } from '../../../test'
 import { createHooks, registerCleanupTask } from '../../../test'
 import { mockRumConfiguration } from '../../../../browser-rum-core/test'
 import type { ContextManager } from '../context/contextManager'
 import { display } from '../../tools/display'
+import type { RelativeTime } from '../../tools/utils/timeUtils'
 import { HookNames } from '../../tools/abstractHooks'
 import { removeStorageListeners } from '../context/storeContextManager'
 import { startAccountContext } from './accountContext'
 
 describe('account context', () => {
   let accountContext: ContextManager
-  let displaySpy: jasmine.Spy
+  let displaySpy: Mock
   let hooks: Hooks
 
   beforeEach(() => {
     hooks = createHooks()
-    displaySpy = spyOn(display, 'warn')
+    displaySpy = vi.spyOn(display, 'warn')
 
     accountContext = startAccountContext(hooks, mockRumConfiguration(), 'some_product_key')
   })

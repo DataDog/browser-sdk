@@ -1,5 +1,5 @@
-import type { RelativeTime, Duration } from '@datadog/js-core/time'
-import type { Telemetry, RawTelemetryEvent } from '@datadog/browser-core'
+import { describe, expect, it } from 'vitest'
+import type { Telemetry, RelativeTime, Duration, RawTelemetryEvent } from '@datadog/browser-core'
 import type { MockTelemetry } from '@datadog/browser-core/test'
 import { registerCleanupTask, startMockTelemetry } from '@datadog/browser-core/test'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -57,14 +57,14 @@ describe('startInitialViewMetricsTelemetry', () => {
   it('should collect initial view metrics telemetry', async () => {
     startInitialViewMetricsTelemetryCollection()
     generateViewUpdateWithInitialViewMetrics(VIEW_METRICS)
-    expect(await telemetry.getEvents()).toEqual([jasmine.objectContaining(TELEMETRY_FOR_VIEW_METRICS)])
+    expect(await telemetry.getEvents()).toEqual([expect.objectContaining(TELEMETRY_FOR_VIEW_METRICS)])
   })
 
   it('should not collect initial view metrics telemetry twice', async () => {
     startInitialViewMetricsTelemetryCollection()
 
     generateViewUpdateWithInitialViewMetrics(VIEW_METRICS)
-    expect(await telemetry.getEvents()).toEqual([jasmine.objectContaining(TELEMETRY_FOR_VIEW_METRICS)])
+    expect(await telemetry.getEvents()).toEqual([expect.objectContaining(TELEMETRY_FOR_VIEW_METRICS)])
     telemetry.reset()
 
     generateViewUpdateWithInitialViewMetrics({
@@ -87,7 +87,7 @@ describe('startInitialViewMetricsTelemetry', () => {
     telemetry.reset()
 
     generateViewUpdateWithInitialViewMetrics(VIEW_METRICS)
-    expect(await telemetry.getEvents()).toEqual([jasmine.objectContaining(TELEMETRY_FOR_VIEW_METRICS)])
+    expect(await telemetry.getEvents()).toEqual([expect.objectContaining(TELEMETRY_FOR_VIEW_METRICS)])
   })
 
   it('should not collect initial view metrics telemetry until navigation timings are known', async () => {
@@ -101,7 +101,7 @@ describe('startInitialViewMetricsTelemetry', () => {
     telemetry.reset()
 
     generateViewUpdateWithInitialViewMetrics(VIEW_METRICS)
-    expect(await telemetry.getEvents()).toEqual([jasmine.objectContaining(TELEMETRY_FOR_VIEW_METRICS)])
+    expect(await telemetry.getEvents()).toEqual([expect.objectContaining(TELEMETRY_FOR_VIEW_METRICS)])
   })
 
   it('should not collect initial view metrics telemetry when telemetry is disabled', async () => {

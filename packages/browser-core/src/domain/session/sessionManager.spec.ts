@@ -1,4 +1,4 @@
-import { ONE_SECOND } from '@datadog/js-core/time'
+import { vi, afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
   collectAsyncCalls,
   createFakeSessionStoreStrategy,
@@ -15,6 +15,7 @@ import {
 import type { Clock } from '../../../test'
 import { DOM_EVENT } from '../../browser/addEventListener'
 import { display } from '../../tools/display'
+import { ONE_SECOND } from '../../tools/utils/timeUtils'
 import type { Configuration } from '../configuration'
 import type { TrackingConsentState } from '../trackingConsent'
 import { TrackingConsent, createTrackingConsentState } from '../trackingConsent'
@@ -165,7 +166,20 @@ describe('startSessionManager', () => {
         configuration: { trackAnonymousUser: false },
       })
 
+<<<<<<< HEAD
       expect(sessionManager.findSession()!.anonymousId).toBeUndefined()
+=======
+      expectSessionIdToNotBeDefined(sessionManager)
+      expectTrackingTypeToBe(sessionManager, FIRST_PRODUCT_KEY, FakeTrackingType.NOT_TRACKED)
+    })
+  })
+
+  describe('computeTrackingType', () => {
+    let spy: (rawTrackingType?: string) => FakeTrackingType
+
+    beforeEach(() => {
+      spy = vi.fn().mockReturnValue(FakeTrackingType.TRACKED)
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
     })
 
     it('should keep existing session when strategy has an active session', async () => {
@@ -184,10 +198,17 @@ describe('startSessionManager', () => {
   })
 
   describe('session renewal', () => {
+<<<<<<< HEAD
     it('should renew on user activity after expiration', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
       const renewSpy = jasmine.createSpy('renew')
       sessionManager.renewObservable.subscribe(renewSpy)
+=======
+    it('should renew on activity after expiration', () => {
+      const sessionManager = startSessionManagerWithDefaults()
+      const renewSessionSpy = vi.fn()
+      sessionManager.renewObservable.subscribe(renewSessionSpy)
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
 
       const initialId = sessionManager.findSession()!.id
 
@@ -209,9 +230,16 @@ describe('startSessionManager', () => {
       expect(sessionManager.findSession()!.id).not.toBe(initialId)
     })
 
+<<<<<<< HEAD
     it('should not renew on visibility check after expiration', async () => {
       setPageVisibility('visible')
       registerCleanupTask(restorePageVisibility)
+=======
+    it('should not renew on visibility after expiration', () => {
+      const sessionManager = startSessionManagerWithDefaults()
+      const renewSessionSpy = vi.fn()
+      sessionManager.renewObservable.subscribe(renewSessionSpy)
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
 
       const sessionManager = await startSessionManagerWithDefaults()
       const renewSpy = jasmine.createSpy('renew')
@@ -224,8 +252,15 @@ describe('startSessionManager', () => {
       expect(renewSpy).not.toHaveBeenCalled()
     })
 
+<<<<<<< HEAD
     it('should throttle expandOrRenew calls from activity', async () => {
       await startSessionManagerWithDefaults()
+=======
+    it('should not renew on activity if cookie is deleted by a 3rd party', () => {
+      const sessionManager = startSessionManagerWithDefaults()
+      const renewSessionSpy = vi.fn()
+      sessionManager.renewObservable.subscribe(renewSessionSpy)
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
 
       // The initial click + expandOrRenew already consumed the first throttle window.
       // Wait for throttle to clear.
@@ -284,22 +319,78 @@ describe('startSessionManager', () => {
       expect(stateAfter.isExpired).toBe(EXPIRED)
     })
 
+<<<<<<< HEAD
     it('should renew on user activity after expire()', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
       const initialId = sessionManager.findSession()!.id
 
       sessionManager.expire()
       expect(sessionManager.findSession()).toBeUndefined()
+=======
+    it('should notify each expire and renew observables', () => {
+      const firstSessionManager = startSessionManagerWithDefaults({ productKey: FIRST_PRODUCT_KEY })
+      const expireSessionASpy = vi.fn()
+      firstSessionManager.expireObservable.subscribe(expireSessionASpy)
+      const renewSessionASpy = vi.fn()
+      firstSessionManager.renewObservable.subscribe(renewSessionASpy)
+
+      const secondSessionManager = startSessionManagerWithDefaults({ productKey: SECOND_PRODUCT_KEY })
+      const expireSessionBSpy = vi.fn()
+      secondSessionManager.expireObservable.subscribe(expireSessionBSpy)
+      const renewSessionBSpy = vi.fn()
+      secondSessionManager.renewObservable.subscribe(renewSessionBSpy)
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
 
       // Wait for throttle
       clock.tick(ONE_SECOND)
 
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
+<<<<<<< HEAD
       await collectAsyncCalls(sessionObservableSpy, 3) // 1 for initial session, 1 for expire, 1 for renew
 
       expect(sessionManager.findSession()).toBeDefined()
       expect(sessionManager.findSession()!.id).not.toBe(initialId)
+=======
+      expect(renewSessionASpy).toHaveBeenCalled()
+      expect(renewSessionBSpy).toHaveBeenCalled()
+    })
+  })
+
+  describe('session timeout', () => {
+    it('should expire the session when the time out delay is reached', () => {
+      const sessionManager = startSessionManagerWithDefaults()
+      const expireSessionSpy = vi.fn()
+      sessionManager.expireObservable.subscribe(expireSessionSpy)
+
+      expect(sessionManager.findSession()).toBeDefined()
+      expect(getCookie(SESSION_STORE_KEY)).toBeDefined()
+
+      clock.tick(SESSION_TIME_OUT_DELAY)
+      expectSessionToBeExpired(sessionManager)
+      expect(expireSessionSpy).toHaveBeenCalled()
+    })
+
+    it('should renew an existing timed out session', () => {
+      setCookie(SESSION_STORE_KEY, `id=abcde&first=tracked&created=${Date.now() - SESSION_TIME_OUT_DELAY}`, DURATION)
+
+      const sessionManager = startSessionManagerWithDefaults()
+      const expireSessionSpy = vi.fn()
+      sessionManager.expireObservable.subscribe(expireSessionSpy)
+
+      expect(sessionManager.findSession()!.id).not.toBe('abcde')
+      expect(getSessionState(SESSION_STORE_KEY).created).toEqual(Date.now().toString())
+      expect(expireSessionSpy).not.toHaveBeenCalled() // the session has not been active from the start
+    })
+
+    it('should not add created date to an existing session from an older versions', () => {
+      setCookie(SESSION_STORE_KEY, 'id=abcde&first=tracked', DURATION)
+
+      const sessionManager = startSessionManagerWithDefaults()
+
+      expect(sessionManager.findSession()!.id).toBe('abcde')
+      expect(getSessionState(SESSION_STORE_KEY).created).toBeUndefined()
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
     })
   })
 
@@ -312,13 +403,31 @@ describe('startSessionManager', () => {
     it('should expand session duration on activity', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
 
+<<<<<<< HEAD
       expect(sessionManager.findSession()).toBeDefined()
+=======
+    it('should expire the session after expiration delay', () => {
+      const sessionManager = startSessionManagerWithDefaults()
+      const expireSessionSpy = vi.fn()
+      sessionManager.expireObservable.subscribe(expireSessionSpy)
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
 
       clock.tick(SESSION_EXPIRATION_DELAY - 100)
 
       // Wait for throttle to clear before dispatching activity
       clock.tick(ONE_SECOND)
 
+<<<<<<< HEAD
+=======
+    it('should expand duration on activity', () => {
+      const sessionManager = startSessionManagerWithDefaults()
+      const expireSessionSpy = vi.fn()
+      sessionManager.expireObservable.subscribe(expireSessionSpy)
+
+      expectSessionIdToBeDefined(sessionManager)
+
+      clock.tick(SESSION_EXPIRATION_DELAY - 10)
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
       // Session should still be active (expire time was extended)
@@ -327,10 +436,40 @@ describe('startSessionManager', () => {
       expect(Number(state.expire)).toBeGreaterThan(Date.now())
     })
 
+<<<<<<< HEAD
     it('should expand session on visibility when visible', async () => {
       setPageVisibility('visible')
 
       const sessionManager = await startSessionManagerWithDefaults()
+=======
+    it('should expand not tracked session duration on activity', () => {
+      const sessionManager = startSessionManagerWithDefaults({
+        computeTrackingType: () => FakeTrackingType.NOT_TRACKED,
+      })
+      const expireSessionSpy = vi.fn()
+      sessionManager.expireObservable.subscribe(expireSessionSpy)
+
+      expectTrackingTypeToBe(sessionManager, FIRST_PRODUCT_KEY, FakeTrackingType.NOT_TRACKED)
+
+      clock.tick(SESSION_EXPIRATION_DELAY - 10)
+      document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+
+      clock.tick(10)
+      expectTrackingTypeToBe(sessionManager, FIRST_PRODUCT_KEY, FakeTrackingType.NOT_TRACKED)
+      expect(expireSessionSpy).not.toHaveBeenCalled()
+
+      clock.tick(SESSION_EXPIRATION_DELAY)
+      expectTrackingTypeToNotBeDefined(sessionManager, FIRST_PRODUCT_KEY)
+      expect(expireSessionSpy).toHaveBeenCalled()
+    })
+
+    it('should expand session on visibility', () => {
+      setPageVisibility('visible')
+
+      const sessionManager = startSessionManagerWithDefaults()
+      const expireSessionSpy = vi.fn()
+      sessionManager.expireObservable.subscribe(expireSessionSpy)
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
 
       expect(sessionManager.findSession()).toBeDefined()
 
@@ -370,9 +509,15 @@ describe('startSessionManager', () => {
         created: String(Date.now()),
         expire: otherTabExpire,
       })
+<<<<<<< HEAD
+=======
+      const expireSessionSpy = vi.fn()
+      sessionManager.expireObservable.subscribe(expireSessionSpy)
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
 
       clock.tick(VISIBILITY_CHECK_DELAY)
 
+<<<<<<< HEAD
       // The other tab's expire should not have been pushed forward
       expect(fakeStrategy.getInternalState().expire).toBe(otherTabExpire)
     })
@@ -381,13 +526,72 @@ describe('startSessionManager', () => {
       const sessionManager = await startSessionManagerWithDefaults()
       const expireSpy = jasmine.createSpy('expire')
       sessionManager.expireObservable.subscribe(expireSpy)
+=======
+      clock.tick(SESSION_EXPIRATION_DELAY - 10)
+      expectTrackingTypeToBe(sessionManager, FIRST_PRODUCT_KEY, FakeTrackingType.NOT_TRACKED)
+      expect(expireSessionSpy).not.toHaveBeenCalled()
+
+      clock.tick(10)
+      expectTrackingTypeToNotBeDefined(sessionManager, FIRST_PRODUCT_KEY)
+      expect(expireSessionSpy).toHaveBeenCalled()
+    })
+  })
+
+  describe('manual session expiration', () => {
+    it('expires the session when calling expire()', () => {
+      const sessionManager = startSessionManagerWithDefaults()
+      const expireSessionSpy = vi.fn()
+      sessionManager.expireObservable.subscribe(expireSessionSpy)
+
+      sessionManager.expire()
+
+      expectSessionToBeExpired(sessionManager)
+      expect(expireSessionSpy).toHaveBeenCalled()
+    })
+
+    it('notifies expired session only once when calling expire() multiple times', () => {
+      const sessionManager = startSessionManagerWithDefaults()
+      const expireSessionSpy = vi.fn()
+      sessionManager.expireObservable.subscribe(expireSessionSpy)
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
 
       expect(sessionManager.findSession()).toBeDefined()
 
       // Advance past the session expiration delay without any user activity
       clock.tick(SESSION_EXPIRATION_DELAY + ONE_SECOND)
 
+<<<<<<< HEAD
       await collectAsyncCalls(expireSpy, 1)
+=======
+    it('notifies expired session only once when calling expire() after the session has been expired', () => {
+      const sessionManager = startSessionManagerWithDefaults()
+      const expireSessionSpy = vi.fn()
+      sessionManager.expireObservable.subscribe(expireSessionSpy)
+
+      clock.tick(SESSION_EXPIRATION_DELAY)
+      sessionManager.expire()
+
+      expectSessionToBeExpired(sessionManager)
+      expect(expireSessionSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('renew the session on user activity', () => {
+      const sessionManager = startSessionManagerWithDefaults()
+      clock.tick(STORAGE_POLL_DELAY)
+
+      sessionManager.expire()
+
+      document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+
+      expectSessionIdToBeDefined(sessionManager)
+    })
+  })
+
+  describe('session history', () => {
+    it('should return undefined when there is no current session and no startTime', () => {
+      const sessionManager = startSessionManagerWithDefaults()
+      expireSessionCookie()
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
 
       expect(expireSpy).toHaveBeenCalledTimes(1)
       expect(sessionManager.findSession()).toBeUndefined()
@@ -654,9 +858,17 @@ describe('startSessionManager', () => {
     })
   })
 
+<<<<<<< HEAD
   describe('findSession', () => {
     it('should return the current session when no startTime is provided', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
+=======
+  describe('session state update', () => {
+    it('should notify session manager update observable', () => {
+      const sessionStateUpdateSpy = vi.fn()
+      const sessionManager = startSessionManagerWithDefaults()
+      sessionManager.sessionStateUpdateObservable.subscribe(sessionStateUpdateSpy)
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
 
       const session = sessionManager.findSession()
       expect(session).toBeDefined()
@@ -666,6 +878,7 @@ describe('startSessionManager', () => {
     it('should return undefined when the session is expired and no startTime is provided', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
 
+<<<<<<< HEAD
       sessionManager.expire()
 
       expect(sessionManager.findSession()).toBeUndefined()
@@ -735,6 +948,11 @@ describe('startSessionManager', () => {
         expect(sessionManager.findSession(clock.relative(15 * ONE_SECOND), { returnInactive: true })).toBeDefined()
         expect(sessionManager.findSession(clock.relative(15 * ONE_SECOND), { returnInactive: false })).toBeUndefined()
       })
+=======
+      const callArgs = sessionStateUpdateSpy.mock.calls[0][0]
+      expect(callArgs.previousState.extra).toBeUndefined()
+      expect(callArgs.newState.extra).toBe('extra')
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
     })
   })
 

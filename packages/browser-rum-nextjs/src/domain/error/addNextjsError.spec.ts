@@ -1,3 +1,4 @@
+import { vi, describe, it, expect } from 'vitest'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { resetNextjsPlugin } from '../nextjsPlugin'
 import { initializeNextjsPlugin } from '../../../test/initializeNextjsPlugin'
@@ -12,23 +13,24 @@ describe('addNextjsError', () => {
   })
 
   it('delegates the error to addError', () => {
-    const addErrorSpy = jasmine.createSpy()
+    const addErrorSpy = vi.fn()
     initializeNextjsPlugin({ addError: addErrorSpy })
     const originalError = new Error('test error')
 
     addNextjsError(originalError, { componentStack: 'at ComponentSpy toto.js' })
 
-    expect(addErrorSpy).toHaveBeenCalledOnceWith({
+    expect(addErrorSpy).toHaveBeenCalledTimes(1)
+    expect(addErrorSpy).toHaveBeenCalledWith({
       error: originalError,
-      handlingStack: jasmine.any(String),
+      handlingStack: expect.any(String),
       componentStack: 'at ComponentSpy toto.js',
-      startClocks: jasmine.any(Object),
+      startClocks: expect.any(Object),
       context: { framework: 'nextjs' },
     })
   })
 
   it('merges dd_context from the original error with nextjs error context', () => {
-    const addErrorSpy = jasmine.createSpy()
+    const addErrorSpy = vi.fn()
     initializeNextjsPlugin({ addError: addErrorSpy })
     const originalError = new Error('error message')
     ;(originalError as any).dd_context = { component: 'Menu', param: 123 }
@@ -36,7 +38,7 @@ describe('addNextjsError', () => {
     addNextjsError(originalError, {})
 
     expect(addErrorSpy).toHaveBeenCalledWith(
-      jasmine.objectContaining({
+      expect.objectContaining({
         error: originalError,
         context: {
           framework: 'nextjs',
@@ -48,57 +50,57 @@ describe('addNextjsError', () => {
   })
 
   it('adds nextjs.digest context when error.digest is present', () => {
-    const addErrorSpy = jasmine.createSpy()
+    const addErrorSpy = vi.fn()
     initializeNextjsPlugin({ addError: addErrorSpy })
     const error = Object.assign(new Error('server error'), { digest: 'abc123' })
 
     addNextjsError(error, {})
 
-    expect(addErrorSpy.calls.mostRecent().args[0]).toEqual(
-      jasmine.objectContaining({
-        context: jasmine.objectContaining({ framework: 'nextjs', nextjs: { digest: 'abc123' } }),
+    expect(addErrorSpy.mock.lastCall![0]).toEqual(
+      expect.objectContaining({
+        context: expect.objectContaining({ framework: 'nextjs', nextjs: { digest: 'abc123' } }),
       })
     )
   })
 
   it('omits nextjs key when digest is undefined', () => {
-    const addErrorSpy = jasmine.createSpy()
+    const addErrorSpy = vi.fn()
     initializeNextjsPlugin({ addError: addErrorSpy })
     const error = new Error('client error')
 
     addNextjsError(error)
 
-    expect(addErrorSpy.calls.mostRecent().args[0]).toEqual(
-      jasmine.objectContaining({
+    expect(addErrorSpy.mock.lastCall![0]).toEqual(
+      expect.objectContaining({
         context: { framework: 'nextjs' },
       })
     )
   })
 
   it('omits componentStack when errorInfo is missing', () => {
-    const addErrorSpy = jasmine.createSpy()
+    const addErrorSpy = vi.fn()
     initializeNextjsPlugin({ addError: addErrorSpy })
     const error = new Error('client error')
 
     addNextjsError(error)
 
-    expect(addErrorSpy.calls.mostRecent().args[0]).toEqual(
-      jasmine.objectContaining({
+    expect(addErrorSpy.mock.lastCall![0]).toEqual(
+      expect.objectContaining({
         componentStack: undefined,
       })
     )
   })
 
   it('does not let error.dd_context overwrite framework', () => {
-    const addErrorSpy = jasmine.createSpy()
+    const addErrorSpy = vi.fn()
     initializeNextjsPlugin({ addError: addErrorSpy })
     const error = Object.assign(new Error('test error'), { dd_context: { framework: 'from-dd-context' } })
 
     addNextjsError(error, {})
 
-    expect(addErrorSpy.calls.mostRecent().args[0]).toEqual(
-      jasmine.objectContaining({
-        context: jasmine.objectContaining({ framework: 'nextjs' }),
+    expect(addErrorSpy.mock.lastCall![0]).toEqual(
+      expect.objectContaining({
+        context: expect.objectContaining({ framework: 'nextjs' }),
       })
     )
   })

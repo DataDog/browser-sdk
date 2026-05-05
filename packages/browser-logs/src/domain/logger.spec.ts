@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { ErrorWithCause } from '@datadog/browser-core'
 import { display, ErrorHandling, NO_ERROR_STACK_PRESENT_MESSAGE } from '@datadog/browser-core'
 import type { LogsMessage } from './logger'
@@ -6,22 +7,22 @@ import { StatusType } from './logger/isAuthorized'
 
 describe('Logger', () => {
   let logger: Logger
-  let handleLogSpy: jasmine.Spy<(message: LogsMessage, logger: Logger, handlingStack?: string) => void>
+  let handleLogSpy: Mock<(message: LogsMessage, logger: Logger, handlingStack?: string) => void>
 
   function getLoggedMessage(index: number) {
-    return handleLogSpy.calls.argsFor(index)[0]
+    return handleLogSpy.mock.calls[index][0]
   }
 
   function getMessageLogger(index: number) {
-    return handleLogSpy.calls.argsFor(index)[1]
+    return handleLogSpy.mock.calls[index][1]
   }
 
   function getLoggedHandlingStack(index: number) {
-    return handleLogSpy.calls.argsFor(index)[2]
+    return handleLogSpy.mock.calls[index][2]
   }
 
   beforeEach(() => {
-    handleLogSpy = jasmine.createSpy()
+    handleLogSpy = vi.fn()
     logger = new Logger(handleLogSpy)
   })
 
@@ -49,7 +50,7 @@ describe('Logger', () => {
           error: {
             kind: 'SyntaxError',
             message: 'My Error',
-            stack: jasmine.stringMatching(/^SyntaxError: My Error/),
+            stack: expect.stringMatching(/^SyntaxError: My Error/),
             causes: undefined,
             handling: ErrorHandling.HANDLED,
             fingerprint: undefined,
@@ -188,15 +189,24 @@ describe('Logger', () => {
   })
 
   describe('tags', () => {
-    let displaySpy: jasmine.Spy<typeof display.warn>
+    let displaySpy: Mock<typeof display.warn>
     function expectWarning() {
+<<<<<<< HEAD
       expect(displaySpy).toHaveBeenCalledOnceWith(
         jasmine.stringMatching("Tag .* doesn't meet tag requirements and will be sanitized")
       )
+=======
+      if (supportUnicodePropertyEscapes()) {
+        expect(displaySpy).toHaveBeenCalledTimes(1)
+        expect(displaySpy).toHaveBeenCalledWith(
+          expect.stringMatching("Tag .* doesn't meet tag requirements and will be sanitized")
+        )
+      }
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
     }
 
     beforeEach(() => {
-      displaySpy = spyOn(display, 'warn')
+      displaySpy = vi.spyOn(display, 'warn')
     })
 
     it('should add a key:value tag', () => {
@@ -325,7 +335,7 @@ describe('Logger', () => {
 
       expect(loggedError).toEqual({
         message: 'Test error',
-        stack: jasmine.stringMatching(/^Error: Test error/),
+        stack: expect.stringMatching(/^Error: Test error/),
         kind: 'Error',
         causes: undefined,
         handling: ErrorHandling.HANDLED,

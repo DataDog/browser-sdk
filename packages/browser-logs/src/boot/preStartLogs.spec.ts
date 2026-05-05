@@ -1,4 +1,4 @@
-import { ONE_SECOND } from '@datadog/js-core/time'
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import {
   collectAsyncCalls,
   type Clock,
@@ -12,6 +12,7 @@ import {
 } from '@datadog/browser-core/test'
 import type { TrackingConsentState } from '@datadog/browser-core'
 import {
+  ONE_SECOND,
   TrackingConsent,
   createTrackingConsentState,
   display,
@@ -38,13 +39,13 @@ describe('preStartLogs', () => {
   })
 
   describe('configuration validation', () => {
-    let displaySpy: jasmine.Spy
-    let doStartLogsSpy: jasmine.Spy<DoStartLogs>
+    let displaySpy: Mock
+    let doStartLogsSpy: Mock<DoStartLogs>
     let strategy: Strategy
 
     beforeEach(() => {
       ;({ strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults())
-      displaySpy = spyOn(display, 'error')
+      displaySpy = vi.spyOn(display, 'error')
     })
 
     it('should start when the configuration is valid', async () => {
@@ -134,7 +135,7 @@ describe('preStartLogs', () => {
     strategy.init(DEFAULT_INIT_CONFIGURATION)
     await collectAsyncCalls(handleLogSpy, 1)
 
-    expect(handleLogSpy.calls.all().length).toBe(1)
+    expect(handleLogSpy.mock.calls.length).toBe(1)
     expect(getLoggedMessage(0).message.message).toBe('message')
   })
 
@@ -161,9 +162,15 @@ describe('preStartLogs', () => {
       expect(getLoggedMessage(0).savedDate).toEqual(Date.now() - ONE_SECOND)
     })
 
+<<<<<<< HEAD
     it('saves the URL', async () => {
       const { strategy, getLoggedMessage, getCommonContextSpy, handleLogSpy } = createPreStartStrategyWithDefaults()
       getCommonContextSpy.and.returnValue({ view: { url: 'url' } } as unknown as CommonContext)
+=======
+    it('saves the URL', () => {
+      const { strategy, getLoggedMessage, getCommonContextSpy } = createPreStartStrategyWithDefaults()
+      getCommonContextSpy.mockReturnValue({ view: { url: 'url' } } as unknown as CommonContext)
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
       strategy.handleLog(
         {
           status: StatusType.info,
@@ -206,7 +213,7 @@ describe('preStartLogs', () => {
 
   describe('tracking consent', () => {
     let strategy: Strategy
-    let doStartLogsSpy: jasmine.Spy<DoStartLogs>
+    let doStartLogsSpy: Mock<DoStartLogs>
     let trackingConsentState: TrackingConsentState
 
     beforeEach(() => {
@@ -214,6 +221,24 @@ describe('preStartLogs', () => {
       ;({ strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults({ trackingConsentState }))
     })
 
+<<<<<<< HEAD
+=======
+    describe('basic methods instrumentation', () => {
+      it('should instrument fetch even if tracking consent is not granted', () => {
+        expect(
+          callbackAddsInstrumentation(() => {
+            strategy.init({
+              ...DEFAULT_INIT_CONFIGURATION,
+              trackingConsent: TrackingConsent.NOT_GRANTED,
+            })
+          })
+            .toMethod(window, 'fetch')
+            .whenCalled()
+        ).toBe(true)
+      })
+    })
+
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
     it('does not start logs if tracking consent is not granted at init', () => {
       strategy.init({
         ...DEFAULT_INIT_CONFIGURATION,
@@ -243,8 +268,12 @@ describe('preStartLogs', () => {
 
     it('do not call startLogs when tracking consent state is updated after init', async () => {
       strategy.init(DEFAULT_INIT_CONFIGURATION)
+<<<<<<< HEAD
       await collectAsyncCalls(doStartLogsSpy, 1)
       doStartLogsSpy.calls.reset()
+=======
+      doStartLogsSpy.mockClear()
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
 
       trackingConsentState.update(TrackingConsent.GRANTED)
       await waitNextMicrotask()
@@ -289,13 +318,18 @@ function createPreStartStrategyWithDefaults({
   trackingConsentState?: TrackingConsentState
   startSessionManagerMock?: typeof startSessionManager
 } = {}) {
-  const handleLogSpy = jasmine.createSpy()
-  const doStartLogsSpy = jasmine.createSpy<DoStartLogs>().and.returnValue({
+  const handleLogSpy = vi.fn()
+  const doStartLogsSpy = vi.fn<DoStartLogs>().mockReturnValue({
     handleLog: handleLogSpy,
   } as unknown as StartLogsResult)
+<<<<<<< HEAD
   const getCommonContextSpy = jasmine.createSpy<() => CommonContext>()
   const startTelemetrySpy = replaceMockableWithSpy(startTelemetry).and.callFake(createFakeTelemetryObject)
   replaceMockable(startSessionManager, startSessionManagerMock)
+=======
+  const getCommonContextSpy = vi.fn<() => CommonContext>()
+  const startTelemetrySpy = replaceMockableWithSpy(startTelemetry).mockImplementation(createFakeTelemetryObject)
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
 
   return {
     strategy: createPreStartStrategy(getCommonContextSpy, trackingConsentState, doStartLogsSpy),
@@ -304,7 +338,7 @@ function createPreStartStrategyWithDefaults({
     doStartLogsSpy,
     getCommonContextSpy,
     getLoggedMessage: (index: number) => {
-      const [message, logger, handlingStack, savedCommonContext, savedDate] = handleLogSpy.calls.argsFor(index)
+      const [message, logger, handlingStack, savedCommonContext, savedDate] = handleLogSpy.mock.calls[index]
       return { message, logger, handlingStack, savedCommonContext, savedDate }
     },
   }

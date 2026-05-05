@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import { HookNames } from '@datadog/browser-core'
 import type { RelativeTime } from '@datadog/js-core/time'
 import type { AssembleHookParams, Hooks } from '../hooks'

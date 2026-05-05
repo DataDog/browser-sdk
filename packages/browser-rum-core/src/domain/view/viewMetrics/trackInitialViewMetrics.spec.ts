@@ -1,5 +1,10 @@
-import type { Duration } from '@datadog/js-core/time'
-import { clocksOrigin } from '@datadog/js-core/time'
+<<<<<<< HEAD
+import type { Duration } from '@datadog/browser-core'
+=======
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
+import type { Duration, RelativeTime } from '@datadog/browser-core'
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
+import { clocksOrigin } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumPerformanceEntry } from '../../../browser/performanceObservable'
@@ -9,17 +14,17 @@ import { trackInitialViewMetrics } from './trackInitialViewMetrics'
 
 describe('trackInitialViewMetrics', () => {
   let clock: Clock
-  let scheduleViewUpdateSpy: jasmine.Spy<() => void>
+  let scheduleViewUpdateSpy: Mock<() => void>
   let trackInitialViewMetricsResult: ReturnType<typeof trackInitialViewMetrics>
-  let setLoadEventSpy: jasmine.Spy<(loadEvent: Duration) => void>
+  let setLoadEventSpy: Mock<(loadEvent: Duration) => void>
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
 
   beforeEach(() => {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
 
     const configuration = mockRumConfiguration()
-    scheduleViewUpdateSpy = jasmine.createSpy()
-    setLoadEventSpy = jasmine.createSpy()
+    scheduleViewUpdateSpy = vi.fn()
+    setLoadEventSpy = vi.fn()
     clock = mockClock()
 
     trackInitialViewMetricsResult = trackInitialViewMetrics(
@@ -42,7 +47,7 @@ describe('trackInitialViewMetrics', () => {
 
     expect(scheduleViewUpdateSpy).toHaveBeenCalledTimes(2)
     expect(trackInitialViewMetricsResult.initialViewMetrics).toEqual({
-      navigationTimings: jasmine.any(Object),
+      navigationTimings: expect.any(Object),
       firstContentfulPaint: 123 as Duration,
     })
   })
@@ -52,6 +57,7 @@ describe('trackInitialViewMetrics', () => {
 
     clock.tick(0)
 
-    expect(setLoadEventSpy).toHaveBeenCalledOnceWith(jasmine.any(Number))
+    expect(setLoadEventSpy).toHaveBeenCalledTimes(1)
+    expect(setLoadEventSpy).toHaveBeenCalledWith(expect.any(Number))
   })
 })

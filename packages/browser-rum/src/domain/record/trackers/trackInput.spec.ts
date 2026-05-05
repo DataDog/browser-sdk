@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock, registerCleanupTask } from '@datadog/browser-core/test'
@@ -14,7 +15,7 @@ import type { Tracker } from './tracker.types'
 
 describe('trackInput', () => {
   let inputTracker: Tracker
-  let emitRecordCallback: jasmine.Spy<EmitRecordCallback>
+  let emitRecordCallback: Mock<EmitRecordCallback>
   let input: HTMLInputElement
   let clock: Clock | undefined
   let scope: RecordingScope
@@ -22,7 +23,7 @@ describe('trackInput', () => {
   beforeEach(() => {
     input = appendElement('<div><input target /></div>') as HTMLInputElement
 
-    emitRecordCallback = jasmine.createSpy()
+    emitRecordCallback = vi.fn()
     scope = createRecordingScopeForTesting()
     takeFullSnapshotForTesting(scope)
 
@@ -32,7 +33,7 @@ describe('trackInput', () => {
   })
 
   function getLatestInputPayload(): InputData & { text?: string } {
-    const latestRecord = emitRecordCallback.calls.mostRecent()?.args[0] as BrowserIncrementalSnapshotRecord
+    const latestRecord = emitRecordCallback.mock.lastCall?.[0] as BrowserIncrementalSnapshotRecord
     return latestRecord.data as InputData
   }
 
@@ -40,13 +41,14 @@ describe('trackInput', () => {
     inputTracker = trackInput(document, emitRecordCallback, scope)
     dispatchInputEvent('foo')
 
-    expect(emitRecordCallback).toHaveBeenCalledOnceWith({
+    expect(emitRecordCallback).toHaveBeenCalledTimes(1)
+    expect(emitRecordCallback).toHaveBeenCalledWith({
       type: RecordType.IncrementalSnapshot,
-      timestamp: jasmine.any(Number),
+      timestamp: expect.any(Number),
       data: {
         source: IncrementalSource.Input,
         text: 'foo',
-        id: jasmine.any(Number) as unknown as number,
+        id: expect.any(Number) as unknown as number,
       },
     })
   })
@@ -58,13 +60,14 @@ describe('trackInput', () => {
 
     clock.tick(0)
 
-    expect(emitRecordCallback).toHaveBeenCalledOnceWith({
+    expect(emitRecordCallback).toHaveBeenCalledTimes(1)
+    expect(emitRecordCallback).toHaveBeenCalledWith({
       type: RecordType.IncrementalSnapshot,
-      timestamp: jasmine.any(Number),
+      timestamp: expect.any(Number),
       data: {
         source: IncrementalSource.Input,
         text: 'foo',
-        id: jasmine.any(Number) as unknown as number,
+        id: expect.any(Number) as unknown as number,
       },
     })
   })
@@ -97,13 +100,14 @@ describe('trackInput', () => {
     inputTracker = trackInput(document, emitRecordCallback, scope)
     dispatchInputEventWithInShadowDom('foo')
 
-    expect(emitRecordCallback).toHaveBeenCalledOnceWith({
+    expect(emitRecordCallback).toHaveBeenCalledTimes(1)
+    expect(emitRecordCallback).toHaveBeenCalledWith({
       type: RecordType.IncrementalSnapshot,
-      timestamp: jasmine.any(Number),
+      timestamp: expect.any(Number),
       data: {
         source: IncrementalSource.Input,
         text: 'foo',
-        id: jasmine.any(Number) as unknown as number,
+        id: expect.any(Number) as unknown as number,
       },
     })
   })

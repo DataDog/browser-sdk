@@ -1,14 +1,4 @@
-import {
-  elapsed,
-  timeStampNow,
-  addDuration,
-  clocksNow,
-  clocksOrigin,
-  ONE_DAY,
-  relativeNow,
-} from '@datadog/js-core/time'
-import type { Duration } from '@datadog/js-core/time'
-import type { ProfilerTrace } from '@datadog/browser-core'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ViewHistoryEntry } from '@datadog/browser-rum-core'
 import {
   LifeCycle,
@@ -17,7 +7,19 @@ import {
   VitalType,
   createHooks,
 } from '@datadog/browser-rum-core'
-import { createIdentityEncoder, createValueHistory, deepClone } from '@datadog/browser-core'
+import type { Duration, ProfilerTrace } from '@datadog/browser-core'
+import {
+  addDuration,
+  clocksNow,
+  clocksOrigin,
+  createIdentityEncoder,
+  createValueHistory,
+  deepClone,
+  elapsed,
+  ONE_DAY,
+  relativeNow,
+  timeStampNow,
+} from '@datadog/browser-core'
 import {
   setPageVisibility,
   restorePageVisibility,
@@ -142,8 +144,8 @@ describe('profiler', () => {
     return {
       profiler,
       profilingContextManager,
-      sessionManager,
       mockedRumProfilerTrace,
+      sessionManager,
       addLongTask: (longTask: LongTaskContext) => {
         longTaskHistory.add(longTask, relativeNow()).close(addDuration(relativeNow(), longTask.duration))
       },
@@ -314,13 +316,13 @@ describe('profiler', () => {
     expect(traceOne.longTasks).toEqual([
       {
         id: 'long-task-id-2',
-        startClocks: jasmine.any(Object),
+        startClocks: expect.any(Object),
         duration: 100 as Duration,
         entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
       },
       {
         id: 'long-task-id-1',
-        startClocks: jasmine.any(Object),
+        startClocks: expect.any(Object),
         duration: 50 as Duration,
         entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
       },
@@ -330,7 +332,7 @@ describe('profiler', () => {
     expect(traceTwo.longTasks).toEqual([
       {
         id: 'long-task-id-3',
-        startClocks: jasmine.any(Object),
+        startClocks: expect.any(Object),
         duration: 100 as Duration,
         entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
       },
@@ -405,13 +407,13 @@ describe('profiler', () => {
     expect(traceOne.actions).toEqual([
       {
         id: 'action-id-2',
-        startClocks: jasmine.any(Object),
+        startClocks: expect.any(Object),
         duration: 100 as Duration,
         label: 'action-label-2',
       },
       {
         id: 'action-id-1',
-        startClocks: jasmine.any(Object),
+        startClocks: expect.any(Object),
         duration: 50 as Duration,
         label: 'action-label-1',
       },
@@ -421,7 +423,7 @@ describe('profiler', () => {
     expect(traceTwo.actions).toEqual([
       {
         id: 'action-id-3',
-        startClocks: jasmine.any(Object),
+        startClocks: expect.any(Object),
         duration: 100 as Duration,
         label: 'action-label-3',
       },
@@ -499,13 +501,13 @@ describe('profiler', () => {
     expect(traceOne.vitals).toEqual([
       {
         id: 'vital-id-2',
-        startClocks: jasmine.any(Object),
+        startClocks: expect.any(Object),
         duration: 100 as Duration,
         label: 'vital-label-2',
       },
       {
         id: 'vital-id-1',
-        startClocks: jasmine.any(Object),
+        startClocks: expect.any(Object),
         duration: 50 as Duration,
         label: 'vital-label-1',
       },
@@ -515,7 +517,7 @@ describe('profiler', () => {
     expect(traceTwo.vitals).toEqual([
       {
         id: 'vital-id-3',
-        startClocks: jasmine.any(Object),
+        startClocks: expect.any(Object),
         duration: 100 as Duration,
         label: 'vital-label-3',
       },
@@ -993,7 +995,7 @@ describe('profiler', () => {
 
     // Simulate clock drift: Date.now() drifted 1000ms ahead of performance.now()
     // This mimics NTP sync or system clock adjustments in production
-    ;(performance.now as jasmine.Spy).and.callFake(() => Date.now() - timeOrigin - 1000)
+    vi.spyOn(performance, 'now').mockImplementation(() => Date.now() - timeOrigin - 1000)
 
     // Stop profiler — state changes synchronously, data collection is async via Promise
     profiler.stop()
@@ -1017,7 +1019,7 @@ describe('profiler', () => {
   it('should use the profiling start time when looking up the session id', async () => {
     const clock = mockClock()
     const { profiler, sessionManager } = setupProfiler()
-    const findTrackedSessionSpy = spyOn(sessionManager, 'findTrackedSession').and.callThrough()
+    const findTrackedSessionSpy = vi.spyOn(sessionManager, 'findTrackedSession')
 
     profiler.start()
     expect(profiler.isRunning()).toBe(true)

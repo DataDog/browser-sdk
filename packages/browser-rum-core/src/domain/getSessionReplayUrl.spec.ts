@@ -1,6 +1,11 @@
-import type { ClocksState } from '@datadog/js-core/time'
-import type { SessionContext } from '@datadog/browser-core'
+<<<<<<< HEAD
+import type { ClocksState, SessionContext } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
+=======
+import { describe, expect, it } from 'vitest'
+import type { ClocksState } from '@datadog/browser-core'
+import type { RumConfiguration, RumSession } from '@datadog/browser-rum-core'
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
 
 import { getSessionReplayUrl, getDatadogSiteUrl } from './getSessionReplayUrl'
 

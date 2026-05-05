@@ -1,5 +1,6 @@
-import type { RelativeTime } from '@datadog/js-core/time'
-import { clocksOrigin } from '@datadog/js-core/time'
+import { vi, describe, expect, it, type Mock } from 'vitest'
+import type { RelativeTime } from '@datadog/browser-core'
+import { clocksOrigin } from '@datadog/browser-core'
 import { registerCleanupTask, restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
 import type { RumPerformanceEntry } from '../../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
@@ -8,13 +9,13 @@ import { FCP_MAXIMUM_DELAY, trackFirstContentfulPaint } from './trackFirstConten
 import { trackFirstHidden } from './trackFirstHidden'
 
 describe('trackFirstContentfulPaint', () => {
-  let fcpCallback: jasmine.Spy<(value: RelativeTime) => void>
+  let fcpCallback: Mock<(value: RelativeTime) => void>
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
 
   function startTrackingFCP() {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
 
-    fcpCallback = jasmine.createSpy()
+    fcpCallback = vi.fn()
     const firstHidden = trackFirstHidden(mockRumConfiguration(), clocksOrigin())
     const firstContentfulPaint = trackFirstContentfulPaint(mockRumConfiguration(), firstHidden, fcpCallback)
 

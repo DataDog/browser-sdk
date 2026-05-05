@@ -1,4 +1,5 @@
-import type { RelativeTime } from '@datadog/js-core/time'
+import { beforeEach, describe, expect, it } from 'vitest'
+import type { RelativeTime } from '@datadog/browser-core'
 import { DISCARDED, HookNames, createTrackingConsentState, TrackingConsent } from '@datadog/browser-core'
 import type { Hooks } from '../hooks'
 import { createHooks } from '../hooks'

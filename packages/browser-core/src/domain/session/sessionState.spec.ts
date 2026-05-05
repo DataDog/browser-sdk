@@ -1,5 +1,9 @@
-import { dateNow } from '@datadog/js-core/time'
-import type { TimeStamp } from '@datadog/js-core/time'
+<<<<<<< HEAD
+import type { TimeStamp } from '../../tools/utils/timeUtils'
+=======
+import { describe, expect, it } from 'vitest'
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
+import { dateNow } from '../../tools/utils/timeUtils'
 import { SESSION_EXPIRATION_DELAY, SESSION_NOT_TRACKED, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import type { SessionState } from './sessionState'
 import {
@@ -114,7 +118,7 @@ describe('session state utilities', () => {
       const session = { ...LIVE_SESSION }
       const now = dateNow()
       expandSessionState(session)
-      expect(session.expire).toBeGreaterThanOrEqual(now + SESSION_EXPIRATION_DELAY)
+      expect(Number(session.expire)).toBeGreaterThanOrEqual(now + SESSION_EXPIRATION_DELAY)
     })
   })
 })

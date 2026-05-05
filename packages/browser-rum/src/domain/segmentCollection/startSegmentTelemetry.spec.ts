@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import type { Telemetry, HttpRequestEvent, BandwidthStats } from '@datadog/browser-core'
 import { Observable } from '@datadog/browser-core'
 import type { MockTelemetry } from '@datadog/browser-core/test'
@@ -54,6 +55,7 @@ describe('segmentTelemetry', () => {
     for (const result of ['failure', 'queue-full', 'success'] as const) {
       generateReplayRequest({ result, isFullSnapshot: true })
 
+<<<<<<< HEAD
       expect(await telemetry.getEvents()).toEqual([
         jasmine.objectContaining({
           type: 'log',
@@ -64,6 +66,42 @@ describe('segmentTelemetry', () => {
               count: 2,
               max: 300,
               sum: 500,
+=======
+      for (const result of ['failure', 'queue-full', 'success'] as const) {
+        generateReplayRequest({ result, isFullSnapshot: true })
+
+        expect(await telemetry.getEvents()).toEqual([
+          expect.objectContaining({
+            type: 'log',
+            status: 'debug',
+            message: 'Segment network request metrics',
+            metrics: {
+              cssText: {
+                count: 2,
+                max: 300,
+                sum: 500,
+              },
+              encoding: {
+                fullSnapshot: isFullSnapshotChangeRecordsEnabled() ? 'change' : 'v1',
+                incrementalSnapshot: isIncrementalSnapshotChangeRecordsEnabled() ? 'change' : 'v1',
+              },
+              isFullSnapshot: true,
+              ongoingRequests: {
+                count: 2,
+                totalSize: 3000,
+              },
+              recordCount: 3,
+              result,
+              size: {
+                compressed: 1000,
+                raw: 2000,
+              },
+              serializationDuration: {
+                count: 3,
+                max: 65,
+                sum: 105,
+              },
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
             },
             encoding: {
               fullSnapshot: 'change',
@@ -100,7 +138,7 @@ describe('segmentTelemetry', () => {
       generateReplayRequest({ result, isFullSnapshot: false })
 
       expect(await telemetry.getEvents()).toEqual([
-        jasmine.objectContaining({
+        expect.objectContaining({
           type: 'log',
           status: 'debug',
           message: 'Segment network request metrics',

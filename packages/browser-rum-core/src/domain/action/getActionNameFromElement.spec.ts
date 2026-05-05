@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+import { describe, expect, it } from 'vitest'
+import { addExperimentalFeatures, ExperimentalFeature } from '@datadog/browser-core'
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
 import { appendElement, mockRumConfiguration } from '../../../test'
 import { NodePrivacyLevel } from '../privacyConstants'
 import { getNodeSelfPrivacyLevel } from '../privacy'

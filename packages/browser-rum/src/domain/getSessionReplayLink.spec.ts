@@ -1,6 +1,10 @@
 import type { ViewHistory } from '@datadog/browser-rum-core'
 import { createSessionManagerMock } from '@datadog/browser-core/test'
-import { mockRumConfiguration } from '../../../browser-rum-core/test'
+import { mockRumConfiguration } from '../../../rum-core/test'
+import { beforeEach, describe, expect, it } from 'vitest'
+import type { RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
+import { registerCleanupTask } from '@datadog/browser-core/test'
+import { createRumSessionManagerMock } from '../../../rum-core/test'
 import { getSessionReplayLink } from './getSessionReplayLink'
 import { addRecord } from './replayStats'
 

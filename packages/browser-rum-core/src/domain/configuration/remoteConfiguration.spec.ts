@@ -1,10 +1,11 @@
-import { ONE_MINUTE } from '@datadog/js-core/time'
+import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import {
   DefaultPrivacyLevel,
   INTAKE_SITE_US1,
   display,
   setCookie,
   deleteCookie,
+  ONE_MINUTE,
   createContextManager,
 } from '@datadog/browser-core'
 import { interceptRequests, registerCleanupTask } from '@datadog/browser-core/test'
@@ -140,7 +141,7 @@ describe('remoteConfiguration', () => {
     const COOKIE_NAME = 'unit_rc'
     const root = window as any
 
-    let displaySpy: jasmine.Spy
+    let displaySpy: Mock
     let supportedContextManagers: {
       user: ReturnType<typeof createContextManager>
       context: ReturnType<typeof createContextManager>
@@ -165,7 +166,7 @@ describe('remoteConfiguration', () => {
     }
 
     beforeEach(() => {
-      displaySpy = spyOn(display, 'error')
+      displaySpy = vi.spyOn(display, 'error')
       supportedContextManagers = { user: createContextManager(), context: createContextManager() }
       metrics = initMetrics()
     })
@@ -730,7 +731,7 @@ describe('remoteConfiguration', () => {
           {}
         )
         expect(metrics.get()).toEqual(
-          jasmine.objectContaining({
+          expect.objectContaining({
             cookie: { success: 2, missing: 1 },
             js: { success: 1 },
           })

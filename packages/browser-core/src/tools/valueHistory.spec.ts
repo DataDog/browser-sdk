@@ -1,7 +1,8 @@
-import { ONE_MINUTE, addDuration } from '@datadog/js-core/time'
-import type { Duration, RelativeTime } from '@datadog/js-core/time'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Clock } from '../../test'
 import { mockClock } from '../../test'
+import type { Duration, RelativeTime } from './utils/timeUtils'
+import { addDuration, ONE_MINUTE } from './utils/timeUtils'
 import { CLEAR_OLD_VALUES_INTERVAL, type ValueHistory, createValueHistory } from './valueHistory'
 
 const EXPIRE_DELAY = 10 * ONE_MINUTE
@@ -128,8 +129,8 @@ describe('valueHistory', () => {
           value: 'foo',
           startTime: 0 as RelativeTime,
           endTime: END_OF_TIMES,
-          remove: jasmine.any(Function),
-          close: jasmine.any(Function),
+          remove: expect.any(Function),
+          close: expect.any(Function),
         },
       ])
       expect(valueHistory.getEntries(5 as RelativeTime)).toEqual([
@@ -137,15 +138,15 @@ describe('valueHistory', () => {
           value: 'qux',
           startTime: 5 as RelativeTime,
           endTime: 15 as RelativeTime,
-          remove: jasmine.any(Function),
-          close: jasmine.any(Function),
+          remove: expect.any(Function),
+          close: expect.any(Function),
         },
         {
           value: 'bar',
           startTime: 5 as RelativeTime,
           endTime: 10 as RelativeTime,
-          remove: jasmine.any(Function),
-          close: jasmine.any(Function),
+          remove: expect.any(Function),
+          close: expect.any(Function),
         },
       ])
       expect(valueHistory.getEntries(10 as RelativeTime)).toEqual([
@@ -153,8 +154,8 @@ describe('valueHistory', () => {
           value: 'baz',
           startTime: 10 as RelativeTime,
           endTime: END_OF_TIMES,
-          remove: jasmine.any(Function),
-          close: jasmine.any(Function),
+          remove: expect.any(Function),
+          close: expect.any(Function),
         },
       ])
     })

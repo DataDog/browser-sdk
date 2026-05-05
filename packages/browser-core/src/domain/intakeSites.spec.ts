@@ -1,4 +1,7 @@
-import { isIntakeUrl } from './intakeSites'
+import { describe, expect, it } from 'vitest'
+import { INTAKE_SITE_FED_STAGING } from '../intakeSites'
+import type { Payload } from '../../transport'
+import { computeTransportConfiguration, isIntakeUrl } from './transportConfiguration'
 
 describe('intakeSites', () => {
   const clientToken = 'some_client_token'

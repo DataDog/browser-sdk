@@ -1,3 +1,4 @@
+import { vi, describe, expect, it, type Mock } from 'vitest'
 import { DISCARDED, HookNames, Observable } from '@datadog/browser-core'
 import type { Duration, ServerDuration, TimeStamp, RelativeTime } from '@datadog/js-core/time'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
@@ -64,7 +65,7 @@ const VIEW: ViewEvent = {
 describe('viewCollection', () => {
   const lifeCycle = new LifeCycle()
   let hooks: Hooks
-  let getReplayStatsSpy: jasmine.Spy<RecorderApi['getReplayStats']>
+  let getReplayStatsSpy: Mock<RecorderApi['getReplayStats']>
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
   function setupViewCollection(
     partialConfiguration: Partial<RumConfiguration> = {},
@@ -72,7 +73,7 @@ describe('viewCollection', () => {
   ) {
     hooks = createHooks()
     const viewHistory = mockViewHistory(viewHistoryEntry)
-    getReplayStatsSpy = jasmine.createSpy()
+    getReplayStatsSpy = vi.fn()
     const domMutationObservable = new Observable<RumMutationRecord[]>()
     const windowOpenObservable = new Observable<void>()
     const locationChangeObservable = new Observable<LocationChange>()
@@ -111,11 +112,11 @@ describe('viewCollection', () => {
         document_version: 3,
         replay_stats: undefined,
         configuration: {
-          start_session_replay_recording_manually: jasmine.any(Boolean),
+          start_session_replay_recording_manually: expect.any(Boolean),
         },
         cls: undefined,
       },
-      date: jasmine.any(Number),
+      date: expect.any(Number),
       type: RumEventType.VIEW,
       view: {
         action: {
@@ -191,9 +192,9 @@ describe('viewCollection', () => {
       },
       privacy: { replay_level: 'mask-user-input' },
       device: {
-        locale: jasmine.any(String),
-        locales: jasmine.any(Array),
-        time_zone: jasmine.any(String),
+        locale: expect.any(String),
+        locales: expect.any(Array),
+        time_zone: expect.any(String),
       },
     })
   })
@@ -249,7 +250,7 @@ describe('viewCollection', () => {
       } as AssembleHookParams)
 
       expect(defaultRumEventAttributes).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           service: VIEW.service,
           version: VIEW.version,
           context: VIEW.context,

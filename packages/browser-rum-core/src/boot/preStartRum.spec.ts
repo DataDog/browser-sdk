@@ -1,13 +1,20 @@
-import type { Duration, TimeStamp } from '@datadog/js-core/time'
-import type { DeflateWorker, TrackingConsentState } from '@datadog/browser-core'
-import { toTimeStamp, relativeToClocks, clocksNow } from '@datadog/js-core/time'
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import {
+  type DeflateWorker,
+  type Duration,
+  type TimeStamp,
+  type TrackingConsentState,
   display,
+  getTimeStamp,
   noop,
+  relativeToClocks,
+  clocksNow,
   TrackingConsent,
   createTrackingConsentState,
   DefaultPrivacyLevel,
+  ExperimentalFeature,
   startTelemetry,
+  addExperimentalFeatures,
   startSessionManager,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
@@ -18,7 +25,6 @@ import {
   mockEventBridge,
   mockSyntheticsWorkerValues,
   createFakeTelemetryObject,
-  registerCleanupTask,
   replaceMockable,
   replaceMockableWithSpy,
   createStartSessionManagerMock,
@@ -43,11 +49,11 @@ const PUBLIC_API = {} as RumPublicApi
 describe('preStartRum', () => {
   describe('configuration validation', () => {
     let strategy: Strategy
-    let doStartRumSpy: jasmine.Spy<DoStartRum>
-    let displaySpy: jasmine.Spy
+    let doStartRumSpy: Mock<DoStartRum>
+    let displaySpy: Mock
 
     beforeEach(() => {
-      displaySpy = spyOn(display, 'error')
+      displaySpy = vi.spyOn(display, 'error')
       ;({ strategy, doStartRumSpy } = createPreStartStrategyWithDefaults())
     })
 
@@ -144,7 +150,7 @@ describe('preStartRum', () => {
 
       it('should initialize even if session cannot be handled', async () => {
         mockEventBridge()
-        spyOnProperty(document, 'cookie', 'get').and.returnValue('')
+        vi.spyOn(document, 'cookie', 'get').mockReturnValue('')
         strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
         await collectAsyncCalls(doStartRumSpy, 1)
         expect(doStartRumSpy).toHaveBeenCalled()
@@ -152,16 +158,30 @@ describe('preStartRum', () => {
     })
   })
 
-  it('should not start when session manager initialization fails', async () => {
-    const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults({
-      startSessionManagerMock: () => Promise.reject(new Error('Session init failed')),
-    })
-    strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
-    await collectAsyncCalls(doStartRumSpy, 0)
-    expect(doStartRumSpy).not.toHaveBeenCalled()
-  })
-
   describe('init', () => {
+    it('should not initialize if session cannot be handled and bridge is not present', async () => {
+      const displaySpy = vi.spyOn(display, 'warn')
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults({
+        startSessionManagerMock: () => {
+          display.warn('No storage available for session. We will not send any data.')
+          return Promise.resolve(null as any)
+        },
+      })
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      await collectAsyncCalls(doStartRumSpy, 0)
+      expect(doStartRumSpy).not.toHaveBeenCalled()
+      expect(displaySpy).toHaveBeenCalled()
+    })
+
+    it('should not start when session manager initialization fails', async () => {
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults({
+        startSessionManagerMock: () => Promise.reject(new Error('Session init failed')),
+      })
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      await collectAsyncCalls(doStartRumSpy, 0)
+      expect(doStartRumSpy).not.toHaveBeenCalled()
+    })
+
     describe('skipInitIfSyntheticsWillInjectRum option', () => {
       it('when true, ignores init() call if Synthetics will inject its own instance of RUM', () => {
         mockSyntheticsWorkerValues({ injectsRum: true })
@@ -202,11 +222,11 @@ describe('preStartRum', () => {
 
     describe('deflate worker', () => {
       let strategy: Strategy
-      let startDeflateWorkerSpy: jasmine.Spy
-      let doStartRumSpy: jasmine.Spy<DoStartRum>
+      let startDeflateWorkerSpy: Mock
+      let doStartRumSpy: Mock<DoStartRum>
 
       beforeEach(() => {
-        startDeflateWorkerSpy = jasmine.createSpy().and.returnValue(FAKE_WORKER)
+        startDeflateWorkerSpy = vi.fn().mockReturnValue(FAKE_WORKER)
         ;({ strategy, doStartRumSpy } = createPreStartStrategyWithDefaults({
           rumPublicApiOptions: {
             startDeflateWorker: startDeflateWorkerSpy,
@@ -221,7 +241,7 @@ describe('preStartRum', () => {
           await collectAsyncCalls(doStartRumSpy, 1)
 
           expect(startDeflateWorkerSpy).not.toHaveBeenCalled()
-          const worker: DeflateWorker | undefined = doStartRumSpy.calls.mostRecent().args[2]
+          const worker: DeflateWorker | undefined = doStartRumSpy.mock.lastCall![2]
           expect(worker).toBeUndefined()
         })
       })
@@ -238,12 +258,12 @@ describe('preStartRum', () => {
           await collectAsyncCalls(doStartRumSpy, 1)
 
           expect(startDeflateWorkerSpy).toHaveBeenCalledTimes(1)
-          const worker: DeflateWorker | undefined = doStartRumSpy.calls.mostRecent().args[2]
+          const worker: DeflateWorker | undefined = doStartRumSpy.mock.lastCall![2]
           expect(worker).toBeDefined()
         })
 
         it('aborts the initialization if it fails to create a deflate worker', () => {
-          startDeflateWorkerSpy.and.returnValue(undefined)
+          startDeflateWorkerSpy.mockReturnValue(undefined)
 
           strategy.init(
             {
@@ -277,17 +297,17 @@ describe('preStartRum', () => {
     describe('trackViews mode', () => {
       let clock: Clock | undefined
       let strategy: Strategy
-      let doStartRumSpy: jasmine.Spy<DoStartRum>
-      let startViewSpy: jasmine.Spy<StartRumResult['startView']>
-      let addTimingSpy: jasmine.Spy<StartRumResult['addTiming']>
-      let setViewNameSpy: jasmine.Spy<StartRumResult['setViewName']>
+      let doStartRumSpy: Mock<DoStartRum>
+      let startViewSpy: Mock<StartRumResult['startView']>
+      let addTimingSpy: Mock<StartRumResult['addTiming']>
+      let setViewNameSpy: Mock<StartRumResult['setViewName']>
 
       beforeEach(() => {
-        startViewSpy = jasmine.createSpy('startView')
-        addTimingSpy = jasmine.createSpy('addTiming')
-        setViewNameSpy = jasmine.createSpy('setViewName')
+        startViewSpy = vi.fn()
+        addTimingSpy = vi.fn()
+        setViewNameSpy = vi.fn()
         ;({ strategy, doStartRumSpy } = createPreStartStrategyWithDefaults())
-        doStartRumSpy.and.returnValue({
+        doStartRumSpy.mockReturnValue({
           startView: startViewSpy,
           addTiming: addTimingSpy,
           setViewName: setViewNameSpy,
@@ -316,8 +336,8 @@ describe('preStartRum', () => {
           await collectAsyncCalls(startViewSpy, 1)
 
           expect(startViewSpy).toHaveBeenCalled()
-          expect(startViewSpy.calls.argsFor(0)[0]).toEqual({ name: 'foo' })
-          expect(startViewSpy.calls.argsFor(0)[1]).toEqual({
+          expect(startViewSpy.mock.calls[0][0]).toEqual({ name: 'foo' })
+          expect(startViewSpy.mock.calls[0][1]).toEqual({
             relative: clock.relative(10),
             timeStamp: clock.timeStamp(10),
           })
@@ -339,7 +359,7 @@ describe('preStartRum', () => {
           strategy.init(MANUAL_CONFIGURATION, PUBLIC_API)
           await collectAsyncCalls(doStartRumSpy, 1)
           expect(doStartRumSpy).toHaveBeenCalled()
-          const initialViewOptions: ViewOptions | undefined = doStartRumSpy.calls.argsFor(0)[3]
+          const initialViewOptions: ViewOptions | undefined = doStartRumSpy.mock.calls[0][3]
           expect(initialViewOptions).toEqual({ name: 'foo' })
           expect(startViewSpy).not.toHaveBeenCalled()
         })
@@ -370,9 +390,10 @@ describe('preStartRum', () => {
           await collectAsyncCalls(startViewSpy, 1)
 
           expect(doStartRumSpy).toHaveBeenCalled()
-          const initialViewOptions: ViewOptions | undefined = doStartRumSpy.calls.argsFor(0)[3]
+          const initialViewOptions: ViewOptions | undefined = doStartRumSpy.mock.calls[0][3]
           expect(initialViewOptions).toEqual({ name: 'foo' })
-          expect(startViewSpy).toHaveBeenCalledOnceWith({ name: 'bar' }, relativeToClocks(clock.relative(20)))
+          expect(startViewSpy).toHaveBeenCalledTimes(1)
+          expect(startViewSpy).toHaveBeenCalledWith({ name: 'bar' }, relativeToClocks(clock.relative(20)))
         })
 
         it('calling init then startView should start rum', async () => {
@@ -383,7 +404,7 @@ describe('preStartRum', () => {
           strategy.startView({ name: 'foo' })
           await collectAsyncCalls(doStartRumSpy, 1)
           expect(doStartRumSpy).toHaveBeenCalled()
-          const initialViewOptions: ViewOptions | undefined = doStartRumSpy.calls.argsFor(0)[3]
+          const initialViewOptions: ViewOptions | undefined = doStartRumSpy.mock.calls[0][3]
           expect(initialViewOptions).toEqual({ name: 'foo' })
           expect(startViewSpy).not.toHaveBeenCalled()
         })
@@ -407,16 +428,16 @@ describe('preStartRum', () => {
 
           expect(addTimingSpy).toHaveBeenCalledTimes(2)
 
-          expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('first')
-          expect(addTimingSpy.calls.argsFor(0)[1]).toEqual(toTimeStamp(clock.relative(10)))
+          expect(addTimingSpy.mock.calls[0][0]).toEqual('first')
+          expect(addTimingSpy.mock.calls[0][1]).toEqual(getTimeStamp(clock.relative(10)))
 
-          expect(addTimingSpy.calls.argsFor(1)[0]).toEqual('second')
-          expect(addTimingSpy.calls.argsFor(1)[1]).toEqual(toTimeStamp(clock.relative(30)))
+          expect(addTimingSpy.mock.calls[1][0]).toEqual('second')
+          expect(addTimingSpy.mock.calls[1][1]).toEqual(getTimeStamp(clock.relative(30)))
         })
       })
     })
 
-    describe('remote configuration sync loading', () => {
+    describe('remote configuration', () => {
       let interceptor: ReturnType<typeof interceptRequests>
 
       beforeEach(() => {
@@ -439,153 +460,13 @@ describe('preStartRum', () => {
           PUBLIC_API
         )
         await collectAsyncCalls(doStartRumSpy, 1)
-        expect(doStartRumSpy.calls.mostRecent().args[0].sessionSampleRate).toEqual(50)
-      })
-
-      it('should start with the remote configuration when remoteConfiguration.sync is true', async () => {
-        interceptor.withFetch(() =>
-          Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({ rum: { sessionSampleRate: 50 } }),
-          })
-        )
-        const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
-        strategy.init(
-          {
-            ...DEFAULT_INIT_CONFIGURATION,
-            remoteConfiguration: { id: '123', sync: true },
-          },
-          PUBLIC_API
-        )
-        await collectAsyncCalls(doStartRumSpy, 1)
-        expect(doStartRumSpy.calls.mostRecent().args[0].sessionSampleRate).toEqual(50)
-      })
-    })
-
-    describe('remote configuration async loading', () => {
-      const REMOTE_CONFIGURATION_ID = '123'
-      let interceptor: ReturnType<typeof interceptRequests>
-
-      beforeEach(() => {
-        localStorage.clear()
-
-        interceptor = interceptRequests()
-        interceptor.withFetch(() =>
-          Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({ rum: { sessionSampleRate: 50 } }),
-          })
-        )
-
-        registerCleanupTask(() => {
-          localStorage.clear()
-        })
-      })
-
-      it('should start synchronously with init configuration on cache miss', async () => {
-        const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
-
-        strategy.init(
-          {
-            ...DEFAULT_INIT_CONFIGURATION,
-            remoteConfiguration: { id: REMOTE_CONFIGURATION_ID },
-            sessionSampleRate: 25,
-          },
-          PUBLIC_API
-        )
-
-        await collectAsyncCalls(doStartRumSpy, 1)
-        expect(doStartRumSpy.calls.mostRecent().args[0].sessionSampleRate).toBe(25)
-      })
-
-      it('should trigger a background fetch to the remote configuration endpoint', async () => {
-        const { strategy } = createPreStartStrategyWithDefaults()
-
-        strategy.init(
-          {
-            ...DEFAULT_INIT_CONFIGURATION,
-            remoteConfiguration: { id: REMOTE_CONFIGURATION_ID },
-          },
-          PUBLIC_API
-        )
-
-        await interceptor.waitForAllFetchCalls()
-        expect(interceptor.requests.some((r) => r.url.includes(REMOTE_CONFIGURATION_ID))).toBeTrue()
-      })
-
-      describe('with required: true', () => {
-        const CACHE_KEY = `dd_rc_${REMOTE_CONFIGURATION_ID}`
-
-        it('should not start the SDK on cache miss', async () => {
-          const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
-
-          strategy.init(
-            {
-              ...DEFAULT_INIT_CONFIGURATION,
-              remoteConfiguration: { id: REMOTE_CONFIGURATION_ID, required: true },
-            },
-            PUBLIC_API
-          )
-
-          await interceptor.waitForAllFetchCalls()
-          expect(doStartRumSpy).not.toHaveBeenCalled()
-        })
-
-        it('should still trigger a background fetch on cache miss', async () => {
-          const { strategy } = createPreStartStrategyWithDefaults()
-
-          strategy.init(
-            {
-              ...DEFAULT_INIT_CONFIGURATION,
-              remoteConfiguration: { id: REMOTE_CONFIGURATION_ID, required: true },
-            },
-            PUBLIC_API
-          )
-
-          await interceptor.waitForAllFetchCalls()
-          expect(interceptor.requests.some((r) => r.url.includes(REMOTE_CONFIGURATION_ID))).toBeTrue()
-        })
-
-        it('should start the SDK with the cached configuration on cache hit', async () => {
-          localStorage.setItem(
-            CACHE_KEY,
-            JSON.stringify({ version: 1, config: { sessionSampleRate: 75 }, fetchedAt: 1000 })
-          )
-          const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
-
-          strategy.init(
-            {
-              ...DEFAULT_INIT_CONFIGURATION,
-              remoteConfiguration: { id: REMOTE_CONFIGURATION_ID, required: true },
-            },
-            PUBLIC_API
-          )
-
-          await collectAsyncCalls(doStartRumSpy, 1)
-          expect(doStartRumSpy.calls.mostRecent().args[0].sessionSampleRate).toBe(75)
-        })
-
-        it('should not start the SDK on cache error', async () => {
-          localStorage.setItem(CACHE_KEY, 'not-json')
-          const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
-
-          strategy.init(
-            {
-              ...DEFAULT_INIT_CONFIGURATION,
-              remoteConfiguration: { id: REMOTE_CONFIGURATION_ID, required: true },
-            },
-            PUBLIC_API
-          )
-
-          await interceptor.waitForAllFetchCalls()
-          expect(doStartRumSpy).not.toHaveBeenCalled()
-        })
+        expect(doStartRumSpy.mock.lastCall![0].sessionSampleRate).toEqual(50)
       })
     })
 
     describe('plugins', () => {
       it('calls the onInit method on provided plugins', () => {
-        const plugin = { name: 'a', onInit: jasmine.createSpy() }
+        const plugin = { name: 'a', onInit: vi.fn() }
         const { strategy } = createPreStartStrategyWithDefaults()
         const initConfiguration: RumInitConfiguration = { ...DEFAULT_INIT_CONFIGURATION, plugins: [plugin] }
         strategy.init(initConfiguration, PUBLIC_API)
@@ -614,7 +495,7 @@ describe('preStartRum', () => {
         await collectAsyncCalls(doStartRumSpy, 1)
 
         expect(doStartRumSpy).toHaveBeenCalled()
-        expect(doStartRumSpy.calls.mostRecent().args[0].applicationId).toBe('application-id')
+        expect(doStartRumSpy.mock.lastCall![0].applicationId).toBe('application-id')
       })
     })
   })
@@ -636,8 +517,8 @@ describe('preStartRum', () => {
   describe('stopSession', () => {
     it('does not buffer the call before starting RUM', () => {
       const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
-      const stopSessionSpy = jasmine.createSpy()
-      doStartRumSpy.and.returnValue({ stopSession: stopSessionSpy } as unknown as StartRumResult)
+      const stopSessionSpy = vi.fn()
+      doStartRumSpy.mockReturnValue({ stopSession: stopSessionSpy } as unknown as StartRumResult)
 
       strategy.stopSession()
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
@@ -650,14 +531,8 @@ describe('preStartRum', () => {
     let interceptor: ReturnType<typeof interceptRequests>
 
     beforeEach(() => {
-      localStorage.clear()
-
       interceptor = interceptRequests()
       initConfiguration = { ...DEFAULT_INIT_CONFIGURATION, service: 'my-service', version: '1.4.2', env: 'dev' }
-
-      registerCleanupTask(() => {
-        localStorage.clear()
-      })
     })
 
     it('is undefined before init', () => {
@@ -685,58 +560,41 @@ describe('preStartRum', () => {
       expect(strategy.initConfiguration).toEqual(initConfiguration)
     })
 
-    it('returns the initConfiguration with the remote configuration when a remoteConfigurationId is provided (sync loading)', (done) => {
-      interceptor.withFetch(() =>
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve({ rum: { sessionSampleRate: 50 } }),
+    it('returns the initConfiguration with the remote configuration when a remoteConfigurationId is provided', () =>
+      new Promise<void>((resolve) => {
+        interceptor.withFetch(() =>
+          Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ rum: { sessionSampleRate: 50 } }),
+          })
+        )
+        const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+        doStartRumSpy.mockImplementation(() => {
+          expect(strategy.initConfiguration?.sessionSampleRate).toEqual(50)
+          resolve()
+          return {} as StartRumResult
         })
-      )
-      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
-      doStartRumSpy.and.callFake(() => {
-        expect(strategy.initConfiguration?.sessionSampleRate).toEqual(50)
-        done()
-        return {} as StartRumResult
-      })
-      strategy.init(
-        {
-          ...DEFAULT_INIT_CONFIGURATION,
-          remoteConfigurationId: '123',
-        },
-        PUBLIC_API
-      )
-    })
-
-    it('exposes the user configuration when remoteConfiguration.id is provided (async loading, cache miss)', () => {
-      interceptor.withFetch(() =>
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve({ rum: { sessionSampleRate: 50 } }),
-        })
-      )
-
-      const { strategy } = createPreStartStrategyWithDefaults()
-      const userInitConfiguration: RumInitConfiguration = {
-        ...DEFAULT_INIT_CONFIGURATION,
-        remoteConfiguration: { id: '123' },
-      }
-      strategy.init(userInitConfiguration, PUBLIC_API)
-
-      expect(strategy.initConfiguration).toEqual(userInitConfiguration)
-    })
+        strategy.init(
+          {
+            ...DEFAULT_INIT_CONFIGURATION,
+            remoteConfigurationId: '123',
+          },
+          PUBLIC_API
+        )
+      }))
   })
 
   describe('buffers API calls before starting RUM', () => {
     let strategy: Strategy
-    let doStartRumSpy: jasmine.Spy<DoStartRum>
+    let doStartRumSpy: Mock<DoStartRum>
 
     beforeEach(() => {
       ;({ strategy, doStartRumSpy } = createPreStartStrategyWithDefaults())
     })
 
     it('addAction', async () => {
-      const addActionSpy = jasmine.createSpy()
-      doStartRumSpy.and.returnValue({ addAction: addActionSpy } as unknown as StartRumResult)
+      const addActionSpy = vi.fn()
+      doStartRumSpy.mockReturnValue({ addAction: addActionSpy } as unknown as StartRumResult)
 
       const manualAction: Omit<ManualAction, 'id' | 'duration' | 'counts' | 'frustrationTypes'> = {
         name: 'foo',
@@ -746,12 +604,12 @@ describe('preStartRum', () => {
       strategy.addAction(manualAction)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       await collectAsyncCalls(addActionSpy, 1)
-      expect(addActionSpy).toHaveBeenCalledOnceWith(manualAction)
+      expect(addActionSpy).toHaveBeenCalledWith(manualAction)
     })
 
     it('addError', async () => {
-      const addErrorSpy = jasmine.createSpy()
-      doStartRumSpy.and.returnValue({ addError: addErrorSpy } as unknown as StartRumResult)
+      const addErrorSpy = vi.fn()
+      doStartRumSpy.mockReturnValue({ addError: addErrorSpy } as unknown as StartRumResult)
 
       const error = {
         error: new Error('foo'),
@@ -762,48 +620,48 @@ describe('preStartRum', () => {
       strategy.addError(error)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       await collectAsyncCalls(addErrorSpy, 1)
-      expect(addErrorSpy).toHaveBeenCalledOnceWith(error)
+      expect(addErrorSpy).toHaveBeenCalledWith(error)
     })
 
     it('startView', async () => {
-      const startViewSpy = jasmine.createSpy()
-      doStartRumSpy.and.returnValue({ startView: startViewSpy } as unknown as StartRumResult)
+      const startViewSpy = vi.fn()
+      doStartRumSpy.mockReturnValue({ startView: startViewSpy } as unknown as StartRumResult)
 
       const options = { name: 'foo' }
       const clockState = clocksNow()
       strategy.startView(options, clockState)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       await collectAsyncCalls(startViewSpy, 1)
-      expect(startViewSpy).toHaveBeenCalledOnceWith(options, clockState)
+      expect(startViewSpy).toHaveBeenCalledWith(options, clockState)
     })
 
     it('addTiming', async () => {
-      const addTimingSpy = jasmine.createSpy()
-      doStartRumSpy.and.returnValue({ addTiming: addTimingSpy } as unknown as StartRumResult)
+      const addTimingSpy = vi.fn()
+      doStartRumSpy.mockReturnValue({ addTiming: addTimingSpy } as unknown as StartRumResult)
 
       const name = 'foo'
       const time = 123 as TimeStamp
       strategy.addTiming(name, time)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       await collectAsyncCalls(addTimingSpy, 1)
-      expect(addTimingSpy).toHaveBeenCalledOnceWith(name, time)
+      expect(addTimingSpy).toHaveBeenCalledWith(name, time)
     })
 
     it('setLoadingTime', async () => {
-      const setLoadingTimeSpy = jasmine.createSpy()
-      doStartRumSpy.and.returnValue({ setLoadingTime: setLoadingTimeSpy } as unknown as StartRumResult)
+      const setLoadingTimeSpy = vi.fn()
+      doStartRumSpy.mockReturnValue({ setLoadingTime: setLoadingTimeSpy } as unknown as StartRumResult)
 
       const timestamp = 123 as TimeStamp
       strategy.setLoadingTime(timestamp)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       await collectAsyncCalls(setLoadingTimeSpy, 1)
-      expect(setLoadingTimeSpy).toHaveBeenCalledOnceWith(timestamp)
+      expect(setLoadingTimeSpy).toHaveBeenCalledWith(timestamp)
     })
 
     it('setLoadingTime should preserve call timestamp', async () => {
       const clock = mockClock()
-      const setLoadingTimeSpy = jasmine.createSpy()
-      doStartRumSpy.and.returnValue({ setLoadingTime: setLoadingTimeSpy } as unknown as StartRumResult)
+      const setLoadingTimeSpy = vi.fn()
+      doStartRumSpy.mockReturnValue({ setLoadingTime: setLoadingTimeSpy } as unknown as StartRumResult)
 
       clock.tick(10)
       strategy.setLoadingTime(clock.timeStamp(10))
@@ -812,46 +670,47 @@ describe('preStartRum', () => {
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       await collectAsyncCalls(setLoadingTimeSpy, 1)
 
-      expect(setLoadingTimeSpy).toHaveBeenCalledOnceWith(jasmine.any(Number))
+      expect(setLoadingTimeSpy).toHaveBeenCalledTimes(1)
+      expect(setLoadingTimeSpy).toHaveBeenCalledWith(expect.any(Number))
       // Verify the timestamp was captured at call time (tick 10), not at drain time (tick 30)
-      const capturedTimestamp = setLoadingTimeSpy.calls.argsFor(0)[0] as number
+      const capturedTimestamp = setLoadingTimeSpy.mock.calls[0][0] as number
       expect(capturedTimestamp).toBe(clock.timeStamp(10))
     })
 
     it('setViewContext', async () => {
-      const setViewContextSpy = jasmine.createSpy()
-      doStartRumSpy.and.returnValue({ setViewContext: setViewContextSpy } as unknown as StartRumResult)
+      const setViewContextSpy = vi.fn()
+      doStartRumSpy.mockReturnValue({ setViewContext: setViewContextSpy } as unknown as StartRumResult)
 
       strategy.setViewContext({ foo: 'bar' })
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       await collectAsyncCalls(setViewContextSpy, 1)
-      expect(setViewContextSpy).toHaveBeenCalledOnceWith({ foo: 'bar' })
+      expect(setViewContextSpy).toHaveBeenCalledWith({ foo: 'bar' })
     })
 
     it('setViewContextProperty', async () => {
-      const setViewContextPropertySpy = jasmine.createSpy()
-      doStartRumSpy.and.returnValue({ setViewContextProperty: setViewContextPropertySpy } as unknown as StartRumResult)
+      const setViewContextPropertySpy = vi.fn()
+      doStartRumSpy.mockReturnValue({ setViewContextProperty: setViewContextPropertySpy } as unknown as StartRumResult)
 
       strategy.setViewContextProperty('foo', 'bar')
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       await collectAsyncCalls(setViewContextPropertySpy, 1)
-      expect(setViewContextPropertySpy).toHaveBeenCalledOnceWith('foo', 'bar')
+      expect(setViewContextPropertySpy).toHaveBeenCalledWith('foo', 'bar')
     })
 
     it('setViewName', async () => {
-      const setViewNameSpy = jasmine.createSpy()
-      doStartRumSpy.and.returnValue({ setViewName: setViewNameSpy } as unknown as StartRumResult)
+      const setViewNameSpy = vi.fn()
+      doStartRumSpy.mockReturnValue({ setViewName: setViewNameSpy } as unknown as StartRumResult)
 
       const name = 'foo'
       strategy.setViewName(name)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       await collectAsyncCalls(setViewNameSpy, 1)
-      expect(setViewNameSpy).toHaveBeenCalledOnceWith(name)
+      expect(setViewNameSpy).toHaveBeenCalledWith(name)
     })
 
     it('addFeatureFlagEvaluation', async () => {
-      const addFeatureFlagEvaluationSpy = jasmine.createSpy()
-      doStartRumSpy.and.returnValue({
+      const addFeatureFlagEvaluationSpy = vi.fn()
+      doStartRumSpy.mockReturnValue({
         addFeatureFlagEvaluation: addFeatureFlagEvaluationSpy,
       } as unknown as StartRumResult)
 
@@ -860,13 +719,13 @@ describe('preStartRum', () => {
       strategy.addFeatureFlagEvaluation(key, value)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       await collectAsyncCalls(addFeatureFlagEvaluationSpy, 1)
-      expect(addFeatureFlagEvaluationSpy).toHaveBeenCalledOnceWith(key, value)
+      expect(addFeatureFlagEvaluationSpy).toHaveBeenCalledWith(key, value)
     })
 
     it('startDurationVital', async () => {
-      const startDurationVitalSpy = jasmine.createSpy()
-      const stopDurationVitalSpy = jasmine.createSpy()
-      doStartRumSpy.and.returnValue({
+      const startDurationVitalSpy = vi.fn()
+      const stopDurationVitalSpy = vi.fn()
+      doStartRumSpy.mockReturnValue({
         startDurationVital: startDurationVitalSpy,
         stopDurationVital: stopDurationVitalSpy,
       } as unknown as StartRumResult)
@@ -876,13 +735,13 @@ describe('preStartRum', () => {
 
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       await collectAsyncCalls(stopDurationVitalSpy, 1)
-      expect(startDurationVitalSpy).toHaveBeenCalledWith('timing', undefined, jasmine.any(Object))
-      expect(stopDurationVitalSpy).toHaveBeenCalledWith('timing', undefined, jasmine.any(Object))
+      expect(startDurationVitalSpy).toHaveBeenCalledWith('timing', undefined, expect.any(Object))
+      expect(stopDurationVitalSpy).toHaveBeenCalledWith('timing', undefined, expect.any(Object))
     })
 
     it('addDurationVital', async () => {
-      const addDurationVitalSpy = jasmine.createSpy()
-      doStartRumSpy.and.returnValue({
+      const addDurationVitalSpy = vi.fn()
+      doStartRumSpy.mockReturnValue({
         addDurationVital: addDurationVitalSpy,
       } as unknown as StartRumResult)
 
@@ -896,25 +755,27 @@ describe('preStartRum', () => {
       strategy.addDurationVital(vitalAdd)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       await collectAsyncCalls(addDurationVitalSpy, 1)
-      expect(addDurationVitalSpy).toHaveBeenCalledOnceWith(vitalAdd)
+      expect(addDurationVitalSpy).toHaveBeenCalledWith(vitalAdd)
     })
 
     it('addOperationStepVital', async () => {
-      const addOperationStepVitalSpy = jasmine.createSpy()
-      doStartRumSpy.and.returnValue({
+      const addOperationStepVitalSpy = vi.fn()
+      doStartRumSpy.mockReturnValue({
         addOperationStepVital: addOperationStepVitalSpy,
       } as unknown as StartRumResult)
 
       strategy.addOperationStepVital('foo', 'start')
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       await collectAsyncCalls(addOperationStepVitalSpy, 1)
-      expect(addOperationStepVitalSpy).toHaveBeenCalledOnceWith('foo', 'start', undefined, undefined)
+      expect(addOperationStepVitalSpy).toHaveBeenCalledWith('foo', 'start', undefined, undefined)
     })
 
     it('startAction / stopAction', async () => {
-      const startActionSpy = jasmine.createSpy()
-      const stopActionSpy = jasmine.createSpy()
-      doStartRumSpy.and.returnValue({
+      addExperimentalFeatures([ExperimentalFeature.START_STOP_ACTION])
+
+      const startActionSpy = vi.fn()
+      const stopActionSpy = vi.fn()
+      doStartRumSpy.mockReturnValue({
         startAction: startActionSpy,
         stopAction: stopActionSpy,
       } as unknown as StartRumResult)
@@ -927,20 +788,20 @@ describe('preStartRum', () => {
 
       expect(startActionSpy).toHaveBeenCalledWith(
         'user_login',
-        jasmine.objectContaining({
+        expect.objectContaining({
           type: ActionType.CUSTOM,
         }),
-        jasmine.objectContaining({
-          relative: jasmine.any(Number),
-          timeStamp: jasmine.any(Number),
+        expect.objectContaining({
+          relative: expect.any(Number),
+          timeStamp: expect.any(Number),
         })
       )
       expect(stopActionSpy).toHaveBeenCalledWith(
         'user_login',
         undefined,
-        jasmine.objectContaining({
-          relative: jasmine.any(Number),
-          timeStamp: jasmine.any(Number),
+        expect.objectContaining({
+          relative: expect.any(Number),
+          timeStamp: expect.any(Number),
         })
       )
     })
@@ -948,7 +809,7 @@ describe('preStartRum', () => {
 
   describe('tracking consent', () => {
     let strategy: Strategy
-    let doStartRumSpy: jasmine.Spy<DoStartRum>
+    let doStartRumSpy: Mock<DoStartRum>
     let trackingConsentState: TrackingConsentState
 
     beforeEach(() => {
@@ -1006,7 +867,7 @@ describe('preStartRum', () => {
 
     it('do not call startRum when tracking consent state is updated after init', () => {
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
-      doStartRumSpy.calls.reset()
+      doStartRumSpy.mockClear()
 
       trackingConsentState.update(TrackingConsent.GRANTED)
 
@@ -1068,8 +929,8 @@ function createPreStartStrategyWithDefaults({
   trackingConsentState?: TrackingConsentState
   startSessionManagerMock?: typeof startSessionManager
 } = {}) {
-  const doStartRumSpy = jasmine.createSpy<DoStartRum>()
-  const startTelemetrySpy = replaceMockableWithSpy(startTelemetry).and.callFake(createFakeTelemetryObject)
+  const doStartRumSpy = vi.fn<DoStartRum>()
+  const startTelemetrySpy = replaceMockableWithSpy(startTelemetry).mockImplementation(createFakeTelemetryObject)
   replaceMockable(startSessionManager, startSessionManagerMock)
   return {
     strategy: createPreStartStrategy(rumPublicApiOptions, trackingConsentState, doStartRumSpy),

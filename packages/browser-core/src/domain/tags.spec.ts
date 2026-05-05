@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { display } from '../tools/display'
 import type { Configuration } from './configuration'
 import { buildTag, buildTags, TAG_SIZE_LIMIT } from './tags'
@@ -18,9 +19,20 @@ describe('buildTags', () => {
 })
 
 describe('buildTag warning', () => {
+<<<<<<< HEAD
   let displaySpy: jasmine.Spy<typeof display.warn>
   beforeEach(() => {
     displaySpy = spyOn(display, 'warn')
+=======
+  let displaySpy: Mock<typeof display.warn>
+  beforeEach((ctx) => {
+    if (!supportUnicodePropertyEscapes()) {
+      ctx.skip()
+      return
+    }
+
+    displaySpy = vi.spyOn(display, 'warn')
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
   })
   ;(
     [
@@ -63,8 +75,9 @@ describe('buildTag warning', () => {
   })
 
   function expectWarning() {
-    expect(displaySpy).toHaveBeenCalledOnceWith(
-      jasmine.stringMatching("Tag .* doesn't meet tag requirements and will be sanitized")
+    expect(displaySpy).toHaveBeenCalledTimes(1)
+    expect(displaySpy).toHaveBeenCalledWith(
+      expect.stringMatching("Tag .* doesn't meet tag requirements and will be sanitized")
     )
   }
 })

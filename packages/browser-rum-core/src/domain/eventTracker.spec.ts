@@ -1,5 +1,6 @@
-import type { RelativeTime, Duration, TimeStamp } from '@datadog/js-core/time'
-import { clocksNow } from '@datadog/js-core/time'
+import { beforeEach, describe, expect, it } from 'vitest'
+import type { Duration, RelativeTime, TimeStamp, SessionRenewalEvent } from '@datadog/browser-core'
+import { clocksNow } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
@@ -65,7 +66,7 @@ describe('eventTracker', () => {
       const stopped = tracker.stop('key1', clocksNow())
 
       expect(stopped).toEqual({
-        id: jasmine.any(String),
+        id: expect.any(String),
         startClocks,
         duration: 500 as Duration,
         counts: undefined,
@@ -79,7 +80,7 @@ describe('eventTracker', () => {
       const stopped = tracker.stop('key1', clocksNow(), { extra: 'additional' })
 
       expect(stopped).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           value: 'original',
           extra: 'additional',
         })
@@ -110,8 +111,8 @@ describe('eventTracker', () => {
 
       const result = tracker.findId()
 
-      expect(Array.isArray(result)).toBeTrue()
-      expect(result).toHaveSize(2)
+      expect(Array.isArray(result)).toBe(true)
+      expect(result).toHaveLength(2)
     })
 
     it('should find events within their time range', () => {
@@ -149,7 +150,7 @@ describe('eventTracker', () => {
 
       tracker.stopAll()
 
-      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
 
       expect(tracker.findId()).toEqual([])
     })

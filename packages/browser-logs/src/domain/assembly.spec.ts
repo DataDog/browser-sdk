@@ -1,7 +1,6 @@
-import type { RelativeTime, TimeStamp } from '@datadog/js-core/time'
-import type { Context } from '@datadog/browser-core'
-import { ONE_MINUTE, toTimeStamp } from '@datadog/js-core/time'
-import { ErrorSource, noop, HookNames } from '@datadog/browser-core'
+import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
+import type { Context, RelativeTime, TimeStamp } from '@datadog/browser-core'
+import { ErrorSource, ONE_MINUTE, getTimeStamp, noop, HookNames } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import type { LogsEvent } from '../logsEvent.types'
@@ -86,7 +85,7 @@ describe('startLogsAssembly', () => {
 
   describe('contexts inclusion', () => {
     it('should include message context', () => {
-      spyOn(window.DD_RUM!, 'getInternalContext').and.returnValue({
+      vi.spyOn(window.DD_RUM!, 'getInternalContext').mockReturnValue({
         view: { url: 'http://from-rum-context.com', id: 'view-id' },
       })
 
@@ -102,7 +101,7 @@ describe('startLogsAssembly', () => {
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
 
       expect(serverLogs[0]).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           view: COMMON_CONTEXT.view,
         })
       )
@@ -120,7 +119,7 @@ describe('startLogsAssembly', () => {
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE, savedCommonContext })
 
       expect(serverLogs[0]).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           view: savedCommonContext.view,
         })
       )
@@ -142,7 +141,7 @@ describe('startLogsAssembly', () => {
       }
 
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: { ...DEFAULT_MESSAGE, date: toTimeStamp(1234 as RelativeTime) },
+        rawLogsEvent: { ...DEFAULT_MESSAGE, date: getTimeStamp(1234 as RelativeTime) },
       })
 
       expect(serverLogs[0].foo).toBe('b')
@@ -167,7 +166,7 @@ describe('startLogsAssembly', () => {
     it('should include raw log', () => {
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
 
-      expect(serverLogs[0]).toEqual(jasmine.objectContaining(DEFAULT_MESSAGE))
+      expect(serverLogs[0]).toEqual(expect.objectContaining(DEFAULT_MESSAGE))
     })
   })
 
@@ -204,7 +203,7 @@ describe('startLogsAssembly', () => {
       })
 
       expect(serverLogs[0]).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           view: {
             referrer: 'referrer_from_defaultLogsEventAttributes',
             url: 'url_from_defaultLogsEventAttributes',
@@ -284,7 +283,7 @@ describe('logs limitation', () => {
   let lifeCycle: LifeCycle
   let hooks: Hooks
   let serverLogs: Array<LogsEvent & Context> = []
-  let reportErrorSpy: jasmine.Spy<jasmine.Func>
+  let reportErrorSpy: Mock<(...args: any[]) => any>
 
   beforeEach(() => {
     lifeCycle = new LifeCycle()
@@ -297,7 +296,7 @@ describe('logs limitation', () => {
     }
 
     beforeSend = noop
-    reportErrorSpy = jasmine.createSpy('reportError')
+    reportErrorSpy = vi.fn()
     startLogsAssembly(configuration, lifeCycle, hooks, () => COMMON_CONTEXT, reportErrorSpy, 1)
     clock = mockClock()
   })
@@ -343,8 +342,8 @@ describe('logs limitation', () => {
       expect(serverLogs.length).toEqual(1)
       expect(serverLogs[0].message).toBe('foo')
       expect(reportErrorSpy).toHaveBeenCalledTimes(1)
-      expect(reportErrorSpy.calls.argsFor(0)[0]).toEqual(
-        jasmine.objectContaining({
+      expect(reportErrorSpy.mock.calls[0][0]).toEqual(
+        expect.objectContaining({
           message,
           source: ErrorSource.AGENT,
         })
@@ -398,8 +397,8 @@ describe('logs limitation', () => {
       expect(serverLogs[0].message).toEqual('foo')
       expect(serverLogs[1].message).toEqual('baz')
       expect(reportErrorSpy).toHaveBeenCalledTimes(1)
-      expect(reportErrorSpy.calls.argsFor(0)[0]).toEqual(
-        jasmine.objectContaining({
+      expect(reportErrorSpy.mock.calls[0][0]).toEqual(
+        expect.objectContaining({
           source: ErrorSource.AGENT,
         })
       )
@@ -424,8 +423,8 @@ describe('logs limitation', () => {
       expect(serverLogs[0].message).toEqual('foo')
       expect(serverLogs[1].message).toEqual('baz')
       expect(reportErrorSpy).toHaveBeenCalledTimes(1)
-      expect(reportErrorSpy.calls.argsFor(0)[0]).toEqual(
-        jasmine.objectContaining({
+      expect(reportErrorSpy.mock.calls[0][0]).toEqual(
+        expect.objectContaining({
           source: ErrorSource.AGENT,
         })
       )
@@ -446,8 +445,8 @@ describe('logs limitation', () => {
     expect(serverLogs.length).toEqual(1)
     expect(serverLogs[0].message).toEqual('foo')
     expect(reportErrorSpy).toHaveBeenCalledTimes(1)
-    expect(reportErrorSpy.calls.argsFor(0)[0]).toEqual(
-      jasmine.objectContaining({
+    expect(reportErrorSpy.mock.calls[0][0]).toEqual(
+      expect.objectContaining({
         source: ErrorSource.AGENT,
       })
     )
