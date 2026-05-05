@@ -179,6 +179,7 @@ export interface SerializedViewEvent {
 
 export interface ViewChangedSignal {
   viewId: string
+  viewName?: string
 }
 
 // Extend the shared pipeline event map

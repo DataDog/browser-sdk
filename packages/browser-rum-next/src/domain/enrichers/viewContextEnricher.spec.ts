@@ -1,64 +1,53 @@
-import { Pipeline } from '@datadog/core-next'
 import { SKIP } from '@datadog/core-next'
 import { viewContextEnricher } from './viewContextEnricher'
-
-async function tick() {
-  return new Promise((r) => setTimeout(r, 0))
-}
+import type { ViewContext } from './viewContextEnricher'
 
 describe('viewContextEnricher', () => {
-  let pipeline: Pipeline<Record<string, unknown>>
-
-  beforeEach(() => {
-    pipeline = new Pipeline<Record<string, unknown>>()
-    pipeline.seal()
-  })
-
   it('should have name "viewContext"', () => {
-    const enricher = viewContextEnricher(pipeline)
-
+    const enricher = viewContextEnricher({})
     expect(enricher.name).toBe('viewContext')
   })
 
   it('should return SKIP when no view is active', () => {
-    const enricher = viewContextEnricher(pipeline)
-
+    const enricher = viewContextEnricher({})
     const result = enricher.transform({ type: 'error' })
-
     expect(result).toBe(SKIP)
   })
 
-  it('should stamp view.id after signal:view_changed', async () => {
-    const enricher = viewContextEnricher(pipeline)
-    pipeline.publish('signal:view_changed', { viewId: 'view-abc' })
-    await tick()
-
+  it('should stamp view.id from context', () => {
+    const ctx: ViewContext = { id: 'view-abc' }
+    const enricher = viewContextEnricher(ctx)
     const result = enricher.transform({ type: 'error' }) as Record<string, unknown>
-
-    expect(result).toEqual({ type: 'error', view: { id: 'view-abc' } })
+    expect((result.view as any).id).toBe('view-abc')
   })
 
-  it('should merge with existing view fields', async () => {
-    const enricher = viewContextEnricher(pipeline)
-    pipeline.publish('signal:view_changed', { viewId: 'view-xyz' })
-    await tick()
+  it('should stamp view.name from context', () => {
+    const ctx: ViewContext = { id: 'view-abc', name: 'checkout' }
+    const enricher = viewContextEnricher(ctx)
+    const result = enricher.transform({ type: 'error' }) as Record<string, unknown>
+    expect((result.view as any).id).toBe('view-abc')
+    expect((result.view as any).name).toBe('checkout')
+  })
 
-    const result = enricher.transform({ type: 'resource', view: { name: 'home' } }) as Record<string, unknown>
+  it('should merge with existing view fields', () => {
+    const ctx: ViewContext = { id: 'view-xyz', name: 'home' }
+    const enricher = viewContextEnricher(ctx)
+    const result = enricher.transform({ type: 'resource', view: { url: '/page' } }) as Record<string, unknown>
     const view = result.view as Record<string, unknown>
-
-    expect(view.name).toBe('home')
     expect(view.id).toBe('view-xyz')
+    expect(view.name).toBe('home')
+    expect(view.url).toBe('/page')
   })
 
-  it('should update view.id when signal fires again', async () => {
-    const enricher = viewContextEnricher(pipeline)
-    pipeline.publish('signal:view_changed', { viewId: 'view-1' })
-    await tick()
-    pipeline.publish('signal:view_changed', { viewId: 'view-2' })
-    await tick()
+  it('should reflect context updates without re-creating enricher', () => {
+    const ctx: ViewContext = { id: 'view-1' }
+    const enricher = viewContextEnricher(ctx)
+
+    ctx.id = 'view-2'
+    ctx.name = 'new-page'
 
     const result = enricher.transform({ type: 'error' }) as Record<string, unknown>
-
-    expect(result).toEqual({ type: 'error', view: { id: 'view-2' } })
+    expect((result.view as any).id).toBe('view-2')
+    expect((result.view as any).name).toBe('new-page')
   })
 })

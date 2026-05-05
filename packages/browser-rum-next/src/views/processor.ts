@@ -82,7 +82,7 @@ function startProcessor({ pipeline }: ProcessorDependencies): void {
     }
 
     publishUpdate()
-    pipeline.publish('signal:view_changed', { viewId: currentView.id } as ViewChangedSignal)
+    pipeline.publish('signal:view_changed', { viewId: currentView.id, viewName: currentView.name } as ViewChangedSignal)
   }
 
   function publishUpdate(): void {

@@ -4,6 +4,7 @@ import { rumExtension } from '../domain/configuration'
 import type { RumConfig } from '../domain/configuration'
 import { startProcessor } from '../domain/processor'
 import { viewContextEnricher } from '../domain/enrichers/viewContextEnricher'
+import type { ViewContext } from '../domain/enrichers/viewContextEnricher'
 import { displayEnricher } from '../domain/enrichers/displayEnricher'
 import { connectivityEnricher } from '../domain/enrichers/connectivityEnricher'
 import { pageStateEnricher } from '../domain/enrichers/pageStateEnricher'
@@ -71,10 +72,18 @@ const rumProcessor: Module = {
     // Start view processor (resource:navigation + action:start_view → observation:view + signal:view_changed)
     startViewProcessor({ pipeline: context.pipeline })
 
+    // Track current view context from signal:view_changed
+    const viewContext: ViewContext = {}
+    context.pipeline.subscribe('signal:view_changed', (data) => {
+      const signal = data as { viewId: string; viewName?: string }
+      viewContext.id = signal.viewId
+      viewContext.name = signal.viewName
+    })
+
     // Register RUM enrichers on all observation:* events
     context.pipeline.enrich('observation:view', deviceEnricher())
     context.pipeline.enrich('observation:*', tabEnricher())
-    context.pipeline.enrich('observation:*', viewContextEnricher(context.pipeline))
+    context.pipeline.enrich('observation:*', viewContextEnricher(viewContext))
     context.pipeline.enrich('observation:*', displayEnricher())
     context.pipeline.enrich('observation:*', connectivityEnricher())
     context.pipeline.enrich('observation:view', pageStateEnricher())
