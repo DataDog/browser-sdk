@@ -231,6 +231,7 @@ unit:
       junit: test-report/unit/*.xml
   script:
     - yarn
+    - yarn playwright install chromium --with-deps
     - yarn test:unit
   after_script:
     - node ./scripts/test/export-test-result.ts unit
@@ -301,16 +302,18 @@ unit-bs:
   extends:
     - .base-configuration
     - .bs-allowed-branches
+    - .resource-allocation-4-cpus
   interruptible: true
-  parallel:
-    matrix:
-      - BS_BROWSER: [edge, firefox, safari-desktop, chrome-desktop, chrome-mobile]
+  resource_group: browserstack
+  timeout: 35 minutes
   artifacts:
+    when: always
     reports:
       junit: test-report/unit-bs/*.xml
   script:
     - yarn
-    - node scripts/test/ci-bs.ts test:unit
+    - yarn playwright install --with-deps
+    - FORCE_COLOR=1 node scripts/test/ci-bs.ts test:unit
   after_script:
     - node ./scripts/test/export-test-result.ts unit-bs
 
