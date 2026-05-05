@@ -65,8 +65,12 @@ interface InitConfiguration {
    * @default 100
    */
   sessionSampleRate?: number
-  /** Datadog site to send data to (e.g. `datadoghq.com`, `datadoghq.eu`). */
-  site: Site
+  /**
+   * Datadog site to send data to (e.g. `datadoghq.com`, `datadoghq.eu`).
+   *
+   * @default 'datadoghq.com'
+   */
+  site?: Site
   /**
    * SDK source identifier. Overrides the `ddsource` query parameter.
    *
