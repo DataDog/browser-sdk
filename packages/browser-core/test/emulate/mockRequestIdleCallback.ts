@@ -36,7 +36,10 @@ export function mockRequestIdleCallback(): RequestIdleCallbackMock {
   })
 
   function callAllActiveCallbacks(deadline: IdleDeadline) {
-    for (let i = 0; i < requestSpy.mock.calls.length; i++) {
+    // Snapshot the call count: callbacks invoked during this loop may call scheduleNextRun()
+    // which adds new spy calls. Without snapshotting, the loop grows infinitely.
+    const callCount = requestSpy.mock.calls.length
+    for (let i = 0; i < callCount; i++) {
       const returnValue = requestSpy.mock.results[i].value as number
       if (!activeIds.has(returnValue)) {
         continue

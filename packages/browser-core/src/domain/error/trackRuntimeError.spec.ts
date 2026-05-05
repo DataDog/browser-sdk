@@ -58,6 +58,7 @@ describe('instrumentOnError', () => {
   const ERROR_MESSAGE = 'foo'
 
   const spyViaInstrumentOnError = async (callback: () => void) => {
+    disableJasmineUncaughtExceptionTracking()
     const callbackSpy = vi.fn<UnhandledErrorCallback>()
     const { stop } = instrumentOnError(callbackSpy)
 

@@ -52,11 +52,6 @@ export default defineConfig({
     include: ['packages/*/{src,test}/**/*.spec.{ts,tsx}', 'developer-extension/{src,test}/**/*.spec.{ts,tsx}'],
 
     exclude: [
-      // trackRuntimeError.spec.ts intentionally throws errors and unhandled rejections
-      // which crash the Vitest browser page (no equivalent of Jasmine's uncaught exception handling)
-      'packages/core/src/domain/error/trackRuntimeError.spec.ts',
-      // taskQueue.spec.ts crashes the browser page during module import (pre-existing issue)
-      'packages/core/src/tools/taskQueue.spec.ts',
       // forEach.spec.ts is the Jasmine-era global setup file, replaced by test/unit/vitest.setup.ts
       'packages/core/test/forEach.spec.ts',
       '**/node_modules/**',

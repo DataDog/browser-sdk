@@ -106,8 +106,6 @@ export default defineConfig({
     include: ['packages/*/{src,test}/**/*.spec.{ts,tsx}'],
 
     exclude: [
-      'packages/core/src/domain/error/trackRuntimeError.spec.ts',
-      'packages/core/src/tools/taskQueue.spec.ts',
       'packages/core/test/forEach.spec.ts',
       '**/node_modules/**',
     ],
