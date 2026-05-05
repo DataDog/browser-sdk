@@ -33,7 +33,7 @@ const APPS: AppConfig[] = [
   // React Router apps
   { name: 'react-router-v6-app' },
   { name: 'tanstack-router-app' },
-  { name: 'react-router-v7-app', builderFn: buildReactRouterv7App },
+  { name: 'react-router-v7-app', builderFn: buildReactRouterv7App, deps: ['react-router-v6-app'] },
 
   // browser extensions
   { name: 'base-extension' },
@@ -79,21 +79,28 @@ runMain(async () => {
   printLog('Packing packages...')
   command`yarn run pack`.run()
 
-  const built = new Set<string>()
-  for (const app of appsToBuild) {
-    for (const dep of app.deps ?? []) {
-      if (!built.has(dep)) {
-        buildApp(dep)
-        built.add(dep)
-      }
+  const buildPromises = new Map<string, Promise<void>>()
+
+  function ensureBuild(app: AppConfig): Promise<void> {
+    let promise = buildPromises.get(app.name)
+    if (!promise) {
+      promise = (async () => {
+        // Ensure all dependencies are built
+        const dependenciesToBuild = (app.deps ?? []).map((name) => APPS.find((a) => a.name === name)!)
+        await Promise.all(dependenciesToBuild.map(ensureBuild))
+
+        if ('builderFn' in app) {
+          await app.builderFn(app.name, app.options)
+        } else {
+          await buildApp(app.name)
+        }
+      })()
+      buildPromises.set(app.name, promise)
     }
-    if ('builderFn' in app) {
-      await app.builderFn(app.name, app.options)
-    } else {
-      buildApp(app.name)
-    }
-    built.add(app.name)
+    return promise
   }
+
+  await Promise.all(appsToBuild.map(ensureBuild))
 
   printLog('Test apps and extensions built successfully.')
 })
@@ -112,10 +119,10 @@ function showHelpAndExit() {
   process.exit(0)
 }
 
-function buildApp(appName: string) {
+async function buildApp(appName: string) {
   const appPath = `test/apps/${appName}`
   printLog(`Building app at ${appPath}...`)
-  command`yarn install --no-immutable`.withCurrentWorkingDirectory(appPath).run()
+  await command`yarn install --no-immutable`.withCurrentWorkingDirectory(appPath).runAsync()
 
   // install peer dependencies if any
   // intent: renovate does not allow to generate local packages before install
@@ -126,16 +133,18 @@ function buildApp(appName: string) {
     for (const [name] of Object.entries(packageJson.peerDependencies)) {
       const resolution = packageJson.resolutions?.[name]
       const specifier = resolution ? `${name}@${resolution}` : name
-      command`yarn add -D ${specifier}`.withCurrentWorkingDirectory(appPath).run()
+      await command`yarn add -D ${specifier}`.withCurrentWorkingDirectory(appPath).runAsync()
     }
     // revert package.json & yarn.lock changes if they are versioned
-    const areFilesVersioned = command`git ls-files package.json yarn.lock`.withCurrentWorkingDirectory(appPath).run()
+    const areFilesVersioned = await command`git ls-files package.json yarn.lock`
+      .withCurrentWorkingDirectory(appPath)
+      .runAsync()
     if (areFilesVersioned) {
-      command`git checkout package.json yarn.lock`.withCurrentWorkingDirectory(appPath).run()
+      await command`git checkout package.json yarn.lock`.withCurrentWorkingDirectory(appPath).runAsync()
     }
   }
 
-  command`yarn build`.withCurrentWorkingDirectory(appPath).run()
+  await command`yarn build`.withCurrentWorkingDirectory(appPath).runAsync()
 }
 
 async function buildReactRouterv7App() {
@@ -163,7 +172,7 @@ async function buildReactRouterv7App() {
       .replace('react-router-v6-app.js', 'react-router-v7-app.js')
   )
 
-  buildApp('react-router-v7-app')
+  await buildApp('react-router-v7-app')
 }
 
 async function buildExtension(appName: string, options?: { runAt?: string }): Promise<void> {

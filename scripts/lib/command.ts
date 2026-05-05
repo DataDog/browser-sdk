@@ -1,5 +1,8 @@
 import childProcess from 'node:child_process'
-import { printDebug, printError } from './executionUtils.ts'
+import { printDebug, printError, printWarning } from './executionUtils.ts'
+
+// Git operations share a single index lock, so they must not run concurrently.
+let gitMutex = Promise.resolve<unknown>(undefined)
 
 interface CommandOptions {
   cwd?: string
@@ -12,6 +15,7 @@ interface CommandBuilder {
   withCurrentWorkingDirectory(newCurrentWorkingDirectory: string): CommandBuilder
   withLogs(): CommandBuilder
   run(): string
+  runAsync(): Promise<string>
 }
 
 /**
@@ -31,6 +35,7 @@ interface CommandBuilder {
 export function command(...templateArguments: [TemplateStringsArray, ...any[]]): CommandBuilder {
   const [commandName, ...commandArguments] = parseCommandTemplateArguments(...templateArguments)
 
+  const formattedCommand = `${commandName} ${commandArguments.join(' ')}`
   let input = ''
   let env: Record<string, string> | undefined
   const extraOptions: CommandOptions = {}
@@ -57,7 +62,6 @@ export function command(...templateArguments: [TemplateStringsArray, ...any[]]):
     },
 
     run(): string {
-      const formattedCommand = `${commandName} ${commandArguments.join(' ')}`
       printDebug(`Running command: ${formattedCommand}`)
 
       const commandResult = childProcess.spawnSync(commandName, commandArguments, {
@@ -68,16 +72,9 @@ export function command(...templateArguments: [TemplateStringsArray, ...any[]]):
       })
 
       if (commandResult.status !== 0) {
-        const formattedStderr = commandResult.stderr ? `\n---- stderr: ----\n${commandResult.stderr}\n----` : ''
-        const formattedStdout = commandResult.stdout ? `\n---- stdout: ----\n${commandResult.stdout}\n----` : ''
-        const exitCause =
-          commandResult.signal !== null
-            ? ` due to signal ${commandResult.signal}`
-            : commandResult.status !== null
-              ? ` with exit status ${commandResult.status}`
-              : ''
-        throw new Error(`Command failed${exitCause}: ${formattedCommand}${formattedStderr}${formattedStdout}`, {
-          cause: commandResult.error,
+        throw buildCommandError({
+          formattedCommand,
+          ...commandResult,
         })
       }
 
@@ -87,7 +84,84 @@ export function command(...templateArguments: [TemplateStringsArray, ...any[]]):
 
       return commandResult.stdout
     },
+
+    runAsync(): Promise<string> {
+      if (extraOptions.stdio === 'inherit') {
+        printWarning(
+          `runAsync() ignores withLogs() for command: ${formattedCommand} (running multiple commands concurrently would produce interleaved output)`
+        )
+      }
+      printDebug(`Running command: ${formattedCommand}`)
+
+      const run = () =>
+        new Promise<string>((resolve, reject) => {
+          const child = childProcess.spawn(commandName, commandArguments, {
+            env: { ...process.env, ...env },
+            ...extraOptions,
+            stdio: 'pipe',
+          })
+
+          let stdout = ''
+          let stderr = ''
+
+          child.stdout.on('data', (chunk: Buffer) => {
+            stdout += chunk.toString()
+          })
+          child.stderr.on('data', (chunk: Buffer) => {
+            stderr += chunk.toString()
+          })
+
+          child.on('error', (error) => {
+            reject(buildCommandError({ formattedCommand, status: null, signal: null, stdout, stderr, error }))
+          })
+          child.on('close', (status, signal) => {
+            if (status !== 0) {
+              reject(buildCommandError({ formattedCommand, status, signal, stdout, stderr }))
+            } else {
+              resolve(stdout)
+            }
+          })
+        })
+
+      if (commandName === 'git') {
+        const result = gitMutex.then(run)
+        gitMutex = result.then(
+          () => {
+            // ignore result
+          },
+          () => {
+            // ignore exception
+          }
+        )
+        return result
+      }
+
+      return run()
+    },
   }
+}
+
+function buildCommandError({
+  formattedCommand,
+  status,
+  signal,
+  stdout,
+  stderr,
+  error,
+}: {
+  formattedCommand: string
+  status: number | null
+  signal: NodeJS.Signals | null
+  stdout: string
+  stderr: string
+  error?: Error
+}): Error {
+  const formattedStderr = stderr ? `\n---- stderr: ----\n${stderr}\n----` : ''
+  const formattedStdout = stdout ? `\n---- stdout: ----\n${stdout}\n----` : ''
+  const exitCause = signal !== null ? ` due to signal ${signal}` : status !== null ? ` with exit status ${status}` : ''
+  return new Error(`Command failed${exitCause}: ${formattedCommand}${formattedStderr}${formattedStdout}`, {
+    cause: error,
+  })
 }
 
 /**
