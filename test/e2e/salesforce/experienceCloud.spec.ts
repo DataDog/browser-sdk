@@ -29,7 +29,7 @@ test('experience cloud emits an initial home view and a route-change Product Exp
 
     await intakeProxy.waitForViews([
       { path: '/ebikes/s', loadingType: 'initial_load' },
-      { path: '/ebikes/s/product-explorer', loadingType: 'route_change' },
+      { path: '/ebikes/s/product-explorer', loadingType: 'route_change', requireLoadingTime: true },
     ])
   } finally {
     await intakeProxy.stop()

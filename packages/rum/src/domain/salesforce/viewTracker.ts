@@ -1,5 +1,5 @@
-import { buildUrl, clearInterval, setInterval } from '@datadog/browser-core'
-import type { TimeoutId } from '@datadog/browser-core'
+import { buildUrl, clearInterval, relativeNow, setInterval } from '@datadog/browser-core'
+import type { RelativeTime, TimeoutId } from '@datadog/browser-core'
 import type { RumPublicApi, ViewOptions } from '@datadog/browser-rum-core'
 
 export interface SalesforceLocation {
@@ -7,9 +7,15 @@ export interface SalesforceLocation {
   href?: string
 }
 
+export interface SalesforcePerformanceResourceTiming {
+  responseEnd?: number
+}
+
 interface StartSalesforceViewTrackingOptions {
-  getRumPublicApi: () => Pick<RumPublicApi, 'startView'> | undefined
+  getRumPublicApi: () => Pick<RumPublicApi, 'startView' | 'setViewLoadingTime'> | undefined
   getLocation?: () => SalesforceLocation | undefined
+  getPerformanceEntries?: () => SalesforcePerformanceResourceTiming[] | undefined
+  getCurrentRelativeTime?: () => RelativeTime
   pollInterval?: number
 }
 
@@ -18,33 +24,65 @@ interface SalesforceView {
   url?: string
 }
 
+interface TrackedSalesforceView extends SalesforceView {
+  startRelativeTime: RelativeTime
+  latestLoadingTimeResponseEnd?: RelativeTime
+  isLoadingTimeFinalized: boolean
+}
+
 const DEFAULT_LOCATION_POLL_INTERVAL = 500
 
 export function startSalesforceViewTracking(options: StartSalesforceViewTrackingOptions) {
   const getLocation = options.getLocation ?? getNavigationLocation
+  const getPerformanceEntries = options.getPerformanceEntries ?? getResourcePerformanceEntries
+  const getCurrentRelativeTime = options.getCurrentRelativeTime ?? relativeNow
   const pollInterval = options.pollInterval ?? DEFAULT_LOCATION_POLL_INTERVAL
 
   let lastEmittedRouteKey: string | undefined
   let pollIntervalId: TimeoutId | undefined
+  let trackedView: TrackedSalesforceView | undefined
 
-  trackCurrentView()
-  pollIntervalId = setInterval(trackCurrentView, pollInterval)
+  trackSalesforceView()
+  pollIntervalId = setInterval(trackSalesforceView, pollInterval)
 
-  function trackCurrentView() {
+  // We currently use the poll completion time as an approximate loading time.
+  // If we want the exact resource completion timestamp later, we can pass the latest
+  // `responseEnd` converted to an absolute time to `setViewLoadingTime(time)`.
+  function trackSalesforceView() {
     const currentView = resolveCurrentView(getLocation())
 
-    if (!currentView || currentView.key === lastEmittedRouteKey) {
+    if (currentView && currentView.key !== lastEmittedRouteKey) {
+      const rumPublicApi = options.getRumPublicApi()
+
+      if (rumPublicApi) {
+        rumPublicApi.startView(toViewOptions(currentView))
+        trackedView = {
+          ...currentView,
+          startRelativeTime: getCurrentRelativeTime(),
+          isLoadingTimeFinalized: false,
+        }
+        lastEmittedRouteKey = currentView.key
+      }
+    }
+
+    if (!trackedView || trackedView.isLoadingTimeFinalized) {
       return
     }
 
-    const rumPublicApi = options.getRumPublicApi()
+    const latestResponseEnd = getLatestViewResourceResponseEnd(getPerformanceEntries(), trackedView.startRelativeTime)
 
-    if (!rumPublicApi) {
+    if (
+      latestResponseEnd !== undefined &&
+      (!trackedView.latestLoadingTimeResponseEnd || latestResponseEnd > trackedView.latestLoadingTimeResponseEnd)
+    ) {
+      trackedView.latestLoadingTimeResponseEnd = latestResponseEnd
       return
     }
 
-    rumPublicApi.startView(toViewOptions(currentView))
-    lastEmittedRouteKey = currentView.key
+    if (trackedView.latestLoadingTimeResponseEnd !== undefined) {
+      options.getRumPublicApi()?.setViewLoadingTime()
+      trackedView.isLoadingTimeFinalized = true
+    }
   }
 
   return {
@@ -64,6 +102,39 @@ function getNavigationLocation(): SalesforceLocation | undefined {
   } catch {
     return undefined
   }
+}
+
+function getResourcePerformanceEntries(): SalesforcePerformanceResourceTiming[] | undefined {
+  try {
+    return window.performance.getEntriesByType('resource') as SalesforcePerformanceResourceTiming[]
+  } catch {
+    return undefined
+  }
+}
+
+function getLatestViewResourceResponseEnd(
+  entries: SalesforcePerformanceResourceTiming[] | undefined,
+  viewStartRelativeTime: RelativeTime
+) {
+  if (!entries) {
+    return undefined
+  }
+
+  let latestResponseEnd: RelativeTime | undefined
+
+  for (const entry of entries) {
+    const responseEnd = entry.responseEnd
+
+    if (typeof responseEnd !== 'number' || responseEnd < viewStartRelativeTime) {
+      continue
+    }
+
+    if (latestResponseEnd === undefined || responseEnd > latestResponseEnd) {
+      latestResponseEnd = responseEnd as RelativeTime
+    }
+  }
+
+  return latestResponseEnd
 }
 
 function resolveCurrentView(location: SalesforceLocation | undefined): SalesforceView | undefined {

@@ -13,6 +13,7 @@ const SALESFORCE_INTAKE_PROXY_CLOSE_DELAY = 1_000
 export interface ExpectedSalesforceRumView {
   path: string
   loadingType: string
+  requireLoadingTime?: boolean
 }
 
 export interface SalesforceIntakeProxy {
@@ -181,10 +182,12 @@ function notifyWaiters(waiters: Set<ViewWaiter>, intakeRegistry: IntakeRegistry)
 
 function findMissingViews(intakeRegistry: IntakeRegistry, expectedViews: ExpectedSalesforceRumView[]) {
   return expectedViews.filter(
-    ({ path, loadingType }) =>
+    ({ path, loadingType, requireLoadingTime }) =>
       !intakeRegistry.rumViewEvents.some(
         (event) =>
-          normalizePathname(event.view.url) === normalizePathname(path) && event.view.loading_type === loadingType
+          normalizePathname(event.view.url) === normalizePathname(path) &&
+          event.view.loading_type === loadingType &&
+          (!requireLoadingTime || hasLoadingTime(event))
       )
   )
 }
@@ -196,12 +199,18 @@ function createTimeoutError(intakeRegistry: IntakeRegistry, expectedViews: Expec
   return new Error(`Timed out waiting for Salesforce RUM views. Expected: ${expected}. Captured: ${captured}.`)
 }
 
-function formatExpectedView({ path, loadingType }: ExpectedSalesforceRumView) {
-  return `${path} (${loadingType})`
+function formatExpectedView({ path, loadingType, requireLoadingTime }: ExpectedSalesforceRumView) {
+  return `${path} (${loadingType}${requireLoadingTime ? ', loading_time' : ''})`
 }
 
 function formatCapturedView(event: IntakeRegistry['rumViewEvents'][number]) {
-  return `${normalizePathname(event.view.url) || 'unknown'} (${event.view.loading_type || 'unknown'})`
+  return `${normalizePathname(event.view.url) || 'unknown'} (${event.view.loading_type || 'unknown'}, loading_time=${
+    typeof event.view.loading_time === 'number' ? event.view.loading_time : 'missing'
+  })`
+}
+
+function hasLoadingTime(event: IntakeRegistry['rumViewEvents'][number]) {
+  return typeof event.view.loading_time === 'number' && event.view.loading_time > 0
 }
 
 function normalizePathname(candidate: unknown) {

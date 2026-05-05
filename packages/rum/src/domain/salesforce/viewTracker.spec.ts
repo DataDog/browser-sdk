@@ -5,21 +5,26 @@ import { startSalesforceViewTracking } from './viewTracker'
 describe('salesforce view tracker', () => {
   let clock: Clock
   let startView: jasmine.Spy
+  let setViewLoadingTime: jasmine.Spy
   let location: { pathname?: string; href?: string } | undefined
+  let performanceEntries: Array<{ responseEnd?: number }>
 
   beforeEach(() => {
     clock = mockClock()
     startView = jasmine.createSpy()
+    setViewLoadingTime = jasmine.createSpy()
     location = {
       pathname: '/lightning/page/home',
       href: 'https://example.lightning.force.com/lightning/page/home',
     }
+    performanceEntries = []
   })
 
   it('starts the current Lightning view on bootstrap', () => {
     startSalesforceViewTracking({
-      getRumPublicApi: () => ({ startView }),
+      getRumPublicApi: () => ({ startView, setViewLoadingTime }),
       getLocation: () => location,
+      getPerformanceEntries: () => performanceEntries,
     })
 
     expect(startView).toHaveBeenCalledOnceWith({
@@ -30,8 +35,9 @@ describe('salesforce view tracker', () => {
 
   it('does not duplicate the same pathname when only query string or hash changes', () => {
     startSalesforceViewTracking({
-      getRumPublicApi: () => ({ startView }),
+      getRumPublicApi: () => ({ startView, setViewLoadingTime }),
       getLocation: () => location,
+      getPerformanceEntries: () => performanceEntries,
       pollInterval: 500,
     })
 
@@ -46,8 +52,9 @@ describe('salesforce view tracker', () => {
 
   it('starts a new view when polling detects a Lightning pathname change', () => {
     startSalesforceViewTracking({
-      getRumPublicApi: () => ({ startView }),
+      getRumPublicApi: () => ({ startView, setViewLoadingTime }),
       getLocation: () => location,
+      getPerformanceEntries: () => performanceEntries,
       pollInterval: 500,
     })
 
@@ -70,8 +77,9 @@ describe('salesforce view tracker', () => {
     location = undefined
 
     startSalesforceViewTracking({
-      getRumPublicApi: () => ({ startView }),
+      getRumPublicApi: () => ({ startView, setViewLoadingTime }),
       getLocation: () => location,
+      getPerformanceEntries: () => performanceEntries,
       pollInterval: 500,
     })
 
@@ -91,8 +99,9 @@ describe('salesforce view tracker', () => {
 
   it('stops polling', () => {
     const subscription = startSalesforceViewTracking({
-      getRumPublicApi: () => ({ startView }),
+      getRumPublicApi: () => ({ startView, setViewLoadingTime }),
       getLocation: () => location,
+      getPerformanceEntries: () => performanceEntries,
       pollInterval: 500,
     })
 
@@ -104,5 +113,87 @@ describe('salesforce view tracker', () => {
     clock.tick(500)
 
     expect(startView).toHaveBeenCalledTimes(1)
+  })
+
+  it('sets the view loading time after one idle polling interval', () => {
+    startSalesforceViewTracking({
+      getRumPublicApi: () => ({ startView, setViewLoadingTime }),
+      getLocation: () => location,
+      getPerformanceEntries: () => performanceEntries,
+      pollInterval: 500,
+    })
+
+    performanceEntries = [{ responseEnd: 100 }]
+    clock.tick(500)
+
+    expect(setViewLoadingTime).not.toHaveBeenCalled()
+
+    clock.tick(500)
+
+    expect(setViewLoadingTime).toHaveBeenCalledOnceWith()
+  })
+
+  it('replaces the pending loading time candidate when a later resource is detected', () => {
+    startSalesforceViewTracking({
+      getRumPublicApi: () => ({ startView, setViewLoadingTime }),
+      getLocation: () => location,
+      getPerformanceEntries: () => performanceEntries,
+      pollInterval: 500,
+    })
+
+    performanceEntries = [{ responseEnd: 100 }]
+    clock.tick(500)
+
+    performanceEntries = [{ responseEnd: 100 }, { responseEnd: 700 }]
+    clock.tick(500)
+
+    expect(setViewLoadingTime).not.toHaveBeenCalled()
+
+    clock.tick(500)
+
+    expect(setViewLoadingTime).toHaveBeenCalledOnceWith()
+  })
+
+  it('resets the resource timing state when a new Salesforce view starts', () => {
+    startSalesforceViewTracking({
+      getRumPublicApi: () => ({ startView, setViewLoadingTime }),
+      getLocation: () => location,
+      getPerformanceEntries: () => performanceEntries,
+      pollInterval: 500,
+    })
+
+    performanceEntries = [{ responseEnd: 100 }]
+    clock.tick(500)
+    clock.tick(500)
+
+    expect(setViewLoadingTime).toHaveBeenCalledOnceWith()
+
+    location = {
+      pathname: '/lightning/n/Product_Explorer',
+      href: 'https://example.lightning.force.com/lightning/n/Product_Explorer',
+    }
+    performanceEntries = [{ responseEnd: 100 }, { responseEnd: 1700 }]
+    clock.tick(500)
+
+    expect(startView).toHaveBeenCalledTimes(2)
+    expect(setViewLoadingTime).toHaveBeenCalledTimes(1)
+
+    clock.tick(500)
+
+    expect(setViewLoadingTime).toHaveBeenCalledTimes(2)
+    expect(setViewLoadingTime.calls.argsFor(1)).toEqual([])
+  })
+
+  it('ignores loading time collection when performance entries are unavailable', () => {
+    startSalesforceViewTracking({
+      getRumPublicApi: () => ({ startView, setViewLoadingTime }),
+      getLocation: () => location,
+      getPerformanceEntries: () => undefined,
+      pollInterval: 500,
+    })
+
+    clock.tick(1000)
+
+    expect(setViewLoadingTime).not.toHaveBeenCalled()
   })
 })

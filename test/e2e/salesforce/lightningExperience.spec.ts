@@ -29,7 +29,7 @@ test('lightning experience emits an initial home view and a route-change Product
 
     await intakeProxy.waitForViews([
       { path: '/lightning/page/home', loadingType: 'initial_load' },
-      { path: '/lightning/n/Product_Explorer', loadingType: 'route_change' },
+      { path: '/lightning/n/Product_Explorer', loadingType: 'route_change', requireLoadingTime: true },
     ])
   } finally {
     await intakeProxy.stop()
