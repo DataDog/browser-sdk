@@ -7,7 +7,7 @@ import type { BrowserConfiguration } from '../browsers.conf'
 // bypass TypeScript/webpack transpilation and must only use syntax supported by all target browsers.
 export const OLDEST_BROWSER_ECMA_VERSION = 2020
 
-export const browserConfigurations: BrowserConfiguration[] = [
+const allBrowserConfigurations: BrowserConfiguration[] = [
   {
     id: 'edge',
     sessionName: 'Edge',
@@ -49,3 +49,5 @@ export const browserConfigurations: BrowserConfiguration[] = [
     device: 'Google Pixel 6',
   },
 ]
+
+export const browserConfigurations = allBrowserConfigurations
