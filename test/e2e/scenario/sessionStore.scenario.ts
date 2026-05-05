@@ -63,7 +63,11 @@ test.describe('Session Stores', () => {
         .withRum({ trackSessionAcrossSubdomains: false })
         .withHostName(FULL_HOSTNAME)
         .withSetup(bundleSetup)
-        .run(async ({ page, baseUrl, browserContext, flushEvents, intakeRegistry, servers }) => {
+        .run(async ({ page, baseUrl, browserContext, flushEvents, intakeRegistry, servers, browserName }) => {
+          test.skip(
+            browserName === 'firefox',
+            "Firefox does not allow setting cookis from iframes without src, so the SDK won't start there"
+          )
           await injectSdkInAnIframe(page, `${servers.crossOrigin.origin}/datadog-rum.js`)
           await flushEvents()
 
@@ -96,7 +100,11 @@ test.describe('Session Stores', () => {
         .withRum({ trackSessionAcrossSubdomains: true })
         .withHostName(FULL_HOSTNAME)
         .withSetup(bundleSetup)
-        .run(async ({ page, baseUrl, browserContext, flushEvents, intakeRegistry, servers }) => {
+        .run(async ({ page, baseUrl, browserContext, flushEvents, intakeRegistry, servers, browserName }) => {
+          test.skip(
+            browserName === 'firefox',
+            "Firefox does not allow setting cookis from iframes without src, so the SDK won't start there"
+          )
           await injectSdkInAnIframe(page, `${servers.crossOrigin.origin}/datadog-rum.js`)
           await flushEvents()
 
