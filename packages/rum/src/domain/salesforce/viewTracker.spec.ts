@@ -1,5 +1,6 @@
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
+import { subscribeToSalesforceResourcePoll } from './resourcePollChannel'
 import { startSalesforceViewTracking } from './viewTracker'
 
 describe('salesforce view tracker', () => {
@@ -195,5 +196,44 @@ describe('salesforce view tracker', () => {
     clock.tick(1000)
 
     expect(setViewLoadingTime).not.toHaveBeenCalled()
+  })
+
+  it('publishes the latest tracked Salesforce view and performance entries on each poll', () => {
+    const polls: Array<{
+      currentView: { startRelativeTime: number } | undefined
+      resourceEntries: Array<{ responseEnd?: number }> | undefined
+    }> = []
+    const subscription = subscribeToSalesforceResourcePoll((poll) => {
+      polls.push(poll)
+    })
+
+    startSalesforceViewTracking({
+      getRumPublicApi: () => ({ startView, setViewLoadingTime }),
+      getLocation: () => location,
+      getPerformanceEntries: () => performanceEntries,
+      pollInterval: 500,
+    })
+
+    expect(polls[0]).toEqual({
+      currentView: { startRelativeTime: jasmine.any(Number) },
+      resourceEntries: [],
+    })
+
+    const initialViewStart = polls[0].currentView!.startRelativeTime
+
+    location = {
+      pathname: '/lightning/n/Product_Explorer',
+      href: 'https://example.lightning.force.com/lightning/n/Product_Explorer',
+    }
+    performanceEntries = [{ responseEnd: 700 }]
+    clock.tick(500)
+
+    expect(polls[polls.length - 1]).toEqual({
+      currentView: { startRelativeTime: jasmine.any(Number) },
+      resourceEntries: [{ responseEnd: 700 }],
+    })
+    expect(polls[polls.length - 1].currentView!.startRelativeTime).toBeGreaterThan(initialViewStart)
+
+    subscription.unsubscribe()
   })
 })

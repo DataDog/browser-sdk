@@ -89,14 +89,16 @@ function createSalesforceDatadogRum(baseRum: RumPublicApi): RumPublicApi {
   let stopSalesforceViewTracking: (() => void) | undefined
 
   baseRum.init = (initConfiguration: RumInitConfiguration) => {
-    baseInit(buildSalesforceInitConfiguration(initConfiguration))
-
     if (!stopSalesforceViewTracking) {
       const salesforceViewTracking = startSalesforceViewTracking({
         getRumPublicApi: () => baseRum,
       })
       stopSalesforceViewTracking = () => salesforceViewTracking.stop()
     }
+
+    const salesforceInitConfiguration = buildSalesforceInitConfiguration(initConfiguration)
+
+    baseInit(salesforceInitConfiguration)
   }
 
   return baseRum

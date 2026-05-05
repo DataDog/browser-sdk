@@ -1,6 +1,7 @@
 import { buildUrl, clearInterval, relativeNow, setInterval } from '@datadog/browser-core'
 import type { RelativeTime, TimeoutId } from '@datadog/browser-core'
 import type { RumPublicApi, ViewOptions } from '@datadog/browser-rum-core'
+import { notifySalesforceResourcePoll } from './resourcePollChannel'
 
 export interface SalesforceLocation {
   pathname?: string
@@ -49,6 +50,7 @@ export function startSalesforceViewTracking(options: StartSalesforceViewTracking
   // If we want the exact resource completion timestamp later, we can pass the latest
   // `responseEnd` converted to an absolute time to `setViewLoadingTime(time)`.
   function trackSalesforceView() {
+    const performanceEntries = getPerformanceEntries()
     const currentView = resolveCurrentView(getLocation())
 
     if (currentView && currentView.key !== lastEmittedRouteKey) {
@@ -66,16 +68,24 @@ export function startSalesforceViewTracking(options: StartSalesforceViewTracking
     }
 
     if (!trackedView || trackedView.isLoadingTimeFinalized) {
+      notifySalesforceResourcePoll({
+        currentView: trackedView && { startRelativeTime: trackedView.startRelativeTime },
+        resourceEntries: performanceEntries,
+      })
       return
     }
 
-    const latestResponseEnd = getLatestViewResourceResponseEnd(getPerformanceEntries(), trackedView.startRelativeTime)
+    const latestResponseEnd = getLatestViewResourceResponseEnd(performanceEntries, trackedView.startRelativeTime)
 
     if (
       latestResponseEnd !== undefined &&
       (!trackedView.latestLoadingTimeResponseEnd || latestResponseEnd > trackedView.latestLoadingTimeResponseEnd)
     ) {
       trackedView.latestLoadingTimeResponseEnd = latestResponseEnd
+      notifySalesforceResourcePoll({
+        currentView: { startRelativeTime: trackedView.startRelativeTime },
+        resourceEntries: performanceEntries,
+      })
       return
     }
 
@@ -83,6 +93,11 @@ export function startSalesforceViewTracking(options: StartSalesforceViewTracking
       options.getRumPublicApi()?.setViewLoadingTime()
       trackedView.isLoadingTimeFinalized = true
     }
+
+    notifySalesforceResourcePoll({
+      currentView: { startRelativeTime: trackedView.startRelativeTime },
+      resourceEntries: performanceEntries,
+    })
   }
 
   return {

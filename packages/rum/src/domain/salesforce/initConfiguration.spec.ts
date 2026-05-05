@@ -41,4 +41,25 @@ describe('salesforce init configuration', () => {
       })
     )
   })
+
+  it('disables core resource tracking and injects a Salesforce resource plugin by default', () => {
+    const initConfiguration = buildSalesforceInitConfiguration({
+      applicationId: 'app-id',
+      clientToken: 'client-token',
+    } as RumInitConfiguration)
+
+    expect(initConfiguration.trackResources).toBeFalse()
+    expect(initConfiguration.plugins?.map((plugin) => plugin.name)).toContain('salesforce-resource-polling')
+  })
+
+  it('does not inject the Salesforce resource plugin when the customer disables resources explicitly', () => {
+    const initConfiguration = buildSalesforceInitConfiguration({
+      applicationId: 'app-id',
+      clientToken: 'client-token',
+      trackResources: false,
+    } as RumInitConfiguration)
+
+    expect(initConfiguration.trackResources).toBeFalse()
+    expect(initConfiguration.plugins).toBeUndefined()
+  })
 })
