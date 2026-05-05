@@ -1,9 +1,10 @@
+import { vi } from 'vitest'
 import { Observable } from '../src/tools/observable'
 import type { SessionState } from '../src/domain/session/sessionState'
 import type { SessionStoreStrategy } from '../src/domain/session/storeStrategies/sessionStoreStrategy'
 
 export type FakeSessionStoreStrategy = SessionStoreStrategy & {
-  setSessionState: jasmine.Spy<(fn: (state: SessionState) => SessionState) => Promise<void>>
+  setSessionState: ReturnType<typeof vi.fn>
   getInternalState: () => SessionState
   simulateExternalChange: (state: SessionState) => void
 }
@@ -15,9 +16,9 @@ export function createFakeSessionStoreStrategy({
   const sessionObservable = new Observable<SessionState>()
 
   return {
-    setSessionState: jasmine
-      .createSpy('setSessionState')
-      .and.callFake(async (fn: (state: SessionState) => SessionState): Promise<void> => {
+    setSessionState: vi
+      .fn<(fn: (state: SessionState) => SessionState) => Promise<void>>()
+      .mockImplementation(async (fn: (state: SessionState) => SessionState): Promise<void> => {
         session = fn({ ...session })
         await Promise.resolve()
         sessionObservable.notify({ ...session })

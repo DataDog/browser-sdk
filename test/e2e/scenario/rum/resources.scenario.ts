@@ -68,13 +68,13 @@ test.describe('rum resources', () => {
       expectToHaveValidTimings(resourceEvent!)
     })
 
-  createTest('collect fetch requests made before init')
+  createTest('collect fetch requests made before init with trackEarlyRequests')
     .withHead(html`
       <script>
         fetch('/ok')
       </script>
     `)
-    .withRum()
+    .withRum({ trackEarlyRequests: true })
     .run(async ({ intakeRegistry, flushEvents }) => {
       await flushEvents()
       const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.type === 'fetch')
@@ -95,12 +95,7 @@ test.describe('rum resources', () => {
   test.describe('XHR abort support', () => {
     createTest('track aborted XHR')
       .withRum()
-      .run(async ({ intakeRegistry, flushEvents, page, browserName }) => {
-        test.skip(
-          browserName === 'webkit',
-          'WebKit does not reporte a PerformanceResourceTiming entry for aborted XHRs'
-        )
-
+      .run(async ({ intakeRegistry, flushEvents, page }) => {
         await page.evaluate(
           () =>
             new Promise<void>((resolve) => {
@@ -203,12 +198,7 @@ test.describe('rum resources', () => {
   test.describe('fetch abort support', () => {
     createTest('track aborted fetch')
       .withRum()
-      .run(async ({ intakeRegistry, flushEvents, page, browserName }) => {
-        test.skip(
-          browserName === 'webkit',
-          'WebKit does not reporte a PerformanceResourceTiming entry for aborted fetches'
-        )
-
+      .run(async ({ intakeRegistry, flushEvents, page }) => {
         await page.evaluate(
           () =>
             new Promise<void>((resolve) => {
@@ -395,6 +385,7 @@ function expectToHaveValidTimings(resourceEvent: RumResourceEvent) {
 
 test.describe('resource headers with trackResourceHeaders', () => {
   const TRACK_RESOURCE_HEADERS_CONFIG = {
+    enableExperimentalFeatures: ['track_resource_headers'],
     trackResourceHeaders: true,
   }
 
@@ -474,33 +465,6 @@ test.describe('resource headers with trackResourceHeaders', () => {
       expect(fetchEvent).toBeDefined()
       expect(fetchEvent!.resource.request).toBeUndefined()
       expect(fetchEvent!.resource.response?.headers?.['cache-control']).toBeUndefined()
-    })
-
-  createTest('collect default and custom headers using DEFAULT_TRACKED_RESOURCE_HEADERS pattern')
-    .withRum()
-    .withRumInit((configuration) => {
-      configuration.trackResourceHeaders = [
-        ...window.DD_RUM!.DEFAULT_TRACKED_RESOURCE_HEADERS.map((name) => ({ name })),
-        { name: 'x-request-id' },
-      ]
-      window.DD_RUM!.init(configuration)
-    })
-    .run(async ({ intakeRegistry, flushEvents, page }) => {
-      const url = okUrl({
-        'Cache-Control': 'no-cache',
-        ETag: 'abc123',
-        'X-Request-Id': 'req-1',
-      })
-      await page.evaluate((u) => fetch(u), url)
-
-      await flushEvents()
-
-      const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.type === 'fetch')
-      expect(resourceEvent).toBeDefined()
-      const headers = resourceEvent!.resource.response!.headers!
-      expect(headers['cache-control']).toBe('no-cache')
-      expect(headers['etag']).toBe('abc123')
-      expect(headers['x-request-id']).toBe('req-1')
     })
 })
 

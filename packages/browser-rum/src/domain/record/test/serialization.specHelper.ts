@@ -1,4 +1,5 @@
-import type { TimeStamp } from '@datadog/js-core/time'
+import { expect } from 'vitest'
+import type { TimeStamp } from '@datadog/browser-core'
 import { noop } from '@datadog/browser-core'
 import { RecordType, SnapshotFormat } from '../../../types'
 import type { BrowserFullSnapshotChangeRecord, BrowserRecord } from '../../../types'
