@@ -21,6 +21,12 @@ export interface StartViewAction {
 export interface LargestContentfulPaint {
   value: number
   targetSelector?: string
+  resourceUrl?: string
+  subParts?: {
+    loadDelay: number
+    loadTime: number
+    renderDelay: number
+  }
 }
 
 export interface RumRect {
@@ -42,6 +48,11 @@ export interface InteractionToNextPaint {
   value: number
   targetSelector?: string
   time?: number
+  subParts?: {
+    inputDelay: number
+    processingDuration: number
+    presentationDelay: number
+  }
 }
 
 export interface NavigationTimings {
@@ -138,9 +149,27 @@ export interface SerializedViewEvent {
     /** Performance detail sub-object for deeper drill-down */
     performance?: {
       fcp?: { timestamp: number }
-      lcp?: { timestamp: number; target_selector?: string }
+      lcp?: {
+        timestamp: number
+        target_selector?: string
+        resource_url?: string
+        sub_parts?: {
+          load_delay: number
+          load_time: number
+          render_delay: number
+        }
+      }
       cls?: { score: number; timestamp?: number; target_selector?: string; previous_rect?: RumRect; current_rect?: RumRect }
-      inp?: { duration: number; timestamp?: number; target_selector?: string }
+      inp?: {
+        duration: number
+        timestamp?: number
+        target_selector?: string
+        sub_parts?: {
+          input_delay: number
+          processing_duration: number
+          presentation_delay: number
+        }
+      }
     }
   }
   _dd: {

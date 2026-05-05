@@ -168,7 +168,18 @@ function startProcessor({ pipeline }: ProcessorDependencies): void {
       performance.fcp = { timestamp: fcpValue }
     }
     if (lcpMetric) {
-      performance.lcp = { timestamp: lcpMetric.value, target_selector: lcpMetric.targetSelector }
+      performance.lcp = {
+        timestamp: lcpMetric.value,
+        target_selector: lcpMetric.targetSelector,
+        resource_url: lcpMetric.resourceUrl,
+        ...(lcpMetric.subParts && {
+          sub_parts: {
+            load_delay: lcpMetric.subParts.loadDelay,
+            load_time: lcpMetric.subParts.loadTime,
+            render_delay: lcpMetric.subParts.renderDelay,
+          },
+        }),
+      }
     }
     if (clsMetric) {
       performance.cls = {
@@ -180,7 +191,18 @@ function startProcessor({ pipeline }: ProcessorDependencies): void {
       }
     }
     if (inpMetric) {
-      performance.inp = { duration: inpMetric.value, target_selector: inpMetric.targetSelector }
+      performance.inp = {
+        duration: inpMetric.value,
+        timestamp: inpMetric.time,
+        target_selector: inpMetric.targetSelector,
+        ...(inpMetric.subParts && {
+          sub_parts: {
+            input_delay: inpMetric.subParts.inputDelay,
+            processing_duration: inpMetric.subParts.processingDuration,
+            presentation_delay: inpMetric.subParts.presentationDelay,
+          },
+        }),
+      }
     }
     if (Object.keys(performance).length > 0) {
       ;(event.view as any).performance = performance
