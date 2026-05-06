@@ -105,10 +105,7 @@ export default defineConfig({
     // Exclude developer-extension: only compatible with Chrome, no point testing on other browsers
     include: ['packages/*/{src,test}/**/*.spec.{ts,tsx}'],
 
-    exclude: [
-      'packages/core/test/forEach.spec.ts',
-      '**/node_modules/**',
-    ],
+    exclude: ['packages/core/test/forEach.spec.ts', '**/node_modules/**'],
 
     restoreMocks: true,
 

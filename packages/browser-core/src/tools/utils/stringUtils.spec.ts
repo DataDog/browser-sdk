@@ -61,7 +61,6 @@ describe('stringUtils', () => {
     it('returns undefined if the value is not found', () => {
       expect(findCommaSeparatedValue('foo=a;bar=b', 'baz')).toBe(undefined)
     })
-
   })
 
   describe('findCommaSeparatedValues', () => {
