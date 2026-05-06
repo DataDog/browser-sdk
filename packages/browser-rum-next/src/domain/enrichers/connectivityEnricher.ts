@@ -9,7 +9,7 @@ function connectivityEnricher() {
           status: navigator.onLine ? 'connected' : 'not_connected',
           ...(connection && {
             effective_type: connection.effectiveType,
-            type: connection.type,
+            interfaces: connection.type ? [connection.type] : undefined,
           }),
         },
       }

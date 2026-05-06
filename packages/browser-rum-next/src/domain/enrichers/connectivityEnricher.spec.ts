@@ -36,7 +36,7 @@ describe('connectivityEnricher', () => {
       const enricher = connectivityEnricher()
       const result = enricher.transform({ type: 'error' }) as Record<string, unknown>
 
-      expect(result.connectivity).toEqual({ status: 'connected', effective_type: '4g', type: 'wifi' })
+      expect(result.connectivity).toEqual({ status: 'connected', effective_type: '4g', interfaces: ['wifi'] })
     })
   })
 
