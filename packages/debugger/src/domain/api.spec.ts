@@ -5,7 +5,6 @@ import type { Probe } from './probes'
 
 describe('api', () => {
   let mockBatchAdd: jasmine.Spy
-  let mockRumGetInternalContext: jasmine.Spy
 
   beforeEach(() => {
     clearProbes()
@@ -13,23 +12,11 @@ describe('api', () => {
     mockBatchAdd = jasmine.createSpy('batchAdd')
     initDebuggerTransport({ service: 'test-service', env: 'test-env' } as any, { add: mockBatchAdd } as any)
 
-    // Mock DD_RUM global for context
-    mockRumGetInternalContext = jasmine.createSpy('getInternalContext').and.returnValue({
-      session_id: 'test-session',
-      view: { id: 'test-view' },
-      user_action: { id: 'test-action' },
-      application_id: 'test-app-id',
-    })
-    ;(window as any).DD_RUM = {
-      version: '1.0.0',
-      getInternalContext: mockRumGetInternalContext,
-    }
     ;(window as any).DD_DEBUGGER = {
       version: '0.0.1',
     }
 
     registerCleanupTask(() => {
-      delete (window as any).DD_RUM
       delete (window as any).DD_DEBUGGER
       resetDebuggerTransport()
       clearProbes()
@@ -319,64 +306,6 @@ describe('api', () => {
       const snapshot = payload.debugger.snapshot
       expect(snapshot.duration).toBeGreaterThan(0)
       expect(snapshot.duration).toBeGreaterThanOrEqual(10000000) // Should be in nanoseconds (>= 10ms)
-    })
-
-    it('should omit trace correlation when no active span context is available', () => {
-      const probe: Probe = {
-        id: 'test-probe',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'rumContext' },
-        template: 'Test',
-        segments: [{ str: 'Test' }],
-        captureSnapshot: false,
-        capture: {},
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
-      addProbe(probe)
-
-      const probes = getProbes('TestClass;rumContext')!
-      onEntry(probes, {}, {})
-      onReturn(probes, null, {}, {}, {})
-
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
-      expect(payload.dd).toBeUndefined()
-    })
-
-    it('should include trace correlation when active span context is available', () => {
-      mockRumGetInternalContext.and.returnValue({
-        session_id: 'test-session',
-        view: { id: 'test-view' },
-        user_action: { id: 'test-action' },
-        application_id: 'test-app-id',
-        trace_id: 'test-trace',
-        span_id: 'test-span',
-      })
-
-      const probe: Probe = {
-        id: 'test-probe',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'traceContext' },
-        template: 'Test',
-        segments: [{ str: 'Test' }],
-        captureSnapshot: false,
-        capture: {},
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
-      addProbe(probe)
-
-      const probes = getProbes('TestClass;traceContext')!
-      onEntry(probes, {}, {})
-      onReturn(probes, null, {}, {}, {})
-
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
-      expect(payload.dd).toEqual({
-        trace_id: 'test-trace',
-        span_id: 'test-span',
-      })
     })
   })
 

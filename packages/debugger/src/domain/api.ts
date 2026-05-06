@@ -1,4 +1,4 @@
-import type { Batch, Context, RumInternalContext } from '@datadog/browser-core'
+import type { Batch, Context } from '@datadog/browser-core'
 
 import { timeStampNow, display, buildTag, generateUUID, getGlobalObject } from '@datadog/browser-core'
 import type { BrowserWindow, DebuggerInitConfiguration } from '../entries/main'
@@ -11,17 +11,8 @@ import { captureStackTrace, parseStackTrace } from './stacktrace'
 import { evaluateProbeMessage } from './template'
 import { evaluateProbeCondition } from './condition'
 
-interface Rum {
-  getInternalContext?: () => RumInternalContext | undefined
-}
-
-interface TraceCorrelationContext extends Context {
-  trace_id: string
-  span_id: string
-}
-
 // Cache hostname at module initialization since it won't change during the app lifetime
-const globalObj = getGlobalObject<BrowserWindow & { DD_RUM?: Rum }>() // eslint-disable-line local-rules/disallow-side-effects
+const globalObj = getGlobalObject<BrowserWindow>() // eslint-disable-line local-rules/disallow-side-effects
 
 const threadName = detectThreadName() // eslint-disable-line local-rules/disallow-side-effects
 
@@ -270,7 +261,6 @@ function sendDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): voi
       // thread_id: 1,
       thread_name: threadName,
     },
-    dd: getTraceCorrelationContext(),
     debugger: {
       snapshot: {
         id: generateUUID(),
@@ -326,24 +316,6 @@ function detectThreadName() {
     return 'web-worker'
   }
   return 'unknown'
-}
-
-function getTraceCorrelationContext(): TraceCorrelationContext | undefined {
-  const rumContext = globalObj.DD_RUM?.getInternalContext?.()
-  const traceId = getStringContextValue(rumContext, 'trace_id')
-  const spanId = getStringContextValue(rumContext, 'span_id')
-
-  return traceId && spanId
-    ? {
-        trace_id: traceId,
-        span_id: spanId,
-      }
-    : undefined
-}
-
-function getStringContextValue(context: Context | undefined, key: string): string | undefined {
-  const value = context?.[key]
-  return typeof value === 'string' && value !== '' ? value : undefined
 }
 
 declare const ServiceWorkerGlobalScope: typeof EventTarget
