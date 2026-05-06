@@ -85,6 +85,7 @@ async function runTests(tests: Test[], benchmarkUrl: string, cb: (result: Perfor
 
 async function runTest(testButton: string, benchmarkUrl: string): Promise<TestRunResult> {
   const browser: Browser = await launch({
+    channel: 'chrome',
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
   })
   const page: Page = await browser.newPage()
