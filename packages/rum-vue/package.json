@@ -40,9 +40,9 @@
     }
   },
   "devDependencies": {
-    "@vue/test-utils": "2.4.6",
-    "vue": "3.5.32",
-    "vue-router": "5.0.4"
+    "@vue/test-utils": "2.4.9",
+    "vue": "3.5.33",
+    "vue-router": "5.0.6"
   },
   "repository": {
     "type": "git",

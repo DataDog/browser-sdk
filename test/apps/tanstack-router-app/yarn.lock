@@ -2,7 +2,7 @@
 # Manual changes might be lost - proceed with caution!
 
 __metadata:
-  version: 8
+  version: 9
   cacheKey: 10c0
 
 "@discoveryjs/json-ext@npm:^0.6.1":
@@ -63,18 +63,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tanstack/react-router@npm:1.168.10":
-  version: 1.168.10
-  resolution: "@tanstack/react-router@npm:1.168.10"
+"@tanstack/react-router@npm:1.168.25":
+  version: 1.168.25
+  resolution: "@tanstack/react-router@npm:1.168.25"
   dependencies:
     "@tanstack/history": "npm:1.161.6"
     "@tanstack/react-store": "npm:^0.9.3"
-    "@tanstack/router-core": "npm:1.168.9"
+    "@tanstack/router-core": "npm:1.168.17"
     isbot: "npm:^5.1.22"
   peerDependencies:
     react: ">=18.0.0 || >=19.0.0"
     react-dom: ">=18.0.0 || >=19.0.0"
-  checksum: 10c0/d52d6a5929266c70ca63dd1875a3f6919a364b7e2253ff9448043a4cf973720e4742b0e1bbf7691001dc3d639e31065806d581eb64ec18da198917712ab0d5dc
+  checksum: 10c0/5d680769464a553a7b8629c33d2d0298941df68b305b528f4d6f0f6906f3c3d3970d51f99d1c6a1e8b052f80c65ddf08248fe3f03f8bc230c65ad6b2b3505a00
   languageName: node
   linkType: hard
 
@@ -91,17 +91,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tanstack/router-core@npm:1.168.9":
-  version: 1.168.9
-  resolution: "@tanstack/router-core@npm:1.168.9"
+"@tanstack/router-core@npm:1.168.17":
+  version: 1.168.17
+  resolution: "@tanstack/router-core@npm:1.168.17"
   dependencies:
     "@tanstack/history": "npm:1.161.6"
-    cookie-es: "npm:^2.0.0"
-    seroval: "npm:^1.4.2"
-    seroval-plugins: "npm:^1.4.2"
+    cookie-es: "npm:^3.0.0"
+    seroval: "npm:^1.5.0"
+    seroval-plugins: "npm:^1.5.0"
   bin:
     intent: bin/intent.js
-  checksum: 10c0/cdc4a3de30adae18d355ea79569fdde2a51e3952eef9e9db8f6ad5eec970781f1e5fca7ccb5c8f562b139cb440780803f871f1c812686c2ff83328634433617d
+  checksum: 10c0/d869053d088fc5aee3871e44f68da9087e10e4b582b84eda79042db7f5138a043b2c276d6093111f6d862458ed9ae07bfdf6d567dfe6711a56b4212ff49d8a19
   languageName: node
   linkType: hard
 
@@ -529,10 +529,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cookie-es@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "cookie-es@npm:2.0.0"
-  checksum: 10c0/3b2459030a5ad2bc715aeb27a32f274340670bfc5031ac29e1fba804212517411bb617880d3fe66ace2b64dfb28f3049e2d1ff40d4bec342154ccdd124deaeaa
+"cookie-es@npm:^3.0.0":
+  version: 3.1.1
+  resolution: "cookie-es@npm:3.1.1"
+  checksum: 10c0/62cf0c325cc547b52477b351e9b5d068b3ffc74f7d143cdf7af854648dd1015fca3aed1498b355365e24b0746333f0b15688ed3a535abecc5ed0a046ae956a84
   languageName: node
   linkType: hard
 
@@ -554,17 +554,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"enhanced-resolve@npm:^5.0.0":
-  version: 5.20.1
-  resolution: "enhanced-resolve@npm:5.20.1"
-  dependencies:
-    graceful-fs: "npm:^4.2.4"
-    tapable: "npm:^2.3.0"
-  checksum: 10c0/c6503ee1b2d725843e047e774445ecb12b779aa52db25d11ebe18d4b3adc148d3d993d2038b3d0c38ad836c9c4b3930fbc55df42f72b44785e2f94e5530eda69
-  languageName: node
-  linkType: hard
-
-"enhanced-resolve@npm:^5.20.0":
+"enhanced-resolve@npm:^5.0.0, enhanced-resolve@npm:^5.20.0":
   version: 5.21.0
   resolution: "enhanced-resolve@npm:5.21.0"
   dependencies:
@@ -799,13 +789,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"json-parse-even-better-errors@npm:^2.3.1":
-  version: 2.3.1
-  resolution: "json-parse-even-better-errors@npm:2.3.1"
-  checksum: 10c0/140932564c8f0b88455432e0f33c4cb4086b8868e37524e07e723f4eaedb9425bdc2bafd71bd1d9765bd15fd1e2d126972bc83990f55c467168c228c24d665f3
-  languageName: node
-  linkType: hard
-
 "json-schema-traverse@npm:^1.0.0":
   version: 1.0.0
   resolution: "json-schema-traverse@npm:1.0.0"
@@ -853,19 +836,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mime-db@npm:1.52.0":
-  version: 1.52.0
-  resolution: "mime-db@npm:1.52.0"
-  checksum: 10c0/0557a01deebf45ac5f5777fe7740b2a5c309c6d62d40ceab4e23da9f821899ce7a900b7ac8157d4548ddbb7beffe9abc621250e6d182b0397ec7f10c7b91a5aa
-  languageName: node
-  linkType: hard
-
-"mime-types@npm:^2.1.27":
-  version: 2.1.35
-  resolution: "mime-types@npm:2.1.35"
-  dependencies:
-    mime-db: "npm:1.52.0"
-  checksum: 10c0/82fb07ec56d8ff1fc999a84f2f217aa46cb6ed1033fefaabd5785b9a974ed225c90dc72fff460259e66b95b73648596dbcc50d51ed69cdf464af2d237d3149b2
+"mime-db@npm:^1.54.0":
+  version: 1.54.0
+  resolution: "mime-db@npm:1.54.0"
+  checksum: 10c0/8d907917bc2a90fa2df842cdf5dfeaf509adc15fe0531e07bb2f6ab15992416479015828d6a74200041c492e42cce3ebf78e5ce714388a0a538ea9c53eece284
   languageName: node
   linkType: hard
 
@@ -952,21 +926,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-dom@npm:19.2.4":
-  version: 19.2.4
-  resolution: "react-dom@npm:19.2.4"
+"react-dom@npm:19.2.5":
+  version: 19.2.5
+  resolution: "react-dom@npm:19.2.5"
   dependencies:
     scheduler: "npm:^0.27.0"
   peerDependencies:
-    react: ^19.2.4
-  checksum: 10c0/f0c63f1794dedb154136d4d0f59af00b41907f4859571c155940296808f4b94bf9c0c20633db75b5b2112ec13d8d7dd4f9bf57362ed48782f317b11d05a44f35
+    react: ^19.2.5
+  checksum: 10c0/8067606e9f58e4c2e8cb5f09570217dbc71c4843ebcaa20ae2085912d3e3a351f17d8f7c1713313cdda7f272840c8c34ff6c860fcb840862071bceea218e0c63
   languageName: node
   linkType: hard
 
-"react@npm:19.2.4":
-  version: 19.2.4
-  resolution: "react@npm:19.2.4"
-  checksum: 10c0/cd2c9ff67a720799cc3b38a516009986f7fc4cb8d3e15716c6211cf098d1357ee3e348ab05ad0600042bbb0fd888530ba92e329198c92eafa0994f5213396596
+"react@npm:19.2.5":
+  version: 19.2.5
+  resolution: "react@npm:19.2.5"
+  checksum: 10c0/4b5f231dbef92886f602533c9ce3bde04d99f0e71dfb5d794c43e02726efaad0421c08688f75fc98a6d6e1dc017372e1af7abbfecdc86a79968f461675931a7a
   languageName: node
   linkType: hard
 
@@ -1056,19 +1030,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"seroval-plugins@npm:^1.4.2":
-  version: 1.5.1
-  resolution: "seroval-plugins@npm:1.5.1"
+"seroval-plugins@npm:^1.5.0":
+  version: 1.5.4
+  resolution: "seroval-plugins@npm:1.5.4"
   peerDependencies:
     seroval: ^1.0
-  checksum: 10c0/3b9c554e74b6d8a47c1f9b06ce744bd4753df0aae4eef6197748ddf9e559215510afa19a463512e89666023fee3b6e1b095fbad24afd7b1737b155fc2563bfca
+  checksum: 10c0/f8843ff12c2fcbf0d1124d02addcffc1a727f55b500ac24218a528e95e540c42052e2e6f6b3dfaad2aa8105fd0985dff722c3ae774723b9899e0fafe7d4698be
   languageName: node
   linkType: hard
 
-"seroval@npm:^1.4.2":
-  version: 1.5.1
-  resolution: "seroval@npm:1.5.1"
-  checksum: 10c0/34ae9faf56b88cdddca8c481bc4f5829be0e9666c65ea6060a033fadd5af26027b47be43dd5d9498c1168a5b2336779d9316a0e2644d6b1e24f575959ddb6c85
+"seroval@npm:^1.5.0":
+  version: 1.5.4
+  resolution: "seroval@npm:1.5.4"
+  checksum: 10c0/6191e27f21000f7693ab923fde69c47a3ce5fbb86e585e5a8fc072d70db52ebc3c4dab83c3b2ab67311ec646b2064df089a3a155c49b21846438aaf510d4b964
   languageName: node
   linkType: hard
 
@@ -1150,12 +1124,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "tanstack-router-app@workspace:."
   dependencies:
-    "@tanstack/react-router": "npm:1.168.10"
-    react: "npm:19.2.4"
-    react-dom: "npm:19.2.4"
+    "@tanstack/react-router": "npm:1.168.25"
+    react: "npm:19.2.5"
+    react-dom: "npm:19.2.5"
     ts-loader: "npm:9.5.7"
     typescript: "npm:6.0.3"
-    webpack: "npm:5.105.4"
+    webpack: "npm:5.106.2"
     webpack-cli: "npm:6.0.1"
   peerDependencies:
     "@datadog/browser-rum": "*"
@@ -1168,14 +1142,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"tapable@npm:^2.3.0":
-  version: 2.3.2
-  resolution: "tapable@npm:2.3.2"
-  checksum: 10c0/45ec8bd8963907f35bba875f9b3e9a5afa5ba11a9a4e4a2d7b2313d983cb2741386fd7dd3e54b13055b2be942971aac369d197e02263ec9216c59c0a8069ed7f
-  languageName: node
-  linkType: hard
-
-"tapable@npm:^2.3.3":
+"tapable@npm:^2.3.0, tapable@npm:^2.3.3":
   version: 2.3.3
   resolution: "tapable@npm:2.3.3"
   checksum: 10c0/47992e861053f861154e92fb4a98ac4ab47b6463717e60792dd1e8c755da0c4964cd8bb68c308a9066d6da89000b6310457b4d5d985c30de4ccc29066068cc17
@@ -1350,9 +1317,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack@npm:5.105.4":
-  version: 5.105.4
-  resolution: "webpack@npm:5.105.4"
+"webpack@npm:5.106.2":
+  version: 5.106.2
+  resolution: "webpack@npm:5.106.2"
   dependencies:
     "@types/eslint-scope": "npm:^3.7.7"
     "@types/estree": "npm:^1.0.8"
@@ -1370,9 +1337,8 @@ __metadata:
     events: "npm:^3.2.0"
     glob-to-regexp: "npm:^0.4.1"
     graceful-fs: "npm:^4.2.11"
-    json-parse-even-better-errors: "npm:^2.3.1"
     loader-runner: "npm:^4.3.1"
-    mime-types: "npm:^2.1.27"
+    mime-db: "npm:^1.54.0"
     neo-async: "npm:^2.6.2"
     schema-utils: "npm:^4.3.3"
     tapable: "npm:^2.3.0"
@@ -1384,7 +1350,7 @@ __metadata:
       optional: true
   bin:
     webpack: bin/webpack.js
-  checksum: 10c0/e9896d20bac351b119d59942b7efae5b117056ecf203acc0d1a84ecbf0a5a9a80ca733735f96bd163e3530be6ab7f615cd67e5320bd3c47d709c9bfe376c3280
+  checksum: 10c0/933293ae94b7f3405147aebd824d978696693a7fbd85cfbf4d05b517329c93f69e634400ad70a27f4ba4148e14e2fd502e335cd8d30d75282091ab3c72a1ac01
   languageName: node
   linkType: hard
 
