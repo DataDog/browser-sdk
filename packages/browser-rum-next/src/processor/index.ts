@@ -87,6 +87,19 @@ const rumProcessor: Module = {
     context.pipeline.enrich('observation:*', displayEnricher())
     context.pipeline.enrich('observation:*', connectivityEnricher())
     context.pipeline.enrich('observation:view', pageStateEnricher())
+    // Add session.is_active on view events (false when finalized, omitted when active)
+    context.pipeline.enrich('observation:view', {
+      name: 'sessionIsActive',
+      transform(data: Record<string, unknown>) {
+        const view = data.view as Record<string, unknown> | undefined
+        const session = data.session as Record<string, unknown> | undefined
+        if (!view || !session) return data
+        return {
+          ...data,
+          session: { ...session, is_active: view.is_active ? undefined : false },
+        }
+      },
+    })
     context.pipeline.enrich('observation:*', urlContextsEnricher())
 
     // Feature flags

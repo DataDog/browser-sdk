@@ -182,6 +182,8 @@ function initV6() {
     datadogLogs.init({
       clientToken: 'pub_playground_v6',
       site: 'datadoghq.com',
+      service: 'playground',
+      version: '0.1.0',
       proxy: (options) => `/intake/v6${options.path}?${options.parameters}`,
       forwardErrorsToLogs: true,
       forwardConsoleLogs: ['log', 'debug', 'info', 'warn', 'error'],
@@ -190,6 +192,8 @@ function initV6() {
       clientToken: 'pub_playground_v6',
       applicationId: 'playground-app-v6',
       site: 'datadoghq.com',
+      service: 'playground',
+      version: '0.1.0',
       proxy: (options) => `/intake/v6${options.path}?${options.parameters}`,
       trackViewsManually: false,
     })
@@ -207,6 +211,8 @@ async function initV8() {
     const sdk = await createSdk({
       clientToken: 'pub_playground_v8',
       site: 'datadoghq.com',
+      service: 'playground',
+      version: '0.1.0',
       sessionCookieName: '_dd_s_v8',
       proxy: (options: { path: string; parameters: string }) =>
         `/intake/v8${options.path}?${options.parameters}`,
