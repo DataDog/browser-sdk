@@ -1,6 +1,6 @@
 import ajv from 'ajv'
 import { registerCleanupTask } from '@datadog/browser-core/test'
-import type { TimeStamp, Context } from '@datadog/browser-core'
+import type { Context } from '@datadog/browser-core'
 import { combine } from '@datadog/browser-core'
 import type { CommonProperties } from '@datadog/browser-rum-core'
 import type { LifeCycle, RawRumEventCollectedData } from '../src/domain/lifeCycle'
@@ -36,7 +36,7 @@ function validateRumEventFormat(rawRumEvent: RawRumEvent) {
     application: {
       id: fakeId,
     },
-    date: 0 as TimeStamp,
+    date: 0,
     source: 'browser',
     session: {
       id: fakeId,

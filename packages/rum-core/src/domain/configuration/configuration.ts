@@ -629,14 +629,14 @@ function validateAndBuildTrackResourceHeaders(initConfiguration: RumInitConfigur
       display.warn(`trackResourceHeaders[${index}].extractor should be a RegExp`)
       return
     }
-    if (item.location !== undefined && !VALID_HEADER_LOCATIONS.includes(item.location as string)) {
+    if (item.location !== undefined && !VALID_HEADER_LOCATIONS.includes(item.location)) {
       display.warn(`trackResourceHeaders[${index}].location should be 'request', 'response', or 'any'`)
       return
     }
 
     result.push({
       ...item,
-      name: typeof item.name === 'string' ? item.name.toLowerCase() : (item.name as MatchOption),
+      name: typeof item.name === 'string' ? item.name.toLowerCase() : item.name,
     })
   })
 

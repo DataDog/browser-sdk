@@ -51,7 +51,7 @@ describe('tracer', () => {
         setRequestHeader(this: MockXhr, name: string, value: string) {
           this.headers[name] = value
         },
-        headers: {} as MockXhr['headers'],
+        headers: {},
       }
     })
 

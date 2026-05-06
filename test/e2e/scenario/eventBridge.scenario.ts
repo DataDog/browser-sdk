@@ -70,7 +70,7 @@ test.describe('bridge present', () => {
             throw new window.Error('bar')
           },
         }
-        window.DD_LOGS!.logger.log('hop', context as any)
+        window.DD_LOGS!.logger.log('hop', context)
       })
 
       await flushEvents()

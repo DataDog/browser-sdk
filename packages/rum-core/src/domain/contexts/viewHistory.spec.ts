@@ -1,4 +1,4 @@
-import type { Context, RelativeTime } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/browser-core'
 import { relativeToClocks, CLEAR_OLD_VALUES_INTERVAL } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
@@ -109,8 +109,8 @@ describe('ViewHistory', () => {
       lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, buildViewCreatedEvent({ context: { foo: 'bar' } }))
       lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_UPDATED, {
         startClocks,
-        context: { bar: 'foo' } as Context,
-      } as BeforeViewUpdateEvent)
+        context: { bar: 'foo' },
+      } as unknown as BeforeViewUpdateEvent)
       expect(viewHistory.findView()!.context).toEqual({ bar: 'foo' })
     })
   })

@@ -22,7 +22,7 @@ export function monitored<T extends (...params: any[]) => unknown>(
   descriptor: TypedPropertyDescriptor<T>
 ) {
   const originalMethod = descriptor.value!
-  descriptor.value = function (this: ThisParameterType<T>, ...args: Parameters<T>) {
+  descriptor.value = function (this: ThisParameterType<T>, ...args: Parameters<T>): ReturnType<T> {
     const decorated = onMonitorErrorCollected ? monitor(originalMethod) : originalMethod
     return decorated.apply(this, args) as ReturnType<T>
   } as T

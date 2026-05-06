@@ -68,7 +68,7 @@ export function computeRawError({
     componentStack,
     originalError,
     ...errorBase,
-    causes: isError(originalError) ? flattenErrorCauses(originalError as ErrorWithCause, source) : undefined,
+    causes: isError(originalError) ? flattenErrorCauses(originalError, source) : undefined,
     fingerprint: tryToGetFingerprint(originalError),
     context: tryToGetErrorContext(originalError),
   }

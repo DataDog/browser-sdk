@@ -30,7 +30,7 @@ const rootRoute = createRootRoute({
           Post 42
         </Link>
         {' | '}
-        <Link to="/" search={{ tab: 'settings' } as Record<string, string>}>
+        <Link to="/" search={{ tab: 'settings' }}>
           Query Param
         </Link>
         {' | '}

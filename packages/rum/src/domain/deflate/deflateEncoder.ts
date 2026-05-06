@@ -27,12 +27,13 @@ export function createDeflateEncoder(
     data: string
   }> = []
 
+  const expectedStreamId: number = streamId
   const { stop: removeMessageListener } = addEventListener(
     configuration,
     worker,
     'message',
     ({ data: workerResponse }: MessageEvent<DeflateWorkerResponse>) => {
-      if (workerResponse.type !== 'wrote' || (workerResponse.streamId as DeflateEncoderStreamId) !== streamId) {
+      if (workerResponse.type !== 'wrote' || workerResponse.streamId !== expectedStreamId) {
         return
       }
 

@@ -207,7 +207,7 @@ describe('session store', () => {
         const displayErrorSpy = spyOn(display, 'error')
         const sessionStoreStrategyType = selectSessionStoreStrategyType({
           ...DEFAULT_INIT_CONFIGURATION,
-          sessionPersistence: ['invalid' as SessionPersistence],
+          sessionPersistence: ['invalid'] as unknown as SessionPersistence[],
         })
         expect(sessionStoreStrategyType).toBeUndefined()
         expect(displayErrorSpy).toHaveBeenCalledOnceWith("Invalid session persistence 'invalid'")

@@ -5,7 +5,7 @@ import { DevServerStatus, useDevServerStatus } from '../../hooks/useDevServerSta
 import { useSettings } from '../../hooks/useSettings'
 import { Columns } from '../columns'
 import { TabBase } from '../tabBase'
-import type { DevBundlesOverride, EventCollectionStrategy } from '../../../common/extension.types'
+import type { DevBundlesOverride } from '../../../common/extension.types'
 
 export function SettingsTab() {
   const sdkDevServerStatus = useDevServerStatus(DEV_LOGS_URL)
@@ -202,7 +202,7 @@ export function SettingsTab() {
                       { label: 'SDK', value: 'sdk' },
                       { label: 'Requests', value: 'requests' },
                     ]}
-                    onChange={(value) => setSetting('eventCollectionStrategy', value as EventCollectionStrategy)}
+                    onChange={(value) => setSetting('eventCollectionStrategy', value)}
                   />
                 </Group>
               }

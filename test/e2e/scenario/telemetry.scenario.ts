@@ -11,7 +11,7 @@ test.describe('telemetry', () => {
             throw new window.Error('expected error')
           },
         }
-        window.DD_LOGS!.logger.log('hop', context as any)
+        window.DD_LOGS!.logger.log('hop', context)
       })
       await flushEvents()
       expect(intakeRegistry.telemetryErrorEvents).toHaveLength(1)
@@ -32,7 +32,7 @@ test.describe('telemetry', () => {
             throw new window.Error('expected error')
           },
         }
-        window.DD_RUM!.addAction('hop', context as any)
+        window.DD_RUM!.addAction('hop', context)
       })
       await flushEvents()
       expect(intakeRegistry.telemetryErrorEvents).toHaveLength(1)

@@ -146,10 +146,10 @@ async function afterSend(
   context.responseType = response.type
   context.isAborted = false
 
-  const responseBodyCondition = responseBodyActionGetters.reduce(
+  const responseBodyCondition: ResponseBodyAction = responseBodyActionGetters.reduce<number>(
     (action, getter) => Math.max(action, getter(context)),
     ResponseBodyAction.IGNORE
-  ) as ResponseBodyAction
+  )
 
   if (responseBodyCondition !== ResponseBodyAction.IGNORE) {
     const clonedResponse = tryToClone(response)
