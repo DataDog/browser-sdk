@@ -186,15 +186,12 @@ const rumProcessor: Module = {
       addError(error: Error | string, errorContext?: object) {
         const errorObj = error instanceof Error ? error : undefined
         const message = error instanceof Error ? error.message : error
-        context.pipeline.publish('observation:error', {
-          type: 'error',
-          date: Date.now(),
-          error: {
-            message,
-            type: errorObj?.name ?? 'Error',
-            source: 'custom',
-          },
-          ...(errorContext ? { context: errorContext } : {}),
+        context.pipeline.publish('action:add_error', {
+          error: errorObj,
+          message,
+          type: errorObj?.name ?? 'Error',
+          stack: errorObj?.stack,
+          context: errorContext,
         })
       },
 
