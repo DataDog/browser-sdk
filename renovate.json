@@ -33,7 +33,8 @@
     },
     {
       "matchFileNames": ["test/apps/angular-app/**"],
-      "matchPackageNames": ["@angular/**"],
+      "matchPackageNames": ["@angular/**", "typescript"],
+      "matchUpdateTypes": ["major"],
       "enabled": false
     }
   ],
