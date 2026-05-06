@@ -30,6 +30,12 @@
       "matchFileNames": ["test/apps/react-router-v6-app/**"],
       "matchDepNames": ["react-router-dom"],
       "enabled": false
+    },
+    {
+      "matchFileNames": ["test/apps/angular-app/**"],
+      "matchPackageNames": ["@angular/**", "typescript"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
     }
   ],
   "toolSettings": {
