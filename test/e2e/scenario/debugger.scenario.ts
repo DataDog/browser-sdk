@@ -129,7 +129,6 @@ test.describe('debugger', () => {
       const event = intakeRegistry.debuggerEvents[0]
       expect(event.message).toBe('Probe hit')
       expect(event.service).toBe('browser-sdk-e2e-test')
-      expect(event.hostname).toBeDefined()
 
       const snapshot = (event.debugger as any).snapshot
       expect(snapshot.probe.id).toBe('test-probe-1')

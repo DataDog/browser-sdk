@@ -11,7 +11,6 @@ import { captureStackTrace, parseStackTrace } from './stacktrace'
 import { evaluateProbeMessage } from './template'
 import { evaluateProbeCondition } from './condition'
 
-// Cache hostname at module initialization since it won't change during the app lifetime
 const globalObj = getGlobalObject<BrowserWindow>() // eslint-disable-line local-rules/disallow-side-effects
 
 const threadName = detectThreadName() // eslint-disable-line local-rules/disallow-side-effects
