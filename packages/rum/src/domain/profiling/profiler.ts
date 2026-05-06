@@ -31,7 +31,6 @@ import type {
   RUMProfilerConfiguration,
   RumProfilerStoppedInstance,
 } from './types'
-import { getNumberOfSamples } from './utils/getNumberOfSamples'
 import type { ProfilingContextManager } from './profilingContext'
 import { getCustomOrDefaultViewName } from './utils/getCustomOrDefaultViewName'
 import { assembleProfilingPayload } from './transport/assembly'
@@ -43,7 +42,6 @@ export const DEFAULT_RUM_PROFILER_CONFIGURATION: RUMProfilerConfiguration = {
   sampleIntervalMs: 10, // Sample stack trace every 10ms
   collectIntervalMs: 60000, // Collect data every minute
   minProfileDurationMs: 5000, // Require at least 5 seconds of profile data to reduce noise and cost
-  minNumberOfSamples: 50, // Require at least 50 samples (~500 ms) to report a profile to reduce noise and cost
 }
 
 export function createRumProfiler(
@@ -239,9 +237,8 @@ export function createRumProfiler(
         const actions = actionHistory.findAll(startClocks.relative, duration)
         const vitals = vitalHistory.findAll(startClocks.relative, duration)
         const isBelowDurationThreshold = duration < profilerConfiguration.minProfileDurationMs
-        const isBelowSampleThreshold = getNumberOfSamples(trace.samples) < profilerConfiguration.minNumberOfSamples
 
-        if (longTasks.length === 0 && (isBelowDurationThreshold || isBelowSampleThreshold)) {
+        if (longTasks.length === 0 && isBelowDurationThreshold) {
           // Skip very short profiles to reduce noise and cost, but keep them if they contain long tasks.
           return
         }
