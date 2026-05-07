@@ -121,6 +121,26 @@ export const references: TestCase[] = [
     expected: new SyntaxError('Illegal identifier: throw new Error()'),
     execute: false,
   },
+  {
+    ast: { ref: '@x; throw new Error("injected"); //' },
+    expected: new SyntaxError('Illegal identifier: @x; throw new Error("injected"); //'),
+    execute: false,
+  },
+  {
+    ast: { ref: '@x.y' },
+    expected: new SyntaxError('Illegal identifier: @x.y'),
+    execute: false,
+  },
+  {
+    ast: { ref: '@x-y' },
+    expected: new SyntaxError('Illegal identifier: @x-y'),
+    execute: false,
+  },
+  {
+    ast: { ref: '@(1)' },
+    expected: new SyntaxError('Illegal identifier: @(1)'),
+    execute: false,
+  },
 ]
 
 export const propertyAccess: TestCase[] = [

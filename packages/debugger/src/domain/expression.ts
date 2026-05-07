@@ -142,11 +142,11 @@ export function compile(node: ExpressionNode): string | number | boolean | null 
       ? `(typeof ${compile(target)} === '${typeName}')`
       : `Function.prototype[Symbol.hasInstance].call(${assertIdentifier(typeName)}, ${compile(target)})`
   } else if (type === 'ref') {
-    const refValue = value as string
+    const refValue = assertIdentifier(value as string)
     if (refValue.startsWith('@')) {
       return `$dd_${refValue.slice(1)}`
     }
-    return assertIdentifier(refValue)
+    return refValue
   } else if (Array.isArray(value)) {
     const args = value.map((v) => compile(v as ExpressionNode))
     switch (type) {
