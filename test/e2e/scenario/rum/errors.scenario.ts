@@ -117,7 +117,11 @@ test.describe('rum errors', () => {
         message: 'oh snap',
         source: 'source',
         handling: 'unhandled',
-        stack: ['Error: oh snap', `at <anonymous> @ ${baseUrl}:`],
+        // The second frame is the inner setTimeout callback. Most browsers report it as
+        // `<anonymous>`, but Firefox uses the lexical parent function name and reports it as
+        // `window.RUM_INIT/<` (or even `window.RUM_INIT/</<`) when running with the `npm` setup,
+        // because the test's rumInit callback is wrapped in a `window.RUM_INIT` arrow function.
+        stack: ['Error: oh snap', new RegExp(`(<anonymous>|window\\.RUM_INIT(/<)+) @ ${baseUrl}:`)],
       })
       withBrowserLogs((browserLogs) => {
         expect(browserLogs).toHaveLength(1)
