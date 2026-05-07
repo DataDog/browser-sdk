@@ -236,37 +236,7 @@ unit:
   after_script:
     - node ./scripts/test/export-test-result.ts unit
 
-e2e-build:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-  interruptible: true
-  script:
-    - yarn
-    - yarn build && yarn build:apps
-  artifacts:
-    paths:
-      # SDK bundles produced by `yarn build`
-      - packages/*/bundle
-      # Test app build outputs (varies per app: webpack/Vite -> dist/, Next.js -> .next/, Nuxt -> .nuxt + .output/)
-      - test/apps/*/dist
-      - test/apps/*/.next
-      - test/apps/*/.nuxt
-      - test/apps/*/.output
-      # Test apps are independent yarn projects, not workspaces — each has its own node_modules
-      # populated by `build-test-apps.ts`. Without these, `yarn start` fails to find its state file.
-      - test/apps/*/node_modules
-      - test/apps/*/.yarn
-      # Generated apps that are not checked into git (see test/e2e/AGENTS.md)
-      - test/apps/react-router-v7-app/
-      - test/apps/cdn-extension/
-      - test/apps/appendChild-extension/
-      # Developer extension build (consumed by developerExtension.scenario.ts)
-      - developer-extension/dist
-    expire_in: 1 day
-
 e2e:
-  needs: ['e2e-build']
   extends:
     - .base-configuration
     - .test-allowed-branches
@@ -281,6 +251,8 @@ e2e:
       junit: test-report/e2e/*.xml
   script:
     - yarn
+    - yarn build
+    - yarn build:apps
     # Browsers are pre-installed in the CI image. If playwright (current or pinned 1.40.1)
     # is upgraded without rebuilding the image, this job will crash — rebuild the image to fix it.
     - FORCE_COLOR=1 PW_BROWSER=$BROWSER yarn test:e2e --project=$BROWSER
