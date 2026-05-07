@@ -18,7 +18,7 @@ const RELEVANT_FILE_PATTERNS = [
 runMain(async () => {
   const testCommand = process.argv[2]
   if (!testCommand) {
-    throw new Error('Usage: ci-bs.ts <test:unit|test:e2e:ci>')
+    throw new Error('Usage: ci-bs.ts <test:unit>')
   }
 
   const pr = await fetchPR(LOCAL_BRANCH!)
