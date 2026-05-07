@@ -4,10 +4,12 @@ interface Metadata {
   date: number
   source: string
   service?: string
+  version?: string
 }
 
 interface MetadataEnricherOptions {
   service?: string
+  version?: string
   source?: string
 }
 
@@ -27,6 +29,7 @@ function metadataEnricher(
         date: (data.date as number | undefined) ?? Date.now(),
         source,
         ...(options?.service && { service: options.service }),
+        ...(options?.version && { version: options.version }),
       }
     },
   }

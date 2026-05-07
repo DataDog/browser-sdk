@@ -124,7 +124,7 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
   pipeline.enrich('resource:runtime_error', stackTraceEnricher())
 
   // 4.6. Register core enrichers on all observation events
-  pipeline.enrich('observation:*', metadataEnricher({ service: config.service, source: config.source }))
+  pipeline.enrich('observation:*', metadataEnricher({ service: config.service, version: config.version, source: config.source }))
   pipeline.enrich('observation:*', sessionEnricher(session))
   pipeline.enrich(
     'observation:*',
