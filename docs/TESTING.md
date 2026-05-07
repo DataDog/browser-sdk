@@ -50,8 +50,8 @@ The `firefox-pinned` (FF 119) and `webkit-pinned` (WK 17.4) Playwright projects 
 the old BrowserStack matrix locally via a pinned Playwright 1.40.1 `run-server` and a
 translation proxy. Run them with:
 
-- `yarn playwright test --config test/e2e/playwright.config.ts --project=firefox-pinned`
-- `yarn playwright test --config test/e2e/playwright.config.ts --project=webkit-pinned`
+- `yarn test:e2e --project=firefox-pinned`
+- `yarn test:e2e --project=webkit-pinned`
 
 ## Run unit tests in BrowserStack
 

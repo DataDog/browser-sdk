@@ -283,7 +283,7 @@ e2e:
     - yarn
     # Browsers are pre-installed in the CI image. If playwright (current or pinned 1.40.1)
     # is upgraded without rebuilding the image, this job will crash — rebuild the image to fix it.
-    - FORCE_COLOR=1 PW_BROWSER=$BROWSER yarn playwright test --config test/e2e/playwright.config.ts --project=$BROWSER
+    - FORCE_COLOR=1 PW_BROWSER=$BROWSER yarn test:e2e --project=$BROWSER
   after_script:
     - node ./scripts/test/export-test-result.ts e2e
 

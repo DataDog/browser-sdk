@@ -1,6 +1,7 @@
 import path from 'path'
 import { defineConfig, devices } from '@playwright/test'
-import { config as baseConfig } from './playwright.base.config'
+import type { ReporterDescription } from '@playwright/test'
+import { getTestReportDirectory } from '../envUtils'
 
 // Single config covering all e2e browser configurations:
 //
@@ -17,8 +18,72 @@ import { config as baseConfig } from './playwright.base.config'
 // Initial install of the pinned browser binaries:
 //   yarn test:e2e:init
 
+const isCi = !!process.env.CI
+const isLocal = !isCi
+
 const PINNED_WS_ENDPOINT = 'ws://127.0.0.1:5400/'
 const proxyDir = path.join(__dirname, 'scripts')
+
+const reporters: ReporterDescription[] = [['line'], ['./noticeReporter.ts']]
+const testReportDirectory = getTestReportDirectory()
+if (testReportDirectory) {
+  // Multiple matrix cells (one per --project) write into the same folder; include the
+  // project name in the filename so they don't collide. PW_BROWSER is set by CI; locally
+  // it falls back to a single shared filename.
+  const junitFilename = process.env.PW_BROWSER ? `results-${process.env.PW_BROWSER}.xml` : 'results.xml'
+  reporters.push(['junit', { outputFile: path.join(process.cwd(), testReportDirectory, junitFilename) }])
+} else {
+  reporters.push(['html'])
+}
+
+const baseWebServers = [
+  ...(isLocal
+    ? [
+        {
+          name: 'dev server',
+          stdout: 'pipe' as const,
+          cwd: path.join(__dirname, '../..'),
+          command: 'yarn dev-server start --no-daemon',
+          wait: {
+            stdout: /Dev server listening on port (?<dev_server_port>\d+)/,
+          },
+        },
+      ]
+    : []),
+  {
+    name: 'nextjs app router',
+    stdout: 'pipe' as const,
+    cwd: path.join(__dirname, '../apps/nextjs'),
+    command: 'yarn start',
+    wait: {
+      stdout: /- Local:\s+http:\/\/localhost:(?<nextjs_app_router_port>\d+)/,
+    },
+  },
+  {
+    name: 'vue router app',
+    stdout: 'pipe' as const,
+    cwd: path.join(__dirname, '../apps/vue-router-app'),
+    command: isLocal ? 'yarn dev' : 'yarn preview',
+    // NO_COLOR=1 prevents Vite from wrapping "Local" in ANSI bold codes when
+    // FORCE_COLOR=1 is set in CI, which would break the wait.stdout regex.
+    env: { NO_COLOR: '1' },
+    wait: {
+      stdout: /Local:\s+http:\/\/localhost:(?<vue_router_app_port>\d+)/,
+    },
+  },
+  {
+    name: 'nuxt app',
+    stdout: 'pipe' as const,
+    cwd: path.join(__dirname, '../apps/nuxt-app'),
+    command: isLocal ? 'yarn dev' : 'yarn start',
+    env: { NO_COLOR: '1' },
+    wait: {
+      // yarn dev logs:   "➜ Local:  http://localhost:PORT"
+      // yarn start logs: "Listening on http://[::]:PORT"
+      stdout: /(?:Local:\s+http:\/\/localhost|Listening on http:\/\/(?:\[[^\]]+\]|[^:]+)):(?<nuxt_app_port>\d+)/,
+    },
+  },
+]
 
 const pinnedWebServers = [
   {
@@ -37,13 +102,21 @@ const pinnedWebServers = [
   },
 ]
 
-const baseWebServers = (baseConfig.webServer as object[]) ?? []
-const webServer = needsPinnedServers() ? [...baseWebServers, ...pinnedWebServers] : baseWebServers
-
 // eslint-disable-next-line import/no-default-export
 export default defineConfig({
-  ...baseConfig,
-  webServer: webServer as never,
+  testDir: './scenario',
+  testMatch: ['**/*.scenario.ts'],
+  tsconfig: './tsconfig.json',
+  fullyParallel: true,
+  forbidOnly: isCi,
+  maxFailures: 0,
+  retries: isCi ? 2 : 0,
+  workers: 5,
+  reporter: reporters,
+  use: {
+    trace: isCi ? 'off' : 'retain-on-failure',
+  },
+  webServer: needsPinnedServers() ? [...baseWebServers, ...pinnedWebServers] : baseWebServers,
   projects: [
     project('chromium', 'Desktop Chrome'),
     project('firefox', 'Desktop Firefox'),

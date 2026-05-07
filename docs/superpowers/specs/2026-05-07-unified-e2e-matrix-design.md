@@ -22,12 +22,12 @@ Replace `playwright.local.config.ts` and `playwright.pinned.config.ts` with one 
 
 ```ts
 projects: [
-  { name: 'chromium',       use: devices['Desktop Chrome']  },
-  { name: 'firefox',        use: devices['Desktop Firefox'] },
-  { name: 'webkit',         use: devices['Desktop Safari']  },
-  { name: 'android',        use: devices['Pixel 7']         },
+  { name: 'chromium', use: devices['Desktop Chrome'] },
+  { name: 'firefox', use: devices['Desktop Firefox'] },
+  { name: 'webkit', use: devices['Desktop Safari'] },
+  { name: 'android', use: devices['Pixel 7'] },
   { name: 'firefox-pinned', use: { ...devices['Desktop Firefox'], connectOptions: { wsEndpoint: PINNED_WS } } },
-  { name: 'webkit-pinned',  use: { ...devices['Desktop Safari'],  connectOptions: { wsEndpoint: PINNED_WS } } },
+  { name: 'webkit-pinned', use: { ...devices['Desktop Safari'], connectOptions: { wsEndpoint: PINNED_WS } } },
 ]
 ```
 
@@ -79,6 +79,7 @@ e2e:
 ```
 
 Notes:
+
 - `yarn` in the `e2e` job hits the existing `.yarn/cache` so install is fast (~13s).
 - `e2e-build` produces the SDK bundles and built test apps as artifacts; the matrix cells download those and skip the build step.
 - All six matrix cells use the same `.resource-allocation-4-cpus`. Can right-size later.
@@ -107,13 +108,13 @@ Notes:
 
 ### Estimated impact
 
-| | Today | After |
-|---|---|---|
-| `e2e` wall-clock | 12m | folded into matrix |
-| `e2e-pinned` wall-clock | 20m | folded into matrix |
-| `e2e-bs` wall-clock | varies (BS) | removed |
-| **Combined wall-clock (longest pole)** | ~20m | **~14m** |
-| Cumulative compute | baseline | similar (build shared, tests split) |
+|                                        | Today       | After                               |
+| -------------------------------------- | ----------- | ----------------------------------- |
+| `e2e` wall-clock                       | 12m         | folded into matrix                  |
+| `e2e-pinned` wall-clock                | 20m         | folded into matrix                  |
+| `e2e-bs` wall-clock                    | varies (BS) | removed                             |
+| **Combined wall-clock (longest pole)** | ~20m        | **~14m**                            |
+| Cumulative compute                     | baseline    | similar (build shared, tests split) |
 
 ## Out of scope
 
