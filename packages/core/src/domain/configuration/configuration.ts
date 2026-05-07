@@ -276,7 +276,7 @@ export interface InitConfiguration {
    *
    * @internal
    */
-  source?: 'browser' | 'flutter' | 'unity' | 'dd_debugger' | undefined
+  source?: 'browser' | 'flutter' | 'unity' | undefined
 
   /**
    * [Internal option] Additional configuration for the SDK.
@@ -335,10 +335,6 @@ export interface Configuration extends TransportConfiguration {
   sdkVersion: string | undefined
   source: SdkSource
   variant: string | undefined
-}
-
-function toSdkSource(source: TransportConfiguration['source']): SdkSource {
-  return source === 'dd_debugger' ? 'browser' : source
 }
 
 function isString(tag: unknown, tagName: string): tag is string | undefined | null {
@@ -404,8 +400,6 @@ export function validateAndBuildConfiguration(
     return
   }
 
-  const transportConfiguration = computeTransportConfiguration(initConfiguration)
-
   return {
     beforeSend:
       initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
@@ -431,8 +425,7 @@ export function validateAndBuildConfiguration(
     variant: initConfiguration.variant,
     sdkVersion: initConfiguration.sdkVersion,
 
-    ...transportConfiguration,
-    source: toSdkSource(transportConfiguration.source),
+    ...computeTransportConfiguration(initConfiguration),
   }
 }
 

@@ -12,7 +12,7 @@ import {
 } from '@datadog/browser-core'
 
 export function startDebuggerBatch(initConfiguration: InitConfiguration): Batch {
-  const { debuggerEndpointBuilder } = computeTransportConfiguration({ ...initConfiguration, source: 'dd_debugger' })
+  const { debuggerEndpointBuilder } = computeTransportConfiguration(initConfiguration, 'dd_debugger')
 
   const batch = createBatch({
     encoder: createIdentityEncoder(),

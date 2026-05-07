@@ -1,7 +1,7 @@
 import type { Site } from '../intakeSites'
 import { INTAKE_SITE_US1, INTAKE_URL_PARAMETERS } from '../intakeSites'
-import type { InitConfiguration } from './configuration'
-import type { EndpointBuilder } from './endpointBuilder'
+import type { InitConfiguration, SdkSource } from './configuration'
+import type { EndpointBuilder, TransportSource } from './endpointBuilder'
 import { createEndpointBuilder } from './endpointBuilder'
 
 export interface TransportConfiguration {
@@ -15,7 +15,7 @@ export interface TransportConfiguration {
   datacenter?: string | undefined
   replica?: ReplicaConfiguration
   site: Site
-  source: 'browser' | 'flutter' | 'unity' | 'dd_debugger'
+  source: TransportSource
 }
 
 export interface ReplicaConfiguration {
@@ -23,12 +23,39 @@ export interface ReplicaConfiguration {
   rumEndpointBuilder: EndpointBuilder
 }
 
-export function computeTransportConfiguration(initConfiguration: InitConfiguration): TransportConfiguration {
-  const site = initConfiguration.site || INTAKE_SITE_US1
-  const source = validateSource(initConfiguration.source)
+// Internal: init configuration once the transport source has been resolved
+// (validated user value or `sourceOverride` from `computeTransportConfiguration`).
+type ResolvedSourceInitConfiguration = Omit<InitConfiguration, 'source'> & {
+  source: TransportSource
+}
 
-  const endpointBuilders = computeEndpointBuilders({ ...initConfiguration, site, source })
-  const replicaConfiguration = computeReplicaConfiguration({ ...initConfiguration, site, source })
+/**
+ * Compute the transport configuration (endpoint builders, replica, etc.) for an
+ * SDK init configuration.
+ *
+ * When called without `sourceOverride`, the resulting `source` is whatever was
+ * provided in `initConfiguration.source` (validated to a `SdkSource`, defaulting
+ * to `browser`).
+ *
+ * When called with `sourceOverride`, that value is used instead.
+ */
+export function computeTransportConfiguration(
+  initConfiguration: InitConfiguration
+): TransportConfiguration & { source: SdkSource }
+export function computeTransportConfiguration(
+  initConfiguration: InitConfiguration,
+  sourceOverride: TransportSource
+): TransportConfiguration
+export function computeTransportConfiguration(
+  initConfiguration: InitConfiguration,
+  sourceOverride?: TransportSource
+): TransportConfiguration {
+  const site = initConfiguration.site || INTAKE_SITE_US1
+  const source: TransportSource = sourceOverride ?? validateSource(initConfiguration.source)
+
+  const resolvedConfiguration: ResolvedSourceInitConfiguration = { ...initConfiguration, site, source }
+  const endpointBuilders = computeEndpointBuilders(resolvedConfiguration)
+  const replicaConfiguration = computeReplicaConfiguration(resolvedConfiguration)
 
   return {
     replica: replicaConfiguration,
@@ -38,14 +65,14 @@ export function computeTransportConfiguration(initConfiguration: InitConfigurati
   }
 }
 
-function validateSource(source: string | undefined) {
-  if (source === 'flutter' || source === 'unity' || source === 'dd_debugger') {
+function validateSource(source: string | undefined): SdkSource {
+  if (source === 'flutter' || source === 'unity') {
     return source
   }
   return 'browser'
 }
 
-function computeEndpointBuilders(initConfiguration: InitConfiguration) {
+function computeEndpointBuilders(initConfiguration: ResolvedSourceInitConfiguration) {
   return {
     logsEndpointBuilder: createEndpointBuilder(initConfiguration, 'logs'),
     rumEndpointBuilder: createEndpointBuilder(initConfiguration, 'rum'),
@@ -57,12 +84,14 @@ function computeEndpointBuilders(initConfiguration: InitConfiguration) {
   }
 }
 
-function computeReplicaConfiguration(initConfiguration: InitConfiguration): ReplicaConfiguration | undefined {
+function computeReplicaConfiguration(
+  initConfiguration: ResolvedSourceInitConfiguration
+): ReplicaConfiguration | undefined {
   if (!initConfiguration.replica) {
     return
   }
 
-  const replicaConfiguration: InitConfiguration = {
+  const replicaConfiguration: ResolvedSourceInitConfiguration = {
     ...initConfiguration,
     site: INTAKE_SITE_US1,
     clientToken: initConfiguration.replica.clientToken,
