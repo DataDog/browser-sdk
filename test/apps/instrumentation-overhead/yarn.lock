@@ -2,24 +2,8 @@
 # Manual changes might be lost - proceed with caution!
 
 __metadata:
-  version: 8
+  version: 9
   cacheKey: 10c0
-
-"@datadog/browser-core@file:../../../packages/core/package.tgz::locator=instrumentation-overhead-app%40workspace%3A.":
-  version: 6.32.0
-  resolution: "@datadog/browser-core@file:../../../packages/core/package.tgz#../../../packages/core/package.tgz::hash=96405e&locator=instrumentation-overhead-app%40workspace%3A."
-  checksum: 10c0/e4e5ca667f2076e20971ce1dc674d018b60bf58630da46ad25a37034e9ac11ec25297a002d71f19e0524784caa3f777d730ee4ac77fe91032a6349c0bf14e7aa
-  languageName: node
-  linkType: hard
-
-"@datadog/browser-debugger@file:../../../packages/debugger/package.tgz::locator=instrumentation-overhead-app%40workspace%3A.":
-  version: 6.32.0
-  resolution: "@datadog/browser-debugger@file:../../../packages/debugger/package.tgz#../../../packages/debugger/package.tgz::hash=dfd49f&locator=instrumentation-overhead-app%40workspace%3A."
-  dependencies:
-    "@datadog/browser-core": "npm:6.32.0"
-  checksum: 10c0/5a0ee48f198141482a3db6f4a865f56ca63b8a951cf2fb383045fda327ba8a3d858140cd05c5603efa018b763be66b6b68af3bb05fe3c82c43c80e4fa0c9482f
-  languageName: node
-  linkType: hard
 
 "@jridgewell/gen-mapping@npm:^0.3.5":
   version: 0.3.13
@@ -543,10 +527,14 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "instrumentation-overhead-app@workspace:."
   dependencies:
-    "@datadog/browser-debugger": "file:../../../packages/debugger/package.tgz"
     ts-loader: "npm:9.5.1"
     typescript: "npm:5.9.3"
     webpack: "npm:5.105.2"
+  peerDependencies:
+    "@datadog/browser-debugger": "*"
+  peerDependenciesMeta:
+    "@datadog/browser-debugger":
+      optional: true
   languageName: unknown
   linkType: soft
 
