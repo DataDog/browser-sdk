@@ -283,7 +283,7 @@ function sendDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): voi
                 return: result.return,
               }
             : undefined,
-      }
+      },
     },
   }
 

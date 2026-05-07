@@ -11,7 +11,6 @@ describe('api', () => {
 
     mockBatchAdd = jasmine.createSpy('batchAdd')
     initDebuggerTransport({ service: 'test-service', env: 'test-env' } as any, { add: mockBatchAdd } as any)
-
     ;(window as any).DD_DEBUGGER = {
       version: '0.0.1',
     }
