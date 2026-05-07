@@ -20,15 +20,12 @@ datadogDebugger.init({
 })
 ```
 
-If [Datadog RUM][3] is also initialized on the page, debugger snapshots automatically include RUM context (session, view, user action) without any additional configuration.
-
 ## Troubleshooting
 
-Need help? Contact [Datadog Support][4].
+Need help? Contact [Datadog Support][3].
 
 <!-- Note: all URLs should be absolute -->
 
 [1]: https://docs.datadoghq.com/tracing/live_debugger/
 [2]: https://www.npmjs.com/package/@datadog/browser-debugger
-[3]: https://docs.datadoghq.com/real_user_monitoring/browser
-[4]: https://docs.datadoghq.com/help/
+[3]: https://docs.datadoghq.com/help/
