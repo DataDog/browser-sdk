@@ -153,8 +153,6 @@ test.describe('rum sessions', () => {
     createTest('persists when session renewed')
       .withRum()
       .run(async ({ browserContext, page }) => {
-        const allCookies = await browserContext.cookies()
-        console.log('DEBUG initial cookies:', JSON.stringify(allCookies))
         const anonymousId = (await findSessionCookie(browserContext))?.aid
         expect(anonymousId).not.toBeNull()
 
@@ -167,8 +165,6 @@ test.describe('rum sessions', () => {
         await page.waitForTimeout(1000)
 
         expect((await findSessionCookie(browserContext))?.aid).toEqual(anonymousId)
-
-        expect(true).toBeTruthy()
       })
 
     createTest('removes anonymous id when tracking consent is withdrawn')
