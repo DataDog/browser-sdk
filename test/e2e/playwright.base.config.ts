@@ -20,6 +20,7 @@ if (testReportDirectory) {
 export const config: Config = {
   testDir: './scenario',
   testMatch: ['**/*.scenario.ts'],
+  testIgnore: ['**/browser-extensions/**', '**/developer-extension/**'],
   tsconfig: './tsconfig.json',
   fullyParallel: true,
   forbidOnly: isCi,
@@ -32,18 +33,14 @@ export const config: Config = {
   },
 
   webServer: [
-    ...(isLocal
-      ? [
-          {
-            name: 'dev server',
-            stdout: 'pipe' as const,
-            cwd: path.join(__dirname, '../..'),
-            command: 'yarn dev-server start --no-daemon',
-            wait: {
-              stdout: /Dev server listening on port (?<dev_server_port>\d+)/,
-            },
-          },
-        ]
-      : []),
+    {
+      name: 'dev server',
+      stdout: 'pipe' as const,
+      cwd: path.join(__dirname, '../..'),
+      command: 'yarn dev-server start --no-daemon',
+      wait: {
+        stdout: /Dev server listening on port (?<dev_server_port>\d+)/,
+      },
+    },
   ],
 }
