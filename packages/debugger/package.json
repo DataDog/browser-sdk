@@ -1,6 +1,5 @@
 {
   "name": "@datadog/browser-debugger",
-  "version": "6.33.0",
   "private": true,
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
