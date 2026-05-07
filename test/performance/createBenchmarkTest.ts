@@ -1,6 +1,8 @@
+import { resolve } from 'node:path'
 import { test } from '@playwright/test'
 import type { Page, CDPSession, Browser } from '@playwright/test'
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
+import type { DebuggerInitConfiguration } from '@datadog/browser-debugger'
 import type { BrowserWindow, Metrics } from './profiling.type'
 import { startProfiling } from './profilers'
 import { reportToConsole } from './reporters/reportToConsole'
@@ -46,12 +48,17 @@ export function createBenchmarkTest(scenarioName: string) {
 
           const { stopProfiling, takeMeasurements } = await startProfiling(page, cdpSession)
 
+          // Default flag to `true` so scenarios that don't need any async setup don't block on `waitForBenchmarkReady`
+          await page.addInitScript(() => {
+            ;(window as BrowserWindow).__benchmarkReady = true
+          })
+
           if (shouldInjectRumSDK(scenarioConfiguration)) {
             await injectRumSDK(page, scenarioConfiguration, scenarioName)
           }
 
           if (shouldInjectDebugger(scenarioConfiguration)) {
-            await injectDebugger(page, scenarioConfiguration, scenarioName)
+            await injectDebugger(page, scenarioConfiguration)
           }
 
           await runner(page, takeMeasurements, buildAppUrl(server.origin, scenarioConfiguration))
@@ -128,86 +135,84 @@ async function injectRumSDK(page: Page, scenarioConfiguration: ScenarioConfigura
   )
 }
 
-async function injectDebugger(page: Page, scenarioConfiguration: ScenarioConfiguration, _scenarioName: string) {
-  // Set flag for app to use instrumented functions
+/**
+ * Load and initialize the debugger SDK.
+ *
+ * Done in three sequential init scripts (each runs synchronously, before any of the page's
+ * own scripts, on every navigation):
+ *
+ * 1. Set `window.USE_INSTRUMENTED` so the test app exposes the instrumented function variants.
+ * 2. Inline the SDK bundle (synchronous load via `path`), which defines `window.DD_DEBUGGER`.
+ * 3. Initialize the SDK and arm `window.__benchmarkReady`.
+ *
+ * Steps 1-2 must run before the app's `<script>` tag executes, so that the instrumented hot
+ * path observes a stable `$dd_probes` shape from its very first call. This matters for
+ * statistical soundness: it ensures V8 can JIT-optimize against the final code path during
+ * the warmup phase, instead of deoptimizing mid-measurement when probes appear.
+ *
+ * Step 3 starts an async probe-delivery poll (mocked by the test server) and flips
+ * `__benchmarkReady` once the response is observed. The benchmark scenario is responsible
+ * for awaiting that flag before running its warmup.
+ */
+async function injectDebugger(page: Page, scenarioConfiguration: ScenarioConfiguration) {
   await page.addInitScript(() => {
     ;(window as any).USE_INSTRUMENTED = true
+    ;(window as BrowserWindow).__benchmarkReady = false
   })
 
-  // Load debugger SDK (using local build for now)
-  await page.addInitScript(() => {
-    // Define global hooks that instrumented code expects
-    // These do minimal work that the VM can't optimize away
-    // Signatures match the real implementations from packages/debugger/src/domain/api.ts
-
-    // Pre-populate with a placeholder key to help V8 optimize property lookups.
-    // Removing this shows a much larger performance overhead.
-    // Benchmarks show that using an object is much faster than a Map.
-    const probesObj: Record<string, any> = { __placeholder__: undefined }
-
-    // Container used to hold some data manipulated by the $dd_* functions to ensure the VM doesn't optimize them away.
-    const callCounts = { entry: 0, return: 0, throw: 0 }
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    ;(window as any).$dd_probes = (functionId: string) => probesObj[functionId]
-    ;(window as any).$dd_entry = (_probes: any[], _self: any, _args: Record<string, any>) => {
-      callCounts.entry++
-    }
-    ;(window as any).$dd_return = (
-      _probes: any[],
-      value: any,
-      _self: any,
-      _args: Record<string, any>,
-      _locals: Record<string, any>
-    ) => {
-      callCounts.return++
-      return value // eslint-disable-line @typescript-eslint/no-unsafe-return
-    }
-    ;(window as any).$dd_throw = (_probes: any[], _error: Error, _self: any, _args: Record<string, any>) => {
-      callCounts.throw++
-    }
-
-    // Variables starting with $_dd are not going to exist in the real code, but are on the global scope in this benchmark to allow the benchmark to modify them.
-    ;(window as any).$_dd_probesObj = probesObj
-    ;(window as any).$_dd_callCounts = callCounts
+  // Inline the SDK source so `DD_DEBUGGER` is available before the test app runs.
+  // TODO: once `@datadog/browser-debugger` is published to the public CDN, switch to the
+  // same async-`<script>` snippet pattern used by `injectRumSDK` (load from `SDK_BUNDLE_URL`,
+  // init via `onReady`). That matches real customer integration and folds the script-fetch
+  // cost into the measured metrics.
+  await page.addInitScript({
+    path: resolve(import.meta.dirname, '../../packages/debugger/bundle/datadog-debugger.js'),
   })
 
-  // Initialize debugger after page loads
+  const configuration: DebuggerInitConfiguration = {
+    clientToken: CLIENT_TOKEN,
+    site: DATADOG_SITE,
+    // The mock probe-delivery handler keys off `service` to decide which probes to return,
+    // so we use the configuration name to keep parallel benchmark workers isolated.
+    service: scenarioConfiguration,
+    // Effectively disable polling after the initial fetch — re-polling during the
+    // measurement loop would add network noise the benchmark doesn't intend to capture.
+    pollInterval: 24 * 60 * 60 * 1000, // One day
+  }
+
   await page.addInitScript(
-    ({ scenarioConfiguration }: { scenarioConfiguration: ScenarioConfiguration }) => {
-      document.addEventListener('DOMContentLoaded', () => {
-        // In a real scenario, DD_DEBUGGER would be loaded from a bundle
-        // For now, we're just testing the instrumentation overhead with the hooks
-        const browserWindow = window as any
+    (params: DebuggerInitScriptParameters) => {
+      const browserWindow = window as BrowserWindow
+      browserWindow.DD_DEBUGGER!.init(params.configuration)
 
-        // Mock init that sets up the hooks properly
-        if (!browserWindow.DD_DEBUGGER) {
-          browserWindow.DD_DEBUGGER = {
-            init: () => {
-              // Hooks are already defined in the init script
-            },
-            version: 'test',
-          }
+      // For `instrumented_with_probes`, wait until the first probe-delivery response has
+      // populated the registry. Polling at 5 ms keeps the wait tight (typically <50 ms over
+      // localhost) without busy-spinning. For `instrumented_no_probes`, the SDK is ready as
+      // soon as `init()` returns since no probes are expected.
+      const expectedFunctionId = 'instrumented.ts;add1'
+      const expectsProbes = params.scenarioConfiguration === 'instrumented_with_probes'
 
-          // Auto-init for testing
-          browserWindow.DD_DEBUGGER.init() // eslint-disable-line @typescript-eslint/no-unsafe-call
+      const markReady = () => {
+        browserWindow.__benchmarkReady = true
+      }
 
-          // Add probe for add1 in instrumented_with_probes scenario.
-          // In the real SDK, probes are added internally by the delivery API polling,
-          // not via a public method. Here we write directly to the probes object.
-          if (scenarioConfiguration === 'instrumented_with_probes') {
-            browserWindow.$_dd_probesObj['instrumented.ts;add1'] = [
-              {
-                id: 'test-probe',
-                functionId: 'instrumented.ts;add1',
-              },
-            ]
-          }
+      const checkReady = () => {
+        if (expectsProbes && browserWindow.$dd_probes!(expectedFunctionId) === undefined) {
+          setTimeout(checkReady, 5)
+          return
         }
-      })
+        markReady()
+      }
+
+      checkReady()
     },
-    { scenarioConfiguration }
+    { configuration, scenarioConfiguration }
   )
+}
+
+interface DebuggerInitScriptParameters {
+  configuration: DebuggerInitConfiguration
+  scenarioConfiguration: ScenarioConfiguration
 }
 
 /**
