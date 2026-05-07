@@ -246,8 +246,21 @@ e2e-build:
     - yarn build && yarn build:apps
   artifacts:
     paths:
+      # SDK bundles produced by `yarn build`
       - packages/*/bundle
+      # Test app build outputs (varies per app: webpack/Vite -> dist/, Next.js -> .next/, Nuxt -> .nuxt + .output/)
       - test/apps/*/dist
+      - test/apps/*/.next
+      - test/apps/*/.nuxt
+      - test/apps/*/.output
+      # Test apps are independent yarn projects, not workspaces — each has its own node_modules
+      # populated by `build-test-apps.ts`. Without these, `yarn start` fails to find its state file.
+      - test/apps/*/node_modules
+      - test/apps/*/.yarn
+      # Generated apps that are not checked into git (see test/e2e/AGENTS.md)
+      - test/apps/react-router-v7-app/
+      - test/apps/cdn-extension/
+      - test/apps/appendChild-extension/
     expire_in: 1 day
 
 e2e:
