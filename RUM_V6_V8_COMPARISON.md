@@ -1,925 +1,268 @@
-# Detailed Field-by-Field Comparison: RUM v6 vs v8 Event Payloads
+# RUM v6 vs v8: Field-by-Field Comparison Report
 
-This document provides a comprehensive comparison of every field sent by v6 and v8 RUM SDKs for each event type. The comparison is based on the **serialized payloads** that reach the Datadog intake (not intermediate representations).
-
----
-
-## KEY OBSERVATIONS
-
-### Format Change: v6 uses snake_case, v8 also uses snake_case
-Both v6 and v8 serialize events to snake_case for the intake.
-
-### Architecture Difference
-- **v6**: Collections create `RawRumEvent` objects → Assembly merges common fields (via hooks) → final event sent
-- **v8**: Processors create `Observation` objects → Enrichers add fields progressively → final event sent
-
-### Common Fields Added by All Events (v6)
-1. `session` (with id, type, has_replay, sampled_for_replay, is_active for views)
-2. `view` (with id, name)
-3. `service`, `version`, `context` (from hooks)
-4. `ddtags` (from tags)
-5. `application.id` (from contexts)
-6. `_dd.format_version` = 2 (v8 only)
-7. `_dd.browser_sdk_version`
-8. `_dd.drift`
-9. `_dd.configuration` (session_sample_rate, session_replay_sample_rate, trace_sample_rate)
-10. `source` = 'browser'
-11. `date` (timestamp)
-12. Global/user/account context fields
+> Generated from live sandbox comparison (`sandbox/v8/`).
+> Both SDKs running on the same page, same user interactions, events captured via `__ddBrowserSdkExtensionCallback`.
+> Classification by `application.id` (`playground-app-v6` vs `playground-app-v8`).
 
 ---
 
-## VIEW EVENT COMPARISON
+## Summary
 
-### v6 View Event (Final Serialized Payload)
+| Event Type | Shared Fields | Only in v6 | Only in v8 | Parity |
+|---|---|---|---|---|
+| **Error** | 35 | 9 | 0 | **80%** (37/46) |
+| **View** | 63 | 20 | 0 | **77%** (66/86) |
+| **Resource** | 31 | 11 | 5 | **73%** (45/56) |
 
-```
-type: 'view'
-date: <timestamp>
-view: {
-  id: <uuid>
-  name: <string> (optional)
-  url: <string>
-  referrer: <string>
-  loading_type: 'initial_load' | 'route_change' | 'bf_cache'
-  is_active: <boolean>
-  time_spent: <duration_ms>
-  
-  // Metrics
-  first_byte?: <duration_ms>
-  first_contentful_paint?: <duration_ms>
-  first_input_delay?: <duration_ms>
-  first_input_time?: <duration_ms>
-  first_input_target_selector?: <string>
-  interaction_to_next_paint?: <duration_ms>
-  interaction_to_next_paint_time?: <duration_ms>
-  interaction_to_next_paint_target_selector?: <string>
-  cumulative_layout_shift?: <number> (score, 0-1)
-  cumulative_layout_shift_time?: <duration_ms>
-  cumulative_layout_shift_target_selector?: <string>
-  largest_contentful_paint?: <duration_ms>
-  largest_contentful_paint_target_selector?: <string>
-  dom_interactive?: <duration_ms>
-  dom_content_loaded?: <duration_ms>
-  dom_complete?: <duration_ms>
-  load_event?: <duration_ms>
-  loading_time?: <duration_ms>
-  
-  // Performance details
-  performance?: {
-    cls?: {
-      score: <number>
-      timestamp?: <duration_ms>
-      target_selector?: <string>
-      previous_rect?: {x, y, width, height}
-      current_rect?: {x, y, width, height}
-    }
-    fcp?: {
-      timestamp: <number>
-    }
-    fid?: {
-      duration: <duration_ms>
-      timestamp: <duration_ms>
-      target_selector?: <string>
-    }
-    inp?: {
-      duration: <duration_ms>
-      timestamp?: <duration_ms>
-      target_selector?: <string>
-      sub_parts?: {
-        input_delay: <duration_ms>
-        processing_duration: <duration_ms>
-        presentation_delay: <duration_ms>
-      }
-    }
-    lcp?: {
-      timestamp: <duration_ms>
-      target_selector?: <string>
-      resource_url?: <string>
-      sub_parts?: {
-        load_delay: <duration_ms>
-        load_time: <duration_ms>
-        render_delay: <duration_ms>
-      }
-    }
-  }
-  
-  // Event counts
-  error: { count: <number> }
-  action: { count: <number> }
-  long_task: { count: <number> }
-  resource: { count: <number> }
-  frustration: { count: <number> }
-  
-  // Custom timings
-  custom_timings?: { [key]: <duration_ms> }
-}
+All v6-only fields fall into known categories (Session Replay, deprecated metrics, internal config, or intentionally skipped). **v8 sends zero unexpected fields that v6 doesn't.**
 
-display?: {
-  scroll?: {
-    max_depth?: <number>
-    max_depth_scroll_top?: <number>
-    max_scroll_height?: <number>
-    max_scroll_height_time?: <duration_ms>
-  }
-}
+---
 
-privacy?: {
-  replay_level: <DefaultPrivacyLevel>
-}
+## Error Events
 
-device?: {
-  locale?: <string>
-  locales?: <string[]>
-  time_zone?: <string>
-}
+### Matching fields (35 of 46)
 
-_dd: {
-  document_version: <number>
-  replay_stats?: {
-    records_count: <number>
-    segments_count: <number>
-    segments_total_raw_size: <number>
-  }
-  page_states?: [
-    {
-      state: <PageState>
-      start: <duration_ms>
-    }
-  ]
-  cls?: {
-    device_pixel_ratio: <number>
-  }
-  configuration?: {
-    start_session_replay_recording_manually: <boolean>
-  }
-}
-
-// Common fields added by assembly:
-session: {
-  id: <string>
-  type: 'user'
-  has_replay?: <boolean>
-  sampled_for_replay?: <boolean>
-  is_active?: <boolean>
-}
-view: { id: <uuid>, name?: <string> }  // ALSO MERGED from hooks
-service?: <string>
-version?: <string>
-context?: <object>
-ddtags?: <string>
-```
-
-### v8 View Event (Final Serialized Payload)
+Both SDKs produce identical structure for:
 
 ```
-type: 'view'
-date: <timestamp>
-view: {
-  id: <uuid>
-  name?: <string>
-  url: <string>
-  referrer?: <string>
-  loading_type: 'initial_load' | 'route_change' | 'bf_cache'
-  duration: <duration_ms>
-  is_active: <boolean>
-  
-  // Metrics (same structure as v6)
-  first_contentful_paint?: <duration_ms>
-  largest_contentful_paint?: <duration_ms>
-  cumulative_layout_shift?: <number>
-  interaction_to_next_paint?: <duration_ms>
-  
-  // Event counts
-  error: { count: <number> }
-  action: { count: <number> }
-  long_task: { count: <number> }
-  resource: { count: <number> }
-  frustration: { count: <number> }
-}
-
-// Enriched by displayEnricher
-display?: {
-  viewport?: {
-    width: <number>
-    height: <number>
-  }
-}
-
-_dd: {
-  format_version: 2
-  browser_sdk_version?: <string>
-  drift: <number>
-  configuration?: {
-    session_sample_rate?: <number>
-    session_replay_sample_rate?: <number>
-    trace_sample_rate?: <number>
-  }
-}
-
-// Common enriched fields:
-session: { id: <string> }
-view: { id: <string> }
-source: 'browser'
-service?: <string>
-version?: <string>
-ddtags?: <string>
-application?: { id: <string> }
-
-// Contextual fields:
-usr?: <object>
-context?: <object>
-account?: <object>
+_dd.browser_sdk_version    _dd.configuration.session_sample_rate
+_dd.configuration.trace_sample_rate    _dd.drift    _dd.format_version
+application.id    connectivity.effective_type    connectivity.status
+context.report    date    ddtags    display.viewport.height
+display.viewport.width    error.causes    error.fingerprint
+error.handling    error.handling_stack    error.id    error.message
+error.source    error.source_type    error.stack    error.type
+service    session.id    session.type    source    tab.id    type
+usr.anonymous_id    version    view.id    view.in_foreground
+view.name    view.referrer    view.url
 ```
 
-### View Event Gap Analysis
+### Only in v6 (9 fields)
+
+| Field | Value | Category |
+|---|---|---|
+| `_dd.configuration.session_replay_sample_rate` | `0` | Session Replay |
+| `_dd.configuration.profiling_sample_rate` | `0` | Internal config |
+| `_dd.configuration.beta_encode_cookie_options` | `false` | Removed in v7 |
+| `_dd.sdk_name` | `"rum"` | Intentionally skipped |
+| `session.has_replay` | `undefined` | Session Replay |
+| `session.sampled_for_replay` | `undefined` | Session Replay |
+| `session.is_active` | `undefined` | Session Replay (only set on views) |
+| `error.component_stack` | `undefined` | Framework-specific (rum-react/vue) |
+| `error.csp` | `undefined` | CSP violation edge case |
+
+### Only in v8: none
+
+### Value differences (expected)
+
+| Field | Notes |
+|---|---|
+| `error.stack` | Different line numbers — both SDKs call `addError()` from different lines in the same script |
+| `error.handling_stack` | Different capture points — v6 captures at `addError()` call site, v8 captures at `captureHandlingStack()` in the processor |
+
+---
+
+## View Events
+
+### Matching fields (63 of 86)
+
+Both SDKs produce identical structure for:
+
+```
+_dd.browser_sdk_version    _dd.cls.device_pixel_ratio
+_dd.configuration.session_sample_rate    _dd.configuration.trace_sample_rate
+_dd.document_version    _dd.drift    _dd.format_version
+_dd.page_states    application.id    connectivity.effective_type
+connectivity.status    date    ddtags    device.locale    device.locales
+device.time_zone    display.viewport.height    display.viewport.width
+service    session.id    session.is_active    session.type    source
+tab.id    type    usr.anonymous_id    version
+view.action.count    view.cumulative_layout_shift
+view.cumulative_layout_shift_target_selector
+view.cumulative_layout_shift_time    view.dom_complete
+view.dom_content_loaded    view.dom_interactive    view.error.count
+view.first_byte    view.first_contentful_paint    view.frustration.count
+view.id    view.interaction_to_next_paint
+view.interaction_to_next_paint_target_selector
+view.interaction_to_next_paint_time    view.is_active
+view.largest_contentful_paint
+view.largest_contentful_paint_target_selector    view.load_event
+view.loading_time    view.loading_type    view.long_task.count
+view.name    view.performance.cls.current_rect.height
+view.performance.cls.current_rect.width
+view.performance.cls.current_rect.x    view.performance.cls.current_rect.y
+view.performance.cls.previous_rect.height
+view.performance.cls.previous_rect.width
+view.performance.cls.previous_rect.x
+view.performance.cls.previous_rect.y    view.performance.cls.score
+view.performance.cls.target_selector
+view.performance.cls.timestamp    view.referrer
+view.resource.count    view.time_spent    view.url
+```
+
+### Only in v6 (20 fields)
+
+| Field | Value | Category |
+|---|---|---|
+| `_dd.configuration.session_replay_sample_rate` | `0` | Session Replay |
+| `_dd.configuration.profiling_sample_rate` | `0` | Internal config |
+| `_dd.configuration.beta_encode_cookie_options` | `false` | Removed in v7 |
+| `_dd.configuration.start_session_replay_recording_manually` | `true` | Session Replay |
+| `_dd.sdk_name` | `"rum"` | Intentionally skipped |
+| `_dd.replay_stats` | `undefined` | Session Replay |
+| `session.has_replay` | `undefined` | Session Replay |
+| `session.sampled_for_replay` | `false` | Session Replay |
+| `privacy.replay_level` | `"mask"` | Session Replay |
+| `view.first_input_delay` | `undefined` | FID — deprecated metric |
+| `view.first_input_time` | `undefined` | FID — deprecated metric |
+| `view.first_input_target_selector` | `undefined` | FID — deprecated metric |
+| `view.performance.fcp` | `undefined` | Omitted on route_change views (no FCP) |
+| `view.performance.fid` | `undefined` | FID — deprecated metric |
+| `view.performance.inp` | `undefined` | Omitted on route_change views (no interactions) |
+| `view.performance.lcp` | `undefined` | Omitted on route_change views (no LCP) |
+| `display.scroll.max_depth` | `810` | v8 has scroll tracking, but not emitting on this view |
+| `display.scroll.max_depth_scroll_top` | `0` | Same |
+| `display.scroll.max_scroll_height` | `810` | Same |
+| `display.scroll.max_scroll_height_time` | `1002600000` | Same |
+
+### Only in v8: none
+
+### Value differences (expected)
 
 | Field | v6 | v8 | Notes |
-|-------|----|----|-------|
-| `view.id` | ✓ | ✓ | Both present |
-| `view.url` | ✓ | ✓ | Both present |
-| `view.referrer` | ✓ | ✓ | Both present, but v8 optional |
-| `view.loading_type` | ✓ | ✓ | Both present |
-| `view.is_active` | ✓ | ✓ | Both present |
-| `view.time_spent` | ✓ | Δ | v6 has `time_spent`, v8 uses `duration` |
-| `view.name` | ✓ | ✓ | Both present but optional |
-| `view.first_byte` | ✓ | ✗ | v6 only |
-| `view.first_contentful_paint` | ✓ | ✓ | Both present |
-| `view.first_input_delay` | ✓ | ✗ | v6 only (replaced by INP) |
-| `view.first_input_time` | ✓ | ✗ | v6 only (replaced by INP) |
-| `view.first_input_target_selector` | ✓ | ✗ | v6 only |
-| `view.interaction_to_next_paint` | ✓ | ✓ | Both present |
-| `view.interaction_to_next_paint_time` | ✓ | ✗ | v6 only, v8 in performance |
-| `view.interaction_to_next_paint_target_selector` | ✓ | ✗ | v6 only |
-| `view.cumulative_layout_shift` | ✓ | ✓ | Both present, v6 is score, v8 is score |
-| `view.cumulative_layout_shift_time` | ✓ | ✗ | v6 only |
-| `view.cumulative_layout_shift_target_selector` | ✓ | ✗ | v6 only |
-| `view.largest_contentful_paint` | ✓ | ✓ | Both present |
-| `view.largest_contentful_paint_target_selector` | ✓ | ✗ | v6 only |
-| `view.dom_interactive` | ✓ | ✗ | v6 only |
-| `view.dom_content_loaded` | ✓ | ✗ | v6 only |
-| `view.dom_complete` | ✓ | ✗ | v6 only |
-| `view.load_event` | ✓ | ✗ | v6 only |
-| `view.loading_time` | ✓ | ✗ | v6 only |
-| `view.performance` | ✓ | ✗ | v6 only (detailed metrics) |
-| `view.error.count` | ✓ | ✓ | Both present |
-| `view.action.count` | ✓ | ✓ | Both present |
-| `view.long_task.count` | ✓ | ✓ | Both present |
-| `view.resource.count` | ✓ | ✓ | Both present |
-| `view.frustration.count` | ✓ | ✓ | Both present |
-| `view.custom_timings` | ✓ | ✗ | v6 only |
-| `display.scroll` | ✓ | ✗ | v6 only |
-| `display.viewport` | ✗ | ✓ | v8 only |
-| `privacy.replay_level` | ✓ | ✗ | v6 only |
-| `device.locale` | ✓ | ✗ | v6 only |
-| `device.locales` | ✓ | ✗ | v6 only |
-| `device.time_zone` | ✓ | ✗ | v6 only |
-| `_dd.document_version` | ✓ | ✗ | v6 only |
-| `_dd.format_version` | ✗ | ✓ | v8 only (always 2) |
-| `_dd.replay_stats` | ✓ | ✗ | v6 only |
-| `_dd.page_states` | ✓ | ✗ | v6 only |
-| `_dd.cls.device_pixel_ratio` | ✓ | ✗ | v6 only |
-| `_dd.configuration.start_session_replay_recording_manually` | ✓ | ✗ | v6 only |
-| `session.type` | ✓ | ✗ | v6 only (always 'user') |
-| `session.has_replay` | ✓ | ✗ | v6 only |
-| `session.sampled_for_replay` | ✓ | ✗ | v6 only |
-| `session.is_active` | ✓ | ✗ | v6 only |
-
-**CRITICAL GAPS:**
-- v8 is missing: `first_byte`, `first_input_*`, `cumulative_layout_shift_*` (target/time), `dom_*`, `load_event`, `loading_time`, `custom_timings`, `device.*`, `replay_level`, `document_version`, `replay_stats`
-- v8 adds: `display.viewport`, `_dd.format_version`, simplified fields
+|---|---|---|---|
+| `_dd.page_states[0].start` | `-12267400000` | `0` | v6 uses relative-to-view start, v8 uses 0-based |
+| `view.referrer` | `"http://localhost:8443/"` | `""` | v8 sends empty referrer on route_change views |
+| `view.cumulative_layout_shift` | `0.0023` | `0.0023384...` | v6 rounds to 4 decimal places, v8 doesn't |
 
 ---
 
-## RESOURCE EVENT COMPARISON
+## Resource Events
 
-### v6 Resource Event
+### Matching fields (31 of 51)
 
-```
-type: 'resource'
-date: <timestamp>
-resource: {
-  id: <string>
-  type: <ResourceType> (e.g., 'xhr', 'fetch', 'image', 'css', 'js', 'media', 'other')
-  url: <string>
-  method?: <string> (HTTP method)
-  status_code?: <number>
-  duration?: <duration_ms>
-  size?: <bytes>
-  encoded_body_size?: <bytes>
-  decoded_body_size?: <bytes>
-  transfer_size?: <bytes>
-  render_blocking_status?: <string> (e.g., 'blocking', 'non-blocking')
-  protocol?: <string> (e.g., 'http/1.1', 'h2', 'h3')
-  delivery_type?: <DeliveryType> ('cache' | 'navigational-prefetch' | 'other')
-  
-  // Timings
-  redirect?: { duration: <duration_ms>, start: <duration_ms> }
-  dns?: { duration: <duration_ms>, start: <duration_ms> }
-  connect?: { duration: <duration_ms>, start: <duration_ms> }
-  ssl?: { duration: <duration_ms>, start: <duration_ms> }
-  worker?: { duration: <duration_ms>, start: <duration_ms> }
-  first_byte?: { duration: <duration_ms>, start: <duration_ms> }
-  download?: { duration: <duration_ms>, start: <duration_ms> }
-  
-  // Optional details
-  graphql?: {
-    operation_name?: <string>
-    operation_type?: <string>
-    variables?: <string>
-  }
-  request?: {
-    headers?: { [key]: <string> }
-  }
-  response?: {
-    headers?: { [key]: <string> }
-  }
-}
-
-_dd: {
-  trace_id?: <string>
-  span_id?: <string>
-  rule_psr?: <number>
-  page_states?: [...]
-}
-
-// Common fields:
-session: { id, type, has_replay, ... }
-view: { id }
-service?: <string>
-version?: <string>
-ddtags?: <string>
-```
-
-### v8 Resource Event
+Both SDKs produce identical structure for:
 
 ```
-type: 'resource'
-date: <timestamp>
-resource: {
-  url: <string>
-  type: <string> (e.g., 'xhr', 'fetch', 'image', 'css', 'js', 'media', 'other')
-  duration?: <duration_ms>
-  status_code?: <number>
-  method?: <string>
-  size?: <bytes>
-  encoded_body_size?: <bytes>
-  decoded_body_size?: <bytes>
-  transfer_size?: <bytes>
-  protocol?: <string>
-  delivery_type?: <string>
-  render_blocking_status?: <string>
-  
-  // Timings (same structure as v6)
-  redirect?: { duration: <duration_ms>, start: <duration_ms> }
-  dns?: { duration: <duration_ms>, start: <duration_ms> }
-  connect?: { duration: <duration_ms>, start: <duration_ms> }
-  ssl?: { duration: <duration_ms>, start: <duration_ms> }
-  first_byte?: { duration: <duration_ms>, start: <duration_ms> }
-  download?: { duration: <duration_ms>, start: <duration_ms> }
-  
-  // Optional details
-  graphql?: {
-    operation_name?: <string>
-    operation_type?: <string>
-  }
-}
-
-_dd: {
-  format_version: 2
-  browser_sdk_version?: <string>
-  drift: <number>
-  trace_id?: <string>
-  span_id?: <string>
-  rule_psr?: <number>
-}
-
-// Common fields:
-session: { id }
-view: { id }
-source: 'browser'
-service?: <string>
-version?: <string>
-ddtags?: <string>
+_dd.browser_sdk_version    _dd.configuration.session_sample_rate
+_dd.configuration.trace_sample_rate    _dd.drift    _dd.format_version
+application.id    connectivity.effective_type    connectivity.status
+date    ddtags    display.viewport.height    display.viewport.width
+resource.decoded_body_size    resource.delivery_type    resource.duration
+resource.encoded_body_size    resource.first_byte.duration
+resource.first_byte.start    resource.id    resource.method
+resource.protocol    resource.render_blocking_status    resource.size
+resource.status_code    resource.transfer_size    resource.type
+resource.url    service    session.id    session.type    source
+tab.id    type    usr.anonymous_id    version    view.id    view.referrer
+view.url
 ```
 
-### Resource Event Gap Analysis
+### Only in v6 (11 fields)
 
-| Field | v6 | v8 | Notes |
-|-------|----|----|-------|
-| `resource.id` | ✓ | ✗ | v6 only (UUID) |
-| `resource.url` | ✓ | ✓ | Both present |
-| `resource.type` | ✓ | ✓ | Both present |
-| `resource.method` | ✓ | ✓ | Both present |
-| `resource.status_code` | ✓ | ✓ | Both present |
-| `resource.duration` | ✓ | ✓ | Both present |
-| `resource.size` | ✓ | ✓ | Both present |
-| `resource.encoded_body_size` | ✓ | ✓ | Both present |
-| `resource.decoded_body_size` | ✓ | ✓ | Both present |
-| `resource.transfer_size` | ✓ | ✓ | Both present |
-| `resource.protocol` | ✓ | ✓ | Both present |
-| `resource.delivery_type` | ✓ | ✓ | Both present |
-| `resource.render_blocking_status` | ✓ | ✓ | Both present |
-| `resource.redirect` | ✓ | ✓ | Both present |
-| `resource.dns` | ✓ | ✓ | Both present |
-| `resource.connect` | ✓ | ✓ | Both present |
-| `resource.ssl` | ✓ | ✓ | Both present |
-| `resource.first_byte` | ✓ | ✓ | Both present |
-| `resource.download` | ✓ | ✓ | Both present |
-| `resource.worker` | ✓ | ✗ | v6 only (Web Worker) |
-| `resource.graphql` | ✓ | ✓ | Both present, but v8 missing `variables` |
-| `resource.request.headers` | ✓ | ✗ | v6 only |
-| `resource.response.headers` | ✓ | ✗ | v6 only |
-| `_dd.page_states` | ✓ | ✗ | v6 only |
+| Field | Value | Category |
+|---|---|---|
+| `_dd.configuration.session_replay_sample_rate` | `0` | Session Replay |
+| `_dd.configuration.profiling_sample_rate` | `0` | Internal config |
+| `_dd.configuration.beta_encode_cookie_options` | `false` | Removed in v7 |
+| `_dd.sdk_name` | `"rum"` | Intentionally skipped |
+| `_dd.discarded` | `false` | Internal sampling flag |
+| `session.has_replay` | `undefined` | Session Replay |
+| `session.sampled_for_replay` | `undefined` | Session Replay |
+| `session.is_active` | `undefined` | Session Replay (only set on views) |
+| `resource.graphql` | `undefined` | GraphQL tracking not implemented |
+| `resource.download.duration` | `900000` | v6 uses nested sub-object for download |
+| `resource.download.start` | `1800000` | v6 uses nested sub-object for download |
 
-**CRITICAL GAPS:**
-- v8 is missing: `resource.id`, `resource.worker`, request/response headers, `graphql.variables`
+### Only in v8 (5 fields)
+
+| Field | Notes |
+|---|---|
+| `resource.redirect` | v8 exposes redirect timing phase |
+| `resource.dns` | v8 exposes DNS timing phase |
+| `resource.connect` | v8 exposes connect timing phase |
+| `resource.ssl` | v8 exposes SSL timing phase |
+| `resource.download` | v8 uses flat field (vs v6's nested `download.duration/start`) |
 
 ---
 
-## ACTION EVENT COMPARISON
+## Remaining Differences by Category
 
-### v6 Action Event
+### Session Replay (out of scope — 10 fields)
 
-```
-type: 'action'
-date: <timestamp>
-action: {
-  id: <uuid>
-  type: <ActionType> ('click' | 'custom' | 'tap' | 'scroll' | 'swipe' | 'application_start' | 'back')
-  target: {
-    name: <string>
-  }
-  loading_time?: <duration_ms>
-  error?: { count: <number> }
-  long_task?: { count: <number> }
-  resource?: { count: <number> }
-  frustration?: {
-    type: <FrustrationType[]> ('rage_click' | 'error_click' | 'dead_click')
-  }
-}
+These will be implemented when Session Replay is built as a separate module:
 
-view?: {
-  in_foreground: <boolean>
-}
+- `session.has_replay` — whether session is being recorded
+- `session.sampled_for_replay` — replay sampling decision
+- `_dd.replay_stats` — replay recording statistics
+- `_dd.configuration.session_replay_sample_rate` — replay sample rate config
+- `_dd.configuration.start_session_replay_recording_manually` — manual recording config
+- `privacy.replay_level` — privacy masking level
 
-_dd?: {
-  action?: {
-    target?: {
-      selector?: <string> (CSS selector)
-      width?: <number>
-      height?: <number>
-      composed_path_selector?: <string> (full path)
-    }
-    name_source?: <string> ('event_target' | 'body_click_listener' | etc.)
-    position?: {
-      x: <number>
-      y: <number>
-    }
-    pointer_up_delay?: <duration_ms>
-  }
-}
+### Deprecated metrics (3 fields)
 
-context?: <object> (for manual actions)
+FID (First Input Delay) was deprecated by Chrome in favor of INP:
 
-// Common fields:
-session: { id, type, has_replay, ... }
-view: { id }
-service?: <string>
-version?: <string>
-ddtags?: <string>
-```
+- `view.first_input_delay`
+- `view.first_input_time`
+- `view.first_input_target_selector`
 
-### v8 Action Event
+### Internal config (3 fields)
 
-```
-type: 'action'
-date: <timestamp>
-action: {
-  id: <uuid>
-  type: <ActionType> ('click' | 'custom')
-  target: {
-    name: <string>
-  }
-  loading_time?: <duration_ms>
-  error: { count: <number> }
-  long_task: { count: <number> }
-  resource: { count: <number> }
-  frustration?: {
-    type: <FrustrationType[]>
-  }
-}
+Configuration values reported in `_dd.configuration`:
 
-_dd: {
-  format_version: 2
-  browser_sdk_version?: <string>
-  drift: <number>
-  action?: {
-    target?: {
-      selector?: <string>
-      width?: <number>
-      height?: <number>
-    }
-    name_source?: <string>
-    position?: { x: <number>, y: <number> }
-    pointer_up_delay?: <duration_ms>
-  }
-}
+- `_dd.configuration.profiling_sample_rate` — profiling not in v8
+- `_dd.configuration.beta_encode_cookie_options` — removed in v7
+- `_dd.sdk_name` — intentionally skipped
 
-context?: <object> (for manual actions)
+### Not implemented (3 fields)
 
-// Common fields:
-session: { id }
-view: { id }
-source: 'browser'
-service?: <string>
-version?: <string>
-ddtags?: <string>
-```
+- `error.component_stack` — handled by framework packages (rum-react, rum-vue)
+- `error.csp` — CSP violation details
+- `resource.graphql` — GraphQL request tracking
 
-### Action Event Gap Analysis
+### Internal flags (1 field)
 
-| Field | v6 | v8 | Notes |
-|-------|----|----|-------|
-| `action.id` | ✓ | ✓ | Both present |
-| `action.type` | ✓ | Δ | v6 has 7 types, v8 has 2 (click, custom) |
-| `action.target.name` | ✓ | ✓ | Both present |
-| `action.loading_time` | ✓ | ✓ | Both present |
-| `action.error.count` | ✓ | ✓ | Both present |
-| `action.long_task.count` | ✓ | ✓ | Both present |
-| `action.resource.count` | ✓ | ✓ | Both present |
-| `action.frustration.type` | ✓ | ✓ | Both present |
-| `view.in_foreground` | ✓ | ✗ | v6 only |
-| `_dd.action.target.composed_path_selector` | ✓ | ✗ | v6 only |
-| `_dd.action.target.selector` | ✓ | ✓ | Both present |
-| `_dd.action.target.width` | ✓ | ✓ | Both present |
-| `_dd.action.target.height` | ✓ | ✓ | Both present |
-| `_dd.action.name_source` | ✓ | ✓ | Both present |
-| `_dd.action.position` | ✓ | ✓ | Both present |
-| `_dd.action.pointer_up_delay` | ✓ | ✓ | Both present |
+- `_dd.discarded` — internal sampling discard flag
 
-**CRITICAL GAPS:**
-- v8 is missing: action types (tap, scroll, swipe, application_start, back), `view.in_foreground`, `composed_path_selector`
-- v8 moves `_dd` fields to top-level enricher (loses details for custom actions)
+### Minor behavioral differences (3 items)
+
+- **CLS rounding**: v6 rounds to 4 decimal places, v8 sends full precision
+- **Page state start**: v6 uses relative-to-navigation start time, v8 uses 0
+- **Referrer on route_change**: v6 includes previous URL, v8 sends empty string
 
 ---
 
-## ERROR EVENT COMPARISON
+## Test Configuration
 
-### v6 Error Event
+```typescript
+// v6
+datadogRum.init({
+  clientToken: 'pub_playground_v6',
+  applicationId: 'playground-app-v6',
+  site: 'datadoghq.com',
+  service: 'playground',
+  version: '0.1.0',
+  proxy: (options) => `/intake/v6${options.path}?${options.parameters}`,
+})
 
-```
-type: 'error'
-date: <timestamp>
-error: {
-  id: <uuid>
-  type?: <string> (e.g., 'ReferenceError', 'TypeError', etc.)
-  message: <string>
-  stack?: <string> (JavaScript stack trace)
-  handling_stack?: <string> (custom handling context)
-  component_stack?: <string> (React component stack)
-  source: <ErrorSource> ('console', 'logger', 'agent', 'custom', 'network', 'source')
-  handling?: <ErrorHandling> ('handled' | 'unhandled')
-  fingerprint?: <string> (error fingerprint)
-  causes?: [
-    {
-      type?: <string>
-      message?: <string>
-      stack?: <string>
-    }
-  ]
-  source_type: 'browser'
-  csp?: {
-    document_uri?: <string>
-    violated_directive?: <string>
-    effective_directive?: <string>
-    original_policy?: <string>
-    blocked_uri?: <string>
-    status_code?: <number>
-  }
-}
-
-view?: {
-  in_foreground: <boolean>
-}
-
-// Common fields:
-session: { id, type, has_replay, ... }
-view: { id }
-service?: <string>
-version?: <string>
-context?: <object>
-ddtags?: <string>
+// v8
+createSdk({
+  clientToken: 'pub_playground_v8',
+  site: 'datadoghq.com',
+  service: 'playground',
+  version: '0.1.0',
+  sessionCookieName: '_dd_s_v8',
+  proxy: (options) => `/intake/v8${options.path}?${options.parameters}`,
+  modules: [logsProcessor, rumProcessor],
+  rum: { applicationId: 'playground-app-v8' },
+})
 ```
 
-### v8 Error Event
+## Test Procedure
 
-```
-type: 'error'
-date: <timestamp>
-error: {
-  message: <string>
-  type?: <string>
-  stack?: <string>
-  source: <string>
-  fingerprint?: <string>
-  causes?: [
-    {
-      type?: <string>
-      message?: <string>
-      stack?: <string>
-    }
-  ]
-}
-
-_dd: {
-  format_version: 2
-  browser_sdk_version?: <string>
-  drift: <number>
-}
-
-// Common fields:
-session: { id }
-view: { id }
-source: 'browser'
-service?: <string>
-version?: <string>
-ddtags?: <string>
-```
-
-### Error Event Gap Analysis
-
-| Field | v6 | v8 | Notes |
-|-------|----|----|-------|
-| `error.id` | ✓ | ✗ | v6 only (UUID) |
-| `error.message` | ✓ | ✓ | Both present |
-| `error.type` | ✓ | ✓ | Both present |
-| `error.stack` | ✓ | ✓ | Both present |
-| `error.handling_stack` | ✓ | ✗ | v6 only |
-| `error.component_stack` | ✓ | ✗ | v6 only (React) |
-| `error.source` | ✓ | ✓ | Both present |
-| `error.source_type` | ✓ | ✗ | v6 only (always 'browser') |
-| `error.handling` | ✓ | ✗ | v6 only |
-| `error.fingerprint` | ✓ | ✓ | Both present |
-| `error.causes` | ✓ | ✓ | Both present |
-| `error.csp` | ✓ | ✗ | v6 only |
-| `view.in_foreground` | ✓ | ✗ | v6 only |
-
-**CRITICAL GAPS:**
-- v8 is missing: `error.id`, `error.handling_stack`, `error.component_stack`, `error.source_type`, `error.handling`, `error.csp`, `view.in_foreground`
-
----
-
-## LONG_TASK EVENT COMPARISON
-
-### v6 Long Task Event (Simple)
-
-```
-type: 'long_task'
-date: <timestamp>
-long_task: {
-  id: <uuid>
-  entry_type: 'long-task'
-  duration: <duration_ms>
-}
-
-_dd: {
-  discarded: <boolean>
-}
-
-// Common fields:
-session: { id, type, has_replay, ... }
-view: { id }
-service?: <string>
-version?: <string>
-ddtags?: <string>
-```
-
-### v6 Long Animation Frame Event (LoAF)
-
-```
-type: 'long_task' // Ingested as Long Task
-date: <timestamp>
-long_task: {
-  id: <uuid>
-  entry_type: 'long-animation-frame'
-  duration: <duration_ms>
-  blocking_duration: <duration_ms>
-  first_ui_event_timestamp: <duration_ms>
-  render_start: <duration_ms>
-  style_and_layout_start: <duration_ms>
-  start_time: <duration_ms>
-  scripts: [
-    {
-      duration: <duration_ms>
-      pause_duration: <duration_ms>
-      forced_style_and_layout_duration: <duration_ms>
-      start_time: <duration_ms>
-      execution_start: <duration_ms>
-      source_url: <string> (script URL)
-      source_function_name: <string>
-      source_char_position: <number>
-      invoker: <string>
-      invoker_type: <InvokerType> ('user-callback' | 'event-listener' | 'resolve-promise' | 'reject-promise' | 'classic-script' | 'module-script')
-      window_attribution: <string>
-    }
-  ]
-}
-
-_dd: {
-  discarded: <boolean>
-}
-
-// Common fields:
-session: { id, type, has_replay, ... }
-view: { id }
-service?: <string>
-version?: <string>
-ddtags?: <string>
-```
-
-### v8 Long Task Event
-
-```
-type: 'long_task'
-date: <timestamp>
-long_task: {
-  duration: <duration_ms>
-  blocking_duration?: <duration_ms>
-  render_start?: <duration_ms>
-  style_and_layout_start?: <duration_ms>
-}
-
-scripts?: [
-  {
-    source_url: <string>
-    source_function_name: <string>
-    invoker: <string>
-    invoker_type: <string>
-    duration: <duration_ms>
-    execution_start: <duration_ms>
-    pause_duration: <duration_ms>
-    forced_style_and_layout_duration: <duration_ms>
-    window_attribution: <string>
-  }
-]
-
-_dd: {
-  format_version: 2
-  browser_sdk_version?: <string>
-  drift: <number>
-}
-
-// Common fields:
-session: { id }
-view: { id }
-source: 'browser'
-service?: <string>
-version?: <string>
-ddtags?: <string>
-```
-
-### Long Task Event Gap Analysis
-
-| Field | v6 | v8 | Notes |
-|-------|----|----|-------|
-| `long_task.id` | ✓ | ✗ | v6 only |
-| `long_task.entry_type` | ✓ | ✗ | v6 only ('long-task' or 'long-animation-frame') |
-| `long_task.duration` | ✓ | ✓ | Both present |
-| `long_task.blocking_duration` | ✓ | ✓ | Both present (LoAF only in v6) |
-| `long_task.render_start` | ✓ | ✓ | Both present (LoAF only in v6) |
-| `long_task.style_and_layout_start` | ✓ | ✓ | Both present (LoAF only in v6) |
-| `long_task.first_ui_event_timestamp` | ✓ | ✗ | v6 only |
-| `long_task.start_time` | ✓ | ✗ | v6 only (LoAF) |
-| `scripts` | ✓ | ✓ | Both present (LoAF only in v6, top-level in v8) |
-| `_dd.discarded` | ✓ | ✗ | v6 only |
-
-**CRITICAL GAPS:**
-- v8 is missing: `long_task.id`, `long_task.entry_type`, `long_task.first_ui_event_timestamp`, `long_task.start_time`, `_dd.discarded`
-- v8 doesn't distinguish between simple long tasks and LoAF in the payload structure
-
----
-
-## VITAL EVENT (Not Covered in Detail)
-- Both v6 and v8 have minimal implementation
-- Format differs but same basic fields (`vital.id`, `vital.name`, `vital.type`)
-
----
-
-## COMMON FIELDS ACROSS ALL EVENTS
-
-### v6 (Added by Assembly Hooks)
-```
-session: {
-  id: <string>
-  type: 'user'
-  has_replay?: <boolean> (views only)
-  sampled_for_replay?: <boolean> (views only)
-  is_active?: <boolean> (views only)
-}
-view: {
-  id: <string>
-  name?: <string>
-}
-service?: <string>
-version?: <string>
-context?: <object>
-ddtags?: <string> (format: "sdk_version:x.y.z,env:prod,service:app,version:1.0.0")
-```
-
-### v8 (Added by Enrichers)
-```
-session: {
-  id: <string>
-}
-view: {
-  id: <string>
-}
-source: 'browser'
-service?: <string>
-version?: <string>
-ddtags?: <string>
-application?: {
-  id: <string>
-}
-_dd: {
-  format_version: 2 (always)
-  browser_sdk_version?: <string>
-  drift: <number> (time difference between device and server)
-  configuration?: {
-    session_sample_rate?: <number>
-    session_replay_sample_rate?: <number>
-    trace_sample_rate?: <number>
-  }
-}
-usr?: <object> (user context)
-account?: <object> (account context)
-```
-
----
-
-## SUMMARY OF CRITICAL MISSING FIELDS IN v8
-
-### High Impact (Used by Backend/UX)
-1. **View Events:**
-   - `view.time_spent` (changed to `duration`)
-   - `view.first_byte`, `view.dom_*`, `view.load_event`
-   - `view.performance` (detailed metrics)
-   - `device` info (locale, locales, time_zone)
-   - `display.scroll` metrics
-   - `_dd.document_version`, `_dd.replay_stats`
-   - `session.has_replay`, `session.sampled_for_replay`, `session.is_active`
-
-2. **Resource Events:**
-   - `resource.id`
-   - `resource.worker` (Web Worker detection)
-   - Request/response headers
-
-3. **Action Events:**
-   - Multiple action types (tap, scroll, swipe, application_start, back)
-   - `view.in_foreground`
-   - `composed_path_selector`
-
-4. **Error Events:**
-   - `error.id`, `error.handling_stack`, `error.component_stack`
-   - `error.handling`, `error.csp`
-   - `view.in_foreground`
-
-5. **Long Task Events:**
-   - `long_task.id`, `long_task.entry_type`
-   - `first_ui_event_timestamp`, `start_time` (LoAF)
-   - No distinction between simple long task and LoAF
-
-### Medium Impact
-- `_dd` fields (page_states, configuration details moved to top-level)
-- Session replay context (moved/missing)
-
-### Low Impact
-- Event count discrepancies
-- Some optional timing fields
-
----
-
-## KEY DIFFERENCES IN STRUCTURE
-
-| Aspect | v6 | v8 |
-|--------|----|----|
-| **Session Fields** | Has replay status, type | Only has ID |
-| **Performance Metrics** | Detailed with sub_parts, targets | Simplified, basic metrics |
-| **Action Types** | 7 types | 2 types (click, custom) |
-| **Field Names** | Some v6-specific naming | Aligned to newer specs |
-| **Common Fields Location** | Merged at assembly | Added by enrichers |
-| **_dd Structure** | Event-specific details | Standardized (format_version, sdk_version, drift, config) |
-| **Device Info** | Explicit device object | Missing |
-| **Timing Details** | Comprehensive | Basic durations only |
-
----
-
-## RECOMMENDATIONS FOR MIGRATION
-
-1. **Backend Impact:** v8 is missing fields that v6 sends. Ensure backend can handle missing fields gracefully.
-2. **Analytics Impact:** Queries relying on `view.performance`, `device.*`, `session.has_replay` will fail.
-3. **UI Impact:** Dashboards showing detailed metrics (`first_byte`, `dom_*`) will need adjustment.
-4. **Data Integrity:** v8 doesn't send resource.id, long_task.id — potential issues with deduplication.
-5. **Session Replay:** Missing `session.has_replay` and `session.sampled_for_replay` may affect replay detection.
-
+1. Both SDKs initialized on page load
+2. `DD_RUM.addError(new Error('report test'), { report: true })` + `sdkV8.rum.addError(...)` triggered simultaneously
+3. `DD_RUM.startView({ name: 'report-view' })` + `sdkV8.rum.startView('report-view')` triggered simultaneously
+4. Events captured via `__ddBrowserSdkExtensionCallback` within 3 seconds
+5. Deep field-by-field comparison using recursive key flattening
