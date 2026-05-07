@@ -240,39 +240,24 @@ e2e:
   extends:
     - .base-configuration
     - .test-allowed-branches
+    - .resource-allocation-4-cpus
   interruptible: true
+  parallel:
+    matrix:
+      - BROWSER: [chromium, firefox-pinned, webkit-pinned]
   artifacts:
     when: always
     reports:
       junit: test-report/e2e/*.xml
   script:
     - yarn
-    # Browsers are pre-installed in the CI image. If playwright is upgraded without rebuilding
-    # the image, this job will crash — rebuild the image to fix it.
-    - FORCE_COLOR=1 yarn test:e2e:ci
+    - yarn build
+    - yarn build:apps
+    # Browsers are pre-installed in the CI image. If playwright (current or pinned 1.40.1)
+    # is upgraded without rebuilding the image, this job will crash — rebuild the image to fix it.
+    - FORCE_COLOR=1 PW_BROWSER=$BROWSER yarn test:e2e --project=$BROWSER
   after_script:
     - node ./scripts/test/export-test-result.ts e2e
-
-# Note: e2e and e2e-pinned are kept separate for now. They should eventually be merged into a
-# single job running all browsers.
-e2e-pinned:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-    - .resource-allocation-4-cpus
-  interruptible: true
-  artifacts:
-    when: always
-    reports:
-      junit: test-report/e2e-pinned/*.xml
-  script:
-    - yarn
-    - yarn build && yarn build:apps
-    # Browsers are pre-installed in the CI image. If the pinned playwright version changes
-    # without rebuilding the image, this job will crash — rebuild the image to fix it.
-    - FORCE_COLOR=1 yarn test:e2e:pinned
-  after_script:
-    - node ./scripts/test/export-test-result.ts e2e-pinned
 
 check-licenses:
   extends:
@@ -327,26 +312,6 @@ unit-bs:
     - node scripts/test/ci-bs.ts test:unit
   after_script:
     - node ./scripts/test/export-test-result.ts unit-bs
-
-e2e-bs:
-  stage: browserstack
-  needs: ['e2e']
-  extends:
-    - .base-configuration
-    - .bs-allowed-branches
-    - .resource-allocation-4-cpus
-  interruptible: true
-  resource_group: browserstack
-  timeout: 35 minutes
-  artifacts:
-    when: always
-    reports:
-      junit: test-report/e2e-bs/*.xml
-  script:
-    - yarn
-    - FORCE_COLOR=1 node scripts/test/ci-bs.ts test:e2e:ci
-  after_script:
-    - node ./scripts/test/export-test-result.ts e2e-bs
 
 script-tests:
   extends:

@@ -73,9 +73,8 @@ All E2E test files follow this pattern:
 
 ### Configuration Files
 
-- `playwright.local.config.ts` - Local development
-- `playwright.bs.config.ts` - BrowserStack cloud testing
-- `playwright.base.config.ts` - Base configuration
+- `playwright.config.ts` - Project list and webServer wiring (current + pinned browsers)
+- `playwright.base.config.ts` - Base configuration shared across runs
 
 ## Writing E2E Tests
 
