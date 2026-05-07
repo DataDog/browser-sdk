@@ -816,5 +816,5 @@ function createClassWithOverloadedMethodInPrototypeChain<T extends new (...args:
 
   class SubKlass extends Klass {}
 
-  return SubKlass as T
+  return SubKlass
 }
