@@ -316,7 +316,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-debugger@workspace:packages/debugger"
   dependencies:
-    "@datadog/browser-core": "npm:6.32.0"
+    "@datadog/browser-core": "npm:6.33.0"
     acorn: "npm:8.16.0"
   languageName: unknown
   linkType: soft

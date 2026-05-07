@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-debugger",
-  "version": "6.32.0",
+  "version": "6.33.0",
   "private": true,
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
@@ -23,7 +23,7 @@
     "acorn": "8.16.0"
   },
   "dependencies": {
-    "@datadog/browser-core": "6.32.0"
+    "@datadog/browser-core": "6.33.0"
   },
   "repository": {
     "type": "git",
