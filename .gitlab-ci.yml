@@ -261,6 +261,8 @@ e2e-build:
       - test/apps/react-router-v7-app/
       - test/apps/cdn-extension/
       - test/apps/appendChild-extension/
+      # Developer extension build (consumed by developerExtension.scenario.ts)
+      - developer-extension/dist
     expire_in: 1 day
 
 e2e:
