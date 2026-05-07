@@ -5,7 +5,7 @@ import { config as baseConfig } from './playwright.base.config'
 // Local equivalent of the BrowserStack matrix in browsers.conf.js (Firefox 119 + WebKit 17.4)
 // without BrowserStack. The pipeline:
 //   1) `playwright run-server` on port 5401 from Playwright 1.40.1 (bundles FF 119, WK 17.4).
-//   2) A small translation proxy on port 5400 (test/e2e/scripts/pinned-proxy.mjs) that
+//   2) A small translation proxy on port 5400 (test/e2e/scripts/pinnedProxy.ts) that
 //      spoofs the User-Agent the 1.40 server's version check expects, and patches
 //      __create__ messages so the 1.58 client's strict initializer validators accept
 //      messages produced by the 1.40 server.
@@ -29,8 +29,8 @@ const pinnedWebServers = [
     name: 'pinned proxy',
     stdout: 'pipe' as const,
     cwd: proxyDir,
-    command: 'node pinned-proxy.mjs --listen 5400 --upstream 127.0.0.1:5401',
-    wait: { stdout: /pinned-proxy] listening/ },
+    command: 'node pinnedProxy.ts --listen 5400 --upstream 127.0.0.1:5401',
+    wait: { stdout: /pinnedProxy] listening/ },
   },
 ]
 
