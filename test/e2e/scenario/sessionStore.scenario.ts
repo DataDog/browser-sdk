@@ -52,11 +52,12 @@ test.describe('Session Stores', () => {
         .withHostName(FULL_HOSTNAME)
         .run(async ({ browserContext }) => {
           const cookies = await browserContext.cookies()
-          expect(cookies).toEqual([
+          const sessionCookie = cookies.find((c) => c.name === SESSION_STORE_KEY)
+          expect(sessionCookie).toEqual(
             expect.objectContaining({
               domain: FULL_HOSTNAME,
-            }),
-          ])
+            })
+          )
         })
 
       createTest('when injected in a iframe without `src`, the cookie should be stored on the parent window domain')
@@ -72,11 +73,12 @@ test.describe('Session Stores', () => {
           await flushEvents()
 
           const cookies = await browserContext.cookies()
-          expect(cookies).toEqual([
+          const sessionCookie = cookies.find((c) => c.name === SESSION_STORE_KEY)
+          expect(sessionCookie).toEqual(
             expect.objectContaining({
               domain: FULL_HOSTNAME,
-            }),
-          ])
+            })
+          )
           expect(intakeRegistry.rumViewEvents.map((event) => event.view.url)).toEqual(
             expect.arrayContaining([baseUrl, 'about:blank'])
           )
@@ -89,11 +91,12 @@ test.describe('Session Stores', () => {
         .withHostName(FULL_HOSTNAME)
         .run(async ({ browserContext }) => {
           const cookies = await browserContext.cookies()
-          expect(cookies).toEqual([
+          const sessionCookie = cookies.find((c) => c.name === SESSION_STORE_KEY)
+          expect(sessionCookie).toEqual(
             expect.objectContaining({
               domain: MAIN_HOSTNAME,
-            }),
-          ])
+            })
+          )
         })
 
       createTest('when injected in a iframe without `src`, the cookie should be stored on the parent window domain')
@@ -109,11 +112,12 @@ test.describe('Session Stores', () => {
           await flushEvents()
 
           const cookies = await browserContext.cookies()
-          expect(cookies).toEqual([
+          const sessionCookie = cookies.find((c) => c.name === SESSION_STORE_KEY)
+          expect(sessionCookie).toEqual(
             expect.objectContaining({
               domain: MAIN_HOSTNAME,
-            }),
-          ])
+            })
+          )
           expect(intakeRegistry.rumViewEvents.map((event) => event.view.url)).toEqual(
             expect.arrayContaining([baseUrl, 'about:blank'])
           )
@@ -259,6 +263,7 @@ async function getSessionIdFromMemory(page: Page): Promise<string | undefined> {
 }
 
 async function getSessionIdFromCookie(browserContext: BrowserContext): Promise<string | undefined> {
-  const [cookie] = await browserContext.cookies()
-  return cookie.value.match(SESSION_ID_REGEX)?.[1]
+  const cookies = await browserContext.cookies()
+  const sessionCookie = cookies.find((c) => c.name === SESSION_STORE_KEY)
+  return sessionCookie?.value.match(SESSION_ID_REGEX)?.[1]
 }
