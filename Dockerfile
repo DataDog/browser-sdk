@@ -39,9 +39,9 @@ RUN curl --silent --show-error --fail http://dl.google.com/linux/chrome/deb/pool
 ARG PLAYWRIGHT_VERSION
 RUN npx -y playwright@${PLAYWRIGHT_VERSION} install --with-deps chromium
 
-# Pinned Playwright browsers: Firefox 119 + WebKit 17.4 (used by the e2e-pinned job)
+# Pinned Playwright browsers: Chromium 120 + Firefox 119 + WebKit 17.4 (used by the e2e-pinned job)
 ARG PINNED_PLAYWRIGHT_VERSION=1.40.1
-RUN npx -y playwright@${PINNED_PLAYWRIGHT_VERSION} install --with-deps firefox webkit
+RUN npx -y playwright@${PINNED_PLAYWRIGHT_VERSION} install --with-deps chromium firefox webkit
 
 
 # Install AWS cli

@@ -6,9 +6,10 @@ import { getTestReportDirectory } from '../envUtils'
 // Single config covering all e2e browser configurations:
 //
 // - chromium / firefox / webkit / android: current Playwright (1.58)-bundled browsers.
-// - firefox-pinned (FF 119) / webkit-pinned (WK 17.4): replicate the old BrowserStack
-//   matrix locally via a pinned Playwright 1.40.1 `run-server` and a translation proxy
-//   (test/e2e/scripts/pinnedProxy.ts) that bridges the 1.58 client and the 1.40 server.
+// - chromium-pinned (Chrome 120) / firefox-pinned (FF 119) / webkit-pinned (WK 17.4):
+//   replicate the old BrowserStack matrix locally via a pinned Playwright 1.40.1
+//   `run-server` and a translation proxy (test/e2e/scripts/pinnedProxy.ts) that bridges
+//   the 1.58 client and the 1.40 server.
 //
 // The pinned web servers (`run-server` + proxy) only boot when at least one selected
 // project is pinned, so non-pinned runs don't pay the boot cost. Selection is read from
@@ -122,6 +123,7 @@ export default defineConfig({
     project('firefox', 'Desktop Firefox'),
     project('webkit', 'Desktop Safari'),
     project('android', 'Pixel 7'),
+    pinnedProject('chromium-pinned', 'Chromium 120', 'Desktop Chrome', '120'),
     pinnedProject('firefox-pinned', 'Firefox 119', 'Desktop Firefox', '119'),
     pinnedProject('webkit-pinned', 'WebKit 17.4', 'Desktop Safari', '17.4'),
   ],

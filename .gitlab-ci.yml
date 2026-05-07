@@ -244,7 +244,7 @@ e2e:
   interruptible: true
   parallel:
     matrix:
-      - BROWSER: [chromium, firefox-pinned, webkit-pinned]
+      - BROWSER: [chromium, chromium-pinned, firefox-pinned, webkit-pinned]
   artifacts:
     when: always
     reports:
