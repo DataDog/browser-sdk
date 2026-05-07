@@ -188,4 +188,85 @@ test.describe('GraphQL tracking', () => {
         payload: undefined,
       })
     })
+
+  createTest('use operationType from POST body when query field is absent')
+    .withRum(buildGraphQlConfig())
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() =>
+        window.fetch('/graphql', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            operationName: 'CreateUser',
+            operationType: 'mutation',
+            variables: { name: 'Alice' },
+          }),
+        })
+      )
+
+      await flushEvents()
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.url.includes('/graphql'))!
+      expect(resourceEvent).toBeDefined()
+      expect(resourceEvent.resource.graphql).toEqual({
+        operationType: 'mutation',
+        operationName: 'CreateUser',
+        variables: '{"name":"Alice"}',
+        payload: undefined,
+      })
+    })
+
+  createTest('query field operationType takes precedence over explicit operationType in POST body')
+    .withRum(buildGraphQlConfig())
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() =>
+        window.fetch('/graphql', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: 'query GetUser { user { id } }',
+            operationName: 'GetUser',
+            operationType: 'mutation',
+          }),
+        })
+      )
+
+      await flushEvents()
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.url.includes('/graphql'))!
+      expect(resourceEvent).toBeDefined()
+      expect(resourceEvent.resource.graphql?.operationType).toBe('query')
+    })
+
+  createTest('use operationType from GET URL params when query param is absent')
+    .withRum(buildGraphQlConfig())
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        const url = `/graphql?operationName=CreateUser&operationType=mutation&variables=${encodeURIComponent(JSON.stringify({ name: 'Bob' }))}`
+        return window.fetch(url, { method: 'GET' })
+      })
+
+      await flushEvents()
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.url.includes('/graphql'))!
+      expect(resourceEvent).toBeDefined()
+      expect(resourceEvent.resource.method).toBe('GET')
+      expect(resourceEvent.resource.graphql).toEqual({
+        operationType: 'mutation',
+        operationName: 'CreateUser',
+        variables: '{"name":"Bob"}',
+        payload: undefined,
+      })
+    })
+
+  createTest('query param operationType takes precedence over explicit operationType GET URL param')
+    .withRum(buildGraphQlConfig())
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        const url = `/graphql?query=${encodeURIComponent('query GetUser { user { id } }')}&operationName=GetUser&operationType=mutation`
+        return window.fetch(url, { method: 'GET' })
+      })
+
+      await flushEvents()
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.url.includes('/graphql'))!
+      expect(resourceEvent).toBeDefined()
+      expect(resourceEvent.resource.graphql?.operationType).toBe('query')
+    })
 })
