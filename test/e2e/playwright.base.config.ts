@@ -9,7 +9,11 @@ const testReportDirectory = getTestReportDirectory()
 const reporters: ReporterDescription[] = [['line'], ['./noticeReporter.ts']]
 
 if (testReportDirectory) {
-  reporters.push(['junit', { outputFile: path.join(process.cwd(), testReportDirectory, 'results.xml') }])
+  // Multiple matrix cells (one per --project) write into the same folder; include the
+  // project name in the filename so they don't collide. PW_BROWSER is set by CI; locally
+  // it falls back to a single shared filename.
+  const junitFilename = process.env.PW_BROWSER ? `results-${process.env.PW_BROWSER}.xml` : 'results.xml'
+  reporters.push(['junit', { outputFile: path.join(process.cwd(), testReportDirectory, junitFilename) }])
 } else {
   reporters.push(['html'])
 }
