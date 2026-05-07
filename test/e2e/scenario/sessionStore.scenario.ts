@@ -141,7 +141,11 @@ test.describe('Session Stores', () => {
         .withRum({ usePartitionedCrossSiteSessionCookie: true })
         .withLogs({ usePartitionedCrossSiteSessionCookie: false })
         .withHostName(FULL_HOSTNAME)
-        .run(async ({ page }) => {
+        .run(async ({ page, browserName }) => {
+          test.skip(
+            browserName === 'webkit',
+            'Safari/webkit refuses to set "partitioned" cookies on localhost, so the SDK doesn\'t start.'
+          )
           await page.waitForTimeout(1000)
 
           const [rumInternalContext, logsInternalContext] = await page.evaluate(() => [
@@ -149,8 +153,8 @@ test.describe('Session Stores', () => {
             window.DD_LOGS?.getInternalContext(),
           ])
 
-          expect(rumInternalContext).toBeDefined()
-          expect(logsInternalContext).toBeDefined()
+          expect.soft(rumInternalContext).toBeDefined()
+          expect.soft(logsInternalContext).toBeDefined()
         })
     })
 
