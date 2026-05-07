@@ -57,7 +57,7 @@ describe('collect fetch', () => {
       fetch(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
       mockFetchManager.whenAllComplete(() => {
-        expect(startSpy).toHaveBeenCalledWith({ requestIndex: expect.any(Number) as unknown as number, url: FAKE_URL })
+        expect(startSpy).toHaveBeenCalledWith({ requestIndex: expect.any(Number), url: FAKE_URL })
         resolve()
       })
     }))
@@ -235,8 +235,8 @@ describe('collect xhr', () => {
         },
         onComplete() {
           expect(startSpy).toHaveBeenCalledWith({
-            requestIndex: expect.any(Number) as unknown as number,
-            url: expect.stringMatching(/\/ok$/) as unknown as string,
+            requestIndex: expect.any(Number),
+            url: expect.stringMatching(/\/ok$/),
           })
           resolve()
         },

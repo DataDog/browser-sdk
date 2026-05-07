@@ -35,7 +35,7 @@ describe('trackMediaInteraction', () => {
       timestamp: expect.any(Number),
       data: {
         source: IncrementalSource.MediaInteraction,
-        id: expect.any(Number) as unknown as number,
+        id: expect.any(Number),
         type: MediaInteractionType.Play,
       },
     })
@@ -50,7 +50,7 @@ describe('trackMediaInteraction', () => {
       timestamp: expect.any(Number),
       data: {
         source: IncrementalSource.MediaInteraction,
-        id: expect.any(Number) as unknown as number,
+        id: expect.any(Number),
         type: MediaInteractionType.Pause,
       },
     })

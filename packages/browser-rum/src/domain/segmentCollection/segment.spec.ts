@@ -1,5 +1,5 @@
 import { vi, beforeEach, describe, expect, it } from 'vitest'
-import type { DeflateEncoder, TimeStamp, Uint8ArrayBuffer } from '@datadog/browser-core'
+import type { DeflateEncoder, TimeStamp } from '@datadog/browser-core'
 import { noop, setDebugMode, DeflateEncoderStreamId } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
@@ -111,7 +111,7 @@ describe('Segment', () => {
       },
       RECORD_STATS,
       {
-        output: expect.any(Uint8Array) as unknown as Uint8ArrayBuffer,
+        output: expect.any(Uint8Array),
         outputBytesCount:
           ENCODED_SEGMENT_HEADER_BYTES_COUNT +
           ENCODED_RECORD_BYTES_COUNT +

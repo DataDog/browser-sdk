@@ -56,7 +56,7 @@ routerVersions.forEach(({ version, createMemoryRouter }) => {
           configuration: {},
         })
 
-        startReactRouterView([] as unknown as RouteMatchV6[] & RouteMatchV7[])
+        startReactRouterView([])
         expect(displayWarnSpy).toHaveBeenCalledTimes(1)
         expect(displayWarnSpy).toHaveBeenCalledWith(
           '`router: true` is missing from the react plugin configuration, the view will not be tracked.'

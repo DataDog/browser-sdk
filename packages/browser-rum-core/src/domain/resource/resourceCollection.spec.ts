@@ -110,7 +110,7 @@ describe('resourceCollection', () => {
 
     expect(rawRumEvents[0].startClocks.relative).toBe(200 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
-      date: expect.any(Number) as unknown as TimeStamp,
+      date: expect.any(Number),
       resource: {
         id: expect.any(String),
         duration: (100 * 1e6) as ServerDuration,

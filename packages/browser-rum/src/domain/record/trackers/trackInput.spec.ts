@@ -48,7 +48,7 @@ describe('trackInput', () => {
       data: {
         source: IncrementalSource.Input,
         text: 'foo',
-        id: expect.any(Number) as unknown as number,
+        id: expect.any(Number),
       },
     })
   })
@@ -67,7 +67,7 @@ describe('trackInput', () => {
       data: {
         source: IncrementalSource.Input,
         text: 'foo',
-        id: expect.any(Number) as unknown as number,
+        id: expect.any(Number),
       },
     })
   })
@@ -107,7 +107,7 @@ describe('trackInput', () => {
       data: {
         source: IncrementalSource.Input,
         text: 'foo',
-        id: expect.any(Number) as unknown as number,
+        id: expect.any(Number),
       },
     })
   })

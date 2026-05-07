@@ -24,7 +24,7 @@ describe('startVueRouterView', () => {
   it('warns if router: true is missing from plugin config', () => {
     const warnSpy = vi.spyOn(display, 'warn')
     initializeVuePlugin({ configuration: {} })
-    startVueRouterView([] as unknown as RouteLocationMatched[], '/')
+    startVueRouterView([], '/')
     expect(warnSpy).toHaveBeenCalledTimes(1)
     expect(warnSpy).toHaveBeenCalledWith(
       '`router: true` is missing from the vue plugin configuration, the view will not be tracked.'

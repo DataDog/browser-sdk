@@ -491,7 +491,7 @@ describe('formatError', () => {
       message: 'message',
       error: {
         kind: 'Error',
-        stack: expect.stringMatching(/^Error: message(\n|$)/) as unknown as string,
+        stack: expect.stringMatching(/^Error: message(\n|$)/),
       },
     })
   })
