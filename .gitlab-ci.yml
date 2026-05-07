@@ -10,6 +10,10 @@ variables:
   CHROME_PACKAGE_VERSION: 148.0.7778.96-1
   FF_TIMESTAMPS: 'true' # Enable timestamps for gitlab-ci logs
 
+workflow:
+  auto_cancel:
+    on_new_commit: interruptible
+
 cache:
   key:
     files:
