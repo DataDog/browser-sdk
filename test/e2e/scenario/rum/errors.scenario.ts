@@ -278,7 +278,8 @@ function expectStack(stack: string | undefined, expectedLines?: Array<string | R
     expect(stack).toBeDefined()
     const actualLines = stack!.split('\n')
     expect.soft(actualLines.length).toBeGreaterThanOrEqual(expectedLines.length)
-    expect.soft(actualLines.length).toBeLessThanOrEqual(expectedLines.length + 2) // FF may have more lines of stack
+    // We don't test for a specific line number because it can be different between browsers. In
+    // particular, Firefox seems to collect async stack traces.
 
     expectedLines.forEach((line, i) => {
       if (typeof line !== 'string') {
