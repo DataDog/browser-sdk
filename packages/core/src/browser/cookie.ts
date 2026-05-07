@@ -67,7 +67,7 @@ export function resetInitCookies() {
 }
 
 export function deleteCookie(name: string, options?: CookieOptions) {
-  setCookie(name, '', -1, options)
+  setCookie(name, '', 0, options)
 }
 
 export function areCookiesAuthorized(options: CookieOptions): boolean {
