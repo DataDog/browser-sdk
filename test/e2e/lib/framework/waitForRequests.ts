@@ -21,16 +21,9 @@ export async function waitForRequests(page: Page) {
         // first batch of tasks are also processed. A 500ms watchdog covers pages where
         // requestIdleCallback is throttled or unavailable (e.g. the empty /flush page during
         // teardown).
-        let done = false
-        const finish = () => {
-          if (!done) {
-            done = true
-            resolve()
-          }
-        }
-        setTimeout(finish, 500)
+        setTimeout(resolve, 500)
         const ric = window.requestIdleCallback?.bind(window) ?? ((cb: IdleRequestCallback) => setTimeout(cb, 50))
-        ric(() => ric(() => setTimeout(finish, 0)))
+        ric(() => ric(() => setTimeout(resolve, 0)))
       })
   )
   await waitForServersIdle()
