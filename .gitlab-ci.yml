@@ -16,4 +16,4 @@ e2e-partitioned-cookie:
   script:
     - yarn
     - yarn build:bundle
-    - FORCE_COLOR=1 yarn playwright test --config test/e2e/playwright.local.config.ts --project chromium --ignore='**/browser-extensions/**' --ignore='**/developer-extension/**' -g 'with different usePartitionedCrossSiteSessionCookie values bundle'
+    - FORCE_COLOR=1 yarn playwright test --config test/e2e/playwright.local.config.ts --project chromium -g 'with different usePartitionedCrossSiteSessionCookie values bundle'
