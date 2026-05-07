@@ -153,6 +153,8 @@ test.describe('rum sessions', () => {
     createTest('persists when session renewed')
       .withRum()
       .run(async ({ browserContext, page }) => {
+        const allCookies = await browserContext.cookies()
+        console.log('DEBUG initial cookies:', JSON.stringify(allCookies))
         const anonymousId = (await findSessionCookie(browserContext))?.aid
         expect(anonymousId).not.toBeNull()
 
