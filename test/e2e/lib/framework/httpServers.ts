@@ -14,6 +14,7 @@ export type ServerApp = (req: http.IncomingMessage, res: http.ServerResponse) =>
 
 export type MockServerApp = ServerApp & {
   getLargeResponseWroteSize(): number
+  setDebuggerProbes(probes: object[]): void
 }
 
 export interface Server<App extends ServerApp> {
