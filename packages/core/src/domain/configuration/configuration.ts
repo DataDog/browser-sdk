@@ -311,6 +311,8 @@ export interface ReplicaUserConfiguration {
   clientToken: string
 }
 
+export type SdkSource = 'browser' | 'flutter' | 'unity'
+
 export interface Configuration extends TransportConfiguration {
   // Built from init configuration
   beforeSend: GenericBeforeSendCallback | undefined
@@ -331,7 +333,7 @@ export interface Configuration extends TransportConfiguration {
 
   // internal
   sdkVersion: string | undefined
-  source: 'browser' | 'flutter' | 'unity'
+  source: SdkSource
   variant: string | undefined
 }
 
