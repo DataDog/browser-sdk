@@ -21,7 +21,7 @@ import { browserStackRequest } from '../lib/bsUtils.ts'
 
 const AVAILABILITY_CHECK_DELAY = 30_000
 const NO_OUTPUT_TIMEOUT = 5 * 60_000
-const BS_BUILD_URL = 'https://api.browserstack.com/automate/builds.json?status=running'
+const BS_PLAN_URL = 'https://api.browserstack.com/automate/plan.json'
 
 const bsLocal = new browserStack.Local()
 
@@ -44,15 +44,21 @@ runMain(async () => {
 })
 
 async function waitForAvailability(): Promise<void> {
-  while (await hasRunningBuild()) {
+  while (await hasParallelSessionsInUse()) {
     printLog('Other build running, waiting...')
     await timeout(AVAILABILITY_CHECK_DELAY)
   }
 }
 
-async function hasRunningBuild(): Promise<boolean> {
-  const builds = (await browserStackRequest(BS_BUILD_URL)) as any[]
-  return builds.length > 0
+async function hasParallelSessionsInUse(): Promise<boolean> {
+  // Use the plan endpoint rather than listing running builds: zombie builds (where the driver
+  // never connected) stay reported as "running" indefinitely, but they don't actually consume
+  // parallel slots. The plan endpoint reflects the real slot usage that BrowserStack gates on.
+  const plan = (await browserStackRequest(BS_PLAN_URL)) as {
+    parallel_sessions_running: number
+    queued_sessions: number
+  }
+  return plan.parallel_sessions_running + plan.queued_sessions > 0
 }
 
 function startBsLocal(): Promise<void> {
