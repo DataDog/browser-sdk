@@ -110,9 +110,6 @@ function processViewUpdate(
         count: view.eventCounts.errorCount,
       },
       first_contentful_paint: toServerDuration(view.initialViewMetrics.firstContentfulPaint),
-      first_input_delay: toServerDuration(view.initialViewMetrics.firstInput?.delay),
-      first_input_time: toServerDuration(view.initialViewMetrics.firstInput?.time),
-      first_input_target_selector: view.initialViewMetrics.firstInput?.targetSelector,
       interaction_to_next_paint: toServerDuration(view.commonViewMetrics.interactionToNextPaint?.value),
       interaction_to_next_paint_time: toServerDuration(view.commonViewMetrics.interactionToNextPaint?.time),
       interaction_to_next_paint_target_selector: view.commonViewMetrics.interactionToNextPaint?.targetSelector,
@@ -172,7 +169,7 @@ function processViewUpdate(
 
 function computeViewPerformanceData(
   { cumulativeLayoutShift, interactionToNextPaint }: CommonViewMetrics,
-  { firstContentfulPaint, firstInput, largestContentfulPaint }: InitialViewMetrics
+  { firstContentfulPaint, largestContentfulPaint }: InitialViewMetrics
 ): ViewPerformanceData {
   return {
     cls: cumulativeLayoutShift && {
@@ -183,11 +180,6 @@ function computeViewPerformanceData(
       current_rect: cumulativeLayoutShift.currentRect,
     },
     fcp: firstContentfulPaint && { timestamp: toServerDuration(firstContentfulPaint) },
-    fid: firstInput && {
-      duration: toServerDuration(firstInput.delay),
-      timestamp: toServerDuration(firstInput.time),
-      target_selector: firstInput.targetSelector,
-    },
     inp: interactionToNextPaint && {
       duration: toServerDuration(interactionToNextPaint.value),
       timestamp: toServerDuration(interactionToNextPaint.time),

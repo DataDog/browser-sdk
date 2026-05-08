@@ -1,6 +1,7 @@
 import type { Context, RawError, ClocksState, BufferedData } from '@datadog/browser-core'
 import {
   BufferedDataType,
+  ConsoleApiName,
   Observable,
   ErrorSource,
   generateUUID,
@@ -15,7 +16,6 @@ import { RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RumErrorEventDomainContext } from '../../domainContext.types'
-import { trackConsoleError } from './trackConsoleError'
 import { trackReportError } from './trackReportError'
 
 export interface ProvidedError {
@@ -33,13 +33,14 @@ export function startErrorCollection(
 ) {
   const errorObservable = new Observable<RawError>()
 
-  bufferedDataObservable.subscribe((bufferedData) => {
-    if (bufferedData.type === BufferedDataType.RUNTIME_ERROR) {
-      errorObservable.notify(bufferedData.error)
+  bufferedDataObservable.subscribe(({ data, type }) => {
+    if (type === BufferedDataType.RUNTIME_ERROR) {
+      errorObservable.notify(data)
+    } else if (type === BufferedDataType.CONSOLE && data.api === ConsoleApiName.error) {
+      errorObservable.notify(data.error)
     }
   })
 
-  trackConsoleError(errorObservable)
   trackReportError(configuration, errorObservable)
 
   errorObservable.subscribe((error) => lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error }))

@@ -1,36 +1,28 @@
-import type { Duration, RelativeTime, ServerDuration, TaskQueue, TimeStamp, MatchOption } from '@datadog/browser-core'
-import {
-  createTaskQueue,
-  noop,
-  RequestType,
-  ResourceType,
-  addExperimentalFeatures,
-  ExperimentalFeature,
-  display,
-} from '@datadog/browser-core'
+import type { Duration, MatchOption, RelativeTime, ServerDuration, TaskQueue, TimeStamp } from '@datadog/browser-core'
+import { createTaskQueue, display, elapsed, RequestType, ResourceType, toServerDuration } from '@datadog/browser-core'
 import type { MockTelemetry } from '@datadog/browser-core/test'
-import { replaceMockable, registerCleanupTask, startMockTelemetry } from '@datadog/browser-core/test'
-import { resetExperimentalFeatures } from '@datadog/browser-core/src/tools/experimentalFeatures'
-import type { RumFetchResourceEventDomainContext, RumXhrResourceEventDomainContext } from '../../domainContext.types'
+import { registerCleanupTask, replaceMockable, startMockTelemetry } from '@datadog/browser-core/test'
 import {
   collectAndValidateRawRumEvents,
   createPerformanceEntry,
-  mockPageStateHistory,
+  mockDocumentReadyState,
   mockPerformanceObserver,
   mockRumConfiguration,
 } from '../../../test'
+import type { RumPerformanceEntry, RumPerformanceResourceTiming } from '../../browser/performanceObservable'
+import { RumPerformanceEntryType } from '../../browser/performanceObservable'
+import { getNavigationEntry } from '../../browser/performanceUtils'
+import type { RumResourceEventDomainContext } from '../../domainContext.types'
 import type { RawRumEvent, RawRumResourceEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
+import type { MatchHeader, RumConfiguration } from '../configuration'
+import { validateAndBuildRumConfiguration } from '../configuration'
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { RequestCompleteEvent } from '../requestCollection'
-import type { RumConfiguration, MatchHeader } from '../configuration'
-import { validateAndBuildRumConfiguration } from '../configuration'
-import type { RumPerformanceEntry, RumPerformanceResourceTiming } from '../../browser/performanceObservable'
-import { RumPerformanceEntryType } from '../../browser/performanceObservable'
+import { getDocumentTraceId } from '../tracing/getDocumentTraceId'
 import { createSpanIdentifier, createTraceIdentifier } from '../tracing/identifier'
 import { startResourceCollection } from './resourceCollection'
-import { retrieveInitialDocumentResourceTiming } from './retrieveInitialDocumentResourceTiming'
 
 function buildMatchHeadersForAllUrls(headerNames: MatchOption[]): MatchHeader[] {
   return headerNames.map((name) => ({ name }))
@@ -38,33 +30,32 @@ function buildMatchHeadersForAllUrls(headerNames: MatchOption[]): MatchHeader[] 
 
 const HANDLING_STACK_REGEX = /^Error: \n\s+at <anonymous> @/
 const baseConfiguration = mockRumConfiguration()
-const pageStateHistory = mockPageStateHistory()
 
 describe('resourceCollection', () => {
   let lifeCycle: LifeCycle
-  let wasInPageStateDuringPeriodSpy: jasmine.Spy<jasmine.Func>
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
   let taskQueuePushSpy: jasmine.Spy<TaskQueue['push']>
 
   function setupResourceCollection(partialConfig: Partial<RumConfiguration> = { trackResources: true }) {
-    replaceMockable(retrieveInitialDocumentResourceTiming, noop)
+    const { triggerOnDomLoaded } = mockDocumentReadyState()
     lifeCycle = new LifeCycle()
     const taskQueue = createTaskQueue()
     replaceMockable(createTaskQueue, () => taskQueue)
     taskQueuePushSpy = spyOn(taskQueue, 'push')
-    const startResult = startResourceCollection(lifeCycle, { ...baseConfiguration, ...partialConfig }, pageStateHistory)
+    const startResult = startResourceCollection(lifeCycle, { ...baseConfiguration, ...partialConfig })
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
 
     registerCleanupTask(() => {
       startResult.stop()
     })
+
+    return { triggerOnDomLoaded }
   }
 
   beforeEach(() => {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
-    wasInPageStateDuringPeriodSpy = spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
   })
 
   it('should create resource from performance entry', () => {
@@ -109,6 +100,14 @@ describe('resourceCollection', () => {
     })
     expect(rawRumEvents[0].domainContext).toEqual({
       performanceEntry,
+      isManual: false,
+      isAborted: false,
+      handlingStack: undefined,
+      requestInit: undefined,
+      requestInput: undefined,
+      response: undefined,
+      error: undefined,
+      xhr: undefined,
     })
   })
 
@@ -159,6 +158,11 @@ describe('resourceCollection', () => {
       performanceEntry: jasmine.any(Object),
       isAborted: false,
       handlingStack: jasmine.stringMatching(HANDLING_STACK_REGEX),
+      isManual: false,
+      requestInit: undefined,
+      requestInput: undefined,
+      response: undefined,
+      error: undefined,
     })
   })
 
@@ -322,47 +326,53 @@ describe('resourceCollection', () => {
     })
   })
 
-  describe('with trackEarlyRequests enabled', () => {
-    it('creates a resource from a performance entry without a matching request', () => {
-      setupResourceCollection({ trackResources: true, trackEarlyRequests: true })
+  it('creates a resource from a performance entry without a matching request', () => {
+    setupResourceCollection({ trackResources: true })
 
-      notifyPerformanceEntries([
-        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
-          initiatorType: RequestType.FETCH,
-        }),
-      ])
-      runTasks()
+    notifyPerformanceEntries([
+      createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+        initiatorType: RequestType.FETCH,
+      }),
+    ])
+    runTasks()
 
-      expect(rawRumEvents.length).toBe(1)
-      expect(rawRumEvents[0].startClocks.relative).toBe(200 as RelativeTime)
-      expect(rawRumEvents[0].rawRumEvent).toEqual({
-        date: jasmine.any(Number),
-        resource: {
-          id: jasmine.any(String),
-          duration: (100 * 1e6) as ServerDuration,
-          method: undefined,
-          status_code: 200,
-          delivery_type: 'cache',
-          protocol: 'HTTP/1.0',
-          type: ResourceType.FETCH,
-          url: 'https://resource.com/valid',
-          render_blocking_status: 'non-blocking',
-          size: undefined,
-          encoded_body_size: undefined,
-          decoded_body_size: undefined,
-          transfer_size: undefined,
-          download: { duration: 100000000 as ServerDuration, start: 0 as ServerDuration },
-          first_byte: { duration: 0 as ServerDuration, start: 0 as ServerDuration },
-          graphql: undefined,
-        },
-        type: RumEventType.RESOURCE,
-        _dd: {
-          discarded: false,
-        },
-      })
-      expect(rawRumEvents[0].domainContext).toEqual({
-        performanceEntry: jasmine.any(Object),
-      })
+    expect(rawRumEvents.length).toBe(1)
+    expect(rawRumEvents[0].startClocks.relative).toBe(200 as RelativeTime)
+    expect(rawRumEvents[0].rawRumEvent).toEqual({
+      date: jasmine.any(Number),
+      resource: {
+        id: jasmine.any(String),
+        duration: (100 * 1e6) as ServerDuration,
+        method: undefined,
+        status_code: 200,
+        delivery_type: 'cache',
+        protocol: 'HTTP/1.0',
+        type: ResourceType.FETCH,
+        url: 'https://resource.com/valid',
+        render_blocking_status: 'non-blocking',
+        size: undefined,
+        encoded_body_size: undefined,
+        decoded_body_size: undefined,
+        transfer_size: undefined,
+        download: { duration: 100000000 as ServerDuration, start: 0 as ServerDuration },
+        first_byte: { duration: 0 as ServerDuration, start: 0 as ServerDuration },
+        graphql: undefined,
+      },
+      type: RumEventType.RESOURCE,
+      _dd: {
+        discarded: false,
+      },
+    })
+    expect(rawRumEvents[0].domainContext).toEqual({
+      performanceEntry: jasmine.any(Object),
+      isManual: false,
+      isAborted: false,
+      handlingStack: undefined,
+      requestInit: undefined,
+      requestInput: undefined,
+      response: undefined,
+      error: undefined,
+      xhr: undefined,
     })
   })
 
@@ -390,10 +400,11 @@ describe('resourceCollection', () => {
     })
 
     describe('and resource is traced', () => {
-      it('should collect a resource from a performance entry', () => {
-        setupResourceCollection({ trackResources: false })
+      it('should collect the initial document navigation entry', () => {
+        replaceMockable(getDocumentTraceId, () => '1234')
+        const { triggerOnDomLoaded } = setupResourceCollection({ trackResources: false })
 
-        notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { traceId: '1234' })])
+        triggerOnDomLoaded()
         runTasks()
 
         expect(rawRumEvents.length).toBe(1)
@@ -415,19 +426,6 @@ describe('resourceCollection', () => {
         expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
       })
     })
-  })
-
-  it('should not have a duration if a frozen state happens during the request and no performance entry matches', () => {
-    setupResourceCollection()
-    wasInPageStateDuringPeriodSpy.and.returnValue(true)
-
-    notifyRequest({
-      // For now, this behavior only happens when there is no performance entry matching the request
-      notifyPerformanceEntry: false,
-    })
-
-    const rawRumResourceEventFetch = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
-    expect(rawRumResourceEventFetch.resource.duration).toBeUndefined()
   })
 
   it('should create resource from completed fetch request', () => {
@@ -483,6 +481,8 @@ describe('resourceCollection', () => {
       error: undefined,
       isAborted: false,
       handlingStack: jasmine.stringMatching(HANDLING_STACK_REGEX),
+      isManual: false,
+      xhr: undefined,
     })
   })
   ;[null, undefined, 42, {}].forEach((input: any) => {
@@ -495,7 +495,7 @@ describe('resourceCollection', () => {
       })
 
       expect(rawRumEvents.length).toBe(1)
-      expect((rawRumEvents[0].domainContext as RumFetchResourceEventDomainContext).requestInput).toBe(input)
+      expect((rawRumEvents[0].domainContext as RumResourceEventDomainContext).requestInput).toBe(input)
     })
   })
 
@@ -522,10 +522,6 @@ describe('resourceCollection', () => {
   })
 
   describe('network headers', () => {
-    beforeEach(() => {
-      addExperimentalFeatures([ExperimentalFeature.TRACK_RESOURCE_HEADERS])
-    })
-
     describe('Fetch', () => {
       it('should extract matching response headers from Fetch', () => {
         setupResourceCollection({
@@ -711,21 +707,6 @@ describe('resourceCollection', () => {
       const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
       expect(event.resource.response!.headers!['x-foo']).toBe('bar')
       expect(event.resource.response!.headers!['content-type']).toBeUndefined()
-    })
-
-    it('should not collect headers when experimental feature is disabled', () => {
-      resetExperimentalFeatures()
-      setupResourceCollection({ trackResourceHeaders: buildMatchHeadersForAllUrls(['content-type']) })
-
-      notifyRequest({
-        request: {
-          type: RequestType.FETCH,
-          response: new Response('', { headers: { 'Content-Type': 'text/html' } }),
-        },
-      })
-
-      const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
-      expect(event.resource.response).toBeUndefined()
     })
 
     describe('forbidden headers', () => {
@@ -1138,9 +1119,12 @@ describe('resourceCollection', () => {
 
   describe('tracing info', () => {
     it('should be processed from traced initial document', () => {
-      setupResourceCollection()
-      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { traceId: '1234' })])
+      replaceMockable(getDocumentTraceId, () => '1234')
+      const { triggerOnDomLoaded } = setupResourceCollection()
+
+      triggerOnDomLoaded()
       runTasks()
+
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields).toBeDefined()
       expect(privateFields.trace_id).toBe('1234')
@@ -1236,7 +1220,7 @@ describe('resourceCollection', () => {
     setupResourceCollection()
     const response = new Response()
     notifyRequest({ request: { type: RequestType.FETCH, response } })
-    const domainContext = rawRumEvents[0].domainContext as RumFetchResourceEventDomainContext
+    const domainContext = rawRumEvents[0].domainContext as RumResourceEventDomainContext
 
     expect(domainContext.handlingStack).toMatch(HANDLING_STACK_REGEX)
   })
@@ -1246,9 +1230,31 @@ describe('resourceCollection', () => {
     const xhr = new XMLHttpRequest()
     notifyRequest({ request: { type: RequestType.XHR, xhr } })
 
-    const domainContext = rawRumEvents[0].domainContext as RumXhrResourceEventDomainContext
+    const domainContext = rawRumEvents[0].domainContext as RumResourceEventDomainContext
 
     expect(domainContext.handlingStack).toMatch(HANDLING_STACK_REGEX)
+  })
+
+  describe('initial document resource', () => {
+    it('should wait until the document is interactive', () => {
+      const { triggerOnDomLoaded } = setupResourceCollection()
+
+      expect(taskQueuePushSpy).not.toHaveBeenCalled()
+      triggerOnDomLoaded()
+      expect(taskQueuePushSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('should use responseEnd as duration', () => {
+      const { triggerOnDomLoaded } = setupResourceCollection()
+
+      triggerOnDomLoaded()
+      runTasks()
+
+      const navigationEntry = getNavigationEntry()
+      expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.duration).toBe(
+        toServerDuration(elapsed(navigationEntry.startTime, navigationEntry.responseEnd))
+      )
+    })
   })
 
   it('collects handle resources in different tasks', () => {
@@ -1304,6 +1310,7 @@ describe('resourceCollection', () => {
       notifyPerformanceEntries([
         createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
           initiatorType: requestCompleteEvent.type === RequestType.FETCH ? 'fetch' : 'xmlhttprequest',
+          name: requestCompleteEvent.url,
           ...performanceEntryOverrides,
         }),
       ])

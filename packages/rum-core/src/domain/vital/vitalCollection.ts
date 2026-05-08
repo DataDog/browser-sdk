@@ -1,8 +1,6 @@
 import type { ClocksState, Duration } from '@datadog/browser-core'
 import {
   clocksNow,
-  combine,
-  elapsed,
   ExperimentalFeature,
   generateUUID,
   isExperimentalFeatureEnabled,
@@ -15,6 +13,7 @@ import type { RawRumVitalEvent } from '../../rawRumEvent.types'
 import { RumEventType, VitalType } from '../../rawRumEvent.types'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
+import { startEventTracker } from '../eventTracker'
 
 /**
  * Vital options
@@ -34,9 +33,13 @@ export interface VitalOptions {
 /**
  * Duration vital options
  */
-
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface DurationVitalOptions extends VitalOptions {}
+export interface DurationVitalOptions extends VitalOptions {
+  /**
+   * Vital key, used to identify a specific vital instance when multiple vitals with the same name
+   * are tracked simultaneously
+   */
+  vitalKey?: string
+}
 
 export interface FeatureOperationOptions extends VitalOptions {
   operationKey?: string
@@ -57,10 +60,6 @@ export interface AddDurationVitalOptions extends DurationVitalOptions {
    * Vital duration, expects a duration in milliseconds
    */
   duration: number
-}
-
-export interface DurationVitalReference {
-  __dd_vital_reference: true
 }
 
 export interface DurationVitalStart extends DurationVitalOptions {
@@ -88,22 +87,16 @@ export interface OperationStepVital extends BaseVital {
   failureReason?: string
 }
 
-export interface CustomVitalsState {
-  vitalsByName: Map<string, DurationVitalStart>
-  vitalsByReference: WeakMap<DurationVitalReference, DurationVitalStart>
+interface DurationVitalData {
+  name: string
+  context?: any
+  description?: string
+  handlingStack?: string
 }
 
-export function createCustomVitalsState() {
-  const vitalsByName = new Map<string, DurationVitalStart>()
-  const vitalsByReference = new WeakMap<DurationVitalReference, DurationVitalStart>()
-  return { vitalsByName, vitalsByReference }
-}
+export function startVitalCollection(lifeCycle: LifeCycle, pageStateHistory: PageStateHistory) {
+  const vitalTracker = startEventTracker<DurationVitalData>(lifeCycle)
 
-export function startVitalCollection(
-  lifeCycle: LifeCycle,
-  pageStateHistory: PageStateHistory,
-  customVitalsState: CustomVitalsState
-) {
   function isValid(vital: DurationVital) {
     return !pageStateHistory.wasInPageStateDuringPeriod(PageState.FROZEN, vital.startClocks.relative, vital.duration)
   }
@@ -140,82 +133,33 @@ export function startVitalCollection(
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital))
   }
 
+  function startDurationVital(
+    name: string,
+    options: DurationVitalOptions & { handlingStack?: string } = {},
+    startClocks = clocksNow()
+  ) {
+    const { id } = vitalTracker.start(options.vitalKey ?? name, startClocks, {
+      name,
+      ...options,
+    })
+    lifeCycle.notify(LifeCycleEventType.VITAL_STARTED, { id, name, startClocks, ...options })
+  }
+
+  function stopDurationVital(name: string, options: DurationVitalOptions = {}, stopClocks = clocksNow()) {
+    const stopped = vitalTracker.stop(options.vitalKey ?? name, stopClocks, options)
+    if (stopped) {
+      addDurationVital({
+        type: VitalType.DURATION,
+        ...stopped,
+      })
+    }
+  }
+
   return {
     addOperationStepVital,
     addDurationVital,
-    startDurationVital: (name: string, options: DurationVitalOptions & { handlingStack?: string } = {}) => {
-      const ref = startDurationVital(customVitalsState, name, options)
-      const vitalState = customVitalsState.vitalsByReference.get(ref)
-      if (vitalState) {
-        lifeCycle.notify(LifeCycleEventType.VITAL_STARTED, vitalState)
-      }
-      return ref
-    },
-    stopDurationVital: (nameOrRef: string | DurationVitalReference, options: DurationVitalOptions = {}) => {
-      stopDurationVital(addDurationVital, customVitalsState, nameOrRef, options)
-    },
-  }
-}
-
-export function startDurationVital(
-  { vitalsByName, vitalsByReference }: CustomVitalsState,
-  name: string,
-  options: DurationVitalOptions & { handlingStack?: string } = {}
-) {
-  const vital = {
-    id: generateUUID(),
-    name,
-    startClocks: clocksNow(),
-    ...options,
-  }
-
-  // To avoid leaking implementation details of the vital, we return a reference to it.
-  const reference: DurationVitalReference = { __dd_vital_reference: true }
-
-  vitalsByName.set(name, vital)
-
-  // To avoid memory leaks caused by the creation of numerous references (e.g., from improper useEffect implementations), we use a WeakMap.
-  vitalsByReference.set(reference, vital)
-
-  return reference
-}
-
-export function stopDurationVital(
-  stopCallback: (vital: DurationVital) => void,
-  { vitalsByName, vitalsByReference }: CustomVitalsState,
-  nameOrRef: string | DurationVitalReference,
-  options: DurationVitalOptions = {}
-) {
-  const vitalStart = typeof nameOrRef === 'string' ? vitalsByName.get(nameOrRef) : vitalsByReference.get(nameOrRef)
-
-  if (!vitalStart) {
-    return
-  }
-
-  stopCallback(buildDurationVital(vitalStart, vitalStart.startClocks, options, clocksNow()))
-
-  if (typeof nameOrRef === 'string') {
-    vitalsByName.delete(nameOrRef)
-  } else {
-    vitalsByReference.delete(nameOrRef)
-  }
-}
-
-function buildDurationVital(
-  vitalStart: DurationVitalStart,
-  startClocks: ClocksState,
-  stopOptions: DurationVitalOptions,
-  stopClocks: ClocksState
-): DurationVital {
-  return {
-    id: vitalStart.id,
-    name: vitalStart.name,
-    type: VitalType.DURATION,
-    startClocks,
-    duration: elapsed(startClocks.timeStamp, stopClocks.timeStamp),
-    context: combine(vitalStart.context, stopOptions.context),
-    description: stopOptions.description ?? vitalStart.description,
-    handlingStack: vitalStart.handlingStack,
+    startDurationVital,
+    stopDurationVital,
   }
 }
 

@@ -1,4 +1,4 @@
-import type { Duration, RelativeTime, TimeStamp } from '@datadog/browser-core'
+import type { Duration, RelativeTime, TimeStamp, SessionRenewalEvent } from '@datadog/browser-core'
 import { clocksNow } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
@@ -149,7 +149,7 @@ describe('eventTracker', () => {
 
       tracker.stopAll()
 
-      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
 
       expect(tracker.findId()).toEqual([])
     })
