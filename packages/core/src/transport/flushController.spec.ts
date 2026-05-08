@@ -132,15 +132,13 @@ describe('flushController', () => {
       expect(flushSpy).toHaveBeenCalled()
     })
 
-    it('does not take removed messages into account', () => {
+    it('triggers bytes_limit when replacing a message increases the total above the limit', () => {
       flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
       flushController.notifyAfterAddMessage()
-      flushController.notifyAfterRemoveMessage(SMALL_MESSAGE_BYTE_COUNT)
 
-      flushController.notifyBeforeAddMessage(BYTES_LIMIT - SMALL_MESSAGE_BYTE_COUNT)
-      flushController.notifyAfterAddMessage()
+      flushController.notifyAfterAddMessage(BYTES_LIMIT - SMALL_MESSAGE_BYTE_COUNT)
 
-      expect(flushSpy).not.toHaveBeenCalled()
+      expect(flushSpy).toHaveBeenCalled()
     })
 
     it('does not notify when the bytes limit will be reached if no message was added yet', () => {
@@ -186,16 +184,13 @@ describe('flushController', () => {
       expect(flushSpy).not.toHaveBeenCalled()
     })
 
-    it('does not take removed messages into account', () => {
+    it('does not change the messages count when replacing a message', () => {
       for (let i = 0; i < MESSAGES_LIMIT - 1; i += 1) {
         flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
         flushController.notifyAfterAddMessage()
       }
 
-      flushController.notifyAfterRemoveMessage(SMALL_MESSAGE_BYTE_COUNT)
-
-      flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
-      flushController.notifyAfterAddMessage()
+      flushController.notifyAfterAddMessage(0)
 
       expect(flushSpy).not.toHaveBeenCalled()
     })
@@ -242,39 +237,6 @@ describe('flushController', () => {
     it('does not notify if no message was added yet', () => {
       clock.tick(FLUSH_DURATION_LIMIT)
       expect(flushSpy).not.toHaveBeenCalled()
-    })
-
-    it('does not notify if a message was added then removed', () => {
-      flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
-      flushController.notifyAfterAddMessage()
-      flushController.notifyAfterRemoveMessage(SMALL_MESSAGE_BYTE_COUNT)
-      clock.tick(FLUSH_DURATION_LIMIT)
-      expect(flushSpy).not.toHaveBeenCalled()
-    })
-
-    it('notifies if a message was added, and another was added then removed', () => {
-      flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
-      flushController.notifyAfterAddMessage()
-
-      flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
-      flushController.notifyAfterAddMessage()
-      flushController.notifyAfterRemoveMessage(SMALL_MESSAGE_BYTE_COUNT)
-
-      clock.tick(FLUSH_DURATION_LIMIT)
-      expect(flushSpy).toHaveBeenCalled()
-    })
-
-    it('does not notify prematurely if a message was added then removed then another was added', () => {
-      flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
-      flushController.notifyAfterAddMessage()
-      flushController.notifyAfterRemoveMessage(SMALL_MESSAGE_BYTE_COUNT)
-      clock.tick(FLUSH_DURATION_LIMIT / 2)
-      flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
-      flushController.notifyAfterAddMessage()
-      clock.tick(FLUSH_DURATION_LIMIT / 2)
-      expect(flushSpy).not.toHaveBeenCalled()
-      clock.tick(FLUSH_DURATION_LIMIT / 2)
-      expect(flushSpy).toHaveBeenCalled()
     })
   })
 })
