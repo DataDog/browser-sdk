@@ -7,7 +7,7 @@
   ],
   "entryPointStrategy": "packages",
   "includeVersion": true,
-  "exclude": ["packages/core", "packages/rum-core", "packages/worker"],
+  "exclude": ["packages/core", "packages/rum-core", "packages/worker", "packages/debugger"],
   "validation": {
     "notExported": true,
     "invalidLink": true,
