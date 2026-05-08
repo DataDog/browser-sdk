@@ -255,13 +255,7 @@ e2e:
     - yarn build:apps
     # Browsers are pre-installed in the CI image. If playwright (current or pinned 1.40.1)
     # is upgraded without rebuilding the image, this job will crash — rebuild the image to fix it.
-    - |
-      if [ "$BROWSER" = "chromium-pinned" ]; then
-        # DEBUG: trace pinned-proxy WS traffic on the SW test only (revert after diagnosis).
-        FORCE_COLOR=1 PW_BROWSER=$BROWSER PINNED_PROXY_TRACE=1 yarn test:e2e --project=$BROWSER -g "service worker with worker rum"
-      else
-        FORCE_COLOR=1 PW_BROWSER=$BROWSER yarn test:e2e --project=$BROWSER
-      fi
+    - FORCE_COLOR=1 PW_BROWSER=$BROWSER yarn test:e2e --project=$BROWSER
   after_script:
     - node ./scripts/test/export-test-result.ts e2e
 
