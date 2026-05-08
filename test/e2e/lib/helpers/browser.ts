@@ -112,3 +112,9 @@ export function isContentTypeAvailableInPerformanceEntry(
   // "modern enough" since Playwright 1.58+ bundles Firefox >= 129.
   return browserName === 'firefox' && (browserVersion === undefined || Number(browserVersion) >= 129)
 }
+
+export function isLongAnimationFrameSupported(page: Page): Promise<boolean> {
+  return page.evaluate(
+    () => 'PerformanceObserver' in self && PerformanceObserver.supportedEntryTypes.includes('long-animation-frame')
+  )
+}
