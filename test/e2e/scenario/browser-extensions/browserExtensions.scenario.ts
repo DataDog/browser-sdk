@@ -97,8 +97,8 @@ test.describe('browser extensions', () => {
     .withSetup((options, servers) => {
       const { rumScriptUrl, logsScriptUrl } = createCrossOriginScriptUrls(servers, options)
       return `
-          <script src="${rumScriptUrl}"></script>
-          <script src="${logsScriptUrl}"></script>
+          <script src="${rumScriptUrl}" crossorigin></script>
+          <script src="${logsScriptUrl}" crossorigin></script>
           <script>
             const script = document.createElement('script')
             script.innerHTML = 'window.DD_RUM.init(${formatConfiguration(options.rum!, servers)}); window.DD_LOGS.init(${formatConfiguration(options.logs!, servers)})'
