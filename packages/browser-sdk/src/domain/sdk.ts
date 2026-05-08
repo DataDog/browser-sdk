@@ -18,6 +18,7 @@ import {
 } from '@datadog/core-next'
 import { logsExtension } from '@datadog/browser-logs-next/extension'
 import { rumExtension } from '@datadog/browser-rum-next/extension'
+import { replayExtension } from '@datadog/browser-replay-next/extension'
 import { TransportRouter } from './transportRouter'
 import {
   selectStore,
@@ -61,7 +62,7 @@ async function createSdk(init: SdkInitConfiguration): Promise<Sdk | null> {
   // 1. Collect extensions — bundled extensions are always registered for config validation.
   // Module-specific config keys (e.g. `logs`, `rum`) are validated against their extensions
   // regardless of whether the module itself is loaded inline or dynamically.
-  const bundledExtensions = [logsExtension, rumExtension]
+  const bundledExtensions = [logsExtension, rumExtension, replayExtension]
   const inlineModules = init.modules ?? []
 
   // 2. Build configuration — inject SDK version from build environment

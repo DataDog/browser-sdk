@@ -21,6 +21,7 @@
     "access": "public"
   },
   "peerDependencies": {
+    "@datadog/browser-replay-next": "workspace:*",
     "@datadog/core-next": "workspace:*"
   }
 }

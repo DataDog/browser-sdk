@@ -24,6 +24,9 @@
       "@datadog/browser-rum-next": ["./packages/browser-rum-next/src"],
       "@datadog/browser-rum-next/processor": ["./packages/browser-rum-next/src/processor"],
       "@datadog/browser-rum-next/extension": ["./packages/browser-rum-next/src/extension"],
+      "@datadog/browser-replay-next": ["./packages/browser-replay-next/src"],
+      "@datadog/browser-replay-next/processor": ["./packages/browser-replay-next/src/processor"],
+      "@datadog/browser-replay-next/extension": ["./packages/browser-replay-next/src/extension"],
       "@datadog/browser-sdk": ["./packages/browser-sdk/src"],
 
       "@datadog/browser-logs": ["./packages/logs/src/entries/main"],
