@@ -1,0 +1,52 @@
+{
+  "name": "@datadog/browser-replay-next",
+  "version": "0.0.0",
+  "license": "Apache-2.0",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.cts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./processor": {
+      "import": {
+        "types": "./dist/processor/index.d.mts",
+        "default": "./dist/processor/index.mjs"
+      },
+      "require": {
+        "types": "./dist/processor/index.d.cts",
+        "default": "./dist/processor/index.cjs"
+      }
+    },
+    "./extension": {
+      "import": "./dist/extension/index.mjs",
+      "types": "./dist/extension/index.d.mts"
+    }
+  },
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsdown"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DataDog/browser-sdk.git",
+    "directory": "packages/browser-replay-next"
+  },
+  "volta": {
+    "extends": "../../package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "@datadog/core-next": "workspace:*"
+  }
+}
