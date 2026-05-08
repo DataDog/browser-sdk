@@ -1,6 +1,6 @@
 import { ChangeType } from '../../../types'
 import type { StringId } from '../itemIds'
-import { createStringIds } from '../itemIds'
+import { createStringIds, StringIdConstants } from '../itemIds'
 import type { ChangeEncoder } from './changeEncoder'
 import { createChangeEncoder } from './changeEncoder'
 
@@ -138,6 +138,45 @@ describe('ChangeEncoder', () => {
 
       // The second flush should not have an AddString change for 'persistent'.
       expect(changes).toEqual([[ChangeType.Text, [1, 0 as StringId]]])
+    })
+  })
+
+  describe('soft max size of the string table', () => {
+    // Simulates a full string table without actually inserting a million entries.
+    const simulateFullStringTable = () => {
+      Object.defineProperty(stringIds, 'size', { get: () => StringIdConstants.SOFT_MAX_SIZE, configurable: true })
+    }
+
+    it('does not add new strings to the table once the soft max size is reached', () => {
+      simulateFullStringTable()
+
+      encoder.add(ChangeType.Text, [0, 'new-string'])
+      const changes = encoder.flush()
+
+      // The new string remains as a literal in the change data and no AddString is emitted.
+      expect(changes).toEqual([[ChangeType.Text, [0, 'new-string']]])
+    })
+
+    it('still reuses existing string ids once the soft max size is reached', () => {
+      const existingId = stringIds.getOrInsert('existing')
+      simulateFullStringTable()
+
+      encoder.add(ChangeType.Text, [0, 'existing'])
+      const changes = encoder.flush()
+
+      // No AddString is emitted, but the existing string is still replaced with its id.
+      expect(changes).toEqual([[ChangeType.Text, [0, existingId]]])
+    })
+
+    it('handles a mix of new and existing strings once the soft max size is reached', () => {
+      const fooId = stringIds.getOrInsert('foo')
+      simulateFullStringTable()
+
+      encoder.add(ChangeType.AddNode, [null, 'foo', ['class', 'bar']])
+      const changes = encoder.flush()
+
+      // 'foo' is replaced with its existing id; 'class' and 'bar' stay as literals.
+      expect(changes).toEqual([[ChangeType.AddNode, [null, fooId, ['class', 'bar']]]])
     })
   })
 

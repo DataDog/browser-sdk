@@ -4,9 +4,8 @@ import type { BrowserChangeRecord, BrowserFullSnapshotChangeRecord } from '../..
 import { ChangeType, PlaybackState } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
 import type { ScrollPositions } from '../elementsScrollPositions'
+import { serializeHtmlAsChange } from '../test/serializeHtml.specHelper'
 import { SerializationKind } from './serializationTransaction'
-
-import { serializeHtmlAsChange } from './serializeHtml.specHelper'
 
 describe('serializeNodeAsChange for DOM nodes', () => {
   let originalTimeout: number

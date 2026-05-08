@@ -1,6 +1,6 @@
-import type { DeflateEncoder, HttpRequest, TimeoutId } from '@datadog/browser-core'
+import type { DeflateEncoder, HttpRequest, TimeoutId, SessionManager } from '@datadog/browser-core'
 import { isPageExitReason, ONE_SECOND, clearTimeout, setTimeout } from '@datadog/browser-core'
-import type { LifeCycle, ViewHistory, RumSessionManager, RumConfiguration } from '@datadog/browser-rum-core'
+import type { LifeCycle, ViewHistory, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { BrowserRecord, CreationReason, SegmentContext } from '../../types'
 import type { SerializationStats } from '../record'
@@ -50,7 +50,7 @@ interface SegmentCollector {
 export function startSegmentCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
-  sessionManager: RumSessionManager,
+  sessionManager: SessionManager,
   viewHistory: ViewHistory,
   httpRequest: HttpRequest<ReplayPayload>,
   encoder: DeflateEncoder
@@ -172,11 +172,7 @@ export function doStartSegmentCollection(
   }
 }
 
-export function computeSegmentContext(
-  applicationId: string,
-  sessionManager: RumSessionManager,
-  viewHistory: ViewHistory
-) {
+export function computeSegmentContext(applicationId: string, sessionManager: SessionManager, viewHistory: ViewHistory) {
   const session = sessionManager.findTrackedSession()
   const viewContext = viewHistory.findView()
   if (!session || !viewContext) {

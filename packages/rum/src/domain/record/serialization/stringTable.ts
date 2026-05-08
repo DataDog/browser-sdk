@@ -1,4 +1,4 @@
-import type { StringId } from '../../itemIds'
+import type { StringId } from '../itemIds'
 
 export interface StringTable {
   add(newString: string): void

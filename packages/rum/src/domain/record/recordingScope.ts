@@ -1,11 +1,9 @@
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 
-import { Observable } from '@datadog/browser-core'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
 import { createEventIds, createNodeIds, createStringIds, createStyleSheetIds } from './itemIds'
 import type { EventIds, NodeIds, StringIds, StyleSheetIds } from './itemIds'
 import type { ShadowRootsController } from './shadowRootsController'
-import type { SerializeEvent } from './record.types'
 
 /**
  * State associated with a stream of session replay records. When a new stream of records
@@ -20,7 +18,6 @@ export interface RecordingScope {
   elementsScrollPositions: ElementsScrollPositions
   eventIds: EventIds
   nodeIds: NodeIds
-  serializeObservable: Observable<SerializeEvent>
   shadowRootsController: ShadowRootsController
   stringIds: StringIds
   styleSheetIds: StyleSheetIds
@@ -48,7 +45,6 @@ export function createRecordingScope(
     elementsScrollPositions,
     eventIds,
     nodeIds,
-    serializeObservable: new Observable<SerializeEvent>(),
     shadowRootsController,
     stringIds,
     styleSheetIds,
