@@ -12,10 +12,10 @@ import type { BrowserConfiguration } from '../browsers.conf'
 //   `run-server` and a translation proxy (test/e2e/scripts/pinnedProxy.ts) that bridges
 //   the 1.58 client and the 1.40 server.
 //
-// The pinned web servers (`run-server` + proxy) only boot when at least one selected
-// project is pinned, so non-pinned runs don't pay the boot cost. Selection is read from
-// `--project=<name>` flags on argv (Playwright's filter); when no `--project` is passed,
-// all projects run and the pinned servers boot.
+// Pinned projects are opt-in via `--project=<name>-pinned`. With no `--project` flag,
+// only the four non-pinned projects run and the pinned web servers don't boot — so a
+// fresh checkout that hasn't run `yarn test:e2e:init` won't fail trying to launch
+// browsers it doesn't have. CI always passes `--project=$BROWSER` explicitly.
 //
 // Initial install of the pinned browser binaries:
 //   yarn test:e2e:init
@@ -119,16 +119,30 @@ export default defineConfig({
     trace: isCi ? 'off' : 'retain-on-failure',
   },
   webServer: needsPinnedServers() ? [...baseWebServers, ...pinnedWebServers] : baseWebServers,
-  projects: [
+  projects: getProjects(),
+})
+
+function getProjects() {
+  const baseProjects = [
     project('chromium', 'Desktop Chrome'),
     project('firefox', 'Desktop Firefox'),
     project('webkit', 'Desktop Safari'),
     project('android', 'Pixel 7'),
+  ]
+  const pinnedProjects = [
     pinnedProject('chromium-pinned', 'Chromium 120', 'Desktop Chrome', '120'),
     pinnedProject('firefox-pinned', 'Firefox 119', 'Desktop Firefox', '119'),
     pinnedProject('webkit-pinned', 'WebKit 17.4', 'Desktop Safari', '17.4'),
-  ],
-})
+  ]
+  // When the caller doesn't filter with `--project`, omit the pinned projects so a fresh
+  // checkout (no `yarn test:e2e:init`) doesn't try to launch browsers it doesn't have.
+  // Any `--project=...` flag — including a non-pinned one — still surfaces all projects
+  // so Playwright's own filter can resolve the name.
+  if (getSelectedProjects().length === 0) {
+    return baseProjects
+  }
+  return [...baseProjects, ...pinnedProjects]
+}
 
 function project(name: string, device: string) {
   return {
@@ -150,11 +164,7 @@ function pinnedProject(name: string, sessionName: string, device: string, versio
 }
 
 function needsPinnedServers(): boolean {
-  const selected = getSelectedProjects()
-  if (selected.length === 0) {
-    return true
-  }
-  return selected.some((p) => p.endsWith('-pinned'))
+  return getSelectedProjects().some((p) => p.endsWith('-pinned'))
 }
 
 function getSelectedProjects(): string[] {

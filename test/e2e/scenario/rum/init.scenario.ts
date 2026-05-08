@@ -418,8 +418,7 @@ const NO_SESSION_WARNING = 'Datadog Browser SDK: The RUM SDK is not supported in
 
 function expectNoSessionWarning(browserName: string, logs: BrowserLog[]) {
   // Firefox does not propagate the service worker's console to the main page's console.
-  // Pinned browser doesn't either: the Playwright 1.40 server never emits SW-sourced
-  // console events on any channel
+  // The pinned Playwright runtime doesn't either.
   if (browserName !== 'firefox' && !isPinnedRuntime(test)) {
     expect(logs.filter((log) => log.message.includes(NO_SESSION_WARNING) && log.level === 'warning')).toHaveLength(1)
   }
