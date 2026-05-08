@@ -118,3 +118,9 @@ export function isLongAnimationFrameSupported(page: Page): Promise<boolean> {
     () => 'PerformanceObserver' in self && PerformanceObserver.supportedEntryTypes.includes('long-animation-frame')
   )
 }
+
+export function isPinnedRuntime(
+  test: TestType<PlaywrightTestArgs & PlaywrightTestOptions, PlaywrightWorkerArgs & PlaywrightWorkerOptions>
+) {
+  return (test.info().project.metadata as BrowserConfiguration).version !== undefined
+}

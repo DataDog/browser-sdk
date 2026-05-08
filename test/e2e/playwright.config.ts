@@ -2,6 +2,7 @@ import path from 'path'
 import { defineConfig, devices } from '@playwright/test'
 import type { ReporterDescription } from '@playwright/test'
 import { getTestReportDirectory } from '../envUtils'
+import type { BrowserConfiguration } from '../browsers.conf'
 
 // Single config covering all e2e browser configurations:
 //
@@ -132,7 +133,7 @@ export default defineConfig({
 function project(name: string, device: string) {
   return {
     name,
-    metadata: { sessionName: device, name },
+    metadata: { sessionName: device, name } satisfies BrowserConfiguration,
     use: devices[device],
   }
 }
@@ -140,7 +141,7 @@ function project(name: string, device: string) {
 function pinnedProject(name: string, sessionName: string, device: string, version: string) {
   return {
     name,
-    metadata: { sessionName, name, version },
+    metadata: { sessionName, name, version } satisfies BrowserConfiguration,
     use: {
       ...devices[device],
       connectOptions: { wsEndpoint: PINNED_WS_ENDPOINT },
