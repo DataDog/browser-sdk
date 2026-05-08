@@ -16,7 +16,11 @@ export default function (config) {
     browsers: browserConfigurations.map((configuration) => configuration.sessionName),
     concurrency: 5,
     browserDisconnectTolerance: 3,
+    // BrowserStack Firefox can pause long enough during full-suite runs to miss the base heartbeat.
+    browserDisconnectTimeout: 30 * 1000,
     captureTimeout: 2 * 60 * 1000,
+    pingTimeout: 2 * 60 * 1000,
+    browserNoActivityTimeout: 2 * 60 * 1000,
     browserStack: {
       username: process.env.BS_USERNAME,
       accessKey: process.env.BS_ACCESS_KEY,
