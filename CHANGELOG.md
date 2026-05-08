@@ -15,6 +15,82 @@
 
 ---
 
+## v7.0.0
+
+This is the v7 major release. It removes deprecated options and legacy code paths accumulated over the v6 line, modernizes the build, and ships a more reliable session manager.
+
+- **Smaller, faster bundle** — dropping legacy browser shims and switching to ESM dynamic imports reduces the SDK footprint on modern browsers.
+- **Better privacy out of the box** — safer default privacy settings mean less risk of capturing sensitive content without explicit configuration.
+- **More reliable sessions** — modernized session manager with bug fixes, including around very short repetitive sessions.
+- **Higher-quality data** — deterministic sampling (consistent decisions across products), aborted requests no longer polluting error metrics, and a new `session_renewal` view loading type to better understand session boundaries.
+- **A cleaner API** — deprecated options and beta flags removed; what's left is the supported, stable surface going forward.
+
+**Migrating from v6:**
+
+- Follow the [v6 → v7 migration guide](https://github.com/DataDog/documentation/blob/8ed5928d4cf04351f6ec6f6e8d605267def58351/content/en/real_user_monitoring/guide/browser-sdk-upgrade.md) in the Datadog documentation.
+- For automated assistance, use the [`upgrade-browser-sdk-v7` Claude Code skill](https://github.com/DataDog/browser-sdk/blob/main/.claude/skills/upgrade-browser-sdk-v7/SKILL.md) shipped in this repo.
+
+**Public Changes:**
+
+- 💥 remove fake resource timing for document resources ([#4406](https://github.com/DataDog/browser-sdk/pull/4406)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 💥 add `session_renewal` view loading type for session-renewed views ([#4478](https://github.com/DataDog/browser-sdk/pull/4478)) [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE]
+- 💥 always collect early requests ([#4285](https://github.com/DataDog/browser-sdk/pull/4285)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 💥 replace DurationVitalReference with vitalKey option in start/stopDurationVital ([#4403](https://github.com/DataDog/browser-sdk/pull/4403)) [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE]
+- 💥 Rename chunk files to include "datadog" prefix for cross-bundler naming ([#4391](https://github.com/DataDog/browser-sdk/pull/4391)) [RUM]
+- 💥 Remove deprecated `strategy` from plugin API ([#4382](https://github.com/DataDog/browser-sdk/pull/4382)) [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE]
+- 💥 [RUM-8693] Decouple forwardErrorsToLogs from console.error log capture ([#4356](https://github.com/DataDog/browser-sdk/pull/4356)) [LOGS]
+- 💥 remove trackBfcacheViews and track bfcache restores by default ([#4228](https://github.com/DataDog/browser-sdk/pull/4228)) [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE]
+- 💥 default privacy settings to improve privacy out of the box ([#4279](https://github.com/DataDog/browser-sdk/pull/4279)) [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE]
+- 💥 Remove FID (First Input Delay) tracking ([#4223](https://github.com/DataDog/browser-sdk/pull/4223)) [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE]
+- 💥 [RUM-970] do not collect network errors for aborted requests ([#4225](https://github.com/DataDog/browser-sdk/pull/4225)) [LOGS]
+- 💥 [RUM-14058] Use tree walker for action name computation ([#3972](https://github.com/DataDog/browser-sdk/pull/3972)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 💥 enable propagateTraceBaggage by default ([#4226](https://github.com/DataDog/browser-sdk/pull/4226)) [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE]
+- 💥 use ESM dynamic imports for CDN async chunks ([#4217](https://github.com/DataDog/browser-sdk/pull/4217))
+- 💥 drop old-browser compatibility code for ES2020 baseline ([#4428](https://github.com/DataDog/browser-sdk/pull/4428)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 💥 remove internalAnalyticsSubdomain and INTAKE_SITE_FED_STAGING ([#4354](https://github.com/DataDog/browser-sdk/pull/4354)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 💥 remove betaTrackActionsInShadowDom and make shadow DOM action tracking the default ([#4355](https://github.com/DataDog/browser-sdk/pull/4355)) [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE]
+- 💥 Remove deprecated allowFallbackToLocalStorage option ([#4329](https://github.com/DataDog/browser-sdk/pull/4329)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 💥 [RUM-11273] Remove usePciIntake option ([#4335](https://github.com/DataDog/browser-sdk/pull/4335)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 💥 Remove old cookie migration ([#4198](https://github.com/DataDog/browser-sdk/pull/4198)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 💥 Remove betaEncodeCookieOptions and always encode cookie options ([#4195](https://github.com/DataDog/browser-sdk/pull/4195)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- ✨ [RUM-15280] Expose DEFAULT_TRACKED_RESOURCE_HEADERS on RumPublicApi ([#4523](https://github.com/DataDog/browser-sdk/pull/4523)) [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE]
+- ✨ Make nuxt package public ([#4520](https://github.com/DataDog/browser-sdk/pull/4520)) [RUM-NUXT]
+- ✨ [PANA-6624] Enable the new session replay serialization algorithm by default ([#4507](https://github.com/DataDog/browser-sdk/pull/4507)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- ✨ Rename session store key to `_dd_s_v2` with legacy migration ([#4459](https://github.com/DataDog/browser-sdk/pull/4459)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- ✨ make all sampling decisions deterministic ([#4194](https://github.com/DataDog/browser-sdk/pull/4194)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 🐛 [PANA-7217] Limit the size of the string table in session replay recordings ([#4544](https://github.com/DataDog/browser-sdk/pull/4544)) [RUM]
+- 🐛 don't adopt another tab's session when it replaces ours directly ([#4537](https://github.com/DataDog/browser-sdk/pull/4537)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 🐛 fix session lifetime bugs for long-lived pages and multi-tab scenarios ([#4531](https://github.com/DataDog/browser-sdk/pull/4531)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 🐛 fix regexp for cookie parsing ([#4527](https://github.com/DataDog/browser-sdk/pull/4527)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 🐛 Prevent cross-tab session adoption after expiry ([#4475](https://github.com/DataDog/browser-sdk/pull/4475)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 🐛 make sure we never send data for very old sessions ([#4462](https://github.com/DataDog/browser-sdk/pull/4462)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 🐛 Ignore cookie observable updates missing the c marker ([#4437](https://github.com/DataDog/browser-sdk/pull/4437)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 🐛 Add telemetry debug for Cookie Store API set failures ([#4432](https://github.com/DataDog/browser-sdk/pull/4432)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 🐛 Fix InvalidStateError when tracing buffered XHR requests ([#4423](https://github.com/DataDog/browser-sdk/pull/4423)) [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE]
+- 📝 Add Claude Code skill for v6 to v7 SDK migration ([#4486](https://github.com/DataDog/browser-sdk/pull/4486))
+
+**Internal Changes:**
+
+- 👷 Renovate: tweak memory ([#4539](https://github.com/DataDog/browser-sdk/pull/4539))
+- 👷 Use 15-minute cache for next major canary S3 uploads ([#4476](https://github.com/DataDog/browser-sdk/pull/4476))
+- 👷 bump rum-vue version to 7.0.0-alpha.0 ([#4351](https://github.com/DataDog/browser-sdk/pull/4351)) [RUM-VUE]
+- 👷 Bump rum-nextjs version to 7.0.0-alpha.0 ([#4295](https://github.com/DataDog/browser-sdk/pull/4295)) [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE]
+- 🔧 use NEXT_MAJOR_BRANCH variable for canary deploy versioning ([#4407](https://github.com/DataDog/browser-sdk/pull/4407))
+- 🔧 Decouple v7 SDK artifact version from package.json version ([#4401](https://github.com/DataDog/browser-sdk/pull/4401)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 🔧 Bump @datadog/browser-rum-angular to 7.0.0-alpha.0 ([#4394](https://github.com/DataDog/browser-sdk/pull/4394)) [RUM-ANGULAR]
+- 🔧 fix root package.json version ([#4286](https://github.com/DataDog/browser-sdk/pull/4286))
+- 🤖 bring v7 upgrade skill to `main` ([#4541](https://github.com/DataDog/browser-sdk/pull/4541))
+- ♻️ Replace BoundedBuffer with BufferedObservable and track dropped data via telemetry ([#4489](https://github.com/DataDog/browser-sdk/pull/4489)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 📈 Add telemetry metric for session manager init duration ([#4488](https://github.com/DataDog/browser-sdk/pull/4488)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- ♻️ Route fetch, XHR, and console through bufferedDataObservable ([#4470](https://github.com/DataDog/browser-sdk/pull/4470)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- ♻️ Refactor startSessionManager to return a Promise instead of using a callback ([#4438](https://github.com/DataDog/browser-sdk/pull/4438)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- ♻️ decouple session change notification from state reading ([#4457](https://github.com/DataDog/browser-sdk/pull/4457)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 🔍 add cookie value and debug context to session renewal event ([#4433](https://github.com/DataDog/browser-sdk/pull/4433)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- ♻️ Rewrite SessionManager with reactive strategy interface ([#4348](https://github.com/DataDog/browser-sdk/pull/4348)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- ♻️ Simplify session managers by removing product-specific wrappers ([#4204](https://github.com/DataDog/browser-sdk/pull/4204)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- ♻️ Make session manager injectable and isolate for v7 rewrite ([#4157](https://github.com/DataDog/browser-sdk/pull/4157)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- ♻️ Async session manager ([#4131](https://github.com/DataDog/browser-sdk/pull/4131)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+
 ## v6.33.0
 
 **Public Changes:**

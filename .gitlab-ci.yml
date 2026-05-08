@@ -6,7 +6,7 @@ variables:
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
   MAIN_BRANCH: 'main'
-  NEXT_MAJOR_BRANCH: 'v7'
+  NEXT_MAJOR_BRANCH: ''
   CHROME_PACKAGE_VERSION: 148.0.7778.96-1
   FF_TIMESTAMPS: 'true' # Enable timestamps for gitlab-ci logs
 
@@ -374,11 +374,10 @@ deploy-next-major-canary:
     - .next-major-branch
   script:
     - export BUILD_MODE=canary
-    - VERSION=$(node -p -e "require('./package.json').version")
     - yarn
     - yarn build:bundle
-    - node ./scripts/deploy/deploy.ts prod v${VERSION%%.*}-canary root
-    - node ./scripts/deploy/upload-source-maps.ts v${VERSION%%.*}-canary root
+    - node ./scripts/deploy/deploy.ts prod ${NEXT_MAJOR_BRANCH}-canary root
+    - node ./scripts/deploy/upload-source-maps.ts ${NEXT_MAJOR_BRANCH}-canary root
 
 deploy-manual:
   stage: deploy

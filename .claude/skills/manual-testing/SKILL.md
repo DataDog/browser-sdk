@@ -5,7 +5,7 @@ description: Run a manual test of the current change end-to-end and output repro
 
 ## Step 1: Understand the change
 
-Review the current diff to identify what SDK behavior changed and what events/fields need to be verified.
+If you don't have the PR changes in memory, review all commits in the PR to identify what SDK behavior changed and what events/fields need to be verified.
 
 ## Step 2: Start the dev server
 
@@ -51,6 +51,13 @@ yarn dev-server intake <selector> | jq '<field>'
 ```
 
 Use `yarn dev-server intake --help` to find the right selector.
+
+To evaluate JavaScript on the page (e.g. to inspect `window` state set by `beforeSend`), switch focus back to tab 0 first, then use `agent-browser eval`:
+
+```bash
+agent-browser tab 0
+agent-browser eval 'window.someValue'
+```
 
 ## Step 5: Verify the output matches expectations, then present the test instructions
 
