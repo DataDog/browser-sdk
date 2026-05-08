@@ -30,10 +30,6 @@ export function createDOMMutationObservable() {
   const MutationObserver = getMutationObserverConstructor()
 
   return new Observable<RumMutationRecord[]>((observable) => {
-    if (!MutationObserver) {
-      return
-    }
-
     const observer = new MutationObserver(monitor((records) => observable.notify(records)))
     observer.observe(document, {
       attributes: true,
@@ -48,11 +44,11 @@ export function createDOMMutationObservable() {
 type MutationObserverConstructor = new (callback: (records: RumMutationRecord[]) => void) => MutationObserver
 
 export interface BrowserWindow extends Window {
-  MutationObserver?: MutationObserverConstructor
+  MutationObserver: MutationObserverConstructor
   Zone?: unknown
 }
 
-export function getMutationObserverConstructor(): MutationObserverConstructor | undefined {
+export function getMutationObserverConstructor(): MutationObserverConstructor {
   let constructor: MutationObserverConstructor | undefined
   const browserWindow = window as BrowserWindow
 
