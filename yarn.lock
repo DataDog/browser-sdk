@@ -34,34 +34,34 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@angular/common@npm:21.2.10":
-  version: 21.2.10
-  resolution: "@angular/common@npm:21.2.10"
+"@angular/common@npm:21.2.11":
+  version: 21.2.11
+  resolution: "@angular/common@npm:21.2.11"
   dependencies:
     tslib: "npm:^2.3.0"
   peerDependencies:
-    "@angular/core": 21.2.10
+    "@angular/core": 21.2.11
     rxjs: ^6.5.3 || ^7.4.0
-  checksum: 10c0/54095e92d0d76c2a27026a7273a03a1b12cd84dc311b41b2740b1ca1be80cb25c05969eabb4e8763d6e00eaea7e61694ce587167f168274864a983b6962ec5b8
+  checksum: 10c0/fcf32f9a7826c4fa32b3e27a32788e9b31d5bc3c112248602a2a5db6b312fb2aec3173db59d95eed72d8b6253fcdb6c04d4c335663672e791628f361a65902ca
   languageName: node
   linkType: hard
 
-"@angular/compiler@npm:21.2.10":
-  version: 21.2.10
-  resolution: "@angular/compiler@npm:21.2.10"
+"@angular/compiler@npm:21.2.11":
+  version: 21.2.11
+  resolution: "@angular/compiler@npm:21.2.11"
   dependencies:
     tslib: "npm:^2.3.0"
-  checksum: 10c0/ef3f3751bf495ac08e87b803e41165f773c9ed42b2f64773cf49f58b086a9ceaf04dd5f5f700290468ffc1196bf0ff9e28959a758d1c54e7c30739c4b7d6daa0
+  checksum: 10c0/c21cad297db199b17fe01c83b74a19cb3ce994cd2c84c5227fe89ccbc0d9567511ab9dc1d7fedf4601625eacc949a4a81f9afe26979db31437a1bf739d358eb2
   languageName: node
   linkType: hard
 
-"@angular/core@npm:21.2.10":
-  version: 21.2.10
-  resolution: "@angular/core@npm:21.2.10"
+"@angular/core@npm:21.2.11":
+  version: 21.2.11
+  resolution: "@angular/core@npm:21.2.11"
   dependencies:
     tslib: "npm:^2.3.0"
   peerDependencies:
-    "@angular/compiler": 21.2.10
+    "@angular/compiler": 21.2.11
     rxjs: ^6.5.3 || ^7.4.0
     zone.js: ~0.15.0 || ~0.16.0
   peerDependenciesMeta:
@@ -69,37 +69,37 @@ __metadata:
       optional: true
     zone.js:
       optional: true
-  checksum: 10c0/69c36e7280fbef4b63e27d0caccea3a40b98b481b356b403c8ade5abd99fd13a503055e4a85b3944558f31322f6d1a479283ecc634a71462a4ed929708e96fba
+  checksum: 10c0/a60cbf46a2d3854fd438c25fe126cc950d6ea12f3cbf278c87a216c7b817d897a840d9b17f847bdfc7630676c67f2bebec7f1058c0249d77d6280b9829f0c8c3
   languageName: node
   linkType: hard
 
-"@angular/platform-browser@npm:21.2.10":
-  version: 21.2.10
-  resolution: "@angular/platform-browser@npm:21.2.10"
+"@angular/platform-browser@npm:21.2.11":
+  version: 21.2.11
+  resolution: "@angular/platform-browser@npm:21.2.11"
   dependencies:
     tslib: "npm:^2.3.0"
   peerDependencies:
-    "@angular/animations": 21.2.10
-    "@angular/common": 21.2.10
-    "@angular/core": 21.2.10
+    "@angular/animations": 21.2.11
+    "@angular/common": 21.2.11
+    "@angular/core": 21.2.11
   peerDependenciesMeta:
     "@angular/animations":
       optional: true
-  checksum: 10c0/9eed09ed031f159811ee02fa2d1cd5f12f254c5e93100cbb0e1a57892bc26649e33c093d925b9bad505f88bab5b76d035334cce6c7b342d3b88795b5601b2f71
+  checksum: 10c0/22227f86388dfa87653e7ea51edc8f1140b5034a95c90330772c03ea69a0906fa49c4dca056f9aa3746f2052c16b063b834272e9293f9d4328b0b92714b047cd
   languageName: node
   linkType: hard
 
-"@angular/router@npm:21.2.10":
-  version: 21.2.10
-  resolution: "@angular/router@npm:21.2.10"
+"@angular/router@npm:21.2.11":
+  version: 21.2.11
+  resolution: "@angular/router@npm:21.2.11"
   dependencies:
     tslib: "npm:^2.3.0"
   peerDependencies:
-    "@angular/common": 21.2.10
-    "@angular/core": 21.2.10
-    "@angular/platform-browser": 21.2.10
+    "@angular/common": 21.2.11
+    "@angular/core": 21.2.11
+    "@angular/platform-browser": 21.2.11
     rxjs: ^6.5.3 || ^7.4.0
-  checksum: 10c0/8db41b68fa9d4b137527a1fda3297116b46fa9684327d02dc420a170d32825c36fa842105aa52e28a0da35daeea047923716417fe02dd8de4638fcf54c501182
+  checksum: 10c0/55bb1e80ac7f1feff5079a2a49a7bfdb34bf0ae3b469315f8da22658e12dabc9866644833ee0c157aa4ec4f99a7d6bd08e9a36edb6c6c9ed01361614b3845293
   languageName: node
   linkType: hard
 
@@ -329,11 +329,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-angular@workspace:packages/rum-angular"
   dependencies:
-    "@angular/common": "npm:21.2.10"
-    "@angular/compiler": "npm:21.2.10"
-    "@angular/core": "npm:21.2.10"
-    "@angular/platform-browser": "npm:21.2.10"
-    "@angular/router": "npm:21.2.10"
+    "@angular/common": "npm:21.2.11"
+    "@angular/compiler": "npm:21.2.11"
+    "@angular/core": "npm:21.2.11"
+    "@angular/platform-browser": "npm:21.2.11"
+    "@angular/router": "npm:21.2.11"
     "@datadog/browser-core": "npm:6.33.0"
     "@datadog/browser-rum-core": "npm:6.33.0"
     rxjs: "npm:7.8.2"
@@ -407,7 +407,7 @@ __metadata:
   dependencies:
     "@datadog/browser-core": "npm:6.33.0"
     "@datadog/browser-rum-core": "npm:6.33.0"
-    "@tanstack/react-router": "npm:1.168.25"
+    "@tanstack/react-router": "npm:1.169.1"
     "@types/react": "npm:19.2.14"
     "@types/react-dom": "npm:19.2.3"
     react: "npm:19.2.5"
@@ -456,7 +456,7 @@ __metadata:
   dependencies:
     "@datadog/browser-core": "npm:6.33.0"
     "@datadog/browser-rum-core": "npm:6.33.0"
-    "@vue/test-utils": "npm:2.4.9"
+    "@vue/test-utils": "npm:2.4.10"
     vue: "npm:3.5.33"
     vue-router: "npm:5.0.6"
   peerDependencies:
@@ -1939,106 +1939,106 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@swc/core-darwin-arm64@npm:1.15.32":
-  version: 1.15.32
-  resolution: "@swc/core-darwin-arm64@npm:1.15.32"
+"@swc/core-darwin-arm64@npm:1.15.33":
+  version: 1.15.33
+  resolution: "@swc/core-darwin-arm64@npm:1.15.33"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"@swc/core-darwin-x64@npm:1.15.32":
-  version: 1.15.32
-  resolution: "@swc/core-darwin-x64@npm:1.15.32"
+"@swc/core-darwin-x64@npm:1.15.33":
+  version: 1.15.33
+  resolution: "@swc/core-darwin-x64@npm:1.15.33"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"@swc/core-linux-arm-gnueabihf@npm:1.15.32":
-  version: 1.15.32
-  resolution: "@swc/core-linux-arm-gnueabihf@npm:1.15.32"
+"@swc/core-linux-arm-gnueabihf@npm:1.15.33":
+  version: 1.15.33
+  resolution: "@swc/core-linux-arm-gnueabihf@npm:1.15.33"
   conditions: os=linux & cpu=arm
   languageName: node
   linkType: hard
 
-"@swc/core-linux-arm64-gnu@npm:1.15.32":
-  version: 1.15.32
-  resolution: "@swc/core-linux-arm64-gnu@npm:1.15.32"
+"@swc/core-linux-arm64-gnu@npm:1.15.33":
+  version: 1.15.33
+  resolution: "@swc/core-linux-arm64-gnu@npm:1.15.33"
   conditions: os=linux & cpu=arm64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@swc/core-linux-arm64-musl@npm:1.15.32":
-  version: 1.15.32
-  resolution: "@swc/core-linux-arm64-musl@npm:1.15.32"
+"@swc/core-linux-arm64-musl@npm:1.15.33":
+  version: 1.15.33
+  resolution: "@swc/core-linux-arm64-musl@npm:1.15.33"
   conditions: os=linux & cpu=arm64 & libc=musl
   languageName: node
   linkType: hard
 
-"@swc/core-linux-ppc64-gnu@npm:1.15.32":
-  version: 1.15.32
-  resolution: "@swc/core-linux-ppc64-gnu@npm:1.15.32"
+"@swc/core-linux-ppc64-gnu@npm:1.15.33":
+  version: 1.15.33
+  resolution: "@swc/core-linux-ppc64-gnu@npm:1.15.33"
   conditions: os=linux & cpu=ppc64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@swc/core-linux-s390x-gnu@npm:1.15.32":
-  version: 1.15.32
-  resolution: "@swc/core-linux-s390x-gnu@npm:1.15.32"
+"@swc/core-linux-s390x-gnu@npm:1.15.33":
+  version: 1.15.33
+  resolution: "@swc/core-linux-s390x-gnu@npm:1.15.33"
   conditions: os=linux & cpu=s390x & libc=glibc
   languageName: node
   linkType: hard
 
-"@swc/core-linux-x64-gnu@npm:1.15.32":
-  version: 1.15.32
-  resolution: "@swc/core-linux-x64-gnu@npm:1.15.32"
+"@swc/core-linux-x64-gnu@npm:1.15.33":
+  version: 1.15.33
+  resolution: "@swc/core-linux-x64-gnu@npm:1.15.33"
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@swc/core-linux-x64-musl@npm:1.15.32":
-  version: 1.15.32
-  resolution: "@swc/core-linux-x64-musl@npm:1.15.32"
+"@swc/core-linux-x64-musl@npm:1.15.33":
+  version: 1.15.33
+  resolution: "@swc/core-linux-x64-musl@npm:1.15.33"
   conditions: os=linux & cpu=x64 & libc=musl
   languageName: node
   linkType: hard
 
-"@swc/core-win32-arm64-msvc@npm:1.15.32":
-  version: 1.15.32
-  resolution: "@swc/core-win32-arm64-msvc@npm:1.15.32"
+"@swc/core-win32-arm64-msvc@npm:1.15.33":
+  version: 1.15.33
+  resolution: "@swc/core-win32-arm64-msvc@npm:1.15.33"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"@swc/core-win32-ia32-msvc@npm:1.15.32":
-  version: 1.15.32
-  resolution: "@swc/core-win32-ia32-msvc@npm:1.15.32"
+"@swc/core-win32-ia32-msvc@npm:1.15.33":
+  version: 1.15.33
+  resolution: "@swc/core-win32-ia32-msvc@npm:1.15.33"
   conditions: os=win32 & cpu=ia32
   languageName: node
   linkType: hard
 
-"@swc/core-win32-x64-msvc@npm:1.15.32":
-  version: 1.15.32
-  resolution: "@swc/core-win32-x64-msvc@npm:1.15.32"
+"@swc/core-win32-x64-msvc@npm:1.15.33":
+  version: 1.15.33
+  resolution: "@swc/core-win32-x64-msvc@npm:1.15.33"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
 
-"@swc/core@npm:1.15.32":
-  version: 1.15.32
-  resolution: "@swc/core@npm:1.15.32"
+"@swc/core@npm:1.15.33":
+  version: 1.15.33
+  resolution: "@swc/core@npm:1.15.33"
   dependencies:
-    "@swc/core-darwin-arm64": "npm:1.15.32"
-    "@swc/core-darwin-x64": "npm:1.15.32"
-    "@swc/core-linux-arm-gnueabihf": "npm:1.15.32"
-    "@swc/core-linux-arm64-gnu": "npm:1.15.32"
-    "@swc/core-linux-arm64-musl": "npm:1.15.32"
-    "@swc/core-linux-ppc64-gnu": "npm:1.15.32"
-    "@swc/core-linux-s390x-gnu": "npm:1.15.32"
-    "@swc/core-linux-x64-gnu": "npm:1.15.32"
-    "@swc/core-linux-x64-musl": "npm:1.15.32"
-    "@swc/core-win32-arm64-msvc": "npm:1.15.32"
-    "@swc/core-win32-ia32-msvc": "npm:1.15.32"
-    "@swc/core-win32-x64-msvc": "npm:1.15.32"
+    "@swc/core-darwin-arm64": "npm:1.15.33"
+    "@swc/core-darwin-x64": "npm:1.15.33"
+    "@swc/core-linux-arm-gnueabihf": "npm:1.15.33"
+    "@swc/core-linux-arm64-gnu": "npm:1.15.33"
+    "@swc/core-linux-arm64-musl": "npm:1.15.33"
+    "@swc/core-linux-ppc64-gnu": "npm:1.15.33"
+    "@swc/core-linux-s390x-gnu": "npm:1.15.33"
+    "@swc/core-linux-x64-gnu": "npm:1.15.33"
+    "@swc/core-linux-x64-musl": "npm:1.15.33"
+    "@swc/core-win32-arm64-msvc": "npm:1.15.33"
+    "@swc/core-win32-ia32-msvc": "npm:1.15.33"
+    "@swc/core-win32-x64-msvc": "npm:1.15.33"
     "@swc/counter": "npm:^0.1.3"
     "@swc/types": "npm:^0.1.26"
   peerDependencies:
@@ -2071,7 +2071,7 @@ __metadata:
   peerDependenciesMeta:
     "@swc/helpers":
       optional: true
-  checksum: 10c0/114e2d08a588de6dc0b01106368461d471464ec1bd0d046f4007cd2af9f52c0ddbf473a6dc251aa7f71828b74fe8488221718019187bb91a5f503a45b91b5fb1
+  checksum: 10c0/7d6771fdf8f1e1d41665fb84b3e718feec05e72ed448b1fbc95d3f9f4c0e80ea495e66e778436201e8ab902478042f517da4bd3f6890127248788d8b985f9a52
   languageName: node
   linkType: hard
 
@@ -2125,18 +2125,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tanstack/react-router@npm:1.168.25":
-  version: 1.168.25
-  resolution: "@tanstack/react-router@npm:1.168.25"
+"@tanstack/react-router@npm:1.169.1":
+  version: 1.169.1
+  resolution: "@tanstack/react-router@npm:1.169.1"
   dependencies:
     "@tanstack/history": "npm:1.161.6"
     "@tanstack/react-store": "npm:^0.9.3"
-    "@tanstack/router-core": "npm:1.168.17"
+    "@tanstack/router-core": "npm:1.169.1"
     isbot: "npm:^5.1.22"
   peerDependencies:
     react: ">=18.0.0 || >=19.0.0"
     react-dom: ">=18.0.0 || >=19.0.0"
-  checksum: 10c0/5d680769464a553a7b8629c33d2d0298941df68b305b528f4d6f0f6906f3c3d3970d51f99d1c6a1e8b052f80c65ddf08248fe3f03f8bc230c65ad6b2b3505a00
+  checksum: 10c0/dfbd114d229a7874db05efd4714852bc81ad92b8e339d121cf66021c1111aa6a85d3feb6688e95d73b34d5159a1a155d0dd67ec7ff7717209a0f88823292f568
   languageName: node
   linkType: hard
 
@@ -2153,9 +2153,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tanstack/router-core@npm:1.168.17":
-  version: 1.168.17
-  resolution: "@tanstack/router-core@npm:1.168.17"
+"@tanstack/router-core@npm:1.169.1":
+  version: 1.169.1
+  resolution: "@tanstack/router-core@npm:1.169.1"
   dependencies:
     "@tanstack/history": "npm:1.161.6"
     cookie-es: "npm:^3.0.0"
@@ -2163,7 +2163,7 @@ __metadata:
     seroval-plugins: "npm:^1.5.0"
   bin:
     intent: bin/intent.js
-  checksum: 10c0/d869053d088fc5aee3871e44f68da9087e10e4b582b84eda79042db7f5138a043b2c276d6093111f6d862458ed9ae07bfdf6d567dfe6711a56b4212ff49d8a19
+  checksum: 10c0/c0d3a579b05be9b9952bd6911c627b95ff0c9c9bc0d77478a1906324b6d051c1d42d64f3b924849759ac0fa43452b66547dd7bc43c7f76baf328f365542d0933
   languageName: node
   linkType: hard
 
@@ -2919,9 +2919,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/test-utils@npm:2.4.9":
-  version: 2.4.9
-  resolution: "@vue/test-utils@npm:2.4.9"
+"@vue/test-utils@npm:2.4.10":
+  version: 2.4.10
+  resolution: "@vue/test-utils@npm:2.4.10"
   dependencies:
     js-beautify: "npm:^1.14.9"
     vue-component-type-helpers: "npm:^3.0.0"
@@ -2932,7 +2932,7 @@ __metadata:
   peerDependenciesMeta:
     "@vue/server-renderer":
       optional: true
-  checksum: 10c0/a38f06d72108e2e64cf3600074121f236c0945b91f191a69cd7efb202c6109acceb5f9209550eac962ece5a2b4fc549f5422ff010e609dc0b461e9c773b7f306
+  checksum: 10c0/5dee1a15a4908d1ad82d9940307223214d9fa93e2cdffdc294b72880f73db3e1938bd2f290b096a22b8b8d84db481d4aea7989fcb4c9e5e63ea16896c9a4f4fd
   languageName: node
   linkType: hard
 
@@ -3827,7 +3827,7 @@ __metadata:
     "@eslint/js": "npm:9.39.4"
     "@jsdevtools/coverage-istanbul-loader": "npm:3.0.5"
     "@playwright/test": "npm:1.58.2"
-    "@swc/core": "npm:1.15.32"
+    "@swc/core": "npm:1.15.33"
     "@types/busboy": "npm:1.5.4"
     "@types/chrome": "npm:0.1.40"
     "@types/cors": "npm:2.8.19"
@@ -3849,7 +3849,7 @@ __metadata:
     eslint-plugin-jsdoc: "npm:62.9.0"
     eslint-plugin-unicorn: "npm:63.0.0"
     express: "npm:5.2.1"
-    globals: "npm:17.5.0"
+    globals: "npm:17.6.0"
     html-webpack-plugin: "npm:5.6.7"
     http-server: "npm:14.1.1"
     jasmine-core: "npm:3.99.1"
@@ -3874,7 +3874,7 @@ __metadata:
     typedoc: "npm:0.28.19"
     typescript: "npm:6.0.3"
     typescript-eslint: "npm:8.59.1"
-    undici: "npm:8.1.0"
+    undici: "npm:8.2.0"
     webpack: "npm:5.106.2"
     webpack-cli: "npm:7.0.2"
     webpack-dev-middleware: "npm:8.0.3"
@@ -6483,10 +6483,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"globals@npm:17.5.0":
-  version: 17.5.0
-  resolution: "globals@npm:17.5.0"
-  checksum: 10c0/92828102ed2f5637907725f0478038bed02fc83e9fc89300bb753639ba7c022b6c02576fc772117302b431b204591db1f2fa909d26f3f0a9852cc856a941df3f
+"globals@npm:17.6.0":
+  version: 17.6.0
+  resolution: "globals@npm:17.6.0"
+  checksum: 10c0/cf94fb4329cc5c68cf81018fd68324f413181ee169f0235b0b33b82bc93fe7825a21beea951f83a80e8e4bbdad9c0c80515a145b5fd4b5cb52f2a80db899a93f
   languageName: node
   linkType: hard
 
@@ -11772,10 +11772,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici@npm:8.1.0":
-  version: 8.1.0
-  resolution: "undici@npm:8.1.0"
-  checksum: 10c0/c55ad57f10efb9b55ab683104dde1c6f620496b9facde640ba26cffdc53a53694c12a8c3f7196069017c5c1b5031ef0843e232d9c04dcc834b3baa046d3ea678
+"undici@npm:8.2.0":
+  version: 8.2.0
+  resolution: "undici@npm:8.2.0"
+  checksum: 10c0/11a172a1a9d9b958e1e60e01fd416b630f977a2607783e35a20ba0a6a89a79dc8d03f9d496c08b4d8541a787db02cbe83be56c55d1285400385c1b6061ef2015
   languageName: node
   linkType: hard
 

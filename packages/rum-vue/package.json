@@ -40,7 +40,7 @@
     }
   },
   "devDependencies": {
-    "@vue/test-utils": "2.4.9",
+    "@vue/test-utils": "2.4.10",
     "vue": "3.5.33",
     "vue-router": "5.0.6"
   },
