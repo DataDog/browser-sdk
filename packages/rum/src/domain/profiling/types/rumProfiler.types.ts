@@ -58,5 +58,4 @@ export interface RUMProfilerConfiguration {
   sampleIntervalMs: number // Sample stack trace every x milliseconds (defaults to 10ms for Unix, 16ms on Windows)
   collectIntervalMs: number // Interval for collecting RUM Profiles (defaults to 1min)
   minProfileDurationMs: number // Minimum duration of a profile for it be sent (defaults to 5s). Profiles shorter than this duration are discarded.
-  minNumberOfSamples: number // Minimum number of samples to be collected before it can be sent (defaults to 50). Profiles with fewer samples are discarded.
 }
