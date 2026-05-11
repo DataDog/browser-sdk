@@ -70,7 +70,11 @@ export type {
   DurationVitalStart,
   AddDurationVitalOptions,
   DurationVitalOptions,
+  FeatureOperationOptions,
+  FailureReason,
 } from './domain/vital/vitalCollection'
+export type { ActionOptions } from './domain/action/trackManualActions'
+export type { ResourceOptions, ResourceStopOptions } from './domain/resource/trackManualResources'
 export type { Hooks, DefaultRumEventAttributes, DefaultTelemetryEventAttributes } from './domain/hooks'
 export { createHooks } from './domain/hooks'
 export { isSampled } from './domain/sampler/sampler'
