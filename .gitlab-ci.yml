@@ -231,6 +231,7 @@ e2e:
   extends:
     - .base-configuration
     - .test-allowed-branches
+    - .resource-allocation-4-cpus
   interruptible: true
   artifacts:
     when: always

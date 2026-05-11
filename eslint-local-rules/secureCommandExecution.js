@@ -50,7 +50,7 @@ function isCommandExecuted(node) {
     currentMethodCall = currentMethodCall.parent.parent
   }
 
-  return methodCallNames.includes('run')
+  return methodCallNames.includes('run') || methodCallNames.includes('runAsync')
 }
 
 function isCommandContainsShellCharacters(node) {
