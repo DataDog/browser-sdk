@@ -61,6 +61,9 @@ export function startResourceCollection(lifeCycle: LifeCycle, configuration: Rum
         // The PerformanceObserver callback can fire before the fetch's resolve microtask runs
         // (notably on Firefox), so the matching REQUEST_COMPLETED isn't in the registry yet.
         // Defer the lookup to give the request time to land before we look it up.
+        //
+        // Note: we could clear the timeout on stop(), but this requires a bit of bookkeeping that
+        // is not necessary right now. We could reevaluate in the future.
         setTimeout(
           () => handleResource(() => assembleResource(entry, requestRegistry.getMatchingRequest(entry), configuration)),
           REQUEST_MATCHING_DELAY
