@@ -1,3 +1,4 @@
+import type { Duration } from '@datadog/browser-core'
 import {
   combine,
   generateUUID,
@@ -11,6 +12,7 @@ import {
   display,
   addTelemetryDebug,
   RequestType,
+  setTimeout,
 } from '@datadog/browser-core'
 import type { MatchHeader, RumConfiguration } from '../configuration'
 import { RumPerformanceEntryType, createPerformanceObservable } from '../../browser/performanceObservable'
@@ -36,12 +38,15 @@ import {
   sanitizeIfLongDataUrl,
 } from './resourceUtils'
 import type { ResourceLikeEntry } from './resourceUtils'
-import type { RequestRegistry } from './requestRegistry'
 import { createRequestRegistry } from './requestRegistry'
 import type { GraphQlMetadata } from './graphql'
 import { extractGraphQlMetadata, findGraphQlConfiguration } from './graphql'
 import type { ManualResourceData } from './trackManualResources'
 import { trackManualResources } from './trackManualResources'
+
+// Delay before looking up the request matching a request-type performance entry. See the call
+// site in `startResourceCollection` for the rationale.
+export const REQUEST_MATCHING_DELAY = 50 as Duration
 
 export function startResourceCollection(lifeCycle: LifeCycle, configuration: RumConfiguration) {
   const taskQueue = mockable(createTaskQueue)()
@@ -52,12 +57,25 @@ export function startResourceCollection(lifeCycle: LifeCycle, configuration: Rum
     buffered: true,
   }).subscribe((entries) => {
     for (const entry of entries) {
-      handleResource(() => assembleResource(entry, requestRegistry, configuration))
+      if (isResourceEntryRequestType(entry)) {
+        // The PerformanceObserver callback can fire before the fetch's resolve microtask runs
+        // (notably on Firefox), so the matching REQUEST_COMPLETED isn't in the registry yet.
+        // Defer the lookup to give the request time to land before we look it up.
+        //
+        // Note: we could clear the timeout on stop(), but this requires a bit of bookkeeping that
+        // is not necessary right now. We could reevaluate in the future.
+        setTimeout(
+          () => handleResource(() => assembleResource(entry, requestRegistry.getMatchingRequest(entry), configuration)),
+          REQUEST_MATCHING_DELAY
+        )
+      } else {
+        handleResource(() => assembleResource(entry, undefined, configuration))
+      }
     }
   })
 
   const { stop: stopRunOnReadyState } = runOnReadyState(configuration, 'interactive', () => {
-    handleResource(() => assembleResource(getNavigationEntry(), requestRegistry, configuration))
+    handleResource(() => assembleResource(getNavigationEntry(), undefined, configuration))
   })
 
   function handleResource(computeRawEvent: () => RawRumEventCollectedData<RawRumResourceEvent> | undefined) {
@@ -86,10 +104,9 @@ export function startResourceCollection(lifeCycle: LifeCycle, configuration: Rum
 
 function assembleResource(
   entry: ResourceLikeEntry,
-  requestRegistry: RequestRegistry,
+  request: RequestCompleteEvent | undefined,
   configuration: RumConfiguration
 ): RawRumEventCollectedData<RawRumResourceEvent> | undefined {
-  const request = isResourceEntryRequestType(entry) ? requestRegistry.getMatchingRequest(entry) : undefined
   const tracingInfo = request
     ? computeRequestTracingInfo(request, configuration)
     : computeResourceEntryTracingInfo(entry, configuration)

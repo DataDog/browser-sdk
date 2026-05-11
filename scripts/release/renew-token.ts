@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
 import { Writable } from 'node:stream'
-import { printError, printLog, runMain } from '../lib/executionUtils.ts'
+import { printError, printLog, printWarning, runMain } from '../lib/executionUtils.ts'
 import { findPackageJsonFiles } from '../lib/filesUtils.ts'
 import { command } from '../lib/command.ts'
 
@@ -19,6 +19,27 @@ runMain(async () => {
   if (!accessToken) {
     printError('Could not find NPM token in ~/.npmrc. Make sure you have logged in with `npm login`')
     process.exit(1)
+  }
+
+  const publishablePackages = findPublisheablePackages()
+  const missingPackages = await findMissingPackages(publishablePackages)
+
+  if (missingPackages.length > 0) {
+    printWarning("The following packages don't exist yet on the npm registry:")
+    for (const packageName of missingPackages) {
+      printWarning(`  - ${packageName}`)
+    }
+    printWarning(
+      'Renewing the granular token with non-existing packages will fail. Placeholder packages must be published first.'
+    )
+
+    const answer = await prompt({ question: 'Publish placeholder packages now? [y/N] ' })
+    if (answer.toLowerCase() !== 'y') {
+      printError('Aborting. Either publish the missing packages or mark them as private in their package.json.')
+      process.exit(1)
+    }
+
+    publishPlaceholderPackages(missingPackages)
   }
 
   const password = await prompt({ question: 'npmjs.com password: ', showOutput: false })
@@ -53,7 +74,7 @@ runMain(async () => {
       token_description: 'Token used to publish Browser SDK packages (@datadog/browser-*) from the CI.',
       expires: 90,
       bypass_2fa: true,
-      packages: findPublisheablePackages(),
+      packages: publishablePackages,
       packages_and_scopes_permission: 'read-write',
     },
     otp,
@@ -121,6 +142,48 @@ async function callNpmApi<T>({
   }
 
   return responseBody as T
+}
+
+async function findMissingPackages(packageNames: string[]): Promise<string[]> {
+  const results = await Promise.all(
+    packageNames.map(async (packageName) => {
+      const response = await fetch(`https://registry.npmjs.org/${encodeURIComponent(packageName)}`)
+      return response.status === 404 ? [packageName] : []
+    })
+  )
+  return results.flat()
+}
+
+function publishPlaceholderPackages(packageNames: string[]): void {
+  for (const packageName of packageNames) {
+    publishPlaceholderPackage(packageName)
+  }
+}
+
+function publishPlaceholderPackage(packageName: string): void {
+  printLog(`Publishing placeholder for ${packageName}...`)
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'browser-sdk-placeholder-'))
+  try {
+    fs.writeFileSync(
+      path.join(tmpDir, 'package.json'),
+      JSON.stringify(
+        {
+          name: packageName,
+          version: '0.0.0',
+          publishConfig: { access: 'public' },
+        },
+        null,
+        2
+      )
+    )
+
+    fs.writeFileSync(path.join(tmpDir, 'README.md'), `Placeholder for package ${packageName}\n`)
+
+    command`npm publish`.withCurrentWorkingDirectory(tmpDir).withLogs().run()
+    printLog(`Published placeholder for ${packageName}`)
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true })
+  }
 }
 
 function findPublisheablePackages() {

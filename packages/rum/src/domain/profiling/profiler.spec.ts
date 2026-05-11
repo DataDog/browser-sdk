@@ -29,7 +29,7 @@ import { mockProfiler } from '../../../test'
 import type { BrowserProfilerTrace } from '../../types'
 import { mockedTrace } from './test-utils/mockedTrace'
 import { createRumProfiler } from './datadogProfiler'
-import type { ProfilerTrace } from './types'
+import type { ProfilerTrace, RUMProfilerConfiguration } from './types'
 import type { ProfilingContextManager } from './profilingContext'
 import { startProfilingContext } from './profilingContext'
 import type { ProfileEventPayload } from './transport/assembly'
@@ -57,7 +57,7 @@ describe('profiler', () => {
 
   let lifeCycle = new LifeCycle()
 
-  function setupProfiler(currentView?: ViewHistoryEntry) {
+  function setupProfiler(currentView?: ViewHistoryEntry, profilerConfigOverrides?: Partial<RUMProfilerConfiguration>) {
     const sessionManager = createSessionManagerMock().setId('session-id-1')
     lifeCycle = new LifeCycle()
     const hooks = createHooks()
@@ -123,8 +123,8 @@ describe('profiler', () => {
       {
         sampleIntervalMs: 10,
         collectIntervalMs: 60000, // 1min
-        minNumberOfSamples: 0,
         minProfileDurationMs: 0,
+        ...profilerConfigOverrides,
       }
     )
     return {
@@ -932,6 +932,66 @@ describe('profiler', () => {
     await waitNextMicrotask()
 
     expect(findTrackedSessionSpy).toHaveBeenCalledWith(expectedStartTime)
+  })
+
+  describe('discard logic', () => {
+    it('should discard profile when duration is below threshold and there are no long tasks', async () => {
+      const clock = mockClock()
+      const { profiler } = setupProfiler(undefined, { minProfileDurationMs: 5000 })
+
+      profiler.start()
+      expect(profiler.isRunning()).toBe(true)
+
+      clock.tick(100)
+      profiler.stop()
+      expect(profiler.isStopped()).toBe(true)
+
+      await waitNextMicrotask()
+      await waitNextMicrotask()
+
+      expect(interceptor.requests.length).toBe(0)
+    })
+
+    it('should send profile when below duration threshold if a long task is present', async () => {
+      const clock = mockClock()
+      const { profiler, addLongTask } = setupProfiler(undefined, { minProfileDurationMs: 5000 })
+
+      profiler.start()
+      expect(profiler.isRunning()).toBe(true)
+
+      addLongTask({
+        id: 'long-task-id',
+        startClocks: clocksNow(),
+        duration: 50 as Duration,
+        entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
+      })
+      clock.tick(100)
+
+      profiler.stop()
+      expect(profiler.isStopped()).toBe(true)
+
+      await waitNextMicrotask()
+      await waitNextMicrotask()
+
+      expect(interceptor.requests.length).toBe(1)
+    })
+
+    it('should send profile when duration threshold is met', async () => {
+      const clock = mockClock()
+      const { profiler } = setupProfiler(undefined, { minProfileDurationMs: 100 })
+
+      profiler.start()
+      expect(profiler.isRunning()).toBe(true)
+
+      clock.tick(200)
+      profiler.stop()
+      expect(profiler.isStopped()).toBe(true)
+
+      await waitNextMicrotask()
+      await waitNextMicrotask()
+
+      expect(interceptor.requests.length).toBe(1)
+    })
   })
 
   it('should restart profiling when session expires while paused and then renews', async () => {

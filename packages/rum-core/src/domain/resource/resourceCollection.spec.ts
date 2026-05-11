@@ -1,7 +1,7 @@
 import type { Duration, MatchOption, RelativeTime, ServerDuration, TaskQueue, TimeStamp } from '@datadog/browser-core'
 import { createTaskQueue, display, elapsed, RequestType, ResourceType, toServerDuration } from '@datadog/browser-core'
-import type { MockTelemetry } from '@datadog/browser-core/test'
-import { registerCleanupTask, replaceMockable, startMockTelemetry } from '@datadog/browser-core/test'
+import type { Clock, MockTelemetry } from '@datadog/browser-core/test'
+import { mockClock, registerCleanupTask, replaceMockable, startMockTelemetry } from '@datadog/browser-core/test'
 import {
   collectAndValidateRawRumEvents,
   createPerformanceEntry,
@@ -22,7 +22,7 @@ import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { RequestCompleteEvent } from '../requestCollection'
 import { getDocumentTraceId } from '../tracing/getDocumentTraceId'
 import { createSpanIdentifier, createTraceIdentifier } from '../tracing/identifier'
-import { startResourceCollection } from './resourceCollection'
+import { REQUEST_MATCHING_DELAY, startResourceCollection } from './resourceCollection'
 
 function buildMatchHeadersForAllUrls(headerNames: MatchOption[]): MatchHeader[] {
   return headerNames.map((name) => ({ name }))
@@ -36,6 +36,7 @@ describe('resourceCollection', () => {
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
   let taskQueuePushSpy: jasmine.Spy<TaskQueue['push']>
+  let clock: Clock
 
   function setupResourceCollection(partialConfig: Partial<RumConfiguration> = { trackResources: true }) {
     const { triggerOnDomLoaded } = mockDocumentReadyState()
@@ -55,6 +56,7 @@ describe('resourceCollection', () => {
   }
 
   beforeEach(() => {
+    clock = mockClock()
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
   })
 
@@ -1277,6 +1279,9 @@ describe('resourceCollection', () => {
   })
 
   function runTasks() {
+    // Request-type entries are queued through a `setTimeout(…, REQUEST_MATCHING_DELAY)` before
+    // they reach the task queue — advance past it so they get pushed.
+    clock.tick(REQUEST_MATCHING_DELAY)
     taskQueuePushSpy.calls.allArgs().forEach(([task]) => {
       task()
     })

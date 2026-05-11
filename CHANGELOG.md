@@ -15,6 +15,37 @@
 
 ---
 
+## v7.1.0
+
+**Public Changes:**
+
+- ✨ [RUM-16070] GA trackResourceHeaders ([#4542](https://github.com/DataDog/browser-sdk/pull/4542)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 🐛 make sure we don't postpone batch indefinitely when upserting a view ([#4583](https://github.com/DataDog/browser-sdk/pull/4583)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 🐛 align trace sampling fallback with non-bridge path [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE]
+- 🐛 tolerate Cypress.env throwing under allowCypressEnv: false ([#4550](https://github.com/DataDog/browser-sdk/pull/4550)) [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE]
+- 🐛 [Browser Profiler] use profiling start time to look up session id ([#4545](https://github.com/DataDog/browser-sdk/pull/4545)) [RUM]
+- 📝 export public API option types for typedoc ([#4575](https://github.com/DataDog/browser-sdk/pull/4575)) [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE]
+- 📝 Add DO NOT MODIFY IT BY HAND comment to CHANGELOG.md ([#4526](https://github.com/DataDog/browser-sdk/pull/4526))
+- 📝 update CDN URLs to v7 and clear NEXT_MAJOR_BRANCH ([#4551](https://github.com/DataDog/browser-sdk/pull/4551))
+
+**Internal Changes:**
+
+- 👷 Update all non-major dependencies ([#4596](https://github.com/DataDog/browser-sdk/pull/4596)) [RUM-ANGULAR] [RUM-NEXTJS] [RUM-VUE]
+- 👷 Auto-cancel interruptible jobs on new commits ([#4571](https://github.com/DataDog/browser-sdk/pull/4571))
+- 👷 Update all non-major dependencies ([#4501](https://github.com/DataDog/browser-sdk/pull/4501)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 👷 Renovate: pin angular-app to its current Angular version ([#4565](https://github.com/DataDog/browser-sdk/pull/4565))
+- 👷 check @datadog/browser-\* in test app devDependencies ([#4564](https://github.com/DataDog/browser-sdk/pull/4564))
+- 👷 add dd-octo-sts[bot] to CLA allowlist ([#4562](https://github.com/DataDog/browser-sdk/pull/4562))
+- 👷 Bump chrome to 148.0.7778.96-1 ([#4559](https://github.com/DataDog/browser-sdk/pull/4559))
+- 👷 Lock file maintenance ([#4504](https://github.com/DataDog/browser-sdk/pull/4504))
+- 👷 Update dependency typescript to v6 ([#4553](https://github.com/DataDog/browser-sdk/pull/4553))
+- 👷 Update dependency next to v16.1.7 [SECURITY] ([#4375](https://github.com/DataDog/browser-sdk/pull/4375))
+- 👷 [PANA-7214] Use only new serialization code in mutation tracker tests ([#4538](https://github.com/DataDog/browser-sdk/pull/4538)) [RUM]
+- 👷 Bump chrome to 147.0.7727.55-1 ([#4452](https://github.com/DataDog/browser-sdk/pull/4452))
+- 👷 RUM-15702 Add trace sampling decision to DatadogEventBridge ([#4516](https://github.com/DataDog/browser-sdk/pull/4516)) [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- ♻️ remove unnecessary type assertions [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 🔥 [PANA-7724] Remove the old session replay serialization algorithm ([#4547](https://github.com/DataDog/browser-sdk/pull/4547)) [RUM]
+
 ## v7.0.0
 
 This is the v7 major release. It removes deprecated options and legacy code paths accumulated over the v6 line, modernizes the build, and ships a more reliable session manager.
