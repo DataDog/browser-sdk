@@ -17,10 +17,12 @@ export interface CapturedValue {
   entries?: Array<[CapturedValue, CapturedValue]>
 }
 
-const hasReplaceAll = typeof (String.prototype as any).replaceAll === 'function'
-const replaceDots = hasReplaceAll
+// Prefer replaceAll to replace because it's ~20% faster in this hot code path.
+const REGEX_PERIOD = /\./g
+const HAS_REPLACE_ALL = typeof (String.prototype as any).replaceAll === 'function'
+const replaceDots = HAS_REPLACE_ALL
   ? (str: string) => (str as string & { replaceAll: (s: string, r: string) => string }).replaceAll('.', '_')
-  : (str: string) => str.replace(/\./g, '_')
+  : (str: string) => str.replace(REGEX_PERIOD, '_')
 
 const DEFAULT_MAX_REFERENCE_DEPTH = 3
 const DEFAULT_MAX_COLLECTION_SIZE = 100
