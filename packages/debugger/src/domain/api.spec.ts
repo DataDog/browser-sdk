@@ -1,3 +1,4 @@
+import { display } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { onEntry, onReturn, onThrow, initDebuggerTransport, resetDebuggerTransport } from './api'
 import { addProbe, removeProbe, getProbes, clearProbes } from './probes'
@@ -588,6 +589,7 @@ describe('api', () => {
 
     it('should handle uninitialized debugger transport gracefully', () => {
       resetDebuggerTransport()
+      const warnSpy = spyOn(display, 'warn')
 
       const probe: Probe = {
         id: 'test-probe',
@@ -607,6 +609,9 @@ describe('api', () => {
         onEntry(probes, {}, {})
         onReturn(probes, null, {}, {}, {})
       }).not.toThrow()
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Debugger transport is not initialized. Make sure DD_DEBUGGER.init() has been called.'
+      )
     })
   })
 })
