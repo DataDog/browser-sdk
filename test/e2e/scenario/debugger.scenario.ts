@@ -45,7 +45,22 @@ function makeProbe({
 }
 
 /**
- * Injects an instrumented function into the page that calls the debugger hooks.
+ * Wait until the SDK has registered at least one probe for the given function ID.
+ * `DD_DEBUGGER.init()` fetches probes asynchronously via the Delivery API, so we need to
+ * poll until that initial fetch has applied to the probe registry before invoking the
+ * instrumented function — otherwise the call would silently bypass the probe hooks.
+ */
+async function waitForProbe(page: Page, functionId: string) {
+  await page.waitForFunction((id) => {
+    const $dd_probes = (globalThis as any).$dd_probes as ((id: string) => unknown[] | undefined) | undefined
+    const probes = $dd_probes?.(id)
+    return probes !== undefined && probes.length > 0
+  }, functionId)
+}
+
+/**
+ * Injects an instrumented function into the page that calls the debugger hooks, and waits
+ * for the SDK to register the corresponding probe before returning.
  * The function is named `testFunction` and registered under the `TestModule;testFunction` function ID.
  */
 async function injectInstrumentedFunction(page: Page) {
@@ -73,10 +88,12 @@ async function injectInstrumentedFunction(page: Page) {
       return returnValue
     }
   })
+  await waitForProbe(page, 'TestModule;testFunction')
 }
 
 /**
- * Injects an instrumented function that throws, triggering `$dd_throw`.
+ * Injects an instrumented function that throws, triggering `$dd_throw`, and waits for the
+ * SDK to register the corresponding probe before returning.
  */
 async function injectThrowingFunction(page: Page) {
   await page.evaluate(() => {
@@ -104,6 +121,7 @@ async function injectThrowingFunction(page: Page) {
       }
     }
   })
+  await waitForProbe(page, 'TestModule;throwingFunction')
 }
 
 test.describe('debugger', () => {
