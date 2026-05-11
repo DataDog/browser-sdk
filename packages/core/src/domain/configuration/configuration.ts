@@ -333,7 +333,6 @@ export interface Configuration extends TransportConfiguration {
 
   // internal
   sdkVersion: string | undefined
-  source: SdkSource
   variant: string | undefined
 }
 

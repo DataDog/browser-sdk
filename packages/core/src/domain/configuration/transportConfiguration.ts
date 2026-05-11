@@ -15,7 +15,7 @@ export interface TransportConfiguration {
   datacenter?: string | undefined
   replica?: ReplicaConfiguration
   site: Site
-  source: TransportSource
+  source: SdkSource
 }
 
 export interface ReplicaConfiguration {
@@ -33,27 +33,24 @@ type ResolvedSourceInitConfiguration = Omit<InitConfiguration, 'source'> & {
  * Compute the transport configuration (endpoint builders, replica, etc.) for an
  * SDK init configuration.
  *
- * When called without `sourceOverride`, the resulting `source` is whatever was
- * provided in `initConfiguration.source` (validated to a `SdkSource`, defaulting
- * to `browser`).
- *
- * When called with `sourceOverride`, that value is used instead.
+ * `sourceOverride` (if provided) is only used to build the `ddsource` URL
+ * parameter on outgoing requests; it does not appear on the returned
+ * `TransportConfiguration.source`, which is always the validated `SdkSource`
+ * derived from `initConfiguration.source`.
  */
-export function computeTransportConfiguration(
-  initConfiguration: InitConfiguration
-): TransportConfiguration & { source: SdkSource }
-export function computeTransportConfiguration(
-  initConfiguration: InitConfiguration,
-  sourceOverride: TransportSource
-): TransportConfiguration
 export function computeTransportConfiguration(
   initConfiguration: InitConfiguration,
   sourceOverride?: TransportSource
 ): TransportConfiguration {
   const site = initConfiguration.site || INTAKE_SITE_US1
-  const source: TransportSource = sourceOverride ?? validateSource(initConfiguration.source)
+  const source = validateSource(initConfiguration.source)
+  const transportSource: TransportSource = sourceOverride ?? source
 
-  const resolvedConfiguration: ResolvedSourceInitConfiguration = { ...initConfiguration, site, source }
+  const resolvedConfiguration: ResolvedSourceInitConfiguration = {
+    ...initConfiguration,
+    site,
+    source: transportSource,
+  }
   const endpointBuilders = computeEndpointBuilders(resolvedConfiguration)
   const replicaConfiguration = computeReplicaConfiguration(resolvedConfiguration)
 
