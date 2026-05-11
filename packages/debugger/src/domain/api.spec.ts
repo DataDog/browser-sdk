@@ -1,5 +1,5 @@
 import { display } from '@datadog/browser-core'
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { onEntry, onReturn, onThrow, initDebuggerTransport, resetDebuggerTransport } from './api'
 import { addProbe, removeProbe, getProbes, clearProbes } from './probes'
 import type { Probe } from './probes'
@@ -278,6 +278,8 @@ describe('api', () => {
     })
 
     it('should include duration in snapshot', () => {
+      const clock = mockClock()
+
       const probe: Probe = {
         id: 'test-probe',
         version: 0,
@@ -294,18 +296,13 @@ describe('api', () => {
       const probes = getProbes('TestClass;durationTest')!
       onEntry(probes, {}, {})
 
-      // Simulate some time passing
-      const startTime = performance.now()
-      while (performance.now() - startTime < 10) {
-        // Wait
-      }
+      clock.tick(10)
 
       onReturn(probes, null, {}, {}, {})
 
       const payload = mockBatchAdd.calls.mostRecent().args[0]
       const snapshot = payload.debugger.snapshot
-      expect(snapshot.duration).toBeGreaterThan(0)
-      expect(snapshot.duration).toBeGreaterThanOrEqual(10000000) // Should be in nanoseconds (>= 10ms)
+      expect(snapshot.duration).toBe(10_000_000) // Should be in nanoseconds (10ms)
     })
   })
 
