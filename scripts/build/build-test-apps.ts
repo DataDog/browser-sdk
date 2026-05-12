@@ -29,6 +29,7 @@ const APPS: AppConfig[] = [
   { name: 'angular-app' },
   { name: 'vue-router-app' },
   { name: 'nuxt-app' },
+  { name: 'instrumentation-overhead' },
 
   // React Router apps
   { name: 'react-router-v6-app' },

@@ -14,6 +14,7 @@ import type {
   TelemetryUsageEvent,
 } from '@datadog/browser-core'
 import type {
+  DebuggerIntakeRequest,
   IntakeRequest,
   LogsIntakeRequest,
   ProfileIntakeRequest,
@@ -138,6 +139,18 @@ export class IntakeRegistry {
   get profileEvents() {
     return this.profileRequests.map((request) => request.event)
   }
+
+  //
+  // Debugger
+  //
+
+  get debuggerRequests() {
+    return this.requests.filter(isDebuggerIntakeRequest)
+  }
+
+  get debuggerEvents() {
+    return this.debuggerRequests.flatMap((request) => request.events)
+  }
 }
 
 function isLogsIntakeRequest(request: IntakeRequest): request is LogsIntakeRequest {
@@ -154,6 +167,10 @@ function isReplayIntakeRequest(request: IntakeRequest): request is ReplayIntakeR
 
 function isProfileIntakeRequest(request: IntakeRequest): request is ProfileIntakeRequest {
   return request.intakeType === 'profile'
+}
+
+function isDebuggerIntakeRequest(request: IntakeRequest): request is DebuggerIntakeRequest {
+  return request.intakeType === 'debugger'
 }
 
 function isRumEvent(event: RumEvent | TelemetryEvent): event is RumEvent {

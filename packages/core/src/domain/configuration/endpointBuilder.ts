@@ -8,7 +8,7 @@ import type { InitConfiguration } from './configuration'
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
 
-export type TrackType = 'logs' | 'rum' | 'replay' | 'profile' | 'exposures' | 'flagevaluation'
+export type TrackType = 'logs' | 'rum' | 'replay' | 'profile' | 'exposures' | 'flagevaluation' | 'debugger'
 export type ApiType =
   | 'fetch'
   | 'beacon'
@@ -16,10 +16,26 @@ export type ApiType =
   // a Node.js script).
   | 'manual'
 
+/**
+ * Source values supported by the transport layer for the `ddsource` URL parameter.
+ *
+ * `'dd_debugger'` is internal to the Live Debugger SDK and is not part of
+ * `InitConfiguration.source`. It can only be supplied by passing it as the
+ * `sourceOverride` argument of `computeTransportConfiguration`.
+ */
+export type TransportSource = 'browser' | 'flutter' | 'unity' | 'dd_debugger'
+
+// Internal: the endpoint builder accepts a wider `source` than the public
+// `InitConfiguration.source` so that `computeTransportConfiguration` can pass
+// the validated/overridden transport source through to URL building.
+type EndpointBuilderInitConfiguration = Omit<InitConfiguration, 'source'> & {
+  source?: TransportSource
+}
+
 export type EndpointBuilder = ReturnType<typeof createEndpointBuilder>
 
 export function createEndpointBuilder(
-  initConfiguration: InitConfiguration,
+  initConfiguration: EndpointBuilderInitConfiguration,
   trackType: TrackType,
   extraParameters?: string[]
 ) {
@@ -40,7 +56,7 @@ export function createEndpointBuilder(
  * request, as only parameters are changing.
  */
 function createEndpointUrlWithParametersBuilder(
-  initConfiguration: InitConfiguration,
+  initConfiguration: EndpointBuilderInitConfiguration,
   trackType: TrackType
 ): (parameters: string) => string {
   const path = `/api/v2/${trackType}`
@@ -58,7 +74,7 @@ function createEndpointUrlWithParametersBuilder(
 
 export function buildEndpointHost(
   trackType: TrackType,
-  initConfiguration: InitConfiguration & { usePciIntake?: boolean }
+  initConfiguration: Omit<InitConfiguration, 'source'> & { usePciIntake?: boolean }
 ) {
   const { site = INTAKE_SITE_US1, internalAnalyticsSubdomain } = initConfiguration
 
@@ -84,7 +100,7 @@ export function buildEndpointHost(
  * request, as they change randomly.
  */
 function buildEndpointParameters(
-  { clientToken, internalAnalyticsSubdomain, source = 'browser' }: InitConfiguration,
+  { clientToken, internalAnalyticsSubdomain, source = 'browser' }: EndpointBuilderInitConfiguration,
   trackType: TrackType,
   api: ApiType,
   { retry, encoding }: Payload,

@@ -41,7 +41,9 @@
 
       "@datadog/browser-rum-nextjs": ["./packages/rum-nextjs/src/entries/main"],
 
-      "@datadog/browser-worker": ["./packages/worker/src/entries/main"]
+      "@datadog/browser-worker": ["./packages/worker/src/entries/main"],
+
+      "@datadog/browser-debugger": ["./packages/debugger/src/entries/main"]
     }
   }
 }
