@@ -1,4 +1,5 @@
 import path from 'path'
+import { parseArgs } from 'node:util'
 import { defineConfig, devices } from '@playwright/test'
 import type { ReporterDescription } from '@playwright/test'
 import { getTestReportDirectory } from '../envUtils'
@@ -158,17 +159,18 @@ function needsPinnedServers(): boolean {
 }
 
 function getSelectedProjects(): string[] {
-  const projects: string[] = []
-  for (let i = 0; i < process.argv.length; i++) {
-    const arg = process.argv[i]
-    if (arg === '--project' || arg === '-p') {
-      const next = process.argv[i + 1]
-      if (next) {
-        projects.push(next)
-      }
-    } else if (arg.startsWith('--project=')) {
-      projects.push(arg.slice('--project='.length))
-    }
-  }
-  return projects
+  const {
+    values: { project },
+  } = parseArgs({
+    args: process.argv.slice(2),
+    options: {
+      project: {
+        type: 'string',
+        short: 'p',
+        multiple: true,
+      },
+    },
+    strict: false,
+  })
+  return (project as string[] | undefined) ?? []
 }

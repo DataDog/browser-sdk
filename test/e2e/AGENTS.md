@@ -74,7 +74,6 @@ All E2E test files follow this pattern:
 ### Configuration Files
 
 - `playwright.config.ts` - Project list and webServer wiring (current + pinned browsers)
-- `playwright.base.config.ts` - Base configuration shared across runs
 
 ## Writing E2E Tests
 
