@@ -52,6 +52,18 @@ interface SubtreeTarget {
   target: Element
 }
 
+export function escapeCssValue(value: string) {
+  if (typeof CSS === 'undefined' || typeof CSS.escape !== 'function') {
+    return
+  }
+
+  try {
+    return CSS.escape(value)
+  } catch {
+    return
+  }
+}
+
 export function getSelectorFromElement(
   targetElement: Element,
   actionNameAttribute: string | undefined
@@ -131,6 +143,9 @@ function getSelectorFromElementWithinSubtree(
     )
 
     const elementSelector = uniqueSelectorAmongChildren || getPositionSelector(currentElement)
+    if (!elementSelector) {
+      return undefined
+    }
     currentSelector = combineSelector(elementSelector, currentSelector)
 
     currentElement = currentElement.parentElement
@@ -152,7 +167,10 @@ export function isGeneratedValue(value: string) {
 
 export function getIDSelector(element: Element): string | undefined {
   if (element.id && !isGeneratedValue(element.id)) {
-    return `#${CSS.escape(element.id)}`
+    const escapedId = escapeCssValue(element.id)
+    if (escapedId) {
+      return `#${escapedId}`
+    }
   }
 }
 
@@ -167,12 +185,16 @@ function getClassSelector(element: Element): string | undefined {
       continue
     }
 
-    return `${CSS.escape(element.tagName)}.${CSS.escape(className)}`
+    const escapedTagName = escapeCssValue(element.tagName)
+    const escapedClassName = escapeCssValue(className)
+    if (escapedTagName && escapedClassName) {
+      return `${escapedTagName}.${escapedClassName}`
+    }
   }
 }
 
-export function getTagNameSelector(element: Element): string {
-  return CSS.escape(element.tagName)
+export function getTagNameSelector(element: Element): string | undefined {
+  return escapeCssValue(element.tagName)
 }
 
 function getStableAttributeSelector(element: Element, actionNameAttribute: string | undefined): string | undefined {
@@ -192,19 +214,27 @@ function getStableAttributeSelector(element: Element, actionNameAttribute: strin
 
   function getAttributeSelector(attributeName: string) {
     if (element.hasAttribute(attributeName)) {
-      return `${CSS.escape(element.tagName)}${getAttributeValueSelector(attributeName, element.getAttribute(attributeName)!)}`
+      const escapedTagName = escapeCssValue(element.tagName)
+      const attributeValueSelector = getAttributeValueSelector(attributeName, element.getAttribute(attributeName)!)
+      if (escapedTagName && attributeValueSelector) {
+        return `${escapedTagName}${attributeValueSelector}`
+      }
     }
   }
 }
 
 export function getAttributeValueSelector(attributeName: string, attributeValue: string) {
-  return `[${attributeName}="${CSS.escape(attributeValue)}"]`
+  const escapedAttributeValue = escapeCssValue(attributeValue)
+  if (escapedAttributeValue) {
+    return `[${attributeName}="${escapedAttributeValue}"]`
+  }
 }
 
-function getPositionSelector(element: Element): string {
+function getPositionSelector(element: Element): string | undefined {
   const nthOfType = getNthOfTypeSelector(element)
 
-  return `${CSS.escape(element.tagName)}:nth-of-type(${nthOfType})`
+  const escapedTagName = escapeCssValue(element.tagName)
+  return escapedTagName ? `${escapedTagName}:nth-of-type(${nthOfType})` : undefined
 }
 
 export function getNthOfTypeSelector(element: Element): number {

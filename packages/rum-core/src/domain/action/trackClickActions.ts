@@ -237,8 +237,10 @@ function computeClickActionBase(
 
   const rect = target.getBoundingClientRect()
   const selector = getSelectorFromElement(target, configuration.actionNameAttribute)
-
-  const composedPathSelector = getComposedPathSelector(event.composedPath(), configuration.actionNameAttribute)
+  const composedPath = getEventComposedPath(event)
+  const composedPathSelector = composedPath
+    ? getComposedPathSelector(composedPath, configuration.actionNameAttribute)
+    : ''
 
   if (selector) {
     updateInteractionSelector(event.timeStamp, selector)
@@ -265,13 +267,25 @@ function computeClickActionBase(
 }
 
 function getEventTarget(event: MouseEventOnElement): Element {
-  if (event.composed && isNodeShadowHost(event.target) && typeof event.composedPath === 'function') {
-    const composedPath = event.composedPath()
-    if (composedPath.length > 0 && composedPath[0] instanceof Element) {
+  if (event.composed && isNodeShadowHost(event.target)) {
+    const composedPath = getEventComposedPath(event)
+    if (composedPath && composedPath.length > 0 && composedPath[0] instanceof Element) {
       return composedPath[0]
     }
   }
   return event.target
+}
+
+function getEventComposedPath(event: MouseEventOnElement) {
+  if (typeof event.composedPath !== 'function') {
+    return
+  }
+
+  try {
+    return event.composedPath()
+  } catch {
+    return
+  }
 }
 
 const enum ClickStatus {

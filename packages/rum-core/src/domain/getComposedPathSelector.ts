@@ -3,6 +3,7 @@ import type { MatchOption } from '@datadog/browser-core'
 import {
   STABLE_ATTRIBUTES,
   isGeneratedValue,
+  escapeCssValue,
   getIDSelector,
   getTagNameSelector,
   getNthOfTypeSelector,
@@ -76,6 +77,9 @@ export function getComposedPathSelector(composedPath: EventTarget[], actionNameA
  */
 function getSelectorStringFromElement(element: Element, allowedAttributes: MatchOption[]): string {
   const tagName = getTagNameSelector(element)
+  if (!tagName) {
+    return ''
+  }
   const id = getIDSelector(element)
   const classes = getElementClassesString(element)
   const attributes = extractSafeAttributesString(element, allowedAttributes)
@@ -88,7 +92,9 @@ function getElementClassesString(element: Element): string {
   return Array.from(element.classList)
     .filter((c) => !isGeneratedValue(c))
     .sort()
-    .map((c) => `.${CSS.escape(c)}`)
+    .map((c) => escapeCssValue(c))
+    .filter((c): c is string => c !== undefined)
+    .map((c) => `.${c}`)
     .join('')
 }
 
@@ -123,7 +129,10 @@ function extractSafeAttributesString(element: Element, allowedAttributes: MatchO
   const attributes = Array.from(element.attributes)
   for (const attribute of attributes) {
     if (allowedAttributes.includes(attribute.name)) {
-      result.push(getAttributeValueSelector(attribute.name, attribute.value))
+      const attributeSelector = getAttributeValueSelector(attribute.name, attribute.value)
+      if (attributeSelector) {
+        result.push(attributeSelector)
+      }
     }
   }
   return result.sort().join('')

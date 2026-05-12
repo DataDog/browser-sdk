@@ -241,6 +241,15 @@ describe('getSelectorFromComposedPath', () => {
         // tagName for SVG in HTML document is lowercase
         expect(result).toBe('svg[data-testid="my-svg"];')
       })
+
+      it('returns an empty selector when CSS.escape is unavailable', () => {
+        spyOn(CSS, 'escape').and.throwError('CSS.escape is unavailable')
+
+        const element = appendElementInIsolation('<div id="test"></div>')
+        const result = getComposedPathSelector([element], undefined)
+
+        expect(result).toBe('')
+      })
     })
   })
 })

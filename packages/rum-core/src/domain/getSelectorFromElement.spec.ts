@@ -113,6 +113,12 @@ describe('getSelectorFromElement', () => {
     it('on tag name', () => {
       expect(getSelector('<div&nbsp;span>></div&nbsp;span>')).toBe('BODY>DIV\\&NBSP\\;SPAN')
     })
+
+    it('returns undefined when CSS.escape is unavailable', () => {
+      spyOn(CSS, 'escape').and.throwError('CSS.escape is unavailable')
+
+      expect(getSelector('<div id="foo"></div>')).toBeUndefined()
+    })
   })
 
   describe('attribute selector', () => {

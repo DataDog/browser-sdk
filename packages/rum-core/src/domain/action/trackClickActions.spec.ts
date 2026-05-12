@@ -284,6 +284,55 @@ describe('trackClickActions', () => {
     expect(events.length).toBe(1)
   })
 
+  describe('compatibility fallbacks', () => {
+    it('collects click actions when composedPath is unavailable', () => {
+      startClickActionsTracking()
+
+      emulateClick({
+        activity: {},
+        eventProperty: {
+          composedPath: undefined,
+        },
+      })
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events.length).toBe(1)
+      expect(events[0].target?.selector).toBe('#button')
+      expect(events[0].target?.composedPathSelector).toBeUndefined()
+    })
+
+    it('collects click actions when composedPath throws', () => {
+      startClickActionsTracking()
+
+      emulateClick({
+        activity: {},
+        eventProperty: {
+          composedPath: () => {
+            throw new Error('composedPath is unavailable')
+          },
+        },
+      })
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events.length).toBe(1)
+      expect(events[0].target?.selector).toBe('#button')
+      expect(events[0].target?.composedPathSelector).toBeUndefined()
+    })
+
+    it('collects click actions without selector data when CSS.escape is unavailable', () => {
+      startClickActionsTracking()
+      spyOn(CSS, 'escape').and.throwError('CSS.escape is unavailable')
+
+      emulateClick({ activity: {} })
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events.length).toBe(1)
+      expect(events[0].name).toBe('Click me')
+      expect(events[0].target?.selector).toBeUndefined()
+      expect(events[0].target?.composedPathSelector).toBeUndefined()
+    })
+  })
+
   describe('with enablePrivacyForActionName false', () => {
     it('extracts action name when default privacy level is mask', () => {
       startClickActionsTracking({
