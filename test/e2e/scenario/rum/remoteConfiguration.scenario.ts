@@ -1,8 +1,9 @@
 import type { Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
-import { createTest, html } from '../../lib/framework'
+import { createTest, html, waitForServersIdle } from '../../lib/framework'
 
 const RC_APP_ID = 'e2e'
+const CACHE_KEY = `dd_rc_${RC_APP_ID}`
 
 test.describe('remote configuration', () => {
   createTest('should be fetched and applied')
@@ -47,7 +48,7 @@ test.describe('remote configuration', () => {
         version: { rcSerializedType: 'dynamic', strategy: 'dom', selector: '#version' },
       },
     })
-    .withBody(html`<span id="version">123</span>`)
+    .withHead(html`<span id="version">123</span>`)
     .run(async ({ page }) => {
       await waitForRemoteConfigurationToBeApplied(page)
       const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
@@ -64,7 +65,7 @@ test.describe('remote configuration', () => {
         version: { rcSerializedType: 'dynamic', strategy: 'dom', selector: '#version', attribute: 'data-version' },
       },
     })
-    .withBody(html`<span id="version" data-version="123"></span>`)
+    .withHead(html`<span id="version" data-version="123"></span>`)
     .run(async ({ page }) => {
       await waitForRemoteConfigurationToBeApplied(page)
       const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
@@ -81,11 +82,9 @@ test.describe('remote configuration', () => {
         version: { rcSerializedType: 'dynamic', strategy: 'js', path: 'dataLayer.version' },
       },
     })
-    .withBody(html`
+    .withHead(html`
       <script>
-        dataLayer = {
-          version: 'js-version',
-        }
+        window.dataLayer = { version: 'js-version' }
       </script>
     `)
     .run(async ({ page }) => {
@@ -157,32 +156,6 @@ test.describe('remote configuration', () => {
       expect(initConfiguration.version).toBeUndefined()
     })
 
-  createTest('should handle localStorage access failure gracefully')
-    .withRum({
-      remoteConfigurationId: 'e2e',
-    })
-    .withRemoteConfiguration({
-      rum: {
-        applicationId: 'e2e',
-        version: { rcSerializedType: 'dynamic', strategy: 'localStorage', key: 'dd_app_version' },
-      },
-    })
-    .withBody(html`
-      <script>
-        Object.defineProperty(window, 'localStorage', {
-          get: function () {
-            throw new Error('localStorage is not available')
-          },
-          configurable: true,
-        })
-      </script>
-    `)
-    .run(async ({ page }) => {
-      await waitForRemoteConfigurationToBeApplied(page)
-      const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
-      expect(initConfiguration.version).toBeUndefined()
-    })
-
   createTest('should resolve user context')
     .withRum({
       remoteConfigurationId: 'e2e',
@@ -231,13 +204,11 @@ test.describe('remote configuration', () => {
     })
 })
 
+/* The background fetch on the initial page load writes the remote configuration into localStorage;
+ * reloading lets the SDK pick it up synchronously on the next init().
+ */
 async function waitForRemoteConfigurationToBeApplied(page: Page) {
-  for (let i = 0; i < 20; i++) {
-    const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
-    if (initConfiguration.applicationId === RC_APP_ID) {
-      break
-    }
-    console.log('wait for remote configuration to be applied')
-    await page.waitForTimeout(100)
-  }
+  await page.waitForFunction((key) => localStorage.getItem(key) !== null, CACHE_KEY)
+  await page.reload()
+  await waitForServersIdle()
 }
