@@ -30,11 +30,8 @@
     "test:script": "node --test --experimental-test-module-mocks './scripts/**/*.spec.*'",
     "test:unit:watch": "yarn test:unit --no-single-run",
     "test:unit:bs": "node --env-file-if-exists=.env ./scripts/test/bs-wrapper.ts karma start test/unit/karma.bs.conf.js",
-    "test:e2e:init": "yarn build && yarn build:apps && yarn playwright install chromium --with-deps",
-    "test:e2e": "playwright test --config test/e2e/playwright.local.config.ts --project chromium",
-    "test:e2e:bs": "node --env-file-if-exists=.env ./scripts/test/bs-wrapper.ts playwright test --config test/e2e/playwright.bs.config.ts",
-    "test:e2e:ci": "yarn test:e2e:init && yarn test:e2e",
-    "test:e2e:ci:bs": "yarn build && yarn build:apps && yarn test:e2e:bs",
+    "test:e2e:init": "yarn build && yarn build:apps && yarn playwright install --with-deps && yarn dlx -p playwright@1.40.1 playwright install chromium firefox webkit",
+    "test:e2e": "playwright test --config test/e2e/playwright.config.ts",
     "test:compat:tsc": "node scripts/check-typescript-compatibility.ts",
     "test:compat:ssr": "scripts/cli check_server_side_rendering_compatibility",
     "test:performance": "yarn test:e2e:init && playwright test --config test/performance/playwright.config.ts",
@@ -57,6 +54,7 @@
     "@types/jasmine": "3.10.19",
     "@types/node": "25.6.0",
     "@types/node-forge": "1.3.14",
+    "@types/ws": "8.18.1",
     "ajv": "8.20.0",
     "browserstack-local": "1.5.13",
     "busboy": "1.6.0",
@@ -99,7 +97,8 @@
     "undici": "8.2.0",
     "webpack": "5.106.2",
     "webpack-cli": "7.0.2",
-    "webpack-dev-middleware": "8.0.3"
+    "webpack-dev-middleware": "8.0.3",
+    "ws": "8.18.3"
   },
   "resolutions": {
     "puppeteer-core@npm:21.11.0/ws": "8.17.1"

@@ -107,6 +107,20 @@ export function isContentTypeAvailableInPerformanceEntry(
 ) {
   const browserVersion = (test.info().project.metadata as BrowserConfiguration).version
 
-  // Currently our CI only runs Firefox 119, so this test only runs locally with yarn test:e2e --project=firefox
-  return browserName === 'firefox' && Number(browserVersion) >= 129
+  // Pinned projects set an explicit `version` in metadata (e.g. firefox-pinned = '119'),
+  // current-version projects leave it undefined, in which case we treat them as
+  // "modern enough" since Playwright 1.58+ bundles Firefox >= 129.
+  return browserName === 'firefox' && (browserVersion === undefined || Number(browserVersion) >= 129)
+}
+
+export function isLongAnimationFrameSupported(page: Page): Promise<boolean> {
+  return page.evaluate(
+    () => 'PerformanceObserver' in self && PerformanceObserver.supportedEntryTypes.includes('long-animation-frame')
+  )
+}
+
+export function isPinnedRuntime(
+  test: TestType<PlaywrightTestArgs & PlaywrightTestOptions, PlaywrightWorkerArgs & PlaywrightWorkerOptions>
+) {
+  return (test.info().project.metadata as BrowserConfiguration).version !== undefined
 }

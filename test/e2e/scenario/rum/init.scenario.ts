@@ -2,6 +2,7 @@ import type { Context } from '@datadog/browser-core'
 import { test, expect } from '@playwright/test'
 import type { IntakeRegistry, BrowserLog } from '../../lib/framework'
 import { createTest, createWorker } from '../../lib/framework'
+import { isPinnedRuntime } from '../../lib/helpers/browser'
 
 test.describe('API calls and events around init', () => {
   createTest('should display a console log when calling init without configuration')
@@ -416,8 +417,9 @@ test.describe('Service workers Rum', () => {
 const NO_SESSION_WARNING = 'Datadog Browser SDK: The RUM SDK is not supported in a web or service worker environment.'
 
 function expectNoSessionWarning(browserName: string, logs: BrowserLog[]) {
-  // Firefox does not propagate the service worker's console to the main page's console
-  if (browserName !== 'firefox') {
+  // Firefox does not propagate the service worker's console to the main page's console.
+  // The pinned Playwright runtime doesn't either.
+  if (browserName !== 'firefox' && !isPinnedRuntime(test)) {
     expect(logs.filter((log) => log.message.includes(NO_SESSION_WARNING) && log.level === 'warning')).toHaveLength(1)
   }
 

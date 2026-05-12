@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { createTest, html, waitForServersIdle, waitForRequests } from '../../lib/framework'
+import { isLongAnimationFrameSupported } from '../../lib/helpers/browser'
 
 function hasActionId(event: { action?: { id?: string | string[] } }, actionId: string): boolean {
   return [event.action?.id].flat().includes(actionId)
@@ -171,8 +172,11 @@ test.describe('action collection', () => {
         })
       </script>
     `)
-    .run(async ({ intakeRegistry, flushEvents, page, browserName }) => {
-      test.skip(browserName !== 'chromium', 'Non-Chromium browsers do not support long tasks')
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      test.skip(
+        !(await isLongAnimationFrameSupported(page)),
+        'Browser does not support PerformanceLongAnimationFrameTiming'
+      )
 
       const button = page.locator('button')
       await button.click()

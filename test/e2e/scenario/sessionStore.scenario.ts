@@ -52,27 +52,33 @@ test.describe('Session Stores', () => {
         .withHostName(FULL_HOSTNAME)
         .run(async ({ browserContext }) => {
           const cookies = await browserContext.cookies()
-          expect(cookies).toEqual([
+          const sessionCookie = cookies.find((c) => c.name === SESSION_STORE_KEY)
+          expect(sessionCookie).toEqual(
             expect.objectContaining({
               domain: FULL_HOSTNAME,
-            }),
-          ])
+            })
+          )
         })
 
       createTest('when injected in a iframe without `src`, the cookie should be stored on the parent window domain')
         .withRum({ trackSessionAcrossSubdomains: false })
         .withHostName(FULL_HOSTNAME)
         .withSetup(bundleSetup)
-        .run(async ({ page, baseUrl, browserContext, flushEvents, intakeRegistry, servers }) => {
+        .run(async ({ page, baseUrl, browserContext, flushEvents, intakeRegistry, servers, browserName }) => {
+          test.skip(
+            browserName === 'firefox',
+            "Firefox does not allow setting cookis from iframes without src, so the SDK won't start there"
+          )
           await injectSdkInAnIframe(page, `${servers.crossOrigin.origin}/datadog-rum.js`)
           await flushEvents()
 
           const cookies = await browserContext.cookies()
-          expect(cookies).toEqual([
+          const sessionCookie = cookies.find((c) => c.name === SESSION_STORE_KEY)
+          expect(sessionCookie).toEqual(
             expect.objectContaining({
               domain: FULL_HOSTNAME,
-            }),
-          ])
+            })
+          )
           expect(intakeRegistry.rumViewEvents.map((event) => event.view.url)).toEqual(
             expect.arrayContaining([baseUrl, 'about:blank'])
           )
@@ -85,27 +91,33 @@ test.describe('Session Stores', () => {
         .withHostName(FULL_HOSTNAME)
         .run(async ({ browserContext }) => {
           const cookies = await browserContext.cookies()
-          expect(cookies).toEqual([
+          const sessionCookie = cookies.find((c) => c.name === SESSION_STORE_KEY)
+          expect(sessionCookie).toEqual(
             expect.objectContaining({
               domain: MAIN_HOSTNAME,
-            }),
-          ])
+            })
+          )
         })
 
       createTest('when injected in a iframe without `src`, the cookie should be stored on the parent window domain')
         .withRum({ trackSessionAcrossSubdomains: true })
         .withHostName(FULL_HOSTNAME)
         .withSetup(bundleSetup)
-        .run(async ({ page, baseUrl, browserContext, flushEvents, intakeRegistry, servers }) => {
+        .run(async ({ page, baseUrl, browserContext, flushEvents, intakeRegistry, servers, browserName }) => {
+          test.skip(
+            browserName === 'firefox',
+            "Firefox does not allow setting cookis from iframes without src, so the SDK won't start there"
+          )
           await injectSdkInAnIframe(page, `${servers.crossOrigin.origin}/datadog-rum.js`)
           await flushEvents()
 
           const cookies = await browserContext.cookies()
-          expect(cookies).toEqual([
+          const sessionCookie = cookies.find((c) => c.name === SESSION_STORE_KEY)
+          expect(sessionCookie).toEqual(
             expect.objectContaining({
               domain: MAIN_HOSTNAME,
-            }),
-          ])
+            })
+          )
           expect(intakeRegistry.rumViewEvents.map((event) => event.view.url)).toEqual(
             expect.arrayContaining([baseUrl, 'about:blank'])
           )
@@ -133,7 +145,11 @@ test.describe('Session Stores', () => {
         .withRum({ usePartitionedCrossSiteSessionCookie: true })
         .withLogs({ usePartitionedCrossSiteSessionCookie: false })
         .withHostName(FULL_HOSTNAME)
-        .run(async ({ page }) => {
+        .run(async ({ page, browserName }) => {
+          test.skip(
+            browserName === 'webkit',
+            'Safari/webkit refuses to set "partitioned" cookies on localhost, so the SDK doesn\'t start.'
+          )
           await page.waitForTimeout(1000)
 
           const [rumInternalContext, logsInternalContext] = await page.evaluate(() => [
@@ -141,8 +157,8 @@ test.describe('Session Stores', () => {
             window.DD_LOGS?.getInternalContext(),
           ])
 
-          expect(rumInternalContext).toBeDefined()
-          expect(logsInternalContext).toBeDefined()
+          expect.soft(rumInternalContext).toBeDefined()
+          expect.soft(logsInternalContext).toBeDefined()
         })
     })
 
@@ -247,6 +263,7 @@ async function getSessionIdFromMemory(page: Page): Promise<string | undefined> {
 }
 
 async function getSessionIdFromCookie(browserContext: BrowserContext): Promise<string | undefined> {
-  const [cookie] = await browserContext.cookies()
-  return cookie.value.match(SESSION_ID_REGEX)?.[1]
+  const cookies = await browserContext.cookies()
+  const sessionCookie = cookies.find((c) => c.name === SESSION_STORE_KEY)
+  return sessionCookie?.value.match(SESSION_ID_REGEX)?.[1]
 }

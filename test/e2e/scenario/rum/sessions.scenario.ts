@@ -165,8 +165,6 @@ test.describe('rum sessions', () => {
         await page.waitForTimeout(1000)
 
         expect((await findSessionCookie(browserContext))?.aid).toEqual(anonymousId)
-
-        expect(true).toBeTruthy()
       })
 
     createTest('removes anonymous id when tracking consent is withdrawn')

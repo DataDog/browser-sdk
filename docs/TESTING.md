@@ -44,7 +44,15 @@ Quick commands:
 - `yarn test:e2e -g "pattern"` — filter by name
 - `yarn test:e2e --ui` — Playwright UI mode
 
-## Run tests in browserstack
+## Run tests against pinned browsers
 
-- `BS_USERNAME=<username> BS_ACCESS_KEY=<access_key> yarn test:unit:bs` - unit tests
-- `BS_USERNAME=<username> BS_ACCESS_KEY=<access_key> yarn test:e2e:bs` - e2e tests
+The `firefox-pinned` (FF 119) and `webkit-pinned` (WK 17.4) Playwright projects replicate
+the old BrowserStack matrix locally via a pinned Playwright 1.40.1 `run-server` and a
+translation proxy. Run them with:
+
+- `yarn test:e2e --project=firefox-pinned`
+- `yarn test:e2e --project=webkit-pinned`
+
+## Run unit tests in BrowserStack
+
+- `BS_USERNAME=<username> BS_ACCESS_KEY=<access_key> yarn test:unit:bs`

@@ -1,7 +1,7 @@
 variables:
   CURRENT_STAGING: staging-20
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 105
+  CURRENT_CI_IMAGE: 107
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
@@ -131,7 +131,16 @@ ci-image:
       aud: image-integrity
   script:
     - METADATA_FILE=$(mktemp)
-    - docker buildx build --platform linux/amd64 --build-arg CHROME_PACKAGE_VERSION=$CHROME_PACKAGE_VERSION --tag $CI_IMAGE --push --metadata-file $METADATA_FILE .
+    - PLAYWRIGHT_VERSION=$(jq -r '.devDependencies["@playwright/test"]' package.json)
+    - >
+      docker buildx build
+      --platform linux/amd64
+      --build-arg CHROME_PACKAGE_VERSION=$CHROME_PACKAGE_VERSION
+      --build-arg PLAYWRIGHT_VERSION=$PLAYWRIGHT_VERSION
+      --tag $CI_IMAGE
+      --push
+      --metadata-file $METADATA_FILE
+      .
     - ddsign sign $CI_IMAGE --docker-metadata-file $METADATA_FILE
 
 ########################################################################################################################
@@ -233,13 +242,20 @@ e2e:
     - .test-allowed-branches
     - .resource-allocation-4-cpus
   interruptible: true
+  parallel:
+    matrix:
+      - BROWSER: [chromium, chromium-pinned, firefox-pinned, webkit-pinned]
   artifacts:
     when: always
     reports:
       junit: test-report/e2e/*.xml
   script:
     - yarn
-    - FORCE_COLOR=1 yarn test:e2e:ci
+    - yarn build
+    - yarn build:apps
+    # Browsers are pre-installed in the CI image. If playwright (current or pinned 1.40.1)
+    # is upgraded without rebuilding the image, this job will crash — rebuild the image to fix it.
+    - FORCE_COLOR=1 PW_BROWSER=$BROWSER yarn test:e2e --project=$BROWSER
   after_script:
     - node ./scripts/test/export-test-result.ts e2e
 
@@ -296,26 +312,6 @@ unit-bs:
     - node scripts/test/ci-bs.ts test:unit
   after_script:
     - node ./scripts/test/export-test-result.ts unit-bs
-
-e2e-bs:
-  stage: browserstack
-  needs: ['e2e']
-  extends:
-    - .base-configuration
-    - .bs-allowed-branches
-    - .resource-allocation-4-cpus
-  interruptible: true
-  resource_group: browserstack
-  timeout: 35 minutes
-  artifacts:
-    when: always
-    reports:
-      junit: test-report/e2e-bs/*.xml
-  script:
-    - yarn
-    - FORCE_COLOR=1 node scripts/test/ci-bs.ts test:e2e:ci
-  after_script:
-    - node ./scripts/test/export-test-result.ts e2e-bs
 
 script-tests:
   extends:

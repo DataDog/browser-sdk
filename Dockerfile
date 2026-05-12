@@ -30,6 +30,19 @@ RUN curl --silent --show-error --fail http://dl.google.com/linux/chrome/deb/pool
   && dpkg -i google-chrome.deb \
   && rm google-chrome.deb
 
+# Pre-install Playwright browsers as an optimisation: CI jobs still run `playwright install`
+# themselves, but when the image is up to date that step becomes a fast no-op. If the image is
+# stale (e.g. a browser version was bumped before the image was rebuilt), playwright falls back
+# to downloading the right binaries at job time.
+
+# Current Playwright's Chromium (used by the e2e job)
+ARG PLAYWRIGHT_VERSION
+RUN npx -y playwright@${PLAYWRIGHT_VERSION} install --with-deps chromium
+
+# Pinned Playwright browsers: Chromium 120 + Firefox 119 + WebKit 17.4 (used by the e2e-pinned job)
+ARG PINNED_PLAYWRIGHT_VERSION=1.40.1
+RUN npx -y playwright@${PINNED_PLAYWRIGHT_VERSION} install --with-deps chromium firefox webkit
+
 
 # Install AWS cli
 # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
