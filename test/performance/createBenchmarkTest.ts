@@ -58,7 +58,7 @@ export function createBenchmarkTest(scenarioName: string) {
           }
 
           if (shouldInjectDebugger(scenarioConfiguration)) {
-            await injectDebugger(page, scenarioConfiguration)
+            await injectDebugger(page, scenarioConfiguration, server.origin)
           }
 
           await runner(page, takeMeasurements, buildAppUrl(server.origin, scenarioConfiguration))
@@ -151,11 +151,11 @@ async function injectRumSDK(page: Page, scenarioConfiguration: ScenarioConfigura
  * statistical soundness: it ensures V8 can JIT-optimize against the final code path during
  * the warmup phase, instead of deoptimizing mid-measurement when probes appear.
  *
- * Step 3 starts an async probe-delivery poll (mocked by the test server) and flips
+ * Step 3 starts an async probe-delivery poll (proxied to the test server) and flips
  * `__benchmarkReady` once the response is observed. The benchmark scenario is responsible
  * for awaiting that flag before running its warmup.
  */
-async function injectDebugger(page: Page, scenarioConfiguration: ScenarioConfiguration) {
+async function injectDebugger(page: Page, scenarioConfiguration: ScenarioConfiguration, proxy: string) {
   await page.addInitScript(() => {
     ;(window as any).USE_INSTRUMENTED = true
     ;(window as BrowserWindow).__benchmarkReady = false
@@ -173,6 +173,7 @@ async function injectDebugger(page: Page, scenarioConfiguration: ScenarioConfigu
   const configuration: DebuggerInitConfiguration = {
     clientToken: CLIENT_TOKEN,
     site: DATADOG_SITE,
+    proxy,
     // The mock probe-delivery handler keys off `service` to decide which probes to return,
     // so we use the configuration name to keep parallel benchmark workers isolated.
     service: scenarioConfiguration,

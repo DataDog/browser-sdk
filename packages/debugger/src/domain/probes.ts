@@ -8,9 +8,9 @@ import type { TemplateSegment, CompiledTemplate } from './template'
 import type { CaptureOptions } from './capture'
 
 // Sampling rate limits
-const MAX_SNAPSHOTS_PER_SECOND_GLOBALLY = 25
-const MAX_SNAPSHOTS_PER_SECOND_PER_PROBE = 1
-const MAX_NON_SNAPSHOTS_PER_SECOND_PER_PROBE = 5000
+const DEFAULT_MAX_SNAPSHOTS_PER_SECOND_GLOBALLY = 25
+const DEFAULT_MAX_SNAPSHOTS_PER_SECOND_PER_PROBE = 1
+const DEFAULT_MAX_NON_SNAPSHOTS_PER_SECOND_PER_PROBE = 5000
 
 // Global snapshot rate limiting
 let globalSnapshotSamplingRateWindowStart = 0
@@ -30,6 +30,12 @@ export interface ProbeWhen {
 
 export interface ProbeSampling {
   snapshotsPerSecond?: number
+}
+
+export interface ProbeBudgetConfiguration {
+  maxSnapshotsPerSecondGlobally?: number
+  maxSnapshotsPerSecondPerProbe?: number
+  maxNonSnapshotsPerSecondPerProbe?: number
 }
 
 export interface Probe {
@@ -69,6 +75,32 @@ const activeProbes: Record<string, InitializedProbe[]> = {
 const probeIdToFunctionId: Record<string, string> = {
   // @ts-expect-error - Pre-populate with a placeholder key to help V8 optimize property lookups.
   __placeholder__: undefined,
+}
+let currentProbeBudgetConfiguration: Required<ProbeBudgetConfiguration> = {
+  maxSnapshotsPerSecondGlobally: DEFAULT_MAX_SNAPSHOTS_PER_SECOND_GLOBALLY,
+  maxSnapshotsPerSecondPerProbe: DEFAULT_MAX_SNAPSHOTS_PER_SECOND_PER_PROBE,
+  maxNonSnapshotsPerSecondPerProbe: DEFAULT_MAX_NON_SNAPSHOTS_PER_SECOND_PER_PROBE,
+}
+
+export function setProbeBudgetConfiguration(configuration: ProbeBudgetConfiguration = {}): void {
+  currentProbeBudgetConfiguration = {
+    maxSnapshotsPerSecondGlobally: normalizeProbeBudgetRate(
+      configuration.maxSnapshotsPerSecondGlobally,
+      DEFAULT_MAX_SNAPSHOTS_PER_SECOND_GLOBALLY
+    ),
+    maxSnapshotsPerSecondPerProbe: normalizeProbeBudgetRate(
+      configuration.maxSnapshotsPerSecondPerProbe,
+      DEFAULT_MAX_SNAPSHOTS_PER_SECOND_PER_PROBE
+    ),
+    maxNonSnapshotsPerSecondPerProbe: normalizeProbeBudgetRate(
+      configuration.maxNonSnapshotsPerSecondPerProbe,
+      DEFAULT_MAX_NON_SNAPSHOTS_PER_SECOND_PER_PROBE
+    ),
+  }
+}
+
+export function resetProbeBudgetConfiguration(): void {
+  setProbeBudgetConfiguration()
 }
 
 /**
@@ -136,6 +168,9 @@ export function removeProbe(id: string): void {
         probe.condition.clearCache()
       }
       probes.splice(i, 1)
+      // TODO: Gracefully drain in-flight entries instead of clearing them immediately.
+      // Deleting a probe can currently race with return/throw handling, whether removal
+      // comes from delivery updates or budget-based auto-unregistering.
       clearActiveEntries(id)
       break
     }
@@ -199,7 +234,7 @@ export function checkGlobalSnapshotBudget(now: number, captureSnapshot: boolean)
   }
 
   // Check if we've exceeded the global limit
-  if (snapshotsSampledWithinTheLastSecond >= MAX_SNAPSHOTS_PER_SECOND_GLOBALLY) {
+  if (snapshotsSampledWithinTheLastSecond >= currentProbeBudgetConfiguration.maxSnapshotsPerSecondGlobally) {
     return false
   }
 
@@ -266,7 +301,13 @@ export function initializeProbe(probe: Probe): asserts probe is InitializedProbe
   // Optimize for fast calculations when probe is hit - calculate sampling budget
   const snapshotsPerSecond =
     probe.sampling?.snapshotsPerSecond ??
-    (probe.captureSnapshot ? MAX_SNAPSHOTS_PER_SECOND_PER_PROBE : MAX_NON_SNAPSHOTS_PER_SECOND_PER_PROBE)
+    (probe.captureSnapshot
+      ? currentProbeBudgetConfiguration.maxSnapshotsPerSecondPerProbe
+      : currentProbeBudgetConfiguration.maxNonSnapshotsPerSecondPerProbe)
   ;(probe as InitializedProbe).msBetweenSampling = (1 / snapshotsPerSecond) * 1000 // Convert to milliseconds
   ;(probe as InitializedProbe).lastCaptureMs = -Infinity // Initialize to -Infinity to allow first call
+}
+
+function normalizeProbeBudgetRate(rate: number | undefined, defaultRate: number): number {
+  return typeof rate === 'number' && Number.isFinite(rate) && rate > 0 ? rate : defaultRate
 }

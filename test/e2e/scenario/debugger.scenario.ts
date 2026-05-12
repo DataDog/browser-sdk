@@ -5,7 +5,7 @@ import { createTest } from '../lib/framework'
 import type { Servers } from '../lib/framework'
 
 function setDebuggerProbes(servers: Servers, probes: object[]) {
-  servers.base.app.setDebuggerProbes(probes)
+  servers.intake.app.setDebuggerProbes(probes)
 }
 
 function makeProbe({

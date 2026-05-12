@@ -3,8 +3,9 @@ import type { Batch, Context } from '@datadog/browser-core'
 import { timeStampNow, display, buildTag, generateUUID, getGlobalObject } from '@datadog/browser-core'
 import type { BrowserWindow, DebuggerInitConfiguration } from '../entries/main'
 import { capture, captureFields } from './capture'
+import type { CaptureContext } from './capture'
 import type { InitializedProbe } from './probes'
-import { checkGlobalSnapshotBudget } from './probes'
+import { checkGlobalSnapshotBudget, resetProbeBudgetConfiguration, setProbeBudgetConfiguration } from './probes'
 import type { ActiveEntry } from './activeEntries'
 import { active } from './activeEntries'
 import { captureStackTrace, parseStackTrace } from './stacktrace'
@@ -15,6 +16,8 @@ const globalObj = getGlobalObject<BrowserWindow>() // eslint-disable-line local-
 
 const threadName = detectThreadName() // eslint-disable-line local-rules/disallow-side-effects
 
+const SNAPSHOT_TIMEOUT_MS = 10
+
 let debuggerBatch: Batch | undefined
 let debuggerConfig: DebuggerInitConfiguration | undefined
 let cachedDDtags: string | undefined
@@ -23,6 +26,7 @@ export function initDebuggerTransport(config: DebuggerInitConfiguration, batch: 
   debuggerConfig = config
   debuggerBatch = batch
   cachedDDtags = undefined
+  setProbeBudgetConfiguration(config)
 }
 
 export function resetDebuggerTransport(): void {
@@ -30,6 +34,7 @@ export function resetDebuggerTransport(): void {
   debuggerConfig = undefined
   cachedDDtags = undefined
   active.clear()
+  resetProbeBudgetConfiguration()
 }
 
 /**
@@ -41,6 +46,7 @@ export function resetDebuggerTransport(): void {
  */
 export function onEntry(probes: InitializedProbe[], self: any, args: Record<string, any>): void {
   const start = performance.now()
+  const captureCtx: CaptureContext = { deadline: start + SNAPSHOT_TIMEOUT_MS, timedOut: false }
 
   // TODO: A lot of repeated work performed for each probe that could be shared between probes
   for (const probe of probes) {
@@ -81,14 +87,19 @@ export function onEntry(probes: InitializedProbe[], self: any, args: Record<stri
 
     // Special case for evaluateAt=EXIT with a condition: we only capture the return snapshot
     const shouldCaptureEntrySnapshot = probe.captureSnapshot && (probe.evaluateAt === 'ENTRY' || !probe.condition)
-    const entry = shouldCaptureEntrySnapshot
-      ? {
-          arguments: {
-            ...captureFields(args, probe.capture),
-            this: capture(self, probe.capture),
-          },
-        }
-      : undefined
+    let entry: { arguments: Record<string, any> } | undefined
+    if (shouldCaptureEntrySnapshot) {
+      entry = {
+        arguments: {
+          ...captureFields(args, probe.capture, captureCtx),
+          this: capture(self, probe.capture, captureCtx),
+        },
+      }
+      if (captureCtx.timedOut) {
+        stack.push(null)
+        continue
+      }
+    }
 
     stack.push({
       start,
@@ -118,6 +129,7 @@ export function onReturn(
   locals: Record<string, any>
 ): any {
   const end = performance.now()
+  const captureCtx: CaptureContext = { deadline: performance.now() + SNAPSHOT_TIMEOUT_MS, timedOut: false }
 
   // TODO: A lot of repeated work performed for each probe that could be shared between probes
   for (const probe of probes) {
@@ -153,18 +165,21 @@ export function onReturn(
       result.message = evaluateProbeMessage(probe, context)
     }
 
-    result.return = probe.captureSnapshot
-      ? {
-          arguments: {
-            ...captureFields(args, probe.capture),
-            this: capture(self, probe.capture),
-          },
-          locals: {
-            ...captureFields(locals, probe.capture),
-            '@return': capture(value, probe.capture),
-          },
-        }
-      : undefined
+    if (probe.captureSnapshot) {
+      result.return = {
+        arguments: {
+          ...captureFields(args, probe.capture, captureCtx),
+          this: capture(self, probe.capture, captureCtx),
+        },
+        locals: {
+          ...captureFields(locals, probe.capture, captureCtx),
+          '@return': capture(value, probe.capture, captureCtx),
+        },
+      }
+      if (captureCtx.timedOut) {
+        continue
+      }
+    }
 
     sendDebuggerSnapshot(probe, result)
   }
@@ -182,6 +197,7 @@ export function onReturn(
  */
 export function onThrow(probes: InitializedProbe[], error: Error, self: any, args: Record<string, any>): void {
   const end = performance.now()
+  const captureCtx: CaptureContext = { deadline: performance.now() + SNAPSHOT_TIMEOUT_MS, timedOut: false }
 
   // TODO: A lot of repeated work performed for each probe that could be shared between probes
   for (const probe of probes) {
@@ -217,13 +233,19 @@ export function onThrow(probes: InitializedProbe[], error: Error, self: any, arg
       result.message = evaluateProbeMessage(probe, context)
     }
 
+    let throwArguments: Record<string, any> | undefined
+    if (probe.captureSnapshot) {
+      throwArguments = {
+        ...captureFields(args, probe.capture, captureCtx),
+        this: capture(self, probe.capture, captureCtx),
+      }
+      if (captureCtx.timedOut) {
+        continue
+      }
+    }
+
     result.return = {
-      arguments: probe.captureSnapshot
-        ? {
-            ...captureFields(args, probe.capture),
-            this: capture(self, probe.capture),
-          }
-        : undefined,
+      arguments: throwArguments,
       throwable: {
         message: error.message,
         stacktrace: parseStackTrace(error),

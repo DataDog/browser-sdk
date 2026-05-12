@@ -67,6 +67,39 @@ export interface DebuggerInitConfiguration {
    * @defaultValue 60000
    */
   pollInterval?: number
+
+  /**
+   * Maximum number of snapshot events allowed globally per second
+   *
+   * @category Data Collection
+   * @defaultValue 25
+   */
+  maxSnapshotsPerSecondGlobally?: number
+
+  /**
+   * Default maximum number of snapshot events allowed per probe per second
+   *
+   * @category Data Collection
+   * @defaultValue 1
+   */
+  maxSnapshotsPerSecondPerProbe?: number
+
+  /**
+   * Default maximum number of non-snapshot events allowed per probe per second
+   *
+   * @category Data Collection
+   * @defaultValue 5000
+   */
+  maxNonSnapshotsPerSecondPerProbe?: number
+
+  /**
+   * A proxy URL for routing SDK requests. When set, delivery API requests are
+   * sent to `{proxy}/api/unstable/debugger/frontend/probes` instead of the
+   * default Datadog API host derived from `site`.
+   *
+   * @category Transport
+   */
+  proxy?: string
 }
 
 /**
@@ -114,6 +147,9 @@ function makeDebuggerPublicApi(): DatadogDebugger {
 
       startDeliveryApiPolling({
         service: initConfiguration.service,
+        clientToken: initConfiguration.clientToken,
+        site: initConfiguration.site,
+        proxy: initConfiguration.proxy,
         env: initConfiguration.env,
         version: initConfiguration.version,
         pollInterval: initConfiguration.pollInterval,

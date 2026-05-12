@@ -7,11 +7,21 @@ import type { Probe } from './probes'
 describe('api', () => {
   let mockBatchAdd: jasmine.Spy
 
+  function initTransport(overrides: Record<string, unknown> = {}) {
+    resetDebuggerTransport()
+    initDebuggerTransport(
+      { service: 'test-service', env: 'test-env', ...overrides } as any,
+      {
+        add: mockBatchAdd,
+      } as any
+    )
+  }
+
   beforeEach(() => {
     clearProbes()
 
     mockBatchAdd = jasmine.createSpy('batchAdd')
-    initDebuggerTransport({ service: 'test-service', env: 'test-env' } as any, { add: mockBatchAdd } as any)
+    initTransport()
     ;(window as any).DD_DEBUGGER = {
       version: '0.0.1',
     }
@@ -476,6 +486,85 @@ describe('api', () => {
       // Should only get 25 calls (global limit)
       expect(mockBatchAdd).toHaveBeenCalledTimes(25)
     })
+
+    it('should respect configured global snapshot rate limit', () => {
+      initTransport({ maxSnapshotsPerSecondGlobally: 2 })
+
+      for (let i = 0; i < 3; i++) {
+        const probe: Probe = {
+          id: `configured-global-probe-${i}`,
+          version: 0,
+          type: 'LOG_PROBE',
+          where: { typeName: 'TestClass', methodName: `configuredGlobal${i}` },
+          template: 'Test',
+          captureSnapshot: true,
+          capture: {},
+          sampling: { snapshotsPerSecond: 5000 },
+          evaluateAt: 'ENTRY',
+        }
+        addProbe(probe)
+      }
+
+      for (let i = 0; i < 3; i++) {
+        const probes = getProbes(`TestClass;configuredGlobal${i}`)!
+        onEntry(probes, {}, {})
+        onReturn(probes, null, {}, {}, {})
+      }
+
+      expect(mockBatchAdd).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  describe('configured per-second budgets', () => {
+    it('should respect configured default snapshot per-probe rate limit', () => {
+      initTransport({ maxSnapshotsPerSecondPerProbe: 0.5 })
+
+      const probe: Probe = {
+        id: 'configured-snapshot-rate-probe',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'configuredSnapshotRate' },
+        template: 'Test',
+        captureSnapshot: true,
+        capture: { maxReferenceDepth: 1 },
+        sampling: {},
+        evaluateAt: 'ENTRY',
+      }
+      addProbe(probe)
+
+      const probes = getProbes('TestClass;configuredSnapshotRate')!
+      onEntry(probes, {}, {})
+      onReturn(probes, null, {}, {}, {})
+      onEntry(probes, {}, {})
+      onReturn(probes, null, {}, {}, {})
+
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+    })
+
+    it('should respect configured default non-snapshot per-probe rate limit', () => {
+      initTransport({ maxNonSnapshotsPerSecondPerProbe: 1 })
+
+      const probe: Probe = {
+        id: 'configured-non-snapshot-rate-probe',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'configuredNonSnapshotRate' },
+        template: 'Test',
+        captureSnapshot: false,
+        capture: {},
+        sampling: {},
+        evaluateAt: 'ENTRY',
+      }
+      addProbe(probe)
+
+      const probes = getProbes('TestClass;configuredNonSnapshotRate')!
+      onEntry(probes, {}, {})
+      onReturn(probes, null, {}, {}, {})
+      onEntry(probes, {}, {})
+      onReturn(probes, null, {}, {}, {})
+
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+    })
   })
 
   describe('active entries cleanup', () => {
@@ -554,6 +643,246 @@ describe('api', () => {
 
       // A second onThrow without onEntry should not produce a snapshot
       onThrow(probes, new Error('test'), {}, {})
+      expect(mockBatchAdd).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('snapshot timeout', () => {
+    function createSnapshotProbe(methodName: string): Probe {
+      return {
+        id: `timeout-probe-${methodName}`,
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName },
+        template: 'Test',
+        captureSnapshot: true,
+        capture: { maxReferenceDepth: 3 },
+        sampling: { snapshotsPerSecond: 5000 },
+        evaluateAt: 'ENTRY',
+      }
+    }
+
+    it('should drop snapshot when entry capture exceeds timeout', () => {
+      const probe = createSnapshotProbe('entryTimeout')
+      addProbe(probe)
+
+      let callCount = 0
+      const realNow = performance.now.bind(performance)
+      spyOn(performance, 'now').and.callFake(() => {
+        callCount++
+        // Let the first few calls (start time, deadline creation) use real time,
+        // then jump past the deadline to simulate slow capture.
+        if (callCount <= 3) {
+          return realNow()
+        }
+        return realNow() + 20
+      })
+
+      const probes = getProbes('TestClass;entryTimeout')!
+      const deepObj = { level1: { level2: { level3: { level4: 'deep' } } } }
+      onEntry(probes, {}, { arg: deepObj })
+      onReturn(probes, null, {}, { arg: deepObj }, {})
+
+      // The entry capture timed out, so onEntry pushed null.
+      // onReturn still gets an active entry from its own onEntry call, but
+      // the entry snapshot is dropped. The return capture has its own timeout.
+      // Since performance.now is still returning future values, the return
+      // capture also times out and no snapshot is sent.
+      expect(mockBatchAdd).not.toHaveBeenCalled()
+    })
+
+    it('should drop snapshot when return capture exceeds timeout', () => {
+      const probe = createSnapshotProbe('returnTimeout')
+      addProbe(probe)
+
+      const probes = getProbes('TestClass;returnTimeout')!
+
+      // Let onEntry succeed with real time
+      onEntry(probes, {}, { x: 1 })
+
+      // Now make performance.now jump forward so the return capture times out
+      let callCount = 0
+      const realNow = performance.now.bind(performance)
+      spyOn(performance, 'now').and.callFake(() => {
+        callCount++
+        if (callCount <= 2) {
+          return realNow()
+        }
+        return realNow() + 20
+      })
+
+      onReturn(probes, null, {}, { x: 1 }, { local: 'value' })
+
+      expect(mockBatchAdd).not.toHaveBeenCalled()
+    })
+
+    it('should drop snapshot when throw capture exceeds timeout', () => {
+      const probe = createSnapshotProbe('throwTimeout')
+      addProbe(probe)
+
+      const probes = getProbes('TestClass;throwTimeout')!
+
+      // Let onEntry succeed with real time
+      onEntry(probes, {}, { x: 1 })
+
+      // Now make performance.now jump forward so the throw capture times out
+      let callCount = 0
+      const realNow = performance.now.bind(performance)
+      spyOn(performance, 'now').and.callFake(() => {
+        callCount++
+        if (callCount <= 2) {
+          return realNow()
+        }
+        return realNow() + 20
+      })
+
+      onThrow(probes, new Error('test'), {}, { x: 1 })
+
+      expect(mockBatchAdd).not.toHaveBeenCalled()
+    })
+
+    it('should not affect non-snapshot probes', () => {
+      const probe: Probe = {
+        id: 'non-snapshot-timeout',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'nonSnapshot' },
+        template: 'Test',
+        captureSnapshot: false,
+        capture: {},
+        sampling: { snapshotsPerSecond: 5000 },
+        evaluateAt: 'ENTRY',
+      }
+      addProbe(probe)
+
+      // Spike performance.now to simulate slow execution
+      let callCount = 0
+      const realNow = performance.now.bind(performance)
+      spyOn(performance, 'now').and.callFake(() => {
+        callCount++
+        if (callCount <= 2) {
+          return realNow()
+        }
+        return realNow() + 20
+      })
+
+      const probes = getProbes('TestClass;nonSnapshot')!
+      onEntry(probes, {}, {})
+      onReturn(probes, null, {}, {}, {})
+
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+    })
+
+    it('should not leak active entries when entry capture times out', () => {
+      const probe = createSnapshotProbe('entryLeakTest')
+      addProbe(probe)
+
+      let shouldTimeout = true
+      let callCount = 0
+      const realNow = performance.now.bind(performance)
+      spyOn(performance, 'now').and.callFake(() => {
+        callCount++
+        if (!shouldTimeout || callCount <= 3) {
+          return realNow()
+        }
+        return realNow() + 20
+      })
+
+      const probes = getProbes('TestClass;entryLeakTest')!
+      // This onEntry will time out and push null
+      onEntry(probes, {}, { x: 1 })
+
+      // onReturn should handle the null entry gracefully (no snapshot sent)
+      shouldTimeout = false
+      callCount = 0
+      onReturn(probes, null, {}, { x: 1 }, {})
+
+      expect(mockBatchAdd).not.toHaveBeenCalled()
+    })
+
+    it('should skip subsequent snapshot probes after timeout but still process non-snapshot probes', () => {
+      const snapshotProbe1: Probe = {
+        id: 'timeout-shared-1',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'sharedDeadline' },
+        template: 'Snapshot probe',
+        captureSnapshot: true,
+        capture: { maxReferenceDepth: 3 },
+        sampling: { snapshotsPerSecond: 5000 },
+        evaluateAt: 'ENTRY',
+      }
+      const nonSnapshotProbe: Probe = {
+        id: 'timeout-shared-2',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'sharedDeadline' },
+        template: 'Non-snapshot probe',
+        captureSnapshot: false,
+        capture: {},
+        sampling: { snapshotsPerSecond: 5000 },
+        evaluateAt: 'ENTRY',
+      }
+      const snapshotProbe2: Probe = {
+        id: 'timeout-shared-3',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'sharedDeadline' },
+        template: 'Second snapshot probe',
+        captureSnapshot: true,
+        capture: { maxReferenceDepth: 3 },
+        sampling: { snapshotsPerSecond: 5000 },
+        evaluateAt: 'ENTRY',
+      }
+      addProbe(snapshotProbe1)
+      addProbe(nonSnapshotProbe)
+      addProbe(snapshotProbe2)
+
+      let callCount = 0
+      const realNow = performance.now.bind(performance)
+      spyOn(performance, 'now').and.callFake(() => {
+        callCount++
+        if (callCount <= 3) {
+          return realNow()
+        }
+        return realNow() + 20
+      })
+
+      const probes = getProbes('TestClass;sharedDeadline')!
+      onEntry(probes, {}, { x: 1 })
+      onReturn(probes, null, {}, { x: 1 }, {})
+
+      // The non-snapshot probe should still send, but both snapshot probes should be dropped
+      const calls = mockBatchAdd.calls.allArgs()
+      expect(calls.length).toBe(1)
+      expect(calls[0][0].message).toBe('Non-snapshot probe')
+    })
+
+    it('should share deadline across probes so second snapshot probe exits immediately', () => {
+      const probe1 = createSnapshotProbe('sharedDeadline1')
+      const probe2: Probe = {
+        ...createSnapshotProbe('sharedDeadline2'),
+        id: 'timeout-probe-sharedDeadline2',
+        where: { typeName: 'TestClass', methodName: 'sharedDeadline1' },
+      }
+      addProbe(probe1)
+      addProbe(probe2)
+
+      let callCount = 0
+      const realNow = performance.now.bind(performance)
+      spyOn(performance, 'now').and.callFake(() => {
+        callCount++
+        if (callCount <= 3) {
+          return realNow()
+        }
+        return realNow() + 20
+      })
+
+      const probes = getProbes('TestClass;sharedDeadline1')!
+      onEntry(probes, {}, { x: 1 })
+      onReturn(probes, null, {}, { x: 1 }, {})
+
+      // Both snapshot probes share the deadline -- neither should send
       expect(mockBatchAdd).not.toHaveBeenCalled()
     })
   })
