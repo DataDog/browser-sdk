@@ -1,8 +1,9 @@
 import type { Configuration } from '../domain/configuration'
 import { withXhr, mockXhr } from '../../test'
 import type { Subscription } from '../tools/observable'
+import { noop } from '../tools/utils/functionUtils'
 import type { XhrCompleteContext, XhrContext } from './xhrObservable'
-import { initXhrObservable } from './xhrObservable'
+import { initXhrObservable, resetXhrObservable } from './xhrObservable'
 
 describe('xhr observable', () => {
   let requestsTrackingSubscription: Subscription
@@ -400,6 +401,72 @@ describe('xhr observable', () => {
         expect(requests[1].method).toBe('UNDEFINED')
         done()
       },
+    })
+  })
+
+  describe('with conflicting allowUntrustedEvents policies across callers', () => {
+    // Reproduces the bug where the early bufferedData call to
+    // initXhrObservable({ allowUntrustedEvents: true }) creates the singleton
+    // and a later initXhrObservable(customerConfig) silently reuses it,
+    // discarding the customer's stricter policy.
+    let policySubscription: Subscription
+    let policyContexts: XhrContext[]
+
+    beforeEach(() => {
+      requestsTrackingSubscription.unsubscribe()
+      resetXhrObservable()
+      policyContexts = []
+    })
+
+    afterEach(() => {
+      policySubscription.unsubscribe()
+      resetXhrObservable()
+      // The outer afterEach calls requestsTrackingSubscription.unsubscribe(); we already
+      // unsubscribed it in beforeEach, so give it a no-op stub.
+      requestsTrackingSubscription = { unsubscribe: noop }
+    })
+
+    it('does not emit completion for an untrusted loadend when the customer disallows it', (done) => {
+      // First caller (bufferedData) opts into untrusted events.
+      initXhrObservable({ allowUntrustedEvents: true })
+      // Second caller (customer config) opts out.
+      policySubscription = initXhrObservable({ allowUntrustedEvents: false }).subscribe((context) => {
+        policyContexts.push(context)
+      })
+
+      withXhr({
+        setup(xhr) {
+          xhr.open('GET', '/ok')
+          xhr.send()
+          // Untrusted Event (constructor-built, no __ddIsTrusted marker)
+          xhr.dispatchEvent(new Event('loadend'))
+        },
+        onComplete() {
+          const completions = policyContexts.filter((context) => context.state === 'complete')
+          expect(completions).toEqual([])
+          done()
+        },
+      })
+    })
+
+    it('emits completion for an untrusted loadend when every caller allows it', (done) => {
+      initXhrObservable({ allowUntrustedEvents: true })
+      policySubscription = initXhrObservable({ allowUntrustedEvents: true }).subscribe((context) => {
+        policyContexts.push(context)
+      })
+
+      withXhr({
+        setup(xhr) {
+          xhr.open('GET', '/ok')
+          xhr.send()
+          xhr.dispatchEvent(new Event('loadend'))
+        },
+        onComplete() {
+          const completions = policyContexts.filter((context) => context.state === 'complete')
+          expect(completions.length).toBe(1)
+          done()
+        },
+      })
     })
   })
 })
