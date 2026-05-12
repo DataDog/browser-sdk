@@ -1,7 +1,7 @@
 import type { InputData, StyleSheetRuleData, ScrollData } from '@datadog/browser-rum/src/types'
 import { IncrementalSource, ChangeType, RecordType } from '@datadog/browser-rum/src/types'
 
-import { DefaultPrivacyLevel } from '@datadog/browser-core'
+import { DefaultPrivacyLevel, SESSION_STORE_KEY } from '@datadog/browser-core'
 
 import { decodeChangeRecords, findChangeRecords } from '@datadog/browser-rum/test/record/changes'
 import {
@@ -669,8 +669,9 @@ test.describe('recorder', () => {
         await page.evaluate(() => {
           window.DD_RUM!.startSessionReplayRecording({ force: true })
         })
-        const [cookie] = await browserContext.cookies()
-        expect(cookie.value).toContain('forcedReplay=1')
+        const cookies = await browserContext.cookies()
+        const sessionCookie = cookies.find((c) => c.name === SESSION_STORE_KEY)
+        expect(sessionCookie?.value).toContain('forcedReplay=1')
 
         await flushEvents()
 

@@ -30,6 +30,7 @@ dev,@types/express,MIT,Copyright Microsoft Corporation
 dev,@types/jasmine,MIT,Copyright Microsoft Corporation
 dev,@types/node,MIT,Copyright Microsoft Corporation
 dev,@types/node-forge,MIT,Copyright Microsoft Corporation
+dev,@types/ws,MIT,Copyright Microsoft Corporation
 dev,@types/pako,MIT,Copyright Microsoft Corporation
 dev,@types/react,MIT,Copyright Microsoft Corporation
 dev,@types/react-dom,MIT,Copyright Microsoft Corporation
@@ -94,5 +95,6 @@ dev,vue-router,MIT,Copyright (c) 2019-present Eduardo San Martin Morote
 dev,webpack,MIT,Copyright JS Foundation and other contributors
 dev,webpack-cli,MIT,Copyright JS Foundation and other contributors
 dev,webpack-dev-middleware,MIT,Copyright JS Foundation and other contributors
+dev,ws,MIT,Copyright (c) 2011 Einar Otto Stangvik Copyright (c) 2013 Arnout Kazemier Copyright (c) 2016 Luigi Pinca and contributors
 dev,wxt,MIT,Copyright (c) 2023 Aaron
 dev,zone.js,MIT,Copyright (c) 2010-2024 Google LLC

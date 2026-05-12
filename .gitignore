@@ -30,6 +30,7 @@ generated-docs/
 /playwright/.cache/
 test-results/
 playwright-report/
+test/e2e/.pinned-browsers/
 .vscode
 
 # Claude Code local files

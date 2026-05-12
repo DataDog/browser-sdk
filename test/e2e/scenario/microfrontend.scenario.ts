@@ -3,6 +3,7 @@ import type { LogsEvent, LogsInitConfiguration, LogsEventDomainContext } from '@
 import { test, expect } from '@playwright/test'
 import { ExperimentalFeature } from '@datadog/browser-core'
 import { createTest, microfrontendSetup } from '../lib/framework'
+import { isLongAnimationFrameSupported } from '../lib/helpers/browser'
 
 const HANDLING_STACK_REGEX = /^HandlingStack: .*\n\s+at testHandlingStack @/
 
@@ -352,8 +353,11 @@ test.describe('microfrontend', () => {
       createTest('LOAf should have service and version from source code context')
         .withRum(RUM_CONFIG)
         .withSetup(microfrontendSetup)
-        .run(async ({ intakeRegistry, flushEvents, page, browserName }) => {
-          test.skip(browserName !== 'chromium', 'Non-Chromium browsers do not support long tasks')
+        .run(async ({ intakeRegistry, flushEvents, page }) => {
+          test.skip(
+            !(await isLongAnimationFrameSupported(page)),
+            'Browser does not support PerformanceLongAnimationFrameTiming'
+          )
 
           await page.click('#app1-loaf')
           await page.click('#app2-loaf')
