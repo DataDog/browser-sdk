@@ -1,21 +1,16 @@
-import { fetch, setTimeout, clearTimeout } from '@datadog/browser-core'
+import { fetch, setTimeout, clearTimeout, buildEndpointHost } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-
-const getQuotaBaseURL = (site: string) => {
-  switch (site) {
-    case 'datad0g.com':
-      return `https://dd.${site}`
-    default:
-      return `https://app.${site}`
-  }
-}
 
 export function checkProfilingQuota(
   configuration: RumConfiguration,
   sessionId: string,
   timeoutMs = 5000
 ): Promise<'quota-ok' | 'quota-exceeded'> {
-  const url = `${getQuotaBaseURL(configuration.site)}/api/unstable/profiling/admission?session_id=${sessionId}`
+  // Follow the same browser-intake-* host derivation used by all other SDK endpoints,
+  // but bypass the fed-staging and internalAnalyticsSubdomain special cases which don't
+  // apply to the quota endpoint.
+  const host = `quota.${buildEndpointHost('profile', { site: configuration.site })}`
+  const url = `https://${host}?session_id=${sessionId}`
   const controller = new AbortController()
 
   let timeoutId: ReturnType<typeof setTimeout>

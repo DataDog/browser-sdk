@@ -47,19 +47,21 @@ describe('checkProfilingQuota', () => {
     expect(result).toBe('quota-ok')
   })
 
-  it('builds the URL with site and session_id', async () => {
+  it('builds the URL following the browser-intake-* host pattern', async () => {
     interceptor.withFetch(DEFAULT_FETCH_MOCK)
     await checkProfilingQuota(mockRumConfiguration({ site: 'datadoghq.com', clientToken: 'my-token' }), 'session-abc')
-    expect(interceptor.requests[0].url).toBe(
-      'https://app.datadoghq.com/api/unstable/profiling/admission?session_id=session-abc'
-    )
+    expect(interceptor.requests[0].url).toBe('https://quota.browser-intake-datadoghq.com?session_id=session-abc')
   })
 
-  it('uses the dd.datad0g.com base URL for datad0g.com site', async () => {
+  it('derives the host correctly for non-US1 sites', async () => {
     interceptor.withFetch(DEFAULT_FETCH_MOCK)
-    await checkProfilingQuota(mockRumConfiguration({ site: 'datad0g.com', clientToken: 'my-token' }), 'session-abc')
-    expect(interceptor.requests[0].url).toBe(
-      'https://dd.datad0g.com/api/unstable/profiling/admission?session_id=session-abc'
-    )
+    await checkProfilingQuota(mockRumConfiguration({ site: 'datadoghq.eu' }), 'session-abc')
+    expect(interceptor.requests[0].url).toBe('https://quota.browser-intake-datadoghq.eu?session_id=session-abc')
+  })
+
+  it('derives the host correctly for staging (datad0g.com)', async () => {
+    interceptor.withFetch(DEFAULT_FETCH_MOCK)
+    await checkProfilingQuota(mockRumConfiguration({ site: 'datad0g.com' }), 'session-abc')
+    expect(interceptor.requests[0].url).toBe('https://quota.browser-intake-datad0g.com?session_id=session-abc')
   })
 })
