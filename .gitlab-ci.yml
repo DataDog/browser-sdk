@@ -599,7 +599,9 @@ bump-chrome-version-scheduled-failure:
 
 performance-benchmark:
   stage: task
-  extends: .base-configuration
+  extends:
+    - .base-configuration
+    - .resource-allocation-4-cpus
   only:
     variables:
       - $TARGET_TASK_NAME == "performance-benchmark-scheduled"
