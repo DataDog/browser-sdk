@@ -7,7 +7,6 @@ import type { RequestCompleteEvent } from '../requestCollection'
  */
 const GRAPHQL_PAYLOAD_LIMIT = 32 * ONE_KIBI_BYTE
 
-
 interface RawGraphQlMetadata {
   query?: string
   operationName?: string

@@ -345,8 +345,7 @@ describe('GraphQL detection and metadata extraction', () => {
     })
 
     it('should prefer operationType derived from query URL param over explicit operationType URL param for GET requests', () => {
-      const url =
-        'http://example.com/graphql?query=mutation%20CreateUser%20%7B%20createUser%20%7D&operationType=query'
+      const url = 'http://example.com/graphql?query=mutation%20CreateUser%20%7B%20createUser%20%7D&operationType=query'
 
       const result = extractGraphQlRequestMetadata({ method: 'GET', url, requestBody: undefined }, false)
 
