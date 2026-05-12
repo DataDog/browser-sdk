@@ -1,8 +1,10 @@
+import type { TimeStamp } from '../../tools/utils/timeUtils'
 import { dateNow } from '../../tools/utils/timeUtils'
-import { SESSION_EXPIRATION_DELAY, SESSION_NOT_TRACKED } from './sessionConstants'
+import { SESSION_EXPIRATION_DELAY, SESSION_NOT_TRACKED, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import type { SessionState } from './sessionState'
 import {
   expandSessionState,
+  getExpireDate,
   isSessionInExpiredState,
   toSessionString,
   toSessionState,
@@ -36,15 +38,15 @@ describe('session state utilities', () => {
     it('should correctly identify a session in expired state', () => {
       expect(isSessionInExpiredState(EXPIRED_SESSION)).toBe(true)
       expect(isSessionInExpiredState({ created: dateNowWithOffset(-1000 * 60 * 60 * 4) })).toBe(true)
-      expect(isSessionInExpiredState({ expire: dateNowWithOffset(-100) })).toBe(true)
+      expect(isSessionInExpiredState({ created: dateNowWithOffset(-100), expire: dateNowWithOffset(-100) })).toBe(true)
+      expect(isSessionInExpiredState({ first: SESSION_NOT_TRACKED })).toBe(true)
+      expect(isSessionInExpiredState({ first: 'tracked' })).toBe(true)
     })
 
     it('should correctly identify a session in live state', () => {
       expect(isSessionInExpiredState({ created: dateNowWithOffset(-1000), expire: dateNowWithOffset(1000) })).toBe(
         false
       )
-      expect(isSessionInExpiredState({ first: SESSION_NOT_TRACKED })).toBe(false)
-      expect(isSessionInExpiredState({ first: 'tracked' })).toBe(false)
     })
   })
 
@@ -74,6 +76,36 @@ describe('session state utilities', () => {
     it('should handle invalid session strings', () => {
       const sessionString = '{invalid: true}'
       expect(toSessionState(sessionString)).toEqual(NOT_STARTED_SESSION)
+    })
+  })
+
+  describe('getExpireDate', () => {
+    it('should return undefined when expire and created are both absent', () => {
+      expect(getExpireDate({})).toBeUndefined()
+    })
+
+    it('should return undefined when only expire is set', () => {
+      expect(getExpireDate({ expire: String(dateNow() + SESSION_EXPIRATION_DELAY) })).toBeUndefined()
+    })
+
+    it('should return undefined when only created is set', () => {
+      expect(getExpireDate({ created: String(dateNow()) })).toBeUndefined()
+    })
+
+    it('should return expire date when it is before the cap', () => {
+      const createdDate = dateNow()
+      const expireDate = dateNow() + SESSION_EXPIRATION_DELAY // 15 min, well before the 4h cap
+      expect(getExpireDate({ created: String(createdDate), expire: String(expireDate) })).toBe(expireDate as TimeStamp)
+    })
+
+    it('should cap expire date when expandOnly pushes it past the max-age deadline', () => {
+      const createdDate = dateNow() - SESSION_TIME_OUT_DELAY + 1000 // session nearly 4h old
+      const expireDate = dateNow() + SESSION_EXPIRATION_DELAY // expandOnly pushed expire well into the future
+      const maxExpireDate = createdDate + SESSION_TIME_OUT_DELAY
+
+      expect(getExpireDate({ created: String(createdDate), expire: String(expireDate) })).toBe(
+        maxExpireDate as TimeStamp
+      )
     })
   })
 

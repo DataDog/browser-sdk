@@ -167,8 +167,8 @@ test.describe('microfrontend', () => {
           window.DD_RUM!.init(configuration)
 
           function testHandlingStack() {
-            const ref = window.DD_RUM!.startDurationVital('test-vital')
-            window.DD_RUM!.stopDurationVital(ref)
+            window.DD_RUM!.startDurationVital('test-vital')
+            window.DD_RUM!.stopDurationVital('test-vital')
           }
 
           testHandlingStack()

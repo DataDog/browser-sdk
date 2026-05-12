@@ -9,7 +9,6 @@ export type LogsEventDomainContext<T extends ErrorSource = any> = T extends type
       : undefined
 
 export interface NetworkLogsEventDomainContext {
-  isAborted: boolean
   handlingStack?: string
 }
 

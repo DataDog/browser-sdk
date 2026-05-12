@@ -1,6 +1,8 @@
-import { NodeType, RecordType, SnapshotFormat } from '../../types'
+import type { BrowserChangeRecord, BrowserFullSnapshotChangeRecord, BrowserRecord } from '../../types'
+import { ChangeType, RecordType, SnapshotFormat } from '../../types'
 import { appendElement } from '../../../../rum-core/test'
 import { takeFullSnapshot, takeNodeSnapshot } from './internalApi'
+import { createChangeDecoder } from './serialization'
 
 describe('takeFullSnapshot', () => {
   it('should produce Meta, Focus, and FullSnapshot records', () => {
@@ -23,14 +25,8 @@ describe('takeFullSnapshot', () => {
           timestamp: jasmine.any(Number),
         },
         {
-          data: {
-            node: jasmine.any(Object),
-            initialOffset: {
-              left: jasmine.any(Number),
-              top: jasmine.any(Number),
-            },
-          },
-          format: SnapshotFormat.V1,
+          data: jasmine.any(Object),
+          format: SnapshotFormat.Change,
           type: RecordType.FullSnapshot,
           timestamp: jasmine.any(Number),
         },
@@ -56,35 +52,30 @@ describe('takeFullSnapshot', () => {
 })
 
 describe('takeNodeSnapshot', () => {
+  function decodeSnapshot(
+    record: BrowserRecord | undefined
+  ): BrowserChangeRecord | BrowserFullSnapshotChangeRecord | undefined {
+    if (!record) {
+      return undefined
+    }
+    if (record.type !== RecordType.FullSnapshot) {
+      throw new Error(`Unexpected record type ${record.type}`)
+    }
+    if (record.format !== SnapshotFormat.Change) {
+      throw new Error(`Unexpected record format ${record.format}`)
+    }
+
+    const decoder = createChangeDecoder()
+    return decoder.decode(record)
+  }
+
   it('should serialize nodes', () => {
     const node = appendElement('<div>Hello <b>world</b></div>', document.body)
-    expect(takeNodeSnapshot(node)).toEqual({
-      type: NodeType.Element,
-      id: 0,
-      tagName: 'div',
-      isSVG: undefined,
-      attributes: {},
-      childNodes: [
-        {
-          type: NodeType.Text,
-          id: 1,
-          textContent: 'Hello ',
-        },
-        {
-          type: NodeType.Element,
-          id: 2,
-          tagName: 'b',
-          isSVG: undefined,
-          attributes: {},
-          childNodes: [
-            {
-              type: NodeType.Text,
-              id: 3,
-              textContent: 'world',
-            },
-          ],
-        },
-      ],
+    expect(decodeSnapshot(takeNodeSnapshot(node))).toEqual({
+      type: RecordType.FullSnapshot,
+      format: SnapshotFormat.Change,
+      data: [[ChangeType.AddNode, [null, 'DIV'], [1, '#text', 'Hello '], [0, 'B'], [1, '#text', 'world']]],
+      timestamp: jasmine.any(Number),
     })
   })
 
@@ -92,32 +83,11 @@ describe('takeNodeSnapshot', () => {
     const node = appendElement('<div>Hello</div>', document.body)
     const shadowRoot = node.attachShadow({ mode: 'open' })
     shadowRoot.appendChild(document.createTextNode('world'))
-    expect(takeNodeSnapshot(node)).toEqual({
-      type: NodeType.Element,
-      id: 0,
-      tagName: 'div',
-      isSVG: undefined,
-      attributes: {},
-      childNodes: [
-        {
-          type: NodeType.Text,
-          id: 1,
-          textContent: 'Hello',
-        },
-        {
-          type: NodeType.DocumentFragment,
-          id: 2,
-          isShadowRoot: true,
-          adoptedStyleSheets: undefined,
-          childNodes: [
-            {
-              type: NodeType.Text,
-              id: 3,
-              textContent: 'world',
-            },
-          ],
-        },
-      ],
+    expect(decodeSnapshot(takeNodeSnapshot(node))).toEqual({
+      type: RecordType.FullSnapshot,
+      format: SnapshotFormat.Change,
+      data: [[ChangeType.AddNode, [null, 'DIV'], [1, '#text', 'Hello'], [0, '#shadow-root'], [1, '#text', 'world']]],
+      timestamp: jasmine.any(Number),
     })
   })
 })

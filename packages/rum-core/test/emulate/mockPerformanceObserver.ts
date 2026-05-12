@@ -3,11 +3,7 @@ import { objectValues } from '@datadog/browser-core'
 import { RumPerformanceEntryType, type RumPerformanceEntry } from '../../src/browser/performanceObservable'
 import { mockGlobalPerformanceBuffer } from './mockGlobalPerformanceBuffer'
 
-export function mockPerformanceObserver({
-  typeSupported = true,
-  emulateAllEntryTypesUnsupported = false,
-  supportedEntryTypes = objectValues(RumPerformanceEntryType),
-} = {}) {
+export function mockPerformanceObserver({ supportedEntryTypes = objectValues(RumPerformanceEntryType) } = {}) {
   const originalPerformanceObserver = window.PerformanceObserver
   const instances = new Set<MockPerformanceObserver>()
 
@@ -25,12 +21,6 @@ export function mockPerformanceObserver({
     }
 
     observe({ entryTypes, type, buffered }: PerformanceObserverInit) {
-      if (!typeSupported && type) {
-        throw new TypeError("Failed to execute 'observe' on 'PerformanceObserver")
-      }
-      if (emulateAllEntryTypesUnsupported) {
-        throw new TypeError('entryTypes contained only unsupported types')
-      }
       this.entryTypes = entryTypes || (type ? [type] : [])
       instances.add(this)
       if (buffered) {

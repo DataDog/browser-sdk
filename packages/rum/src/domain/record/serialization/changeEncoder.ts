@@ -1,5 +1,6 @@
 import type { Change } from '../../../types'
 import { ChangeType } from '../../../types'
+import { StringIdConstants } from '../itemIds'
 import type { StringIds } from '../itemIds'
 
 type ChangeData<T extends ChangeType> =
@@ -32,10 +33,17 @@ export function createChangeEncoder(stringIds: StringIds): ChangeEncoder {
     for (let index = 0, length = array.length; index < length; index++) {
       const item = array[index]
       if (typeof item === 'string') {
-        const previousSize = stringIds.size
-        array[index] = stringIds.getOrInsert(item)
-        if (stringIds.size > previousSize) {
-          add(ChangeType.AddString, item)
+        const currentSize = stringIds.size
+        if (currentSize < Number(StringIdConstants.SOFT_MAX_SIZE)) {
+          // Insert this string into the string table.
+          array[index] = stringIds.getOrInsert(item)
+          if (stringIds.size > currentSize) {
+            add(ChangeType.AddString, item)
+          }
+        } else {
+          // The string table is full. If this string is already in the string table, use
+          // the existing entry, but if it's not there, don't insert it.
+          array[index] = stringIds.get(item) ?? item
         }
       } else if (Array.isArray(item)) {
         convertStringsToStringReferences(item)

@@ -7,7 +7,6 @@ import type {
   MouseInteractionType,
   BrowserIncrementalSnapshotRecord,
   VisualViewportRecord,
-  FrustrationRecord,
   SnapshotFormatV1,
   BrowserFullSnapshotV1Record,
   BrowserFullSnapshotChangeRecord,
@@ -65,11 +64,6 @@ export function findAllIncrementalSnapshots(
   return records.filter(
     (record) => record.type === RecordType.IncrementalSnapshot && record.data.source === source
   ) as BrowserIncrementalSnapshotRecord[]
-}
-
-// Returns all the FrustrationRecords in the given Segment, if any.
-export function findAllFrustrationRecords(segment: BrowserSegment): FrustrationRecord[] {
-  return segment.records.filter((record) => record.type === RecordType.FrustrationRecord)
 }
 
 // Returns all the IncrementalSnapshotRecords of the given MouseInteraction source, if any

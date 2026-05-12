@@ -1,9 +1,8 @@
 import { isAdoptedStyleSheetsSupported } from '../../../../../core/test'
 import { ChangeType } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
+import { serializeHtmlAsChange } from '../test/serializeHtml.specHelper'
 import type { SerializationStats } from './serializationStats'
-
-import { serializeHtmlAsChange } from './serializeHtml.specHelper'
 
 describe('serializeNodeAsChange for stylesheets', () => {
   let originalTimeout: number

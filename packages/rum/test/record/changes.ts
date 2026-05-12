@@ -13,7 +13,7 @@ export function decodeFullSnapshotChangeRecord(
   record: BrowserFullSnapshotChangeRecord
 ): BrowserFullSnapshotChangeRecord {
   const changeDecoder = createChangeDecoder()
-  return changeDecoder.decode(record) as BrowserFullSnapshotChangeRecord
+  return changeDecoder.decode(record)
 }
 
 export function findChangeRecords(

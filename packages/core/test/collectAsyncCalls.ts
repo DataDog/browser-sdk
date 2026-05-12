@@ -1,5 +1,7 @@
 import { getCurrentJasmineSpec } from './getCurrentJasmineSpec'
 
+const originalPlanForGuard = new WeakMap<() => void, () => void>()
+
 export function collectAsyncCalls<F extends jasmine.Func>(
   spy: jasmine.Spy<F>,
   expectedCallsCount = 1
@@ -13,23 +15,28 @@ export function collectAsyncCalls<F extends jasmine.Func>(
 
     const checkCalls = () => {
       if (spy.calls.count() === expectedCallsCount) {
-        spy.and.callFake(extraCallDetected as F)
         resolve(spy.calls)
       } else if (spy.calls.count() > expectedCallsCount) {
-        extraCallDetected()
+        const message = `Unexpected extra call for spec '${currentSpec.fullName}'`
+        fail(message)
+        reject(new Error(message))
       }
     }
 
     checkCalls()
 
-    spy.and.callFake((() => {
+    const originalPlan = getOriginalPlan(spy)
+    const guard = ((...args: Parameters<F>) => {
       checkCalls()
-    }) as F)
-
-    function extraCallDetected() {
-      const message = `Unexpected extra call for spec '${currentSpec!.fullName}'`
-      fail(message)
-      reject(new Error(message))
-    }
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return originalPlan(...args)
+    }) as F
+    originalPlanForGuard.set(guard, originalPlan)
+    spy.and.callFake(guard)
   })
+}
+
+function getOriginalPlan<F extends () => void>(spy: jasmine.Spy<F>): F {
+  const originalPlanOrGuard: F = (spy.and as unknown as { plan: F }).plan
+  return (originalPlanForGuard.get(originalPlanOrGuard) as F | undefined) ?? originalPlanOrGuard
 }

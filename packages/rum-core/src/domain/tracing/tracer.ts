@@ -1,9 +1,11 @@
-import type { ContextManager } from '@datadog/browser-core'
+import type { ContextManager, SessionManager } from '@datadog/browser-core'
 import {
   objectEntries,
   shallowClone,
   matchList,
   TraceContextInjection,
+  correctedChildSampleRate,
+  isSampled,
   canUseEventBridge,
   getEventBridge,
 } from '@datadog/browser-core'
@@ -14,8 +16,6 @@ import type {
   RumXhrCompleteContext,
   RumXhrStartContext,
 } from '../requestCollection'
-import type { RumSessionManager } from '../rumSessionManager'
-import { isSampled } from '../sampler/sampler'
 import type { PropagatorType } from './tracer.types'
 import type { SpanIdentifier, TraceIdentifier } from './identifier'
 import { createSpanIdentifier, createTraceIdentifier, toPaddedHexadecimalString } from './identifier'
@@ -57,7 +57,7 @@ export function clearTracingIfNeeded(context: RumFetchResolveContext | RumXhrCom
 
 export function startTracer(
   configuration: RumConfiguration,
-  sessionManager: RumSessionManager,
+  sessionManager: SessionManager,
   userContext: ContextManager,
   accountContext: ContextManager
 ): Tracer {
@@ -104,9 +104,13 @@ export function startTracer(
         userContext,
         accountContext,
         (tracingHeaders: TracingHeaders) => {
-          Object.keys(tracingHeaders).forEach((name) => {
-            xhr.setRequestHeader(name, tracingHeaders[name])
-          })
+          try {
+            Object.keys(tracingHeaders).forEach((name) => {
+              xhr.setRequestHeader(name, tracingHeaders[name])
+            })
+          } catch {
+            // XHR may have already been sent (buffered replay via microtask)
+          }
         }
       ),
   }
@@ -115,7 +119,7 @@ export function startTracer(
 function injectHeadersIfTracingAllowed(
   configuration: RumConfiguration,
   context: Partial<RumFetchStartContext | RumXhrStartContext>,
-  sessionManager: RumSessionManager,
+  sessionManager: SessionManager,
   userContext: ContextManager,
   accountContext: ContextManager,
   inject: (tracingHeaders: TracingHeaders) => void
@@ -132,9 +136,13 @@ function injectHeadersIfTracingAllowed(
     return
   }
 
+  const fallbackTraceSampled = isSampled(
+    session.id,
+    correctedChildSampleRate(configuration.sessionSampleRate, configuration.traceSampleRate)
+  )
   const traceSampled = canUseEventBridge()
-    ? (getEventBridge()?.getIsTraceSampled() ?? isSampled(session.id, configuration.traceSampleRate))
-    : isSampled(session.id, configuration.traceSampleRate)
+    ? (getEventBridge()?.getIsTraceSampled() ?? fallbackTraceSampled)
+    : fallbackTraceSampled
 
   const shouldInjectHeaders = traceSampled || configuration.traceContextInjection === TraceContextInjection.ALL
   if (!shouldInjectHeaders) {

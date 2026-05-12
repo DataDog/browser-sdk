@@ -117,7 +117,7 @@ function uploadToS3(awsConfig: AwsConfig, bundlePath: string, uploadPath: string
   const accessToS3 = generateEnvironmentForRole(awsConfig.accountId, 'build-stable-browser-agent-artifacts-s3-write')
 
   const browserCache =
-    version === 'staging' || version === 'canary' || version === 'pull-request'
+    version === 'staging' || version === 'canary' || version.endsWith('-canary') || version === 'pull-request'
       ? 15 * ONE_MINUTE_IN_SECOND
       : 4 * ONE_HOUR_IN_SECOND
   const cacheControl = `max-age=${browserCache}, s-maxage=60`

@@ -113,6 +113,7 @@ async function injectRumSDK(page: Page, scenarioConfiguration: ScenarioConfigura
           const s = o.createElement(u) as HTMLScriptElement
           s.async = true
           s.src = n
+          s.crossOrigin = ''
           o.head.appendChild(s)
         })(window, document, 'script', sdkBundleUrl, 'DD_RUM')
         browserWindow.DD_RUM?.onReady(function () {

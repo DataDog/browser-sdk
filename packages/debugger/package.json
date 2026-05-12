@@ -22,7 +22,7 @@
     "acorn": "8.16.0"
   },
   "dependencies": {
-    "@datadog/browser-core": "6.33.0"
+    "@datadog/browser-core": "7.1.0"
   },
   "repository": {
     "type": "git",

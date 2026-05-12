@@ -21,47 +21,16 @@ export function createSpanIdentifier() {
 }
 
 function createIdentifier(bits: 63 | 64): BaseIdentifier {
+  // TODO: when Safari 15 becomes the minimum, simplify to:
+  //   crypto.getRandomValues(new BigUint64Array(1))[0]
   const buffer = crypto.getRandomValues(new Uint32Array(2))
+  // eslint-disable-next-line no-bitwise
+  let value = BigInt(buffer[0]) + (BigInt(buffer[1]) << 32n)
   if (bits === 63) {
     // eslint-disable-next-line no-bitwise
-    buffer[buffer.length - 1] >>>= 1 // force 63-bit
+    value &= 0x7fffffffffffffffn // force 63-bit by clearing the top bit
   }
-
-  // The `.toString` function is intentionally similar to Number and BigInt `.toString` method.
-  //
-  // JavaScript numbers can represent integers up to 48 bits, this is why we need two of them to
-  // represent a 64 bits identifier. But BigInts don't have this limitation and can represent larger
-  // integer values.
-  //
-  // In the future, when we drop browsers without BigInts support, we could use BigInts directly
-  // represent identifiers by simply returning a BigInt from this function (as all we need is a
-  // value with a `.toString` method).
-  //
-  // Examples:
-  //   const buffer = getCrypto().getRandomValues(new Uint32Array(2))
-  //   return BigInt(buffer[0]) + BigInt(buffer[1]) << 32n
-  //
-  //   // Alternative with BigUint64Array (different Browser support than plain bigints!):
-  //   return crypto.getRandomValues(new BigUint64Array(1))[0]
-  //
-  // For now, let's keep using two plain numbers as having two different implementations (one for
-  // browsers with BigInt support and one for older browsers) don't bring much value.
-  return {
-    toString(radix = 10) {
-      let high = buffer[1]
-      let low = buffer[0]
-      let str = ''
-
-      do {
-        const mod = (high % radix) * 4294967296 + low
-        high = Math.floor(high / radix)
-        low = Math.floor(mod / radix)
-        str = (mod % radix).toString(radix) + str
-      } while (high || low)
-
-      return str
-    },
-  }
+  return value
 }
 
 export function toPaddedHexadecimalString(id: BaseIdentifier) {

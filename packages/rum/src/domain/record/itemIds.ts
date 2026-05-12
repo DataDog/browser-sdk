@@ -20,6 +20,9 @@ export type StringId = number & { __brand: 'StringId' }
 export type StringIds = ItemIds<string, StringId>
 export const enum StringIdConstants {
   FIRST_ID = 0,
+
+  // An arbitrarily-chosen soft limit on the maximum size of the string id map.
+  SOFT_MAX_SIZE = 1000000,
 }
 export function createStringIds(): StringIds {
   return createIdMap(StringIdConstants.FIRST_ID as StringId)

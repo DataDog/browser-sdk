@@ -10,7 +10,7 @@ import {
 import { registerCleanupTask } from '../../../../../core/test'
 import { ChangeType, PlaybackState } from '../../../types'
 
-import { serializeHtmlAsChange } from './serializeHtml.specHelper'
+import { serializeHtmlAsChange } from '../test/serializeHtml.specHelper'
 
 describe('serializeNodeAsChange for snapshotted documents', () => {
   let originalTimeout: number
