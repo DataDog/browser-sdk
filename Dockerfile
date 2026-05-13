@@ -37,7 +37,7 @@ RUN curl --silent --show-error --fail http://dl.google.com/linux/chrome/deb/pool
 
 # Current Playwright's Chromium (used by the e2e job)
 ARG PLAYWRIGHT_VERSION
-RUN npx -y playwright@${PLAYWRIGHT_VERSION} install --with-deps chromium
+RUN npx -y playwright@${PLAYWRIGHT_VERSION} install --with-deps chromium firefox webkit
 
 # Pinned Playwright browsers: Chromium 120 + Firefox 119 + WebKit 17.4 (used by the e2e-pinned job)
 ARG PINNED_PLAYWRIGHT_VERSION=1.40.1
