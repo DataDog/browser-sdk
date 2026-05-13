@@ -142,7 +142,7 @@ export function startVitalCollection(lifeCycle: LifeCycle, pageStateHistory: Pag
       name,
       ...options,
     })
-    lifeCycle.notify(LifeCycleEventType.VITAL_STARTED, { id, name, startClocks, ...options })
+    lifeCycle.notify(LifeCycleEventType.DURATION_VITAL_STARTED, { id, name, startClocks, ...options })
   }
 
   function stopDurationVital(name: string, options: DurationVitalOptions = {}, stopClocks = clocksNow()) {

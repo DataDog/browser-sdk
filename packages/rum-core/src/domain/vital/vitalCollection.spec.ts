@@ -211,7 +211,7 @@ describe('vitalCollection', () => {
 
     it('should notify lifecycle with vital started event when starting a duration vital', () => {
       const subscriberSpy = jasmine.createSpy()
-      lifeCycle.subscribe(LifeCycleEventType.VITAL_STARTED, subscriberSpy)
+      lifeCycle.subscribe(LifeCycleEventType.DURATION_VITAL_STARTED, subscriberSpy)
 
       vitalCollection.startDurationVital('foo')
 
