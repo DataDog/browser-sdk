@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+import { describe, expect, it } from 'vitest'
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 import type { SessionContext } from '@datadog/browser-core'
 import { timeStampNow } from '@datadog/js-core/time'
 import { BridgeCapability } from '@datadog/browser-core'

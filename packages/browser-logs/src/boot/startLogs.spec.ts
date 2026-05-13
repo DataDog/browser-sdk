@@ -46,8 +46,17 @@ const COMMON_CONTEXT = {
   view: { referrer: 'common_referrer', url: 'common_url' },
 }
 
+<<<<<<< HEAD
 function startLogsWithDefaults({ configuration }: { configuration?: Partial<LogsConfiguration> } = {}) {
   const sessionManager = createSessionManagerMock()
+=======
+function startLogsWithDefaults({
+  configuration,
+  sessionManager: customSessionManager,
+}: { configuration?: Partial<LogsConfiguration>; sessionManager?: ReturnType<typeof createSessionManagerMock> } = {}) {
+  const endpointBuilder = mockEndpointBuilder('https://localhost/v1/input/log')
+  const sessionManager = customSessionManager ?? createSessionManagerMock()
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
   const { handleLog, stop, globalContext, accountContext, userContext } = startLogs(
     {
       ...validateAndBuildLogsConfiguration({ clientToken: 'xxx', service: 'service', telemetrySampleRate: 0 })!,
@@ -160,7 +169,7 @@ describe('logs', () => {
       const sendSpy = vi.spyOn(mockEventBridge(), 'send')
 
       const { handleLog, logger } = startLogsWithDefaults({
-        configuration: { sessionSampleRate: 0 },
+        sessionManager: createSessionManagerMock().setNotTracked(),
       })
       handleLog(DEFAULT_MESSAGE, logger)
 

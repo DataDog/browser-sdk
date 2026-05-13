@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+import { describe, expect, it } from 'vitest'
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 import { HIGH_HASH_UUID, LOW_HASH_UUID } from '../../test'
 import { correctedChildSampleRate, isSampled, resetSampleDecisionCache, sampleUsingKnuthFactor } from './sampler'
 
@@ -6,6 +10,7 @@ const ARBITRARY_UUID = '1ff81c8c-6e32-473b-869b-55af08048323'
 
 describe('isSampled', () => {
   it('returns true when sampleRate is 100', () => {
+<<<<<<< HEAD
     expect(isSampled(ARBITRARY_UUID, 100)).toBeTrue()
   })
 
@@ -39,6 +44,41 @@ describe('isSampled', () => {
     // At some point the sample rate is so high that the session is sampled even if the hash is
     // high. This is not an error: we can probably find a UUID with an even higher hash.
     expect(isSampled(HIGH_HASH_UUID, 99.9999999999)).toBeTrue()
+=======
+    expect(isSampled(ARBITRARY_UUID, 100)).toBe(true)
+  })
+
+  it('returns false when sampleRate is 0', () => {
+    expect(isSampled(ARBITRARY_UUID, 0)).toBe(false)
+  })
+
+  it('a session id with a low hash value should be sampled with a rate close to 0%', () => {
+    expect(isSampled(LOW_HASH_UUID, 0.1)).toBe(true)
+    resetSampleDecisionCache()
+    expect(isSampled(LOW_HASH_UUID, 0.01)).toBe(true)
+    resetSampleDecisionCache()
+    expect(isSampled(LOW_HASH_UUID, 0.001)).toBe(true)
+    resetSampleDecisionCache()
+    expect(isSampled(LOW_HASH_UUID, 0.0001)).toBe(true)
+    resetSampleDecisionCache()
+    // At some point the sample rate is so low that the session is not sampled even if the hash
+    // is low. This is not an error: we can probably find a UUID with an even lower hash.
+    expect(isSampled(LOW_HASH_UUID, 0.0000000001)).toBe(false)
+  })
+
+  it('a session id with a high hash value should not be sampled even if the rate is close to 100%', () => {
+    expect(isSampled(HIGH_HASH_UUID, 99.9)).toBe(false)
+    resetSampleDecisionCache()
+    expect(isSampled(HIGH_HASH_UUID, 99.99)).toBe(false)
+    resetSampleDecisionCache()
+    expect(isSampled(HIGH_HASH_UUID, 99.999)).toBe(false)
+    resetSampleDecisionCache()
+    expect(isSampled(HIGH_HASH_UUID, 99.9999)).toBe(false)
+    resetSampleDecisionCache()
+    // At some point the sample rate is so high that the session is sampled even if the hash is
+    // high. This is not an error: we can probably find a UUID with an even higher hash.
+    expect(isSampled(HIGH_HASH_UUID, 99.9999999999)).toBe(true)
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
   })
 })
 
@@ -82,16 +122,28 @@ describe('sampleUsingKnuthFactor', () => {
     ]
 
     for (const [identifier, sampleRate, expected] of inputs) {
+<<<<<<< HEAD
       expect(sampleUsingKnuthFactor(identifier, sampleRate))
         .withContext(`identifier=${identifier}, sampleRate=${sampleRate}`)
         .toBe(expected)
+=======
+      expect(sampleUsingKnuthFactor(identifier, sampleRate), `identifier=${identifier}, sampleRate=${sampleRate}`).toBe(
+        expected
+      )
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
     }
   })
 
   it('should cache sampling decision per sampling rate', () => {
     // For the same session id, the sampling decision should be different for trace and profiling, eg. trace should not cache profiling decisions and vice versa
+<<<<<<< HEAD
     expect(isSampled(HIGH_HASH_UUID, 99.9999999999)).toBeTrue()
     expect(isSampled(HIGH_HASH_UUID, 0.0000001)).toBeFalse()
     expect(isSampled(HIGH_HASH_UUID, 99.9999999999)).toBeTrue()
+=======
+    expect(isSampled(HIGH_HASH_UUID, 99.9999999999)).toBe(true)
+    expect(isSampled(HIGH_HASH_UUID, 0.0000001)).toBe(false)
+    expect(isSampled(HIGH_HASH_UUID, 99.9999999999)).toBe(true)
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
   })
 })

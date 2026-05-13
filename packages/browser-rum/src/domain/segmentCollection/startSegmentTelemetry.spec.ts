@@ -56,8 +56,13 @@ describe('segmentTelemetry', () => {
       generateReplayRequest({ result, isFullSnapshot: true })
 
 <<<<<<< HEAD
+<<<<<<< HEAD
       expect(await telemetry.getEvents()).toEqual([
         jasmine.objectContaining({
+=======
+      expect(await telemetry.getEvents()).toEqual([
+        expect.objectContaining({
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
           type: 'log',
           status: 'debug',
           message: 'Segment network request metrics',
@@ -66,6 +71,7 @@ describe('segmentTelemetry', () => {
               count: 2,
               max: 300,
               sum: 500,
+<<<<<<< HEAD
 =======
       for (const result of ['failure', 'queue-full', 'success'] as const) {
         generateReplayRequest({ result, isFullSnapshot: true })
@@ -102,6 +108,8 @@ describe('segmentTelemetry', () => {
                 sum: 105,
               },
 >>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
+=======
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
             },
             encoding: {
               fullSnapshot: 'change',

@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+import { describe, expect, it } from 'vitest'
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 import {
   createHooks,
   MID_HASH_UUID,

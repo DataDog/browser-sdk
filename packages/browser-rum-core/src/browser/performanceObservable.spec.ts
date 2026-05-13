@@ -14,6 +14,7 @@ describe('performanceObservable', () => {
   let clock: Clock
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   beforeEach(() => {
     observableCallback = jasmine.createSpy()
 =======
@@ -22,6 +23,9 @@ describe('performanceObservable', () => {
       ctx.skip()
       return
     }
+=======
+  beforeEach(() => {
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
     observableCallback = vi.fn()
 >>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
     clock = mockClock()
@@ -112,9 +116,15 @@ describe('performanceObservable', () => {
     })
     performanceSubscription = performanceResourceObservable.subscribe(observableCallback)
 
+<<<<<<< HEAD
     notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: forbiddenUrl })])
     expect(observableCallback).not.toHaveBeenCalled()
   })
+=======
+    it('should notify buffered performance resources when type not supported', () => {
+      const { notifyPerformanceEntries } = mockPerformanceObserver({ typeSupported: false })
+      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: allowedUrl })])
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 
 <<<<<<< HEAD
   it('should not notify performance resources with invalid duration', () => {
@@ -132,6 +142,7 @@ describe('performanceObservable', () => {
       expect(observableCallback).toHaveBeenCalledWith([expect.objectContaining({ name: allowedUrl })])
 >>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
     })
+<<<<<<< HEAD
     performanceSubscription = performanceResourceObservable.subscribe(observableCallback)
 
     notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { duration: -1 as Duration })])
@@ -150,5 +161,7 @@ describe('performanceObservable', () => {
     expect(observableCallback).not.toHaveBeenCalled()
     clock.tick(0)
     expect(observableCallback).toHaveBeenCalledWith([jasmine.objectContaining({ name: allowedUrl })])
+=======
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
   })
 })

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { vi, beforeEach, describe, expect, it } from 'vitest'
 import { registerCleanupTask } from '../../../../test'
 import { globalObject } from '../../../tools/globalObject'
 import type { SessionState } from '../sessionState'
@@ -33,24 +33,30 @@ describe('Memory SessionStoreStrategy', () => {
     })
 
     it('should notify sessionObservable after write', async () => {
-      const spy = jasmine.createSpy('observer')
+      const spy = vi.fn()
       strategy.sessionObservable.subscribe(spy)
 
       await strategy.setSessionState((state) => ({ ...state, id: 'test-id' }), 'updateState')
 
-      expect(spy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ id: 'test-id' }))
+      expect(spy).toHaveBeenCalledTimes(1)
+      expect(spy).toHaveBeenCalledWith(
+        expect.objectContaining({ sessionState: expect.objectContaining({ id: 'test-id' }) })
+      )
     })
   })
 
   describe('sessionObservable', () => {
     it('should be shared across strategy instances', async () => {
       const strategy2 = initMemorySessionStoreStrategy()
-      const spy = jasmine.createSpy('observer')
+      const spy = vi.fn()
 
       strategy.sessionObservable.subscribe(spy)
       await strategy2.setSessionState((state) => ({ ...state, id: 'from-strategy2' }), 'updateState')
 
-      expect(spy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ id: 'from-strategy2' }))
+      expect(spy).toHaveBeenCalledTimes(1)
+      expect(spy).toHaveBeenCalledWith(
+        expect.objectContaining({ sessionState: expect.objectContaining({ id: 'from-strategy2' }) })
+      )
     })
   })
 

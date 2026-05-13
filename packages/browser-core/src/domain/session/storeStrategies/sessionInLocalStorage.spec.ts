@@ -1,8 +1,5 @@
-<<<<<<< HEAD
+import { vi, beforeEach, describe, expect, it } from 'vitest'
 import { registerCleanupTask } from '../../../../test'
-=======
-import { vi, afterEach, beforeEach, describe, expect, it } from 'vitest'
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
 import type { Configuration } from '../../configuration'
 import type { SessionState } from '../sessionState'
 import { toSessionString } from '../sessionState'
@@ -15,51 +12,12 @@ describe('LocalStorage SessionStoreStrategy', () => {
   let strategy: ReturnType<typeof initLocalStorageStrategy>
 
   beforeEach(() => {
-<<<<<<< HEAD
     localStorage.removeItem(SESSION_STORE_KEY)
     localStorage.removeItem(LEGACY_SESSION_STORE_KEY)
     strategy = initLocalStorageStrategy(MOCK_CONFIGURATION)
     registerCleanupTask(() => {
       localStorage.removeItem(SESSION_STORE_KEY)
       localStorage.removeItem(LEGACY_SESSION_STORE_KEY)
-=======
-    vi.spyOn(Math, 'random').mockReturnValue(0)
-  })
-
-  afterEach(() => {
-    window.localStorage.clear()
-  })
-
-  it('should report local storage as available', () => {
-    const available = selectLocalStorageStrategy()
-    expect(available).toEqual({ type: SessionPersistence.LOCAL_STORAGE })
-  })
-
-  it('should report local storage as not available', () => {
-    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
-      throw new Error('Unavailable')
-    })
-    const available = selectLocalStorageStrategy()
-    expect(available).toBeUndefined()
-  })
-
-  it('should persist a session in local storage', () => {
-    const localStorageStrategy = initLocalStorageStrategy(DEFAULT_INIT_CONFIGURATION)
-    localStorageStrategy.persistSession(sessionState)
-    const session = localStorageStrategy.retrieveSession()
-    expect(session).toEqual({ ...sessionState })
-    expect(getSessionStateFromLocalStorage(SESSION_STORE_KEY)).toEqual(sessionState)
-  })
-
-  it('should set `isExpired=1` to the local storage item holding the session', () => {
-    const localStorageStrategy = initLocalStorageStrategy(DEFAULT_INIT_CONFIGURATION)
-    localStorageStrategy.persistSession(sessionState)
-    localStorageStrategy.expireSession(sessionState)
-    const session = localStorageStrategy?.retrieveSession()
-    expect(session).toEqual({ isExpired: '1' })
-    expect(getSessionStateFromLocalStorage(SESSION_STORE_KEY)).toEqual({
-      isExpired: '1',
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
     })
   })
 
@@ -92,19 +50,22 @@ describe('LocalStorage SessionStoreStrategy', () => {
     })
 
     it('should notify sessionObservable after write', async () => {
-      const spy = jasmine.createSpy('observer')
+      const spy = vi.fn()
       const subscription = strategy.sessionObservable.subscribe(spy)
       registerCleanupTask(() => subscription.unsubscribe())
 
       await strategy.setSessionState((state) => ({ ...state, id: 'test-id' }), 'updateState')
 
-      expect(spy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ id: 'test-id' }))
+      expect(spy).toHaveBeenCalledTimes(1)
+      expect(spy).toHaveBeenCalledWith(
+        expect.objectContaining({ sessionState: expect.objectContaining({ id: 'test-id' }) })
+      )
     })
   })
 
   describe('sessionObservable', () => {
     it('should emit on storage event from other tabs', () => {
-      const spy = jasmine.createSpy('observer')
+      const spy = vi.fn()
       const subscription = strategy.sessionObservable.subscribe(spy)
       registerCleanupTask(() => subscription.unsubscribe())
 
@@ -116,11 +77,14 @@ describe('LocalStorage SessionStoreStrategy', () => {
       })
       window.dispatchEvent(event)
 
-      expect(spy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ id: 'from-other-tab' }))
+      expect(spy).toHaveBeenCalledTimes(1)
+      expect(spy).toHaveBeenCalledWith(
+        expect.objectContaining({ sessionState: expect.objectContaining({ id: 'from-other-tab' }) })
+      )
     })
 
     it('should ignore storage events for other keys', () => {
-      const spy = jasmine.createSpy('observer')
+      const spy = vi.fn()
       const subscription = strategy.sessionObservable.subscribe(spy)
       registerCleanupTask(() => subscription.unsubscribe())
 

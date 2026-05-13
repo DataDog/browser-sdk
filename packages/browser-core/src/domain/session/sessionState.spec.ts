@@ -2,7 +2,11 @@
 import type { TimeStamp } from '../../tools/utils/timeUtils'
 =======
 import { describe, expect, it } from 'vitest'
+<<<<<<< HEAD
 >>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
+=======
+import type { TimeStamp } from '../../tools/utils/timeUtils'
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 import { dateNow } from '../../tools/utils/timeUtils'
 import { SESSION_EXPIRATION_DELAY, SESSION_NOT_TRACKED, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import type { SessionState } from './sessionState'

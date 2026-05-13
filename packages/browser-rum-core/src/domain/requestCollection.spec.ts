@@ -1,8 +1,8 @@
 import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { Payload } from '@datadog/browser-core'
-import { createEndpointBuilder, RequestType, startBufferingData } from '@datadog/browser-core'
+import { RequestType, startBufferingData } from '@datadog/browser-core'
 import type { MockFetch, MockFetchManager } from '@datadog/browser-core/test'
-import { registerCleanupTask, mockFetch, mockXhr, withXhr } from '@datadog/browser-core/test'
+import { registerCleanupTask, SPEC_ENDPOINTS, mockFetch, mockXhr, withXhr } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../test'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
@@ -200,8 +200,20 @@ describe('collect xhr', () => {
 
   beforeEach(() => {
     mockXhr()
+<<<<<<< HEAD
+<<<<<<< HEAD
+    const { observable: bufferedDataObservable, stop: stopBuffering } = startBufferingData()
+
+    startSpy = jasmine.createSpy('requestStart')
+    completeSpy = jasmine.createSpy('requestComplete')
+=======
+=======
+    const { observable: bufferedDataObservable, stop: stopBuffering } = startBufferingData()
+
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
     startSpy = vi.fn()
     completeSpy = vi.fn()
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
     const lifeCycle = new LifeCycle()
     lifeCycle.subscribe(LifeCycleEventType.REQUEST_STARTED, startSpy)
     lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, completeSpy)
@@ -379,8 +391,20 @@ describe('GraphQL response text collection', () => {
     const configuration = mockRumConfiguration({
       allowedGraphQlUrls: [{ match: /\/graphql$/, trackResponseErrors }],
     })
+<<<<<<< HEAD
+<<<<<<< HEAD
+    const { observable: bufferedDataObservable, stop: stopBuffering } = startBufferingData()
+    const tracerStub: Partial<Tracer> = { clearTracingIfNeeded, traceFetch: jasmine.createSpy() }
+    const { stop } = trackFetch(lifeCycle, configuration, tracerStub as Tracer, bufferedDataObservable)
+=======
     const tracerStub: Partial<Tracer> = { clearTracingIfNeeded, traceFetch: vi.fn() }
     const { stop } = trackFetch(lifeCycle, configuration, tracerStub as Tracer)
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
+=======
+    const { observable: bufferedDataObservable, stop: stopBuffering } = startBufferingData()
+    const tracerStub: Partial<Tracer> = { clearTracingIfNeeded, traceFetch: vi.fn() }
+    const { stop } = trackFetch(lifeCycle, configuration, tracerStub as Tracer, bufferedDataObservable)
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
     registerCleanupTask(() => {
       stop()
       stopBuffering()

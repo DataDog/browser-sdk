@@ -541,8 +541,12 @@ describe('fetch proxy with ResponseBodyAction', () => {
 =======
   it('should not collect response body with WAIT or IGNORE action', () =>
     new Promise<void>((resolve) => {
+<<<<<<< HEAD
       setupFetchTracking(() => ResponseBodyAction.WAIT)
 >>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
+=======
+      setupFetchTracking((): ResponseBodyAction => ResponseBodyAction.WAIT as ResponseBodyAction)
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 
       fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'response body content' })
 
@@ -552,6 +556,7 @@ describe('fetch proxy with ResponseBodyAction', () => {
       })
     }))
 
+<<<<<<< HEAD
 <<<<<<< HEAD
   it('should not collect response body when body is already used', (done) => {
     setupFetchTracking(() => ResponseBodyAction.COLLECT)
@@ -582,6 +587,35 @@ describe('fetch proxy with ResponseBodyAction', () => {
     new Promise<void>((resolve) => {
       setupFetchTracking(() => ResponseBodyAction.WAIT)
 >>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
+=======
+  it('should not collect response body when body is already used', () =>
+    new Promise<void>((resolve) => {
+      setupFetchTracking(() => ResponseBodyAction.COLLECT)
+
+      fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'response body content', bodyUsed: true })
+
+      mockFetchManager.whenAllComplete(() => {
+        expect(requests[0].responseBody).toBeUndefined()
+        resolve()
+      })
+    }))
+
+  it('should not collect response body when body is disturbed', () =>
+    new Promise<void>((resolve) => {
+      setupFetchTracking(() => ResponseBodyAction.COLLECT)
+
+      fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'response body content', bodyDisturbed: true })
+
+      mockFetchManager.whenAllComplete(() => {
+        expect(requests[0].responseBody).toBeUndefined()
+        resolve()
+      })
+    }))
+
+  it('should use the highest priority action when multiple getters are registered', () =>
+    new Promise<void>((resolve) => {
+      setupFetchTracking(() => ResponseBodyAction.IGNORE)
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 
       initFetchObservable({
         responseBodyAction: () => ResponseBodyAction.COLLECT,

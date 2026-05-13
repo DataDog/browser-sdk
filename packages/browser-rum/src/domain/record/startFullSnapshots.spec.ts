@@ -10,10 +10,14 @@ import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
 import { createRecordingScopeForTesting } from './test/recordingScope.specHelper'
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 describe('startFullSnapshots', () => {
 =======
 const describeStartFullSnapshotsWithExpectedSnapshot = (fullSnapshotRecord: BrowserRecord) => {
 >>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
+=======
+describe('startFullSnapshots', () => {
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
   const viewStartClock = { relative: 1, timeStamp: 1 as TimeStamp }
   let lifeCycle: LifeCycle
   let emitRecordCallback: Mock<EmitRecordCallback>
@@ -79,10 +83,17 @@ const describeStartFullSnapshotsWithExpectedSnapshot = (fullSnapshotRecord: Brow
           timestamp: expect.any(Number),
         },
         {
+<<<<<<< HEAD
           data: jasmine.any(Array),
           type: RecordType.FullSnapshot,
           format: SnapshotFormat.Change,
           timestamp: jasmine.any(Number),
+=======
+          data: expect.any(Array),
+          type: RecordType.FullSnapshot,
+          format: SnapshotFormat.Change,
+          timestamp: expect.any(Number),
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
         },
       ])
     )
@@ -111,6 +122,7 @@ const describeStartFullSnapshotsWithExpectedSnapshot = (fullSnapshotRecord: Brow
     expect(stats.cssText.sum).toBeGreaterThanOrEqual(21)
     expect(stats.serializationDuration).toBeDefined()
   })
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
 }
@@ -144,4 +156,6 @@ describe('startFullSnapshots', () => {
     })
   })
 >>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
+=======
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 })

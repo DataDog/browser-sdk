@@ -2,8 +2,12 @@
 import type { Duration } from '@datadog/browser-core'
 =======
 import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
+<<<<<<< HEAD
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 >>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
+=======
+import type { Duration } from '@datadog/browser-core'
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 import { clocksOrigin } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'

@@ -146,7 +146,11 @@ describe('httpRequest', () => {
         ctx.skip()
         return
       }
+<<<<<<< HEAD
 >>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
+=======
+
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
       interceptor.withSendBeacon(() => false)
 
       request.sendOnExit({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
@@ -165,7 +169,11 @@ describe('httpRequest', () => {
         ctx.skip()
         return
       }
+<<<<<<< HEAD
 >>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
+=======
+
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
       let sendBeaconCalled = false
       interceptor.withSendBeacon(() => {
         sendBeaconCalled = true

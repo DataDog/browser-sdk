@@ -81,6 +81,7 @@ describe('validateAndBuildLogsConfiguration', () => {
     })
   })
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
   describe('PCI compliant intake option', () => {
@@ -102,6 +103,8 @@ describe('validateAndBuildLogsConfiguration', () => {
     })
   })
 >>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
+=======
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 })
 
 describe('validateAndBuildForwardOption', () => {

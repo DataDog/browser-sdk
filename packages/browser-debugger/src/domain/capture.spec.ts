@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+import { describe, expect, it, vi } from 'vitest'
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 import { capture, captureFields } from './capture'
 import type { CaptureContext } from './capture'
 
@@ -43,7 +47,11 @@ describe('capture', () => {
 
     it('should capture bigint', () => {
       if (typeof BigInt === 'undefined') {
+<<<<<<< HEAD
         pending('BigInt is not supported in this browser')
+=======
+        ;(pending as (reason?: string) => void)('BigInt is not supported in this browser')
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
         return
       }
       const result = capture(BigInt(123), defaultOpts, noTimeout())
@@ -52,7 +60,11 @@ describe('capture', () => {
 
     it('should capture symbol', () => {
       if (!('description' in Symbol.prototype)) {
+<<<<<<< HEAD
         pending('Symbol.description is not supported in this browser')
+=======
+        ;(pending as (reason?: string) => void)('Symbol.description is not supported in this browser')
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
         return
       }
       const sym = Symbol('test')
@@ -114,7 +126,11 @@ describe('capture', () => {
         fields: {
           message: { type: 'string', value: 'test error' },
           name: { type: 'string', value: 'Error' },
+<<<<<<< HEAD
           stack: { type: 'string', value: jasmine.any(String), truncated: true, size: error.stack!.length },
+=======
+          stack: { type: 'string', value: expect.any(String), truncated: true, size: error.stack!.length },
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
         },
       })
     })
@@ -138,7 +154,11 @@ describe('capture', () => {
       // @ts-expect-error - cause is not a valid argument for Error constructor
       const error = new Error('main error', { cause })
       if ((error as any).cause === undefined) {
+<<<<<<< HEAD
         pending('Error cause is not supported in this browser')
+=======
+        ;(pending as (reason?: string) => void)('Error cause is not supported in this browser')
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
         return
       }
       const result = capture(error, defaultOpts, noTimeout()) as any
@@ -148,7 +168,11 @@ describe('capture', () => {
         fields: {
           message: { type: 'string', value: 'cause error' },
           name: { type: 'string', value: 'Error' },
+<<<<<<< HEAD
           stack: { type: 'string', value: jasmine.any(String), truncated: true, size: cause.stack!.length },
+=======
+          stack: { type: 'string', value: expect.any(String), truncated: true, size: cause.stack!.length },
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
         },
       })
     })
@@ -308,7 +332,11 @@ describe('capture', () => {
 
     it('should handle objects with symbol keys', () => {
       if (!('description' in Symbol.prototype)) {
+<<<<<<< HEAD
         pending('Symbol.description is not supported in this browser')
+=======
+        ;(pending as (reason?: string) => void)('Symbol.description is not supported in this browser')
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
         return
       }
       const sym = Symbol('test')
@@ -533,7 +561,11 @@ describe('captureFields', () => {
 
   it('should handle symbol keys', () => {
     if (!('description' in Symbol.prototype)) {
+<<<<<<< HEAD
       pending('Symbol.description is not supported in this browser')
+=======
+      ;(pending as (reason?: string) => void)('Symbol.description is not supported in this browser')
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
       return
     }
     const sym = Symbol('test')
@@ -581,7 +613,11 @@ describe('capture timeout', () => {
   it('should stop traversing object properties when deadline is exceeded', () => {
     let callCount = 0
     const originalNow = performance.now.bind(performance)
+<<<<<<< HEAD
     spyOn(performance, 'now').and.callFake(() => {
+=======
+    vi.spyOn(performance, 'now').mockImplementation(() => {
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
       callCount++
       // First call is the deadline check at the start of captureValue,
       // subsequent calls are from isTimedOut checks during property iteration.
@@ -607,7 +643,11 @@ describe('capture timeout', () => {
 
   it('should stop traversing array elements when deadline is exceeded', () => {
     let callCount = 0
+<<<<<<< HEAD
     spyOn(performance, 'now').and.callFake(() => {
+=======
+    vi.spyOn(performance, 'now').mockImplementation(() => {
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
       callCount++
       if (callCount <= 4) {
         return 100
@@ -625,7 +665,11 @@ describe('capture timeout', () => {
 
   it('should stop captureFields traversal when deadline is exceeded', () => {
     let callCount = 0
+<<<<<<< HEAD
     spyOn(performance, 'now').and.callFake(() => {
+=======
+    vi.spyOn(performance, 'now').mockImplementation(() => {
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
       callCount++
       if (callCount <= 2) {
         return 100

@@ -1,6 +1,15 @@
-import { evaluateProbeCondition, compileCondition, isConditionEvaluationError } from './condition'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
+import type { Mock } from 'vitest'
+import { display } from '@datadog/browser-core'
+import { evaluateProbeCondition, compileCondition } from './condition'
 
 describe('condition', () => {
+  let displayErrorSpy: Mock
+
+  beforeEach(() => {
+    displayErrorSpy = vi.spyOn(display, 'error') as Mock
+  })
+
   describe('evaluateProbeCondition', () => {
     it('should return true when probe has no condition', () => {
       const probe: any = {}
@@ -77,41 +86,31 @@ describe('condition', () => {
       expect(evaluateProbeCondition(probe, { x: undefined })).toBe(false)
     })
 
-    it('should return an evaluation error when condition evaluation fails', () => {
+    it('should handle condition evaluation errors gracefully', () => {
       const probe: any = {
         id: 'test-probe',
-        when: {
-          dsl: 'nonExistent.property',
-        },
         condition: compileCondition('nonExistent.property'),
       }
 
-      expect(() => evaluateProbeCondition(probe, {})).toThrowMatching((error) => {
-        expect(isConditionEvaluationError(error)).toBeTrue()
-        expect(isConditionEvaluationError(error) && error.evaluationError).toEqual({
-          expr: 'nonExistent.property',
-          message: jasmine.stringMatching(/^ReferenceError: /),
-        })
-        return true
-      })
+      // Should return true (fire probe) when condition evaluation fails
+      const result = evaluateProbeCondition(probe, {})
+      expect(result).toBe(true)
+
+      // Should log error
+      expect(displayErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Failed to evaluate condition for probe test-probe'),
+        expect.any(Error)
+      )
     })
 
     it('should handle syntax errors in condition', () => {
       const probe: any = {
-        when: {
-          dsl: 'invalid syntax !!!',
-        },
         condition: compileCondition('invalid syntax !!!'),
       }
 
-      expect(() => evaluateProbeCondition(probe, {})).toThrowMatching((error) => {
-        expect(isConditionEvaluationError(error)).toBeTrue()
-        expect(isConditionEvaluationError(error) && error.evaluationError).toEqual({
-          expr: 'invalid syntax !!!',
-          message: jasmine.stringMatching(/^SyntaxError: /),
-        })
-        return true
-      })
+      const result = evaluateProbeCondition(probe, {})
+      expect(result).toBe(true)
+      expect(displayErrorSpy).toHaveBeenCalled()
     })
 
     it('should handle conditions with special variables', () => {

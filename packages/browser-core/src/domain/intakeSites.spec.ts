@@ -1,11 +1,47 @@
+<<<<<<< HEAD
+=======
 import { describe, expect, it } from 'vitest'
+<<<<<<< HEAD
 import { INTAKE_SITE_FED_STAGING } from '../intakeSites'
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
+=======
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 import type { Payload } from '../../transport'
 import { computeTransportConfiguration, isIntakeUrl } from './transportConfiguration'
 
-describe('intakeSites', () => {
+const DEFAULT_PAYLOAD = {} as Payload
+
+describe('transportConfiguration', () => {
   const clientToken = 'some_client_token'
   const intakeParameters = 'ddsource=browser&dd-api-key=xxxx&dd-request-id=1234567890'
+
+  describe('site', () => {
+    it('should use US site by default', () => {
+      const configuration = computeTransportConfiguration({ clientToken })
+      expect(configuration.rumEndpointBuilder.build('fetch', DEFAULT_PAYLOAD)).toContain('datadoghq.com')
+      expect(configuration.site).toBe('datadoghq.com')
+    })
+
+    it('should use site value when set', () => {
+      const configuration = computeTransportConfiguration({ clientToken, site: 'datadoghq.com' })
+      expect(configuration.rumEndpointBuilder.build('fetch', DEFAULT_PAYLOAD)).toContain('datadoghq.com')
+      expect(configuration.site).toBe('datadoghq.com')
+    })
+  })
+
+  it('adds the replica application id to the rum replica endpoint', () => {
+    const replicaApplicationId = 'replica-application-id'
+    const configuration = computeTransportConfiguration({
+      clientToken,
+      replica: {
+        clientToken: 'replica-client-token',
+        applicationId: replicaApplicationId,
+      },
+    })
+    expect(configuration.replica!.rumEndpointBuilder.build('fetch', DEFAULT_PAYLOAD)).toContain(
+      `application.id=${replicaApplicationId}`
+    )
+  })
 
   describe('isIntakeUrl', () => {
     const v1IntakePath = `/v1/input/${clientToken}`

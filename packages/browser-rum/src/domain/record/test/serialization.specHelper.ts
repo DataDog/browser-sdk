@@ -1,4 +1,3 @@
-import { expect } from 'vitest'
 import type { TimeStamp } from '@datadog/browser-core'
 import { noop } from '@datadog/browser-core'
 import { RecordType, SnapshotFormat } from '../../../types'

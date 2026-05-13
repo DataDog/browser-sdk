@@ -12,9 +12,23 @@ export function collectAsyncCalls<F extends (...args: any[]) => any>(
   expectedCallsCount = 1
 ): Promise<MockCalls<F>> {
   return new Promise((resolve, reject) => {
+    const originalImplementation = spy.getMockImplementation()
+
+    function extraCallDetected() {
+      const message = `Unexpected extra call (expected ${expectedCallsCount}, got ${spy.mock.calls.length})`
+      reject(new Error(message))
+    }
+
     const checkCalls = () => {
       if (spy.mock.calls.length === expectedCallsCount) {
-        spy.mockImplementation(extraCallDetected as any)
+        spy.mockImplementation(((...args: any[]) => {
+          extraCallDetected()
+          try {
+            return originalImplementation?.(...args) as ReturnType<F>
+          } catch {
+            // ignore
+          }
+        }) as any)
         resolve(wrapMockCalls(spy))
       } else if (spy.mock.calls.length > expectedCallsCount) {
         extraCallDetected()
@@ -23,14 +37,15 @@ export function collectAsyncCalls<F extends (...args: any[]) => any>(
 
     checkCalls()
 
-    spy.mockImplementation((() => {
-      checkCalls()
+    spy.mockImplementation(((...args: any[]) => {
+      let result: ReturnType<F> | undefined
+      try {
+        result = originalImplementation?.(...args)
+      } finally {
+        checkCalls()
+      }
+      return result as ReturnType<F>
     }) as any)
-
-    function extraCallDetected() {
-      const message = `Unexpected extra call (expected ${expectedCallsCount}, got ${spy.mock.calls.length})`
-      reject(new Error(message))
-    }
   })
 }
 

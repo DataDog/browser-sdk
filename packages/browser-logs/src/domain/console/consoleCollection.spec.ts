@@ -1,20 +1,31 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 import type { BufferedData, ConsoleLog, RawError } from '@datadog/browser-core'
-import { clocksNow } from '@datadog/js-core/time'
+=======
+import { vi, afterEach, beforeEach, describe, expect, it } from 'vitest'
+import type { BufferedData, ConsoleLog, ErrorWithCause, RawError } from '@datadog/browser-core'
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 import {
   BufferedDataType,
   ConsoleApiName,
   ErrorHandling,
   ErrorSource,
   Observable,
+  clocksNow,
   noop,
   objectEntries,
+<<<<<<< HEAD
 } from '@datadog/browser-core'
 =======
 import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { Context, ErrorWithCause } from '@datadog/browser-core'
 import { ErrorHandling, ErrorSource, noop, objectEntries } from '@datadog/browser-core'
 >>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
+=======
+  startBufferingData,
+} from '@datadog/browser-core'
+import { registerCleanupTask } from '@datadog/browser-core/test'
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 import type { RawConsoleLogsEvent } from '../../rawLogsEvent.types'
 import { validateAndBuildLogsConfiguration } from '../configuration'
 import type { RawLogsEventCollectedData } from '../lifeCycle'
@@ -24,9 +35,12 @@ import { startConsoleCollection, LogStatusForApi } from './consoleCollection'
 describe('console collection', () => {
   const initConfiguration = { clientToken: 'xxx', service: 'service' }
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
   let consoleSpies: { [key: string]: Mock }
 >>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
+=======
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
   let stopConsoleCollection: () => void
   let lifeCycle: LifeCycle
   let rawLogsEvents: Array<RawLogsEventCollectedData<RawConsoleLogsEvent>>
@@ -60,6 +74,7 @@ describe('console collection', () => {
     )
     stopConsoleCollection = noop
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     consoleSpies = {
       log: vi.spyOn(console, 'log').mockImplementation(() => true),
@@ -69,6 +84,13 @@ describe('console collection', () => {
       error: vi.spyOn(console, 'error').mockImplementation(() => true),
     }
 >>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
+=======
+    vi.spyOn(console, 'log').mockImplementation(() => true)
+    vi.spyOn(console, 'debug').mockImplementation(() => true)
+    vi.spyOn(console, 'info').mockImplementation(() => true)
+    vi.spyOn(console, 'warn').mockImplementation(() => true)
+    vi.spyOn(console, 'error').mockImplementation(() => true)
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
   })
 
   afterEach(() => {
@@ -152,11 +174,15 @@ describe('console collection', () => {
     ))
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
     notifyConsole({
       api: ConsoleApiName.error,
       message: 'Error: foo',
       handlingStack: '',
       error: makeRawError({ context: { foo: 'bar' } }),
+<<<<<<< HEAD
 =======
     // eslint-disable-next-line no-console
     console.error(error)
@@ -169,6 +195,8 @@ describe('console collection', () => {
       kind: 'Error',
       message: undefined,
 >>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
+=======
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
     })
 
     expect(rawLogsEvents[0].messageContext).toEqual({ foo: 'bar' })
@@ -176,10 +204,13 @@ describe('console collection', () => {
 <<<<<<< HEAD
 =======
 
-  it('should retrieve causes from console error', () => {
+  it('should retrieve causes from console error', async () => {
+    const { observable: consoleBufferedObservable, stop: stopBuffering } = startBufferingData()
+    registerCleanupTask(stopBuffering)
     ;({ stop: stopConsoleCollection } = startConsoleCollection(
-      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardErrorsToLogs: true })!,
-      lifeCycle
+      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['error'] })!,
+      lifeCycle,
+      consoleBufferedObservable
     ))
     const error = new Error('High level error') as ErrorWithCause
     error.stack = 'Error: High level error'
@@ -195,6 +226,9 @@ describe('console collection', () => {
 
     // eslint-disable-next-line no-console
     console.error(error)
+
+    // Wait for BufferedObservable microtask to deliver the event to subscribers
+    await new Promise<void>((resolve) => queueMicrotask(resolve))
 
     expect(rawLogsEvents[0].rawLogsEvent.error).toEqual({
       stack: expect.any(String),

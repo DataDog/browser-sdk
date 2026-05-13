@@ -1,7 +1,19 @@
+<<<<<<< HEAD
+import type { BufferedData, FetchResolveContext } from '@datadog/browser-core'
+import { BufferedDataType, ErrorSource, Observable, clocksNow } from '@datadog/browser-core'
+import { SPEC_ENDPOINTS, registerCleanupTask } from '@datadog/browser-core/test'
+=======
 import { beforeEach, describe, expect, it } from 'vitest'
+<<<<<<< HEAD
 import { ErrorSource } from '@datadog/browser-core'
 import type { MockFetch, MockFetchManager } from '@datadog/browser-core/test'
 import { SPEC_ENDPOINTS, mockFetch, registerCleanupTask } from '@datadog/browser-core/test'
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
+=======
+import type { BufferedData, FetchResolveContext } from '@datadog/browser-core'
+import { BufferedDataType, ErrorSource, Observable, clocksNow } from '@datadog/browser-core'
+import { SPEC_ENDPOINTS, registerCleanupTask } from '@datadog/browser-core/test'
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 import type { RawNetworkLogsEvent } from '../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../configuration'
 import type { RawLogsEventCollectedData } from '../lifeCycle'
@@ -12,6 +24,7 @@ import { startNetworkErrorCollection } from './networkErrorCollection'
 
 const CONFIGURATION = {
   requestErrorResponseLengthLimit: 64,
+  ...SPEC_ENDPOINTS,
 } as LogsConfiguration
 
 const FAKE_URL = 'http://fake.com/'
@@ -61,120 +74,209 @@ describe('network error collection', () => {
     )
   })
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+  it('should track server error', () => {
+    startCollection()
+    notifyFetch()
+
+    expect(rawLogsEvents[0].rawLogsEvent).toEqual({
+      message: 'Fetch error GET http://fake.com/',
+      date: jasmine.any(Number),
+      status: StatusType.error,
+      origin: ErrorSource.NETWORK,
+      error: {
+        stack: 'Server error',
+        handling: undefined,
+      },
+      http: {
+        method: 'GET',
+        status_code: 503,
+        url: 'http://fake.com/',
+      },
+    })
+  })
+
+  it('should not track network error when forwardErrorsToLogs is false', () => {
+    startCollection(false)
+    notifyFetch()
+
+    expect(rawLogsEvents.length).toEqual(0)
+  })
+
+  it('should not track intake error', () => {
+    startCollection()
+    notifyFetch({
+      url: 'https://logs-intake.com/v1/input/send?ddsource=browser&dd-api-key=xxxx&dd-request-id=1234567890',
+    })
+
+    expect(rawLogsEvents.length).toEqual(0)
+  })
+
+  it('should not track aborted requests', () => {
+    startCollection()
+    notifyFetch({ isAborted: true, status: 0 })
+
+    expect(rawLogsEvents.length).toEqual(0)
+  })
+
+  it('should track refused request', () => {
+    startCollection()
+    notifyFetch({ status: 0 })
+
+    expect(rawLogsEvents.length).toEqual(1)
+  })
+
+  it('should not track client error', () => {
+    startCollection()
+    notifyFetch({ status: 400 })
+
+    expect(rawLogsEvents.length).toEqual(0)
+  })
+
+  it('should not track successful request', () => {
+    startCollection()
+    notifyFetch({ status: 200 })
+
+    expect(rawLogsEvents.length).toEqual(0)
+  })
+
+  it('uses a fallback when the response text is empty', () => {
+    startCollection()
+    notifyFetch({ responseBody: '' })
+
+    expect(rawLogsEvents.length).toEqual(1)
+    expect(rawLogsEvents[0].rawLogsEvent.error.stack).toEqual('Failed to load')
+  })
+=======
   it('should track server error', () =>
     new Promise<void>((resolve) => {
       startCollection()
       fetch(FAKE_URL).resolveWith(DEFAULT_REQUEST)
+=======
+  it('should track server error', () => {
+    startCollection()
+    notifyFetch()
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 
-      mockFetchManager.whenAllComplete(() => {
-        expect(rawLogsEvents[0].rawLogsEvent).toEqual({
-          message: 'Fetch error GET http://fake.com/',
-          date: expect.any(Number),
-          status: StatusType.error,
-          origin: ErrorSource.NETWORK,
-          error: {
-            stack: 'Server error',
-            handling: undefined,
-          },
-          http: {
-            method: 'GET',
-            status_code: 503,
-            url: 'http://fake.com/',
-          },
-        })
-        resolve()
-      })
-    }))
+    expect(rawLogsEvents[0].rawLogsEvent).toEqual({
+      message: 'Fetch error GET http://fake.com/',
+      date: expect.any(Number),
+      status: StatusType.error,
+      origin: ErrorSource.NETWORK,
+      error: {
+        stack: 'Server error',
+        handling: undefined,
+      },
+      http: {
+        method: 'GET',
+        status_code: 503,
+        url: 'http://fake.com/',
+      },
+    })
+  })
 
-  it('should not track network error when forwardErrorsToLogs is false', () =>
-    new Promise<void>((resolve) => {
-      startCollection(false)
-      fetch(FAKE_URL).resolveWith(DEFAULT_REQUEST)
+  it('should not track network error when forwardErrorsToLogs is false', () => {
+    startCollection(false)
+    notifyFetch()
 
-      mockFetchManager.whenAllComplete(() => {
-        expect(rawLogsEvents.length).toEqual(0)
-        resolve()
-      })
-    }))
+    expect(rawLogsEvents.length).toEqual(0)
+  })
 
-  it('should not track intake error', () =>
-    new Promise<void>((resolve) => {
-      startCollection()
-      fetch(
-        'https://logs-intake.com/v1/input/send?ddsource=browser&dd-api-key=xxxx&dd-request-id=1234567890'
-      ).resolveWith(DEFAULT_REQUEST)
+  it('should not track intake error', () => {
+    startCollection()
+    notifyFetch({
+      url: 'https://logs-intake.com/v1/input/send?ddsource=browser&dd-api-key=xxxx&dd-request-id=1234567890',
+    })
 
-      mockFetchManager.whenAllComplete(() => {
-        expect(rawLogsEvents.length).toEqual(0)
-        resolve()
-      })
-    }))
+    expect(rawLogsEvents.length).toEqual(0)
+  })
 
-  it('should track aborted requests', () =>
-    new Promise<void>((resolve) => {
-      startCollection()
-      fetch(FAKE_URL).abort()
+  it('should not track aborted requests', () => {
+    startCollection()
+    notifyFetch({ isAborted: true, status: 0 })
 
-      mockFetchManager.whenAllComplete(() => {
-        expect(rawLogsEvents.length).toEqual(1)
-        expect(rawLogsEvents[0].domainContext).toEqual({
-          isAborted: true,
-          handlingStack: expect.any(String),
-        })
-        resolve()
-      })
-    }))
+    expect(rawLogsEvents.length).toEqual(0)
+  })
 
-  it('should track refused request', () =>
-    new Promise<void>((resolve) => {
-      startCollection()
-      fetch(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 0 })
+  it('should track refused request', () => {
+    startCollection()
+    notifyFetch({ status: 0 })
 
-      mockFetchManager.whenAllComplete(() => {
-        expect(rawLogsEvents.length).toEqual(1)
-        resolve()
-      })
-    }))
+    expect(rawLogsEvents.length).toEqual(1)
+  })
 
-  it('should not track client error', () =>
-    new Promise<void>((resolve) => {
-      startCollection()
-      fetch(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 400 })
+  it('should not track client error', () => {
+    startCollection()
+    notifyFetch({ status: 400 })
 
-      mockFetchManager.whenAllComplete(() => {
-        expect(rawLogsEvents.length).toEqual(0)
-        resolve()
-      })
-    }))
+    expect(rawLogsEvents.length).toEqual(0)
+  })
 
-  it('should not track successful request', () =>
-    new Promise<void>((resolve) => {
-      startCollection()
-      fetch(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, status: 200 })
+  it('should not track successful request', () => {
+    startCollection()
+    notifyFetch({ status: 200 })
 
-      mockFetchManager.whenAllComplete(() => {
-        expect(rawLogsEvents.length).toEqual(0)
-        resolve()
-      })
-    }))
+    expect(rawLogsEvents.length).toEqual(0)
+  })
 
-  it('uses a fallback when the response text is empty', () =>
-    new Promise<void>((resolve) => {
-      startCollection()
-      fetch(FAKE_URL).resolveWith({ ...DEFAULT_REQUEST, responseText: '' })
+  it('uses a fallback when the response text is empty', () => {
+    startCollection()
+    notifyFetch({ responseBody: '' })
 
+<<<<<<< HEAD
       mockFetchManager.whenAllComplete(() => {
         expect(rawLogsEvents.length).toEqual(1)
         expect(rawLogsEvents[0].rawLogsEvent.error.stack).toEqual('Failed to load')
         resolve()
       })
     }))
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
+=======
+    expect(rawLogsEvents.length).toEqual(1)
+    expect(rawLogsEvents[0].rawLogsEvent.error.stack).toEqual('Failed to load')
+  })
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 
   describe('response body handling', () => {
     beforeEach(() => {
       startCollection()
     })
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+    it('should use responseBody for fetch server errors', () => {
+      const responseBody = 'Internal Server Error Details'
+      notifyFetch({ url: 'http://fake-url/', status: 500, responseBody })
+
+      const log = rawLogsEvents[0].rawLogsEvent
+      expect(log.error.stack).toBe(responseBody)
+    })
+
+    it('should use error stack trace for fetch rejections', () => {
+      const error = new Error('Network failure')
+      notifyFetch({ url: 'http://fake-url/', status: 0, error, responseBody: undefined })
+
+      const log = rawLogsEvents[0].rawLogsEvent
+      expect(log.error.stack).toContain('Error: Network failure')
+    })
+
+    it('should truncate responseBody according to limit', () => {
+      const longResponse = 'a'.repeat(100)
+      notifyFetch({ url: 'http://fake-url/', status: 500, responseBody: longResponse })
+
+      const log = rawLogsEvents[0].rawLogsEvent
+      expect(log.error.stack?.length).toBe(67) // 64 chars + '...'
+      expect(log.error.stack).toMatch(/^a{64}\.\.\.$/)
+    })
+
+    it('should use fallback message when no responseBody available', () => {
+      notifyFetch({ url: 'http://fake-url/', status: 500, responseBody: undefined })
+
+      const log = rawLogsEvents[0].rawLogsEvent
+      expect(log.error.stack).toBe('Failed to load')
+    })
+=======
     it('should use responseBody for fetch server errors', () =>
       new Promise<void>((resolve) => {
         const responseBody = 'Internal Server Error Details'
@@ -182,42 +284,37 @@ describe('network error collection', () => {
           status: 500,
           responseText: responseBody,
         })
+=======
+    it('should use responseBody for fetch server errors', () => {
+      const responseBody = 'Internal Server Error Details'
+      notifyFetch({ url: 'http://fake-url/', status: 500, responseBody })
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 
-        mockFetchManager.whenAllComplete(() => {
-          const log = rawLogsEvents[0].rawLogsEvent
-          expect(log.error.stack).toBe(responseBody)
-          resolve()
-        })
-      }))
+      const log = rawLogsEvents[0].rawLogsEvent
+      expect(log.error.stack).toBe(responseBody)
+    })
 
-    it('should use error stack trace for fetch rejections', () =>
-      new Promise<void>((resolve) => {
-        fetch('http://fake-url/').rejectWith(new Error('Network failure'))
+    it('should use error stack trace for fetch rejections', () => {
+      const error = new Error('Network failure')
+      notifyFetch({ url: 'http://fake-url/', status: 0, error, responseBody: undefined })
 
-        mockFetchManager.whenAllComplete(() => {
-          const log = rawLogsEvents[0].rawLogsEvent
-          expect(log.error.stack).toContain('Error: Network failure')
-          resolve()
-        })
-      }))
+      const log = rawLogsEvents[0].rawLogsEvent
+      expect(log.error.stack).toContain('Error: Network failure')
+    })
 
-    it('should truncate responseBody according to limit', () =>
-      new Promise<void>((resolve) => {
-        const longResponse = 'a'.repeat(100)
+    it('should truncate responseBody according to limit', () => {
+      const longResponse = 'a'.repeat(100)
+      notifyFetch({ url: 'http://fake-url/', status: 500, responseBody: longResponse })
 
-        fetch('http://fake-url/').resolveWith({
-          status: 500,
-          responseText: longResponse,
-        })
+      const log = rawLogsEvents[0].rawLogsEvent
+      expect(log.error.stack?.length).toBe(67) // 64 chars + '...'
+      expect(log.error.stack).toMatch(/^a{64}\.\.\.$/)
+    })
 
-        mockFetchManager.whenAllComplete(() => {
-          const log = rawLogsEvents[0].rawLogsEvent
-          expect(log.error.stack?.length).toBe(67) // 64 chars + '...'
-          expect(log.error.stack).toMatch(/^a{64}\.\.\.$/)
-          resolve()
-        })
-      }))
+    it('should use fallback message when no responseBody available', () => {
+      notifyFetch({ url: 'http://fake-url/', status: 500, responseBody: undefined })
 
+<<<<<<< HEAD
     it('should use fallback message when no responseBody available', () =>
       new Promise<void>((resolve) => {
         fetch('http://fake-url/').resolveWith({ status: 500 })
@@ -250,5 +347,11 @@ describe('network error collection', () => {
           resolve()
         })
       }))
+>>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
+=======
+      const log = rawLogsEvents[0].rawLogsEvent
+      expect(log.error.stack).toBe('Failed to load')
+    })
+>>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
   })
 })
