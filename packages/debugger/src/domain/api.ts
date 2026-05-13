@@ -56,6 +56,10 @@ export function onEntry(probes: InitializedProbe[], self: any, args: Record<stri
 
   // TODO: A lot of repeated work performed for each probe that could be shared between probes
   for (const probe of probes) {
+    if (!hasProbeLifetimeBudgetRemaining(probe)) {
+      continue
+    }
+
     let stack = active.get(probe.id) // TODO: Should we use the functionId instead?
     if (!stack) {
       stack = []
@@ -136,9 +140,15 @@ export function onReturn(
 ): any {
   const end = performance.now()
   const captureCtx: CaptureContext = { deadline: performance.now() + SNAPSHOT_TIMEOUT_MS, timedOut: false }
+  let exhaustedProbeIds: string[] | undefined
 
   // TODO: A lot of repeated work performed for each probe that could be shared between probes
   for (const probe of probes) {
+    if (!hasProbeLifetimeBudgetRemaining(probe)) {
+      ;(exhaustedProbeIds ??= []).push(probe.id)
+      continue
+    }
+
     const stack = active.get(probe.id) // TODO: Should we use the functionId instead?
     if (!stack) {
       continue // TODO: This shouldn't be possible, do we need it? Should we warn?
@@ -187,7 +197,13 @@ export function onReturn(
       }
     }
 
-    sendDebuggerSnapshot(probe, result)
+    queueDebuggerSnapshot(probe, result)
+  }
+
+  if (exhaustedProbeIds) {
+    for (const id of exhaustedProbeIds) {
+      removeProbe(id)
+    }
   }
 
   return value
@@ -204,9 +220,15 @@ export function onReturn(
 export function onThrow(probes: InitializedProbe[], error: Error, self: any, args: Record<string, any>): void {
   const end = performance.now()
   const captureCtx: CaptureContext = { deadline: performance.now() + SNAPSHOT_TIMEOUT_MS, timedOut: false }
+  let exhaustedProbeIds: string[] | undefined
 
   // TODO: A lot of repeated work performed for each probe that could be shared between probes
   for (const probe of probes) {
+    if (!hasProbeLifetimeBudgetRemaining(probe)) {
+      ;(exhaustedProbeIds ??= []).push(probe.id)
+      continue
+    }
+
     const stack = active.get(probe.id) // TODO: Should we use the functionId instead?
     if (!stack) {
       continue // TODO: This shouldn't be possible, do we need it? Should we warn?
@@ -258,17 +280,23 @@ export function onThrow(probes: InitializedProbe[], error: Error, self: any, arg
       },
     }
 
-    sendDebuggerSnapshot(probe, result)
+    queueDebuggerSnapshot(probe, result)
+  }
+
+  if (exhaustedProbeIds) {
+    for (const id of exhaustedProbeIds) {
+      removeProbe(id)
+    }
   }
 }
 
 /**
- * Send a debugger snapshot to Datadog via the debugger's own transport.
+ * Queue a debugger snapshot for delivery via the debugger's own transport.
  *
  * @param probe - The probe that was executed
  * @param result - The result of the probe execution
  */
-function sendDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): void {
+function queueDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): void {
   if (!debuggerBatch || !debuggerConfig) {
     display.warn('Debugger transport is not initialized. Make sure DD_DEBUGGER.init() has been called.')
     return
@@ -317,10 +345,6 @@ function sendDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): voi
 
   debuggerBatch.add(payload)
   probe.eventsSentInLifetime++
-
-  if (!hasProbeLifetimeBudgetRemaining(probe)) {
-    removeProbe(probe.id)
-  }
 }
 
 function getDebuggerDDtags(debuggerVersion: string): string {

@@ -185,8 +185,12 @@ export function removeProbe(id: string): void {
       }
       probes.splice(i, 1)
       // TODO: Gracefully drain in-flight entries instead of clearing them immediately.
-      // Deleting a probe can currently race with return/throw handling, whether removal
-      // comes from delivery updates or budget-based auto-unregistering.
+      // Deleting a probe can currently race with reentrant onEntry/onReturn invocations
+      // for the same probe — both delivery-driven removal and budget-based auto-unregistering
+      // can wipe the active stack while a deeper invocation is still in progress.
+      // A common concrete trigger is instrumenting a recursive function: if the inner
+      // frame is the one that exhausts the lifetime budget, the outer frame's pending
+      // entry is dropped and its snapshot is lost.
       clearActiveEntries(id)
       break
     }
