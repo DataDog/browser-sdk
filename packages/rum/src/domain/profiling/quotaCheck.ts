@@ -36,7 +36,7 @@ export function checkProfilingQuota(
   sessionId: string,
   timeoutMs = 5000
 ): Promise<QuotaResult> {
-  const host = `quota.${buildEndpointHost('profile', { site: configuration.site })}`
+  const host = `quota.${buildEndpointHost('profile', { site: configuration.site, clientToken: configuration.clientToken })}`
   const url = `https://${host}/api/v2/profiling/quota?session_id=${sessionId}`
   const controller = new AbortController()
 
