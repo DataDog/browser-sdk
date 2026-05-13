@@ -10,6 +10,11 @@ const backendResponse =
       json: () => Promise.resolve({ data: { attributes: { admitted, reason } } }),
     })
 
+const unparseableResponse =
+  (status: number): (() => Promise<unknown>) =>
+  () =>
+    Promise.resolve({ status, json: () => Promise.reject(new Error('invalid json')) })
+
 describe('checkProfilingQuota', () => {
   let interceptor: ReturnType<typeof interceptRequests>
 
@@ -63,17 +68,13 @@ describe('checkProfilingQuota', () => {
   })
 
   it('returns quota_ok with api-error reason when response body is unparseable and status is 200', async () => {
-    interceptor.withFetch(
-      () => Promise.resolve({ status: 200, json: () => Promise.reject(new Error('invalid json')) }) as any
-    )
+    interceptor.withFetch(unparseableResponse(200))
     const result = await checkProfilingQuota(mockRumConfiguration(), 'session-123')
     expect(result).toEqual({ decision: 'quota_ok', reason: 'api-error' })
   })
 
   it('returns quota_ko with quota_exceeded reason when response body is unparseable and status is 429', async () => {
-    interceptor.withFetch(
-      () => Promise.resolve({ status: 429, json: () => Promise.reject(new Error('invalid json')) }) as any
-    )
+    interceptor.withFetch(unparseableResponse(429))
     const result = await checkProfilingQuota(mockRumConfiguration(), 'session-123')
     expect(result).toEqual({ decision: 'quota_ko', reason: 'quota_exceeded' })
   })
