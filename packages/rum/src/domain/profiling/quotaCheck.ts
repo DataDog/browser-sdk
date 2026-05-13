@@ -36,9 +36,6 @@ export function checkProfilingQuota(
   sessionId: string,
   timeoutMs = 5000
 ): Promise<QuotaResult> {
-  // Follow the same browser-intake-* host derivation used by all other SDK endpoints,
-  // but bypass the fed-staging and internalAnalyticsSubdomain special cases which don't
-  // apply to the quota endpoint.
   const host = `quota.${buildEndpointHost('profile', { site: configuration.site })}`
   const url = `https://${host}/api/v2/profiling/quota?session_id=${sessionId}`
   const controller = new AbortController()
