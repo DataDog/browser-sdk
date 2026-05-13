@@ -1098,7 +1098,7 @@ describe('profiler', () => {
       mockProfiler(deepClone(mockedTrace) as any)
       const hooks = createHooks()
       const profilingContextManager = startProfilingContext(hooks)
-      const noSessionManager = createRumSessionManagerMock()
+      const noSessionManager = createSessionManagerMock()
       spyOn(noSessionManager, 'findTrackedSession').and.returnValue(undefined)
       const profilerNoSession = createRumProfiler(
         mockRumConfiguration({ profilingSampleRate: 100 }),
