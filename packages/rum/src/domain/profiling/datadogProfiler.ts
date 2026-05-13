@@ -32,6 +32,7 @@ import { createLongTaskHistory } from './longTaskHistory'
 import { createActionHistory } from './actionHistory'
 import { createVitalHistory } from './vitalHistory'
 import { checkProfilingQuota } from './quotaCheck'
+import type { QuotaReason } from './quotaCheck'
 
 export const DEFAULT_RUM_PROFILER_CONFIGURATION: RUMProfilerConfiguration = {
   sampleIntervalMs: 10, // Sample stack trace every 10ms
@@ -70,7 +71,7 @@ export function createRumProfiler(
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
     if (
       instance.state === 'stopped' &&
-      (instance.stateReason === 'session-expired' || instance.stateReason === 'quota-exceeded')
+      (instance.stateReason === 'session-expired' || instance.stateReason === 'quota_ko')
     ) {
       start()
     }
@@ -117,8 +118,8 @@ export function createRumProfiler(
           if (instance.state !== 'running' && instance.state !== 'paused') {
             return
           }
-          if (result === 'quota-exceeded') {
-            stopProfiling('quota-exceeded')
+          if (result.decision === 'quota_ko') {
+            stopProfiling('quota_ko', result.reason)
           }
         })
         .catch(monitorError)
@@ -130,7 +131,7 @@ export function createRumProfiler(
     stopProfiling('stopped-by-user')
   }
 
-  function stopProfiling(reason: RumProfilerStoppedInstance['stateReason']) {
+  function stopProfiling(reason: RumProfilerStoppedInstance['stateReason'], quotaReason?: QuotaReason) {
     // Stop current profiler instance (data collection happens async in background)
     stopProfilerInstance(reason)
 
@@ -139,12 +140,7 @@ export function createRumProfiler(
     globalCleanupTasks.length = 0
 
     // Update Profiling status once the Profiler has been stopped.
-    if (reason === 'quota-exceeded') {
-      // TODO(PROF-13798): remove `as any` once rum-events-format schema adds 'quota-exceeded' to error_reason
-      profilingContextManager.set({ status: 'stopped', error_reason: 'quota-exceeded' as any })
-    } else {
-      profilingContextManager.set({ status: 'stopped', error_reason: undefined })
-    }
+    profilingContextManager.set({ status: 'stopped', error_reason: undefined, quota_reason: quotaReason })
   }
 
   /**
@@ -310,8 +306,8 @@ export function createRumProfiler(
     // Cleanup instance-specific tasks (e.g., view listener)
     runningInstance.cleanupTasks.forEach((cleanupTask) => cleanupTask())
 
-    if (stateReason === 'quota-exceeded') {
-      // Discard data — quota exceeded means we should not send anything
+    if (stateReason === 'quota_ko') {
+      // Discard data — quota denied means we should not send anything
       clearTimeout(runningInstance.timeoutId)
       runningInstance.profiler.removeEventListener('samplebufferfull', handleSampleBufferFull)
       void runningInstance.profiler.stop().catch(monitorError)

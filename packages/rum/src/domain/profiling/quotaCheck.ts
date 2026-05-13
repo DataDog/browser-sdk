@@ -1,16 +1,46 @@
 import { fetch, setTimeout, clearTimeout, buildEndpointHost } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 
+// Exact reason strings returned by the backend quota admission API.
+export type BackendQuotaReason =
+  | 'quota_ok'
+  | 'quota_exceeded'
+  | 'org_disabled'
+  | 'backend_unavailable'
+  | 'backend_client_not_initialized'
+  | 'undefined'
+
+// SDK-only reasons used when the backend is not reachable.
+export type FrontendQuotaReason = 'timeout' | 'api-error'
+
+export type QuotaReason = BackendQuotaReason | FrontendQuotaReason
+
+export interface QuotaResult {
+  decision: 'quota_ok' | 'quota_ko'
+  reason: QuotaReason
+}
+
+function parseQuotaResult(body: unknown, httpStatusFallback: QuotaResult): QuotaResult {
+  const attrs = (body as any)?.data?.attributes
+  if (!attrs || typeof attrs.admitted !== 'boolean' || typeof attrs.reason !== 'string') {
+    return httpStatusFallback
+  }
+  return {
+    decision: attrs.admitted ? 'quota_ok' : 'quota_ko',
+    reason: attrs.reason as BackendQuotaReason,
+  }
+}
+
 export function checkProfilingQuota(
   configuration: RumConfiguration,
   sessionId: string,
   timeoutMs = 5000
-): Promise<'quota-ok' | 'quota-exceeded'> {
+): Promise<QuotaResult> {
   // Follow the same browser-intake-* host derivation used by all other SDK endpoints,
   // but bypass the fed-staging and internalAnalyticsSubdomain special cases which don't
   // apply to the quota endpoint.
   const host = `quota.${buildEndpointHost('profile', { site: configuration.site })}`
-  const url = `https://${host}?session_id=${sessionId}`
+  const url = `https://${host}/api/v2/profiling/quota?session_id=${sessionId}`
   const controller = new AbortController()
 
   let timeoutId: ReturnType<typeof setTimeout>
@@ -22,19 +52,32 @@ export function checkProfilingQuota(
       'DD-CLIENT-TOKEN': configuration.clientToken,
     }),
   })
-    .then((response): 'quota-ok' | 'quota-exceeded' => {
-      clearTimeout(timeoutId)
-      return response.status === 429 ? 'quota-exceeded' : 'quota-ok'
+    .then((response) => {
+      const statusFallback: QuotaResult =
+        response.status === 429
+          ? { decision: 'quota_ko', reason: 'quota_exceeded' }
+          : { decision: 'quota_ok', reason: 'api-error' }
+      return response.json().then(
+        (body): QuotaResult => {
+          clearTimeout(timeoutId)
+          return parseQuotaResult(body, statusFallback)
+        },
+        (): QuotaResult => {
+          // Body unparseable — fall back to HTTP status
+          clearTimeout(timeoutId)
+          return statusFallback
+        }
+      )
     })
-    .catch((): 'quota-ok' => {
+    .catch((): QuotaResult => {
       clearTimeout(timeoutId)
-      return 'quota-ok'
+      return { decision: 'quota_ok', reason: 'api-error' }
     })
 
-  const timeoutPromise = new Promise<'quota-ok'>((resolve) => {
+  const timeoutPromise = new Promise<QuotaResult>((resolve) => {
     timeoutId = setTimeout(() => {
       controller.abort()
-      resolve('quota-ok')
+      resolve({ decision: 'quota_ok', reason: 'timeout' })
     }, timeoutMs)
   })
 
