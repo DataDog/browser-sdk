@@ -28,20 +28,6 @@ describe('PrComment', () => {
       `
 RUM: 10KB
 
-<details>
-<summary>🚀 CPU Performance</summary>
-
-Pending...
-
-</details>
-
-<details>
-<summary>🧠 Memory Performance</summary>
-
-Pending...
-
-</details>
-
 🔗 [RealWorld](https://datadoghq.dev/browser-sdk-test-playground/realworld-scenario/?prNumber=123)
 `
     )

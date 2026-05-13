@@ -8,8 +8,6 @@ export class Pr {
   prNumber: number
   lastCommonCommit: string
   bundleSizesSection: string = 'Pending...'
-  memoryPerformanceSection: string = 'Pending...'
-  cpuPerformanceSection: string = 'Pending...'
 
   constructor(prNumber: number, lastCommonCommit: string) {
     this.prNumber = prNumber
@@ -21,33 +19,9 @@ export class Pr {
     await this.updateComment()
   }
 
-  async setMemoryPerformance(newSection: string) {
-    this.memoryPerformanceSection = newSection
-    await this.updateComment()
-  }
-
-  async setCpuPerformance(newSection: string) {
-    this.cpuPerformanceSection = newSection
-    await this.updateComment()
-  }
-
   formatComment() {
     return `
 ${this.bundleSizesSection}
-
-<details>
-<summary>🚀 CPU Performance</summary>
-
-${this.cpuPerformanceSection}
-
-</details>
-
-<details>
-<summary>🧠 Memory Performance</summary>
-
-${this.memoryPerformanceSection}
-
-</details>
 
 🔗 [RealWorld](https://datadoghq.dev/browser-sdk-test-playground/realworld-scenario/?prNumber=${this.prNumber})
 `
