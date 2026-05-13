@@ -1107,7 +1107,7 @@ describe('profiler', () => {
         profilingContextManager,
         createIdentityEncoder,
         mockViewHistory(),
-        { sampleIntervalMs: 10, collectIntervalMs: 60000, minNumberOfSamples: 0, minProfileDurationMs: 0 }
+        { sampleIntervalMs: 10, collectIntervalMs: 60000, minProfileDurationMs: 0 }
       )
 
       profilerNoSession.start()
@@ -1219,7 +1219,7 @@ describe('profiler', () => {
       await waitForBoolean(() => profiler.isRunning())
 
       lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
       await waitForBoolean(() => profiler.isRunning())
 
       resolveOldQuota({ decision: 'quota_ko', reason: 'quota_exceeded' })
@@ -1248,7 +1248,7 @@ describe('profiler', () => {
 
       expect(callCount).toBe(1)
 
-      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
       await waitForBoolean(() => profiler.isRunning())
 
       expect(callCount).toBe(2)
@@ -1267,7 +1267,7 @@ describe('profiler', () => {
       profiler.stop()
       expect(profiler.isStopped()).toBe(true)
 
-      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
       await waitNextMicrotask()
 
       expect(profiler.isStopped()).toBe(true)
