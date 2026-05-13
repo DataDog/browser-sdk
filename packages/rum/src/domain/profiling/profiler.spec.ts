@@ -1095,7 +1095,7 @@ describe('profiler', () => {
 
     it('should not call quota check and proceed when sessionId is undefined at start', async () => {
       // default spy already returns quota-ok; we just verify it's never called
-      mockProfiler(deepClone(mockedTrace) as any)
+      mockProfiler(deepClone(mockedTrace))
       const hooks = createHooks()
       const profilingContextManager = startProfilingContext(hooks)
       const noSessionManager = createSessionManagerMock()

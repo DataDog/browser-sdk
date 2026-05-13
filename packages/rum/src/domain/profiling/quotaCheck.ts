@@ -31,13 +31,29 @@ function parseQuotaResult(body: unknown, httpStatusFallback: QuotaResult): Quota
   }
 }
 
+function buildQuotaUrl(configuration: RumConfiguration, sessionId: string): string {
+  const path = '/api/v2/profiling/quota'
+  const parameters = `session_id=${sessionId}`
+  const proxy = configuration.proxy
+
+  if (typeof proxy === 'string') {
+    // Route through proxy to avoid CSP/CORS issues in environments with restricted connect-src
+    return `${proxy}?ddforward=${encodeURIComponent(`${path}?${parameters}`)}`
+  }
+  if (typeof proxy === 'function') {
+    return proxy({ path, parameters })
+  }
+
+  const host = `quota.${buildEndpointHost({ site: configuration.site, clientToken: configuration.clientToken })}`
+  return `https://${host}${path}?${parameters}`
+}
+
 export function checkProfilingQuota(
   configuration: RumConfiguration,
   sessionId: string,
   timeoutMs = 5000
 ): Promise<QuotaResult> {
-  const host = `quota.${buildEndpointHost({ site: configuration.site, clientToken: configuration.clientToken })}`
-  const url = `https://${host}/api/v2/profiling/quota?session_id=${sessionId}`
+  const url = buildQuotaUrl(configuration, sessionId)
   const controller = new AbortController()
 
   let timeoutId: ReturnType<typeof setTimeout>

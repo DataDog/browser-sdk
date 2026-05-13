@@ -1,6 +1,6 @@
 import type { Site } from '../intakeSites'
 import { INTAKE_SITE_US1, INTAKE_URL_PARAMETERS } from '../intakeSites'
-import type { InitConfiguration, SdkSource } from './configuration'
+import type { InitConfiguration, ProxyFn, SdkSource } from './configuration'
 import type { EndpointBuilder, TransportSource } from './endpointBuilder'
 import { createEndpointBuilder } from './endpointBuilder'
 
@@ -15,6 +15,7 @@ export interface TransportConfiguration {
   datacenter?: string | undefined
   replica?: ReplicaConfiguration
   clientToken: string
+  proxy?: string | ProxyFn | undefined
   site: Site
   source: SdkSource
 }
@@ -57,6 +58,7 @@ export function computeTransportConfiguration(
 
   return {
     clientToken: initConfiguration.clientToken,
+    proxy: initConfiguration.proxy,
     replica: replicaConfiguration,
     site,
     source,
