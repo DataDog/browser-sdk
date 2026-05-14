@@ -16,6 +16,7 @@ interface EventsTabProps {
   columns: EventListColumn[]
   onColumnsChange: (columns: EventListColumn[]) => void
   clear: () => void
+  datadogMode: boolean
 }
 
 export function EventsTab({
@@ -26,11 +27,19 @@ export function EventsTab({
   columns,
   onColumnsChange,
   clear,
+  datadogMode,
 }: EventsTabProps) {
   return (
     <TabBase
       top={<EventsTabTop filters={filters} onFiltersChange={onFiltersChange} clear={clear} />}
-      leftSide={<EventsTabSide filters={filters} onFiltersChange={onFiltersChange} facetRegistry={facetRegistry} />}
+      leftSide={
+        <EventsTabSide
+          filters={filters}
+          onFiltersChange={onFiltersChange}
+          facetRegistry={facetRegistry}
+          datadogMode={datadogMode}
+        />
+      }
     >
       {events.length === 0 || !facetRegistry ? (
         <Center>

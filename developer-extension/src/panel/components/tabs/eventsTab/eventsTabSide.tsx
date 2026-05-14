@@ -7,19 +7,23 @@ export function EventsTabSide({
   facetRegistry,
   filters,
   onFiltersChange,
+  datadogMode,
 }: {
   facetRegistry?: FacetRegistry
   filters: EventFilters
   onFiltersChange: (filters: EventFilters) => void
+  datadogMode: boolean
 }) {
   return (
     <Box ml="md">
-      <Checkbox
-        label={'Show only the latest View\xa0event'}
-        checked={!filters.outdatedVersions}
-        onChange={(e) => onFiltersChange({ ...filters, outdatedVersions: !e.target.checked })}
-        mb="sm"
-      />
+      {datadogMode && (
+        <Checkbox
+          label={'Show only the latest View\xa0event'}
+          checked={!filters.outdatedVersions}
+          onChange={(e) => onFiltersChange({ ...filters, outdatedVersions: !e.target.checked })}
+          mb="sm"
+        />
+      )}
 
       {facetRegistry && (
         <FacetList
