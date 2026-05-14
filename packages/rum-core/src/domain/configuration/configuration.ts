@@ -138,11 +138,21 @@ export interface RumInitConfiguration extends InitConfiguration {
   compressIntakeRequests?: boolean | undefined
 
   /**
-   * [Internal option] Id of the remote configuration
+   * [Internal option] Id of the remote configuration.
+   * Prefer `remoteConfiguration.id` for the non-blocking cache-and-reload path.
    *
    * @internal
    */
   remoteConfigurationId?: string | undefined
+
+  /**
+   * [Internal option] Remote configuration descriptor. By default the SDK reads a cached
+   * configuration synchronously and refreshes it in the background. Set `sync: true` to fall back
+   * to the legacy blocking fetch.
+   *
+   * @internal
+   */
+  remoteConfiguration?: { id: string; sync?: boolean } | undefined
 
   /**
    * [Internal option] set a proxy URL for the remote configuration
@@ -666,7 +676,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
       ...plugin.getConfigurationTelemetry?.(),
     })),
     track_feature_flags_for_events: configuration.trackFeatureFlagsForEvents,
-    remote_configuration_id: configuration.remoteConfigurationId,
+    remote_configuration_id: configuration.remoteConfigurationId ?? configuration.remoteConfiguration?.id,
     profiling_sample_rate: configuration.profilingSampleRate,
     use_remote_configuration_proxy: !!configuration.remoteConfigurationProxy,
     track_resource_headers: getTrackResourceHeadersTelemetryValue(configuration.trackResourceHeaders),

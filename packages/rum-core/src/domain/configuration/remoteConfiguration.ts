@@ -60,6 +60,30 @@ interface RemoteConfigurationMetricCounters {
   [key: string]: number | undefined
 }
 
+export async function fetchAndApplyRemoteConfiguration(
+  initConfiguration: RumInitConfiguration,
+  supportedContextManagers: SupportedContextManagers
+) {
+  let rumInitConfiguration: RumInitConfiguration | undefined
+  const metrics = initMetrics()
+  const fetchResult = await fetchRemoteConfiguration(initConfiguration)
+  if (!fetchResult.ok) {
+    metrics.increment('fetch', 'failure')
+    display.error(fetchResult.error)
+  } else {
+    metrics.increment('fetch', 'success')
+    rumInitConfiguration = applyRemoteConfiguration(
+      initConfiguration,
+      fetchResult.value,
+      supportedContextManagers,
+      metrics
+    )
+  }
+  // monitor-until: forever
+  addTelemetryMetrics(TelemetryMetrics.REMOTE_CONFIGURATION_METRIC_NAME, { metrics: metrics.get() })
+  return rumInitConfiguration
+}
+
 export function applyRemoteConfiguration(
   initConfiguration: RumInitConfiguration,
   rumRemoteConfiguration: RumRemoteConfiguration & { [key: string]: unknown },
@@ -288,11 +312,16 @@ export async function fetchRemoteConfiguration(
   }
 }
 
+export function getRemoteConfigurationId(configuration: RumInitConfiguration): string | undefined {
+  return configuration.remoteConfiguration?.id ?? configuration.remoteConfigurationId
+}
+
 export function buildEndpoint(configuration: RumInitConfiguration) {
   if (configuration.remoteConfigurationProxy) {
     return configuration.remoteConfigurationProxy
   }
-  return `https://sdk-configuration.${buildEndpointHost(configuration)}/${REMOTE_CONFIGURATION_VERSION}/${encodeURIComponent(configuration.remoteConfigurationId!)}.json`
+  const id = getRemoteConfigurationId(configuration)!
+  return `https://sdk-configuration.${buildEndpointHost(configuration)}/${REMOTE_CONFIGURATION_VERSION}/${encodeURIComponent(id)}.json`
 }
 
 function doBackgroundCacheSync(
@@ -322,7 +351,7 @@ export function getRemoteConfiguration(
   supportedContextManagers: SupportedContextManagers
 ): RumInitConfiguration {
   const configurationCache = createConfigurationCache({
-    remoteConfigurationId: initConfiguration.remoteConfigurationId!,
+    remoteConfigurationId: getRemoteConfigurationId(initConfiguration)!,
   })
   const metrics = initMetrics()
 

@@ -39,7 +39,9 @@ import { createHooks } from '../domain/hooks'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 
 import {
+  fetchAndApplyRemoteConfiguration,
   getRemoteConfiguration,
+  getRemoteConfigurationId,
   validateAndBuildRumConfiguration,
   serializeRumConfiguration,
 } from '../domain/configuration'
@@ -244,10 +246,23 @@ export function createPreStartStrategy(
 
       callPluginsMethod(initConfiguration.plugins, 'onInit', { initConfiguration, publicApi })
 
-      if (initConfiguration.remoteConfigurationId) {
-        const supportedContextManagers = { user: userContext, context: globalContext }
+      const hasRemoteConfiguration = getRemoteConfigurationId(initConfiguration)
 
-        doInit(getRemoteConfiguration(initConfiguration, supportedContextManagers), errorStack)
+      if (hasRemoteConfiguration) {
+        const supportedContextManagers = { user: userContext, context: globalContext }
+        const isSyncLoading = !!initConfiguration.remoteConfigurationId || !!initConfiguration.remoteConfiguration?.sync
+
+        if (isSyncLoading) {
+          fetchAndApplyRemoteConfiguration(initConfiguration, supportedContextManagers)
+            .then((resolvedInitConfiguration) => {
+              if (resolvedInitConfiguration) {
+                doInit(resolvedInitConfiguration, errorStack)
+              }
+            })
+            .catch(monitorError)
+        } else {
+          doInit(getRemoteConfiguration(initConfiguration, supportedContextManagers), errorStack)
+        }
       } else {
         doInit(initConfiguration, errorStack)
       }

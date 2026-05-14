@@ -752,7 +752,7 @@ describe('remoteConfiguration', () => {
     })
   })
 
-  describe('getRemoteConfiguration', () => {
+  describe('async loading (getRemoteConfiguration)', () => {
     const REMOTE_CONFIGURATION_ID = 'rc-test-id'
     const CACHE_KEY = buildCacheKey(REMOTE_CONFIGURATION_ID)
     const FRESH_RUM_CONFIG: RumRemoteConfiguration = { applicationId: 'fresh-app' }
@@ -787,7 +787,7 @@ describe('remoteConfiguration', () => {
       initConfiguration = {
         ...DEFAULT_INIT_CONFIGURATION,
         applicationId: 'init-app',
-        remoteConfigurationId: REMOTE_CONFIGURATION_ID,
+        remoteConfiguration: { id: REMOTE_CONFIGURATION_ID },
       }
       supportedContextManagers = { user: createContextManager(), context: createContextManager() }
       interceptor = interceptRequests()
