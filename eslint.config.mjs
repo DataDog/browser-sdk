@@ -43,6 +43,7 @@ export default tseslint.config(
       'generated-docs',
       'developer-extension/.wxt',
       'developer-extension/dist',
+      '.claude/worktrees',
     ],
   },
 
