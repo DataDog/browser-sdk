@@ -20,7 +20,6 @@ import {
   relativeToClocks,
   timeStampNow,
   display,
-  looksLikeRelativeTime,
   setInterval,
   clearInterval,
   setTimeout,
@@ -180,7 +179,7 @@ export function trackViews(
   }
 
   return {
-    addTiming: (name: string, time: RelativeTime | TimeStamp = timeStampNow()) => {
+    addTiming: (name: string, time: TimeStamp = timeStampNow()) => {
       currentView.addTiming(name, time)
     },
     setLoadingTime: (callTimestamp?: TimeStamp) => currentView.setLoadingTime(callTimestamp),
@@ -377,11 +376,11 @@ function newView(
       stopINPTracking()
       stopObservable.notify()
     },
-    addTiming(name: string, time: RelativeTime | TimeStamp) {
+    addTiming(name: string, time: TimeStamp) {
       if (endClocks) {
         return
       }
-      const relativeTime = looksLikeRelativeTime(time) ? time : elapsed(startClocks.timeStamp, time)
+      const relativeTime = elapsed(startClocks.timeStamp, time)
       customTimings[sanitizeTiming(name)] = relativeTime
       scheduleViewUpdate()
     },
