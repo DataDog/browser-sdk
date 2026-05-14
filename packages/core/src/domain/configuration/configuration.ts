@@ -3,8 +3,8 @@ import { DOCS_ORIGIN, MORE_DETAILS, display } from '../../tools/display'
 import type { RawTelemetryConfiguration } from '../telemetry'
 import { isPercentage } from '../../tools/utils/numberUtils'
 import { objectHasValue } from '../../tools/utils/objectUtils'
-import { selectSessionStoreStrategyType } from '../session/sessionStore'
-import type { SessionStoreStrategyType } from '../session/storeStrategies/sessionStoreStrategy'
+import type { CookieOptions } from '../../browser/cookie'
+import { buildCookieOptions } from '../session/storeStrategies/sessionInCookie'
 import { TrackingConsent } from '../trackingConsent'
 import type { SessionPersistence } from '../session/sessionConstants'
 import type { MatchOption } from '../../tools/matchOption'
@@ -287,7 +287,8 @@ export type SdkSource = 'browser' | 'flutter' | 'unity'
 export interface Configuration extends TransportConfiguration {
   // Built from init configuration
   beforeSend: GenericBeforeSendCallback | undefined
-  sessionStoreStrategyType: SessionStoreStrategyType | undefined
+  cookieOptions: CookieOptions | undefined
+  sessionPersistence: SessionPersistence | SessionPersistence[] | undefined
   sessionSampleRate: number
   telemetrySampleRate: number
   telemetryConfigurationSampleRate: number
@@ -372,7 +373,8 @@ export function validateAndBuildConfiguration(
   return {
     beforeSend:
       initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
-    sessionStoreStrategyType: selectSessionStoreStrategyType(initConfiguration),
+    cookieOptions: buildCookieOptions(initConfiguration),
+    sessionPersistence: initConfiguration.sessionPersistence,
     sessionSampleRate: initConfiguration.sessionSampleRate ?? 100,
     telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
     telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,

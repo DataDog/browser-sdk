@@ -1,11 +1,11 @@
 import { registerCleanupTask, replaceMockable, mockCookies, collectAsyncCalls } from '../../../../test'
-import { createCookieAccess } from '../../../browser/cookieAccess'
+import type { CookieStoreWindow } from '../../../browser/browser.types'
 import { Observable } from '../../../tools/observable'
 import type { SessionState } from '../sessionState'
 import type { Configuration, InitConfiguration } from '../../configuration'
-import { SESSION_COOKIE_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from '../sessionConstants'
-import { LEGACY_SESSION_STORE_KEY } from './sessionStoreStrategy'
-import { buildCookieOptions, selectCookieStrategy, initCookieStrategy } from './sessionInCookie'
+import { SESSION_COOKIE_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY, SessionPersistence } from '../sessionConstants'
+import { CookieApi, LEGACY_SESSION_STORE_KEY } from './sessionStoreStrategy'
+import { buildCookieOptions, createCookieAccess, selectCookieStrategy, initCookieStrategy } from './sessionInCookie'
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'abc', trackAnonymousUser: true }
 
@@ -55,7 +55,10 @@ function setupCookieStrategy(partialInitConfiguration: Partial<InitConfiguration
   replaceMockable(createCookieAccess, () => mockCookieAccess)
 
   return {
-    strategy: initCookieStrategy(cookieOptions, configuration),
+    strategy: initCookieStrategy(
+      { type: SessionPersistence.COOKIE, cookieOptions, cookieApi: CookieApi.DOCUMENT_COOKIE },
+      configuration
+    ),
     cookieOptions,
     mockCookie,
   }
@@ -257,10 +260,45 @@ describe('session in cookie strategy', () => {
   })
 
   describe('selectCookieStrategy', () => {
-    it('should return defined when cookies are authorized', () => {
+    function makeConfiguration(): Configuration {
+      const cookieOptions = buildCookieOptions({ clientToken: 'abc' })
+      return { cookieOptions } as Configuration
+    }
+
+    function disableCookieStore() {
+      replaceMockable((window as CookieStoreWindow).cookieStore, undefined)
+    }
+
+    function disableDocumentCookie() {
+      spyOnProperty(document, 'cookie', 'get').and.returnValue('')
+    }
+
+    it('returns cookieStore strategy when both APIs are available', async () => {
+      if (!(window as CookieStoreWindow).cookieStore) {
+        pending('CookieStore API not available')
+      }
       mockCookies()
-      const strategy = selectCookieStrategy({ clientToken: 'abc' })
-      expect(strategy).toBeDefined()
+      const strategy = await selectCookieStrategy(makeConfiguration())
+      expect(strategy).toEqual(jasmine.objectContaining({ cookieApi: 'cookieStore' }))
+    })
+
+    it('falls back to document.cookie when CookieStore is unavailable', async () => {
+      disableCookieStore()
+      mockCookies()
+      const strategy = await selectCookieStrategy(makeConfiguration())
+      expect(strategy).toEqual(jasmine.objectContaining({ cookieApi: 'documentCookie' }))
+    })
+
+    it('returns undefined when both APIs are unavailable', async () => {
+      disableCookieStore()
+      disableDocumentCookie()
+      const strategy = await selectCookieStrategy(makeConfiguration())
+      expect(strategy).toBeUndefined()
+    })
+
+    it('returns undefined when cookieOptions is undefined', async () => {
+      const strategy = await selectCookieStrategy({ cookieOptions: undefined } as unknown as Configuration)
+      expect(strategy).toBeUndefined()
     })
   })
 

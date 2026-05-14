@@ -1,12 +1,19 @@
 import type { Clock } from '../../test'
 import { collectAsyncCalls, mockClock, registerCleanupTask, replaceMockable } from '../../test'
 import type { Configuration } from '../domain/configuration'
+import { display } from '../tools/display'
 import { detectVersion, isChromium } from '../tools/utils/browserDetection'
 import { dateNow } from '../tools/utils/timeUtils'
 import type { CookieOptions } from './cookie'
 import { deleteCookie, getCookie, setCookie } from './cookie'
 import type { CookieStoreWindow } from './browser.types'
-import { createCookieAccess, WATCH_COOKIE_INTERVAL_DELAY } from './cookieAccess'
+import type { CookieAccess } from './cookieAccess'
+import {
+  areCookiesAuthorized,
+  createCookieStoreAccess,
+  createDocumentCookieAccess,
+  WATCH_COOKIE_INTERVAL_DELAY,
+} from './cookieAccess'
 
 const COOKIE_NAME = 'test_cookie'
 const COOKIE_OPTIONS = { secure: false, crossSite: false, partitioned: false }
@@ -18,6 +25,7 @@ function disableCookieStore() {
 
 interface setupResult {
   clock: Clock
+  createCookieAccess: (name: string, options: CookieOptions) => CookieAccess
   flushObservable: (spy: jasmine.Spy) => Promise<void>
   setCookieWithCleanup: (
     this: void,
@@ -38,6 +46,7 @@ describe('cookieAccess', () => {
 
         return {
           clock,
+          createCookieAccess: (name: string, options: CookieOptions) => createDocumentCookieAccess(name, options),
           flushObservable(this: void, _spy: jasmine.Spy) {
             clock.tick(WATCH_COOKIE_INTERVAL_DELAY)
             return Promise.resolve()
@@ -68,6 +77,8 @@ describe('cookieAccess', () => {
 
         return {
           clock,
+          createCookieAccess: (name: string, options: CookieOptions) =>
+            createCookieStoreAccess(name, options, MOCK_CONFIGURATION),
           async flushObservable(this: void, spy: jasmine.Spy) {
             await collectAsyncCalls(spy, 1)
             // Reset the spy calls to avoid throwing on unexpected calls during teardown
@@ -107,10 +118,10 @@ describe('cookieAccess', () => {
     describe(title, () => {
       describe('getAllAndSet', () => {
         it('should pass current cookie values to callback', async () => {
-          const { setCookieWithCleanup } = setup()
+          const { createCookieAccess, setCookieWithCleanup } = setup()
           await setCookieWithCleanup(COOKIE_NAME, 'value1', 1000)
 
-          const cookieAccess = createCookieAccess(COOKIE_NAME, MOCK_CONFIGURATION, COOKIE_OPTIONS)
+          const cookieAccess = createCookieAccess(COOKIE_NAME, COOKIE_OPTIONS)
 
           let capturedValues: string[] | undefined
           await cookieAccess.getAllAndSet((values) => {
@@ -122,8 +133,8 @@ describe('cookieAccess', () => {
         })
 
         it('should pass empty array when cookie does not exist', async () => {
-          setup()
-          const cookieAccess = createCookieAccess(COOKIE_NAME, MOCK_CONFIGURATION, COOKIE_OPTIONS)
+          const { createCookieAccess } = setup()
+          const cookieAccess = createCookieAccess(COOKIE_NAME, COOKIE_OPTIONS)
 
           let capturedValues: string[] | undefined
           await cookieAccess.getAllAndSet((values) => {
@@ -135,8 +146,8 @@ describe('cookieAccess', () => {
         })
 
         it('should write the value returned by the callback', async () => {
-          setup()
-          const cookieAccess = createCookieAccess(COOKIE_NAME, MOCK_CONFIGURATION, COOKIE_OPTIONS)
+          const { createCookieAccess } = setup()
+          const cookieAccess = createCookieAccess(COOKIE_NAME, COOKIE_OPTIONS)
 
           await cookieAccess.getAllAndSet(() => ({ value: 'hello', expireDelay: 1000 }))
 
@@ -149,11 +160,11 @@ describe('cookieAccess', () => {
             pending('Only Recent Chromium supports multiple cookies with the same name with different options')
           }
 
-          const { setCookieWithCleanup } = setup()
+          const { createCookieAccess, setCookieWithCleanup } = setup()
           await setCookieWithCleanup(COOKIE_NAME, 'value1', 1000)
           await setCookieWithCleanup(COOKIE_NAME, 'value2', 1000, { secure: true, partitioned: true })
 
-          const cookieAccess = createCookieAccess(COOKIE_NAME, MOCK_CONFIGURATION, COOKIE_OPTIONS)
+          const cookieAccess = createCookieAccess(COOKIE_NAME, COOKIE_OPTIONS)
 
           let capturedValues: string[] | undefined
           await cookieAccess.getAllAndSet((values) => {
@@ -167,8 +178,8 @@ describe('cookieAccess', () => {
 
       describe('observable', () => {
         it('should notify when cookie is changed externally', async () => {
-          const { flushObservable, setCookieWithCleanup } = setup()
-          const cookieAccess = createCookieAccess(COOKIE_NAME, MOCK_CONFIGURATION, COOKIE_OPTIONS)
+          const { createCookieAccess, flushObservable, setCookieWithCleanup } = setup()
+          const cookieAccess = createCookieAccess(COOKIE_NAME, COOKIE_OPTIONS)
           const spy = jasmine.createSpy('observer')
           const subscription = cookieAccess.observable.subscribe(spy)
           registerCleanupTask(() => subscription.unsubscribe())
@@ -180,10 +191,10 @@ describe('cookieAccess', () => {
         })
 
         it('should notify when cookie is deleted externally', async () => {
-          const { flushObservable, setCookieWithCleanup } = setup()
+          const { createCookieAccess, flushObservable, setCookieWithCleanup } = setup()
           await setCookieWithCleanup(COOKIE_NAME, 'existing', 1000)
 
-          const cookieAccess = createCookieAccess(COOKIE_NAME, MOCK_CONFIGURATION, COOKIE_OPTIONS)
+          const cookieAccess = createCookieAccess(COOKIE_NAME, COOKIE_OPTIONS)
           const spy = jasmine.createSpy('observer')
           const subscription = cookieAccess.observable.subscribe(spy)
           registerCleanupTask(() => subscription.unsubscribe())
@@ -195,10 +206,10 @@ describe('cookieAccess', () => {
         })
 
         it('should not notify when cookie value is unchanged', async () => {
-          const { clock, setCookieWithCleanup } = setup()
+          const { createCookieAccess, clock, setCookieWithCleanup } = setup()
           await setCookieWithCleanup(COOKIE_NAME, 'stable', 1000)
 
-          const cookieAccess = createCookieAccess(COOKIE_NAME, MOCK_CONFIGURATION, COOKIE_OPTIONS)
+          const cookieAccess = createCookieAccess(COOKIE_NAME, COOKIE_OPTIONS)
           const spy = jasmine.createSpy('observer')
           const subscription = cookieAccess.observable.subscribe(spy)
           registerCleanupTask(() => subscription.unsubscribe())
@@ -209,8 +220,8 @@ describe('cookieAccess', () => {
         })
 
         it('should notify the observable after writing', async () => {
-          const { flushObservable } = setup()
-          const cookieAccess = createCookieAccess(COOKIE_NAME, MOCK_CONFIGURATION, COOKIE_OPTIONS)
+          const { createCookieAccess, flushObservable } = setup()
+          const cookieAccess = createCookieAccess(COOKIE_NAME, COOKIE_OPTIONS)
           const spy = jasmine.createSpy('observer')
           const subscription = cookieAccess.observable.subscribe(spy)
           registerCleanupTask(() => subscription.unsubscribe())
@@ -223,4 +234,85 @@ describe('cookieAccess', () => {
       })
     })
   }
+
+  describe('areCookiesAuthorized', () => {
+    it('returns true when the access can write and read back the test cookie', async () => {
+      const access: CookieAccess = {
+        getAll: jasmine.createSpy('getAll').and.returnValue(Promise.resolve(['test'])),
+        getAllAndSet: jasmine.createSpy('getAllAndSet').and.returnValue(Promise.resolve()),
+        observable: null as any,
+      }
+      const factory = jasmine.createSpy('factory').and.returnValue(access)
+
+      const result = await areCookiesAuthorized(factory, COOKIE_OPTIONS, MOCK_CONFIGURATION)
+
+      expect(result).toBe(true)
+      expect(factory).toHaveBeenCalledWith(jasmine.any(String), COOKIE_OPTIONS, MOCK_CONFIGURATION)
+    })
+
+    it('returns false when the access cannot read back the test cookie', async () => {
+      const access: CookieAccess = {
+        getAll: () => Promise.resolve([]),
+        getAllAndSet: () => Promise.resolve(),
+        observable: null as any,
+      }
+
+      const result = await areCookiesAuthorized(() => access, COOKIE_OPTIONS, MOCK_CONFIGURATION)
+
+      expect(result).toBe(false)
+    })
+
+    it('returns false and logs when the access throws', async () => {
+      const displayErrorSpy = spyOn(display, 'error')
+      const access: CookieAccess = {
+        getAll: () => Promise.resolve([]),
+        getAllAndSet: () => Promise.reject(new Error('boom')),
+        observable: null as any,
+      }
+
+      const result = await areCookiesAuthorized(() => access, COOKIE_OPTIONS, MOCK_CONFIGURATION)
+
+      expect(result).toBe(false)
+      expect(displayErrorSpy).toHaveBeenCalled()
+    })
+
+    it('cleans up the test cookie after the check', async () => {
+      const calls: Array<{ value: string; expireDelay: number }> = []
+      const access: CookieAccess = {
+        getAll: () => Promise.resolve(['test']),
+        getAllAndSet: (cb) => {
+          calls.push(cb([]))
+          return Promise.resolve()
+        },
+        observable: null as any,
+      }
+
+      await areCookiesAuthorized(() => access, COOKIE_OPTIONS, MOCK_CONFIGURATION)
+
+      expect(calls).toEqual([
+        { value: 'test', expireDelay: jasmine.any(Number) as unknown as number },
+        { value: '', expireDelay: 0 },
+      ])
+    })
+
+    it('works with the real createDocumentCookieAccess', async () => {
+      disableCookieStore()
+      const result = await areCookiesAuthorized(createDocumentCookieAccess, COOKIE_OPTIONS, MOCK_CONFIGURATION)
+      expect(result).toBe(true)
+    })
+
+    it('works with the real createCookieStoreAccess', async () => {
+      if (!(window as CookieStoreWindow).cookieStore) {
+        pending('CookieStore API not available')
+      }
+      const result = await areCookiesAuthorized(createCookieStoreAccess, COOKIE_OPTIONS, MOCK_CONFIGURATION)
+      expect(result).toBe(true)
+    })
+
+    it('returns false when document.cookie is empty', async () => {
+      spyOnProperty(document, 'cookie', 'get').and.returnValue('')
+      const result = await areCookiesAuthorized(createDocumentCookieAccess, COOKIE_OPTIONS, MOCK_CONFIGURATION)
+      expect(result).toBe(false)
+    })
+  })
 })
