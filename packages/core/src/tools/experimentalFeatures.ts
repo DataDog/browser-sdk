@@ -20,6 +20,10 @@ export enum ExperimentalFeature {
   START_STOP_RESOURCE = 'start_stop_resource',
   TOO_MANY_REQUESTS_INVESTIGATION = 'too_many_requests_investigation',
   SESSION_RENEWAL_DEBUG_CONTEXT = 'session_renewal_debug_context',
+  COMPOSED_PATH_SELECTOR = 'composed_path_selector',
+  TRACK_RESOURCE_HEADERS = 'track_resource_headers',
+  PARTIAL_VIEW_UPDATES = 'partial_view_updates',
+  PARTIAL_VIEW_UPDATES_NO_CHECKPOINT = 'partial_view_updates_no_checkpoint',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()
