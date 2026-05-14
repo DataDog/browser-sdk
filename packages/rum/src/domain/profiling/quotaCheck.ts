@@ -35,16 +35,17 @@ function buildQuotaUrl(configuration: RumConfiguration, sessionId: string): stri
   const path = '/api/v2/profiling/quota'
   const parameters = `session_id=${sessionId}`
   const proxy = configuration.proxy
+  const host = `quota.${buildEndpointHost({ site: configuration.site, clientToken: configuration.clientToken })}`
 
   if (typeof proxy === 'string') {
     // Route through proxy to avoid CSP/CORS issues in environments with restricted connect-src
     return `${proxy}?ddforward=${encodeURIComponent(`${path}?${parameters}`)}`
   }
+
   if (typeof proxy === 'function') {
-    return proxy({ path, parameters })
+    return proxy({ path, parameters, host })
   }
 
-  const host = `quota.${buildEndpointHost({ site: configuration.site, clientToken: configuration.clientToken })}`
   return `https://${host}${path}?${parameters}`
 }
 
