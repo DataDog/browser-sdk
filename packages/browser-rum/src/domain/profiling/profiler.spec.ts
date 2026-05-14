@@ -36,6 +36,7 @@ import {
 import { mockRumConfiguration, mockViewHistory } from '../../../../browser-rum-core/test'
 import { mockProfiler } from '../../../test'
 import type { BrowserProfilerTrace } from '../../types'
+import type { QuotaResult } from './quotaCheck'
 import { checkProfilingQuota } from './quotaCheck'
 import { mockedTrace } from './test-utils/mockedTrace'
 import { createRumProfiler } from './datadogProfiler'
@@ -53,14 +54,14 @@ describe('profiler', () => {
   // Store the original pathname
   const originalPathname = document.location.pathname
   let interceptor: ReturnType<typeof interceptRequests>
-  let checkProfilingQuotaSpy: jasmine.Spy
+  let checkProfilingQuotaSpy: ReturnType<typeof replaceMockableWithSpy<typeof checkProfilingQuota>>
 
   beforeEach(() => {
     interceptor = interceptRequests()
     interceptor.withFetch(DEFAULT_FETCH_MOCK, DEFAULT_FETCH_MOCK, DEFAULT_FETCH_MOCK)
     // Default: quota always ok. Individual quota-check tests can reconfigure via spy.and.callFake(...)
     checkProfilingQuotaSpy = replaceMockableWithSpy(checkProfilingQuota)
-    checkProfilingQuotaSpy.and.returnValue(Promise.resolve({ decision: 'quota_ok', reason: 'quota_ok' }))
+    checkProfilingQuotaSpy.mockReturnValue(Promise.resolve({ decision: 'quota_ok', reason: 'quota_ok' }))
   })
 
   afterEach(() => {
@@ -578,14 +579,14 @@ describe('profiler', () => {
     const vitals3 = req3['wall-time.json'].vitals
 
     // Profile 1: all three operations present, only op1 has a duration
-    expect(vitals1?.map((v) => v.id)).toEqual(jasmine.arrayContaining(['op-id-1', 'op-id-2', 'op-id-3']))
+    expect(vitals1?.map((v) => v.id)).toEqual(expect.arrayContaining(['op-id-1', 'op-id-2', 'op-id-3']))
     expect(vitals1?.find((v) => v.id === 'op-id-1')?.duration).toBe(30 as Duration)
     expect(vitals1?.find((v) => v.id === 'op-id-2')?.duration).toBeUndefined()
     expect(vitals1?.find((v) => v.id === 'op-id-3')?.duration).toBeUndefined()
 
     // Profile 2: op1 is gone (ended before profile 2 started), op2 and op3 present, only op2 has a duration
     expect(vitals2?.map((v) => v.id)).not.toContain('op-id-1')
-    expect(vitals2?.map((v) => v.id)).toEqual(jasmine.arrayContaining(['op-id-2', 'op-id-3']))
+    expect(vitals2?.map((v) => v.id)).toEqual(expect.arrayContaining(['op-id-2', 'op-id-3']))
     expect(vitals2?.find((v) => v.id === 'op-id-2')?.duration).toBe(140 as Duration)
     expect(vitals2?.find((v) => v.id === 'op-id-3')?.duration).toBeUndefined()
 
@@ -1132,7 +1133,7 @@ describe('profiler', () => {
 
   describe('quota check', () => {
     it('should stop profiler and set quota_exceeded context when quota check returns quota_exceeded', async () => {
-      checkProfilingQuotaSpy.and.returnValue(Promise.resolve({ decision: 'quota_ko', reason: 'quota_exceeded' }))
+      checkProfilingQuotaSpy.mockReturnValue(Promise.resolve({ decision: 'quota_ko', reason: 'quota_exceeded' }))
       const { profiler, profilingContextManager } = setupProfiler()
 
       profiler.start()
@@ -1147,7 +1148,7 @@ describe('profiler', () => {
     })
 
     it('should stop profiler and set org_disabled context when quota check returns org_disabled', async () => {
-      checkProfilingQuotaSpy.and.returnValue(Promise.resolve({ decision: 'quota_ko', reason: 'org_disabled' }))
+      checkProfilingQuotaSpy.mockReturnValue(Promise.resolve({ decision: 'quota_ko', reason: 'org_disabled' }))
       const { profiler, profilingContextManager } = setupProfiler()
 
       profiler.start()
@@ -1162,7 +1163,9 @@ describe('profiler', () => {
     })
 
     it('should stop profiler and set unknown_reason context when quota check returns unknown_reason', async () => {
-      checkProfilingQuotaSpy.and.returnValue(Promise.resolve({ decision: 'quota_ko', reason: 'unknown_reason' }))
+      checkProfilingQuotaSpy.mockReturnValue(
+        Promise.resolve({ decision: 'quota_ko', reason: 'unknown_reason' } as unknown as QuotaResult)
+      )
       const { profiler, profilingContextManager } = setupProfiler()
 
       profiler.start()
@@ -1195,7 +1198,7 @@ describe('profiler', () => {
       const hooks = createHooks()
       const profilingContextManager = startProfilingContext(hooks)
       const noSessionManager = createSessionManagerMock()
-      spyOn(noSessionManager, 'findTrackedSession').and.returnValue(undefined)
+      vi.spyOn(noSessionManager, 'findTrackedSession').mockReturnValue(undefined)
       const profilerNoSession = createRumProfiler(
         mockRumConfiguration({ profilingSampleRate: 100 }),
         new LifeCycle(),
@@ -1216,8 +1219,8 @@ describe('profiler', () => {
     })
 
     it('should discard quota-exceeded result when profiler was already stopped by user', async () => {
-      let resolveQuota!: (result: { decision: string; reason: string }) => void
-      checkProfilingQuotaSpy.and.callFake(
+      let resolveQuota!: (result: QuotaResult) => void
+      checkProfilingQuotaSpy.mockImplementation(
         () =>
           new Promise((resolve) => {
             resolveQuota = resolve
@@ -1240,8 +1243,8 @@ describe('profiler', () => {
     })
 
     it('should discard quota-exceeded result when SESSION_EXPIRED fired before quota resolved', async () => {
-      let resolveQuota!: (result: { decision: string; reason: string }) => void
-      checkProfilingQuotaSpy.and.callFake(
+      let resolveQuota!: (result: QuotaResult) => void
+      checkProfilingQuotaSpy.mockImplementation(
         () =>
           new Promise((resolve) => {
             resolveQuota = resolve
@@ -1266,8 +1269,8 @@ describe('profiler', () => {
     })
 
     it('should stop profiler and not resume when quota-exceeded resolves while paused', async () => {
-      let resolveQuota!: (result: { decision: string; reason: string }) => void
-      checkProfilingQuotaSpy.and.callFake(
+      let resolveQuota!: (result: QuotaResult) => void
+      checkProfilingQuotaSpy.mockImplementation(
         () =>
           new Promise((resolve) => {
             resolveQuota = resolve
@@ -1298,9 +1301,9 @@ describe('profiler', () => {
     })
 
     it('should discard stale quota result when SESSION_RENEWED restarts the profiler', async () => {
-      let resolveOldQuota!: (result: { decision: string; reason: string }) => void
+      let resolveOldQuota!: (result: QuotaResult) => void
       let callCount = 0
-      checkProfilingQuotaSpy.and.callFake(() => {
+      checkProfilingQuotaSpy.mockImplementation(() => {
         callCount++
         if (callCount === 1) {
           return new Promise((resolve) => {
@@ -1329,7 +1332,7 @@ describe('profiler', () => {
 
     it('should restart profiler and re-check quota on SESSION_RENEWED after quota_exceeded or org_disabled', async () => {
       let callCount = 0
-      checkProfilingQuotaSpy.and.callFake(() => {
+      checkProfilingQuotaSpy.mockImplementation(() => {
         callCount++
         return Promise.resolve(
           callCount === 1

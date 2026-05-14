@@ -313,7 +313,7 @@ unit-bs:
   script:
     - yarn
     - yarn playwright install --with-deps
-    - FORCE_COLOR=1 node scripts/test/ci-bs.ts test:unit
+    - DEBUG=vitest:browser:* FORCE_COLOR=1 node scripts/test/ci-bs.ts test:unit
   after_script:
     - node ./scripts/test/export-test-result.ts unit-bs
 

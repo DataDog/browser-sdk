@@ -64,14 +64,14 @@ describe('event bridge getIsTraceSampled', () => {
     mockEventBridge({ isTraceSampled: true })
     const eventBridge = getEventBridge()!
 
-    expect(eventBridge.getIsTraceSampled()).toBeTrue()
+    expect(eventBridge.getIsTraceSampled()).toBe(true)
   })
 
   it("should return false when the bridge returns 'false'", () => {
     mockEventBridge({ isTraceSampled: false })
     const eventBridge = getEventBridge()!
 
-    expect(eventBridge.getIsTraceSampled()).toBeFalse()
+    expect(eventBridge.getIsTraceSampled()).toBe(false)
   })
 
   it("should return null when the bridge returns 'null'", () => {

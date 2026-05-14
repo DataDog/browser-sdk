@@ -401,93 +401,6 @@ describe('xhr observable', () => {
     })
   })
 
-<<<<<<< HEAD
-  it('should track request with undefined or null methods', (done) => {
-    withXhr({
-      setup(xhr) {
-        xhr.open(null, '/ok')
-        xhr.send()
-        xhr.onreadystatechange = jasmine.createSpy()
-        xhr.complete(200, 'ok')
-        xhr.open(undefined, '/ok')
-        xhr.send()
-        xhr.onreadystatechange = jasmine.createSpy()
-        xhr.complete(200, 'ok')
-      },
-      onComplete() {
-        expect(requests[0].method).toBe('NULL')
-        expect(requests[1].method).toBe('UNDEFINED')
-        done()
-      },
-    })
-  })
-
-  describe('with conflicting allowUntrustedEvents policies across callers', () => {
-    // Reproduces the bug where the early bufferedData call to
-    // initXhrObservable({ allowUntrustedEvents: true }) creates the singleton
-    // and a later initXhrObservable(customerConfig) silently reuses it,
-    // discarding the customer's stricter policy.
-    let policySubscription: Subscription
-    let policyContexts: XhrContext[]
-
-    beforeEach(() => {
-      requestsTrackingSubscription.unsubscribe()
-      resetXhrObservable()
-      policyContexts = []
-    })
-
-    afterEach(() => {
-      policySubscription.unsubscribe()
-      resetXhrObservable()
-      // The outer afterEach calls requestsTrackingSubscription.unsubscribe(); we already
-      // unsubscribed it in beforeEach, so give it a no-op stub.
-      requestsTrackingSubscription = { unsubscribe: noop }
-    })
-
-    it('does not emit completion for an untrusted loadend when the customer disallows it', (done) => {
-      // First caller (bufferedData) opts into untrusted events.
-      initXhrObservable({ allowUntrustedEvents: true })
-      // Second caller (customer config) opts out.
-      policySubscription = initXhrObservable({ allowUntrustedEvents: false }).subscribe((context) => {
-        policyContexts.push(context)
-      })
-
-      withXhr({
-        setup(xhr) {
-          xhr.open('GET', '/ok')
-          xhr.send()
-          // Untrusted Event (constructor-built, no __ddIsTrusted marker)
-          xhr.dispatchEvent(new Event('loadend'))
-        },
-        onComplete() {
-          const completions = policyContexts.filter((context) => context.state === 'complete')
-          expect(completions).toEqual([])
-          done()
-        },
-      })
-    })
-
-    it('emits completion for an untrusted loadend when every caller allows it', (done) => {
-      initXhrObservable({ allowUntrustedEvents: true })
-      policySubscription = initXhrObservable({ allowUntrustedEvents: true }).subscribe((context) => {
-        policyContexts.push(context)
-      })
-
-      withXhr({
-        setup(xhr) {
-          xhr.open('GET', '/ok')
-          xhr.send()
-          xhr.dispatchEvent(new Event('loadend'))
-        },
-        onComplete() {
-          const completions = policyContexts.filter((context) => context.state === 'complete')
-          expect(completions.length).toBe(1)
-          done()
-        },
-      })
-    })
-  })
-=======
   it('should track request with undefined or null methods', () =>
     new Promise<void>((resolve) => {
       withXhr({
@@ -508,9 +421,6 @@ describe('xhr observable', () => {
         },
       })
     }))
-<<<<<<< HEAD
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
-=======
 
   describe('with conflicting allowUntrustedEvents policies across callers', () => {
     // Reproduces the bug where the early bufferedData call to
@@ -579,5 +489,4 @@ describe('xhr observable', () => {
         })
       }))
   })
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 })

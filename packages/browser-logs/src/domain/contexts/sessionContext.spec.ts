@@ -1,13 +1,5 @@
-<<<<<<< HEAD
-import type { RelativeTime, SessionManager } from '@datadog/browser-core'
-=======
 import { beforeEach, describe, expect, it } from 'vitest'
-<<<<<<< HEAD
-import type { RelativeTime } from '@datadog/browser-core'
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
-=======
 import type { RelativeTime, SessionManager } from '@datadog/browser-core'
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 import { DISCARDED, HookNames } from '@datadog/browser-core'
 import { createSessionManagerMock } from '@datadog/browser-core/test'
 import type { DefaultLogsEventAttributes, Hooks } from '../hooks'
@@ -76,34 +68,4 @@ describe('session context', () => {
       })
     })
   })
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-
-  describe('assemble telemetry hook', () => {
-    it('should set the session id', () => {
-      startSessionContext(hooks, configuration, createLogsSessionManagerMock())
-
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
-        startTime: 0 as RelativeTime,
-      })
-
-      expect(defaultRumEventAttributes).toEqual({
-        session: { id: expect.any(String) },
-      })
-    })
-
-    it('should not set the session id if session is not tracked', () => {
-      startSessionContext(hooks, configuration, createLogsSessionManagerMock().setNotTracked())
-
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
-        startTime: 0 as RelativeTime,
-      })
-
-      expect(defaultRumEventAttributes).toBeUndefined()
-    })
-  })
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
-=======
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 })

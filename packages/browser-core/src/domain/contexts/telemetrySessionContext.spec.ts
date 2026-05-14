@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
 import { vi, beforeEach, describe, expect, it } from 'vitest'
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 import type { Hooks } from '../../../test'
 import { createHooks, createSessionManagerMock, MOCK_SESSION_ID } from '../../../test'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
@@ -48,11 +45,7 @@ describe('telemetrySessionContext', () => {
 
   it('should pass startTime to findTrackedSession', () => {
     const sessionManager = createSessionManagerMock()
-<<<<<<< HEAD
-    spyOn(sessionManager, 'findTrackedSession').and.callThrough()
-=======
     vi.spyOn(sessionManager, 'findTrackedSession')
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 
     startTelemetrySessionContext(hooks, sessionManager)
 

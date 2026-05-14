@@ -1,32 +1,8 @@
-<<<<<<< HEAD
-import type { Duration, MatchOption, RelativeTime, ServerDuration, TaskQueue, TimeStamp } from '@datadog/browser-core'
-import { createTaskQueue, display, elapsed, RequestType, ResourceType, toServerDuration } from '@datadog/browser-core'
-import type { Clock, MockTelemetry } from '@datadog/browser-core/test'
-import { mockClock, registerCleanupTask, replaceMockable, startMockTelemetry } from '@datadog/browser-core/test'
-=======
 import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
-<<<<<<< HEAD
-import type { Duration, RelativeTime, ServerDuration, TaskQueue, TimeStamp, MatchOption } from '@datadog/browser-core'
-import {
-  createTaskQueue,
-  noop,
-  RequestType,
-  ResourceType,
-  addExperimentalFeatures,
-  ExperimentalFeature,
-  display,
-} from '@datadog/browser-core'
-import type { MockTelemetry } from '@datadog/browser-core/test'
-import { replaceMockable, registerCleanupTask, startMockTelemetry } from '@datadog/browser-core/test'
-import { resetExperimentalFeatures } from '../../../../core/src/tools/experimentalFeatures'
-import type { RumFetchResourceEventDomainContext, RumXhrResourceEventDomainContext } from '../../domainContext.types'
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
-=======
 import type { Duration, MatchOption, RelativeTime, ServerDuration, TaskQueue, TimeStamp } from '@datadog/browser-core'
 import { createTaskQueue, display, elapsed, RequestType, ResourceType, toServerDuration } from '@datadog/browser-core'
 import type { Clock, MockTelemetry } from '@datadog/browser-core/test'
 import { mockClock, replaceMockable, registerCleanupTask, startMockTelemetry } from '@datadog/browser-core/test'
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 import {
   collectAndValidateRawRumEvents,
   createPerformanceEntry,
@@ -58,41 +34,18 @@ const baseConfiguration = mockRumConfiguration()
 
 describe('resourceCollection', () => {
   let lifeCycle: LifeCycle
-<<<<<<< HEAD
-<<<<<<< HEAD
-  let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
-  let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
-  let taskQueuePushSpy: jasmine.Spy<TaskQueue['push']>
-  let clock: Clock
-=======
-  let wasInPageStateDuringPeriodSpy: Mock<(...args: any[]) => any>
-  let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
-  let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
-  let taskQueuePushSpy: Mock<TaskQueue['push']>
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
-=======
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
   let taskQueuePushSpy: Mock<TaskQueue['push']>
   let clock: Clock
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 
   function setupResourceCollection(partialConfig: Partial<RumConfiguration> = { trackResources: true }) {
     const { triggerOnDomLoaded } = mockDocumentReadyState()
     lifeCycle = new LifeCycle()
     const taskQueue = createTaskQueue()
     replaceMockable(createTaskQueue, () => taskQueue)
-<<<<<<< HEAD
-    taskQueuePushSpy = spyOn(taskQueue, 'push')
-    const startResult = startResourceCollection(lifeCycle, { ...baseConfiguration, ...partialConfig })
-=======
     taskQueuePushSpy = vi.spyOn(taskQueue, 'push')
-<<<<<<< HEAD
-    const startResult = startResourceCollection(lifeCycle, { ...baseConfiguration, ...partialConfig }, pageStateHistory)
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
-=======
     const startResult = startResourceCollection(lifeCycle, { ...baseConfiguration, ...partialConfig })
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
 
@@ -106,13 +59,6 @@ describe('resourceCollection', () => {
   beforeEach(() => {
     clock = mockClock()
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-    wasInPageStateDuringPeriodSpy = vi.spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
-=======
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
   })
 
   it('should create resource from performance entry', () => {
@@ -214,24 +160,12 @@ describe('resourceCollection', () => {
       xhr,
       performanceEntry: expect.any(Object),
       isAborted: false,
-<<<<<<< HEAD
-      handlingStack: jasmine.stringMatching(HANDLING_STACK_REGEX),
-      isManual: false,
-      requestInit: undefined,
-      requestInput: undefined,
-      response: undefined,
-      error: undefined,
-=======
       handlingStack: expect.stringMatching(HANDLING_STACK_REGEX),
-<<<<<<< HEAD
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
-=======
       isManual: false,
       requestInit: undefined,
       requestInput: undefined,
       response: undefined,
       error: undefined,
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
     })
   })
 
@@ -405,22 +339,12 @@ describe('resourceCollection', () => {
     ])
     runTasks()
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-    expect(rawRumEvents.length).toBe(1)
-    expect(rawRumEvents[0].startClocks.relative).toBe(200 as RelativeTime)
-    expect(rawRumEvents[0].rawRumEvent).toEqual({
-      date: jasmine.any(Number),
-      resource: {
-        id: jasmine.any(String),
-=======
     expect(rawRumEvents.length).toBe(1)
     expect(rawRumEvents[0].startClocks.relative).toBe(200 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       date: expect.any(Number),
       resource: {
         id: expect.any(String),
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
         duration: (100 * 1e6) as ServerDuration,
         method: undefined,
         status_code: 200,
@@ -443,11 +367,7 @@ describe('resourceCollection', () => {
       },
     })
     expect(rawRumEvents[0].domainContext).toEqual({
-<<<<<<< HEAD
-      performanceEntry: jasmine.any(Object),
-=======
       performanceEntry: expect.any(Object),
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
       isManual: false,
       isAborted: false,
       handlingStack: undefined,
@@ -456,41 +376,6 @@ describe('resourceCollection', () => {
       response: undefined,
       error: undefined,
       xhr: undefined,
-<<<<<<< HEAD
-=======
-      expect(rawRumEvents.length).toBe(1)
-      expect(rawRumEvents[0].startClocks.relative).toBe(200 as RelativeTime)
-      expect(rawRumEvents[0].rawRumEvent).toEqual({
-        date: expect.any(Number),
-        resource: {
-          id: expect.any(String),
-          duration: (100 * 1e6) as ServerDuration,
-          method: undefined,
-          status_code: 200,
-          delivery_type: 'cache',
-          protocol: 'HTTP/1.0',
-          type: ResourceType.FETCH,
-          url: 'https://resource.com/valid',
-          render_blocking_status: 'non-blocking',
-          size: undefined,
-          encoded_body_size: undefined,
-          decoded_body_size: undefined,
-          transfer_size: undefined,
-          download: { duration: 100000000 as ServerDuration, start: 0 as ServerDuration },
-          first_byte: { duration: 0 as ServerDuration, start: 0 as ServerDuration },
-          graphql: undefined,
-        },
-        type: RumEventType.RESOURCE,
-        _dd: {
-          discarded: false,
-        },
-      })
-      expect(rawRumEvents[0].domainContext).toEqual({
-        performanceEntry: expect.any(Object),
-      })
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
-=======
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
     })
   })
 
@@ -546,25 +431,6 @@ describe('resourceCollection', () => {
     })
   })
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-  it('should not have a duration if a frozen state happens during the request and no performance entry matches', () => {
-    setupResourceCollection()
-    wasInPageStateDuringPeriodSpy.mockReturnValue(true)
-
-    notifyRequest({
-      // For now, this behavior only happens when there is no performance entry matching the request
-      notifyPerformanceEntry: false,
-    })
-
-    const rawRumResourceEventFetch = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
-    expect(rawRumResourceEventFetch.resource.duration).toBeUndefined()
-  })
-
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
-=======
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
   it('should create resource from completed fetch request', () => {
     setupResourceCollection()
     const response = new Response()
@@ -617,18 +483,9 @@ describe('resourceCollection', () => {
       requestInit: { headers: { foo: 'bar' } },
       error: undefined,
       isAborted: false,
-<<<<<<< HEAD
-      handlingStack: jasmine.stringMatching(HANDLING_STACK_REGEX),
-      isManual: false,
-      xhr: undefined,
-=======
       handlingStack: expect.stringMatching(HANDLING_STACK_REGEX),
-<<<<<<< HEAD
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
-=======
       isManual: false,
       xhr: undefined,
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
     })
   })
   ;[null, undefined, 42, {}].forEach((input: any) => {
@@ -1425,20 +1282,10 @@ describe('resourceCollection', () => {
   })
 
   function runTasks() {
-<<<<<<< HEAD
-<<<<<<< HEAD
     // Request-type entries are queued through a `setTimeout(…, REQUEST_MATCHING_DELAY)` before
     // they reach the task queue — advance past it so they get pushed.
     clock.tick(REQUEST_MATCHING_DELAY)
-    taskQueuePushSpy.calls.allArgs().forEach(([task]) => {
-=======
-=======
-    // Request-type entries are queued through a `setTimeout(…, REQUEST_MATCHING_DELAY)` before
-    // they reach the task queue — advance past it so they get pushed.
-    clock.tick(REQUEST_MATCHING_DELAY)
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
     taskQueuePushSpy.mock.calls.forEach(([task]) => {
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
       task()
     })
     taskQueuePushSpy.mockClear()

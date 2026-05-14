@@ -12,9 +12,7 @@ import {
   TrackingConsent,
   createTrackingConsentState,
   DefaultPrivacyLevel,
-  ExperimentalFeature,
   startTelemetry,
-  addExperimentalFeatures,
   startSessionManager,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
@@ -771,8 +769,6 @@ describe('preStartRum', () => {
     })
 
     it('startAction / stopAction', async () => {
-      addExperimentalFeatures([ExperimentalFeature.START_STOP_ACTION])
-
       const startActionSpy = vi.fn()
       const stopActionSpy = vi.fn()
       doStartRumSpy.mockReturnValue({

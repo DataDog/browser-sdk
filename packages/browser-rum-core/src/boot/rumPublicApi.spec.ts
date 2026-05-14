@@ -5,10 +5,8 @@ import {
   display,
   DefaultPrivacyLevel,
   timeStampToClocks,
-  ExperimentalFeature,
   ResourceType,
   startTelemetry,
-  addExperimentalFeatures,
   startSessionManager,
   getTimeStamp,
 } from '@datadog/browser-core'
@@ -848,7 +846,6 @@ describe('rum public api', () => {
   describe('startAction / stopAction', () => {
     it('should call startAction and stopAction on the strategy', async () => {
       const clock = mockClock()
-      addExperimentalFeatures([ExperimentalFeature.START_STOP_ACTION])
 
       const startActionSpy = vi.fn()
       const stopActionSpy = vi.fn()
@@ -890,8 +887,6 @@ describe('rum public api', () => {
     })
 
     it('should sanitize startAction and stopAction inputs', async () => {
-      addExperimentalFeatures([ExperimentalFeature.START_STOP_ACTION])
-
       const startActionSpy = vi.fn()
       const { rumPublicApi } = makeRumPublicApiWithDefaults({
         startRumResult: {
@@ -940,7 +935,6 @@ describe('rum public api', () => {
   describe('startResource / stopResource', () => {
     it('should call startResource and stopResource on the strategy', async () => {
       const clock = mockClock()
-      addExperimentalFeatures([ExperimentalFeature.START_STOP_RESOURCE])
 
       const startResourceSpy = vi.fn()
       const stopResourceSpy = vi.fn()
@@ -989,8 +983,6 @@ describe('rum public api', () => {
     })
 
     it('should sanitize startResource and stopResource inputs', async () => {
-      addExperimentalFeatures([ExperimentalFeature.START_STOP_RESOURCE])
-
       const startResourceSpy = vi.fn()
       const { rumPublicApi } = makeRumPublicApiWithDefaults({
         startRumResult: {

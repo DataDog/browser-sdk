@@ -31,13 +31,10 @@ describe('trackRuntimeError', () => {
   })
 
   it('should collect unhandled rejection', async () => {
-<<<<<<< HEAD
-=======
     if (!('onunhandledrejection' in window)) {
       return // skip: 'onunhandledrejection not supported'
     }
 
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
     const error = await errorViaTrackRuntimeError(() => {
       // Reject with a string instead of an Error here because Jasmine forwards the
       // unhandled rejection to the onerror handler with the wrong argument structure if
@@ -284,16 +281,11 @@ describe('instrumentUnhandledRejection', () => {
   const ERROR_MESSAGE = 'foo'
 
   const spyViaInstrumentOnUnhandledRejection = async (callback: () => void) => {
-<<<<<<< HEAD
-    const onUnhandledRejectionSpy = spyOn(window as any, 'onunhandledrejection')
-    const callbackSpy = jasmine.createSpy<UnhandledErrorCallback>()
-=======
     if (!('onunhandledrejection' in window)) {
       return // skip: 'onunhandledrejection not supported'
     }
 
     const callbackSpy = vi.fn<UnhandledErrorCallback>()
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
     const { stop } = instrumentUnhandledRejection(callbackSpy)
 
     try {

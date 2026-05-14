@@ -1,13 +1,5 @@
-<<<<<<< HEAD
-import type { ClocksState, RelativeTime, SessionManager, TimeStamp } from '@datadog/browser-core'
-=======
 import { vi, beforeEach, describe, expect, it } from 'vitest'
-<<<<<<< HEAD
-import type { ClocksState, RelativeTime, TimeStamp } from '@datadog/browser-core'
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
-=======
 import type { ClocksState, RelativeTime, SessionManager, TimeStamp } from '@datadog/browser-core'
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 import {
   ErrorSource,
   HookNames,
@@ -549,17 +541,8 @@ describe('rum assembly', () => {
     })
 
     it('should get session state from event start', () => {
-<<<<<<< HEAD
-<<<<<<< HEAD
       const sessionManager = createSessionManagerMock()
-      spyOn(sessionManager, 'findTrackedSession').and.callThrough()
-=======
-      const sessionManager = createRumSessionManagerMock()
-=======
-      const sessionManager = createSessionManagerMock()
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
       vi.spyOn(sessionManager, 'findTrackedSession')
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
       const { lifeCycle } = setupAssemblyTestWithDefaults({ sessionManager })
 
       notifyRawRumEvent(lifeCycle, {
@@ -697,17 +680,8 @@ function setupAssemblyTestWithDefaults({
 }: AssemblyTestParams = {}) {
   const lifeCycle = new LifeCycle()
   const hooks = createHooks()
-<<<<<<< HEAD
-  const reportErrorSpy = jasmine.createSpy('reportError')
-  const rumSessionManager = sessionManager ?? createSessionManagerMock().setId('1234')
-=======
   const reportErrorSpy = vi.fn()
-<<<<<<< HEAD
-  const rumSessionManager = sessionManager ?? createRumSessionManagerMock().setId('1234')
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
-=======
   const rumSessionManager = sessionManager ?? createSessionManagerMock().setId('1234')
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
   const serverRumEvents: RumEvent[] = []
   const subscription = lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent) => {
     serverRumEvents.push(serverRumEvent)

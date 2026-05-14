@@ -1,15 +1,6 @@
-<<<<<<< HEAD
-import type { BrowserChangeRecord, BrowserFullSnapshotChangeRecord, BrowserRecord } from '../../types'
-import { ChangeType, RecordType, SnapshotFormat } from '../../types'
-=======
 import { describe, expect, it } from 'vitest'
-<<<<<<< HEAD
-import { NodeType, RecordType, SnapshotFormat } from '../../types'
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
-=======
 import type { BrowserChangeRecord, BrowserFullSnapshotChangeRecord, BrowserRecord } from '../../types'
 import { ChangeType, RecordType, SnapshotFormat } from '../../types'
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 import { appendElement } from '../../../../rum-core/test'
 import { takeFullSnapshot, takeNodeSnapshot } from './internalApi'
 import { createChangeDecoder } from './serialization'
@@ -35,24 +26,8 @@ describe('takeFullSnapshot', () => {
           timestamp: expect.any(Number),
         },
         {
-<<<<<<< HEAD
-<<<<<<< HEAD
-          data: jasmine.any(Object),
-          format: SnapshotFormat.Change,
-=======
-          data: {
-            node: expect.any(Object),
-            initialOffset: {
-              left: expect.any(Number),
-              top: expect.any(Number),
-            },
-          },
-          format: SnapshotFormat.V1,
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
-=======
           data: expect.any(Object),
           format: SnapshotFormat.Change,
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
           type: RecordType.FullSnapshot,
           timestamp: expect.any(Number),
         },
@@ -102,11 +77,7 @@ describe('takeNodeSnapshot', () => {
       type: RecordType.FullSnapshot,
       format: SnapshotFormat.Change,
       data: [[ChangeType.AddNode, [null, 'DIV'], [1, '#text', 'Hello '], [0, 'B'], [1, '#text', 'world']]],
-<<<<<<< HEAD
-      timestamp: jasmine.any(Number),
-=======
       timestamp: expect.any(Number),
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
     })
   })
 
@@ -118,11 +89,7 @@ describe('takeNodeSnapshot', () => {
       type: RecordType.FullSnapshot,
       format: SnapshotFormat.Change,
       data: [[ChangeType.AddNode, [null, 'DIV'], [1, '#text', 'Hello'], [0, '#shadow-root'], [1, '#text', 'world']]],
-<<<<<<< HEAD
-      timestamp: jasmine.any(Number),
-=======
       timestamp: expect.any(Number),
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
     })
   })
 })

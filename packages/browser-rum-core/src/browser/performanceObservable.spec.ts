@@ -13,21 +13,8 @@ describe('performanceObservable', () => {
   let observableCallback: Mock
   let clock: Clock
 
-<<<<<<< HEAD
-<<<<<<< HEAD
   beforeEach(() => {
-    observableCallback = jasmine.createSpy()
-=======
-  beforeEach((ctx) => {
-    if (!window.PerformanceObserver) {
-      ctx.skip()
-      return
-    }
-=======
-  beforeEach(() => {
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
     observableCallback = vi.fn()
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
     clock = mockClock()
   })
 
@@ -35,12 +22,6 @@ describe('performanceObservable', () => {
     performanceSubscription?.unsubscribe()
   })
 
-<<<<<<< HEAD
-  it('should notify performance resources', () => {
-    const { notifyPerformanceEntries } = mockPerformanceObserver()
-    const performanceResourceObservable = createPerformanceObservable(configuration, {
-      type: RumPerformanceEntryType.RESOURCE,
-=======
   describe('primary strategy when type supported', () => {
     it('should notify performance resources', () => {
       const { notifyPerformanceEntries } = mockPerformanceObserver()
@@ -51,20 +32,8 @@ describe('performanceObservable', () => {
 
       notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: allowedUrl })])
       expect(observableCallback).toHaveBeenCalledWith([expect.objectContaining({ name: allowedUrl })])
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
     })
-    performanceSubscription = performanceResourceObservable.subscribe(observableCallback)
 
-<<<<<<< HEAD
-    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: allowedUrl })])
-    expect(observableCallback).toHaveBeenCalledWith([jasmine.objectContaining({ name: allowedUrl })])
-  })
-
-  it('should not notify performance resources with intake url', () => {
-    const { notifyPerformanceEntries } = mockPerformanceObserver()
-    const performanceResourceObservable = createPerformanceObservable(configuration, {
-      type: RumPerformanceEntryType.RESOURCE,
-=======
     it('should not notify performance resources with intake url', () => {
       const { notifyPerformanceEntries } = mockPerformanceObserver()
       const performanceResourceObservable = createPerformanceObservable(configuration, {
@@ -104,7 +73,7 @@ describe('performanceObservable', () => {
 
   describe('fallback strategy when type not supported', () => {
     it('should notify performance resources when type not supported', () => {
-      const { notifyPerformanceEntries } = mockPerformanceObserver({ typeSupported: false })
+      const { notifyPerformanceEntries } = mockPerformanceObserver({ supportedEntryTypes: [] })
       const performanceResourceObservable = createPerformanceObservable(configuration, {
         type: RumPerformanceEntryType.RESOURCE,
       })
@@ -112,26 +81,12 @@ describe('performanceObservable', () => {
 
       notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: allowedUrl })])
       expect(observableCallback).toHaveBeenCalledWith([expect.objectContaining({ name: allowedUrl })])
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
     })
-    performanceSubscription = performanceResourceObservable.subscribe(observableCallback)
 
-<<<<<<< HEAD
-    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: forbiddenUrl })])
-    expect(observableCallback).not.toHaveBeenCalled()
-  })
-=======
     it('should notify buffered performance resources when type not supported', () => {
-      const { notifyPerformanceEntries } = mockPerformanceObserver({ typeSupported: false })
+      const { notifyPerformanceEntries } = mockPerformanceObserver({ supportedEntryTypes: [] })
       notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: allowedUrl })])
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 
-<<<<<<< HEAD
-  it('should not notify performance resources with invalid duration', () => {
-    const { notifyPerformanceEntries } = mockPerformanceObserver()
-    const performanceResourceObservable = createPerformanceObservable(configuration, {
-      type: RumPerformanceEntryType.RESOURCE,
-=======
       const performanceResourceObservable = createPerformanceObservable(configuration, {
         type: RumPerformanceEntryType.RESOURCE,
         buffered: true,
@@ -140,28 +95,6 @@ describe('performanceObservable', () => {
       expect(observableCallback).not.toHaveBeenCalled()
       clock.tick(0)
       expect(observableCallback).toHaveBeenCalledWith([expect.objectContaining({ name: allowedUrl })])
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
     })
-<<<<<<< HEAD
-    performanceSubscription = performanceResourceObservable.subscribe(observableCallback)
-
-    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { duration: -1 as Duration })])
-    expect(observableCallback).not.toHaveBeenCalled()
-  })
-
-  it('should notify buffered performance resources asynchronously', () => {
-    const { notifyPerformanceEntries } = mockPerformanceObserver()
-    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: allowedUrl })])
-
-    const performanceResourceObservable = createPerformanceObservable(configuration, {
-      type: RumPerformanceEntryType.RESOURCE,
-      buffered: true,
-    })
-    performanceSubscription = performanceResourceObservable.subscribe(observableCallback)
-    expect(observableCallback).not.toHaveBeenCalled()
-    clock.tick(0)
-    expect(observableCallback).toHaveBeenCalledWith([jasmine.objectContaining({ name: allowedUrl })])
-=======
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
   })
 })

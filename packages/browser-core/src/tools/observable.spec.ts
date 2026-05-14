@@ -259,11 +259,7 @@ describe('BufferedObservable', () => {
   })
 
   it('calls onDrop with the number of dropped items when unbuffering', async () => {
-<<<<<<< HEAD
-    const onDrop = jasmine.createSpy('onDrop')
-=======
     const onDrop = vi.fn()
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
     const observable = new BufferedObservable<string>(2, onDrop)
     observable.notify('first') // dropped
     observable.notify('second') // dropped
@@ -273,20 +269,12 @@ describe('BufferedObservable', () => {
     observable.unbuffer()
     await waitNextMicrotask()
 
-<<<<<<< HEAD
-    expect(onDrop).toHaveBeenCalledOnceWith(2)
-  })
-
-  it('does not call onDrop when no data was dropped', async () => {
-    const onDrop = jasmine.createSpy('onDrop')
-=======
     expect(onDrop).toHaveBeenCalledTimes(1)
     expect(onDrop).toHaveBeenCalledWith(2)
   })
 
   it('does not call onDrop when no data was dropped', async () => {
     const onDrop = vi.fn()
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
     const observable = new BufferedObservable<string>(2, onDrop)
     observable.notify('first')
     observable.notify('second')

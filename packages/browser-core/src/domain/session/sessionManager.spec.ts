@@ -26,14 +26,19 @@ import {
   TRACKED_SESSION_MAX_AGE,
   VISIBILITY_CHECK_DELAY,
 } from './sessionManager'
-import { getSessionStoreStrategy } from './sessionStore'
+import { getSessionStoreStrategy, selectSessionStoreStrategyType } from './sessionStore'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY, SessionPersistence } from './sessionConstants'
 import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
+import { CookieApi } from './storeStrategies/sessionStoreStrategy'
 import type { SessionState } from './sessionState'
 import { EXPIRED } from './sessionState'
 
 describe('startSessionManager', () => {
-  const STORE_TYPE: SessionStoreStrategyType = { type: SessionPersistence.COOKIE, cookieOptions: {} }
+  const STORE_TYPE: SessionStoreStrategyType = {
+    type: SessionPersistence.COOKIE,
+    cookieOptions: {},
+    cookieApi: CookieApi.DOCUMENT_COOKIE,
+  }
   let fakeStrategy: ReturnType<typeof createFakeSessionStoreStrategy>
   let clock: Clock
   let sessionObservableSpy: Mock<(...args: any[]) => any>
@@ -70,7 +75,7 @@ describe('startSessionManager', () => {
   } = {}): Promise<SessionManager> {
     const sessionManager = await startSessionManager(
       {
-        sessionStoreStrategyType: STORE_TYPE,
+        sessionPersistence: SessionPersistence.COOKIE,
         sessionSampleRate: 100,
         ...configuration,
       } as Configuration,
@@ -82,9 +87,10 @@ describe('startSessionManager', () => {
   describe('initialization', () => {
     it('should not start if no session store strategy type is configured', async () => {
       const displayWarnSpy = vi.spyOn(display, 'warn')
+      replaceMockable(selectSessionStoreStrategyType, async () => undefined)
 
       const sessionManager = await startSessionManager(
-        { sessionStoreStrategyType: undefined } as Configuration,
+        {} as Configuration,
         createTrackingConsentState(TrackingConsent.GRANTED)
       )
 
@@ -102,7 +108,11 @@ describe('startSessionManager', () => {
       fakeStrategy.setSessionState.mockReturnValue(Promise.reject(new Error('storage failure')))
 
       const sessionManager = await startSessionManager(
-        { sessionStoreStrategyType: STORE_TYPE, sessionSampleRate: 100, trackAnonymousUser: false } as Configuration,
+        {
+          sessionPersistence: SessionPersistence.COOKIE,
+          sessionSampleRate: 100,
+          trackAnonymousUser: false,
+        } as Configuration,
         createTrackingConsentState(TrackingConsent.GRANTED)
       )
 
@@ -111,7 +121,11 @@ describe('startSessionManager', () => {
 
     it('should resolve after initialization', async () => {
       const sessionManager = await startSessionManager(
-        { sessionStoreStrategyType: STORE_TYPE, sessionSampleRate: 100, trackAnonymousUser: false } as Configuration,
+        {
+          sessionPersistence: SessionPersistence.COOKIE,
+          sessionSampleRate: 100,
+          trackAnonymousUser: false,
+        } as Configuration,
         createTrackingConsentState(TrackingConsent.GRANTED)
       )
 
@@ -538,7 +552,7 @@ describe('startSessionManager', () => {
 
       const sessionManagerPromise = startSessionManager(
         {
-          sessionStoreStrategyType: STORE_TYPE,
+          sessionPersistence: SessionPersistence.COOKIE,
           sessionSampleRate: 100,
           trackAnonymousUser: false,
         } as Configuration,

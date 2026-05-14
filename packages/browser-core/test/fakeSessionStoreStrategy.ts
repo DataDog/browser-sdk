@@ -4,11 +4,7 @@ import type { SessionState } from '../src/domain/session/sessionState'
 import type { SessionStoreStrategy } from '../src/domain/session/storeStrategies/sessionStoreStrategy'
 
 export type FakeSessionStoreStrategy = SessionStoreStrategy & {
-<<<<<<< HEAD
-  setSessionState: ReturnType<typeof vi.fn>
-=======
   setSessionState: ReturnType<typeof vi.fn<(fn: (state: SessionState) => SessionState) => Promise<void>>>
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
   getInternalState: () => SessionState
   simulateExternalChange: (state: SessionState) => void
 }

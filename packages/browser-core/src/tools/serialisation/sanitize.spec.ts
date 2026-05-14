@@ -33,14 +33,6 @@ describe('sanitize', () => {
       expect(sanitize(testFunction)).toBe('[Function] testFunction')
     })
 
-<<<<<<< HEAD
-    it('should handle bigint', () => {
-      expect(sanitize(2n)).toEqual('[BigInt] 2')
-    })
-
-    it('shoud handle symbols', () => {
-      const symbol = Symbol('description')
-=======
     it('should handle bigint', (ctx) => {
       const bigIntFunction: (val: number) => any = (window as any).BigInt
       if (typeof bigIntFunction !== 'function') {
@@ -58,7 +50,6 @@ describe('sanitize', () => {
         return
       }
       const symbol = symbolFunction('description')
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
       expect(sanitize(symbol)).toMatch(/\[Symbol\] (?:Symbol\()?description\)?/)
     })
   })

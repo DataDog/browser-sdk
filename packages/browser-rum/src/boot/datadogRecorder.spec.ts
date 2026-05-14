@@ -3,10 +3,6 @@ import type { TimeStamp, HttpRequest, HttpRequestEvent, Telemetry } from '@datad
 import { PageExitReason, DefaultPrivacyLevel, noop, DeflateEncoderStreamId, Observable } from '@datadog/browser-core'
 import type { ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType, startViewHistory } from '@datadog/browser-rum-core'
-<<<<<<< HEAD
-<<<<<<< HEAD:packages/rum/src/boot/datadogRecorder.spec.ts
-=======
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 import type { SessionManagerMock } from '@datadog/browser-core/test'
 import {
   collectAsyncCalls,
@@ -18,15 +14,6 @@ import {
 } from '@datadog/browser-core/test'
 import type { ViewEndedEvent } from '../../../rum-core/src/domain/view/trackViews'
 import { appendElement, mockRumConfiguration } from '../../../rum-core/test'
-<<<<<<< HEAD
-=======
-import { collectAsyncCalls, createNewEvent, mockEventBridge, registerCleanupTask } from '@datadog/browser-core/test'
-import type { ViewEndedEvent } from '@datadog/browser-rum-core/src/domain/view/trackViews'
-import type { RumSessionManagerMock } from '../../../rum-core/test'
-import { appendElement, createRumSessionManagerMock, mockRumConfiguration } from '../../../rum-core/test'
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API):packages/rum/src/boot/startRecording.spec.ts
-=======
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 
 import { recordsPerFullSnapshot, readReplayPayload } from '../../test'
 import type { ReplayPayload } from '../domain/segmentCollection'
@@ -108,44 +95,7 @@ describe.skipIf(!__BUILD_ENV__WORKER_STRING__)('startRecording', () => {
       has_full_snapshot: true,
       records_count: recordsPerFullSnapshot(),
       session: {
-<<<<<<< HEAD
-<<<<<<< HEAD:packages/rum/src/boot/datadogRecorder.spec.ts
         id: MOCK_SESSION_ID,
-=======
-        id: 'session-id',
-      },
-      start: expect.any(Number),
-      raw_segment_size: expect.any(Number),
-      compressed_segment_size: expect.any(Number),
-      view: {
-        id: 'view-id',
-      },
-      index_in_view: 0,
-      source: 'browser',
-    })
-  })
-
-  it('sends recorded segments with valid context when Change records are enabled', async () => {
-    addExperimentalFeatures([ExperimentalFeature.USE_CHANGE_RECORDS])
-    setupStartRecording()
-    flushSegment(lifeCycle)
-
-    const requests = await readSentRequests(1)
-    expect(requests[0].segment).toEqual(expect.any(Object))
-    expect(requests[0].event).toEqual({
-      application: {
-        id: 'appId',
-      },
-      creation_reason: 'init',
-      end: expect.stringMatching(/^\d{13}$/),
-      has_full_snapshot: true,
-      records_count: recordsPerFullSnapshot(),
-      session: {
-        id: 'session-id',
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API):packages/rum/src/boot/startRecording.spec.ts
-=======
-        id: MOCK_SESSION_ID,
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
       },
       start: expect.any(Number),
       raw_segment_size: expect.any(Number),

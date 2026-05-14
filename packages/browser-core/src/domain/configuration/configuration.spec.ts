@@ -94,54 +94,42 @@ describe('validateAndBuildConfiguration', () => {
     })
   })
 
-  describe('sessionStoreStrategyType', () => {
-    it('should contain cookie strategy in the configuration by default', () => {
+  describe('sessionPersistence', () => {
+    it('should be undefined by default', () => {
       const configuration = validateAndBuildConfiguration({ clientToken })
-      expect(configuration?.sessionStoreStrategyType).toEqual({
-        type: SessionPersistence.COOKIE,
-        cookieOptions: { secure: false, crossSite: false, partitioned: false },
-      })
+      expect(configuration?.sessionPersistence).toBeUndefined()
     })
 
-    it('should not contain any strategy if cookies are unavailable and no session persistence is configured', () => {
-      vi.spyOn(document, 'cookie', 'get').mockReturnValue('')
-      vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
-        throw new Error('unavailable')
+    it('should pass through a single session persistence value', () => {
+      const configuration = validateAndBuildConfiguration({
+        clientToken,
+        sessionPersistence: SessionPersistence.COOKIE,
       })
-      const configuration = validateAndBuildConfiguration({ clientToken })
-      expect(configuration?.sessionStoreStrategyType).toBeUndefined()
+      expect(configuration?.sessionPersistence).toBe(SessionPersistence.COOKIE)
     })
 
-    it('should use the first available strategy when multiple session persistence strategies are provided', () => {
+    it('should pass through an array of session persistence values', () => {
       const configuration = validateAndBuildConfiguration({
         clientToken,
         sessionPersistence: [SessionPersistence.COOKIE, SessionPersistence.LOCAL_STORAGE],
       })
-      expect(configuration?.sessionStoreStrategyType).toEqual({
-        type: SessionPersistence.COOKIE,
-        cookieOptions: { secure: false, crossSite: false, partitioned: false },
-      })
+      expect(configuration?.sessionPersistence).toEqual([SessionPersistence.COOKIE, SessionPersistence.LOCAL_STORAGE])
     })
 
-    it('should contain local-storage strategy if cookies are unavailable and session persistence contained cookies and local-storage', () => {
-      vi.spyOn(document, 'cookie', 'get').mockReturnValue('')
+    it('should pass through local-storage session persistence', () => {
       const configuration = validateAndBuildConfiguration({
         clientToken,
-        sessionPersistence: [SessionPersistence.COOKIE, SessionPersistence.LOCAL_STORAGE],
+        sessionPersistence: SessionPersistence.LOCAL_STORAGE,
       })
-      expect(configuration?.sessionStoreStrategyType).toEqual({ type: SessionPersistence.LOCAL_STORAGE })
+      expect(configuration?.sessionPersistence).toBe(SessionPersistence.LOCAL_STORAGE)
     })
 
-    it('should contain memory strategy if cookies and local-storage are unavailable and session persistence contained all three', () => {
-      vi.spyOn(document, 'cookie', 'get').mockReturnValue('')
-      vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
-        throw new Error('unavailable')
-      })
+    it('should pass through memory session persistence', () => {
       const configuration = validateAndBuildConfiguration({
         clientToken,
-        sessionPersistence: [SessionPersistence.COOKIE, SessionPersistence.LOCAL_STORAGE, SessionPersistence.MEMORY],
+        sessionPersistence: SessionPersistence.MEMORY,
       })
-      expect(configuration?.sessionStoreStrategyType).toEqual({ type: SessionPersistence.MEMORY })
+      expect(configuration?.sessionPersistence).toBe(SessionPersistence.MEMORY)
     })
   })
 

@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
-import { describe, expect, it } from 'vitest'
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
+import { describe, expect, it, type TestContext } from 'vitest'
 import { templateRequiresEvaluation, compileSegments, evaluateProbeMessage, browserInspect } from './template'
 
 describe('template', () => {
@@ -90,14 +87,9 @@ describe('template', () => {
       expect(browserInspect(false)).toBe('false')
     })
 
-    it('should inspect bigint', () => {
+    it('should inspect bigint', (ctx: TestContext) => {
       if (typeof BigInt === 'undefined') {
-<<<<<<< HEAD
-        pending('BigInt is not supported in this browser')
-=======
-        ;(pending as (reason?: string) => void)('BigInt is not supported in this browser')
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
-        return
+        ctx.skip()
       }
       expect(browserInspect(BigInt(123))).toBe('123n')
     })

@@ -80,31 +80,6 @@ describe('validateAndBuildLogsConfiguration', () => {
       ).toEqual(['error'])
     })
   })
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-
-  describe('PCI compliant intake option', () => {
-    let warnSpy: Mock<typeof display.warn>
-
-    beforeEach(() => {
-      warnSpy = vi.spyOn(display, 'warn')
-    })
-    it('should display warning with wrong PCI intake configuration', () => {
-      validateAndBuildLogsConfiguration({
-        ...DEFAULT_INIT_CONFIGURATION,
-        site: 'us3.datadoghq.com',
-        usePciIntake: true,
-      })
-      expect(warnSpy).toHaveBeenCalledTimes(1)
-      expect(warnSpy).toHaveBeenCalledWith(
-        'PCI compliance for Logs is only available for Datadog organizations in the US1 site. Default intake will be used.'
-      )
-    })
-  })
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
-=======
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 })
 
 describe('validateAndBuildForwardOption', () => {

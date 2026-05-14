@@ -173,17 +173,12 @@ describe('startWorker', () => {
     })
   })
 
-<<<<<<< HEAD
-  it('reports an error when an unexpected exception occurs while writing on a stream', () => {
-    spyOn(TextEncoder.prototype, 'encode').and.callFake(() => {
-=======
   it('reports an error when an unexpected exception occurs while writing on a stream', (ctx) => {
     if (!window.TextEncoder) {
       ctx.skip()
       return
     }
     vi.spyOn(TextEncoder.prototype, 'encode').mockImplementation(() => {
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
       throw new Error('Something went wrong!')
     })
     expect(

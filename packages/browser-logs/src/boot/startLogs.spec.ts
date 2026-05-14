@@ -4,6 +4,7 @@ import { ErrorSource, display, BufferedObservable, FLUSH_DURATION_LIMIT } from '
 import type { Clock, Request } from '@datadog/browser-core/test'
 import {
   interceptRequests,
+  mockEndpointBuilder,
   mockEventBridge,
   registerCleanupTask,
   mockClock,
@@ -45,21 +46,18 @@ const DEFAULT_MESSAGE = { status: StatusType.info, message: 'message' }
 const COMMON_CONTEXT = {
   view: { referrer: 'common_referrer', url: 'common_url' },
 }
+const DEFAULT_PAYLOAD = {} as Payload
 
-<<<<<<< HEAD
-function startLogsWithDefaults({ configuration }: { configuration?: Partial<LogsConfiguration> } = {}) {
-  const sessionManager = createSessionManagerMock()
-=======
 function startLogsWithDefaults({
   configuration,
   sessionManager: customSessionManager,
 }: { configuration?: Partial<LogsConfiguration>; sessionManager?: ReturnType<typeof createSessionManagerMock> } = {}) {
   const endpointBuilder = mockEndpointBuilder('https://localhost/v1/input/log')
   const sessionManager = customSessionManager ?? createSessionManagerMock()
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
   const { handleLog, stop, globalContext, accountContext, userContext } = startLogs(
     {
       ...validateAndBuildLogsConfiguration({ clientToken: 'xxx', service: 'service', telemetrySampleRate: 0 })!,
+      logsEndpointBuilder: endpointBuilder,
       ...configuration,
     },
     sessionManager,
@@ -72,7 +70,7 @@ function startLogsWithDefaults({
 
   const logger = new Logger(handleLog)
 
-  return { handleLog, logger, globalContext, accountContext, userContext, sessionManager }
+  return { handleLog, logger, endpointBuilder, globalContext, accountContext, userContext, sessionManager }
 }
 
 describe('logs', () => {
@@ -92,7 +90,7 @@ describe('logs', () => {
 
   describe('request', () => {
     it('should send the needed data', async () => {
-      const { handleLog, logger } = startLogsWithDefaults()
+      const { handleLog, logger, endpointBuilder } = startLogsWithDefaults()
 
       handleLog(
         { message: 'message', status: StatusType.warn, context: { foo: 'bar' } },
@@ -105,9 +103,7 @@ describe('logs', () => {
       await interceptor.waitForAllFetchCalls()
 
       expect(requests.length).toEqual(1)
-      expect(requests[0].url).toMatch(
-        /^https:\/\/browser-intake-datadoghq\.com\/api\/v2\/logs\?ddsource=browser&dd-api-key=xxx&dd-evp-origin-version=test&dd-evp-origin=browser&dd-request-id=/
-      )
+      expect(requests[0].url).toContain(endpointBuilder.build('fetch', DEFAULT_PAYLOAD))
       expect(getLoggedMessage(requests, 0)).toEqual({
         date: expect.any(Number),
         foo: 'bar',

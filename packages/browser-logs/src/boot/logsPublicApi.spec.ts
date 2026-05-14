@@ -72,15 +72,7 @@ describe('logs entry', () => {
     it('should have the current date, view and global context', () => {
       logsPublicApi.setGlobalContextProperty('foo', 'bar')
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-      const getCommonContext = startLogsSpy.calls.mostRecent().args[2]
-=======
-      const getCommonContext = startLogsSpy.mock.lastCall![1]
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
-=======
       const getCommonContext = startLogsSpy.mock.lastCall![2]
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
       expect(getCommonContext()).toEqual({
         view: {
           referrer: document.referrer,
@@ -107,11 +99,7 @@ describe('logs entry', () => {
   describe('post start API usages', () => {
     let logsPublicApi: LogsPublicApi
     let getLoggedMessage: ReturnType<typeof makeLogsPublicApiWithDefaults>['getLoggedMessage']
-<<<<<<< HEAD
-    let startLogsSpy: jasmine.Spy<StartLogs>
-=======
     let startLogsSpy: Mock<StartLogs>
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
     let userContext: ContextManager
     let accountContext: ContextManager
 

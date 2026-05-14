@@ -1,35 +1,14 @@
-<<<<<<< HEAD
-import { noop, type RelativeTime, type SessionManager } from '@datadog/browser-core'
-import { buildLocation, createSessionManagerMock } from '@datadog/browser-core/test'
-=======
 import { vi, describe, expect, it, type Mock } from 'vitest'
-<<<<<<< HEAD
-import { noop, type RelativeTime } from '@datadog/browser-core'
-import { buildLocation } from '@datadog/browser-core/test'
-import { createRumSessionManagerMock } from '../../../test'
-import type { RumSessionManager } from '../rumSessionManager'
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
-=======
 import { noop, type RelativeTime, type SessionManager } from '@datadog/browser-core'
 import { buildLocation, createSessionManagerMock } from '@datadog/browser-core/test'
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 import type { ActionContexts } from '../action/actionCollection'
 import { startInternalContext } from './internalContext'
 import type { ViewHistory } from './viewHistory'
 import type { UrlContexts } from './urlContexts'
 
 describe('internal context', () => {
-<<<<<<< HEAD
-  let findUrlSpy: jasmine.Spy<UrlContexts['findUrl']>
-  let findSessionSpy: jasmine.Spy<SessionManager['findTrackedSession']>
-=======
   let findUrlSpy: Mock<UrlContexts['findUrl']>
-<<<<<<< HEAD
-  let findSessionSpy: Mock<RumSessionManager['findTrackedSession']>
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
-=======
   let findSessionSpy: Mock<SessionManager['findTrackedSession']>
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
   let fakeLocation: Location
   let viewHistory: ViewHistory
   let actionContexts: ActionContexts

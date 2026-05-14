@@ -113,16 +113,12 @@ describe('httpRequest', () => {
       expect(requests[0].body).toEqual('{"foo":"bar1"}\n{"foo":"bar2"}')
     })
 
-<<<<<<< HEAD
-    it('should use sendBeacon when the bytes count is correct', () => {
-=======
     it('should use sendBeacon when the bytes count is correct', (ctx) => {
       if (!interceptor.isSendBeaconSupported()) {
         ctx.skip()
         return
       }
 
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
       request.sendOnExit({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
 
       expect(requests.length).toEqual(1)
@@ -138,19 +134,12 @@ describe('httpRequest', () => {
       expect(requests[0].type).toBe('fetch')
     })
 
-<<<<<<< HEAD
-    it('should fallback to fetch when sendBeacon is not queued', async () => {
-=======
     it('should fallback to fetch when sendBeacon is not queued', async (ctx) => {
       if (!interceptor.isSendBeaconSupported()) {
         ctx.skip()
         return
       }
-<<<<<<< HEAD
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
-=======
 
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
       interceptor.withSendBeacon(() => false)
 
       request.sendOnExit({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
@@ -161,19 +150,12 @@ describe('httpRequest', () => {
       expect(requests[0].type).toBe('fetch')
     })
 
-<<<<<<< HEAD
-    it('should fallback to fetch when sendBeacon throws', async () => {
-=======
     it('should fallback to fetch when sendBeacon throws', async (ctx) => {
       if (!interceptor.isSendBeaconSupported()) {
         ctx.skip()
         return
       }
-<<<<<<< HEAD
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
-=======
 
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
       let sendBeaconCalled = false
       interceptor.withSendBeacon(() => {
         sendBeaconCalled = true

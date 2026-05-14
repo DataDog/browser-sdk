@@ -1,20 +1,7 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-import type { ViewHistory } from '@datadog/browser-rum-core'
-import { createSessionManagerMock } from '@datadog/browser-core/test'
-import { mockRumConfiguration } from '../../../rum-core/test'
-=======
-import { beforeEach, describe, expect, it } from 'vitest'
-import type { RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
-import { registerCleanupTask } from '@datadog/browser-core/test'
-import { createRumSessionManagerMock } from '../../../rum-core/test'
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
-=======
 import { describe, expect, it } from 'vitest'
 import type { ViewHistory } from '@datadog/browser-rum-core'
 import { createSessionManagerMock } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../../rum-core/test'
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 import { getSessionReplayLink } from './getSessionReplayLink'
 import { addRecord } from './replayStats'
 

@@ -91,6 +91,8 @@ export default defineConfig({
       api: {
         host: 'bs-local.com',
       },
+      // Fail fast if a BrowserStack CDP connection can't be established (default: 60s).
+      connectTimeout: 30_000,
       instances: browserConfigurations.map((config) => ({
         browser: getPlaywrightBrowserName(config.name),
         name: config.sessionName,
@@ -107,14 +109,23 @@ export default defineConfig({
 
     exclude: ['packages/core/test/forEach.spec.ts', '**/node_modules/**'],
 
+    // BrowserStack CDP connections are unreliable: sessions drop silently and Vitest
+    // hangs waiting for dead sessions to finish. Limit to 1 worker per browser (matching
+    // Karma's concurrency model).
+    maxWorkers: 1,
+
     restoreMocks: true,
 
-    setupFiles: ['./test/unit/vitest.setup.ts'],
+    setupFiles: ['./test/unit/vitest.setup.ts', './test/unit/browserstack.keepalive.ts'],
 
     sequence: {
       shuffle: true,
     },
 
-    reporters: process.env.CI ? ['default', ['junit', { outputFile: 'test-report/unit-bs/results.xml' }]] : ['default'],
+    // Use 'verbose' in CI to produce per-test output (not just per-file).
+    // BrowserStack CDP connections die silently, leaving sessions stuck.
+    // More frequent output keeps the bs-wrapper's no-output timer alive
+    // while surviving browsers continue running.
+    reporters: process.env.CI ? ['verbose', ['junit', { outputFile: 'test-report/unit-bs/results.xml' }]] : ['default'],
   },
 })

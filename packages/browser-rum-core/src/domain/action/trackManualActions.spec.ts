@@ -275,7 +275,7 @@ describe('trackManualActions', () => {
       const actionIdBeforeRenewal = actionContexts.findActionId()
       expect(actionIdBeforeRenewal).toBeDefined()
 
-      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, undefined)
 
       expect(actionContexts.findActionId()).toHaveLength(0)
 
@@ -294,7 +294,7 @@ describe('trackManualActions', () => {
         action: { id: actionId },
       } as any)
 
-      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, undefined)
 
       startAction('tracked-action')
       stopAction('tracked-action')

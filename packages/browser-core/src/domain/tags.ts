@@ -51,8 +51,6 @@ export function sanitizeTag(tag: string) {
   return tag.replace(/,/g, '_')
 }
 
-<<<<<<< HEAD
-=======
 export function supportUnicodePropertyEscapes(): boolean {
   try {
     return new RegExp('\\p{L}', 'u').test('a')
@@ -61,7 +59,6 @@ export function supportUnicodePropertyEscapes(): boolean {
   }
 }
 
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 function hasForbiddenCharacters(rawValue: string) {
   // We use the Unicode property escapes to match any character that is a letter including other languages like Chinese, Japanese, etc.
   // p{Ll} matches a lowercase letter.

@@ -206,15 +206,7 @@ describe('makeRecorderApi', () => {
     })
 
     it('should start recording if session is tracked without session replay when forced', async () => {
-<<<<<<< HEAD
-<<<<<<< HEAD
-      const updateSessionStateSpy = jasmine.createSpy()
-=======
-      const setForcedReplaySpy = vi.fn()
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
-=======
       const updateSessionStateSpy = vi.fn()
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
 
       setupRecorderApi({
         sessionManager: {

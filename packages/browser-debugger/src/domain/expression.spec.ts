@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
-import { describe, expect, it, assert } from 'vitest'
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
+import { describe, expect, it, assert, type TestContext } from 'vitest'
 import * as acorn from 'acorn'
 import {
   literals,
@@ -59,9 +56,12 @@ describe('Expression language', () => {
       const baseName = generateTestCaseName(ast, vars, expected, suffix, execute)
       const uniqueName = makeUniqueName(baseName, testNameCounts)
 
-      it(uniqueName, () => {
+      it(uniqueName, (ctx: TestContext) => {
         if (before) {
-          before()
+          const skipReason = before() as string | undefined
+          if (skipReason) {
+            ctx.skip()
+          }
         }
 
         if (execute === false) {
@@ -167,11 +167,7 @@ describe('browser compatibility of generated code', () => {
     try {
       acorn.parse(functionCode, { ecmaVersion: OLDEST_BROWSER_ECMA_VERSION, sourceType: 'script' })
     } catch (e: unknown) {
-<<<<<<< HEAD
-      fail(
-=======
       assert.fail(
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
         `Generated code is not ES${OLDEST_BROWSER_ECMA_VERSION}-compatible: ${(e as Error).message}\n\nGenerated code:\n${code}`
       )
     }

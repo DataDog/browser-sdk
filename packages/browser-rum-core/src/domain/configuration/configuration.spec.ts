@@ -379,30 +379,6 @@ describe('validateAndBuildRumConfiguration', () => {
   })
 
   describe('enablePrivacyForActionName', () => {
-<<<<<<< HEAD
-<<<<<<< HEAD
-    it('defaults to true', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.enablePrivacyForActionName).toBeTrue()
-    })
-
-    it('is false when the option is false', () => {
-=======
-    it('defaults to false', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.enablePrivacyForActionName).toBe(false)
-    })
-
-    it('is true when the option is true', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.enablePrivacyForActionName).toBe(false)
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
-      expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, enablePrivacyForActionName: false })!
-          .enablePrivacyForActionName
-<<<<<<< HEAD
-      ).toBeFalse()
-=======
-      ).toBe(true)
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
-=======
     it('defaults to true', () => {
       expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.enablePrivacyForActionName).toBe(true)
     })
@@ -412,7 +388,6 @@ describe('validateAndBuildRumConfiguration', () => {
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, enablePrivacyForActionName: false })!
           .enablePrivacyForActionName
       ).toBe(false)
->>>>>>> 8fed0c958 (🔀 Merge main (resolve 77 conflicts, migrate new code to Vitest))
     })
   })
 

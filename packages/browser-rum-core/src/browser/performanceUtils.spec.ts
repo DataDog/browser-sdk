@@ -3,7 +3,7 @@ import { type RelativeTime } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { createPerformanceEntry, mockGlobalPerformanceBuffer } from '../../test'
 import type { RumPerformanceNavigationTiming } from './performanceObservable'
-import { RumPerformanceEntryType } from './performanceObservable'
+import { RumPerformanceEntryType, supportPerformanceTimingEvent } from './performanceObservable'
 import { findLcpResourceEntry, getNavigationEntry } from './performanceUtils'
 
 describe('getNavigationEntry', () => {
@@ -113,8 +113,6 @@ describe('getNavigationEntry', () => {
 })
 
 describe('findLcpResourceEntry', () => {
-<<<<<<< HEAD
-=======
   beforeEach((ctx) => {
     if (!supportPerformanceTimingEvent(RumPerformanceEntryType.RESOURCE)) {
       ctx.skip()
@@ -122,7 +120,6 @@ describe('findLcpResourceEntry', () => {
     }
   })
 
->>>>>>> 9f695e5f5 (✅ Migrate 257 spec files from Jasmine to Vitest API)
   it('should return undefined when no resource entries exist', () => {
     mockGlobalPerformanceBuffer([])
 

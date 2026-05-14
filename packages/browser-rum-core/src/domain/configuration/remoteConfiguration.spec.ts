@@ -765,7 +765,7 @@ describe('remoteConfiguration', () => {
       context: ReturnType<typeof createContextManager>
     }
     let interceptor: ReturnType<typeof interceptRequests>
-    let displaySpy: jasmine.Spy
+    let displaySpy: Mock
 
     function withCachedEntry(config: RumRemoteConfiguration) {
       localStorage.setItem(CACHE_KEY, JSON.stringify({ version: 1, config, fetchedAt: 1000 }))
@@ -792,7 +792,7 @@ describe('remoteConfiguration', () => {
       }
       supportedContextManagers = { user: createContextManager(), context: createContextManager() }
       interceptor = interceptRequests()
-      displaySpy = spyOn(display, 'error')
+      displaySpy = vi.spyOn(display, 'error') as Mock
 
       registerCleanupTask(() => {
         localStorage.clear()
