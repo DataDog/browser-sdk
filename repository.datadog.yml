@@ -38,3 +38,11 @@ kind: adms # Automated Dependency Management Service
 auto-version-updates:
   disabled:
     reason: We use renovate for now
+---
+schema-version: v1
+kind: mergegate
+name: rum-browser
+rules:
+  - require: reviewers-approval
+    enforcement: disabled
+  - require: all-files-are-owned
