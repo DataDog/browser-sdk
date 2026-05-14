@@ -272,7 +272,7 @@ type GenericBeforeSendCallback = (event: any, context?: any) => unknown
  * path: /api/vX/product
  * parameters: xxx=yyy&zzz=aaa
  */
-export type ProxyFn = (options: { path: string; parameters: string }) => string
+export type ProxyFn = (options: { path: string; parameters: string; host?: string }) => string
 
 /**
  * @internal
