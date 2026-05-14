@@ -36,3 +36,4 @@ test/e2e/.pinned-browsers/
 # Claude Code local files
 *.local.md
 .claude/settings.local.json
+.claude/worktrees/
