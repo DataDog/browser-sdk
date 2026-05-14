@@ -13,7 +13,7 @@ import type { RecordingScope } from '../recordingScope'
 import type { AddShadowRootCallBack, RemoveShadowRootCallBack } from '../shadowRootsController'
 import type { ChangeDecoder, SerializationStats } from '../serialization'
 import { aggregateSerializationStats, createSerializationStats } from '../serialization'
-import { serializeHtmlAsChange } from '../test/serializeHtml.specHelper'
+import { serializeHtml } from '../test/serializeHtml.specHelper'
 import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
 import { trackMutation } from './trackMutation'
 
@@ -35,7 +35,7 @@ describe('trackMutation', () => {
     const emittedMutations: BrowserChangeRecord[] = []
     const emittedStats = createSerializationStats()
 
-    const fullSnapshot = await serializeHtmlAsChange(initialContent, {
+    const fullSnapshot = await serializeHtml(initialContent, {
       scope: options.scope ?? createRecordingScopeForTesting({ configuration: options.configuration }),
       before(target: Node, scope: RecordingScope): void {
         const sandbox = target as HTMLElement

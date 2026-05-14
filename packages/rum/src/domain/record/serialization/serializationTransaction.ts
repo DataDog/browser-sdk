@@ -33,16 +33,16 @@ export const enum SerializationKind {
 
 type AddNodeParams<NodeChange extends AddNodeChange> = NodeChange extends [any, any, ...infer Params] ? Params : never
 
-export type ChangeSerializationTransactionCallback = (transaction: ChangeSerializationTransaction) => void
+export type SerializationTransactionCallback = (transaction: SerializationTransaction) => void
 
 /**
- * ChangeSerializationTransaction is used to build and emit a BrowserChangeRecord
+ * SerializationTransaction is used to build and emit a BrowserChangeRecord
  * containing a serialized snapshot of the DOM. Unlike SerializationTransaction, it
  * doesn't support emitting arbitrary BrowserRecords; instead, the builder methods it
  * exposes are used to construct a single BrowserChangeRecord which is emitted at the end
  * of the transaction.
  */
-export interface ChangeSerializationTransaction {
+export interface SerializationTransaction {
   /**
    * Add a metric to the transaction's statistics. The aggregated statistics will be
    * emitted when the transaction ends.
@@ -101,18 +101,18 @@ export interface ChangeSerializationTransaction {
   scope: RecordingScope
 }
 
-export function serializeChangesInTransaction(
+export function serializeInTransaction(
   kind: SerializationKind,
   emitRecord: EmitRecordCallback,
   emitStats: EmitStatsCallback,
   scope: RecordingScope,
   timestamp: TimeStamp,
-  serialize: ChangeSerializationTransactionCallback
+  serialize: SerializationTransactionCallback
 ): void {
   const encoder = createChangeEncoder(scope.stringIds)
   const stats = createSerializationStats()
 
-  const transaction: ChangeSerializationTransaction = {
+  const transaction: SerializationTransaction = {
     addMetric(metric: keyof SerializationStats, value: number): void {
       updateSerializationStats(stats, metric, value)
     },

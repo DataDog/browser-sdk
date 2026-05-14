@@ -7,12 +7,12 @@ import {
   PRIVACY_ATTR_VALUE_MASK_UNLESS_ALLOWLISTED,
   PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
 } from '@datadog/browser-rum-core'
-import { registerCleanupTask } from '../../../../../core/test'
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import { ChangeType, PlaybackState } from '../../../types'
 
-import { serializeHtmlAsChange } from '../test/serializeHtml.specHelper'
+import { serializeHtml } from '../test/serializeHtml.specHelper'
 
-describe('serializeNodeAsChange for snapshotted documents', () => {
+describe('serializeNode for snapshotted documents', () => {
   let originalTimeout: number
 
   beforeAll(() => {
@@ -80,7 +80,7 @@ describe('serializeNodeAsChange for snapshotted documents', () => {
     describe("when the <html> element's privacy level is ALLOW", () => {
       it('matches the snapshot', async () => {
         const html = createHtmlWithPrivacyAttributeValue(PRIVACY_ATTR_VALUE_ALLOW)
-        const record = await serializeHtmlAsChange(html, { input: 'document' })
+        const record = await serializeHtml(html, { input: 'document' })
         expect(record?.data).toEqual([
           [
             ChangeType.AddNode,
@@ -154,7 +154,7 @@ describe('serializeNodeAsChange for snapshotted documents', () => {
     describe("when the <html> element's privacy level is HIDDEN", () => {
       it('matches the snapshot', async () => {
         const html = createHtmlWithPrivacyAttributeValue(PRIVACY_ATTR_VALUE_HIDDEN)
-        const record = await serializeHtmlAsChange(html, { input: 'document' })
+        const record = await serializeHtml(html, { input: 'document' })
         expect(record?.data).toEqual([
           [
             ChangeType.AddNode,
@@ -171,7 +171,7 @@ describe('serializeNodeAsChange for snapshotted documents', () => {
     describe("when the <html> element's privacy level is MASK", () => {
       it('matches the snapshot', async () => {
         const html = createHtmlWithPrivacyAttributeValue(PRIVACY_ATTR_VALUE_MASK)
-        const record = await serializeHtmlAsChange(html, { input: 'document' })
+        const record = await serializeHtml(html, { input: 'document' })
         expect(record?.data).toEqual([
           [
             ChangeType.AddNode,
@@ -246,7 +246,7 @@ describe('serializeNodeAsChange for snapshotted documents', () => {
     describe("when the <html> element's privacy level is MASK_USER_INPUT", () => {
       it('matches the snapshot', async () => {
         const html = createHtmlWithPrivacyAttributeValue(PRIVACY_ATTR_VALUE_MASK_USER_INPUT)
-        const record = await serializeHtmlAsChange(html, { input: 'document' })
+        const record = await serializeHtml(html, { input: 'document' })
         expect(record?.data).toEqual([
           [
             ChangeType.AddNode,
@@ -314,7 +314,7 @@ describe('serializeNodeAsChange for snapshotted documents', () => {
         })
 
         const html = createHtmlWithPrivacyAttributeValue(PRIVACY_ATTR_VALUE_MASK_UNLESS_ALLOWLISTED)
-        const record = await serializeHtmlAsChange(html, { input: 'document' })
+        const record = await serializeHtml(html, { input: 'document' })
         expect(record?.data).toEqual([
           [
             ChangeType.AddNode,
@@ -397,7 +397,7 @@ describe('serializeNodeAsChange for snapshotted documents', () => {
         })
 
         const html = createHtmlWithPrivacyAttributeValue(PRIVACY_ATTR_VALUE_MASK_UNLESS_ALLOWLISTED)
-        const record = await serializeHtmlAsChange(html, { input: 'document' })
+        const record = await serializeHtml(html, { input: 'document' })
         expect(record?.data).toEqual([
           [
             ChangeType.AddNode,
@@ -475,7 +475,7 @@ describe('serializeNodeAsChange for snapshotted documents', () => {
 
       it('matches the snapshot when the allowlist is not defined', async () => {
         const html = createHtmlWithPrivacyAttributeValue(PRIVACY_ATTR_VALUE_MASK_UNLESS_ALLOWLISTED)
-        const record = await serializeHtmlAsChange(html, { input: 'document' })
+        const record = await serializeHtml(html, { input: 'document' })
         expect(record?.data).toEqual([
           [
             ChangeType.AddNode,

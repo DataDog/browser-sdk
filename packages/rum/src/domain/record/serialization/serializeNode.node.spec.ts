@@ -4,10 +4,10 @@ import type { BrowserChangeRecord, BrowserFullSnapshotChangeRecord } from '../..
 import { ChangeType, PlaybackState } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
 import type { ScrollPositions } from '../elementsScrollPositions'
-import { serializeHtmlAsChange } from '../test/serializeHtml.specHelper'
+import { serializeHtml } from '../test/serializeHtml.specHelper'
 import { SerializationKind } from './serializationTransaction'
 
-describe('serializeNodeAsChange for DOM nodes', () => {
+describe('serializeNode for DOM nodes', () => {
   let originalTimeout: number
 
   beforeAll(() => {
@@ -21,7 +21,7 @@ describe('serializeNodeAsChange for DOM nodes', () => {
 
   describe('for #cdata-section nodes', () => {
     it('serializes the node', async () => {
-      const record = await serializeHtmlAsChange('<div></div>', {
+      const record = await serializeHtml('<div></div>', {
         target: (node: Node) => {
           // It's surprisingly tricky to create a CDATA section, since HTML documents are
           // not allowed to contain them in normal circumstances; the HTML parser will
@@ -40,14 +40,14 @@ describe('serializeNodeAsChange for DOM nodes', () => {
 
   describe('for #comment nodes', () => {
     it('does not serialize the node', async () => {
-      const record = await serializeHtmlAsChange('<!-- comment -->')
+      const record = await serializeHtml('<!-- comment -->')
       expect(record?.data).toBeUndefined()
     })
   })
 
   describe('for #document nodes', () => {
     it('serializes the #document node', async () => {
-      const record = await serializeHtmlAsChange('<!doctype html><html>foo</html>', { input: 'document' })
+      const record = await serializeHtml('<!doctype html><html>foo</html>', { input: 'document' })
       expect(record?.data).toEqual([
         [
           ChangeType.AddNode,
@@ -63,7 +63,7 @@ describe('serializeNodeAsChange for DOM nodes', () => {
     })
 
     it('serializes the #document node when the default privacy level is MASK', async () => {
-      const record = await serializeHtmlAsChange('<!doctype html><html>foo</html>', {
+      const record = await serializeHtml('<!doctype html><html>foo</html>', {
         configuration: { defaultPrivacyLevel: DefaultPrivacyLevel.MASK },
         input: 'document',
       })
@@ -84,14 +84,14 @@ describe('serializeNodeAsChange for DOM nodes', () => {
 
   describe('for #text nodes', () => {
     it('serializes the node', async () => {
-      const record = await serializeHtmlAsChange('<div>text content</div>', {
+      const record = await serializeHtml('<div>text content</div>', {
         target: (node: Node) => node.firstChild!,
       })
       expect(record?.data).toEqual([[ChangeType.AddNode, [null, '#text', 'text content']]])
     })
 
     it('serializes a node with no text content', async () => {
-      const record = await serializeHtmlAsChange('<div>xxx</div>', {
+      const record = await serializeHtml('<div>xxx</div>', {
         before(target: Node): void {
           target.textContent = ''
         },
@@ -103,7 +103,7 @@ describe('serializeNodeAsChange for DOM nodes', () => {
     })
 
     it('does not serialize a whitespace-only node if the parent is a <head> element', async () => {
-      const record = await serializeHtmlAsChange('<!doctype HTML><head>    </head>', {
+      const record = await serializeHtml('<!doctype HTML><head>    </head>', {
         input: 'document',
         target: (node: Node) => (node as Document).head.firstChild!,
         whitespace: 'keep',
@@ -114,14 +114,12 @@ describe('serializeNodeAsChange for DOM nodes', () => {
 
   describe('for HTML elements', () => {
     it('serializes the element', async () => {
-      const record = await serializeHtmlAsChange('<div>')
+      const record = await serializeHtml('<div>')
       expect(record?.data).toEqual([[ChangeType.AddNode, [null, 'DIV']]])
     })
 
     it("serializes the HTML element's attributes", async () => {
-      const record = await serializeHtmlAsChange(
-        '<div foo="bar" data-foo="data-bar" class="zog" style="width: 10px;"></div>'
-      )
+      const record = await serializeHtml('<div foo="bar" data-foo="data-bar" class="zog" style="width: 10px;"></div>')
       expect(record?.data).toEqual([
         [
           ChangeType.AddNode,
@@ -133,7 +131,7 @@ describe('serializeNodeAsChange for DOM nodes', () => {
 
   describe('for SVG elements', () => {
     it('serializes the element', async () => {
-      const record = await serializeHtmlAsChange(`
+      const record = await serializeHtml(`
         <svg viewBox="0 0 100 100">
           <clipPath id="myClip">
             <circle cx="40" cy="35" r="35" />
@@ -164,7 +162,7 @@ describe('serializeNodeAsChange for DOM nodes', () => {
 
   describe('for <audio> elements', () => {
     it("serializes the <audio> element's playback state when paused", async () => {
-      const record = await serializeHtmlAsChange('<audio></audio>')
+      const record = await serializeHtml('<audio></audio>')
       expect(record?.data).toEqual([
         [ChangeType.AddNode, [null, 'AUDIO']],
         [ChangeType.MediaPlaybackState, [0, PlaybackState.Paused]],
@@ -172,7 +170,7 @@ describe('serializeNodeAsChange for DOM nodes', () => {
     })
 
     it("serializes the <audio> element's playback state when playing", async () => {
-      const record = await serializeHtmlAsChange('<audio></audio>', {
+      const record = await serializeHtml('<audio></audio>', {
         before(target: Node): void {
           // Emulate a playing audio file.
           Object.defineProperty(target, 'paused', { value: false })
@@ -187,7 +185,7 @@ describe('serializeNodeAsChange for DOM nodes', () => {
 
   describe('for <head> elements', () => {
     it('does not serialize whitespace', async () => {
-      const record = await serializeHtmlAsChange('<!doctype HTML><head>  <title>  foo </title>  </head>', {
+      const record = await serializeHtml('<!doctype HTML><head>  <title>  foo </title>  </head>', {
         input: 'document',
         whitespace: 'keep',
       })
@@ -209,7 +207,7 @@ describe('serializeNodeAsChange for DOM nodes', () => {
 
   describe('for <link> elements', () => {
     it('serializes the element', async () => {
-      const record = await serializeHtmlAsChange(`
+      const record = await serializeHtml(`
         <link rel="alternate" type="application/atom+xml" href="posts.xml" title="Blog">
       `)
       expect(record?.data).toEqual([
@@ -228,14 +226,14 @@ describe('serializeNodeAsChange for DOM nodes', () => {
     })
 
     it('does not serialize <link rel="shortcut icon">', async () => {
-      const record = await serializeHtmlAsChange('<link rel="shortcut icon">')
+      const record = await serializeHtml('<link rel="shortcut icon">')
       expect(record?.data).toBeUndefined()
     })
   })
 
   describe('for <meta> elements', () => {
     it('serializes the element', async () => {
-      const record = await serializeHtmlAsChange(`
+      const record = await serializeHtml(`
         <meta name="viewport" content="width=device-width, initial-scale=1">
       `)
       expect(record?.data).toEqual([
@@ -244,14 +242,14 @@ describe('serializeNodeAsChange for DOM nodes', () => {
     })
 
     it('does not serialize <meta name="keywords">', async () => {
-      const record = await serializeHtmlAsChange(`
+      const record = await serializeHtml(`
         <meta name="keywords" content="products" lang="en">
       `)
       expect(record?.data).toBeUndefined()
     })
 
     it('does not serialize <meta name="KeYwOrDs">', async () => {
-      const record = await serializeHtmlAsChange(`
+      const record = await serializeHtml(`
         <meta name="KeYwOrDs" content="products" lang="en">
       `)
       expect(record?.data).toBeUndefined()
@@ -260,14 +258,14 @@ describe('serializeNodeAsChange for DOM nodes', () => {
 
   describe('for <script> elements', () => {
     it('does not serialize the element', async () => {
-      const record = await serializeHtmlAsChange('<script></script>')
+      const record = await serializeHtml('<script></script>')
       expect(record?.data).toBeUndefined()
     })
   })
 
   describe('for children of <script> elements', () => {
     it('does not serialize them', async () => {
-      const record = await serializeHtmlAsChange('<script>foo</script>', {
+      const record = await serializeHtml('<script>foo</script>', {
         target: (node: Node) => node.firstChild!,
       })
       expect(record?.data).toBeUndefined()
@@ -276,7 +274,7 @@ describe('serializeNodeAsChange for DOM nodes', () => {
 
   describe('for <video> elements', () => {
     it("serializes the <video> element's playback state when paused", async () => {
-      const record = await serializeHtmlAsChange('<video></video>')
+      const record = await serializeHtml('<video></video>')
       expect(record?.data).toEqual([
         [ChangeType.AddNode, [null, 'VIDEO']],
         [ChangeType.MediaPlaybackState, [0, PlaybackState.Paused]],
@@ -284,7 +282,7 @@ describe('serializeNodeAsChange for DOM nodes', () => {
     })
 
     it("serializes the <video> element's playback state when playing", async () => {
-      const record = await serializeHtmlAsChange('<video></video>', {
+      const record = await serializeHtml('<video></video>', {
         before(target: Node): void {
           // Emulate a playing video.
           Object.defineProperty(target, 'paused', { value: false })
@@ -299,7 +297,7 @@ describe('serializeNodeAsChange for DOM nodes', () => {
 
   describe('for elements with NodePrivacyLevel.HIDDEN', () => {
     it('generates a placeholder', async () => {
-      const record = await serializeHtmlAsChange(`
+      const record = await serializeHtml(`
         <div
           ${PRIVACY_ATTR_NAME}="${PRIVACY_ATTR_VALUE_HIDDEN}"
           style="width: 200px; height: 100px;"
@@ -317,7 +315,7 @@ describe('serializeNodeAsChange for DOM nodes', () => {
 
   describe('for children of elements with NodePrivacyLevel.HIDDEN', () => {
     it('does not serialize them', async () => {
-      const record = await serializeHtmlAsChange(
+      const record = await serializeHtml(
         `
         <div ${PRIVACY_ATTR_NAME}="${PRIVACY_ATTR_VALUE_HIDDEN}">
           <span>Foo</span>
@@ -341,7 +339,7 @@ describe('serializeNodeAsChange for DOM nodes', () => {
     function serializeScrollableElement(
       scrollPositions: ScrollPositions | undefined
     ): Promise<BrowserChangeRecord | BrowserFullSnapshotChangeRecord | undefined> {
-      return serializeHtmlAsChange(scrollableElement, {
+      return serializeHtml(scrollableElement, {
         before(target: Node): void {
           if (scrollPositions) {
             ;(target as Element).scrollBy(scrollPositions.scrollLeft, scrollPositions.scrollTop)
@@ -380,7 +378,7 @@ describe('serializeNodeAsChange for DOM nodes', () => {
 
     describe('during subsequent full snapshots', () => {
       it('reads the scroll position from ElementScrollPositions and serializes it', async () => {
-        const record = await serializeHtmlAsChange(scrollableElement, {
+        const record = await serializeHtml(scrollableElement, {
           before(target: Node, scope: RecordingScope): void {
             scope.elementsScrollPositions.set(target as Element, { scrollLeft: 10, scrollTop: 20 })
           },
@@ -397,7 +395,7 @@ describe('serializeNodeAsChange for DOM nodes', () => {
       })
 
       it('does not read the scroll position from the DOM', async () => {
-        const record = await serializeHtmlAsChange(scrollableElement, {
+        const record = await serializeHtml(scrollableElement, {
           before(target: Node): void {
             ;(target as Element).scrollBy(10, 20)
           },
@@ -418,7 +416,7 @@ describe('serializeNodeAsChange for DOM nodes', () => {
 
     describe('during incremental mutations', () => {
       it('does not serialize the scroll position', async () => {
-        const record = await serializeHtmlAsChange(scrollableElement, {
+        const record = await serializeHtml(scrollableElement, {
           before(target: Node, scope: RecordingScope): void {
             ;(target as Element).scrollBy(10, 20)
             scope.elementsScrollPositions.set(target as Element, { scrollLeft: 10, scrollTop: 20 })
@@ -438,7 +436,7 @@ describe('serializeNodeAsChange for DOM nodes', () => {
 
   describe('for shadow hosts', () => {
     it('serializes the element and its shadow root', async () => {
-      const record = await serializeHtmlAsChange('<div id="shadow-host"></div>', {
+      const record = await serializeHtml('<div id="shadow-host"></div>', {
         before(target: Node): void {
           ;(target as Element).attachShadow({ mode: 'open' })
         },
@@ -447,7 +445,7 @@ describe('serializeNodeAsChange for DOM nodes', () => {
     })
 
     it('serializes elements within the shadow subtree', async () => {
-      const record = await serializeHtmlAsChange('<div id="shadow-host"></div>', {
+      const record = await serializeHtml('<div id="shadow-host"></div>', {
         before(target: Node): void {
           const shadowRoot = (target as Element).attachShadow({ mode: 'open' })
           shadowRoot.appendChild(target.ownerDocument!.createElement('hr'))
@@ -459,7 +457,7 @@ describe('serializeNodeAsChange for DOM nodes', () => {
     })
 
     it("propagates the element's privacy level to its shadow subtree", async () => {
-      const record = await serializeHtmlAsChange(
+      const record = await serializeHtml(
         `
         <div
           id="shadow-host"
