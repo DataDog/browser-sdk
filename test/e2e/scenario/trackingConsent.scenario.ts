@@ -61,6 +61,37 @@ test.describe('tracking consent', () => {
         expect(await findSessionCookie(browserContext)).not.toEqual(initialSessionId)
       })
 
+    createTest('recovers when consent is revoked during session manager init and re-granted')
+      .withRum({ trackingConsent: 'not-granted' })
+      .run(async ({ intakeRegistry, flushEvents, browserContext, page }) => {
+        // Known bug: onGrantedOnce fires exactly once, so a revoke-during-init
+        // bail-out leaves the SDK permanently stuck. Re-granting later never
+        // brings the session manager back. Remove the test.fail() once fixed.
+        test.fail()
+
+        // Grant then revoke synchronously: the grant triggers startSessionManager
+        // (it begins awaiting setSessionState / cookie lock), and the revoke lands
+        // before that async work completes.
+        await page.evaluate(() => {
+          window.DD_RUM!.setTrackingConsent('granted')
+          window.DD_RUM!.setTrackingConsent('not-granted')
+        })
+
+        // Allow the pending setSessionState to resolve so the original
+        // startSessionManager call observes the revoked state and bails out.
+        await page.waitForTimeout(200)
+
+        // Re-grant: onGrantedOnce has already fired, so nothing reacts.
+        await page.evaluate(() => {
+          window.DD_RUM!.setTrackingConsent('granted')
+        })
+
+        await flushEvents()
+
+        expect(intakeRegistry.rumViewEvents.length).toBeGreaterThan(0)
+        expect((await findSessionCookie(browserContext))?.isExpired).not.toEqual('1')
+      })
+
     createTest('using setTrackingConsent before init overrides the init parameter')
       .withRum({ trackingConsent: 'not-granted' })
       .withRumInit((configuration) => {
