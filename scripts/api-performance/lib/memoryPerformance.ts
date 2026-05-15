@@ -1,7 +1,7 @@
 import type { Browser, CDPSession, Page, Protocol } from 'puppeteer'
 import { launch } from 'puppeteer'
 import { formatSize, printLog } from '../../lib/executionUtils.ts'
-import { reportToDatadog } from './reportToDatadog.ts'
+import { reportToDatadog } from '../../lib/reportToDatadog.ts'
 import type { Test } from './constants.ts'
 import { TESTS } from './constants.ts'
 
