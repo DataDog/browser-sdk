@@ -72,12 +72,13 @@ test.describe('tracking consent', () => {
           window.DD_RUM!.setTrackingConsent('not-granted')
         })
 
-        // Allow the pending setSessionState to resolve so the original
-        // startSessionManager call observes the revoked state.
+        // While consent stays revoked the cookie must be marked expired so
+        // other tabs don't pick up an orphan session ID.
         await page.waitForTimeout(200)
+        expect((await findSessionCookie(browserContext))?.isExpired).toEqual('1')
 
         // Re-grant: the session manager should now finish installing and
-        // start collecting events.
+        // start collecting events with a fresh session.
         await page.evaluate(() => {
           window.DD_RUM!.setTrackingConsent('granted')
         })
