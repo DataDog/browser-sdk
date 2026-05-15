@@ -95,11 +95,13 @@ test.describe('rum resources', () => {
       await flushEvents()
       const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.url.includes('empty.css'))
 
+      const info = test.info()
+      const tag = `[EARLY-TIMINGS-DEBUG ${browserName} title=${JSON.stringify(info.title)} repeat=${info.repeatEachIndex}]`
       // eslint-disable-next-line no-console
-      console.log(`[EARLY-TIMINGS-DEBUG ${browserName}] raw=`, JSON.stringify(raw))
+      console.log(`${tag} raw=`, JSON.stringify(raw))
       // eslint-disable-next-line no-console
       console.log(
-        `[EARLY-TIMINGS-DEBUG ${browserName}] sdk=`,
+        `${tag} sdk=`,
         JSON.stringify({
           duration: resourceEvent?.resource.duration,
           download: resourceEvent?.resource.download,

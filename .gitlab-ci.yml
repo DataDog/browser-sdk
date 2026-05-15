@@ -256,8 +256,10 @@ e2e:
     - yarn build:apps
     # Browsers are pre-installed in the CI image. If playwright (current or pinned 1.40.1)
     # is upgraded without rebuilding the image, this job will crash — rebuild the image to fix it.
-    # REPRO branch: only the early-timings test, 50 repeats, no retries so each repeat is independent.
-    - FORCE_COLOR=1 PW_BROWSER=$BROWSER yarn test:e2e --project=$BROWSER -g "retrieve early requests timings" --repeat-each=50 --retries=0
+    # REPRO branch: only the early-timings test. workers=1 to serialize stdout (otherwise
+    # parallel console.log output interleaves and is hard to read). 30 repeats × 3 sub-tests
+    # = 90 attempts, retries=0 so each repeat is independent.
+    - FORCE_COLOR=1 PW_BROWSER=$BROWSER yarn test:e2e --project=$BROWSER -g "retrieve early requests timings" --repeat-each=30 --retries=0 --workers=1
   after_script:
     - node ./scripts/test/export-test-result.ts e2e
 
