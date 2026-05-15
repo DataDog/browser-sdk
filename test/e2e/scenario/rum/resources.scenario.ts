@@ -61,9 +61,55 @@ test.describe('rum resources', () => {
   createTest('retrieve early requests timings')
     .withRum()
     .withHead(html` <link rel="stylesheet" href="/empty.css" /> `)
-    .run(async ({ intakeRegistry, flushEvents }) => {
+    .run(async ({ intakeRegistry, flushEvents, page, browserName }) => {
+      // DEBUG (repro branch): sample raw PerformanceResourceTiming + performance.now() clock
+      // resolution BEFORE flushEvents() — flushEvents triggers a navigation that wipes the
+      // resource buffer. We're trying to confirm the WebKit 1ms clamping hypothesis on CI.
+      const raw = await page.evaluate(() => {
+        const entries = performance.getEntriesByType('resource') as PerformanceResourceTiming[]
+        const e = entries.find((entry) => entry.name.includes('empty.css'))
+        if (!e) {
+          return null
+        }
+        return {
+          name: e.name,
+          initiatorType: e.initiatorType,
+          startTime: e.startTime,
+          fetchStart: e.fetchStart,
+          domainLookupStart: e.domainLookupStart,
+          domainLookupEnd: e.domainLookupEnd,
+          connectStart: e.connectStart,
+          connectEnd: e.connectEnd,
+          requestStart: e.requestStart,
+          responseStart: e.responseStart,
+          responseEnd: e.responseEnd,
+          duration: e.duration,
+          transferSize: e.transferSize,
+          encodedBodySize: e.encodedBodySize,
+          decodedBodySize: e.decodedBodySize,
+          deliveryType: (e as PerformanceResourceTiming & { deliveryType?: string }).deliveryType,
+          // Four consecutive performance.now() samples — if they're identical the clock is clamped.
+          nowSamples: [performance.now(), performance.now(), performance.now(), performance.now()],
+        }
+      })
       await flushEvents()
       const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.url.includes('empty.css'))
+
+      // eslint-disable-next-line no-console
+      console.log(`[EARLY-TIMINGS-DEBUG ${browserName}] raw=`, JSON.stringify(raw))
+      // eslint-disable-next-line no-console
+      console.log(
+        `[EARLY-TIMINGS-DEBUG ${browserName}] sdk=`,
+        JSON.stringify({
+          duration: resourceEvent?.resource.duration,
+          download: resourceEvent?.resource.download,
+          first_byte: resourceEvent?.resource.first_byte,
+          size: resourceEvent?.resource.size,
+          transfer_size: resourceEvent?.resource.transfer_size,
+          delivery_type: resourceEvent?.resource.delivery_type,
+        })
+      )
+
       expect(resourceEvent).toBeDefined()
       expectToHaveValidTimings(resourceEvent!)
     })

@@ -244,7 +244,8 @@ e2e:
   interruptible: true
   parallel:
     matrix:
-      - BROWSER: [chromium, chromium-pinned, firefox-pinned, webkit-pinned]
+      # REPRO branch: only webkit-pinned, the browser where the flake reproduces.
+      - BROWSER: [webkit-pinned]
   artifacts:
     when: always
     reports:
@@ -255,7 +256,8 @@ e2e:
     - yarn build:apps
     # Browsers are pre-installed in the CI image. If playwright (current or pinned 1.40.1)
     # is upgraded without rebuilding the image, this job will crash — rebuild the image to fix it.
-    - FORCE_COLOR=1 PW_BROWSER=$BROWSER yarn test:e2e --project=$BROWSER
+    # REPRO branch: only the early-timings test, 50 repeats, no retries so each repeat is independent.
+    - FORCE_COLOR=1 PW_BROWSER=$BROWSER yarn test:e2e --project=$BROWSER -g "retrieve early requests timings" --repeat-each=50 --retries=0
   after_script:
     - node ./scripts/test/export-test-result.ts e2e
 
