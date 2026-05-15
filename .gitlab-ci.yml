@@ -244,8 +244,8 @@ e2e:
   interruptible: true
   parallel:
     matrix:
-      # REPRO branch: only webkit-pinned, the browser where the flake reproduces.
-      - BROWSER: [webkit-pinned]
+      # REPRO branch: webkit-pinned (where the flake reproduces) + chromium (comparison).
+      - BROWSER: [webkit-pinned, chromium]
   artifacts:
     when: always
     reports:
