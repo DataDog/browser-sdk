@@ -1,14 +1,9 @@
 import { fetch, setTimeout, clearTimeout, buildEndpointHost } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 
-// Exact reason strings returned by the backend quota admission API.
-export type BackendQuotaReason =
-  | 'quota_ok'
-  | 'quota_exceeded'
-  | 'org_disabled'
-  | 'backend_unavailable'
-  | 'backend_client_not_initialized'
-  | 'undefined'
+// Reason strings surfaced on RUM events. Backend reasons backend_unavailable and
+// backend_client_not_initialized are both normalised to backend_unavailable.
+export type BackendQuotaReason = 'quota_ok' | 'quota_exceeded' | 'org_disabled' | 'backend_unavailable' | 'undefined'
 
 // SDK-only reasons used when the backend is not reachable.
 export type FrontendQuotaReason = 'timeout' | 'api-error'
@@ -25,9 +20,11 @@ function parseQuotaResult(body: unknown, httpStatusFallback: QuotaResult): Quota
   if (!attrs || typeof attrs.admitted !== 'boolean' || typeof attrs.reason !== 'string') {
     return httpStatusFallback
   }
+  const reason: BackendQuotaReason =
+    attrs.reason === 'backend_client_not_initialized' ? 'backend_unavailable' : (attrs.reason as BackendQuotaReason)
   return {
     decision: attrs.admitted ? 'quota_ok' : 'quota_ko',
-    reason: attrs.reason as BackendQuotaReason,
+    reason,
   }
 }
 

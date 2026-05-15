@@ -35,10 +35,10 @@ describe('checkProfilingQuota', () => {
     expect(result).toEqual({ decision: 'quota_ok', reason: 'backend_unavailable' })
   })
 
-  it('returns quota_ok decision for reason backend_client_not_initialized', async () => {
+  it('normalises backend_client_not_initialized to backend_unavailable', async () => {
     interceptor.withFetch(backendResponse(true, 'backend_client_not_initialized'))
     const result = await checkProfilingQuota(mockRumConfiguration(), 'session-123')
-    expect(result).toEqual({ decision: 'quota_ok', reason: 'backend_client_not_initialized' })
+    expect(result).toEqual({ decision: 'quota_ok', reason: 'backend_unavailable' })
   })
 
   // admitted: false → quota_ko decision
