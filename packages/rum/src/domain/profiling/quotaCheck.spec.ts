@@ -125,7 +125,7 @@ describe('checkProfilingQuota', () => {
     interceptor.withFetch(backendResponse(true, 'quota_ok'))
     await checkProfilingQuota(
       mockRumConfiguration({
-        proxy: ({ path, parameters, host }) => `https://${host ?? 'fallback.example.com'}${path}?${parameters}`,
+        proxy: ({ path, parameters, host }) => `https://${host}${path}?${parameters}`,
       }),
       'session-abc'
     )
