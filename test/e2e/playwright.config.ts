@@ -13,16 +13,24 @@ import type { BrowserConfiguration } from '../browsers.conf'
 //   `run-server` and a translation proxy (test/e2e/scripts/pinnedProxy.ts) that bridges
 //   the 1.58 client and the 1.40 server.
 //
-// The pinned web servers (`run-server` + proxy) only boot when at least one selected
-// project is pinned, so non-pinned runs don't pay the boot cost. Selection is read from
-// `--project=<name>` flags on argv (Playwright's filter); when no `--project` is passed,
-// all projects run and the pinned servers boot.
+// Project selection is read from `--project=<name>` flags on argv (Playwright's filter):
+// - When no `--project` is passed, only chromium runs (fast local feedback loop).
+// - When at least one `--project` is passed, all projects are registered and Playwright
+//   filters to the selected ones. The pinned web servers (`run-server` + proxy) only boot
+//   when a pinned project is selected, so non-pinned runs don't pay the boot cost.
 //
 // Initial install of the pinned browser binaries:
 //   yarn test:e2e:init
 
 const isCi = !!process.env.CI
 const isLocal = !isCi
+
+// Playwright re-imports this config in each worker process, where `--project=<name>` is no
+// longer on argv. To keep the project list consistent across main and workers, decide once
+// in the main process (based on argv) and propagate via an env var that workers inherit.
+if (getSelectedProjects().length > 0) {
+  process.env.E2E_INCLUDE_ALL_PROJECTS = '1'
+}
 
 const PINNED_WS_ENDPOINT = 'ws://127.0.0.1:5400/'
 const proxyDir = path.join(__dirname, 'scripts')
@@ -120,7 +128,14 @@ export default defineConfig({
     trace: isCi ? 'off' : 'retain-on-failure',
   },
   webServer: needsPinnedServers() ? [...baseWebServers, ...pinnedWebServers] : baseWebServers,
-  projects: [
+  projects: getProjects(),
+})
+
+function getProjects() {
+  if (process.env.E2E_INCLUDE_ALL_PROJECTS !== '1') {
+    return [project('chromium', 'Desktop Chrome')]
+  }
+  return [
     project('chromium', 'Desktop Chrome'),
     project('firefox', 'Desktop Firefox'),
     project('webkit', 'Desktop Safari'),
@@ -128,8 +143,8 @@ export default defineConfig({
     pinnedProject('chromium-pinned', 'Chromium 120', 'Desktop Chrome', '120'),
     pinnedProject('firefox-pinned', 'Firefox 119', 'Desktop Firefox', '119'),
     pinnedProject('webkit-pinned', 'WebKit 17.4', 'Desktop Safari', '17.4'),
-  ],
-})
+  ]
+}
 
 function project(name: string, device: string) {
   return {
@@ -151,11 +166,7 @@ function pinnedProject(name: string, sessionName: string, device: string, versio
 }
 
 function needsPinnedServers(): boolean {
-  const selected = getSelectedProjects()
-  if (selected.length === 0) {
-    return true
-  }
-  return selected.some((p) => p.endsWith('-pinned'))
+  return getSelectedProjects().some((p) => p.endsWith('-pinned'))
 }
 
 function getSelectedProjects(): string[] {
