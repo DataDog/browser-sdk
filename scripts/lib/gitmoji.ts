@@ -35,9 +35,11 @@ export const GITMOJI: readonly Gitmoji[] = [
 const VARIATION_SELECTOR = /️/g
 export const normalizeGitmoji = (value: string): string => value.replace(VARIATION_SELECTOR, '')
 
-export const PUBLIC_EMOJI_PRIORITY: readonly string[] = GITMOJI.filter((g) => g.category === 'public').map(
-  (g) => g.emoji
+// Exported priorities are normalized so they match the output of `\p{Extended_Pictographic}`,
+// which strips the U+FE0F variation selector.
+export const PUBLIC_EMOJI_PRIORITY: readonly string[] = GITMOJI.filter((g) => g.category === 'public').map((g) =>
+  normalizeGitmoji(g.emoji)
 )
-export const INTERNAL_EMOJI_PRIORITY: readonly string[] = GITMOJI.filter((g) => g.category === 'internal').map(
-  (g) => g.emoji
+export const INTERNAL_EMOJI_PRIORITY: readonly string[] = GITMOJI.filter((g) => g.category === 'internal').map((g) =>
+  normalizeGitmoji(g.emoji)
 )
