@@ -101,15 +101,6 @@ describe('serializeNode for DOM nodes', () => {
       })
       expect(record?.data).toEqual([[ChangeType.AddNode, [null, '#text', '']]])
     })
-
-    it('does not serialize a whitespace-only node if the parent is a <head> element', async () => {
-      const record = await serializeHtml('<!doctype HTML><head>    </head>', {
-        input: 'document',
-        target: (node: Node) => (node as Document).head.firstChild!,
-        whitespace: 'keep',
-      })
-      expect(record?.data).toBeUndefined()
-    })
   })
 
   describe('for HTML elements', () => {
@@ -184,7 +175,7 @@ describe('serializeNode for DOM nodes', () => {
   })
 
   describe('for <head> elements', () => {
-    it('does not serialize whitespace', async () => {
+    it('serializes the element', async () => {
       const record = await serializeHtml('<!doctype HTML><head>  <title>  foo </title>  </head>', {
         input: 'document',
         whitespace: 'keep',
@@ -196,9 +187,11 @@ describe('serializeNode for DOM nodes', () => {
           [1, '#doctype', 'html', '', ''],
           [0, 'HTML'],
           [1, 'HEAD'],
-          [1, 'TITLE'],
+          [1, '#text', ''],
+          [0, 'TITLE'],
           [1, '#text', '  foo '],
-          [4, 'BODY'],
+          [4, '#text', ''],
+          [6, 'BODY'],
         ],
         [ChangeType.ScrollPosition, [0, 0, 0]],
       ])
