@@ -613,9 +613,11 @@ api-performance-benchmark:
   stage: task
   extends:
     - .base-configuration
-  only:
-    variables:
-      - $TARGET_TASK_NAME == "performance-benchmark-scheduled"
+  # TEMP: gate disabled so this PR can exercise the job. REVERT before merging — the
+  # production gate is `$TARGET_TASK_NAME == "performance-benchmark-scheduled"`.
+  # only:
+  #   variables:
+  #     - $TARGET_TASK_NAME == "performance-benchmark-scheduled"
   script:
     - yarn
     - node ./scripts/api-performance/index.ts
