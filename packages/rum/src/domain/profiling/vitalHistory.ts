@@ -33,59 +33,72 @@ export function createVitalHistory(lifeCycle: LifeCycle) {
   })
 
   lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, ({ rawRumEvent, startClocks, duration }) => {
-    if (rawRumEvent.type === 'vital') {
-      if (rawRumEvent.vital.type === VitalType.OPERATION_STEP) {
-        if (rawRumEvent.vital.step_type === 'end') {
-          const historyEntry = history
-            .findAllEntries()
-            .find(
-              (entry) =>
-                entry.value.type === VitalType.OPERATION_STEP &&
-                entry.value.label === rawRumEvent.vital.name &&
-                entry.value.operationKey === rawRumEvent.vital.operation_key
-            )
-          if (historyEntry) {
-            historyEntry.value.duration = elapsed(historyEntry.value.startClocks.relative, startClocks.relative)
-            historyEntry.close(startClocks.relative)
-          }
-        } else if (rawRumEvent.vital.step_type === 'start') {
-          history.add(
-            {
-              id: rawRumEvent.vital.id,
-              type: rawRumEvent.vital.type,
-              operationKey: rawRumEvent.vital.operation_key,
-              startClocks,
-              label: rawRumEvent.vital.name,
-            },
-            startClocks.relative
-          )
-        }
-      } else {
-        const historyEntry = history
-          .getEntries(startClocks.relative)
-          .find((entry) => entry.value.id === rawRumEvent.vital.id)
+    if (rawRumEvent.type !== 'vital') {
+      return
+    }
 
-        if (historyEntry) {
-          historyEntry.value.duration = duration!
-          historyEntry.close(addDuration(startClocks.relative, duration!))
+    // For operation step vitals, we only tag profiles with the start step's id.
+    // This means that if we receive an end step vital, we need to look for the
+    // corresponding start one and update its duration. If we receive a start step vital
+    // however, we just store it and wait for the end step.
+    if (rawRumEvent.vital.type === VitalType.OPERATION_STEP) {
+      if (rawRumEvent.vital.step_type === 'start') {
+        history.add(
+          {
+            id: rawRumEvent.vital.id,
+            type: rawRumEvent.vital.type,
+            operationKey: rawRumEvent.vital.operation_key,
+            startClocks,
+            label: rawRumEvent.vital.name,
+          },
+          startClocks.relative
+        )
+      } else if (rawRumEvent.vital.step_type === 'end') {
+        const historyEntry = history
+          .findAllEntries()
+          .find(
+            (entry) =>
+              entry.value.type === VitalType.OPERATION_STEP &&
+              entry.value.label === rawRumEvent.vital.name &&
+              entry.value.operationKey === rawRumEvent.vital.operation_key
+          )
+
+        if (!historyEntry) {
           return
         }
 
-        history
-          .add(
-            {
-              id: rawRumEvent.vital.id,
-              type: rawRumEvent.vital.type,
-              operationKey: rawRumEvent.vital.operation_key,
-              startClocks,
-              duration,
-              label: rawRumEvent.vital.name,
-            },
-            startClocks.relative
-          )
-          .close(addDuration(startClocks.relative, duration!))
+        historyEntry.value.duration = elapsed(historyEntry.value.startClocks.relative, startClocks.relative)
+        historyEntry.close(startClocks.relative)
       }
+
+      return
     }
+
+    // All the other vital types are handled normally (i.e. stored in the
+    // history and tagged on the profiles)
+    const historyEntry = history
+      .getEntries(startClocks.relative)
+      .find((entry) => entry.value.id === rawRumEvent.vital.id)
+
+    if (historyEntry) {
+      historyEntry.value.duration = duration!
+      historyEntry.close(addDuration(startClocks.relative, duration!))
+      return
+    }
+
+    history
+      .add(
+        {
+          id: rawRumEvent.vital.id,
+          type: rawRumEvent.vital.type,
+          operationKey: rawRumEvent.vital.operation_key,
+          startClocks,
+          duration,
+          label: rawRumEvent.vital.name,
+        },
+        startClocks.relative
+      )
+      .close(addDuration(startClocks.relative, duration!))
   })
 
   return history
