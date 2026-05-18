@@ -196,6 +196,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    *
    * See [Connect Session Replay To Your Third-Party Tools](https://docs.datadoghq.com/real_user_monitoring/guide/connect-session-replay-to-your-third-party-tools) for further information.
    *
+   * @category Session Replay
    */
   subdomain?: string
 
