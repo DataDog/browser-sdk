@@ -17,6 +17,8 @@ import {
   startGlobalContext,
   startUserContext,
   startTabContext,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { createWindowOpenObservable } from '../browser/windowOpenObservable'
@@ -170,6 +172,10 @@ export function startRumEventCollection(
   startConnectivityContext(hooks)
   startTabContext(hooks)
   const globalContext = startGlobalContext(hooks, configuration, 'rum', true)
+  globalContext.setContextProperty(
+    'partial_view_updates',
+    isExperimentalFeatureEnabled(ExperimentalFeature.PARTIAL_VIEW_UPDATES)
+  )
   const userContext = startUserContext(hooks, configuration, sessionManager, 'rum')
   const accountContext = startAccountContext(hooks, configuration, 'rum')
 
