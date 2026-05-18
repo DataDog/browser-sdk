@@ -1,5 +1,11 @@
 import type { ViewHistoryEntry } from '@datadog/browser-rum-core'
-import { LifeCycle, LifeCycleEventType, RumPerformanceEntryType, createHooks } from '@datadog/browser-rum-core'
+import {
+  LifeCycle,
+  LifeCycleEventType,
+  RumPerformanceEntryType,
+  VitalType,
+  createHooks,
+} from '@datadog/browser-rum-core'
 import type { Duration, SessionRenewalEvent } from '@datadog/browser-core'
 import {
   addDuration,
@@ -8,6 +14,7 @@ import {
   createIdentityEncoder,
   createValueHistory,
   deepClone,
+  elapsed,
   ONE_DAY,
   relativeNow,
   timeStampNow,
@@ -140,6 +147,18 @@ describe('profiler', () => {
       },
       addVital: (vital: VitalContext) => {
         vitalHistory.add(vital, relativeNow()).close(addDuration(relativeNow(), vital.duration ?? (0 as Duration)))
+      },
+      startOperationStep: (id: string, label: string, operationKey?: string) => {
+        const startClocks = clocksNow()
+        const entry = vitalHistory.add(
+          { id, type: VitalType.OPERATION_STEP, label, operationKey, startClocks, duration: undefined },
+          startClocks.relative
+        )
+        return () => {
+          const endTime = relativeNow()
+          entry.value.duration = elapsed(entry.startTime, endTime)
+          entry.close(endTime)
+        }
       },
     }
   }
@@ -415,6 +434,7 @@ describe('profiler', () => {
     expect(profilingContextManager.get()?.status).toBe('running')
     addVital({
       id: 'vital-id-1',
+      type: VitalType.DURATION,
       label: 'vital-label-1',
       startClocks: clocksNow(),
       duration: 50 as Duration,
@@ -423,6 +443,7 @@ describe('profiler', () => {
 
     addVital({
       id: 'vital-id-2',
+      type: VitalType.DURATION,
       label: 'vital-label-2',
       startClocks: clocksNow(),
       duration: 100 as Duration,
@@ -442,6 +463,7 @@ describe('profiler', () => {
 
     addVital({
       id: 'vital-id-3',
+      type: VitalType.DURATION,
       label: 'vital-label-3',
       startClocks: clocksNow(),
       duration: 100 as Duration,
@@ -493,6 +515,79 @@ describe('profiler', () => {
         label: 'vital-label-3',
       },
     ])
+  })
+
+  it('should collect all ongoing operations during a profiling session', async () => {
+    const clock = mockClock()
+    const { profiler, startOperationStep } = setupProfiler()
+
+    // Profile 1: start all three operations, end op1
+    profiler.start()
+    await waitForBoolean(() => profiler.isRunning())
+
+    const endOp1 = startOperationStep('op-id-1', 'op-label-1')
+    clock.tick(10)
+    const endOp2 = startOperationStep('op-id-2', 'op-label-2')
+    clock.tick(10)
+    const endOp3 = startOperationStep('op-id-3', 'op-label-3')
+    clock.tick(10)
+    endOp1() // op1 ends during profile 1
+
+    clock.tick(70)
+    profiler.stop()
+    await waitNextMicrotask()
+
+    // Profile 2: end op2
+    profiler.start()
+    await waitForBoolean(() => profiler.isRunning())
+
+    clock.tick(50)
+    endOp2() // op2 ends during profile 2
+
+    clock.tick(50)
+    profiler.stop()
+    await waitNextMicrotask()
+
+    // Profile 3: end op3
+    profiler.start()
+    await waitForBoolean(() => profiler.isRunning())
+
+    clock.tick(50)
+    endOp3() // op3 ends during profile 3
+
+    clock.tick(50)
+    profiler.stop()
+    await waitNextMicrotask()
+    await waitNextMicrotask()
+
+    expect(interceptor.requests.length).toBe(3)
+
+    const req1 = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[0])
+    const req2 = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[1])
+    const req3 = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[2])
+
+    const vitals1 = req1['wall-time.json'].vitals
+    const vitals2 = req2['wall-time.json'].vitals
+    const vitals3 = req3['wall-time.json'].vitals
+
+    // Profile 1: all three operations present, only op1 has a duration
+    expect(vitals1?.map((v) => v.id)).toEqual(jasmine.arrayContaining(['op-id-1', 'op-id-2', 'op-id-3']))
+    expect(vitals1?.find((v) => v.id === 'op-id-1')?.duration).toBe(30 as Duration)
+    expect(vitals1?.find((v) => v.id === 'op-id-2')?.duration).toBeUndefined()
+    expect(vitals1?.find((v) => v.id === 'op-id-3')?.duration).toBeUndefined()
+
+    // Profile 2: op1 is gone (ended before profile 2 started), op2 and op3 present, only op2 has a duration
+    expect(vitals2?.map((v) => v.id)).not.toContain('op-id-1')
+    expect(vitals2?.map((v) => v.id)).toEqual(jasmine.arrayContaining(['op-id-2', 'op-id-3']))
+    expect(vitals2?.find((v) => v.id === 'op-id-2')?.duration).toBe(140 as Duration)
+    expect(vitals2?.find((v) => v.id === 'op-id-3')?.duration).toBeUndefined()
+
+    // Profile 3: only op3 remains, with a duration
+    expect(vitals3?.map((v) => v.id)).not.toContain('op-id-1')
+    expect(vitals3?.map((v) => v.id)).not.toContain('op-id-2')
+    expect(vitals3?.length).toBe(1)
+    expect(vitals3?.[0].id).toBe('op-id-3')
+    expect(vitals3?.[0].duration).toBe(230 as Duration)
   })
 
   it('should collect views and set default view name in the Profile', async () => {
