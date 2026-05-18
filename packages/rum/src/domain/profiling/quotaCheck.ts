@@ -29,17 +29,8 @@ function parseQuotaResult(body: unknown, httpStatusFallback: QuotaResult): Quota
 }
 
 function buildQuotaUrl(configuration: RumConfiguration, sessionId: string): string {
-  const path = '/api/v2/profiling/quota'
-  const parameters = `session_id=${sessionId}`
-  const proxy = configuration.proxy
   const host = `quota.${buildEndpointHost({ site: configuration.site, clientToken: configuration.clientToken })}`
-
-  if (typeof proxy === 'string') {
-    // Route through proxy to avoid CSP/CORS issues in environments with restricted connect-src
-    return `${proxy}?ddforward=${encodeURIComponent(`${path}?${parameters}`)}`
-  }
-
-  return `https://${host}${path}?${parameters}`
+  return `https://${host}/api/v2/profiling/quota?session_id=${sessionId}`
 }
 
 export function checkProfilingQuota(

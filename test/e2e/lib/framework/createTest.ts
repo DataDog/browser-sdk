@@ -450,6 +450,17 @@ async function setUpTest(
   { mockClock }: SetupOptions,
   { baseUrl, page, browserContext }: TestContext
 ) {
+  // Intercept quota admission requests: CSP allows the host, Playwright intercepts before DNS.
+  await browserContext.route('https://quota.browser-intake-datadoghq.com/api/v2/profiling/quota*', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/vnd.api+json',
+      body: JSON.stringify({
+        data: { id: 'test', type: 'profiling-quota', attributes: { admitted: true, reason: 'quota_ok' } },
+      }),
+    })
+  )
+
   browserContext.on('console', (msg) => {
     browserLogsManager.add({
       level: msg.type() as BrowserLog['level'],

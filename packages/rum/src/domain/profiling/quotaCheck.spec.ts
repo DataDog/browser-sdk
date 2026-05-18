@@ -112,12 +112,4 @@ describe('checkProfilingQuota', () => {
       'https://quota.browser-intake-datad0g.com/api/v2/profiling/quota?session_id=session-abc'
     )
   })
-
-  it('routes through proxy when proxy is configured as a string', async () => {
-    interceptor.withFetch(backendResponse(true, 'quota_ok'))
-    await checkProfilingQuota(mockRumConfiguration({ proxy: 'http://proxy.example.com' }), 'session-abc')
-    expect(interceptor.requests[0].url).toBe(
-      'http://proxy.example.com?ddforward=%2Fapi%2Fv2%2Fprofiling%2Fquota%3Fsession_id%3Dsession-abc'
-    )
-  })
 })
