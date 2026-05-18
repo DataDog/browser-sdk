@@ -46,7 +46,7 @@ export const enum LifeCycleEventType {
   RUM_EVENT_COLLECTED,
   RAW_ERROR_COLLECTED,
   ACTION_STARTED,
-  VITAL_STARTED,
+  DURATION_VITAL_STARTED,
 }
 
 // This is a workaround for an issue occurring when the Browser SDK is included in a TypeScript
@@ -79,7 +79,7 @@ declare const LifeCycleEventTypeAsConst: {
   RAW_RUM_EVENT_COLLECTED: LifeCycleEventType.RAW_RUM_EVENT_COLLECTED
   RUM_EVENT_COLLECTED: LifeCycleEventType.RUM_EVENT_COLLECTED
   RAW_ERROR_COLLECTED: LifeCycleEventType.RAW_ERROR_COLLECTED
-  VITAL_STARTED: LifeCycleEventType.VITAL_STARTED
+  DURATION_VITAL_STARTED: LifeCycleEventType.DURATION_VITAL_STARTED
 }
 
 // Note: this interface needs to be exported even if it is not used outside of this module, else TS
@@ -104,7 +104,7 @@ export interface LifeCycleEventMap {
     error: RawError
     customerContext?: Context
   }
-  [LifeCycleEventTypeAsConst.VITAL_STARTED]: DurationVitalStart
+  [LifeCycleEventTypeAsConst.DURATION_VITAL_STARTED]: DurationVitalStart
 }
 
 export interface RawRumEventCollectedData<E extends RawRumEvent = RawRumEvent> {
