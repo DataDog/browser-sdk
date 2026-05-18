@@ -459,12 +459,12 @@ async function setUpTest(
     })
     const originalFetch = window.fetch
     window.fetch = function (input: RequestInfo | URL, init?: RequestInit) {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input).url
       if (url.includes('/api/v2/profiling/quota')) {
         return Promise.resolve(new Response(QUOTA_ADMIT_RESPONSE, { status: 200 }))
       }
       return originalFetch.call(window, input, init)
-    } as typeof fetch
+    }
   })
 
   browserContext.on('console', (msg) => {
