@@ -39,10 +39,6 @@ function buildQuotaUrl(configuration: RumConfiguration, sessionId: string): stri
     return `${proxy}?ddforward=${encodeURIComponent(`${path}?${parameters}`)}`
   }
 
-  if (typeof proxy === 'function') {
-    return proxy({ path, parameters, host })
-  }
-
   return `https://${host}${path}?${parameters}`
 }
 
