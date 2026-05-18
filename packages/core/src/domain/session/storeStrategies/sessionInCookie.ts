@@ -37,7 +37,7 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
       .then((cookieValues) => {
         sessionObservable.notify({ cookieValues, sessionState: findMatchingSessionState(cookieValues, opts) })
       })
-      .catch(monitorError)
+      .catch((error) => monitorError(new Error(`Error while reading session cookies on change: ${error}`)))
   })
 
   function applyAndWrite(fn: (state: SessionState) => SessionState) {
