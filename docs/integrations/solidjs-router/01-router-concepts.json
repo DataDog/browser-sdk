@@ -1,0 +1,281 @@
+{
+  "metadata": {
+    "framework": {
+      "value": "solidjs-router",
+      "source": "https://www.npmjs.com/package/@solidjs/router"
+    },
+    "npmPackage": {
+      "value": "@solidjs/router",
+      "source": "https://www.npmjs.com/package/@solidjs/router"
+    }
+  },
+  "routeDefinition": {
+    "styles": [
+      {
+        "value": "config-object",
+        "source": "https://docs.solidjs.com/solid-router/getting-started/config"
+      },
+      {
+        "value": "other",
+        "source": "https://docs.solidjs.com/solid-router/getting-started/component"
+      },
+      {
+        "value": "file-based",
+        "source": "https://docs.solidjs.com/solid-start/building-your-application/routing"
+      }
+    ],
+    "historyStrategies": [
+      {
+        "value": "path",
+        "source": "https://docs.solidjs.com/solid-router/concepts/alternative-routers"
+      },
+      {
+        "value": "hash",
+        "source": "https://docs.solidjs.com/solid-router/concepts/alternative-routers"
+      },
+      {
+        "value": "memory",
+        "source": "https://docs.solidjs.com/solid-router/concepts/alternative-routers"
+      }
+    ]
+  },
+  "routeSyntax": {
+    "concepts": [
+      {
+        "value": "static-path",
+        "source": "https://docs.solidjs.com/solid-router/reference/components/route"
+      },
+      {
+        "value": "dynamic-segments",
+        "source": "https://docs.solidjs.com/solid-router/concepts/dynamic-routes"
+      },
+      {
+        "value": "optional-segments",
+        "source": "https://docs.solidjs.com/solid-router/reference/components/route"
+      },
+      {
+        "value": "catch-all",
+        "source": "https://docs.solidjs.com/solid-router/concepts/catch-all"
+      },
+      {
+        "value": "nested-routes",
+        "source": "https://docs.solidjs.com/solid-router/reference/components/route"
+      }
+    ],
+    "examples": [
+      {
+        "route": "/users",
+        "path": "/users",
+        "viewName": "/users",
+        "source": "https://docs.solidjs.com/solid-router/reference/components/route"
+      },
+      {
+        "route": "/users/:id",
+        "path": "/users/42",
+        "viewName": "/users/:id",
+        "note": "Dynamic segment :id can be any string. Access via useParams().",
+        "source": "https://docs.solidjs.com/solid-router/concepts/dynamic-routes"
+      },
+      {
+        "route": "/stories/:id?",
+        "path": "/stories",
+        "viewName": "/stories/:id?",
+        "note": "Optional parameter — matches both /stories and /stories/123, but NOT /stories/123/comments.",
+        "source": "https://docs.solidjs.com/solid-router/reference/components/route"
+      },
+      {
+        "route": "/stories/:id?",
+        "path": "/stories/123",
+        "viewName": "/stories/:id?",
+        "note": "Optional parameter matched with a value present.",
+        "source": "https://docs.solidjs.com/solid-router/reference/components/route"
+      },
+      {
+        "route": "/*",
+        "path": "/anything/nested/deep",
+        "viewName": "/*",
+        "note": "Bare catch-all * matches any remaining path segments. Used for 404 pages.",
+        "source": "https://docs.solidjs.com/solid-router/concepts/catch-all"
+      },
+      {
+        "route": "/*rest",
+        "path": "/anything/nested/deep",
+        "viewName": "/*rest",
+        "note": "Named catch-all: the matched remainder is accessible via useParams().rest.",
+        "source": "https://docs.solidjs.com/solid-router/concepts/catch-all"
+      },
+      {
+        "route": "/users/:id/settings",
+        "path": "/users/42/settings",
+        "viewName": "/users/:id/settings",
+        "note": "Nested route: child Route rendered inside parent via props.children (replaces removed <Outlet> in v0.10+).",
+        "source": "https://docs.solidjs.com/solid-router/guides/migration"
+      }
+    ]
+  },
+  "ssr": {
+    "supported": {
+      "value": true,
+      "source": "https://docs.solidjs.com/solid-router/rendering-modes/ssr"
+    },
+    "clientDetection": {
+      "value": "isServer from 'solid-js/web' — pass url prop on server: <Router url={isServer ? req.url : ''} />",
+      "source": "https://docs.solidjs.com/solid-router/rendering-modes/ssr"
+    }
+  },
+  "hooks": [
+    {
+      "name": "useBeforeLeave",
+      "afterCancellation": false,
+      "afterRedirects": false,
+      "afterFetch": false,
+      "afterRender": false,
+      "access": "Must be called inside a component that is rendered within the router tree (reactive component scope).",
+      "availableApi": [
+        {
+          "name": "e.from",
+          "description": "Current Location object before the navigation (the page being left).",
+          "source": "https://docs.solidjs.com/solid-router/reference/primitives/use-before-leave"
+        },
+        {
+          "name": "e.to",
+          "description": "The path (string | number) passed to navigate — the intended destination.",
+          "source": "https://docs.solidjs.com/solid-router/reference/primitives/use-before-leave"
+        },
+        {
+          "name": "e.options",
+          "description": "NavigateOptions passed to navigate.",
+          "source": "https://docs.solidjs.com/solid-router/reference/primitives/use-before-leave"
+        },
+        {
+          "name": "e.preventDefault",
+          "description": "Function — call to block the navigation.",
+          "source": "https://docs.solidjs.com/solid-router/reference/primitives/use-before-leave"
+        },
+        {
+          "name": "e.defaultPrevented",
+          "description": "Readonly boolean — true if a previous leave handler called preventDefault.",
+          "source": "https://docs.solidjs.com/solid-router/reference/primitives/use-before-leave"
+        },
+        {
+          "name": "e.retry",
+          "description": "Function (force?: boolean) — retry the same navigation, optionally skipping leave handlers when force=true.",
+          "source": "https://docs.solidjs.com/solid-router/reference/primitives/use-before-leave"
+        }
+      ],
+      "source": "https://docs.solidjs.com/solid-router/reference/primitives/use-before-leave"
+    },
+    {
+      "name": "useIsRouting (createEffect pattern)",
+      "afterCancellation": false,
+      "afterRedirects": false,
+      "afterFetch": false,
+      "afterRender": false,
+      "access": "Must be called inside a component within the router tree. Returns a reactive signal.",
+      "availableApi": [
+        {
+          "name": "isRouting()",
+          "description": "Boolean signal — true during any navigation transition after initial render, false once the transition ends (nested Suspense may still be loading).",
+          "source": "https://docs.solidjs.com/solid-router/reference/primitives/use-is-routing"
+        }
+      ],
+      "source": "https://docs.solidjs.com/solid-router/reference/primitives/use-is-routing"
+    },
+    {
+      "name": "useLocation (createEffect pattern)",
+      "afterCancellation": true,
+      "afterRedirects": true,
+      "afterFetch": false,
+      "afterRender": false,
+      "access": "Must be called inside a component within the router tree. Returns a reactive proxy.",
+      "availableApi": [
+        {
+          "name": "location.pathname",
+          "description": "Reactive — the current URL path (e.g. /users/42). Updates after navigation commits.",
+          "source": "https://docs.solidjs.com/solid-router/reference/primitives/use-location"
+        },
+        {
+          "name": "location.search",
+          "description": "Reactive — query string including leading '?' (e.g. ?foo=bar).",
+          "source": "https://docs.solidjs.com/solid-router/reference/primitives/use-location"
+        },
+        {
+          "name": "location.hash",
+          "description": "Reactive — hash fragment including leading '#'.",
+          "source": "https://docs.solidjs.com/solid-router/reference/primitives/use-location"
+        },
+        {
+          "name": "location.state",
+          "description": "Reactive — arbitrary state stored in history.state passed via useNavigate.",
+          "source": "https://docs.solidjs.com/solid-router/reference/primitives/use-location"
+        }
+      ],
+      "source": "https://docs.solidjs.com/solid-router/reference/primitives/use-location"
+    },
+    {
+      "name": "useCurrentMatches (createEffect pattern)",
+      "afterCancellation": true,
+      "afterRedirects": true,
+      "afterFetch": false,
+      "afterRender": false,
+      "access": "Must be called inside a component within the router tree. Returns a reactive signal.",
+      "availableApi": [
+        {
+          "name": "matches()",
+          "description": "Array of all RouteMatch objects for the currently matched route tree. Each match exposes m.route.path and m.route.info.",
+          "source": "https://docs.solidjs.com/solid-router/reference/primitives/use-current-matches"
+        },
+        {
+          "name": "m.route.path",
+          "description": "The route pattern that matched this segment (e.g. /users/:id).",
+          "source": "https://docs.solidjs.com/solid-router/reference/primitives/use-current-matches"
+        },
+        {
+          "name": "m.route.info",
+          "description": "Arbitrary metadata attached to the route definition via its info property.",
+          "source": "https://docs.solidjs.com/solid-router/reference/primitives/use-current-matches"
+        }
+      ],
+      "source": "https://docs.solidjs.com/solid-router/reference/primitives/use-current-matches"
+    }
+  ],
+  "versions": {
+    "entries": [
+      {
+        "version": "0.10.0",
+        "date": "2023-12-01",
+        "routingChanges": [
+          "Removed <Outlet> component — use props.children instead.",
+          "Removed <Routes> component — <Router> now acts as <Routes>; children must be <Route> components.",
+          "Removed useRoutes — pass config array directly as children of <Router>.",
+          "Removed element prop on <Route>.",
+          "Removed data functions and useRouteData — replaced by load/preload mechanism.",
+          "No Context API available in non-hydrating (Islands) parts of the application.",
+          "Requires SolidJS v1.8.4 or later.",
+          "Top-level layout moved to root prop of <Router>."
+        ],
+        "source": "https://docs.solidjs.com/solid-router/guides/migration"
+      },
+      {
+        "version": "0.14.0",
+        "date": "2024-07-01",
+        "routingChanges": [
+          "Renamed load to preload on route definitions.",
+          "Response helpers now return responses; cache/action filter them out.",
+          "Default form actions changed to URL-encoded format."
+        ],
+        "source": "https://github.com/solidjs/solid-router/blob/main/CHANGELOG.md"
+      },
+      {
+        "version": "0.15.0",
+        "date": "2024-10-01",
+        "routingChanges": [
+          "Renamed cache to query for data-fetching API.",
+          "action onComplete callback added."
+        ],
+        "source": "https://github.com/solidjs/solid-router/pull/490"
+      }
+    ]
+  },
+  "notes": "Solid Router uses SolidJS fine-grained reactivity for all navigation primitives — useLocation, useIsRouting, useCurrentMatches all return reactive signals/proxies that update automatically when navigation commits. The canonical pattern for tracking route changes for analytics is createEffect(() => { ... location.pathname ... }) inside a layout component. useBeforeLeave fires before the navigation completes and does NOT fire reliably on browser back/forward buttons (known limitation). useIsRouting is backed by SolidJS Transitions and becomes true during navigation, false after the transition ends — but nested <Suspense> may still be resolving at that point. The <Outlet> component was removed in v0.10 in favour of passing props.children. File-based routing is available via SolidStart's <FileRoutes> component. Route parameter validation is supported via the matchFilters prop on <Route>. Three router variants exist: <Router> (history/pushState), <HashRouter> (hash-based, client-only), <MemoryRouter> (in-memory, for testing). SSR is handled by passing a url prop to <Router> server-side, detected via isServer from solid-js/web."
+}

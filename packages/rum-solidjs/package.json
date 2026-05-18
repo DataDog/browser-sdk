@@ -1,0 +1,57 @@
+{
+  "name": "@datadog/browser-rum-solidjs",
+  "version": "6.32.0",
+  "license": "Apache-2.0",
+  "main": "cjs/entries/main.js",
+  "module": "esm/entries/main.js",
+  "types": "cjs/entries/main.d.ts",
+  "files": [
+    "cjs",
+    "esm",
+    "src",
+    "solid-router",
+    "!src/**/*.spec.ts",
+    "!src/**/*.specHelper.ts"
+  ],
+  "scripts": {
+    "build": "node ../../scripts/build/build-package.ts --modules",
+    "prepack": "yarn build"
+  },
+  "dependencies": {
+    "@datadog/browser-core": "6.32.0",
+    "@datadog/browser-rum-core": "6.32.0"
+  },
+  "peerDependencies": {
+    "solid-js": "^1.8.4",
+    "@solidjs/router": ">=0.10.0"
+  },
+  "peerDependenciesMeta": {
+    "@datadog/browser-rum": {
+      "optional": true
+    },
+    "@datadog/browser-rum-slim": {
+      "optional": true
+    },
+    "solid-js": {
+      "optional": true
+    },
+    "@solidjs/router": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "solid-js": "1.9.7",
+    "@solidjs/router": "0.15.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DataDog/browser-sdk.git",
+    "directory": "packages/rum-solidjs"
+  },
+  "volta": {
+    "extends": "../../package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "name": "@datadog/browser-rum-solidjs/solid-router",
+  "private": true,
+  "main": "../cjs/entries/solidRouter.js",
+  "module": "../esm/entries/solidRouter.js",
+  "types": "../cjs/entries/solidRouter.d.ts"
+}

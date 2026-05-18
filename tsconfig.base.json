@@ -37,6 +37,9 @@
       "@datadog/browser-rum-vue": ["./packages/rum-vue/src/entries/main"],
       "@datadog/browser-rum-vue/vue-router-v4": ["./packages/rum-vue/src/entries/vueRouter"],
 
+      "@datadog/browser-rum-solidjs": ["./packages/rum-solidjs/src/entries/main"],
+      "@datadog/browser-rum-solidjs/solid-router": ["./packages/rum-solidjs/src/entries/solidRouter"],
+
       "@datadog/browser-rum-nextjs": ["./packages/rum-nextjs/src/entries/main"],
 
       "@datadog/browser-worker": ["./packages/worker/src/entries/main"]
