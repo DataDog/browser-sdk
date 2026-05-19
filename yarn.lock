@@ -433,6 +433,25 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@datadog/browser-rum-sveltekit@workspace:packages/rum-sveltekit":
+  version: 0.0.0-use.local
+  resolution: "@datadog/browser-rum-sveltekit@workspace:packages/rum-sveltekit"
+  dependencies:
+    "@datadog/browser-core": "npm:6.32.0"
+    "@datadog/browser-rum-core": "npm:6.32.0"
+  peerDependencies:
+    "@datadog/browser-rum": "*"
+    "@sveltejs/kit": ">=2.0.0"
+  peerDependenciesMeta:
+    "@datadog/browser-rum":
+      optional: true
+    "@datadog/browser-rum-slim":
+      optional: true
+    "@sveltejs/kit":
+      optional: false
+  languageName: unknown
+  linkType: soft
+
 "@datadog/browser-rum-vue@workspace:packages/rum-vue":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-vue@workspace:packages/rum-vue"

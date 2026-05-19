@@ -39,6 +39,8 @@
 
       "@datadog/browser-rum-nextjs": ["./packages/rum-nextjs/src/entries/main"],
 
+      "@datadog/browser-rum-sveltekit": ["./packages/rum-sveltekit/src/entries/main"],
+
       "@datadog/browser-worker": ["./packages/worker/src/entries/main"]
     }
   }
