@@ -5,8 +5,8 @@
     "build": "webpack"
   },
   "dependencies": {
-    "react": "19.2.5",
-    "react-dom": "19.2.5",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
     "react-router-dom": "6.30.0"
   },
   "peerDependencies": {
