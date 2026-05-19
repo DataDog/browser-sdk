@@ -7,11 +7,11 @@ import type { SessionState } from '../sessionState'
 import { toSessionString, toSessionState } from '../sessionState'
 import { Observable } from '../../../tools/observable'
 import { mockable } from '../../../tools/mockable'
-import { addEventListener, DOM_EVENT } from '../../../browser/addEventListener'
 import { monitorError } from '../../../tools/monitor'
 import { addTelemetryError } from '../../telemetry'
 import { createCookieAccess } from '../../../browser/cookieAccess'
-import { dateNow } from '../../../tools/utils/timeUtils'
+import { dateNow, timeStampNow } from '../../../tools/utils/timeUtils'
+import type { Context } from '../../../tools/serialisation/context'
 import type { SessionStoreStrategy, SessionStoreStrategyType, SessionObservableEvent } from './sessionStoreStrategy'
 import { SESSION_STORE_KEY, LEGACY_SESSION_STORE_KEY } from './sessionStoreStrategy'
 
@@ -33,14 +33,7 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
   const opts = encodeCookieOptions(cookieOptions)
   const cookieAccess = mockable(createCookieAccess)(SESSION_STORE_KEY, configuration, cookieOptions)
   let isFirstCall = true
-  const initTimestamp = dateNow()
-  let pageHideFired = false
-  addEventListener(configuration, window, DOM_EVENT.PAGE_HIDE, () => {
-    pageHideFired = true
-  })
-  addEventListener(configuration, window, DOM_EVENT.PAGE_SHOW, () => {
-    pageHideFired = false
-  })
+  const initTimestamp = timeStampNow()
 
   cookieAccess.observable.subscribe(() => {
     cookieAccess
@@ -74,16 +67,11 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
         await navigator.locks
           .request(SESSION_STORE_KEY, () => applyAndWrite(fn))
           .catch((error) => {
-            const context: Record<string, string | number | boolean | undefined> = {
+            const context: Context = {
               strategy: configuration.sessionStoreStrategyType?.type,
-              pagehide: pageHideFired,
               timeSinceInit: dateNow() - initTimestamp,
-            }
-            try {
-              context.visibilityState = document.visibilityState
-              context.hidden = document.hidden
-            } catch {
-              // ignore
+              visibilityState: document.visibilityState,
+              hidden: document.hidden,
             }
             addTelemetryError(new Error(`Error while expanding or renewing session on activity: ${error}`), context)
           })
