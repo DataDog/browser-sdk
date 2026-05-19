@@ -518,6 +518,75 @@ describe('preStartRum', () => {
         await interceptor.waitForAllFetchCalls()
         expect(interceptor.requests.some((r) => r.url.includes(REMOTE_CONFIGURATION_ID))).toBeTrue()
       })
+
+      describe('with required: true', () => {
+        const CACHE_KEY = `dd_rc_${REMOTE_CONFIGURATION_ID}`
+
+        it('should not start the SDK on cache miss', async () => {
+          const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+          strategy.init(
+            {
+              ...DEFAULT_INIT_CONFIGURATION,
+              remoteConfiguration: { id: REMOTE_CONFIGURATION_ID, required: true },
+            },
+            PUBLIC_API
+          )
+
+          await interceptor.waitForAllFetchCalls()
+          expect(doStartRumSpy).not.toHaveBeenCalled()
+        })
+
+        it('should still trigger a background fetch on cache miss', async () => {
+          const { strategy } = createPreStartStrategyWithDefaults()
+
+          strategy.init(
+            {
+              ...DEFAULT_INIT_CONFIGURATION,
+              remoteConfiguration: { id: REMOTE_CONFIGURATION_ID, required: true },
+            },
+            PUBLIC_API
+          )
+
+          await interceptor.waitForAllFetchCalls()
+          expect(interceptor.requests.some((r) => r.url.includes(REMOTE_CONFIGURATION_ID))).toBeTrue()
+        })
+
+        it('should start the SDK with the cached configuration on cache hit', async () => {
+          localStorage.setItem(
+            CACHE_KEY,
+            JSON.stringify({ version: 1, config: { sessionSampleRate: 75 }, fetchedAt: 1000 })
+          )
+          const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+          strategy.init(
+            {
+              ...DEFAULT_INIT_CONFIGURATION,
+              remoteConfiguration: { id: REMOTE_CONFIGURATION_ID, required: true },
+            },
+            PUBLIC_API
+          )
+
+          await collectAsyncCalls(doStartRumSpy, 1)
+          expect(doStartRumSpy.calls.mostRecent().args[0].sessionSampleRate).toBe(75)
+        })
+
+        it('should not start the SDK on cache error', async () => {
+          localStorage.setItem(CACHE_KEY, 'not-json')
+          const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+          strategy.init(
+            {
+              ...DEFAULT_INIT_CONFIGURATION,
+              remoteConfiguration: { id: REMOTE_CONFIGURATION_ID, required: true },
+            },
+            PUBLIC_API
+          )
+
+          await interceptor.waitForAllFetchCalls()
+          expect(doStartRumSpy).not.toHaveBeenCalled()
+        })
+      })
     })
 
     describe('plugins', () => {
