@@ -28,21 +28,17 @@ import type { Worker } from './createWorker'
 import { isBrowserStack } from './environment'
 
 /**
- * Init script applied to every WebKit context to work around two Playwright-specific
- * quirks observed on the bundled WebKit (Safari 26). Real Safari users are unaffected;
- * these only manifest in Playwright's WebKit fork.
+ * Init script applied to every WebKit context to work around a Playwright-specific
+ * quirk observed on the bundled WebKit (Safari 26). Real Safari users are unaffected;
+ * this only manifests in Playwright's WebKit fork.
  *
- * 1. Trusted PointerEvent.timeStamp returns a Cocoa-epoch-derived value (~8e11 ms)
+ * Trusted PointerEvent.timeStamp returns a Cocoa-epoch-derived value (~8e11 ms)
  * instead of a DOMHighResTimeStamp. The SDK feeds it into relativeToClocks() and
  * trips the "clock looks weird" guard in trackClickActions — every click action is
  * silently discarded. We wrap Event.prototype.timeStamp to fall back to
  * performance.now() when the raw value is implausibly large (>1 year).
  *
- * 2. window.cookieStore.set() resolves without error but does not persist. The SDK
- * picks the CookieStore strategy, the next poll sees an empty cookie, the session
- * expires within ~50ms, and every later event is dropped by the session hook. We
- * remove window.cookieStore so the SDK falls back to its document.cookie path
- * (which works correctly on Playwright WebKit).
+ * Upstream issue: https://github.com/microsoft/playwright/issues/40822
  */
 const WEBKIT_PLAYWRIGHT_WORKAROUND = `
 (() => {
@@ -66,13 +62,6 @@ const WEBKIT_PLAYWRIGHT_WORKAROUND = `
       },
     });
   }
-  try {
-    Object.defineProperty(window, 'cookieStore', {
-      value: undefined,
-      configurable: true,
-      writable: false,
-    });
-  } catch (e) {}
 })();
 `
 
