@@ -9,6 +9,7 @@ import {
   replaceMockable,
   restorePageVisibility,
   setPageVisibility,
+  waitNextMicrotask,
 } from '../../../test'
 import type { Clock } from '../../../test'
 import { DOM_EVENT } from '../../browser/addEventListener'
@@ -395,7 +396,7 @@ describe('startSessionManager', () => {
       clock.tick(SESSION_TIME_OUT_DELAY)
       // Drain the pending setSessionState microtasks so that scheduleExpirationTimeout runs
       // and registers the 0ms expiry timeout.
-      await Promise.resolve()
+      await waitNextMicrotask()
       // Fire the 0ms expiry timeout.
       clock.tick(0)
 
@@ -553,7 +554,7 @@ describe('startSessionManager', () => {
       )
 
       // Allow startSessionManager to await selectSessionStoreStrategyType and call setSessionState
-      await Promise.resolve()
+      await waitNextMicrotask()
 
       // Consent revoked while initialization promise is pending
       trackingConsentState.update(TrackingConsent.NOT_GRANTED)
