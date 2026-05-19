@@ -32,7 +32,7 @@ export const GITMOJI: readonly Gitmoji[] = [
 ]
 
 // Strip the Unicode variation selector (U+FE0F) so '⚡' and '⚡️' compare equal.
-const VARIATION_SELECTOR = /️/g
+const VARIATION_SELECTOR = /\uFE0F/g
 export const normalizeGitmoji = (value: string): string => value.replace(VARIATION_SELECTOR, '')
 
 // Exported priorities are normalized so they match the output of `\p{Extended_Pictographic}`,
