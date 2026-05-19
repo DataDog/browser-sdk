@@ -16,6 +16,7 @@ import type { RumEventDomainContext } from '../../domainContext.types'
 import type { RumEvent } from '../../rumEvent.types'
 import type { RumPlugin } from '../plugins'
 import type { PropagatorType, TracingOption } from '../tracing/tracer.types'
+import { getRemoteConfigurationId } from './remoteConfiguration'
 
 export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'datadog']
 
@@ -676,7 +677,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
       ...plugin.getConfigurationTelemetry?.(),
     })),
     track_feature_flags_for_events: configuration.trackFeatureFlagsForEvents,
-    remote_configuration_id: configuration.remoteConfigurationId ?? configuration.remoteConfiguration?.id,
+    remote_configuration_id: getRemoteConfigurationId(configuration),
     profiling_sample_rate: configuration.profilingSampleRate,
     use_remote_configuration_proxy: !!configuration.remoteConfigurationProxy,
     track_resource_headers: getTrackResourceHeadersTelemetryValue(configuration.trackResourceHeaders),
