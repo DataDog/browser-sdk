@@ -1,31 +1,25 @@
 import { test, expect } from '@playwright/test'
 import type { Page } from '@playwright/test'
-import { createTest, getTestServers } from '../lib/framework'
+import { createTest } from '../lib/framework'
 
 test.describe('profiling', () => {
   test.beforeEach(({ browserName }) => {
     test.skip(browserName !== 'chromium', 'JS Profiling API is only available in Chromium')
   })
 
-  // Mock the quota admission endpoint before page navigation — CSP allows the host,
-  // Playwright intercepts before DNS so no network error appears in the console.
-  test.beforeEach(async ({ page }) => {
-    const { quotaOrigin } = await getTestServers()
-    await page.route(`${quotaOrigin}/api/v2/profiling/quota*`, (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: 'application/vnd.api+json',
-        body: JSON.stringify({
-          data: { id: 'test', type: 'profiling-quota', attributes: { admitted: true, reason: 'quota_ok' } },
-        }),
-      })
-    )
-  })
-
   createTest('send profile events when profiling is enabled')
     .withRum({ profilingSampleRate: 100, trackUserInteractions: true })
     .withBasePath('/?js-profiling=true')
     .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.route('https://quota.browser-intake-datadoghq.com/api/v2/profiling/quota*', (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: 'application/vnd.api+json',
+          body: JSON.stringify({
+            data: { id: 'test', type: 'profiling-quota', attributes: { admitted: true, reason: 'quota_ok' } },
+          }),
+        })
+      )
       await generateLongTask(page)
       await generateAction(page)
       await generateVital(page)
@@ -152,6 +146,16 @@ test.describe('profiling', () => {
     .withRum({ profilingSampleRate: 100, compressIntakeRequests: true })
     .withBasePath('/?js-profiling=true')
     .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.route('https://quota.browser-intake-datadoghq.com/api/v2/profiling/quota*', (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: 'application/vnd.api+json',
+          body: JSON.stringify({
+            data: { id: 'test', type: 'profiling-quota', attributes: { admitted: true, reason: 'quota_ok' } },
+          }),
+        })
+      )
+
       await generateLongTask(page)
 
       await flushEvents()

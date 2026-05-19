@@ -31,7 +31,6 @@ export interface Servers {
   base: Server<MockServerApp>
   intake: Server<IntakeServerApp>
   crossOrigin: Server<MockServerApp>
-  quotaOrigin: string
 }
 
 let serversSingleton: undefined | Servers
@@ -42,8 +41,6 @@ export async function getTestServers() {
       base: await createServer(),
       crossOrigin: await createServer(),
       intake: await createServer(),
-      // Consistent with intakeProxyMiddleware.ts which targets browser-intake-datadoghq.com
-      quotaOrigin: 'https://quota.browser-intake-datadoghq.com',
     }
   }
   return serversSingleton
