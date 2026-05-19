@@ -60,7 +60,15 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
   return {
     async setSessionState(fn: (sessionState: SessionState) => SessionState): Promise<void> {
       if (typeof navigator !== 'undefined' && navigator.locks) {
-        await navigator.locks.request(SESSION_STORE_KEY, () => applyAndWrite(fn))
+        await navigator.locks
+          .request(SESSION_STORE_KEY, () => applyAndWrite(fn))
+          .catch((error) =>
+            monitorError(
+              new Error(
+                `Error while expanding or renewing session on activity: ${error} (locks=${navigator.locks}, strategy=${configuration.sessionStoreStrategyType?.type})`
+              )
+            )
+          )
       } else {
         pendingChain = (pendingChain ?? Promise.resolve()).then(() => applyAndWrite(fn))
         await pendingChain
