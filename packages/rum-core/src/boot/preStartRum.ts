@@ -37,9 +37,12 @@ import {
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
+
 import {
-  validateAndBuildRumConfiguration,
   fetchAndApplyRemoteConfiguration,
+  getRemoteConfiguration,
+  getRemoteConfigurationId,
+  validateAndBuildRumConfiguration,
   serializeRumConfiguration,
 } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
@@ -243,14 +246,23 @@ export function createPreStartStrategy(
 
       callPluginsMethod(initConfiguration.plugins, 'onInit', { initConfiguration, publicApi })
 
-      if (initConfiguration.remoteConfigurationId) {
-        fetchAndApplyRemoteConfiguration(initConfiguration, { user: userContext, context: globalContext })
-          .then((initConfiguration) => {
-            if (initConfiguration) {
-              doInit(initConfiguration, errorStack)
-            }
-          })
-          .catch(monitorError)
+      const hasRemoteConfiguration = getRemoteConfigurationId(initConfiguration)
+
+      if (hasRemoteConfiguration) {
+        const supportedContextManagers = { user: userContext, context: globalContext }
+        const isSyncLoading = !!initConfiguration.remoteConfigurationId || !!initConfiguration.remoteConfiguration?.sync
+
+        if (isSyncLoading) {
+          fetchAndApplyRemoteConfiguration(initConfiguration, supportedContextManagers)
+            .then((resolvedInitConfiguration) => {
+              if (resolvedInitConfiguration) {
+                doInit(resolvedInitConfiguration, errorStack)
+              }
+            })
+            .catch(monitorError)
+        } else {
+          doInit(getRemoteConfiguration(initConfiguration, supportedContextManagers), errorStack)
+        }
       } else {
         doInit(initConfiguration, errorStack)
       }
