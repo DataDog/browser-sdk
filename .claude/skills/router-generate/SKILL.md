@@ -134,13 +134,15 @@ For `new-package` mode, verify it appears in `yarn workspaces list`.
 **2. Run all checks, fix, repeat — up to 5 iterations:**
 
 ```
-checks = [typecheck, lint, unit tests]
+checks = [typecheck, lint, build, license check, unit tests]
 
 for iteration in 1..5:
-    run `yarn format`
+    run `yarn format` → capture warnings and errors, fix them in generated files
     run `yarn typecheck` → capture errors
     run `yarn lint` → capture errors
-    run `yarn test:unit --spec packages/rum-<framework>/` → capture errors
+    run `yarn build` → capture errors
+    run `node scripts/check-licenses.ts` → capture errors
+    run `yarn test:unit --spec 'packages/rum-<framework>/@(src|test)/**/*.spec.@(ts|tsx)'` → capture errors
 
     if all pass → done, break
 
@@ -151,15 +153,17 @@ for iteration in 1..5:
 if iteration 5 still has failures → stop, document in manifest
 ```
 
-**Checks (run all three every iteration):**
+**Checks (run all five every iteration):**
 
 | Command                                           | What it catches                                          |
 | ------------------------------------------------- | -------------------------------------------------------- |
 | `yarn typecheck`                                  | Wrong imports, missing properties, mismatched interfaces |
 | `yarn lint`                                       | Naming, formatting (mostly auto-fixed by `yarn format`)  |
-| `yarn test:unit --spec packages/rum-<framework>/` | Wrong mock shapes, assertion mismatches, missing cleanup |
+| `yarn build`                                      | Bundling errors, missing exports, package config issues  |
+| `node scripts/check-licenses.ts`                  | Missing or disallowed third-party dependency licenses    |
+| `yarn test:unit --spec 'packages/rum-<framework>/@(src|test)/**/*.spec.@(ts|tsx)'` | Wrong mock shapes, assertion mismatches, missing cleanup |
 
-Running all three every iteration (instead of gating sequentially) lets you see the full error surface and fix multiple categories at once.
+Running all five every iteration (instead of gating sequentially) lets you see the full error surface and fix multiple categories at once.
 
 **Fix strategy:**
 

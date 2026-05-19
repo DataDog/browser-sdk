@@ -70,18 +70,21 @@ Each stage is its own slash command. Testable in isolation, orchestrator just se
 ## Next
 
 Publish pipeline:
-• Publish pipeline to Datadog claude marketplace
-• Host the web application
+
+- Publish pipeline to Datadog claude marketplace
+- Host the web application
 
 Improvements:
-• Improve harness test step
-• Allow users to ask questions to agents at each step through the UI and retrigger the pipeline
-• Run evaluations, self-prompt improvement
+
+- Improve harness test step
+- Allow users to ask questions to agents at each step through the UI and retrigger the pipeline
+- Run evaluations, self-prompt improvement
 
 ---
 
 ## Lessons Learned
 
+- **Fix the code, not the prompt** — if you're enumerating edge cases in the prompt, the code is the problem. Enforce one pattern, delete the alternatives. Shorter prompt, fewer hallucinations. E.g. multiple ways to wire E2E tests in this repo — pick one, the model stops guessing.
 - **Many ways to orchestrate agents** — skills, subagents, `claude -p` CLI, raw API. Each has different trade-offs (context isolation, composability, cost, observability). Pick deliberately per stage.
 - **Read the actual Claude docs** — I tried asking Claude about its own best practices and got vague/inconclusive answers. Docs are the source of truth.
 - **Building this takes time** — each stage has to be developed in isolation, iteration is slow, lots of manual review of intermediate outputs early on. The upfront cost is real.

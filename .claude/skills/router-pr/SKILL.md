@@ -46,12 +46,14 @@ Artifacts: router concepts, design decisions, generation manifest."
 
 ### 3. Commit Generated Code
 
-Second commit: the generated code. Read `targetPackage.mode` from `02-design-decisions.json`.
+Second commit: the generated code **plus any other modified files** (e.g. `yarn.lock`, root `package.json`, `tsconfig.json` updates from adding a new workspace).
+
+Read `targetPackage.mode` from `02-design-decisions.json`.
 
 For `new-package`:
 
 ```bash
-git add packages/rum-<framework>/
+git add -A
 git commit -m "✨ Add <framework> router integration package
 
 Auto-generated from framework documentation using the router integration pipeline.
@@ -61,14 +63,24 @@ See docs/integrations/<framework>/ for design artifacts and decision rationale."
 For `extend-existing`:
 
 ```bash
-git add packages/<targetPackage.package>/
+git add -A
 git commit -m "✨ Add <framework> router support to <targetPackage.package>
 
 Auto-generated from framework documentation using the router integration pipeline.
 See docs/integrations/<framework>/ for design artifacts and decision rationale."
 ```
 
-### 4. Push and Create Draft PR
+### 4. Verify Clean Working Tree
+
+Before pushing, confirm nothing was missed:
+
+```bash
+git status --porcelain
+```
+
+If output is non-empty, investigate and commit those files (typically with a third commit `🔧 Misc updates from <framework> router integration`) before proceeding. The working tree **must** be clean before pushing.
+
+### 5. Push and Create Draft PR
 
 ```bash
 git push -u origin "$BRANCH"
