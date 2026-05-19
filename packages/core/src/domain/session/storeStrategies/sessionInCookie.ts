@@ -30,6 +30,17 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
   const opts = encodeCookieOptions(cookieOptions)
   const cookieAccess = mockable(createCookieAccess)(SESSION_STORE_KEY, configuration, cookieOptions)
   let isFirstCall = true
+  const initTimestamp = Date.now()
+  let pageHideFired = false
+  if (typeof window !== 'undefined') {
+    window.addEventListener(
+      'pagehide',
+      () => {
+        pageHideFired = true
+      },
+      { once: true }
+    )
+  }
 
   cookieAccess.observable.subscribe(() => {
     cookieAccess
@@ -62,13 +73,15 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
       if (typeof navigator !== 'undefined' && navigator.locks) {
         await navigator.locks
           .request(SESSION_STORE_KEY, () => applyAndWrite(fn))
-          .catch((error) =>
-            monitorError(
-              new Error(
-                `Error while expanding or renewing session on activity: ${error} (locks=${navigator.locks}, strategy=${configuration.sessionStoreStrategyType?.type})`
-              )
-            )
-          )
+          .catch((error) => {
+            let context = ''
+            try {
+              context = ` (locks=${navigator.locks}, strategy=${configuration.sessionStoreStrategyType?.type}, visibilityState=${document.visibilityState}, hidden=${document.hidden}, pagehide=${pageHideFired}, timeSinceInit=${Date.now() - initTimestamp}ms)`
+            } catch {
+              // ignore
+            }
+            monitorError(new Error(`Error while expanding or renewing session on activity: ${error}${context}`))
+          })
       } else {
         pendingChain = (pendingChain ?? Promise.resolve()).then(() => applyAndWrite(fn))
         await pendingChain
