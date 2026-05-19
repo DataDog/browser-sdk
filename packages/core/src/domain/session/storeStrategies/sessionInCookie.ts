@@ -7,8 +7,10 @@ import type { SessionState } from '../sessionState'
 import { toSessionString, toSessionState } from '../sessionState'
 import { Observable } from '../../../tools/observable'
 import { mockable } from '../../../tools/mockable'
+import { addEventListener, DOM_EVENT } from '../../../browser/addEventListener'
 import { monitorError } from '../../../tools/monitor'
 import { createCookieAccess } from '../../../browser/cookieAccess'
+import { dateNow } from '../../../tools/utils/timeUtils'
 import type { SessionStoreStrategy, SessionStoreStrategyType, SessionObservableEvent } from './sessionStoreStrategy'
 import { SESSION_STORE_KEY, LEGACY_SESSION_STORE_KEY } from './sessionStoreStrategy'
 
@@ -30,6 +32,11 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
   const opts = encodeCookieOptions(cookieOptions)
   const cookieAccess = mockable(createCookieAccess)(SESSION_STORE_KEY, configuration, cookieOptions)
   let isFirstCall = true
+  const initTimestamp = dateNow()
+  let pageHideFired = false
+  addEventListener(configuration, window, DOM_EVENT.PAGE_HIDE, () => {
+    pageHideFired = true
+  })
 
   cookieAccess.observable.subscribe(() => {
     cookieAccess
@@ -60,7 +67,17 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
   return {
     async setSessionState(fn: (sessionState: SessionState) => SessionState): Promise<void> {
       if (typeof navigator !== 'undefined' && navigator.locks) {
-        await navigator.locks.request(SESSION_STORE_KEY, () => applyAndWrite(fn))
+        await navigator.locks
+          .request(SESSION_STORE_KEY, () => applyAndWrite(fn))
+          .catch((error) => {
+            let context = ''
+            try {
+              context = ` (strategy=${configuration.sessionStoreStrategyType?.type}, visibilityState=${document.visibilityState}, hidden=${document.hidden}, pagehide=${pageHideFired}, timeSinceInit=${dateNow() - initTimestamp}ms)`
+            } catch {
+              // ignore
+            }
+            monitorError(new Error(`Error while expanding or renewing session on activity: ${error}${context}`))
+          })
       } else {
         pendingChain = (pendingChain ?? Promise.resolve()).then(() => applyAndWrite(fn))
         await pendingChain
