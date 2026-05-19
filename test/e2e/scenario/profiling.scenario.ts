@@ -1,15 +1,17 @@
 import { test, expect } from '@playwright/test'
 import type { Page } from '@playwright/test'
-import { createTest } from '../lib/framework'
+import { createTest, getTestServers } from '../lib/framework'
 
 test.describe('profiling', () => {
   test.beforeEach(({ browserName }) => {
     test.skip(browserName !== 'chromium', 'JS Profiling API is only available in Chromium')
   })
 
-  // Mock the quota admission endpoint — CSP allows the host, Playwright intercepts before DNS.
+  // Mock the quota admission endpoint before page navigation — CSP allows the host,
+  // Playwright intercepts before DNS so no network error appears in the console.
   test.beforeEach(async ({ page }) => {
-    await page.route('https://quota.browser-intake-datadoghq.com/api/v2/profiling/quota*', (route) =>
+    const { quotaOrigin } = await getTestServers()
+    await page.route(`${quotaOrigin}/api/v2/profiling/quota*`, (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/vnd.api+json',
