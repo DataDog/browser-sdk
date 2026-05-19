@@ -30,7 +30,10 @@ export function computeAssembledViewDiff(
     // context, connectivity, usr, device, privacy are objects — use REPLACE to avoid partial updates
     replaceKeys: new Set(['view.custom_timings', 'context', 'connectivity', 'usr', 'device', 'privacy']),
     appendKeys: new Set(['_dd.page_states']),
-    // Ignore always-required fields — they are added back via combine regardless of changes
+    // Ignore always-required fields — they are added back via combine regardless of changes.
+    // Also ignore SDK init-time config booleans that never change after initialisation:
+    // _dd.application.{rum_enabled, product_analytics_enabled, error_focused_mode_enabled,
+    // product_analytics_preview_enabled} are set once at init and constant for the session.
     ignoreKeys: new Set([
       'date',
       'type',
@@ -40,6 +43,7 @@ export function computeAssembledViewDiff(
       'view.url',
       '_dd.document_version',
       '_dd.format_version',
+      '_dd.application',
     ]),
   })
 

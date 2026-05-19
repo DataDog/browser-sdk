@@ -205,6 +205,20 @@ describe('computeAssembledViewDiff', () => {
 
     expect(current.service).toBe(currentService)
   })
+
+  it('should exclude _dd.application from view_update (SDK init-time config, never changes)', () => {
+    const application = { rum_enabled: true, product_analytics_enabled: false }
+    const last = makeAssembledView({ _dd: { document_version: 1, format_version: 2, sdk_name: 'rum', configuration: { start_session_replay_recording_manually: false }, application } })
+    const current = makeAssembledView({
+      _dd: { document_version: 2, format_version: 2, sdk_name: 'rum', configuration: { start_session_replay_recording_manually: false }, application },
+      view: { id: 'view-1', name: 'Home', url: '/home', referrer: '', is_active: true, action: { count: 1 }, error: { count: 0 }, long_task: { count: 0 }, resource: { count: 0 }, time_spent: 100 },
+    })
+
+    const result = computeAssembledViewDiff(current, last)!
+
+    expect((result._dd as any).application).toBeUndefined()
+    expect((result._dd as any).document_version).toBe(2) // required field still present
+  })
 })
 
 describe('startRumBatch partial_view_updates routing', () => {
