@@ -1,0 +1,32 @@
+{
+  "type": "result",
+  "subtype": "success",
+  "is_error": false,
+  "structured_output": {
+    "selectedHook": {
+      "name": "useCurrentMatches",
+      "rationale": "Five hooks were evaluated against the three priority rules:\n\n1. useBeforeLeave — afterCancellation: false. FAILS rule 1 (must not start a view for a cancelled navigation). Eliminated.\n2. useIsRouting — afterCancellation: false. FAILS rule 1. Eliminated.\n3. useLocation — afterCancellation: true ✓, afterRedirects: true ✓, afterFetch: false ✓, afterRender: false ✓. Passes all rules.\n4. useCurrentMatches — afterCancellation: true ✓, afterRedirects: true ✓, afterFetch: false ✓, afterRender: false ✓. Passes all rules.\n5. useParams — afterCancellation: true ✓, afterRedirects: true ✓, afterFetch: false ✓, afterRender: false ✓. Passes all rules but requires being rendered inside a matched <Route> component, limiting where the integration component can be placed.\n\nBoth useLocation and useCurrentMatches pass all rules and tie on timing. useCurrentMatches is selected because its availableApi exposes the matched route records array (matches()[n].route.path and params), enabling the preferred 'matched-records' view name algorithm directly. useLocation (pathname only) would force the less preferred 'param-substitution' algorithm. useLocation is still used alongside useCurrentMatches as a reactive signal to detect navigation changes, since useCurrentMatches does not have a stable 'previous vs. current' API."
+    },
+    "wrappingStrategy": {
+      "pattern": "renderless-component",
+      "target": "A RumSolidRouter renderless component exported from @datadog/browser-rum-solid that users place anywhere inside their <Router> tree",
+      "rationale": "Both useCurrentMatches and useLocation must be called inside a Solid component tree rendered under a <Router>. There is no factory function to wrap (unlike vue-router's createRouter) and no DI system (unlike Angular). The idiomatic Solid.js pattern for side-effecting logic that requires router context is a renderless component — a component that renders null but calls reactive hooks and uses createEffect to respond to signal changes. Users drop <RumSolidRouter /> inside their root App component beneath <Router>. This mirrors how Solid ecosystem libraries expose router-aware utilities as components, and is analogous to the React integration's Routes component wrapper pattern."
+    },
+    "viewNameAlgorithm": {
+      "family": "matched-records",
+      "rationale": "useCurrentMatches() returns an array of matched route segment objects. Each element has a route.path property containing the parameterized route pattern as defined by the developer (e.g. '/users/:id', '/stories/:id?', 'foo/*any'). By iterating the matches array and concatenating path segments (handling absolute vs. relative paths the same way as rum-react and rum-vue), we reconstruct the full parameterized view name without needing to reverse-engineer parameters from the evaluated pathname. Catch-all segments (e.g. '*404', 'foo/*any') should be kept as-is in the view name since solid-router uses named wildcards rather than bare splats; the wildcard name itself is meaningful context (e.g. '*404' signals a 404 catch-all route)."
+    },
+    "targetPackage": {
+      "mode": "new-package",
+      "package": "rum-solid"
+    },
+    "referenceImplementation": {
+      "primary": "rum-react",
+      "rationale": "rum-react is the closest match across all three dimensions: (1) Hook subscription pattern — both use component-context hooks (useRoutes/useLocation in React, useCurrentMatches/useLocation in Solid) rather than a router instance subscription; (2) Wrapping strategy — both use a renderless/wrapper component placed inside the app tree rather than wrapping a factory; (3) Algorithm family — both use matched-records, iterating an array of route match objects and concatenating route.path segments with identical absolute/relative path handling logic. The vue router is less suitable as its primary pattern is factory-wrapping with a router.afterEach callback."
+    },
+    "ssr": {
+      "handling": "Guard all hook calls and reactive effects with isServer from 'solid-js/web'. The RumSolidRouter component should return null immediately on the server without calling useCurrentMatches or useLocation. Example: import { isServer } from 'solid-js/web'; if (isServer) return null; This prevents any RUM SDK calls during server-side rendering. The clientDetection API documented in Stage 1 is exactly this pattern."
+    },
+    "notes": "1. Component placement: <RumSolidRouter /> must be placed as a child of <Router> (any depth). It does not need to be a direct child. Users should be instructed to place it near the top of their app component tree for maximum event attribution coverage.\n\n2. Initial navigation: Solid router fires reactive signals on initial render, so useCurrentMatches() will return the initial route matches synchronously. The createEffect that calls startView should fire on mount for the first view, and on every subsequent location change.\n\n3. Catch-all naming: Unlike React Router which uses bare '*' splats that the rum-react integration substitutes with the actual path, solid-router uses named wildcards ('*any', '*404'). These named wildcards are semantically meaningful and should NOT be substituted with the evaluated path — keep 'foo/*any' as the view name, not 'foo/bar/baz'.\n\n4. Optional segments: solid-router supports '/stories/:id?' (optional param with '?' suffix). The route.path from useCurrentMatches will contain the pattern as written, including the '?', which is correct as a view name.\n\n5. Multiple paths on a single Route: A <Route path={['/a', '/b']}> assigns multiple paths to one component. useCurrentMatches will reflect the matched path, so each alternative is tracked separately.\n\n6. Plugin architecture: The new rum-solid package should follow the same plugin architecture as rum-react — a solidPlugin() factory returning a RumPlugin, with internal onRumInit/onRumStart subscription channels, and router: boolean in plugin configuration.\n\n7. Minimum version: Target @solidjs/router >= 0.11.0 (initial changesets adoption; useCurrentMatches available since earlier but API stable from this point). The 0.15.0 cache→query rename and 0.14.0 load→preload rename do not affect the routing hooks used by the integration."
+  }
+}

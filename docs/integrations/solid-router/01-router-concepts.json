@@ -1,0 +1,315 @@
+{
+  "type": "result",
+  "subtype": "success",
+  "is_error": false,
+  "structured_output": {
+    "metadata": {
+      "framework": {
+        "value": "solid-router",
+        "source": "inferred: @solidjs/router → solid-router (analogous to @angular/router → angular, keeping package scope qualifier for clarity)"
+      },
+      "npmPackage": {
+        "value": "@solidjs/router",
+        "source": "https://registry.npmjs.org/@solidjs/router/latest"
+      }
+    },
+    "routeDefinition": {
+      "styles": [
+        {
+          "value": "config-object",
+          "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+        }
+      ],
+      "historyStrategies": [
+        {
+          "value": "path",
+          "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+        },
+        {
+          "value": "hash",
+          "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+        },
+        {
+          "value": "memory",
+          "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+        }
+      ]
+    },
+    "routeSyntax": {
+      "concepts": [
+        {
+          "value": "static-path",
+          "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+        },
+        {
+          "value": "dynamic-segments",
+          "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+        },
+        {
+          "value": "optional-segments",
+          "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+        },
+        {
+          "value": "catch-all",
+          "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+        },
+        {
+          "value": "nested-routes",
+          "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+        }
+      ],
+      "examples": [
+        {
+          "route": "/users",
+          "path": "/users",
+          "viewName": "/users",
+          "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+        },
+        {
+          "route": "/users/:id",
+          "path": "/users/42",
+          "viewName": "/users/:id",
+          "note": "Dynamic segment with colon prefix; accessible via useParams().id",
+          "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+        },
+        {
+          "route": "/stories/:id?",
+          "path": "/stories",
+          "viewName": "/stories/:id?",
+          "note": "Optional segment with ? suffix; matches both /stories and /stories/123",
+          "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+        },
+        {
+          "route": "/stories/:id?",
+          "path": "/stories/123",
+          "viewName": "/stories/:id?",
+          "note": "Optional segment matched with value",
+          "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+        },
+        {
+          "route": "foo/*any",
+          "path": "/foo/bar/baz",
+          "viewName": "foo/*any",
+          "note": "Named wildcard; matched remainder accessible via useParams().any. Wildcard token must appear at end of path.",
+          "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+        },
+        {
+          "route": "*404",
+          "path": "/nonexistent/path",
+          "viewName": "*404",
+          "note": "Catch-all route for 404 handling; named wildcard at root level",
+          "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+        },
+        {
+          "route": "/users/:id",
+          "path": "/users/abc",
+          "viewName": "/users/:id",
+          "note": "matchFilters prop allows regex/array/function validation of segment values; invalid values cause route to not match",
+          "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+        },
+        {
+          "route": "/users",
+          "path": "/users",
+          "viewName": "/users",
+          "note": "Nested routes: only leaf <Route> nodes are real routes. A parent route needs a child '/' route to render at its own path.",
+          "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+        }
+      ]
+    },
+    "ssr": {
+      "supported": {
+        "value": true,
+        "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+      },
+      "clientDetection": {
+        "value": "isServer from 'solid-js/web' (false on client, true on server)",
+        "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+      }
+    },
+    "hooks": [
+      {
+        "name": "useBeforeLeave",
+        "afterCancellation": false,
+        "afterRedirects": false,
+        "afterFetch": false,
+        "afterRender": false,
+        "access": "Must be called inside a Solid component tree that is rendered under a <Router>; internally subscribes via RouterContext's beforeLeave lifecycle",
+        "availableApi": [
+          {
+            "name": "event.from",
+            "description": "The current location (BeforeLeaveEventArgs.from) — location object before navigation",
+            "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+          },
+          {
+            "name": "event.to",
+            "description": "The target path or location being navigated to",
+            "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+          },
+          {
+            "name": "event.options",
+            "description": "Navigation options passed to navigate()",
+            "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+          },
+          {
+            "name": "event.preventDefault()",
+            "description": "Blocks the navigation from proceeding",
+            "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+          },
+          {
+            "name": "event.defaultPrevented",
+            "description": "Whether preventDefault has been called",
+            "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+          },
+          {
+            "name": "event.retry(force?)",
+            "description": "Re-attempt the blocked navigation, optionally forcing it through even if blocked again",
+            "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+          }
+        ],
+        "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/src/routing.ts"
+      },
+      {
+        "name": "useIsRouting",
+        "afterCancellation": false,
+        "afterRedirects": false,
+        "afterFetch": false,
+        "afterRender": false,
+        "access": "Must be called inside a Solid component tree under a <Router>; returns a reactive signal",
+        "availableApi": [
+          {
+            "name": "isRouting()",
+            "description": "Reactive boolean signal; true while a navigation transition is in progress, false when navigation has completed (after startTransition resolves and isRouting is reset)",
+            "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/src/routing.ts"
+          }
+        ],
+        "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+      },
+      {
+        "name": "useLocation",
+        "afterCancellation": true,
+        "afterRedirects": true,
+        "afterFetch": false,
+        "afterRender": false,
+        "access": "Must be called inside a Solid component tree under a <Router>; returns a reactive location object",
+        "availableApi": [
+          {
+            "name": "location.pathname",
+            "description": "Current URL path string",
+            "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+          },
+          {
+            "name": "location.search",
+            "description": "Query string portion of URL",
+            "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+          },
+          {
+            "name": "location.hash",
+            "description": "Hash fragment of URL",
+            "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+          },
+          {
+            "name": "location.query",
+            "description": "Parsed query string as object",
+            "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+          },
+          {
+            "name": "location.state",
+            "description": "History state associated with current entry",
+            "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+          },
+          {
+            "name": "location.key",
+            "description": "Unique key for this history entry",
+            "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+          }
+        ],
+        "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+      },
+      {
+        "name": "useCurrentMatches",
+        "afterCancellation": true,
+        "afterRedirects": true,
+        "afterFetch": false,
+        "afterRender": false,
+        "access": "Must be called inside a Solid component tree under a <Router>; returns a reactive accessor returning the array of matched route segments",
+        "availableApi": [
+          {
+            "name": "matches()",
+            "description": "Array of matched route segments for the current route; each element has route.info, route.path, and params",
+            "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+          },
+          {
+            "name": "matches()[n].route.info",
+            "description": "Custom route info metadata attached to the route definition",
+            "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+          }
+        ],
+        "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+      },
+      {
+        "name": "useParams",
+        "afterCancellation": true,
+        "afterRedirects": true,
+        "afterFetch": false,
+        "afterRender": false,
+        "access": "Must be called inside a Solid component rendered as part of a matched route (within the component tree under a <Route>)",
+        "availableApi": [
+          {
+            "name": "params.<segment>",
+            "description": "Reactive store of current path parameter values keyed by segment name (e.g. params.id for :id)",
+            "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+          }
+        ],
+        "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/README.md"
+      }
+    ],
+    "versions": {
+      "entries": [
+        {
+          "version": "0.16.0",
+          "date": "2026-03-17",
+          "routingChanges": [
+            "Re-export context: router context is now re-exported from the package for advanced use cases"
+          ],
+          "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/CHANGELOG.md"
+        },
+        {
+          "version": "0.15.0",
+          "date": "2024-10-31",
+          "routingChanges": [
+            "Renamed cache() to query() — any code using cache() for route data fetching must migrate to query()",
+            "action onComplete callback added"
+          ],
+          "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/CHANGELOG.md"
+        },
+        {
+          "version": "0.14.0",
+          "date": "2024-07-08",
+          "routingChanges": [
+            "Renamed load to preload — route preload functions must use the preload prop instead of load",
+            "Default form actions now use URL encoding (application/x-www-form-urlencoded) instead of multipart",
+            "Response helpers (redirect, reload) now return Response objects; cache/action filter them out of render"
+          ],
+          "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/CHANGELOG.md"
+        },
+        {
+          "version": "0.12.0",
+          "date": "2024-02-09",
+          "routingChanges": [
+            "Added createAsyncStorage; added prev argument to cache callbacks; removed store from cache API"
+          ],
+          "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/CHANGELOG.md"
+        },
+        {
+          "version": "0.11.0",
+          "date": "2024-02-01",
+          "routingChanges": [
+            "Initial changesets adoption; no routing API breaking changes documented"
+          ],
+          "source": "https://raw.githubusercontent.com/solidjs/solid-router/main/CHANGELOG.md"
+        }
+      ]
+    },
+    "notes": "1. Route definition: @solidjs/router supports both JSX-declarative style (<Route> components as children of <Router>) and config-object style (array of {path, component} objects passed as children). Both are equivalent at runtime — there is no true 'file-based' routing in the framework itself.\n2. No post-navigation hook: There is no 'afterRouteChange' or equivalent event. The closest approximation is a reactive effect on useLocation() or watching useIsRouting() transition from true to false. These run after route matching and transition commit but before data loading / rendering of new components.\n3. Route components as leaves only: Parent <Route> elements without a component do not render anything themselves; only leaf route nodes render components. Nested routes compose via props.children passed down, not via <Outlet> (removed in v0.10.0).\n4. matchFilters: Route segments can be validated with the matchFilters prop (accepts arrays for enum matching, RegExp, or predicate functions). A segment failing its filter causes the route not to match.\n5. Multiple paths: A single <Route> can accept an array as its path prop; switching between matched paths does not re-mount the component.\n6. SSR: Pass url prop to <Router> on server (e.g. <Router url={req.url}>). Use isServer from solid-js/web to branch client/server code."
+  }
+}
