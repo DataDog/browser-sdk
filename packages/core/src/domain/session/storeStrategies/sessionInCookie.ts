@@ -7,8 +7,10 @@ import type { SessionState } from '../sessionState'
 import { toSessionString, toSessionState } from '../sessionState'
 import { Observable } from '../../../tools/observable'
 import { mockable } from '../../../tools/mockable'
+import { addEventListener, DOM_EVENT } from '../../../browser/addEventListener'
 import { monitorError } from '../../../tools/monitor'
 import { createCookieAccess } from '../../../browser/cookieAccess'
+import { dateNow } from '../../../tools/utils/timeUtils'
 import type { SessionStoreStrategy, SessionStoreStrategyType, SessionObservableEvent } from './sessionStoreStrategy'
 import { SESSION_STORE_KEY, LEGACY_SESSION_STORE_KEY } from './sessionStoreStrategy'
 
@@ -30,17 +32,11 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
   const opts = encodeCookieOptions(cookieOptions)
   const cookieAccess = mockable(createCookieAccess)(SESSION_STORE_KEY, configuration, cookieOptions)
   let isFirstCall = true
-  const initTimestamp = Date.now()
+  const initTimestamp = dateNow()
   let pageHideFired = false
-  if (typeof window !== 'undefined') {
-    window.addEventListener(
-      'pagehide',
-      () => {
-        pageHideFired = true
-      },
-      { once: true }
-    )
-  }
+  addEventListener(configuration, window, DOM_EVENT.PAGE_HIDE, () => {
+    pageHideFired = true
+  })
 
   cookieAccess.observable.subscribe(() => {
     cookieAccess
@@ -76,7 +72,7 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
           .catch((error) => {
             let context = ''
             try {
-              context = ` (locks=${navigator.locks}, strategy=${configuration.sessionStoreStrategyType?.type}, visibilityState=${document.visibilityState}, hidden=${document.hidden}, pagehide=${pageHideFired}, timeSinceInit=${Date.now() - initTimestamp}ms)`
+              context = ` (strategy=${configuration.sessionStoreStrategyType?.type}, visibilityState=${document.visibilityState}, hidden=${document.hidden}, pagehide=${pageHideFired}, timeSinceInit=${dateNow() - initTimestamp}ms)`
             } catch {
               // ignore
             }
