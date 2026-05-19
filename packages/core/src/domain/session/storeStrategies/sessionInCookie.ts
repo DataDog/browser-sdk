@@ -60,7 +60,9 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
   return {
     async setSessionState(fn: (sessionState: SessionState) => SessionState): Promise<void> {
       if (typeof navigator !== 'undefined' && navigator.locks) {
-        await navigator.locks.request(SESSION_STORE_KEY, () => applyAndWrite(fn))
+        await navigator.locks
+          .request(SESSION_STORE_KEY, () => applyAndWrite(fn))
+          .catch((error) => monitorError(new Error(`Error while writing session state to cookie: ${error}`)))
       } else {
         pendingChain = (pendingChain ?? Promise.resolve()).then(() => applyAndWrite(fn))
         await pendingChain
