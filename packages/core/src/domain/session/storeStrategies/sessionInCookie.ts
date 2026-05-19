@@ -9,6 +9,7 @@ import { Observable } from '../../../tools/observable'
 import { mockable } from '../../../tools/mockable'
 import { addEventListener, DOM_EVENT } from '../../../browser/addEventListener'
 import { monitorError } from '../../../tools/monitor'
+import { addTelemetryError } from '../../telemetry'
 import { createCookieAccess } from '../../../browser/cookieAccess'
 import { dateNow } from '../../../tools/utils/timeUtils'
 import type { SessionStoreStrategy, SessionStoreStrategyType, SessionObservableEvent } from './sessionStoreStrategy'
@@ -36,6 +37,9 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
   let pageHideFired = false
   addEventListener(configuration, window, DOM_EVENT.PAGE_HIDE, () => {
     pageHideFired = true
+  })
+  addEventListener(configuration, window, DOM_EVENT.PAGE_SHOW, () => {
+    pageHideFired = false
   })
 
   cookieAccess.observable.subscribe(() => {
@@ -70,13 +74,18 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
         await navigator.locks
           .request(SESSION_STORE_KEY, () => applyAndWrite(fn))
           .catch((error) => {
-            let context = ''
+            const context: Record<string, string | number | boolean | undefined> = {
+              strategy: configuration.sessionStoreStrategyType?.type,
+              pagehide: pageHideFired,
+              timeSinceInit: dateNow() - initTimestamp,
+            }
             try {
-              context = ` (strategy=${configuration.sessionStoreStrategyType?.type}, visibilityState=${document.visibilityState}, hidden=${document.hidden}, pagehide=${pageHideFired}, timeSinceInit=${dateNow() - initTimestamp}ms)`
+              context.visibilityState = document.visibilityState
+              context.hidden = document.hidden
             } catch {
               // ignore
             }
-            monitorError(new Error(`Error while expanding or renewing session on activity: ${error}${context}`))
+            addTelemetryError(new Error(`Error while expanding or renewing session on activity: ${error}`), context)
           })
       } else {
         pendingChain = (pendingChain ?? Promise.resolve()).then(() => applyAndWrite(fn))
