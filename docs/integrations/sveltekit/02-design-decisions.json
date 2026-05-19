@@ -1,0 +1,41 @@
+{
+  "type": "result",
+  "subtype": "success",
+  "is_error": false,
+  "duration_ms": 114335,
+  "result": "Design decisions for sveltekit router integration generated.",
+  "structured_output": {
+    "selectedHook": {
+      "name": "afterNavigate",
+      "rationale": "Three hooks evaluated: beforeNavigate, onNavigate, afterNavigate.\n\nRule 1 (afterCancellation: true — required): beforeNavigate has afterCancellation: false → eliminated. onNavigate and afterNavigate both have afterCancellation: true → both pass.\n\nRule 2 (afterRedirects: true — preferred): onNavigate has afterRedirects: false → eliminated. afterNavigate has afterRedirects: true → passes.\n\nRule 3 (afterFetch: false AND afterRender: false — preferred) is not reached since only one hook remains after Rule 2. Note: afterNavigate fires after fetch and render (afterFetch: true, afterRender: true), which is suboptimal for attributing fetch/long-task events to the new view, but correctness (no cancelled/redirected navigations) takes absolute priority. Selected: afterNavigate."
+    },
+    "wrappingStrategy": {
+      "pattern": "renderless-component",
+      "target": "A Svelte component (e.g. DatadogRouterTracker.svelte) placed by the user in their root +layout.svelte. Inside the component, afterNavigate imported from '$app/navigation' is called at component initialization to subscribe to navigation events.",
+      "rationale": "SvelteKit exposes no router factory to wrap — the framework owns routing entirely. afterNavigate must be called during Svelte component initialization since it is tied to component lifetime. The idiomatic SvelteKit pattern for library-provided router-level behavior (progress bars, analytics integrations) is a renderless component placed in the root layout. This avoids factory-wrapping (impossible with SvelteKit's routing model), hook-wrapping (no user-facing hook exposes route state), and DI providers (no Angular-style DI in Svelte)."
+    },
+    "viewNameAlgorithm": {
+      "family": "route-id",
+      "rationale": "afterNavigate provides navigation.to (NavigationTarget) which exposes route.id — the parameterized route pattern string directly (e.g. '/blog/[slug]', '/(app)/dashboard'). This is the route-id family: no matched-records iteration or param-substitution heuristics needed. Minimal post-processing: optionally strip route group segments '(groupName)' from the id since groups appear in route.id but not in URLs."
+    },
+    "targetPackage": {
+      "mode": "new-package",
+      "package": "rum-sveltekit"
+    },
+    "referenceImplementation": {
+      "primary": "rum-vue",
+      "rationale": "rum-vue is the closest structural match: (1) the plugin machinery pattern (plugin factory + onRumInit/onRumStart subscriber queues + globalPublicApi) is directly reusable; (2) the navigation hook fires after completion with failures filtered, analogous to afterNavigate which only fires on completed navigations; (3) the startView call pattern is the same. rum-react uses wrap-factory which does not apply. rum-nextjs uses param-substitution which does not apply."
+    },
+    "ssr": {
+      "handling": "SvelteKit renders components server-side by default. afterNavigate is client-only but the DatadogRouterTracker component may be SSR'd. Guard the afterNavigate registration and all datadogRum.startView() calls with 'import { browser } from \"$app/environment\"' — execute only when browser === true. This is the canonical SvelteKit idiom for client-only code in SSR-rendered components."
+    },
+    "notes": "1. Route group stripping: route.id includes group directory names in parentheses (e.g. '/(app)/dashboard'). Stage 3 should implement a stripRouteGroups() helper that removes '/(groupName)' segments so view names match URL paths. This should be optional or at least documented.\n\n2. Initial navigation: afterNavigate fires on initial mount with type === 'enter', so the first page view is automatically tracked with no special-casing needed.\n\n3. Hash routing: Since SvelteKit 2.14, hash-based routing is supported (kit.router.type === 'hash'). The integration works transparently since afterNavigate fires regardless of history strategy and route.id is still the correct view name source.\n\n4. $app/state vs $app/stores: Since SvelteKit 2.12, $app/state is the recommended runes-based API. Stage 3 should use $app/state (page.route.id) as the primary API. $app/stores remains supported for compatibility with SvelteKit < 2.12.\n\n5. Timing trade-off: afterNavigate fires after data loading and DOM update, meaning fetch resources and long tasks during navigation are attributed to the old view rather than the new one. This is an accepted trade-off because correctness (no cancelled/redirected-intermediate views) is required by the priority rules. Document in the package README.\n\n6. Plugin configuration: Include router: boolean in the plugin configuration (matching rum-vue and rum-react patterns) so users can use rum-sveltekit for error tracking only without enabling view tracking."
+  },
+  "usage": {
+    "input_tokens": 8500,
+    "output_tokens": 1200,
+    "cache_read_input_tokens": 0,
+    "cache_creation_input_tokens": 0
+  },
+  "total_cost_usd": 0.18
+}
