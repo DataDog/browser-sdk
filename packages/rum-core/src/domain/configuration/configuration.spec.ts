@@ -825,6 +825,7 @@ describe('serializeRumConfiguration', () => {
       trackResources: true,
       trackLongTasks: true,
       remoteConfigurationId: '123',
+      remoteConfiguration: { id: '123', sync: false },
       remoteConfigurationProxy: 'config',
       plugins: [{ name: 'foo', getConfigurationTelemetry: () => ({ bar: true }) }],
       trackFeatureFlagsForEvents: ['vital'],
@@ -845,7 +846,8 @@ describe('serializeRumConfiguration', () => {
         : Key extends 'trackLongTasks'
           ? 'track_long_task' // We forgot the s, keeping this for backward compatibility
           : // The following options are not reported as telemetry. Please avoid adding more of them.
-            Key extends 'applicationId' | 'subdomain'
+            // `remoteConfiguration` is covered by the legacy `remote_configuration_id` field.
+            Key extends 'applicationId' | 'subdomain' | 'remoteConfiguration'
             ? never
             : CamelToSnakeCase<Key>
     // By specifying the type here, we can ensure that serializeConfiguration is returning an
