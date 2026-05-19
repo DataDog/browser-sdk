@@ -7,6 +7,19 @@ test.describe('profiling', () => {
     test.skip(browserName !== 'chromium', 'JS Profiling API is only available in Chromium')
   })
 
+  // Mock the quota admission endpoint — CSP allows the host, Playwright intercepts before DNS.
+  test.beforeEach(async ({ page }) => {
+    await page.route('https://quota.browser-intake-datadoghq.com/api/v2/profiling/quota*', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/vnd.api+json',
+        body: JSON.stringify({
+          data: { id: 'test', type: 'profiling-quota', attributes: { admitted: true, reason: 'quota_ok' } },
+        }),
+      })
+    )
+  })
+
   createTest('send profile events when profiling is enabled')
     .withRum({ profilingSampleRate: 100, trackUserInteractions: true })
     .withBasePath('/?js-profiling=true')

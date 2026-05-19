@@ -450,23 +450,6 @@ async function setUpTest(
   { mockClock }: SetupOptions,
   { baseUrl, page, browserContext }: TestContext
 ) {
-  // Mock the quota admission endpoint at the JS level before any SDK code runs.
-  // This avoids cross-origin fetch errors (CSP violations, DNS failures) regardless
-  // of the browser version or network environment.
-  await page.addInitScript(() => {
-    const QUOTA_ADMIT_RESPONSE = JSON.stringify({
-      data: { id: 'test', type: 'profiling-quota', attributes: { admitted: true, reason: 'quota_ok' } },
-    })
-    const originalFetch = window.fetch
-    window.fetch = function (input: RequestInfo | URL, init?: RequestInit) {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
-      if (url.includes('/api/v2/profiling/quota')) {
-        return Promise.resolve(new Response(QUOTA_ADMIT_RESPONSE, { status: 200 }))
-      }
-      return originalFetch.call(window, input, init)
-    }
-  })
-
   browserContext.on('console', (msg) => {
     browserLogsManager.add({
       level: msg.type() as BrowserLog['level'],
