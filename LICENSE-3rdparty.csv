@@ -21,6 +21,7 @@ dev,@eslint/js,MIT,Copyright OpenJS Foundation and other contributors, <www.open
 dev,@jsdevtools/coverage-istanbul-loader,MIT,Copyright (c) 2015 James Messinger
 dev,@ngtools/webpack,MIT,Copyright (c) 2017 Google LLC
 dev,@playwright/test,Apache-2.0,Copyright Microsoft Corporation
+dev,@solidjs/router,MIT,Copyright (c) 2020-2022 Ryan Carniato
 dev,@swc/core,Apache-2.0,Copyright (c) SWC Contributors
 dev,@types/chrome,MIT,Copyright Microsoft Corporation
 dev,@types/busboy,MIT,Copyright Microsoft Corporation
@@ -78,6 +79,7 @@ dev,react-router-dom,MIT,Copyright (c) React Training LLC 2015-2019 Copyright (c
 dev,react-window,MIT,Copyright (c) 2018 Brian Vaughn
 dev,recharts,MIT,Copyright (c) 2015-present recharts
 dev,rxjs,Apache-2.0,Copyright (c) 2015-2022 Google LLC Ben Lesh and contributors
+dev,solid-js,MIT,Copyright (c) 2016-2025 Ryan Carniato
 dev,swc-loader,MIT,Copyright (c) SWC Contributors
 dev,terser-webpack-plugin,MIT,Copyright JS Foundation and other contributors
 dev,ts-loader,MIT,Copyright 2015 TypeStrong

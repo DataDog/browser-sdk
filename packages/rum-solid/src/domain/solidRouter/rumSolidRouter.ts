@@ -2,7 +2,6 @@ import { isServer } from 'solid-js/web'
 import { createEffect } from 'solid-js'
 import { useCurrentMatches, useLocation } from '@solidjs/router'
 import { startSolidRouterView } from './startSolidRouterView'
-import type { AnyRouteMatch } from './types'
 
 /**
  * Renderless Solid component that tracks route changes as RUM views.
@@ -38,7 +37,7 @@ export function RumSolidRouter(): null {
     // Access location.pathname to make this effect reactive to navigation changes.
     // useCurrentMatches() returns the matched route records after each completed navigation.
     void location.pathname
-    startSolidRouterView(matches() as AnyRouteMatch[])
+    startSolidRouterView(matches().map((match) => ({ route: { path: match.route.originalPath } })))
   })
 
   return null
