@@ -27,6 +27,44 @@ import type { Extension } from './createExtension'
 import type { Worker } from './createWorker'
 import { isBrowserStack } from './environment'
 
+/**
+ * Init script applied to every WebKit context to work around a Playwright-specific
+ * quirk observed on the bundled WebKit (Safari 26). Real Safari users are unaffected;
+ * this only manifests in Playwright's WebKit fork.
+ *
+ * Trusted PointerEvent.timeStamp returns a Cocoa-epoch-derived value (~8e11 ms)
+ * instead of a DOMHighResTimeStamp. The SDK feeds it into relativeToClocks() and
+ * trips the "clock looks weird" guard in trackClickActions — every click action is
+ * silently discarded. We wrap Event.prototype.timeStamp to fall back to
+ * performance.now() when the raw value is implausibly large (>1 year).
+ *
+ * Upstream issue: https://github.com/microsoft/playwright/issues/40822
+ */
+const WEBKIT_PLAYWRIGHT_WORKAROUND = `
+(() => {
+  // event.timeStamp is a DOMHighResTimeStamp (ms since performance.timeOrigin), so
+  // it should always be well below a year. Anything larger is the Cocoa-epoch leak
+  // observed on Playwright's bundled WebKit (~8e11 ms, ~25 years).
+  const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+  const desc = Object.getOwnPropertyDescriptor(Event.prototype, 'timeStamp');
+  if (desc && desc.get) {
+    const origGetter = desc.get;
+    const cache = new WeakMap();
+    Object.defineProperty(Event.prototype, 'timeStamp', {
+      configurable: true,
+      get() {
+        const raw = origGetter.call(this);
+        if (raw < ONE_YEAR_MS) return raw;
+        if (cache.has(this)) return cache.get(this);
+        const fallback = performance.now();
+        cache.set(this, fallback);
+        return fallback;
+      },
+    });
+  }
+})();
+`
+
 export function createTest(title: string) {
   return new TestBuilder(title, captureCallerLocation())
 }
@@ -348,6 +386,10 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     const browserName = getBrowserName(test.info().project.name)
     addTag('test.browserName', browserName)
     addTestOptimizationTags(test.info().project.metadata as BrowserConfiguration)
+
+    if (browserName === 'webkit') {
+      await context.addInitScript(WEBKIT_PLAYWRIGHT_WORKAROUND)
+    }
 
     const servers = await getTestServers()
     const baseUrl = new URL(servers.base.origin)

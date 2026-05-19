@@ -1,6 +1,6 @@
-import { fetchHandlingError } from '../../lib/executionUtils.ts'
-import { getOrg2ApiKey } from '../../lib/secrets.ts'
-import { browserSdkVersion } from '../../lib/browserSdkVersion.ts'
+import { fetchHandlingError } from './executionUtils.ts'
+import { getOrg2ApiKey } from './secrets.ts'
+import { browserSdkVersion } from './browserSdkVersion.ts'
 
 export async function reportToDatadog(
   logData: Record<string, number | string | Record<string, number>>
