@@ -3,14 +3,10 @@ import type { Page } from '@playwright/test'
 import { createTest } from '../lib/framework'
 
 test.describe('profiling', () => {
-  test.beforeEach(({ browserName }) => {
+  test.beforeEach(async ({ page, browserName }) => {
     test.skip(browserName !== 'chromium', 'JS Profiling API is only available in Chromium')
-  })
+    // ↑ throws TestSkipError on Firefox/WebKit — nothing below runs
 
-  // The quota admission endpoint must be mocked before page navigation (the profiler's
-  // lazy chunk loads during page init and fires the quota fetch before page.goto() returns).
-  // CSP allows the host; Playwright intercepts before the request reaches the network.
-  test.beforeEach(async ({ page }) => {
     await page.route('https://quota.browser-intake-datadoghq.com/api/v2/profiling/quota*', (route) =>
       route.fulfill({
         status: 200,
