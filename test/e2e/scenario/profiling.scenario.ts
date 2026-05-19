@@ -7,19 +7,24 @@ test.describe('profiling', () => {
     test.skip(browserName !== 'chromium', 'JS Profiling API is only available in Chromium')
   })
 
-  // The quota admission endpoint must be mocked before page navigation (the profiler's
-  // lazy chunk loads during page init and fires the quota fetch before page.goto() returns).
-  // CSP allows the host; Playwright intercepts before the request reaches the network.
+  // The quota check fires during early page init (before page.goto() returns), so
+  // page.route() is too late and unreliable across browser versions. Playwright docs
+  // recommend page.addInitScript() when "the page may be calling the API very early
+  // while loading": https://playwright.dev/docs/mock-browser-apis
   test.beforeEach(async ({ page }) => {
-    await page.route('https://quota.browser-intake-datadoghq.com/api/v2/profiling/quota*', (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: 'application/vnd.api+json',
-        body: JSON.stringify({
-          data: { id: 'test', type: 'profiling-quota', attributes: { admitted: true, reason: 'quota_ok' } },
-        }),
+    await page.addInitScript(() => {
+      const QUOTA_ADMIT_RESPONSE = JSON.stringify({
+        data: { id: 'test', type: 'profiling-quota', attributes: { admitted: true, reason: 'quota_ok' } },
       })
-    )
+      const originalFetch = window.fetch
+      window.fetch = function (input, init) {
+        const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input).url
+        if (url.includes('/api/v2/profiling/quota')) {
+          return Promise.resolve(new Response(QUOTA_ADMIT_RESPONSE, { status: 200 }))
+        }
+        return originalFetch.call(window, input, init)
+      }
+    })
   })
 
   createTest('send profile events when profiling is enabled')
