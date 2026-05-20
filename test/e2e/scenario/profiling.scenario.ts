@@ -3,19 +3,8 @@ import type { Page } from '@playwright/test'
 import { createTest } from '../lib/framework'
 
 test.describe('profiling', () => {
-  test.beforeEach(async ({ page, browserName }) => {
+  test.beforeEach(({ browserName }) => {
     test.skip(browserName !== 'chromium', 'JS Profiling API is only available in Chromium')
-    // ↑ throws TestSkipError on Firefox/WebKit — nothing below runs
-
-    await page.route('https://quota.browser-intake-datadoghq.com/api/v2/profiling/quota*', (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: 'application/vnd.api+json',
-        body: JSON.stringify({
-          data: { id: 'test', type: 'profiling-quota', attributes: { admitted: true, reason: 'quota_ok' } },
-        }),
-      })
-    )
   })
 
   createTest('send profile events when profiling is enabled')
