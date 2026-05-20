@@ -1,4 +1,4 @@
-import { ExperimentalFeature, addExperimentalFeatures, isExperimentalFeatureEnabled } from '@datadog/browser-core'
+import { ExperimentalFeature, addExperimentalFeatures } from '@datadog/browser-core'
 import { resetExperimentalFeatures } from '@datadog/browser-core/src/tools/experimentalFeatures'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { AssembledRumEvent } from '../rawRumEvent.types'
@@ -215,13 +215,5 @@ describe('startRumBatch partial_view_updates routing', () => {
 
   it('PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL should be 100', () => {
     expect(PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL).toBe(100)
-  })
-
-  it('PARTIAL_VIEW_UPDATES_NO_CHECKPOINT flag should be defined', () => {
-    expect(ExperimentalFeature.PARTIAL_VIEW_UPDATES_NO_CHECKPOINT).toBe('partial_view_updates_no_checkpoint')
-  })
-
-  it('PARTIAL_VIEW_UPDATES_NO_CHECKPOINT flag should be disabled by default', () => {
-    expect(isExperimentalFeatureEnabled(ExperimentalFeature.PARTIAL_VIEW_UPDATES_NO_CHECKPOINT)).toBe(false)
   })
 })

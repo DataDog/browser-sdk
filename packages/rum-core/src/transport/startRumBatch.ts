@@ -123,15 +123,13 @@ export function startRumBatch(
       return
     }
 
-    // Checkpoint: every N intermediate updates, send a full view (unless disabled by flag)
-    if (!isExperimentalFeatureEnabled(ExperimentalFeature.PARTIAL_VIEW_UPDATES_NO_CHECKPOINT)) {
-      viewUpdatesSinceCheckpoint += 1
-      if (viewUpdatesSinceCheckpoint >= PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL) {
-        viewUpdatesSinceCheckpoint = 0
-        lastSentView = serverRumEvent
-        batch.upsert(serverRumEvent, viewId)
-        return
-      }
+    // Checkpoint: every N intermediate updates, send a full view
+    viewUpdatesSinceCheckpoint += 1
+    if (viewUpdatesSinceCheckpoint >= PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL) {
+      viewUpdatesSinceCheckpoint = 0
+      lastSentView = serverRumEvent
+      batch.upsert(serverRumEvent, viewId)
+      return
     }
 
     // Intermediate update: compute diff and send view_update.
