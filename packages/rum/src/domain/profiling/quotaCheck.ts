@@ -29,8 +29,21 @@ function parseQuotaResult(body: unknown, httpStatusFallback: QuotaResult): Quota
 }
 
 function buildQuotaUrl(configuration: RumConfiguration, sessionId: string): string {
+  const path = '/api/v2/profiling/quota'
+  const parameters = `session_id=${sessionId}`
+  const proxy = configuration.proxy
   const host = `quota.${buildEndpointHost({ site: configuration.site, clientToken: configuration.clientToken })}`
-  return `https://${host}/api/v2/profiling/quota?session_id=${sessionId}`
+
+  if (typeof proxy === 'string') {
+    // ddforwardSubdomain tells the proxy which intake subdomain to target.
+    return `${proxy}?ddforward=${encodeURIComponent(`${path}?${parameters}`)}&ddforwardSubdomain=quota`
+  }
+
+  if (typeof proxy === 'function') {
+    return proxy({ path, parameters, subdomain: 'quota' })
+  }
+
+  return `https://${host}${path}?${parameters}`
 }
 
 export function checkProfilingQuota(
