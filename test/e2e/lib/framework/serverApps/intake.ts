@@ -11,6 +11,16 @@ export function createIntakeServerApp(intakeRegistry: IntakeRegistry) {
 
   app.post('/', createIntakeProxyMiddleware({ onRequest: (request) => intakeRegistry.push(request) }))
 
+  // Quota admission check — always admit in the test environment.
+  // Triggered via proxy-as-string with ddforwardSubdomain=quota.
+  app.get('/', (req, res) => {
+    if (req.query.ddforwardSubdomain === 'quota') {
+      res.json({ data: { id: 'test', type: 'profiling-quota', attributes: { admitted: true, reason: 'quota_ok' } } })
+    } else {
+      res.status(404).end()
+    }
+  })
+
   app.post('/api/unstable/debugger/frontend/probes', (_req, res) => {
     res.json({ nextCursor: '', updates: debuggerProbes, deletions: [] })
   })
