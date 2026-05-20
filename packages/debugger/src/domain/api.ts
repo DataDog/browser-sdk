@@ -44,7 +44,7 @@ export function resetDebuggerTransport(): void {
  * @param self - The 'this' context
  * @param args - Function arguments
  */
-export function onEntry(probes: InitializedProbe[], self: any, args: Record<string, any>): void {
+export function onEntry(probes: InitializedProbe[], self: any, args: Record<string, any> = {}): void {
   const start = performance.now()
   const captureCtx: CaptureContext = { deadline: start + SNAPSHOT_TIMEOUT_MS, timedOut: false }
 
@@ -125,8 +125,8 @@ export function onReturn(
   probes: InitializedProbe[],
   value: any,
   self: any,
-  args: Record<string, any>,
-  locals: Record<string, any>
+  args: Record<string, any> = {},
+  locals: Record<string, any> = {}
 ): any {
   const end = performance.now()
   const captureCtx: CaptureContext = { deadline: performance.now() + SNAPSHOT_TIMEOUT_MS, timedOut: false }
@@ -195,7 +195,7 @@ export function onReturn(
  * @param self - The 'this' context
  * @param args - Function arguments
  */
-export function onThrow(probes: InitializedProbe[], error: Error, self: any, args: Record<string, any>): void {
+export function onThrow(probes: InitializedProbe[], error: Error, self: any, args: Record<string, any> = {}): void {
   const end = performance.now()
   const captureCtx: CaptureContext = { deadline: performance.now() + SNAPSHOT_TIMEOUT_MS, timedOut: false }
 
