@@ -1,9 +1,9 @@
 import { formatPercentage, formatSize } from '../../lib/executionUtils.ts'
 import { calculateBundleSizes } from '../../lib/computeBundleSize.ts'
+import { reportToDatadog } from '../../lib/reportToDatadog.ts'
 import type { PerformanceMetric } from './fetchPerformanceMetrics.ts'
 import { fetchPerformanceMetrics } from './fetchPerformanceMetrics.ts'
 import { markdownArray, type Pr } from './reportAsAPrComment.ts'
-import { reportToDatadog } from './reportToDatadog.ts'
 
 // The value is set to 5% as it's around 10 times the average value for small PRs.
 const SIZE_INCREASE_THRESHOLD = 5

@@ -1,5 +1,5 @@
 variables:
-  CURRENT_STAGING: staging-20
+  CURRENT_STAGING: staging-21
   APP: 'browser-sdk'
   CURRENT_CI_IMAGE: 107
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
@@ -188,7 +188,7 @@ build-and-lint:
     - yarn lint
     - node scripts/check-packages.ts
 
-test-performance:
+bundle-size:
   extends:
     - .base-configuration
     - .test-allowed-branches
@@ -608,6 +608,17 @@ performance-benchmark:
   script:
     - yarn
     - yarn test:performance
+
+api-performance-benchmark:
+  stage: task
+  extends:
+    - .base-configuration
+  only:
+    variables:
+      - $TARGET_TASK_NAME == "performance-benchmark-scheduled"
+  script:
+    - yarn
+    - node ./scripts/api-performance/index.ts
 
 ########################################################################################################################
 # Check expired telemetry

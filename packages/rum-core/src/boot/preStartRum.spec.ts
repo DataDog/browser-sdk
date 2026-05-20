@@ -24,6 +24,7 @@ import {
   mockEventBridge,
   mockSyntheticsWorkerValues,
   createFakeTelemetryObject,
+  registerCleanupTask,
   replaceMockable,
   replaceMockableWithSpy,
   createStartSessionManagerMock,
@@ -421,7 +422,7 @@ describe('preStartRum', () => {
       })
     })
 
-    describe('remote configuration', () => {
+    describe('remote configuration sync loading', () => {
       let interceptor: ReturnType<typeof interceptRequests>
 
       beforeEach(() => {
@@ -445,6 +446,77 @@ describe('preStartRum', () => {
         )
         await collectAsyncCalls(doStartRumSpy, 1)
         expect(doStartRumSpy.calls.mostRecent().args[0].sessionSampleRate).toEqual(50)
+      })
+
+      it('should start with the remote configuration when remoteConfiguration.sync is true', async () => {
+        interceptor.withFetch(() =>
+          Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ rum: { sessionSampleRate: 50 } }),
+          })
+        )
+        const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+        strategy.init(
+          {
+            ...DEFAULT_INIT_CONFIGURATION,
+            remoteConfiguration: { id: '123', sync: true },
+          },
+          PUBLIC_API
+        )
+        await collectAsyncCalls(doStartRumSpy, 1)
+        expect(doStartRumSpy.calls.mostRecent().args[0].sessionSampleRate).toEqual(50)
+      })
+    })
+
+    describe('remote configuration async loading', () => {
+      const REMOTE_CONFIGURATION_ID = '123'
+      let interceptor: ReturnType<typeof interceptRequests>
+
+      beforeEach(() => {
+        localStorage.clear()
+
+        interceptor = interceptRequests()
+        interceptor.withFetch(() =>
+          Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ rum: { sessionSampleRate: 50 } }),
+          })
+        )
+
+        registerCleanupTask(() => {
+          localStorage.clear()
+        })
+      })
+
+      it('should start synchronously with init configuration on cache miss', async () => {
+        const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+        strategy.init(
+          {
+            ...DEFAULT_INIT_CONFIGURATION,
+            remoteConfiguration: { id: REMOTE_CONFIGURATION_ID },
+            sessionSampleRate: 25,
+          },
+          PUBLIC_API
+        )
+
+        await collectAsyncCalls(doStartRumSpy, 1)
+        expect(doStartRumSpy.calls.mostRecent().args[0].sessionSampleRate).toBe(25)
+      })
+
+      it('should trigger a background fetch to the remote configuration endpoint', async () => {
+        const { strategy } = createPreStartStrategyWithDefaults()
+
+        strategy.init(
+          {
+            ...DEFAULT_INIT_CONFIGURATION,
+            remoteConfiguration: { id: REMOTE_CONFIGURATION_ID },
+          },
+          PUBLIC_API
+        )
+
+        await interceptor.waitForAllFetchCalls()
+        expect(interceptor.requests.some((r) => r.url.includes(REMOTE_CONFIGURATION_ID))).toBeTrue()
       })
     })
 
@@ -515,8 +587,14 @@ describe('preStartRum', () => {
     let interceptor: ReturnType<typeof interceptRequests>
 
     beforeEach(() => {
+      localStorage.clear()
+
       interceptor = interceptRequests()
       initConfiguration = { ...DEFAULT_INIT_CONFIGURATION, service: 'my-service', version: '1.4.2', env: 'dev' }
+
+      registerCleanupTask(() => {
+        localStorage.clear()
+      })
     })
 
     it('is undefined before init', () => {
@@ -544,7 +622,7 @@ describe('preStartRum', () => {
       expect(strategy.initConfiguration).toEqual(initConfiguration)
     })
 
-    it('returns the initConfiguration with the remote configuration when a remoteConfigurationId is provided', (done) => {
+    it('returns the initConfiguration with the remote configuration when a remoteConfigurationId is provided (sync loading)', (done) => {
       interceptor.withFetch(() =>
         Promise.resolve({
           ok: true,
@@ -564,6 +642,24 @@ describe('preStartRum', () => {
         },
         PUBLIC_API
       )
+    })
+
+    it('exposes the user configuration when remoteConfiguration.id is provided (async loading, cache miss)', () => {
+      interceptor.withFetch(() =>
+        Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ rum: { sessionSampleRate: 50 } }),
+        })
+      )
+
+      const { strategy } = createPreStartStrategyWithDefaults()
+      const userInitConfiguration: RumInitConfiguration = {
+        ...DEFAULT_INIT_CONFIGURATION,
+        remoteConfiguration: { id: '123' },
+      }
+      strategy.init(userInitConfiguration, PUBLIC_API)
+
+      expect(strategy.initConfiguration).toEqual(userInitConfiguration)
     })
   })
 

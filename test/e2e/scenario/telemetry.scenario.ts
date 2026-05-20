@@ -153,7 +153,7 @@ test.describe('telemetry', () => {
         expect(intakeRegistry.telemetryErrorEvents).toHaveLength(1)
         const error = intakeRegistry.telemetryErrorEvents[0]
         expect(error.service).toEqual('browser-logs-sdk')
-        expect(error.telemetry.message).toBe('expected error')
+        expect(error.telemetry.message).toBe('Error while resolving initial session state: Error: expected error')
         expect(error.telemetry.error!.kind).toBe('Error')
         expect(error.telemetry.status).toBe('error')
         intakeRegistry.empty()
@@ -167,7 +167,7 @@ test.describe('telemetry', () => {
         expect(intakeRegistry.telemetryErrorEvents).toHaveLength(1)
         const error = intakeRegistry.telemetryErrorEvents[0]
         expect(error.service).toEqual('browser-rum-sdk')
-        expect(error.telemetry.message).toBe('expected error')
+        expect(error.telemetry.message).toBe('Error while resolving initial session state: Error: expected error')
         expect(error.telemetry.error!.kind).toBe('Error')
         expect(error.telemetry.status).toBe('error')
         intakeRegistry.empty()

@@ -229,7 +229,12 @@ export function createRumProfiler(
         const duration = elapsed(startClocks.relative, endClocks.relative)
         const longTasks = longTaskHistory.findAll(startClocks.relative, duration)
         const actions = actionHistory.findAll(startClocks.relative, duration)
-        const vitals = vitalHistory.findAll(startClocks.relative, duration)
+        const vitals = vitalHistory.findAll(startClocks.relative, duration).map((vital) => ({
+          id: vital.id,
+          label: vital.label,
+          startClocks: vital.startClocks,
+          duration: vital.duration,
+        }))
         const isBelowDurationThreshold = duration < profilerConfiguration.minProfileDurationMs
 
         if (longTasks.length === 0 && isBelowDurationThreshold) {

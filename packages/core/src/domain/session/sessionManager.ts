@@ -109,7 +109,9 @@ export async function startSessionManager(
 
   const { throttled: throttledExpandOrRenew, cancel: cancelExpandOrRenew } = throttle(() => {
     sessionExpired = false
-    strategy.setSessionState((state) => expandOrRenew(state, configuration)).catch(monitorError)
+    strategy
+      .setSessionState((state) => expandOrRenew(state, configuration))
+      .catch((error) => monitorError(new Error(`Error while expanding or renewing session on activity: ${error}`)))
   }, ONE_SECOND)
   stopCallbacks.push(cancelExpandOrRenew)
 
@@ -121,7 +123,9 @@ export async function startSessionManager(
     stopped = true
   })
 
-  let initialState = await resolveInitialState().catch(monitorError)
+  let initialState = await resolveInitialState().catch((error) =>
+    monitorError(new Error(`Error while resolving initial session state: ${error}`))
+  )
   if (!initialState || stopped) {
     return
   }
@@ -190,7 +194,7 @@ export async function startSessionManager(
 
             return state
           })
-          .catch(monitorError)
+          .catch((error) => monitorError(new Error(`Error while expiring session on timeout: ${error}`)))
       }, delay)
     }
   }
@@ -199,7 +203,9 @@ export async function startSessionManager(
     trackingConsentState.observable.subscribe(() => {
       if (trackingConsentState.isGranted()) {
         sessionExpired = false
-        strategy.setSessionState((state) => expandOrRenew(state, configuration)).catch(monitorError)
+        strategy
+          .setSessionState((state) => expandOrRenew(state, configuration))
+          .catch((error) => monitorError(new Error(`Error while expanding or renewing session on consent: ${error}`)))
       } else {
         expire()
       }
@@ -213,11 +219,15 @@ export async function startSessionManager(
       })
       trackVisibility(configuration, () => {
         if (!sessionExpired) {
-          strategy.setSessionState((state) => expandOnly(state)).catch(monitorError)
+          strategy
+            .setSessionState((state) => expandOnly(state))
+            .catch((error) => monitorError(new Error(`Error while expanding session on visibility: ${error}`)))
         }
       })
       trackResume(configuration, () => {
-        strategy.setSessionState((state) => initializeSession(state, configuration)).catch(monitorError)
+        strategy
+          .setSessionState((state) => initializeSession(state, configuration))
+          .catch((error) => monitorError(new Error(`Error while initializing session on resume: ${error}`)))
       })
     }
   }
@@ -242,7 +252,9 @@ export async function startSessionManager(
       expireObservable,
       expire,
       updateSessionState: (partialState) => {
-        strategy.setSessionState((state) => ({ ...state, ...partialState })).catch(monitorError)
+        strategy
+          .setSessionState((state) => ({ ...state, ...partialState }))
+          .catch((error) => monitorError(new Error(`Error while updating session state: ${error}`)))
       },
     }
   }
@@ -321,7 +333,7 @@ export async function startSessionManager(
         }
         return getExpiredSessionState(state, configuration)
       })
-      .catch(monitorError)
+      .catch((error) => monitorError(new Error(`Error while persisting expired session state: ${error}`)))
   }
 
   function buildSessionContext(sessionState: SessionState): SessionContext {
