@@ -31,7 +31,7 @@
     "@datadog/browser-worker": "file:../../../packages/worker/package.tgz"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "5.x",
+    "@vitejs/plugin-vue": "6.x",
     "typescript": "6.x",
     "vite": "7.x"
   },
