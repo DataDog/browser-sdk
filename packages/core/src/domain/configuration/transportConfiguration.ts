@@ -14,6 +14,7 @@ export interface TransportConfiguration {
   debuggerEndpointBuilder: EndpointBuilder
   datacenter?: string | undefined
   replica?: ReplicaConfiguration
+  clientToken: string
   site: Site
   source: SdkSource
 }
@@ -55,6 +56,7 @@ export function computeTransportConfiguration(
   const replicaConfiguration = computeReplicaConfiguration(resolvedConfiguration)
 
   return {
+    clientToken: initConfiguration.clientToken,
     replica: replicaConfiguration,
     site,
     source,
