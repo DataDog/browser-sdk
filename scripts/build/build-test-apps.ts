@@ -158,13 +158,40 @@ async function buildReactRouterv7App() {
   await modifyFile(path.join(appPath, 'package.json'), (content: string) =>
     content
       .replace(/"name": "react-router-v6-app"/, '"name": "react-router-v7-app"')
-      .replace(/"react-router-dom": "[^"]*"/, '"react-router": "7.0.2"')
+      .replace(/"react-router-dom": "[^"]*"/, '"react-router": "7.15.1"')
   )
 
   await modifyFile(path.join(appPath, 'app.tsx'), (content: string) =>
     content
       .replace('@datadog/browser-rum-react/react-router-v6', '@datadog/browser-rum-react/react-router-v7')
       .replace("from 'react-router-dom'", "from 'react-router'")
+      // Inject a loader that throws synchronously when ?test-loader-error is present,
+      // and an onError marker on RouterProvider. Used by the regression test for #4657.
+      .replace(
+        /({\s*index: true,\s*Component: HomePage,\s*},)/,
+        `{
+        index: true,
+        loader: ({ request }: { request: Request }) => {
+          if (new URL(request.url).searchParams.has('test-loader-error')) {
+            throw new Error('Synchronous loader error')
+          }
+          return null
+        },
+        Component: HomePage,
+      },`
+      )
+      .replace(
+        /<RouterProvider router={router} \/>/,
+        `<RouterProvider
+      router={router}
+      onError={(error: unknown) => {
+        const el = document.createElement('div')
+        el.setAttribute('data-testid', 'on-error-fired')
+        el.textContent = (error as Error).message ?? String(error)
+        document.body.appendChild(el)
+      }}
+    />`
+      )
   )
 
   await modifyFile(path.join(appPath, 'webpack.config.js'), (content: string) =>
