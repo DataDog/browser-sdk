@@ -58,6 +58,7 @@ import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
 import type { Hooks } from '../domain/hooks'
 import type { SdkName } from '../domain/contexts/defaultContext'
+import type { AiAgentContext } from '../domain/contexts/aiAgentContext'
 import type { ActionOptions } from '../domain/action/trackManualActions'
 import type { ResourceOptions, ResourceStopOptions } from '../domain/resource/trackManualResources'
 import { createPreStartStrategy } from './preStartRum'
@@ -525,7 +526,7 @@ export interface RecorderApi {
     viewHistory: ViewHistory,
     deflateWorker: DeflateWorker | undefined,
     telemetry: Telemetry,
-    updateBehavioralDetection?: (context: import('../domain/contexts/aiAgentContext').AiAgentContext) => void
+    updateBehavioralDetection?: (context: AiAgentContext) => void
   ) => void
   isRecording: () => boolean
   getReplayStats: (viewId: string) => ReplayStats | undefined

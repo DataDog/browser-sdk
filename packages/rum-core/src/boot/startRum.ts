@@ -17,6 +17,8 @@ import {
   startGlobalContext,
   startUserContext,
   startTabContext,
+  ExperimentalFeature,
+  isExperimentalFeatureEnabled,
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { createWindowOpenObservable } from '../browser/windowOpenObservable'
@@ -42,7 +44,7 @@ import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
 import { startDisplayContext } from '../domain/contexts/displayContext'
 import type { CustomVitalsState } from '../domain/vital/vitalCollection'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
-import { ExperimentalFeature, isExperimentalFeatureEnabled } from '@datadog/browser-core'
+import type { AiAgentContext } from '../domain/contexts/aiAgentContext'
 import { startAiAgentContext } from '../domain/contexts/aiAgentContext'
 import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext'
 import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
@@ -281,7 +283,9 @@ export function startRumEventCollection(
     globalContext,
     userContext,
     accountContext,
-    updateBehavioralDetection: aiAgentContext?.updateBehavioralDetection,
+    updateBehavioralDetection: aiAgentContext
+      ? (context: AiAgentContext) => aiAgentContext.updateBehavioralDetection(context)
+      : undefined,
     stop: () => cleanupTasks.forEach((task) => task()),
   }
 }

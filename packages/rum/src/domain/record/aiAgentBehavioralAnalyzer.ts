@@ -1,6 +1,6 @@
 import type { AiAgentContext } from '@datadog/browser-rum-core'
 import type { BrowserRecord } from '../../types'
-import { RecordType, IncrementalSource, MouseInteractionType } from '../../types/sessionReplayConstants'
+import { RecordType, IncrementalSource, MouseInteractionType } from '../../types'
 
 const MIN_INTERACTIONS_FOR_ANALYSIS = 10
 const METRONOMIC_TIMING_CV_THRESHOLD = 0.15

@@ -11,3 +11,4 @@ export {
 } from './serialization'
 export { createElementsScrollPositions } from './elementsScrollPositions'
 export type { ShadowRootsController } from './shadowRootsController'
+export { setAiAgentBehaviorCallback } from './aiAgentBehavioralAnalyzer'

@@ -7,6 +7,7 @@ import {
   DeflateEncoderStreamId,
 } from '@datadog/browser-core'
 import type {
+  AiAgentContext,
   LifeCycle,
   ViewHistory,
   RumSessionManager,
@@ -21,7 +22,7 @@ import {
   getDeflateWorkerStatus,
   startDeflateWorker,
 } from '../domain/deflate'
-import { setAiAgentBehaviorCallback } from '../domain/record/aiAgentBehavioralAnalyzer'
+import { setAiAgentBehaviorCallback } from '../domain/record'
 import { isBrowserSupported } from './isBrowserSupported'
 import { createPostStartStrategy } from './postStartStrategy'
 import { createPreStartStrategy } from './preStartStrategy'
@@ -82,7 +83,7 @@ export function makeRecorderApi(): RecorderApi {
     viewHistory: ViewHistory,
     worker: DeflateWorker | undefined,
     telemetry: Telemetry,
-    updateBehavioralDetection?: (context: import('@datadog/browser-rum-core').AiAgentContext) => void
+    updateBehavioralDetection?: (context: AiAgentContext) => void
   ) {
     if (updateBehavioralDetection) {
       setAiAgentBehaviorCallback(updateBehavioralDetection)
