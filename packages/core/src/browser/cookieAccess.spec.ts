@@ -2,7 +2,7 @@ import type { Clock } from '../../test'
 import { collectAsyncCalls, mockClock, registerCleanupTask, replaceMockable } from '../../test'
 import type { Configuration } from '../domain/configuration'
 import { detectVersion, isChromium } from '../tools/utils/browserDetection'
-import { dateNow } from '../tools/utils/timeUtils'
+import { dateNow, ONE_MINUTE } from '../tools/utils/timeUtils'
 import type { CookieOptions } from './cookie'
 import { deleteCookie, getCookie, setCookie } from './cookie'
 import type { CookieStoreWindow } from './browser.types'
@@ -108,14 +108,14 @@ describe('cookieAccess', () => {
       describe('getAllAndSet', () => {
         it('should pass current cookie values to callback', async () => {
           const { setCookieWithCleanup } = setup()
-          await setCookieWithCleanup(COOKIE_NAME, 'value1', 1000)
+          await setCookieWithCleanup(COOKIE_NAME, 'value1', ONE_MINUTE)
 
           const cookieAccess = createCookieAccess(COOKIE_NAME, MOCK_CONFIGURATION, COOKIE_OPTIONS)
 
           let capturedValues: string[] | undefined
           await cookieAccess.getAllAndSet((values) => {
             capturedValues = values
-            return { value: 'new', expireDelay: 1000 }
+            return { value: 'new', expireDelay: ONE_MINUTE }
           })
 
           expect(capturedValues).toEqual(['value1'])
@@ -128,7 +128,7 @@ describe('cookieAccess', () => {
           let capturedValues: string[] | undefined
           await cookieAccess.getAllAndSet((values) => {
             capturedValues = values
-            return { value: 'new', expireDelay: 1000 }
+            return { value: 'new', expireDelay: ONE_MINUTE }
           })
 
           expect(capturedValues).toEqual([])
@@ -138,7 +138,7 @@ describe('cookieAccess', () => {
           setup()
           const cookieAccess = createCookieAccess(COOKIE_NAME, MOCK_CONFIGURATION, COOKIE_OPTIONS)
 
-          await cookieAccess.getAllAndSet(() => ({ value: 'hello', expireDelay: 1000 }))
+          await cookieAccess.getAllAndSet(() => ({ value: 'hello', expireDelay: ONE_MINUTE }))
 
           expect(getCookie(COOKIE_NAME)).toBe('hello')
         })
@@ -150,15 +150,15 @@ describe('cookieAccess', () => {
           }
 
           const { setCookieWithCleanup } = setup()
-          await setCookieWithCleanup(COOKIE_NAME, 'value1', 1000)
-          await setCookieWithCleanup(COOKIE_NAME, 'value2', 1000, { secure: true, partitioned: true })
+          await setCookieWithCleanup(COOKIE_NAME, 'value1', ONE_MINUTE)
+          await setCookieWithCleanup(COOKIE_NAME, 'value2', ONE_MINUTE, { secure: true, partitioned: true })
 
           const cookieAccess = createCookieAccess(COOKIE_NAME, MOCK_CONFIGURATION, COOKIE_OPTIONS)
 
           let capturedValues: string[] | undefined
           await cookieAccess.getAllAndSet((values) => {
             capturedValues = values
-            return { value: 'new', expireDelay: 1000 }
+            return { value: 'new', expireDelay: ONE_MINUTE }
           })
 
           expect(capturedValues).toEqual(['value1', 'value2'])
@@ -173,7 +173,7 @@ describe('cookieAccess', () => {
           const subscription = cookieAccess.observable.subscribe(spy)
           registerCleanupTask(() => subscription.unsubscribe())
 
-          await setCookieWithCleanup(COOKIE_NAME, 'external', 1000)
+          await setCookieWithCleanup(COOKIE_NAME, 'external', ONE_MINUTE)
           await flushObservable(spy)
 
           expect(spy).toHaveBeenCalledTimes(1)
@@ -181,7 +181,7 @@ describe('cookieAccess', () => {
 
         it('should notify when cookie is deleted externally', async () => {
           const { flushObservable, setCookieWithCleanup } = setup()
-          await setCookieWithCleanup(COOKIE_NAME, 'existing', 1000)
+          await setCookieWithCleanup(COOKIE_NAME, 'existing', ONE_MINUTE)
 
           const cookieAccess = createCookieAccess(COOKIE_NAME, MOCK_CONFIGURATION, COOKIE_OPTIONS)
           const spy = jasmine.createSpy('observer')
@@ -196,7 +196,7 @@ describe('cookieAccess', () => {
 
         it('should not notify when cookie value is unchanged', async () => {
           const { clock, setCookieWithCleanup } = setup()
-          await setCookieWithCleanup(COOKIE_NAME, 'stable', 1000)
+          await setCookieWithCleanup(COOKIE_NAME, 'stable', ONE_MINUTE)
 
           const cookieAccess = createCookieAccess(COOKIE_NAME, MOCK_CONFIGURATION, COOKIE_OPTIONS)
           const spy = jasmine.createSpy('observer')
@@ -215,7 +215,7 @@ describe('cookieAccess', () => {
           const subscription = cookieAccess.observable.subscribe(spy)
           registerCleanupTask(() => subscription.unsubscribe())
 
-          await cookieAccess.getAllAndSet(() => ({ value: 'written', expireDelay: 1000 }))
+          await cookieAccess.getAllAndSet(() => ({ value: 'written', expireDelay: ONE_MINUTE }))
           await flushObservable(spy)
 
           expect(spy).toHaveBeenCalledTimes(1)
