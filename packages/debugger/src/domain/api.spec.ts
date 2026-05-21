@@ -567,6 +567,226 @@ describe('api', () => {
     })
   })
 
+  describe('probe lifetime budgets', () => {
+    it('should stop sending snapshot events after maxSnapshotsPerProbeLifetime', () => {
+      initTransport({ maxSnapshotsPerProbeLifetime: 1 })
+
+      const probe: Probe = {
+        id: 'snapshot-lifetime-probe',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'snapshotLifetime' },
+        template: 'Test',
+        captureSnapshot: true,
+        capture: { maxReferenceDepth: 1 },
+        // Disable per-probe rate limiting so the second invocation exercises the
+        // lifetime cap rather than the per-second cap.
+        sampling: { snapshotsPerSecond: Infinity },
+        evaluateAt: 'ENTRY',
+      }
+      addProbe(probe)
+
+      // First invocation: probe sends its single allowed event.
+      const probes = getProbes('TestClass;snapshotLifetime')!
+      onEntry(probes, {}, {})
+      onReturn(probes, null, {}, {}, {})
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+
+      // Second invocation: the lifetime budget is now exhausted. No new event should
+      // be queued, and the probe should be auto-unregistered.
+      onEntry(probes, {}, {})
+      onReturn(probes, null, {}, {}, {})
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+      expect(getProbes('TestClass;snapshotLifetime')).toBeUndefined()
+    })
+
+    it('should skip snapshot collection once the lifetime budget is exhausted', () => {
+      initTransport({ maxSnapshotsPerProbeLifetime: 1 })
+
+      const getterSpy = jasmine.createSpy('argGetter').and.returnValue('value')
+      const args = {}
+      Object.defineProperty(args, 'arg', {
+        enumerable: true,
+        get: getterSpy,
+      })
+      const probe: Probe = {
+        id: 'snapshot-lifetime-collection-probe',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'snapshotLifetimeCollection' },
+        template: 'Test',
+        captureSnapshot: true,
+        capture: { maxReferenceDepth: 1 },
+        // Disable per-probe rate limiting so the second invocation isn't sampled out
+        // by it — we want to exercise the lifetime cap, not the rate cap.
+        sampling: { snapshotsPerSecond: Infinity },
+        evaluateAt: 'ENTRY',
+      }
+      addProbe(probe)
+
+      // First invocation does the full pipeline: 2 reads from entry capture
+      // (context spread + captureFields) + 1 read from return capture = 3 reads.
+      // This exhausts the lifetime budget.
+      const probes = getProbes('TestClass;snapshotLifetimeCollection')!
+      onEntry(probes, {}, args)
+      onReturn(probes, null, {}, args, {})
+
+      // Second invocation: both onEntry and onReturn detect the exhausted budget
+      // up front and skip all capture work — no further reads from args.
+      onEntry(probes, {}, args)
+      onReturn(probes, null, {}, args, {})
+
+      expect(getterSpy).toHaveBeenCalledTimes(3)
+    })
+
+    it('should stop sending non-snapshot events after maxNonSnapshotsPerProbeLifetime', () => {
+      initTransport({ maxNonSnapshotsPerProbeLifetime: 1 })
+
+      const probe: Probe = {
+        id: 'non-snapshot-lifetime-probe',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'nonSnapshotLifetime' },
+        template: 'Test',
+        captureSnapshot: false,
+        capture: {},
+        // Disable per-probe rate limiting so the second invocation exercises the
+        // lifetime cap rather than the per-second cap.
+        sampling: { snapshotsPerSecond: Infinity },
+        evaluateAt: 'ENTRY',
+      }
+      addProbe(probe)
+
+      // First invocation: probe sends its single allowed event.
+      const probes = getProbes('TestClass;nonSnapshotLifetime')!
+      onEntry(probes, {}, {})
+      onReturn(probes, null, {}, {}, {})
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+
+      // Second invocation: the lifetime budget is now exhausted. No new event should
+      // be queued, and the probe should be auto-unregistered.
+      onEntry(probes, {}, {})
+      onReturn(probes, null, {}, {}, {})
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+      expect(getProbes('TestClass;nonSnapshotLifetime')).toBeUndefined()
+    })
+
+    it('should reset the lifetime budget when a new probe version is delivered', () => {
+      initTransport({ maxSnapshotsPerProbeLifetime: 1 })
+
+      const probe: Probe = {
+        id: 'versioned-lifetime-probe',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'versionedLifetime' },
+        template: 'Test',
+        captureSnapshot: true,
+        capture: { maxReferenceDepth: 1 },
+        sampling: { snapshotsPerSecond: 5000 },
+        evaluateAt: 'ENTRY',
+      }
+      addProbe(probe)
+
+      let probes = getProbes('TestClass;versionedLifetime')!
+      onEntry(probes, {}, {})
+      onReturn(probes, null, {}, {}, {})
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+
+      // A Remote Config delivery for an existing probe id replaces the old probe with
+      // the new version. After re-add, the new version should have a fresh budget.
+      removeProbe(probe.id)
+      addProbe({ ...probe, version: 1 })
+
+      probes = getProbes('TestClass;versionedLifetime')!
+      onEntry(probes, {}, {})
+      onReturn(probes, null, {}, {}, {})
+      expect(mockBatchAdd).toHaveBeenCalledTimes(2)
+    })
+
+    it('should not emit any event when the lifetime budget is zero', () => {
+      initTransport({ maxSnapshotsPerProbeLifetime: 0 })
+
+      const probe: Probe = {
+        id: 'zero-budget-probe',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'zeroBudget' },
+        template: 'Test',
+        captureSnapshot: true,
+        capture: { maxReferenceDepth: 1 },
+        sampling: { snapshotsPerSecond: 5000 },
+        evaluateAt: 'ENTRY',
+      }
+      addProbe(probe)
+
+      const probes = getProbes('TestClass;zeroBudget')!
+      onEntry(probes, {}, {})
+      onReturn(probes, null, {}, {}, {})
+
+      expect(mockBatchAdd).not.toHaveBeenCalled()
+      expect(getProbes('TestClass;zeroBudget')).toBeUndefined()
+    })
+
+    it('should still process sibling probes when one is removed mid-iteration', () => {
+      // Use distinct snapshot/non-snapshot lifetime caps so probeA hits its cap after
+      // one event while probeB still has plenty of budget. On the second invocation,
+      // probeA's pre-call budget check fails and it gets removed from the shared
+      // probes array. This exposes the array mutation hazard: removing probeA
+      // mid-iteration must not cause probeB to be skipped.
+      initTransport({ maxSnapshotsPerProbeLifetime: 1, maxNonSnapshotsPerProbeLifetime: 1000 })
+
+      // Disable per-probe rate limiting on both probes so the second invocation
+      // exercises the lifetime cap rather than the per-second cap.
+      const probeA: Probe = {
+        id: 'sibling-probe-a',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'sibling' },
+        template: 'A',
+        captureSnapshot: true,
+        capture: { maxReferenceDepth: 1 },
+        sampling: { snapshotsPerSecond: Infinity },
+        evaluateAt: 'ENTRY',
+      }
+      const probeB: Probe = {
+        id: 'sibling-probe-b',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'sibling' },
+        template: 'B',
+        captureSnapshot: false,
+        capture: {},
+        sampling: { snapshotsPerSecond: Infinity },
+        evaluateAt: 'ENTRY',
+      }
+      addProbe(probeA)
+      addProbe(probeB)
+
+      // First invocation: both probes emit one event. probeA hits its cap (eventsSent=1,
+      // max=1) but is not removed yet — the pre-call budget check still passed.
+      const probes = getProbes('TestClass;sibling')!
+      onEntry(probes, {}, {})
+      onReturn(probes, null, {}, {}, {})
+      expect(mockBatchAdd).toHaveBeenCalledTimes(2)
+
+      // Second invocation: probeA's pre-call check now fails and it is queued for
+      // removal. probeB must still be processed in the same iteration even though
+      // probeA gets spliced out of the probes array.
+      mockBatchAdd.calls.reset()
+      const probesAfterFirst = getProbes('TestClass;sibling')!
+      onEntry(probesAfterFirst, {}, {})
+      onReturn(probesAfterFirst, null, {}, {}, {})
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+      expect(getProbes('TestClass;sibling')).toEqual([jasmine.objectContaining({ id: 'sibling-probe-b' })])
+
+      // probeB's stack entry must not leak: a third onReturn without onEntry is a no-op.
+      mockBatchAdd.calls.reset()
+      const remainingProbes = getProbes('TestClass;sibling')!
+      onReturn(remainingProbes, null, {}, {}, {})
+      expect(mockBatchAdd).not.toHaveBeenCalled()
+    })
+  })
+
   describe('active entries cleanup', () => {
     function createProbe(id: string, methodName: string): Probe {
       return {
