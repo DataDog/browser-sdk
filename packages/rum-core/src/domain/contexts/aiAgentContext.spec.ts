@@ -9,7 +9,7 @@ import {
   mockUserAgent,
   mockAutomationFrameworkGlobal,
 } from '../../../test'
-import { SessionType } from '../rumSessionManager'
+
 import type { AssembleHookParams, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import {
@@ -41,8 +41,8 @@ describe('aiAgentContext', () => {
 
       expect(triggerAssembleHook()).toEqual({
         type: 'view',
-        session: {
-          type: SessionType.AI_AGENT,
+        context: {
+          isAgentSession: true,
         },
         ai_agent: {
           name: 'claude-code',
@@ -79,8 +79,8 @@ describe('aiAgentContext', () => {
 
       expect(triggerAssembleHook()).toEqual({
         type: 'view',
-        session: {
-          type: SessionType.AI_AGENT,
+        context: {
+          isAgentSession: true,
         },
         ai_agent: {
           name: 'cursor',
@@ -97,8 +97,8 @@ describe('aiAgentContext', () => {
 
       expect(triggerAssembleHook()).toEqual({
         type: 'view',
-        session: {
-          type: SessionType.AI_AGENT,
+        context: {
+          isAgentSession: true,
         },
         ai_agent: {
           detection_method: 'webdriver',
@@ -127,8 +127,8 @@ describe('aiAgentContext', () => {
 
       expect(triggerAssembleHook()).toEqual({
         type: 'view',
-        session: {
-          type: SessionType.AI_AGENT,
+        context: {
+          isAgentSession: true,
         },
         ai_agent: {
           name: 'claudebot',
@@ -143,8 +143,8 @@ describe('aiAgentContext', () => {
 
       expect(triggerAssembleHook()).toEqual({
         type: 'view',
-        session: {
-          type: SessionType.AI_AGENT,
+        context: {
+          isAgentSession: true,
         },
         ai_agent: {
           name: 'gptbot',
@@ -173,8 +173,8 @@ describe('aiAgentContext', () => {
 
       expect(triggerAssembleHook()).toEqual({
         type: 'view',
-        session: {
-          type: SessionType.AI_AGENT,
+        context: {
+          isAgentSession: true,
         },
         ai_agent: {
           detection_method: 'automation_framework',
@@ -189,8 +189,8 @@ describe('aiAgentContext', () => {
 
       expect(triggerAssembleHook()).toEqual({
         type: 'view',
-        session: {
-          type: SessionType.AI_AGENT,
+        context: {
+          isAgentSession: true,
         },
         ai_agent: {
           detection_method: 'automation_framework',
@@ -205,8 +205,8 @@ describe('aiAgentContext', () => {
 
       expect(triggerAssembleHook()).toEqual({
         type: 'view',
-        session: {
-          type: SessionType.AI_AGENT,
+        context: {
+          isAgentSession: true,
         },
         ai_agent: {
           detection_method: 'automation_framework',
@@ -229,8 +229,8 @@ describe('aiAgentContext', () => {
 
       expect(triggerAssembleHook()).toEqual({
         type: 'view',
-        session: {
-          type: SessionType.AI_AGENT,
+        context: {
+          isAgentSession: true,
         },
         ai_agent: {
           detection_method: 'webgl_renderer',
@@ -259,8 +259,8 @@ describe('aiAgentContext', () => {
 
       expect(triggerAssembleHook()).toEqual({
         type: 'view',
-        session: {
-          type: SessionType.AI_AGENT,
+        context: {
+          isAgentSession: true,
         },
         ai_agent: {
           detection_method: 'headless_environment',
@@ -289,8 +289,8 @@ describe('aiAgentContext', () => {
 
       expect(triggerAssembleHook()).toEqual({
         type: 'view',
-        session: {
-          type: SessionType.AI_AGENT,
+        context: {
+          isAgentSession: true,
         },
         ai_agent: {
           detection_method: 'cdp',

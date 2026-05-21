@@ -16,7 +16,6 @@ export const enum SessionType {
   SYNTHETICS = 'synthetics',
   USER = 'user',
   CI_TEST = 'ci_test',
-  AI_AGENT = 'ai_agent',
 }
 
 export const RUM_SESSION_KEY = 'rum'

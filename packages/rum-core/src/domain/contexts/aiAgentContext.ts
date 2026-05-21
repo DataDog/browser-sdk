@@ -1,5 +1,4 @@
 import { getInitCookie, HookNames, isSyntheticsTest, mockable, SKIPPED } from '@datadog/browser-core'
-import { SessionType } from '../rumSessionManager'
 import type { DefaultRumEventAttributes, Hooks } from '../hooks'
 
 export const AI_AGENT_COOKIE_NAME = 'datadog-ai-agent-id'
@@ -17,6 +16,7 @@ export interface AiAgentContext {
   name?: string
   detection_method: string
   framework?: string
+  behavioral_detection_reason?: string
 }
 
 const AI_AGENT_UA_PATTERNS: Array<{ pattern: RegExp; name: string }> = [
@@ -54,8 +54,9 @@ export function startAiAgentContext(hooks: Hooks) {
     // TODO: Remove 'unknown' cast after adding 'ai_agent' to the rum-events-format schema
     return {
       type: eventType,
-      session: {
-        type: SessionType.AI_AGENT,
+      context: {
+        isAgentSession: true,
+        aiAgentContext,
       },
       ai_agent: aiAgentContext,
     } as unknown as DefaultRumEventAttributes
