@@ -813,8 +813,9 @@ describe('remoteConfiguration', () => {
 
       const result = getRemoteConfiguration(initConfiguration, supportedContextManagers)
 
-      expect(result.applicationId).toBe('cached-app')
-      expect(result.clientToken).toBe('xxx')
+      expect(result).toBeDefined()
+      expect(result!.applicationId).toBe('cached-app')
+      expect(result!.clientToken).toBe('xxx')
       await flushBackgroundSync()
     })
 
@@ -866,6 +867,55 @@ describe('remoteConfiguration', () => {
           Promise.resolve({ ok: true, json: () => Promise.resolve({ rum: FRESH_RUM_CONFIG }) })
         )
       }
+    })
+
+    describe('with required: true', () => {
+      beforeEach(() => {
+        initConfiguration = {
+          ...initConfiguration,
+          remoteConfiguration: { id: REMOTE_CONFIGURATION_ID, required: true },
+        }
+      })
+
+      it('should apply cached configuration on cache hit', async () => {
+        withCachedEntry(CACHED_RUM_CONFIG)
+        withFetchSuccess()
+
+        const result = getRemoteConfiguration(initConfiguration, supportedContextManagers)
+
+        expect(result).toBeDefined()
+        expect(result!.applicationId).toBe('cached-app')
+        await flushBackgroundSync()
+      })
+
+      it('should return undefined on cache miss', async () => {
+        withFetchSuccess()
+
+        const result = getRemoteConfiguration(initConfiguration, supportedContextManagers)
+
+        expect(result).toBeUndefined()
+        await flushBackgroundSync()
+      })
+
+      it('should return undefined on cache error', async () => {
+        localStorage.setItem(CACHE_KEY, 'not-json')
+        withFetchSuccess()
+
+        const result = getRemoteConfiguration(initConfiguration, supportedContextManagers)
+
+        expect(result).toBeUndefined()
+        await flushBackgroundSync()
+      })
+
+      it('should still trigger a background fetch on cache miss', async () => {
+        withFetchSuccess()
+
+        getRemoteConfiguration(initConfiguration, supportedContextManagers)
+        await flushBackgroundSync()
+
+        const stored = JSON.parse(localStorage.getItem(CACHE_KEY)!)
+        expect(stored.config).toEqual(FRESH_RUM_CONFIG)
+      })
     })
   })
 })

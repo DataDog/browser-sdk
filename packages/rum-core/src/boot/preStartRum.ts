@@ -261,7 +261,11 @@ export function createPreStartStrategy(
             })
             .catch(monitorError)
         } else {
-          doInit(getRemoteConfiguration(initConfiguration, supportedContextManagers), errorStack)
+          const resolvedInitConfiguration = getRemoteConfiguration(initConfiguration, supportedContextManagers)
+
+          if (resolvedInitConfiguration) {
+            doInit(resolvedInitConfiguration, errorStack)
+          }
         }
       } else {
         doInit(initConfiguration, errorStack)
