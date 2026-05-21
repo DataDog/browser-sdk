@@ -72,12 +72,17 @@ async function getInfos(): Promise<SdkInfos> {
           }))
         }
 
-        const cookieRawValue = document.cookie
-          .split(';')
-          .map(cookie => cookie.match(/(\\S*?)=(.*)/)?.slice(1) || [])
-          .find(([name, _]) => name === '_dd_s')
-          ?.[1]
+        // SDK v7 renamed the session cookie from '_dd_s' to '_dd_s_v2'. Prefer the new name,
+        // fall back to the legacy one so this works for both v6 and v7 apps.
+        function findCookieValue(name) {
+          return document.cookie
+            .split(';')
+            .map(c => c.match(/(\\S*?)=(.*)/)?.slice(1) || [])
+            .find(([cookieName]) => cookieName === name)
+            ?.[1]
+        }
 
+        const cookieRawValue = findCookieValue('_dd_s_v2') ?? findCookieValue('_dd_s')
         const cookie = cookieRawValue && Object.fromEntries(
           cookieRawValue.split('&').map(value => value.split('='))
         )

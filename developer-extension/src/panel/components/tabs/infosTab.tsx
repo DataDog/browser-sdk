@@ -322,9 +322,12 @@ function endSession() {
   const fourHours = 1000 * 60 * 60 * 4
   const expires = new Date(Date.now() + fourHours).toUTCString()
 
+  // Expire both the legacy ('_dd_s') and current ('_dd_s_v2') cookies — whichever
+  // one is set, the SDK will see an expired session on next read.
   evalInWindow(
     `
       document.cookie = '_dd_s=isExpired=1; expires=${expires}; path=/'
+      document.cookie = '_dd_s_v2=isExpired=1; expires=${expires}; path=/'
     `
   ).catch((error) => logger.error('Error while ending session:', error))
 }
