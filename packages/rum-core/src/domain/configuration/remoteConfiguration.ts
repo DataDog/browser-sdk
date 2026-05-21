@@ -349,7 +349,7 @@ function doBackgroundCacheSync(
 export function getRemoteConfiguration(
   initConfiguration: RumInitConfiguration,
   supportedContextManagers: SupportedContextManagers
-): RumInitConfiguration {
+): RumInitConfiguration | undefined {
   const configurationCache = createConfigurationCache({
     remoteConfigurationId: getRemoteConfigurationId(initConfiguration)!,
   })
@@ -361,7 +361,13 @@ export function getRemoteConfiguration(
 
   doBackgroundCacheSync(initConfiguration, configurationCache, metrics)
 
-  return cacheResult.status === 'hit'
-    ? applyRemoteConfiguration(initConfiguration, cacheResult.config, supportedContextManagers, metrics)
-    : initConfiguration
+  if (cacheResult.status === 'hit') {
+    return applyRemoteConfiguration(initConfiguration, cacheResult.config, supportedContextManagers, metrics)
+  }
+
+  if (initConfiguration.remoteConfiguration?.required) {
+    return
+  }
+
+  return initConfiguration
 }

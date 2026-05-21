@@ -149,11 +149,14 @@ export interface RumInitConfiguration extends InitConfiguration {
   /**
    * [Internal option] Remote configuration descriptor. By default the SDK reads a cached
    * configuration synchronously and refreshes it in the background. Set `sync: true` to fall back
-   * to the legacy blocking fetch.
+   * to the legacy blocking fetch. Set `required: true` to prevent the SDK from starting on the
+   * current page load when the remote configuration cache is empty or unreadable (the background
+   * fetch still runs to populate the cache for the next load). Ignored when `sync: true` is set
+   * or when the legacy `remoteConfigurationId` field is used.
    *
    * @internal
    */
-  remoteConfiguration?: { id: string; sync?: boolean } | undefined
+  remoteConfiguration?: { id: string; sync?: boolean; required?: boolean } | undefined
 
   /**
    * [Internal option] set a proxy URL for the remote configuration
