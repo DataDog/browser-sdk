@@ -1,4 +1,3 @@
-import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { BrowserRecord } from '../../types'
 import { RecordType, IncrementalSource, MouseInteractionType } from '../../types/sessionReplayConstants'
 import type { BehavioralSignals } from './aiAgentBehavioralAnalyzer'
@@ -24,6 +23,14 @@ function makeMouseMoveRecord(timestamp: number): BrowserRecord {
   } as unknown as BrowserRecord
 }
 
+function makeTouchMoveRecord(timestamp: number): BrowserRecord {
+  return {
+    type: RecordType.IncrementalSnapshot,
+    timestamp,
+    data: { source: IncrementalSource.TouchMove, positions: [] },
+  } as unknown as BrowserRecord
+}
+
 function makeScrollRecord(timestamp: number): BrowserRecord {
   return {
     type: RecordType.IncrementalSnapshot,
@@ -40,14 +47,6 @@ function makeInputRecord(timestamp: number): BrowserRecord {
   } as unknown as BrowserRecord
 }
 
-function makeContextMenuRecord(timestamp: number): BrowserRecord {
-  return {
-    type: RecordType.IncrementalSnapshot,
-    timestamp,
-    data: { source: IncrementalSource.MouseInteraction, type: MouseInteractionType.ContextMenu, id: 1, x: 0, y: 0 },
-  } as unknown as BrowserRecord
-}
-
 function makeFullSnapshotRecord(timestamp: number): BrowserRecord {
   return {
     type: RecordType.FullSnapshot,
@@ -59,18 +58,55 @@ function makeFullSnapshotRecord(timestamp: number): BrowserRecord {
 function baseSignals(overrides: Partial<BehavioralSignals> = {}): BehavioralSignals {
   return {
     mouseMoveCount: 0,
+    touchMoveCount: 0,
     clickCount: 0,
     scrollCount: 0,
     inputCount: 0,
-    contextMenuCount: 0,
     clickTimestamps: [],
+    interactionTimestamps: [],
     ...overrides,
   }
 }
 
 describe('computeBehavioralDetection', () => {
-  it('returns undefined when there are no clicks', () => {
-    expect(computeBehavioralDetection(baseSignals({ inputCount: 20 }))).toBeUndefined()
+  it('returns undefined when total interactions are below threshold', () => {
+    expect(computeBehavioralDetection(baseSignals({ inputCount: 5 }))).toBeUndefined()
+  })
+
+  it('detects activity without any physical presence (inputs only)', () => {
+    expect(computeBehavioralDetection(baseSignals({ inputCount: 10, interactionTimestamps: [] }))).toEqual({
+      detection_method: 'behavioral',
+    })
+  })
+
+  it('detects activity without any physical presence (scrolls only)', () => {
+    expect(computeBehavioralDetection(baseSignals({ scrollCount: 10, interactionTimestamps: [] }))).toEqual({
+      detection_method: 'behavioral',
+    })
+  })
+
+  it('detects activity without any physical presence (mixed inputs and scrolls)', () => {
+    expect(
+      computeBehavioralDetection(baseSignals({ inputCount: 6, scrollCount: 5, interactionTimestamps: [] }))
+    ).toEqual({ detection_method: 'behavioral' })
+  })
+
+  it('does not detect when mouse movement is present with inputs', () => {
+    const signals = baseSignals({
+      inputCount: 10,
+      mouseMoveCount: 5,
+      interactionTimestamps: [100, 350, 800, 900, 1500, 1550, 2300, 2400, 3500, 3600],
+    })
+    expect(computeBehavioralDetection(signals)).toBeUndefined()
+  })
+
+  it('does not detect when touch movement is present with inputs', () => {
+    const signals = baseSignals({
+      inputCount: 10,
+      touchMoveCount: 3,
+      interactionTimestamps: [100, 350, 800, 900, 1500, 1550, 2300, 2400, 3500, 3600],
+    })
+    expect(computeBehavioralDetection(signals)).toBeUndefined()
   })
 
   it('detects low mouse-move-to-click ratio', () => {
@@ -78,6 +114,7 @@ describe('computeBehavioralDetection', () => {
       clickCount: 10,
       mouseMoveCount: 5,
       clickTimestamps: [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
+      interactionTimestamps: [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
     })
     expect(computeBehavioralDetection(signals)).toEqual({ detection_method: 'behavioral' })
   })
@@ -87,38 +124,30 @@ describe('computeBehavioralDetection', () => {
       clickCount: 10,
       mouseMoveCount: 25,
       clickTimestamps: [100, 300, 450, 700, 850, 1100, 1400, 1500, 1800, 2200],
+      interactionTimestamps: [100, 300, 450, 700, 850, 1100, 1400, 1500, 1800, 2200],
     })
     expect(computeBehavioralDetection(signals)).toBeUndefined()
   })
 
-  it('detects metronomic click timing (low CV)', () => {
+  it('detects metronomic interaction timing', () => {
     const timestamps: number[] = []
     for (let i = 0; i < 10; i++) {
       timestamps.push(1000 + i * 500)
     }
     const signals = baseSignals({
-      clickCount: 10,
-      mouseMoveCount: 30,
-      clickTimestamps: timestamps,
+      inputCount: 10,
+      mouseMoveCount: 5,
+      interactionTimestamps: timestamps,
     })
     expect(computeBehavioralDetection(signals)).toEqual({ detection_method: 'behavioral' })
   })
 
-  it('does not detect when click timing has high variance', () => {
+  it('does not detect when interaction timing has high variance', () => {
     const timestamps = [100, 350, 800, 900, 1500, 1550, 2300, 2400, 3500, 3600]
     const signals = baseSignals({
-      clickCount: 10,
-      mouseMoveCount: 30,
-      clickTimestamps: timestamps,
-    })
-    expect(computeBehavioralDetection(signals)).toBeUndefined()
-  })
-
-  it('returns undefined when click count is below threshold', () => {
-    const signals = baseSignals({
-      clickCount: 5,
-      mouseMoveCount: 0,
-      clickTimestamps: [100, 200, 300, 400, 500],
+      inputCount: 10,
+      mouseMoveCount: 5,
+      interactionTimestamps: timestamps,
     })
     expect(computeBehavioralDetection(signals)).toBeUndefined()
   })
@@ -133,18 +162,55 @@ describe('createBehavioralAnalyzer', () => {
     expect(createBehavioralAnalyzer()).toBeUndefined()
   })
 
-  it('counts mouse move records', () => {
+  it('detects programmatic inputs with no physical presence', () => {
     const callback = jasmine.createSpy()
     setAiAgentBehaviorCallback(callback)
     const analyzer = createBehavioralAnalyzer()!
 
-    for (let i = 0; i < 5; i++) {
-      analyzer.processRecord(makeMouseMoveRecord(1000 + i * 100))
+    for (let i = 0; i < 10; i++) {
+      analyzer.processRecord(makeInputRecord(1000 + i * 200))
+    }
+    expect(callback).toHaveBeenCalledWith({ detection_method: 'behavioral' })
+  })
+
+  it('detects programmatic scrolls with no physical presence', () => {
+    const callback = jasmine.createSpy()
+    setAiAgentBehaviorCallback(callback)
+    const analyzer = createBehavioralAnalyzer()!
+
+    for (let i = 0; i < 10; i++) {
+      analyzer.processRecord(makeScrollRecord(1000 + i * 200))
+    }
+    expect(callback).toHaveBeenCalledWith({ detection_method: 'behavioral' })
+  })
+
+  it('does not detect when mouse moves accompany inputs', () => {
+    const callback = jasmine.createSpy()
+    setAiAgentBehaviorCallback(callback)
+    const analyzer = createBehavioralAnalyzer()!
+
+    const irregularTimestamps = [100, 350, 800, 900, 1500, 1550, 2300, 2400, 3500, 3600]
+    for (let i = 0; i < 10; i++) {
+      analyzer.processRecord(makeMouseMoveRecord(irregularTimestamps[i] - 50))
+      analyzer.processRecord(makeInputRecord(irregularTimestamps[i]))
     }
     expect(callback).not.toHaveBeenCalled()
   })
 
-  it('counts click records and triggers analysis at threshold', () => {
+  it('does not detect when touch moves accompany inputs', () => {
+    const callback = jasmine.createSpy()
+    setAiAgentBehaviorCallback(callback)
+    const analyzer = createBehavioralAnalyzer()!
+
+    const irregularTimestamps = [100, 350, 800, 900, 1500, 1550, 2300, 2400, 3500, 3600]
+    for (let i = 0; i < 10; i++) {
+      analyzer.processRecord(makeTouchMoveRecord(irregularTimestamps[i] - 50))
+      analyzer.processRecord(makeInputRecord(irregularTimestamps[i]))
+    }
+    expect(callback).not.toHaveBeenCalled()
+  })
+
+  it('detects clicks with no mouse movement', () => {
     const callback = jasmine.createSpy()
     setAiAgentBehaviorCallback(callback)
     const analyzer = createBehavioralAnalyzer()!
@@ -155,25 +221,18 @@ describe('createBehavioralAnalyzer', () => {
     expect(callback).toHaveBeenCalledWith({ detection_method: 'behavioral' })
   })
 
-  it('counts input records towards total interactions', () => {
+  it('does not trigger detection when mouse moves are sufficient for clicks', () => {
     const callback = jasmine.createSpy()
     setAiAgentBehaviorCallback(callback)
     const analyzer = createBehavioralAnalyzer()!
 
-    for (let i = 0; i < 10; i++) {
-      analyzer.processRecord(makeInputRecord(1000 + i * 100))
+    for (let i = 0; i < 30; i++) {
+      analyzer.processRecord(makeMouseMoveRecord(1000 + i * 50))
     }
-    // No clicks → no detection
-    expect(callback).not.toHaveBeenCalled()
-  })
-
-  it('counts scroll and context menu records', () => {
-    const callback = jasmine.createSpy()
-    setAiAgentBehaviorCallback(callback)
-    const analyzer = createBehavioralAnalyzer()!
-
-    analyzer.processRecord(makeScrollRecord(1000))
-    analyzer.processRecord(makeContextMenuRecord(2000))
+    const timestamps = [100, 350, 800, 900, 1500, 1550, 2300, 2400, 3500, 3600]
+    for (let i = 0; i < 10; i++) {
+      analyzer.processRecord(makeClickRecord(timestamps[i]))
+    }
     expect(callback).not.toHaveBeenCalled()
   })
 
@@ -194,23 +253,8 @@ describe('createBehavioralAnalyzer', () => {
     const analyzer = createBehavioralAnalyzer()!
 
     for (let i = 0; i < 20; i++) {
-      analyzer.processRecord(makeClickRecord(1000 + i * 100))
+      analyzer.processRecord(makeInputRecord(1000 + i * 100))
     }
     expect(callback).toHaveBeenCalledTimes(1)
-  })
-
-  it('does not trigger detection when mouse moves are sufficient', () => {
-    const callback = jasmine.createSpy()
-    setAiAgentBehaviorCallback(callback)
-    const analyzer = createBehavioralAnalyzer()!
-
-    for (let i = 0; i < 30; i++) {
-      analyzer.processRecord(makeMouseMoveRecord(1000 + i * 50))
-    }
-    const timestamps = [100, 350, 800, 900, 1500, 1550, 2300, 2400, 3500, 3600]
-    for (let i = 0; i < 10; i++) {
-      analyzer.processRecord(makeClickRecord(timestamps[i]))
-    }
-    expect(callback).not.toHaveBeenCalled()
   })
 })

@@ -8,11 +8,12 @@ const MIN_MOUSE_MOVE_TO_CLICK_RATIO = 2
 
 export interface BehavioralSignals {
   mouseMoveCount: number
+  touchMoveCount: number
   clickCount: number
   scrollCount: number
   inputCount: number
-  contextMenuCount: number
   clickTimestamps: number[]
+  interactionTimestamps: number[]
 }
 
 let onBehaviorDetectedCallback: ((context: AiAgentContext) => void) | undefined
@@ -27,14 +28,14 @@ export function createBehavioralAnalyzer() {
     return undefined
   }
 
-
   const signals: BehavioralSignals = {
     mouseMoveCount: 0,
+    touchMoveCount: 0,
     clickCount: 0,
     scrollCount: 0,
     inputCount: 0,
-    contextMenuCount: 0,
     clickTimestamps: [],
+    interactionTimestamps: [],
   }
   let alreadyDetected = false
 
@@ -56,23 +57,32 @@ export function createBehavioralAnalyzer() {
       case IncrementalSource.MouseMove:
         signals.mouseMoveCount++
         break
+      case IncrementalSource.TouchMove:
+        signals.touchMoveCount++
+        break
       case IncrementalSource.MouseInteraction:
-        if (data.type === MouseInteractionType.Click) {
+        if (
+          data.type === MouseInteractionType.Click ||
+          data.type === MouseInteractionType.MouseDown ||
+          data.type === MouseInteractionType.TouchStart
+        ) {
           signals.clickCount++
           signals.clickTimestamps.push(record.timestamp)
-        } else if (data.type === MouseInteractionType.ContextMenu) {
-          signals.contextMenuCount++
+          signals.interactionTimestamps.push(record.timestamp)
         }
         break
       case IncrementalSource.Scroll:
         signals.scrollCount++
+        signals.interactionTimestamps.push(record.timestamp)
         break
       case IncrementalSource.Input:
         signals.inputCount++
+        signals.interactionTimestamps.push(record.timestamp)
         break
     }
 
-    const totalInteractions = signals.clickCount + signals.inputCount
+    const totalInteractions = signals.clickCount + signals.inputCount + signals.scrollCount
+
     if (totalInteractions >= MIN_INTERACTIONS_FOR_ANALYSIS) {
       analyze()
     }
@@ -90,20 +100,31 @@ export function createBehavioralAnalyzer() {
 }
 
 export function computeBehavioralDetection(signals: BehavioralSignals): AiAgentContext | undefined {
-  if (signals.clickCount === 0) {
+  const totalInteractions = signals.clickCount + signals.inputCount + signals.scrollCount
+  if (totalInteractions < MIN_INTERACTIONS_FOR_ANALYSIS) {
     return undefined
   }
 
-  // No mouse movement despite many clicks: keyboard-only agent or direct-click agent
-  if (signals.clickCount >= MIN_INTERACTIONS_FOR_ANALYSIS && signals.mouseMoveCount < signals.clickCount * MIN_MOUSE_MOVE_TO_CLICK_RATIO) {
-    return { detection_method: 'behavioral' }
+  const hasPhysicalPresence = signals.mouseMoveCount > 0 || signals.touchMoveCount > 0
+
+  // Activity without any physical presence (no mouse or touch movement at all)
+  if (!hasPhysicalPresence) {
+    return { detection_method: 'behavioral', behavioral_detection_reason: 'no_physical_presence' }
   }
 
-  // Metronomic click timing: coefficient of variation below threshold
-  if (signals.clickTimestamps.length >= MIN_INTERACTIONS_FOR_ANALYSIS) {
-    const cv = computeTimingCV(signals.clickTimestamps)
+  // Clicks with too few mouse movements relative to click count
+  if (
+    signals.clickCount >= MIN_INTERACTIONS_FOR_ANALYSIS &&
+    signals.mouseMoveCount < signals.clickCount * MIN_MOUSE_MOVE_TO_CLICK_RATIO
+  ) {
+    return { detection_method: 'behavioral', behavioral_detection_reason: 'too_few_mouse_movements' }
+  }
+
+  // Metronomic interaction timing
+  if (signals.interactionTimestamps.length >= MIN_INTERACTIONS_FOR_ANALYSIS) {
+    const cv = computeTimingCV(signals.interactionTimestamps)
     if (cv !== undefined && cv < METRONOMIC_TIMING_CV_THRESHOLD) {
-      return { detection_method: 'behavioral' }
+      return { detection_method: 'behavioral', behavioral_detection_reason: 'metronomic_interaction' }
     }
   }
 
