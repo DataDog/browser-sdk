@@ -45,9 +45,9 @@ Search: `grep -r "@datadog/browser-" package.json`
 
 ### Removed from Logs
 
-| Option                           | Action                                   |
-| -------------------------------- | ---------------------------------------- |
-| `sendLogsAfterSessionExpiration` | Delete. Logs are tied to sessions in v6. |
+| Option                           | Action                                                                                                               |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `sendLogsAfterSessionExpiration` | Delete. In v6, logs are always sent after session expiration (without a session ID). The option is no longer needed. |
 
 Search: `grep -rn 'useCrossSiteSessionCookie\|sendLogsAfterSessionExpiration' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.html"`
 
