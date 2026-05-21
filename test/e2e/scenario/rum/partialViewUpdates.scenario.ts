@@ -1,23 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { createTest, html, waitForRequests } from '../../lib/framework'
-import type { IntakeRegistry } from '../../lib/framework'
-
-// Loose type for view_update events received at the intake (no generated schema type yet)
-interface ViewUpdateEvent {
-  type: string
-  date: number
-  application: { id: string }
-  session: { id: string }
-  view: { id: string; is_active?: boolean; [key: string]: unknown }
-  _dd: { document_version: number; [key: string]: unknown }
-  [key: string]: unknown
-}
-
-// Helper: extract view_update events from all RUM events
-// (intakeRegistry.rumViewEvents only returns type==='view')
-function getViewUpdateEvents(intakeRegistry: IntakeRegistry): ViewUpdateEvent[] {
-  return intakeRegistry.rumEvents.filter((e) => (e.type as string) === 'view_update') as unknown as ViewUpdateEvent[]
-}
+import { createTest, waitForRequests } from '../../lib/framework'
 
 test.describe('partial view updates', () => {
   createTest('should send view_update events after the initial view event')
@@ -38,7 +20,7 @@ test.describe('partial view updates', () => {
       expect(viewEvents[0].type).toBe('view')
 
       // Should have at least one view_update
-      const viewUpdateEvents = getViewUpdateEvents(intakeRegistry)
+      const viewUpdateEvents = intakeRegistry.rumViewUpdateEvents
       expect(viewUpdateEvents.length).toBeGreaterThanOrEqual(1)
 
       // All events share the same view.id
@@ -59,20 +41,16 @@ test.describe('partial view updates', () => {
 
       await flushEvents()
 
-      // Collect all view-related events (view + view_update) sorted by document_version
-      const allViewRelatedEvents = [
-        ...intakeRegistry.rumViewEvents.map((e) => ({ _dd: e._dd })),
-        ...getViewUpdateEvents(intakeRegistry).map((e) => ({ _dd: e._dd })),
-      ].sort((a, b) => a._dd.document_version - b._dd.document_version)
+      // Collect document_versions from all view-related events (view + view_update)
+      const allDocVersions = [
+        ...intakeRegistry.rumViewEvents.map((e) => e._dd.document_version),
+        ...intakeRegistry.rumViewUpdateEvents.map((e) => (e._dd as { document_version: number }).document_version),
+      ]
 
-      expect(allViewRelatedEvents.length).toBeGreaterThanOrEqual(2)
+      expect(allDocVersions.length).toBeGreaterThanOrEqual(2)
 
-      // Verify monotonic increase
-      for (let i = 1; i < allViewRelatedEvents.length; i++) {
-        expect(allViewRelatedEvents[i]._dd.document_version).toBeGreaterThan(
-          allViewRelatedEvents[i - 1]._dd.document_version
-        )
-      }
+      // Verify all document_versions are unique (no duplicates)
+      expect(new Set(allDocVersions).size).toBe(allDocVersions.length)
     })
 
   createTest('should only send view events when feature flag is not enabled')
@@ -88,7 +66,7 @@ test.describe('partial view updates', () => {
       expect(intakeRegistry.rumViewEvents.length).toBeGreaterThanOrEqual(1)
 
       // Should NOT have any view_update events
-      const viewUpdateEvents = getViewUpdateEvents(intakeRegistry)
+      const viewUpdateEvents = intakeRegistry.rumViewUpdateEvents
       expect(viewUpdateEvents).toHaveLength(0)
     })
 
@@ -96,17 +74,8 @@ test.describe('partial view updates', () => {
     .withRum({
       enableExperimentalFeatures: ['partial_view_updates'],
     })
-    .withBody(html`
-      <a id="nav-link">Navigate</a>
-      <script>
-        document.getElementById('nav-link').addEventListener('click', () => {
-          history.pushState(null, '', '/new-page')
-        })
-      </script>
-    `)
     .run(async ({ intakeRegistry, flushEvents, page }) => {
-      // Trigger a route change to create a new view
-      await page.click('#nav-link')
+      await page.evaluate(() => history.pushState(null, '', '/new-page'))
 
       await flushEvents()
 
@@ -130,7 +99,7 @@ test.describe('partial view updates', () => {
 
       await flushEvents()
 
-      const viewUpdateEvents = getViewUpdateEvents(intakeRegistry)
+      const viewUpdateEvents = intakeRegistry.rumViewUpdateEvents
       expect(viewUpdateEvents.length).toBeGreaterThanOrEqual(1)
 
       for (const event of viewUpdateEvents) {
@@ -148,17 +117,8 @@ test.describe('partial view updates', () => {
     .withRum({
       enableExperimentalFeatures: ['partial_view_updates'],
     })
-    .withBody(html`
-      <a id="nav-link">Navigate</a>
-      <script>
-        document.getElementById('nav-link').addEventListener('click', () => {
-          history.pushState(null, '', '/other-page')
-        })
-      </script>
-    `)
     .run(async ({ intakeRegistry, flushEvents, page }) => {
-      // Navigate to trigger view end on the first view
-      await page.click('#nav-link')
+      await page.evaluate(() => history.pushState(null, '', '/other-page'))
 
       await flushEvents()
 
@@ -170,7 +130,7 @@ test.describe('partial view updates', () => {
       expect(endEvent?.type).toBe('view')
 
       // No view_update should have is_active: false
-      const viewUpdateEvents = getViewUpdateEvents(intakeRegistry)
+      const viewUpdateEvents = intakeRegistry.rumViewUpdateEvents
       const endUpdateEvent = viewUpdateEvents.find((e) => e.view.id === firstViewId && e.view.is_active === false)
       expect(endUpdateEvent).toBeUndefined()
     })

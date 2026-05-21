@@ -3,7 +3,7 @@ import { resetExperimentalFeatures } from '@datadog/browser-core/src/tools/exper
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { AssembledRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
-import { computeAssembledViewDiff, PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL } from './startRumBatch'
+import { assembleViewUpdateEvent, PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL } from './startRumBatch'
 
 function makeAssembledView(overrides: Record<string, unknown> = {}): AssembledRumEvent {
   return {
@@ -38,7 +38,7 @@ function makeAssembledView(overrides: Record<string, unknown> = {}): AssembledRu
   } as unknown as AssembledRumEvent
 }
 
-describe('computeAssembledViewDiff', () => {
+describe('assembleViewUpdateEvent', () => {
   it('should return undefined when nothing has changed', () => {
     const last = makeAssembledView()
     const current = makeAssembledView({
@@ -49,7 +49,7 @@ describe('computeAssembledViewDiff', () => {
         configuration: { start_session_replay_recording_manually: false },
       },
     })
-    const result = computeAssembledViewDiff(current, last)
+    const result = assembleViewUpdateEvent(current, last)
 
     // Only document_version changed (always required, not a "meaningful change")
     // view.* unchanged → should return undefined
@@ -78,7 +78,7 @@ describe('computeAssembledViewDiff', () => {
         time_spent: 100,
       },
     })
-    const result = computeAssembledViewDiff(current, last)!
+    const result = assembleViewUpdateEvent(current, last)!
 
     expect(result.type).toBe(RumEventType.VIEW_UPDATE)
     expect((result as any).application).toEqual({ id: 'app-1' })
@@ -111,7 +111,7 @@ describe('computeAssembledViewDiff', () => {
         time_spent: 5000,
       },
     })
-    const result = computeAssembledViewDiff(current, last)!
+    const result = assembleViewUpdateEvent(current, last)!
 
     expect((result.view as any).action).toEqual({ count: 3 }) // changed
     expect((result.view as any).time_spent).toBe(5000) // changed
@@ -144,7 +144,7 @@ describe('computeAssembledViewDiff', () => {
       service: 'svc',
       version: '1.0.0',
     })
-    const result = computeAssembledViewDiff(current, last)!
+    const result = assembleViewUpdateEvent(current, last)!
 
     expect(result.service).toBeUndefined() // unchanged, stripped
     expect((result as any).version).toBeUndefined() // unchanged, stripped
@@ -173,7 +173,7 @@ describe('computeAssembledViewDiff', () => {
       },
       service: 'new-service',
     })
-    const result = computeAssembledViewDiff(current, last)!
+    const result = assembleViewUpdateEvent(current, last)!
 
     expect(result.service).toBe('new-service')
   })
@@ -201,7 +201,7 @@ describe('computeAssembledViewDiff', () => {
       },
     })
     const currentService = current.service
-    computeAssembledViewDiff(current, last)
+    assembleViewUpdateEvent(current, last)
 
     expect(current.service).toBe(currentService)
   })

@@ -19,7 +19,7 @@ import { diffMerge } from '../domain/view/viewDiff'
 
 export const PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL = 100
 
-export function computeAssembledViewDiff(
+export function assembleViewUpdateEvent(
   current: AssembledRumEvent,
   last: AssembledRumEvent
 ): AssembledRumEvent | undefined {
@@ -50,7 +50,7 @@ export function computeAssembledViewDiff(
   const currentView = currentObj.view as Record<string, unknown>
   const currentDd = currentObj._dd as Record<string, unknown>
 
-  // Merge always-required fields on top of the diff for backend routing
+  // Restore the ignoreKeys — backend needs them on every event
   return combine(diff, {
     type: RumEventType.VIEW_UPDATE,
     date: currentObj.date,
@@ -137,7 +137,7 @@ export function startRumBatch(
     // They intentionally bypass RAW_RUM_EVENT_COLLECTED → assembly → RUM_EVENT_COLLECTED, which
     // means they skip beforeSend entirely. view_update is an internal bandwidth optimization —
     // not a customer-visible event type, and not modifiable via beforeSend.
-    const diff = computeAssembledViewDiff(serverRumEvent, lastSentView)
+    const diff = assembleViewUpdateEvent(serverRumEvent, lastSentView)
     lastSentView = serverRumEvent
     if (diff) {
       sendToExtension('rum', diff)

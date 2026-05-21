@@ -88,6 +88,10 @@ export class IntakeRegistry {
     return this.rumEvents.filter(isRumViewEvent)
   }
 
+  get rumViewUpdateEvents() {
+    return this.rumEvents.filter(isRumViewUpdateEvent)
+  }
+
   get rumVitalEvents() {
     return this.rumEvents.filter(isRumVitalEvent)
   }
@@ -191,6 +195,10 @@ function isRumLongTaskEvent(event: RumEvent): event is RumLongTaskEvent {
 
 function isRumViewEvent(event: RumEvent): event is RumViewEvent {
   return event.type === 'view'
+}
+
+function isRumViewUpdateEvent(event: RumEvent): boolean {
+  return (event.type as string) === 'view_update'
 }
 
 function isRumErrorEvent(event: RumEvent): event is RumErrorEvent {

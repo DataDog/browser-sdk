@@ -28,6 +28,10 @@ describe('isEqual', () => {
     expect(isEqual({ a: 1 }, { b: 1 })).toBe(false)
   })
 
+  it('should return true for objects with same keys in different order', () => {
+    expect(isEqual({ a: 1, b: 2 }, { b: 2, a: 1 })).toBe(true)
+  })
+
   it('should return true for equal arrays', () => {
     expect(isEqual([1, 2, 3], [1, 2, 3])).toBe(true)
   })
