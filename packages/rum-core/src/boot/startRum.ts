@@ -42,6 +42,7 @@ import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
 import { startDisplayContext } from '../domain/contexts/displayContext'
 import type { CustomVitalsState } from '../domain/vital/vitalCollection'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
+import { ExperimentalFeature, isExperimentalFeatureEnabled } from '@datadog/browser-core'
 import { startAiAgentContext } from '../domain/contexts/aiAgentContext'
 import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext'
 import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
@@ -201,7 +202,9 @@ export function startRumEventCollection(
 
   const displayContext = startDisplayContext(hooks, configuration)
   cleanupTasks.push(displayContext.stop)
-  const aiAgentContext = startAiAgentContext(hooks)
+  const aiAgentContext = isExperimentalFeatureEnabled(ExperimentalFeature.AI_AGENT_DETECTION)
+    ? startAiAgentContext(hooks)
+    : undefined
   const ciVisibilityContext = startCiVisibilityContext(configuration, hooks)
   cleanupTasks.push(ciVisibilityContext.stop)
   startSyntheticsContext(hooks)
@@ -278,7 +281,7 @@ export function startRumEventCollection(
     globalContext,
     userContext,
     accountContext,
-    updateBehavioralDetection: aiAgentContext.updateBehavioralDetection,
+    updateBehavioralDetection: aiAgentContext?.updateBehavioralDetection,
     stop: () => cleanupTasks.forEach((task) => task()),
   }
 }

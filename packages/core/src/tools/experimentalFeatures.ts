@@ -23,6 +23,7 @@ export enum ExperimentalFeature {
   USE_INCREMENTAL_CHANGE_RECORDS = 'use_incremental_change_records',
   TOO_MANY_REQUESTS_INVESTIGATION = 'too_many_requests_investigation',
   TRACK_RESOURCE_HEADERS = 'track_resource_headers',
+  AI_AGENT_DETECTION = 'ai_agent_detection',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()
