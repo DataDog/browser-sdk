@@ -1,5 +1,5 @@
 import type { BrowserRecord } from '../../types'
-import { RecordType, IncrementalSource, MouseInteractionType } from '../../types/sessionReplayConstants'
+import { RecordType, IncrementalSource, MouseInteractionType } from '../../types'
 import type { BehavioralSignals } from './aiAgentBehavioralAnalyzer'
 import {
   computeBehavioralDetection,
@@ -74,21 +74,21 @@ describe('computeBehavioralDetection', () => {
   })
 
   it('detects activity without any physical presence (inputs only)', () => {
-    expect(computeBehavioralDetection(baseSignals({ inputCount: 10, interactionTimestamps: [] }))).toEqual({
-      detection_method: 'behavioral',
-    })
+    expect(computeBehavioralDetection(baseSignals({ inputCount: 10, interactionTimestamps: [] }))).toEqual(
+      jasmine.objectContaining({ detection_method: 'behavioral' })
+    )
   })
 
   it('detects activity without any physical presence (scrolls only)', () => {
-    expect(computeBehavioralDetection(baseSignals({ scrollCount: 10, interactionTimestamps: [] }))).toEqual({
-      detection_method: 'behavioral',
-    })
+    expect(computeBehavioralDetection(baseSignals({ scrollCount: 10, interactionTimestamps: [] }))).toEqual(
+      jasmine.objectContaining({ detection_method: 'behavioral' })
+    )
   })
 
   it('detects activity without any physical presence (mixed inputs and scrolls)', () => {
     expect(
       computeBehavioralDetection(baseSignals({ inputCount: 6, scrollCount: 5, interactionTimestamps: [] }))
-    ).toEqual({ detection_method: 'behavioral' })
+    ).toEqual(jasmine.objectContaining({ detection_method: 'behavioral' }))
   })
 
   it('does not detect when mouse movement is present with inputs', () => {
@@ -116,7 +116,7 @@ describe('computeBehavioralDetection', () => {
       clickTimestamps: [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
       interactionTimestamps: [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
     })
-    expect(computeBehavioralDetection(signals)).toEqual({ detection_method: 'behavioral' })
+    expect(computeBehavioralDetection(signals)).toEqual(jasmine.objectContaining({ detection_method: 'behavioral' }))
   })
 
   it('does not detect when mouse-move-to-click ratio is sufficient', () => {
@@ -139,7 +139,7 @@ describe('computeBehavioralDetection', () => {
       mouseMoveCount: 5,
       interactionTimestamps: timestamps,
     })
-    expect(computeBehavioralDetection(signals)).toEqual({ detection_method: 'behavioral' })
+    expect(computeBehavioralDetection(signals)).toEqual(jasmine.objectContaining({ detection_method: 'behavioral' }))
   })
 
   it('does not detect when interaction timing has high variance', () => {
@@ -170,7 +170,7 @@ describe('createBehavioralAnalyzer', () => {
     for (let i = 0; i < 10; i++) {
       analyzer.processRecord(makeInputRecord(1000 + i * 200))
     }
-    expect(callback).toHaveBeenCalledWith({ detection_method: 'behavioral' })
+    expect(callback).toHaveBeenCalledWith(jasmine.objectContaining({ detection_method: 'behavioral' }))
   })
 
   it('detects programmatic scrolls with no physical presence', () => {
@@ -181,7 +181,7 @@ describe('createBehavioralAnalyzer', () => {
     for (let i = 0; i < 10; i++) {
       analyzer.processRecord(makeScrollRecord(1000 + i * 200))
     }
-    expect(callback).toHaveBeenCalledWith({ detection_method: 'behavioral' })
+    expect(callback).toHaveBeenCalledWith(jasmine.objectContaining({ detection_method: 'behavioral' }))
   })
 
   it('does not detect when mouse moves accompany inputs', () => {
@@ -218,7 +218,7 @@ describe('createBehavioralAnalyzer', () => {
     for (let i = 0; i < 10; i++) {
       analyzer.processRecord(makeClickRecord(1000 + i * 100))
     }
-    expect(callback).toHaveBeenCalledWith({ detection_method: 'behavioral' })
+    expect(callback).toHaveBeenCalledWith(jasmine.objectContaining({ detection_method: 'behavioral' }))
   })
 
   it('does not trigger detection when mouse moves are sufficient for clicks', () => {

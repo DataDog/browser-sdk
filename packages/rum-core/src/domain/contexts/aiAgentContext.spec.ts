@@ -12,12 +12,7 @@ import {
 
 import type { AssembleHookParams, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
-import {
-  detectCDP,
-  detectHeadlessEnvironment,
-  detectSoftwareRenderer,
-  startAiAgentContext,
-} from './aiAgentContext'
+import { detectCDP, detectHeadlessEnvironment, detectSoftwareRenderer, startAiAgentContext } from './aiAgentContext'
 
 // Return type is 'any' because SessionType.AI_AGENT is not yet in the auto-generated rum-events-format schema
 describe('aiAgentContext', () => {
@@ -43,10 +38,7 @@ describe('aiAgentContext', () => {
         type: 'view',
         context: {
           isAgentSession: true,
-        },
-        ai_agent: {
-          name: 'claude-code',
-          detection_method: 'cooperative',
+          aiAgentContext: { name: 'claude-code', detection_method: 'cooperative' },
         },
       })
     })
@@ -81,10 +73,7 @@ describe('aiAgentContext', () => {
         type: 'view',
         context: {
           isAgentSession: true,
-        },
-        ai_agent: {
-          name: 'cursor',
-          detection_method: 'cooperative',
+          aiAgentContext: { name: 'cursor', detection_method: 'cooperative' },
         },
       })
     })
@@ -99,9 +88,7 @@ describe('aiAgentContext', () => {
         type: 'view',
         context: {
           isAgentSession: true,
-        },
-        ai_agent: {
-          detection_method: 'webdriver',
+          aiAgentContext: { detection_method: 'webdriver' },
         },
       })
     })
@@ -129,10 +116,7 @@ describe('aiAgentContext', () => {
         type: 'view',
         context: {
           isAgentSession: true,
-        },
-        ai_agent: {
-          name: 'claudebot',
-          detection_method: 'ua_match',
+          aiAgentContext: { name: 'claudebot', detection_method: 'ua_match' },
         },
       })
     })
@@ -145,10 +129,7 @@ describe('aiAgentContext', () => {
         type: 'view',
         context: {
           isAgentSession: true,
-        },
-        ai_agent: {
-          name: 'gptbot',
-          detection_method: 'ua_match',
+          aiAgentContext: { name: 'gptbot', detection_method: 'ua_match' },
         },
       })
     })
@@ -175,10 +156,7 @@ describe('aiAgentContext', () => {
         type: 'view',
         context: {
           isAgentSession: true,
-        },
-        ai_agent: {
-          detection_method: 'automation_framework',
-          framework: 'playwright',
+          aiAgentContext: { detection_method: 'automation_framework', framework: 'playwright' },
         },
       })
     })
@@ -191,10 +169,7 @@ describe('aiAgentContext', () => {
         type: 'view',
         context: {
           isAgentSession: true,
-        },
-        ai_agent: {
-          detection_method: 'automation_framework',
-          framework: 'puppeteer',
+          aiAgentContext: { detection_method: 'automation_framework', framework: 'puppeteer' },
         },
       })
     })
@@ -207,10 +182,7 @@ describe('aiAgentContext', () => {
         type: 'view',
         context: {
           isAgentSession: true,
-        },
-        ai_agent: {
-          detection_method: 'automation_framework',
-          framework: 'selenium',
+          aiAgentContext: { detection_method: 'automation_framework', framework: 'selenium' },
         },
       })
     })
@@ -231,9 +203,7 @@ describe('aiAgentContext', () => {
         type: 'view',
         context: {
           isAgentSession: true,
-        },
-        ai_agent: {
-          detection_method: 'webgl_renderer',
+          aiAgentContext: { detection_method: 'webgl_renderer' },
         },
       })
     })
@@ -261,9 +231,7 @@ describe('aiAgentContext', () => {
         type: 'view',
         context: {
           isAgentSession: true,
-        },
-        ai_agent: {
-          detection_method: 'headless_environment',
+          aiAgentContext: { detection_method: 'headless_environment' },
         },
       })
     })
@@ -291,9 +259,7 @@ describe('aiAgentContext', () => {
         type: 'view',
         context: {
           isAgentSession: true,
-        },
-        ai_agent: {
-          detection_method: 'cdp',
+          aiAgentContext: { detection_method: 'cdp' },
         },
       })
     })
@@ -313,8 +279,8 @@ describe('aiAgentContext', () => {
       startAiAgentContext(hooks)
 
       const result = triggerAssembleHook()
-      expect(result.ai_agent.detection_method).toBe('cooperative')
-      expect(result.ai_agent.name).toBe('claude-code')
+      expect(result.context.aiAgentContext.detection_method).toBe('cooperative')
+      expect(result.context.aiAgentContext.name).toBe('claude-code')
     })
 
     it('should prioritize cooperative cookie over webdriver', () => {
@@ -323,8 +289,8 @@ describe('aiAgentContext', () => {
       startAiAgentContext(hooks)
 
       const result = triggerAssembleHook()
-      expect(result.ai_agent.detection_method).toBe('cooperative')
-      expect(result.ai_agent.name).toBe('devin')
+      expect(result.context.aiAgentContext.detection_method).toBe('cooperative')
+      expect(result.context.aiAgentContext.name).toBe('devin')
     })
 
     it('should prioritize webdriver over user-agent', () => {
@@ -333,7 +299,7 @@ describe('aiAgentContext', () => {
       startAiAgentContext(hooks)
 
       const result = triggerAssembleHook()
-      expect(result.ai_agent.detection_method).toBe('webdriver')
+      expect(result.context.aiAgentContext.detection_method).toBe('webdriver')
     })
 
     it('should prioritize user-agent over automation framework', () => {
@@ -342,7 +308,7 @@ describe('aiAgentContext', () => {
       startAiAgentContext(hooks)
 
       const result = triggerAssembleHook()
-      expect(result.ai_agent.detection_method).toBe('ua_match')
+      expect(result.context.aiAgentContext.detection_method).toBe('ua_match')
     })
 
     it('should prioritize automation framework over Tier 2 signals', () => {
@@ -354,7 +320,7 @@ describe('aiAgentContext', () => {
       startAiAgentContext(hooks)
 
       const result = triggerAssembleHook()
-      expect(result.ai_agent.detection_method).toBe('automation_framework')
+      expect(result.context.aiAgentContext.detection_method).toBe('automation_framework')
     })
 
     it('should prioritize WebGL renderer over headless environment', () => {
@@ -365,7 +331,7 @@ describe('aiAgentContext', () => {
       startAiAgentContext(hooks)
 
       const result = triggerAssembleHook()
-      expect(result.ai_agent.detection_method).toBe('webgl_renderer')
+      expect(result.context.aiAgentContext.detection_method).toBe('webgl_renderer')
     })
 
     it('should prioritize headless environment over CDP', () => {
@@ -376,7 +342,7 @@ describe('aiAgentContext', () => {
       startAiAgentContext(hooks)
 
       const result = triggerAssembleHook()
-      expect(result.ai_agent.detection_method).toBe('headless_environment')
+      expect(result.context.aiAgentContext.detection_method).toBe('headless_environment')
     })
   })
 

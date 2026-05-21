@@ -51,15 +51,13 @@ export function startAiAgentContext(hooks: Hooks) {
       return SKIPPED
     }
 
-    // TODO: Remove 'unknown' cast after adding 'ai_agent' to the rum-events-format schema
     return {
       type: eventType,
       context: {
         isAgentSession: true,
         aiAgentContext,
       },
-      ai_agent: aiAgentContext,
-    } as unknown as DefaultRumEventAttributes
+    } as DefaultRumEventAttributes
   })
 
   return {
@@ -92,7 +90,11 @@ export function detectAiAgent(): AiAgentContext | undefined {
 
 function detectCooperativeGlobal(): AiAgentContext | undefined {
   const globalContext = (window as AiAgentWindow)._DATADOG_AI_AGENT
-  if (typeof globalContext === 'object' && globalContext !== null && typeof (globalContext as { name?: unknown }).name === 'string') {
+  if (
+    typeof globalContext === 'object' &&
+    globalContext !== null &&
+    typeof (globalContext as { name?: unknown }).name === 'string'
+  ) {
     return { name: (globalContext as { name: string }).name, detection_method: 'cooperative' }
   }
 }
