@@ -8,7 +8,7 @@ import { toSessionString, toSessionState } from '../sessionState'
 import { Observable } from '../../../tools/observable'
 import { mockable } from '../../../tools/mockable'
 import { monitorError } from '../../../tools/monitor'
-import { addTelemetryDebug, addTelemetryError } from '../../telemetry'
+import { addTelemetryError } from '../../telemetry'
 import { createCookieAccess } from '../../../browser/cookieAccess'
 import { dateNow, timeStampNow } from '../../../tools/utils/timeUtils'
 import type { Context } from '../../../tools/serialisation/context'
@@ -56,15 +56,6 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
       const newState = fn(currentState)
       const sessionString = buildSessionString(newState, cookieOptions)
       const expireDelay = trackAnonymousUser ? SESSION_COOKIE_EXPIRATION_DELAY : SESSION_TIME_OUT_DELAY
-      // monitor-until: 2026-05-30
-      addTelemetryDebug('applyAndWrite', {
-        cookieValues,
-        opts,
-        currentState,
-        newState,
-        sessionString,
-        expireDelay,
-      })
 
       return { value: sessionString, expireDelay }
     })
@@ -83,6 +74,7 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
               hidden: document.hidden,
             }
             addTelemetryError(new Error(`Error while expanding or renewing session on activity: ${error}`), context)
+            throw error
           })
       } else {
         pendingChain = (pendingChain ?? Promise.resolve()).then(() => applyAndWrite(fn))
