@@ -8,7 +8,10 @@ import { toSessionString, toSessionState } from '../sessionState'
 import { Observable } from '../../../tools/observable'
 import { mockable } from '../../../tools/mockable'
 import { monitorError } from '../../../tools/monitor'
+import { addTelemetryError } from '../../telemetry'
 import { createCookieAccess } from '../../../browser/cookieAccess'
+import { dateNow, timeStampNow } from '../../../tools/utils/timeUtils'
+import type { Context } from '../../../tools/serialisation/context'
 import type { SessionStoreStrategy, SessionStoreStrategyType, SessionObservableEvent } from './sessionStoreStrategy'
 import { SESSION_STORE_KEY, LEGACY_SESSION_STORE_KEY } from './sessionStoreStrategy'
 
@@ -30,6 +33,7 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
   const opts = encodeCookieOptions(cookieOptions)
   const cookieAccess = mockable(createCookieAccess)(SESSION_STORE_KEY, configuration, cookieOptions)
   let isFirstCall = true
+  const initTimestamp = timeStampNow()
 
   cookieAccess.observable.subscribe(() => {
     cookieAccess
@@ -60,7 +64,21 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
   return {
     async setSessionState(fn: (sessionState: SessionState) => SessionState): Promise<void> {
       if (typeof navigator !== 'undefined' && navigator.locks) {
-        await navigator.locks.request(SESSION_STORE_KEY, () => applyAndWrite(fn))
+        await navigator.locks
+          .request(SESSION_STORE_KEY, () => applyAndWrite(fn))
+          .catch(async (error) => {
+            const context: Context = {
+              strategy: configuration.sessionStoreStrategyType?.type,
+              timeSinceInit: dateNow() - initTimestamp,
+              visibilityState: document.visibilityState,
+              hidden: document.hidden,
+              cookieStoreSupported: 'cookieStore' in window,
+              cookies: document.cookie,
+              cookieStore: (await cookieStore.getAll()).map((value) => value as Context),
+            }
+            addTelemetryError(new Error(`Error while expanding or renewing session on activity: ${error}`), context)
+            throw error
+          })
       } else {
         pendingChain = (pendingChain ?? Promise.resolve()).then(() => applyAndWrite(fn))
         await pendingChain
