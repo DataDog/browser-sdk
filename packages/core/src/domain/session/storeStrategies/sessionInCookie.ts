@@ -10,11 +10,19 @@ import { mockable } from '../../../tools/mockable'
 import { monitorError } from '../../../tools/monitor'
 import { addTelemetryError } from '../../telemetry'
 import { createCookieAccess } from '../../../browser/cookieAccess'
+import { clearTimeout, setTimeout } from '../../../tools/timer'
 import { dateNow, timeStampNow } from '../../../tools/utils/timeUtils'
 import type { Context } from '../../../tools/serialisation/context'
-import type { SessionStoreStrategy, SessionStoreStrategyType, SessionObservableEvent } from './sessionStoreStrategy'
+import { getLifecycleContext } from '../../../browser/lifecycleTracker'
+import type {
+  SessionStateOperation,
+  SessionStoreStrategy,
+  SessionStoreStrategyType,
+  SessionObservableEvent,
+} from './sessionStoreStrategy'
 import { SESSION_STORE_KEY, LEGACY_SESSION_STORE_KEY } from './sessionStoreStrategy'
 
+const LOCK_QUERY_TIMEOUT = 1000
 const SESSION_COOKIE_VERSION = 0
 
 export function selectCookieStrategy(initConfiguration: InitConfiguration): SessionStoreStrategyType | undefined {
@@ -62,21 +70,17 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
   }
 
   return {
-    async setSessionState(fn: (sessionState: SessionState) => SessionState): Promise<void> {
+    async setSessionState(
+      fn: (sessionState: SessionState) => SessionState,
+      operation: SessionStateOperation
+    ): Promise<void> {
       if (typeof navigator !== 'undefined' && navigator.locks) {
+        const lockRequestedAt = dateNow()
         await navigator.locks
           .request(SESSION_STORE_KEY, () => applyAndWrite(fn))
           .catch(async (error) => {
-            const context: Context = {
-              strategy: configuration.sessionStoreStrategyType?.type,
-              timeSinceInit: dateNow() - initTimestamp,
-              visibilityState: document.visibilityState,
-              hidden: document.hidden,
-              cookieStoreSupported: 'cookieStore' in window,
-              cookies: document.cookie,
-              cookieStore: (await cookieStore.getAll()).map((value) => value as Context),
-            }
-            addTelemetryError(new Error(`Error while expanding or renewing session on activity: ${error}`), context)
+            const context = await buildLockErrorContext(configuration, operation, initTimestamp, lockRequestedAt)
+            addTelemetryError(error, context)
             throw error
           })
       } else {
@@ -85,6 +89,80 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
       }
     },
     sessionObservable,
+  }
+}
+
+interface LockQuerySnapshot {
+  heldByOthers: number
+  pendingCount: number
+  isPending: boolean
+}
+
+async function queryLockSnapshot(): Promise<LockQuerySnapshot | 'timeout' | 'unavailable' | 'error'> {
+  if (typeof navigator === 'undefined' || !navigator.locks?.query) {
+    return 'unavailable'
+  }
+  let timeoutId: ReturnType<typeof setTimeout> | undefined
+  const timeout = new Promise<'timeout'>((resolve) => {
+    timeoutId = setTimeout(() => resolve('timeout'), LOCK_QUERY_TIMEOUT)
+  })
+  try {
+    const snapshot = await Promise.race([navigator.locks.query(), timeout])
+    if (snapshot === 'timeout') {
+      return 'timeout'
+    }
+    const held = snapshot.held ?? []
+    const pending = snapshot.pending ?? []
+    return {
+      heldByOthers: held.filter((lock) => lock.name === SESSION_STORE_KEY).length,
+      pendingCount: pending.filter((lock) => lock.name === SESSION_STORE_KEY).length,
+      isPending: pending.some((lock) => lock.name === SESSION_STORE_KEY),
+    }
+  } catch {
+    return 'error'
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
+
+function getNavigationType(): string | undefined {
+  if (typeof performance === 'undefined' || typeof performance.getEntriesByType !== 'function') {
+    return undefined
+  }
+  // The document-load entry is what we want here ('back_forward' signals bfcache restore).
+  // Some Chromium builds expose extra entries for experimental soft navigations — index 0 is
+  // still the original document-load entry per the Performance Timeline ordering.
+  const entry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined
+  return entry?.type
+}
+
+function isInIframe(): boolean | undefined {
+  try {
+    return window !== window.top
+  } catch {
+    // Cross-origin access — definitely in an iframe
+    return true
+  }
+}
+
+async function buildLockErrorContext(
+  configuration: Configuration,
+  operation: SessionStateOperation,
+  initTimestamp: number,
+  lockRequestedAt: number
+): Promise<Context> {
+  return {
+    operation,
+    strategy: configuration.sessionStoreStrategyType?.type,
+    timeSinceInit: dateNow() - initTimestamp,
+    lockRequestDuration: dateNow() - lockRequestedAt,
+    visibilityState: document.visibilityState,
+    readyState: document.readyState,
+    inIframe: isInIframe(),
+    navigationType: getNavigationType(),
+    sessionCookies: getCookies(SESSION_STORE_KEY),
+    lockQuery: (await queryLockSnapshot()) as Context[string],
+    ...getLifecycleContext(),
   }
 }
 

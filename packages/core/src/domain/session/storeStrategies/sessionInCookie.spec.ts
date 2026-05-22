@@ -66,7 +66,7 @@ describe('session in cookie strategy', () => {
     it('should read cookie, apply fn, and write back', async () => {
       const { strategy, mockCookie } = setupCookieStrategy()
 
-      await strategy.setSessionState((state) => ({ ...state, id: 'abc123' }))
+      await strategy.setSessionState((state) => ({ ...state, id: 'abc123' }), 'updateState')
 
       expect(mockCookie.getStoredValues()[0]).toContain('id=abc123')
     })
@@ -78,7 +78,7 @@ describe('session in cookie strategy', () => {
       await strategy.setSessionState((state) => {
         capturedState = state
         return { ...state, id: 'new-id' }
-      })
+      }, 'updateState')
 
       expect(capturedState).toEqual({})
     })
@@ -91,7 +91,7 @@ describe('session in cookie strategy', () => {
       await strategy.setSessionState((state) => {
         capturedState = state
         return state
-      })
+      }, 'updateState')
 
       expect(capturedState!.id).toBe('123')
     })
@@ -99,7 +99,7 @@ describe('session in cookie strategy', () => {
     it('should add c=xxx to cookie on write', async () => {
       const { strategy, mockCookie } = setupCookieStrategy()
 
-      await strategy.setSessionState(() => ({ id: 'abc' }))
+      await strategy.setSessionState(() => ({ id: 'abc' }), 'updateState')
 
       expect(mockCookie.getStoredValues()[0]).toContain('c=0')
     })
@@ -112,7 +112,7 @@ describe('session in cookie strategy', () => {
       await strategy.setSessionState((state) => {
         capturedState = state
         return { ...state, id: 'test' }
-      })
+      }, 'updateState')
 
       expect(capturedState!.c).toBeUndefined()
     })
@@ -121,7 +121,7 @@ describe('session in cookie strategy', () => {
       const { strategy, mockCookie } = setupCookieStrategy()
       mockCookie.setAllValues(['id=123&c=0'])
 
-      await strategy.setSessionState(() => ({}))
+      await strategy.setSessionState(() => ({}), 'updateState')
 
       expect(mockCookie.getStoredValues()).toEqual([])
     })
@@ -156,7 +156,7 @@ describe('session in cookie strategy', () => {
       const subscription = strategy.sessionObservable.subscribe(spy)
       registerCleanupTask(() => subscription.unsubscribe())
 
-      await strategy.setSessionState(() => ({ id: '123' }))
+      await strategy.setSessionState(() => ({ id: '123' }), 'updateState')
       await collectAsyncCalls(spy, 1)
 
       expect(spy.calls.mostRecent().args[0].sessionState).toEqual({ id: '123' })
@@ -169,12 +169,12 @@ describe('session in cookie strategy', () => {
       void strategy.setSessionState((state) => {
         calls.push('first')
         return { ...state, id: 'first' }
-      })
+      }, 'updateState')
 
       await strategy.setSessionState((state) => {
         calls.push('second')
         return { ...state, id: 'second' }
-      })
+      }, 'updateState')
 
       expect(calls).toEqual(['first', 'second'])
       expect(mockCookie.getStoredValues()[0]).toContain('id=second')
@@ -190,7 +190,7 @@ describe('session in cookie strategy', () => {
       await strategy.setSessionState((state) => {
         capturedState = state
         return state
-      })
+      }, 'updateState')
 
       expect(capturedState.id).toBe('456')
     })
@@ -203,7 +203,7 @@ describe('session in cookie strategy', () => {
       await strategy.setSessionState((state) => {
         capturedState = state
         return state
-      })
+      }, 'updateState')
 
       expect(capturedState.id).toBe('123')
     })
@@ -213,7 +213,7 @@ describe('session in cookie strategy', () => {
     it('should use 1 year expiration when trackAnonymousUser=true', async () => {
       const { strategy, mockCookie } = setupCookieStrategy({ trackAnonymousUser: true })
 
-      await strategy.setSessionState(() => ({ id: '123', created: '0' }))
+      await strategy.setSessionState(() => ({ id: '123', created: '0' }), 'updateState')
 
       expect(mockCookie.getLastExpireDelay()).toBe(SESSION_COOKIE_EXPIRATION_DELAY)
     })
@@ -221,7 +221,7 @@ describe('session in cookie strategy', () => {
     it('should use 4h expiration when trackAnonymousUser=false', async () => {
       const { strategy, mockCookie } = setupCookieStrategy({ trackAnonymousUser: false })
 
-      await strategy.setSessionState(() => ({ id: '123', created: '0' }))
+      await strategy.setSessionState(() => ({ id: '123', created: '0' }), 'updateState')
 
       expect(mockCookie.getLastExpireDelay()).toBe(SESSION_TIME_OUT_DELAY)
     })
@@ -282,7 +282,7 @@ describe('session in cookie strategy', () => {
       await strategy.setSessionState((state) => {
         capturedState = state
         return state
-      })
+      }, 'updateState')
 
       expect(capturedState!.id).toBe('legacy-id')
       expect(capturedState!.created).toBe('123')
@@ -297,7 +297,7 @@ describe('session in cookie strategy', () => {
       await strategy.setSessionState((state) => {
         capturedState = state
         return state
-      })
+      }, 'updateState')
 
       expect(capturedState!.id).toBe('new-id')
     })
@@ -307,7 +307,7 @@ describe('session in cookie strategy', () => {
       const { strategy, mockCookie } = setupCookieStrategy()
 
       // First call triggers migration
-      await strategy.setSessionState((state) => state)
+      await strategy.setSessionState((state) => state, 'updateState')
 
       // Clear the new cookie to simulate empty state
       mockCookie.setAllValues([])
@@ -317,7 +317,7 @@ describe('session in cookie strategy', () => {
       await strategy.setSessionState((state) => {
         capturedState = state
         return state
-      })
+      }, 'updateState')
 
       expect(capturedState).toEqual({})
     })
@@ -327,7 +327,7 @@ describe('session in cookie strategy', () => {
     it('should encode cookie options in the cookie value', async () => {
       const { strategy, mockCookie } = setupCookieStrategy({ usePartitionedCrossSiteSessionCookie: true })
 
-      await strategy.setSessionState(() => ({ id: '123' }))
+      await strategy.setSessionState(() => ({ id: '123' }), 'updateState')
 
       expect(mockCookie.getStoredValues()[0]).toMatch(/^id=123&c=1/)
     })
@@ -335,7 +335,7 @@ describe('session in cookie strategy', () => {
     it('should not encode cookie options in the cookie value if the session is empty', async () => {
       const { strategy, mockCookie } = setupCookieStrategy({ usePartitionedCrossSiteSessionCookie: true })
 
-      await strategy.setSessionState(() => ({}))
+      await strategy.setSessionState(() => ({}), 'updateState')
 
       expect(mockCookie.getStoredValues()).toEqual([])
     })

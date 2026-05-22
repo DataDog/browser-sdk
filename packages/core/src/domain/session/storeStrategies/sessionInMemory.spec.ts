@@ -17,7 +17,7 @@ describe('Memory SessionStoreStrategy', () => {
 
   describe('setSessionState', () => {
     it('should read current state, apply fn, and write back', () => {
-      void strategy.setSessionState((state) => ({ ...state, id: 'test-id' }))
+      void strategy.setSessionState((state) => ({ ...state, id: 'test-id' }), 'updateState')
 
       const globalObject = getGlobalObject<Record<string, { state?: SessionState }>>()
       expect(globalObject[MEMORY_SESSION_STORE_KEY]?.state?.id).toBe('test-id')
@@ -27,14 +27,14 @@ describe('Memory SessionStoreStrategy', () => {
       void strategy.setSessionState((state) => {
         expect(state).toEqual({})
         return { ...state, id: 'new-id' }
-      })
+      }, 'updateState')
     })
 
     it('should notify sessionObservable after write', async () => {
       const spy = jasmine.createSpy('observer')
       strategy.sessionObservable.subscribe(spy)
 
-      await strategy.setSessionState((state) => ({ ...state, id: 'test-id' }))
+      await strategy.setSessionState((state) => ({ ...state, id: 'test-id' }), 'updateState')
 
       expect(spy).toHaveBeenCalledOnceWith(
         jasmine.objectContaining({ sessionState: jasmine.objectContaining({ id: 'test-id' }) })
@@ -48,7 +48,7 @@ describe('Memory SessionStoreStrategy', () => {
       const spy = jasmine.createSpy('observer')
 
       strategy.sessionObservable.subscribe(spy)
-      await strategy2.setSessionState((state) => ({ ...state, id: 'from-strategy2' }))
+      await strategy2.setSessionState((state) => ({ ...state, id: 'from-strategy2' }), 'updateState')
 
       expect(spy).toHaveBeenCalledOnceWith(
         jasmine.objectContaining({ sessionState: jasmine.objectContaining({ id: 'from-strategy2' }) })
@@ -58,20 +58,20 @@ describe('Memory SessionStoreStrategy', () => {
 
   describe('isolation', () => {
     it('should shallow clone on read to prevent external mutation', () => {
-      void strategy.setSessionState(() => ({ id: 'original' }))
+      void strategy.setSessionState(() => ({ id: 'original' }), 'updateState')
 
       let capturedState: SessionState | undefined
       void strategy.setSessionState((state) => {
         capturedState = state
         return state
-      })
+      }, 'updateState')
 
       capturedState!.id = 'mutated'
 
       void strategy.setSessionState((state) => {
         expect(state.id).toBe('original')
         return state
-      })
+      }, 'updateState')
     })
   })
 })

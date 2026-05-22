@@ -12,6 +12,7 @@ import {
   timeStampNow,
 } from '../../tools/utils/timeUtils'
 import { addEventListener, addEventListeners, DOM_EVENT } from '../../browser/addEventListener'
+import { startLifecycleTracker } from '../../browser/lifecycleTracker'
 import { clearInterval, clearTimeout, setInterval, setTimeout } from '../../tools/timer'
 import { mockable } from '../../tools/mockable'
 import { noop, throttle } from '../../tools/utils/functionUtils'
@@ -98,6 +99,8 @@ export async function startSessionManager(
     return
   }
 
+  startLifecycleTracker(configuration)
+
   const strategy = mockable(getSessionStoreStrategy)(configuration.sessionStoreStrategyType, configuration)
 
   const sessionContextHistory = createValueHistory<SessionContext>({
@@ -110,8 +113,8 @@ export async function startSessionManager(
   const { throttled: throttledExpandOrRenew, cancel: cancelExpandOrRenew } = throttle(() => {
     sessionExpired = false
     strategy
-      .setSessionState((state) => expandOrRenew(state, configuration))
-      .catch((error) => monitorError(new Error(`Error while expanding or renewing session on activity: ${error}`)))
+      .setSessionState((state) => expandOrRenew(state, configuration), 'expandOrRenewOnActivity')
+      .catch(monitorError)
   }, ONE_SECOND)
   stopCallbacks.push(cancelExpandOrRenew)
 
@@ -155,7 +158,7 @@ export async function startSessionManager(
       const initialState = initializeSession(currentState, configuration)
       state = expandOrRenew(initialState, configuration)
       return state
-    })
+    }, 'initialize')
     return state
   }
 
@@ -184,8 +187,8 @@ export async function startSessionManager(
             }
 
             return state
-          })
-          .catch((error) => monitorError(new Error(`Error while expiring session on timeout: ${error}`)))
+          }, 'expireOnTimeout')
+          .catch(monitorError)
       }, delay)
     }
   }
@@ -195,8 +198,8 @@ export async function startSessionManager(
       if (trackingConsentState.isGranted()) {
         sessionExpired = false
         strategy
-          .setSessionState((state) => expandOrRenew(state, configuration))
-          .catch((error) => monitorError(new Error(`Error while expanding or renewing session on consent: ${error}`)))
+          .setSessionState((state) => expandOrRenew(state, configuration), 'expandOrRenewOnConsent')
+          .catch(monitorError)
       } else {
         expire()
       }
@@ -210,15 +213,13 @@ export async function startSessionManager(
       })
       trackVisibility(configuration, () => {
         if (!sessionExpired) {
-          strategy
-            .setSessionState((state) => expandOnly(state))
-            .catch((error) => monitorError(new Error(`Error while expanding session on visibility: ${error}`)))
+          strategy.setSessionState((state) => expandOnly(state), 'expandOnVisibility').catch(monitorError)
         }
       })
       trackResume(configuration, () => {
         strategy
-          .setSessionState((state) => initializeSession(state, configuration))
-          .catch((error) => monitorError(new Error(`Error while initializing session on resume: ${error}`)))
+          .setSessionState((state) => initializeSession(state, configuration), 'initializeOnResume')
+          .catch(monitorError)
       })
     }
   }
@@ -243,9 +244,7 @@ export async function startSessionManager(
       expireObservable,
       expire,
       updateSessionState: (partialState) => {
-        strategy
-          .setSessionState((state) => ({ ...state, ...partialState }))
-          .catch((error) => monitorError(new Error(`Error while updating session state: ${error}`)))
+        strategy.setSessionState((state) => ({ ...state, ...partialState }), 'updateState').catch(monitorError)
       },
     }
   }
@@ -323,8 +322,8 @@ export async function startSessionManager(
           delete state.anonymousId
         }
         return getExpiredSessionState(state, configuration)
-      })
-      .catch((error) => monitorError(new Error(`Error while persisting expired session state: ${error}`)))
+      }, 'expire')
+      .catch(monitorError)
   }
 
   function buildSessionContext(sessionState: SessionState): SessionContext {
