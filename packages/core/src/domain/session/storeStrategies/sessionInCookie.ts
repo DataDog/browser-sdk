@@ -9,10 +9,7 @@ import { Observable } from '../../../tools/observable'
 import { mockable } from '../../../tools/mockable'
 import { monitorError } from '../../../tools/monitor'
 import { addTelemetryError } from '../../telemetry'
-import { addTelemetryError } from '../../telemetry'
 import { createCookieAccess } from '../../../browser/cookieAccess'
-import { dateNow, timeStampNow } from '../../../tools/utils/timeUtils'
-import type { Context } from '../../../tools/serialisation/context'
 import { dateNow, timeStampNow } from '../../../tools/utils/timeUtils'
 import type { Context } from '../../../tools/serialisation/context'
 import type { SessionStoreStrategy, SessionStoreStrategyType, SessionObservableEvent } from './sessionStoreStrategy'
@@ -36,7 +33,6 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
   const opts = encodeCookieOptions(cookieOptions)
   const cookieAccess = mockable(createCookieAccess)(SESSION_STORE_KEY, configuration, cookieOptions)
   let isFirstCall = true
-  const initTimestamp = timeStampNow()
   const initTimestamp = timeStampNow()
 
   cookieAccess.observable.subscribe(() => {
