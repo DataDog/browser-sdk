@@ -17,8 +17,8 @@ import {
   startGlobalContext,
   startUserContext,
   startTabContext,
-  ExperimentalFeature,
   isExperimentalFeatureEnabled,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { createWindowOpenObservable } from '../browser/windowOpenObservable'

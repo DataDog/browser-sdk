@@ -57,7 +57,7 @@ export function startAiAgentContext(hooks: Hooks) {
         isAgentSession: true,
         aiAgentContext,
       },
-    } as DefaultRumEventAttributes
+    }
   })
 
   return {

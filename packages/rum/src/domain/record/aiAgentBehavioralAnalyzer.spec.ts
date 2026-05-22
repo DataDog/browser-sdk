@@ -12,7 +12,7 @@ function makeClickRecord(timestamp: number): BrowserRecord {
     type: RecordType.IncrementalSnapshot,
     timestamp,
     data: { source: IncrementalSource.MouseInteraction, type: MouseInteractionType.Click, id: 1, x: 0, y: 0 },
-  } as unknown as BrowserRecord
+  }
 }
 
 function makeMouseMoveRecord(timestamp: number): BrowserRecord {
@@ -20,7 +20,7 @@ function makeMouseMoveRecord(timestamp: number): BrowserRecord {
     type: RecordType.IncrementalSnapshot,
     timestamp,
     data: { source: IncrementalSource.MouseMove, positions: [] },
-  } as unknown as BrowserRecord
+  }
 }
 
 function makeTouchMoveRecord(timestamp: number): BrowserRecord {
@@ -28,7 +28,7 @@ function makeTouchMoveRecord(timestamp: number): BrowserRecord {
     type: RecordType.IncrementalSnapshot,
     timestamp,
     data: { source: IncrementalSource.TouchMove, positions: [] },
-  } as unknown as BrowserRecord
+  }
 }
 
 function makeScrollRecord(timestamp: number): BrowserRecord {
@@ -36,7 +36,7 @@ function makeScrollRecord(timestamp: number): BrowserRecord {
     type: RecordType.IncrementalSnapshot,
     timestamp,
     data: { source: IncrementalSource.Scroll, id: 1, x: 0, y: 100 },
-  } as unknown as BrowserRecord
+  }
 }
 
 function makeInputRecord(timestamp: number): BrowserRecord {
@@ -44,15 +44,15 @@ function makeInputRecord(timestamp: number): BrowserRecord {
     type: RecordType.IncrementalSnapshot,
     timestamp,
     data: { source: IncrementalSource.Input, id: 1, text: 'a', isChecked: false },
-  } as unknown as BrowserRecord
+  }
 }
 
 function makeFullSnapshotRecord(timestamp: number): BrowserRecord {
   return {
     type: RecordType.FullSnapshot,
     timestamp,
-    data: {},
-  } as unknown as BrowserRecord
+    data: {} as any,
+  }
 }
 
 function baseSignals(overrides: Partial<BehavioralSignals> = {}): BehavioralSignals {
