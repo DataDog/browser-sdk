@@ -11,6 +11,7 @@ interface RawGraphQlMetadata {
   query?: string
   operationName?: string
   variables?: string
+  operationType?: string
 }
 
 export interface GraphQlError {
@@ -108,6 +109,7 @@ function extractFromBody(requestBody: unknown): RawGraphQlMetadata | undefined {
     query?: string
     operationName?: string
     variables?: unknown
+    operationType?: string
   }>(requestBody)
 
   if (!graphqlBody) {
@@ -118,6 +120,7 @@ function extractFromBody(requestBody: unknown): RawGraphQlMetadata | undefined {
     query: graphqlBody.query,
     operationName: graphqlBody.operationName,
     variables: graphqlBody.variables ? JSON.stringify(graphqlBody.variables) : undefined,
+    operationType: graphqlBody.operationType,
   }
 }
 
@@ -130,6 +133,7 @@ function extractFromUrlQueryParams(url: string): RawGraphQlMetadata {
     query: searchParams.get('query') || undefined,
     operationName: searchParams.get('operationName') || undefined,
     variables,
+    operationType: searchParams.get('operationType') || undefined,
   }
 }
 
@@ -143,6 +147,13 @@ function sanitizeGraphQlMetadata(rawMetadata: RawGraphQlMetadata, trackPayload: 
     operationType = getOperationType(trimmedQuery)
     if (trackPayload) {
       payload = safeTruncate(trimmedQuery, GRAPHQL_PAYLOAD_LIMIT, '...')
+    }
+  }
+
+  if (!operationType) {
+    const bodyType = rawMetadata.operationType
+    if (bodyType === 'query' || bodyType === 'mutation' || bodyType === 'subscription') {
+      operationType = bodyType
     }
   }
 

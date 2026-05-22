@@ -107,7 +107,7 @@ export default {
   // few seconds. We need to increase those two timeout values to make sure Karma (and underlying
   // Socket.io) does not consider that the browser crashed.
   pingTimeout: 60_000,
-  browserNoActivityTimeout: 60_000,
+  browserNoActivityTimeout: 2 * 60_000,
 }
 
 function overrideTsLoaderRule(module) {

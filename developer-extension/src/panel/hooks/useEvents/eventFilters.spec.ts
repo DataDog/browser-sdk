@@ -22,7 +22,7 @@ if (!isSafari()) {
       expect(
         filterFacets(
           [RUM_ACTION_EVENT, RUM_ERROR_EVENT, RUM_ERROR_EVENT],
-          { type: 'exclude', facetValues: { type: ['error'] } } as FacetValuesFilter,
+          { type: 'exclude', facetValues: { type: ['error'] } },
           facetRegistry
         )
       ).toEqual([RUM_ACTION_EVENT])
@@ -31,7 +31,7 @@ if (!isSafari()) {
       expect(
         filterFacets(
           [RUM_ACTION_EVENT, RUM_ERROR_EVENT, RUM_ERROR_EVENT],
-          { type: 'include', facetValues: { type: ['error'] } } as FacetValuesFilter,
+          { type: 'include', facetValues: { type: ['error'] } },
           facetRegistry
         )
       ).toEqual([RUM_ERROR_EVENT, RUM_ERROR_EVENT])
@@ -46,7 +46,7 @@ if (!isSafari()) {
               type: ['action'],
               'resource.type': ['xhr'],
             },
-          } as FacetValuesFilter,
+          },
           facetRegistry
         )
       ).toEqual([RUM_ACTION_EVENT, RUM_XHR_RESOURCE_EVENT])

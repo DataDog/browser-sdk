@@ -1,10 +1,14 @@
-import type { ClocksState, HttpRequest, HttpRequestEvent, TimeStamp } from '@datadog/browser-core'
+import type { ClocksState, HttpRequest, HttpRequestEvent } from '@datadog/browser-core'
 import { DeflateEncoderStreamId, Observable, PageExitReason } from '@datadog/browser-core'
 import type { ViewHistory, ViewHistoryEntry, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, registerCleanupTask, restorePageVisibility } from '@datadog/browser-core/test'
-import { createRumSessionManagerMock } from '../../../../rum-core/test'
+import {
+  mockClock,
+  registerCleanupTask,
+  restorePageVisibility,
+  createSessionManagerMock,
+} from '@datadog/browser-core/test'
 import type { BrowserRecord, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
 import { MockWorker, readMetadataFromReplayPayload } from '../../../test'
@@ -18,12 +22,12 @@ import {
 import type { ReplayPayload } from './buildReplayPayload'
 
 const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, session: { id: 'c' } }
-const RECORD: BrowserRecord = { type: RecordType.ViewEnd, timestamp: 10 as TimeStamp }
+const RECORD: BrowserRecord = { type: RecordType.ViewEnd, timestamp: 10 }
 
 // A record that will make the segment size reach the SEGMENT_BYTES_LIMIT
 const VERY_BIG_RECORD: BrowserRecord = {
   type: RecordType.FullSnapshot,
-  timestamp: 10 as TimeStamp,
+  timestamp: 10,
   data: Array(SEGMENT_BYTES_LIMIT).join('a') as any,
 }
 
@@ -294,7 +298,7 @@ describe('startSegmentCollection', () => {
 
 describe('computeSegmentContext', () => {
   const DEFAULT_VIEW_CONTEXT: ViewHistoryEntry = { id: '123', startClocks: {} as ClocksState }
-  const DEFAULT_SESSION = createRumSessionManagerMock().setId('456')
+  const DEFAULT_SESSION = createSessionManagerMock().setId('456')
 
   it('returns a segment context', () => {
     expect(computeSegmentContext('appid', DEFAULT_SESSION, mockViewHistory(DEFAULT_VIEW_CONTEXT))).toEqual({
@@ -310,11 +314,7 @@ describe('computeSegmentContext', () => {
 
   it('returns undefined if the session is not tracked', () => {
     expect(
-      computeSegmentContext(
-        'appid',
-        createRumSessionManagerMock().setNotTracked(),
-        mockViewHistory(DEFAULT_VIEW_CONTEXT)
-      )
+      computeSegmentContext('appid', createSessionManagerMock().setNotTracked(), mockViewHistory(DEFAULT_VIEW_CONTEXT))
     ).toBeUndefined()
   })
 

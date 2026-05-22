@@ -1,6 +1,5 @@
 import type { BandwidthStats, Context, HttpRequestEvent, Observable, Telemetry } from '@datadog/browser-core'
 import { TelemetryMetrics, addTelemetryMetrics, noop } from '@datadog/browser-core'
-import { isFullSnapshotChangeRecordsEnabled, isIncrementalSnapshotChangeRecordsEnabled } from '../record'
 import type { ReplayPayload } from './buildReplayPayload'
 
 interface SegmentMetrics extends Context {
@@ -68,8 +67,8 @@ function createSegmentMetrics(
       sum: payload.cssText.sum,
     },
     encoding: {
-      fullSnapshot: isFullSnapshotChangeRecordsEnabled() ? 'change' : 'v1',
-      incrementalSnapshot: isIncrementalSnapshotChangeRecordsEnabled() ? 'change' : 'v1',
+      fullSnapshot: 'change',
+      incrementalSnapshot: 'change',
     },
     isFullSnapshot: payload.isFullSnapshot,
     ongoingRequests: {

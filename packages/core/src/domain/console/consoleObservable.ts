@@ -1,5 +1,5 @@
 import { isError, computeRawError } from '../error/error'
-import { mergeObservables, Observable } from '../../tools/observable'
+import { Observable, mergeObservables } from '../../tools/observable'
 import { ConsoleApiName, globalConsole } from '../../tools/display'
 import { callMonitored } from '../../tools/monitor'
 import { sanitize } from '../../tools/serialisation/sanitize'

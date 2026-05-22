@@ -10,9 +10,11 @@ import {
   ExperimentalFeature,
 } from '@datadog/browser-core'
 
-import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
+import type { RumPerformanceNavigationTiming, RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 
 import type { ResourceEntryDetailsElement, DeliveryType } from '../../rawRumEvent.types'
+
+export type ResourceLikeEntry = RumPerformanceResourceTiming | RumPerformanceNavigationTiming
 
 export interface ResourceEntryDetails {
   worker?: ResourceEntryDetailsElement
@@ -24,10 +26,8 @@ export interface ResourceEntryDetails {
   download?: ResourceEntryDetailsElement
 }
 
-export const FAKE_INITIAL_DOCUMENT = 'initial_document'
-
 const RESOURCE_TYPES: Array<[ResourceType, (initiatorType: string, path: string) => boolean]> = [
-  [ResourceType.DOCUMENT, (initiatorType: string) => FAKE_INITIAL_DOCUMENT === initiatorType],
+  [ResourceType.DOCUMENT, (initiatorType: string) => 'navigation' === initiatorType],
   [ResourceType.XHR, (initiatorType: string) => 'xmlhttprequest' === initiatorType],
   [ResourceType.FETCH, (initiatorType: string) => 'fetch' === initiatorType],
   [ResourceType.BEACON, (initiatorType: string) => 'beacon' === initiatorType],
@@ -46,7 +46,7 @@ const RESOURCE_TYPES: Array<[ResourceType, (initiatorType: string, path: string)
   ],
 ]
 
-export function computeResourceEntryType(entry: RumPerformanceResourceTiming) {
+export function computeResourceEntryType(entry: ResourceLikeEntry) {
   const url = entry.name
   if (!isValidUrl(url)) {
     return ResourceType.OTHER
@@ -69,22 +69,23 @@ function areInOrder(...numbers: number[]) {
   return true
 }
 
-export function isResourceEntryRequestType(entry: RumPerformanceResourceTiming) {
+export function isResourceEntryRequestType(entry: ResourceLikeEntry): entry is RumPerformanceResourceTiming {
   return entry.initiatorType === 'xmlhttprequest' || entry.initiatorType === 'fetch'
 }
 
-export function computeResourceEntryDuration(entry: RumPerformanceResourceTiming): Duration {
+export function computeResourceEntryDuration(entry: ResourceLikeEntry): Duration {
   const { duration, startTime, responseEnd } = entry
-
-  // Safari duration is always 0 on timings blocked by cross origin policies.
-  if (duration === 0 && startTime < responseEnd) {
+  // For navigation timing, `duration` is the page load time rather than the response time,
+  // so use `responseEnd - startTime` instead. Same fallback applies for Safari where duration
+  // is always 0 for cross-origin resources blocked by cross origin policies.
+  if (entry.initiatorType === 'navigation' || (duration === 0 && startTime < responseEnd)) {
     return elapsed(startTime, responseEnd)
   }
 
   return duration
 }
 
-export function computeResourceEntryDetails(entry: RumPerformanceResourceTiming): ResourceEntryDetails | undefined {
+export function computeResourceEntryDetails(entry: ResourceLikeEntry): ResourceEntryDetails | undefined {
   if (!hasValidResourceEntryTimings(entry)) {
     return undefined
   }
@@ -143,11 +144,11 @@ export function computeResourceEntryDetails(entry: RumPerformanceResourceTiming)
  * Since Chromium 128, more entries have unexpected negative durations, see
  * https://issues.chromium.org/issues/363031537
  */
-export function hasValidResourceEntryDuration(entry: RumPerformanceResourceTiming) {
+export function hasValidResourceEntryDuration(entry: ResourceLikeEntry) {
   return entry.duration >= 0
 }
 
-export function hasValidResourceEntryTimings(entry: RumPerformanceResourceTiming) {
+export function hasValidResourceEntryTimings(entry: ResourceLikeEntry) {
   // Ensure timings are in the right order. On top of filtering out potential invalid
   // RumPerformanceResourceTiming, it will ignore entries from requests where timings cannot be
   // collected, for example cross origin requests without a "Timing-Allow-Origin" header allowing
@@ -171,7 +172,7 @@ export function hasValidResourceEntryTimings(entry: RumPerformanceResourceTiming
   return areCommonTimingsInOrder && areRedirectionTimingsInOrder
 }
 
-function hasRedirection(entry: RumPerformanceResourceTiming) {
+function hasRedirection(entry: ResourceLikeEntry) {
   return entry.redirectEnd > entry.startTime
 }
 function formatTiming(origin: RelativeTime, start: RelativeTime, end: RelativeTime) {
@@ -188,7 +189,7 @@ function formatTiming(origin: RelativeTime, start: RelativeTime, end: RelativeTi
  * meaning the protocol is unknown, and we shouldn't report it.
  * https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming/nextHopProtocol#cross-origin_resources
  */
-export function computeResourceEntryProtocol(entry: RumPerformanceResourceTiming) {
+export function computeResourceEntryProtocol(entry: ResourceLikeEntry) {
   return entry.nextHopProtocol === '' ? undefined : entry.nextHopProtocol
 }
 
@@ -197,11 +198,11 @@ export function computeResourceEntryProtocol(entry: RumPerformanceResourceTiming
  * undefined (unsupported in some browsers), and other cases ('other' for unknown or unrecognized values).
  * see: https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming/deliveryType
  */
-export function computeResourceEntryDeliveryType(entry: RumPerformanceResourceTiming): DeliveryType | undefined {
+export function computeResourceEntryDeliveryType(entry: ResourceLikeEntry): DeliveryType | undefined {
   return entry.deliveryType === '' ? 'other' : entry.deliveryType
 }
 
-export function computeResourceEntrySize(entry: RumPerformanceResourceTiming) {
+export function computeResourceEntrySize(entry: ResourceLikeEntry) {
   // Make sure a request actually occurred
   if (entry.startTime < entry.responseStart) {
     const { encodedBodySize, decodedBodySize, transferSize } = entry

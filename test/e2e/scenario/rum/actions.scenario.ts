@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { createTest, html, waitForServersIdle, waitForRequests } from '../../lib/framework'
+import { isLongAnimationFrameSupported } from '../../lib/helpers/browser'
 
 function hasActionId(event: { action?: { id?: string | string[] } }, actionId: string): boolean {
   return [event.action?.id].flat().includes(actionId)
@@ -171,8 +172,11 @@ test.describe('action collection', () => {
         })
       </script>
     `)
-    .run(async ({ intakeRegistry, flushEvents, page, browserName }) => {
-      test.skip(browserName !== 'chromium', 'Non-Chromium browsers do not support long tasks')
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      test.skip(
+        !(await isLongAnimationFrameSupported(page)),
+        'Browser does not support PerformanceLongAnimationFrameTiming'
+      )
 
       const button = page.locator('button')
       await button.click()
@@ -515,36 +519,8 @@ test.describe('action collection', () => {
 })
 
 test.describe('action collection with shadow DOM', () => {
-  createTest('without betaTrackActionsInShadowDom, click inside shadow DOM uses shadow host as target')
+  createTest('get action name from element inside shadow DOM')
     .withRum({ trackUserInteractions: true })
-    .withBody(html`
-      <my-button id="shadow-host"></my-button>
-      <script>
-        class MyButton extends HTMLElement {
-          constructor() {
-            super()
-            this.attachShadow({ mode: 'open' })
-            const button = document.createElement('button')
-            button.textContent = 'Shadow Button'
-            this.shadowRoot.appendChild(button)
-          }
-        }
-        customElements.define('my-button', MyButton)
-      </script>
-    `)
-    .run(async ({ intakeRegistry, flushEvents, page }) => {
-      const button = page.locator('my-button').first().locator('button')
-      await button.click()
-      await flushEvents()
-
-      const actionEvents = intakeRegistry.rumActionEvents
-      expect(actionEvents).toHaveLength(1)
-      expect(actionEvents[0].action?.target?.name).toBe('')
-      expect(actionEvents[0]._dd.action?.target?.selector).toBe('#shadow-host')
-    })
-
-  createTest('with betaTrackActionsInShadowDom, get action name from element inside shadow DOM')
-    .withRum({ trackUserInteractions: true, betaTrackActionsInShadowDom: true })
     .withBody(html`
       <my-button id="shadow-host"></my-button>
       <script>
@@ -571,8 +547,8 @@ test.describe('action collection with shadow DOM', () => {
       expect(actionEvents[0]._dd.action?.target?.selector).toEqual('#shadow-host::shadow BUTTON')
     })
 
-  createTest('with betaTrackActionsInShadowDom, traverse shadow boundary for data-dd-action-name')
-    .withRum({ trackUserInteractions: true, betaTrackActionsInShadowDom: true })
+  createTest('traverse shadow boundary for data-dd-action-name')
+    .withRum({ trackUserInteractions: true })
     .withBody(html`
       <my-button id="shadow-host" data-dd-action-name="Custom Shadow Action"></my-button>
       <script>
@@ -598,8 +574,8 @@ test.describe('action collection with shadow DOM', () => {
       expect(actionEvents[0].action?.target?.name).toBe('Custom Shadow Action')
     })
 
-  createTest('with betaTrackActionsInShadowDom, selector includes stable attributes from inside shadow DOM')
-    .withRum({ trackUserInteractions: true, betaTrackActionsInShadowDom: true })
+  createTest('selector includes stable attributes from inside shadow DOM')
+    .withRum({ trackUserInteractions: true })
     .withBody(html`
       <my-button id="shadow-host"></my-button>
       <script>

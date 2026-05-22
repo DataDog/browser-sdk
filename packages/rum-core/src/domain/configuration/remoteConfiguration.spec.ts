@@ -16,7 +16,9 @@ import {
   applyRemoteConfiguration,
   buildEndpoint,
   fetchRemoteConfiguration,
+  getRemoteConfiguration,
 } from './remoteConfiguration'
+import { buildCacheKey } from './remoteConfigurationCache'
 
 const DEFAULT_INIT_CONFIGURATION: RumInitConfiguration = {
   clientToken: 'xxx',
@@ -747,6 +749,173 @@ describe('remoteConfiguration', () => {
 
     it('should return the remote configuration proxy', () => {
       expect(buildEndpoint({ remoteConfigurationProxy: '/config' } as RumInitConfiguration)).toEqual('/config')
+    })
+  })
+
+  describe('async loading (getRemoteConfiguration)', () => {
+    const REMOTE_CONFIGURATION_ID = 'rc-test-id'
+    const CACHE_KEY = buildCacheKey(REMOTE_CONFIGURATION_ID)
+    const FRESH_RUM_CONFIG: RumRemoteConfiguration = { applicationId: 'fresh-app' }
+    const CACHED_RUM_CONFIG: RumRemoteConfiguration = { applicationId: 'cached-app' }
+
+    let initConfiguration: RumInitConfiguration
+    let supportedContextManagers: {
+      user: ReturnType<typeof createContextManager>
+      context: ReturnType<typeof createContextManager>
+    }
+    let interceptor: ReturnType<typeof interceptRequests>
+    let displaySpy: jasmine.Spy
+
+    function withCachedEntry(config: RumRemoteConfiguration) {
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ version: 1, config, fetchedAt: 1000 }))
+    }
+
+    function withFetchSuccess(config: RumRemoteConfiguration = FRESH_RUM_CONFIG) {
+      interceptor.withFetch(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ rum: config }) }))
+    }
+
+    function withFetchFailure() {
+      interceptor.withFetch(() => Promise.reject(new Error('Network error')))
+    }
+
+    async function flushBackgroundSync() {
+      await interceptor.waitForAllFetchCalls()
+      await new Promise<void>((resolve) => setTimeout(resolve))
+    }
+
+    beforeEach(() => {
+      initConfiguration = {
+        ...DEFAULT_INIT_CONFIGURATION,
+        applicationId: 'init-app',
+        remoteConfiguration: { id: REMOTE_CONFIGURATION_ID },
+      }
+      supportedContextManagers = { user: createContextManager(), context: createContextManager() }
+      interceptor = interceptRequests()
+      displaySpy = spyOn(display, 'error')
+
+      registerCleanupTask(() => {
+        localStorage.clear()
+      })
+    })
+
+    it('should return init configuration on cache miss', async () => {
+      withFetchSuccess()
+
+      const result = getRemoteConfiguration(initConfiguration, supportedContextManagers)
+
+      expect(result).toBe(initConfiguration)
+      await flushBackgroundSync()
+    })
+
+    it('should apply cached configuration to init on cache hit', async () => {
+      withCachedEntry(CACHED_RUM_CONFIG)
+      withFetchSuccess()
+
+      const result = getRemoteConfiguration(initConfiguration, supportedContextManagers)
+
+      expect(result).toBeDefined()
+      expect(result!.applicationId).toBe('cached-app')
+      expect(result!.clientToken).toBe('xxx')
+      await flushBackgroundSync()
+    })
+
+    it('should return init configuration on cache error and remove the corrupted entry', async () => {
+      localStorage.setItem(CACHE_KEY, 'not-json')
+      withFetchSuccess()
+
+      const result = getRemoteConfiguration(initConfiguration, supportedContextManagers)
+
+      expect(result).toBe(initConfiguration)
+      expect(localStorage.getItem(CACHE_KEY)).toBeNull()
+      await flushBackgroundSync()
+    })
+
+    it('should write the fetched configuration to cache on background fetch success', async () => {
+      withFetchSuccess()
+
+      getRemoteConfiguration(initConfiguration, supportedContextManagers)
+      await flushBackgroundSync()
+
+      const stored = JSON.parse(localStorage.getItem(CACHE_KEY)!)
+      expect(stored.config).toEqual(FRESH_RUM_CONFIG)
+      expect(stored.version).toBe(1)
+    })
+
+    it('should not overwrite cache when background fetch fails', async () => {
+      withCachedEntry(CACHED_RUM_CONFIG)
+      withFetchFailure()
+
+      getRemoteConfiguration(initConfiguration, supportedContextManagers)
+      await flushBackgroundSync()
+
+      const stored = JSON.parse(localStorage.getItem(CACHE_KEY)!)
+      expect(stored.config).toEqual(CACHED_RUM_CONFIG)
+      expect(displaySpy).toHaveBeenCalled()
+    })
+
+    it('should always trigger a background fetch regardless of cache state', async () => {
+      withCachedEntry(CACHED_RUM_CONFIG)
+      const fetchSpy = withFetchSuccessReturningSpy()
+
+      getRemoteConfiguration(initConfiguration, supportedContextManagers)
+      await flushBackgroundSync()
+
+      expect(fetchSpy).toHaveBeenCalledTimes(1)
+
+      function withFetchSuccessReturningSpy() {
+        return interceptor.withFetch(() =>
+          Promise.resolve({ ok: true, json: () => Promise.resolve({ rum: FRESH_RUM_CONFIG }) })
+        )
+      }
+    })
+
+    describe('with required: true', () => {
+      beforeEach(() => {
+        initConfiguration = {
+          ...initConfiguration,
+          remoteConfiguration: { id: REMOTE_CONFIGURATION_ID, required: true },
+        }
+      })
+
+      it('should apply cached configuration on cache hit', async () => {
+        withCachedEntry(CACHED_RUM_CONFIG)
+        withFetchSuccess()
+
+        const result = getRemoteConfiguration(initConfiguration, supportedContextManagers)
+
+        expect(result).toBeDefined()
+        expect(result!.applicationId).toBe('cached-app')
+        await flushBackgroundSync()
+      })
+
+      it('should return undefined on cache miss', async () => {
+        withFetchSuccess()
+
+        const result = getRemoteConfiguration(initConfiguration, supportedContextManagers)
+
+        expect(result).toBeUndefined()
+        await flushBackgroundSync()
+      })
+
+      it('should return undefined on cache error', async () => {
+        localStorage.setItem(CACHE_KEY, 'not-json')
+        withFetchSuccess()
+
+        const result = getRemoteConfiguration(initConfiguration, supportedContextManagers)
+
+        expect(result).toBeUndefined()
+        await flushBackgroundSync()
+      })
+
+      it('should still trigger a background fetch on cache miss', async () => {
+        withFetchSuccess()
+
+        getRemoteConfiguration(initConfiguration, supportedContextManagers)
+        await flushBackgroundSync()
+
+        const stored = JSON.parse(localStorage.getItem(CACHE_KEY)!)
+        expect(stored.config).toEqual(FRESH_RUM_CONFIG)
+      })
     })
   })
 })

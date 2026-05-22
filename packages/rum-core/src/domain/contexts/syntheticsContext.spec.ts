@@ -1,10 +1,10 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { HookNames } from '@datadog/browser-core'
 import { mockSyntheticsWorkerValues } from '../../../../core/test'
-import { SessionType } from '../rumSessionManager'
 import type { AssembleHookParams, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { startSyntheticsContext } from './syntheticsContext'
+import { SessionType } from './sessionContext'
 
 describe('getSyntheticsContext', () => {
   let hooks: Hooks
@@ -64,7 +64,7 @@ describe('getSyntheticsContext', () => {
             test_id: 'foo',
             result_id: 'bar',
             run_type: 'scheduled',
-            suite_ids: ['abc'] as any,
+            suite_ids: ['abc'],
           },
         },
         'globals'

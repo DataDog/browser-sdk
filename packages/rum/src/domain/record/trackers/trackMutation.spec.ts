@@ -1,313 +1,208 @@
 import { DefaultPrivacyLevel } from '@datadog/browser-core'
-import { collectAsyncCalls, registerCleanupTask } from '@datadog/browser-core/test'
+import { registerCleanupTask } from '@datadog/browser-core/test'
+import type { RumConfiguration } from '@datadog/browser-rum-core'
 import {
   PRIVACY_ATTR_NAME,
   PRIVACY_ATTR_VALUE_ALLOW,
   PRIVACY_ATTR_VALUE_MASK,
   PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
 } from '@datadog/browser-rum-core'
-import { createMutationPayloadValidator } from '../../../../test'
-import type {
-  AttributeMutation,
-  Attributes,
-  BrowserIncrementalSnapshotRecord,
-  BrowserMutationPayload,
-  DocumentNode,
-  SerializedNodeWithId,
-} from '../../../types'
-import { NodeType } from '../../../types'
+import type { BrowserChangeRecord, BrowserFullSnapshotChangeRecord, BrowserRecord } from '../../../types'
+import { ChangeType } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
-import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
 import type { AddShadowRootCallBack, RemoveShadowRootCallBack } from '../shadowRootsController'
-import { appendElement, appendText } from '../../../../../rum-core/test'
-import type { EmitRecordCallback, EmitStatsCallback } from '../record.types'
-import { takeFullSnapshotForTesting } from '../test/serialization.specHelper'
-import { serializeMutations } from '../serialization'
-import { createSerializationVerifier } from '../serializationVerifier'
+import type { ChangeDecoder, SerializationStats } from '../serialization'
+import { aggregateSerializationStats, createSerializationStats } from '../serialization'
+import { serializeHtmlAsChange } from '../test/serializeHtml.specHelper'
+import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
 import { trackMutation } from './trackMutation'
-import type { MutationTracker } from './trackMutation'
 
 describe('trackMutation', () => {
-  let sandbox: HTMLElement
-
-  let addShadowRootSpy: jasmine.Spy<AddShadowRootCallBack>
-  let removeShadowRootSpy: jasmine.Spy<RemoveShadowRootCallBack>
-  let emitRecordCallback: jasmine.Spy<EmitRecordCallback>
-  let emitStatsCallback: jasmine.Spy<EmitStatsCallback>
-
-  beforeEach(() => {
-    sandbox = appendElement('<div id="sandbox"></div>')
-
-    addShadowRootSpy = jasmine.createSpy()
-    removeShadowRootSpy = jasmine.createSpy()
-    emitRecordCallback = jasmine.createSpy()
-    emitStatsCallback = jasmine.createSpy()
-  })
-
-  function getRecordingScope(defaultPrivacyLevel: DefaultPrivacyLevel = DefaultPrivacyLevel.ALLOW): RecordingScope {
-    return createRecordingScopeForTesting({
-      configuration: { defaultPrivacyLevel },
-      addShadowRoot: addShadowRootSpy,
-      removeShadowRoot: removeShadowRootSpy,
-    })
-  }
-
-  function getLatestMutationPayload(): BrowserMutationPayload {
-    const latestRecord = emitRecordCallback.calls.mostRecent()?.args[0] as BrowserIncrementalSnapshotRecord
-    return latestRecord.data as BrowserMutationPayload
-  }
-
-  function recordMutation(
-    mutation: () => void,
+  async function recordMutationOf(
+    initialContent: string,
+    mutation: (sandbox: HTMLElement) => void,
     options: {
-      mutationBeforeTrackingStarts?: () => void
+      configuration?: Partial<RumConfiguration>
+      beforeFullSnapshot?: (sandbox: HTMLElement, scope: RecordingScope) => void
+      beforeTrackingMutations?: (sandbox: HTMLElement) => void
       scope?: RecordingScope
-      skipFlush?: boolean
     } = {}
-  ): {
-    mutationTracker: MutationTracker
-    serializedDocument: DocumentNode & SerializedNodeWithId
-  } {
-    const scope = options.scope || getRecordingScope()
+  ): Promise<{
+    fullSnapshot: BrowserChangeRecord | BrowserFullSnapshotChangeRecord
+    mutation?: BrowserChangeRecord
+    stats: SerializationStats
+  }> {
+    const emittedMutations: BrowserChangeRecord[] = []
+    const emittedStats = createSerializationStats()
 
-    const { stop: stopSerializationVerifier } = createSerializationVerifier(scope, (error, context) => {
-      fail({ error, ...context })
+    const fullSnapshot = await serializeHtmlAsChange(initialContent, {
+      scope: options.scope ?? createRecordingScopeForTesting({ configuration: options.configuration }),
+      before(target: Node, scope: RecordingScope): void {
+        const sandbox = target as HTMLElement
+        options.beforeFullSnapshot?.(sandbox, scope)
+      },
+      after(target: Node, scope: RecordingScope, stats: SerializationStats, decoder: ChangeDecoder): void {
+        const sandbox = target as HTMLElement
+
+        options.beforeTrackingMutations?.(sandbox)
+
+        const emitRecord = (record: BrowserRecord): void => {
+          emittedMutations.push(decoder.decode(record as BrowserChangeRecord))
+        }
+
+        const emitStats = (stats: SerializationStats): void => {
+          aggregateSerializationStats(emittedStats, stats)
+        }
+        emitStats(stats)
+
+        const mutationTracker = trackMutation(sandbox.ownerDocument, emitRecord, emitStats, scope)
+        registerCleanupTask(() => {
+          mutationTracker.stop()
+        })
+
+        mutation(sandbox)
+
+        mutationTracker.flush()
+      },
     })
-    registerCleanupTask(stopSerializationVerifier)
 
-    const serializedDocument = takeFullSnapshotForTesting(scope)
-
-    if (options.mutationBeforeTrackingStarts) {
-      options.mutationBeforeTrackingStarts()
+    if (!fullSnapshot) {
+      throw new Error('Expected a full snapshot to be recorded')
+    }
+    if (emittedMutations.length > 1) {
+      throw new Error(`Expected zero or one mutations, but ${emittedMutations.length} were recorded`)
     }
 
-    const mutationTracker = trackMutation(document, emitRecordCallback, emitStatsCallback, scope, serializeMutations)
-    registerCleanupTask(() => {
-      mutationTracker.stop()
-    })
-
-    mutation()
-
-    if (!options.skipFlush) {
-      mutationTracker.flush()
-    }
-
-    return { mutationTracker, serializedDocument }
+    return { fullSnapshot, mutation: emittedMutations[0], stats: emittedStats }
   }
 
   describe('childList mutation records', () => {
-    it('emits a mutation when a node is appended to a known node', () => {
-      const { serializedDocument } = recordMutation(() => {
-        appendElement('<div></div>', sandbox)
+    it('emits a mutation when a node is appended to a known node', async () => {
+      const { fullSnapshot, mutation } = await recordMutationOf('<div>', (sandbox: HTMLElement): void => {
+        const document = sandbox.ownerDocument
+        sandbox.appendChild(document.createElement('span'))
       })
-      expect(emitRecordCallback).toHaveBeenCalledTimes(1)
-
-      const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
-      validate(getLatestMutationPayload(), {
-        adds: [
-          {
-            parent: expectInitialNode({ idAttribute: 'sandbox' }),
-            node: expectNewNode({ type: NodeType.Element, tagName: 'div' }),
-          },
-        ],
-      })
+      expect(fullSnapshot.data).toEqual([[ChangeType.AddNode, [null, 'DIV']]])
+      expect(mutation?.data).toEqual([[ChangeType.AddNode, [1, 'SPAN']]])
     })
 
-    it('emits add node mutations in the expected order', () => {
-      const a = appendElement('<a></a>', sandbox)
-      const aa = appendElement('<aa></aa>', a)
-      const b = appendElement('<b></b>', sandbox)
-      const bb = appendElement('<bb></bb>', b)
-      const c = appendElement('<c></c>', sandbox)
-      const cc = appendElement('<cc></cc>', c)
+    it('emits add node mutations in the expected order', async () => {
+      const { fullSnapshot, mutation } = await recordMutationOf(
+        `<div>
+          <a><aa></aa></a>
+          <b><bb></bb></b>
+          <c><cc></cc></c>
+        </div>`,
+        (sandbox: HTMLElement): void => {
+          const document = sandbox.ownerDocument
+          const [aa] = document.getElementsByTagName('aa')
+          const [bb] = document.getElementsByTagName('bb')
+          const [cc] = document.getElementsByTagName('cc')
 
-      const { serializedDocument } = recordMutation(() => {
-        const ab = document.createElement('ab')
-        const ac = document.createElement('ac')
-        const ba = document.createElement('ba')
-        const bc = document.createElement('bc')
-        const ca = document.createElement('ca')
-        const cb = document.createElement('cb')
+          const ab = document.createElement('ab')
+          const ac = document.createElement('ac')
+          const ba = document.createElement('ba')
+          const bc = document.createElement('bc')
+          const ca = document.createElement('ca')
+          const cb = document.createElement('cb')
 
-        cc.before(cb)
-        aa.after(ac)
-        bb.before(ba)
-        aa.after(ab)
-        cb.before(ca)
-        bb.after(bc)
-      })
-      expect(emitRecordCallback).toHaveBeenCalledTimes(1)
-
-      const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
-      const cb = expectNewNode({ type: NodeType.Element, tagName: 'cb' })
-      const ca = expectNewNode({ type: NodeType.Element, tagName: 'ca' })
-      const bc = expectNewNode({ type: NodeType.Element, tagName: 'bc' })
-      const ba = expectNewNode({ type: NodeType.Element, tagName: 'ba' })
-      const ac = expectNewNode({ type: NodeType.Element, tagName: 'ac' })
-      const ab = expectNewNode({ type: NodeType.Element, tagName: 'ab' })
-      validate(getLatestMutationPayload(), {
-        adds: [
-          {
-            parent: expectInitialNode({ tag: 'c' }),
-            node: cb,
-            next: expectInitialNode({ tag: 'cc' }),
-          },
-          {
-            parent: expectInitialNode({ tag: 'c' }),
-            node: ca,
-            next: cb,
-          },
-          {
-            parent: expectInitialNode({ tag: 'b' }),
-            node: bc,
-          },
-          {
-            parent: expectInitialNode({ tag: 'b' }),
-            node: ba,
-            next: expectInitialNode({ tag: 'bb' }),
-          },
-          {
-            parent: expectInitialNode({ tag: 'a' }),
-            node: ac,
-          },
-          {
-            parent: expectInitialNode({ tag: 'a' }),
-            node: ab,
-            next: ac,
-          },
-        ],
-      })
+          cc.before(cb)
+          aa.after(ac)
+          bb.before(ba)
+          aa.after(ab)
+          cb.before(ca)
+          bb.after(bc)
+        }
+      )
+      expect(fullSnapshot.data).toEqual([
+        [ChangeType.AddNode, [null, 'DIV'], [1, 'A'], [1, 'AA'], [3, 'B'], [1, 'BB'], [5, 'C'], [1, 'CC']],
+      ])
+      expect(mutation?.data).toEqual([
+        [ChangeType.AddNode, [-1, 'CB'], [7, 'AC'], [-5, 'BA'], [-2, 'AB'], [-4, 'CA'], [9, 'BC']],
+      ])
     })
 
-    it('emits serialization stats with mutations', () => {
+    it('emits serialization stats with mutations', async () => {
       const cssText = 'body { width: 100%; }'
 
-      const { serializedDocument } = recordMutation(() => {
-        appendElement(`<style>${cssText}</style>`, sandbox)
+      const { mutation, stats } = await recordMutationOf('<div>', (sandbox: HTMLElement): void => {
+        const document = sandbox.ownerDocument
+        const style = document.createElement('style')
+        style.textContent = cssText
+        sandbox.appendChild(style)
       })
-
-      expect(emitRecordCallback).toHaveBeenCalledTimes(1)
-
-      const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
-      validate(getLatestMutationPayload(), {
-        adds: [
-          {
-            parent: expectInitialNode({ idAttribute: 'sandbox' }),
-            node: expectNewNode({
-              type: NodeType.Element,
-              tagName: 'style',
-              attributes: { _cssText: cssText },
-            }),
-          },
-        ],
-      })
-
-      expect(emitStatsCallback.calls.mostRecent().args[0]).toEqual({
+      expect(mutation?.data).toEqual([
+        [ChangeType.AddNode, [1, 'STYLE']],
+        [ChangeType.AddStyleSheet, [cssText]],
+        [ChangeType.AttachedStyleSheets, [1, 0]],
+      ])
+      expect(stats).toEqual({
         cssText: { count: 1, max: 21, sum: 21 },
         serializationDuration: jasmine.anything(),
       })
     })
 
-    it('processes mutations asynchronously', async () => {
-      recordMutation(
-        () => {
-          appendElement('<div></div>', sandbox)
-        },
-        { skipFlush: true }
-      )
-
-      expect(emitRecordCallback).not.toHaveBeenCalled()
-
-      await collectAsyncCalls(emitRecordCallback)
-    })
-
-    it('does not emit a mutation when a node is appended to a unknown node', () => {
-      const unknownNode = document.createElement('div')
-      registerCleanupTask(() => {
-        unknownNode.remove()
-      })
-
-      recordMutation(
-        () => {
-          appendElement('<div></div>', unknownNode)
+    it('does not emit a mutation when a node is appended to an unknown node', async () => {
+      let unknownNode!: HTMLElement
+      const { mutation } = await recordMutationOf(
+        '<div>',
+        (sandbox: HTMLElement): void => {
+          unknownNode.appendChild(sandbox.ownerDocument.createElement('div'))
         },
         {
-          mutationBeforeTrackingStarts() {
+          beforeTrackingMutations(sandbox: HTMLElement): void {
+            unknownNode = sandbox.ownerDocument.createElement('div')
             // Append the node after the full snapshot, but before tracking starts,
             // rendering it 'unknown'.
             sandbox.appendChild(unknownNode)
           },
         }
       )
-
-      expect(emitRecordCallback).not.toHaveBeenCalled()
-    })
-
-    it('emits buffered mutation records on flush', () => {
-      const { mutationTracker } = recordMutation(
-        () => {
-          appendElement('<div></div>', sandbox)
-        },
-        {
-          skipFlush: true,
-        }
-      )
-
-      expect(emitRecordCallback).toHaveBeenCalledTimes(0)
-
-      mutationTracker.flush()
-      expect(emitRecordCallback).toHaveBeenCalledTimes(1)
+      expect(mutation).toBeUndefined()
     })
 
     describe('does not emit mutations on removed nodes and their descendants', () => {
-      it('attribute mutations', () => {
-        const element = appendElement('<div></div>', sandbox)
-
-        recordMutation(() => {
-          element.setAttribute('foo', 'bar')
+      it('attribute mutations', async () => {
+        const { mutation } = await recordMutationOf('<div><span></span></div>', (sandbox: HTMLElement): void => {
+          ;(sandbox.firstElementChild as HTMLElement).setAttribute('foo', 'bar')
           sandbox.remove()
         })
-
-        expect(getLatestMutationPayload().attributes).toEqual([])
+        // The setAttribute on the descendant is filtered out; the only change is the
+        // removal of the sandbox itself.
+        expect(mutation?.data).toEqual([[ChangeType.RemoveNode, 0]])
       })
 
-      it('text mutations', () => {
-        const textNode = appendText('text', sandbox)
-
-        recordMutation(() => {
-          textNode.data = 'bar'
+      it('text mutations', async () => {
+        const { mutation } = await recordMutationOf('<div>text</div>', (sandbox: HTMLElement): void => {
+          ;(sandbox.firstChild as Text).data = 'bar'
           sandbox.remove()
         })
-
-        expect(getLatestMutationPayload().texts).toEqual([])
+        // The text change on the descendant is filtered out; the only change is the
+        // removal of the sandbox itself.
+        expect(mutation?.data).toEqual([[ChangeType.RemoveNode, 0]])
       })
 
-      it('add mutations', () => {
-        recordMutation(() => {
-          appendElement('<div><hr /></div>', sandbox)
+      it('add mutations', async () => {
+        const { mutation } = await recordMutationOf('<div></div>', (sandbox: HTMLElement): void => {
+          const document = sandbox.ownerDocument
+          const div = document.createElement('div')
+          div.appendChild(document.createElement('hr'))
+          sandbox.appendChild(div)
           sandbox.remove()
         })
-
-        expect(getLatestMutationPayload().adds).toEqual([])
+        // The newly added subtree is filtered out; the only change is the removal of
+        // the sandbox itself.
+        expect(mutation?.data).toEqual([[ChangeType.RemoveNode, 0]])
       })
 
-      it('remove mutations', () => {
-        const element = appendElement('<div></div>', sandbox)
-
-        const { serializedDocument } = recordMutation(() => {
-          element.remove()
+      it('remove mutations', async () => {
+        const { mutation } = await recordMutationOf('<div><div></div></div>', (sandbox: HTMLElement): void => {
+          sandbox.firstElementChild!.remove()
           sandbox.remove()
         })
-
-        const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
-        validate(getLatestMutationPayload(), {
-          removes: [
-            {
-              parent: expectInitialNode({ tag: 'body' }),
-              node: expectInitialNode({ idAttribute: 'sandbox' }),
-            },
-          ],
-        })
+        // The active removal of the descendant is recorded alongside the removal of
+        // the sandbox itself, but no other changes are emitted.
+        expect(mutation?.data).toEqual([[ChangeType.RemoveNode, 1, 0]])
       })
     })
 
@@ -317,315 +212,229 @@ describe('trackMutation', () => {
       // (during the document serialization for example), and re-serialized (by being added in the
       // document) during the processed mutation batched.
 
-      it('attribute mutations', () => {
-        const element = appendElement('<div></div>', sandbox)
-
-        recordMutation(() => {
+      it('attribute mutations', async () => {
+        const { mutation } = await recordMutationOf('<div><div></div></div>', (sandbox: HTMLElement): void => {
+          const element = sandbox.firstElementChild as HTMLElement
           element.remove()
           sandbox.appendChild(element)
           element.setAttribute('foo', 'bar')
         })
-
-        expect(getLatestMutationPayload().attributes).toEqual([])
+        // The attribute change is captured inline in the fresh AddNode for the
+        // re-serialized element rather than as a separate Attribute change.
+        expect(mutation?.data).toEqual([
+          [ChangeType.AddNode, [2, 'DIV', ['foo', 'bar']]],
+          [ChangeType.RemoveNode, 1],
+        ])
       })
 
-      it('text mutations', () => {
-        const textNode = appendText('foo', sandbox)
-
-        recordMutation(() => {
+      it('text mutations', async () => {
+        const { mutation } = await recordMutationOf('<div>foo</div>', (sandbox: HTMLElement): void => {
+          const textNode = sandbox.firstChild as Text
           textNode.remove()
           sandbox.appendChild(textNode)
           textNode.data = 'bar'
         })
-
-        expect(getLatestMutationPayload().texts).toEqual([])
+        // The text change is captured inline in the fresh AddNode for the re-serialized
+        // text node rather than as a separate Text change.
+        expect(mutation?.data).toEqual([
+          [ChangeType.AddNode, [2, '#text', 'bar']],
+          [ChangeType.RemoveNode, 1],
+        ])
       })
 
-      it('add mutations', () => {
-        const child = appendElement('<a><b target/></a>', sandbox)
-        const parent = child.parentElement!
-
-        const { serializedDocument } = recordMutation(() => {
-          // Generate a mutation on 'child'
-          child.remove()
-          parent.appendChild(child)
-          // Generate a mutation on 'parent'
-          parent.remove()
-          sandbox.appendChild(parent)
+      it('add mutations', async () => {
+        const { mutation } = await recordMutationOf('<div><a><b></b></a></div>', (sandbox: HTMLElement): void => {
+          const a = sandbox.firstElementChild as HTMLElement
+          const b = a.firstElementChild as HTMLElement
+          // Generate a mutation on 'b' (child)
+          b.remove()
+          a.appendChild(b)
+          // Generate a mutation on 'a' (parent)
+          a.remove()
+          sandbox.appendChild(a)
         })
-
-        const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
-
-        // Even if the mutation on 'child' comes first, we only take the 'parent' mutation into
-        // account since it is embeds an up-to-date serialization of 'parent'
-        validate(getLatestMutationPayload(), {
-          adds: [
-            {
-              parent: expectInitialNode({ idAttribute: 'sandbox' }),
-              node: expectInitialNode({ tag: 'a' }).withChildren(expectInitialNode({ tag: 'b' })),
-            },
-          ],
-          removes: [
-            {
-              parent: expectInitialNode({ tag: 'a' }),
-              node: expectInitialNode({ tag: 'b' }),
-            },
-            {
-              parent: expectInitialNode({ idAttribute: 'sandbox' }),
-              node: expectInitialNode({ tag: 'a' }),
-            },
-          ],
-        })
+        // Even though the mutation on 'b' comes first, only the 'a' re-serialization is
+        // emitted, since it embeds an up-to-date serialization of 'a' (with 'b' inside).
+        expect(mutation?.data).toEqual([
+          [ChangeType.AddNode, [3, 'A'], [1, 'B']],
+          [ChangeType.RemoveNode, 2, 1],
+        ])
       })
 
-      it('remove mutations', () => {
-        const { serializedDocument } = recordMutation(() => {
-          const child = appendElement('<a><b target/></a>', sandbox)
-          child.remove()
+      it('remove mutations', async () => {
+        const { mutation } = await recordMutationOf('<div></div>', (sandbox: HTMLElement): void => {
+          const document = sandbox.ownerDocument
+          const a = document.createElement('a')
+          a.appendChild(document.createElement('b'))
+          sandbox.appendChild(a)
+          a.firstElementChild!.remove()
         })
-
-        const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidator(serializedDocument)
-        validate(getLatestMutationPayload(), {
-          adds: [
-            {
-              parent: expectInitialNode({ idAttribute: 'sandbox' }),
-              node: expectNewNode({ type: NodeType.Element, tagName: 'a' }),
-            },
-          ],
-        })
+        // 'b' is added then removed within the same batch and never serialized, so the
+        // only change is the AddNode for 'a' with no children.
+        expect(mutation?.data).toEqual([[ChangeType.AddNode, [1, 'A']]])
       })
     })
 
-    it('emits only an "add" mutation when adding, removing then re-adding a child', () => {
-      const { serializedDocument } = recordMutation(() => {
-        const element = appendElement('<a></a>', sandbox)
+    it('emits only an "add" mutation when adding, removing then re-adding a child', async () => {
+      const { mutation } = await recordMutationOf('<div></div>', (sandbox: HTMLElement): void => {
+        const element = sandbox.ownerDocument.createElement('a')
+        sandbox.appendChild(element)
         element.remove()
         sandbox.appendChild(element)
       })
-
-      const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidator(serializedDocument)
-      validate(getLatestMutationPayload(), {
-        adds: [
-          {
-            parent: expectInitialNode({ idAttribute: 'sandbox' }),
-            node: expectNewNode({ type: NodeType.Element, tagName: 'a' }),
-          },
-        ],
-      })
+      expect(mutation?.data).toEqual([[ChangeType.AddNode, [1, 'A']]])
     })
 
-    it('emits an "add" and a "remove" mutation when moving a node', () => {
-      const a = appendElement('<a></a><b/>', sandbox)
-
-      const { serializedDocument } = recordMutation(() => {
+    it('emits an "add" and a "remove" mutation when moving a node', async () => {
+      const { mutation } = await recordMutationOf('<div><a></a><b></b></div>', (sandbox: HTMLElement): void => {
         // Moves 'a' after 'b'
-        sandbox.appendChild(a)
+        sandbox.appendChild(sandbox.firstElementChild!)
       })
-
-      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
-      validate(getLatestMutationPayload(), {
-        adds: [
-          {
-            parent: expectInitialNode({ idAttribute: 'sandbox' }),
-            node: expectInitialNode({ tag: 'a' }),
-          },
-        ],
-        removes: [
-          {
-            parent: expectInitialNode({ idAttribute: 'sandbox' }),
-            node: expectInitialNode({ tag: 'a' }),
-          },
-        ],
-      })
+      expect(mutation?.data).toEqual([
+        [ChangeType.AddNode, [3, 'A']],
+        [ChangeType.RemoveNode, 1],
+      ])
     })
 
-    it('uses the initial parent id when removing a node from multiple places', () => {
-      const span = appendElement(
-        `<span></span>
-         <a></a>
-         <b></b>`,
-        sandbox
+    it('emits only one remove when removing a node from multiple places', async () => {
+      const { mutation } = await recordMutationOf(
+        '<div><span></span><a></a><b></b></div>',
+        (sandbox: HTMLElement): void => {
+          const span = sandbox.querySelector('span')!
+          const a = sandbox.querySelector('a')!
+          const b = sandbox.querySelector('b')!
+          a.appendChild(span)
+          b.appendChild(span)
+        }
       )
-      const a = span.nextElementSibling!
-      const b = a.nextElementSibling!
-
-      const { serializedDocument } = recordMutation(() => {
-        a.appendChild(span)
-        b.appendChild(span)
-      })
-
-      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
-      validate(getLatestMutationPayload(), {
-        adds: [
-          {
-            parent: expectInitialNode({ tag: 'b' }),
-            node: expectInitialNode({ tag: 'span' }),
-          },
-        ],
-        removes: [
-          {
-            parent: expectInitialNode({ idAttribute: 'sandbox' }),
-            node: expectInitialNode({ tag: 'span' }),
-          },
-        ],
-      })
+      expect(mutation?.data).toEqual([
+        [ChangeType.AddNode, [1, 'SPAN']],
+        [ChangeType.RemoveNode, 1],
+      ])
     })
 
-    it('keep nodes order when adding multiple sibling nodes', () => {
-      const { serializedDocument } = recordMutation(() => {
-        appendElement('<a></a><b></b><c></c>', sandbox)
+    it('keep node order when adding multiple sibling nodes', async () => {
+      const { mutation } = await recordMutationOf('<div></div>', (sandbox: HTMLElement): void => {
+        const document = sandbox.ownerDocument
+        sandbox.appendChild(document.createElement('a'))
+        sandbox.appendChild(document.createElement('b'))
+        sandbox.appendChild(document.createElement('c'))
       })
-
-      const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidator(serializedDocument)
-      const c = expectNewNode({ type: NodeType.Element, tagName: 'c' })
-      const b = expectNewNode({ type: NodeType.Element, tagName: 'b' })
-      const a = expectNewNode({ type: NodeType.Element, tagName: 'a' })
-      validate(getLatestMutationPayload(), {
-        adds: [
-          {
-            parent: expectInitialNode({ idAttribute: 'sandbox' }),
-            node: c,
-          },
-          {
-            parent: expectInitialNode({ idAttribute: 'sandbox' }),
-            node: b,
-            next: c,
-          },
-          {
-            parent: expectInitialNode({ idAttribute: 'sandbox' }),
-            node: a,
-            next: b,
-          },
-        ],
-      })
+      expect(mutation?.data).toEqual([[ChangeType.AddNode, [1, 'A'], [2, 'B'], [3, 'C']]])
     })
 
-    it('respects the default privacy level setting', () => {
-      const { serializedDocument } = recordMutation(
-        () => {
+    it('respects the default privacy level setting', async () => {
+      const { mutation } = await recordMutationOf(
+        '<div></div>',
+        (sandbox: HTMLElement): void => {
           sandbox.innerText = 'foo bar'
         },
-        { scope: getRecordingScope(DefaultPrivacyLevel.MASK) }
+        { configuration: { defaultPrivacyLevel: DefaultPrivacyLevel.MASK } }
       )
-
-      const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
-      validate(getLatestMutationPayload(), {
-        adds: [
-          {
-            parent: expectInitialNode({ idAttribute: 'sandbox' }),
-            node: expectNewNode({
-              type: NodeType.Text,
-              textContent: 'xxx xxx',
-            }),
-          },
-        ],
-      })
+      expect(mutation?.data).toEqual([[ChangeType.AddNode, [1, '#text', 'xxx xxx']]])
     })
 
     describe('for shadow DOM', () => {
-      it('should call addShadowRoot when host is added', () => {
-        let shadowRoot: ShadowRoot
-        const { serializedDocument } = recordMutation(() => {
-          const host = appendElement('<div></div>', sandbox)
-          shadowRoot = host.attachShadow({ mode: 'open' })
-          appendElement('<span></span>', shadowRoot)
-        })
+      let addShadowRootSpy: jasmine.Spy<AddShadowRootCallBack>
+      let removeShadowRootSpy: jasmine.Spy<RemoveShadowRootCallBack>
+      let scope: RecordingScope
 
-        expect(emitRecordCallback).toHaveBeenCalledTimes(1)
-        const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
-
-        const expectedHost = expectNewNode({ type: NodeType.Element, tagName: 'div' })
-        const shadowRootNode = expectNewNode({ type: NodeType.DocumentFragment, isShadowRoot: true })
-        const child = expectNewNode({ type: NodeType.Element, tagName: 'span' })
-        validate(getLatestMutationPayload(), {
-          adds: [
-            {
-              parent: expectInitialNode({ idAttribute: 'sandbox' }),
-              node: expectedHost.withChildren(shadowRootNode.withChildren(child)),
-            },
-          ],
+      beforeEach(() => {
+        addShadowRootSpy = jasmine.createSpy()
+        removeShadowRootSpy = jasmine.createSpy()
+        scope = createRecordingScopeForTesting({
+          addShadowRoot: addShadowRootSpy,
+          removeShadowRoot: removeShadowRootSpy,
         })
-        expect(addShadowRootSpy).toHaveBeenCalledOnceWith(shadowRoot!, jasmine.anything())
+      })
+
+      it('should call addShadowRoot when host is added', async () => {
+        let shadowRoot!: ShadowRoot
+        const { mutation } = await recordMutationOf(
+          '<div></div>',
+          (sandbox: HTMLElement): void => {
+            const document = sandbox.ownerDocument
+            const host = document.createElement('div')
+            sandbox.appendChild(host)
+            shadowRoot = host.attachShadow({ mode: 'open' })
+            shadowRoot.appendChild(document.createElement('span'))
+          },
+          { scope }
+        )
+
+        expect(mutation?.data).toEqual([[ChangeType.AddNode, [1, 'DIV'], [1, '#shadow-root'], [1, 'SPAN']]])
+        expect(addShadowRootSpy).toHaveBeenCalledOnceWith(shadowRoot, jasmine.anything())
         expect(removeShadowRootSpy).not.toHaveBeenCalled()
       })
 
-      it('should call removeShadowRoot when host is removed', () => {
-        const host = appendElement('<div id="host"></div>', sandbox)
-        const shadowRoot = host.attachShadow({ mode: 'open' })
-        appendElement('<span></span>', shadowRoot)
-
-        const { serializedDocument } = recordMutation(() => {
-          host.remove()
-        })
-
-        expect(emitRecordCallback).toHaveBeenCalledTimes(1)
-        expect(addShadowRootSpy).toHaveBeenCalledTimes(1)
-
-        const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
-        validate(getLatestMutationPayload(), {
-          removes: [
-            {
-              parent: expectInitialNode({ idAttribute: 'sandbox' }),
-              node: expectInitialNode({ idAttribute: 'host' }),
+      it('should call removeShadowRoot when host is removed', async () => {
+        let shadowRoot!: ShadowRoot
+        const { mutation } = await recordMutationOf(
+          '<div><div id="host"></div></div>',
+          (sandbox: HTMLElement): void => {
+            sandbox.querySelector('#host')!.remove()
+          },
+          {
+            scope,
+            beforeFullSnapshot(sandbox: HTMLElement): void {
+              const host = sandbox.querySelector('#host') as HTMLElement
+              shadowRoot = host.attachShadow({ mode: 'open' })
+              shadowRoot.appendChild(sandbox.ownerDocument.createElement('span'))
             },
-          ],
-        })
+          }
+        )
+
+        expect(mutation?.data).toEqual([[ChangeType.RemoveNode, 1]])
         expect(addShadowRootSpy).toHaveBeenCalledTimes(1)
         expect(removeShadowRootSpy).toHaveBeenCalledOnceWith(shadowRoot)
       })
 
-      it('should call removeShadowRoot when parent of host is removed', () => {
-        const host = appendElement('<div id="parent"><div id="host" target></div></div>', sandbox)
-        const shadowRoot = host.attachShadow({ mode: 'open' })
-        appendElement('<span></span>', shadowRoot)
-
-        const { serializedDocument } = recordMutation(() => {
-          host.parentElement!.remove()
-        })
-
-        expect(emitRecordCallback).toHaveBeenCalledTimes(1)
-        expect(addShadowRootSpy).toHaveBeenCalledTimes(1)
-
-        const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
-        validate(getLatestMutationPayload(), {
-          removes: [
-            {
-              parent: expectInitialNode({ idAttribute: 'sandbox' }),
-              node: expectInitialNode({ idAttribute: 'parent' }),
+      it('should call removeShadowRoot when parent of host is removed', async () => {
+        let shadowRoot!: ShadowRoot
+        const { mutation } = await recordMutationOf(
+          '<div><div id="parent"><div id="host"></div></div></div>',
+          (sandbox: HTMLElement): void => {
+            sandbox.querySelector('#parent')!.remove()
+          },
+          {
+            scope,
+            beforeFullSnapshot(sandbox: HTMLElement): void {
+              const host = sandbox.querySelector('#host') as HTMLElement
+              shadowRoot = host.attachShadow({ mode: 'open' })
+              shadowRoot.appendChild(sandbox.ownerDocument.createElement('span'))
             },
-          ],
-        })
+          }
+        )
+
+        expect(mutation?.data).toEqual([[ChangeType.RemoveNode, 1]])
         expect(addShadowRootSpy).toHaveBeenCalledTimes(1)
         expect(removeShadowRootSpy).toHaveBeenCalledOnceWith(shadowRoot)
       })
 
-      it('should call removeShadowRoot when removing a host containing other hosts in its children', () => {
-        const parentHost = appendElement('<div id="host"><p></p></div>', sandbox)
-        const parentShadowRoot = parentHost.attachShadow({ mode: 'open' })
-        const childHost = appendElement('<span></span>', parentHost.querySelector('p')!)
-        const childShadowRoot = childHost.attachShadow({ mode: 'open' })
-
-        const { serializedDocument } = recordMutation(() => {
-          parentHost.remove()
-        })
-
-        expect(emitRecordCallback).toHaveBeenCalledTimes(1)
-        expect(addShadowRootSpy).toHaveBeenCalledTimes(2)
-
-        const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
-        validate(getLatestMutationPayload(), {
-          removes: [
-            {
-              parent: expectInitialNode({ idAttribute: 'sandbox' }),
-              node: expectInitialNode({ idAttribute: 'host' }),
+      it('should call removeShadowRoot when removing a host containing other hosts in its children', async () => {
+        let parentShadowRoot!: ShadowRoot
+        let childShadowRoot!: ShadowRoot
+        const { mutation } = await recordMutationOf(
+          '<div><div id="host"><p></p></div></div>',
+          (sandbox: HTMLElement): void => {
+            sandbox.querySelector('#host')!.remove()
+          },
+          {
+            scope,
+            beforeFullSnapshot(sandbox: HTMLElement): void {
+              const document = sandbox.ownerDocument
+              const parentHost = sandbox.querySelector('#host') as HTMLElement
+              parentShadowRoot = parentHost.attachShadow({ mode: 'open' })
+              const childHost = document.createElement('span')
+              parentHost.querySelector('p')!.appendChild(childHost)
+              childShadowRoot = childHost.attachShadow({ mode: 'open' })
             },
-          ],
-        })
+          }
+        )
+
+        expect(mutation?.data).toEqual([[ChangeType.RemoveNode, 1]])
         expect(addShadowRootSpy).toHaveBeenCalledTimes(2)
         expect(removeShadowRootSpy).toHaveBeenCalledTimes(2)
-        // Note: `toHaveBeenCalledWith` does not assert strict equality, we need to actually
-        // retrieve the argument and using `toBe` to make sure the spy has been called with both
-        // shadow roots.
         expect(removeShadowRootSpy.calls.argsFor(0)[0]).toBe(parentShadowRoot)
         expect(removeShadowRootSpy.calls.argsFor(1)[0]).toBe(childShadowRoot)
       })
@@ -633,337 +442,238 @@ describe('trackMutation', () => {
   })
 
   describe('characterData mutations', () => {
-    let textNode: Text
-
-    beforeEach(() => {
-      textNode = appendText('foo', sandbox)
+    it('emits a mutation when a text node is changed', async () => {
+      const { mutation } = await recordMutationOf('<div>foo</div>', (sandbox: HTMLElement): void => {
+        ;(sandbox.firstChild as Text).data = 'bar'
+      })
+      expect(mutation?.data).toEqual([[ChangeType.Text, [1, 'bar']]])
     })
 
-    it('emits a mutation when a text node is changed', () => {
-      const { serializedDocument } = recordMutation(() => {
-        textNode.data = 'bar'
-      })
-
-      expect(emitRecordCallback).toHaveBeenCalledTimes(1)
-
-      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
-      validate(getLatestMutationPayload(), {
-        texts: [
-          {
-            node: expectInitialNode({ text: 'foo' }),
-            value: 'bar',
+    it('emits a mutation when an empty text node is changed', async () => {
+      const { mutation } = await recordMutationOf(
+        '<div>foo</div>',
+        (sandbox: HTMLElement): void => {
+          ;(sandbox.firstChild as Text).data = 'bar'
+        },
+        {
+          beforeFullSnapshot(sandbox: HTMLElement): void {
+            ;(sandbox.firstChild as Text).data = ''
           },
-        ],
-      })
+        }
+      )
+      expect(mutation?.data).toEqual([[ChangeType.Text, [1, 'bar']]])
     })
 
-    it('emits a mutation when an empty text node is changed', () => {
-      textNode.data = ''
-
-      recordMutation(() => {
-        textNode.data = 'bar'
-      })
-
-      expect(emitRecordCallback).toHaveBeenCalledTimes(1)
-    })
-
-    it('does not emit a mutation when a text node keeps the same value', () => {
-      recordMutation(() => {
+    it('does not emit a mutation when a text node keeps the same value', async () => {
+      const { mutation } = await recordMutationOf('<div>foo</div>', (sandbox: HTMLElement): void => {
+        const textNode = sandbox.firstChild as Text
         textNode.data = 'bar'
         textNode.data = 'foo'
       })
-
-      expect(emitRecordCallback).not.toHaveBeenCalled()
+      expect(mutation).toBeUndefined()
     })
 
-    it('respects the default privacy level setting', () => {
-      const scope = getRecordingScope()
-      const { serializedDocument } = recordMutation(
-        () => {
+    it('respects the default privacy level setting', async () => {
+      const scope = createRecordingScopeForTesting()
+      const { mutation } = await recordMutationOf(
+        '<div>foo</div>',
+        (sandbox: HTMLElement): void => {
           scope.configuration.defaultPrivacyLevel = DefaultPrivacyLevel.MASK
-          textNode.data = 'foo bar'
+          ;(sandbox.firstChild as Text).data = 'foo bar'
         },
         { scope }
       )
-
-      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
-      validate(getLatestMutationPayload(), {
-        texts: [
-          {
-            node: expectInitialNode({ text: 'foo' }),
-            value: 'xxx xxx',
-          },
-        ],
-      })
+      expect(mutation?.data).toEqual([[ChangeType.Text, [1, 'xxx xxx']]])
     })
 
-    it('respects the parent privacy level when emitting a text node mutation', () => {
-      sandbox.setAttribute('data-dd-privacy', 'allow')
-      const div = appendElement('<div>foo 81</div>', sandbox)
-
-      const { serializedDocument } = recordMutation(
-        () => {
-          div.firstChild!.textContent = 'bazz 7'
+    it('respects the parent privacy level when emitting a text node mutation', async () => {
+      const { mutation } = await recordMutationOf(
+        '<div data-dd-privacy="allow"><div>foo 81</div></div>',
+        (sandbox: HTMLElement): void => {
+          sandbox.firstElementChild!.firstChild!.textContent = 'bazz 7'
         },
-        { scope: getRecordingScope(DefaultPrivacyLevel.MASK) }
+        { configuration: { defaultPrivacyLevel: DefaultPrivacyLevel.MASK } }
       )
-
-      expect(emitRecordCallback).toHaveBeenCalledTimes(1)
-
-      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
-      validate(getLatestMutationPayload(), {
-        texts: [
-          {
-            node: expectInitialNode({ text: 'foo 81' }),
-            value: 'bazz 7',
-          },
-        ],
-      })
+      // sandbox=0 (with data-dd-privacy="allow"), inner div=1, text=2.
+      // sandbox's "allow" overrides the MASK default for its descendants.
+      expect(mutation?.data).toEqual([[ChangeType.Text, [2, 'bazz 7']]])
     })
   })
 
   describe('attributes mutations', () => {
-    it('emits a mutation when an attribute is changed', () => {
-      const { serializedDocument } = recordMutation(() => {
+    it('emits a mutation when an attribute is changed', async () => {
+      const { mutation } = await recordMutationOf('<div></div>', (sandbox: HTMLElement): void => {
         sandbox.setAttribute('foo', 'bar')
       })
-
-      expect(emitRecordCallback).toHaveBeenCalledTimes(1)
-
-      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
-      validate(getLatestMutationPayload(), {
-        attributes: [
-          {
-            node: expectInitialNode({ idAttribute: 'sandbox' }),
-            attributes: { foo: 'bar' },
-          },
-        ],
-      })
+      expect(mutation?.data).toEqual([[ChangeType.Attribute, [0, ['foo', 'bar']]]])
     })
 
-    it('emits a mutation with an empty string when an attribute is changed to an empty string', () => {
-      const { serializedDocument } = recordMutation(() => {
+    it('emits a mutation with an empty string when an attribute is changed to an empty string', async () => {
+      const { mutation } = await recordMutationOf('<div></div>', (sandbox: HTMLElement): void => {
         sandbox.setAttribute('foo', '')
       })
-
-      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
-      validate(getLatestMutationPayload(), {
-        attributes: [
-          {
-            node: expectInitialNode({ idAttribute: 'sandbox' }),
-            attributes: { foo: '' },
-          },
-        ],
-      })
+      expect(mutation?.data).toEqual([[ChangeType.Attribute, [0, ['foo', '']]]])
     })
 
-    it('emits a mutation with `null` when an attribute is removed', () => {
-      sandbox.setAttribute('foo', 'bar')
-
-      const { serializedDocument } = recordMutation(() => {
+    it('emits an attribute deletion when an attribute is removed', async () => {
+      const { mutation } = await recordMutationOf('<div foo="bar"></div>', (sandbox: HTMLElement): void => {
         sandbox.removeAttribute('foo')
       })
-
-      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
-      validate(getLatestMutationPayload(), {
-        attributes: [
-          {
-            node: expectInitialNode({ idAttribute: 'sandbox' }),
-            attributes: { foo: null },
-          },
-        ],
-      })
+      // An attribute deletion is encoded as a single-element [name] tuple.
+      expect(mutation?.data).toEqual([[ChangeType.Attribute, [0, ['foo']]]])
     })
 
-    it('does not emit a mutation when an attribute keeps the same value', () => {
-      sandbox.setAttribute('foo', 'bar')
-
-      recordMutation(() => {
+    it('does not emit a mutation when an attribute keeps the same value', async () => {
+      const { mutation } = await recordMutationOf('<div foo="bar"></div>', (sandbox: HTMLElement): void => {
         sandbox.setAttribute('foo', 'biz')
         sandbox.setAttribute('foo', 'bar')
       })
-
-      expect(emitRecordCallback).not.toHaveBeenCalled()
+      expect(mutation).toBeUndefined()
     })
 
-    it('reuse the same mutation when multiple attributes are changed', () => {
-      const { serializedDocument } = recordMutation(() => {
+    it('reuses the same mutation when multiple attributes are changed', async () => {
+      const { mutation } = await recordMutationOf('<div></div>', (sandbox: HTMLElement): void => {
         sandbox.setAttribute('foo1', 'biz')
         sandbox.setAttribute('foo2', 'bar')
       })
-
-      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
-      validate(getLatestMutationPayload(), {
-        attributes: [
-          {
-            node: expectInitialNode({ idAttribute: 'sandbox' }),
-            attributes: { foo1: 'biz', foo2: 'bar' },
-          },
-        ],
-      })
+      expect(mutation?.data).toEqual([[ChangeType.Attribute, [0, ['foo1', 'biz'], ['foo2', 'bar']]]])
     })
 
-    it('respects the default privacy level setting', () => {
-      const { serializedDocument } = recordMutation(
-        () => {
+    it('respects the default privacy level setting', async () => {
+      const { mutation } = await recordMutationOf(
+        '<div></div>',
+        (sandbox: HTMLElement): void => {
           sandbox.setAttribute('data-foo', 'biz')
         },
-        { scope: getRecordingScope(DefaultPrivacyLevel.MASK) }
+        { configuration: { defaultPrivacyLevel: DefaultPrivacyLevel.MASK } }
       )
-
-      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
-      validate(getLatestMutationPayload(), {
-        attributes: [
-          {
-            node: expectInitialNode({ idAttribute: 'sandbox' }),
-            attributes: { 'data-foo': '***' },
-          },
-        ],
-      })
+      expect(mutation?.data).toEqual([[ChangeType.Attribute, [0, ['data-foo', '***']]]])
     })
   })
 
   describe('ignored nodes', () => {
-    let ignoredElement: HTMLElement
-
-    beforeEach(() => {
-      ignoredElement = appendElement('<script></script>', sandbox)
+    it('skips ignored nodes when serializing', async () => {
+      const { mutation } = await recordMutationOf('<div><script></script></div>', (sandbox: HTMLElement): void => {
+        const document = sandbox.ownerDocument
+        sandbox.insertBefore(document.createElement('a'), sandbox.firstElementChild)
+      })
+      // The <script> element is ignored, so sandbox=0 and the new <a> gets id 1
+      // (appended as the only known child of sandbox).
+      expect(mutation?.data).toEqual([[ChangeType.AddNode, [1, 'A']]])
     })
 
-    it('skips ignored nodes when looking for the next id', () => {
-      const { serializedDocument } = recordMutation(() => {
-        sandbox.insertBefore(document.createElement('a'), ignoredElement)
+    describe('does not emit mutations occurring in ignored nodes', () => {
+      it('when adding an ignored node', async () => {
+        const { mutation } = await recordMutationOf('<div></div>', (sandbox: HTMLElement): void => {
+          sandbox.appendChild(sandbox.ownerDocument.createElement('script'))
+        })
+        expect(mutation).toBeUndefined()
       })
 
-      const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidator(serializedDocument)
-      validate(getLatestMutationPayload(), {
-        adds: [
-          {
-            parent: expectInitialNode({ idAttribute: 'sandbox' }),
-            node: expectNewNode({ type: NodeType.Element, tagName: 'a' }),
+      it('when changing the attributes of an ignored node', async () => {
+        const { mutation } = await recordMutationOf('<div><script></script></div>', (sandbox: HTMLElement): void => {
+          sandbox.querySelector('script')!.setAttribute('foo', 'bar')
+        })
+        expect(mutation).toBeUndefined()
+      })
+
+      it('when adding a new child node', async () => {
+        const { mutation } = await recordMutationOf('<div><script></script></div>', (sandbox: HTMLElement): void => {
+          sandbox.querySelector('script')!.appendChild(sandbox.ownerDocument.createTextNode('function foo() {}'))
+        })
+        expect(mutation).toBeUndefined()
+      })
+
+      it('when mutating a known child node', async () => {
+        const { mutation } = await recordMutationOf(
+          '<div><script></script></div>',
+          (sandbox: HTMLElement): void => {
+            ;(sandbox.querySelector('script')!.firstChild as Text).data = 'function bar() {}'
           },
-        ],
-      })
-    })
-
-    describe('does not emit mutations occurring in ignored node', () => {
-      it('when adding an ignored node', () => {
-        ignoredElement.remove()
-
-        recordMutation(() => {
-          sandbox.appendChild(ignoredElement)
-        })
-
-        expect(emitRecordCallback).not.toHaveBeenCalled()
-      })
-
-      it('when changing the attributes of an ignored node', () => {
-        recordMutation(() => {
-          ignoredElement.setAttribute('foo', 'bar')
-        })
-
-        expect(emitRecordCallback).not.toHaveBeenCalled()
-      })
-
-      it('when adding a new child node', () => {
-        recordMutation(() => {
-          appendElement("'function foo() {}'", ignoredElement)
-        })
-
-        expect(emitRecordCallback).not.toHaveBeenCalled()
-      })
-
-      it('when mutating a known child node', () => {
-        const textNode = appendText('function foo() {}', sandbox)
-        ignoredElement.appendChild(textNode)
-
-        recordMutation(() => {
-          textNode.data = 'function bar() {}'
-        })
-
-        expect(emitRecordCallback).not.toHaveBeenCalled()
-      })
-
-      it('when adding a known child node', () => {
-        const textNode = appendText('function foo() {}', sandbox)
-
-        const { serializedDocument } = recordMutation(() => {
-          ignoredElement.appendChild(textNode)
-        })
-
-        const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
-        validate(getLatestMutationPayload(), {
-          removes: [
-            {
-              parent: expectInitialNode({ idAttribute: 'sandbox' }),
-              node: expectInitialNode({ text: 'function foo() {}' }),
+          {
+            beforeFullSnapshot(sandbox: HTMLElement): void {
+              const script = sandbox.querySelector('script')!
+              script.appendChild(sandbox.ownerDocument.createTextNode('function foo() {}'))
             },
-          ],
-        })
+          }
+        )
+        expect(mutation).toBeUndefined()
       })
 
-      it('when moving an ignored node', () => {
-        const script = appendElement('<a></a><script target></script><b><b/>', sandbox)
+      it('when adding a known child node', async () => {
+        const { mutation } = await recordMutationOf(
+          '<div>function foo() {}<script></script></div>',
+          (sandbox: HTMLElement): void => {
+            const textNode = sandbox.firstChild as Text
+            sandbox.querySelector('script')!.appendChild(textNode)
+          }
+        )
+        // sandbox=0, textNode=1 (script is not serialized). Moving textNode into the
+        // ignored script looks like a removal from sandbox.
+        expect(mutation?.data).toEqual([[ChangeType.RemoveNode, 1]])
+      })
 
-        recordMutation(() => {
-          sandbox.appendChild(script)
-        })
-
-        expect(emitRecordCallback).not.toHaveBeenCalled()
+      it('when moving an ignored node', async () => {
+        const { mutation } = await recordMutationOf(
+          '<div><a></a><script></script><b></b></div>',
+          (sandbox: HTMLElement): void => {
+            sandbox.appendChild(sandbox.querySelector('script')!)
+          }
+        )
+        expect(mutation).toBeUndefined()
       })
     })
   })
 
   describe('hidden nodes', () => {
-    let hiddenElement: HTMLElement
-    beforeEach(() => {
-      hiddenElement = appendElement("<div data-dd-privacy='hidden'></div>", sandbox)
-    })
-
-    it('does not emit attribute mutations on hidden nodes', () => {
-      recordMutation(() => {
-        hiddenElement.setAttribute('foo', 'bar')
-      })
-
-      expect(emitRecordCallback).not.toHaveBeenCalled()
+    it('does not emit attribute mutations on hidden nodes', async () => {
+      const { mutation } = await recordMutationOf(
+        '<div><div data-dd-privacy="hidden"></div></div>',
+        (sandbox: HTMLElement): void => {
+          ;(sandbox.firstElementChild as HTMLElement).setAttribute('foo', 'bar')
+        }
+      )
+      expect(mutation).toBeUndefined()
     })
 
     describe('does not emit mutations occurring in hidden node', () => {
-      it('when adding a new node', () => {
-        recordMutation(() => {
-          appendElement('function foo() {}', hiddenElement)
-        })
-
-        expect(emitRecordCallback).not.toHaveBeenCalled()
+      it('when adding a new node', async () => {
+        const { mutation } = await recordMutationOf(
+          '<div><div data-dd-privacy="hidden"></div></div>',
+          (sandbox: HTMLElement): void => {
+            sandbox.firstElementChild!.appendChild(sandbox.ownerDocument.createTextNode('function foo() {}'))
+          }
+        )
+        expect(mutation).toBeUndefined()
       })
 
-      it('when mutating a known child node', () => {
-        const textNode = appendText('function foo() {}', sandbox)
-        hiddenElement.appendChild(textNode)
-
-        recordMutation(() => {
-          textNode.data = 'function bar() {}'
-        })
-
-        expect(emitRecordCallback).not.toHaveBeenCalled()
-      })
-
-      it('when moving a known node into an hidden node', () => {
-        const textNode = appendText('function foo() {}', sandbox)
-
-        const { serializedDocument } = recordMutation(() => {
-          hiddenElement.appendChild(textNode)
-        })
-
-        const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
-        validate(getLatestMutationPayload(), {
-          removes: [
-            {
-              parent: expectInitialNode({ idAttribute: 'sandbox' }),
-              node: expectInitialNode({ text: 'function foo() {}' }),
+      it('when mutating a known child node', async () => {
+        const { mutation } = await recordMutationOf(
+          '<div><div data-dd-privacy="hidden"></div></div>',
+          (sandbox: HTMLElement): void => {
+            ;(sandbox.firstElementChild!.firstChild as Text).data = 'function bar() {}'
+          },
+          {
+            beforeFullSnapshot(sandbox: HTMLElement): void {
+              const hiddenElement = sandbox.firstElementChild!
+              hiddenElement.appendChild(sandbox.ownerDocument.createTextNode('function foo() {}'))
             },
-          ],
-        })
+          }
+        )
+        expect(mutation).toBeUndefined()
+      })
+
+      it('when moving a known node into an hidden node', async () => {
+        const { mutation } = await recordMutationOf(
+          '<div><div data-dd-privacy="hidden"></div>function foo() {}</div>',
+          (sandbox: HTMLElement): void => {
+            const textNode = sandbox.lastChild as Text
+            sandbox.firstElementChild!.appendChild(textNode)
+          }
+        )
+        // sandbox=0, hidden div=1, textNode=2. Moving textNode into the hidden element
+        // makes it disappear from the recorded tree.
+        expect(mutation?.data).toEqual([[ChangeType.RemoveNode, 2]])
       })
     })
   })
@@ -972,8 +682,8 @@ describe('trackMutation', () => {
     const testsVariations: Array<{
       privacyAttributeValue: string
       privacyAttributeOn: 'input' | 'ancestor'
-      expectedSerializedAttributes: Attributes
-      expectedAttributesMutation: AttributeMutation['attributes'] | null
+      expectedSerializedAttributes: Record<string, string>
+      expectedAttributesMutation: Record<string, string> | null
     }> = [
       {
         privacyAttributeValue: PRIVACY_ATTR_VALUE_MASK,
@@ -1029,55 +739,46 @@ describe('trackMutation', () => {
       expectedAttributesMutation,
     } of testsVariations) {
       describe(`${privacyAttributeValue} mode on ${privacyAttributeOn} element`, () => {
-        it('respects the privacy mode for newly added inputs', () => {
-          const input = document.createElement('input')
+        const initialContent =
+          privacyAttributeOn === 'ancestor'
+            ? `<div ${PRIVACY_ATTR_NAME}="${privacyAttributeValue}"></div>`
+            : '<div></div>'
+
+        function setUpInput(sandbox: HTMLElement): HTMLInputElement {
+          const input = sandbox.ownerDocument.createElement('input')
           input.value = 'foo'
           if (privacyAttributeOn === 'input') {
             input.setAttribute(PRIVACY_ATTR_NAME, privacyAttributeValue)
-          } else {
-            sandbox.setAttribute(PRIVACY_ATTR_NAME, privacyAttributeValue)
           }
+          return input
+        }
 
-          const { serializedDocument } = recordMutation(() => {
-            sandbox.appendChild(input)
+        it('respects the privacy mode for newly added inputs', async () => {
+          const { mutation } = await recordMutationOf(initialContent, (sandbox: HTMLElement): void => {
+            sandbox.appendChild(setUpInput(sandbox))
           })
-
-          const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
-          validate(getLatestMutationPayload(), {
-            adds: [
-              {
-                parent: expectInitialNode({ idAttribute: 'sandbox' }),
-                node: expectNewNode({
-                  type: NodeType.Element,
-                  tagName: 'input',
-                  attributes: expectedSerializedAttributes,
-                }),
-              },
-            ],
-          })
+          expect(mutation?.data).toEqual([
+            [ChangeType.AddNode, [1, 'INPUT', ...Object.entries(expectedSerializedAttributes)]],
+          ])
         })
 
-        it('respects the privacy mode for attribute mutations', () => {
-          const input = document.createElement('input')
-          input.value = 'foo'
-          if (privacyAttributeOn === 'input') {
-            input.setAttribute(PRIVACY_ATTR_NAME, privacyAttributeValue)
-          } else {
-            sandbox.setAttribute(PRIVACY_ATTR_NAME, privacyAttributeValue)
-          }
-          sandbox.appendChild(input)
-
-          const { serializedDocument } = recordMutation(() => {
-            input.setAttribute('value', 'bar')
-          })
+        it('respects the privacy mode for attribute mutations', async () => {
+          const { mutation } = await recordMutationOf(
+            initialContent,
+            (sandbox: HTMLElement): void => {
+              sandbox.querySelector('input')!.setAttribute('value', 'bar')
+            },
+            {
+              beforeFullSnapshot(sandbox: HTMLElement): void {
+                sandbox.appendChild(setUpInput(sandbox))
+              },
+            }
+          )
 
           if (expectedAttributesMutation) {
-            const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
-            validate(getLatestMutationPayload(), {
-              attributes: [{ node: expectInitialNode({ tag: 'input' }), attributes: expectedAttributesMutation }],
-            })
+            expect(mutation?.data).toEqual([[ChangeType.Attribute, [1, ...Object.entries(expectedAttributesMutation)]]])
           } else {
-            expect(emitRecordCallback).not.toHaveBeenCalled()
+            expect(mutation).toBeUndefined()
           }
         })
       })

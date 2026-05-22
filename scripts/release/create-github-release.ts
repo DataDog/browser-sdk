@@ -7,15 +7,11 @@ interface ReleaseInfo {
   body: string
 }
 
-interface GitHubReleaseResponse {
-  html_url: string
-}
-
 runMain(async () => {
   const requestedVersion = process.argv[2]
   printLog(`Creating GitHub release for ${requestedVersion ? `version ${requestedVersion}` : 'latest version'}`)
   const versionAndBody = getReleaseVersionAndBody(requestedVersion)
-  const response = (await createGitHubRelease(versionAndBody)) as GitHubReleaseResponse
+  const response = await createGitHubRelease(versionAndBody)
   printLog(`GitHub release created: ${response.html_url}`)
 })
 

@@ -55,7 +55,7 @@ describe('syntheticsWorkerValues', () => {
 
     it('includes extra properties from the context', () => {
       mockSyntheticsWorkerValues(
-        { context: { test_id: 'foo', result_id: 'bar', run_type: 'scheduled', suite_ids: ['abc'] as any } },
+        { context: { test_id: 'foo', result_id: 'bar', run_type: 'scheduled', suite_ids: ['abc'] } },
         'globals'
       )
 

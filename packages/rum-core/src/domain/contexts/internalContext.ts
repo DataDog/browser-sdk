@@ -1,5 +1,4 @@
-import type { RelativeTime, RumInternalContext } from '@datadog/browser-core'
-import type { RumSessionManager } from '../rumSessionManager'
+import type { RelativeTime, RumInternalContext, SessionManager } from '@datadog/browser-core'
 import type { ActionContexts } from '../action/actionCollection'
 import type { ViewHistory } from './viewHistory'
 import type { UrlContexts } from './urlContexts'
@@ -10,7 +9,7 @@ import type { UrlContexts } from './urlContexts'
  */
 export function startInternalContext(
   applicationId: string,
-  sessionManager: RumSessionManager,
+  sessionManager: SessionManager,
   viewHistory: ViewHistory,
   actionContexts: ActionContexts,
   urlContexts: UrlContexts

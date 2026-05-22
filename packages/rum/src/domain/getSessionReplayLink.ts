@@ -1,15 +1,14 @@
-import type { RumConfiguration, RumSessionManager, ViewHistory, RumSession } from '@datadog/browser-rum-core'
-import { getSessionReplayUrl, SessionReplayState } from '@datadog/browser-rum-core'
-import { isBrowserSupported } from '../boot/isBrowserSupported'
-
+import type { RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
+import { getSessionReplayUrl, SessionReplayState, computeSessionReplayState } from '@datadog/browser-rum-core'
+import type { SessionManager, SessionContext } from '@datadog/browser-core'
 export function getSessionReplayLink(
   configuration: RumConfiguration,
-  sessionManager: RumSessionManager,
+  sessionManager: SessionManager,
   viewHistory: ViewHistory,
   isRecordingStarted: boolean
 ): string | undefined {
   const session = sessionManager.findTrackedSession()
-  const errorType = getErrorType(session, isRecordingStarted)
+  const errorType = getErrorType(configuration, session, isRecordingStarted)
   const viewContext = viewHistory.findView()
 
   return getSessionReplayUrl(configuration, {
@@ -19,17 +18,18 @@ export function getSessionReplayLink(
   })
 }
 
-function getErrorType(session: RumSession | undefined, isRecordingStarted: boolean) {
-  if (!isBrowserSupported()) {
-    return 'browser-not-supported'
-  }
+function getErrorType(
+  configuration: RumConfiguration,
+  session: SessionContext | undefined,
+  isRecordingStarted: boolean
+) {
   if (!session) {
     // possibilities:
     // - rum sampled out
     // - session expired (edge case)
     return 'rum-not-tracked'
   }
-  if (session.sessionReplay === SessionReplayState.OFF) {
+  if (computeSessionReplayState(session, configuration) === SessionReplayState.OFF) {
     // possibilities
     // - replay sampled out
     return 'incorrect-session-plan'

@@ -107,7 +107,7 @@ let navigationStart: TimeStamp | undefined
  * at least in Firefox 71. (see: https://bugzilla.mozilla.org/show_bug.cgi?id=1429926)
  * - It is not supported in Safari <15
  */
-function getNavigationStart() {
+export function getNavigationStart() {
   if (navigationStart === undefined) {
     // ServiceWorkers do not support navigationStart (it's deprecated), so we fallback to timeOrigin
     navigationStart = (performance.timing?.navigationStart ?? performance.timeOrigin) as TimeStamp

@@ -52,25 +52,9 @@ export function sanitizeTag(tag: string) {
 }
 
 function hasForbiddenCharacters(rawValue: string) {
-  // Unicode property escapes is not supported in all browsers, so we use a try/catch.
-  // Todo: Remove the try/catch when dropping support for Chrome 63 and Firefox 67
-  // see: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Unicode_character_class_escape#browser_compatibility
-  if (!supportUnicodePropertyEscapes()) {
-    return false
-  }
-
   // We use the Unicode property escapes to match any character that is a letter including other languages like Chinese, Japanese, etc.
   // p{Ll} matches a lowercase letter.
   // p{Lo} matches a letter that is neither uppercase nor lowercase (ex: Japanese characters).
   // See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Unicode_character_class_escape#unicode_property_escapes_vs._character_classes
   return new RegExp('[^\\p{Ll}\\p{Lo}0-9_:./-]', 'u').test(rawValue)
-}
-
-export function supportUnicodePropertyEscapes() {
-  try {
-    new RegExp('[\\p{Ll}]', 'u')
-    return true
-  } catch {
-    return false
-  }
 }

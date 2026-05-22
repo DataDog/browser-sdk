@@ -267,6 +267,90 @@ describe('GraphQL detection and metadata extraction', () => {
       )
       expect(result).toBeUndefined()
     })
+
+    it('should use operationType from body when query field is absent', () => {
+      const requestBody = JSON.stringify({
+        operationName: 'CreateUser',
+        operationType: 'mutation',
+        variables: { name: 'Alice' },
+      })
+
+      const result = extractGraphQlRequestMetadata({ method: 'POST', url: '/graphql', requestBody }, false)
+
+      expect(result).toEqual({
+        operationType: 'mutation',
+        operationName: 'CreateUser',
+        variables: '{"name":"Alice"}',
+        payload: undefined,
+      })
+    })
+
+    it('should prefer operationType derived from query field over explicit operationType in body', () => {
+      const requestBody = JSON.stringify({
+        query: 'query GetUser { user { id } }',
+        operationName: 'GetUser',
+        operationType: 'mutation',
+      })
+
+      const result = extractGraphQlRequestMetadata({ method: 'POST', url: '/graphql', requestBody }, false)
+
+      expect(result?.operationType).toBe('query')
+    })
+
+    it('should fall back to operationType from body when query has no parseable operation type', () => {
+      const requestBody = JSON.stringify({
+        query: '{ user { id } }',
+        operationName: 'GetUser',
+        operationType: 'query',
+      })
+
+      const result = extractGraphQlRequestMetadata({ method: 'POST', url: '/graphql', requestBody }, false)
+
+      expect(result?.operationType).toBe('query')
+    })
+
+    it('should ignore unknown operationType value from body', () => {
+      const requestBody = JSON.stringify({
+        operationName: 'DoSomething',
+        operationType: 'foobar',
+      })
+
+      const result = extractGraphQlRequestMetadata({ method: 'POST', url: '/graphql', requestBody }, false)
+
+      expect(result?.operationType).toBeUndefined()
+    })
+
+    it('should ignore mixed-case operationType value from body', () => {
+      const requestBody = JSON.stringify({
+        operationName: 'DoSomething',
+        operationType: 'Mutation',
+      })
+
+      const result = extractGraphQlRequestMetadata({ method: 'POST', url: '/graphql', requestBody }, false)
+
+      expect(result?.operationType).toBeUndefined()
+    })
+
+    it('should use operationType from URL params for GET requests when query param is absent', () => {
+      const url = 'http://example.com/graphql?operationName=CreateUser&operationType=mutation'
+
+      const result = extractGraphQlRequestMetadata({ method: 'GET', url, requestBody: undefined }, false)
+
+      expect(result).toEqual({
+        operationType: 'mutation',
+        operationName: 'CreateUser',
+        variables: undefined,
+        payload: undefined,
+      })
+    })
+
+    it('should prefer operationType derived from query URL param over explicit operationType URL param for GET requests', () => {
+      const url = 'http://example.com/graphql?query=mutation%20CreateUser%20%7B%20createUser%20%7D&operationType=query'
+
+      const result = extractGraphQlRequestMetadata({ method: 'GET', url, requestBody: undefined }, false)
+
+      expect(result?.operationType).toBe('mutation')
+    })
   })
 
   describe('request payload truncation', () => {

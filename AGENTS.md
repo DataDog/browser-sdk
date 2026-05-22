@@ -89,6 +89,8 @@ For deeper context, see:
 - Test framework: Jasmine + Karma. Spec files co-located with implementation: `feature.ts` → `feature.spec.ts`
 - Focus tests with `fit()` / `fdescribe()`, skip with `xit()` / `xdescribe()`
 - Use `registerCleanupTask()` for cleanup, NOT `afterEach()`
+- Prefer `collectAsyncCalls(spy, n)` over `waitFor(() => spy.calls.count() > 0)` for waiting on spy calls
+- Don't destructure methods from `spy.calls` (e.g., `argsFor`, `mostRecent`) - use `calls.argsFor()` to avoid `@typescript-eslint/unbound-method` errors
 - Mock values/functions: wrap with `mockable()` in source, use `replaceMockable()` or `replaceMockableWithSpy()` in tests (auto-cleanup)
 
 ### Naming Conventions
@@ -106,6 +108,7 @@ For deeper context, see:
 
 - `addTelemetryUsage` tracks **which public API the customer calls and which options they pass** (static call-site information)
 - Do NOT include runtime state analysis (e.g., whether a view was active, whether a value was overwritten) in telemetry usage — that belongs elsewhere
+- In serialized telemetry configuration, the `use_` prefix is reserved for boolean fields that track the usage of a configuration option that might contain customer data (e.g. `use_allowed_tracing_urls`)
 
 ### Auto-Generated Files
 
@@ -116,6 +119,12 @@ For deeper context, see:
 ## Commit Messages
 
 Use gitmoji conventions — see `docs/DEVELOPMENT.md` for the full reference.
+
+## Manual Testing with Chrome MCP
+
+`yarn dev` serves the sandbox at `http://localhost:8080` (increments port if busy). The sandbox page (`sandbox/index.html`) loads the SDK bundles and calls `DD_LOGS.init()` / `DD_RUM.init()`.
+
+To test with specific config options (e.g. `forwardErrorsToLogs: true`), just edit `sandbox/index.html` temporarily. The dev server reloads on change, so navigate to `http://localhost:8080` after saving and use `evaluate_script` to run test code.
 
 ## Git Workflow
 

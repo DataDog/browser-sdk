@@ -1,0 +1,378 @@
+import type { Batch, Context } from '@datadog/browser-core'
+
+import { timeStampNow, display, buildTag, generateUUID, getGlobalObject } from '@datadog/browser-core'
+import type { BrowserWindow, DebuggerInitConfiguration } from '../entries/main'
+import { capture, captureFields } from './capture'
+import type { CaptureContext } from './capture'
+import type { InitializedProbe } from './probes'
+import {
+  checkGlobalSnapshotBudget,
+  hasProbeLifetimeBudgetRemaining,
+  removeProbe,
+  resetProbeBudgetConfiguration,
+  setProbeBudgetConfiguration,
+} from './probes'
+import type { ActiveEntry } from './activeEntries'
+import { active } from './activeEntries'
+import { captureStackTrace, parseStackTrace } from './stacktrace'
+import { evaluateProbeMessage } from './template'
+import { evaluateProbeCondition } from './condition'
+
+const globalObj = getGlobalObject<BrowserWindow>() // eslint-disable-line local-rules/disallow-side-effects
+
+const threadName = detectThreadName() // eslint-disable-line local-rules/disallow-side-effects
+
+const SNAPSHOT_TIMEOUT_MS = 10
+
+let debuggerBatch: Batch | undefined
+let debuggerConfig: DebuggerInitConfiguration | undefined
+let cachedDDtags: string | undefined
+
+export function initDebuggerTransport(config: DebuggerInitConfiguration, batch: Batch): void {
+  debuggerConfig = config
+  debuggerBatch = batch
+  cachedDDtags = undefined
+  setProbeBudgetConfiguration(config)
+}
+
+export function resetDebuggerTransport(): void {
+  debuggerBatch = undefined
+  debuggerConfig = undefined
+  cachedDDtags = undefined
+  active.clear()
+  resetProbeBudgetConfiguration()
+}
+
+/**
+ * Called when entering an instrumented function
+ *
+ * @param probes - Array of probes for this function
+ * @param self - The 'this' context
+ * @param args - Function arguments
+ */
+export function onEntry(probes: InitializedProbe[], self: any, args: Record<string, any> = {}): void {
+  const start = performance.now()
+  const captureCtx: CaptureContext = { deadline: start + SNAPSHOT_TIMEOUT_MS, timedOut: false }
+
+  // TODO: A lot of repeated work performed for each probe that could be shared between probes
+  for (const probe of probes) {
+    if (!hasProbeLifetimeBudgetRemaining(probe)) {
+      continue
+    }
+
+    let stack = active.get(probe.id) // TODO: Should we use the functionId instead?
+    if (!stack) {
+      stack = []
+      active.set(probe.id, stack)
+    }
+
+    // Skip if sampling budget is exceeded
+    if (
+      start - probe.lastCaptureMs < probe.msBetweenSampling ||
+      !checkGlobalSnapshotBudget(start, probe.captureSnapshot)
+    ) {
+      stack.push(null)
+      continue
+    }
+
+    // Update last capture time
+    probe.lastCaptureMs = start
+
+    let timestamp: number | undefined
+    let message: string | undefined
+    if (probe.evaluateAt === 'ENTRY') {
+      // Build context for condition and message evaluation
+      const context = { ...args, this: self }
+
+      // Check condition - if it fails, don't evaluate or capture anything
+      if (!evaluateProbeCondition(probe, context)) {
+        // Still push to stack so onReturn/onThrow can pop it, but mark as skipped
+        stack.push(null)
+        continue
+      }
+
+      timestamp = timeStampNow()
+      message = evaluateProbeMessage(probe, context)
+    }
+
+    // Special case for evaluateAt=EXIT with a condition: we only capture the return snapshot
+    const shouldCaptureEntrySnapshot = probe.captureSnapshot && (probe.evaluateAt === 'ENTRY' || !probe.condition)
+    let entry: { arguments: Record<string, any> } | undefined
+    if (shouldCaptureEntrySnapshot) {
+      entry = {
+        arguments: {
+          ...captureFields(args, probe.capture, captureCtx),
+          this: capture(self, probe.capture, captureCtx),
+        },
+      }
+      if (captureCtx.timedOut) {
+        stack.push(null)
+        continue
+      }
+    }
+
+    stack.push({
+      start,
+      timestamp,
+      message,
+      entry,
+      stack: probe.captureSnapshot ? captureStackTrace(1) : undefined,
+    })
+  }
+}
+
+/**
+ * Called when exiting an instrumented function normally
+ *
+ * @param probes - Array of probes for this function
+ * @param value - Return value
+ * @param self - The 'this' context
+ * @param args - Function arguments
+ * @param locals - Local variables
+ * @returns The return value (passed through)
+ */
+export function onReturn(
+  probes: InitializedProbe[],
+  value: any,
+  self: any,
+  args: Record<string, any> = {},
+  locals: Record<string, any> = {}
+): any {
+  const end = performance.now()
+  const captureCtx: CaptureContext = { deadline: performance.now() + SNAPSHOT_TIMEOUT_MS, timedOut: false }
+  let exhaustedProbeIds: string[] | undefined
+
+  // TODO: A lot of repeated work performed for each probe that could be shared between probes
+  for (const probe of probes) {
+    if (!hasProbeLifetimeBudgetRemaining(probe)) {
+      ;(exhaustedProbeIds ??= []).push(probe.id)
+      continue
+    }
+
+    const stack = active.get(probe.id) // TODO: Should we use the functionId instead?
+    if (!stack) {
+      continue // TODO: This shouldn't be possible, do we need it? Should we warn?
+    }
+    const result = stack.pop()
+    if (stack.length === 0) {
+      active.delete(probe.id)
+    }
+    if (!result) {
+      continue
+    }
+
+    result.duration = end - result.start
+
+    if (probe.evaluateAt === 'EXIT') {
+      result.timestamp = timeStampNow()
+
+      const context = {
+        ...args,
+        ...locals,
+        this: self,
+        $dd_duration: result.duration,
+        $dd_return: value,
+      }
+
+      if (!evaluateProbeCondition(probe, context)) {
+        continue
+      }
+
+      result.message = evaluateProbeMessage(probe, context)
+    }
+
+    if (probe.captureSnapshot) {
+      result.return = {
+        arguments: {
+          ...captureFields(args, probe.capture, captureCtx),
+          this: capture(self, probe.capture, captureCtx),
+        },
+        locals: {
+          ...captureFields(locals, probe.capture, captureCtx),
+          '@return': capture(value, probe.capture, captureCtx),
+        },
+      }
+      if (captureCtx.timedOut) {
+        continue
+      }
+    }
+
+    queueDebuggerSnapshot(probe, result)
+  }
+
+  if (exhaustedProbeIds) {
+    for (const id of exhaustedProbeIds) {
+      removeProbe(id)
+    }
+  }
+
+  return value
+}
+
+/**
+ * Called when exiting an instrumented function via exception
+ *
+ * @param probes - Array of probes for this function
+ * @param error - The thrown error
+ * @param self - The 'this' context
+ * @param args - Function arguments
+ */
+export function onThrow(probes: InitializedProbe[], error: Error, self: any, args: Record<string, any> = {}): void {
+  const end = performance.now()
+  const captureCtx: CaptureContext = { deadline: performance.now() + SNAPSHOT_TIMEOUT_MS, timedOut: false }
+  let exhaustedProbeIds: string[] | undefined
+
+  // TODO: A lot of repeated work performed for each probe that could be shared between probes
+  for (const probe of probes) {
+    if (!hasProbeLifetimeBudgetRemaining(probe)) {
+      ;(exhaustedProbeIds ??= []).push(probe.id)
+      continue
+    }
+
+    const stack = active.get(probe.id) // TODO: Should we use the functionId instead?
+    if (!stack) {
+      continue // TODO: This shouldn't be possible, do we need it? Should we warn?
+    }
+    const result = stack.pop()
+    if (stack.length === 0) {
+      active.delete(probe.id)
+    }
+    if (!result) {
+      continue
+    }
+
+    result.duration = end - result.start
+    result.exception = error
+
+    if (probe.evaluateAt === 'EXIT') {
+      result.timestamp = timeStampNow()
+
+      const context = {
+        ...args,
+        this: self,
+        $dd_duration: result.duration,
+        $dd_exception: error,
+      }
+
+      if (!evaluateProbeCondition(probe, context)) {
+        continue
+      }
+
+      result.message = evaluateProbeMessage(probe, context)
+    }
+
+    let throwArguments: Record<string, any> | undefined
+    if (probe.captureSnapshot) {
+      throwArguments = {
+        ...captureFields(args, probe.capture, captureCtx),
+        this: capture(self, probe.capture, captureCtx),
+      }
+      if (captureCtx.timedOut) {
+        continue
+      }
+    }
+
+    result.return = {
+      arguments: throwArguments,
+      throwable: {
+        message: error.message,
+        stacktrace: parseStackTrace(error),
+      },
+    }
+
+    queueDebuggerSnapshot(probe, result)
+  }
+
+  if (exhaustedProbeIds) {
+    for (const id of exhaustedProbeIds) {
+      removeProbe(id)
+    }
+  }
+}
+
+/**
+ * Queue a debugger snapshot for delivery via the debugger's own transport.
+ *
+ * @param probe - The probe that was executed
+ * @param result - The result of the probe execution
+ */
+function queueDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): void {
+  if (!debuggerBatch || !debuggerConfig) {
+    display.warn('Debugger transport is not initialized. Make sure DD_DEBUGGER.init() has been called.')
+    return
+  }
+
+  const version = globalObj.DD_DEBUGGER!.version
+
+  const payload: Context = {
+    message: result.message,
+    service: debuggerConfig.service,
+    ddtags: getDebuggerDDtags(version),
+    // TODO: Fill out logger with the right information
+    logger: {
+      name: probe.where.typeName,
+      method: probe.where.methodName,
+      version,
+      // thread_id: 1,
+      thread_name: threadName,
+    },
+    debugger: {
+      snapshot: {
+        id: generateUUID(),
+        timestamp: result.timestamp!,
+        probe: {
+          id: probe.id,
+          version: probe.version,
+          location: {
+            // TODO: Are our hardcoded where.* keys correct according to the spec?
+            method: probe.where.methodName,
+            type: probe.where.typeName,
+          },
+        },
+        stack: result.stack,
+        language: 'javascript',
+        duration: result.duration! * 1e6, // to nanoseconds
+        captures:
+          result.entry || result.return
+            ? {
+                entry: result.entry,
+                return: result.return,
+              }
+            : undefined,
+      },
+    },
+  }
+
+  debuggerBatch.add(payload)
+  probe.eventsSentInLifetime++
+}
+
+function getDebuggerDDtags(debuggerVersion: string): string {
+  if (!cachedDDtags) {
+    cachedDDtags = [
+      buildTag('sdk_version', debuggerVersion),
+      buildTag('debugger_version', debuggerVersion),
+      buildTag('env', debuggerConfig?.env),
+      buildTag('service', debuggerConfig?.service),
+      buildTag('version', debuggerConfig?.version),
+    ].join(',')
+  }
+
+  return cachedDDtags
+}
+
+function detectThreadName() {
+  if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+    return 'main'
+  }
+  if (typeof ServiceWorkerGlobalScope !== 'undefined' && self instanceof ServiceWorkerGlobalScope) {
+    return 'service-worker'
+  }
+  if (typeof importScripts === 'function') {
+    return 'web-worker'
+  }
+  return 'unknown'
+}
+
+declare const ServiceWorkerGlobalScope: typeof EventTarget
+declare function importScripts(...urls: string[]): void

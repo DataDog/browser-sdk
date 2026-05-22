@@ -89,7 +89,11 @@ export function createMockServerApp(servers: Servers, setup: string, setupOption
   })
 
   app.get('/empty.css', (_req, res) => {
-    res.header('content-type', 'text/css').end()
+    // 50ms delay: WebKit clamps PerformanceResourceTiming timestamps to 1ms. Without a delay,
+    // a zero-byte response on fast (Linux CI) loopback occasionally completes within a single
+    // tick, collapsing every timestamp to the same value and making the SDK report duration: 0
+    // — which made `rum resources › retrieve early requests timings` the top flaky E2E this week.
+    setTimeout(() => res.header('content-type', 'text/css').end(), 50)
   })
 
   app.get('/flush', (_req, res) => {
@@ -169,7 +173,7 @@ export function createMockServerApp(servers: Servers, setup: string, setupOption
     res.header(
       'Content-Security-Policy',
       [
-        `connect-src ${servers.intake.origin} ${servers.base.origin} ${servers.crossOrigin.origin}`,
+        `connect-src ${servers.intake.origin} ${servers.base.origin} ${servers.crossOrigin.origin} https://quota.browser-intake-datadoghq.com`,
         `script-src 'self' 'unsafe-inline' ${servers.crossOrigin.origin}`,
         "worker-src blob: 'self'",
       ].join(';')
@@ -185,7 +189,7 @@ export function createMockServerApp(servers: Servers, setup: string, setupOption
     res.header(
       'Content-Security-Policy',
       [
-        `connect-src ${servers.intake.origin} ${servers.base.origin} ${servers.crossOrigin.origin}`,
+        `connect-src ${servers.intake.origin} ${servers.base.origin} ${servers.crossOrigin.origin} https://quota.browser-intake-datadoghq.com`,
         `script-src 'self' 'unsafe-inline' ${servers.crossOrigin.origin}`,
       ].join(';')
     )

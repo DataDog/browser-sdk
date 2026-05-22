@@ -63,9 +63,7 @@ describe('validateAndBuildConfiguration', () => {
       expect(displaySpy).toHaveBeenCalledOnceWith('Session Sample Rate should be a number between 0 and 100')
 
       displaySpy.calls.reset()
-      expect(
-        validateAndBuildConfiguration({ clientToken, sessionSampleRate: 200 } as unknown as InitConfiguration)
-      ).toBeUndefined()
+      expect(validateAndBuildConfiguration({ clientToken, sessionSampleRate: 200 })).toBeUndefined()
       expect(displaySpy).toHaveBeenCalledOnceWith('Session Sample Rate should be a number between 0 and 100')
 
       displaySpy.calls.reset()
@@ -80,9 +78,7 @@ describe('validateAndBuildConfiguration', () => {
       expect(displaySpy).toHaveBeenCalledOnceWith('Telemetry Sample Rate should be a number between 0 and 100')
 
       displaySpy.calls.reset()
-      expect(
-        validateAndBuildConfiguration({ clientToken, telemetrySampleRate: 200 } as unknown as InitConfiguration)
-      ).toBeUndefined()
+      expect(validateAndBuildConfiguration({ clientToken, telemetrySampleRate: 200 })).toBeUndefined()
       expect(displaySpy).toHaveBeenCalledOnceWith('Telemetry Sample Rate should be a number between 0 and 100')
 
       displaySpy.calls.reset()
@@ -92,39 +88,49 @@ describe('validateAndBuildConfiguration', () => {
   })
 
   describe('sessionStoreStrategyType', () => {
-    it('allowFallbackToLocalStorage should not be enabled by default', () => {
+    it('should contain cookie strategy in the configuration by default', () => {
+      const configuration = validateAndBuildConfiguration({ clientToken })
+      expect(configuration?.sessionStoreStrategyType).toEqual({
+        type: SessionPersistence.COOKIE,
+        cookieOptions: { secure: false, crossSite: false, partitioned: false },
+      })
+    })
+
+    it('should not contain any strategy if cookies are unavailable and no session persistence is configured', () => {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
+      spyOn(Storage.prototype, 'getItem').and.throwError('unavailable')
       const configuration = validateAndBuildConfiguration({ clientToken })
       expect(configuration?.sessionStoreStrategyType).toBeUndefined()
     })
 
-    it('should contain cookie strategy in the configuration by default', () => {
-      const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: false })
+    it('should use the first available strategy when multiple session persistence strategies are provided', () => {
+      const configuration = validateAndBuildConfiguration({
+        clientToken,
+        sessionPersistence: [SessionPersistence.COOKIE, SessionPersistence.LOCAL_STORAGE],
+      })
       expect(configuration?.sessionStoreStrategyType).toEqual({
         type: SessionPersistence.COOKIE,
         cookieOptions: { secure: false, crossSite: false, partitioned: false },
       })
     })
 
-    it('should contain cookie strategy in the configuration when fallback is enabled and cookies are available', () => {
-      const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: true })
-      expect(configuration?.sessionStoreStrategyType).toEqual({
-        type: SessionPersistence.COOKIE,
-        cookieOptions: { secure: false, crossSite: false, partitioned: false },
-      })
-    })
-
-    it('should contain localStorage strategy in the configuration when localStorage fallback is enabled and cookies are not available', () => {
+    it('should contain local-storage strategy if cookies are unavailable and session persistence contained cookies and local-storage', () => {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
-      const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: true })
+      const configuration = validateAndBuildConfiguration({
+        clientToken,
+        sessionPersistence: [SessionPersistence.COOKIE, SessionPersistence.LOCAL_STORAGE],
+      })
       expect(configuration?.sessionStoreStrategyType).toEqual({ type: SessionPersistence.LOCAL_STORAGE })
     })
 
-    it('should not contain any strategy if both cookies and local storage are unavailable', () => {
+    it('should contain memory strategy if cookies and local-storage are unavailable and session persistence contained all three', () => {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
       spyOn(Storage.prototype, 'getItem').and.throwError('unavailable')
-      const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: true })
-      expect(configuration?.sessionStoreStrategyType).toBeUndefined()
+      const configuration = validateAndBuildConfiguration({
+        clientToken,
+        sessionPersistence: [SessionPersistence.COOKIE, SessionPersistence.LOCAL_STORAGE, SessionPersistence.MEMORY],
+      })
+      expect(configuration?.sessionStoreStrategyType).toEqual({ type: SessionPersistence.MEMORY })
     })
   })
 
@@ -201,7 +207,7 @@ describe('validateAndBuildConfiguration', () => {
 
   describe('site parameter validation', () => {
     it('should validate the site parameter', () => {
-      validateAndBuildConfiguration({ clientToken, site: 'foo.com' as any })
+      validateAndBuildConfiguration({ clientToken, site: 'foo.com' })
       expect(displaySpy).toHaveBeenCalledOnceWith(
         `Site should be a valid Datadog site. ${MORE_DETAILS} ${DOCS_ORIGIN}/getting_started/site/.`
       )

@@ -88,7 +88,7 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
   const instrumentation = function (this: TARGET): ReturnType<TARGET[METHOD]> {
     if (stopped) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
-      return original.apply(this, arguments as unknown as Parameters<TARGET[METHOD]>)
+      return original.apply(this, arguments)
     }
 
     const parameters = Array.from(arguments) as Parameters<TARGET[METHOD]>

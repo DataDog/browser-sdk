@@ -3,7 +3,7 @@ import { HookNames, relativeToClocks } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import type { ViewCreatedEvent, ViewEndedEvent } from '../view/trackViews'
+import type { ViewCreatedEvent } from '../view/trackViews'
 import type { RumConfiguration } from '../configuration'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { AssembleHookParams, Hooks } from '../hooks'
@@ -116,7 +116,7 @@ describe('featureFlagContexts', () => {
       featureFlagContexts.addFeatureFlagEvaluation('feature', 'one')
       lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, {
         endClocks: relativeToClocks(10 as RelativeTime),
-      } as ViewEndedEvent)
+      })
       lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
         startClocks: relativeToClocks(10 as RelativeTime),
       } as ViewCreatedEvent)

@@ -30,8 +30,10 @@ export default ({
         : // Include a content hash in chunk names in production.
           `chunks/[name]-[contenthash]-${filename}`,
     path: path.resolve('./bundle'),
+    chunkFormat: 'module',
+    chunkLoading: 'import',
   },
-  target: ['web', 'es2018'],
+  target: ['web', 'es2020'],
   devtool: false,
   module: {
     rules: [
@@ -67,7 +69,7 @@ export default ({
       new TerserPlugin({
         extractComments: false,
         terserOptions: {
-          ecma: 2018,
+          ecma: 2020,
           module: true,
           compress: {
             passes: 4,

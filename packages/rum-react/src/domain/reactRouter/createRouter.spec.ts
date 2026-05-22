@@ -15,10 +15,6 @@ describe('createRouter', () => {
       let router: ReturnType<typeof createMemoryRouter>
 
       beforeEach(() => {
-        if (!window.AbortController) {
-          pending('createMemoryRouter relies on AbortController')
-        }
-
         startViewSpy = jasmine.createSpy()
         initializeReactPlugin({
           configuration: {

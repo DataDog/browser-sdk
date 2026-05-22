@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-rum-react",
-  "version": "6.32.0",
+  "version": "7.1.0",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
   "module": "esm/entries/main.js",
@@ -21,8 +21,8 @@
     "prepack": "yarn build"
   },
   "dependencies": {
-    "@datadog/browser-core": "6.32.0",
-    "@datadog/browser-rum-core": "6.32.0"
+    "@datadog/browser-core": "7.1.0",
+    "@datadog/browser-rum-core": "7.1.0"
   },
   "peerDependencies": {
     "@tanstack/react-router": ">=1.64.0 <2",
@@ -51,13 +51,13 @@
     }
   },
   "devDependencies": {
-    "@tanstack/react-router": "1.168.22",
+    "@tanstack/react-router": "1.169.2",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
-    "react": "19.2.5",
-    "react-dom": "19.2.5",
-    "react-router": "7.14.1",
-    "react-router-dom": "7.14.1",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "react-router": "7.15.0",
+    "react-router-dom": "7.15.0",
     "react-router-dom-6": "npm:react-router-dom@6.30.3"
   },
   "repository": {

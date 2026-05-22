@@ -2,6 +2,11 @@
 
 import type { BrowserConfiguration } from '../browsers.conf'
 
+// The ECMAScript version supported by the oldest browser in the list below (Chrome 63 → ES2017).
+// Used by tests that validate runtime-generated code strings (e.g. the expression compiler) which
+// bypass TypeScript/webpack transpilation and must only use syntax supported by all target browsers.
+export const OLDEST_BROWSER_ECMA_VERSION = 2017
+
 export const browserConfigurations: BrowserConfiguration[] = [
   {
     sessionName: 'Edge',
@@ -13,21 +18,21 @@ export const browserConfigurations: BrowserConfiguration[] = [
   {
     sessionName: 'Firefox',
     name: 'Firefox',
-    version: '67.0',
+    version: '78.0',
     os: 'Windows',
     osVersion: '11',
   },
   {
     sessionName: 'Safari desktop',
     name: 'Safari',
-    version: '12.1',
+    version: '14.0',
     os: 'OS X',
-    osVersion: 'Mojave',
+    osVersion: 'Big Sur',
   },
   {
     sessionName: 'Chrome desktop',
     name: 'Chrome',
-    version: '63.0',
+    version: '80.0',
     os: 'Windows',
     osVersion: '11',
   },

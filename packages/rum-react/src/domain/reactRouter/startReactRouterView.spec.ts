@@ -54,7 +54,7 @@ routerVersions.forEach(({ version, createMemoryRouter }) => {
           configuration: {},
         })
 
-        startReactRouterView([] as unknown as RouteMatchV6[] & RouteMatchV7[])
+        startReactRouterView([])
         expect(displayWarnSpy).toHaveBeenCalledOnceWith(
           '`router: true` is missing from the react plugin configuration, the view will not be tracked.'
         )
@@ -63,7 +63,7 @@ routerVersions.forEach(({ version, createMemoryRouter }) => {
 
     describe('computeViewName', () => {
       it('returns an empty string if there is no route match', () => {
-        expect(computeViewName([] as unknown as RouteMatchV6[] & RouteMatchV7[])).toBe('')
+        expect(computeViewName([])).toBe('')
       })
 
       it('ignores routes without a path', () => {

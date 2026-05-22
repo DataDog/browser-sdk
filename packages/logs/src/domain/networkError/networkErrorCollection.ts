@@ -1,9 +1,7 @@
-import type { FetchResolveContext, XhrCompleteContext } from '@datadog/browser-core'
+import type { FetchResolveContext, XhrCompleteContext, Observable, BufferedData } from '@datadog/browser-core'
 import {
-  isWorkerEnvironment,
-  Observable,
+  BufferedDataType,
   ErrorSource,
-  initXhrObservable,
   RequestType,
   initFetchObservable,
   computeStackTrace,
@@ -20,30 +18,30 @@ import type { LogsEventDomainContext } from '../../domainContext.types'
 import { LifeCycleEventType } from '../lifeCycle'
 import { StatusType } from '../logger/isAuthorized'
 
-export function startNetworkErrorCollection(configuration: LogsConfiguration, lifeCycle: LifeCycle) {
+export function startNetworkErrorCollection(
+  configuration: LogsConfiguration,
+  lifeCycle: LifeCycle,
+  bufferedDataObservable: Observable<BufferedData>
+) {
   if (!configuration.forwardErrorsToLogs) {
     return { stop: noop }
   }
 
-  // XHR is not available in web workers, so we use an empty observable that never emits
-  const xhrSubscription = (
-    isWorkerEnvironment ? new Observable<XhrCompleteContext>() : initXhrObservable(configuration)
-  ).subscribe((context) => {
-    if (context.state === 'complete') {
-      handleResponse(RequestType.XHR, context)
-    }
+  // Register responseBodyAction getter (no subscription needed)
+  initFetchObservable({
+    responseBodyAction: (context) => (isNetworkError(context) ? ResponseBodyAction.COLLECT : ResponseBodyAction.IGNORE),
   })
 
-  const fetchSubscription = initFetchObservable({
-    responseBodyAction: (context) => (isNetworkError(context) ? ResponseBodyAction.COLLECT : ResponseBodyAction.IGNORE),
-  }).subscribe((context) => {
-    if (context.state === 'resolve') {
-      handleResponse(RequestType.FETCH, context)
+  const subscription = bufferedDataObservable.subscribe(({ data, type }) => {
+    if (type === BufferedDataType.FETCH && data.state === 'resolve') {
+      handleResponse(RequestType.FETCH, data)
+    } else if (type === BufferedDataType.XHR && data.state === 'complete') {
+      handleResponse(RequestType.XHR, data)
     }
   })
 
   function isNetworkError(request: XhrCompleteContext | FetchResolveContext) {
-    return !isIntakeUrl(request.url) && (isRejected(request) || isServerError(request.status))
+    return !isIntakeUrl(request.url) && !request.isAborted && (isRejected(request) || isServerError(request.status))
   }
 
   function handleResponse(type: RequestType, request: XhrCompleteContext | FetchResolveContext) {
@@ -57,7 +55,6 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
         : request.responseBody || 'Failed to load'
 
     const domainContext: LogsEventDomainContext<typeof ErrorSource.NETWORK> = {
-      isAborted: request.isAborted,
       handlingStack: request.handlingStack,
     }
 
@@ -82,12 +79,7 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
     })
   }
 
-  return {
-    stop: () => {
-      xhrSubscription.unsubscribe()
-      fetchSubscription.unsubscribe()
-    },
-  }
+  return { stop: () => subscription.unsubscribe() }
 }
 
 function isRejected(request: { status: number; responseType?: string }) {

@@ -56,6 +56,37 @@ describe('event bridge send', () => {
   })
 })
 
+describe('event bridge getIsTraceSampled', () => {
+  it("should return true when the bridge returns 'true'", () => {
+    mockEventBridge({ isTraceSampled: true })
+    const eventBridge = getEventBridge()!
+
+    expect(eventBridge.getIsTraceSampled()).toBeTrue()
+  })
+
+  it("should return false when the bridge returns 'false'", () => {
+    mockEventBridge({ isTraceSampled: false })
+    const eventBridge = getEventBridge()!
+
+    expect(eventBridge.getIsTraceSampled()).toBeFalse()
+  })
+
+  it("should return null when the bridge returns 'null'", () => {
+    mockEventBridge()
+    ;(window as BrowserWindowWithEventBridge).DatadogEventBridge!.getIsTraceSampled = () => 'null'
+    const eventBridge = getEventBridge()!
+
+    expect(eventBridge.getIsTraceSampled()).toBeNull()
+  })
+
+  it('should return null when getIsTraceSampled is not present on the bridge', () => {
+    mockEventBridge()
+    const eventBridge = getEventBridge()!
+
+    expect(eventBridge.getIsTraceSampled()).toBeNull()
+  })
+})
+
 describe('event bridge getPrivacyLevel', () => {
   const bridgePrivacyLevel = DefaultPrivacyLevel.MASK
 

@@ -30,6 +30,7 @@ dev,@types/express,MIT,Copyright Microsoft Corporation
 dev,@types/jasmine,MIT,Copyright Microsoft Corporation
 dev,@types/node,MIT,Copyright Microsoft Corporation
 dev,@types/node-forge,MIT,Copyright Microsoft Corporation
+dev,@types/ws,MIT,Copyright Microsoft Corporation
 dev,@types/pako,MIT,Copyright Microsoft Corporation
 dev,@types/react,MIT,Copyright Microsoft Corporation
 dev,@types/react-dom,MIT,Copyright Microsoft Corporation
@@ -38,6 +39,7 @@ dev,@vitejs/plugin-react,MIT,Copyright (c) 2019-present Evan You & Vite Contribu
 dev,@vitejs/plugin-vue,MIT,Copyright (c) 2019-present, Yuxi (Evan) You and Vite contributors
 dev,@module-federation/enhanced,MIT, Copyright (c) 2020 ScriptedAlchemy LLC (Zack Jackson) Zhou Shaw (zhouxiao)
 dev,@vue/test-utils,MIT,Copyright (c) 2021-present vuejs
+dev,acorn,MIT,Copyright (C) 2012-2022 by various contributors (see AUTHORS)
 dev,ajv,MIT,Copyright 2015-2017 Evgeny Poberezkin
 dev,babel-loader,MIT,Copyright (c) 2014-2019 Luís Couto <hello@luiscouto.pt>
 dev,browserstack-local,MIT,Copyright 2016 BrowserStack
@@ -93,5 +95,6 @@ dev,vue-router,MIT,Copyright (c) 2019-present Eduardo San Martin Morote
 dev,webpack,MIT,Copyright JS Foundation and other contributors
 dev,webpack-cli,MIT,Copyright JS Foundation and other contributors
 dev,webpack-dev-middleware,MIT,Copyright JS Foundation and other contributors
+dev,ws,MIT,Copyright (c) 2011 Einar Otto Stangvik Copyright (c) 2013 Arnout Kazemier Copyright (c) 2016 Luigi Pinca and contributors
 dev,wxt,MIT,Copyright (c) 2023 Aaron
 dev,zone.js,MIT,Copyright (c) 2010-2024 Google LLC
