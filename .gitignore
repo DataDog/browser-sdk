@@ -17,6 +17,7 @@ generated-docs/
 .env*
 !.env.example
 .rum-ai-toolkit/
+.idea/
 
 # https://yarnpkg.com/getting-started/qa#which-files-should-be-gitignored
 .pnp.*

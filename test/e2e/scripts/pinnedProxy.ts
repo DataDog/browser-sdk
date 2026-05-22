@@ -64,6 +64,10 @@ httpServer.on('upgrade', (req, socket, head) => {
     // guid -> channel type, populated from server __create__ messages so we know how to
     // translate client commands like `Frame.waitForTimeout` based on the target object.
     const guidTypes = new Map<string, string>()
+    // Request guid -> URL, used to inject requestUrl into Route.fulfill for 1.40 compat.
+    const requestUrls = new Map<string, string>()
+    // Route guid -> Request guid, to look up the URL when Route.fulfill is called.
+    const routeRequestGuids = new Map<string, string>()
     let queueToUpstream: string[] = []
 
     upstreamWs.on('open', () => {
@@ -78,7 +82,7 @@ httpServer.on('upgrade', (req, socket, head) => {
       if (TRACE) {
         console.log('C->S', text.slice(0, 500))
       }
-      const rewritten = rewriteClientToServer(text, guidTypes)
+      const rewritten = rewriteClientToServer(text, guidTypes, routeRequestGuids, requestUrls)
       if (rewritten === null) {
         return
       }
@@ -94,7 +98,7 @@ httpServer.on('upgrade', (req, socket, head) => {
       if (TRACE) {
         console.log('S->C', text.slice(0, 800))
       }
-      const rewritten = rewriteServerToClient(text, guidTypes)
+      const rewritten = rewriteServerToClient(text, guidTypes, requestUrls, routeRequestGuids)
       if (rewritten === null) {
         return
       }
@@ -143,7 +147,12 @@ function forwardHeader(headers: http.IncomingHttpHeaders, name: string): Record<
 }
 
 // Server (1.40) -> Client (1.58)
-function rewriteServerToClient(text: string, guidTypes: Map<string, string>): string | null {
+function rewriteServerToClient(
+  text: string,
+  guidTypes: Map<string, string>,
+  requestUrls: Map<string, string>,
+  routeRequestGuids: Map<string, string>
+): string | null {
   let msg: JsonRpcMessage
   try {
     msg = JSON.parse(text) as JsonRpcMessage
@@ -156,6 +165,19 @@ function rewriteServerToClient(text: string, guidTypes: Map<string, string>): st
       guidTypes.set(msg.params.guid, type)
     }
     const init = msg.params.initializer || {}
+    // Track Request URL so Route.fulfill can inject requestUrl for 1.40 compat.
+    if (type === 'Request' && msg.params.guid && typeof init.url === 'string') {
+      requestUrls.set(msg.params.guid, init.url)
+    }
+    // Track Route -> Request guid association.
+    if (
+      type === 'Route' &&
+      msg.params.guid &&
+      init.request &&
+      typeof (init.request as { guid?: string }).guid === 'string'
+    ) {
+      routeRequestGuids.set(msg.params.guid, (init.request as { guid: string }).guid)
+    }
     // Selectors channel was removed; drop the __create__ and strip references from Playwright.
     if (type === 'Selectors') {
       return null
@@ -177,7 +199,12 @@ function rewriteServerToClient(text: string, guidTypes: Map<string, string>): st
 }
 
 // Client (1.58) -> Server (1.40)
-function rewriteClientToServer(text: string, guidTypes: Map<string, string>): string | null {
+function rewriteClientToServer(
+  text: string,
+  guidTypes: Map<string, string>,
+  routeRequestGuids: Map<string, string>,
+  requestUrls: Map<string, string>
+): string | null {
   let msg: JsonRpcMessage
   try {
     msg = JSON.parse(text) as JsonRpcMessage
@@ -227,6 +254,13 @@ function rewriteClientToServer(text: string, guidTypes: Map<string, string>): st
   }
   if (type && noWaitAfterMethods[type]?.has(msg.method) && params.noWaitAfter === undefined) {
     params.noWaitAfter = false
+  }
+
+  // Route.fulfill: 1.40 required `requestUrl: string` (used for CORS header injection);
+  // 1.58 dropped it. Inject the URL of the intercepted request to satisfy the validator.
+  if (type === 'Route' && msg.method === 'fulfill' && params.requestUrl === undefined) {
+    const reqGuid = msg.guid ? routeRequestGuids.get(msg.guid) : undefined
+    params.requestUrl = (reqGuid ? requestUrls.get(reqGuid) : undefined) ?? ''
   }
 
   msg.params = params

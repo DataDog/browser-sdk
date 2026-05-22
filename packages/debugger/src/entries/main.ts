@@ -6,18 +6,15 @@
  * @see [Live Debugger Documentation](https://docs.datadoghq.com/tracing/live_debugger/)
  */
 
-import { defineGlobal, getGlobalObject, makePublicApi } from '@datadog/browser-core'
+import { defineGlobal, display, getGlobalObject, makePublicApi, mockable } from '@datadog/browser-core'
 import type { PublicApi, Site } from '@datadog/browser-core'
-import { onEntry, onReturn, onThrow, initDebuggerTransport } from '../domain/api'
+import { initDebuggerTransport, onEntry, onReturn, onThrow } from '../domain/api'
 import { startDeliveryApiPolling } from '../domain/deliveryApi'
 import { getProbes } from '../domain/probes'
 import { startDebuggerBatch } from '../transport/startDebuggerBatch'
 
-type DebuggerInstrumentationGlobal = typeof globalThis & {
-  $dd_entry?: typeof onEntry
-  $dd_return?: typeof onReturn
-  $dd_throw?: typeof onThrow
-  $dd_probes?: typeof getProbes
+export interface DebuggerBuildMetadata {
+  version?: string
 }
 
 /**
@@ -93,6 +90,22 @@ export interface DebuggerInitConfiguration {
   maxNonSnapshotsPerSecondPerProbe?: number
 
   /**
+   * Maximum number of snapshot events a single probe version can send during the page lifetime
+   *
+   * @category Data Collection
+   * @defaultValue 1000
+   */
+  maxSnapshotsPerProbeLifetime?: number
+
+  /**
+   * Maximum number of non-snapshot events a single probe version can send during the page lifetime
+   *
+   * @category Data Collection
+   * @defaultValue 50000
+   */
+  maxNonSnapshotsPerProbeLifetime?: number
+
+  /**
    * A proxy URL for routing SDK requests. When set, delivery API requests are
    * sent to `{proxy}/api/unstable/debugger/frontend/probes` instead of the
    * default Datadog API host derived from `site`.
@@ -120,10 +133,36 @@ export interface DatadogDebugger extends PublicApi {
    *   service: 'my-app',
    *   site: 'datadoghq.com',
    *   env: 'production'
+   *   version: 'my-deployed-build-version',
    * })
    * ```
    */
   init: (initConfiguration: DebuggerInitConfiguration) => void
+}
+
+export interface BrowserWindow extends Window {
+  DD_DEBUGGER?: DatadogDebugger
+  __DD_LIVE_DEBUGGER_BUILD__?: DebuggerBuildMetadata
+  $dd_entry?: typeof onEntry
+  $dd_return?: typeof onReturn
+  $dd_throw?: typeof onThrow
+  $dd_probes?: typeof getProbes
+}
+
+function resolveDebuggerVersion(initConfiguration: DebuggerInitConfiguration): string | undefined {
+  const buildVersion = getGlobalObject<BrowserWindow>().__DD_LIVE_DEBUGGER_BUILD__?.version
+
+  if (
+    initConfiguration.version !== undefined &&
+    buildVersion !== undefined &&
+    initConfiguration.version !== buildVersion
+  ) {
+    display.warn(
+      `Debugger: init version "${initConfiguration.version}" does not match the build-plugin version "${buildVersion}". Using the init version.`
+    )
+  }
+
+  return initConfiguration.version ?? buildVersion
 }
 
 /**
@@ -132,27 +171,30 @@ export interface DatadogDebugger extends PublicApi {
 function makeDebuggerPublicApi(): DatadogDebugger {
   return makePublicApi<DatadogDebugger>({
     init: (initConfiguration: DebuggerInitConfiguration) => {
-      // Initialize debugger's own transport
-      const batch = startDebuggerBatch(initConfiguration)
-      initDebuggerTransport(initConfiguration, batch)
-
-      // Expose internal hooks on globalThis for instrumented code
-      if (typeof globalThis !== 'undefined') {
-        const debuggerGlobal = globalThis as DebuggerInstrumentationGlobal
-        debuggerGlobal.$dd_entry = onEntry
-        debuggerGlobal.$dd_return = onReturn
-        debuggerGlobal.$dd_throw = onThrow
-        debuggerGlobal.$dd_probes = getProbes
+      const resolvedConfiguration = {
+        ...initConfiguration,
+        version: resolveDebuggerVersion(initConfiguration),
       }
 
-      startDeliveryApiPolling({
-        service: initConfiguration.service,
-        clientToken: initConfiguration.clientToken,
-        site: initConfiguration.site,
-        proxy: initConfiguration.proxy,
-        env: initConfiguration.env,
-        version: initConfiguration.version,
-        pollInterval: initConfiguration.pollInterval,
+      // Initialize debugger's own transport
+      const batch = mockable(startDebuggerBatch)(resolvedConfiguration)
+      mockable(initDebuggerTransport)(resolvedConfiguration, batch)
+
+      // Expose internal hooks on globalThis for instrumented code
+      const debuggerGlobal = getGlobalObject<BrowserWindow>()
+      debuggerGlobal.$dd_entry = onEntry
+      debuggerGlobal.$dd_return = onReturn
+      debuggerGlobal.$dd_throw = onThrow
+      debuggerGlobal.$dd_probes = getProbes
+
+      mockable(startDeliveryApiPolling)({
+        service: resolvedConfiguration.service,
+        clientToken: resolvedConfiguration.clientToken,
+        site: resolvedConfiguration.site,
+        proxy: resolvedConfiguration.proxy,
+        env: resolvedConfiguration.env,
+        version: resolvedConfiguration.version,
+        pollInterval: resolvedConfiguration.pollInterval,
       })
     },
   })
@@ -166,9 +208,5 @@ function makeDebuggerPublicApi(): DatadogDebugger {
  * @see [Live Debugger Documentation](https://docs.datadoghq.com/tracing/live_debugger/)
  */
 export const datadogDebugger = makeDebuggerPublicApi()
-
-export interface BrowserWindow extends Window {
-  DD_DEBUGGER?: DatadogDebugger
-}
 
 defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_DEBUGGER', datadogDebugger)

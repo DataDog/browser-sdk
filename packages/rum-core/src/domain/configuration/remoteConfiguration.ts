@@ -6,6 +6,7 @@ import {
   getCookie,
   addTelemetryMetrics,
   TelemetryMetrics,
+  monitorError,
   isIndexableObject,
   fetch,
 } from '@datadog/browser-core'
@@ -13,6 +14,7 @@ import { extractRegexMatch } from '../extractRegexMatch'
 import type { RumInitConfiguration } from './configuration'
 import type { RumSdkConfig, DynamicOption, ContextItem } from './remoteConfiguration.types'
 import { parseJsonPath } from './jsonPathParser'
+import { CACHE_STATUS_TO_METRIC_MAP, createConfigurationCache } from './remoteConfigurationCache'
 
 export type RemoteConfiguration = RumSdkConfig
 export type RumRemoteConfiguration = Exclude<RemoteConfiguration['rum'], undefined>
@@ -44,6 +46,7 @@ interface SupportedContextManagers {
 
 export interface RemoteConfigurationMetrics extends Context {
   fetch: RemoteConfigurationMetricCounters
+  cache?: RemoteConfigurationMetricCounters
   cookie?: RemoteConfigurationMetricCounters
   dom?: RemoteConfigurationMetricCounters
   js?: RemoteConfigurationMetricCounters
@@ -244,7 +247,10 @@ export function initMetrics() {
   const metrics: RemoteConfigurationMetrics = { fetch: {} }
   return {
     get: () => metrics,
-    increment: (metricName: 'fetch' | DynamicOption['strategy'], type: keyof RemoteConfigurationMetricCounters) => {
+    increment: (
+      metricName: 'fetch' | 'cache' | DynamicOption['strategy'],
+      type: keyof RemoteConfigurationMetricCounters
+    ) => {
       if (!metrics[metricName]) {
         metrics[metricName] = {}
       }
@@ -306,9 +312,62 @@ export async function fetchRemoteConfiguration(
   }
 }
 
+export function getRemoteConfigurationId(configuration: RumInitConfiguration): string | undefined {
+  return configuration.remoteConfiguration?.id ?? configuration.remoteConfigurationId
+}
+
 export function buildEndpoint(configuration: RumInitConfiguration) {
   if (configuration.remoteConfigurationProxy) {
     return configuration.remoteConfigurationProxy
   }
-  return `https://sdk-configuration.${buildEndpointHost(configuration)}/${REMOTE_CONFIGURATION_VERSION}/${encodeURIComponent(configuration.remoteConfigurationId!)}.json`
+  const id = getRemoteConfigurationId(configuration)!
+  return `https://sdk-configuration.${buildEndpointHost(configuration)}/${REMOTE_CONFIGURATION_VERSION}/${encodeURIComponent(id)}.json`
+}
+
+function doBackgroundCacheSync(
+  initConfiguration: RumInitConfiguration,
+  cache: ReturnType<typeof createConfigurationCache>,
+  metrics: ReturnType<typeof initMetrics>
+) {
+  fetchRemoteConfiguration(initConfiguration)
+    .then((fetchResult) => {
+      if (!fetchResult.ok) {
+        metrics.increment('fetch', 'failure')
+        display.error(fetchResult.error)
+      } else {
+        metrics.increment('fetch', 'success')
+        cache.write(fetchResult.value)
+      }
+    })
+    .catch(monitorError)
+    .finally(() => {
+      // monitor-until: forever
+      addTelemetryMetrics(TelemetryMetrics.REMOTE_CONFIGURATION_METRIC_NAME, { metrics: metrics.get() })
+    })
+}
+
+export function getRemoteConfiguration(
+  initConfiguration: RumInitConfiguration,
+  supportedContextManagers: SupportedContextManagers
+): RumInitConfiguration | undefined {
+  const configurationCache = createConfigurationCache({
+    remoteConfigurationId: getRemoteConfigurationId(initConfiguration)!,
+  })
+  const metrics = initMetrics()
+
+  const cacheResult = configurationCache.read()
+
+  metrics.increment('cache', CACHE_STATUS_TO_METRIC_MAP[cacheResult.status])
+
+  doBackgroundCacheSync(initConfiguration, configurationCache, metrics)
+
+  if (cacheResult.status === 'hit') {
+    return applyRemoteConfiguration(initConfiguration, cacheResult.config, supportedContextManagers, metrics)
+  }
+
+  if (initConfiguration.remoteConfiguration?.required) {
+    return
+  }
+
+  return initConfiguration
 }
