@@ -4,6 +4,7 @@ import type {
   RumErrorEvent,
   RumResourceEvent,
   RumViewEvent,
+  RumViewUpdateEvent,
   RumVitalEvent,
   RumLongTaskEvent,
 } from '@datadog/browser-rum'
@@ -197,7 +198,7 @@ function isRumViewEvent(event: RumEvent): event is RumViewEvent {
   return event.type === 'view'
 }
 
-function isRumViewUpdateEvent(event: RumEvent): boolean {
+function isRumViewUpdateEvent(event: RumEvent): event is RumViewUpdateEvent {
   return (event.type as string) === 'view_update'
 }
 
