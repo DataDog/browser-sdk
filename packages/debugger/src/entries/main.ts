@@ -106,6 +106,20 @@ export interface DebuggerInitConfiguration {
   maxNonSnapshotsPerProbeLifetime?: number
 
   /**
+   * Maximum duration, in milliseconds, that the Delivery API may stay
+   * unreachable (network errors or 5xx responses) before the Live Debugger
+   * SDK automatically and permanently disables itself for the rest of the
+   * page lifetime. Short network glitches under this threshold are
+   * tolerated transparently.
+   *
+   * Must be a positive finite number; otherwise the default is used.
+   *
+   * @category Delivery API
+   * @defaultValue 300000
+   */
+  maxUnreachableDuration?: number
+
+  /**
    * A proxy URL for routing SDK requests. When set, delivery API requests are
    * sent to `{proxy}/api/unstable/debugger/frontend/probes` instead of the
    * default Datadog API host derived from `site`.
@@ -195,6 +209,7 @@ function makeDebuggerPublicApi(): DatadogDebugger {
         env: resolvedConfiguration.env,
         version: resolvedConfiguration.version,
         pollInterval: resolvedConfiguration.pollInterval,
+        maxUnreachableDuration: resolvedConfiguration.maxUnreachableDuration,
       })
     },
   })
