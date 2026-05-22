@@ -165,21 +165,8 @@ async function buildReactRouterv7App() {
     content
       .replace('@datadog/browser-rum-react/react-router-v6', '@datadog/browser-rum-react/react-router-v7')
       .replace("from 'react-router-dom'", "from 'react-router'")
-      // Inject a loader that throws synchronously when ?test-loader-error is present,
-      // and an onError marker on RouterProvider. Used by the regression test for #4657.
-      .replace(
-        /({\s*index: true,\s*Component: HomePage,\s*},)/,
-        `{
-        index: true,
-        loader: ({ request }: { request: Request }) => {
-          if (new URL(request.url).searchParams.has('test-loader-error')) {
-            throw new Error('Synchronous loader error')
-          }
-          return null
-        },
-        Component: HomePage,
-      },`
-      )
+      // Add an onError marker on RouterProvider — v7-only prop, exercised by the
+      // regression test for https://github.com/DataDog/browser-sdk/issues/4657.
       .replace(
         /<RouterProvider router={router} \/>/,
         `<RouterProvider
