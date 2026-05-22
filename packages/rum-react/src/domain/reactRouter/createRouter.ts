@@ -1,5 +1,5 @@
 import { startReactRouterView } from './startReactRouterView'
-import type { AnyCreateRouter } from './types'
+import type { AnyCreateRouter, AnyRouterSubscriberOpts } from './types'
 
 export function wrapCreateRouter<CreateRouter extends AnyCreateRouter<any>>(
   originalCreateRouter: CreateRouter
@@ -9,24 +9,20 @@ export function wrapCreateRouter<CreateRouter extends AnyCreateRouter<any>>(
     let location = router.state.location.pathname
 
     // We subscribe before RouterProvider, so initial loader-error notifications
-    // reach us instead of it (consuming the react-router ≥7.15.1 one-shot buffer,
-    // or arriving before RouterProvider's deferred useLayoutEffect). Forward the
-    // first such notification to the next subscriber so RouterProvider's onError
-    // still fires.
-    let hasForwardedInitialErrors = false
+    // reach us instead of it — either via react-router ≥7.15.1's one-shot
+    // buffer replay (sync) or as a regular broadcast before RouterProvider's
+    // deferred useLayoutEffect (async). Capture any such error and replay it
+    // to the next subscriber so RouterProvider's onError still fires.
+    // The next-subscriber patch is installed eagerly so a single flag
+    // (hasNextSubscriberAttached) reliably tells us whether an incoming error
+    // is pre- or post-RouterProvider — only pre-RouterProvider errors are
+    // captured, avoiding duplicate onError on later resubscribes.
+    let pendingInitialError: { state: typeof router.state; opts: AnyRouterSubscriberOpts } | null = null
+    let hasNextSubscriberAttached = false
 
     router.subscribe((routerState, opts) => {
-      if (opts?.newErrors && !hasForwardedInitialErrors) {
-        hasForwardedInitialErrors = true
-        const capturedState = routerState
-        const capturedOpts = opts
-        const originalSubscribe = router.subscribe.bind(router)
-        router.subscribe = (fn) => {
-          router.subscribe = originalSubscribe
-          const unsubscribe = originalSubscribe(fn)
-          fn(capturedState, capturedOpts)
-          return unsubscribe
-        }
+      if (opts?.newErrors && !hasNextSubscriberAttached) {
+        pendingInitialError = { state: routerState, opts }
       }
       const newPathname = routerState.location.pathname
       if (location !== newPathname) {
@@ -34,6 +30,19 @@ export function wrapCreateRouter<CreateRouter extends AnyCreateRouter<any>>(
         location = newPathname
       }
     })
+
+    const originalSubscribe = router.subscribe.bind(router)
+    router.subscribe = (fn) => {
+      hasNextSubscriberAttached = true
+      router.subscribe = originalSubscribe
+      const unsubscribe = originalSubscribe(fn)
+      if (pendingInitialError) {
+        fn(pendingInitialError.state, pendingInitialError.opts)
+        pendingInitialError = null
+      }
+      return unsubscribe
+    }
+
     startReactRouterView(router.state.matches)
     return router
   }) as CreateRouter

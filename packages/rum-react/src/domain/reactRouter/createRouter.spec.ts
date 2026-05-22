@@ -109,7 +109,7 @@ describe('wrapCreateRouter — initial error forwarding', () => {
     expect(spy).toHaveBeenCalledOnceWith(fakeRouter.state, errorOpts)
   })
 
-  it('forwards an async newErrors notification', () => {
+  it('forwards an async newErrors notification that fires before the next subscriber attaches', () => {
     const { fakeRouter, notify } = buildFakeRouter()
     notify(errorOpts)
     const spy = jasmine.createSpy<AnyRouterSubscriber>()
@@ -125,14 +125,33 @@ describe('wrapCreateRouter — initial error forwarding', () => {
     expect(spy).not.toHaveBeenCalled()
   })
 
-  it('forwards only once — subsequent error navigations are not replayed', () => {
-    const { fakeRouter, notify } = buildFakeRouter(errorOpts)
-    const firstSpy = jasmine.createSpy<AnyRouterSubscriber>()
-    fakeRouter.subscribe(firstSpy)
-    notify(errorOpts)
-    const secondSpy = jasmine.createSpy<AnyRouterSubscriber>()
-    fakeRouter.subscribe(secondSpy)
-    expect(firstSpy).toHaveBeenCalledTimes(1)
-    expect(secondSpy).not.toHaveBeenCalled()
+  it('does not replay errors that arrive after the next subscriber attached', () => {
+    // No initial buffered error. RouterProvider subscribes, then a navigation
+    // error fires and is broadcast to all subscribers — RouterProvider gets it
+    // directly. A later resubscribe (e.g. RouterProvider's setState identity
+    // changes when an inline onError prop changes) must NOT receive a stale
+    // replay, otherwise onError would fire twice for the same error.
+    const subscribers: AnyRouterSubscriber[] = []
+    const fakeRouter: AnyRouter = {
+      state: { location: { pathname: '/foo' }, matches: [] },
+      subscribe(fn) {
+        subscribers.push(fn)
+        return noop
+      },
+    }
+    wrapCreateRouter((_r: unknown[], _o?: unknown) => fakeRouter)([], {})
+
+    const routerProvider = jasmine.createSpy<AnyRouterSubscriber>()
+    fakeRouter.subscribe(routerProvider)
+
+    // Broadcast as react-router would for a post-mount navigation error
+    for (const sub of [...subscribers]) {
+      sub(fakeRouter.state, errorOpts)
+    }
+    expect(routerProvider).toHaveBeenCalledTimes(1)
+
+    const resubscribed = jasmine.createSpy<AnyRouterSubscriber>()
+    fakeRouter.subscribe(resubscribed)
+    expect(resubscribed).not.toHaveBeenCalled()
   })
 })
