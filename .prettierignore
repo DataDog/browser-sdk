@@ -13,3 +13,6 @@ yarn.lock
 /generated-docs
 /developer-extension/.output
 /developer-extension/.wxt
+
+# Symlinks (prettier would otherwise resolve and overwrite the target file or replace the symlink with a regular file)
+/packages/rum-slim/BROWSER_SUPPORT.md
