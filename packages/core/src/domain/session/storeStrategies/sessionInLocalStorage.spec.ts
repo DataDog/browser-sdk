@@ -28,7 +28,7 @@ describe('LocalStorage SessionStoreStrategy', () => {
 
   describe('setSessionState', () => {
     it('should read current state from localStorage, apply fn, and write back', () => {
-      void strategy.setSessionState((state) => ({ ...state, id: 'test-id' }))
+      void strategy.setSessionState((state) => ({ ...state, id: 'test-id' }), 'updateState')
       expect(localStorage.getItem(SESSION_STORE_KEY)).toContain('id=test-id')
     })
 
@@ -36,7 +36,7 @@ describe('LocalStorage SessionStoreStrategy', () => {
       void strategy.setSessionState((state) => {
         expect(state).toEqual({})
         return { ...state, id: 'new-id' }
-      })
+      }, 'updateState')
     })
 
     it('should read existing state from localStorage', () => {
@@ -45,7 +45,7 @@ describe('LocalStorage SessionStoreStrategy', () => {
       void strategy.setSessionState((state) => {
         expect(state.id).toBe('existing')
         return { ...state, expire: '999' }
-      })
+      }, 'updateState')
     })
 
     it('should notify sessionObservable after write', async () => {
@@ -53,7 +53,7 @@ describe('LocalStorage SessionStoreStrategy', () => {
       const subscription = strategy.sessionObservable.subscribe(spy)
       registerCleanupTask(() => subscription.unsubscribe())
 
-      await strategy.setSessionState((state) => ({ ...state, id: 'test-id' }))
+      await strategy.setSessionState((state) => ({ ...state, id: 'test-id' }), 'updateState')
 
       expect(spy).toHaveBeenCalledOnceWith(
         jasmine.objectContaining({ sessionState: jasmine.objectContaining({ id: 'test-id' }) })
@@ -104,7 +104,7 @@ describe('LocalStorage SessionStoreStrategy', () => {
       await strategy.setSessionState((state) => {
         capturedState = state
         return state
-      })
+      }, 'updateState')
 
       expect(capturedState!.id).toBe('legacy-id')
       expect(capturedState!.created).toBe('123')
@@ -118,7 +118,7 @@ describe('LocalStorage SessionStoreStrategy', () => {
       await strategy.setSessionState((state) => {
         capturedState = state
         return state
-      })
+      }, 'updateState')
 
       expect(capturedState!.id).toBe('new-id')
     })
@@ -127,7 +127,7 @@ describe('LocalStorage SessionStoreStrategy', () => {
       localStorage.setItem(LEGACY_SESSION_STORE_KEY, 'id=legacy-id')
 
       // First call triggers migration
-      await strategy.setSessionState((state) => state)
+      await strategy.setSessionState((state) => state, 'updateState')
 
       // Clear the new key to simulate empty state
       localStorage.removeItem(SESSION_STORE_KEY)
@@ -137,7 +137,7 @@ describe('LocalStorage SessionStoreStrategy', () => {
       await strategy.setSessionState((state) => {
         capturedState = state
         return state
-      })
+      }, 'updateState')
 
       expect(capturedState).toEqual({})
     })

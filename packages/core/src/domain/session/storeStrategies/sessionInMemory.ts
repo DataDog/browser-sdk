@@ -3,7 +3,12 @@ import { Observable } from '../../../tools/observable'
 import { shallowClone } from '../../../tools/utils/objectUtils'
 import { SessionPersistence } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
-import type { SessionStoreStrategy, SessionStoreStrategyType, SessionObservableEvent } from './sessionStoreStrategy'
+import type {
+  SessionStateOperation,
+  SessionStoreStrategy,
+  SessionStoreStrategyType,
+  SessionObservableEvent,
+} from './sessionStoreStrategy'
 
 export const MEMORY_SESSION_STORE_KEY = '_DD_SESSION'
 
@@ -40,7 +45,10 @@ export function initMemorySessionStoreStrategy(): SessionStoreStrategy {
   }
 
   return {
-    async setSessionState(fn: (sessionState: SessionState) => SessionState): Promise<void> {
+    async setSessionState(
+      fn: (sessionState: SessionState) => SessionState,
+      _operation: SessionStateOperation
+    ): Promise<void> {
       const currentState = memorySession.state ?? {}
       const newState = shallowClone(fn(currentState))
       memorySession.state = newState

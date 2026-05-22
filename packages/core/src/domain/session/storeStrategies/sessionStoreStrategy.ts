@@ -16,7 +16,17 @@ export interface SessionObservableEvent {
   sessionState: SessionState
 }
 
+export type SessionStateOperation =
+  | 'initialize'
+  | 'expandOrRenewOnActivity'
+  | 'expandOrRenewOnConsent'
+  | 'expandOnVisibility'
+  | 'initializeOnResume'
+  | 'expireOnTimeout'
+  | 'expire'
+  | 'updateState'
+
 export interface SessionStoreStrategy {
-  setSessionState(fn: (sessionState: SessionState) => SessionState): Promise<void>
+  setSessionState(fn: (sessionState: SessionState) => SessionState, operation: SessionStateOperation): Promise<void>
   sessionObservable: Observable<SessionObservableEvent>
 }
