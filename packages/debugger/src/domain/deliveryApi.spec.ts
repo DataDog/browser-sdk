@@ -311,6 +311,170 @@ describe('deliveryApi', () => {
       expect(fetchSpy).toHaveBeenCalledTimes(1)
     })
   })
+
+  describe('circuit breaker', () => {
+    const FIVE_MINUTES_MS = 5 * 60 * 1000
+    const POLL_INTERVAL_MS = 5000
+
+    function respondWithNetworkError() {
+      fetchSpy.and.returnValue(Promise.reject(new Error('network error')))
+    }
+
+    async function tickAndFlush(ms: number) {
+      clock.tick(ms)
+      await flushPromises()
+    }
+
+    it('should keep polling while failures last less than five minutes', async () => {
+      respondWithNetworkError()
+      startDeliveryApiPolling(makeConfig({ pollInterval: POLL_INTERVAL_MS }))
+      await flushPromises()
+
+      // Just shy of five minutes of continuous failures.
+      const ticks = Math.floor((FIVE_MINUTES_MS - POLL_INTERVAL_MS) / POLL_INTERVAL_MS)
+      for (let i = 0; i < ticks; i++) {
+        await tickAndFlush(POLL_INTERVAL_MS)
+      }
+
+      const callsBefore = fetchSpy.calls.count()
+      await tickAndFlush(POLL_INTERVAL_MS)
+      expect(fetchSpy.calls.count()).toBe(callsBefore + 1)
+    })
+
+    it('should stop polling after five minutes of continuous network failures', async () => {
+      respondWithNetworkError()
+      startDeliveryApiPolling(makeConfig({ pollInterval: POLL_INTERVAL_MS }))
+      await flushPromises()
+
+      // Run for slightly over five minutes of continuous failures.
+      const ticks = Math.ceil(FIVE_MINUTES_MS / POLL_INTERVAL_MS) + 1
+      for (let i = 0; i < ticks; i++) {
+        await tickAndFlush(POLL_INTERVAL_MS)
+      }
+
+      const callsAtTrip = fetchSpy.calls.count()
+      await tickAndFlush(POLL_INTERVAL_MS * 10)
+      expect(fetchSpy.calls.count()).toBe(callsAtTrip)
+    })
+
+    it('should stop polling after five minutes of continuous 5xx responses', async () => {
+      respondWith({}, 500)
+      startDeliveryApiPolling(makeConfig({ pollInterval: POLL_INTERVAL_MS }))
+      await flushPromises()
+
+      const ticks = Math.ceil(FIVE_MINUTES_MS / POLL_INTERVAL_MS) + 1
+      for (let i = 0; i < ticks; i++) {
+        await tickAndFlush(POLL_INTERVAL_MS)
+      }
+
+      const callsAtTrip = fetchSpy.calls.count()
+      await tickAndFlush(POLL_INTERVAL_MS * 10)
+      expect(fetchSpy.calls.count()).toBe(callsAtTrip)
+    })
+
+    it('should treat 4xx responses as a config issue and trip immediately', async () => {
+      respondWith({}, 403)
+      startDeliveryApiPolling(makeConfig({ pollInterval: POLL_INTERVAL_MS }))
+      await flushPromises()
+
+      // No grace period for 4xx - the next tick should not poll.
+      expect(fetchSpy).toHaveBeenCalledTimes(1)
+      await tickAndFlush(POLL_INTERVAL_MS * 10)
+      expect(fetchSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('should reset the failure window after a successful response', async () => {
+      respondWithNetworkError()
+      startDeliveryApiPolling(makeConfig({ pollInterval: POLL_INTERVAL_MS }))
+      await flushPromises()
+
+      // Almost five minutes of failures.
+      await tickAndFlush(FIVE_MINUTES_MS - POLL_INTERVAL_MS)
+
+      // One success resets the window.
+      respondWith({ nextCursor: '', updates: [], deletions: [] })
+      await tickAndFlush(POLL_INTERVAL_MS)
+
+      // Back to failing - should get a fresh 5-minute window.
+      respondWithNetworkError()
+      await tickAndFlush(FIVE_MINUTES_MS - POLL_INTERVAL_MS)
+
+      const callsBefore = fetchSpy.calls.count()
+      await tickAndFlush(POLL_INTERVAL_MS)
+      expect(fetchSpy.calls.count()).toBe(callsBefore + 1)
+    })
+
+    it('should clear active probes when tripping', async () => {
+      respondWith({
+        nextCursor: 'cursor-1',
+        updates: [makeProbe({ id: 'probe-1', version: 1 })],
+        deletions: [],
+      })
+      startDeliveryApiPolling(makeConfig({ pollInterval: POLL_INTERVAL_MS }))
+      await flushPromises()
+      expect(getProbes('test.js;testMethod')).toBeDefined()
+
+      respondWithNetworkError()
+      const ticks = Math.ceil(FIVE_MINUTES_MS / POLL_INTERVAL_MS) + 1
+      for (let i = 0; i < ticks; i++) {
+        await tickAndFlush(POLL_INTERVAL_MS)
+      }
+
+      expect(getProbes('test.js;testMethod')).toBeUndefined()
+    })
+
+    it('should honor a configured maxUnreachableDuration', async () => {
+      const customWindow = 30_000
+      respondWithNetworkError()
+      startDeliveryApiPolling(makeConfig({ pollInterval: POLL_INTERVAL_MS, maxUnreachableDuration: customWindow }))
+      await flushPromises()
+
+      // Just shy of the custom window - should still be polling.
+      const ticks = Math.floor((customWindow - POLL_INTERVAL_MS) / POLL_INTERVAL_MS)
+      for (let i = 0; i < ticks; i++) {
+        await tickAndFlush(POLL_INTERVAL_MS)
+      }
+      const callsBeforeTrip = fetchSpy.calls.count()
+      await tickAndFlush(POLL_INTERVAL_MS)
+      expect(fetchSpy.calls.count()).toBe(callsBeforeTrip + 1)
+
+      // One more tick past the custom window should trip and stop polling.
+      await tickAndFlush(POLL_INTERVAL_MS)
+      const callsAtTrip = fetchSpy.calls.count()
+      await tickAndFlush(POLL_INTERVAL_MS * 10)
+      expect(fetchSpy.calls.count()).toBe(callsAtTrip)
+    })
+
+    it('should fall back to the default maxUnreachableDuration when option is invalid', async () => {
+      respondWithNetworkError()
+      startDeliveryApiPolling(
+        // -1 is invalid; should be ignored and the 5-minute default used.
+        makeConfig({ pollInterval: POLL_INTERVAL_MS, maxUnreachableDuration: -1 })
+      )
+      await flushPromises()
+
+      // Way past any "reasonable" misinterpretation - if -1 were honored,
+      // polling would have already stopped. Confirm we're still polling at 30s.
+      await tickAndFlush(30_000)
+      const callsBefore = fetchSpy.calls.count()
+      await tickAndFlush(POLL_INTERVAL_MS)
+      expect(fetchSpy.calls.count()).toBe(callsBefore + 1)
+    })
+
+    it('should warn when tripping', async () => {
+      const warnSpy = spyOn(display, 'warn')
+      respondWithNetworkError()
+      startDeliveryApiPolling(makeConfig({ pollInterval: POLL_INTERVAL_MS }))
+      await flushPromises()
+
+      const ticks = Math.ceil(FIVE_MINUTES_MS / POLL_INTERVAL_MS) + 1
+      for (let i = 0; i < ticks; i++) {
+        await tickAndFlush(POLL_INTERVAL_MS)
+      }
+
+      expect(warnSpy).toHaveBeenCalledWith(jasmine.stringMatching(/circuit breaker/i))
+    })
+  })
 })
 
 async function flushPromises() {
