@@ -66,7 +66,7 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
       if (typeof navigator !== 'undefined' && navigator.locks) {
         await navigator.locks
           .request(SESSION_STORE_KEY, () => applyAndWrite(fn))
-          .catch( async (error) => {
+          .catch(async (error) => {
             const context: Context = {
               strategy: configuration.sessionStoreStrategyType?.type,
               timeSinceInit: dateNow() - initTimestamp,
@@ -74,7 +74,7 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
               hidden: document.hidden,
               cookieStoreSupported: 'cookieStore' in window,
               cookies: document.cookie,
-              cookieStore: (await cookieStore.getAll()).map((value) => value as Context)
+              cookieStore: (await cookieStore.getAll()).map((value) => value as Context),
             }
             addTelemetryError(new Error(`Error while expanding or renewing session on activity: ${error}`), context)
             throw error
