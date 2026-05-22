@@ -383,6 +383,44 @@ describe('deliveryApi', () => {
       expect(fetchSpy).toHaveBeenCalledTimes(1)
     })
 
+    // 408 (Request Timeout) and 429 (Too Many Requests) are 4xx statuses that
+    // are nevertheless expected to recover on their own - the request just took
+    // too long, or the client/proxy is temporarily rate-limited. They should
+    // follow the same transient-failure path as 5xx rather than trip the breaker
+    // on a single response. This matches core's transport retry predicate
+    // (`shouldRetryRequest` in `sendWithRetryStrategy.ts`).
+    for (const status of [408, 429]) {
+      it(`should treat ${status} as a transient failure rather than tripping immediately`, async () => {
+        respondWith({}, status)
+        startDeliveryApiPolling(makeConfig({ pollInterval: POLL_INTERVAL_MS }))
+        await flushPromises()
+
+        // Just shy of five minutes of continuous failures - should still be polling.
+        const ticks = Math.floor((FIVE_MINUTES_MS - POLL_INTERVAL_MS) / POLL_INTERVAL_MS)
+        for (let i = 0; i < ticks; i++) {
+          await tickAndFlush(POLL_INTERVAL_MS)
+        }
+        const callsBefore = fetchSpy.calls.count()
+        await tickAndFlush(POLL_INTERVAL_MS)
+        expect(fetchSpy.calls.count()).toBe(callsBefore + 1)
+      })
+
+      it(`should eventually trip on continuous ${status} responses past the window`, async () => {
+        respondWith({}, status)
+        startDeliveryApiPolling(makeConfig({ pollInterval: POLL_INTERVAL_MS }))
+        await flushPromises()
+
+        const ticks = Math.ceil(FIVE_MINUTES_MS / POLL_INTERVAL_MS) + 1
+        for (let i = 0; i < ticks; i++) {
+          await tickAndFlush(POLL_INTERVAL_MS)
+        }
+
+        const callsAtTrip = fetchSpy.calls.count()
+        await tickAndFlush(POLL_INTERVAL_MS * 10)
+        expect(fetchSpy.calls.count()).toBe(callsAtTrip)
+      })
+    }
+
     it('should reset the failure window after a successful response', async () => {
       respondWithNetworkError()
       startDeliveryApiPolling(makeConfig({ pollInterval: POLL_INTERVAL_MS }))
@@ -459,6 +497,58 @@ describe('deliveryApi', () => {
       const callsBefore = fetchSpy.calls.count()
       await tickAndFlush(POLL_INTERVAL_MS)
       expect(fetchSpy.calls.count()).toBe(callsBefore + 1)
+    })
+
+    it('should not re-install probes from an in-flight poll that is aborted by tripping', async () => {
+      // First poll: hangs indefinitely so it's still in-flight when the breaker
+      // trips. The fixture honors the AbortSignal exactly like a real fetch
+      // would: rejecting with AbortError when the controller calls abort().
+      let resolveFirstPoll!: (response: unknown) => void
+      const firstPollFetchOptions: { signal?: AbortSignal } = {}
+      fetchSpy.and.callFake((_url: string, options: { signal?: AbortSignal }) => {
+        firstPollFetchOptions.signal = options.signal
+        return new Promise((resolve, reject) => {
+          resolveFirstPoll = resolve
+          options.signal?.addEventListener('abort', () => {
+            reject(new DOMException('The user aborted a request', 'AbortError'))
+          })
+        })
+      })
+
+      startDeliveryApiPolling(makeConfig({ pollInterval: POLL_INTERVAL_MS }))
+      await flushPromises()
+      expect(fetchSpy).toHaveBeenCalledTimes(1)
+      // Quick check that the source passes an AbortSignal at all.
+      expect(firstPollFetchOptions.signal).toBeTruthy()
+
+      // Subsequent polls fail and trip the breaker.
+      respondWithNetworkError()
+      const ticks = Math.ceil(FIVE_MINUTES_MS / POLL_INTERVAL_MS) + 1
+      for (let i = 0; i < ticks; i++) {
+        await tickAndFlush(POLL_INTERVAL_MS)
+      }
+
+      // Breaker has tripped: polling stopped, probes cleared, and the in-flight
+      // poll's signal must have been aborted.
+      expect(getProbes('test.js;testMethod')).toBeUndefined()
+      expect(firstPollFetchOptions.signal!.aborted).toBeTrue()
+      const callsAtTrip = fetchSpy.calls.count()
+
+      // Even if the hung response somehow still resolves with probe updates
+      // after the abort, the poll has already rejected with AbortError and
+      // returned - the success path can never run.
+      resolveFirstPoll({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ nextCursor: 'late', updates: [makeProbe({ id: 'late-probe' })], deletions: [] }),
+        text: () => Promise.resolve(''),
+      })
+      await flushPromises()
+
+      expect(getProbes('test.js;testMethod')).toBeUndefined()
+      // No new fetches should have been issued either.
+      await tickAndFlush(POLL_INTERVAL_MS * 5)
+      expect(fetchSpy.calls.count()).toBe(callsAtTrip)
     })
 
     it('should warn when tripping', async () => {

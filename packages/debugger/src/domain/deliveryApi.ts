@@ -5,6 +5,7 @@ import {
   display,
   fetch,
   getGlobalObject,
+  isServerError,
   mockable,
   setInterval,
   clearInterval,
@@ -54,6 +55,8 @@ let pollIntervalId: TimeoutId | undefined
 let currentCursor: string | undefined
 let knownProbeIds = new Set<string>()
 let firstFailureAtMs: number | undefined
+let tripped = false
+let sessionAbortController: AbortController | undefined
 
 /**
  * Start polling the Datadog Delivery API for probe updates.
@@ -94,6 +97,9 @@ export function startDeliveryApiPolling(config: DeliveryApiConfiguration): void 
     serviceVersion: config.version,
   }
 
+  sessionAbortController = new AbortController()
+  const signal = sessionAbortController.signal
+
   const poll = async () => {
     try {
       const body: Record<string, unknown> = { ...baseRequestBody }
@@ -105,6 +111,7 @@ export function startDeliveryApiPolling(config: DeliveryApiConfiguration): void 
         method: 'POST',
         headers,
         body: JSON.stringify(body),
+        signal,
       })
 
       if (!response.ok) {
@@ -116,12 +123,15 @@ export function startDeliveryApiPolling(config: DeliveryApiConfiguration): void 
           // ignore
         }
         display.error(`Debugger: Delivery API poll failed with status ${response.status}`, errorBody)
-        // 4xx is a client/config issue (bad token, wrong service, etc) and is not
-        // expected to recover on its own, so trip immediately. 5xx is treated as
-        // a transient server issue and only trips after the failure window.
-        if (response.status >= 400 && response.status < 500) {
-          tripCircuitBreaker(`status ${response.status}`)
-        } else if (response.status >= 500 && noteFailureAndCheckTrip(maxUnreachableDuration)) {
+        // 408 (request timeout), 429 (rate limited), and 5xx are transient: they
+        // only trip the breaker after the unreachable-duration window. Other 4xx
+        // responses indicate a client/config issue (bad token, wrong service, …)
+        // that is not expected to self-recover, so we trip immediately.
+        if (isTransientFailureStatus(response.status)) {
+          if (noteFailureAndCheckTrip(maxUnreachableDuration)) {
+            tripCircuitBreaker(`status ${response.status}`)
+          }
+        } else {
           tripCircuitBreaker(`status ${response.status}`)
         }
         return
@@ -168,6 +178,11 @@ export function startDeliveryApiPolling(config: DeliveryApiConfiguration): void 
         }
       }
     } catch (err) {
+      // Aborts are intentional (the breaker tripped while this poll was in flight)
+      // and shouldn't be logged or counted against the failure window.
+      if (err instanceof DOMException && err.code === DOMException.ABORT_ERR) {
+        return
+      }
       display.error('Debugger: Delivery API poll error:', err as Error)
       if (noteFailureAndCheckTrip(maxUnreachableDuration)) {
         tripCircuitBreaker('network error')
@@ -192,10 +207,23 @@ export function clearDeliveryApiState(): void {
   currentCursor = undefined
   knownProbeIds = new Set<string>()
   firstFailureAtMs = undefined
+  tripped = false
+  sessionAbortController?.abort()
+  sessionAbortController = undefined
   if (pollIntervalId !== undefined) {
     clearInterval(pollIntervalId)
     pollIntervalId = undefined
   }
+}
+
+/**
+ * Returns true for HTTP statuses that represent a transient server-side or
+ * infrastructure issue worth waiting out (server errors, request timeouts,
+ * rate limits). Mirrors the retry predicate in core's transport layer
+ * (`shouldRetryRequest` in `sendWithRetryStrategy`) so the two stay in sync.
+ */
+function isTransientFailureStatus(status: number): boolean {
+  return isServerError(status) || status === 408 || status === 429
 }
 
 /**
@@ -217,12 +245,17 @@ function noteFailureAndCheckTrip(maxUnreachableDurationMs: number): boolean {
  * only resets via clearDeliveryApiState (used in tests).
  */
 function tripCircuitBreaker(reason: string): void {
+  if (tripped) {
+    return
+  }
+  tripped = true
   display.warn(
     `Debugger: Delivery API circuit breaker tripped (${reason}). Disabling Live Debugger for the rest of the page lifetime.`
   )
   // monitor-until: forever, to keep an eye on how often the Live Debugger gets disabled in the wild
   addTelemetryDebug('Delivery API circuit breaker tripped', { reason })
   stopDeliveryApiPolling()
+  sessionAbortController?.abort()
   clearProbes()
   knownProbeIds = new Set<string>()
 }
