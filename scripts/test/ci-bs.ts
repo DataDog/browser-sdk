@@ -1,3 +1,4 @@
+import { parseArgs } from 'node:util'
 import { printLog, runMain } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
 import { fetchPR, getLastCommonCommit, LOCAL_BRANCH } from '../lib/gitUtils.ts'
@@ -16,9 +17,20 @@ const RELEVANT_FILE_PATTERNS = [
 ]
 
 runMain(async () => {
-  const testCommand = process.argv[2]
+  const {
+    values: { browser },
+    positionals,
+  } = parseArgs({
+    args: process.argv.slice(2),
+    options: {
+      browser: { type: 'string' },
+    },
+    allowPositionals: true,
+  })
+
+  const testCommand = positionals[0]
   if (!testCommand) {
-    throw new Error('Usage: ci-bs.ts <test:unit>')
+    throw new Error('Usage: ci-bs.ts <test:unit> [--browser <id>]')
   }
 
   const pr = await fetchPR(LOCAL_BRANCH!)
@@ -30,13 +42,16 @@ runMain(async () => {
     return
   }
 
-  command`yarn ${testCommand}:bs`
-    .withEnvironment({
-      BS_USERNAME: getBrowserStackUsername(),
-      BS_ACCESS_KEY: getBrowserStackAccessKey(),
-    })
-    .withLogs()
-    .run()
+  const environment: Record<string, string> = {
+    BS_USERNAME: getBrowserStackUsername(),
+    BS_ACCESS_KEY: getBrowserStackAccessKey(),
+  }
+
+  if (browser) {
+    environment.BS_BROWSER = browser
+  }
+
+  command`yarn ${testCommand}:bs`.withEnvironment(environment).withLogs().run()
 })
 
 function hasRelevantChanges(baseCommit: string): boolean {

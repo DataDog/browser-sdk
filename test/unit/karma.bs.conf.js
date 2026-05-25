@@ -2,6 +2,16 @@ import { getBuildInfos } from '../envUtils.ts'
 import { browserConfigurations } from './browsers.conf.ts'
 import karmaBaseConf from './karma.base.conf.js'
 
+const selectedBrowser = process.env.BS_BROWSER
+const filteredConfigurations = selectedBrowser
+  ? browserConfigurations.filter((configuration) => configuration.id === selectedBrowser)
+  : browserConfigurations
+
+if (selectedBrowser && filteredConfigurations.length === 0) {
+  const availableIds = browserConfigurations.map((c) => c.id).join(', ')
+  throw new Error(`Unknown BS_BROWSER "${selectedBrowser}". Available: ${availableIds}`)
+}
+
 // eslint-disable-next-line import/no-default-export
 export default function (config) {
   config.set({
@@ -13,8 +23,8 @@ export default function (config) {
     ],
     plugins: [...karmaBaseConf.plugins, 'karma-browserstack-launcher'],
     reporters: [...karmaBaseConf.reporters, 'BrowserStack'],
-    browsers: browserConfigurations.map((configuration) => configuration.sessionName),
-    concurrency: 5,
+    browsers: filteredConfigurations.map((configuration) => configuration.sessionName),
+    concurrency: filteredConfigurations.length,
     browserDisconnectTolerance: 3,
     captureTimeout: 2 * 60 * 1000,
     browserStack: {
@@ -25,7 +35,7 @@ export default function (config) {
       video: false,
     },
     customLaunchers: Object.fromEntries(
-      browserConfigurations.map((configuration) => [
+      filteredConfigurations.map((configuration) => [
         configuration.sessionName,
         // See https://github.com/karma-runner/karma-browserstack-launcher#per-browser-options
         {
