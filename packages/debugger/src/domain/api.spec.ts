@@ -220,8 +220,7 @@ describe('api', () => {
       expect(mockBatchAdd).not.toHaveBeenCalled()
     })
 
-    // TODO: Validate that this test is actually correct
-    it('should capture entry snapshot only for ENTRY evaluation with no condition', () => {
+    it('should capture both entry and return snapshots for ENTRY evaluation', () => {
       const probe: Probe = {
         id: 'test-probe',
         version: 0,
@@ -236,6 +235,46 @@ describe('api', () => {
       addProbe(probe)
 
       const probes = getProbes('TestClass;entrySnapshot')!
+      onEntry(probes, { name: 'obj' }, { arg: 'value' })
+      onReturn(probes, 'result', { name: 'obj' }, { arg: 'value' }, { local: 'data' })
+
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
+      expect(snapshot.captures).toEqual({
+        entry: {
+          arguments: {
+            arg: { type: 'string', value: 'value' },
+            this: { type: 'Object', fields: { name: { type: 'string', value: 'obj' } } },
+          },
+        },
+        return: {
+          arguments: {
+            arg: { type: 'string', value: 'value' },
+            this: { type: 'Object', fields: { name: { type: 'string', value: 'obj' } } },
+          },
+          locals: {
+            local: { type: 'string', value: 'data' },
+            '@return': { type: 'string', value: 'result' },
+          },
+        },
+      })
+    })
+
+    it('should capture both entry and return snapshots for EXIT evaluation with no condition', () => {
+      const probe: Probe = {
+        id: 'test-probe',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'exitSnapshotNoCondition' },
+        template: 'Test',
+        captureSnapshot: true,
+        capture: { maxReferenceDepth: 1 },
+        sampling: {},
+        evaluateAt: 'EXIT',
+      }
+      addProbe(probe)
+
+      const probes = getProbes('TestClass;exitSnapshotNoCondition')!
       onEntry(probes, { name: 'obj' }, { arg: 'value' })
       onReturn(probes, 'result', { name: 'obj' }, { arg: 'value' }, { local: 'data' })
 
