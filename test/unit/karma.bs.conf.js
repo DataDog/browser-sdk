@@ -30,6 +30,7 @@ export default function (config) {
     browserStack: {
       username: process.env.BS_USERNAME,
       accessKey: process.env.BS_ACCESS_KEY,
+      localIdentifier: process.env.BROWSERSTACK_LOCAL_IDENTIFIER,
       project: 'browser sdk unit',
       build: getBuildInfos(),
       video: false,

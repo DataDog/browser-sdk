@@ -1,7 +1,7 @@
-// This wrapper script ensures that no other test is running in BrowserStack before launching the
+// This wrapper script waits until a BrowserStack parallel session is available before launching the
 // test command, to avoid overloading the service and making tests more flaky than necessary. This
-// is also handled by the CI (exclusive lock on the "browserstack" resource), but it is helpful when
-// launching tests outside of the CI.
+// is also handled by the CI (resource groups), but it is helpful when launching tests outside of
+// the CI.
 //
 // It used to re-run the test command based on its output (in particular, when the BrowserStack
 // session failed to be created), but we observed that:
@@ -13,6 +13,7 @@
 // after killing it. There might be a better way of prematurely aborting the test command if we need
 // to in the future.
 
+import { randomUUID } from 'node:crypto'
 import { spawn, type ChildProcess } from 'node:child_process'
 import browserStack from 'browserstack-local'
 import { printLog, runMain, timeout, printError } from '../lib/executionUtils.ts'
@@ -21,9 +22,10 @@ import { browserStackRequest } from '../lib/bsUtils.ts'
 
 const AVAILABILITY_CHECK_DELAY = 30_000
 const NO_OUTPUT_TIMEOUT = 5 * 60_000
-const BS_BUILD_URL = 'https://api.browserstack.com/automate/builds.json?status=running'
+const BS_PLAN_URL = 'https://api.browserstack.com/automate/plan.json'
 
 const bsLocal = new browserStack.Local()
+const localIdentifier = `browser-sdk-${randomUUID()}`
 
 runMain(async () => {
   if (command`git tag --points-at HEAD`.run()) {
@@ -44,15 +46,19 @@ runMain(async () => {
 })
 
 async function waitForAvailability(): Promise<void> {
-  while (await hasRunningBuild()) {
-    printLog('Other build running, waiting...')
-    await timeout(AVAILABILITY_CHECK_DELAY)
+  while (await isAtCapacity()) {
+    const jitter = Math.floor(Math.random() * 3_000)
+    printLog('All BrowserStack sessions occupied, waiting...')
+    await timeout(AVAILABILITY_CHECK_DELAY + jitter)
   }
 }
 
-async function hasRunningBuild(): Promise<boolean> {
-  const builds = (await browserStackRequest(BS_BUILD_URL)) as any[]
-  return builds.length > 0
+async function isAtCapacity(): Promise<boolean> {
+  const plan = (await browserStackRequest(BS_PLAN_URL)) as {
+    parallel_sessions_running: number
+    parallel_sessions_max_allowed: number
+  }
+  return plan.parallel_sessions_running >= plan.parallel_sessions_max_allowed
 }
 
 function startBsLocal(): Promise<void> {
@@ -62,8 +68,8 @@ function startBsLocal(): Promise<void> {
     bsLocal.start(
       {
         key: process.env.BS_ACCESS_KEY,
+        localIdentifier,
         forceLocal: true,
-        forceKill: true,
         onlyAutomate: true,
       },
       (error?: Error) => {
@@ -97,6 +103,7 @@ function runTests(): Promise<boolean> {
         ...process.env,
         FORCE_COLOR: 'true',
         BROWSER_STACK: 'true',
+        BROWSERSTACK_LOCAL_IDENTIFIER: localIdentifier,
       },
     })
 
