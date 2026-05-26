@@ -279,14 +279,14 @@ describe('session in cookie strategy', () => {
       }
       mockCookies()
       const strategy = await selectCookieStrategy(makeConfiguration())
-      expect(strategy).toEqual(jasmine.objectContaining({ cookieApi: 'cookieStore' }))
+      expect(strategy).toEqual(jasmine.objectContaining({ cookieApi: CookieApi.COOKIE_STORE }))
     })
 
     it('falls back to document.cookie when CookieStore is unavailable', async () => {
       disableCookieStore()
       mockCookies()
       const strategy = await selectCookieStrategy(makeConfiguration())
-      expect(strategy).toEqual(jasmine.objectContaining({ cookieApi: 'documentCookie' }))
+      expect(strategy).toEqual(jasmine.objectContaining({ cookieApi: CookieApi.DOCUMENT_COOKIE }))
     })
 
     it('returns undefined when both APIs are unavailable', async () => {
