@@ -8,6 +8,7 @@ import { toSessionString, toSessionState } from '../sessionState'
 import { Observable } from '../../../tools/observable'
 import { mockable } from '../../../tools/mockable'
 import { monitorError } from '../../../tools/monitor'
+import { noop } from '../../../tools/utils/functionUtils'
 import type { CookieAccess } from '../../../browser/cookieAccess'
 import {
   areCookiesAuthorized,
@@ -16,9 +17,8 @@ import {
 } from '../../../browser/cookieAccess'
 import { timeStampNow, dateNow } from '../../../tools/utils/timeUtils'
 import { addTelemetryError } from '../../telemetry'
-
-const LOCK_QUERY_TIMEOUT = 1000
 import type { CookieStoreWindow } from '../../../browser/browser.types'
+import { addEventListener, DOM_EVENT } from '../../../browser/addEventListener'
 import { getLifecycleContext } from '../../../browser/lifecycleTracker'
 import { clearTimeout, setTimeout } from '../../../tools/timer'
 import type { Context } from '../../../tools/serialisation/context'
@@ -32,6 +32,7 @@ import type {
 } from './sessionStoreStrategy'
 
 const SESSION_COOKIE_VERSION = 0
+const LOCK_QUERY_TIMEOUT = 1000
 
 export async function selectCookieStrategy(
   configuration: Configuration
@@ -42,7 +43,7 @@ export async function selectCookieStrategy(
   }
 
   if (
-    mockable((window as CookieStoreWindow).cookieStore) &&
+    canUseCookieStoreStrategy(configuration) &&
     (await areCookiesAuthorized(createCookieStoreAccess, cookieOptions, configuration))
   ) {
     return { type: SessionPersistence.COOKIE, cookieOptions, cookieApi: CookieApi.COOKIE_STORE }
@@ -116,6 +117,20 @@ export function initCookieStrategy(
       }
     },
     sessionObservable,
+  }
+}
+
+function canUseCookieStoreStrategy(configuration: Configuration): boolean {
+  const cookieStore = mockable((window as CookieStoreWindow).cookieStore)
+  if (!cookieStore) {
+    return false
+  }
+  try {
+    const { stop } = addEventListener(configuration, cookieStore, DOM_EVENT.CHANGE, noop)
+    stop()
+    return true
+  } catch {
+    return false
   }
 }
 
