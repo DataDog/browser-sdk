@@ -13,6 +13,7 @@ import {
 } from '../../../test'
 import type { Clock } from '../../../test'
 import { DOM_EVENT } from '../../browser/addEventListener'
+import { resetLifecycleTracker } from '../../browser/lifecycleTracker'
 import { display } from '../../tools/display'
 import { ONE_SECOND } from '../../tools/utils/timeUtils'
 import type { Configuration } from '../configuration'
@@ -75,6 +76,7 @@ describe('startSessionManager', () => {
 
     registerCleanupTask(() => {
       stopSessionManager()
+      resetLifecycleTracker()
       clock.tick(SESSION_TIME_OUT_DELAY)
     })
   })
@@ -562,6 +564,9 @@ describe('startSessionManager', () => {
         trackingConsentState
       ).then(sessionManagerResolution)
 
+      // Allow startSessionManager to await selectSessionStoreStrategyType and call setSessionState
+      await waitNextMicrotask()
+
       trackingConsentState.update(TrackingConsent.NOT_GRANTED)
       initResolvers[0]()
       await flushMicrotasks()
@@ -636,6 +641,9 @@ describe('startSessionManager', () => {
         } as Configuration,
         trackingConsentState
       )
+
+      // Allow startSessionManager to await selectSessionStoreStrategyType and call setSessionState
+      await waitNextMicrotask()
 
       const initialCallCount = setStateCalls.length
 
