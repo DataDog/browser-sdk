@@ -18,7 +18,8 @@ export async function startWebVitalsProfiling(page: Page) {
   await page.addInitScript(() => {
     const metrics: WebVitalsMetrics = {}
     ;(window as BrowserWindow).__webVitalsMetrics__ = metrics
-    import('https://unpkg.com/web-vitals@5?module' as string)
+    const webVitalsUrl: string = 'https://unpkg.com/web-vitals@5?module'
+    import(webVitalsUrl)
       .then(({ onLCP, onCLS, onFCP, onTTFB, onINP }: WebVitalsModule) => {
         const recordMetric = (name: keyof WebVitalsMetrics) => (metric: Metric) => (metrics[name] = metric.value)
         onINP(recordMetric('INP'), { reportAllChanges: true })

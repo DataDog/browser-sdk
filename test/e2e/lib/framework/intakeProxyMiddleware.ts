@@ -12,6 +12,7 @@ interface BaseIntakeRequest {
   isBridge: boolean
   encoding: string | null
   transport: string | null
+  batchTime: number | null
 }
 
 export type LogsIntakeRequest = {
@@ -51,13 +52,24 @@ export type ProfileIntakeRequest = {
   }
 } & BaseIntakeRequest
 
-export type IntakeRequest = LogsIntakeRequest | RumIntakeRequest | ReplayIntakeRequest | ProfileIntakeRequest
+export type DebuggerIntakeRequest = {
+  intakeType: 'debugger'
+  events: Array<Record<string, unknown>>
+} & BaseIntakeRequest
+
+export type IntakeRequest =
+  | LogsIntakeRequest
+  | RumIntakeRequest
+  | ReplayIntakeRequest
+  | ProfileIntakeRequest
+  | DebuggerIntakeRequest
 
 interface IntakeRequestInfos {
   isBridge: boolean
   intakeType: IntakeRequest['intakeType']
   encoding: string | null
   transport: string | null
+  batchTime: number | null
 }
 
 interface IntakeProxyOptions {
@@ -90,6 +102,8 @@ function computeIntakeRequestInfos(req: express.Request): IntakeRequestInfos {
 
   const encoding = req.headers['content-encoding'] || searchParams.get('dd-evp-encoding')
   const transport = searchParams.get('_dd.api')
+  const batchTimeRaw = searchParams.get('batch_time')
+  const batchTime = batchTimeRaw ? Number(batchTimeRaw) : null
 
   if (req.query.bridge === 'true') {
     const eventType = req.query.event_type
@@ -97,6 +111,7 @@ function computeIntakeRequestInfos(req: express.Request): IntakeRequestInfos {
       isBridge: true,
       encoding,
       transport,
+      batchTime,
       intakeType: eventType === 'log' ? 'logs' : eventType === 'record' ? 'replay' : 'rum',
     }
   }
@@ -104,7 +119,13 @@ function computeIntakeRequestInfos(req: express.Request): IntakeRequestInfos {
   let intakeType: IntakeRequest['intakeType']
   // pathname = /api/v2/rum
   const endpoint = pathname.split(/[/?]/)[3]
-  if (endpoint === 'logs' || endpoint === 'rum' || endpoint === 'replay' || endpoint === 'profile') {
+  if (
+    endpoint === 'logs' ||
+    endpoint === 'rum' ||
+    endpoint === 'replay' ||
+    endpoint === 'profile' ||
+    endpoint === 'debugger'
+  ) {
     intakeType = endpoint
   } else {
     throw new Error("Can't find intake type")
@@ -113,6 +134,7 @@ function computeIntakeRequestInfos(req: express.Request): IntakeRequestInfos {
     isBridge: false,
     encoding,
     transport,
+    batchTime,
     intakeType,
   }
 }
@@ -124,13 +146,13 @@ function readIntakeRequest(req: express.Request, infos: IntakeRequestInfos): Pro
   if (infos.intakeType === 'profile') {
     return readProfileIntakeRequest(req, infos as IntakeRequestInfos & { intakeType: 'profile' })
   }
-  return readRumOrLogsIntakeRequest(req, infos as IntakeRequestInfos & { intakeType: 'rum' | 'logs' })
+  return readEventIntakeRequest(req, infos as IntakeRequestInfos & { intakeType: 'rum' | 'logs' | 'debugger' })
 }
 
-async function readRumOrLogsIntakeRequest(
+async function readEventIntakeRequest(
   req: express.Request,
-  infos: IntakeRequestInfos & { intakeType: 'rum' | 'logs' }
-): Promise<RumIntakeRequest | LogsIntakeRequest> {
+  infos: IntakeRequestInfos & { intakeType: 'rum' | 'logs' | 'debugger' }
+): Promise<RumIntakeRequest | LogsIntakeRequest | DebuggerIntakeRequest> {
   const rawBody = await readStream(req)
   const encodedBody = infos.encoding === 'deflate' ? inflateSync(rawBody) : rawBody
 

@@ -3,10 +3,10 @@
     "outDir": "./dist/",
     "strict": true,
     "module": "commonjs",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "esModuleInterop": true,
     "jsx": "react",
-    "target": "es5",
+    "target": "es2015",
     "lib": ["ES2015", "DOM"],
     "types": []
   }

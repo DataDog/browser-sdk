@@ -401,7 +401,7 @@ Error: foo
 
   it('should parse Chrome error with no location', () => {
     const error = { stack: 'error\n at Array.forEach (native)' }
-    const stackFrames = computeStackTrace(error as Error)
+    const stackFrames = computeStackTrace(error)
     expect(stackFrames.stack.length).toEqual(1)
     expect(stackFrames.stack[0]).toEqual({
       args: ['native'],
@@ -418,7 +418,7 @@ Error: foo
     at func1$func2$func3$func4 (std_interceptors.js:128:19)
     at eval (std_interceptors.jsx:132:29)`
 
-    const stackFrames = computeStackTrace({ stack } as Error)
+    const stackFrames = computeStackTrace({ stack })
     expect(stackFrames.stack.length).toEqual(3)
     expect(stackFrames.stack[0]).toEqual({
       args: [],
@@ -448,7 +448,7 @@ Error: foo
     at https://datadoghq.com/somefile.js:8489:191
     at chrome-extension://<id>/content/index.js:85:37379`
 
-    const stackFrames = computeStackTrace({ stack } as Error)
+    const stackFrames = computeStackTrace({ stack })
     expect(stackFrames.stack.length).toEqual(2)
     expect(stackFrames.stack[0]).toEqual({
       args: [],
@@ -467,7 +467,7 @@ Error: foo
   })
 
   it('should parse Chrome 15 error', () => {
-    const stackFrames = computeStackTrace(CapturedExceptions.CHROME_15 as any)
+    const stackFrames = computeStackTrace(CapturedExceptions.CHROME_15)
 
     expect(stackFrames.stack.length).toEqual(4)
     expect(stackFrames.stack[0]).toEqual({ args: [], column: 17, func: 'bar', line: 13, url: 'http://path/to/file.js' })
@@ -669,7 +669,7 @@ Error: foo
   })
 
   it('should parse IE 10 error', () => {
-    const stackFrames = computeStackTrace(CapturedExceptions.IE_10 as any)
+    const stackFrames = computeStackTrace(CapturedExceptions.IE_10)
 
     expect(stackFrames.stack.length).toEqual(3)
     // TODO: func should be normalized
@@ -725,7 +725,7 @@ Error: foo
   })
 
   it('should parse PhantomJS 1.19 error', () => {
-    const stackFrames = computeStackTrace(CapturedExceptions.PHANTOMJS_1_19 as Error)
+    const stackFrames = computeStackTrace(CapturedExceptions.PHANTOMJS_1_19)
 
     expect(stackFrames.stack.length).toEqual(3)
     expect(stackFrames.stack[0]).toEqual({
@@ -765,7 +765,7 @@ Error: foo
   })
 
   it('should parse Firefox errors with eval URLs', () => {
-    const stackFrames = computeStackTrace(CapturedExceptions.FIREFOX_43_EVAL as any)
+    const stackFrames = computeStackTrace(CapturedExceptions.FIREFOX_43_EVAL)
 
     expect(stackFrames.stack.length).toEqual(5)
     expect(stackFrames.stack[0]).toEqual({

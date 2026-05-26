@@ -1,4 +1,4 @@
-import type { DeflateEncoder, DeflateWorker, Telemetry } from '@datadog/browser-core'
+import type { DeflateEncoder, DeflateWorker, Telemetry, SessionManager } from '@datadog/browser-core'
 import {
   canUseEventBridge,
   noop,
@@ -9,7 +9,6 @@ import {
 import type {
   LifeCycle,
   ViewHistory,
-  RumSessionManager,
   RecorderApi,
   RumConfiguration,
   StartRecordingOptions,
@@ -21,12 +20,11 @@ import {
   getDeflateWorkerStatus,
   startDeflateWorker,
 } from '../domain/deflate'
-import { isBrowserSupported } from './isBrowserSupported'
 import { createPostStartStrategy } from './postStartStrategy'
 import { createPreStartStrategy } from './preStartStrategy'
 
 export function makeRecorderApi(): RecorderApi {
-  if ((canUseEventBridge() && !bridgeSupports(BridgeCapability.RECORDS)) || !isBrowserSupported()) {
+  if (canUseEventBridge() && !bridgeSupports(BridgeCapability.RECORDS)) {
     return {
       start: noop,
       stop: noop,
@@ -77,7 +75,7 @@ export function makeRecorderApi(): RecorderApi {
   function onRumStart(
     lifeCycle: LifeCycle,
     configuration: RumConfiguration,
-    sessionManager: RumSessionManager,
+    sessionManager: SessionManager,
     viewHistory: ViewHistory,
     worker: DeflateWorker | undefined,
     telemetry: Telemetry

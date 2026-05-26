@@ -26,6 +26,7 @@ export interface ValueHistory<Value> {
 
   closeActive: (endTime: RelativeTime) => void
   findAll: (startTime?: RelativeTime, duration?: Duration) => Value[]
+  findAllEntries: (startTime?: RelativeTime, duration?: Duration) => Array<ValueHistoryEntry<Value>>
   getEntries: (startTime: RelativeTime) => Array<ValueHistoryEntry<Value>>
   reset: () => void
   stop: () => void
@@ -131,6 +132,19 @@ export function createValueHistory<Value>({
   }
 
   /**
+   * Return all entries with an active period overlapping with the duration,
+   * or all entries that were active during `startTime` if no duration is provided,
+   * or all currently active entries if no `startTime` is provided.
+   */
+  function findAllEntries(
+    startTime: RelativeTime = END_OF_TIMES,
+    duration = 0 as Duration
+  ): Array<ValueHistoryEntry<Value>> {
+    const endTime = addDuration(startTime, duration)
+    return entries.filter((entry) => entry.startTime <= endTime && startTime <= entry.endTime)
+  }
+
+  /**
    * Return all the entries whose start time is equal to the given startTime.
    */
   function getEntries(startTime: RelativeTime): Array<ValueHistoryEntry<Value>> {
@@ -155,7 +169,7 @@ export function createValueHistory<Value>({
     }
   }
 
-  return { add, find, closeActive, findAll, getEntries, reset, stop }
+  return { add, find, closeActive, findAll, findAllEntries, getEntries, reset, stop }
 }
 
 /**

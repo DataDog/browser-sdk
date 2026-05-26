@@ -1,90 +1,227 @@
 import { isEmptyObject } from '../../../tools/utils/objectUtils'
-import { isChromium } from '../../../tools/utils/browserDetection'
 import type { CookieOptions } from '../../../browser/cookie'
-import { getCurrentSite, areCookiesAuthorized, getCookies, setCookie, getCookie } from '../../../browser/cookie'
-import type { InitConfiguration, Configuration } from '../../configuration'
-import { tryOldCookiesMigration } from '../oldCookiesMigration'
-import {
-  SESSION_COOKIE_EXPIRATION_DELAY,
-  SESSION_EXPIRATION_DELAY,
-  SESSION_TIME_OUT_DELAY,
-  SessionPersistence,
-} from '../sessionConstants'
+import { getCurrentSite, getCookies } from '../../../browser/cookie'
+import type { Configuration, InitConfiguration } from '../../configuration'
+import { SESSION_COOKIE_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY, SessionPersistence } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
-import { toSessionString, toSessionState, getExpiredSessionState } from '../sessionState'
-import type { SessionStoreStrategy, SessionStoreStrategyType } from './sessionStoreStrategy'
-import { SESSION_STORE_KEY } from './sessionStoreStrategy'
+import { toSessionString, toSessionState } from '../sessionState'
+import { Observable } from '../../../tools/observable'
+import { mockable } from '../../../tools/mockable'
+import { monitorError } from '../../../tools/monitor'
+import type { CookieAccess } from '../../../browser/cookieAccess'
+import {
+  areCookiesAuthorized,
+  createCookieStoreAccess,
+  createDocumentCookieAccess,
+} from '../../../browser/cookieAccess'
+import { timeStampNow, dateNow } from '../../../tools/utils/timeUtils'
+import { addTelemetryError } from '../../telemetry'
+
+const LOCK_QUERY_TIMEOUT = 1000
+import type { CookieStoreWindow } from '../../../browser/browser.types'
+import { getLifecycleContext } from '../../../browser/lifecycleTracker'
+import { clearTimeout, setTimeout } from '../../../tools/timer'
+import type { Context } from '../../../tools/serialisation/context'
+import { CookieApi, LEGACY_SESSION_STORE_KEY, SESSION_STORE_KEY } from './sessionStoreStrategy'
+import type {
+  SessionStoreStrategy,
+  SessionStoreStrategyType,
+  SessionObservableEvent,
+  CookieSessionStoreStrategyType,
+  SessionStateOperation,
+} from './sessionStoreStrategy'
 
 const SESSION_COOKIE_VERSION = 0
 
-export function selectCookieStrategy(initConfiguration: InitConfiguration): SessionStoreStrategyType | undefined {
-  const cookieOptions = buildCookieOptions(initConfiguration)
-  return cookieOptions && areCookiesAuthorized(cookieOptions)
-    ? { type: SessionPersistence.COOKIE, cookieOptions }
-    : undefined
-}
-
-export function initCookieStrategy(configuration: Configuration, cookieOptions: CookieOptions): SessionStoreStrategy {
-  const cookieStore = {
-    /**
-     * Lock strategy allows mitigating issues due to concurrent access to cookie.
-     * This issue concerns only chromium browsers and enabling this on firefox increases cookie write failures.
-     */
-    isLockEnabled: isChromium(),
-    persistSession: (sessionState: SessionState) =>
-      storeSessionCookie(cookieOptions, configuration, sessionState, SESSION_EXPIRATION_DELAY),
-    retrieveSession: () => retrieveSessionCookie(cookieOptions, configuration),
-    expireSession: (sessionState: SessionState) =>
-      storeSessionCookie(
-        cookieOptions,
-        configuration,
-        getExpiredSessionState(sessionState, configuration),
-        SESSION_TIME_OUT_DELAY
-      ),
+export async function selectCookieStrategy(
+  configuration: Configuration
+): Promise<SessionStoreStrategyType | undefined> {
+  const { cookieOptions } = configuration
+  if (!cookieOptions) {
+    return undefined
   }
 
-  tryOldCookiesMigration(cookieStore)
+  if (
+    mockable((window as CookieStoreWindow).cookieStore) &&
+    (await areCookiesAuthorized(createCookieStoreAccess, cookieOptions, configuration))
+  ) {
+    return { type: SessionPersistence.COOKIE, cookieOptions, cookieApi: CookieApi.COOKIE_STORE }
+  }
 
-  return cookieStore
+  if (await areCookiesAuthorized(createDocumentCookieAccess, cookieOptions, configuration)) {
+    return { type: SessionPersistence.COOKIE, cookieOptions, cookieApi: CookieApi.DOCUMENT_COOKIE }
+  }
+
+  return undefined
 }
 
-function storeSessionCookie(
-  options: CookieOptions,
-  configuration: Configuration,
-  sessionState: SessionState,
-  defaultTimeout: number
-) {
-  let sessionStateString = toSessionString(sessionState)
+// Promise chain serializes calls when Web Locks are unavailable
+let pendingChain: Promise<void> | undefined
 
-  if (configuration.betaEncodeCookieOptions) {
-    sessionStateString = toSessionString({
-      ...sessionState,
-      // deleting a cookie is writing a new cookie with an empty value
-      // we don't want to store the cookie options in this case otherwise the cookie will not be deleted
-      ...(!isEmptyObject(sessionState) ? { c: encodeCookieOptions(options) } : {}),
+export function initCookieStrategy(
+  sessionStoreStrategyType: CookieSessionStoreStrategyType,
+  configuration: Configuration
+): SessionStoreStrategy {
+  const { cookieOptions, cookieApi } = sessionStoreStrategyType
+  const sessionObservable = new Observable<SessionObservableEvent>()
+  const trackAnonymousUser = !!configuration.trackAnonymousUser
+  const opts = encodeCookieOptions(cookieOptions)
+  const cookieAccess = mockable(createCookieAccess)(cookieApi, configuration, cookieOptions)
+  let isFirstCall = true
+  const initTimestamp = timeStampNow()
+
+  cookieAccess.observable.subscribe(() => {
+    cookieAccess
+      .getAll()
+      .then((cookieValues) => {
+        sessionObservable.notify({ cookieValues, sessionState: findMatchingSessionState(cookieValues, opts) })
+      })
+      .catch((error) => monitorError(new Error(`Error while reading session cookies on change: ${error}`)))
+  })
+
+  function applyAndWrite(fn: (state: SessionState) => SessionState) {
+    return cookieAccess.getAllAndSet((cookieValues) => {
+      let currentState = findMatchingSessionState(cookieValues, opts)
+
+      if (isFirstCall && isEmptyObject(currentState)) {
+        currentState = findMatchingSessionState(getCookies(LEGACY_SESSION_STORE_KEY), opts)
+      }
+      isFirstCall = false
+
+      const newState = fn(currentState)
+      const sessionString = buildSessionString(newState, cookieOptions)
+      const expireDelay = trackAnonymousUser ? SESSION_COOKIE_EXPIRATION_DELAY : SESSION_TIME_OUT_DELAY
+
+      return { value: sessionString, expireDelay }
     })
   }
 
-  setCookie(
-    SESSION_STORE_KEY,
-    sessionStateString,
-    configuration.trackAnonymousUser ? SESSION_COOKIE_EXPIRATION_DELAY : defaultTimeout,
-    options
-  )
+  return {
+    async setSessionState(
+      fn: (sessionState: SessionState) => SessionState,
+      operation: SessionStateOperation
+    ): Promise<void> {
+      if (typeof navigator !== 'undefined' && navigator.locks) {
+        const lockRequestedAt = dateNow()
+        await navigator.locks
+          .request(SESSION_STORE_KEY, () => applyAndWrite(fn))
+          .catch(async (error) => {
+            const context = await buildLockErrorContext(operation, initTimestamp, lockRequestedAt)
+            addTelemetryError(error, context)
+            throw error
+          })
+      } else {
+        pendingChain = (pendingChain ?? Promise.resolve()).then(() => applyAndWrite(fn))
+        await pendingChain
+      }
+    },
+    sessionObservable,
+  }
 }
 
-/**
- * Retrieve the session state from the cookie that was set with the same cookie options
- * If there is no match, return the first cookie, because that's how `getCookie()` works
- */
-export function retrieveSessionCookie(cookieOptions: CookieOptions, configuration: Configuration): SessionState {
-  if (configuration.betaEncodeCookieOptions) {
-    return retrieveSessionCookieFromEncodedCookie(cookieOptions)
+interface LockQuerySnapshot {
+  heldByOthers: number
+  pendingCount: number
+  isPending: boolean
+}
+
+async function queryLockSnapshot(): Promise<LockQuerySnapshot | 'timeout' | 'unavailable' | 'error'> {
+  if (typeof navigator === 'undefined' || !navigator.locks?.query) {
+    return 'unavailable'
+  }
+  let timeoutId: ReturnType<typeof setTimeout> | undefined
+  const timeout = new Promise<'timeout'>((resolve) => {
+    timeoutId = setTimeout(() => resolve('timeout'), LOCK_QUERY_TIMEOUT)
+  })
+  try {
+    const snapshot = await Promise.race([navigator.locks.query(), timeout])
+    if (snapshot === 'timeout') {
+      return 'timeout'
+    }
+    const held = snapshot.held ?? []
+    const pending = snapshot.pending ?? []
+    return {
+      heldByOthers: held.filter((lock) => lock.name === SESSION_STORE_KEY).length,
+      pendingCount: pending.filter((lock) => lock.name === SESSION_STORE_KEY).length,
+      isPending: pending.some((lock) => lock.name === SESSION_STORE_KEY),
+    }
+  } catch {
+    return 'error'
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
+
+function getNavigationType(): string | undefined {
+  if (typeof performance === 'undefined' || typeof performance.getEntriesByType !== 'function') {
+    return undefined
+  }
+  // The document-load entry is what we want here ('back_forward' signals bfcache restore).
+  // Some Chromium builds expose extra entries for experimental soft navigations — index 0 is
+  // still the original document-load entry per the Performance Timeline ordering.
+  const entry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined
+  return entry?.type
+}
+
+function isInIframe(): boolean | undefined {
+  try {
+    return window !== window.top
+  } catch {
+    // Cross-origin access — definitely in an iframe
+    return true
+  }
+}
+
+async function buildLockErrorContext(
+  operation: SessionStateOperation,
+  initTimestamp: number,
+  lockRequestedAt: number
+): Promise<Context> {
+  return {
+    operation,
+    timeSinceInit: dateNow() - initTimestamp,
+    lockRequestDuration: dateNow() - lockRequestedAt,
+    visibilityState: document.visibilityState,
+    readyState: document.readyState,
+    inIframe: isInIframe(),
+    navigationType: getNavigationType(),
+    sessionCookies: getCookies(SESSION_STORE_KEY),
+    lockQuery: (await queryLockSnapshot()) as Context[string],
+    ...getLifecycleContext(),
+  }
+}
+
+export function createCookieAccess(
+  cookieApi: CookieApi,
+  configuration: Configuration,
+  cookieOptions: CookieOptions
+): CookieAccess {
+  return cookieApi === CookieApi.COOKIE_STORE
+    ? createCookieStoreAccess(SESSION_STORE_KEY, cookieOptions, configuration)
+    : createDocumentCookieAccess(SESSION_STORE_KEY, cookieOptions)
+}
+
+function findMatchingSessionState(items: string[], opts: string): SessionState {
+  let sessionState: SessionState | undefined
+
+  // reverse the cookies so that if there is no match, the cookie returned is the first one
+  for (const item of items.slice().reverse()) {
+    sessionState = toSessionState(item)
+    if (sessionState.c === opts) {
+      break
+    }
   }
 
-  const sessionString = getCookie(SESSION_STORE_KEY)
-  const sessionState = toSessionState(sessionString)
-  return sessionState
+  // remove the cookie options from the session state as this is not part of the session state
+  delete sessionState?.c
+
+  return sessionState ?? {}
+}
+
+function buildSessionString(sessionState: SessionState, cookieOptions: CookieOptions): string {
+  return toSessionString(
+    isEmptyObject(sessionState) ? sessionState : { ...sessionState, c: encodeCookieOptions(cookieOptions) }
+  )
 }
 
 export function buildCookieOptions(initConfiguration: InitConfiguration): CookieOptions | undefined {
@@ -117,30 +254,4 @@ function encodeCookieOptions(cookieOptions: CookieOptions): string {
   /* eslint-enable no-bitwise */
 
   return byte.toString(16) // Convert to hex string
-}
-
-/**
- * Retrieve the session state from the cookie that was set with the same cookie options.
- * If there is no match, fallback to the first cookie, (because that's how `getCookie()` works)
- * and this allows to keep the current session id when we release this feature.
- */
-function retrieveSessionCookieFromEncodedCookie(cookieOptions: CookieOptions): SessionState {
-  const cookies = getCookies(SESSION_STORE_KEY)
-  const opts = encodeCookieOptions(cookieOptions)
-
-  let sessionState: SessionState | undefined
-
-  // reverse the cookies so that if there is no match, the cookie returned is the first one
-  for (const cookie of cookies.reverse()) {
-    sessionState = toSessionState(cookie)
-
-    if (sessionState.c === opts) {
-      break
-    }
-  }
-
-  // remove the cookie options from the session state as this is not part of the session state
-  delete sessionState?.c
-
-  return sessionState ?? {}
 }

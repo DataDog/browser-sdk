@@ -20,6 +20,8 @@ export const addNewChangesToChangelog = async (previousContent: string): Promise
   const changeLists = getChangeLists()
 
   return `\
+<!-- DO NOT MODIFY IT BY HAND. This file is generated automatically during the release process. -->
+
 # Changelog
 
 ${emojisLegend}
@@ -96,7 +98,7 @@ function getLastReleaseTagName(): string {
   return match[1]
 }
 
-function sortByEmojiPriority(a: string, b: string, priorityList: string[]): number {
+function sortByEmojiPriority(a: string, b: string, priorityList: readonly string[]): number {
   const getFirstRelevantEmojiIndex = (text: string): number => {
     const emoji = findFirstEmoji(text)
     return emoji && priorityList.includes(emoji) ? priorityList.indexOf(emoji) : Number.MAX_VALUE
@@ -104,7 +106,7 @@ function sortByEmojiPriority(a: string, b: string, priorityList: string[]): numb
   return getFirstRelevantEmojiIndex(a) - getFirstRelevantEmojiIndex(b)
 }
 
-function formatChangeList(title: string, changes: string[], priority: string[]): string {
+function formatChangeList(title: string, changes: string[], priority: readonly string[]): string {
   if (!changes.length) {
     return ''
   }

@@ -6,9 +6,9 @@
     "start": "next start --port 0"
   },
   "dependencies": {
-    "next": "16.1.6",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "next": "16.1.7",
+    "react": "19.2.6",
+    "react-dom": "19.2.6"
   },
   "peerDependencies": {
     "@datadog/browser-rum": "*",
@@ -36,10 +36,10 @@
     "@datadog/browser-worker": "file:../../../packages/worker/package.tgz"
   },
   "devDependencies": {
-    "@types/node": "22.19.17",
+    "@types/node": "22.19.19",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
-    "typescript": "5.9.3"
+    "typescript": "6.0.3"
   },
   "volta": {
     "extends": "../../../package.json"

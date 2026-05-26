@@ -1,5 +1,4 @@
-import { display } from '../tools/display'
-import { ONE_MINUTE, ONE_SECOND } from '../tools/utils/timeUtils'
+import { ONE_SECOND } from '../tools/utils/timeUtils'
 import {
   findAllCommaSeparatedValues,
   findCommaSeparatedValue,
@@ -31,7 +30,13 @@ export function setCookie(name: string, value: string, expireDelay: number = 0, 
  * If there are multiple cookies with the same name, returns the first one
  */
 export function getCookie(name: string) {
-  return findCommaSeparatedValue(document.cookie, name)
+  const value = findCommaSeparatedValue(document.cookie, name)
+
+  if (value === '') {
+    return
+  }
+
+  return value
 }
 
 /**
@@ -62,25 +67,6 @@ export function resetInitCookies() {
 
 export function deleteCookie(name: string, options?: CookieOptions) {
   setCookie(name, '', 0, options)
-}
-
-export function areCookiesAuthorized(options: CookieOptions): boolean {
-  if (document.cookie === undefined || document.cookie === null) {
-    return false
-  }
-  try {
-    // Use a unique cookie name to avoid issues when the SDK is initialized multiple times during
-    // the test cookie lifetime
-    const testCookieName = `dd_cookie_test_${generateUUID()}`
-    const testCookieValue = 'test'
-    setCookie(testCookieName, testCookieValue, ONE_MINUTE, options)
-    const isCookieCorrectlySet = getCookie(testCookieName) === testCookieValue
-    deleteCookie(testCookieName, options)
-    return isCookieCorrectlySet
-  } catch (error) {
-    display.error(error)
-    return false
-  }
 }
 
 /**

@@ -1,4 +1,5 @@
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
+import type { DebuggerInitConfiguration } from '@datadog/browser-debugger'
 import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
 import type { BrowserContext, Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
@@ -6,7 +7,11 @@ import { addTag, addTestOptimizationTags } from '../helpers/tags'
 import { getRunId } from '../../../envUtils'
 import type { BrowserLog } from '../helpers/browser'
 import { BrowserLogsManager, deleteAllCookies, getBrowserName, sendXhr } from '../helpers/browser'
-import { DEFAULT_LOGS_CONFIGURATION, DEFAULT_RUM_CONFIGURATION } from '../helpers/configuration'
+import {
+  DEFAULT_DEBUGGER_CONFIGURATION,
+  DEFAULT_LOGS_CONFIGURATION,
+  DEFAULT_RUM_CONFIGURATION,
+} from '../helpers/configuration'
 import { validateRumFormat } from '../helpers/validation'
 import type { BrowserConfiguration } from '../../../browsers.conf'
 import { NEXTJS_APP_ROUTER_PORT, NUXT_APP_PORT, VUE_ROUTER_APP_PORT } from '../helpers/playwright'
@@ -14,13 +19,51 @@ import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
 import { getTestServers, waitForServersIdle } from './httpServers'
-import type { CallerLocation, SetupFactory, SetupOptions, UrlHook } from './pageSetups'
+import type { CallerLocation, EventBridgeOptions, SetupFactory, SetupOptions, UrlHook } from './pageSetups'
 import { html, DEFAULT_SETUPS, npmSetup, appSetup, formatConfiguration } from './pageSetups'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
 import type { Extension } from './createExtension'
 import type { Worker } from './createWorker'
 import { isBrowserStack } from './environment'
+
+/**
+ * Init script applied to every WebKit context to work around a Playwright-specific
+ * quirk observed on the bundled WebKit (Safari 26). Real Safari users are unaffected;
+ * this only manifests in Playwright's WebKit fork.
+ *
+ * Trusted PointerEvent.timeStamp returns a Cocoa-epoch-derived value (~8e11 ms)
+ * instead of a DOMHighResTimeStamp. The SDK feeds it into relativeToClocks() and
+ * trips the "clock looks weird" guard in trackClickActions — every click action is
+ * silently discarded. We wrap Event.prototype.timeStamp to fall back to
+ * performance.now() when the raw value is implausibly large (>1 year).
+ *
+ * Upstream issue: https://github.com/microsoft/playwright/issues/40822
+ */
+const WEBKIT_PLAYWRIGHT_WORKAROUND = `
+(() => {
+  // event.timeStamp is a DOMHighResTimeStamp (ms since performance.timeOrigin), so
+  // it should always be well below a year. Anything larger is the Cocoa-epoch leak
+  // observed on Playwright's bundled WebKit (~8e11 ms, ~25 years).
+  const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+  const desc = Object.getOwnPropertyDescriptor(Event.prototype, 'timeStamp');
+  if (desc && desc.get) {
+    const origGetter = desc.get;
+    const cache = new WeakMap();
+    Object.defineProperty(Event.prototype, 'timeStamp', {
+      configurable: true,
+      get() {
+        const raw = origGetter.call(this);
+        if (raw < ONE_YEAR_MS) return raw;
+        if (cache.has(this)) return cache.get(this);
+        const fallback = performance.now();
+        cache.set(this, fallback);
+        return fallback;
+      },
+    });
+  }
+})();
+`
 
 export function createTest(title: string) {
   return new TestBuilder(title, captureCallerLocation())
@@ -48,13 +91,15 @@ class TestBuilder {
   private rumConfiguration: RumInitConfiguration | undefined = undefined
   private alsoRunWithRumSlim = false
   private logsConfiguration: LogsInitConfiguration | undefined = undefined
+  private debuggerConfiguration: DebuggerInitConfiguration | undefined = undefined
   private remoteConfiguration?: RemoteConfiguration = undefined
   private head = ''
   private body = ''
   private baseUrlHooks: UrlHook[] = []
-  private eventBridge = false
+  private eventBridge: EventBridgeOptions | undefined
   private setups: Array<{ factory: SetupFactory; name?: string }> = DEFAULT_SETUPS
   private testFixture: typeof test = test
+  private mockClock = false
   private extension: {
     rumConfiguration?: RumInitConfiguration
     logsConfiguration?: LogsInitConfiguration
@@ -91,6 +136,11 @@ class TestBuilder {
     return this
   }
 
+  withDebugger(debuggerInitConfiguration?: Partial<DebuggerInitConfiguration>) {
+    this.debuggerConfiguration = { ...DEFAULT_DEBUGGER_CONFIGURATION, ...debuggerInitConfiguration }
+    return this
+  }
+
   withHead(head: string) {
     this.head = head
     return this
@@ -101,13 +151,18 @@ class TestBuilder {
     return this
   }
 
-  withEventBridge() {
-    this.eventBridge = true
+  withEventBridge(options: EventBridgeOptions = {}) {
+    this.eventBridge = options
     return this
   }
 
   withApp(appName: string) {
     this.setups = [{ factory: (options, servers) => appSetup(options, servers, appName) }]
+    return this
+  }
+
+  withMockClock() {
+    this.mockClock = true
     return this
   }
 
@@ -218,6 +273,7 @@ class TestBuilder {
       head: this.head,
       logs: this.logsConfiguration,
       rum: this.rumConfiguration,
+      debugger: this.debuggerConfiguration,
       remoteConfiguration: this.remoteConfiguration,
       rumInit: this.rumInit,
       logsInit: this.logsInit,
@@ -232,6 +288,7 @@ class TestBuilder {
       extension: this.extension,
       worker: this.worker,
       callerLocation: this.callerLocation,
+      mockClock: this.mockClock,
     }
 
     if (this.alsoRunWithRumSlim) {
@@ -330,6 +387,12 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     addTag('test.browserName', browserName)
     addTestOptimizationTags(test.info().project.metadata as BrowserConfiguration)
 
+    // The bug only reproduces on Playwright's macOS WebKit build; skip on every other platform
+    // (notably Linux CI runners) to avoid installing the prototype override where it serves no purpose.
+    if (browserName === 'webkit' && process.platform === 'darwin') {
+      await context.addInitScript(WEBKIT_PLAYWRIGHT_WORKAROUND)
+    }
+
     const servers = await getTestServers()
     const baseUrl = new URL(servers.base.origin)
     setupOptions.baseUrlHooks.forEach((hook) => hook(baseUrl, servers, setupOptions))
@@ -360,7 +423,7 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     servers.base.bindServerApp(createMockServerApp(servers, setup, setupOptions))
     servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
 
-    await setUpTest(browserLogs, testContext)
+    await setUpTest(browserLogs, setupOptions, testContext)
 
     try {
       await runner(testContext)
@@ -426,7 +489,11 @@ function createTestContext(
   }
 }
 
-async function setUpTest(browserLogsManager: BrowserLogsManager, { baseUrl, page, browserContext }: TestContext) {
+async function setUpTest(
+  browserLogsManager: BrowserLogsManager,
+  { mockClock }: SetupOptions,
+  { baseUrl, page, browserContext }: TestContext
+) {
   browserContext.on('console', (msg) => {
     browserLogsManager.add({
       level: msg.type() as BrowserLog['level'],
@@ -445,6 +512,13 @@ async function setUpTest(browserLogsManager: BrowserLogsManager, { baseUrl, page
     })
   })
 
+  if (mockClock) {
+    try {
+      await page.clock.install()
+    } catch (e) {
+      test.skip(true, `Mock clock is not supported in this browser: ${String(e)}`)
+    }
+  }
   await page.goto(baseUrl)
   await waitForServersIdle()
 }

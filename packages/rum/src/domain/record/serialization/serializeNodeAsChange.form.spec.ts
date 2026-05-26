@@ -8,7 +8,7 @@ import {
 import { registerCleanupTask } from '../../../../../core/test'
 import { ChangeType } from '../../../types'
 
-import { serializeHtmlAsChange } from './serializeHtml.specHelper'
+import { serializeHtmlAsChange } from '../test/serializeHtml.specHelper'
 
 describe('serializeNodeAsChange for form elements', () => {
   let originalTimeout: number

@@ -1,6 +1,7 @@
 import { generateUUID, INTAKE_URL_PARAMETERS } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
+import type { DebuggerInitConfiguration } from '@datadog/browser-debugger'
 import type test from '@playwright/test'
 import { isBrowserStack, isContinuousIntegration } from './environment'
 import type { Servers } from './httpServers'
@@ -11,8 +12,9 @@ export interface SetupOptions {
   logs?: LogsInitConfiguration
   logsInit: (initConfiguration: LogsInitConfiguration) => void
   rumInit: (initConfiguration: RumInitConfiguration) => void
+  debugger?: DebuggerInitConfiguration
   remoteConfiguration?: RemoteConfiguration
-  eventBridge: boolean
+  eventBridge?: EventBridgeOptions
   head?: string
   body?: string
   baseUrlHooks: UrlHook[]
@@ -27,6 +29,7 @@ export interface SetupOptions {
   }
   worker?: WorkerOptions
   callerLocation?: CallerLocation
+  mockClock: boolean
 }
 
 export interface CallerLocation {
@@ -39,6 +42,10 @@ export interface WorkerOptions {
   importScripts?: boolean
   rumConfiguration?: RumInitConfiguration
   logsConfiguration?: LogsInitConfiguration
+}
+
+export interface EventBridgeOptions {
+  isTraceSampled?: boolean
 }
 
 export type SetupFactory = (options: SetupOptions, servers: Servers) => string
@@ -60,7 +67,7 @@ export function asyncSetup(options: SetupOptions, servers: Servers) {
   let footer = ''
 
   if (options.eventBridge) {
-    header += setupEventBridge(servers)
+    header += setupEventBridge(servers, options.eventBridge)
   }
 
   if (options.extension) {
@@ -70,12 +77,12 @@ export function asyncSetup(options: SetupOptions, servers: Servers) {
   function formatSnippet(url: string, globalName: string) {
     return `(function(h,o,u,n,d) {
 h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}}
-d=o.createElement(u);d.async=1;d.src=n
+d=o.createElement(u);d.async=1;d.src=n;d.crossOrigin=''
 n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
 })(window,document,'script','${url}','${globalName}')`
   }
 
-  const { logsScriptUrl, rumScriptUrl } = createCrossOriginScriptUrls(servers, options)
+  const { logsScriptUrl, rumScriptUrl, debuggerScriptUrl } = createCrossOriginScriptUrls(servers, options)
 
   if (options.logs) {
     footer += html`<script>
@@ -97,6 +104,15 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
     </script>`
   }
 
+  if (options.debugger) {
+    footer += html`<script type="text/javascript">
+      ${formatSnippet(debuggerScriptUrl, 'DD_DEBUGGER')}
+      DD_DEBUGGER.onReady(function () {
+        DD_DEBUGGER.init(${formatConfiguration(options.debugger, servers)})
+      })
+    </script>`
+  }
+
   return basePage({
     header,
     body: options.body,
@@ -108,17 +124,17 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
   let header = options.head || ''
 
   if (options.eventBridge) {
-    header += setupEventBridge(servers)
+    header += setupEventBridge(servers, options.eventBridge)
   }
 
   if (options.extension) {
     header += setupExtension(options, servers)
   }
 
-  const { logsScriptUrl, rumScriptUrl } = createCrossOriginScriptUrls(servers, options)
+  const { logsScriptUrl, rumScriptUrl, debuggerScriptUrl } = createCrossOriginScriptUrls(servers, options)
 
   if (options.logs) {
-    header += html`<script type="text/javascript" src="${logsScriptUrl}"></script>`
+    header += html`<script type="text/javascript" src="${logsScriptUrl}" crossorigin></script>`
     header += html`<script type="text/javascript">
       DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
       ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
@@ -126,11 +142,20 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
   }
 
   if (options.rum) {
-    header += html`<script type="text/javascript" src="${rumScriptUrl}"></script>`
+    header += html`<script type="text/javascript" src="${rumScriptUrl}" crossorigin></script>`
     header += html`<script type="text/javascript">
       DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
       ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
     </script>`
+  }
+
+  if (options.debugger) {
+    header += html`
+      <script type="text/javascript" src="${debuggerScriptUrl}"></script>
+      <script type="text/javascript">
+        DD_DEBUGGER.init(${formatConfiguration(options.debugger, servers)})
+      </script>
+    `
   }
 
   return basePage({
@@ -143,7 +168,7 @@ export function npmSetup(options: SetupOptions, servers: Servers) {
   let header = options.head || ''
 
   if (options.eventBridge) {
-    header += setupEventBridge(servers)
+    header += setupEventBridge(servers, options.eventBridge)
   }
 
   if (options.extension) {
@@ -168,6 +193,14 @@ export function npmSetup(options: SetupOptions, servers: Servers) {
     </script>`
   }
 
+  if (options.debugger) {
+    header += html`<script type="text/javascript">
+      window.DEBUGGER_INIT = () => {
+        window.DD_DEBUGGER.init(${formatConfiguration(options.debugger, servers)})
+      }
+    </script>`
+  }
+
   header += html`<script type="text/javascript" src="./app.js"></script>`
 
   return basePage({
@@ -180,7 +213,7 @@ export function appSetup(options: SetupOptions, servers: Servers, appName: strin
   let header = options.head || ''
 
   if (options.eventBridge) {
-    header += setupEventBridge(servers)
+    header += setupEventBridge(servers, options.eventBridge)
   }
 
   if (options.extension) {
@@ -238,7 +271,7 @@ export function microfrontendSetup(options: SetupOptions, servers: Servers) {
   let header = options.head || ''
 
   if (options.eventBridge) {
-    header += setupEventBridge(servers)
+    header += setupEventBridge(servers, options.eventBridge)
   }
 
   if (options.extension) {
@@ -248,7 +281,7 @@ export function microfrontendSetup(options: SetupOptions, servers: Servers) {
   const { rumScriptUrl } = createCrossOriginScriptUrls(servers, options)
 
   if (options.rum) {
-    header += html`<script type="text/javascript" src="${rumScriptUrl}"></script>`
+    header += html`<script type="text/javascript" src="${rumScriptUrl}" crossorigin></script>`
     header += html`<script type="text/javascript">
       DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
       ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
@@ -278,7 +311,7 @@ function js(parts: readonly string[], ...vars: string[]) {
   return parts.reduce((full, part, index) => full + vars[index - 1] + part)
 }
 
-function setupEventBridge(servers: Servers) {
+function setupEventBridge(servers: Servers, options: EventBridgeOptions = {}) {
   const baseHostname = new URL(servers.base.origin).hostname
 
   // Send EventBridge events to the intake so we can inspect them in our E2E test cases. The URL
@@ -289,6 +322,13 @@ function setupEventBridge(servers: Servers) {
     bridge: 'true',
   }).toString()}`
 
+  const isTraceSampledMethod =
+    options.isTraceSampled !== undefined
+      ? `getIsTraceSampled() {
+        return '${options.isTraceSampled}'
+      },`
+      : ''
+
   return html`<script type="text/javascript">
     window.DatadogEventBridge = {
       getCapabilities() {
@@ -297,6 +337,7 @@ function setupEventBridge(servers: Servers) {
       getPrivacyLevel() {
         return 'mask'
       },
+      ${isTraceSampledMethod}
       getAllowedWebViewHosts() {
         return '["${baseHostname}"]'
       },
@@ -340,7 +381,10 @@ function isJsonIncompatibleValue(value: unknown): value is JsonIncompatibleValue
   return typeof value === 'function' || value instanceof RegExp
 }
 
-export function formatConfiguration(initConfiguration: LogsInitConfiguration | RumInitConfiguration, servers: Servers) {
+export function formatConfiguration(
+  initConfiguration: LogsInitConfiguration | RumInitConfiguration | DebuggerInitConfiguration,
+  servers: Servers
+) {
   const jsonIncompatibles = new Map<string, JsonIncompatibleValue>()
 
   let result = JSON.stringify(
@@ -375,5 +419,6 @@ export function createCrossOriginScriptUrls(servers: Servers, options: SetupOpti
   return {
     logsScriptUrl: `${servers.crossOrigin.origin}/datadog-logs.js`,
     rumScriptUrl: `${servers.crossOrigin.origin}/${options.useRumSlim ? 'datadog-rum-slim.js' : 'datadog-rum.js'}`,
+    debuggerScriptUrl: `${servers.crossOrigin.origin}/datadog-debugger.js`,
   }
 }

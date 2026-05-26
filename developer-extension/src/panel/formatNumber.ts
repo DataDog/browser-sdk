@@ -34,7 +34,7 @@ export function formatDate(ms: number): string {
         // Add milliseconds to the formatted date
         value += `.${new Intl.DateTimeFormat(LOCALE, {
           fractionalSecondDigits: 3,
-        } as Intl.DateTimeFormatOptions).format(date)}`
+        }).format(date)}`
       }
       return value
     })

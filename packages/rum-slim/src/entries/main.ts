@@ -33,7 +33,11 @@ export type {
   StartRecordingOptions,
   AddDurationVitalOptions,
   DurationVitalOptions,
-  DurationVitalReference,
+  FeatureOperationOptions,
+  FailureReason,
+  ActionOptions,
+  ResourceOptions,
+  ResourceStopOptions,
   TracingOption,
   RumPlugin,
   OnRumStartOptions,
@@ -57,9 +61,7 @@ export type {
   RumErrorEventDomainContext,
   RumActionEventDomainContext,
   RumVitalEventDomainContext,
-  RumFetchResourceEventDomainContext,
-  RumXhrResourceEventDomainContext,
-  RumOtherResourceEventDomainContext,
+  RumResourceEventDomainContext,
   RumLongTaskEventDomainContext,
 } from '@datadog/browser-rum-core'
 export { DEFAULT_TRACKED_RESOURCE_HEADERS } from '@datadog/browser-rum-core'

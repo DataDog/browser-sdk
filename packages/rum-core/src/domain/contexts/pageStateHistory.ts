@@ -55,9 +55,7 @@ export function startPageStateHistory(
   let currentPageState: PageState
 
   if (supportPerformanceTimingEvent(RumPerformanceEntryType.VISIBILITY_STATE)) {
-    const visibilityEntries = performance.getEntriesByType(
-      RumPerformanceEntryType.VISIBILITY_STATE
-    ) as PerformanceEntry[]
+    const visibilityEntries = performance.getEntriesByType(RumPerformanceEntryType.VISIBILITY_STATE)
 
     visibilityEntries.forEach((entry) => {
       const state = entry.name === 'hidden' ? PageState.HIDDEN : PageState.ACTIVE

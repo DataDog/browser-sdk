@@ -77,11 +77,11 @@ describe('createContextManager', () => {
   it('should prevent setting non object values', () => {
     spyOn(display, 'error')
     const manager = createContextManagerWithDefaults()
-    manager.setContext(null as any)
+    manager.setContext(null)
     expect(manager.getContext()).toEqual({})
-    manager.setContext(undefined as any)
+    manager.setContext(undefined)
     expect(manager.getContext()).toEqual({})
-    manager.setContext(2 as any)
+    manager.setContext(2)
     expect(manager.getContext()).toEqual({})
   })
 

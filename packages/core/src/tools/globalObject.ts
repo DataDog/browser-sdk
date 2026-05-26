@@ -1,7 +1,3 @@
-/**
- * inspired by https://mathiasbynens.be/notes/globalthis
- */
-
 // Extend/Create the WorkerGlobalScope interface to avoid issues when used in a non-browser tsconfig environment
 interface WorkerGlobalScope {
   empty: never

@@ -22,7 +22,7 @@ describe('startVueRouterView', () => {
   it('warns if router: true is missing from plugin config', () => {
     const warnSpy = spyOn(display, 'warn')
     initializeVuePlugin({ configuration: {} })
-    startVueRouterView([] as unknown as RouteLocationMatched[], '/')
+    startVueRouterView([], '/')
     expect(warnSpy).toHaveBeenCalledOnceWith(
       '`router: true` is missing from the vue plugin configuration, the view will not be tracked.'
     )
@@ -31,7 +31,7 @@ describe('startVueRouterView', () => {
 
 describe('computeViewName', () => {
   it('returns an empty string if there is no route match', () => {
-    expect(computeViewName([] as unknown as RouteLocationMatched[], '/')).toBe('')
+    expect(computeViewName([], '/')).toBe('')
   })
 
   it('ignores routes without a path', () => {

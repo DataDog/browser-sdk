@@ -43,6 +43,7 @@ export default tseslint.config(
       'generated-docs',
       'developer-extension/.wxt',
       'developer-extension/dist',
+      '.claude/worktrees',
     ],
   },
 
@@ -68,6 +69,7 @@ export default tseslint.config(
 
     languageOptions: {
       parserOptions: {
+        tsconfigRootDir: import.meta.dirname,
         project: [
           './tsconfig.default.json',
           './tsconfig.scripts.json',

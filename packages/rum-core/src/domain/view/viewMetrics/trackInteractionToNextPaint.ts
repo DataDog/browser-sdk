@@ -306,10 +306,7 @@ function createSubPartsTracker(longestInteractions: ReturnType<typeof trackLonge
 
       // Use group.startTime consistently to ensure subparts sum to inpDuration
       // Math.max prevents nextPaintTime from being before processingStart (Chrome implementation)
-      const nextPaintTime = Math.max(
-        (group.startTime + inpDuration) as RelativeTime,
-        group.processingStart
-      ) as RelativeTime
+      const nextPaintTime = Math.max(group.startTime + inpDuration, group.processingStart) as RelativeTime
 
       // Clamp processingEnd to not exceed nextPaintTime
       const processingEnd = Math.min(group.processingEnd, nextPaintTime) as RelativeTime

@@ -1,14 +1,22 @@
-import { DISCARDED, HookNames, SKIPPED } from '@datadog/browser-core'
-import { SessionReplayState, SessionType } from '../rumSessionManager'
-import type { RumSessionManager } from '../rumSessionManager'
+import type { SessionManager } from '@datadog/browser-core'
+import { DISCARDED, HookNames } from '@datadog/browser-core'
+import type { RumConfiguration } from '../configuration'
+import { SessionReplayState, computeSessionReplayState } from '../sessionReplayState'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { RecorderApi } from '../../boot/rumPublicApi'
-import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
+import type { DefaultRumEventAttributes, Hooks } from '../hooks'
 import type { ViewHistory } from './viewHistory'
+
+export const enum SessionType {
+  SYNTHETICS = 'synthetics',
+  USER = 'user',
+  CI_TEST = 'ci_test',
+}
 
 export function startSessionContext(
   hooks: Hooks,
-  sessionManager: RumSessionManager,
+  configuration: RumConfiguration,
+  sessionManager: SessionManager,
   recorderApi: RecorderApi,
   viewHistory: ViewHistory
 ) {
@@ -25,7 +33,7 @@ export function startSessionContext(
     let isActive
     if (eventType === RumEventType.VIEW) {
       hasReplay = recorderApi.getReplayStats(view.id) ? true : undefined
-      sampledForReplay = session.sessionReplay === SessionReplayState.SAMPLED
+      sampledForReplay = computeSessionReplayState(session, configuration) === SessionReplayState.SAMPLED
       isActive = view.sessionIsActive ? undefined : false
     } else {
       hasReplay = recorderApi.isRecording() ? true : undefined
@@ -39,20 +47,6 @@ export function startSessionContext(
         has_replay: hasReplay,
         sampled_for_replay: sampledForReplay,
         is_active: isActive,
-      },
-    }
-  })
-
-  hooks.register(HookNames.AssembleTelemetry, ({ startTime }): DefaultTelemetryEventAttributes | SKIPPED => {
-    const session = sessionManager.findTrackedSession(startTime)
-
-    if (!session) {
-      return SKIPPED
-    }
-
-    return {
-      session: {
-        id: session.id,
       },
     }
   })

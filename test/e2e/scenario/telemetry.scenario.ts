@@ -11,7 +11,7 @@ test.describe('telemetry', () => {
             throw new window.Error('expected error')
           },
         }
-        window.DD_LOGS!.logger.log('hop', context as any)
+        window.DD_LOGS!.logger.log('hop', context)
       })
       await flushEvents()
       expect(intakeRegistry.telemetryErrorEvents).toHaveLength(1)
@@ -32,7 +32,7 @@ test.describe('telemetry', () => {
             throw new window.Error('expected error')
           },
         }
-        window.DD_RUM!.addAction('hop', context as any)
+        window.DD_RUM!.addAction('hop', context)
       })
       await flushEvents()
       expect(intakeRegistry.telemetryErrorEvents).toHaveLength(1)
@@ -67,6 +67,7 @@ test.describe('telemetry', () => {
       const event = intakeRegistry.telemetryConfigurationEvents[0]
       expect(event.service).toEqual('browser-rum-sdk')
       expect(event.telemetry.configuration.track_user_interactions).toEqual(true)
+      expect(event.session!.id).toEqual(expect.any(String))
       expect(event.application!.id).toEqual(expect.any(String))
     })
 
@@ -135,7 +136,7 @@ test.describe('telemetry', () => {
         Object.defineProperty(Document.prototype, 'cookie', {
           get: () => originalDescriptor.get.call(document),
           set: (value) => {
-            if (value.includes('_dd_s=')) {
+            if (value.includes('_dd_s_v2=')) {
               throw new Error('expected error')
             }
             originalDescriptor.set.call(document, value)
@@ -152,7 +153,7 @@ test.describe('telemetry', () => {
         expect(intakeRegistry.telemetryErrorEvents).toHaveLength(1)
         const error = intakeRegistry.telemetryErrorEvents[0]
         expect(error.service).toEqual('browser-logs-sdk')
-        expect(error.telemetry.message).toBe('expected error')
+        expect(error.telemetry.message).toBe('Error while resolving initial session state: Error: expected error')
         expect(error.telemetry.error!.kind).toBe('Error')
         expect(error.telemetry.status).toBe('error')
         intakeRegistry.empty()
@@ -166,7 +167,7 @@ test.describe('telemetry', () => {
         expect(intakeRegistry.telemetryErrorEvents).toHaveLength(1)
         const error = intakeRegistry.telemetryErrorEvents[0]
         expect(error.service).toEqual('browser-rum-sdk')
-        expect(error.telemetry.message).toBe('expected error')
+        expect(error.telemetry.message).toBe('Error while resolving initial session state: Error: expected error')
         expect(error.telemetry.error!.kind).toBe('Error')
         expect(error.telemetry.status).toBe('error')
         intakeRegistry.empty()

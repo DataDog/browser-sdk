@@ -61,6 +61,34 @@ test.describe('tracking consent', () => {
         expect(await findSessionCookie(browserContext)).not.toEqual(initialSessionId)
       })
 
+    createTest('recovers when consent is revoked during session manager init and re-granted')
+      .withRum({ trackingConsent: 'not-granted' })
+      .run(async ({ intakeRegistry, flushEvents, browserContext, page }) => {
+        // Grant then revoke synchronously: the grant triggers startSessionManager
+        // (it begins awaiting setSessionState / cookie lock), and the revoke lands
+        // before that async work completes.
+        await page.evaluate(() => {
+          window.DD_RUM!.setTrackingConsent('granted')
+          window.DD_RUM!.setTrackingConsent('not-granted')
+        })
+
+        // While consent stays revoked the cookie must be marked expired so
+        // other tabs don't pick up an orphan session ID.
+        await page.waitForTimeout(200)
+        expect((await findSessionCookie(browserContext))?.isExpired).toEqual('1')
+
+        // Re-grant: the session manager should now finish installing and
+        // start collecting events with a fresh session.
+        await page.evaluate(() => {
+          window.DD_RUM!.setTrackingConsent('granted')
+        })
+
+        await flushEvents()
+
+        expect(intakeRegistry.rumViewEvents.length).toBeGreaterThan(0)
+        expect((await findSessionCookie(browserContext))?.isExpired).not.toEqual('1')
+      })
+
     createTest('using setTrackingConsent before init overrides the init parameter')
       .withRum({ trackingConsent: 'not-granted' })
       .withRumInit((configuration) => {
@@ -96,6 +124,20 @@ test.describe('tracking consent', () => {
 
         expect(intakeRegistry.isEmpty).toBe(false)
         expect(await findSessionCookie(browserContext)).toBeDefined()
+      })
+
+    createTest('stops sending events if tracking consent is revoked')
+      .withLogs()
+      .run(async ({ intakeRegistry, flushEvents, browserContext, page }) => {
+        await page.evaluate(() => {
+          window.DD_LOGS!.setTrackingConsent('not-granted')
+          window.DD_LOGS!.logger.log('should not be sent')
+        })
+
+        await flushEvents()
+
+        expect(intakeRegistry.logsEvents).toHaveLength(0)
+        expect((await findSessionCookie(browserContext))?.isExpired).toEqual('1')
       })
   })
 })

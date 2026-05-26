@@ -117,7 +117,11 @@ test.describe('rum errors', () => {
         message: 'oh snap',
         source: 'source',
         handling: 'unhandled',
-        stack: ['Error: oh snap', `at <anonymous> @ ${baseUrl}:`],
+        // The second frame is the inner setTimeout callback. Most browsers report it as
+        // `<anonymous>`, but Firefox uses the lexical parent function name and reports it as
+        // `window.RUM_INIT/<` (or even `window.RUM_INIT/</<`) when running with the `npm` setup,
+        // because the test's rumInit callback is wrapped in a `window.RUM_INIT` arrow function.
+        stack: ['Error: oh snap', new RegExp(`(<anonymous>|window\\.RUM_INIT(/<)+) @ ${baseUrl}:`)],
       })
       withBrowserLogs((browserLogs) => {
         expect(browserLogs).toHaveLength(1)
@@ -278,7 +282,8 @@ function expectStack(stack: string | undefined, expectedLines?: Array<string | R
     expect(stack).toBeDefined()
     const actualLines = stack!.split('\n')
     expect.soft(actualLines.length).toBeGreaterThanOrEqual(expectedLines.length)
-    expect.soft(actualLines.length).toBeLessThanOrEqual(expectedLines.length + 2) // FF may have more lines of stack
+    // We don't test for a specific line number because it can be different between browsers. In
+    // particular, Firefox seems to collect async stack traces.
 
     expectedLines.forEach((line, i) => {
       if (typeof line !== 'string') {

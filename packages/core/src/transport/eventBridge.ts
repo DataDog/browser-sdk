@@ -8,6 +8,7 @@ export interface BrowserWindowWithEventBridge extends Window {
 export interface DatadogEventBridge {
   getCapabilities?(): string
   getPrivacyLevel?(): DefaultPrivacyLevel
+  getIsTraceSampled?(): 'true' | 'false' | 'null'
   getAllowedWebViewHosts(): string
   send(msg: string): void
 }
@@ -29,6 +30,9 @@ export function getEventBridge<T, E>() {
     },
     getPrivacyLevel() {
       return eventBridgeGlobal.getPrivacyLevel?.()
+    },
+    getIsTraceSampled() {
+      return JSON.parse(eventBridgeGlobal.getIsTraceSampled?.() || 'null') as boolean | null
     },
     getAllowedWebViewHosts() {
       return JSON.parse(eventBridgeGlobal.getAllowedWebViewHosts()) as string[]

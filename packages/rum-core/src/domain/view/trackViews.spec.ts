@@ -1,4 +1,4 @@
-import type { Duration, RelativeTime } from '@datadog/browser-core'
+import type { Duration, RelativeTime, SessionRenewalEvent } from '@datadog/browser-core'
 import { PageExitReason, timeStampNow, display, relativeToClocks, relativeNow } from '@datadog/browser-core'
 
 import type { Clock } from '@datadog/browser-core/test'
@@ -217,25 +217,34 @@ describe('view lifecycle', () => {
       expect(getViewCreateCount()).toBe(1)
 
       lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
 
       expect(getViewCreateCount()).toBe(2)
+    })
+
+    it('should use session_renewal loading type for the new view', () => {
+      const { getViewUpdate, getViewUpdateCount } = viewTest
+
+      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
+
+      expect(getViewUpdate(getViewUpdateCount() - 1).loadingType).toBe(ViewLoadingType.SESSION_RENEWAL)
     })
 
     it('should use the current view name, service and version for the new view', () => {
       const { getViewCreateCount, getViewCreate, startView } = viewTest
       lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
 
       startView({ name: 'view 1', service: 'service 1', version: 'version 1' })
       startView({ name: 'view 2', service: 'service 2', version: 'version 2' })
       lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
 
       startView({ name: 'view 3', service: 'service 3', version: 'version 3' })
       changeLocation('/bar')
       lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
 
       expect(getViewCreateCount()).toBe(8)
 
@@ -1277,7 +1286,7 @@ describe('BFCache views', () => {
   let viewTest: ViewTest
 
   beforeEach(() => {
-    viewTest = setupViewTest({ lifeCycle, partialConfig: { trackBfcacheViews: true } })
+    viewTest = setupViewTest({ lifeCycle })
 
     registerCleanupTask(() => {
       viewTest.stop()

@@ -14,18 +14,9 @@ describe('readBytesFromStream', () => {
   })
 
   it('should read full stream', async () => {
-    const bytes = await readBytesFromStream(stream, {
-      collectStreamBody: true,
-    })
+    const bytes = await readBytesFromStream(stream)
 
-    expect(bytes?.length).toBe(27)
-  })
-
-  it('should read full stream without body', async () => {
-    const bytes = await readBytesFromStream(stream, {
-      collectStreamBody: false,
-    })
-    expect(bytes).toBeUndefined()
+    expect(bytes.length).toBe(27)
   })
 
   it('should handle rejection error on read', async () => {
@@ -36,9 +27,7 @@ describe('readBytesFromStream', () => {
     })
 
     try {
-      await readBytesFromStream(stream, {
-        collectStreamBody: true,
-      })
+      await readBytesFromStream(stream)
       fail('Should have thrown an error')
     } catch (error) {
       expect(error).toEqual(jasmine.any(Error))
@@ -54,9 +43,7 @@ describe('readBytesFromStream', () => {
       cancel: () => Promise.reject(new Error('foo')),
     })
 
-    const bytes = await readBytesFromStream(stream, {
-      collectStreamBody: true,
-    })
+    const bytes = await readBytesFromStream(stream)
     expect(bytes).toBeDefined()
   })
 })

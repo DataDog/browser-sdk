@@ -94,26 +94,24 @@ export function createScrollValuesObservable(
       observable.notify(computeScrollValues())
     }
 
-    if (window.ResizeObserver) {
-      const throttledNotify = throttle(notify, throttleDuration, {
-        leading: false,
-        trailing: true,
-      })
+    const throttledNotify = throttle(notify, throttleDuration, {
+      leading: false,
+      trailing: true,
+    })
 
-      const observerTarget = document.scrollingElement || document.documentElement
-      const resizeObserver = new ResizeObserver(monitor(throttledNotify.throttled))
-      if (observerTarget) {
-        resizeObserver.observe(observerTarget)
-      }
-      const eventListener = addEventListener(configuration, window, DOM_EVENT.SCROLL, throttledNotify.throttled, {
-        passive: true,
-      })
+    const observerTarget = document.scrollingElement || document.documentElement
+    const resizeObserver = new ResizeObserver(monitor(throttledNotify.throttled))
+    if (observerTarget) {
+      resizeObserver.observe(observerTarget)
+    }
+    const eventListener = addEventListener(configuration, window, DOM_EVENT.SCROLL, throttledNotify.throttled, {
+      passive: true,
+    })
 
-      return () => {
-        throttledNotify.cancel()
-        resizeObserver.disconnect()
-        eventListener.stop()
-      }
+    return () => {
+      throttledNotify.cancel()
+      resizeObserver.disconnect()
+      eventListener.stop()
     }
   })
 }

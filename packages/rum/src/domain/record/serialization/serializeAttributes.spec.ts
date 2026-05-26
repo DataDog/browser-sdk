@@ -12,7 +12,8 @@ import { appendElement } from '@datadog/browser-rum-core/test'
 import { createSerializationTransactionForTesting } from '../test/serialization.specHelper'
 import type { ScrollPositions } from '../elementsScrollPositions'
 import { getCssRulesString, serializeDOMAttributes, serializeVirtualAttributes } from './serializeAttributes'
-import { SerializationKind, type SerializationTransaction } from './serializationTransaction'
+import type { ChangeSerializationTransaction } from './serializationTransaction'
+import { SerializationKind } from './serializationTransaction'
 import type { VirtualAttributes } from './serialization.types'
 import type { SerializationMetric, SerializationStats } from './serializationStats'
 import { createSerializationStats } from './serializationStats'
@@ -29,7 +30,7 @@ const PRIVACY_LEVELS = Object.keys({
 } satisfies Record<NodePrivacyLevel, true>) as NodePrivacyLevel[]
 
 describe('serializeDOMAttributes', () => {
-  let transaction: SerializationTransaction
+  let transaction: ChangeSerializationTransaction
 
   beforeEach(() => {
     transaction = createSerializationTransactionForTesting()
@@ -331,7 +332,7 @@ describe('serializeDOMAttributes', () => {
 
 describe('serializeVirtualAttributes', () => {
   let stats: SerializationStats
-  let transaction: SerializationTransaction
+  let transaction: ChangeSerializationTransaction
 
   beforeEach(() => {
     stats = createSerializationStats()

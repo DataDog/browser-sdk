@@ -16,9 +16,38 @@ import type { RumEventDomainContext } from '../../domainContext.types'
 import type { RumEvent } from '../../rumEvent.types'
 import type { RumPlugin } from '../plugins'
 import type { PropagatorType, TracingOption } from '../tracing/tracer.types'
+import { getRemoteConfigurationId } from './remoteConfiguration'
 
 export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'datadog']
 
+/**
+ * Default list of headers collected on resource events when {@link RumInitConfiguration.trackResourceHeaders | trackResourceHeaders}
+ * is set to `true`. Re-exported by the `@datadog/browser-rum` and `@datadog/browser-rum-slim` packages, and exposed on the
+ * `DD_RUM` global object when the SDK is loaded via the CDN, so it can be referenced when building a custom matcher list.
+ *
+ * @example NPM
+ * ```ts
+ * import { datadogRum, DEFAULT_TRACKED_RESOURCE_HEADERS } from '@datadog/browser-rum'
+ *
+ * datadogRum.init({
+ *   // ...
+ *   trackResourceHeaders: [
+ *     ...DEFAULT_TRACKED_RESOURCE_HEADERS.map((name) => ({ name })),
+ *     { name: 'x-request-id' },
+ *   ],
+ * })
+ * ```
+ * @example CDN
+ * ```ts
+ * DD_RUM.init({
+ *   // ...
+ *   trackResourceHeaders: [
+ *     ...DD_RUM.DEFAULT_TRACKED_RESOURCE_HEADERS.map((name) => ({ name })),
+ *     { name: 'x-request-id' },
+ *   ],
+ * })
+ * ```
+ */
 export const DEFAULT_TRACKED_RESOURCE_HEADERS = [
   'cache-control',
   'etag',
@@ -110,11 +139,24 @@ export interface RumInitConfiguration extends InitConfiguration {
   compressIntakeRequests?: boolean | undefined
 
   /**
-   * [Internal option] Id of the remote configuration
+   * [Internal option] Id of the remote configuration.
+   * Prefer `remoteConfiguration.id` for the non-blocking cache-and-reload path.
    *
    * @internal
    */
   remoteConfigurationId?: string | undefined
+
+  /**
+   * [Internal option] Remote configuration descriptor. By default the SDK reads a cached
+   * configuration synchronously and refreshes it in the background. Set `sync: true` to fall back
+   * to the legacy blocking fetch. Set `required: true` to prevent the SDK from starting on the
+   * current page load when the remote configuration cache is empty or unreadable (the background
+   * fetch still runs to populate the cache for the next load). Ignored when `sync: true` is set
+   * or when the legacy `remoteConfigurationId` field is used.
+   *
+   * @internal
+   */
+  remoteConfiguration?: { id: string; sync?: boolean; required?: boolean } | undefined
 
   /**
    * [Internal option] set a proxy URL for the remote configuration
@@ -159,7 +201,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    * See [Replay Privacy Options](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser/privacy_options) for further information.
    *
    * @category Privacy
-   * @defaultValue mask
+   * @defaultValue mask-user-input
    */
   defaultPrivacyLevel?: DefaultPrivacyLevel | undefined
 
@@ -168,6 +210,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    *
    * See [Connect Session Replay To Your Third-Party Tools](https://docs.datadoghq.com/real_user_monitoring/guide/connect-session-replay-to-your-third-party-tools) for further information.
    *
+   * @category Session Replay
    */
   subdomain?: string
 
@@ -194,8 +237,9 @@ export interface RumInitConfiguration extends InitConfiguration {
    * Enables privacy control for action names.
    *
    * @category Privacy
+   * @defaultValue true
    */
-  enablePrivacyForActionName?: boolean | undefined // TODO next major: remove this option and make privacy for action name the default behavior
+  enablePrivacyForActionName?: boolean | undefined
 
   /**
    * Enables automatic collection of users actions.
@@ -216,15 +260,6 @@ export interface RumInitConfiguration extends InitConfiguration {
    */
   actionNameAttribute?: string | undefined
 
-  /**
-   * Enables accurate action names for clicks inside Shadow DOM elements.
-   * ⚠️ This is a beta feature and will be updated in the future with selector tracking.
-   *
-   * @category Beta
-   * @defaultValue false
-   */
-  betaTrackActionsInShadowDom?: boolean | undefined
-
   // view options
   /**
    * Allows you to control RUM views creation. See [Override default RUM view names](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/?tab=npm#override-default-rum-view-names) for further information.
@@ -232,14 +267,6 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @category Data Collection
    */
   trackViewsManually?: boolean | undefined
-
-  /**
-   * Enable the creation of dedicated views for pages restored from the Back-Forward cache.
-   *
-   * @category Data Collection
-   * @defaultValue false
-   */
-  trackBfcacheViews?: boolean | undefined
 
   /**
    * Enables collection of resource events.
@@ -268,7 +295,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @example
    * // Collect default headers plus custom ones for all URLs
    * trackResourceHeaders: [
-   *   { name: (h) => DEFAULT_TRACKED_RESOURCE_HEADERS.includes(h) },
+   *   ...DEFAULT_TRACKED_RESOURCE_HEADERS.map((h) => ({ name: h })),
    *   { name: 'x-request-id' },
    * ]
    * @example
@@ -277,7 +304,6 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @example
    * // Extract a partial value from a header
    * trackResourceHeaders: [{ url: /\/api\//, name: 'server-timing', extractor: /dur=(\d+)/, location: 'response' }]
-   * @hidden
    */
   trackResourceHeaders?: boolean | MatchHeader[] | undefined
 
@@ -288,14 +314,6 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @defaultValue true
    */
   trackLongTasks?: boolean | undefined
-
-  /**
-   * Enables early request collection before resource timing entries are available.
-   *
-   * @category Data Collection
-   * @defaultValue false
-   */
-  trackEarlyRequests?: boolean | undefined
 
   /**
    * List of plugins to enable. The plugins API is unstable and experimental, and may change without
@@ -356,7 +374,6 @@ export interface MatchHeader {
 export interface RumConfiguration extends Configuration {
   // Built from init configuration
   actionNameAttribute: string | undefined
-  betaTrackActionsInShadowDom: boolean
   traceSampleRate: number
   rulePsr: number | undefined
   allowedTracingUrls: TracingOption[]
@@ -373,8 +390,6 @@ export interface RumConfiguration extends Configuration {
   trackResources: boolean
   trackResourceHeaders: MatchHeader[]
   trackLongTasks: boolean
-  trackBfcacheViews: boolean
-  trackEarlyRequests: boolean
   subdomain?: string
   traceContextInjection: TraceContextInjection
   plugins: RumPlugin[]
@@ -430,7 +445,6 @@ export function validateAndBuildRumConfiguration(
   return {
     applicationId: initConfiguration.applicationId,
     actionNameAttribute: initConfiguration.actionNameAttribute,
-    betaTrackActionsInShadowDom: !!initConfiguration.betaTrackActionsInShadowDom,
     sessionReplaySampleRate,
     startSessionReplayRecordingManually:
       initConfiguration.startSessionReplayRecordingManually !== undefined
@@ -447,20 +461,18 @@ export function validateAndBuildRumConfiguration(
     trackResources: !!(initConfiguration.trackResources ?? true),
     trackResourceHeaders: validateAndBuildTrackResourceHeaders(initConfiguration),
     trackLongTasks: !!(initConfiguration.trackLongTasks ?? true),
-    trackBfcacheViews: !!initConfiguration.trackBfcacheViews,
-    trackEarlyRequests: !!initConfiguration.trackEarlyRequests,
     subdomain: initConfiguration.subdomain,
     defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
       ? initConfiguration.defaultPrivacyLevel
-      : DefaultPrivacyLevel.MASK,
-    enablePrivacyForActionName: !!initConfiguration.enablePrivacyForActionName,
+      : DefaultPrivacyLevel.MASK_USER_INPUT,
+    enablePrivacyForActionName: initConfiguration.enablePrivacyForActionName !== false,
     traceContextInjection: objectHasValue(TraceContextInjection, initConfiguration.traceContextInjection)
       ? initConfiguration.traceContextInjection
       : TraceContextInjection.SAMPLED,
     plugins: initConfiguration.plugins || [],
     trackFeatureFlagsForEvents: initConfiguration.trackFeatureFlagsForEvents || [],
     profilingSampleRate: initConfiguration.profilingSampleRate ?? 0,
-    propagateTraceBaggage: !!initConfiguration.propagateTraceBaggage,
+    propagateTraceBaggage: initConfiguration.propagateTraceBaggage !== false,
     allowedGraphQlUrls,
     ...baseConfiguration,
   }
@@ -600,14 +612,14 @@ function validateAndBuildTrackResourceHeaders(initConfiguration: RumInitConfigur
       display.warn(`trackResourceHeaders[${index}].extractor should be a RegExp`)
       return
     }
-    if (item.location !== undefined && !VALID_HEADER_LOCATIONS.includes(item.location as string)) {
+    if (item.location !== undefined && !VALID_HEADER_LOCATIONS.includes(item.location)) {
       display.warn(`trackResourceHeaders[${index}].location should be 'request', 'response', or 'any'`)
       return
     }
 
     result.push({
       ...item,
-      name: typeof item.name === 'string' ? item.name.toLowerCase() : (item.name as MatchOption),
+      name: typeof item.name === 'string' ? item.name.toLowerCase() : item.name,
     })
   })
 
@@ -664,14 +676,12 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     track_user_interactions: configuration.trackUserInteractions,
     track_resources: configuration.trackResources,
     track_long_task: configuration.trackLongTasks,
-    track_bfcache_views: configuration.trackBfcacheViews,
-    track_early_requests: configuration.trackEarlyRequests,
     plugins: configuration.plugins?.map((plugin) => ({
       name: plugin.name,
       ...plugin.getConfigurationTelemetry?.(),
     })),
     track_feature_flags_for_events: configuration.trackFeatureFlagsForEvents,
-    remote_configuration_id: configuration.remoteConfigurationId,
+    remote_configuration_id: getRemoteConfigurationId(configuration),
     profiling_sample_rate: configuration.profilingSampleRate,
     use_remote_configuration_proxy: !!configuration.remoteConfigurationProxy,
     track_resource_headers: getTrackResourceHeadersTelemetryValue(configuration.trackResourceHeaders),

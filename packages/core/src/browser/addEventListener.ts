@@ -57,7 +57,10 @@ type EventMapFor<T> = T extends Window
       visibilitychange: Event
     }
   : T extends Document
-    ? DocumentEventMap
+    ? DocumentEventMap & {
+        // TS 4.9.5 does not define `prerenderingchange` on Document yet (Speculation Rules / Prerender2)
+        prerenderingchange: Event
+      }
     : T extends HTMLElement
       ? HTMLElementEventMap
       : T extends VisualViewport

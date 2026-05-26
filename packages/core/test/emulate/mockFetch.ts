@@ -16,7 +16,7 @@ export function mockFetch() {
     }
   }
 
-  window.fetch = ((_input, init) => {
+  const newFetch: typeof window.fetch = (_input, init) => {
     pendingRequests += 1
     let resolve: (response: Response) => unknown
     let reject: (error: Error) => unknown
@@ -41,7 +41,9 @@ export function mockFetch() {
     })
 
     return promise
-  }) as typeof window.fetch
+  }
+
+  window.fetch = newFetch
 
   registerCleanupTask(() => {
     window.fetch = originalFetch

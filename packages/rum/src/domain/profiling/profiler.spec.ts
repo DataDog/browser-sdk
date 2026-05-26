@@ -1,6 +1,12 @@
 import type { ViewHistoryEntry } from '@datadog/browser-rum-core'
-import { LifeCycle, LifeCycleEventType, RumPerformanceEntryType, createHooks } from '@datadog/browser-rum-core'
-import type { Duration } from '@datadog/browser-core'
+import {
+  LifeCycle,
+  LifeCycleEventType,
+  RumPerformanceEntryType,
+  VitalType,
+  createHooks,
+} from '@datadog/browser-rum-core'
+import type { Duration, SessionRenewalEvent } from '@datadog/browser-core'
 import {
   addDuration,
   clocksNow,
@@ -8,6 +14,7 @@ import {
   createIdentityEncoder,
   createValueHistory,
   deepClone,
+  elapsed,
   ONE_DAY,
   relativeNow,
   timeStampNow,
@@ -22,13 +29,16 @@ import {
   mockClock,
   waitNextMicrotask,
   replaceMockable,
+  createSessionManagerMock,
+  replaceMockableWithSpy,
 } from '@datadog/browser-core/test'
-import { createRumSessionManagerMock, mockRumConfiguration, mockViewHistory } from '../../../../rum-core/test'
+import { mockRumConfiguration, mockViewHistory } from '../../../../rum-core/test'
 import { mockProfiler } from '../../../test'
 import type { BrowserProfilerTrace } from '../../types'
+import { checkProfilingQuota } from './quotaCheck'
 import { mockedTrace } from './test-utils/mockedTrace'
-import { createRumProfiler } from './profiler'
-import type { ProfilerTrace } from './types'
+import { createRumProfiler } from './datadogProfiler'
+import type { ProfilerTrace, RUMProfilerConfiguration } from './types'
 import type { ProfilingContextManager } from './profilingContext'
 import { startProfilingContext } from './profilingContext'
 import type { ProfileEventPayload } from './transport/assembly'
@@ -42,10 +52,14 @@ describe('profiler', () => {
   // Store the original pathname
   const originalPathname = document.location.pathname
   let interceptor: ReturnType<typeof interceptRequests>
+  let checkProfilingQuotaSpy: jasmine.Spy
 
   beforeEach(() => {
     interceptor = interceptRequests()
     interceptor.withFetch(DEFAULT_FETCH_MOCK, DEFAULT_FETCH_MOCK, DEFAULT_FETCH_MOCK)
+    // Default: quota always ok. Individual quota-check tests can reconfigure via spy.and.callFake(...)
+    checkProfilingQuotaSpy = replaceMockableWithSpy(checkProfilingQuota)
+    checkProfilingQuotaSpy.and.returnValue(Promise.resolve({ decision: 'quota_ok', reason: 'quota_ok' }))
   })
 
   afterEach(() => {
@@ -56,8 +70,8 @@ describe('profiler', () => {
 
   let lifeCycle = new LifeCycle()
 
-  function setupProfiler(currentView?: ViewHistoryEntry) {
-    const sessionManager = createRumSessionManagerMock().setId('session-id-1')
+  function setupProfiler(currentView?: ViewHistoryEntry, profilerConfigOverrides?: Partial<RUMProfilerConfiguration>) {
+    const sessionManager = createSessionManagerMock().setId('session-id-1')
     lifeCycle = new LifeCycle()
     const hooks = createHooks()
     const profilingContextManager: ProfilingContextManager = startProfilingContext(hooks)
@@ -122,13 +136,14 @@ describe('profiler', () => {
       {
         sampleIntervalMs: 10,
         collectIntervalMs: 60000, // 1min
-        minNumberOfSamples: 0,
         minProfileDurationMs: 0,
+        ...profilerConfigOverrides,
       }
     )
     return {
       profiler,
       profilingContextManager,
+      sessionManager,
       mockedRumProfilerTrace,
       addLongTask: (longTask: LongTaskContext) => {
         longTaskHistory.add(longTask, relativeNow()).close(addDuration(relativeNow(), longTask.duration))
@@ -138,6 +153,18 @@ describe('profiler', () => {
       },
       addVital: (vital: VitalContext) => {
         vitalHistory.add(vital, relativeNow()).close(addDuration(relativeNow(), vital.duration ?? (0 as Duration)))
+      },
+      startOperationStep: (id: string, label: string, operationKey?: string) => {
+        const startClocks = clocksNow()
+        const entry = vitalHistory.add(
+          { id, type: VitalType.OPERATION_STEP, label, operationKey, startClocks, duration: undefined },
+          startClocks.relative
+        )
+        return () => {
+          const endTime = relativeNow()
+          entry.value.duration = elapsed(entry.startTime, endTime)
+          entry.close(endTime)
+        }
       },
     }
   }
@@ -413,6 +440,7 @@ describe('profiler', () => {
     expect(profilingContextManager.get()?.status).toBe('running')
     addVital({
       id: 'vital-id-1',
+      type: VitalType.DURATION,
       label: 'vital-label-1',
       startClocks: clocksNow(),
       duration: 50 as Duration,
@@ -421,6 +449,7 @@ describe('profiler', () => {
 
     addVital({
       id: 'vital-id-2',
+      type: VitalType.DURATION,
       label: 'vital-label-2',
       startClocks: clocksNow(),
       duration: 100 as Duration,
@@ -440,6 +469,7 @@ describe('profiler', () => {
 
     addVital({
       id: 'vital-id-3',
+      type: VitalType.DURATION,
       label: 'vital-label-3',
       startClocks: clocksNow(),
       duration: 100 as Duration,
@@ -491,6 +521,79 @@ describe('profiler', () => {
         label: 'vital-label-3',
       },
     ])
+  })
+
+  it('should collect all ongoing operations during a profiling session', async () => {
+    const clock = mockClock()
+    const { profiler, startOperationStep } = setupProfiler()
+
+    // Profile 1: start all three operations, end op1
+    profiler.start()
+    await waitForBoolean(() => profiler.isRunning())
+
+    const endOp1 = startOperationStep('op-id-1', 'op-label-1')
+    clock.tick(10)
+    const endOp2 = startOperationStep('op-id-2', 'op-label-2')
+    clock.tick(10)
+    const endOp3 = startOperationStep('op-id-3', 'op-label-3')
+    clock.tick(10)
+    endOp1() // op1 ends during profile 1
+
+    clock.tick(70)
+    profiler.stop()
+    await waitNextMicrotask()
+
+    // Profile 2: end op2
+    profiler.start()
+    await waitForBoolean(() => profiler.isRunning())
+
+    clock.tick(50)
+    endOp2() // op2 ends during profile 2
+
+    clock.tick(50)
+    profiler.stop()
+    await waitNextMicrotask()
+
+    // Profile 3: end op3
+    profiler.start()
+    await waitForBoolean(() => profiler.isRunning())
+
+    clock.tick(50)
+    endOp3() // op3 ends during profile 3
+
+    clock.tick(50)
+    profiler.stop()
+    await waitNextMicrotask()
+    await waitNextMicrotask()
+
+    expect(interceptor.requests.length).toBe(3)
+
+    const req1 = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[0])
+    const req2 = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[1])
+    const req3 = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[2])
+
+    const vitals1 = req1['wall-time.json'].vitals
+    const vitals2 = req2['wall-time.json'].vitals
+    const vitals3 = req3['wall-time.json'].vitals
+
+    // Profile 1: all three operations present, only op1 has a duration
+    expect(vitals1?.map((v) => v.id)).toEqual(jasmine.arrayContaining(['op-id-1', 'op-id-2', 'op-id-3']))
+    expect(vitals1?.find((v) => v.id === 'op-id-1')?.duration).toBe(30 as Duration)
+    expect(vitals1?.find((v) => v.id === 'op-id-2')?.duration).toBeUndefined()
+    expect(vitals1?.find((v) => v.id === 'op-id-3')?.duration).toBeUndefined()
+
+    // Profile 2: op1 is gone (ended before profile 2 started), op2 and op3 present, only op2 has a duration
+    expect(vitals2?.map((v) => v.id)).not.toContain('op-id-1')
+    expect(vitals2?.map((v) => v.id)).toEqual(jasmine.arrayContaining(['op-id-2', 'op-id-3']))
+    expect(vitals2?.find((v) => v.id === 'op-id-2')?.duration).toBe(140 as Duration)
+    expect(vitals2?.find((v) => v.id === 'op-id-3')?.duration).toBeUndefined()
+
+    // Profile 3: only op3 remains, with a duration
+    expect(vitals3?.map((v) => v.id)).not.toContain('op-id-1')
+    expect(vitals3?.map((v) => v.id)).not.toContain('op-id-2')
+    expect(vitals3?.length).toBe(1)
+    expect(vitals3?.[0].id).toBe('op-id-3')
+    expect(vitals3?.[0].duration).toBe(230 as Duration)
   })
 
   it('should collect views and set default view name in the Profile', async () => {
@@ -707,7 +810,7 @@ describe('profiler', () => {
     expect(interceptor.requests.length).toBe(1)
 
     // Notify that the session has been renewed
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
 
     // Wait for profiler to restart
     await waitForBoolean(() => profiler.isRunning())
@@ -744,7 +847,7 @@ describe('profiler', () => {
     await waitForBoolean(() => interceptor.requests.length >= 1)
     expect(interceptor.requests.length).toBe(1)
 
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
     await waitForBoolean(() => profiler.isRunning())
     expect(profilingContextManager.get()?.status).toBe('running')
 
@@ -756,7 +859,7 @@ describe('profiler', () => {
     await waitForBoolean(() => interceptor.requests.length >= 2)
     expect(interceptor.requests.length).toBe(2)
 
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
     await waitForBoolean(() => profiler.isRunning())
     expect(profilingContextManager.get()?.status).toBe('running')
 
@@ -786,7 +889,7 @@ describe('profiler', () => {
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
     // Notify that the session has been renewed
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
 
     // Wait a bit to ensure profiler doesn't restart
     await new Promise((resolve) => setTimeout(resolve, 100))
@@ -817,7 +920,7 @@ describe('profiler', () => {
     // Session renews IMMEDIATELY - even before async data collection completes
     // This simulates the scenario where user activity triggers renewal
     // while data is still being collected in the background
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
 
     // The profiler should restart because the sync state was already 'stopped'
     // when SESSION_RENEWED fired
@@ -853,7 +956,7 @@ describe('profiler', () => {
     expect(profiler.isStopped()).toBe(true)
 
     // Session is renewed — start() is called synchronously, so no need to wait
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
 
     // Profiler should remain stopped - user's explicit stop should take priority over session expiration
     expect(profiler.isStopped()).toBe(true)
@@ -912,6 +1015,86 @@ describe('profiler', () => {
     expect(trace.longTasks[0].id).toBe('long-task-inside')
   })
 
+  it('should use the profiling start time when looking up the session id', async () => {
+    const clock = mockClock()
+    const { profiler, sessionManager } = setupProfiler()
+    const findTrackedSessionSpy = spyOn(sessionManager, 'findTrackedSession').and.callThrough()
+
+    profiler.start()
+    expect(profiler.isRunning()).toBe(true)
+
+    const expectedStartTime = relativeNow()
+
+    clock.tick(1000)
+
+    profiler.stop()
+
+    await waitNextMicrotask()
+    await waitNextMicrotask()
+
+    expect(findTrackedSessionSpy).toHaveBeenCalledWith(expectedStartTime)
+  })
+
+  describe('discard logic', () => {
+    it('should discard profile when duration is below threshold and there are no long tasks', async () => {
+      const clock = mockClock()
+      const { profiler } = setupProfiler(undefined, { minProfileDurationMs: 5000 })
+
+      profiler.start()
+      expect(profiler.isRunning()).toBe(true)
+
+      clock.tick(100)
+      profiler.stop()
+      expect(profiler.isStopped()).toBe(true)
+
+      await waitNextMicrotask()
+      await waitNextMicrotask()
+
+      expect(interceptor.requests.length).toBe(0)
+    })
+
+    it('should send profile when below duration threshold if a long task is present', async () => {
+      const clock = mockClock()
+      const { profiler, addLongTask } = setupProfiler(undefined, { minProfileDurationMs: 5000 })
+
+      profiler.start()
+      expect(profiler.isRunning()).toBe(true)
+
+      addLongTask({
+        id: 'long-task-id',
+        startClocks: clocksNow(),
+        duration: 50 as Duration,
+        entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
+      })
+      clock.tick(100)
+
+      profiler.stop()
+      expect(profiler.isStopped()).toBe(true)
+
+      await waitNextMicrotask()
+      await waitNextMicrotask()
+
+      expect(interceptor.requests.length).toBe(1)
+    })
+
+    it('should send profile when duration threshold is met', async () => {
+      const clock = mockClock()
+      const { profiler } = setupProfiler(undefined, { minProfileDurationMs: 100 })
+
+      profiler.start()
+      expect(profiler.isRunning()).toBe(true)
+
+      clock.tick(200)
+      profiler.stop()
+      expect(profiler.isStopped()).toBe(true)
+
+      await waitNextMicrotask()
+      await waitNextMicrotask()
+
+      expect(interceptor.requests.length).toBe(1)
+    })
+  })
+
   it('should restart profiling when session expires while paused and then renews', async () => {
     const { profiler, profilingContextManager } = setupProfiler()
 
@@ -935,7 +1118,7 @@ describe('profiler', () => {
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
     // Session is renewed
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
 
     // Wait for profiler to restart
     await waitForBoolean(() => profiler.isRunning())
@@ -944,6 +1127,246 @@ describe('profiler', () => {
     // Clean up
     profiler.stop()
     expect(profiler.isStopped()).toBe(true)
+  })
+
+  describe('quota check', () => {
+    it('should stop profiler and set quota_exceeded context when quota check returns quota_exceeded', async () => {
+      checkProfilingQuotaSpy.and.returnValue(Promise.resolve({ decision: 'quota_ko', reason: 'quota_exceeded' }))
+      const { profiler, profilingContextManager } = setupProfiler()
+
+      profiler.start()
+      await waitForBoolean(() => profiler.isStopped())
+
+      expect(profilingContextManager.get()).toEqual({
+        status: 'stopped',
+        error_reason: undefined,
+        quota_reason: 'quota_exceeded',
+      } as any)
+      expect(interceptor.requests.length).toBe(0) // no data sent
+    })
+
+    it('should stop profiler and set org_disabled context when quota check returns org_disabled', async () => {
+      checkProfilingQuotaSpy.and.returnValue(Promise.resolve({ decision: 'quota_ko', reason: 'org_disabled' }))
+      const { profiler, profilingContextManager } = setupProfiler()
+
+      profiler.start()
+      await waitForBoolean(() => profiler.isStopped())
+
+      expect(profilingContextManager.get()).toEqual({
+        status: 'stopped',
+        error_reason: undefined,
+        quota_reason: 'org_disabled',
+      } as any)
+      expect(interceptor.requests.length).toBe(0) // no data sent
+    })
+
+    it('should stop profiler and set unknown_reason context when quota check returns unknown_reason', async () => {
+      checkProfilingQuotaSpy.and.returnValue(Promise.resolve({ decision: 'quota_ko', reason: 'unknown_reason' }))
+      const { profiler, profilingContextManager } = setupProfiler()
+
+      profiler.start()
+      await waitForBoolean(() => profiler.isStopped())
+
+      expect(profilingContextManager.get()).toEqual({
+        status: 'stopped',
+        error_reason: undefined,
+        quota_reason: 'unknown_reason',
+      } as any)
+      expect(interceptor.requests.length).toBe(0) // no data sent
+    })
+
+    it('should keep profiler running when quota check returns quota-ok', async () => {
+      // default spy already returns quota-ok
+      const { profiler, profilingContextManager } = setupProfiler()
+
+      profiler.start()
+      await waitForBoolean(() => profiler.isRunning())
+
+      expect(profiler.isRunning()).toBe(true)
+      expect(profilingContextManager.get()?.status).toBe('running')
+
+      profiler.stop()
+    })
+
+    it('should not call quota check and proceed when sessionId is undefined at start', async () => {
+      // default spy already returns quota-ok; we just verify it's never called
+      mockProfiler(deepClone(mockedTrace))
+      const hooks = createHooks()
+      const profilingContextManager = startProfilingContext(hooks)
+      const noSessionManager = createSessionManagerMock()
+      spyOn(noSessionManager, 'findTrackedSession').and.returnValue(undefined)
+      const profilerNoSession = createRumProfiler(
+        mockRumConfiguration({ profilingSampleRate: 100 }),
+        new LifeCycle(),
+        noSessionManager,
+        profilingContextManager,
+        createIdentityEncoder,
+        mockViewHistory(),
+        { sampleIntervalMs: 10, collectIntervalMs: 60000, minProfileDurationMs: 0 }
+      )
+
+      profilerNoSession.start()
+      await waitForBoolean(() => profilerNoSession.isRunning())
+
+      expect(checkProfilingQuotaSpy).not.toHaveBeenCalled()
+      expect(profilerNoSession.isRunning()).toBe(true)
+
+      profilerNoSession.stop()
+    })
+
+    it('should discard quota-exceeded result when profiler was already stopped by user', async () => {
+      let resolveQuota!: (result: { decision: string; reason: string }) => void
+      checkProfilingQuotaSpy.and.callFake(
+        () =>
+          new Promise((resolve) => {
+            resolveQuota = resolve
+          })
+      )
+      const { profiler, profilingContextManager } = setupProfiler()
+
+      profiler.start()
+      await waitForBoolean(() => profiler.isRunning())
+
+      profiler.stop()
+      expect(profiler.isStopped()).toBe(true)
+      expect(profilingContextManager.get()?.status).toBe('stopped')
+      expect(profilingContextManager.get()?.error_reason).toBeUndefined()
+
+      resolveQuota({ decision: 'quota_ko', reason: 'quota_exceeded' })
+      await waitNextMicrotask()
+
+      expect(profilingContextManager.get()?.error_reason).toBeUndefined()
+    })
+
+    it('should discard quota-exceeded result when SESSION_EXPIRED fired before quota resolved', async () => {
+      let resolveQuota!: (result: { decision: string; reason: string }) => void
+      checkProfilingQuotaSpy.and.callFake(
+        () =>
+          new Promise((resolve) => {
+            resolveQuota = resolve
+          })
+      )
+      const { profiler, profilingContextManager } = setupProfiler()
+
+      profiler.start()
+      await waitForBoolean(() => profiler.isRunning())
+
+      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+      expect(profiler.isStopped()).toBe(true)
+
+      resolveQuota({ decision: 'quota_ko', reason: 'quota_exceeded' })
+      await waitNextMicrotask()
+
+      expect(profilingContextManager.get()?.error_reason).toBeUndefined()
+
+      // data IS sent (normal session-expired collection happens)
+      await waitForBoolean(() => interceptor.requests.length >= 1)
+      expect(interceptor.requests.length).toBeGreaterThanOrEqual(1)
+    })
+
+    it('should stop profiler and not resume when quota-exceeded resolves while paused', async () => {
+      let resolveQuota!: (result: { decision: string; reason: string }) => void
+      checkProfilingQuotaSpy.and.callFake(
+        () =>
+          new Promise((resolve) => {
+            resolveQuota = resolve
+          })
+      )
+      const { profiler, profilingContextManager } = setupProfiler()
+
+      profiler.start()
+      await waitForBoolean(() => profiler.isRunning())
+
+      setVisibilityState('hidden')
+      await waitForBoolean(() => profiler.isPaused())
+
+      resolveQuota({ decision: 'quota_ko', reason: 'quota_exceeded' })
+      await waitNextMicrotask()
+
+      expect(profiler.isStopped()).toBe(true)
+      expect(profilingContextManager.get()).toEqual({
+        status: 'stopped',
+        error_reason: undefined,
+        quota_reason: 'quota_exceeded',
+      } as any)
+
+      setVisibilityState('visible')
+      await waitNextMicrotask()
+
+      expect(profiler.isStopped()).toBe(true)
+    })
+
+    it('should discard stale quota result when SESSION_RENEWED restarts the profiler', async () => {
+      let resolveOldQuota!: (result: { decision: string; reason: string }) => void
+      let callCount = 0
+      checkProfilingQuotaSpy.and.callFake(() => {
+        callCount++
+        if (callCount === 1) {
+          return new Promise((resolve) => {
+            resolveOldQuota = resolve
+          })
+        }
+        return Promise.resolve({ decision: 'quota_ok', reason: 'quota_ok' })
+      })
+      const { profiler, profilingContextManager } = setupProfiler()
+
+      profiler.start()
+      await waitForBoolean(() => profiler.isRunning())
+
+      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
+      await waitForBoolean(() => profiler.isRunning())
+
+      resolveOldQuota({ decision: 'quota_ko', reason: 'quota_exceeded' })
+      await waitNextMicrotask()
+
+      expect(profiler.isRunning()).toBe(true)
+      expect(profilingContextManager.get()?.status).toBe('running')
+
+      profiler.stop()
+    })
+
+    it('should restart profiler and re-check quota on SESSION_RENEWED after quota_exceeded or org_disabled', async () => {
+      let callCount = 0
+      checkProfilingQuotaSpy.and.callFake(() => {
+        callCount++
+        return Promise.resolve(
+          callCount === 1
+            ? { decision: 'quota_ko', reason: 'quota_exceeded' }
+            : { decision: 'quota_ok', reason: 'quota_ok' }
+        )
+      })
+      const { profiler } = setupProfiler()
+
+      profiler.start()
+      await waitForBoolean(() => profiler.isStopped())
+
+      expect(callCount).toBe(1)
+
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
+      await waitForBoolean(() => profiler.isRunning())
+
+      expect(callCount).toBe(2)
+      expect(profiler.isRunning()).toBe(true)
+
+      profiler.stop()
+    })
+
+    it('should NOT restart profiler on SESSION_RENEWED after stopped-by-user', async () => {
+      // default spy already returns quota-ok
+      const { profiler } = setupProfiler()
+
+      profiler.start()
+      await waitForBoolean(() => profiler.isRunning())
+
+      profiler.stop()
+      expect(profiler.isStopped()).toBe(true)
+
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
+      await waitNextMicrotask()
+
+      expect(profiler.isStopped()).toBe(true)
+    })
   })
 })
 

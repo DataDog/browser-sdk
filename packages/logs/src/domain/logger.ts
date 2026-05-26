@@ -49,7 +49,7 @@ export class Logger {
   ) {
     this.contextManager = createContextManager('logger')
     this.tags = []
-    this.contextManager.setContext(loggerContext as Context)
+    this.contextManager.setContext(loggerContext)
     if (name) {
       this.contextManager.setContextProperty('logger', { name })
     }
@@ -108,7 +108,7 @@ export class Logger {
   }
 
   setContext(context: object) {
-    this.contextManager.setContext(context as Context)
+    this.contextManager.setContext(context)
   }
 
   getContext() {

@@ -37,3 +37,11 @@ export function detectBrowser(browserWindow: Window = window) {
 
   return Browser.OTHER
 }
+
+export function detectVersion() {
+  const userAgent = window.navigator.userAgent
+  const match = userAgent.match(/(?:chrome|headlesschrome|version)\/(\d+)/i)
+  if (match) {
+    return parseInt(match[1], 10)
+  }
+}

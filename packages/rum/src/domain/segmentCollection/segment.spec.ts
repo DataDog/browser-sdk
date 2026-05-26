@@ -26,7 +26,7 @@ const FULL_SNAPSHOT_RECORD: BrowserRecord = {
 const CHANGE_RECORD: BrowserRecord = {
   type: RecordType.Change,
   timestamp: RECORD_TIMESTAMP,
-  data: [] as any,
+  data: [],
 }
 const ENCODED_SEGMENT_HEADER_BYTES_COUNT = 12 // {"records":[
 const ENCODED_RECORD_BYTES_COUNT = 25
@@ -160,8 +160,8 @@ describe('Segment', () => {
       let segment: Segment
       beforeEach(() => {
         segment = createTestSegment()
-        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 10 as TimeStamp }, noop)
-        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 15 as TimeStamp }, noop)
+        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 10 }, noop)
+        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 15 }, noop)
       })
 
       it('does increment records_count', () => {
@@ -173,7 +173,7 @@ describe('Segment', () => {
       })
 
       it('does change the start timestamp when receiving an earlier record', () => {
-        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 5 as TimeStamp }, noop)
+        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 5 }, noop)
         expect(flushAndGetMetadata(segment).start).toBe(5)
       })
 
@@ -182,7 +182,7 @@ describe('Segment', () => {
       })
 
       it('does not change the end timestamp when receiving an earlier record', () => {
-        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 5 as TimeStamp }, noop)
+        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 5 }, noop)
         expect(flushAndGetMetadata(segment).end).toBe(15)
       })
     })
@@ -259,12 +259,12 @@ describe('Segment', () => {
       let segment: Segment
       beforeEach(() => {
         segment = createTestSegment()
-        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 10 as TimeStamp }, noop)
+        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 10 }, noop)
         segment.addStats({
           cssText: { count: 1, max: 50, sum: 50 },
           serializationDuration: { count: 1, max: 20, sum: 20 },
         })
-        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 15 as TimeStamp }, noop)
+        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 15 }, noop)
         segment.addStats({
           cssText: { count: 2, max: 150, sum: 250 },
           serializationDuration: { count: 3, max: 35, sum: 65 },
@@ -279,7 +279,7 @@ describe('Segment', () => {
       })
 
       it('does not change aggregated stats for records with no serialization stats', () => {
-        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 5 as TimeStamp }, noop)
+        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 5 }, noop)
         expect(flushAndGetSerializationStats(segment)).toEqual({
           cssText: { count: 3, max: 150, sum: 300 },
           serializationDuration: { count: 4, max: 35, sum: 85 },
