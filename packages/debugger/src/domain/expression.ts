@@ -5,7 +5,7 @@
  * Adapted from dd-trace-js/packages/dd-trace/src/debugger/devtools_client/condition.js
  */
 
-const identifierRegex = /^[@a-zA-Z_$][\w$]*$/
+const identifierRegex = /^(@[\w$]+|[a-zA-Z_$][\w$]*)$/
 
 // The following identifiers have purposefully not been included in this list:
 // - The reserved words `this` and `super` as they can have valid use cases as `ref` values
