@@ -19,6 +19,9 @@ test('experience cloud emits an initial home view and a route-change Product Exp
     await expect
       .poll(() => page.evaluate(() => window.DD_RUM?.getInitConfiguration?.()?.trackResources))
       .toBe(true)
+    await expect
+      .poll(() => page.evaluate(() => window.DD_RUM?.getInitConfiguration?.()?.trackEarlyRequests))
+      .toBe(true)
     const productExplorerLink = page.getByRole('link', { name: 'Product Explorer' })
 
     await expect(productExplorerLink).toBeVisible()
