@@ -12,7 +12,7 @@ import { workerSetup } from '../pageSetups'
 export const LARGE_RESPONSE_MIN_BYTE_SIZE = 100_000
 
 export function createMockServerApp(servers: Servers, setup: string, setupOptions?: SetupOptions): MockServerApp {
-  const { remoteConfiguration, worker } = setupOptions ?? {}
+  const { worker } = setupOptions ?? {}
   const app = express()
   let largeResponseBytesWritten = 0
 
@@ -225,10 +225,6 @@ export function createMockServerApp(servers: Servers, setup: string, setupOption
     // Remove the /microfrontend prefix from the URL since getTestAppBundlePath adds the app path
     const filePath = originalUrl.replace(/^\/microfrontend/, '')
     res.sendFile(getTestAppBundlePath('microfrontend', filePath))
-  })
-
-  app.get('/config', (_req, res) => {
-    res.send(JSON.stringify(remoteConfiguration))
   })
 
   return Object.assign(app, {

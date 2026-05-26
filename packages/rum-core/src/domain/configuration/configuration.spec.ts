@@ -826,7 +826,6 @@ describe('serializeRumConfiguration', () => {
       trackLongTasks: true,
       remoteConfigurationId: '123',
       remoteConfiguration: { id: '123', sync: false },
-      remoteConfigurationProxy: 'config',
       plugins: [{ name: 'foo', getConfigurationTelemetry: () => ({ bar: true }) }],
       trackFeatureFlagsForEvents: ['vital'],
       profilingSampleRate: 42,
@@ -840,7 +839,6 @@ describe('serializeRumConfiguration', () => {
             | 'workerUrl'
             | 'allowedTracingUrls'
             | 'excludedActivityUrls'
-            | 'remoteConfigurationProxy'
             | 'allowedGraphQlUrls'
         ? `use_${CamelToSnakeCase<Key>}`
         : Key extends 'trackLongTasks'
@@ -884,7 +882,6 @@ describe('serializeRumConfiguration', () => {
       plugins: [{ name: 'foo', bar: true }],
       track_feature_flags_for_events: ['vital'],
       remote_configuration_id: '123',
-      use_remote_configuration_proxy: true,
       profiling_sample_rate: 42,
       track_resource_headers: 'default_headers',
     })

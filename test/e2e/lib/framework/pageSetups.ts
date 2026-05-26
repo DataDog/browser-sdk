@@ -391,7 +391,6 @@ export function formatConfiguration(
     {
       ...initConfiguration,
       proxy: servers.intake.origin,
-      remoteConfigurationProxy: `${servers.base.origin}/config`,
     },
     (_key, value) => {
       if (isJsonIncompatibleValue(value)) {
