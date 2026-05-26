@@ -1,11 +1,10 @@
 import { defineGlobal, getGlobalObject } from '@datadog/browser-core'
-import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
+import type { RumPublicApi } from '@datadog/browser-rum-core'
 import { makeRumPublicApi } from '@datadog/browser-rum-core'
 import { makeProfilerApi } from '../boot/profilerApi'
 import { makeRecorderApi } from '../boot/recorderApi'
 import { createDeflateEncoder, startDeflateWorker } from '../domain/deflate'
-import { buildSalesforceInitConfiguration } from '../domain/salesforce/initConfiguration'
-import { startSalesforceViewTracking } from '../domain/salesforce/viewTracker'
+import { startSalesforceViewNameTracking } from '../domain/salesforce/viewNameTracker'
 
 export type {
   User,
@@ -86,19 +85,17 @@ defineGlobal(salesforceGlobal, 'DD_RUM', datadogRum)
 
 function createSalesforceDatadogRum(baseRum: RumPublicApi): RumPublicApi {
   const baseInit = baseRum.init
-  let stopSalesforceViewTracking: (() => void) | undefined
+  let stopSalesforceViewNameTracking: (() => void) | undefined
 
-  baseRum.init = (initConfiguration: RumInitConfiguration) => {
-    if (!stopSalesforceViewTracking) {
-      const salesforceViewTracking = startSalesforceViewTracking({
+  baseRum.init = (initConfiguration) => {
+    baseInit(initConfiguration)
+
+    if (!stopSalesforceViewNameTracking) {
+      const salesforceViewNameTracking = startSalesforceViewNameTracking({
         getRumPublicApi: () => baseRum,
       })
-      stopSalesforceViewTracking = () => salesforceViewTracking.stop()
+      stopSalesforceViewNameTracking = () => salesforceViewNameTracking.stop()
     }
-
-    const salesforceInitConfiguration = buildSalesforceInitConfiguration(initConfiguration)
-
-    baseInit(salesforceInitConfiguration)
   }
 
   return baseRum

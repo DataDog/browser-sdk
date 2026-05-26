@@ -12,6 +12,7 @@ const SALESFORCE_INTAKE_PROXY_CLOSE_DELAY = 1_000
 
 export interface ExpectedSalesforceRumView {
   path: string
+  name?: string
   loadingType: string
   requireLoadingTime?: boolean
 }
@@ -182,10 +183,11 @@ function notifyWaiters(waiters: Set<ViewWaiter>, intakeRegistry: IntakeRegistry)
 
 function findMissingViews(intakeRegistry: IntakeRegistry, expectedViews: ExpectedSalesforceRumView[]) {
   return expectedViews.filter(
-    ({ path, loadingType, requireLoadingTime }) =>
+    ({ path, name, loadingType, requireLoadingTime }) =>
       !intakeRegistry.rumViewEvents.some(
         (event) =>
           normalizePathname(event.view.url) === normalizePathname(path) &&
+          (name === undefined || event.view.name === name) &&
           event.view.loading_type === loadingType &&
           (!requireLoadingTime || hasLoadingTime(event))
       )
@@ -199,14 +201,14 @@ function createTimeoutError(intakeRegistry: IntakeRegistry, expectedViews: Expec
   return new Error(`Timed out waiting for Salesforce RUM views. Expected: ${expected}. Captured: ${captured}.`)
 }
 
-function formatExpectedView({ path, loadingType, requireLoadingTime }: ExpectedSalesforceRumView) {
-  return `${path} (${loadingType}${requireLoadingTime ? ', loading_time' : ''})`
+function formatExpectedView({ path, name, loadingType, requireLoadingTime }: ExpectedSalesforceRumView) {
+  return `${path} (name=${name ?? 'any'}, ${loadingType}${requireLoadingTime ? ', loading_time' : ''})`
 }
 
 function formatCapturedView(event: IntakeRegistry['rumViewEvents'][number]) {
-  return `${normalizePathname(event.view.url) || 'unknown'} (${event.view.loading_type || 'unknown'}, loading_time=${
-    typeof event.view.loading_time === 'number' ? event.view.loading_time : 'missing'
-  })`
+  return `${normalizePathname(event.view.url) || 'unknown'} (name=${event.view.name || 'none'}, ${
+    event.view.loading_type || 'unknown'
+  }, loading_time=${typeof event.view.loading_time === 'number' ? event.view.loading_time : 'missing'})`
 }
 
 function hasLoadingTime(event: IntakeRegistry['rumViewEvents'][number]) {

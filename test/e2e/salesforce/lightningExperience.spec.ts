@@ -22,6 +22,9 @@ test('lightning experience emits an initial home view and a route-change Product
     await expect
       .poll(() => page.evaluate(() => window.DD_RUM?.getInitConfiguration?.()?.trackEarlyRequests))
       .toBe(true)
+    await expect
+      .poll(() => page.evaluate(() => window.DD_RUM?.getInitConfiguration?.()?.trackViewsManually))
+      .toBe(false)
     const productExplorerLink = page.getByRole('link', { name: 'Product Explorer' })
 
     await expect(productExplorerLink).toBeVisible()
@@ -34,8 +37,13 @@ test('lightning experience emits an initial home view and a route-change Product
     await flushSalesforceRumEvents(page)
 
     await intakeProxy.waitForViews([
-      { path: '/lightning/page/home', loadingType: 'initial_load' },
-      { path: '/lightning/n/Product_Explorer', loadingType: 'route_change', requireLoadingTime: true },
+      { path: '/lightning/page/home', name: '/lightning/page/home', loadingType: 'initial_load' },
+      {
+        path: '/lightning/n/Product_Explorer',
+        name: '/lightning/n/Product_Explorer',
+        loadingType: 'route_change',
+        requireLoadingTime: true,
+      },
     ])
   } finally {
     await intakeProxy.stop()
