@@ -71,6 +71,8 @@ describe('buildDeliveryApiUrl', () => {
 
 describe('deliveryApi', () => {
   let fetchSpy: jasmine.Spy
+  let errorSpy: jasmine.Spy
+  let warnSpy: jasmine.Spy
   let clock: Clock
 
   function makeConfig(overrides: Partial<DeliveryApiConfiguration> = {}): DeliveryApiConfiguration {
@@ -100,6 +102,8 @@ describe('deliveryApi', () => {
     clearProbes()
     clearDeliveryApiState()
     fetchSpy = spyOn(window, 'fetch')
+    errorSpy = spyOn(display, 'error')
+    warnSpy = spyOn(display, 'warn')
     respondWith({ nextCursor: '', updates: [], deletions: [] })
 
     registerCleanupTask(() => {
@@ -159,7 +163,6 @@ describe('deliveryApi', () => {
     })
 
     it('should warn if polling is already started', () => {
-      const warnSpy = spyOn(display, 'warn')
       startDeliveryApiPolling(makeConfig())
       startDeliveryApiPolling(makeConfig())
 
@@ -253,7 +256,6 @@ describe('deliveryApi', () => {
     })
 
     it('should log an error when the response is not ok', async () => {
-      const errorSpy = spyOn(display, 'error')
       respondWith({}, 500)
 
       startDeliveryApiPolling(makeConfig())
@@ -263,7 +265,6 @@ describe('deliveryApi', () => {
     })
 
     it('should log an error when fetch throws', async () => {
-      const errorSpy = spyOn(display, 'error')
       fetchSpy.and.returnValue(Promise.reject(new Error('network error')))
 
       startDeliveryApiPolling(makeConfig())
@@ -552,7 +553,6 @@ describe('deliveryApi', () => {
     })
 
     it('should warn when tripping', async () => {
-      const warnSpy = spyOn(display, 'warn')
       respondWithNetworkError()
       startDeliveryApiPolling(makeConfig({ pollInterval: POLL_INTERVAL_MS }))
       await flushPromises()
