@@ -62,13 +62,11 @@ interface IntakeRequestInfos {
 
 interface IntakeProxyOptions {
   onRequest?: (request: IntakeRequest) => void
-  forward?: boolean
 }
 
 export function createIntakeProxyMiddleware(options: IntakeProxyOptions): express.RequestHandler {
   return async (req, res) => {
     const infos = computeIntakeRequestInfos(req)
-    const shouldForward = options.forward ?? true
 
     try {
       const [intakeRequest] = await Promise.all([
