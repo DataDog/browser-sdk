@@ -1,4 +1,4 @@
-import type { Configuration, InitConfiguration } from '../configuration'
+import type { Configuration } from '../configuration'
 import { isWorkerEnvironment } from '../../tools/globalObject'
 import { display } from '../../tools/display'
 import { SessionPersistence } from './sessionConstants'
@@ -12,15 +12,13 @@ import { selectMemorySessionStoreStrategy, initMemorySessionStoreStrategy } from
  * availability. When an array is provided, tries each persistence type in order until one
  * successfully initializes.
  */
-export function selectSessionStoreStrategyType(
-  initConfiguration: InitConfiguration
-): SessionStoreStrategyType | undefined {
-  const { sessionPersistence } = initConfiguration
-
-  const persistenceList = normalizePersistenceList(sessionPersistence)
+export async function selectSessionStoreStrategyType(
+  configuration: Configuration
+): Promise<SessionStoreStrategyType | undefined> {
+  const persistenceList = normalizePersistenceList(configuration.sessionPersistence)
 
   for (const persistence of persistenceList) {
-    const strategyType = selectStrategyForPersistence(persistence, initConfiguration)
+    const strategyType = await selectStrategyForPersistence(persistence, configuration)
     if (strategyType !== undefined) {
       return strategyType
     }
@@ -51,11 +49,11 @@ function normalizePersistenceList(
 
 function selectStrategyForPersistence(
   persistence: SessionPersistence,
-  initConfiguration: InitConfiguration
-): SessionStoreStrategyType | undefined {
+  configuration: Configuration
+): Promise<SessionStoreStrategyType | undefined> | SessionStoreStrategyType | undefined {
   switch (persistence) {
     case SessionPersistence.COOKIE:
-      return selectCookieStrategy(initConfiguration)
+      return selectCookieStrategy(configuration)
 
     case SessionPersistence.LOCAL_STORAGE:
       return selectLocalStorageStrategy()
@@ -75,7 +73,7 @@ export function getSessionStoreStrategy(
 ): SessionStoreStrategy {
   switch (sessionStoreStrategyType.type) {
     case SessionPersistence.COOKIE:
-      return initCookieStrategy(sessionStoreStrategyType.cookieOptions, configuration)
+      return initCookieStrategy(sessionStoreStrategyType, configuration)
     case SessionPersistence.LOCAL_STORAGE:
       return initLocalStorageStrategy(configuration)
     case SessionPersistence.MEMORY:

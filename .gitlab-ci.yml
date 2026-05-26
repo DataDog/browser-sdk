@@ -1,7 +1,7 @@
 variables:
   CURRENT_STAGING: staging-22
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 107
+  CURRENT_CI_IMAGE: 108
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
@@ -244,7 +244,7 @@ e2e:
   interruptible: true
   parallel:
     matrix:
-      - BROWSER: [chromium, chromium-pinned, firefox-pinned, webkit-pinned]
+      - BROWSER: [chromium, firefox, webkit, chromium-pinned, firefox-pinned, webkit-pinned]
   artifacts:
     when: always
     reports:

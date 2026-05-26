@@ -3,7 +3,6 @@ import { EXHAUSTIVE_INIT_CONFIGURATION, SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION
 import type { ExtractTelemetryConfiguration, MapInitConfigurationKey } from '../../../test'
 import { DOCS_ORIGIN, MORE_DETAILS, display } from '../../tools/display'
 import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
-import { SessionPersistence } from '../session/sessionConstants'
 import { TrackingConsent } from '../trackingConsent'
 import type { InitConfiguration } from './configuration'
 import { serializeConfiguration, validateAndBuildConfiguration } from './configuration'
@@ -84,53 +83,6 @@ describe('validateAndBuildConfiguration', () => {
       displaySpy.calls.reset()
       validateAndBuildConfiguration({ clientToken: 'yes', telemetrySampleRate: 1 })
       expect(displaySpy).not.toHaveBeenCalled()
-    })
-  })
-
-  describe('sessionStoreStrategyType', () => {
-    it('should contain cookie strategy in the configuration by default', () => {
-      const configuration = validateAndBuildConfiguration({ clientToken })
-      expect(configuration?.sessionStoreStrategyType).toEqual({
-        type: SessionPersistence.COOKIE,
-        cookieOptions: { secure: false, crossSite: false, partitioned: false },
-      })
-    })
-
-    it('should not contain any strategy if cookies are unavailable and no session persistence is configured', () => {
-      spyOnProperty(document, 'cookie', 'get').and.returnValue('')
-      spyOn(Storage.prototype, 'getItem').and.throwError('unavailable')
-      const configuration = validateAndBuildConfiguration({ clientToken })
-      expect(configuration?.sessionStoreStrategyType).toBeUndefined()
-    })
-
-    it('should use the first available strategy when multiple session persistence strategies are provided', () => {
-      const configuration = validateAndBuildConfiguration({
-        clientToken,
-        sessionPersistence: [SessionPersistence.COOKIE, SessionPersistence.LOCAL_STORAGE],
-      })
-      expect(configuration?.sessionStoreStrategyType).toEqual({
-        type: SessionPersistence.COOKIE,
-        cookieOptions: { secure: false, crossSite: false, partitioned: false },
-      })
-    })
-
-    it('should contain local-storage strategy if cookies are unavailable and session persistence contained cookies and local-storage', () => {
-      spyOnProperty(document, 'cookie', 'get').and.returnValue('')
-      const configuration = validateAndBuildConfiguration({
-        clientToken,
-        sessionPersistence: [SessionPersistence.COOKIE, SessionPersistence.LOCAL_STORAGE],
-      })
-      expect(configuration?.sessionStoreStrategyType).toEqual({ type: SessionPersistence.LOCAL_STORAGE })
-    })
-
-    it('should contain memory strategy if cookies and local-storage are unavailable and session persistence contained all three', () => {
-      spyOnProperty(document, 'cookie', 'get').and.returnValue('')
-      spyOn(Storage.prototype, 'getItem').and.throwError('unavailable')
-      const configuration = validateAndBuildConfiguration({
-        clientToken,
-        sessionPersistence: [SessionPersistence.COOKIE, SessionPersistence.LOCAL_STORAGE, SessionPersistence.MEMORY],
-      })
-      expect(configuration?.sessionStoreStrategyType).toEqual({ type: SessionPersistence.MEMORY })
     })
   })
 
