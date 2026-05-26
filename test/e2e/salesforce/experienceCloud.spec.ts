@@ -16,6 +16,9 @@ test('experience cloud emits an initial home view and a route-change Product Exp
     await installSalesforceRumProxy(page.context(), intakeProxy.origin)
     await page.goto(targets.experienceUrl, { waitUntil: 'domcontentloaded' })
     await waitForRumProxyInitialization(page, intakeProxy.origin)
+    await expect
+      .poll(() => page.evaluate(() => window.DD_RUM?.getInitConfiguration?.()?.trackResources))
+      .toBe(true)
     const productExplorerLink = page.getByRole('link', { name: 'Product Explorer' })
 
     await expect(productExplorerLink).toBeVisible()

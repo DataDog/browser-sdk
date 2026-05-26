@@ -1,7 +1,6 @@
 import { buildUrl, clearInterval, relativeNow, setInterval } from '@datadog/browser-core'
 import type { RelativeTime, TimeoutId } from '@datadog/browser-core'
 import type { RumPublicApi, ViewOptions } from '@datadog/browser-rum-core'
-import { notifySalesforceResourcePoll } from './resourcePollChannel'
 
 export interface SalesforceLocation {
   pathname?: string
@@ -68,10 +67,6 @@ export function startSalesforceViewTracking(options: StartSalesforceViewTracking
     }
 
     if (!trackedView || trackedView.isLoadingTimeFinalized) {
-      notifySalesforceResourcePoll({
-        currentView: trackedView && { startRelativeTime: trackedView.startRelativeTime },
-        resourceEntries: performanceEntries,
-      })
       return
     }
 
@@ -82,10 +77,6 @@ export function startSalesforceViewTracking(options: StartSalesforceViewTracking
       (!trackedView.latestLoadingTimeResponseEnd || latestResponseEnd > trackedView.latestLoadingTimeResponseEnd)
     ) {
       trackedView.latestLoadingTimeResponseEnd = latestResponseEnd
-      notifySalesforceResourcePoll({
-        currentView: { startRelativeTime: trackedView.startRelativeTime },
-        resourceEntries: performanceEntries,
-      })
       return
     }
 
@@ -93,11 +84,6 @@ export function startSalesforceViewTracking(options: StartSalesforceViewTracking
       options.getRumPublicApi()?.setViewLoadingTime()
       trackedView.isLoadingTimeFinalized = true
     }
-
-    notifySalesforceResourcePoll({
-      currentView: { startRelativeTime: trackedView.startRelativeTime },
-      resourceEntries: performanceEntries,
-    })
   }
 
   return {
