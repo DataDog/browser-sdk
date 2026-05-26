@@ -73,7 +73,7 @@ export function createIntakeProxyMiddleware(options: IntakeProxyOptions): expres
     try {
       const [intakeRequest] = await Promise.all([
         readIntakeRequest(req, infos),
-        shouldForward && !infos.isBridge && forwardIntakeRequestToDatadog(req),
+        !infos.isBridge && forwardIntakeRequestToDatadog(req),
       ])
       options.onRequest?.(intakeRequest)
     } catch (error) {

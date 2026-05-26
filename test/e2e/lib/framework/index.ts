@@ -12,7 +12,6 @@ export {
   microfrontendSetup,
 } from './pageSetups'
 export { IntakeRegistry } from './intakeRegistry'
-export { createIntakeProxyMiddleware } from './intakeProxyMiddleware'
 export { getTestServers, waitForServersIdle } from './httpServers'
 export { flushEvents } from './flushEvents'
 export { waitForRequests } from './waitForRequests'
