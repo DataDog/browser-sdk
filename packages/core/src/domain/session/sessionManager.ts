@@ -126,7 +126,7 @@ export async function startSessionManager(
     stopped = true
   })
 
-  const initialState = await resolveInitialState().catch((error) =>
+  let initialState = await resolveInitialState().catch((error) =>
     monitorError(new Error(`Error while resolving initial session state: ${error}`))
   )
   if (!initialState || stopped) {
@@ -135,9 +135,18 @@ export async function startSessionManager(
 
   // Consent is always granted when the session manager is started, but it may
   // be revoked during the async initialization (e.g., while waiting for cookie lock).
-  if (!trackingConsentState.isGranted()) {
+  // Mirror setupSessionTracking's revoke/grant handler until the manager is installed:
+  // expire the session in storage, wait for the next grant, then re-resolve.
+  while (!trackingConsentState.isGranted()) {
     expire()
-    return
+    await new Promise<void>((resolve) => trackingConsentState.onGrantedOnce(resolve))
+    if (stopped) {
+      return
+    }
+    initialState = await resolveInitialState().catch(monitorError)
+    if (!initialState || stopped) {
+      return
+    }
   }
 
   sessionContextHistory.add(buildSessionContext(initialState), clocksOrigin().relative)
