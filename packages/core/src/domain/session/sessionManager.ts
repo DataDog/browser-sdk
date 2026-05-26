@@ -38,7 +38,7 @@ import {
   initializeSession,
   isSessionInExpiredState,
 } from './sessionState'
-import { getSessionStoreStrategy } from './sessionStore'
+import { getSessionStoreStrategy, selectSessionStoreStrategyType } from './sessionStore'
 
 export interface SessionManager {
   findSession: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => SessionContext | undefined
@@ -94,14 +94,15 @@ export async function startSessionManager(
   const expireObservable = new Observable<void>()
   let expireContext: SessionDebugContext | undefined
 
-  if (!configuration.sessionStoreStrategyType) {
+  const sessionStoreStrategyType = await mockable(selectSessionStoreStrategyType)(configuration)
+  if (!sessionStoreStrategyType) {
     display.warn('No storage available for session. We will not send any data.')
     return
   }
 
   startLifecycleTracker(configuration)
 
-  const strategy = mockable(getSessionStoreStrategy)(configuration.sessionStoreStrategyType, configuration)
+  const strategy = mockable(getSessionStoreStrategy)(sessionStoreStrategyType, configuration)
 
   const sessionContextHistory = createValueHistory<SessionContext>({
     expireDelay: SESSION_CONTEXT_TIMEOUT_DELAY,

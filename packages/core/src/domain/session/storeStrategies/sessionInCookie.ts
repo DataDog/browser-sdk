@@ -1,6 +1,6 @@
 import { isEmptyObject } from '../../../tools/utils/objectUtils'
 import type { CookieOptions } from '../../../browser/cookie'
-import { getCurrentSite, areCookiesAuthorized, getCookies } from '../../../browser/cookie'
+import { getCurrentSite, getCookies } from '../../../browser/cookie'
 import type { Configuration, InitConfiguration } from '../../configuration'
 import { SESSION_COOKIE_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY, SessionPersistence } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
@@ -8,38 +8,65 @@ import { toSessionString, toSessionState } from '../sessionState'
 import { Observable } from '../../../tools/observable'
 import { mockable } from '../../../tools/mockable'
 import { monitorError } from '../../../tools/monitor'
+import type { CookieAccess } from '../../../browser/cookieAccess'
+import {
+  areCookiesAuthorized,
+  createCookieStoreAccess,
+  createDocumentCookieAccess,
+} from '../../../browser/cookieAccess'
+import { timeStampNow, dateNow } from '../../../tools/utils/timeUtils'
 import { addTelemetryError } from '../../telemetry'
-import { createCookieAccess } from '../../../browser/cookieAccess'
-import { clearTimeout, setTimeout } from '../../../tools/timer'
-import { dateNow, timeStampNow } from '../../../tools/utils/timeUtils'
-import type { Context } from '../../../tools/serialisation/context'
+
+const LOCK_QUERY_TIMEOUT = 1000
+import type { CookieStoreWindow } from '../../../browser/browser.types'
 import { getLifecycleContext } from '../../../browser/lifecycleTracker'
+import { clearTimeout, setTimeout } from '../../../tools/timer'
+import type { Context } from '../../../tools/serialisation/context'
+import { CookieApi, LEGACY_SESSION_STORE_KEY, SESSION_STORE_KEY } from './sessionStoreStrategy'
 import type {
-  SessionStateOperation,
   SessionStoreStrategy,
   SessionStoreStrategyType,
   SessionObservableEvent,
+  CookieSessionStoreStrategyType,
+  SessionStateOperation,
 } from './sessionStoreStrategy'
-import { SESSION_STORE_KEY, LEGACY_SESSION_STORE_KEY } from './sessionStoreStrategy'
 
-const LOCK_QUERY_TIMEOUT = 1000
 const SESSION_COOKIE_VERSION = 0
 
-export function selectCookieStrategy(initConfiguration: InitConfiguration): SessionStoreStrategyType | undefined {
-  const cookieOptions = buildCookieOptions(initConfiguration)
-  return cookieOptions && areCookiesAuthorized(cookieOptions)
-    ? { type: SessionPersistence.COOKIE, cookieOptions }
-    : undefined
+export async function selectCookieStrategy(
+  configuration: Configuration
+): Promise<SessionStoreStrategyType | undefined> {
+  const { cookieOptions } = configuration
+  if (!cookieOptions) {
+    return undefined
+  }
+
+  if (
+    mockable((window as CookieStoreWindow).cookieStore) &&
+    (await areCookiesAuthorized(createCookieStoreAccess, cookieOptions, configuration))
+  ) {
+    return { type: SessionPersistence.COOKIE, cookieOptions, cookieApi: CookieApi.COOKIE_STORE }
+  }
+
+  if (await areCookiesAuthorized(createDocumentCookieAccess, cookieOptions, configuration)) {
+    return { type: SessionPersistence.COOKIE, cookieOptions, cookieApi: CookieApi.DOCUMENT_COOKIE }
+  }
+
+  return undefined
 }
 
 // Promise chain serializes calls when Web Locks are unavailable
 let pendingChain: Promise<void> | undefined
 
-export function initCookieStrategy(cookieOptions: CookieOptions, configuration: Configuration): SessionStoreStrategy {
+export function initCookieStrategy(
+  sessionStoreStrategyType: CookieSessionStoreStrategyType,
+  configuration: Configuration
+): SessionStoreStrategy {
+  const { cookieOptions, cookieApi } = sessionStoreStrategyType
   const sessionObservable = new Observable<SessionObservableEvent>()
   const trackAnonymousUser = !!configuration.trackAnonymousUser
   const opts = encodeCookieOptions(cookieOptions)
-  const cookieAccess = mockable(createCookieAccess)(SESSION_STORE_KEY, configuration, cookieOptions)
+  const cookieAccess = mockable(createCookieAccess)(cookieApi, configuration, cookieOptions)
   let isFirstCall = true
   const initTimestamp = timeStampNow()
 
@@ -79,7 +106,7 @@ export function initCookieStrategy(cookieOptions: CookieOptions, configuration: 
         await navigator.locks
           .request(SESSION_STORE_KEY, () => applyAndWrite(fn))
           .catch(async (error) => {
-            const context = await buildLockErrorContext(configuration, operation, initTimestamp, lockRequestedAt)
+            const context = await buildLockErrorContext(operation, initTimestamp, lockRequestedAt)
             addTelemetryError(error, context)
             throw error
           })
@@ -146,14 +173,12 @@ function isInIframe(): boolean | undefined {
 }
 
 async function buildLockErrorContext(
-  configuration: Configuration,
   operation: SessionStateOperation,
   initTimestamp: number,
   lockRequestedAt: number
 ): Promise<Context> {
   return {
     operation,
-    strategy: configuration.sessionStoreStrategyType?.type,
     timeSinceInit: dateNow() - initTimestamp,
     lockRequestDuration: dateNow() - lockRequestedAt,
     visibilityState: document.visibilityState,
@@ -164,6 +189,16 @@ async function buildLockErrorContext(
     lockQuery: (await queryLockSnapshot()) as Context[string],
     ...getLifecycleContext(),
   }
+}
+
+export function createCookieAccess(
+  cookieApi: CookieApi,
+  configuration: Configuration,
+  cookieOptions: CookieOptions
+): CookieAccess {
+  return cookieApi === CookieApi.COOKIE_STORE
+    ? createCookieStoreAccess(SESSION_STORE_KEY, cookieOptions, configuration)
+    : createDocumentCookieAccess(SESSION_STORE_KEY, cookieOptions)
 }
 
 function findMatchingSessionState(items: string[], opts: string): SessionState {

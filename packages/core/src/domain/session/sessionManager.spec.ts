@@ -9,9 +9,11 @@ import {
   replaceMockable,
   restorePageVisibility,
   setPageVisibility,
+  waitNextMicrotask,
 } from '../../../test'
 import type { Clock } from '../../../test'
 import { DOM_EVENT } from '../../browser/addEventListener'
+import { resetLifecycleTracker } from '../../browser/lifecycleTracker'
 import { display } from '../../tools/display'
 import { ONE_SECOND } from '../../tools/utils/timeUtils'
 import type { Configuration } from '../configuration'
@@ -25,9 +27,10 @@ import {
   TRACKED_SESSION_MAX_AGE,
   VISIBILITY_CHECK_DELAY,
 } from './sessionManager'
-import { getSessionStoreStrategy } from './sessionStore'
+import { getSessionStoreStrategy, selectSessionStoreStrategyType } from './sessionStore'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY, SessionPersistence } from './sessionConstants'
 import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
+import { CookieApi } from './storeStrategies/sessionStoreStrategy'
 import type { SessionState } from './sessionState'
 import { EXPIRED } from './sessionState'
 
@@ -41,7 +44,11 @@ async function flushMicrotasks(): Promise<void> {
 }
 
 describe('startSessionManager', () => {
-  const STORE_TYPE: SessionStoreStrategyType = { type: SessionPersistence.COOKIE, cookieOptions: {} }
+  const STORE_TYPE: SessionStoreStrategyType = {
+    type: SessionPersistence.COOKIE,
+    cookieOptions: {},
+    cookieApi: CookieApi.DOCUMENT_COOKIE,
+  }
   let fakeStrategy: ReturnType<typeof createFakeSessionStoreStrategy>
   let clock: Clock
   let sessionObservableSpy!: jasmine.Spy
@@ -55,16 +62,21 @@ describe('startSessionManager', () => {
     fakeStrategy = createFakeSessionStoreStrategy(options)
   }
 
+  let currentStoreType: SessionStoreStrategyType | undefined
+
   beforeEach(() => {
     sessionObservableSpy = jasmine.createSpy('sessionObservable')
     clock = mockClock()
     fakeStrategy = createFakeSessionStoreStrategy()
     fakeStrategy.sessionObservable.subscribe(sessionObservableSpy)
+    currentStoreType = STORE_TYPE
     // Register the mockable once, pointing to a function that always returns the current fakeStrategy
     replaceMockable(getSessionStoreStrategy, () => fakeStrategy)
+    replaceMockable(selectSessionStoreStrategyType, () => Promise.resolve(currentStoreType))
 
     registerCleanupTask(() => {
       stopSessionManager()
+      resetLifecycleTracker()
       clock.tick(SESSION_TIME_OUT_DELAY)
     })
   })
@@ -78,7 +90,6 @@ describe('startSessionManager', () => {
   } = {}): Promise<SessionManager> {
     const sessionManager = await startSessionManager(
       {
-        sessionStoreStrategyType: STORE_TYPE,
         sessionSampleRate: 100,
         ...configuration,
       } as Configuration,
@@ -90,9 +101,10 @@ describe('startSessionManager', () => {
   describe('initialization', () => {
     it('should not start if no session store strategy type is configured', async () => {
       const displayWarnSpy = spyOn(display, 'warn')
+      currentStoreType = undefined
 
       const sessionManager = await startSessionManager(
-        { sessionStoreStrategyType: undefined } as Configuration,
+        {} as Configuration,
         createTrackingConsentState(TrackingConsent.GRANTED)
       )
 
@@ -110,7 +122,7 @@ describe('startSessionManager', () => {
       fakeStrategy.setSessionState.and.returnValue(Promise.reject(new Error('storage failure')))
 
       const sessionManager = await startSessionManager(
-        { sessionStoreStrategyType: STORE_TYPE, sessionSampleRate: 100, trackAnonymousUser: false } as Configuration,
+        { sessionSampleRate: 100, trackAnonymousUser: false } as Configuration,
         createTrackingConsentState(TrackingConsent.GRANTED)
       )
 
@@ -119,7 +131,7 @@ describe('startSessionManager', () => {
 
     it('should resolve after initialization', async () => {
       const sessionManager = await startSessionManager(
-        { sessionStoreStrategyType: STORE_TYPE, sessionSampleRate: 100, trackAnonymousUser: false } as Configuration,
+        { sessionSampleRate: 100, trackAnonymousUser: false } as Configuration,
         createTrackingConsentState(TrackingConsent.GRANTED)
       )
 
@@ -395,7 +407,7 @@ describe('startSessionManager', () => {
       clock.tick(SESSION_TIME_OUT_DELAY)
       // Drain the pending setSessionState microtasks so that scheduleExpirationTimeout runs
       // and registers the 0ms expiry timeout.
-      await Promise.resolve()
+      await waitNextMicrotask()
       // Fire the 0ms expiry timeout.
       clock.tick(0)
 
@@ -546,12 +558,14 @@ describe('startSessionManager', () => {
       const sessionManagerResolution = jasmine.createSpy('sessionManagerResolution')
       void startSessionManager(
         {
-          sessionStoreStrategyType: STORE_TYPE,
           sessionSampleRate: 100,
           trackAnonymousUser: false,
         } as Configuration,
         trackingConsentState
       ).then(sessionManagerResolution)
+
+      // Allow startSessionManager to await selectSessionStoreStrategyType and call setSessionState
+      await waitNextMicrotask()
 
       trackingConsentState.update(TrackingConsent.NOT_GRANTED)
       initResolvers[0]()
@@ -578,12 +592,14 @@ describe('startSessionManager', () => {
 
       const sessionManagerPromise = startSessionManager(
         {
-          sessionStoreStrategyType: STORE_TYPE,
           sessionSampleRate: 100,
           trackAnonymousUser: false,
         } as Configuration,
         trackingConsentState
       )
+
+      // Allow startSessionManager to await selectSessionStoreStrategyType and call setSessionState
+      await waitNextMicrotask()
 
       trackingConsentState.update(TrackingConsent.NOT_GRANTED)
       initResolvers[0]()
@@ -620,12 +636,14 @@ describe('startSessionManager', () => {
 
       void startSessionManager(
         {
-          sessionStoreStrategyType: STORE_TYPE,
           sessionSampleRate: 100,
           trackAnonymousUser: false,
         } as Configuration,
         trackingConsentState
       )
+
+      // Allow startSessionManager to await selectSessionStoreStrategyType and call setSessionState
+      await waitNextMicrotask()
 
       const initialCallCount = setStateCalls.length
 
