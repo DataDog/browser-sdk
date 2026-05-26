@@ -41,8 +41,9 @@ export function startUrlContexts(
   let previousViewUrl: string | undefined
 
   lifeCycle.subscribe(LifeCycleEventType.BEFORE_VIEW_CREATED, ({ startClocks, url }) => {
-    const locationHref = mockable(location).href
+    const locationHref = getLocationHref()
     const viewUrl = url !== undefined ? buildUrl(url, locationHref).href : locationHref
+
     urlContextHistory.add(
       buildUrlContext({
         url: viewUrl,
@@ -101,5 +102,14 @@ export function startUrlContexts(
       locationChangeSubscription.unsubscribe()
       urlContextHistory.stop()
     },
+  }
+}
+
+// Preserves existing global location behavior but in Salesforce access through explicit window as documented:  https://developer.salesforce.com/docs/platform/lightning-components-security/guide/lws-limitations.html#:~:text=The%20location%20property,window.location
+function getLocationHref() {
+  try {
+    return mockable(location).href
+  } catch {
+    return mockable(window.location).href
   }
 }
