@@ -63,6 +63,7 @@ export type {
 export { DEFAULT_TRACKED_RESOURCE_HEADERS } from '@datadog/browser-rum-core'
 export { DefaultPrivacyLevel } from '@datadog/browser-core'
 
+// eslint-disable-next-line local-rules/disallow-side-effects
 export const datadogRum = createSalesforceDatadogRum(
   makeRumPublicApi(makeRecorderApiStub(), makeProfilerApiStub(), {
     sdkName: 'rum-slim',
@@ -73,6 +74,7 @@ interface BrowserWindow extends Window {
   DD_RUM?: RumPublicApi
 }
 
+// eslint-disable-next-line local-rules/disallow-side-effects
 defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_RUM', datadogRum)
 
 function createSalesforceDatadogRum(baseRum: RumPublicApi): RumPublicApi {

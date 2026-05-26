@@ -1,4 +1,4 @@
-import { buildUrl, instrumentMethod, noop, setTimeout } from '@datadog/browser-core'
+import { addEventListener, buildUrl, DOM_EVENT, instrumentMethod, noop, setTimeout } from '@datadog/browser-core'
 import type { RumPublicApi, ViewOptions } from '@datadog/browser-rum-core'
 
 export interface SalesforceLocation {
@@ -20,6 +20,7 @@ export function startSalesforceViewNameTracking(options: StartSalesforceViewName
   const getLocation = options.getLocation ?? getNavigationLocation
   const initialView = resolveCurrentView(getLocation())
   let lastViewKey = initialView?.key
+  const eventListenerConfiguration = { allowUntrustedEvents: true }
 
   if (initialView) {
     setCurrentViewName(initialView)
@@ -40,9 +41,25 @@ export function startSalesforceViewNameTracking(options: StartSalesforceViewName
     }
   )
 
-  window.addEventListener('popstate', scheduleSetCurrentViewName)
-  window.addEventListener('hashchange', scheduleSetCurrentViewName)
-  window.addEventListener('click', scheduleLocationCheckAfterClick, true)
+  const { stop: stopListeningPopState } = addEventListener(
+    eventListenerConfiguration,
+    window,
+    DOM_EVENT.POP_STATE,
+    scheduleSetCurrentViewName
+  )
+  const { stop: stopListeningHashChange } = addEventListener(
+    eventListenerConfiguration,
+    window,
+    DOM_EVENT.HASH_CHANGE,
+    scheduleSetCurrentViewName
+  )
+  const { stop: stopListeningClick } = addEventListener(
+    eventListenerConfiguration,
+    window,
+    DOM_EVENT.CLICK,
+    scheduleLocationCheckAfterClick,
+    { capture: true }
+  )
 
   function scheduleLocationCheckAfterClick() {
     setTimeout(trackCurrentView, 0)
@@ -79,9 +96,9 @@ export function startSalesforceViewNameTracking(options: StartSalesforceViewName
     stop() {
       stopInstrumentingPushState()
       stopInstrumentingReplaceState()
-      window.removeEventListener('popstate', scheduleSetCurrentViewName)
-      window.removeEventListener('hashchange', scheduleSetCurrentViewName)
-      window.removeEventListener('click', scheduleLocationCheckAfterClick, true)
+      stopListeningPopState()
+      stopListeningHashChange()
+      stopListeningClick()
     },
   }
 }
