@@ -311,7 +311,7 @@ unit-bs:
       junit: test-report/unit-bs/*.xml
   script:
     - yarn
-    - node scripts/test/ci-bs.ts test:unit --browser $BS_BROWSER
+    - node scripts/test/ci-bs.ts test:unit
   after_script:
     - node ./scripts/test/export-test-result.ts unit-bs
 
