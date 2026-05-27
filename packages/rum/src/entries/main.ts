@@ -63,6 +63,7 @@ export type {
   RumLongTaskEvent,
   RumResourceEvent,
   RumViewEvent,
+  RumViewUpdateEvent,
   RumVitalEvent,
 
   // Events context

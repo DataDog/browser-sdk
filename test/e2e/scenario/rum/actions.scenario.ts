@@ -607,7 +607,7 @@ test.describe('action collection with shadow DOM', () => {
 
 test.describe('custom actions with startAction/stopAction', () => {
   createTest('track a custom action with startAction/stopAction')
-    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
+    .withRum()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
         window.DD_RUM!.startAction('checkout')
@@ -623,7 +623,7 @@ test.describe('custom actions with startAction/stopAction', () => {
     })
 
   createTest('associate an error to a custom action')
-    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
+    .withRum()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
         window.DD_RUM!.startAction('checkout')
@@ -646,7 +646,7 @@ test.describe('custom actions with startAction/stopAction', () => {
     })
 
   createTest('associate a resource to a custom action')
-    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
+    .withRum()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
         window.DD_RUM!.startAction('load-data')
@@ -671,7 +671,7 @@ test.describe('custom actions with startAction/stopAction', () => {
     })
 
   createTest('track multiple concurrent custom actions with actionKey')
-    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
+    .withRum()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
         window.DD_RUM!.startAction('click', { actionKey: 'button1' })
@@ -687,7 +687,7 @@ test.describe('custom actions with startAction/stopAction', () => {
     })
 
   createTest('merge contexts from start and stop')
-    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
+    .withRum()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
         window.DD_RUM!.startAction('purchase', { context: { cart_id: 'abc123' } })
@@ -706,7 +706,7 @@ test.describe('custom actions with startAction/stopAction', () => {
     })
 
   createTest('preserve timing when startAction is called before init')
-    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
+    .withRum()
     .withRumInit((configuration) => {
       window.DD_RUM!.startAction('pre_init_action')
 
@@ -725,7 +725,7 @@ test.describe('custom actions with startAction/stopAction', () => {
     })
 
   createTest('attribute errors and resources to action started before init')
-    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
+    .withRum()
     .withRumInit((configuration) => {
       window.DD_RUM!.startAction('pre_init_action')
 

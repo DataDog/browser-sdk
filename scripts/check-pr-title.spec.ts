@@ -15,6 +15,12 @@ describe('isValidPrTitle', () => {
     assert.equal(isValidPrTitle('⚡ Speed up'), true)
   })
 
+  it('accepts version bump titles like v7.2.0', () => {
+    assert.equal(isValidPrTitle('v7.2.0'), true)
+    assert.equal(isValidPrTitle('v1.0.0'), true)
+    assert.equal(isValidPrTitle('v10.12.34'), true)
+  })
+
   it('rejects titles without any allowed emoji prefix', () => {
     assert.equal(isValidPrTitle('Add new feature'), false)
     assert.equal(isValidPrTitle('feat: add thing'), false)
