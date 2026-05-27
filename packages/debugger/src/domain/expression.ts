@@ -132,7 +132,7 @@ export function compile(node: ExpressionNode): string | number | boolean | null 
       try {
         ${compile(value as ExpressionNode)}
         return true
-      } catch (e) {
+      } catch {
         return false
       }
     })()`
@@ -302,7 +302,7 @@ function accessProperty(variable: string, keyOrIndex: string, allowMapAccess: bo
 function guardAgainstPropertyAccessSideEffects(variable: string, propertyName: string): string {
   return `((val, key) => {
     const desc = Object.getOwnPropertyDescriptor(val, key);
-    if (desc && desc.get !== undefined) {
+    if (desc?.get !== undefined) {
       throw new Error('Possibility of side effect')
     } else {
       return val[key]
