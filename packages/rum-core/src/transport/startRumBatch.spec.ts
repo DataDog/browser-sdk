@@ -3,7 +3,7 @@ import { resetExperimentalFeatures } from '@datadog/browser-core/src/tools/exper
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumViewEvent } from '../rumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
-import { assembleViewUpdateEvent, PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL } from './startRumBatch'
+import { assembleViewUpdateEvent } from './startRumBatch'
 
 function makeViewEvent(overrides: Record<string, unknown> = {}): RumViewEvent {
   return {
@@ -211,9 +211,5 @@ describe('startRumBatch partial_view_updates routing', () => {
   beforeEach(() => {
     addExperimentalFeatures([ExperimentalFeature.PARTIAL_VIEW_UPDATES])
     registerCleanupTask(resetExperimentalFeatures)
-  })
-
-  it('PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL should be 100', () => {
-    expect(PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL).toBe(100)
   })
 })
