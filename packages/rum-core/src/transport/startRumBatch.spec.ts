@@ -1,6 +1,3 @@
-import { ExperimentalFeature, addExperimentalFeatures } from '@datadog/browser-core'
-import { resetExperimentalFeatures } from '@datadog/browser-core/src/tools/experimentalFeatures'
-import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumViewEvent } from '../rumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import { assembleViewUpdateEvent } from './startRumBatch'
@@ -204,12 +201,5 @@ describe('assembleViewUpdateEvent', () => {
     assembleViewUpdateEvent(current, last)
 
     expect(current.service).toBe(currentService)
-  })
-})
-
-describe('startRumBatch partial_view_updates routing', () => {
-  beforeEach(() => {
-    addExperimentalFeatures([ExperimentalFeature.PARTIAL_VIEW_UPDATES])
-    registerCleanupTask(resetExperimentalFeatures)
   })
 })
