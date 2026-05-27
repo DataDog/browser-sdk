@@ -1,6 +1,7 @@
 export type { RumPublicApi, RecorderApi, ProfilerApi, StartRecordingOptions, Strategy } from './boot/rumPublicApi'
 export { makeRumPublicApi } from './boot/rumPublicApi'
 export type { StartRum, StartRumResult } from './boot/startRum'
+export type { AiAgentContext } from './domain/contexts/aiAgentContext'
 export type {
   RumEvent,
   RumActionEvent,

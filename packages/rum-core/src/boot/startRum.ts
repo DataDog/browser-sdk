@@ -17,6 +17,8 @@ import {
   startGlobalContext,
   startUserContext,
   startTabContext,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { createWindowOpenObservable } from '../browser/windowOpenObservable'
@@ -39,6 +41,7 @@ import { startCustomerDataTelemetry } from '../domain/startCustomerDataTelemetry
 import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
 import { startDisplayContext } from '../domain/contexts/displayContext'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
+import { startAiAgentContext } from '../domain/contexts/aiAgentContext'
 import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext'
 import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
 import { startSyntheticsContext } from '../domain/contexts/syntheticsContext'
@@ -186,6 +189,9 @@ export function startRumEventCollection(
 
   const displayContext = startDisplayContext(hooks, configuration)
   cleanupTasks.push(displayContext.stop)
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.AI_AGENT_DETECTION)) {
+    startAiAgentContext(hooks)
+  }
   const ciVisibilityContext = startCiVisibilityContext(configuration, hooks)
   cleanupTasks.push(ciVisibilityContext.stop)
   startSyntheticsContext(hooks)

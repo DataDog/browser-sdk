@@ -19,6 +19,7 @@ export enum ExperimentalFeature {
   START_STOP_ACTION = 'start_stop_action',
   START_STOP_RESOURCE = 'start_stop_resource',
   TOO_MANY_REQUESTS_INVESTIGATION = 'too_many_requests_investigation',
+  AI_AGENT_DETECTION = 'ai_agent_detection',
   SESSION_RENEWAL_DEBUG_CONTEXT = 'session_renewal_debug_context',
 }
 
