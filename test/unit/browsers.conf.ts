@@ -9,6 +9,7 @@ export const OLDEST_BROWSER_ECMA_VERSION = 2017
 
 export const browserConfigurations: BrowserConfiguration[] = [
   {
+    id: 'edge',
     sessionName: 'Edge',
     name: 'Edge',
     version: '80.0',
@@ -16,6 +17,7 @@ export const browserConfigurations: BrowserConfiguration[] = [
     osVersion: '11',
   },
   {
+    id: 'firefox',
     sessionName: 'Firefox',
     name: 'Firefox',
     version: '78.0',
@@ -23,6 +25,7 @@ export const browserConfigurations: BrowserConfiguration[] = [
     osVersion: '11',
   },
   {
+    id: 'safari-desktop',
     sessionName: 'Safari desktop',
     name: 'Safari',
     version: '14.0',
@@ -30,6 +33,7 @@ export const browserConfigurations: BrowserConfiguration[] = [
     osVersion: 'Big Sur',
   },
   {
+    id: 'chrome-desktop',
     sessionName: 'Chrome desktop',
     name: 'Chrome',
     version: '80.0',
@@ -37,6 +41,7 @@ export const browserConfigurations: BrowserConfiguration[] = [
     osVersion: '11',
   },
   {
+    id: 'chrome-mobile',
     sessionName: 'Chrome mobile',
     name: 'chrome',
     os: 'android',

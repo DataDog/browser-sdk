@@ -303,7 +303,9 @@ unit-bs:
     - .base-configuration
     - .bs-allowed-branches
   interruptible: true
-  resource_group: browserstack
+  parallel:
+    matrix:
+      - BS_BROWSER: [edge, firefox, safari-desktop, chrome-desktop, chrome-mobile]
   artifacts:
     reports:
       junit: test-report/unit-bs/*.xml
