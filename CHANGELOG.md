@@ -15,6 +15,71 @@
 
 ---
 
+## v7.2.0
+
+**Public Changes:**
+
+- ✨ add `required` option for remote configuration ([#4651](https://github.com/DataDog/browser-sdk/pull/4651)) [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE]
+- ✨ [PROF-13798] ✨ Add subdomain support to ProxyFn for quota check ([#4638](https://github.com/DataDog/browser-sdk/pull/4638)) [DEBUGGER] [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- ✨[Profiler] Quota check ([#4514](https://github.com/DataDog/browser-sdk/pull/4514)) [DEBUGGER] [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- ✨ implement remote configuration async loading & caching ([#4606](https://github.com/DataDog/browser-sdk/pull/4606)) [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE]
+- ✨ Add operation's start vital's id to profiles metadata ([#4617](https://github.com/DataDog/browser-sdk/pull/4617)) [DEBUGGER] [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- ✨ Add `view_update` support to developer extension ([#4319](https://github.com/DataDog/browser-sdk/pull/4319))
+- ✨ Remove start stop action and resource experiment flag ([#4677](https://github.com/DataDog/browser-sdk/pull/4677)) [DEBUGGER] [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- ✨ feat(graphql): extract operationType from the req. body ([#4574](https://github.com/DataDog/browser-sdk/pull/4574)) [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE]
+- 🐛 generalize @-prefix ref desugaring in debugger expressions ([#4671](https://github.com/DataDog/browser-sdk/pull/4671)) [DEBUGGER]
+- 🐛 await re-grant if consent is revoked during session manager init ([#4605](https://github.com/DataDog/browser-sdk/pull/4605)) [DEBUGGER] [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 🐛 ignore symlinked BROWSER_SUPPORT.md in prettier ([#4665](https://github.com/DataDog/browser-sdk/pull/4665))
+- 🐛 Add context to session manager error telemetry ([#4621](https://github.com/DataDog/browser-sdk/pull/4621)) [DEBUGGER] [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 🐛 honor strictest allowUntrustedEvents policy in XHR observable ([#4611](https://github.com/DataDog/browser-sdk/pull/4611)) [DEBUGGER] [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 🐛 improve early request collection reliability in Firefox ([#4573](https://github.com/DataDog/browser-sdk/pull/4573)) [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE]
+- 📝 group subdomain option with Session Replay in docs ([#4632](https://github.com/DataDog/browser-sdk/pull/4632)) [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE]
+- ⚗️ auto-disable Live Debugger after prolonged Delivery API outage ([#4663](https://github.com/DataDog/browser-sdk/pull/4663)) [DEBUGGER]
+- ⚗️ Default debugger version and embed build identity in snapshots ([#4511](https://github.com/DataDog/browser-sdk/pull/4511)) [DEBUGGER]
+- ⚗️ Add Live Debugger lifetime event budgets ([#4510](https://github.com/DataDog/browser-sdk/pull/4510)) [DEBUGGER]
+- ⚗️️️️ Default args and locals params in debugger snapshot hooks ([#4609](https://github.com/DataDog/browser-sdk/pull/4609)) [DEBUGGER]
+- ⚗️ test(e2e): work around Playwright WebKit click and session bugs ([#4616](https://github.com/DataDog/browser-sdk/pull/4616))
+- ⚗️ Switch debugger delivery to public ClientTokenAuth endpoint ([#4480](https://github.com/DataDog/browser-sdk/pull/4480)) [DEBUGGER]
+- ⚗️ [Live Debugger] Add 10ms snapshot capture timeout circuit breaker ([#4512](https://github.com/DataDog/browser-sdk/pull/4512)) [DEBUGGER]
+- ⚗️ Make Live Debugger per-second budgets configurable ([#4509](https://github.com/DataDog/browser-sdk/pull/4509)) [DEBUGGER]
+- ⚗️ Tighten Live Debugger global hook typing ([#4508](https://github.com/DataDog/browser-sdk/pull/4508)) [DEBUGGER]
+- ⚗️ fix debugger package version for v7 [DEBUGGER]
+- ⚗️ Add Live Debugger package ([#4449](https://github.com/DataDog/browser-sdk/pull/4449)) [DEBUGGER] [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+
+**Internal Changes:**
+
+- 👷 Allow version bump titles in PR ([#4681](https://github.com/DataDog/browser-sdk/pull/4681))
+- 👷 Split unit-bs CI job per browser ([#4623](https://github.com/DataDog/browser-sdk/pull/4623))
+- 👷 Update dependency nuxt to v3.21.6 [SECURITY] ([#4653](https://github.com/DataDog/browser-sdk/pull/4653))
+- 👷 run latest firefox and webkit in CI, default local e2e to chromium ([#4618](https://github.com/DataDog/browser-sdk/pull/4618)) [DEBUGGER] [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 👷 add CI check enforcing gitmoji PR title convention ([#4619](https://github.com/DataDog/browser-sdk/pull/4619))
+- 👷 scope debugger CODEOWNERS to the Node.js debugger team ([#4666](https://github.com/DataDog/browser-sdk/pull/4666))
+- 👷 Update dependency @vitejs/plugin-vue to v6 ([#4655](https://github.com/DataDog/browser-sdk/pull/4655))
+- 👷 Update dependency vue-router to v5.0.7 ([#4654](https://github.com/DataDog/browser-sdk/pull/4654)) [RUM-NUXT] [RUM-VUE]
+- 👷 Update actions/upload-pages-artifact action to v5 ([#4636](https://github.com/DataDog/browser-sdk/pull/4636))
+- 👷 Update all non-major dependencies ([#4635](https://github.com/DataDog/browser-sdk/pull/4635)) [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-VUE]
+- 👷 E2E scope WebKit workaround to macOS only ([#4643](https://github.com/DataDog/browser-sdk/pull/4643))
+- 👷 add api-performance-benchmark scheduled job + rename test-performance to bundle-size ([#4633](https://github.com/DataDog/browser-sdk/pull/4633))
+- 👷 default local e2e to chromium only ([#4634](https://github.com/DataDog/browser-sdk/pull/4634))
+- 👷 disable reviewers-approval mergegate rule ([#4627](https://github.com/DataDog/browser-sdk/pull/4627))
+- 👷 support Claude worktree setup ([#4620](https://github.com/DataDog/browser-sdk/pull/4620))
+- 👷 bump performance test SDK bundle to v7 ([#4614](https://github.com/DataDog/browser-sdk/pull/4614))
+- 👷 Update actions/configure-pages action to v6 ([#4597](https://github.com/DataDog/browser-sdk/pull/4597))
+- 👷 allocate 4 CPUs to performance-benchmark job ([#4610](https://github.com/DataDog/browser-sdk/pull/4610))
+- 👷 Add pinned Firefox 119 + WebKit 17.4 e2e + Chromium 120 test runner without BrowserStack ([#4612](https://github.com/DataDog/browser-sdk/pull/4612))
+- 👷 parallelize test app builds ([#4567](https://github.com/DataDog/browser-sdk/pull/4567))
+- 👷 Update actions/deploy-pages action to v5 ([#4598](https://github.com/DataDog/browser-sdk/pull/4598))
+- ♻️ Update debugger generated code target to ES2020 ([#4680](https://github.com/DataDog/browser-sdk/pull/4680)) [DEBUGGER]
+- ♻️ [Profiler] Remove sample-count threshold from profiler discard logic ([#4566](https://github.com/DataDog/browser-sdk/pull/4566)) [RUM]
+- ✅ remove unit test noise ([#4673](https://github.com/DataDog/browser-sdk/pull/4673)) [DEBUGGER] [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- ✅ fix flaky cookieAccess tests in slow CI ([#4613](https://github.com/DataDog/browser-sdk/pull/4613)) [DEBUGGER] [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- ✅ delay /empty.css response to fix WebKit early-timings flake ([#4631](https://github.com/DataDog/browser-sdk/pull/4631))
+- 🔧 handle missing packages when renewing the npm token ([#4411](https://github.com/DataDog/browser-sdk/pull/4411))
+- 🧹 [Profiler] Remove dead page.route() quota mock from E2E profiling scenario ([#4656](https://github.com/DataDog/browser-sdk/pull/4656))
+- 🔊 Send source-code-context telemetry usage ([#4675](https://github.com/DataDog/browser-sdk/pull/4675)) [DEBUGGER] [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 🔊 enrich session lock error telemetry with operation and lifecycle context ([#4668](https://github.com/DataDog/browser-sdk/pull/4668)) [DEBUGGER] [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+- 🔊 Add more session error context telemetry ([#4641](https://github.com/DataDog/browser-sdk/pull/4641)) [DEBUGGER] [LOGS] [RUM] [RUM-ANGULAR] [RUM-NEXTJS] [RUM-NUXT] [RUM-SLIM] [RUM-VUE] [WORKER]
+
 ## v7.1.0
 
 **Public Changes:**
