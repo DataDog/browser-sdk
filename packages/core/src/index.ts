@@ -5,7 +5,7 @@ export {
   TraceContextInjection,
   serializeConfiguration,
   isSampleRate,
-  buildEndpointHost,
+  buildEndpointUrl,
   isIntakeUrl,
   computeTransportConfiguration,
 } from './domain/configuration'

@@ -2,8 +2,9 @@ import type { Payload } from '../../transport'
 import { timeStampNow } from '../../tools/utils/timeUtils'
 import { normalizeUrl } from '../../tools/utils/urlPolyfill'
 import { generateUUID } from '../../tools/utils/stringUtils'
+import type { Site } from '../intakeSites'
 import { INTAKE_SITE_US1 } from '../intakeSites'
-import type { InitConfiguration } from './configuration'
+import type { InitConfiguration, ProxyFn } from './configuration'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
@@ -39,45 +40,59 @@ export function createEndpointBuilder(
   trackType: TrackType,
   extraParameters?: string[]
 ) {
-  const buildUrlWithParameters = createEndpointUrlWithParametersBuilder(initConfiguration, trackType)
-
   return {
     build(api: ApiType, payload: Payload) {
-      const parameters = buildEndpointParameters(initConfiguration, trackType, api, payload, extraParameters)
-      return buildUrlWithParameters(parameters)
+      return buildEndpointUrl({
+        proxy: initConfiguration.proxy,
+        site: initConfiguration.site,
+        path: `/api/v2/${trackType}`,
+        parameters: buildEndpointParameters(initConfiguration, trackType, api, payload, extraParameters),
+      })
     },
     trackType,
   }
 }
 
-/**
- * Create a function used to build a full endpoint url from provided parameters. The goal of this
- * function is to pre-compute some parts of the URL to avoid re-computing everything on every
- * request, as only parameters are changing.
- */
-function createEndpointUrlWithParametersBuilder(
-  initConfiguration: EndpointBuilderInitConfiguration,
-  trackType: TrackType
-): (parameters: string) => string {
-  const path = `/api/v2/${trackType}`
-  const proxy = initConfiguration.proxy
-  if (typeof proxy === 'string') {
-    const normalizedProxyUrl = normalizeUrl(proxy)
-    return (parameters) => `${normalizedProxyUrl}?ddforward=${encodeURIComponent(`${path}?${parameters}`)}`
-  }
-  if (typeof proxy === 'function') {
-    return (parameters) => proxy({ path, parameters })
-  }
-  const host = buildEndpointHost(initConfiguration)
-  return (parameters) => `https://${host}${path}?${parameters}`
+export interface BuildEndpointUrlOptions {
+  proxy?: string | ProxyFn
+  site: Site | undefined
+  subdomain?: string
+  path: string
+  parameters: string
 }
 
-export function buildEndpointHost(initConfiguration: Omit<InitConfiguration, 'source'>) {
-  const { site = INTAKE_SITE_US1 } = initConfiguration
+export function buildEndpointUrl({
+  proxy,
+  site = INTAKE_SITE_US1,
+  path,
+  parameters,
+  subdomain,
+}: BuildEndpointUrlOptions): string {
+  let pathAndParameters = path
+  if (parameters) {
+    pathAndParameters += `?${parameters}`
+  }
+
+  if (typeof proxy === 'string') {
+    let url = `${normalizeUrl(proxy)}?ddforward=${encodeURIComponent(pathAndParameters)}`
+    if (subdomain) {
+      url += `&ddforwardSubdomain=${subdomain}`
+    }
+    return url
+  }
+
+  if (typeof proxy === 'function') {
+    return proxy({ path, parameters, subdomain })
+  }
 
   const domainParts = site.split('.')
   const extension = domainParts.pop()
-  return `browser-intake-${domainParts.join('-')}.${extension!}`
+  let domain = `browser-intake-${domainParts.join('-')}.${extension!}`
+  if (subdomain) {
+    domain = `${subdomain}.${domain}`
+  }
+
+  return `https://${domain}${pathAndParameters}`
 }
 
 /**

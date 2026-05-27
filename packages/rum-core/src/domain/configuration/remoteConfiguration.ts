@@ -1,7 +1,6 @@
 import type { createContextManager, Context } from '@datadog/browser-core'
 import {
   display,
-  buildEndpointHost,
   mapValues,
   getCookie,
   addTelemetryMetrics,
@@ -9,6 +8,7 @@ import {
   monitorError,
   isIndexableObject,
   fetch,
+  buildEndpointUrl,
 } from '@datadog/browser-core'
 import { extractRegexMatch } from '../extractRegexMatch'
 import type { RumInitConfiguration } from './configuration'
@@ -321,7 +321,12 @@ export function buildEndpoint(configuration: RumInitConfiguration) {
     return configuration.remoteConfigurationProxy
   }
   const id = getRemoteConfigurationId(configuration)!
-  return `https://sdk-configuration.${buildEndpointHost(configuration)}/${REMOTE_CONFIGURATION_VERSION}/${encodeURIComponent(id)}.json`
+  return buildEndpointUrl({
+    site: configuration.site,
+    path: `/${REMOTE_CONFIGURATION_VERSION}/${encodeURIComponent(id)}.json`,
+    subdomain: 'sdk-configuration',
+    parameters: '',
+  })
 }
 
 function doBackgroundCacheSync(
