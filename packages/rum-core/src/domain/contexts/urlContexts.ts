@@ -5,8 +5,8 @@ import {
   createValueHistory,
   HookNames,
   DISCARDED,
-  mockable,
   buildUrl,
+  getGlobalLocationHref,
 } from '@datadog/browser-core'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { LifeCycle } from '../lifeCycle'
@@ -41,7 +41,7 @@ export function startUrlContexts(
   let previousViewUrl: string | undefined
 
   lifeCycle.subscribe(LifeCycleEventType.BEFORE_VIEW_CREATED, ({ startClocks, url }) => {
-    const locationHref = getLocationHref()
+    const locationHref = getGlobalLocationHref()
     const viewUrl = url !== undefined ? buildUrl(url, locationHref).href : locationHref
 
     urlContextHistory.add(
@@ -102,14 +102,5 @@ export function startUrlContexts(
       locationChangeSubscription.unsubscribe()
       urlContextHistory.stop()
     },
-  }
-}
-
-// Preserves existing global location behavior but in Salesforce access through explicit window as documented:  https://developer.salesforce.com/docs/platform/lightning-components-security/guide/lws-limitations.html#:~:text=The%20location%20property,window.location
-function getLocationHref() {
-  try {
-    return mockable(location).href
-  } catch {
-    return mockable(window.location).href
   }
 }
