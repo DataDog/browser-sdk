@@ -46,7 +46,7 @@ export function assembleViewUpdateEvent(
 
   // Restore the ignoreKeys — backend needs them on every event
   return combine(diff, {
-    type: RumEventType.VIEW_UPDATE,
+    type: 'view_update' as const,
     date: current.date,
     application: current.application,
     session: current.session,

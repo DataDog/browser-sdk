@@ -80,7 +80,7 @@ describe('assembleViewUpdateEvent', () => {
     })
     const result = assembleViewUpdateEvent(current, last)!
 
-    expect(result.type).toBe(RumEventType.VIEW_UPDATE)
+    expect(result.type).toBe('view_update')
     expect((result as any).application).toEqual({ id: 'app-1' })
     expect((result as any).session).toEqual({ id: 'sess-1', type: 'user' })
     expect((result.view as any).id).toBe('view-1')
