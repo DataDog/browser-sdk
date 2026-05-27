@@ -325,7 +325,6 @@ export function buildEndpoint(configuration: RumInitConfiguration) {
     site: configuration.site,
     path: `/${REMOTE_CONFIGURATION_VERSION}/${encodeURIComponent(id)}.json`,
     subdomain: 'sdk-configuration',
-    parameters: '',
   })
 }
 

@@ -58,14 +58,14 @@ export interface BuildEndpointUrlOptions {
   site: Site | undefined
   subdomain?: string
   path: string
-  parameters: string
+  parameters?: string
 }
 
 export function buildEndpointUrl({
   proxy,
   site = INTAKE_SITE_US1,
   path,
-  parameters,
+  parameters = '',
   subdomain,
 }: BuildEndpointUrlOptions): string {
   let pathAndParameters = path

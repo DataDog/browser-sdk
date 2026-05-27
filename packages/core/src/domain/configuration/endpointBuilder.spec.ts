@@ -173,6 +173,16 @@ describe('endpointBuilder', () => {
       ).toBe('https://quota.proxy.test/api/v2/profiling/quota?session_id=abc')
     })
 
+    it('falls back to empty parameters when calling proxy function', () => {
+      expect(
+        buildEndpointUrl({
+          proxy: ({ path, parameters }) => `https://proxy.test${path}?${parameters}`,
+          site: undefined,
+          path: '/api/v2/rum',
+        })
+      ).toBe('https://proxy.test/api/v2/rum?')
+    })
+
     it('builds intake URL from the site when no proxy is configured', () => {
       expect(
         buildEndpointUrl({
