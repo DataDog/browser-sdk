@@ -36,11 +36,14 @@ type AddNodeParams<NodeChange extends AddNodeChange> = NodeChange extends [any, 
 export type SerializationTransactionCallback = (transaction: SerializationTransaction) => void
 
 /**
- * SerializationTransaction is used to build and emit a BrowserChangeRecord
- * containing a serialized snapshot of the DOM. Unlike SerializationTransaction, it
- * doesn't support emitting arbitrary BrowserRecords; instead, the builder methods it
- * exposes are used to construct a single BrowserChangeRecord which is emitted at the end
- * of the transaction.
+ * SerializationTransaction is used to build and emit a `BrowserChangeRecord` containing a
+ * serialized snapshot of the DOM. The term "transaction" is used because all the changes
+ * in a serialization transaction are applied together, atomically. A serialization
+ * transaction is thus always associated with a single timestamp.
+ *
+ * To use `SerializationTransaction`, call the builder methods it exposes to add changes
+ * to the transaction. At the end of the transaction, the changes will be combined into a
+ * single `BrowserChangeRecord` and emitted.
  */
 export interface SerializationTransaction {
   /**
