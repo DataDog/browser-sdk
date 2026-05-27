@@ -4,10 +4,8 @@ import {
   display,
   DefaultPrivacyLevel,
   timeStampToClocks,
-  ExperimentalFeature,
   ResourceType,
   startTelemetry,
-  addExperimentalFeatures,
   startSessionManager,
   getTimeStamp,
 } from '@datadog/browser-core'
@@ -852,7 +850,6 @@ describe('rum public api', () => {
   describe('startAction / stopAction', () => {
     it('should call startAction and stopAction on the strategy', async () => {
       const clock = mockClock()
-      addExperimentalFeatures([ExperimentalFeature.START_STOP_ACTION])
 
       const startActionSpy = jasmine.createSpy('startAction')
       const stopActionSpy = jasmine.createSpy('stopAction')
@@ -894,8 +891,6 @@ describe('rum public api', () => {
     })
 
     it('should sanitize startAction and stopAction inputs', async () => {
-      addExperimentalFeatures([ExperimentalFeature.START_STOP_ACTION])
-
       const startActionSpy = jasmine.createSpy()
       const { rumPublicApi } = makeRumPublicApiWithDefaults({
         startRumResult: {
@@ -920,31 +915,11 @@ describe('rum public api', () => {
         })
       )
     })
-
-    it('should not call startAction/stopAction when feature flag is disabled', async () => {
-      const startActionSpy = jasmine.createSpy()
-      const stopActionSpy = jasmine.createSpy()
-      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
-        startRumResult: {
-          startAction: startActionSpy,
-          stopAction: stopActionSpy,
-        },
-      })
-
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      rumPublicApi.startAction('purchase', { type: ActionType.CUSTOM })
-      rumPublicApi.stopAction('purchase')
-      await collectAsyncCalls(startRumSpy, 1)
-
-      expect(startActionSpy).not.toHaveBeenCalled()
-      expect(stopActionSpy).not.toHaveBeenCalled()
-    })
   })
 
   describe('startResource / stopResource', () => {
     it('should call startResource and stopResource on the strategy', async () => {
       const clock = mockClock()
-      addExperimentalFeatures([ExperimentalFeature.START_STOP_RESOURCE])
 
       const startResourceSpy = jasmine.createSpy('startResource')
       const stopResourceSpy = jasmine.createSpy('stopResource')
@@ -993,8 +968,6 @@ describe('rum public api', () => {
     })
 
     it('should sanitize startResource and stopResource inputs', async () => {
-      addExperimentalFeatures([ExperimentalFeature.START_STOP_RESOURCE])
-
       const startResourceSpy = jasmine.createSpy()
       const { rumPublicApi } = makeRumPublicApiWithDefaults({
         startRumResult: {
@@ -1019,25 +992,6 @@ describe('rum public api', () => {
           resourceKey: 'resource_key',
         })
       )
-    })
-
-    it('should not call startResource/stopResource when feature flag is disabled', async () => {
-      const startResourceSpy = jasmine.createSpy()
-      const stopResourceSpy = jasmine.createSpy()
-      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
-        startRumResult: {
-          startResource: startResourceSpy,
-          stopResource: stopResourceSpy,
-        },
-      })
-
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      rumPublicApi.startResource('https://api.example.com/data', { type: ResourceType.FETCH })
-      rumPublicApi.stopResource('https://api.example.com/data')
-      await collectAsyncCalls(startRumSpy, 1)
-
-      expect(startResourceSpy).not.toHaveBeenCalled()
-      expect(stopResourceSpy).not.toHaveBeenCalled()
     })
   })
 

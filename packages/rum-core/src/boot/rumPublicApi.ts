@@ -34,8 +34,6 @@ import {
   CustomerContextKey,
   defineContextMethod,
   startBufferingData,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
   mockable,
   generateUUID,
   timeStampNow,
@@ -727,11 +725,7 @@ export function makeRumPublicApi(
     },
 
     startAction: monitor((name, options) => {
-      // Check feature flag only after init; pre-init calls should be buffered
-      if (strategy.initConfiguration && !isExperimentalFeatureEnabled(ExperimentalFeature.START_STOP_ACTION)) {
-        return
-      }
-      // addTelemetryUsage({ feature: 'start-action' })
+      addTelemetryUsage({ feature: 'start-action' })
       strategy.startAction(sanitize(name)!, {
         type: sanitize(options && options.type) as ActionType | undefined,
         context: sanitize(options && options.context) as Context,
@@ -740,10 +734,7 @@ export function makeRumPublicApi(
     }),
 
     stopAction: monitor((name, options) => {
-      if (strategy.initConfiguration && !isExperimentalFeatureEnabled(ExperimentalFeature.START_STOP_ACTION)) {
-        return
-      }
-      // addTelemetryUsage({ feature: 'stop-action' })
+      addTelemetryUsage({ feature: 'stop-action' })
       strategy.stopAction(sanitize(name)!, {
         type: sanitize(options && options.type) as ActionType | undefined,
         context: sanitize(options && options.context) as Context,
@@ -752,11 +743,7 @@ export function makeRumPublicApi(
     }),
 
     startResource: monitor((url, options) => {
-      // Check feature flag only after init; pre-init calls should be buffered
-      if (strategy.initConfiguration && !isExperimentalFeatureEnabled(ExperimentalFeature.START_STOP_RESOURCE)) {
-        return
-      }
-      // addTelemetryUsage({ feature: 'start-resource' })
+      addTelemetryUsage({ feature: 'start-resource' })
       strategy.startResource(sanitize(url)!, {
         type: sanitize(options && options.type) as ResourceType | undefined,
         method: sanitize(options && options.method) as string | undefined,
@@ -766,10 +753,7 @@ export function makeRumPublicApi(
     }),
 
     stopResource: monitor((url, options) => {
-      if (strategy.initConfiguration && !isExperimentalFeatureEnabled(ExperimentalFeature.START_STOP_RESOURCE)) {
-        return
-      }
-      // addTelemetryUsage({ feature: 'stop-resource' })
+      addTelemetryUsage({ feature: 'stop-resource' })
       strategy.stopResource(sanitize(url)!, {
         type: sanitize(options && options.type) as ResourceType | undefined,
         statusCode: options && options.statusCode,
