@@ -8,13 +8,12 @@ import type { InitializedProbe } from './probes'
 import {
   checkConditionErrorBudget,
   checkGlobalSnapshotBudget,
-  hasProbeLifetimeBudgetRemaining,
-  removeProbe,
+  enforceProbeLifetimeBudget,
+  recordProbeEventSent,
   resetProbeBudgetConfiguration,
   setProbeBudgetConfiguration,
 } from './probes'
 import type { ActiveEntry } from './activeEntries'
-import { active } from './activeEntries'
 import { captureStackTrace, parseStackTrace } from './stacktrace'
 import { evaluateProbeMessage } from './template'
 import { evaluateProbeCondition, isConditionEvaluationError } from './condition'
@@ -40,7 +39,6 @@ export function resetDebuggerTransport(): void {
   debuggerBatch = undefined
   debuggerConfig = undefined
   cachedDDtags = undefined
-  active.clear()
   resetProbeBudgetConfiguration()
 }
 
@@ -57,14 +55,8 @@ export function onEntry(probes: InitializedProbe[], self: any, args: Record<stri
 
   // TODO: A lot of repeated work performed for each probe that could be shared between probes
   for (const probe of probes) {
-    if (!hasProbeLifetimeBudgetRemaining(probe)) {
+    if (!enforceProbeLifetimeBudget(probe)) {
       continue
-    }
-
-    let stack = active.get(probe.id) // TODO: Should we use the functionId instead?
-    if (!stack) {
-      stack = []
-      active.set(probe.id, stack)
     }
 
     // Skip if sampling budget is exceeded
@@ -72,7 +64,7 @@ export function onEntry(probes: InitializedProbe[], self: any, args: Record<stri
       start - probe.lastCaptureMs < probe.msBetweenSampling ||
       !checkGlobalSnapshotBudget(start, probe.captureSnapshot)
     ) {
-      stack.push(null)
+      probe.activeEntries.push(null)
       continue
     }
 
@@ -89,7 +81,7 @@ export function onEntry(probes: InitializedProbe[], self: any, args: Record<stri
         // Check condition - if it fails, don't evaluate or capture anything
         if (!evaluateProbeCondition(probe, context)) {
           // Still push to stack so onReturn/onThrow can pop it, but mark as skipped
-          stack.push(null)
+          probe.activeEntries.push(null)
           continue
         }
       } catch (error) {
@@ -101,7 +93,7 @@ export function onEntry(probes: InitializedProbe[], self: any, args: Record<stri
           })
         }
         // Still push to stack so onReturn/onThrow can pop it, but mark as skipped
-        stack.push(null)
+        probe.activeEntries.push(null)
         continue
       }
 
@@ -120,12 +112,12 @@ export function onEntry(probes: InitializedProbe[], self: any, args: Record<stri
         },
       }
       if (captureCtx.timedOut) {
-        stack.push(null)
+        probe.activeEntries.push(null)
         continue
       }
     }
 
-    stack.push({
+    probe.activeEntries.push({
       start,
       timestamp,
       message,
@@ -154,23 +146,10 @@ export function onReturn(
 ): any {
   const end = performance.now()
   const captureCtx: CaptureContext = { deadline: performance.now() + SNAPSHOT_TIMEOUT_MS, timedOut: false }
-  let exhaustedProbeIds: string[] | undefined
 
   // TODO: A lot of repeated work performed for each probe that could be shared between probes
   for (const probe of probes) {
-    if (!hasProbeLifetimeBudgetRemaining(probe)) {
-      ;(exhaustedProbeIds ??= []).push(probe.id)
-      continue
-    }
-
-    const stack = active.get(probe.id) // TODO: Should we use the functionId instead?
-    if (!stack) {
-      continue // TODO: This shouldn't be possible, do we need it? Should we warn?
-    }
-    const result = stack.pop()
-    if (stack.length === 0) {
-      active.delete(probe.id)
-    }
+    const result = probe.activeEntries.pop()
     if (!result) {
       continue
     }
@@ -226,12 +205,6 @@ export function onReturn(
     queueDebuggerSnapshot(probe, result)
   }
 
-  if (exhaustedProbeIds) {
-    for (const id of exhaustedProbeIds) {
-      removeProbe(id)
-    }
-  }
-
   return value
 }
 
@@ -246,23 +219,10 @@ export function onReturn(
 export function onThrow(probes: InitializedProbe[], error: Error, self: any, args: Record<string, any> = {}): void {
   const end = performance.now()
   const captureCtx: CaptureContext = { deadline: performance.now() + SNAPSHOT_TIMEOUT_MS, timedOut: false }
-  let exhaustedProbeIds: string[] | undefined
 
   // TODO: A lot of repeated work performed for each probe that could be shared between probes
   for (const probe of probes) {
-    if (!hasProbeLifetimeBudgetRemaining(probe)) {
-      ;(exhaustedProbeIds ??= []).push(probe.id)
-      continue
-    }
-
-    const stack = active.get(probe.id) // TODO: Should we use the functionId instead?
-    if (!stack) {
-      continue // TODO: This shouldn't be possible, do we need it? Should we warn?
-    }
-    const result = stack.pop()
-    if (stack.length === 0) {
-      active.delete(probe.id)
-    }
+    const result = probe.activeEntries.pop()
     if (!result) {
       continue
     }
@@ -319,12 +279,6 @@ export function onThrow(probes: InitializedProbe[], error: Error, self: any, arg
     }
 
     queueDebuggerSnapshot(probe, result)
-  }
-
-  if (exhaustedProbeIds) {
-    for (const id of exhaustedProbeIds) {
-      removeProbe(id)
-    }
   }
 }
 
@@ -383,7 +337,7 @@ function queueDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): vo
   }
 
   debuggerBatch.add(payload)
-  probe.eventsSentInLifetime++
+  recordProbeEventSent(probe)
 }
 
 function getDebuggerDDtags(debuggerVersion: string): string {
