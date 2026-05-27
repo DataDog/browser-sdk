@@ -174,16 +174,29 @@ export interface RumPublicApi extends PublicApi {
   addAction: (name: string, context?: object) => void
 
   /**
-   * [Experimental] Start an action, stored in `@action`
+   * Start tracking a custom action.
+   *
+   * Call {@link stopAction} with the same name (and optional `actionKey`) to send a RUM action event
+   * with the elapsed duration. Errors and resources triggered between start and stop are associated
+   * with the action.
    *
    * @category Data Collection
    * @param name - Name of the action
    * @param options - Options of the action (@default type: 'custom')
+   * @example
+   * ```ts
+   * datadogRum.startAction('checkout', { context: { cartId: 'abc' } })
+   * // ... user completes checkout
+   * datadogRum.stopAction('checkout')
+   * ```
    */
   startAction: (name: string, options?: ActionOptions) => void
 
   /**
-   * [Experimental] Stop an action, stored in `@action`
+   * Stop tracking a custom action started with {@link startAction}.
+   *
+   * Sends a RUM action event with the elapsed duration since the matching start call. Context from
+   * start and stop calls is merged into the event.
    *
    * @category Data Collection
    * @param name - Name of the action
@@ -192,16 +205,28 @@ export interface RumPublicApi extends PublicApi {
   stopAction: (name: string, options?: ActionOptions) => void
 
   /**
-   * [Experimental] Start tracking a resource, stored in `@resource`
+   * Start tracking a resource manually.
+   *
+   * Use this for network activity that the SDK cannot automatically instrument. Call {@link stopResource}
+   * with the same URL (and optional `resourceKey`) to send a RUM resource event with the elapsed duration.
    *
    * @category Data Collection
    * @param url - URL of the resource
    * @param options - Options of the resource (@default type: 'other')
+   * @example
+   * ```ts
+   * datadogRum.startResource('https://api.example.com/users', { type: 'fetch', method: 'POST' })
+   * // ... perform the request
+   * datadogRum.stopResource('https://api.example.com/users', { statusCode: 201 })
+   * ```
    */
   startResource: (url: string, options?: ResourceOptions) => void
 
   /**
-   * [Experimental] Stop tracking a resource, stored in `@resource`
+   * Stop tracking a resource started with {@link startResource}.
+   *
+   * Sends a RUM resource event with the elapsed duration since the matching start call. Context from
+   * start and stop calls is merged into the event.
    *
    * @category Data Collection
    * @param url - URL of the resource
