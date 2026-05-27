@@ -2,6 +2,10 @@ import { printError, printLog, runMain } from './lib/executionUtils.ts'
 import { GITMOJI, normalizeGitmoji } from './lib/gitmoji.ts'
 
 export function isValidPrTitle(title: string): boolean {
+  if (/^v\d+\.\d+\.\d+$/.test(title)) {
+    return true
+  }
+
   const normalized = normalizeGitmoji(title)
   return GITMOJI.some(({ emoji }) => normalized.startsWith(normalizeGitmoji(emoji)))
 }
