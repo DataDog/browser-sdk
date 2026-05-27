@@ -84,7 +84,6 @@ export function Panel() {
           columns={columns}
           onColumnsChange={setColumns}
           clear={clear}
-          datadogMode={settings.datadogMode}
         />
       </Tabs.Panel>
       <Tabs.Panel value={PanelTabs.Infos} className={classes.tab}>

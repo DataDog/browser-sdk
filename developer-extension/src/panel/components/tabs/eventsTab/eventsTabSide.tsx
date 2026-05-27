@@ -1,22 +1,23 @@
 import { Box, Checkbox } from '@mantine/core'
 import React from 'react'
 import type { EventFilters, FacetRegistry } from '../../../hooks/useEvents'
+import { useSettings } from '../../../hooks/useSettings'
 import { FacetList } from './facetList'
 
 export function EventsTabSide({
   facetRegistry,
   filters,
   onFiltersChange,
-  datadogMode,
 }: {
   facetRegistry?: FacetRegistry
   filters: EventFilters
   onFiltersChange: (filters: EventFilters) => void
-  datadogMode: boolean
 }) {
+  const [settings] = useSettings()
+
   return (
     <Box ml="md">
-      {datadogMode && (
+      {settings.datadogMode && (
         <Checkbox
           label={'Show only the latest View\xa0event'}
           checked={!filters.outdatedVersions}
