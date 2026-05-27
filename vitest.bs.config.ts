@@ -1,13 +1,12 @@
 import path from 'node:path'
 
-import { playwright } from '@vitest/browser-playwright'
+import { webdriverio } from '@vitest/browser-webdriverio'
 import { defineConfig } from 'vitest/config'
 
 // eslint-disable-next-line local-rules/disallow-test-import-export-from-src
 import { getBuildInfos } from './test/envUtils.ts'
 // eslint-disable-next-line local-rules/disallow-test-import-export-from-src
 import { browserConfigurations } from './test/unit/browsers.conf.ts'
-import packageJson from './package.json' with { type: 'json' }
 
 // Build env variables that should be replaced at compile time (same as webpack.base.ts)
 const buildEnvDefines: Record<string, string> = {
@@ -17,36 +16,28 @@ const buildEnvDefines: Record<string, string> = {
   __BUILD_ENV__WORKER_STRING__: JSON.stringify(''),
 }
 
-function getPlaywrightBrowserName(name: string): 'chromium' | 'firefox' | 'webkit' {
-  if (name.toLowerCase().includes('firefox')) {
-    return 'firefox'
-  }
-  if (name.toLowerCase().includes('safari') || name.toLowerCase().includes('webkit')) {
-    return 'webkit'
-  }
-  return 'chromium'
+function getWebdriverBrowserName(name: string): 'chrome' | 'firefox' | 'safari' | 'edge' {
+  const lower = name.toLowerCase()
+  if (lower.includes('firefox')) { return 'firefox' }
+  if (lower.includes('safari')) { return 'safari' }
+  if (lower.includes('edge')) { return 'edge' }
+  return 'chrome'
 }
 
-function getCapabilities(configuration: (typeof browserConfigurations)[number]) {
-  const rootPkg = packageJson as unknown as { devDependencies?: Record<string, string> }
-  const playwrightVersion = rootPkg.devDependencies?.['@playwright/test'] ?? 'latest'
+function getBrowserStackOptions(configuration: (typeof browserConfigurations)[number]) {
   return {
     os: configuration.os,
-    os_version: configuration.osVersion,
-    browser: configuration.name,
-    browser_version: configuration.version,
-    'browserstack.username': process.env.BS_USERNAME,
-    'browserstack.accessKey': process.env.BS_ACCESS_KEY,
-    project: 'browser sdk unit',
-    build: getBuildInfos(),
-    name: configuration.sessionName,
-    'browserstack.local': true,
-    'browserstack.playwrightVersion': playwrightVersion,
-    'client.playwrightVersion': playwrightVersion,
-    'browserstack.debug': false,
-    'browserstack.console': 'info',
-    'browserstack.networkLogs': false,
-    'browserstack.interactiveDebugging': false,
+    osVersion: configuration.osVersion,
+    browserVersion: configuration.version,
+    projectName: 'browser sdk unit',
+    buildName: getBuildInfos(),
+    sessionName: configuration.sessionName,
+    local: 'true',
+    debug: 'false',
+      consoleLogs: 'verbose',
+    networkLogs: 'false',
+    interactiveDebugging: 'false',
+    ...(configuration.device ? { deviceName: configuration.device } : {}),
   }
 }
 
@@ -83,24 +74,44 @@ export default defineConfig({
   test: {
     browser: {
       enabled: true,
-      provider: playwright(),
-      // Use bs-local.com instead of localhost so Safari on BrowserStack can access cookies.
-      // BrowserStack replaces localhost with bs-local.com for Safari, which breaks cookie-based
-      // tests when the server hostname doesn't match.
-      // See https://www.browserstack.com/support/faq/local-testing/local-exceptions/i-face-issues-while-testing-localhost-urls-or-private-servers-in-safari-on-macos-os-x-and-ios
-      api: {
-        host: 'bs-local.com',
-      },
-      // Fail fast if a BrowserStack CDP connection can't be established (default: 60s).
-      connectTimeout: 30_000,
-      instances: browserConfigurations.map((config) => ({
-        browser: getPlaywrightBrowserName(config.name),
-        name: config.sessionName,
-        playwright: {
-          connectOptions: {
-            wsEndpoint: `wss://cdp.browserstack.com/playwright?caps=${encodeURIComponent(JSON.stringify(getCapabilities(config)))}`,
+      // Use WebdriverIO instead of Playwright for BrowserStack. Playwright connects via CDP
+      // websockets which BrowserStack drops after ~60s idle (vitest#10151). WebdriverIO uses
+      // the WebDriver protocol — the same protocol Karma used — which is BrowserStack's native
+      // and most stable integration.
+      provider: webdriverio({
+        protocol: 'https',
+        hostname: 'hub-cloud.browserstack.com',
+        port: 443,
+        path: '/wd/hub',
+        capabilities: {
+          'bstack:options': {
+            userName: process.env.BS_USERNAME,
+            accessKey: process.env.BS_ACCESS_KEY,
           },
         },
+      }),
+      // Bind Vite server to 0.0.0.0 so BrowserStack Local tunnel can reach it.
+      // The browser navigates to bs-local.com which resolves to 127.0.0.1 on both
+      // the local machine and the BrowserStack machine (via the Local tunnel).
+      api: {
+        host: '0.0.0.0',
+      },
+      instances: browserConfigurations.map((config) => ({
+        browser: getWebdriverBrowserName(config.name),
+        name: config.sessionName,
+        provider: webdriverio({
+          protocol: 'https',
+          hostname: 'hub-cloud.browserstack.com',
+          port: 443,
+          path: '/wd/hub',
+          capabilities: {
+            'bstack:options': {
+              userName: process.env.BS_USERNAME,
+              accessKey: process.env.BS_ACCESS_KEY,
+              ...getBrowserStackOptions(config),
+            },
+          } as Record<string, unknown>,
+        }),
       })),
     },
 
@@ -109,23 +120,14 @@ export default defineConfig({
 
     exclude: ['packages/core/test/forEach.spec.ts', '**/node_modules/**'],
 
-    // BrowserStack CDP connections are unreliable: sessions drop silently and Vitest
-    // hangs waiting for dead sessions to finish. Limit to 1 worker per browser (matching
-    // Karma's concurrency model).
-    maxWorkers: 1,
-
     restoreMocks: true,
 
-    setupFiles: ['./test/unit/vitest.setup.ts', './test/unit/browserstack.keepalive.ts'],
+    setupFiles: ['./test/unit/vitest.setup.ts'],
 
     sequence: {
       shuffle: true,
     },
 
-    // Use 'verbose' in CI to produce per-test output (not just per-file).
-    // BrowserStack CDP connections die silently, leaving sessions stuck.
-    // More frequent output keeps the bs-wrapper's no-output timer alive
-    // while surviving browsers continue running.
     reporters: process.env.CI ? ['verbose', ['junit', { outputFile: 'test-report/unit-bs/results.xml' }]] : ['default'],
   },
 })

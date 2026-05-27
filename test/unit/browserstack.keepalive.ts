@@ -8,7 +8,6 @@
  * See https://github.com/vitest-dev/vitest/issues/10151
  */
 // @ts-expect-error -- @vitest/browser/client has no type declarations
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 const { client } = await import('@vitest/browser/client')
 
 const KEEPALIVE_INTERVAL_MS = 25_000
@@ -22,9 +21,9 @@ async function sendKeepAlive(): Promise<void> {
   keepAliveInFlight = true
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     await client.waitForConnection()
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     await client.rpc.getCountOfFailedTests()
   } catch {
     // ignore transient reconnects
