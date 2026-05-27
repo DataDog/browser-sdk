@@ -150,6 +150,64 @@ describe('api', () => {
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
     })
 
+    it('should not evaluate ENTRY condition when sampling budget is exceeded', () => {
+      const probe: Probe = {
+        id: 'test-probe',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'entryConditionSamplingBudget' },
+        when: {
+          dsl: 'missing.value',
+          json: { getmember: [{ ref: 'missing' }, 'value'] },
+        },
+        template: 'Test',
+        captureSnapshot: true,
+        capture: {},
+        sampling: { snapshotsPerSecond: 0.5 },
+        evaluateAt: 'ENTRY',
+      }
+      addProbe(probe)
+
+      const probes = getProbes('TestClass;entryConditionSamplingBudget')!
+      onEntry(probes, {}, { missing: { value: true } })
+      onReturn(probes, null, {}, { missing: { value: true } }, {})
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+
+      onEntry(probes, {}, {})
+      onReturn(probes, null, {}, {}, {})
+
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+    })
+
+    it('should not evaluate EXIT condition when sampling budget is exceeded', () => {
+      const probe: Probe = {
+        id: 'test-probe',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'exitConditionSamplingBudget' },
+        when: {
+          dsl: 'missing.value',
+          json: { getmember: [{ ref: 'missing' }, 'value'] },
+        },
+        template: 'Test',
+        captureSnapshot: true,
+        capture: {},
+        sampling: { snapshotsPerSecond: 0.5 },
+        evaluateAt: 'EXIT',
+      }
+      addProbe(probe)
+
+      const probes = getProbes('TestClass;exitConditionSamplingBudget')!
+      onEntry(probes, {}, { missing: { value: true } })
+      onReturn(probes, null, {}, { missing: { value: true } }, {})
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+
+      onEntry(probes, {}, {})
+      onReturn(probes, null, {}, {}, {})
+
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+    })
+
     it('should evaluate condition at ENTRY', () => {
       const probe: Probe = {
         id: 'test-probe',
@@ -316,6 +374,112 @@ describe('api', () => {
       const snapshot = payload.debugger.snapshot
       expect(snapshot.duration).toBe(10_000_000) // Should be in nanoseconds (10ms)
     })
+
+    it('should report ENTRY condition evaluation errors without capturing a snapshot', () => {
+      const probe: Probe = {
+        id: 'test-probe',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'entryConditionError' },
+        when: {
+          dsl: 'missing.value',
+          json: { getmember: [{ ref: 'missing' }, 'value'] },
+        },
+        template: 'Should not be evaluated',
+        captureSnapshot: true,
+        capture: { maxReferenceDepth: 1 },
+        sampling: { snapshotsPerSecond: Infinity },
+        evaluateAt: 'ENTRY',
+      }
+      addProbe(probe)
+
+      const probes = getProbes('TestClass;entryConditionError')!
+      onEntry(probes, {}, {})
+      onReturn(probes, null, {}, {}, {})
+
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
+      expect(payload.message).toBeUndefined()
+      expect(snapshot.evaluationErrors).toEqual([
+        {
+          expr: 'missing.value',
+          message: jasmine.stringMatching(/^ReferenceError: /),
+        },
+      ])
+      expect(snapshot.duration).toBeUndefined()
+      expect(snapshot.captures).toBeUndefined()
+      expect(snapshot.stack).toBeUndefined()
+    })
+
+    it('should report EXIT condition evaluation errors without capturing a return snapshot', () => {
+      const probe: Probe = {
+        id: 'test-probe',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'exitConditionError' },
+        when: {
+          dsl: 'missing.value',
+          json: { getmember: [{ ref: 'missing' }, 'value'] },
+        },
+        template: 'Should not be evaluated',
+        captureSnapshot: true,
+        capture: { maxReferenceDepth: 1 },
+        sampling: { snapshotsPerSecond: Infinity },
+        evaluateAt: 'EXIT',
+      }
+      addProbe(probe)
+
+      const probes = getProbes('TestClass;exitConditionError')!
+      onEntry(probes, {}, {})
+      onReturn(probes, null, {}, {}, {})
+
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
+      expect(payload.message).toBeUndefined()
+      expect(snapshot.evaluationErrors).toEqual([
+        {
+          expr: 'missing.value',
+          message: jasmine.stringMatching(/^ReferenceError: /),
+        },
+      ])
+      expect(snapshot.captures).toBeUndefined()
+      expect(snapshot.stack).toBeUndefined()
+    })
+
+    it('should rate limit repeated condition evaluation errors', () => {
+      const clock = mockClock()
+      const probe: Probe = {
+        id: 'test-probe',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'rateLimitedConditionError' },
+        when: {
+          dsl: 'missing.value',
+          json: { getmember: [{ ref: 'missing' }, 'value'] },
+        },
+        template: 'Should not be evaluated',
+        captureSnapshot: true,
+        capture: { maxReferenceDepth: 1 },
+        sampling: { snapshotsPerSecond: Infinity },
+        evaluateAt: 'ENTRY',
+      }
+      addProbe(probe)
+
+      const probes = getProbes('TestClass;rateLimitedConditionError')!
+      onEntry(probes, {}, {})
+      onReturn(probes, null, {}, {}, {})
+      onEntry(probes, {}, {})
+      onReturn(probes, null, {}, {}, {})
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+
+      clock.tick(5 * 60 * 1000)
+
+      onEntry(probes, {}, {})
+      onReturn(probes, null, {}, {}, {})
+      expect(mockBatchAdd).toHaveBeenCalledTimes(2)
+    })
   })
 
   describe('onThrow', () => {
@@ -435,6 +599,42 @@ describe('api', () => {
       onThrow(probes, error, {}, {})
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+    })
+
+    it('should report EXIT condition evaluation errors on throw without capturing a snapshot', () => {
+      const probe: Probe = {
+        id: 'test-probe',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'throwConditionError' },
+        when: {
+          dsl: 'missing.value',
+          json: { getmember: [{ ref: 'missing' }, 'value'] },
+        },
+        template: 'Should not be evaluated',
+        captureSnapshot: true,
+        capture: { maxReferenceDepth: 1 },
+        sampling: { snapshotsPerSecond: Infinity },
+        evaluateAt: 'EXIT',
+      }
+      addProbe(probe)
+
+      const probes = getProbes('TestClass;throwConditionError')!
+      onEntry(probes, {}, {})
+      onThrow(probes, new Error('Test error'), {}, {})
+
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
+      expect(payload.message).toBeUndefined()
+      expect(snapshot.evaluationErrors).toEqual([
+        {
+          expr: 'missing.value',
+          message: jasmine.stringMatching(/^ReferenceError: /),
+        },
+      ])
+      expect(snapshot.captures).toBeUndefined()
+      expect(snapshot.stack).toBeUndefined()
     })
 
     it('should handle onThrow without preceding onEntry', () => {

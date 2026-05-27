@@ -13,6 +13,7 @@ const DEFAULT_MAX_SNAPSHOTS_PER_SECOND_PER_PROBE = 1
 const DEFAULT_MAX_NON_SNAPSHOTS_PER_SECOND_PER_PROBE = 5000
 const DEFAULT_MAX_SNAPSHOTS_PER_PROBE_LIFETIME = 1000
 const DEFAULT_MAX_NON_SNAPSHOTS_PER_PROBE_LIFETIME = 50000
+const DEFAULT_MS_BETWEEN_CONDITION_ERRORS = 5 * 60 * 1000
 
 // Global snapshot rate limiting
 let globalSnapshotSamplingRateWindowStart = 0
@@ -67,6 +68,7 @@ export interface InitializedProbe extends Probe {
   condition?: CompiledCondition
   msBetweenSampling: number
   lastCaptureMs: number
+  lastConditionErrorMs: number
   eventsSentInLifetime: number
   lifetimeBudgetWarningEmitted: boolean
 }
@@ -283,6 +285,15 @@ export function isProbeLifetimeBudgetExhausted(probe: InitializedProbe): boolean
   return probe.eventsSentInLifetime >= getMaxProbeLifetimeEvents(probe)
 }
 
+export function checkConditionErrorBudget(probe: InitializedProbe, now: number): boolean {
+  if (now - probe.lastConditionErrorMs < DEFAULT_MS_BETWEEN_CONDITION_ERRORS) {
+    return false
+  }
+
+  probe.lastConditionErrorMs = now
+  return true
+}
+
 /**
  * Initialize a probe by preprocessing template segments, conditions, and sampling
  *
@@ -346,6 +357,7 @@ export function initializeProbe(probe: Probe): asserts probe is InitializedProbe
       : currentProbeBudgetConfiguration.maxNonSnapshotsPerSecondPerProbe)
   ;(probe as InitializedProbe).msBetweenSampling = (1 / snapshotsPerSecond) * 1000 // Convert to milliseconds
   ;(probe as InitializedProbe).lastCaptureMs = -Infinity // Initialize to -Infinity to allow first call
+  ;(probe as InitializedProbe).lastConditionErrorMs = -Infinity
   ;(probe as InitializedProbe).eventsSentInLifetime = 0
   ;(probe as InitializedProbe).lifetimeBudgetWarningEmitted = false
 }
