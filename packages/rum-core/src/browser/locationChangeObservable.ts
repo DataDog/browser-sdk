@@ -1,4 +1,11 @@
-import { addEventListener, DOM_EVENT, instrumentMethod, Observable, shallowClone } from '@datadog/browser-core'
+import {
+  addEventListener,
+  DOM_EVENT,
+  getGlobalLocation,
+  instrumentMethod,
+  Observable,
+  shallowClone,
+} from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 
 export interface LocationChange {
@@ -7,13 +14,14 @@ export interface LocationChange {
 }
 
 export function createLocationChangeObservable(configuration: RumConfiguration) {
-  let currentLocation = shallowClone(location)
+  let currentLocation = shallowClone(getGlobalLocation()!)
 
   return new Observable<LocationChange>((observable) => {
     const { stop: stopHistoryTracking } = trackHistory(configuration, onLocationChange)
     const { stop: stopHashTracking } = trackHash(configuration, onLocationChange)
 
     function onLocationChange() {
+      const location = getGlobalLocation()!
       if (currentLocation.href === location.href) {
         return
       }
