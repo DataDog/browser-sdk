@@ -19,9 +19,10 @@ test.describe('partial view updates', () => {
       expect(viewEvents.length).toBeGreaterThanOrEqual(1)
       expect(viewEvents[0].type).toBe('view')
 
-      // Should have at least one view_update
+      // Should have at least one view_update with the updated action count
       const viewUpdateEvents = intakeRegistry.rumViewUpdateEvents
       expect(viewUpdateEvents.length).toBeGreaterThanOrEqual(1)
+      expect(viewUpdateEvents.some((e) => (e.view as { action?: { count: number } }).action?.count)).toBe(true)
 
       // All events share the same view.id
       const viewId = viewEvents[0].view.id
