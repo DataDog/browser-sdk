@@ -154,7 +154,7 @@ export type RumActionEvent = CommonProperties &
            */
           readonly height?: number
           /**
-           * Mobile-only: a globally unique and stable identifier for this UI element, computed as the hash of the element's path (32 lowercase hex characters). Used to correlate actions with mobile session replay wireframes.
+           * Mobile-only: a globally unique and stable identifier for this UI element, computed as the hash of the element's path. Used to correlate actions with mobile session replay wireframes.
            */
           readonly permanent_id?: string
           [k: string]: unknown
@@ -321,6 +321,7 @@ export type RumErrorEvent = CommonProperties &
         | 'windows'
         | 'macos'
         | 'linux'
+        | 'maui'
       /**
        * Resource properties of the error
        */
@@ -1172,6 +1173,7 @@ export interface CommonProperties {
     | 'kotlin-multiplatform'
     | 'electron'
     | 'rum-cpp'
+    | 'maui'
   /**
    * View properties
    */
@@ -1525,6 +1527,7 @@ export interface ViewContainerSchema {
       | 'kotlin-multiplatform'
       | 'electron'
       | 'rum-cpp'
+      | 'maui'
     [k: string]: unknown
   }
   [k: string]: unknown
