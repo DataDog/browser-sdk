@@ -506,7 +506,7 @@ test.describe('resource headers with trackResourceHeaders', () => {
 
 test.describe('manual resources with startResource/stopResource', () => {
   createTest('track a manual resource with startResource/stopResource')
-    .withRum({ enableExperimentalFeatures: ['start_stop_resource'] })
+    .withRum()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
         window.DD_RUM!.startResource('https://api.example.com/data')
@@ -524,7 +524,7 @@ test.describe('manual resources with startResource/stopResource', () => {
     })
 
   createTest('track a manual resource with type and method')
-    .withRum({ enableExperimentalFeatures: ['start_stop_resource'] })
+    .withRum()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
         window.DD_RUM!.startResource('https://api.example.com/users', {
@@ -547,7 +547,7 @@ test.describe('manual resources with startResource/stopResource', () => {
     })
 
   createTest('track multiple concurrent manual resources with resourceKey')
-    .withRum({ enableExperimentalFeatures: ['start_stop_resource'] })
+    .withRum()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
         window.DD_RUM!.startResource('https://api.example.com/data', { resourceKey: 'request1' })
@@ -565,7 +565,7 @@ test.describe('manual resources with startResource/stopResource', () => {
     })
 
   createTest('merge contexts from start and stop')
-    .withRum({ enableExperimentalFeatures: ['start_stop_resource'] })
+    .withRum()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
         window.DD_RUM!.startResource('https://api.example.com/data', {
@@ -590,7 +590,7 @@ test.describe('manual resources with startResource/stopResource', () => {
     })
 
   createTest('preserve timing when startResource is called before init')
-    .withRum({ enableExperimentalFeatures: ['start_stop_resource'] })
+    .withRum()
     .withRumInit((configuration) => {
       window.DD_RUM!.startResource('https://api.example.com/early')
 
