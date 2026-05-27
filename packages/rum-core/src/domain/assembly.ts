@@ -49,6 +49,10 @@ export function startRumAssembly(
       ...VIEW_MODIFIABLE_FIELD_PATHS,
       ...ROOT_MODIFIABLE_FIELD_PATHS,
     },
+    // view_update events are created post-assembly in startRumBatch.ts and never reach this pipeline.
+    // The full view already went through assembly (as RumEventType.VIEW), so any beforeSend
+    // modifications (e.g. PII scrubbing) are already reflected in the view_update diff.
+    [RumEventType.VIEW_UPDATE]: {},
     [RumEventType.ERROR]: {
       'error.message': 'string',
       'error.stack': 'string',
