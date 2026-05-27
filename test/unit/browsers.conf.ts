@@ -2,10 +2,10 @@
 
 import type { BrowserConfiguration } from '../browsers.conf'
 
-// The ECMAScript version supported by the oldest browser in the list below (Chrome 63 → ES2017).
+// The ECMAScript version supported by the oldest browser in the list below (Edge/Chrome 80 → ES2020).
 // Used by tests that validate runtime-generated code strings (e.g. the expression compiler) which
 // bypass TypeScript/webpack transpilation and must only use syntax supported by all target browsers.
-export const OLDEST_BROWSER_ECMA_VERSION = 2017
+export const OLDEST_BROWSER_ECMA_VERSION = 2020
 
 export const browserConfigurations: BrowserConfiguration[] = [
   {
