@@ -1,11 +1,11 @@
 import { ExperimentalFeature, addExperimentalFeatures } from '@datadog/browser-core'
 import { resetExperimentalFeatures } from '@datadog/browser-core/src/tools/experimentalFeatures'
 import { registerCleanupTask } from '@datadog/browser-core/test'
-import type { AssembledRumEvent } from '../rawRumEvent.types'
+import type { RumViewEvent } from '../rumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import { assembleViewUpdateEvent, PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL } from './startRumBatch'
 
-function makeAssembledView(overrides: Record<string, unknown> = {}): AssembledRumEvent {
+function makeViewEvent(overrides: Record<string, unknown> = {}): RumViewEvent {
   return {
     type: RumEventType.VIEW,
     date: 1000,
@@ -35,13 +35,13 @@ function makeAssembledView(overrides: Record<string, unknown> = {}): AssembledRu
     source: 'browser',
     context: {},
     ...overrides,
-  } as unknown as AssembledRumEvent
+  } as unknown as RumViewEvent
 }
 
 describe('assembleViewUpdateEvent', () => {
   it('should return undefined when nothing has changed', () => {
-    const last = makeAssembledView()
-    const current = makeAssembledView({
+    const last = makeViewEvent()
+    const current = makeViewEvent({
       _dd: {
         document_version: 2,
         format_version: 2,
@@ -57,8 +57,8 @@ describe('assembleViewUpdateEvent', () => {
   })
 
   it('should always include required routing fields', () => {
-    const last = makeAssembledView()
-    const current = makeAssembledView({
+    const last = makeViewEvent()
+    const current = makeViewEvent({
       _dd: {
         document_version: 2,
         format_version: 2,
@@ -90,8 +90,8 @@ describe('assembleViewUpdateEvent', () => {
   })
 
   it('should include only changed view.* fields', () => {
-    const last = makeAssembledView()
-    const current = makeAssembledView({
+    const last = makeViewEvent()
+    const current = makeViewEvent({
       _dd: {
         document_version: 2,
         format_version: 2,
@@ -121,8 +121,8 @@ describe('assembleViewUpdateEvent', () => {
   })
 
   it('should strip unchanged top-level assembled fields', () => {
-    const last = makeAssembledView({ service: 'svc', version: '1.0.0' })
-    const current = makeAssembledView({
+    const last = makeViewEvent({ service: 'svc', version: '1.0.0' })
+    const current = makeViewEvent({
       _dd: {
         document_version: 2,
         format_version: 2,
@@ -151,8 +151,8 @@ describe('assembleViewUpdateEvent', () => {
   })
 
   it('should keep top-level assembled fields that changed', () => {
-    const last = makeAssembledView({ service: 'old-service' })
-    const current = makeAssembledView({
+    const last = makeViewEvent({ service: 'old-service' })
+    const current = makeViewEvent({
       _dd: {
         document_version: 2,
         format_version: 2,
@@ -179,8 +179,8 @@ describe('assembleViewUpdateEvent', () => {
   })
 
   it('should not mutate the input events', () => {
-    const last = makeAssembledView()
-    const current = makeAssembledView({
+    const last = makeViewEvent()
+    const current = makeViewEvent({
       _dd: {
         document_version: 2,
         format_version: 2,
