@@ -4,7 +4,6 @@ import * as emojiNameMap from 'emoji-name-map'
 
 import { browserSdkVersion } from '../../../lib/browserSdkVersion.ts'
 import { command } from '../../../lib/command.ts'
-import { getAffectedPackages } from './getAffectedPackages.ts'
 import { CHANGELOG_FILE, CONTRIBUTING_FILE, PUBLIC_EMOJI_PRIORITY, INTERNAL_EMOJI_PRIORITY } from './constants.ts'
 
 const FIRST_EMOJI_REGEX = /\p{Extended_Pictographic}/u
@@ -66,13 +65,12 @@ function getChangeLists(): string {
 
   commits.forEach((commit) => {
     const spaceIndex = commit.indexOf(' ')
-    const hash = commit.slice(0, spaceIndex)
     const message = commit.slice(spaceIndex + 1)
     if (isVersionMessage(message) || isStagingBumpMessage(message)) {
       return
     }
 
-    const change = formatChange(hash, message)
+    const change = formatChange(message)
     const emoji = findFirstEmoji(change)
     if (PUBLIC_EMOJI_PRIORITY.includes(emoji || '')) {
       publicChanges.push(change)
@@ -115,16 +113,8 @@ function formatChangeList(title: string, changes: string[], priority: readonly s
   return `**${title}:**\n\n${formatedList}`
 }
 
-function formatChange(hash: string, message: string): string {
-  let change = `- ${message}`
-
-  const affectedPackages = getAffectedPackages(hash)
-  if (affectedPackages.length > 0) {
-    const formattedPackages = affectedPackages
-      .map((packageDirectoryName) => `[${packageDirectoryName.toUpperCase()}]`)
-      .join(' ')
-    change += ` ${formattedPackages}`
-  }
+function formatChange(message: string): string {
+  const change = `- ${message}`
 
   return addLinksToGithubIssues(emojiNameToUnicode(change))
 }

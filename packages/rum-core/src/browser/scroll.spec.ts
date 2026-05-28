@@ -20,8 +20,8 @@ describe('scroll', () => {
     it('normalized scroll matches initial behavior', () => {
       expect(getScrollX()).toBe(0)
       expect(getScrollY()).toBe(0)
-      expect(getScrollX()).toBe(window.scrollX || window.pageXOffset)
-      expect(getScrollY()).toBe(window.scrollY || window.pageYOffset)
+      expect(getScrollX()).toBe(Math.round(window.scrollX || window.pageXOffset))
+      expect(getScrollY()).toBe(Math.round(window.scrollY || window.pageYOffset))
     })
 
     it('normalized scroll updates when scrolled', () => {
@@ -31,8 +31,8 @@ describe('scroll', () => {
 
       expect(getScrollX()).toBe(0)
       expect(getScrollY()).toBe(100)
-      expect(getScrollX()).toBe(window.scrollX || window.pageXOffset)
-      expect(getScrollY()).toBe(window.scrollY || window.pageYOffset)
+      expect(getScrollX()).toBe(Math.round(window.scrollX || window.pageXOffset))
+      expect(getScrollY()).toBe(Math.round(window.scrollY || window.pageYOffset))
     })
   })
 })
