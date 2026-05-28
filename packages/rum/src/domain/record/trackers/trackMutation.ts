@@ -4,7 +4,7 @@ import { getMutationObserverConstructor } from '@datadog/browser-rum-core'
 import type { RecordingScope } from '../recordingScope'
 import { createMutationBatch } from '../mutationBatch'
 import type { EmitRecordCallback, EmitStatsCallback } from '../record.types'
-import { serializeMutationsAsChange } from '../serialization'
+import { serializeMutations } from '../serialization'
 import type { Tracker } from './tracker.types'
 
 export type MutationTracker = Tracker & { flush: () => void }
@@ -24,7 +24,7 @@ export function trackMutation(
   }
 
   const mutationBatch = createMutationBatch((mutations) => {
-    serializeMutationsAsChange(
+    serializeMutations(
       timeStampNow(),
       mutations.concat(observer.takeRecords() as RumMutationRecord[]),
       emitRecord,

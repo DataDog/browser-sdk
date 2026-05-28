@@ -12,34 +12,34 @@ import type { AttributeChange } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
 import type { EmitRecordCallback, EmitStatsCallback } from '../record.types'
 import type { NodeId, NodeIds } from '../itemIds'
-import type { ChangeSerializationTransaction } from './serializationTransaction'
-import { SerializationKind, serializeChangesInTransaction } from './serializationTransaction'
-import { serializeNodeAsChange } from './serializeNodeAsChange'
+import type { SerializationTransaction } from './serializationTransaction'
+import { SerializationKind, serializeInTransaction } from './serializationTransaction'
+import { serializeNode } from './serializeNode'
 import { createChildInsertionCursor } from './insertionCursor'
 import { getElementInputValue } from './serializationUtils'
 import { serializeAttribute } from './serializeAttribute'
 
-export function serializeMutationsAsChange(
+export function serializeMutations(
   timestamp: TimeStamp,
   mutations: RumMutationRecord[],
   emitRecord: EmitRecordCallback,
   emitStats: EmitStatsCallback,
   scope: RecordingScope
 ): void {
-  serializeChangesInTransaction(
+  serializeInTransaction(
     SerializationKind.INCREMENTAL_SNAPSHOT,
     emitRecord,
     emitStats,
     scope,
     timestamp,
-    (transaction: ChangeSerializationTransaction) => processMutations(mutations, transaction)
+    (transaction: SerializationTransaction) => processMutations(mutations, transaction)
   )
 }
 
 type AttributeName = string
 type OldValue = string | null
 
-function processMutations(mutations: RumMutationRecord[], transaction: ChangeSerializationTransaction): void {
+function processMutations(mutations: RumMutationRecord[], transaction: SerializationTransaction): void {
   const addedNodes = new Set<Node>()
   const attributeMutations = new Map<Element, Map<AttributeName, OldValue>>()
   const characterDataMutations = new Map<Node, OldValue>()
@@ -101,7 +101,7 @@ function processMutations(mutations: RumMutationRecord[], transaction: ChangeSer
   processAttributeMutations(attributeMutations, firstNewNodeId, nodePrivacyLevelCache, transaction)
 }
 
-function processRemovedNodes(nodes: Set<Node>, transaction: ChangeSerializationTransaction): void {
+function processRemovedNodes(nodes: Set<Node>, transaction: SerializationTransaction): void {
   const nodeIds = transaction.scope.nodeIds
 
   for (const node of nodes) {
@@ -130,7 +130,7 @@ function processRemovedNodes(nodes: Set<Node>, transaction: ChangeSerializationT
 function processAddedNodes(
   nodes: Set<Node>,
   nodePrivacyLevelCache: NodePrivacyLevelCache,
-  transaction: ChangeSerializationTransaction
+  transaction: SerializationTransaction
 ): void {
   const nodeIds = transaction.scope.nodeIds
 
@@ -164,7 +164,7 @@ function processAddedNodes(
 
     const nextSiblingId = getNextSiblingId(node, nodeIds)
 
-    serializeNodeAsChange(
+    serializeNode(
       createChildInsertionCursor(parentId, nextSiblingId, nodeIds),
       node,
       parentNodePrivacyLevel,
@@ -177,7 +177,7 @@ function processCharacterDataMutations(
   mutations: Map<Node, OldValue>,
   firstNewNodeId: NodeId,
   nodePrivacyLevelCache: NodePrivacyLevelCache,
-  transaction: ChangeSerializationTransaction
+  transaction: SerializationTransaction
 ): void {
   const nodeIds = transaction.scope.nodeIds
 
@@ -223,7 +223,7 @@ function processAttributeMutations(
   mutations: Map<Element, Map<AttributeName, OldValue>>,
   firstNewNodeId: NodeId,
   nodePrivacyLevelCache: NodePrivacyLevelCache,
-  transaction: ChangeSerializationTransaction
+  transaction: SerializationTransaction
 ): void {
   const nodeIds = transaction.scope.nodeIds
 

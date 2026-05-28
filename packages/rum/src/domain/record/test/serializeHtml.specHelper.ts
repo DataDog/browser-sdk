@@ -1,26 +1,26 @@
 import type { TimeStamp } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { forEachChildNodes, getNodePrivacyLevel } from '@datadog/browser-rum-core'
-import { registerCleanupTask } from '../../../../../core/test'
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { BrowserFullSnapshotChangeRecord, BrowserChangeRecord, BrowserRecord } from '../../../types'
 import { RecordType, SnapshotFormat } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
-import type { ChangeDecoder, ChangeSerializationTransaction, SerializationStats } from '../serialization'
+import type { ChangeDecoder, SerializationTransaction, SerializationStats } from '../serialization'
 import {
   aggregateSerializationStats,
   createChangeDecoder,
   createRootInsertionCursor,
   createSerializationStats,
-  serializeChangesInTransaction,
-  serializeNodeAsChange,
+  serializeInTransaction,
+  serializeNode,
   SerializationKind,
 } from '../serialization'
 import { createRecordingScopeForTesting } from './recordingScope.specHelper'
 
 /**
- * A wrapper for serializeNodeAsChange() that parses HTML in an isolated context, selects
+ * A wrapper for serializeNode() that parses HTML in an isolated context, selects
  * a target node from the resulting subtree (by default, the subtree root), and serializes
- * it using serializeNodeAsChange().
+ * it using serializeNode().
  *
  * @param html - The HTML to parse.
  * @param options - Options to customize the serialization process.
@@ -40,7 +40,7 @@ import { createRecordingScopeForTesting } from './recordingScope.specHelper'
  * @param options.whitespace - Whether to keep or discard whitespace-only text nodes. The default
  * is to discard them, which gives you more freedom when formatting the HTML.
  */
-export async function serializeHtmlAsChange(
+export async function serializeHtml(
   html: string,
   {
     after,
@@ -101,19 +101,19 @@ export async function serializeHtmlAsChange(
 
   before?.(targetNode, scope)
 
-  serializeChangesInTransaction(
+  serializeInTransaction(
     kind ?? SerializationKind.INITIAL_FULL_SNAPSHOT,
     emitRecord,
     emitStats,
     scope,
     0 as TimeStamp,
-    (transaction: ChangeSerializationTransaction) => {
+    (transaction: SerializationTransaction) => {
       const insertionCursor = createRootInsertionCursor(scope.nodeIds)
       const defaultPrivacyLevel = transaction.scope.configuration.defaultPrivacyLevel
       const parentNodePrivacyLevel = !targetNode.parentNode
         ? defaultPrivacyLevel
         : getNodePrivacyLevel(targetNode.parentNode, defaultPrivacyLevel)
-      serializeNodeAsChange(insertionCursor, targetNode, parentNodePrivacyLevel, transaction)
+      serializeNode(insertionCursor, targetNode, parentNodePrivacyLevel, transaction)
     }
   )
 

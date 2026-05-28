@@ -3,7 +3,7 @@ import type { LifeCycle } from '@datadog/browser-rum-core'
 import { timeStampNow } from '@datadog/browser-core'
 import type { TimeStamp } from '@datadog/browser-core'
 import { RecordType } from '../../types'
-import { SerializationKind, serializeFullSnapshotAsChange } from './serialization'
+import { SerializationKind, serializeFullSnapshot } from './serialization'
 import { getVisualViewport } from './viewports'
 import type { RecordingScope } from './recordingScope'
 import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
@@ -59,7 +59,7 @@ export function takeFullSnapshot(
     timestamp,
   })
 
-  serializeFullSnapshotAsChange(timestamp, kind, document, emitRecord, emitStats, scope)
+  serializeFullSnapshot(timestamp, kind, document, emitRecord, emitStats, scope)
 
   if (window.visualViewport) {
     emitRecord({

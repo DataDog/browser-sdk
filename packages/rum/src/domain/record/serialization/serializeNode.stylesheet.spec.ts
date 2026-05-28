@@ -1,10 +1,10 @@
-import { isAdoptedStyleSheetsSupported } from '../../../../../core/test'
+import { isAdoptedStyleSheetsSupported } from '@datadog/browser-core/test'
 import { ChangeType } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
-import { serializeHtmlAsChange } from '../test/serializeHtml.specHelper'
+import { serializeHtml } from '../test/serializeHtml.specHelper'
 import type { SerializationStats } from './serializationStats'
 
-describe('serializeNodeAsChange for stylesheets', () => {
+describe('serializeNode for stylesheets', () => {
   let originalTimeout: number
 
   beforeAll(() => {
@@ -21,7 +21,7 @@ describe('serializeNodeAsChange for stylesheets', () => {
 
   describe('for <style> elements', () => {
     it('serializes the element', async () => {
-      const record = await serializeHtmlAsChange('<style id="foo"></style>', {
+      const record = await serializeHtml('<style id="foo"></style>', {
         after(_target: Node, _scope: RecordingScope, stats: SerializationStats): void {
           expect(stats).toEqual({
             cssText: { count: 0, max: 0, sum: 0 },
@@ -33,7 +33,7 @@ describe('serializeNodeAsChange for stylesheets', () => {
     })
 
     it('serializes multiple elements and aggregates their statistics', async () => {
-      const record = await serializeHtmlAsChange(
+      const record = await serializeHtml(
         `
         <div>
           <style id="foo">${css}</style>
@@ -57,7 +57,7 @@ describe('serializeNodeAsChange for stylesheets', () => {
     })
 
     it('serializes the contents of the associated stylesheet', async () => {
-      const record = await serializeHtmlAsChange(`<style>${css}</style>`, {
+      const record = await serializeHtml(`<style>${css}</style>`, {
         after(_target: Node, _scope: RecordingScope, stats: SerializationStats): void {
           expect(stats).toEqual({
             cssText: { count: 1, max: 21, sum: 21 },
@@ -73,7 +73,7 @@ describe('serializeNodeAsChange for stylesheets', () => {
     })
 
     it('serializes dynamically inserted CSS rules', async () => {
-      const record = await serializeHtmlAsChange('<style></style>', {
+      const record = await serializeHtml('<style></style>', {
         before(target: Node): void {
           ;(target as HTMLStyleElement).sheet!.insertRule(dynamicCss)
         },
@@ -92,7 +92,7 @@ describe('serializeNodeAsChange for stylesheets', () => {
     })
 
     it('serializes a mix of static and dynamic CSS rules', async () => {
-      const record = await serializeHtmlAsChange(`<style>${css}</style>`, {
+      const record = await serializeHtml(`<style>${css}</style>`, {
         before(target: Node): void {
           ;(target as HTMLStyleElement).sheet!.insertRule(dynamicCss)
         },
@@ -111,7 +111,7 @@ describe('serializeNodeAsChange for stylesheets', () => {
     })
 
     it('serializes dynamically modified CSS rules', async () => {
-      const record = await serializeHtmlAsChange(`<style>${css}</style>`, {
+      const record = await serializeHtml(`<style>${css}</style>`, {
         before(target: Node): void {
           const sheet = (target as HTMLStyleElement).sheet!
           const rule = sheet.cssRules[0] as CSSStyleRule
@@ -135,7 +135,7 @@ describe('serializeNodeAsChange for stylesheets', () => {
 
   describe('for <style> element children', () => {
     it('does not serialize them', async () => {
-      const record = await serializeHtmlAsChange(`<style>${css}</style>`, { target: (node: Node) => node.firstChild! })
+      const record = await serializeHtml(`<style>${css}</style>`, { target: (node: Node) => node.firstChild! })
       expect(record).toBeUndefined()
     })
   })
@@ -147,7 +147,7 @@ describe('serializeNodeAsChange for stylesheets', () => {
     }
 
     it('serializes the element when the sheet is accessible', async () => {
-      const record = await serializeHtmlAsChange(`<link rel="stylesheet" href="${sheet.href}">`, {
+      const record = await serializeHtml(`<link rel="stylesheet" href="${sheet.href}">`, {
         before(target: Node): void {
           // Simulate a successful fetch of the stylesheet. (In reality, the fetch will
           // fail, so `target.sheet` won't be populated by the browser.)
@@ -175,7 +175,7 @@ describe('serializeNodeAsChange for stylesheets', () => {
     })
 
     it('serializes the element when the sheet is unavailable', async () => {
-      const record = await serializeHtmlAsChange(`<link rel="stylesheet" href="${sheet.href}">`, {
+      const record = await serializeHtml(`<link rel="stylesheet" href="${sheet.href}">`, {
         after(_target: Node, _scope: RecordingScope, stats: SerializationStats): void {
           expect(stats).toEqual({
             cssText: { count: 0, max: 0, sum: 0 },
@@ -194,7 +194,7 @@ describe('serializeNodeAsChange for stylesheets', () => {
         },
       })
 
-      const record = await serializeHtmlAsChange(`<link rel="stylesheet" href="${sheet.href}">`, {
+      const record = await serializeHtml(`<link rel="stylesheet" href="${sheet.href}">`, {
         before(target: Node): void {
           // Simulate a successful fetch of the stylesheet which is unreadable due to CORS.
           Object.defineProperty(target.ownerDocument, 'styleSheets', {
@@ -225,7 +225,7 @@ describe('serializeNodeAsChange for stylesheets', () => {
         pending('No adoptedStyleSheets support.')
       }
 
-      const record = await serializeHtmlAsChange(
+      const record = await serializeHtml(
         `
         <!doctype HTML>
         <div></div>

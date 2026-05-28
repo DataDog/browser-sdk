@@ -3,12 +3,12 @@ import { noop } from '@datadog/browser-core'
 import { RecordType, SnapshotFormat } from '../../../types'
 import type { BrowserFullSnapshotChangeRecord, BrowserRecord } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
-import type { ChangeSerializationTransaction, SerializationStats } from '../serialization'
+import type { SerializationTransaction, SerializationStats } from '../serialization'
 import {
   createRootInsertionCursor,
   SerializationKind,
-  serializeChangesInTransaction,
-  serializeNodeAsChange,
+  serializeInTransaction,
+  serializeNode,
   updateSerializationStats,
 } from '../serialization'
 import { createRecordingScopeForTesting } from './recordingScope.specHelper'
@@ -21,7 +21,7 @@ export function createSerializationTransactionForTesting({
   kind?: SerializationKind
   scope?: RecordingScope
   stats?: SerializationStats
-} = {}): ChangeSerializationTransaction {
+} = {}): SerializationTransaction {
   const transactionScope = scope || createRecordingScopeForTesting()
   return {
     addMetric(metric: keyof SerializationStats, value: number): void {
@@ -31,7 +31,7 @@ export function createSerializationTransactionForTesting({
     },
     kind: kind ?? SerializationKind.INITIAL_FULL_SNAPSHOT,
     scope: transactionScope,
-  } as ChangeSerializationTransaction
+  } as SerializationTransaction
 }
 
 export function takeFullSnapshotForTesting(scope: RecordingScope): BrowserFullSnapshotChangeRecord {
@@ -43,16 +43,16 @@ export function takeFullSnapshotForTesting(scope: RecordingScope): BrowserFullSn
     fullSnapshotRecord = record
   }
 
-  serializeChangesInTransaction(
+  serializeInTransaction(
     SerializationKind.INITIAL_FULL_SNAPSHOT,
     emitRecord,
     noop,
     scope,
     0 as TimeStamp,
-    (transaction: ChangeSerializationTransaction) => {
+    (transaction: SerializationTransaction) => {
       const insertionCursor = createRootInsertionCursor(scope.nodeIds)
       const defaultPrivacyLevel = transaction.scope.configuration.defaultPrivacyLevel
-      serializeNodeAsChange(insertionCursor, document, defaultPrivacyLevel, transaction)
+      serializeNode(insertionCursor, document, defaultPrivacyLevel, transaction)
     }
   )
 
