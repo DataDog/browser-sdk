@@ -1,6 +1,6 @@
 import type { Batch, Context } from '@datadog/browser-core'
 
-import { timeStampNow, display, buildTag, generateUUID, getGlobalObject } from '@datadog/browser-core'
+import { timeStampNow, display, buildTag, generateUUID, globalObject } from '@datadog/browser-core'
 import type { BrowserWindow, DebuggerInitConfiguration } from '../entries/main'
 import { capture, captureFields } from './capture'
 import type { CaptureContext } from './capture'
@@ -19,7 +19,7 @@ import { captureStackTrace, parseStackTrace } from './stacktrace'
 import { evaluateProbeMessage } from './template'
 import { evaluateProbeCondition, isConditionEvaluationError } from './condition'
 
-const globalObj = getGlobalObject<BrowserWindow>() // eslint-disable-line local-rules/disallow-side-effects
+const globalObj = globalObject as BrowserWindow
 
 const threadName = detectThreadName() // eslint-disable-line local-rules/disallow-side-effects
 

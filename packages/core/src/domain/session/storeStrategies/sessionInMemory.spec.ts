@@ -1,17 +1,18 @@
 import { registerCleanupTask } from '../../../../test'
-import { getGlobalObject } from '../../../tools/globalObject'
+import { globalObject } from '../../../tools/globalObject'
 import type { SessionState } from '../sessionState'
+import type { GlobalObjectWithSession } from './sessionInMemory'
 import { initMemorySessionStoreStrategy, MEMORY_SESSION_STORE_KEY } from './sessionInMemory'
 
 describe('Memory SessionStoreStrategy', () => {
   let strategy: ReturnType<typeof initMemorySessionStoreStrategy>
 
   beforeEach(() => {
-    const globalObject = getGlobalObject<Record<string, unknown>>()
-    delete globalObject[MEMORY_SESSION_STORE_KEY]
+    const globalObjectWithSession = globalObject as GlobalObjectWithSession
+    delete globalObjectWithSession[MEMORY_SESSION_STORE_KEY]
     strategy = initMemorySessionStoreStrategy()
     registerCleanupTask(() => {
-      delete globalObject[MEMORY_SESSION_STORE_KEY]
+      delete globalObjectWithSession[MEMORY_SESSION_STORE_KEY]
     })
   })
 
@@ -19,8 +20,8 @@ describe('Memory SessionStoreStrategy', () => {
     it('should read current state, apply fn, and write back', () => {
       void strategy.setSessionState((state) => ({ ...state, id: 'test-id' }), 'updateState')
 
-      const globalObject = getGlobalObject<Record<string, { state?: SessionState }>>()
-      expect(globalObject[MEMORY_SESSION_STORE_KEY]?.state?.id).toBe('test-id')
+      const globalObjectWithSession = globalObject as GlobalObjectWithSession
+      expect(globalObjectWithSession[MEMORY_SESSION_STORE_KEY]?.state?.id).toBe('test-id')
     })
 
     it('should start with empty state when no session exists', () => {
