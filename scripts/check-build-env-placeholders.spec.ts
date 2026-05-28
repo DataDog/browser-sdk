@@ -24,7 +24,7 @@ describe('findUnreplacedPlaceholders', () => {
     assert.deepEqual(findUnreplacedPlaceholders(root), [])
   })
 
-  it('detects unreplaced placeholders and deduplicates within a file', () => {
+  it('reports every occurrence of a placeholder within a file', () => {
     const root = path.join(tmpDir, 'dirty')
     const file = path.join(root, 'pkg-a/cjs/init.js')
     writeFile(file, 'const v = "__BUILD_ENV__SDK_VERSION__"; const v2 = "__BUILD_ENV__SDK_VERSION__"')
@@ -32,7 +32,7 @@ describe('findUnreplacedPlaceholders', () => {
     const hits = findUnreplacedPlaceholders(root)
     assert.equal(hits.length, 1)
     assert.equal(hits[0].file, file)
-    assert.deepEqual(hits[0].placeholders, ['__BUILD_ENV__SDK_VERSION__'])
+    assert.deepEqual(hits[0].placeholders, ['__BUILD_ENV__SDK_VERSION__', '__BUILD_ENV__SDK_VERSION__'])
   })
 
   it('scans cjs, esm and bundle output directories', () => {

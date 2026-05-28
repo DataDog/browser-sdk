@@ -23,7 +23,7 @@ export function findUnreplacedPlaceholders(packagesRoot: string): PlaceholderHit
         const content = fs.readFileSync(file, 'utf8')
         const matches = content.match(PLACEHOLDER_RE)
         if (matches) {
-          hits.push({ file, placeholders: [...new Set(matches)] })
+          hits.push({ file, placeholders: matches })
         }
       }
     }
@@ -46,7 +46,7 @@ if (!process.env.NODE_TEST_CONTEXT) {
     }
     printError(
       '\nThis usually means the build-env replacement step (scripts/build/build-package.ts) ' +
-        'missed an output file or a placeholder name. See incident 14078 for context.'
+        'missed an output file or a placeholder name.'
     )
     process.exit(1)
   })
