@@ -30,6 +30,16 @@ function checkBrowserSdkPackage(packagePath: string) {
   checkExpectedFiles(packagePath, packageFiles)
   checkPackageJsonEntryPoints(packageJson, packageFiles)
   checkFilesField(packageJson, packageFiles)
+  checkBuildEnvPlaceholders(packagePath)
+}
+
+function checkBuildEnvPlaceholders(packagePath: string) {
+  try {
+    command`grep -r -q --include=*.js BUILD_ENV cjs esm bundle`.withCurrentWorkingDirectory(packagePath).run()
+  } catch {
+    return
+  }
+  throw new Error(`Found unreplaced __BUILD_ENV__ placeholders in built package ${packagePath}`)
 }
 
 function checkExpectedFiles(packagePath: string, packageFiles: string[]) {
