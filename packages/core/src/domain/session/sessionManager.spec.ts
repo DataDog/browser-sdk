@@ -13,7 +13,6 @@ import {
 } from '../../../test'
 import type { Clock } from '../../../test'
 import { DOM_EVENT } from '../../browser/addEventListener'
-import { resetLifecycleTracker } from '../../browser/lifecycleTracker'
 import { display } from '../../tools/display'
 import { ONE_SECOND } from '../../tools/utils/timeUtils'
 import type { Configuration } from '../configuration'
@@ -76,7 +75,6 @@ describe('startSessionManager', () => {
 
     registerCleanupTask(() => {
       stopSessionManager()
-      resetLifecycleTracker()
       clock.tick(SESSION_TIME_OUT_DELAY)
     })
   })

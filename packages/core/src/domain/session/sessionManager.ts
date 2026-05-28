@@ -12,7 +12,6 @@ import {
   timeStampNow,
 } from '../../tools/utils/timeUtils'
 import { addEventListener, addEventListeners, DOM_EVENT } from '../../browser/addEventListener'
-import { resetLifecycleTracker, startLifecycleTracker } from '../../browser/lifecycleTracker'
 import { clearInterval, clearTimeout, setInterval, setTimeout } from '../../tools/timer'
 import { mockable } from '../../tools/mockable'
 import { noop, throttle } from '../../tools/utils/functionUtils'
@@ -99,8 +98,6 @@ export async function startSessionManager(
     display.warn('No storage available for session. We will not send any data.')
     return
   }
-
-  startLifecycleTracker(configuration)
 
   const strategy = mockable(getSessionStoreStrategy)(sessionStoreStrategyType, configuration)
 
@@ -383,7 +380,6 @@ export function startSessionManagerStub(): Promise<SessionManager> {
 export function stopSessionManager() {
   stopCallbacks.forEach((e) => e())
   stopCallbacks = []
-  resetLifecycleTracker()
 }
 
 function trackActivity(configuration: Configuration, expandOrRenewSession: () => void) {
