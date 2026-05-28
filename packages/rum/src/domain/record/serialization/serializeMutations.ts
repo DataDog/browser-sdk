@@ -214,7 +214,7 @@ function processCharacterDataMutations(
       continue // Mutations to this node should be ignored.
     }
 
-    const content = getTextContent(node, parentNodePrivacyLevel) ?? ''
+    const content = getTextContent(node, parentNodePrivacyLevel)
     transaction.setText(nodeId, content)
   }
 }
