@@ -78,10 +78,6 @@ export interface CookieStore extends EventTarget {
   delete(options: { name: string; domain?: string; path?: string; partitioned?: boolean }): Promise<void>
 }
 
-export interface CookieStoreWindow {
-  cookieStore?: CookieStore
-}
-
 export interface CookieStoreEventMap {
   change: CookieChangeEvent
 }
@@ -94,4 +90,17 @@ export interface CookieChangeItem {
 export type CookieChangeEvent = Event & {
   changed: CookieChangeItem[]
   deleted: CookieChangeItem[]
+}
+
+export type NetworkInterface = 'bluetooth' | 'cellular' | 'ethernet' | 'none' | 'wifi' | 'wimax' | 'other' | 'unknown'
+export type EffectiveType = 'slow-2g' | '2g' | '3g' | '4g'
+
+export interface BrowserNavigator extends Navigator {
+  connection?: NetworkInformation
+}
+
+export interface NetworkInformation {
+  type?: NetworkInterface
+  effectiveType?: EffectiveType
+  saveData: boolean
 }
