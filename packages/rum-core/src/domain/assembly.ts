@@ -18,22 +18,46 @@ import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
 import type { Hooks, AssembleHookParams } from './hooks'
 
-const VIEW_MODIFIABLE_FIELD_PATHS: ModifiableFieldPaths = {
+const COMMON_MODIFIABLE_FIELD_PATHS: ModifiableFieldPaths = {
   'view.name': 'string',
   'view.url': 'string',
   'view.referrer': 'string',
-}
-
-const USER_CUSTOMIZABLE_FIELD_PATHS: ModifiableFieldPaths = {
   context: 'object',
-}
-
-const ROOT_MODIFIABLE_FIELD_PATHS: ModifiableFieldPaths = {
   service: 'string',
   version: 'string',
 }
 
-let modifiableFieldPathsByEvent: { [key in RumEventType]: ModifiableFieldPaths }
+const MODIFIABLE_FIELD_PATHS_BY_EVENT: Record<AssembledRumEvent['type'], ModifiableFieldPaths> = {
+  [RumEventType.VIEW]: {
+    ...COMMON_MODIFIABLE_FIELD_PATHS,
+    'view.performance.lcp.resource_url': 'string',
+  },
+  [RumEventType.ERROR]: {
+    ...COMMON_MODIFIABLE_FIELD_PATHS,
+    'error.message': 'string',
+    'error.stack': 'string',
+    'error.handling_stack': 'string',
+    'error.resource.url': 'string',
+    'error.fingerprint': 'string',
+  },
+  [RumEventType.RESOURCE]: {
+    ...COMMON_MODIFIABLE_FIELD_PATHS,
+    'resource.url': 'string',
+    'resource.graphql.variables': 'string',
+    'resource.request.headers': 'object',
+    'resource.response.headers': 'object',
+  },
+  [RumEventType.ACTION]: {
+    ...COMMON_MODIFIABLE_FIELD_PATHS,
+    'action.target.name': 'string',
+  },
+  [RumEventType.LONG_TASK]: {
+    ...COMMON_MODIFIABLE_FIELD_PATHS,
+    'long_task.scripts[].source_url': 'string',
+    'long_task.scripts[].invoker': 'string',
+  },
+  [RumEventType.VITAL]: COMMON_MODIFIABLE_FIELD_PATHS,
+}
 
 export function startRumAssembly(
   configuration: RumConfiguration,
@@ -42,55 +66,6 @@ export function startRumAssembly(
   reportError: (error: RawError) => void,
   eventRateLimit?: number
 ) {
-  modifiableFieldPathsByEvent = {
-    [RumEventType.VIEW]: {
-      'view.performance.lcp.resource_url': 'string',
-      ...USER_CUSTOMIZABLE_FIELD_PATHS,
-      ...VIEW_MODIFIABLE_FIELD_PATHS,
-      ...ROOT_MODIFIABLE_FIELD_PATHS,
-    },
-    // view_update events are created post-assembly in startRumBatch.ts and never reach this pipeline.
-    // The full view already went through assembly (as RumEventType.VIEW), so any beforeSend
-    // modifications (e.g. PII scrubbing) are already reflected in the view_update diff.
-    [RumEventType.VIEW_UPDATE]: {},
-    [RumEventType.ERROR]: {
-      'error.message': 'string',
-      'error.stack': 'string',
-      'error.handling_stack': 'string',
-      'error.resource.url': 'string',
-      'error.fingerprint': 'string',
-      ...USER_CUSTOMIZABLE_FIELD_PATHS,
-      ...VIEW_MODIFIABLE_FIELD_PATHS,
-      ...ROOT_MODIFIABLE_FIELD_PATHS,
-    },
-    [RumEventType.RESOURCE]: {
-      'resource.url': 'string',
-      'resource.graphql.variables': 'string',
-      'resource.request.headers': 'object',
-      'resource.response.headers': 'object',
-      ...USER_CUSTOMIZABLE_FIELD_PATHS,
-      ...VIEW_MODIFIABLE_FIELD_PATHS,
-      ...ROOT_MODIFIABLE_FIELD_PATHS,
-    },
-    [RumEventType.ACTION]: {
-      'action.target.name': 'string',
-      ...USER_CUSTOMIZABLE_FIELD_PATHS,
-      ...VIEW_MODIFIABLE_FIELD_PATHS,
-      ...ROOT_MODIFIABLE_FIELD_PATHS,
-    },
-    [RumEventType.LONG_TASK]: {
-      'long_task.scripts[].source_url': 'string',
-      'long_task.scripts[].invoker': 'string',
-      ...USER_CUSTOMIZABLE_FIELD_PATHS,
-      ...VIEW_MODIFIABLE_FIELD_PATHS,
-      ...ROOT_MODIFIABLE_FIELD_PATHS,
-    },
-    [RumEventType.VITAL]: {
-      ...USER_CUSTOMIZABLE_FIELD_PATHS,
-      ...VIEW_MODIFIABLE_FIELD_PATHS,
-      ...ROOT_MODIFIABLE_FIELD_PATHS,
-    },
-  }
   const eventRateLimiters = {
     [RumEventType.ERROR]: createEventRateLimiter(RumEventType.ERROR, reportError, eventRateLimit),
     [RumEventType.ACTION]: createEventRateLimiter(RumEventType.ACTION, reportError, eventRateLimit),
@@ -133,7 +108,7 @@ function shouldSend(
   eventRateLimiters: { [key in RumEventType]?: EventRateLimiter }
 ) {
   if (beforeSend) {
-    const result = limitModification(event, modifiableFieldPathsByEvent[event.type], (event) =>
+    const result = limitModification(event, MODIFIABLE_FIELD_PATHS_BY_EVENT[event.type], (event) =>
       beforeSend(event, domainContext)
     )
     if (result === false && event.type !== RumEventType.VIEW) {
