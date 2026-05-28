@@ -33,16 +33,19 @@ export const enum SerializationKind {
 
 type AddNodeParams<NodeChange extends AddNodeChange> = NodeChange extends [any, any, ...infer Params] ? Params : never
 
-export type ChangeSerializationTransactionCallback = (transaction: ChangeSerializationTransaction) => void
+export type SerializationTransactionCallback = (transaction: SerializationTransaction) => void
 
 /**
- * ChangeSerializationTransaction is used to build and emit a BrowserChangeRecord
- * containing a serialized snapshot of the DOM. Unlike SerializationTransaction, it
- * doesn't support emitting arbitrary BrowserRecords; instead, the builder methods it
- * exposes are used to construct a single BrowserChangeRecord which is emitted at the end
- * of the transaction.
+ * SerializationTransaction is used to build and emit a `BrowserChangeRecord` containing a
+ * serialized snapshot of the DOM. The term "transaction" is used because all the changes
+ * in a serialization transaction are applied together, atomically. A serialization
+ * transaction is thus always associated with a single timestamp.
+ *
+ * To use `SerializationTransaction`, call the builder methods it exposes to add changes
+ * to the transaction. At the end of the transaction, the changes will be combined into a
+ * single `BrowserChangeRecord` and emitted.
  */
-export interface ChangeSerializationTransaction {
+export interface SerializationTransaction {
   /**
    * Add a metric to the transaction's statistics. The aggregated statistics will be
    * emitted when the transaction ends.
@@ -101,18 +104,18 @@ export interface ChangeSerializationTransaction {
   scope: RecordingScope
 }
 
-export function serializeChangesInTransaction(
+export function serializeInTransaction(
   kind: SerializationKind,
   emitRecord: EmitRecordCallback,
   emitStats: EmitStatsCallback,
   scope: RecordingScope,
   timestamp: TimeStamp,
-  serialize: ChangeSerializationTransactionCallback
+  serialize: SerializationTransactionCallback
 ): void {
   const encoder = createChangeEncoder(scope.stringIds)
   const stats = createSerializationStats()
 
-  const transaction: ChangeSerializationTransaction = {
+  const transaction: SerializationTransaction = {
     addMetric(metric: keyof SerializationStats, value: number): void {
       updateSerializationStats(stats, metric, value)
     },
