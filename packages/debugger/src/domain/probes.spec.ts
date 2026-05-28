@@ -1,4 +1,4 @@
-import { display } from '@datadog/browser-core'
+import type { ErrorWithCause } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import {
   initializeProbe,
@@ -209,8 +209,7 @@ describe('probes', () => {
       )
     })
 
-    it('should handle condition compilation errors', () => {
-      const displayErrorSpy = spyOn(display, 'error')
+    it('should not add probe when condition compilation fails', () => {
       const probe: Probe = {
         id: 'test-probe-1',
         version: 0,
@@ -227,12 +226,17 @@ describe('probes', () => {
         evaluateAt: 'EXIT',
       }
 
-      initializeProbe(probe)
+      let error: unknown
+      try {
+        addProbe(probe)
+      } catch (err) {
+        error = err
+      }
 
-      expect(displayErrorSpy).toHaveBeenCalledWith(
-        jasmine.stringContaining('Cannot compile condition'),
-        jasmine.any(Error)
-      )
+      expect(error).toEqual(jasmine.any(Error))
+      expect((error as Error).message).toContain('Cannot compile condition')
+      expect((error as ErrorWithCause).cause).toEqual(jasmine.any(TypeError))
+      expect(getProbes('TestClass;conditionError')).toBeUndefined()
     })
 
     it('should calculate msBetweenSampling for snapshot probes', () => {

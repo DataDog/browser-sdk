@@ -1,4 +1,5 @@
 import { display } from '@datadog/browser-core'
+import type { ErrorWithCause } from '@datadog/browser-core'
 import { clearActiveEntries } from './activeEntries'
 import { compile } from './expression'
 import { compileCondition } from './condition'
@@ -309,11 +310,12 @@ export function initializeProbe(probe: Probe): asserts probe is InitializedProbe
       ;(probe as InitializedProbe).condition = compileCondition(String(compile(probe.when.json)))
     }
   } catch (err) {
-    // TODO: Handle error properly
-    display.error(
-      `Cannot compile condition expression: ${probe.when!.dsl} (probe: ${probe.id}, version: ${probe.version})`,
-      err as Error
+    // TODO: Report to the debugger intake as a diagnostics message with state ERROR.
+    const conditionError = new Error(
+      `Cannot compile condition expression: ${probe.when!.dsl} (probe: ${probe.id}, version: ${probe.version})`
     )
+    ;(conditionError as ErrorWithCause).cause = err
+    throw conditionError
   }
 
   // Optimize for fast calculations when probe is hit
