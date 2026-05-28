@@ -187,6 +187,7 @@ build-and-lint:
     - yarn build
     - yarn lint
     - node scripts/check-packages.ts
+    - node scripts/check-build-env-placeholders.ts
 
 bundle-size:
   extends:
