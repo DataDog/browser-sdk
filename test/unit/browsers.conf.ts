@@ -46,6 +46,6 @@ export const browserConfigurations: BrowserConfiguration[] = [
     name: 'chrome',
     os: 'android',
     osVersion: '12.0',
-    device: 'Google Pixel 6 Pro',
+    device: 'Google Pixel 6',
   },
 ]
