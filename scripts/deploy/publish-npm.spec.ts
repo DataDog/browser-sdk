@@ -64,6 +64,22 @@ describe('publish-npm', () => {
       }
     )
   })
+
+  it('should not mask npm token lookup failures as publish failures', () => {
+    const tokenError = new Error('failed to fetch npm token')
+    getNpmTokenMock.mock.mockImplementation(() => {
+      throw tokenError
+    })
+
+    assert.throws(
+      () => main([]),
+      (error: Error) => {
+        assert.equal(error, tokenError)
+        assert.doesNotMatch(error.message, /scripts\/release\/renew-token\.ts/)
+        return true
+      }
+    )
+  })
 })
 
 function isNpmPublishCommand(template: TemplateStringsArray, ...values: any[]): boolean {

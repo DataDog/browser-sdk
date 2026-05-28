@@ -27,10 +27,12 @@ export function main(args = process.argv.slice(2)): void {
   command`yarn build`.withEnvironment({ BUILD_MODE: 'release' }).run()
 
   printLog(dryRun ? 'Publishing (dry run)' : 'Publishing')
+  const npmToken = dryRun ? '' : getNpmToken()
+
   try {
     command`yarn workspaces foreach --verbose --all --topological --no-private npm publish --tolerate-republish --access public ${dryRun ? ['--dry-run'] : []}`
       .withEnvironment({
-        YARN_NPM_AUTH_TOKEN: dryRun ? '' : getNpmToken(),
+        YARN_NPM_AUTH_TOKEN: npmToken,
         BUILD_MODE: 'release',
       })
       .withLogs()
