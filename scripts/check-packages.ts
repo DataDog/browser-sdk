@@ -35,7 +35,7 @@ function checkBrowserSdkPackage(packagePath: string) {
 
 function checkBuildEnvPlaceholders(packagePath: string) {
   try {
-    command`grep -r -q BUILD_ENV cjs esm bundle`.withCurrentWorkingDirectory(packagePath).run()
+    command`grep -r -q --include=*.js BUILD_ENV cjs esm bundle`.withCurrentWorkingDirectory(packagePath).run()
   } catch {
     return
   }
