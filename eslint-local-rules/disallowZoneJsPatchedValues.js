@@ -44,7 +44,7 @@ export default {
         ) {
           const originalNode = parserServices.esTreeNodeToTSNodeMap.get(node)
           const symbol = checker.getSymbolAtLocation(originalNode)
-          if (symbol && isDeclaredInTsDomLib(symbol.declarations[0])) {
+          if (symbol && isNativeValue(symbol.declarations[0])) {
             context.report(node, `This value might be patched by Zone.js. ${PROBLEMATIC_IDENTIFIERS[node.name]}`)
           }
         }
@@ -54,14 +54,17 @@ export default {
 }
 
 /**
- * Wether the declaration is inside the TypeScript DOM declaration file (i.e. lib.dom.d.ts),
- * indicating that it's a "native" browser API and not a function that we declare ourselves.
+ * Wether the declaration is inside the TypeScript DOM declaration file (i.e. lib.dom.d.ts) or in a
+ * 'globalObject.ts' file, indicating that it's a "native" browser API and not a function that we
+ * declare ourselves.
  */
-function isDeclaredInTsDomLib(declaration) {
+function isNativeValue(declaration) {
   if (declaration.parent) {
-    return isDeclaredInTsDomLib(declaration.parent)
+    return isNativeValue(declaration.parent)
   }
-  return declaration.isDeclarationFile && declaration.path.endsWith('/lib.dom.d.ts')
+  // in macOs, path is lowercased
+  const path = declaration.path.toLowerCase()
+  return path.endsWith('/lib.dom.d.ts') || path.endsWith('/globalobject.ts')
 }
 
 /**
