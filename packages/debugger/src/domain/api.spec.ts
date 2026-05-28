@@ -6,6 +6,7 @@ import type { Probe } from './probes'
 
 describe('api', () => {
   let mockBatchAdd: jasmine.Spy
+  let warnSpy: jasmine.Spy
 
   function initTransport(overrides: Record<string, unknown> = {}) {
     resetDebuggerTransport()
@@ -20,6 +21,7 @@ describe('api', () => {
   beforeEach(() => {
     clearProbes()
 
+    warnSpy = spyOn(display, 'warn')
     mockBatchAdd = jasmine.createSpy('batchAdd')
     initTransport()
     ;(window as any).DD_DEBUGGER = {
@@ -1135,7 +1137,6 @@ describe('api', () => {
 
     it('should handle uninitialized debugger transport gracefully', () => {
       resetDebuggerTransport()
-      const warnSpy = spyOn(display, 'warn')
 
       const probe: Probe = {
         id: 'test-probe',

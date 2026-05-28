@@ -5,7 +5,7 @@
  * Adapted from dd-trace-js/packages/dd-trace/src/debugger/devtools_client/condition.js
  */
 
-const identifierRegex = /^[@a-zA-Z_$][\w$]*$/
+const identifierRegex = /^(@[\w$]+|[a-zA-Z_$][\w$]*)$/
 
 // The following identifiers have purposefully not been included in this list:
 // - The reserved words `this` and `super` as they can have valid use cases as `ref` values
@@ -132,7 +132,7 @@ export function compile(node: ExpressionNode): string | number | boolean | null 
       try {
         ${compile(value as ExpressionNode)}
         return true
-      } catch (e) {
+      } catch {
         return false
       }
     })()`
@@ -302,7 +302,7 @@ function accessProperty(variable: string, keyOrIndex: string, allowMapAccess: bo
 function guardAgainstPropertyAccessSideEffects(variable: string, propertyName: string): string {
   return `((val, key) => {
     const desc = Object.getOwnPropertyDescriptor(val, key);
-    if (desc && desc.get !== undefined) {
+    if (desc?.get !== undefined) {
       throw new Error('Possibility of side effect')
     } else {
       return val[key]

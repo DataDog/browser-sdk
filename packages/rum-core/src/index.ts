@@ -7,6 +7,7 @@ export type {
   CommonProperties,
   RumErrorEvent,
   RumViewEvent,
+  RumViewUpdateEvent,
   RumResourceEvent,
   RumLongTaskEvent,
   RumVitalEvent,

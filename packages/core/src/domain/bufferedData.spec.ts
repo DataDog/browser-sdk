@@ -136,6 +136,7 @@ describe('startBufferingData', () => {
   })
 
   it('collects console logs', (done) => {
+    spyOn(console, 'error').and.callFake(noop)
     const { observable, stop } = startBufferingData()
 
     registerCleanupTask(() => {

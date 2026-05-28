@@ -102,14 +102,7 @@ export {
 } from './domain/error/error'
 export { NonErrorPrefix } from './domain/error/error.types'
 export type { Context, ContextArray, ContextValue } from './tools/serialisation/context'
-export {
-  areCookiesAuthorized,
-  getCookie,
-  getInitCookie,
-  setCookie,
-  deleteCookie,
-  resetInitCookies,
-} from './browser/cookie'
+export { getCookie, getInitCookie, setCookie, deleteCookie, resetInitCookies } from './browser/cookie'
 export type { CookieStore, WeakRef, WeakRefConstructor } from './browser/browser.types'
 export type { XhrCompleteContext, XhrStartContext, XhrContext } from './browser/xhrObservable'
 export { initXhrObservable } from './browser/xhrObservable'

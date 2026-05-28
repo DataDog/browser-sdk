@@ -1,7 +1,6 @@
 import type { RumEvent, RumEventDomainContext, RumInitConfiguration } from '@datadog/browser-rum-core'
 import type { LogsEvent, LogsInitConfiguration, LogsEventDomainContext } from '@datadog/browser-logs'
 import { test, expect } from '@playwright/test'
-import { ExperimentalFeature } from '@datadog/browser-core'
 import { createTest, microfrontendSetup } from '../lib/framework'
 import { isLongAnimationFrameSupported } from '../lib/helpers/browser'
 
@@ -184,7 +183,7 @@ test.describe('microfrontend', () => {
         })
 
       createTest('expose handling stack for DD_RUM.startFeatureOperation')
-        .withRum({ ...RUM_CONFIG, enableExperimentalFeatures: [ExperimentalFeature.FEATURE_OPERATION_VITAL] })
+        .withRum({ ...RUM_CONFIG })
         .withRumInit((configuration) => {
           window.DD_RUM!.init(configuration)
 
@@ -412,7 +411,7 @@ test.describe('microfrontend', () => {
         })
 
       createTest('feature operations should have service and version from source code context')
-        .withRum({ ...RUM_CONFIG, enableExperimentalFeatures: [ExperimentalFeature.FEATURE_OPERATION_VITAL] })
+        .withRum({ ...RUM_CONFIG })
         .withSetup(microfrontendSetup)
         .run(async ({ intakeRegistry, flushEvents, page }) => {
           await page.click('#app1-feature-operation')

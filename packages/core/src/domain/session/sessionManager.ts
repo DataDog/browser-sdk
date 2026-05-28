@@ -12,7 +12,7 @@ import {
   timeStampNow,
 } from '../../tools/utils/timeUtils'
 import { addEventListener, addEventListeners, DOM_EVENT } from '../../browser/addEventListener'
-import { startLifecycleTracker } from '../../browser/lifecycleTracker'
+import { resetLifecycleTracker, startLifecycleTracker } from '../../browser/lifecycleTracker'
 import { clearInterval, clearTimeout, setInterval, setTimeout } from '../../tools/timer'
 import { mockable } from '../../tools/mockable'
 import { noop, throttle } from '../../tools/utils/functionUtils'
@@ -38,7 +38,7 @@ import {
   initializeSession,
   isSessionInExpiredState,
 } from './sessionState'
-import { getSessionStoreStrategy } from './sessionStore'
+import { getSessionStoreStrategy, selectSessionStoreStrategyType } from './sessionStore'
 
 export interface SessionManager {
   findSession: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => SessionContext | undefined
@@ -94,14 +94,15 @@ export async function startSessionManager(
   const expireObservable = new Observable<void>()
   let expireContext: SessionDebugContext | undefined
 
-  if (!configuration.sessionStoreStrategyType) {
+  const sessionStoreStrategyType = await mockable(selectSessionStoreStrategyType)(configuration)
+  if (!sessionStoreStrategyType) {
     display.warn('No storage available for session. We will not send any data.')
     return
   }
 
   startLifecycleTracker(configuration)
 
-  const strategy = mockable(getSessionStoreStrategy)(configuration.sessionStoreStrategyType, configuration)
+  const strategy = mockable(getSessionStoreStrategy)(sessionStoreStrategyType, configuration)
 
   const sessionContextHistory = createValueHistory<SessionContext>({
     expireDelay: SESSION_CONTEXT_TIMEOUT_DELAY,
@@ -126,7 +127,7 @@ export async function startSessionManager(
     stopped = true
   })
 
-  const initialState = await resolveInitialState().catch((error) =>
+  let initialState = await resolveInitialState().catch((error) =>
     monitorError(new Error(`Error while resolving initial session state: ${error}`))
   )
   if (!initialState || stopped) {
@@ -135,9 +136,18 @@ export async function startSessionManager(
 
   // Consent is always granted when the session manager is started, but it may
   // be revoked during the async initialization (e.g., while waiting for cookie lock).
-  if (!trackingConsentState.isGranted()) {
+  // Mirror setupSessionTracking's revoke/grant handler until the manager is installed:
+  // expire the session in storage, wait for the next grant, then re-resolve.
+  while (!trackingConsentState.isGranted()) {
     expire()
-    return
+    await new Promise<void>((resolve) => trackingConsentState.onGrantedOnce(resolve))
+    if (stopped) {
+      return
+    }
+    initialState = await resolveInitialState().catch(monitorError)
+    if (!initialState || stopped) {
+      return
+    }
   }
 
   sessionContextHistory.add(buildSessionContext(initialState), clocksOrigin().relative)
@@ -373,6 +383,7 @@ export function startSessionManagerStub(): Promise<SessionManager> {
 export function stopSessionManager() {
   stopCallbacks.forEach((e) => e())
   stopCallbacks = []
+  resetLifecycleTracker()
 }
 
 function trackActivity(configuration: Configuration, expandOrRenewSession: () => void) {

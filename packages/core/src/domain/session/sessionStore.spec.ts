@@ -1,142 +1,165 @@
-import type { InitConfiguration } from '../configuration'
+import { replaceMockable } from '../../../test'
+import type { CookieStoreWindow } from '../../browser/browser.types'
+import type { Configuration, InitConfiguration } from '../configuration'
 import { display } from '../../tools/display'
 import { selectSessionStoreStrategyType } from './sessionStore'
 import { SessionPersistence } from './sessionConstants'
+import { buildCookieOptions } from './storeStrategies/sessionInCookie'
 
 const DEFAULT_INIT_CONFIGURATION: InitConfiguration = { clientToken: 'abc' }
+
+function makeConfiguration(initConfiguration: InitConfiguration): Configuration {
+  return {
+    cookieOptions: buildCookieOptions(initConfiguration),
+    sessionPersistence: initConfiguration.sessionPersistence,
+  } as Configuration
+}
 
 describe('session store', () => {
   describe('selectSessionStoreStrategyType', () => {
     describe('sessionPersistence: cookie (default)', () => {
-      it('returns cookie strategy when cookies are available', () => {
-        const sessionStoreStrategyType = selectSessionStoreStrategyType(DEFAULT_INIT_CONFIGURATION)
+      it('returns cookie strategy when cookies are available', async () => {
+        const sessionStoreStrategyType = await selectSessionStoreStrategyType(
+          makeConfiguration(DEFAULT_INIT_CONFIGURATION)
+        )
         expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.COOKIE }))
       })
 
-      it('returns undefined when cookies are not available', () => {
+      it('returns undefined when cookies are not available', async () => {
         disableCookies()
-        const sessionStoreStrategyType = selectSessionStoreStrategyType(DEFAULT_INIT_CONFIGURATION)
+        const sessionStoreStrategyType = await selectSessionStoreStrategyType(
+          makeConfiguration(DEFAULT_INIT_CONFIGURATION)
+        )
         expect(sessionStoreStrategyType).toBeUndefined()
       })
 
-      it('returns cookie strategy when sessionPersistence is cookie', () => {
-        const sessionStoreStrategyType = selectSessionStoreStrategyType({
-          ...DEFAULT_INIT_CONFIGURATION,
-          sessionPersistence: SessionPersistence.COOKIE,
-        })
+      it('returns cookie strategy when sessionPersistence is cookie', async () => {
+        const sessionStoreStrategyType = await selectSessionStoreStrategyType(
+          makeConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionPersistence: SessionPersistence.COOKIE })
+        )
         expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.COOKIE }))
       })
     })
 
     describe('sessionPersistence: local-storage', () => {
-      it('returns local storage strategy when sessionPersistence is local storage', () => {
-        const sessionStoreStrategyType = selectSessionStoreStrategyType({
-          ...DEFAULT_INIT_CONFIGURATION,
-          sessionPersistence: SessionPersistence.LOCAL_STORAGE,
-        })
+      it('returns local storage strategy when sessionPersistence is local storage', async () => {
+        const sessionStoreStrategyType = await selectSessionStoreStrategyType(
+          makeConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionPersistence: SessionPersistence.LOCAL_STORAGE })
+        )
         expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.LOCAL_STORAGE }))
       })
 
-      it('returns undefined when local storage is not available', () => {
+      it('returns undefined when local storage is not available', async () => {
         disableLocalStorage()
-        const sessionStoreStrategyType = selectSessionStoreStrategyType({
-          ...DEFAULT_INIT_CONFIGURATION,
-          sessionPersistence: SessionPersistence.LOCAL_STORAGE,
-        })
+        const sessionStoreStrategyType = await selectSessionStoreStrategyType(
+          makeConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionPersistence: SessionPersistence.LOCAL_STORAGE })
+        )
         expect(sessionStoreStrategyType).toBeUndefined()
       })
     })
 
     describe('sessionPersistence: memory', () => {
-      it('returns memory strategy when sessionPersistence is memory', () => {
-        const sessionStoreStrategyType = selectSessionStoreStrategyType({
-          ...DEFAULT_INIT_CONFIGURATION,
-          sessionPersistence: SessionPersistence.MEMORY,
-        })
+      it('returns memory strategy when sessionPersistence is memory', async () => {
+        const sessionStoreStrategyType = await selectSessionStoreStrategyType(
+          makeConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionPersistence: SessionPersistence.MEMORY })
+        )
         expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.MEMORY }))
       })
     })
 
-    it('returns undefined when sessionPersistence is invalid', () => {
+    it('returns undefined when sessionPersistence is invalid', async () => {
       const displayErrorSpy = spyOn(display, 'error')
 
-      const sessionStoreStrategyType = selectSessionStoreStrategyType({
-        ...DEFAULT_INIT_CONFIGURATION,
-        sessionPersistence: 'invalid' as SessionPersistence,
-      })
+      const sessionStoreStrategyType = await selectSessionStoreStrategyType(
+        makeConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionPersistence: 'invalid' as SessionPersistence })
+      )
       expect(sessionStoreStrategyType).toBeUndefined()
       expect(displayErrorSpy).toHaveBeenCalledOnceWith("Invalid session persistence 'invalid'")
     })
 
     describe('sessionPersistence as array', () => {
-      it('returns the first available strategy from the array', () => {
-        const sessionStoreStrategyType = selectSessionStoreStrategyType({
-          ...DEFAULT_INIT_CONFIGURATION,
-          sessionPersistence: [SessionPersistence.COOKIE, SessionPersistence.LOCAL_STORAGE],
-        })
+      it('returns the first available strategy from the array', async () => {
+        const sessionStoreStrategyType = await selectSessionStoreStrategyType(
+          makeConfiguration({
+            ...DEFAULT_INIT_CONFIGURATION,
+            sessionPersistence: [SessionPersistence.COOKIE, SessionPersistence.LOCAL_STORAGE],
+          })
+        )
         expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.COOKIE }))
       })
 
-      it('falls back to next strategy when first is unavailable', () => {
+      it('falls back to next strategy when first is unavailable', async () => {
         disableCookies()
-        const sessionStoreStrategyType = selectSessionStoreStrategyType({
-          ...DEFAULT_INIT_CONFIGURATION,
-          sessionPersistence: [SessionPersistence.COOKIE, SessionPersistence.LOCAL_STORAGE],
-        })
+        const sessionStoreStrategyType = await selectSessionStoreStrategyType(
+          makeConfiguration({
+            ...DEFAULT_INIT_CONFIGURATION,
+            sessionPersistence: [SessionPersistence.COOKIE, SessionPersistence.LOCAL_STORAGE],
+          })
+        )
         expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.LOCAL_STORAGE }))
       })
 
-      it('falls back to memory when cookie and local storage are unavailable', () => {
+      it('falls back to memory when cookie and local storage are unavailable', async () => {
         disableCookies()
         disableLocalStorage()
-        const sessionStoreStrategyType = selectSessionStoreStrategyType({
-          ...DEFAULT_INIT_CONFIGURATION,
-          sessionPersistence: [SessionPersistence.COOKIE, SessionPersistence.LOCAL_STORAGE, SessionPersistence.MEMORY],
-        })
+        const sessionStoreStrategyType = await selectSessionStoreStrategyType(
+          makeConfiguration({
+            ...DEFAULT_INIT_CONFIGURATION,
+            sessionPersistence: [
+              SessionPersistence.COOKIE,
+              SessionPersistence.LOCAL_STORAGE,
+              SessionPersistence.MEMORY,
+            ],
+          })
+        )
         expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.MEMORY }))
       })
 
-      it('returns undefined when no strategy in array is available', () => {
+      it('returns undefined when no strategy in array is available', async () => {
         disableCookies()
         disableLocalStorage()
-        const sessionStoreStrategyType = selectSessionStoreStrategyType({
-          ...DEFAULT_INIT_CONFIGURATION,
-          sessionPersistence: [SessionPersistence.COOKIE, SessionPersistence.LOCAL_STORAGE],
-        })
+        const sessionStoreStrategyType = await selectSessionStoreStrategyType(
+          makeConfiguration({
+            ...DEFAULT_INIT_CONFIGURATION,
+            sessionPersistence: [SessionPersistence.COOKIE, SessionPersistence.LOCAL_STORAGE],
+          })
+        )
         expect(sessionStoreStrategyType).toBeUndefined()
       })
 
-      it('handles empty array', () => {
-        const sessionStoreStrategyType = selectSessionStoreStrategyType({
-          ...DEFAULT_INIT_CONFIGURATION,
-          sessionPersistence: [],
-        })
+      it('handles empty array', async () => {
+        const sessionStoreStrategyType = await selectSessionStoreStrategyType(
+          makeConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionPersistence: [] })
+        )
         expect(sessionStoreStrategyType).toBeUndefined()
       })
 
-      it('handles array with single element', () => {
-        const sessionStoreStrategyType = selectSessionStoreStrategyType({
-          ...DEFAULT_INIT_CONFIGURATION,
-          sessionPersistence: [SessionPersistence.LOCAL_STORAGE],
-        })
+      it('handles array with single element', async () => {
+        const sessionStoreStrategyType = await selectSessionStoreStrategyType(
+          makeConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionPersistence: [SessionPersistence.LOCAL_STORAGE] })
+        )
         expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.LOCAL_STORAGE }))
       })
 
-      it('stops at first available strategy and does not try subsequent ones', () => {
-        const sessionStoreStrategyType = selectSessionStoreStrategyType({
-          ...DEFAULT_INIT_CONFIGURATION,
-          sessionPersistence: [SessionPersistence.LOCAL_STORAGE, SessionPersistence.COOKIE],
-        })
+      it('stops at first available strategy and does not try subsequent ones', async () => {
+        const sessionStoreStrategyType = await selectSessionStoreStrategyType(
+          makeConfiguration({
+            ...DEFAULT_INIT_CONFIGURATION,
+            sessionPersistence: [SessionPersistence.LOCAL_STORAGE, SessionPersistence.COOKIE],
+          })
+        )
         // Should return local storage (first available), not cookie
         expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.LOCAL_STORAGE }))
       })
 
-      it('returns undefined and logs error if array contains invalid persistence type', () => {
+      it('returns undefined and logs error if array contains invalid persistence type', async () => {
         const displayErrorSpy = spyOn(display, 'error')
-        const sessionStoreStrategyType = selectSessionStoreStrategyType({
-          ...DEFAULT_INIT_CONFIGURATION,
-          sessionPersistence: ['invalid'] as unknown as SessionPersistence[],
-        })
+        const sessionStoreStrategyType = await selectSessionStoreStrategyType(
+          makeConfiguration({
+            ...DEFAULT_INIT_CONFIGURATION,
+            sessionPersistence: ['invalid'] as unknown as SessionPersistence[],
+          })
+        )
         expect(sessionStoreStrategyType).toBeUndefined()
         expect(displayErrorSpy).toHaveBeenCalledOnceWith("Invalid session persistence 'invalid'")
       })
@@ -144,6 +167,7 @@ describe('session store', () => {
 
     function disableCookies() {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
+      replaceMockable((window as CookieStoreWindow).cookieStore, undefined)
     }
     function disableLocalStorage() {
       spyOn(Storage.prototype, 'getItem').and.throwError('unavailable')

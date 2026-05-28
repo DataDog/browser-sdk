@@ -141,6 +141,11 @@ export const references: TestCase[] = [
     expected: new SyntaxError('Illegal identifier: @(1)'),
     execute: false,
   },
+  {
+    ast: { ref: '@' },
+    expected: new SyntaxError('Illegal identifier: @'),
+    execute: false,
+  },
 ]
 
 export const propertyAccess: TestCase[] = [

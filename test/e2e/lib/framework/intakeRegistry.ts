@@ -4,6 +4,7 @@ import type {
   RumErrorEvent,
   RumResourceEvent,
   RumViewEvent,
+  RumViewUpdateEvent,
   RumVitalEvent,
   RumLongTaskEvent,
 } from '@datadog/browser-rum'
@@ -86,6 +87,10 @@ export class IntakeRegistry {
 
   get rumViewEvents() {
     return this.rumEvents.filter(isRumViewEvent)
+  }
+
+  get rumViewUpdateEvents() {
+    return this.rumEvents.filter(isRumViewUpdateEvent)
   }
 
   get rumVitalEvents() {
@@ -191,6 +196,10 @@ function isRumLongTaskEvent(event: RumEvent): event is RumLongTaskEvent {
 
 function isRumViewEvent(event: RumEvent): event is RumViewEvent {
   return event.type === 'view'
+}
+
+function isRumViewUpdateEvent(event: RumEvent): event is RumViewUpdateEvent {
+  return (event.type as string) === 'view_update'
 }
 
 function isRumErrorEvent(event: RumEvent): event is RumErrorEvent {

@@ -1,4 +1,5 @@
 export interface BrowserConfiguration {
+  id?: string
   sessionName: string
   name: string
   version?: string
