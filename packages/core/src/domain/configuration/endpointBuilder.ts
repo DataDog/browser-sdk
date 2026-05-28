@@ -4,7 +4,7 @@ import { normalizeUrl } from '../../tools/utils/urlPolyfill'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import type { Site } from '../intakeSites'
 import { INTAKE_SITE_US1 } from '../intakeSites'
-import type { InitConfiguration, ProxyFn } from './configuration'
+import type { Configuration, ProxyFn } from './configuration'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
@@ -21,36 +21,58 @@ export type ApiType =
  * Source values supported by the transport layer for the `ddsource` URL parameter.
  *
  * `'dd_debugger'` is internal to the Live Debugger SDK and is not part of
- * `InitConfiguration.source`. It can only be supplied by passing it as the
- * `sourceOverride` argument of `computeTransportConfiguration`.
+ * `InitConfiguration.source`. It is passed directly to `createEndpointBuilder`
+ * by the debugger transport.
  */
 export type TransportSource = 'browser' | 'flutter' | 'unity' | 'dd_debugger'
 
-// Internal: the endpoint builder accepts a wider `source` than the public
-// `InitConfiguration.source` so that `computeTransportConfiguration` can pass
-// the validated/overridden transport source through to URL building.
-type EndpointBuilderInitConfiguration = Omit<InitConfiguration, 'source'> & {
+interface EndpointBuilderConfiguration {
+  clientToken: string
+  proxy?: string | ProxyFn
+  site?: Site
   source?: TransportSource
 }
 
 export type EndpointBuilder = ReturnType<typeof createEndpointBuilder>
 
 export function createEndpointBuilder(
-  initConfiguration: EndpointBuilderInitConfiguration,
+  configuration: EndpointBuilderConfiguration,
   trackType: TrackType,
   extraParameters?: string[]
 ) {
   return {
     build(api: ApiType, payload: Payload) {
       return buildEndpointUrl({
-        proxy: initConfiguration.proxy,
-        site: initConfiguration.site,
+        proxy: configuration.proxy,
+        site: configuration.site,
         path: `/api/v2/${trackType}`,
-        parameters: buildEndpointParameters(initConfiguration, trackType, api, payload, extraParameters),
+        parameters: buildEndpointParameters(configuration, trackType, api, payload, extraParameters),
       })
     },
     trackType,
   }
+}
+
+/**
+ * Build the endpoint for the replica (dual shipping) site, if a replica is configured.
+ *
+ * The replica always targets the US1 site but keeps the `proxy` and `source` of the main
+ * configuration. The RUM track additionally carries the replica `application.id`.
+ */
+export function createReplicaEndpointBuilder({ replica, proxy, source }: Configuration, trackType: TrackType) {
+  if (!replica) {
+    return
+  }
+  return createEndpointBuilder(
+    {
+      clientToken: replica.clientToken,
+      proxy,
+      source,
+      site: INTAKE_SITE_US1,
+    },
+    trackType,
+    trackType === 'rum' ? [`application.id=${replica.applicationId}`] : undefined
+  )
 }
 
 export interface BuildEndpointUrlOptions {
@@ -100,7 +122,7 @@ export function buildEndpointUrl({
  * request, as they change randomly.
  */
 function buildEndpointParameters(
-  { clientToken, source = 'browser' }: EndpointBuilderInitConfiguration,
+  { clientToken, source = 'browser' }: EndpointBuilderConfiguration,
   trackType: TrackType,
   api: ApiType,
   { retry, encoding }: Payload,

@@ -86,6 +86,35 @@ describe('validateAndBuildConfiguration', () => {
     })
   })
 
+  describe('site', () => {
+    it('should use US site by default', () => {
+      const configuration = validateAndBuildConfiguration({ clientToken })!
+      expect(configuration.site).toBe('datadoghq.com')
+    })
+
+    it('should use site value when set', () => {
+      const configuration = validateAndBuildConfiguration({ clientToken, site: 'datadoghq.com' })!
+      expect(configuration.site).toBe('datadoghq.com')
+    })
+  })
+
+  describe('source', () => {
+    it('should use the browser source by default', () => {
+      const configuration = validateAndBuildConfiguration({ clientToken })!
+      expect(configuration.source).toBe('browser')
+    })
+
+    it('should use the flutter and unity sources when set', () => {
+      expect(validateAndBuildConfiguration({ clientToken, source: 'flutter' })!.source).toBe('flutter')
+      expect(validateAndBuildConfiguration({ clientToken, source: 'unity' })!.source).toBe('unity')
+    })
+
+    it('should fall back to the browser source when set to an unsupported value', () => {
+      const configuration = validateAndBuildConfiguration({ clientToken, source: 'invalid' as any })!
+      expect(configuration.source).toBe('browser')
+    })
+  })
+
   describe('beforeSend', () => {
     it('should be undefined when beforeSend is missing on user configuration', () => {
       const configuration = validateAndBuildConfiguration({ clientToken })!

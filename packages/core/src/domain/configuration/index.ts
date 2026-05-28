@@ -8,5 +8,4 @@ export {
   buildCookieOptions,
 } from './configuration'
 export type { EndpointBuilder, TrackType } from './endpointBuilder'
-export { createEndpointBuilder, buildEndpointUrl } from './endpointBuilder'
-export { computeTransportConfiguration } from './transportConfiguration'
+export { createEndpointBuilder, createReplicaEndpointBuilder, buildEndpointUrl } from './endpointBuilder'
