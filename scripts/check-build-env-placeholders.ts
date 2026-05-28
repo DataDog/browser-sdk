@@ -10,8 +10,14 @@ export interface PlaceholderHit {
   placeholders: string[]
 }
 
-export function findUnreplacedPlaceholders(packagesRoot: string): PlaceholderHit[] {
+export interface ScanResult {
+  hits: PlaceholderHit[]
+  scannedFiles: number
+}
+
+export function findUnreplacedPlaceholders(packagesRoot: string): ScanResult {
   const hits: PlaceholderHit[] = []
+  let scannedFiles = 0
   for (const packageDir of globSync(path.join(packagesRoot, '*'))) {
     for (const dir of SCAN_DIRS) {
       const baseDir = path.join(packageDir, dir)
@@ -21,6 +27,7 @@ export function findUnreplacedPlaceholders(packagesRoot: string): PlaceholderHit
       for (const relative of globSync('**/*.js', { cwd: baseDir })) {
         const file = path.join(baseDir, relative)
         const content = fs.readFileSync(file, 'utf8')
+        scannedFiles += 1
         const matches = content.match(PLACEHOLDER_RE)
         if (matches) {
           hits.push({ file, placeholders: matches })
@@ -28,15 +35,23 @@ export function findUnreplacedPlaceholders(packagesRoot: string): PlaceholderHit
       }
     }
   }
-  return hits
+  return { hits, scannedFiles }
 }
 
 if (!process.env.NODE_TEST_CONTEXT) {
   runMain(() => {
-    const hits = findUnreplacedPlaceholders('packages')
+    const { hits, scannedFiles } = findUnreplacedPlaceholders('packages')
+
+    if (scannedFiles === 0) {
+      printError(
+        'No built files were scanned — expected packages/*/{cjs,esm,bundle}/**/*.js to exist. ' +
+          'Run `yarn build` first, or check whether output directories have been renamed.'
+      )
+      process.exit(1)
+    }
 
     if (hits.length === 0) {
-      printLog('No unreplaced __BUILD_ENV__ placeholders found in built packages.')
+      printLog(`No unreplaced __BUILD_ENV__ placeholders found (${scannedFiles} files scanned).`)
       return
     }
 

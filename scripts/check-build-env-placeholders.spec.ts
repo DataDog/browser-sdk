@@ -16,12 +16,19 @@ describe('findUnreplacedPlaceholders', () => {
     fs.rmSync(tmpDir, { recursive: true, force: true })
   })
 
-  it('returns empty when no placeholders are present', () => {
+  it('returns no hits and counts scanned files when none contain placeholders', () => {
     const root = path.join(tmpDir, 'clean')
     writeFile(path.join(root, 'pkg-a/cjs/index.js'), 'export const version = "1.2.3"')
     writeFile(path.join(root, 'pkg-a/esm/index.js'), 'export const version = "1.2.3"')
 
-    assert.deepEqual(findUnreplacedPlaceholders(root), [])
+    assert.deepEqual(findUnreplacedPlaceholders(root), { hits: [], scannedFiles: 2 })
+  })
+
+  it('reports zero scanned files when no built output exists', () => {
+    const root = path.join(tmpDir, 'empty')
+    writeFile(path.join(root, 'pkg-a/src/init.ts'), 'noop')
+
+    assert.deepEqual(findUnreplacedPlaceholders(root), { hits: [], scannedFiles: 0 })
   })
 
   it('reports every occurrence of a placeholder within a file', () => {
@@ -29,7 +36,8 @@ describe('findUnreplacedPlaceholders', () => {
     const file = path.join(root, 'pkg-a/cjs/init.js')
     writeFile(file, 'const v = "__BUILD_ENV__SDK_VERSION__"; const v2 = "__BUILD_ENV__SDK_VERSION__"')
 
-    const hits = findUnreplacedPlaceholders(root)
+    const { hits, scannedFiles } = findUnreplacedPlaceholders(root)
+    assert.equal(scannedFiles, 1)
     assert.equal(hits.length, 1)
     assert.equal(hits[0].file, file)
     assert.deepEqual(hits[0].placeholders, ['__BUILD_ENV__SDK_VERSION__', '__BUILD_ENV__SDK_VERSION__'])
@@ -41,9 +49,9 @@ describe('findUnreplacedPlaceholders', () => {
     writeFile(path.join(root, 'pkg-a/esm/b.js'), '__BUILD_ENV__SDK_SETUP__')
     writeFile(path.join(root, 'pkg-a/bundle/c.js'), '__BUILD_ENV__WORKER_STRING__')
 
-    const files = findUnreplacedPlaceholders(root)
-      .map((hit) => path.relative(root, hit.file))
-      .sort()
+    const { hits, scannedFiles } = findUnreplacedPlaceholders(root)
+    assert.equal(scannedFiles, 3)
+    const files = hits.map((hit) => path.relative(root, hit.file)).sort()
     assert.deepEqual(files, [
       path.join('pkg-a', 'bundle', 'c.js'),
       path.join('pkg-a', 'cjs', 'a.js'),
@@ -55,7 +63,7 @@ describe('findUnreplacedPlaceholders', () => {
     const root = path.join(tmpDir, 'src-only')
     writeFile(path.join(root, 'pkg-a/src/init.ts'), 'const v = "__BUILD_ENV__SDK_VERSION__"')
 
-    assert.deepEqual(findUnreplacedPlaceholders(root), [])
+    assert.deepEqual(findUnreplacedPlaceholders(root), { hits: [], scannedFiles: 0 })
   })
 })
 
