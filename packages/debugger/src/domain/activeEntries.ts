@@ -1,9 +1,11 @@
 import type { StackFrame } from './stacktrace'
+import type { EvaluationError } from './condition'
 
 export interface ActiveEntry {
   start: number
   timestamp?: number
   message?: string
+  evaluationErrors?: EvaluationError[]
   entry?: {
     arguments: Record<string, any>
   }
