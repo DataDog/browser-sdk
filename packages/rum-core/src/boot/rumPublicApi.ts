@@ -517,33 +517,43 @@ export interface RumPublicApi extends PublicApi {
   stopDurationVital: (name: string, options?: DurationVitalOptions) => void
 
   /**
-   * start a feature operation
+   * Start a feature operation.
+   *
+   * Call {@link succeedFeatureOperation} or {@link failFeatureOperation} with the same name (and optional
+   * `operationKey`) to send a RUM vital event marking the end of the operation.
    *
    * @category Vital - Feature Operation
-   * @param name - Name of the operation step
-   * @param options - Options for the operation step (operationKey, context, description)
-   * @hidden // TODO: replace by @since when GA
+   * @param name - Name of the operation
+   * @param options - Options for the operation (operationKey, context, description)
+   * @example
+   * ```ts
+   * datadogRum.startFeatureOperation('checkout')
+   * // ... perform the operation
+   * datadogRum.succeedFeatureOperation('checkout')
+   * ```
    */
   startFeatureOperation: (name: string, options?: FeatureOperationOptions) => void
 
   /**
-   * succeed a feature operation
+   * Mark a feature operation as successful.
+   *
+   * Sends a RUM vital event marking the end of the operation started with {@link startFeatureOperation}.
    *
    * @category Vital - Feature Operation
-   * @param name - Name of the operation step
-   * @param options - Options for the operation step (operationKey, context, description)
-   * @hidden // TODO: replace by @since when GA
+   * @param name - Name of the operation
+   * @param options - Options for the operation (operationKey, context, description)
    */
   succeedFeatureOperation: (name: string, options?: FeatureOperationOptions) => void
 
   /**
-   * fail a feature operation
+   * Mark a feature operation as failed.
+   *
+   * Sends a RUM vital event marking the end of the operation started with {@link startFeatureOperation}.
    *
    * @category Vital - Feature Operation
-   * @param name - Name of the operation step
+   * @param name - Name of the operation
    * @param failureReason - Reason for the failure
-   * @param options - Options for the operation step (operationKey, context, description)
-   * @hidden // TODO: replace by @since when GA
+   * @param options - Options for the operation (operationKey, context, description)
    */
   failFeatureOperation: (name: string, failureReason: FailureReason, options?: FeatureOperationOptions) => void
 

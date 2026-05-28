@@ -1,5 +1,4 @@
 import { test, expect } from '@playwright/test'
-import { ExperimentalFeature } from '@datadog/browser-core'
 import { createTest } from '../../lib/framework'
 
 test.describe('vital collection', () => {
@@ -46,9 +45,7 @@ test.describe('vital collection', () => {
     })
 
   createTest('send operation step vital')
-    .withRum({
-      enableExperimentalFeatures: [ExperimentalFeature.FEATURE_OPERATION_VITAL],
-    })
+    .withRum()
     .run(async ({ flushEvents, intakeRegistry, page }) => {
       await page.evaluate(() => {
         window.DD_RUM!.startFeatureOperation('foo')
