@@ -1,4 +1,4 @@
-import { defineGlobal, getGlobalObject } from '@datadog/browser-core'
+import { defineGlobal, globalObject } from '@datadog/browser-core'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
 import { makeRumPublicApi } from '@datadog/browser-rum-core'
 import { makeProfilerApiStub } from '../boot/stubProfilerApi'
@@ -69,7 +69,6 @@ export { DefaultPrivacyLevel } from '@datadog/browser-core'
 export { createSalesforceViewsPlugin }
 export type { SalesforceViewChange, SalesforceViewsPlugin } from '../domain/salesforce/salesforceViewsPlugin'
 
-// eslint-disable-next-line local-rules/disallow-side-effects
 export const datadogRum: DatadogRum = Object.assign(
   makeRumPublicApi(makeRecorderApiStub(), makeProfilerApiStub(), {
     sdkName: 'rum-slim',
@@ -77,9 +76,7 @@ export const datadogRum: DatadogRum = Object.assign(
   { createSalesforceViewsPlugin }
 )
 
-interface BrowserWindow extends Window {
-  DD_RUM?: DatadogRum
+interface BrowserWindow {
+  DD_RUM?: RumPublicApi
 }
-
-// eslint-disable-next-line local-rules/disallow-side-effects
-defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_RUM', datadogRum)
+defineGlobal(globalObject as BrowserWindow, 'DD_RUM', datadogRum)

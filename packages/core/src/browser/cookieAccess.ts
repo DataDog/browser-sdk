@@ -31,7 +31,7 @@ export type CookieAccessFactory = (
 ) => CookieAccess
 
 export function isCookieStoreSupported(configuration: Configuration): boolean {
-  const cookieStore = (window as CookieStoreWindow).cookieStore
+  const cookieStore = globalObject.cookieStore
   if (!cookieStore) {
     return false
   }
