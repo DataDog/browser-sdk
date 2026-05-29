@@ -1,10 +1,8 @@
 import { defineGlobal, globalObject } from '@datadog/browser-core'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
 import { makeRumPublicApi } from '@datadog/browser-rum-core'
-import { makeProfilerApiStub } from '../boot/stubProfilerApi'
 import { makeRecorderApiStub } from '../boot/stubRecorderApi'
-import { createSalesforceViewsPlugin } from '../domain/salesforce/salesforceViewsPlugin'
-import type { SalesforceViewsPlugin } from '../domain/salesforce/salesforceViewsPlugin'
+import { makeProfilerApiStub } from '../boot/stubProfilerApi'
 
 export type {
   User,
@@ -24,13 +22,10 @@ export type {
 /**
  * @deprecated Use {@link DatadogRum} instead
  */
-export type RumGlobal = DatadogRum
-
-export interface DatadogRum extends RumPublicApi {
-  createSalesforceViewsPlugin: () => SalesforceViewsPlugin
-}
+export type RumGlobal = RumPublicApi
 
 export type {
+  RumPublicApi as DatadogRum,
   RumInitConfiguration,
   RumBeforeSend,
   ViewOptions,
@@ -66,15 +61,10 @@ export type {
 } from '@datadog/browser-rum-core'
 export { DEFAULT_TRACKED_RESOURCE_HEADERS } from '@datadog/browser-rum-core'
 export { DefaultPrivacyLevel } from '@datadog/browser-core'
-export { createSalesforceViewsPlugin }
-export type { SalesforceViewChange, SalesforceViewsPlugin } from '../domain/salesforce/salesforceViewsPlugin'
 
-export const datadogRum: DatadogRum = Object.assign(
-  makeRumPublicApi(makeRecorderApiStub(), makeProfilerApiStub(), {
-    sdkName: 'rum-slim',
-  }),
-  { createSalesforceViewsPlugin }
-)
+export const datadogRum = makeRumPublicApi(makeRecorderApiStub(), makeProfilerApiStub(), {
+  sdkName: 'rum-slim',
+})
 
 interface BrowserWindow {
   DD_RUM?: RumPublicApi

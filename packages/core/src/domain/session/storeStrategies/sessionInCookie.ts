@@ -34,10 +34,7 @@ export async function selectCookieStrategy(
     return undefined
   }
 
-  if (
-    isCookieStoreSupported() &&
-    (await areCookiesAuthorized(createCookieStoreAccess, cookieOptions, configuration))
-  ) {
+  if (isCookieStoreSupported() && (await areCookiesAuthorized(createCookieStoreAccess, cookieOptions, configuration))) {
     return { type: SessionPersistence.COOKIE, cookieOptions, cookieApi: CookieApi.COOKIE_STORE }
   }
 

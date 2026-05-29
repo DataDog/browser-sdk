@@ -118,27 +118,25 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
     return result
   }
 
-  // Salesforce makes History.prototype.pushState and History.prototype.replaceState readonly. https://help.salesforce.com/s/articleView?id=release-notes.rn_lws_distortions_added.htm&release=238&type=5
-
-  try {
+  // try {
     targetPrototype[method] = instrumentation as TARGET[METHOD]
-  } catch (error) {
-    display.error(error)
-    return { stop: noop }
-  }
+  // } catch (error) {
+    // display.error(error)
+    // return { stop: noop }
+  // }
 
   return {
     stop: () => {
       stopped = true
       // If the instrumentation has been removed by a third party, keep the last one
       if (targetPrototype[method] === instrumentation) {
-        try {
+        // try {
           targetPrototype[method] = original
-        } catch (error) {
-          display.error(error)
+        // } catch (error) {
+          // display.error(error)
           // Restore can be rejected by sandboxed runtimes; the instrumentation is already stopped.
         }
-      }
+      // }
     },
   }
 }
