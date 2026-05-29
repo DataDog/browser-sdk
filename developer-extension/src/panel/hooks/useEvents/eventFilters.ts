@@ -1,5 +1,5 @@
 import type { SdkEvent } from '../../sdkEvent'
-import type { RumViewEvent } from '../../../../../packages/rum-core/src/rumEvent.types'
+import type { RumViewEvent, RumViewUpdateEvent } from '../../../../../packages/rum-core/src/rumEvent.types'
 import { isRumViewEvent } from '../../sdkEvent'
 import type { FacetRegistry } from './facetRegistry'
 
@@ -41,6 +41,8 @@ export function applyEventFilters(filters: EventFilters, events: SdkEvent[], fac
 
   if (!filters.outdatedVersions) {
     filteredEvents = filterOutdatedVersions(filteredEvents)
+  } else {
+    filteredEvents = deduplicateViewAndViewUpdate(filteredEvents)
   }
 
   return filteredEvents
@@ -64,6 +66,10 @@ export function filterFacets(
   )
 }
 
+function isRumViewUpdateEvent(event: SdkEvent): event is RumViewUpdateEvent {
+  return 'type' in event && event.type === 'view_update'
+}
+
 function filterOutdatedVersions(events: SdkEvent[]): SdkEvent[] {
   const upToDateEvents = new Map<string, RumViewEvent>()
   const outdatedEvents = new Set<SdkEvent>()
@@ -82,7 +88,29 @@ function filterOutdatedVersions(events: SdkEvent[]): SdkEvent[] {
     }
   }
 
-  return events.filter((event) => !outdatedEvents.has(event))
+  return events.filter((event) => !outdatedEvents.has(event) && !isRumViewUpdateEvent(event))
+}
+
+// When showing all versions, prefer view_update diffs over full views for the same document_version.
+// The initial view (no corresponding view_update) and the final view are always kept.
+function deduplicateViewAndViewUpdate(events: SdkEvent[]): SdkEvent[] {
+  const viewUpdateVersions = new Set<string>()
+  for (const event of events) {
+    if (isRumViewUpdateEvent(event) && event.view?.id && event._dd?.document_version) {
+      viewUpdateVersions.add(`${event.view.id}:${event._dd.document_version}`)
+    }
+  }
+
+  if (viewUpdateVersions.size === 0) {
+    return events
+  }
+
+  return events.filter((event) => {
+    if (isRumViewEvent(event) && viewUpdateVersions.has(`${event.view.id}:${event._dd.document_version}`)) {
+      return false
+    }
+    return true
+  })
 }
 
 export function parseQuery(query: string) {
