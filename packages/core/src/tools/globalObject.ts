@@ -21,13 +21,6 @@ export interface GlobalObject extends Omit<typeof globalThis, 'queueMicrotask' |
   queueMicrotask?: typeof queueMicrotask
 }
 
-/**
- * Cached reference to the global object so it can be imported and re-used.
- */
 export const globalObject = globalThis as GlobalObject
-
-export function getGlobalObject<T = GlobalObject>() {
-  return globalObject as T
-}
 
 export const isWorkerEnvironment = 'WorkerGlobalScope' in globalObject
