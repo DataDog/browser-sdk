@@ -156,7 +156,7 @@ describe('Expression language', () => {
 // Validate that all compiled expressions produce JavaScript compatible with the oldest target browser.
 // The expression compiler generates code as strings evaluated at runtime via new Function(),
 // bypassing TypeScript compilation and webpack transpilation. This test catches usage of syntax
-// not supported by older browsers (e.g., optional chaining ?., optional catch binding, nullish coalescing ??).
+// not supported by older browsers.
 describe('browser compatibility of generated code', () => {
   function assertECMAVersionCompatible(code: string, params: string[] = []) {
     const functionCode = `function f(${params.join(', ')}) { ${code} }`

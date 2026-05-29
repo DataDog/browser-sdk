@@ -1,5 +1,5 @@
 import { registerCleanupTask, replaceMockable, mockCookies, collectAsyncCalls } from '../../../../test'
-import type { CookieStoreWindow } from '../../../browser/browser.types'
+import { globalObject } from '../../../tools/globalObject'
 import { Observable } from '../../../tools/observable'
 import type { SessionState } from '../sessionState'
 import type { Configuration, InitConfiguration } from '../../configuration'
@@ -266,7 +266,7 @@ describe('session in cookie strategy', () => {
     }
 
     function disableCookieStore() {
-      replaceMockable((window as CookieStoreWindow).cookieStore, undefined)
+      replaceMockable(globalObject.cookieStore, undefined)
     }
 
     function disableDocumentCookie() {
@@ -274,7 +274,7 @@ describe('session in cookie strategy', () => {
     }
 
     it('returns cookieStore strategy when both APIs are available', async () => {
-      if (!(window as CookieStoreWindow).cookieStore) {
+      if (!globalObject.cookieStore) {
         pending('CookieStore API not available')
       }
       mockCookies()

@@ -5,12 +5,12 @@ import {
   PRIVACY_ATTR_VALUE_MASK_UNLESS_ALLOWLISTED,
   PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
 } from '@datadog/browser-rum-core'
-import { registerCleanupTask } from '../../../../../core/test'
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import { ChangeType } from '../../../types'
 
-import { serializeHtmlAsChange } from '../test/serializeHtml.specHelper'
+import { serializeHtml } from '../test/serializeHtml.specHelper'
 
-describe('serializeNodeAsChange for form elements', () => {
+describe('serializeNode for form elements', () => {
   let originalTimeout: number
 
   beforeAll(() => {
@@ -24,12 +24,12 @@ describe('serializeNodeAsChange for form elements', () => {
 
   describe('<input type="button">', () => {
     it('serializes the element', async () => {
-      const record = await serializeHtmlAsChange('<input type="button" value="Click here"></input>')
+      const record = await serializeHtml('<input type="button" value="Click here"></input>')
       expect(record?.data).toEqual([[ChangeType.AddNode, [null, 'INPUT', ['type', 'button'], ['value', 'Click here']]]])
     })
 
     it('does not mask the value if the <input> has privacy level MASK_USER_INPUT', async () => {
-      const record = await serializeHtmlAsChange(`
+      const record = await serializeHtml(`
           <input
             ${PRIVACY_ATTR_NAME}="${PRIVACY_ATTR_VALUE_MASK_USER_INPUT}"
             type="button"
@@ -53,7 +53,7 @@ describe('serializeNodeAsChange for form elements', () => {
     it('does not mask the value if an ancestor has privacy level MASK_USER_INPUT', async () => {
       // Check that the ancestor's privacy level takes effect when we serialize
       // a descendant <input> directly.
-      const record = await serializeHtmlAsChange(
+      const record = await serializeHtml(
         `
           <div ${PRIVACY_ATTR_NAME}="${PRIVACY_ATTR_VALUE_MASK_USER_INPUT}">
             <input type="button" value="Click here"></input>
@@ -69,7 +69,7 @@ describe('serializeNodeAsChange for form elements', () => {
     it('does not mask the value when serializing an ancestor with privacy level MASK_USER_INPUT', async () => {
       // Check that the ancestor's privacy level takes effect when we serialize
       // the ancestor and the <input> appears within the serialized subtree.
-      const record = await serializeHtmlAsChange(`
+      const record = await serializeHtml(`
           <div ${PRIVACY_ATTR_NAME}="${PRIVACY_ATTR_VALUE_MASK_USER_INPUT}">
             <input type="button" value="Click here"></input>
           </div>
@@ -87,12 +87,12 @@ describe('serializeNodeAsChange for form elements', () => {
   describe('<input type="checkbox">', () => {
     describe('which is unchecked', () => {
       it('serializes the element', async () => {
-        const record = await serializeHtmlAsChange('<input type="checkbox" value="on"></input>')
+        const record = await serializeHtml('<input type="checkbox" value="on"></input>')
         expect(record?.data).toEqual([[ChangeType.AddNode, [null, 'INPUT', ['type', 'checkbox'], ['value', 'on']]]])
       })
 
       it('serializes a MASK_USER_INPUT element', async () => {
-        const record = await serializeHtmlAsChange(`
+        const record = await serializeHtml(`
             <input
               ${PRIVACY_ATTR_NAME}="${PRIVACY_ATTR_VALUE_MASK_USER_INPUT}"
               type="checkbox"
@@ -116,14 +116,14 @@ describe('serializeNodeAsChange for form elements', () => {
 
     describe('which is checked by default', () => {
       it('serializes the element', async () => {
-        const record = await serializeHtmlAsChange('<input type="checkbox" value="on" checked></input>')
+        const record = await serializeHtml('<input type="checkbox" value="on" checked></input>')
         expect(record?.data).toEqual([
           [ChangeType.AddNode, [null, 'INPUT', ['type', 'checkbox'], ['value', 'on'], ['checked', '']]],
         ])
       })
 
       it('serializes a MASK_USER_INPUT element without the "checked" attribute', async () => {
-        const record = await serializeHtmlAsChange(`
+        const record = await serializeHtml(`
             <input
               ${PRIVACY_ATTR_NAME}="${PRIVACY_ATTR_VALUE_MASK_USER_INPUT}"
               type="checkbox"
@@ -148,7 +148,7 @@ describe('serializeNodeAsChange for form elements', () => {
 
     describe('which is checked by property setter', () => {
       it('serializes the element', async () => {
-        const record = await serializeHtmlAsChange('<input type="checkbox" value="on"></input>', {
+        const record = await serializeHtml('<input type="checkbox" value="on"></input>', {
           before(target: Node): void {
             ;(target as HTMLInputElement).checked = true
           },
@@ -159,7 +159,7 @@ describe('serializeNodeAsChange for form elements', () => {
       })
 
       it('serializes a MASK_USER_INPUT element without the "checked" attribute', async () => {
-        const record = await serializeHtmlAsChange(
+        const record = await serializeHtml(
           `
             <input
               ${PRIVACY_ATTR_NAME}="${PRIVACY_ATTR_VALUE_MASK_USER_INPUT}"
@@ -190,7 +190,7 @@ describe('serializeNodeAsChange for form elements', () => {
 
     describe('which is unchecked by property setter', () => {
       it('serializes the element', async () => {
-        const record = await serializeHtmlAsChange('<input type="checkbox" value="on" checked></input>', {
+        const record = await serializeHtml('<input type="checkbox" value="on" checked></input>', {
           before(target: Node): void {
             ;(target as HTMLInputElement).checked = false
           },
@@ -199,7 +199,7 @@ describe('serializeNodeAsChange for form elements', () => {
       })
 
       it('serializes a MASK_USER_INPUT element without the "checked" attribute', async () => {
-        const record = await serializeHtmlAsChange(
+        const record = await serializeHtml(
           `
             <input
               ${PRIVACY_ATTR_NAME}="${PRIVACY_ATTR_VALUE_MASK_USER_INPUT}"
@@ -232,7 +232,7 @@ describe('serializeNodeAsChange for form elements', () => {
 
   describe('<input type="password">', () => {
     it('does not serialize a value set via property setter', async () => {
-      const record = await serializeHtmlAsChange('<input type="password"></input>', {
+      const record = await serializeHtml('<input type="password"></input>', {
         before(target: Node): void {
           ;(target as HTMLInputElement).value = 'toto'
         },
@@ -241,7 +241,7 @@ describe('serializeNodeAsChange for form elements', () => {
     })
 
     it('does not serialize a value set via attribute setter', async () => {
-      const record = await serializeHtmlAsChange('<input type="password"></input>', {
+      const record = await serializeHtml('<input type="password"></input>', {
         before(target: Node): void {
           ;(target as HTMLInputElement).setAttribute('value', 'toto')
         },
@@ -253,12 +253,12 @@ describe('serializeNodeAsChange for form elements', () => {
   describe('<input type="radio">', () => {
     describe('which is unchecked', () => {
       it('serializes the element', async () => {
-        const record = await serializeHtmlAsChange('<input type="radio" value="on"></input>')
+        const record = await serializeHtml('<input type="radio" value="on"></input>')
         expect(record?.data).toEqual([[ChangeType.AddNode, [null, 'INPUT', ['type', 'radio'], ['value', 'on']]]])
       })
 
       it('serializes a MASK_USER_INPUT element', async () => {
-        const record = await serializeHtmlAsChange(`
+        const record = await serializeHtml(`
             <input
               ${PRIVACY_ATTR_NAME}="${PRIVACY_ATTR_VALUE_MASK_USER_INPUT}"
               type="radio"
@@ -282,14 +282,14 @@ describe('serializeNodeAsChange for form elements', () => {
 
     describe('which is checked by default', () => {
       it('serializes the element', async () => {
-        const record = await serializeHtmlAsChange('<input type="radio" value="on" checked></input>')
+        const record = await serializeHtml('<input type="radio" value="on" checked></input>')
         expect(record?.data).toEqual([
           [ChangeType.AddNode, [null, 'INPUT', ['type', 'radio'], ['value', 'on'], ['checked', '']]],
         ])
       })
 
       it('serializes a MASK_USER_INPUT element without the "checked" attribute', async () => {
-        const record = await serializeHtmlAsChange(`
+        const record = await serializeHtml(`
             <input
               ${PRIVACY_ATTR_NAME}="${PRIVACY_ATTR_VALUE_MASK_USER_INPUT}"
               type="radio"
@@ -314,7 +314,7 @@ describe('serializeNodeAsChange for form elements', () => {
 
     describe('which is checked by property setter', () => {
       it('serializes the element', async () => {
-        const record = await serializeHtmlAsChange('<input type="radio" value="on"></input>', {
+        const record = await serializeHtml('<input type="radio" value="on"></input>', {
           before(target: Node): void {
             ;(target as HTMLInputElement).checked = true
           },
@@ -325,7 +325,7 @@ describe('serializeNodeAsChange for form elements', () => {
       })
 
       it('serializes a MASK_USER_INPUT element without the "checked" attribute', async () => {
-        const record = await serializeHtmlAsChange(
+        const record = await serializeHtml(
           `
             <input
               ${PRIVACY_ATTR_NAME}="${PRIVACY_ATTR_VALUE_MASK_USER_INPUT}"
@@ -356,7 +356,7 @@ describe('serializeNodeAsChange for form elements', () => {
 
     describe('which is unchecked by property setter', () => {
       it('serializes the element', async () => {
-        const record = await serializeHtmlAsChange('<input type="radio" value="on" checked></input>', {
+        const record = await serializeHtml('<input type="radio" value="on" checked></input>', {
           before(target: Node): void {
             ;(target as HTMLInputElement).checked = false
           },
@@ -365,7 +365,7 @@ describe('serializeNodeAsChange for form elements', () => {
       })
 
       it('serializes a MASK_USER_INPUT element without the "checked" attribute', async () => {
-        const record = await serializeHtmlAsChange(
+        const record = await serializeHtml(
           `
             <input
               ${PRIVACY_ATTR_NAME}="${PRIVACY_ATTR_VALUE_MASK_USER_INPUT}"
@@ -398,12 +398,12 @@ describe('serializeNodeAsChange for form elements', () => {
 
   describe('<input type="submit">', () => {
     it('serializes the element', async () => {
-      const record = await serializeHtmlAsChange('<input type="submit" value="Click here"></input>')
+      const record = await serializeHtml('<input type="submit" value="Click here"></input>')
       expect(record?.data).toEqual([[ChangeType.AddNode, [null, 'INPUT', ['type', 'submit'], ['value', 'Click here']]]])
     })
 
     it('does not mask the value if the <input> has privacy level MASK_USER_INPUT', async () => {
-      const record = await serializeHtmlAsChange(`
+      const record = await serializeHtml(`
           <input
             ${PRIVACY_ATTR_NAME}="${PRIVACY_ATTR_VALUE_MASK_USER_INPUT}"
             type="submit"
@@ -427,7 +427,7 @@ describe('serializeNodeAsChange for form elements', () => {
     it('does not mask the value if an ancestor has privacy level MASK_USER_INPUT', async () => {
       // Check that the ancestor's privacy level takes effect when we serialize
       // a descendant <input> directly.
-      const record = await serializeHtmlAsChange(
+      const record = await serializeHtml(
         `
           <div ${PRIVACY_ATTR_NAME}="${PRIVACY_ATTR_VALUE_MASK_USER_INPUT}">
             <input type="submit" value="Click here"></input>
@@ -443,7 +443,7 @@ describe('serializeNodeAsChange for form elements', () => {
     it('does not mask the value when serializing an ancestor with privacy level MASK_USER_INPUT', async () => {
       // Check that the ancestor's privacy level takes effect when we serialize
       // the ancestor and the <input> appears within the serialized subtree.
-      const record = await serializeHtmlAsChange(`
+      const record = await serializeHtml(`
           <div ${PRIVACY_ATTR_NAME}="${PRIVACY_ATTR_VALUE_MASK_USER_INPUT}">
             <input type="submit" value="Click here"></input>
           </div>
@@ -469,26 +469,26 @@ describe('serializeNodeAsChange for form elements', () => {
     ]) {
       describe(`with ${typeAttributeDescription}`, () => {
         it('serializes the element', async () => {
-          const record = await serializeHtmlAsChange(`<input ${typeAttribute}></input>`)
+          const record = await serializeHtml(`<input ${typeAttribute}></input>`)
           expect(record?.data).toEqual([[ChangeType.AddNode, [null, 'INPUT', ...serializedTypeAttribute]]])
         })
 
         it('serializes the placeholder', async () => {
-          const record = await serializeHtmlAsChange(`<input ${typeAttribute} placeholder="placeholder"></input>`)
+          const record = await serializeHtml(`<input ${typeAttribute} placeholder="placeholder"></input>`)
           expect(record?.data).toEqual([
             [ChangeType.AddNode, [null, 'INPUT', ...serializedTypeAttribute, ['placeholder', 'placeholder']]],
           ])
         })
 
         it('serializes the element with a value set by attribute', async () => {
-          const record = await serializeHtmlAsChange(`<input ${typeAttribute} value="toto"></input>`)
+          const record = await serializeHtml(`<input ${typeAttribute} value="toto"></input>`)
           expect(record?.data).toEqual([
             [ChangeType.AddNode, [null, 'INPUT', ...serializedTypeAttribute, ['value', 'toto']]],
           ])
         })
 
         it('serializes the element with a value set by property setter', async () => {
-          const record = await serializeHtmlAsChange(`<input ${typeAttribute}></input>`, {
+          const record = await serializeHtml(`<input ${typeAttribute}></input>`, {
             before(target: Node): void {
               ;(target as HTMLInputElement).value = 'toto'
             },
@@ -499,7 +499,7 @@ describe('serializeNodeAsChange for form elements', () => {
         })
 
         it('masks the value and placeholder if the element has privacy level MASK', async () => {
-          const record = await serializeHtmlAsChange(
+          const record = await serializeHtml(
             `
             <input
               ${typeAttribute}
@@ -529,7 +529,7 @@ describe('serializeNodeAsChange for form elements', () => {
         })
 
         it('masks the value if the element has privacy level MASK_USER_INPUT', async () => {
-          const record = await serializeHtmlAsChange(
+          const record = await serializeHtml(
             `
             <input
               ${typeAttribute}
@@ -561,7 +561,7 @@ describe('serializeNodeAsChange for form elements', () => {
         it('masks the value if an ancestor has privacy level MASK_USER_INPUT', async () => {
           // Check that the ancestor's privacy level takes effect when we serialize
           // a descendant <input> directly.
-          const record = await serializeHtmlAsChange(
+          const record = await serializeHtml(
             `
             <div ${PRIVACY_ATTR_NAME}="${PRIVACY_ATTR_VALUE_MASK_USER_INPUT}">
               <input ${typeAttribute} placeholder="placeholder"></input>
@@ -587,7 +587,7 @@ describe('serializeNodeAsChange for form elements', () => {
         it('masks the value when serializing an ancestor with privacy level MASK_USER_INPUT', async () => {
           // Check that the ancestor's privacy level takes effect when we serialize
           // the ancestor and the <input> appears within the serialized subtree.
-          const record = await serializeHtmlAsChange(
+          const record = await serializeHtml(
             `
             <div ${PRIVACY_ATTR_NAME}="${PRIVACY_ATTR_VALUE_MASK_USER_INPUT}">
               <input ${typeAttribute} placeholder="placeholder"></input>
@@ -609,7 +609,7 @@ describe('serializeNodeAsChange for form elements', () => {
         })
 
         it('masks the placeholder and value if the element has privacy level MASK_UNLESS_ALLOWLISTED', async () => {
-          const record = await serializeHtmlAsChange(
+          const record = await serializeHtml(
             `
             <input
               ${typeAttribute}
@@ -644,7 +644,7 @@ describe('serializeNodeAsChange for form elements', () => {
             delete (window as BrowserWindow).$DD_ALLOW
           })
 
-          const record = await serializeHtmlAsChange(
+          const record = await serializeHtml(
             `
             <input
               ${typeAttribute}
@@ -688,7 +688,7 @@ describe('serializeNodeAsChange for form elements', () => {
       select.appendChild(option2)
       select.options.selectedIndex = 1
 
-      expect(await serializeHtmlAsChangeNode(select, NodePrivacyLevel.ALLOW, transaction)).toEqual(
+      expect(await serializeHtmlNode(select, NodePrivacyLevel.ALLOW, transaction)).toEqual(
         jasmine.objectContaining({
           attributes: { value: 'bar' },
           childNodes: [
@@ -712,7 +712,7 @@ describe('serializeNodeAsChange for form elements', () => {
 
   describe('<textarea>', () => {
     it('serializes the value', async () => {
-      const record = await serializeHtmlAsChange('<textarea>toto</textarea>', {
+      const record = await serializeHtml('<textarea>toto</textarea>', {
         before(target: Node): void {
           ;(target as HTMLTextAreaElement).value = 'some text'
         },
@@ -723,12 +723,12 @@ describe('serializeNodeAsChange for form elements', () => {
     })
 
     it('serializes the default value', async () => {
-      const record = await serializeHtmlAsChange('<textarea>toto</textarea>')
+      const record = await serializeHtml('<textarea>toto</textarea>')
       expect(record?.data).toEqual([[ChangeType.AddNode, [null, 'TEXTAREA', ['value', 'toto']], [1, '#text', 'toto']]])
     })
 
     it('masks the value if the element has privacy level MASK', async () => {
-      const record = await serializeHtmlAsChange(
+      const record = await serializeHtml(
         `<textarea ${PRIVACY_ATTR_NAME}="${PRIVACY_ATTR_VALUE_MASK}">toto</textarea>`,
         {
           before(target: Node): void {
@@ -746,9 +746,7 @@ describe('serializeNodeAsChange for form elements', () => {
     })
 
     it('masks the default value if the element has privacy level MASK', async () => {
-      const record = await serializeHtmlAsChange(
-        `<textarea ${PRIVACY_ATTR_NAME}="${PRIVACY_ATTR_VALUE_MASK}">toto</textarea>`
-      )
+      const record = await serializeHtml(`<textarea ${PRIVACY_ATTR_NAME}="${PRIVACY_ATTR_VALUE_MASK}">toto</textarea>`)
       expect(record?.data).toEqual([
         [
           ChangeType.AddNode,
@@ -759,7 +757,7 @@ describe('serializeNodeAsChange for form elements', () => {
     })
 
     it('masks the value if the element has privacy level MASK_USER_INPUT', async () => {
-      const record = await serializeHtmlAsChange(
+      const record = await serializeHtml(
         `<textarea ${PRIVACY_ATTR_NAME}="${PRIVACY_ATTR_VALUE_MASK_USER_INPUT}">toto</textarea>`,
         {
           before(target: Node): void {
@@ -777,7 +775,7 @@ describe('serializeNodeAsChange for form elements', () => {
     })
 
     it('masks the default value if the element has privacy level MASK_USER_INPUT', async () => {
-      const record = await serializeHtmlAsChange(
+      const record = await serializeHtml(
         `<textarea ${PRIVACY_ATTR_NAME}="${PRIVACY_ATTR_VALUE_MASK_USER_INPUT}">toto</textarea>`
       )
       expect(record?.data).toEqual([
@@ -795,7 +793,7 @@ describe('serializeNodeAsChange for form elements', () => {
         delete (window as BrowserWindow).$DD_ALLOW
       })
 
-      const record = await serializeHtmlAsChange(
+      const record = await serializeHtml(
         `
         <textarea
           ${PRIVACY_ATTR_NAME}="${PRIVACY_ATTR_VALUE_MASK_UNLESS_ALLOWLISTED}"

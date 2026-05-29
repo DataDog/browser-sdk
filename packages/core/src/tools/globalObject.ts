@@ -1,41 +1,45 @@
+// eslint-disable-next-line no-restricted-imports
+import type { BrowserNavigator, CookieStore } from '../browser/browser.types'
 import { mockable } from './mockable'
 
-// Extend/Create the WorkerGlobalScope interface to avoid issues when used in a non-browser tsconfig environment
-interface WorkerGlobalScope {
-  empty: never
-}
+/**
+ * Reflects values available in the global object (e.g. window or self). We use our own type to
+ * adjust the expectations across the codebase when the native types offered by TypeScript aren't
+ * sufficient.
+ *
+ * For example, we can mark a property as optional when it is not available in all browsers, or add
+ * new browser APIs that are not yet typed properly in the typescript lib.
+ *
+ * Feel free to add more properties as needed, or mark some properties as optional when they are.
+ */
+export interface GlobalObject extends Omit<typeof globalThis, 'queueMicrotask' | 'cookieStore' | 'location'> {
+  navigator: BrowserNavigator
 
-// Utility type to enforce that exactly one of the two types is used
-type Without<T, U> = { [P in Exclude<keyof T, keyof U>]?: never }
-type XOR<T, U> = T | U extends object ? (Without<T, U> & U) | (Without<U, T> & T) : T | U
+  // cookieStore is not available in all browsers yet
+  cookieStore?: CookieStore
 
-export type GlobalObject = XOR<Window, WorkerGlobalScope>
+  // location is not available in all execution contexts
+  location?: Location
 
-export function getGlobalObject<T = typeof globalThis>(): T {
-  // Salesforce recommends to asign self to global: https://developer.salesforce.com/docs/platform/lightning-components-security/guide/lws-js.html#third-party-library-sets-up-on-global-window-object
-  if (typeof self === 'object') {
-    return self as unknown as T
-  }
-
-  return globalThis as unknown as T
+  // queueMicrotask is not available in all browsers yet
+  queueMicrotask?: typeof queueMicrotask
 }
 
 /**
- * Cached reference to the global object so it can be imported and re-used without
- * re-evaluating the heavyweight fallback logic in `getGlobalObject()`.
+ * Cached reference to the global object so it can be imported and re-used.
  */
-// eslint-disable-next-line local-rules/disallow-side-effects
-export const globalObject = getGlobalObject<GlobalObject>()
+export const globalObject = globalThis as GlobalObject
+
+export function getGlobalObject<T = GlobalObject>() {
+  return globalObject as T
+}
 
 export const isWorkerEnvironment = 'WorkerGlobalScope' in globalObject
 
 export function getGlobalLocation<T extends { href: string } = Location>(): T | undefined {
-  const location = (globalObject as unknown as { location?: T }).location
-  return location && mockable(location)
+  return mockable(globalObject.location as T | undefined)
 }
 
-// In Salesforce the location property must be used with accessors: https://developer.salesforce.com/docs/platform/lightning-components-security/guide/lws-limitations.html#:~:text=The%20location%20property%20must%20be%20used%20with%20these%20accessors.
-// If not we crash. This way we mantain current behaviour while fallbacking safely in Salesforce.
 export function getGlobalLocationHref(): string {
   return getGlobalLocation()!.href
 }

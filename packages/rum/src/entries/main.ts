@@ -7,7 +7,7 @@
  */
 
 // Keep the following in sync with packages/rum-slim/src/entries/main.ts
-import { defineGlobal, getGlobalObject } from '@datadog/browser-core'
+import { defineGlobal, globalObject } from '@datadog/browser-core'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
 import { makeRumPublicApi } from '@datadog/browser-rum-core'
 import { makeRecorderApi } from '../boot/recorderApi'
@@ -63,6 +63,7 @@ export type {
   RumLongTaskEvent,
   RumResourceEvent,
   RumViewEvent,
+  RumViewUpdateEvent,
   RumVitalEvent,
 
   // Events context
@@ -94,7 +95,7 @@ export const datadogRum = makeRumPublicApi(recorderApi, profilerApi, {
   sdkName: 'rum',
 })
 
-interface BrowserWindow extends Window {
+interface BrowserWindow {
   DD_RUM?: RumPublicApi
 }
-defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_RUM', datadogRum)
+defineGlobal(globalObject as BrowserWindow, 'DD_RUM', datadogRum)

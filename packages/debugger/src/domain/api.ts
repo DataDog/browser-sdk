@@ -1,11 +1,12 @@
 import type { Batch, Context } from '@datadog/browser-core'
 
-import { timeStampNow, display, buildTag, generateUUID, getGlobalObject } from '@datadog/browser-core'
+import { timeStampNow, display, buildTag, generateUUID, globalObject } from '@datadog/browser-core'
 import type { BrowserWindow, DebuggerInitConfiguration } from '../entries/main'
 import { capture, captureFields } from './capture'
 import type { CaptureContext } from './capture'
 import type { InitializedProbe } from './probes'
 import {
+  checkConditionErrorBudget,
   checkGlobalSnapshotBudget,
   hasProbeLifetimeBudgetRemaining,
   removeProbe,
@@ -16,9 +17,9 @@ import type { ActiveEntry } from './activeEntries'
 import { active } from './activeEntries'
 import { captureStackTrace, parseStackTrace } from './stacktrace'
 import { evaluateProbeMessage } from './template'
-import { evaluateProbeCondition } from './condition'
+import { evaluateProbeCondition, isConditionEvaluationError } from './condition'
 
-const globalObj = getGlobalObject<BrowserWindow>() // eslint-disable-line local-rules/disallow-side-effects
+const globalObj = globalObject as BrowserWindow
 
 const threadName = detectThreadName() // eslint-disable-line local-rules/disallow-side-effects
 
@@ -84,8 +85,21 @@ export function onEntry(probes: InitializedProbe[], self: any, args: Record<stri
       // Build context for condition and message evaluation
       const context = { ...args, this: self }
 
-      // Check condition - if it fails, don't evaluate or capture anything
-      if (!evaluateProbeCondition(probe, context)) {
+      try {
+        // Check condition - if it fails, don't evaluate or capture anything
+        if (!evaluateProbeCondition(probe, context)) {
+          // Still push to stack so onReturn/onThrow can pop it, but mark as skipped
+          stack.push(null)
+          continue
+        }
+      } catch (error) {
+        if (isConditionEvaluationError(error) && checkConditionErrorBudget(probe, start)) {
+          queueDebuggerSnapshot(probe, {
+            start,
+            timestamp: timeStampNow(),
+            evaluationErrors: [error.evaluationError],
+          })
+        }
         // Still push to stack so onReturn/onThrow can pop it, but mark as skipped
         stack.push(null)
         continue
@@ -174,7 +188,19 @@ export function onReturn(
         $dd_return: value,
       }
 
-      if (!evaluateProbeCondition(probe, context)) {
+      try {
+        if (!evaluateProbeCondition(probe, context)) {
+          continue
+        }
+      } catch (error) {
+        if (isConditionEvaluationError(error) && checkConditionErrorBudget(probe, end)) {
+          queueDebuggerSnapshot(probe, {
+            start: result.start,
+            timestamp: result.timestamp,
+            duration: result.duration,
+            evaluationErrors: [error.evaluationError],
+          })
+        }
         continue
       }
 
@@ -254,7 +280,19 @@ export function onThrow(probes: InitializedProbe[], error: Error, self: any, arg
         $dd_exception: error,
       }
 
-      if (!evaluateProbeCondition(probe, context)) {
+      try {
+        if (!evaluateProbeCondition(probe, context)) {
+          continue
+        }
+      } catch (error) {
+        if (isConditionEvaluationError(error) && checkConditionErrorBudget(probe, end)) {
+          queueDebuggerSnapshot(probe, {
+            start: result.start,
+            timestamp: result.timestamp,
+            duration: result.duration,
+            evaluationErrors: [error.evaluationError],
+          })
+        }
         continue
       }
 
@@ -329,9 +367,10 @@ function queueDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): vo
             type: probe.where.typeName,
           },
         },
+        evaluationErrors: result.evaluationErrors,
         stack: result.stack,
         language: 'javascript',
-        duration: result.duration! * 1e6, // to nanoseconds
+        duration: result.duration === undefined ? undefined : result.duration * 1e6, // to nanoseconds (might be undefined in case of eval errors)
         captures:
           result.entry || result.return
             ? {

@@ -1,5 +1,5 @@
 import { display } from '../tools/display'
-import { getGlobalObject } from '../tools/globalObject'
+import { globalObject } from '../tools/globalObject'
 import { matchList } from '../tools/matchOption'
 import { mockable } from '../tools/mockable'
 import type { InitConfiguration } from './configuration'
@@ -10,7 +10,7 @@ export const ERROR_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN =
 export const ERROR_NOT_ALLOWED_TRACKING_ORIGIN = 'SDK initialized on a non-allowed domain.'
 
 export function isAllowedTrackingOrigins(configuration: InitConfiguration, errorStack: string): boolean {
-  const location = mockable(getGlobalObject().location)
+  const location = mockable(globalObject.location)
   const windowOrigin = location ? location.origin : ''
   const allowedTrackingOrigins = configuration.allowedTrackingOrigins
   if (!allowedTrackingOrigins) {

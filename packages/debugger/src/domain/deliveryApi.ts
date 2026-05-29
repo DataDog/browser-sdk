@@ -4,7 +4,7 @@ import {
   dateNow,
   display,
   fetch,
-  getGlobalObject,
+  globalObject,
   isServerError,
   mockable,
   setInterval,
@@ -65,7 +65,7 @@ let sessionAbortController: AbortController | undefined
  * against the public Smart Edge route.
  */
 export function startDeliveryApiPolling(config: DeliveryApiConfiguration): void {
-  if (!('location' in mockable(getGlobalObject)())) {
+  if (!('location' in mockable(globalObject))) {
     return
   }
 
@@ -146,7 +146,7 @@ export function startDeliveryApiPolling(config: DeliveryApiConfiguration): void 
         currentCursor = data.nextCursor
       }
 
-      for (const probeId of data.deletions || []) {
+      for (const probeId of data.deletions ?? []) {
         if (knownProbeIds.has(probeId)) {
           try {
             removeProbe(probeId)
@@ -157,7 +157,7 @@ export function startDeliveryApiPolling(config: DeliveryApiConfiguration): void 
         }
       }
 
-      for (const probe of data.updates || []) {
+      for (const probe of data.updates ?? []) {
         if (!probe.id) {
           continue
         }

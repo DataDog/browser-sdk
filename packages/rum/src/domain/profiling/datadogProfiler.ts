@@ -6,7 +6,7 @@ import {
   DOM_EVENT,
   monitorError,
   display,
-  getGlobalObject,
+  globalObject,
   clocksOrigin,
   clocksNow,
   elapsed,
@@ -181,7 +181,7 @@ export function createRumProfiler(
 
   function startNextProfilerInstance(): void {
     // These APIs might be unavailable in some browsers
-    const globalThisProfiler: Profiler | undefined = getGlobalObject<any>().Profiler
+    const globalThisProfiler: Profiler | undefined = (globalObject as any).Profiler
 
     if (!globalThisProfiler) {
       profilingContextManager.set({ status: 'error', error_reason: 'not-supported-by-browser' })

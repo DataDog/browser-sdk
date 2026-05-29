@@ -1,5 +1,5 @@
 import { getZoneJsOriginalValue } from '../tools/getZoneJsOriginalValue'
-import { getGlobalObject } from '../tools/globalObject'
+import { globalObject } from '../tools/globalObject'
 
 /**
  * Make a fetch request using the native implementation, bypassing Zone.js patching.
@@ -10,5 +10,5 @@ import { getGlobalObject } from '../tools/globalObject'
  * @returns A Promise that resolves to the Response
  */
 export function fetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
-  return getZoneJsOriginalValue(getGlobalObject(), 'fetch')(input, init)
+  return getZoneJsOriginalValue(globalObject, 'fetch')(input, init)
 }
