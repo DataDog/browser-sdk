@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-restricted-imports
-import type { BrowserNavigator, CookieStore } from '../browser/browser.types'
+import type { BrowserNavigator, CookieStore, Profiler } from '../browser/browser.types'
 
 /**
  * Reflects values available in the global object (e.g. window or self). We use our own type to
@@ -11,7 +11,7 @@ import type { BrowserNavigator, CookieStore } from '../browser/browser.types'
  *
  * Feel free to add more properties as needed, or mark some properties as optional when they are.
  */
-export interface GlobalObject extends Omit<typeof globalThis, 'queueMicrotask' | 'cookieStore'> {
+export interface GlobalObject extends Omit<typeof globalThis, 'queueMicrotask' | 'cookieStore' | 'Profiler'> {
   navigator: BrowserNavigator
 
   // cookieStore is not available in all browsers yet
@@ -19,6 +19,9 @@ export interface GlobalObject extends Omit<typeof globalThis, 'queueMicrotask' |
 
   // queueMicrotask is not available in all browsers yet
   queueMicrotask?: typeof queueMicrotask
+
+  // Profiler is not available in all browsers yet
+  Profiler?: Profiler
 }
 
 export const globalObject = globalThis as GlobalObject

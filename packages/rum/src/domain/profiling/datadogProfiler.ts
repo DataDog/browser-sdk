@@ -1,4 +1,4 @@
-import type { Encoder, RelativeTime, SessionManager } from '@datadog/browser-core'
+import type { Encoder, RelativeTime, SessionManager, Profiler } from '@datadog/browser-core'
 import {
   addEventListener,
   clearTimeout,
@@ -20,7 +20,6 @@ import type { BrowserProfilerTrace, RumViewEntry } from '../../types'
 import type {
   RumProfilerInstance,
   RumProfilerRunningInstance,
-  Profiler,
   RUMProfiler,
   RUMProfilerConfiguration,
   RumProfilerStoppedInstance,

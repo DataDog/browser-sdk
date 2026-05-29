@@ -6,7 +6,7 @@ import {
   VitalType,
   createHooks,
 } from '@datadog/browser-rum-core'
-import type { Duration, SessionRenewalEvent } from '@datadog/browser-core'
+import type { Duration, SessionRenewalEvent, ProfilerTrace } from '@datadog/browser-core'
 import {
   addDuration,
   clocksNow,
@@ -38,7 +38,7 @@ import type { BrowserProfilerTrace } from '../../types'
 import { checkProfilingQuota } from './quotaCheck'
 import { mockedTrace } from './test-utils/mockedTrace'
 import { createRumProfiler } from './datadogProfiler'
-import type { ProfilerTrace, RUMProfilerConfiguration } from './types'
+import type { RUMProfilerConfiguration } from './types'
 import type { ProfilingContextManager } from './profilingContext'
 import { startProfilingContext } from './profilingContext'
 import type { ProfileEventPayload } from './transport/assembly'

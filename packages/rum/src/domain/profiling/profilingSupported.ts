@@ -1,5 +1,5 @@
 import { globalObject } from '@datadog/browser-core'
-import type { Profiler } from './types'
+import type { Profiler } from '@datadog/browser-core'
 
 export function isProfilingSupported(): boolean {
   const globalThis = globalObject
