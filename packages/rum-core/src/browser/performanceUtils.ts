@@ -4,12 +4,18 @@ import type { RelevantNavigationTiming } from '../domain/view/viewMetrics/trackN
 import type { RumPerformanceNavigationTiming } from './performanceObservable'
 import { RumPerformanceEntryType, supportPerformanceTimingEvent } from './performanceObservable'
 
+function isValidNavigationEntry(entry: Pick<RumPerformanceNavigationTiming, 'loadEventEnd' | 'domComplete'>) {
+  // WebKit 26.4 reports loadEventEnd/responseStart but leaves DOM timing fields at 0.
+  // performance.timing still has the correct values.
+  return !(entry.loadEventEnd > 0 && entry.domComplete <= 0)
+}
+
 export function getNavigationEntry(): RumPerformanceNavigationTiming {
   if (supportPerformanceTimingEvent(RumPerformanceEntryType.NAVIGATION)) {
     const navigationEntry = performance.getEntriesByType(
       RumPerformanceEntryType.NAVIGATION
     )[0] as unknown as RumPerformanceNavigationTiming
-    if (navigationEntry) {
+    if (navigationEntry && isValidNavigationEntry(navigationEntry)) {
       return navigationEntry
     }
   }
