@@ -1,10 +1,9 @@
-// @ts-check .ts config files are still experimental: https://github.com/eslint/eslint/discussions/17726
-
 import eslint from '@eslint/js'
 import * as tseslint from 'typescript-eslint'
 import { importX } from 'eslint-plugin-import-x'
 import unicornPlugin from 'eslint-plugin-unicorn'
 import jsdocPlugin from 'eslint-plugin-jsdoc'
+// @ts-expect-error -- eslint-plugin-jasmine is not typed
 import jasmine from 'eslint-plugin-jasmine'
 import globals from 'globals'
 // eslint-disable-next-line local-rules/disallow-protected-directory-import
@@ -12,7 +11,8 @@ import eslintLocalRules from './eslint-local-rules/index.js'
 import { SCHEMAS } from './scripts/lib/generatedSchemaTypes.ts'
 
 const SPEC_FILES = '**/*.{spec,specHelper}.{ts,tsx,js}'
-const MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL = process.env.MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL || 'warn'
+const MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL =
+  (process.env.MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL as 'warn' | 'error' | undefined) || 'warn'
 
 /**
  * no-restricted-syntax rules for spec and source files included in packages/
@@ -404,7 +404,6 @@ export default tseslint.config(
     ignores: [SPEC_FILES],
     rules: {
       'local-rules/enforce-monitor-until-comment': 'error',
-      // @ts-expect-error - MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL is either 'warn' or 'error'
       'local-rules/monitor-until-comment-expired': MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL,
       'local-rules/disallow-side-effects': 'error',
       'local-rules/disallow-zone-js-patched-values': 'error',
@@ -466,7 +465,7 @@ export default tseslint.config(
       'scripts/**',
       'test/**/*.js',
       'eslint-local-rules/**/*.js',
-      'eslint.config.mjs',
+      'eslint.config.ts',
       'packages/*/scripts/**/*.js',
     ],
     languageOptions: {
