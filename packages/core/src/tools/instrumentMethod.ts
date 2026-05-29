@@ -2,7 +2,6 @@ import { setTimeout } from './timer'
 import { callMonitored } from './monitor'
 import { noop } from './utils/functionUtils'
 import { createHandlingStack } from './stackTrace/handlingStack'
-import { display } from './display'
 
 /**
  * Object passed to the callback of an instrumented method call. See `instrumentMethod` for more
@@ -117,26 +116,14 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return result
   }
-
-  // try {
-    targetPrototype[method] = instrumentation as TARGET[METHOD]
-  // } catch (error) {
-    // display.error(error)
-    // return { stop: noop }
-  // }
+  targetPrototype[method] = instrumentation as TARGET[METHOD]
 
   return {
     stop: () => {
       stopped = true
-      // If the instrumentation has been removed by a third party, keep the last one
       if (targetPrototype[method] === instrumentation) {
-        // try {
-          targetPrototype[method] = original
-        // } catch (error) {
-          // display.error(error)
-          // Restore can be rejected by sandboxed runtimes; the instrumentation is already stopped.
-        }
-      // }
+        targetPrototype[method] = original
+      }
     },
   }
 }
