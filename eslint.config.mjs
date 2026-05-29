@@ -14,6 +14,17 @@ import { SCHEMAS } from './scripts/lib/generatedSchemaTypes.ts'
 const SPEC_FILES = '**/*.{spec,specHelper}.{ts,tsx,js}'
 const MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL = process.env.MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL || 'warn'
 
+/**
+ * no-restricted-syntax rules for spec and source files included in packages/
+ * This list is needed to avoid repeating the same rules in each eslint config block.
+ */
+const PACKAGES_NO_RESTRICTED_SYNTAX_RULES = [
+  {
+    selector: 'Identifier[name="globalThis"]',
+    message: 'Use `globalObject` from @datadog/browser-core instead of `globalThis`.',
+  },
+]
+
 // eslint-disable-next-line import/no-default-export
 export default tseslint.config(
   eslint.configs.recommended,
@@ -383,6 +394,13 @@ export default tseslint.config(
 
   {
     files: ['packages/*/src/**/*.ts'],
+    rules: {
+      'no-restricted-syntax': ['error', ...PACKAGES_NO_RESTRICTED_SYNTAX_RULES],
+    },
+  },
+
+  {
+    files: ['packages/*/src/**/*.ts'],
     ignores: [SPEC_FILES],
     rules: {
       'local-rules/enforce-monitor-until-comment': 'error',
@@ -409,11 +427,12 @@ export default tseslint.config(
           selector: 'TSEnumDeclaration:not([const=true])',
           message: 'When possible, use `const enum` as it produces less code when transpiled.',
         },
-
         {
           selector: 'TSModuleDeclaration[kind=global]',
           message: 'Never declare global types as it will leak to the user app global scope.',
         },
+
+        ...PACKAGES_NO_RESTRICTED_SYNTAX_RULES,
       ],
     },
   },

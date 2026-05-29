@@ -1,4 +1,4 @@
-import type { ProfilerTrace } from '../types'
+import type { ProfilerTrace } from '@datadog/browser-core'
 
 const generateFiftyRandomSamples = () => {
   const samples = []

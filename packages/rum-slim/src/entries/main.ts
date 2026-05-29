@@ -1,5 +1,5 @@
 // Keep the following in sync with packages/rum/src/entries/main.ts
-import { defineGlobal, getGlobalObject } from '@datadog/browser-core'
+import { defineGlobal, globalObject } from '@datadog/browser-core'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
 import { makeRumPublicApi } from '@datadog/browser-rum-core'
 import { makeRecorderApiStub } from '../boot/stubRecorderApi'
@@ -78,7 +78,7 @@ export const datadogRum = makeRumPublicApi(makeRecorderApiStub(), makeProfilerAp
   sdkName: 'rum-slim',
 })
 
-interface BrowserWindow extends Window {
+interface BrowserWindow {
   DD_RUM?: RumPublicApi
 }
-defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_RUM', datadogRum)
+defineGlobal(globalObject as BrowserWindow, 'DD_RUM', datadogRum)

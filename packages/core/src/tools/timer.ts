@@ -1,21 +1,22 @@
 import { getZoneJsOriginalValue } from './getZoneJsOriginalValue'
 import { monitor } from './monitor'
-import { getGlobalObject } from './globalObject'
+import type { GlobalObject } from './globalObject'
+import { globalObject } from './globalObject'
 
-export type TimeoutId = ReturnType<typeof globalThis.setTimeout>
+export type TimeoutId = ReturnType<GlobalObject['setTimeout']>
 
 export function setTimeout(callback: () => void, delay?: number): TimeoutId {
-  return getZoneJsOriginalValue(getGlobalObject(), 'setTimeout')(monitor(callback), delay)
+  return getZoneJsOriginalValue(globalObject, 'setTimeout')(monitor(callback), delay)
 }
 
 export function clearTimeout(timeoutId: TimeoutId | undefined) {
-  getZoneJsOriginalValue(getGlobalObject(), 'clearTimeout')(timeoutId)
+  getZoneJsOriginalValue(globalObject, 'clearTimeout')(timeoutId)
 }
 
 export function setInterval(callback: () => void, delay?: number): TimeoutId {
-  return getZoneJsOriginalValue(getGlobalObject(), 'setInterval')(monitor(callback), delay)
+  return getZoneJsOriginalValue(globalObject, 'setInterval')(monitor(callback), delay)
 }
 
 export function clearInterval(timeoutId: TimeoutId | undefined) {
-  getZoneJsOriginalValue(getGlobalObject(), 'clearInterval')(timeoutId)
+  getZoneJsOriginalValue(globalObject, 'clearInterval')(timeoutId)
 }

@@ -7,7 +7,7 @@ import type { BrowserWindow } from './main'
 import { datadogDebugger } from './main'
 
 describe('datadogDebugger', () => {
-  const browserWindow: BrowserWindow = window
+  const browserWindow = window as BrowserWindow
 
   beforeEach(() => {
     delete browserWindow.__DD_LIVE_DEBUGGER_BUILD__

@@ -7,7 +7,7 @@
  * @see [Browser Log Collection](https://docs.datadoghq.com/logs/log_collection/javascript/)
  */
 
-import { defineGlobal, getGlobalObject } from '@datadog/browser-core'
+import { defineGlobal, globalObject } from '@datadog/browser-core'
 import type { LogsPublicApi } from '../boot/logsPublicApi'
 import { makeLogsPublicApi } from '../boot/logsPublicApi'
 
@@ -58,7 +58,7 @@ export type {
  */
 export const datadogLogs = makeLogsPublicApi()
 
-interface BrowserWindow extends Window {
+interface BrowserWindow {
   DD_LOGS?: LogsPublicApi
 }
-defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_LOGS', datadogLogs)
+defineGlobal(globalObject as BrowserWindow, 'DD_LOGS', datadogLogs)

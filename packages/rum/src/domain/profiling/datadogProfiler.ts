@@ -1,4 +1,4 @@
-import type { Encoder, RelativeTime, SessionManager } from '@datadog/browser-core'
+import type { Encoder, RelativeTime, SessionManager, Profiler } from '@datadog/browser-core'
 import {
   addEventListener,
   clearTimeout,
@@ -6,7 +6,7 @@ import {
   DOM_EVENT,
   monitorError,
   display,
-  getGlobalObject,
+  globalObject,
   clocksOrigin,
   clocksNow,
   elapsed,
@@ -20,7 +20,6 @@ import type { BrowserProfilerTrace, RumViewEntry } from '../../types'
 import type {
   RumProfilerInstance,
   RumProfilerRunningInstance,
-  Profiler,
   RUMProfiler,
   RUMProfilerConfiguration,
   RumProfilerStoppedInstance,
@@ -181,9 +180,9 @@ export function createRumProfiler(
 
   function startNextProfilerInstance(): void {
     // These APIs might be unavailable in some browsers
-    const globalThisProfiler: Profiler | undefined = getGlobalObject<any>().Profiler
+    const profilerConstructor = globalObject.Profiler
 
-    if (!globalThisProfiler) {
+    if (!profilerConstructor) {
       profilingContextManager.set({ status: 'error', error_reason: 'not-supported-by-browser' })
       throw new Error('RUM Profiler is not supported in this browser.')
     }
@@ -198,7 +197,7 @@ export function createRumProfiler(
     let profiler: Profiler
     try {
       // We have to create new Profiler each time we start a new instance
-      profiler = new globalThisProfiler({
+      profiler = new profilerConstructor({
         sampleInterval: profilerConfiguration.sampleIntervalMs,
         // Keep buffer size at 1.5 times of minimum required to collect data for a profiling instance
         maxBufferSize: Math.round(

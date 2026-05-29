@@ -6,7 +6,7 @@
  * @see [Live Debugger Documentation](https://docs.datadoghq.com/tracing/live_debugger/)
  */
 
-import { defineGlobal, display, getGlobalObject, makePublicApi, mockable } from '@datadog/browser-core'
+import { defineGlobal, display, globalObject, makePublicApi, mockable } from '@datadog/browser-core'
 import type { PublicApi, Site } from '@datadog/browser-core'
 import { initDebuggerTransport, onEntry, onReturn, onThrow } from '../domain/api'
 import { startDeliveryApiPolling } from '../domain/deliveryApi'
@@ -154,7 +154,7 @@ export interface DatadogDebugger extends PublicApi {
   init: (initConfiguration: DebuggerInitConfiguration) => void
 }
 
-export interface BrowserWindow extends Window {
+export interface BrowserWindow {
   DD_DEBUGGER?: DatadogDebugger
   __DD_LIVE_DEBUGGER_BUILD__?: DebuggerBuildMetadata
   $dd_entry?: typeof onEntry
@@ -164,7 +164,7 @@ export interface BrowserWindow extends Window {
 }
 
 function resolveDebuggerVersion(initConfiguration: DebuggerInitConfiguration): string | undefined {
-  const buildVersion = getGlobalObject<BrowserWindow>().__DD_LIVE_DEBUGGER_BUILD__?.version
+  const buildVersion = (globalObject as BrowserWindow).__DD_LIVE_DEBUGGER_BUILD__?.version
 
   if (
     initConfiguration.version !== undefined &&
@@ -195,7 +195,7 @@ function makeDebuggerPublicApi(): DatadogDebugger {
       mockable(initDebuggerTransport)(resolvedConfiguration, batch)
 
       // Expose internal hooks on globalThis for instrumented code
-      const debuggerGlobal = getGlobalObject<BrowserWindow>()
+      const debuggerGlobal = globalObject as BrowserWindow
       debuggerGlobal.$dd_entry = onEntry
       debuggerGlobal.$dd_return = onReturn
       debuggerGlobal.$dd_throw = onThrow
@@ -224,4 +224,4 @@ function makeDebuggerPublicApi(): DatadogDebugger {
  */
 export const datadogDebugger = makeDebuggerPublicApi()
 
-defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_DEBUGGER', datadogDebugger)
+defineGlobal(globalObject as BrowserWindow, 'DD_DEBUGGER', datadogDebugger)
