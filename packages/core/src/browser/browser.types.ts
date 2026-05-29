@@ -153,14 +153,16 @@ export interface ProfilerInitOptions {
   readonly maxBufferSize: number
 }
 
+export interface ProfilerConstructor {
+  new (options: ProfilerInitOptions): Profiler
+}
+
 export interface Profiler extends EventTarget {
   /** Sample interval in ms. */
   readonly sampleInterval: number
   /** True if profiler is stopped. */
   readonly stopped: boolean
 
-  // eslint-disable-next-line @typescript-eslint/no-misused-new
-  new (options: ProfilerInitOptions): Profiler
   stop(): Promise<ProfilerTrace>
 
   addEventListener<K extends keyof ProfilerEventMap>(

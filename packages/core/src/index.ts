@@ -112,6 +112,7 @@ export type {
   NetworkInterface,
   EffectiveType,
   Profiler,
+  ProfilerConstructor,
   ProfilerTrace,
   ProfilerInitOptions,
   ProfilerFrame,

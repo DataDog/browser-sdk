@@ -180,9 +180,9 @@ export function createRumProfiler(
 
   function startNextProfilerInstance(): void {
     // These APIs might be unavailable in some browsers
-    const globalThisProfiler: Profiler | undefined = (globalObject as any).Profiler
+    const profilerConstructor = globalObject.Profiler
 
-    if (!globalThisProfiler) {
+    if (!profilerConstructor) {
       profilingContextManager.set({ status: 'error', error_reason: 'not-supported-by-browser' })
       throw new Error('RUM Profiler is not supported in this browser.')
     }
@@ -197,7 +197,7 @@ export function createRumProfiler(
     let profiler: Profiler
     try {
       // We have to create new Profiler each time we start a new instance
-      profiler = new globalThisProfiler({
+      profiler = new profilerConstructor({
         sampleInterval: profilerConfiguration.sampleIntervalMs,
         // Keep buffer size at 1.5 times of minimum required to collect data for a profiling instance
         maxBufferSize: Math.round(
