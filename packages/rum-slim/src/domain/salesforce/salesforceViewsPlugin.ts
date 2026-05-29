@@ -67,6 +67,7 @@ function getPageReferenceKey(pageReference: unknown) {
   try {
     return JSON.stringify(pageReference)
   } catch {
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
     return String(pageReference)
   }
 }

@@ -8,15 +8,13 @@ import { toSessionString, toSessionState } from '../sessionState'
 import { Observable } from '../../../tools/observable'
 import { mockable } from '../../../tools/mockable'
 import { monitorError } from '../../../tools/monitor'
-import { noop } from '../../../tools/utils/functionUtils'
 import type { CookieAccess } from '../../../browser/cookieAccess'
 import {
   areCookiesAuthorized,
   createCookieStoreAccess,
   createDocumentCookieAccess,
+  isCookieStoreSupported,
 } from '../../../browser/cookieAccess'
-import type { CookieStoreWindow } from '../../../browser/browser.types'
-import { addEventListener, DOM_EVENT } from '../../../browser/addEventListener'
 import { CookieApi, LEGACY_SESSION_STORE_KEY, SESSION_STORE_KEY } from './sessionStoreStrategy'
 import type {
   SessionStoreStrategy,
@@ -37,7 +35,7 @@ export async function selectCookieStrategy(
   }
 
   if (
-    canUseCookieStoreStrategy(configuration) &&
+    isCookieStoreSupported(configuration) &&
     (await areCookiesAuthorized(createCookieStoreAccess, cookieOptions, configuration))
   ) {
     return { type: SessionPersistence.COOKIE, cookieOptions, cookieApi: CookieApi.COOKIE_STORE }
@@ -110,20 +108,6 @@ export function initCookieStrategy(
       }
     },
     sessionObservable,
-  }
-}
-
-function canUseCookieStoreStrategy(configuration: Configuration): boolean {
-  const cookieStore = mockable((window as CookieStoreWindow).cookieStore)
-  if (!cookieStore) {
-    return false
-  }
-  try {
-    const { stop } = addEventListener(configuration, cookieStore, DOM_EVENT.CHANGE, noop)
-    stop()
-    return true
-  } catch {
-    return false
   }
 }
 

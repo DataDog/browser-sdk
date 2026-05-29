@@ -1,7 +1,7 @@
-import { getGlobalLocationHref, globalObject } from '../globalObject'
+import { globalObject } from '../globalObject'
 
 export function normalizeUrl(url: string) {
-  return buildUrl(url, getGlobalLocationHref()).href
+  return buildUrl(url, globalObject.location?.href).href
 }
 
 export function isValidUrl(url: string) {

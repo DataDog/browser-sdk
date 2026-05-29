@@ -4,6 +4,7 @@ import { Observable } from '../tools/observable'
 import { mockable } from '../tools/mockable'
 import { display } from '../tools/display'
 import { generateUUID } from '../tools/utils/stringUtils'
+import { noop } from '../tools/utils/functionUtils'
 import type { Configuration } from '../domain/configuration'
 import { addTelemetryDebug } from '../domain/telemetry'
 import { addEventListener, DOM_EVENT } from './addEventListener'
@@ -28,6 +29,20 @@ export type CookieAccessFactory = (
   cookieOptions: CookieOptions,
   configuration: Configuration
 ) => CookieAccess
+
+export function isCookieStoreSupported(configuration: Configuration): boolean {
+  const cookieStore = (window as CookieStoreWindow).cookieStore
+  if (!cookieStore) {
+    return false
+  }
+  try {
+    // Salesforce LWS does not support the change event of CookieStore objects. https://developer.salesforce.com/tools/lws-distortion-viewer
+    addEventListener(configuration, cookieStore, DOM_EVENT.CHANGE, noop).stop()
+    return true
+  } catch {
+    return false
+  }
+}
 
 export async function areCookiesAuthorized(
   createAccess: CookieAccessFactory,
