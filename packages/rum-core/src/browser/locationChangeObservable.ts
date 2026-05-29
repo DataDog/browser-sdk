@@ -1,4 +1,11 @@
-import { addEventListener, DOM_EVENT, globalObject, instrumentMethod, Observable, shallowClone } from '@datadog/browser-core'
+import {
+  addEventListener,
+  DOM_EVENT,
+  globalObject,
+  instrumentMethod,
+  Observable,
+  shallowClone,
+} from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 
 export interface LocationChange {

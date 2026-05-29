@@ -8,6 +8,7 @@ import type { RawError } from '../error/error.types'
 import { ErrorHandling, ErrorSource } from '../error/error.types'
 import { clocksNow } from '../../tools/utils/timeUtils'
 import type { ReportType, InterventionReport, DeprecationReport } from './browser.types'
+import { noop } from '../../tools/utils/functionUtils'
 
 export const RawReportType = {
   intervention: 'intervention',
@@ -60,16 +61,15 @@ function createReportObservable(reportTypes: ReportType[]) {
 
 function createCspViolationReportObservable(configuration: Configuration) {
   return new Observable<RawReportError>((observable) => {
-    // Salesforce does not allow to add a securitypolicyviolation event listener. https://developer.salesforce.com/tools/lws-distortion-viewer
-    try {
-      const { stop } = addEventListener(configuration, document, DOM_EVENT.SECURITY_POLICY_VIOLATION, (event) => {
-        observable.notify(buildRawReportErrorFromCspViolation(event))
-      })
-
-      return stop
-    } catch {
+    if (!isCSPEventSupported(configuration)) {
       return
     }
+
+    const { stop } = addEventListener(configuration, document, DOM_EVENT.SECURITY_POLICY_VIOLATION, (event) => {
+      observable.notify(buildRawReportErrorFromCspViolation(event))
+    })
+
+    return stop
   })
 }
 
@@ -135,4 +135,14 @@ function buildStack(
         ],
       })
     : undefined
+}
+
+export function isCSPEventSupported(configuration: Configuration): boolean {
+  try {
+    // Salesforce does not allow to add a securitypolicyviolation event listener. https://developer.salesforce.com/tools/lws-distortion-viewer
+    addEventListener(configuration, document, DOM_EVENT.SECURITY_POLICY_VIOLATION, noop).stop()
+    return true
+  } catch {
+    return false
+  }
 }
