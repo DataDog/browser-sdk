@@ -1,10 +1,10 @@
 import { replaceMockable } from '../../../test'
 import type { CookieStoreWindow } from '../../browser/browser.types'
 import type { Configuration, InitConfiguration } from '../configuration'
+import { buildCookieOptions } from '../configuration'
 import { display } from '../../tools/display'
 import { selectSessionStoreStrategyType } from './sessionStore'
 import { SessionPersistence } from './sessionConstants'
-import { buildCookieOptions } from './storeStrategies/sessionInCookie'
 
 const DEFAULT_INIT_CONFIGURATION: InitConfiguration = { clientToken: 'abc' }
 

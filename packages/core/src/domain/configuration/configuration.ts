@@ -4,7 +4,7 @@ import type { RawTelemetryConfiguration } from '../telemetry'
 import { isPercentage } from '../../tools/utils/numberUtils'
 import { objectHasValue } from '../../tools/utils/objectUtils'
 import type { CookieOptions } from '../../browser/cookie'
-import { buildCookieOptions } from '../session/storeStrategies/sessionInCookie'
+import { getCurrentSite } from '../../browser/cookie'
 import { TrackingConsent } from '../trackingConsent'
 import type { SessionPersistence } from '../session/sessionConstants'
 import type { MatchOption } from '../../tools/matchOption'
@@ -397,6 +397,25 @@ export function validateAndBuildConfiguration(
 
     ...computeTransportConfiguration(initConfiguration),
   }
+}
+
+export function buildCookieOptions(initConfiguration: InitConfiguration): CookieOptions | undefined {
+  const cookieOptions: CookieOptions = {}
+
+  cookieOptions.secure =
+    !!initConfiguration.useSecureSessionCookie || !!initConfiguration.usePartitionedCrossSiteSessionCookie
+  cookieOptions.crossSite = !!initConfiguration.usePartitionedCrossSiteSessionCookie
+  cookieOptions.partitioned = !!initConfiguration.usePartitionedCrossSiteSessionCookie
+
+  if (initConfiguration.trackSessionAcrossSubdomains) {
+    const currentSite = getCurrentSite()
+    if (!currentSite) {
+      return
+    }
+    cookieOptions.domain = currentSite
+  }
+
+  return cookieOptions
 }
 
 export function serializeConfiguration(initConfiguration: InitConfiguration) {
