@@ -57,6 +57,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   stopAction: () => undefined,
   startResource: () => undefined,
   stopResource: () => undefined,
+  updateBehavioralDetection: () => undefined,
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const FAKE_WORKER = {} as DeflateWorker

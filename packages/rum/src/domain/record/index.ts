@@ -4,3 +4,4 @@ export type { ChangeDecoder, SerializationMetric, SerializationStats } from './s
 export { aggregateSerializationStats, createChangeDecoder, createSerializationStats } from './serialization'
 export { createElementsScrollPositions } from './elementsScrollPositions'
 export type { ShadowRootsController } from './shadowRootsController'
+export { setAiAgentBehaviorCallback } from './aiAgentBehavioralAnalyzer'

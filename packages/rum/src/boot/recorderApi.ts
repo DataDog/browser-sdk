@@ -7,6 +7,7 @@ import {
   DeflateEncoderStreamId,
 } from '@datadog/browser-core'
 import type {
+  AiAgentContext,
   LifeCycle,
   ViewHistory,
   RecorderApi,
@@ -20,6 +21,7 @@ import {
   getDeflateWorkerStatus,
   startDeflateWorker,
 } from '../domain/deflate'
+import { setAiAgentBehaviorCallback } from '../domain/record'
 import { createPostStartStrategy } from './postStartStrategy'
 import { createPreStartStrategy } from './preStartStrategy'
 
@@ -78,8 +80,12 @@ export function makeRecorderApi(): RecorderApi {
     sessionManager: SessionManager,
     viewHistory: ViewHistory,
     worker: DeflateWorker | undefined,
-    telemetry: Telemetry
+    telemetry: Telemetry,
+    updateBehavioralDetection?: (context: AiAgentContext) => void
   ) {
+    if (updateBehavioralDetection) {
+      setAiAgentBehaviorCallback(updateBehavioralDetection)
+    }
     let cachedDeflateEncoder: DeflateEncoder | undefined
 
     function getOrCreateDeflateEncoder() {

@@ -55,6 +55,7 @@ import type {
 import { callPluginsMethod } from '../domain/plugins'
 import type { Hooks } from '../domain/hooks'
 import type { SdkName } from '../domain/contexts/defaultContext'
+import type { AiAgentContext } from '../domain/contexts/aiAgentContext'
 import type { ActionOptions } from '../domain/action/trackManualActions'
 import type { ResourceOptions, ResourceStopOptions } from '../domain/resource/trackManualResources'
 import { createPreStartStrategy } from './preStartRum'
@@ -572,7 +573,8 @@ export interface RecorderApi {
     sessionManager: SessionManager,
     viewHistory: ViewHistory,
     deflateWorker: DeflateWorker | undefined,
-    telemetry: Telemetry
+    telemetry: Telemetry,
+    updateBehavioralDetection?: (context: AiAgentContext) => void
   ) => void
   isRecording: () => boolean
   getReplayStats: (viewId: string) => ReplayStats | undefined
@@ -673,7 +675,8 @@ export function makeRumPublicApi(
         sessionManager,
         startRumResult.viewHistory,
         deflateWorker,
-        startRumResult.telemetry
+        startRumResult.telemetry,
+        startRumResult.updateBehavioralDetection
       )
 
       profilerApi.onRumStart(
