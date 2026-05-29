@@ -15,5 +15,5 @@
     "checkJs": false,
     "allowImportingTsExtensions": true
   },
-  "include": ["scripts", "**/webpack.*.mts", "test/envUtils.ts", "eslint.config.ts", "eslint-local-rules"]
+  "include": ["scripts", "**/webpack.*.*", "test/envUtils.ts", "eslint.config.ts", "eslint-local-rules", "test/unit"]
 }

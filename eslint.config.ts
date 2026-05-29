@@ -1,4 +1,5 @@
 import eslint from '@eslint/js'
+import { defineConfig } from 'eslint/config'
 import * as tseslint from 'typescript-eslint'
 import { importX } from 'eslint-plugin-import-x'
 import unicornPlugin from 'eslint-plugin-unicorn'
@@ -26,7 +27,7 @@ const PACKAGES_NO_RESTRICTED_SYNTAX_RULES = [
 ]
 
 // eslint-disable-next-line import-x/no-default-export
-export default tseslint.config(
+export default defineConfig(
   eslint.configs.recommended,
   tseslint.configs.recommendedTypeChecked,
   importX.flatConfigs.recommended,
@@ -67,50 +68,20 @@ export default tseslint.config(
   {
     plugins: {
       unicorn: unicornPlugin,
-      'local-rules': { rules: eslintLocalRules },
+      'local-rules': { rules: eslintLocalRules as Record<string, any> },
       jsdoc: jsdocPlugin,
       jasmine,
     },
 
     languageOptions: {
       parserOptions: {
-        tsconfigRootDir: import.meta.dirname,
-        project: [
-          './tsconfig.default.json',
-          './tsconfig.scripts.json',
-          './developer-extension/tsconfig.json',
-          './packages/rum-nextjs/tsconfig.json',
-          './test/e2e/tsconfig.json',
-          './test/performance/tsconfig.json',
-          './test/apps/**/tsconfig.json',
-        ],
-        sourceType: 'module',
-
-        // Without this option, typescript-eslint fails to lint .js files because we don't use
-        // `allowJs: true` in the TypeScript configuration. Same issue as
-        // https://github.com/typescript-eslint/typescript-eslint/issues/9749.
-        //
-        // Enabling `allowJs` would be a better solution, but right now it's not possible because of a
-        // pretty small reason with big implications: `webpack.base.js` includes
-        // `tsconfig-paths-webpack-plugin`, and this file includes Node.js types via a <reference>
-        // directive (see https://unpkg.com/browse/tsconfig-paths-webpack-plugin@4.2.0/lib/plugin.d.ts).
-        //
-        // Because of this, Node.js types are included in the whole project, and because some of them
-        // are slightly different from the DOM/Browser types, some annoying typecheck errors are raised.
-        //
-        // So, ideally, we should:
-        // * add `allowJs: true` in the TypeScript configuration
-        // * have different tsconfig.json configurations for packages and scripts
-        // * when typechecking, run `tsc` multiple time with each configuration (like we do for the
-        //   developer-extension)
-        // * then remove this option
-        disallowAutomaticSingleRunInference: true,
+        projectService: true,
       },
     },
 
     rules: {
       'arrow-body-style': 'error',
-      camelcase: ['error', { properties: 'never', allow: ['_dd_temp_'] }],
+      camelcase: ['error', { properties: 'never' }],
       curly: 'error',
       eqeqeq: ['error', 'smart'],
       'guard-for-in': 'error',
@@ -393,8 +364,10 @@ export default tseslint.config(
   },
 
   {
-    files: ['packages/*/src/**/*.ts'],
+    files: ['packages/**/*.ts'],
     rules: {
+      'local-rules/disallow-spec-import': 'error',
+      'jsdoc/no-types': 'error',
       'no-restricted-syntax': ['error', ...PACKAGES_NO_RESTRICTED_SYNTAX_RULES],
     },
   },
@@ -433,14 +406,6 @@ export default tseslint.config(
 
         ...PACKAGES_NO_RESTRICTED_SYNTAX_RULES,
       ],
-    },
-  },
-
-  {
-    files: ['packages/**/*.ts'],
-    rules: {
-      'local-rules/disallow-spec-import': 'error',
-      'jsdoc/no-types': 'error',
     },
   },
 

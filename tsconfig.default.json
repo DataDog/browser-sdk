@@ -14,11 +14,13 @@
     "packages/*/bundle",
 
     // Files included in ./tsconfig.scripts.json
-    "**/webpack.*",
     "scripts",
+    "**/webpack.*.*",
+    "webpack.base.ts",
     "test/envUtils.ts",
     "eslint.config.ts",
     "eslint-local-rules",
+    "test/unit",
 
     // Files included in ./test/e2e/tsconfig.json
     "test/e2e",
