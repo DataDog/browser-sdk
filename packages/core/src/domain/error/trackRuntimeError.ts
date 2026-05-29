@@ -4,11 +4,11 @@ import { clocksNow } from '../../tools/utils/timeUtils'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { computeStackTraceFromOnErrorMessage } from '../../tools/stackTrace/computeStackTrace'
 import { globalObject } from '../../tools/globalObject'
+import { DOM_EVENT, isEventSupported } from '../../browser/addEventListener'
+import { noop } from '../../tools/utils/functionUtils'
 import { computeRawError, isError } from './error'
 import type { RawError } from './error.types'
 import { ErrorHandling, ErrorSource, NonErrorPrefix } from './error.types'
-import { DOM_EVENT, isEventSupported } from '../../browser/addEventListener'
-import { noop } from '../../tools/utils/functionUtils'
 
 export type UnhandledErrorCallback = (originalError: unknown, stackTrace?: StackTrace) => any
 

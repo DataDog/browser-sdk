@@ -7,8 +7,8 @@ import type { Configuration } from '../configuration'
 import type { RawError } from '../error/error.types'
 import { ErrorHandling, ErrorSource } from '../error/error.types'
 import { clocksNow } from '../../tools/utils/timeUtils'
-import type { ReportType, InterventionReport, DeprecationReport } from './browser.types'
 import { noop } from '../../tools/utils/functionUtils'
+import type { ReportType, InterventionReport, DeprecationReport } from './browser.types'
 
 export const RawReportType = {
   intervention: 'intervention',
