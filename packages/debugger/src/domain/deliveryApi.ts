@@ -4,7 +4,7 @@ import {
   dateNow,
   display,
   fetch,
-  getGlobalObject,
+  globalObject,
   isServerError,
   mockable,
   setInterval,
@@ -65,7 +65,7 @@ let sessionAbortController: AbortController | undefined
  * against the public Smart Edge route.
  */
 export function startDeliveryApiPolling(config: DeliveryApiConfiguration): void {
-  if (!('location' in mockable(getGlobalObject)())) {
+  if (!('location' in mockable(globalObject))) {
     return
   }
 

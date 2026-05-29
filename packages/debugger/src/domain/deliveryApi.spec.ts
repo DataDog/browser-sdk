@@ -1,4 +1,5 @@
-import { display, getGlobalObject } from '@datadog/browser-core'
+import type { GlobalObject } from '@datadog/browser-core'
+import { display, globalObject } from '@datadog/browser-core'
 import { registerCleanupTask, mockClock, replaceMockable } from '@datadog/browser-core/test'
 import type { Clock } from '@datadog/browser-core/test'
 import { getProbes, clearProbes } from './probes'
@@ -115,7 +116,7 @@ describe('deliveryApi', () => {
 
   describe('startDeliveryApiPolling', () => {
     it('should not start polling when location is not available', () => {
-      replaceMockable(getGlobalObject, (() => ({})) as unknown as typeof getGlobalObject)
+      replaceMockable(globalObject, {} as GlobalObject)
       startDeliveryApiPolling(makeConfig())
       expect(fetchSpy).not.toHaveBeenCalled()
     })

@@ -1,6 +1,6 @@
-import { getGlobalObject } from './globalObject'
+import { globalObject } from './globalObject'
 
-export interface BrowserWindowWithZoneJs extends Window {
+export interface BrowserWindowWithZoneJs {
   Zone?: {
     // All Zone.js versions expose the __symbol__ method, but we observed that some website have a
     // 'Zone' global variable unrelated to Zone.js, so let's consider this method optional
@@ -26,7 +26,7 @@ export function getZoneJsOriginalValue<Target, Name extends keyof Target & strin
   target: Target,
   name: Name
 ): Target[Name] {
-  const browserWindow = getGlobalObject<BrowserWindowWithZoneJs>()
+  const browserWindow = globalObject as BrowserWindowWithZoneJs
   let original: Target[Name] | undefined
   if (browserWindow.Zone && typeof browserWindow.Zone.__symbol__ === 'function') {
     original = (target as any)[browserWindow.Zone.__symbol__(name)]
