@@ -1,3 +1,4 @@
+import type { GlobalObject } from '../globalObject'
 import { globalObject } from '../globalObject'
 
 export function normalizeUrl(url: string) {
@@ -37,14 +38,14 @@ let getPristineGlobalObjectCache: Pick<typeof window, 'URL'> | undefined
 export function getPristineWindow() {
   if (!getPristineGlobalObjectCache) {
     let iframe: HTMLIFrameElement | undefined
-    let pristineWindow: Window & typeof globalThis
+    let pristineWindow: GlobalObject
     try {
       iframe = document.createElement('iframe')
       iframe.style.display = 'none'
       document.body.appendChild(iframe)
-      pristineWindow = (iframe.contentWindow ?? globalObject) as Window & typeof globalThis
+      pristineWindow = (iframe.contentWindow as GlobalObject | null) ?? globalObject
     } catch {
-      pristineWindow = globalObject as unknown as Window & typeof globalThis
+      pristineWindow = globalObject
     }
     getPristineGlobalObjectCache = {
       URL: pristineWindow.URL,

@@ -11,6 +11,7 @@ import type { BrowserNavigator, CookieStore, ProfilerConstructor } from '../brow
  *
  * Feel free to add more properties as needed, or mark some properties as optional when they are.
  */
+// eslint-disable-next-line no-restricted-syntax
 export interface GlobalObject extends Omit<typeof globalThis, 'queueMicrotask' | 'cookieStore' | 'Profiler'> {
   navigator: BrowserNavigator
 
@@ -24,6 +25,7 @@ export interface GlobalObject extends Omit<typeof globalThis, 'queueMicrotask' |
   Profiler?: ProfilerConstructor
 }
 
+// eslint-disable-next-line no-restricted-syntax
 export const globalObject = globalThis as GlobalObject
 
 export const isWorkerEnvironment = 'WorkerGlobalScope' in globalObject

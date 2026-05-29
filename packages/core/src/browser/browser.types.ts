@@ -167,7 +167,7 @@ export interface Profiler extends EventTarget {
 
   addEventListener<K extends keyof ProfilerEventMap>(
     type: K,
-    listener: (this: typeof globalThis, ev: ProfilerEventMap[K]) => any,
+    listener: (ev: ProfilerEventMap[K]) => any,
     options?: boolean | AddEventListenerOptions
   ): void
   addEventListener(
@@ -177,7 +177,7 @@ export interface Profiler extends EventTarget {
   ): void
   removeEventListener<K extends keyof ProfilerEventMap>(
     type: K,
-    listener: (this: typeof globalThis, ev: ProfilerEventMap[K]) => any,
+    listener: (ev: ProfilerEventMap[K]) => any,
     options?: boolean | EventListenerOptions
   ): void
   removeEventListener(

@@ -1,8 +1,9 @@
 import { getZoneJsOriginalValue } from './getZoneJsOriginalValue'
 import { monitor } from './monitor'
+import type { GlobalObject } from './globalObject'
 import { globalObject } from './globalObject'
 
-export type TimeoutId = ReturnType<typeof globalThis.setTimeout>
+export type TimeoutId = ReturnType<GlobalObject['setTimeout']>
 
 export function setTimeout(callback: () => void, delay?: number): TimeoutId {
   return getZoneJsOriginalValue(globalObject, 'setTimeout')(monitor(callback), delay)
