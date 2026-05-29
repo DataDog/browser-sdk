@@ -1,12 +1,16 @@
 import path from 'node:path'
+import { RuleCreator } from '@typescript-eslint/utils/eslint-utils'
 
-export default {
+export default RuleCreator.withoutDocs({
   meta: {
     docs: {
       description: 'Disallow the use of too generic utility file names',
-      recommended: false,
     },
     schema: [],
+    messages: {
+      genericUtilsFileName: 'Consider having a more specific file name to reflect the domain of this utility file',
+    },
+    type: 'suggestion',
   },
   create: (context) => ({
     Program: (node) => {
@@ -14,13 +18,13 @@ export default {
       if (isGenericUtilsFileName(filename)) {
         context.report({
           node,
-          message: 'Consider having a more specific file name to reflect the domain of this utility file',
+          messageId: 'genericUtilsFileName',
         })
       }
     },
   }),
-}
+})
 
-function isGenericUtilsFileName(filename) {
+function isGenericUtilsFileName(filename: string) {
   return /^(utils|specHelper)\..*/.test(filename)
 }

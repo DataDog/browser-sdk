@@ -18,6 +18,7 @@
     "scripts",
     "test/envUtils.ts",
     "eslint.config.ts",
+    "eslint-local-rules",
 
     // Files included in ./test/e2e/tsconfig.json
     "test/e2e",

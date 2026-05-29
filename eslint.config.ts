@@ -7,7 +7,7 @@ import jsdocPlugin from 'eslint-plugin-jsdoc'
 import jasmine from 'eslint-plugin-jasmine'
 import globals from 'globals'
 // eslint-disable-next-line local-rules/disallow-protected-directory-import
-import eslintLocalRules from './eslint-local-rules/index.js'
+import eslintLocalRules from './eslint-local-rules/index.ts'
 import { SCHEMAS } from './scripts/lib/generatedSchemaTypes.ts'
 
 const SPEC_FILES = '**/*.{spec,specHelper}.{ts,tsx,js}'
@@ -464,7 +464,7 @@ export default tseslint.config(
     files: [
       'scripts/**',
       'test/**/*.js',
-      'eslint-local-rules/**/*.js',
+      'eslint-local-rules/**/*.ts',
       'eslint.config.ts',
       'packages/*/scripts/**/*.js',
     ],
@@ -489,7 +489,7 @@ export default tseslint.config(
   },
 
   {
-    files: ['**/webpack.*.{ts,mts}', 'eslint-local-rules/**/*.js'],
+    files: ['**/webpack.*.{ts,mts}', 'eslint-local-rules/**/*.ts'],
     rules: {
       // Webpack configuration files and eslint rules files are expected to use a default export.
       'import-x/no-default-export': 'off',

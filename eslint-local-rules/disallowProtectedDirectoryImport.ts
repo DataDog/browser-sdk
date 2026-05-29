@@ -1,9 +1,10 @@
 import path from 'node:path'
+import { RuleCreator } from '@typescript-eslint/utils/eslint-utils'
 import { minimatch } from 'minimatch'
 
 import { importType, moduleVisitor, resolve } from 'eslint-plugin-import-x/utils'
 
-export default {
+export default RuleCreator.withoutDocs({
   meta: {
     docs: {
       description:
@@ -23,23 +24,26 @@ export default {
         additionalProperties: false,
       },
     ],
+    messages: {
+      protectedDirectoryImport: '{{protectedDirectory}} is a protected directory, import from its index module instead',
+    },
+    type: 'suggestion',
   },
-  /**
-   * Create an ESLint rule to disallow importing modules from protected directories.
-   *
-   * @returns {Record<string, Function>}
-   */
   create(context) {
     return moduleVisitor((source) => {
       const protectedDirectory = getFirstProtectedDirectory(source.value, context)
       if (protectedDirectory) {
-        context.report(source, `${protectedDirectory} is a protected directory, import from its index module instead`)
+        context.report({
+          node: source,
+          messageId: 'protectedDirectoryImport',
+          data: { protectedDirectory },
+        })
       }
     })
   },
-}
+})
 
-function getFirstProtectedDirectory(importedModule, context) {
+function getFirstProtectedDirectory(importedModule: string, context: Parameters<typeof importType>[1]) {
   // only consider relative and absolute paths, no package or builtin imports
   if (!['absolute', 'sibling', 'index', 'parent'].includes(importType(importedModule, context))) {
     return
@@ -52,7 +56,7 @@ function getFirstProtectedDirectory(importedModule, context) {
 
   return findProtectedDirectory(splitLast(importedModule)[0])
 
-  function findProtectedDirectory(potentialProtectedDirectory) {
+  function findProtectedDirectory(potentialProtectedDirectory: string): string | undefined {
     const [parentPotentialProtectedDirectory, basename] = splitLast(potentialProtectedDirectory)
     if (basename === '' || basename === '..' || basename === '.') {
       return
@@ -72,7 +76,8 @@ function getFirstProtectedDirectory(importedModule, context) {
 
     // Make sure we shouldn't ignore it
     const resolvedPathRelativeToCwd = path.relative(context.cwd, resolvedPath)
-    const shouldIgnore = context.options[0]?.ignore?.some((glob) => minimatch(resolvedPathRelativeToCwd, glob))
+    const firstOption = context.options[0] as { ignore?: string[] } | undefined
+    const shouldIgnore = firstOption?.ignore?.some((glob) => minimatch(resolvedPathRelativeToCwd, glob))
     if (shouldIgnore) {
       return
     }
@@ -81,7 +86,7 @@ function getFirstProtectedDirectory(importedModule, context) {
   }
 }
 
-function splitLast(importSource) {
+function splitLast(importSource: string): [string, string] {
   const lastIndex = importSource.lastIndexOf('/')
   if (lastIndex < 0) {
     return ['', importSource]

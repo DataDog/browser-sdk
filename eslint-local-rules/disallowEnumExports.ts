@@ -1,4 +1,6 @@
-import { SymbolFlags } from 'typescript'
+import { RuleCreator } from '@typescript-eslint/utils/eslint-utils'
+
+import { SymbolFlags, type Symbol } from 'typescript'
 
 /**
  * This rule forbids exporting 'enums'.  It serves two purposes:
@@ -34,42 +36,47 @@ import { SymbolFlags } from 'typescript'
  * [1]: https://www.typescriptlang.org/tsconfig#isolatedModules
  * [2]: https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-8.html#type-only-imports-and-export
  */
-export default {
+export default RuleCreator.withoutDocs({
   meta: {
     docs: {
       description: 'Disallow export of enums.',
-      recommended: false,
     },
     schema: [],
+    messages: {
+      cannotExportEnum: 'Cannot export enum',
+      cannotExportEnumName: 'Cannot export enum {{name}}',
+    },
+    type: 'suggestion',
   },
   create(context) {
-    const parserServices = context.sourceCode.parserServices
-    const checker = parserServices.program.getTypeChecker()
+    const parserServices = context.sourceCode.parserServices!
+    const checker = parserServices.program!.getTypeChecker()
 
     return {
       ExportNamedDeclaration(node) {
         for (const specifier of node.specifiers) {
-          const originalNode = parserServices.esTreeNodeToTSNodeMap.get(specifier)
+          const originalNode = parserServices.esTreeNodeToTSNodeMap!.get(specifier)
           const type = checker.getTypeAtLocation(originalNode)
           if (type.symbol && isEnum(type.symbol)) {
-            context.report(specifier, 'Cannot export enum')
+            context.report({ node: specifier, messageId: 'cannotExportEnum' })
           }
         }
       },
       ExportAllDeclaration(node) {
-        const originalNode = parserServices.esTreeNodeToTSNodeMap.get(node)
-        const moduleSymbol = checker.getSymbolAtLocation(originalNode.moduleSpecifier)
+        const originalNode = parserServices.esTreeNodeToTSNodeMap!.get(node)
+        const moduleSymbol = checker.getSymbolAtLocation(originalNode.moduleSpecifier!)!
         const moduleExports = checker.getExportsOfModule(moduleSymbol)
 
         for (const symbol of moduleExports) {
-          if (isEnum(symbol, checker)) {
-            context.report(node, `Cannot export enum ${symbol.getName()}`)
+          if (isEnum(symbol)) {
+            context.report({ node, messageId: 'cannotExportEnumName', data: { name: symbol.getName() } })
           }
         }
       },
     }
 
-    function isEnum(symbol) {
+    // eslint-disable-next-line @typescript-eslint/no-restricted-types
+    function isEnum(symbol: Symbol) {
       const flags = symbol.getFlags()
 
       // eslint-disable-next-line no-bitwise
@@ -85,4 +92,4 @@ export default {
       return false
     }
   },
-}
+})

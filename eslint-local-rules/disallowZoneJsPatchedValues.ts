@@ -1,3 +1,6 @@
+import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils'
+import { RuleCreator } from '@typescript-eslint/utils/eslint-utils'
+
 const PROBLEMATIC_IDENTIFIERS = {
   // Using the patched `MutationObserver` from Zone.js triggers an infinite callback loop on some
   // occasion, see PRs #376 #866 #1530
@@ -21,36 +24,54 @@ const PROBLEMATIC_IDENTIFIERS = {
   // Using the patched `fetch` from Zone.js triggers unnecessary Angular change detection cycles,
   // see PR #4117.
   fetch: 'Use `fetch` from @datadog/browser-core instead',
-}
+} as const
 
-export default {
+type ProblematicIdentifier = keyof typeof PROBLEMATIC_IDENTIFIERS
+
+export default RuleCreator.withoutDocs({
   meta: {
     docs: {
       description: 'Disallow problematic ZoneJs patched values.',
-      recommended: false,
     },
     schema: [],
+    messages: {
+      patchedValue: 'This value might be patched by Zone.js. {{replacement}}',
+    },
+    type: 'suggestion',
   },
   create(context) {
-    const parserServices = context.sourceCode.parserServices
-    const checker = parserServices.program.getTypeChecker()
+    const parserServices = context.sourceCode.parserServices!
+    const checker = parserServices.program!.getTypeChecker()
 
     return {
       Identifier(node) {
         if (
-          Object.hasOwn(PROBLEMATIC_IDENTIFIERS, node.name) &&
+          isProblematicIdentifier(node.name) &&
           // Using those identifiers inside type definition is not problematic
           !isInTypeDefinition(node)
         ) {
-          const originalNode = parserServices.esTreeNodeToTSNodeMap.get(node)
+          const originalNode = parserServices.esTreeNodeToTSNodeMap!.get(node)
           const symbol = checker.getSymbolAtLocation(originalNode)
-          if (symbol && isNativeValue(symbol.declarations[0])) {
-            context.report(node, `This value might be patched by Zone.js. ${PROBLEMATIC_IDENTIFIERS[node.name]}`)
+          if (symbol && isNativeValue(symbol.declarations![0] as unknown as DeclarationLike)) {
+            context.report({
+              node,
+              messageId: 'patchedValue',
+              data: { replacement: PROBLEMATIC_IDENTIFIERS[node.name] },
+            })
           }
         }
       },
     }
   },
+})
+
+interface DeclarationLike {
+  parent?: DeclarationLike
+  path: string
+}
+
+function isProblematicIdentifier(name: string): name is ProblematicIdentifier {
+  return Object.hasOwn(PROBLEMATIC_IDENTIFIERS, name)
 }
 
 /**
@@ -58,7 +79,7 @@ export default {
  * 'globalObject.ts' file, indicating that it's a "native" browser API and not a function that we
  * declare ourselves.
  */
-function isNativeValue(declaration) {
+function isNativeValue(declaration: DeclarationLike) {
   if (declaration.parent) {
     return isNativeValue(declaration.parent)
   }
@@ -71,8 +92,8 @@ function isNativeValue(declaration) {
  * Whether the symbol is a concrete value and not a type
  */
 
-function isInTypeDefinition(node) {
-  let types = new Set()
+function isInTypeDefinition(node: TSESTree.Node | undefined) {
+  const types = new Set()
   while (node) {
     types.add(node.type)
     if (isTypeDefinition(node)) {
@@ -83,7 +104,11 @@ function isInTypeDefinition(node) {
   return false
 }
 
-const typeDefinitionNodeTypes = new Set(['TSAsExpression', 'TSTypeAliasDeclaration', 'TSInterfaceDeclaration'])
-function isTypeDefinition(node) {
+const typeDefinitionNodeTypes = new Set([
+  AST_NODE_TYPES.TSAsExpression,
+  AST_NODE_TYPES.TSTypeAliasDeclaration,
+  AST_NODE_TYPES.TSInterfaceDeclaration,
+])
+function isTypeDefinition(node: TSESTree.Node) {
   return typeDefinitionNodeTypes.has(node.type)
 }

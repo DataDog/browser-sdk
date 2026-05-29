@@ -1,13 +1,24 @@
 import path from 'node:path'
 
-export default {
+import { AST_NODE_TYPES, type TSESLint, type TSESTree } from '@typescript-eslint/utils'
+import { RuleCreator } from '@typescript-eslint/utils/eslint-utils'
+
+type MessageIds = 'importWithSideEffects' | 'nodeWithSideEffects'
+type RuleContext = Readonly<TSESLint.RuleContext<MessageIds, readonly unknown[]>>
+
+export default RuleCreator.withoutDocs({
   meta: {
     docs: {
       description:
         'Disallow potential side effects when evaluating modules, to ensure modules content are tree-shakable.',
-      recommended: false,
     },
     schema: [],
+    messages: {
+      importWithSideEffects: 'This file cannot import modules with side-effects',
+      nodeWithSideEffects:
+        '{{nodeType}} can have side effects when the module is evaluated. Maybe move it in a function declaration?',
+    },
+    type: 'suggestion',
   },
   create(context) {
     const filename = context.filename
@@ -20,7 +31,7 @@ export default {
       },
     }
   },
-}
+})
 
 const packagesRoot = path.resolve(import.meta.dirname, '..', 'packages')
 
@@ -57,92 +68,94 @@ const packagesWithoutSideEffect = new Set([
  *    foo()          // OK, this statement won't be executed when evaluating the module code
  * }
  */
-function reportPotentialSideEffect(context, node) {
+function reportPotentialSideEffect(context: RuleContext, node: TSESTree.Node) {
   // This acts like an authorized list of syntax nodes to use directly in the body of a module.  All
   // those nodes should not have a side effect when evaluated.
   //
   // This list is probably not complete, feel free to add more cases if you encounter an unhandled
   // node.
   switch (node.type) {
-    case 'Program':
+    case AST_NODE_TYPES.Program:
       node.body.forEach((child) => reportPotentialSideEffect(context, child))
       return
-    case 'TemplateLiteral':
+    case AST_NODE_TYPES.TemplateLiteral:
       node.expressions.forEach((child) => reportPotentialSideEffect(context, child))
       return
-    case 'ExportNamedDeclaration':
-    case 'ExportAllDeclaration':
-    case 'ImportDeclaration':
-      if (node.declaration) {
+    case AST_NODE_TYPES.ExportNamedDeclaration:
+    case AST_NODE_TYPES.ExportAllDeclaration:
+    case AST_NODE_TYPES.ImportDeclaration: {
+      if ('declaration' in node && node.declaration) {
         reportPotentialSideEffect(context, node.declaration)
       } else if (
         node.source &&
-        node.importKind !== 'type' &&
+        (node.type !== AST_NODE_TYPES.ImportDeclaration || node.importKind !== 'type') &&
+        typeof node.source.value === 'string' &&
         !isAllowedImport(context.filename, node.source.value)
       ) {
         context.report({
           node: node.source,
-          message: 'This file cannot import modules with side-effects',
+          messageId: 'importWithSideEffects',
         })
       }
       return
-    case 'VariableDeclaration':
+    }
+    case AST_NODE_TYPES.VariableDeclaration:
       node.declarations.forEach((child) => reportPotentialSideEffect(context, child))
       return
-    case 'VariableDeclarator':
+    case AST_NODE_TYPES.VariableDeclarator:
       if (node.init) {
         reportPotentialSideEffect(context, node.init)
       }
       return
-    case 'ArrayExpression':
-      node.elements.forEach((child) => reportPotentialSideEffect(context, child))
+    case AST_NODE_TYPES.ArrayExpression:
+      node.elements.forEach((child) => reportPotentialSideEffect(context, child!))
       return
-    case 'UnaryExpression':
+    case AST_NODE_TYPES.UnaryExpression:
       reportPotentialSideEffect(context, node.argument)
       return
-    case 'ObjectExpression':
+    case AST_NODE_TYPES.ObjectExpression:
       node.properties.forEach((child) => reportPotentialSideEffect(context, child))
       return
-    case 'SpreadElement':
+    case AST_NODE_TYPES.SpreadElement:
       reportPotentialSideEffect(context, node.argument)
       return
-    case 'Property':
+    case AST_NODE_TYPES.Property:
       reportPotentialSideEffect(context, node.key)
       reportPotentialSideEffect(context, node.value)
       return
-    case 'BinaryExpression':
-    case 'LogicalExpression':
+    case AST_NODE_TYPES.BinaryExpression:
+    case AST_NODE_TYPES.LogicalExpression:
       reportPotentialSideEffect(context, node.left)
       reportPotentialSideEffect(context, node.right)
       return
-    case 'TSAsExpression':
-    case 'ExpressionStatement':
+    case AST_NODE_TYPES.TSAsExpression:
+    case AST_NODE_TYPES.ExpressionStatement:
       reportPotentialSideEffect(context, node.expression)
       return
-    case 'MemberExpression':
+    case AST_NODE_TYPES.MemberExpression:
       reportPotentialSideEffect(context, node.object)
       reportPotentialSideEffect(context, node.property)
       return
-    case 'ConditionalExpression':
-    case 'FunctionExpression':
-    case 'ArrowFunctionExpression':
-    case 'FunctionDeclaration':
-    case 'ClassDeclaration':
-    case 'TSEnumDeclaration':
-    case 'TSInterfaceDeclaration':
-    case 'TSTypeAliasDeclaration':
-    case 'TSModuleDeclaration':
-    case 'TSDeclareFunction':
-    case 'TSInstantiationExpression':
-    case 'Literal':
-    case 'Identifier':
+    case AST_NODE_TYPES.ConditionalExpression:
+    case AST_NODE_TYPES.FunctionExpression:
+    case AST_NODE_TYPES.ArrowFunctionExpression:
+    case AST_NODE_TYPES.FunctionDeclaration:
+    case AST_NODE_TYPES.ClassDeclaration:
+    case AST_NODE_TYPES.TSEnumDeclaration:
+    case AST_NODE_TYPES.TSInterfaceDeclaration:
+    case AST_NODE_TYPES.TSTypeAliasDeclaration:
+    case AST_NODE_TYPES.TSModuleDeclaration:
+    case AST_NODE_TYPES.TSDeclareFunction:
+    case AST_NODE_TYPES.TSInstantiationExpression:
+    case AST_NODE_TYPES.Literal:
+    case AST_NODE_TYPES.Identifier:
       return
-    case 'CallExpression':
+    case AST_NODE_TYPES.CallExpression:
       if (isAllowedCallExpression(node)) {
         return
       }
       break
-    case 'NewExpression':
+    case AST_NODE_TYPES.NewExpression:
       if (isAllowedNewExpression(node)) {
         return
       }
@@ -152,15 +165,15 @@ function reportPotentialSideEffect(context, node) {
   // If the node doesn't match any of the condition above, report it
   context.report({
     node,
-    message: `${node.type} can have side effects when the module is evaluated. \
-Maybe move it in a function declaration?`,
+    messageId: 'nodeWithSideEffects',
+    data: { nodeType: node.type },
   })
 }
 
 /**
  * Make sure an 'import' statement does not pull a module or package with side effects.
  */
-function isAllowedImport(basePath, source) {
+function isAllowedImport(basePath: string, source: string) {
   if (source.startsWith('.')) {
     const resolvedPath = `${path.resolve(path.dirname(basePath), source)}.ts`
     return !pathsWithSideEffect.has(resolvedPath)
@@ -179,14 +192,24 @@ function isAllowedImport(basePath, source) {
  * Webpack is not as smart as Rollup, and it usually treat all call expressions as impure, but it
  * could be fine to allow it nonetheless at it pulls very little code.
  */
-function isAllowedCallExpression({ callee }) {
+function isAllowedCallExpression({ callee }: TSESTree.CallExpression) {
   // Allow "Object.keys()"
-  if (callee.type === 'MemberExpression' && callee.object.name === 'Object' && callee.property.name === 'keys') {
+  if (
+    callee.type === AST_NODE_TYPES.MemberExpression &&
+    callee.object.type === AST_NODE_TYPES.Identifier &&
+    callee.object.name === 'Object' &&
+    callee.property.type === AST_NODE_TYPES.Identifier &&
+    callee.property.name === 'keys'
+  ) {
     return true
   }
 
   // Allow ".concat()"
-  if (callee.type === 'MemberExpression' && callee.property.name === 'concat') {
+  if (
+    callee.type === AST_NODE_TYPES.MemberExpression &&
+    callee.property.type === AST_NODE_TYPES.Identifier &&
+    callee.property.name === 'concat'
+  ) {
     return true
   }
 
@@ -204,7 +227,11 @@ function isAllowedCallExpression({ callee }) {
  * Webpack is not as smart as Rollup, and it usually treat all 'new' expressions as impure, but it
  * could be fine to allow it nonetheless at it pulls very little code.
  */
-function isAllowedNewExpression({ callee }) {
+function isAllowedNewExpression({ callee }: TSESTree.NewExpression) {
+  if (callee.type !== AST_NODE_TYPES.Identifier) {
+    return false
+  }
+
   switch (callee.name) {
     // Allow some native constructors
     case 'RegExp':

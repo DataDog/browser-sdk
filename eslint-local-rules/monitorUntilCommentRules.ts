@@ -1,23 +1,37 @@
-const METHODS_TO_CHECK = ['addTelemetryDebug', 'addTelemetryMetrics']
+import { AST_NODE_TYPES } from '@typescript-eslint/utils'
+import { RuleCreator } from '@typescript-eslint/utils/eslint-utils'
+
+const METHODS_TO_CHECK = ['addTelemetryDebug', 'addTelemetryMetrics'] as const
 const MONITOR_COMMENT_FORMAT = /^\s*monitor-until: (\d{4}-\d{2}-\d{2}|forever)/
 
+function isMethodToCheck(methodName: string): methodName is (typeof METHODS_TO_CHECK)[number] {
+  return METHODS_TO_CHECK.includes(methodName as (typeof METHODS_TO_CHECK)[number])
+}
+
 export default {
-  'enforce-monitor-until-comment': {
+  'enforce-monitor-until-comment': RuleCreator.withoutDocs({
     meta: {
       docs: {
         description:
           'Force to specify an expiration date to telemetry debug and metrics events in order to clean them regularly',
-        recommended: false,
       },
       schema: [],
+      messages: {
+        missingMonitorUntilComment: 'Missing `// monitor-until: YYYY-MM-DD` or `// monitor-until: forever` comment',
+      },
+      type: 'suggestion',
     },
     create(context) {
       const sourceCode = context.sourceCode
 
       return {
         CallExpression(node) {
+          if (node.callee.type !== AST_NODE_TYPES.Identifier) {
+            return
+          }
+
           const methodName = node.callee.name
-          if (!METHODS_TO_CHECK.includes(methodName)) {
+          if (!isMethodToCheck(methodName)) {
             return
           }
 
@@ -26,19 +40,25 @@ export default {
             .find((comment) => MONITOR_COMMENT_FORMAT.test(comment.value))
 
           if (!monitorComment) {
-            context.report(node, 'Missing `// monitor-until: YYYY-MM-DD` or `// monitor-until: forever` comment')
+            context.report({
+              node,
+              messageId: 'missingMonitorUntilComment',
+            })
           }
         },
       }
     },
-  },
-  'monitor-until-comment-expired': {
+  }),
+  'monitor-until-comment-expired': RuleCreator.withoutDocs({
     meta: {
       docs: {
         description: 'Report expired monitor-until comments',
-        recommended: false,
       },
       schema: [],
+      messages: {
+        expiredMonitorUntilComment: 'Expired: {{commentValue}}',
+      },
+      type: 'suggestion',
     },
     create(context) {
       return {
@@ -52,11 +72,17 @@ export default {
             }
 
             if (new Date(monitorCommentMatch[1]) < now) {
-              context.report(comment, `Expired: ${comment.value}`)
+              context.report({
+                node: comment,
+                messageId: 'expiredMonitorUntilComment',
+                data: {
+                  commentValue: comment.value,
+                },
+              })
             }
           })
         },
       }
     },
-  },
+  }),
 }
