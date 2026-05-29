@@ -1,12 +1,5 @@
 import type { ClocksState, Duration } from '@datadog/browser-core'
-import {
-  clocksNow,
-  ExperimentalFeature,
-  generateUUID,
-  isExperimentalFeatureEnabled,
-  sanitize,
-  toServerDuration,
-} from '@datadog/browser-core'
+import { clocksNow, generateUUID, sanitize, toServerDuration } from '@datadog/browser-core'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RawRumVitalEvent } from '../../rawRumEvent.types'
@@ -113,10 +106,6 @@ export function startVitalCollection(lifeCycle: LifeCycle, pageStateHistory: Pag
     options?: FeatureOperationOptions & { handlingStack?: string },
     failureReason?: FailureReason
   ) {
-    if (!isExperimentalFeatureEnabled(ExperimentalFeature.FEATURE_OPERATION_VITAL)) {
-      return
-    }
-
     const { operationKey, context, description, handlingStack } = options || {}
 
     const vital: OperationStepVital = {

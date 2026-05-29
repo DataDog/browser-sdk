@@ -7,13 +7,8 @@ import type { RecordingScope } from './recordingScope'
 import { createRecordingScope } from './recordingScope'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { EmitRecordCallback } from './record.types'
-import type { ChangeSerializationTransaction } from './serialization'
-import {
-  createRootInsertionCursor,
-  SerializationKind,
-  serializeChangesInTransaction,
-  serializeNodeAsChange,
-} from './serialization'
+import type { SerializationTransaction } from './serialization'
+import { createRootInsertionCursor, SerializationKind, serializeInTransaction, serializeNode } from './serialization'
 
 /**
  * Take a full snapshot of the document, generating the same records that the browser SDK
@@ -57,19 +52,19 @@ export function takeNodeSnapshot(
     nodeSnapshotRecord = record
   }
 
-  serializeChangesInTransaction(
+  serializeInTransaction(
     SerializationKind.INITIAL_FULL_SNAPSHOT,
     emitRecord,
     noop,
     createTemporaryRecordingScope(configuration),
     timeStampNow(),
-    (transaction: ChangeSerializationTransaction): void => {
+    (transaction: SerializationTransaction): void => {
       const privacyLevel = getNodePrivacyLevel(node, transaction.scope.configuration.defaultPrivacyLevel)
       if (privacyLevel === NodePrivacyLevel.HIDDEN || privacyLevel === NodePrivacyLevel.IGNORE) {
         return
       }
       const cursor = createRootInsertionCursor(transaction.scope.nodeIds)
-      serializeNodeAsChange(cursor, node, privacyLevel, transaction)
+      serializeNode(cursor, node, privacyLevel, transaction)
     }
   )
 

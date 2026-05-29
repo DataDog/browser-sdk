@@ -1,5 +1,3 @@
-import { display } from '@datadog/browser-core'
-
 export interface CompiledCondition {
   evaluate: (contextKeys: string[]) => (...args: any[]) => boolean
   clearCache: () => void
@@ -7,7 +5,29 @@ export interface CompiledCondition {
 
 export interface ProbeWithCondition {
   id: string
+  when?: {
+    dsl: string
+  }
   condition?: CompiledCondition
+}
+
+export interface EvaluationError {
+  [key: string]: string
+  expr: string
+  message: string
+}
+
+export type ConditionEvaluationError = Error & { evaluationError: EvaluationError }
+
+export function createConditionEvaluationError(evaluationError: EvaluationError): ConditionEvaluationError {
+  const error = new Error(evaluationError.message) as ConditionEvaluationError
+  error.name = 'ConditionEvaluationError'
+  error.evaluationError = evaluationError
+  return error
+}
+
+export function isConditionEvaluationError(error: unknown): error is ConditionEvaluationError {
+  return error instanceof Error && error.name === 'ConditionEvaluationError' && 'evaluationError' in error
 }
 
 /**
@@ -49,6 +69,7 @@ export function compileCondition(condition: string): CompiledCondition {
  * @param probe - Probe configuration
  * @param context - Runtime context with variables
  * @returns True if condition passes (or no condition), false otherwise
+ * @throws ConditionEvaluationError when the condition cannot be evaluated
  */
 export function evaluateProbeCondition(probe: ProbeWithCondition, context: Record<string, any>): boolean {
   // If no condition, probe always fires
@@ -65,9 +86,13 @@ export function evaluateProbeCondition(probe: ProbeWithCondition, context: Recor
     const fn = probe.condition.evaluate(contextKeys)
     return Boolean(fn.call(thisValue, ...contextValues))
   } catch (e) {
-    // If condition evaluation fails, log error and let probe fire
-    // TODO: Handle error properly
-    display.error(`Failed to evaluate condition for probe ${probe.id}:`, e)
-    return true
+    throw createConditionEvaluationError({
+      expr: probe.when!.dsl,
+      message: formatConditionEvaluationError(e),
+    })
   }
+}
+
+function formatConditionEvaluationError(error: unknown): string {
+  return error instanceof Error ? `${error.name}: ${error.message}` : String(error)
 }

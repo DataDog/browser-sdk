@@ -34,7 +34,9 @@ export function createMutationBatch(processMutationBatch: (mutations: RumMutatio
       if (pendingMutations.length === 0) {
         cancelScheduledFlush = requestIdleCallback(throttledFlush, { timeout: MUTATION_PROCESS_MAX_DELAY })
       }
-      pendingMutations.push(...mutations)
+      for (const mutation of mutations) {
+        pendingMutations.push(mutation)
+      }
     },
 
     flush,

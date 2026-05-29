@@ -1,4 +1,11 @@
-import { SKIPPED, computeStackTrace, objectEntries, addTelemetryError, HookNames } from '@datadog/browser-core'
+import {
+  SKIPPED,
+  computeStackTrace,
+  objectEntries,
+  addTelemetryError,
+  HookNames,
+  addTelemetryUsage,
+} from '@datadog/browser-core'
 import type { Hooks, DefaultRumEventAttributes, AssembleHookParams } from '../hooks'
 
 interface SourceCodeContext {
@@ -19,6 +26,7 @@ export function startSourceCodeContext(hooks: Hooks) {
     if (!browserWindow.DD_SOURCE_CODE_CONTEXT) {
       return
     }
+    addTelemetryUsage({ feature: 'source-code-context' })
 
     objectEntries(browserWindow.DD_SOURCE_CODE_CONTEXT).forEach(([stack, context]) => {
       const stackTrace = computeStackTrace({ stack })

@@ -117,7 +117,15 @@ describe('checkProfilingQuota', () => {
     interceptor.withFetch(backendResponse(true, 'quota_ok'))
     await checkProfilingQuota(mockRumConfiguration({ proxy: 'http://proxy.example.com' }), 'session-abc')
     expect(interceptor.requests[0].url).toBe(
-      'http://proxy.example.com?ddforward=%2Fapi%2Fv2%2Fprofiling%2Fquota%3Fsession_id%3Dsession-abc&ddforwardSubdomain=quota'
+      'http://proxy.example.com/?ddforward=%2Fapi%2Fv2%2Fprofiling%2Fquota%3Fsession_id%3Dsession-abc&ddforwardSubdomain=quota'
+    )
+  })
+
+  it('normalizes string proxy URLs', async () => {
+    interceptor.withFetch(backendResponse(true, 'quota_ok'))
+    await checkProfilingQuota(mockRumConfiguration({ proxy: '/proxy' }), 'session-abc')
+    expect(interceptor.requests[0].url).toBe(
+      `${location.origin}/proxy?ddforward=%2Fapi%2Fv2%2Fprofiling%2Fquota%3Fsession_id%3Dsession-abc&ddforwardSubdomain=quota`
     )
   })
 

@@ -26,6 +26,7 @@ label our Commit messages and Pull Request titles:
 - 🚨 **Linting** - Add/fix linter rules
 - 🧹 **Cleanup** - Minor cleanup, housekeeping
 - 🔊 **Logging** - Add/modify debug logs, telemetry
+- 🔇 **Remove logs** - Remove debug logs or telemetry
 
 ## Dependency Management
 

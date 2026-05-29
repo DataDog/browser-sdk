@@ -146,7 +146,7 @@ export function startDeliveryApiPolling(config: DeliveryApiConfiguration): void 
         currentCursor = data.nextCursor
       }
 
-      for (const probeId of data.deletions || []) {
+      for (const probeId of data.deletions ?? []) {
         if (knownProbeIds.has(probeId)) {
           try {
             removeProbe(probeId)
@@ -157,7 +157,7 @@ export function startDeliveryApiPolling(config: DeliveryApiConfiguration): void 
         }
       }
 
-      for (const probe of data.updates || []) {
+      for (const probe of data.updates ?? []) {
         if (!probe.id) {
           continue
         }
