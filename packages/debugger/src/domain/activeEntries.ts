@@ -21,13 +21,3 @@ export interface ActiveEntry {
   }
   exception?: Error
 }
-
-export const active = new Map<string, Array<ActiveEntry | null>>()
-
-export function clearActiveEntries(probeId?: string): void {
-  if (probeId !== undefined) {
-    active.delete(probeId)
-  } else {
-    active.clear()
-  }
-}
