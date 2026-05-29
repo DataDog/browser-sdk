@@ -1,5 +1,5 @@
 const path = require('node:path')
-// eslint-disable-next-line import/no-unresolved
+// eslint-disable-next-line import-x/no-unresolved
 const { AngularWebpackPlugin } = require('@ngtools/webpack')
 
 module.exports = {

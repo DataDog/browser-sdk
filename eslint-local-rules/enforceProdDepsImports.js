@@ -1,12 +1,6 @@
 import fs from 'node:fs'
 
-import moduleVisitorPackage from 'eslint-module-utils/moduleVisitor.js'
-import importTypePackage from 'eslint-plugin-import/lib/core/importType.js'
-import pkgUpPackage from 'eslint-module-utils/pkgUp.js'
-
-const moduleVisitor = moduleVisitorPackage.default
-const pkgUp = pkgUpPackage.default
-const importType = importTypePackage.default
+import { importType, moduleVisitor, pkgUp } from 'eslint-plugin-import-x/utils'
 
 // The import/no-extraneous-dependencies rule cannot catch this issue[1] where we imported an
 // aliased package in production code, because it resolves[2] the alias to the real package name, and
@@ -33,7 +27,7 @@ export default {
    * @returns {Record<string, Function>}
    */
   create(context) {
-    const packageJson = readPackageJson(pkgUp({ cwd: context.getFilename() }))
+    const packageJson = readPackageJson(pkgUp({ cwd: context.filename }))
 
     return moduleVisitor((source) => {
       const importTypeResult = importType(source.value, context)

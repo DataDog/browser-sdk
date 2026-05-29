@@ -2,7 +2,7 @@
 
 import eslint from '@eslint/js'
 import * as tseslint from 'typescript-eslint'
-import importPlugin from 'eslint-plugin-import'
+import { importX } from 'eslint-plugin-import-x'
 import unicornPlugin from 'eslint-plugin-unicorn'
 import jsdocPlugin from 'eslint-plugin-jsdoc'
 import jasmine from 'eslint-plugin-jasmine'
@@ -25,12 +25,12 @@ const PACKAGES_NO_RESTRICTED_SYNTAX_RULES = [
   },
 ]
 
-// eslint-disable-next-line import/no-default-export
+// eslint-disable-next-line import-x/no-default-export
 export default tseslint.config(
   eslint.configs.recommended,
   tseslint.configs.recommendedTypeChecked,
-  importPlugin.flatConfigs.recommended,
-  importPlugin.flatConfigs.typescript,
+  importX.flatConfigs.recommended,
+  importX.flatConfigs.typescript,
   {
     ignores: [
       ...SCHEMAS.map((schema) => schema.typesPath),
@@ -70,12 +70,6 @@ export default tseslint.config(
       'local-rules': { rules: eslintLocalRules },
       jsdoc: jsdocPlugin,
       jasmine,
-    },
-
-    settings: {
-      'import/resolver': {
-        typescript: true,
-      },
     },
 
     languageOptions: {
@@ -149,6 +143,7 @@ export default tseslint.config(
       'no-useless-concat': 'error',
       'object-shorthand': 'error',
       'one-var': ['error', 'never'],
+      'preserve-caught-error': 'off', // disabled until our monitor tooling supports `error.cause`.
       'prefer-rest-params': 'off',
       'prefer-template': 'error',
       'prefer-object-spread': 'error',
@@ -243,11 +238,16 @@ export default tseslint.config(
         { allowForKnownSafeCalls: [{ from: 'package', name: ['describe', 'it', 'test'], package: 'node:test' }] },
       ],
 
-      'import/no-cycle': 'error',
-      'import/no-default-export': 'error',
-      'import/no-duplicates': 'error',
-      'import/no-extraneous-dependencies': 'error',
-      'import/no-unresolved': [
+      // Those lints are triggering false positives
+      'import-x/default': 'off',
+      'import-x/no-named-as-default': 'off',
+      'import-x/no-named-as-default-member': 'off',
+
+      'import-x/no-cycle': 'error',
+      'import-x/no-default-export': 'error',
+      'import-x/no-duplicates': 'error',
+      'import-x/no-extraneous-dependencies': 'error',
+      'import-x/no-unresolved': [
         'error',
         {
           commonjs: true,
@@ -258,8 +258,8 @@ export default tseslint.config(
           ],
         },
       ],
-      'import/no-useless-path-segments': 'error',
-      'import/order': [
+      'import-x/no-useless-path-segments': 'error',
+      'import-x/order': [
         'error',
         {
           // This is the default order plus 'internal', which is imports like
@@ -344,7 +344,7 @@ export default tseslint.config(
   {
     files: ['scripts/**'],
     rules: {
-      'import/extensions': ['error', 'ignorePackages'],
+      'import-x/extensions': ['error', 'ignorePackages'],
     },
   },
 
@@ -449,7 +449,7 @@ export default tseslint.config(
     files: ['packages/*/src/**/*.ts'],
     ignores: [SPEC_FILES],
     rules: {
-      'import/consistent-type-specifier-style': ['error', 'prefer-top-level'],
+      'import-x/consistent-type-specifier-style': ['error', 'prefer-top-level'],
     },
   },
 
@@ -474,7 +474,7 @@ export default tseslint.config(
     },
     rules: {
       '@typescript-eslint/no-require-imports': 'off',
-      'import/enforce-node-protocol-usage': ['error', 'always'],
+      'unicorn/prefer-node-protocol': 'error',
       'no-restricted-imports': [
         'error',
         {
@@ -493,7 +493,7 @@ export default tseslint.config(
     files: ['**/webpack.*.{ts,mts}', 'eslint-local-rules/**/*.js'],
     rules: {
       // Webpack configuration files and eslint rules files are expected to use a default export.
-      'import/no-default-export': 'off',
+      'import-x/no-default-export': 'off',
     },
   },
 
@@ -501,7 +501,7 @@ export default tseslint.config(
     files: ['test/e2e/**/*.ts', 'test/performance/**/*.ts'],
     rules: {
       // E2E codebase is importing @datadog/browser-* packages referenced by tsconfig.
-      'import/no-extraneous-dependencies': 'off',
+      'import-x/no-extraneous-dependencies': 'off',
     },
   },
 

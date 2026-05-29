@@ -12,7 +12,7 @@ export default {
       schema: [],
     },
     create(context) {
-      const sourceCode = context.getSourceCode()
+      const sourceCode = context.sourceCode
 
       return {
         CallExpression(node) {
@@ -44,7 +44,7 @@ export default {
       return {
         Program() {
           const now = new Date()
-          const comments = context.getSourceCode().getAllComments()
+          const comments = context.sourceCode.getAllComments()
           comments.forEach((comment) => {
             const monitorCommentMatch = comment.value.match(MONITOR_COMMENT_FORMAT)
             if (!monitorCommentMatch || monitorCommentMatch[1] === 'forever') {

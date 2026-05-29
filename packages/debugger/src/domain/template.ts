@@ -216,7 +216,7 @@ export interface ProbeWithTemplate {
  * @returns Evaluated and truncated message
  */
 export function evaluateProbeMessage(probe: ProbeWithTemplate, context: Record<string, any>): string {
-  let message = ''
+  let message: string
 
   if (probe.templateRequiresEvaluation) {
     try {

@@ -23,7 +23,7 @@ export default {
 }
 
 function checkTestImportExportFromSrc(context, node) {
-  if (!isTestCode(context.getFilename()) && node.source && isTestCode(node.source.value)) {
+  if (!isTestCode(context.filename) && node.source && isTestCode(node.source.value)) {
     context.report({
       node: node.source,
       message: 'Test code import or export is not allowed in src code',

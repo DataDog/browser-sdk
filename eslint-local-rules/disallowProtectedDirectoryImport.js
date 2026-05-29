@@ -1,13 +1,7 @@
 import path from 'node:path'
 import { minimatch } from 'minimatch'
 
-import resolvePackage from 'eslint-module-utils/resolve.js'
-import moduleVisitorPackage from 'eslint-module-utils/moduleVisitor.js'
-import importTypePackage from 'eslint-plugin-import/lib/core/importType.js'
-
-const moduleVisitor = moduleVisitorPackage.default
-const importType = importTypePackage.default
-const resolve = resolvePackage.default
+import { importType, moduleVisitor, resolve } from 'eslint-plugin-import-x/utils'
 
 export default {
   meta: {
@@ -77,7 +71,7 @@ function getFirstProtectedDirectory(importedModule, context) {
     }
 
     // Make sure we shouldn't ignore it
-    const resolvedPathRelativeToCwd = path.relative(context.getCwd(), resolvedPath)
+    const resolvedPathRelativeToCwd = path.relative(context.cwd, resolvedPath)
     const shouldIgnore = context.options[0]?.ignore?.some((glob) => minimatch(resolvedPathRelativeToCwd, glob))
     if (shouldIgnore) {
       return

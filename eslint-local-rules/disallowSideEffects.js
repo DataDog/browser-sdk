@@ -10,7 +10,7 @@ export default {
     schema: [],
   },
   create(context) {
-    const filename = context.getFilename()
+    const filename = context.filename
     if (pathsWithSideEffect.has(filename)) {
       return {}
     }
@@ -78,7 +78,7 @@ function reportPotentialSideEffect(context, node) {
       } else if (
         node.source &&
         node.importKind !== 'type' &&
-        !isAllowedImport(context.getFilename(), node.source.value)
+        !isAllowedImport(context.filename, node.source.value)
       ) {
         context.report({
           node: node.source,
