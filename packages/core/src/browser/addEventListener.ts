@@ -149,13 +149,12 @@ export function addEventListeners<Target extends EventTarget, EventName extends 
 }
 
 export function isEventSupported<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(
-  configuration: { allowUntrustedEvents?: boolean | undefined },
   eventTarget: Target,
   eventName: EventName,
   listener: (event: EventMapFor<Target>[EventName] & { type: EventName }) => void
 ) {
   try {
-    addEventListener(configuration, eventTarget, eventName, listener).stop()
+    addEventListener({}, eventTarget, eventName, listener).stop()
     return true
   } catch {
     return false

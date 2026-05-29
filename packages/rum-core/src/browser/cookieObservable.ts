@@ -14,7 +14,7 @@ import {
 export type CookieObservable = ReturnType<typeof createCookieObservable>
 
 export function createCookieObservable(configuration: Configuration, cookieName: string) {
-  const detectCookieChangeStrategy = isCookieStoreSupported(configuration)
+  const detectCookieChangeStrategy = isCookieStoreSupported()
     ? listenToCookieStoreChange(configuration)
     : watchCookieFallback
 
