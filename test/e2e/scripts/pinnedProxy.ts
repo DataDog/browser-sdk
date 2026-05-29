@@ -1,15 +1,15 @@
-// WebSocket translation proxy that lets a recent @playwright/test client (1.58) drive an
+// WebSocket translation proxy that lets a recent @playwright/test client (1.59) drive an
 // older `playwright run-server` (1.40). Two layers of translation:
 //
 // 1) HTTP upgrade — the 1.40 server's User-Agent version check rejects mismatched clients
 //    with HTTP 428. We rewrite the upgrade request's User-Agent so the check passes.
 //
-// 2) JSON-RPC — once connected, the 1.58 client validates server messages strictly and
-//    sends commands using the 1.58 schema. We patch __create__ initializers (server→client)
+// 2) JSON-RPC — once connected, the recent client validates server messages strictly and
+//    sends commands using the recent schema. We patch __create__ initializers (server→client)
 //    and command parameters (client→server) where the schemas diverge between versions.
 //
 // Patches were derived from a diff of packages/protocol/src/protocol.yml between v1.40.1
-// and v1.58.2 — only the divergences exercised by this repo's e2e tests are translated.
+// and v1.59.1 — only the divergences exercised by this repo's e2e tests are translated.
 //
 // Usage: node pinnedProxy.ts --listen 5400 --upstream 127.0.0.1:5401
 
@@ -102,7 +102,9 @@ httpServer.on('upgrade', (req, socket, head) => {
       if (rewritten === null) {
         return
       }
-      clientWs.send(rewritten)
+      for (const out of rewritten) {
+        clientWs.send(out)
+      }
     })
 
     const closeBoth = () => {
@@ -146,18 +148,32 @@ function forwardHeader(headers: http.IncomingHttpHeaders, name: string): Record<
   return typeof value === 'string' ? { [name]: value } : {}
 }
 
-// Server (1.40) -> Client (1.58)
+// Server (1.40) -> Client (1.58). Returns one or more messages to forward to the client, or
+// null to drop the upstream message. Returning multiple messages allows synthesising channels
+// that newer client schemas require but the older server doesn't emit (e.g. Debugger).
 function rewriteServerToClient(
   text: string,
   guidTypes: Map<string, string>,
   requestUrls: Map<string, string>,
   routeRequestGuids: Map<string, string>
-): string | null {
+): string[] | null {
   let msg: JsonRpcMessage
   try {
     msg = JSON.parse(text) as JsonRpcMessage
   } catch {
-    return text
+    return [text]
+  }
+  // BrowserContextConsoleEvent requires `timestamp` (tFloat, ms since epoch) in 1.59. The 1.40
+  // server emits `console` without that field — inject a best-effort wall time.
+  if (
+    msg.method === 'console' &&
+    msg.params &&
+    msg.params.timestamp === undefined &&
+    msg.guid !== undefined &&
+    guidTypes.get(msg.guid) === 'BrowserContext'
+  ) {
+    msg.params.timestamp = Date.now()
+    return [JSON.stringify(msg)]
   }
   if (msg.method === '__create__' && msg.params) {
     const type = msg.params.type
@@ -193,9 +209,31 @@ function rewriteServerToClient(
     if (type === 'Request' && init.hasResponse === undefined) {
       init.hasResponse = false
     }
+    // BrowserInitializer requires `browserName` in 1.59. In 1.40 the `name` field already
+    // held the browser type ("chromium" | "firefox" | "webkit"), so copy it over.
+    if (type === 'Browser' && init.browserName === undefined && typeof init.name === 'string') {
+      init.browserName = init.name
+    }
+    // BrowserContextInitializer requires a `debugger` Debugger channel in 1.59. The 1.40 server
+    // has no Debugger channel, so synthesise one (parented to the same Browser as the context)
+    // and inject the reference. DebuggerInitializer is `{}` in 1.59, so an empty initializer is
+    // valid. The client only uses BrowserContext.debugger when debug controller features are
+    // requested, which our tests don't do.
+    if (type === 'BrowserContext' && init.debugger === undefined && msg.params.guid) {
+      const debuggerGuid = `debugger@synthetic-${msg.params.guid}`
+      guidTypes.set(debuggerGuid, 'Debugger')
+      const debuggerCreate = {
+        guid: msg.guid,
+        method: '__create__',
+        params: { type: 'Debugger', initializer: {}, guid: debuggerGuid },
+      }
+      init.debugger = { guid: debuggerGuid }
+      msg.params.initializer = init
+      return [JSON.stringify(debuggerCreate), JSON.stringify(msg)]
+    }
     msg.params.initializer = init
   }
-  return JSON.stringify(msg)
+  return [JSON.stringify(msg)]
 }
 
 // Client (1.58) -> Server (1.40)

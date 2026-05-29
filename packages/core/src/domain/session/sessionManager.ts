@@ -18,7 +18,7 @@ import { noop, throttle } from '../../tools/utils/functionUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import type { Configuration } from '../configuration'
 import type { TrackingConsentState } from '../trackingConsent'
-import { isWorkerEnvironment } from '../../tools/globalObject'
+import { globalObject, isWorkerEnvironment } from '../../tools/globalObject'
 import { display } from '../../tools/display'
 import { isSampled } from '../sampler'
 import { TelemetryMetrics, addTelemetryMetrics } from '../telemetry'
@@ -274,8 +274,8 @@ export async function startSessionManager(
           from,
           cookieValues,
           cookies: getCookies(SESSION_STORE_KEY),
-          locksAvailable: Boolean(globalThis.navigator?.locks),
-          cookieStoreAvailable: Boolean(globalThis.cookieStore),
+          locksAvailable: Boolean(globalObject.navigator?.locks),
+          cookieStoreAvailable: Boolean(globalObject.cookieStore),
         }
       }
       sessionExpired = true
@@ -300,8 +300,8 @@ export async function startSessionManager(
                 from,
                 cookieValues,
                 cookies: getCookies(SESSION_STORE_KEY),
-                locksAvailable: Boolean(globalThis.navigator?.locks),
-                cookieStoreAvailable: Boolean(globalThis.cookieStore),
+                locksAvailable: Boolean(globalObject.navigator?.locks),
+                cookieStoreAvailable: Boolean(globalObject.cookieStore),
               },
             }
           : undefined

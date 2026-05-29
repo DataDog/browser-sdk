@@ -1,4 +1,5 @@
 import { type RelativeTime } from '@datadog/browser-core'
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import { createPerformanceEntry, mockGlobalPerformanceBuffer } from '../../test'
 import type { RumPerformanceNavigationTiming } from './performanceObservable'
 import { RumPerformanceEntryType } from './performanceObservable'
@@ -50,6 +51,63 @@ describe('getNavigationEntry', () => {
     if (navigationEntry.transferSize) {
       expect(navigationEntry.transferSize).toEqual(jasmine.any(Number))
     }
+  })
+
+  describe('when navigation entry has broken DOM timings (WebKit 26.4)', () => {
+    let originalSupportedEntryTypes: string[] | undefined
+    let originalTiming: PerformanceTiming
+
+    beforeEach(() => {
+      originalSupportedEntryTypes = PerformanceObserver.supportedEntryTypes as string[]
+      Object.defineProperty(PerformanceObserver, 'supportedEntryTypes', {
+        get: () => [...(originalSupportedEntryTypes || []), RumPerformanceEntryType.NAVIGATION],
+        configurable: true,
+      })
+
+      mockGlobalPerformanceBuffer([
+        createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
+          domComplete: 0 as RelativeTime,
+          domContentLoadedEventEnd: 0 as RelativeTime,
+          domInteractive: 0 as RelativeTime,
+          loadEventEnd: 32 as RelativeTime,
+          responseStart: 6 as RelativeTime,
+        }),
+      ])
+
+      originalTiming = performance.timing
+      const navigationStart = originalTiming.navigationStart
+      Object.defineProperty(performance, 'timing', {
+        configurable: true,
+        value: {
+          ...originalTiming,
+          navigationStart,
+          domComplete: navigationStart + 456,
+          domContentLoadedEventEnd: navigationStart + 345,
+          domInteractive: navigationStart + 234,
+          loadEventEnd: navigationStart + 567,
+          responseStart: navigationStart + 123,
+        },
+      })
+
+      registerCleanupTask(() => {
+        Object.defineProperty(performance, 'timing', { configurable: true, value: originalTiming })
+        if (originalSupportedEntryTypes !== undefined) {
+          Object.defineProperty(PerformanceObserver, 'supportedEntryTypes', {
+            get: () => originalSupportedEntryTypes,
+            configurable: true,
+          })
+        }
+      })
+    })
+
+    it('falls back to deprecated performance timing', () => {
+      const navigationEntry = getNavigationEntry()
+
+      expect(navigationEntry.domComplete).toBe(456 as RelativeTime)
+      expect(navigationEntry.domContentLoadedEventEnd).toBe(345 as RelativeTime)
+      expect(navigationEntry.domInteractive).toBe(234 as RelativeTime)
+      expect(navigationEntry.loadEventEnd).toBe(567 as RelativeTime)
+    })
   })
 })
 

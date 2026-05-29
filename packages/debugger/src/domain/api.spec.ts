@@ -912,6 +912,35 @@ describe('api', () => {
       expect(getProbes('TestClass;nonSnapshotLifetime')).toBeUndefined()
     })
 
+    it('should finish in-flight recursive entries after the lifetime budget is exhausted', () => {
+      initTransport({ maxNonSnapshotsPerProbeLifetime: 1 })
+
+      const probe: Probe = {
+        id: 'recursive-lifetime-probe',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'recursiveLifetime' },
+        template: 'Test',
+        captureSnapshot: false,
+        capture: {},
+        sampling: { snapshotsPerSecond: Infinity },
+        evaluateAt: 'ENTRY',
+      }
+      addProbe(probe)
+
+      const probes = getProbes('TestClass;recursiveLifetime')!
+      onEntry(probes, {}, {})
+      onEntry(probes, {}, {})
+
+      onReturn(probes, null, {}, {}, {})
+      expect(getProbes('TestClass;recursiveLifetime')).toBeUndefined()
+
+      // The lifetime budget gates new entries, but already accepted in-flight
+      // entries still drain even if another frame exhausts the budget first.
+      onReturn(probes, null, {}, {}, {})
+      expect(mockBatchAdd).toHaveBeenCalledTimes(2)
+    })
+
     it('should reset the lifetime budget when a new probe version is delivered', () => {
       initTransport({ maxSnapshotsPerProbeLifetime: 1 })
 
@@ -933,9 +962,8 @@ describe('api', () => {
       onReturn(probes, null, {}, {}, {})
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
-      // A Remote Config delivery for an existing probe id replaces the old probe with
-      // the new version. After re-add, the new version should have a fresh budget.
-      removeProbe(probe.id)
+      // The old probe has reached its lifetime budget and was auto-unregistered.
+      // After re-add, the new version should have a fresh budget.
       addProbe({ ...probe, version: 1 })
 
       probes = getProbes('TestClass;versionedLifetime')!
@@ -1043,7 +1071,7 @@ describe('api', () => {
       }
     }
 
-    it('should discard in-flight entries when a probe is removed', () => {
+    it('should drain in-flight entries through the removed probe instance', () => {
       const probe = createProbe('cleanup-probe', 'cleanupTest')
       addProbe(probe)
 
@@ -1051,7 +1079,20 @@ describe('api', () => {
       onEntry(probes, {}, {})
 
       removeProbe('cleanup-probe')
+      onReturn(probes, null, {}, {}, {})
+
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+    })
+
+    it('should isolate in-flight entries from a replacement probe with the same id', () => {
+      const probe = createProbe('cleanup-probe', 'cleanupTest')
       addProbe(probe)
+
+      const probes = getProbes('TestClass;cleanupTest')!
+      onEntry(probes, {}, {})
+
+      removeProbe('cleanup-probe')
+      addProbe(createProbe('cleanup-probe', 'cleanupTest'))
 
       const newProbes = getProbes('TestClass;cleanupTest')!
       onReturn(newProbes, null, {}, {}, {})
@@ -1067,7 +1108,7 @@ describe('api', () => {
       onEntry(probes, {}, {})
 
       clearProbes()
-      addProbe(probe)
+      addProbe(createProbe('cleanup-probe', 'clearAllTest'))
 
       const newProbes = getProbes('TestClass;clearAllTest')!
       onReturn(newProbes, null, {}, {}, {})

@@ -1,4 +1,4 @@
-import type { Configuration, CookieStore } from '@datadog/browser-core'
+import type { Configuration } from '@datadog/browser-core'
 import {
   setInterval,
   clearInterval,
@@ -7,12 +7,9 @@ import {
   ONE_SECOND,
   DOM_EVENT,
   getCookie,
+  globalObject,
   isCookieStoreSupported,
 } from '@datadog/browser-core'
-
-export interface CookieStoreWindow {
-  cookieStore?: CookieStore
-}
 
 export type CookieObservable = ReturnType<typeof createCookieObservable>
 
@@ -28,21 +25,16 @@ export function createCookieObservable(configuration: Configuration, cookieName:
 
 function listenToCookieStoreChange(configuration: Configuration) {
   return (cookieName: string, callback: (event: string | undefined) => void) => {
-    const listener = addEventListener(
-      configuration,
-      (window as CookieStoreWindow).cookieStore!,
-      DOM_EVENT.CHANGE,
-      (event) => {
-        // Based on our experimentation, we're assuming that entries for the same cookie cannot be in both the 'changed' and 'deleted' arrays.
-        // However, due to ambiguity in the specification, we asked for clarification: https://github.com/WICG/cookie-store/issues/226
-        const changeEvent =
-          event.changed.find((event) => event.name === cookieName) ||
-          event.deleted.find((event) => event.name === cookieName)
-        if (changeEvent) {
-          callback(changeEvent.value)
-        }
+    const listener = addEventListener(configuration, globalObject.cookieStore!, DOM_EVENT.CHANGE, (event) => {
+      // Based on our experimentation, we're assuming that entries for the same cookie cannot be in both the 'changed' and 'deleted' arrays.
+      // However, due to ambiguity in the specification, we asked for clarification: https://github.com/WICG/cookie-store/issues/226
+      const changeEvent =
+        event.changed.find((event) => event.name === cookieName) ||
+        event.deleted.find((event) => event.name === cookieName)
+      if (changeEvent) {
+        callback(changeEvent.value)
       }
-    )
+    })
     return listener.stop
   }
 }

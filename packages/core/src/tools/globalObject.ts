@@ -1,23 +1,31 @@
-// Extend/Create the WorkerGlobalScope interface to avoid issues when used in a non-browser tsconfig environment
-interface WorkerGlobalScope {
-  empty: never
-}
-
-// Utility type to enforce that exactly one of the two types is used
-type Without<T, U> = { [P in Exclude<keyof T, keyof U>]?: never }
-type XOR<T, U> = T | U extends object ? (Without<T, U> & U) | (Without<U, T> & T) : T | U
-
-export type GlobalObject = XOR<Window, WorkerGlobalScope>
-
-export function getGlobalObject<T = typeof globalThis>(): T {
-  return globalThis as unknown as T
-}
+// eslint-disable-next-line no-restricted-imports
+import type { BrowserNavigator, CookieStore, ProfilerConstructor } from '../browser/browser.types'
 
 /**
- * Cached reference to the global object so it can be imported and re-used without
- * re-evaluating the heavyweight fallback logic in `getGlobalObject()`.
+ * Reflects values available in the global object (e.g. window or self). We use our own type to
+ * adjust the expectations across the codebase when the native types offered by TypeScript aren't
+ * sufficient.
+ *
+ * For example, we can mark a property as optional when it is not available in all browsers, or add
+ * new browser APIs that are not yet typed properly in the typescript lib.
+ *
+ * Feel free to add more properties as needed, or mark some properties as optional when they are.
  */
-// eslint-disable-next-line local-rules/disallow-side-effects
-export const globalObject = getGlobalObject<GlobalObject>()
+// eslint-disable-next-line no-restricted-syntax
+export interface GlobalObject extends Omit<typeof globalThis, 'queueMicrotask' | 'cookieStore' | 'Profiler'> {
+  navigator: BrowserNavigator
+
+  // cookieStore is not available in all browsers yet
+  cookieStore?: CookieStore
+
+  // queueMicrotask is not available in all browsers yet
+  queueMicrotask?: typeof queueMicrotask
+
+  // Profiler is not available in all browsers yet
+  Profiler?: ProfilerConstructor
+}
+
+// eslint-disable-next-line no-restricted-syntax
+export const globalObject = globalThis as GlobalObject
 
 export const isWorkerEnvironment = 'WorkerGlobalScope' in globalObject

@@ -1,5 +1,5 @@
 import { replaceMockable } from '../../../test'
-import type { CookieStoreWindow } from '../../browser/browser.types'
+import { globalObject } from '../../tools/globalObject'
 import type { Configuration, InitConfiguration } from '../configuration'
 import { display } from '../../tools/display'
 import { selectSessionStoreStrategyType } from './sessionStore'
@@ -167,7 +167,7 @@ describe('session store', () => {
 
     function disableCookies() {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
-      replaceMockable((window as CookieStoreWindow).cookieStore, undefined)
+      replaceMockable(globalObject.cookieStore, undefined)
     }
     function disableLocalStorage() {
       spyOn(Storage.prototype, 'getItem').and.throwError('unavailable')

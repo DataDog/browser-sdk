@@ -1,9 +1,8 @@
 import type { Subscription } from '@datadog/browser-core'
-import { ONE_MINUTE, deleteCookie, setCookie } from '@datadog/browser-core'
+import { ONE_MINUTE, deleteCookie, globalObject, setCookie } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../test'
-import type { CookieStoreWindow } from './cookieObservable'
 import { WATCH_COOKIE_INTERVAL_DELAY, createCookieObservable } from './cookieObservable'
 
 const COOKIE_NAME = 'cookie_name'
@@ -38,10 +37,9 @@ describe('cookieObservable', () => {
     // To work around this, we get some random cookie from the cookieStore. This adds enough delay
     // to ensure that the 'change' event is triggered when we write our cookie.
     // This was reported here: https://issues.chromium.org/issues/420405275
-    const cookieStore = (window as CookieStoreWindow).cookieStore
-    if (cookieStore) {
+    if (globalObject.cookieStore) {
       // Wait for the cookieStore to be ready
-      await cookieStore.get('some_cookie_name')
+      await globalObject.cookieStore.get('some_cookie_name')
     }
 
     setCookie(COOKIE_NAME, 'foo', COOKIE_DURATION)

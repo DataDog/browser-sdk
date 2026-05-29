@@ -1,4 +1,4 @@
-import { getGlobalObject } from '../../../tools/globalObject'
+import { globalObject } from '../../../tools/globalObject'
 import { Observable } from '../../../tools/observable'
 import { shallowClone } from '../../../tools/utils/objectUtils'
 import { SessionPersistence } from '../sessionConstants'
@@ -17,7 +17,7 @@ export interface MemorySession {
   onChange?: (state: SessionState) => void
 }
 
-interface GlobalObjectWithSession {
+export interface GlobalObjectWithSession {
   [MEMORY_SESSION_STORE_KEY]?: MemorySession
 }
 
@@ -26,13 +26,13 @@ export function selectMemorySessionStoreStrategy(): SessionStoreStrategyType {
 }
 
 export function initMemorySessionStoreStrategy(): SessionStoreStrategy {
-  const globalObject = getGlobalObject<GlobalObjectWithSession>()
+  const globalObjectWithSession = globalObject as GlobalObjectWithSession
 
   // Share the observable across SDK instances (RUM + Logs)
-  if (!globalObject[MEMORY_SESSION_STORE_KEY]) {
-    globalObject[MEMORY_SESSION_STORE_KEY] = {}
+  if (!globalObjectWithSession[MEMORY_SESSION_STORE_KEY]) {
+    globalObjectWithSession[MEMORY_SESSION_STORE_KEY] = {}
   }
-  const memorySession = globalObject[MEMORY_SESSION_STORE_KEY]
+  const memorySession = globalObjectWithSession[MEMORY_SESSION_STORE_KEY]
 
   const sessionObservable = new Observable<SessionObservableEvent>()
 

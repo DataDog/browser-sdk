@@ -7,7 +7,6 @@ export function queueMicrotask(callback: () => void) {
   // 'queueMicrotask called on an object that does not implement interface Window'. Calling it as an
   // unbound method is fine, as the proper global object will be used implicitly.
   // See https://github.com/mozilla/geckodriver/issues/1798
-  // eslint-disable-next-line @typescript-eslint/unbound-method
   const nativeImplementation = globalObject.queueMicrotask
 
   if (typeof nativeImplementation === 'function') {

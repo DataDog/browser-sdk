@@ -8,7 +8,7 @@ export const SYNTHETICS_RESULT_ID_COOKIE_NAME = `${cookieNamePrefix}result-id`
 export const SYNTHETICS_INJECTS_RUM_COOKIE_NAME = `${cookieNamePrefix}injects-rum`
 export const SYNTHETICS_CONTEXT_COOKIE_NAME = `${cookieNamePrefix}rum-context`
 
-export interface BrowserWindow extends Window {
+export interface BrowserWindow {
   _DATADOG_SYNTHETICS_PUBLIC_ID?: unknown
   _DATADOG_SYNTHETICS_RESULT_ID?: unknown
   _DATADOG_SYNTHETICS_INJECTS_RUM?: unknown
