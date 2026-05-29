@@ -39,6 +39,7 @@ export const enum DOM_EVENT {
   SECURITY_POLICY_VIOLATION = 'securitypolicyviolation',
   SELECTION_CHANGE = 'selectionchange',
   STORAGE = 'storage',
+  UNHANDLED_REJECTION = 'unhandledrejection',
 }
 
 interface AddEventListenerOptions {
@@ -144,5 +145,19 @@ export function addEventListeners<Target extends EventTarget, EventName extends 
 
   return {
     stop,
+  }
+}
+
+export function isEventSupported<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(
+  configuration: { allowUntrustedEvents?: boolean | undefined },
+  eventTarget: Target,
+  eventName: EventName,
+  listener: (event: EventMapFor<Target>[EventName] & { type: EventName }) => void
+) {
+  try {
+    addEventListener(configuration, eventTarget, eventName, listener).stop()
+    return true
+  } catch {
+    return false
   }
 }

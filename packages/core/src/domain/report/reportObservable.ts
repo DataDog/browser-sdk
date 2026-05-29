@@ -1,7 +1,7 @@
 import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
 import { monitor } from '../../tools/monitor'
 import { mergeObservables, Observable } from '../../tools/observable'
-import { addEventListener, DOM_EVENT } from '../../browser/addEventListener'
+import { addEventListener, DOM_EVENT, isEventSupported } from '../../browser/addEventListener'
 import { safeTruncate } from '../../tools/utils/stringUtils'
 import type { Configuration } from '../configuration'
 import type { RawError } from '../error/error.types'
@@ -61,7 +61,8 @@ function createReportObservable(reportTypes: ReportType[]) {
 
 function createCspViolationReportObservable(configuration: Configuration) {
   return new Observable<RawReportError>((observable) => {
-    if (!isCSPEventSupported(configuration)) {
+    // Salesforce does not allow to add a securitypolicyviolation event listener. https://developer.salesforce.com/tools/lws-distortion-viewer
+    if (!isEventSupported(configuration, document, DOM_EVENT.SECURITY_POLICY_VIOLATION, noop)) {
       return
     }
 
@@ -135,14 +136,4 @@ function buildStack(
         ],
       })
     : undefined
-}
-
-export function isCSPEventSupported(configuration: Configuration): boolean {
-  try {
-    // Salesforce does not allow to add a securitypolicyviolation event listener. https://developer.salesforce.com/tools/lws-distortion-viewer
-    addEventListener(configuration, document, DOM_EVENT.SECURITY_POLICY_VIOLATION, noop).stop()
-    return true
-  } catch {
-    return false
-  }
 }

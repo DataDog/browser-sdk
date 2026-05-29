@@ -7,6 +7,8 @@ import { globalObject } from '../../tools/globalObject'
 import { computeRawError, isError } from './error'
 import type { RawError } from './error.types'
 import { ErrorHandling, ErrorSource, NonErrorPrefix } from './error.types'
+import { DOM_EVENT, isEventSupported } from '../../browser/addEventListener'
+import { noop } from '../../tools/utils/functionUtils'
 
 export type UnhandledErrorCallback = (originalError: unknown, stackTrace?: StackTrace) => any
 
@@ -44,6 +46,11 @@ export function instrumentOnError(callback: UnhandledErrorCallback) {
 }
 
 export function instrumentUnhandledRejection(callback: UnhandledErrorCallback) {
+  // Salesforce LWS does not support the unhandledrejection event. https://developer.salesforce.com/tools/lws-distortion-viewer
+  if (!isEventSupported({}, window, DOM_EVENT.UNHANDLED_REJECTION, noop)) {
+    return { stop: noop }
+  }
+
   return instrumentMethod(globalObject, 'onunhandledrejection', ({ parameters: [e] }) => {
     callback(e.reason || 'Empty reason')
   })

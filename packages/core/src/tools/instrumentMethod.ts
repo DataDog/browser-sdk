@@ -2,6 +2,7 @@ import { setTimeout } from './timer'
 import { callMonitored } from './monitor'
 import { noop } from './utils/functionUtils'
 import { createHandlingStack } from './stackTrace/handlingStack'
+import { display } from './display'
 
 /**
  * Object passed to the callback of an instrumented method call. See `instrumentMethod` for more
@@ -118,9 +119,11 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
   }
 
   // Salesforce makes History.prototype.pushState and History.prototype.replaceState readonly. https://help.salesforce.com/s/articleView?id=release-notes.rn_lws_distortions_added.htm&release=238&type=5
+
   try {
     targetPrototype[method] = instrumentation as TARGET[METHOD]
-  } catch {
+  } catch (error) {
+    display.error(error)
     return { stop: noop }
   }
 
@@ -131,7 +134,8 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
       if (targetPrototype[method] === instrumentation) {
         try {
           targetPrototype[method] = original
-        } catch {
+        } catch (error) {
+          display.error(error)
           // Restore can be rejected by sandboxed runtimes; the instrumentation is already stopped.
         }
       }
