@@ -3,10 +3,15 @@ import { printLog, runMain } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
 import { getNpmToken } from '../lib/secrets.ts'
 
-runMain(() => {
+if (!process.env.NODE_TEST_CONTEXT) {
+  runMain(() => main())
+}
+
+export function main(args = process.argv.slice(2)): void {
   const {
     values: { 'dry-run': dryRun },
   } = parseArgs({
+    args,
     options: {
       'dry-run': { type: 'boolean', default: false },
     },
@@ -22,11 +27,19 @@ runMain(() => {
   command`yarn build`.withEnvironment({ BUILD_MODE: 'release' }).run()
 
   printLog(dryRun ? 'Publishing (dry run)' : 'Publishing')
-  command`yarn workspaces foreach --verbose --all --topological --no-private npm publish --tolerate-republish --access public ${dryRun ? ['--dry-run'] : []}`
-    .withEnvironment({
-      YARN_NPM_AUTH_TOKEN: dryRun ? '' : getNpmToken(),
-      BUILD_MODE: 'release',
+  const npmToken = dryRun ? '' : getNpmToken()
+
+  try {
+    command`yarn workspaces foreach --verbose --all --topological --no-private npm publish --tolerate-republish --access public ${dryRun ? ['--dry-run'] : []}`
+      .withEnvironment({
+        YARN_NPM_AUTH_TOKEN: npmToken,
+        BUILD_MODE: 'release',
+      })
+      .withLogs()
+      .run()
+  } catch (error) {
+    throw new Error('NPM publish failed. Run `node ./scripts/release/renew-token.ts` and retry the job.', {
+      cause: error as Error,
     })
-    .withLogs()
-    .run()
-})
+  }
+}
