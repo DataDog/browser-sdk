@@ -16,6 +16,11 @@ export function storeContextManager(
   productKey: string,
   customerDataType: CustomerDataType
 ) {
+  // window and localStorage are not available in Web Workers or Node.js environments
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+    return
+  }
+
   const storageKey = buildStorageKey(productKey, customerDataType)
 
   storageListeners.push(
