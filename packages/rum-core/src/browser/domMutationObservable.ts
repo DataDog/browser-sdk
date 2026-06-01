@@ -82,7 +82,7 @@ export function getMutationObserverConstructor(): MutationObserverConstructor {
       }
 
       const originalInstance = getZoneJsOriginalValue(patchedInstance, 'originalInstance')
-      constructor = originalInstance && originalInstance.constructor
+      constructor = originalInstance?.constructor
     }
   }
 

@@ -85,7 +85,7 @@ function beforeSend(
   observable: Observable<FetchContext>
 ) {
   const [input, init] = parameters
-  let methodFromParams = init && init.method
+  let methodFromParams = init?.method
 
   if (methodFromParams === undefined && input instanceof Request) {
     methodFromParams = input.method
@@ -152,7 +152,7 @@ async function afterSend(
 
   if (responseBodyCondition === ResponseBodyAction.COLLECT) {
     const clonedResponse = tryToClone(response)
-    if (clonedResponse && clonedResponse.body) {
+    if (clonedResponse?.body) {
       try {
         const bytes = await readBytesFromStream(clonedResponse.body)
         context.responseBody = new TextDecoder().decode(bytes)

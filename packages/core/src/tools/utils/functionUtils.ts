@@ -7,8 +7,8 @@ export function throttle<T extends (...args: any[]) => void>(
   wait: number,
   options?: { leading?: boolean; trailing?: boolean }
 ) {
-  const needLeadingExecution = options && options.leading !== undefined ? options.leading : true
-  const needTrailingExecution = options && options.trailing !== undefined ? options.trailing : true
+  const needLeadingExecution = options?.leading !== undefined ? options.leading : true
+  const needTrailingExecution = options?.trailing !== undefined ? options.trailing : true
   let inWaitPeriod = false
   let pendingExecutionWithParameters: Parameters<T> | undefined
   let pendingTimeoutId: TimeoutId

@@ -335,7 +335,7 @@ export function validateAndBuildConfiguration(
   initConfiguration: InitConfiguration,
   errorStack?: string
 ): Configuration | undefined {
-  if (!initConfiguration || !initConfiguration.clientToken) {
+  if (!initConfiguration?.clientToken) {
     display.error('Client Token is not configured, we will not send any data.')
     return
   }

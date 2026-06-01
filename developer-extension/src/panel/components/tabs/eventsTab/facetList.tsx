@@ -92,10 +92,8 @@ function FacetValue({
 }) {
   const isTopLevel = depth === 0
   const facetSelectState = computeSelectionState(facetValuesFilter, facetRegistry, facet, facetValue, parentList)
-  const isCollapsed =
-    !facetValuesFilter.facetValues[facet.path] || !facetValuesFilter.facetValues[facet.path].includes(facetValue)
-  const isFiltered =
-    facetValuesFilter.facetValues[facet.path] && facetValuesFilter.facetValues[facet.path].includes(facetValue)
+  const isCollapsed = !facetValuesFilter.facetValues[facet.path]?.includes(facetValue)
+  const isFiltered = facetValuesFilter.facetValues[facet.path]?.includes(facetValue)
   const isOnly = facetValuesFilter.type === 'include' && facetSelectState === 'selected'
   const value = (
     <Flex justify="space-between" mt={isTopLevel ? 'xs' : SPACE_BETWEEN_CHECKBOX}>

@@ -46,7 +46,7 @@ function withLeakDetection(eventName: string, listener: EventListener) {
 
   return (event: Event) => {
     const currentSpec = getCurrentJasmineSpec()
-    if (!currentSpec || specWhenAdded.fullName !== currentSpec.fullName) {
+    if (specWhenAdded.fullName !== currentSpec?.fullName) {
       display.error(`Leaked listener
   event names: "${eventName}"
   attached with: "${specWhenAdded.fullName}"

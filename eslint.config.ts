@@ -198,6 +198,7 @@ export default defineConfig(
         },
       ],
       '@typescript-eslint/no-empty-function': 'error',
+      '@typescript-eslint/prefer-optional-chain': 'error',
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unsafe-argument': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
