@@ -383,7 +383,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-remote-config@npm:6.28.0, @datadog/browser-remote-config@workspace:packages/remote-config":
+"@datadog/browser-remote-config@npm:7.2.0, @datadog/browser-remote-config@workspace:packages/remote-config":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-remote-config@workspace:packages/remote-config"
   dependencies:
@@ -583,7 +583,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-sdk-endpoint@workspace:packages/endpoint"
   dependencies:
-    "@datadog/browser-remote-config": "npm:6.28.0"
+    "@datadog/browser-remote-config": "npm:7.2.0"
   languageName: unknown
   linkType: soft
 
