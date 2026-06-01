@@ -55,7 +55,9 @@ export function bridgeSupports(capability: BridgeCapability): boolean {
 
 export function canUseEventBridge(currentHost = globalObject.location?.hostname): boolean {
   const bridge = getEventBridge()
-  if (!bridge) return false
+  if (!bridge) {
+    return false
+  }
 
   if (typeof getEventBridgeGlobal()?.getAllowedWebViewHostPatterns === 'function') {
     return bridge.getAllowedWebViewHostPatterns().some((pattern) => matchesWildcardPattern(currentHost, pattern))
