@@ -5,12 +5,7 @@ import type { Configuration } from '../../configuration'
 import { SessionPersistence } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
 import { isSessionInNotStartedState, toSessionString, toSessionState } from '../sessionState'
-import type {
-  SessionStateOperation,
-  SessionStoreStrategy,
-  SessionStoreStrategyType,
-  SessionObservableEvent,
-} from './sessionStoreStrategy'
+import type { SessionStateOperation, SessionStoreStrategy, SessionStoreStrategyType } from './sessionStoreStrategy'
 import { SESSION_STORE_KEY, LEGACY_SESSION_STORE_KEY } from './sessionStoreStrategy'
 
 const LOCAL_STORAGE_TEST_KEY = '_dd_test_'
@@ -29,11 +24,11 @@ export function selectLocalStorageStrategy(): SessionStoreStrategyType | undefin
 }
 
 export function initLocalStorageStrategy(configuration: Configuration): SessionStoreStrategy {
-  const sessionObservable = new Observable<SessionObservableEvent>(
+  const sessionObservable = new Observable<SessionState>(
     (observable) =>
       addEventListener(configuration, window, 'storage', (event) => {
         if (event.key === SESSION_STORE_KEY && event.storageArea === localStorage) {
-          observable.notify({ sessionState: toSessionState(event.newValue) })
+          observable.notify(toSessionState(event.newValue))
         }
       }).stop
   )
@@ -55,7 +50,7 @@ export function initLocalStorageStrategy(configuration: Configuration): SessionS
       const newState = fn(currentState)
       localStorage.setItem(SESSION_STORE_KEY, toSessionString(newState))
       await Promise.resolve()
-      sessionObservable.notify({ sessionState: newState })
+      sessionObservable.notify(newState)
     },
     sessionObservable,
   }
