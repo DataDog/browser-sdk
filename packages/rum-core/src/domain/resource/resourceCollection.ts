@@ -364,7 +364,7 @@ function filterHeaders(headers: Headers, matchers: MatchHeader[]): NetworkHeader
       display.warn(
         `Header "${lowerName}" value was truncated from ${capturedValue.length} to ${MAX_HEADER_VALUE_LENGTH} characters.`
       )
-      // monitor-until: 2026-05-23
+      // monitor-until: 2026-07-23
       addTelemetryDebug('Resource header value was truncated', {
         header_name: lowerName,
         original_length: capturedValue.length,
@@ -377,7 +377,7 @@ function filterHeaders(headers: Headers, matchers: MatchHeader[]): NetworkHeader
   })
 
   if (hasReachedMaxHeaderCount) {
-    // monitor-until: 2026-05-23
+    // monitor-until: 2026-07-23
     addTelemetryDebug('Maximum number of resource headers reached', {
       collectedHeaderCount,
       totalHeaderCount,
