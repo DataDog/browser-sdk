@@ -19,7 +19,6 @@ import { CookieApi, LEGACY_SESSION_STORE_KEY, SESSION_STORE_KEY } from './sessio
 import type {
   SessionStoreStrategy,
   SessionStoreStrategyType,
-  SessionObservableEvent,
   CookieSessionStoreStrategyType,
   SessionStateOperation,
 } from './sessionStoreStrategy'
@@ -56,7 +55,7 @@ export function initCookieStrategy(
   configuration: Configuration
 ): SessionStoreStrategy {
   const { cookieOptions, cookieApi } = sessionStoreStrategyType
-  const sessionObservable = new Observable<SessionObservableEvent>()
+  const sessionObservable = new Observable<SessionState>()
   const trackAnonymousUser = !!configuration.trackAnonymousUser
   const opts = encodeCookieOptions(cookieOptions)
   const cookieAccess = mockable(createCookieAccess)(cookieApi, configuration, cookieOptions)
@@ -66,7 +65,7 @@ export function initCookieStrategy(
     cookieAccess
       .getAll()
       .then((cookieValues) => {
-        sessionObservable.notify({ cookieValues, sessionState: findMatchingSessionState(cookieValues, opts) })
+        sessionObservable.notify(findMatchingSessionState(cookieValues, opts))
       })
       .catch((error) => monitorError(new Error(`Error while reading session cookies on change: ${error}`)))
   })
