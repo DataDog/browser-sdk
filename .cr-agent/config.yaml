@@ -1,0 +1,9 @@
+# Per-SDK overrides for cr-agent's review filtering. Any key here overrides the
+# toolkit default (tools/cr-agent/defaults.yaml); omitted keys are inherited.
+#
+# Per severity: minimum confidence (1–5) a finding must reach to be published,
+# or `off` to drop the whole severity. `max_comments` caps the published count.
+filtering:
+  # major: { min_confidence: 3 }
+  # minor: { min_confidence: 5 }
+  max_comments: 8
