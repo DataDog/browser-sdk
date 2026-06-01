@@ -16,6 +16,7 @@ import { objectHasValue } from './utils/objectUtils'
 export enum ExperimentalFeature {
   TRACK_INTAKE_REQUESTS = 'track_intake_requests',
   TOO_MANY_REQUESTS_INVESTIGATION = 'too_many_requests_investigation',
+  AI_AGENT_DETECTION = 'ai_agent_detection',
   SESSION_RENEWAL_DEBUG_CONTEXT = 'session_renewal_debug_context',
   PARTIAL_VIEW_UPDATES = 'partial_view_updates',
 }

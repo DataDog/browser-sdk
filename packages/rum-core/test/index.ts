@@ -1,4 +1,5 @@
 export * from './createFakeClick'
+export * from './mockAiAgentValues'
 export * from './dom'
 export * from './fixtures'
 export * from './formatValidation'
