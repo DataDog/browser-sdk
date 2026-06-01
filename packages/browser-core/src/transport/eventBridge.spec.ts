@@ -31,6 +31,58 @@ describe('canUseEventBridge', () => {
   })
 })
 
+describe('canUseEventBridge with wildcard patterns', () => {
+  it('should match a wildcard subdomain pattern', () => {
+    mockEventBridge({ allowedWebViewHostPatterns: ['*.shopist.io'] })
+    expect(canUseEventBridge('app.shopist.io')).toBeTrue()
+    expect(canUseEventBridge('preview-abc.shopist.io')).toBeTrue()
+  })
+
+  it('should not match the apex domain with a wildcard subdomain pattern', () => {
+    mockEventBridge({ allowedWebViewHostPatterns: ['*.shopist.io'] })
+    expect(canUseEventBridge('shopist.io')).toBeFalse()
+  })
+
+  it('should match the apex domain with an exact pattern', () => {
+    mockEventBridge({ allowedWebViewHostPatterns: ['shopist.io'] })
+    expect(canUseEventBridge('shopist.io')).toBeTrue()
+    expect(canUseEventBridge('app.shopist.io')).toBeFalse()
+  })
+
+  it('should match a prefix wildcard pattern', () => {
+    mockEventBridge({ allowedWebViewHostPatterns: ['preview-*.shopist.io'] })
+    expect(canUseEventBridge('preview-abc123.shopist.io')).toBeTrue()
+    expect(canUseEventBridge('app.shopist.io')).toBeFalse()
+  })
+
+  it('should match across multiple patterns', () => {
+    mockEventBridge({ allowedWebViewHostPatterns: ['shopist.io', '*.shopist.io'] })
+    expect(canUseEventBridge('shopist.io')).toBeTrue()
+    expect(canUseEventBridge('app.shopist.io')).toBeTrue()
+  })
+
+  it('should not match an unrelated host', () => {
+    mockEventBridge({ allowedWebViewHostPatterns: ['*.shopist.io'] })
+    expect(canUseEventBridge('evil.com')).toBeFalse()
+  })
+
+  it('should skip a pattern with more than one wildcard and still evaluate others', () => {
+    mockEventBridge({ allowedWebViewHostPatterns: ['*.foo.*.bar', 'shopist.io'] })
+    expect(canUseEventBridge('shopist.io')).toBeTrue()
+    expect(canUseEventBridge('anything.foo.anything.bar')).toBeFalse()
+  })
+
+  it('should prefer wildcard path over legacy path when getAllowedWebViewHostPatterns is present', () => {
+    mockEventBridge({ allowedWebViewHosts: ['legacy.com'], allowedWebViewHostPatterns: ['shopist.io'] })
+    expect(canUseEventBridge('shopist.io')).toBeTrue()
+    expect(canUseEventBridge('legacy.com')).toBeFalse()
+  })
+
+  it('should not detect when bridge is absent', () => {
+    expect(canUseEventBridge('shopist.io')).toBeFalse()
+  })
+})
+
 describe('event bridge send', () => {
   let sendSpy: jasmine.Spy<(msg: string) => void>
 
