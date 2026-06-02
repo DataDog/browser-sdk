@@ -1,9 +1,5 @@
-import {
-  serializeDynamicValueToJs,
-  nodeContextItemHandler,
-  serializeConfigToJs,
-  CodeExpression,
-} from './nodeResolution'
+import type { CodeExpression } from './nodeResolution'
+import { serializeDynamicValueToJs, nodeContextItemHandler, serializeConfigToJs } from './nodeResolution'
 import type { ContextItem, DynamicOption } from './remoteConfiguration.types'
 
 describe('serializeDynamicValueToJs', () => {
@@ -94,7 +90,7 @@ describe('nodeContextItemHandler', () => {
     const items: ContextItem[] = [
       { key: 'id', value: { rcSerializedType: 'dynamic', strategy: 'js', path: 'window.user' } },
     ]
-    const result = nodeContextItemHandler(items, resolve) as CodeExpression
+    const result = nodeContextItemHandler(items, resolve)
     expect(result.__isCodeExpression).toBe(true)
     expect(result.code).toContain('"id"')
     expect(result.code).toContain("__dd_getJs('window.user')")
@@ -105,14 +101,14 @@ describe('nodeContextItemHandler', () => {
       { key: 'id', value: { rcSerializedType: 'dynamic', strategy: 'cookie', name: 'uid' } },
       { key: 'env', value: { rcSerializedType: 'dynamic', strategy: 'js', path: 'window.env' } },
     ]
-    const result = nodeContextItemHandler(items, resolve) as CodeExpression
+    const result = nodeContextItemHandler(items, resolve)
     expect(result.code).toContain("__dd_getCookie('uid')")
     expect(result.code).toContain("__dd_getJs('window.env')")
   })
 
   it('should skip items where value is undefined (malformed ContextItem)', () => {
     const items = [{ key: 'id', value: undefined as any }]
-    const result = nodeContextItemHandler(items, () => undefined) as CodeExpression
+    const result = nodeContextItemHandler(items, () => undefined)
     expect(result.code).toBe('{}')
   })
 })

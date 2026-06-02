@@ -71,7 +71,11 @@ export function serializeDynamicValueToJs(option: DynamicOption): string {
 // nodeContextItemHandler and serializeConfigToJs — implemented in Task 2
 // ---------------------------------------------------------------------------
 
-/** @internal */
+/**
+ * Convert ContextItem[] to a JS object literal CodeExpression for Node code generation.
+ *
+ * @internal
+ */
 export function nodeContextItemHandler(
   items: ContextItem[],
   // resolve is intentionally unused — ContextItem values are always DynamicOption,
@@ -80,7 +84,9 @@ export function nodeContextItemHandler(
 ): CodeExpression {
   const entries = items
     .map(({ key, value }) => {
-      if (value === undefined) return null
+      if (value === undefined) {
+        return null
+      }
       return `${JSON.stringify(key)}: ${serializeDynamicValueToJs(value)}`
     })
     .filter((entry): entry is string => entry !== null)

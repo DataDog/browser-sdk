@@ -94,6 +94,7 @@ describe('INLINE_HELPERS', () => {
 
   it('is valid JavaScript', () => {
     // Wrapping in a function and parsing via Function constructor validates syntax
+    // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func -- intentional syntax validation
     assert.doesNotThrow(() => new Function(INLINE_HELPERS), 'INLINE_HELPERS should be valid JS')
   })
 })

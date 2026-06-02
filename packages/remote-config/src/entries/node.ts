@@ -1,8 +1,4 @@
-import {
-  resolveDynamicValues as resolveDynamicValuesFn,
-  fetchRemoteConfiguration,
-  buildEndpoint,
-} from '../remoteConfiguration'
+import { resolveDynamicValues as resolveDynamicValuesFn } from '../remoteConfiguration'
 import { nodeContextItemHandler } from '../nodeResolution'
 
 /**
