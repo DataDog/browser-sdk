@@ -1,5 +1,5 @@
 import { vi, beforeEach, describe, expect, it } from 'vitest'
-import type { RawError, Duration, BufferedData, SessionManager, SessionRenewalEvent } from '@datadog/browser-core'
+import type { RawError, Duration, BufferedData, SessionManager } from '@datadog/browser-core'
 import {
   Observable,
   toServerDuration,
@@ -87,7 +87,7 @@ describe('rum session', () => {
     expect(serverRumEvents.length).toEqual(2)
 
     sessionManager.setId('43')
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, undefined)
 
     expect(serverRumEvents.length).toEqual(3)
 

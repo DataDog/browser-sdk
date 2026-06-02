@@ -84,7 +84,7 @@ function replaceRequestIdleCallbackWithPolyfillShim() {
   const originalRequestIdleCallback = window.requestIdleCallback
   const originalCancelIdleCallback = window.cancelIdleCallback
   // Reproduces `(cb) => setTimeout(cb, 0)` — invokes the callback with no argument.
-  window.requestIdleCallback = ((cb: () => void) => setTimeout(() => cb(), 0)) as typeof window.requestIdleCallback
+  window.requestIdleCallback = ((cb: () => void) => setTimeout(() => cb(), 0)) as unknown as typeof window.requestIdleCallback
   window.cancelIdleCallback = (id: number) => clearTimeout(id)
   registerCleanupTask(() => {
     window.requestIdleCallback = originalRequestIdleCallback

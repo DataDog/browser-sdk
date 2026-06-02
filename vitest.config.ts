@@ -11,6 +11,7 @@ const buildEnvDefines: Record<string, string> = {
   __BUILD_ENV__WORKER_STRING__: JSON.stringify(''),
 }
 
+// eslint-disable-next-line import-x/no-default-export
 export default defineConfig({
   resolve: {
     alias: {

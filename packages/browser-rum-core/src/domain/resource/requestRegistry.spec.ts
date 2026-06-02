@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { Duration, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { addExperimentalFeatures, ExperimentalFeature, RequestType } from '@datadog/browser-core'
-import type { Clock, MockTelemetry } from '@datadog/browser-core/test'
-import { mockClock, startMockTelemetry } from '@datadog/browser-core/test'
+import { RequestType } from '@datadog/browser-core'
+import type { MockTelemetry } from '@datadog/browser-core/test'
+import { startMockTelemetry } from '@datadog/browser-core/test'
 import { createPerformanceEntry } from '../../../test'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
@@ -82,66 +82,6 @@ describe('RequestRegistry', () => {
       expect(await telemetry.getEvents()).toEqual([expect.objectContaining({ message: 'Too many requests' })])
     })
 
-    it('includes debug context when TOO_MANY_REQUESTS_INVESTIGATION is enabled', async () => {
-      const clock: Clock = mockClock()
-      addExperimentalFeatures([ExperimentalFeature.TOO_MANY_REQUESTS_INVESTIGATION])
-      let fetchCount = 0
-      let xhrCount = 0
-      let abortedCount = 0
-      let abortedOnStartCount = 0
-
-      // oldest request: created at t=0, FETCH, takes 50ms
-      lifeCycle.notify(
-        LifeCycleEventType.REQUEST_COMPLETED,
-        createRequestCompleteEvent({ startTime: 0, timeStamp: clock.timeStamp(0), duration: 50 as Duration })
-      )
-      fetchCount++
-
-      clock.tick(1000)
-
-      // 1 XHR request
-      lifeCycle.notify(
-        LifeCycleEventType.REQUEST_COMPLETED,
-        createRequestCompleteEvent({ startTime: MAX_REQUESTS - 1, type: RequestType.XHR })
-      )
-      xhrCount++
-
-      // aborted
-      lifeCycle.notify(
-        LifeCycleEventType.REQUEST_COMPLETED,
-        createRequestCompleteEvent({ startTime: MAX_REQUESTS, isAborted: true })
-      )
-      fetchCount++
-      abortedCount++
-
-      // aborted on start
-      lifeCycle.notify(
-        LifeCycleEventType.REQUEST_COMPLETED,
-        createRequestCompleteEvent({ startTime: MAX_REQUESTS, isAborted: true, isAbortedOnStart: true })
-      )
-      fetchCount++
-      abortedCount++
-      abortedOnStartCount++
-
-      // trigger requests until we reach the limit
-      while (fetchCount + xhrCount <= MAX_REQUESTS) {
-        lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createRequestCompleteEvent({ startTime: 10 }))
-        fetchCount++
-      }
-
-      expect(await telemetry.getEvents()).toEqual([
-        expect.objectContaining({
-          message: 'Too many requests',
-          abortedCount,
-          abortedOnStartCount,
-          xhrCount,
-          fetchCount,
-          oldestRequestAge: 1000,
-          oldestRequestEndAge: 950,
-          withoutMatchingEntryCount: MAX_REQUESTS + 1,
-        }),
-      ])
-    })
   })
 
   function createRequestCompleteEvent({

@@ -103,7 +103,7 @@ describe('record', () => {
       })
     )
     expect(records[i].type).toEqual(RecordType.IncrementalSnapshot)
-    expect((records[i++] as BrowserIncrementalSnapshotRecord).data).toEqual(
+    expect((records[i] as BrowserIncrementalSnapshotRecord).data).toEqual(
       expect.objectContaining({
         source: IncrementalSource.StyleSheetRule,
         adds: [{ rule: 'body { color: #ccc; }', index: undefined }],
@@ -135,7 +135,7 @@ describe('record', () => {
     expect((records[i++] as BrowserChangeRecord).data.map((change) => change[0])).toContain(ChangeType.AddNode)
     expect(records[i++].type).toEqual(RecordType.Meta)
     expect(records[i++].type).toEqual(RecordType.Focus)
-    expect(records[i++].type).toEqual(RecordType.FullSnapshot)
+    expect(records[i].type).toEqual(RecordType.FullSnapshot)
   })
 
   describe('Shadow dom', () => {

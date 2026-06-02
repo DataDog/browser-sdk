@@ -1,6 +1,6 @@
 import { vi, describe, expect, it } from 'vitest'
 import { replaceMockable } from '../../../test'
-import type { CookieStoreWindow } from '../../browser/browser.types'
+import { globalObject } from '../../tools/globalObject'
 import type { Configuration, InitConfiguration } from '../configuration'
 import { buildCookieOptions } from '../configuration'
 import { display } from '../../tools/display'
@@ -170,7 +170,7 @@ describe('session store', () => {
 
     function disableCookies() {
       vi.spyOn(document, 'cookie', 'get').mockReturnValue('')
-      replaceMockable((window as CookieStoreWindow).cookieStore, undefined)
+      replaceMockable(globalObject.cookieStore, undefined)
     }
     function disableLocalStorage() {
       vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {

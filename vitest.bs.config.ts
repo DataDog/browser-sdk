@@ -1,12 +1,25 @@
 import path from 'node:path'
 
-import { webdriverio } from '@vitest/browser-webdriverio'
+import { playwright } from '@vitest/browser-playwright'
 import { defineConfig } from 'vitest/config'
 
 // eslint-disable-next-line local-rules/disallow-test-import-export-from-src
 import { getBuildInfos } from './test/envUtils.ts'
 // eslint-disable-next-line local-rules/disallow-test-import-export-from-src
-import { browserConfigurations } from './test/unit/browsers.conf.ts'
+import { browserConfigurations as allBrowserConfigurations } from './test/unit/browsers.conf.ts'
+import packageJson from './package.json' with { type: 'json' }
+
+// Filter to a single browser when BS_BROWSER is set (CI parallel matrix).
+// Without this, all browsers run in a single Vitest process.
+const selectedBrowser = process.env.BS_BROWSER
+const browserConfigurations = selectedBrowser
+  ? allBrowserConfigurations.filter((c) => c.id === selectedBrowser)
+  : allBrowserConfigurations
+
+if (selectedBrowser && browserConfigurations.length === 0) {
+  const availableIds = allBrowserConfigurations.map((c) => c.id).join(', ')
+  throw new Error(`Unknown BS_BROWSER "${selectedBrowser}". Available: ${availableIds}`)
+}
 
 // Build env variables that should be replaced at compile time (same as webpack.base.ts)
 const buildEnvDefines: Record<string, string> = {
@@ -16,28 +29,37 @@ const buildEnvDefines: Record<string, string> = {
   __BUILD_ENV__WORKER_STRING__: JSON.stringify(''),
 }
 
-function getWebdriverBrowserName(name: string): 'chrome' | 'firefox' | 'safari' | 'edge' {
-  const lower = name.toLowerCase()
-  if (lower.includes('firefox')) { return 'firefox' }
-  if (lower.includes('safari')) { return 'safari' }
-  if (lower.includes('edge')) { return 'edge' }
-  return 'chrome'
+function getPlaywrightBrowserName(name: string): 'chromium' | 'firefox' | 'webkit' {
+  if (name.toLowerCase().includes('firefox')) {
+    return 'firefox'
+  }
+  if (name.toLowerCase().includes('safari') || name.toLowerCase().includes('webkit')) {
+    return 'webkit'
+  }
+  return 'chromium'
 }
 
-function getBrowserStackOptions(configuration: (typeof browserConfigurations)[number]) {
+function getCapabilities(configuration: (typeof browserConfigurations)[number]) {
+  const rootPkg = packageJson as unknown as { devDependencies?: Record<string, string> }
+  const playwrightVersion = rootPkg.devDependencies?.['@playwright/test'] ?? 'latest'
   return {
     os: configuration.os,
-    osVersion: configuration.osVersion,
-    browserVersion: configuration.version,
-    projectName: 'browser sdk unit',
-    buildName: getBuildInfos(),
-    sessionName: configuration.sessionName,
-    local: 'true',
-    debug: 'false',
-      consoleLogs: 'verbose',
-    networkLogs: 'false',
-    interactiveDebugging: 'false',
-    ...(configuration.device ? { deviceName: configuration.device } : {}),
+    os_version: configuration.osVersion,
+    browser: configuration.name,
+    browser_version: configuration.version,
+    'browserstack.username': process.env.BS_USERNAME,
+    'browserstack.accessKey': process.env.BS_ACCESS_KEY,
+    project: 'browser sdk unit',
+    build: getBuildInfos(),
+    name: configuration.sessionName,
+    'browserstack.local': true,
+    'browserstack.localIdentifier': process.env.BROWSERSTACK_LOCAL_IDENTIFIER || '',
+    'browserstack.playwrightVersion': playwrightVersion,
+    'client.playwrightVersion': playwrightVersion,
+    'browserstack.debug': false,
+    'browserstack.console': 'info',
+    'browserstack.networkLogs': false,
+    'browserstack.interactiveDebugging': false,
   }
 }
 
@@ -67,51 +89,40 @@ export default defineConfig({
 
   define: buildEnvDefines,
 
+  // Transpile Vitest's browser client and dependencies to ES2020 so they run on older
+  // BrowserStack browsers (Chrome 80, Edge 80, Firefox 78). Without this, Vitest's client.js
+  // uses ??= and #privateFields which these browsers can't parse.
+  // See https://github.com/vitest-dev/vitest/issues/4304
+  esbuild: {
+    target: 'es2020',
+  },
+
   optimizeDeps: {
     include: ['pako'],
+    esbuildOptions: {
+      target: 'es2020',
+    },
   },
 
   test: {
     browser: {
       enabled: true,
-      // Use WebdriverIO instead of Playwright for BrowserStack. Playwright connects via CDP
-      // websockets which BrowserStack drops after ~60s idle (vitest#10151). WebdriverIO uses
-      // the WebDriver protocol — the same protocol Karma used — which is BrowserStack's native
-      // and most stable integration.
-      provider: webdriverio({
-        protocol: 'https',
-        hostname: 'hub-cloud.browserstack.com',
-        port: 443,
-        path: '/wd/hub',
-        capabilities: {
-          'bstack:options': {
-            userName: process.env.BS_USERNAME,
-            accessKey: process.env.BS_ACCESS_KEY,
-          },
-        },
-      }),
-      // Bind Vite server to 0.0.0.0 so BrowserStack Local tunnel can reach it.
-      // The browser navigates to bs-local.com which resolves to 127.0.0.1 on both
-      // the local machine and the BrowserStack machine (via the Local tunnel).
+      provider: playwright(),
+      // Use bs-local.com instead of localhost so Safari on BrowserStack can access cookies.
+      // BrowserStack replaces localhost with bs-local.com for Safari, which breaks cookie-based
+      // tests when the server hostname doesn't match.
+      // See https://www.browserstack.com/support/faq/local-testing/local-exceptions/i-face-issues-while-testing-localhost-urls-or-private-servers-in-safari-on-macos-os-x-and-ios
       api: {
-        host: '0.0.0.0',
+        host: 'bs-local.com',
       },
       instances: browserConfigurations.map((config) => ({
-        browser: getWebdriverBrowserName(config.name),
+        browser: getPlaywrightBrowserName(config.name),
         name: config.sessionName,
-        provider: webdriverio({
-          protocol: 'https',
-          hostname: 'hub-cloud.browserstack.com',
-          port: 443,
-          path: '/wd/hub',
-          capabilities: {
-            'bstack:options': {
-              userName: process.env.BS_USERNAME,
-              accessKey: process.env.BS_ACCESS_KEY,
-              ...getBrowserStackOptions(config),
-            },
-          } as Record<string, unknown>,
-        }),
+        playwright: {
+          connectOptions: {
+            wsEndpoint: `wss://cdp.browserstack.com/playwright?caps=${encodeURIComponent(JSON.stringify(getCapabilities(config)))}`,
+          },
+        },
       })),
     },
 

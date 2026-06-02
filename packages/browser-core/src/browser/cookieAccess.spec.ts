@@ -2,11 +2,11 @@ import { vi, describe, it, expect, type Mock } from 'vitest'
 import { collectAsyncCalls, mockClock, registerCleanupTask, replaceMockable } from '../../test'
 import type { Configuration } from '../domain/configuration'
 import { display } from '../tools/display'
+import { globalObject } from '../tools/globalObject'
 import { detectVersion, isChromium } from '../tools/utils/browserDetection'
 import { dateNow, ONE_MINUTE } from '../tools/utils/timeUtils'
 import type { CookieOptions } from './cookie'
 import { deleteCookie, getCookie, setCookie } from './cookie'
-import type { CookieStoreWindow } from './browser.types'
 import type { CookieAccess } from './cookieAccess'
 import {
   areCookiesAuthorized,
@@ -20,7 +20,7 @@ const COOKIE_OPTIONS = { secure: false, crossSite: false, partitioned: false }
 const MOCK_CONFIGURATION = { allowUntrustedEvents: true } as Configuration
 
 function disableCookieStore() {
-  replaceMockable((window as CookieStoreWindow).cookieStore, undefined)
+  replaceMockable(globalObject.cookieStore, undefined)
 }
 
 describe('cookieAccess', () => {
@@ -57,7 +57,7 @@ describe('cookieAccess', () => {
       setup: () => {
         const clock = mockClock()
 
-        if (!(window as CookieStoreWindow).cookieStore) {
+        if (!globalObject.cookieStore) {
           return null
         }
 
@@ -320,7 +320,7 @@ describe('cookieAccess', () => {
     })
 
     it('works with the real createCookieStoreAccess', async () => {
-      if (!(window as CookieStoreWindow).cookieStore) {
+      if (!globalObject.cookieStore) {
         return
       }
       const result = await areCookiesAuthorized(createCookieStoreAccess, COOKIE_OPTIONS, MOCK_CONFIGURATION)

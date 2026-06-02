@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest'
 import { isEqual, diffMerge } from './viewDiff'
 
 describe('isEqual', () => {

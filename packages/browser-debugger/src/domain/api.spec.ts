@@ -336,7 +336,7 @@ describe('api', () => {
       onEntry(probes, { name: 'obj' }, { arg: 'value' })
       onReturn(probes, 'result', { name: 'obj' }, { arg: 'value' }, { local: 'data' })
 
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
       expect(snapshot.captures).toEqual({
         entry: {
@@ -437,13 +437,13 @@ describe('api', () => {
       onReturn(probes, null, {}, {}, {})
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
       expect(payload.message).toBeUndefined()
       expect(snapshot.evaluationErrors).toEqual([
         {
           expr: 'missing.value',
-          message: jasmine.stringMatching(/^ReferenceError: /),
+          message: expect.stringMatching(/^ReferenceError: /),
         },
       ])
       expect(snapshot.duration).toBeUndefined()
@@ -474,13 +474,13 @@ describe('api', () => {
       onReturn(probes, null, {}, {}, {})
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
       expect(payload.message).toBeUndefined()
       expect(snapshot.evaluationErrors).toEqual([
         {
           expr: 'missing.value',
-          message: jasmine.stringMatching(/^ReferenceError: /),
+          message: expect.stringMatching(/^ReferenceError: /),
         },
       ])
       expect(snapshot.captures).toBeUndefined()
@@ -663,13 +663,13 @@ describe('api', () => {
       onThrow(probes, new Error('Test error'), {}, {})
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
-      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
       expect(payload.message).toBeUndefined()
       expect(snapshot.evaluationErrors).toEqual([
         {
           expr: 'missing.value',
-          message: jasmine.stringMatching(/^ReferenceError: /),
+          message: expect.stringMatching(/^ReferenceError: /),
         },
       ])
       expect(snapshot.captures).toBeUndefined()
