@@ -434,7 +434,7 @@ describe('shouldMaskNode', () => {
     })
 
     describe('when privacy level is MASK_UNLESS_ALLOWLISTED', () => {
-      beforeEach(() => {
+      afterEach(() => {
         // Reset allowlist before each test
         delete (window as any).$DD_ALLOW
       })
