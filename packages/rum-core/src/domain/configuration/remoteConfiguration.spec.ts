@@ -54,6 +54,9 @@ export type _ = Assert<
   ResolvedRumRemoteConfiguration & {
     // clientToken is not part of the remote configuration but required in init configuration
     clientToken: string
+    // user and globalContext are set via initConfiguration but not via remote configuration
+    user: RumInitConfiguration['user']
+    globalContext: RumInitConfiguration['globalContext']
   } extends RumInitConfiguration
     ? true
     : false

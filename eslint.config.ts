@@ -56,6 +56,9 @@ export default defineConfig(
       'developer-extension/.wxt',
       'developer-extension/dist',
       '.claude/worktrees',
+      'developer-extension/.output',
+      // Auto-generated file — do not lint
+      'packages/rum/src/types/profiling.ts',
     ],
   },
 
@@ -399,6 +402,7 @@ export default defineConfig(
           selector: 'TSEnumDeclaration:not([const=true])',
           message: 'When possible, use `const enum` as it produces less code when transpiled.',
         },
+
         {
           selector: 'TSModuleDeclaration[kind=global]',
           message: 'Never declare global types as it will leak to the user app global scope.',
