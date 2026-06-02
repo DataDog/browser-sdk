@@ -1,4 +1,4 @@
-/* eslint-disable camelcase, no-bitwise */
+/* eslint-disable camelcase, no-bitwise, no-useless-assignment */
 // This file comes from and was trimmed from unused code https://github.com/nodeca/pako/blob/034669ba0f1a4c0590e45f7c2820128200f972b3/dist/pako_deflate.es5.js
 
 // (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
