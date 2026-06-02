@@ -94,6 +94,20 @@ test.describe('plugin: react', () => {
             expect(browserLogs.filter((log) => log.level === 'error').length).toBeGreaterThan(0)
           })
         })
+
+      if (appName === 'react-router-v7-app') {
+        createTest('should call RouterProvider onError when initial route loader throws synchronously')
+          .withRum()
+          .withApp(appName)
+          .withBasePath('/?test-loader-error')
+          .run(async ({ page, flushBrowserLogs }) => {
+            await page.waitForSelector('[data-testid="on-error-fired"]', { timeout: 10000 })
+            const errorText = await page.textContent('[data-testid="on-error-fired"]')
+            expect(errorText).toBe('Synchronous loader error')
+
+            flushBrowserLogs()
+          })
+      }
     })
   }
 })

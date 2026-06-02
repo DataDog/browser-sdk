@@ -135,6 +135,15 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
+        // Throws on demand to exercise initial loader-error handling. Used by the
+        // e2e regression test for https://github.com/DataDog/browser-sdk/issues/4657
+        // (only exercised on the v7 build — v6 has no equivalent initial-error bug).
+        loader: ({ request }: { request: Request }) => {
+          if (new URL(request.url).searchParams.has('test-loader-error')) {
+            throw new Error('Synchronous loader error')
+          }
+          return null
+        },
         Component: HomePage,
       },
       {
