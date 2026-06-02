@@ -13,7 +13,7 @@ export function getConnectivity(): Connectivity {
 
   return {
     status: navigator.onLine ? 'connected' : 'not_connected',
-    interfaces: navigator.connection && navigator.connection.type ? [navigator.connection.type] : undefined,
+    interfaces: navigator.connection?.type ? [navigator.connection.type] : undefined,
     effective_type: navigator.connection?.effectiveType,
   }
 }

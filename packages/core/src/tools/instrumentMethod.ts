@@ -136,7 +136,7 @@ export function instrumentSetter<TARGET extends { [key: string]: any }, PROPERTY
   after: (target: TARGET, value: TARGET[PROPERTY]) => void
 ) {
   const originalDescriptor = Object.getOwnPropertyDescriptor(targetPrototype, property)
-  if (!originalDescriptor || !originalDescriptor.set || !originalDescriptor.configurable) {
+  if (!originalDescriptor?.set || !originalDescriptor.configurable) {
     return { stop: noop }
   }
 

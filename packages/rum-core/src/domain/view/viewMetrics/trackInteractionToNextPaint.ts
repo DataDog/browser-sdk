@@ -106,7 +106,7 @@ export function trackInteractionToNextPaint(
     const newStartTime = elapsed(viewStart, candidate.startTime)
     // startTime catches identity changes when the p98 switches to a different interaction with the same duration,
     // ensuring targetSelector and subParts always describe the same interaction.
-    if (!currentInp || candidate.duration !== currentInp.duration || newStartTime !== currentInp.startTime) {
+    if (candidate.duration !== currentInp?.duration || newStartTime !== currentInp.startTime) {
       let targetSelector = getInteractionSelector(candidate.startTime)
       if (!targetSelector && candidate.target && isElementNode(candidate.target)) {
         targetSelector = getSelectorFromElement(candidate.target, configuration.actionNameAttribute)

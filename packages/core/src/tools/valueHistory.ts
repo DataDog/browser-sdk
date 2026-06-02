@@ -114,7 +114,7 @@ export function createValueHistory<Value>({
    */
   function closeActive(endTime: RelativeTime) {
     const latestEntry = entries[0]
-    if (latestEntry && latestEntry.endTime === END_OF_TIMES) {
+    if (latestEntry?.endTime === END_OF_TIMES) {
       latestEntry.close(endTime)
     }
   }

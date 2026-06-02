@@ -293,7 +293,7 @@ export async function fetchRemoteConfiguration(
   } catch {
     response = undefined
   }
-  if (!response || !response.ok) {
+  if (!response?.ok) {
     return {
       ok: false,
       error: new Error('Error fetching the remote configuration.'),

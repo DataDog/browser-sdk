@@ -48,7 +48,7 @@ export function startRUMInternalContext(hooks: Hooks) {
   }
 
   function getInternalContextFromRumGlobal(startTime?: RelativeTime, rumGlobal?: Rum): RumInternalContext | undefined {
-    if (rumGlobal && rumGlobal.getInternalContext) {
+    if (rumGlobal?.getInternalContext) {
       return rumGlobal.getInternalContext(startTime)
     }
   }

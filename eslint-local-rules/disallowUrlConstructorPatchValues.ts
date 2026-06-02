@@ -19,12 +19,12 @@ export default RuleCreator.withoutDocs({
         const globalScope = context.sourceCode.getScope(node)
         const variable = globalScope.set.get('URL')
 
-        if (variable && variable.defs.length === 0) {
+        if (variable?.defs.length === 0) {
           variable.references.forEach((ref) => {
             const idNode = ref.identifier
             const parent = idNode.parent
 
-            if (parent && parent.type === AST_NODE_TYPES.NewExpression && parent.callee === idNode) {
+            if (parent?.type === AST_NODE_TYPES.NewExpression && parent.callee === idNode) {
               context.report({
                 node: idNode,
                 messageId: 'patchedUrlConstructor',
