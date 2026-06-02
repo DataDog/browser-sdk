@@ -160,7 +160,7 @@ function getActionNameFromElementForStrategies(
       const actionName = strategy(element, rumConfiguration, nodePrivacyLevelCache)
       if (actionName) {
         const { name, nameSource } = actionName
-        const trimmedName = name && name.trim()
+        const trimmedName = name?.trim()
         if (trimmedName) {
           return { name: truncate(normalizeWhitespace(trimmedName)), nameSource }
         }

@@ -62,7 +62,7 @@ function listenEventsFromRequests(callback: (events: SdkEvent[]) => void) {
     if (!['rum', 'logs'].includes(url.pathname.split('/')[3])) {
       return
     }
-    if (!request.request.postData || !request.request.postData.text) {
+    if (!request.request.postData?.text) {
       return
     }
 

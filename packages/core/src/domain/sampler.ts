@@ -16,7 +16,7 @@ export function isSampled(sessionId: string, sampleRate: number): boolean {
   }
 
   const cachedDecision = sampleDecisionCache.get(sampleRate)
-  if (cachedDecision && sessionId === cachedDecision.sessionId) {
+  if (sessionId === cachedDecision?.sessionId) {
     return cachedDecision.decision
   }
 

@@ -49,7 +49,7 @@ export function defineGlobal<Global, Name extends keyof Global>(global: Global, 
     display.warn('SDK is loaded more than once. This is unsupported and might have unexpected behavior.')
   }
   global[name] = api
-  if (existingGlobalVariable && existingGlobalVariable.q) {
+  if (existingGlobalVariable?.q) {
     existingGlobalVariable.q.forEach((fn) => catchUserErrors(fn, 'onReady callback threw an error:')())
   }
 }

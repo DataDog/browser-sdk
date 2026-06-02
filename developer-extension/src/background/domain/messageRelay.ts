@@ -52,7 +52,7 @@ onDevtoolsLastDisconnection.subscribe(() => {
 // Listen for messages coming from the "isolated" content-script and relay them to a potential
 // devtools panel connection.
 chrome.runtime.onMessage.addListener((message, sender) => {
-  if (sender.tab && sender.tab.id) {
+  if (sender.tab?.id) {
     sendMessageToDevtools(sender.tab.id, { type: 'sdk-message', message })
   }
 })

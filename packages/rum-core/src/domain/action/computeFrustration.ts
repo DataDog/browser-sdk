@@ -74,5 +74,5 @@ export function isDead(click: Click) {
     target = document.getElementById(target.getAttribute('for')!)
   }
 
-  return !target || !target.matches(DEAD_CLICK_EXCLUDE_SELECTOR)
+  return !target?.matches(DEAD_CLICK_EXCLUDE_SELECTOR)
 }

@@ -52,7 +52,7 @@ export async function createGitHubRelease({ version, body }: GitHubReleaseParams
     throw new Error(`Release ${version} already exists`)
   } catch (error) {
     const fetchError = findError(error, FetchError)
-    if (!fetchError || fetchError.response.status !== 404) {
+    if (fetchError?.response.status !== 404) {
       throw error
     }
   }
