@@ -1,4 +1,5 @@
 import { appendElement } from '../../test'
+import { registerCleanupTask } from '../../../core/test'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
@@ -17,6 +18,17 @@ import {
   maskDisallowedTextContent,
 } from './privacy'
 import { ACTION_NAME_MASK } from './action/actionNameConstants'
+
+interface BrowserWindow extends Window {
+  $DD_ALLOW?: Set<string>
+}
+
+function defineAllowList(allowList: Set<string> | undefined) {
+  ;(window as BrowserWindow).$DD_ALLOW = allowList
+  registerCleanupTask(() => {
+    ;(window as BrowserWindow).$DD_ALLOW = undefined
+  })
+}
 
 describe('getNodePrivacyLevel', () => {
   it('returns the element privacy mode if it has one', () => {
@@ -434,11 +446,6 @@ describe('shouldMaskNode', () => {
     })
 
     describe('when privacy level is MASK_UNLESS_ALLOWLISTED', () => {
-      beforeEach(() => {
-        // Reset allowlist before each test
-        delete (window as any).$DD_ALLOW
-      })
-
       describe('for text nodes', () => {
         let textNode: Text
 
@@ -449,7 +456,7 @@ describe('shouldMaskNode', () => {
         it('returns false for allowlisted text content', () => {
           const allowedText = 'allowed text'
           textNode.textContent = allowedText
-          ;(window as any).$DD_ALLOW = new Set([allowedText.toLocaleLowerCase()])
+          defineAllowList(new Set([allowedText.toLocaleLowerCase()]))
           expect(shouldMaskNode(textNode, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBeFalse()
         })
 
@@ -467,7 +474,7 @@ describe('shouldMaskNode', () => {
           const input = document.createElement('input')
           textNode.textContent = 'some text'
           input.appendChild(textNode)
-          ;(window as any).$DD_ALLOW = new Set(['some text'])
+          defineAllowList(new Set(['some text']))
           expect(shouldMaskNode(textNode, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBeTrue()
         })
       })
@@ -494,20 +501,12 @@ describe('shouldMaskNode', () => {
 })
 
 describe('getTextContent', () => {
-  interface BrowserWindow extends Window {
-    $DD_ALLOW?: Set<string>
-  }
-
   describe('for text nodes inside form elements', () => {
     let textNode: Text
 
     beforeEach(() => {
       const textarea = appendElement('<textarea>some text</textarea>')
       textNode = textarea.firstChild as Text
-    })
-
-    afterEach(() => {
-      delete (window as BrowserWindow).$DD_ALLOW
     })
 
     it('returns original text if privacy level is ALLOW', () => {
@@ -523,7 +522,7 @@ describe('getTextContent', () => {
     })
 
     it('censors text if privacy level is MASK_UNLESS_ALLOWLISTED, even if the text is allowlisted', () => {
-      ;(window as BrowserWindow).$DD_ALLOW = new Set(['some text'])
+      defineAllowList(new Set(['some text']))
       expect(getTextContent(textNode, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBe(censorText('some text'))
     })
 
@@ -538,10 +537,6 @@ describe('getTextContent', () => {
     beforeEach(() => {
       const div = appendElement('<div>some text</div>')
       textNode = div.firstChild as Text
-    })
-
-    afterEach(() => {
-      delete (window as BrowserWindow).$DD_ALLOW
     })
 
     it('returns original text if privacy level is ALLOW', () => {
@@ -562,7 +557,7 @@ describe('getTextContent', () => {
 
     describe('when privacy level is MASK_UNLESS_ALLOWLISTED', () => {
       it('returns original text if the text is allowlisted', () => {
-        ;(window as BrowserWindow).$DD_ALLOW = new Set(['some text'])
+        defineAllowList(new Set(['some text']))
         expect(getTextContent(textNode, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBe('some text')
       })
 
@@ -584,20 +579,12 @@ const TEST_STRINGS = {
 }
 
 describe('maskWithAllowlist', () => {
-  interface BrowserWindow extends Window {
-    $DD_ALLOW?: Set<string>
-  }
-
   beforeEach(() => {
-    ;(window as BrowserWindow).$DD_ALLOW = new Set([TEST_STRINGS.PARAGRAPH_MIXED])
-  })
-
-  afterEach(() => {
-    ;(window as BrowserWindow).$DD_ALLOW = undefined
+    defineAllowList(new Set([TEST_STRINGS.PARAGRAPH_MIXED]))
   })
 
   it('should fail closed if $DD_ALLOW is not defined', () => {
-    ;(window as BrowserWindow).$DD_ALLOW = undefined
+    defineAllowList(undefined)
     const testString = maskDisallowedTextContent('mask-feature-on', ACTION_NAME_MASK)
     expect(testString).toBe(ACTION_NAME_MASK)
   })
