@@ -240,7 +240,6 @@ describe('session in cookie strategy', () => {
     })
   })
 
-
   describe('selectCookieStrategy', () => {
     it('should return defined when cookies are authorized', () => {
       mockCookies()

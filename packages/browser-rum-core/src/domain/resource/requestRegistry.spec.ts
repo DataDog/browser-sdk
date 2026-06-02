@@ -81,7 +81,6 @@ describe('RequestRegistry', () => {
       }
       expect(await telemetry.getEvents()).toEqual([expect.objectContaining({ message: 'Too many requests' })])
     })
-
   })
 
   function createRequestCompleteEvent({
