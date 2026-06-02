@@ -7,7 +7,7 @@
     "start": "nuxt preview --port 0 --host"
   },
   "dependencies": {
-    "nuxt": "^3.0.0"
+    "nuxt": "^4.0.0"
   },
   "peerDependencies": {
     "@datadog/browser-rum": "*",

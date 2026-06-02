@@ -20,6 +20,11 @@ type AppConfig<T extends AppBuilderOptions = AppBuilderOptions> =
 
 type AppBuilderOptions = Record<string, unknown>
 
+interface TestAppPackageJson {
+  name: string
+  dependencies: Record<string, string>
+}
+
 const APPS: AppConfig[] = [
   { name: 'vanilla' },
   { name: 'react-heavy-spa' },
@@ -35,6 +40,10 @@ const APPS: AppConfig[] = [
   { name: 'react-router-v6-app' },
   { name: 'tanstack-router-app' },
   { name: 'react-router-v7-app', builderFn: buildReactRouterv7App, deps: ['react-router-v6-app'] },
+
+  // Vue Router apps
+  { name: 'vue-router-v4-app', builderFn: buildVueRouterV4App, deps: ['vue-router-app'] },
+  { name: 'nuxt-vue-router-v4-app', builderFn: buildNuxtVueRouterV4App, deps: ['nuxt-app'] },
 
   // browser extensions
   { name: 'base-extension' },
@@ -149,31 +158,63 @@ async function buildApp(appName: string) {
 }
 
 async function buildReactRouterv7App() {
-  const baseAppPath = 'test/apps/react-router-v6-app'
-  const appPath = 'test/apps/react-router-v7-app'
+  await buildGeneratedApp('react-router-v6-app', 'react-router-v7-app', async (appPath) => {
+    await modifyFile(path.join(appPath, 'package.json'), (content: string) =>
+      content
+        .replace(/"name": "react-router-v6-app"/, '"name": "react-router-v7-app"')
+        .replace(/"react-router-dom": "[^"]*"/, '"react-router": "7.0.2"')
+    )
+
+    await modifyFile(path.join(appPath, 'app.tsx'), (content: string) =>
+      content
+        .replace('@datadog/browser-rum-react/react-router-v6', '@datadog/browser-rum-react/react-router-v7')
+        .replace("from 'react-router-dom'", "from 'react-router'")
+    )
+
+    await modifyFile(path.join(appPath, 'webpack.config.js'), (content: string) =>
+      content
+        .replace('react-router-v6-app.js', 'react-router-v7-app.js')
+        .replace('react-router-v6-app.js', 'react-router-v7-app.js')
+    )
+  })
+}
+
+async function buildVueRouterV4App() {
+  await buildGeneratedApp('vue-router-app', 'vue-router-v4-app', async (appPath) => {
+    await modifyPackageJson(appPath, (packageJson) => {
+      packageJson.name = 'vue-router-v4-app'
+      packageJson.dependencies['vue-router'] = '4.6.4'
+    })
+  })
+}
+
+async function buildNuxtVueRouterV4App() {
+  await buildGeneratedApp('nuxt-app', 'nuxt-vue-router-v4-app', async (appPath) => {
+    await modifyPackageJson(appPath, (packageJson) => {
+      packageJson.name = 'nuxt-vue-router-v4-app'
+      packageJson.dependencies.nuxt = '3.21.6'
+      packageJson.dependencies['vue-router'] = '4.6.4'
+    })
+  })
+}
+
+async function buildGeneratedApp(baseAppName: string, appName: string, modifyApp: (appPath: string) => Promise<void>) {
+  const baseAppPath = `test/apps/${baseAppName}`
+  const appPath = `test/apps/${appName}`
 
   fs.rmSync(appPath, { recursive: true, force: true })
   fs.cpSync(baseAppPath, appPath, { recursive: true })
 
-  await modifyFile(path.join(appPath, 'package.json'), (content: string) =>
-    content
-      .replace(/"name": "react-router-v6-app"/, '"name": "react-router-v7-app"')
-      .replace(/"react-router-dom": "[^"]*"/, '"react-router": "7.0.2"')
-  )
+  await modifyApp(appPath)
+  await buildApp(appName)
+}
 
-  await modifyFile(path.join(appPath, 'app.tsx'), (content: string) =>
-    content
-      .replace('@datadog/browser-rum-react/react-router-v6', '@datadog/browser-rum-react/react-router-v7')
-      .replace("from 'react-router-dom'", "from 'react-router'")
-  )
-
-  await modifyFile(path.join(appPath, 'webpack.config.js'), (content: string) =>
-    content
-      .replace('react-router-v6-app.js', 'react-router-v7-app.js')
-      .replace('react-router-v6-app.js', 'react-router-v7-app.js')
-  )
-
-  await buildApp('react-router-v7-app')
+async function modifyPackageJson(appPath: string, update: (packageJson: TestAppPackageJson) => void) {
+  await modifyFile(path.join(appPath, 'package.json'), (content: string) => {
+    const packageJson = JSON.parse(content) as TestAppPackageJson
+    update(packageJson)
+    return `${JSON.stringify(packageJson, null, 2)}\n`
+  })
 }
 
 async function buildExtension(appName: string, options?: { runAt?: string }): Promise<void> {

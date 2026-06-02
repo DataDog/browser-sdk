@@ -83,6 +83,16 @@ const baseWebServers = [
     },
   },
   {
+    name: 'vue router v4 app',
+    stdout: 'pipe' as const,
+    cwd: path.join(__dirname, '../apps/vue-router-v4-app'),
+    command: isLocal ? 'yarn dev' : 'yarn preview',
+    env: { NO_COLOR: '1' },
+    wait: {
+      stdout: /Local:\s+http:\/\/localhost:(?<vue_router_v4_app_port>\d+)/,
+    },
+  },
+  {
     name: 'nuxt app',
     stdout: 'pipe' as const,
     cwd: path.join(__dirname, '../apps/nuxt-app'),
@@ -92,6 +102,17 @@ const baseWebServers = [
       // yarn dev logs:   "➜ Local:  http://localhost:PORT"
       // yarn start logs: "Listening on http://[::]:PORT"
       stdout: /(?:Local:\s+http:\/\/localhost|Listening on http:\/\/(?:\[[^\]]+\]|[^:]+)):(?<nuxt_app_port>\d+)/,
+    },
+  },
+  {
+    name: 'nuxt vue router v4 app',
+    stdout: 'pipe' as const,
+    cwd: path.join(__dirname, '../apps/nuxt-vue-router-v4-app'),
+    command: isLocal ? 'yarn dev' : 'yarn start',
+    env: { NO_COLOR: '1' },
+    wait: {
+      stdout:
+        /(?:Local:\s+http:\/\/localhost|Listening on http:\/\/(?:\[[^\]]+\]|[^:]+)):(?<nuxt_vue_router_v4_app_port>\d+)/,
     },
   },
 ]
