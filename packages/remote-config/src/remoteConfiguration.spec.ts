@@ -8,7 +8,7 @@ import {
 } from './remoteConfiguration'
 import { parseJsonPath } from './jsonPathParser'
 
-describe('remoteConfiguration', () => {
+describe('browser-remote-config', () => {
   describe('buildEndpoint', () => {
     it('should build the default endpoint', () => {
       const endpoint = buildEndpoint({

@@ -21,8 +21,8 @@ import { writeFileSync } from 'node:fs'
 const bundle = await generateBundle({
   applicationId: 'your-app-id',
   remoteConfigurationId: 'your-config-id',
-  variant: 'rum',          // 'rum' | 'rum-slim' | 'logs' | 'rum-and-logs'
-  site: 'datadoghq.com',   // optional, defaults to datadoghq.com
+  variant: 'rum', // 'rum' | 'rum-slim' | 'logs' | 'rum-and-logs'
+  site: 'datadoghq.com', // optional, defaults to datadoghq.com
 })
 
 writeFileSync('public/datadog-sdk.js', bundle)
@@ -34,7 +34,7 @@ Then in your HTML, set `window.__DD_BASE_CONFIG__` with the fields that belong t
 <script>
   window.__DD_BASE_CONFIG__ = {
     clientToken: 'your-client-token',
-    site: 'datadoghq.com'
+    site: 'datadoghq.com',
   }
 </script>
 <script src="/datadog-sdk.js"></script>
@@ -75,7 +75,7 @@ datadogRum.init({
   applicationId: 'your-app-id',
   clientToken: 'your-client-token',
   site: 'datadoghq.com',
-  ...window.__DD_RC_CONFIG__
+  ...window.__DD_RC_CONFIG__,
 })
 ```
 
