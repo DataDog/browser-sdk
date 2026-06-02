@@ -13,6 +13,7 @@ import {
   DefaultPrivacyLevel,
   startTelemetry,
   startSessionManager,
+  CustomerContextKey,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
@@ -1059,6 +1060,104 @@ describe('preStartRum', () => {
       strategy.startView({ name: 'foo' })
 
       expect(startTelemetrySpy).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('user and globalContext from initConfiguration', () => {
+    it('applies user from initConfiguration to the user context manager at start', async () => {
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+      const setContextSpy = jasmine.createSpy()
+      doStartRumSpy.and.returnValue({
+        [CustomerContextKey.userContext]: { setContext: setContextSpy },
+      } as unknown as StartRumResult)
+
+      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, user: { id: 'u1', name: 'Alice' } }, PUBLIC_API)
+      await collectAsyncCalls(setContextSpy, 1)
+
+      expect(setContextSpy).toHaveBeenCalledOnceWith({ id: 'u1', name: 'Alice' })
+    })
+
+    it('applies globalContext from initConfiguration to the global context manager at start', async () => {
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+      const setContextSpy = jasmine.createSpy()
+      doStartRumSpy.and.returnValue({
+        [CustomerContextKey.globalContext]: { setContext: setContextSpy },
+      } as unknown as StartRumResult)
+
+      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, globalContext: { plan: 'pro', region: 'eu' } }, PUBLIC_API)
+      await collectAsyncCalls(setContextSpy, 1)
+
+      expect(setContextSpy).toHaveBeenCalledOnceWith({ plan: 'pro', region: 'eu' })
+    })
+
+    it('does not apply user context if not provided in initConfiguration', async () => {
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+      const setContextSpy = jasmine.createSpy()
+      doStartRumSpy.and.returnValue({
+        [CustomerContextKey.userContext]: { setContext: setContextSpy },
+      } as unknown as StartRumResult)
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      await collectAsyncCalls(doStartRumSpy, 1)
+
+      expect(setContextSpy).not.toHaveBeenCalled()
+    })
+
+    it('does not apply globalContext if not provided in initConfiguration', async () => {
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+      const setContextSpy = jasmine.createSpy()
+      doStartRumSpy.and.returnValue({
+        [CustomerContextKey.globalContext]: { setContext: setContextSpy },
+      } as unknown as StartRumResult)
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      await collectAsyncCalls(doStartRumSpy, 1)
+
+      expect(setContextSpy).not.toHaveBeenCalled()
+    })
+
+    it('applies user from initConfiguration only after SDK start (drain), not at init time', async () => {
+      const trackingConsentState = createTrackingConsentState()
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults({ trackingConsentState })
+
+      const setContextSpy = jasmine.createSpy()
+      doStartRumSpy.and.returnValue({
+        [CustomerContextKey.userContext]: { setContext: setContextSpy },
+      } as unknown as StartRumResult)
+
+      // init with tracking consent NOT_GRANTED — SDK will not start yet
+      strategy.init(
+        { ...DEFAULT_INIT_CONFIGURATION, user: { id: 'u1' }, trackingConsent: TrackingConsent.NOT_GRANTED },
+        PUBLIC_API
+      )
+
+      // SDK hasn't started — setContext should not have been called on the post-start manager yet
+      expect(setContextSpy).not.toHaveBeenCalled()
+
+      // Grant consent — triggers tryStartRum and drain
+      trackingConsentState.update(TrackingConsent.GRANTED)
+      await collectAsyncCalls(setContextSpy, 1)
+
+      // Now the drain has replayed — setContext should have been called
+      expect(setContextSpy).toHaveBeenCalledOnceWith({ id: 'u1' })
+    })
+
+    it('applies user context even when user is an empty object (user: {} is a valid User value)', async () => {
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+      const setContextSpy = jasmine.createSpy()
+      doStartRumSpy.and.returnValue({
+        [CustomerContextKey.userContext]: { setContext: setContextSpy },
+      } as unknown as StartRumResult)
+
+      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, user: {} }, PUBLIC_API)
+      await collectAsyncCalls(setContextSpy, 1)
+
+      expect(setContextSpy).toHaveBeenCalled()
     })
   })
 })

@@ -832,6 +832,8 @@ describe('serializeRumConfiguration', () => {
       profilingSampleRate: 42,
       propagateTraceBaggage: true,
       trackResourceHeaders: true,
+      user: { id: 'user-id' },
+      globalContext: { foo: 'bar' },
     }
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
@@ -847,7 +849,8 @@ describe('serializeRumConfiguration', () => {
           ? 'track_long_task' // We forgot the s, keeping this for backward compatibility
           : // The following options are not reported as telemetry. Please avoid adding more of them.
             // `remoteConfiguration` is covered by the legacy `remote_configuration_id` field.
-            Key extends 'applicationId' | 'subdomain' | 'remoteConfiguration'
+            // user and globalContext are excluded from telemetry because they contain PII (user identity and arbitrary customer data)
+            Key extends 'applicationId' | 'subdomain' | 'remoteConfiguration' | 'user' | 'globalContext'
             ? never
             : CamelToSnakeCase<Key>
     // By specifying the type here, we can ensure that serializeConfiguration is returning an
