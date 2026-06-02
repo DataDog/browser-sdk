@@ -8,6 +8,8 @@ import {
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
   sendToExtension,
+  createEndpointBuilder,
+  createReplicaEndpointBuilder,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -69,9 +71,10 @@ export function startRumBatch(
   sessionExpireObservable: Observable<void>,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
 ) {
-  const endpoints = [configuration.rumEndpointBuilder]
-  if (configuration.replica) {
-    endpoints.push(configuration.replica.rumEndpointBuilder)
+  const endpoints = [createEndpointBuilder(configuration, 'rum')]
+  const replicaEndpoint = createReplicaEndpointBuilder(configuration, 'rum')
+  if (replicaEndpoint) {
+    endpoints.push(replicaEndpoint)
   }
 
   const batch = createBatch({

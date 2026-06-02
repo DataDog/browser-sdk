@@ -4,14 +4,13 @@ import type { RawTelemetryConfiguration } from '../telemetry'
 import { isPercentage } from '../../tools/utils/numberUtils'
 import { objectHasValue } from '../../tools/utils/objectUtils'
 import type { CookieOptions } from '../../browser/cookie'
-import { buildCookieOptions } from '../session/storeStrategies/sessionInCookie'
+import { getCurrentSite } from '../../browser/cookie'
 import { TrackingConsent } from '../trackingConsent'
 import type { SessionPersistence } from '../session/sessionConstants'
 import type { MatchOption } from '../../tools/matchOption'
 import { isAllowedTrackingOrigins } from '../allowedTrackingOrigins'
+import { INTAKE_SITE_US1 } from '../intakeSites'
 import type { Site } from '../intakeSites'
-import type { TransportConfiguration } from './transportConfiguration'
-import { computeTransportConfiguration } from './transportConfiguration'
 
 /**
  * Default privacy level for the browser SDK.
@@ -217,7 +216,7 @@ export interface InitConfiguration {
    *
    * @internal
    */
-  replica?: ReplicaUserConfiguration | undefined
+  replica?: ReplicaInitConfiguration | undefined
 
   /**
    * [Internal option] Set the datacenter from where the data is dual shipped
@@ -277,15 +276,19 @@ export type ProxyFn = (options: { path: string; parameters: string; subdomain?: 
 /**
  * @internal
  */
-export interface ReplicaUserConfiguration {
+export interface ReplicaInitConfiguration {
   applicationId?: string
   clientToken: string
 }
 
 export type SdkSource = 'browser' | 'flutter' | 'unity'
 
-export interface Configuration extends TransportConfiguration {
-  // Built from init configuration
+export interface Configuration {
+  clientToken: string
+  datacenter: string | undefined
+  proxy: string | ProxyFn | undefined
+  site: Site
+  source: SdkSource
   beforeSend: GenericBeforeSendCallback | undefined
   cookieOptions: CookieOptions | undefined
   sessionPersistence: SessionPersistence | SessionPersistence[] | undefined
@@ -305,6 +308,7 @@ export interface Configuration extends TransportConfiguration {
   // internal
   sdkVersion: string | undefined
   variant: string | undefined
+  replica: ReplicaInitConfiguration | undefined
 }
 
 function isString(tag: unknown, tagName: string): tag is string | undefined | null {
@@ -371,6 +375,10 @@ export function validateAndBuildConfiguration(
   }
 
   return {
+    clientToken: initConfiguration.clientToken,
+    proxy: initConfiguration.proxy,
+    site: initConfiguration.site || INTAKE_SITE_US1,
+    source: validateSource(initConfiguration.source),
     beforeSend:
       initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
     cookieOptions: buildCookieOptions(initConfiguration),
@@ -394,9 +402,27 @@ export function validateAndBuildConfiguration(
      */
     variant: initConfiguration.variant,
     sdkVersion: initConfiguration.sdkVersion,
-
-    ...computeTransportConfiguration(initConfiguration),
+    replica: initConfiguration.replica,
   }
+}
+
+export function buildCookieOptions(initConfiguration: InitConfiguration): CookieOptions | undefined {
+  const cookieOptions: CookieOptions = {}
+
+  cookieOptions.secure =
+    !!initConfiguration.useSecureSessionCookie || !!initConfiguration.usePartitionedCrossSiteSessionCookie
+  cookieOptions.crossSite = !!initConfiguration.usePartitionedCrossSiteSessionCookie
+  cookieOptions.partitioned = !!initConfiguration.usePartitionedCrossSiteSessionCookie
+
+  if (initConfiguration.trackSessionAcrossSubdomains) {
+    const currentSite = getCurrentSite()
+    if (!currentSite) {
+      return
+    }
+    cookieOptions.domain = currentSite
+  }
+
+  return cookieOptions
 }
 
 export function serializeConfiguration(initConfiguration: InitConfiguration) {
@@ -423,4 +449,11 @@ export function serializeConfiguration(initConfiguration: InitConfiguration) {
     sdk_version: initConfiguration.sdkVersion,
     variant: initConfiguration.variant,
   } satisfies RawTelemetryConfiguration
+}
+
+function validateSource(source: string | undefined): SdkSource {
+  if (source === 'flutter' || source === 'unity') {
+    return source
+  }
+  return 'browser'
 }
