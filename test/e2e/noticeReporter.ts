@@ -2,7 +2,7 @@ import type { Reporter } from '@playwright/test/reporter'
 import { getRunId } from '../envUtils'
 import { APPLICATION_ID } from './lib/helpers/configuration'
 
-// eslint-disable-next-line import/no-default-export
+// eslint-disable-next-line import-x/no-default-export
 export default class NoticeReporter implements Reporter {
   onBegin() {
     console.log(
