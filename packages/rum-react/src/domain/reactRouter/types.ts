@@ -19,10 +19,17 @@ export interface AnyRouteMatch {
   params: Record<string, string | undefined>
 }
 export type AnyLocation = { pathname?: string } | string
-export type AnyCreateRouter<Options> = (
-  routes: AnyRouteObject[],
-  options?: Options
-) => {
+// Opaque second arg to subscriber callbacks — forwarded verbatim when replaying
+// initial-error notifications to subscribers that attach after us.
+export type AnyRouterSubscriberOpts = Record<string, unknown>
+export type AnyRouterSubscriber = (
+  routerState: { location: { pathname: string }; matches: AnyRouteMatch[] },
+  opts?: AnyRouterSubscriberOpts
+) => void
+
+export interface AnyRouter {
   state: { location: { pathname: string }; matches: AnyRouteMatch[] }
-  subscribe: (callback: (routerState: { location: { pathname: string }; matches: AnyRouteMatch[] }) => void) => void
+  subscribe: (callback: AnyRouterSubscriber) => () => void
 }
+
+export type AnyCreateRouter<Options> = (routes: AnyRouteObject[], options?: Options) => AnyRouter
