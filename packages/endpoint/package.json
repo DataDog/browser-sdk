@@ -4,6 +4,10 @@
   "license": "Apache-2.0",
   "main": "src/index.ts",
   "types": "src/index.ts",
+  "files": [
+    "src",
+    "!src/**/*.spec.ts"
+  ],
   "engines": {
     "node": ">=18"
   },
