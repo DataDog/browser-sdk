@@ -1,12 +1,21 @@
 /**
  * UUID v4
- * from https://gist.github.com/jed/982883
+ * Iterative implementation to avoid stack overflow from .replace() callback frames
+ * when the call stack is already deep (e.g. in Angular/React applications).
  */
-export function generateUUID(placeholder?: string): string {
-  return placeholder
-    ? // eslint-disable-next-line  no-bitwise
-      (parseInt(placeholder, 10) ^ ((Math.random() * 16) >> (parseInt(placeholder, 10) / 4))).toString(16)
-    : `${1e7}-${1e3}-${4e3}-${8e3}-${1e11}`.replace(/[018]/g, generateUUID)
+export function generateUUID(): string {
+  const template = '10000000-1000-4000-8000-100000000000'
+  let result = ''
+  for (let i = 0; i < template.length; i++) {
+    const char = template[i]
+    if (char === '0' || char === '1' || char === '8') {
+      // eslint-disable-next-line no-bitwise
+      result += (parseInt(char, 10) ^ ((Math.random() * 16) >> (parseInt(char, 10) / 4))).toString(16)
+    } else {
+      result += char
+    }
+  }
+  return result
 }
 
 // Assuming input string is following the HTTP Cookie format defined in
