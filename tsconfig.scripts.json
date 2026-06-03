@@ -15,5 +15,13 @@
     "checkJs": false,
     "allowImportingTsExtensions": true
   },
-  "include": ["scripts", "**/webpack.*.*", "test/envUtils.ts", "eslint.config.ts", "eslint-local-rules", "test/unit"]
+  "include": [
+    "scripts",
+    "**/webpack.*.*",
+    "test/envUtils.ts",
+    "eslint.config.ts",
+    "eslint-local-rules",
+    "test/unit",
+    "test/unit-vitest/vite.config.ts"
+  ]
 }

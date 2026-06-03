@@ -7,8 +7,6 @@ describe('trackRuntimeError', () => {
   const ERROR_MESSAGE = 'foo'
 
   const errorViaTrackRuntimeError = async (callback: () => void): Promise<RawError> => {
-    disableJasmineUncaughtExceptionTracking()
-
     const errorObservable = trackRuntimeError()
     const errorNotification = new Promise<RawError>((resolve) => {
       errorObservable.subscribe((e: RawError) => resolve(e))
@@ -21,6 +19,8 @@ describe('trackRuntimeError', () => {
       stop()
     }
   }
+
+  beforeEach(disableJasmineUncaughtExceptionTracking)
 
   it('should collect unhandled error', async () => {
     const error = await errorViaTrackRuntimeError(() => {
@@ -62,6 +62,8 @@ describe('instrumentOnError', () => {
       stop()
     }
   }
+
+  beforeEach(disableJasmineUncaughtExceptionTracking)
 
   it('should call original error handler', async () => {
     // withInstrumentOnError() asserts that the original error handler has been called for
@@ -287,6 +289,8 @@ describe('instrumentUnhandledRejection', () => {
       stop()
     }
   }
+
+  beforeEach(disableJasmineUncaughtExceptionTracking)
 
   it('should call original unhandled rejection handler', async () => {
     // withInstrumentOnUnhandledRejection() asserts that the original unhandled
