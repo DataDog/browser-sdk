@@ -3,6 +3,17 @@ import { callMonitored } from './monitor'
 import { noop } from './utils/functionUtils'
 import { createHandlingStack } from './stackTrace/handlingStack'
 
+/* Resolves parameters from either a call or construct signature, so instrumentMethod can handle
+ * both regular methods and constructors (e.g. `new WebSocket()`).
+ */
+type MethodParameters<T> = T extends new (...args: infer P) => any ? P : T extends (...args: infer P) => any ? P : never
+
+type MethodReturnType<T> = T extends new (...args: any[]) => infer R
+  ? R
+  : T extends (...args: any[]) => infer R
+    ? R
+    : never
+
 /**
  * Object passed to the callback of an instrumented method call. See `instrumentMethod` for more
  * info.
@@ -18,7 +29,7 @@ export interface InstrumentedMethodCall<TARGET extends { [key: string]: any }, M
    *
    * Note: if needed, parameters can be mutated by the instrumentation
    */
-  parameters: Parameters<TARGET[METHOD]>
+  parameters: MethodParameters<TARGET[METHOD]>
 
   /**
    * Registers a callback that will be called after the original method is called, with the method
@@ -33,7 +44,7 @@ export interface InstrumentedMethodCall<TARGET extends { [key: string]: any }, M
 }
 
 type PostCallCallback<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET> = (
-  result: ReturnType<TARGET[METHOD]>
+  result: MethodReturnType<TARGET[METHOD]>
 ) => void
 
 /**
@@ -85,13 +96,16 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
 
   let stopped = false
 
-  const instrumentation = function (this: TARGET): ReturnType<TARGET[METHOD]> {
+  const instrumentation = function (this: TARGET): MethodReturnType<TARGET[METHOD]> {
     if (stopped) {
+      if (new.target) {
+        return Reflect.construct(original, arguments as unknown as MethodParameters<TARGET[METHOD]>)
+      }
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
       return original.apply(this, arguments)
     }
 
-    const parameters = Array.from(arguments) as Parameters<TARGET[METHOD]>
+    const parameters = Array.from(arguments) as MethodParameters<TARGET[METHOD]>
 
     let postCallCallback: PostCallCallback<TARGET, METHOD> | undefined
 
@@ -107,7 +121,7 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
     ])
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    const result = original.apply(this, parameters)
+    const result = new.target ? Reflect.construct(original, parameters) : original.apply(this, parameters)
 
     if (postCallCallback) {
       callMonitored(postCallCallback, null, [result])
@@ -115,6 +129,12 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return result
+  }
+
+  // Preserve the original prototype so that instanceof checks against the instrumented global work.
+  // e.g. `new window.WebSocket(url) instanceof window.WebSocket` must remain true.
+  if (typeof original === 'function' && original.prototype) {
+    instrumentation.prototype = original.prototype
   }
 
   targetPrototype[method] = instrumentation as TARGET[METHOD]
