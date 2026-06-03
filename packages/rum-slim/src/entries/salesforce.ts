@@ -3,6 +3,7 @@ import type { RumPublicApi } from '@datadog/browser-rum-core'
 import { makeRumPublicApi } from '@datadog/browser-rum-core'
 import { makeRecorderApiStub } from '../boot/stubRecorderApi'
 import { makeProfilerApiStub } from '../boot/stubProfilerApi'
+import { makeSalesforceRumPublicApi } from '../domain/salesforce/salesforce'
 
 export type {
   User,
@@ -61,12 +62,20 @@ export type {
 } from '@datadog/browser-rum-core'
 export { DEFAULT_TRACKED_RESOURCE_HEADERS } from '@datadog/browser-rum-core'
 export { DefaultPrivacyLevel } from '@datadog/browser-core'
+export type {
+  SalesforceGenerateUrl,
+  SalesforceRumInitConfiguration,
+  SalesforceRumPublicApi,
+  SalesforceViewOptions,
+} from '../domain/salesforce/salesforce'
 
-export const datadogRum = makeRumPublicApi(makeRecorderApiStub(), makeProfilerApiStub(), {
+const rumPublicApi = makeRumPublicApi(makeRecorderApiStub(), makeProfilerApiStub(), {
   sdkName: 'rum-slim',
 })
 
+export const datadogRum = Object.assign(rumPublicApi, makeSalesforceRumPublicApi(rumPublicApi))
+
 interface BrowserWindow {
-  DD_RUM?: RumPublicApi
+  DD_RUM?: RumPublicApi & ReturnType<typeof makeSalesforceRumPublicApi>
 }
 defineGlobal(globalObject as BrowserWindow, 'DD_RUM', datadogRum)
