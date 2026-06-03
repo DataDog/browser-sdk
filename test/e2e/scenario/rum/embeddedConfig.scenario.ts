@@ -1,4 +1,5 @@
 import { generateCombinedBundle } from '@datadog/browser-sdk-endpoint'
+import { serializeConfigToJs } from '@datadog/browser-remote-config/node'
 import { test, expect } from '@playwright/test'
 import { createTest } from '../../lib/framework'
 
@@ -46,7 +47,7 @@ test.describe('embedded configuration', () => {
 
     const bundle = generateCombinedBundle({
       sdkCode,
-      config,
+      configJs: serializeConfigToJs(config),
       variant: 'rum',
     })
 
@@ -76,7 +77,7 @@ test.describe('embedded configuration', () => {
 
     const bundle = generateCombinedBundle({
       sdkCode,
-      config,
+      configJs: serializeConfigToJs(config),
       variant: 'rum',
     })
 
@@ -97,7 +98,7 @@ test.describe('embedded configuration', () => {
 
     const bundle = generateCombinedBundle({
       sdkCode,
-      config,
+      configJs: serializeConfigToJs(config),
       variant: 'rum',
     })
 

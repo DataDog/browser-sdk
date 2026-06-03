@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { generateCombinedBundle } from '@datadog/browser-sdk-endpoint'
+import { serializeConfigToJs } from '@datadog/browser-remote-config/node'
 
 test.describe('embedded configuration with dynamic values', () => {
   test('preserves cookie dynamic value markers in generated bundle', () => {
@@ -11,7 +12,7 @@ test.describe('embedded configuration with dynamic values', () => {
 
     const bundle = generateCombinedBundle({
       sdkCode: '// SDK',
-      config,
+      configJs: serializeConfigToJs(config),
       variant: 'rum',
     })
 
@@ -29,7 +30,7 @@ test.describe('embedded configuration with dynamic values', () => {
 
     const bundle = generateCombinedBundle({
       sdkCode: '// SDK',
-      config,
+      configJs: serializeConfigToJs(config),
       variant: 'rum',
     })
 
@@ -51,7 +52,7 @@ test.describe('embedded configuration with dynamic values', () => {
 
     const bundle = generateCombinedBundle({
       sdkCode: '// SDK',
-      config,
+      configJs: serializeConfigToJs(config),
       variant: 'rum',
     })
 
@@ -69,7 +70,7 @@ test.describe('embedded configuration with dynamic values', () => {
 
     const bundle = generateCombinedBundle({
       sdkCode: '// SDK',
-      config,
+      configJs: serializeConfigToJs(config),
       variant: 'rum',
     })
 
@@ -89,7 +90,7 @@ test.describe('embedded configuration with dynamic values', () => {
 
     const bundle = generateCombinedBundle({
       sdkCode: '// SDK',
-      config,
+      configJs: serializeConfigToJs(config),
       variant: 'rum',
     })
 
@@ -123,7 +124,7 @@ test.describe('embedded configuration with dynamic values', () => {
 
     const bundle = generateCombinedBundle({
       sdkCode: '// SDK',
-      config,
+      configJs: serializeConfigToJs(config),
       variant: 'rum',
     })
 
@@ -147,7 +148,7 @@ test.describe('embedded configuration with dynamic values', () => {
 
     const bundle = generateCombinedBundle({
       sdkCode: 'window.__TEST_LOADED__ = true;',
-      config,
+      configJs: serializeConfigToJs(config),
       variant: 'rum',
     })
 
