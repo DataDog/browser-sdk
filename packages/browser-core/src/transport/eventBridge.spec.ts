@@ -1,7 +1,7 @@
 import { mockEventBridge } from '../../test'
 import { DefaultPrivacyLevel } from '../domain/configuration'
 import type { BrowserWindowWithEventBridge } from './eventBridge'
-import { getEventBridge, canUseEventBridge, BridgeCapability, bridgeSupports } from './eventBridge'
+import { getEventBridge, canUseEventBridge, matchesWildcardPattern, BridgeCapability, bridgeSupports } from './eventBridge'
 
 describe('canUseEventBridge', () => {
   const allowedWebViewHosts = ['foo.bar']
@@ -31,45 +31,34 @@ describe('canUseEventBridge', () => {
   })
 })
 
+describe('matchesWildcardPattern', () => {
+  // prettier-ignore
+  const cases: Array<[string, string, boolean]> = [
+    // [host,                          pattern,                  expected]
+    ['app.shopist.io',                 '*.shopist.io',           true],
+    ['preview-abc.shopist.io',         '*.shopist.io',           true],
+    ['shopist.io',                     '*.shopist.io',           false], // apex not matched by subdomain wildcard
+    ['shopist.io',                     'shopist.io',             true],  // exact match
+    ['app.shopist.io',                 'shopist.io',             false], // exact only, no subdomain
+    ['preview-abc123.shopist.io',      'preview-*.shopist.io',   true],
+    ['app.shopist.io',                 'preview-*.shopist.io',   false],
+    ['evil.com',                       '*.shopist.io',           false],
+    ['anything.foo.anything.bar',      '*.foo.*.bar',            false], // multiple wildcards → invalid
+  ]
+
+  cases.forEach(([host, pattern, expected]) => {
+    it(`"${host}" against "${pattern}" → ${expected}`, () => {
+      expect(matchesWildcardPattern(host, pattern)).toBe(expected)
+    })
+  })
+})
+
 describe('canUseEventBridge with wildcard patterns', () => {
-  it('should match a wildcard subdomain pattern', () => {
-    mockEventBridge({ allowedWebViewHostPatterns: ['*.shopist.io'] })
+  it('should use wildcard matching when getAllowedWebViewHostPatterns is present', () => {
+    mockEventBridge({ allowedWebViewHostPatterns: ['*.shopist.io', 'shopist.io'] })
     expect(canUseEventBridge('app.shopist.io')).toBeTrue()
-    expect(canUseEventBridge('preview-abc.shopist.io')).toBeTrue()
-  })
-
-  it('should not match the apex domain with a wildcard subdomain pattern', () => {
-    mockEventBridge({ allowedWebViewHostPatterns: ['*.shopist.io'] })
-    expect(canUseEventBridge('shopist.io')).toBeFalse()
-  })
-
-  it('should match the apex domain with an exact pattern', () => {
-    mockEventBridge({ allowedWebViewHostPatterns: ['shopist.io'] })
     expect(canUseEventBridge('shopist.io')).toBeTrue()
-    expect(canUseEventBridge('app.shopist.io')).toBeFalse()
-  })
-
-  it('should match a prefix wildcard pattern', () => {
-    mockEventBridge({ allowedWebViewHostPatterns: ['preview-*.shopist.io'] })
-    expect(canUseEventBridge('preview-abc123.shopist.io')).toBeTrue()
-    expect(canUseEventBridge('app.shopist.io')).toBeFalse()
-  })
-
-  it('should match across multiple patterns', () => {
-    mockEventBridge({ allowedWebViewHostPatterns: ['shopist.io', '*.shopist.io'] })
-    expect(canUseEventBridge('shopist.io')).toBeTrue()
-    expect(canUseEventBridge('app.shopist.io')).toBeTrue()
-  })
-
-  it('should not match an unrelated host', () => {
-    mockEventBridge({ allowedWebViewHostPatterns: ['*.shopist.io'] })
     expect(canUseEventBridge('evil.com')).toBeFalse()
-  })
-
-  it('should skip a pattern with more than one wildcard and still evaluate others', () => {
-    mockEventBridge({ allowedWebViewHostPatterns: ['*.foo.*.bar', 'shopist.io'] })
-    expect(canUseEventBridge('shopist.io')).toBeTrue()
-    expect(canUseEventBridge('anything.foo.anything.bar')).toBeFalse()
   })
 
   it('should prefer wildcard path over legacy path when getAllowedWebViewHostPatterns is present', () => {

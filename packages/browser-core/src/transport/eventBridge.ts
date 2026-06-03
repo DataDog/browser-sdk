@@ -55,20 +55,15 @@ export function bridgeSupports(capability: BridgeCapability): boolean {
 
 export function canUseEventBridge(currentHost = globalObject.location?.hostname): boolean {
   const bridge = getEventBridge()
-  if (!bridge) {
-    return false
-  }
 
   if (typeof getEventBridgeGlobal()?.getAllowedWebViewHostPatterns === 'function') {
-    return bridge.getAllowedWebViewHostPatterns().some((pattern) => matchesWildcardPattern(currentHost, pattern))
+    return bridge?.getAllowedWebViewHostPatterns().some((pattern) => matchesWildcardPattern(currentHost, pattern)) ?? false
   }
 
-  return bridge
-    .getAllowedWebViewHosts()
-    .some((allowedHost) => currentHost === allowedHost || currentHost.endsWith(`.${allowedHost}`))
+  return bridge?.getAllowedWebViewHosts().some((allowedHost) => currentHost === allowedHost || currentHost.endsWith(`.${allowedHost}`)) ?? false
 }
 
-function matchesWildcardPattern(host: string, pattern: string): boolean {
+export function matchesWildcardPattern(host: string, pattern: string): boolean {
   if (!pattern.includes('*')) {
     return host === pattern
   }
