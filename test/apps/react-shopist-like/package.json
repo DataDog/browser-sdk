@@ -10,10 +10,10 @@
   "dependencies": {
     "react": "19.2.6",
     "react-dom": "19.2.6",
-    "react-router-dom": "7.15.0"
+    "react-router-dom": "7.15.1"
   },
   "devDependencies": {
-    "@types/react": "19.2.14",
+    "@types/react": "19.2.15",
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "5.2.0",
     "globals": "17.6.0",

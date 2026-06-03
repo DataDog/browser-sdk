@@ -24,7 +24,7 @@ const BUILD_MODES: BuildMode[] = [
  */
 const SDK_SETUPS: SdkSetup[] = ['npm', 'cdn']
 
-const WORKER_PATH = path.join(import.meta.dirname, '../../packages/worker')
+const WORKER_PATH = path.join(import.meta.dirname, '../../packages/browser-worker')
 
 const buildEnvCache = new Map<string, string>()
 

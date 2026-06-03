@@ -12,7 +12,7 @@ if (selectedBrowser && filteredConfigurations.length === 0) {
   throw new Error(`Unknown BS_BROWSER "${selectedBrowser}". Available: ${availableIds}`)
 }
 
-// eslint-disable-next-line import/no-default-export
+// eslint-disable-next-line import-x/no-default-export
 export default function (config) {
   config.set({
     ...karmaBaseConf,

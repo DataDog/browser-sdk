@@ -1,9 +1,14 @@
+import fs from 'fs'
 import path from 'path'
 
 const ROOT = path.join(__dirname, '../../../..')
 
 export function getSdkBundlePath(packageName: string, originalUrl: string) {
-  return path.join(ROOT, `packages/${packageName}/bundle${originalUrl}`)
+  const bundlePath = path.join(ROOT, `packages/${packageName}/bundle${originalUrl}`)
+  if (!fs.existsSync(bundlePath)) {
+    throw new Error(`SDK bundle not found at ${bundlePath}. Did you run "yarn build"?`)
+  }
+  return bundlePath
 }
 
 export function getTestAppBundlePath(appName: string, originalUrl: string) {

@@ -27,8 +27,8 @@ const FILES = [
   // Make sure 'forEach.spec' is the first file to be loaded, so its `beforeEach` hook is executed
   // before all other `beforeEach` hooks, and its `afterEach` hook is executed after all other
   // `afterEach` hooks.
-  'packages/core/test/forEach.spec.ts',
-  'packages/rum/test/record/toto.css',
+  'packages/browser-core/test/forEach.spec.ts',
+  'packages/browser-rum/test/record/toto.css',
 ]
 
 const FILES_SPECS = [
@@ -50,7 +50,7 @@ const { values } = parseArgs({
   },
 })
 
-// eslint-disable-next-line import/no-default-export
+// eslint-disable-next-line import-x/no-default-export
 export default {
   basePath: '../..',
   files: [...FILES, ...(values.spec || FILES_SPECS)],

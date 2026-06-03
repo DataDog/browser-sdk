@@ -1,6 +1,6 @@
-import type { TelemetryEvent } from '../../../packages/core/src/domain/telemetry'
-import type { LogsEvent } from '../../../packages/logs/src/logsEvent.types'
-import type { RumEvent, RumViewEvent } from '../../../packages/rum-core/src/rumEvent.types'
+import type { TelemetryEvent } from '../../../packages/browser-core/src/domain/telemetry'
+import type { LogsEvent } from '../../../packages/browser-logs/src/logsEvent.types'
+import type { RumEvent, RumViewEvent } from '../../../packages/browser-rum-core/src/rumEvent.types'
 
 export enum EventSource {
   TELEMETRY = 'telemetry',

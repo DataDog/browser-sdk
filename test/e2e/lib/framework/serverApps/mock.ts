@@ -201,7 +201,7 @@ export function createMockServerApp(servers: Servers, setup: string, setupOption
     const { originalUrl, params } = req
 
     if (process.env.CI) {
-      res.sendFile(getSdkBundlePath(params.packageName, originalUrl))
+      res.sendFile(getSdkBundlePath(`browser-${params.packageName}`, originalUrl))
     } else {
       forwardToDevServer(req.originalUrl, res)
     }
@@ -209,7 +209,7 @@ export function createMockServerApp(servers: Servers, setup: string, setupOption
 
   app.get('/worker.js', (req, res) => {
     if (process.env.CI) {
-      res.sendFile(getSdkBundlePath('worker', req.originalUrl))
+      res.sendFile(getSdkBundlePath('browser-worker', req.originalUrl))
     } else {
       forwardToDevServer(req.originalUrl, res)
     }

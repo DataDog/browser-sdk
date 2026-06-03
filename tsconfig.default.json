@@ -14,9 +14,13 @@
     "packages/*/bundle",
 
     // Files included in ./tsconfig.scripts.json
-    "**/webpack.*",
     "scripts",
+    "**/webpack.*.*",
+    "webpack.base.ts",
     "test/envUtils.ts",
+    "eslint.config.ts",
+    "eslint-local-rules",
+    "test/unit",
 
     // Files included in ./test/e2e/tsconfig.json
     "test/e2e",
@@ -28,8 +32,8 @@
     // Files included in ./developer-extension/tsconfig.json
     "developer-extension",
 
-    // Files included in ./packages/rum-nextjs/tsconfig.json
-    "packages/rum-nextjs",
+    // Files included in ./packages/browser-rum-nextjs/tsconfig.json
+    "packages/browser-rum-nextjs",
 
     // Skip typechecking for these folders for now
     "rum-events-format",
