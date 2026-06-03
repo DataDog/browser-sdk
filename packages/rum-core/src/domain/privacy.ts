@@ -23,7 +23,7 @@ export function getNodePrivacyLevel(
   defaultPrivacyLevel: NodePrivacyLevel,
   cache?: NodePrivacyLevelCache
 ): NodePrivacyLevel {
-  if (cache && cache.has(node)) {
+  if (cache?.has(node)) {
     return cache.get(node)!
   }
   const parentNode = getParentNode(node)
@@ -331,7 +331,7 @@ export interface BrowserWindow extends Window {
 }
 
 export function isAllowlisted(text: string): boolean {
-  if (!text || !text.trim()) {
+  if (!text?.trim()) {
     return true
   }
   // We are using toLocaleLowerCase when adding to the allowlist to avoid case sensitivity

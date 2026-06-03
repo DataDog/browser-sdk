@@ -3,6 +3,7 @@
  * Adapted from dd-trace-js/packages/dd-trace/test/debugger/devtools_client/condition-test-cases.js
  */
 
+import { globalObject } from '@datadog/browser-core'
 import type { ExpressionNode } from '../src/domain/expression'
 
 export type VariableBindings = Record<string, unknown>
@@ -50,7 +51,7 @@ export const references: TestCase[] = [
   [{ ref: 'foo' }, {}, new ReferenceError('foo is not defined')],
 
   // Reserved words, but we allow them as they can be useful
-  [{ ref: 'this' }, {}, globalThis], // Unless bound, `this` defaults to the global object
+  [{ ref: 'this' }, {}, globalObject], // Unless bound, `this` defaults to the global object
   { ast: { ref: 'super' }, expected: 'super', execute: false },
 
   // Literals, but we allow them as they can be useful

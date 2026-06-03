@@ -5,7 +5,7 @@ export {
   isSampleRate,
   validateAndBuildConfiguration,
   serializeConfiguration,
+  buildCookieOptions,
 } from './configuration'
 export type { EndpointBuilder, TrackType } from './endpointBuilder'
-export { createEndpointBuilder, buildEndpointUrl } from './endpointBuilder'
-export { computeTransportConfiguration, isIntakeUrl } from './transportConfiguration'
+export { createEndpointBuilder, createReplicaEndpointBuilder, buildEndpointUrl } from './endpointBuilder'

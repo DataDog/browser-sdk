@@ -1,4 +1,3 @@
-import { SPEC_ENDPOINTS } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { validateAndBuildRumConfiguration } from '../src/domain/configuration'
 
@@ -12,7 +11,6 @@ export function mockRumConfiguration(partialConfig: Partial<RumConfiguration> = 
       trackLongTasks: true,
       trackAnonymousUser: true,
     })!,
-    ...SPEC_ENDPOINTS,
   }
   return { ...baseConfig, ...partialConfig }
 }

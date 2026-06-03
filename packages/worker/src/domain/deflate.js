@@ -1,4 +1,4 @@
-/* eslint-disable camelcase, no-bitwise */
+/* eslint-disable camelcase, no-bitwise, no-useless-assignment */
 // This file comes from and was trimmed from unused code https://github.com/nodeca/pako/blob/034669ba0f1a4c0590e45f7c2820128200f972b3/dist/pako_deflate.es5.js
 
 // (C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
@@ -177,7 +177,7 @@ function StaticTreeDesc(static_tree, extra_bits, extra_base, elems, max_length) 
   /* max bit length for the codes */
   // show if `static_tree` has data or dummy - needed for monomorphic objects
 
-  this.has_stree = static_tree && static_tree.length
+  this.has_stree = static_tree?.length
 }
 
 var static_l_desc
@@ -3214,7 +3214,7 @@ function DeflateState() {
 }
 
 var deflateResetKeep = function deflateResetKeep(strm) {
-  if (!strm || !strm.state) {
+  if (!strm?.state) {
     return err(strm, Z_STREAM_ERROR)
   }
 
@@ -3253,7 +3253,7 @@ var deflateReset = function deflateReset(strm) {
 }
 
 var deflateSetHeader = function deflateSetHeader(strm, head) {
-  if (!strm || !strm.state) {
+  if (!strm?.state) {
     return Z_STREAM_ERROR
   }
 
@@ -3352,7 +3352,7 @@ var deflate = function deflate(strm, flush) {
   var beg
   var val // for gzip header write only
 
-  if (!strm || !strm.state || flush > Z_BLOCK || flush < 0) {
+  if (!strm?.state || flush > Z_BLOCK || flush < 0) {
     return strm ? err(strm, Z_STREAM_ERROR) : Z_STREAM_ERROR
   }
 
@@ -3404,7 +3404,7 @@ var deflate = function deflate(strm, flush) {
         put_byte(s, s.level === 9 ? 2 : s.strategy >= Z_HUFFMAN_ONLY || s.level < 2 ? 4 : 0)
         put_byte(s, s.gzhead.os & 0xff)
 
-        if (s.gzhead.extra && s.gzhead.extra.length) {
+        if (s.gzhead.extra?.length) {
           put_byte(s, s.gzhead.extra.length & 0xff)
           put_byte(s, (s.gzhead.extra.length >> 8) & 0xff)
         }
@@ -3731,9 +3731,7 @@ var deflate = function deflate(strm, flush) {
 
 var deflateEnd = function deflateEnd(strm) {
   if (
-    !strm ||
-    /* == Z_NULL */
-    !strm.state
+    !strm?.state
     /* == Z_NULL */
   ) {
     return Z_STREAM_ERROR
@@ -3765,9 +3763,7 @@ var deflateSetDictionary = function deflateSetDictionary(strm, dictionary) {
   var dictLength = dictionary.length
 
   if (
-    !strm ||
-    /* == Z_NULL */
-    !strm.state
+    !strm?.state
     /* == Z_NULL */
   ) {
     return Z_STREAM_ERROR

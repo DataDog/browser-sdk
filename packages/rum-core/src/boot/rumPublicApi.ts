@@ -762,39 +762,39 @@ export function makeRumPublicApi(
     startAction: monitor((name, options) => {
       addTelemetryUsage({ feature: 'start-action' })
       strategy.startAction(sanitize(name)!, {
-        type: sanitize(options && options.type) as ActionType | undefined,
-        context: sanitize(options && options.context) as Context,
-        actionKey: options && options.actionKey,
+        type: sanitize(options?.type) as ActionType | undefined,
+        context: sanitize(options?.context) as Context,
+        actionKey: options?.actionKey,
       })
     }),
 
     stopAction: monitor((name, options) => {
       addTelemetryUsage({ feature: 'stop-action' })
       strategy.stopAction(sanitize(name)!, {
-        type: sanitize(options && options.type) as ActionType | undefined,
-        context: sanitize(options && options.context) as Context,
-        actionKey: options && options.actionKey,
+        type: sanitize(options?.type) as ActionType | undefined,
+        context: sanitize(options?.context) as Context,
+        actionKey: options?.actionKey,
       })
     }),
 
     startResource: monitor((url, options) => {
       addTelemetryUsage({ feature: 'start-resource' })
       strategy.startResource(sanitize(url)!, {
-        type: sanitize(options && options.type) as ResourceType | undefined,
-        method: sanitize(options && options.method) as string | undefined,
-        context: sanitize(options && options.context) as Context,
-        resourceKey: options && options.resourceKey,
+        type: sanitize(options?.type) as ResourceType | undefined,
+        method: sanitize(options?.method) as string | undefined,
+        context: sanitize(options?.context) as Context,
+        resourceKey: options?.resourceKey,
       })
     }),
 
     stopResource: monitor((url, options) => {
       addTelemetryUsage({ feature: 'stop-resource' })
       strategy.stopResource(sanitize(url)!, {
-        type: sanitize(options && options.type) as ResourceType | undefined,
-        statusCode: options && options.statusCode,
-        size: options && options.size,
-        context: sanitize(options && options.context) as Context,
-        resourceKey: options && options.resourceKey,
+        type: sanitize(options?.type) as ResourceType | undefined,
+        statusCode: options?.statusCode,
+        size: options?.size,
+        context: sanitize(options?.context) as Context,
+        resourceKey: options?.resourceKey,
       })
     }),
 
@@ -933,7 +933,7 @@ export function makeRumPublicApi(
 
     startSessionReplayRecording: monitor((options?: StartRecordingOptions) => {
       recorderApi.start(options)
-      addTelemetryUsage({ feature: 'start-session-replay-recording', force: options && options.force })
+      addTelemetryUsage({ feature: 'start-session-replay-recording', force: options?.force })
     }),
 
     stopSessionReplayRecording: monitor(() => recorderApi.stop()),
@@ -948,8 +948,8 @@ export function makeRumPublicApi(
           type: VitalType.DURATION,
           startClocks: timeStampToClocks(options.startTime as TimeStamp),
           duration: options.duration as Duration,
-          context: sanitize(options && options.context) as Context,
-          description: sanitize(options && options.description) as string | undefined,
+          context: sanitize(options?.context) as Context,
+          description: sanitize(options?.description) as string | undefined,
           handlingStack,
         })
       })
@@ -960,9 +960,9 @@ export function makeRumPublicApi(
       callMonitored(() => {
         addTelemetryUsage({ feature: 'start-duration-vital' })
         strategy.startDurationVital(sanitize(name)!, {
-          vitalKey: options && options.vitalKey,
-          context: sanitize(options && options.context) as Context,
-          description: sanitize(options && options.description) as string | undefined,
+          vitalKey: options?.vitalKey,
+          context: sanitize(options?.context) as Context,
+          description: sanitize(options?.description) as string | undefined,
           handlingStack,
         })
       })
@@ -971,9 +971,9 @@ export function makeRumPublicApi(
     stopDurationVital: monitor((name, options) => {
       addTelemetryUsage({ feature: 'stop-duration-vital' })
       strategy.stopDurationVital(sanitize(name)!, {
-        vitalKey: options && options.vitalKey,
-        context: sanitize(options && options.context) as Context,
-        description: sanitize(options && options.description) as string | undefined,
+        vitalKey: options?.vitalKey,
+        context: sanitize(options?.context) as Context,
+        description: sanitize(options?.description) as string | undefined,
       })
     }),
 

@@ -22,8 +22,6 @@ export class Pr {
   formatComment() {
     return `
 ${this.bundleSizesSection}
-
-🔗 [RealWorld](https://datadoghq.dev/browser-sdk-test-playground/realworld-scenario/?prNumber=${this.prNumber})
 `
   }
 

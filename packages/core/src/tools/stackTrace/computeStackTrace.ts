@@ -33,7 +33,7 @@ export function computeStackTrace(ex: unknown): StackTrace {
 
   let stackProperty = tryToGetString(ex, 'stack')
   const exString = String(ex)
-  if (stackProperty && stackProperty.startsWith(exString)) {
+  if (stackProperty?.startsWith(exString)) {
     stackProperty = stackProperty.slice(exString.length)
   }
   if (stackProperty) {
@@ -93,8 +93,8 @@ function parseChromeLine(line: string): StackFrame | undefined {
     return
   }
 
-  const isNative = parts[2] && parts[2].indexOf('native') === 0 // start of line
-  const isEval = parts[2] && parts[2].indexOf('eval') === 0 // start of line
+  const isNative = parts[2]?.indexOf('native') === 0 // start of line
+  const isEval = parts[2]?.indexOf('eval') === 0 // start of line
   const submatch = CHROME_EVAL_RE.exec(parts[2])
 
   if (isEval && submatch) {

@@ -1,18 +1,19 @@
-// @ts-check .ts config files are still experimental: https://github.com/eslint/eslint/discussions/17726
-
 import eslint from '@eslint/js'
+import { defineConfig } from 'eslint/config'
 import * as tseslint from 'typescript-eslint'
-import importPlugin from 'eslint-plugin-import'
+import { importX } from 'eslint-plugin-import-x'
 import unicornPlugin from 'eslint-plugin-unicorn'
 import jsdocPlugin from 'eslint-plugin-jsdoc'
+// @ts-expect-error -- eslint-plugin-jasmine is not typed
 import jasmine from 'eslint-plugin-jasmine'
 import globals from 'globals'
 // eslint-disable-next-line local-rules/disallow-protected-directory-import
-import eslintLocalRules from './eslint-local-rules/index.js'
+import eslintLocalRules from './eslint-local-rules/index.ts'
 import { SCHEMAS } from './scripts/lib/generatedSchemaTypes.ts'
 
 const SPEC_FILES = '**/*.{spec,specHelper}.{ts,tsx,js}'
-const MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL = process.env.MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL || 'warn'
+const MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL =
+  (process.env.MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL as 'warn' | 'error' | undefined) || 'warn'
 
 /**
  * no-restricted-syntax rules for spec and source files included in packages/
@@ -25,12 +26,12 @@ const PACKAGES_NO_RESTRICTED_SYNTAX_RULES = [
   },
 ]
 
-// eslint-disable-next-line import/no-default-export
-export default tseslint.config(
+// eslint-disable-next-line import-x/no-default-export
+export default defineConfig(
   eslint.configs.recommended,
   tseslint.configs.recommendedTypeChecked,
-  importPlugin.flatConfigs.recommended,
-  importPlugin.flatConfigs.typescript,
+  importX.flatConfigs.recommended,
+  importX.flatConfigs.typescript,
   {
     ignores: [
       ...SCHEMAS.map((schema) => schema.typesPath),
@@ -67,56 +68,20 @@ export default tseslint.config(
   {
     plugins: {
       unicorn: unicornPlugin,
-      'local-rules': { rules: eslintLocalRules },
+      'local-rules': { rules: eslintLocalRules as Record<string, any> },
       jsdoc: jsdocPlugin,
       jasmine,
     },
 
-    settings: {
-      'import/resolver': {
-        typescript: true,
-      },
-    },
-
     languageOptions: {
       parserOptions: {
-        tsconfigRootDir: import.meta.dirname,
-        project: [
-          './tsconfig.default.json',
-          './tsconfig.scripts.json',
-          './developer-extension/tsconfig.json',
-          './packages/rum-nextjs/tsconfig.json',
-          './test/e2e/tsconfig.json',
-          './test/performance/tsconfig.json',
-          './test/apps/**/tsconfig.json',
-        ],
-        sourceType: 'module',
-
-        // Without this option, typescript-eslint fails to lint .js files because we don't use
-        // `allowJs: true` in the TypeScript configuration. Same issue as
-        // https://github.com/typescript-eslint/typescript-eslint/issues/9749.
-        //
-        // Enabling `allowJs` would be a better solution, but right now it's not possible because of a
-        // pretty small reason with big implications: `webpack.base.js` includes
-        // `tsconfig-paths-webpack-plugin`, and this file includes Node.js types via a <reference>
-        // directive (see https://unpkg.com/browse/tsconfig-paths-webpack-plugin@4.2.0/lib/plugin.d.ts).
-        //
-        // Because of this, Node.js types are included in the whole project, and because some of them
-        // are slightly different from the DOM/Browser types, some annoying typecheck errors are raised.
-        //
-        // So, ideally, we should:
-        // * add `allowJs: true` in the TypeScript configuration
-        // * have different tsconfig.json configurations for packages and scripts
-        // * when typechecking, run `tsc` multiple time with each configuration (like we do for the
-        //   developer-extension)
-        // * then remove this option
-        disallowAutomaticSingleRunInference: true,
+        projectService: true,
       },
     },
 
     rules: {
       'arrow-body-style': 'error',
-      camelcase: ['error', { properties: 'never', allow: ['_dd_temp_'] }],
+      camelcase: ['error', { properties: 'never' }],
       curly: 'error',
       eqeqeq: ['error', 'smart'],
       'guard-for-in': 'error',
@@ -149,6 +114,7 @@ export default tseslint.config(
       'no-useless-concat': 'error',
       'object-shorthand': 'error',
       'one-var': ['error', 'never'],
+      'preserve-caught-error': 'off', // disabled until our monitor tooling supports `error.cause`.
       'prefer-rest-params': 'off',
       'prefer-template': 'error',
       'prefer-object-spread': 'error',
@@ -232,6 +198,7 @@ export default tseslint.config(
         },
       ],
       '@typescript-eslint/no-empty-function': 'error',
+      '@typescript-eslint/prefer-optional-chain': 'error',
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unsafe-argument': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
@@ -243,11 +210,16 @@ export default tseslint.config(
         { allowForKnownSafeCalls: [{ from: 'package', name: ['describe', 'it', 'test'], package: 'node:test' }] },
       ],
 
-      'import/no-cycle': 'error',
-      'import/no-default-export': 'error',
-      'import/no-duplicates': 'error',
-      'import/no-extraneous-dependencies': 'error',
-      'import/no-unresolved': [
+      // Those lints are triggering false positives
+      'import-x/default': 'off',
+      'import-x/no-named-as-default': 'off',
+      'import-x/no-named-as-default-member': 'off',
+
+      'import-x/no-cycle': 'error',
+      'import-x/no-default-export': 'error',
+      'import-x/no-duplicates': 'error',
+      'import-x/no-extraneous-dependencies': 'error',
+      'import-x/no-unresolved': [
         'error',
         {
           commonjs: true,
@@ -258,8 +230,8 @@ export default tseslint.config(
           ],
         },
       ],
-      'import/no-useless-path-segments': 'error',
-      'import/order': [
+      'import-x/no-useless-path-segments': 'error',
+      'import-x/order': [
         'error',
         {
           // This is the default order plus 'internal', which is imports like
@@ -344,7 +316,7 @@ export default tseslint.config(
   {
     files: ['scripts/**'],
     rules: {
-      'import/extensions': ['error', 'ignorePackages'],
+      'import-x/extensions': ['error', 'ignorePackages'],
     },
   },
 
@@ -393,8 +365,10 @@ export default tseslint.config(
   },
 
   {
-    files: ['packages/*/src/**/*.ts'],
+    files: ['packages/**/*.ts'],
     rules: {
+      'local-rules/disallow-spec-import': 'error',
+      'jsdoc/no-types': 'error',
       'no-restricted-syntax': ['error', ...PACKAGES_NO_RESTRICTED_SYNTAX_RULES],
     },
   },
@@ -404,7 +378,6 @@ export default tseslint.config(
     ignores: [SPEC_FILES],
     rules: {
       'local-rules/enforce-monitor-until-comment': 'error',
-      // @ts-expect-error - MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL is either 'warn' or 'error'
       'local-rules/monitor-until-comment-expired': MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL,
       'local-rules/disallow-side-effects': 'error',
       'local-rules/disallow-zone-js-patched-values': 'error',
@@ -438,18 +411,10 @@ export default tseslint.config(
   },
 
   {
-    files: ['packages/**/*.ts'],
-    rules: {
-      'local-rules/disallow-spec-import': 'error',
-      'jsdoc/no-types': 'error',
-    },
-  },
-
-  {
     files: ['packages/*/src/**/*.ts'],
     ignores: [SPEC_FILES],
     rules: {
-      'import/consistent-type-specifier-style': ['error', 'prefer-top-level'],
+      'import-x/consistent-type-specifier-style': ['error', 'prefer-top-level'],
     },
   },
 
@@ -465,8 +430,8 @@ export default tseslint.config(
     files: [
       'scripts/**',
       'test/**/*.js',
-      'eslint-local-rules/**/*.js',
-      'eslint.config.mjs',
+      'eslint-local-rules/**/*.ts',
+      'eslint.config.ts',
       'packages/*/scripts/**/*.js',
     ],
     languageOptions: {
@@ -474,7 +439,7 @@ export default tseslint.config(
     },
     rules: {
       '@typescript-eslint/no-require-imports': 'off',
-      'import/enforce-node-protocol-usage': ['error', 'always'],
+      'unicorn/prefer-node-protocol': 'error',
       'no-restricted-imports': [
         'error',
         {
@@ -490,10 +455,10 @@ export default tseslint.config(
   },
 
   {
-    files: ['**/webpack.*.{ts,mts}', 'eslint-local-rules/**/*.js'],
+    files: ['**/webpack.*.{ts,mts}', 'eslint-local-rules/**/*.ts'],
     rules: {
       // Webpack configuration files and eslint rules files are expected to use a default export.
-      'import/no-default-export': 'off',
+      'import-x/no-default-export': 'off',
     },
   },
 
@@ -501,7 +466,7 @@ export default tseslint.config(
     files: ['test/e2e/**/*.ts', 'test/performance/**/*.ts'],
     rules: {
       // E2E codebase is importing @datadog/browser-* packages referenced by tsconfig.
-      'import/no-extraneous-dependencies': 'off',
+      'import-x/no-extraneous-dependencies': 'off',
     },
   },
 

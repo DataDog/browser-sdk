@@ -1,7 +1,7 @@
 import { isEmptyObject } from '../../../tools/utils/objectUtils'
 import type { CookieOptions } from '../../../browser/cookie'
-import { getCurrentSite, getCookies } from '../../../browser/cookie'
-import type { Configuration, InitConfiguration } from '../../configuration'
+import { getCookies } from '../../../browser/cookie'
+import type { Configuration } from '../../configuration'
 import { SESSION_COOKIE_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY, SessionPersistence } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
 import { toSessionString, toSessionState } from '../sessionState'
@@ -19,7 +19,6 @@ import { CookieApi, LEGACY_SESSION_STORE_KEY, SESSION_STORE_KEY } from './sessio
 import type {
   SessionStoreStrategy,
   SessionStoreStrategyType,
-  SessionObservableEvent,
   CookieSessionStoreStrategyType,
   SessionStateOperation,
 } from './sessionStoreStrategy'
@@ -56,7 +55,7 @@ export function initCookieStrategy(
   configuration: Configuration
 ): SessionStoreStrategy {
   const { cookieOptions, cookieApi } = sessionStoreStrategyType
-  const sessionObservable = new Observable<SessionObservableEvent>()
+  const sessionObservable = new Observable<SessionState>()
   const trackAnonymousUser = !!configuration.trackAnonymousUser
   const opts = encodeCookieOptions(cookieOptions)
   const cookieAccess = mockable(createCookieAccess)(cookieApi, configuration, cookieOptions)
@@ -66,7 +65,7 @@ export function initCookieStrategy(
     cookieAccess
       .getAll()
       .then((cookieValues) => {
-        sessionObservable.notify({ cookieValues, sessionState: findMatchingSessionState(cookieValues, opts) })
+        sessionObservable.notify(findMatchingSessionState(cookieValues, opts))
       })
       .catch((error) => monitorError(new Error(`Error while reading session cookies on change: ${error}`)))
   })
@@ -152,25 +151,6 @@ function buildSessionString(sessionState: SessionState, cookieOptions: CookieOpt
   return toSessionString(
     isEmptyObject(sessionState) ? sessionState : { ...sessionState, c: encodeCookieOptions(cookieOptions) }
   )
-}
-
-export function buildCookieOptions(initConfiguration: InitConfiguration): CookieOptions | undefined {
-  const cookieOptions: CookieOptions = {}
-
-  cookieOptions.secure =
-    !!initConfiguration.useSecureSessionCookie || !!initConfiguration.usePartitionedCrossSiteSessionCookie
-  cookieOptions.crossSite = !!initConfiguration.usePartitionedCrossSiteSessionCookie
-  cookieOptions.partitioned = !!initConfiguration.usePartitionedCrossSiteSessionCookie
-
-  if (initConfiguration.trackSessionAcrossSubdomains) {
-    const currentSite = getCurrentSite()
-    if (!currentSite) {
-      return
-    }
-    cookieOptions.domain = currentSite
-  }
-
-  return cookieOptions
 }
 
 function encodeCookieOptions(cookieOptions: CookieOptions): string {

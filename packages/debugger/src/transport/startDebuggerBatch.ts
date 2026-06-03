@@ -5,14 +5,14 @@ import {
   createFlushController,
   createHttpRequest,
   createIdentityEncoder,
-  computeTransportConfiguration,
   Observable,
   PageExitReason,
   display,
+  createEndpointBuilder,
 } from '@datadog/browser-core'
 
 export function startDebuggerBatch(initConfiguration: InitConfiguration): Batch {
-  const { debuggerEndpointBuilder } = computeTransportConfiguration(initConfiguration, 'dd_debugger')
+  const debuggerEndpointBuilder = createEndpointBuilder({ ...initConfiguration, source: 'dd_debugger' }, 'debugger')
 
   const batch = createBatch({
     encoder: createIdentityEncoder(),

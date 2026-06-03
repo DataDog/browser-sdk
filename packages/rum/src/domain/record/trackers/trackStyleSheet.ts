@@ -13,7 +13,7 @@ export function trackStyleSheet(
   scope: RecordingScope
 ): Tracker {
   function checkStyleSheetAndCallback(styleSheet: CSSStyleSheet | null, callback: (id: number) => void): void {
-    if (!styleSheet || !styleSheet.ownerNode) {
+    if (!styleSheet?.ownerNode) {
       return
     }
     const id = scope.nodeIds.get(styleSheet.ownerNode)
