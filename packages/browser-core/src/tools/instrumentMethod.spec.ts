@@ -180,6 +180,72 @@ describe('instrumentMethod', () => {
     })
   })
 
+  describe('constructor support', () => {
+    class MyClass {
+      value: number
+      constructor(value: number) {
+        this.value = value
+      }
+
+      getValue() {
+        return this.value
+      }
+    }
+
+    it('works when the instrumented method is called with new', () => {
+      const container = { MyClass }
+      const instrumentationSpy = jasmine.createSpy()
+      instrumentMethod(container, 'MyClass', instrumentationSpy)
+
+      const instance = new container.MyClass(42)
+
+      expect(instrumentationSpy).toHaveBeenCalledOnceWith({
+        target: jasmine.any(MyClass),
+        parameters: [42],
+        onPostCall: jasmine.any(Function),
+        handlingStack: undefined,
+      })
+      expect(instance.value).toBe(42)
+      expect(instance.getValue()).toBe(42)
+    })
+
+    it('preserves instanceof on the constructed instance', () => {
+      const container = { MyClass }
+      instrumentMethod(container, 'MyClass', noop)
+
+      const instance = new container.MyClass(1)
+
+      expect(instance instanceof container.MyClass).toBeTrue()
+    })
+
+    it('passes the constructed instance to onPostCall', () => {
+      const container = { MyClass }
+      const postCallCallbackSpy = jasmine.createSpy()
+      instrumentMethod(container, 'MyClass', ({ onPostCall }) => onPostCall(postCallCallbackSpy))
+
+      const instance = new container.MyClass(7)
+
+      expect(postCallCallbackSpy).toHaveBeenCalledOnceWith(instance)
+      expect((postCallCallbackSpy.calls.mostRecent().args[0] as MyClass).value).toBe(7)
+    })
+
+    it('works correctly after stop() when a third party has re-instrumented', () => {
+      const container = { MyClass }
+      const { stop } = instrumentMethod(container, 'MyClass', noop)
+
+      // Third party wraps our instrumentation
+      const OurInstrumentation = container.MyClass
+      container.MyClass = class extends OurInstrumentation {}
+
+      stop()
+
+      const instance = new container.MyClass(99)
+
+      expect(instance instanceof MyClass).toBeTrue()
+      expect(instance.value).toBe(99)
+    })
+  })
+
   function thirdPartyInstrumentation(object: { method?: () => number; onevent?: () => void }) {
     const originalMethod = object.method
     if (typeof originalMethod === 'function') {
