@@ -12,7 +12,7 @@ export interface Server {
   stop: () => void
 }
 
-// Probe-delivery endpoint hardcoded in `packages/debugger/src/domain/deliveryApi.ts`.
+// Probe-delivery endpoint hardcoded in `packages/browser-debugger/src/domain/deliveryApi.ts`.
 // Must be served from the same origin as the page since the debugger uses same-origin fetch.
 const DEBUGGER_PROBE_DELIVERY_PATH = '/api/unstable/debugger/frontend/probes'
 

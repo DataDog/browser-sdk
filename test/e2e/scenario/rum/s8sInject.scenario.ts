@@ -13,7 +13,7 @@ test.describe('Inject RUM with Puppeteer', () => {
 })
 
 async function injectRumWithPuppeteer() {
-  const ddRUM = fs.readFileSync(getSdkBundlePath('rum', '/datadog-rum.js'), 'utf8')
+  const ddRUM = fs.readFileSync(getSdkBundlePath('browser-rum', '/datadog-rum.js'), 'utf8')
   const puppeteerBrowser = await launch({
     channel: 'chrome',
     headless: true,

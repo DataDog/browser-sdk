@@ -1,5 +1,5 @@
 import type { SdkEvent } from '../../sdkEvent'
-import type { RumViewEvent, RumViewUpdateEvent } from '../../../../../packages/rum-core/src/rumEvent.types'
+import type { RumViewEvent, RumViewUpdateEvent } from '../../../../../packages/browser-rum-core/src/rumEvent.types'
 import { isRumViewEvent } from '../../sdkEvent'
 import type { FacetRegistry } from './facetRegistry'
 

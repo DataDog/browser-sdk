@@ -99,7 +99,7 @@ function uploadToOrg2(packageName: string, service: string, prefix: string, bund
       --service ${service}
       --release-version ${getBuildEnvValue('SDK_VERSION')}
       --minified-path-prefix ${org2Prefix}
-      --project-path @datadog/browser-${packageName}/
+      --project-path @datadog/${packageName}/
       --repository-url https://www.github.com/datadog/browser-sdk
   `
     .withEnvironment({
@@ -131,7 +131,7 @@ function uploadToDatadog(
         --service ${service}
         --release-version ${getBuildEnvValue('SDK_VERSION')}
         --minified-path-prefix ${prefix}
-        --project-path @datadog/browser-${packageName}/
+        --project-path @datadog/${packageName}/
         --repository-url https://www.github.com/datadog/browser-sdk
     `
       .withEnvironment({

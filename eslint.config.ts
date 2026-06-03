@@ -421,7 +421,7 @@ export default defineConfig(
   },
 
   {
-    files: ['packages/{rum,logs,rum-slim}/src/entries/*.ts'],
+    files: ['packages/{browser-rum,browser-logs,browser-rum-slim}/src/entries/*.ts'],
     rules: {
       'local-rules/disallow-enum-exports': 'error',
     },
@@ -473,7 +473,7 @@ export default defineConfig(
   },
 
   {
-    files: ['packages/core/src/tools/**/*.ts'],
+    files: ['packages/browser-core/src/tools/**/*.ts'],
     ignores: [SPEC_FILES],
     rules: {
       'no-restricted-imports': [

@@ -17,34 +17,34 @@
     "lib": ["ES2020", "DOM", "WebWorker"],
 
     "paths": {
-      "@datadog/browser-core": ["./packages/core/src"],
+      "@datadog/browser-core": ["./packages/browser-core/src"],
 
-      "@datadog/browser-logs": ["./packages/logs/src/entries/main"],
+      "@datadog/browser-logs": ["./packages/browser-logs/src/entries/main"],
 
-      "@datadog/browser-rum-core": ["./packages/rum-core/src"],
+      "@datadog/browser-rum-core": ["./packages/browser-rum-core/src"],
 
-      "@datadog/browser-rum": ["./packages/rum/src/entries/main"],
-      "@datadog/browser-rum/internal": ["./packages/rum/src/entries/internal"],
-      "@datadog/browser-rum/internal-synthetics": ["./packages/rum/src/entries/internalSynthetics"],
+      "@datadog/browser-rum": ["./packages/browser-rum/src/entries/main"],
+      "@datadog/browser-rum/internal": ["./packages/browser-rum/src/entries/internal"],
+      "@datadog/browser-rum/internal-synthetics": ["./packages/browser-rum/src/entries/internalSynthetics"],
 
-      "@datadog/browser-rum-slim": ["./packages/rum-slim/src/entries/main"],
+      "@datadog/browser-rum-slim": ["./packages/browser-rum-slim/src/entries/main"],
 
-      "@datadog/browser-rum-react": ["./packages/rum-react/src/entries/main"],
-      "@datadog/browser-rum-react/internal": ["./packages/rum-react/src/entries/internal"],
-      "@datadog/browser-rum-react/react-router-v6": ["./packages/rum-react/src/entries/reactRouterV6"],
-      "@datadog/browser-rum-react/react-router-v7": ["./packages/rum-react/src/entries/reactRouterV7"],
-      "@datadog/browser-rum-react/tanstack-router": ["./packages/rum-react/src/entries/tanstackRouter"],
+      "@datadog/browser-rum-react": ["./packages/browser-rum-react/src/entries/main"],
+      "@datadog/browser-rum-react/internal": ["./packages/browser-rum-react/src/entries/internal"],
+      "@datadog/browser-rum-react/react-router-v6": ["./packages/browser-rum-react/src/entries/reactRouterV6"],
+      "@datadog/browser-rum-react/react-router-v7": ["./packages/browser-rum-react/src/entries/reactRouterV7"],
+      "@datadog/browser-rum-react/tanstack-router": ["./packages/browser-rum-react/src/entries/tanstackRouter"],
 
-      "@datadog/browser-rum-vue": ["./packages/rum-vue/src/entries/main"],
-      "@datadog/browser-rum-vue/vue-router-v4": ["./packages/rum-vue/src/entries/vueRouter"],
+      "@datadog/browser-rum-vue": ["./packages/browser-rum-vue/src/entries/main"],
+      "@datadog/browser-rum-vue/vue-router-v4": ["./packages/browser-rum-vue/src/entries/vueRouter"],
 
-      "@datadog/browser-rum-nuxt": ["./packages/rum-nuxt/src/entries/main"],
+      "@datadog/browser-rum-nuxt": ["./packages/browser-rum-nuxt/src/entries/main"],
 
-      "@datadog/browser-rum-nextjs": ["./packages/rum-nextjs/src/entries/main"],
+      "@datadog/browser-rum-nextjs": ["./packages/browser-rum-nextjs/src/entries/main"],
 
-      "@datadog/browser-worker": ["./packages/worker/src/entries/main"],
+      "@datadog/browser-worker": ["./packages/browser-worker/src/entries/main"],
 
-      "@datadog/browser-debugger": ["./packages/debugger/src/entries/main"]
+      "@datadog/browser-debugger": ["./packages/browser-debugger/src/entries/main"]
     }
   }
 }
