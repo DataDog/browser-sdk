@@ -65,6 +65,22 @@ interface PackageJson {
   peerDependencies?: Record<string, string>
 }
 
+let browserSdkPackageNames: Set<string> | undefined
+
+/**
+ * Returns whether the given name is a Browser SDK package defined in this monorepo (under
+ * `packages/`).
+ */
+export function isBrowserSdkPackageName(name: string): boolean {
+  browserSdkPackageNames ??= new Set(
+    findPackageJsonFiles()
+      .filter((packageJsonFile) => packageJsonFile.relativePath.startsWith('packages/'))
+      .map((packageJsonFile) => packageJsonFile.content.name)
+      .filter((packageName): packageName is string => Boolean(packageName))
+  )
+  return browserSdkPackageNames.has(name)
+}
+
 export function findPackageJsonFiles(): PackageJsonInfo[] {
   const manifestPaths = command`git ls-files -- package.json */package.json`.run()
   return manifestPaths
