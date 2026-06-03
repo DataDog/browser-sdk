@@ -417,7 +417,7 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     const browserLogs = new BrowserLogsManager()
 
     const testContext = createTestContext(servers, page, context, browserLogs, browserName, baseUrl.href)
-    servers.intake.bindServerApp(createIntakeServerApp(testContext.intakeRegistry))
+    servers.intake.bindServerApp(createIntakeServerApp(testContext.intakeRegistry, setupOptions.remoteConfiguration))
 
     const setup = factory(setupOptions, servers)
     servers.base.bindServerApp(createMockServerApp(servers, setup, setupOptions))

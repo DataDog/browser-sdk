@@ -747,8 +747,13 @@ describe('remoteConfiguration', () => {
       )
     })
 
-    it('should return the remote configuration proxy', () => {
-      expect(buildEndpoint({ remoteConfigurationProxy: '/config' } as RumInitConfiguration)).toEqual('/config')
+    it('should use the proxy when configured', () => {
+      const remoteConfigurationId = '0e008b1b-8600-4709-9d1d-f4edcfdf5587'
+      expect(
+        buildEndpoint({ proxy: 'https://proxy.io/config', remoteConfigurationId } as RumInitConfiguration)
+      ).toEqual(
+        `https://proxy.io/config?ddforward=${encodeURIComponent(`/v1/${remoteConfigurationId}.json`)}&ddforwardSubdomain=sdk-configuration`
+      )
     })
   })
 
