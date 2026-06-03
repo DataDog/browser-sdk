@@ -139,7 +139,9 @@ function runTests(): Promise<boolean> {
         return
       }
 
-      if (chunk.includes(' FAIL ') || chunk.includes(' failed')) {
+      // Match Vitest's failure summary line (e.g. "Test Files  2 failed | 40 passed")
+      // but not test console output like "Session Replay failed to start"
+      if (/\d+ failed/.test(chunk)) {
         hasFailures = true
       }
 
