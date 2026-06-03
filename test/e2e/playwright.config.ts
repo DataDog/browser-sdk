@@ -7,11 +7,11 @@ import type { BrowserConfiguration } from '../browsers.conf'
 
 // Single config covering all e2e browser configurations:
 //
-// - chromium / firefox / webkit / android: current Playwright (1.59)-bundled browsers.
+// - chromium / firefox / webkit / android: current Playwright (1.60)-bundled browsers.
 // - chromium-pinned (Chrome 120) / firefox-pinned (FF 119) / webkit-pinned (WK 17.4):
 //   replicate the old BrowserStack matrix locally via a pinned Playwright 1.40.1
 //   `run-server` and a translation proxy (test/e2e/scripts/pinnedProxy.ts) that bridges
-//   the 1.58 client and the 1.40 server.
+//   the 1.60 client and the 1.40 server.
 //
 // Project selection is read from `--project=<name>` flags on argv (Playwright's filter):
 // - When no `--project` is passed, only chromium runs (fast local feedback loop).
