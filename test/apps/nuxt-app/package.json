@@ -4,7 +4,7 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev --port 0 --host",
-    "start": "nuxt preview --port 0 --host"
+    "start": "nuxt preview --host"
   },
   "dependencies": {
     "nuxt": "^4.0.0"
