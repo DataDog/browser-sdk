@@ -243,20 +243,34 @@ describe('instrumentMethod', () => {
       expect((postCallCallbackSpy.calls.mostRecent().args[0] as MyClass).value).toBe(7)
     })
 
-    it('works correctly after stop() when a third party has re-instrumented', () => {
+    it('constructs without calling the instrumentation after stop() when calling new Original()', () => {
       const container = { MyClass }
-      const { stop } = instrumentMethod(container, 'MyClass', noop)
-
-      // Third party wraps our instrumentation
-      const OurInstrumentation = container.MyClass
-      container.MyClass = class extends OurInstrumentation {}
+      const instrumentationSpy = jasmine.createSpy()
+      const { stop } = instrumentMethod(container, 'MyClass', instrumentationSpy)
 
       stop()
 
-      const instance = new container.MyClass(99)
+      const instance = new container.MyClass(5)
 
+      expect(instrumentationSpy).not.toHaveBeenCalled()
       expect(instance instanceof MyClass).toBeTrue()
-      expect(instance.value).toBe(99)
+      expect(instance.value).toBe(5)
+    })
+
+    it('constructs without calling the instrumentation after stop() when calling instrumentation reference', () => {
+      const container = { MyClass }
+      const instrumentationSpy = jasmine.createSpy()
+      const { stop } = instrumentMethod(container, 'MyClass', instrumentationSpy)
+
+      const OurInstrumentation = container.MyClass
+
+      stop()
+
+      const instance = new OurInstrumentation(5)
+
+      expect(instrumentationSpy).not.toHaveBeenCalled()
+      expect(instance instanceof MyClass).toBeTrue()
+      expect(instance.value).toBe(5)
     })
   })
 
