@@ -109,7 +109,7 @@ const baseWebServers = [
     stdout: 'pipe' as const,
     cwd: path.join(__dirname, '../apps/nuxt-vue-router-v4-app'),
     command: isLocal ? 'yarn dev' : 'yarn start',
-    env: { NO_COLOR: '1' },
+    env: { NO_COLOR: '1', PORT: '3001', NUXT_PORT: '3001' },
     wait: {
       stdout:
         /(?:Local:\s+http:\/\/localhost|Listening on http:\/\/(?:\[[^\]]+\]|[^:]+)):(?<nuxt_vue_router_v4_app_port>\d+)/,
