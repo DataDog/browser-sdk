@@ -1,6 +1,7 @@
 import type { Payload } from '../../transport'
 import type { InitConfiguration } from './configuration'
-import { createEndpointBuilder } from './endpointBuilder'
+import { validateAndBuildConfiguration } from './configuration'
+import { buildEndpointUrl, createEndpointBuilder, createReplicaEndpointBuilder } from './endpointBuilder'
 
 const DEFAULT_PAYLOAD = {} as Payload
 
@@ -126,6 +127,157 @@ describe('endpointBuilder', () => {
       const config = { ...initConfiguration, source: 'unity' as const }
       const endpoint = createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)
       expect(endpoint).toContain('ddsource=unity')
+    })
+  })
+
+  describe('createReplicaEndpointBuilder', () => {
+    const replica = { clientToken: 'replica_client_token', applicationId: 'replica_application_id' }
+
+    it('returns undefined when no replica is configured', () => {
+      const configuration = validateAndBuildConfiguration({ clientToken })!
+      expect(createReplicaEndpointBuilder(configuration, 'rum')).toBeUndefined()
+    })
+
+    it('uses the replica client token', () => {
+      const configuration = validateAndBuildConfiguration({ clientToken, replica })!
+      expect(createReplicaEndpointBuilder(configuration, 'rum')!.build('fetch', DEFAULT_PAYLOAD)).toContain(
+        `dd-api-key=${replica.clientToken}`
+      )
+    })
+
+    it('always targets the US1 site, even when the main site differs', () => {
+      const configuration = validateAndBuildConfiguration({ clientToken, site: 'datadoghq.eu', replica })!
+      expect(createReplicaEndpointBuilder(configuration, 'rum')!.build('fetch', DEFAULT_PAYLOAD)).toContain(
+        'https://browser-intake-datadoghq.com'
+      )
+    })
+
+    it('keeps the proxy of the main configuration', () => {
+      const configuration = validateAndBuildConfiguration({ clientToken, proxy: 'https://proxy.io/path', replica })!
+      expect(createReplicaEndpointBuilder(configuration, 'rum')!.build('fetch', DEFAULT_PAYLOAD)).toContain(
+        'https://proxy.io/path?ddforward'
+      )
+    })
+
+    it('keeps the source of the main configuration', () => {
+      const configuration = validateAndBuildConfiguration({ clientToken, source: 'flutter', replica })!
+      expect(createReplicaEndpointBuilder(configuration, 'rum')!.build('fetch', DEFAULT_PAYLOAD)).toContain(
+        'ddsource=flutter'
+      )
+    })
+
+    it('adds the replica application id to the rum endpoint', () => {
+      const configuration = validateAndBuildConfiguration({ clientToken, replica })!
+      expect(createReplicaEndpointBuilder(configuration, 'rum')!.build('fetch', DEFAULT_PAYLOAD)).toContain(
+        `application.id=${replica.applicationId}`
+      )
+    })
+
+    it('does not add the application id to non-rum endpoints', () => {
+      const configuration = validateAndBuildConfiguration({ clientToken, replica })!
+      expect(createReplicaEndpointBuilder(configuration, 'logs')!.build('fetch', DEFAULT_PAYLOAD)).not.toContain(
+        'application.id'
+      )
+    })
+  })
+
+  describe('buildEndpointUrl', () => {
+    it('builds proxy URL from a string proxy', () => {
+      expect(
+        buildEndpointUrl({
+          proxy: 'https://proxy.io/path',
+          site: undefined,
+          path: '/api/v2/rum',
+          parameters: 'foo=bar',
+        })
+      ).toBe('https://proxy.io/path?ddforward=%2Fapi%2Fv2%2Frum%3Ffoo%3Dbar')
+    })
+
+    it('normalizes a relative proxy URL', () => {
+      expect(buildEndpointUrl({ proxy: '/path', site: undefined, path: '/api/v2/rum', parameters: 'foo=bar' })).toBe(
+        `${location.origin}/path?ddforward=%2Fapi%2Fv2%2Frum%3Ffoo%3Dbar`
+      )
+    })
+
+    it('adds the subdomain forwarding hint when provided', () => {
+      expect(
+        buildEndpointUrl({
+          proxy: 'https://proxy.io/path',
+          site: undefined,
+          path: '/api/v2/profiling/quota',
+          parameters: 'session_id=abc',
+          subdomain: 'quota',
+        })
+      ).toBe(
+        'https://proxy.io/path?ddforward=%2Fapi%2Fv2%2Fprofiling%2Fquota%3Fsession_id%3Dabc&ddforwardSubdomain=quota'
+      )
+    })
+
+    it('delegates URL creation to proxy function', () => {
+      expect(
+        buildEndpointUrl({
+          proxy: ({ path, parameters, subdomain }) => `https://${subdomain}.proxy.test${path}?${parameters}`,
+          site: undefined,
+          path: '/api/v2/profiling/quota',
+          parameters: 'session_id=abc',
+          subdomain: 'quota',
+        })
+      ).toBe('https://quota.proxy.test/api/v2/profiling/quota?session_id=abc')
+    })
+
+    it('falls back to empty parameters when calling proxy function', () => {
+      expect(
+        buildEndpointUrl({
+          proxy: ({ path, parameters }) => `https://proxy.test${path}?${parameters}`,
+          site: undefined,
+          path: '/api/v2/rum',
+        })
+      ).toBe('https://proxy.test/api/v2/rum?')
+    })
+
+    it('builds intake URL from the site when no proxy is configured', () => {
+      expect(
+        buildEndpointUrl({
+          proxy: undefined,
+          site: 'datadoghq.com',
+          path: '/api/v2/rum',
+          parameters: 'foo=bar',
+        })
+      ).toBe('https://browser-intake-datadoghq.com/api/v2/rum?foo=bar')
+    })
+
+    it('defaults to US1 site when site is undefined', () => {
+      expect(
+        buildEndpointUrl({
+          proxy: undefined,
+          site: undefined,
+          path: '/api/v2/rum',
+          parameters: 'foo=bar',
+        })
+      ).toBe('https://browser-intake-datadoghq.com/api/v2/rum?foo=bar')
+    })
+
+    it('omits the query separator when parameters are empty', () => {
+      expect(
+        buildEndpointUrl({
+          proxy: undefined,
+          site: 'datadoghq.com',
+          path: '/api/v2/rum',
+          parameters: '',
+        })
+      ).toBe('https://browser-intake-datadoghq.com/api/v2/rum')
+    })
+
+    it('adds subdomain to the intake host', () => {
+      expect(
+        buildEndpointUrl({
+          proxy: undefined,
+          site: 'datadoghq.com',
+          path: '/api/v2/profiling/quota',
+          parameters: 'session_id=abc',
+          subdomain: 'quota',
+        })
+      ).toBe('https://quota.browser-intake-datadoghq.com/api/v2/profiling/quota?session_id=abc')
     })
   })
 })

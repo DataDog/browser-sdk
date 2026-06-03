@@ -23,7 +23,7 @@ export function getNodePrivacyLevel(
   defaultPrivacyLevel: NodePrivacyLevel,
   cache?: NodePrivacyLevelCache
 ): NodePrivacyLevel {
-  if (cache && cache.has(node)) {
+  if (cache?.has(node)) {
     return cache.get(node)!
   }
   const parentNode = getParentNode(node)
@@ -220,37 +220,23 @@ export function censorText(text: string): string {
   return text.replace(/\S/g, TEXT_MASKING_CHAR)
 }
 
-export function getTextContent(textNode: Node, parentNodePrivacyLevel: NodePrivacyLevel): string | undefined {
+export function getTextContent(textNode: Node, parentNodePrivacyLevel: NodePrivacyLevel): string {
   // The parent node may not be a html element which has a tagName attribute.
   // So just let it be undefined which is ok in this use case.
   const parentTagName = textNode.parentElement?.tagName
   let textContent = textNode.textContent || ''
-
-  const shouldIgnoreWhiteSpace = parentTagName === 'HEAD'
-  if (shouldIgnoreWhiteSpace && !textContent.trim()) {
-    return
-  }
-
   const nodePrivacyLevel = parentNodePrivacyLevel
 
-  const isScript = parentTagName === 'SCRIPT'
-
-  if (isScript) {
+  if (parentTagName === 'SCRIPT') {
     // For perf reasons, we don't record script (heuristic)
     textContent = CENSORED_STRING_MARK
   } else if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     // Should never occur, but just in case, we set to CENSORED_MARK.
     textContent = CENSORED_STRING_MARK
   } else if (shouldMaskNode(textNode, nodePrivacyLevel)) {
-    if (
-      // Scrambling the child list breaks text nodes for DATALIST/SELECT/OPTGROUP
-      parentTagName === 'DATALIST' ||
-      parentTagName === 'SELECT' ||
-      parentTagName === 'OPTGROUP'
-    ) {
-      if (!textContent.trim()) {
-        return
-      }
+    if (parentTagName === 'DATALIST' || parentTagName === 'SELECT' || parentTagName === 'OPTGROUP') {
+      // Masking the child list breaks text nodes for DATALIST/SELECT/OPTGROUP.
+      // TODO: Reinvestigate this.
     } else if (parentTagName === 'OPTION') {
       // <Option> has low entropy in charset + text length, so use `CENSORED_STRING_MARK` when masked
       textContent = CENSORED_STRING_MARK
@@ -258,6 +244,12 @@ export function getTextContent(textNode: Node, parentNodePrivacyLevel: NodePriva
       textContent = censorText(textContent)
     }
   }
+
+  const shouldCollapseWhiteSpace = parentTagName === 'HEAD'
+  if (shouldCollapseWhiteSpace && !textContent.trim()) {
+    return ''
+  }
+
   return textContent
 }
 
@@ -339,7 +331,7 @@ export interface BrowserWindow extends Window {
 }
 
 export function isAllowlisted(text: string): boolean {
-  if (!text || !text.trim()) {
+  if (!text?.trim()) {
     return true
   }
   // We are using toLocaleLowerCase when adding to the allowlist to avoid case sensitivity

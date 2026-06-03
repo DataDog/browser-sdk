@@ -97,7 +97,7 @@ export function trackClickActions(
   }
 
   function appendClickToClickChain(click: Click) {
-    if (!currentClickChain || !currentClickChain.tryAppend(click)) {
+    if (!currentClickChain?.tryAppend(click)) {
       const rageClick = click.clone()
       currentClickChain = createClickChain(click, (clicks) => {
         finalizeClicks(clicks, rageClick)

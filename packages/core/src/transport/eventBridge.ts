@@ -1,7 +1,7 @@
-import { getGlobalObject } from '../tools/globalObject'
+import { globalObject } from '../tools/globalObject'
 import type { DefaultPrivacyLevel } from '../domain/configuration'
 
-export interface BrowserWindowWithEventBridge extends Window {
+export interface BrowserWindowWithEventBridge {
   DatadogEventBridge?: DatadogEventBridge
 }
 
@@ -49,7 +49,7 @@ export function bridgeSupports(capability: BridgeCapability): boolean {
   return !!bridge && bridge.getCapabilities().includes(capability)
 }
 
-export function canUseEventBridge(currentHost = getGlobalObject<Window>().location?.hostname): boolean {
+export function canUseEventBridge(currentHost = globalObject.location?.hostname): boolean {
   const bridge = getEventBridge()
 
   return (
@@ -61,5 +61,5 @@ export function canUseEventBridge(currentHost = getGlobalObject<Window>().locati
 }
 
 function getEventBridgeGlobal() {
-  return getGlobalObject<BrowserWindowWithEventBridge>().DatadogEventBridge
+  return (globalObject as BrowserWindowWithEventBridge).DatadogEventBridge
 }

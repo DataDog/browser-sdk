@@ -22,11 +22,6 @@ export type SessionStoreStrategyType =
   | { type: typeof SessionPersistence.LOCAL_STORAGE }
   | { type: typeof SessionPersistence.MEMORY }
 
-export interface SessionObservableEvent {
-  cookieValues?: string[]
-  sessionState: SessionState
-}
-
 export type SessionStateOperation =
   | 'initialize'
   | 'expandOrRenewOnActivity'
@@ -39,5 +34,5 @@ export type SessionStateOperation =
 
 export interface SessionStoreStrategy {
   setSessionState(fn: (sessionState: SessionState) => SessionState, operation: SessionStateOperation): Promise<void>
-  sessionObservable: Observable<SessionObservableEvent>
+  sessionObservable: Observable<SessionState>
 }

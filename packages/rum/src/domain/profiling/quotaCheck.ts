@@ -1,4 +1,4 @@
-import { fetch, setTimeout, clearTimeout, buildEndpointHost } from '@datadog/browser-core'
+import { fetch, setTimeout, clearTimeout, buildEndpointUrl } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 
 // Reason strings surfaced on RUM events. Backend reasons backend_unavailable and
@@ -29,21 +29,13 @@ function parseQuotaResult(body: unknown, httpStatusFallback: QuotaResult): Quota
 }
 
 function buildQuotaUrl(configuration: RumConfiguration, sessionId: string): string {
-  const path = '/api/v2/profiling/quota'
-  const parameters = `session_id=${sessionId}`
-  const proxy = configuration.proxy
-  const host = `quota.${buildEndpointHost({ site: configuration.site, clientToken: configuration.clientToken })}`
-
-  if (typeof proxy === 'string') {
-    // ddforwardSubdomain tells the proxy which intake subdomain to target.
-    return `${proxy}?ddforward=${encodeURIComponent(`${path}?${parameters}`)}&ddforwardSubdomain=quota`
-  }
-
-  if (typeof proxy === 'function') {
-    return proxy({ path, parameters, subdomain: 'quota' })
-  }
-
-  return `https://${host}${path}?${parameters}`
+  return buildEndpointUrl({
+    proxy: configuration.proxy,
+    site: configuration.site,
+    path: '/api/v2/profiling/quota',
+    parameters: `session_id=${sessionId}`,
+    subdomain: 'quota',
+  })
 }
 
 export function checkProfilingQuota(

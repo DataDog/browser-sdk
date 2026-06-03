@@ -4,7 +4,6 @@ import type {
   DeflateWorkerAction,
   RawTelemetryEvent,
   SessionManager,
-  SessionRenewalEvent,
   Telemetry,
 } from '@datadog/browser-core'
 import { BridgeCapability, display, resetSampleDecisionCache } from '@datadog/browser-core'
@@ -373,7 +372,7 @@ describe('makeRecorderApi', () => {
           sessionManager.setId(LOW_HASH_UUID)
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
           expect(startRecordingSpy).not.toHaveBeenCalled()
-          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
           await collectAsyncCalls(startRecordingSpy, 1)
 
           expect(startRecordingSpy).toHaveBeenCalledTimes(1)
@@ -385,7 +384,7 @@ describe('makeRecorderApi', () => {
           recorderApi.stop()
           sessionManager.setId(LOW_HASH_UUID)
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
           expect(importRecorderSpy).not.toHaveBeenCalled()
           expect(startRecordingSpy).not.toHaveBeenCalled()
@@ -401,7 +400,7 @@ describe('makeRecorderApi', () => {
           rumInit()
           sessionManager.setNotTracked()
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
           expect(importRecorderSpy).not.toHaveBeenCalled()
           expect(startRecordingSpy).not.toHaveBeenCalled()
@@ -417,7 +416,7 @@ describe('makeRecorderApi', () => {
         it('keeps not recording if startSessionReplayRecording was called', () => {
           rumInit()
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
           expect(importRecorderSpy).not.toHaveBeenCalled()
           expect(startRecordingSpy).not.toHaveBeenCalled()
@@ -438,7 +437,7 @@ describe('makeRecorderApi', () => {
           sessionManager.setId(HIGH_HASH_UUID)
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
           expect(stopRecordingSpy).toHaveBeenCalled()
-          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
           expect(importRecorderSpy).toHaveBeenCalledTimes(1)
           expect(startRecordingSpy).toHaveBeenCalledTimes(1)
         })
@@ -448,7 +447,7 @@ describe('makeRecorderApi', () => {
           rumInit()
           sessionManager.setId(HIGH_HASH_UUID)
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
           triggerOnDomLoaded()
           expect(importRecorderSpy).toHaveBeenCalled()
           expect(startRecordingSpy).not.toHaveBeenCalled()
@@ -467,7 +466,7 @@ describe('makeRecorderApi', () => {
           sessionManager.setNotTracked()
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
           expect(stopRecordingSpy).toHaveBeenCalled()
-          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
           expect(importRecorderSpy).toHaveBeenCalledTimes(1)
           expect(startRecordingSpy).toHaveBeenCalledTimes(1)
         })
@@ -484,7 +483,7 @@ describe('makeRecorderApi', () => {
           expect(startRecordingSpy).toHaveBeenCalledTimes(1)
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
           expect(stopRecordingSpy).toHaveBeenCalled()
-          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
           await collectAsyncCalls(startRecordingSpy, 2)
 
           expect(importRecorderSpy).toHaveBeenCalledTimes(2)
@@ -498,7 +497,7 @@ describe('makeRecorderApi', () => {
           recorderApi.stop()
           expect(stopRecordingSpy).toHaveBeenCalledTimes(1)
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
           expect(importRecorderSpy).toHaveBeenCalledTimes(1)
           expect(startRecordingSpy).toHaveBeenCalledTimes(1)
           expect(stopRecordingSpy).toHaveBeenCalledTimes(1)
@@ -515,7 +514,7 @@ describe('makeRecorderApi', () => {
           rumInit()
           sessionManager.setTracked()
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
           await collectAsyncCalls(startRecordingSpy, 1)
 
           expect(startRecordingSpy).toHaveBeenCalled()
@@ -527,7 +526,7 @@ describe('makeRecorderApi', () => {
           recorderApi.stop()
           sessionManager.setTracked()
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
           expect(importRecorderSpy).not.toHaveBeenCalled()
           expect(startRecordingSpy).not.toHaveBeenCalled()
           expect(stopRecordingSpy).not.toHaveBeenCalled()
@@ -545,7 +544,7 @@ describe('makeRecorderApi', () => {
           sessionManager.setTracked()
           sessionManager.setId(HIGH_HASH_UUID)
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
           expect(importRecorderSpy).not.toHaveBeenCalled()
           expect(startRecordingSpy).not.toHaveBeenCalled()
           expect(stopRecordingSpy).not.toHaveBeenCalled()
@@ -561,7 +560,7 @@ describe('makeRecorderApi', () => {
         it('keeps not recording if startSessionReplayRecording was called', () => {
           rumInit()
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, {} as SessionRenewalEvent)
+          lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
           expect(importRecorderSpy).not.toHaveBeenCalled()
           expect(startRecordingSpy).not.toHaveBeenCalled()
           expect(stopRecordingSpy).not.toHaveBeenCalled()

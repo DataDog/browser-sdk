@@ -1,11 +1,12 @@
 import { registerCleanupTask, replaceMockable, mockCookies, collectAsyncCalls } from '../../../../test'
-import type { CookieStoreWindow } from '../../../browser/browser.types'
+import { globalObject } from '../../../tools/globalObject'
 import { Observable } from '../../../tools/observable'
 import type { SessionState } from '../sessionState'
 import type { Configuration, InitConfiguration } from '../../configuration'
+import { buildCookieOptions } from '../../configuration'
 import { SESSION_COOKIE_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY, SessionPersistence } from '../sessionConstants'
 import { CookieApi, LEGACY_SESSION_STORE_KEY } from './sessionStoreStrategy'
-import { buildCookieOptions, createCookieAccess, selectCookieStrategy, initCookieStrategy } from './sessionInCookie'
+import { createCookieAccess, selectCookieStrategy, initCookieStrategy } from './sessionInCookie'
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'abc', trackAnonymousUser: true }
 
@@ -138,7 +139,7 @@ describe('session in cookie strategy', () => {
       mockCookie.simulateExternalChange('id=test&c=0')
       await collectAsyncCalls(spy, 1)
 
-      expect(spy.calls.mostRecent().args[0].sessionState.c).toBeUndefined()
+      expect(spy.calls.mostRecent().args[0].c).toBeUndefined()
     })
 
     it('should notify observable when cookie is cleared', async () => {
@@ -150,7 +151,7 @@ describe('session in cookie strategy', () => {
       mockCookie.simulateExternalChange('')
       await collectAsyncCalls(spy, 1)
 
-      expect(spy.calls.mostRecent().args[0]).toEqual({ cookieValues: [], sessionState: {} })
+      expect(spy.calls.mostRecent().args[0]).toEqual({})
     })
 
     it('should notify sessionObservable after write', async () => {
@@ -162,7 +163,7 @@ describe('session in cookie strategy', () => {
       await strategy.setSessionState(() => ({ id: '123' }), 'updateState')
       await collectAsyncCalls(spy, 1)
 
-      expect(spy.calls.mostRecent().args[0].sessionState).toEqual({ id: '123' })
+      expect(spy.calls.mostRecent().args[0]).toEqual({ id: '123' })
     })
 
     it('should queue setSessionState calls and process them sequentially', async () => {
@@ -230,35 +231,6 @@ describe('session in cookie strategy', () => {
     })
   })
 
-  describe('build cookie options', () => {
-    const clientToken = 'abc'
-
-    it('should not be secure nor crossSite by default', () => {
-      const cookieOptions = buildCookieOptions({ clientToken })
-      expect(cookieOptions).toEqual({ secure: false, crossSite: false, partitioned: false })
-    })
-
-    it('should be secure when `useSecureSessionCookie` is truthy', () => {
-      const cookieOptions = buildCookieOptions({ clientToken, useSecureSessionCookie: true })
-      expect(cookieOptions).toEqual({ secure: true, crossSite: false, partitioned: false })
-    })
-
-    it('should be secure, crossSite and partitioned when `usePartitionedCrossSiteSessionCookie` is truthy', () => {
-      const cookieOptions = buildCookieOptions({ clientToken, usePartitionedCrossSiteSessionCookie: true })
-      expect(cookieOptions).toEqual({ secure: true, crossSite: true, partitioned: true })
-    })
-
-    it('should have domain when `trackSessionAcrossSubdomains` is truthy', () => {
-      const cookieOptions = buildCookieOptions({ clientToken, trackSessionAcrossSubdomains: true })
-      expect(cookieOptions).toEqual({
-        secure: false,
-        crossSite: false,
-        partitioned: false,
-        domain: jasmine.any(String),
-      })
-    })
-  })
-
   describe('selectCookieStrategy', () => {
     function makeConfiguration(): Configuration {
       const cookieOptions = buildCookieOptions({ clientToken: 'abc' })
@@ -266,7 +238,7 @@ describe('session in cookie strategy', () => {
     }
 
     function disableCookieStore() {
-      replaceMockable((window as CookieStoreWindow).cookieStore, undefined)
+      replaceMockable(globalObject.cookieStore, undefined)
     }
 
     function disableDocumentCookie() {
@@ -274,7 +246,7 @@ describe('session in cookie strategy', () => {
     }
 
     it('returns cookieStore strategy when both APIs are available', async () => {
-      if (!(window as CookieStoreWindow).cookieStore) {
+      if (!globalObject.cookieStore) {
         pending('CookieStore API not available')
       }
       mockCookies()

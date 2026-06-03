@@ -1,11 +1,12 @@
 import { display } from '@datadog/browser-core'
-import { clearActiveEntries } from './activeEntries'
+import type { ErrorWithCause } from '@datadog/browser-core'
 import { compile } from './expression'
 import { compileCondition } from './condition'
 import type { CompiledCondition } from './condition'
 import { templateRequiresEvaluation, compileSegments } from './template'
 import type { TemplateSegment, CompiledTemplate } from './template'
 import type { CaptureOptions } from './capture'
+import type { ActiveEntry } from './activeEntries'
 
 // Sampling rate limits
 const DEFAULT_MAX_SNAPSHOTS_PER_SECOND_GLOBALLY = 25
@@ -13,6 +14,7 @@ const DEFAULT_MAX_SNAPSHOTS_PER_SECOND_PER_PROBE = 1
 const DEFAULT_MAX_NON_SNAPSHOTS_PER_SECOND_PER_PROBE = 5000
 const DEFAULT_MAX_SNAPSHOTS_PER_PROBE_LIFETIME = 1000
 const DEFAULT_MAX_NON_SNAPSHOTS_PER_PROBE_LIFETIME = 50000
+const DEFAULT_MS_BETWEEN_CONDITION_ERRORS = 5 * 60 * 1000
 
 // Global snapshot rate limiting
 let globalSnapshotSamplingRateWindowStart = 0
@@ -67,8 +69,10 @@ export interface InitializedProbe extends Probe {
   condition?: CompiledCondition
   msBetweenSampling: number
   lastCaptureMs: number
+  lastConditionErrorMs: number
   eventsSentInLifetime: number
   lifetimeBudgetWarningEmitted: boolean
+  activeEntries: Array<ActiveEntry | null>
 }
 
 // Pre-populate with a placeholder key to help V8 optimize property lookups.
@@ -161,42 +165,62 @@ export function getAllProbes(): InitializedProbe[] {
 }
 
 /**
- * Remove a probe from the registry
+ * Remove a probe from the registry.
  *
- * @param id - The probe ID
+ * Passing an initialized probe removes only that exact registered instance, so
+ * stale in-flight returns cannot remove a newer replacement with the same id.
  */
-export function removeProbe(id: string): void {
+export function removeProbe(id: string): void
+export function removeProbe(probe: InitializedProbe): void
+export function removeProbe(idOrProbe: string | InitializedProbe): void {
+  const id = typeof idOrProbe === 'string' ? idOrProbe : idOrProbe.id
+  const expectedProbe = typeof idOrProbe === 'string' ? undefined : idOrProbe
   const functionId = probeIdToFunctionId[id]
   if (!functionId) {
+    if (expectedProbe) {
+      // Identity-checked removal is best-effort: the in-flight probe instance
+      // may already have been removed or replaced by the delivery API.
+      return
+    }
     throw new Error(`Probe with id ${id} not found`)
   }
   const probes = activeProbes[functionId]
   if (!probes) {
+    if (expectedProbe) {
+      // The id mapping can outlive the probe array briefly for stale in-flight
+      // instances; there is nothing left for this instance to unregister.
+      return
+    }
     throw new Error(`Probes with function id ${functionId} not found`)
   }
   for (let i = 0; i < probes.length; i++) {
     const probe = probes[i]
-    if (probe.id === id) {
-      if (typeof probe.template === 'object' && probe.template !== null && probe.template.clearCache) {
+    if (probe.id === id && (!expectedProbe || probe === expectedProbe)) {
+      if (typeof probe.template === 'object' && probe.template?.clearCache) {
         probe.template.clearCache()
       }
-      if (typeof probe.condition === 'object' && probe.condition !== null && probe.condition.clearCache) {
+      if (typeof probe.condition === 'object' && probe.condition?.clearCache) {
         probe.condition.clearCache()
       }
-      probes.splice(i, 1)
-      // TODO: Gracefully drain in-flight entries instead of clearing them immediately.
-      // Deleting a probe can currently race with reentrant onEntry/onReturn invocations
-      // for the same probe — both delivery-driven removal and budget-based auto-unregistering
-      // can wipe the active stack while a deeper invocation is still in progress.
-      // A common concrete trigger is instrumenting a recursive function: if the inner
-      // frame is the one that exhausts the lifetime budget, the outer frame's pending
-      // entry is dropped and its snapshot is lost.
-      clearActiveEntries(id)
-      break
+      const remainingProbes = probes.slice(0, i).concat(probes.slice(i + 1))
+      if (remainingProbes.length === 0) {
+        delete activeProbes[functionId]
+      } else {
+        activeProbes[functionId] = remainingProbes
+      }
+      delete probeIdToFunctionId[id]
+      return
     }
   }
+  const hasReplacementWithSameId = expectedProbe && probes.some((probe) => probe.id === id)
+  if (hasReplacementWithSameId) {
+    // Stale in-flight instance: a replacement with the same id is already registered.
+    return
+  }
+
+  // No matching registered probe exists, so the id mapping is orphaned.
   delete probeIdToFunctionId[id]
-  if (probes.length === 0) {
+  if (activeProbes[functionId]?.length === 0) {
     delete activeProbes[functionId]
   }
 }
@@ -208,12 +232,16 @@ export function clearProbes(): void {
   for (const probes of Object.values(activeProbes)) {
     if (probes) {
       for (const probe of probes) {
-        if (typeof probe.template === 'object' && probe.template !== null && probe.template.clearCache) {
+        if (typeof probe.template === 'object' && probe.template?.clearCache) {
           probe.template.clearCache()
         }
-        if (typeof probe.condition === 'object' && probe.condition !== null && probe.condition.clearCache) {
+        if (typeof probe.condition === 'object' && probe.condition?.clearCache) {
           probe.condition.clearCache()
         }
+        // Unlike removeProbe(), clearProbes() is an aggressive teardown used by
+        // tests and the delivery API circuit breaker. Drop in-flight entries so
+        // stale captured probe instances cannot emit after the debugger is disabled.
+        probe.activeEntries.length = 0
       }
     }
   }
@@ -227,7 +255,6 @@ export function clearProbes(): void {
       delete probeIdToFunctionId[probeId]
     }
   }
-  clearActiveEntries()
   globalSnapshotSamplingRateWindowStart = 0
   snapshotsSampledWithinTheLastSecond = 0
 }
@@ -263,7 +290,7 @@ export function checkGlobalSnapshotBudget(now: number, captureSnapshot: boolean)
   return true
 }
 
-export function hasProbeLifetimeBudgetRemaining(probe: InitializedProbe): boolean {
+function hasProbeLifetimeBudgetRemaining(probe: InitializedProbe): boolean {
   if (isProbeLifetimeBudgetExhausted(probe)) {
     if (!probe.lifetimeBudgetWarningEmitted) {
       probe.lifetimeBudgetWarningEmitted = true
@@ -279,8 +306,33 @@ export function hasProbeLifetimeBudgetRemaining(probe: InitializedProbe): boolea
   return true
 }
 
+export function enforceProbeLifetimeBudget(probe: InitializedProbe): boolean {
+  if (!hasProbeLifetimeBudgetRemaining(probe)) {
+    removeProbe(probe)
+    return false
+  }
+
+  return true
+}
+
+export function recordProbeEventSent(probe: InitializedProbe): void {
+  probe.eventsSentInLifetime++
+  if (isProbeLifetimeBudgetExhausted(probe)) {
+    removeProbe(probe)
+  }
+}
+
 export function isProbeLifetimeBudgetExhausted(probe: InitializedProbe): boolean {
   return probe.eventsSentInLifetime >= getMaxProbeLifetimeEvents(probe)
+}
+
+export function checkConditionErrorBudget(probe: InitializedProbe, now: number): boolean {
+  if (now - probe.lastConditionErrorMs < DEFAULT_MS_BETWEEN_CONDITION_ERRORS) {
+    return false
+  }
+
+  probe.lastConditionErrorMs = now
+  return true
 }
 
 /**
@@ -298,11 +350,12 @@ export function initializeProbe(probe: Probe): asserts probe is InitializedProbe
       ;(probe as InitializedProbe).condition = compileCondition(String(compile(probe.when.json)))
     }
   } catch (err) {
-    // TODO: Handle error properly
-    display.error(
-      `Cannot compile condition expression: ${probe.when!.dsl} (probe: ${probe.id}, version: ${probe.version})`,
-      err as Error
+    // TODO: Report to the debugger intake as a diagnostics message with state ERROR.
+    const conditionError = new Error(
+      `Cannot compile condition expression: ${probe.when!.dsl} (probe: ${probe.id}, version: ${probe.version})`
     )
+    ;(conditionError as ErrorWithCause).cause = err
+    throw conditionError
   }
 
   // Optimize for fast calculations when probe is hit
@@ -346,8 +399,10 @@ export function initializeProbe(probe: Probe): asserts probe is InitializedProbe
       : currentProbeBudgetConfiguration.maxNonSnapshotsPerSecondPerProbe)
   ;(probe as InitializedProbe).msBetweenSampling = (1 / snapshotsPerSecond) * 1000 // Convert to milliseconds
   ;(probe as InitializedProbe).lastCaptureMs = -Infinity // Initialize to -Infinity to allow first call
+  ;(probe as InitializedProbe).lastConditionErrorMs = -Infinity
   ;(probe as InitializedProbe).eventsSentInLifetime = 0
   ;(probe as InitializedProbe).lifetimeBudgetWarningEmitted = false
+  ;(probe as InitializedProbe).activeEntries = []
 }
 
 function normalizeProbeLifetimeLimit(limit: number | undefined, defaultLimit: number): number {

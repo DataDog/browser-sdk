@@ -50,7 +50,7 @@ const { values } = parseArgs({
   },
 })
 
-// eslint-disable-next-line import/no-default-export
+// eslint-disable-next-line import-x/no-default-export
 export default {
   basePath: '../..',
   files: [...FILES, ...(values.spec || FILES_SPECS)],

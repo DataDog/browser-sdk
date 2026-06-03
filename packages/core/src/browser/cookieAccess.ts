@@ -6,10 +6,10 @@ import { display } from '../tools/display'
 import { generateUUID } from '../tools/utils/stringUtils'
 import type { Configuration } from '../domain/configuration'
 import { addTelemetryDebug } from '../domain/telemetry'
+import { globalObject } from '../tools/globalObject'
 import { addEventListener, DOM_EVENT } from './addEventListener'
-import type { CookieOptions } from './cookie'
 import { getCookies, setCookie } from './cookie'
-import type { CookieStoreWindow } from './browser.types'
+import type { CookieOptions } from './cookie'
 
 export interface CookieAccessItem {
   value: string
@@ -60,7 +60,7 @@ export function createCookieStoreAccess(
   cookieOptions: CookieOptions,
   configuration: Configuration
 ): CookieAccess {
-  const cookieStore = mockable((window as CookieStoreWindow).cookieStore)!
+  const cookieStore = mockable(globalObject.cookieStore)!
   const observable = new Observable<void>(() => {
     const listener = addEventListener(configuration, cookieStore, DOM_EVENT.CHANGE, (event) => {
       // Based on our experimentation, we're assuming that entries for the same cookie cannot be in both the 'changed' and 'deleted' arrays.

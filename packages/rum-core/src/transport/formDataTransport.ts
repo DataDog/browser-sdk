@@ -6,7 +6,13 @@ import type {
   RawError,
   Context,
 } from '@datadog/browser-core'
-import { addTelemetryDebug, createHttpRequest, jsonStringify, objectEntries } from '@datadog/browser-core'
+import {
+  addTelemetryDebug,
+  createEndpointBuilder,
+  createHttpRequest,
+  jsonStringify,
+  objectEntries,
+} from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
@@ -36,7 +42,7 @@ export function createFormDataTransport<T extends TransportPayload>(
     addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
   }
 
-  const httpRequest = createHttpRequest([configuration.profilingEndpointBuilder], reportError)
+  const httpRequest = createHttpRequest([createEndpointBuilder(configuration, 'profile')], reportError)
 
   const encoder = createEncoder(streamId)
 

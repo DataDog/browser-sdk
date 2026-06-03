@@ -6,6 +6,7 @@ import {
   generateUUID,
 } from '../tools/utils/stringUtils'
 import { buildUrl } from '../tools/utils/urlPolyfill'
+import { globalObject } from '../tools/globalObject'
 
 export interface CookieOptions {
   secure?: boolean
@@ -18,10 +19,10 @@ export function setCookie(name: string, value: string, expireDelay: number = 0, 
   const date = new Date()
   date.setTime(date.getTime() + expireDelay)
   const expires = `expires=${date.toUTCString()}`
-  const sameSite = options && options.crossSite ? 'none' : 'strict'
-  const domain = options && options.domain ? `;domain=${options.domain}` : ''
-  const secure = options && options.secure ? ';secure' : ''
-  const partitioned = options && options.partitioned ? ';partitioned' : ''
+  const sameSite = options?.crossSite ? 'none' : 'strict'
+  const domain = options?.domain ? `;domain=${options.domain}` : ''
+  const secure = options?.secure ? ';secure' : ''
+  const partitioned = options?.partitioned ? ';partitioned' : ''
   document.cookie = `${name}=${value};${expires};path=/;samesite=${sameSite}${domain}${secure}${partitioned}`
 }
 
@@ -75,7 +76,14 @@ export function deleteCookie(name: string, options?: CookieOptions) {
  * https://web.dev/same-site-same-origin/#site
  */
 let getCurrentSiteCache: string | undefined
-export function getCurrentSite(hostname = location.hostname, referrer = document.referrer): string | undefined {
+export function getCurrentSite(
+  hostname = globalObject.location?.hostname ?? '',
+  referrer = typeof document !== 'undefined' ? document.referrer : ''
+): string | undefined {
+  // Cookie probing requires document.cookie, which is not available in Web Workers or Node.js
+  if (typeof document === 'undefined') {
+    return undefined
+  }
   if (getCurrentSiteCache === undefined) {
     const defaultHostName = getCookieDefaultHostName(hostname, referrer)
     if (defaultHostName) {

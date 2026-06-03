@@ -62,12 +62,19 @@ export function startResourceCollection(lifeCycle: LifeCycle, configuration: Rum
         // (notably on Firefox), so the matching REQUEST_COMPLETED isn't in the registry yet.
         // Defer the lookup to give the request time to land before we look it up.
         //
+        // Publish synchronously after the delay rather than via the task queue: the queue's
+        // requestIdleCallback can fire after the click action's PAGE_ACTIVITY_END_DELAY window
+        // (notably on newer Chromium scheduling), leaving the request uncounted by its parent
+        // action.
+        //
         // Note: we could clear the timeout on stop(), but this requires a bit of bookkeeping that
         // is not necessary right now. We could reevaluate in the future.
-        setTimeout(
-          () => handleResource(() => assembleResource(entry, requestRegistry.getMatchingRequest(entry), configuration)),
-          REQUEST_MATCHING_DELAY
-        )
+        setTimeout(() => {
+          const rawEvent = assembleResource(entry, requestRegistry.getMatchingRequest(entry), configuration)
+          if (rawEvent) {
+            lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
+          }
+        }, REQUEST_MATCHING_DELAY)
       } else {
         handleResource(() => assembleResource(entry, undefined, configuration))
       }
@@ -357,7 +364,7 @@ function filterHeaders(headers: Headers, matchers: MatchHeader[]): NetworkHeader
       display.warn(
         `Header "${lowerName}" value was truncated from ${capturedValue.length} to ${MAX_HEADER_VALUE_LENGTH} characters.`
       )
-      // monitor-until: 2026-05-23
+      // monitor-until: 2026-07-23
       addTelemetryDebug('Resource header value was truncated', {
         header_name: lowerName,
         original_length: capturedValue.length,
@@ -370,7 +377,7 @@ function filterHeaders(headers: Headers, matchers: MatchHeader[]): NetworkHeader
   })
 
   if (hasReachedMaxHeaderCount) {
-    // monitor-until: 2026-05-23
+    // monitor-until: 2026-07-23
     addTelemetryDebug('Maximum number of resource headers reached', {
       collectedHeaderCount,
       totalHeaderCount,

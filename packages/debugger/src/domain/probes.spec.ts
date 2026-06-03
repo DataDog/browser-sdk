@@ -1,4 +1,4 @@
-import { display } from '@datadog/browser-core'
+import type { ErrorWithCause } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import {
   initializeProbe,
@@ -126,6 +126,79 @@ describe('probes', () => {
       // Should not throw when removing probe with static template (no clearCache method)
       expect(() => removeProbe('test-probe-1')).not.toThrow()
     })
+
+    it('should remove the exact initialized probe instance when passed a probe', () => {
+      const probe: Probe = {
+        id: 'test-probe-1',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'instanceTest' },
+        template: 'Static message',
+        captureSnapshot: false,
+        capture: {},
+        sampling: {},
+        evaluateAt: 'ENTRY',
+      }
+      addProbe(probe)
+
+      const initializedProbe = getProbes('TestClass;instanceTest')![0]
+      removeProbe(initializedProbe)
+
+      expect(getProbes('TestClass;instanceTest')).toBeUndefined()
+    })
+
+    it('should not remove a replacement probe when passed a stale probe instance', () => {
+      const staleProbe: Probe = {
+        id: 'test-probe-1',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'replacementTest' },
+        template: 'Stale message',
+        captureSnapshot: false,
+        capture: {},
+        sampling: {},
+        evaluateAt: 'ENTRY',
+      }
+      addProbe(staleProbe)
+
+      const staleInitializedProbe = getProbes('TestClass;replacementTest')![0]
+      removeProbe('test-probe-1')
+      addProbe({
+        id: 'test-probe-1',
+        version: 1,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'replacementTest' },
+        template: 'Replacement message',
+        captureSnapshot: false,
+        capture: {},
+        sampling: {},
+        evaluateAt: 'ENTRY',
+      })
+
+      expect(() => removeProbe(staleInitializedProbe)).not.toThrow()
+      expect(getProbes('TestClass;replacementTest')).toEqual([jasmine.objectContaining({ version: 1 })])
+    })
+
+    it('should not throw when passed a stale probe instance that is no longer registered', () => {
+      const probe: Probe = {
+        id: 'test-probe-1',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'staleTest' },
+        template: 'Static message',
+        captureSnapshot: false,
+        capture: {},
+        sampling: {},
+        evaluateAt: 'ENTRY',
+      }
+      addProbe(probe)
+
+      const initializedProbe = getProbes('TestClass;staleTest')![0]
+      removeProbe('test-probe-1')
+
+      expect(() => removeProbe(initializedProbe)).not.toThrow()
+      expect(getProbes('TestClass;staleTest')).toBeUndefined()
+    })
   })
 
   describe('initializeProbe', () => {
@@ -209,8 +282,7 @@ describe('probes', () => {
       )
     })
 
-    it('should handle condition compilation errors', () => {
-      const displayErrorSpy = spyOn(display, 'error')
+    it('should not add probe when condition compilation fails', () => {
       const probe: Probe = {
         id: 'test-probe-1',
         version: 0,
@@ -227,12 +299,17 @@ describe('probes', () => {
         evaluateAt: 'EXIT',
       }
 
-      initializeProbe(probe)
+      let error: unknown
+      try {
+        addProbe(probe)
+      } catch (err) {
+        error = err
+      }
 
-      expect(displayErrorSpy).toHaveBeenCalledWith(
-        jasmine.stringContaining('Cannot compile condition'),
-        jasmine.any(Error)
-      )
+      expect(error).toEqual(jasmine.any(Error))
+      expect((error as Error).message).toContain('Cannot compile condition')
+      expect((error as ErrorWithCause).cause).toEqual(jasmine.any(TypeError))
+      expect(getProbes('TestClass;conditionError')).toBeUndefined()
     })
 
     it('should calculate msBetweenSampling for snapshot probes', () => {

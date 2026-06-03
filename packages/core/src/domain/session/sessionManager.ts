@@ -12,7 +12,6 @@ import {
   timeStampNow,
 } from '../../tools/utils/timeUtils'
 import { addEventListener, addEventListeners, DOM_EVENT } from '../../browser/addEventListener'
-import { resetLifecycleTracker, startLifecycleTracker } from '../../browser/lifecycleTracker'
 import { clearInterval, clearTimeout, setInterval, setTimeout } from '../../tools/timer'
 import { mockable } from '../../tools/mockable'
 import { noop, throttle } from '../../tools/utils/functionUtils'
@@ -24,9 +23,6 @@ import { display } from '../../tools/display'
 import { isSampled } from '../sampler'
 import { TelemetryMetrics, addTelemetryMetrics } from '../telemetry'
 import { monitorError } from '../../tools/monitor'
-import { getCookies } from '../../browser/cookie'
-import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
-import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import type { SessionState } from './sessionState'
 import {
@@ -43,24 +39,10 @@ import { getSessionStoreStrategy, selectSessionStoreStrategyType } from './sessi
 export interface SessionManager {
   findSession: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => SessionContext | undefined
   findTrackedSession: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => SessionContext | undefined
-  renewObservable: Observable<SessionRenewalEvent | undefined>
+  renewObservable: Observable<void>
   expireObservable: Observable<void>
   expire: () => void
   updateSessionState: (state: Partial<SessionState>) => void
-}
-
-interface SessionDebugContext {
-  previousSession?: SessionContext
-  newState: SessionState
-  from: string
-  cookieValues: string[] | undefined
-  cookies: string[]
-  locksAvailable: boolean
-  cookieStoreAvailable: boolean
-}
-export interface SessionRenewalEvent {
-  expire: SessionDebugContext | undefined
-  renew: SessionDebugContext
 }
 
 export interface SessionContext {
@@ -90,17 +72,14 @@ export async function startSessionManager(
   trackingConsentState: TrackingConsentState
 ): Promise<SessionManager | undefined> {
   const startTime = relativeNow()
-  const renewObservable = new Observable<SessionRenewalEvent | undefined>()
+  const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
-  let expireContext: SessionDebugContext | undefined
 
   const sessionStoreStrategyType = await mockable(selectSessionStoreStrategyType)(configuration)
   if (!sessionStoreStrategyType) {
     display.warn('No storage available for session. We will not send any data.')
     return
   }
-
-  startLifecycleTracker(configuration)
 
   const strategy = mockable(getSessionStoreStrategy)(sessionStoreStrategyType, configuration)
 
@@ -173,9 +152,9 @@ export async function startSessionManager(
   }
 
   function subscribeToSessionChanges() {
-    const subscription = strategy.sessionObservable.subscribe(({ cookieValues, sessionState }) => {
+    const subscription = strategy.sessionObservable.subscribe((sessionState) => {
       scheduleExpirationTimeout(sessionState)
-      handleStateChange(sessionState, { from: 'sessionObservable', cookieValues })
+      handleStateChange(sessionState)
     })
     stopCallbacks.push(() => subscription.unsubscribe())
   }
@@ -259,10 +238,7 @@ export async function startSessionManager(
     }
   }
 
-  function handleStateChange(
-    newState: SessionState,
-    { from, cookieValues }: { from: string; cookieValues?: string[] }
-  ) {
+  function handleStateChange(newState: SessionState) {
     const previousSession = sessionContextHistory.find()
     const hadSession = previousSession?.id !== undefined
     const hasSession = newState.id !== undefined
@@ -270,17 +246,6 @@ export async function startSessionManager(
 
     if (hadSession && (!hasSession || sessionIdChanged)) {
       // Session expired or replaced
-      if (isExperimentalFeatureEnabled(ExperimentalFeature.SESSION_RENEWAL_DEBUG_CONTEXT)) {
-        expireContext = {
-          previousSession: previousSession && { ...previousSession },
-          newState: { ...newState },
-          from,
-          cookieValues,
-          cookies: getCookies(SESSION_STORE_KEY),
-          locksAvailable: Boolean(globalThis.navigator?.locks),
-          cookieStoreAvailable: Boolean(globalThis.cookieStore),
-        }
-      }
       sessionExpired = true
       expireObservable.notify()
       sessionContextHistory.closeActive(relativeNow())
@@ -293,22 +258,7 @@ export async function startSessionManager(
       }
       // New session appeared
       sessionContextHistory.add(buildSessionContext(newState), relativeNow())
-      renewObservable.notify(
-        isExperimentalFeatureEnabled(ExperimentalFeature.SESSION_RENEWAL_DEBUG_CONTEXT)
-          ? {
-              expire: expireContext,
-              renew: {
-                previousSession: previousSession && { ...previousSession },
-                newState: { ...newState },
-                from,
-                cookieValues,
-                cookies: getCookies(SESSION_STORE_KEY),
-                locksAvailable: Boolean(globalThis.navigator?.locks),
-                cookieStoreAvailable: Boolean(globalThis.cookieStore),
-              },
-            }
-          : undefined
-      )
+      renewObservable.notify()
     } else if (hadSession && hasSession && !sessionIdChanged) {
       // Same session,
       // Mutate the session context in the history for replay forced changes
@@ -324,7 +274,7 @@ export async function startSessionManager(
     if (!trackingConsentState.isGranted()) {
       delete expiredState.anonymousId
     }
-    handleStateChange(expiredState, { from: 'expire' })
+    handleStateChange(expiredState)
     // Persist to storage asynchronously
     strategy
       .setSessionState((state) => {
@@ -383,7 +333,6 @@ export function startSessionManagerStub(): Promise<SessionManager> {
 export function stopSessionManager() {
   stopCallbacks.forEach((e) => e())
   stopCallbacks = []
-  resetLifecycleTracker()
 }
 
 function trackActivity(configuration: Configuration, expandOrRenewSession: () => void) {

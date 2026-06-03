@@ -226,7 +226,7 @@ function sanitizeObjects(value: object): string | SanitizedEvent {
     // Handle all remaining object types in a generic way
     const result = Object.prototype.toString.call(value)
     const match = result.match(/\[object (.*)\]/)
-    if (match && match[1]) {
+    if (match?.[1]) {
       return `[${match[1]}]`
     }
   } catch {

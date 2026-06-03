@@ -29,6 +29,7 @@ export const GITMOJI: readonly Gitmoji[] = [
   { emoji: '🚨', label: 'Linting', category: 'internal' },
   { emoji: '🧹', label: 'Cleanup', category: 'internal' },
   { emoji: '🔊', label: 'Logging', category: 'internal' },
+  { emoji: '🔇', label: 'Remove logs', category: 'internal' },
 ]
 
 // Strip the Unicode variation selector (U+FE0F) so '⚡' and '⚡️' compare equal.

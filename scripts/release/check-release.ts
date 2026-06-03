@@ -17,7 +17,7 @@ function checkGitTag(): void {
   try {
     tagRef = command`git rev-list -n 1 v${releaseVersion} --`.run()
   } catch (error) {
-    throw new Error(`Failed to find git tag reference: ${error as string}`)
+    throw new Error('Failed to find git tag reference', { cause: error })
   }
   if (tagRef !== headRef) {
     throw new Error('Git tag not on HEAD')

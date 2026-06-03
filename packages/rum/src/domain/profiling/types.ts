@@ -1,7 +1,6 @@
-import type { TimeoutId, ClocksState } from '@datadog/browser-core'
-import type { RumViewEntry } from '../../../types'
-import type { LongTaskContext } from '../longTaskHistory'
-import type { Profiler } from './profilerApi.types'
+import type { TimeoutId, ClocksState, Profiler } from '@datadog/browser-core'
+import type { RumViewEntry } from '../../types'
+import type { LongTaskContext } from './longTaskHistory'
 
 /**
  * Additional data recorded during profiling session

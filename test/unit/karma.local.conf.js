@@ -8,7 +8,7 @@ if (process.env.CI) {
   coverageReports.push('clover')
 }
 
-// eslint-disable-next-line import/no-default-export
+// eslint-disable-next-line import-x/no-default-export
 export default function (config) {
   config.set({
     ...karmaBaseConf,

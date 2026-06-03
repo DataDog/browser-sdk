@@ -169,11 +169,8 @@ function serializeTextNode(
   privacyLevel: NodePrivacyLevel,
   transaction: SerializationTransaction
 ): void {
-  const textContent = getTextContent(textNode, privacyLevel)
-  if (textContent === undefined) {
-    return
-  }
   const { insertionPoint } = cursor.advance(textNode)
+  const textContent = getTextContent(textNode, privacyLevel)
   transaction.addNode(insertionPoint, '#text', textContent)
 }
 
@@ -192,7 +189,9 @@ function serializeHiddenNodePlaceholder(
   transaction: SerializationTransaction
 ): void {
   // We only generate placeholders for element nodes; other hidden nodes are simply not
-  // serialized.
+  // serialized. (But note that a non-element node can only be hidden if it's a descendant
+  // of another hidden node, since only element nodes can have a different privacy level
+  // than their parent.)
   if (!isElementNode(node)) {
     return
   }

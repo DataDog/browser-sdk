@@ -1,7 +1,7 @@
 variables:
-  CURRENT_STAGING: staging-22
+  CURRENT_STAGING: staging-23
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 108
+  CURRENT_CI_IMAGE: 109
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
@@ -200,8 +200,7 @@ bundle-size:
   script:
     - yarn
     - yarn build:bundle
-    - node ./scripts/deploy/deploy.ts staging pull-request pull-request
-    - node ./scripts/performance/index.ts
+    - node ./scripts/bundle-size/index.ts
 
 build-bundle:
   extends:

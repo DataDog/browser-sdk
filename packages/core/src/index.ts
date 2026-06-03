@@ -5,9 +5,9 @@ export {
   TraceContextInjection,
   serializeConfiguration,
   isSampleRate,
-  buildEndpointHost,
-  isIntakeUrl,
-  computeTransportConfiguration,
+  buildEndpointUrl,
+  createEndpointBuilder,
+  createReplicaEndpointBuilder,
 } from './domain/configuration'
 export * from './domain/intakeSites'
 export type { TrackingConsentState } from './domain/trackingConsent'
@@ -51,7 +51,7 @@ export {
 export { monitored, monitor, callMonitored, setDebugMode, monitorError } from './tools/monitor'
 export type { Subscription } from './tools/observable'
 export { Observable, BufferedObservable } from './tools/observable'
-export type { SessionManager, SessionContext, SessionRenewalEvent } from './domain/session/sessionManager'
+export type { SessionManager, SessionContext } from './domain/session/sessionManager'
 export { startSessionManager, startSessionManagerStub, stopSessionManager } from './domain/session/sessionManager'
 export {
   SESSION_TIME_OUT_DELAY, // Exposed for tests
@@ -103,7 +103,24 @@ export {
 export { NonErrorPrefix } from './domain/error/error.types'
 export type { Context, ContextArray, ContextValue } from './tools/serialisation/context'
 export { getCookie, getInitCookie, setCookie, deleteCookie, resetInitCookies } from './browser/cookie'
-export type { CookieStore, WeakRef, WeakRefConstructor } from './browser/browser.types'
+export type {
+  CookieStore,
+  WeakRef,
+  WeakRefConstructor,
+  NetworkInformation,
+  BrowserNavigator,
+  NetworkInterface,
+  EffectiveType,
+  Profiler,
+  ProfilerConstructor,
+  ProfilerTrace,
+  ProfilerInitOptions,
+  ProfilerFrame,
+  ProfilerStack,
+  ProfilerSample,
+  ProfilerResource,
+  SampleBufferFullEvent,
+} from './browser/browser.types'
 export type { XhrCompleteContext, XhrStartContext, XhrContext } from './browser/xhrObservable'
 export { initXhrObservable } from './browser/xhrObservable'
 export type { FetchResolveContext, FetchStartContext, FetchContext } from './browser/fetchObservable'

@@ -10,6 +10,7 @@
     "target": "ES2020",
     "sourceMap": true,
     "jsx": "react",
+    "allowJs": true,
     "skipLibCheck": true,
 
     "types": [],
