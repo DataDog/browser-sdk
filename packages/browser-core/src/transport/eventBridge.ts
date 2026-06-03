@@ -57,10 +57,16 @@ export function canUseEventBridge(currentHost = globalObject.location?.hostname)
   const bridge = getEventBridge()
 
   if (typeof getEventBridgeGlobal()?.getAllowedWebViewHostPatterns === 'function') {
-    return bridge?.getAllowedWebViewHostPatterns().some((pattern) => matchesWildcardPattern(currentHost, pattern)) ?? false
+    return (
+      bridge?.getAllowedWebViewHostPatterns().some((pattern) => matchesWildcardPattern(currentHost, pattern)) ?? false
+    )
   }
 
-  return bridge?.getAllowedWebViewHosts().some((allowedHost) => currentHost === allowedHost || currentHost.endsWith(`.${allowedHost}`)) ?? false
+  return (
+    bridge
+      ?.getAllowedWebViewHosts()
+      .some((allowedHost) => currentHost === allowedHost || currentHost.endsWith(`.${allowedHost}`)) ?? false
+  )
 }
 
 export function matchesWildcardPattern(host: string, pattern: string): boolean {

@@ -1,7 +1,13 @@
 import { mockEventBridge } from '../../test'
 import { DefaultPrivacyLevel } from '../domain/configuration'
 import type { BrowserWindowWithEventBridge } from './eventBridge'
-import { getEventBridge, canUseEventBridge, matchesWildcardPattern, BridgeCapability, bridgeSupports } from './eventBridge'
+import {
+  getEventBridge,
+  canUseEventBridge,
+  matchesWildcardPattern,
+  BridgeCapability,
+  bridgeSupports,
+} from './eventBridge'
 
 describe('canUseEventBridge', () => {
   const allowedWebViewHosts = ['foo.bar']
