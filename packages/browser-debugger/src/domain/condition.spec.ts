@@ -1,15 +1,7 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
-import type { Mock } from 'vitest'
-import { display } from '@datadog/browser-core'
-import { evaluateProbeCondition, compileCondition } from './condition'
+import { describe, expect, it } from 'vitest'
+import { evaluateProbeCondition, compileCondition, isConditionEvaluationError } from './condition'
 
 describe('condition', () => {
-  let displayErrorSpy: Mock
-
-  beforeEach(() => {
-    displayErrorSpy = vi.spyOn(display, 'error') as Mock
-  })
-
   describe('evaluateProbeCondition', () => {
     it('should return true when probe has no condition', () => {
       const probe: any = {}
@@ -86,31 +78,53 @@ describe('condition', () => {
       expect(evaluateProbeCondition(probe, { x: undefined })).toBe(false)
     })
 
-    it('should handle condition evaluation errors gracefully', () => {
+    it('should return an evaluation error when condition evaluation fails', () => {
       const probe: any = {
         id: 'test-probe',
+        when: {
+          dsl: 'nonExistent.property',
+        },
         condition: compileCondition('nonExistent.property'),
       }
 
-      // Should return true (fire probe) when condition evaluation fails
-      const result = evaluateProbeCondition(probe, {})
-      expect(result).toBe(true)
-
-      // Should log error
-      expect(displayErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Failed to evaluate condition for probe test-probe'),
-        expect.any(Error)
-      )
+      expect(() => evaluateProbeCondition(probe, {})).toThrow()
+      let thrownError: unknown
+      try {
+        evaluateProbeCondition(probe, {})
+      } catch (e) {
+        thrownError = e
+      }
+      expect(isConditionEvaluationError(thrownError)).toBe(true)
+      if (isConditionEvaluationError(thrownError)) {
+        expect(thrownError.evaluationError).toEqual({
+          expr: 'nonExistent.property',
+          message: expect.stringMatching(/^ReferenceError: /),
+        })
+      }
     })
 
     it('should handle syntax errors in condition', () => {
       const probe: any = {
+        when: {
+          dsl: 'invalid syntax !!!',
+        },
         condition: compileCondition('invalid syntax !!!'),
       }
 
-      const result = evaluateProbeCondition(probe, {})
-      expect(result).toBe(true)
-      expect(displayErrorSpy).toHaveBeenCalled()
+      expect(() => evaluateProbeCondition(probe, {})).toThrow()
+      let thrownError: unknown
+      try {
+        evaluateProbeCondition(probe, {})
+      } catch (e) {
+        thrownError = e
+      }
+      expect(isConditionEvaluationError(thrownError)).toBe(true)
+      if (isConditionEvaluationError(thrownError)) {
+        expect(thrownError.evaluationError).toEqual({
+          expr: 'invalid syntax !!!',
+          message: expect.stringMatching(/^SyntaxError: /),
+        })
+      }
     })
 
     it('should handle conditions with special variables', () => {

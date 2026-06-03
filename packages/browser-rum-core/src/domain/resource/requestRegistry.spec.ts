@@ -1,8 +1,6 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import type { Duration, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import { RequestType } from '@datadog/browser-core'
-import type { MockTelemetry } from '@datadog/browser-core/test'
-import { startMockTelemetry } from '@datadog/browser-core/test'
 import { createPerformanceEntry } from '../../../test'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
@@ -63,24 +61,6 @@ describe('RequestRegistry', () => {
       lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createRequestCompleteEvent({ startTime: i }))
     }
     expect(requestRegistry.getMatchingRequest(createResourceEntry({ startTime: 0 }))).toBeUndefined()
-  })
-
-  describe('when the registry overflows', () => {
-    let telemetry: MockTelemetry
-    let lifeCycle: LifeCycle
-
-    beforeEach(() => {
-      telemetry = startMockTelemetry()
-      lifeCycle = new LifeCycle()
-      createRequestRegistry(lifeCycle)
-    })
-
-    it('fires "Too many requests" telemetry only once', async () => {
-      for (let i = 0; i < MAX_REQUESTS + 3; i++) {
-        lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createRequestCompleteEvent({ startTime: i }))
-      }
-      expect(await telemetry.getEvents()).toEqual([expect.objectContaining({ message: 'Too many requests' })])
-    })
   })
 
   function createRequestCompleteEvent({

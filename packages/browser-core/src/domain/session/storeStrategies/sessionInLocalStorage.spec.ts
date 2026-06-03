@@ -57,9 +57,7 @@ describe('LocalStorage SessionStoreStrategy', () => {
       await strategy.setSessionState((state) => ({ ...state, id: 'test-id' }), 'updateState')
 
       expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(
-        expect.objectContaining({ sessionState: expect.objectContaining({ id: 'test-id' }) })
-      )
+      expect(spy).toHaveBeenCalledWith(expect.objectContaining({ id: 'test-id' }))
     })
   })
 
@@ -78,9 +76,7 @@ describe('LocalStorage SessionStoreStrategy', () => {
       window.dispatchEvent(event)
 
       expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(
-        expect.objectContaining({ sessionState: expect.objectContaining({ id: 'from-other-tab' }) })
-      )
+      expect(spy).toHaveBeenCalledWith(expect.objectContaining({ id: 'from-other-tab' }))
     })
 
     it('should ignore storage events for other keys', () => {

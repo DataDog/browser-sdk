@@ -39,9 +39,7 @@ describe('Memory SessionStoreStrategy', () => {
       await strategy.setSessionState((state) => ({ ...state, id: 'test-id' }), 'updateState')
 
       expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(
-        expect.objectContaining({ sessionState: expect.objectContaining({ id: 'test-id' }) })
-      )
+      expect(spy).toHaveBeenCalledWith(expect.objectContaining({ id: 'test-id' }))
     })
   })
 
@@ -54,9 +52,7 @@ describe('Memory SessionStoreStrategy', () => {
       await strategy2.setSessionState((state) => ({ ...state, id: 'from-strategy2' }), 'updateState')
 
       expect(spy).toHaveBeenCalledTimes(1)
-      expect(spy).toHaveBeenCalledWith(
-        expect.objectContaining({ sessionState: expect.objectContaining({ id: 'from-strategy2' }) })
-      )
+      expect(spy).toHaveBeenCalledWith(expect.objectContaining({ id: 'from-strategy2' }))
     })
   })
 

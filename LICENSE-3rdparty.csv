@@ -40,6 +40,8 @@ dev,@vitejs/plugin-react,MIT,Copyright (c) 2019-present Evan You & Vite Contribu
 dev,@vitejs/plugin-vue,MIT,Copyright (c) 2019-present, Yuxi (Evan) You and Vite contributors
 dev,@vitest/browser,MIT,Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
 dev,@vitest/browser-playwright,MIT,Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
+dev,@vitest/browser-webdriverio,MIT,Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
+dev,webdriverio,MIT,Copyright (c) OpenJS Foundation and other contributors
 dev,@vitest/coverage-istanbul,MIT,Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
 dev,@module-federation/enhanced,MIT, Copyright (c) 2020 ScriptedAlchemy LLC (Zack Jackson) Zhou Shaw (zhouxiao)
 dev,@vue/test-utils,MIT,Copyright (c) 2021-present vuejs

@@ -148,7 +148,7 @@ describe('session in cookie strategy', () => {
       mockCookie.simulateExternalChange('id=test&c=0')
       await collectAsyncCalls(spy, 1)
 
-      expect(spy.mock.lastCall![0].sessionState.c).toBeUndefined()
+      expect(spy.mock.lastCall![0].c).toBeUndefined()
     })
 
     it('should notify observable when cookie is cleared', async () => {
@@ -160,7 +160,7 @@ describe('session in cookie strategy', () => {
       mockCookie.simulateExternalChange('')
       await collectAsyncCalls(spy, 1)
 
-      expect(spy.mock.lastCall![0]).toEqual({ cookieValues: [], sessionState: {} })
+      expect(spy.mock.lastCall![0]).toEqual({})
     })
 
     it('should notify sessionObservable after write', async () => {
@@ -172,7 +172,7 @@ describe('session in cookie strategy', () => {
       await strategy.setSessionState(() => ({ id: '123' }), 'updateState')
       await collectAsyncCalls(spy, 1)
 
-      expect(spy.mock.lastCall![0].sessionState).toEqual({ id: '123' })
+      expect(spy.mock.lastCall![0]).toEqual({ id: '123' })
     })
 
     it('should queue setSessionState calls and process them sequentially', async () => {
