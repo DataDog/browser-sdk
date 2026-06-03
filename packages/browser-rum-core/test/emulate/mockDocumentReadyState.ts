@@ -1,5 +1,5 @@
 import { DOM_EVENT } from '@datadog/browser-core'
-import { createNewEvent } from '../../../core/test'
+import { createNewEvent } from '../../../browser-core/test'
 
 export function mockDocumentReadyState() {
   let readyState: DocumentReadyState = 'loading'

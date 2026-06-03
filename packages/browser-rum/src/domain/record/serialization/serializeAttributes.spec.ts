@@ -18,7 +18,7 @@ import type { VirtualAttributes } from './serialization.types'
 import type { SerializationMetric, SerializationStats } from './serializationStats'
 import { createSerializationStats } from './serializationStats'
 
-const CSS_FILE_URL = '/base/packages/rum/test/record/toto.css'
+const CSS_FILE_URL = '/base/packages/browser-rum/test/record/toto.css'
 
 const PRIVACY_LEVELS = Object.keys({
   [NodePrivacyLevel.ALLOW]: true,

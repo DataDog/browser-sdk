@@ -1,6 +1,6 @@
 import type { Hooks } from '../../../test'
 import { createHooks, registerCleanupTask } from '../../../test'
-import { mockRumConfiguration } from '../../../../rum-core/test'
+import { mockRumConfiguration } from '../../../../browser-rum-core/test'
 import type { ContextManager } from '../context/contextManager'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
 import { HookNames } from '../../tools/abstractHooks'

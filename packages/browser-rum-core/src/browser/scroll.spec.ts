@@ -1,4 +1,4 @@
-import { waitAfterNextPaint } from '../../../core/test'
+import { waitAfterNextPaint } from '../../../browser-core/test'
 import { getScrollX, getScrollY } from './scroll'
 
 describe('scroll', () => {

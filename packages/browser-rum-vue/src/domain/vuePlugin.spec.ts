@@ -1,5 +1,5 @@
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
-import { registerCleanupTask } from '../../../core/test'
+import { registerCleanupTask } from '../../../browser-core/test'
 import { onRumInit, vuePlugin, resetVuePlugin } from './vuePlugin'
 
 const PUBLIC_API = {} as RumPublicApi

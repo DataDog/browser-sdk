@@ -1,7 +1,7 @@
 import type { Payload } from '@datadog/browser-core'
 import type { BrowserSegment } from '../../src/types'
 import type { BrowserSegmentMetadataAndSegmentSizes } from '../../src/domain/segmentCollection'
-import { readFormData } from '../../../core/test'
+import { readFormData } from '../../../browser-core/test'
 
 export function readReplayPayload(payload: Payload) {
   return readFormData<{

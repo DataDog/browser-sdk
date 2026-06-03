@@ -22,7 +22,7 @@ yarn build:apps
 yarn test:unit
 
 # Run specific test file
-yarn test:unit --spec packages/core/src/path/to/feature.spec.ts
+yarn test:unit --spec packages/browser-core/src/path/to/feature.spec.ts
 
 # Run tests on a specific seed
 yarn test:unit --seed 123

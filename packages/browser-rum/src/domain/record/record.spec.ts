@@ -13,7 +13,7 @@ import type {
   ScrollData,
 } from '../../types'
 import { ChangeType, RecordType, IncrementalSource, SnapshotFormat } from '../../types'
-import { appendElement } from '../../../../rum-core/test'
+import { appendElement } from '../../../../browser-rum-core/test'
 import { getReplayStats } from '../replayStats'
 import type { RecordAPI } from './record'
 import { record } from './record'

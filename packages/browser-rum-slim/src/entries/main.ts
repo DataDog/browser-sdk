@@ -1,4 +1,4 @@
-// Keep the following in sync with packages/rum/src/entries/main.ts
+// Keep the following in sync with packages/browser-rum/src/entries/main.ts
 import { defineGlobal, globalObject } from '@datadog/browser-core'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
 import { makeRumPublicApi } from '@datadog/browser-rum-core'

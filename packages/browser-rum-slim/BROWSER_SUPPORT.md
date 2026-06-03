@@ -1,1 +1,1 @@
-../rum/BROWSER_SUPPORT.md
+../browser-rum/BROWSER_SUPPORT.md

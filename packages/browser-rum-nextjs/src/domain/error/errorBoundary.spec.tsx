@@ -1,13 +1,13 @@
 import React from 'react'
 
 import { disableJasmineUncaughtExceptionTracking, ignoreConsoleLogs } from '@datadog/browser-core/test'
-import { appendComponent } from '../../../../rum-react/test/appendComponent'
-import { initReactOldBrowsersSupport } from '../../../../rum-react/test/reactOldBrowsersSupport'
+import { appendComponent } from '../../../../browser-rum-react/test/appendComponent'
+import { initReactOldBrowsersSupport } from '../../../../browser-rum-react/test/reactOldBrowsersSupport'
 import { initializeNextjsPlugin } from '../../../test/initializeNextjsPlugin'
 import { ErrorBoundary } from './errorBoundary'
 
 // Component behavior (renders children, fallback, resetError) is tested via createErrorBoundary
-// in packages/rum-react/src/domain/error/errorBoundary.spec.tsx
+// in packages/browser-rum-react/src/domain/error/errorBoundary.spec.tsx
 
 describe('NextjsErrorBoundary', () => {
   it('reports the error through addNextjsError', () => {

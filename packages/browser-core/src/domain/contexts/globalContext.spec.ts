@@ -1,5 +1,5 @@
 import type { Hooks } from '../../../test'
-import type { LogsConfiguration } from '../../../../logs/src/domain/configuration'
+import type { LogsConfiguration } from '../../../../browser-logs/src/domain/configuration'
 import type { ContextManager } from '../context/contextManager'
 import { HookNames } from '../../tools/abstractHooks'
 import type { RelativeTime } from '../../tools/utils/timeUtils'

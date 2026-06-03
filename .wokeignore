@@ -4,4 +4,4 @@ yarn.lock
 generated-docs
 
 # code import
-packages/worker/src/domain/deflate.js
+packages/browser-worker/src/domain/deflate.js

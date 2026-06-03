@@ -2,8 +2,8 @@ import React, { useEffect, useLayoutEffect, act } from 'react'
 import { appendComponent } from '../../../test/appendComponent'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import { initReactOldBrowsersSupport } from '../../../test/reactOldBrowsersSupport'
-import type { Clock } from '../../../../core/test'
-import { mockClock } from '../../../../core/test'
+import type { Clock } from '../../../../browser-core/test'
+import { mockClock } from '../../../../browser-core/test'
 import { UNSTABLE_ReactComponentTracker as ReactComponentTracker } from './reactComponentTracker'
 
 const RENDER_DURATION = 100

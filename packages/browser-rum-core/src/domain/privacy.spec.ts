@@ -1,5 +1,5 @@
 import { appendElement } from '../../test'
-import { registerCleanupTask } from '../../../core/test'
+import { registerCleanupTask } from '../../../browser-core/test'
 import {
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,

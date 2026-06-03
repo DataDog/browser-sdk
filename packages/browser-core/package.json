@@ -20,7 +20,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/DataDog/browser-sdk.git",
-    "directory": "packages/core"
+    "directory": "packages/browser-core"
   },
   "devDependencies": {
     "@types/pako": "2.0.4",

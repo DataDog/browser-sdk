@@ -1,5 +1,5 @@
 import type { DeflateWorker, DeflateWorkerAction } from '@datadog/browser-core'
-import { createNewEvent, MockEventTarget } from '../../core/test'
+import { createNewEvent, MockEventTarget } from '../../browser-core/test'
 
 export class MockWorker extends MockEventTarget implements DeflateWorker {
   public onmessage = null

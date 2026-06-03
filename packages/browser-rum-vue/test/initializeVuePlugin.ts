@@ -2,7 +2,7 @@ import type { RumInitConfiguration, RumPublicApi, StartRumResult } from '@datado
 import { noop } from '@datadog/browser-core'
 import type { VuePluginConfiguration } from '../src/domain/vuePlugin'
 import { vuePlugin, resetVuePlugin } from '../src/domain/vuePlugin'
-import { registerCleanupTask } from '../../core/test'
+import { registerCleanupTask } from '../../browser-core/test'
 
 export function initializeVuePlugin({
   configuration = {},

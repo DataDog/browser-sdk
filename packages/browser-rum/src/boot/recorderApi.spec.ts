@@ -20,7 +20,7 @@ import {
   LOW_HASH_UUID,
   HIGH_HASH_UUID,
 } from '@datadog/browser-core/test'
-import { mockDocumentReadyState, mockRumConfiguration, mockViewHistory } from '../../../rum-core/test'
+import { mockDocumentReadyState, mockRumConfiguration, mockViewHistory } from '../../../browser-rum-core/test'
 import type { CreateDeflateWorker } from '../domain/deflate'
 import { resetDeflateWorkerState, createDeflateWorker } from '../domain/deflate'
 import { MockWorker } from '../../test'

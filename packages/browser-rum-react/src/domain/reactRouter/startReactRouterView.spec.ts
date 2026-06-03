@@ -9,7 +9,7 @@ import {
   type RouteObject as RouteObjectV7,
   type RouteMatch as RouteMatchV7,
 } from 'react-router-dom'
-import { registerCleanupTask } from '../../../../core/test'
+import { registerCleanupTask } from '../../../../browser-core/test'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import { startReactRouterView, computeViewName } from './startReactRouterView'
 import type { AnyRouteMatch } from './types'

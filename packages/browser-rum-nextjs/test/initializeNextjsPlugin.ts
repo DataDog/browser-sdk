@@ -1,7 +1,7 @@
 import type { RumInitConfiguration, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
 import { noop } from '@datadog/browser-core'
 import { nextjsPlugin, resetNextjsPlugin } from '../src/domain/nextjsPlugin'
-import { registerCleanupTask } from '../../core/test'
+import { registerCleanupTask } from '../../browser-core/test'
 
 export function initializeNextjsPlugin({
   initConfiguration = {},

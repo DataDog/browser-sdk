@@ -1,6 +1,6 @@
 import type { ViewHistory } from '@datadog/browser-rum-core'
 import { createSessionManagerMock } from '@datadog/browser-core/test'
-import { mockRumConfiguration } from '../../../rum-core/test'
+import { mockRumConfiguration } from '../../../browser-rum-core/test'
 import { getSessionReplayLink } from './getSessionReplayLink'
 import { addRecord } from './replayStats'
 

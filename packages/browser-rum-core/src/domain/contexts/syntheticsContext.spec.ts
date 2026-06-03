@@ -1,6 +1,6 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { HookNames } from '@datadog/browser-core'
-import { mockSyntheticsWorkerValues } from '../../../../core/test'
+import { mockSyntheticsWorkerValues } from '../../../../browser-core/test'
 import type { AssembleHookParams, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { startSyntheticsContext } from './syntheticsContext'

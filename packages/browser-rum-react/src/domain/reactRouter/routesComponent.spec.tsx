@@ -1,7 +1,7 @@
 import React, { act } from 'react'
 import * as rrdom6 from 'react-router-dom-6'
 import * as rrdom7 from 'react-router-dom'
-import { ignoreConsoleLogs } from '../../../../core/test'
+import { ignoreConsoleLogs } from '../../../../browser-core/test'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import { initReactOldBrowsersSupport } from '../../../test/reactOldBrowsersSupport'
 import { appendComponent } from '../../../test/appendComponent'

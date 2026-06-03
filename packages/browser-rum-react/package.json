@@ -63,7 +63,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/DataDog/browser-sdk.git",
-    "directory": "packages/rum-react"
+    "directory": "packages/browser-rum-react"
   },
   "volta": {
     "extends": "../../package.json"

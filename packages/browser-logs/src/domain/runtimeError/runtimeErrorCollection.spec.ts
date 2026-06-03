@@ -1,6 +1,6 @@
 import type { BufferedData, RawError } from '@datadog/browser-core'
 import { ErrorSource, ErrorHandling, Observable, BufferedDataType, clocksNow } from '@datadog/browser-core'
-import { registerCleanupTask } from '../../../../core/test'
+import { registerCleanupTask } from '../../../../browser-core/test'
 import type { RawRuntimeLogsEvent } from '../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../configuration'
 import { StatusType } from '../logger/isAuthorized'

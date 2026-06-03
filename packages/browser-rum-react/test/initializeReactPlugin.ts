@@ -2,7 +2,7 @@ import type { RumInitConfiguration, RumPublicApi, StartRumResult } from '@datado
 import { noop } from '@datadog/browser-core'
 import type { ReactPluginConfiguration } from '../src/domain/reactPlugin'
 import { reactPlugin, resetReactPlugin } from '../src/domain/reactPlugin'
-import { registerCleanupTask } from '../../core/test'
+import { registerCleanupTask } from '../../browser-core/test'
 
 export function initializeReactPlugin({
   configuration = {},

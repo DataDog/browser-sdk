@@ -1,7 +1,7 @@
 import type { Router } from 'vue-router'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
-import { registerCleanupTask } from '../../../core/test'
+import { registerCleanupTask } from '../../../browser-core/test'
 import { nuxtRumPlugin, resetNuxtPlugin } from './nuxtPlugin'
 
 const PUBLIC_API = { startView: jasmine.createSpy() } as unknown as RumPublicApi

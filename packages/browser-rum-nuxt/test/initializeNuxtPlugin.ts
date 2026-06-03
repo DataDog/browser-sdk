@@ -3,7 +3,7 @@ import { createRouter, createMemoryHistory } from 'vue-router'
 import type { RumInitConfiguration, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
 import { noop } from '@datadog/browser-core'
 import { nuxtRumPlugin, resetNuxtPlugin } from '../src/domain/nuxtPlugin'
-import { registerCleanupTask } from '../../core/test'
+import { registerCleanupTask } from '../../browser-core/test'
 
 export function initializeNuxtPlugin({
   initConfiguration = {},

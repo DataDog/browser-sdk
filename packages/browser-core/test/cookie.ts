@@ -11,7 +11,7 @@ export function expireCookie() {
 export function getSessionState(sessionStoreKey: string) {
   const sessionState = toSessionState(getCookie(sessionStoreKey))
   // remove the cookie options from the session state so the test works the same way as the code
-  // see: packages/core/src/domain/session/storeStrategies/sessionInCookie.ts:148
+  // see: packages/browser-core/src/domain/session/storeStrategies/sessionInCookie.ts:148
   delete sessionState.c
   return sessionState
 }

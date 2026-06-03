@@ -33,7 +33,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/DataDog/browser-sdk.git",
-    "directory": "packages/rum-slim"
+    "directory": "packages/browser-rum-slim"
   },
   "volta": {
     "extends": "../../package.json"

@@ -6,7 +6,7 @@ import {
   type ExtractTelemetryConfiguration,
   type MapInitConfigurationKey,
   SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION,
-} from '../../../core/test'
+} from '../../../browser-core/test'
 import type { LogsInitConfiguration } from './configuration'
 import {
   serializeLogsConfiguration,

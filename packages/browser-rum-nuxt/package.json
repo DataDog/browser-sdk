@@ -49,7 +49,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/DataDog/browser-sdk.git",
-    "directory": "packages/rum-nuxt"
+    "directory": "packages/browser-rum-nuxt"
   },
   "volta": {
     "extends": "../../package.json"

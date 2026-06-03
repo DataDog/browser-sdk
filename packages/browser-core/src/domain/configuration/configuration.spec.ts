@@ -1,4 +1,4 @@
-import type { RumEvent } from '../../../../rum-core/src'
+import type { RumEvent } from '../../../../browser-rum-core/src'
 import { EXHAUSTIVE_INIT_CONFIGURATION, SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION } from '../../../test'
 import type { ExtractTelemetryConfiguration, MapInitConfigurationKey } from '../../../test'
 import { DOCS_ORIGIN, MORE_DETAILS, display } from '../../tools/display'

@@ -32,7 +32,7 @@ import {
   createSessionManagerMock,
   replaceMockableWithSpy,
 } from '@datadog/browser-core/test'
-import { mockRumConfiguration, mockViewHistory } from '../../../../rum-core/test'
+import { mockRumConfiguration, mockViewHistory } from '../../../../browser-rum-core/test'
 import { mockProfiler } from '../../../test'
 import type { BrowserProfilerTrace } from '../../types'
 import { checkProfilingQuota } from './quotaCheck'

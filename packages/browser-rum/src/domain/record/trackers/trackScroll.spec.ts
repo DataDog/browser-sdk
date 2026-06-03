@@ -1,5 +1,5 @@
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
-import { appendElement } from '../../../../../rum-core/test'
+import { appendElement } from '../../../../../browser-rum-core/test'
 import { IncrementalSource, RecordType } from '../../../types'
 import type { EmitRecordCallback } from '../record.types'
 import { takeFullSnapshotForTesting } from '../test/serialization.specHelper'

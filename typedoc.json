@@ -1,13 +1,18 @@
 {
   "entryPoints": [
     "packages/*",
-    "packages/rum-react/react-router-v6",
-    "packages/rum-react/react-router-v7",
-    "packages/rum-vue/vue-router-v4"
+    "packages/browser-rum-react/react-router-v6",
+    "packages/browser-rum-react/react-router-v7",
+    "packages/browser-rum-vue/vue-router-v4"
   ],
   "entryPointStrategy": "packages",
   "includeVersion": true,
-  "exclude": ["packages/core", "packages/rum-core", "packages/worker", "packages/debugger"],
+  "exclude": [
+    "packages/browser-core",
+    "packages/browser-rum-core",
+    "packages/browser-worker",
+    "packages/browser-debugger"
+  ],
   "validation": {
     "notExported": true,
     "invalidLink": true,
