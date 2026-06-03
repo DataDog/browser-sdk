@@ -27,8 +27,6 @@ describe('PrComment', () => {
       payload.message,
       `
 RUM: 10KB
-
-🔗 [RealWorld](https://datadoghq.dev/browser-sdk-test-playground/realworld-scenario/?prNumber=123)
 `
     )
   })
