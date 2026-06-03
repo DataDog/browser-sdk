@@ -55,7 +55,7 @@ runMain(async () => {
 
   printLog('Create PR...')
 
-  const pullRequestUrl = createPullRequest(MAIN_BRANCH)
+  const pullRequestUrl = createPullRequest(MAIN_BRANCH, ['dependencies'])
   printLog(`Chrome version bump PR created (from ${CURRENT_PACKAGE_VERSION} to ${packageVersion}).`)
 
   // used to share the pull request url to the notification jobs
