@@ -1,7 +1,7 @@
 import { releaseVersion } from './browserSdkVersion.ts'
 import { printLog } from './executionUtils.ts'
 import type { PackageJsonInfo } from './filesUtils.ts'
-import { findPackageJsonFiles } from './filesUtils.ts'
+import { findPackageJsonFiles, isBrowserSdkPackageName } from './filesUtils.ts'
 
 export function checkPackageJsonFiles(): void {
   const packageJsonFiles = findPackageJsonFiles()
@@ -55,7 +55,4 @@ function checkPackageDependencyVersions(packageJsonInfo: PackageJsonInfo): void 
       }
     }
   }
-}
-function isBrowserSdkPackageName(name: string): boolean {
-  return name?.startsWith('@datadog/')
 }

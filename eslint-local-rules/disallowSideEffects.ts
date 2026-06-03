@@ -37,10 +37,10 @@ const packagesRoot = path.resolve(import.meta.dirname, '..', 'packages')
 
 // Those modules are known to have side effects when evaluated
 const pathsWithSideEffect = new Set([
-  `${packagesRoot}/logs/src/entries/main.ts`,
-  `${packagesRoot}/rum/src/entries/main.ts`,
-  `${packagesRoot}/rum-slim/src/entries/main.ts`,
-  `${packagesRoot}/debugger/src/entries/main.ts`,
+  `${packagesRoot}/browser-logs/src/entries/main.ts`,
+  `${packagesRoot}/browser-rum/src/entries/main.ts`,
+  `${packagesRoot}/browser-rum-slim/src/entries/main.ts`,
+  `${packagesRoot}/browser-debugger/src/entries/main.ts`,
 ])
 
 // Those packages are known to have no side effects when evaluated

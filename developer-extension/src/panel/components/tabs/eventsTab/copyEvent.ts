@@ -1,5 +1,5 @@
 import type { EndpointBuilder } from '@datadog/browser-core'
-import { createEndpointBuilder } from '../../../../../../packages/core/src/domain/configuration'
+import { createEndpointBuilder } from '../../../../../../packages/browser-core/src/domain/configuration'
 import { copy } from '../../../copy'
 import type { SdkInfos } from '../../../hooks/useSdkInfos'
 import type { SdkEvent } from '../../../sdkEvent'
