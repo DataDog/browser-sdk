@@ -83,7 +83,8 @@ function createStaticSandboxApp(): express.Application {
           webpackBase({
             mode: 'development',
             entry: `${packagePath}/src/entries/main.ts`,
-            filename: packageName === 'worker' ? 'worker.js' : `datadog-${packageName}.js`,
+            filename:
+              packageName === 'browser-worker' ? 'worker.js' : `${packageName.replace(/^browser-/, 'datadog-')}.js`,
           })
         ),
         { stats: 'minimal' }
