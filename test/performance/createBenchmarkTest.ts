@@ -167,7 +167,7 @@ async function injectDebugger(page: Page, scenarioConfiguration: ScenarioConfigu
   // init via `onReady`). That matches real customer integration and folds the script-fetch
   // cost into the measured metrics.
   await page.addInitScript({
-    path: resolve(import.meta.dirname, '../../packages/debugger/bundle/datadog-debugger.js'),
+    path: resolve(import.meta.dirname, '../../packages/browser-debugger/bundle/datadog-debugger.js'),
   })
 
   const configuration: DebuggerInitConfiguration = {

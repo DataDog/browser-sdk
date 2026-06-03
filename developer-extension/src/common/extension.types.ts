@@ -1,7 +1,7 @@
-import type { TelemetryEvent } from '../../../packages/core/src/domain/telemetry'
-import type { LogsEvent } from '../../../packages/logs/src/logsEvent.types'
-import type { RumEvent } from '../../../packages/rum-core/src/rumEvent.types'
-import type { BrowserRecord, BrowserSegmentMetadata } from '../../../packages/rum/src/types'
+import type { TelemetryEvent } from '../../../packages/browser-core/src/domain/telemetry'
+import type { LogsEvent } from '../../../packages/browser-logs/src/logsEvent.types'
+import type { RumEvent } from '../../../packages/browser-rum-core/src/rumEvent.types'
+import type { BrowserRecord, BrowserSegmentMetadata } from '../../../packages/browser-rum/src/types'
 
 export interface BackgroundToDevtoolsMessage {
   type: 'sdk-message'

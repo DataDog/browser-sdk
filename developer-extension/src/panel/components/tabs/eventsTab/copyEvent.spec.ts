@@ -1,6 +1,6 @@
-import type { TelemetryEvent } from '../../../../../../packages/core/src/domain/telemetry'
-import type { LogsEvent } from '../../../../../../packages/logs/src/logsEvent.types'
-import type { RumEvent } from '../../../../../../packages/rum-core/src/rumEvent.types'
+import type { TelemetryEvent } from '../../../../../../packages/browser-core/src/domain/telemetry'
+import type { LogsEvent } from '../../../../../../packages/browser-logs/src/logsEvent.types'
+import type { RumEvent } from '../../../../../../packages/browser-rum-core/src/rumEvent.types'
 import { getIntakeUrlForEvent, escapeShellParameter } from './copyEvent'
 
 const RUM_ERROR_EVENT = { type: 'error' } as RumEvent

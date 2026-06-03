@@ -13,8 +13,8 @@
     }
   },
   "resolutions": {
-    "@datadog/browser-core": "file:../../../packages/core/package.tgz",
-    "@datadog/browser-debugger": "file:../../../packages/debugger/package.tgz"
+    "@datadog/browser-core": "file:../../../packages/browser-core/package.tgz",
+    "@datadog/browser-debugger": "file:../../../packages/browser-debugger/package.tgz"
   },
   "devDependencies": {
     "ts-loader": "9.5.7",

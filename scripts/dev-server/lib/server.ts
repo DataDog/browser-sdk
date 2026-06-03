@@ -15,7 +15,7 @@ const sandboxPath = './sandbox'
 const START_PORT = 8080
 const MAX_PORT = 8180
 
-const PACKAGES_WITH_BUNDLE = ['rum', 'rum-slim', 'logs', 'worker', 'debugger']
+const PACKAGES_WITH_BUNDLE = ['browser-rum', 'browser-rum-slim', 'browser-logs', 'browser-worker', 'browser-debugger']
 
 export function runServer({ writeIntakeFile = true }: { writeIntakeFile?: boolean } = {}): void {
   if (writeIntakeFile) {

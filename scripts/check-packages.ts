@@ -4,6 +4,7 @@ import { globSync } from 'node:fs'
 import { minimatch } from 'minimatch'
 import { printLog, runMain } from './lib/executionUtils.ts'
 import { command } from './lib/command.ts'
+import { isBrowserSdkPackageName } from './lib/filesUtils.ts'
 import { checkPackageJsonFiles } from './lib/checkBrowserSdkPackageJsonFiles.ts'
 
 runMain(() => {
@@ -123,11 +124,11 @@ function checkTestAppPackage(packagePath: string) {
   printLog(`Checking ${packagePath}`)
 
   for (const field of ['dependencies', 'devDependencies'] as const) {
-    const browserSdkDeps = Object.keys(packageJson[field] ?? {}).filter((name) => name.startsWith('@datadog/browser-'))
+    const browserSdkDeps = Object.keys(packageJson[field] ?? {}).filter(isBrowserSdkPackageName)
 
     if (browserSdkDeps.length > 0) {
       throw new Error(
-        `${packagePath} has @datadog/browser-* packages in "${field}": ${browserSdkDeps.join(', ')}. ` +
+        `${packagePath} has Browser SDK packages in "${field}": ${browserSdkDeps.join(', ')}. ` +
           'Use "peerDependencies" instead (see other test apps for the pattern).'
       )
     }
