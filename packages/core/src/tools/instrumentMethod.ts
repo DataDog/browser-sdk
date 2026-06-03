@@ -116,11 +116,13 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return result
   }
+
   targetPrototype[method] = instrumentation as TARGET[METHOD]
 
   return {
     stop: () => {
       stopped = true
+      // If the instrumentation has been removed by a third party, keep the last one
       if (targetPrototype[method] === instrumentation) {
         targetPrototype[method] = original
       }
@@ -134,7 +136,7 @@ export function instrumentSetter<TARGET extends { [key: string]: any }, PROPERTY
   after: (target: TARGET, value: TARGET[PROPERTY]) => void
 ) {
   const originalDescriptor = Object.getOwnPropertyDescriptor(targetPrototype, property)
-  if (!originalDescriptor || !originalDescriptor.set || !originalDescriptor.configurable) {
+  if (!originalDescriptor?.set || !originalDescriptor.configurable) {
     return { stop: noop }
   }
 
