@@ -200,8 +200,7 @@ bundle-size:
   script:
     - yarn
     - yarn build:bundle
-    - node ./scripts/deploy/deploy.ts staging pull-request pull-request
-    - node ./scripts/performance/index.ts
+    - node ./scripts/bundle-size/index.ts
 
 build-bundle:
   extends:
