@@ -121,7 +121,7 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
     ])
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    const result = new.target ? Reflect.construct(original, parameters) : original.apply(this, parameters)
+    const result = new.target ? Reflect.construct(original, parameters, new.target) : original.apply(this, parameters)
 
     if (postCallCallback) {
       callMonitored(postCallCallback, null, [result])

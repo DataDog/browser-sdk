@@ -215,6 +215,20 @@ describe('instrumentMethod', () => {
 
       const instance = new container.MyClass(1)
 
+      // The instance is recognized both as the original class and as the instrumented value.
+      expect(instance instanceof MyClass).toBeTrue()
+      expect(instance instanceof container.MyClass).toBeTrue()
+    })
+
+    it('preserves instanceof when instrumented constructor is used as a base class', () => {
+      const container = { MyClass }
+      instrumentMethod(container, 'MyClass', noop)
+
+      // Third party wraps our instrumentation
+      const OurInstrumentation = container.MyClass
+      container.MyClass = class extends OurInstrumentation {}
+
+      const instance = new container.MyClass(99)
       expect(instance instanceof container.MyClass).toBeTrue()
     })
 
