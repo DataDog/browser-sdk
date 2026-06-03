@@ -1,5 +1,5 @@
 import type { RumPublicApi } from '@datadog/browser-rum-core'
-import { makeSalesforceRumPublicApi } from './salesforce'
+import { makeSalesforceRumPublicApi } from './salesforceViewTracker'
 
 describe('salesforce', () => {
   let rumPublicApi: RumPublicApi

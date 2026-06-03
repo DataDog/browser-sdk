@@ -3,7 +3,7 @@ import type { RumPublicApi } from '@datadog/browser-rum-core'
 import { makeRumPublicApi } from '@datadog/browser-rum-core'
 import { makeRecorderApiStub } from '../boot/stubRecorderApi'
 import { makeProfilerApiStub } from '../boot/stubProfilerApi'
-import { makeSalesforceRumPublicApi } from '../domain/salesforce/salesforce'
+import { makeSalesforceRumPublicApi } from '../domain/salesforce/salesforceViewTracker'
 
 export type {
   User,
@@ -67,7 +67,7 @@ export type {
   SalesforceRumInitConfiguration,
   SalesforceRumPublicApi,
   SalesforceViewOptions,
-} from '../domain/salesforce/salesforce'
+} from '../domain/salesforce/salesforceViewTracker'
 
 const rumPublicApi = makeRumPublicApi(makeRecorderApiStub(), makeProfilerApiStub(), {
   sdkName: 'rum-slim',
