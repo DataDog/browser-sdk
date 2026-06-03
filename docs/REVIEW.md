@@ -41,6 +41,14 @@ Backward compatibility is a requirement — watch for unintentional breaking cha
 changes, renamed/removed event fields, changed default values, or a different shape passed to
 customer callbacks.
 
+### Browser API availability
+
+Browser APIs (e.g. `navigator.locks`, `navigator.sendBeacon`, `cookieStore`) may not exist in all
+supported browsers or execution contexts (iframes, Web Workers). Any call to a browser API not
+already established in the codebase must be guarded with an availability check.
+
+See "Global object access" in `docs/CONVENTIONS.md` for the recommended pattern.
+
 ### Documentation
 
 Public APIs require a TSDoc comment, including:
