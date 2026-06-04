@@ -39,7 +39,7 @@ Located in `test/apps/`:
 ```
 test/apps/
 ├── vanilla/              # Plain JavaScript app for basic E2E tests
-├── react-router-app/     # React Router v7 integration tests (latest, Renovate-tracked)
+├── react-router-app/     # React Router v7 integration tests
 └── base-extension/       # Browser extension testing
 ```
 
@@ -49,7 +49,7 @@ Running `yarn build:apps` generates additional test apps from the source apps:
 
 ```
 test/apps/ (generated)
-├── react-router-v6-app/   # Generated from react-router-app with RR v6 (oldest supported)
+├── react-router-v6-app/   # Generated from react-router-v7-app with RR v6
 ├── cdn-extension/         # Generated from base-extension (CDN variant)
 └── appendChild-extension/ # Generated from base-extension (appendChild variant)
 ```

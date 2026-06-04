@@ -169,7 +169,7 @@ async function buildReactRouterV6App() {
       content
         .replace('@datadog/browser-rum-react/react-router-v7', '@datadog/browser-rum-react/react-router-v6')
         .replace("from 'react-router'", "from 'react-router-dom'")
-        // Remove the v7-only onError prop, reverting to the plain self-closing form.
+        // Remove the v7-only onError prop
         .replace(
           `<RouterProvider
       router={router}
