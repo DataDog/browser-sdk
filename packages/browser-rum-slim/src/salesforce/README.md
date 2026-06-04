@@ -6,9 +6,9 @@ This entrypoint is intended for Salesforce Lightning and LWC applications.
 
 ### 1. Add the static resource
 
-Copy `packages/browser-rum-salesforce/bundle/datadog-rum-salesforce.js` into your Salesforce project as `staticresources/datadog_rum_salesforce.js`.
+Copy `packages/browser-rum-slim/bundle/datadog-rum-slim.js` into your Salesforce project as `staticresources/datadog_rum_slim.js`.
 
-Create the accompanying metadata file `staticresources/datadog_rum_salesforce.resource-meta.xml`:
+Create the accompanying metadata file `staticresources/datadog_rum_slim.resource-meta.xml`:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
@@ -47,7 +47,7 @@ Create a new LWC component under `lwc/datadogInit/`, for example `lwc/datadogIni
 ```js
 import { LightningElement, api, wire } from 'lwc'
 import { NavigationMixin, CurrentPageReference } from 'lightning/navigation'
-import datadogRumSalesforce from '@salesforce/resourceUrl/datadog_rum_salesforce'
+import datadogRumSlim from '@salesforce/resourceUrl/datadog_rum_slim'
 import { loadScript } from 'lightning/platformResourceLoader'
 
 let datadogInitialization
@@ -98,7 +98,7 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
   }
 
   loadDatadogRum() {
-    return loadScript(this, datadogRumSalesforce).then(() => {
+    return loadScript(this, datadogRumSlim).then(() => {
       const initConfig = {
         applicationId: this.applicationId,
         clientToken: this.clientToken,
@@ -120,6 +120,19 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
     })
   }
 }
+```
+
+Also create the required component metadata file `lwc/datadogInit/datadogInit.js-meta.xml` to expose it to the utility bar:
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>59.0</apiVersion>
+    <isExposed>true</isExposed>
+    <targets>
+        <target>lightning__UtilityBar</target>
+    </targets>
+</LightningComponentBundle>
 ```
 
 ### 4. Add the component to a Lightning App
