@@ -8,12 +8,13 @@ import {
   DOM_EVENT,
   getCookie,
   globalObject,
+  isCookieStoreSupported,
 } from '@datadog/browser-core'
 
 export type CookieObservable = ReturnType<typeof createCookieObservable>
 
 export function createCookieObservable(configuration: Configuration, cookieName: string) {
-  const detectCookieChangeStrategy = globalObject.cookieStore
+  const detectCookieChangeStrategy = isCookieStoreSupported()
     ? listenToCookieStoreChange(configuration)
     : watchCookieFallback
 
