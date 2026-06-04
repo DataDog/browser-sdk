@@ -104,4 +104,3 @@ dev,webpack-dev-middleware,MIT,Copyright JS Foundation and other contributors
 dev,ws,MIT,Copyright (c) 2011 Einar Otto Stangvik Copyright (c) 2013 Arnout Kazemier Copyright (c) 2016 Luigi Pinca and contributors
 dev,wxt,MIT,Copyright (c) 2023 Aaron
 dev,zone.js,MIT,Copyright (c) 2010-2024 Google LLC
-dev,@vitest/browser-webdriverio,MIT,Copyright (c) 2021-Present VoidZero Inc. and Vitest contributors
