@@ -4,10 +4,10 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev --port 0 --host",
-    "start": "nuxt preview --port 0 --host"
+    "start": "nuxt preview --host"
   },
   "dependencies": {
-    "nuxt": "^3.0.0"
+    "nuxt": "^4.0.0"
   },
   "peerDependencies": {
     "@datadog/browser-rum": "*",

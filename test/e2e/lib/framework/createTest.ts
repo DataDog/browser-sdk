@@ -14,7 +14,13 @@ import {
 } from '../helpers/configuration'
 import { validateRumFormat } from '../helpers/validation'
 import type { BrowserConfiguration } from '../../../browsers.conf'
-import { NEXTJS_APP_ROUTER_PORT, NUXT_APP_PORT, VUE_ROUTER_APP_PORT } from '../helpers/playwright'
+import {
+  NEXTJS_APP_ROUTER_PORT,
+  NUXT_APP_PORT,
+  NUXT_VUE_ROUTER_V4_APP_PORT,
+  VUE_ROUTER_APP_PORT,
+  VUE_ROUTER_V4_APP_PORT,
+} from '../helpers/playwright'
 import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
@@ -166,9 +172,9 @@ class TestBuilder {
     return this
   }
 
-  withVueApp() {
+  withVueApp(routerVersion: 'v4' | 'v5' = 'v5') {
     this.baseUrlHooks.push((baseUrl, servers, { rum, context }) => {
-      baseUrl.port = VUE_ROUTER_APP_PORT
+      baseUrl.port = routerVersion === 'v4' ? VUE_ROUTER_V4_APP_PORT : VUE_ROUTER_APP_PORT
       if (rum) {
         baseUrl.searchParams.set('rum-config', formatConfiguration(rum, servers))
       }
@@ -198,9 +204,9 @@ class TestBuilder {
     return this
   }
 
-  withNuxtApp() {
+  withNuxtApp(routerVersion: 'v4' | 'v5' = 'v5') {
     this.baseUrlHooks.push((baseUrl, servers, { rum, context }) => {
-      baseUrl.port = NUXT_APP_PORT
+      baseUrl.port = routerVersion === 'v4' ? NUXT_VUE_ROUTER_V4_APP_PORT : NUXT_APP_PORT
       if (rum) {
         baseUrl.searchParams.set('rum-config', formatConfiguration(rum, servers))
       }
