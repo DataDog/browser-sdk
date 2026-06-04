@@ -83,6 +83,9 @@ export { createIdentityEncoder } from './tools/encoder'
 export * from './tools/utils/urlPolyfill'
 export * from './tools/utils/timeUtils'
 export * from './tools/utils/arrayUtils'
+
+// Backward-compat re-exports for APIs that moved to @datadog/js-core (remove in next major).
+export * from './jsCoreCompat'
 export * from './tools/serialisation/sanitize'
 export * from './tools/globalObject'
 export { AbstractLifeCycle } from './tools/abstractLifeCycle'

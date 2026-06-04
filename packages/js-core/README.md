@@ -12,7 +12,8 @@ yarn add @datadog/js-core
 
 ## API
 
-The package uses sub-path exports. Import only what you need.
+The package exposes named sub-paths (e.g. `@datadog/js-core/time`). Import only what you need.
+There is no root entry point — always import from a sub-path.
 
 ### `@datadog/js-core/time`
 
