@@ -28,8 +28,12 @@ export default defineConfig({
       '@datadog/browser-rum/internal-synthetics': path.resolve('./packages/browser-rum/src/entries/internalSynthetics'),
       '@datadog/browser-rum': path.resolve('./packages/browser-rum/src/entries/main'),
       '@datadog/browser-rum-slim': path.resolve('./packages/browser-rum-slim/src/entries/main'),
-      '@datadog/browser-rum-react/react-router-v6': path.resolve('./packages/browser-rum-react/src/entries/reactRouterV6'),
-      '@datadog/browser-rum-react/react-router-v7': path.resolve('./packages/browser-rum-react/src/entries/reactRouterV7'),
+      '@datadog/browser-rum-react/react-router-v6': path.resolve(
+        './packages/browser-rum-react/src/entries/reactRouterV6'
+      ),
+      '@datadog/browser-rum-react/react-router-v7': path.resolve(
+        './packages/browser-rum-react/src/entries/reactRouterV7'
+      ),
       '@datadog/browser-rum-react/internal': path.resolve('./packages/browser-rum-react/src/entries/internal'),
       '@datadog/browser-rum-react': path.resolve('./packages/browser-rum-react/src/entries/main'),
       '@datadog/browser-worker': path.resolve('./packages/browser-worker/src/entries/main'),
