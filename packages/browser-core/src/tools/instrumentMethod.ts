@@ -120,14 +120,24 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
       },
     ])
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    const result = new.target ? Reflect.construct(original, parameters, new.target) : original.apply(this, parameters)
+    let result: MethodReturnType<TARGET[METHOD]>
+
+    if (new.target) {
+      // When `new` is used on this instrumented property, `new.target` is this wrapper. Passing it
+      // through to Reflect.construct would expose the wrong new.target inside the original body.
+      // If a subclass extends the wrapper, or a third party wraps us and their class is `new`ed,
+      // `new.target` is that outer constructor and must be preserved.
+      const constructNewTarget = new.target === instrumentation ? original : new.target
+      result = Reflect.construct(original, parameters, constructNewTarget)
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- TARGET[METHOD] is any under the index signature; value is verified as a function above
+      result = original.apply(this, parameters)
+    }
 
     if (postCallCallback) {
       callMonitored(postCallCallback, null, [result])
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return result
   }
 

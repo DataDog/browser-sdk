@@ -220,6 +220,47 @@ describe('instrumentMethod', () => {
       expect(instance instanceof container.MyClass).toBeTrue()
     })
 
+    it('preserves new.target as the original constructor for direct new calls', () => {
+      let observedNewTarget: unknown
+      class TracksNewTarget {
+        constructor() {
+          observedNewTarget = new.target
+        }
+      }
+
+      const container = { TracksNewTarget }
+      instrumentMethod(container, 'TracksNewTarget', noop)
+
+      new container.TracksNewTarget()
+
+      // Without instrumentation, `new.target` in the constructor body is `TracksNewTarget`.
+      // Forwarding the wrapper as the Reflect.construct newTarget makes `new.target` the
+      // instrumentation function instead, which breaks subclass checks and similar patterns.
+      expect(observedNewTarget).toBe(TracksNewTarget)
+    })
+
+    it('preserves new.target as the subclass when extending the instrumented constructor', () => {
+      let observedNewTargetInOriginal: unknown
+      class Base {
+        constructor() {
+          observedNewTargetInOriginal = new.target
+        }
+      }
+
+      const container = { Base }
+      instrumentMethod(container, 'Base', noop)
+
+      class Sub extends container.Base {
+        constructor() {
+          super()
+        }
+      }
+
+      new Sub()
+
+      expect(observedNewTargetInOriginal).toBe(Sub)
+    })
+
     it('preserves static members on the instrumented constructor', () => {
       class MyClassWithStaticMembers {
         static staticNumber = 123
