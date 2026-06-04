@@ -1,8 +1,8 @@
 import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { Payload } from '@datadog/browser-core'
-import { RequestType, startBufferingData } from '@datadog/browser-core'
+import { createEndpointBuilder, RequestType, startBufferingData } from '@datadog/browser-core'
 import type { MockFetch, MockFetchManager } from '@datadog/browser-core/test'
-import { registerCleanupTask, SPEC_ENDPOINTS, mockFetch, mockXhr, withXhr } from '@datadog/browser-core/test'
+import { registerCleanupTask, mockFetch, mockXhr, withXhr } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../test'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
@@ -141,7 +141,7 @@ describe('collect fetch', () => {
 
   it('should ignore intake requests', () =>
     new Promise<void>((resolve) => {
-      fetch(SPEC_ENDPOINTS.rumEndpointBuilder.build('fetch', DEFAULT_PAYLOAD)).resolveWith({
+      fetch(createEndpointBuilder(mockRumConfiguration(), 'rum').build('fetch', DEFAULT_PAYLOAD)).resolveWith({
         status: 200,
         responseText: 'foo',
       })
@@ -288,7 +288,7 @@ describe('collect xhr', () => {
     new Promise<void>((resolve) => {
       withXhr({
         setup(xhr) {
-          xhr.open('GET', SPEC_ENDPOINTS.rumEndpointBuilder.build('fetch', DEFAULT_PAYLOAD))
+          xhr.open('GET', createEndpointBuilder(mockRumConfiguration(), 'rum').build('fetch', DEFAULT_PAYLOAD))
           xhr.send()
           xhr.complete(200)
         },

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { BufferedData, FetchResolveContext } from '@datadog/browser-core'
 import { BufferedDataType, ErrorSource, Observable, clocksNow } from '@datadog/browser-core'
-import { SPEC_ENDPOINTS, registerCleanupTask } from '@datadog/browser-core/test'
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RawNetworkLogsEvent } from '../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../configuration'
 import type { RawLogsEventCollectedData } from '../lifeCycle'
@@ -12,7 +12,6 @@ import { startNetworkErrorCollection } from './networkErrorCollection'
 
 const CONFIGURATION = {
   requestErrorResponseLengthLimit: 64,
-  ...SPEC_ENDPOINTS,
 } as LogsConfiguration
 
 const FAKE_URL = 'http://fake.com/'

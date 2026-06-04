@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { BrowserChangeRecord, BrowserFullSnapshotChangeRecord, BrowserRecord } from '../../types'
 import { ChangeType, RecordType, SnapshotFormat } from '../../types'
-import { appendElement } from '../../../../rum-core/test'
+import { appendElement } from '../../../../browser-rum-core/test'
 import { takeFullSnapshot, takeNodeSnapshot } from './internalApi'
 import { createChangeDecoder } from './serialization'
 

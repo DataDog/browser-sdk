@@ -1,6 +1,6 @@
 import { vi, beforeEach, describe, expect, it } from 'vitest'
 import React, { act } from 'react'
-import { disableJasmineUncaughtExceptionTracking, ignoreConsoleLogs } from '../../../../core/test'
+import { disableJasmineUncaughtExceptionTracking, ignoreConsoleLogs } from '@datadog/browser-core/test'
 import { appendComponent } from '../../../test/appendComponent'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import { initReactOldBrowsersSupport } from '../../../test/reactOldBrowsersSupport'

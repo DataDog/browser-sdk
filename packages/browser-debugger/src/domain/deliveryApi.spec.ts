@@ -74,6 +74,7 @@ describe('buildDeliveryApiUrl', () => {
 describe('deliveryApi', () => {
   let fetchSpy: Mock
   let clock: Clock
+  let errorSpy: ReturnType<typeof vi.spyOn>
 
   function makeConfig(overrides: Partial<DeliveryApiConfiguration> = {}): DeliveryApiConfiguration {
     return {
@@ -102,6 +103,7 @@ describe('deliveryApi', () => {
     clearProbes()
     clearDeliveryApiState()
     fetchSpy = vi.spyOn(window, 'fetch') as Mock
+    errorSpy = vi.spyOn(display, 'error')
     respondWith({ nextCursor: '', updates: [], deletions: [] })
 
     registerCleanupTask(() => {

@@ -1,21 +1,21 @@
-// Vitest global setup — replaces packages/core/test/forEach.spec.ts
+// Vitest global setup — replaces packages/browser-core/test/forEach.spec.ts
 //
 // This file runs before each test file in the browser context.
 // It sets up the same global state that Karma's forEach.spec.ts provided.
 
 import { beforeEach, afterEach } from 'vitest'
-import { resetValueHistoryGlobals } from '../../packages/core/src/tools/valueHistory'
-import { resetFetchObservable } from '../../packages/core/src/browser/fetchObservable'
-import { resetConsoleObservable } from '../../packages/core/src/domain/console/consoleObservable'
-import { resetXhrObservable } from '../../packages/core/src/browser/xhrObservable'
-import { resetGetCurrentSite } from '../../packages/core/src/browser/cookie'
-import { resetReplayStats } from '../../packages/rum/src/domain/replayStats'
-import { resetInteractionCountPolyfill } from '../../packages/rum-core/src/domain/view/viewMetrics/interactionCountPolyfill'
-import { resetMonitor } from '../../packages/core/src/tools/monitor'
-import { resetTelemetry } from '../../packages/core/src/domain/telemetry'
-import { resetExperimentalFeatures } from '../../packages/core/src/tools/experimentalFeatures'
-import type { BuildEnvWindow } from '../../packages/core/test'
-import { startLeakDetection } from '../../packages/core/test'
+import { resetValueHistoryGlobals } from '../../packages/browser-core/src/tools/valueHistory'
+import { resetFetchObservable } from '../../packages/browser-core/src/browser/fetchObservable'
+import { resetConsoleObservable } from '../../packages/browser-core/src/domain/console/consoleObservable'
+import { resetXhrObservable } from '../../packages/browser-core/src/browser/xhrObservable'
+import { resetGetCurrentSite } from '../../packages/browser-core/src/browser/cookie'
+import { resetReplayStats } from '../../packages/browser-rum/src/domain/replayStats'
+import { resetInteractionCountPolyfill } from '../../packages/browser-rum-core/src/domain/view/viewMetrics/interactionCountPolyfill'
+import { resetMonitor } from '../../packages/browser-core/src/tools/monitor'
+import { resetTelemetry } from '../../packages/browser-core/src/domain/telemetry'
+import { resetExperimentalFeatures } from '../../packages/browser-core/src/tools/experimentalFeatures'
+import type { BuildEnvWindow } from '../../packages/browser-core/test'
+import { startLeakDetection } from '../../packages/browser-core/test'
 
 beforeEach(() => {
   ;(window as unknown as BuildEnvWindow).__BUILD_ENV__SDK_VERSION__ = 'test'

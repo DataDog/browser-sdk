@@ -302,10 +302,10 @@ unit-bs:
   extends:
     - .base-configuration
     - .bs-allowed-branches
-    - .resource-allocation-4-cpus
   interruptible: true
-  resource_group: browserstack
-  timeout: 35 minutes
+  parallel:
+    matrix:
+      - BS_BROWSER: [edge, firefox, safari-desktop, chrome-desktop, chrome-mobile]
   artifacts:
     when: always
     reports:

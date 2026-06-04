@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
-import type { Subscription } from '../../../core/src/tools/observable'
+import type { Subscription } from '@datadog/browser-core/src/tools/observable'
 import { mockRumConfiguration } from '../../test'
 import type { ViewportDimension } from './viewportObservable'
 import { getViewportDimension, initViewportObservable } from './viewportObservable'
