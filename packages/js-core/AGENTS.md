@@ -43,11 +43,23 @@ Every export must work in both Node.js and browser environments. Do not add:
 All APIs live under a named sub-path (e.g. `@datadog/js-core/time`). There is no root entry
 point. Each sub-path corresponds to a single source file under `src/`.
 
+Each sub-path is exposed two ways so it resolves in both modern and legacy tooling:
+
+- The `"exports"` field — used by modern resolvers (webpack 5, Vite, esbuild, Rollup, Node ≥12.7,
+  TS `node16`/`nodenext`/`bundler`). Gives encapsulation and explicit `import`/`require`/`types`
+  conditions.
+- A physical `<name>/package.json` fallback (relative `main`/`module`/`types`) — used by resolvers
+  that ignore `"exports"` (webpack 4, old Node, older Jest/ts-node). `"exports"` takes precedence
+  wherever it's understood, so this only kicks in for legacy tooling. This package is published
+  transitively to all Browser SDK consumers, so the fallback protects customers on older bundlers.
+
 When adding a new sub-path:
 
 1. Create `src/<name>.ts`
 2. Add `"./<name>"` to the `exports` field in `package.json`
-3. Add `"@datadog/js-core/<name>"` to the `paths` map in the root `tsconfig.base.json`
+3. Add a physical fallback `<name>/package.json` with relative `main`/`module`/`types` (see
+   `time/package.json`), and add `"<name>"` to the `files` array so it ships in the package
+4. Add `"@datadog/js-core/<name>"` to the `paths` map in the root `tsconfig.base.json`
 
 ## Current sub-paths
 

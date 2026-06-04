@@ -14,6 +14,7 @@
     "cjs",
     "esm",
     "src",
+    "time",
     "!src/**/*.spec.ts",
     "!src/**/*.specHelper.ts"
   ],
