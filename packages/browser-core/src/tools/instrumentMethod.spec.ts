@@ -356,6 +356,29 @@ describe('instrumentConstructor', () => {
       expect(instance instanceof MyClass).toBeTrue()
       expect(instance.value).toBe(5)
     })
+
+    it('preserves new.target when constructing a subclass of the instrumented constructor after stop()', () => {
+      const container = { MyClass }
+      const { stop } = instrumentConstructor(container, 'MyClass', noop)
+
+      // A third party extends our instrumented constructor while the SDK is active.
+      class Sub extends container.MyClass {
+        extra() {
+          return 'sub'
+        }
+      }
+
+      stop()
+
+      // Constructing the subclass now delegates to the stopped branch. It must still preserve the
+      // subclass as `new.target`, otherwise the instance is allocated with the original prototype
+      // and loses the subclass prototype methods.
+      const instance = new Sub(5)
+
+      expect(instance instanceof Sub).toBeTrue()
+      expect(instance.extra()).toBe('sub')
+      expect(instance.value).toBe(5)
+    })
   })
 })
 

@@ -176,9 +176,19 @@ export function instrumentConstructor<TARGET extends { [key: string]: any }, NAM
 
   return replaceWithInstrumentation(target, name, original, (isStopped) => {
     const instrumentation = function (this: TARGET): ConstructorInstanceOf<TARGET[NAME]> {
+      // When `new` is used on this instrumented property, `new.target` is this wrapper. Passing
+      // it through to Reflect.construct would expose the wrong new.target inside the original
+      // body. If a subclass extends the wrapper, or a third party wraps us and their class is
+      // `new`ed, `new.target` is that outer constructor and must be preserved.
+      const constructNewTarget = new.target === instrumentation ? original : new.target
+
       if (isStopped()) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return Reflect.construct(original, arguments as unknown as ConstructorParametersOf<TARGET[NAME]>)
+        return Reflect.construct(
+          original,
+          arguments as unknown as ConstructorParametersOf<TARGET[NAME]>,
+          constructNewTarget
+        )
       }
 
       const parameters = Array.from(arguments) as ConstructorParametersOf<TARGET[NAME]>
@@ -189,15 +199,9 @@ export function instrumentConstructor<TARGET extends { [key: string]: any }, NAM
           parameters,
           handlingStack: computeHandlingStack ? createHandlingStack('instrumented method') : undefined,
         },
-        () => {
-          // When `new` is used on this instrumented property, `new.target` is this wrapper. Passing
-          // it through to Reflect.construct would expose the wrong new.target inside the original
-          // body. If a subclass extends the wrapper, or a third party wraps us and their class is
-          // `new`ed, `new.target` is that outer constructor and must be preserved.
-          const constructNewTarget = new.target === instrumentation ? original : new.target
+        () =>
           // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-          return Reflect.construct(original, parameters, constructNewTarget)
-        }
+          Reflect.construct(original, parameters, constructNewTarget)
       )
     }
 
