@@ -170,6 +170,13 @@ export function startDeliveryApiPolling(config: DeliveryApiConfiguration): void 
           }
         }
 
+        if (!isSupportedProbe(probe)) {
+          // A probe should not change from supported to unsupported while keeping
+          // the same id, but guard against leaving stale state if it ever happens.
+          knownProbeIds.delete(probe.id)
+          continue
+        }
+
         try {
           addProbe(probe)
           knownProbeIds.add(probe.id)
@@ -224,6 +231,10 @@ export function clearDeliveryApiState(): void {
  */
 function isTransientFailureStatus(status: number): boolean {
   return isServerError(status) || status === 408 || status === 429
+}
+
+function isSupportedProbe(probe: Probe): boolean {
+  return probe.type === 'LOG_PROBE' && probe.where?.typeName !== undefined && probe.where.methodName !== undefined
 }
 
 /**

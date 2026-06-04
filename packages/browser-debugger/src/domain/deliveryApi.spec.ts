@@ -186,6 +186,54 @@ describe('deliveryApi', () => {
       expect(probes![0].id).toBe('probe-1')
     })
 
+    it('should ignore log probes without a method location', async () => {
+      respondWith({
+        nextCursor: 'cursor-1',
+        updates: [
+          makeProbe({
+            id: 'line-probe',
+            where: {
+              sourceFile: 'packages/apps/live-debugger/toolkit/services/use-debugger-services.hook.ts',
+              lines: ['16'],
+            },
+          }),
+        ],
+        deletions: [],
+      })
+
+      startDeliveryApiPolling(makeConfig())
+      await flushPromises()
+
+      expect(getProbes('undefined;undefined')).toBeUndefined()
+    })
+
+    it('should ignore log probes without a where clause', async () => {
+      respondWith({
+        nextCursor: 'cursor-1',
+        updates: [{ id: 'log-probe-without-where', version: 1, type: 'LOG_PROBE' } as Probe],
+        deletions: [],
+      })
+
+      startDeliveryApiPolling(makeConfig())
+      await flushPromises()
+
+      expect(errorSpy).not.toHaveBeenCalled()
+    })
+
+    it('should ignore non-log probes without requiring a method location', async () => {
+      respondWith({
+        nextCursor: 'cursor-1',
+        updates: [{ id: 'metric-probe', version: 1, type: 'METRIC_PROBE' } as Probe],
+        deletions: [],
+      })
+
+      startDeliveryApiPolling(makeConfig())
+      await flushPromises()
+
+      expect(getProbes('test.js;testMethod')).toBeUndefined()
+      expect(errorSpy).not.toHaveBeenCalled()
+    })
+
     it('should remove probes listed in deletions', async () => {
       // First poll: add the probe via the delivery API
       respondWith({
