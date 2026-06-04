@@ -3,17 +3,6 @@ import { callMonitored } from './monitor'
 import { noop } from './utils/functionUtils'
 import { createHandlingStack } from './stackTrace/handlingStack'
 
-/* Resolves parameters from either a call or construct signature, so instrumentMethod can handle
- * both regular methods and constructors (e.g. `new MyClass()`).
- */
-type MethodParameters<T> = T extends new (...args: infer P) => any ? P : T extends (...args: infer P) => any ? P : never
-
-type MethodReturnType<T> = T extends new (...args: any[]) => infer R
-  ? R
-  : T extends (...args: any[]) => infer R
-    ? R
-    : never
-
 /**
  * Object passed to the callback of an instrumented method call. See `instrumentMethod` for more
  * info.
@@ -29,7 +18,7 @@ export interface InstrumentedMethodCall<TARGET extends { [key: string]: any }, M
    *
    * Note: if needed, parameters can be mutated by the instrumentation
    */
-  parameters: MethodParameters<TARGET[METHOD]>
+  parameters: Parameters<TARGET[METHOD]>
 
   /**
    * Registers a callback that will be called after the original method is called, with the method
@@ -44,8 +33,35 @@ export interface InstrumentedMethodCall<TARGET extends { [key: string]: any }, M
 }
 
 type PostCallCallback<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET> = (
-  result: MethodReturnType<TARGET[METHOD]>
+  result: ReturnType<TARGET[METHOD]>
 ) => void
+
+type ConstructorParametersOf<CONSTRUCTOR> = CONSTRUCTOR extends new (...args: infer P) => any ? P : never
+type ConstructorInstanceOf<CONSTRUCTOR> = CONSTRUCTOR extends new (...args: any[]) => infer R ? R : never
+
+/**
+ * Object passed to the callback of an instrumented constructor call. See `instrumentConstructor`
+ * for more info.
+ */
+export interface InstrumentedConstructorCall<CONSTRUCTOR> {
+  /**
+   * The parameters with which the constructor was called.
+   *
+   * Note: if needed, parameters can be mutated by the instrumentation
+   */
+  parameters: ConstructorParametersOf<CONSTRUCTOR>
+
+  /**
+   * Registers a callback that will be called after the original constructor is called, with the
+   * constructed instance passed as argument.
+   */
+  onPostCall: (callback: (result: ConstructorInstanceOf<CONSTRUCTOR>) => void) => void
+
+  /**
+   * The stack trace of the constructor call.
+   */
+  handlingStack?: string
+}
 
 /**
  * Instruments a method on a object, calling the given callback before the original method is
@@ -67,6 +83,8 @@ type PostCallCallback<TARGET extends { [key: string]: any }, METHOD extends keyo
  * override it.
  * * if the event handler is set by a third party after us, we need to keep it in place when
  * removing ours.
+ *
+ * To instrument a constructor @see {@link instrumentConstructor}.
  *
  * @example
  *
@@ -94,78 +112,120 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
     }
   }
 
+  return replaceWithInstrumentation(
+    targetPrototype,
+    method,
+    original,
+    (isStopped) =>
+      function (this: TARGET): ReturnType<TARGET[METHOD]> {
+        if (isStopped()) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+          return original.apply(this, arguments)
+        }
+
+        const parameters = Array.from(arguments) as Parameters<TARGET[METHOD]>
+
+        return notifyInstrumentation<InstrumentedMethodCall<TARGET, METHOD>, ReturnType<TARGET[METHOD]>>(
+          onPreCall,
+          {
+            target: this,
+            parameters,
+            handlingStack: computeHandlingStack ? createHandlingStack('instrumented method') : undefined,
+          },
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call -- TARGET[METHOD] is any under the index signature; value is verified as a function above
+          () => original.apply(this, parameters)
+        )
+      } as TARGET[METHOD]
+  )
+}
+
+/**
+ * Instruments a constructor on an object (typically a global, e.g. `window.WebSocket`), calling the
+ * given callback before the original constructor is invoked. The callback receives an object with
+ * information about the constructor call, and can register an `onPostCall` callback to be notified
+ * with the constructed instance.
+ *
+ * Like `instrumentMethod`, this is a "good citizen" regarding third party instrumentations: stopping
+ * restores the original constructor unless a third party replaced it afterwards.
+ *
+ * The wrapper preserves the original prototype (so `instanceof` keeps working), the original
+ * `new.target` (so constructors that inspect it behave as if not instrumented), and the original
+ * static members (e.g. `WebSocket.OPEN`).
+ *
+ * @example
+ *
+ *  instrumentConstructor(window, 'WebSocket', ({ parameters, onPostCall }) => {
+ *    console.log('Before constructing WebSocket with parameters', parameters)
+ *
+ *    onPostCall((instance) => {
+ *      console.log('Constructed WebSocket instance', instance)
+ *    })
+ *  })
+ */
+export function instrumentConstructor<TARGET extends { [key: string]: any }, NAME extends keyof TARGET>(
+  target: TARGET,
+  name: NAME,
+  onPreCall: (this: null, callInfos: InstrumentedConstructorCall<TARGET[NAME]>) => void,
+  { computeHandlingStack }: { computeHandlingStack?: boolean } = {}
+) {
+  const original = target[name]
+
+  if (typeof original !== 'function') {
+    return { stop: noop }
+  }
+
+  return replaceWithInstrumentation(target, name, original, (isStopped) => {
+    const instrumentation = function (this: TARGET): ConstructorInstanceOf<TARGET[NAME]> {
+      if (isStopped()) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return Reflect.construct(original, arguments as unknown as ConstructorParametersOf<TARGET[NAME]>)
+      }
+
+      const parameters = Array.from(arguments) as ConstructorParametersOf<TARGET[NAME]>
+
+      return notifyInstrumentation<InstrumentedConstructorCall<TARGET[NAME]>, ConstructorInstanceOf<TARGET[NAME]>>(
+        onPreCall,
+        {
+          parameters,
+          handlingStack: computeHandlingStack ? createHandlingStack('instrumented method') : undefined,
+        },
+        () => {
+          // When `new` is used on this instrumented property, `new.target` is this wrapper. Passing
+          // it through to Reflect.construct would expose the wrong new.target inside the original
+          // body. If a subclass extends the wrapper, or a third party wraps us and their class is
+          // `new`ed, `new.target` is that outer constructor and must be preserved.
+          const constructNewTarget = new.target === instrumentation ? original : new.target
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+          return Reflect.construct(original, parameters, constructNewTarget)
+        }
+      )
+    }
+
+    preserveConstructorShape(instrumentation, original)
+
+    return instrumentation as TARGET[NAME]
+  })
+}
+
+/**
+ * Replaces `targetPrototype[method]` with the instrumentation built by `buildInstrumentation`, and
+ * returns a `stop` function restoring the original (unless a third party replaced us afterwards).
+ *
+ * `buildInstrumentation` receives an `isStopped` accessor so the wrapper can transparently delegate
+ * to the original once the instrumentation has been stopped but consumers still hold a reference to
+ * it.
+ */
+function replaceWithInstrumentation<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET>(
+  targetPrototype: TARGET,
+  method: METHOD,
+  original: TARGET[METHOD],
+  buildInstrumentation: (isStopped: () => boolean) => TARGET[METHOD]
+) {
   let stopped = false
 
-  const instrumentation = function (this: TARGET): MethodReturnType<TARGET[METHOD]> {
-    if (stopped) {
-      if (new.target) {
-        return Reflect.construct(original, arguments as unknown as MethodParameters<TARGET[METHOD]>)
-      }
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
-      return original.apply(this, arguments)
-    }
+  const instrumentation = buildInstrumentation(() => stopped)
 
-    const parameters = Array.from(arguments) as MethodParameters<TARGET[METHOD]>
-
-    let postCallCallback: PostCallCallback<TARGET, METHOD> | undefined
-
-    callMonitored(onPreCall, null, [
-      {
-        target: this,
-        parameters,
-        onPostCall: (callback) => {
-          postCallCallback = callback
-        },
-        handlingStack: computeHandlingStack ? createHandlingStack('instrumented method') : undefined,
-      },
-    ])
-
-    let result: MethodReturnType<TARGET[METHOD]>
-
-    if (new.target) {
-      // When `new` is used on this instrumented property, `new.target` is this wrapper. Passing it
-      // through to Reflect.construct would expose the wrong new.target inside the original body.
-      // If a subclass extends the wrapper, or a third party wraps us and their class is `new`ed,
-      // `new.target` is that outer constructor and must be preserved.
-      const constructNewTarget = new.target === instrumentation ? original : new.target
-      result = Reflect.construct(original, parameters, constructNewTarget)
-    } else {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- TARGET[METHOD] is any under the index signature; value is verified as a function above
-      result = original.apply(this, parameters)
-    }
-
-    if (postCallCallback) {
-      callMonitored(postCallCallback, null, [result])
-    }
-
-    return result
-  }
-
-  // Preserve the original prototype so that instanceof checks against the instrumented global work.
-  // e.g. `new MyClass() instanceof MyClass` must remain true.
-  if (typeof original === 'function' && original.prototype) {
-    instrumentation.prototype = original.prototype
-
-    // Preserve static members (class fields, static methods, etc.) on the instrumented function.
-    const excludedKeys = new Set(['prototype', 'length', 'name', 'arguments', 'caller'])
-    for (const key of Object.getOwnPropertyNames(original)) {
-      if (excludedKeys.has(key)) {
-        continue
-      }
-      const descriptor = Object.getOwnPropertyDescriptor(original, key)
-      if (descriptor) {
-        Object.defineProperty(instrumentation, key, descriptor)
-      }
-    }
-    for (const key of Object.getOwnPropertySymbols(original)) {
-      const descriptor = Object.getOwnPropertyDescriptor(original, key)
-      if (descriptor) {
-        Object.defineProperty(instrumentation, key, descriptor)
-      }
-    }
-  }
-
-  targetPrototype[method] = instrumentation as TARGET[METHOD]
+  targetPrototype[method] = instrumentation
 
   return {
     stop: () => {
@@ -175,6 +235,76 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
         targetPrototype[method] = original
       }
     },
+  }
+}
+
+/**
+ * Runs the pre-call callback (injecting the `onPostCall` registration), invokes the original
+ * method/constructor, then runs the registered post-call callback with the result.
+ *
+ * Note: the handling stack must be computed by the caller (at the topmost position of the call
+ * stack), so it is part of `baseCallInfo` rather than computed here.
+ */
+function notifyInstrumentation<CALL_INFO extends InstrumentationCallbacks<RESULT>, RESULT>(
+  onPreCall: (this: null, callInfo: CALL_INFO) => void,
+  baseCallInfo: Omit<CALL_INFO, 'onPostCall'>,
+  invokeOriginal: () => RESULT
+): RESULT {
+  let postCallCallback: ((result: RESULT) => void) | undefined
+
+  callMonitored(onPreCall, null, [
+    {
+      ...baseCallInfo,
+      onPostCall: (callback: (result: RESULT) => void) => {
+        postCallCallback = callback
+      },
+    } as CALL_INFO,
+  ])
+
+  const result = invokeOriginal()
+
+  if (postCallCallback) {
+    callMonitored(postCallCallback, null, [result])
+  }
+
+  return result
+}
+
+interface InstrumentationCallbacks<RESULT> {
+  onPostCall: (callback: (result: RESULT) => void) => void
+  handlingStack?: string
+}
+
+/**
+ * Copies the original constructor prototype and static members onto the instrumentation, so that
+ * `instanceof` checks keep working and statics such as `WebSocket.OPEN` remain available while
+ * instrumented.
+ */
+function preserveConstructorShape(instrumentation: (...args: any[]) => any, original: (...args: any[]) => any) {
+  if (!original.prototype) {
+    return
+  }
+
+  // Preserve the original prototype so that instanceof checks against the instrumented global work.
+  // e.g. `new MyClass() instanceof MyClass` must remain true.
+  instrumentation.prototype = original.prototype
+
+  // Preserve static members (class fields, static methods, etc.) on the instrumented function.
+  const excludedKeys = new Set(['prototype', 'length', 'name', 'arguments', 'caller'])
+  for (const key of Object.getOwnPropertyNames(original)) {
+    if (excludedKeys.has(key)) {
+      continue
+    }
+    const descriptor = Object.getOwnPropertyDescriptor(original, key)
+    if (descriptor) {
+      Object.defineProperty(instrumentation, key, descriptor)
+    }
+  }
+  for (const key of Object.getOwnPropertySymbols(original)) {
+    const descriptor = Object.getOwnPropertyDescriptor(original, key)
+    if (descriptor) {
+      Object.defineProperty(instrumentation, key, descriptor)
+    }
   }
 }
 
