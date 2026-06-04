@@ -37,9 +37,9 @@ const APPS: AppConfig[] = [
   { name: 'instrumentation-overhead' },
 
   // React Router apps
-  { name: 'react-router-v6-app' },
+  { name: 'react-router-app' },
   { name: 'tanstack-router-app' },
-  { name: 'react-router-v7-app', builderFn: buildReactRouterv7App, deps: ['react-router-v6-app'] },
+  { name: 'react-router-v6-app', builderFn: buildReactRouterV6App, deps: ['react-router-app'] },
 
   // Vue Router apps
   { name: 'vue-router-v4-app', builderFn: buildVueRouterV4App, deps: ['vue-router-app'] },
@@ -157,22 +157,20 @@ async function buildApp(appName: string) {
   await command`yarn build`.withCurrentWorkingDirectory(appPath).runAsync()
 }
 
-async function buildReactRouterv7App() {
-  await buildGeneratedApp('react-router-v6-app', 'react-router-v7-app', async (appPath) => {
+async function buildReactRouterV6App() {
+  await buildGeneratedApp('react-router-app', 'react-router-v6-app', async (appPath) => {
     await modifyFile(path.join(appPath, 'package.json'), (content: string) =>
       content
-        .replace(/"name": "react-router-v6-app"/, '"name": "react-router-v7-app"')
-        .replace(/"react-router-dom": "[^"]*"/, '"react-router": "7.15.1"')
+        .replace(/"name": "react-router-app"/, '"name": "react-router-v6-app"')
+        .replace(/"react-router": "[^"]*"/, '"react-router-dom": "6.30.0"')
     )
 
     await modifyFile(path.join(appPath, 'app.tsx'), (content: string) =>
       content
-        .replace('@datadog/browser-rum-react/react-router-v6', '@datadog/browser-rum-react/react-router-v7')
-        .replace("from 'react-router-dom'", "from 'react-router'")
-        // Add an onError marker on RouterProvider — v7-only prop, exercised by the
-        // regression test for https://github.com/DataDog/browser-sdk/issues/4657.
+        .replace('@datadog/browser-rum-react/react-router-v7', '@datadog/browser-rum-react/react-router-v6')
+        .replace("from 'react-router'", "from 'react-router-dom'")
+        // Remove the v7-only onError prop, reverting to the plain self-closing form.
         .replace(
-          /<RouterProvider router={router} \/>/,
           `<RouterProvider
       router={router}
       onError={(error: unknown) => {
@@ -181,14 +179,15 @@ async function buildReactRouterv7App() {
         el.textContent = (error as Error).message ?? String(error)
         document.body.appendChild(el)
       }}
-    />`
+    />`,
+          '<RouterProvider router={router} />'
         )
     )
 
     await modifyFile(path.join(appPath, 'webpack.config.js'), (content: string) =>
       content
-        .replace('react-router-v6-app.js', 'react-router-v7-app.js')
-        .replace('react-router-v6-app.js', 'react-router-v7-app.js')
+        .replace('react-router-app.js', 'react-router-v6-app.js')
+        .replace('react-router-app.js', 'react-router-v6-app.js')
     )
   })
 }

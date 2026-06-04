@@ -15,7 +15,7 @@ export function getTestAppBundlePath(appName: string, originalUrl: string) {
   const appNameMapping: Record<string, string> = {
     app: 'apps/vanilla',
     'react-router-v6-app': 'apps/react-router-v6-app',
-    'react-router-v7-app': 'apps/react-router-v7-app',
+    'react-router-app': 'apps/react-router-app',
     'angular-app': 'apps/angular-app',
     'tanstack-router-app': 'apps/tanstack-router-app',
     microfrontend: 'apps/microfrontend',
