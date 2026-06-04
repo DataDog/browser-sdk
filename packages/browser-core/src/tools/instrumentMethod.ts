@@ -145,10 +145,8 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
   // e.g. `new MyClass() instanceof MyClass` must remain true.
   if (typeof original === 'function' && original.prototype) {
     instrumentation.prototype = original.prototype
-  }
 
-  // Preserve static members (class fields, static methods, etc.) on the instrumented function.
-  if (typeof original === 'function') {
+    // Preserve static members (class fields, static methods, etc.) on the instrumented function.
     const excludedKeys = new Set(['prototype', 'length', 'name', 'arguments', 'caller'])
     for (const key of Object.getOwnPropertyNames(original)) {
       if (excludedKeys.has(key)) {
