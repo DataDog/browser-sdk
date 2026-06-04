@@ -36,7 +36,12 @@ export default defineConfig({
     },
   },
 
-  define: buildEnvDefines,
+  define: {
+    ...buildEnvDefines,
+    // Some CJS modules use `global` for environment detection; map it to globalThis
+    // so they patch the real window instead of an empty object.
+    global: 'globalThis',
+  },
 
   optimizeDeps: {
     include: ['pako'],
@@ -47,6 +52,8 @@ export default defineConfig({
       enabled: true,
       provider: playwright(),
       headless: true,
+      // Empty body prevents DOM serialization tests from breaking on Vitest's default tester HTML
+      testerHtmlPath: './test/unit/vitest.tester.html',
       instances: [{ browser: 'chromium' }],
     },
 

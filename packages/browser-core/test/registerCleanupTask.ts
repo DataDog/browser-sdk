@@ -1,15 +1,7 @@
-import { afterEach } from 'vitest'
+import { onTestFinished } from 'vitest'
 
-type CleanupTask = () => unknown
-
-const cleanupTasks: CleanupTask[] = []
-
-export function registerCleanupTask(task: CleanupTask) {
-  cleanupTasks.unshift(task)
+export function registerCleanupTask(task: () => unknown) {
+  onTestFinished(() => {
+    task()
+  })
 }
-
-afterEach(async () => {
-  for (const task of cleanupTasks.splice(0)) {
-    await task()
-  }
-})
