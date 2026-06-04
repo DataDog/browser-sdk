@@ -444,7 +444,7 @@ __metadata:
   peerDependencies:
     nuxt: 3 || 4
     vue: ^3.5.0
-    vue-router: ^4.0.0
+    vue-router: ^4.0.0 || ^5.0.0
   peerDependenciesMeta:
     "@datadog/browser-rum":
       optional: true
@@ -519,7 +519,7 @@ __metadata:
     vue-router: "npm:5.0.7"
   peerDependencies:
     vue: ^3.5.0
-    vue-router: ^4.0.0
+    vue-router: ^4.0.0 || ^5.0.0
   peerDependenciesMeta:
     "@datadog/browser-rum":
       optional: true
