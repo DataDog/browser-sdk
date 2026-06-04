@@ -137,6 +137,26 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
     instrumentation.prototype = original.prototype
   }
 
+  // Preserve static members (class fields, static methods, etc.) on the instrumented function.
+  if (typeof original === 'function') {
+    const excludedKeys = new Set(['prototype', 'length', 'name', 'arguments', 'caller'])
+    for (const key of Object.getOwnPropertyNames(original)) {
+      if (excludedKeys.has(key)) {
+        continue
+      }
+      const descriptor = Object.getOwnPropertyDescriptor(original, key)
+      if (descriptor) {
+        Object.defineProperty(instrumentation, key, descriptor)
+      }
+    }
+    for (const key of Object.getOwnPropertySymbols(original)) {
+      const descriptor = Object.getOwnPropertyDescriptor(original, key)
+      if (descriptor) {
+        Object.defineProperty(instrumentation, key, descriptor)
+      }
+    }
+  }
+
   targetPrototype[method] = instrumentation as TARGET[METHOD]
 
   return {

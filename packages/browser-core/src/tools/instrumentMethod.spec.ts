@@ -220,6 +220,22 @@ describe('instrumentMethod', () => {
       expect(instance instanceof container.MyClass).toBeTrue()
     })
 
+    it('preserves static members on the instrumented constructor', () => {
+      class MyClassWithStaticMembers {
+        static staticNumber = 123
+
+        static staticMethod() {
+          return 'static-result'
+        }
+      }
+
+      const container = { MyClassWithStaticMembers }
+      instrumentMethod(container, 'MyClassWithStaticMembers', noop)
+
+      expect(container.MyClassWithStaticMembers.staticNumber).toBe(123)
+      expect(container.MyClassWithStaticMembers.staticMethod()).toBe('static-result')
+    })
+
     it('preserves instanceof when instrumented constructor is used as a base class', () => {
       const container = { MyClass }
       instrumentMethod(container, 'MyClass', noop)
