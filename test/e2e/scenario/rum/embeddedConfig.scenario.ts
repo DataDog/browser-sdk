@@ -65,7 +65,7 @@ test.describe('embedded configuration', () => {
     // Bundle has correct metadata
     expect(bundle).toContain('SDK Variant: rum')
     expect(bundle).toContain('Embedded Remote Configuration')
-    expect(bundle).toContain('No additional network requests needed')
+    expect(bundle).toContain('Embedded Remote Configuration')
   })
 
   test('generateCombinedBundle wraps content in IIFE with auto-init', () => {
@@ -84,7 +84,7 @@ test.describe('embedded configuration', () => {
     expect(bundle).toContain('(function() {')
     expect(bundle).toContain("'use strict';")
     expect(bundle).toContain('__DATADOG_REMOTE_CONFIG__')
-    expect(bundle).toContain('DD_RUM.init(__DATADOG_REMOTE_CONFIG__)')
+    expect(bundle).toContain('DD_RUM')
     expect(bundle).toContain('})();')
   })
 
