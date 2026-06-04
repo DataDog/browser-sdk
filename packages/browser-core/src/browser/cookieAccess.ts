@@ -1,5 +1,6 @@
+import { dateNow } from '@datadog/js-core/time'
 import { setInterval, clearInterval } from '../tools/timer'
-import { dateNow, ONE_MINUTE, ONE_SECOND } from '../tools/utils/timeUtils'
+import { ONE_MINUTE, ONE_SECOND } from '../tools/utils/timeUtils'
 import { Observable } from '../tools/observable'
 import { mockable } from '../tools/mockable'
 import { display } from '../tools/display'

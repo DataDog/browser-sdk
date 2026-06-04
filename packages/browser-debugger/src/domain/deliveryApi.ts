@@ -1,7 +1,7 @@
 import type { TimeoutId, Site } from '@datadog/browser-core'
+import { dateNow } from '@datadog/js-core/time'
 import {
   addTelemetryDebug,
-  dateNow,
   fetch,
   globalObject,
   isServerError,
