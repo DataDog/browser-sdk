@@ -1,5 +1,6 @@
 import { monitor } from '../tools/monitor'
 import { getZoneJsOriginalValue } from '../tools/getZoneJsOriginalValue'
+import { noop } from '../tools/utils/functionUtils'
 import type { CookieStore, CookieStoreEventMap, VisualViewport, VisualViewportEventMap } from './browser.types'
 
 export type TrustableEvent<E extends Event = Event> = E & { __ddIsTrusted?: boolean }
@@ -150,11 +151,10 @@ export function addEventListeners<Target extends EventTarget, EventName extends 
 
 export function isEventSupported<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(
   eventTarget: Target,
-  eventName: EventName,
-  listener: (event: EventMapFor<Target>[EventName] & { type: EventName }) => void
+  eventName: EventName
 ) {
   try {
-    addEventListener({}, eventTarget, eventName, listener).stop()
+    addEventListener({}, eventTarget, eventName, noop).stop()
     return true
   } catch {
     return false

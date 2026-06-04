@@ -62,7 +62,7 @@ function createReportObservable(reportTypes: ReportType[]) {
 function createCspViolationReportObservable(configuration: Configuration) {
   return new Observable<RawReportError>((observable) => {
     // Salesforce does not allow to add a securitypolicyviolation event listener. https://developer.salesforce.com/tools/lws-distortion-viewer
-    if (!isEventSupported(document, DOM_EVENT.SECURITY_POLICY_VIOLATION, noop)) {
+    if (!isEventSupported(document, DOM_EVENT.SECURITY_POLICY_VIOLATION)) {
       return
     }
 

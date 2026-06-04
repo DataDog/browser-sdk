@@ -47,7 +47,7 @@ export function instrumentOnError(callback: UnhandledErrorCallback) {
 
 export function instrumentUnhandledRejection(callback: UnhandledErrorCallback) {
   // Salesforce LWS does not support the unhandledrejection event. https://developer.salesforce.com/tools/lws-distortion-viewer
-  if (!isEventSupported(globalObject.window, DOM_EVENT.UNHANDLED_REJECTION, noop)) {
+  if (!isEventSupported(window, DOM_EVENT.UNHANDLED_REJECTION)) {
     return { stop: noop }
   }
 

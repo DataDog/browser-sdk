@@ -4,8 +4,6 @@ import type { RumPublicApi } from '@datadog/browser-rum-core'
 import { makeRumPublicApi } from '@datadog/browser-rum-core'
 import { makeRecorderApiStub } from '../boot/stubRecorderApi'
 import { makeProfilerApiStub } from '../boot/stubProfilerApi'
-export { makeRecorderApiStub } from '../boot/stubRecorderApi'
-export { makeProfilerApiStub } from '../boot/stubProfilerApi'
 
 export type {
   User,

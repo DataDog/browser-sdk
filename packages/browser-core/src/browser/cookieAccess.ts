@@ -166,5 +166,5 @@ export function createDocumentCookieAccess(
 
 // Salesforce LWS does not support the change event of CookieStore objects. https://developer.salesforce.com/tools/lws-distortion-viewer
 export function isCookieStoreSupported(): boolean {
-  return Boolean(globalObject.cookieStore && isEventSupported(globalObject.cookieStore, DOM_EVENT.CHANGE, noop))
+  return Boolean(globalObject.cookieStore && isEventSupported(globalObject.cookieStore, DOM_EVENT.CHANGE))
 }
