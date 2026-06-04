@@ -1,11 +1,8 @@
-// Keep the following in sync with packages/browser-rum/src/entries/main.ts
+// Keep the following in sync with packages/browser-rum-slim/src/entries/main.ts
 import { defineGlobal, globalObject } from '@datadog/browser-core'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
 import { makeRumPublicApi } from '@datadog/browser-rum-core'
-import { makeRecorderApiStub } from '../boot/stubRecorderApi'
-import { makeProfilerApiStub } from '../boot/stubProfilerApi'
-export { makeRecorderApiStub } from '../boot/stubRecorderApi'
-export { makeProfilerApiStub } from '../boot/stubProfilerApi'
+import { makeRecorderApiStub, makeProfilerApiStub } from '@datadog/browser-rum-slim'
 
 export type {
   User,
@@ -77,7 +74,7 @@ export { DefaultPrivacyLevel } from '@datadog/browser-core'
  * @see [RUM Browser Monitoring Setup](https://docs.datadoghq.com/real_user_monitoring/browser/)
  */
 export const datadogRum = makeRumPublicApi(makeRecorderApiStub(), makeProfilerApiStub(), {
-  sdkName: 'rum-slim',
+  sdkName: 'rum-salesforce',
 })
 
 interface BrowserWindow {
