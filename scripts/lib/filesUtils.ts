@@ -65,6 +65,29 @@ interface PackageJson {
   peerDependencies?: Record<string, string>
 }
 
+/**
+ * Packages under `packages/` that are versioned independently from the synced Browser SDK release
+ * version. They are still built and published as part of the same release process, but their
+ * version is managed manually and is not bumped to the release version.
+ */
+export const INDEPENDENTLY_VERSIONED_PACKAGES = new Set<string>(['@datadog/js-core'])
+
+/**
+ * Returns whether the given package is versioned independently from the synced Browser SDK release
+ * version. See {@link INDEPENDENTLY_VERSIONED_PACKAGES}.
+ */
+export function isIndependentlyVersionedPackage(name: string | undefined): boolean {
+  return name !== undefined && INDEPENDENTLY_VERSIONED_PACKAGES.has(name)
+}
+
+/**
+ * Returns whether the given string is an exact semantic version (e.g. `1.2.3`), without range
+ * prefixes (`^`, `~`) or pre-release/build metadata.
+ */
+export function isSemanticVersion(input: string | undefined): boolean {
+  return input !== undefined && /^\d+\.\d+\.\d+$/.test(input)
+}
+
 let browserSdkPackageNames: Set<string> | undefined
 
 /**
