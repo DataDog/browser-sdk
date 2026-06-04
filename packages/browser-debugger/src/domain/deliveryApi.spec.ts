@@ -186,6 +186,40 @@ describe('deliveryApi', () => {
       expect(probes![0].id).toBe('probe-1')
     })
 
+    it('should ignore unsupported probes from the updates array', async () => {
+      respondWith({
+        nextCursor: 'cursor-1',
+        updates: [
+          makeProbe({
+            id: 'line-probe',
+            where: {
+              sourceFile: 'packages/apps/live-debugger/toolkit/services/use-debugger-services.hook.ts',
+              lines: ['16'],
+            },
+          }),
+        ],
+        deletions: [],
+      })
+
+      startDeliveryApiPolling(makeConfig())
+      await flushPromises()
+
+      expect(getProbes('undefined;undefined')).toBeUndefined()
+    })
+
+    it('should ignore non-log probes from the updates array', async () => {
+      respondWith({
+        nextCursor: 'cursor-1',
+        updates: [makeProbe({ id: 'metric-probe', type: 'METRIC_PROBE' })],
+        deletions: [],
+      })
+
+      startDeliveryApiPolling(makeConfig())
+      await flushPromises()
+
+      expect(getProbes('test.js;testMethod')).toBeUndefined()
+    })
+
     it('should remove probes listed in deletions', async () => {
       // First poll: add the probe via the delivery API
       respondWith({
