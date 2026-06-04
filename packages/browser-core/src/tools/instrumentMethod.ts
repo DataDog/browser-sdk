@@ -152,6 +152,7 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
  * `new.target` (so constructors that inspect it behave as if not instrumented), and the original
  * static members (e.g. `WebSocket.OPEN`).
  *
+ * @see {@link preserveConstructorShape} for limitations on static members preservation.
  * @example
  *
  *  instrumentConstructor(window, 'WebSocket', ({ parameters, onPostCall }) => {
@@ -283,6 +284,13 @@ interface InstrumentationCallbacks<RESULT> {
  * Copies the original constructor prototype and static members onto the instrumentation, so that
  * `instanceof` checks keep working and statics such as `WebSocket.OPEN` remain available while
  * instrumented.
+ *
+ * Limitation: only the original's *own* static members are copied. Statics inherited through the
+ * constructor's prototype chain (e.g. `class Child extends Parent` where `Parent` defines statics)
+ * are not preserved, since the instrumentation still inherits from `Function.prototype`. This is
+ * acceptable for the globals we instrument (e.g. `WebSocket`, whose own statics are the only ones
+ * that matter), but would need to delegate the static prototype chain to support subclassed
+ * constructors with meaningful inherited statics.
  */
 function preserveConstructorShape(instrumentation: (...args: any[]) => any, original: (...args: any[]) => any) {
   if (!original.prototype) {
@@ -293,7 +301,7 @@ function preserveConstructorShape(instrumentation: (...args: any[]) => any, orig
   // e.g. `new MyClass() instanceof MyClass` must remain true.
   instrumentation.prototype = original.prototype
 
-  // Preserve static members (class fields, static methods, etc.) on the instrumented function.
+  // Preserve own static members (class fields, static methods, etc.) on the instrumented function.
   const excludedKeys = new Set(['prototype', 'length', 'name', 'arguments', 'caller'])
   for (const key of Object.getOwnPropertyNames(original)) {
     if (excludedKeys.has(key)) {
