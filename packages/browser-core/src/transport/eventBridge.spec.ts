@@ -1,4 +1,5 @@
 import { mockEventBridge } from '../../test'
+import { display } from '../tools/display'
 import { DefaultPrivacyLevel } from '../domain/configuration'
 import type { BrowserWindowWithEventBridge } from './eventBridge'
 import {
@@ -72,6 +73,16 @@ describe('canUseEventBridge with wildcard patterns', () => {
     expect(canUseEventBridge('legacy.com')).toBeTrue()
     expect(canUseEventBridge('app.shopist.io')).toBeTrue()
     expect(canUseEventBridge('evil.com')).toBeFalse()
+  })
+
+  it('should log an error and skip patterns with more than one wildcard', () => {
+    const displayErrorSpy = spyOn(display, 'error')
+    mockEventBridge({ allowedWebViewHosts: ['*.foo.*.bar', 'shopist.io'] })
+    expect(canUseEventBridge('shopist.io')).toBeTrue()
+    expect(canUseEventBridge('anything.foo.anything.bar')).toBeFalse()
+    expect(displayErrorSpy).toHaveBeenCalledWith(
+      'Invalid WebView host pattern "*.foo.*.bar": only one wildcard (*) is supported.'
+    )
   })
 
   it('should not detect when bridge is absent', () => {

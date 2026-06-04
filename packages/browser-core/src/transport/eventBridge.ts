@@ -1,3 +1,4 @@
+import { display } from '../tools/display'
 import { globalObject } from '../tools/globalObject'
 import type { DefaultPrivacyLevel } from '../domain/configuration'
 
@@ -53,13 +54,15 @@ export function canUseEventBridge(currentHost = globalObject.location?.hostname)
   const bridge = getEventBridge()
 
   return (
-    bridge
-      ?.getAllowedWebViewHosts()
-      .some((entry) =>
-        entry.includes('*')
-          ? matchesWildcardPattern(currentHost, entry)
-          : currentHost === entry || currentHost.endsWith(`.${entry}`)
-      ) ?? false
+    bridge?.getAllowedWebViewHosts().some((entry) => {
+      if (entry.includes('*') && entry.split('*').length !== 2) {
+        display.error(`Invalid WebView host pattern "${entry}": only one wildcard (*) is supported.`)
+        return false
+      }
+      return entry.includes('*')
+        ? matchesWildcardPattern(currentHost, entry)
+        : currentHost === entry || currentHost.endsWith(`.${entry}`)
+    }) ?? false
   )
 }
 
