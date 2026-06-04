@@ -4,7 +4,7 @@ import { noop } from './utils/functionUtils'
 import { createHandlingStack } from './stackTrace/handlingStack'
 
 /* Resolves parameters from either a call or construct signature, so instrumentMethod can handle
- * both regular methods and constructors (e.g. `new WebSocket()`).
+ * both regular methods and constructors (e.g. `new MyClass()`).
  */
 type MethodParameters<T> = T extends new (...args: infer P) => any ? P : T extends (...args: infer P) => any ? P : never
 
@@ -142,7 +142,7 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
   }
 
   // Preserve the original prototype so that instanceof checks against the instrumented global work.
-  // e.g. `new window.WebSocket(url) instanceof window.WebSocket` must remain true.
+  // e.g. `new MyClass() instanceof MyClass` must remain true.
   if (typeof original === 'function' && original.prototype) {
     instrumentation.prototype = original.prototype
   }
