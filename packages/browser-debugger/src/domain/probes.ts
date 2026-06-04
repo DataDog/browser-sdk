@@ -1,5 +1,5 @@
-import { display } from '@datadog/browser-core'
 import type { ErrorWithCause } from '@datadog/browser-core'
+import { display } from './display'
 import { compile } from './expression'
 import { compileCondition } from './condition'
 import type { CompiledCondition } from './condition'
@@ -295,7 +295,7 @@ function hasProbeLifetimeBudgetRemaining(probe: InitializedProbe): boolean {
     if (!probe.lifetimeBudgetWarningEmitted) {
       probe.lifetimeBudgetWarningEmitted = true
       display.warn(
-        `Debugger: Probe ${probe.id} version ${probe.version} reached max ${
+        `Probe ${probe.id} version ${probe.version} reached max ${
           probe.captureSnapshot ? 'snapshot' : 'non-snapshot'
         } events per lifetime: ${getMaxProbeLifetimeEvents(probe)}`
       )

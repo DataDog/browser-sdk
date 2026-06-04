@@ -17,7 +17,7 @@ export const ConsoleApiName = {
 
 export type ConsoleApiName = (typeof ConsoleApiName)[keyof typeof ConsoleApiName]
 
-interface Display {
+export interface Display {
   debug: typeof console.debug
   log: typeof console.log
   info: typeof console.info
@@ -43,13 +43,17 @@ Object.keys(ConsoleApiName).forEach((name) => {
 
 const PREFIX = 'Datadog Browser SDK:'
 
-export const display: Display = {
-  debug: originalConsoleMethods.debug.bind(globalConsole, PREFIX),
-  log: originalConsoleMethods.log.bind(globalConsole, PREFIX),
-  info: originalConsoleMethods.info.bind(globalConsole, PREFIX),
-  warn: originalConsoleMethods.warn.bind(globalConsole, PREFIX),
-  error: originalConsoleMethods.error.bind(globalConsole, PREFIX),
+export function createDisplay(prefix: string): Display {
+  return {
+    debug: originalConsoleMethods.debug.bind(globalConsole, prefix),
+    log: originalConsoleMethods.log.bind(globalConsole, prefix),
+    info: originalConsoleMethods.info.bind(globalConsole, prefix),
+    warn: originalConsoleMethods.warn.bind(globalConsole, prefix),
+    error: originalConsoleMethods.error.bind(globalConsole, prefix),
+  }
 }
+
+export const display: Display = createDisplay(PREFIX)
 
 export const DOCS_ORIGIN = 'https://docs.datadoghq.com'
 export const DOCS_TROUBLESHOOTING = `${DOCS_ORIGIN}/real_user_monitoring/browser/troubleshooting`

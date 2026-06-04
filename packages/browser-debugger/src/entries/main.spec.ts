@@ -1,7 +1,7 @@
-import { display } from '@datadog/browser-core'
 import { registerCleanupTask, replaceMockableWithSpy } from '@datadog/browser-core/test'
 import { initDebuggerTransport } from '../domain/api'
 import { startDeliveryApiPolling } from '../domain/deliveryApi'
+import { display } from '../domain/display'
 import { startDebuggerBatch } from '../transport/startDebuggerBatch'
 import type { BrowserWindow } from './main'
 import { datadogDebugger } from './main'

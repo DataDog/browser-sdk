@@ -1,6 +1,6 @@
 import type { Batch, Context } from '@datadog/browser-core'
 
-import { timeStampNow, display, buildTag, generateUUID, globalObject } from '@datadog/browser-core'
+import { timeStampNow, buildTag, generateUUID, globalObject } from '@datadog/browser-core'
 import type { BrowserWindow, DebuggerInitConfiguration } from '../entries/main'
 import { capture, captureFields } from './capture'
 import type { CaptureContext } from './capture'
@@ -17,6 +17,7 @@ import type { ActiveEntry } from './activeEntries'
 import { captureStackTrace, parseStackTrace } from './stacktrace'
 import { evaluateProbeMessage } from './template'
 import { evaluateProbeCondition, isConditionEvaluationError } from './condition'
+import { display } from './display'
 
 const globalObj = globalObject as BrowserWindow
 
@@ -290,7 +291,7 @@ export function onThrow(probes: InitializedProbe[], error: Error, self: any, arg
  */
 function queueDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): void {
   if (!debuggerBatch || !debuggerConfig) {
-    display.warn('Debugger transport is not initialized. Make sure DD_DEBUGGER.init() has been called.')
+    display.warn('Transport is not initialized. Make sure DD_DEBUGGER.init() has been called.')
     return
   }
 

@@ -7,16 +7,16 @@ import {
   createIdentityEncoder,
   Observable,
   PageExitReason,
-  display,
   createEndpointBuilder,
 } from '@datadog/browser-core'
+import { display } from '../domain/display'
 
 export function startDebuggerBatch(initConfiguration: InitConfiguration): Batch {
   const debuggerEndpointBuilder = createEndpointBuilder({ ...initConfiguration, source: 'dd_debugger' }, 'debugger')
 
   const batch = createBatch({
     encoder: createIdentityEncoder(),
-    request: createHttpRequest([debuggerEndpointBuilder], (error) => display.error('Debugger transport error:', error)),
+    request: createHttpRequest([debuggerEndpointBuilder], (error) => display.error('transport error:', error)),
     flushController: createFlushController({
       pageMayExitObservable: createSimplePageMayExitObservable(),
       sessionExpireObservable: new Observable(),
