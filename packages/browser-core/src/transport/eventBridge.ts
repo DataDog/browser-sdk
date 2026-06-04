@@ -10,7 +10,6 @@ export interface DatadogEventBridge {
   getPrivacyLevel?(): DefaultPrivacyLevel
   getIsTraceSampled?(): 'true' | 'false' | 'null'
   getAllowedWebViewHosts(): string
-  getAllowedWebViewHostPatterns?(): string
   send(msg: string): void
 }
 
@@ -38,9 +37,6 @@ export function getEventBridge<T, E>() {
     getAllowedWebViewHosts() {
       return JSON.parse(eventBridgeGlobal.getAllowedWebViewHosts()) as string[]
     },
-    getAllowedWebViewHostPatterns() {
-      return JSON.parse(eventBridgeGlobal.getAllowedWebViewHostPatterns?.() || '[]') as string[]
-    },
     send(eventType: T, event: E, viewId?: string) {
       const view = viewId ? { id: viewId } : undefined
       eventBridgeGlobal.send(JSON.stringify({ eventType, event, view }))
@@ -56,16 +52,14 @@ export function bridgeSupports(capability: BridgeCapability): boolean {
 export function canUseEventBridge(currentHost = globalObject.location?.hostname): boolean {
   const bridge = getEventBridge()
 
-  if (typeof getEventBridgeGlobal()?.getAllowedWebViewHostPatterns === 'function') {
-    return (
-      bridge?.getAllowedWebViewHostPatterns().some((pattern) => matchesWildcardPattern(currentHost, pattern)) ?? false
-    )
-  }
-
   return (
     bridge
       ?.getAllowedWebViewHosts()
-      .some((allowedHost) => currentHost === allowedHost || currentHost.endsWith(`.${allowedHost}`)) ?? false
+      .some((entry) =>
+        entry.includes('*')
+          ? matchesWildcardPattern(currentHost, entry)
+          : currentHost === entry || currentHost.endsWith(`.${entry}`)
+      ) ?? false
   )
 }
 

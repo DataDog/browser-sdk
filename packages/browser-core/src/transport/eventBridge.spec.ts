@@ -60,17 +60,18 @@ describe('matchesWildcardPattern', () => {
 })
 
 describe('canUseEventBridge with wildcard patterns', () => {
-  it('should use wildcard matching when getAllowedWebViewHostPatterns is present', () => {
-    mockEventBridge({ allowedWebViewHostPatterns: ['*.shopist.io', 'shopist.io'] })
+  it('should match wildcard entries in getAllowedWebViewHosts', () => {
+    mockEventBridge({ allowedWebViewHosts: ['*.shopist.io', 'shopist.io'] })
     expect(canUseEventBridge('app.shopist.io')).toBeTrue()
     expect(canUseEventBridge('shopist.io')).toBeTrue()
     expect(canUseEventBridge('evil.com')).toBeFalse()
   })
 
-  it('should prefer wildcard path over legacy path when getAllowedWebViewHostPatterns is present', () => {
-    mockEventBridge({ allowedWebViewHosts: ['legacy.com'], allowedWebViewHostPatterns: ['shopist.io'] })
-    expect(canUseEventBridge('shopist.io')).toBeTrue()
-    expect(canUseEventBridge('legacy.com')).toBeFalse()
+  it('should match plain and wildcard entries together', () => {
+    mockEventBridge({ allowedWebViewHosts: ['legacy.com', '*.shopist.io'] })
+    expect(canUseEventBridge('legacy.com')).toBeTrue()
+    expect(canUseEventBridge('app.shopist.io')).toBeTrue()
+    expect(canUseEventBridge('evil.com')).toBeFalse()
   })
 
   it('should not detect when bridge is absent', () => {

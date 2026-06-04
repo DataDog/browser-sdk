@@ -5,13 +5,11 @@ import { registerCleanupTask } from '../registerCleanupTask'
 
 export function mockEventBridge({
   allowedWebViewHosts = [window.location.hostname],
-  allowedWebViewHostPatterns,
   privacyLevel = DefaultPrivacyLevel.MASK,
   capabilities = [BridgeCapability.RECORDS],
   isTraceSampled,
 }: {
   allowedWebViewHosts?: string[]
-  allowedWebViewHostPatterns?: string[]
   privacyLevel?: DefaultPrivacyLevel
   capabilities?: BridgeCapability[]
   isTraceSampled?: boolean
@@ -19,8 +17,6 @@ export function mockEventBridge({
   const eventBridge: DatadogEventBridge = {
     send: (_msg: string) => undefined,
     getAllowedWebViewHosts: () => JSON.stringify(allowedWebViewHosts),
-    getAllowedWebViewHostPatterns:
-      allowedWebViewHostPatterns !== undefined ? () => JSON.stringify(allowedWebViewHostPatterns) : undefined,
     getCapabilities: () => JSON.stringify(capabilities),
     getPrivacyLevel: () => privacyLevel,
     getIsTraceSampled: isTraceSampled !== undefined ? () => String(isTraceSampled) as 'true' | 'false' : undefined,
