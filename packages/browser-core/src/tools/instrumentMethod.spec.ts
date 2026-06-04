@@ -1,7 +1,7 @@
 import { mockClock, mockZoneJs } from '../../test'
 import type { Clock, MockZoneJs } from '../../test'
 import type { InstrumentedMethodCall } from './instrumentMethod'
-import { instrumentMethod, instrumentSetter } from './instrumentMethod'
+import { instrumentConstructor, instrumentMethod, instrumentSetter } from './instrumentMethod'
 import { noop } from './utils/functionUtils'
 
 describe('instrumentMethod', () => {
@@ -180,157 +180,6 @@ describe('instrumentMethod', () => {
     })
   })
 
-  describe('constructor support', () => {
-    class MyClass {
-      value: number
-      constructor(value: number) {
-        this.value = value
-      }
-
-      getValue() {
-        return this.value
-      }
-    }
-
-    it('works when the instrumented method is called with new', () => {
-      const container = { MyClass }
-      const instrumentationSpy = jasmine.createSpy()
-      instrumentMethod(container, 'MyClass', instrumentationSpy)
-
-      const instance = new container.MyClass(42)
-
-      expect(instrumentationSpy).toHaveBeenCalledOnceWith({
-        target: jasmine.any(MyClass),
-        parameters: [42],
-        onPostCall: jasmine.any(Function),
-        handlingStack: undefined,
-      })
-      expect(instance.value).toBe(42)
-      expect(instance.getValue()).toBe(42)
-    })
-
-    it('preserves instanceof on the constructed instance', () => {
-      const container = { MyClass }
-      instrumentMethod(container, 'MyClass', noop)
-
-      const instance = new container.MyClass(1)
-
-      // The instance is recognized both as the original class and as the instrumented value.
-      expect(instance instanceof MyClass).toBeTrue()
-      expect(instance instanceof container.MyClass).toBeTrue()
-    })
-
-    it('preserves new.target as the original constructor for direct new calls', () => {
-      let observedNewTarget: unknown
-      class TracksNewTarget {
-        constructor() {
-          observedNewTarget = new.target
-        }
-      }
-
-      const container = { TracksNewTarget }
-      instrumentMethod(container, 'TracksNewTarget', noop)
-
-      new container.TracksNewTarget()
-
-      // Without instrumentation, `new.target` in the constructor body is `TracksNewTarget`.
-      // Forwarding the wrapper as the Reflect.construct newTarget makes `new.target` the
-      // instrumentation function instead, which breaks subclass checks and similar patterns.
-      expect(observedNewTarget).toBe(TracksNewTarget)
-    })
-
-    it('preserves new.target as the subclass when extending the instrumented constructor', () => {
-      let observedNewTargetInOriginal: unknown
-      class Base {
-        constructor() {
-          observedNewTargetInOriginal = new.target
-        }
-      }
-
-      const container = { Base }
-      instrumentMethod(container, 'Base', noop)
-
-      class Sub extends container.Base {
-        constructor() {
-          super()
-        }
-      }
-
-      new Sub()
-
-      expect(observedNewTargetInOriginal).toBe(Sub)
-    })
-
-    it('preserves static members on the instrumented constructor', () => {
-      class MyClassWithStaticMembers {
-        static staticNumber = 123
-
-        static staticMethod() {
-          return 'static-result'
-        }
-      }
-
-      const container = { MyClassWithStaticMembers }
-      instrumentMethod(container, 'MyClassWithStaticMembers', noop)
-
-      expect(container.MyClassWithStaticMembers.staticNumber).toBe(123)
-      expect(container.MyClassWithStaticMembers.staticMethod()).toBe('static-result')
-    })
-
-    it('preserves instanceof when instrumented constructor is used as a base class', () => {
-      const container = { MyClass }
-      instrumentMethod(container, 'MyClass', noop)
-
-      // Third party wraps our instrumentation
-      const OurInstrumentation = container.MyClass
-      container.MyClass = class extends OurInstrumentation {}
-
-      const instance = new container.MyClass(99)
-      expect(instance instanceof container.MyClass).toBeTrue()
-    })
-
-    it('passes the constructed instance to onPostCall', () => {
-      const container = { MyClass }
-      const postCallCallbackSpy = jasmine.createSpy()
-      instrumentMethod(container, 'MyClass', ({ onPostCall }) => onPostCall(postCallCallbackSpy))
-
-      const instance = new container.MyClass(7)
-
-      expect(postCallCallbackSpy).toHaveBeenCalledOnceWith(instance)
-      expect((postCallCallbackSpy.calls.mostRecent().args[0] as MyClass).value).toBe(7)
-    })
-
-    it('constructs without calling the instrumentation after stop() when calling new Original()', () => {
-      const container = { MyClass }
-      const instrumentationSpy = jasmine.createSpy()
-      const { stop } = instrumentMethod(container, 'MyClass', instrumentationSpy)
-
-      stop()
-
-      const instance = new container.MyClass(5)
-
-      expect(instrumentationSpy).not.toHaveBeenCalled()
-      expect(instance instanceof MyClass).toBeTrue()
-      expect(instance.value).toBe(5)
-    })
-
-    it('constructs without calling the instrumentation after stop() when calling instrumentation reference', () => {
-      const container = { MyClass }
-      const instrumentationSpy = jasmine.createSpy()
-      const { stop } = instrumentMethod(container, 'MyClass', instrumentationSpy)
-
-      const OurInstrumentation = container.MyClass
-
-      stop()
-
-      const instance = new OurInstrumentation(5)
-
-      expect(instrumentationSpy).not.toHaveBeenCalled()
-      expect(instance instanceof MyClass).toBeTrue()
-      expect(instance.value).toBe(5)
-    })
-  })
-
   function thirdPartyInstrumentation(object: { method?: () => number; onevent?: () => void }) {
     const originalMethod = object.method
     if (typeof originalMethod === 'function') {
@@ -347,6 +196,167 @@ describe('instrumentMethod', () => {
       }
     }
   }
+})
+
+describe('instrumentConstructor', () => {
+  class MyClass {
+    value: number
+    constructor(value: number) {
+      this.value = value
+    }
+
+    getValue() {
+      return this.value
+    }
+  }
+
+  it('calls the instrumentation when the constructor is called with new', () => {
+    const container = { MyClass }
+    const instrumentationSpy = jasmine.createSpy()
+    instrumentConstructor(container, 'MyClass', instrumentationSpy)
+
+    const instance = new container.MyClass(42)
+
+    expect(instrumentationSpy).toHaveBeenCalledOnceWith({
+      parameters: [42],
+      onPostCall: jasmine.any(Function),
+      handlingStack: undefined,
+    })
+    expect(instance.value).toBe(42)
+    expect(instance.getValue()).toBe(42)
+  })
+
+  it('preserves instanceof on the constructed instance', () => {
+    const container = { MyClass }
+    instrumentConstructor(container, 'MyClass', noop)
+
+    const instance = new container.MyClass(1)
+
+    // The instance is recognized both as the original class and as the instrumented value.
+    expect(instance instanceof MyClass).toBeTrue()
+    expect(instance instanceof container.MyClass).toBeTrue()
+  })
+
+  it('preserves new.target as the original constructor for direct new calls', () => {
+    let observedNewTarget: unknown
+    class TracksNewTarget {
+      constructor() {
+        observedNewTarget = new.target
+      }
+    }
+
+    const container = { TracksNewTarget }
+    instrumentConstructor(container, 'TracksNewTarget', noop)
+
+    new container.TracksNewTarget()
+
+    // Without instrumentation, `new.target` in the constructor body is `TracksNewTarget`.
+    // Forwarding the wrapper as the Reflect.construct newTarget makes `new.target` the
+    // instrumentation function instead, which breaks subclass checks and similar patterns.
+    expect(observedNewTarget).toBe(TracksNewTarget)
+  })
+
+  it('preserves new.target as the subclass when extending the instrumented constructor', () => {
+    let observedNewTargetInOriginal: unknown
+    class Base {
+      constructor() {
+        observedNewTargetInOriginal = new.target
+      }
+    }
+
+    const container = { Base }
+    instrumentConstructor(container, 'Base', noop)
+
+    class Sub extends container.Base {
+      constructor() {
+        super()
+      }
+    }
+
+    new Sub()
+
+    expect(observedNewTargetInOriginal).toBe(Sub)
+  })
+
+  it('preserves static members on the instrumented constructor', () => {
+    class MyClassWithStaticMembers {
+      static staticNumber = 123
+
+      static staticMethod() {
+        return 'static-result'
+      }
+    }
+
+    const container = { MyClassWithStaticMembers }
+    instrumentConstructor(container, 'MyClassWithStaticMembers', noop)
+
+    expect(container.MyClassWithStaticMembers.staticNumber).toBe(123)
+    expect(container.MyClassWithStaticMembers.staticMethod()).toBe('static-result')
+  })
+
+  it('preserves instanceof when instrumented constructor is used as a base class', () => {
+    const container = { MyClass }
+    instrumentConstructor(container, 'MyClass', noop)
+
+    // Third party wraps our instrumentation
+    const OurInstrumentation = container.MyClass
+    container.MyClass = class extends OurInstrumentation {}
+
+    const instance = new container.MyClass(99)
+    expect(instance instanceof container.MyClass).toBeTrue()
+  })
+
+  it('passes the constructed instance to onPostCall', () => {
+    const container = { MyClass }
+    const postCallCallbackSpy = jasmine.createSpy()
+    instrumentConstructor(container, 'MyClass', ({ onPostCall }) => onPostCall(postCallCallbackSpy))
+
+    const instance = new container.MyClass(7)
+
+    expect(postCallCallbackSpy).toHaveBeenCalledOnceWith(instance)
+    expect((postCallCallbackSpy.calls.mostRecent().args[0] as MyClass).value).toBe(7)
+  })
+
+  it('does not instrument a constructor that does not exist', () => {
+    const container: { MyClass?: typeof MyClass } = {}
+
+    const { stop } = instrumentConstructor(container, 'MyClass', noop)
+
+    expect(container.MyClass).toBeUndefined()
+    expect(stop).toBe(noop)
+  })
+
+  describe('stop()', () => {
+    it('constructs without calling the instrumentation when calling new Original()', () => {
+      const container = { MyClass }
+      const instrumentationSpy = jasmine.createSpy()
+      const { stop } = instrumentConstructor(container, 'MyClass', instrumentationSpy)
+
+      stop()
+
+      const instance = new container.MyClass(5)
+
+      expect(instrumentationSpy).not.toHaveBeenCalled()
+      expect(instance instanceof MyClass).toBeTrue()
+      expect(instance.value).toBe(5)
+    })
+
+    it('constructs without calling the instrumentation when calling the instrumentation reference', () => {
+      const container = { MyClass }
+      const instrumentationSpy = jasmine.createSpy()
+      const { stop } = instrumentConstructor(container, 'MyClass', instrumentationSpy)
+
+      const OurInstrumentation = container.MyClass
+
+      stop()
+
+      const instance = new OurInstrumentation(5)
+
+      expect(instrumentationSpy).not.toHaveBeenCalled()
+      expect(instance instanceof MyClass).toBeTrue()
+      expect(instance.value).toBe(5)
+    })
+  })
 })
 
 describe('instrumentSetter', () => {
