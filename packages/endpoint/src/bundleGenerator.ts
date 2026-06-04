@@ -2,11 +2,11 @@
 import { fetchRemoteConfiguration } from '@datadog/browser-remote-config'
 // eslint-disable-next-line local-rules/disallow-side-effects -- Node.js build tool, not browser SDK
 import { resolveDynamicValues, serializeConfigToJs } from '@datadog/browser-remote-config/node'
-import type { SdkVariant } from './sdkDownloader.ts'
-import { getDefaultVersion, downloadSDK } from './sdkDownloader.ts'
-import { INLINE_HELPERS } from './helpers.ts'
+import type { SdkVariant } from './sdkDownloader'
+import { getDefaultVersion, downloadSDK } from './sdkDownloader'
+import { INLINE_HELPERS } from './helpers'
 
-export type { SdkVariant } from './sdkDownloader.ts'
+export type { SdkVariant } from './sdkDownloader'
 
 export interface FetchConfigOptions {
   applicationId: string

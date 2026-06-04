@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert'
-import { generateCombinedBundle } from './bundleGenerator.ts'
-import { INLINE_HELPERS } from './helpers.ts'
+import { generateCombinedBundle } from './bundleGenerator'
+import { INLINE_HELPERS } from './helpers'
 
 const mockSdkCode = 'window.DD_RUM = { init: function(c) { this.config = c; } };'
 

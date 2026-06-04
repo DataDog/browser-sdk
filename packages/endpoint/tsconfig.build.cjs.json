@@ -1,15 +1,18 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "composite": true,
     "declaration": true,
+    "module": "commonjs",
     "target": "ES2024",
     "lib": ["ES2024", "DOM"],
     "types": ["node"],
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "rootDir": "./src",
+    "outDir": "./cjs",
+    "paths": {}
   },
   "include": ["./src/**/*.ts"],
-  "exclude": []
+  "exclude": ["./src/**/*.spec.ts"]
 }

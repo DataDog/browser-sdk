@@ -1,7 +1,5 @@
 // eslint-disable-next-line local-rules/disallow-side-effects, local-rules/enforce-prod-deps-imports -- Node.js build tool
 import https from 'node:https'
-// eslint-disable-next-line local-rules/disallow-side-effects, local-rules/enforce-prod-deps-imports -- Node.js build tool
-import { createRequire } from 'node:module'
 
 export type SdkVariant = 'rum' | 'rum-slim' | 'logs' | 'rum-and-logs'
 
@@ -24,7 +22,7 @@ const DEFAULT_DATACENTER = 'us1'
 const sdkCache = new Map<string, string>()
 
 export function getDefaultVersion(): string {
-  const require = createRequire(import.meta.url)
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- Node.js build tool, read version from dependency
   const pkg = require('@datadog/browser-remote-config/package.json') as { version: string }
   return pkg.version
 }
