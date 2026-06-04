@@ -2,7 +2,6 @@ import type { TimeoutId, Site } from '@datadog/browser-core'
 import {
   addTelemetryDebug,
   dateNow,
-  display,
   fetch,
   globalObject,
   isServerError,
@@ -11,6 +10,7 @@ import {
   clearInterval,
   INTAKE_SITE_US1,
 } from '@datadog/browser-core'
+import { display } from './display'
 import { addProbe, clearProbes, removeProbe } from './probes'
 import type { Probe } from './probes'
 
@@ -70,7 +70,7 @@ export function startDeliveryApiPolling(config: DeliveryApiConfiguration): void 
   }
 
   if (pollIntervalId !== undefined) {
-    display.warn('Debugger: Delivery API polling already started')
+    display.warn('Delivery API polling already started')
     return
   }
 
@@ -122,7 +122,7 @@ export function startDeliveryApiPolling(config: DeliveryApiConfiguration): void 
         } catch {
           // ignore
         }
-        display.error(`Debugger: Delivery API poll failed with status ${response.status}`, errorBody)
+        display.error(`Delivery API poll failed with status ${response.status}`, errorBody)
         // 408 (request timeout), 429 (rate limited), and 5xx are transient: they
         // only trip the breaker after the unreachable-duration window. Other 4xx
         // responses indicate a client/config issue (bad token, wrong service, …)
@@ -152,7 +152,7 @@ export function startDeliveryApiPolling(config: DeliveryApiConfiguration): void 
             removeProbe(probeId)
             knownProbeIds.delete(probeId)
           } catch (err) {
-            display.error(`Debugger: Failed to remove probe ${probeId}:`, err as Error)
+            display.error(`Failed to remove probe ${probeId}:`, err as Error)
           }
         }
       }
@@ -174,7 +174,7 @@ export function startDeliveryApiPolling(config: DeliveryApiConfiguration): void 
           addProbe(probe)
           knownProbeIds.add(probe.id)
         } catch (err) {
-          display.error(`Debugger: Failed to add probe ${probe.id}:`, err as Error)
+          display.error(`Failed to add probe ${probe.id}:`, err as Error)
         }
       }
     } catch (err) {
@@ -183,7 +183,7 @@ export function startDeliveryApiPolling(config: DeliveryApiConfiguration): void 
       if (err instanceof DOMException && err.code === DOMException.ABORT_ERR) {
         return
       }
-      display.error('Debugger: Delivery API poll error:', err as Error)
+      display.error('Delivery API poll error:', err as Error)
       if (noteFailureAndCheckTrip(maxUnreachableDuration)) {
         tripCircuitBreaker('network error')
       }
@@ -250,7 +250,7 @@ function tripCircuitBreaker(reason: string): void {
   }
   tripped = true
   display.warn(
-    `Debugger: Delivery API circuit breaker tripped (${reason}). Disabling Live Debugger for the rest of the page lifetime.`
+    `Delivery API circuit breaker tripped (${reason}). Disabling Live Debugger for the rest of the page lifetime.`
   )
   // monitor-until: forever, to keep an eye on how often the Live Debugger gets disabled in the wild
   addTelemetryDebug('Delivery API circuit breaker tripped', { reason })

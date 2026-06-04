@@ -1,6 +1,6 @@
-import { display } from '@datadog/browser-core'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { onEntry, onReturn, onThrow, initDebuggerTransport, resetDebuggerTransport } from './api'
+import { display } from './display'
 import { addProbe, removeProbe, getProbes, clearProbes } from './probes'
 import type { Probe } from './probes'
 
@@ -1437,7 +1437,7 @@ describe('api', () => {
         onReturn(probes, null, {}, {}, {})
       }).not.toThrow()
       expect(warnSpy).toHaveBeenCalledWith(
-        'Debugger transport is not initialized. Make sure DD_DEBUGGER.init() has been called.'
+        'Transport is not initialized. Make sure DD_DEBUGGER.init() has been called.'
       )
     })
   })

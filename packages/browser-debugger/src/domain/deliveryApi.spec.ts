@@ -1,7 +1,8 @@
 import type { GlobalObject } from '@datadog/browser-core'
-import { display, globalObject } from '@datadog/browser-core'
+import { globalObject } from '@datadog/browser-core'
 import { registerCleanupTask, mockClock, replaceMockable } from '@datadog/browser-core/test'
 import type { Clock } from '@datadog/browser-core/test'
+import { display } from './display'
 import { getProbes, clearProbes } from './probes'
 import type { Probe } from './probes'
 import {
