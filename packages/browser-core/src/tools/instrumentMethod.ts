@@ -180,10 +180,17 @@ export function instrumentConstructor<TARGET extends { [key: string]: any }, NAM
 
   const { stop: replaceStop } = replaceWithInstrumentation(target, name, original, (isStopped) => {
     const instrumentation = function (this: TARGET): ConstructorInstanceOf<TARGET[NAME]> {
+      // Bare `[[Call]]` (no `new`): delegate through `[[Call]]` and skip `onPreCall`. Otherwise we
+      // would notify instrumentation before the original rejects or returns, unlike the native
+      // constructor (e.g. `WebSocket(url)` or `class {}()` without `new`).
+      if (!new.target) {
+        return Reflect.apply(original, this, Array.from(arguments)) as ConstructorInstanceOf<TARGET[NAME]>
+      }
+
       // When `new` is used on this instrumented property, `new.target` is this wrapper. Passing
       // it through to Reflect.construct would expose the wrong new.target inside the original
       // body. If a subclass extends the wrapper, or a third party wraps us and their class is
-      // `new`ed, `new.target` is that outer constructor and must be preserved.
+      // instantiated, `new.target` is that outer constructor and must be preserved.
       const constructNewTarget = new.target === instrumentation ? original : new.target
 
       if (isStopped()) {
