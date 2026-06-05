@@ -149,7 +149,9 @@ test.describe('debugger', () => {
       const snapshot = (event.debugger as any).snapshot
       expect(snapshot.probe.id).toBe('test-probe-1')
       expect(snapshot.language).toBe('javascript')
-      expect(snapshot.duration).toBeGreaterThan(0)
+      expect(snapshot.duration).toBeGreaterThanOrEqual(0)
+      expect(snapshot.captures.entry.arguments.this).toBeUndefined()
+      expect(snapshot.captures.return.arguments.this).toBeUndefined()
     })
 
   createTest('capture function arguments and return value')

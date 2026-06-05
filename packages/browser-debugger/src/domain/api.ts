@@ -107,10 +107,7 @@ export function onEntry(probes: InitializedProbe[], self: any, args: Record<stri
     let entry: { arguments: Record<string, any> } | undefined
     if (shouldCaptureEntrySnapshot) {
       entry = {
-        arguments: {
-          ...captureFields(args, probe.capture, captureCtx),
-          this: capture(self, probe.capture, captureCtx),
-        },
+        arguments: captureArguments(args, self, probe.capture, captureCtx),
       }
       if (captureCtx.timedOut) {
         probe.activeEntries.push(null)
@@ -189,10 +186,7 @@ export function onReturn(
 
     if (probe.captureSnapshot) {
       result.return = {
-        arguments: {
-          ...captureFields(args, probe.capture, captureCtx),
-          this: capture(self, probe.capture, captureCtx),
-        },
+        arguments: captureArguments(args, self, probe.capture, captureCtx),
         locals: {
           ...captureFields(locals, probe.capture, captureCtx),
           '@return': capture(value, probe.capture, captureCtx),
@@ -262,10 +256,7 @@ export function onThrow(probes: InitializedProbe[], error: Error, self: any, arg
 
     let throwArguments: Record<string, any> | undefined
     if (probe.captureSnapshot) {
-      throwArguments = {
-        ...captureFields(args, probe.capture, captureCtx),
-        this: capture(self, probe.capture, captureCtx),
-      }
+      throwArguments = captureArguments(args, self, probe.capture, captureCtx)
       if (captureCtx.timedOut) {
         continue
       }
@@ -339,6 +330,19 @@ function queueDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): vo
 
   debuggerBatch.add(payload)
   recordProbeEventSent(probe)
+}
+
+function captureArguments(
+  args: Record<string, any>,
+  self: any,
+  captureOptions: InitializedProbe['capture'],
+  captureCtx: CaptureContext
+): Record<string, any> {
+  const fields = captureFields(args, captureOptions, captureCtx)
+  if (self !== globalObject) {
+    fields.this = capture(self, captureOptions, captureCtx)
+  }
+  return fields
 }
 
 function getDebuggerDDtags(debuggerVersion: string): string {

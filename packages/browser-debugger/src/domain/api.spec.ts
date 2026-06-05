@@ -1,3 +1,4 @@
+import { globalObject } from '@datadog/browser-core'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { onEntry, onReturn, onThrow, initDebuggerTransport, resetDebuggerTransport } from './api'
 import { display } from './display'
@@ -87,6 +88,36 @@ describe('api', () => {
       expect(snapshot.captures.return.locals['@return']).toEqual({
         type: 'string',
         value: 'result',
+      })
+    })
+
+    it('should not capture this when it is the global object', () => {
+      const probe: Probe = {
+        id: 'global-this-probe',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'globalThis' },
+        template: 'Test message',
+        captureSnapshot: true,
+        capture: { maxReferenceDepth: 1 },
+        sampling: { snapshotsPerSecond: 5000 },
+        evaluateAt: 'ENTRY',
+      }
+      addProbe(probe)
+
+      const args = { a: 1 }
+      const probes = getProbes('TestClass;globalThis')!
+      onEntry(probes, globalObject, args)
+      onReturn(probes, 'result', globalObject, args, {})
+
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
+
+      expect(snapshot.captures.entry.arguments).toEqual({
+        a: { type: 'number', value: '1' },
+      })
+      expect(snapshot.captures.return.arguments).toEqual({
+        a: { type: 'number', value: '1' },
       })
     })
 
@@ -573,6 +604,37 @@ describe('api', () => {
           })
         )
       }
+    })
+
+    it('should not capture this for exceptions when it is the global object', () => {
+      const probe: Probe = {
+        id: 'global-this-throw-probe',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'globalThisThrow' },
+        template: 'Test',
+        captureSnapshot: true,
+        capture: { maxReferenceDepth: 1 },
+        sampling: {},
+        evaluateAt: 'ENTRY',
+      }
+      addProbe(probe)
+
+      const args = { a: 1 }
+      const probes = getProbes('TestClass;globalThisThrow')!
+      onEntry(probes, globalObject, args)
+      onThrow(probes, new Error('Test error'), globalObject, args)
+
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
+
+      expect(snapshot.captures.return.arguments).toEqual({
+        a: { type: 'number', value: '1' },
+      })
+      expect(snapshot.captures.return.throwable).toEqual({
+        message: 'Test error',
+        stacktrace: jasmine.any(Array),
+      })
     })
 
     it('should capture exception details', () => {
