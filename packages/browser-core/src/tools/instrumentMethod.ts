@@ -319,7 +319,21 @@ function preserveConstructorShape(instrumentation: (...args: any[]) => any, orig
 
   // Preserve the original prototype so that instanceof checks against the instrumented global work.
   // e.g. `new MyClass() instanceof MyClass` must remain true.
-  instrumentation.prototype = original.prototype
+  const originalPrototypeDescriptor = Object.getOwnPropertyDescriptor(original, 'prototype')
+  try {
+    if (originalPrototypeDescriptor) {
+      Object.defineProperty(instrumentation, 'prototype', {
+        value: original.prototype,
+        writable: originalPrototypeDescriptor.writable,
+        enumerable: originalPrototypeDescriptor.enumerable,
+        configurable: originalPrototypeDescriptor.configurable,
+      })
+    } else {
+      instrumentation.prototype = original.prototype
+    }
+  } catch {
+    instrumentation.prototype = original.prototype
+  }
 
   const prototypeObject = original.prototype as object
 
