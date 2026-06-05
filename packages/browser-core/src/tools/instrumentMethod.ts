@@ -210,7 +210,7 @@ export function instrumentConstructor<TARGET extends { [key: string]: any }, NAM
         onPreCall,
         {
           parameters,
-          handlingStack: computeHandlingStack ? createHandlingStack('instrumented method') : undefined,
+          handlingStack: computeHandlingStack ? createHandlingStack('instrumented constructor') : undefined,
         },
         () =>
           // eslint-disable-next-line @typescript-eslint/no-unsafe-return
