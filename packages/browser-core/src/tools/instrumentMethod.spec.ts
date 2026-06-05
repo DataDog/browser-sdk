@@ -330,6 +330,25 @@ describe('instrumentConstructor', () => {
     expect(container.MyClassWithStaticMembers.staticMethod()).toBe('static-result')
   })
 
+  it('preserves the own prototype property descriptor on the instrumented constructor (writable must match original)', () => {
+    const container = { MyClass }
+    const originalDescriptor = Object.getOwnPropertyDescriptor(MyClass, 'prototype')!
+
+    expect(originalDescriptor.writable).toBe(false)
+
+    instrumentConstructor(container, 'MyClass', noop)
+
+    // Writable must match original
+    expect(Object.getOwnPropertyDescriptor(container.MyClass, 'prototype')).toEqual(
+      jasmine.objectContaining({
+        writable: originalDescriptor.writable,
+        configurable: originalDescriptor.configurable,
+        enumerable: originalDescriptor.enumerable,
+        value: MyClass.prototype,
+      })
+    )
+  })
+
   it('preserves instanceof when instrumented constructor is used as a base class', () => {
     const container = { MyClass }
     instrumentConstructor(container, 'MyClass', noop)
