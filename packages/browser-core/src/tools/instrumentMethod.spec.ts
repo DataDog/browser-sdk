@@ -199,6 +199,8 @@ describe('instrumentMethod', () => {
 })
 
 describe('instrumentConstructor', () => {
+  const THIRD_PARTY_CONSTRUCTOR_TAG = 42
+
   class MyClass {
     value: number
     constructor(value: number) {
@@ -237,6 +239,36 @@ describe('instrumentConstructor', () => {
     })
     expect(instance.value).toBe(42)
     expect(instance.getValue()).toBe(42)
+  })
+
+  it('allows other instrumentations from third parties', () => {
+    const container = { MyClass }
+    const instrumentationSpy = jasmine.createSpy()
+    instrumentConstructor(container, 'MyClass', instrumentationSpy)
+
+    thirdPartyConstructorWrap(container)
+
+    const instance = new container.MyClass(7) as MyClass & { thirdPartyTag: number }
+
+    expect(instance.value).toBe(7)
+    expect(instance.thirdPartyTag).toBe(THIRD_PARTY_CONSTRUCTOR_TAG)
+    expect(instrumentationSpy).toHaveBeenCalled()
+  })
+
+  it('computes the handling stack', () => {
+    const container = { MyClass }
+    const instrumentationSpy = jasmine.createSpy()
+    instrumentConstructor(container, 'MyClass', instrumentationSpy, { computeHandlingStack: true })
+
+    function foo() {
+      new container.MyClass(1)
+    }
+
+    foo()
+
+    expect(instrumentationSpy.calls.mostRecent().args[0].handlingStack).toEqual(
+      jasmine.stringMatching(/^HandlingStack: instrumented constructor\n {2}at foo @/)
+    )
   })
 
   it('does not call the instrumentation when the constructor is invoked without new', () => {
@@ -412,6 +444,37 @@ describe('instrumentConstructor', () => {
       expect(instance.value).toBe(5)
     })
 
+    describe('when the constructor has been instrumented by a third party', () => {
+      it('should preserve third party instrumentation after stop()', () => {
+        const container = { MyClass }
+        const { stop } = instrumentConstructor(container, 'MyClass', noop)
+
+        thirdPartyConstructorWrap(container)
+        const wrappedConstructor = container.MyClass
+
+        stop()
+
+        expect(container.MyClass).toBe(wrappedConstructor)
+      })
+
+      it('does not call the instrumentation when constructing after stop()', () => {
+        const container = { MyClass }
+        const instrumentationSpy = jasmine.createSpy()
+        const { stop } = instrumentConstructor(container, 'MyClass', instrumentationSpy)
+
+        thirdPartyConstructorWrap(container)
+
+        stop()
+
+        const instance = new container.MyClass(5) as MyClass & { thirdPartyTag: number }
+
+        expect(instrumentationSpy).not.toHaveBeenCalled()
+        expect(instance.value).toBe(5)
+        expect(instance.thirdPartyTag).toBe(THIRD_PARTY_CONSTRUCTOR_TAG)
+        expect(instance instanceof MyClass).toBeTrue()
+      })
+    })
+
     it('preserves new.target when constructing a subclass of the instrumented constructor after stop()', () => {
       const container = { MyClass }
       const { stop } = instrumentConstructor(container, 'MyClass', noop)
@@ -491,6 +554,22 @@ describe('instrumentConstructor', () => {
       expect(instance.x).toBe(2)
     })
   })
+
+  /**
+   * Wraps the current `MyClass` on `container` (typically the SDK-instrumented constructor) in a
+   * Proxy that still delegates construction, then tags instances — analogous to
+   * `thirdPartyInstrumentation` in the `instrumentMethod` suite.
+   */
+  function thirdPartyConstructorWrap(container: { MyClass: typeof MyClass }) {
+    const inner = container.MyClass
+    container.MyClass = new Proxy(inner, {
+      construct(target, argArray, newTarget) {
+        const instance = Reflect.construct(target, argArray, newTarget) as MyClass & { thirdPartyTag: number }
+        instance.thirdPartyTag = THIRD_PARTY_CONSTRUCTOR_TAG
+        return instance
+      },
+    })
+  }
 })
 
 describe('instrumentSetter', () => {
