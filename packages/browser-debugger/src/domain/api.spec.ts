@@ -1212,6 +1212,19 @@ describe('api', () => {
   })
 
   describe('snapshot timeout', () => {
+    function hasTimeoutMarker(value: any): boolean {
+      if (!value || typeof value !== 'object') {
+        return false
+      }
+      if (value.notCapturedReason === 'timeout') {
+        return true
+      }
+      if (Array.isArray(value)) {
+        return value.some(hasTimeoutMarker)
+      }
+      return Object.values(value).some(hasTimeoutMarker)
+    }
+
     function createSnapshotProbe(methodName: string): Probe {
       return {
         id: `timeout-probe-${methodName}`,
@@ -1226,7 +1239,7 @@ describe('api', () => {
       }
     }
 
-    it('should drop snapshot when entry capture exceeds timeout', () => {
+    it('should send partial snapshot when entry capture exceeds timeout', () => {
       const probe = createSnapshotProbe('entryTimeout')
       addProbe(probe)
 
@@ -1247,15 +1260,13 @@ describe('api', () => {
       onEntry(probes, {}, { arg: deepObj })
       onReturn(probes, null, {}, { arg: deepObj }, {})
 
-      // The entry capture timed out, so onEntry pushed null.
-      // onReturn still gets an active entry from its own onEntry call, but
-      // the entry snapshot is dropped. The return capture has its own timeout.
-      // Since performance.now is still returning future values, the return
-      // capture also times out and no snapshot is sent.
-      expect(mockBatchAdd).not.toHaveBeenCalled()
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
+      expect(hasTimeoutMarker(snapshot.captures.entry)).toBe(true)
     })
 
-    it('should drop snapshot when return capture exceeds timeout', () => {
+    it('should send partial snapshot when return capture exceeds timeout', () => {
       const probe = createSnapshotProbe('returnTimeout')
       addProbe(probe)
 
@@ -1277,10 +1288,13 @@ describe('api', () => {
 
       onReturn(probes, null, {}, { x: 1 }, { local: 'value' })
 
-      expect(mockBatchAdd).not.toHaveBeenCalled()
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
+      expect(hasTimeoutMarker(snapshot.captures.return)).toBe(true)
     })
 
-    it('should drop snapshot when throw capture exceeds timeout', () => {
+    it('should send partial snapshot when throw capture exceeds timeout', () => {
       const probe = createSnapshotProbe('throwTimeout')
       addProbe(probe)
 
@@ -1302,7 +1316,11 @@ describe('api', () => {
 
       onThrow(probes, new Error('test'), {}, { x: 1 })
 
-      expect(mockBatchAdd).not.toHaveBeenCalled()
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
+      expect(hasTimeoutMarker(snapshot.captures.return.arguments)).toBe(true)
+      expect(snapshot.captures.return.throwable.message).toBe('test')
     })
 
     it('should not affect non-snapshot probes', () => {
@@ -1353,18 +1371,18 @@ describe('api', () => {
       })
 
       const probes = getProbes('TestClass;entryLeakTest')!
-      // This onEntry will time out and push null
+      // This onEntry will time out but should still push the partial snapshot entry
       onEntry(probes, {}, { x: 1 })
 
-      // onReturn should handle the null entry gracefully (no snapshot sent)
+      // onReturn should pop the timed-out entry and send its partial snapshot
       shouldTimeout = false
       callCount = 0
       onReturn(probes, null, {}, { x: 1 }, {})
 
-      expect(mockBatchAdd).not.toHaveBeenCalled()
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
     })
 
-    it('should skip subsequent snapshot probes after timeout but still process non-snapshot probes', () => {
+    it('should mark subsequent snapshot probes as timed out but still process non-snapshot probes', () => {
       const snapshotProbe1: Probe = {
         id: 'timeout-shared-1',
         version: 0,
@@ -1413,16 +1431,17 @@ describe('api', () => {
       })
 
       const probes = getProbes('TestClass;sharedDeadline')!
-      onEntry(probes, {}, { x: 1 })
-      onReturn(probes, null, {}, { x: 1 }, {})
+      onEntry(probes, {}, { x: { nested: 'value' } })
+      onReturn(probes, null, {}, { x: { nested: 'value' } }, {})
 
-      // The non-snapshot probe should still send, but both snapshot probes should be dropped
+      // All probes should still send, with snapshot probes marked as timed out
       const calls = mockBatchAdd.calls.allArgs()
-      expect(calls.length).toBe(1)
-      expect(calls[0][0].message).toBe('Non-snapshot probe')
+      expect(calls.length).toBe(3)
+      expect(calls[1][0].message).toBe('Non-snapshot probe')
+      expect(hasTimeoutMarker(calls[2][0].debugger.snapshot.captures)).toBe(true)
     })
 
-    it('should share deadline across probes so second snapshot probe exits immediately', () => {
+    it('should share deadline across probes and mark the second snapshot as timed out immediately', () => {
       const probe1 = createSnapshotProbe('sharedDeadline1')
       const probe2: Probe = {
         ...createSnapshotProbe('sharedDeadline2'),
@@ -1443,11 +1462,13 @@ describe('api', () => {
       })
 
       const probes = getProbes('TestClass;sharedDeadline1')!
-      onEntry(probes, {}, { x: 1 })
-      onReturn(probes, null, {}, { x: 1 }, {})
+      onEntry(probes, {}, { x: { nested: 'value' } })
+      onReturn(probes, null, {}, { x: { nested: 'value' } }, {})
 
-      // Both snapshot probes share the deadline -- neither should send
-      expect(mockBatchAdd).not.toHaveBeenCalled()
+      // Both snapshot probes share the deadline -- both should send partial snapshots
+      const calls = mockBatchAdd.calls.allArgs()
+      expect(calls.length).toBe(2)
+      expect(hasTimeoutMarker(calls[1][0].debugger.snapshot.captures)).toBe(true)
     })
   })
 
