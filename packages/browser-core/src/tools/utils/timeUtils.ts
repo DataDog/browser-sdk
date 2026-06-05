@@ -1,3 +1,4 @@
+import { dateNow } from '@datadog/js-core/time'
 import { isNumber, round } from './numberUtils'
 
 export const ONE_SECOND = 1000
@@ -43,15 +44,6 @@ export function toServerDuration(duration: Duration | undefined) {
     return duration
   }
   return round(duration * 1e6, 0) as ServerDuration
-}
-
-export function dateNow() {
-  // Do not use `Date.now` because sometimes websites are wrongly "polyfilling" it. For example, we
-  // had some users using a very old version of `datejs`, which patched `Date.now` to return a Date
-  // instance instead of a timestamp[1]. Those users are unlikely to fix this, so let's handle this
-  // case ourselves.
-  // [1]: https://github.com/datejs/Datejs/blob/97f5c7c58c5bc5accdab8aa7602b6ac56462d778/src/core-debug.js#L14-L16
-  return new Date().getTime()
 }
 
 export function timeStampNow() {

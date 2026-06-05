@@ -23,6 +23,10 @@ runMain(async () => {
         type: 'boolean',
         default: false,
       },
+      'esm-type-module': {
+        type: 'boolean',
+        default: false,
+      },
     },
   })
 
@@ -38,6 +42,9 @@ runMain(async () => {
       module: 'es2020',
       verbose: values.verbose,
     })
+    if (values['esm-type-module']) {
+      await fs.writeFile('./esm/package.json', `${JSON.stringify({ type: 'module' }, null, 2)}\n`)
+    }
   }
 
   if (values.bundle) {

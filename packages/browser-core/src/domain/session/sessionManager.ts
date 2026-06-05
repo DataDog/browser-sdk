@@ -1,9 +1,9 @@
+import { dateNow } from '@datadog/js-core/time'
 import { Observable } from '../../tools/observable'
 import { createValueHistory } from '../../tools/valueHistory'
 import type { RelativeTime, TimeStamp } from '../../tools/utils/timeUtils'
 import {
   clocksOrigin,
-  dateNow,
   elapsed,
   ONE_HOUR,
   ONE_MINUTE,
