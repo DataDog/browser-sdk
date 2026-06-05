@@ -11,10 +11,6 @@ import {
 } from './probes'
 import type { Probe } from './probes'
 
-interface TemplateWithCache {
-  createFunction: (params: string[]) => (...args: any[]) => any
-}
-
 describe('probes', () => {
   beforeEach(() => {
     clearProbes()
@@ -43,9 +39,9 @@ describe('probes', () => {
       expect(retrieved).toEqual([
         jasmine.objectContaining({
           id: 'test-probe-1',
-          templateRequiresEvaluation: false,
         }),
       ])
+      expect(retrieved![0].evaluateTemplate).toBeUndefined()
     })
 
     it('should return undefined for non-existent probe', () => {
@@ -186,12 +182,12 @@ describe('probes', () => {
 
       expect(probe).toEqual(
         jasmine.objectContaining({
-          templateRequiresEvaluation: false,
           template: 'Static message',
           msBetweenSampling: jasmine.any(Number),
           lastCaptureMs: -Infinity,
         })
       )
+      expect(probe.evaluateTemplate).toBeUndefined()
     })
 
     it('should initialize probe with dynamic template', () => {
@@ -212,10 +208,8 @@ describe('probes', () => {
 
       expect(probe).toEqual(
         jasmine.objectContaining({
-          templateRequiresEvaluation: true,
-          template: {
-            createFunction: jasmine.any(Function),
-          },
+          template: '',
+          evaluateTemplate: jasmine.any(Function),
         })
       )
       expect(probe.segments).toBeUndefined() // Should be deleted after initialization
@@ -331,7 +325,7 @@ describe('probes', () => {
       expect(probe.msBetweenSampling).toBeLessThan(1) // 5000 per second = 0.2ms
     })
 
-    it('should cache compiled functions by context keys', () => {
+    it('should evaluate dynamic template with cached functions', () => {
       const probe: Probe = {
         id: 'test-probe-1',
         version: 0,
@@ -347,16 +341,8 @@ describe('probes', () => {
 
       initializeProbe(probe)
 
-      const template = probe.template as TemplateWithCache
-      const fn1 = template.createFunction(['x', 'y'])
-      const fn2 = template.createFunction(['x', 'y'])
-
-      // Should return the same cached function
-      expect(fn1).toBe(fn2)
-
-      const fn3 = template.createFunction(['x', 'z'])
-      // Different keys should create different function
-      expect(fn1).not.toBe(fn3)
+      expect(probe.evaluateTemplate!({ x: 1 })).toEqual(['1'])
+      expect(probe.evaluateTemplate!({ x: 2 })).toEqual(['2'])
     })
   })
 
@@ -394,7 +380,6 @@ describe('probes', () => {
       expect(getProbes('TestClass;clear1')).toBeUndefined()
       expect(getProbes('TestClass;clear2')).toBeUndefined()
     })
-
   })
 
   describe('checkGlobalSnapshotBudget', () => {
