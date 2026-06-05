@@ -3,8 +3,8 @@ import type { Batch, Context, ContextValue } from '@datadog/browser-core'
 import { timeStampNow } from '@datadog/js-core/time'
 import { buildTag, generateUUID, mergeArrays } from '@datadog/browser-core'
 import type { BrowserWindow, DebuggerInitConfiguration } from '../entries/main'
-import { capture, captureFields } from './capture'
-import type { CaptureContext } from './capture'
+import { capture, captureFields, createTimeoutCapturedValue } from './capture'
+import type { CaptureContext, TimeoutCapturedValue } from './capture'
 import type { InitializedProbe } from './probes'
 import {
   checkConditionErrorBudget,
@@ -124,10 +124,6 @@ export function onEntry(probes: InitializedProbe[], self: any, args: Record<stri
       entry = {
         arguments: captureArguments(args, self, probe.capture, captureCtx),
       }
-      if (captureCtx.timedOut) {
-        probe.activeEntries.push(null)
-        continue
-      }
     } else if (entryCaptureExpressions) {
       entry = {
         captureExpressions: entryCaptureExpressions,
@@ -227,9 +223,6 @@ export function onReturn(
           '@return': capture(value, probe.capture, captureCtx),
         },
       }
-      if (captureCtx.timedOut) {
-        continue
-      }
     }
 
     queueDebuggerSnapshot(probe, result)
@@ -304,12 +297,9 @@ export function onThrow(probes: InitializedProbe[], error: unknown, self: any, a
       }
     }
 
-    let throwArguments: Record<string, any> | undefined
+    let throwArguments: Record<string, any> | TimeoutCapturedValue | undefined
     if (probe.captureSnapshot) {
       throwArguments = captureArguments(args, self, probe.capture, captureCtx)
-      if (captureCtx.timedOut) {
-        continue
-      }
     }
 
     const throwable = formatThrowable(error)
@@ -347,7 +337,7 @@ function queueDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): vo
       : undefined
   ) as ContextValue
 
-  const payload: Context = {
+  const payload = {
     message: result.message,
     service: debuggerConfig.service,
     ddtags: getDebuggerDDtags(version),
@@ -381,7 +371,7 @@ function queueDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): vo
     },
   }
 
-  debuggerBatch.add(payload)
+  debuggerBatch.add(payload as unknown as Context)
   recordProbeEventSent(probe)
 }
 
@@ -390,7 +380,11 @@ function captureArguments(
   self: any,
   captureOptions: InitializedProbe['capture'],
   captureCtx: CaptureContext
-): Record<string, any> {
+): Record<string, any> | TimeoutCapturedValue {
+  if (captureCtx.timedOut) {
+    return createTimeoutCapturedValue(args)
+  }
+
   const fields = captureFields(args, captureOptions, captureCtx)
   if (self !== globalObject) {
     fields.this = capture(self, captureOptions, captureCtx)
