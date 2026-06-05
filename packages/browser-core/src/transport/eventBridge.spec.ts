@@ -50,6 +50,7 @@ describe('matchesWildcardPattern', () => {
     ['preview-abc123.shopist.io',      'preview-*.shopist.io',   true],
     ['app.shopist.io',                 'preview-*.shopist.io',   false],
     ['evil.com',                       '*.shopist.io',           false],
+    ['app.shopist.io.evil.com',                       '*.shopist.io',                       false],
     ['anything.foo.anything.bar',      '*.foo.*.bar',            false], // multiple wildcards → invalid
   ]
 
