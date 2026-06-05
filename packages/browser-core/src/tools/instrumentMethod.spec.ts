@@ -239,6 +239,19 @@ describe('instrumentConstructor', () => {
     expect(instance.getValue()).toBe(42)
   })
 
+  it('does not call the instrumentation when the constructor is invoked without new', () => {
+    const container = { MyClass }
+    const instrumentationSpy = jasmine.createSpy()
+    instrumentConstructor(container, 'MyClass', instrumentationSpy)
+
+    // Bare `[[Call]]` has no `new.target`; the original class constructor throws before any work.
+    expect(() => {
+      ;(container.MyClass as unknown as (value: number) => void)(42)
+    }).toThrow()
+
+    expect(instrumentationSpy).not.toHaveBeenCalled()
+  })
+
   it('preserves instanceof on the constructed instance', () => {
     const container = { MyClass }
     instrumentConstructor(container, 'MyClass', noop)
