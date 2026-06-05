@@ -6,6 +6,9 @@ RUN npx -y playwright@1.40.1 install --with-deps chromium firefox webkit
 
 FROM node:26.2.0-bookworm-slim
 
+# Node 26 ships without yarn — enable it via corepack
+RUN corepack enable
+
 ARG CHROME_PACKAGE_VERSION
 
 SHELL ["/bin/bash", "-c"]
