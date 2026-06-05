@@ -40,6 +40,9 @@ export default defineConfig(
       'packages/*/esm',
       'test/**/dist',
       'test/**/.next',
+      // Test-app webpack configs are build tooling for fixtures, not part of the typed project graph
+      // (excluded from tsconfig.scripts.json). Without this, projectService fails to find a project.
+      'test/apps/*/webpack.*',
       'test/apps/react-heavy-spa',
       'test/apps/react-shopist-like',
       'test/apps/microfrontend',
