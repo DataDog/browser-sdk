@@ -1,5 +1,5 @@
 {
-  "name": "react-router-v6-app",
+  "name": "react-router-app",
   "private": true,
   "scripts": {
     "build": "webpack"
@@ -7,7 +7,7 @@
   "dependencies": {
     "react": "19.2.6",
     "react-dom": "19.2.6",
-    "react-router-dom": "6.30.0"
+    "react-router": "7.15.1"
   },
   "peerDependencies": {
     "@datadog/browser-rum": "*",
