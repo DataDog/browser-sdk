@@ -1,6 +1,5 @@
 export interface CompiledCondition {
   evaluate: (contextKeys: string[]) => (...args: any[]) => boolean
-  clearCache: () => void
 }
 
 export interface ProbeWithCondition {
@@ -56,9 +55,6 @@ export function compileCondition(condition: string): CompiledCondition {
         functionCache.set(cacheKey, fn)
       }
       return fn
-    },
-    clearCache: () => {
-      functionCache.clear()
     },
   }
 }

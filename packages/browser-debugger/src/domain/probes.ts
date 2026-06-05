@@ -196,12 +196,6 @@ export function removeProbe(idOrProbe: string | InitializedProbe): void {
   for (let i = 0; i < probes.length; i++) {
     const probe = probes[i]
     if (probe.id === id && (!expectedProbe || probe === expectedProbe)) {
-      if (typeof probe.template === 'object' && probe.template?.clearCache) {
-        probe.template.clearCache()
-      }
-      if (typeof probe.condition === 'object' && probe.condition?.clearCache) {
-        probe.condition.clearCache()
-      }
       const remainingProbes = probes.slice(0, i).concat(probes.slice(i + 1))
       if (remainingProbes.length === 0) {
         delete activeProbes[functionId]
@@ -232,12 +226,6 @@ export function clearProbes(): void {
   for (const probes of Object.values(activeProbes)) {
     if (probes) {
       for (const probe of probes) {
-        if (typeof probe.template === 'object' && probe.template?.clearCache) {
-          probe.template.clearCache()
-        }
-        if (typeof probe.condition === 'object' && probe.condition?.clearCache) {
-          probe.condition.clearCache()
-        }
         // Unlike removeProbe(), clearProbes() is an aggressive teardown used by
         // tests and the delivery API circuit breaker. Drop in-flight entries so
         // stale captured probe instances cannot emit after the debugger is disabled.
@@ -383,9 +371,6 @@ export function initializeProbe(probe: Probe): asserts probe is InitializedProbe
           functionCache.set(cacheKey, fn)
         }
         return fn
-      },
-      clearCache: () => {
-        functionCache.clear()
       },
     }
   }

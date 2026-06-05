@@ -14,7 +14,6 @@ export interface TemplateSegment {
 
 export interface CompiledTemplate {
   createFunction: (keys: string[]) => (...args: any[]) => any[]
-  clearCache?: () => void
 }
 
 // Options for browserInspect - controls how values are stringified
