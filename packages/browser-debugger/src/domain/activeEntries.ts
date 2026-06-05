@@ -7,14 +7,13 @@ export interface ActiveEntry {
   timestamp?: number
   message?: string
   evaluationErrors?: EvaluationError[]
-  entry?: {
-    arguments: Record<string, any>
-  }
+  entry?: { arguments: Record<string, any> } | { captureExpressions: Record<string, any> }
   stack?: StackFrame[]
   duration?: number
   return?: {
     arguments?: Record<string, any>
     locals?: Record<string, any>
+    captureExpressions?: Record<string, any>
     throwable?: Throwable
   }
   exception?: unknown

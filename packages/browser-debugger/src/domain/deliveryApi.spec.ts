@@ -211,6 +211,51 @@ describe('deliveryApi', () => {
       expect(getAllProbes()).toEqual([])
     })
 
+    it('should ignore log probes with both snapshot capture and capture expressions', async () => {
+      respondWith({
+        nextCursor: 'cursor-1',
+        updates: [
+          createProbe({
+            id: 'snapshot-and-capture-expressions',
+            captureSnapshot: true,
+            captureExpressions: [{ name: 'arg', expr: { dsl: 'arg', json: { ref: 'arg' } } }],
+          }),
+        ],
+        deletions: [],
+      })
+
+      startDeliveryApiPolling(makeConfig())
+      await flushPromises()
+
+      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
+      expect(errorSpy).not.toHaveBeenCalled()
+    })
+
+    it('should log an error when a capture expression cannot be compiled', async () => {
+      respondWith({
+        nextCursor: 'cursor-1',
+        updates: [
+          createProbe({
+            id: 'invalid-capture-expression',
+            captureSnapshot: false,
+            captureExpressions: [
+              {
+                name: 'invalid expr',
+                expr: { dsl: 'not a valid identifier!', json: { ref: 'not a valid identifier!' } },
+              },
+            ],
+          }),
+        ],
+        deletions: [],
+      })
+
+      startDeliveryApiPolling(makeConfig())
+      await flushPromises()
+
+      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
+      expect(errorSpy).toHaveBeenCalledWith('Failed to add probe invalid-capture-expression:', jasmine.any(Error))
+    })
+
     it('should ignore log probes without a where clause', async () => {
       respondWith({
         nextCursor: 'cursor-1',

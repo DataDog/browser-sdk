@@ -1,7 +1,6 @@
 import type { Batch, Context } from '@datadog/browser-core'
 import { timeStampNow } from '@datadog/js-core/time'
-
-import { buildTag, generateUUID, globalObject } from '@datadog/browser-core'
+import { buildTag, generateUUID, globalObject, mergeArrays } from '@datadog/browser-core'
 import type { BrowserWindow, DebuggerInitConfiguration } from '../entries/main'
 import { capture, captureFields } from './capture'
 import type { CaptureContext } from './capture'
@@ -20,6 +19,7 @@ import { evaluateProbeMessage } from './template'
 import { evaluateProbeCondition, isConditionEvaluationError } from './condition'
 import { display } from './display'
 import { formatThrowable } from './error'
+import { evaluateCaptureExpressions } from './captureExpressions'
 
 const globalObj = globalObject as BrowserWindow
 
@@ -65,7 +65,7 @@ export function onEntry(probes: InitializedProbe[], self: any, args: Record<stri
     // Skip if sampling budget is exceeded
     if (
       start - probe.lastCaptureMs < probe.msBetweenSampling ||
-      !checkGlobalSnapshotBudget(start, probe.captureSnapshot)
+      !checkGlobalSnapshotBudget(start, isSnapshotProducingProbe(probe))
     ) {
       probe.activeEntries.push(null)
       continue
@@ -76,6 +76,8 @@ export function onEntry(probes: InitializedProbe[], self: any, args: Record<stri
 
     let timestamp: number | undefined
     let message: string | undefined
+    let entryCaptureExpressions: Record<string, any> | undefined
+    let evaluationErrors: ActiveEntry['evaluationErrors'] | undefined
     if (probe.evaluateAt === 'ENTRY') {
       // Build context for condition and message evaluation
       const context = { ...args, this: self }
@@ -102,11 +104,21 @@ export function onEntry(probes: InitializedProbe[], self: any, args: Record<stri
 
       timestamp = timeStampNow()
       message = evaluateProbeMessage(probe, context)
+
+      const captureExpressionsResult = evaluateCaptureExpressions(probe, context, captureCtx)
+      if (captureExpressionsResult) {
+        entryCaptureExpressions = captureExpressionsResult.values
+        evaluationErrors = captureExpressionsResult.evaluationErrors
+        if (captureCtx.timedOut) {
+          probe.activeEntries.push(null)
+          continue
+        }
+      }
     }
 
     // Special case for evaluateAt=EXIT with a condition: we only capture the return snapshot
     const shouldCaptureEntrySnapshot = probe.captureSnapshot && (probe.evaluateAt === 'ENTRY' || !probe.condition)
-    let entry: { arguments: Record<string, any> } | undefined
+    let entry: ActiveEntry['entry'] | undefined
     if (shouldCaptureEntrySnapshot) {
       entry = {
         arguments: captureArguments(args, self, probe.capture, captureCtx),
@@ -115,14 +127,19 @@ export function onEntry(probes: InitializedProbe[], self: any, args: Record<stri
         probe.activeEntries.push(null)
         continue
       }
+    } else if (entryCaptureExpressions) {
+      entry = {
+        captureExpressions: entryCaptureExpressions,
+      }
     }
 
     probe.activeEntries.push({
       start,
       timestamp,
       message,
+      evaluationErrors,
       entry,
-      stack: probe.captureSnapshot ? captureStackTrace(1) : undefined,
+      stack: isSnapshotProducingProbe(probe) ? captureStackTrace(1) : undefined,
     })
   }
 }
@@ -184,6 +201,19 @@ export function onReturn(
       }
 
       result.message = evaluateProbeMessage(probe, context)
+
+      if (!probe.captureSnapshot) {
+        const captureExpressionsResult = evaluateCaptureExpressions(probe, context, captureCtx)
+        if (captureExpressionsResult) {
+          result.return = {
+            captureExpressions: captureExpressionsResult.values,
+          }
+          result.evaluationErrors = mergeArrays(result.evaluationErrors, captureExpressionsResult.evaluationErrors)
+          if (captureCtx.timedOut) {
+            continue
+          }
+        }
+      }
     }
 
     if (probe.captureSnapshot) {
@@ -254,6 +284,19 @@ export function onThrow(probes: InitializedProbe[], error: unknown, self: any, a
       }
 
       result.message = evaluateProbeMessage(probe, context)
+
+      if (!probe.captureSnapshot) {
+        const captureExpressionsResult = evaluateCaptureExpressions(probe, context, captureCtx)
+        if (captureExpressionsResult) {
+          result.return = {
+            captureExpressions: captureExpressionsResult.values,
+          }
+          result.evaluationErrors = mergeArrays(result.evaluationErrors, captureExpressionsResult.evaluationErrors)
+          if (captureCtx.timedOut) {
+            continue
+          }
+        }
+      }
     }
 
     let throwArguments: Record<string, any> | undefined
@@ -265,6 +308,7 @@ export function onThrow(probes: InitializedProbe[], error: unknown, self: any, a
     }
 
     result.return = {
+      ...result.return,
       arguments: throwArguments,
       throwable: formatThrowable(error),
     }
@@ -369,6 +413,10 @@ function detectThreadName() {
     return 'web-worker'
   }
   return 'unknown'
+}
+
+function isSnapshotProducingProbe(probe: InitializedProbe): boolean {
+  return probe.captureSnapshot || (probe.compiledCaptureExpressions?.expressions.length ?? 0) > 0
 }
 
 declare const ServiceWorkerGlobalScope: typeof EventTarget

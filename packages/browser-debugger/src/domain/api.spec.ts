@@ -243,6 +243,98 @@ describe('api', () => {
       expect(mockBatchAdd).not.toHaveBeenCalled()
     })
 
+    it('should capture expressions at ENTRY', () => {
+      addProbe(
+        createProbe({
+          captureSnapshot: false,
+          captureExpressions: [
+            { name: 'argValue', expr: { dsl: 'arg.value', json: { getmember: [{ ref: 'arg' }, 'value'] } } },
+            { name: 'limited', expr: { dsl: 'longString', json: { ref: 'longString' } }, capture: { maxLength: 3 } },
+          ],
+          sampling: { snapshotsPerSecond: Infinity },
+          evaluateAt: 'ENTRY',
+        })
+      )
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      onEntry(probes, thisArg, { arg: { value: 42 }, longString: 'abcdef' })
+      onReturn(probes, null, thisArg, { arg: { value: 42 }, longString: 'abcdef' })
+
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
+      expect(snapshot.captures).toEqual({
+        entry: {
+          captureExpressions: {
+            argValue: { type: 'number', value: '42' },
+            limited: { type: 'string', value: 'abc', truncated: true, size: 6 },
+          },
+        },
+        return: undefined,
+      })
+    })
+
+    it('should capture expressions at EXIT with @return and locals', () => {
+      addProbe(
+        createProbe({
+          captureSnapshot: false,
+          captureExpressions: [
+            { name: 'returnValue', expr: { dsl: '@return', json: { ref: '@return' } } },
+            { name: 'localValue', expr: { dsl: 'local.value', json: { getmember: [{ ref: 'local' }, 'value'] } } },
+          ],
+          sampling: { snapshotsPerSecond: Infinity },
+        })
+      )
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      onEntry(probes, thisArg)
+      onReturn(probes, { nested: 'return' }, thisArg, {}, { local: { value: 'data' } })
+
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
+      expect(snapshot.captures).toEqual({
+        entry: undefined,
+        return: {
+          captureExpressions: {
+            returnValue: { type: 'Object', fields: { nested: { type: 'string', value: 'return' } } },
+            localValue: { type: 'string', value: 'data' },
+          },
+        },
+      })
+    })
+
+    it('should report capture expression evaluation errors without dropping successful expressions', () => {
+      addProbe(
+        createProbe({
+          captureSnapshot: false,
+          captureExpressions: [
+            { name: 'existing', expr: { dsl: 'existing', json: { ref: 'existing' } } },
+            {
+              name: 'missing.value',
+              expr: { dsl: 'missing.value', json: { getmember: [{ ref: 'missing' }, 'value'] } },
+            },
+          ],
+          sampling: { snapshotsPerSecond: Infinity },
+          evaluateAt: 'ENTRY',
+        })
+      )
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      onEntry(probes, thisArg, { existing: 'value' })
+      onReturn(probes, null, thisArg, { existing: 'value' })
+
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
+      expect(snapshot.captures.entry.captureExpressions).toEqual({
+        existing: { type: 'string', value: 'value' },
+      })
+      expect(snapshot.evaluationErrors).toEqual([
+        {
+          expr: 'missing.value',
+          message: jasmine.stringMatching(/^ReferenceError: /),
+        },
+      ])
+    })
+
     it('should capture both entry and return snapshots for ENTRY evaluation', () => {
       addProbe(createProbe({ evaluateAt: 'ENTRY' }))
 
@@ -632,6 +724,41 @@ describe('api', () => {
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
     })
 
+    it('should capture expressions at EXIT with @exception', () => {
+      addProbe(
+        createProbe({
+          captureSnapshot: false,
+          captureExpressions: [
+            {
+              name: 'exceptionMessage',
+              expr: { dsl: '@exception.message', json: { getmember: [{ ref: '@exception' }, 'message'] } },
+            },
+          ],
+          sampling: { snapshotsPerSecond: Infinity },
+        })
+      )
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      onEntry(probes, thisArg)
+      onThrow(probes, new Error('Test error'), thisArg)
+
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
+      expect(snapshot.captures).toEqual({
+        entry: undefined,
+        return: {
+          arguments: undefined,
+          captureExpressions: {
+            exceptionMessage: { type: 'string', value: 'Test error' },
+          },
+          throwable: {
+            message: 'Test error',
+            stacktrace: jasmine.any(Array),
+          },
+        },
+      })
+    })
+
     it('should report EXIT condition evaluation errors on throw without capturing a snapshot', () => {
       addProbe(
         createProbe({
@@ -716,6 +843,27 @@ describe('api', () => {
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(2)
     })
+
+    it('should apply the global snapshot rate limit to capture-expression probes', () => {
+      for (let i = 0; i < 30; i++) {
+        addProbe(
+          createProbe({
+            where: { typeName: 'test.js', methodName: `captureExpressionGlobal${i}` },
+            captureSnapshot: false,
+            captureExpressions: [{ name: 'x', expr: { dsl: 'x', json: { ref: 'x' } } }],
+            sampling: { snapshotsPerSecond: 5000 },
+          })
+        )
+      }
+
+      for (let i = 0; i < 30; i++) {
+        const probes = getProbes(`test.js;captureExpressionGlobal${i}`)!
+        onEntry(probes, thisArg, { x: i })
+        onReturn(probes, null, thisArg, { x: i })
+      }
+
+      expect(mockBatchAdd).toHaveBeenCalledTimes(25)
+    })
   })
 
   describe('configured per-second budgets', () => {
@@ -748,6 +896,25 @@ describe('api', () => {
       onReturn(probes, null, thisArg)
       onEntry(probes, thisArg)
       onReturn(probes, null, thisArg)
+
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+    })
+
+    it('should use the configured default snapshot per-probe rate limit for capture-expression probes', () => {
+      initTransport({ maxSnapshotsPerSecondPerProbe: 0.5 })
+
+      addProbe(
+        createProbe({
+          captureSnapshot: false,
+          captureExpressions: [{ name: 'x', expr: { dsl: 'x', json: { ref: 'x' } } }],
+        })
+      )
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      onEntry(probes, thisArg, { x: 1 })
+      onReturn(probes, null, thisArg, { x: 1 })
+      onEntry(probes, thisArg, { x: 2 })
+      onReturn(probes, null, thisArg, { x: 2 })
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
     })
