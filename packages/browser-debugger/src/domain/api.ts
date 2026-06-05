@@ -109,10 +109,6 @@ export function onEntry(probes: InitializedProbe[], self: any, args: Record<stri
       entry = {
         arguments: captureArguments(args, self, probe.capture, captureCtx),
       }
-      if (captureCtx.timedOut) {
-        probe.activeEntries.push(null)
-        continue
-      }
     }
 
     probe.activeEntries.push({
@@ -192,9 +188,6 @@ export function onReturn(
           '@return': capture(value, probe.capture, captureCtx),
         },
       }
-      if (captureCtx.timedOut) {
-        continue
-      }
     }
 
     queueDebuggerSnapshot(probe, result)
@@ -254,16 +247,8 @@ export function onThrow(probes: InitializedProbe[], error: Error, self: any, arg
       result.message = evaluateProbeMessage(probe, context)
     }
 
-    let throwArguments: Record<string, any> | undefined
-    if (probe.captureSnapshot) {
-      throwArguments = captureArguments(args, self, probe.capture, captureCtx)
-      if (captureCtx.timedOut) {
-        continue
-      }
-    }
-
     result.return = {
-      arguments: throwArguments,
+      arguments: probe.captureSnapshot ? captureArguments(args, self, probe.capture, captureCtx) : undefined,
       throwable: {
         message: error.message,
         stacktrace: parseStackTrace(error),
