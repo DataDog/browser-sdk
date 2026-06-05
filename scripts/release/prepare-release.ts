@@ -60,12 +60,12 @@ function setVersionInPackageJsonFiles(version: string) {
   const packageJsonFiles = findPackageJsonFiles()
 
   // Independently-versioned packages (e.g. @datadog/js-core) are not synced to the release version.
-  // For now they get a simple minor bump on each release. Compute their new versions up front so we
+  // For now they get a simple patch bump on each release. Compute their new versions up front so we
   // can also update the packages that depend on them.
   const independentVersions = new Map<string, string>()
   for (const { content } of packageJsonFiles) {
     if (content.name && isIndependentlyVersionedPackage(content.name) && isSemanticVersion(content.version)) {
-      independentVersions.set(content.name, incrementMinor(content.version!))
+      independentVersions.set(content.name, incrementPatch(content.version!))
     }
   }
 
@@ -94,8 +94,8 @@ function setVersionInPackageJsonFiles(version: string) {
   }
 }
 
-// Bumps the minor component and resets the patch (e.g. `0.0.1` -> `0.1.0`).
-function incrementMinor(version: string): string {
-  const [major, minor] = version.split('.').map(Number)
-  return `${major}.${minor + 1}.0`
+// Bumps the patch component (e.g. `0.0.1` -> `0.0.2`).
+function incrementPatch(version: string): string {
+  const [major, minor, patch] = version.split('.').map(Number)
+  return `${major}.${minor}.${patch + 1}`
 }
