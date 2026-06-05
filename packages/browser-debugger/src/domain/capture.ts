@@ -19,6 +19,11 @@ export interface CapturedValue {
   entries?: Array<[CapturedValue, CapturedValue]>
 }
 
+export interface TimeoutCapturedValue {
+  type: string
+  notCapturedReason: 'timeout'
+}
+
 /**
  * Mutable context threaded through the capture walker so that a single
  * `performance.now()` deadline can cooperatively abort deep traversals.
@@ -49,6 +54,10 @@ function isTimedOut(ctx: CaptureContext): boolean {
     return true
   }
   return false
+}
+
+export function createTimeoutCapturedValue(value: unknown): TimeoutCapturedValue {
+  return { type: value === null ? 'null' : typeof value, notCapturedReason: 'timeout' }
 }
 
 /**
@@ -111,7 +120,7 @@ function captureValue(
   ctx: CaptureContext
 ): CapturedValue {
   if (isTimedOut(ctx)) {
-    return { type: value === null ? 'null' : typeof value, notCapturedReason: 'timeout' }
+    return createTimeoutCapturedValue(value)
   }
 
   // Handle null first as typeof null === 'object'
