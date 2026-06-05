@@ -149,8 +149,9 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
  * restores the original constructor unless a third party replaced it afterwards.
  *
  * The wrapper preserves the original prototype (so `instanceof` keeps working), the original
- * `new.target` (so constructors that inspect it behave as if not instrumented), and the original
- * static members (e.g. `WebSocket.OPEN`).
+ * `new.target` (so constructors that inspect it behave as if not instrumented), the original
+ * static members (e.g. `WebSocket.OPEN`), and `instance.constructor ===` so checks like
+ * `new WebSocket(url).constructor === WebSocket` stay true.
  *
  * @see {@link preserveConstructorShape} for limitations on static members preservation.
  * @example
@@ -175,7 +176,9 @@ export function instrumentConstructor<TARGET extends { [key: string]: any }, NAM
     return { stop: noop }
   }
 
-  return replaceWithInstrumentation(target, name, original, (isStopped) => {
+  let restorePrototypeConstructor: () => void = noop
+
+  const { stop: replaceStop } = replaceWithInstrumentation(target, name, original, (isStopped) => {
     const instrumentation = function (this: TARGET): ConstructorInstanceOf<TARGET[NAME]> {
       // When `new` is used on this instrumented property, `new.target` is this wrapper. Passing
       // it through to Reflect.construct would expose the wrong new.target inside the original
@@ -206,10 +209,17 @@ export function instrumentConstructor<TARGET extends { [key: string]: any }, NAM
       )
     }
 
-    preserveConstructorShape(instrumentation, original)
+    restorePrototypeConstructor = preserveConstructorShape(instrumentation, original)
 
     return instrumentation as TARGET[NAME]
   })
+
+  return {
+    stop: () => {
+      restorePrototypeConstructor()
+      replaceStop()
+    },
+  }
 }
 
 /**
@@ -291,15 +301,42 @@ interface InstrumentationCallbacks<RESULT> {
  * acceptable for the globals we instrument (e.g. `WebSocket`, whose own statics are the only ones
  * that matter), but would need to delegate the static prototype chain to support subclassed
  * constructors with meaningful inherited statics.
+ *
+ * Returns a function that restores `prototype.constructor` to its prior descriptor; call it
+ * before restoring the global property in `stop()`.
  */
 function preserveConstructorShape(instrumentation: (...args: any[]) => any, original: (...args: any[]) => any) {
   if (!original.prototype) {
-    return
+    return noop
   }
 
   // Preserve the original prototype so that instanceof checks against the instrumented global work.
   // e.g. `new MyClass() instanceof MyClass` must remain true.
   instrumentation.prototype = original.prototype
+
+  const prototypeObject = original.prototype as object
+
+  // Limitation: repointing `constructor` on this shared prototype affects every instance whose
+  // [[Prototype]] is this object, including instances created before instrumentation, because
+  // `constructor` is inherited rather than snapshotted per instance. Code that held `original`
+  // (or whatever was in `prototype.constructor` before) as the canonical constructor and expects
+  // reference equality to that value for the lifetime of the page can observe a behavior change
+  // while RUM is active; restoring on `stop()` fixes this. Note, In practice the
+  // SDK initializes as early as possible, which narrows the window where pre-instrument instances
+  // exist.
+  const savedConstructorDescriptor = Object.getOwnPropertyDescriptor(prototypeObject, 'constructor')
+  let rewiredPrototypeConstructor = false
+  try {
+    Object.defineProperty(prototypeObject, 'constructor', {
+      value: instrumentation,
+      writable: savedConstructorDescriptor?.writable ?? true,
+      enumerable: savedConstructorDescriptor?.enumerable ?? false,
+      configurable: true,
+    })
+    rewiredPrototypeConstructor = true
+  } catch {
+    // Some exotic builtins keep a non-configurable `constructor` on their prototype.
+  }
 
   // Preserve own static members (class fields, static methods, etc.) on the instrumented function.
   const excludedKeys = new Set(['prototype', 'length', 'name', 'arguments', 'caller'])
@@ -316,6 +353,26 @@ function preserveConstructorShape(instrumentation: (...args: any[]) => any, orig
     const descriptor = Object.getOwnPropertyDescriptor(original, key)
     if (descriptor) {
       Object.defineProperty(instrumentation, key, descriptor)
+    }
+  }
+
+  return () => {
+    if (!rewiredPrototypeConstructor) {
+      return
+    }
+    try {
+      if (savedConstructorDescriptor) {
+        Object.defineProperty(prototypeObject, 'constructor', savedConstructorDescriptor)
+      } else {
+        Object.defineProperty(prototypeObject, 'constructor', {
+          value: original,
+          writable: true,
+          enumerable: false,
+          configurable: true,
+        })
+      }
+    } catch {
+      // Best-effort: prototype.constructor may be non-configurable
     }
   }
 }
