@@ -1,33 +1,31 @@
 {
-  "name": "@datadog/browser-core",
-  "version": "7.2.0",
+  "name": "@datadog/js-core",
+  "version": "0.0.1",
   "license": "Apache-2.0",
-  "main": "cjs/index.js",
-  "module": "esm/index.js",
-  "types": "cjs/index.d.ts",
   "sideEffects": false,
+  "exports": {
+    "./time": {
+      "import": "./esm/time.js",
+      "require": "./cjs/time.js",
+      "types": "./cjs/time.d.ts"
+    }
+  },
   "files": [
     "cjs",
     "esm",
     "src",
+    "time",
     "!src/**/*.spec.ts",
     "!src/**/*.specHelper.ts"
   ],
   "scripts": {
-    "build": "node ../../scripts/build/build-package.ts --modules",
+    "build": "node ../../scripts/build/build-package.ts --modules --esm-type-module",
     "prepack": "yarn build"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/DataDog/browser-sdk.git",
-    "directory": "packages/browser-core"
-  },
-  "dependencies": {
-    "@datadog/js-core": "0.0.1"
-  },
-  "devDependencies": {
-    "@types/pako": "2.0.4",
-    "pako": "2.1.0"
+    "directory": "packages/js-core"
   },
   "volta": {
     "extends": "../../package.json"

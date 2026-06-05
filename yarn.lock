@@ -356,6 +356,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-core@workspace:packages/browser-core"
   dependencies:
+    "@datadog/js-core": "npm:0.0.1"
     "@types/pako": "npm:2.0.4"
     pako: "npm:2.1.0"
   languageName: unknown
@@ -366,6 +367,7 @@ __metadata:
   resolution: "@datadog/browser-debugger@workspace:packages/browser-debugger"
   dependencies:
     "@datadog/browser-core": "npm:7.2.0"
+    "@datadog/js-core": "npm:0.0.1"
     acorn: "npm:8.16.0"
   languageName: unknown
   linkType: soft
@@ -577,6 +579,12 @@ __metadata:
   dependencies:
     "@datadog/browser-core": "npm:7.2.0"
     webpack: "npm:5.107.2"
+  languageName: unknown
+  linkType: soft
+
+"@datadog/js-core@npm:0.0.1, @datadog/js-core@workspace:packages/js-core":
+  version: 0.0.0-use.local
+  resolution: "@datadog/js-core@workspace:packages/js-core"
   languageName: unknown
   linkType: soft
 

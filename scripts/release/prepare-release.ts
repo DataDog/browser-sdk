@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import { parseArgs } from 'node:util'
 import { runMain, printLog } from '../lib/executionUtils.ts'
-import { findPackageJsonFiles } from '../lib/filesUtils.ts'
+import { findPackageJsonFiles, isIndependentlyVersionedPackage, isSemanticVersion } from '../lib/filesUtils.ts'
 import { command } from '../lib/command.ts'
 
 runMain(() => {
@@ -59,17 +59,32 @@ runMain(() => {
 function setVersionInPackageJsonFiles(version: string) {
   const packageJsonFiles = findPackageJsonFiles()
 
+  // Independently-versioned packages (e.g. @datadog/js-core) are not synced to the release version.
+  // For now they get a simple patch bump on each release. Compute their new versions up front so we
+  // can also update the packages that depend on them.
+  const independentVersions = new Map<string, string>()
+  for (const { content } of packageJsonFiles) {
+    if (content.name && isIndependentlyVersionedPackage(content.name) && isSemanticVersion(content.version)) {
+      independentVersions.set(content.name, incrementPatch(content.version!))
+    }
+  }
+
   for (const { path: absolutePath, content } of packageJsonFiles) {
-    if (isSemanticVersion(content.version)) {
+    if (content.name && independentVersions.has(content.name)) {
+      content.version = independentVersions.get(content.name)
+    } else if (!isIndependentlyVersionedPackage(content.name) && isSemanticVersion(content.version)) {
       content.version = version
     }
+
     for (const depField of ['dependencies', 'peerDependencies', 'devDependencies'] as const) {
       if (!content[depField]) {
         continue
       }
 
       for (const [key, value] of Object.entries(content[depField])) {
-        if (key.startsWith('@datadog/browser-') && isSemanticVersion(value)) {
+        if (independentVersions.has(key) && isSemanticVersion(value)) {
+          content[depField][key] = independentVersions.get(key)!
+        } else if (key.startsWith('@datadog/browser-') && isSemanticVersion(value)) {
           content[depField][key] = version
         }
       }
@@ -79,6 +94,8 @@ function setVersionInPackageJsonFiles(version: string) {
   }
 }
 
-function isSemanticVersion(input: string | undefined): boolean {
-  return input !== undefined && /^\d+\.\d+\.\d+$/.test(input)
+// Bumps the patch component (e.g. `0.0.1` -> `0.0.2`).
+function incrementPatch(version: string): string {
+  const [major, minor, patch] = version.split('.').map(Number)
+  return `${major}.${minor}.${patch + 1}`
 }

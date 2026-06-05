@@ -14,6 +14,7 @@
   },
   "resolutions": {
     "@datadog/browser-core": "file:../../../packages/browser-core/package.tgz",
+    "@datadog/js-core": "file:../../../packages/js-core/package.tgz",
     "@datadog/browser-debugger": "file:../../../packages/browser-debugger/package.tgz"
   },
   "devDependencies": {

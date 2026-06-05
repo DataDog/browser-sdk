@@ -83,6 +83,7 @@ export { createIdentityEncoder } from './tools/encoder'
 export * from './tools/utils/urlPolyfill'
 export * from './tools/utils/timeUtils'
 export * from './tools/utils/arrayUtils'
+
 export * from './tools/serialisation/sanitize'
 export * from './tools/globalObject'
 export { AbstractLifeCycle } from './tools/abstractLifeCycle'
