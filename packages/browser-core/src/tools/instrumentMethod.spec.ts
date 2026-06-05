@@ -1,4 +1,4 @@
-import { mockClock, mockZoneJs } from '../../test'
+import { mockClock, mockZoneJs, registerCleanupTask } from '../../test'
 import type { Clock, MockZoneJs } from '../../test'
 import type { InstrumentedMethodCall } from './instrumentMethod'
 import { instrumentConstructor, instrumentMethod, instrumentSetter } from './instrumentMethod'
@@ -210,6 +210,19 @@ describe('instrumentConstructor', () => {
     }
   }
 
+  const initialMyClassPrototypeConstructor = Object.getOwnPropertyDescriptor(MyClass.prototype, 'constructor')!
+
+  beforeEach(() => {
+    // Several tests instrument without calling `stop()`; they share this `MyClass` and leave
+    // `MyClass.prototype.constructor` pointing at a stale wrapper, which breaks random-order runs.
+    Object.defineProperty(MyClass.prototype, 'constructor', {
+      configurable: initialMyClassPrototypeConstructor.configurable!,
+      enumerable: initialMyClassPrototypeConstructor.enumerable!,
+      writable: initialMyClassPrototypeConstructor.writable,
+      value: MyClass,
+    })
+  })
+
   it('calls the instrumentation when the constructor is called with new', () => {
     const container = { MyClass }
     const instrumentationSpy = jasmine.createSpy()
@@ -235,6 +248,16 @@ describe('instrumentConstructor', () => {
     // The instance is recognized both as the original class and as the instrumented value.
     expect(instance instanceof MyClass).toBeTrue()
     expect(instance instanceof container.MyClass).toBeTrue()
+  })
+
+  it('exposes the instrumented constructor as instance.constructor', () => {
+    const container = { MyClass }
+    const { stop } = instrumentConstructor(container, 'MyClass', noop)
+    registerCleanupTask(stop)
+
+    const instance = new container.MyClass(1)
+
+    expect(instance.constructor).toBe(container.MyClass)
   })
 
   it('preserves new.target as the original constructor for direct new calls', () => {
@@ -378,6 +401,62 @@ describe('instrumentConstructor', () => {
       expect(instance instanceof Sub).toBeTrue()
       expect(instance.extra()).toBe('sub')
       expect(instance.value).toBe(5)
+    })
+
+    it('restores the prototype constructor descriptor and prototype object identity after stop()', () => {
+      const container = { MyClass }
+      const prototypeObject = MyClass.prototype
+      const constructorDescriptorBefore = Object.getOwnPropertyDescriptor(prototypeObject, 'constructor')!
+
+      const { stop } = instrumentConstructor(container, 'MyClass', noop)
+
+      expect(container.MyClass.prototype).toBe(prototypeObject)
+      expect(new container.MyClass(1).constructor).toBe(container.MyClass)
+
+      stop()
+
+      expect(container.MyClass).toBe(MyClass)
+      expect(MyClass.prototype).toBe(prototypeObject)
+      expect(Object.getOwnPropertyDescriptor(prototypeObject, 'constructor')).toEqual(constructorDescriptorBefore)
+      expect(prototypeObject.constructor).toBe(MyClass)
+
+      const instance = new container.MyClass(2)
+      expect(instance.constructor).toBe(MyClass)
+    })
+
+    it('restores prototype.constructor after stop when the prototype had no own constructor descriptor', () => {
+      class NoOwnPrototypeConstructor {
+        x: number
+        constructor(x: number) {
+          this.x = x
+        }
+      }
+
+      const prototypeObject = NoOwnPrototypeConstructor.prototype
+      delete (prototypeObject as unknown as { constructor?: typeof NoOwnPrototypeConstructor }).constructor
+
+      expect(Object.getOwnPropertyDescriptor(prototypeObject, 'constructor')).toBeUndefined()
+
+      const container = { NoOwnPrototypeConstructor }
+      const { stop } = instrumentConstructor(container, 'NoOwnPrototypeConstructor', noop)
+      registerCleanupTask(stop)
+
+      new container.NoOwnPrototypeConstructor(1)
+
+      stop()
+
+      expect(container.NoOwnPrototypeConstructor).toBe(NoOwnPrototypeConstructor)
+      expect(NoOwnPrototypeConstructor.prototype).toBe(prototypeObject)
+      expect(Object.getOwnPropertyDescriptor(prototypeObject, 'constructor')).toEqual({
+        value: NoOwnPrototypeConstructor,
+        writable: true,
+        enumerable: false,
+        configurable: true,
+      })
+
+      const instance = new NoOwnPrototypeConstructor(2)
+      expect(instance.constructor).toBe(NoOwnPrototypeConstructor)
+      expect(instance.x).toBe(2)
     })
   })
 })
