@@ -104,7 +104,7 @@
     "puppeteer-core@npm:21.11.0/ws": "8.17.1"
   },
   "volta": {
-    "node": "25.9.0",
+    "node": "26.2.0",
     "yarn": "4.15.0"
   },
   "packageManager": "yarn@4.15.0"
