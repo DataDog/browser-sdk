@@ -11,11 +11,6 @@ import {
 } from './probes'
 import type { Probe } from './probes'
 
-interface TemplateWithCache {
-  createFunction: (params: string[]) => (...args: any[]) => any
-  clearCache?: () => void
-}
-
 describe('probes', () => {
   beforeEach(() => {
     clearProbes()
@@ -44,9 +39,9 @@ describe('probes', () => {
       expect(retrieved).toEqual([
         jasmine.objectContaining({
           id: 'test-probe-1',
-          templateRequiresEvaluation: false,
         }),
       ])
+      expect(retrieved![0].evaluateTemplate).toBeUndefined()
     })
 
     it('should return undefined for non-existent probe', () => {
@@ -76,38 +71,6 @@ describe('probes', () => {
       expect(getProbes('TestClass;testMethod')).toBeUndefined()
     })
 
-    it('should clear function cache when removing probe with dynamic template', () => {
-      const probe: Probe = {
-        id: 'test-probe-1',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'cacheTest' },
-        template: '',
-        segments: [{ dsl: 'x', json: { ref: 'x' } }],
-        captureSnapshot: false,
-        capture: {},
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
-
-      addProbe(probe)
-      const retrieved = getProbes('TestClass;cacheTest')
-      const template = retrieved![0].template as TemplateWithCache
-
-      // Create some cached functions
-      template.createFunction(['x', 'y'])
-      template.createFunction(['x', 'z'])
-
-      // Spy on clearCache method
-      const clearCacheSpy = jasmine.createSpy('clearCache')
-      template.clearCache = clearCacheSpy
-
-      removeProbe('test-probe-1')
-
-      // Verify clearCache was called
-      expect(clearCacheSpy).toHaveBeenCalled()
-    })
-
     it('should handle removing probe with static template without errors', () => {
       const probe: Probe = {
         id: 'test-probe-1',
@@ -123,7 +86,7 @@ describe('probes', () => {
 
       addProbe(probe)
 
-      // Should not throw when removing probe with static template (no clearCache method)
+      // Should not throw when removing probe with static template
       expect(() => removeProbe('test-probe-1')).not.toThrow()
     })
 
@@ -219,12 +182,12 @@ describe('probes', () => {
 
       expect(probe).toEqual(
         jasmine.objectContaining({
-          templateRequiresEvaluation: false,
           template: 'Static message',
           msBetweenSampling: jasmine.any(Number),
           lastCaptureMs: -Infinity,
         })
       )
+      expect(probe.evaluateTemplate).toBeUndefined()
     })
 
     it('should initialize probe with dynamic template', () => {
@@ -245,11 +208,8 @@ describe('probes', () => {
 
       expect(probe).toEqual(
         jasmine.objectContaining({
-          templateRequiresEvaluation: true,
-          template: {
-            createFunction: jasmine.any(Function),
-            clearCache: jasmine.any(Function),
-          },
+          template: '',
+          evaluateTemplate: jasmine.any(Function),
         })
       )
       expect(probe.segments).toBeUndefined() // Should be deleted after initialization
@@ -277,7 +237,6 @@ describe('probes', () => {
       expect(probe.condition).toEqual(
         jasmine.objectContaining({
           evaluate: jasmine.any(Function),
-          clearCache: jasmine.any(Function),
         })
       )
     })
@@ -366,7 +325,7 @@ describe('probes', () => {
       expect(probe.msBetweenSampling).toBeLessThan(1) // 5000 per second = 0.2ms
     })
 
-    it('should cache compiled functions by context keys', () => {
+    it('should evaluate dynamic template with cached functions', () => {
       const probe: Probe = {
         id: 'test-probe-1',
         version: 0,
@@ -382,16 +341,8 @@ describe('probes', () => {
 
       initializeProbe(probe)
 
-      const template = probe.template as TemplateWithCache
-      const fn1 = template.createFunction(['x', 'y'])
-      const fn2 = template.createFunction(['x', 'y'])
-
-      // Should return the same cached function
-      expect(fn1).toBe(fn2)
-
-      const fn3 = template.createFunction(['x', 'z'])
-      // Different keys should create different function
-      expect(fn1).not.toBe(fn3)
+      expect(probe.evaluateTemplate!({ x: 1 })).toEqual(['1'])
+      expect(probe.evaluateTemplate!({ x: 2 })).toEqual(['2'])
     })
   })
 
@@ -428,69 +379,6 @@ describe('probes', () => {
 
       expect(getProbes('TestClass;clear1')).toBeUndefined()
       expect(getProbes('TestClass;clear2')).toBeUndefined()
-    })
-
-    it('should clear function caches for all probes with dynamic templates', () => {
-      const probe1: Probe = {
-        id: 'test-probe-1',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'clearCache1' },
-        template: '',
-        segments: [{ dsl: 'x', json: { ref: 'x' } }],
-        captureSnapshot: false,
-        capture: {},
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
-
-      const probe2: Probe = {
-        id: 'test-probe-2',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'clearCache2' },
-        template: '',
-        segments: [{ dsl: 'y', json: { ref: 'y' } }],
-        captureSnapshot: false,
-        capture: {},
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
-
-      const probe3: Probe = {
-        id: 'test-probe-3',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'clearCache3' },
-        template: 'Static message',
-        captureSnapshot: false,
-        capture: {},
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
-
-      addProbe(probe1)
-      addProbe(probe2)
-      addProbe(probe3)
-
-      const template1 = getProbes('TestClass;clearCache1')![0].template as TemplateWithCache
-      const template2 = getProbes('TestClass;clearCache2')![0].template as TemplateWithCache
-
-      // Create some cached functions
-      template1.createFunction(['x'])
-      template2.createFunction(['y'])
-
-      // Spy on clearCache methods
-      const clearCache1Spy = jasmine.createSpy('clearCache1')
-      const clearCache2Spy = jasmine.createSpy('clearCache2')
-      template1.clearCache = clearCache1Spy
-      template2.clearCache = clearCache2Spy
-
-      clearProbes()
-
-      // Verify clearCache was called for both dynamic template probes
-      expect(clearCache1Spy).toHaveBeenCalled()
-      expect(clearCache2Spy).toHaveBeenCalled()
     })
   })
 
