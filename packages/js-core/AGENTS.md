@@ -38,29 +38,30 @@ Every export must work in both Node.js and browser environments. Do not add:
 - Node.js built-in modules (`fs`, `path`, `process`, etc.)
 - Any API that is not available in both runtimes
 
-### Sub-paths via physical directories
+### Sub-path exports
 
 All APIs live under a named sub-path (e.g. `@datadog/js-core/time`). There is no root entry
 point. Each sub-path corresponds to a single source file under `src/`.
 
-Each sub-path is resolved via a **physical `<name>/package.json` directory** (relative
-`main`/`module`/`types`, see `time/package.json`) — the same maximally-compatible pattern the rest
-of the Browser SDK uses (e.g. `@datadog/browser-rum/internal`). This works across all resolvers,
-including legacy ones (webpack 4, old Node, older Jest/ts-node).
+Each sub-path is exposed **two ways** for maximum compatibility:
 
-We deliberately do **not** use the `package.json` `"exports"` field yet. `exports` would give
-encapsulation and explicit `import`/`require`/`types` conditions, but it breaks resolvers that
-predate it, and getting native-Node ESM right under `exports` requires extra packaging (a
-`.mjs`/`type: module` ESM scope) the build doesn't currently emit. Since this package is published
-transitively to all Browser SDK consumers, switching to `exports` is a breaking change — defer it
-to a future **major** Browser SDK release.
+- **`exports` field** (root `package.json`) — used by modern resolvers (webpack 5, Vite, esbuild,
+  Rollup, native Node ESM/CJS, TypeScript `node16`/`nodenext`/`bundler`). Maps the sub-path to the
+  correct `import` (ESM), `require` (CJS), and `types` targets. The build emits `esm/package.json`
+  with `{"type":"module"}` so Node.js correctly treats `esm/*.js` as ES modules (pass
+  `--esm-type-module` to `build-package.ts`).
+- **Physical `<name>/package.json` fallback** — used by legacy resolvers that ignore `exports`
+  (webpack 4, old Node, older Jest/ts-node). Relative `main`/`module`/`types` pointing at the
+  same built files.
 
 When adding a new sub-path:
 
 1. Create `src/<name>.ts`
-2. Add a physical `<name>/package.json` with relative `main`/`module`/`types` (see
+2. Add `"./<name>"` to the `exports` field in `package.json` with `import`, `require`, and `types`
+   conditions
+3. Add a physical `<name>/package.json` with relative `main`/`module`/`types` (see
    `time/package.json`), and add `"<name>"` to the `files` array so it ships in the package
-3. Add `"@datadog/js-core/<name>"` to the `paths` map in the root `tsconfig.base.json`
+4. Add `"@datadog/js-core/<name>"` to the `paths` map in the root `tsconfig.base.json`
 
 ## Current sub-paths
 
