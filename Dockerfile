@@ -6,6 +6,9 @@ RUN npx -y playwright@1.40.1 install --with-deps chromium firefox webkit
 
 FROM node:26.2.0-bookworm-slim
 
+# Node 26 slim images don't bundle yarn — install it globally
+RUN npm install -g yarn
+
 ARG CHROME_PACKAGE_VERSION
 
 SHELL ["/bin/bash", "-c"]
