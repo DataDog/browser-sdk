@@ -3,6 +3,8 @@ import { test, expect } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import { createTest } from '../lib/framework'
 
+const DEBUGGER_POLL_INTERVAL = 1_000
+
 function makeProbe({
   id = 'test-probe-1',
   version = 1,
@@ -53,12 +55,29 @@ async function waitForProbe(page: Page, functionId: string) {
   }, functionId)
 }
 
+async function waitForNoProbe(page: Page, functionId: string) {
+  await page.waitForFunction((id) => {
+    const $dd_probes = (globalThis as any).$dd_probes as ((id: string) => unknown[] | undefined) | undefined
+    const probes = $dd_probes?.(id)
+    return $dd_probes !== undefined && (probes === undefined || probes.length === 0)
+  }, functionId)
+}
+
 /**
  * Injects an instrumented function into the page that calls the debugger hooks, and waits
  * for the SDK to register the corresponding probe before returning.
  * The function is named `testFunction` and registered under the `TestModule;testFunction` function ID.
  */
 async function injectInstrumentedFunction(page: Page) {
+  await injectInstrumentedFunctionWithoutWaiting(page)
+  await waitForProbe(page, 'TestModule;testFunction')
+}
+
+/**
+ * Injects the same instrumented function as `injectInstrumentedFunction`, but does not
+ * wait for a probe. This lets polling tests observe the uninstrumented state first.
+ */
+async function injectInstrumentedFunctionWithoutWaiting(page: Page) {
   await page.evaluate(() => {
     const $dd_probes = (globalThis as any).$dd_probes as (id: string) => unknown[] | undefined
     const $dd_entry = (globalThis as any).$dd_entry as (probes: unknown[], self: unknown, args: object) => void
@@ -83,7 +102,6 @@ async function injectInstrumentedFunction(page: Page) {
       return returnValue
     }
   })
-  await waitForProbe(page, 'TestModule;testFunction')
 }
 
 /**
@@ -202,6 +220,75 @@ test.describe('debugger', () => {
       const snapshot = (intakeRegistry.debuggerEvents[0].debugger as any).snapshot
       expect(snapshot.captures.return.throwable).toBeDefined()
       expect(snapshot.captures.return.throwable.message).toBe('test error')
+
+      const stacktrace = snapshot.captures.return.throwable.stacktrace
+      expect(stacktrace).toBeDefined()
+      expect(stacktrace.length).toBeGreaterThan(0)
+
+      const firstFrame = stacktrace[0]
+      expect(firstFrame.function).toEqual(expect.any(String))
+      expect(firstFrame.fileName).toEqual(expect.any(String))
+      expect(firstFrame.lineNumber).toEqual(expect.any(Number))
+    })
+
+  createTest('fetch probes from the Delivery API after initial load')
+    .withDebugger({ pollInterval: DEBUGGER_POLL_INTERVAL })
+    .run(async ({ intakeRegistry, datadogHttpApiControl, flushEvents, page }) => {
+      datadogHttpApiControl.debugger.setDebuggerProbes([])
+
+      await page.reload()
+      await injectInstrumentedFunctionWithoutWaiting(page)
+      await waitForNoProbe(page, 'TestModule;testFunction')
+
+      datadogHttpApiControl.debugger.setDebuggerProbes([makeProbe()])
+      await waitForProbe(page, 'TestModule;testFunction')
+
+      await page.evaluate(() => {
+        ;(window as any).testFunction('after', ' poll')
+      })
+      await flushEvents()
+
+      expect(intakeRegistry.debuggerEvents.length).toBeGreaterThanOrEqual(1)
+      expect(intakeRegistry.debuggerEvents[0].message).toBe('Probe hit')
+    })
+
+  createTest('stop sending snapshots after probe deletion is delivered')
+    .withDebugger({ pollInterval: DEBUGGER_POLL_INTERVAL })
+    .run(async ({ intakeRegistry, datadogHttpApiControl, flushEvents, page }) => {
+      const probe = makeProbe()
+      datadogHttpApiControl.debugger.setDebuggerProbes([probe])
+
+      await page.reload()
+      await injectInstrumentedFunction(page)
+
+      datadogHttpApiControl.debugger.setDebuggerProbeResponse({ deletions: [probe.id] })
+      await waitForNoProbe(page, 'TestModule;testFunction')
+
+      await page.evaluate(() => {
+        ;(window as any).testFunction('after', ' deletion')
+      })
+      await flushEvents()
+
+      expect(intakeRegistry.debuggerEvents).toHaveLength(0)
+    })
+
+  createTest('safely capture browser-native objects')
+    .withDebugger()
+    .run(async ({ intakeRegistry, datadogHttpApiControl, flushEvents, page }) => {
+      const probe = makeProbe()
+      datadogHttpApiControl.debugger.setDebuggerProbes([probe])
+
+      await page.reload()
+      await injectInstrumentedFunction(page)
+
+      await page.evaluate(() => {
+        ;(window as any).testFunction(document.body, new MouseEvent('click'))
+      })
+
+      await flushEvents()
+
+      expect(intakeRegistry.debuggerEvents.length).toBeGreaterThanOrEqual(1)
+      expect(intakeRegistry.debuggerEvents[0].message).toBe('Probe hit')
     })
 
   createTest('evaluate probe message template with expression segments')
