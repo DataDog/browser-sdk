@@ -2,10 +2,10 @@ import express from 'express'
 import cors from 'cors'
 import { createIntakeProxyMiddleware } from '../intakeProxyMiddleware.ts'
 import type { IntakeRegistry } from '../intakeRegistry'
+import { addDebuggerDatadogProxy } from './debuggerDatadogProxy'
 
-export function createIntakeServerApp(intakeRegistry: IntakeRegistry) {
+export function createDatadogProxyServer(intakeRegistry: IntakeRegistry) {
   const app = express()
-  let debuggerProbes: object[] = []
 
   app.use(cors())
 
@@ -21,13 +21,5 @@ export function createIntakeServerApp(intakeRegistry: IntakeRegistry) {
     }
   })
 
-  app.post('/api/unstable/debugger/frontend/probes', (_req, res) => {
-    res.json({ nextCursor: '', updates: debuggerProbes, deletions: [] })
-  })
-
-  return Object.assign(app, {
-    setDebuggerProbes(probes: object[]) {
-      debuggerProbes = probes
-    },
-  })
+  return addDebuggerDatadogProxy({ app })
 }

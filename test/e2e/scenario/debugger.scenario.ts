@@ -2,11 +2,6 @@
 import { test, expect } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import { createTest } from '../lib/framework'
-import type { Servers } from '../lib/framework'
-
-function setDebuggerProbes(servers: Servers, probes: object[]) {
-  servers.intake.app.setDebuggerProbes(probes)
-}
 
 function makeProbe({
   id = 'test-probe-1',
@@ -127,9 +122,9 @@ async function injectThrowingFunction(page: Page) {
 test.describe('debugger', () => {
   createTest('send debugger snapshot when instrumented function is called')
     .withDebugger()
-    .run(async ({ intakeRegistry, flushEvents, page, servers }) => {
+    .run(async ({ intakeRegistry, datadogProxyControl, flushEvents, page }) => {
       const probe = makeProbe()
-      setDebuggerProbes(servers, [probe])
+      datadogProxyControl.debugger.setDebuggerProbes([probe])
 
       await page.reload()
       await injectInstrumentedFunction(page)
@@ -156,9 +151,9 @@ test.describe('debugger', () => {
 
   createTest('capture function arguments and return value')
     .withDebugger()
-    .run(async ({ intakeRegistry, flushEvents, page, servers }) => {
+    .run(async ({ intakeRegistry, datadogProxyControl, flushEvents, page }) => {
       const probe = makeProbe({ captureSnapshot: true })
-      setDebuggerProbes(servers, [probe])
+      datadogProxyControl.debugger.setDebuggerProbes([probe])
 
       await page.reload()
       await injectInstrumentedFunction(page)
@@ -182,12 +177,12 @@ test.describe('debugger', () => {
 
   createTest('capture exception in snapshot on throw')
     .withDebugger()
-    .run(async ({ intakeRegistry, flushEvents, page, servers }) => {
+    .run(async ({ intakeRegistry, datadogProxyControl, flushEvents, page }) => {
       const probe = makeProbe({
         typeName: 'TestModule',
         methodName: 'throwingFunction',
       })
-      setDebuggerProbes(servers, [probe])
+      datadogProxyControl.debugger.setDebuggerProbes([probe])
 
       await page.reload()
       await injectThrowingFunction(page)
@@ -211,7 +206,7 @@ test.describe('debugger', () => {
 
   createTest('evaluate probe message template with expression segments')
     .withDebugger()
-    .run(async ({ intakeRegistry, flushEvents, page, servers }) => {
+    .run(async ({ intakeRegistry, datadogProxyControl, flushEvents, page }) => {
       const probe = makeProbe({
         template: '',
         segments: [
@@ -221,7 +216,7 @@ test.describe('debugger', () => {
           { dsl: 'b', json: { ref: 'b' } },
         ],
       })
-      setDebuggerProbes(servers, [probe])
+      datadogProxyControl.debugger.setDebuggerProbes([probe])
 
       await page.reload()
       await injectInstrumentedFunction(page)
@@ -238,7 +233,7 @@ test.describe('debugger', () => {
 
   createTest('do not send snapshot when probe condition is not met')
     .withDebugger()
-    .run(async ({ intakeRegistry, flushEvents, page, servers }) => {
+    .run(async ({ intakeRegistry, datadogProxyControl, flushEvents, page }) => {
       const probe = makeProbe({
         evaluateAt: 'EXIT',
         condition: {
@@ -246,7 +241,7 @@ test.describe('debugger', () => {
           json: { eq: [{ ref: '$dd_return' }, 'match'] },
         },
       })
-      setDebuggerProbes(servers, [probe])
+      datadogProxyControl.debugger.setDebuggerProbes([probe])
 
       await page.reload()
       await injectInstrumentedFunction(page)
@@ -262,7 +257,7 @@ test.describe('debugger', () => {
 
   createTest('send snapshot when probe condition is met')
     .withDebugger()
-    .run(async ({ intakeRegistry, flushEvents, page, servers }) => {
+    .run(async ({ intakeRegistry, datadogProxyControl, flushEvents, page }) => {
       const probe = makeProbe({
         evaluateAt: 'EXIT',
         condition: {
@@ -270,7 +265,7 @@ test.describe('debugger', () => {
           json: { eq: [{ ref: '$dd_return' }, 'foobar'] },
         },
       })
-      setDebuggerProbes(servers, [probe])
+      datadogProxyControl.debugger.setDebuggerProbes([probe])
 
       await page.reload()
       await injectInstrumentedFunction(page)
@@ -288,9 +283,9 @@ test.describe('debugger', () => {
   createTest('omit trace correlation data when no active span is available')
     .withRum()
     .withDebugger()
-    .run(async ({ intakeRegistry, flushEvents, page, servers }) => {
+    .run(async ({ intakeRegistry, datadogProxyControl, flushEvents, page }) => {
       const probe = makeProbe()
-      setDebuggerProbes(servers, [probe])
+      datadogProxyControl.debugger.setDebuggerProbes([probe])
 
       await page.reload()
       await injectInstrumentedFunction(page)

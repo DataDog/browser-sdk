@@ -18,6 +18,7 @@ export {
 export { IntakeRegistry } from './intakeRegistry'
 export { getTestServers, waitForServersIdle } from './httpServers'
 export type { Servers } from './httpServers'
+export type { DebuggerDatadogProxyControl } from './serverApps/debuggerDatadogProxy'
 export { flushEvents } from './flushEvents'
 export { waitForRequests } from './waitForRequests'
 export { LARGE_RESPONSE_MIN_BYTE_SIZE } from './serverApps/mock'
