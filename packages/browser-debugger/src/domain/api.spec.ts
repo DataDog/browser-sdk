@@ -516,6 +516,57 @@ describe('api', () => {
       }
     })
 
+    it('should capture non-Error thrown values', () => {
+      addProbe(createProbe())
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      onEntry(probes, {}, {})
+      onThrow(probes, 'Test error', {}, {})
+
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
+      expect(snapshot.captures.return.throwable).toEqual({
+        message: 'Test error',
+        stacktrace: [],
+      })
+    })
+
+    it('should capture cross-realm Error thrown values', () => {
+      addProbe(createProbe())
+
+      const iframe = document.createElement('iframe')
+      document.body.appendChild(iframe)
+      registerCleanupTask(() => iframe.remove())
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      const iframeWindow = iframe.contentWindow as Window & { Error: ErrorConstructor }
+      const error = new iframeWindow.Error('Iframe error')
+      onEntry(probes, {}, {})
+      onThrow(probes, error, {}, {})
+
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
+      expect(snapshot.captures.return.throwable).toEqual({
+        message: 'Iframe error',
+        stacktrace: jasmine.any(Array),
+      })
+    })
+
+    it('should capture thrown values that cannot be coerced to strings', () => {
+      addProbe(createProbe())
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      onEntry(probes, {}, {})
+      expect(() => onThrow(probes, Object.create(null), {}, {})).not.toThrow()
+
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
+      expect(snapshot.captures.return.throwable).toEqual({
+        message: '{}',
+        stacktrace: [],
+      })
+    })
+
     it('should evaluate EXIT condition with @exception', () => {
       addProbe(
         createProbe({

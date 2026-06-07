@@ -1,7 +1,14 @@
 import type { Batch, Context } from '@datadog/browser-core'
 import { timeStampNow } from '@datadog/js-core/time'
 
-import { buildTag, generateUUID, globalObject } from '@datadog/browser-core'
+import {
+  buildTag,
+  generateUUID,
+  globalObject,
+  isError,
+  jsonStringify,
+  sanitize,
+} from '@datadog/browser-core'
 import type { BrowserWindow, DebuggerInitConfiguration } from '../entries/main'
 import { capture, captureFields } from './capture'
 import type { CaptureContext } from './capture'
@@ -14,7 +21,7 @@ import {
   resetProbeBudgetConfiguration,
   setProbeBudgetConfiguration,
 } from './probes'
-import type { ActiveEntry } from './activeEntries'
+import type { ActiveEntry, Throwable } from './activeEntries'
 import { captureStackTrace, parseStackTrace } from './stacktrace'
 import { evaluateProbeMessage } from './template'
 import { evaluateProbeCondition, isConditionEvaluationError } from './condition'
@@ -208,11 +215,11 @@ export function onReturn(
  * Called when exiting an instrumented function via exception
  *
  * @param probes - Array of probes for this function
- * @param error - The thrown error
+ * @param error - The thrown value
  * @param self - The 'this' context
  * @param args - Function arguments
  */
-export function onThrow(probes: InitializedProbe[], error: Error, self: any, args: Record<string, any> = {}): void {
+export function onThrow(probes: InitializedProbe[], error: unknown, self: any, args: Record<string, any> = {}): void {
   const end = performance.now()
   const captureCtx: CaptureContext = { deadline: performance.now() + SNAPSHOT_TIMEOUT_MS, timedOut: false }
 
@@ -265,13 +272,44 @@ export function onThrow(probes: InitializedProbe[], error: Error, self: any, arg
 
     result.return = {
       arguments: throwArguments,
-      throwable: {
-        message: error.message,
-        stacktrace: parseStackTrace(error),
-      },
+      throwable: formatThrowable(error),
     }
 
     queueDebuggerSnapshot(probe, result)
+  }
+}
+
+function formatThrowable(error: unknown): Throwable {
+  if (isError(error)) {
+    return {
+      message: error.message,
+      stacktrace: tryParseStackTrace(error),
+    }
+  }
+
+  return {
+    message: formatNonErrorMessage(error),
+    stacktrace: [],
+  }
+}
+
+function tryParseStackTrace(error: Error) {
+  try {
+    return parseStackTrace(error)
+  } catch {
+    return []
+  }
+}
+
+function formatNonErrorMessage(error: unknown): string {
+  if (typeof error === 'string') {
+    return error
+  }
+
+  try {
+    return String(error)
+  } catch {
+    return jsonStringify(sanitize(error)) ?? '<error: unable to stringify thrown value>'
   }
 }
 

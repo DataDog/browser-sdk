@@ -1,6 +1,12 @@
 import type { StackFrame } from './stacktrace'
 import type { EvaluationError } from './condition'
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- `type` is needed for implicit index signature compatibility with Context
+export type Throwable = {
+  message: string
+  stacktrace: StackFrame[]
+}
+
 export interface ActiveEntry {
   start: number
   timestamp?: number
@@ -14,10 +20,7 @@ export interface ActiveEntry {
   return?: {
     arguments?: Record<string, any>
     locals?: Record<string, any>
-    throwable?: {
-      message: string
-      stacktrace: StackFrame[]
-    }
+    throwable?: Throwable
   }
-  exception?: Error
+  exception?: unknown
 }
