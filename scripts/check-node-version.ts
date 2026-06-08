@@ -29,8 +29,7 @@ async function retrieveDockerVersion(): Promise<string> {
   const fileStream = fs.createReadStream(path.join(import.meta.dirname, '..', 'Dockerfile'))
   const rl = readline.createInterface({ input: fileStream })
   for await (const line of rl) {
-    // Main stage: FROM node:X.Y.Z-... without an AS clause (helper stages have AS <name>)
-    if (/^FROM node:\d/.test(line) && !/ AS /i.test(line)) {
+    if (/^FROM node:\S+$/.test(line)) {
       return extractVersion(line)
     }
   }

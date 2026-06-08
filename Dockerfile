@@ -65,8 +65,8 @@ RUN set -x \
 # Node fsevents deps
 RUN apt-get install -y -q --no-install-recommends g++ build-essential
 
-# Datadog CI cli (yarn is not bundled in Node 26 slim images; use npm)
-RUN npm install -g @datadog/datadog-ci
+# Datadog CI cli
+RUN yarn global add @datadog/datadog-ci
 
 # Gihub cli
 RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg -o /usr/share/keyrings/githubcli-archive-keyring.gpg \

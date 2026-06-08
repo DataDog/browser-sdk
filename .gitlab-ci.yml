@@ -123,7 +123,7 @@ ci-image:
   extends:
     - .base-configuration
     - .feature-branches
-  when: on_success
+  when: manual
   tags: ['arch:amd64']
   image: $BUILD_STABLE_REGISTRY/images/docker:27.3.1
   id_tokens:
