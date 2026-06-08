@@ -1,6 +1,7 @@
 import type { RelativeTime } from '@datadog/js-core/time'
-import type { Hook, RecursivePartial, TelemetryEvent } from '@datadog/browser-core'
-import { createHook } from '@datadog/browser-core'
+import type { TelemetryEvent } from '@datadog/browser-core'
+import { createHook } from '@datadog/js-core/assembly'
+import type { Hook, RecursivePartial } from '@datadog/js-core/assembly'
 import type { LogsEvent } from '../logsEvent.types'
 
 export type DefaultLogsEventAttributes = RecursivePartial<LogsEvent>

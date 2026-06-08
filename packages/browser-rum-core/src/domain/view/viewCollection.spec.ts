@@ -1,4 +1,5 @@
-import { DISCARDED, Observable } from '@datadog/browser-core'
+import { Observable } from '@datadog/browser-core'
+import { DISCARDED } from '@datadog/js-core/assembly'
 import type { Duration, ServerDuration, TimeStamp, RelativeTime } from '@datadog/js-core/time'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RecorderApi } from '../../boot/rumPublicApi'

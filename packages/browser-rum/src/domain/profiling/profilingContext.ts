@@ -1,4 +1,4 @@
-import { SKIPPED } from '@datadog/browser-core'
+import { SKIPPED } from '@datadog/js-core/assembly'
 import type { Hooks, ProfilingInternalContextSchema } from '@datadog/browser-rum-core'
 import { RumEventType } from '@datadog/browser-rum-core'
 

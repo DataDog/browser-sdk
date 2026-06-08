@@ -1,6 +1,7 @@
 import type { Context, EventRateLimiter, RawError } from '@datadog/browser-core'
+import { ErrorSource, buildTags, createEventRateLimiter } from '@datadog/browser-core'
 import { toRelativeTime } from '@datadog/js-core/time'
-import { DISCARDED, ErrorSource, buildTags, createEventRateLimiter } from '@datadog/browser-core'
+import { DISCARDED } from '@datadog/js-core/assembly'
 import { combine } from '@datadog/js-core/util'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { LogsEvent } from '../logsEvent.types'

@@ -1,5 +1,6 @@
 import type { ContextValue, Context } from '@datadog/browser-core'
-import { SESSION_TIME_OUT_DELAY, SKIPPED, createValueHistory, isEmptyObject } from '@datadog/browser-core'
+import { SESSION_TIME_OUT_DELAY, createValueHistory, isEmptyObject } from '@datadog/browser-core'
+import { SKIPPED } from '@datadog/js-core/assembly'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import { RumEventType } from '../../rawRumEvent.types'
