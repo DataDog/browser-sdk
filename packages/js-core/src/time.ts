@@ -64,7 +64,7 @@ export function timeStampNow(): TimeStamp {
  * @returns The elapsed duration in milliseconds.
  */
 export function elapsed(start: TimeStamp, end: TimeStamp): Duration
-export function elapsed(start: number, end: number): Duration
+export function elapsed(start: RelativeTime, end: RelativeTime): Duration
 export function elapsed(start: number, end: number) {
   return (end - start) as Duration
 }
