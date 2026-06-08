@@ -58,58 +58,33 @@ export function sanitize(source: unknown, maxCharacterCount = SANITIZE_DEFAULT_M
   const restoreObjectPrototypeToJson = detachToJsonMethod(Object.prototype)
   const restoreArrayPrototypeToJson = detachToJsonMethod(Array.prototype)
 
-  // Initial call to sanitizeProcessor - will populate containerQueue if source is an Array or a plain Object
-  const containerQueue: ContainerElementToProcess[] = []
-  const visitedObjectsWithPath = new WeakMap<object, string>()
-  const sanitizedData = sanitizeProcessor(
-    source as ExtendedContextValue,
-    JSON_PATH_ROOT_ELEMENT,
-    undefined,
-    containerQueue,
-    visitedObjectsWithPath
-  )
-  const serializedSanitizedData = JSON.stringify(sanitizedData)
-  let accumulatedCharacterCount = serializedSanitizedData ? serializedSanitizedData.length : 0
+  try {
+    // Initial call to sanitizeProcessor - will populate containerQueue if source is an Array or a plain Object
+    const containerQueue: ContainerElementToProcess[] = []
+    const visitedObjectsWithPath = new WeakMap<object, string>()
+    const sanitizedData = sanitizeProcessor(
+      source as ExtendedContextValue,
+      JSON_PATH_ROOT_ELEMENT,
+      undefined,
+      containerQueue,
+      visitedObjectsWithPath
+    )
+    const serializedSanitizedData = JSON.stringify(sanitizedData)
+    let accumulatedCharacterCount = serializedSanitizedData ? serializedSanitizedData.length : 0
 
-  if (accumulatedCharacterCount > maxCharacterCount) {
-    warnOverCharacterLimit(maxCharacterCount, 'discarded', source)
-    return undefined
-  }
+    if (accumulatedCharacterCount > maxCharacterCount) {
+      warnOverCharacterLimit(maxCharacterCount, 'discarded', source)
+      return undefined
+    }
 
-  while (containerQueue.length > 0 && accumulatedCharacterCount < maxCharacterCount) {
-    const containerToProcess = containerQueue.shift()!
-    let separatorLength = 0 // 0 for the first element, 1 for subsequent elements
+    while (containerQueue.length > 0 && accumulatedCharacterCount < maxCharacterCount) {
+      const containerToProcess = containerQueue.shift()!
+      let separatorLength = 0 // 0 for the first element, 1 for subsequent elements
 
-    // Arrays and Objects have to be handled distinctly to ensure
-    // we do not pick up non-numerical properties from Arrays
-    if (Array.isArray(containerToProcess.source)) {
-      for (let key = 0; key < containerToProcess.source.length; key++) {
-        const targetData = sanitizeProcessor(
-          containerToProcess.source[key],
-          containerToProcess.path,
-          key,
-          containerQueue,
-          visitedObjectsWithPath
-        )
-
-        if (targetData !== undefined) {
-          accumulatedCharacterCount += JSON.stringify(targetData).length
-        } else {
-          // When an element of an Array (targetData) is undefined, it is serialized as null:
-          // JSON.stringify([undefined]) => '[null]' - This accounts for 4 characters
-          accumulatedCharacterCount += 4
-        }
-        accumulatedCharacterCount += separatorLength
-        separatorLength = 1
-        if (accumulatedCharacterCount > maxCharacterCount) {
-          warnOverCharacterLimit(maxCharacterCount, 'truncated', source)
-          break
-        }
-        ;(containerToProcess.target as ContextArray)[key] = targetData
-      }
-    } else {
-      for (const key in containerToProcess.source) {
-        if (Object.prototype.hasOwnProperty.call(containerToProcess.source, key)) {
+      // Arrays and Objects have to be handled distinctly to ensure
+      // we do not pick up non-numerical properties from Arrays
+      if (Array.isArray(containerToProcess.source)) {
+        for (let key = 0; key < containerToProcess.source.length; key++) {
           const targetData = sanitizeProcessor(
             containerToProcess.source[key],
             containerToProcess.path,
@@ -117,28 +92,55 @@ export function sanitize(source: unknown, maxCharacterCount = SANITIZE_DEFAULT_M
             containerQueue,
             visitedObjectsWithPath
           )
-          // When a property of an object has an undefined value, it will be dropped during serialization:
-          // JSON.stringify({a:undefined}) => '{}'
+
           if (targetData !== undefined) {
-            accumulatedCharacterCount +=
-              JSON.stringify(targetData).length + separatorLength + key.length + KEY_DECORATION_LENGTH
-            separatorLength = 1
+            accumulatedCharacterCount += JSON.stringify(targetData).length
+          } else {
+            // When an element of an Array (targetData) is undefined, it is serialized as null:
+            // JSON.stringify([undefined]) => '[null]' - This accounts for 4 characters
+            accumulatedCharacterCount += 4
           }
+          accumulatedCharacterCount += separatorLength
+          separatorLength = 1
           if (accumulatedCharacterCount > maxCharacterCount) {
             warnOverCharacterLimit(maxCharacterCount, 'truncated', source)
             break
           }
-          ;(containerToProcess.target as Context)[key] = targetData
+          ;(containerToProcess.target as ContextArray)[key] = targetData
+        }
+      } else {
+        for (const key in containerToProcess.source) {
+          if (Object.prototype.hasOwnProperty.call(containerToProcess.source, key)) {
+            const targetData = sanitizeProcessor(
+              containerToProcess.source[key],
+              containerToProcess.path,
+              key,
+              containerQueue,
+              visitedObjectsWithPath
+            )
+            // When a property of an object has an undefined value, it will be dropped during serialization:
+            // JSON.stringify({a:undefined}) => '{}'
+            if (targetData !== undefined) {
+              accumulatedCharacterCount +=
+                JSON.stringify(targetData).length + separatorLength + key.length + KEY_DECORATION_LENGTH
+              separatorLength = 1
+            }
+            if (accumulatedCharacterCount > maxCharacterCount) {
+              warnOverCharacterLimit(maxCharacterCount, 'truncated', source)
+              break
+            }
+            ;(containerToProcess.target as Context)[key] = targetData
+          }
         }
       }
     }
+
+    return sanitizedData
+  } finally {
+    // Rebind detached toJSON functions
+    restoreObjectPrototypeToJson()
+    restoreArrayPrototypeToJson()
   }
-
-  // Rebind detached toJSON functions
-  restoreObjectPrototypeToJson()
-  restoreArrayPrototypeToJson()
-
-  return sanitizedData
 }
 
 /**
