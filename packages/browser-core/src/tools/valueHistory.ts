@@ -1,8 +1,8 @@
+import { ONE_MINUTE, addDuration, relativeNow } from '@datadog/js-core/time'
+import type { Duration, RelativeTime } from '@datadog/js-core/time'
 import { setInterval, clearInterval } from './timer'
 import type { TimeoutId } from './timer'
 import { removeItem } from './utils/arrayUtils'
-import type { Duration, RelativeTime } from './utils/timeUtils'
-import { addDuration, relativeNow, ONE_MINUTE } from './utils/timeUtils'
 
 const END_OF_TIMES = Infinity as RelativeTime
 

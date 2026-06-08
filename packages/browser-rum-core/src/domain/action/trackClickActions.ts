@@ -1,5 +1,6 @@
-import type { Duration, ClocksState, TimeStamp } from '@datadog/browser-core'
-import { timeStampNow, Observable, timeStampToClocks, relativeToClocks, generateUUID } from '@datadog/browser-core'
+import type { ClocksState, Duration, TimeStamp } from '@datadog/js-core/time'
+import { timeStampNow, timeStampToClocks, relativeToClocks } from '@datadog/js-core/time'
+import { Observable, generateUUID } from '@datadog/browser-core'
 import { isNodeShadowHost } from '../../browser/htmlDomUtils'
 import type { FrustrationType } from '../../rawRumEvent.types'
 import { ActionType } from '../../rawRumEvent.types'

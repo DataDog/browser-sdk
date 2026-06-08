@@ -1,3 +1,4 @@
+import { clocksNow } from '@datadog/js-core/time'
 import { isError, computeRawError } from '../error/error'
 import { Observable, mergeObservables } from '../../tools/observable'
 import { ConsoleApiName, globalConsole } from '../../tools/display'
@@ -8,7 +9,6 @@ import type { RawError } from '../error/error.types'
 import { ErrorHandling, ErrorSource, NonErrorPrefix } from '../error/error.types'
 import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { createHandlingStack, formatErrorMessage } from '../../tools/stackTrace/handlingStack'
-import { clocksNow } from '../../tools/utils/timeUtils'
 
 export type ConsoleLog = NonErrorConsoleLog | ErrorConsoleLog
 

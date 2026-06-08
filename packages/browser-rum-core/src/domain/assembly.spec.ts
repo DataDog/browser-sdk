@@ -1,13 +1,7 @@
-import type { ClocksState, RelativeTime, SessionManager, TimeStamp } from '@datadog/browser-core'
-import {
-  ErrorSource,
-  HookNames,
-  ONE_MINUTE,
-  display,
-  relativeToClocks,
-  startGlobalContext,
-  startTabContext,
-} from '@datadog/browser-core'
+import { ONE_MINUTE, relativeToClocks } from '@datadog/js-core/time'
+import type { TimeStamp, ClocksState, RelativeTime } from '@datadog/js-core/time'
+import type { SessionManager } from '@datadog/browser-core'
+import { ErrorSource, HookNames, display, startGlobalContext, startTabContext } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { registerCleanupTask, mockClock, createSessionManagerMock } from '@datadog/browser-core/test'
 import { createRawRumEvent, mockRumConfiguration, mockViewHistory, noopRecorderApi } from '../../test'

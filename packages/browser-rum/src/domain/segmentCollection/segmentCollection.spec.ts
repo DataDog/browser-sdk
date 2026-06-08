@@ -1,4 +1,5 @@
-import type { ClocksState, HttpRequest, HttpRequestEvent } from '@datadog/browser-core'
+import type { ClocksState } from '@datadog/js-core/time'
+import type { HttpRequest, HttpRequestEvent } from '@datadog/browser-core'
 import { DeflateEncoderStreamId, Observable, PageExitReason } from '@datadog/browser-core'
 import type { ViewHistory, ViewHistoryEntry, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'

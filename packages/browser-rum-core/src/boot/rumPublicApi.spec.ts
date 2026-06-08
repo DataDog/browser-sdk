@@ -1,14 +1,7 @@
-import type { RelativeTime, DeflateWorker, TimeStamp } from '@datadog/browser-core'
-import {
-  ONE_SECOND,
-  display,
-  DefaultPrivacyLevel,
-  timeStampToClocks,
-  ResourceType,
-  startTelemetry,
-  startSessionManager,
-  getTimeStamp,
-} from '@datadog/browser-core'
+import { ONE_SECOND, timeStampToClocks, toTimeStamp } from '@datadog/js-core/time'
+import type { TimeStamp, RelativeTime } from '@datadog/js-core/time'
+import type { DeflateWorker } from '@datadog/browser-core'
+import { display, DefaultPrivacyLevel, ResourceType, startTelemetry, startSessionManager } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
   collectAsyncCalls,
@@ -577,7 +570,7 @@ describe('rum public api', () => {
 
       expect(addTimingSpy).toHaveBeenCalledTimes(1)
       expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('foo')
-      expect(addTimingSpy.calls.argsFor(0)[1]).toBe(getTimeStamp(clock.relative(0)))
+      expect(addTimingSpy.calls.argsFor(0)[1]).toBe(toTimeStamp(clock.relative(0)))
       expect(displaySpy).not.toHaveBeenCalled()
     })
 

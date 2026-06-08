@@ -1,3 +1,4 @@
+import type { RelativeTime } from '@datadog/js-core/time'
 import type { AbstractHooks } from '../../tools/abstractHooks'
 import { CustomerDataType } from '../context/contextConstants'
 import { storeContextManager } from '../context/storeContextManager'
@@ -5,7 +6,6 @@ import { HookNames, SKIPPED } from '../../tools/abstractHooks'
 import { createContextManager } from '../context/contextManager'
 import type { Configuration } from '../configuration'
 import { isEmptyObject } from '../../tools/utils/objectUtils'
-import type { RelativeTime } from '../../tools/utils/timeUtils'
 
 export interface User {
   id?: string | undefined

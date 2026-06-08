@@ -1,10 +1,10 @@
+import { ONE_SECOND } from '@datadog/js-core/time'
+import type { Duration } from '@datadog/js-core/time'
 import type { PageMayExitEvent, PageExitReason } from '../browser/pageMayExitObservable'
 import { isWorkerEnvironment } from '../tools/globalObject'
 import { Observable } from '../tools/observable'
 import type { TimeoutId } from '../tools/timer'
 import { clearTimeout, setTimeout } from '../tools/timer'
-import { ONE_SECOND } from '../tools/utils/timeUtils'
-import type { Duration } from '../tools/utils/timeUtils'
 import { RECOMMENDED_REQUEST_BYTES_LIMIT } from './httpRequest'
 
 export type FlushReason = PageExitReason | 'duration_limit' | 'bytes_limit' | 'messages_limit' | 'session_expire'

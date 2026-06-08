@@ -32,11 +32,16 @@ Every exported function, type, and constant must have a JSDoc comment that cover
 
 ### Runtime-agnostic exports only
 
-Every export must work in both Node.js and browser environments. Do not add:
+Every export must work in both Node.js and browser environments without throwing. Do not add hard
+dependencies on platform-specific APIs. Graceful fallbacks are acceptable — for example, reading
+`performance.timing?.navigationStart` with optional chaining and falling back to
+`performance.timeOrigin` for environments (Service Workers, Node.js) that lack it.
 
-- DOM APIs (`document`, `window`, `navigator`, `performance.timing`, etc.)
+Do not add:
+
+- DOM APIs (`document`, `window`, `navigator`, etc.) without a safe fallback
 - Node.js built-in modules (`fs`, `path`, `process`, etc.)
-- Any API that is not available in both runtimes
+- Any API that throws or produces incorrect results in a non-browser environment
 
 ### Sub-path exports
 

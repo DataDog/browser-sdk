@@ -1,4 +1,5 @@
-import type { Telemetry, RelativeTime, Duration, RawTelemetryEvent } from '@datadog/browser-core'
+import type { RelativeTime, Duration } from '@datadog/js-core/time'
+import type { Telemetry, RawTelemetryEvent } from '@datadog/browser-core'
 import type { MockTelemetry } from '@datadog/browser-core/test'
 import { registerCleanupTask, startMockTelemetry } from '@datadog/browser-core/test'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'

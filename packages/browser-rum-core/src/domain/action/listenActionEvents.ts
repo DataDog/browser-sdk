@@ -1,5 +1,5 @@
 import { addEventListener, DOM_EVENT } from '@datadog/browser-core'
-import type { RelativeTime } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/js-core/time'
 import type { RumConfiguration } from '../configuration'
 
 export interface ExtraPointerEventFields {

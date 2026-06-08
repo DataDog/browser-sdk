@@ -1,16 +1,16 @@
-import { dateNow } from '@datadog/js-core/time'
-import { Observable } from '../../tools/observable'
-import { createValueHistory } from '../../tools/valueHistory'
-import type { RelativeTime, TimeStamp } from '../../tools/utils/timeUtils'
 import {
-  clocksOrigin,
-  elapsed,
   ONE_HOUR,
   ONE_MINUTE,
   ONE_SECOND,
-  relativeNow,
+  dateNow,
+  elapsed,
   timeStampNow,
-} from '../../tools/utils/timeUtils'
+  clocksOrigin,
+  relativeNow,
+} from '@datadog/js-core/time'
+import type { TimeStamp, RelativeTime } from '@datadog/js-core/time'
+import { Observable } from '../../tools/observable'
+import { createValueHistory } from '../../tools/valueHistory'
 import { addEventListener, addEventListeners, DOM_EVENT } from '../../browser/addEventListener'
 import { clearInterval, clearTimeout, setInterval, setTimeout } from '../../tools/timer'
 import { mockable } from '../../tools/mockable'

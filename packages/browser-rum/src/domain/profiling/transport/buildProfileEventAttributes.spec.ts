@@ -1,4 +1,4 @@
-import { clocksOrigin } from '@datadog/browser-core'
+import { clocksOrigin } from '@datadog/js-core/time'
 import { RumPerformanceEntryType } from '@datadog/browser-rum-core'
 import type { BrowserProfilerTrace, RumViewEntry } from '../../../types'
 import type { LongTaskContext } from '../longTaskHistory'

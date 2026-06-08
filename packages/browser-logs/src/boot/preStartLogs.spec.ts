@@ -1,3 +1,4 @@
+import { ONE_SECOND } from '@datadog/js-core/time'
 import {
   collectAsyncCalls,
   type Clock,
@@ -11,7 +12,6 @@ import {
 } from '@datadog/browser-core/test'
 import type { TrackingConsentState } from '@datadog/browser-core'
 import {
-  ONE_SECOND,
   TrackingConsent,
   createTrackingConsentState,
   display,
