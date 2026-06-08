@@ -1,9 +1,15 @@
 import { isError, safeStringify, safeToString } from '@datadog/browser-core'
-import type { Throwable } from './activeEntries'
+import type { StackFrame } from './stacktrace'
 import { parseStackTrace } from './stacktrace'
 
 const UNABLE_TO_STRINGIFY_ERROR = '<error: unable to stringify error>'
 const UNABLE_TO_STRINGIFY_THROWN_VALUE = '<error: unable to stringify thrown value>'
+
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- `type` is needed for implicit index signature compatibility with Context
+export type Throwable = {
+  message: string
+  stacktrace: StackFrame[]
+}
 
 /**
  * Format an arbitrary thrown value into a `Throwable` (message + stacktrace) for a debugger
