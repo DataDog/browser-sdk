@@ -1,5 +1,5 @@
 import type { TimeoutId, ClocksState, Profiler } from '@datadog/browser-core'
-import type { RumViewEntry } from '../../types'
+import type { BrowserProfileEvent, BrowserProfilerTrace, RumViewEntry } from '../../types'
 import type { LongTaskContext } from './longTaskHistory'
 
 /**
@@ -51,6 +51,11 @@ export interface RUMProfiler {
   isStopped: () => boolean
   isRunning: () => boolean
   isPaused: () => boolean
+}
+
+export interface ProfilingPayload {
+  profile: BrowserProfileEvent
+  trace: BrowserProfilerTrace
 }
 
 export interface RUMProfilerConfiguration {

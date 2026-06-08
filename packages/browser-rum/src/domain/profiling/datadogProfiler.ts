@@ -1,4 +1,4 @@
-import type { Encoder, RelativeTime, SessionManager, Profiler } from '@datadog/browser-core'
+import type { SessionManager, Profiler, RelativeTime } from '@datadog/browser-core'
 import {
   addEventListener,
   clearTimeout,
@@ -10,12 +10,11 @@ import {
   clocksOrigin,
   clocksNow,
   elapsed,
-  DeflateEncoderStreamId,
   mockable,
 } from '@datadog/browser-core'
 
-import type { LifeCycle, RumConfiguration, TransportPayload, ViewHistory } from '@datadog/browser-rum-core'
-import { createFormDataTransport, LifeCycleEventType } from '@datadog/browser-rum-core'
+import type { LifeCycle, RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
+import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { BrowserProfilerTrace, RumViewEntry } from '../../types'
 import type {
   RumProfilerInstance,
@@ -23,10 +22,11 @@ import type {
   RUMProfiler,
   RUMProfilerConfiguration,
   RumProfilerStoppedInstance,
+  ProfilingPayload,
 } from './types'
 import type { ProfilingContextManager } from './profilingContext'
 import { getCustomOrDefaultViewName } from './utils/getCustomOrDefaultViewName'
-import { assembleProfilingPayload } from './transport/assembly'
+import { buildProfileEvent } from './transport/buildProfileEvent'
 import { createLongTaskHistory } from './longTaskHistory'
 import { createActionHistory } from './actionHistory'
 import { createVitalHistory } from './vitalHistory'
@@ -44,12 +44,10 @@ export function createRumProfiler(
   lifeCycle: LifeCycle,
   session: SessionManager,
   profilingContextManager: ProfilingContextManager,
-  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
+  emitPayload: (payload: ProfilingPayload) => void,
   viewHistory: ViewHistory,
   profilerConfiguration: RUMProfilerConfiguration = DEFAULT_RUM_PROFILER_CONFIGURATION
 ): RUMProfiler {
-  const transport = createFormDataTransport(configuration, lifeCycle, createEncoder, DeflateEncoderStreamId.PROFILING)
-
   let lastViewEntry: RumViewEntry | undefined
 
   // Global clean-up tasks for listeners that are not specific to a profiler instance (eg. visibility change, before unload)
@@ -269,8 +267,8 @@ export function createRumProfiler(
         }
 
         handleProfilerTrace(
-          // Enrich trace with time and instance data
-          Object.assign(trace, {
+          // Enrich trace with time and instance data — create new object to avoid mutating the raw trace
+          Object.assign({} as BrowserProfilerTrace, trace, {
             startClocks,
             endClocks,
             clocksOrigin: clocksOrigin(),
@@ -350,9 +348,11 @@ export function createRumProfiler(
 
   function handleProfilerTrace(trace: BrowserProfilerTrace, startTime: RelativeTime): void {
     const sessionId = session.findTrackedSession(startTime)?.id
-    const payload = assembleProfilingPayload(trace, configuration, sessionId)
-
-    void transport.send(payload as unknown as TransportPayload)
+    const payload: ProfilingPayload = {
+      profile: buildProfileEvent(trace, configuration, sessionId),
+      trace,
+    }
+    emitPayload(payload)
   }
 
   function handleSampleBufferFull(): void {

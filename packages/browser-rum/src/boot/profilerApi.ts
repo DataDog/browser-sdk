@@ -4,6 +4,7 @@ import { monitorError, correctedChildSampleRate, isSampled, mockable } from '@da
 import type { RUMProfiler } from '../domain/profiling/types'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { startProfilingContext } from '../domain/profiling/profilingContext'
+import { createFormDataEmitter } from '../domain/profiling/transport/formDataEmitter'
 import { lazyLoadProfiler } from './lazyLoadProfiler'
 
 export function makeProfilerApi(): ProfilerApi {
@@ -49,6 +50,8 @@ export function makeProfilerApi(): ProfilerApi {
       return
     }
 
+    const emitPayload = createFormDataEmitter(configuration, lifeCycle, createEncoder)
+
     lazyLoadProfiler()
       .then((createRumProfiler) => {
         if (!createRumProfiler) {
@@ -61,7 +64,7 @@ export function makeProfilerApi(): ProfilerApi {
           lifeCycle,
           sessionManager,
           profilingContextManager,
-          createEncoder,
+          emitPayload,
           viewHistory,
           undefined
         )
