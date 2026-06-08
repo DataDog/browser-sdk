@@ -110,14 +110,7 @@ const oldPostsRoute = createRoute({
   },
 })
 
-const routeTree = rootRoute.addChildren([
-  indexRoute,
-  postsRoute,
-  userRoute,
-  guidesRoute,
-  filesRoute,
-  oldPostsRoute,
-])
+const routeTree = rootRoute.addChildren([indexRoute, postsRoute, userRoute, guidesRoute, filesRoute, oldPostsRoute])
 
 // Cast needed because local .tgz packaging creates separate type declarations.
 // End users installing from npm won't need this — same pattern as react-router-v6-app.
