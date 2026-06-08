@@ -54,7 +54,7 @@ export interface Probe {
   segments?: TemplateSegment[]
   captureSnapshot: boolean
   capture: CaptureOptions
-  sampling: ProbeSampling
+  sampling?: ProbeSampling
   evaluateAt: 'ENTRY' | 'EXIT'
   location?: {
     file?: string
