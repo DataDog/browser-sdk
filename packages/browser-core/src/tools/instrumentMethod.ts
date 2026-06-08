@@ -166,13 +166,13 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
  *    })
  *  })
  */
-export function instrumentConstructor<TARGET extends { [key: string]: any }, NAME extends keyof TARGET>(
-  target: TARGET,
-  name: NAME,
-  onPreCall: (this: null, callInfos: InstrumentedConstructorCall<TARGET[NAME]>) => void,
+export function instrumentConstructor<CONTAINER extends { [key: string]: any }, CONSTRUCTOR extends keyof CONTAINER>(
+  container: CONTAINER,
+  constructor: CONSTRUCTOR,
+  onPreCall: (this: null, callInfos: InstrumentedConstructorCall<CONTAINER[CONSTRUCTOR]>) => void,
   { computeHandlingStack }: { computeHandlingStack?: boolean } = {}
 ) {
-  const original = target[name]
+  const original = container[constructor]
 
   if (typeof original !== 'function') {
     return { stop: noop }
@@ -180,33 +180,36 @@ export function instrumentConstructor<TARGET extends { [key: string]: any }, NAM
 
   let restorePrototypeConstructor: () => void = noop
 
-  const { stop: replaceStop } = replaceWithInstrumentation(target, name, original, (isStopped) => {
-    const instrumentation = function (this: TARGET): ConstructorInstanceOf<TARGET[NAME]> {
+  const { stop: replaceStop } = replaceWithInstrumentation(container, constructor, original, (isStopped) => {
+    const instrumentation = function (this: unknown): ConstructorInstanceOf<CONTAINER[CONSTRUCTOR]> {
       // Bare `[[Call]]` (no `new`): delegate through `[[Call]]` and skip `onPreCall`. Otherwise we
       // would notify instrumentation before the original rejects or returns, unlike the native
       // constructor (e.g. `WebSocket(url)` or `class {}()` without `new`).
       if (!new.target) {
-        return Reflect.apply(original, this, Array.from(arguments)) as ConstructorInstanceOf<TARGET[NAME]>
+        return Reflect.apply(original, this, Array.from(arguments)) as ConstructorInstanceOf<CONTAINER[CONSTRUCTOR]>
       }
 
       // When `new` is used on this instrumented property, `new.target` is this wrapper. Passing
       // it through to Reflect.construct would expose the wrong new.target inside the original
       // body. If a subclass extends the wrapper, or a third party wraps us and their class is
       // instantiated, `new.target` is that outer constructor and must be preserved.
-      const constructNewTarget = new.target === instrumentation ? original : new.target
+      const newTarget = new.target === instrumentation ? original : new.target
 
       if (isStopped()) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return Reflect.construct(
           original,
-          arguments as unknown as ConstructorParametersOf<TARGET[NAME]>,
-          constructNewTarget
+          arguments as unknown as ConstructorParametersOf<CONTAINER[CONSTRUCTOR]>,
+          newTarget
         )
       }
 
-      const parameters = Array.from(arguments) as ConstructorParametersOf<TARGET[NAME]>
+      const parameters = Array.from(arguments) as ConstructorParametersOf<CONTAINER[CONSTRUCTOR]>
 
-      return notifyInstrumentation<InstrumentedConstructorCall<TARGET[NAME]>, ConstructorInstanceOf<TARGET[NAME]>>(
+      return notifyInstrumentation<
+        InstrumentedConstructorCall<CONTAINER[CONSTRUCTOR]>,
+        ConstructorInstanceOf<CONTAINER[CONSTRUCTOR]>
+      >(
         onPreCall,
         {
           parameters,
@@ -214,13 +217,13 @@ export function instrumentConstructor<TARGET extends { [key: string]: any }, NAM
         },
         () =>
           // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-          Reflect.construct(original, parameters, constructNewTarget)
+          Reflect.construct(original, parameters, newTarget)
       )
     }
 
     restorePrototypeConstructor = preserveConstructorShape(instrumentation as unknown as AnyConstructor, original)
 
-    return instrumentation as TARGET[NAME]
+    return instrumentation as CONTAINER[CONSTRUCTOR]
   })
 
   return {
