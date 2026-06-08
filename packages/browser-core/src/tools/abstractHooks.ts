@@ -1,4 +1,4 @@
-import { combine } from './mergeInto'
+import { combine } from '@datadog/js-core/util'
 
 export interface Hook<Params, Result> {
   register(this: void, callback: (params: Params) => Result | DISCARDED | SKIPPED): { unregister: () => void }

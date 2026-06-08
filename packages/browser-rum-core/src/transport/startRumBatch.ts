@@ -1,6 +1,5 @@
 import type { Observable, RawError, PageMayExitEvent, Encoder, Context } from '@datadog/browser-core'
 import {
-  combine,
   createBatch,
   createFlushController,
   createHttpRequest,
@@ -11,6 +10,7 @@ import {
   createEndpointBuilder,
   createReplicaEndpointBuilder,
 } from '@datadog/browser-core'
+import { combine } from '@datadog/js-core/util'
 import type { RumConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'

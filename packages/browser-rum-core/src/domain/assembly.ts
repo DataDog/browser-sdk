@@ -1,5 +1,6 @@
 import type { RawError, EventRateLimiter } from '@datadog/browser-core'
-import { combine, isEmptyObject, display, createEventRateLimiter, DISCARDED, buildTags } from '@datadog/browser-core'
+import { isEmptyObject, display, createEventRateLimiter, DISCARDED, buildTags } from '@datadog/browser-core'
+import { combine } from '@datadog/js-core/util'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { AssembledRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'

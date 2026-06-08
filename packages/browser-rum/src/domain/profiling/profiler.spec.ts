@@ -17,7 +17,7 @@ import {
   VitalType,
   createHooks,
 } from '@datadog/browser-rum-core'
-import { createIdentityEncoder, createValueHistory, deepClone } from '@datadog/browser-core'
+import { createIdentityEncoder, createValueHistory } from '@datadog/browser-core'
 import {
   setPageVisibility,
   restorePageVisibility,
@@ -33,6 +33,7 @@ import {
   HIGH_HASH_UUID,
   LOW_HASH_UUID,
 } from '@datadog/browser-core/test'
+import { deepClone } from '@datadog/js-core/util'
 import { mockRumConfiguration, mockViewHistory } from '../../../../browser-rum-core/test'
 import { mockProfiler } from '../../../test'
 import type { BrowserProfilerTrace } from '../../types'

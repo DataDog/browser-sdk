@@ -1,4 +1,4 @@
-import { combine } from '../mergeInto'
+import { combine } from '@datadog/js-core/util'
 import { Browser, detectBrowser } from './browserDetection'
 
 describe('browserDetection', () => {
