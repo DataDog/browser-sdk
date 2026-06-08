@@ -1,6 +1,8 @@
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import { createMemoryRouter as createMemoryRouterV7 } from 'react-router-dom'
 import { createMemoryRouter as createMemoryRouterV6 } from 'react-router-dom-6'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
+import { resetReactPlugin } from '../reactPlugin'
 import { wrapCreateRouter } from './createRouter'
 import type { AnyRouter, AnyRouterSubscriber } from './types'
 
@@ -83,6 +85,11 @@ describe('wrapCreateRouter — initial error forwarding', () => {
   const errorOpts = { newErrors: { '0': new Error('loader error') }, deletedFetchers: [] }
   const normalOpts = { newErrors: null, deletedFetchers: [] }
   const noop = () => undefined
+
+  beforeEach(() => {
+    resetReactPlugin()
+    registerCleanupTask(resetReactPlugin)
+  })
 
   function buildFakeRouter(syncReplay?: typeof errorOpts) {
     let ourCallback: AnyRouterSubscriber | undefined
