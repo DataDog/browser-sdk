@@ -1,4 +1,4 @@
-import { Duration, relativeToClocks, type RelativeTime } from '@datadog/js-core/time'
+import { type Duration, relativeToClocks, type RelativeTime } from '@datadog/js-core/time'
 import { LifeCycle, LifeCycleEventType, RumEventType, VitalType } from '@datadog/browser-rum-core'
 import { createRawRumEvent } from '@datadog/browser-rum-core/test'
 import { createVitalHistory } from './vitalHistory'
