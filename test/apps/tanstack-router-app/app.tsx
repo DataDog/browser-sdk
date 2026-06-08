@@ -24,8 +24,6 @@ const rootRoute = createRootRoute({
       <nav>
         <Link to="/">Home</Link>
         {' | '}
-        <Link to="/posts">Posts</Link>
-        {' | '}
         <Link to="/files/$" params={{ _splat: 'path/to/file' }}>
           Splat
         </Link>
@@ -58,18 +56,7 @@ const indexRoute = createRoute({
 const postsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/posts',
-  component: () => (
-    <div>
-      <h1>Posts</h1>
-      <Outlet />
-    </div>
-  ),
-})
-
-const postsIndexRoute = createRoute({
-  getParentRoute: () => postsRoute,
-  path: '/',
-  component: () => <p>Select a post</p>,
+  component: () => <h1>Posts</h1>,
 })
 
 const userRoute = createRoute({
@@ -125,7 +112,7 @@ const oldPostsRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
-  postsRoute.addChildren([postsIndexRoute]),
+  postsRoute,
   userRoute,
   guidesRoute,
   filesRoute,
