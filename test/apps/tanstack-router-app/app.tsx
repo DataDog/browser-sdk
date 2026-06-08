@@ -49,7 +49,18 @@ const rootRoute = createRootRoute({
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-  component: () => <h1>Home</h1>,
+  component: () => (
+    <div>
+      <h1>Home</h1>
+      <Link to="/user/$id" params={{ id: '42' }} search={{ admin: true }}>
+        Go to User 42
+      </Link>
+      <br />
+      <Link to="/guides/$slug" params={{ slug: '123' }}>
+        Go to Guides 123
+      </Link>
+    </div>
+  ),
 })
 
 const postsRoute = createRoute({
@@ -80,6 +91,39 @@ const postRoute = createRoute({
   component: PostDetail,
 })
 
+const userRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/user/$id',
+  component: () => {
+    const { id } = useParams({ strict: false })
+    return (
+      <div>
+        <h1>User {id}</h1>
+        <Link to="/">Back to Home</Link>
+        <br />
+        <Link to="/user/$id" params={{ id: id! }} search={{ admin: false }}>
+          Change query params
+        </Link>
+        <br />
+        <Link to="/user/$id" params={{ id: '999' }} search={{ admin: true }}>
+          Go to User 999
+        </Link>
+      </div>
+    )
+  },
+})
+
+const guidesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/guides/$slug',
+  component: () => (
+    <div>
+      <h1>Guides</h1>
+      <Link to="/">Back to Home</Link>
+    </div>
+  ),
+})
+
 const filesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/files/$',
@@ -101,6 +145,8 @@ const oldPostsRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   indexRoute,
   postsRoute.addChildren([postsIndexRoute, postRoute]),
+  userRoute,
+  guidesRoute,
   filesRoute,
   oldPostsRoute,
 ])
