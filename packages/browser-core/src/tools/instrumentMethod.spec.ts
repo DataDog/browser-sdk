@@ -295,6 +295,18 @@ describe('instrumentConstructor', () => {
     expect(instance instanceof container.MyClass).toBeTrue()
   })
 
+  it('keeps the constructor prototype property non-writable after instrumentation', () => {
+    const originalPrototypeDescriptor = Object.getOwnPropertyDescriptor(MyClass, 'prototype')!
+    expect(originalPrototypeDescriptor.writable).toBeFalse()
+
+    const container = { MyClass }
+    const { stop } = instrumentConstructor(container, 'MyClass', noop)
+    registerCleanupTask(stop)
+
+    const instrumentedPrototypeDescriptor = Object.getOwnPropertyDescriptor(container.MyClass, 'prototype')!
+    expect(instrumentedPrototypeDescriptor.writable).toBeFalse()
+  })
+
   it('exposes the instrumented constructor as instance.constructor', () => {
     const container = { MyClass }
     const { stop } = instrumentConstructor(container, 'MyClass', noop)
