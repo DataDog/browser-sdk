@@ -76,20 +76,6 @@ function makeUrlAbsolute(url: string, baseUrl: string): string {
   }
 }
 
-const TAG_NAME_REGEX = /[^a-z1-6-_]/
-export function getValidTagName(tagName: string): string {
-  const processedTagName = tagName.toLowerCase().trim()
-
-  if (TAG_NAME_REGEX.test(processedTagName)) {
-    // if the tag name is odd and we cannot extract
-    // anything from the string, then we return a
-    // generic div
-    return 'div'
-  }
-
-  return processedTagName
-}
-
 /**
  * Returns the tag name of the given element, normalized to ensure a consistent lowercase
  * representation regardless of whether the element is HTML, XHTML, or SVG.
