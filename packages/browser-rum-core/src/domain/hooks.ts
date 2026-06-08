@@ -1,6 +1,6 @@
+import type { Duration } from '@datadog/js-core/time'
 import type {
   DISCARDED,
-  Duration,
   HookNamesAsConst,
   RecursivePartial,
   RelativeTime,

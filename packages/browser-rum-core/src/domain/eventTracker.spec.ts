@@ -1,4 +1,5 @@
-import type { Duration, RelativeTime, TimeStamp } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/browser-core'
+import type { Duration, TimeStamp } from '@datadog/js-core/time'
 import { clocksNow } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'

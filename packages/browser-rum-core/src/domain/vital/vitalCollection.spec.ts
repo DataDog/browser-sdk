@@ -1,4 +1,4 @@
-import type { Duration } from '@datadog/browser-core'
+import type { Duration } from '@datadog/js-core/time'
 import { mockClock, type Clock } from '@datadog/browser-core/test'
 import { clocksNow, generateUUID } from '@datadog/browser-core'
 import { collectAndValidateRawRumEvents, mockPageStateHistory } from '../../../test'

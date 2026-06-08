@@ -1,6 +1,7 @@
 import type { Batch, Context } from '@datadog/browser-core'
+import { timeStampNow } from '@datadog/js-core/time'
 
-import { timeStampNow, buildTag, generateUUID, globalObject } from '@datadog/browser-core'
+import { buildTag, generateUUID, globalObject } from '@datadog/browser-core'
 import type { BrowserWindow, DebuggerInitConfiguration } from '../entries/main'
 import { capture, captureFields } from './capture'
 import type { CaptureContext } from './capture'

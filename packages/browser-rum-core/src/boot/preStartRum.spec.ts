@@ -1,10 +1,8 @@
+import type { Duration, TimeStamp } from '@datadog/js-core/time'
+import type { DeflateWorker, TrackingConsentState } from '@datadog/browser-core'
 import {
-  type DeflateWorker,
-  type Duration,
-  type TimeStamp,
-  type TrackingConsentState,
   display,
-  getTimeStamp,
+  toTimeStamp,
   noop,
   relativeToClocks,
   clocksNow,
@@ -412,10 +410,10 @@ describe('preStartRum', () => {
           expect(addTimingSpy).toHaveBeenCalledTimes(2)
 
           expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('first')
-          expect(addTimingSpy.calls.argsFor(0)[1]).toEqual(getTimeStamp(clock.relative(10)))
+          expect(addTimingSpy.calls.argsFor(0)[1]).toEqual(toTimeStamp(clock.relative(10)))
 
           expect(addTimingSpy.calls.argsFor(1)[0]).toEqual('second')
-          expect(addTimingSpy.calls.argsFor(1)[1]).toEqual(getTimeStamp(clock.relative(30)))
+          expect(addTimingSpy.calls.argsFor(1)[1]).toEqual(toTimeStamp(clock.relative(30)))
         })
       })
     })

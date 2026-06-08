@@ -22,7 +22,8 @@
   },
   "dependencies": {
     "@datadog/browser-core": "7.2.0",
-    "@datadog/browser-rum-core": "7.2.0"
+    "@datadog/browser-rum-core": "7.2.0",
+    "@datadog/js-core": "0.0.1"
   },
   "peerDependencies": {
     "@datadog/browser-logs": "7.2.0"

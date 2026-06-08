@@ -1,26 +1,17 @@
-import type {
-  Duration,
-  ClocksState,
-  TimeStamp,
-  Subscription,
-  RelativeTime,
-  Context,
-  ContextValue,
-} from '@datadog/browser-core'
+import { ONE_MINUTE, elapsed, timeStampNow } from '@datadog/js-core/time'
+import type { Duration, TimeStamp } from '@datadog/js-core/time'
+import type { ClocksState, Subscription, RelativeTime, Context, ContextValue } from '@datadog/browser-core'
 import {
   noop,
   PageExitReason,
   shallowClone,
-  elapsed,
   generateUUID,
-  ONE_MINUTE,
   throttle,
   clocksNow,
   clocksOrigin,
   relativeToClocks,
-  timeStampNow,
   display,
-  looksLikeRelativeTime,
+  isRelativeTime,
   setInterval,
   clearInterval,
   setTimeout,
@@ -375,7 +366,7 @@ function newView(
       if (endClocks) {
         return
       }
-      const relativeTime = looksLikeRelativeTime(time) ? time : elapsed(startClocks.timeStamp, time)
+      const relativeTime = isRelativeTime(time) ? time : elapsed(startClocks.timeStamp, time)
       customTimings[sanitizeTiming(name)] = relativeTime
       scheduleViewUpdate()
     },

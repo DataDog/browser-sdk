@@ -1,4 +1,4 @@
-import { ONE_SECOND } from '../tools/utils/timeUtils'
+import { ONE_SECOND } from '@datadog/js-core/time'
 import {
   findAllCommaSeparatedValues,
   findCommaSeparatedValue,

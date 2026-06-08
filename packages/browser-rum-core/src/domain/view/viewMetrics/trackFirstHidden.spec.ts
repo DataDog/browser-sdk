@@ -1,4 +1,5 @@
-import type { RelativeTime, TimeStamp } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/browser-core'
+import type { TimeStamp } from '@datadog/js-core/time'
 import { clocksOrigin, DOM_EVENT } from '@datadog/browser-core'
 import { createNewEvent, restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
 import { mockRumConfiguration, mockGlobalPerformanceBuffer } from '../../../../test'

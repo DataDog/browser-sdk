@@ -1,4 +1,5 @@
-import { elapsed, ONE_SECOND, relativeNow } from '@datadog/browser-core'
+import { relativeNow } from '@datadog/browser-core'
+import { ONE_SECOND, elapsed } from '@datadog/js-core/time'
 import type { RelativeTime } from '@datadog/browser-core'
 
 // Maximum duration for click actions

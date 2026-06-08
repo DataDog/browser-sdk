@@ -1,5 +1,6 @@
-import type { TimeStamp } from '@datadog/browser-core'
-import { ConsoleApiName, timeStampNow, ErrorSource, originalConsoleMethods } from '@datadog/browser-core'
+import type { TimeStamp } from '@datadog/js-core/time'
+import { timeStampNow } from '@datadog/js-core/time'
+import { ConsoleApiName, ErrorSource, originalConsoleMethods } from '@datadog/browser-core'
 import { mockClock } from '@datadog/browser-core/test'
 import type { CommonContext, RawLoggerLogsEvent } from '../../rawLogsEvent.types'
 import type { RawLogsEventCollectedData } from '../lifeCycle'

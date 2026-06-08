@@ -6,7 +6,7 @@ import {
   buildTags,
   combine,
   createEventRateLimiter,
-  getRelativeTime,
+  toRelativeTime,
 } from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { LogsEvent } from '../logsEvent.types'
@@ -33,7 +33,7 @@ export function startLogsAssembly(
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_LOG_COLLECTED,
     ({ rawLogsEvent, messageContext = undefined, savedCommonContext = undefined, domainContext, ddtags = [] }) => {
-      const startTime = getRelativeTime(rawLogsEvent.date)
+      const startTime = toRelativeTime(rawLogsEvent.date)
       const commonContext = savedCommonContext || getCommonContext()
       const defaultLogsEventAttributes = hooks.triggerHook(HookNames.Assemble, {
         startTime,

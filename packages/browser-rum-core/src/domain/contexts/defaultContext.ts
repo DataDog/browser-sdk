@@ -1,4 +1,5 @@
-import { canUseEventBridge, currentDrift, HookNames, round, timeStampNow } from '@datadog/browser-core'
+import { canUseEventBridge, clockDrift, HookNames, round } from '@datadog/browser-core'
+import { timeStampNow } from '@datadog/js-core/time'
 import type { RumConfiguration } from '../configuration'
 import type { DefaultRumEventAttributes, Hooks } from '../hooks'
 
@@ -15,7 +16,7 @@ export function startDefaultContext(hooks: Hooks, configuration: RumConfiguratio
       type: eventType,
       _dd: {
         format_version: 2,
-        drift: currentDrift(),
+        drift: clockDrift(),
         configuration: {
           session_sample_rate: round(configuration.sessionSampleRate, 3),
           session_replay_sample_rate: round(configuration.sessionReplaySampleRate, 3),

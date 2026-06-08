@@ -1,5 +1,6 @@
 import type { Context, ResourceType } from '@datadog/browser-core'
-import { clocksNow, elapsed, ResourceType as ResourceTypeEnum, toServerDuration } from '@datadog/browser-core'
+import { elapsed, toServerDuration } from '@datadog/js-core/time'
+import { clocksNow, ResourceType as ResourceTypeEnum } from '@datadog/browser-core'
 import type { RawRumResourceEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'

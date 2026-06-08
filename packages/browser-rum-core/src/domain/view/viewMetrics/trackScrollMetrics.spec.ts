@@ -1,4 +1,5 @@
-import type { RelativeTime, Subscription, TimeStamp } from '@datadog/browser-core'
+import type { RelativeTime, Subscription } from '@datadog/browser-core'
+import type { TimeStamp } from '@datadog/js-core/time'
 import { DOM_EVENT, Observable } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock, registerCleanupTask } from '@datadog/browser-core/test'

@@ -1,10 +1,10 @@
-import type { Duration, RelativeTime } from '@datadog/browser-core'
+import { elapsed, toServerDuration } from '@datadog/js-core/time'
+import type { Duration } from '@datadog/js-core/time'
+import type { RelativeTime } from '@datadog/browser-core'
 import {
   SKIPPED,
-  elapsed,
   createValueHistory,
   SESSION_TIME_OUT_DELAY,
-  toServerDuration,
   addEventListeners,
   relativeNow,
   DOM_EVENT,

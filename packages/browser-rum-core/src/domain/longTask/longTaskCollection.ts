@@ -1,5 +1,6 @@
 import type { ClocksState } from '@datadog/browser-core'
-import { toServerDuration, relativeToClocks, generateUUID } from '@datadog/browser-core'
+import { toServerDuration } from '@datadog/js-core/time'
+import { relativeToClocks, generateUUID } from '@datadog/browser-core'
 import type { RawRumLongTaskEvent, RawRumLongAnimationFrameEvent } from '../../rawRumEvent.types'
 import { RumEventType, RumLongTaskEntryType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'

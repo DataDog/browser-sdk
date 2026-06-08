@@ -1,4 +1,5 @@
-import { ErrorHandling, ErrorSource, type RawError, type RelativeTime, type TimeStamp } from '@datadog/browser-core'
+import { ErrorHandling, ErrorSource, type RawError, type RelativeTime } from '@datadog/browser-core'
+import type { TimeStamp } from '@datadog/js-core/time'
 import { createErrorFieldFromRawError } from './createErrorFieldFromRawError'
 
 describe('createErrorFieldFromRawError', () => {

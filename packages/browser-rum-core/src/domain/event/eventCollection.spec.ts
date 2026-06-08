@@ -1,4 +1,5 @@
-import type { Duration, RelativeTime, TimeStamp } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/browser-core'
+import type { Duration, TimeStamp } from '@datadog/js-core/time'
 import type { RumEventDomainContext } from '../../domainContext.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { RumEventType, VitalType } from '../../rawRumEvent.types'

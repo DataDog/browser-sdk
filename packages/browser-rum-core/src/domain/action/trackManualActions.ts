@@ -1,4 +1,5 @@
-import type { ClocksState, Context, Duration } from '@datadog/browser-core'
+import type { ClocksState, Context } from '@datadog/browser-core'
+import type { Duration } from '@datadog/js-core/time'
 import { clocksNow, generateUUID } from '@datadog/browser-core'
 import type { ActionType, FrustrationType } from '../../rawRumEvent.types'
 import { ActionType as ActionTypeEnum, FrustrationType as FrustrationTypeEnum } from '../../rawRumEvent.types'

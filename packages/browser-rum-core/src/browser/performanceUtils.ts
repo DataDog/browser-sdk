@@ -1,5 +1,6 @@
-import type { RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { findLast, getRelativeTime, isNumber, relativeNow } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/browser-core'
+import type { TimeStamp } from '@datadog/js-core/time'
+import { findLast, toRelativeTime, isNumber, relativeNow } from '@datadog/browser-core'
 import type { RelevantNavigationTiming } from '../domain/view/viewMetrics/trackNavigationTimings'
 import type { RumPerformanceNavigationTiming } from './performanceObservable'
 import { RumPerformanceEntryType, supportPerformanceTimingEvent } from './performanceObservable'
@@ -50,7 +51,7 @@ export function computeTimingsFromDeprecatedPerformanceTiming() {
     if (isNumber(timing[key as keyof PerformanceTiming])) {
       const numberKey = key as keyof TimingsFromDeprecatedPerformanceTiming
       const timingElement = timing[numberKey] as TimeStamp
-      result[numberKey] = timingElement === 0 ? (0 as RelativeTime) : getRelativeTime(timingElement)
+      result[numberKey] = timingElement === 0 ? (0 as RelativeTime) : toRelativeTime(timingElement)
     }
   }
   return result as TimingsFromDeprecatedPerformanceTiming

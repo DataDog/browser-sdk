@@ -1,5 +1,6 @@
 import { mockClock, mockEventBridge } from '@datadog/browser-core/test'
-import { HookNames, timeStampNow } from '@datadog/browser-core'
+import { timeStampNow } from '@datadog/js-core/time'
+import { HookNames } from '@datadog/browser-core'
 import type { RelativeTime } from '@datadog/browser-core'
 import { mockRumConfiguration } from '../../../test'
 import type { AssembleHookParams, DefaultRumEventAttributes, Hooks } from '../hooks'

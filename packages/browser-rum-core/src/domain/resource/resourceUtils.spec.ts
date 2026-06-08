@@ -1,4 +1,5 @@
-import { addExperimentalFeatures, type Duration, type RelativeTime, type ServerDuration } from '@datadog/browser-core'
+import { addExperimentalFeatures, type RelativeTime } from '@datadog/browser-core'
+import type { Duration, ServerDuration } from '@datadog/js-core/time'
 import { ExperimentalFeature } from '@datadog/browser-core'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import { createPerformanceEntry } from '../../../test'

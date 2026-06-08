@@ -1,5 +1,6 @@
 import type { DeflateWorker, DeflateWorkerResponse } from '@datadog/browser-core'
-import { addTelemetryError, display, addEventListener, setTimeout, ONE_SECOND, mockable } from '@datadog/browser-core'
+import { ONE_SECOND } from '@datadog/js-core/time'
+import { addTelemetryError, display, addEventListener, setTimeout, mockable } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { reportScriptLoadingError } from '../scriptLoadingError'
 

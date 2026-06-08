@@ -1,5 +1,7 @@
-import type { Duration, MatchOption, RelativeTime, ServerDuration, TaskQueue, TimeStamp } from '@datadog/browser-core'
-import { createTaskQueue, display, elapsed, RequestType, ResourceType, toServerDuration } from '@datadog/browser-core'
+import type { MatchOption, RelativeTime, TaskQueue } from '@datadog/browser-core'
+import { elapsed, toServerDuration } from '@datadog/js-core/time'
+import type { Duration, ServerDuration, TimeStamp } from '@datadog/js-core/time'
+import { createTaskQueue, display, RequestType, ResourceType } from '@datadog/browser-core'
 import type { Clock, MockTelemetry } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask, replaceMockable, startMockTelemetry } from '@datadog/browser-core/test'
 import {

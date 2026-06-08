@@ -1,8 +1,9 @@
-import type { ClocksState, RelativeTime, SessionManager, TimeStamp } from '@datadog/browser-core'
+import { ONE_MINUTE } from '@datadog/js-core/time'
+import type { TimeStamp } from '@datadog/js-core/time'
+import type { ClocksState, RelativeTime, SessionManager } from '@datadog/browser-core'
 import {
   ErrorSource,
   HookNames,
-  ONE_MINUTE,
   display,
   relativeToClocks,
   startGlobalContext,

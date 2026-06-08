@@ -1,7 +1,7 @@
 import { dateNow } from '@datadog/js-core/time'
+import type { TimeStamp } from '@datadog/js-core/time'
 import { isEmptyObject } from '../../tools/utils/objectUtils'
 import { objectEntries } from '../../tools/utils/polyfills'
-import type { TimeStamp } from '../../tools/utils/timeUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import type { Configuration } from '../configuration'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'

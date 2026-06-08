@@ -1,5 +1,6 @@
 import { relativeToClocks } from '@datadog/browser-core'
-import type { Context, Duration, RelativeTime } from '@datadog/browser-core'
+import type { Duration } from '@datadog/js-core/time'
+import type { Context, RelativeTime } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../../domainContext.types'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'

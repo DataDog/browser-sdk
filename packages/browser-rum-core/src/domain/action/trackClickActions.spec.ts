@@ -1,8 +1,9 @@
-import type { Duration, RelativeTime } from '@datadog/browser-core'
+import { timeStampNow } from '@datadog/js-core/time'
+import type { Duration } from '@datadog/js-core/time'
+import type { RelativeTime } from '@datadog/browser-core'
 import {
   addDuration,
   clocksNow,
-  timeStampNow,
   relativeNow,
   DefaultPrivacyLevel,
   Observable,

@@ -1,3 +1,4 @@
+import { timeStampNow } from '@datadog/js-core/time'
 import type { TrackingConsentState, SessionManager } from '@datadog/browser-core'
 import {
   BufferedObservable,
@@ -7,7 +8,6 @@ import {
   initFeatureFlags,
   monitorError,
   noop,
-  timeStampNow,
   buildAccountContextManager,
   CustomerContextKey,
   bufferContextCalls,

@@ -1,5 +1,6 @@
+import { elapsed, timeStampNow } from '@datadog/js-core/time'
+import type { Duration } from '@datadog/js-core/time'
 import type {
-  Duration,
   XhrCompleteContext,
   XhrStartContext,
   ClocksState,
@@ -15,9 +16,7 @@ import {
   RequestType,
   ResponseBodyAction,
   BufferedDataType,
-  elapsed,
   initFetchObservable,
-  timeStampNow,
   initXhrObservable,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from './configuration'

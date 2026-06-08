@@ -1,5 +1,7 @@
-import type { Duration, RelativeTime } from '@datadog/browser-core'
-import { elapsed, relativeNow } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/browser-core'
+import { elapsed } from '@datadog/js-core/time'
+import type { Duration } from '@datadog/js-core/time'
+import { relativeNow } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import {
   appendElement,

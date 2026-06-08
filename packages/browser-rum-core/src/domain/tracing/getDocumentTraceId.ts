@@ -1,5 +1,6 @@
-import type { TimeStamp } from '@datadog/browser-core'
-import { findCommaSeparatedValue, getNavigationStart, ONE_MINUTE } from '@datadog/browser-core'
+import { ONE_MINUTE } from '@datadog/js-core/time'
+import type { TimeStamp } from '@datadog/js-core/time'
+import { findCommaSeparatedValue, getTimeOrigin } from '@datadog/browser-core'
 import { isCommentNode, isTextNode } from '../../browser/htmlDomUtils'
 
 interface DocumentTraceData {
@@ -12,7 +13,7 @@ export const INITIAL_DOCUMENT_OUTDATED_TRACE_ID_THRESHOLD = 2 * ONE_MINUTE
 export function getDocumentTraceId(document: Document): string | undefined {
   const data = getDocumentTraceDataFromMeta(document) || getDocumentTraceDataFromComment(document)
 
-  if (!data || data.traceTime <= getNavigationStart() - INITIAL_DOCUMENT_OUTDATED_TRACE_ID_THRESHOLD) {
+  if (!data || data.traceTime <= getTimeOrigin() - INITIAL_DOCUMENT_OUTDATED_TRACE_ID_THRESHOLD) {
     return undefined
   }
 

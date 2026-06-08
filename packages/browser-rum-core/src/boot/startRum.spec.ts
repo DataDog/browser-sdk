@@ -1,8 +1,8 @@
-import type { RawError, Duration, BufferedData, SessionManager } from '@datadog/browser-core'
+import { ONE_SECOND, toServerDuration } from '@datadog/js-core/time'
+import type { Duration } from '@datadog/js-core/time'
+import type { RawError, BufferedData, SessionManager } from '@datadog/browser-core'
 import {
   Observable,
-  toServerDuration,
-  ONE_SECOND,
   findLast,
   noop,
   relativeNow,

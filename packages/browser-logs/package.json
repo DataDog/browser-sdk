@@ -19,7 +19,8 @@
     "prepack": "yarn build"
   },
   "dependencies": {
-    "@datadog/browser-core": "7.2.0"
+    "@datadog/browser-core": "7.2.0",
+    "@datadog/js-core": "0.0.1"
   },
   "peerDependencies": {
     "@datadog/browser-rum": "7.2.0"

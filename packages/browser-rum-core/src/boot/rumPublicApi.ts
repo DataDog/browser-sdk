@@ -1,12 +1,12 @@
+import { timeStampNow } from '@datadog/js-core/time'
+import type { Duration, TimeStamp } from '@datadog/js-core/time'
 import type {
   Context,
-  TimeStamp,
   RelativeTime,
   DeflateWorker,
   DeflateEncoderStreamId,
   DeflateEncoder,
   PublicApi,
-  Duration,
   ContextManager,
   TrackingConsent,
   User,
@@ -36,7 +36,6 @@ import {
   startBufferingData,
   mockable,
   generateUUID,
-  timeStampNow,
 } from '@datadog/browser-core'
 
 import type { LifeCycle } from '../domain/lifeCycle'

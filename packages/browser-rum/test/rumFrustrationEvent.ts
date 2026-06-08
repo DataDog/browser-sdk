@@ -1,4 +1,5 @@
-import { clocksNow, timeStampNow } from '@datadog/browser-core'
+import { clocksNow } from '@datadog/browser-core'
+import { timeStampNow } from '@datadog/js-core/time'
 import type { RawRumActionEvent, RawRumEventCollectedData } from '@datadog/browser-rum-core'
 import { ActionType, FrustrationType, RumEventType } from '@datadog/browser-rum-core'
 

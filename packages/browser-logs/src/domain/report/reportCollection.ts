@@ -1,5 +1,6 @@
 import type { Context, ClocksState } from '@datadog/browser-core'
-import { timeStampNow, ErrorSource, getFileFromStackTraceString, initReportObservable } from '@datadog/browser-core'
+import { timeStampNow } from '@datadog/js-core/time'
+import { ErrorSource, getFileFromStackTraceString, initReportObservable } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'

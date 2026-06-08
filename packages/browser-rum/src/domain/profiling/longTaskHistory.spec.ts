@@ -1,4 +1,5 @@
-import { relativeToClocks, type Duration, type RelativeTime } from '@datadog/browser-core'
+import { relativeToClocks, type RelativeTime } from '@datadog/browser-core'
+import type { Duration } from '@datadog/js-core/time'
 import { LifeCycle, LifeCycleEventType, RumEventType, RumPerformanceEntryType } from '@datadog/browser-rum-core'
 import { createRawRumEvent } from '@datadog/browser-rum-core/test'
 import { createLongTaskHistory } from './longTaskHistory'

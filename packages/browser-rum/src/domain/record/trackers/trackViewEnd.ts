@@ -1,4 +1,4 @@
-import { timeStampNow } from '@datadog/browser-core'
+import { timeStampNow } from '@datadog/js-core/time'
 import type { LifeCycle } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { ViewEndRecord } from '../../../types'
