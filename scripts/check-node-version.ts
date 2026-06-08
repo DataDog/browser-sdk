@@ -29,8 +29,9 @@ async function retrieveDockerVersion(): Promise<string> {
   const fileStream = fs.createReadStream(path.join(import.meta.dirname, '..', 'Dockerfile'))
   const rl = readline.createInterface({ input: fileStream })
   for await (const line of rl) {
-    // node image on first line
-    return extractVersion(line)
+    if (/^FROM node:\S+$/.test(line)) {
+      return extractVersion(line)
+    }
   }
   throw new Error('Could not find node version in Dockerfile')
 }
