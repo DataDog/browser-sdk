@@ -8,7 +8,7 @@ const nextjsVariants = [
     name: 'nextjs app router',
     routerType: 'app' as const,
     viewPrefix: '',
-    homeUrlPattern: '**/',
+    homeUrlPattern: /\/(\?|$)/,
     clientErrorMessage: 'Client error from error-test',
   },
   {
