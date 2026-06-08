@@ -482,14 +482,32 @@ function captureError(
     name: captureProperty(err, 'name', depth, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx),
   }
 
-  const stack = tryGetProperty(err, 'stack')
+  const stack = captureOptionalProperty(
+    err,
+    'stack',
+    depth,
+    maxReferenceDepth,
+    maxCollectionSize,
+    maxFieldCount,
+    maxLength,
+    ctx
+  )
   if (stack !== undefined) {
-    fields.stack = captureValue(stack, depth + 1, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx)
+    fields.stack = stack
   }
 
-  const cause = tryGetProperty(err, 'cause')
+  const cause = captureOptionalProperty(
+    err,
+    'cause',
+    depth,
+    maxReferenceDepth,
+    maxCollectionSize,
+    maxFieldCount,
+    maxLength,
+    ctx
+  )
   if (cause !== undefined) {
-    fields.cause = captureValue(cause, depth + 1, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx)
+    fields.cause = cause
   }
 
   return { type: typeName, fields }
@@ -512,11 +530,23 @@ function captureProperty(
   }
 }
 
-function tryGetProperty(obj: any, property: string | symbol): unknown {
+function captureOptionalProperty(
+  obj: any,
+  property: string | symbol,
+  depth: number,
+  maxReferenceDepth: number,
+  maxCollectionSize: number,
+  maxFieldCount: number,
+  maxLength: number,
+  ctx: CaptureContext
+): CapturedValue | undefined {
   try {
-    return obj[property]
+    const value = obj[property]
+    return value === undefined
+      ? undefined
+      : captureValue(value, depth + 1, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength, ctx)
   } catch {
-    // ignore
+    return { notCapturedReason: 'Error accessing property' }
   }
 }
 

@@ -192,6 +192,65 @@ describe('capture', () => {
       })
     })
 
+    it('should capture Error stack and cause values that cannot be inspected', () => {
+      const error = {
+        [Symbol.toStringTag]: 'Error',
+        name: 'Error',
+        message: 'Cannot inspect error details',
+        stack: new Proxy(
+          {},
+          {
+            ownKeys() {
+              throw new Error('Cannot inspect stack')
+            },
+          }
+        ),
+        cause: new Proxy(
+          {},
+          {
+            ownKeys() {
+              throw new Error('Cannot inspect cause')
+            },
+          }
+        ),
+      }
+
+      const result = capture(error, defaultOpts, noTimeout()) as any
+
+      expect(result.type).toBe('Object')
+      expect(result.fields.stack).toEqual({
+        notCapturedReason: 'Error accessing property',
+      })
+      expect(result.fields.cause).toEqual({
+        notCapturedReason: 'Error accessing property',
+      })
+    })
+
+    it('should read optional Error properties once and omit undefined values', () => {
+      let stackReads = 0
+      let causeReads = 0
+      const error = {
+        [Symbol.toStringTag]: 'Error',
+        name: 'Error',
+        message: 'Optional error details',
+        get stack() {
+          stackReads += 1
+          return 'stack'
+        },
+        get cause() {
+          causeReads += 1
+          return undefined
+        },
+      }
+
+      const result = capture(error, defaultOpts, noTimeout()) as any
+
+      expect(result.fields.stack).toEqual({ type: 'string', value: 'stack' })
+      expect(result.fields.cause).toBeUndefined()
+      expect(stackReads).toBe(1)
+      expect(causeReads).toBe(1)
+    })
+
     it('should capture Promise', () => {
       const promise = Promise.resolve(42)
       const result = capture(promise, defaultOpts, noTimeout())
