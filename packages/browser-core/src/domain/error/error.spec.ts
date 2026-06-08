@@ -342,10 +342,6 @@ describe('flattenErrorCauses', () => {
 })
 
 describe('isError', () => {
-  type ErrorConstructorWithIsError = ErrorConstructor & {
-    isError?: (value: unknown) => boolean
-  }
-
   it('should correctly identify an error object from a different window context', () => {
     const iframe = document.createElement('iframe')
     document.body.appendChild(iframe)
@@ -356,10 +352,8 @@ describe('isError', () => {
     expect(isError(new iframeWindow.Error())).toBe(true)
   })
 
-  it('should export Error.isError when available', () => {
-    const nativeIsError = (Error as ErrorConstructorWithIsError).isError
-
-    expect(typeof nativeIsError === 'function' ? isError : undefined).toBe(nativeIsError)
+  it('should identify Error-like values', () => {
+    expect(isError({ [Symbol.toStringTag]: 'Error' })).toBe(true)
   })
 
   it('should return false when object tag lookup throws', () => {

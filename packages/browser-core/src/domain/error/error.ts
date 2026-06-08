@@ -105,22 +105,13 @@ export function getFileFromStackTraceString(stack: string) {
   return /@ (.+)/.exec(stack)?.[1]
 }
 
-type ErrorConstructorWithIsError = ErrorConstructor & {
-  isError?: (error: unknown) => error is Error
+export function isError(error: unknown): error is Error {
+  try {
+    return error instanceof Error || Object.prototype.toString.call(error) === '[object Error]'
+  } catch {
+    return false
+  }
 }
-
-const nativeIsError = (Error as ErrorConstructorWithIsError).isError
-
-export const isError =
-  typeof nativeIsError === 'function'
-    ? nativeIsError
-    : function (error: unknown): error is Error {
-        try {
-          return error instanceof Error || Object.prototype.toString.call(error) === '[object Error]'
-        } catch {
-          return false
-        }
-      }
 
 export function flattenErrorCauses(error: ErrorWithCause, parentSource: ErrorSource): RawErrorCause[] | undefined {
   const causes: RawErrorCause[] = []
