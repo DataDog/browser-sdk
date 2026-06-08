@@ -511,6 +511,26 @@ describe('instrumentConstructor', () => {
       const instance = new container.MyClass(2)
       expect(instance.constructor).toBe(MyClass)
     })
+
+    it('does not clobber prototype.constructor when a third party repoints it before stop()', () => {
+      const container = { MyClass }
+      const { stop } = instrumentConstructor(container, 'MyClass', noop)
+
+      function thirdPartyCanonicalCtor() {
+        /* third party keeps identity checks aligned with their wrapper */
+      }
+
+      // Simulate another layer repointing the shared prototype after our instrumentation.
+      const constructorDescriptor = Object.getOwnPropertyDescriptor(MyClass.prototype, 'constructor')!
+      Object.defineProperty(MyClass.prototype, 'constructor', {
+        ...constructorDescriptor,
+        value: thirdPartyCanonicalCtor,
+      })
+
+      stop()
+
+      expect(MyClass.prototype.constructor).toBe(thirdPartyCanonicalCtor)
+    })
   })
 
   /**

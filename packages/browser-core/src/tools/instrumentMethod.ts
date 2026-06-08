@@ -340,7 +340,9 @@ function preserveConstructorShape(instrumentation: AnyConstructor, original: Any
   original.prototype.constructor = instrumentation
 
   return () => {
-    original.prototype.constructor = originalConstructor
+    if (original.prototype.constructor === instrumentation) {
+      original.prototype.constructor = originalConstructor
+    }
   }
 }
 
