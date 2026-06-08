@@ -27,7 +27,8 @@ import type { Servers } from './httpServers'
 import { getTestServers, waitForServersIdle } from './httpServers'
 import type { CallerLocation, EventBridgeOptions, SetupFactory, SetupOptions, UrlHook } from './pageSetups'
 import { html, DEFAULT_SETUPS, npmSetup, appSetup, formatConfiguration } from './pageSetups'
-import { createDatadogProxyServer } from './serverApps/datadogProxy'
+import { createDatadogHttpApi } from './serverApps/datadogHttpApi'
+import type { DatadogHttpApiControl } from './serverApps/datadogHttpApi'
 import { createMockServerApp } from './serverApps/mock'
 import type { Extension } from './createExtension'
 import type { Worker } from './createWorker'
@@ -71,8 +72,6 @@ const WEBKIT_PLAYWRIGHT_WORKAROUND = `
 })();
 `
 
-type DatadogProxyControl = ReturnType<typeof createDatadogProxyServer>['control']
-
 export function createTest(title: string) {
   return new TestBuilder(title, captureCallerLocation())
 }
@@ -80,7 +79,7 @@ export function createTest(title: string) {
 interface TestContext {
   baseUrl: string
   intakeRegistry: IntakeRegistry
-  datadogProxyControl: DatadogProxyControl
+  datadogHttpApiControl: DatadogHttpApiControl
   servers: Servers
   page: Page
   browserContext: BrowserContext
@@ -426,18 +425,18 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     const browserLogs = new BrowserLogsManager()
 
     const intakeRegistry = new IntakeRegistry()
-    const datadogProxyServer = createDatadogProxyServer(intakeRegistry)
+    const datadogHttpApi = createDatadogHttpApi(intakeRegistry)
     const testContext = createTestContext(
       servers,
       intakeRegistry,
-      datadogProxyServer.control,
+      datadogHttpApi.control,
       page,
       context,
       browserLogs,
       browserName,
       baseUrl.href
     )
-    servers.datadogProxy.bindServerApp(datadogProxyServer.app)
+    servers.datadogHttpApi.bindServerApp(datadogHttpApi.app)
 
     const setup = factory(setupOptions, servers)
     servers.base.bindServerApp(createMockServerApp(servers, setup, setupOptions))
@@ -457,7 +456,7 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
 function createTestContext(
   servers: Servers,
   intakeRegistry: IntakeRegistry,
-  datadogProxyControl: DatadogProxyControl,
+  datadogHttpApiControl: DatadogHttpApiControl,
   page: Page,
   browserContext: BrowserContext,
   browserLogsManager: BrowserLogsManager,
@@ -467,7 +466,7 @@ function createTestContext(
   return {
     baseUrl,
     intakeRegistry,
-    datadogProxyControl,
+    datadogHttpApiControl,
     servers,
     page,
     browserContext,

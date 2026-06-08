@@ -2,10 +2,21 @@ import express from 'express'
 import cors from 'cors'
 import { createIntakeProxyMiddleware } from '../intakeProxyMiddleware.ts'
 import type { IntakeRegistry } from '../intakeRegistry'
-import { addDebuggerDatadogProxy } from './debuggerDatadogProxy'
+import { createDebuggerHttpApi } from './debuggerHttpApi'
+import type { DebuggerHttpApiControl } from './debuggerHttpApi'
 
-export function createDatadogProxyServer(intakeRegistry: IntakeRegistry) {
+export interface DatadogHttpApiControl {
+  debugger: DebuggerHttpApiControl
+}
+
+export interface DatadogHttpApi {
+  app: express.Express
+  control: DatadogHttpApiControl
+}
+
+export function createDatadogHttpApi(intakeRegistry: IntakeRegistry): DatadogHttpApi {
   const app = express()
+  const debuggerHttpApi = createDebuggerHttpApi()
 
   app.use(cors())
 
@@ -21,5 +32,12 @@ export function createDatadogProxyServer(intakeRegistry: IntakeRegistry) {
     }
   })
 
-  return addDebuggerDatadogProxy({ app })
+  app.use(debuggerHttpApi.router)
+
+  return {
+    app,
+    control: {
+      debugger: debuggerHttpApi.control,
+    },
+  }
 }

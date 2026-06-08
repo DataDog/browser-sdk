@@ -173,7 +173,7 @@ export function createMockServerApp(servers: Servers, setup: string, setupOption
     res.header(
       'Content-Security-Policy',
       [
-        `connect-src ${servers.datadogProxy.origin} ${servers.base.origin} ${servers.crossOrigin.origin} https://quota.browser-intake-datadoghq.com`,
+        `connect-src ${servers.datadogHttpApi.origin} ${servers.base.origin} ${servers.crossOrigin.origin} https://quota.browser-intake-datadoghq.com`,
         `script-src 'self' 'unsafe-inline' ${servers.crossOrigin.origin}`,
         "worker-src blob: 'self'",
       ].join(';')
@@ -189,7 +189,7 @@ export function createMockServerApp(servers: Servers, setup: string, setupOption
     res.header(
       'Content-Security-Policy',
       [
-        `connect-src ${servers.datadogProxy.origin} ${servers.base.origin} ${servers.crossOrigin.origin} https://quota.browser-intake-datadoghq.com`,
+        `connect-src ${servers.datadogHttpApi.origin} ${servers.base.origin} ${servers.crossOrigin.origin} https://quota.browser-intake-datadoghq.com`,
         `script-src 'self' 'unsafe-inline' ${servers.crossOrigin.origin}`,
       ].join(';')
     )
