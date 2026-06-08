@@ -1,5 +1,5 @@
-import type { RelativeTime, TimeoutId } from '@datadog/browser-core'
-import type { Duration } from '@datadog/js-core/time'
+import type { RelativeTime, Duration } from '@datadog/js-core/time'
+import type { TimeoutId } from '@datadog/browser-core'
 import { addEventListener, Observable, setTimeout, clearTimeout, monitor } from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 import { hasValidResourceEntryDuration, isAllowedRequestUrl } from '../domain/resource/resourceUtils'

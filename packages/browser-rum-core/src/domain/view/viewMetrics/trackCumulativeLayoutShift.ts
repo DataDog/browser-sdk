@@ -1,7 +1,7 @@
 import { round, noop } from '@datadog/browser-core'
 import { ONE_SECOND, elapsed } from '@datadog/js-core/time'
-import type { Duration } from '@datadog/js-core/time'
-import type { RelativeTime, WeakRef, WeakRefConstructor } from '@datadog/browser-core'
+import type { Duration, RelativeTime } from '@datadog/js-core/time'
+import type { WeakRef, WeakRefConstructor } from '@datadog/browser-core'
 import { isElementNode } from '../../../browser/htmlDomUtils'
 import type { RumLayoutShiftAttribution, RumLayoutShiftTiming } from '../../../browser/performanceObservable'
 import {

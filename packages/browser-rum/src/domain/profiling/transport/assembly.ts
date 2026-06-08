@@ -1,4 +1,5 @@
-import { buildTags, clockDrift } from '@datadog/browser-core'
+import { clockDrift } from '@datadog/js-core/time'
+import { buildTags } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { BrowserProfileEvent, BrowserProfilerTrace } from '../../../types'
 import { buildProfileEventAttributes } from './buildProfileEventAttributes'

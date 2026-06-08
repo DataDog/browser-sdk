@@ -1,4 +1,5 @@
-import type { Context, RawError, ClocksState, BufferedData } from '@datadog/browser-core'
+import type { ClocksState } from '@datadog/js-core/time'
+import type { Context, RawError, BufferedData } from '@datadog/browser-core'
 import {
   BufferedDataType,
   ConsoleApiName,

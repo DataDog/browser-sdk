@@ -1,5 +1,6 @@
 import type { RawError, Subscription } from '@datadog/browser-core'
-import { ErrorHandling, ErrorSource, Observable, clocksNow } from '@datadog/browser-core'
+import { clocksNow } from '@datadog/js-core/time'
+import { ErrorHandling, ErrorSource, Observable } from '@datadog/browser-core'
 import type { MockCspEventListener, MockReportingObserver } from '@datadog/browser-core/test'
 import {
   FAKE_CSP_VIOLATION_EVENT,

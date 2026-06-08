@@ -1,4 +1,4 @@
-import { timeStampNow } from '@datadog/js-core/time'
+import { timeStampNow, clocksNow } from '@datadog/js-core/time'
 import type { TimeStamp } from '@datadog/js-core/time'
 import type { TrackingConsentState, DeflateWorker, Context, Telemetry, SessionManager } from '@datadog/browser-core'
 import {
@@ -8,7 +8,6 @@ import {
   displayAlreadyInitializedError,
   willSyntheticsInjectRum,
   noop,
-  clocksNow,
   getEventBridge,
   initFeatureFlags,
   addTelemetryConfiguration,

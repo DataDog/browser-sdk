@@ -1,5 +1,5 @@
-import type { RelativeTime } from '@datadog/browser-core'
-import { clocksOrigin } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/js-core/time'
+import { clocksOrigin } from '@datadog/js-core/time'
 import { registerCleanupTask, restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
 import type { RumPerformanceEntry } from '../../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'

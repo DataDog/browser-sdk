@@ -1,5 +1,5 @@
-import type { ClocksState, Context, PageMayExitEvent, RawError } from '@datadog/browser-core'
-import type { Duration } from '@datadog/js-core/time'
+import type { ClocksState, Duration } from '@datadog/js-core/time'
+import type { Context, PageMayExitEvent, RawError } from '@datadog/browser-core'
 import { AbstractLifeCycle } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumEvent, AssembledRumEvent } from '../rawRumEvent.types'

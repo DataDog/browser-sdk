@@ -1,4 +1,5 @@
-import type { Context, ClocksState, Observable, BufferedData } from '@datadog/browser-core'
+import type { ClocksState } from '@datadog/js-core/time'
+import type { Context, Observable, BufferedData } from '@datadog/browser-core'
 import { timeStampNow } from '@datadog/js-core/time'
 import { BufferedDataType, ConsoleApiName, ErrorSource } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../configuration'

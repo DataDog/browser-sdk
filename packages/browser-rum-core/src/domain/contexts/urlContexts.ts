@@ -1,7 +1,8 @@
-import type { RelativeTime, Observable } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/js-core/time'
+import type { Observable } from '@datadog/browser-core'
+import { relativeNow } from '@datadog/js-core/time'
 import {
   SESSION_TIME_OUT_DELAY,
-  relativeNow,
   createValueHistory,
   HookNames,
   DISCARDED,

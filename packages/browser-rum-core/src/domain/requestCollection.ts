@@ -1,9 +1,8 @@
 import { elapsed, timeStampNow } from '@datadog/js-core/time'
-import type { Duration } from '@datadog/js-core/time'
+import type { Duration, ClocksState } from '@datadog/js-core/time'
 import type {
   XhrCompleteContext,
   XhrStartContext,
-  ClocksState,
   FetchStartContext,
   FetchResolveContext,
   ContextManager,

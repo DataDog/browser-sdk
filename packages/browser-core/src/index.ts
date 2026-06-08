@@ -81,7 +81,6 @@ export * from './tools/display'
 export type { Encoder, EncoderResult } from './tools/encoder'
 export { createIdentityEncoder } from './tools/encoder'
 export * from './tools/utils/urlPolyfill'
-export * from '@datadog/js-core/time'
 export * from './tools/utils/arrayUtils'
 
 export * from './tools/serialisation/sanitize'

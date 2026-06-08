@@ -1,4 +1,4 @@
-import type { RelativeTime } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/js-core/time'
 import { ONE_SECOND, elapsed } from '@datadog/js-core/time'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import {

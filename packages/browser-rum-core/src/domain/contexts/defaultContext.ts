@@ -1,5 +1,5 @@
-import { canUseEventBridge, clockDrift, HookNames, round } from '@datadog/browser-core'
-import { timeStampNow } from '@datadog/js-core/time'
+import { clockDrift, timeStampNow } from '@datadog/js-core/time'
+import { canUseEventBridge, HookNames, round } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { DefaultRumEventAttributes, Hooks } from '../hooks'
 

@@ -1,5 +1,5 @@
-import { clocksNow, Observable } from '@datadog/browser-core'
-import { timeStampNow } from '@datadog/js-core/time'
+import { clocksNow, timeStampNow } from '@datadog/js-core/time'
+import { Observable } from '@datadog/browser-core'
 import { createNewEvent } from '@datadog/browser-core/test'
 import type { Click } from '../src/domain/action/trackClickActions'
 import type { MouseEventOnElement, UserActivity } from '../src/domain/action/listenActionEvents'

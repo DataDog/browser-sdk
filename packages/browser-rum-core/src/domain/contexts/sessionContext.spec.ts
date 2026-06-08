@@ -1,5 +1,6 @@
-import type { RelativeTime } from '@datadog/browser-core'
-import { clocksNow, DISCARDED, HookNames } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/js-core/time'
+import { clocksNow } from '@datadog/js-core/time'
+import { DISCARDED, HookNames } from '@datadog/browser-core'
 import type { SessionManagerMock } from '@datadog/browser-core/test'
 import { createSessionManagerMock } from '@datadog/browser-core/test'
 import { mockRumConfiguration, noopRecorderApi } from '../../../test'

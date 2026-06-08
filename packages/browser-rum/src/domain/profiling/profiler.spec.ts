@@ -1,4 +1,12 @@
-import { elapsed, timeStampNow } from '@datadog/js-core/time'
+import {
+  elapsed,
+  timeStampNow,
+  addDuration,
+  clocksNow,
+  clocksOrigin,
+  ONE_DAY,
+  relativeNow,
+} from '@datadog/js-core/time'
 import type { Duration } from '@datadog/js-core/time'
 import type { ProfilerTrace } from '@datadog/browser-core'
 import type { ViewHistoryEntry } from '@datadog/browser-rum-core'
@@ -9,16 +17,7 @@ import {
   VitalType,
   createHooks,
 } from '@datadog/browser-rum-core'
-import {
-  addDuration,
-  clocksNow,
-  clocksOrigin,
-  createIdentityEncoder,
-  createValueHistory,
-  deepClone,
-  ONE_DAY,
-  relativeNow,
-} from '@datadog/browser-core'
+import { createIdentityEncoder, createValueHistory, deepClone } from '@datadog/browser-core'
 import {
   setPageVisibility,
   restorePageVisibility,

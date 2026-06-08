@@ -1,4 +1,4 @@
-import type { RelativeTime } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/js-core/time'
 import { ONE_MINUTE } from '@datadog/js-core/time'
 import { DOM_EVENT, addEventListeners, findLast } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'

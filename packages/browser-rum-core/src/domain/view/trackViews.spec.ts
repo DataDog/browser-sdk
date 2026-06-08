@@ -1,7 +1,6 @@
-import type { RelativeTime } from '@datadog/browser-core'
-import { timeStampNow } from '@datadog/js-core/time'
-import type { Duration } from '@datadog/js-core/time'
-import { PageExitReason, display, relativeToClocks, relativeNow } from '@datadog/browser-core'
+import type { RelativeTime, Duration } from '@datadog/js-core/time'
+import { timeStampNow, relativeToClocks, relativeNow } from '@datadog/js-core/time'
+import { PageExitReason, display } from '@datadog/browser-core'
 
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask, createNewEvent } from '@datadog/browser-core/test'

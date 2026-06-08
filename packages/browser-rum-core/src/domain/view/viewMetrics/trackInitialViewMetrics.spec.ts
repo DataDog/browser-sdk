@@ -1,5 +1,5 @@
 import type { Duration } from '@datadog/js-core/time'
-import { clocksOrigin } from '@datadog/browser-core'
+import { clocksOrigin } from '@datadog/js-core/time'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumPerformanceEntry } from '../../../browser/performanceObservable'

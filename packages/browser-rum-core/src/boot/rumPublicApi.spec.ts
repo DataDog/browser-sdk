@@ -1,15 +1,7 @@
-import { ONE_SECOND } from '@datadog/js-core/time'
-import type { TimeStamp } from '@datadog/js-core/time'
-import type { RelativeTime, DeflateWorker } from '@datadog/browser-core'
-import {
-  display,
-  DefaultPrivacyLevel,
-  timeStampToClocks,
-  ResourceType,
-  startTelemetry,
-  startSessionManager,
-  toTimeStamp,
-} from '@datadog/browser-core'
+import { ONE_SECOND, timeStampToClocks, toTimeStamp } from '@datadog/js-core/time'
+import type { TimeStamp, RelativeTime } from '@datadog/js-core/time'
+import type { DeflateWorker } from '@datadog/browser-core'
+import { display, DefaultPrivacyLevel, ResourceType, startTelemetry, startSessionManager } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
   collectAsyncCalls,

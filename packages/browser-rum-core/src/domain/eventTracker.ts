@@ -1,6 +1,6 @@
-import type { ClocksState, RelativeTime, ValueHistoryEntry } from '@datadog/browser-core'
+import type { ClocksState, RelativeTime, Duration } from '@datadog/js-core/time'
+import type { ValueHistoryEntry } from '@datadog/browser-core'
 import { ONE_MINUTE, elapsed } from '@datadog/js-core/time'
-import type { Duration } from '@datadog/js-core/time'
 import { generateUUID, createValueHistory, combine } from '@datadog/browser-core'
 import type { RumActionEvent, RumErrorEvent, RumLongTaskEvent, RumResourceEvent } from '../rumEvent.types'
 import { LifeCycleEventType } from './lifeCycle'

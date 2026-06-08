@@ -432,6 +432,7 @@ __metadata:
     "@angular/router": "npm:21.2.15"
     "@datadog/browser-core": "npm:7.2.0"
     "@datadog/browser-rum-core": "npm:7.2.0"
+    "@datadog/js-core": "npm:0.0.1"
     rxjs: "npm:7.8.2"
   peerDependencies:
     "@angular/core": ">=15 <=21"
@@ -457,6 +458,7 @@ __metadata:
     "@datadog/browser-core": "npm:7.2.0"
     "@datadog/browser-rum-core": "npm:7.2.0"
     "@datadog/browser-rum-react": "npm:7.2.0"
+    "@datadog/js-core": "npm:0.0.1"
     "@types/react": "npm:19.2.15"
     next: "npm:16.2.4"
     react: "npm:19.2.6"
@@ -478,6 +480,7 @@ __metadata:
   dependencies:
     "@datadog/browser-core": "npm:7.2.0"
     "@datadog/browser-rum-core": "npm:7.2.0"
+    "@datadog/js-core": "npm:0.0.1"
     vue: "npm:3.5.35"
     vue-router: "npm:5.1.0"
   peerDependencies:
@@ -554,6 +557,7 @@ __metadata:
   dependencies:
     "@datadog/browser-core": "npm:7.2.0"
     "@datadog/browser-rum-core": "npm:7.2.0"
+    "@datadog/js-core": "npm:0.0.1"
     "@vue/test-utils": "npm:2.4.10"
     vue: "npm:3.5.35"
     vue-router: "npm:5.1.0"

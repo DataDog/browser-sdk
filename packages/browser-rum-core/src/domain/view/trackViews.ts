@@ -1,17 +1,21 @@
-import { ONE_MINUTE, elapsed, timeStampNow } from '@datadog/js-core/time'
-import type { Duration, TimeStamp } from '@datadog/js-core/time'
-import type { ClocksState, Subscription, RelativeTime, Context, ContextValue } from '@datadog/browser-core'
+import {
+  ONE_MINUTE,
+  elapsed,
+  timeStampNow,
+  clocksNow,
+  clocksOrigin,
+  relativeToClocks,
+  isRelativeTime,
+} from '@datadog/js-core/time'
+import type { Duration, TimeStamp, ClocksState, RelativeTime } from '@datadog/js-core/time'
+import type { Subscription, Context, ContextValue } from '@datadog/browser-core'
 import {
   noop,
   PageExitReason,
   shallowClone,
   generateUUID,
   throttle,
-  clocksNow,
-  clocksOrigin,
-  relativeToClocks,
   display,
-  isRelativeTime,
   setInterval,
   clearInterval,
   setTimeout,

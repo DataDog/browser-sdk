@@ -1,5 +1,4 @@
-import type { ClocksState } from '@datadog/browser-core'
-import type { Duration } from '@datadog/js-core/time'
+import type { ClocksState, Duration } from '@datadog/js-core/time'
 import type { RumConfiguration } from '../../configuration'
 import { trackFirstContentfulPaint } from './trackFirstContentfulPaint'
 import type { NavigationTimings } from './trackNavigationTimings'

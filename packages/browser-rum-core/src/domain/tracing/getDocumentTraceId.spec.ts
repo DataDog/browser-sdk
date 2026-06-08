@@ -1,5 +1,5 @@
 import type { TimeStamp } from '@datadog/js-core/time'
-import { getTimeOrigin } from '@datadog/browser-core'
+import { getTimeOrigin } from '@datadog/js-core/time'
 import {
   createDocumentTraceData,
   findTraceComment,

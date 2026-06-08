@@ -1,8 +1,7 @@
-import { timeStampNow } from '@datadog/js-core/time'
-import type { Duration, TimeStamp } from '@datadog/js-core/time'
+import { timeStampNow, clocksNow, timeStampToClocks } from '@datadog/js-core/time'
+import type { Duration, TimeStamp, RelativeTime } from '@datadog/js-core/time'
 import type {
   Context,
-  RelativeTime,
   DeflateWorker,
   DeflateEncoderStreamId,
   DeflateEncoder,
@@ -23,14 +22,12 @@ import {
   deepClone,
   makePublicApi,
   monitor,
-  clocksNow,
   callMonitored,
   createHandlingStack,
   sanitize,
   createIdentityEncoder,
   displayAlreadyInitializedError,
   createTrackingConsentState,
-  timeStampToClocks,
   CustomerContextKey,
   defineContextMethod,
   startBufferingData,
