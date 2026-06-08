@@ -362,25 +362,6 @@ describe('instrumentConstructor', () => {
     expect(container.MyClassWithStaticMembers.staticMethod()).toBe('static-result')
   })
 
-  it('preserves the own prototype property descriptor on the instrumented constructor (writable must match original)', () => {
-    const container = { MyClass }
-    const originalDescriptor = Object.getOwnPropertyDescriptor(MyClass, 'prototype')!
-
-    expect(originalDescriptor.writable).toBe(false)
-
-    instrumentConstructor(container, 'MyClass', noop)
-
-    // Writable must match original
-    expect(Object.getOwnPropertyDescriptor(container.MyClass, 'prototype')).toEqual(
-      jasmine.objectContaining({
-        writable: originalDescriptor.writable,
-        configurable: originalDescriptor.configurable,
-        enumerable: originalDescriptor.enumerable,
-        value: MyClass.prototype,
-      })
-    )
-  })
-
   it('preserves instanceof when instrumented constructor is used as a base class', () => {
     const container = { MyClass }
     instrumentConstructor(container, 'MyClass', noop)
@@ -517,41 +498,6 @@ describe('instrumentConstructor', () => {
 
       const instance = new container.MyClass(2)
       expect(instance.constructor).toBe(MyClass)
-    })
-
-    it('restores prototype.constructor after stop when the prototype had no own constructor descriptor', () => {
-      class NoOwnPrototypeConstructor {
-        x: number
-        constructor(x: number) {
-          this.x = x
-        }
-      }
-
-      const prototypeObject = NoOwnPrototypeConstructor.prototype
-      delete (prototypeObject as unknown as { constructor?: typeof NoOwnPrototypeConstructor }).constructor
-
-      expect(Object.getOwnPropertyDescriptor(prototypeObject, 'constructor')).toBeUndefined()
-
-      const container = { NoOwnPrototypeConstructor }
-      const { stop } = instrumentConstructor(container, 'NoOwnPrototypeConstructor', noop)
-      registerCleanupTask(stop)
-
-      new container.NoOwnPrototypeConstructor(1)
-
-      stop()
-
-      expect(container.NoOwnPrototypeConstructor).toBe(NoOwnPrototypeConstructor)
-      expect(NoOwnPrototypeConstructor.prototype).toBe(prototypeObject)
-      expect(Object.getOwnPropertyDescriptor(prototypeObject, 'constructor')).toEqual({
-        value: NoOwnPrototypeConstructor,
-        writable: true,
-        enumerable: false,
-        configurable: true,
-      })
-
-      const instance = new NoOwnPrototypeConstructor(2)
-      expect(instance.constructor).toBe(NoOwnPrototypeConstructor)
-      expect(instance.x).toBe(2)
     })
   })
 

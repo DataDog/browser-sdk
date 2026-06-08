@@ -300,7 +300,7 @@ interface InstrumentationCallbacks<RESULT> {
 }
 
 /**
- * Copies the original constructor prototype and static members onto the instrumentation, so that
+ * Copies the original constructor prototype and other static members onto the instrumentation, so that
  * `instanceof` checks keep working and statics such as `WebSocket.OPEN` remain available while
  * instrumented.
  *
@@ -308,128 +308,36 @@ interface InstrumentationCallbacks<RESULT> {
  * before restoring the global property in `stop()`.
  */
 function preserveConstructorShape(instrumentation: AnyConstructor, original: AnyConstructor): () => void {
-  if (!original.prototype) {
-    return noop
-  }
-
-  copyOriginalPrototype(instrumentation, original)
-
-  const prototypeObject = original.prototype as object
-  const { rewired, savedConstructorDescriptor } = tryRewirePrototypeConstructor(prototypeObject, instrumentation)
-
-  copyOwnStaticsExceptBuiltins(original, instrumentation)
-
-  return () =>
-    restorePrototypeConstructor({
-      rewired,
-      prototypeObject,
-      savedConstructorDescriptor,
-      original,
-    })
-}
-
-// Preserve the original prototype so that instanceof checks against the instrumented global work.
-// e.g. `new MyClass() instanceof MyClass` must remain true.
-function copyOriginalPrototype(instrumentation: AnyConstructor, original: AnyConstructor): void {
-  const originalPrototypeDescriptor = Object.getOwnPropertyDescriptor(original, 'prototype')
-  try {
-    if (originalPrototypeDescriptor) {
-      Object.defineProperty(instrumentation, 'prototype', {
-        value: original.prototype,
-        writable: originalPrototypeDescriptor.writable,
-        enumerable: originalPrototypeDescriptor.enumerable,
-        configurable: originalPrototypeDescriptor.configurable,
-      })
-    } else {
-      instrumentation.prototype = original.prototype
-    }
-  } catch {
-    instrumentation.prototype = original.prototype
-  }
-}
-
-/*
- * Limitation: repointing `constructor` on this shared prototype affects every instance whose
- * `[[Prototype]]` is this object, including instances created before instrumentation, because
- * `constructor` is inherited rather than snapshotted per instance. Code that held `original` (or
- * whatever was in `prototype.constructor` before) as the canonical constructor and expects reference
- * equality to that value for the lifetime of the page can observe a behavior change while RUM is
- * active; restoring on `stop()` fixes this. In practice the SDK initializes as early as possible,
- * which narrows the window where pre-instrument instances exist.
- */
-function tryRewirePrototypeConstructor(
-  prototypeObject: object,
-  instrumentation: AnyConstructor
-): { rewired: boolean; savedConstructorDescriptor: PropertyDescriptor | undefined } {
-  const savedConstructorDescriptor = Object.getOwnPropertyDescriptor(prototypeObject, 'constructor')
-
-  let rewired = false
-  try {
-    Object.defineProperty(prototypeObject, 'constructor', {
-      value: instrumentation,
-      writable: savedConstructorDescriptor?.writable ?? true,
-      enumerable: savedConstructorDescriptor?.enumerable ?? false,
-      configurable: true,
-    })
-    rewired = true
-  } catch {
-    // Some exotic builtins keep a non-configurable `constructor` on their prototype.
-  }
-  return { rewired, savedConstructorDescriptor }
-}
-
-const STATIC_COPY_EXCLUDED_KEYS = new Set(['prototype', 'length', 'name', 'arguments', 'caller'])
-
-/*
- * Limitation: only the original's *own* static members are copied. Statics inherited through the
- * constructor's prototype chain (e.g. `class Child extends Parent` where `Parent` defines statics)
- * are not preserved, since the instrumentation still inherits from `Function.prototype`. This is
- * acceptable for the globals we instrument (e.g. `WebSocket`, whose own statics are the only ones
- * that matter), but would need to delegate the static prototype chain to support subclassed
- * constructors with meaningful inherited statics.
- */
-function copyOwnStaticsExceptBuiltins(original: AnyConstructor, instrumentation: AnyConstructor): void {
+  /**
+   * Limitation: Only the original's *own* static members are copied. Statics inherited through the
+   * constructor's prototype chain (e.g. `class Child extends Parent` where `Parent` defines statics)
+   * are not preserved, since the instrumentation still inherits from `Function.prototype`. This is
+   * acceptable for the globals we instrument (e.g. `WebSocket`, whose own statics are the only ones
+   * that matter), but we would need to delegate the static prototype chain to support subclassed
+   * constructors with meaningful inherited statics.
+   */
   for (const key of ([] as PropertyKey[]).concat(
     Object.getOwnPropertyNames(original),
     Object.getOwnPropertySymbols(original)
   )) {
-    if (typeof key === 'string' && STATIC_COPY_EXCLUDED_KEYS.has(key)) {
-      continue
-    }
-    const descriptor = Object.getOwnPropertyDescriptor(original, key)
-    if (descriptor) {
-      Object.defineProperty(instrumentation, key, descriptor)
-    }
+    const descriptor = Object.getOwnPropertyDescriptor(original, key) as PropertyDescriptor
+    Object.defineProperty(instrumentation, key, descriptor)
   }
-}
 
-function restorePrototypeConstructor({
-  rewired,
-  prototypeObject,
-  savedConstructorDescriptor,
-  original,
-}: {
-  rewired: boolean
-  prototypeObject: object
-  savedConstructorDescriptor: PropertyDescriptor | undefined
-  original: AnyConstructor
-}): void {
-  if (!rewired) {
-    return
-  }
-  try {
-    if (savedConstructorDescriptor) {
-      Object.defineProperty(prototypeObject, 'constructor', savedConstructorDescriptor)
-    } else {
-      Object.defineProperty(prototypeObject, 'constructor', {
-        value: original,
-        writable: true,
-        enumerable: false,
-        configurable: true,
-      })
-    }
-  } catch {
-    // Best-effort: prototype.constructor may be non-configurable
+  /*
+   * Limitation: Repointing `constructor` on this shared prototype affects every instance whose
+   * `[[Prototype]]` is this object, including instances created before instrumentation, because
+   * `constructor` is inherited rather than snapshotted per instance. Code that held `original` (or
+   * whatever was in `prototype.constructor` before) as the canonical constructor and expects reference
+   * equality to that value for the lifetime of the page can observe a behavior change while RUM is
+   * active; restoring on `stop()` fixes this. In practice the SDK initializes as early as possible,
+   * which narrows the window where pre-instrument instances exist.
+   */
+  const originalConstructor = original.prototype.constructor
+  original.prototype.constructor = instrumentation
+
+  return () => {
+    original.prototype.constructor = originalConstructor
   }
 }
 
