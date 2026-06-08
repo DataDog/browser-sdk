@@ -25,3 +25,12 @@ export function mapValues<A, B>(object: { [key: string]: A }, fn: (arg: A) => B)
   }
   return newObject
 }
+
+export function getConstructorName(value: unknown): string | undefined {
+  try {
+    const name = (value as { constructor?: { name?: unknown } } | null | undefined)?.constructor?.name
+    return typeof name === 'string' && name ? name : undefined
+  } catch {
+    // ignore: accessing `constructor` can throw on hostile objects
+  }
+}

@@ -567,6 +567,50 @@ describe('api', () => {
       })
     })
 
+    it('should capture thrown values that cannot be coerced or sanitized', () => {
+      addProbe(createProbe())
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      const error = {
+        toString() {
+          throw new Error('Cannot coerce')
+        },
+        get x() {
+          throw new Error('Cannot sanitize')
+        },
+      }
+      onEntry(probes, {}, {})
+      expect(() => onThrow(probes, error, {}, {})).not.toThrow()
+
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
+      expect(snapshot.captures.return.throwable).toEqual({
+        message: '<error: unable to stringify thrown value>',
+        stacktrace: [],
+      })
+    })
+
+    it('should capture Error-like thrown values with hostile message getters', () => {
+      addProbe(createProbe())
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      const error = {
+        [Symbol.toStringTag]: 'Error',
+        get message() {
+          throw new Error('Cannot read message')
+        },
+      }
+      onEntry(probes, {}, {})
+      expect(() => onThrow(probes, error, {}, {})).not.toThrow()
+
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
+      expect(snapshot.captures.return.throwable).toEqual({
+        message: '[object Error]',
+        stacktrace: [],
+      })
+    })
+
     it('should evaluate EXIT condition with @exception', () => {
       addProbe(
         createProbe({

@@ -1,3 +1,6 @@
+import { isError, safeToString } from '@datadog/browser-core'
+import { formatUnknownError } from './error'
+
 export interface CompiledCondition {
   evaluate: (contextKeys: string[]) => (...args: any[]) => boolean
 }
@@ -90,5 +93,5 @@ export function evaluateProbeCondition(probe: ProbeWithCondition, context: Recor
 }
 
 function formatConditionEvaluationError(error: unknown): string {
-  return error instanceof Error ? `${error.name}: ${error.message}` : String(error)
+  return isError(error) ? formatUnknownError(error) : (safeToString(error) ?? '<error: unable to stringify error>')
 }

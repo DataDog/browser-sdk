@@ -1,14 +1,7 @@
 import type { Batch, Context } from '@datadog/browser-core'
 import { timeStampNow } from '@datadog/js-core/time'
 
-import {
-  buildTag,
-  generateUUID,
-  globalObject,
-  isError,
-  jsonStringify,
-  sanitize,
-} from '@datadog/browser-core'
+import { buildTag, generateUUID, globalObject } from '@datadog/browser-core'
 import type { BrowserWindow, DebuggerInitConfiguration } from '../entries/main'
 import { capture, captureFields } from './capture'
 import type { CaptureContext } from './capture'
@@ -21,11 +14,12 @@ import {
   resetProbeBudgetConfiguration,
   setProbeBudgetConfiguration,
 } from './probes'
-import type { ActiveEntry, Throwable } from './activeEntries'
-import { captureStackTrace, parseStackTrace } from './stacktrace'
+import type { ActiveEntry } from './activeEntries'
+import { captureStackTrace } from './stacktrace'
 import { evaluateProbeMessage } from './template'
 import { evaluateProbeCondition, isConditionEvaluationError } from './condition'
 import { display } from './display'
+import { formatThrowable } from './error'
 
 const globalObj = globalObject as BrowserWindow
 
@@ -276,40 +270,6 @@ export function onThrow(probes: InitializedProbe[], error: unknown, self: any, a
     }
 
     queueDebuggerSnapshot(probe, result)
-  }
-}
-
-function formatThrowable(error: unknown): Throwable {
-  if (isError(error)) {
-    return {
-      message: error.message,
-      stacktrace: tryParseStackTrace(error),
-    }
-  }
-
-  return {
-    message: formatNonErrorMessage(error),
-    stacktrace: [],
-  }
-}
-
-function tryParseStackTrace(error: Error) {
-  try {
-    return parseStackTrace(error)
-  } catch {
-    return []
-  }
-}
-
-function formatNonErrorMessage(error: unknown): string {
-  if (typeof error === 'string') {
-    return error
-  }
-
-  try {
-    return String(error)
-  } catch {
-    return jsonStringify(sanitize(error)) ?? '<error: unable to stringify thrown value>'
   }
 }
 

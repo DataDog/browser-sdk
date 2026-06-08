@@ -153,6 +153,45 @@ describe('capture', () => {
       })
     })
 
+    it('should capture cross-realm Error values', () => {
+      const iframe = document.createElement('iframe')
+      document.body.appendChild(iframe)
+      const iframeWindow = iframe.contentWindow as Window & { Error: ErrorConstructor }
+      const error = new iframeWindow.Error('iframe error')
+      iframe.remove()
+
+      const result = capture(error, defaultOpts, noTimeout()) as any
+
+      expect(result.type).toBe('Error')
+      expect(result.fields.message).toEqual({ type: 'string', value: 'iframe error' })
+      expect(result.fields.name).toEqual({ type: 'string', value: 'Error' })
+    })
+
+    it('should use Error as type for Error-like values without a constructor name', () => {
+      const error = Object.create(null)
+      error[Symbol.toStringTag] = 'Error'
+
+      const result = capture(error, defaultOpts, noTimeout()) as any
+
+      expect(result.type).toBe('Error')
+    })
+
+    it('should capture Error properties that cannot be accessed', () => {
+      const error = new Error()
+      Object.defineProperty(error, 'message', {
+        get() {
+          throw new Error('Cannot access message')
+        },
+      })
+
+      const result = capture(error, defaultOpts, noTimeout()) as any
+
+      expect(result.type).toBe('Error')
+      expect(result.fields.message).toEqual({
+        notCapturedReason: 'Error accessing property',
+      })
+    })
+
     it('should capture Promise', () => {
       const promise = Promise.resolve(42)
       const result = capture(promise, defaultOpts, noTimeout())
@@ -334,7 +373,6 @@ describe('capture', () => {
       const result = capture(obj, defaultOpts, noTimeout()) as any
 
       expect(result.fields.throwing).toEqual({
-        type: 'undefined',
         notCapturedReason: 'Error accessing property',
       })
     })
@@ -554,7 +592,6 @@ describe('captureFields', () => {
     const result = captureFields(obj, defaultOpts, noTimeout())
 
     expect(result.throwing).toEqual({
-      type: 'undefined',
       notCapturedReason: 'Error accessing property',
     })
   })

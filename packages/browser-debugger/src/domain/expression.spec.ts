@@ -211,13 +211,13 @@ describe('browser compatibility of generated code', () => {
     it('should generate code compatible with the oldest target browser for compiled segments', () => {
       const segmentsCode = compileSegments([{ str: 'Hello ' }, { dsl: 'name', json: { ref: 'name' } }, { str: '!' }])
 
-      assertECMAVersionCompatible(`return ${segmentsCode}`, ['$dd_inspect', 'name'])
+      assertECMAVersionCompatible(`return ${segmentsCode}`, ['$dd_inspect', '$dd_format_error', 'name'])
     })
 
     it('should generate code compatible with the oldest target browser for segments with complex expressions', () => {
       const segmentsCode = compileSegments([{ dsl: 'obj.field', json: { getmember: [{ ref: 'obj' }, 'field'] } }])
 
-      assertECMAVersionCompatible(`return ${segmentsCode}`, ['$dd_inspect', 'obj'])
+      assertECMAVersionCompatible(`return ${segmentsCode}`, ['$dd_inspect', '$dd_format_error', 'obj'])
     })
   })
 })
