@@ -4,6 +4,7 @@ import type { Page } from '@playwright/test'
 import { createTest } from '../lib/framework'
 
 const DEBUGGER_POLL_INTERVAL = 1_000
+const PROBE_WAIT_TIMEOUT = 30_000
 
 function makeProbe({
   id = 'test-probe-1',
@@ -48,18 +49,27 @@ function makeProbe({
  * instrumented function — otherwise the call would silently bypass the probe hooks.
  */
 async function waitForProbe(page: Page, functionId: string) {
-  await page.waitForFunction((id) => {
-    const $dd_probes = (globalThis as any).$dd_probes as ((id: string) => unknown[] | undefined) | undefined
-    const probes = $dd_probes?.(id)
-    return probes !== undefined && probes.length > 0
-  }, functionId)
+  await expect
+    .poll(() => hasActiveProbe(page, functionId), {
+      timeout: PROBE_WAIT_TIMEOUT,
+    })
+    .toBe(true)
 }
 
 async function waitForNoProbe(page: Page, functionId: string) {
-  await page.waitForFunction((id) => {
+  await expect
+    .poll(() => hasActiveProbe(page, functionId), {
+      timeout: PROBE_WAIT_TIMEOUT,
+    })
+    .toBe(false)
+}
+
+function hasActiveProbe(page: Page, functionId: string) {
+  // Do not use page.waitForFunction() here: pinned Chromium evaluates its predicate through an eval-like path,
+  // which is blocked by the test page CSP because it intentionally omits 'unsafe-eval'.
+  return page.evaluate((id) => {
     const $dd_probes = (globalThis as any).$dd_probes as ((id: string) => unknown[] | undefined) | undefined
-    const probes = $dd_probes?.(id)
-    return $dd_probes !== undefined && (probes === undefined || probes.length === 0)
+    return $dd_probes?.(id) !== undefined
   }, functionId)
 }
 
