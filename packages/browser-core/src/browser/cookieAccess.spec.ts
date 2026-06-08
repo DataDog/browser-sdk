@@ -12,6 +12,7 @@ import {
   areCookiesAuthorized,
   createCookieStoreAccess,
   createDocumentCookieAccess,
+  isCookieStoreSupported,
   WATCH_COOKIE_INTERVAL_DELAY,
 } from './cookieAccess'
 
@@ -313,6 +314,30 @@ describe('cookieAccess', () => {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
       const result = await areCookiesAuthorized(createDocumentCookieAccess, COOKIE_OPTIONS, MOCK_CONFIGURATION)
       expect(result).toBe(false)
+    })
+  })
+
+  describe('isCookieStoreSupported', () => {
+    it('returns false when the CookieStore API is not available', () => {
+      disableCookieStore()
+
+      expect(isCookieStoreSupported()).toBe(false)
+    })
+
+    it('returns true when the CookieStore API supports change events', () => {
+      const cookieStore = new EventTarget()
+      replaceMockable(globalObject.cookieStore, cookieStore as unknown as typeof globalObject.cookieStore)
+
+      expect(isCookieStoreSupported()).toBe(true)
+    })
+
+    it('returns false when the CookieStore API does not support change events', () => {
+      const cookieStore = {
+        addEventListener: jasmine.createSpy().and.throwError('unsupported'),
+      }
+      replaceMockable(globalObject.cookieStore, cookieStore as unknown as typeof globalObject.cookieStore)
+
+      expect(isCookieStoreSupported()).toBe(false)
     })
   })
 })
