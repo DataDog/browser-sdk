@@ -1,28 +1,28 @@
 import type { RelativeTime } from '@datadog/js-core/time'
-import type { Hooks } from '../../../test'
+import { registerCleanupTask } from '../../../test'
 import type { LogsConfiguration } from '../../../../browser-logs/src/domain/configuration'
 import type { ContextManager } from '../context/contextManager'
-import { HookNames } from '../../tools/abstractHooks'
-import { createHooks, registerCleanupTask } from '../../../test'
 import { removeStorageListeners } from '../context/storeContextManager'
 import type { Configuration } from '../configuration'
+import type { Hook } from '../../tools/abstractHooks'
+import { createHook } from '../../tools/abstractHooks'
 import { startGlobalContext } from './globalContext'
 
 describe('logs global context', () => {
   let globalContext: ContextManager
-  let hooks: Hooks
+  let hook: Hook<any, any>
 
   beforeEach(() => {
-    hooks = createHooks()
+    hook = createHook()
   })
 
   describe('assemble hook', () => {
     it('should set the context in context in `context` namespace when specified', () => {
       const contextNamespace = true
-      globalContext = startGlobalContext(hooks, {} as LogsConfiguration, 'some_product_key', contextNamespace)
+      globalContext = startGlobalContext(hook, {} as LogsConfiguration, 'some_product_key', contextNamespace)
 
       globalContext.setContext({ id: '123', foo: 'bar' })
-      const event = hooks.triggerHook(HookNames.Assemble, { startTime: 0 as RelativeTime })
+      const event = hook.trigger({ startTime: 0 as RelativeTime })
 
       expect(event).toEqual({
         context: {
@@ -34,10 +34,10 @@ describe('logs global context', () => {
 
     it('should set the context in root namespace when specified', () => {
       const contextNamespace = false
-      globalContext = startGlobalContext(hooks, {} as LogsConfiguration, 'some_product_key', contextNamespace)
+      globalContext = startGlobalContext(hook, {} as LogsConfiguration, 'some_product_key', contextNamespace)
 
       globalContext.setContext({ id: '123', foo: 'bar' })
-      const event = hooks.triggerHook(HookNames.Assemble, { startTime: 0 as RelativeTime })
+      const event = hook.trigger({ startTime: 0 as RelativeTime })
 
       expect(event).toEqual({
         id: '123',
@@ -49,10 +49,10 @@ describe('logs global context', () => {
 
 describe('global context across pages', () => {
   let globalContext: ContextManager
-  let hooks: Hooks
+  let hook: Hook<any, any>
 
   beforeEach(() => {
-    hooks = createHooks()
+    hook = createHook()
 
     registerCleanupTask(() => {
       localStorage.clear()
@@ -62,7 +62,7 @@ describe('global context across pages', () => {
 
   it('when disabled, should store contexts only in memory', () => {
     globalContext = startGlobalContext(
-      hooks,
+      hook,
       { storeContextsAcrossPages: false } as Configuration,
       'some_product_key',
       false
@@ -75,7 +75,7 @@ describe('global context across pages', () => {
 
   it('when enabled, should maintain the global context in local storage', () => {
     globalContext = startGlobalContext(
-      hooks,
+      hook,
       { storeContextsAcrossPages: true } as Configuration,
       'some_product_key',
       false

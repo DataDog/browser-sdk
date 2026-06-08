@@ -1,17 +1,16 @@
 import type { RelativeTime } from '@datadog/js-core/time'
-import type { Hooks } from '../../../test'
-import { createHooks, registerCleanupTask } from '../../../test'
+import { registerCleanupTask } from '../../../test'
 import { mockRumConfiguration } from '../../../../browser-rum-core/test'
 import type { ContextManager } from '../context/contextManager'
-import { HookNames } from '../../tools/abstractHooks'
 import { removeStorageListeners } from '../context/storeContextManager'
 import type { Configuration } from '../configuration'
 import type { SessionContext } from '../session/sessionManager'
+import { createHook, type Hook } from '../../tools/abstractHooks'
 import { startUserContext } from './userContext'
 
 describe('user context', () => {
   let userContext: ContextManager
-  let hooks: Hooks
+  let hook: Hook<any, any>
   const mockSessionManager = {
     findTrackedSession: () =>
       ({
@@ -20,9 +19,9 @@ describe('user context', () => {
   }
 
   beforeEach(() => {
-    hooks = createHooks()
+    hook = createHook()
     userContext = startUserContext(
-      hooks,
+      hook,
       mockRumConfiguration({ trackAnonymousUser: false }),
       mockSessionManager,
       'some_product_key'
@@ -42,7 +41,7 @@ describe('user context', () => {
   describe('assemble hook', () => {
     it('should set the user', () => {
       userContext.setContext({ id: '123', foo: 'bar' })
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultRumEventAttributes = hook.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       })
@@ -58,13 +57,13 @@ describe('user context', () => {
 
     it('should set anonymous_id when trackAnonymousUser is true', () => {
       userContext = startUserContext(
-        hooks,
+        hook,
         { trackAnonymousUser: true } as Configuration,
         mockSessionManager,
         'some_product_key'
       )
       userContext.setContext({ id: '123' })
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultRumEventAttributes = hook.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       })
@@ -80,13 +79,13 @@ describe('user context', () => {
 
     it('should not override customer provided anonymous_id when trackAnonymousUser is true', () => {
       userContext = startUserContext(
-        hooks,
+        hook,
         { trackAnonymousUser: true } as Configuration,
         mockSessionManager,
         'some_product_key'
       )
       userContext.setContext({ id: '123', anonymous_id: 'foo' })
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultRumEventAttributes = hook.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       })
@@ -104,11 +103,11 @@ describe('user context', () => {
 
 describe('user context across pages', () => {
   let userContext: ContextManager
-  let hooks: Hooks
+  let hook: Hook<any, any>
   const mockSessionManager = { findTrackedSession: () => undefined }
 
   beforeEach(() => {
-    hooks = createHooks()
+    hook = createHook()
 
     registerCleanupTask(() => {
       localStorage.clear()
@@ -118,7 +117,7 @@ describe('user context across pages', () => {
 
   it('when disabled, should store contexts only in memory', () => {
     userContext = startUserContext(
-      hooks,
+      hook,
       { storeContextsAcrossPages: false } as Configuration,
       mockSessionManager,
       'some_product_key'
@@ -131,7 +130,7 @@ describe('user context across pages', () => {
 
   it('when enabled, should maintain the user in local storage', () => {
     userContext = startUserContext(
-      hooks,
+      hook,
       { storeContextsAcrossPages: true } as Configuration,
       mockSessionManager,
       'some_product_key'

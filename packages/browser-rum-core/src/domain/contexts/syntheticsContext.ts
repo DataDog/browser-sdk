@@ -1,15 +1,9 @@
-import {
-  SKIPPED,
-  getSyntheticsContext,
-  HookNames,
-  willSyntheticsInjectRum,
-  isSyntheticsTest,
-} from '@datadog/browser-core'
-import type { DefaultRumEventAttributes, Hooks } from '../hooks'
+import { SKIPPED, getSyntheticsContext, willSyntheticsInjectRum, isSyntheticsTest } from '@datadog/browser-core'
+import type { AssembleHook, DefaultRumEventAttributes } from '../hooks'
 import { SessionType } from './sessionContext'
 
-export function startSyntheticsContext(hooks: Hooks) {
-  hooks.register(HookNames.Assemble, ({ eventType }): DefaultRumEventAttributes | SKIPPED => {
+export function startSyntheticsContext(assembleHook: AssembleHook) {
+  assembleHook.register(({ eventType }): DefaultRumEventAttributes | SKIPPED => {
     if (!isSyntheticsTest()) {
       return SKIPPED
     }

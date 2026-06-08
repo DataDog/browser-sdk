@@ -1,23 +1,23 @@
 import type { RelativeTime } from '@datadog/js-core/time'
-import type { Hooks } from '../../../test'
-import { createHooks, registerCleanupTask } from '../../../test'
+import { registerCleanupTask } from '../../../test'
 import { mockRumConfiguration } from '../../../../browser-rum-core/test'
 import type { ContextManager } from '../context/contextManager'
 import { display } from '../../tools/display'
-import { HookNames } from '../../tools/abstractHooks'
 import { removeStorageListeners } from '../context/storeContextManager'
+import type { Hook } from '../../tools/abstractHooks'
+import { createHook } from '../../tools/abstractHooks'
 import { startAccountContext } from './accountContext'
 
 describe('account context', () => {
   let accountContext: ContextManager
   let displaySpy: jasmine.Spy
-  let hooks: Hooks
+  let hook: Hook<any, any>
 
   beforeEach(() => {
-    hooks = createHooks()
+    hook = createHook()
     displaySpy = spyOn(display, 'warn')
 
-    accountContext = startAccountContext(hooks, mockRumConfiguration(), 'some_product_key')
+    accountContext = startAccountContext(hook, mockRumConfiguration(), 'some_product_key')
   })
 
   it('should warn when the account.id is missing', () => {
@@ -37,7 +37,7 @@ describe('account context', () => {
     it('should set the account', () => {
       accountContext.setContext({ id: '123', foo: 'bar' })
 
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultRumEventAttributes = hook.trigger({
         startTime: 0 as RelativeTime,
       })
 
@@ -51,7 +51,7 @@ describe('account context', () => {
 
     it('should not set the account when account.id is undefined', () => {
       accountContext.setContext({ foo: 'bar' })
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultRumEventAttributes = hook.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       })
@@ -63,9 +63,10 @@ describe('account context', () => {
 
 describe('account context across pages', () => {
   let accountContext: ContextManager
-  let hooks: Hooks
+  let hook: Hook<any, any>
+
   beforeEach(() => {
-    hooks = createHooks()
+    hook = createHook()
 
     registerCleanupTask(() => {
       localStorage.clear()
@@ -75,7 +76,7 @@ describe('account context across pages', () => {
 
   it('when disabled, should store contexts only in memory', () => {
     accountContext = startAccountContext(
-      hooks,
+      hook,
       mockRumConfiguration({ storeContextsAcrossPages: false }),
       'some_product_key'
     )
@@ -87,7 +88,7 @@ describe('account context across pages', () => {
 
   it('when enabled, should maintain the account in local storage', () => {
     accountContext = startAccountContext(
-      hooks,
+      hook,
       mockRumConfiguration({ storeContextsAcrossPages: true }),
       'some_product_key'
     )
