@@ -26,14 +26,6 @@ const rootRoute = createRootRoute({
         {' | '}
         <Link to="/posts">Posts</Link>
         {' | '}
-        <Link to="/posts/$postId" params={{ postId: '42' }}>
-          Post 42
-        </Link>
-        {' | '}
-        <Link to="/" search={{ tab: 'settings' }}>
-          Query Param
-        </Link>
-        {' | '}
         <Link to="/files/$" params={{ _splat: 'path/to/file' }}>
           Splat
         </Link>
@@ -78,17 +70,6 @@ const postsIndexRoute = createRoute({
   getParentRoute: () => postsRoute,
   path: '/',
   component: () => <p>Select a post</p>,
-})
-
-function PostDetail() {
-  const { postId } = useParams({ strict: false })
-  return <h1>Post {postId}</h1>
-}
-
-const postRoute = createRoute({
-  getParentRoute: () => postsRoute,
-  path: '/$postId',
-  component: PostDetail,
 })
 
 const userRoute = createRoute({
@@ -144,7 +125,7 @@ const oldPostsRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
-  postsRoute.addChildren([postsIndexRoute, postRoute]),
+  postsRoute.addChildren([postsIndexRoute]),
   userRoute,
   guidesRoute,
   filesRoute,
