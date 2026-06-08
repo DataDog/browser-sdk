@@ -52,26 +52,16 @@ export function bridgeSupports(capability: BridgeCapability): boolean {
 
 export function canUseEventBridge(currentHost = globalObject.location?.hostname): boolean {
   const bridge = getEventBridge()
-
-  return (
-    bridge?.getAllowedWebViewHosts().some((entry) => {
-      if (entry.includes('*') && entry.split('*').length !== 2) {
-        display.error(`Invalid WebView host pattern "${entry}": only one wildcard (*) is supported.`)
-        return false
-      }
-      return entry.includes('*')
-        ? matchesWildcardPattern(currentHost, entry)
-        : currentHost === entry || currentHost.endsWith(`.${entry}`)
-    }) ?? false
-  )
+  return bridge?.getAllowedWebViewHosts().some((entry) => matchesHostEntry(currentHost, entry)) ?? false
 }
 
-export function matchesWildcardPattern(host: string, pattern: string): boolean {
-  if (!pattern.includes('*')) {
-    return host === pattern
+export function matchesHostEntry(host: string, entry: string): boolean {
+  if (!entry.includes('*')) {
+    return host === entry || host.endsWith(`.${entry}`)
   }
-  const parts = pattern.split('*')
+  const parts = entry.split('*')
   if (parts.length !== 2) {
+    display.error(`Invalid WebView host pattern "${entry}": only one wildcard (*) is supported.`)
     return false
   }
   const [prefix, suffix] = parts

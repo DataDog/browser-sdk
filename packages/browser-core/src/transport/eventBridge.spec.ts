@@ -2,13 +2,7 @@ import { mockEventBridge } from '../../test'
 import { display } from '../tools/display'
 import { DefaultPrivacyLevel } from '../domain/configuration'
 import type { BrowserWindowWithEventBridge } from './eventBridge'
-import {
-  getEventBridge,
-  canUseEventBridge,
-  matchesWildcardPattern,
-  BridgeCapability,
-  bridgeSupports,
-} from './eventBridge'
+import { getEventBridge, canUseEventBridge, matchesHostEntry, BridgeCapability, bridgeSupports } from './eventBridge'
 
 describe('canUseEventBridge', () => {
   const allowedWebViewHosts = ['foo.bar']
@@ -38,7 +32,7 @@ describe('canUseEventBridge', () => {
   })
 })
 
-describe('matchesWildcardPattern', () => {
+describe('matchesHostEntry', () => {
   // prettier-ignore
   const cases: Array<[string, string, boolean]> = [
     // [host,                          pattern,                  expected]
@@ -46,17 +40,17 @@ describe('matchesWildcardPattern', () => {
     ['preview-abc.shopist.io',         '*.shopist.io',           true],
     ['shopist.io',                     '*.shopist.io',           false], // apex not matched by subdomain wildcard
     ['shopist.io',                     'shopist.io',             true],  // exact match
-    ['app.shopist.io',                 'shopist.io',             false], // exact only, no subdomain
+    ['app.shopist.io',                 'shopist.io',             true],  // subdomain-suffix match
     ['preview-abc123.shopist.io',      'preview-*.shopist.io',   true],
     ['app.shopist.io',                 'preview-*.shopist.io',   false],
     ['evil.com',                       '*.shopist.io',           false],
-    ['app.shopist.io.evil.com',                       '*.shopist.io',                       false],
+    ['app.shopist.io.evil.com',        '*.shopist.io',           false],
     ['anything.foo.anything.bar',      '*.foo.*.bar',            false], // multiple wildcards → invalid
   ]
 
   cases.forEach(([host, pattern, expected]) => {
     it(`"${host}" against "${pattern}" → ${expected}`, () => {
-      expect(matchesWildcardPattern(host, pattern)).toBe(expected)
+      expect(matchesHostEntry(host, pattern)).toBe(expected)
     })
   })
 })
