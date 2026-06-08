@@ -226,6 +226,20 @@ describe('sanitize', () => {
       // Since toJSON throws, sanitize falls back to serialize property by property
       expect(sanitize(obj)).toEqual({ b: 42, toJSON: '[Function] faulty' })
     })
+
+    it('should restore prototype toJSON methods when sanitization throws', () => {
+      const toJSON = jasmine.createSpy('toJSON', () => 'Object').and.callThrough()
+      ;(Object.prototype as any).toJSON = toJSON
+      const obj = {
+        get x() {
+          throw new Error('Cannot sanitize')
+        },
+      }
+
+      expect(() => sanitize(obj)).toThrowError('Cannot sanitize')
+      expect(Object.prototype.hasOwnProperty.call(Object.prototype, 'toJSON')).toBe(true)
+      delete (Object.prototype as any).toJSON
+    })
   })
 
   describe('maxSize verification', () => {
