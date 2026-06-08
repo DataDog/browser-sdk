@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
-import { createTest } from '../lib/framework'
-import { runBasePluginRouterTests } from './plugins/basePluginRouterTests'
+import { createTest } from '../../lib/framework'
+import { runBasePluginRouterTests } from './basePluginRouterTests'
 
 runBasePluginRouterTests([
   {
