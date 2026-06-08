@@ -1,10 +1,19 @@
 import type { LifeCycle, ViewHistory, RumConfiguration, ProfilerApi, Hooks } from '@datadog/browser-rum-core'
 import type { SessionManager, DeflateEncoderStreamId, Encoder } from '@datadog/browser-core'
-import { monitorError, correctedChildSampleRate, isSampled, mockable } from '@datadog/browser-core'
+import {
+  monitorError,
+  correctedChildSampleRate,
+  isSampled,
+  mockable,
+  canUseEventBridge,
+  bridgeSupports,
+  BridgeCapability,
+} from '@datadog/browser-core'
 import type { RUMProfiler } from '../domain/profiling/types'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { startProfilingContext } from '../domain/profiling/profilingContext'
 import { createFormDataEmitter } from '../domain/profiling/transport/formDataEmitter'
+import { createBridgeEmitter } from '../domain/profiling/transport/profilingBridge'
 import { lazyLoadProfiler } from './lazyLoadProfiler'
 
 export function makeProfilerApi(): ProfilerApi {
@@ -38,6 +47,12 @@ export function makeProfilerApi(): ProfilerApi {
       return
     }
 
+    const isBridgeMode = canUseEventBridge()
+
+    if (isBridgeMode && !bridgeSupports(BridgeCapability.PROFILES)) {
+      return
+    }
+
     // Listen to events and add the profiling context to them.
     const profilingContextManager = startProfilingContext(hooks)
 
@@ -50,9 +65,11 @@ export function makeProfilerApi(): ProfilerApi {
       return
     }
 
-    const emitPayload = createFormDataEmitter(configuration, lifeCycle, createEncoder)
+    const emitPayload = isBridgeMode
+      ? createBridgeEmitter()
+      : createFormDataEmitter(configuration, lifeCycle, createEncoder)
 
-    lazyLoadProfiler()
+    mockable(lazyLoadProfiler)()
       .then((createRumProfiler) => {
         if (!createRumProfiler) {
           profilingContextManager.set({ status: 'error', error_reason: 'failed-to-lazy-load' })
