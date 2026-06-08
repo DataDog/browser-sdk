@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { createTest, html } from '../lib/framework'
+import { generateLongTask } from '../lib/helpers/browser.ts'
 
 test.describe('bridge present', () => {
   createTest('send action')
@@ -147,5 +148,24 @@ test.describe('bridge present', () => {
 
       const postStopRecordsCount = intakeRegistry.replayRecords.length - preStopRecordsCount
       expect(postStopRecordsCount).toEqual(0)
+    })
+
+  createTest('send profile to the bridge')
+    .withRum({ profilingSampleRate: 100, trackUserInteractions: true })
+    .withEventBridge()
+    .withBasePath('/?js-profiling=true')
+    .run(async ({ intakeRegistry, flushEvents, page, browserName }) => {
+      test.skip(browserName !== 'chromium', 'JS Profiling API is only available in Chromium')
+
+      await generateLongTask(page)
+
+      await flushEvents()
+
+      expect(intakeRegistry.profileEvents.length).toBeGreaterThan(0)
+      expect(intakeRegistry.hasOnlyBridgeRequests).toBe(true)
+
+      const profileEvent = intakeRegistry.profileEvents[0]
+      expect(profileEvent.family).toBe('chrome')
+      expect(profileEvent.format).toBe('json')
     })
 })

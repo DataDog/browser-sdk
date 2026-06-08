@@ -45,7 +45,7 @@ export type ProfileIntakeRequest = {
   intakeType: 'profile'
   event: BrowserProfileEvent
   trace: BrowserProfilerTrace
-  traceFile: {
+  traceFile?: {
     filename: string
     encoding: string | null
     mimetype: string
@@ -112,7 +112,8 @@ function computeIntakeRequestInfos(req: express.Request): IntakeRequestInfos {
       encoding,
       transport,
       batchTime,
-      intakeType: eventType === 'log' ? 'logs' : eventType === 'record' ? 'replay' : 'rum',
+      intakeType:
+        eventType === 'log' ? 'logs' : eventType === 'record' ? 'replay' : eventType === 'profile' ? 'profile' : 'rum',
     }
   }
 
@@ -233,6 +234,23 @@ function readProfileIntakeRequest(
   infos: IntakeRequestInfos & { intakeType: 'profile' }
 ): Promise<ProfileIntakeRequest> {
   return new Promise((resolve, reject) => {
+    if (infos.isBridge) {
+      readStream(req)
+        .then((rawBody) => {
+          const payload = JSON.parse(rawBody.toString('utf-8')) as {
+            profile: BrowserProfileEvent
+            trace: BrowserProfilerTrace
+          }
+          resolve({
+            ...infos,
+            event: payload.profile,
+            trace: payload.trace,
+          })
+        })
+        .catch(reject)
+      return
+    }
+
     let eventPromise: Promise<BrowserProfileEvent>
     let tracePromise: Promise<{
       trace: BrowserProfilerTrace

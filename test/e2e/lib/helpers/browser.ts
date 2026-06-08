@@ -101,6 +101,22 @@ export async function sendXhr(page: Page, url: string, headers: string[][] = [])
   return result.response
 }
 
+export async function generateLongTask(page: Page, durationMs = 500) {
+  await page.evaluate(
+    (duration) =>
+      new Promise<void>((resolve) => {
+        setTimeout(() => {
+          const start = Date.now()
+          while (Date.now() - start < duration) {
+            /* empty */
+          }
+          resolve()
+        })
+      }),
+    durationMs
+  )
+}
+
 export function isContentTypeAvailableInPerformanceEntry(
   test: TestType<PlaywrightTestArgs & PlaywrightTestOptions, PlaywrightWorkerArgs & PlaywrightWorkerOptions>,
   browserName: ReturnType<typeof getBrowserName>

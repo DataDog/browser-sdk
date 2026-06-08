@@ -332,7 +332,7 @@ function setupEventBridge(servers: Servers, options: EventBridgeOptions = {}) {
   return html`<script type="text/javascript">
     window.DatadogEventBridge = {
       getCapabilities() {
-        return '["records"]'
+        return '["records","profiles"]'
       },
       getPrivacyLevel() {
         return 'mask'
