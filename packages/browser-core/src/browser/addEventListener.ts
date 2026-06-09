@@ -150,9 +150,13 @@ export function addEventListeners<Target extends EventTarget, EventName extends 
 }
 
 export function isEventSupported<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(
-  eventTarget: Target,
+  eventTarget: Target | undefined,
   eventName: EventName
 ) {
+  if (!eventTarget) {
+    return false
+  }
+
   try {
     addEventListener({}, eventTarget, eventName, noop).stop()
     return true
