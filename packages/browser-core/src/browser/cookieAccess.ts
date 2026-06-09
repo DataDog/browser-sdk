@@ -11,12 +11,6 @@ import { addEventListener, DOM_EVENT } from './addEventListener'
 import { getCookies, setCookie } from './cookie'
 import type { CookieOptions } from './cookie'
 
-export interface CookieAccessItem {
-  value: string
-  domain?: string
-  partitioned?: boolean
-}
-
 export interface CookieAccess {
   getAll(): Promise<string[]>
   getAllAndSet(cb: (value: string[]) => { value: string; expireDelay: number }): Promise<void>
