@@ -62,7 +62,9 @@ export interface Display extends ConsoleMethods {
  */
 const globalConsole = console
 
-const originalConsoleMethods = {} as ConsoleMethods
+// Exported (but intentionally not re-exported from the `util` barrel, so it stays out of the public
+// API) as a test seam: `createDisplay` reads these at call time, so a spec can spy on them.
+export const originalConsoleMethods = {} as ConsoleMethods
 Object.keys(ConsoleApiName).forEach((name) => {
   originalConsoleMethods[name as ConsoleApiName] = globalConsole[name as ConsoleApiName]
 })
@@ -78,26 +80,25 @@ Object.keys(ConsoleApiName).forEach((name) => {
  * @returns A {@link Display} whose methods forward to the original console methods.
  */
 export function createDisplay(prefix: string): Display {
-  const debug = originalConsoleMethods.debug.bind(globalConsole, prefix)
-  const log = originalConsoleMethods.log.bind(globalConsole, prefix)
-  const info = originalConsoleMethods.info.bind(globalConsole, prefix)
-  const warn = originalConsoleMethods.warn.bind(globalConsole, prefix)
-  const error = originalConsoleMethods.error.bind(globalConsole, prefix)
+  const display = {
+    debug: originalConsoleMethods.debug.bind(globalConsole, prefix),
+    log: originalConsoleMethods.log.bind(globalConsole, prefix),
+    info: originalConsoleMethods.info.bind(globalConsole, prefix),
+    warn: originalConsoleMethods.warn.bind(globalConsole, prefix),
+    error: originalConsoleMethods.error.bind(globalConsole, prefix),
+  } as Display
 
-  return {
-    debug,
-    log,
-    info,
-    warn,
-    error,
-    ifDebugEnabled: {
-      debug: (...args) => emitIfDebugEnabled(debug, args),
-      log: (...args) => emitIfDebugEnabled(log, args),
-      info: (...args) => emitIfDebugEnabled(info, args),
-      warn: (...args) => emitIfDebugEnabled(warn, args),
-      error: (...args) => emitIfDebugEnabled(error, args),
-    },
+  // Delegate through the display's own methods (rather than the bound consts) so an override of,
+  // say, `display.error` is respected by `display.ifDebugEnabled.error` too.
+  display.ifDebugEnabled = {
+    debug: (...args) => emitIfDebugEnabled(display.debug, args),
+    log: (...args) => emitIfDebugEnabled(display.log, args),
+    info: (...args) => emitIfDebugEnabled(display.info, args),
+    warn: (...args) => emitIfDebugEnabled(display.warn, args),
+    error: (...args) => emitIfDebugEnabled(display.error, args),
   }
+
+  return display
 }
 
 function emitIfDebugEnabled(method: (...args: any[]) => void, args: any[]) {
