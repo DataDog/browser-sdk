@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process'
 
-const orgAlias = process.env.ORG_ALIAS ?? 'ebikes'
+const orgAlias = process.env.SF_ORG_ALIAS ?? 'engrumdev'
 
 export interface SfSession {
   instanceUrl: string
@@ -37,7 +37,6 @@ export function getSfSession(): SfSession {
     accessToken: result.accessToken as string,
   }
 }
-
 
 // Uses frontdoor to authenticate and redirect to Salesforce: https://help.salesforce.com/s/articleView?id=000386254&type=1
 export function buildFrontdoorUrl(session: SfSession, retPath: string): string {

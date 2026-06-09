@@ -1,7 +1,7 @@
 import { test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import { getSfSession, buildFrontdoorUrl } from './sfAuth.ts'
-import { SfRegistry, BRIDGE_INIT_SCRIPT, BridgeEvent } from './sfRegistry.ts'
+import { SfRegistry, BridgeEvent } from './sfRegistry.ts'
 
 export type RumEventType = 'view' | 'action' | 'error' | 'resource' | 'long_task'
 
@@ -9,7 +9,6 @@ export interface SfTestContext {
   page: Page
   sfRegistry: SfRegistry
   instanceUrl: string
-  waitForSfEvents: (minCount?: number, timeout?: number) => Promise<void>
   waitForRumEvent: (type: RumEventType, minCount?: number, timeout?: number) => Promise<void>
   waitForUniqueViews: (count: number, timeout?: number) => Promise<void>
 }
@@ -31,62 +30,77 @@ class SalesforceTestBuilder {
 
     test(title, async ({ page }) => {
       const sfRegistry = new SfRegistry()
-
-      await page.addInitScript(BRIDGE_INIT_SCRIPT)
-
       const session = getSfSession()
-      await page.goto(buildFrontdoorUrl(session, path))
+      const bundleConfig = getSalesforceBundleConfig()
+
+      await page.exposeFunction('__ddSfOnBridgeEvent', (event: BridgeEvent) => sfRegistry.add(event))
+      await page.addInitScript(`window.__ddBrowserSdkExtensionCallback = (msg) => __ddSfOnBridgeEvent(msg)`)
+      await page.goto(buildFrontdoorUrl(session, addBundleConfigToUrl(path, bundleConfig)))
       await page.waitForLoadState('load')
 
-      const syncRegistry = async () => {
-        sfRegistry.load(
-          (await page.evaluate(() => (window as any).__ddSfTestEvents ?? [])) as BridgeEvent[]
+      if (bundleConfig) {
+        await waitFor(
+          () => sfRegistry.rumEvents.some((e) => e.version === bundleConfig.sha),
+          30000,
+          `Timed out waiting for Salesforce RUM version ${bundleConfig.sha}`
         )
       }
 
-      const waitForSfEvents = async (minCount = 1, timeout = 15000) => {
-        await page.waitForFunction(
-          (min: number) => ((window as any).__ddSfTestEvents ?? []).length >= min,
-          minCount,
-          { timeout }
+      const waitForRumEvent = (type: RumEventType, minCount = 1, timeout = 15000) =>
+        waitFor(
+          () => sfRegistry.rumEvents.filter((e) => e.type === type).length >= minCount,
+          timeout,
+          `Timed out waiting for ${minCount} Salesforce ${type} events`
         )
-        await syncRegistry()
-      }
 
-      const waitForRumEvent = async (type: RumEventType, minCount = 1, timeout = 15000) => {
-        await page.waitForFunction(
-          (arg: { t: string; min: number }) =>
-            ((window as any).__ddSfTestEvents ?? []).filter(
-              (e: any) => e.type === 'rum' && e.payload?.type === arg.t
-            ).length >= arg.min,
-          { t: type, min: minCount },
-          { timeout }
+      const waitForUniqueViews = (count: number, timeout = 20000) =>
+        waitFor(
+          () => sfRegistry.rumUniqueViewEvents.length >= count,
+          timeout,
+          `Timed out waiting for ${count} unique Salesforce views`
         )
-        await syncRegistry()
-      }
 
-      const waitForUniqueViews = async (count: number, timeout = 20000) => {
-        await page.waitForFunction(
-          (n: number) => {
-            const ids = new Set(
-              ((window as any).__ddSfTestEvents ?? [])
-                .filter((e: any) => e.type === 'rum' && e.payload?.type === 'view')
-                .map((e: any) => e.payload?.view?.id)
-                .filter(Boolean)
-            )
-            return ids.size >= n
-          },
-          count,
-          { timeout }
-        )
-        await syncRegistry()
-      }
-
-      await runner({ page, sfRegistry, instanceUrl: session.instanceUrl, waitForSfEvents, waitForRumEvent, waitForUniqueViews })
+      await runner({
+        page,
+        sfRegistry,
+        instanceUrl: session.instanceUrl,
+        waitForRumEvent,
+        waitForUniqueViews,
+      })
     })
   }
 }
 
 export function createSalesforceTest(title: string) {
   return new SalesforceTestBuilder(title)
+}
+
+function getSalesforceBundleConfig() {
+  const resourceName = process.env.DD_SALESFORCE_E2E_STATIC_RESOURCE_NAME
+  const sha = process.env.DD_SALESFORCE_E2E_SHA
+
+  return resourceName && sha ? { resourceName, sha } : undefined
+}
+
+function addBundleConfigToUrl(path: string, bundleConfig: { resourceName: string; sha: string } | undefined) {
+  if (!bundleConfig) {
+    return path
+  }
+
+  const url = new URL(path, 'https://salesforce.local')
+  const hashParameters = new URLSearchParams(url.hash.replace(/^#/u, ''))
+  hashParameters.set('dd_sf_e2e', `${bundleConfig.resourceName}:${bundleConfig.sha}`)
+  url.hash = hashParameters.toString()
+
+  return `${url.pathname}${url.search}${url.hash}`
+}
+
+async function waitFor(condition: () => boolean, timeout: number, message: string) {
+  const deadline = Date.now() + timeout
+  while (!condition()) {
+    if (Date.now() > deadline) {
+      throw new Error(message)
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100))
+  }
 }

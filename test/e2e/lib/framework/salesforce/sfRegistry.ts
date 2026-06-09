@@ -1,60 +1,51 @@
 export interface BridgeEvent {
   type: 'rum' | 'logs' | 'telemetry'
-  payload: Record<string, unknown>
+  payload: Record<string, any>
 }
 
 export class SfRegistry {
-  private _events: BridgeEvent[] = []
+  private events: BridgeEvent[] = []
 
-  load(events: BridgeEvent[]) {
-    this._events = events
+  add(event: BridgeEvent) {
+    this.events.push(event)
   }
 
   get rumEvents() {
-    return this._events.filter((e) => e.type === 'rum').map((e) => e.payload)
+    return this.events.filter((event) => event.type === 'rum').map((event) => event.payload)
   }
 
   get rumViewEvents() {
-    return this.rumEvents.filter((e) => e['type'] === 'view')
+    return this.rumEvents.filter((event) => event.type === 'view')
   }
 
-  // Deduplicated by view.id, keeping the latest event per view (SDK sends multiple updates per view)
   get rumUniqueViewEvents() {
-    const byId = new Map<string, Record<string, unknown>>()
+    const viewsById = new Map<string, Record<string, any>>()
     for (const event of this.rumViewEvents) {
-      const id = event['view']?.['id'] as string
-      if (id) byId.set(id, event)
+      const viewId = event.view?.id
+      if (viewId) {
+        viewsById.set(viewId, event)
+      }
     }
-    return [...byId.values()]
+    return [...viewsById.values()]
   }
 
   get rumActionEvents() {
-    return this.rumEvents.filter((e) => e['type'] === 'action')
+    return this.rumEvents.filter((event) => event.type === 'action')
   }
 
   get rumErrorEvents() {
-    return this.rumEvents.filter((e) => e['type'] === 'error')
+    return this.rumEvents.filter((event) => event.type === 'error')
   }
 
   get rumResourceEvents() {
-    return this.rumEvents.filter((e) => e['type'] === 'resource')
+    return this.rumEvents.filter((event) => event.type === 'resource')
   }
 
   get rumLongTaskEvents() {
-    return this.rumEvents.filter((e) => e['type'] === 'long_task')
+    return this.rumEvents.filter((event) => event.type === 'long_task')
   }
 
   get logsEvents() {
-    return this._events.filter((e) => e.type === 'logs').map((e) => e.payload)
+    return this.events.filter((event) => event.type === 'logs').map((event) => event.payload)
   }
 }
-
-// Injected via page.addInitScript() — runs in the real top-level window before LWS boots.
-// The SDK (inside the LWS sandbox) reads globalThis.__ddBrowserSdkExtensionCallback; the LWS
-// proxy forwards unknown-property reads to the real global, so it finds this callback.
-export const BRIDGE_INIT_SCRIPT = `
-  window.__ddBrowserSdkExtensionCallback = function(msg) {
-    window.__ddSfTestEvents = window.__ddSfTestEvents || [];
-    window.__ddSfTestEvents.push(msg);
-  };
-`

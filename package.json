@@ -32,7 +32,7 @@
     "test:unit:bs": "node --env-file-if-exists=.env ./scripts/test/bs-wrapper.ts karma start test/unit/karma.bs.conf.js",
     "test:e2e:init": "yarn build && yarn build:apps && yarn playwright install --with-deps && yarn dlx -p playwright@1.40.1 playwright install chromium firefox webkit",
     "test:e2e": "playwright test --config test/e2e/playwright.config.ts",
-    "test:e2e:salesforce": "playwright test --config test/e2e/playwright.salesforce.config.ts",
+    "test:e2e:salesforce": "node test/e2e/salesforce-app/scripts/run.mjs",
     "test:compat:tsc": "node scripts/check-typescript-compatibility.ts",
     "test:compat:ssr": "scripts/cli check_server_side_rendering_compatibility",
     "test:performance": "yarn test:e2e:init && playwright test --config test/performance/playwright.config.ts",

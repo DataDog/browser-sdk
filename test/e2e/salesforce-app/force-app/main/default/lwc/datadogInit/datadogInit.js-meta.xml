@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>67.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>Datadog Init</masterLabel>
+    <targets>
+        <target>lightning__UtilityBar</target>
+        <target>lightningCommunity__Page</target>
+        <target>lightningCommunity__Default</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__UtilityBar">
+            <property
+                name="applicationId"
+                type="String"
+                label="Application ID"
+                description="Datadog RUM application ID"
+            />
+            <property
+                name="clientToken"
+                type="String"
+                label="Client Token"
+                description="Datadog browser client token"
+            />
+            <property
+                name="site"
+                type="String"
+                label="Site"
+                default="datadoghq.com"
+            />
+            <property
+                name="service"
+                type="String"
+                label="Service"
+                default="browser-sdk-sandbox"
+            />
+            <property name="env" type="String" label="Env" default="dev" />
+            <property
+                name="allowedTracingUrls"
+                type="String"
+                label="Allowed Tracing URLs"
+                description="Comma or newline separated API URL prefixes where Datadog tracing headers should be injected"
+                default="https://dummyjson.com/"
+            />
+            <property
+                name="trackViewsManually"
+                type="Boolean"
+                label="Track Views Manually"
+                default="true"
+            />
+        </targetConfig>
+        <targetConfig targets="lightningCommunity__Default">
+            <property
+                name="applicationId"
+                type="String"
+                label="Application ID"
+                description="Datadog RUM application ID"
+            />
+            <property
+                name="clientToken"
+                type="String"
+                label="Client Token"
+                description="Datadog browser client token"
+            />
+            <property
+                name="site"
+                type="String"
+                label="Site"
+                default="datadoghq.com"
+            />
+            <property
+                name="service"
+                type="String"
+                label="Service"
+                default="browser-sdk-sandbox"
+            />
+            <property name="env" type="String" label="Env" default="dev" />
+            <property
+                name="allowedTracingUrls"
+                type="String"
+                label="Allowed Tracing URLs"
+                description="Comma or newline separated API URL prefixes where Datadog tracing headers should be injected"
+                default="https://dummyjson.com/"
+            />
+            <property
+                name="trackViewsManually"
+                type="Boolean"
+                label="Track Views Manually"
+                default="true"
+            />
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>
