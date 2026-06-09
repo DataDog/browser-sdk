@@ -22,7 +22,7 @@ export function createLocationChangeObservable(configuration: RumConfiguration) 
     const { stop: stopHashTracking } = trackHash(configuration, onLocationChange)
 
     function onLocationChange() {
-      if (currentLocation.href === location.href) {
+      if (currentLocation.href === getLocation().href) {
         return
       }
       const newLocation = shallowClone(getLocation())
