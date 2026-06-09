@@ -1,10 +1,8 @@
+import type { Duration, ServerDuration, TimeStamp } from '@datadog/js-core/time'
 import type {
-  Duration,
   ErrorSource,
   ErrorHandling,
   ResourceType,
-  ServerDuration,
-  TimeStamp,
   RawErrorCause,
   DefaultPrivacyLevel,
   Csp,

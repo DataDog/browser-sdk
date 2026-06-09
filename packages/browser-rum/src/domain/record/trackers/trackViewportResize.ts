@@ -1,4 +1,5 @@
-import { throttle, DOM_EVENT, addEventListeners, timeStampNow, noop } from '@datadog/browser-core'
+import { throttle, DOM_EVENT, addEventListeners, noop } from '@datadog/browser-core'
+import { timeStampNow } from '@datadog/js-core/time'
 import type { ViewportDimension } from '@datadog/browser-rum-core'
 import { initViewportObservable } from '@datadog/browser-rum-core'
 import { IncrementalSource, RecordType } from '../../../types'

@@ -1,4 +1,4 @@
-import { type RelativeTime } from '@datadog/browser-core'
+import { type RelativeTime } from '@datadog/js-core/time'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { createPerformanceEntry, mockGlobalPerformanceBuffer } from '../../test'
 import type { RumPerformanceNavigationTiming } from './performanceObservable'

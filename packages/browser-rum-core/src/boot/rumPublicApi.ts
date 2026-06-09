@@ -1,12 +1,11 @@
+import { timeStampNow, clocksNow, timeStampToClocks } from '@datadog/js-core/time'
+import type { Duration, TimeStamp, RelativeTime } from '@datadog/js-core/time'
 import type {
   Context,
-  TimeStamp,
-  RelativeTime,
   DeflateWorker,
   DeflateEncoderStreamId,
   DeflateEncoder,
   PublicApi,
-  Duration,
   ContextManager,
   TrackingConsent,
   User,
@@ -23,20 +22,17 @@ import {
   deepClone,
   makePublicApi,
   monitor,
-  clocksNow,
   callMonitored,
   createHandlingStack,
   sanitize,
   createIdentityEncoder,
   displayAlreadyInitializedError,
   createTrackingConsentState,
-  timeStampToClocks,
   CustomerContextKey,
   defineContextMethod,
   startBufferingData,
   mockable,
   generateUUID,
-  timeStampNow,
 } from '@datadog/browser-core'
 
 import type { LifeCycle } from '../domain/lifeCycle'

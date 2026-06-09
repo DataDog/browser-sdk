@@ -1,6 +1,6 @@
 import type { Context, ContextManager } from '@datadog/browser-core'
+import { clocksNow } from '@datadog/js-core/time'
 import {
-  clocksNow,
   computeRawError,
   ErrorHandling,
   combine,

@@ -1,5 +1,6 @@
 import type { DeflateEncoder, HttpRequest, TimeoutId, SessionManager } from '@datadog/browser-core'
-import { isPageExitReason, ONE_SECOND, clearTimeout, setTimeout } from '@datadog/browser-core'
+import { ONE_SECOND } from '@datadog/js-core/time'
+import { isPageExitReason, clearTimeout, setTimeout } from '@datadog/browser-core'
 import type { LifeCycle, ViewHistory, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { BrowserRecord, CreationReason, SegmentContext } from '../../types'

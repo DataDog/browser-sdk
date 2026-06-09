@@ -1,5 +1,5 @@
-import type { Duration, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { elapsed, relativeNow, timeStampNow } from '@datadog/browser-core'
+import type { RelativeTime, Duration, TimeStamp } from '@datadog/js-core/time'
+import { elapsed, timeStampNow, relativeNow } from '@datadog/js-core/time'
 
 export function createTimer() {
   let duration: Duration | undefined

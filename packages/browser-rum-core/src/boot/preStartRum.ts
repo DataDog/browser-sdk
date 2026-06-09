@@ -1,11 +1,6 @@
-import type {
-  TrackingConsentState,
-  DeflateWorker,
-  Context,
-  Telemetry,
-  TimeStamp,
-  SessionManager,
-} from '@datadog/browser-core'
+import { timeStampNow, clocksNow } from '@datadog/js-core/time'
+import type { TimeStamp } from '@datadog/js-core/time'
+import type { TrackingConsentState, DeflateWorker, Context, Telemetry, SessionManager } from '@datadog/browser-core'
 import {
   BufferedObservable,
   display,
@@ -13,8 +8,6 @@ import {
   displayAlreadyInitializedError,
   willSyntheticsInjectRum,
   noop,
-  timeStampNow,
-  clocksNow,
   getEventBridge,
   initFeatureFlags,
   addTelemetryConfiguration,

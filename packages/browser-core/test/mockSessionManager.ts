@@ -1,7 +1,7 @@
+import { timeStampNow } from '@datadog/js-core/time'
 import type { SessionManager, startSessionManager } from '@datadog/browser-core'
 import { Observable } from '../src/tools/observable'
 import { noop } from '../src/tools/utils/functionUtils'
-import { timeStampNow } from '../src/tools/utils/timeUtils'
 import { LOW_HASH_UUID } from './sampling'
 
 export interface SessionManagerMock extends SessionManager {

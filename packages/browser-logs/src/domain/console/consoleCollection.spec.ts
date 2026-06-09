@@ -1,11 +1,11 @@
 import type { BufferedData, ConsoleLog, RawError } from '@datadog/browser-core'
+import { clocksNow } from '@datadog/js-core/time'
 import {
   BufferedDataType,
   ConsoleApiName,
   ErrorHandling,
   ErrorSource,
   Observable,
-  clocksNow,
   noop,
   objectEntries,
 } from '@datadog/browser-core'

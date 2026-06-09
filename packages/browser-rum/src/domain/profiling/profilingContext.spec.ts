@@ -1,5 +1,5 @@
 import { RumEventType, createHooks } from '@datadog/browser-rum-core'
-import type { RelativeTime } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/js-core/time'
 import { HookNames } from '@datadog/browser-core'
 import type { AssembleHookParams } from '@datadog/browser-rum-core/src/domain/hooks'
 import { startProfilingContext } from './profilingContext'

@@ -1,6 +1,6 @@
+import { ONE_MINUTE, ONE_SECOND, clocksNow } from '@datadog/js-core/time'
 import type { TrackType } from '../domain/configuration'
 import { setTimeout } from '../tools/timer'
-import { clocksNow, ONE_MINUTE, ONE_SECOND } from '../tools/utils/timeUtils'
 import { ONE_MEBI_BYTE, ONE_KIBI_BYTE } from '../tools/utils/byteUtils'
 import { isServerError } from '../tools/utils/responseUtils'
 import type { RawError } from '../domain/error/error.types'

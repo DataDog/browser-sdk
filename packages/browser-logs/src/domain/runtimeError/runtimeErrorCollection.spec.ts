@@ -1,5 +1,6 @@
 import type { BufferedData, RawError } from '@datadog/browser-core'
-import { ErrorSource, ErrorHandling, Observable, BufferedDataType, clocksNow } from '@datadog/browser-core'
+import { clocksNow } from '@datadog/js-core/time'
+import { ErrorSource, ErrorHandling, Observable, BufferedDataType } from '@datadog/browser-core'
 import { registerCleanupTask } from '../../../../browser-core/test'
 import type { RawRuntimeLogsEvent } from '../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../configuration'

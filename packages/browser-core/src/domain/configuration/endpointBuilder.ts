@@ -1,5 +1,5 @@
+import { timeStampNow } from '@datadog/js-core/time'
 import type { Payload } from '../../transport'
-import { timeStampNow } from '../../tools/utils/timeUtils'
 import { normalizeUrl } from '../../tools/utils/urlPolyfill'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import type { Site } from '../intakeSites'

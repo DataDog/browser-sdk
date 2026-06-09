@@ -1,11 +1,5 @@
-import type {
-  DISCARDED,
-  HookNamesAsConst,
-  RecursivePartial,
-  RelativeTime,
-  SKIPPED,
-  TelemetryEvent,
-} from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/js-core/time'
+import type { DISCARDED, HookNamesAsConst, RecursivePartial, SKIPPED, TelemetryEvent } from '@datadog/browser-core'
 import { abstractHooks } from '@datadog/browser-core'
 import type { LogsEvent } from '../logsEvent.types'
 

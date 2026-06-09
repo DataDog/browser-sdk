@@ -1,5 +1,5 @@
+import type { ClocksState } from '@datadog/js-core/time'
 import { sanitize } from '../../tools/serialisation/sanitize'
-import type { ClocksState } from '../../tools/utils/timeUtils'
 import type { Context } from '../../tools/serialisation/context'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'

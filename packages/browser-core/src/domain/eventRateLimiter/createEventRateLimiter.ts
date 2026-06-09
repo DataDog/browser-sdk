@@ -1,5 +1,5 @@
+import { ONE_MINUTE, clocksNow } from '@datadog/js-core/time'
 import { setTimeout } from '../../tools/timer'
-import { clocksNow, ONE_MINUTE } from '../../tools/utils/timeUtils'
 import type { RawError } from '../error/error.types'
 import { ErrorSource } from '../error/error.types'
 

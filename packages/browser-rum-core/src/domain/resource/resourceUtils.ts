@@ -1,10 +1,9 @@
-import type { Duration, RelativeTime } from '@datadog/browser-core'
+import { elapsed, toServerDuration } from '@datadog/js-core/time'
+import type { Duration, RelativeTime } from '@datadog/js-core/time'
 import {
-  elapsed,
   getPathName,
   isValidUrl,
   ResourceType,
-  toServerDuration,
   isIntakeUrl,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,

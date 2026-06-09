@@ -1,4 +1,5 @@
-import type { RelativeTime, SessionManager } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/js-core/time'
+import type { SessionManager } from '@datadog/browser-core'
 
 export interface InternalContext {
   session_id: string | undefined

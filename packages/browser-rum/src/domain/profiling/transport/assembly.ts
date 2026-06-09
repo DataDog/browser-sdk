@@ -1,4 +1,5 @@
-import { buildTags, currentDrift } from '@datadog/browser-core'
+import { clockDrift } from '@datadog/js-core/time'
+import { buildTags } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { BrowserProfileEvent, BrowserProfilerTrace } from '../../../types'
 import { buildProfileEventAttributes } from './buildProfileEventAttributes'
@@ -41,7 +42,7 @@ function buildProfileEvent(
     version: 4, // Ingestion event version (not the version application tag)
     tags_profiler: profileEventTags.join(','),
     _dd: {
-      clock_drift: currentDrift(),
+      clock_drift: clockDrift(),
     },
   }
 

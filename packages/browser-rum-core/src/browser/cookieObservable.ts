@@ -1,10 +1,10 @@
+import { ONE_SECOND } from '@datadog/js-core/time'
 import type { Configuration } from '@datadog/browser-core'
 import {
   setInterval,
   clearInterval,
   Observable,
   addEventListener,
-  ONE_SECOND,
   DOM_EVENT,
   getCookie,
   globalObject,
