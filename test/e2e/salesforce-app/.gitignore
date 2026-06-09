@@ -1,2 +1,4 @@
 .sf
 .sfdx
+force-app/main/default/staticresources/datadogRumSf_*.resource
+force-app/main/default/staticresources/datadogRumSf_*.resource-meta.xml

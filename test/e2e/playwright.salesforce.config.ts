@@ -7,7 +7,6 @@ export default defineConfig({
   testDir: './scenario/salesforce',
   testMatch: '**/*.scenario.ts',
   timeout: 60_000,
-  navigationTimeout: 30_000,
   workers: 1,
   retries: isCi ? 1 : 0,
   reporter: isCi
@@ -20,4 +19,3 @@ export default defineConfig({
     },
   ],
 })
-

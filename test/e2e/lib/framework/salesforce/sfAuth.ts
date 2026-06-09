@@ -28,7 +28,7 @@ export function getSfSession(): SfSession {
     throw new Error(
       `Could not get SF session for org '${orgAlias}'. ` +
         `Run 'sf org display -o ${orgAlias}' to diagnose, ` +
-        `or set SF_INSTANCE_URL and SF_ACCESS_TOKEN env vars for CI.`
+        'or set SF_INSTANCE_URL and SF_ACCESS_TOKEN env vars for CI.'
     )
   }
 

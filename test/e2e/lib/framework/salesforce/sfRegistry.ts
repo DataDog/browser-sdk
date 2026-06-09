@@ -18,21 +18,6 @@ export class SfRegistry {
     return this.rumEvents.filter((event) => event.type === 'view')
   }
 
-  get rumUniqueViewEvents() {
-    const viewsById = new Map<string, Record<string, any>>()
-    for (const event of this.rumViewEvents) {
-      const viewId = event.view?.id
-      if (viewId) {
-        viewsById.set(viewId, event)
-      }
-    }
-    return [...viewsById.values()]
-  }
-
-  get rumActionEvents() {
-    return this.rumEvents.filter((event) => event.type === 'action')
-  }
-
   get rumErrorEvents() {
     return this.rumEvents.filter((event) => event.type === 'error')
   }

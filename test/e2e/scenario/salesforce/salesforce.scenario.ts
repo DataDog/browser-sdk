@@ -1,37 +1,50 @@
 import { test, expect } from '@playwright/test'
-import { createSalesforceTest } from '../../lib/framework/salesforce/createSalesforceTest.ts'
+import { createSalesforceTest } from '../../lib/framework'
+
+function uniqueViews(sfRegistry: { rumViewEvents: Array<Record<string, any>> }) {
+  return [...new Map(sfRegistry.rumViewEvents.map((e) => [e['view']?.['id'], e])).values()]
+}
 
 test.describe('Salesforce Lightning — Datadog RUM SDK', () => {
   createSalesforceTest('captures views, custom action, and auto-click actions')
     .withPath('/lightning/page/home')
-    .run(async ({ page, sfRegistry, waitForRumEvent, waitForUniqueViews }) => {
-      await waitForUniqueViews(1)
-      expect(sfRegistry.rumUniqueViewEvents).toHaveLength(1)
-      expect(sfRegistry.rumUniqueViewEvents[0]['view']).toMatchObject({
+    .run(async ({ page, sfRegistry, waitFor }) => {
+      await waitFor(() => uniqueViews(sfRegistry).length >= 1, 20000, 'Timed out waiting for initial view')
+      expect(uniqueViews(sfRegistry)).toHaveLength(1)
+      expect(uniqueViews(sfRegistry)[0]['view']).toMatchObject({
         url: expect.stringContaining('lightning/page/home'),
       })
 
       await page.locator('[data-testid="custom-action-1"]').click()
-      await waitForRumEvent('action', 1)
+      await waitFor(
+        () => sfRegistry.rumEvents.filter((e) => e['type'] === 'action').length >= 1,
+        15000,
+        'Timed out waiting for action event'
+      )
 
       await page.getByRole('link', { name: 'Accounts' }).click()
       await page.waitForURL(/Account\/home/i)
-      await waitForUniqueViews(2)
+      await waitFor(() => uniqueViews(sfRegistry).length >= 2, 20000, 'Timed out waiting for Accounts view')
 
-      expect(sfRegistry.rumUniqueViewEvents).toHaveLength(2)
-      expect(sfRegistry.rumUniqueViewEvents[1]['view']).toMatchObject({
+      expect(uniqueViews(sfRegistry)).toHaveLength(2)
+      expect(uniqueViews(sfRegistry)[1]['view']).toMatchObject({
         name: expect.stringContaining('Account'),
       })
 
-      await waitForRumEvent('action', 2)
+      await waitFor(
+        () => sfRegistry.rumEvents.filter((e) => e['type'] === 'action').length >= 2,
+        15000,
+        'Timed out waiting for 2 action events'
+      )
 
-      const customAction = sfRegistry.rumActionEvents.find((event) => event['action']?.['type'] === 'custom')
+      const actions = sfRegistry.rumEvents.filter((e) => e['type'] === 'action')
+      const customAction = actions.find((event) => event['action']?.['type'] === 'custom')
       expect(customAction).toBeDefined()
       expect(customAction!['view']).toMatchObject({
         url: expect.stringContaining('lightning/page/home'),
       })
 
-      const navClickAction = sfRegistry.rumActionEvents.find((event) => event['action']?.['type'] === 'click')
+      const navClickAction = actions.find((event) => event['action']?.['type'] === 'click')
       expect(navClickAction).toBeDefined()
       expect(navClickAction!['view']).toMatchObject({
         name: expect.stringContaining('/lightning/page/home'),
@@ -40,16 +53,16 @@ test.describe('Salesforce Lightning — Datadog RUM SDK', () => {
 
   createSalesforceTest('captures resources of every type')
     .withPath('/lightning/page/home')
-    .run(async ({ page, sfRegistry, waitForRumEvent, waitForUniqueViews }) => {
-      await waitForUniqueViews(1)
+    .run(async ({ page, sfRegistry, waitFor }) => {
+      await waitFor(() => uniqueViews(sfRegistry).length >= 1, 20000, 'Timed out waiting for initial view')
 
       await page.getByRole('link', { name: 'Accounts' }).click()
       await page.waitForURL(/Account\/home/i)
-      await waitForUniqueViews(2)
+      await waitFor(() => uniqueViews(sfRegistry).length >= 2, 20000, 'Timed out waiting for Accounts view')
 
-      expect(sfRegistry.rumUniqueViewEvents).toHaveLength(2)
+      expect(uniqueViews(sfRegistry)).toHaveLength(2)
 
-      await waitForRumEvent('resource', 5)
+      await waitFor(() => sfRegistry.rumResourceEvents.length >= 5, 15000, 'Timed out waiting for resource events')
 
       const resourcesByType = (type: string) =>
         sfRegistry.rumResourceEvents.filter((event) => event['resource']?.['type'] === type)
@@ -64,22 +77,22 @@ test.describe('Salesforce Lightning — Datadog RUM SDK', () => {
 
   createSalesforceTest('captures custom errors and long tasks')
     .withPath('/lightning/page/home')
-    .run(async ({ page, sfRegistry, waitForRumEvent, waitForUniqueViews }) => {
-      await waitForUniqueViews(1)
-      expect(sfRegistry.rumUniqueViewEvents).toHaveLength(1)
-      expect(sfRegistry.rumUniqueViewEvents[0]['view']).toMatchObject({
+    .run(async ({ page, sfRegistry, waitFor }) => {
+      await waitFor(() => uniqueViews(sfRegistry).length >= 1, 20000, 'Timed out waiting for initial view')
+      expect(uniqueViews(sfRegistry)).toHaveLength(1)
+      expect(uniqueViews(sfRegistry)[0]['view']).toMatchObject({
         url: expect.stringContaining('lightning/page/home'),
       })
 
       await page.locator('[data-testid="custom-error-1"]').click()
-      await waitForRumEvent('error', 1)
+      await waitFor(() => sfRegistry.rumErrorEvents.length >= 1, 15000, 'Timed out waiting for error event')
 
       expect(sfRegistry.rumErrorEvents[0]['error']).toMatchObject({
         message: 'custom error 1',
       })
 
       await page.locator('[data-testid="long-task"]').click()
-      await waitForRumEvent('long_task', 1, 10000)
+      await waitFor(() => sfRegistry.rumLongTaskEvents.length >= 1, 10000, 'Timed out waiting for long task event')
 
       expect(sfRegistry.rumLongTaskEvents[0]['long_task']).toMatchObject({
         duration: expect.any(Number),

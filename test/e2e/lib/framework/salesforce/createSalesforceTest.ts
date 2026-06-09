@@ -1,16 +1,13 @@
 import { test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import { getSfSession, buildFrontdoorUrl } from './sfAuth.ts'
-import { SfRegistry, BridgeEvent } from './sfRegistry.ts'
-
-export type RumEventType = 'view' | 'action' | 'error' | 'resource' | 'long_task'
+import { SfRegistry, type BridgeEvent } from './sfRegistry.ts'
 
 export interface SfTestContext {
   page: Page
   sfRegistry: SfRegistry
   instanceUrl: string
-  waitForRumEvent: (type: RumEventType, minCount?: number, timeout?: number) => Promise<void>
-  waitForUniqueViews: (count: number, timeout?: number) => Promise<void>
+  waitFor: (condition: () => boolean, timeout?: number, message?: string) => Promise<void>
 }
 
 type SfTestRunner = (ctx: SfTestContext) => Promise<void> | void
@@ -34,7 +31,7 @@ class SalesforceTestBuilder {
       const bundleConfig = getSalesforceBundleConfig()
 
       await page.exposeFunction('__ddSfOnBridgeEvent', (event: BridgeEvent) => sfRegistry.add(event))
-      await page.addInitScript(`window.__ddBrowserSdkExtensionCallback = (msg) => __ddSfOnBridgeEvent(msg)`)
+      await page.addInitScript('window.__ddBrowserSdkExtensionCallback = (msg) => __ddSfOnBridgeEvent(msg)')
       await page.goto(buildFrontdoorUrl(session, addBundleConfigToUrl(path, bundleConfig)))
       await page.waitForLoadState('load')
 
@@ -46,26 +43,11 @@ class SalesforceTestBuilder {
         )
       }
 
-      const waitForRumEvent = (type: RumEventType, minCount = 1, timeout = 15000) =>
-        waitFor(
-          () => sfRegistry.rumEvents.filter((e) => e.type === type).length >= minCount,
-          timeout,
-          `Timed out waiting for ${minCount} Salesforce ${type} events`
-        )
-
-      const waitForUniqueViews = (count: number, timeout = 20000) =>
-        waitFor(
-          () => sfRegistry.rumUniqueViewEvents.length >= count,
-          timeout,
-          `Timed out waiting for ${count} unique Salesforce views`
-        )
-
       await runner({
         page,
         sfRegistry,
         instanceUrl: session.instanceUrl,
-        waitForRumEvent,
-        waitForUniqueViews,
+        waitFor,
       })
     })
   }
@@ -95,7 +77,7 @@ function addBundleConfigToUrl(path: string, bundleConfig: { resourceName: string
   return `${url.pathname}${url.search}${url.hash}`
 }
 
-async function waitFor(condition: () => boolean, timeout: number, message: string) {
+async function waitFor(condition: () => boolean, timeout = 15000, message = 'Timed out waiting for condition') {
   const deadline = Date.now() + timeout
   while (!condition()) {
     if (Date.now() > deadline) {

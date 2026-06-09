@@ -457,8 +457,22 @@ export default defineConfig(
   {
     files: ['**/webpack.*.{ts,mts}', 'eslint-local-rules/**/*.ts'],
     rules: {
-      // Webpack configuration files and eslint rules files are expected to use a default export.
+      // Webpack and eslint rules files are expected to use a default export.
       'import-x/no-default-export': 'off',
+    },
+  },
+
+  {
+    // Salesforce LWC component: runs in the browser inside the Salesforce platform, uses
+    // platform-specific module resolution (lwc, lightning/*) and requires a default class export.
+    files: ['test/e2e/salesforce-app/force-app/**/*.js'],
+    languageOptions: {
+      globals: globals.browser,
+    },
+    rules: {
+      'import-x/no-default-export': 'off',
+      'import-x/no-unresolved': ['error', { ignore: ['^lwc$', '^lightning/'] }],
+      '@typescript-eslint/member-ordering': 'off',
     },
   },
 

@@ -80,7 +80,7 @@
                 type="String"
                 label="Allowed Tracing URLs"
                 description="Comma or newline separated API URL prefixes where Datadog tracing headers should be injected"
-                default="https://dummyjson.com/"
+                default="https://placeholder.com/"
             />
             <property
                 name="trackViewsManually"
