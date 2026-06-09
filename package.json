@@ -107,7 +107,8 @@
     "ws": "8.21.0"
   },
   "resolutions": {
-    "puppeteer-core@npm:21.11.0/ws": "8.17.1"
+    "puppeteer-core@npm:21.11.0/ws": "8.17.1",
+    "@wxt-dev/module-react/@vitejs/plugin-react": "5.2.0"
   },
   "volta": {
     "node": "26.2.0",
