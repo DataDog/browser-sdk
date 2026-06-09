@@ -1,7 +1,8 @@
 import { mockEventBridge } from '../../test'
+import { display } from '../tools/display'
 import { DefaultPrivacyLevel } from '../domain/configuration'
 import type { BrowserWindowWithEventBridge } from './eventBridge'
-import { getEventBridge, canUseEventBridge, BridgeCapability, bridgeSupports } from './eventBridge'
+import { getEventBridge, canUseEventBridge, matchesHostEntry, BridgeCapability, bridgeSupports } from './eventBridge'
 
 describe('canUseEventBridge', () => {
   const allowedWebViewHosts = ['foo.bar']
@@ -28,6 +29,59 @@ describe('canUseEventBridge', () => {
 
   it('should not detect when the bridge is absent', () => {
     expect(canUseEventBridge()).toBeFalse()
+  })
+})
+
+describe('matchesHostEntry', () => {
+  // prettier-ignore
+  const cases: Array<[string, string, boolean]> = [
+    // [host,                          pattern,                  expected]
+    ['app.shopist.io',                 '*.shopist.io',           true],
+    ['preview-abc.shopist.io',         '*.shopist.io',           true],
+    ['shopist.io',                     '*.shopist.io',           false], // apex not matched by subdomain wildcard
+    ['shopist.io',                     'shopist.io',             true],  // exact match
+    ['app.shopist.io',                 'shopist.io',             true],  // subdomain-suffix match
+    ['preview-abc123.shopist.io',      'preview-*.shopist.io',   true],
+    ['app.shopist.io',                 'preview-*.shopist.io',   false],
+    ['evil.com',                       '*.shopist.io',           false],
+    ['app.shopist.io.evil.com',        '*.shopist.io',           false],
+    ['anything.foo.anything.bar',      '*.foo.*.bar',            false], // multiple wildcards → invalid
+  ]
+
+  cases.forEach(([host, pattern, expected]) => {
+    it(`"${host}" against "${pattern}" → ${expected}`, () => {
+      expect(matchesHostEntry(host, pattern)).toBe(expected)
+    })
+  })
+})
+
+describe('canUseEventBridge with wildcard patterns', () => {
+  it('should match wildcard entries in getAllowedWebViewHosts', () => {
+    mockEventBridge({ allowedWebViewHosts: ['*.shopist.io', 'shopist.io'] })
+    expect(canUseEventBridge('app.shopist.io')).toBeTrue()
+    expect(canUseEventBridge('shopist.io')).toBeTrue()
+    expect(canUseEventBridge('evil.com')).toBeFalse()
+  })
+
+  it('should match plain and wildcard entries together', () => {
+    mockEventBridge({ allowedWebViewHosts: ['legacy.com', '*.shopist.io'] })
+    expect(canUseEventBridge('legacy.com')).toBeTrue()
+    expect(canUseEventBridge('app.shopist.io')).toBeTrue()
+    expect(canUseEventBridge('evil.com')).toBeFalse()
+  })
+
+  it('should log an error and skip patterns with more than one wildcard', () => {
+    const displayErrorSpy = spyOn(display, 'error')
+    mockEventBridge({ allowedWebViewHosts: ['*.foo.*.bar', 'shopist.io'] })
+    expect(canUseEventBridge('shopist.io')).toBeTrue()
+    expect(canUseEventBridge('anything.foo.anything.bar')).toBeFalse()
+    expect(displayErrorSpy).toHaveBeenCalledWith(
+      'Invalid WebView host pattern "*.foo.*.bar": only one wildcard (*) is supported.'
+    )
+  })
+
+  it('should not detect when bridge is absent', () => {
+    expect(canUseEventBridge('shopist.io')).toBeFalse()
   })
 })
 
