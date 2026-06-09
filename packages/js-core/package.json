@@ -8,6 +8,16 @@
       "import": "./esm/entries/time.mjs",
       "require": "./cjs/entries/time.js",
       "types": "./cjs/entries/time.d.ts"
+    },
+    "./monitor": {
+      "import": "./esm/entries/monitor.js",
+      "require": "./cjs/entries/monitor.js",
+      "types": "./cjs/entries/monitor.d.ts"
+    },
+    "./util": {
+      "import": "./esm/entries/util.js",
+      "require": "./cjs/entries/util.js",
+      "types": "./cjs/entries/util.d.ts"
     }
   },
   "files": [
@@ -15,6 +25,8 @@
     "esm",
     "src",
     "time",
+    "monitor",
+    "util",
     "!src/**/*.spec.ts",
     "!src/**/*.specHelper.ts"
   ],
