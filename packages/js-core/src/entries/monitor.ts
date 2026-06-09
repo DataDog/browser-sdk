@@ -4,25 +4,14 @@ import type { Display } from './util'
 export interface Monitor {
   /**
    * TypeScript method decorator that routes a class method through {@link Monitor.monitor}, so any
-   * error it throws is caught and reported instead of propagating to the caller.
+   * error it throws is caught and reported instead of propagating to the caller. Apply it as
+   * `@monitored` on the method (it replaces the method's descriptor value with the monitored
+   * wrapper).
    *
    * When to use: prefer this for **class methods** that are entry points from outside the SDK
    * (public API methods, lifecycle callbacks) where an internal error must never reach the host
    * application. For standalone functions or inline blocks, use {@link Monitor.monitor} or
    * {@link Monitor.callMonitored} instead.
-   *
-   * @param descriptor - Property descriptor of the decorated method; its `value` is replaced with
-   * the monitored wrapper.
-   *
-   * @example
-   * ```ts
-   * class Logger {
-   *   @monitored
-   *   logImplementation(message: string) {
-   *     // if this throws, the error is collected and reported, not propagated to the caller
-   *   }
-   * }
-   * ```
    */
   monitored: <T extends (...params: any[]) => unknown>(
     _: any,
@@ -40,7 +29,6 @@ export interface Monitor {
    *
    * @param fn - The function to wrap.
    * @returns A function with the same signature that never throws (errors are collected instead).
-   *
    * @example
    * ```ts
    * element.addEventListener(
@@ -65,7 +53,6 @@ export interface Monitor {
    * @param context - `this` value to invoke `fn` with (optional for context-free functions).
    * @param args - Arguments to invoke `fn` with (optional for context-free functions).
    * @returns The result of `fn`, or `undefined` if it threw.
-   *
    * @example
    * ```ts
    * callMonitored(() => {
@@ -93,7 +80,6 @@ export interface Monitor {
    * handle synchronous throws).
    *
    * @param e - The error to report.
-   *
    * @example
    * ```ts
    * // route a promise rejection to telemetry
