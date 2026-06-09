@@ -42,7 +42,13 @@ Create a CSP trusted site metadata file under `cspTrustedSites/`, for example `c
 
 ### 3. Create the LWC component
 
-Create a new LWC component under `lwc/datadogInit/`, for example `lwc/datadogInit/datadogInit.js`:
+Create a new LWC component under `lwc/datadogInit/`. A LWC bundle requires an HTML template, so first create `lwc/datadogInit/datadogInit.html`:
+
+```html
+<template></template>
+```
+
+Then create `lwc/datadogInit/datadogInit.js`:
 
 ```js
 import { LightningElement, api, wire } from 'lwc'
@@ -59,8 +65,6 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
   @api site
   @api service
   @api env
-  @api allowedTracingUrls
-  @api trackViewsManually
 
   connectedCallback() {
     this.initialize()
@@ -132,6 +136,15 @@ Also create the required component metadata file `lwc/datadogInit/datadogInit.js
     <targets>
         <target>lightning__UtilityBar</target>
     </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__UtilityBar">
+            <property name="applicationId" type="String" required="true" label="Application ID" />
+            <property name="clientToken" type="String" required="true" label="Client Token" />
+            <property name="site" type="String" required="true" label="Site" default="datadoghq.com" />
+            <property name="service" type="String" label="Service" />
+            <property name="env" type="String" label="Environment" />
+        </targetConfig>
+    </targetConfigs>
 </LightningComponentBundle>
 ```
 

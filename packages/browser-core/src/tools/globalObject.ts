@@ -12,7 +12,10 @@ import type { BrowserNavigator, CookieStore, ProfilerConstructor } from '../brow
  * Feel free to add more properties as needed, or mark some properties as optional when they are.
  */
 // eslint-disable-next-line no-restricted-syntax
-export interface GlobalObject extends Omit<typeof globalThis, 'queueMicrotask' | 'cookieStore' | 'Profiler' | 'window'> {
+export interface GlobalObject extends Omit<
+  typeof globalThis,
+  'queueMicrotask' | 'cookieStore' | 'Profiler' | 'window'
+> {
   navigator: BrowserNavigator
 
   // cookieStore is not available in all browsers yet
