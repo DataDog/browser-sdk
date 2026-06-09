@@ -154,7 +154,7 @@ function writeGithubEnv(entries: Record<string, string>) {
 // Deploys the Salesforce e2e LWC and generated static resources into the target org.
 function deploySalesforceE2eApp() {
   const targetOrg = process.env.SF_ORG_ALIAS || 'engrumdev'
-  const waitMinutes = process.env.SF_DEPLOY_WAIT_MINUTES || '20'
+  const waitMinutes = process.env.SF_DEPLOY_WAIT_MINUTES || '10'
 
   command`sf project deploy start --target-org ${targetOrg} --source-dir force-app/main/default/lwc/datadogInit --source-dir force-app/main/default/staticresources --wait ${waitMinutes} --ignore-conflicts --json`
     .withCurrentWorkingDirectory(salesforceAppDir)
