@@ -53,6 +53,18 @@ describe('probes', () => {
       const retrieved = getProbes('non-existent')
       expect(retrieved).toBeUndefined()
     })
+
+    it('should not register a probe when initialization throws', () => {
+      const probe = createProbe({
+        when: {
+          dsl: 'invalid',
+          json: { invalidOp: 'bad' } as any,
+        },
+      })
+
+      expect(() => addProbe(probe)).toThrow()
+      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
+    })
   })
 
   describe('removeProbe', () => {
@@ -156,17 +168,17 @@ describe('probes', () => {
       )
     })
 
-    it('should not add probe when condition compilation fails', () => {
+    it('should throw when condition compilation fails', () => {
+      const probe = createProbe({
+        when: {
+          dsl: 'invalid',
+          json: { invalidOp: 'bad' } as any,
+        },
+      })
+
       let error: unknown
       try {
-        addProbe(
-          createProbe({
-            when: {
-              dsl: 'invalid',
-              json: { invalidOp: 'bad' } as any,
-            },
-          })
-        )
+        initializeProbe(probe)
       } catch (err) {
         error = err
       }
@@ -174,7 +186,6 @@ describe('probes', () => {
       expect(error).toEqual(jasmine.any(Error))
       expect((error as Error).message).toContain('Cannot compile condition')
       expect((error as ErrorWithCause).cause).toEqual(jasmine.any(TypeError))
-      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
     })
 
     it('should calculate msBetweenSampling for snapshot probes', () => {
