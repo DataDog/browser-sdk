@@ -89,25 +89,16 @@ async function injectInstrumentedFunction(page: Page) {
  */
 async function injectInstrumentedFunctionWithoutWaiting(page: Page) {
   await page.evaluate(() => {
-    const $dd_probes = (globalThis as any).$dd_probes as (id: string) => unknown[] | undefined
-    const $dd_entry = (globalThis as any).$dd_entry as (probes: unknown[], self: unknown, args: object) => void
-    const $dd_return = (globalThis as any).$dd_return as (
-      probes: unknown[],
-      value: unknown,
-      self: unknown,
-      args: object,
-      locals: object
-    ) => unknown
-
     ;(window as any).testFunction = function testFunction(a: unknown, b: unknown) {
-      const probes = $dd_probes('TestModule;testFunction')
+      const probes = (window as any).$dd_probes('TestModule;testFunction')
       if (probes) {
-        $dd_entry(probes, this, { a, b })
+        ;(window as any).$dd_entry(probes, this, { a, b })
       }
       const result = String(a) + String(b)
       const returnValue = result
       if (probes) {
-        return $dd_return(probes, returnValue, this, { a, b }, { result })
+        const instrumentedReturnValue = (window as any).$dd_return(probes, returnValue, this, { a, b }, { result }) as unknown
+        return instrumentedReturnValue
       }
       return returnValue
     }
