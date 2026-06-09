@@ -747,7 +747,6 @@ describe('api', () => {
       expect(snapshot.captures).toEqual({
         entry: undefined,
         return: {
-          arguments: undefined,
           captureExpressions: {
             exceptionMessage: { type: 'string', value: 'Test error' },
           },
