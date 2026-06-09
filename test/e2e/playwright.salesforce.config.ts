@@ -3,6 +3,7 @@ import { getTestReportDirectory } from '../envUtils'
 
 const isCi = !!process.env.CI
 
+// eslint-disable-next-line import-x/no-default-export
 export default defineConfig({
   testDir: './scenario/salesforce',
   testMatch: '**/*.scenario.ts',
@@ -16,6 +17,14 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
     },
   ],
 })

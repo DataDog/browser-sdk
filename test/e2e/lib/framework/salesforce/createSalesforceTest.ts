@@ -5,6 +5,7 @@ import { SfRegistry, type BridgeEvent } from './sfRegistry.ts'
 
 export interface SfTestContext {
   page: Page
+  browserName: string
   sfRegistry: SfRegistry
   instanceUrl: string
   waitFor: (condition: () => boolean, timeout?: number, message?: string) => Promise<void>
@@ -25,7 +26,7 @@ class SalesforceTestBuilder {
   run(runner: SfTestRunner) {
     const { title, path } = this
 
-    test(title, async ({ page }) => {
+    test(title, async ({ page, browserName }) => {
       const sfRegistry = new SfRegistry()
       const session = getSfSession()
       const bundleConfig = getSalesforceBundleConfig()
@@ -45,6 +46,7 @@ class SalesforceTestBuilder {
 
       await runner({
         page,
+        browserName,
         sfRegistry,
         instanceUrl: session.instanceUrl,
         waitFor,

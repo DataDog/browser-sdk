@@ -77,7 +77,8 @@ test.describe('Salesforce Lightning — Datadog RUM SDK', () => {
 
   createSalesforceTest('captures custom errors and long tasks')
     .withPath('/lightning/page/home')
-    .run(async ({ page, sfRegistry, waitFor }) => {
+    .run(async ({ page, browserName, sfRegistry, waitFor }) => {
+      test.skip(browserName !== 'chromium', 'Long Tasks API is Chromium-only')
       await waitFor(() => uniqueViews(sfRegistry).length >= 1, 20000, 'Timed out waiting for initial view')
       expect(uniqueViews(sfRegistry)).toHaveLength(1)
       expect(uniqueViews(sfRegistry)[0]['view']).toMatchObject({
