@@ -120,29 +120,27 @@ async function injectInstrumentedFunctionWithoutWaiting(page: Page) {
  */
 async function injectThrowingFunction(page: Page) {
   await page.evaluate(() => {
-    const $dd_probes = (globalThis as any).$dd_probes as (id: string) => unknown[] | undefined
-    const $dd_entry = (globalThis as any).$dd_entry as (probes: unknown[], self: unknown, args: object) => void
-    const $dd_throw = (globalThis as any).$dd_throw as (
-      probes: unknown[],
-      error: Error,
-      self: unknown,
-      args: object
-    ) => void
-
-    ;(window as any).throwingFunction = function throwingFunction(msg: string) {
-      const probes = $dd_probes('TestModule;throwingFunction')
-      if (probes) {
-        $dd_entry(probes, this, { msg })
-      }
-      try {
-        throw new Error(msg)
-      } catch (e) {
+    // Define the function through a page script so thrown errors get normal page-script stack frames.
+    // Firefox/WebKit can expose empty or unparseable stacks for functions defined directly by page.evaluate().
+    const script = document.createElement('script')
+    script.textContent = `
+      window.throwingFunction = function throwingFunction(msg) {
+        const probes = window.$dd_probes('TestModule;throwingFunction')
         if (probes) {
-          $dd_throw(probes, e as Error, this, { msg })
+          window.$dd_entry(probes, this, { msg })
         }
-        throw e
+        try {
+          throw new Error(msg)
+        } catch (e) {
+          if (probes) {
+            window.$dd_throw(probes, e, this, { msg })
+          }
+          throw e
+        }
       }
-    }
+    `
+    document.head.appendChild(script)
+    script.remove()
   })
   await waitForProbe(page, 'TestModule;throwingFunction')
 }
