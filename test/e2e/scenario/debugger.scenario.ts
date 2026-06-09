@@ -97,8 +97,8 @@ async function injectInstrumentedFunctionWithoutWaiting(page: Page) {
       const result = String(a) + String(b)
       const returnValue = result
       if (probes) {
-        const instrumentedReturnValue = (window as any).$dd_return(probes, returnValue, this, { a, b }, { result }) as unknown
-        return instrumentedReturnValue
+        const val = (window as any).$dd_return(probes, returnValue, this, { a, b }, { result }) as unknown
+        return val
       }
       return returnValue
     }
