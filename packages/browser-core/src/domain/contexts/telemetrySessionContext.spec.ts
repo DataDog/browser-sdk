@@ -1,7 +1,7 @@
 import { vi, beforeEach, describe, expect, it } from 'vitest'
+import type { RelativeTime } from '@datadog/js-core/time'
 import type { Hooks } from '../../../test'
 import { createHooks, createSessionManagerMock, MOCK_SESSION_ID } from '../../../test'
-import type { RelativeTime } from '../../tools/utils/timeUtils'
 import { HookNames } from '../../tools/abstractHooks'
 import { startTelemetrySessionContext } from './telemetrySessionContext'
 

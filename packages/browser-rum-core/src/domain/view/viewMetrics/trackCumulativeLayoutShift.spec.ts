@@ -1,7 +1,7 @@
 import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
-import type { RelativeTime } from '@datadog/browser-core'
+import { elapsed, ONE_SECOND } from '@datadog/js-core/time'
+import type { RelativeTime } from '@datadog/js-core/time'
 import { registerCleanupTask } from '@datadog/browser-core/test'
-import { elapsed, ONE_SECOND } from '@datadog/browser-core'
 import {
   appendElement,
   appendText,

@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import type { Duration, RelativeTime } from '@datadog/js-core/time'
+import { addDuration, ONE_MINUTE } from '@datadog/js-core/time'
 import type { Clock } from '../../test'
 import { mockClock } from '../../test'
-import type { Duration, RelativeTime } from './utils/timeUtils'
-import { addDuration, ONE_MINUTE } from './utils/timeUtils'
 import { CLEAR_OLD_VALUES_INTERVAL, type ValueHistory, createValueHistory } from './valueHistory'
 
 const EXPIRE_DELAY = 10 * ONE_MINUTE

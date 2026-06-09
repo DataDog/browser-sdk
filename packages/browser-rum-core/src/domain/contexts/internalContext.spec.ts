@@ -1,5 +1,6 @@
 import { vi, describe, expect, it, type Mock } from 'vitest'
-import { noop, type RelativeTime, type SessionManager } from '@datadog/browser-core'
+import { type RelativeTime } from '@datadog/js-core/time'
+import { noop, type SessionManager } from '@datadog/browser-core'
 import { buildLocation, createSessionManagerMock } from '@datadog/browser-core/test'
 import type { ActionContexts } from '../action/actionCollection'
 import { startInternalContext } from './internalContext'

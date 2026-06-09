@@ -241,7 +241,7 @@ describe('sanitize', () => {
     })
 
     it('should restore prototype toJSON methods when sanitization throws', () => {
-      const toJSON = jasmine.createSpy('toJSON', () => 'Object').and.callThrough()
+      const toJSON = vi.fn(() => 'Object')
       ;(Object.prototype as any).toJSON = toJSON
       const obj = {
         get x() {

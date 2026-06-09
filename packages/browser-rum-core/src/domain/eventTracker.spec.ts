@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import type { Duration, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { clocksNow } from '@datadog/browser-core'
+import type { RelativeTime, Duration, TimeStamp } from '@datadog/js-core/time'
+import { clocksNow } from '@datadog/js-core/time'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'

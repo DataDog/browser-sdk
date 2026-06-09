@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import type { RelativeTime } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/js-core/time'
 import { HookNames } from '@datadog/browser-core'
 import { mockSyntheticsWorkerValues } from '../../../../browser-core/test'
 import type { AssembleHookParams, Hooks } from '../hooks'

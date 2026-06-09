@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { RelativeTime, TimeStamp, ErrorWithCause } from '@datadog/browser-core'
+import type { RelativeTime, TimeStamp } from '@datadog/js-core/time'
+import type { ErrorWithCause } from '@datadog/browser-core'
 import { ErrorHandling, ErrorSource, NO_ERROR_STACK_PRESENT_MESSAGE } from '@datadog/browser-core'
 import { FAKE_CSP_VIOLATION_EVENT } from '@datadog/browser-core/test'
 import { collectAndValidateRawRumEvents } from '../../../test'

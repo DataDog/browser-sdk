@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { type RelativeTime } from '@datadog/browser-core'
+import { type RelativeTime } from '@datadog/js-core/time'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { createPerformanceEntry, mockGlobalPerformanceBuffer } from '../../test'
 import type { RumPerformanceNavigationTiming } from './performanceObservable'
-import { RumPerformanceEntryType, supportPerformanceTimingEvent } from './performanceObservable'
+import { RumPerformanceEntryType } from './performanceObservable'
 import { findLcpResourceEntry, getNavigationEntry } from './performanceUtils'
 
 describe('getNavigationEntry', () => {
@@ -113,13 +113,6 @@ describe('getNavigationEntry', () => {
 })
 
 describe('findLcpResourceEntry', () => {
-  beforeEach((ctx) => {
-    if (!supportPerformanceTimingEvent(RumPerformanceEntryType.RESOURCE)) {
-      ctx.skip()
-      return
-    }
-  })
-
   it('should return undefined when no resource entries exist', () => {
     mockGlobalPerformanceBuffer([])
 

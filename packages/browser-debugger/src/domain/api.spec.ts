@@ -1,13 +1,17 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
-import type { Mock } from 'vitest'
-import { display } from '@datadog/browser-core'
+import { vi, describe, it, expect, beforeEach, type Mock } from 'vitest'
+import { globalObject } from '@datadog/browser-core'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { onEntry, onReturn, onThrow, initDebuggerTransport, resetDebuggerTransport } from './api'
+import { display } from './display'
 import { addProbe, removeProbe, getProbes, clearProbes } from './probes'
 import type { Probe } from './probes'
+import { createProbe } from './probe.specHelper'
+
+const DEFAULT_PROBE_FUNCTION_ID = 'test.js;testMethod'
 
 describe('api', () => {
   let mockBatchAdd: Mock
+  let warnSpy: Mock
 
   function initTransport(overrides: Record<string, unknown> = {}) {
     resetDebuggerTransport()
@@ -22,6 +26,7 @@ describe('api', () => {
   beforeEach(() => {
     clearProbes()
 
+    warnSpy = vi.spyOn(display, 'warn')
     mockBatchAdd = vi.fn()
     initTransport()
     ;(window as any).DD_DEBUGGER = {
@@ -37,22 +42,11 @@ describe('api', () => {
 
   describe('onEntry and onReturn', () => {
     it('should capture this inside arguments.fields', () => {
-      const probe: Probe = {
-        id: 'test-probe',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'testMethod' },
-        template: 'Test message',
-        captureSnapshot: true,
-        capture: { maxReferenceDepth: 1 },
-        sampling: { snapshotsPerSecond: 5000 },
-        evaluateAt: 'ENTRY',
-      }
-      addProbe(probe)
+      addProbe(createProbe())
 
       const self = { name: 'testObj' }
       const args = { a: 1, b: 2 }
-      const probes = getProbes('TestClass;testMethod')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, self, args)
       onReturn(probes, 'result', self, args, {})
 
@@ -90,24 +84,32 @@ describe('api', () => {
       })
     })
 
+    it('should not capture this when it is the global object', () => {
+      addProbe(createProbe())
+
+      const args = { a: 1 }
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      onEntry(probes, globalObject, args)
+      onReturn(probes, 'result', globalObject, args, {})
+
+      const payload = mockBatchAdd.mock.lastCall![0]
+      const snapshot = payload.debugger.snapshot
+
+      expect(snapshot.captures.entry.arguments).toEqual({
+        a: { type: 'number', value: '1' },
+      })
+      expect(snapshot.captures.return.arguments).toEqual({
+        a: { type: 'number', value: '1' },
+      })
+    })
+
     it('should capture entry and return for simple probe', () => {
-      const probe: Probe = {
-        id: 'test-probe',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'testMethod' },
-        template: 'Test message',
-        captureSnapshot: true,
-        capture: { maxReferenceDepth: 1 },
-        sampling: { snapshotsPerSecond: 5000 },
-        evaluateAt: 'ENTRY',
-      }
-      addProbe(probe)
+      addProbe(createProbe())
 
       const self = { name: 'test' }
       const args = { arg1: 'value1', arg2: 42 }
 
-      const probes = getProbes('TestClass;testMethod')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, self, args)
       const result = onReturn(probes, 'returnValue', self, args, {})
 
@@ -123,20 +125,13 @@ describe('api', () => {
 
     it('should skip probe if sampling budget exceeded', () => {
       // Use a very low sampling rate to ensure budget is exceeded
-      const probe: Probe = {
-        id: 'test-probe',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'budgetTest' },
-        template: 'Test',
-        captureSnapshot: true,
-        capture: { maxReferenceDepth: 1 },
-        sampling: { snapshotsPerSecond: 0.5 }, // 0.5 per second = 2000ms between samples
-        evaluateAt: 'ENTRY',
-      }
-      addProbe(probe)
+      addProbe(
+        createProbe({
+          sampling: { snapshotsPerSecond: 0.5 }, // 0.5 per second = 2000ms between samples
+        })
+      )
 
-      const probes = getProbes('TestClass;budgetTest')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       // First call should work
       onEntry(probes, {}, {})
       onReturn(probes, null, {}, {}, {})
@@ -151,24 +146,18 @@ describe('api', () => {
     })
 
     it('should not evaluate ENTRY condition when sampling budget is exceeded', () => {
-      const probe: Probe = {
-        id: 'test-probe',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'entryConditionSamplingBudget' },
-        when: {
-          dsl: 'missing.value',
-          json: { getmember: [{ ref: 'missing' }, 'value'] },
-        },
-        template: 'Test',
-        captureSnapshot: true,
-        capture: {},
-        sampling: { snapshotsPerSecond: 0.5 },
-        evaluateAt: 'ENTRY',
-      }
-      addProbe(probe)
+      addProbe(
+        createProbe({
+          when: {
+            dsl: 'missing.value',
+            json: { getmember: [{ ref: 'missing' }, 'value'] },
+          },
+          sampling: { snapshotsPerSecond: 0.5 },
+          evaluateAt: 'ENTRY',
+        })
+      )
 
-      const probes = getProbes('TestClass;entryConditionSamplingBudget')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, {}, { missing: { value: true } })
       onReturn(probes, null, {}, { missing: { value: true } }, {})
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
@@ -180,24 +169,17 @@ describe('api', () => {
     })
 
     it('should not evaluate EXIT condition when sampling budget is exceeded', () => {
-      const probe: Probe = {
-        id: 'test-probe',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'exitConditionSamplingBudget' },
-        when: {
-          dsl: 'missing.value',
-          json: { getmember: [{ ref: 'missing' }, 'value'] },
-        },
-        template: 'Test',
-        captureSnapshot: true,
-        capture: {},
-        sampling: { snapshotsPerSecond: 0.5 },
-        evaluateAt: 'EXIT',
-      }
-      addProbe(probe)
+      addProbe(
+        createProbe({
+          when: {
+            dsl: 'missing.value',
+            json: { getmember: [{ ref: 'missing' }, 'value'] },
+          },
+          sampling: { snapshotsPerSecond: 0.5 },
+        })
+      )
 
-      const probes = getProbes('TestClass;exitConditionSamplingBudget')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, {}, { missing: { value: true } })
       onReturn(probes, null, {}, { missing: { value: true } }, {})
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
@@ -209,24 +191,16 @@ describe('api', () => {
     })
 
     it('should evaluate condition at ENTRY', () => {
-      const probe: Probe = {
-        id: 'test-probe',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'conditionEntry' },
+      const probe = createProbe({
         when: {
           dsl: 'x > 5',
           json: { gt: [{ ref: 'x' }, 5] },
         },
-        template: 'Condition passed',
-        captureSnapshot: false,
-        capture: {},
-        sampling: {},
         evaluateAt: 'ENTRY',
-      }
+      })
       addProbe(probe)
 
-      let probes = getProbes('TestClass;conditionEntry')!
+      let probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       // Should fire when condition passes
       onEntry(probes, {}, { x: 10 })
       onReturn(probes, null, {}, { x: 10 }, {})
@@ -234,9 +208,9 @@ describe('api', () => {
 
       clearProbes()
       addProbe(probe)
-      mockBatchAdd.mockReset()
+      mockBatchAdd.mockClear()
 
-      probes = getProbes('TestClass;conditionEntry')!
+      probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       // Should not fire when condition fails
       onEntry(probes, {}, { x: 3 })
       onReturn(probes, null, {}, { x: 3 }, {})
@@ -244,24 +218,15 @@ describe('api', () => {
     })
 
     it('should evaluate condition at EXIT with @return', () => {
-      const probe: Probe = {
-        id: 'test-probe',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'conditionExit' },
+      const probe = createProbe({
         when: {
           dsl: '@return > 10',
           json: { gt: [{ ref: '@return' }, 10] },
         },
-        template: 'Return value check',
-        captureSnapshot: false,
-        capture: {},
-        sampling: {},
-        evaluateAt: 'EXIT',
-      }
+      })
       addProbe(probe)
 
-      let probes = getProbes('TestClass;conditionExit')!
+      let probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       // Should fire when return value > 10
       onEntry(probes, {}, {})
       onReturn(probes, 15, {}, {}, {})
@@ -269,9 +234,9 @@ describe('api', () => {
 
       clearProbes()
       addProbe(probe)
-      mockBatchAdd.mockReset()
+      mockBatchAdd.mockClear()
 
-      probes = getProbes('TestClass;conditionExit')!
+      probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       // Should not fire when return value <= 10
       onEntry(probes, {}, {})
       onReturn(probes, 5, {}, {}, {})
@@ -279,20 +244,9 @@ describe('api', () => {
     })
 
     it('should capture both entry and return snapshots for ENTRY evaluation', () => {
-      const probe: Probe = {
-        id: 'test-probe',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'entrySnapshot' },
-        template: 'Test',
-        captureSnapshot: true,
-        capture: { maxReferenceDepth: 1 },
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
-      addProbe(probe)
+      addProbe(createProbe({ evaluateAt: 'ENTRY' }))
 
-      const probes = getProbes('TestClass;entrySnapshot')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, { name: 'obj' }, { arg: 'value' })
       onReturn(probes, 'result', { name: 'obj' }, { arg: 'value' }, { local: 'data' })
 
@@ -319,20 +273,9 @@ describe('api', () => {
     })
 
     it('should capture both entry and return snapshots for EXIT evaluation with no condition', () => {
-      const probe: Probe = {
-        id: 'test-probe',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'exitSnapshotNoCondition' },
-        template: 'Test',
-        captureSnapshot: true,
-        capture: { maxReferenceDepth: 1 },
-        sampling: {},
-        evaluateAt: 'EXIT',
-      }
-      addProbe(probe)
+      addProbe(createProbe())
 
-      const probes = getProbes('TestClass;exitSnapshotNoCondition')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, { name: 'obj' }, { arg: 'value' })
       onReturn(probes, 'result', { name: 'obj' }, { arg: 'value' }, { local: 'data' })
 
@@ -359,24 +302,16 @@ describe('api', () => {
     })
 
     it('should only capture return snapshot for EXIT evaluation with condition', () => {
-      const probe: Probe = {
-        id: 'test-probe',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'exitSnapshot' },
-        when: {
-          dsl: '@return === true',
-          json: { eq: [{ ref: '@return' }, true] },
-        },
-        template: 'Test',
-        captureSnapshot: true,
-        capture: { maxReferenceDepth: 1 },
-        sampling: {},
-        evaluateAt: 'EXIT',
-      }
-      addProbe(probe)
+      addProbe(
+        createProbe({
+          when: {
+            dsl: '@return === true',
+            json: { eq: [{ ref: '@return' }, true] },
+          },
+        })
+      )
 
-      const probes = getProbes('TestClass;exitSnapshot')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, {}, { arg: 'value' })
       onReturn(probes, true, {}, { arg: 'value' }, {})
 
@@ -389,20 +324,9 @@ describe('api', () => {
     it('should include duration in snapshot', () => {
       const clock = mockClock()
 
-      const probe: Probe = {
-        id: 'test-probe',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'durationTest' },
-        template: 'Test',
-        captureSnapshot: true,
-        capture: { maxReferenceDepth: 1 },
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
-      addProbe(probe)
+      addProbe(createProbe())
 
-      const probes = getProbes('TestClass;durationTest')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, {}, {})
 
       clock.tick(10)
@@ -415,24 +339,18 @@ describe('api', () => {
     })
 
     it('should report ENTRY condition evaluation errors without capturing a snapshot', () => {
-      const probe: Probe = {
-        id: 'test-probe',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'entryConditionError' },
-        when: {
-          dsl: 'missing.value',
-          json: { getmember: [{ ref: 'missing' }, 'value'] },
-        },
-        template: 'Should not be evaluated',
-        captureSnapshot: true,
-        capture: { maxReferenceDepth: 1 },
-        sampling: { snapshotsPerSecond: Infinity },
-        evaluateAt: 'ENTRY',
-      }
-      addProbe(probe)
+      addProbe(
+        createProbe({
+          when: {
+            dsl: 'missing.value',
+            json: { getmember: [{ ref: 'missing' }, 'value'] },
+          },
+          sampling: { snapshotsPerSecond: Infinity },
+          evaluateAt: 'ENTRY',
+        })
+      )
 
-      const probes = getProbes('TestClass;entryConditionError')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, {}, {})
       onReturn(probes, null, {}, {}, {})
 
@@ -452,24 +370,17 @@ describe('api', () => {
     })
 
     it('should report EXIT condition evaluation errors without capturing a return snapshot', () => {
-      const probe: Probe = {
-        id: 'test-probe',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'exitConditionError' },
-        when: {
-          dsl: 'missing.value',
-          json: { getmember: [{ ref: 'missing' }, 'value'] },
-        },
-        template: 'Should not be evaluated',
-        captureSnapshot: true,
-        capture: { maxReferenceDepth: 1 },
-        sampling: { snapshotsPerSecond: Infinity },
-        evaluateAt: 'EXIT',
-      }
-      addProbe(probe)
+      addProbe(
+        createProbe({
+          when: {
+            dsl: 'missing.value',
+            json: { getmember: [{ ref: 'missing' }, 'value'] },
+          },
+          sampling: { snapshotsPerSecond: Infinity },
+        })
+      )
 
-      const probes = getProbes('TestClass;exitConditionError')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, {}, {})
       onReturn(probes, null, {}, {}, {})
 
@@ -489,24 +400,18 @@ describe('api', () => {
 
     it('should rate limit repeated condition evaluation errors', () => {
       const clock = mockClock()
-      const probe: Probe = {
-        id: 'test-probe',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'rateLimitedConditionError' },
-        when: {
-          dsl: 'missing.value',
-          json: { getmember: [{ ref: 'missing' }, 'value'] },
-        },
-        template: 'Should not be evaluated',
-        captureSnapshot: true,
-        capture: { maxReferenceDepth: 1 },
-        sampling: { snapshotsPerSecond: Infinity },
-        evaluateAt: 'ENTRY',
-      }
-      addProbe(probe)
+      addProbe(
+        createProbe({
+          when: {
+            dsl: 'missing.value',
+            json: { getmember: [{ ref: 'missing' }, 'value'] },
+          },
+          sampling: { snapshotsPerSecond: Infinity },
+          evaluateAt: 'ENTRY',
+        })
+      )
 
-      const probes = getProbes('TestClass;rateLimitedConditionError')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, {}, {})
       onReturn(probes, null, {}, {}, {})
       onEntry(probes, {}, {})
@@ -523,23 +428,12 @@ describe('api', () => {
 
   describe('onThrow', () => {
     it('should capture this inside arguments.fields for exceptions', () => {
-      const probe: Probe = {
-        id: 'test-probe',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'throwTest' },
-        template: 'Test',
-        captureSnapshot: true,
-        capture: { maxReferenceDepth: 1 },
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
-      addProbe(probe)
+      addProbe(createProbe())
 
       const self = { name: 'testObj' }
       const args = { a: 1, b: 2 }
       const error = new Error('Test error')
-      const probes = getProbes('TestClass;throwTest')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, self, args)
       onThrow(probes, error, self, args)
 
@@ -575,21 +469,30 @@ describe('api', () => {
       }
     })
 
-    it('should capture exception details', () => {
-      const probe: Probe = {
-        id: 'test-probe',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'throwTest' },
-        template: 'Test',
-        captureSnapshot: true,
-        capture: { maxReferenceDepth: 1 },
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
-      addProbe(probe)
+    it('should not capture this for exceptions when it is the global object', () => {
+      addProbe(createProbe())
 
-      const probes = getProbes('TestClass;throwTest')!
+      const args = { a: 1 }
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      onEntry(probes, globalObject, args)
+      onThrow(probes, new Error('Test error'), globalObject, args)
+
+      const payload = mockBatchAdd.mock.lastCall![0]
+      const snapshot = payload.debugger.snapshot
+
+      expect(snapshot.captures.return.arguments).toEqual({
+        a: { type: 'number', value: '1' },
+      })
+      expect(snapshot.captures.return.throwable).toEqual({
+        message: 'Test error',
+        stacktrace: expect.any(Array),
+      })
+    })
+
+    it('should capture exception details', () => {
+      addProbe(createProbe())
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       const error = new Error('Test error')
       onEntry(probes, {}, { arg: 'value' })
       onThrow(probes, error, {}, { arg: 'value' })
@@ -615,24 +518,18 @@ describe('api', () => {
     })
 
     it('should evaluate EXIT condition with @exception', () => {
-      const probe: Probe = {
-        id: 'test-probe',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'exceptionCondition' },
-        when: {
-          dsl: '@exception.message',
-          json: { getmember: [{ ref: '@exception' }, 'message'] },
-        },
-        template: 'Exception captured',
-        captureSnapshot: false,
-        capture: { maxReferenceDepth: 1 },
-        sampling: {},
-        evaluateAt: 'EXIT',
-      }
-      addProbe(probe)
+      addProbe(
+        createProbe({
+          when: {
+            dsl: '@exception.message',
+            json: { getmember: [{ ref: '@exception' }, 'message'] },
+          },
+          template: 'Exception captured',
+          captureSnapshot: false,
+        })
+      )
 
-      const probes = getProbes('TestClass;exceptionCondition')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       const error = new Error('Test error')
       onEntry(probes, {}, {})
       onThrow(probes, error, {}, {})
@@ -641,24 +538,17 @@ describe('api', () => {
     })
 
     it('should report EXIT condition evaluation errors on throw without capturing a snapshot', () => {
-      const probe: Probe = {
-        id: 'test-probe',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'throwConditionError' },
-        when: {
-          dsl: 'missing.value',
-          json: { getmember: [{ ref: 'missing' }, 'value'] },
-        },
-        template: 'Should not be evaluated',
-        captureSnapshot: true,
-        capture: { maxReferenceDepth: 1 },
-        sampling: { snapshotsPerSecond: Infinity },
-        evaluateAt: 'EXIT',
-      }
-      addProbe(probe)
+      addProbe(
+        createProbe({
+          when: {
+            dsl: 'missing.value',
+            json: { getmember: [{ ref: 'missing' }, 'value'] },
+          },
+          sampling: { snapshotsPerSecond: Infinity },
+        })
+      )
 
-      const probes = getProbes('TestClass;throwConditionError')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, {}, {})
       onThrow(probes, new Error('Test error'), {}, {})
 
@@ -677,20 +567,9 @@ describe('api', () => {
     })
 
     it('should handle onThrow without preceding onEntry', () => {
-      const probe: Probe = {
-        id: 'test-probe',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'throwWithoutEntry' },
-        template: 'Test',
-        captureSnapshot: true,
-        capture: { maxReferenceDepth: 1 },
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
-      addProbe(probe)
+      addProbe(createProbe())
 
-      const probes = getProbes('TestClass;throwWithoutEntry')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       const error = new Error('Test error')
       onThrow(probes, error, {}, {})
 
@@ -702,24 +581,18 @@ describe('api', () => {
     it('should respect global snapshot rate limit', () => {
       const probes: Probe[] = []
       for (let i = 0; i < 30; i++) {
-        const probe: Probe = {
+        const probe = createProbe({
           id: `probe-${i}`,
-          version: 0,
-          type: 'LOG_PROBE',
-          where: { typeName: 'TestClass', methodName: `method${i}` },
-          template: 'Test',
-          captureSnapshot: true,
-          capture: {},
+          where: { typeName: 'test.js', methodName: `method${i}` },
           sampling: { snapshotsPerSecond: 5000 },
-          evaluateAt: 'ENTRY',
-        }
+        })
         addProbe(probe)
         probes.push(probe)
       }
 
       // Try to fire 30 probes rapidly
       for (let i = 0; i < 30; i++) {
-        const probes = getProbes(`TestClass;method${i}`)!
+        const probes = getProbes(`test.js;method${i}`)!
         onEntry(probes, {}, {})
         onReturn(probes, null, {}, {}, {})
       }
@@ -732,22 +605,16 @@ describe('api', () => {
       initTransport({ maxSnapshotsPerSecondGlobally: 2 })
 
       for (let i = 0; i < 3; i++) {
-        const probe: Probe = {
+        const probe = createProbe({
           id: `configured-global-probe-${i}`,
-          version: 0,
-          type: 'LOG_PROBE',
-          where: { typeName: 'TestClass', methodName: `configuredGlobal${i}` },
-          template: 'Test',
-          captureSnapshot: true,
-          capture: {},
+          where: { typeName: 'test.js', methodName: `configuredGlobal${i}` },
           sampling: { snapshotsPerSecond: 5000 },
-          evaluateAt: 'ENTRY',
-        }
+        })
         addProbe(probe)
       }
 
       for (let i = 0; i < 3; i++) {
-        const probes = getProbes(`TestClass;configuredGlobal${i}`)!
+        const probes = getProbes(`test.js;configuredGlobal${i}`)!
         onEntry(probes, {}, {})
         onReturn(probes, null, {}, {}, {})
       }
@@ -760,20 +627,9 @@ describe('api', () => {
     it('should respect configured default snapshot per-probe rate limit', () => {
       initTransport({ maxSnapshotsPerSecondPerProbe: 0.5 })
 
-      const probe: Probe = {
-        id: 'configured-snapshot-rate-probe',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'configuredSnapshotRate' },
-        template: 'Test',
-        captureSnapshot: true,
-        capture: { maxReferenceDepth: 1 },
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
-      addProbe(probe)
+      addProbe(createProbe({ sampling: undefined }))
 
-      const probes = getProbes('TestClass;configuredSnapshotRate')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, {}, {})
       onReturn(probes, null, {}, {}, {})
       onEntry(probes, {}, {})
@@ -785,20 +641,14 @@ describe('api', () => {
     it('should respect configured default non-snapshot per-probe rate limit', () => {
       initTransport({ maxNonSnapshotsPerSecondPerProbe: 1 })
 
-      const probe: Probe = {
-        id: 'configured-non-snapshot-rate-probe',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'configuredNonSnapshotRate' },
-        template: 'Test',
-        captureSnapshot: false,
-        capture: {},
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
-      addProbe(probe)
+      addProbe(
+        createProbe({
+          captureSnapshot: false,
+          sampling: undefined,
+        })
+      )
 
-      const probes = getProbes('TestClass;configuredNonSnapshotRate')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, {}, {})
       onReturn(probes, null, {}, {}, {})
       onEntry(probes, {}, {})
@@ -812,23 +662,15 @@ describe('api', () => {
     it('should stop sending snapshot events after maxSnapshotsPerProbeLifetime', () => {
       initTransport({ maxSnapshotsPerProbeLifetime: 1 })
 
-      const probe: Probe = {
-        id: 'snapshot-lifetime-probe',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'snapshotLifetime' },
-        template: 'Test',
-        captureSnapshot: true,
-        capture: { maxReferenceDepth: 1 },
+      const probe = createProbe({
         // Disable per-probe rate limiting so the second invocation exercises the
         // lifetime cap rather than the per-second cap.
         sampling: { snapshotsPerSecond: Infinity },
-        evaluateAt: 'ENTRY',
-      }
+      })
       addProbe(probe)
 
       // First invocation: probe sends its single allowed event.
-      const probes = getProbes('TestClass;snapshotLifetime')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, {}, {})
       onReturn(probes, null, {}, {}, {})
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
@@ -838,7 +680,7 @@ describe('api', () => {
       onEntry(probes, {}, {})
       onReturn(probes, null, {}, {}, {})
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
-      expect(getProbes('TestClass;snapshotLifetime')).toBeUndefined()
+      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
     })
 
     it('should skip snapshot collection once the lifetime budget is exhausted', () => {
@@ -850,25 +692,18 @@ describe('api', () => {
         enumerable: true,
         get: getterSpy,
       })
-      const probe: Probe = {
-        id: 'snapshot-lifetime-collection-probe',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'snapshotLifetimeCollection' },
-        template: 'Test',
-        captureSnapshot: true,
-        capture: { maxReferenceDepth: 1 },
-        // Disable per-probe rate limiting so the second invocation isn't sampled out
-        // by it — we want to exercise the lifetime cap, not the rate cap.
-        sampling: { snapshotsPerSecond: Infinity },
-        evaluateAt: 'ENTRY',
-      }
-      addProbe(probe)
+      addProbe(
+        createProbe({
+          // Disable per-probe rate limiting so the second invocation isn't sampled out
+          // by it — we want to exercise the lifetime cap, not the rate cap.
+          sampling: { snapshotsPerSecond: Infinity },
+        })
+      )
 
       // First invocation does the full pipeline: 2 reads from entry capture
       // (context spread + captureFields) + 1 read from return capture = 3 reads.
       // This exhausts the lifetime budget.
-      const probes = getProbes('TestClass;snapshotLifetimeCollection')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, {}, args)
       onReturn(probes, null, {}, args, {})
 
@@ -883,23 +718,17 @@ describe('api', () => {
     it('should stop sending non-snapshot events after maxNonSnapshotsPerProbeLifetime', () => {
       initTransport({ maxNonSnapshotsPerProbeLifetime: 1 })
 
-      const probe: Probe = {
-        id: 'non-snapshot-lifetime-probe',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'nonSnapshotLifetime' },
-        template: 'Test',
-        captureSnapshot: false,
-        capture: {},
-        // Disable per-probe rate limiting so the second invocation exercises the
-        // lifetime cap rather than the per-second cap.
-        sampling: { snapshotsPerSecond: Infinity },
-        evaluateAt: 'ENTRY',
-      }
-      addProbe(probe)
+      addProbe(
+        createProbe({
+          captureSnapshot: false,
+          // Disable per-probe rate limiting so the second invocation exercises the
+          // lifetime cap rather than the per-second cap.
+          sampling: { snapshotsPerSecond: Infinity },
+        })
+      )
 
       // First invocation: probe sends its single allowed event.
-      const probes = getProbes('TestClass;nonSnapshotLifetime')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, {}, {})
       onReturn(probes, null, {}, {}, {})
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
@@ -909,31 +738,25 @@ describe('api', () => {
       onEntry(probes, {}, {})
       onReturn(probes, null, {}, {}, {})
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
-      expect(getProbes('TestClass;nonSnapshotLifetime')).toBeUndefined()
+      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
     })
 
     it('should finish in-flight recursive entries after the lifetime budget is exhausted', () => {
       initTransport({ maxNonSnapshotsPerProbeLifetime: 1 })
 
-      const probe: Probe = {
-        id: 'recursive-lifetime-probe',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'recursiveLifetime' },
-        template: 'Test',
-        captureSnapshot: false,
-        capture: {},
-        sampling: { snapshotsPerSecond: Infinity },
-        evaluateAt: 'ENTRY',
-      }
-      addProbe(probe)
+      addProbe(
+        createProbe({
+          captureSnapshot: false,
+          sampling: { snapshotsPerSecond: Infinity },
+        })
+      )
 
-      const probes = getProbes('TestClass;recursiveLifetime')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, {}, {})
       onEntry(probes, {}, {})
 
       onReturn(probes, null, {}, {}, {})
-      expect(getProbes('TestClass;recursiveLifetime')).toBeUndefined()
+      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
 
       // The lifetime budget gates new entries, but already accepted in-flight
       // entries still drain even if another frame exhausts the budget first.
@@ -944,20 +767,10 @@ describe('api', () => {
     it('should reset the lifetime budget when a new probe version is delivered', () => {
       initTransport({ maxSnapshotsPerProbeLifetime: 1 })
 
-      const probe: Probe = {
-        id: 'versioned-lifetime-probe',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'versionedLifetime' },
-        template: 'Test',
-        captureSnapshot: true,
-        capture: { maxReferenceDepth: 1 },
-        sampling: { snapshotsPerSecond: 5000 },
-        evaluateAt: 'ENTRY',
-      }
+      const probe = createProbe({ sampling: { snapshotsPerSecond: 5000 } })
       addProbe(probe)
 
-      let probes = getProbes('TestClass;versionedLifetime')!
+      let probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, {}, {})
       onReturn(probes, null, {}, {}, {})
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
@@ -966,7 +779,7 @@ describe('api', () => {
       // After re-add, the new version should have a fresh budget.
       addProbe({ ...probe, version: 1 })
 
-      probes = getProbes('TestClass;versionedLifetime')!
+      probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, {}, {})
       onReturn(probes, null, {}, {}, {})
       expect(mockBatchAdd).toHaveBeenCalledTimes(2)
@@ -975,25 +788,14 @@ describe('api', () => {
     it('should not emit any event when the lifetime budget is zero', () => {
       initTransport({ maxSnapshotsPerProbeLifetime: 0 })
 
-      const probe: Probe = {
-        id: 'zero-budget-probe',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'zeroBudget' },
-        template: 'Test',
-        captureSnapshot: true,
-        capture: { maxReferenceDepth: 1 },
-        sampling: { snapshotsPerSecond: 5000 },
-        evaluateAt: 'ENTRY',
-      }
-      addProbe(probe)
+      addProbe(createProbe({ sampling: { snapshotsPerSecond: 5000 } }))
 
-      const probes = getProbes('TestClass;zeroBudget')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, {}, {})
       onReturn(probes, null, {}, {}, {})
 
       expect(mockBatchAdd).not.toHaveBeenCalled()
-      expect(getProbes('TestClass;zeroBudget')).toBeUndefined()
+      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
     })
 
     it('should still process sibling probes when one is removed mid-iteration', () => {
@@ -1006,34 +808,23 @@ describe('api', () => {
 
       // Disable per-probe rate limiting on both probes so the second invocation
       // exercises the lifetime cap rather than the per-second cap.
-      const probeA: Probe = {
+      const probeA = createProbe({
         id: 'sibling-probe-a',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'sibling' },
         template: 'A',
-        captureSnapshot: true,
-        capture: { maxReferenceDepth: 1 },
         sampling: { snapshotsPerSecond: Infinity },
-        evaluateAt: 'ENTRY',
-      }
-      const probeB: Probe = {
+      })
+      const probeB = createProbe({
         id: 'sibling-probe-b',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'sibling' },
         template: 'B',
         captureSnapshot: false,
-        capture: {},
         sampling: { snapshotsPerSecond: Infinity },
-        evaluateAt: 'ENTRY',
-      }
+      })
       addProbe(probeA)
       addProbe(probeB)
 
       // First invocation: both probes emit one event. probeA hits its cap (eventsSent=1,
       // max=1) but is not removed yet — the pre-call budget check still passed.
-      const probes = getProbes('TestClass;sibling')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, {}, {})
       onReturn(probes, null, {}, {}, {})
       expect(mockBatchAdd).toHaveBeenCalledTimes(2)
@@ -1042,90 +833,74 @@ describe('api', () => {
       // removal. probeB must still be processed in the same iteration even though
       // probeA gets spliced out of the probes array.
       mockBatchAdd.mockClear()
-      const probesAfterFirst = getProbes('TestClass;sibling')!
+      const probesAfterFirst = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probesAfterFirst, {}, {})
       onReturn(probesAfterFirst, null, {}, {}, {})
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
-      expect(getProbes('TestClass;sibling')).toEqual([expect.objectContaining({ id: 'sibling-probe-b' })])
+      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toEqual([expect.objectContaining({ id: 'sibling-probe-b' })])
 
       // probeB's stack entry must not leak: a third onReturn without onEntry is a no-op.
       mockBatchAdd.mockClear()
-      const remainingProbes = getProbes('TestClass;sibling')!
+      const remainingProbes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onReturn(remainingProbes, null, {}, {}, {})
       expect(mockBatchAdd).not.toHaveBeenCalled()
     })
   })
 
   describe('active entries cleanup', () => {
-    function createProbe(id: string, methodName: string): Probe {
-      return {
-        id,
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName },
-        template: 'Test',
-        captureSnapshot: false,
-        capture: {},
-        sampling: { snapshotsPerSecond: 5000 },
-        evaluateAt: 'ENTRY',
-      }
-    }
-
     it('should drain in-flight entries through the removed probe instance', () => {
-      const probe = createProbe('cleanup-probe', 'cleanupTest')
+      const probe = createProbe()
       addProbe(probe)
 
-      const probes = getProbes('TestClass;cleanupTest')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, {}, {})
 
-      removeProbe('cleanup-probe')
+      removeProbe(probe.id)
       onReturn(probes, null, {}, {}, {})
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
     })
 
     it('should isolate in-flight entries from a replacement probe with the same id', () => {
-      const probe = createProbe('cleanup-probe', 'cleanupTest')
+      const probe = createProbe()
       addProbe(probe)
 
-      const probes = getProbes('TestClass;cleanupTest')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, {}, {})
 
-      removeProbe('cleanup-probe')
-      addProbe(createProbe('cleanup-probe', 'cleanupTest'))
+      removeProbe(probe.id)
+      addProbe(createProbe({ id: probe.id }))
 
-      const newProbes = getProbes('TestClass;cleanupTest')!
+      const newProbes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onReturn(newProbes, null, {}, {}, {})
 
       expect(mockBatchAdd).not.toHaveBeenCalled()
     })
 
     it('should discard in-flight entries when all probes are cleared', () => {
-      const probe = createProbe('cleanup-probe', 'clearAllTest')
-      addProbe(probe)
+      addProbe(createProbe())
 
-      const probes = getProbes('TestClass;clearAllTest')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, {}, {})
 
       clearProbes()
-      addProbe(createProbe('cleanup-probe', 'clearAllTest'))
+      addProbe(createProbe())
 
-      const newProbes = getProbes('TestClass;clearAllTest')!
+      const newProbes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onReturn(newProbes, null, {}, {}, {})
 
       expect(mockBatchAdd).not.toHaveBeenCalled()
     })
 
     it('should not leak active entries after onReturn completes', () => {
-      const probe = createProbe('leak-probe', 'leakTest')
-      addProbe(probe)
+      addProbe(createProbe())
 
-      const probes = getProbes('TestClass;leakTest')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, {}, {})
       onReturn(probes, null, {}, {}, {})
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
-      mockBatchAdd.mockReset()
+      mockBatchAdd.mockClear()
 
       // A second onReturn without onEntry should not produce a snapshot
       onReturn(probes, null, {}, {}, {})
@@ -1133,15 +908,14 @@ describe('api', () => {
     })
 
     it('should not leak active entries after onThrow completes', () => {
-      const probe = createProbe('throw-leak-probe', 'throwLeakTest')
-      addProbe(probe)
+      addProbe(createProbe())
 
-      const probes = getProbes('TestClass;throwLeakTest')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, {}, {})
       onThrow(probes, new Error('test'), {}, {})
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
-      mockBatchAdd.mockReset()
+      mockBatchAdd.mockClear()
 
       // A second onThrow without onEntry should not produce a snapshot
       onThrow(probes, new Error('test'), {}, {})
@@ -1150,23 +924,8 @@ describe('api', () => {
   })
 
   describe('snapshot timeout', () => {
-    function createSnapshotProbe(methodName: string): Probe {
-      return {
-        id: `timeout-probe-${methodName}`,
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName },
-        template: 'Test',
-        captureSnapshot: true,
-        capture: { maxReferenceDepth: 3 },
-        sampling: { snapshotsPerSecond: 5000 },
-        evaluateAt: 'ENTRY',
-      }
-    }
-
     it('should drop snapshot when entry capture exceeds timeout', () => {
-      const probe = createSnapshotProbe('entryTimeout')
-      addProbe(probe)
+      addProbe(createProbe({ sampling: { snapshotsPerSecond: 5000 } }))
 
       let callCount = 0
       const realNow = performance.now.bind(performance)
@@ -1180,7 +939,7 @@ describe('api', () => {
         return realNow() + 20
       })
 
-      const probes = getProbes('TestClass;entryTimeout')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       const deepObj = { level1: { level2: { level3: { level4: 'deep' } } } }
       onEntry(probes, {}, { arg: deepObj })
       onReturn(probes, null, {}, { arg: deepObj }, {})
@@ -1194,10 +953,9 @@ describe('api', () => {
     })
 
     it('should drop snapshot when return capture exceeds timeout', () => {
-      const probe = createSnapshotProbe('returnTimeout')
-      addProbe(probe)
+      addProbe(createProbe({ sampling: { snapshotsPerSecond: 5000 } }))
 
-      const probes = getProbes('TestClass;returnTimeout')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
 
       // Let onEntry succeed with real time
       onEntry(probes, {}, { x: 1 })
@@ -1219,10 +977,9 @@ describe('api', () => {
     })
 
     it('should drop snapshot when throw capture exceeds timeout', () => {
-      const probe = createSnapshotProbe('throwTimeout')
-      addProbe(probe)
+      addProbe(createProbe({ sampling: { snapshotsPerSecond: 5000 } }))
 
-      const probes = getProbes('TestClass;throwTimeout')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
 
       // Let onEntry succeed with real time
       onEntry(probes, {}, { x: 1 })
@@ -1244,18 +1001,12 @@ describe('api', () => {
     })
 
     it('should not affect non-snapshot probes', () => {
-      const probe: Probe = {
-        id: 'non-snapshot-timeout',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'nonSnapshot' },
-        template: 'Test',
-        captureSnapshot: false,
-        capture: {},
-        sampling: { snapshotsPerSecond: 5000 },
-        evaluateAt: 'ENTRY',
-      }
-      addProbe(probe)
+      addProbe(
+        createProbe({
+          captureSnapshot: false,
+          sampling: { snapshotsPerSecond: 5000 },
+        })
+      )
 
       // Spike performance.now to simulate slow execution
       let callCount = 0
@@ -1268,7 +1019,7 @@ describe('api', () => {
         return realNow() + 20
       })
 
-      const probes = getProbes('TestClass;nonSnapshot')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, {}, {})
       onReturn(probes, null, {}, {}, {})
 
@@ -1276,8 +1027,7 @@ describe('api', () => {
     })
 
     it('should not leak active entries when entry capture times out', () => {
-      const probe = createSnapshotProbe('entryLeakTest')
-      addProbe(probe)
+      addProbe(createProbe({ sampling: { snapshotsPerSecond: 5000 } }))
 
       let shouldTimeout = true
       let callCount = 0
@@ -1290,7 +1040,7 @@ describe('api', () => {
         return realNow() + 20
       })
 
-      const probes = getProbes('TestClass;entryLeakTest')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       // This onEntry will time out and push null
       onEntry(probes, {}, { x: 1 })
 
@@ -1303,39 +1053,19 @@ describe('api', () => {
     })
 
     it('should skip subsequent snapshot probes after timeout but still process non-snapshot probes', () => {
-      const snapshotProbe1: Probe = {
-        id: 'timeout-shared-1',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'sharedDeadline' },
-        template: 'Snapshot probe',
-        captureSnapshot: true,
-        capture: { maxReferenceDepth: 3 },
+      const snapshotProbe1 = createProbe({
+        id: 'snapshot-probe-1',
         sampling: { snapshotsPerSecond: 5000 },
-        evaluateAt: 'ENTRY',
-      }
-      const nonSnapshotProbe: Probe = {
-        id: 'timeout-shared-2',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'sharedDeadline' },
-        template: 'Non-snapshot probe',
+      })
+      const nonSnapshotProbe = createProbe({
+        id: 'non-snapshot-probe',
         captureSnapshot: false,
-        capture: {},
         sampling: { snapshotsPerSecond: 5000 },
-        evaluateAt: 'ENTRY',
-      }
-      const snapshotProbe2: Probe = {
-        id: 'timeout-shared-3',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'sharedDeadline' },
-        template: 'Second snapshot probe',
-        captureSnapshot: true,
-        capture: { maxReferenceDepth: 3 },
+      })
+      const snapshotProbe2 = createProbe({
+        id: 'snapshot-probe-2',
         sampling: { snapshotsPerSecond: 5000 },
-        evaluateAt: 'ENTRY',
-      }
+      })
       addProbe(snapshotProbe1)
       addProbe(nonSnapshotProbe)
       addProbe(snapshotProbe2)
@@ -1350,25 +1080,29 @@ describe('api', () => {
         return realNow() + 20
       })
 
-      const probes = getProbes('TestClass;sharedDeadline')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, {}, { x: 1 })
       onReturn(probes, null, {}, { x: 1 }, {})
 
       // The non-snapshot probe should still send, but both snapshot probes should be dropped
       const calls = mockBatchAdd.mock.calls
       expect(calls.length).toBe(1)
-      expect(calls[0][0].message).toBe('Non-snapshot probe')
+      expect(calls[0][0].debugger.snapshot.probe.id).toBe(nonSnapshotProbe.id)
     })
 
     it('should share deadline across probes so second snapshot probe exits immediately', () => {
-      const probe1 = createSnapshotProbe('sharedDeadline1')
-      const probe2: Probe = {
-        ...createSnapshotProbe('sharedDeadline2'),
-        id: 'timeout-probe-sharedDeadline2',
-        where: { typeName: 'TestClass', methodName: 'sharedDeadline1' },
-      }
-      addProbe(probe1)
-      addProbe(probe2)
+      addProbe(
+        createProbe({
+          id: 'timeout-probe-sharedDeadline1',
+          sampling: { snapshotsPerSecond: 5000 },
+        })
+      )
+      addProbe(
+        createProbe({
+          id: 'timeout-probe-sharedDeadline2',
+          sampling: { snapshotsPerSecond: 5000 },
+        })
+      )
 
       let callCount = 0
       const realNow = performance.now.bind(performance)
@@ -1380,7 +1114,7 @@ describe('api', () => {
         return realNow() + 20
       })
 
-      const probes = getProbes('TestClass;sharedDeadline1')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, {}, { x: 1 })
       onReturn(probes, null, {}, { x: 1 }, {})
 
@@ -1393,20 +1127,9 @@ describe('api', () => {
     it('should handle missing DD_RUM gracefully', () => {
       delete (window as any).DD_RUM
 
-      const probe: Probe = {
-        id: 'test-probe',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'errorHandling' },
-        template: 'Test',
-        captureSnapshot: false,
-        capture: {},
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
-      addProbe(probe)
+      addProbe(createProbe())
 
-      const probes = getProbes('TestClass;errorHandling')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       expect(() => {
         onEntry(probes, {}, {})
         onReturn(probes, null, {}, {}, {})
@@ -1417,28 +1140,16 @@ describe('api', () => {
 
     it('should handle uninitialized debugger transport gracefully', () => {
       resetDebuggerTransport()
-      const warnSpy = vi.spyOn(display, 'warn')
 
-      const probe: Probe = {
-        id: 'test-probe',
-        version: 0,
-        type: 'LOG_PROBE',
-        where: { typeName: 'TestClass', methodName: 'errorHandling' },
-        template: 'Test',
-        captureSnapshot: false,
-        capture: {},
-        sampling: {},
-        evaluateAt: 'ENTRY',
-      }
-      addProbe(probe)
+      addProbe(createProbe())
 
-      const probes = getProbes('TestClass;errorHandling')!
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       expect(() => {
         onEntry(probes, {}, {})
         onReturn(probes, null, {}, {}, {})
       }).not.toThrow()
       expect(warnSpy).toHaveBeenCalledWith(
-        'Debugger transport is not initialized. Make sure DD_DEBUGGER.init() has been called.'
+        'Transport is not initialized. Make sure DD_DEBUGGER.init() has been called.'
       )
     })
   })

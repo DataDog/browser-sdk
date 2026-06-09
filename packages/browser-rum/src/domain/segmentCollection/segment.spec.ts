@@ -1,5 +1,6 @@
 import { vi, beforeEach, describe, expect, it } from 'vitest'
-import type { DeflateEncoder, TimeStamp } from '@datadog/browser-core'
+import type { TimeStamp } from '@datadog/js-core/time'
+import type { DeflateEncoder } from '@datadog/browser-core'
 import { noop, setDebugMode, DeflateEncoderStreamId } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'

@@ -1,5 +1,5 @@
 import { vi } from 'vitest'
-import type { RelativeTime, TimeStamp } from '../../src/tools/utils/timeUtils'
+import type { TimeStamp, RelativeTime } from '@datadog/js-core/time'
 import { registerCleanupTask } from '../registerCleanupTask'
 
 export type Clock = ReturnType<typeof mockClock>

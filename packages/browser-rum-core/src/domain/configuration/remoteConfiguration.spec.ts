@@ -1,11 +1,11 @@
 import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
+import { ONE_MINUTE } from '@datadog/js-core/time'
 import {
   DefaultPrivacyLevel,
   INTAKE_SITE_US1,
   display,
   setCookie,
   deleteCookie,
-  ONE_MINUTE,
   createContextManager,
 } from '@datadog/browser-core'
 import { interceptRequests, registerCleanupTask } from '@datadog/browser-core/test'

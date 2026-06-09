@@ -1,5 +1,5 @@
 import { vi, beforeEach, describe, expect, it } from 'vitest'
-import type { RelativeTime } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/js-core/time'
 import { createHooks } from '../../test'
 import { DISCARDED, HookNames } from './abstractHooks'
 

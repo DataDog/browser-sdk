@@ -1,6 +1,8 @@
-import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
-import type { Context, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { ErrorSource, ONE_MINUTE, getTimeStamp, noop, HookNames } from '@datadog/browser-core'
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest'
+import type { RelativeTime, TimeStamp } from '@datadog/js-core/time'
+import type { Context, RawError } from '@datadog/browser-core'
+import { ONE_MINUTE, toTimeStamp } from '@datadog/js-core/time'
+import { ErrorSource, noop, HookNames } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import type { LogsEvent } from '../logsEvent.types'
@@ -141,7 +143,7 @@ describe('startLogsAssembly', () => {
       }
 
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: { ...DEFAULT_MESSAGE, date: getTimeStamp(1234 as RelativeTime) },
+        rawLogsEvent: { ...DEFAULT_MESSAGE, date: toTimeStamp(1234 as RelativeTime) },
       })
 
       expect(serverLogs[0].foo).toBe('b')
@@ -283,7 +285,7 @@ describe('logs limitation', () => {
   let lifeCycle: LifeCycle
   let hooks: Hooks
   let serverLogs: Array<LogsEvent & Context> = []
-  let reportErrorSpy: Mock<(...args: any[]) => any>
+  let reportErrorSpy: Mock<(error: RawError) => void>
 
   beforeEach(() => {
     lifeCycle = new LifeCycle()

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import type { ServerDuration, Duration, RelativeTime } from '@datadog/browser-core'
+import type { ServerDuration, Duration, RelativeTime } from '@datadog/js-core/time'
 import { HookNames } from '@datadog/browser-core'
 import type { Clock } from '../../../../browser-core/test'
 import { mockClock, registerCleanupTask } from '../../../../browser-core/test'

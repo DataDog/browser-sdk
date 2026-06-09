@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { TimeStamp } from '../../tools/utils/timeUtils'
-import { dateNow } from '../../tools/utils/timeUtils'
+import type { TimeStamp } from '@datadog/js-core/time'
+import { dateNow } from '@datadog/js-core/time'
 import { SESSION_EXPIRATION_DELAY, SESSION_NOT_TRACKED, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import type { SessionState } from './sessionState'
 import {

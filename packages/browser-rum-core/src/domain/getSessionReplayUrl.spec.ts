@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { ClocksState, SessionContext } from '@datadog/browser-core'
+import type { ClocksState } from '@datadog/js-core/time'
+import type { SessionContext } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 
 import { getSessionReplayUrl, getDatadogSiteUrl } from './getSessionReplayUrl'

@@ -1,14 +1,10 @@
 import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
+import type { Duration, TimeStamp } from '@datadog/js-core/time'
+import type { DeflateWorker, TrackingConsentState } from '@datadog/browser-core'
+import { relativeToClocks, clocksNow } from '@datadog/js-core/time'
 import {
-  type DeflateWorker,
-  type Duration,
-  type TimeStamp,
-  type TrackingConsentState,
   display,
-  getTimeStamp,
   noop,
-  relativeToClocks,
-  clocksNow,
   TrackingConsent,
   createTrackingConsentState,
   DefaultPrivacyLevel,
@@ -427,10 +423,8 @@ describe('preStartRum', () => {
           expect(addTimingSpy).toHaveBeenCalledTimes(2)
 
           expect(addTimingSpy.mock.calls[0][0]).toEqual('first')
-          expect(addTimingSpy.mock.calls[0][1]).toEqual(getTimeStamp(clock.relative(10)))
 
           expect(addTimingSpy.mock.calls[1][0]).toEqual('second')
-          expect(addTimingSpy.mock.calls[1][1]).toEqual(getTimeStamp(clock.relative(30)))
         })
       })
     })

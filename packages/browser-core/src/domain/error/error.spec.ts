@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { clocksNow } from '../../tools/utils/timeUtils'
+import { clocksNow } from '@datadog/js-core/time'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { registerCleanupTask } from '../../../test'
 import {

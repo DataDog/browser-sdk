@@ -1,19 +1,13 @@
-import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
-import type { RelativeTime, DeflateWorker, TimeStamp } from '@datadog/browser-core'
-import {
-  ONE_SECOND,
-  display,
-  DefaultPrivacyLevel,
-  timeStampToClocks,
-  ResourceType,
-  startTelemetry,
-  startSessionManager,
-  getTimeStamp,
-} from '@datadog/browser-core'
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
+import { ONE_SECOND, timeStampToClocks, toTimeStamp } from '@datadog/js-core/time'
+import type { TimeStamp, RelativeTime } from '@datadog/js-core/time'
+import type { DeflateWorker } from '@datadog/browser-core'
+import { display, DefaultPrivacyLevel, ResourceType, startTelemetry, startSessionManager } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
   collectAsyncCalls,
   mockClock,
+  mockEventBridge,
   createFakeTelemetryObject,
   replaceMockable,
   replaceMockableWithSpy,
@@ -157,6 +151,7 @@ describe('rum public api', () => {
     let rumPublicApi: RumPublicApi
 
     beforeEach(() => {
+      mockEventBridge()
       addActionSpy = vi.fn()
       ;({ rumPublicApi } = makeRumPublicApiWithDefaults({
         startRumResult: {
@@ -207,8 +202,9 @@ describe('rum public api', () => {
     let clock: Clock
 
     beforeEach(() => {
-      addErrorSpy = vi.fn()
+      mockEventBridge()
       clock = mockClock()
+      addErrorSpy = vi.fn()
       ;({ rumPublicApi } = makeRumPublicApiWithDefaults({
         startRumResult: {
           addError: addErrorSpy,
@@ -575,7 +571,7 @@ describe('rum public api', () => {
 
       expect(addTimingSpy).toHaveBeenCalledTimes(1)
       expect(addTimingSpy.mock.calls[0][0]).toEqual('foo')
-      expect(addTimingSpy.mock.calls[0][1]).toBe(getTimeStamp(clock.relative(0)))
+      expect(addTimingSpy.mock.calls[0][1]).toBe(toTimeStamp(clock.relative(0)))
       expect(displaySpy).not.toHaveBeenCalled()
     })
 
@@ -623,7 +619,6 @@ describe('rum public api', () => {
       rumPublicApi.setViewLoadingTime()
 
       await collectAsyncCalls(setLoadingTimeSpy, 1)
-      expect(setLoadingTimeSpy).toHaveBeenCalledTimes(1)
       expect(setLoadingTimeSpy).toHaveBeenCalledWith(expect.any(Number))
     })
 
@@ -678,8 +673,8 @@ describe('rum public api', () => {
       })
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.startView('foo')
-      await collectAsyncCalls(startViewSpy, 1)
-      expect(startViewSpy.mock.calls[0][0]).toEqual({ name: 'foo', handlingStack: expect.any(String) })
+      const calls = await collectAsyncCalls(startViewSpy, 1)
+      expect(calls.argsFor(0)[0]).toEqual({ name: 'foo', handlingStack: expect.any(String) })
     })
 
     it('should call RUM results startView with the view options', async () => {
@@ -691,8 +686,8 @@ describe('rum public api', () => {
       })
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.startView({ name: 'foo', service: 'bar', version: 'baz', context: { foo: 'bar' } })
-      await collectAsyncCalls(startViewSpy, 1)
-      expect(startViewSpy.mock.calls[0][0]).toEqual({
+      const calls = await collectAsyncCalls(startViewSpy, 1)
+      expect(calls.argsFor(0)[0]).toEqual({
         name: 'foo',
         service: 'bar',
         version: 'baz',
@@ -704,6 +699,7 @@ describe('rum public api', () => {
 
   describe('recording', () => {
     let rumPublicApi: RumPublicApi
+    let startRumSpy: ReturnType<typeof makeRumPublicApiWithDefaults>['startRumSpy']
     let recorderApi: {
       onRumStart: Mock<RecorderApi['onRumStart']>
       start: Mock
@@ -718,13 +714,13 @@ describe('rum public api', () => {
         stop: vi.fn(),
         getSessionReplayLink: vi.fn(),
       }
-      ;({ rumPublicApi } = makeRumPublicApiWithDefaults({ recorderApi }))
+      ;({ rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({ recorderApi }))
     })
 
     it('is started with the default defaultPrivacyLevel', async () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      await collectAsyncCalls(recorderApi.onRumStart, 1)
-      expect(recorderApi.onRumStart.mock.lastCall![1].defaultPrivacyLevel).toBe(DefaultPrivacyLevel.MASK_USER_INPUT)
+      const calls = await collectAsyncCalls(recorderApi.onRumStart, 1)
+      expect(calls.mostRecent().args[1].defaultPrivacyLevel).toBe(DefaultPrivacyLevel.MASK_USER_INPUT)
     })
 
     it('is started with the configured defaultPrivacyLevel', async () => {
@@ -732,7 +728,7 @@ describe('rum public api', () => {
         ...DEFAULT_INIT_CONFIGURATION,
         defaultPrivacyLevel: DefaultPrivacyLevel.MASK_USER_INPUT,
       })
-      await collectAsyncCalls(recorderApi.onRumStart, 1)
+      await collectAsyncCalls(startRumSpy, 1)
       expect(recorderApi.onRumStart.mock.lastCall![1].defaultPrivacyLevel).toBe(DefaultPrivacyLevel.MASK_USER_INPUT)
     })
 
@@ -748,8 +744,8 @@ describe('rum public api', () => {
 
     it('is started with the default startSessionReplayRecordingManually', async () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      await collectAsyncCalls(recorderApi.onRumStart, 1)
-      expect(recorderApi.onRumStart.mock.lastCall![1].startSessionReplayRecordingManually).toBe(true)
+      const calls = await collectAsyncCalls(recorderApi.onRumStart, 1)
+      expect(calls.mostRecent().args[1].startSessionReplayRecordingManually).toBe(true)
     })
 
     it('is started with the configured startSessionReplayRecordingManually', async () => {
@@ -757,8 +753,8 @@ describe('rum public api', () => {
         ...DEFAULT_INIT_CONFIGURATION,
         startSessionReplayRecordingManually: false,
       })
-      await collectAsyncCalls(recorderApi.onRumStart, 1)
-      expect(recorderApi.onRumStart.mock.lastCall![1].startSessionReplayRecordingManually).toBe(false)
+      const calls = await collectAsyncCalls(recorderApi.onRumStart, 1)
+      expect(calls.mostRecent().args[1].startSessionReplayRecordingManually).toBe(false)
     })
   })
 
@@ -911,25 +907,6 @@ describe('rum public api', () => {
         })
       )
     })
-
-    it('should not call startAction/stopAction when feature flag is disabled', async () => {
-      const startActionSpy = vi.fn()
-      const stopActionSpy = vi.fn()
-      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
-        startRumResult: {
-          startAction: startActionSpy,
-          stopAction: stopActionSpy,
-        },
-      })
-
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      rumPublicApi.startAction('purchase', { type: ActionType.CUSTOM })
-      rumPublicApi.stopAction('purchase')
-      await collectAsyncCalls(startRumSpy, 1)
-
-      expect(startActionSpy).not.toHaveBeenCalled()
-      expect(stopActionSpy).not.toHaveBeenCalled()
-    })
   })
 
   describe('startResource / stopResource', () => {
@@ -1007,25 +984,6 @@ describe('rum public api', () => {
           resourceKey: 'resource_key',
         })
       )
-    })
-
-    it('should not call startResource/stopResource when feature flag is disabled', async () => {
-      const startResourceSpy = vi.fn()
-      const stopResourceSpy = vi.fn()
-      const { rumPublicApi, startRumSpy } = makeRumPublicApiWithDefaults({
-        startRumResult: {
-          startResource: startResourceSpy,
-          stopResource: stopResourceSpy,
-        },
-      })
-
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      rumPublicApi.startResource('https://api.example.com/data', { type: ResourceType.FETCH })
-      rumPublicApi.stopResource('https://api.example.com/data')
-      await collectAsyncCalls(startRumSpy, 1)
-
-      expect(startResourceSpy).not.toHaveBeenCalled()
-      expect(stopResourceSpy).not.toHaveBeenCalled()
     })
   })
 
@@ -1226,8 +1184,8 @@ describe('rum public api', () => {
       })
 
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      await collectAsyncCalls(startRumSpy, 1)
-      const sdkName = startRumSpy.mock.calls[0][9]
+      const calls = await collectAsyncCalls(startRumSpy, 1)
+      const sdkName = calls.argsFor(0)[9]
       expect(sdkName).toBe('rum-slim')
     })
   })

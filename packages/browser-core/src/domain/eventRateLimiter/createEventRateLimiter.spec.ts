@@ -1,7 +1,7 @@
 import { vi, beforeEach, describe, expect, it } from 'vitest'
+import { relativeToClocks, ONE_MINUTE } from '@datadog/js-core/time'
 import type { Clock } from '../../../test'
 import { mockClock } from '../../../test'
-import { relativeToClocks, ONE_MINUTE } from '../../tools/utils/timeUtils'
 import { noop } from '../../tools/utils/functionUtils'
 import type { RawError } from '../error/error.types'
 import { createEventRateLimiter } from './createEventRateLimiter'

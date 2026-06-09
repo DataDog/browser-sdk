@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
+import { clocksNow } from '@datadog/js-core/time'
 import type { BufferedData, FetchResolveContext } from '@datadog/browser-core'
-import { BufferedDataType, ErrorSource, Observable, clocksNow } from '@datadog/browser-core'
+import { BufferedDataType, ErrorSource, Observable } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RawNetworkLogsEvent } from '../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../configuration'

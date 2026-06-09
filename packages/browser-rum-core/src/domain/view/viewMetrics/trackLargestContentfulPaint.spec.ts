@@ -1,6 +1,7 @@
 import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
-import type { RelativeTime } from '@datadog/browser-core'
-import { clocksOrigin, DOM_EVENT } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/js-core/time'
+import { clocksOrigin } from '@datadog/js-core/time'
+import { DOM_EVENT } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
   setPageVisibility,

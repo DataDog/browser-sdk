@@ -1,5 +1,5 @@
 import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
-import type { Duration, RelativeTime, TimeStamp } from '@datadog/browser-core'
+import type { Duration, RelativeTime, TimeStamp } from '@datadog/js-core/time'
 import type { RumEventDomainContext } from '../../domainContext.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { RumEventType, VitalType } from '../../rawRumEvent.types'
