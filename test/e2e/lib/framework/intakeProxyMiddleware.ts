@@ -76,6 +76,12 @@ interface IntakeProxyOptions {
   onRequest?: (request: IntakeRequest) => void
 }
 
+interface IntakeRequestPayload {
+  url: string
+  headers: Record<string, string | string[] | undefined>
+  body: Buffer
+}
+
 export function createIntakeProxyMiddleware(options: IntakeProxyOptions): express.RequestHandler {
   return async (req, res) => {
     const infos = computeIntakeRequestInfos(req)
@@ -93,20 +99,42 @@ export function createIntakeProxyMiddleware(options: IntakeProxyOptions): expres
   }
 }
 
+export function createEventIntakeRequestFromPayload({
+  url,
+  headers,
+  body,
+}: IntakeRequestPayload): RumIntakeRequest | LogsIntakeRequest | DebuggerIntakeRequest {
+  const infos = computeIntakeRequestInfosFromUrl(url, headers)
+
+  if (infos.intakeType === 'replay' || infos.intakeType === 'profile') {
+    throw new Error(`Unsupported intercepted intake type: ${infos.intakeType}`)
+  }
+
+  return createEventIntakeRequestFromBody(body, infos)
+}
+
 function computeIntakeRequestInfos(req: express.Request): IntakeRequestInfos {
-  const ddforward = req.query.ddforward as string | undefined
+  return computeIntakeRequestInfosFromUrl(req.originalUrl, req.headers)
+}
+
+function computeIntakeRequestInfosFromUrl(
+  url: string,
+  headers: Record<string, string | string[] | undefined>
+): IntakeRequestInfos {
+  const requestUrl = new URL(url, 'https://browser-sdk-e2e.local')
+  const ddforward = requestUrl.searchParams.get('ddforward')
   if (!ddforward) {
     throw new Error('ddforward is missing')
   }
   const { pathname, searchParams } = new URL(ddforward, 'https://example.org')
 
-  const encoding = req.headers['content-encoding'] || searchParams.get('dd-evp-encoding')
+  const encoding = getHeader(headers, 'content-encoding') || searchParams.get('dd-evp-encoding')
   const transport = searchParams.get('_dd.api')
   const batchTimeRaw = searchParams.get('batch_time')
   const batchTime = batchTimeRaw ? Number(batchTimeRaw) : null
 
-  if (req.query.bridge === 'true') {
-    const eventType = req.query.event_type
+  if (requestUrl.searchParams.get('bridge') === 'true') {
+    const eventType = requestUrl.searchParams.get('event_type')
     return {
       isBridge: true,
       encoding,
@@ -139,6 +167,11 @@ function computeIntakeRequestInfos(req: express.Request): IntakeRequestInfos {
   }
 }
 
+function getHeader(headers: Record<string, string | string[] | undefined>, name: string) {
+  const value = headers[name] ?? headers[name.toLowerCase()]
+  return Array.isArray(value) ? value[0] : value
+}
+
 function readIntakeRequest(req: express.Request, infos: IntakeRequestInfos): Promise<IntakeRequest> {
   if (infos.intakeType === 'replay') {
     return readReplayIntakeRequest(req, infos as IntakeRequestInfos & { intakeType: 'replay' })
@@ -154,6 +187,13 @@ async function readEventIntakeRequest(
   infos: IntakeRequestInfos & { intakeType: 'rum' | 'logs' | 'debugger' }
 ): Promise<RumIntakeRequest | LogsIntakeRequest | DebuggerIntakeRequest> {
   const rawBody = await readStream(req)
+  return createEventIntakeRequestFromBody(rawBody, infos)
+}
+
+function createEventIntakeRequestFromBody(
+  rawBody: Buffer,
+  infos: IntakeRequestInfos & { intakeType: 'rum' | 'logs' | 'debugger' }
+): RumIntakeRequest | LogsIntakeRequest | DebuggerIntakeRequest {
   const encodedBody = infos.encoding === 'deflate' ? inflateSync(rawBody) : rawBody
 
   return {

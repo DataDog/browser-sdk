@@ -1,81 +1,127 @@
 import { test, expect } from '@playwright/test'
-import { createSalesforceTest } from '../../lib/framework'
+import {
+  cleanupSalesforceTrustedUrls,
+  createTest,
+  getSalesforceE2eConfig,
+  getSfSession,
+  goToSalesforcePage,
+  type IntakeRegistry,
+  type SalesforceE2eConfig,
+  type Servers,
+  type SfSession,
+} from '../../lib/framework'
 
-function uniqueViews(sfRegistry: { rumViewEvents: Array<Record<string, any>> }) {
-  return [...new Map(sfRegistry.rumViewEvents.map((e) => [e['view']?.['id'], e])).values()]
+let sfSession: SfSession | undefined
+let sfConfig: SalesforceE2eConfig
+
+function uniqueViews(intakeRegistry: IntakeRegistry) {
+  return [...new Map(intakeRegistry.rumViewEvents.map((event) => [event.view.id, event])).values()]
+}
+
+function expectFreshSalesforceBundle(intakeRegistry: IntakeRegistry) {
+  expect(intakeRegistry.rumEvents.some((event) => event.version === sfConfig.sha)).toBe(true)
+}
+
+function expectRequiredViews(intakeRegistry: IntakeRegistry) {
+  const views = uniqueViews(intakeRegistry)
+  expect(views.length).toBeGreaterThanOrEqual(2)
+  expect(views.find((event) => event.view.url.includes('lightning/page/home'))).toBeDefined()
+  expect(views.find((event) => event.view.name?.includes('Account'))).toBeDefined()
+}
+
+async function openSalesforceHome(
+  page: Parameters<typeof goToSalesforcePage>[0]['page'],
+  servers: Servers,
+  intakeRegistry: IntakeRegistry
+) {
+  await goToSalesforcePage({
+    page,
+    servers,
+    intakeRegistry,
+    session: sfSession!,
+    config: sfConfig,
+    path: '/lightning/page/home',
+  })
+  await expect
+    .poll(() => intakeRegistry.rumEvents.some((event) => event.version === sfConfig.sha), {
+      message: `Timed out waiting for Salesforce RUM version ${sfConfig.sha}`,
+      timeout: 30_000,
+    })
+    .toBe(true)
 }
 
 test.describe('Salesforce Lightning — Datadog RUM SDK', () => {
-  createSalesforceTest('captures views, custom action, and auto-click actions')
-    .withPath('/lightning/page/home')
-    .run(async ({ page, sfRegistry, waitFor }) => {
+  test.describe.configure({ mode: 'serial' })
+  test.setTimeout(60_000)
+
+  test.beforeAll(() => {
+    sfSession = getSfSession()
+    sfConfig = getSalesforceE2eConfig()
+  })
+
+  test.afterAll(async () => {
+    await cleanupSalesforceTrustedUrls(sfSession)
+  })
+
+  createTest('captures views, custom action, and auto-click actions')
+    .withSetup(() => '')
+    .run(async ({ page, servers, intakeRegistry, flushEvents }) => {
+      await openSalesforceHome(page, servers, intakeRegistry)
+
       await page.locator('[data-testid="custom-action-1"]').click()
       await page.getByRole('link', { name: 'Accounts' }).click()
       await page.waitForURL(/Account\/home/i)
 
-      await waitFor(
-        () => uniqueViews(sfRegistry).length >= 2 && sfRegistry.rumEvents.filter((e) => e['type'] === 'action').length >= 2,
-        20000,
-        'Timed out waiting for 2 views and 2 actions'
-      )
+      await flushEvents()
 
-      const views = uniqueViews(sfRegistry)
-      expect(views).toHaveLength(2)
-      expect(views[0]['view']).toMatchObject({ url: expect.stringContaining('lightning/page/home') })
-      expect(views[1]['view']).toMatchObject({ name: expect.stringContaining('Account') })
+      expectFreshSalesforceBundle(intakeRegistry)
+      expectRequiredViews(intakeRegistry)
 
-      const actions = sfRegistry.rumEvents.filter((e) => e['type'] === 'action')
-      const customAction = actions.find((e) => e['action']?.['type'] === 'custom')
+      const customAction = intakeRegistry.rumActionEvents.find((event) => event.action.type === 'custom')
       expect(customAction).toBeDefined()
-      expect(customAction!['view']).toMatchObject({ url: expect.stringContaining('lightning/page/home') })
+      expect(customAction!.view).toMatchObject({ url: expect.stringContaining('lightning/page/home') })
 
-      const navClickAction = actions.find((e) => e['action']?.['type'] === 'click')
+      const navClickAction = intakeRegistry.rumActionEvents.find((event) => event.action.type === 'click')
       expect(navClickAction).toBeDefined()
-      expect(navClickAction!['view']).toMatchObject({ name: expect.stringContaining('/lightning/page/home') })
+      expect(navClickAction!.view).toMatchObject({ name: expect.stringContaining('/lightning/page/home') })
     })
 
-  createSalesforceTest('captures resources of every type')
-    .withPath('/lightning/page/home')
-    .run(async ({ page, sfRegistry, waitFor }) => {
+  createTest('captures resources of every type')
+    .withSetup(() => '')
+    .run(async ({ page, servers, intakeRegistry, flushEvents }) => {
+      await openSalesforceHome(page, servers, intakeRegistry)
+
       await page.getByRole('link', { name: 'Accounts' }).click()
       await page.waitForURL(/Account\/home/i)
 
-      await waitFor(
-        () => uniqueViews(sfRegistry).length >= 2 && sfRegistry.rumResourceEvents.length >= 5,
-        20000,
-        'Timed out waiting for 2 views and 5 resource events'
-      )
+      await flushEvents()
 
-      expect(uniqueViews(sfRegistry)).toHaveLength(2)
-
-      const resourcesByType = (type: string) =>
-        sfRegistry.rumResourceEvents.filter((event) => event['resource']?.['type'] === type)
+      expectFreshSalesforceBundle(intakeRegistry)
+      expectRequiredViews(intakeRegistry)
 
       for (const type of ['document', 'other', 'js', 'xhr', 'fetch']) {
-        const resources = resourcesByType(type)
+        const resources = intakeRegistry.rumResourceEvents.filter((event) => event.resource.type === type)
         expect(resources.length, `expected at least one ${type} resource`).toBeGreaterThanOrEqual(1)
-        expect(resources[0]['resource']?.['url']).toBeTruthy()
-        expect(resources[0]['resource']?.['duration']).toBeGreaterThan(0)
+        expect(resources[0].resource.url).toBeTruthy()
+        expect(resources[0].resource.duration).toBeGreaterThan(0)
       }
     })
 
-  createSalesforceTest('captures custom errors and long tasks')
-    .withPath('/lightning/page/home')
-    .run(async ({ page, browserName, sfRegistry, waitFor }) => {
+  createTest('captures custom errors and long tasks')
+    .withSetup(() => '')
+    .run(async ({ page, servers, browserName, intakeRegistry, flushEvents }) => {
       test.skip(browserName !== 'chromium', 'Long Tasks API is Chromium-only')
+
+      await openSalesforceHome(page, servers, intakeRegistry)
 
       await page.locator('[data-testid="custom-error-1"]').click()
       await page.locator('[data-testid="long-task"]').click()
 
-      await waitFor(
-        () => sfRegistry.rumErrorEvents.length >= 1 && sfRegistry.rumLongTaskEvents.length >= 1,
-        20000,
-        'Timed out waiting for error and long task events'
-      )
+      await flushEvents()
 
-      expect(sfRegistry.rumErrorEvents[0]['error']).toMatchObject({ message: 'custom error 1' })
-
-      expect(sfRegistry.rumLongTaskEvents[0]['long_task']).toMatchObject({ duration: expect.any(Number) })
-      expect(sfRegistry.rumLongTaskEvents[0]['long_task']?.['duration'] as number).toBeGreaterThan(50)
+      expectFreshSalesforceBundle(intakeRegistry)
+      expect(intakeRegistry.rumErrorEvents[0].error).toMatchObject({ message: 'custom error 1' })
+      expect(intakeRegistry.rumLongTaskEvents[0].long_task).toMatchObject({ duration: expect.any(Number) })
+      expect(intakeRegistry.rumLongTaskEvents[0].long_task.duration).toBeGreaterThan(50)
     })
 })

@@ -71,6 +71,9 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
       if (config.sha) {
         initConfig.version = config.sha
       }
+      if (config.proxy) {
+        initConfig.proxy = config.proxy
+      }
       window.DD_RUM.init(initConfig)
       lastStartedUrl = window.location.pathname + window.location.search + window.location.hash
       window.DD_RUM.startView({
@@ -93,7 +96,16 @@ function buildStaticResourceUrl(config) {
 }
 
 function getBundleConfigFromUrl() {
-  const [resourceName, sha] = (getHashParameter(E2E_CONFIG_HASH_PARAMETER) || '').split(':')
+  const rawConfig = getHashParameter(E2E_CONFIG_HASH_PARAMETER)
+  if (!rawConfig) {
+    return {}
+  }
+
+  if (rawConfig.startsWith('{')) {
+    return JSON.parse(rawConfig)
+  }
+
+  const [resourceName, sha] = rawConfig.split(':')
   return { resourceName, sha }
 }
 

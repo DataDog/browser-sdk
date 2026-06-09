@@ -1,4 +1,5 @@
 .sf
 .sfdx
+.e2e-config.json
 force-app/main/default/staticresources/datadogRumSf_*.resource
 force-app/main/default/staticresources/datadogRumSf_*.resource-meta.xml

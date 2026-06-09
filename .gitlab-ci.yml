@@ -258,26 +258,6 @@ e2e:
   after_script:
     - node ./scripts/test/export-test-result.ts e2e
 
-e2e:salesforce:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-    - .resource-allocation-4-cpus
-  interruptible: true
-  allow_failure: true
-  when: manual
-  artifacts:
-    when: always
-    reports:
-      junit: test-report/salesforce-results.xml
-  script:
-    - yarn
-    # run.ts builds the bundle, deploys to the SF org, runs Playwright, then cleans up.
-    # SF_INSTANCE_URL and SF_ACCESS_TOKEN must be set as CI variables.
-    - yarn test:e2e:salesforce
-  after_script:
-    - node ./scripts/test/export-test-result.ts salesforce
-
 check-licenses:
   extends:
     - .base-configuration

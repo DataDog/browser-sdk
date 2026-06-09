@@ -7,6 +7,10 @@ export function createIntakeServerApp(intakeRegistry: IntakeRegistry) {
   const app = express()
   let debuggerProbes: object[] = []
 
+  app.use((_req, res, next) => {
+    res.setHeader('Access-Control-Allow-Private-Network', 'true')
+    next()
+  })
   app.use(cors())
 
   app.post('/', createIntakeProxyMiddleware({ onRequest: (request) => intakeRegistry.push(request) }))

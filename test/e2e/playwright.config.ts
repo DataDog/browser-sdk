@@ -117,7 +117,6 @@ const pinnedWebServers = [
 export default defineConfig({
   testDir: './scenario',
   testMatch: ['**/*.scenario.ts'],
-  testIgnore: ['**/salesforce/**'],
   tsconfig: './tsconfig.json',
   fullyParallel: true,
   forbidOnly: isCi,

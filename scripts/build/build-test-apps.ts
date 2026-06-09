@@ -5,6 +5,7 @@ import { parseArgs } from 'node:util'
 import { printLog, runMain } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
 import { modifyFile } from '../lib/filesUtils.ts'
+import { buildSalesforceTestApp } from '../salesforce/lib/build.ts'
 
 type AppConfig<T extends AppBuilderOptions = AppBuilderOptions> =
   | {
@@ -49,6 +50,9 @@ const APPS: AppConfig[] = [
     options: { runAt: 'document_start' },
     deps: ['base-extension'],
   },
+
+  // Salesforce Lightning app
+  { name: 'salesforce', builderFn: buildSalesforceTestApp },
 ]
 
 runMain(async () => {
