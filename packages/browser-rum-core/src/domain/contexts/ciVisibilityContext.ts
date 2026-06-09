@@ -12,8 +12,6 @@ export interface CiTestWindow extends Window {
   }
 }
 
-export type CiVisibilityContext = ReturnType<typeof startCiVisibilityContext>
-
 export function startCiVisibilityContext(
   configuration: Configuration,
   hooks: Hooks,
