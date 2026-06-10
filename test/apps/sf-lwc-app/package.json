@@ -1,0 +1,9 @@
+{
+  "name": "sf-lwc-app",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Salesforce Lightning app for browser-sdk Salesforce testing",
+  "scripts": {
+    "setup": "node scripts/setup.mjs"
+  }
+}

@@ -47,6 +47,7 @@ export default defineConfig(
       'test/apps/angular-app',
       'test/apps/vue-router-app',
       'test/apps/nuxt-app',
+      'test/apps/sf-lwc-app',
       'sandbox',
       'coverage',
       'rum-events-format',
