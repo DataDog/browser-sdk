@@ -73,7 +73,9 @@ describe('report observable', () => {
   })
 
   it(`should not notify ${RawReportType.cspViolation} when the event is not supported`, () => {
-    ;(EventTarget.prototype.addEventListener as jasmine.Spy).and.throwError('unsupported')
+    vi.spyOn(EventTarget.prototype, 'addEventListener').mockImplementation(() => {
+      throw new Error('unsupported')
+    })
 
     consoleSubscription = initReportObservable(configuration, [RawReportType.cspViolation]).subscribe(notifyReport)
     cspEventListener.dispatchEvent()

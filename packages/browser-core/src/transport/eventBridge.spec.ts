@@ -59,30 +59,30 @@ describe('matchesHostEntry', () => {
 describe('canUseEventBridge with wildcard patterns', () => {
   it('should match wildcard entries in getAllowedWebViewHosts', () => {
     mockEventBridge({ allowedWebViewHosts: ['*.shopist.io', 'shopist.io'] })
-    expect(canUseEventBridge('app.shopist.io')).toBeTrue()
-    expect(canUseEventBridge('shopist.io')).toBeTrue()
-    expect(canUseEventBridge('evil.com')).toBeFalse()
+    expect(canUseEventBridge('app.shopist.io')).toBe(true)
+    expect(canUseEventBridge('shopist.io')).toBe(true)
+    expect(canUseEventBridge('evil.com')).toBe(false)
   })
 
   it('should match plain and wildcard entries together', () => {
     mockEventBridge({ allowedWebViewHosts: ['legacy.com', '*.shopist.io'] })
-    expect(canUseEventBridge('legacy.com')).toBeTrue()
-    expect(canUseEventBridge('app.shopist.io')).toBeTrue()
-    expect(canUseEventBridge('evil.com')).toBeFalse()
+    expect(canUseEventBridge('legacy.com')).toBe(true)
+    expect(canUseEventBridge('app.shopist.io')).toBe(true)
+    expect(canUseEventBridge('evil.com')).toBe(false)
   })
 
   it('should log an error and skip patterns with more than one wildcard', () => {
-    const displayErrorSpy = spyOn(display, 'error')
+    const displayErrorSpy = vi.spyOn(display, 'error')
     mockEventBridge({ allowedWebViewHosts: ['*.foo.*.bar', 'shopist.io'] })
-    expect(canUseEventBridge('shopist.io')).toBeTrue()
-    expect(canUseEventBridge('anything.foo.anything.bar')).toBeFalse()
+    expect(canUseEventBridge('shopist.io')).toBe(true)
+    expect(canUseEventBridge('anything.foo.anything.bar')).toBe(false)
     expect(displayErrorSpy).toHaveBeenCalledWith(
       'Invalid WebView host pattern "*.foo.*.bar": only one wildcard (*) is supported.'
     )
   })
 
   it('should not detect when bridge is absent', () => {
-    expect(canUseEventBridge('shopist.io')).toBeFalse()
+    expect(canUseEventBridge('shopist.io')).toBe(false)
   })
 })
 

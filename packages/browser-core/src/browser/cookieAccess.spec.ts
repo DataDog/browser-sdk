@@ -351,7 +351,9 @@ describe('cookieAccess', () => {
 
     it('returns false when the CookieStore API does not support change events', () => {
       const cookieStore = {
-        addEventListener: jasmine.createSpy().and.throwError('unsupported'),
+        addEventListener: vi.fn().mockImplementation(() => {
+          throw new Error('unsupported')
+        }),
       }
       replaceMockable(globalObject.cookieStore, cookieStore as unknown as typeof globalObject.cookieStore)
 

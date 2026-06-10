@@ -145,7 +145,9 @@ describe('addEventListener', () => {
 
     it('should return false if the event listener cannot be added', () => {
       const eventTarget = {
-        addEventListener: jasmine.createSpy().and.throwError('unsupported'),
+        addEventListener: vi.fn().mockImplementation(() => {
+          throw new Error('unsupported')
+        }),
       } as unknown as HTMLElement
 
       expect(isEventSupported(eventTarget, DOM_EVENT.CLICK)).toBe(false)
