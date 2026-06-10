@@ -142,24 +142,12 @@ interface CircularReferenceChecker {
 }
 
 function createCircularReferenceChecker(): CircularReferenceChecker {
-  if (typeof WeakSet !== 'undefined') {
-    const set: WeakSet<any> = new WeakSet()
-    return {
-      hasAlreadyBeenSeen(value) {
-        const has = set.has(value)
-        if (!has) {
-          set.add(value)
-        }
-        return has
-      },
-    }
-  }
-  const array: any[] = []
+  const set = new WeakSet<any>()
   return {
     hasAlreadyBeenSeen(value) {
-      const has = array.indexOf(value) >= 0
+      const has = set.has(value)
       if (!has) {
-        array.push(value)
+        set.add(value)
       }
       return has
     },
