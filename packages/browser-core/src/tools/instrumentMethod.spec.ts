@@ -1,7 +1,7 @@
-import { mockClock, mockZoneJs } from '../../test'
+import { mockClock, mockZoneJs, registerCleanupTask } from '../../test'
 import type { Clock, MockZoneJs } from '../../test'
 import type { InstrumentedMethodCall } from './instrumentMethod'
-import { instrumentMethod, instrumentSetter } from './instrumentMethod'
+import { instrumentConstructor, instrumentMethod, instrumentSetter } from './instrumentMethod'
 import { noop } from './utils/functionUtils'
 
 describe('instrumentMethod', () => {
@@ -196,6 +196,360 @@ describe('instrumentMethod', () => {
       }
     }
   }
+})
+
+describe('instrumentConstructor', () => {
+  const THIRD_PARTY_CONSTRUCTOR_TAG = 42
+
+  let MyClass: MyClassConstructor
+
+  beforeEach(() => {
+    MyClass = createMyClassFixture().MyClass
+  })
+
+  it('calls the instrumentation when the constructor is called with new', () => {
+    const container = { MyClass }
+    const instrumentationSpy = jasmine.createSpy()
+    instrumentConstructor(container, 'MyClass', instrumentationSpy)
+
+    const instance = new container.MyClass(42)
+
+    expect(instrumentationSpy).toHaveBeenCalledOnceWith({
+      parameters: [42],
+      onPostCall: jasmine.any(Function),
+      handlingStack: undefined,
+    })
+    expect(instance.value).toBe(42)
+    expect(instance.getValue()).toBe(42)
+  })
+
+  it('allows other instrumentations from third parties', () => {
+    const container = { MyClass }
+    const instrumentationSpy = jasmine.createSpy()
+    instrumentConstructor(container, 'MyClass', instrumentationSpy)
+
+    thirdPartyConstructorWrap(container)
+
+    const instance = new container.MyClass(7) as MyClassInstance & { thirdPartyTag: number }
+
+    expect(instance.value).toBe(7)
+    expect(instance.thirdPartyTag).toBe(THIRD_PARTY_CONSTRUCTOR_TAG)
+    expect(instrumentationSpy).toHaveBeenCalled()
+  })
+
+  it('computes the handling stack', () => {
+    const container = { MyClass }
+    const instrumentationSpy = jasmine.createSpy()
+    instrumentConstructor(container, 'MyClass', instrumentationSpy, { computeHandlingStack: true })
+
+    function foo() {
+      new container.MyClass(1)
+    }
+
+    foo()
+
+    expect(instrumentationSpy.calls.mostRecent().args[0].handlingStack).toEqual(
+      jasmine.stringMatching(/^HandlingStack: instrumented constructor\n {2}at foo @/)
+    )
+  })
+
+  it('does not call the instrumentation when the constructor is invoked without new', () => {
+    const container = { MyClass }
+    const instrumentationSpy = jasmine.createSpy()
+    instrumentConstructor(container, 'MyClass', instrumentationSpy)
+
+    // Bare `[[Call]]` has no `new.target`; the original class constructor throws before any work.
+    expect(() => {
+      ;(container.MyClass as unknown as (value: number) => void)(42)
+    }).toThrow()
+
+    expect(instrumentationSpy).not.toHaveBeenCalled()
+  })
+
+  it('preserves instanceof on the constructed instance', () => {
+    const container = { MyClass }
+    instrumentConstructor(container, 'MyClass', noop)
+
+    const instance = new container.MyClass(1)
+
+    // The instance is recognized both as the original class and as the instrumented value.
+    expect(instance instanceof MyClass).toBeTrue()
+    expect(instance instanceof container.MyClass).toBeTrue()
+  })
+
+  it('keeps the constructor prototype property non-writable after instrumentation', () => {
+    const originalPrototypeDescriptor = Object.getOwnPropertyDescriptor(MyClass, 'prototype')!
+    expect(originalPrototypeDescriptor.writable).toBeFalse()
+
+    const container = { MyClass }
+    const { stop } = instrumentConstructor(container, 'MyClass', noop)
+    registerCleanupTask(stop)
+
+    const instrumentedPrototypeDescriptor = Object.getOwnPropertyDescriptor(container.MyClass, 'prototype')!
+    expect(instrumentedPrototypeDescriptor.writable).toBeFalse()
+  })
+
+  it('exposes the instrumented constructor as instance.constructor', () => {
+    const container = { MyClass }
+    const { stop } = instrumentConstructor(container, 'MyClass', noop)
+    registerCleanupTask(stop)
+
+    const instance = new container.MyClass(1)
+
+    expect(instance.constructor).toBe(container.MyClass)
+  })
+
+  it('preserves new.target as the original constructor for direct new calls', () => {
+    let observedNewTarget: unknown
+    class TracksNewTarget {
+      constructor() {
+        observedNewTarget = new.target
+      }
+    }
+
+    const container = { TracksNewTarget }
+    instrumentConstructor(container, 'TracksNewTarget', noop)
+
+    new container.TracksNewTarget()
+
+    // Without instrumentation, `new.target` in the constructor body is `TracksNewTarget`.
+    // Forwarding the wrapper as the Reflect.construct newTarget makes `new.target` the
+    // instrumentation function instead, which breaks subclass checks and similar patterns.
+    expect(observedNewTarget).toBe(TracksNewTarget)
+  })
+
+  it('preserves new.target as the subclass when extending the instrumented constructor', () => {
+    let observedNewTargetInOriginal: unknown
+    class Base {
+      constructor() {
+        observedNewTargetInOriginal = new.target
+      }
+    }
+
+    const container = { Base }
+    instrumentConstructor(container, 'Base', noop)
+
+    class Sub extends container.Base {
+      constructor() {
+        super()
+      }
+    }
+
+    new Sub()
+
+    expect(observedNewTargetInOriginal).toBe(Sub)
+  })
+
+  it('preserves static members on the instrumented constructor', () => {
+    class MyClassWithStaticMembers {
+      static staticNumber = 123
+
+      static staticMethod() {
+        return 'static-result'
+      }
+    }
+
+    const container = { MyClassWithStaticMembers }
+    instrumentConstructor(container, 'MyClassWithStaticMembers', noop)
+
+    expect(container.MyClassWithStaticMembers.staticNumber).toBe(123)
+    expect(container.MyClassWithStaticMembers.staticMethod()).toBe('static-result')
+  })
+
+  it('preserves instanceof when instrumented constructor is used as a base class', () => {
+    const container = { MyClass }
+    instrumentConstructor(container, 'MyClass', noop)
+
+    // Third party wraps our instrumentation
+    const OurInstrumentation = container.MyClass
+    container.MyClass = class extends OurInstrumentation {}
+
+    const instance = new container.MyClass(99)
+    expect(instance instanceof container.MyClass).toBeTrue()
+  })
+
+  it('passes the constructed instance to onPostCall', () => {
+    const container = { MyClass }
+    const postCallCallbackSpy = jasmine.createSpy()
+    instrumentConstructor(container, 'MyClass', ({ onPostCall }) => onPostCall(postCallCallbackSpy))
+
+    const instance = new container.MyClass(7)
+
+    expect(postCallCallbackSpy).toHaveBeenCalledOnceWith(instance)
+    expect((postCallCallbackSpy.calls.mostRecent().args[0] as MyClassInstance).value).toBe(7)
+  })
+
+  it('does not instrument a constructor that does not exist', () => {
+    const container: { MyClass?: MyClassConstructor } = {}
+
+    const { stop } = instrumentConstructor(container, 'MyClass', noop)
+
+    expect(container.MyClass).toBeUndefined()
+    expect(stop).toBe(noop)
+  })
+
+  describe('stop()', () => {
+    it('constructs without calling the instrumentation when calling new Original()', () => {
+      const container = { MyClass }
+      const instrumentationSpy = jasmine.createSpy()
+      const { stop } = instrumentConstructor(container, 'MyClass', instrumentationSpy)
+
+      stop()
+
+      const instance = new container.MyClass(5)
+
+      expect(instrumentationSpy).not.toHaveBeenCalled()
+      expect(instance instanceof MyClass).toBeTrue()
+      expect(instance.value).toBe(5)
+    })
+
+    it('constructs without calling the instrumentation when calling the instrumentation reference', () => {
+      const container = { MyClass }
+      const instrumentationSpy = jasmine.createSpy()
+      const { stop } = instrumentConstructor(container, 'MyClass', instrumentationSpy)
+
+      const OurInstrumentation = container.MyClass
+
+      stop()
+
+      const instance = new OurInstrumentation(5)
+
+      expect(instrumentationSpy).not.toHaveBeenCalled()
+      expect(instance instanceof MyClass).toBeTrue()
+      expect(instance.value).toBe(5)
+    })
+
+    describe('when the constructor has been instrumented by a third party', () => {
+      it('should preserve third party instrumentation after stop()', () => {
+        const container = { MyClass }
+        const { stop } = instrumentConstructor(container, 'MyClass', noop)
+
+        thirdPartyConstructorWrap(container)
+        const wrappedConstructor = container.MyClass
+
+        stop()
+
+        expect(container.MyClass).toBe(wrappedConstructor)
+      })
+
+      it('does not call the instrumentation when constructing after stop()', () => {
+        const container = { MyClass }
+        const instrumentationSpy = jasmine.createSpy()
+        const { stop } = instrumentConstructor(container, 'MyClass', instrumentationSpy)
+
+        thirdPartyConstructorWrap(container)
+
+        stop()
+
+        const instance = new container.MyClass(5) as MyClassInstance & { thirdPartyTag: number }
+
+        expect(instrumentationSpy).not.toHaveBeenCalled()
+        expect(instance.value).toBe(5)
+        expect(instance.thirdPartyTag).toBe(THIRD_PARTY_CONSTRUCTOR_TAG)
+        expect(instance instanceof MyClass).toBeTrue()
+      })
+    })
+
+    it('preserves new.target when constructing a subclass of the instrumented constructor after stop()', () => {
+      const container = { MyClass }
+      const { stop } = instrumentConstructor(container, 'MyClass', noop)
+
+      // A third party extends our instrumented constructor while the SDK is active.
+      class Sub extends container.MyClass {
+        extra() {
+          return 'sub'
+        }
+      }
+
+      stop()
+
+      // Constructing the subclass now delegates to the stopped branch. It must still preserve the
+      // subclass as `new.target`, otherwise the instance is allocated with the original prototype
+      // and loses the subclass prototype methods.
+      const instance = new Sub(5)
+
+      expect(instance instanceof Sub).toBeTrue()
+      expect(instance.extra()).toBe('sub')
+      expect(instance.value).toBe(5)
+    })
+
+    it('restores the prototype constructor descriptor and prototype object identity after stop()', () => {
+      const container = { MyClass }
+      const prototypeObject = MyClass.prototype
+      const constructorDescriptorBefore = Object.getOwnPropertyDescriptor(prototypeObject, 'constructor')!
+
+      const { stop } = instrumentConstructor(container, 'MyClass', noop)
+
+      expect(container.MyClass.prototype).toBe(prototypeObject)
+      expect(new container.MyClass(1).constructor).toBe(container.MyClass)
+
+      stop()
+
+      expect(container.MyClass).toBe(MyClass)
+      expect(MyClass.prototype).toBe(prototypeObject)
+      expect(Object.getOwnPropertyDescriptor(prototypeObject, 'constructor')).toEqual(constructorDescriptorBefore)
+      expect(prototypeObject.constructor).toBe(MyClass)
+
+      const instance = new container.MyClass(2)
+      expect(instance.constructor).toBe(MyClass)
+    })
+
+    it('does not clobber prototype.constructor when a third party repoints it before stop()', () => {
+      const container = { MyClass }
+      const { stop } = instrumentConstructor(container, 'MyClass', noop)
+
+      function thirdPartyCanonicalCtor() {
+        /* third party keeps identity checks aligned with their wrapper */
+      }
+
+      // Simulate another layer repointing the shared prototype after our instrumentation.
+      const constructorDescriptor = Object.getOwnPropertyDescriptor(MyClass.prototype, 'constructor')!
+      Object.defineProperty(MyClass.prototype, 'constructor', {
+        ...constructorDescriptor,
+        value: thirdPartyCanonicalCtor,
+      })
+
+      stop()
+
+      expect(MyClass.prototype.constructor).toBe(thirdPartyCanonicalCtor)
+    })
+  })
+
+  /**
+   * Wraps the current `container.MyClass` (typically the SDK-instrumented constructor) in a
+   * Proxy that still delegates construction, then tags instances — analogous to
+   * `thirdPartyInstrumentation` in the `instrumentMethod` suite.
+   */
+  function thirdPartyConstructorWrap(container: { MyClass: MyClassConstructor }) {
+    const inner = container.MyClass
+    container.MyClass = new Proxy(inner, {
+      construct(target, argArray, newTarget) {
+        const instance = Reflect.construct(target, argArray, newTarget) as MyClassInstance & {
+          thirdPartyTag: number
+        }
+        instance.thirdPartyTag = THIRD_PARTY_CONSTRUCTOR_TAG
+        return instance
+      },
+    })
+  }
+
+  function createMyClassFixture() {
+    class MyClass {
+      value: number
+      constructor(value: number) {
+        this.value = value
+      }
+
+      getValue() {
+        return this.value
+      }
+    }
+
+    return { MyClass }
+  }
+
+  type MyClassConstructor = ReturnType<typeof createMyClassFixture>['MyClass']
+  type MyClassInstance = InstanceType<MyClassConstructor>
 })
 
 describe('instrumentSetter', () => {

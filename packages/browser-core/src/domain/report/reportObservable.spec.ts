@@ -68,4 +68,13 @@ describe('report observable', () => {
       csp: { disposition: 'enforce' },
     })
   })
+
+  it(`should not notify ${RawReportType.cspViolation} when the event is not supported`, () => {
+    ;(EventTarget.prototype.addEventListener as jasmine.Spy).and.throwError('unsupported')
+
+    consoleSubscription = initReportObservable(configuration, [RawReportType.cspViolation]).subscribe(notifyReport)
+    cspEventListener.dispatchEvent()
+
+    expect(notifyReport).not.toHaveBeenCalled()
+  })
 })
