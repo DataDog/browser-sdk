@@ -1,12 +1,12 @@
 import { buildLocation, replaceMockable } from '@datadog/browser-core/test'
-import { Observable } from '@datadog/browser-core'
+import { globalObject, Observable } from '@datadog/browser-core'
 import type { LocationChange } from '../src/browser/locationChangeObservable'
 
 export function setupLocationObserver(initialLocation?: string) {
-  const fakeLocation = initialLocation ? buildLocation(initialLocation) : location
+  const fakeLocation = initialLocation ? buildLocation(initialLocation) : globalObject.location
   const locationChangeObservable = new Observable<LocationChange>()
 
-  replaceMockable(location, fakeLocation)
+  replaceMockable(globalObject.location, fakeLocation)
 
   function changeLocation(to: string) {
     const currentLocation = { ...fakeLocation }
