@@ -34,34 +34,34 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@angular/common@npm:21.2.15":
-  version: 21.2.15
-  resolution: "@angular/common@npm:21.2.15"
+"@angular/common@npm:22.0.0":
+  version: 22.0.0
+  resolution: "@angular/common@npm:22.0.0"
   dependencies:
     tslib: "npm:^2.3.0"
   peerDependencies:
-    "@angular/core": 21.2.15
+    "@angular/core": 22.0.0
     rxjs: ^6.5.3 || ^7.4.0
-  checksum: 10c0/d1a758dcdc39e93a5a4ea79a0cb07d3f6967beef52b96ad425547bd05c9642424e41f8a246a22fe183a7acac25cbbc9fa9b7736ea00af9613ad244cec9558689
+  checksum: 10c0/dd615a4f197ab415fed028ba906e8f898f9937206ce943b55eac80971ab3a3ceaeda8221386cc567093301cd53cb3ad552912993f0a474782a0636dc5ec83646
   languageName: node
   linkType: hard
 
-"@angular/compiler@npm:21.2.15":
-  version: 21.2.15
-  resolution: "@angular/compiler@npm:21.2.15"
+"@angular/compiler@npm:22.0.0":
+  version: 22.0.0
+  resolution: "@angular/compiler@npm:22.0.0"
   dependencies:
     tslib: "npm:^2.3.0"
-  checksum: 10c0/e68213e24205befdf1da2133e6c04826a00fdafa881907c148218dc8c6ffc68f4fb38c6224697eefb602cebc400066fb028424bd9d0f62f9173ee8c752c79626
+  checksum: 10c0/1bbb5e8691ccaba66abff0e7ef0aa226f44fc1e03b0d967ba4541fd6deb94924a4794e0c3c0358bb6324a494a54fd1692645827b223f76438678068a9690b228
   languageName: node
   linkType: hard
 
-"@angular/core@npm:21.2.15":
-  version: 21.2.15
-  resolution: "@angular/core@npm:21.2.15"
+"@angular/core@npm:22.0.0":
+  version: 22.0.0
+  resolution: "@angular/core@npm:22.0.0"
   dependencies:
     tslib: "npm:^2.3.0"
   peerDependencies:
-    "@angular/compiler": 21.2.15
+    "@angular/compiler": 22.0.0
     rxjs: ^6.5.3 || ^7.4.0
     zone.js: ~0.15.0 || ~0.16.0
   peerDependenciesMeta:
@@ -69,37 +69,37 @@ __metadata:
       optional: true
     zone.js:
       optional: true
-  checksum: 10c0/f93f62794fb3a41533c9a8ebb7aa83ae3be5aa0d94d369ede5b02deafab77e4856f7a5fca358d8d694d7ea9ec483ee38cd1b19fa8f88f648ac21e9b72a1642e2
+  checksum: 10c0/0e8bf7ff2491f19e75dfb7166a541ca2a3891182ac2fa35f3e99b52fa041c9751dca15249255ed04115e1d39a472857f9bd68b08ba3031db0156c643c795e748
   languageName: node
   linkType: hard
 
-"@angular/platform-browser@npm:21.2.15":
-  version: 21.2.15
-  resolution: "@angular/platform-browser@npm:21.2.15"
+"@angular/platform-browser@npm:22.0.0":
+  version: 22.0.0
+  resolution: "@angular/platform-browser@npm:22.0.0"
   dependencies:
     tslib: "npm:^2.3.0"
   peerDependencies:
-    "@angular/animations": 21.2.15
-    "@angular/common": 21.2.15
-    "@angular/core": 21.2.15
+    "@angular/animations": 22.0.0
+    "@angular/common": 22.0.0
+    "@angular/core": 22.0.0
   peerDependenciesMeta:
     "@angular/animations":
       optional: true
-  checksum: 10c0/7e77dfbe0f0c5ae21b231d437ea986e900c15e5b4d4cdebdd94550017c8a866a15fe436f89ae34d2f358ce6c279a152e16186d60633f3d6fbb2ea49540fc7496
+  checksum: 10c0/ece1edec45c8d188e999603d07ae8d36b29718be4cec3071f13711b2fa4ed75762a8d48a093da05e04f9fec66ead09817e156e5fe9a4388d80be362555963d5b
   languageName: node
   linkType: hard
 
-"@angular/router@npm:21.2.15":
-  version: 21.2.15
-  resolution: "@angular/router@npm:21.2.15"
+"@angular/router@npm:22.0.0":
+  version: 22.0.0
+  resolution: "@angular/router@npm:22.0.0"
   dependencies:
     tslib: "npm:^2.3.0"
   peerDependencies:
-    "@angular/common": 21.2.15
-    "@angular/core": 21.2.15
-    "@angular/platform-browser": 21.2.15
+    "@angular/common": 22.0.0
+    "@angular/core": 22.0.0
+    "@angular/platform-browser": 22.0.0
     rxjs: ^6.5.3 || ^7.4.0
-  checksum: 10c0/e6cf23168b9f646bf32ae9785f3d49df30ac5e30a63468caa4f854ff59fc828a0df0d61a2c0384fdab9322910bd5f7d6e33bc1e2fee0ef8cb613f657285f52a7
+  checksum: 10c0/571b19b1034615d98180072c3b6b39addcdf1107cfc7da0c35cc3d82cd0a3bf88329c96a572ffc566b6160c304ce4b874f82c61a087156d534cbc0da5ef14788
   languageName: node
   linkType: hard
 
@@ -390,18 +390,18 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-angular@workspace:packages/browser-rum-angular"
   dependencies:
-    "@angular/common": "npm:21.2.15"
-    "@angular/compiler": "npm:21.2.15"
-    "@angular/core": "npm:21.2.15"
-    "@angular/platform-browser": "npm:21.2.15"
-    "@angular/router": "npm:21.2.15"
+    "@angular/common": "npm:22.0.0"
+    "@angular/compiler": "npm:22.0.0"
+    "@angular/core": "npm:22.0.0"
+    "@angular/platform-browser": "npm:22.0.0"
+    "@angular/router": "npm:22.0.0"
     "@datadog/browser-core": "npm:7.2.0"
     "@datadog/browser-rum-core": "npm:7.2.0"
     "@datadog/js-core": "npm:0.0.1"
     rxjs: "npm:7.8.2"
   peerDependencies:
-    "@angular/core": ">=15 <=21"
-    "@angular/router": ">=15 <=21"
+    "@angular/core": ">=15 <=22"
+    "@angular/router": ">=15 <=22"
     rxjs: ">=7"
   languageName: unknown
   linkType: soft
