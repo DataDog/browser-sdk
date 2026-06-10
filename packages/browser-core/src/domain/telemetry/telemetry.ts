@@ -28,7 +28,6 @@ import {
   getEventBridge,
   createBatch,
 } from '../../transport'
-import { createIdentityEncoder } from '../../tools/encoder'
 import { createPageMayExitObservable } from '../../browser/pageMayExitObservable'
 import { globalObject, isWorkerEnvironment } from '../../tools/globalObject'
 import { noop } from '../../tools/utils/functionUtils'
@@ -218,7 +217,6 @@ export function startTelemetryTransport(
       endpoints.push(replicaEndpoint)
     }
     const telemetryBatch = createBatch({
-      encoder: createIdentityEncoder(),
       request: createHttpRequest(
         endpoints,
         // Ignore transport errors for telemetry

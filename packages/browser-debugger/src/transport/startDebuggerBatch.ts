@@ -4,7 +4,6 @@ import {
   createBatch,
   createFlushController,
   createHttpRequest,
-  createIdentityEncoder,
   Observable,
   PageExitReason,
   createEndpointBuilder,
@@ -15,7 +14,6 @@ export function startDebuggerBatch(initConfiguration: InitConfiguration): Batch 
   const debuggerEndpointBuilder = createEndpointBuilder({ ...initConfiguration, source: 'dd_debugger' }, 'debugger')
 
   const batch = createBatch({
-    encoder: createIdentityEncoder(),
     request: createHttpRequest([debuggerEndpointBuilder], (error) => display.error('transport error:', error)),
     flushController: createFlushController({
       pageMayExitObservable: createSimplePageMayExitObservable(),

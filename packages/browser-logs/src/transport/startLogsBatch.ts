@@ -5,7 +5,6 @@ import {
   createReplicaEndpointBuilder,
   createFlushController,
   createHttpRequest,
-  createIdentityEncoder,
 } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -26,7 +25,6 @@ export function startLogsBatch(
   }
 
   const batch = createBatch({
-    encoder: createIdentityEncoder(),
     request: createHttpRequest(endpoints, reportError),
     flushController: createFlushController({
       pageMayExitObservable,

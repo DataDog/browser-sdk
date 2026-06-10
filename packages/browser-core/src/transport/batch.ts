@@ -3,6 +3,7 @@ import type { Context } from '../tools/serialisation/context'
 import { objectValues } from '../tools/utils/polyfills'
 import { isPageExitReason } from '../browser/pageMayExitObservable'
 import { jsonStringify } from '../tools/serialisation/jsonStringify'
+import { createIdentityEncoder } from '../tools/encoder'
 import type { Encoder, EncoderResult } from '../tools/encoder'
 import { computeBytesCount, ONE_KIBI_BYTE } from '../tools/utils/byteUtils'
 import type { HttpRequest, Payload } from './httpRequest'
@@ -18,11 +19,11 @@ export interface Batch {
 }
 
 export function createBatch({
-  encoder,
+  encoder = createIdentityEncoder(),
   request,
   flushController,
 }: {
-  encoder: Encoder
+  encoder?: Encoder
   request: HttpRequest
   flushController: FlushController
 }): Batch {
