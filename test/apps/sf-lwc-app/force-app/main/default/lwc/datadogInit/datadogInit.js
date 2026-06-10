@@ -13,6 +13,8 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
   @api service = 'my-salesforce-app'
   @api env = 'dev'
   @api allowedTracingUrls
+  @api proxy
+  @api resourceName
   @api trackViewsManually
 
   connectedCallback() {
@@ -51,7 +53,10 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
   }
 
   loadDatadogRum() {
-    return loadScript(this, datadogRumSlim).then(() => {
+    const resourceName = new URLSearchParams(window.location.search).get('c__datadogResourceName') || this.resourceName
+    const resourceUrl = resourceName ? `/resource/${encodeURIComponent(resourceName)}` : datadogRumSlim
+
+    return loadScript(this, resourceUrl).then(() => {
       const initConfig = {
         applicationId: this.applicationId,
         clientToken: this.clientToken,

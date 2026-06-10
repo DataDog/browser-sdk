@@ -14,6 +14,8 @@
             <property name="service" type="String" label="Service" default="my-salesforce-app" />
             <property name="env" type="String" label="Env" default="dev" />
             <property name="allowedTracingUrls" type="String" label="Allowed Tracing URLs" />
+            <property name="proxy" type="String" label="Proxy" description="Optional proxy URL for Datadog intake requests" />
+            <property name="resourceName" type="String" label="Resource Name" description="Datadog RUM static resource name" />
             <property name="trackViewsManually" type="Boolean" label="Track Views Manually" default="true" />
         </targetConfig>
     </targetConfigs>
