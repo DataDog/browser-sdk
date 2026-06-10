@@ -102,9 +102,9 @@ export interface WebSocketResourceProperties {
   messages_out: { count: number; size: number }
   time_to_first_message_in?: Duration
   time_to_first_message_out?: Duration
-  last_message_at?: TimeStamp
-  longest_silence: Duration
-  idle_duration_before_close?: Duration
+  last_message_in_at?: TimeStamp
+  longest_inbound_silence: Duration
+  inbound_idle_duration_before_close?: Duration
   buffered_amount_max?: number
   protocol?: string
   setup_duration?: Duration

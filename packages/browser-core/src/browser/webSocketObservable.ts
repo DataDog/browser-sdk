@@ -6,10 +6,6 @@ import { instrumentConstructor, instrumentMethod } from '../tools/instrumentMeth
 import { Observable } from '../tools/observable'
 import { addEventListener } from './addEventListener'
 
-interface WebSocketObservableConfiguration {
-  allowUntrustedEvents?: boolean | undefined
-}
-
 type GlobalWithWebSocket = GlobalObject & { WebSocket: typeof WebSocket }
 
 function isGlobalWithWebSocket(global: GlobalObject): global is GlobalWithWebSocket {
@@ -64,18 +60,7 @@ export type WebSocketContext =
 
 let webSocketObservable: Observable<WebSocketContext> | undefined
 
-// The singleton WebSocket observable applies the latest caller's allowUntrustedEvents policy so
-// that the customer's configuration overrides an early call (e.g. from bufferedData) that opts
-// in before the customer config is parsed.
-let allowUntrustedEvents: boolean | undefined
-
-export function initWebSocketObservable(
-  configuration: WebSocketObservableConfiguration = {}
-): Observable<WebSocketContext> {
-  if (configuration.allowUntrustedEvents !== undefined) {
-    allowUntrustedEvents = configuration.allowUntrustedEvents
-  }
-
+export function initWebSocketObservable(): Observable<WebSocketContext> {
   if (!webSocketObservable) {
     webSocketObservable = createWebSocketObservable()
   }
@@ -143,7 +128,7 @@ function attachInstanceListeners(
   observable: Observable<WebSocketContext>,
   stopListeners: Array<() => void>
 ) {
-  const { stop: stopOpen } = addEventListener({ allowUntrustedEvents }, instance, 'open', () => {
+  const { stop: stopOpen } = addEventListener(instance, 'open', () => {
     observable.notify({
       state: 'open',
       instance,
@@ -151,7 +136,7 @@ function attachInstanceListeners(
       protocol: instance.protocol || '',
     })
   })
-  const { stop: stopMessage } = addEventListener({ allowUntrustedEvents }, instance, 'message', (event) => {
+  const { stop: stopMessage } = addEventListener(instance, 'message', (event) => {
     observable.notify({
       state: 'message-in',
       instance,
@@ -159,7 +144,7 @@ function attachInstanceListeners(
       at: clocksNow(),
     })
   })
-  const { stop: stopClose } = addEventListener({ allowUntrustedEvents }, instance, 'close', (event) => {
+  const { stop: stopClose } = addEventListener(instance, 'close', (event) => {
     observable.notify({
       state: 'closed',
       instance,
@@ -196,5 +181,4 @@ function computePayloadSize(data: unknown): number {
  */
 export function resetWebSocketObservable() {
   webSocketObservable = undefined
-  allowUntrustedEvents = undefined
 }
