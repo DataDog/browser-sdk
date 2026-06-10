@@ -3,8 +3,8 @@
     <canAccessCamera>false</canAccessCamera>
     <canAccessMicrophone>false</canAccessMicrophone>
     <context>All</context>
-    <description>Dummy JSON API for Datadog APM correlation testing</description>
-    <endpointUrl>https://dummyjson.com</endpointUrl>
+    <description>Sample JSON API for Datadog APM correlation testing</description>
+    <endpointUrl>https://sample-json-api.com</endpointUrl>
     <isActive>true</isActive>
     <isApplicableToConnectSrc>true</isApplicableToConnectSrc>
     <isApplicableToFontSrc>false</isApplicableToFontSrc>

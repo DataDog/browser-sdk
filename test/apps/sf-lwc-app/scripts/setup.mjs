@@ -57,9 +57,13 @@ function assignPermissionSet() {
 }
 
 function printAppUrl() {
-  const result = spawnSync('sf', ['org', 'open', '-p', '/lightning/page/home', '--url-only', '--json', ...orgArgs], {
-    encoding: 'utf8',
-  })
+  const result = spawnSync(
+    'sf',
+    ['org', 'open', '-p', '/lightning/app/c__SF_LWC_App/page/home', '--url-only', '--json', ...orgArgs],
+    {
+      encoding: 'utf8',
+    }
+  )
 
   if (result.status !== 0) {
     process.stderr.write(result.stderr)

@@ -19,6 +19,6 @@ From this directory:
 npm run setup -- -o engrumdev --ignore-conflicts
 ```
 
-The setup script copies the local RUM slim bundle into the static resource, deploys the app, assigns the app permission set to the target user, and prints the Home URL.
+The setup script copies the local RUM slim bundle into the static resource, deploys the app, assigns the app permission set to the target user, and prints the app-specific Home URL.
 
 If prompted for a user. Log into 1Password and use `beltran.bulbarella@datadoghq.com.engrumdev`

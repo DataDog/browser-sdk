@@ -111,7 +111,7 @@ export default class CustomActionButtons extends LightningElement {
   }
 
   getResourceTestUrl(token) {
-    return `https://dummyjson.com/products/1?${token}`
+    return `https://sample-json-api.com/products/1?${token}`
   }
 
   getComposedPathNames(event) {
