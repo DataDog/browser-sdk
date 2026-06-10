@@ -16,7 +16,7 @@ describe('report observable', () => {
 
   beforeEach((ctx) => {
     if (!window.ReportingObserver) {
-      ctx.skip()
+      ctx.skip(true, 'ReportingObserver not supported')
       return
     }
     configuration = {} as Configuration

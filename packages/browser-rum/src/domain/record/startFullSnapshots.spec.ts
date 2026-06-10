@@ -86,7 +86,7 @@ describe('startFullSnapshots', () => {
 
   it('full snapshot records should contain visualViewport when supported', (ctx) => {
     if (!window.visualViewport) {
-      ctx.skip()
+      ctx.skip(true, 'VisualViewport API not supported')
       return
     }
     const record = emitRecordCallback.mock.lastCall![0]

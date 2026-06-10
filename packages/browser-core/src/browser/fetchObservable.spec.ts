@@ -85,7 +85,7 @@ describe('fetch proxy', () => {
   it('should track fetch aborted by AbortController', (ctx) =>
     new Promise<void>((resolve) => {
       if (!window.AbortController) {
-        ctx.skip()
+        ctx.skip(true, 'AbortController not supported')
         return resolve()
       }
 

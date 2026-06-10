@@ -22,7 +22,7 @@ describe('buildTag warning', () => {
   let displaySpy: Mock<typeof display.warn>
   beforeEach((ctx) => {
     if (!supportUnicodePropertyEscapes()) {
-      ctx.skip()
+      ctx.skip(true, 'Unicode property escapes not supported')
       return
     }
 

@@ -37,7 +37,7 @@ describe('takeFullSnapshot', () => {
 
   it('should produce VisualViewport records when supported', (ctx) => {
     if (!window.visualViewport) {
-      ctx.skip()
+      ctx.skip(true, 'VisualViewport API not supported')
       return
     }
 

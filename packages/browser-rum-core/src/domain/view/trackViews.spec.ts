@@ -444,7 +444,7 @@ describe('view metrics', () => {
   describe('common view metrics', () => {
     it('should be updated when notified with a PERFORMANCE_ENTRY_COLLECTED event (throttled)', (ctx) => {
       if (!isLayoutShiftSupported()) {
-        ctx.skip()
+        ctx.skip(true, 'Layout Shift API not supported')
         return
       }
       const { getViewUpdateCount, getViewUpdate } = viewTest
@@ -471,7 +471,7 @@ describe('view metrics', () => {
 
     it('should not be updated after view end', (ctx) => {
       if (!isLayoutShiftSupported()) {
-        ctx.skip()
+        ctx.skip(true, 'Layout Shift API not supported')
         return
       }
       const { getViewUpdate, getViewUpdateCount, getViewCreateCount, startView } = viewTest

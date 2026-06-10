@@ -111,7 +111,7 @@ Error: foo
 
   it('should get the order of functions called right', (ctx) => {
     if (isSafari()) {
-      ctx.skip()
+      ctx.skip(true, 'not supported in Safari')
       return
     }
     function foo() {

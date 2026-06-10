@@ -44,7 +44,7 @@ describe('capture', () => {
 
     it('should capture bigint', (ctx: TestContext) => {
       if (typeof BigInt === 'undefined') {
-        ctx.skip()
+        ctx.skip(true, 'BigInt not supported')
       }
       const result = capture(BigInt(123), defaultOpts, noTimeout())
       expect(result).toEqual({ type: 'bigint', value: '123' })
@@ -52,7 +52,7 @@ describe('capture', () => {
 
     it('should capture symbol', (ctx: TestContext) => {
       if (!('description' in Symbol.prototype)) {
-        ctx.skip()
+        ctx.skip(true, 'Symbol.description not supported')
       }
       const sym = Symbol('test')
       const result = capture(sym, defaultOpts, noTimeout())
@@ -137,7 +137,7 @@ describe('capture', () => {
       // @ts-expect-error - cause is not a valid argument for Error constructor
       const error = new Error('main error', { cause })
       if ((error as any).cause === undefined) {
-        ctx.skip()
+        ctx.skip(true, 'Error cause not supported')
       }
       const result = capture(error, defaultOpts, noTimeout()) as any
 
@@ -306,7 +306,7 @@ describe('capture', () => {
 
     it('should handle objects with symbol keys', (ctx: TestContext) => {
       if (!('description' in Symbol.prototype)) {
-        ctx.skip()
+        ctx.skip(true, 'Symbol.description not supported')
       }
       const sym = Symbol('test')
       const obj = { [sym]: 'value' }
@@ -530,7 +530,7 @@ describe('captureFields', () => {
 
   it('should handle symbol keys', (ctx: TestContext) => {
     if (!('description' in Symbol.prototype)) {
-      ctx.skip()
+      ctx.skip(true, 'Symbol.description not supported')
     }
     const sym = Symbol('test')
     const obj = { [sym]: 'symbolValue' }

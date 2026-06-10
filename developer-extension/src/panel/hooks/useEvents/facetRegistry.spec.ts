@@ -5,7 +5,7 @@ import { getAllFields } from './facetRegistry'
 describe('getAllFields', () => {
   beforeEach((ctx) => {
     if (!isChromium()) {
-      ctx.skip()
+      ctx.skip(true, 'extension only supported in Chromium')
       return
     }
   })

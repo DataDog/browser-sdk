@@ -36,7 +36,7 @@ describe('sanitize', () => {
     it('should handle bigint', (ctx) => {
       const bigIntFunction: (val: number) => any = (window as any).BigInt
       if (typeof bigIntFunction !== 'function') {
-        ctx.skip()
+        ctx.skip(true, 'BigInt not supported')
         return
       }
       const bigint = bigIntFunction(2)
@@ -46,7 +46,7 @@ describe('sanitize', () => {
     it('shoud handle symbols', (ctx) => {
       const symbolFunction: (description: string) => any = (window as any).Symbol
       if (typeof symbolFunction !== 'function') {
-        ctx.skip()
+        ctx.skip(true, 'Symbol not supported')
         return
       }
       const symbol = symbolFunction('description')

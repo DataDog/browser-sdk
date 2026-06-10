@@ -60,7 +60,7 @@ describe('Expression language', () => {
         if (before) {
           const skipReason = before() as string | undefined
           if (skipReason) {
-            ctx.skip()
+            ctx.skip(true, skipReason)
           }
         }
 

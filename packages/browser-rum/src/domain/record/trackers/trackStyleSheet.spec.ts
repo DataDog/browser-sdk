@@ -110,7 +110,7 @@ describe('trackStyleSheet', () => {
 
       it('should not create record when inserting into a detached CSSGroupingRule', (ctx) => {
         if (isFirefox()) {
-          ctx.skip()
+          ctx.skip(true, 'not supported in Firefox')
           return
         }
 
@@ -149,7 +149,7 @@ describe('trackStyleSheet', () => {
 
       it('should not create record when removing from a detached CSSGroupingRule', (ctx) => {
         if (isFirefox()) {
-          ctx.skip()
+          ctx.skip(true, 'not supported in Firefox')
           return
         }
 

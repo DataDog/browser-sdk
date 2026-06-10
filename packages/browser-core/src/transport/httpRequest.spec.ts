@@ -115,7 +115,7 @@ describe('httpRequest', () => {
 
     it('should use sendBeacon when the bytes count is correct', (ctx) => {
       if (!interceptor.isSendBeaconSupported()) {
-        ctx.skip()
+        ctx.skip(true, 'sendBeacon not supported')
         return
       }
 
@@ -136,7 +136,7 @@ describe('httpRequest', () => {
 
     it('should fallback to fetch when sendBeacon is not queued', async (ctx) => {
       if (!interceptor.isSendBeaconSupported()) {
-        ctx.skip()
+        ctx.skip(true, 'sendBeacon not supported')
         return
       }
 
@@ -152,7 +152,7 @@ describe('httpRequest', () => {
 
     it('should fallback to fetch when sendBeacon throws', async (ctx) => {
       if (!interceptor.isSendBeaconSupported()) {
-        ctx.skip()
+        ctx.skip(true, 'sendBeacon not supported')
         return
       }
 

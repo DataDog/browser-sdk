@@ -398,7 +398,7 @@ describe('record', () => {
 
     it('visual viewport resize', (ctx) => {
       if (!window.visualViewport) {
-        ctx.skip()
+        ctx.skip(true, 'VisualViewport API not supported')
         return
       }
 

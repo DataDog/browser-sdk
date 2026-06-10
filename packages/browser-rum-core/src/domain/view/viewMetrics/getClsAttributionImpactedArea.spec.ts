@@ -6,7 +6,7 @@ import { isLayoutShiftSupported } from './trackCumulativeLayoutShift'
 describe('getClsAttributionImpactedArea', () => {
   beforeEach((ctx) => {
     if (!isLayoutShiftSupported()) {
-      ctx.skip()
+      ctx.skip(true, 'Layout Shift API not supported')
       return
     }
   })

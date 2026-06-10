@@ -60,7 +60,7 @@ describe('trackInteractionToNextPaint', () => {
 
   beforeEach((ctx) => {
     if (!isInteractionToNextPaintSupported()) {
-      ctx.skip()
+      ctx.skip(true, 'Interaction to Next Paint not supported')
       return
     }
   })

@@ -175,7 +175,7 @@ describe('startWorker', () => {
 
   it('reports an error when an unexpected exception occurs while writing on a stream', (ctx) => {
     if (!window.TextEncoder) {
-      ctx.skip()
+      ctx.skip(true, 'TextEncoder not supported')
       return
     }
     vi.spyOn(TextEncoder.prototype, 'encode').mockImplementation(() => {

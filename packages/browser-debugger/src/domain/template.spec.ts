@@ -89,7 +89,7 @@ describe('template', () => {
 
     it('should inspect bigint', (ctx: TestContext) => {
       if (typeof BigInt === 'undefined') {
-        ctx.skip()
+        ctx.skip(true, 'BigInt not supported')
       }
       expect(browserInspect(BigInt(123))).toBe('123n')
     })

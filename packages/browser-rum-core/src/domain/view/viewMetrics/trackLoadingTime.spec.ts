@@ -167,7 +167,7 @@ describe('trackLoadingTime', () => {
 
   it('should not discard loading time if page was hidden before the view start', (ctx) => {
     if (!supportPerformanceTimingEvent(RumPerformanceEntryType.VISIBILITY_STATE)) {
-      ctx.skip()
+      ctx.skip(true, 'VisibilityState performance entry not supported')
       return
     }
 
@@ -188,7 +188,7 @@ describe('trackLoadingTime', () => {
 
   it('should discard loading time if page was hidden during the loading time', (ctx) => {
     if (!supportPerformanceTimingEvent(RumPerformanceEntryType.VISIBILITY_STATE)) {
-      ctx.skip()
+      ctx.skip(true, 'VisibilityState performance entry not supported')
       return
     }
 
