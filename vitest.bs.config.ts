@@ -67,23 +67,28 @@ export default defineConfig({
   resolve: {
     alias: {
       // Test utility subpath imports (must come before main package aliases)
-      '@datadog/browser-core/test': path.resolve('./packages/core/test'),
-      '@datadog/browser-rum-core/test': path.resolve('./packages/rum-core/test'),
+      '@datadog/browser-core/test': path.resolve('./packages/browser-core/test'),
+      '@datadog/browser-rum-core/test': path.resolve('./packages/browser-rum-core/test'),
 
       // Main package aliases (matching tsconfig.base.json paths)
-      '@datadog/browser-core': path.resolve('./packages/core/src'),
-      '@datadog/browser-flagging': path.resolve('./packages/flagging/src/entries/main'),
-      '@datadog/browser-logs': path.resolve('./packages/logs/src/entries/main'),
-      '@datadog/browser-rum-core': path.resolve('./packages/rum-core/src'),
-      '@datadog/browser-rum/internal': path.resolve('./packages/rum/src/entries/internal'),
-      '@datadog/browser-rum/internal-synthetics': path.resolve('./packages/rum/src/entries/internalSynthetics'),
-      '@datadog/browser-rum': path.resolve('./packages/rum/src/entries/main'),
-      '@datadog/browser-rum-slim': path.resolve('./packages/rum-slim/src/entries/main'),
-      '@datadog/browser-rum-react/react-router-v6': path.resolve('./packages/rum-react/src/entries/reactRouterV6'),
-      '@datadog/browser-rum-react/react-router-v7': path.resolve('./packages/rum-react/src/entries/reactRouterV7'),
-      '@datadog/browser-rum-react/internal': path.resolve('./packages/rum-react/src/entries/internal'),
-      '@datadog/browser-rum-react': path.resolve('./packages/rum-react/src/entries/main'),
-      '@datadog/browser-worker': path.resolve('./packages/worker/src/entries/main'),
+      '@datadog/js-core/time': path.resolve('./packages/js-core/src/time'),
+      '@datadog/browser-core': path.resolve('./packages/browser-core/src'),
+      '@datadog/browser-flagging': path.resolve('./packages/browser-flagging/src/entries/main'),
+      '@datadog/browser-logs': path.resolve('./packages/browser-logs/src/entries/main'),
+      '@datadog/browser-rum-core': path.resolve('./packages/browser-rum-core/src'),
+      '@datadog/browser-rum/internal': path.resolve('./packages/browser-rum/src/entries/internal'),
+      '@datadog/browser-rum/internal-synthetics': path.resolve('./packages/browser-rum/src/entries/internalSynthetics'),
+      '@datadog/browser-rum': path.resolve('./packages/browser-rum/src/entries/main'),
+      '@datadog/browser-rum-slim': path.resolve('./packages/browser-rum-slim/src/entries/main'),
+      '@datadog/browser-rum-react/react-router-v6': path.resolve(
+        './packages/browser-rum-react/src/entries/reactRouterV6'
+      ),
+      '@datadog/browser-rum-react/react-router-v7': path.resolve(
+        './packages/browser-rum-react/src/entries/reactRouterV7'
+      ),
+      '@datadog/browser-rum-react/internal': path.resolve('./packages/browser-rum-react/src/entries/internal'),
+      '@datadog/browser-rum-react': path.resolve('./packages/browser-rum-react/src/entries/main'),
+      '@datadog/browser-worker': path.resolve('./packages/browser-worker/src/entries/main'),
     },
   },
 
