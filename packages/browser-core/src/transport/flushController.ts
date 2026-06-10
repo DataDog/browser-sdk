@@ -95,9 +95,6 @@ export function createFlushController({ pageMayExitObservable }: FlushController
     flushObservable,
     prepareUrgentFlushObservable,
     forceFlush: flush,
-    get messagesCount() {
-      return currentMessagesCount
-    },
 
     /**
      * Notifies that a message will be added to a pool of pending messages waiting to be flushed.
