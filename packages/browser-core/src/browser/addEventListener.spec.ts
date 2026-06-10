@@ -3,7 +3,7 @@ import type { Configuration } from '../domain/configuration'
 import { createNewEvent, mockZoneJs, registerCleanupTask } from '../../test'
 import type { MockZoneJs } from '../../test'
 import { noop } from '../tools/utils/functionUtils'
-import { addEventListener, DOM_EVENT } from './addEventListener'
+import { addEventListener, DOM_EVENT, isEventSupported } from './addEventListener'
 
 describe('addEventListener', () => {
   let configuration: Configuration
@@ -135,6 +135,20 @@ describe('addEventListener', () => {
       eventTarget.dispatchEvent(event)
 
       expect(listener).toHaveBeenCalled()
+    })
+  })
+
+  describe('isEventSupported', () => {
+    it('should return true if the event is supported', () => {
+      expect(isEventSupported(document, DOM_EVENT.CLICK)).toBe(true)
+    })
+
+    it('should return false if the event listener cannot be added', () => {
+      const eventTarget = {
+        addEventListener: jasmine.createSpy().and.throwError('unsupported'),
+      } as unknown as HTMLElement
+
+      expect(isEventSupported(eventTarget, DOM_EVENT.CLICK)).toBe(false)
     })
   })
 })

@@ -1,5 +1,6 @@
 import { monitor } from '../tools/monitor'
 import { getZoneJsOriginalValue } from '../tools/getZoneJsOriginalValue'
+import { noop } from '../tools/utils/functionUtils'
 import type { CookieStore, CookieStoreEventMap, VisualViewport, VisualViewportEventMap } from './browser.types'
 
 export type TrustableEvent<E extends Event = Event> = E & { __ddIsTrusted?: boolean }
@@ -39,6 +40,7 @@ export const enum DOM_EVENT {
   SECURITY_POLICY_VIOLATION = 'securitypolicyviolation',
   SELECTION_CHANGE = 'selectionchange',
   STORAGE = 'storage',
+  UNHANDLED_REJECTION = 'unhandledrejection',
 }
 
 interface AddEventListenerOptions {
@@ -144,5 +146,21 @@ export function addEventListeners<Target extends EventTarget, EventName extends 
 
   return {
     stop,
+  }
+}
+
+export function isEventSupported<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(
+  eventTarget: Target | undefined,
+  eventName: EventName
+) {
+  if (!eventTarget) {
+    return false
+  }
+
+  try {
+    addEventListener({}, eventTarget, eventName, noop).stop()
+    return true
+  } catch {
+    return false
   }
 }

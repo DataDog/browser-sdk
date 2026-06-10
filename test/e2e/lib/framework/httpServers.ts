@@ -16,10 +16,6 @@ export type MockServerApp = ServerApp & {
   getLargeResponseWroteSize(): number
 }
 
-export type IntakeServerApp = ServerApp & {
-  setDebuggerProbes(probes: object[]): void
-}
-
 export interface Server<App extends ServerApp> {
   origin: string
   app: App
@@ -29,7 +25,7 @@ export interface Server<App extends ServerApp> {
 
 export interface Servers {
   base: Server<MockServerApp>
-  intake: Server<IntakeServerApp>
+  datadogHttpApi: Server<ServerApp>
   crossOrigin: Server<MockServerApp>
 }
 
@@ -40,7 +36,7 @@ export async function getTestServers() {
     serversSingleton = {
       base: await createServer(),
       crossOrigin: await createServer(),
-      intake: await createServer(),
+      datadogHttpApi: await createServer(),
     }
   }
   return serversSingleton
@@ -51,7 +47,11 @@ export async function waitForServersIdle() {
   // still be in-flight from the browser and haven't reached the server yet.
   await new Promise((resolve) => setTimeout(resolve, idleWaitDuration))
   const servers = await getTestServers()
-  await Promise.all([servers.base.waitForIdle(), servers.crossOrigin.waitForIdle(), servers.intake.waitForIdle()])
+  await Promise.all([
+    servers.base.waitForIdle(),
+    servers.crossOrigin.waitForIdle(),
+    servers.datadogHttpApi.waitForIdle(),
+  ])
 }
 
 async function createServer<App extends ServerApp>(): Promise<Server<App>> {
@@ -133,7 +133,7 @@ async function measureServerLatency(browser: Browser): Promise<number> {
   // We measure the round-trip time to the test server to calibrate how long we wait after the
   // last pending request before considering the server idle. In BrowserStack, the browser runs
   // remotely, so this latency can be significant.
-  const { intake: server } = await getTestServers()
+  const { datadogHttpApi: server } = await getTestServers()
   const page = await browser.newPage()
   const start = Date.now()
   await page.goto(server.origin)

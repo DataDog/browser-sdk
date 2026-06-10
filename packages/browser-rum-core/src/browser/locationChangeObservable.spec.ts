@@ -1,5 +1,6 @@
 import { vi, describe, expect, it } from 'vitest'
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import { globalObject } from '@datadog/browser-core'
+import { buildLocation, registerCleanupTask, replaceMockable } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { createLocationChangeObservable } from './locationChangeObservable'
 
@@ -37,6 +38,19 @@ describe('locationChangeObservable', () => {
     history.pushState({}, '', '/foo')
 
     expect(observer).not.toHaveBeenCalled()
+  })
+
+  it('should use globalObject.location to detect location changes', () => {
+    const fakeLocation = buildLocation('/fake-location')
+    replaceMockable(globalObject.location, fakeLocation)
+    const observer = setup()
+
+    Object.assign(fakeLocation, buildLocation('/fake-location?bar=qux'))
+    history.pushState({}, '', '/foo?bar=qux')
+
+    const locationChanges = observer.mock.calls[0][0]
+    expect(locationChanges.oldLocation.href).toMatch(/\/fake-location$/)
+    expect(locationChanges.newLocation.href).toMatch(/\/fake-location\?bar=qux$/)
   })
 
   it('allow frameworks to patch history.pushState', () => {
