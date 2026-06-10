@@ -98,9 +98,8 @@ Error-monitoring utilities that wrap callbacks to catch, report, and suppress SD
 Each consumer creates its own isolated monitor via `createMonitor(display, onMonitorErrorCollected)`,
 so error-collection state is not shared between SDKs. The `display` (from `createDisplay` in
 `@datadog/js-core/util`) controls the log prefix. Both arguments are required and fixed for the
-lifetime of the monitor. Caught errors are logged via the display's `ifDebugEnabled` facet, so they
-only reach the console when debug mode is on (toggled globally via `setDebugMode` from
-`@datadog/js-core/util`).
+lifetime of the monitor. Caught errors are logged to the console via the given `display`, but only
+when debug mode is on (toggled globally via `setDebugMode` from `@datadog/js-core/util`).
 
 ```ts
 import { createMonitor } from '@datadog/js-core/monitor'
@@ -132,19 +131,35 @@ setDebugMode(true) // global: also log caught errors to the console
 General-purpose utilities.
 
 ```ts
-import { createDisplay, setDebugMode } from '@datadog/js-core/util'
+import {
+  createDisplay,
+  setDebugMode,
+  getDebugMode,
+  ConsoleApiName,
+  globalConsole,
+  originalConsoleMethods,
+} from '@datadog/js-core/util'
 import type { Display } from '@datadog/js-core/util'
 ```
 
 #### Types
 
-| Export    | Description                                                                                                                                       |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Display` | Console methods pre-bound to the original (unpatched) console. Top-level methods always emit; `Display.ifDebugEnabled.*` emit only in debug mode. |
+| Export    | Description                                                              |
+| --------- | ------------------------------------------------------------------------ |
+| `Display` | Console methods pre-bound to the original (unpatched) console, prefixed. |
+
+#### Constants
+
+| Export                   | Description                                                                          |
+| ------------------------ | ------------------------------------------------------------------------------------ |
+| `ConsoleApiName`         | Enum-like map of the console method names (`log`, `debug`, `info`, `warn`, `error`). |
+| `globalConsole`          | Alias for the global `console`, resilient to bundler `console.*` stripping.          |
+| `originalConsoleMethods` | The original (unpatched) console methods, captured at module load.                   |
 
 #### Functions
 
 | Export                  | Description                                                                                                                       |
 | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | `createDisplay(prefix)` | Returns a `Display` bound to the original console methods, prefixing every message with `prefix`. Guards against patched console. |
-| `setDebugMode(enabled)` | Global toggle. When `true`, every display's `ifDebugEnabled.*` methods emit to the console; otherwise they stay silent.           |
+| `getDebugMode()`        | Returns whether debug mode is currently enabled.                                                                                  |
+| `setDebugMode(enabled)` | Global debug-mode toggle. SDKs check `getDebugMode()` to decide whether to emit internal diagnostic logs to the console.          |

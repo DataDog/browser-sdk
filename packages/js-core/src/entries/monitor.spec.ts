@@ -1,3 +1,4 @@
+import { setDebugMode } from './util'
 import type { Display } from './util'
 import type { Monitor } from './monitor'
 import { createMonitor } from './monitor'
@@ -8,20 +9,13 @@ describe('monitor', () => {
   let currentMonitor: Monitor
 
   function createFakeDisplay(): Display {
-    displayErrorSpy = jasmine.createSpy('ifDebugEnabled.error')
+    displayErrorSpy = jasmine.createSpy('display.error')
     return {
       debug: jasmine.createSpy(),
       log: jasmine.createSpy(),
       info: jasmine.createSpy(),
       warn: jasmine.createSpy(),
-      error: jasmine.createSpy(),
-      ifDebugEnabled: {
-        debug: jasmine.createSpy(),
-        log: jasmine.createSpy(),
-        info: jasmine.createSpy(),
-        warn: jasmine.createSpy(),
-        error: displayErrorSpy,
-      },
+      error: displayErrorSpy,
     }
   }
 
@@ -145,7 +139,21 @@ describe('monitor', () => {
   })
 
   describe('debug logging', () => {
-    it('logs caught errors through the display debug-gated facet', () => {
+    afterEach(() => {
+      setDebugMode(false)
+    })
+
+    it('does not log caught errors when debug mode is disabled', () => {
+      currentMonitor.callMonitored(() => {
+        throw new Error('message')
+      })
+
+      expect(displayErrorSpy).not.toHaveBeenCalled()
+    })
+
+    it('logs caught errors to the display when debug mode is enabled', () => {
+      setDebugMode(true)
+
       currentMonitor.callMonitored(() => {
         throw new Error('message')
       })
@@ -153,7 +161,8 @@ describe('monitor', () => {
       expect(displayErrorSpy).toHaveBeenCalledWith('[MONITOR]', new Error('message'))
     })
 
-    it('logs errors thrown by the onMonitorErrorCollected callback', () => {
+    it('logs errors thrown by the onMonitorErrorCollected callback when debug mode is enabled', () => {
+      setDebugMode(true)
       onMonitorErrorCollectedSpy.and.throwError(new Error('unexpected'))
 
       currentMonitor.callMonitored(() => {

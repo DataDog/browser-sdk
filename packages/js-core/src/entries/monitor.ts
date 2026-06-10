@@ -1,3 +1,4 @@
+import { getDebugMode } from './util'
 import type { Display } from './util'
 
 /** An isolated monitor, as returned by {@link createMonitor}. */
@@ -97,7 +98,7 @@ export interface Monitor {
  *
  * @param display - {@link Display} used for debug logging (see `createDisplay` in
  * `@datadog/js-core/util`). Lets the consumer control the log prefix and console binding. Debug
- * output is gated by the display's `ifDebugEnabled` facet (toggled via `setDebugMode`).
+ * output is only emitted when debug mode is enabled (see `setDebugMode`/`getDebugMode`).
  * @param onMonitorErrorCollected - Callback invoked with each error caught by the monitor (e.g. to
  * forward it to telemetry). Fixed for the lifetime of the monitor.
  * @returns A {@link Monitor}.
@@ -139,11 +140,17 @@ export function createMonitor(display: Display, onMonitorErrorCollected: (error:
   }
 
   function monitorError(e: unknown) {
-    display.ifDebugEnabled.error('[MONITOR]', e)
+    const displayIfDebugEnabled = (e: unknown) => {
+      if (getDebugMode()) {
+        display.error('[MONITOR]', e)
+      }
+    }
+
+    displayIfDebugEnabled(e)
     try {
       onMonitorErrorCollected(e)
     } catch (e) {
-      display.ifDebugEnabled.error('[MONITOR]', e)
+      displayIfDebugEnabled(e)
     }
   }
 
