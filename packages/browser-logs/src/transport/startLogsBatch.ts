@@ -26,11 +26,9 @@ export function startLogsBatch(
   const batch = createBatch({
     endpoints,
     reportError,
-    flushController: createFlushController({
-      pageMayExitObservable,
-      sessionExpireObservable: sessionManager.expireObservable,
-    }),
+    flushController: createFlushController({ pageMayExitObservable }),
   })
+  sessionManager.expireObservable.subscribe(() => batch.flushController.forceFlush('session_expire'))
 
   lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (serverLogsEvent: LogsEvent & Context) => {
     batch.add(serverLogsEvent)

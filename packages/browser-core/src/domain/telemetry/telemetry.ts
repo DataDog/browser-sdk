@@ -216,10 +216,6 @@ export function startTelemetryTransport(
       reportError: noop,
       flushController: createFlushController({
         pageMayExitObservable: createPageMayExitObservable(),
-
-        // We don't use an actual session expire observable here, to make telemetry collection
-        // independent of the session. This allows to start and send telemetry events earlier.
-        sessionExpireObservable: new Observable(),
       }),
     })
     cleanupTasks.push(telemetryBatch.stop)

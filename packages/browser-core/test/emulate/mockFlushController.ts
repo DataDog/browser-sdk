@@ -29,6 +29,7 @@ export function createMockFlushController() {
     },
     flushObservable,
     prepareUrgentFlushObservable,
+    forceFlush: jasmine.createSpy<FlushController['forceFlush']>(),
     notifyFlush(reason: FlushReason = 'bytes_limit') {
       if (currentMessagesCount === 0) {
         throw new Error(

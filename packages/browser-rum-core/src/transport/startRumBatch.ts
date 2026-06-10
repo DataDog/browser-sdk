@@ -80,11 +80,9 @@ export function startRumBatch(
     encoder: createEncoder(DeflateEncoderStreamId.RUM),
     endpoints,
     reportError,
-    flushController: createFlushController({
-      pageMayExitObservable,
-      sessionExpireObservable,
-    }),
+    flushController: createFlushController({ pageMayExitObservable }),
   })
+  sessionExpireObservable.subscribe(() => batch.flushController.forceFlush('session_expire'))
 
   let lastSentView: RumViewEvent | undefined
   let viewUpdatesSinceCheckpoint = 0

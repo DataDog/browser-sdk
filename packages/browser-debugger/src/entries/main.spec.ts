@@ -39,6 +39,7 @@ describe('datadogDebugger', () => {
       flushController: undefined as any,
       add: () => undefined,
       flush: () => undefined,
+      forceFlush: () => undefined,
       stop: () => undefined,
       upsert: () => undefined,
     }))
@@ -70,6 +71,7 @@ describe('datadogDebugger', () => {
       flushController: undefined as any,
       add: () => undefined,
       flush: () => undefined,
+      forceFlush: () => undefined,
       stop: () => undefined,
       upsert: () => undefined,
     }))

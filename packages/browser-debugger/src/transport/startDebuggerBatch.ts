@@ -17,7 +17,6 @@ export function startDebuggerBatch(initConfiguration: InitConfiguration): Batch 
     reportError: (message) => display.error('transport error:', message),
     flushController: createFlushController({
       pageMayExitObservable: createSimplePageMayExitObservable(),
-      sessionExpireObservable: new Observable(),
     }),
   })
 

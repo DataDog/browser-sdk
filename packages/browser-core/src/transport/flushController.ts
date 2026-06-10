@@ -31,7 +31,6 @@ export interface FlushEvent {
 
 interface FlushControllerOptions {
   pageMayExitObservable: Observable<PageMayExitEvent>
-  sessionExpireObservable: Observable<void>
 }
 
 /**
@@ -39,7 +38,7 @@ interface FlushControllerOptions {
  * to happen. The implementation is designed to support both synchronous and asynchronous usages,
  * but relies on invariants described in each method documentation to keep a coherent state.
  */
-export function createFlushController({ pageMayExitObservable, sessionExpireObservable }: FlushControllerOptions) {
+export function createFlushController({ pageMayExitObservable }: FlushControllerOptions) {
   let forcedFlushReason: FlushReason | undefined
   const prepareUrgentFlushObservable = new Observable<UrgentFlushReason>()
   const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => {
@@ -51,11 +50,9 @@ export function createFlushController({ pageMayExitObservable, sessionExpireObse
     }
     flush(event.reason)
   })
-  const sessionExpireSubscription = sessionExpireObservable.subscribe(() => flush('session_expire'))
 
   const flushObservable = new Observable<FlushEvent>(() => () => {
     pageMayExitSubscription.unsubscribe()
-    sessionExpireSubscription.unsubscribe()
   })
 
   let currentBytesCount = 0
@@ -97,6 +94,7 @@ export function createFlushController({ pageMayExitObservable, sessionExpireObse
   return {
     flushObservable,
     prepareUrgentFlushObservable,
+    forceFlush: flush,
     get messagesCount() {
       return currentMessagesCount
     },
