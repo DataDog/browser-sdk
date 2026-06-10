@@ -6,7 +6,11 @@ import { jsonStringify } from '../tools/serialisation/jsonStringify'
 import { createIdentityEncoder } from '../tools/encoder'
 import type { Encoder, EncoderResult } from '../tools/encoder'
 import { computeBytesCount, ONE_KIBI_BYTE } from '../tools/utils/byteUtils'
-import type { HttpRequest, Payload } from './httpRequest'
+import { mockable } from '../tools/mockable'
+import type { EndpointBuilder } from '../domain/configuration'
+import type { RawError } from '../domain/error/error.types'
+import { createHttpRequest } from './httpRequest'
+import type { Payload } from './httpRequest'
 import type { FlushController, FlushEvent } from './flushController'
 
 export const MESSAGE_BYTES_LIMIT = 256 * ONE_KIBI_BYTE
@@ -20,13 +24,16 @@ export interface Batch {
 
 export function createBatch({
   encoder = createIdentityEncoder(),
-  request,
+  endpoints,
+  reportError,
   flushController,
 }: {
   encoder?: Encoder
-  request: HttpRequest
+  endpoints: EndpointBuilder[]
+  reportError: (error: RawError) => void
   flushController: FlushController
 }): Batch {
+  const request = mockable(createHttpRequest)(endpoints, reportError)
   let upsertBuffer: { [key: string]: string } = {}
   const flushSubscription = flushController.flushObservable.subscribe((event) => flush(event))
 

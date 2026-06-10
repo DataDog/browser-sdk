@@ -1,10 +1,11 @@
 import { Observable } from '..'
 import type { MockFlushController } from '../../test'
-import { createMockFlushController } from '../../test'
+import { createMockFlushController, replaceMockable } from '../../test'
 import { display } from '../tools/display'
 import type { Encoder } from '../tools/encoder'
 import { createIdentityEncoder } from '../tools/encoder'
 import { createBatch, MESSAGE_BYTES_LIMIT, type Batch } from './batch'
+import { createHttpRequest } from './httpRequest'
 import type { HttpRequest, HttpRequestEvent } from './httpRequest'
 
 describe('batch', () => {
@@ -31,7 +32,8 @@ describe('batch', () => {
     } satisfies HttpRequest
     flushController = createMockFlushController()
     encoder = createIdentityEncoder()
-    batch = createBatch({ encoder, request: transport, flushController })
+    replaceMockable(createHttpRequest, (() => transport) as unknown as typeof createHttpRequest)
+    batch = createBatch({ encoder, endpoints: [], reportError: () => undefined, flushController })
   })
 
   it('should send a message', () => {

@@ -2,7 +2,6 @@ import type { Observable, RawError, PageMayExitEvent, Encoder, Context } from '@
 import {
   createBatch,
   createFlushController,
-  createHttpRequest,
   DeflateEncoderStreamId,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
@@ -79,7 +78,8 @@ export function startRumBatch(
 
   const batch = createBatch({
     encoder: createEncoder(DeflateEncoderStreamId.RUM),
-    request: createHttpRequest(endpoints, reportError),
+    endpoints,
+    reportError,
     flushController: createFlushController({
       pageMayExitObservable,
       sessionExpireObservable,

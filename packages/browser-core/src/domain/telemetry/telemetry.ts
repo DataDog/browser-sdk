@@ -21,13 +21,7 @@ import { NonErrorPrefix } from '../error/error.types'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { getConnectivity } from '../connectivity'
-import {
-  canUseEventBridge,
-  createFlushController,
-  createHttpRequest,
-  getEventBridge,
-  createBatch,
-} from '../../transport'
+import { canUseEventBridge, createFlushController, getEventBridge, createBatch } from '../../transport'
 import { createPageMayExitObservable } from '../../browser/pageMayExitObservable'
 import { globalObject, isWorkerEnvironment } from '../../tools/globalObject'
 import { noop } from '../../tools/utils/functionUtils'
@@ -217,11 +211,9 @@ export function startTelemetryTransport(
       endpoints.push(replicaEndpoint)
     }
     const telemetryBatch = createBatch({
-      request: createHttpRequest(
-        endpoints,
-        // Ignore transport errors for telemetry
-        noop
-      ),
+      endpoints,
+      // Ignore transport errors for telemetry
+      reportError: noop,
       flushController: createFlushController({
         pageMayExitObservable: createPageMayExitObservable(),
 

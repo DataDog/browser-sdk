@@ -3,7 +3,6 @@ import {
   addEventListener,
   createBatch,
   createFlushController,
-  createHttpRequest,
   Observable,
   PageExitReason,
   createEndpointBuilder,
@@ -14,7 +13,8 @@ export function startDebuggerBatch(initConfiguration: InitConfiguration): Batch 
   const debuggerEndpointBuilder = createEndpointBuilder({ ...initConfiguration, source: 'dd_debugger' }, 'debugger')
 
   const batch = createBatch({
-    request: createHttpRequest([debuggerEndpointBuilder], (error) => display.error('transport error:', error)),
+    endpoints: [debuggerEndpointBuilder],
+    reportError: (error) => display.error('transport error:', error),
     flushController: createFlushController({
       pageMayExitObservable: createSimplePageMayExitObservable(),
       sessionExpireObservable: new Observable(),
