@@ -96,8 +96,8 @@ export function startRum(
       sessionManager.expireObservable,
       createEncoder
     )
-    const preparePageExitSubscription = batch.flushController.preparePageExitFlushObservable.subscribe((reason) => {
-      lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, { reason })
+    const preparePageExitSubscription = batch.flushController.prepareUrgentFlushObservable.subscribe((reason) => {
+      lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, reason)
     })
     cleanupTasks.push(() => preparePageExitSubscription.unsubscribe())
     cleanupTasks.push(() => batch.stop())
@@ -105,7 +105,7 @@ export function startRum(
   } else {
     startRumEventBridge(lifeCycle)
     const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => {
-      lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, event)
+      lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, event.reason)
     })
     cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
   }

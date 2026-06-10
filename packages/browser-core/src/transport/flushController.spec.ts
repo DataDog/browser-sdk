@@ -100,11 +100,11 @@ describe('flushController', () => {
   })
 
   describe('bytes limit', () => {
-    it('uses the page exit reason as flush reason for intermediate flushes during page exit', () => {
+    it('uses the urgent reason as flush reason for intermediate flushes during page exit', () => {
       flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
       flushController.notifyAfterAddMessage()
 
-      flushController.preparePageExitFlushObservable.subscribe(() => {
+      flushController.prepareUrgentFlushObservable.subscribe(() => {
         flushController.notifyBeforeAddMessage(BYTES_LIMIT)
       })
 

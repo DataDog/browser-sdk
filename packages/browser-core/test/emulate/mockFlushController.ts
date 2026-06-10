@@ -1,12 +1,11 @@
 import { Observable } from '../../src/tools/observable'
-import type { PageExitReason } from '../../src/browser/pageMayExitObservable'
-import type { FlushEvent, FlushController, FlushReason } from '../../src/transport'
+import type { FlushEvent, FlushController, FlushReason, UrgentFlushReason } from '../../src/transport'
 
 export type MockFlushController = ReturnType<typeof createMockFlushController>
 
 export function createMockFlushController() {
   const flushObservable = new Observable<FlushEvent>()
-  const preparePageExitFlushObservable = new Observable<PageExitReason>()
+  const prepareUrgentFlushObservable = new Observable<UrgentFlushReason>()
   let currentMessagesCount = 0
   let currentBytesCount = 0
 
@@ -29,7 +28,7 @@ export function createMockFlushController() {
       return currentBytesCount
     },
     flushObservable,
-    preparePageExitFlushObservable,
+    prepareUrgentFlushObservable,
     notifyFlush(reason: FlushReason = 'bytes_limit') {
       if (currentMessagesCount === 0) {
         throw new Error(

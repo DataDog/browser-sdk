@@ -7,7 +7,8 @@ import type { TimeoutId } from '../tools/timer'
 import { clearTimeout, setTimeout } from '../tools/timer'
 import { RECOMMENDED_REQUEST_BYTES_LIMIT } from './httpRequest'
 
-export type FlushReason = PageExitReason | 'duration_limit' | 'bytes_limit' | 'messages_limit' | 'session_expire'
+export type UrgentFlushReason = PageExitReason
+export type FlushReason = UrgentFlushReason | 'duration_limit' | 'bytes_limit' | 'messages_limit' | 'session_expire'
 
 /**
  * flush automatically, aim to be lower than ALB connection timeout
@@ -40,11 +41,11 @@ interface FlushControllerOptions {
  */
 export function createFlushController({ pageMayExitObservable, sessionExpireObservable }: FlushControllerOptions) {
   let forcedFlushReason: FlushReason | undefined
-  const preparePageExitFlushObservable = new Observable<PageExitReason>()
+  const prepareUrgentFlushObservable = new Observable<UrgentFlushReason>()
   const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => {
     forcedFlushReason = event.reason
     try {
-      preparePageExitFlushObservable.notify(event.reason)
+      prepareUrgentFlushObservable.notify(event.reason)
     } finally {
       forcedFlushReason = undefined
     }
@@ -95,7 +96,7 @@ export function createFlushController({ pageMayExitObservable, sessionExpireObse
 
   return {
     flushObservable,
-    preparePageExitFlushObservable,
+    prepareUrgentFlushObservable,
     get messagesCount() {
       return currentMessagesCount
     },
