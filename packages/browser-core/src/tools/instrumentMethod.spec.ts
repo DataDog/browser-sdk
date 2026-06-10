@@ -201,28 +201,10 @@ describe('instrumentMethod', () => {
 describe('instrumentConstructor', () => {
   const THIRD_PARTY_CONSTRUCTOR_TAG = 42
 
-  class MyClass {
-    value: number
-    constructor(value: number) {
-      this.value = value
-    }
-
-    getValue() {
-      return this.value
-    }
-  }
-
-  const initialMyClassPrototypeConstructor = Object.getOwnPropertyDescriptor(MyClass.prototype, 'constructor')!
+  let MyClass: MyClassConstructor
 
   beforeEach(() => {
-    // Several tests instrument without calling `stop()`; they share this `MyClass` and leave
-    // `MyClass.prototype.constructor` pointing at a stale wrapper, which breaks random-order runs.
-    Object.defineProperty(MyClass.prototype, 'constructor', {
-      configurable: initialMyClassPrototypeConstructor.configurable!,
-      enumerable: initialMyClassPrototypeConstructor.enumerable!,
-      writable: initialMyClassPrototypeConstructor.writable,
-      value: MyClass,
-    })
+    MyClass = createMyClassFixture().MyClass
   })
 
   it('calls the instrumentation when the constructor is called with new', () => {
@@ -248,7 +230,7 @@ describe('instrumentConstructor', () => {
 
     thirdPartyConstructorWrap(container)
 
-    const instance = new container.MyClass(7) as MyClass & { thirdPartyTag: number }
+    const instance = new container.MyClass(7) as MyClassInstance & { thirdPartyTag: number }
 
     expect(instance.value).toBe(7)
     expect(instance.thirdPartyTag).toBe(THIRD_PARTY_CONSTRUCTOR_TAG)
@@ -394,11 +376,11 @@ describe('instrumentConstructor', () => {
     const instance = new container.MyClass(7)
 
     expect(postCallCallbackSpy).toHaveBeenCalledOnceWith(instance)
-    expect((postCallCallbackSpy.calls.mostRecent().args[0] as MyClass).value).toBe(7)
+    expect((postCallCallbackSpy.calls.mostRecent().args[0] as MyClassInstance).value).toBe(7)
   })
 
   it('does not instrument a constructor that does not exist', () => {
-    const container: { MyClass?: typeof MyClass } = {}
+    const container: { MyClass?: MyClassConstructor } = {}
 
     const { stop } = instrumentConstructor(container, 'MyClass', noop)
 
@@ -459,7 +441,7 @@ describe('instrumentConstructor', () => {
 
         stop()
 
-        const instance = new container.MyClass(5) as MyClass & { thirdPartyTag: number }
+        const instance = new container.MyClass(5) as MyClassInstance & { thirdPartyTag: number }
 
         expect(instrumentationSpy).not.toHaveBeenCalled()
         expect(instance.value).toBe(5)
@@ -534,20 +516,40 @@ describe('instrumentConstructor', () => {
   })
 
   /**
-   * Wraps the current `MyClass` on `container` (typically the SDK-instrumented constructor) in a
+   * Wraps the current `container.MyClass` (typically the SDK-instrumented constructor) in a
    * Proxy that still delegates construction, then tags instances — analogous to
    * `thirdPartyInstrumentation` in the `instrumentMethod` suite.
    */
-  function thirdPartyConstructorWrap(container: { MyClass: typeof MyClass }) {
+  function thirdPartyConstructorWrap(container: { MyClass: MyClassConstructor }) {
     const inner = container.MyClass
     container.MyClass = new Proxy(inner, {
       construct(target, argArray, newTarget) {
-        const instance = Reflect.construct(target, argArray, newTarget) as MyClass & { thirdPartyTag: number }
+        const instance = Reflect.construct(target, argArray, newTarget) as MyClassInstance & {
+          thirdPartyTag: number
+        }
         instance.thirdPartyTag = THIRD_PARTY_CONSTRUCTOR_TAG
         return instance
       },
     })
   }
+
+  function createMyClassFixture() {
+    class MyClass {
+      value: number
+      constructor(value: number) {
+        this.value = value
+      }
+
+      getValue() {
+        return this.value
+      }
+    }
+
+    return { MyClass }
+  }
+
+  type MyClassConstructor = ReturnType<typeof createMyClassFixture>['MyClass']
+  type MyClassInstance = InstanceType<MyClassConstructor>
 })
 
 describe('instrumentSetter', () => {
