@@ -6,15 +6,15 @@ import { compile } from './expression'
 
 const MAX_MESSAGE_LENGTH = 8 * 1024 // 8KB
 
+interface TemplateEvaluationError {
+  expr: string
+  message: string
+}
+
 export interface TemplateSegment {
   str?: string
   dsl?: string
   json?: any
-}
-
-export interface CompiledTemplate {
-  createFunction: (keys: string[]) => (...args: any[]) => any[]
-  clearCache?: () => void
 }
 
 // Options for browserInspect - controls how values are stringified
@@ -183,29 +183,9 @@ function inspectValueInternal(value: unknown, depthExceeded: boolean = false): s
   return browserInspectInternal(value, true)
 }
 
-/**
- * Evaluate compiled template with runtime context
- *
- * @param compiledTemplate - Template object with createFunction factory
- * @param context - Runtime context with variables
- * @returns Array of segment results (strings or error objects)
- */
-function evalCompiledTemplate(compiledTemplate: CompiledTemplate, context: Record<string, any>): any[] {
-  // Separate 'this' from other context variables
-  const { this: thisValue, ...otherContext } = context
-  const contextKeys = Object.keys(otherContext)
-  const contextValues = Object.values(otherContext)
-
-  // Create function with dynamic parameters (function body was pre-built during initialization)
-  const fn = compiledTemplate.createFunction(contextKeys)
-
-  // Execute with browserInspect and context values, binding 'this' context
-  return fn.call(thisValue, browserInspect, ...contextValues)
-}
-
 export interface ProbeWithTemplate {
-  templateRequiresEvaluation: boolean
-  template: CompiledTemplate | string
+  template: string
+  evaluateTemplate?: (context: Record<string, any>) => unknown[]
 }
 
 /**
@@ -218,15 +198,14 @@ export interface ProbeWithTemplate {
 export function evaluateProbeMessage(probe: ProbeWithTemplate, context: Record<string, any>): string {
   let message: string
 
-  if (probe.templateRequiresEvaluation) {
+  if (probe.evaluateTemplate) {
     try {
-      const segments = evalCompiledTemplate(probe.template as CompiledTemplate, context)
+      const segments = probe.evaluateTemplate(context)
       message = segments
         .map((seg) => {
           if (typeof seg === 'string') {
             return seg
-          } else if (seg && typeof seg === 'object' && seg.expr) {
-            // Error object from template evaluation
+          } else if (isTemplateEvaluationError(seg)) {
             return `{${seg.message}}`
           }
           return String(seg)
@@ -236,7 +215,7 @@ export function evaluateProbeMessage(probe: ProbeWithTemplate, context: Record<s
       message = `{Error: ${(e as Error).message}}`
     }
   } else {
-    message = probe.template as string
+    message = probe.template
   }
 
   // Truncate message if it exceeds maximum length
@@ -245,4 +224,8 @@ export function evaluateProbeMessage(probe: ProbeWithTemplate, context: Record<s
   }
 
   return message
+}
+
+function isTemplateEvaluationError(segment: any): segment is TemplateEvaluationError {
+  return segment?.expr !== undefined
 }

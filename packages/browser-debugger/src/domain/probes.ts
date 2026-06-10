@@ -3,8 +3,8 @@ import { display } from './display'
 import { compile } from './expression'
 import { compileCondition } from './condition'
 import type { CompiledCondition } from './condition'
-import { templateRequiresEvaluation, compileSegments } from './template'
-import type { TemplateSegment, CompiledTemplate } from './template'
+import { browserInspect, templateRequiresEvaluation, compileSegments } from './template'
+import type { TemplateSegment } from './template'
 import type { CaptureOptions } from './capture'
 import type { ActiveEntry } from './activeEntries'
 
@@ -50,11 +50,11 @@ export interface Probe {
   type: string
   where: ProbeWhere
   when?: ProbeWhen
-  template: string | CompiledTemplate
+  template: string
   segments?: TemplateSegment[]
   captureSnapshot: boolean
   capture: CaptureOptions
-  sampling: ProbeSampling
+  sampling?: ProbeSampling
   evaluateAt: 'ENTRY' | 'EXIT'
   location?: {
     file?: string
@@ -64,9 +64,9 @@ export interface Probe {
 }
 
 export interface InitializedProbe extends Probe {
-  templateRequiresEvaluation: boolean
   functionId: string
   condition?: CompiledCondition
+  evaluateTemplate?: (context: Record<string, any>) => unknown[]
   msBetweenSampling: number
   lastCaptureMs: number
   lastConditionErrorMs: number
@@ -196,12 +196,6 @@ export function removeProbe(idOrProbe: string | InitializedProbe): void {
   for (let i = 0; i < probes.length; i++) {
     const probe = probes[i]
     if (probe.id === id && (!expectedProbe || probe === expectedProbe)) {
-      if (typeof probe.template === 'object' && probe.template?.clearCache) {
-        probe.template.clearCache()
-      }
-      if (typeof probe.condition === 'object' && probe.condition?.clearCache) {
-        probe.condition.clearCache()
-      }
       const remainingProbes = probes.slice(0, i).concat(probes.slice(i + 1))
       if (remainingProbes.length === 0) {
         delete activeProbes[functionId]
@@ -232,12 +226,6 @@ export function clearProbes(): void {
   for (const probes of Object.values(activeProbes)) {
     if (probes) {
       for (const probe of probes) {
-        if (typeof probe.template === 'object' && probe.template?.clearCache) {
-          probe.template.clearCache()
-        }
-        if (typeof probe.condition === 'object' && probe.condition?.clearCache) {
-          probe.condition.clearCache()
-        }
         // Unlike removeProbe(), clearProbes() is an aggressive teardown used by
         // tests and the delivery API circuit breaker. Drop in-flight entries so
         // stale captured probe instances cannot emit after the debugger is disabled.
@@ -359,8 +347,7 @@ export function initializeProbe(probe: Probe): asserts probe is InitializedProbe
   }
 
   // Optimize for fast calculations when probe is hit
-  ;(probe as InitializedProbe).templateRequiresEvaluation = templateRequiresEvaluation(probe.segments)
-  if ((probe as InitializedProbe).templateRequiresEvaluation) {
+  if (templateRequiresEvaluation(probe.segments)) {
     const segmentsCode = compileSegments(probe.segments!)
 
     // Pre-build the function body so we avoid rebuilding this string on every probe hit.
@@ -370,23 +357,20 @@ export function initializeProbe(probe: Probe): asserts probe is InitializedProbe
     const fnBodyTemplate = `return ${segmentsCode};`
 
     // Cache compiled functions by context keys to avoid recreating them
-    const functionCache = new Map<string, (...args: any[]) => any[]>()
+    const functionCache = new Map<string, (...args: any[]) => unknown[]>()
 
-    // Store the template with a factory that caches functions
-    probe.template = {
-      createFunction: (contextKeys: string[]) => {
-        const cacheKey = contextKeys.join(',')
-        let fn = functionCache.get(cacheKey)
-        if (!fn) {
-          // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
-          fn = new Function('$dd_inspect', ...contextKeys, fnBodyTemplate) as (...args: any[]) => any[]
-          functionCache.set(cacheKey, fn)
-        }
-        return fn
-      },
-      clearCache: () => {
-        functionCache.clear()
-      },
+    ;(probe as InitializedProbe).evaluateTemplate = (context: Record<string, any>): unknown[] => {
+      const { this: thisValue, ...otherContext } = context
+      const contextKeys = Object.keys(otherContext)
+      const contextValues = Object.values(otherContext)
+      const cacheKey = contextKeys.join(',')
+      let fn = functionCache.get(cacheKey)
+      if (!fn) {
+        // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
+        fn = new Function('$dd_inspect', ...contextKeys, fnBodyTemplate) as (...args: any[]) => unknown[]
+        functionCache.set(cacheKey, fn)
+      }
+      return fn.call(thisValue, browserInspect, ...contextValues)
     }
   }
   delete probe.segments

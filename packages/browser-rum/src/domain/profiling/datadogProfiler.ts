@@ -1,4 +1,6 @@
-import type { SessionManager, Profiler, RelativeTime } from '@datadog/browser-core'
+import { elapsed, clocksOrigin, clocksNow } from '@datadog/js-core/time'
+import type { RelativeTime } from '@datadog/js-core/time'
+import type { SessionManager, Profiler } from '@datadog/browser-core'
 import {
   addEventListener,
   clearTimeout,
@@ -7,9 +9,6 @@ import {
   monitorError,
   display,
   globalObject,
-  clocksOrigin,
-  clocksNow,
-  elapsed,
   mockable,
 } from '@datadog/browser-core'
 

@@ -1,5 +1,6 @@
-import type { ClocksState, Duration, Observable, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { elapsed, timeStampNow } from '@datadog/browser-core'
+import type { ClocksState, RelativeTime, Duration, TimeStamp } from '@datadog/js-core/time'
+import type { Observable } from '@datadog/browser-core'
+import { elapsed, timeStampNow } from '@datadog/js-core/time'
 import type { ViewLoadingType } from '../../../rawRumEvent.types'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'

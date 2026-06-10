@@ -6,7 +6,7 @@
     "start": "next start --port 0"
   },
   "dependencies": {
-    "next": "16.1.7",
+    "next": "16.2.6",
     "react": "19.2.6",
     "react-dom": "19.2.6"
   },
@@ -29,6 +29,7 @@
   "resolutions": {
     "@datadog/browser-rum-core": "file:../../../packages/browser-rum-core/package.tgz",
     "@datadog/browser-core": "file:../../../packages/browser-core/package.tgz",
+    "@datadog/js-core": "file:../../../packages/js-core/package.tgz",
     "@datadog/browser-rum": "file:../../../packages/browser-rum/package.tgz",
     "@datadog/browser-rum-nextjs": "file:../../../packages/browser-rum-nextjs/package.tgz",
     "@datadog/browser-rum-react": "file:../../../packages/browser-rum-react/package.tgz",

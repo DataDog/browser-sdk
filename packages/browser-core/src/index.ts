@@ -81,8 +81,8 @@ export * from './tools/display'
 export type { Encoder, EncoderResult } from './tools/encoder'
 export { createIdentityEncoder } from './tools/encoder'
 export * from './tools/utils/urlPolyfill'
-export * from './tools/utils/timeUtils'
 export * from './tools/utils/arrayUtils'
+
 export * from './tools/serialisation/sanitize'
 export * from './tools/globalObject'
 export { AbstractLifeCycle } from './tools/abstractLifeCycle'
@@ -92,8 +92,8 @@ export { sendToExtension } from './tools/sendToExtension'
 export { runOnReadyState, asyncRunOnReadyState } from './browser/runOnReadyState'
 export { getZoneJsOriginalValue } from './tools/getZoneJsOriginalValue'
 export { mockable } from './tools/mockable'
-export type { InstrumentedMethodCall } from './tools/instrumentMethod'
-export { instrumentMethod, instrumentSetter } from './tools/instrumentMethod'
+export type { InstrumentedMethodCall, InstrumentedConstructorCall } from './tools/instrumentMethod'
+export { instrumentMethod, instrumentConstructor, instrumentSetter } from './tools/instrumentMethod'
 export {
   computeRawError,
   getFileFromStackTraceString,
@@ -103,6 +103,7 @@ export {
 export { NonErrorPrefix } from './domain/error/error.types'
 export type { Context, ContextArray, ContextValue } from './tools/serialisation/context'
 export { getCookie, getInitCookie, setCookie, deleteCookie, resetInitCookies } from './browser/cookie'
+export { isCookieStoreSupported } from './browser/cookieAccess'
 export type {
   CookieStore,
   WeakRef,

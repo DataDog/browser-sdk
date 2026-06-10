@@ -1,4 +1,5 @@
-import type { TimeStamp, HttpRequest, HttpRequestEvent, Telemetry } from '@datadog/browser-core'
+import type { HttpRequest, HttpRequestEvent, Telemetry } from '@datadog/browser-core'
+import type { TimeStamp } from '@datadog/js-core/time'
 import { PageExitReason, DefaultPrivacyLevel, noop, DeflateEncoderStreamId, Observable } from '@datadog/browser-core'
 import type { ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType, startViewHistory } from '@datadog/browser-rum-core'

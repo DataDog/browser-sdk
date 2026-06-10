@@ -1,6 +1,6 @@
 import { setNavigatorOnLine, setNavigatorConnection } from '@datadog/browser-core/test'
 import { HookNames } from '@datadog/browser-core'
-import type { RelativeTime } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/js-core/time'
 import type { AssembleHookParams, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { startConnectivityContext } from './connectivityContext'

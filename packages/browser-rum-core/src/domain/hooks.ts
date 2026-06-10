@@ -1,12 +1,5 @@
-import type {
-  DISCARDED,
-  Duration,
-  HookNamesAsConst,
-  RecursivePartial,
-  RelativeTime,
-  SKIPPED,
-  TelemetryEvent,
-} from '@datadog/browser-core'
+import type { Duration, RelativeTime } from '@datadog/js-core/time'
+import type { DISCARDED, HookNamesAsConst, RecursivePartial, SKIPPED, TelemetryEvent } from '@datadog/browser-core'
 import { abstractHooks } from '@datadog/browser-core'
 import type { RumEvent } from '../rumEvent.types'
 import type { RawRumEvent } from '../rawRumEvent.types'

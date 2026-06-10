@@ -19,7 +19,8 @@
   "dependencies": {
     "@datadog/browser-core": "7.2.0",
     "@datadog/browser-rum-core": "7.2.0",
-    "@datadog/browser-rum-react": "7.2.0"
+    "@datadog/browser-rum-react": "7.2.0",
+    "@datadog/js-core": "0.0.1"
   },
   "peerDependencies": {
     "next": ">=13.0.0",
@@ -43,7 +44,7 @@
   },
   "devDependencies": {
     "@types/react": "19.2.15",
-    "next": "16.2.4",
+    "next": "16.2.6",
     "react": "19.2.6",
     "react-dom": "19.2.6"
   }

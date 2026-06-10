@@ -2,10 +2,21 @@ import express from 'express'
 import cors from 'cors'
 import { createIntakeProxyMiddleware } from '../intakeProxyMiddleware.ts'
 import type { IntakeRegistry } from '../intakeRegistry'
+import { createDebuggerHttpApi } from './debuggerHttpApi'
+import type { DebuggerHttpApiControl } from './debuggerHttpApi'
 
-export function createIntakeServerApp(intakeRegistry: IntakeRegistry) {
+export interface DatadogHttpApiControl {
+  debugger: DebuggerHttpApiControl
+}
+
+export interface DatadogHttpApi {
+  app: express.Express
+  control: DatadogHttpApiControl
+}
+
+export function createDatadogHttpApi(intakeRegistry: IntakeRegistry): DatadogHttpApi {
   const app = express()
-  let debuggerProbes: object[] = []
+  const debuggerHttpApi = createDebuggerHttpApi()
 
   app.use(cors())
 
@@ -21,13 +32,12 @@ export function createIntakeServerApp(intakeRegistry: IntakeRegistry) {
     }
   })
 
-  app.post('/api/unstable/debugger/frontend/probes', (_req, res) => {
-    res.json({ nextCursor: '', updates: debuggerProbes, deletions: [] })
-  })
+  app.use(debuggerHttpApi.router)
 
-  return Object.assign(app, {
-    setDebuggerProbes(probes: object[]) {
-      debuggerProbes = probes
+  return {
+    app,
+    control: {
+      debugger: debuggerHttpApi.control,
     },
-  })
+  }
 }

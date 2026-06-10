@@ -1,5 +1,5 @@
 import { HookNames } from '@datadog/browser-core'
-import type { RelativeTime } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/js-core/time'
 import { mockRumConfiguration } from '../../../test'
 import type { AssembleHookParams, Hooks } from '../hooks'
 import { createHooks } from '../hooks'

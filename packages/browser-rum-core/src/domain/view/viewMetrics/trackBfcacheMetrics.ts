@@ -1,4 +1,4 @@
-import type { RelativeTime, ClocksState } from '@datadog/browser-core'
+import type { RelativeTime, ClocksState } from '@datadog/js-core/time'
 import type { InitialViewMetrics } from './trackInitialViewMetrics'
 import { trackRestoredFirstContentfulPaint } from './trackFirstContentfulPaint'
 

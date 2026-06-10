@@ -314,10 +314,9 @@ function js(parts: readonly string[], ...vars: string[]) {
 function setupEventBridge(servers: Servers, options: EventBridgeOptions = {}) {
   const baseHostname = new URL(servers.base.origin).hostname
 
-  // Send EventBridge events to the intake so we can inspect them in our E2E test cases. The URL
-  // needs to be similar to the normal Datadog intake (through proxy) to make the SDK completely
-  // ignore them.
-  const eventBridgeIntake = `${servers.intake.origin}/?${new URLSearchParams({
+  // Send EventBridge events through the Datadog HTTP API so we can inspect them in our E2E test cases.
+  // The URL needs to be similar to the normal Datadog intake to make the SDK completely ignore them.
+  const eventBridgeProxy = `${servers.datadogHttpApi.origin}/?${new URLSearchParams({
     ddforward: `/api/v2/rum?${INTAKE_URL_PARAMETERS.join('&')}`,
     bridge: 'true',
   }).toString()}`
@@ -344,7 +343,7 @@ function setupEventBridge(servers: Servers, options: EventBridgeOptions = {}) {
       send(e) {
         const { eventType, event } = JSON.parse(e)
         const request = new XMLHttpRequest()
-        request.open('POST', ${JSON.stringify(eventBridgeIntake)} + '&event_type=' + eventType, true)
+        request.open('POST', ${JSON.stringify(eventBridgeProxy)} + '&event_type=' + eventType, true)
         request.send(JSON.stringify(event))
       },
     }
@@ -390,7 +389,7 @@ export function formatConfiguration(
   let result = JSON.stringify(
     {
       ...initConfiguration,
-      proxy: servers.intake.origin,
+      proxy: servers.datadogHttpApi.origin,
       remoteConfigurationProxy: `${servers.base.origin}/config`,
     },
     (_key, value) => {

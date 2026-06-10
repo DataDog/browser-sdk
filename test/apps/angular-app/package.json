@@ -29,6 +29,7 @@
   "resolutions": {
     "@datadog/browser-rum-core": "file:../../../packages/browser-rum-core/package.tgz",
     "@datadog/browser-core": "file:../../../packages/browser-core/package.tgz",
+    "@datadog/js-core": "file:../../../packages/js-core/package.tgz",
     "@datadog/browser-rum": "file:../../../packages/browser-rum/package.tgz",
     "@datadog/browser-rum-angular": "file:../../../packages/browser-rum-angular/package.tgz",
     "@datadog/browser-rum-slim": "file:../../../packages/browser-rum-slim/package.tgz",

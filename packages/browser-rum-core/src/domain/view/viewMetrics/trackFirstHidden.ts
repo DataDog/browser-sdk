@@ -1,4 +1,4 @@
-import type { ClocksState, RelativeTime } from '@datadog/browser-core'
+import type { ClocksState, RelativeTime } from '@datadog/js-core/time'
 import { addEventListeners, DOM_EVENT, noop } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
 import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../../browser/performanceObservable'

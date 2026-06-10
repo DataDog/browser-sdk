@@ -1,4 +1,5 @@
-import type { RelativeTime, SessionManager } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/js-core/time'
+import type { SessionManager } from '@datadog/browser-core'
 import { DISCARDED, HookNames } from '@datadog/browser-core'
 import { createSessionManagerMock } from '@datadog/browser-core/test'
 import type { DefaultLogsEventAttributes, Hooks } from '../hooks'

@@ -7,7 +7,7 @@
   "dependencies": {
     "react": "19.2.6",
     "react-dom": "19.2.6",
-    "react-router": "7.15.1"
+    "react-router": "7.16.0"
   },
   "peerDependencies": {
     "@datadog/browser-rum": "*",
@@ -24,13 +24,14 @@
   "resolutions": {
     "@datadog/browser-rum-core": "file:../../../packages/browser-rum-core/package.tgz",
     "@datadog/browser-core": "file:../../../packages/browser-core/package.tgz",
+    "@datadog/js-core": "file:../../../packages/js-core/package.tgz",
     "@datadog/browser-rum": "file:../../../packages/browser-rum/package.tgz",
     "@datadog/browser-rum-react": "file:../../../packages/browser-rum-react/package.tgz",
     "@datadog/browser-rum-slim": "file:../../../packages/browser-rum-slim/package.tgz",
     "@datadog/browser-worker": "file:../../../packages/browser-worker/package.tgz"
   },
   "devDependencies": {
-    "ts-loader": "9.5.7",
+    "ts-loader": "9.6.0",
     "typescript": "6.0.3",
     "webpack": "5.107.2"
   },

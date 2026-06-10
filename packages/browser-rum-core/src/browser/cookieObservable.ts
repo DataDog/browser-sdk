@@ -1,19 +1,20 @@
+import { ONE_SECOND } from '@datadog/js-core/time'
 import type { Configuration } from '@datadog/browser-core'
 import {
   setInterval,
   clearInterval,
   Observable,
   addEventListener,
-  ONE_SECOND,
   DOM_EVENT,
   getCookie,
   globalObject,
+  isCookieStoreSupported,
 } from '@datadog/browser-core'
 
 export type CookieObservable = ReturnType<typeof createCookieObservable>
 
 export function createCookieObservable(configuration: Configuration, cookieName: string) {
-  const detectCookieChangeStrategy = globalObject.cookieStore
+  const detectCookieChangeStrategy = isCookieStoreSupported()
     ? listenToCookieStoreChange(configuration)
     : watchCookieFallback
 

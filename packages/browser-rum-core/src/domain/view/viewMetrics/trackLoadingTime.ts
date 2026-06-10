@@ -1,5 +1,6 @@
-import type { ClocksState, Duration, Observable } from '@datadog/browser-core'
-import { elapsed } from '@datadog/browser-core'
+import type { ClocksState, Duration } from '@datadog/js-core/time'
+import type { Observable } from '@datadog/browser-core'
+import { elapsed } from '@datadog/js-core/time'
 import { waitPageActivityEnd } from '../../waitPageActivityEnd'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'

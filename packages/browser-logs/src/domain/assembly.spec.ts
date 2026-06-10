@@ -1,5 +1,7 @@
-import type { Context, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { ErrorSource, ONE_MINUTE, getTimeStamp, noop, HookNames } from '@datadog/browser-core'
+import type { RelativeTime, TimeStamp } from '@datadog/js-core/time'
+import type { Context } from '@datadog/browser-core'
+import { ONE_MINUTE, toTimeStamp } from '@datadog/js-core/time'
+import { ErrorSource, noop, HookNames } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import type { LogsEvent } from '../logsEvent.types'
@@ -140,7 +142,7 @@ describe('startLogsAssembly', () => {
       }
 
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: { ...DEFAULT_MESSAGE, date: getTimeStamp(1234 as RelativeTime) },
+        rawLogsEvent: { ...DEFAULT_MESSAGE, date: toTimeStamp(1234 as RelativeTime) },
       })
 
       expect(serverLogs[0].foo).toBe('b')

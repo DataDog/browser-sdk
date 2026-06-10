@@ -1,3 +1,4 @@
+import { display } from '../tools/display'
 import { globalObject } from '../tools/globalObject'
 import type { DefaultPrivacyLevel } from '../domain/configuration'
 
@@ -52,13 +53,20 @@ export function bridgeSupports(capability: BridgeCapability): boolean {
 
 export function canUseEventBridge(currentHost = globalObject.location?.hostname): boolean {
   const bridge = getEventBridge()
+  return bridge?.getAllowedWebViewHosts().some((entry) => matchesHostEntry(currentHost, entry)) ?? false
+}
 
-  return (
-    !!bridge &&
-    bridge
-      .getAllowedWebViewHosts()
-      .some((allowedHost) => currentHost === allowedHost || currentHost.endsWith(`.${allowedHost}`))
-  )
+export function matchesHostEntry(host: string, entry: string): boolean {
+  if (!entry.includes('*')) {
+    return host === entry || host.endsWith(`.${entry}`)
+  }
+  const parts = entry.split('*')
+  if (parts.length !== 2) {
+    display.error(`Invalid WebView host pattern "${entry}": only one wildcard (*) is supported.`)
+    return false
+  }
+  const [prefix, suffix] = parts
+  return host.length >= prefix.length + suffix.length && host.startsWith(prefix) && host.endsWith(suffix)
 }
 
 function getEventBridgeGlobal() {

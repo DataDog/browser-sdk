@@ -22,6 +22,9 @@
     "url": "https://github.com/DataDog/browser-sdk.git",
     "directory": "packages/browser-core"
   },
+  "dependencies": {
+    "@datadog/js-core": "0.0.1"
+  },
   "devDependencies": {
     "@types/pako": "2.0.4",
     "pako": "2.1.0"

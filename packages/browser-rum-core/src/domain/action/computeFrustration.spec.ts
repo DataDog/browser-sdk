@@ -1,4 +1,4 @@
-import { ONE_SECOND } from '@datadog/browser-core'
+import { ONE_SECOND } from '@datadog/js-core/time'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import { FrustrationType } from '../../rawRumEvent.types'
