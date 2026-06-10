@@ -151,6 +151,10 @@ export { CustomerDataType, CustomerContextKey, ContextManagerMethod } from './do
 export type { ValueHistory, ValueHistoryEntry } from './tools/valueHistory'
 export { createValueHistory, CLEAR_OLD_VALUES_INTERVAL } from './tools/valueHistory'
 export { readBytesFromStream } from './tools/readBytesFromStream'
+// Only the SSE wire-metadata types are part of the public surface: rum-core consumes `SseMetadata`
+// (which references the other two) on the resource event. The counter, content-type helper, and
+// limit constants stay package-internal — fetchObservable imports them directly from ./tools/sse.
+export type { SseMetadata, SseEventEntry, SseTrackingEndReason } from './tools/sse'
 export type { SessionState } from './domain/session/sessionState'
 export { SESSION_STORE_KEY } from './domain/session/storeStrategies/sessionStoreStrategy'
 export type { MemorySession } from './domain/session/storeStrategies/sessionInMemory'

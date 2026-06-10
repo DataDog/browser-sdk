@@ -13,6 +13,7 @@ import {
   RequestType,
   setTimeout,
 } from '@datadog/browser-core'
+import type { SseMetadata } from '@datadog/browser-core'
 import type { MatchHeader, RumConfiguration } from '../configuration'
 import { RumPerformanceEntryType, createPerformanceObservable } from '../../browser/performanceObservable'
 import type { RumResourceEventDomainContext } from '../../domainContext.types'
@@ -47,9 +48,24 @@ import { trackManualResources } from './trackManualResources'
 // site in `startResourceCollection` for the rationale.
 export const REQUEST_MATCHING_DELAY = 50 as Duration
 
+// SSE counts arrive out of band (the stream ends after resolve); hold them until the matching
+// resource is assembled. Capped so a resource that never assembles cannot leak the map.
+const MAX_PENDING_SSE_METADATA = 1000
+
 export function startResourceCollection(lifeCycle: LifeCycle, configuration: RumConfiguration) {
   const taskQueue = mockable(createTaskQueue)()
   const requestRegistry = createRequestRegistry(lifeCycle)
+
+  const sseMetadataByRequestIndex = new Map<number, SseMetadata>()
+  const sseMetadataSubscription = lifeCycle.subscribe(
+    LifeCycleEventType.SSE_METADATA_COLLECTED,
+    ({ requestIndex, sseMetadata }) => {
+      sseMetadataByRequestIndex.set(requestIndex, sseMetadata)
+      if (sseMetadataByRequestIndex.size > MAX_PENDING_SSE_METADATA) {
+        sseMetadataByRequestIndex.delete(sseMetadataByRequestIndex.keys().next().value!)
+      }
+    }
+  )
 
   const performanceResourceSubscription = createPerformanceObservable(configuration, {
     type: RumPerformanceEntryType.RESOURCE,
@@ -69,7 +85,12 @@ export function startResourceCollection(lifeCycle: LifeCycle, configuration: Rum
         // Note: we could clear the timeout on stop(), but this requires a bit of bookkeeping that
         // is not necessary right now. We could reevaluate in the future.
         setTimeout(() => {
-          const rawEvent = assembleResource(entry, requestRegistry.getMatchingRequest(entry), configuration)
+          const rawEvent = assembleResource(
+            entry,
+            requestRegistry.getMatchingRequest(entry),
+            configuration,
+            sseMetadataByRequestIndex
+          )
           if (rawEvent) {
             lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
           }
@@ -103,6 +124,7 @@ export function startResourceCollection(lifeCycle: LifeCycle, configuration: Rum
       stopRunOnReadyState()
       taskQueue.stop()
       performanceResourceSubscription.unsubscribe()
+      sseMetadataSubscription.unsubscribe()
       resourceTracker.stopAll()
     },
   }
@@ -111,7 +133,8 @@ export function startResourceCollection(lifeCycle: LifeCycle, configuration: Rum
 function assembleResource(
   entry: ResourceLikeEntry,
   request: RequestCompleteEvent | undefined,
-  configuration: RumConfiguration
+  configuration: RumConfiguration,
+  sseMetadataByRequestIndex?: Map<number, SseMetadata>
 ): RawRumEventCollectedData<RawRumResourceEvent> | undefined {
   const tracingInfo = request
     ? computeRequestTracingInfo(request, configuration)
@@ -138,6 +161,7 @@ function assembleResource(
         protocol: computeResourceEntryProtocol(entry),
         delivery_type: computeResourceEntryDeliveryType(entry),
         graphql: request && computeGraphQlMetaData(request, configuration),
+        sse: request && computeSseMetadata(request, sseMetadataByRequestIndex),
         render_blocking_status: entry.renderBlockingStatus,
         ...computeResourceEntrySize(entry),
         ...computeResourceEntryDetails(entry),
@@ -170,6 +194,19 @@ function computeGraphQlMetaData(
   }
 
   return extractGraphQlMetadata(request, graphQlConfig)
+}
+
+// SSE counts arrive after resolve (when the stream ends), keyed by request index. Consume the
+// pending entry, if any, when the matching resource is assembled.
+function computeSseMetadata(
+  request: RequestCompleteEvent,
+  sseMetadataByRequestIndex?: Map<number, SseMetadata>
+): SseMetadata | undefined {
+  const sseMetadata = sseMetadataByRequestIndex?.get(request.requestIndex)
+  if (sseMetadata) {
+    sseMetadataByRequestIndex!.delete(request.requestIndex)
+  }
+  return sseMetadata
 }
 
 function computeContentTypeFromPerformanceEntry(

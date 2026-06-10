@@ -1,5 +1,5 @@
 import type { RelativeTime, Duration, ServerDuration, TimeStamp } from '@datadog/js-core/time'
-import type { MatchOption, TaskQueue } from '@datadog/browser-core'
+import type { MatchOption, TaskQueue, SseMetadata } from '@datadog/browser-core'
 import { elapsed, toServerDuration } from '@datadog/js-core/time'
 import { createTaskQueue, display, RequestType, ResourceType } from '@datadog/browser-core'
 import type { Clock, MockTelemetry } from '@datadog/browser-core/test'
@@ -96,6 +96,7 @@ describe('resourceCollection', () => {
         render_blocking_status: 'blocking',
         method: undefined,
         graphql: undefined,
+        sse: undefined,
       },
       type: RumEventType.RESOURCE,
       _dd: {
@@ -151,6 +152,7 @@ describe('resourceCollection', () => {
         download: { duration: 100000000 as ServerDuration, start: 0 as ServerDuration },
         first_byte: { duration: 0 as ServerDuration, start: 0 as ServerDuration },
         graphql: undefined,
+        sse: undefined,
       },
       type: RumEventType.RESOURCE,
       _dd: {
@@ -167,6 +169,30 @@ describe('resourceCollection', () => {
       requestInput: undefined,
       response: undefined,
       error: undefined,
+    })
+  })
+
+  describe('SSE metadata enrichment', () => {
+    const sseMetadata: SseMetadata = {
+      event_count: 3,
+      events: [{ name: 'message', count: 3 }],
+      comment_count: 1,
+      tracking_end_reason: 'stream_closed',
+    }
+
+    it('attaches sse metadata delivered (out of band) before the resource is assembled', () => {
+      setupResourceCollection()
+      lifeCycle.notify(LifeCycleEventType.SSE_METADATA_COLLECTED, { requestIndex: 42, sseMetadata })
+      notifyRequest({ request: { requestIndex: 42, type: RequestType.FETCH } })
+
+      expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.sse).toEqual(sseMetadata)
+    })
+
+    it('leaves sse undefined when no metadata was delivered for the request', () => {
+      setupResourceCollection()
+      notifyRequest({ request: { requestIndex: 7, type: RequestType.FETCH } })
+
+      expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.sse).toBeUndefined()
     })
   })
 
@@ -361,6 +387,7 @@ describe('resourceCollection', () => {
         download: { duration: 100000000 as ServerDuration, start: 0 as ServerDuration },
         first_byte: { duration: 0 as ServerDuration, start: 0 as ServerDuration },
         graphql: undefined,
+        sse: undefined,
       },
       type: RumEventType.RESOURCE,
       _dd: {
@@ -471,6 +498,7 @@ describe('resourceCollection', () => {
         first_byte: { duration: 0 as ServerDuration, start: 0 as ServerDuration },
         url: 'https://resource.com/valid',
         graphql: undefined,
+        sse: undefined,
       },
       type: RumEventType.RESOURCE,
       _dd: {

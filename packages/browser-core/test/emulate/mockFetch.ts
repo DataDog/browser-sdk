@@ -132,7 +132,7 @@ export class MockResponse implements Response {
   }
 
   get headers() {
-    return notYetImplemented()
+    return new Headers(this.options.headers)
   }
 
   get redirected() {
@@ -161,6 +161,7 @@ export interface MockResponseOptions {
   body?: ReadableStream<Uint8ArrayBuffer>
   bodyUsed?: boolean
   bodyDisturbed?: boolean
+  headers?: Record<string, string>
 }
 export type MockFetch = (input: RequestInfo, init?: RequestInit) => MockFetchPromise
 

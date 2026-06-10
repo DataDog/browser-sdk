@@ -3,7 +3,7 @@ import type { Context, PageMayExitEvent, RawError } from '@datadog/browser-core'
 import { AbstractLifeCycle } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumEvent, AssembledRumEvent } from '../rawRumEvent.types'
-import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
+import type { RequestCompleteEvent, RequestStartEvent, SseMetadataCollectedEvent } from './requestCollection'
 import type { AutoAction } from './action/actionCollection'
 import type { ViewEvent, ViewCreatedEvent, ViewEndedEvent, BeforeViewUpdateEvent } from './view/trackViews'
 import type { DurationVitalStart } from './vital/vitalCollection'
@@ -22,6 +22,7 @@ export const enum LifeCycleEventType {
   AFTER_VIEW_ENDED,
   REQUEST_STARTED,
   REQUEST_COMPLETED,
+  SSE_METADATA_COLLECTED,
 
   // The SESSION_EXPIRED lifecycle event has been introduced to represent when a session has expired
   // and trigger cleanup tasks related to this, prior to renewing the session. Its implementation is
@@ -67,6 +68,7 @@ declare const LifeCycleEventTypeAsConst: {
   AFTER_VIEW_ENDED: LifeCycleEventType.AFTER_VIEW_ENDED
   REQUEST_STARTED: LifeCycleEventType.REQUEST_STARTED
   REQUEST_COMPLETED: LifeCycleEventType.REQUEST_COMPLETED
+  SSE_METADATA_COLLECTED: LifeCycleEventType.SSE_METADATA_COLLECTED
   SESSION_EXPIRED: LifeCycleEventType.SESSION_EXPIRED
   SESSION_RENEWED: LifeCycleEventType.SESSION_RENEWED
   PAGE_MAY_EXIT: LifeCycleEventType.PAGE_MAY_EXIT
@@ -89,6 +91,7 @@ export interface LifeCycleEventMap {
   [LifeCycleEventTypeAsConst.AFTER_VIEW_ENDED]: ViewEndedEvent
   [LifeCycleEventTypeAsConst.REQUEST_STARTED]: RequestStartEvent
   [LifeCycleEventTypeAsConst.REQUEST_COMPLETED]: RequestCompleteEvent
+  [LifeCycleEventTypeAsConst.SSE_METADATA_COLLECTED]: SseMetadataCollectedEvent
   [LifeCycleEventTypeAsConst.SESSION_EXPIRED]: void
   [LifeCycleEventTypeAsConst.SESSION_RENEWED]: void
   [LifeCycleEventTypeAsConst.PAGE_MAY_EXIT]: PageMayExitEvent
