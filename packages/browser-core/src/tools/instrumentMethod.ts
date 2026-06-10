@@ -330,14 +330,14 @@ function preserveConstructorShape(instrumentation: AnyConstructor, original: Any
    * active; restoring on `stop()` fixes this. In practice the SDK initializes as early as possible,
    * which narrows the window where pre-instrument instances exist.
    */
-  const originalConstructor = original.prototype.constructor
-  original.prototype.constructor = instrumentation
+  const { stop: restoreOriginalConstructor } = replaceWithInstrumentation(
+    original.prototype,
+    'constructor',
+    original.prototype.constructor,
+    instrumentation
+  )
 
-  return () => {
-    if (original.prototype.constructor === instrumentation) {
-      original.prototype.constructor = originalConstructor
-    }
-  }
+  return restoreOriginalConstructor
 }
 
 export function instrumentSetter<TARGET extends { [key: string]: any }, PROPERTY extends keyof TARGET>(
