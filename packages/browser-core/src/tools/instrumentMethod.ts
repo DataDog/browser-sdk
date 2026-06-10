@@ -114,31 +114,36 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
     }
   }
 
-  return replaceWithInstrumentation(
-    targetPrototype,
-    method,
-    original,
-    (isStopped) =>
-      function (this: TARGET): ReturnType<TARGET[METHOD]> {
-        if (isStopped()) {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
-          return original.apply(this, arguments)
-        }
+  let stopped = false
 
-        const parameters = Array.from(arguments) as Parameters<TARGET[METHOD]>
+  const instrumentation = function (this: TARGET): ReturnType<TARGET[METHOD]> {
+    if (stopped) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      return original.apply(this, arguments)
+    }
 
-        return notifyInstrumentation<InstrumentedMethodCall<TARGET, METHOD>, ReturnType<TARGET[METHOD]>>(
-          onPreCall,
-          {
-            target: this,
-            parameters,
-            handlingStack: computeHandlingStack ? createHandlingStack('instrumented method') : undefined,
-          },
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call -- TARGET[METHOD] is any under the index signature; value is verified as a function above
-          () => original.apply(this, parameters)
-        )
-      } as TARGET[METHOD]
-  )
+    const parameters = Array.from(arguments) as Parameters<TARGET[METHOD]>
+
+    return notifyInstrumentation<InstrumentedMethodCall<TARGET, METHOD>, ReturnType<TARGET[METHOD]>>(
+      onPreCall,
+      {
+        target: this,
+        parameters,
+        handlingStack: computeHandlingStack ? createHandlingStack('instrumented method') : undefined,
+      },
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call -- TARGET[METHOD] is any under the index signature; value is verified as a function above
+      () => original.apply(this, parameters)
+    )
+  } as TARGET[METHOD]
+
+  const { stop: restoreOriginal } = replaceWithInstrumentation(targetPrototype, method, original, instrumentation)
+
+  return {
+    stop: () => {
+      stopped = true
+      restoreOriginal()
+    },
+  }
 }
 
 /**
@@ -178,85 +183,74 @@ export function instrumentConstructor<CONTAINER extends { [key: string]: any }, 
     return { stop: noop }
   }
 
-  let restorePrototypeConstructor: () => void = noop
+  let stopped = false
 
-  const { stop: replaceStop } = replaceWithInstrumentation(container, constructor, original, (isStopped) => {
-    const instrumentation = function (this: unknown): ConstructorInstanceOf<CONTAINER[CONSTRUCTOR]> {
-      // Bare `[[Call]]` (no `new`): delegate through `[[Call]]` and skip `onPreCall`. Otherwise we
-      // would notify instrumentation before the original rejects or returns, unlike the native
-      // constructor (e.g. `WebSocket(url)` or `class {}()` without `new`).
-      if (!new.target) {
-        return Reflect.apply(original, this, Array.from(arguments)) as ConstructorInstanceOf<CONTAINER[CONSTRUCTOR]>
-      }
+  const instrumentation = function (this: unknown): ConstructorInstanceOf<CONTAINER[CONSTRUCTOR]> {
+    // Bare `[[Call]]` (no `new`): delegate through `[[Call]]` and skip `onPreCall`. Otherwise we
+    // would notify instrumentation before the original rejects or returns, unlike the native
+    // constructor (e.g. `WebSocket(url)` or `class {}()` without `new`).
+    if (!new.target) {
+      return Reflect.apply(original, this, Array.from(arguments)) as ConstructorInstanceOf<CONTAINER[CONSTRUCTOR]>
+    }
 
-      // When `new` is used on this instrumented property, `new.target` is this wrapper. Passing
-      // it through to Reflect.construct would expose the wrong new.target inside the original
-      // body. If a subclass extends the wrapper, or a third party wraps us and their class is
-      // instantiated, `new.target` is that outer constructor and must be preserved.
-      const newTarget = new.target === instrumentation ? original : new.target
+    // When `new` is used on this instrumented property, `new.target` is this wrapper. Passing
+    // it through to Reflect.construct would expose the wrong new.target inside the original
+    // body. If a subclass extends the wrapper, or a third party wraps us and their class is
+    // instantiated, `new.target` is that outer constructor and must be preserved.
+    const newTarget = new.target === instrumentation ? original : new.target
 
-      if (isStopped()) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return Reflect.construct(
-          original,
-          arguments as unknown as ConstructorParametersOf<CONTAINER[CONSTRUCTOR]>,
-          newTarget
-        )
-      }
-
-      const parameters = Array.from(arguments) as ConstructorParametersOf<CONTAINER[CONSTRUCTOR]>
-
-      return notifyInstrumentation<
-        InstrumentedConstructorCall<CONTAINER[CONSTRUCTOR]>,
-        ConstructorInstanceOf<CONTAINER[CONSTRUCTOR]>
-      >(
-        onPreCall,
-        {
-          parameters,
-          handlingStack: computeHandlingStack ? createHandlingStack('instrumented constructor') : undefined,
-        },
-        () =>
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-          Reflect.construct(original, parameters, newTarget)
+    if (stopped) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return Reflect.construct(
+        original,
+        arguments as unknown as ConstructorParametersOf<CONTAINER[CONSTRUCTOR]>,
+        newTarget
       )
     }
 
-    restorePrototypeConstructor = preserveConstructorShape(instrumentation as unknown as AnyConstructor, original)
+    const parameters = Array.from(arguments) as ConstructorParametersOf<CONTAINER[CONSTRUCTOR]>
 
-    return instrumentation as CONTAINER[CONSTRUCTOR]
-  })
+    return notifyInstrumentation<
+      InstrumentedConstructorCall<CONTAINER[CONSTRUCTOR]>,
+      ConstructorInstanceOf<CONTAINER[CONSTRUCTOR]>
+    >(
+      onPreCall,
+      {
+        parameters,
+        handlingStack: computeHandlingStack ? createHandlingStack('instrumented constructor') : undefined,
+      },
+      () =>
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        Reflect.construct(original, parameters, newTarget)
+    )
+  } as CONTAINER[CONSTRUCTOR]
+
+  const restorePrototypeConstructor = preserveConstructorShape(instrumentation, original)
+  const { stop: restoreOriginal } = replaceWithInstrumentation(container, constructor, original, instrumentation)
 
   return {
     stop: () => {
+      stopped = true
       restorePrototypeConstructor()
-      replaceStop()
+      restoreOriginal()
     },
   }
 }
 
 /**
- * Replaces `targetPrototype[method]` with the instrumentation built by `buildInstrumentation`, and
+ * Replaces `targetPrototype[method]` with the provided instrumentation and
  * returns a `stop` function restoring the original (unless a third party replaced us afterwards).
- *
- * `buildInstrumentation` receives an `isStopped` accessor so the wrapper can transparently delegate
- * to the original once the instrumentation has been stopped but consumers still hold a reference to
- * it.
  */
 function replaceWithInstrumentation<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET>(
   targetPrototype: TARGET,
   method: METHOD,
   original: TARGET[METHOD],
-  buildInstrumentation: (isStopped: () => boolean) => TARGET[METHOD]
+  instrumentation: TARGET[METHOD]
 ) {
-  let stopped = false
-
-  const instrumentation = buildInstrumentation(() => stopped)
-
   targetPrototype[method] = instrumentation
 
   return {
     stop: () => {
-      stopped = true
       // If the instrumentation has been removed by a third party, keep the last one
       if (targetPrototype[method] === instrumentation) {
         targetPrototype[method] = original
