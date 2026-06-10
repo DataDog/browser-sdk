@@ -1,7 +1,7 @@
 import { clocksNow } from '@datadog/js-core/time'
+import { ConsoleApiName, globalConsole } from '@datadog/js-core/util'
 import { isError, computeRawError } from '../error/error'
 import { Observable, mergeObservables } from '../../tools/observable'
-import { ConsoleApiName, globalConsole } from '../../tools/display'
 import { callMonitored } from '../../tools/monitor'
 import { sanitize } from '../../tools/serialisation/sanitize'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'

@@ -44,10 +44,10 @@ export type {
   MatchOption,
   ProxyFn,
   Site,
-  ConsoleApiName,
   RawReportType,
   ErrorSource,
 } from '@datadog/browser-core'
+export type { ConsoleApiName } from '@datadog/js-core/util'
 
 /**
  * The global Logs instance. Use this to call Logs methods.

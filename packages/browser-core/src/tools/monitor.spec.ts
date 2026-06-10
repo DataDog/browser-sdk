@@ -43,9 +43,9 @@ describe('monitor', () => {
     })
 
     describe('before initialization', () => {
-      it('should not monitor', () => {
+      it('catches monitored errors but does not report them (no collection callback yet)', () => {
         expect(() => candidate.notMonitoredThrowing()).toThrowError('not monitored')
-        expect(() => candidate.monitoredThrowing()).toThrowError('monitored')
+        expect(() => candidate.monitoredThrowing()).not.toThrowError()
         expect(candidate.monitoredNotThrowing()).toEqual(1)
       })
     })
