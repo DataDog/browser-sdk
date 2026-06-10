@@ -92,13 +92,13 @@ type EventMapFor<T> = T extends Window
  * * returns a `stop` function to remove the listener
  */
 export function addEventListener<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(
-  configuration: { allowUntrustedEvents?: boolean | undefined },
+  _configuration: { allowUntrustedEvents?: boolean | undefined },
   eventTarget: Target,
   eventName: EventName,
   listener: (event: EventMapFor<Target>[EventName] & { type: EventName }) => void,
   options?: AddEventListenerOptions
 ) {
-  return addEventListeners(configuration, eventTarget, [eventName], listener, options)
+  return addEventListeners(_configuration, eventTarget, [eventName], listener, options)
 }
 
 /**
@@ -114,14 +114,14 @@ export function addEventListener<Target extends EventTarget, EventName extends k
  * * with `once: true`, the listener will be called at most once, even if different events are listened
  */
 export function addEventListeners<Target extends EventTarget, EventName extends keyof EventMapFor<Target> & string>(
-  configuration: { allowUntrustedEvents?: boolean | undefined },
+  _configuration: { allowUntrustedEvents?: boolean | undefined },
   eventTarget: Target,
   eventNames: EventName[],
   listener: (event: EventMapFor<Target>[EventName] & { type: EventName }) => void,
   { once, capture, passive }: AddEventListenerOptions = {}
 ) {
   const listenerWithMonitor = monitor((event: TrustableEvent) => {
-    if (!event.isTrusted && !event.__ddIsTrusted && !configuration.allowUntrustedEvents) {
+    if (!event.isTrusted && !event.__ddIsTrusted && allowUntrustedEventsFromConfiguration === false) {
       return
     }
     if (once) {
@@ -163,4 +163,17 @@ export function isEventSupported<Target extends EventTarget, EventName extends k
   } catch {
     return false
   }
+}
+
+let allowUntrustedEventsFromConfiguration: boolean | undefined
+
+export function setAllowUntrustedEvents(value: boolean | undefined) {
+  if (allowUntrustedEventsFromConfiguration === true) {
+    return // keep the laxer value (true)
+  }
+  allowUntrustedEventsFromConfiguration = value ?? false
+}
+
+export function resetAllowUntrustedEvents() {
+  allowUntrustedEventsFromConfiguration = undefined
 }
