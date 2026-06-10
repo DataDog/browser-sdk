@@ -1,5 +1,5 @@
+import { ONE_MINUTE, ONE_SECOND, dateNow } from '@datadog/js-core/time'
 import { setInterval, clearInterval } from '../tools/timer'
-import { dateNow, ONE_MINUTE, ONE_SECOND } from '../tools/utils/timeUtils'
 import { Observable } from '../tools/observable'
 import { mockable } from '../tools/mockable'
 import { display } from '../tools/display'
@@ -10,12 +10,6 @@ import { globalObject } from '../tools/globalObject'
 import { addEventListener, DOM_EVENT, isEventSupported } from './addEventListener'
 import { getCookies, setCookie } from './cookie'
 import type { CookieOptions } from './cookie'
-
-export interface CookieAccessItem {
-  value: string
-  domain?: string
-  partitioned?: boolean
-}
 
 export interface CookieAccess {
   getAll(): Promise<string[]>

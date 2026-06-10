@@ -1,4 +1,5 @@
-import { DOM_EVENT, addEventListeners, timeStampNow } from '@datadog/browser-core'
+import { DOM_EVENT, addEventListeners } from '@datadog/browser-core'
+import { timeStampNow } from '@datadog/js-core/time'
 import type { FocusRecord } from '../../../types'
 import { RecordType } from '../../../types'
 import type { RecordingScope } from '../recordingScope'

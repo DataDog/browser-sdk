@@ -1,4 +1,4 @@
-import type { Duration, RelativeTime, TimeStamp } from '@datadog/browser-core'
+import type { RelativeTime, Duration, TimeStamp } from '@datadog/js-core/time'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock } from '@datadog/browser-core/test'
 import { trackBfcacheMetrics } from './trackBfcacheMetrics'

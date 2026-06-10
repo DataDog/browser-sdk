@@ -18,7 +18,8 @@
   },
   "dependencies": {
     "@datadog/browser-core": "7.2.0",
-    "@datadog/browser-rum-core": "7.2.0"
+    "@datadog/browser-rum-core": "7.2.0",
+    "@datadog/js-core": "0.0.1"
   },
   "peerDependencies": {
     "@angular/core": ">=15 <=21",
@@ -37,11 +38,11 @@
     "access": "public"
   },
   "devDependencies": {
-    "@angular/common": "21.2.14",
-    "@angular/compiler": "21.2.14",
-    "@angular/core": "21.2.14",
-    "@angular/platform-browser": "21.2.14",
-    "@angular/router": "21.2.14",
+    "@angular/common": "21.2.15",
+    "@angular/compiler": "21.2.15",
+    "@angular/core": "21.2.15",
+    "@angular/platform-browser": "21.2.15",
+    "@angular/router": "21.2.15",
     "rxjs": "7.8.2"
   }
 }

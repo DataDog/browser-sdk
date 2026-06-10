@@ -1,6 +1,8 @@
 allowed-tracking-origin/
 invalid-tracking-origin/
-react-router-v7-app/
+react-router-v6-app/
+vue-router-v4-app/
+nuxt-vue-router-v4-app/
 cdn-extension/
 appendChild-extension/
 */dist/

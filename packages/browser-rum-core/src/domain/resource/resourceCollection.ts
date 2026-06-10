@@ -1,9 +1,8 @@
-import type { Duration } from '@datadog/browser-core'
+import type { Duration } from '@datadog/js-core/time'
+import { toServerDuration, relativeToClocks } from '@datadog/js-core/time'
 import {
   combine,
   generateUUID,
-  toServerDuration,
-  relativeToClocks,
   createTaskQueue,
   mockable,
   runOnReadyState,

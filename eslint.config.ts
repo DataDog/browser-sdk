@@ -40,13 +40,18 @@ export default defineConfig(
       'packages/*/esm',
       'test/**/dist',
       'test/**/.next',
+      // Test-app webpack configs are build tooling for fixtures, not part of the typed project graph
+      // (excluded from tsconfig.scripts.json). Without this, projectService fails to find a project.
+      'test/apps/*/webpack.*',
       'test/apps/react-heavy-spa',
       'test/apps/react-shopist-like',
       'test/apps/microfrontend',
       'test/apps/nextjs',
       'test/apps/angular-app',
       'test/apps/vue-router-app',
+      'test/apps/vue-router-v4-app',
       'test/apps/nuxt-app',
+      'test/apps/nuxt-vue-router-v4-app',
       'test/apps/sf-lwc-app',
       'sandbox',
       'coverage',

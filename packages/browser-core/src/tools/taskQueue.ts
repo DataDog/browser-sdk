@@ -1,4 +1,4 @@
-import { ONE_SECOND } from './utils/timeUtils'
+import { ONE_SECOND } from '@datadog/js-core/time'
 import { requestIdleCallback } from './requestIdleCallback'
 
 /**

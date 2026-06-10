@@ -24,16 +24,6 @@ const rootRoute = createRootRoute({
       <nav>
         <Link to="/">Home</Link>
         {' | '}
-        <Link to="/posts">Posts</Link>
-        {' | '}
-        <Link to="/posts/$postId" params={{ postId: '42' }}>
-          Post 42
-        </Link>
-        {' | '}
-        <Link to="/" search={{ tab: 'settings' }}>
-          Query Param
-        </Link>
-        {' | '}
         <Link to="/files/$" params={{ _splat: 'path/to/file' }}>
           Splat
         </Link>
@@ -49,35 +39,57 @@ const rootRoute = createRootRoute({
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-  component: () => <h1>Home</h1>,
+  component: () => (
+    <div>
+      <h1>Home</h1>
+      <Link to="/user/$id" params={{ id: '42' }} search={{ admin: true }}>
+        Go to User 42
+      </Link>
+      <br />
+      <Link to="/guides/$slug" params={{ slug: '123' }}>
+        Go to Guides 123
+      </Link>
+    </div>
+  ),
 })
 
 const postsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/posts',
+  component: () => <h1>Posts</h1>,
+})
+
+const userRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/user/$id',
+  component: () => {
+    const { id } = useParams({ strict: false })
+    return (
+      <div>
+        <h1>User {id}</h1>
+        <Link to="/">Back to Home</Link>
+        <br />
+        <Link to="/user/$id" params={{ id: id! }} search={{ admin: false }}>
+          Change query params
+        </Link>
+        <br />
+        <Link to="/user/$id" params={{ id: '999' }} search={{ admin: true }}>
+          Go to User 999
+        </Link>
+      </div>
+    )
+  },
+})
+
+const guidesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/guides/$slug',
   component: () => (
     <div>
-      <h1>Posts</h1>
-      <Outlet />
+      <h1>Guides</h1>
+      <Link to="/">Back to Home</Link>
     </div>
   ),
-})
-
-const postsIndexRoute = createRoute({
-  getParentRoute: () => postsRoute,
-  path: '/',
-  component: () => <p>Select a post</p>,
-})
-
-function PostDetail() {
-  const { postId } = useParams({ strict: false })
-  return <h1>Post {postId}</h1>
-}
-
-const postRoute = createRoute({
-  getParentRoute: () => postsRoute,
-  path: '/$postId',
-  component: PostDetail,
 })
 
 const filesRoute = createRoute({
@@ -98,12 +110,7 @@ const oldPostsRoute = createRoute({
   },
 })
 
-const routeTree = rootRoute.addChildren([
-  indexRoute,
-  postsRoute.addChildren([postsIndexRoute, postRoute]),
-  filesRoute,
-  oldPostsRoute,
-])
+const routeTree = rootRoute.addChildren([indexRoute, postsRoute, userRoute, guidesRoute, filesRoute, oldPostsRoute])
 
 // Cast needed because local .tgz packaging creates separate type declarations.
 // End users installing from npm won't need this — same pattern as react-router-v6-app.

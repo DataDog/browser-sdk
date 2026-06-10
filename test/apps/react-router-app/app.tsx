@@ -1,5 +1,5 @@
-import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v6'
-import { RouterProvider, Link, useParams, Outlet } from 'react-router-dom'
+import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v7'
+import { RouterProvider, Link, useParams, Outlet } from 'react-router'
 import React, { useState } from 'react'
 import ReactDOM from 'react-dom/client'
 import { datadogRum } from '@datadog/browser-rum'
@@ -136,8 +136,7 @@ const router = createBrowserRouter([
       {
         index: true,
         // Throws on demand to exercise initial loader-error handling. Used by the
-        // e2e regression test for https://github.com/DataDog/browser-sdk/issues/4657
-        // (only exercised on the v7 build — v6 has no equivalent initial-error bug).
+        // e2e regression test for https://github.com/DataDog/browser-sdk/issues/4657.
         loader: ({ request }: { request: Request }) => {
           if (new URL(request.url).searchParams.has('test-loader-error')) {
             throw new Error('Synchronous loader error')
@@ -175,6 +174,14 @@ document.body.appendChild(rootElement)
 const root = ReactDOM.createRoot(rootElement)
 root.render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <RouterProvider
+      router={router}
+      onError={(error: unknown) => {
+        const el = document.createElement('div')
+        el.setAttribute('data-testid', 'on-error-fired')
+        el.textContent = (error as Error).message ?? String(error)
+        document.body.appendChild(el)
+      }}
+    />
   </React.StrictMode>
 )

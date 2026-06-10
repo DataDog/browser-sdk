@@ -1,4 +1,5 @@
-import type { DeflateEncoder, TimeStamp, Uint8ArrayBuffer } from '@datadog/browser-core'
+import type { DeflateEncoder, Uint8ArrayBuffer } from '@datadog/browser-core'
+import type { TimeStamp } from '@datadog/js-core/time'
 import { noop, setDebugMode, DeflateEncoderStreamId } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'

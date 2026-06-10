@@ -6,10 +6,11 @@
  * @see [Live Debugger Documentation](https://docs.datadoghq.com/tracing/live_debugger/)
  */
 
-import { defineGlobal, display, globalObject, makePublicApi, mockable } from '@datadog/browser-core'
+import { defineGlobal, globalObject, makePublicApi, mockable } from '@datadog/browser-core'
 import type { PublicApi, Site } from '@datadog/browser-core'
 import { initDebuggerTransport, onEntry, onReturn, onThrow } from '../domain/api'
 import { startDeliveryApiPolling } from '../domain/deliveryApi'
+import { display } from '../domain/display'
 import { getProbes } from '../domain/probes'
 import { startDebuggerBatch } from '../transport/startDebuggerBatch'
 
@@ -172,7 +173,7 @@ function resolveDebuggerVersion(initConfiguration: DebuggerInitConfiguration): s
     initConfiguration.version !== buildVersion
   ) {
     display.warn(
-      `Debugger: init version "${initConfiguration.version}" does not match the build-plugin version "${buildVersion}". Using the init version.`
+      `init version "${initConfiguration.version}" does not match the build-plugin version "${buildVersion}". Using the init version.`
     )
   }
 

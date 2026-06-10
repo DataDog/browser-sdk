@@ -1,4 +1,5 @@
-import { noop, timeStampNow } from '@datadog/browser-core'
+import { noop } from '@datadog/browser-core'
+import { timeStampNow } from '@datadog/js-core/time'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { getNodePrivacyLevel, NodePrivacyLevel } from '@datadog/browser-rum-core'
 import type { BrowserRecord } from '../../types'

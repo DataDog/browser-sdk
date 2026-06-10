@@ -1,6 +1,7 @@
 import type { Batch, Context } from '@datadog/browser-core'
+import { timeStampNow } from '@datadog/js-core/time'
 
-import { timeStampNow, display, buildTag, generateUUID, globalObject } from '@datadog/browser-core'
+import { buildTag, generateUUID, globalObject } from '@datadog/browser-core'
 import type { BrowserWindow, DebuggerInitConfiguration } from '../entries/main'
 import { capture, captureFields } from './capture'
 import type { CaptureContext } from './capture'
@@ -17,6 +18,7 @@ import type { ActiveEntry } from './activeEntries'
 import { captureStackTrace, parseStackTrace } from './stacktrace'
 import { evaluateProbeMessage } from './template'
 import { evaluateProbeCondition, isConditionEvaluationError } from './condition'
+import { display } from './display'
 
 const globalObj = globalObject as BrowserWindow
 
@@ -106,10 +108,7 @@ export function onEntry(probes: InitializedProbe[], self: any, args: Record<stri
     let entry: { arguments: Record<string, any> } | undefined
     if (shouldCaptureEntrySnapshot) {
       entry = {
-        arguments: {
-          ...captureFields(args, probe.capture, captureCtx),
-          this: capture(self, probe.capture, captureCtx),
-        },
+        arguments: captureArguments(args, self, probe.capture, captureCtx),
       }
       if (captureCtx.timedOut) {
         probe.activeEntries.push(null)
@@ -188,10 +187,7 @@ export function onReturn(
 
     if (probe.captureSnapshot) {
       result.return = {
-        arguments: {
-          ...captureFields(args, probe.capture, captureCtx),
-          this: capture(self, probe.capture, captureCtx),
-        },
+        arguments: captureArguments(args, self, probe.capture, captureCtx),
         locals: {
           ...captureFields(locals, probe.capture, captureCtx),
           '@return': capture(value, probe.capture, captureCtx),
@@ -261,10 +257,7 @@ export function onThrow(probes: InitializedProbe[], error: Error, self: any, arg
 
     let throwArguments: Record<string, any> | undefined
     if (probe.captureSnapshot) {
-      throwArguments = {
-        ...captureFields(args, probe.capture, captureCtx),
-        this: capture(self, probe.capture, captureCtx),
-      }
+      throwArguments = captureArguments(args, self, probe.capture, captureCtx)
       if (captureCtx.timedOut) {
         continue
       }
@@ -290,7 +283,7 @@ export function onThrow(probes: InitializedProbe[], error: Error, self: any, arg
  */
 function queueDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): void {
   if (!debuggerBatch || !debuggerConfig) {
-    display.warn('Debugger transport is not initialized. Make sure DD_DEBUGGER.init() has been called.')
+    display.warn('Transport is not initialized. Make sure DD_DEBUGGER.init() has been called.')
     return
   }
 
@@ -338,6 +331,19 @@ function queueDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): vo
 
   debuggerBatch.add(payload)
   recordProbeEventSent(probe)
+}
+
+function captureArguments(
+  args: Record<string, any>,
+  self: any,
+  captureOptions: InitializedProbe['capture'],
+  captureCtx: CaptureContext
+): Record<string, any> {
+  const fields = captureFields(args, captureOptions, captureCtx)
+  if (self !== globalObject) {
+    fields.this = capture(self, captureOptions, captureCtx)
+  }
+  return fields
 }
 
 function getDebuggerDDtags(debuggerVersion: string): string {
