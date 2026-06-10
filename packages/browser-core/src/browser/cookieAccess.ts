@@ -7,7 +7,7 @@ import { generateUUID } from '../tools/utils/stringUtils'
 import type { Configuration } from '../domain/configuration'
 import { addTelemetryDebug } from '../domain/telemetry'
 import { globalObject } from '../tools/globalObject'
-import { addEventListener, DOM_EVENT } from './addEventListener'
+import { addEventListener, DOM_EVENT, isEventSupported } from './addEventListener'
 import { getCookies, setCookie } from './cookie'
 import type { CookieOptions } from './cookie'
 
@@ -155,4 +155,10 @@ export function createDocumentCookieAccess(
 
     observable,
   }
+}
+
+// Salesforce LWS does not support the change event of CookieStore objects. https://developer.salesforce.com/tools/lws-distortion-viewer
+export function isCookieStoreSupported(): boolean {
+  const cookieStore = mockable(globalObject.cookieStore)
+  return Boolean(cookieStore && isEventSupported(cookieStore, DOM_EVENT.CHANGE))
 }

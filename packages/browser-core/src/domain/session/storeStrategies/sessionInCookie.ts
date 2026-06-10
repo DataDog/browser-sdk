@@ -13,8 +13,8 @@ import {
   areCookiesAuthorized,
   createCookieStoreAccess,
   createDocumentCookieAccess,
+  isCookieStoreSupported,
 } from '../../../browser/cookieAccess'
-import { globalObject } from '../../../tools/globalObject'
 import { CookieApi, LEGACY_SESSION_STORE_KEY, SESSION_STORE_KEY } from './sessionStoreStrategy'
 import type {
   SessionStoreStrategy,
@@ -33,10 +33,7 @@ export async function selectCookieStrategy(
     return undefined
   }
 
-  if (
-    mockable(globalObject.cookieStore) &&
-    (await areCookiesAuthorized(createCookieStoreAccess, cookieOptions, configuration))
-  ) {
+  if (isCookieStoreSupported() && (await areCookiesAuthorized(createCookieStoreAccess, cookieOptions, configuration))) {
     return { type: SessionPersistence.COOKIE, cookieOptions, cookieApi: CookieApi.COOKIE_STORE }
   }
 
