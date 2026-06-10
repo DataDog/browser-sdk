@@ -22,7 +22,7 @@ export function startLongTaskCollection(lifeCycle: LifeCycle, configuration: Rum
     ? RumPerformanceEntryType.LONG_ANIMATION_FRAME
     : RumPerformanceEntryType.LONG_TASK
 
-  const subscription = createPerformanceObservable(configuration, {
+  const subscription = createPerformanceObservable({
     type: entryType,
     buffered: true,
   }).subscribe((entries) => {

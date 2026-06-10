@@ -7,7 +7,6 @@ import {
   addEventListeners,
   DOM_EVENT,
 } from '@datadog/browser-core'
-import type { RumConfiguration } from '../configuration'
 import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../browser/performanceObservable'
 import type { PageStateServerEntry } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -41,7 +40,6 @@ export interface PageStateHistory {
 
 export function startPageStateHistory(
   assembleHook: AssembleHook,
-  configuration: RumConfiguration,
   maxPageStateEntriesSelectable = MAX_PAGE_STATE_ENTRIES_SELECTABLE
 ): PageStateHistory {
   const pageStateEntryHistory = createValueHistory<PageStateEntry>({
@@ -63,7 +61,6 @@ export function startPageStateHistory(
   addPageState(getPageState(), relativeNow())
 
   const { stop: stopEventListeners } = addEventListeners(
-    configuration,
     window,
     [
       DOM_EVENT.PAGE_SHOW,

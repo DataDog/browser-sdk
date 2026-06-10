@@ -2,19 +2,14 @@ import type { RelativeTime, Duration } from '@datadog/js-core/time'
 import { ONE_MINUTE, elapsed, relativeNow } from '@datadog/js-core/time'
 import type { RumPerformancePaintTiming } from '../../../browser/performanceObservable'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../../../browser/performanceObservable'
-import type { RumConfiguration } from '../../configuration'
 import type { FirstHidden } from './trackFirstHidden'
 
 // Discard FCP timings above a certain delay to avoid incorrect data
 // It happens in some cases like sleep mode or some browser implementations
 export const FCP_MAXIMUM_DELAY = 10 * ONE_MINUTE
 
-export function trackFirstContentfulPaint(
-  configuration: RumConfiguration,
-  firstHidden: FirstHidden,
-  callback: (fcpTiming: RelativeTime) => void
-) {
-  const performanceSubscription = createPerformanceObservable(configuration, {
+export function trackFirstContentfulPaint(firstHidden: FirstHidden, callback: (fcpTiming: RelativeTime) => void) {
+  const performanceSubscription = createPerformanceObservable({
     type: RumPerformanceEntryType.PAINT,
     buffered: true,
   }).subscribe((entries) => {

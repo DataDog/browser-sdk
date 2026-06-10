@@ -67,12 +67,12 @@ export function record(options: RecordOptions): RecordAPI {
     trackMove(processRecord, scope),
     trackMouseInteraction(processRecord, scope),
     trackScroll(document, processRecord, scope),
-    trackViewportResize(processRecord, scope),
+    trackViewportResize(processRecord),
     trackInput(document, processRecord, scope),
     trackMediaInteraction(processRecord, scope),
     trackStyleSheet(processRecord, scope),
-    trackFocus(processRecord, scope),
-    trackVisualViewportResize(processRecord, scope),
+    trackFocus(processRecord),
+    trackVisualViewportResize(processRecord),
     trackViewEnd(lifeCycle, processRecord, flushMutations),
   ]
 

@@ -594,11 +594,7 @@ export interface RumPublicApiOptions {
     source: string,
     onInitializationFailure: () => void
   ) => DeflateWorker | undefined
-  createDeflateEncoder?: (
-    configuration: RumConfiguration,
-    worker: DeflateWorker,
-    streamId: DeflateEncoderStreamId
-  ) => DeflateEncoder
+  createDeflateEncoder?: (worker: DeflateWorker, streamId: DeflateEncoderStreamId) => DeflateEncoder
   sdkName?: SdkName
 }
 
@@ -647,7 +643,7 @@ export function makeRumPublicApi(
     (configuration, sessionManager, deflateWorker, initialViewOptions, telemetry, hooks) => {
       const createEncoder =
         deflateWorker && options.createDeflateEncoder
-          ? (streamId: DeflateEncoderStreamId) => options.createDeflateEncoder!(configuration, deflateWorker, streamId)
+          ? (streamId: DeflateEncoderStreamId) => options.createDeflateEncoder!(deflateWorker, streamId)
           : createIdentityEncoder
 
       const startRumResult = mockable(startRum)(

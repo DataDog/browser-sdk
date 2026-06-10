@@ -2,21 +2,20 @@ import type { RelativeTime, TimeStamp } from '@datadog/js-core/time'
 import { clocksOrigin } from '@datadog/js-core/time'
 import { DOM_EVENT } from '@datadog/browser-core'
 import { createNewEvent, restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
-import { mockRumConfiguration, mockGlobalPerformanceBuffer } from '../../../../test'
+import { mockGlobalPerformanceBuffer } from '../../../../test'
 import type { GlobalPerformanceBufferMock } from '../../../../test'
 import { trackFirstHidden } from './trackFirstHidden'
 
 describe('trackFirstHidden', () => {
-  const configuration = mockRumConfiguration()
   let firstHidden: { timeStamp: RelativeTime; stop: () => void }
   let performanceBufferMock: GlobalPerformanceBufferMock
 
   function trackFirstHiddenWithDefaults({
-    configuration = mockRumConfiguration(),
     viewStart = clocksOrigin(),
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     eventTarget = window as Window,
-  }): ReturnType<typeof trackFirstHidden> {
-    return trackFirstHidden(configuration, viewStart, eventTarget)
+  } = {}): ReturnType<typeof trackFirstHidden> {
+    return trackFirstHidden(viewStart, eventTarget)
   }
 
   afterEach(() => {
@@ -27,7 +26,7 @@ describe('trackFirstHidden', () => {
   describe('the page is initially hidden', () => {
     it('should return 0', () => {
       setPageVisibility('hidden')
-      firstHidden = trackFirstHiddenWithDefaults({ configuration })
+      firstHidden = trackFirstHiddenWithDefaults()
 
       expect(firstHidden.timeStamp).toBe(0 as RelativeTime)
     })
@@ -35,7 +34,7 @@ describe('trackFirstHidden', () => {
     it('should ignore events', () => {
       setPageVisibility('hidden')
       const eventTarget = createWindowEventTarget()
-      firstHidden = trackFirstHiddenWithDefaults({ configuration, eventTarget })
+      firstHidden = trackFirstHiddenWithDefaults({ eventTarget })
 
       eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.PAGE_HIDE, { timeStamp: 100 }))
       eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE, { timeStamp: 100 }))
@@ -47,13 +46,13 @@ describe('trackFirstHidden', () => {
   describe('the page is initially visible', () => {
     it('should return Infinity if the page was not hidden yet', () => {
       setPageVisibility('visible')
-      firstHidden = trackFirstHiddenWithDefaults({ configuration })
+      firstHidden = trackFirstHiddenWithDefaults()
       expect(firstHidden.timeStamp).toBe(Infinity as RelativeTime)
     })
 
     it('should return the timestamp of the first pagehide event', () => {
       const eventTarget = createWindowEventTarget()
-      firstHidden = trackFirstHiddenWithDefaults({ configuration, eventTarget })
+      firstHidden = trackFirstHiddenWithDefaults({ eventTarget })
 
       eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.PAGE_HIDE, { timeStamp: 100 }))
 
@@ -62,7 +61,7 @@ describe('trackFirstHidden', () => {
 
     it('should return the timestamp of the first visibilitychange event if the page is hidden', () => {
       const eventTarget = createWindowEventTarget()
-      firstHidden = trackFirstHiddenWithDefaults({ configuration, eventTarget })
+      firstHidden = trackFirstHiddenWithDefaults({ eventTarget })
 
       setPageVisibility('hidden')
       eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE, { timeStamp: 100 }))
@@ -72,7 +71,7 @@ describe('trackFirstHidden', () => {
 
     it('should ignore visibilitychange event if the page is visible', () => {
       const eventTarget = createWindowEventTarget()
-      firstHidden = trackFirstHiddenWithDefaults({ configuration, eventTarget })
+      firstHidden = trackFirstHiddenWithDefaults({ eventTarget })
 
       eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE, { timeStamp: 100 }))
 
@@ -81,7 +80,7 @@ describe('trackFirstHidden', () => {
 
     it('should ignore subsequent events', () => {
       const eventTarget = createWindowEventTarget()
-      firstHidden = trackFirstHiddenWithDefaults({ configuration, eventTarget })
+      firstHidden = trackFirstHiddenWithDefaults({ eventTarget })
 
       eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.PAGE_HIDE, { timeStamp: 100 }))
 
@@ -121,7 +120,7 @@ describe('trackFirstHidden', () => {
         startTime: 23219031,
       } as PerformanceEntry)
 
-      firstHidden = trackFirstHiddenWithDefaults({ configuration })
+      firstHidden = trackFirstHiddenWithDefaults()
       expect(firstHidden.timeStamp).toBe(23 as RelativeTime)
     })
 
@@ -135,7 +134,6 @@ describe('trackFirstHidden', () => {
       } as PerformanceEntry)
 
       firstHidden = trackFirstHiddenWithDefaults({
-        configuration,
         eventTarget: createWindowEventTarget(),
         viewStart: { relative: 100 as RelativeTime, timeStamp: 100 as TimeStamp },
       })
@@ -151,7 +149,7 @@ describe('trackFirstHidden', () => {
         startTime: 0,
       } as PerformanceEntry)
 
-      firstHidden = trackFirstHiddenWithDefaults({ configuration })
+      firstHidden = trackFirstHiddenWithDefaults()
       expect(firstHidden.timeStamp).toBe(0 as RelativeTime)
     })
   })

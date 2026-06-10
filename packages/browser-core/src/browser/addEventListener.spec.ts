@@ -16,7 +16,7 @@ describe('addEventListener', () => {
       const eventTarget = document.createElement('div')
       zoneJs.replaceProperty(eventTarget, 'addEventListener', zoneJsPatchedAddEventListener)
 
-      addEventListener({}, eventTarget, DOM_EVENT.CLICK, noop)
+      addEventListener(eventTarget, DOM_EVENT.CLICK, noop)
       expect(zoneJsPatchedAddEventListener).not.toHaveBeenCalled()
     })
 
@@ -25,7 +25,7 @@ describe('addEventListener', () => {
       const eventTarget = document.createElement('div')
       zoneJs.replaceProperty(eventTarget, 'removeEventListener', zoneJsPatchedRemoveEventListener)
 
-      const { stop } = addEventListener({}, eventTarget, DOM_EVENT.CLICK, noop)
+      const { stop } = addEventListener(eventTarget, DOM_EVENT.CLICK, noop)
       stop()
       expect(zoneJsPatchedRemoveEventListener).not.toHaveBeenCalled()
     })
@@ -49,7 +49,7 @@ describe('addEventListener', () => {
     htmlDivElement.addEventListener = jasmine.createSpy()
     htmlDivElement.removeEventListener = jasmine.createSpy()
 
-    const { stop } = addEventListener({}, htmlDivElement, DOM_EVENT.CLICK, noop)
+    const { stop } = addEventListener(htmlDivElement, DOM_EVENT.CLICK, noop)
 
     const event = createNewEvent(DOM_EVENT.CLICK)
     htmlDivElement.dispatchEvent(event)
@@ -74,7 +74,7 @@ describe('addEventListener', () => {
       removeEventListener: jasmine.createSpy(),
     } as unknown as HTMLElement
 
-    const { stop } = addEventListener({}, customEventTarget, 'change', listener)
+    const { stop } = addEventListener(customEventTarget, 'change', listener)
     stop()
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -91,7 +91,7 @@ describe('addEventListener', () => {
     it('should be ignored if __ddIsTrusted is absent', () => {
       const listener = jasmine.createSpy()
       const eventTarget = document.createElement('div')
-      addEventListener({}, eventTarget, DOM_EVENT.CLICK, listener)
+      addEventListener(eventTarget, DOM_EVENT.CLICK, listener)
 
       const event = createNewEvent(DOM_EVENT.CLICK, { __ddIsTrusted: undefined })
       eventTarget.dispatchEvent(event)
@@ -101,7 +101,7 @@ describe('addEventListener', () => {
     it('should be ignored if __ddIsTrusted is false', () => {
       const listener = jasmine.createSpy()
       const eventTarget = document.createElement('div')
-      addEventListener({}, eventTarget, DOM_EVENT.CLICK, listener)
+      addEventListener(eventTarget, DOM_EVENT.CLICK, listener)
 
       const event = createNewEvent(DOM_EVENT.CLICK, { __ddIsTrusted: false })
       eventTarget.dispatchEvent(event)
@@ -111,7 +111,7 @@ describe('addEventListener', () => {
     it('should not be ignored if __ddIsTrusted is true', () => {
       const listener = jasmine.createSpy()
       const eventTarget = document.createElement('div')
-      addEventListener({}, eventTarget, DOM_EVENT.CLICK, listener)
+      addEventListener(eventTarget, DOM_EVENT.CLICK, listener)
 
       const event = createNewEvent(DOM_EVENT.CLICK, { __ddIsTrusted: true })
       eventTarget.dispatchEvent(event)
@@ -124,7 +124,7 @@ describe('addEventListener', () => {
       const eventTarget = document.createElement('div')
       setAllowUntrustedEvents(true)
 
-      addEventListener({}, eventTarget, DOM_EVENT.CLICK, listener)
+      addEventListener(eventTarget, DOM_EVENT.CLICK, listener)
 
       const event = createNewEvent(DOM_EVENT.CLICK, { __ddIsTrusted: undefined })
       eventTarget.dispatchEvent(event)
@@ -140,7 +140,7 @@ describe('addEventListener', () => {
     beforeEach(() => {
       listener = jasmine.createSpy()
       eventTarget = document.createElement('div')
-      addEventListener({}, eventTarget, DOM_EVENT.CLICK, listener)
+      addEventListener(eventTarget, DOM_EVENT.CLICK, listener)
     })
 
     function dispatchUntrustedClick() {

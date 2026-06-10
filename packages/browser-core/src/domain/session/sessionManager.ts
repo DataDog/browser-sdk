@@ -195,17 +195,17 @@ export async function startSessionManager(
     })
 
     if (!isWorkerEnvironment) {
-      trackActivity(configuration, () => {
+      trackActivity(() => {
         if (trackingConsentState.isGranted()) {
           throttledExpandOrRenew()
         }
       })
-      trackVisibility(configuration, () => {
+      trackVisibility(() => {
         if (!sessionExpired) {
           strategy.setSessionState((state) => expandOnly(state), 'expandOnVisibility').catch(monitorError)
         }
       })
-      trackResume(configuration, () => {
+      trackResume(() => {
         strategy
           .setSessionState((state) => initializeSession(state, configuration), 'initializeOnResume')
           .catch(monitorError)
@@ -335,9 +335,8 @@ export function stopSessionManager() {
   stopCallbacks = []
 }
 
-function trackActivity(configuration: Configuration, expandOrRenewSession: () => void) {
+function trackActivity(expandOrRenewSession: () => void) {
   const { stop } = addEventListeners(
-    configuration,
     window,
     [DOM_EVENT.CLICK, DOM_EVENT.TOUCH_START, DOM_EVENT.KEY_DOWN, DOM_EVENT.SCROLL],
     expandOrRenewSession,
@@ -346,14 +345,14 @@ function trackActivity(configuration: Configuration, expandOrRenewSession: () =>
   stopCallbacks.push(stop)
 }
 
-function trackVisibility(configuration: Configuration, expandSession: () => void) {
+function trackVisibility(expandSession: () => void) {
   const expandSessionWhenVisible = () => {
     if (document.visibilityState === 'visible') {
       expandSession()
     }
   }
 
-  const { stop } = addEventListener(configuration, document, DOM_EVENT.VISIBILITY_CHANGE, expandSessionWhenVisible)
+  const { stop } = addEventListener(document, DOM_EVENT.VISIBILITY_CHANGE, expandSessionWhenVisible)
   stopCallbacks.push(stop)
 
   const visibilityCheckInterval = setInterval(expandSessionWhenVisible, VISIBILITY_CHECK_DELAY)
@@ -362,7 +361,7 @@ function trackVisibility(configuration: Configuration, expandSession: () => void
   })
 }
 
-function trackResume(configuration: Configuration, cb: () => void) {
-  const { stop } = addEventListener(configuration, window, DOM_EVENT.RESUME, cb, { capture: true })
+function trackResume(cb: () => void) {
+  const { stop } = addEventListener(window, DOM_EVENT.RESUME, cb, { capture: true })
   stopCallbacks.push(stop)
 }

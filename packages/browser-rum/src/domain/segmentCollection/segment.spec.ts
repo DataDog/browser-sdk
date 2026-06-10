@@ -1,7 +1,6 @@
 import type { DeflateEncoder, Uint8ArrayBuffer } from '@datadog/browser-core'
 import type { TimeStamp } from '@datadog/js-core/time'
 import { noop, setDebugMode, DeflateEncoderStreamId } from '@datadog/browser-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { MockWorker } from '../../../test'
 import type { CreationReason, BrowserRecord, SegmentContext, BrowserSegment, BrowserSegmentMetadata } from '../../types'
@@ -35,13 +34,12 @@ const ENCODED_META_BYTES_COUNT = 193 // this should stay accurate as long as les
 const TRAILER_BYTES_COUNT = 1
 
 describe('Segment', () => {
-  const configuration = {} as RumConfiguration
   let worker: MockWorker
   let encoder: DeflateEncoder
 
   beforeEach(() => {
     worker = new MockWorker()
-    encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+    encoder = createDeflateEncoder(worker, DeflateEncoderStreamId.REPLAY)
     setDebugMode(true)
 
     registerCleanupTask(() => {
