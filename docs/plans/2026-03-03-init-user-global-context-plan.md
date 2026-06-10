@@ -13,22 +13,34 @@
 ### Task 1: Add `user` and `globalContext` to `RumInitConfiguration`
 
 **Files:**
+
 - Modify: `packages/rum-core/src/domain/configuration/configuration.ts`
 
 **Step 1: Write the failing typecheck**
 
 Before adding the fields, verify that assigning them causes a type error. Run:
+
 ```bash
 yarn typecheck
 ```
+
 No errors expected yet — this step is just a baseline.
 
 **Step 2: Add `User` and `Context` imports, then add the fields**
 
 In `packages/rum-core/src/domain/configuration/configuration.ts`, add to the imports at line 1:
+
 ```typescript
-import type { Configuration, InitConfiguration, MatchOption, RawTelemetryConfiguration, User, Context } from '@datadog/browser-core'
+import type {
+  Configuration,
+  InitConfiguration,
+  MatchOption,
+  RawTelemetryConfiguration,
+  User,
+  Context,
+} from '@datadog/browser-core'
 ```
+
 (`User` and `Context` are not yet imported in this file.)
 
 Then, at the end of the `RumInitConfiguration` interface (after the last field, before the closing `}`), add:
@@ -53,12 +65,15 @@ Then, at the end of the `RumInitConfiguration` interface (after the last field, 
 ```
 
 **Step 3: Verify no typecheck errors**
+
 ```bash
 yarn typecheck
 ```
+
 Expected: no errors.
 
 **Step 4: Commit**
+
 ```bash
 git add packages/rum-core/src/domain/configuration/configuration.ts
 git commit -m "✨ Add user and globalContext fields to RumInitConfiguration"
@@ -69,6 +84,7 @@ git commit -m "✨ Add user and globalContext fields to RumInitConfiguration"
 ### Task 2: Apply `user` and `globalContext` in `preStartRum.ts`
 
 **Files:**
+
 - Modify: `packages/rum-core/src/boot/preStartRum.ts`
 - Test: `packages/rum-core/src/boot/preStartRum.spec.ts`
 
@@ -137,9 +153,11 @@ describe('user and globalContext from initConfiguration', () => {
 You will also need to add `CustomerContextKey` to the imports at the top of the spec file — check if it is already imported; if not, add it from `@datadog/browser-core`.
 
 **Step 2: Run tests to confirm they fail**
+
 ```bash
 yarn test:unit --spec packages/rum-core/src/boot/preStartRum.spec.ts
 ```
+
 Expected: 4 new failing tests.
 
 **Step 3: Implement the fix in `preStartRum.ts`**
@@ -147,23 +165,26 @@ Expected: 4 new failing tests.
 In `packages/rum-core/src/boot/preStartRum.ts`, inside `doInit()`, after `cachedInitConfiguration = initConfiguration` (line 127) and before `addTelemetryConfiguration(...)` (line 128), add:
 
 ```typescript
-    if (initConfiguration.user) {
-      userContext.setContext(initConfiguration.user)
-    }
-    if (initConfiguration.globalContext) {
-      globalContext.setContext(initConfiguration.globalContext)
-    }
+if (initConfiguration.user) {
+  userContext.setContext(initConfiguration.user)
+}
+if (initConfiguration.globalContext) {
+  globalContext.setContext(initConfiguration.globalContext)
+}
 ```
 
 The `userContext` and `globalContext` variables are in the enclosing `createPreStartStrategy` closure (declared at lines 64 and 67). No new imports needed — `User` and `Context` are already carried via the `RumInitConfiguration` type.
 
 **Step 4: Run tests to confirm they pass**
+
 ```bash
 yarn test:unit --spec packages/rum-core/src/boot/preStartRum.spec.ts
 ```
+
 Expected: all tests green, including the 4 new ones.
 
 **Step 5: Commit**
+
 ```bash
 git add packages/rum-core/src/boot/preStartRum.ts packages/rum-core/src/boot/preStartRum.spec.ts
 git commit -m "✨ Apply user and globalContext from initConfiguration at SDK start"
@@ -174,6 +195,7 @@ git commit -m "✨ Apply user and globalContext from initConfiguration at SDK st
 ### Task 3: Create the context resolution helpers module
 
 **Files:**
+
 - Create: `packages/endpoint/src/contextResolutionHelpers.ts`
 - Create: `packages/endpoint/src/contextResolutionHelpers.spec.ts` (tested in the same step)
 
@@ -295,18 +317,24 @@ describe('CONTEXT_RESOLUTION_HELPERS', () => {
   describe('strategy: cookie', () => {
     it('reads a cookie by name', () => {
       assert.strictEqual(
-        resolve({ rcSerializedType: 'dynamic', strategy: 'cookie', name: 'user_id' }, {
-          __cookie: 'session=abc; user_id=42; other=x',
-        }),
+        resolve(
+          { rcSerializedType: 'dynamic', strategy: 'cookie', name: 'user_id' },
+          {
+            __cookie: 'session=abc; user_id=42; other=x',
+          }
+        ),
         '42'
       )
     })
 
     it('returns undefined when cookie is absent', () => {
       assert.strictEqual(
-        resolve({ rcSerializedType: 'dynamic', strategy: 'cookie', name: 'missing' }, {
-          __cookie: 'session=abc',
-        }),
+        resolve(
+          { rcSerializedType: 'dynamic', strategy: 'cookie', name: 'missing' },
+          {
+            __cookie: 'session=abc',
+          }
+        ),
         undefined
       )
     })
@@ -315,45 +343,54 @@ describe('CONTEXT_RESOLUTION_HELPERS', () => {
   describe('strategy: js', () => {
     it('resolves a top-level window property', () => {
       assert.strictEqual(
-        resolve({ rcSerializedType: 'dynamic', strategy: 'js', path: 'userId' }, {
-          userId: 'alice',
-        }),
+        resolve(
+          { rcSerializedType: 'dynamic', strategy: 'js', path: 'userId' },
+          {
+            userId: 'alice',
+          }
+        ),
         'alice'
       )
     })
 
     it('resolves a nested window property', () => {
       assert.strictEqual(
-        resolve({ rcSerializedType: 'dynamic', strategy: 'js', path: 'user.id' }, {
-          user: { id: 'bob' },
-        }),
+        resolve(
+          { rcSerializedType: 'dynamic', strategy: 'js', path: 'user.id' },
+          {
+            user: { id: 'bob' },
+          }
+        ),
         'bob'
       )
     })
 
     it('returns undefined for missing path', () => {
-      assert.strictEqual(
-        resolve({ rcSerializedType: 'dynamic', strategy: 'js', path: 'missing.deep' }),
-        undefined
-      )
+      assert.strictEqual(resolve({ rcSerializedType: 'dynamic', strategy: 'js', path: 'missing.deep' }), undefined)
     })
   })
 
   describe('strategy: localStorage', () => {
     it('reads a localStorage item by key', () => {
       assert.strictEqual(
-        resolve({ rcSerializedType: 'dynamic', strategy: 'localStorage', key: 'plan' }, {
-          __localStorage: { plan: 'pro' },
-        }),
+        resolve(
+          { rcSerializedType: 'dynamic', strategy: 'localStorage', key: 'plan' },
+          {
+            __localStorage: { plan: 'pro' },
+          }
+        ),
         'pro'
       )
     })
 
     it('returns null when key is absent', () => {
       assert.strictEqual(
-        resolve({ rcSerializedType: 'dynamic', strategy: 'localStorage', key: 'missing' }, {
-          __localStorage: {},
-        }),
+        resolve(
+          { rcSerializedType: 'dynamic', strategy: 'localStorage', key: 'missing' },
+          {
+            __localStorage: {},
+          }
+        ),
         null
       )
     })
@@ -362,14 +399,17 @@ describe('CONTEXT_RESOLUTION_HELPERS', () => {
   describe('extractor regex', () => {
     it('applies the extractor regex to the resolved string', () => {
       assert.strictEqual(
-        resolve({
-          rcSerializedType: 'dynamic',
-          strategy: 'cookie',
-          name: 'session',
-          extractor: { value: 'user-(\\w+)' },
-        }, {
-          __cookie: 'session=user-alice123',
-        }),
+        resolve(
+          {
+            rcSerializedType: 'dynamic',
+            strategy: 'cookie',
+            name: 'session',
+            extractor: { value: 'user-(\\w+)' },
+          },
+          {
+            __cookie: 'session=user-alice123',
+          }
+        ),
         'alice123'
       )
     })
@@ -377,24 +417,24 @@ describe('CONTEXT_RESOLUTION_HELPERS', () => {
 
   describe('unknown strategy', () => {
     it('returns undefined for unsupported strategy', () => {
-      assert.strictEqual(
-        resolve({ rcSerializedType: 'dynamic', strategy: 'unknown' as any }),
-        undefined
-      )
+      assert.strictEqual(resolve({ rcSerializedType: 'dynamic', strategy: 'unknown' as any }), undefined)
     })
   })
 })
 ```
 
 **Step 3: Run the spec**
+
 ```bash
 node --test 'packages/endpoint/src/contextResolutionHelpers.spec.ts'
 ```
+
 Expected: all tests pass.
 
 > If `vm.runInNewContext` is not flexible enough to handle `document.querySelector` interception, refactor the sandbox to pass a proper mock `document` object into the context.
 
 **Step 4: Commit**
+
 ```bash
 git add packages/endpoint/src/contextResolutionHelpers.ts packages/endpoint/src/contextResolutionHelpers.spec.ts
 git commit -m "✨ Add context resolution helpers for dynamic values in generated bundles"
@@ -405,6 +445,7 @@ git commit -m "✨ Add context resolution helpers for dynamic values in generate
 ### Task 4: Update `generateCombinedBundle` to resolve and pass user/globalContext
 
 **Files:**
+
 - Modify: `packages/endpoint/src/bundleGenerator.ts`
 - Modify: `packages/endpoint/src/bundleGenerator.spec.ts`
 
@@ -419,9 +460,7 @@ describe('user and context resolution', () => {
       sdkCode: mockSdkCode,
       config: {
         applicationId: 'test-app-id',
-        user: [
-          { key: 'id', value: { rcSerializedType: 'dynamic', strategy: 'cookie', name: 'user_id' } },
-        ],
+        user: [{ key: 'id', value: { rcSerializedType: 'dynamic', strategy: 'cookie', name: 'user_id' } }],
       },
       variant: 'rum',
     })
@@ -436,9 +475,7 @@ describe('user and context resolution', () => {
       sdkCode: mockSdkCode,
       config: {
         applicationId: 'test-app-id',
-        context: [
-          { key: 'plan', value: { rcSerializedType: 'string', value: 'pro' } },
-        ],
+        context: [{ key: 'plan', value: { rcSerializedType: 'string', value: 'pro' } }],
       },
       variant: 'rum',
     })
@@ -475,14 +512,17 @@ describe('user and context resolution', () => {
 ```
 
 **Step 2: Run tests to confirm they fail**
+
 ```bash
 node --test 'packages/endpoint/src/bundleGenerator.spec.ts'
 ```
+
 Expected: 4 new failing tests.
 
 **Step 3: Update `generateCombinedBundle` in `bundleGenerator.ts`**
 
 Import the helpers at the top of `packages/endpoint/src/bundleGenerator.ts`:
+
 ```typescript
 import { CONTEXT_RESOLUTION_HELPERS } from './contextResolutionHelpers.ts'
 ```
@@ -553,18 +593,23 @@ export function generateCombinedBundle(options: CombineBundleOptions): string {
 ```
 
 **Step 4: Run tests to confirm they pass**
+
 ```bash
 node --test 'packages/endpoint/src/bundleGenerator.spec.ts'
 ```
+
 Expected: all tests green, including the 4 new ones.
 
 **Step 5: Run the full unit test suite to check for regressions**
+
 ```bash
 yarn test:unit
 ```
+
 Expected: all tests pass.
 
 **Step 6: Commit**
+
 ```bash
 git add packages/endpoint/src/bundleGenerator.ts packages/endpoint/src/bundleGenerator.spec.ts
 git commit -m "✨ Resolve user and globalContext from remote config in generated bundles"
@@ -575,6 +620,7 @@ git commit -m "✨ Resolve user and globalContext from remote config in generate
 ### Task 5: E2E tests for user and globalContext from embedded config
 
 **Files:**
+
 - Modify: `test/e2e/scenario/rum/embeddedConfig.scenario.ts`
 
 **Background:** The existing E2E tests in this file use `withRemoteConfiguration` to serve pre-generated bundles. Look at the existing test structure to understand how to set up the page and assert on RUM events.
@@ -586,6 +632,7 @@ Open `test/e2e/scenario/rum/embeddedConfig.scenario.ts` and `test/e2e/scenario/r
 **Step 2: Add static user context test**
 
 Add a test that:
+
 1. Generates a bundle with `user: [{ key: 'id', value: { rcSerializedType: 'string', value: 'test-user-42' } }]`
 2. Loads the page with that bundle
 3. Asserts that the first RUM view event has `usr.id === 'test-user-42'`
@@ -593,6 +640,7 @@ Add a test that:
 **Step 3: Add static globalContext test**
 
 Add a test that:
+
 1. Generates a bundle with `context: [{ key: 'plan', value: { rcSerializedType: 'string', value: 'enterprise' } }]`
 2. Loads the page
 3. Asserts that the first RUM view event has `context.plan === 'enterprise'`
@@ -600,17 +648,21 @@ Add a test that:
 **Step 4: Add dynamic cookie user context test** (in `embeddedConfigDynamic.scenario.ts`)
 
 Add a test that:
+
 1. Generates a bundle with `user: [{ key: 'id', value: { rcSerializedType: 'dynamic', strategy: 'cookie', name: 'uid' } }]`
 2. Sets the `uid` cookie to `cookie-user-99` in the browser context before loading the page
 3. Asserts that the RUM view event has `usr.id === 'cookie-user-99'`
 
 **Step 5: Run E2E tests**
+
 ```bash
 yarn test:e2e -g "embedded configuration"
 ```
+
 Expected: all embedded config tests pass, including the new ones.
 
 **Step 6: Commit**
+
 ```bash
 git add test/e2e/scenario/rum/embeddedConfig.scenario.ts test/e2e/scenario/rum/embeddedConfigDynamic.scenario.ts
 git commit -m "✅ Add E2E tests for user and globalContext from embedded remote config"
@@ -621,25 +673,33 @@ git commit -m "✅ Add E2E tests for user and globalContext from embedded remote
 ### Task 6: Final verification
 
 **Step 1: Run all unit tests**
+
 ```bash
 yarn test:unit
 ```
+
 Expected: all pass.
 
 **Step 2: Run typecheck**
+
 ```bash
 yarn typecheck
 ```
+
 Expected: no errors.
 
 **Step 3: Run lint**
+
 ```bash
 yarn lint
 ```
+
 Expected: no errors.
 
 **Step 4: Run E2E tests**
+
 ```bash
 yarn test:e2e -g "embedded configuration"
 ```
+
 Expected: all pass.

@@ -132,7 +132,9 @@ test.describe('embedded configuration', () => {
     })
 
   createTest('should apply static user context from embedded config to view events')
-    .withSetup(createEmbeddedConfigSetup({ user: [{ key: 'id', value: { rcSerializedType: 'string', value: 'test-user-42' } }] }))
+    .withSetup(
+      createEmbeddedConfigSetup({ user: [{ key: 'id', value: { rcSerializedType: 'string', value: 'test-user-42' } }] })
+    )
     .run(async ({ intakeRegistry, flushEvents }) => {
       await flushEvents()
       expect(intakeRegistry.rumViewEvents.length).toBeGreaterThanOrEqual(1)
@@ -140,7 +142,11 @@ test.describe('embedded configuration', () => {
     })
 
   createTest('should apply static globalContext from embedded config to view events')
-    .withSetup(createEmbeddedConfigSetup({ context: [{ key: 'plan', value: { rcSerializedType: 'string', value: 'enterprise' } }] }))
+    .withSetup(
+      createEmbeddedConfigSetup({
+        context: [{ key: 'plan', value: { rcSerializedType: 'string', value: 'enterprise' } }],
+      })
+    )
     .run(async ({ intakeRegistry, flushEvents }) => {
       await flushEvents()
       expect(intakeRegistry.rumViewEvents.length).toBeGreaterThanOrEqual(1)

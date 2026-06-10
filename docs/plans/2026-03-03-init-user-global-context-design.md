@@ -25,6 +25,7 @@ The bundle generator (`generateCombinedBundle`) resolves `DynamicOption` values 
 **`packages/rum-core/src/domain/configuration/configuration.ts`**
 
 Add to `RumInitConfiguration`:
+
 ```typescript
 user?: User
 globalContext?: Context
@@ -62,20 +63,22 @@ This runs after the context managers are initialized but before any views are tr
 3. A single `DD_RUM.init()` call with a spread of the scalar remote config fields plus the resolved `user` and `globalContext`:
 
 ```js
-var __dd_user = {};
-(__DATADOG_REMOTE_CONFIG__.user || []).forEach(function(item) {
-  __dd_user[item.key] = __dd_resolveContextValue(item.value);
-});
+var __dd_user = {}
+;(__DATADOG_REMOTE_CONFIG__.user || []).forEach(function (item) {
+  __dd_user[item.key] = __dd_resolveContextValue(item.value)
+})
 
-var __dd_ctx = {};
-(__DATADOG_REMOTE_CONFIG__.context || []).forEach(function(item) {
-  __dd_ctx[item.key] = __dd_resolveContextValue(item.value);
-});
+var __dd_ctx = {}
+;(__DATADOG_REMOTE_CONFIG__.context || []).forEach(function (item) {
+  __dd_ctx[item.key] = __dd_resolveContextValue(item.value)
+})
 
-window.DD_RUM.init(Object.assign({}, __DATADOG_REMOTE_CONFIG__, {
-  user: Object.keys(__dd_user).length ? __dd_user : undefined,
-  globalContext: Object.keys(__dd_ctx).length ? __dd_ctx : undefined,
-}));
+window.DD_RUM.init(
+  Object.assign({}, __DATADOG_REMOTE_CONFIG__, {
+    user: Object.keys(__dd_user).length ? __dd_user : undefined,
+    globalContext: Object.keys(__dd_ctx).length ? __dd_ctx : undefined,
+  })
+)
 ```
 
 The resolution helpers are defined in a separate source file `packages/endpoint/src/contextResolutionHelpers.ts` that exports the JS string constant, keeping `bundleGenerator.ts` readable and allowing the helpers to be unit-tested independently.

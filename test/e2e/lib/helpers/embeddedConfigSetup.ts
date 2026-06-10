@@ -1,5 +1,5 @@
 import { CONTEXT_RESOLUTION_HELPERS } from '@datadog/browser-sdk-endpoint'
-import { DEFAULT_RUM_CONFIGURATION, html, basePage, createCrossOriginScriptUrls } from '../framework'
+import { DEFAULT_RUM_CONFIGURATION, html, createCrossOriginScriptUrls } from '../framework'
 import type { SetupOptions, Servers } from '../framework'
 
 export interface ContextItem {
@@ -48,35 +48,44 @@ export function createEmbeddedConfigSetup(extraConfig: {
       ${extraConfig.preSDKScript ? `<script type="text/javascript">${extraConfig.preSDKScript}</script>` : ''}
       <script type="text/javascript" src="${rumScriptUrl}"></script>
       <script type="text/javascript">
-        (function () {
-          'use strict';
-          var __DATADOG_REMOTE_CONFIG__ = ${configJson};
-          var __dd_user = {};
-          (__DATADOG_REMOTE_CONFIG__.user || []).forEach(function (item) {
-            __dd_user[item.key] = __dd_resolveContextValue(item.value);
-          });
-          var __dd_globalContext = {};
-          (__DATADOG_REMOTE_CONFIG__.context || []).forEach(function (item) {
-            __dd_globalContext[item.key] = __dd_resolveContextValue(item.value);
-          });
-          var hasUser = Object.keys(__dd_user).length > 0;
-          var hasGlobalContext = Object.keys(__dd_globalContext).length > 0;
-          window.DD_RUM.init(Object.assign({}, __DATADOG_REMOTE_CONFIG__, {
-            user: hasUser ? __dd_user : undefined,
-            context: undefined,
-            globalContext: hasGlobalContext ? __dd_globalContext : undefined
-          }));
+        ;(function () {
+          'use strict'
+          var __DATADOG_REMOTE_CONFIG__ = ${configJson}
+          var __dd_user = {}
+          ;(__DATADOG_REMOTE_CONFIG__.user || []).forEach(function (item) {
+            __dd_user[item.key] = __dd_resolveContextValue(item.value)
+          })
+          var __dd_globalContext = {}
+          ;(__DATADOG_REMOTE_CONFIG__.context || []).forEach(function (item) {
+            __dd_globalContext[item.key] = __dd_resolveContextValue(item.value)
+          })
+          var hasUser = Object.keys(__dd_user).length > 0
+          var hasGlobalContext = Object.keys(__dd_globalContext).length > 0
+          window.DD_RUM.init(
+            Object.assign({}, __DATADOG_REMOTE_CONFIG__, {
+              user: hasUser ? __dd_user : undefined,
+              context: undefined,
+              globalContext: hasGlobalContext ? __dd_globalContext : undefined,
+            })
+          )
           // Re-apply test isolation context after init so it is not overwritten by the
           // globalContext init option (setContext replaces; we add test properties back).
-          var __dd_testContext = ${testContextJson};
-          Object.keys(__dd_testContext).forEach(function(key) {
-            window.DD_RUM.setGlobalContextProperty(key, __dd_testContext[key]);
-          });
+          var __dd_testContext = ${testContextJson}
+          Object.keys(__dd_testContext).forEach(function (key) {
+            window.DD_RUM.setGlobalContextProperty(key, __dd_testContext[key])
+          })
 
           ${CONTEXT_RESOLUTION_HELPERS.trim()}
-        })();
+        })()
       </script>
     `
-    return basePage({ header })
+    return html`<!doctype html>
+      <html>
+        <head>
+          <link rel="icon" href="data:," />
+          ${header}
+        </head>
+        <body></body>
+      </html>`
   }
 }

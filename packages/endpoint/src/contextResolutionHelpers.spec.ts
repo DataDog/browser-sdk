@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert'
 import vm from 'node:vm'
-import { CONTEXT_RESOLUTION_HELPERS } from './contextResolutionHelpers.ts'
+import { CONTEXT_RESOLUTION_HELPERS } from './contextResolutionHelpers'
 
 function resolve(
   value: unknown,
@@ -68,10 +68,7 @@ describe('CONTEXT_RESOLUTION_HELPERS', () => {
 
     it('returns undefined when cookie is absent', () => {
       assert.strictEqual(
-        resolve(
-          { rcSerializedType: 'dynamic', strategy: 'cookie', name: 'missing' },
-          { cookie: 'session=abc' }
-        ),
+        resolve({ rcSerializedType: 'dynamic', strategy: 'cookie', name: 'missing' }, { cookie: 'session=abc' }),
         undefined
       )
     })
@@ -80,10 +77,7 @@ describe('CONTEXT_RESOLUTION_HELPERS', () => {
   describe('strategy: js', () => {
     it('resolves a top-level window property', () => {
       assert.strictEqual(
-        resolve(
-          { rcSerializedType: 'dynamic', strategy: 'js', path: 'userId' },
-          { jsGlobals: { userId: 'alice' } }
-        ),
+        resolve({ rcSerializedType: 'dynamic', strategy: 'js', path: 'userId' }, { jsGlobals: { userId: 'alice' } }),
         'alice'
       )
     })
@@ -99,10 +93,7 @@ describe('CONTEXT_RESOLUTION_HELPERS', () => {
     })
 
     it('returns undefined for missing path', () => {
-      assert.strictEqual(
-        resolve({ rcSerializedType: 'dynamic', strategy: 'js', path: 'missing.deep' }),
-        undefined
-      )
+      assert.strictEqual(resolve({ rcSerializedType: 'dynamic', strategy: 'js', path: 'missing.deep' }), undefined)
     })
   })
 
@@ -119,10 +110,7 @@ describe('CONTEXT_RESOLUTION_HELPERS', () => {
 
     it('returns null when key is absent', () => {
       assert.strictEqual(
-        resolve(
-          { rcSerializedType: 'dynamic', strategy: 'localStorage', key: 'missing' },
-          { localStorageItems: {} }
-        ),
+        resolve({ rcSerializedType: 'dynamic', strategy: 'localStorage', key: 'missing' }, { localStorageItems: {} }),
         null
       )
     })
@@ -174,10 +162,7 @@ describe('CONTEXT_RESOLUTION_HELPERS', () => {
     })
 
     it('returns undefined when element not found', () => {
-      assert.strictEqual(
-        resolve({ rcSerializedType: 'dynamic', strategy: 'dom', selector: '#missing' }, {}),
-        undefined
-      )
+      assert.strictEqual(resolve({ rcSerializedType: 'dynamic', strategy: 'dom', selector: '#missing' }, {}), undefined)
     })
   })
 
@@ -215,10 +200,7 @@ describe('CONTEXT_RESOLUTION_HELPERS', () => {
 
   describe('unknown strategy', () => {
     it('returns undefined for unsupported strategy', () => {
-      assert.strictEqual(
-        resolve({ rcSerializedType: 'dynamic', strategy: 'unknown' }),
-        undefined
-      )
+      assert.strictEqual(resolve({ rcSerializedType: 'dynamic', strategy: 'unknown' }), undefined)
     })
   })
 })
