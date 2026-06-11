@@ -1,5 +1,4 @@
 import { elapsed, clocksOrigin, clocksNow } from '@datadog/js-core/time'
-import type { RelativeTime } from '@datadog/js-core/time'
 import type { Encoder, SessionManager, Profiler } from '@datadog/browser-core'
 import {
   addEventListener,
@@ -76,7 +75,10 @@ export function createRumProfiler(
       const newSession = session.findTrackedSession()
       if (
         !newSession ||
-        !isSampled(newSession.id, correctedChildSampleRate(configuration.sessionSampleRate, configuration.profilingSampleRate))
+        !isSampled(
+          newSession.id,
+          correctedChildSampleRate(configuration.sessionSampleRate, configuration.profilingSampleRate)
+        )
       ) {
         return
       }
@@ -289,7 +291,7 @@ export function createRumProfiler(
             views,
             sampleInterval: profilerConfiguration.sampleIntervalMs,
           }),
-          sessionId,
+          sessionId
         )
       })
       .catch(monitorError)
