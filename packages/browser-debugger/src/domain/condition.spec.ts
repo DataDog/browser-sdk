@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { evaluateProbeCondition, compileCondition, isConditionEvaluationError } from './condition'
 
 describe('condition', () => {
@@ -86,14 +87,20 @@ describe('condition', () => {
         condition: compileCondition('nonExistent.property'),
       }
 
-      expect(() => evaluateProbeCondition(probe, {})).toThrowMatching((error) => {
-        expect(isConditionEvaluationError(error)).toBeTrue()
-        expect(isConditionEvaluationError(error) && error.evaluationError).toEqual({
+      expect(() => evaluateProbeCondition(probe, {})).toThrow()
+      let thrownError: unknown
+      try {
+        evaluateProbeCondition(probe, {})
+      } catch (e) {
+        thrownError = e
+      }
+      expect(isConditionEvaluationError(thrownError)).toBe(true)
+      if (isConditionEvaluationError(thrownError)) {
+        expect(thrownError.evaluationError).toEqual({
           expr: 'nonExistent.property',
-          message: jasmine.stringMatching(/^ReferenceError: /),
+          message: expect.stringMatching(/^ReferenceError: /),
         })
-        return true
-      })
+      }
     })
 
     it('should handle syntax errors in condition', () => {
@@ -104,14 +111,20 @@ describe('condition', () => {
         condition: compileCondition('invalid syntax !!!'),
       }
 
-      expect(() => evaluateProbeCondition(probe, {})).toThrowMatching((error) => {
-        expect(isConditionEvaluationError(error)).toBeTrue()
-        expect(isConditionEvaluationError(error) && error.evaluationError).toEqual({
+      expect(() => evaluateProbeCondition(probe, {})).toThrow()
+      let thrownError: unknown
+      try {
+        evaluateProbeCondition(probe, {})
+      } catch (e) {
+        thrownError = e
+      }
+      expect(isConditionEvaluationError(thrownError)).toBe(true)
+      if (isConditionEvaluationError(thrownError)) {
+        expect(thrownError.evaluationError).toEqual({
           expr: 'invalid syntax !!!',
-          message: jasmine.stringMatching(/^SyntaxError: /),
+          message: expect.stringMatching(/^SyntaxError: /),
         })
-        return true
-      })
+      }
     })
 
     it('should handle cross-realm Error condition failures', () => {

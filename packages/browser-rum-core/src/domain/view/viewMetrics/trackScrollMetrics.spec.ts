@@ -1,3 +1,4 @@
+import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { RelativeTime, TimeStamp } from '@datadog/js-core/time'
 import type { Subscription } from '@datadog/browser-core'
 import { DOM_EVENT, Observable } from '@datadog/browser-core'
@@ -46,12 +47,12 @@ describe('createScrollValuesObserver', () => {
 
 describe('trackScrollMetrics', () => {
   let clock: Clock
-  let scrollMetricsCallback: jasmine.Spy<(metrics: ScrollMetrics) => void>
+  let scrollMetricsCallback: Mock<(metrics: ScrollMetrics) => void>
 
   const scrollObservable = new Observable<ScrollValues>()
 
   beforeEach(() => {
-    scrollMetricsCallback = jasmine.createSpy()
+    scrollMetricsCallback = vi.fn()
     clock = mockClock()
     trackScrollMetrics(
       mockRumConfiguration(),
@@ -72,7 +73,8 @@ describe('trackScrollMetrics', () => {
 
   it('should update scroll height and scroll depth', () => {
     updateScrollValues({ scrollDepth: 700, scrollHeight: 2000, scrollTop: 100 })
-    expect(scrollMetricsCallback).toHaveBeenCalledOnceWith({
+    expect(scrollMetricsCallback).toHaveBeenCalledTimes(1)
+    expect(scrollMetricsCallback).toHaveBeenCalledWith({
       maxDepth: 700,
       maxScrollHeight: 2000,
       maxScrollHeightTime: clock.relative(100),
@@ -82,7 +84,8 @@ describe('trackScrollMetrics', () => {
   it('should update time and scroll height only if it has increased', () => {
     updateScrollValues({ scrollDepth: 700, scrollHeight: 2000, scrollTop: 100 })
     updateScrollValues({ scrollDepth: 700, scrollHeight: 1900, scrollTop: 100 })
-    expect(scrollMetricsCallback).toHaveBeenCalledOnceWith({
+    expect(scrollMetricsCallback).toHaveBeenCalledTimes(1)
+    expect(scrollMetricsCallback).toHaveBeenCalledWith({
       maxDepth: 700,
       maxScrollHeight: 2000,
       maxScrollHeightTime: clock.relative(100),
@@ -93,7 +96,8 @@ describe('trackScrollMetrics', () => {
   it('should update max depth only if it has increased', () => {
     updateScrollValues({ scrollDepth: 700, scrollHeight: 2000, scrollTop: 100 })
     updateScrollValues({ scrollDepth: 600, scrollHeight: 2000, scrollTop: 0 })
-    expect(scrollMetricsCallback).toHaveBeenCalledOnceWith({
+    expect(scrollMetricsCallback).toHaveBeenCalledTimes(1)
+    expect(scrollMetricsCallback).toHaveBeenCalledWith({
       maxDepth: 700,
       maxScrollHeight: 2000,
       maxScrollHeightTime: clock.relative(100),

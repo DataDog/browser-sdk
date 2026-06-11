@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { RelativeTime } from '@datadog/js-core/time'
 import { registerCleanupTask } from '../../../test'
 import { mockRumConfiguration } from '../../../../browser-rum-core/test'
@@ -10,12 +11,12 @@ import { startAccountContext } from './accountContext'
 
 describe('account context', () => {
   let accountContext: ContextManager
-  let displaySpy: jasmine.Spy
+  let displaySpy: Mock
   let hook: Hook<any, any>
 
   beforeEach(() => {
     hook = createHook()
-    displaySpy = spyOn(display, 'warn')
+    displaySpy = vi.spyOn(display, 'warn')
 
     accountContext = startAccountContext(hook, mockRumConfiguration(), 'some_product_key')
   })

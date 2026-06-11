@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it } from 'vitest'
 import type { RelativeTime } from '@datadog/js-core/time'
 import { registerCleanupTask } from '../../../test'
 import type { Hook } from '../../tools/abstractHooks'
@@ -26,9 +27,9 @@ describe('tabContext', () => {
     })
 
     expect(event).toEqual(
-      jasmine.objectContaining({
-        tab: jasmine.objectContaining({
-          id: jasmine.stringMatching(UUID_PATTERN),
+      expect.objectContaining({
+        tab: expect.objectContaining({
+          id: expect.stringMatching(UUID_PATTERN),
         }),
       })
     )
@@ -61,7 +62,9 @@ describe('tabContext', () => {
   })
 
   it('should generate a tab ID when sessionStorage.getItem throws', () => {
-    spyOn(sessionStorage, 'getItem').and.throwError('SecurityError')
+    vi.spyOn(sessionStorage, 'getItem').mockImplementation(() => {
+      throw new Error('SecurityError')
+    })
     startTabContext(hook)
 
     const event = hook.trigger({ startTime: 0 as RelativeTime })
@@ -70,8 +73,10 @@ describe('tabContext', () => {
   })
 
   it('should generate a tab ID when sessionStorage.setItem throws', () => {
-    spyOn(sessionStorage, 'getItem').and.returnValue(null)
-    spyOn(sessionStorage, 'setItem').and.throwError('QuotaExceededError')
+    vi.spyOn(sessionStorage, 'getItem').mockReturnValue(null)
+    vi.spyOn(sessionStorage, 'setItem').mockImplementation(() => {
+      throw new Error('QuotaExceededError')
+    })
     startTabContext(hook)
 
     const event = hook.trigger({ startTime: 0 as RelativeTime })
@@ -80,7 +85,9 @@ describe('tabContext', () => {
   })
 
   it('should return the same tab ID across multiple startTabContext calls when sessionStorage is unavailable', () => {
-    spyOn(sessionStorage, 'getItem').and.throwError('SecurityError')
+    vi.spyOn(sessionStorage, 'getItem').mockImplementation(() => {
+      throw new Error('SecurityError')
+    })
 
     const hook1 = createHook<any, any>()
     startTabContext(hook1)

@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest'
 import type { BrowserWindow } from '@datadog/browser-rum-core'
 import {
   PRIVACY_ATTR_NAME,
@@ -13,17 +14,6 @@ import { ChangeType, PlaybackState } from '../../../types'
 import { serializeHtml } from '../test/serializeHtml.specHelper'
 
 describe('serializeNode for snapshotted documents', () => {
-  let originalTimeout: number
-
-  beforeAll(() => {
-    originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000
-  })
-
-  afterAll(() => {
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout
-  })
-
   describe('for a simple document', () => {
     const GREEN_PNG =
       'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQAQMAAAAlPW0iAAAAA1BMVEUA/wA0XsCoAAAADElEQVR4nGNgIA0AAAAwAAEWiZrRAAAAAElFTkSuQmCC'
@@ -162,7 +152,7 @@ describe('serializeNode for snapshotted documents', () => {
             [1, '#doctype', 'html', '', ''],
             [0, 'HTML', [PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN]],
           ],
-          [ChangeType.Size, [2, jasmine.any(Number), jasmine.any(Number)]],
+          [ChangeType.Size, [2, expect.any(Number), expect.any(Number)]],
           [ChangeType.ScrollPosition, [0, 0, 0]],
         ])
       })

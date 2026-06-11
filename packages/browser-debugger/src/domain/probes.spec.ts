@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach } from 'vitest'
 import type { ErrorWithCause } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import {
@@ -28,7 +29,7 @@ describe('probes', () => {
       const retrieved = getProbes(DEFAULT_PROBE_FUNCTION_ID)
 
       expect(retrieved).toEqual([
-        jasmine.objectContaining({
+        expect.objectContaining({
           id: probe.id,
         }),
       ])
@@ -77,7 +78,7 @@ describe('probes', () => {
       addProbe(createProbe({ version: 1 }))
 
       expect(() => removeProbe(staleInitializedProbe)).not.toThrow()
-      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toEqual([jasmine.objectContaining({ version: 1 })])
+      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toEqual([expect.objectContaining({ version: 1 })])
     })
 
     it('should not throw when passed a stale probe instance that is no longer registered', () => {
@@ -99,9 +100,9 @@ describe('probes', () => {
       initializeProbe(probe)
 
       expect(probe).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           template: 'Test message',
-          msBetweenSampling: jasmine.any(Number),
+          msBetweenSampling: expect.any(Number),
           lastCaptureMs: -Infinity,
         })
       )
@@ -117,9 +118,9 @@ describe('probes', () => {
       initializeProbe(probe)
 
       expect(probe).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           template: 'Value: {x}',
-          evaluateTemplate: jasmine.any(Function),
+          evaluateTemplate: expect.any(Function),
         })
       )
       expect(probe.segments).toBeUndefined() // Should be deleted after initialization
@@ -136,8 +137,8 @@ describe('probes', () => {
       initializeProbe(probe)
 
       expect(probe.condition).toEqual(
-        jasmine.objectContaining({
-          evaluate: jasmine.any(Function),
+        expect.objectContaining({
+          evaluate: expect.any(Function),
         })
       )
     })
@@ -157,9 +158,9 @@ describe('probes', () => {
         error = err
       }
 
-      expect(error).toEqual(jasmine.any(Error))
+      expect(error).toEqual(expect.any(Error))
       expect((error as Error).message).toContain('Cannot compile condition')
-      expect((error as ErrorWithCause).cause).toEqual(jasmine.any(TypeError))
+      expect((error as ErrorWithCause).cause).toEqual(expect.any(TypeError))
       expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
     })
 

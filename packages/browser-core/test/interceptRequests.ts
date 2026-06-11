@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import type { EndpointBuilder } from '../src'
 import { noop } from '../src'
 import { mockXhr, MockXhr } from './emulate/mockXhr'
@@ -25,7 +26,7 @@ export function interceptRequests() {
   const originalFetch = window.fetch
 
   if (isSendBeaconSupported()) {
-    spyOn(navigator, 'sendBeacon').and.callFake((url, body) => {
+    vi.spyOn(navigator, 'sendBeacon').mockImplementation((url, body) => {
       requests.push({ type: 'sendBeacon', url: url as string, body: body as string })
       return true
     })
@@ -38,7 +39,7 @@ export function interceptRequests() {
     resolveFetchCallReturns = resolve
   })
 
-  const fetchSpy = spyOn(window, 'fetch').and.callFake((url, config) => {
+  const fetchSpy = vi.spyOn(window, 'fetch').mockImplementation((url, config) => {
     const fetchPromise = fetchMocks.shift()
 
     if (!fetchPromise) {
