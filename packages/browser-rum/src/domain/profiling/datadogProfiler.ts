@@ -106,8 +106,15 @@ export function createRumProfiler(
 
     // Start profiler instance
     startNextProfilerInstance()
+    triggerQuotaCheck()
+  }
 
-    // Quota check — optimistic: profiler already recording, only gates sending.
+  function triggerQuotaCheck() {
+    if (canUseEventBridge()) {
+      // Quota check only in non-bridge mode.
+      return
+    }
+    // Optimistic: profiler already recording, only gates sending.
     // Generation counter invalidates results from a prior session (incremented on each start() call).
     // State guard handles within-session cancellation (user stop, session expiry, etc.).
     const checkGeneration = ++quotaCheckGeneration

@@ -1352,6 +1352,17 @@ describe('profiler', () => {
 
       expect(profiler.isStopped()).toBe(true)
     })
+
+    it('should not call quota check in bridge mode', async () => {
+      mockEventBridge({ capabilities: [BridgeCapability.PROFILES] })
+      const { profiler } = setupProfiler()
+
+      profiler.start()
+      await waitNextMicrotask()
+      profiler.stop()
+
+      expect(checkProfilingQuotaSpy).not.toHaveBeenCalled()
+    })
   })
 
   describe('transport selection', () => {
