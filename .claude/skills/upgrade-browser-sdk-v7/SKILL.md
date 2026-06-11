@@ -86,33 +86,29 @@ Search: `grep -rn 'betaEncodeCookieOptions|allowFallbackToLocalStorage|trackBfca
 
 ### 4a. `forwardErrorsToLogs` + `forwardConsoleLogs` (Logs)
 
-These are now **independent**. In v6, `forwardErrorsToLogs: true` silently forwarded `console.error()`. In v7, it only controls unhandled errors.
+These are now **independent**. In v6, `forwardErrorsToLogs: true` had a side effect: it also forwarded `console.error()` calls to Logs. In v7, that side effect is removed.
 
-**If you use `forwardErrorsToLogs: true`**, add `"error"` to your `forwardConsoleLogs` array to preserve v6 behavior:
+- `forwardErrorsToLogs` — controls forwarding of **unhandled errors** (uncaught exceptions, unhandled rejections) to Logs. **Keep this unchanged.**
+- `forwardConsoleLogs` — controls forwarding of **`console.error()` calls** to Logs. Add `'error'` here to restore the v6 side effect.
+
+**Keep `forwardErrorsToLogs: true` and add `forwardConsoleLogs: ['error']` alongside it:**
 
 ```js
+// v6
 DD_LOGS.init({
   forwardErrorsToLogs: true,
-  forwardConsoleLogs: ['error', 'warn'], // add 'error' explicitly
+})
+
+// v7
+DD_LOGS.init({
+  forwardErrorsToLogs: true, // unchanged — still forwards unhandled errors
+  forwardConsoleLogs: ['error'], // new — restores console.error forwarding
 })
 ```
 
+Do **not** replace `forwardErrorsToLogs` with `forwardConsoleLogs` — they control different things.
+
 Search: `grep -rn "forwardErrorsToLogs" --include="*.js" --include="*.ts" --include="*.tsx" --include="*.html"`
-
-**RUM source errors from caught exceptions**: In v6, `console.error(errorObject)` with `forwardErrorsToLogs: true` implicitly created both a Logs event and a RUM `error::source` event. In v7 these are decoupled — `console.error` only produces a Logs event. If the error is caught and never re-thrown, RUM never sees it.
-
-If your app catches exceptions and reports them only via `console.error`, add an explicit `datadogRum.addError()` call:
-
-```js
-try {
-  riskyOperation()
-} catch (err) {
-  console.error('Operation failed:', err.message)
-  datadogRum.addError(err) // v7: explicit RUM error required
-}
-```
-
-Search for this pattern: `grep -rn 'console\.error' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.svelte" --include="*.vue"` — review each catch block and decide whether a RUM error event is expected.
 
 ### 4b. `startDurationVital` / `stopDurationVital` (RUM)
 
