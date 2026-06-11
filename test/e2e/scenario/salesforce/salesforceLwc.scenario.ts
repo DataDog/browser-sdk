@@ -1,7 +1,12 @@
 import { expect, test } from '@playwright/test'
 import type { Request } from '@playwright/test'
-import { DEFAULT_RUM_CONFIGURATION, createTest } from '../../lib/framework'
-import { getEventIntakeEncoding, parseEventIntakePayload } from '../../lib/framework/intakeProxyMiddleware'
+import type { RumEvent } from '@datadog/browser-rum'
+import {
+  DEFAULT_RUM_CONFIGURATION,
+  createTest,
+  getEventIntakeEncoding,
+  parseEventIntakePayload,
+} from '../../lib/framework'
 import { buildFrontdoorUrl, getSfSession } from './sfSession'
 import type { SfSession } from './sfSession'
 
@@ -56,11 +61,15 @@ createTest('salesforce')
 
     // Click on the custom action 1 and verify that the action event is present.
     expect(intakeRegistry.rumActionEvents.length).toBeGreaterThanOrEqual(1)
-    const customAction = intakeRegistry.rumActionEvents.find((e) => e.action.type === 'custom' && e.action.target?.name?.includes('custom action 1') === true)
+    const customAction = intakeRegistry.rumActionEvents.find(
+      (e) => e.action.type === 'custom' && e.action.target?.name?.includes('custom action 1') === true
+    )
     expect(customAction).toBeDefined()
 
     // Verify that the product explorer view event is present.
-    const productExplorerView = intakeRegistry.rumViewEvents.find((e) => e.view.name?.includes('/lightning/n/Product_Explorer') === true)
+    const productExplorerView = intakeRegistry.rumViewEvents.find(
+      (e) => e.view.name?.includes('/lightning/n/Product_Explorer') === true
+    )
     expect(productExplorerView).toBeDefined()
     expect(productExplorerView?.view.loading_type).toBe('route_change')
   })
@@ -82,5 +91,7 @@ function buildSfLwcRetPath(resourceName: string) {
 function getRumEvents(request: Request) {
   const body = request.postDataBuffer()
   const url = new URL(request.url())
-  return body ? parseEventIntakePayload(body, getEventIntakeEncoding(request.headers(), url.searchParams)) : []
+  return body
+    ? (parseEventIntakePayload(body, getEventIntakeEncoding(request.headers(), url.searchParams)) as RumEvent[])
+    : []
 }

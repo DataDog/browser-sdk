@@ -166,17 +166,17 @@ async function readEventIntakeRequest(
   return {
     ...infos,
     events: parseEventIntakePayload(rawBody, infos.encoding),
-  }
+  } as RumIntakeRequest | LogsIntakeRequest | DebuggerIntakeRequest
 }
 
-export function parseEventIntakePayload(rawBody: Buffer, encoding: string | null) {
+export function parseEventIntakePayload(rawBody: Buffer, encoding: string | null): Array<Record<string, unknown>> {
   const encodedBody = encoding === 'deflate' ? inflateSync(rawBody) : rawBody
 
   return encodedBody
     .toString('utf-8')
     .split('\n')
     .filter(Boolean)
-    .map((line): any => JSON.parse(line))
+    .map((line): Record<string, unknown> => JSON.parse(line) as Record<string, unknown>)
 }
 
 function readReplayIntakeRequest(
