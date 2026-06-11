@@ -22,8 +22,8 @@
     "@datadog/js-core": "0.0.1"
   },
   "peerDependencies": {
-    "@angular/core": ">=15 <=21",
-    "@angular/router": ">=15 <=21",
+    "@angular/core": ">=15 <=22",
+    "@angular/router": ">=15 <=22",
     "rxjs": ">=7"
   },
   "repository": {
@@ -38,11 +38,11 @@
     "access": "public"
   },
   "devDependencies": {
-    "@angular/common": "21.2.15",
-    "@angular/compiler": "21.2.15",
-    "@angular/core": "21.2.15",
-    "@angular/platform-browser": "21.2.15",
-    "@angular/router": "21.2.15",
+    "@angular/common": "22.0.0",
+    "@angular/compiler": "22.0.0",
+    "@angular/core": "22.0.0",
+    "@angular/platform-browser": "22.0.0",
+    "@angular/router": "22.0.0",
     "rxjs": "7.8.2"
   }
 }

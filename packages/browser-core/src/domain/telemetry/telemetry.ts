@@ -27,8 +27,8 @@ import {
 } from '../../transport'
 import { createIdentityEncoder } from '../../tools/encoder'
 import { createPageMayExitObservable } from '../../browser/pageMayExitObservable'
-import type { AbstractHooks, RecursivePartial } from '../../tools/abstractHooks'
-import { HookNames, DISCARDED } from '../../tools/abstractHooks'
+import type { Hook, RecursivePartial } from '../../tools/abstractHooks'
+import { DISCARDED } from '../../tools/abstractHooks'
 import { globalObject, isWorkerEnvironment } from '../../tools/globalObject'
 import { noop } from '../../tools/utils/functionUtils'
 import type { TelemetryEvent } from './telemetryEvent.types'
@@ -90,10 +90,10 @@ export function getTelemetryObservable() {
 export function startTelemetry(
   telemetryService: TelemetryService,
   configuration: Configuration,
-  hooks: AbstractHooks
+  hook: Hook<any, any>
 ): Telemetry {
   const observable = new Observable<TelemetryEvent & Context>()
-  const { enabled, metricsEnabled } = startTelemetryCollection(telemetryService, configuration, hooks, observable)
+  const { enabled, metricsEnabled } = startTelemetryCollection(telemetryService, configuration, hook, observable)
   const { stop } = startTelemetryTransport(configuration, observable)
   return {
     stop,
@@ -105,7 +105,7 @@ export function startTelemetry(
 export function startTelemetryCollection(
   telemetryService: TelemetryService,
   configuration: Configuration,
-  hooks: AbstractHooks,
+  hook: Hook<any, any>,
   observable: Observable<TelemetryEvent & Context>,
   metricSampleRate = METRIC_SAMPLE_RATE,
   maxTelemetryEventsPerPage = MAX_TELEMETRY_EVENTS_PER_PAGE
@@ -145,7 +145,7 @@ export function startTelemetryCollection(
       return
     }
 
-    const defaultTelemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
+    const defaultTelemetryEventAttributes = hook.trigger({
       startTime: clocksNow().relative,
     })
 

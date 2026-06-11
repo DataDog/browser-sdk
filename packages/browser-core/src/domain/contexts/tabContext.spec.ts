@@ -1,17 +1,17 @@
 import type { RelativeTime } from '@datadog/js-core/time'
-import type { Hooks } from '../../../test'
-import { createHooks, registerCleanupTask } from '../../../test'
-import { HookNames } from '../../tools/abstractHooks'
+import { registerCleanupTask } from '../../../test'
+import type { Hook } from '../../tools/abstractHooks'
+import { createHook } from '../../tools/abstractHooks'
 import { TAB_ID_STORAGE_KEY, resetCachedTabId, startTabContext } from './tabContext'
 
 const UUID_PATTERN = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/
 
 describe('tabContext', () => {
-  let hooks: Hooks
+  let hook: Hook<any, any>
 
   beforeEach(() => {
     resetCachedTabId()
-    hooks = createHooks()
+    hook = createHook()
     registerCleanupTask(() => {
       sessionStorage.removeItem(TAB_ID_STORAGE_KEY)
       resetCachedTabId()
@@ -19,9 +19,9 @@ describe('tabContext', () => {
   })
 
   it('should return a tab ID via the assemble hook', () => {
-    startTabContext(hooks)
+    startTabContext(hook)
 
-    const event = hooks.triggerHook(HookNames.Assemble, {
+    const event = hook.trigger({
       startTime: 0 as RelativeTime,
     })
 
@@ -35,46 +35,36 @@ describe('tabContext', () => {
   })
 
   it('should return a consistent tab ID across multiple hook triggers', () => {
-    startTabContext(hooks)
+    startTabContext(hook)
 
-    const event1 = hooks.triggerHook(HookNames.Assemble, {
-      startTime: 0 as RelativeTime,
-    })
-    const event2 = hooks.triggerHook(HookNames.Assemble, {
-      startTime: 0 as RelativeTime,
-    })
+    const event1 = hook.trigger({ startTime: 0 as RelativeTime })
+    const event2 = hook.trigger({ startTime: 0 as RelativeTime })
 
     expect(event1.tab.id).toBe(event2.tab.id)
   })
 
   it('should persist the tab ID to sessionStorage', () => {
-    startTabContext(hooks)
+    startTabContext(hook)
 
-    const event = hooks.triggerHook(HookNames.Assemble, {
-      startTime: 0 as RelativeTime,
-    })
+    const event = hook.trigger({ startTime: 0 as RelativeTime })
 
     expect(sessionStorage.getItem(TAB_ID_STORAGE_KEY)).toBe(event.tab.id)
   })
 
   it('should reuse an existing tab ID from sessionStorage', () => {
     sessionStorage.setItem(TAB_ID_STORAGE_KEY, 'existing-tab-id')
-    startTabContext(hooks)
+    startTabContext(hook)
 
-    const event = hooks.triggerHook(HookNames.Assemble, {
-      startTime: 0 as RelativeTime,
-    })
+    const event = hook.trigger({ startTime: 0 as RelativeTime })
 
     expect(event.tab.id).toBe('existing-tab-id')
   })
 
   it('should generate a tab ID when sessionStorage.getItem throws', () => {
     spyOn(sessionStorage, 'getItem').and.throwError('SecurityError')
-    startTabContext(hooks)
+    startTabContext(hook)
 
-    const event = hooks.triggerHook(HookNames.Assemble, {
-      startTime: 0 as RelativeTime,
-    })
+    const event = hook.trigger({ startTime: 0 as RelativeTime })
 
     expect(event.tab.id).toMatch(UUID_PATTERN)
   })
@@ -82,11 +72,9 @@ describe('tabContext', () => {
   it('should generate a tab ID when sessionStorage.setItem throws', () => {
     spyOn(sessionStorage, 'getItem').and.returnValue(null)
     spyOn(sessionStorage, 'setItem').and.throwError('QuotaExceededError')
-    startTabContext(hooks)
+    startTabContext(hook)
 
-    const event = hooks.triggerHook(HookNames.Assemble, {
-      startTime: 0 as RelativeTime,
-    })
+    const event = hook.trigger({ startTime: 0 as RelativeTime })
 
     expect(event.tab.id).toMatch(UUID_PATTERN)
   })
@@ -94,13 +82,13 @@ describe('tabContext', () => {
   it('should return the same tab ID across multiple startTabContext calls when sessionStorage is unavailable', () => {
     spyOn(sessionStorage, 'getItem').and.throwError('SecurityError')
 
-    const hooks1 = createHooks()
-    startTabContext(hooks1)
-    const hooks2 = createHooks()
-    startTabContext(hooks2)
+    const hook1 = createHook<any, any>()
+    startTabContext(hook1)
+    const hook2 = createHook<any, any>()
+    startTabContext(hook2)
 
-    const event1 = hooks1.triggerHook(HookNames.Assemble, { startTime: 0 as RelativeTime })
-    const event2 = hooks2.triggerHook(HookNames.Assemble, { startTime: 0 as RelativeTime })
+    const event1 = hook1.trigger({ startTime: 0 as RelativeTime })
+    const event2 = hook2.trigger({ startTime: 0 as RelativeTime })
 
     expect(event1.tab.id).toBe(event2.tab.id)
   })

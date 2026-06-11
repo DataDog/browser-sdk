@@ -1,6 +1,6 @@
 import type { RelativeTime } from '@datadog/js-core/time'
 import type { RumInternalContext } from '@datadog/browser-core'
-import { globalObject, willSyntheticsInjectRum, HookNames, SKIPPED } from '@datadog/browser-core'
+import { globalObject, willSyntheticsInjectRum, SKIPPED } from '@datadog/browser-core'
 import type { Hooks } from '../hooks'
 
 interface Rum {
@@ -15,7 +15,7 @@ interface BrowserWindow {
 export function startRUMInternalContext(hooks: Hooks) {
   const browserWindow = globalObject as BrowserWindow
 
-  hooks.register(HookNames.Assemble, ({ startTime }) => {
+  hooks.assemble.register(({ startTime }) => {
     const internalContext = getRUMInternalContext(startTime)
     if (!internalContext) {
       return SKIPPED
@@ -24,7 +24,7 @@ export function startRUMInternalContext(hooks: Hooks) {
     return internalContext
   })
 
-  hooks.register(HookNames.AssembleTelemetry, ({ startTime }) => {
+  hooks.assembleTelemetry.register(({ startTime }) => {
     const internalContext = getRUMInternalContext(startTime)
 
     if (!internalContext) {

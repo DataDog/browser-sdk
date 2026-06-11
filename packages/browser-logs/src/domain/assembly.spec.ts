@@ -1,7 +1,7 @@
 import type { RelativeTime, TimeStamp } from '@datadog/js-core/time'
 import type { Context } from '@datadog/browser-core'
 import { ONE_MINUTE, toTimeStamp } from '@datadog/js-core/time'
-import { ErrorSource, noop, HookNames } from '@datadog/browser-core'
+import { ErrorSource, noop } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import type { LogsEvent } from '../logsEvent.types'
@@ -49,7 +49,7 @@ describe('startLogsAssembly', () => {
     mainLogger = new Logger(() => noop)
     hooks = createHooks()
     startRUMInternalContext(hooks)
-    startLogsAssembly(configuration, lifeCycle, hooks, () => COMMON_CONTEXT, noop)
+    startLogsAssembly(configuration, lifeCycle, hooks.assemble, () => COMMON_CONTEXT, noop)
     window.DD_RUM = {
       getInternalContext: noop,
     }
@@ -173,7 +173,7 @@ describe('startLogsAssembly', () => {
 
   describe('assembly precedence', () => {
     it('defaultLogsEventAttributes should take precedence over service, session_id', () => {
-      hooks.register(HookNames.Assemble, () => ({
+      hooks.assemble.register(() => ({
         service: 'foo',
         session_id: 'bar',
       }))
@@ -185,7 +185,7 @@ describe('startLogsAssembly', () => {
     })
 
     it('defaultLogsEventAttributes should take precedence over common context', () => {
-      hooks.register(HookNames.Assemble, () => ({
+      hooks.assemble.register(() => ({
         view: {
           referrer: 'referrer_from_defaultLogsEventAttributes',
           url: 'url_from_defaultLogsEventAttributes',
@@ -215,7 +215,7 @@ describe('startLogsAssembly', () => {
     })
 
     it('raw log should take precedence over defaultLogsEventAttributes', () => {
-      hooks.register(HookNames.Assemble, () => ({
+      hooks.assemble.register(() => ({
         message: 'from-defaultLogsEventAttributes',
       }))
 
@@ -298,7 +298,7 @@ describe('logs limitation', () => {
 
     beforeSend = noop
     reportErrorSpy = jasmine.createSpy('reportError')
-    startLogsAssembly(configuration, lifeCycle, hooks, () => COMMON_CONTEXT, reportErrorSpy, 1)
+    startLogsAssembly(configuration, lifeCycle, hooks.assemble, () => COMMON_CONTEXT, reportErrorSpy, 1)
     clock = mockClock()
   })
 

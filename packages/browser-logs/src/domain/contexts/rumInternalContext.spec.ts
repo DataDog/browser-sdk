@@ -1,5 +1,4 @@
 import type { RelativeTime } from '@datadog/js-core/time'
-import { HookNames } from '@datadog/browser-core'
 import { mockSyntheticsWorkerValues } from '@datadog/browser-core/test'
 import type { Hooks } from '../hooks'
 import { createHooks } from '../hooks'
@@ -20,7 +19,7 @@ describe('startRUMInternalContext', () => {
 
   describe('assemble hook', () => {
     it('returns undefined if no RUM instance is present', () => {
-      const defaultLogsEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultLogsEventAttributes = hooks.assemble.trigger({
         startTime: 0 as RelativeTime,
       })
 
@@ -29,7 +28,7 @@ describe('startRUMInternalContext', () => {
 
     it('returns undefined if the global variable does not have a `getInternalContext` method', () => {
       window.DD_RUM = {} as any
-      const defaultLogsEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultLogsEventAttributes = hooks.assemble.trigger({
         startTime: 0 as RelativeTime,
       })
       expect(defaultLogsEventAttributes).toBeUndefined()
@@ -39,7 +38,7 @@ describe('startRUMInternalContext', () => {
       window.DD_RUM = {
         getInternalContext: () => ({ foo: 'bar' }),
       }
-      const defaultLogsEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultLogsEventAttributes = hooks.assemble.trigger({
         startTime: 0 as RelativeTime,
       })
       expect(defaultLogsEventAttributes).toEqual({ foo: 'bar' })
@@ -54,7 +53,7 @@ describe('startRUMInternalContext', () => {
         window.DD_RUM_SYNTHETICS = {
           getInternalContext: () => ({ foo: 'bar' }),
         }
-        const defaultLogsEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        const defaultLogsEventAttributes = hooks.assemble.trigger({
           startTime: 0 as RelativeTime,
         })
         expect(defaultLogsEventAttributes).toEqual({ foo: 'bar' })
@@ -67,7 +66,7 @@ describe('startRUMInternalContext', () => {
       window.DD_RUM = {
         getInternalContext: () => ({ application_id: '123', view: { id: '456' }, user_action: { id: '789' } }),
       }
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
+      const defaultRumEventAttributes = hooks.assembleTelemetry.trigger({
         startTime: 0 as RelativeTime,
       })
 
@@ -82,7 +81,7 @@ describe('startRUMInternalContext', () => {
       window.DD_RUM = {
         getInternalContext: () => undefined,
       }
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
+      const defaultRumEventAttributes = hooks.assembleTelemetry.trigger({
         startTime: 0 as RelativeTime,
       })
 
