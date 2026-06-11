@@ -76,6 +76,14 @@ interface IntakeProxyOptions {
   onRequest?: (request: IntakeRequest) => void
 }
 
+export function getEventIntakeEncoding(
+  headers: Record<string, string | string[] | undefined>,
+  searchParams: URLSearchParams
+) {
+  const contentEncoding = headers['content-encoding']
+  return (Array.isArray(contentEncoding) ? contentEncoding[0] : contentEncoding) || searchParams.get('dd-evp-encoding')
+}
+
 export function createIntakeProxyMiddleware(options: IntakeProxyOptions): express.RequestHandler {
   return async (req, res) => {
     const infos = computeIntakeRequestInfos(req)
@@ -100,7 +108,7 @@ function computeIntakeRequestInfos(req: express.Request): IntakeRequestInfos {
   }
   const { pathname, searchParams } = new URL(ddforward, 'https://example.org')
 
-  const encoding = req.headers['content-encoding'] || searchParams.get('dd-evp-encoding')
+  const encoding = getEventIntakeEncoding(req.headers, searchParams)
   const transport = searchParams.get('_dd.api')
   const batchTimeRaw = searchParams.get('batch_time')
   const batchTime = batchTimeRaw ? Number(batchTimeRaw) : null
@@ -154,15 +162,21 @@ async function readEventIntakeRequest(
   infos: IntakeRequestInfos & { intakeType: 'rum' | 'logs' | 'debugger' }
 ): Promise<RumIntakeRequest | LogsIntakeRequest | DebuggerIntakeRequest> {
   const rawBody = await readStream(req)
-  const encodedBody = infos.encoding === 'deflate' ? inflateSync(rawBody) : rawBody
 
   return {
     ...infos,
-    events: encodedBody
-      .toString('utf-8')
-      .split('\n')
-      .map((line): any => JSON.parse(line)),
+    events: parseEventIntakePayload(rawBody, infos.encoding),
   }
+}
+
+export function parseEventIntakePayload(rawBody: Buffer, encoding: string | null) {
+  const encodedBody = encoding === 'deflate' ? inflateSync(rawBody) : rawBody
+
+  return encodedBody
+    .toString('utf-8')
+    .split('\n')
+    .filter(Boolean)
+    .map((line): any => JSON.parse(line))
 }
 
 function readReplayIntakeRequest(

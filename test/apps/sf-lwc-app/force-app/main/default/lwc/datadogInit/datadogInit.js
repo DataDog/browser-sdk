@@ -53,7 +53,10 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
   }
 
   loadDatadogRum() {
-    const resourceName = new URLSearchParams(window.location.search).get('c__datadogResourceName') || this.resourceName
+    const searchParams = new URLSearchParams(window.location.search)
+    // By appending the resource name to the query string, we can load a different bundle for the e2e tests.
+    const resourceName = searchParams.get('c__datadogResourceName') || this.resourceName
+    const queryInitConfiguration = this.getQueryInitConfiguration(searchParams)
     const resourceUrl = resourceName ? `/resource/${encodeURIComponent(resourceName)}` : datadogRumSlim
 
     return loadScript(this, resourceUrl).then(() => {
@@ -68,6 +71,7 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
         trackLongTasks: true,
         trackResources: true,
         trackUserInteractions: true,
+        ...queryInitConfiguration,
       }
       window.DD_RUM.init(initConfig)
       lastStartedUrl = window.location.pathname + window.location.search + window.location.hash
@@ -76,5 +80,19 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
         url: window.location.href,
       })
     })
+  }
+
+  getQueryInitConfiguration(searchParams) {
+    const configuration = searchParams.get('c__datadogInitConfiguration')
+    if (!configuration) {
+      return {}
+    }
+
+    try {
+      return JSON.parse(configuration)
+    } catch (error) {
+      window.console.warn('Invalid Datadog init configuration query parameter', error)
+      return {}
+    }
   }
 }
