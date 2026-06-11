@@ -5,7 +5,7 @@
   "sideEffects": false,
   "exports": {
     "./time": {
-      "import": "./esm/time.js",
+      "import": "./esm/time.mjs",
       "require": "./cjs/time.js",
       "types": "./cjs/time.d.ts"
     }
@@ -19,7 +19,7 @@
     "!src/**/*.specHelper.ts"
   ],
   "scripts": {
-    "build": "node ../../scripts/build/build-package.ts --modules --esm-type-module",
+    "build": "node ../../scripts/build/build-package.ts --modules",
     "prepack": "yarn build"
   },
   "repository": {

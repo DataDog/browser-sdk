@@ -20,6 +20,7 @@ dev,@angular/router,MIT,Copyright (c) 2010-2024 Google LLC
 dev,@eslint/js,MIT,Copyright OpenJS Foundation and other contributors, <www.openjsf.org>
 dev,@jsdevtools/coverage-istanbul-loader,MIT,Copyright (c) 2015 James Messinger
 dev,@ngtools/webpack,MIT,Copyright (c) 2017 Google LLC
+dev,@oxc-project/runtime,MIT,Copyright (c) 2024-present VoidZero Inc. & Contributors
 dev,@playwright/test,Apache-2.0,Copyright Microsoft Corporation
 dev,@swc/core,Apache-2.0,Copyright (c) SWC Contributors
 dev,@tanstack/react-router,MIT,Copyright (c) 2021-present Tanner Linsley
@@ -85,6 +86,7 @@ dev,swc-loader,MIT,Copyright (c) SWC Contributors
 dev,terser-webpack-plugin,MIT,Copyright JS Foundation and other contributors
 dev,ts-loader,MIT,Copyright 2015 TypeStrong
 dev,tsconfig-paths-webpack-plugin,MIT,Copyright 2016 Jonas Kello
+dev,tsdown,MIT,Copyright (c) 2025-present VoidZero Inc. & Contributors
 dev,typescript,Apache-2.0,Copyright Microsoft Corporation
 dev,typescript-eslint,MIT,Copyright (c) 2019 typescript-eslint and other contributors
 dev,undici,MIT,Copyright (c) Matteo Collina and Undici contributors
