@@ -1,5 +1,5 @@
 <template>
-  <section class="explorer">
+  <section class="explorer" data-testid="product-explorer">
     <div class="product-list" aria-label="Products">
       <template for:each="{productsForView}" for:item="product">
         <button
@@ -7,11 +7,7 @@
           class="{product.buttonClass}"
           data-id="{product.id}"
           type="button"
-          onclick="
-            {
-              handleSelectProduct
-            }
-          "
+          onclick="{handleSelectProduct}"
         >
           <span class="product-name">{product.name}</span>
           <span class="product-meta">{product.level} / {product.material}</span>
@@ -36,11 +32,7 @@
         <lightning-button
           label="Reset"
           variant="neutral"
-          onclick="
-            {
-              handleReset
-            }
-          "
+          onclick="{handleReset}"
         ></lightning-button>
       </header>
 
@@ -49,11 +41,7 @@
           label="Product Name"
           data-field="name"
           value="{selectedProduct.name}"
-          onchange="
-            {
-              handleFieldChange
-            }
-          "
+          onchange="{handleFieldChange}"
         ></lightning-input>
         <lightning-input
           label="MSRP"
@@ -62,74 +50,46 @@
           value="{selectedProduct.msrp}"
           formatter="currency"
           step="100"
-          onchange="
-            {
-              handleFieldChange
-            }
-          "
+          onchange="{handleFieldChange}"
         ></lightning-input>
         <lightning-combobox
           label="Category"
           data-field="category"
           value="{selectedProduct.category}"
           options="{categoryOptions}"
-          onchange="
-            {
-              handleFieldChange
-            }
-          "
+          onchange="{handleFieldChange}"
         ></lightning-combobox>
         <lightning-combobox
           label="Level"
           data-field="level"
           value="{selectedProduct.level}"
           options="{levelOptions}"
-          onchange="
-            {
-              handleFieldChange
-            }
-          "
+          onchange="{handleFieldChange}"
         ></lightning-combobox>
         <lightning-combobox
           label="Material"
           data-field="material"
           value="{selectedProduct.material}"
           options="{materialOptions}"
-          onchange="
-            {
-              handleFieldChange
-            }
-          "
+          onchange="{handleFieldChange}"
         ></lightning-combobox>
         <lightning-input
           label="Motor"
           data-field="motor"
           value="{selectedProduct.motor}"
-          onchange="
-            {
-              handleFieldChange
-            }
-          "
+          onchange="{handleFieldChange}"
         ></lightning-input>
         <lightning-input
           label="Battery"
           data-field="battery"
           value="{selectedProduct.battery}"
-          onchange="
-            {
-              handleFieldChange
-            }
-          "
+          onchange="{handleFieldChange}"
         ></lightning-input>
         <lightning-input
           label="Brakes"
           data-field="brakes"
           value="{selectedProduct.brakes}"
-          onchange="
-            {
-              handleFieldChange
-            }
-          "
+          onchange="{handleFieldChange}"
         ></lightning-input>
       </div>
 
@@ -137,11 +97,7 @@
         label="Description"
         data-field="description"
         value="{selectedProduct.description}"
-        onchange="
-          {
-            handleFieldChange
-          }
-        "
+        onchange="{handleFieldChange}"
       ></lightning-textarea>
     </div>
   </section>

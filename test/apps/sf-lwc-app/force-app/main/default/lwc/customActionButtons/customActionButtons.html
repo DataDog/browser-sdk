@@ -1,5 +1,5 @@
 <template>
-  <section class="action-card">
+  <section class="action-card" data-testid="home-custom-actions">
     <div class="action-card__header">
       <h2>Datadog Custom Actions</h2>
       <p>Use these buttons to send manual RUM custom actions from the home page.</p>
@@ -10,21 +10,13 @@
         variant="brand"
         data-action-name="custom action 1"
         data-testid="custom-action-1"
-        onclick="
-          {
-            handleActionClick
-          }
-        "
+        onclick="{handleActionClick}"
       ></lightning-button>
       <lightning-button
         label="Custom Action 2"
         variant="neutral"
         data-action-name="custom action 2"
-        onclick="
-          {
-            handleActionClick
-          }
-        "
+        onclick="{handleActionClick}"
       ></lightning-button>
     </div>
     <template lwc:if="{lastActionName}">
@@ -42,21 +34,13 @@
         variant="destructive"
         data-error-name="custom error 1"
         data-testid="custom-error-1"
-        onclick="
-          {
-            handleErrorClick
-          }
-        "
+        onclick="{handleErrorClick}"
       ></lightning-button>
       <lightning-button
         label="Custom Error 2"
         variant="destructive-text"
         data-error-name="custom error 2"
-        onclick="
-          {
-            handleErrorClick
-          }
-        "
+        onclick="{handleErrorClick}"
       ></lightning-button>
     </div>
     <template lwc:if="{lastErrorName}">
@@ -72,11 +56,7 @@
       <lightning-button
         label="Runtime Error"
         variant="destructive"
-        onclick="
-          {
-            handleRuntimeErrorClick
-          }
-        "
+        onclick="{handleRuntimeErrorClick}"
       ></lightning-button>
     </div>
   </section>
@@ -90,11 +70,7 @@
         label="Long Task"
         variant="brand"
         data-testid="long-task"
-        onclick="
-          {
-            handleLongTaskClick
-          }
-        "
+        onclick="{handleLongTaskClick}"
       ></lightning-button>
     </div>
   </section>
@@ -107,20 +83,12 @@
       <lightning-button
         label="Add Duration Vital"
         variant="brand"
-        onclick="
-          {
-            handleAddDurationVitalClick
-          }
-        "
+        onclick="{handleAddDurationVitalClick}"
       ></lightning-button>
       <lightning-button
         label="Start/Stop Vital"
         variant="brand"
-        onclick="
-          {
-            handleStartStopVitalClick
-          }
-        "
+        onclick="{handleStartStopVitalClick}"
       ></lightning-button>
     </div>
   </section>
@@ -133,20 +101,12 @@
       <lightning-button
         label="Fetch Resource"
         variant="brand"
-        onclick="
-          {
-            handleFetchResourceClick
-          }
-        "
+        onclick="{handleFetchResourceClick}"
       ></lightning-button>
       <lightning-button
         label="XHR Resource"
         variant="brand"
-        onclick="
-          {
-            handleXhrResourceClick
-          }
-        "
+        onclick="{handleXhrResourceClick}"
       ></lightning-button>
     </div>
     <template lwc:if="{lastResourceName}">
@@ -163,11 +123,7 @@
         class="selector-probe"
         data-dd-action-name="inner selector probe button"
         data-testid="inner-selector-probe-button"
-        onclick="
-          {
-            handleSelectorProbeClick
-          }
-        "
+        onclick="{handleSelectorProbeClick}"
       >
         Inner Selector Probe
       </button>
