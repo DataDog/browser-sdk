@@ -76,5 +76,20 @@ describe('profilerApi', () => {
       await startApi()
       expect(createRumProfilerSpy).toHaveBeenCalled()
     })
+
+    it('with PROFILES capability, it starts the profiler even when profilingSampleRate is 0', async () => {
+      mockEventBridge({ capabilities: [BridgeCapability.RECORDS, BridgeCapability.PROFILES] })
+      const api = makeProfilerApi()
+      api.onRumStart(
+        new LifeCycle(),
+        createHooks(),
+        mockRumConfiguration({ profilingSampleRate: 0 }),
+        createSessionManagerMock().setId('session-id-1'),
+        mockViewHistory(),
+        createIdentityEncoder
+      )
+      await waitNextMicrotask()
+      expect(createRumProfilerSpy).toHaveBeenCalled()
+    })
   })
 })

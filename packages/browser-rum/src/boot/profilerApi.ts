@@ -1,5 +1,5 @@
 import type { Hooks, LifeCycle, ProfilerApi, RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
-import type { DeflateEncoderStreamId, Encoder, SessionManager } from '@datadog/browser-core'
+import type { DeflateEncoderStreamId, Encoder, SessionContext, SessionManager } from '@datadog/browser-core'
 import {
   BridgeCapability,
   bridgeSupports,
@@ -33,20 +33,7 @@ export function makeProfilerApi(): ProfilerApi {
       return
     }
 
-    // Sampling (sticky sampling based on session id)
-    if (
-      !isSampled(
-        session.id,
-        correctedChildSampleRate(configuration.sessionSampleRate, configuration.profilingSampleRate)
-      )
-    ) {
-      // No sampling, no profiling.
-      // Note: No Profiling context is set at this stage.
-      return
-    }
-
-    if (canUseEventBridge() && !bridgeSupports(BridgeCapability.PROFILES)) {
-      // without PROFILES capability, we cannot send profiles
+    if (!isProfilingSampled(configuration, session)) {
       return
     }
 
@@ -89,4 +76,15 @@ export function makeProfilerApi(): ProfilerApi {
       profiler?.stop()
     },
   }
+}
+
+function isProfilingSampled(configuration: RumConfiguration, session: SessionContext) {
+  if (canUseEventBridge()) {
+    // In bridge mode, native SDK owns the sampling decision, skip the rate check
+    return bridgeSupports(BridgeCapability.PROFILES)
+  }
+  return isSampled(
+    session.id,
+    correctedChildSampleRate(configuration.sessionSampleRate, configuration.profilingSampleRate)
+  )
 }
