@@ -1,19 +1,18 @@
-import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
-import { HookNames } from '@datadog/browser-core'
+import { afterEach, vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { RelativeTime } from '@datadog/js-core/time'
+import { createHook } from '@datadog/browser-core'
 import { mockRumConfiguration } from '../../../test'
-import type { AssembleHookParams, Hooks } from '../hooks'
-import { createHooks } from '../hooks'
+import type { AssembleHook, AssembleHookParams } from '../hooks'
 import type { DisplayContext } from './displayContext'
 import { startDisplayContext } from './displayContext'
 
 describe('displayContext', () => {
   let displayContext: DisplayContext
   let requestAnimationFrameSpy: Mock
-  let hooks: Hooks
+  let hook: AssembleHook
 
   beforeEach(() => {
-    hooks = createHooks()
+    hook = createHook()
     requestAnimationFrameSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
       callback(1)
       return 1
@@ -26,9 +25,9 @@ describe('displayContext', () => {
 
   describe('assemble hook', () => {
     it('should set the display context', () => {
-      displayContext = startDisplayContext(hooks, mockRumConfiguration())
+      displayContext = startDisplayContext(hook, mockRumConfiguration())
 
-      const event = hooks.triggerHook(HookNames.Assemble, {
+      const event = hook.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams)

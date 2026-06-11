@@ -1,77 +1,85 @@
-import { vi, beforeEach, describe, expect, it } from 'vitest'
+import { vi, describe, expect, it } from 'vitest'
 import type { RelativeTime } from '@datadog/js-core/time'
-import { createHooks } from '../../test'
-import { DISCARDED, HookNames } from './abstractHooks'
+import { DISCARDED, SKIPPED, createHook } from './abstractHooks'
 
-describe('startHooks', () => {
-  let hooks: ReturnType<typeof createHooks>
+describe('createHook', () => {
   const hookParams = { eventType: 'error', startTime: 1011 as RelativeTime } as any
 
-  beforeEach(() => {
-    hooks = createHooks()
-  })
-
-  it('unregister a hook callback', () => {
+  it('unregisters a callback', () => {
+    const hook = createHook<typeof hookParams, object>()
     const callback = vi.fn().mockReturnValue({ service: 'foo' })
 
-    const { unregister } = hooks.register(HookNames.Assemble, callback)
+    const { unregister } = hook.register(callback)
     unregister()
 
-    const result = hooks.triggerHook(HookNames.Assemble, hookParams)
+    const result = hook.trigger(hookParams)
 
     expect(callback).not.toHaveBeenCalled()
     expect(result).toBeUndefined()
   })
 
-  describe('assemble hook', () => {
-    it('combines results from multiple callbacks', () => {
-      const callback1 = vi.fn().mockReturnValue({ type: 'action', service: 'foo' })
-      const callback2 = vi.fn().mockReturnValue({ type: 'action', version: 'bar' })
+  it('combines results from multiple callbacks', () => {
+    const hook = createHook<typeof hookParams, object>()
+    const callback1 = vi.fn().mockReturnValue({ type: 'action', service: 'foo' })
+    const callback2 = vi.fn().mockReturnValue({ type: 'action', version: 'bar' })
 
-      hooks.register(HookNames.Assemble, callback1)
-      hooks.register(HookNames.Assemble, callback2)
+    hook.register(callback1)
+    hook.register(callback2)
 
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, hookParams)
+    const result = hook.trigger(hookParams)
 
-      expect(defaultRumEventAttributes).toEqual({ type: 'action', service: 'foo', version: 'bar' })
-      expect(callback1).toHaveBeenCalled()
-      expect(callback2).toHaveBeenCalled()
-    })
+    expect(result).toEqual({ type: 'action', service: 'foo', version: 'bar' })
+    expect(callback1).toHaveBeenCalled()
+    expect(callback2).toHaveBeenCalled()
+  })
 
-    it('does not combine undefined results from callbacks', () => {
-      const callback1 = vi.fn().mockReturnValue({ type: 'action', service: 'foo' })
-      const callback2 = vi.fn().mockReturnValue(undefined)
+  it('does not combine undefined results from callbacks', () => {
+    const hook = createHook<typeof hookParams, object>()
+    const callback1 = vi.fn().mockReturnValue({ type: 'action', service: 'foo' })
+    const callback2 = vi.fn().mockReturnValue(undefined)
 
-      hooks.register(HookNames.Assemble, callback1)
-      hooks.register(HookNames.Assemble, callback2)
+    hook.register(callback1)
+    hook.register(callback2)
 
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, hookParams)
+    const result = hook.trigger(hookParams)
 
-      expect(defaultRumEventAttributes).toEqual({ type: 'action', service: 'foo' })
-      expect(callback1).toHaveBeenCalled()
-      expect(callback2).toHaveBeenCalled()
-    })
+    expect(result).toEqual({ type: 'action', service: 'foo' })
+  })
 
-    it('returns DISCARDED if one callbacks returns DISCARDED', () => {
-      const callback1 = vi.fn().mockReturnValue({ type: 'action', service: 'foo' })
-      const callback2 = vi.fn().mockReturnValue(DISCARDED)
-      const callback3 = vi.fn().mockReturnValue({ type: 'action', version: 'bar' })
+  it('returns DISCARDED if one callback returns DISCARDED', () => {
+    const hook = createHook<typeof hookParams, object>()
+    const callback1 = vi.fn().mockReturnValue({ type: 'action', service: 'foo' })
+    const callback2 = vi.fn().mockReturnValue(DISCARDED)
+    const callback3 = vi.fn().mockReturnValue({ type: 'action', version: 'bar' })
 
-      hooks.register(HookNames.Assemble, callback1)
-      hooks.register(HookNames.Assemble, callback2)
-      hooks.register(HookNames.Assemble, callback3)
+    hook.register(callback1)
+    hook.register(callback2)
+    hook.register(callback3)
 
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, hookParams)
+    const result = hook.trigger(hookParams)
 
-      expect(defaultRumEventAttributes).toEqual(DISCARDED)
-      expect(callback1).toHaveBeenCalled()
-      expect(callback2).toHaveBeenCalled()
-      expect(callback3).not.toHaveBeenCalled()
-    })
+    expect(result).toEqual(DISCARDED)
+    expect(callback1).toHaveBeenCalled()
+    expect(callback2).toHaveBeenCalled()
+    expect(callback3).not.toHaveBeenCalled()
+  })
 
-    it('returns undefined when no registered hooks', () => {
-      const result = hooks.triggerHook(HookNames.Assemble, hookParams)
-      expect(result).toBeUndefined()
-    })
+  it('skips callbacks that return SKIPPED', () => {
+    const hook = createHook<typeof hookParams, object>()
+    const callback1 = vi.fn().mockReturnValue(SKIPPED)
+    const callback2 = vi.fn().mockReturnValue({ type: 'action', service: 'foo' })
+
+    hook.register(callback1)
+    hook.register(callback2)
+
+    const result = hook.trigger(hookParams)
+
+    expect(result).toEqual({ type: 'action', service: 'foo' })
+  })
+
+  it('returns undefined when no callbacks are registered', () => {
+    const hook = createHook<typeof hookParams, object>()
+    const result = hook.trigger(hookParams)
+    expect(result).toBeUndefined()
   })
 })

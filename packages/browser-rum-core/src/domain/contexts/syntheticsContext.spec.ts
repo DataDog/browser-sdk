@@ -1,24 +1,23 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { RelativeTime } from '@datadog/js-core/time'
-import { HookNames } from '@datadog/browser-core'
+import { createHook } from '@datadog/browser-core'
 import { mockSyntheticsWorkerValues } from '../../../../browser-core/test'
-import type { AssembleHookParams, Hooks } from '../hooks'
-import { createHooks } from '../hooks'
+import type { AssembleHook, AssembleHookParams } from '../hooks'
 import { startSyntheticsContext } from './syntheticsContext'
 import { SessionType } from './sessionContext'
 
 describe('getSyntheticsContext', () => {
-  let hooks: Hooks
+  let hook: AssembleHook
   beforeEach(() => {
-    hooks = createHooks()
+    hook = createHook()
   })
 
   describe('assemble hook', () => {
     it('should set the synthetics context defined by global variables', () => {
       mockSyntheticsWorkerValues({ context: { test_id: 'foo', result_id: 'bar' } }, 'globals')
-      startSyntheticsContext(hooks)
+      startSyntheticsContext(hook)
 
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultRumEventAttributes = hook.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams)
@@ -38,9 +37,9 @@ describe('getSyntheticsContext', () => {
 
     it('should set the synthetics context defined by cookie', () => {
       mockSyntheticsWorkerValues({ context: { test_id: 'foo', result_id: 'bar' } }, 'cookies')
-      startSyntheticsContext(hooks)
+      startSyntheticsContext(hook)
 
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultRumEventAttributes = hook.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams)
@@ -70,9 +69,9 @@ describe('getSyntheticsContext', () => {
         },
         'globals'
       )
-      startSyntheticsContext(hooks)
+      startSyntheticsContext(hook)
 
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultRumEventAttributes = hook.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams)
@@ -94,9 +93,9 @@ describe('getSyntheticsContext', () => {
 
     it('should set the `injected` field to true if the Synthetics test is configured to automatically inject RUM', () => {
       mockSyntheticsWorkerValues({ context: { test_id: 'foo', result_id: 'bar' }, injectsRum: true }, 'globals')
-      startSyntheticsContext(hooks)
+      startSyntheticsContext(hook)
 
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultRumEventAttributes = hook.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams)
@@ -116,9 +115,9 @@ describe('getSyntheticsContext', () => {
 
     it('should not set synthetics context if the global variable is missing required fields', () => {
       mockSyntheticsWorkerValues({ context: { test_id: 'foo' } as any }, 'globals')
-      startSyntheticsContext(hooks)
+      startSyntheticsContext(hook)
 
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultRumEventAttributes = hook.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams)
@@ -128,9 +127,9 @@ describe('getSyntheticsContext', () => {
 
     it('should not set synthetics context if the global variable fields are not strings', () => {
       mockSyntheticsWorkerValues({ context: { test_id: 1, result_id: 2 } as any }, 'globals')
-      startSyntheticsContext(hooks)
+      startSyntheticsContext(hook)
 
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultRumEventAttributes = hook.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams)
@@ -140,9 +139,9 @@ describe('getSyntheticsContext', () => {
 
     it('should set the synthetics context from legacy globals when the new context is absent', () => {
       mockSyntheticsWorkerValues({ publicId: 'foo', resultId: 'bar' }, 'globals')
-      startSyntheticsContext(hooks)
+      startSyntheticsContext(hook)
 
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultRumEventAttributes = hook.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams)
@@ -162,9 +161,9 @@ describe('getSyntheticsContext', () => {
 
     it('should not set synthetics context if the cookie is missing required fields', () => {
       mockSyntheticsWorkerValues({ context: { test_id: 'foo' } as any }, 'cookies')
-      startSyntheticsContext(hooks)
+      startSyntheticsContext(hook)
 
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultRumEventAttributes = hook.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams)

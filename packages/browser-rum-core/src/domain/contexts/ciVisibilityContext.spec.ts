@@ -1,22 +1,21 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { vi, afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { RelativeTime } from '@datadog/js-core/time'
 import type { Configuration } from '@datadog/browser-core'
-import { HookNames, Observable } from '@datadog/browser-core'
+import { display, Observable, createHook } from '@datadog/browser-core'
 import { mockCiVisibilityValues } from '../../../test'
 import type { CookieObservable } from '../../browser/cookieObservable'
-import type { AssembleHookParams, Hooks } from '../hooks'
-import { createHooks } from '../hooks'
+import type { AssembleHook, AssembleHookParams } from '../hooks'
 import { SessionType } from './sessionContext'
 import { startCiVisibilityContext } from './ciVisibilityContext'
 
 describe('startCiVisibilityContext', () => {
   let cookieObservable: CookieObservable
   let stopCiVisibility: () => void
-  let hooks: Hooks
+  let hook: AssembleHook
 
   beforeEach(() => {
     cookieObservable = new Observable()
-    hooks = createHooks()
+    hook = createHook()
   })
 
   afterEach(() => {
@@ -26,9 +25,9 @@ describe('startCiVisibilityContext', () => {
   describe('assemble hook', () => {
     it('should set ci visibility context defined by Cypress global variables', () => {
       mockCiVisibilityValues('trace_id_value')
-      ;({ stop: stopCiVisibility } = startCiVisibilityContext({} as Configuration, hooks, cookieObservable))
+      ;({ stop: stopCiVisibility } = startCiVisibilityContext({} as Configuration, hook, cookieObservable))
 
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultRumEventAttributes = hook.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams)
@@ -46,9 +45,9 @@ describe('startCiVisibilityContext', () => {
 
     it('should add the ci visibility context defined by global cookie', () => {
       mockCiVisibilityValues('trace_id_value', 'cookies')
-      ;({ stop: stopCiVisibility } = startCiVisibilityContext({} as Configuration, hooks, cookieObservable))
+      ;({ stop: stopCiVisibility } = startCiVisibilityContext({} as Configuration, hook, cookieObservable))
 
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultRumEventAttributes = hook.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams)
@@ -66,10 +65,10 @@ describe('startCiVisibilityContext', () => {
 
     it('should update the ci visibility context when global cookie is updated', () => {
       mockCiVisibilityValues('trace_id_value', 'cookies')
-      ;({ stop: stopCiVisibility } = startCiVisibilityContext({} as Configuration, hooks, cookieObservable))
+      ;({ stop: stopCiVisibility } = startCiVisibilityContext({} as Configuration, hook, cookieObservable))
       cookieObservable.notify('trace_id_value_updated')
 
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultRumEventAttributes = hook.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams)
@@ -87,9 +86,9 @@ describe('startCiVisibilityContext', () => {
 
     it('should not set ci visibility context if the Cypress global variable is undefined', () => {
       mockCiVisibilityValues(undefined)
-      ;({ stop: stopCiVisibility } = startCiVisibilityContext({} as Configuration, hooks, cookieObservable))
+      ;({ stop: stopCiVisibility } = startCiVisibilityContext({} as Configuration, hook, cookieObservable))
 
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultRumEventAttributes = hook.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams)
@@ -99,14 +98,55 @@ describe('startCiVisibilityContext', () => {
 
     it('should not set ci visibility context if it is not a string', () => {
       mockCiVisibilityValues({ key: 'value' })
-      ;({ stop: stopCiVisibility } = startCiVisibilityContext({} as Configuration, hooks, cookieObservable))
+      ;({ stop: stopCiVisibility } = startCiVisibilityContext({} as Configuration, hook, cookieObservable))
 
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultRumEventAttributes = hook.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams)
 
       expect(defaultRumEventAttributes).toBeUndefined()
+    })
+
+    it('should not throw and emit a warning when Cypress.env throws', () => {
+      const displaySpy = vi.spyOn(display, 'warn')
+      mockCiVisibilityValues(undefined, 'globals-throws')
+
+      expect(() => {
+        ;({ stop: stopCiVisibility } = startCiVisibilityContext({} as Configuration, hook, cookieObservable))
+      }).not.toThrow()
+
+      const defaultRumEventAttributes = hook.trigger({
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      } as AssembleHookParams)
+
+      expect(defaultRumEventAttributes).toBeUndefined()
+      expect(displaySpy).toHaveBeenCalledTimes(1)
+      expect(displaySpy.mock.calls[displaySpy.mock.calls.length - 1][0]).toContain('5.88.0')
+    })
+
+    it('should not emit a warning when Cypress.env returns a value', () => {
+      const displaySpy = vi.spyOn(display, 'warn')
+      mockCiVisibilityValues('trace_id_value')
+      ;({ stop: stopCiVisibility } = startCiVisibilityContext({} as Configuration, hook, cookieObservable))
+
+      expect(displaySpy).not.toHaveBeenCalled()
+    })
+
+    it('should not emit a warning when the cookie is set', () => {
+      const displaySpy = vi.spyOn(display, 'warn')
+      mockCiVisibilityValues('trace_id_value', 'cookies')
+      ;({ stop: stopCiVisibility } = startCiVisibilityContext({} as Configuration, hook, cookieObservable))
+
+      expect(displaySpy).not.toHaveBeenCalled()
+    })
+
+    it('should not emit a warning when Cypress is not present', () => {
+      const displaySpy = vi.spyOn(display, 'warn')
+      ;({ stop: stopCiVisibility } = startCiVisibilityContext({} as Configuration, hook, cookieObservable))
+
+      expect(displaySpy).not.toHaveBeenCalled()
     })
   })
 })

@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest'
+import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { RelativeTime, TimeStamp } from '@datadog/js-core/time'
-import type { Context, RawError } from '@datadog/browser-core'
+import type { Context } from '@datadog/browser-core'
 import { ONE_MINUTE, toTimeStamp } from '@datadog/js-core/time'
-import { ErrorSource, noop, HookNames } from '@datadog/browser-core'
+import { ErrorSource, noop } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import type { LogsEvent } from '../logsEvent.types'
@@ -50,7 +50,7 @@ describe('startLogsAssembly', () => {
     mainLogger = new Logger(() => noop)
     hooks = createHooks()
     startRUMInternalContext(hooks)
-    startLogsAssembly(configuration, lifeCycle, hooks, () => COMMON_CONTEXT, noop)
+    startLogsAssembly(configuration, lifeCycle, hooks.assemble, () => COMMON_CONTEXT, noop)
     window.DD_RUM = {
       getInternalContext: noop,
     }
@@ -174,7 +174,7 @@ describe('startLogsAssembly', () => {
 
   describe('assembly precedence', () => {
     it('defaultLogsEventAttributes should take precedence over service, session_id', () => {
-      hooks.register(HookNames.Assemble, () => ({
+      hooks.assemble.register(() => ({
         service: 'foo',
         session_id: 'bar',
       }))
@@ -186,7 +186,7 @@ describe('startLogsAssembly', () => {
     })
 
     it('defaultLogsEventAttributes should take precedence over common context', () => {
-      hooks.register(HookNames.Assemble, () => ({
+      hooks.assemble.register(() => ({
         view: {
           referrer: 'referrer_from_defaultLogsEventAttributes',
           url: 'url_from_defaultLogsEventAttributes',
@@ -216,7 +216,7 @@ describe('startLogsAssembly', () => {
     })
 
     it('raw log should take precedence over defaultLogsEventAttributes', () => {
-      hooks.register(HookNames.Assemble, () => ({
+      hooks.assemble.register(() => ({
         message: 'from-defaultLogsEventAttributes',
       }))
 
@@ -285,7 +285,7 @@ describe('logs limitation', () => {
   let lifeCycle: LifeCycle
   let hooks: Hooks
   let serverLogs: Array<LogsEvent & Context> = []
-  let reportErrorSpy: Mock<(error: RawError) => void>
+  let reportErrorSpy: Mock<(...args: any[]) => any>
 
   beforeEach(() => {
     lifeCycle = new LifeCycle()
@@ -299,7 +299,7 @@ describe('logs limitation', () => {
 
     beforeSend = noop
     reportErrorSpy = vi.fn()
-    startLogsAssembly(configuration, lifeCycle, hooks, () => COMMON_CONTEXT, reportErrorSpy, 1)
+    startLogsAssembly(configuration, lifeCycle, hooks.assemble, () => COMMON_CONTEXT, reportErrorSpy, 1)
     clock = mockClock()
   })
 

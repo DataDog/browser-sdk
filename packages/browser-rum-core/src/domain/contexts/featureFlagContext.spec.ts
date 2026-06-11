@@ -1,15 +1,14 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { RelativeTime } from '@datadog/js-core/time'
 import { relativeToClocks } from '@datadog/js-core/time'
-import { HookNames } from '@datadog/browser-core'
+import { createHook } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { ViewCreatedEvent } from '../view/trackViews'
 import type { RumConfiguration } from '../configuration'
 import { RumEventType } from '../../rawRumEvent.types'
-import type { AssembleHookParams, Hooks } from '../hooks'
-import { createHooks } from '../hooks'
+import type { AssembleHook, AssembleHookParams } from '../hooks'
 import type { FeatureFlagContexts } from './featureFlagContext'
 import { startFeatureFlagContexts } from './featureFlagContext'
 
@@ -17,14 +16,14 @@ describe('featureFlagContexts', () => {
   const lifeCycle = new LifeCycle()
   let clock: Clock
   let featureFlagContexts: FeatureFlagContexts
-  let hooks: Hooks
+  let hook: AssembleHook
   let trackFeatureFlagsForEvents: any[]
 
   beforeEach(() => {
     clock = mockClock()
-    hooks = createHooks()
+    hook = createHook()
     trackFeatureFlagsForEvents = []
-    featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, {
+    featureFlagContexts = startFeatureFlagContexts(lifeCycle, hook, {
       trackFeatureFlagsForEvents,
     } as unknown as RumConfiguration)
   })
@@ -37,11 +36,11 @@ describe('featureFlagContexts', () => {
 
       featureFlagContexts.addFeatureFlagEvaluation('feature', 'foo')
 
-      const defaultViewAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultViewAttributes = hook.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams)
-      const defaultErrorAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultErrorAttributes = hook.trigger({
         eventType: 'error',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams)
@@ -69,7 +68,7 @@ describe('featureFlagContexts', () => {
 
         featureFlagContexts.addFeatureFlagEvaluation('feature', 'foo')
 
-        const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        const defaultRumEventAttributes = hook.trigger({
           eventType,
           startTime: 0 as RelativeTime,
         } as AssembleHookParams)
@@ -93,7 +92,7 @@ describe('featureFlagContexts', () => {
       featureFlagContexts.addFeatureFlagEvaluation('feature3', true)
       featureFlagContexts.addFeatureFlagEvaluation('feature4', { foo: 'bar' })
 
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultRumEventAttributes = hook.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams)
@@ -126,11 +125,11 @@ describe('featureFlagContexts', () => {
       clock.tick(10)
       featureFlagContexts.addFeatureFlagEvaluation('feature', 'two')
 
-      const defaultEventOneAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultEventOneAttributes = hook.trigger({
         eventType: 'view',
         startTime: 5 as RelativeTime,
       } as AssembleHookParams)
-      const defaultEventTwoAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultEventTwoAttributes = hook.trigger({
         eventType: 'view',
         startTime: 15 as RelativeTime,
       } as AssembleHookParams)
@@ -148,7 +147,7 @@ describe('featureFlagContexts', () => {
         startClocks: relativeToClocks(0 as RelativeTime),
       } as ViewCreatedEvent)
 
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultRumEventAttributes = hook.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams)
@@ -165,7 +164,7 @@ describe('featureFlagContexts', () => {
       featureFlagContexts.addFeatureFlagEvaluation('feature2', 'baz')
       featureFlagContexts.addFeatureFlagEvaluation('feature', 'bar')
 
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultRumEventAttributes = hook.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams)

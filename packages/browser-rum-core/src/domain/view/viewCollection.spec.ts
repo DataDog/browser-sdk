@@ -1,5 +1,5 @@
 import { vi, describe, expect, it, type Mock } from 'vitest'
-import { DISCARDED, HookNames, Observable } from '@datadog/browser-core'
+import { DISCARDED, Observable } from '@datadog/browser-core'
 import type { Duration, ServerDuration, TimeStamp, RelativeTime } from '@datadog/js-core/time'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RecorderApi } from '../../boot/rumPublicApi'
@@ -244,7 +244,7 @@ describe('viewCollection', () => {
     it('should add view properties from the history', () => {
       setupViewCollection({ trackViewsManually: true }, VIEW)
 
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultRumEventAttributes = hooks.assemble.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams)
@@ -265,7 +265,7 @@ describe('viewCollection', () => {
     it('should discard the event if no view', () => {
       const viewHistoryEntry = undefined
       setupViewCollection({ trackViewsManually: true }, viewHistoryEntry)
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultRumEventAttributes = hooks.assemble.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams)
@@ -278,7 +278,7 @@ describe('viewCollection', () => {
     it('should add view id', () => {
       setupViewCollection({ trackViewsManually: true }, VIEW)
 
-      const telemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
+      const telemetryEventAttributes = hooks.assembleTelemetry.trigger({
         startTime: VIEW.startClocks.relative,
       }) as DefaultTelemetryEventAttributes
 
@@ -287,7 +287,7 @@ describe('viewCollection', () => {
 
     it('should not add view id if no view', () => {
       setupViewCollection({ trackViewsManually: true }, undefined)
-      const telemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
+      const telemetryEventAttributes = hooks.assembleTelemetry.trigger({
         startTime: 0 as RelativeTime,
       }) as DefaultTelemetryEventAttributes
 

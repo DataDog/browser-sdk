@@ -1,15 +1,14 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { HookNames } from '@datadog/browser-core'
 import type { RelativeTime } from '@datadog/js-core/time'
-import type { AssembleHookParams, Hooks } from '../hooks'
-import { createHooks } from '../hooks'
+import { createHook } from '@datadog/browser-core'
+import type { AssembleHook, AssembleHookParams } from '../hooks'
 import { registerCleanupTask } from '../../../../browser-core/test'
 import type { RawRumLongAnimationFrameEvent } from '../../rawRumEvent.types'
 import type { BrowserWindow } from './sourceCodeContext'
 import { startSourceCodeContext } from './sourceCodeContext'
 
 describe('sourceCodeContext', () => {
-  let hooks: Hooks
+  let hook: AssembleHook
   let browserWindow: BrowserWindow
   const TEST_STACK = `Error: Test error
     at testFunction (http://localhost:8080/file.js:41:27)
@@ -20,7 +19,7 @@ describe('sourceCodeContext', () => {
     at HTMLButtonElement.onPointerUp (http://localhost:8080/another-file.js:107:146)`
 
   beforeEach(() => {
-    hooks = createHooks()
+    hook = createHook()
     browserWindow = window as BrowserWindow
   })
 
@@ -39,9 +38,9 @@ describe('sourceCodeContext', () => {
 
   it('should add source code context matching the error stack first frame URL', () => {
     setupBrowserWindowWithContext()
-    startSourceCodeContext(hooks)
+    startSourceCodeContext(hook)
 
-    const result = hooks.triggerHook(HookNames.Assemble, {
+    const result = hook.trigger({
       eventType: 'error',
       startTime: 0 as RelativeTime,
       domainContext: {},
@@ -62,9 +61,9 @@ describe('sourceCodeContext', () => {
 
   it('should add source code context matching the handling_stack first frame URL', () => {
     setupBrowserWindowWithContext()
-    startSourceCodeContext(hooks)
+    startSourceCodeContext(hook)
 
-    const result = hooks.triggerHook(HookNames.Assemble, {
+    const result = hook.trigger({
       eventType: 'action',
       startTime: 0 as RelativeTime,
       rawRumEvent: {
@@ -84,9 +83,9 @@ describe('sourceCodeContext', () => {
 
   it('should add source code context matching the LoAF first script source URL', () => {
     setupBrowserWindowWithContext()
-    startSourceCodeContext(hooks)
+    startSourceCodeContext(hook)
 
-    const result = hooks.triggerHook(HookNames.Assemble, {
+    const result = hook.trigger({
       eventType: 'long_task',
       startTime: 0 as RelativeTime,
       domainContext: {},
@@ -112,9 +111,9 @@ describe('sourceCodeContext', () => {
 
   it('should not add source code context matching no stack', () => {
     setupBrowserWindowWithContext()
-    startSourceCodeContext(hooks)
+    startSourceCodeContext(hook)
 
-    const result = hooks.triggerHook(HookNames.Assemble, {
+    const result = hook.trigger({
       eventType: 'error',
       startTime: 0 as RelativeTime,
       domainContext: {},
@@ -131,12 +130,12 @@ describe('sourceCodeContext', () => {
   })
 
   it('should support late updates to DD_SOURCE_CODE_CONTEXT', () => {
-    startSourceCodeContext(hooks)
+    startSourceCodeContext(hook)
 
     // Add context AFTER initialization
     setupBrowserWindowWithContext()
 
-    const result = hooks.triggerHook(HookNames.Assemble, {
+    const result = hook.trigger({
       eventType: 'error',
       startTime: 0 as RelativeTime,
       domainContext: {},
@@ -157,7 +156,7 @@ describe('sourceCodeContext', () => {
 
   it('should ignore updates to existing source code context after initialization', () => {
     setupBrowserWindowWithContext()
-    startSourceCodeContext(hooks)
+    startSourceCodeContext(hook)
 
     // Update existing entry
     browserWindow.DD_SOURCE_CODE_CONTEXT![TEST_STACK] = {
@@ -165,7 +164,7 @@ describe('sourceCodeContext', () => {
       version: '1.1.0',
     }
 
-    const result = hooks.triggerHook(HookNames.Assemble, {
+    const result = hook.trigger({
       eventType: 'error',
       startTime: 0 as RelativeTime,
       domainContext: {},

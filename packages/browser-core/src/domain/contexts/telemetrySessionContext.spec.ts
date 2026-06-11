@@ -1,21 +1,21 @@
 import { vi, beforeEach, describe, expect, it } from 'vitest'
 import type { RelativeTime } from '@datadog/js-core/time'
-import type { Hooks } from '../../../test'
-import { createHooks, createSessionManagerMock, MOCK_SESSION_ID } from '../../../test'
-import { HookNames } from '../../tools/abstractHooks'
+import { createSessionManagerMock, MOCK_SESSION_ID } from '../../../test'
+import type { Hook } from '../../tools/abstractHooks'
+import { createHook } from '../../tools/abstractHooks'
 import { startTelemetrySessionContext } from './telemetrySessionContext'
 
 describe('telemetrySessionContext', () => {
-  let hooks: Hooks
+  let hook: Hook<any, any>
 
   beforeEach(() => {
-    hooks = createHooks()
+    hook = createHook()
   })
 
   it('should include session id and anonymous_id in assembled telemetry', () => {
-    startTelemetrySessionContext(hooks, createSessionManagerMock())
+    startTelemetrySessionContext(hook, createSessionManagerMock())
 
-    const result = hooks.triggerHook(HookNames.AssembleTelemetry, { startTime: 0 as RelativeTime })
+    const result = hook.trigger({ startTime: 0 as RelativeTime })
 
     expect(result).toEqual({
       session: { id: MOCK_SESSION_ID },
@@ -24,17 +24,17 @@ describe('telemetrySessionContext', () => {
   })
 
   it('should contribute nothing when no tracked session is found', () => {
-    startTelemetrySessionContext(hooks, createSessionManagerMock().setNotTracked())
+    startTelemetrySessionContext(hook, createSessionManagerMock().setNotTracked())
 
-    const result = hooks.triggerHook(HookNames.AssembleTelemetry, { startTime: 0 as RelativeTime })
+    const result = hook.trigger({ startTime: 0 as RelativeTime })
 
     expect(result).toBeUndefined()
   })
 
   it('should merge extraContext into the result', () => {
-    startTelemetrySessionContext(hooks, createSessionManagerMock(), { application: { id: 'app-789' } })
+    startTelemetrySessionContext(hook, createSessionManagerMock(), { application: { id: 'app-789' } })
 
-    const result = hooks.triggerHook(HookNames.AssembleTelemetry, { startTime: 0 as RelativeTime })
+    const result = hook.trigger({ startTime: 0 as RelativeTime })
 
     expect(result).toEqual({
       session: { id: MOCK_SESSION_ID },
@@ -47,9 +47,9 @@ describe('telemetrySessionContext', () => {
     const sessionManager = createSessionManagerMock()
     vi.spyOn(sessionManager, 'findTrackedSession')
 
-    startTelemetrySessionContext(hooks, sessionManager)
+    startTelemetrySessionContext(hook, sessionManager)
 
-    hooks.triggerHook(HookNames.AssembleTelemetry, { startTime: 42 as RelativeTime })
+    hook.trigger({ startTime: 42 as RelativeTime })
 
     expect(sessionManager.findTrackedSession).toHaveBeenCalledWith(42 as RelativeTime)
   })

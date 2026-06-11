@@ -1,25 +1,24 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { mockClock, mockEventBridge } from '@datadog/browser-core/test'
 import { timeStampNow } from '@datadog/js-core/time'
-import { HookNames } from '@datadog/browser-core'
 import type { RelativeTime } from '@datadog/js-core/time'
+import { createHook } from '@datadog/browser-core'
 import { mockRumConfiguration } from '../../../test'
-import type { AssembleHookParams, DefaultRumEventAttributes, Hooks } from '../hooks'
-import { createHooks } from '../hooks'
+import type { AssembleHook, AssembleHookParams, DefaultRumEventAttributes } from '../hooks'
 import { startDefaultContext } from './defaultContext'
 
 describe('startDefaultContext', () => {
-  let hooks: Hooks
+  let hook: AssembleHook
 
   beforeEach(() => {
     mockClock()
-    hooks = createHooks()
+    hook = createHook()
   })
 
   describe('assemble hook', () => {
     it('should set the rum default context', () => {
-      startDefaultContext(hooks, mockRumConfiguration({ applicationId: '1' }), 'rum')
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      startDefaultContext(hook, mockRumConfiguration({ applicationId: '1' }), 'rum')
+      const defaultRumEventAttributes = hook.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams)
@@ -39,15 +38,15 @@ describe('startDefaultContext', () => {
     })
 
     it('should set the browser sdk version if event bridge detected', () => {
-      startDefaultContext(hooks, mockRumConfiguration(), 'rum')
-      const eventWithoutEventBridge = hooks.triggerHook(HookNames.Assemble, {
+      startDefaultContext(hook, mockRumConfiguration(), 'rum')
+      const eventWithoutEventBridge = hook.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams) as DefaultRumEventAttributes
 
       mockEventBridge()
 
-      const eventWithEventBridge = hooks.triggerHook(HookNames.Assemble, {
+      const eventWithEventBridge = hook.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams) as DefaultRumEventAttributes
@@ -58,12 +57,12 @@ describe('startDefaultContext', () => {
 
     it('should set the configured sample rates', () => {
       startDefaultContext(
-        hooks,
+        hook,
         mockRumConfiguration({ sessionSampleRate: 10, sessionReplaySampleRate: 20, traceSampleRate: 30 }),
         'rum'
       )
 
-      const event = hooks.triggerHook(HookNames.Assemble, {
+      const event = hook.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams) as DefaultRumEventAttributes
