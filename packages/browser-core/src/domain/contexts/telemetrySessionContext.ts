@@ -1,14 +1,14 @@
 import type { SessionManager } from '../session/sessionManager'
-import type { AbstractHooks } from '../../tools/abstractHooks'
-import { HookNames, SKIPPED } from '../../tools/abstractHooks'
+import type { Hook } from '../../tools/abstractHooks'
+import { SKIPPED } from '../../tools/abstractHooks'
 import type { Context } from '../../tools/serialisation/context'
 
 export function startTelemetrySessionContext(
-  hooks: AbstractHooks,
+  assembleTelemetryHook: Hook<any, any>,
   sessionManager: SessionManager,
   extraContext?: Context
 ) {
-  hooks.register(HookNames.AssembleTelemetry, ({ startTime }) => {
+  assembleTelemetryHook.register(({ startTime }) => {
     const session = sessionManager.findTrackedSession(startTime)
 
     if (!session) {

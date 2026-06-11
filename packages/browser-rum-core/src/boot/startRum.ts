@@ -158,20 +158,22 @@ export function startRumEventCollection(
   const { observable: windowOpenObservable, stop: stopWindowOpen } = createWindowOpenObservable()
   cleanupTasks.push(stopWindowOpen)
 
-  startDefaultContext(hooks, configuration, sdkName)
-  const pageStateHistory = startPageStateHistory(hooks, configuration)
+  const { assemble: assembleHook } = hooks
+
+  startDefaultContext(assembleHook, configuration, sdkName)
+  const pageStateHistory = startPageStateHistory(assembleHook, configuration)
   cleanupTasks.push(() => pageStateHistory.stop())
   const viewHistory = startViewHistory(lifeCycle)
   cleanupTasks.push(() => viewHistory.stop())
-  const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable)
+  const urlContexts = startUrlContexts(lifeCycle, assembleHook, locationChangeObservable)
   cleanupTasks.push(() => urlContexts.stop())
-  const featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, configuration)
-  startSessionContext(hooks, configuration, sessionManager, recorderApi, viewHistory)
-  startConnectivityContext(hooks)
-  startTabContext(hooks)
-  const globalContext = startGlobalContext(hooks, configuration, 'rum', true)
-  const userContext = startUserContext(hooks, configuration, sessionManager, 'rum')
-  const accountContext = startAccountContext(hooks, configuration, 'rum')
+  const featureFlagContexts = startFeatureFlagContexts(lifeCycle, assembleHook, configuration)
+  startSessionContext(assembleHook, configuration, sessionManager, recorderApi, viewHistory)
+  startConnectivityContext(assembleHook)
+  startTabContext(assembleHook)
+  const globalContext = startGlobalContext(assembleHook, configuration, 'rum', true)
+  const userContext = startUserContext(assembleHook, configuration, sessionManager, 'rum')
+  const accountContext = startAccountContext(assembleHook, configuration, 'rum')
 
   const actionCollection = startActionCollection(
     lifeCycle,
@@ -184,13 +186,13 @@ export function startRumEventCollection(
 
   const eventCollection = startEventCollection(lifeCycle)
 
-  const displayContext = startDisplayContext(hooks, configuration)
+  const displayContext = startDisplayContext(assembleHook, configuration)
   cleanupTasks.push(displayContext.stop)
-  const ciVisibilityContext = startCiVisibilityContext(configuration, hooks)
+  const ciVisibilityContext = startCiVisibilityContext(configuration, assembleHook)
   cleanupTasks.push(ciVisibilityContext.stop)
-  startSyntheticsContext(hooks)
+  startSyntheticsContext(assembleHook)
 
-  startRumAssembly(configuration, lifeCycle, hooks, reportError)
+  startRumAssembly(configuration, lifeCycle, assembleHook, reportError)
 
   const {
     addTiming,
@@ -213,7 +215,7 @@ export function startRumEventCollection(
     initialViewOptions
   )
 
-  startSourceCodeContext(hooks)
+  startSourceCodeContext(assembleHook)
 
   cleanupTasks.push(stopViewCollection)
 

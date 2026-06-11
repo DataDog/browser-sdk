@@ -2,12 +2,11 @@ import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import type { Clock } from '@datadog/browser-core/test'
 import type { RelativeTime } from '@datadog/js-core/time'
 import { clocksNow, relativeToClocks } from '@datadog/js-core/time'
-import { DISCARDED, HookNames } from '@datadog/browser-core'
+import { DISCARDED, createHook } from '@datadog/browser-core'
 import { setupLocationObserver } from '../../../test'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { ViewCreatedEvent } from '../view/trackViews'
-import type { AssembleHookParams, Hooks } from '../hooks'
-import { createHooks } from '../hooks'
+import type { AssembleHook, AssembleHookParams } from '../hooks'
 import { startUrlContexts, type UrlContexts } from './urlContexts'
 
 describe('urlContexts', () => {
@@ -15,15 +14,15 @@ describe('urlContexts', () => {
   let changeLocation: (to: string) => void
   let urlContexts: UrlContexts
   let clock: Clock
-  let hooks: Hooks
+  let hook: AssembleHook
 
   beforeEach(() => {
     clock = mockClock()
-    hooks = createHooks()
+    hook = createHook()
     const setupResult = setupLocationObserver('http://fake-url.com')
 
     changeLocation = setupResult.changeLocation
-    urlContexts = startUrlContexts(lifeCycle, hooks, setupResult.locationChangeObservable)
+    urlContexts = startUrlContexts(lifeCycle, hook, setupResult.locationChangeObservable)
 
     registerCleanupTask(() => {
       urlContexts.stop()
@@ -201,7 +200,7 @@ describe('urlContexts', () => {
         startClocks: relativeToClocks(0 as RelativeTime),
       } as ViewCreatedEvent)
 
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultRumEventAttributes = hook.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams)
@@ -217,7 +216,7 @@ describe('urlContexts', () => {
     })
 
     it('should discard the event if no URL', () => {
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultRumEventAttributes = hook.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams)

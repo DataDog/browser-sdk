@@ -6,13 +6,12 @@ import {
   SESSION_TIME_OUT_DELAY,
   addEventListeners,
   DOM_EVENT,
-  HookNames,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../browser/performanceObservable'
 import type { PageStateServerEntry } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
-import type { DefaultRumEventAttributes, Hooks } from '../hooks'
+import type { AssembleHook, DefaultRumEventAttributes } from '../hooks'
 
 // Arbitrary value to cap number of element for memory consumption in the browser
 export const MAX_PAGE_STATE_ENTRIES = 4000
@@ -41,7 +40,7 @@ export interface PageStateHistory {
 }
 
 export function startPageStateHistory(
-  hooks: Hooks,
+  assembleHook: AssembleHook,
   configuration: RumConfiguration,
   maxPageStateEntriesSelectable = MAX_PAGE_STATE_ENTRIES_SELECTABLE
 ): PageStateHistory {
@@ -95,27 +94,24 @@ export function startPageStateHistory(
     return pageStateEntryHistory.findAll(startTime, duration).some((pageState) => pageState.state === state)
   }
 
-  hooks.register(
-    HookNames.Assemble,
-    ({ startTime, duration = 0 as Duration, eventType }): DefaultRumEventAttributes | SKIPPED => {
-      if (eventType === RumEventType.VIEW) {
-        const pageStates = pageStateEntryHistory.findAll(startTime, duration)
-        return {
-          type: eventType,
-          _dd: { page_states: processPageStates(pageStates, startTime, maxPageStateEntriesSelectable) },
-        }
+  assembleHook.register(({ startTime, duration = 0 as Duration, eventType }): DefaultRumEventAttributes | SKIPPED => {
+    if (eventType === RumEventType.VIEW) {
+      const pageStates = pageStateEntryHistory.findAll(startTime, duration)
+      return {
+        type: eventType,
+        _dd: { page_states: processPageStates(pageStates, startTime, maxPageStateEntriesSelectable) },
       }
-
-      if (eventType === RumEventType.ACTION || eventType === RumEventType.ERROR) {
-        return {
-          type: eventType,
-          view: { in_foreground: wasInPageStateDuringPeriod(PageState.ACTIVE, startTime, 0 as Duration) },
-        }
-      }
-
-      return SKIPPED
     }
-  )
+
+    if (eventType === RumEventType.ACTION || eventType === RumEventType.ERROR) {
+      return {
+        type: eventType,
+        view: { in_foreground: wasInPageStateDuringPeriod(PageState.ACTIVE, startTime, 0 as Duration) },
+      }
+    }
+
+    return SKIPPED
+  })
 
   return {
     wasInPageStateDuringPeriod,

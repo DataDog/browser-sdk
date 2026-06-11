@@ -174,8 +174,9 @@ export function createPreStartStrategy(
     trackingConsentState.tryToInit(configuration.trackingConsent)
 
     trackingConsentState.onGrantedOnce(() => {
-      startTrackingConsentContext(hooks, trackingConsentState)
-      telemetry = mockable(startTelemetry)(TelemetryService.RUM, configuration, hooks)
+      const { assembleTelemetry: assembleTelemetryHook } = hooks
+      startTrackingConsentContext(assembleTelemetryHook, trackingConsentState)
+      telemetry = mockable(startTelemetry)(TelemetryService.RUM, configuration, assembleTelemetryHook)
 
       if (isWorkerEnvironment) {
         display.warn('The RUM SDK is not supported in a web or service worker environment.')
@@ -192,7 +193,9 @@ export function createPreStartStrategy(
             return
           }
           sessionManager = newSessionManager
-          startTelemetrySessionContext(hooks, sessionManager, { application: { id: configuration.applicationId } })
+          startTelemetrySessionContext(assembleTelemetryHook, sessionManager, {
+            application: { id: configuration.applicationId },
+          })
           addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
 
           tryStartRum()

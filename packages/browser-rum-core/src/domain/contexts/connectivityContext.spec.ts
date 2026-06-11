@@ -1,23 +1,22 @@
 import { setNavigatorOnLine, setNavigatorConnection } from '@datadog/browser-core/test'
-import { HookNames } from '@datadog/browser-core'
 import type { RelativeTime } from '@datadog/js-core/time'
-import type { AssembleHookParams, Hooks } from '../hooks'
-import { createHooks } from '../hooks'
+import { createHook } from '@datadog/browser-core'
+import type { AssembleHook, AssembleHookParams } from '../hooks'
 import { startConnectivityContext } from './connectivityContext'
 
 describe('startConnectivityContext', () => {
   describe('assemble hook', () => {
-    let hooks: Hooks
+    let hook: AssembleHook
 
     beforeEach(() => {
-      hooks = createHooks()
+      hook = createHook()
     })
 
     it('should set ci visibility context defined by Cypress global variables', () => {
-      startConnectivityContext(hooks)
+      startConnectivityContext(hook)
       setNavigatorOnLine(true)
       setNavigatorConnection({ effectiveType: '2g' })
-      const event = hooks.triggerHook(HookNames.Assemble, {
+      const event = hook.trigger({
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams)

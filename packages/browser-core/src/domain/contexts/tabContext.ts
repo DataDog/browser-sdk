@@ -1,5 +1,4 @@
-import { HookNames } from '../../tools/abstractHooks'
-import type { AbstractHooks } from '../../tools/abstractHooks'
+import type { Hook } from '../../tools/abstractHooks'
 import { generateUUID } from '../../tools/utils/stringUtils'
 
 export const TAB_ID_STORAGE_KEY = '_dd_tab_id'
@@ -11,10 +10,10 @@ export function resetCachedTabId(): void {
   cachedTabId = undefined
 }
 
-export function startTabContext(hooks: AbstractHooks) {
+export function startTabContext(assembleHook: Hook<any, any>) {
   const tabId = retrieveOrCreateTabId()
 
-  hooks.register(HookNames.Assemble, () => ({
+  assembleHook.register(() => ({
     tab: {
       id: tabId,
     },

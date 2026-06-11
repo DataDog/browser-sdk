@@ -1,13 +1,5 @@
 import type { RawError, EventRateLimiter } from '@datadog/browser-core'
-import {
-  combine,
-  isEmptyObject,
-  display,
-  createEventRateLimiter,
-  HookNames,
-  DISCARDED,
-  buildTags,
-} from '@datadog/browser-core'
+import { combine, isEmptyObject, display, createEventRateLimiter, DISCARDED, buildTags } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { AssembledRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
@@ -16,7 +8,7 @@ import { LifeCycleEventType } from './lifeCycle'
 import type { RumConfiguration } from './configuration'
 import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
-import type { Hooks, AssembleHookParams } from './hooks'
+import type { AssembleHook, AssembleHookParams } from './hooks'
 
 const COMMON_MODIFIABLE_FIELD_PATHS: ModifiableFieldPaths = {
   'view.name': 'string',
@@ -62,7 +54,7 @@ const MODIFIABLE_FIELD_PATHS_BY_EVENT: Record<AssembledRumEvent['type'], Modifia
 export function startRumAssembly(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
-  hooks: Hooks,
+  assembleHook: AssembleHook,
   reportError: (error: RawError) => void,
   eventRateLimit?: number
 ) {
@@ -75,7 +67,7 @@ export function startRumAssembly(
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
     ({ startClocks, duration, rawRumEvent, domainContext }) => {
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const defaultRumEventAttributes = assembleHook.trigger({
         eventType: rawRumEvent.type,
         rawRumEvent,
         domainContext,
