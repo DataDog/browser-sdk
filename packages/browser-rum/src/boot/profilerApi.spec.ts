@@ -1,11 +1,6 @@
-import {
-  createHooks,
-  MID_HASH_UUID,
-  replaceMockableWithSpy,
-  createSessionManagerMock,
-} from '@datadog/browser-core/test'
+import { MID_HASH_UUID, replaceMockableWithSpy, createSessionManagerMock } from '@datadog/browser-core/test'
 import { mockRumConfiguration, mockViewHistory } from '@datadog/browser-rum-core/test'
-import { LifeCycle } from '@datadog/browser-rum-core'
+import { createHooks, LifeCycle } from '@datadog/browser-rum-core'
 import { createIdentityEncoder } from '@datadog/browser-core'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { makeProfilerApi } from './profilerApi'

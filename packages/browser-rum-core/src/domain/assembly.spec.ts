@@ -1,7 +1,7 @@
 import { ONE_MINUTE, relativeToClocks } from '@datadog/js-core/time'
 import type { TimeStamp, ClocksState, RelativeTime } from '@datadog/js-core/time'
 import type { SessionManager } from '@datadog/browser-core'
-import { ErrorSource, HookNames, display, startGlobalContext, startTabContext } from '@datadog/browser-core'
+import { ErrorSource, display, startGlobalContext, startTabContext } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { registerCleanupTask, mockClock, createSessionManagerMock } from '@datadog/browser-core/test'
 import { createRawRumEvent, mockRumConfiguration, mockViewHistory, noopRecorderApi } from '../../test'
@@ -472,7 +472,7 @@ describe('rum assembly', () => {
         partialConfiguration: { service: 'default-service', version: 'default-version' },
       })
 
-      hooks.register(HookNames.Assemble, ({ eventType }) => ({
+      hooks.assemble.register(({ eventType }) => ({
         type: eventType,
         service: 'new service',
         version: 'new version',
@@ -490,7 +490,7 @@ describe('rum assembly', () => {
     it('should not override customer context', () => {
       const { lifeCycle, hooks, serverRumEvents } = setupAssemblyTestWithDefaults()
 
-      hooks.register(HookNames.Assemble, ({ eventType }) => ({
+      hooks.assemble.register(({ eventType }) => ({
         type: eventType,
         context: { foo: 'bar' },
       }))
@@ -504,7 +504,7 @@ describe('rum assembly', () => {
     it('should include tab.id from tabContext', () => {
       const { lifeCycle, hooks, serverRumEvents } = setupAssemblyTestWithDefaults()
 
-      startTabContext(hooks)
+      startTabContext(hooks.assemble)
 
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
@@ -682,9 +682,9 @@ function setupAssemblyTestWithDefaults({
   const recorderApi = noopRecorderApi
   const viewHistory = { ...mockViewHistory(), findView: () => findView() }
   const configuration = mockRumConfiguration(partialConfiguration)
-  startGlobalContext(hooks, configuration, 'rum', true)
-  startSessionContext(hooks, configuration, rumSessionManager, recorderApi, viewHistory)
-  startRumAssembly(configuration, lifeCycle, hooks, reportErrorSpy, eventRateLimit)
+  startGlobalContext(hooks.assemble, configuration, 'rum', true)
+  startSessionContext(hooks.assemble, configuration, rumSessionManager, recorderApi, viewHistory)
+  startRumAssembly(configuration, lifeCycle, hooks.assemble, reportErrorSpy, eventRateLimit)
 
   registerCleanupTask(() => {
     subscription.unsubscribe()
