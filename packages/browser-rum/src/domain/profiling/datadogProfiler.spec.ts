@@ -9,6 +9,7 @@ import {
 } from '@datadog/js-core/time'
 import type { Duration } from '@datadog/js-core/time'
 import type { ProfilerTrace } from '@datadog/browser-core'
+import { BridgeCapability, createIdentityEncoder, createValueHistory, deepClone } from '@datadog/browser-core'
 import type { ViewHistoryEntry } from '@datadog/browser-rum-core'
 import {
   LifeCycle,
@@ -17,12 +18,12 @@ import {
   VitalType,
   createHooks,
 } from '@datadog/browser-rum-core'
-import { createValueHistory, deepClone } from '@datadog/browser-core'
 import {
   setPageVisibility,
   restorePageVisibility,
   createNewEvent,
   mockClock,
+  mockEventBridge,
   waitNextMicrotask,
   replaceMockable,
   createSessionManagerMock,
@@ -34,6 +35,8 @@ import type { BrowserProfilerTrace } from '../../types'
 import { checkProfilingQuota } from './quotaCheck'
 import { mockedTrace } from './test-utils/mockedTrace'
 import { createRumProfiler } from './datadogProfiler'
+import { createFormDataEmitter } from './transport/formDataEmitter'
+import { createBridgeEmitter } from './transport/profilingBridge'
 import type { RUMProfilerConfiguration } from './types'
 import type { ProfilingContextManager } from './profilingContext'
 import { startProfilingContext } from './profilingContext'
@@ -118,6 +121,7 @@ describe('profiler', () => {
     replaceMockable(createVitalHistory, () => vitalHistory)
 
     emitPayloadSpy = jasmine.createSpy('emitPayload')
+    replaceMockable(createFormDataEmitter, () => emitPayloadSpy)
 
     // Start collection of profile.
     const profiler = createRumProfiler(
@@ -125,7 +129,7 @@ describe('profiler', () => {
       lifeCycle,
       sessionManager,
       profilingContextManager,
-      emitPayloadSpy,
+      createIdentityEncoder,
       viewHistory,
       // Overrides default configuration for testing purpose.
       {
@@ -1181,7 +1185,7 @@ describe('profiler', () => {
         new LifeCycle(),
         noSessionManager,
         profilingContextManager,
-        jasmine.createSpy('emitPayload'),
+        createIdentityEncoder,
         mockViewHistory(),
         { sampleIntervalMs: 10, collectIntervalMs: 60000, minProfileDurationMs: 0 }
       )
@@ -1347,6 +1351,33 @@ describe('profiler', () => {
       await waitNextMicrotask()
 
       expect(profiler.isStopped()).toBe(true)
+    })
+  })
+
+  describe('transport selection', () => {
+    function buildProfiler() {
+      const hooks = createHooks()
+      return createRumProfiler(
+        mockRumConfiguration({ profilingSampleRate: 100 }),
+        new LifeCycle(),
+        createSessionManagerMock(),
+        startProfilingContext(hooks),
+        createIdentityEncoder,
+        mockViewHistory()
+      )
+    }
+
+    it('uses bridge emitter when event bridge is active', () => {
+      mockEventBridge({ capabilities: [BridgeCapability.PROFILES] })
+      const createBridgeEmitterSpy = replaceMockableWithSpy(createBridgeEmitter)
+      buildProfiler()
+      expect(createBridgeEmitterSpy).toHaveBeenCalled()
+    })
+
+    it('uses form data emitter when no event bridge', () => {
+      const createFormDataEmitterSpy = replaceMockableWithSpy(createFormDataEmitter)
+      buildProfiler()
+      expect(createFormDataEmitterSpy).toHaveBeenCalled()
     })
   })
 })

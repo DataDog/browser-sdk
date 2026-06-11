@@ -60,29 +60,21 @@ describe('profilerApi', () => {
       return api
     }
 
-    describe('when bridge is present without PROFILES capability', () => {
-      it('does not start the profiler', async () => {
-        mockEventBridge({ capabilities: [BridgeCapability.RECORDS] })
-        await startApi()
-        expect(createRumProfilerSpy).not.toHaveBeenCalled()
-      })
+    it('without bridge, it starts the profiler', async () => {
+      await startApi()
+      expect(createRumProfilerSpy).toHaveBeenCalled()
     })
 
-    describe('when bridge is present with PROFILES capability', () => {
-      it('starts the profiler with an emitPayload function', async () => {
-        mockEventBridge({ capabilities: [BridgeCapability.RECORDS, BridgeCapability.PROFILES] })
-        await startApi()
-        expect(createRumProfilerSpy).toHaveBeenCalled()
-        expect(typeof createRumProfilerSpy.calls.first().args[4]).toBe('function')
-      })
+    it('without PROFILES capability, it does not start the profiler', async () => {
+      mockEventBridge({ capabilities: [BridgeCapability.RECORDS] })
+      await startApi()
+      expect(createRumProfilerSpy).not.toHaveBeenCalled()
     })
 
-    describe('when no bridge', () => {
-      it('starts the profiler with an emitPayload function', async () => {
-        await startApi()
-        expect(createRumProfilerSpy).toHaveBeenCalled()
-        expect(typeof createRumProfilerSpy.calls.first().args[4]).toBe('function')
-      })
+    it('with PROFILES capability, it starts the profiler', async () => {
+      mockEventBridge({ capabilities: [BridgeCapability.RECORDS, BridgeCapability.PROFILES] })
+      await startApi()
+      expect(createRumProfilerSpy).toHaveBeenCalled()
     })
   })
 })

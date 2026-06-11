@@ -1,8 +1,9 @@
 import { elapsed, clocksOrigin, clocksNow } from '@datadog/js-core/time'
 import type { RelativeTime } from '@datadog/js-core/time'
-import type { SessionManager, Profiler } from '@datadog/browser-core'
+import type { SessionManager, Profiler, DeflateEncoderStreamId, Encoder } from '@datadog/browser-core'
 import {
   addEventListener,
+  canUseEventBridge,
   clearTimeout,
   setTimeout,
   DOM_EVENT,
@@ -24,6 +25,8 @@ import type {
   ProfilingPayload,
 } from './types'
 import type { ProfilingContextManager } from './profilingContext'
+import { createBridgeEmitter } from './transport/profilingBridge'
+import { createFormDataEmitter } from './transport/formDataEmitter'
 import { getCustomOrDefaultViewName } from './utils/getCustomOrDefaultViewName'
 import { buildProfileEvent } from './transport/buildProfileEvent'
 import { createLongTaskHistory } from './longTaskHistory'
@@ -43,10 +46,14 @@ export function createRumProfiler(
   lifeCycle: LifeCycle,
   session: SessionManager,
   profilingContextManager: ProfilingContextManager,
-  emitPayload: (payload: ProfilingPayload) => void,
+  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
   viewHistory: ViewHistory,
   profilerConfiguration: RUMProfilerConfiguration = DEFAULT_RUM_PROFILER_CONFIGURATION
 ): RUMProfiler {
+  const emitPayload = canUseEventBridge()
+    ? mockable(createBridgeEmitter)()
+    : mockable(createFormDataEmitter)(configuration, lifeCycle, createEncoder)
+
   let lastViewEntry: RumViewEntry | undefined
 
   // Global clean-up tasks for listeners that are not specific to a profiler instance (eg. visibility change, before unload)
