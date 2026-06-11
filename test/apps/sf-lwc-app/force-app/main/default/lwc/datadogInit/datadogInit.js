@@ -12,7 +12,6 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
   @api site = 'datadoghq.com'
   @api service = 'my-salesforce-app'
   @api env = 'dev'
-  @api allowedTracingUrls
   @api trackViewsManually
 
   connectedCallback() {

@@ -13,7 +13,6 @@
             <property name="site" type="String" label="Site" default="datadoghq.com" />
             <property name="service" type="String" label="Service" default="my-salesforce-app" />
             <property name="env" type="String" label="Env" default="dev" />
-            <property name="allowedTracingUrls" type="String" label="Allowed Tracing URLs" />
             <property name="trackViewsManually" type="Boolean" label="Track Views Manually" default="true" />
         </targetConfig>
     </targetConfigs>
