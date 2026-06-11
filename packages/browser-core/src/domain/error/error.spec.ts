@@ -351,6 +351,20 @@ describe('isError', () => {
 
     expect(isError(new iframeWindow.Error())).toBe(true)
   })
+
+  it('should identify Error-like values', () => {
+    expect(isError({ [Symbol.toStringTag]: 'Error' })).toBe(true)
+  })
+
+  it('should return false when object tag lookup throws', () => {
+    expect(
+      isError({
+        get [Symbol.toStringTag]() {
+          throw new Error('Cannot get tag')
+        },
+      })
+    ).toBe(false)
+  })
 })
 
 describe('tryToGetContext', () => {

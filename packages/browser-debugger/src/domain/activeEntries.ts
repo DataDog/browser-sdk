@@ -1,5 +1,6 @@
 import type { StackFrame } from './stacktrace'
 import type { EvaluationError } from './condition'
+import type { Throwable } from './error'
 
 export interface ActiveEntry {
   start: number
@@ -14,10 +15,7 @@ export interface ActiveEntry {
   return?: {
     arguments?: Record<string, any>
     locals?: Record<string, any>
-    throwable?: {
-      message: string
-      stacktrace: StackFrame[]
-    }
+    throwable?: Throwable
   }
-  exception?: Error
+  exception?: unknown
 }
