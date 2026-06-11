@@ -11,6 +11,8 @@ import {
   globalObject,
   DeflateEncoderStreamId,
   mockable,
+  isSampled,
+  correctedChildSampleRate,
 } from '@datadog/browser-core'
 
 import type { LifeCycle, RumConfiguration, TransportPayload, ViewHistory } from '@datadog/browser-rum-core'
@@ -71,6 +73,13 @@ export function createRumProfiler(
       instance.state === 'stopped' &&
       (instance.stateReason === 'session-expired' || instance.stateReason === 'quota_ko')
     ) {
+      const newSession = session.findTrackedSession()
+      if (
+        !newSession ||
+        !isSampled(newSession.id, correctedChildSampleRate(configuration.sessionSampleRate, configuration.profilingSampleRate))
+      ) {
+        return
+      }
       start()
     }
   })
