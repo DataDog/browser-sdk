@@ -13,17 +13,22 @@ import type { RumConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
 import type { AssembledRumEvent } from '../rawRumEvent.types'
-import type { RumViewEvent, RumViewUpdateEvent } from '../rumEvent.types'
+import type { RumViewUpdateEvent } from '../rumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import { diffMerge } from '../domain/view/viewDiff'
 
+type AssembledViewEvent = Extract<AssembledRumEvent, { type: 'view' }>
+
 export const PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL = 100
 
-export function assembleViewUpdateEvent(
-  current: RumViewEvent,
-  last: RumViewEvent
-): (RumViewUpdateEvent & Context) | undefined {
-  const diff = diffMerge(current, last, {
+export function computeAssembledViewDiff(
+  current: AssembledViewEvent,
+  last: AssembledViewEvent
+): RumViewUpdateEvent | undefined {
+  const currentObj = current as unknown as Record<string, unknown>
+  const lastObj = last as unknown as Record<string, unknown>
+
+  const diff = diffMerge(currentObj, lastObj, {
     // context, connectivity, usr, device, privacy are objects — use REPLACE to avoid partial updates
     replaceKeys: new Set(['view.custom_timings', 'context', 'connectivity', 'usr', 'device', 'privacy']),
     appendKeys: new Set(['_dd.page_states']),
@@ -44,21 +49,135 @@ export function assembleViewUpdateEvent(
     return undefined
   }
 
-  // Restore the ignoreKeys — backend needs them on every event
+  const currentView = currentObj.view as Record<string, unknown>
+  const currentDd = currentObj._dd as Record<string, unknown>
+
+  // Merge always-required fields on top of the diff for backend routing
   return combine(diff, {
     type: RumEventType.VIEW_UPDATE,
-    date: current.date,
-    application: current.application,
-    session: current.session,
+    date: currentObj.date,
+    application: currentObj.application,
+    session: currentObj.session,
     view: {
-      id: current.view.id,
-      url: current.view.url,
+      id: currentView.id,
+      url: currentView.url,
     },
     _dd: {
-      document_version: current._dd.document_version,
-      format_version: current._dd.format_version,
+      document_version: currentDd.document_version,
+      format_version: currentDd.format_version,
     },
-  }) as RumViewUpdateEvent & Context
+  }) as unknown as RumViewUpdateEvent
+}
+
+/**
+ * Creates the VIEW routing handler for the RUM batch.
+ *
+ * Two optimizations over the naive "always upsert full view" approach:
+ *
+ * Optimization 1 — VIEW already in batch:
+ * Intermediate updates upsert the latest full VIEW (same key), keeping a single up-to-date
+ * entry. No view_update event is emitted. Equivalent to the non-experimental path.
+ *
+ * Optimization 2 — no VIEW in batch (post-flush):
+ * Intermediate updates compute an aggregate diff from batchBase (the state the backend
+ * received in the last batch) and upsert it under the same key. Multiple updates in the
+ * same batch produce one view_update, not N.
+ *
+ * On each flush, batchHasFullView resets and batchBase advances to lastSentView.
+ * The checkpoint (every N updates in opt-2) upserts a full VIEW, replacing any pending
+ * view_update under the same key.
+ */
+export function createViewBatchRouter(
+  batch: Pick<ReturnType<typeof createBatch>, 'flushController' | 'add' | 'upsert'>
+) {
+  let lastSentView: AssembledViewEvent | undefined
+  // Base used to compute the aggregate diff for the current batch's view_update.
+  // Reset to lastSentView on each flush (= what the backend received in the previous batch).
+  let batchBase: AssembledViewEvent | undefined
+  // True when the current batch already contains a full VIEW event for the active view.
+  // Reset to false on each flush.
+  let batchHasFullView = false
+  let viewUpdatesSinceCheckpoint = 0
+
+  // On flush: advance batchBase to lastSentView (what the backend now has) and clear the flag.
+  batch.flushController.flushObservable.subscribe(() => {
+    batchHasFullView = false
+    batchBase = lastSentView
+  })
+
+  return (serverRumEvent: AssembledRumEvent) => {
+    if (serverRumEvent.type !== RumEventType.VIEW) {
+      // Non-view events: always append
+      batch.add(serverRumEvent)
+      return
+    }
+
+    if (!isExperimentalFeatureEnabled(ExperimentalFeature.PARTIAL_VIEW_UPDATES)) {
+      // Feature OFF: existing behavior — upsert full view
+      batch.upsert(serverRumEvent, serverRumEvent.view.id)
+      return
+    }
+
+    const viewId = serverRumEvent.view.id
+
+    // New view started
+    if (viewId !== lastSentView?.view.id) {
+      lastSentView = serverRumEvent
+      batchBase = serverRumEvent
+      batchHasFullView = true
+      viewUpdatesSinceCheckpoint = 0
+      batch.upsert(serverRumEvent, viewId)
+      return
+    }
+
+    // View ended (is_active: false)
+    if (!serverRumEvent.view.is_active) {
+      lastSentView = undefined
+      batchBase = undefined
+      batchHasFullView = false
+      viewUpdatesSinceCheckpoint = 0
+      batch.upsert(serverRumEvent, viewId)
+      return
+    }
+
+    // Intermediate update
+    lastSentView = serverRumEvent
+
+    if (batchHasFullView) {
+      // Optimization 1: batch already has a full VIEW — replace it with the latest full view.
+      // This is equivalent to the non-experimental upsert behavior for in-flight batches.
+      batch.upsert(serverRumEvent, viewId)
+      return
+    }
+
+    // Optimization 2: no full VIEW in the current batch — compute an aggregate diff from
+    // batchBase (last state the backend received) and upsert it under the same key as the VIEW.
+    // Each update replaces the previous aggregate, so the batch always contains at most one
+    // view_update per view ID.
+    //
+    // Note: view_update events are created here, post-assembly, bypassing
+    // RAW_RUM_EVENT_COLLECTED → assembly → RUM_EVENT_COLLECTED. They intentionally skip
+    // beforeSend — view_update is an internal bandwidth optimization, not a customer-visible type.
+
+    // Checkpoint: periodically send a full VIEW for backend reliability.
+    // When the checkpoint fires, upsert(VIEW) replaces any pending view_update (same key).
+    viewUpdatesSinceCheckpoint += 1
+    if (viewUpdatesSinceCheckpoint >= PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL) {
+      viewUpdatesSinceCheckpoint = 0
+      batchHasFullView = true
+      batchBase = serverRumEvent
+      batch.upsert(serverRumEvent, viewId)
+      return
+    }
+
+    if (batchBase) {
+      const diff = computeAssembledViewDiff(serverRumEvent, batchBase)
+      if (diff) {
+        sendToExtension('rum', diff)
+        batch.upsert(diff as unknown as Context, viewId)
+      }
+    }
+  }
 }
 
 export function startRumBatch(
@@ -81,64 +200,8 @@ export function startRumBatch(
   })
   sessionExpireObservable.subscribe(() => batch.forceFlush('session_expire'))
 
-  let lastSentView: RumViewEvent | undefined
-  let viewUpdatesSinceCheckpoint = 0
-
-  lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent: AssembledRumEvent) => {
-    if (serverRumEvent.type !== RumEventType.VIEW) {
-      // Non-view events: always append
-      batch.add(serverRumEvent)
-      return
-    }
-
-    const viewEvent = serverRumEvent as RumViewEvent
-
-    if (!isExperimentalFeatureEnabled(ExperimentalFeature.PARTIAL_VIEW_UPDATES)) {
-      // Feature OFF: existing behavior — upsert full view
-      batch.upsert(viewEvent as unknown as Context, viewEvent.view.id)
-      return
-    }
-
-    const viewId = viewEvent.view.id
-
-    // View ended (is_active: false) — always send a full view for backend recovery
-    if (!viewEvent.view.is_active) {
-      lastSentView = undefined
-      viewUpdatesSinceCheckpoint = 0
-      batch.upsert(viewEvent as unknown as Context, viewId)
-      return
-    }
-
-    // New view started
-    if (viewId !== lastSentView?.view.id) {
-      lastSentView = viewEvent
-      viewUpdatesSinceCheckpoint = 0
-      batch.upsert(viewEvent as unknown as Context, viewId)
-      return
-    }
-
-    // Checkpoint: every N intermediate updates, send a full view
-    viewUpdatesSinceCheckpoint += 1
-    if (viewUpdatesSinceCheckpoint >= PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL) {
-      viewUpdatesSinceCheckpoint = 0
-      lastSentView = viewEvent
-      batch.upsert(viewEvent as unknown as Context, viewId)
-      return
-    }
-
-    // Intermediate update: compute diff and send view_update.
-    // Note: view_update events are created here, post-assembly, and go directly to batch.add().
-    // They intentionally bypass RAW_RUM_EVENT_COLLECTED → assembly → RUM_EVENT_COLLECTED, which
-    // means they skip beforeSend entirely. view_update is an internal bandwidth optimization —
-    // not a customer-visible event type, and not modifiable via beforeSend.
-    const diff = assembleViewUpdateEvent(viewEvent, lastSentView)
-    lastSentView = viewEvent
-    if (diff) {
-      sendToExtension('rum', diff)
-      batch.add(diff)
-    }
-    // If diff is undefined (nothing changed), skip — no event emitted
-  })
+  const route = createViewBatchRouter(batch)
+  lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, route)
 
   return batch
 }
