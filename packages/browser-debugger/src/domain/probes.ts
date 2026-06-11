@@ -5,6 +5,7 @@ import { compileCondition } from './condition'
 import type { CompiledCondition } from './condition'
 import { browserInspect, templateRequiresEvaluation, compileSegments } from './template'
 import type { TemplateSegment } from './template'
+import { formatUnknownError } from './error'
 import type { CaptureOptions } from './capture'
 import type { ActiveEntry } from './activeEntries'
 
@@ -366,11 +367,15 @@ export function initializeProbe(probe: Probe): asserts probe is InitializedProbe
       const cacheKey = contextKeys.join(',')
       let fn = functionCache.get(cacheKey)
       if (!fn) {
+        // TODO: Avoid helper parameter shadowing if contextKeys contain reserved
+        // helper names like $dd_inspect or $dd_format_error.
         // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
-        fn = new Function('$dd_inspect', ...contextKeys, fnBodyTemplate) as (...args: any[]) => unknown[]
+        fn = new Function('$dd_inspect', '$dd_format_error', ...contextKeys, fnBodyTemplate) as (
+          ...args: any[]
+        ) => unknown[]
         functionCache.set(cacheKey, fn)
       }
-      return fn.call(thisValue, browserInspect, ...contextValues)
+      return fn.call(thisValue, browserInspect, formatUnknownError, ...contextValues)
     }
   }
   delete probe.segments

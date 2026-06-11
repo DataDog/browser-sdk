@@ -516,6 +516,101 @@ describe('api', () => {
       }
     })
 
+    it('should capture non-Error thrown values', () => {
+      addProbe(createProbe())
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      onEntry(probes, {}, {})
+      onThrow(probes, 'Test error', {}, {})
+
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
+      expect(snapshot.captures.return.throwable).toEqual({
+        message: 'Test error',
+        stacktrace: [],
+      })
+    })
+
+    it('should capture cross-realm Error thrown values', () => {
+      addProbe(createProbe())
+
+      const iframe = document.createElement('iframe')
+      document.body.appendChild(iframe)
+      registerCleanupTask(() => iframe.remove())
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      const iframeWindow = iframe.contentWindow as Window & { Error: ErrorConstructor }
+      const error = new iframeWindow.Error('Iframe error')
+      onEntry(probes, {}, {})
+      onThrow(probes, error, {}, {})
+
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
+      expect(snapshot.captures.return.throwable).toEqual({
+        message: 'Iframe error',
+        stacktrace: jasmine.any(Array),
+      })
+    })
+
+    it('should capture thrown values that cannot be coerced to strings', () => {
+      addProbe(createProbe())
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      onEntry(probes, {}, {})
+      expect(() => onThrow(probes, Object.create(null), {}, {})).not.toThrow()
+
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
+      expect(snapshot.captures.return.throwable).toEqual({
+        message: '{}',
+        stacktrace: [],
+      })
+    })
+
+    it('should capture thrown values that cannot be coerced or sanitized', () => {
+      addProbe(createProbe())
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      const error = {
+        toString() {
+          throw new Error('Cannot coerce')
+        },
+        get x() {
+          throw new Error('Cannot sanitize')
+        },
+      }
+      onEntry(probes, {}, {})
+      expect(() => onThrow(probes, error, {}, {})).not.toThrow()
+
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
+      expect(snapshot.captures.return.throwable).toEqual({
+        message: '<error: unable to stringify thrown value>',
+        stacktrace: [],
+      })
+    })
+
+    it('should capture Error-like thrown values with hostile message getters', () => {
+      addProbe(createProbe())
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      const error = {
+        [Symbol.toStringTag]: 'Error',
+        get message() {
+          throw new Error('Cannot read message')
+        },
+      }
+      onEntry(probes, {}, {})
+      expect(() => onThrow(probes, error, {}, {})).not.toThrow()
+
+      const payload = mockBatchAdd.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
+      expect(snapshot.captures.return.throwable).toEqual({
+        message: '[object Error]',
+        stacktrace: [],
+      })
+    })
+
     it('should evaluate EXIT condition with @exception', () => {
       addProbe(
         createProbe({

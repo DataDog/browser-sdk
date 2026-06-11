@@ -15,10 +15,11 @@ import {
   setProbeBudgetConfiguration,
 } from './probes'
 import type { ActiveEntry } from './activeEntries'
-import { captureStackTrace, parseStackTrace } from './stacktrace'
+import { captureStackTrace } from './stacktrace'
 import { evaluateProbeMessage } from './template'
 import { evaluateProbeCondition, isConditionEvaluationError } from './condition'
 import { display } from './display'
+import { formatThrowable } from './error'
 
 const globalObj = globalObject as BrowserWindow
 
@@ -208,11 +209,11 @@ export function onReturn(
  * Called when exiting an instrumented function via exception
  *
  * @param probes - Array of probes for this function
- * @param error - The thrown error
+ * @param error - The thrown value
  * @param self - The 'this' context
  * @param args - Function arguments
  */
-export function onThrow(probes: InitializedProbe[], error: Error, self: any, args: Record<string, any> = {}): void {
+export function onThrow(probes: InitializedProbe[], error: unknown, self: any, args: Record<string, any> = {}): void {
   const end = performance.now()
   const captureCtx: CaptureContext = { deadline: performance.now() + SNAPSHOT_TIMEOUT_MS, timedOut: false }
 
@@ -265,10 +266,7 @@ export function onThrow(probes: InitializedProbe[], error: Error, self: any, arg
 
     result.return = {
       arguments: throwArguments,
-      throwable: {
-        message: error.message,
-        stacktrace: parseStackTrace(error),
-      },
+      throwable: formatThrowable(error),
     }
 
     queueDebuggerSnapshot(probe, result)
