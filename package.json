@@ -45,6 +45,7 @@
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "@jsdevtools/coverage-istanbul-loader": "3.0.5",
+    "@oxc-project/runtime": "0.135.0",
     "@playwright/test": "1.60.0",
     "@swc/core": "1.15.40",
     "@types/busboy": "1.5.4",
@@ -91,6 +92,7 @@
     "terser-webpack-plugin": "5.6.1",
     "ts-loader": "9.6.0",
     "tsconfig-paths-webpack-plugin": "4.2.0",
+    "tsdown": "0.22.2",
     "typedoc": "0.28.19",
     "typescript": "6.0.3",
     "typescript-eslint": "8.60.0",
