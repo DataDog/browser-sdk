@@ -17,21 +17,17 @@ const sourceBundle = resolve(browserSdkDir, 'packages/browser-rum-slim/bundle/da
 const defaultBundle = resolve(appDir, `force-app/main/default/staticresources/${DATADOG_RESOURCE_NAME}.js`)
 const generatedDir = resolve(appDir, '.sf-e2e')
 
-buildDatadogBundle()
 const resourceName = syncDatadogBundle()
 if (deployApp) {
   deploySource(targetSfArgs)
 }
 deployGeneratedMetadata(resourceName)
+writeFileSync(resolve(generatedDir, 'resource-name'), resourceName)
 if (deployApp) {
   assignPermissionSet()
   printAppUrl(resourceName)
 }
 console.log(`Datadog RUM resource: ${resourceName}`)
-
-function buildDatadogBundle() {
-  run('yarn', ['workspace', '@datadog/browser-rum-slim', 'build:bundle'], { cwd: browserSdkDir })
-}
 
 // Keep the committed app deployable with the stable resource while exposing the same bundle
 // under a content-hashed resource name for parallel E2E runs.

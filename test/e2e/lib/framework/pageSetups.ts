@@ -30,6 +30,7 @@ export interface SetupOptions {
   worker?: WorkerOptions
   callerLocation?: CallerLocation
   mockClock: boolean
+  salesforceApp: boolean
 }
 
 export interface CallerLocation {

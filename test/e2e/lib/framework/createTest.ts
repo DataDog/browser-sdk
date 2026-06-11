@@ -21,12 +21,14 @@ import {
   VUE_ROUTER_APP_PORT,
   VUE_ROUTER_V4_APP_PORT,
 } from '../helpers/playwright'
+import { buildFrontdoorUrl } from '../helpers/sfSession'
 import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
 import { getTestServers, waitForServersIdle } from './httpServers'
 import type { CallerLocation, EventBridgeOptions, SetupFactory, SetupOptions, UrlHook } from './pageSetups'
 import { html, DEFAULT_SETUPS, npmSetup, appSetup, formatConfiguration } from './pageSetups'
+import { computeIntakeRequestInfos, readIntakeRequest } from './intakeProxyMiddleware'
 import { createDatadogHttpApi } from './serverApps/datadogHttpApi'
 import type { DatadogHttpApiControl } from './serverApps/datadogHttpApi'
 import { createMockServerApp } from './serverApps/mock'
@@ -113,6 +115,7 @@ class TestBuilder {
     logsConfiguration?: LogsInitConfiguration
   } = {}
   private worker: Worker | undefined
+  private salesforceApp = false
 
   constructor(
     private title: string,
@@ -268,6 +271,12 @@ class TestBuilder {
     return this
   }
 
+  withSalesforceApp() {
+    this.salesforceApp = true
+    this.setups = [{ factory: () => '' }]
+    return this
+  }
+
   withHostName(hostName: string) {
     this.baseUrlHooks.push((baseUrl) => {
       baseUrl.hostname = hostName
@@ -297,6 +306,7 @@ class TestBuilder {
       worker: this.worker,
       callerLocation: this.callerLocation,
       mockClock: this.mockClock,
+      salesforceApp: this.salesforceApp,
     }
 
     if (this.alsoRunWithRumSlim) {
@@ -442,6 +452,17 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     servers.base.bindServerApp(createMockServerApp(servers, setup, setupOptions))
     servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
 
+    if (setupOptions.salesforceApp) {
+      await page.route('*/**/api/v2/rum**', async (route) => {
+        const request = route.request()
+        const infos = computeIntakeRequestInfos(request)
+        const intakeRequest = await readIntakeRequest(request, infos)
+        intakeRegistry.push(intakeRequest)
+        const response = await route.fetch()
+        await route.fulfill({ response })
+      })
+    }
+
     await setUpTest(browserLogs, setupOptions, testContext)
 
     try {
@@ -513,7 +534,7 @@ function createTestContext(
 
 async function setUpTest(
   browserLogsManager: BrowserLogsManager,
-  { mockClock }: SetupOptions,
+  { mockClock, salesforceApp }: SetupOptions,
   { baseUrl, page, browserContext }: TestContext
 ) {
   browserContext.on('console', (msg) => {
@@ -541,7 +562,7 @@ async function setUpTest(
       test.skip(true, `Mock clock is not supported in this browser: ${String(e)}`)
     }
   }
-  await page.goto(baseUrl)
+  await page.goto(salesforceApp ? buildFrontdoorUrl() : baseUrl)
   await waitForServersIdle()
 }
 

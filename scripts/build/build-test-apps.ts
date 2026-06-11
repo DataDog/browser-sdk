@@ -45,6 +45,9 @@ const APPS: AppConfig[] = [
   { name: 'vue-router-v4-app', builderFn: buildVueRouterV4App, deps: ['vue-router-app'] },
   { name: 'nuxt-vue-router-v4-app', builderFn: buildNuxtVueRouterV4App, deps: ['nuxt-app'] },
 
+  // Salesforce LWC app (deploys content-hashed bundle to SF org, writes resource name for E2E tests)
+  { name: 'sf-lwc-app', builderFn: buildSfLwcApp },
+
   // browser extensions
   { name: 'base-extension' },
   {
@@ -228,6 +231,11 @@ async function modifyPackageJson(appPath: string, update: (packageJson: TestAppP
     update(packageJson)
     return `${JSON.stringify(packageJson, null, 2)}\n`
   })
+}
+
+async function buildSfLwcApp() {
+  printLog('Building sf-lwc-app...')
+  await command`node test/apps/sf-lwc-app/scripts/setup.mjs`.runAsync()
 }
 
 async function buildExtension(appName: string, options?: { runAt?: string }): Promise<void> {

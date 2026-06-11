@@ -1,12 +1,19 @@
 import { createInflate, inflateSync } from 'node:zlib'
 import https from 'node:https'
 import type express from 'express'
+import type { Request as PlaywrightRequest } from '@playwright/test'
 import createBusboy from 'busboy'
 import type { BrowserProfileEvent, BrowserProfilerTrace } from '@datadog/browser-rum/src/types/profiling'
 import type { BrowserSegment, BrowserSegmentMetadata } from '@datadog/browser-rum/src/types/sessionReplay'
 import type { LogsEvent } from '@datadog/browser-logs/src/logsEvent.types'
 import type { RumEvent } from '@datadog/browser-rum-core/src/rumEvent.types'
 import type { TelemetryEvent } from '@datadog/browser-core/src/domain/telemetry/telemetryEvent.types'
+
+export type IncomingRequest = express.Request | PlaywrightRequest
+
+function isPlaywrightRequest(req: IncomingRequest): req is PlaywrightRequest {
+  return typeof (req as { url: unknown }).url === 'function'
+}
 
 interface BaseIntakeRequest {
   isBridge: boolean
@@ -76,14 +83,6 @@ interface IntakeProxyOptions {
   onRequest?: (request: IntakeRequest) => void
 }
 
-export function getEventIntakeEncoding(
-  headers: Record<string, string | string[] | undefined>,
-  searchParams: URLSearchParams
-) {
-  const contentEncoding = headers['content-encoding']
-  return (Array.isArray(contentEncoding) ? contentEncoding[0] : contentEncoding) || searchParams.get('dd-evp-encoding')
-}
-
 export function createIntakeProxyMiddleware(options: IntakeProxyOptions): express.RequestHandler {
   return async (req, res) => {
     const infos = computeIntakeRequestInfos(req)
@@ -101,19 +100,24 @@ export function createIntakeProxyMiddleware(options: IntakeProxyOptions): expres
   }
 }
 
-function computeIntakeRequestInfos(req: express.Request): IntakeRequestInfos {
-  const ddforward = req.query.ddforward as string | undefined
-  if (!ddforward) {
-    throw new Error('ddforward is missing')
+export function computeIntakeRequestInfos(req: IncomingRequest): IntakeRequestInfos {
+  let intakeUrl: URL
+  if (isPlaywrightRequest(req)) {
+    intakeUrl = new URL(req.url(), 'https://example.org')
+  } else if (typeof req.query.ddforward === 'string') {
+    intakeUrl = new URL(req.query.ddforward, 'https://example.org')
+  } else {
+    intakeUrl = new URL(req.url, 'https://example.org')
   }
-  const { pathname, searchParams } = new URL(ddforward, 'https://example.org')
 
-  const encoding = getEventIntakeEncoding(req.headers, searchParams)
+  const { pathname, searchParams } = intakeUrl
+  const headers = isPlaywrightRequest(req) ? req.headers() : req.headers
+  const encoding = headers['content-encoding'] || searchParams.get('dd-evp-encoding')
   const transport = searchParams.get('_dd.api')
   const batchTimeRaw = searchParams.get('batch_time')
   const batchTime = batchTimeRaw ? Number(batchTimeRaw) : null
 
-  if (req.query.bridge === 'true') {
+  if (!isPlaywrightRequest(req) && req.query.bridge === 'true') {
     const eventType = req.query.event_type
     return {
       isBridge: true,
@@ -147,36 +151,30 @@ function computeIntakeRequestInfos(req: express.Request): IntakeRequestInfos {
   }
 }
 
-function readIntakeRequest(req: express.Request, infos: IntakeRequestInfos): Promise<IntakeRequest> {
+export function readIntakeRequest(req: IncomingRequest, infos: IntakeRequestInfos): Promise<IntakeRequest> {
   if (infos.intakeType === 'replay') {
-    return readReplayIntakeRequest(req, infos as IntakeRequestInfos & { intakeType: 'replay' })
+    return readReplayIntakeRequest(req as express.Request, infos as IntakeRequestInfos & { intakeType: 'replay' })
   }
   if (infos.intakeType === 'profile') {
-    return readProfileIntakeRequest(req, infos as IntakeRequestInfos & { intakeType: 'profile' })
+    return readProfileIntakeRequest(req as express.Request, infos as IntakeRequestInfos & { intakeType: 'profile' })
   }
   return readEventIntakeRequest(req, infos as IntakeRequestInfos & { intakeType: 'rum' | 'logs' | 'debugger' })
 }
 
 async function readEventIntakeRequest(
-  req: express.Request,
+  req: IncomingRequest,
   infos: IntakeRequestInfos & { intakeType: 'rum' | 'logs' | 'debugger' }
 ): Promise<RumIntakeRequest | LogsIntakeRequest | DebuggerIntakeRequest> {
-  const rawBody = await readStream(req)
+  const rawBody = isPlaywrightRequest(req) ? req.postDataBuffer()! : await readStream(req)
+  const encodedBody = infos.encoding === 'deflate' ? inflateSync(rawBody) : rawBody
 
   return {
     ...infos,
-    events: parseEventIntakePayload(rawBody, infos.encoding),
-  } as RumIntakeRequest | LogsIntakeRequest | DebuggerIntakeRequest
-}
-
-export function parseEventIntakePayload(rawBody: Buffer, encoding: string | null): Array<Record<string, unknown>> {
-  const encodedBody = encoding === 'deflate' ? inflateSync(rawBody) : rawBody
-
-  return encodedBody
-    .toString('utf-8')
-    .split('\n')
-    .filter(Boolean)
-    .map((line): Record<string, unknown> => JSON.parse(line) as Record<string, unknown>)
+    events: encodedBody
+      .toString('utf-8')
+      .split('\n')
+      .map((line): any => JSON.parse(line)),
+  }
 }
 
 function readReplayIntakeRequest(
