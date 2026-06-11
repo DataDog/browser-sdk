@@ -1053,24 +1053,21 @@ describe('profiler', () => {
     expect(trace.longTasks[0].id).toBe('long-task-inside')
   })
 
-  it('should use the profiling start time when looking up the session id', async () => {
-    const clock = mockClock()
+  it('should use the session id at profiler instance start time, not at collection time', async () => {
     const { profiler, sessionManager } = setupProfiler()
-    const findTrackedSessionSpy = spyOn(sessionManager, 'findTrackedSession').and.callThrough()
 
     profiler.start()
-    expect(profiler.isRunning()).toBe(true)
+    await waitForBoolean(() => profiler.isRunning())
 
-    const expectedStartTime = relativeNow()
-
-    clock.tick(1000)
+    // Change session ID after profiler instance started
+    sessionManager.setId('changed-session-id')
 
     profiler.stop()
 
-    await waitNextMicrotask()
-    await waitNextMicrotask()
+    await waitForBoolean(() => interceptor.requests.length >= 1)
 
-    expect(findTrackedSessionSpy).toHaveBeenCalledWith(expectedStartTime)
+    const request = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[0])
+    expect(request.event.session?.id).toBe('session-id-1')
   })
 
   describe('discard logic', () => {
