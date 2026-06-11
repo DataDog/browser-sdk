@@ -238,6 +238,7 @@ export function createRumProfiler(
       views: [],
       cleanupTasks,
       longTasks: [],
+      sessionId: session.findTrackedSession()?.id,
     }
 
     // Add last view entry
@@ -253,7 +254,7 @@ export function createRumProfiler(
     runningInstance.profiler.removeEventListener('samplebufferfull', handleSampleBufferFull)
 
     // Store instance data snapshot in local variables to use in async callback
-    const { startClocks, views } = runningInstance
+    const { startClocks, views, sessionId } = runningInstance
 
     // Stop current profiler to get trace
     runningInstance.profiler
@@ -288,7 +289,7 @@ export function createRumProfiler(
             views,
             sampleInterval: profilerConfiguration.sampleIntervalMs,
           }),
-          startClocks.relative
+          sessionId,
         )
       })
       .catch(monitorError)
@@ -356,8 +357,7 @@ export function createRumProfiler(
     instance.views.push(viewEntry)
   }
 
-  function handleProfilerTrace(trace: BrowserProfilerTrace, startTime: RelativeTime): void {
-    const sessionId = session.findTrackedSession(startTime)?.id
+  function handleProfilerTrace(trace: BrowserProfilerTrace, sessionId: string | undefined): void {
     const payload = assembleProfilingPayload(trace, configuration, sessionId)
 
     void transport.send(payload as unknown as TransportPayload)
