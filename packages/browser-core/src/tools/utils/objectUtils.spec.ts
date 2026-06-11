@@ -11,6 +11,12 @@ describe('objectUtils', () => {
       expect(getConstructorName(new Error())).toBe('Error')
     })
 
+    it('should return the constructor name of a primitive value', () => {
+      expect(getConstructorName('foo')).toBe('String')
+      expect(getConstructorName(1)).toBe('Number')
+      expect(getConstructorName(true)).toBe('Boolean')
+    })
+
     it('should return undefined when there is no usable constructor name', () => {
       expect(getConstructorName(Object.create(null))).toBeUndefined()
       expect(getConstructorName(null)).toBeUndefined()
