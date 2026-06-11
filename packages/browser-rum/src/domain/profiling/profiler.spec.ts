@@ -30,6 +30,8 @@ import {
   replaceMockable,
   createSessionManagerMock,
   replaceMockableWithSpy,
+  HIGH_HASH_UUID,
+  LOW_HASH_UUID,
 } from '@datadog/browser-core/test'
 import { mockRumConfiguration, mockViewHistory } from '../../../../browser-rum-core/test'
 import { mockProfiler } from '../../../test'
@@ -960,6 +962,43 @@ describe('profiler', () => {
     // Profiler should remain stopped - user's explicit stop should take priority over session expiration
     expect(profiler.isStopped()).toBe(true)
     expect(profilingContextManager.get()?.status).toBe('stopped')
+  })
+
+  it('should not restart profiling on session renewal when new session is not sampled for profiling', async () => {
+    mockProfiler(deepClone(mockedTrace))
+    const testLifeCycle = new LifeCycle()
+    const hooks = createHooks()
+    const profilingContextManager = startProfilingContext(hooks)
+    // Initial session uses LOW_HASH_UUID (sampled at any rate)
+    const sessionManager = createSessionManagerMock().setId(LOW_HASH_UUID)
+
+    const profiler = createRumProfiler(
+      mockRumConfiguration({ sessionSampleRate: 100, profilingSampleRate: 50 }),
+      testLifeCycle,
+      sessionManager,
+      profilingContextManager,
+      createIdentityEncoder,
+      mockViewHistory(),
+      { sampleIntervalMs: 10, collectIntervalMs: 60000, minProfileDurationMs: 0 }
+    )
+
+    // Start directly, simulating profilerApi.ts having validated the initial session
+    profiler.start()
+    await waitForBoolean(() => profiler.isRunning())
+
+    // Session expires
+    testLifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+    expect(profiler.isStopped()).toBeTrue()
+
+    // Session renews with HIGH_HASH_UUID, which is not sampled at profilingSampleRate: 50
+    sessionManager.setId(HIGH_HASH_UUID)
+    testLifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+    await new Promise((resolve) => setTimeout(resolve, 100))
+
+    expect(profiler.isStopped()).toBeTrue()
+
+    profiler.stop()
   })
 
   it('should not include long tasks outside the profiling window when clocks drift', async () => {
