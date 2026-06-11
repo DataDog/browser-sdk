@@ -10,11 +10,14 @@ import type {
   Observable,
   BufferedData,
   Subscription,
+  SseMetadata,
 } from '@datadog/browser-core'
 import {
   RequestType,
   ResponseBodyAction,
   BufferedDataType,
+  ExperimentalFeature,
+  isExperimentalFeatureEnabled,
   initFetchObservable,
   initXhrObservable,
 } from '@datadog/browser-core'
@@ -64,6 +67,11 @@ export interface RequestCompleteEvent {
   handlingStack?: string
   requestBody?: unknown
   responseBody?: string
+}
+
+export interface SseMetadataCollectedEvent {
+  requestIndex: number
+  sseMetadata: SseMetadata
 }
 
 let nextRequestIndex = 1
@@ -146,6 +154,16 @@ export function trackFetch(
           return ResponseBodyAction.COLLECT
         }
         return ResponseBodyAction.IGNORE
+      },
+      collectSse: () => isExperimentalFeatureEnabled(ExperimentalFeature.SSE_EVENT_COUNTS),
+      onSseMetadata: (context, sseMetadata) => {
+        const fetchContext = context as RumFetchResolveContext
+        if (isAllowedRequestUrl(fetchContext.url)) {
+          lifeCycle.notify(LifeCycleEventType.SSE_METADATA_COLLECTED, {
+            requestIndex: fetchContext.requestIndex,
+            sseMetadata,
+          })
+        }
       },
     }).subscribe((context) => {
       if (context.state === 'start' && isAllowedRequestUrl(context.url)) {

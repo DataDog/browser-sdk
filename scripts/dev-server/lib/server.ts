@@ -45,6 +45,52 @@ export function runServer({ writeIntakeFile = true }: { writeIntakeFile?: boolea
     })
   )
 
+  // Local Server-Sent Events endpoint for manually exercising SSE resource tracking.
+  // Query params: ?count=<tokenDelta frames> (default 3), ?delay=<ms between frames> (default 100).
+  app.get('/sse', (req, res) => {
+    // ?prehead: destroy the socket before sending any headers (mimics wifi cut during connection
+    // setup -> fetch() itself rejects, no Response is ever returned).
+    if (req.query.prehead !== undefined) {
+      res.socket?.destroy()
+      return
+    }
+
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+    })
+
+    const count = Number(req.query.count) || 3
+    const delay = Number(req.query.delay) || 100
+    // ?abort=<n>: after writing n frames, kill the socket abnormally (mimics a wifi cut mid-stream).
+    const abortAfter = req.query.abort !== undefined ? Number(req.query.abort) || 2 : undefined
+    const frames = [': keepalive']
+    for (let i = 0; i < count; i++) {
+      frames.push(`event: tokenDelta\ndata: {"index":${i}}`)
+    }
+    frames.push('data: {"unnamed":true}') // dispatches as `message`
+    frames.push('id: 42\nretry: 3000\nevent: done\ndata: [DONE]')
+
+    let index = 0
+    const timer = setInterval(() => {
+      if (abortAfter !== undefined && index >= abortAfter) {
+        clearInterval(timer)
+        res.socket?.destroy() // break the connection without a clean close
+        return
+      }
+      if (index >= frames.length) {
+        clearInterval(timer)
+        res.end()
+        return
+      }
+      res.write(`${frames[index]}\n\n`)
+      index++
+    }, delay)
+
+    req.on('close', () => clearInterval(timer))
+  })
+
   app.use(createStaticSandboxApp())
 
   app.use('/react-app', createReactApp())

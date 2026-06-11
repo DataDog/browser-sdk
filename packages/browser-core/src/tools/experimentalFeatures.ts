@@ -16,6 +16,7 @@ import { objectHasValue } from './utils/objectUtils'
 export enum ExperimentalFeature {
   TRACK_INTAKE_REQUESTS = 'track_intake_requests',
   PARTIAL_VIEW_UPDATES = 'partial_view_updates',
+  SSE_EVENT_COUNTS = 'sse_event_counts',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()

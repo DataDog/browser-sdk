@@ -7,6 +7,7 @@ import type {
   DefaultPrivacyLevel,
   Csp,
   Context,
+  SseMetadata,
 } from '@datadog/browser-core'
 import type { GraphQlMetadata } from './domain/resource/graphql'
 import type { PageState } from './domain/contexts/pageStateHistory'
@@ -73,6 +74,7 @@ export interface RawRumResourceEvent {
     protocol?: string
     delivery_type?: DeliveryType
     graphql?: GraphQlMetadata
+    sse?: SseMetadata
     request?: ResourceRequest
     response?: ResourceResponse
   }
