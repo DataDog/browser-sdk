@@ -1,13 +1,16 @@
 import fs from 'fs'
+import * as path from 'node:path'
 import type { RumEvent } from '@datadog/browser-rum'
 import ajv from 'ajv'
+
+const schemasDir = path.join(path.dirname(require.resolve('@datadog/rum-events-format/package.json')), 'schemas')
 
 export function validateRumFormat(events: RumEvent[]) {
   const instance = new ajv({
     allErrors: true,
   })
   const allJsonSchemas = fs
-    .globSync('./rum-events-format/schemas/**/*.json')
+    .globSync(path.join(schemasDir, '**/*.json'))
     .map((path) => JSON.parse(fs.readFileSync(path, 'utf8')) as object)
   instance.addSchema(allJsonSchemas)
 

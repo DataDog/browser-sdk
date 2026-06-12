@@ -2,7 +2,6 @@ bundle
 cjs
 esm
 coverage
-rum-events-format
 .yarn
 test/**/dist
 test/**/.next

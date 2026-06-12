@@ -11,7 +11,6 @@
   ],
   "type": "module",
   "scripts": {
-    "postinstall": "scripts/cli init_submodule",
     "build": "yarn workspaces foreach --all --parallel --topological run build",
     "build:bundle": "yarn workspaces foreach --all --parallel run build:bundle",
     "build:apps": "node scripts/build/build-test-apps.ts",
@@ -37,12 +36,13 @@
     "test:performance": "yarn test:e2e:init && playwright test --config test/performance/playwright.config.ts",
     "test:performance:debug": "playwright test --config test/performance/playwright.config.ts --debug",
     "test:performance:ui": "playwright test --config test/performance/playwright.config.ts --ui",
-    "json-schemas:sync": "scripts/cli update_submodule && yarn json-schemas:generate",
-    "json-schemas:generate": "scripts/cli build_json2type && node scripts/generate-schema-types.ts",
+    "json-schemas:sync": "node scripts/json-schemas.ts --update master --build",
+    "json-schemas:generate": "node scripts/json-schemas.ts --build",
     "size": "node scripts/show-bundle-size.ts",
     "woke": "scripts/cli woke"
   },
   "devDependencies": {
+    "@datadog/rum-events-format": "DataDog/rum-events-format#commit=d6ba7f79da55412f7357c9cf3da9a3442e7f6cb0",
     "@eslint/js": "10.0.1",
     "@jsdevtools/coverage-istanbul-loader": "3.0.5",
     "@playwright/test": "1.60.0",
