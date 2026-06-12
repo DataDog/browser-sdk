@@ -1,6 +1,14 @@
-import type { LifeCycle, ViewHistory, RumConfiguration, ProfilerApi, Hooks } from '@datadog/browser-rum-core'
-import type { SessionManager, DeflateEncoderStreamId, Encoder } from '@datadog/browser-core'
-import { monitorError, correctedChildSampleRate, isSampled, mockable } from '@datadog/browser-core'
+import type { Hooks, LifeCycle, ProfilerApi, RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
+import type { DeflateEncoderStreamId, Encoder, SessionManager } from '@datadog/browser-core'
+import {
+  BridgeCapability,
+  bridgeSupports,
+  canUseEventBridge,
+  correctedChildSampleRate,
+  isSampled,
+  mockable,
+  monitorError,
+} from '@datadog/browser-core'
 import type { RUMProfiler } from '../domain/profiling/types'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { startProfilingContext } from '../domain/profiling/profilingContext'
@@ -37,6 +45,11 @@ export function makeProfilerApi(): ProfilerApi {
       return
     }
 
+    if (canUseEventBridge() && !bridgeSupports(BridgeCapability.PROFILES)) {
+      // without PROFILES capability, we cannot send profiles
+      return
+    }
+
     // Listen to events and add the profiling context to them.
     const profilingContextManager = startProfilingContext(hooks)
 
@@ -49,7 +62,7 @@ export function makeProfilerApi(): ProfilerApi {
       return
     }
 
-    lazyLoadProfiler()
+    mockable(lazyLoadProfiler)()
       .then((createRumProfiler) => {
         if (!createRumProfiler) {
           profilingContextManager.set({ status: 'error', error_reason: 'failed-to-lazy-load' })
