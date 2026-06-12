@@ -39,6 +39,10 @@
     "url": "https://github.com/DataDog/browser-sdk.git",
     "directory": "packages/browser-rum-nextjs"
   },
+  "bugs": {
+    "url": "https://github.com/DataDog/browser-sdk/issues"
+  },
+  "homepage": "https://github.com/DataDog/browser-sdk#readme",
   "volta": {
     "extends": "../../package.json"
   },
