@@ -3,7 +3,7 @@
   "version": "7.2.0",
   "license": "Apache-2.0",
   "main": "cjs/index.js",
-  "module": "esm/index.js",
+  "module": "esm/index.mjs",
   "types": "cjs/index.d.ts",
   "sideEffects": false,
   "files": [
