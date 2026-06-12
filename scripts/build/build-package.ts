@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises'
-import { existsSync, readFileSync, globSync } from 'node:fs'
+import { readFileSync, globSync } from 'node:fs'
 import { parseArgs } from 'node:util'
 import ts from 'typescript'
 import webpack from 'webpack'
@@ -85,14 +85,6 @@ function referencedBuildEnvKeys() {
   return buildEnvKeys.filter((key) => content.includes(`__BUILD_ENV__${key}__`))
 }
 
-function getEntries() {
-  if (existsSync('./src/index.ts') || existsSync('./src/entries')) {
-    return ['./src/index.ts', './src/entries/*.ts']
-  }
-
-  return ['./src/*.ts', './src/*/index.ts']
-}
-
 async function buildModules({ verbose }: { verbose: boolean }) {
   // Transpile the source with tsdown (Rolldown). We let TypeScript emit the declaration files (see
   // emitDeclarations) rather than tsdown, because Rolldown's declaration bundler restructures
@@ -100,7 +92,10 @@ async function buildModules({ verbose }: { verbose: boolean }) {
   // modifiers, rewritten re-exports).
   await tsdownBuild({
     clean: true,
-    entry: [...getEntries(), '!**/*.spec.*', '!**/*.specHelper.*'],
+    // Every package exposes its public surface through `src/entries/*.ts` and/or a single
+    // `src/index.ts`. Restricting entries to those (rather than every source file) lets Rolldown
+    // tree-shake code only reachable from specs.
+    entry: ['./src/index.ts', './src/entries/*.ts', '!**/*.spec.*', '!**/*.specHelper.*'],
     // In unbundle mode `root` is the preserveModulesRoot: it pins the output layout to mirror `src/`
     // so e.g. `src/entries/main.ts` emits to `cjs/entries/main.js`. Without it, the output would be
     // rooted at the entries' common ancestor and flatten `entries/main.ts` to `cjs/main.js`.

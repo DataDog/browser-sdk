@@ -5,9 +5,9 @@
   "sideEffects": false,
   "exports": {
     "./time": {
-      "import": "./esm/time.mjs",
-      "require": "./cjs/time.js",
-      "types": "./cjs/time.d.ts"
+      "import": "./esm/entries/time.mjs",
+      "require": "./cjs/entries/time.js",
+      "types": "./cjs/entries/time.d.ts"
     }
   },
   "files": [
