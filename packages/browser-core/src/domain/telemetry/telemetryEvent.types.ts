@@ -636,7 +636,7 @@ export interface CommonTelemetryProperties {
     /**
      * UUID of the action
      */
-    id: string
+    readonly id: string | string[]
     [k: string]: unknown
   }
   /**

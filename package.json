@@ -42,7 +42,7 @@
     "woke": "scripts/cli woke"
   },
   "devDependencies": {
-    "@datadog/rum-events-format": "DataDog/rum-events-format#commit=d6ba7f79da55412f7357c9cf3da9a3442e7f6cb0",
+    "@datadog/rum-events-format": "DataDog/rum-events-format#commit=02c94b31a2676458a156ed627f3edcd87254beb7",
     "@eslint/js": "10.0.1",
     "@jsdevtools/coverage-istanbul-loader": "3.0.5",
     "@playwright/test": "1.60.0",
