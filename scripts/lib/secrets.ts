@@ -84,6 +84,18 @@ export function getBrowserStackAccessKey(): string {
   return getSecretKey('ci.browser-sdk.bs_access_key')
 }
 
+export function getSfInstanceUrl(): string {
+  return getSecretKey('ci.browser-sdk.sf_instance_url')
+}
+
+export function getSfClientId(): string {
+  return getSecretKey('ci.browser-sdk.sf_client_id')
+}
+
+export function getSfClientSecret(): string {
+  return getSecretKey('ci.browser-sdk.sf_secret_id')
+}
+
 function getSecretKey(name: string): string {
   return command`
     aws ssm get-parameter --region=us-east-1 --with-decryption --query=Parameter.Value --out=text --name=${name}

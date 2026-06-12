@@ -5,6 +5,7 @@ import { parseArgs } from 'node:util'
 import { printLog, runMain } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
 import { modifyFile } from '../lib/filesUtils.ts'
+import { getSfClientId, getSfClientSecret, getSfInstanceUrl } from '../lib/secrets.ts'
 
 type AppConfig<T extends AppBuilderOptions = AppBuilderOptions> =
   | {
@@ -234,12 +235,27 @@ async function modifyPackageJson(appPath: string, update: (packageJson: TestAppP
 }
 
 async function buildSfLwcApp() {
-  if (!process.env.SF_INSTANCE_URL || !process.env.SF_CLIENT_ID || !process.env.SF_CLIENT_SECRET) {
-    printLog('Skipping sf-lwc-app: SF_INSTANCE_URL, SF_CLIENT_ID and SF_CLIENT_SECRET not set')
+  const instanceUrl = process.env.SF_INSTANCE_URL ?? tryGetSecret(getSfInstanceUrl)
+  const clientId = process.env.SF_CLIENT_ID ?? tryGetSecret(getSfClientId)
+  const clientSecret = process.env.SF_CLIENT_SECRET ?? tryGetSecret(getSfClientSecret)
+
+  if (!instanceUrl || !clientId || !clientSecret) {
+    printLog('Skipping sf-lwc-app: SF credentials not available')
     return
   }
+
   printLog('Building sf-lwc-app...')
-  await command`node test/apps/sf-lwc-app/scripts/setup.mjs`.runAsync()
+  await command`node test/apps/sf-lwc-app/scripts/setup.mjs`
+    .withEnvironment({ SF_INSTANCE_URL: instanceUrl, SF_CLIENT_ID: clientId, SF_CLIENT_SECRET: clientSecret })
+    .runAsync()
+}
+
+function tryGetSecret(getter: () => string): string | undefined {
+  try {
+    return getter()
+  } catch {
+    return undefined
+  }
 }
 
 async function buildExtension(appName: string, options?: { runAt?: string }): Promise<void> {
