@@ -1,7 +1,4 @@
 import fs from 'node:fs/promises'
-import path from 'node:path'
-import { globSync } from 'node:fs'
-import { createRequire } from 'node:module'
 import { parseArgs } from 'node:util'
 import ts from 'typescript'
 import webpack from 'webpack'
@@ -9,7 +6,6 @@ import { build as tsdownBuild } from 'tsdown'
 import webpackBase from '../../webpack.base.ts'
 
 import { printLog, runMain } from '../lib/executionUtils.ts'
-import { modifyFile } from '../lib/filesUtils.ts'
 import { buildEnvKeys, getBuildEnvValue } from '../lib/buildEnv.ts'
 
 runMain(async () => {
@@ -107,59 +103,10 @@ async function buildModules({ verbose }: { verbose: boolean }) {
     logLevel: verbose ? 'info' : 'error',
   })
 
-  await vendorOxcRuntimeHelpers('./cjs', { module: 'cjs' })
-  await vendorOxcRuntimeHelpers('./esm', { module: 'esm' })
-
   // Declarations only need to live next to the CommonJS output: every package's `types` field (and
   // the `types` condition in `exports`) points at `./cjs`, so both CJS and ESM consumers resolve
   // the same declaration files.
   emitDeclarations('./cjs')
-}
-
-const OXC_HELPERS_DIRNAME = '_oxc-helpers'
-const OXC_HELPER_IMPORT_RE = /@oxc-project\/runtime\/helpers\/([\w-]+)/g
-
-// tsdown/Rolldown lowers TypeScript features (e.g. decorators) using helpers imported from
-// `@oxc-project/runtime`, and oxc cannot inline them. To avoid shipping that runtime as a
-// dependency, we vendor the few helpers actually used: copy them into the output directory and
-// rewrite the bare imports to point at the local copies. The helpers are self-contained (the same
-// snippets `tsc` would have inlined), so no transitive resolution is needed.
-async function vendorOxcRuntimeHelpers(outDir: string, { module }: { module: 'cjs' | 'esm' }) {
-  const ext = module === 'esm' ? '.mjs' : '.js'
-  const files = globSync(`**/*${ext}`, { cwd: outDir }).map((file) => path.resolve(outDir, file))
-
-  const usedHelpers = new Set<string>()
-  for (const file of files) {
-    for (const [, helper] of (await fs.readFile(file, 'utf8')).matchAll(OXC_HELPER_IMPORT_RE)) {
-      usedHelpers.add(helper)
-    }
-  }
-
-  if (usedHelpers.size === 0) {
-    return
-  }
-
-  const require = createRequire(import.meta.url)
-  const runtimeRoot = path.dirname(require.resolve('@oxc-project/runtime/package.json'))
-  const helpersDir = path.resolve(outDir, OXC_HELPERS_DIRNAME)
-  await fs.mkdir(helpersDir, { recursive: true })
-
-  for (const helper of usedHelpers) {
-    // The CJS and ESM helper variants live in separate directories within the runtime package.
-    const source = path.join(runtimeRoot, 'src/helpers', module === 'esm' ? 'esm' : '', `${helper}.js`)
-    await fs.copyFile(source, path.join(helpersDir, `${helper}${ext}`))
-  }
-
-  for (const file of files) {
-    await modifyFile(file, (content: string) =>
-      content.replace(OXC_HELPER_IMPORT_RE, (_, helper: string) => {
-        const relativePath = path.relative(path.dirname(file), path.join(helpersDir, `${helper}${ext}`))
-        const specifier = relativePath.startsWith('.') ? relativePath : `./${relativePath}`
-        // CJS `require` resolves extensionless specifiers; ESM imports need the explicit extension.
-        return module === 'esm' ? specifier : specifier.slice(0, -ext.length)
-      })
-    )
-  }
 }
 
 function emitDeclarations(outDir: string) {

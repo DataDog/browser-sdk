@@ -1741,13 +1741,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@oxc-project/runtime@npm:0.135.0":
-  version: 0.135.0
-  resolution: "@oxc-project/runtime@npm:0.135.0"
-  checksum: 10c0/3ccf1e7b4882928426abf36f632bd724979dd1bd38e40ff5fa8b1aa7ddf943331a3d03654c16529c6fee278b6179f60a6dbe43d2767b0a06446079b2dd6b814f
-  languageName: node
-  linkType: hard
-
 "@oxc-project/types@npm:=0.133.0":
   version: 0.133.0
   resolution: "@oxc-project/types@npm:0.133.0"
@@ -3972,7 +3965,6 @@ __metadata:
     "@datadog/rum-events-format": "DataDog/rum-events-format#commit=02c94b31a2676458a156ed627f3edcd87254beb7"
     "@eslint/js": "npm:10.0.1"
     "@jsdevtools/coverage-istanbul-loader": "npm:3.0.5"
-    "@oxc-project/runtime": "npm:0.135.0"
     "@playwright/test": "npm:1.60.0"
     "@swc/core": "npm:1.15.40"
     "@types/busboy": "npm:1.5.4"
