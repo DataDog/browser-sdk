@@ -86,22 +86,33 @@ Search: `grep -rn 'betaEncodeCookieOptions|allowFallbackToLocalStorage|trackBfca
 
 ### 4a. `forwardErrorsToLogs` + `forwardConsoleLogs` (Logs)
 
-These are now **independent**. In v6, `forwardErrorsToLogs: true` silently forwarded `console.error()`. In v7, it only controls unhandled errors.
+These are now **independent**. In v6, `forwardErrorsToLogs: true` had a side effect: it also forwarded `console.error()` calls to Logs. In v7, that side effect is removed.
 
-**If you use `forwardErrorsToLogs: true`**, add `"error"` to your `forwardConsoleLogs` array to preserve v6 behavior:
+- `forwardErrorsToLogs` — controls forwarding of **unhandled errors** (uncaught exceptions, unhandled rejections) to Logs. **Keep this unchanged.**
+- `forwardConsoleLogs` — controls forwarding of **`console.error()` calls** to Logs. Add `'error'` here to restore the v6 side effect.
+
+**Keep `forwardErrorsToLogs: true` and add `forwardConsoleLogs: ['error']` alongside it:**
 
 ```js
+// v6
 DD_LOGS.init({
   forwardErrorsToLogs: true,
-  forwardConsoleLogs: ['error', 'warn'], // add 'error' explicitly
+})
+
+// v7
+DD_LOGS.init({
+  forwardErrorsToLogs: true, // unchanged — still forwards unhandled errors
+  forwardConsoleLogs: ['error'], // new — restores console.error forwarding
 })
 ```
+
+Do **not** replace `forwardErrorsToLogs` with `forwardConsoleLogs` — they control different things.
 
 Search: `grep -rn "forwardErrorsToLogs" --include="*.js" --include="*.ts" --include="*.tsx" --include="*.html"`
 
 ### 4b. `startDurationVital` / `stopDurationVital` (RUM)
 
-The `DurationVitalReference` object is replaced by a `vitalKey` string:
+The `DurationVitalReference` object is replaced by a `vitalKey` string. **`startDurationVital` now returns nothing** — the v7 API is fire-and-forget; the vital name string is all you need.
 
 ```js
 // v6
@@ -113,7 +124,28 @@ DD_RUM.startDurationVital('checkout', { vitalKey: 'checkout-key' })
 DD_RUM.stopDurationVital('checkout', { vitalKey: 'checkout-key' })
 ```
 
-Search: `grep -rn 'startDurationVital|stopDurationVital|DurationVitalReference' --include="*.js" --include="*.ts" --include="*.tsx"`
+Search for direct SDK calls: `grep -rn 'startDurationVital|stopDurationVital|DurationVitalReference' --include="*.js" --include="*.ts" --include="*.tsx"`
+
+**Then trace every variable that captures the return value.** If `startDurationVital` (or any wrapper around it) is assigned to a variable and that variable is passed to the stop call, the vital will never stop in v7 — `stopDurationVital(undefined)` is a no-op.
+
+Search for captured return values: `grep -rn '=\s*.*startDurationVital\|=\s*.*[Ss]tart.*[Vv]ital\|=\s*.*[Ss]tart[Tt]iming' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.svelte" --include="*.vue"`
+
+**When the SDK is wrapped in a utility** (e.g. `startTiming(name)` delegates to `datadogRum.startDurationVital`):
+
+1. Update the wrapper so `startDurationVital` receives a `vitalKey` option and returns nothing.
+2. Find all callers that capture the wrapper's return value and update them to pass the vital name string directly to the stop call:
+
+```js
+// Caller — before
+const ref = startTiming('checkout_flow')
+// ...
+stopTiming(ref) // ref is undefined in v7 → vital never stops
+
+// Caller — after
+startTiming('checkout_flow')
+// ...
+stopTiming('checkout_flow')
+```
 
 ### 4c. Plugin API: `strategy` removed (RUM)
 
@@ -125,20 +157,20 @@ Search: `grep -rn "strategy" --include="*.js" --include="*.ts" --include="*.tsx"
 
 These are **default changes** — no code breaks, but behavior differs from v6:
 
-| Change                                                               | Impact                                                                                     | Action if needed                                                                                                     |
-| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| `defaultPrivacyLevel` defaults to `"mask-user-input"` (was `"mask"`) | Less restrictive masking out of the box. Only user input is masked.                        | Set `defaultPrivacyLevel: "mask"` to preserve full masking.                                                          |
-| `enablePrivacyForActionName` defaults to `true`                      | Click action names follow privacy level. May be masked.                                    | Use the [Datadog build plugin](https://github.com/DataDog/build-plugins) or set `enablePrivacyForActionName: false`. |
-| `propagateTraceBaggage` defaults to `true`                           | CORS: cross-origin APIs must allow `baggage` header.                                       | Add `"baggage"` to `Access-Control-Allow-Headers`, or set `propagateTraceBaggage: false`.                            |
-| Deterministic sampling                                               | Sampling computed from session ID + rate, not stored. Consistent across pages.             | Review if you use different sample rates on different pages.                                                         |
-| FID removed                                                          | First Input Delay no longer collected.                                                     | Use INP (Interaction to Next Paint) instead.                                                                         |
-| `session_renewal` view loading type                                  | Session-renewed views have `@view.loading_type:session_renewal` instead of `route_change`. | Update dashboards/monitors filtering on `@view.loading_type`.                                                        |
-| Document resource `initiatorType` changed                            | `"initial_document"` becomes `"navigation"`. Duration may differ slightly.                 | Update any code inspecting document resource `performanceEntry`.                                                     |
-| Action names may change                                              | Tree walker strategy always used (including Shadow DOM).                                   | Review if you have monitors based on specific action names.                                                          |
-| Cancelled request errors removed (Logs)                              | Aborted fetch/XHR no longer generate network error logs.                                   | No action needed — reduces noise.                                                                                    |
-| Logs always requires session storage                                 | Without cookies or localStorage, Logs SDK won't start.                                     | Use `sessionPersistence: 'memory'` for worker environments.                                                          |
-| Session Replay: Change Records                                       | New serialization format. More accurate, less bandwidth.                                   | Update if you depend on raw segment format.                                                                          |
-| Async chunk names prefixed with `datadog`                            | e.g., `datadogRecorder-<hash>-datadog-rum.js`, `datadogProfiler-<hash>-datadog-rum.js`.    | Update CSP `script-src` rules or caching configs (allow `datadog*-datadog-rum.js`).                                  |
+| Change                                                               | Impact                                                                                                                                                                                                                   | Action if needed                                                                                                                                                                     |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `defaultPrivacyLevel` defaults to `"mask-user-input"` (was `"mask"`) | Less restrictive masking out of the box. Only user input is masked.                                                                                                                                                      | Set `defaultPrivacyLevel: "mask"` to preserve full masking.                                                                                                                          |
+| `enablePrivacyForActionName` defaults to `true`                      | Action names are normalized: derived from DOM text and lowercased. `"Add to Cart"` in v6 becomes `"add to cart"` in v7. May also mask names based on privacy level.                                                      | Set `enablePrivacyForActionName: false` to preserve original casing and text. Use the [Datadog build plugin](https://github.com/DataDog/build-plugins) for annotation-based control. |
+| `propagateTraceBaggage` defaults to `true`                           | CORS: cross-origin APIs must allow `baggage` header.                                                                                                                                                                     | Add `"baggage"` to `Access-Control-Allow-Headers`, or set `propagateTraceBaggage: false`.                                                                                            |
+| Deterministic sampling                                               | Sampling computed from session ID + rate, not stored. Consistent across pages.                                                                                                                                           | Review if you use different sample rates on different pages.                                                                                                                         |
+| FID removed                                                          | First Input Delay no longer collected.                                                                                                                                                                                   | Use INP (Interaction to Next Paint) instead.                                                                                                                                         |
+| `session_renewal` view loading type                                  | Session-renewed views have `@view.loading_type:session_renewal` instead of `route_change`.                                                                                                                               | Update dashboards/monitors filtering on `@view.loading_type`.                                                                                                                        |
+| Document resource `initiatorType` changed                            | `"initial_document"` becomes `"navigation"`. Duration may differ slightly.                                                                                                                                               | Update any code inspecting document resource `performanceEntry`.                                                                                                                     |
+| Action names may change                                              | Tree walker strategy always used (including Shadow DOM). Combined with `enablePrivacyForActionName: true` (new default), action name strings are lowercased. Monitors/dashboards with case-sensitive filters will break. | Set `enablePrivacyForActionName: false` to preserve exact casing, or update monitors to match the new lowercase names.                                                               |
+| Cancelled request errors removed (Logs)                              | Aborted fetch/XHR no longer generate network error logs.                                                                                                                                                                 | No action needed — reduces noise.                                                                                                                                                    |
+| Logs always requires session storage                                 | Without cookies or localStorage, Logs SDK won't start.                                                                                                                                                                   | Use `sessionPersistence: 'memory'` for worker environments.                                                                                                                          |
+| Session Replay: Change Records                                       | New serialization format. More accurate, less bandwidth.                                                                                                                                                                 | Update if you depend on raw segment format.                                                                                                                                          |
+| Async chunk names prefixed with `datadog`                            | e.g., `datadogRecorder-<hash>-datadog-rum.js`, `datadogProfiler-<hash>-datadog-rum.js`.                                                                                                                                  | Update CSP `script-src` rules or caching configs (allow `datadog*-datadog-rum.js`).                                                                                                  |
 
 ## Step 6: Update infrastructure
 
