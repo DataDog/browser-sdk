@@ -45,7 +45,7 @@ const APPS: AppConfig[] = [
   { name: 'vue-router-v4-app', builderFn: buildVueRouterV4App, deps: ['vue-router-app'] },
   { name: 'nuxt-vue-router-v4-app', builderFn: buildNuxtVueRouterV4App, deps: ['nuxt-app'] },
 
-  // Salesforce LWC app (deploys content-hashed bundle to SF org, writes resource name for E2E tests)
+  // Salesforce LWC app
   { name: 'sf-lwc-app', builderFn: buildSfLwcApp },
 
   // browser extensions
@@ -234,6 +234,10 @@ async function modifyPackageJson(appPath: string, update: (packageJson: TestAppP
 }
 
 async function buildSfLwcApp() {
+  if (!process.env.SF_INSTANCE_URL && !process.env.SF_ACCESS_TOKEN) {
+    printLog('Skipping sf-lwc-app: SF credentials not available')
+    return
+  }
   printLog('Building sf-lwc-app...')
   await command`node test/apps/sf-lwc-app/scripts/setup.mjs`.runAsync()
 }
