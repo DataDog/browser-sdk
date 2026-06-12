@@ -90,6 +90,10 @@ async function buildModules({ verbose }: { verbose: boolean }) {
   // emitDeclarations) rather than tsdown, because Rolldown's declaration bundler restructures
   // modules in ways that break compatibility with older TypeScript versions (e.g. inline `type`
   // modifiers, rewritten re-exports).
+  // TODO: once we drop support for TypeScript < 4.7, let tsdown emit the declarations (`dts: true`)
+  // and remove emitDeclarations. The bundler output needs inline `type` modifiers (TS 4.5+) and
+  // `.mjs`/`.js` extensioned import paths that only resolve under `node16`/`bundler` module
+  // resolution (TS 4.7+), so 4.7 is the floor where it works.
   await tsdownBuild({
     clean: true,
     // Every package exposes its public surface through `src/entries/*.ts` and/or a single
