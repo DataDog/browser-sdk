@@ -1,6 +1,6 @@
 import type { LifeCycle, ViewHistory, RumConfiguration, ProfilerApi, Hooks } from '@datadog/browser-rum-core'
 import type { SessionManager, DeflateEncoderStreamId, Encoder } from '@datadog/browser-core'
-import { monitorError, correctedChildSampleRate, isSampled, mockable, addTelemetryDebug } from '@datadog/browser-core'
+import { monitorError, correctedChildSampleRate, isSampled, mockable } from '@datadog/browser-core'
 import type { RUMProfiler } from '../domain/profiling/types'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { startProfilingContext } from '../domain/profiling/profilingContext'
@@ -49,9 +49,6 @@ export function makeProfilerApi(): ProfilerApi {
       return
     }
 
-    // monitor-until: 2026-07-01
-    addTelemetryDebug(`[Profiler Session Debug] Session ID before Lazy load: ${session.id}`)
-
     lazyLoadProfiler()
       .then((createRumProfiler) => {
         if (!createRumProfiler) {
@@ -69,9 +66,6 @@ export function makeProfilerApi(): ProfilerApi {
           undefined
         )
         profiler.start()
-        // telemetry: report if there is a session id once the lazy-load is done and the profiler is actually starting.
-        // monitor-until: 2026-07-01
-        addTelemetryDebug(`[Profiler Session Debug] Session ID after lazy load: ${session.id}`)
       })
       .catch(monitorError)
   }

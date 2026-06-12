@@ -1,4 +1,5 @@
 import { elapsed, clocksOrigin, clocksNow } from '@datadog/js-core/time'
+import type { RelativeTime } from '@datadog/js-core/time'
 import type { Encoder, SessionManager, Profiler } from '@datadog/browser-core'
 import {
   addEventListener,
@@ -10,9 +11,6 @@ import {
   globalObject,
   DeflateEncoderStreamId,
   mockable,
-  isSampled,
-  correctedChildSampleRate,
-  addTelemetryDebug,
 } from '@datadog/browser-core'
 
 import type { LifeCycle, RumConfiguration, TransportPayload, ViewHistory } from '@datadog/browser-rum-core'
@@ -73,18 +71,6 @@ export function createRumProfiler(
       instance.state === 'stopped' &&
       (instance.stateReason === 'session-expired' || instance.stateReason === 'quota_ko')
     ) {
-      const newSession = session.findTrackedSession()
-      // monitor-until: 2026-07-01
-      addTelemetryDebug(`[Profiler Session Debug] Session Renewed : ${newSession?.id}`)
-      if (
-        !newSession ||
-        !isSampled(
-          newSession.id,
-          correctedChildSampleRate(configuration.sessionSampleRate, configuration.profilingSampleRate)
-        )
-      ) {
-        return
-      }
       start()
     }
   })
@@ -192,8 +178,6 @@ export function createRumProfiler(
   }
 
   function startNextProfilerInstance(): void {
-    // monitor-until: 2026-07-01
-    addTelemetryDebug(`[Profiler Session Debug] Start Next Profiler Instance : ${session.findTrackedSession()?.id}`)
     // These APIs might be unavailable in some browsers
     const profilerConstructor = globalObject.Profiler
 
@@ -245,7 +229,6 @@ export function createRumProfiler(
       views: [],
       cleanupTasks,
       longTasks: [],
-      sessionId: session.findTrackedSession()?.id,
     }
 
     // Add last view entry
@@ -261,7 +244,7 @@ export function createRumProfiler(
     runningInstance.profiler.removeEventListener('samplebufferfull', handleSampleBufferFull)
 
     // Store instance data snapshot in local variables to use in async callback
-    const { startClocks, views, sessionId } = runningInstance
+    const { startClocks, views } = runningInstance
 
     // Stop current profiler to get trace
     runningInstance.profiler
@@ -284,18 +267,6 @@ export function createRumProfiler(
           return
         }
 
-        // monitor-until: 2026-07-01
-        addTelemetryDebug(
-          `[Profiler Session Debug] After Running instance stopped: Start session: ${session.findTrackedSession()?.id}, endSession: ${sessionId}`
-        )
-        if (session.findTrackedSession()?.id !== sessionId) {
-          // monitor-until: 2026-07-01
-
-          addTelemetryDebug(
-            `[Profiler Session Debug] Session ID differ: ${session.findTrackedSession()?.id !== sessionId ? 'true' : 'false'} -- Start session: ${session.findTrackedSession()?.id}, endSession: ${sessionId}`
-          )
-        }
-
         handleProfilerTrace(
           // Enrich trace with time and instance data
           Object.assign(trace, {
@@ -308,7 +279,7 @@ export function createRumProfiler(
             views,
             sampleInterval: profilerConfiguration.sampleIntervalMs,
           }),
-          sessionId
+          startClocks.relative
         )
       })
       .catch(monitorError)
@@ -376,15 +347,14 @@ export function createRumProfiler(
     instance.views.push(viewEntry)
   }
 
-  function handleProfilerTrace(trace: BrowserProfilerTrace, sessionId: string | undefined): void {
+  function handleProfilerTrace(trace: BrowserProfilerTrace, startTime: RelativeTime): void {
+    const sessionId = session.findTrackedSession(startTime)?.id
     const payload = assembleProfilingPayload(trace, configuration, sessionId)
 
     void transport.send(payload as unknown as TransportPayload)
   }
 
   function handleSampleBufferFull(): void {
-    // monitor-until: 2026-07-01
-    addTelemetryDebug(`[Profiler Session Debug] Handle Sample Buffer Full : ${session.findTrackedSession()?.id}`)
     startNextProfilerInstance()
   }
 
@@ -397,8 +367,6 @@ export function createRumProfiler(
       pauseProfilerInstance()
     } else if (document.visibilityState === 'visible' && instance.state === 'paused') {
       // Resume when tab becomes visible again
-      // monitor-until: 2026-07-01
-      addTelemetryDebug(`[Profiler Session Debug] Handle Visibility Change : ${session.findTrackedSession()?.id}`)
       startNextProfilerInstance()
     }
   }
@@ -407,8 +375,6 @@ export function createRumProfiler(
     // `unload` can in some cases be triggered while the page is still active (link to a different protocol like mailto:).
     // We can immediately flush (by starting a new profiler instance) to make sure we receive the data, and at the same time keep the profiler active.
     // In case of the regular unload, the profiler will be shut down anyway.
-    // monitor-until: 2026-07-01
-    addTelemetryDebug(`[Profiler Session Debug] Handle Before Unload : ${session.findTrackedSession()?.id}`)
     startNextProfilerInstance()
   }
 
