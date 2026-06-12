@@ -562,7 +562,7 @@ async function setUpTest(
       test.skip(true, `Mock clock is not supported in this browser: ${String(e)}`)
     }
   }
-  await page.goto(salesforceApp ? buildFrontdoorUrl() : baseUrl)
+  await page.goto(salesforceApp ? await buildFrontdoorUrl() : baseUrl)
   await waitForServersIdle()
 }
 

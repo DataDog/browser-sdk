@@ -8,6 +8,8 @@ const DATADOG_RESOURCE_NAME = 'datadog_rum_slim'
 const GENERATED_RESOURCE_PREFIX = `${DATADOG_RESOURCE_NAME}_`
 const DEFAULT_ORG_ALIAS = process.env.SF_ORG_ALIAS ?? 'engrumdev'
 
+await authenticateSfCli()
+
 const { deployApp, sfArgs } = getScriptArgs(process.argv.slice(2))
 const targetSfArgs = withDefaultOrg(sfArgs)
 const orgArgs = getOrgArgs(targetSfArgs)
@@ -151,6 +153,44 @@ function withDefaultOrg(args) {
     return args
   }
   return [...args, '-o', DEFAULT_ORG_ALIAS]
+}
+
+async function authenticateSfCli() {
+  const { SF_INSTANCE_URL, SF_CLIENT_ID, SF_CLIENT_SECRET } = process.env
+  if (!SF_INSTANCE_URL || !SF_CLIENT_ID || !SF_CLIENT_SECRET) {
+    return
+  }
+
+  const response = await fetch(`${SF_INSTANCE_URL}/services/oauth2/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'client_credentials',
+      client_id: SF_CLIENT_ID,
+      client_secret: SF_CLIENT_SECRET,
+    }),
+  })
+
+  const data = await response.json()
+  if (!response.ok || !data.access_token) {
+    throw new Error(`SF client credentials exchange failed: ${data.error_description ?? 'unknown error'}`)
+  }
+
+  const instanceUrl = data.instance_url ?? SF_INSTANCE_URL
+  run('sf', [
+    'org',
+    'login',
+    'access-token',
+    '--instance-url',
+    instanceUrl,
+    '--access-token',
+    data.access_token,
+    '--alias',
+    DEFAULT_ORG_ALIAS,
+    '--no-prompt',
+  ])
+
+  console.log(`Authenticated SF CLI as ${DEFAULT_ORG_ALIAS} via client credentials`)
 }
 
 function getOrgArgs(args) {

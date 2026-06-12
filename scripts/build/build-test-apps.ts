@@ -234,8 +234,8 @@ async function modifyPackageJson(appPath: string, update: (packageJson: TestAppP
 }
 
 async function buildSfLwcApp() {
-  if (!process.env.SF_INSTANCE_URL && !process.env.SF_ACCESS_TOKEN) {
-    printLog('Skipping sf-lwc-app: SF credentials not available')
+  if (!process.env.SF_INSTANCE_URL || !process.env.SF_CLIENT_ID || !process.env.SF_CLIENT_SECRET) {
+    printLog('Skipping sf-lwc-app: SF_INSTANCE_URL, SF_CLIENT_ID and SF_CLIENT_SECRET not set')
     return
   }
   printLog('Building sf-lwc-app...')
