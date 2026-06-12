@@ -1,4 +1,4 @@
-import type { Batch, Context } from '@datadog/browser-core'
+import type { Batch, Context, ContextValue } from '@datadog/browser-core'
 import { timeStampNow } from '@datadog/js-core/time'
 import { buildTag, generateUUID, globalObject, mergeArrays } from '@datadog/browser-core'
 import type { BrowserWindow, DebuggerInitConfiguration } from '../entries/main'
@@ -205,8 +205,10 @@ export function onReturn(
       if (!probe.captureSnapshot) {
         const captureExpressionsResult = evaluateCaptureExpressions(probe, context, captureCtx)
         if (captureExpressionsResult) {
-          result.return = {
-            captureExpressions: captureExpressionsResult.values,
+          if (captureExpressionsResult.values) {
+            result.return = {
+              captureExpressions: captureExpressionsResult.values,
+            }
           }
           result.evaluationErrors = mergeArrays(result.evaluationErrors, captureExpressionsResult.evaluationErrors)
           if (captureCtx.timedOut) {
@@ -288,8 +290,10 @@ export function onThrow(probes: InitializedProbe[], error: unknown, self: any, a
       if (!probe.captureSnapshot) {
         const captureExpressionsResult = evaluateCaptureExpressions(probe, context, captureCtx)
         if (captureExpressionsResult) {
-          result.return = {
-            captureExpressions: captureExpressionsResult.values,
+          if (captureExpressionsResult.values) {
+            result.return = {
+              captureExpressions: captureExpressionsResult.values,
+            }
           }
           result.evaluationErrors = mergeArrays(result.evaluationErrors, captureExpressionsResult.evaluationErrors)
           if (captureCtx.timedOut) {
@@ -307,10 +311,13 @@ export function onThrow(probes: InitializedProbe[], error: unknown, self: any, a
       }
     }
 
-    result.return = {
-      ...result.return,
-      arguments: throwArguments,
-      throwable: formatThrowable(error),
+    const throwable = formatThrowable(error)
+    if (throwArguments) {
+      result.return = { arguments: throwArguments, throwable }
+    } else if (result.return?.captureExpressions) {
+      result.return = { captureExpressions: result.return.captureExpressions, throwable }
+    } else {
+      result.return = { throwable }
     }
 
     queueDebuggerSnapshot(probe, result)
@@ -330,6 +337,14 @@ function queueDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): vo
   }
 
   const version = globalObj.DD_DEBUGGER!.version
+  const captures = (
+    result.entry || result.return
+      ? {
+          entry: result.entry,
+          return: result.return,
+        }
+      : undefined
+  ) as ContextValue
 
   const payload: Context = {
     message: result.message,
@@ -360,13 +375,7 @@ function queueDebuggerSnapshot(probe: InitializedProbe, result: ActiveEntry): vo
         stack: result.stack,
         language: 'javascript',
         duration: result.duration === undefined ? undefined : result.duration * 1e6, // to nanoseconds (might be undefined in case of eval errors)
-        captures:
-          result.entry || result.return
-            ? {
-                entry: result.entry,
-                return: result.return,
-              }
-            : undefined,
+        captures,
       },
     },
   }
