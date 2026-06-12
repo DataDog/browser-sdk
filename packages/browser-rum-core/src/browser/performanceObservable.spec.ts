@@ -2,12 +2,11 @@ import type { Subscription } from '@datadog/browser-core'
 import type { Duration } from '@datadog/js-core/time'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
-import { createPerformanceEntry, mockPerformanceObserver, mockRumConfiguration } from '../../test'
+import { createPerformanceEntry, mockPerformanceObserver } from '../../test'
 import { RumPerformanceEntryType, createPerformanceObservable } from './performanceObservable'
 
 describe('performanceObservable', () => {
   let performanceSubscription: Subscription | undefined
-  const configuration = mockRumConfiguration()
   const forbiddenUrl = 'https://forbidden.url/abce?ddsource=browser&dd-api-key=xxxx&dd-request-id=1234567890'
   const allowedUrl = 'https://allowed.url'
   let observableCallback: jasmine.Spy
@@ -24,7 +23,7 @@ describe('performanceObservable', () => {
 
   it('should notify performance resources', () => {
     const { notifyPerformanceEntries } = mockPerformanceObserver()
-    const performanceResourceObservable = createPerformanceObservable(configuration, {
+    const performanceResourceObservable = createPerformanceObservable({
       type: RumPerformanceEntryType.RESOURCE,
     })
     performanceSubscription = performanceResourceObservable.subscribe(observableCallback)
@@ -35,7 +34,7 @@ describe('performanceObservable', () => {
 
   it('should not notify performance resources with intake url', () => {
     const { notifyPerformanceEntries } = mockPerformanceObserver()
-    const performanceResourceObservable = createPerformanceObservable(configuration, {
+    const performanceResourceObservable = createPerformanceObservable({
       type: RumPerformanceEntryType.RESOURCE,
     })
     performanceSubscription = performanceResourceObservable.subscribe(observableCallback)
@@ -46,7 +45,7 @@ describe('performanceObservable', () => {
 
   it('should not notify performance resources with invalid duration', () => {
     const { notifyPerformanceEntries } = mockPerformanceObserver()
-    const performanceResourceObservable = createPerformanceObservable(configuration, {
+    const performanceResourceObservable = createPerformanceObservable({
       type: RumPerformanceEntryType.RESOURCE,
     })
     performanceSubscription = performanceResourceObservable.subscribe(observableCallback)
@@ -59,7 +58,7 @@ describe('performanceObservable', () => {
     const { notifyPerformanceEntries } = mockPerformanceObserver()
     notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: allowedUrl })])
 
-    const performanceResourceObservable = createPerformanceObservable(configuration, {
+    const performanceResourceObservable = createPerformanceObservable({
       type: RumPerformanceEntryType.RESOURCE,
       buffered: true,
     })

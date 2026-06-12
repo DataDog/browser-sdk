@@ -5,6 +5,7 @@ import { getTestReportDirectory } from '../envUtils.ts'
 import jasmineSeedReporterPlugin from './jasmineSeedReporterPlugin.js'
 import karmaSkippedFailedReporterPlugin from './karmaSkippedFailedReporterPlugin.js'
 import karmaDuplicateTestNameReporterPlugin from './karmaDuplicateTestNameReporterPlugin.js'
+import karmaUnexpectedErrorLogReporterPlugin from './karmaUnexpectedErrorLogReporterPlugin.js'
 
 const webpackConfig = webpackBase({
   mode: 'development',
@@ -14,6 +15,9 @@ const webpackConfig = webpackBase({
 })
 
 const reporters = ['spec', 'jasmine-seed', 'karma-skipped-failed', 'karma-duplicate-test-name']
+if (process.env.CI) {
+  reporters.push('karma-unexpected-error-log')
+}
 
 const testReportDirectory = getTestReportDirectory()
 if (testReportDirectory) {
@@ -101,6 +105,7 @@ export default {
     jasmineSeedReporterPlugin,
     karmaSkippedFailedReporterPlugin,
     karmaDuplicateTestNameReporterPlugin,
+    karmaUnexpectedErrorLogReporterPlugin,
   ],
 
   // Running tests on low performance environments (ex: BrowserStack) can block JS execution for a

@@ -82,7 +82,7 @@ export function startRum(
     addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
   }
 
-  const pageMayExitObservable = createPageMayExitObservable(configuration)
+  const pageMayExitObservable = createPageMayExitObservable()
 
   if (!canUseEventBridge()) {
     const batch = startRumBatch(
@@ -154,14 +154,13 @@ export function startRumEventCollection(
   const cleanupTasks: Array<() => void> = []
 
   const domMutationObservable = createDOMMutationObservable()
-  const locationChangeObservable = createLocationChangeObservable(configuration)
+  const locationChangeObservable = createLocationChangeObservable()
   const { observable: windowOpenObservable, stop: stopWindowOpen } = createWindowOpenObservable()
   cleanupTasks.push(stopWindowOpen)
 
   const { assemble: assembleHook } = hooks
-
   startDefaultContext(assembleHook, configuration, sdkName)
-  const pageStateHistory = startPageStateHistory(assembleHook, configuration)
+  const pageStateHistory = startPageStateHistory(assembleHook)
   cleanupTasks.push(() => pageStateHistory.stop())
   const viewHistory = startViewHistory(lifeCycle)
   cleanupTasks.push(() => viewHistory.stop())
@@ -186,9 +185,9 @@ export function startRumEventCollection(
 
   const eventCollection = startEventCollection(lifeCycle)
 
-  const displayContext = startDisplayContext(assembleHook, configuration)
+  const displayContext = startDisplayContext(assembleHook)
   cleanupTasks.push(displayContext.stop)
-  const ciVisibilityContext = startCiVisibilityContext(configuration, assembleHook)
+  const ciVisibilityContext = startCiVisibilityContext(assembleHook)
   cleanupTasks.push(ciVisibilityContext.stop)
   startSyntheticsContext(assembleHook)
 
@@ -225,7 +224,7 @@ export function startRumEventCollection(
   const { stop: stopLongTaskCollection } = startLongTaskCollection(lifeCycle, configuration)
   cleanupTasks.push(stopLongTaskCollection)
 
-  const { addError } = startErrorCollection(lifeCycle, configuration, bufferedDataObservable)
+  const { addError } = startErrorCollection(lifeCycle, bufferedDataObservable)
 
   startRequestCollection(lifeCycle, configuration, sessionManager, userContext, accountContext, bufferedDataObservable)
 

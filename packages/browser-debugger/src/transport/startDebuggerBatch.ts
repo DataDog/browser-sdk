@@ -42,8 +42,8 @@ function createSimplePageMayExitObservable(): Observable<PageMayExitEvent> {
       observable.notify({ reason: PageExitReason.UNLOADING })
     }
 
-    const visibilityListener = addEventListener({}, window, 'visibilitychange', onVisibilityChange, { capture: true })
-    const unloadListener = addEventListener({}, window, 'beforeunload', onBeforeUnload)
+    const visibilityListener = addEventListener(window, 'visibilitychange', onVisibilityChange, { capture: true })
+    const unloadListener = addEventListener(window, 'beforeunload', onBeforeUnload)
 
     return () => {
       visibilityListener.stop()

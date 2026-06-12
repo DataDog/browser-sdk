@@ -1,7 +1,6 @@
 import { ONE_MINUTE, dateNow } from '@datadog/js-core/time'
 import type { Clock } from '../../test'
 import { collectAsyncCalls, mockClock, registerCleanupTask, replaceMockable } from '../../test'
-import type { Configuration } from '../domain/configuration'
 import { display } from '../tools/display'
 import { globalObject } from '../tools/globalObject'
 import { detectVersion, isChromium } from '../tools/utils/browserDetection'
@@ -18,7 +17,6 @@ import {
 
 const COOKIE_NAME = 'test_cookie'
 const COOKIE_OPTIONS = { secure: false, crossSite: false, partitioned: false }
-const MOCK_CONFIGURATION = { allowUntrustedEvents: true } as Configuration
 
 function disableCookieStore() {
   replaceMockable(globalObject.cookieStore, undefined)
@@ -78,8 +76,7 @@ describe('cookieAccess', () => {
 
         return {
           clock,
-          createCookieAccess: (name: string, options: CookieOptions) =>
-            createCookieStoreAccess(name, options, MOCK_CONFIGURATION),
+          createCookieAccess: (name: string, options: CookieOptions) => createCookieStoreAccess(name, options),
           async flushObservable(this: void, spy: jasmine.Spy) {
             await collectAsyncCalls(spy, 1)
             // Reset the spy calls to avoid throwing on unexpected calls during teardown
@@ -245,10 +242,10 @@ describe('cookieAccess', () => {
       }
       const factory = jasmine.createSpy('factory').and.returnValue(access)
 
-      const result = await areCookiesAuthorized(factory, COOKIE_OPTIONS, MOCK_CONFIGURATION)
+      const result = await areCookiesAuthorized(factory, COOKIE_OPTIONS)
 
       expect(result).toBe(true)
-      expect(factory).toHaveBeenCalledWith(jasmine.any(String), COOKIE_OPTIONS, MOCK_CONFIGURATION)
+      expect(factory).toHaveBeenCalledWith(jasmine.any(String), COOKIE_OPTIONS)
     })
 
     it('returns false when the access cannot read back the test cookie', async () => {
@@ -258,7 +255,7 @@ describe('cookieAccess', () => {
         observable: null as any,
       }
 
-      const result = await areCookiesAuthorized(() => access, COOKIE_OPTIONS, MOCK_CONFIGURATION)
+      const result = await areCookiesAuthorized(() => access, COOKIE_OPTIONS)
 
       expect(result).toBe(false)
     })
@@ -271,7 +268,7 @@ describe('cookieAccess', () => {
         observable: null as any,
       }
 
-      const result = await areCookiesAuthorized(() => access, COOKIE_OPTIONS, MOCK_CONFIGURATION)
+      const result = await areCookiesAuthorized(() => access, COOKIE_OPTIONS)
 
       expect(result).toBe(false)
       expect(displayErrorSpy).toHaveBeenCalled()
@@ -288,7 +285,7 @@ describe('cookieAccess', () => {
         observable: null as any,
       }
 
-      await areCookiesAuthorized(() => access, COOKIE_OPTIONS, MOCK_CONFIGURATION)
+      await areCookiesAuthorized(() => access, COOKIE_OPTIONS)
 
       expect(calls).toEqual([
         { value: 'test', expireDelay: jasmine.any(Number) as unknown as number },
@@ -298,7 +295,7 @@ describe('cookieAccess', () => {
 
     it('works with the real createDocumentCookieAccess', async () => {
       disableCookieStore()
-      const result = await areCookiesAuthorized(createDocumentCookieAccess, COOKIE_OPTIONS, MOCK_CONFIGURATION)
+      const result = await areCookiesAuthorized(createDocumentCookieAccess, COOKIE_OPTIONS)
       expect(result).toBe(true)
     })
 
@@ -306,13 +303,13 @@ describe('cookieAccess', () => {
       if (!globalObject.cookieStore) {
         pending('CookieStore API not available')
       }
-      const result = await areCookiesAuthorized(createCookieStoreAccess, COOKIE_OPTIONS, MOCK_CONFIGURATION)
+      const result = await areCookiesAuthorized(createCookieStoreAccess, COOKIE_OPTIONS)
       expect(result).toBe(true)
     })
 
     it('returns false when document.cookie is empty', async () => {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
-      const result = await areCookiesAuthorized(createDocumentCookieAccess, COOKIE_OPTIONS, MOCK_CONFIGURATION)
+      const result = await areCookiesAuthorized(createDocumentCookieAccess, COOKIE_OPTIONS)
       expect(result).toBe(false)
     })
   })

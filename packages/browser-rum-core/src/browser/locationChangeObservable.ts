@@ -7,19 +7,18 @@ import {
   Observable,
   shallowClone,
 } from '@datadog/browser-core'
-import type { RumConfiguration } from '../domain/configuration'
 
 export interface LocationChange {
   oldLocation: Readonly<Location>
   newLocation: Readonly<Location>
 }
 
-export function createLocationChangeObservable(configuration: RumConfiguration) {
+export function createLocationChangeObservable() {
   let currentLocation = shallowClone(getLocation())
 
   return new Observable<LocationChange>((observable) => {
-    const { stop: stopHistoryTracking } = trackHistory(configuration, onLocationChange)
-    const { stop: stopHashTracking } = trackHash(configuration, onLocationChange)
+    const { stop: stopHistoryTracking } = trackHistory(onLocationChange)
+    const { stop: stopHashTracking } = trackHash(onLocationChange)
 
     function onLocationChange() {
       if (currentLocation.href === getLocation().href) {
@@ -44,7 +43,7 @@ function getLocation() {
   return mockable(globalObject.location)
 }
 
-function trackHistory(configuration: RumConfiguration, onHistoryChange: () => void) {
+function trackHistory(onHistoryChange: () => void) {
   const { stop: stopInstrumentingPushState } = instrumentMethod(
     getHistoryInstrumentationTarget('pushState'),
     'pushState',
@@ -59,7 +58,7 @@ function trackHistory(configuration: RumConfiguration, onHistoryChange: () => vo
       onPostCall(onHistoryChange)
     }
   )
-  const { stop: removeListener } = addEventListener(configuration, window, DOM_EVENT.POP_STATE, onHistoryChange)
+  const { stop: removeListener } = addEventListener(window, DOM_EVENT.POP_STATE, onHistoryChange)
 
   return {
     stop: () => {
@@ -70,8 +69,8 @@ function trackHistory(configuration: RumConfiguration, onHistoryChange: () => vo
   }
 }
 
-function trackHash(configuration: RumConfiguration, onHashChange: () => void) {
-  return addEventListener(configuration, window, DOM_EVENT.HASH_CHANGE, onHashChange)
+function trackHash(onHashChange: () => void) {
+  return addEventListener(window, DOM_EVENT.HASH_CHANGE, onHashChange)
 }
 
 function getHistoryInstrumentationTarget(methodName: 'pushState' | 'replaceState') {

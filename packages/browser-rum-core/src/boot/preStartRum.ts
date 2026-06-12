@@ -26,6 +26,7 @@ import {
   isWorkerEnvironment,
   startTelemetrySessionContext,
   addTelemetryDebug,
+  setAllowUntrustedEvents,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
@@ -228,6 +229,7 @@ export function createPreStartStrategy(
       }
       // Set the experimental feature flags as early as possible, so we can use them in most places
       initFeatureFlags(initConfiguration.enableExperimentalFeatures)
+      setAllowUntrustedEvents(initConfiguration.allowUntrustedEvents)
 
       // Expose the initial configuration regardless of initialization success.
       cachedInitConfiguration = initConfiguration

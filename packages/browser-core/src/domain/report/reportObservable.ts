@@ -4,7 +4,6 @@ import { monitor } from '../../tools/monitor'
 import { mergeObservables, Observable } from '../../tools/observable'
 import { addEventListener, DOM_EVENT, isEventSupported } from '../../browser/addEventListener'
 import { safeTruncate } from '../../tools/utils/stringUtils'
-import type { Configuration } from '../configuration'
 import type { RawError } from '../error/error.types'
 import { ErrorHandling, ErrorSource } from '../error/error.types'
 import type { ReportType, InterventionReport, DeprecationReport } from './browser.types'
@@ -21,11 +20,11 @@ export type RawReportError = RawError & {
   originalError: SecurityPolicyViolationEvent | DeprecationReport | InterventionReport
 }
 
-export function initReportObservable(configuration: Configuration, apis: RawReportType[]) {
+export function initReportObservable(apis: RawReportType[]) {
   const observables: Array<Observable<RawReportError>> = []
 
   if (apis.includes(RawReportType.cspViolation)) {
-    observables.push(createCspViolationReportObservable(configuration))
+    observables.push(createCspViolationReportObservable())
   }
 
   const reportTypes = apis.filter((api: RawReportType): api is ReportType => api !== RawReportType.cspViolation)
@@ -58,14 +57,14 @@ function createReportObservable(reportTypes: ReportType[]) {
   })
 }
 
-function createCspViolationReportObservable(configuration: Configuration) {
+function createCspViolationReportObservable() {
   return new Observable<RawReportError>((observable) => {
     // Salesforce does not allow to add a securitypolicyviolation event listener. https://developer.salesforce.com/tools/lws-distortion-viewer
     if (!isEventSupported(document, DOM_EVENT.SECURITY_POLICY_VIOLATION)) {
       return
     }
 
-    const { stop } = addEventListener(configuration, document, DOM_EVENT.SECURITY_POLICY_VIOLATION, (event) => {
+    const { stop } = addEventListener(document, DOM_EVENT.SECURITY_POLICY_VIOLATION, (event) => {
       observable.notify(buildRawReportErrorFromCspViolation(event))
     })
 

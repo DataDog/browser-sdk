@@ -70,7 +70,7 @@ export function trackCumulativeLayoutShift(
   })
 
   const slidingWindow = slidingSessionWindow()
-  const performanceSubscription = createPerformanceObservable(configuration, {
+  const performanceSubscription = createPerformanceObservable({
     type: RumPerformanceEntryType.LAYOUT_SHIFT,
     buffered: true,
   }).subscribe((entries) => {

@@ -43,7 +43,7 @@ export function startLogs(
   lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (log) => sendToExtension('logs', log))
 
   const reportError = startReportError(lifeCycle)
-  const pageMayExitObservable = createPageMayExitObservable(configuration)
+  const pageMayExitObservable = createPageMayExitObservable()
 
   // Start user and account context first to allow overrides from global context
   const assembleHook = hooks.assemble

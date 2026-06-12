@@ -48,7 +48,7 @@ export function trackCommonViewMetrics(
     }
   )
 
-  const { stop: stopScrollMetricsTracking } = trackScrollMetrics(configuration, viewStart, (newScrollMetrics) => {
+  const { stop: stopScrollMetricsTracking } = trackScrollMetrics(viewStart, (newScrollMetrics) => {
     commonViewMetrics.scroll = newScrollMetrics
   })
 

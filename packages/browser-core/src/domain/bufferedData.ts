@@ -49,7 +49,7 @@ export function startBufferingData() {
 
   subscribe(BufferedDataType.RUNTIME_ERROR, mockable(trackRuntimeError)())
   subscribe(BufferedDataType.FETCH, initFetchObservable())
-  subscribe(BufferedDataType.XHR, initXhrObservable({ allowUntrustedEvents: true }))
+  subscribe(BufferedDataType.XHR, initXhrObservable())
   subscribe(BufferedDataType.CONSOLE, initConsoleObservable(Object.values(ConsoleApiName)))
 
   return {
