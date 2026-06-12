@@ -7,8 +7,7 @@ runMain(() => {
   }
 
   printLog('Regenerating schemas...')
-  command`scripts/cli build_json2type`.run()
-  command`node scripts/generate-schema-types.ts`.run()
+  command`node scripts/json-schemas.ts --build`.run()
 
   printLog('Checking untracked changes...')
   const diff = command`git diff --color`.run()
@@ -17,9 +16,8 @@ runMain(() => {
     printError(`
 Untracked changes detected.
 * If your PR requires rum-events-format changes, make sure to run \`yarn json-schemas:sync\`.
-* Else, you probably updated the rum-events-format submodule by mistake. To revert it, run something like:
-  git checkout $(git merge-base main HEAD) rum-events-format
-  git submodule update rum-events-format
+* Else, you probably updated the @datadog/rum-events-format ref by mistake. To revert it, restore
+  the previous ref in package.json and run \`yarn install\`.
 `)
 
     process.exit(1)
