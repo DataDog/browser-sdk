@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises'
+import { readFileSync, globSync } from 'node:fs'
 import { parseArgs } from 'node:util'
 import ts from 'typescript'
 import webpack from 'webpack'
@@ -72,15 +73,25 @@ async function buildBundle({ filename, verbose }: { filename: string; verbose: b
   }
 }
 
-async function buildModules({ verbose }: { verbose: boolean }) {
-  await fs.rm('./cjs', { recursive: true, force: true })
-  await fs.rm('./esm', { recursive: true, force: true })
+// Returns only the build-env keys actually referenced in this package's sources. tsdown's `define`
+// is eager: every listed key is computed up front, for every package. WORKER_STRING reads (and may
+// rebuild) packages/browser-worker/bundle/worker.js, so computing it for packages that don't use it
+// makes them race against browser-worker's own concurrent rebuild. Filtering to referenced keys
+// mirrors webpack's lazy DefinePlugin.runtimeValue, so only browser-rum (the sole consumer) touches
+// the worker bundle.
+function referencedBuildEnvKeys() {
+  const files = globSync('./src/**/*.ts', { exclude: ['**/*.spec.*', '**/*.specHelper.*'] })
+  const content = files.map((file) => readFileSync(file, 'utf8')).join('\n')
+  return buildEnvKeys.filter((key) => content.includes(`__BUILD_ENV__${key}__`))
+}
 
+async function buildModules({ verbose }: { verbose: boolean }) {
   // Transpile the source with tsdown (Rolldown). We let TypeScript emit the declaration files (see
   // emitDeclarations) rather than tsdown, because Rolldown's declaration bundler restructures
   // modules in ways that break compatibility with older TypeScript versions (e.g. inline `type`
-  // modifiers, rewritten re-exports). `define` inlines build-time constants at transpile time.
+  // modifiers, rewritten re-exports).
   await tsdownBuild({
+    clean: true,
     entry: ['./src/**/*.ts', '!./src/**/*.spec.ts', '!./src/**/*.specHelper.ts'],
     format: {
       cjs: {
@@ -97,19 +108,19 @@ async function buildModules({ verbose }: { verbose: boolean }) {
     // Mark all non-relative imports as external (cross-package deps and node_modules)
     deps: { neverBundle: /^[^./]/ },
     define: Object.fromEntries(
-      buildEnvKeys.map((key) => [`__BUILD_ENV__${key}__`, JSON.stringify(getBuildEnvValue(key))])
+      referencedBuildEnvKeys().map((key) => [`__BUILD_ENV__${key}__`, JSON.stringify(getBuildEnvValue(key))])
     ),
     sourcemap: true,
     logLevel: verbose ? 'info' : 'error',
   })
 
-  // Declarations only need to live next to the CommonJS output: every package's `types` field (and
-  // the `types` condition in `exports`) points at `./cjs`, so both CJS and ESM consumers resolve
-  // the same declaration files.
-  emitDeclarations('./cjs')
+  emitDeclarations()
 }
 
-function emitDeclarations(outDir: string) {
+// Declarations only need to live next to the CommonJS output: every package's `types` field (and
+// the `types` condition in `exports`) points at `./cjs`, so both CJS and ESM consumers resolve
+// the same declaration files.
+function emitDeclarations() {
   const { options, fileNames } = ts.parseJsonConfigFileContent(
     {
       extends: '../../tsconfig.base.json',
@@ -118,7 +129,7 @@ function emitDeclarations(outDir: string) {
         emitDeclarationOnly: true,
         allowJs: true,
         rootDir: './src/',
-        outDir,
+        outDir: './cjs',
         paths: {},
       },
       include: ['./src'],
