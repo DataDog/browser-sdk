@@ -85,15 +85,20 @@ export function getBrowserStackAccessKey(): string {
 }
 
 export function getSfInstanceUrl(): string {
-  return getSecretKey('ci.browser-sdk.sf_instance_url')
+  return process.env.SF_INSTANCE_URL ?? getSecretKey('ci.browser-sdk.sf_instance_url')
 }
 
 export function getSfClientId(): string {
-  return getSecretKey('ci.browser-sdk.sf_client_id')
+  return process.env.SF_CLIENT_ID ?? getSecretKey('ci.browser-sdk.sf_client_id')
 }
 
-export function getSfClientSecret(): string {
-  return getSecretKey('ci.browser-sdk.sf_secret_id')
+export function getSfJwtPrivateKey(): string {
+  const key = process.env.SF_JWT_PRIVATE_KEY ?? getSecretKey('ci.browser-sdk.sf_jwt_private_key')
+  return key.replace(/\\n/g, '\n')
+}
+
+export function getSfRunAsUser(): string {
+  return process.env.SF_RUN_AS_USER ?? getSecretKey('ci.browser-sdk.sf_run_as_user')
 }
 
 function getSecretKey(name: string): string {
