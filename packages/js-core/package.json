@@ -10,12 +10,12 @@
       "types": "./cjs/entries/time.d.ts"
     },
     "./monitor": {
-      "import": "./esm/entries/monitor.js",
+      "import": "./esm/entries/monitor.mjs",
       "require": "./cjs/entries/monitor.js",
       "types": "./cjs/entries/monitor.d.ts"
     },
     "./util": {
-      "import": "./esm/entries/util.js",
+      "import": "./esm/entries/util.mjs",
       "require": "./cjs/entries/util.js",
       "types": "./cjs/entries/util.d.ts"
     }
