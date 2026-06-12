@@ -8,6 +8,7 @@ export const ResourceType = {
   IMAGE: 'image',
   FONT: 'font',
   MEDIA: 'media',
+  WEBSOCKET: 'websocket',
   OTHER: 'other',
 } as const
 
