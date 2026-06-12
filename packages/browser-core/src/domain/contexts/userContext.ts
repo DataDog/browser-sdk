@@ -25,7 +25,7 @@ export function startUserContext(
   const userContextManager = buildUserContextManager()
 
   if (configuration.storeContextsAcrossPages) {
-    storeContextManager(configuration, userContextManager, productKey, CustomerDataType.User)
+    storeContextManager(userContextManager, productKey, CustomerDataType.User)
   }
 
   hook.register(({ eventType, startTime }) => {

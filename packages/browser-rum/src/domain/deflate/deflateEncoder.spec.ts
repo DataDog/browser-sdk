@@ -1,13 +1,11 @@
 import type { EncoderResult, Uint8ArrayBuffer } from '@datadog/browser-core'
 import { noop, DeflateEncoderStreamId } from '@datadog/browser-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { MockWorker } from '../../../test'
 import { createDeflateEncoder } from './deflateEncoder'
 
 const OTHER_STREAM_ID = 10 as DeflateEncoderStreamId
 
 describe('createDeflateEncoder', () => {
-  const configuration = {} as RumConfiguration
   let worker: MockWorker
 
   const ENCODED_FOO = [102, 111, 111]
@@ -20,7 +18,7 @@ describe('createDeflateEncoder', () => {
 
   describe('write()', () => {
     it('invokes write callbacks', () => {
-      const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+      const encoder = createDeflateEncoder(worker, DeflateEncoderStreamId.REPLAY)
       const writeCallbackSpy = jasmine.createSpy()
       encoder.write('foo', writeCallbackSpy)
       encoder.write('bar', writeCallbackSpy)
@@ -35,7 +33,7 @@ describe('createDeflateEncoder', () => {
     })
 
     it('marks the encoder as not empty', () => {
-      const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+      const encoder = createDeflateEncoder(worker, DeflateEncoderStreamId.REPLAY)
       encoder.write('foo')
       expect(encoder.isEmpty).toBe(false)
     })
@@ -43,7 +41,7 @@ describe('createDeflateEncoder', () => {
 
   describe('finish()', () => {
     it('invokes the callback with the encoded data', () => {
-      const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+      const encoder = createDeflateEncoder(worker, DeflateEncoderStreamId.REPLAY)
       const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8ArrayBuffer>) => void>()
       encoder.write('foo')
       encoder.write('bar')
@@ -60,7 +58,7 @@ describe('createDeflateEncoder', () => {
     })
 
     it('invokes the callback even if nothing has been written', () => {
-      const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+      const encoder = createDeflateEncoder(worker, DeflateEncoderStreamId.REPLAY)
       const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8ArrayBuffer>) => void>()
       encoder.finish(finishCallbackSpy)
 
@@ -73,7 +71,7 @@ describe('createDeflateEncoder', () => {
     })
 
     it('cancels pending write callbacks', () => {
-      const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+      const encoder = createDeflateEncoder(worker, DeflateEncoderStreamId.REPLAY)
       const writeCallbackSpy = jasmine.createSpy()
       encoder.write('foo', writeCallbackSpy)
       encoder.write('bar', writeCallbackSpy)
@@ -85,14 +83,14 @@ describe('createDeflateEncoder', () => {
     })
 
     it('marks the encoder as empty', () => {
-      const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+      const encoder = createDeflateEncoder(worker, DeflateEncoderStreamId.REPLAY)
       encoder.write('foo')
       encoder.finish(noop)
       expect(encoder.isEmpty).toBe(true)
     })
 
     it('supports calling finish() while another finish() call is pending', () => {
-      const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+      const encoder = createDeflateEncoder(worker, DeflateEncoderStreamId.REPLAY)
       const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8ArrayBuffer>) => void>()
       encoder.write('foo')
       encoder.finish(finishCallbackSpy)
@@ -125,7 +123,7 @@ describe('createDeflateEncoder', () => {
 
   describe('finishSync()', () => {
     it('returns the encoded data up to this point and any pending data', () => {
-      const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+      const encoder = createDeflateEncoder(worker, DeflateEncoderStreamId.REPLAY)
       encoder.write('foo')
       encoder.write('bar')
 
@@ -141,7 +139,7 @@ describe('createDeflateEncoder', () => {
     })
 
     it('cancels pending write callbacks', () => {
-      const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+      const encoder = createDeflateEncoder(worker, DeflateEncoderStreamId.REPLAY)
       const writeCallbackSpy = jasmine.createSpy()
       encoder.write('foo', writeCallbackSpy)
       encoder.write('bar', writeCallbackSpy)
@@ -153,14 +151,14 @@ describe('createDeflateEncoder', () => {
     })
 
     it('marks the encoder as empty', () => {
-      const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+      const encoder = createDeflateEncoder(worker, DeflateEncoderStreamId.REPLAY)
       encoder.write('foo')
       encoder.finishSync()
       expect(encoder.isEmpty).toBe(true)
     })
 
     it('supports calling finishSync() while another finish() call is pending', () => {
-      const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+      const encoder = createDeflateEncoder(worker, DeflateEncoderStreamId.REPLAY)
       const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8ArrayBuffer>) => void>()
       encoder.write('foo')
       encoder.finish(finishCallbackSpy)
@@ -181,9 +179,9 @@ describe('createDeflateEncoder', () => {
 
   it('ignores messages destined to other streams', () => {
     // Let's assume another encoder is sending something to the worker
-    createDeflateEncoder(configuration, worker, OTHER_STREAM_ID).write('foo', noop)
+    createDeflateEncoder(worker, OTHER_STREAM_ID).write('foo', noop)
 
-    const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+    const encoder = createDeflateEncoder(worker, DeflateEncoderStreamId.REPLAY)
     const writeCallbackSpy = jasmine.createSpy()
     encoder.write('foo', writeCallbackSpy)
 
@@ -194,7 +192,7 @@ describe('createDeflateEncoder', () => {
   })
 
   it('unsubscribes from the worker responses come out of order', () => {
-    const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+    const encoder = createDeflateEncoder(worker, DeflateEncoderStreamId.REPLAY)
     encoder.write('foo', noop)
     encoder.write('bar', noop)
 
@@ -205,7 +203,7 @@ describe('createDeflateEncoder', () => {
   })
 
   it('do not notify data twice when calling finishSync() then finish()', () => {
-    const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+    const encoder = createDeflateEncoder(worker, DeflateEncoderStreamId.REPLAY)
     const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8ArrayBuffer>) => void>()
 
     encoder.write('foo')
@@ -225,7 +223,7 @@ describe('createDeflateEncoder', () => {
   })
 
   it('do not notify data twice when calling finishSync() then finishSync()', () => {
-    const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+    const encoder = createDeflateEncoder(worker, DeflateEncoderStreamId.REPLAY)
 
     encoder.write('foo')
     encoder.finishSync()
@@ -235,7 +233,7 @@ describe('createDeflateEncoder', () => {
   })
 
   it('does not unsubscribe when there is no pending action', () => {
-    const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+    const encoder = createDeflateEncoder(worker, DeflateEncoderStreamId.REPLAY)
 
     encoder.write('foo')
     encoder.finishSync()

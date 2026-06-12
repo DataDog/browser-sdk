@@ -95,8 +95,8 @@ export function createRumProfiler(
 
     // Add global clean-up tasks for listeners that are not specific to a profiler instance (eg. visibility change, before unload)
     globalCleanupTasks.push(
-      addEventListener(configuration, window, DOM_EVENT.VISIBILITY_CHANGE, handleVisibilityChange).stop,
-      addEventListener(configuration, window, DOM_EVENT.BEFORE_UNLOAD, handleBeforeUnload).stop
+      addEventListener(window, DOM_EVENT.VISIBILITY_CHANGE, handleVisibilityChange).stop,
+      addEventListener(window, DOM_EVENT.BEFORE_UNLOAD, handleBeforeUnload).stop
     )
 
     // Start profiler instance

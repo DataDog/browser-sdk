@@ -4,7 +4,6 @@ import { Observable } from '../tools/observable'
 import { mockable } from '../tools/mockable'
 import { display } from '../tools/display'
 import { generateUUID } from '../tools/utils/stringUtils'
-import type { Configuration } from '../domain/configuration'
 import { addTelemetryDebug } from '../domain/telemetry'
 import { globalObject } from '../tools/globalObject'
 import { addEventListener, DOM_EVENT, isEventSupported } from './addEventListener'
@@ -17,22 +16,17 @@ export interface CookieAccess {
   observable: Observable<void>
 }
 
-export type CookieAccessFactory = (
-  cookieName: string,
-  cookieOptions: CookieOptions,
-  configuration: Configuration
-) => CookieAccess
+export type CookieAccessFactory = (cookieName: string, cookieOptions: CookieOptions) => CookieAccess
 
 export async function areCookiesAuthorized(
   createAccess: CookieAccessFactory,
-  cookieOptions: CookieOptions,
-  configuration: Configuration
+  cookieOptions: CookieOptions
 ): Promise<boolean> {
   // Use a unique cookie name to avoid issues when the SDK is initialized multiple times during
   // the test cookie lifetime
   const testCookieName = `dd_cookie_test_${generateUUID()}`
   const testCookieValue = 'test'
-  const access = createAccess(testCookieName, cookieOptions, configuration)
+  const access = createAccess(testCookieName, cookieOptions)
   try {
     await access.getAllAndSet(() => ({ value: testCookieValue, expireDelay: ONE_MINUTE }))
     const values = await access.getAll()
@@ -49,14 +43,10 @@ export async function areCookiesAuthorized(
   }
 }
 
-export function createCookieStoreAccess(
-  cookieName: string,
-  cookieOptions: CookieOptions,
-  configuration: Configuration
-): CookieAccess {
+export function createCookieStoreAccess(cookieName: string, cookieOptions: CookieOptions): CookieAccess {
   const cookieStore = mockable(globalObject.cookieStore)!
   const observable = new Observable<void>(() => {
-    const listener = addEventListener(configuration, cookieStore, DOM_EVENT.CHANGE, (event) => {
+    const listener = addEventListener(cookieStore, DOM_EVENT.CHANGE, (event) => {
       // Based on our experimentation, we're assuming that entries for the same cookie cannot be in both the 'changed' and 'deleted' arrays.
       // However, due to ambiguity in the specification, we asked for clarification: https://github.com/WICG/cookie-store/issues/226
       const changeEvent =
@@ -115,11 +105,7 @@ export function createCookieStoreAccess(
 }
 
 export const WATCH_COOKIE_INTERVAL_DELAY = ONE_SECOND
-export function createDocumentCookieAccess(
-  cookieName: string,
-  cookieOptions: CookieOptions,
-  _configuration?: Configuration
-): CookieAccess {
+export function createDocumentCookieAccess(cookieName: string, cookieOptions: CookieOptions): CookieAccess {
   let previousCookieValues = getCookies(cookieName)
 
   const observable = new Observable<void>(() => {

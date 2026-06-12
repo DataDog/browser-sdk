@@ -7,13 +7,8 @@ import type {
   Uint8ArrayBuffer,
 } from '@datadog/browser-core'
 import { addEventListener, concatBuffers } from '@datadog/browser-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
 
-export function createDeflateEncoder(
-  configuration: RumConfiguration,
-  worker: DeflateWorker,
-  streamId: DeflateEncoderStreamId
-): DeflateEncoder {
+export function createDeflateEncoder(worker: DeflateWorker, streamId: DeflateEncoderStreamId): DeflateEncoder {
   let rawBytesCount = 0
   let compressedData: Uint8ArrayBuffer[] = []
   let compressedDataTrailer: Uint8ArrayBuffer
@@ -29,7 +24,6 @@ export function createDeflateEncoder(
 
   const expectedStreamId: number = streamId
   const { stop: removeMessageListener } = addEventListener(
-    configuration,
     worker,
     'message',
     ({ data: workerResponse }: MessageEvent<DeflateWorkerResponse>) => {

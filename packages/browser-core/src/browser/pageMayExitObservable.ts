@@ -1,6 +1,5 @@
 import { Observable } from '../tools/observable'
 import { objectValues } from '../tools/utils/polyfills'
-import type { Configuration } from '../domain/configuration'
 import { isWorkerEnvironment } from '../tools/globalObject'
 import { addEventListeners, addEventListener, DOM_EVENT } from './addEventListener'
 
@@ -17,14 +16,13 @@ export interface PageMayExitEvent {
   reason: PageExitReason
 }
 
-export function createPageMayExitObservable(configuration: Configuration): Observable<PageMayExitEvent> {
+export function createPageMayExitObservable(): Observable<PageMayExitEvent> {
   return new Observable<PageMayExitEvent>((observable) => {
     if (isWorkerEnvironment) {
       // Page exit is not observable in worker environments (no window/document events)
       return
     }
     const { stop: stopListeners } = addEventListeners(
-      configuration,
       window,
       [DOM_EVENT.VISIBILITY_CHANGE, DOM_EVENT.FREEZE],
       (event) => {
@@ -45,7 +43,7 @@ export function createPageMayExitObservable(configuration: Configuration): Obser
       { capture: true }
     )
 
-    const stopBeforeUnloadListener = addEventListener(configuration, window, DOM_EVENT.BEFORE_UNLOAD, () => {
+    const stopBeforeUnloadListener = addEventListener(window, DOM_EVENT.BEFORE_UNLOAD, () => {
       observable.notify({ reason: PageExitReason.UNLOADING })
     }).stop
 

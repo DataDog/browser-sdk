@@ -1,7 +1,6 @@
 import type { MockCspEventListener, MockReportingObserver } from '../../../test'
 import { mockReportingObserver, mockCspEventListener, FAKE_CSP_VIOLATION_EVENT } from '../../../test'
 import type { Subscription } from '../../tools/observable'
-import type { Configuration } from '../configuration'
 import { ErrorHandling, ErrorSource } from '../error/error.types'
 import type { RawReportError } from './reportObservable'
 import { initReportObservable, RawReportType } from './reportObservable'
@@ -11,13 +10,11 @@ describe('report observable', () => {
   let cspEventListener: MockCspEventListener
   let consoleSubscription: Subscription
   let notifyReport: jasmine.Spy<(reportError: RawReportError) => void>
-  let configuration: Configuration
 
   beforeEach(() => {
     if (!window.ReportingObserver) {
       pending('ReportingObserver not supported')
     }
-    configuration = {} as Configuration
     reportingObserver = mockReportingObserver()
     cspEventListener = mockCspEventListener()
     notifyReport = jasmine.createSpy('notifyReport')
@@ -28,7 +25,7 @@ describe('report observable', () => {
   })
   ;[RawReportType.deprecation, RawReportType.intervention].forEach((type) => {
     it(`should notify ${type} reports`, () => {
-      consoleSubscription = initReportObservable(configuration, [type]).subscribe(notifyReport)
+      consoleSubscription = initReportObservable([type]).subscribe(notifyReport)
       reportingObserver.raiseReport(type)
 
       const [report] = notifyReport.calls.mostRecent().args
@@ -43,7 +40,7 @@ describe('report observable', () => {
   })
 
   it(`should compute stack for ${RawReportType.intervention}`, () => {
-    consoleSubscription = initReportObservable(configuration, [RawReportType.intervention]).subscribe(notifyReport)
+    consoleSubscription = initReportObservable([RawReportType.intervention]).subscribe(notifyReport)
     reportingObserver.raiseReport(RawReportType.intervention)
 
     const [report] = notifyReport.calls.mostRecent().args
@@ -53,7 +50,7 @@ describe('report observable', () => {
   })
 
   it(`should notify ${RawReportType.cspViolation}`, () => {
-    consoleSubscription = initReportObservable(configuration, [RawReportType.cspViolation]).subscribe(notifyReport)
+    consoleSubscription = initReportObservable([RawReportType.cspViolation]).subscribe(notifyReport)
     cspEventListener.dispatchEvent()
 
     expect(notifyReport).toHaveBeenCalledOnceWith({
@@ -72,7 +69,7 @@ describe('report observable', () => {
   it(`should not notify ${RawReportType.cspViolation} when the event is not supported`, () => {
     ;(EventTarget.prototype.addEventListener as jasmine.Spy).and.throwError('unsupported')
 
-    consoleSubscription = initReportObservable(configuration, [RawReportType.cspViolation]).subscribe(notifyReport)
+    consoleSubscription = initReportObservable([RawReportType.cspViolation]).subscribe(notifyReport)
     cspEventListener.dispatchEvent()
 
     expect(notifyReport).not.toHaveBeenCalled()

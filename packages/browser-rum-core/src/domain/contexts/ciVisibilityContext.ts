@@ -1,4 +1,3 @@
-import type { Configuration } from '@datadog/browser-core'
 import { display, getInitCookie, SKIPPED } from '@datadog/browser-core'
 import { createCookieObservable } from '../../browser/cookieObservable'
 import type { AssembleHook, DefaultRumEventAttributes } from '../hooks'
@@ -13,9 +12,8 @@ export interface CiTestWindow extends Window {
 }
 
 export function startCiVisibilityContext(
-  configuration: Configuration,
   assembleHook: AssembleHook,
-  cookieObservable = createCookieObservable(configuration, CI_VISIBILITY_TEST_ID_COOKIE_NAME)
+  cookieObservable = createCookieObservable(CI_VISIBILITY_TEST_ID_COOKIE_NAME)
 ) {
   let testExecutionId = getInitCookie(CI_VISIBILITY_TEST_ID_COOKIE_NAME) || readCypressTraceId()
 

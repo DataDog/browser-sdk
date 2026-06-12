@@ -51,7 +51,7 @@ export function startResourceCollection(lifeCycle: LifeCycle, configuration: Rum
   const taskQueue = mockable(createTaskQueue)()
   const requestRegistry = createRequestRegistry(lifeCycle)
 
-  const performanceResourceSubscription = createPerformanceObservable(configuration, {
+  const performanceResourceSubscription = createPerformanceObservable({
     type: RumPerformanceEntryType.RESOURCE,
     buffered: true,
   }).subscribe((entries) => {
@@ -80,7 +80,7 @@ export function startResourceCollection(lifeCycle: LifeCycle, configuration: Rum
     }
   })
 
-  const { stop: stopRunOnReadyState } = runOnReadyState(configuration, 'interactive', () => {
+  const { stop: stopRunOnReadyState } = runOnReadyState('interactive', () => {
     handleResource(() => assembleResource(getNavigationEntry(), undefined, configuration))
   })
 

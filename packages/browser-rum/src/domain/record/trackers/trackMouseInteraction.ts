@@ -62,7 +62,6 @@ export function trackMouseInteraction(
     })
   }
   return addEventListeners(
-    scope.configuration,
     document,
     Object.keys(eventTypeToMouseInteraction) as Array<keyof typeof eventTypeToMouseInteraction>,
     handler,
