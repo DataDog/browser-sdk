@@ -1,11 +1,11 @@
 import type { Configuration, InitConfiguration, RawTelemetryConfiguration } from '@datadog/browser-core'
+import { ConsoleApiName } from '@datadog/js-core/util'
 import {
   serializeConfiguration,
   ONE_KIBI_BYTE,
   validateAndBuildConfiguration,
   display,
   removeDuplicates,
-  ConsoleApiName,
   RawReportType,
   objectValues,
 } from '@datadog/browser-core'
