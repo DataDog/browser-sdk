@@ -42,6 +42,8 @@ export interface RumProfilerRunningInstance extends RumProfilerEnrichmentData {
   readonly timeoutId: TimeoutId
   /** Clean-up tasks to execute after running the Profiler */
   readonly cleanupTasks: Array<() => void>
+  /** Session ID */
+  readonly sessionId: string | undefined
 }
 
 export type RumProfilerInstance = RumProfilerStoppedInstance | RumProfilerPausedInstance | RumProfilerRunningInstance
