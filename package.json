@@ -1,6 +1,9 @@
 {
   "name": "browser-sdk",
   "version": "7.2.0",
+  "bugs": {
+    "url": "https://github.com/DataDog/browser-sdk/issues"
+  },
   "description": "browser SDK",
   "private": true,
   "workspaces": [
