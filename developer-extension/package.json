@@ -7,8 +7,8 @@
     "dev": "wxt"
   },
   "devDependencies": {
-    "@types/chrome": "0.1.42",
-    "@types/react": "19.2.15",
+    "@types/chrome": "0.1.43",
+    "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
     "@wxt-dev/module-react": "1.2.2",
     "typescript": "6.0.3"
@@ -18,12 +18,12 @@
     "@datadog/browser-logs": "workspace:*",
     "@datadog/browser-rum": "workspace:*",
     "@datadog/browser-rum-core": "workspace:*",
-    "@mantine/core": "9.2.2",
-    "@mantine/hooks": "9.2.2",
+    "@mantine/core": "9.3.0",
+    "@mantine/hooks": "9.3.0",
     "@tabler/icons-react": "3.44.0",
     "clsx": "2.1.1",
-    "react": "19.2.6",
-    "react-dom": "19.2.6",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
     "wxt": "0.20.26"
   },
   "volta": {
