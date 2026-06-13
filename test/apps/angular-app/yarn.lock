@@ -343,14 +343,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ngtools/webpack@npm:15.2.11":
-  version: 15.2.11
-  resolution: "@ngtools/webpack@npm:15.2.11"
+"@ngtools/webpack@npm:22.0.0":
+  version: 22.0.0
+  resolution: "@ngtools/webpack@npm:22.0.0"
   peerDependencies:
-    "@angular/compiler-cli": ^15.0.0
-    typescript: ">=4.8.2 <5.0"
+    "@angular/compiler-cli": ^22.0.0
+    typescript: ">=6.0 <6.1"
     webpack: ^5.54.0
-  checksum: 10c0/2f3d4f87a10f399f0de459369e7d24d5543200cb96b61ef4c98a589d5cd323a6adca293118a9dc68312428ec8dbe49f5d46e08f65ce41e42f118e1636fb96367
+  checksum: 10c0/5b273c481aee2e59aa4fefa7f264b483dd38c90c13bc658991ddb50dead0473241145723f0d6d2e28a06718aa015439b0dc98ac2d9090e5ed97f7c5b2b525097
   languageName: node
   linkType: hard
 
@@ -647,7 +647,7 @@ __metadata:
     "@angular/core": "npm:15.2.10"
     "@angular/platform-browser": "npm:15.2.10"
     "@angular/router": "npm:15.2.10"
-    "@ngtools/webpack": "npm:15.2.11"
+    "@ngtools/webpack": "npm:22.0.0"
     babel-loader: "npm:9.2.1"
     rxjs: "npm:7.8.2"
     typescript: "npm:4.9.5"
