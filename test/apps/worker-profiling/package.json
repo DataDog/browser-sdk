@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "build": "webpack --config ./webpack.config.js",
-    "dev": "webpack serve --config ./webpack.config.js"
+    "dev": "webpack serve --config ./webpack.config.js",
+    "proxy": "node proxy-server.ts"
   },
   "peerDependencies": {
     "@datadog/browser-rum": "*"

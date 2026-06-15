@@ -12,28 +12,32 @@
         background: #0f1117;
         color: #e6edf3;
         min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 48px 24px;
-        gap: 32px;
+        display: grid;
+        grid-template-columns: 380px 1fr;
+        grid-template-rows: auto 1fr;
+        gap: 0;
       }
 
-      header {
-        text-align: center;
+      /* ── Left column ─────────────────────────────────────────── */
+      .left-col {
+        grid-row: 1 / 3;
+        border-right: 1px solid #30363d;
+        padding: 28px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        overflow-y: auto;
       }
 
       header h1 {
-        font-size: 1.75rem;
+        font-size: 1.2rem;
         font-weight: 700;
-        letter-spacing: -0.02em;
-        margin-bottom: 8px;
+        margin-bottom: 4px;
       }
 
       header p {
         color: #8b949e;
-        font-size: 0.9rem;
-        max-width: 520px;
+        font-size: 0.8rem;
         line-height: 1.6;
       }
 
@@ -42,10 +46,10 @@
         background: #1c2a3a;
         border: 1px solid #30363d;
         border-radius: 999px;
-        padding: 4px 12px;
-        font-size: 0.75rem;
+        padding: 3px 10px;
+        font-size: 0.7rem;
         color: #58a6ff;
-        margin-bottom: 16px;
+        margin-bottom: 10px;
         font-weight: 600;
         letter-spacing: 0.04em;
         text-transform: uppercase;
@@ -54,252 +58,365 @@
       .card {
         background: #161b22;
         border: 1px solid #30363d;
-        border-radius: 12px;
-        padding: 28px;
-        width: 100%;
-        max-width: 640px;
+        border-radius: 10px;
+        padding: 18px;
       }
 
       .card h2 {
-        font-size: 0.8rem;
+        font-size: 0.7rem;
         text-transform: uppercase;
         letter-spacing: 0.08em;
         color: #8b949e;
-        margin-bottom: 20px;
+        margin-bottom: 14px;
         font-weight: 600;
-      }
-
-      .stats-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 16px;
-      }
-
-      .stat {
-        background: #0d1117;
-        border: 1px solid #21262d;
-        border-radius: 8px;
-        padding: 16px;
-      }
-
-      .stat-label {
-        font-size: 0.75rem;
-        color: #8b949e;
-        margin-bottom: 6px;
-        font-weight: 500;
-      }
-
-      .stat-value {
-        font-size: 1.5rem;
-        font-weight: 700;
-        font-variant-numeric: tabular-nums;
-        color: #f0f6fc;
-        font-family: "SF Mono", ui-monospace, monospace;
       }
 
       .status-row {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 16px;
+        margin-bottom: 14px;
       }
 
       #worker-status {
-        font-size: 0.875rem;
+        font-size: 0.8rem;
         font-weight: 600;
         color: #2da44e;
       }
 
-      .controls {
-        display: flex;
-        gap: 10px;
-      }
+      .controls { display: flex; gap: 8px; }
 
       button {
-        padding: 8px 18px;
+        padding: 6px 14px;
         border-radius: 6px;
         border: 1px solid transparent;
-        font-size: 0.85rem;
+        font-size: 0.78rem;
         font-weight: 600;
         cursor: pointer;
         transition: opacity 0.15s;
       }
+      button:disabled { opacity: 0.4; cursor: not-allowed; }
+      #btn-stop  { background: #da3633; color: #fff; border-color: #b91c1c; }
+      #btn-restart { background: #238636; color: #fff; border-color: #1a7f37; }
 
-      button:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-      }
-
-      #btn-stop {
-        background: #da3633;
-        color: #fff;
-        border-color: #b91c1c;
-      }
-
-      #btn-restart {
-        background: #238636;
-        color: #fff;
-        border-color: #1a7f37;
-      }
-
-      .info-card {
-        background: #0d1117;
-        border: 1px solid #1f4e79;
-        border-radius: 8px;
-        padding: 16px 20px;
-        font-size: 0.8rem;
-        color: #8b949e;
-        line-height: 1.7;
-        max-width: 640px;
-        width: 100%;
-      }
-
-      .info-card strong {
-        color: #58a6ff;
-      }
-
-      .workloads {
-        display: flex;
-        flex-direction: column;
+      .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
         gap: 10px;
+      }
+
+      .stat {
+        background: #0d1117;
+        border: 1px solid #21262d;
+        border-radius: 7px;
+        padding: 12px;
+      }
+      .stat-label { font-size: 0.7rem; color: #8b949e; margin-bottom: 4px; }
+      .stat-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        font-family: "SF Mono", ui-monospace, monospace;
       }
 
       .workload-item {
         display: flex;
-        align-items: flex-start;
-        gap: 12px;
-        padding: 12px 14px;
+        gap: 10px;
+        padding: 10px;
         background: #0d1117;
         border: 1px solid #21262d;
-        border-radius: 8px;
+        border-radius: 7px;
+        margin-bottom: 8px;
       }
-
-      .workload-icon {
-        font-size: 1.25rem;
-        flex-shrink: 0;
-        margin-top: 1px;
-      }
-
-      .workload-name {
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: #e6edf3;
-        margin-bottom: 2px;
-      }
-
-      .workload-desc {
-        font-size: 0.775rem;
-        color: #8b949e;
-        line-height: 1.5;
-      }
+      .workload-item:last-child { margin-bottom: 0; }
+      .workload-icon { font-size: 1.1rem; flex-shrink: 0; }
+      .workload-name { font-size: 0.8rem; font-weight: 600; margin-bottom: 2px; }
+      .workload-desc { font-size: 0.72rem; color: #8b949e; line-height: 1.4; }
 
       code {
         font-family: "SF Mono", ui-monospace, monospace;
         background: #21262d;
-        padding: 1px 5px;
-        border-radius: 4px;
-        font-size: 0.85em;
+        padding: 1px 4px;
+        border-radius: 3px;
+        font-size: 0.82em;
         color: #79c0ff;
+      }
+
+      .info-box {
+        background: #0d1117;
+        border: 1px solid #1f4e79;
+        border-radius: 7px;
+        padding: 12px 14px;
+        font-size: 0.75rem;
+        color: #8b949e;
+        line-height: 1.6;
+      }
+      .info-box strong { color: #58a6ff; }
+
+      /* ── Right column — live profiles ────────────────────────── */
+      .right-col {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .profiles-header {
+        padding: 16px 24px;
+        border-bottom: 1px solid #30363d;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+      }
+
+      .profiles-header h2 {
+        font-size: 0.85rem;
+        font-weight: 700;
+      }
+
+      #proxy-status {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #e55353;
+      }
+
+      #profile-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      #profile-list:empty::before {
+        content: "Waiting for profiles… (proxy server must be running)";
+        color: #8b949e;
+        font-size: 0.82rem;
+        display: block;
+        margin-top: 8px;
+      }
+
+      /* ── Profile card ─────────────────────────────────────────── */
+      .profile-card {
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 10px;
+        padding: 16px;
+        animation: fadeIn 0.25s ease;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-6px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      .profile-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+
+      .thread-badge {
+        font-size: 0.82rem;
+        font-weight: 700;
+      }
+
+      .profile-meta {
+        font-size: 0.72rem;
+        color: #8b949e;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .profile-stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .pstat {
+        background: #0d1117;
+        border: 1px solid #21262d;
+        border-radius: 6px;
+        padding: 8px 10px;
+      }
+      .pstat-label { font-size: 0.65rem; color: #8b949e; margin-bottom: 2px; }
+      .pstat-value {
+        font-size: 0.95rem;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        font-family: "SF Mono", ui-monospace, monospace;
+      }
+      .session-id { font-size: 0.75rem; }
+
+      .correl-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+      }
+      .correl-label {
+        font-size: 0.68rem;
+        color: #8b949e;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        white-space: nowrap;
+      }
+      .correl-id {
+        font-size: 0.72rem;
+        background: #1c2a3a;
+        color: #58a6ff;
+        border: 1px solid #1f4e79;
+        padding: 1px 6px;
+        border-radius: 4px;
+      }
+
+      .frames-section { }
+      .frames-header {
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #8b949e;
+        margin-bottom: 8px;
+      }
+
+      .frame-row {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        padding: 4px 0;
+        border-bottom: 1px solid #21262d;
+        font-size: 0.78rem;
+      }
+      .frame-row:last-child { border-bottom: none; }
+
+      .frame-count {
+        flex-shrink: 0;
+        width: 28px;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        color: #f0883e;
+        font-family: "SF Mono", ui-monospace, monospace;
+        font-weight: 700;
+        font-size: 0.72rem;
+      }
+
+      .frame-name {
+        font-family: "SF Mono", ui-monospace, monospace;
+        color: #e6edf3;
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .frame-resource {
+        flex-shrink: 0;
+        font-size: 0.68rem;
+        color: #8b949e;
+        font-family: "SF Mono", ui-monospace, monospace;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 160px;
       }
     </style>
   </head>
   <body>
-    <header>
-      <div class="badge">Experimental · Chromium Canary</div>
-      <h1>Worker CPU Profiling</h1>
-      <p>
-        Demonstrates Datadog's experimental web worker profiling feature (PROF-15093).
-        A dedicated worker runs CPU-intensive tasks while the JS Self-Profiling API
-        captures its call stacks and ships them to Datadog alongside the main-thread profile.
-      </p>
-    </header>
+    <!-- ── Left column ─────────────────────────────────────── -->
+    <div class="left-col">
+      <header>
+        <div class="badge">Experimental · Chromium Canary</div>
+        <h1>Worker CPU Profiling</h1>
+        <p>
+          PROF-15093 — Dedicated worker profiling via the JS Self-Profiling API.
+          Profiles are captured locally by the proxy server and displayed on the right.
+        </p>
+      </header>
 
-    <div class="card">
-      <div class="status-row">
-        <span id="worker-status">🟢 Worker running</span>
-        <div class="controls">
-          <button id="btn-stop">⏹ Stop worker</button>
-          <button id="btn-restart" disabled>▶ Restart worker</button>
+      <div class="card">
+        <div class="status-row">
+          <span id="worker-status">🟢 Worker running</span>
+          <div class="controls">
+            <button id="btn-stop">⏹ Stop</button>
+            <button id="btn-restart" disabled>▶ Restart</button>
+          </div>
+        </div>
+        <h2>Live worker stats</h2>
+        <div class="stats-grid">
+          <div class="stat">
+            <div class="stat-label">Iterations</div>
+            <div class="stat-value" id="stat-iterations">0</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Primes (sieve)</div>
+            <div class="stat-value" id="stat-primes">0</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">fib(30)</div>
+            <div class="stat-value" id="stat-fib">0</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Matrix / Mandelbrot</div>
+            <div class="stat-value" id="stat-matrix-ops">0</div>
+          </div>
+          <div class="stat" style="grid-column: 1 / -1">
+            <div class="stat-label">Elapsed</div>
+            <div class="stat-value" id="stat-elapsed">0.0s</div>
+          </div>
         </div>
       </div>
 
-      <h2>Live worker stats</h2>
-      <div class="stats-grid">
-        <div class="stat">
-          <div class="stat-label">Loop iterations</div>
-          <div class="stat-value" id="stat-iterations">0</div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Primes found (sieve)</div>
-          <div class="stat-value" id="stat-primes">0</div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">fib(30) result</div>
-          <div class="stat-value" id="stat-fib">0</div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Matrix / Mandelbrot ops</div>
-          <div class="stat-value" id="stat-matrix-ops">0</div>
-        </div>
-        <div class="stat" style="grid-column: 1 / -1;">
-          <div class="stat-label">Elapsed</div>
-          <div class="stat-value" id="stat-elapsed">0.0s</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>Worker workloads</h2>
-      <div class="workloads">
+      <div class="card">
+        <h2>Worker workloads</h2>
         <div class="workload-item">
           <div class="workload-icon">🔢</div>
           <div>
             <div class="workload-name">Sieve of Eratosthenes</div>
-            <div class="workload-desc">
-              Finds all primes up to 50,000. Produces <code>sieve()</code> →
-              inner loop stacks in the profiler.
-            </div>
+            <div class="workload-desc">Primes up to 50,000 — tight inner loop, shows up as <code>sieve()</code></div>
           </div>
         </div>
         <div class="workload-item">
           <div class="workload-icon">🌀</div>
           <div>
             <div class="workload-name">Recursive Fibonacci</div>
-            <div class="workload-desc">
-              Computes <code>fib(30)</code> recursively (2× branching).
-              Generates deep, flamegraph-friendly call stacks.
-            </div>
+            <div class="workload-desc"><code>fib(30)</code> — exponential branching, deep stacks</div>
           </div>
         </div>
         <div class="workload-item">
           <div class="workload-icon">🟦</div>
           <div>
             <div class="workload-name">Matrix multiplication</div>
-            <div class="workload-desc">
-              Multiplies two 80×80 matrices of floats. Tests sustained
-              numeric throughput with tight inner loops.
-            </div>
+            <div class="workload-desc">80×80 floats — numeric throughput, tight triple loop</div>
           </div>
         </div>
         <div class="workload-item">
           <div class="workload-icon">🌌</div>
           <div>
             <div class="workload-name">Mandelbrot set</div>
-            <div class="workload-desc">
-              Iterates over a 100×100 pixel grid with up to 80 escape
-              iterations per point. Mix of branches and arithmetic.
-            </div>
+            <div class="workload-desc">100×100 grid, 80 iter/pixel — mixed branches + arithmetic</div>
           </div>
         </div>
       </div>
+
+      <div class="info-box">
+        <strong>Requires:</strong> Chromium Canary with<br>
+        <code>--enable-features=DocumentPolicyInDedicatedWorker,<br>ProfilerAPIForDedicatedWorker</code><br><br>
+        <strong>Proxy server:</strong> run <code>yarn proxy</code> in a second terminal
+        to capture and display profiles on the right.
+      </div>
     </div>
 
-    <div class="info-card">
-      <strong>Requirements:</strong> Chromium Canary with flags
-      <code>--enable-features=DocumentPolicyInDedicatedWorker,ProfilerAPIForDedicatedWorker</code>
-      (or <code>--enable-experimental-web-platform-features</code>).
-      The dev server automatically serves both the page and the worker script
-      with the <code>Document-Policy: js-profiling</code> header.
+    <!-- ── Right column — live profiles ───────────────────── -->
+    <div class="right-col">
+      <div class="profiles-header">
+        <h2>Captured profiles</h2>
+        <span id="proxy-status">🔴 Connecting to proxy…</span>
+      </div>
+      <div id="profile-list"></div>
     </div>
   </body>
 </html>
