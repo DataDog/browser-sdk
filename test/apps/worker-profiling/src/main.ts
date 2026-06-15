@@ -189,27 +189,32 @@ function renderProfile(p: ProfileEvent): void {
     ? p.correlationIds.map((id) => `<code class="correl-id">${id.slice(0, 8)}…</code>`).join(' ')
     : '<span style="color:#8b949e">none</span>'
 
-  const card = document.createElement('div')
+  const card: HTMLDetailsElement = document.createElement('details')
   card.className = 'profile-card'
   card.innerHTML = `
-    <div class="profile-header">
-      <span class="thread-badge" style="color:${threadColor}">${threadLabel}</span>
+    <summary class="profile-summary">
+      <div class="profile-summary-left">
+        <span class="profile-chevron">▶</span>
+        <span class="thread-badge" style="color:${threadColor}">${threadLabel}</span>
+      </div>
       <span class="profile-meta">#${profileCount} · ${time} · ${duration}s</span>
-    </div>
-    <div class="profile-stats">
-      <div class="pstat"><span class="pstat-label">Samples</span><span class="pstat-value">${p.sampleCount.toLocaleString()}</span></div>
-      <div class="pstat"><span class="pstat-label">Frames</span><span class="pstat-value">${p.frameCount.toLocaleString()}</span></div>
-      <div class="pstat"><span class="pstat-label">Duration</span><span class="pstat-value">${duration}s</span></div>
-      <div class="pstat"><span class="pstat-label">Session</span><span class="pstat-value session-id">${p.sessionId ? p.sessionId.slice(0, 8) + '…' : '—'}</span></div>
-    </div>
-    ${p.correlationIds.length || !isWorker ? `
-    <div class="correl-row">
-      <span class="correl-label">${isWorker ? 'correlation id' : 'worker correlation ids'}</span>
-      ${correlIdsHtml}
-    </div>` : ''}
-    <div class="frames-section">
-      <div class="frames-header">Top frames (by sample count)</div>
-      ${framesHtml || '<span style="color:#8b949e;font-size:.8rem">no frames</span>'}
+    </summary>
+    <div class="profile-body">
+      <div class="profile-stats">
+        <div class="pstat"><span class="pstat-label">Samples</span><span class="pstat-value">${p.sampleCount.toLocaleString()}</span></div>
+        <div class="pstat"><span class="pstat-label">Frames</span><span class="pstat-value">${p.frameCount.toLocaleString()}</span></div>
+        <div class="pstat"><span class="pstat-label">Duration</span><span class="pstat-value">${duration}s</span></div>
+        <div class="pstat"><span class="pstat-label">Session</span><span class="pstat-value session-id">${p.sessionId ? p.sessionId.slice(0, 8) + '…' : '—'}</span></div>
+      </div>
+      ${p.correlationIds.length || !isWorker ? `
+      <div class="correl-row">
+        <span class="correl-label">${isWorker ? 'correlation id' : 'worker correlation ids'}</span>
+        ${correlIdsHtml}
+      </div>` : ''}
+      <div class="frames-section">
+        <div class="frames-header">Top frames (by sample count)</div>
+        ${framesHtml || '<span style="color:#8b949e;font-size:.8rem">no frames</span>'}
+      </div>
     </div>
   `
 
