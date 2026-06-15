@@ -1,8 +1,11 @@
 /**
- * Short-lived worker — does a burst of CPU work then terminates.
+ * Short-lived worker (variant A — self-close).
  *
- * Spawned by the main thread every 30 seconds to demonstrate that
- * Datadog worker profiling also works for transient workers.
+ * The worker itself decides when it's done. It calls stopAndFlush() which:
+ *   1. Flushes the current profiling session (profiler.stop() + postMessage trace)
+ *   2. Calls self.close()
+ *
+ * No signaling back to the main thread needed.
  */
 import { connectDatadogWorker } from '@datadog/browser-rum/worker'
 
@@ -30,7 +33,6 @@ function primeFactors(n: number): number[] {
 }
 
 function sha256Like(input: string): number {
-  // Not a real SHA-256 — just a CPU-burner that looks like one in profiles
   let h = 0x6a09e667
   for (let round = 0; round < 200; round++) {
     for (let i = 0; i < input.length; i++) {
@@ -42,19 +44,17 @@ function sha256Like(input: string): number {
 }
 
 // ---------------------------------------------------------------------------
-// Burst: run workloads for ~5 seconds then self-close
+// Burst: run workloads for ~5s then flush + close
 // ---------------------------------------------------------------------------
 const BURST_DURATION_MS = 5_000
 const startTime = Date.now()
 let batches = 0
 
 function runBurst(): void {
-  const elapsed = Date.now() - startTime
-  if (elapsed >= BURST_DURATION_MS) {
-    // Flush the profiling session and close the worker from the inside.
-    // stopAndFlush() calls profiler.stop(), posts dd-worker-trace, then calls self.close().
+  if (Date.now() - startTime >= BURST_DURATION_MS) {
+    // Done — flush the profiling session and close the worker.
+    // No need to notify the main thread.
     void stopAndFlush()
-    self.postMessage({ kind: 'done', batches, elapsedMs: elapsed })
     return
   }
 

@@ -94,25 +94,24 @@ function spawnShortLivedWorker(): void {
   const w = new Worker(script, { name })
   datadogRum.addProfilingWorker(w, { name })
 
-  w.addEventListener('message', (event: MessageEvent) => {
-    if (event.data?.kind === 'done') {
-      console.log(`[main] ${name} done — ${event.data.batches} batches in ${event.data.elapsedMs}ms`)
-      if (variant === 'main-close') {
-        // Variant B: main thread flushes and terminates
-        console.log(`[main] calling flushAndTerminateProfilingWorker for ${name}`)
-        datadogRum.flushAndTerminateProfilingWorker(w)
-      }
-      // Variant A: worker already called stopAndFlush() + self.close() itself
+  if (variant === 'main-close') {
+    // Variant B: main thread decides when to stop after 5s.
+    // flushAndTerminateProfilingWorker sends dd-flush-and-close to the worker,
+    // which flushes the profile and calls self.close().
+    setTimeout(() => {
+      console.log(`[main] calling flushAndTerminateProfilingWorker for ${name}`)
+      datadogRum.flushAndTerminateProfilingWorker(w)
       updateShortLivedStatus()
-    }
-  })
+    }, 5_000)
+  } else {
+    // Variant A: worker calls stopAndFlush() itself after 5s — nothing to do here.
+    updateShortLivedStatus()
+  }
 
   w.addEventListener('error', (e: ErrorEvent) => {
     console.error(`[main] ${name} error:`, e.message)
     datadogRum.removeProfilingWorker(w)
   })
-
-  updateShortLivedStatus()
 }
 
 function updateShortLivedStatus(): void {
