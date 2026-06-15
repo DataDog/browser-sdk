@@ -38,7 +38,21 @@ interface ActiveSession {
  *
  * @param workerScope - Defaults to `self`. Pass a custom object for testing.
  */
-export function connectDatadogWorker(workerScope: WorkerScopeForProfiling = self as unknown as WorkerScopeForProfiling): void {
+export interface DatadogWorkerHandle {
+  /**
+   * Flush the current profiling session and close the worker.
+   * Call this instead of self.close() so the profile is captured before the worker exits.
+   *
+   * @example
+   * const { stopAndFlush } = connectDatadogWorker()
+   * // ... do work ...
+   * await stopAndFlush()
+   * // worker will self.close() after the trace is posted
+   */
+  stopAndFlush(): Promise<void>
+}
+
+export function connectDatadogWorker(workerScope: WorkerScopeForProfiling = self as unknown as WorkerScopeForProfiling): DatadogWorkerHandle {
   let session: ActiveSession | undefined
 
   console.log('[DD Worker] connectDatadogWorker() called — waiting for dd-start-profiling')
@@ -55,13 +69,13 @@ export function connectDatadogWorker(workerScope: WorkerScopeForProfiling = self
       startSession(command.sampleIntervalMs, command.maxBufferSize, command.collectIntervalMs, command.correlationId)
     } else if (command.type === 'dd-stop-profiling') {
       void stopSession()
+    } else if (command.type === 'dd-flush-and-close') {
+      console.log('[DD Worker] received dd-flush-and-close — flushing then closing')
+      void stopSession().then(() => {
+        console.log('[DD Worker] flush complete, calling self.close()')
+        ;(workerScope as unknown as { close(): void }).close()
+      })
     }
-  })
-
-  // Flush on worker self.close()
-  workerScope.addEventListener('close' as any, () => {
-    console.log('[DD Worker] close event — flushing session')
-    void stopSession()
   })
 
   function startSession(
@@ -152,6 +166,13 @@ export function connectDatadogWorker(workerScope: WorkerScopeForProfiling = self
     await collectAndSend(currentSession)
   }
 
+  async function stopAndFlush(): Promise<void> {
+    console.log('[DD Worker] stopAndFlush() called — flushing then closing')
+    await stopSession()
+    console.log('[DD Worker] stopAndFlush complete, calling self.close()')
+    ;(workerScope as unknown as { close(): void }).close()
+  }
+
   async function collectAndSend(activeSession: ActiveSession): Promise<void> {
     clearTimeout(activeSession.timerId)
     activeSession.profiler.removeEventListener('samplebufferfull', handleBufferFull)
@@ -176,4 +197,6 @@ export function connectDatadogWorker(workerScope: WorkerScopeForProfiling = self
       workerScope.postMessage({ type: 'dd-worker-error', error: 'unexpected-exception' })
     }
   }
+
+  return { stopAndFlush }
 }

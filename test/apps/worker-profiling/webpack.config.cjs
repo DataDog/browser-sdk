@@ -15,6 +15,7 @@ module.exports = {
     main: './src/main.ts',
     worker: './src/profilingWorker.ts',
     'short-lived-worker': './src/shortLivedWorker.ts',
+    'short-lived-worker-main-close': './src/shortLivedWorkerMainThreadClose.ts',
   },
 
   target: ['web', 'es2020'],

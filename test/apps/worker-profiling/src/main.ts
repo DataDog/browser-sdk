@@ -76,30 +76,33 @@ worker.addEventListener('error', (event: ErrorEvent) => {
 worker.postMessage({ kind: 'start' })
 
 // ---------------------------------------------------------------------------
-// Short-lived workers — spawned every 30s, run a 5s burst then terminate
+// Short-lived workers — two variants, alternating every 30s
+//
+// Variant A (self-close): worker calls stopAndFlush() internally then self.close()
+// Variant B (main-close): main thread calls flushAndTerminateProfilingWorker()
 // ---------------------------------------------------------------------------
 const SHORT_LIVED_INTERVAL_MS = 30_000
 let shortLivedCount = 0
 
 function spawnShortLivedWorker(): void {
   shortLivedCount++
-  const name = `burst-worker-${shortLivedCount}`
-  console.log(`[main] spawning ${name}`)
+  const variant = shortLivedCount % 2 === 1 ? 'self-close' : 'main-close'
+  const name = `burst-${variant}-${shortLivedCount}`
+  const script = variant === 'self-close' ? '/short-lived-worker.js' : '/short-lived-worker-main-close.js'
+  console.log(`[main] spawning ${name} (variant: ${variant})`)
 
-  const w = new Worker('/short-lived-worker.js', { name })
+  const w = new Worker(script, { name })
   datadogRum.addProfilingWorker(w, { name })
 
   w.addEventListener('message', (event: MessageEvent) => {
     if (event.data?.kind === 'done') {
-      console.log(`[main] ${name} done — ${event.data.batches} batches in ${event.data.elapsedMs}ms — flushing profile then terminating`)
-      // removeProfilingWorker sends dd-stop-profiling to the worker, which causes
-      // the agent to call profiler.stop() and post dd-worker-trace back to us.
-      // We give it 5s to complete before hard-terminating.
-      datadogRum.removeProfilingWorker(w)
-      setTimeout(() => {
-        console.log(`[main] terminating ${name}`)
-        w.terminate()
-      }, 5_000)
+      console.log(`[main] ${name} done — ${event.data.batches} batches in ${event.data.elapsedMs}ms`)
+      if (variant === 'main-close') {
+        // Variant B: main thread flushes and terminates
+        console.log(`[main] calling flushAndTerminateProfilingWorker for ${name}`)
+        datadogRum.flushAndTerminateProfilingWorker(w)
+      }
+      // Variant A: worker already called stopAndFlush() + self.close() itself
       updateShortLivedStatus()
     }
   })
