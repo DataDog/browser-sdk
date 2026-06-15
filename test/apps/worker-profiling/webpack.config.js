@@ -1,5 +1,6 @@
 // @ts-check
 const path = require('node:path')
+const webpack = require('webpack')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin')
 
@@ -52,6 +53,17 @@ module.exports = {
   },
 
   plugins: [
+    // Replace the build-time env constants that the SDK source references.
+    // In the test app we just hardcode dev-mode values.
+    new webpack.DefinePlugin({
+      __BUILD_ENV__SDK_VERSION__: JSON.stringify('dev'),
+      __BUILD_ENV__SDK_SETUP__: JSON.stringify('npm'),
+      // WORKER_STRING is the deflate worker bundle inlined as a string.
+      // We provide an empty string so the deflate worker simply won't load,
+      // which is fine for this test app (no session replay, no deflate needed).
+      __BUILD_ENV__WORKER_STRING__: JSON.stringify(''),
+    }),
+
     new HtmlWebpackPlugin({
       template: './src/index.html',
       // Only inject the main bundle into the HTML; worker.js is loaded explicitly
