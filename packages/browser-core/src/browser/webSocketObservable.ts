@@ -74,8 +74,6 @@ function createWebSocketObservable() {
       return undefined
     }
 
-    const stopListeners: Array<() => void> = []
-
     const { stop: stopInstrumentingConstructor } = instrumentConstructor(
       globalObject,
       'WebSocket',
@@ -91,7 +89,7 @@ function createWebSocketObservable() {
             ...(protocols !== undefined ? { protocols } : {}),
             startClocks,
           })
-          attachInstanceListeners(instance, observable, stopListeners)
+          attachInstanceListeners(instance, observable)
         })
       }
     )
@@ -117,17 +115,11 @@ function createWebSocketObservable() {
     return () => {
       stopInstrumentingConstructor()
       stopInstrumentingSend()
-      stopListeners.forEach((stop) => stop())
-      stopListeners.length = 0
     }
   })
 }
 
-function attachInstanceListeners(
-  instance: WebSocket,
-  observable: Observable<WebSocketContext>,
-  stopListeners: Array<() => void>
-) {
+function attachInstanceListeners(instance: WebSocket, observable: Observable<WebSocketContext>) {
   const { stop: stopOpen } = addEventListener(instance, 'open', () => {
     observable.notify({
       state: 'open',
@@ -135,7 +127,10 @@ function attachInstanceListeners(
       openClocks: clocksNow(),
       protocol: instance.protocol || '',
     })
+
+    stopOpen()
   })
+
   const { stop: stopMessage } = addEventListener(instance, 'message', (event) => {
     observable.notify({
       state: 'message-in',
@@ -144,6 +139,7 @@ function attachInstanceListeners(
       at: clocksNow(),
     })
   })
+
   const { stop: stopClose } = addEventListener(instance, 'close', (event) => {
     observable.notify({
       state: 'closed',
@@ -153,9 +149,10 @@ function attachInstanceListeners(
       wasClean: event.wasClean,
       at: clocksNow(),
     })
-  })
 
-  stopListeners.push(stopOpen, stopMessage, stopClose)
+    stopMessage()
+    stopClose()
+  })
 }
 
 function computePayloadSize(data: unknown): number {
