@@ -352,13 +352,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@datadog/browser-core@npm:7.2.0":
-  version: 7.2.0
-  resolution: "@datadog/browser-core@npm:7.2.0"
-  checksum: 10c0/cc9a59aa9e66a22475aaa90038f217bb1c5ab91a4a41584ce6cb32579896ff4814c0124dc3c18e231baad3c9275b9c3670fce4a73e78bdab1db536e495f4874b
-  languageName: node
-  linkType: hard
-
 "@datadog/browser-core@npm:7.3.0, @datadog/browser-core@workspace:*, @datadog/browser-core@workspace:packages/browser-core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-core@workspace:packages/browser-core"
@@ -554,7 +547,7 @@ __metadata:
   dependencies:
     "@datadog/browser-core": "npm:7.3.0"
     "@datadog/browser-rum-core": "npm:7.3.0"
-    "@datadog/browser-worker": "npm:7.2.0"
+    "@datadog/browser-worker": "npm:7.3.0"
     "@datadog/js-core": "npm:0.0.2"
     "@types/pako": "npm:2.0.4"
     pako: "npm:2.1.0"
@@ -589,16 +582,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-worker@npm:7.2.0":
-  version: 7.2.0
-  resolution: "@datadog/browser-worker@npm:7.2.0"
-  dependencies:
-    "@datadog/browser-core": "npm:7.2.0"
-  checksum: 10c0/8483361f1db80a3de993d1837c1fc3beddb0b4d79f3cd43e4038baca09d173039754c4beffc4dc059ea984031a706df41d1bd7e57660a3bf17b3a1b7852669f8
-  languageName: node
-  linkType: hard
-
-"@datadog/browser-worker@workspace:packages/browser-worker":
+"@datadog/browser-worker@npm:7.3.0, @datadog/browser-worker@workspace:packages/browser-worker":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-worker@workspace:packages/browser-worker"
   dependencies:
