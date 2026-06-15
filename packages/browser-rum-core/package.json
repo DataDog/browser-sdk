@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-rum-core",
-  "version": "7.2.0",
+  "version": "7.3.0",
   "license": "Apache-2.0",
   "main": "cjs/index.js",
   "module": "esm/index.js",
@@ -17,8 +17,8 @@
     "prepack": "yarn build"
   },
   "dependencies": {
-    "@datadog/browser-core": "7.2.0",
-    "@datadog/js-core": "0.0.1"
+    "@datadog/browser-core": "7.3.0",
+    "@datadog/js-core": "0.0.2"
   },
   "devDependencies": {
     "ajv": "8.20.0"
