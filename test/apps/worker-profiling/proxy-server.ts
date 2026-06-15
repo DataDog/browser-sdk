@@ -1,20 +1,26 @@
 /**
- * Proxy server for the worker-profiling test app.
+ * Proxy server for the worker-profiling test app (port 8082).
  *
- * Run alongside the webpack-dev-server (yarn dev):
- *   node proxy-server.ts          (requires Node 26 via volta)
+ * Run in a separate terminal:
+ *   yarn proxy
  *
- * What it does:
- *  - POST /proxy   — receives SDK intake requests (same ?ddforward= protocol used in E2E tests)
- *                    parses profile, RUM, and log payloads without forwarding them to Datadog
- *  - GET  /events  — SSE stream; the page subscribes here to display captured data live
+ * Provides:
+ *   POST /proxy?ddforward=...  — intake proxy (no forwarding to Datadog)
+ *   GET  /events               — SSE stream of parsed profile summaries
+ *   GET  /datadog-worker.js    — deflate worker bundle (built from source)
  */
+import path from 'node:path'
+import zlib from 'node:zlib'
 import http from 'node:http'
+import { fileURLToPath } from 'node:url'
 import express from 'express'
 import cors from 'cors'
-import { createIntakeProxyMiddleware } from '../../e2e/lib/framework/intakeProxyMiddleware.ts'
-import type { IntakeRequest, ProfileIntakeRequest } from '../../e2e/lib/framework/intakeProxyMiddleware.ts'
+import webpack from 'webpack'
+// @ts-ignore — no types for webpack-dev-middleware default export in ESM
+import webpackDevMiddleware from 'webpack-dev-middleware'
+import busboy from 'busboy'
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PORT = 8082
 
 // ---------------------------------------------------------------------------
@@ -30,95 +36,108 @@ function broadcast(data: object): void {
 }
 
 // ---------------------------------------------------------------------------
-// Express
+// Helpers
 // ---------------------------------------------------------------------------
-const app = express()
-app.use(cors())
-
-// SSE — the page subscribes to receive live intake events
-app.get('/events', (req, res) => {
-  res.setHeader('Content-Type', 'text/event-stream')
-  res.setHeader('Cache-Control', 'no-cache')
-  res.setHeader('Connection', 'keep-alive')
-  res.flushHeaders()
-
-  sseClients.add(res)
-  req.on('close', () => sseClients.delete(res))
-})
-
-// Intake proxy — receives POST /proxy?ddforward=... from the SDK
-app.post(
-  '/proxy',
-  createIntakeProxyMiddleware({
-    onRequest: (request: IntakeRequest) => {
-      if (request.intakeType === 'profile') {
-        broadcast(summariseProfile(request as ProfileIntakeRequest))
-      } else if (request.intakeType === 'rum') {
-        broadcast({ type: 'rum', eventCount: request.events.length })
-      }
-    },
+function readStream(stream: NodeJS.ReadableStream): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = []
+    stream.on('data', (d: Buffer) => chunks.push(d))
+    stream.on('end', () => resolve(Buffer.concat(chunks)))
+    stream.on('error', reject)
   })
-)
-
-http.createServer(app).listen(PORT, () => {
-  console.log(`Proxy server listening on http://localhost:${PORT}`)
-})
-
-// ---------------------------------------------------------------------------
-// Profile summariser
-// ---------------------------------------------------------------------------
-function summariseProfile(profile: ProfileIntakeRequest) {
-  const thread = profile.event.tags_profiler.includes('thread:worker') ? 'worker' : 'main'
-  const durationMs =
-    new Date(profile.event.end).getTime() - new Date(profile.event.start).getTime()
-
-  return {
-    type: 'profile',
-    thread,
-    workerName: extractTag(profile.event.tags_profiler, 'worker.name'),
-    correlationIds: extractAllTags(profile.event.tags_profiler, 'thread.correlation_id'),
-    startTime: profile.event.start,
-    endTime: profile.event.end,
-    durationMs,
-    sampleCount: profile.trace.samples?.length ?? 0,
-    frameCount: profile.trace.frames?.length ?? 0,
-    topFrames: topFrames(profile, 8),
-    sessionId: profile.event.session?.id,
-    tags: profile.event.tags_profiler,
-  }
 }
 
-function extractTag(tagString: string, key: string): string | undefined {
-  const match = tagString.split(',').find((t) => t.startsWith(`${key}:`))
+function isDeflate(buf: Buffer): boolean {
+  return buf.length >= 2 && buf[0] === 0x78 && (buf[1] === 0x01 || buf[1] === 0x9c || buf[1] === 0xda)
+}
+
+function intakeType(req: express.Request): 'rum' | 'logs' | 'profile' | 'replay' | 'unknown' {
+  const ddforward = req.query.ddforward as string | undefined
+  if (!ddforward) return 'unknown'
+  const { pathname } = new URL(ddforward, 'https://example.org')
+  const endpoint = pathname.split('/')[3]
+  if (endpoint === 'rum' || endpoint === 'logs' || endpoint === 'profile' || endpoint === 'replay') {
+    return endpoint
+  }
+  return 'unknown'
+}
+
+function extractTag(tags: string, key: string): string | undefined {
+  const match = tags.split(',').find((t) => t.startsWith(`${key}:`))
   return match ? match.slice(key.length + 1) : undefined
 }
 
-function extractAllTags(tagString: string, key: string): string[] {
-  return tagString
-    .split(',')
-    .filter((t) => t.startsWith(`${key}:`))
-    .map((t) => t.slice(key.length + 1))
+function extractAllTags(tags: string, key: string): string[] {
+  return tags.split(',').filter((t) => t.startsWith(`${key}:`)).map((t) => t.slice(key.length + 1))
 }
 
-function topFrames(
-  profile: ProfileIntakeRequest,
-  n: number
-): Array<{ name: string; resource: string | undefined; line: number | undefined; count: number }> {
-  const { samples = [], stacks = [], frames = [], resources = [] } = profile.trace
-  const counts = new Map<number, number>()
+// ---------------------------------------------------------------------------
+// Profile parser + summariser
+// ---------------------------------------------------------------------------
+function handleProfile(req: express.Request): Promise<void> {
+  return new Promise((resolve) => {
+    let eventPromise: Promise<any>
+    let tracePromise: Promise<any>
 
+    const bb = busboy({ headers: req.headers })
+
+    bb.on('file', (name: string, stream: NodeJS.ReadableStream) => {
+      if (name === 'event') {
+        eventPromise = readStream(stream).then((d) => JSON.parse(d.toString()))
+      } else if (name === 'wall-time.json') {
+        tracePromise = readStream(stream).then((d) => {
+          const buf = isDeflate(d) ? zlib.inflateSync(d) : d
+          return JSON.parse(buf.toString())
+        })
+      } else {
+        (stream as any).resume()
+      }
+    })
+
+    bb.on('finish', () => {
+      Promise.all([eventPromise, tracePromise])
+        .then(([event, trace]) => broadcast(summariseProfile(event, trace)))
+        .catch((e) => console.error('[proxy] profile parse error:', e))
+        .finally(resolve)
+    })
+
+    bb.on('error', (e: Error) => {
+      console.error('[proxy] busboy error:', e)
+      resolve()
+    })
+
+    req.pipe(bb)
+  })
+}
+
+async function handleRum(req: express.Request): Promise<void> {
+  const encoding = req.headers['content-encoding']
+  const raw = await readStream(req)
+  const body = encoding === 'deflate' ? zlib.inflateSync(raw) : raw
+  const events = body.toString('utf-8').split('\n').filter(Boolean).map((l) => {
+    try { return JSON.parse(l) } catch { return null }
+  }).filter(Boolean)
+  broadcast({ type: 'rum', eventCount: events.length })
+}
+
+function summariseProfile(event: any, trace: any): object {
+  const tags: string = event.tags_profiler ?? ''
+  const thread = tags.includes('thread:worker') ? 'worker' : 'main'
+  const durationMs = new Date(event.end).getTime() - new Date(event.start).getTime()
+
+  const { samples = [], stacks = [], frames = [], resources = [] } = trace
+  const counts = new Map<number, number>()
   for (const sample of samples) {
-    let id = sample.stackId
+    let id: number | undefined = sample.stackId
     while (id !== undefined) {
       const stack = stacks[id]
       counts.set(stack.frameId, (counts.get(stack.frameId) ?? 0) + 1)
       id = stack.parentId
     }
   }
-
-  return [...counts.entries()]
+  const topFrames = [...counts.entries()]
     .sort((a, b) => b[1] - a[1])
-    .slice(0, n)
+    .slice(0, 8)
     .map(([frameId, count]) => {
       const frame = frames[frameId]
       return {
@@ -128,4 +147,92 @@ function topFrames(
         count,
       }
     })
+
+  return {
+    type: 'profile',
+    thread,
+    workerName: extractTag(tags, 'worker.name'),
+    correlationIds: extractAllTags(tags, 'thread.correlation_id'),
+    startTime: event.start,
+    endTime: event.end,
+    durationMs,
+    sampleCount: (samples as any[]).length,
+    frameCount: (frames as any[]).length,
+    topFrames,
+    sessionId: event.session?.id,
+  }
 }
+
+// ---------------------------------------------------------------------------
+// Deflate worker bundle (built from source, served at /datadog-worker.js)
+// ---------------------------------------------------------------------------
+const tsconfigPath = path.resolve(__dirname, 'tsconfig.json')
+
+const deflateWorkerCompiler = webpack({
+  mode: 'development',
+  entry: path.resolve(__dirname, '../../../packages/browser-worker/src/entries/main.ts'),
+  target: ['web', 'es2020'],
+  module: {
+    rules: [{
+      test: /\.ts$/,
+      use: [{ loader: 'ts-loader', options: { configFile: tsconfigPath, onlyCompileBundledFiles: true, transpileOnly: true } }],
+      exclude: /node_modules/,
+    }],
+  },
+  resolve: {
+    extensions: ['.ts', '.js'],
+    // Reuse the monorepo tsconfig path aliases
+    alias: {
+      '@datadog/browser-core': path.resolve(__dirname, '../../../packages/browser-core/src'),
+      '@datadog/js-core/time': path.resolve(__dirname, '../../../packages/js-core/src/time.ts'),
+      '@datadog/browser-rum-core': path.resolve(__dirname, '../../../packages/browser-rum-core/src'),
+    },
+  },
+  plugins: [
+    new webpack.DefinePlugin({
+      __BUILD_ENV__SDK_VERSION__: JSON.stringify('dev'),
+      __BUILD_ENV__SDK_SETUP__: JSON.stringify('npm'),
+      __BUILD_ENV__WORKER_STRING__: JSON.stringify(''),
+    }),
+  ],
+  output: { filename: 'datadog-worker.js', globalObject: 'self' },
+})
+
+// ---------------------------------------------------------------------------
+// Express app
+// ---------------------------------------------------------------------------
+const app = express()
+app.use(cors())
+
+// Deflate worker bundle
+app.use(webpackDevMiddleware(deflateWorkerCompiler, { stats: 'minimal' }))
+
+// SSE
+app.get('/events', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream')
+  res.setHeader('Cache-Control', 'no-cache')
+  res.setHeader('Connection', 'keep-alive')
+  res.flushHeaders()
+  sseClients.add(res)
+  req.on('close', () => sseClients.delete(res))
+})
+
+// Intake proxy
+app.post('/proxy', (req, res) => {
+  const type = intakeType(req)
+  const done = () => res.end()
+  if (type === 'profile') {
+    handleProfile(req).then(done)
+  } else if (type === 'rum') {
+    handleRum(req).then(done)
+  } else {
+    res.end()
+  }
+})
+
+http.createServer(app).listen(PORT, () => {
+  console.log(`\n🔬 Worker Profiling proxy`)
+  console.log(`   Intake:  POST http://localhost:${PORT}/proxy`)
+  console.log(`   SSE:     GET  http://localhost:${PORT}/events`)
+  console.log(`   Worker:  GET  http://localhost:${PORT}/datadog-worker.js\n`)
+})
