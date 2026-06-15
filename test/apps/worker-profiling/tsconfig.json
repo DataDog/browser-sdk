@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "module": "commonjs",
+    "moduleResolution": "bundler",
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM", "WebWorker"],
+    "types": [],
+    "paths": {
+      "@datadog/browser-core": ["../../../packages/browser-core/src"],
+      "@datadog/js-core/time": ["../../../packages/js-core/src/time"],
+      "@datadog/browser-rum-core": ["../../../packages/browser-rum-core/src"],
+      "@datadog/browser-rum": ["../../../packages/browser-rum/src/entries/main"],
+      "@datadog/browser-rum/worker": ["../../../packages/browser-rum/src/entries/worker"]
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "worker-profiling-app",
+  "private": true,
+  "scripts": {
+    "build": "webpack --config ./webpack.config.js",
+    "dev": "webpack serve --config ./webpack.config.js"
+  },
+  "peerDependencies": {
+    "@datadog/browser-rum": "*"
+  },
+  "resolutions": {
+    "@datadog/browser-core": "file:../../../packages/browser-core/package.tgz",
+    "@datadog/js-core": "file:../../../packages/js-core/package.tgz",
+    "@datadog/browser-rum": "file:../../../packages/browser-rum/package.tgz",
+    "@datadog/browser-rum-core": "file:../../../packages/browser-rum-core/package.tgz"
+  },
+  "devDependencies": {
+    "html-webpack-plugin": "5.6.3",
+    "ts-loader": "9.6.0",
+    "tsconfig-paths-webpack-plugin": "4.2.0",
+    "typescript": "6.0.2",
+    "webpack": "5.107.2",
+    "webpack-cli": "6.0.1",
+    "webpack-dev-server": "5.2.1"
+  },
+  "volta": {
+    "extends": "../../../package.json"
+  }
+}
