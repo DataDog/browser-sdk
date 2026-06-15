@@ -2,6 +2,9 @@
   "name": "@datadog/browser-worker",
   "version": "7.3.0",
   "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/DataDog/browser-sdk/issues"
+  },
   "main": "bundle/worker.js",
   "files": [
     "bundle/**/*.js",

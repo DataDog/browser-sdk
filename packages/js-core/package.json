@@ -2,6 +2,9 @@
   "name": "@datadog/js-core",
   "version": "0.0.2",
   "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/DataDog/browser-sdk/issues"
+  },
   "sideEffects": false,
   "exports": {
     "./time": {
