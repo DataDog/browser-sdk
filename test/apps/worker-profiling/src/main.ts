@@ -26,6 +26,8 @@ datadogRum.init({
   profilingSampleRate: 100,
   trackResources: true,
   trackLongTasks: true,
+  // Use the locally-built deflate worker (served by webpack-dev-middleware)
+  workerUrl: '/datadog-worker.js',
   // All intake traffic goes to the local proxy server so nothing leaves the machine
   proxy: '/proxy',
 })

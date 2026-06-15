@@ -5,6 +5,7 @@ const webpack = require('webpack')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin')
 const busboy = require('busboy')
+const webpackDevMiddleware = require('webpack-dev-middleware')
 
 const tsconfigPath = path.resolve(__dirname, 'tsconfig.json')
 
@@ -232,6 +233,34 @@ module.exports = {
 
     setupMiddlewares(middlewares, devServer) {
       const app = devServer.app
+
+      // Build and serve the deflate worker bundle (/datadog-worker.js) so
+      // RUM can initialize its compression worker correctly.
+      const deflateWorkerCompiler = webpack({
+        mode: 'development',
+        entry: path.resolve(__dirname, '../../../packages/browser-worker/src/entries/main.ts'),
+        target: ['web', 'es2020'],
+        module: {
+          rules: [{
+            test: /\.ts$/,
+            use: [{ loader: 'ts-loader', options: { configFile: tsconfigPath, onlyCompileBundledFiles: true } }],
+            exclude: /node_modules/,
+          }],
+        },
+        resolve: {
+          extensions: ['.ts', '.js'],
+          plugins: [new TsconfigPathsPlugin({ configFile: tsconfigPath })],
+        },
+        plugins: [
+          new webpack.DefinePlugin({
+            __BUILD_ENV__SDK_VERSION__: JSON.stringify('dev'),
+            __BUILD_ENV__SDK_SETUP__: JSON.stringify('npm'),
+            __BUILD_ENV__WORKER_STRING__: JSON.stringify(''),
+          }),
+        ],
+        output: { filename: 'datadog-worker.js', globalObject: 'self' },
+      })
+      app.use(webpackDevMiddleware(deflateWorkerCompiler, { stats: 'minimal' }))
 
       // SSE endpoint — browser subscribes here for live profile events
       app.get('/events', (req, res) => {
