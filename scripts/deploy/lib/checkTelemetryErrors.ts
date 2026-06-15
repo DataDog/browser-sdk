@@ -57,6 +57,8 @@ function getQueries(version: string): Query[] {
 export async function checkTelemetryErrors(datacenters: string[], version: string): Promise<void> {
   const queries = getQueries(version)
 
+  printLog(`Checking telemetry errors for version ${version} across ${datacenters.length} datacenter(s): ${datacenters.join(', ')}`)
+
   // Create a fresh HTTP agent for this batch of telemetry checks
   const agent = createTelemetryAgent()
 
@@ -70,26 +72,32 @@ export async function checkTelemetryErrors(datacenters: string[], version: strin
 }
 
 async function checkDatacenterTelemetryErrors(datacenter: string, queries: Query[], agent: Agent): Promise<void> {
+  printLog(`[${datacenter}] Fetching datacenter metadata...`)
   const datacenterMetadata = await getDatacenterMetadata(datacenter)
 
   if (!datacenterMetadata?.site) {
-    printLog(`No site is configured for datacenter ${datacenter}. skipping...`)
+    printLog(`[${datacenter}] No site is configured for datacenter ${datacenter}. skipping...`)
     return
   }
 
   const site = datacenterMetadata.site
+  printLog(`[${datacenter}] Resolved site: ${site}`)
 
   const apiKey = getTelemetryOrgApiKey(site)
   const applicationKey = getTelemetryOrgApplicationKey(site)
 
   if (!apiKey || !applicationKey) {
-    printLog(`No API key or application key found for ${site}, skipping...`)
+    printLog(`[${datacenter}] No API key or application key found for ${site}, skipping...`)
     return
   }
 
+  printLog(`[${datacenter}] API key present: ${Boolean(apiKey)}, Application key present: ${Boolean(applicationKey)}`)
+
   for (let i = 0; i < queries.length; i++) {
     const query = queries[i]
+    printLog(`[${datacenter}] Running query ${i + 1}/${queries.length}: "${query.name}"`)
     const buckets = await queryLogsApi(site, apiKey, applicationKey, query, agent)
+    printLog(`[${datacenter}] Query "${query.name}" returned ${buckets.length} bucket(s)`)
 
     // buckets are sorted by count, so we only need to check the first one
     if (buckets[0]?.computes?.c0 > query.threshold) {
@@ -97,8 +105,11 @@ async function checkDatacenterTelemetryErrors(datacenter: string, queries: Query
 see ${computeLogsLink(site, query)}`)
     }
 
+    printLog(`[${datacenter}] Query "${query.name}" passed (top count: ${buckets[0]?.computes?.c0 ?? 0}, threshold: ${query.threshold})`)
+
     // Skip rate limit delay after last query
     if (i < queries.length - 1) {
+      printLog(`[${datacenter}] Waiting ${RATE_LIMIT_DELAY_MS}ms before next query (rate limit)...`)
       await timeout(RATE_LIMIT_DELAY_MS)
     }
   }
@@ -112,45 +123,57 @@ async function queryLogsApi(
   agent: Agent,
   attempt: number = 1
 ): Promise<QueryResultBucket[]> {
-  const response = await fetch(`https://api.${site}/api/v2/logs/analytics/aggregate`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'DD-API-KEY': apiKey,
-      'DD-APPLICATION-KEY': applicationKey,
-    },
-    body: JSON.stringify({
-      compute: [
-        {
-          aggregation: 'count',
-        },
-      ],
-      ...(query.groupBy
-        ? {
-            group_by: [
-              {
-                facet: query.groupBy,
-                sort: {
-                  type: 'measure',
-                  aggregation: 'count',
-                },
-              },
-            ],
-          }
-        : {}),
-      filter: {
-        from: `now-${TIME_WINDOW_IN_MINUTES}m`,
-        to: 'now',
-        query: query.query,
+  const url = `https://api.${site}/api/v2/logs/analytics/aggregate`
+  printLog(`[${site}] Fetching ${url} (attempt ${attempt}/${MAX_RETRIES}, query: "${query.name}"${query.groupBy ? `, groupBy: ${query.groupBy}` : ''})`)
+
+  let response: Response
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'DD-API-KEY': apiKey,
+        'DD-APPLICATION-KEY': applicationKey,
       },
-    }),
-    // Use dedicated agent to avoid connection pool conflicts.
-    dispatcher: agent,
-  })
+      body: JSON.stringify({
+        compute: [
+          {
+            aggregation: 'count',
+          },
+        ],
+        ...(query.groupBy
+          ? {
+              group_by: [
+                {
+                  facet: query.groupBy,
+                  sort: {
+                    type: 'measure',
+                    aggregation: 'count',
+                  },
+                },
+              ],
+            }
+          : {}),
+        filter: {
+          from: `now-${TIME_WINDOW_IN_MINUTES}m`,
+          to: 'now',
+          query: query.query,
+        },
+      }),
+      // Use dedicated agent to avoid connection pool conflicts.
+      dispatcher: agent,
+    })
+  } catch (error) {
+    const cause = error instanceof Error ? (error.cause instanceof Error ? error.cause : error) : error
+    printLog(`[${site}] Network error on attempt ${attempt}/${MAX_RETRIES} for "${query.name}": ${cause}`)
+    throw error
+  }
+
+  printLog(`[${site}] Response status for "${query.name}": ${response.status} ${response.statusText}`)
 
   if (shouldRetry(response, attempt)) {
     printLog(
-      `503 Service Unavailable, retrying in ${RATE_LIMIT_DELAY_MS / 1000}s (attempt ${attempt}/${MAX_RETRIES})...`
+      `[${site}] 503 Service Unavailable for "${query.name}", retrying in ${RATE_LIMIT_DELAY_MS / 1000}s (attempt ${attempt}/${MAX_RETRIES})...`
     )
     await timeout(RATE_LIMIT_DELAY_MS)
     return queryLogsApi(site, apiKey, applicationKey, query, agent, attempt + 1)
