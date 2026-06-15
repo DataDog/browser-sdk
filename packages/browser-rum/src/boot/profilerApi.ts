@@ -18,6 +18,7 @@ export function makeProfilerApi(): ProfilerApi {
   type PendingCall =
     | { action: 'add'; worker: Worker; options?: { name?: string } }
     | { action: 'remove'; worker: Worker }
+    | { action: 'flushAndTerminate'; worker: Worker }
   const pendingWorkerCalls: PendingCall[] = []
 
   function getOrBufferCoordinator() {
@@ -34,11 +35,17 @@ export function makeProfilerApi(): ProfilerApi {
         if (workerCoordinator) {
           workerCoordinator.removeWorker(worker)
         } else {
-          // Remove any buffered add for this worker
           const idx = pendingWorkerCalls.findIndex((c) => c.action === 'add' && c.worker === worker)
-          if (idx !== -1) {
-            pendingWorkerCalls.splice(idx, 1)
-          }
+          if (idx !== -1) pendingWorkerCalls.splice(idx, 1)
+        }
+      },
+      flushAndTerminateWorker(worker: Worker) {
+        if (workerCoordinator) {
+          workerCoordinator.flushAndTerminateWorker(worker)
+        } else {
+          // Upgrade any buffered add to a flushAndTerminate so it runs correctly once ready
+          const idx = pendingWorkerCalls.findIndex((c) => c.action === 'add' && c.worker === worker)
+          if (idx !== -1) pendingWorkerCalls[idx] = { action: 'flushAndTerminate', worker }
         }
       },
     }
@@ -117,8 +124,10 @@ export function makeProfilerApi(): ProfilerApi {
           for (const call of pendingWorkerCalls.splice(0)) {
             if (call.action === 'add') {
               workerCoordinator?.addWorker(call.worker, call.options)
-            } else {
+            } else if (call.action === 'remove') {
               workerCoordinator?.removeWorker(call.worker)
+            } else {
+              workerCoordinator?.flushAndTerminateWorker(call.worker)
             }
           }
         }

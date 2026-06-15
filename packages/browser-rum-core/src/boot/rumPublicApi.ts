@@ -579,6 +579,17 @@ export interface RumPublicApi extends PublicApi {
    * @param worker - The Worker instance to stop profiling
    */
   removeProfilingWorker: (worker: Worker) => void
+
+  /**
+   * Flush the current profiling session for a worker and then terminate it.
+   * Use this instead of worker.terminate() for short-lived workers — the worker
+   * will flush its profile, call self.close() on its own, and be hard-terminated
+   * after a 5 second safety timeout.
+   *
+   * @experimental
+   * @param worker - The Worker instance to flush and terminate
+   */
+  flushAndTerminateProfilingWorker: (worker: Worker) => void
 }
 
 export interface RecorderApi {
@@ -599,7 +610,7 @@ export interface RecorderApi {
 
 export interface ProfilerApi {
   stop: () => void
-  getWorkerCoordinator: () => { addWorker: (worker: Worker, options?: { name?: string }) => void; removeWorker: (worker: Worker) => void } | undefined
+  getWorkerCoordinator: () => { addWorker: (worker: Worker, options?: { name?: string }) => void; removeWorker: (worker: Worker) => void; flushAndTerminateWorker: (worker: Worker) => void } | undefined
   onRumStart: (
     lifeCycle: LifeCycle,
     hooks: Hooks,
@@ -1017,6 +1028,10 @@ export function makeRumPublicApi(
 
     removeProfilingWorker: monitor((worker: Worker) => {
       profilerApi.getWorkerCoordinator()?.removeWorker(worker)
+    }),
+
+    flushAndTerminateProfilingWorker: monitor((worker: Worker) => {
+      profilerApi.getWorkerCoordinator()?.flushAndTerminateWorker(worker)
     }),
   })
 

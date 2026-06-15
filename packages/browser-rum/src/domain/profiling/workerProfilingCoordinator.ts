@@ -26,6 +26,7 @@ interface WorkerOptions {
 export interface WorkerProfilingCoordinator {
   addWorker(worker: Worker, options?: WorkerOptions): void
   removeWorker(worker: Worker): void
+  flushAndTerminateWorker(worker: Worker): void
   start(sampleIntervalMs: number, maxBufferSize: number, collectIntervalMs: number): void
   stop(): void
   getCorrelationIds(): string[]
@@ -100,6 +101,26 @@ export function createWorkerProfilingCoordinator(
     }
     sendCommand(registration, { type: 'dd-stop-profiling' })
     teardownWorker(worker)
+  }
+
+  function flushAndTerminateWorker(worker: Worker): void {
+    const registration = registrations.get(worker)
+    if (!registration) {
+      return
+    }
+    console.log(`[DD Coordinator] flushAndTerminateWorker — sending dd-flush-and-close to ${registration.name ?? '(unnamed)'}`)
+    // dd-flush-and-close tells the agent to flush then call self.close() itself.
+    // We keep the registration alive so the dd-worker-trace response is handled,
+    // then clean up when the worker's error/close event fires naturally.
+    sendCommand(registration, { type: 'dd-flush-and-close' })
+    // Safety net: hard-terminate after 5s in case the worker hangs
+    setTimeout(() => {
+      if (registrations.has(worker)) {
+        console.log(`[DD Coordinator] safety-net terminate for ${registration.name ?? '(unnamed)'}`)
+        teardownWorker(worker)
+        worker.terminate()
+      }
+    }, 5_000)
   }
 
   function start(sampleIntervalMs: number, maxBufferSize: number, collectIntervalMs: number): void {
@@ -189,5 +210,5 @@ export function createWorkerProfilingCoordinator(
     }
   }
 
-  return { addWorker, removeWorker, start, stop, getCorrelationIds }
+  return { addWorker, removeWorker, flushAndTerminateWorker, start, stop, getCorrelationIds }
 }

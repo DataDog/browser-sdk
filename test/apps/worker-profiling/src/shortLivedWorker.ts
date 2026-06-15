@@ -6,7 +6,7 @@
  */
 import { connectDatadogWorker } from '@datadog/browser-rum/worker'
 
-connectDatadogWorker()
+const { stopAndFlush } = connectDatadogWorker()
 
 // ---------------------------------------------------------------------------
 // Workloads
@@ -51,11 +51,9 @@ let batches = 0
 function runBurst(): void {
   const elapsed = Date.now() - startTime
   if (elapsed >= BURST_DURATION_MS) {
-    // Signal the main thread that the burst is complete.
-    // The main thread will call removeProfilingWorker() which sends dd-stop-profiling,
-    // causing the agent to flush the profile trace before the worker is terminated.
-    // Do NOT call self.close() here — the port must stay open for dd-stop-profiling
-    // and for postMessage({ type: 'dd-worker-trace' }) to get through.
+    // Flush the profiling session and close the worker from the inside.
+    // stopAndFlush() calls profiler.stop(), posts dd-worker-trace, then calls self.close().
+    void stopAndFlush()
     self.postMessage({ kind: 'done', batches, elapsedMs: elapsed })
     return
   }
