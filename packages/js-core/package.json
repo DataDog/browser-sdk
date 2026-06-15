@@ -32,5 +32,9 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "homepage": "https://github.com/DataDog/browser-sdk",
+  "bugs": {
+    "url": "https://github.com/DataDog/browser-sdk/issues"
   }
 }

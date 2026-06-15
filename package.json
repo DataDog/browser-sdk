@@ -107,5 +107,13 @@
     "node": "26.2.0",
     "yarn": "4.15.0"
   },
-  "packageManager": "yarn@4.15.0"
+  "packageManager": "yarn@4.15.0",
+  "homepage": "https://github.com/DataDog/browser-sdk",
+  "bugs": {
+    "url": "https://github.com/DataDog/browser-sdk/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DataDog/browser-sdk.git"
+  }
 }

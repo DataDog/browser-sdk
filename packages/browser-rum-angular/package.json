@@ -44,5 +44,9 @@
     "@angular/platform-browser": "21.2.15",
     "@angular/router": "21.2.15",
     "rxjs": "7.8.2"
+  },
+  "homepage": "https://github.com/DataDog/browser-sdk",
+  "bugs": {
+    "url": "https://github.com/DataDog/browser-sdk/issues"
   }
 }
