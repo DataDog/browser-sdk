@@ -91,9 +91,15 @@ function spawnShortLivedWorker(): void {
 
   w.addEventListener('message', (event: MessageEvent) => {
     if (event.data?.kind === 'done') {
-      console.log(`[main] ${name} done — ${event.data.batches} batches in ${event.data.elapsedMs}ms`)
-      // Worker called self.close() — unregister it
+      console.log(`[main] ${name} done — ${event.data.batches} batches in ${event.data.elapsedMs}ms — flushing profile then terminating`)
+      // removeProfilingWorker sends dd-stop-profiling to the worker, which causes
+      // the agent to call profiler.stop() and post dd-worker-trace back to us.
+      // We give it 5s to complete before hard-terminating.
       datadogRum.removeProfilingWorker(w)
+      setTimeout(() => {
+        console.log(`[main] terminating ${name}`)
+        w.terminate()
+      }, 5_000)
       updateShortLivedStatus()
     }
   })
