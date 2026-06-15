@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { evaluateProbeCondition, compileCondition, isConditionEvaluationError } from './condition'
 
 describe('condition', () => {
@@ -86,14 +87,20 @@ describe('condition', () => {
         condition: compileCondition('nonExistent.property'),
       }
 
-      expect(() => evaluateProbeCondition(probe, {})).toThrowMatching((error) => {
-        expect(isConditionEvaluationError(error)).toBeTrue()
-        expect(isConditionEvaluationError(error) && error.evaluationError).toEqual({
+      expect(() => evaluateProbeCondition(probe, {})).toThrow()
+      let thrownError: unknown
+      try {
+        evaluateProbeCondition(probe, {})
+      } catch (e) {
+        thrownError = e
+      }
+      expect(isConditionEvaluationError(thrownError)).toBe(true)
+      if (isConditionEvaluationError(thrownError)) {
+        expect(thrownError.evaluationError).toEqual({
           expr: 'nonExistent.property',
-          message: jasmine.stringMatching(/^ReferenceError: /),
+          message: expect.stringMatching(/^ReferenceError: /),
         })
-        return true
-      })
+      }
     })
 
     it('should handle syntax errors in condition', () => {
@@ -104,14 +111,20 @@ describe('condition', () => {
         condition: compileCondition('invalid syntax !!!'),
       }
 
-      expect(() => evaluateProbeCondition(probe, {})).toThrowMatching((error) => {
-        expect(isConditionEvaluationError(error)).toBeTrue()
-        expect(isConditionEvaluationError(error) && error.evaluationError).toEqual({
+      expect(() => evaluateProbeCondition(probe, {})).toThrow()
+      let thrownError: unknown
+      try {
+        evaluateProbeCondition(probe, {})
+      } catch (e) {
+        thrownError = e
+      }
+      expect(isConditionEvaluationError(thrownError)).toBe(true)
+      if (isConditionEvaluationError(thrownError)) {
+        expect(thrownError.evaluationError).toEqual({
           expr: 'invalid syntax !!!',
-          message: jasmine.stringMatching(/^SyntaxError: /),
+          message: expect.stringMatching(/^SyntaxError: /),
         })
-        return true
-      })
+      }
     })
 
     it('should handle cross-realm Error condition failures', () => {
@@ -131,14 +144,16 @@ describe('condition', () => {
         },
       }
 
-      expect(() => evaluateProbeCondition(probe, {})).toThrowMatching((error) => {
-        expect(isConditionEvaluationError(error)).toBeTrue()
+      try {
+        evaluateProbeCondition(probe, {})
+        expect.unreachable()
+      } catch (error) {
+        expect(isConditionEvaluationError(error)).toBe(true)
         expect(isConditionEvaluationError(error) && error.evaluationError).toEqual({
           expr: 'throw iframe error',
           message: 'Error: Iframe error',
         })
-        return true
-      })
+      }
     })
 
     it('should handle condition errors that cannot be coerced to strings', () => {
@@ -158,14 +173,16 @@ describe('condition', () => {
         },
       }
 
-      expect(() => evaluateProbeCondition(probe, {})).toThrowMatching((error) => {
-        expect(isConditionEvaluationError(error)).toBeTrue()
+      try {
+        evaluateProbeCondition(probe, {})
+        expect.unreachable()
+      } catch (error) {
+        expect(isConditionEvaluationError(error)).toBe(true)
         expect(isConditionEvaluationError(error) && error.evaluationError).toEqual({
           expr: 'throw non-coercible value',
           message: '<error: unable to stringify error>',
         })
-        return true
-      })
+      }
     })
 
     it('should handle Error-like condition errors with hostile name and message getters', () => {
@@ -189,14 +206,16 @@ describe('condition', () => {
         },
       }
 
-      expect(() => evaluateProbeCondition(probe, {})).toThrowMatching((error) => {
-        expect(isConditionEvaluationError(error)).toBeTrue()
+      try {
+        evaluateProbeCondition(probe, {})
+        expect.unreachable()
+      } catch (error) {
+        expect(isConditionEvaluationError(error)).toBe(true)
         expect(isConditionEvaluationError(error) && error.evaluationError).toEqual({
           expr: 'throw hostile error-like value',
           message: '[object Error]',
         })
-        return true
-      })
+      }
     })
 
     it('should handle conditions with special variables', () => {

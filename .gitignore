@@ -40,3 +40,4 @@ test/e2e/.pinned-browsers/
 *.local.md
 .claude/settings.local.json
 .claude/worktrees/
+**/__screenshots__/

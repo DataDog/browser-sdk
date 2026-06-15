@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest'
 import type { TimeStamp } from '@datadog/js-core/time'
 import { getTimeOrigin } from '@datadog/js-core/time'
 import {

@@ -1,3 +1,4 @@
+import { vi, describe, it, expect, beforeEach, type Mock } from 'vitest'
 import type { GlobalObject } from '@datadog/browser-core'
 import { globalObject } from '@datadog/browser-core'
 import { registerCleanupTask, mockClock, replaceMockable } from '@datadog/browser-core/test'
@@ -74,9 +75,9 @@ describe('buildDeliveryApiUrl', () => {
 })
 
 describe('deliveryApi', () => {
-  let fetchSpy: jasmine.Spy
-  let errorSpy: jasmine.Spy
-  let warnSpy: jasmine.Spy
+  let fetchSpy: Mock
+  let errorSpy: Mock
+  let warnSpy: Mock
   let clock: Clock
 
   function makeConfig(overrides: Partial<DeliveryApiConfiguration> = {}): DeliveryApiConfiguration {
@@ -91,7 +92,7 @@ describe('deliveryApi', () => {
   }
 
   function respondWith(data: object, status = 200) {
-    fetchSpy.and.returnValue(
+    fetchSpy.mockReturnValue(
       Promise.resolve({
         ok: status >= 200 && status < 300,
         status,
@@ -105,9 +106,9 @@ describe('deliveryApi', () => {
     clock = mockClock()
     clearProbes()
     clearDeliveryApiState()
-    fetchSpy = spyOn(window, 'fetch')
-    errorSpy = spyOn(display, 'error')
-    warnSpy = spyOn(display, 'warn')
+    fetchSpy = vi.spyOn(window, 'fetch')
+    errorSpy = vi.spyOn(display, 'error')
+    warnSpy = vi.spyOn(display, 'warn')
     respondWith({ nextCursor: '', updates: [], deletions: [] })
 
     registerCleanupTask(() => {
@@ -128,7 +129,7 @@ describe('deliveryApi', () => {
       startDeliveryApiPolling(makeConfig())
 
       expect(fetchSpy).toHaveBeenCalledTimes(1)
-      const [url, options] = fetchSpy.calls.mostRecent().args
+      const [url, options] = fetchSpy.mock.lastCall!
       expect(url).toBe('https://api.datadoghq.com/api/unstable/debugger/frontend/probes')
       expect(options.method).toBe('POST')
       expect(options.credentials).toBeUndefined()
@@ -140,19 +141,19 @@ describe('deliveryApi', () => {
     it('should use the configured site for the request URL', () => {
       startDeliveryApiPolling(makeConfig({ site: 'datadoghq.eu' }))
 
-      const [url] = fetchSpy.calls.mostRecent().args
+      const [url] = fetchSpy.mock.lastCall!
       expect(url).toBe('https://api.datadoghq.eu/api/unstable/debugger/frontend/probes')
     })
 
     it('should send the correct request body', () => {
       startDeliveryApiPolling(makeConfig())
 
-      const [, options] = fetchSpy.calls.mostRecent().args
+      const [, options] = fetchSpy.mock.lastCall!
       const body = JSON.parse(options.body)
       expect(body).toEqual({
         service: 'test-service',
         clientName: 'browser',
-        clientVersion: jasmine.stringMatching(/.+/),
+        clientVersion: expect.stringMatching(/.+/),
         env: 'staging',
         serviceVersion: '1.0.0',
       })
@@ -161,7 +162,7 @@ describe('deliveryApi', () => {
     it('should not include nextCursor in the first request', () => {
       startDeliveryApiPolling(makeConfig())
 
-      const [, options] = fetchSpy.calls.mostRecent().args
+      const [, options] = fetchSpy.mock.lastCall!
       const body = JSON.parse(options.body)
       expect(body.nextCursor).toBeUndefined()
     })
@@ -170,7 +171,7 @@ describe('deliveryApi', () => {
       startDeliveryApiPolling(makeConfig())
       startDeliveryApiPolling(makeConfig())
 
-      expect(warnSpy).toHaveBeenCalledWith(jasmine.stringMatching(/already started/))
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/already started/))
     })
 
     it('should add probes from the updates array', async () => {
@@ -253,7 +254,7 @@ describe('deliveryApi', () => {
       await flushPromises()
 
       expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
-      expect(errorSpy).toHaveBeenCalledWith('Failed to add probe invalid-capture-expression:', jasmine.any(Error))
+      expect(errorSpy).toHaveBeenCalledWith('Failed to add probe invalid-capture-expression:', expect.any(Error))
     })
 
     it('should keep adding the other probes when one probe in the same response fails to initialize', async () => {
@@ -284,7 +285,7 @@ describe('deliveryApi', () => {
       expect(getProbes('test.js;before')).toBeDefined()
       expect(getProbes('test.js;after')).toBeDefined()
       expect(getProbes('test.js;invalid')).toBeUndefined()
-      expect(errorSpy).toHaveBeenCalledOnceWith('Failed to add probe invalid:', jasmine.any(Error))
+      expect(errorSpy).toHaveBeenCalledWith('Failed to add probe invalid:', expect.any(Error))
     })
 
     it('should not track a probe that failed to initialize, so a later deletion is a no-op', async () => {
@@ -307,9 +308,9 @@ describe('deliveryApi', () => {
 
       startDeliveryApiPolling(makeConfig())
       await flushPromises()
-      expect(errorSpy).toHaveBeenCalledOnceWith('Failed to add probe invalid:', jasmine.any(Error))
+      expect(errorSpy).toHaveBeenCalledWith('Failed to add probe invalid:', expect.any(Error))
 
-      errorSpy.calls.reset()
+      errorSpy.mockClear()
 
       // The failed probe was never tracked, so deleting it does nothing and must
       // not attempt a removal (which would log a "Failed to remove probe" error).
@@ -344,16 +345,16 @@ describe('deliveryApi', () => {
 
       startDeliveryApiPolling(makeConfig({ pollInterval: 5000 }))
       await flushPromises()
-      expect(errorSpy).toHaveBeenCalledOnceWith('Failed to add probe invalid:', jasmine.any(Error))
+      expect(errorSpy).toHaveBeenCalledWith('Failed to add probe invalid:', expect.any(Error))
 
       // A per-probe compilation error is a data error, not a transport failure:
       // it must not trip the circuit breaker or stop polling.
-      const callsBefore = fetchSpy.calls.count()
+      const callsBefore = fetchSpy.mock.calls.length
       clock.tick(5000)
       await flushPromises()
 
-      expect(fetchSpy.calls.count()).toBe(callsBefore + 1)
-      expect(warnSpy).not.toHaveBeenCalledWith(jasmine.stringMatching(/circuit breaker/i))
+      expect(fetchSpy.mock.calls.length).toBe(callsBefore + 1)
+      expect(warnSpy).not.toHaveBeenCalledWith(expect.stringMatching(/circuit breaker/i))
     })
 
     it('should ignore log probes without a where clause', async () => {
@@ -425,7 +426,7 @@ describe('deliveryApi', () => {
       clock.tick(5000)
 
       expect(fetchSpy).toHaveBeenCalledTimes(2)
-      const [, options] = fetchSpy.calls.mostRecent().args
+      const [, options] = fetchSpy.mock.lastCall!
       const body = JSON.parse(options.body)
       expect(body.nextCursor).toBe('cursor-abc')
     })
@@ -461,16 +462,16 @@ describe('deliveryApi', () => {
       startDeliveryApiPolling(makeConfig())
       await flushPromises()
 
-      expect(errorSpy).toHaveBeenCalledWith(jasmine.stringMatching(/failed with status 500/), jasmine.any(String))
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringMatching(/failed with status 500/), expect.any(String))
     })
 
     it('should log an error when fetch throws', async () => {
-      fetchSpy.and.returnValue(Promise.reject(new Error('network error')))
+      fetchSpy.mockReturnValue(Promise.reject(new Error('network error')))
 
       startDeliveryApiPolling(makeConfig())
       await flushPromises()
 
-      expect(errorSpy).toHaveBeenCalledWith(jasmine.stringMatching(/poll error/), jasmine.any(Error))
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringMatching(/poll error/), expect.any(Error))
     })
 
     it('should poll at the configured interval', () => {
@@ -518,7 +519,7 @@ describe('deliveryApi', () => {
     const POLL_INTERVAL_MS = 5000
 
     function respondWithNetworkError() {
-      fetchSpy.and.returnValue(Promise.reject(new Error('network error')))
+      fetchSpy.mockReturnValue(Promise.reject(new Error('network error')))
     }
 
     async function tickAndFlush(ms: number) {
@@ -537,9 +538,9 @@ describe('deliveryApi', () => {
         await tickAndFlush(POLL_INTERVAL_MS)
       }
 
-      const callsBefore = fetchSpy.calls.count()
+      const callsBefore = fetchSpy.mock.calls.length
       await tickAndFlush(POLL_INTERVAL_MS)
-      expect(fetchSpy.calls.count()).toBe(callsBefore + 1)
+      expect(fetchSpy.mock.calls.length).toBe(callsBefore + 1)
     })
 
     it('should stop polling after five minutes of continuous network failures', async () => {
@@ -553,9 +554,9 @@ describe('deliveryApi', () => {
         await tickAndFlush(POLL_INTERVAL_MS)
       }
 
-      const callsAtTrip = fetchSpy.calls.count()
+      const callsAtTrip = fetchSpy.mock.calls.length
       await tickAndFlush(POLL_INTERVAL_MS * 10)
-      expect(fetchSpy.calls.count()).toBe(callsAtTrip)
+      expect(fetchSpy.mock.calls.length).toBe(callsAtTrip)
     })
 
     it('should stop polling after five minutes of continuous 5xx responses', async () => {
@@ -568,9 +569,9 @@ describe('deliveryApi', () => {
         await tickAndFlush(POLL_INTERVAL_MS)
       }
 
-      const callsAtTrip = fetchSpy.calls.count()
+      const callsAtTrip = fetchSpy.mock.calls.length
       await tickAndFlush(POLL_INTERVAL_MS * 10)
-      expect(fetchSpy.calls.count()).toBe(callsAtTrip)
+      expect(fetchSpy.mock.calls.length).toBe(callsAtTrip)
     })
 
     it('should treat 4xx responses as a config issue and trip immediately', async () => {
@@ -601,9 +602,9 @@ describe('deliveryApi', () => {
         for (let i = 0; i < ticks; i++) {
           await tickAndFlush(POLL_INTERVAL_MS)
         }
-        const callsBefore = fetchSpy.calls.count()
+        const callsBefore = fetchSpy.mock.calls.length
         await tickAndFlush(POLL_INTERVAL_MS)
-        expect(fetchSpy.calls.count()).toBe(callsBefore + 1)
+        expect(fetchSpy.mock.calls.length).toBe(callsBefore + 1)
       })
 
       it(`should eventually trip on continuous ${status} responses past the window`, async () => {
@@ -616,9 +617,9 @@ describe('deliveryApi', () => {
           await tickAndFlush(POLL_INTERVAL_MS)
         }
 
-        const callsAtTrip = fetchSpy.calls.count()
+        const callsAtTrip = fetchSpy.mock.calls.length
         await tickAndFlush(POLL_INTERVAL_MS * 10)
-        expect(fetchSpy.calls.count()).toBe(callsAtTrip)
+        expect(fetchSpy.mock.calls.length).toBe(callsAtTrip)
       })
     }
 
@@ -638,9 +639,9 @@ describe('deliveryApi', () => {
       respondWithNetworkError()
       await tickAndFlush(FIVE_MINUTES_MS - POLL_INTERVAL_MS)
 
-      const callsBefore = fetchSpy.calls.count()
+      const callsBefore = fetchSpy.mock.calls.length
       await tickAndFlush(POLL_INTERVAL_MS)
-      expect(fetchSpy.calls.count()).toBe(callsBefore + 1)
+      expect(fetchSpy.mock.calls.length).toBe(callsBefore + 1)
     })
 
     it('should clear active probes when tripping', async () => {
@@ -673,15 +674,15 @@ describe('deliveryApi', () => {
       for (let i = 0; i < ticks; i++) {
         await tickAndFlush(POLL_INTERVAL_MS)
       }
-      const callsBeforeTrip = fetchSpy.calls.count()
+      const callsBeforeTrip = fetchSpy.mock.calls.length
       await tickAndFlush(POLL_INTERVAL_MS)
-      expect(fetchSpy.calls.count()).toBe(callsBeforeTrip + 1)
+      expect(fetchSpy.mock.calls.length).toBe(callsBeforeTrip + 1)
 
       // One more tick past the custom window should trip and stop polling.
       await tickAndFlush(POLL_INTERVAL_MS)
-      const callsAtTrip = fetchSpy.calls.count()
+      const callsAtTrip = fetchSpy.mock.calls.length
       await tickAndFlush(POLL_INTERVAL_MS * 10)
-      expect(fetchSpy.calls.count()).toBe(callsAtTrip)
+      expect(fetchSpy.mock.calls.length).toBe(callsAtTrip)
     })
 
     it('should fall back to the default maxUnreachableDuration when option is invalid', async () => {
@@ -695,9 +696,9 @@ describe('deliveryApi', () => {
       // Way past any "reasonable" misinterpretation - if -1 were honored,
       // polling would have already stopped. Confirm we're still polling at 30s.
       await tickAndFlush(30_000)
-      const callsBefore = fetchSpy.calls.count()
+      const callsBefore = fetchSpy.mock.calls.length
       await tickAndFlush(POLL_INTERVAL_MS)
-      expect(fetchSpy.calls.count()).toBe(callsBefore + 1)
+      expect(fetchSpy.mock.calls.length).toBe(callsBefore + 1)
     })
 
     it('should not re-install probes from an in-flight poll that is aborted by tripping', async () => {
@@ -706,7 +707,7 @@ describe('deliveryApi', () => {
       // would: rejecting with AbortError when the controller calls abort().
       let resolveFirstPoll!: (response: unknown) => void
       const firstPollFetchOptions: { signal?: AbortSignal } = {}
-      fetchSpy.and.callFake((_url: string, options: { signal?: AbortSignal }) => {
+      fetchSpy.mockImplementation((_url: string, options: { signal?: AbortSignal }) => {
         firstPollFetchOptions.signal = options.signal
         return new Promise((resolve, reject) => {
           resolveFirstPoll = resolve
@@ -732,8 +733,8 @@ describe('deliveryApi', () => {
       // Breaker has tripped: polling stopped, probes cleared, and the in-flight
       // poll's signal must have been aborted.
       expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
-      expect(firstPollFetchOptions.signal!.aborted).toBeTrue()
-      const callsAtTrip = fetchSpy.calls.count()
+      expect(firstPollFetchOptions.signal!.aborted).toBe(true)
+      const callsAtTrip = fetchSpy.mock.calls.length
 
       // Even if the hung response somehow still resolves with probe updates
       // after the abort, the poll has already rejected with AbortError and
@@ -749,7 +750,7 @@ describe('deliveryApi', () => {
       expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
       // No new fetches should have been issued either.
       await tickAndFlush(POLL_INTERVAL_MS * 5)
-      expect(fetchSpy.calls.count()).toBe(callsAtTrip)
+      expect(fetchSpy.mock.calls.length).toBe(callsAtTrip)
     })
 
     it('should warn when tripping', async () => {
@@ -762,7 +763,7 @@ describe('deliveryApi', () => {
         await tickAndFlush(POLL_INTERVAL_MS)
       }
 
-      expect(warnSpy).toHaveBeenCalledWith(jasmine.stringMatching(/circuit breaker/i))
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/circuit breaker/i))
     })
   })
 })

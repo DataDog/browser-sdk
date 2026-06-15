@@ -1,3 +1,4 @@
+import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { mockClock, setNavigatorOnLine } from '../../test'
 import type { Clock } from '../../test'
 import { ErrorSource } from '../domain/error/error.types'
@@ -20,7 +21,7 @@ describe('sendWithRetryStrategy', () => {
   let state: RetryState<Payload>
   let sendRequest: (payload?: Partial<Payload>) => Payload
   let clock: Clock
-  let reportErrorSpy: jasmine.Spy<jasmine.Func>
+  let reportErrorSpy: Mock<(...args: any[]) => any>
   const observedEvents: HttpRequestEvent[] = []
 
   function mockSend() {
@@ -48,7 +49,7 @@ describe('sendWithRetryStrategy', () => {
     sendMock = mockSend()
     state = newRetryState()
     clock = mockClock()
-    reportErrorSpy = jasmine.createSpy('reportError')
+    reportErrorSpy = vi.fn()
     const observable = new Observable<HttpRequestEvent>()
     observable.subscribe((event) => observedEvents.push(event))
     sendRequest = (payload) => {
@@ -167,13 +168,13 @@ describe('sendWithRetryStrategy', () => {
 
       sendMock.respondWith(0, { status: 200 })
       expect(reportErrorSpy).toHaveBeenCalled()
-      expect(reportErrorSpy.calls.argsFor(0)[0]).toEqual(
-        jasmine.objectContaining({
+      expect(reportErrorSpy.mock.calls[0][0]).toEqual(
+        expect.objectContaining({
           message: `Reached max logs events size queued for upload: ${MAX_QUEUE_BYTES_COUNT / ONE_MEBI_BYTE}MiB`,
           source: ErrorSource.AGENT,
         })
       )
-      reportErrorSpy.calls.reset()
+      reportErrorSpy.mockClear()
       expect(latestEvents()).toEqual([
         { type: 'success', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload: payload0 },
       ])

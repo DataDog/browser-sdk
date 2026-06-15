@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { RelativeTime, Duration, ServerDuration } from '@datadog/js-core/time'
 import { createHook } from '@datadog/browser-core'
 import type { Clock } from '../../../../browser-core/test'
@@ -126,7 +127,7 @@ describe('pageStateHistory', () => {
         } as AssembleHookParams)
         expect(defaultRumEventAttributes).toEqual({
           type: 'view',
-          _dd: { page_states: jasmine.any(Array) },
+          _dd: { page_states: expect.any(Array) },
         })
       })
 
@@ -243,10 +244,10 @@ describe('pageStateHistory', () => {
       pageStateHistory = startPageStateHistory(hook)
       registerCleanupTask(pageStateHistory.stop)
 
-      expect(pageStateHistory.wasInPageStateDuringPeriod(PageState.ACTIVE, 5 as RelativeTime, 5 as Duration)).toBeTrue()
-      expect(
-        pageStateHistory.wasInPageStateDuringPeriod(PageState.HIDDEN, 15 as RelativeTime, 5 as Duration)
-      ).toBeTrue()
+      expect(pageStateHistory.wasInPageStateDuringPeriod(PageState.ACTIVE, 5 as RelativeTime, 5 as Duration)).toBe(true)
+      expect(pageStateHistory.wasInPageStateDuringPeriod(PageState.HIDDEN, 15 as RelativeTime, 5 as Duration)).toBe(
+        true
+      )
     })
 
     it('should not backfill if visibility-state is not supported', () => {
@@ -257,9 +258,9 @@ describe('pageStateHistory', () => {
       pageStateHistory = startPageStateHistory(hook)
       registerCleanupTask(pageStateHistory.stop)
 
-      expect(
-        pageStateHistory.wasInPageStateDuringPeriod(PageState.ACTIVE, 5 as RelativeTime, 5 as Duration)
-      ).toBeFalse()
+      expect(pageStateHistory.wasInPageStateDuringPeriod(PageState.ACTIVE, 5 as RelativeTime, 5 as Duration)).toBe(
+        false
+      )
     })
   })
 })

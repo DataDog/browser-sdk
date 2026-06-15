@@ -1,3 +1,4 @@
+import { vi, afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { RelativeTime } from '@datadog/js-core/time'
 import { display, Observable, createHook } from '@datadog/browser-core'
 import { mockCiVisibilityValues } from '../../../test'
@@ -107,7 +108,7 @@ describe('startCiVisibilityContext', () => {
     })
 
     it('should not throw and emit a warning when Cypress.env throws', () => {
-      const displaySpy = spyOn(display, 'warn')
+      const displaySpy = vi.spyOn(display, 'warn')
       mockCiVisibilityValues(undefined, 'globals-throws')
 
       expect(() => {
@@ -121,11 +122,11 @@ describe('startCiVisibilityContext', () => {
 
       expect(defaultRumEventAttributes).toBeUndefined()
       expect(displaySpy).toHaveBeenCalledTimes(1)
-      expect(displaySpy.calls.mostRecent().args[0]).toContain('5.88.0')
+      expect(displaySpy.mock.calls[displaySpy.mock.calls.length - 1][0]).toContain('5.88.0')
     })
 
     it('should not emit a warning when Cypress.env returns a value', () => {
-      const displaySpy = spyOn(display, 'warn')
+      const displaySpy = vi.spyOn(display, 'warn')
       mockCiVisibilityValues('trace_id_value')
       ;({ stop: stopCiVisibility } = startCiVisibilityContext(hook, cookieObservable))
 
@@ -133,7 +134,7 @@ describe('startCiVisibilityContext', () => {
     })
 
     it('should not emit a warning when the cookie is set', () => {
-      const displaySpy = spyOn(display, 'warn')
+      const displaySpy = vi.spyOn(display, 'warn')
       mockCiVisibilityValues('trace_id_value', 'cookies')
       ;({ stop: stopCiVisibility } = startCiVisibilityContext(hook, cookieObservable))
 
@@ -141,7 +142,7 @@ describe('startCiVisibilityContext', () => {
     })
 
     it('should not emit a warning when Cypress is not present', () => {
-      const displaySpy = spyOn(display, 'warn')
+      const displaySpy = vi.spyOn(display, 'warn')
       ;({ stop: stopCiVisibility } = startCiVisibilityContext(hook, cookieObservable))
 
       expect(displaySpy).not.toHaveBeenCalled()

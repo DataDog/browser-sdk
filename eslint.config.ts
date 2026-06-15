@@ -60,6 +60,17 @@ export default defineConfig(
       'developer-extension/.wxt',
       'developer-extension/dist',
       '.claude/worktrees',
+      // Vitest config files (not in any tsconfig for type-aware linting)
+      'vitest.bs.config.ts',
+      'test/unit/vitest.setup.ts',
+      'test/unit/browserstack.keepalive.ts',
+      // Legacy Karma configs (not in any tsconfig after Vitest migration)
+      'test/unit/karma.*.js',
+      'test/unit/jasmine*.js',
+      'test/unit/karma*.js',
+      'test/unit/globalThisPolyfill.js',
+      'packages/browser-rum-core/test/allJsonSchemas.js',
+      'packages/browser-rum-core/test/allJsonSchemas.d.ts',
     ],
   },
 
@@ -470,6 +481,14 @@ export default defineConfig(
     files: ['test/e2e/**/*.ts', 'test/performance/**/*.ts'],
     rules: {
       // E2E codebase is importing @datadog/browser-* packages referenced by tsconfig.
+      'import-x/no-extraneous-dependencies': 'off',
+    },
+  },
+
+  {
+    files: [SPEC_FILES, 'packages/*/test/**/*.ts'],
+    rules: {
+      // vitest is a root devDependency, not listed in each sub-package
       'import-x/no-extraneous-dependencies': 'off',
     },
   },

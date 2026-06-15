@@ -1,3 +1,4 @@
+import { vi, describe, expect, it } from 'vitest'
 import { replaceMockable } from '../../../test'
 import { globalObject } from '../../tools/globalObject'
 import type { Configuration, InitConfiguration } from '../configuration'
@@ -22,7 +23,7 @@ describe('session store', () => {
         const sessionStoreStrategyType = await selectSessionStoreStrategyType(
           makeConfiguration(DEFAULT_INIT_CONFIGURATION)
         )
-        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.COOKIE }))
+        expect(sessionStoreStrategyType).toEqual(expect.objectContaining({ type: SessionPersistence.COOKIE }))
       })
 
       it('returns undefined when cookies are not available', async () => {
@@ -37,7 +38,7 @@ describe('session store', () => {
         const sessionStoreStrategyType = await selectSessionStoreStrategyType(
           makeConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionPersistence: SessionPersistence.COOKIE })
         )
-        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.COOKIE }))
+        expect(sessionStoreStrategyType).toEqual(expect.objectContaining({ type: SessionPersistence.COOKIE }))
       })
     })
 
@@ -46,7 +47,7 @@ describe('session store', () => {
         const sessionStoreStrategyType = await selectSessionStoreStrategyType(
           makeConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionPersistence: SessionPersistence.LOCAL_STORAGE })
         )
-        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.LOCAL_STORAGE }))
+        expect(sessionStoreStrategyType).toEqual(expect.objectContaining({ type: SessionPersistence.LOCAL_STORAGE }))
       })
 
       it('returns undefined when local storage is not available', async () => {
@@ -63,18 +64,19 @@ describe('session store', () => {
         const sessionStoreStrategyType = await selectSessionStoreStrategyType(
           makeConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionPersistence: SessionPersistence.MEMORY })
         )
-        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.MEMORY }))
+        expect(sessionStoreStrategyType).toEqual(expect.objectContaining({ type: SessionPersistence.MEMORY }))
       })
     })
 
     it('returns undefined when sessionPersistence is invalid', async () => {
-      const displayErrorSpy = spyOn(display, 'error')
+      const displayErrorSpy = vi.spyOn(display, 'error')
 
       const sessionStoreStrategyType = await selectSessionStoreStrategyType(
         makeConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionPersistence: 'invalid' as SessionPersistence })
       )
       expect(sessionStoreStrategyType).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith("Invalid session persistence 'invalid'")
+      expect(displayErrorSpy).toHaveBeenCalledTimes(1)
+      expect(displayErrorSpy).toHaveBeenCalledWith("Invalid session persistence 'invalid'")
     })
 
     describe('sessionPersistence as array', () => {
@@ -85,7 +87,7 @@ describe('session store', () => {
             sessionPersistence: [SessionPersistence.COOKIE, SessionPersistence.LOCAL_STORAGE],
           })
         )
-        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.COOKIE }))
+        expect(sessionStoreStrategyType).toEqual(expect.objectContaining({ type: SessionPersistence.COOKIE }))
       })
 
       it('falls back to next strategy when first is unavailable', async () => {
@@ -96,7 +98,7 @@ describe('session store', () => {
             sessionPersistence: [SessionPersistence.COOKIE, SessionPersistence.LOCAL_STORAGE],
           })
         )
-        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.LOCAL_STORAGE }))
+        expect(sessionStoreStrategyType).toEqual(expect.objectContaining({ type: SessionPersistence.LOCAL_STORAGE }))
       })
 
       it('falls back to memory when cookie and local storage are unavailable', async () => {
@@ -112,7 +114,7 @@ describe('session store', () => {
             ],
           })
         )
-        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.MEMORY }))
+        expect(sessionStoreStrategyType).toEqual(expect.objectContaining({ type: SessionPersistence.MEMORY }))
       })
 
       it('returns undefined when no strategy in array is available', async () => {
@@ -138,7 +140,7 @@ describe('session store', () => {
         const sessionStoreStrategyType = await selectSessionStoreStrategyType(
           makeConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionPersistence: [SessionPersistence.LOCAL_STORAGE] })
         )
-        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.LOCAL_STORAGE }))
+        expect(sessionStoreStrategyType).toEqual(expect.objectContaining({ type: SessionPersistence.LOCAL_STORAGE }))
       })
 
       it('stops at first available strategy and does not try subsequent ones', async () => {
@@ -149,11 +151,11 @@ describe('session store', () => {
           })
         )
         // Should return local storage (first available), not cookie
-        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.LOCAL_STORAGE }))
+        expect(sessionStoreStrategyType).toEqual(expect.objectContaining({ type: SessionPersistence.LOCAL_STORAGE }))
       })
 
       it('returns undefined and logs error if array contains invalid persistence type', async () => {
-        const displayErrorSpy = spyOn(display, 'error')
+        const displayErrorSpy = vi.spyOn(display, 'error')
         const sessionStoreStrategyType = await selectSessionStoreStrategyType(
           makeConfiguration({
             ...DEFAULT_INIT_CONFIGURATION,
@@ -161,16 +163,19 @@ describe('session store', () => {
           })
         )
         expect(sessionStoreStrategyType).toBeUndefined()
-        expect(displayErrorSpy).toHaveBeenCalledOnceWith("Invalid session persistence 'invalid'")
+        expect(displayErrorSpy).toHaveBeenCalledTimes(1)
+        expect(displayErrorSpy).toHaveBeenCalledWith("Invalid session persistence 'invalid'")
       })
     })
 
     function disableCookies() {
-      spyOnProperty(document, 'cookie', 'get').and.returnValue('')
+      vi.spyOn(document, 'cookie', 'get').mockReturnValue('')
       replaceMockable(globalObject.cookieStore, undefined)
     }
     function disableLocalStorage() {
-      spyOn(Storage.prototype, 'getItem').and.throwError('unavailable')
+      vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+        throw new Error('unavailable')
+      })
     }
   })
 })

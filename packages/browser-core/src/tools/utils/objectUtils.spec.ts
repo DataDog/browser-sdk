@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { getConstructorName } from './objectUtils'
 
 describe('objectUtils', () => {

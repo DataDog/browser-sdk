@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import { readBytesFromStream } from './readBytesFromStream'
 
 describe('readBytesFromStream', () => {
@@ -28,9 +29,9 @@ describe('readBytesFromStream', () => {
 
     try {
       await readBytesFromStream(stream)
-      fail('Should have thrown an error')
+      throw new Error('Should have thrown an error')
     } catch (error) {
-      expect(error).toEqual(jasmine.any(Error))
+      expect(error).toEqual(expect.any(Error))
     }
   })
 

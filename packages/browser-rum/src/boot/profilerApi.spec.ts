@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { MID_HASH_UUID, replaceMockableWithSpy, createSessionManagerMock } from '@datadog/browser-core/test'
 import { mockRumConfiguration, mockViewHistory } from '@datadog/browser-rum-core/test'
 import { createHooks, LifeCycle } from '@datadog/browser-rum-core'

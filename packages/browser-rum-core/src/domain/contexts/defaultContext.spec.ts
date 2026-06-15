@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import { mockClock, mockEventBridge } from '@datadog/browser-core/test'
 import { timeStampNow } from '@datadog/js-core/time'
 import type { RelativeTime } from '@datadog/js-core/time'
@@ -29,9 +30,9 @@ describe('startDefaultContext', () => {
         },
         date: timeStampNow(),
         source: 'browser',
-        _dd: jasmine.objectContaining({
+        _dd: expect.objectContaining({
           format_version: 2,
-          drift: jasmine.any(Number),
+          drift: expect.any(Number),
         }),
       })
     })

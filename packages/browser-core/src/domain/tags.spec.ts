@@ -1,6 +1,7 @@
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { display } from '../tools/display'
 import type { Configuration } from './configuration'
-import { buildTag, buildTags, TAG_SIZE_LIMIT } from './tags'
+import { buildTag, buildTags, supportUnicodePropertyEscapes, TAG_SIZE_LIMIT } from './tags'
 
 const LARGE_VALUE = Array(TAG_SIZE_LIMIT + 10).join('a')
 
@@ -18,9 +19,14 @@ describe('buildTags', () => {
 })
 
 describe('buildTag warning', () => {
-  let displaySpy: jasmine.Spy<typeof display.warn>
-  beforeEach(() => {
-    displaySpy = spyOn(display, 'warn')
+  let displaySpy: Mock<typeof display.warn>
+  beforeEach((ctx) => {
+    if (!supportUnicodePropertyEscapes()) {
+      ctx.skip(true, 'Unicode property escapes not supported')
+      return
+    }
+
+    displaySpy = vi.spyOn(display, 'warn')
   })
   ;(
     [
@@ -63,8 +69,9 @@ describe('buildTag warning', () => {
   })
 
   function expectWarning() {
-    expect(displaySpy).toHaveBeenCalledOnceWith(
-      jasmine.stringMatching("Tag .* doesn't meet tag requirements and will be sanitized")
+    expect(displaySpy).toHaveBeenCalledTimes(1)
+    expect(displaySpy).toHaveBeenCalledWith(
+      expect.stringMatching("Tag .* doesn't meet tag requirements and will be sanitized")
     )
   }
 })

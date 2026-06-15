@@ -1,3 +1,4 @@
+import { vi, describe, expect, it } from 'vitest'
 import type { RelativeTime } from '@datadog/js-core/time'
 import { DISCARDED, SKIPPED, createHook } from './abstractHooks'
 
@@ -6,7 +7,7 @@ describe('createHook', () => {
 
   it('unregisters a callback', () => {
     const hook = createHook<typeof hookParams, object>()
-    const callback = jasmine.createSpy().and.returnValue({ service: 'foo' })
+    const callback = vi.fn().mockReturnValue({ service: 'foo' })
 
     const { unregister } = hook.register(callback)
     unregister()
@@ -19,8 +20,8 @@ describe('createHook', () => {
 
   it('combines results from multiple callbacks', () => {
     const hook = createHook<typeof hookParams, object>()
-    const callback1 = jasmine.createSpy().and.returnValue({ type: 'action', service: 'foo' })
-    const callback2 = jasmine.createSpy().and.returnValue({ type: 'action', version: 'bar' })
+    const callback1 = vi.fn().mockReturnValue({ type: 'action', service: 'foo' })
+    const callback2 = vi.fn().mockReturnValue({ type: 'action', version: 'bar' })
 
     hook.register(callback1)
     hook.register(callback2)
@@ -34,8 +35,8 @@ describe('createHook', () => {
 
   it('does not combine undefined results from callbacks', () => {
     const hook = createHook<typeof hookParams, object>()
-    const callback1 = jasmine.createSpy().and.returnValue({ type: 'action', service: 'foo' })
-    const callback2 = jasmine.createSpy().and.returnValue(undefined)
+    const callback1 = vi.fn().mockReturnValue({ type: 'action', service: 'foo' })
+    const callback2 = vi.fn().mockReturnValue(undefined)
 
     hook.register(callback1)
     hook.register(callback2)
@@ -47,9 +48,9 @@ describe('createHook', () => {
 
   it('returns DISCARDED if one callback returns DISCARDED', () => {
     const hook = createHook<typeof hookParams, object>()
-    const callback1 = jasmine.createSpy().and.returnValue({ type: 'action', service: 'foo' })
-    const callback2 = jasmine.createSpy().and.returnValue(DISCARDED)
-    const callback3 = jasmine.createSpy().and.returnValue({ type: 'action', version: 'bar' })
+    const callback1 = vi.fn().mockReturnValue({ type: 'action', service: 'foo' })
+    const callback2 = vi.fn().mockReturnValue(DISCARDED)
+    const callback3 = vi.fn().mockReturnValue({ type: 'action', version: 'bar' })
 
     hook.register(callback1)
     hook.register(callback2)
@@ -65,8 +66,8 @@ describe('createHook', () => {
 
   it('skips callbacks that return SKIPPED', () => {
     const hook = createHook<typeof hookParams, object>()
-    const callback1 = jasmine.createSpy().and.returnValue(SKIPPED)
-    const callback2 = jasmine.createSpy().and.returnValue({ type: 'action', service: 'foo' })
+    const callback1 = vi.fn().mockReturnValue(SKIPPED)
+    const callback2 = vi.fn().mockReturnValue({ type: 'action', service: 'foo' })
 
     hook.register(callback1)
     hook.register(callback2)

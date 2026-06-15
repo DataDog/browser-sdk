@@ -1,3 +1,4 @@
+import { describe, it, expect, vi } from 'vitest'
 import type { EnvironmentInjector } from '@angular/core'
 import { ErrorHandler, Injector, createEnvironmentInjector } from '@angular/core'
 import { initializeAngularPlugin } from '../../../test/initializeAngularPlugin'
@@ -10,10 +11,10 @@ function createErrorHandler(): ErrorHandler {
 
 describe('provideDatadogErrorHandler', () => {
   it('provides an ErrorHandler that reports errors to Datadog', () => {
-    const addErrorSpy = jasmine.createSpy()
+    const addErrorSpy = vi.fn()
     initializeAngularPlugin({ addError: addErrorSpy })
 
-    spyOn(console, 'error') // Mute console.errors
+    vi.spyOn(console, 'error').mockImplementation(() => true) // Mute console.errors
     const handler = createErrorHandler()
     handler.handleError(new Error('test error'))
 
@@ -23,7 +24,7 @@ describe('provideDatadogErrorHandler', () => {
   it('still logs the error to the console via default ErrorHandler', () => {
     initializeAngularPlugin()
 
-    const consoleErrorSpy = spyOn(console, 'error')
+    const consoleErrorSpy = vi.spyOn(console, 'error')
     const handler = createErrorHandler()
     handler.handleError(new Error('test error'))
 

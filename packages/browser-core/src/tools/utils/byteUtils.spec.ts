@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { computeBytesCount, concatBuffers } from './byteUtils'
 
 describe('byteUtils', () => {

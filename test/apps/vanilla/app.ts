@@ -27,5 +27,8 @@ if (typeof window !== 'undefined') {
   datadogLogs.init({ clientToken: 'xxx', beforeSend: undefined })
   datadogRum.init({ clientToken: 'xxx', applicationId: 'xxx', beforeSend: undefined })
   datadogRum.setUser({ id: undefined })
-  datadogDebugger.init({ clientToken: 'xxx', service: 'xxx' })
+  ;(datadogDebugger as { init: (config: { clientToken: string; service: string }) => void }).init({
+    clientToken: 'xxx',
+    service: 'xxx',
+  })
 }
