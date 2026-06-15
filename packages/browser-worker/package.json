@@ -30,5 +30,8 @@
   },
   "devDependencies": {
     "webpack": "5.107.2"
+  },
+  "bugs": {
+    "url": "https://github.com/DataDog/browser-sdk/issues"
   }
 }
