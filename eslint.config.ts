@@ -305,7 +305,7 @@ export default defineConfig(
         },
       ],
 
-      'unicorn/filename-case': ['error', { case: 'camelCase' }],
+      'unicorn/filename-case': ['error', { case: 'camelCase', checkDirectories: false }],
       'unicorn/no-empty-file': 'error',
     },
   },
@@ -340,7 +340,7 @@ export default defineConfig(
     files: ['scripts/**', 'packages/*/scripts/**'],
     ignores: ['**/lib/**'],
     rules: {
-      'unicorn/filename-case': ['error', { case: 'kebabCase' }],
+      'unicorn/filename-case': ['error', { case: 'kebabCase', checkDirectories: false }],
     },
   },
 
