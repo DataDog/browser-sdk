@@ -54,7 +54,7 @@ export function startResourceCollection(lifeCycle: LifeCycle, configuration: Rum
   const requestRegistry = createRequestRegistry(lifeCycle)
 
   lifeCycle.subscribe(LifeCycleEventType.WEBSOCKET_COMPLETED, (event: WebSocketCompleteEvent) => {
-    handleResource(() => assembleWebSocketResource(event))
+    handleResource(() => assembleWebSocketResource(event, configuration))
   })
   const performanceResourceSubscription = createPerformanceObservable({
     type: RumPerformanceEntryType.RESOURCE,
@@ -114,7 +114,8 @@ export function startResourceCollection(lifeCycle: LifeCycle, configuration: Rum
 }
 
 function assembleWebSocketResource(
-  event: WebSocketCompleteEvent
+  event: WebSocketCompleteEvent,
+  configuration: RumConfiguration
 ): RawRumEventCollectedData<RawRumResourceEvent> | undefined {
   const duration = elapsed(event.startClocks.timeStamp, event.endClocks.timeStamp)
 
@@ -150,7 +151,7 @@ function assembleWebSocketResource(
       },
     },
     _dd: {
-      discarded: false,
+      discarded: !configuration.trackResources,
     },
   }
 
