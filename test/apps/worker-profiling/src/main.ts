@@ -10,7 +10,7 @@
  */
 import { datadogRum } from '@datadog/browser-rum'
 
-const PROXY_ORIGIN = 'http://localhost:8082'
+const PROXY_ORIGIN = ''  // same origin as the page (webpack-dev-server handles /proxy and /events)
 
 // ---------------------------------------------------------------------------
 // RUM init
@@ -27,7 +27,7 @@ datadogRum.init({
   trackResources: true,
   trackLongTasks: true,
   // All intake traffic goes to the local proxy server so nothing leaves the machine
-  proxy: PROXY_ORIGIN + '/proxy',
+  proxy: '/proxy',
 })
 
 // ---------------------------------------------------------------------------
@@ -135,7 +135,7 @@ const proxyStatus = document.getElementById('proxy-status')!
 let profileCount = 0
 
 function connectSSE(): void {
-  const es = new EventSource(`${PROXY_ORIGIN}/events`)
+  const es = new EventSource('/events')
 
   es.onopen = () => {
     proxyStatus.textContent = '🟢 Connected to proxy'
