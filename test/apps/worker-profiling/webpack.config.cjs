@@ -14,6 +14,7 @@ module.exports = {
   entry: {
     main: './src/main.ts',
     worker: './src/profilingWorker.ts',
+    'short-lived-worker': './src/shortLivedWorker.ts',
   },
 
   target: ['web', 'es2020'],

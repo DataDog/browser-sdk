@@ -48,12 +48,14 @@ export function createWorkerProfilingCoordinator(
     }
 
     const correlationId = generateUUID()
+    console.log(`[DD Coordinator] addWorker name=${options?.name ?? '(unnamed)'} correlationId=${correlationId}`)
 
     const messageListener = (event: MessageEvent) => {
       const response = event.data as WorkerProfilingResponse
       if (!response || typeof response.type !== 'string') {
         return
       }
+      console.log(`[DD Coordinator] received from worker: ${response.type}`)
       if (response.type === 'dd-worker-trace') {
         handleWorkerTrace(registration, response)
       } else if (response.type === 'dd-worker-error') {
@@ -80,11 +82,14 @@ export function createWorkerProfilingCoordinator(
 
     // If profiling is already active, start this worker immediately
     if (activeOptions) {
+      console.log(`[DD Coordinator] profiling already active — sending dd-start-profiling immediately to worker ${registration.name ?? '(unnamed)'}`)
       sendCommand(registration, {
         type: 'dd-start-profiling',
         ...activeOptions,
         correlationId,
       })
+    } else {
+      console.log(`[DD Coordinator] profiling not yet active — worker will start when start() is called`)
     }
   }
 
@@ -98,8 +103,10 @@ export function createWorkerProfilingCoordinator(
   }
 
   function start(sampleIntervalMs: number, maxBufferSize: number, collectIntervalMs: number): void {
+    console.log(`[DD Coordinator] start() — ${registrations.size} worker(s) registered sampleInterval=${sampleIntervalMs}ms collectInterval=${collectIntervalMs}ms`)
     activeOptions = { sampleIntervalMs, maxBufferSize, collectIntervalMs }
     registrations.forEach((registration) => {
+      console.log(`[DD Coordinator] sending dd-start-profiling to worker ${registration.name ?? '(unnamed)'} correlationId=${registration.correlationId}`)
       sendCommand(registration, {
         type: 'dd-start-profiling',
         sampleIntervalMs,
@@ -111,6 +118,7 @@ export function createWorkerProfilingCoordinator(
   }
 
   function stop(): void {
+    console.log('[DD Coordinator] stop() — sending dd-stop-profiling to all workers')
     activeOptions = undefined
     registrations.forEach((registration) => {
       sendCommand(registration, { type: 'dd-stop-profiling' })
@@ -146,6 +154,8 @@ export function createWorkerProfilingCoordinator(
   ): void {
     try {
       const sessionId = session.findTrackedSession()?.id
+      const durationMs = response.endTimeStamp - response.startTimeStamp
+      console.log(`[DD Coordinator] handleWorkerTrace — worker=${registration.name ?? '(unnamed)'} correlationId=${response.correlationId} durationMs=${durationMs} sessionId=${sessionId ?? '(none)'}`)
       const payload = assembleWorkerProfilingPayload(
         response.trace,
         response.startTimeStamp,
@@ -155,8 +165,10 @@ export function createWorkerProfilingCoordinator(
         configuration,
         sessionId
       )
+      console.log('[DD Coordinator] sending worker profile payload via transport')
       void transport.send(payload as unknown as TransportPayload)
     } catch (e) {
+      console.error('[DD Coordinator] handleWorkerTrace error:', e)
       monitorError(e)
     }
   }
