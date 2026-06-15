@@ -46,7 +46,8 @@ export function createRumProfiler(
   profilingContextManager: ProfilingContextManager,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
   viewHistory: ViewHistory,
-  profilerConfiguration: RUMProfilerConfiguration = DEFAULT_RUM_PROFILER_CONFIGURATION
+  profilerConfiguration: RUMProfilerConfiguration = DEFAULT_RUM_PROFILER_CONFIGURATION,
+  getWorkerCorrelationIds: () => string[] = () => []
 ): RUMProfiler {
   const transport = createFormDataTransport(configuration, lifeCycle, createEncoder, DeflateEncoderStreamId.PROFILING)
 
@@ -360,7 +361,8 @@ export function createRumProfiler(
   }
 
   function handleProfilerTrace(trace: BrowserProfilerTrace, sessionId: string | undefined): void {
-    const payload = assembleProfilingPayload(trace, configuration, sessionId)
+    const workerCorrelationIds = getWorkerCorrelationIds()
+    const payload = assembleProfilingPayload(trace, configuration, sessionId, workerCorrelationIds)
 
     void transport.send(payload as unknown as TransportPayload)
   }

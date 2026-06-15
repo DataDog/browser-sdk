@@ -5,9 +5,13 @@ import type { RUMProfiler } from '../domain/profiling/types'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { startProfilingContext } from '../domain/profiling/profilingContext'
 import { lazyLoadProfiler } from './lazyLoadProfiler'
+import { createWorkerProfilingCoordinator } from '../domain/profiling/workerProfilingCoordinator'
+import type { WorkerProfilingCoordinator } from '../domain/profiling/workerProfilingCoordinator'
+import { DEFAULT_RUM_PROFILER_CONFIGURATION } from '../domain/profiling/datadogProfiler'
 
 export function makeProfilerApi(): ProfilerApi {
   let profiler: RUMProfiler | undefined
+  let workerCoordinator: WorkerProfilingCoordinator | undefined
 
   function onRumStart(
     lifeCycle: LifeCycle,
@@ -49,6 +53,8 @@ export function makeProfilerApi(): ProfilerApi {
       return
     }
 
+    workerCoordinator = createWorkerProfilingCoordinator(configuration, lifeCycle, sessionManager, createEncoder)
+
     lazyLoadProfiler()
       .then((createRumProfiler) => {
         if (!createRumProfiler) {
@@ -63,9 +69,16 @@ export function makeProfilerApi(): ProfilerApi {
           profilingContextManager,
           createEncoder,
           viewHistory,
-          undefined
+          undefined,
+          () => workerCoordinator?.getCorrelationIds() ?? []
         )
         profiler.start()
+
+        workerCoordinator?.start(
+          DEFAULT_RUM_PROFILER_CONFIGURATION.sampleIntervalMs,
+          Math.round((DEFAULT_RUM_PROFILER_CONFIGURATION.collectIntervalMs * 1.5) / DEFAULT_RUM_PROFILER_CONFIGURATION.sampleIntervalMs),
+          DEFAULT_RUM_PROFILER_CONFIGURATION.collectIntervalMs
+        )
       })
       .catch(monitorError)
   }
@@ -74,6 +87,8 @@ export function makeProfilerApi(): ProfilerApi {
     onRumStart,
     stop: () => {
       profiler?.stop()
+      workerCoordinator?.stop()
     },
+    getWorkerCoordinator: () => workerCoordinator,
   }
 }

@@ -12,9 +12,10 @@ export interface ProfileEventPayload {
 export function assembleProfilingPayload(
   profilerTrace: BrowserProfilerTrace,
   configuration: RumConfiguration,
-  sessionId: string | undefined
+  sessionId: string | undefined,
+  workerCorrelationIds: string[] = []
 ): ProfileEventPayload {
-  const event = buildProfileEvent(profilerTrace, configuration, sessionId)
+  const event = buildProfileEvent(profilerTrace, configuration, sessionId, workerCorrelationIds)
 
   return {
     event,
@@ -25,11 +26,12 @@ export function assembleProfilingPayload(
 function buildProfileEvent(
   profilerTrace: BrowserProfilerTrace,
   configuration: RumConfiguration,
-  sessionId: string | undefined
+  sessionId: string | undefined,
+  workerCorrelationIds: string[] = []
 ): ProfileEventPayload['event'] {
   const tags = buildTags(configuration) // TODO: get that from the tagContext hook
   const profileAttributes = buildProfileEventAttributes(profilerTrace, configuration.applicationId, sessionId)
-  const profileEventTags = buildProfileEventTags(tags)
+  const profileEventTags = buildProfileEventTags(tags, workerCorrelationIds)
 
   const profileEvent: ProfileEventPayload['event'] = {
     ...profileAttributes,
@@ -55,10 +57,16 @@ function buildProfileEvent(
  * @param tags - RUM tags
  * @returns Combined tags for the Profile Event.
  */
-function buildProfileEventTags(tags: string[]): string[] {
+function buildProfileEventTags(tags: string[], workerCorrelationIds: string[] = []): string[] {
   // Tags already contains the common tags for all events. (service, env, version, etc.)
   // Here we are adding some specific-to-profiling tags.
   const profileEventTags = tags.concat(['language:javascript', 'runtime:chrome', 'family:chrome', 'host:browser'])
+
+  // Include correlation IDs of all currently registered workers so the backend can join
+  // this main-thread profile with the worker profiles collected in the same session.
+  for (const correlationId of workerCorrelationIds) {
+    profileEventTags.push(`thread.correlation_id:${correlationId}`)
+  }
 
   return profileEventTags
 }
