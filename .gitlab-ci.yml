@@ -608,6 +608,8 @@ performance-benchmark:
       - $TARGET_TASK_NAME == "performance-benchmark-scheduled"
   script:
     - yarn
+    - yarn build
+    - yarn build:apps
     - yarn test:performance
 
 api-performance-benchmark:
