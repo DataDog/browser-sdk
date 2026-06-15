@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Worker Profiling — Datadog Browser SDK</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: #0f1117;
+        color: #e6edf3;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 48px 24px;
+        gap: 32px;
+      }
+
+      header {
+        text-align: center;
+      }
+
+      header h1 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin-bottom: 8px;
+      }
+
+      header p {
+        color: #8b949e;
+        font-size: 0.9rem;
+        max-width: 520px;
+        line-height: 1.6;
+      }
+
+      .badge {
+        display: inline-block;
+        background: #1c2a3a;
+        border: 1px solid #30363d;
+        border-radius: 999px;
+        padding: 4px 12px;
+        font-size: 0.75rem;
+        color: #58a6ff;
+        margin-bottom: 16px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .card {
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 12px;
+        padding: 28px;
+        width: 100%;
+        max-width: 640px;
+      }
+
+      .card h2 {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #8b949e;
+        margin-bottom: 20px;
+        font-weight: 600;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+
+      .stat {
+        background: #0d1117;
+        border: 1px solid #21262d;
+        border-radius: 8px;
+        padding: 16px;
+      }
+
+      .stat-label {
+        font-size: 0.75rem;
+        color: #8b949e;
+        margin-bottom: 6px;
+        font-weight: 500;
+      }
+
+      .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        color: #f0f6fc;
+        font-family: "SF Mono", ui-monospace, monospace;
+      }
+
+      .status-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+
+      #worker-status {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #2da44e;
+      }
+
+      .controls {
+        display: flex;
+        gap: 10px;
+      }
+
+      button {
+        padding: 8px 18px;
+        border-radius: 6px;
+        border: 1px solid transparent;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.15s;
+      }
+
+      button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      #btn-stop {
+        background: #da3633;
+        color: #fff;
+        border-color: #b91c1c;
+      }
+
+      #btn-restart {
+        background: #238636;
+        color: #fff;
+        border-color: #1a7f37;
+      }
+
+      .info-card {
+        background: #0d1117;
+        border: 1px solid #1f4e79;
+        border-radius: 8px;
+        padding: 16px 20px;
+        font-size: 0.8rem;
+        color: #8b949e;
+        line-height: 1.7;
+        max-width: 640px;
+        width: 100%;
+      }
+
+      .info-card strong {
+        color: #58a6ff;
+      }
+
+      .workloads {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .workload-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px 14px;
+        background: #0d1117;
+        border: 1px solid #21262d;
+        border-radius: 8px;
+      }
+
+      .workload-icon {
+        font-size: 1.25rem;
+        flex-shrink: 0;
+        margin-top: 1px;
+      }
+
+      .workload-name {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #e6edf3;
+        margin-bottom: 2px;
+      }
+
+      .workload-desc {
+        font-size: 0.775rem;
+        color: #8b949e;
+        line-height: 1.5;
+      }
+
+      code {
+        font-family: "SF Mono", ui-monospace, monospace;
+        background: #21262d;
+        padding: 1px 5px;
+        border-radius: 4px;
+        font-size: 0.85em;
+        color: #79c0ff;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="badge">Experimental · Chromium Canary</div>
+      <h1>Worker CPU Profiling</h1>
+      <p>
+        Demonstrates Datadog's experimental web worker profiling feature (PROF-15093).
+        A dedicated worker runs CPU-intensive tasks while the JS Self-Profiling API
+        captures its call stacks and ships them to Datadog alongside the main-thread profile.
+      </p>
+    </header>
+
+    <div class="card">
+      <div class="status-row">
+        <span id="worker-status">🟢 Worker running</span>
+        <div class="controls">
+          <button id="btn-stop">⏹ Stop worker</button>
+          <button id="btn-restart" disabled>▶ Restart worker</button>
+        </div>
+      </div>
+
+      <h2>Live worker stats</h2>
+      <div class="stats-grid">
+        <div class="stat">
+          <div class="stat-label">Loop iterations</div>
+          <div class="stat-value" id="stat-iterations">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Primes found (sieve)</div>
+          <div class="stat-value" id="stat-primes">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">fib(30) result</div>
+          <div class="stat-value" id="stat-fib">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Matrix / Mandelbrot ops</div>
+          <div class="stat-value" id="stat-matrix-ops">0</div>
+        </div>
+        <div class="stat" style="grid-column: 1 / -1;">
+          <div class="stat-label">Elapsed</div>
+          <div class="stat-value" id="stat-elapsed">0.0s</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Worker workloads</h2>
+      <div class="workloads">
+        <div class="workload-item">
+          <div class="workload-icon">🔢</div>
+          <div>
+            <div class="workload-name">Sieve of Eratosthenes</div>
+            <div class="workload-desc">
+              Finds all primes up to 50,000. Produces <code>sieve()</code> →
+              inner loop stacks in the profiler.
+            </div>
+          </div>
+        </div>
+        <div class="workload-item">
+          <div class="workload-icon">🌀</div>
+          <div>
+            <div class="workload-name">Recursive Fibonacci</div>
+            <div class="workload-desc">
+              Computes <code>fib(30)</code> recursively (2× branching).
+              Generates deep, flamegraph-friendly call stacks.
+            </div>
+          </div>
+        </div>
+        <div class="workload-item">
+          <div class="workload-icon">🟦</div>
+          <div>
+            <div class="workload-name">Matrix multiplication</div>
+            <div class="workload-desc">
+              Multiplies two 80×80 matrices of floats. Tests sustained
+              numeric throughput with tight inner loops.
+            </div>
+          </div>
+        </div>
+        <div class="workload-item">
+          <div class="workload-icon">🌌</div>
+          <div>
+            <div class="workload-name">Mandelbrot set</div>
+            <div class="workload-desc">
+              Iterates over a 100×100 pixel grid with up to 80 escape
+              iterations per point. Mix of branches and arithmetic.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <strong>Requirements:</strong> Chromium Canary with flags
+      <code>--enable-features=DocumentPolicyInDedicatedWorker,ProfilerAPIForDedicatedWorker</code>
+      (or <code>--enable-experimental-web-platform-features</code>).
+      The dev server automatically serves both the page and the worker script
+      with the <code>Document-Policy: js-profiling</code> header.
+    </div>
+  </body>
+</html>
