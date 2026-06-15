@@ -1,16 +1,20 @@
 /**
- * Short-lived worker (variant 2) — closed from the main thread.
+ * Short-lived worker (variant B — main-thread-close).
  *
- * Does a burst of CPU work, then posts { kind: 'done' } and waits.
- * The main thread calls datadogRum.flushAndTerminateProfilingWorker(worker),
- * which sends dd-flush-and-close, causing the agent to flush then self.close().
+ * The worker just does its work. The main thread decides when to stop it
+ * by calling datadogRum.flushAndTerminateProfilingWorker(worker), which:
+ *   1. Sends dd-flush-and-close to the worker
+ *   2. Worker flushes its profiling session and calls self.close()
+ *   3. Main thread hard-terminates after a 5s safety timeout
+ *
+ * No postMessage, no signaling, no manual cleanup needed in the worker.
  */
 import { connectDatadogWorker } from '@datadog/browser-rum/worker'
 
 connectDatadogWorker()
 
 // ---------------------------------------------------------------------------
-// Workloads (different from shortLivedWorker.ts so they look distinct in profiles)
+// Workloads
 // ---------------------------------------------------------------------------
 
 function insertionSort(arr: number[]): number[] {
@@ -33,7 +37,6 @@ function collatz(n: number): number {
 }
 
 function polynomialEval(coeffs: number[], x: number): number {
-  // Horner's method
   let result = 0
   for (let i = coeffs.length - 1; i >= 0; i--) {
     result = result * x + coeffs[i]
@@ -42,20 +45,11 @@ function polynomialEval(coeffs: number[], x: number): number {
 }
 
 // ---------------------------------------------------------------------------
-// Burst
+// Run indefinitely — main thread controls lifecycle
 // ---------------------------------------------------------------------------
-const BURST_DURATION_MS = 5_000
-const startTime = Date.now()
 let batches = 0
 
-function runBurst(): void {
-  const elapsed = Date.now() - startTime
-  if (elapsed >= BURST_DURATION_MS) {
-    // Signal done — main thread will call flushAndTerminateProfilingWorker()
-    self.postMessage({ kind: 'done', batches, elapsedMs: elapsed })
-    return
-  }
-
+function runBatch(): void {
   const phase = batches % 3
   if (phase === 0) {
     const arr = Array.from({ length: 2_000 }, (_, i) => Math.cos(i))
@@ -72,7 +66,7 @@ function runBurst(): void {
   }
 
   batches++
-  setTimeout(runBurst, 0)
+  setTimeout(runBatch, 0)
 }
 
-setTimeout(runBurst, 0)
+setTimeout(runBatch, 0)
