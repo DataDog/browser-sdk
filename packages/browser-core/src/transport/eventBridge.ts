@@ -65,7 +65,7 @@ export function matchesHostEntry(host: string, entry: string): boolean {
     return false
   }
   const [prefix, suffix] = parts
-  return host.length >= prefix.length + suffix.length && host.startsWith(prefix) && host.endsWith(suffix)
+  return host.length > prefix.length + suffix.length && host.startsWith(prefix) && host.endsWith(suffix)
 }
 
 function getEventBridgeGlobal() {
