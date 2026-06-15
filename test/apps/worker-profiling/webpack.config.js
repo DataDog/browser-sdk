@@ -18,7 +18,7 @@ module.exports = {
     worker: './src/profilingWorker.ts',
   },
 
-  target: ['web', 'es2018'],
+  target: ['web', 'es2020'],
 
   module: {
     rules: [
@@ -40,10 +40,7 @@ module.exports = {
 
   resolve: {
     extensions: ['.ts', '.js'],
-    plugins: [
-      // Resolve @datadog/* imports to monorepo sources via tsconfig paths
-      new TsconfigPathsPlugin({ configFile: tsconfigPath }),
-    ],
+    plugins: [new TsconfigPathsPlugin({ configFile: tsconfigPath })],
   },
 
   output: {
@@ -54,19 +51,17 @@ module.exports = {
 
   plugins: [
     // Replace the build-time env constants that the SDK source references.
-    // In the test app we just hardcode dev-mode values.
     new webpack.DefinePlugin({
       __BUILD_ENV__SDK_VERSION__: JSON.stringify('dev'),
       __BUILD_ENV__SDK_SETUP__: JSON.stringify('npm'),
       // WORKER_STRING is the deflate worker bundle inlined as a string.
-      // We provide an empty string so the deflate worker simply won't load,
-      // which is fine for this test app (no session replay, no deflate needed).
+      // Empty string: deflate worker simply won't load (no session replay needed).
       __BUILD_ENV__WORKER_STRING__: JSON.stringify(''),
     }),
 
     new HtmlWebpackPlugin({
       template: './src/index.html',
-      // Only inject the main bundle into the HTML; worker.js is loaded explicitly
+      // Only inject the main bundle; worker.js is loaded explicitly
       chunks: ['main'],
       filename: 'index.html',
     }),
@@ -91,7 +86,6 @@ module.exports = {
   },
 
   optimization: {
-    // Keep chunks together for simplicity in the test app
     splitChunks: false,
     runtimeChunk: false,
   },
