@@ -100,14 +100,14 @@ export interface WebSocketResourceProperties {
   was_clean?: boolean
   messages_in: { count: number; size: number }
   messages_out: { count: number; size: number }
-  time_to_first_message_in?: Duration
-  time_to_first_message_out?: Duration
+  time_to_first_message_in?: ServerDuration
+  time_to_first_message_out?: ServerDuration
   last_message_in_at?: TimeStamp
-  longest_inbound_silence: Duration
-  inbound_idle_duration_before_close?: Duration
+  longest_inbound_silence: ServerDuration
+  inbound_idle_duration_before_close?: ServerDuration
   buffered_amount_max?: number
   protocol?: string
-  setup_duration?: Duration
+  setup_duration?: ServerDuration
 }
 
 export type NetworkHeaders = Record<string, string>
