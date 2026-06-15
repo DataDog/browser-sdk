@@ -214,12 +214,7 @@ describe('collect xhr', () => {
         context.spanId = createSpanIdentifier()
       },
     }
-    ;({ stop: stopXhrTracking } = trackXhr(
-      lifeCycle,
-      mockRumConfiguration(),
-      tracerStub as Tracer,
-      bufferedDataObservable
-    ))
+    ;({ stop: stopXhrTracking } = trackXhr(lifeCycle, tracerStub as Tracer, bufferedDataObservable))
 
     registerCleanupTask(() => {
       stopXhrTracking()

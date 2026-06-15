@@ -127,6 +127,97 @@ describe('condition', () => {
       }
     })
 
+    it('should handle cross-realm Error condition failures', () => {
+      const iframe = document.createElement('iframe')
+      document.body.appendChild(iframe)
+      const iframeWindow = iframe.contentWindow as Window & { Error: ErrorConstructor }
+      const iframeError = new iframeWindow.Error('Iframe error')
+      iframe.remove()
+      const probe: any = {
+        when: {
+          dsl: 'throw iframe error',
+        },
+        condition: {
+          evaluate: () => () => {
+            throw iframeError
+          },
+        },
+      }
+
+      try {
+        evaluateProbeCondition(probe, {})
+        expect.unreachable()
+      } catch (error) {
+        expect(isConditionEvaluationError(error)).toBe(true)
+        expect(isConditionEvaluationError(error) && error.evaluationError).toEqual({
+          expr: 'throw iframe error',
+          message: 'Error: Iframe error',
+        })
+      }
+    })
+
+    it('should handle condition errors that cannot be coerced to strings', () => {
+      const probe: any = {
+        when: {
+          dsl: 'throw non-coercible value',
+        },
+        condition: {
+          evaluate: () => () => {
+            // eslint-disable-next-line @typescript-eslint/only-throw-error
+            throw {
+              toString() {
+                throw new Error('Cannot coerce')
+              },
+            }
+          },
+        },
+      }
+
+      try {
+        evaluateProbeCondition(probe, {})
+        expect.unreachable()
+      } catch (error) {
+        expect(isConditionEvaluationError(error)).toBe(true)
+        expect(isConditionEvaluationError(error) && error.evaluationError).toEqual({
+          expr: 'throw non-coercible value',
+          message: '<error: unable to stringify error>',
+        })
+      }
+    })
+
+    it('should handle Error-like condition errors with hostile name and message getters', () => {
+      const probe: any = {
+        when: {
+          dsl: 'throw hostile error-like value',
+        },
+        condition: {
+          evaluate: () => () => {
+            // eslint-disable-next-line @typescript-eslint/only-throw-error
+            throw {
+              [Symbol.toStringTag]: 'Error',
+              get name() {
+                throw new Error('Cannot read name')
+              },
+              get message() {
+                throw new Error('Cannot read message')
+              },
+            }
+          },
+        },
+      }
+
+      try {
+        evaluateProbeCondition(probe, {})
+        expect.unreachable()
+      } catch (error) {
+        expect(isConditionEvaluationError(error)).toBe(true)
+        expect(isConditionEvaluationError(error) && error.evaluationError).toEqual({
+          expr: 'throw hostile error-like value',
+          message: '[object Error]',
+        })
+      }
+    })
+
     it('should handle conditions with special variables', () => {
       const probe: any = {
         condition: compileCondition('$dd_return > 0'),

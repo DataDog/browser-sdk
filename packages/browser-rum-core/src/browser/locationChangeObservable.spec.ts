@@ -1,7 +1,6 @@
 import { vi, describe, expect, it } from 'vitest'
 import { globalObject } from '@datadog/browser-core'
 import { buildLocation, registerCleanupTask, replaceMockable } from '@datadog/browser-core/test'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { createLocationChangeObservable } from './locationChangeObservable'
 
 describe('locationChangeObservable', () => {
@@ -83,7 +82,7 @@ function setup() {
 
   history.pushState({}, '', '/foo')
 
-  const observable = createLocationChangeObservable({} as RumConfiguration)
+  const observable = createLocationChangeObservable()
   const observer = vi.fn()
   const subscription = observable.subscribe(observer)
 

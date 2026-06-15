@@ -1,12 +1,10 @@
 import { vi, beforeEach, describe, expect, it } from 'vitest'
 import { registerCleanupTask } from '../../../../test'
-import type { Configuration } from '../../configuration'
+import type { TrustableEvent } from '../../../browser/addEventListener'
 import type { SessionState } from '../sessionState'
 import { toSessionString } from '../sessionState'
 import { initLocalStorageStrategy, selectLocalStorageStrategy } from './sessionInLocalStorage'
 import { LEGACY_SESSION_STORE_KEY, SESSION_STORE_KEY } from './sessionStoreStrategy'
-
-const MOCK_CONFIGURATION = { allowUntrustedEvents: true } as Configuration
 
 describe('LocalStorage SessionStoreStrategy', () => {
   let strategy: ReturnType<typeof initLocalStorageStrategy>
@@ -14,7 +12,7 @@ describe('LocalStorage SessionStoreStrategy', () => {
   beforeEach(() => {
     localStorage.removeItem(SESSION_STORE_KEY)
     localStorage.removeItem(LEGACY_SESSION_STORE_KEY)
-    strategy = initLocalStorageStrategy(MOCK_CONFIGURATION)
+    strategy = initLocalStorageStrategy()
     registerCleanupTask(() => {
       localStorage.removeItem(SESSION_STORE_KEY)
       localStorage.removeItem(LEGACY_SESSION_STORE_KEY)
@@ -73,6 +71,7 @@ describe('LocalStorage SessionStoreStrategy', () => {
         newValue: toSessionString({ id: 'from-other-tab' }),
         storageArea: localStorage,
       })
+      ;(event as TrustableEvent).__ddIsTrusted = true
       window.dispatchEvent(event)
 
       expect(spy).toHaveBeenCalledTimes(1)
@@ -89,6 +88,7 @@ describe('LocalStorage SessionStoreStrategy', () => {
         newValue: 'value',
         storageArea: localStorage,
       })
+      ;(event as TrustableEvent).__ddIsTrusted = true
       window.dispatchEvent(event)
 
       expect(spy).not.toHaveBeenCalled()

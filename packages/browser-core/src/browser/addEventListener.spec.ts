@@ -1,18 +1,20 @@
-import { vi, beforeEach, describe, expect, it } from 'vitest'
-import type { Configuration } from '../domain/configuration'
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { createNewEvent, mockZoneJs, registerCleanupTask } from '../../test'
 import type { MockZoneJs } from '../../test'
 import { noop } from '../tools/utils/functionUtils'
-import { addEventListener, DOM_EVENT, isEventSupported } from './addEventListener'
+import {
+  addEventListener,
+  DOM_EVENT,
+  isEventSupported,
+  resetAllowUntrustedEvents,
+  setAllowUntrustedEvents,
+} from './addEventListener'
 
 describe('addEventListener', () => {
-  let configuration: Configuration
-
   describe('Zone.js support', () => {
     let zoneJs: MockZoneJs
 
     beforeEach(() => {
-      configuration = { allowUntrustedEvents: false } as Configuration
       zoneJs = mockZoneJs()
     })
 
@@ -21,7 +23,7 @@ describe('addEventListener', () => {
       const eventTarget = document.createElement('div')
       zoneJs.replaceProperty(eventTarget, 'addEventListener', zoneJsPatchedAddEventListener)
 
-      addEventListener(configuration, eventTarget, DOM_EVENT.CLICK, noop)
+      addEventListener(eventTarget, DOM_EVENT.CLICK, noop)
       expect(zoneJsPatchedAddEventListener).not.toHaveBeenCalled()
     })
 
@@ -30,7 +32,7 @@ describe('addEventListener', () => {
       const eventTarget = document.createElement('div')
       zoneJs.replaceProperty(eventTarget, 'removeEventListener', zoneJsPatchedRemoveEventListener)
 
-      const { stop } = addEventListener(configuration, eventTarget, DOM_EVENT.CLICK, noop)
+      const { stop } = addEventListener(eventTarget, DOM_EVENT.CLICK, noop)
       stop()
       expect(zoneJsPatchedRemoveEventListener).not.toHaveBeenCalled()
     })
@@ -54,7 +56,7 @@ describe('addEventListener', () => {
     htmlDivElement.addEventListener = vi.fn()
     htmlDivElement.removeEventListener = vi.fn()
 
-    const { stop } = addEventListener({ allowUntrustedEvents: false }, htmlDivElement, DOM_EVENT.CLICK, noop)
+    const { stop } = addEventListener(htmlDivElement, DOM_EVENT.CLICK, noop)
 
     const event = createNewEvent(DOM_EVENT.CLICK)
     htmlDivElement.dispatchEvent(event)
@@ -79,7 +81,7 @@ describe('addEventListener', () => {
       removeEventListener: vi.fn(),
     } as unknown as HTMLElement
 
-    const { stop } = addEventListener({ allowUntrustedEvents: false }, customEventTarget, 'change', listener)
+    const { stop } = addEventListener(customEventTarget, 'change', listener)
     stop()
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -90,13 +92,14 @@ describe('addEventListener', () => {
 
   describe('Untrusted event', () => {
     beforeEach(() => {
-      configuration = { allowUntrustedEvents: false } as Configuration
+      setAllowUntrustedEvents(false)
+      registerCleanupTask(resetAllowUntrustedEvents)
     })
 
     it('should be ignored if __ddIsTrusted is absent', () => {
       const listener = vi.fn()
       const eventTarget = document.createElement('div')
-      addEventListener(configuration, eventTarget, DOM_EVENT.CLICK, listener)
+      addEventListener(eventTarget, DOM_EVENT.CLICK, listener)
 
       const event = createNewEvent(DOM_EVENT.CLICK, { __ddIsTrusted: undefined })
       eventTarget.dispatchEvent(event)
@@ -106,7 +109,7 @@ describe('addEventListener', () => {
     it('should be ignored if __ddIsTrusted is false', () => {
       const listener = vi.fn()
       const eventTarget = document.createElement('div')
-      addEventListener(configuration, eventTarget, DOM_EVENT.CLICK, listener)
+      addEventListener(eventTarget, DOM_EVENT.CLICK, listener)
 
       const event = createNewEvent(DOM_EVENT.CLICK, { __ddIsTrusted: false })
       eventTarget.dispatchEvent(event)
@@ -116,7 +119,7 @@ describe('addEventListener', () => {
     it('should not be ignored if __ddIsTrusted is true', () => {
       const listener = vi.fn()
       const eventTarget = document.createElement('div')
-      addEventListener(configuration, eventTarget, DOM_EVENT.CLICK, listener)
+      addEventListener(eventTarget, DOM_EVENT.CLICK, listener)
 
       const event = createNewEvent(DOM_EVENT.CLICK, { __ddIsTrusted: true })
       eventTarget.dispatchEvent(event)
@@ -124,16 +127,70 @@ describe('addEventListener', () => {
       expect(listener).toHaveBeenCalled()
     })
 
-    it('should not be ignored if allowUntrustedEvents is true', () => {
+    it('should not be ignored if setAllowUntrustedEvents(true) was called', () => {
       const listener = vi.fn()
       const eventTarget = document.createElement('div')
-      configuration = { allowUntrustedEvents: true } as Configuration
+      setAllowUntrustedEvents(true)
 
-      addEventListener(configuration, eventTarget, DOM_EVENT.CLICK, listener)
+      addEventListener(eventTarget, DOM_EVENT.CLICK, listener)
 
       const event = createNewEvent(DOM_EVENT.CLICK, { __ddIsTrusted: undefined })
       eventTarget.dispatchEvent(event)
 
+      expect(listener).toHaveBeenCalled()
+    })
+  })
+
+  describe('setAllowUntrustedEvents', () => {
+    let listener: Mock<(event: PointerEvent & { type: DOM_EVENT.CLICK }) => void>
+    let eventTarget: HTMLElement
+
+    beforeEach(() => {
+      listener = vi.fn()
+      eventTarget = document.createElement('div')
+      addEventListener(eventTarget, DOM_EVENT.CLICK, listener)
+      registerCleanupTask(resetAllowUntrustedEvents)
+    })
+
+    function dispatchUntrustedClick() {
+      eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.CLICK, { __ddIsTrusted: undefined }))
+    }
+
+    it('passes untrusted events through before any SDK init (undefined state)', () => {
+      // allowUntrustedEventsFromConfiguration is undefined (reset between tests)
+      dispatchUntrustedClick()
+      expect(listener).toHaveBeenCalled()
+    })
+
+    it('filters untrusted events after setAllowUntrustedEvents(false)', () => {
+      setAllowUntrustedEvents(false)
+      dispatchUntrustedClick()
+      expect(listener).not.toHaveBeenCalled()
+    })
+
+    it('filters untrusted events after setAllowUntrustedEvents(undefined)', () => {
+      setAllowUntrustedEvents(undefined)
+      dispatchUntrustedClick()
+      expect(listener).not.toHaveBeenCalled()
+    })
+
+    it('allows untrusted events after setAllowUntrustedEvents(true)', () => {
+      setAllowUntrustedEvents(true)
+      dispatchUntrustedClick()
+      expect(listener).toHaveBeenCalled()
+    })
+
+    it('keeps the laxer value: once set to true, a subsequent false call has no effect', () => {
+      setAllowUntrustedEvents(true)
+      setAllowUntrustedEvents(false)
+      dispatchUntrustedClick()
+      expect(listener).toHaveBeenCalled()
+    })
+
+    it('can be upgraded from false to true', () => {
+      setAllowUntrustedEvents(false)
+      setAllowUntrustedEvents(true)
+      dispatchUntrustedClick()
       expect(listener).toHaveBeenCalled()
     })
   })

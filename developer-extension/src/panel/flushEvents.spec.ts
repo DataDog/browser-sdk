@@ -1,5 +1,4 @@
 import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
-import type { Configuration } from '@datadog/browser-core'
 import { registerCleanupTask } from '../../../packages/browser-core/test'
 import type { PageMayExitEvent } from '../../../packages/browser-core/src/browser/pageMayExitObservable'
 import { createPageMayExitObservable } from '../../../packages/browser-core/src/browser/pageMayExitObservable'
@@ -7,12 +6,10 @@ import { flushScript } from './flushEvents'
 
 describe('flushEvents', () => {
   let onExitSpy: Mock<(event: PageMayExitEvent) => void>
-  let configuration: Configuration
 
   beforeEach(() => {
     onExitSpy = vi.fn()
-    configuration = {} as Configuration
-    registerCleanupTask(createPageMayExitObservable(configuration).subscribe(onExitSpy).unsubscribe)
+    registerCleanupTask(createPageMayExitObservable().subscribe(onExitSpy).unsubscribe)
   })
 
   it('flushes when the flush scripts evaluated', () => {

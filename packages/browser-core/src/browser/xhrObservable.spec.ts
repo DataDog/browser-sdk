@@ -1,9 +1,9 @@
 import { vi, afterEach, beforeEach, describe, expect, it } from 'vitest'
-import type { Configuration } from '../domain/configuration'
 import { withXhr, mockXhr } from '../../test'
 import type { Subscription } from '../tools/observable'
 import { noop } from '../tools/utils/functionUtils'
 import type { XhrCompleteContext, XhrContext } from './xhrObservable'
+import { resetAllowUntrustedEvents, setAllowUntrustedEvents } from './addEventListener'
 import { initXhrObservable, resetXhrObservable } from './xhrObservable'
 
 describe('xhr observable', () => {
@@ -11,11 +11,9 @@ describe('xhr observable', () => {
   let contextEditionSubscription: Subscription | undefined
   let requests: XhrCompleteContext[]
   let originalMockXhrSend: XMLHttpRequest['send']
-  let configuration: Configuration
 
   beforeEach(() => {
     mockXhr()
-    configuration = {} as Configuration
     // eslint-disable-next-line @typescript-eslint/unbound-method
     originalMockXhrSend = XMLHttpRequest.prototype.send
 
@@ -29,7 +27,7 @@ describe('xhr observable', () => {
   })
 
   function startTrackingRequests() {
-    requestsTrackingSubscription = initXhrObservable(configuration).subscribe((context) => {
+    requestsTrackingSubscription = initXhrObservable().subscribe((context) => {
       if (context.state === 'complete') {
         requests.push(context)
       }
@@ -238,7 +236,7 @@ describe('xhr observable', () => {
   it('should allow to enhance the context', () =>
     new Promise<void>((resolve) => {
       type CustomContext = XhrContext & { foo: string }
-      contextEditionSubscription = initXhrObservable(configuration).subscribe((rawContext) => {
+      contextEditionSubscription = initXhrObservable().subscribe((rawContext) => {
         const context = rawContext as CustomContext
         if (context.state === 'start') {
           context.foo = 'bar'
@@ -439,6 +437,7 @@ describe('xhr observable', () => {
     afterEach(() => {
       policySubscription.unsubscribe()
       resetXhrObservable()
+      resetAllowUntrustedEvents()
       // The outer afterEach calls requestsTrackingSubscription.unsubscribe(); we already
       // unsubscribed it in beforeEach, so give it a no-op stub.
       requestsTrackingSubscription = { unsubscribe: noop }
@@ -447,9 +446,11 @@ describe('xhr observable', () => {
     it('does not emit completion for an untrusted loadend when the customer disallows it', () =>
       new Promise<void>((resolve) => {
         // First caller (bufferedData) opts into untrusted events.
-        initXhrObservable({ allowUntrustedEvents: true })
+        setAllowUntrustedEvents(true)
+        initXhrObservable()
         // Second caller (customer config) opts out.
-        policySubscription = initXhrObservable({ allowUntrustedEvents: false }).subscribe((context) => {
+        setAllowUntrustedEvents(false)
+        policySubscription = initXhrObservable().subscribe((context) => {
           policyContexts.push(context)
         })
 
@@ -459,10 +460,13 @@ describe('xhr observable', () => {
             xhr.send()
             // Untrusted Event (constructor-built, no __ddIsTrusted marker)
             xhr.dispatchEvent(new Event('loadend'))
+            // Send the real (trusted) loadend so onComplete fires and we can assert
+            xhr.complete(200, 'ok')
           },
           onComplete() {
             const completions = policyContexts.filter((context) => context.state === 'complete')
-            expect(completions).toEqual([])
+            // Only the trusted loadend should produce a completion, not the untrusted one
+            expect(completions.length).toBe(1)
             resolve()
           },
         })
@@ -470,8 +474,10 @@ describe('xhr observable', () => {
 
     it('emits completion for an untrusted loadend when every caller allows it', () =>
       new Promise<void>((resolve) => {
-        initXhrObservable({ allowUntrustedEvents: true })
-        policySubscription = initXhrObservable({ allowUntrustedEvents: true }).subscribe((context) => {
+        setAllowUntrustedEvents(true)
+        initXhrObservable()
+        setAllowUntrustedEvents(true)
+        policySubscription = initXhrObservable().subscribe((context) => {
           policyContexts.push(context)
         })
 

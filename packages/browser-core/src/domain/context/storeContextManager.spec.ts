@@ -1,5 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import type { Configuration } from '../configuration'
+import { afterEach, describe, expect, it } from 'vitest'
 import { createNewEvent } from '../../../test'
 import { DOM_EVENT } from '../../browser/addEventListener'
 import type { Context } from '../../tools/serialisation/context'
@@ -11,12 +10,6 @@ describe('storeContextManager', () => {
   const PRODUCT_KEY = 'fake'
   const CUSTOMER_DATA_TYPE = CustomerDataType.User
   const STORAGE_KEY = buildStorageKey(PRODUCT_KEY, CUSTOMER_DATA_TYPE)
-
-  let configuration: Configuration
-
-  beforeEach(() => {
-    configuration = {} as Configuration
-  })
 
   afterEach(() => {
     localStorage.clear()
@@ -98,7 +91,7 @@ describe('storeContextManager', () => {
     if (initialContext) {
       manager.setContext(initialContext)
     }
-    storeContextManager(configuration, manager, productKey, customerDataType)
+    storeContextManager(manager, productKey, customerDataType)
     return manager
   }
 })

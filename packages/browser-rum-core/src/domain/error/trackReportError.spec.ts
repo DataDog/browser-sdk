@@ -11,8 +11,6 @@ import {
   mockReportingObserver,
   registerCleanupTask,
 } from '@datadog/browser-core/test'
-import { mockRumConfiguration } from '../../../test'
-import type { RumConfiguration } from '../configuration'
 import { trackReportError } from './trackReportError'
 
 describe('trackReportError', () => {
@@ -21,14 +19,12 @@ describe('trackReportError', () => {
   let notifyLog: Mock
   let reportingObserver: MockReportingObserver
   let cspEventListener: MockCspEventListener
-  let configuration: RumConfiguration
 
   beforeEach((ctx) => {
     if (!window.ReportingObserver) {
       ctx.skip(true, 'ReportingObserver not supported')
       return
     }
-    configuration = mockRumConfiguration()
     errorObservable = new Observable()
     notifyLog = vi.fn()
     reportingObserver = mockReportingObserver()
@@ -41,7 +37,7 @@ describe('trackReportError', () => {
   })
 
   it('should track reports', () => {
-    trackReportError(configuration, errorObservable)
+    trackReportError(errorObservable)
     reportingObserver.raiseReport('intervention')
 
     expect(notifyLog).toHaveBeenCalledWith({
@@ -56,7 +52,7 @@ describe('trackReportError', () => {
   })
 
   it('should track securitypolicyviolation', () => {
-    trackReportError(configuration, errorObservable)
+    trackReportError(errorObservable)
     cspEventListener.dispatchEvent()
 
     expect(notifyLog).toHaveBeenCalledWith({

@@ -1,7 +1,7 @@
-import { vi, describe, it, expect, type Mock } from 'vitest'
-import { dateNow, ONE_MINUTE } from '@datadog/js-core/time'
+import { vi, describe, expect, it, type Mock } from 'vitest'
+import { ONE_MINUTE, dateNow } from '@datadog/js-core/time'
+import type { Clock } from '../../test'
 import { collectAsyncCalls, mockClock, registerCleanupTask, replaceMockable } from '../../test'
-import type { Configuration } from '../domain/configuration'
 import { display } from '../tools/display'
 import { globalObject } from '../tools/globalObject'
 import { detectVersion, isChromium } from '../tools/utils/browserDetection'
@@ -18,10 +18,22 @@ import {
 
 const COOKIE_NAME = 'test_cookie'
 const COOKIE_OPTIONS = { secure: false, crossSite: false, partitioned: false }
-const MOCK_CONFIGURATION = { allowUntrustedEvents: true } as Configuration
 
 function disableCookieStore() {
   replaceMockable(globalObject.cookieStore, undefined)
+}
+
+interface setupResult {
+  clock: Clock
+  createCookieAccess: (name: string, options: CookieOptions) => CookieAccess
+  flushObservable: (spy: Mock) => Promise<void>
+  setCookieWithCleanup: (
+    this: void,
+    name: string,
+    value: string,
+    expireDelay?: number,
+    options?: CookieOptions
+  ) => Promise<void>
 }
 
 describe('cookieAccess', () => {
@@ -59,17 +71,16 @@ describe('cookieAccess', () => {
         const clock = mockClock()
 
         if (!globalObject.cookieStore) {
-          return null
+          return {} as setupResult
         }
 
         return {
           clock,
-          createCookieAccess: (name: string, options: CookieOptions) =>
-            createCookieStoreAccess(name, options, MOCK_CONFIGURATION),
+          createCookieAccess: (name: string, options: CookieOptions) => createCookieStoreAccess(name, options),
           async flushObservable(this: void, spy: Mock) {
             await collectAsyncCalls(spy, 1)
             // Reset the spy calls to avoid throwing on unexpected calls during teardown
-            registerCleanupTask(() => spy.mockReset())
+            registerCleanupTask(() => spy.mockClear())
           },
           async setCookieWithCleanup(
             this: void,
@@ -105,11 +116,7 @@ describe('cookieAccess', () => {
     describe(title, () => {
       describe('getAllAndSet', () => {
         it('should pass current cookie values to callback', async () => {
-          const result = setup()
-          if (!result) {
-            return
-          }
-          const { createCookieAccess, setCookieWithCleanup } = result
+          const { createCookieAccess, setCookieWithCleanup } = setup()
           await setCookieWithCleanup(COOKIE_NAME, 'value1', ONE_MINUTE)
 
           const cookieAccess = createCookieAccess(COOKIE_NAME, COOKIE_OPTIONS)
@@ -124,11 +131,7 @@ describe('cookieAccess', () => {
         })
 
         it('should pass empty array when cookie does not exist', async () => {
-          const result = setup()
-          if (!result) {
-            return
-          }
-          const { createCookieAccess } = result
+          const { createCookieAccess } = setup()
           const cookieAccess = createCookieAccess(COOKIE_NAME, COOKIE_OPTIONS)
 
           let capturedValues: string[] | undefined
@@ -141,11 +144,7 @@ describe('cookieAccess', () => {
         })
 
         it('should write the value returned by the callback', async () => {
-          const result = setup()
-          if (!result) {
-            return
-          }
-          const { createCookieAccess } = result
+          const { createCookieAccess } = setup()
           const cookieAccess = createCookieAccess(COOKIE_NAME, COOKIE_OPTIONS)
 
           await cookieAccess.getAllAndSet(() => ({ value: 'hello', expireDelay: ONE_MINUTE }))
@@ -153,17 +152,13 @@ describe('cookieAccess', () => {
           expect(getCookie(COOKIE_NAME)).toBe('hello')
         })
 
-        it('should pass all cookie values to callback', async () => {
+        it('should pass all cookie values to callback', async (ctx) => {
           const browserVersion = detectVersion()
           if (!isChromium() || (browserVersion !== undefined && browserVersion < 145)) {
-            return
+            ctx.skip(true, 'Only Recent Chromium supports multiple cookies with the same name with different options')
           }
 
-          const result = setup()
-          if (!result) {
-            return
-          }
-          const { createCookieAccess, setCookieWithCleanup } = result
+          const { createCookieAccess, setCookieWithCleanup } = setup()
           await setCookieWithCleanup(COOKIE_NAME, 'value1', ONE_MINUTE)
           await setCookieWithCleanup(COOKIE_NAME, 'value2', ONE_MINUTE, { secure: true, partitioned: true })
 
@@ -181,11 +176,7 @@ describe('cookieAccess', () => {
 
       describe('observable', () => {
         it('should notify when cookie is changed externally', async () => {
-          const result = setup()
-          if (!result) {
-            return
-          }
-          const { createCookieAccess, flushObservable, setCookieWithCleanup } = result
+          const { createCookieAccess, flushObservable, setCookieWithCleanup } = setup()
           const cookieAccess = createCookieAccess(COOKIE_NAME, COOKIE_OPTIONS)
           const spy = vi.fn()
           const subscription = cookieAccess.observable.subscribe(spy)
@@ -198,11 +189,7 @@ describe('cookieAccess', () => {
         })
 
         it('should notify when cookie is deleted externally', async () => {
-          const result = setup()
-          if (!result) {
-            return
-          }
-          const { createCookieAccess, flushObservable, setCookieWithCleanup } = result
+          const { createCookieAccess, flushObservable, setCookieWithCleanup } = setup()
           await setCookieWithCleanup(COOKIE_NAME, 'existing', ONE_MINUTE)
 
           const cookieAccess = createCookieAccess(COOKIE_NAME, COOKIE_OPTIONS)
@@ -217,11 +204,7 @@ describe('cookieAccess', () => {
         })
 
         it('should not notify when cookie value is unchanged', async () => {
-          const result = setup()
-          if (!result) {
-            return
-          }
-          const { createCookieAccess, clock, setCookieWithCleanup } = result
+          const { createCookieAccess, clock, setCookieWithCleanup } = setup()
           await setCookieWithCleanup(COOKIE_NAME, 'stable', ONE_MINUTE)
 
           const cookieAccess = createCookieAccess(COOKIE_NAME, COOKIE_OPTIONS)
@@ -235,11 +218,7 @@ describe('cookieAccess', () => {
         })
 
         it('should notify the observable after writing', async () => {
-          const result = setup()
-          if (!result) {
-            return
-          }
-          const { createCookieAccess, flushObservable } = result
+          const { createCookieAccess, flushObservable } = setup()
           const cookieAccess = createCookieAccess(COOKIE_NAME, COOKIE_OPTIONS)
           const spy = vi.fn()
           const subscription = cookieAccess.observable.subscribe(spy)
@@ -257,16 +236,16 @@ describe('cookieAccess', () => {
   describe('areCookiesAuthorized', () => {
     it('returns true when the access can write and read back the test cookie', async () => {
       const access: CookieAccess = {
-        getAll: vi.fn().mockResolvedValue(['test']),
-        getAllAndSet: vi.fn().mockResolvedValue(undefined),
+        getAll: vi.fn().mockReturnValue(Promise.resolve(['test'])),
+        getAllAndSet: vi.fn().mockReturnValue(Promise.resolve()),
         observable: null as any,
       }
       const factory = vi.fn().mockReturnValue(access)
 
-      const result = await areCookiesAuthorized(factory, COOKIE_OPTIONS, MOCK_CONFIGURATION)
+      const result = await areCookiesAuthorized(factory, COOKIE_OPTIONS)
 
       expect(result).toBe(true)
-      expect(factory).toHaveBeenCalledWith(expect.any(String), COOKIE_OPTIONS, MOCK_CONFIGURATION)
+      expect(factory).toHaveBeenCalledWith(expect.any(String), COOKIE_OPTIONS)
     })
 
     it('returns false when the access cannot read back the test cookie', async () => {
@@ -276,7 +255,7 @@ describe('cookieAccess', () => {
         observable: null as any,
       }
 
-      const result = await areCookiesAuthorized(() => access, COOKIE_OPTIONS, MOCK_CONFIGURATION)
+      const result = await areCookiesAuthorized(() => access, COOKIE_OPTIONS)
 
       expect(result).toBe(false)
     })
@@ -289,7 +268,7 @@ describe('cookieAccess', () => {
         observable: null as any,
       }
 
-      const result = await areCookiesAuthorized(() => access, COOKIE_OPTIONS, MOCK_CONFIGURATION)
+      const result = await areCookiesAuthorized(() => access, COOKIE_OPTIONS)
 
       expect(result).toBe(false)
       expect(displayErrorSpy).toHaveBeenCalled()
@@ -306,7 +285,7 @@ describe('cookieAccess', () => {
         observable: null as any,
       }
 
-      await areCookiesAuthorized(() => access, COOKIE_OPTIONS, MOCK_CONFIGURATION)
+      await areCookiesAuthorized(() => access, COOKIE_OPTIONS)
 
       expect(calls).toEqual([
         { value: 'test', expireDelay: expect.any(Number) },
@@ -316,21 +295,21 @@ describe('cookieAccess', () => {
 
     it('works with the real createDocumentCookieAccess', async () => {
       disableCookieStore()
-      const result = await areCookiesAuthorized(createDocumentCookieAccess, COOKIE_OPTIONS, MOCK_CONFIGURATION)
+      const result = await areCookiesAuthorized(createDocumentCookieAccess, COOKIE_OPTIONS)
       expect(result).toBe(true)
     })
 
-    it('works with the real createCookieStoreAccess', async () => {
+    it('works with the real createCookieStoreAccess', async (ctx) => {
       if (!globalObject.cookieStore) {
-        return
+        ctx.skip(true, 'CookieStore API not available')
       }
-      const result = await areCookiesAuthorized(createCookieStoreAccess, COOKIE_OPTIONS, MOCK_CONFIGURATION)
+      const result = await areCookiesAuthorized(createCookieStoreAccess, COOKIE_OPTIONS)
       expect(result).toBe(true)
     })
 
     it('returns false when document.cookie is empty', async () => {
       vi.spyOn(document, 'cookie', 'get').mockReturnValue('')
-      const result = await areCookiesAuthorized(createDocumentCookieAccess, COOKIE_OPTIONS, MOCK_CONFIGURATION)
+      const result = await areCookiesAuthorized(createDocumentCookieAccess, COOKIE_OPTIONS)
       expect(result).toBe(false)
     })
   })

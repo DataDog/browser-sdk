@@ -90,11 +90,10 @@ export function getDeflateWorkerStatus() {
 export function doStartDeflateWorker(configuration: RumConfiguration, source: string) {
   try {
     const worker = mockable(createDeflateWorker)(configuration)
-    const { stop: removeErrorListener } = addEventListener(configuration, worker, 'error', (error) => {
+    const { stop: removeErrorListener } = addEventListener(worker, 'error', (error) => {
       onError(configuration, source, error)
     })
     const { stop: removeMessageListener } = addEventListener(
-      configuration,
       worker,
       'message',
       ({ data }: MessageEvent<DeflateWorkerResponse>) => {

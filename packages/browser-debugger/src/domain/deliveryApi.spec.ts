@@ -212,6 +212,151 @@ describe('deliveryApi', () => {
       expect(getAllProbes()).toEqual([])
     })
 
+    it('should ignore log probes with both snapshot capture and capture expressions', async () => {
+      respondWith({
+        nextCursor: 'cursor-1',
+        updates: [
+          createProbe({
+            id: 'snapshot-and-capture-expressions',
+            captureSnapshot: true,
+            captureExpressions: [{ name: 'arg', expr: { dsl: 'arg', json: { ref: 'arg' } } }],
+          }),
+        ],
+        deletions: [],
+      })
+
+      startDeliveryApiPolling(makeConfig())
+      await flushPromises()
+
+      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
+      expect(errorSpy).not.toHaveBeenCalled()
+    })
+
+    it('should log an error when a capture expression cannot be compiled', async () => {
+      respondWith({
+        nextCursor: 'cursor-1',
+        updates: [
+          createProbe({
+            id: 'invalid-capture-expression',
+            captureSnapshot: false,
+            captureExpressions: [
+              {
+                name: 'invalid expr',
+                expr: { dsl: 'not a valid identifier!', json: { ref: 'not a valid identifier!' } },
+              },
+            ],
+          }),
+        ],
+        deletions: [],
+      })
+
+      startDeliveryApiPolling(makeConfig())
+      await flushPromises()
+
+      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
+      expect(errorSpy).toHaveBeenCalledWith('Failed to add probe invalid-capture-expression:', expect.any(Error))
+    })
+
+    it('should keep adding the other probes when one probe in the same response fails to initialize', async () => {
+      respondWith({
+        nextCursor: 'cursor-1',
+        updates: [
+          createProbe({ id: 'valid-before', where: { typeName: 'test.js', methodName: 'before' } }),
+          createProbe({
+            id: 'invalid',
+            where: { typeName: 'test.js', methodName: 'invalid' },
+            captureSnapshot: false,
+            captureExpressions: [
+              {
+                name: 'invalid expr',
+                expr: { dsl: 'not a valid identifier!', json: { ref: 'not a valid identifier!' } },
+              },
+            ],
+          }),
+          createProbe({ id: 'valid-after', where: { typeName: 'test.js', methodName: 'after' } }),
+        ],
+        deletions: [],
+      })
+
+      startDeliveryApiPolling(makeConfig())
+      await flushPromises()
+
+      // The failing probe must not prevent the surrounding probes from being registered.
+      expect(getProbes('test.js;before')).toBeDefined()
+      expect(getProbes('test.js;after')).toBeDefined()
+      expect(getProbes('test.js;invalid')).toBeUndefined()
+      expect(errorSpy).toHaveBeenCalledWith('Failed to add probe invalid:', expect.any(Error))
+    })
+
+    it('should not track a probe that failed to initialize, so a later deletion is a no-op', async () => {
+      respondWith({
+        nextCursor: 'cursor-1',
+        updates: [
+          createProbe({
+            id: 'invalid',
+            captureSnapshot: false,
+            captureExpressions: [
+              {
+                name: 'invalid expr',
+                expr: { dsl: 'not a valid identifier!', json: { ref: 'not a valid identifier!' } },
+              },
+            ],
+          }),
+        ],
+        deletions: [],
+      })
+
+      startDeliveryApiPolling(makeConfig())
+      await flushPromises()
+      expect(errorSpy).toHaveBeenCalledWith('Failed to add probe invalid:', expect.any(Error))
+
+      errorSpy.mockClear()
+
+      // The failed probe was never tracked, so deleting it does nothing and must
+      // not attempt a removal (which would log a "Failed to remove probe" error).
+      respondWith({
+        nextCursor: 'cursor-2',
+        updates: [],
+        deletions: ['invalid'],
+      })
+      clock.tick(5000)
+      await flushPromises()
+
+      expect(errorSpy).not.toHaveBeenCalled()
+    })
+
+    it('should keep polling after a probe fails to initialize', async () => {
+      respondWith({
+        nextCursor: 'cursor-1',
+        updates: [
+          createProbe({
+            id: 'invalid',
+            captureSnapshot: false,
+            captureExpressions: [
+              {
+                name: 'invalid expr',
+                expr: { dsl: 'not a valid identifier!', json: { ref: 'not a valid identifier!' } },
+              },
+            ],
+          }),
+        ],
+        deletions: [],
+      })
+
+      startDeliveryApiPolling(makeConfig({ pollInterval: 5000 }))
+      await flushPromises()
+      expect(errorSpy).toHaveBeenCalledWith('Failed to add probe invalid:', expect.any(Error))
+
+      // A per-probe compilation error is a data error, not a transport failure:
+      // it must not trip the circuit breaker or stop polling.
+      const callsBefore = fetchSpy.mock.calls.length
+      clock.tick(5000)
+      await flushPromises()
+
+      expect(fetchSpy.mock.calls.length).toBe(callsBefore + 1)
+      expect(warnSpy).not.toHaveBeenCalledWith(expect.stringMatching(/circuit breaker/i))
+    })
+
     it('should ignore log probes without a where clause', async () => {
       respondWith({
         nextCursor: 'cursor-1',

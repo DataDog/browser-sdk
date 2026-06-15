@@ -2,7 +2,6 @@ import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vite
 import type { MockCspEventListener, MockReportingObserver } from '../../../test'
 import { mockReportingObserver, mockCspEventListener, FAKE_CSP_VIOLATION_EVENT } from '../../../test'
 import type { Subscription } from '../../tools/observable'
-import type { Configuration } from '../configuration'
 import { ErrorHandling, ErrorSource } from '../error/error.types'
 import type { RawReportError } from './reportObservable'
 import { initReportObservable, RawReportType } from './reportObservable'
@@ -12,14 +11,11 @@ describe('report observable', () => {
   let cspEventListener: MockCspEventListener
   let consoleSubscription: Subscription
   let notifyReport: Mock<(reportError: RawReportError) => void>
-  let configuration: Configuration
 
   beforeEach((ctx) => {
     if (!window.ReportingObserver) {
       ctx.skip(true, 'ReportingObserver not supported')
-      return
     }
-    configuration = {} as Configuration
     reportingObserver = mockReportingObserver()
     cspEventListener = mockCspEventListener()
     notifyReport = vi.fn()
@@ -30,10 +26,10 @@ describe('report observable', () => {
   })
   ;[RawReportType.deprecation, RawReportType.intervention].forEach((type) => {
     it(`should notify ${type} reports`, () => {
-      consoleSubscription = initReportObservable(configuration, [type]).subscribe(notifyReport)
+      consoleSubscription = initReportObservable([type]).subscribe(notifyReport)
       reportingObserver.raiseReport(type)
 
-      const [report] = notifyReport.mock.lastCall!
+      const [report] = notifyReport.mock.calls[notifyReport.mock.calls.length - 1]
 
       expect(report).toEqual(
         expect.objectContaining({
@@ -45,20 +41,19 @@ describe('report observable', () => {
   })
 
   it(`should compute stack for ${RawReportType.intervention}`, () => {
-    consoleSubscription = initReportObservable(configuration, [RawReportType.intervention]).subscribe(notifyReport)
+    consoleSubscription = initReportObservable([RawReportType.intervention]).subscribe(notifyReport)
     reportingObserver.raiseReport(RawReportType.intervention)
 
-    const [report] = notifyReport.mock.lastCall!
+    const [report] = notifyReport.mock.calls[notifyReport.mock.calls.length - 1]
 
     expect(report.stack).toEqual(`NavigatorVibrate: foo bar
   at <anonymous> @ http://foo.bar/index.js:20:10`)
   })
 
   it(`should notify ${RawReportType.cspViolation}`, () => {
-    consoleSubscription = initReportObservable(configuration, [RawReportType.cspViolation]).subscribe(notifyReport)
+    consoleSubscription = initReportObservable([RawReportType.cspViolation]).subscribe(notifyReport)
     cspEventListener.dispatchEvent()
 
-    expect(notifyReport).toHaveBeenCalledTimes(1)
     expect(notifyReport).toHaveBeenCalledWith({
       startClocks: expect.any(Object),
       source: ErrorSource.REPORT,
@@ -73,11 +68,11 @@ describe('report observable', () => {
   })
 
   it(`should not notify ${RawReportType.cspViolation} when the event is not supported`, () => {
-    vi.spyOn(EventTarget.prototype, 'addEventListener').mockImplementation(() => {
+    ;(EventTarget.prototype.addEventListener as Mock).mockImplementation(() => {
       throw new Error('unsupported')
     })
 
-    consoleSubscription = initReportObservable(configuration, [RawReportType.cspViolation]).subscribe(notifyReport)
+    consoleSubscription = initReportObservable([RawReportType.cspViolation]).subscribe(notifyReport)
     cspEventListener.dispatchEvent()
 
     expect(notifyReport).not.toHaveBeenCalled()

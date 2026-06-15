@@ -300,7 +300,6 @@ export interface Configuration {
   version?: string | undefined
   env?: string | undefined
   silentMultipleInit: boolean
-  allowUntrustedEvents: boolean
   trackingConsent: TrackingConsent
   storeContextsAcrossPages: boolean
   trackAnonymousUser?: boolean
@@ -392,7 +391,6 @@ export function validateAndBuildConfiguration(
     version: initConfiguration.version ?? undefined,
     datacenter: initConfiguration.datacenter ?? undefined,
     silentMultipleInit: !!initConfiguration.silentMultipleInit,
-    allowUntrustedEvents: !!initConfiguration.allowUntrustedEvents,
     trackingConsent: initConfiguration.trackingConsent ?? TrackingConsent.GRANTED,
     trackAnonymousUser: initConfiguration.trackAnonymousUser ?? true,
     storeContextsAcrossPages: !!initConfiguration.storeContextsAcrossPages,

@@ -75,7 +75,7 @@ export function getSessionStoreStrategy(
     case SessionPersistence.COOKIE:
       return initCookieStrategy(sessionStoreStrategyType, configuration)
     case SessionPersistence.LOCAL_STORAGE:
-      return initLocalStorageStrategy(configuration)
+      return initLocalStorageStrategy()
     case SessionPersistence.MEMORY:
       return initMemorySessionStoreStrategy()
   }

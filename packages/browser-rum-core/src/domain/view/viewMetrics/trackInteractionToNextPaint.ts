@@ -72,11 +72,11 @@ export function trackInteractionToNextPaint(
   const { getViewInteractionCount, stopViewInteractionCount } = trackViewInteractionCount(viewLoadingType)
   const longestInteractions = trackLongestInteractions(getViewInteractionCount)
   const subPartsTracker = createSubPartsTracker(longestInteractions)
-  const firstInputSubscription = createPerformanceObservable(configuration, {
+  const firstInputSubscription = createPerformanceObservable({
     type: RumPerformanceEntryType.FIRST_INPUT,
     buffered: true,
   }).subscribe(handleEntries)
-  const eventSubscription = createPerformanceObservable(configuration, {
+  const eventSubscription = createPerformanceObservable({
     type: RumPerformanceEntryType.EVENT,
     // durationThreshold only impact PerformanceEventTiming entries used for INP computation which requires a threshold at 40 (default is 104ms)
     // cf: https://github.com/GoogleChrome/web-vitals/blob/3806160ffbc93c3c4abf210a167b81228172b31c/src/onINP.ts#L202-L210

@@ -47,7 +47,7 @@ export function trackScroll(
     )
   }, SCROLL_OBSERVER_THRESHOLD)
 
-  const { stop: removeListener } = addEventListener(scope.configuration, target, DOM_EVENT.SCROLL, updatePosition, {
+  const { stop: removeListener } = addEventListener(target, DOM_EVENT.SCROLL, updatePosition, {
     capture: true,
     passive: true,
   })

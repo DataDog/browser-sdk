@@ -16,7 +16,7 @@ export interface ProvidedError {
 }
 
 export function startReportCollection(configuration: LogsConfiguration, lifeCycle: LifeCycle) {
-  const reportSubscription = initReportObservable(configuration, configuration.forwardReports).subscribe((rawError) => {
+  const reportSubscription = initReportObservable(configuration.forwardReports).subscribe((rawError) => {
     let message = rawError.message
     let error
     const status = rawError.originalError.type === 'deprecation' ? StatusType.warn : StatusType.error

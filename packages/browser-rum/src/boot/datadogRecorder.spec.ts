@@ -49,7 +49,7 @@ describe.skipIf(!__BUILD_ENV__WORKER_STRING__)('startRecording', () => {
       sendOnExit: requestSendSpy,
     }
 
-    const deflateEncoder = createDeflateEncoder(configuration, worker!, DeflateEncoderStreamId.REPLAY)
+    const deflateEncoder = createDeflateEncoder(worker!, DeflateEncoderStreamId.REPLAY)
     const viewHistory = startViewHistory(lifeCycle)
     initialView(lifeCycle)
 

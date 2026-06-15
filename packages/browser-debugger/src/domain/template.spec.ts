@@ -1,5 +1,6 @@
-import { describe, expect, it, type TestContext } from 'vitest'
+import { vi, describe, expect, it, type TestContext } from 'vitest'
 import { templateRequiresEvaluation, compileSegments, evaluateProbeMessage, browserInspect } from './template'
+import { formatUnknownError } from './error'
 
 describe('template', () => {
   describe('templateRequiresEvaluation', () => {
@@ -54,13 +55,13 @@ describe('template', () => {
       expect(result).toContain('", y="')
     })
 
-    it('should handle errors in DSL evaluation', () => {
+    it('should generate error handling for DSL evaluation', () => {
       const segments = [{ dsl: 'badExpr', json: { ref: 'nonExistent' } }]
       const code = compileSegments(segments)
 
-      // The compiled code should have error handling
       expect(code).toContain('catch (e)')
-      expect(code).toContain('message')
+      expect(code).toContain('expr: "badExpr"')
+      expect(code).toContain('message: $dd_format_error(e)')
     })
   })
 
@@ -126,6 +127,36 @@ describe('template', () => {
       const result = browserInspect(obj)
       // Should either return [Object] or handle the error
       expect(result).toBeTruthy()
+    })
+
+    it('should not call custom toString when object serialization fails', () => {
+      const obj: any = {
+        toString: vi.fn(() => 'custom'),
+      }
+      obj.self = obj
+
+      expect(browserInspect(obj)).toBe('[Object]')
+      expect(obj.toString).not.toHaveBeenCalled()
+    })
+
+    it('should use constructor name when object serialization fails', () => {
+      class Custom {}
+      const obj: any = new Custom()
+      obj.self = obj
+
+      expect(browserInspect(obj)).toBe('[Custom]')
+    })
+
+    it('should fall back when constructor name access throws', () => {
+      const obj: any = {}
+      obj.self = obj
+      Object.defineProperty(obj, 'constructor', {
+        get() {
+          throw new Error('Cannot access constructor')
+        },
+      })
+
+      expect(browserInspect(obj)).toBe('[Object]')
     })
 
     it('should handle objects without constructor', () => {
@@ -301,6 +332,42 @@ describe('template', () => {
       expect(result).toBe('{Error: Evaluation failed}')
     })
 
+    it('should handle template evaluation errors that cannot be coerced', () => {
+      const probe: any = {
+        evaluateTemplate: () => {
+          // eslint-disable-next-line @typescript-eslint/only-throw-error
+          throw {
+            toString() {
+              throw new Error('Cannot coerce')
+            },
+          }
+        },
+      }
+
+      const result = evaluateProbeMessage(probe, {})
+      expect(result).toBe('{<error: unable to stringify error>}')
+    })
+
+    it('should handle template evaluation errors with hostile name and message getters', () => {
+      const probe: any = {
+        evaluateTemplate: () => {
+          // eslint-disable-next-line @typescript-eslint/only-throw-error
+          throw {
+            [Symbol.toStringTag]: 'Error',
+            get name() {
+              throw new Error('Cannot read name')
+            },
+            get message() {
+              throw new Error('Cannot read message')
+            },
+          }
+        },
+      }
+
+      const result = evaluateProbeMessage(probe, {})
+      expect(result).toBe('{[object Error]}')
+    })
+
     it('should truncate long messages', () => {
       const longMessage = 'a'.repeat(10000)
       const probe: any = {
@@ -343,15 +410,16 @@ describe('template', () => {
 })
 
 function evaluateSegments(segments: Array<{ str?: string; dsl?: string; json?: any }>) {
-  const segmentsCode = compileSegments(segments)
-  const fnBodyTemplate = `return ${segmentsCode};`
+  const fnBodyTemplate = `return ${compileSegments(segments)};`
 
   return (context: Record<string, any>): unknown[] => {
     const { this: thisValue, ...otherContext } = context
     const contextKeys = Object.keys(otherContext)
     const contextValues = Object.values(otherContext)
     // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
-    const fn = new Function('$dd_inspect', ...contextKeys, fnBodyTemplate) as (...args: any[]) => unknown[]
-    return fn.call(thisValue, browserInspect, ...contextValues)
+    const fn = new Function('$dd_inspect', '$dd_format_error', ...contextKeys, fnBodyTemplate) as (
+      ...args: any[]
+    ) => unknown[]
+    return fn.call(thisValue, browserInspect, formatUnknownError, ...contextValues)
   }
 }

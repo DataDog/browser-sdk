@@ -1,7 +1,6 @@
 import { afterEach, vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { RelativeTime } from '@datadog/js-core/time'
 import { createHook } from '@datadog/browser-core'
-import { mockRumConfiguration } from '../../../test'
 import type { AssembleHook, AssembleHookParams } from '../hooks'
 import type { DisplayContext } from './displayContext'
 import { startDisplayContext } from './displayContext'
@@ -25,7 +24,7 @@ describe('displayContext', () => {
 
   describe('assemble hook', () => {
     it('should set the display context', () => {
-      displayContext = startDisplayContext(hook, mockRumConfiguration())
+      displayContext = startDisplayContext(hook)
 
       const event = hook.trigger({
         eventType: 'view',

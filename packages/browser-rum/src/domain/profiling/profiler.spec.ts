@@ -58,7 +58,7 @@ describe('profiler', () => {
   beforeEach(() => {
     interceptor = interceptRequests()
     interceptor.withFetch(DEFAULT_FETCH_MOCK, DEFAULT_FETCH_MOCK, DEFAULT_FETCH_MOCK)
-    // Default: quota always ok. Individual quota-check tests can reconfigure via spy.and.callFake(...)
+    // Default: quota always ok. Individual quota-check tests can reconfigure via spy.mockImplementation(...)
     checkProfilingQuotaSpy = replaceMockableWithSpy(checkProfilingQuota)
     checkProfilingQuotaSpy.mockReturnValue(Promise.resolve({ decision: 'quota_ok', reason: 'quota_ok' }))
   })

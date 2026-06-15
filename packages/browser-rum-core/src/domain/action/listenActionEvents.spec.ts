@@ -1,6 +1,5 @@
 import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { createNewEvent } from '@datadog/browser-core/test'
-import { mockRumConfiguration } from '../../../test'
 import type { ActionEventsHooks } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 
@@ -16,7 +15,7 @@ describe('listenActionEvents', () => {
       onPointerUp: vi.fn(),
       onPointerDown: vi.fn().mockReturnValue({}),
     }
-    ;({ stop: stopListenEvents } = listenActionEvents(mockRumConfiguration(), actionEventsHooks))
+    ;({ stop: stopListenEvents } = listenActionEvents(actionEventsHooks))
   })
 
   afterEach(() => {

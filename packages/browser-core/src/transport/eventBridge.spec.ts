@@ -34,6 +34,10 @@ describe('canUseEventBridge', () => {
 })
 
 describe('matchesHostEntry', () => {
+  beforeEach(() => {
+    vi.spyOn(display, 'error')
+  })
+
   // prettier-ignore
   const cases: Array<[string, string, boolean]> = [
     // [host,                          pattern,                  expected]

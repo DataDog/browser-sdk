@@ -119,7 +119,7 @@ export function trackViews(
   let locationChangeSubscription: Subscription
   if (areViewsTrackedAutomatically) {
     locationChangeSubscription = renewViewOnLocationChange(locationChangeObservable)
-    stopOnBFCacheRestore = onBFCacheRestore(configuration, (pageshowEvent) => {
+    stopOnBFCacheRestore = onBFCacheRestore((pageshowEvent) => {
       currentView.end()
       const startClocks = relativeToClocks(pageshowEvent.timeStamp as RelativeTime)
       currentView = startNewView(ViewLoadingType.BF_CACHE, startClocks, undefined)

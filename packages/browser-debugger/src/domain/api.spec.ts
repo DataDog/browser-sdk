@@ -8,6 +8,7 @@ import type { Probe } from './probes'
 import { createProbe } from './probe.specHelper'
 
 const DEFAULT_PROBE_FUNCTION_ID = 'test.js;testMethod'
+const thisArg = {}
 
 describe('api', () => {
   let mockBatchAdd: Mock
@@ -48,7 +49,7 @@ describe('api', () => {
       const args = { a: 1, b: 2 }
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, self, args)
-      onReturn(probes, 'result', self, args, {})
+      onReturn(probes, 'result', self, args)
 
       const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
@@ -90,7 +91,7 @@ describe('api', () => {
       const args = { a: 1 }
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, globalObject, args)
-      onReturn(probes, 'result', globalObject, args, {})
+      onReturn(probes, 'result', globalObject, args)
 
       const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
@@ -111,7 +112,7 @@ describe('api', () => {
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       onEntry(probes, self, args)
-      const result = onReturn(probes, 'returnValue', self, args, {})
+      const result = onReturn(probes, 'returnValue', self, args)
 
       expect(result).toBe('returnValue')
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
@@ -133,13 +134,13 @@ describe('api', () => {
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       // First call should work
-      onEntry(probes, {}, {})
-      onReturn(probes, null, {}, {}, {})
+      onEntry(probes, thisArg)
+      onReturn(probes, null, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
       // Second immediate call should be skipped (less than 2000ms passed)
-      onEntry(probes, {}, {})
-      onReturn(probes, null, {}, {}, {})
+      onEntry(probes, thisArg)
+      onReturn(probes, null, thisArg)
 
       // Still only one call because sampling budget not refreshed
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
@@ -158,12 +159,12 @@ describe('api', () => {
       )
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, {}, { missing: { value: true } })
-      onReturn(probes, null, {}, { missing: { value: true } }, {})
+      onEntry(probes, thisArg, { missing: { value: true } })
+      onReturn(probes, null, thisArg, { missing: { value: true } })
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
-      onEntry(probes, {}, {})
-      onReturn(probes, null, {}, {}, {})
+      onEntry(probes, thisArg)
+      onReturn(probes, null, thisArg)
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
     })
@@ -180,12 +181,12 @@ describe('api', () => {
       )
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, {}, { missing: { value: true } })
-      onReturn(probes, null, {}, { missing: { value: true } }, {})
+      onEntry(probes, thisArg, { missing: { value: true } })
+      onReturn(probes, null, thisArg, { missing: { value: true } })
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
-      onEntry(probes, {}, {})
-      onReturn(probes, null, {}, {}, {})
+      onEntry(probes, thisArg)
+      onReturn(probes, null, thisArg)
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
     })
@@ -202,8 +203,8 @@ describe('api', () => {
 
       let probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       // Should fire when condition passes
-      onEntry(probes, {}, { x: 10 })
-      onReturn(probes, null, {}, { x: 10 }, {})
+      onEntry(probes, thisArg, { x: 10 })
+      onReturn(probes, null, thisArg, { x: 10 })
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
       clearProbes()
@@ -212,8 +213,8 @@ describe('api', () => {
 
       probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       // Should not fire when condition fails
-      onEntry(probes, {}, { x: 3 })
-      onReturn(probes, null, {}, { x: 3 }, {})
+      onEntry(probes, thisArg, { x: 3 })
+      onReturn(probes, null, thisArg, { x: 3 })
       expect(mockBatchAdd).not.toHaveBeenCalled()
     })
 
@@ -228,8 +229,8 @@ describe('api', () => {
 
       let probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       // Should fire when return value > 10
-      onEntry(probes, {}, {})
-      onReturn(probes, 15, {}, {}, {})
+      onEntry(probes, thisArg)
+      onReturn(probes, 15, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
       clearProbes()
@@ -238,9 +239,101 @@ describe('api', () => {
 
       probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       // Should not fire when return value <= 10
-      onEntry(probes, {}, {})
-      onReturn(probes, 5, {}, {}, {})
+      onEntry(probes, thisArg)
+      onReturn(probes, 5, thisArg)
       expect(mockBatchAdd).not.toHaveBeenCalled()
+    })
+
+    it('should capture expressions at ENTRY', () => {
+      addProbe(
+        createProbe({
+          captureSnapshot: false,
+          captureExpressions: [
+            { name: 'argValue', expr: { dsl: 'arg.value', json: { getmember: [{ ref: 'arg' }, 'value'] } } },
+            { name: 'limited', expr: { dsl: 'longString', json: { ref: 'longString' } }, capture: { maxLength: 3 } },
+          ],
+          sampling: { snapshotsPerSecond: Infinity },
+          evaluateAt: 'ENTRY',
+        })
+      )
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      onEntry(probes, thisArg, { arg: { value: 42 }, longString: 'abcdef' })
+      onReturn(probes, null, thisArg, { arg: { value: 42 }, longString: 'abcdef' })
+
+      const payload = mockBatchAdd.mock.calls[mockBatchAdd.mock.calls.length - 1][0]
+      const snapshot = payload.debugger.snapshot
+      expect(snapshot.captures).toEqual({
+        entry: {
+          captureExpressions: {
+            argValue: { type: 'number', value: '42' },
+            limited: { type: 'string', value: 'abc', truncated: true, size: 6 },
+          },
+        },
+        return: undefined,
+      })
+    })
+
+    it('should capture expressions at EXIT with @return and locals', () => {
+      addProbe(
+        createProbe({
+          captureSnapshot: false,
+          captureExpressions: [
+            { name: 'returnValue', expr: { dsl: '@return', json: { ref: '@return' } } },
+            { name: 'localValue', expr: { dsl: 'local.value', json: { getmember: [{ ref: 'local' }, 'value'] } } },
+          ],
+          sampling: { snapshotsPerSecond: Infinity },
+        })
+      )
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      onEntry(probes, thisArg)
+      onReturn(probes, { nested: 'return' }, thisArg, {}, { local: { value: 'data' } })
+
+      const payload = mockBatchAdd.mock.calls[mockBatchAdd.mock.calls.length - 1][0]
+      const snapshot = payload.debugger.snapshot
+      expect(snapshot.captures).toEqual({
+        entry: undefined,
+        return: {
+          captureExpressions: {
+            returnValue: { type: 'Object', fields: { nested: { type: 'string', value: 'return' } } },
+            localValue: { type: 'string', value: 'data' },
+          },
+        },
+      })
+    })
+
+    it('should report capture expression evaluation errors without dropping successful expressions', () => {
+      addProbe(
+        createProbe({
+          captureSnapshot: false,
+          captureExpressions: [
+            { name: 'existing', expr: { dsl: 'existing', json: { ref: 'existing' } } },
+            {
+              name: 'missing.value',
+              expr: { dsl: 'missing.value', json: { getmember: [{ ref: 'missing' }, 'value'] } },
+            },
+          ],
+          sampling: { snapshotsPerSecond: Infinity },
+          evaluateAt: 'ENTRY',
+        })
+      )
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      onEntry(probes, thisArg, { existing: 'value' })
+      onReturn(probes, null, thisArg, { existing: 'value' })
+
+      const payload = mockBatchAdd.mock.calls[mockBatchAdd.mock.calls.length - 1][0]
+      const snapshot = payload.debugger.snapshot
+      expect(snapshot.captures.entry.captureExpressions).toEqual({
+        existing: { type: 'string', value: 'value' },
+      })
+      expect(snapshot.evaluationErrors).toEqual([
+        {
+          expr: 'missing.value',
+          message: expect.stringMatching(/^ReferenceError: /),
+        },
+      ])
     })
 
     it('should capture both entry and return snapshots for ENTRY evaluation', () => {
@@ -312,8 +405,8 @@ describe('api', () => {
       )
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, {}, { arg: 'value' })
-      onReturn(probes, true, {}, { arg: 'value' }, {})
+      onEntry(probes, thisArg, { arg: 'value' })
+      onReturn(probes, true, thisArg, { arg: 'value' })
 
       const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
@@ -327,11 +420,11 @@ describe('api', () => {
       addProbe(createProbe())
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, {}, {})
+      onEntry(probes, thisArg)
 
       clock.tick(10)
 
-      onReturn(probes, null, {}, {}, {})
+      onReturn(probes, null, thisArg)
 
       const payload = mockBatchAdd.mock.lastCall![0]
       const snapshot = payload.debugger.snapshot
@@ -351,8 +444,8 @@ describe('api', () => {
       )
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, {}, {})
-      onReturn(probes, null, {}, {}, {})
+      onEntry(probes, thisArg)
+      onReturn(probes, null, thisArg)
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
       const payload = mockBatchAdd.mock.lastCall![0]
@@ -381,8 +474,8 @@ describe('api', () => {
       )
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, {}, {})
-      onReturn(probes, null, {}, {}, {})
+      onEntry(probes, thisArg)
+      onReturn(probes, null, thisArg)
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
       const payload = mockBatchAdd.mock.lastCall![0]
@@ -412,16 +505,16 @@ describe('api', () => {
       )
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, {}, {})
-      onReturn(probes, null, {}, {}, {})
-      onEntry(probes, {}, {})
-      onReturn(probes, null, {}, {}, {})
+      onEntry(probes, thisArg)
+      onReturn(probes, null, thisArg)
+      onEntry(probes, thisArg)
+      onReturn(probes, null, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
       clock.tick(5 * 60 * 1000)
 
-      onEntry(probes, {}, {})
-      onReturn(probes, null, {}, {}, {})
+      onEntry(probes, thisArg)
+      onReturn(probes, null, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(2)
     })
   })
@@ -494,8 +587,8 @@ describe('api', () => {
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       const error = new Error('Test error')
-      onEntry(probes, {}, { arg: 'value' })
-      onThrow(probes, error, {}, { arg: 'value' })
+      onEntry(probes, thisArg, { arg: 'value' })
+      onThrow(probes, error, thisArg, { arg: 'value' })
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
@@ -517,6 +610,101 @@ describe('api', () => {
       }
     })
 
+    it('should capture non-Error thrown values', () => {
+      addProbe(createProbe())
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      onEntry(probes, thisArg)
+      onThrow(probes, 'Test error', thisArg)
+
+      const payload = mockBatchAdd.mock.calls[mockBatchAdd.mock.calls.length - 1][0]
+      const snapshot = payload.debugger.snapshot
+      expect(snapshot.captures.return.throwable).toEqual({
+        message: 'Test error',
+        stacktrace: [],
+      })
+    })
+
+    it('should capture cross-realm Error thrown values', () => {
+      addProbe(createProbe())
+
+      const iframe = document.createElement('iframe')
+      document.body.appendChild(iframe)
+      registerCleanupTask(() => iframe.remove())
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      const iframeWindow = iframe.contentWindow as Window & { Error: ErrorConstructor }
+      const error = new iframeWindow.Error('Iframe error')
+      onEntry(probes, thisArg)
+      onThrow(probes, error, thisArg)
+
+      const payload = mockBatchAdd.mock.calls[mockBatchAdd.mock.calls.length - 1][0]
+      const snapshot = payload.debugger.snapshot
+      expect(snapshot.captures.return.throwable).toEqual({
+        message: 'Iframe error',
+        stacktrace: expect.any(Array),
+      })
+    })
+
+    it('should capture thrown values that cannot be coerced to strings', () => {
+      addProbe(createProbe())
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      onEntry(probes, thisArg)
+      expect(() => onThrow(probes, Object.create(null), thisArg)).not.toThrow()
+
+      const payload = mockBatchAdd.mock.calls[mockBatchAdd.mock.calls.length - 1][0]
+      const snapshot = payload.debugger.snapshot
+      expect(snapshot.captures.return.throwable).toEqual({
+        message: '{}',
+        stacktrace: [],
+      })
+    })
+
+    it('should capture thrown values that cannot be coerced or sanitized', () => {
+      addProbe(createProbe())
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      const error = {
+        toString() {
+          throw new Error('Cannot coerce')
+        },
+        get x() {
+          throw new Error('Cannot sanitize')
+        },
+      }
+      onEntry(probes, {}, {})
+      expect(() => onThrow(probes, error, {}, {})).not.toThrow()
+
+      const payload = mockBatchAdd.mock.calls[mockBatchAdd.mock.calls.length - 1][0]
+      const snapshot = payload.debugger.snapshot
+      expect(snapshot.captures.return.throwable).toEqual({
+        message: '<error: unable to stringify thrown value>',
+        stacktrace: [],
+      })
+    })
+
+    it('should capture Error-like thrown values with hostile message getters', () => {
+      addProbe(createProbe())
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      const error = {
+        [Symbol.toStringTag]: 'Error',
+        get message() {
+          throw new Error('Cannot read message')
+        },
+      }
+      onEntry(probes, {}, {})
+      expect(() => onThrow(probes, error, {}, {})).not.toThrow()
+
+      const payload = mockBatchAdd.mock.calls[mockBatchAdd.mock.calls.length - 1][0]
+      const snapshot = payload.debugger.snapshot
+      expect(snapshot.captures.return.throwable).toEqual({
+        message: '[object Error]',
+        stacktrace: [],
+      })
+    })
+
     it('should evaluate EXIT condition with @exception', () => {
       addProbe(
         createProbe({
@@ -531,10 +719,44 @@ describe('api', () => {
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       const error = new Error('Test error')
-      onEntry(probes, {}, {})
-      onThrow(probes, error, {}, {})
+      onEntry(probes, thisArg)
+      onThrow(probes, error, thisArg)
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+    })
+
+    it('should capture expressions at EXIT with @exception', () => {
+      addProbe(
+        createProbe({
+          captureSnapshot: false,
+          captureExpressions: [
+            {
+              name: 'exceptionMessage',
+              expr: { dsl: '@exception.message', json: { getmember: [{ ref: '@exception' }, 'message'] } },
+            },
+          ],
+          sampling: { snapshotsPerSecond: Infinity },
+        })
+      )
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      onEntry(probes, thisArg)
+      onThrow(probes, new Error('Test error'), thisArg)
+
+      const payload = mockBatchAdd.mock.calls[mockBatchAdd.mock.calls.length - 1][0]
+      const snapshot = payload.debugger.snapshot
+      expect(snapshot.captures).toEqual({
+        entry: undefined,
+        return: {
+          captureExpressions: {
+            exceptionMessage: { type: 'string', value: 'Test error' },
+          },
+          throwable: {
+            message: 'Test error',
+            stacktrace: expect.any(Array),
+          },
+        },
+      })
     })
 
     it('should report EXIT condition evaluation errors on throw without capturing a snapshot', () => {
@@ -549,8 +771,8 @@ describe('api', () => {
       )
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, {}, {})
-      onThrow(probes, new Error('Test error'), {}, {})
+      onEntry(probes, thisArg)
+      onThrow(probes, new Error('Test error'), thisArg)
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
       const payload = mockBatchAdd.mock.lastCall![0]
@@ -571,7 +793,7 @@ describe('api', () => {
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       const error = new Error('Test error')
-      onThrow(probes, error, {}, {})
+      onThrow(probes, error, thisArg)
 
       expect(mockBatchAdd).not.toHaveBeenCalled()
     })
@@ -593,8 +815,8 @@ describe('api', () => {
       // Try to fire 30 probes rapidly
       for (let i = 0; i < 30; i++) {
         const probes = getProbes(`test.js;method${i}`)!
-        onEntry(probes, {}, {})
-        onReturn(probes, null, {}, {}, {})
+        onEntry(probes, thisArg)
+        onReturn(probes, null, thisArg)
       }
 
       // Should only get 25 calls (global limit)
@@ -615,11 +837,32 @@ describe('api', () => {
 
       for (let i = 0; i < 3; i++) {
         const probes = getProbes(`test.js;configuredGlobal${i}`)!
-        onEntry(probes, {}, {})
-        onReturn(probes, null, {}, {}, {})
+        onEntry(probes, thisArg)
+        onReturn(probes, null, thisArg)
       }
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(2)
+    })
+
+    it('should apply the global snapshot rate limit to capture-expression probes', () => {
+      for (let i = 0; i < 30; i++) {
+        addProbe(
+          createProbe({
+            where: { typeName: 'test.js', methodName: `captureExpressionGlobal${i}` },
+            captureSnapshot: false,
+            captureExpressions: [{ name: 'x', expr: { dsl: 'x', json: { ref: 'x' } } }],
+            sampling: { snapshotsPerSecond: 5000 },
+          })
+        )
+      }
+
+      for (let i = 0; i < 30; i++) {
+        const probes = getProbes(`test.js;captureExpressionGlobal${i}`)!
+        onEntry(probes, thisArg, { x: i })
+        onReturn(probes, null, thisArg, { x: i })
+      }
+
+      expect(mockBatchAdd).toHaveBeenCalledTimes(25)
     })
   })
 
@@ -630,10 +873,10 @@ describe('api', () => {
       addProbe(createProbe({ sampling: undefined }))
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, {}, {})
-      onReturn(probes, null, {}, {}, {})
-      onEntry(probes, {}, {})
-      onReturn(probes, null, {}, {}, {})
+      onEntry(probes, thisArg)
+      onReturn(probes, null, thisArg)
+      onEntry(probes, thisArg)
+      onReturn(probes, null, thisArg)
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
     })
@@ -649,10 +892,29 @@ describe('api', () => {
       )
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, {}, {})
-      onReturn(probes, null, {}, {}, {})
-      onEntry(probes, {}, {})
-      onReturn(probes, null, {}, {}, {})
+      onEntry(probes, thisArg)
+      onReturn(probes, null, thisArg)
+      onEntry(probes, thisArg)
+      onReturn(probes, null, thisArg)
+
+      expect(mockBatchAdd).toHaveBeenCalledTimes(1)
+    })
+
+    it('should use the configured default snapshot per-probe rate limit for capture-expression probes', () => {
+      initTransport({ maxSnapshotsPerSecondPerProbe: 0.5 })
+
+      addProbe(
+        createProbe({
+          captureSnapshot: false,
+          captureExpressions: [{ name: 'x', expr: { dsl: 'x', json: { ref: 'x' } } }],
+        })
+      )
+
+      const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
+      onEntry(probes, thisArg, { x: 1 })
+      onReturn(probes, null, thisArg, { x: 1 })
+      onEntry(probes, thisArg, { x: 2 })
+      onReturn(probes, null, thisArg, { x: 2 })
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
     })
@@ -671,14 +933,14 @@ describe('api', () => {
 
       // First invocation: probe sends its single allowed event.
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, {}, {})
-      onReturn(probes, null, {}, {}, {})
+      onEntry(probes, thisArg)
+      onReturn(probes, null, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
       // Second invocation: the lifetime budget is now exhausted. No new event should
       // be queued, and the probe should be auto-unregistered.
-      onEntry(probes, {}, {})
-      onReturn(probes, null, {}, {}, {})
+      onEntry(probes, thisArg)
+      onReturn(probes, null, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
       expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
     })
@@ -704,13 +966,13 @@ describe('api', () => {
       // (context spread + captureFields) + 1 read from return capture = 3 reads.
       // This exhausts the lifetime budget.
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, {}, args)
-      onReturn(probes, null, {}, args, {})
+      onEntry(probes, thisArg, args)
+      onReturn(probes, null, thisArg, args)
 
       // Second invocation: both onEntry and onReturn detect the exhausted budget
       // up front and skip all capture work — no further reads from args.
-      onEntry(probes, {}, args)
-      onReturn(probes, null, {}, args, {})
+      onEntry(probes, thisArg, args)
+      onReturn(probes, null, thisArg, args)
 
       expect(getterSpy).toHaveBeenCalledTimes(3)
     })
@@ -729,14 +991,14 @@ describe('api', () => {
 
       // First invocation: probe sends its single allowed event.
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, {}, {})
-      onReturn(probes, null, {}, {}, {})
+      onEntry(probes, thisArg)
+      onReturn(probes, null, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
       // Second invocation: the lifetime budget is now exhausted. No new event should
       // be queued, and the probe should be auto-unregistered.
-      onEntry(probes, {}, {})
-      onReturn(probes, null, {}, {}, {})
+      onEntry(probes, thisArg)
+      onReturn(probes, null, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
       expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
     })
@@ -752,15 +1014,15 @@ describe('api', () => {
       )
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, {}, {})
-      onEntry(probes, {}, {})
+      onEntry(probes, thisArg)
+      onEntry(probes, thisArg)
 
-      onReturn(probes, null, {}, {}, {})
+      onReturn(probes, null, thisArg)
       expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
 
       // The lifetime budget gates new entries, but already accepted in-flight
       // entries still drain even if another frame exhausts the budget first.
-      onReturn(probes, null, {}, {}, {})
+      onReturn(probes, null, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(2)
     })
 
@@ -771,8 +1033,8 @@ describe('api', () => {
       addProbe(probe)
 
       let probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, {}, {})
-      onReturn(probes, null, {}, {}, {})
+      onEntry(probes, thisArg)
+      onReturn(probes, null, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
       // The old probe has reached its lifetime budget and was auto-unregistered.
@@ -780,8 +1042,8 @@ describe('api', () => {
       addProbe({ ...probe, version: 1 })
 
       probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, {}, {})
-      onReturn(probes, null, {}, {}, {})
+      onEntry(probes, thisArg)
+      onReturn(probes, null, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(2)
     })
 
@@ -791,8 +1053,8 @@ describe('api', () => {
       addProbe(createProbe({ sampling: { snapshotsPerSecond: 5000 } }))
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, {}, {})
-      onReturn(probes, null, {}, {}, {})
+      onEntry(probes, thisArg)
+      onReturn(probes, null, thisArg)
 
       expect(mockBatchAdd).not.toHaveBeenCalled()
       expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
@@ -825,8 +1087,8 @@ describe('api', () => {
       // First invocation: both probes emit one event. probeA hits its cap (eventsSent=1,
       // max=1) but is not removed yet — the pre-call budget check still passed.
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, {}, {})
-      onReturn(probes, null, {}, {}, {})
+      onEntry(probes, thisArg)
+      onReturn(probes, null, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(2)
 
       // Second invocation: probeA's pre-call check now fails and it is queued for
@@ -834,15 +1096,15 @@ describe('api', () => {
       // probeA gets spliced out of the probes array.
       mockBatchAdd.mockClear()
       const probesAfterFirst = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probesAfterFirst, {}, {})
-      onReturn(probesAfterFirst, null, {}, {}, {})
+      onEntry(probesAfterFirst, thisArg)
+      onReturn(probesAfterFirst, null, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
       expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toEqual([expect.objectContaining({ id: 'sibling-probe-b' })])
 
       // probeB's stack entry must not leak: a third onReturn without onEntry is a no-op.
       mockBatchAdd.mockClear()
       const remainingProbes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onReturn(remainingProbes, null, {}, {}, {})
+      onReturn(remainingProbes, null, thisArg)
       expect(mockBatchAdd).not.toHaveBeenCalled()
     })
   })
@@ -853,10 +1115,10 @@ describe('api', () => {
       addProbe(probe)
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, {}, {})
+      onEntry(probes, thisArg)
 
       removeProbe(probe.id)
-      onReturn(probes, null, {}, {}, {})
+      onReturn(probes, null, thisArg)
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
     })
@@ -866,13 +1128,13 @@ describe('api', () => {
       addProbe(probe)
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, {}, {})
+      onEntry(probes, thisArg)
 
       removeProbe(probe.id)
       addProbe(createProbe({ id: probe.id }))
 
       const newProbes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onReturn(newProbes, null, {}, {}, {})
+      onReturn(newProbes, null, thisArg)
 
       expect(mockBatchAdd).not.toHaveBeenCalled()
     })
@@ -881,13 +1143,13 @@ describe('api', () => {
       addProbe(createProbe())
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, {}, {})
+      onEntry(probes, thisArg)
 
       clearProbes()
       addProbe(createProbe())
 
       const newProbes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onReturn(newProbes, null, {}, {}, {})
+      onReturn(newProbes, null, thisArg)
 
       expect(mockBatchAdd).not.toHaveBeenCalled()
     })
@@ -896,14 +1158,14 @@ describe('api', () => {
       addProbe(createProbe())
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, {}, {})
-      onReturn(probes, null, {}, {}, {})
+      onEntry(probes, thisArg)
+      onReturn(probes, null, thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
       mockBatchAdd.mockClear()
 
       // A second onReturn without onEntry should not produce a snapshot
-      onReturn(probes, null, {}, {}, {})
+      onReturn(probes, null, thisArg)
       expect(mockBatchAdd).not.toHaveBeenCalled()
     })
 
@@ -911,14 +1173,14 @@ describe('api', () => {
       addProbe(createProbe())
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, {}, {})
-      onThrow(probes, new Error('test'), {}, {})
+      onEntry(probes, thisArg)
+      onThrow(probes, new Error('test'), thisArg)
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
 
       mockBatchAdd.mockClear()
 
       // A second onThrow without onEntry should not produce a snapshot
-      onThrow(probes, new Error('test'), {}, {})
+      onThrow(probes, new Error('test'), thisArg)
       expect(mockBatchAdd).not.toHaveBeenCalled()
     })
   })
@@ -941,8 +1203,8 @@ describe('api', () => {
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       const deepObj = { level1: { level2: { level3: { level4: 'deep' } } } }
-      onEntry(probes, {}, { arg: deepObj })
-      onReturn(probes, null, {}, { arg: deepObj }, {})
+      onEntry(probes, thisArg, { arg: deepObj })
+      onReturn(probes, null, thisArg, { arg: deepObj })
 
       // The entry capture timed out, so onEntry pushed null.
       // onReturn still gets an active entry from its own onEntry call, but
@@ -958,7 +1220,7 @@ describe('api', () => {
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
 
       // Let onEntry succeed with real time
-      onEntry(probes, {}, { x: 1 })
+      onEntry(probes, thisArg, { x: 1 })
 
       // Now make performance.now jump forward so the return capture times out
       let callCount = 0
@@ -971,7 +1233,7 @@ describe('api', () => {
         return realNow() + 20
       })
 
-      onReturn(probes, null, {}, { x: 1 }, { local: 'value' })
+      onReturn(probes, null, thisArg, { x: 1 }, { local: 'value' })
 
       expect(mockBatchAdd).not.toHaveBeenCalled()
     })
@@ -982,7 +1244,7 @@ describe('api', () => {
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
 
       // Let onEntry succeed with real time
-      onEntry(probes, {}, { x: 1 })
+      onEntry(probes, thisArg, { x: 1 })
 
       // Now make performance.now jump forward so the throw capture times out
       let callCount = 0
@@ -995,7 +1257,7 @@ describe('api', () => {
         return realNow() + 20
       })
 
-      onThrow(probes, new Error('test'), {}, { x: 1 })
+      onThrow(probes, new Error('test'), thisArg, { x: 1 })
 
       expect(mockBatchAdd).not.toHaveBeenCalled()
     })
@@ -1020,8 +1282,8 @@ describe('api', () => {
       })
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, {}, {})
-      onReturn(probes, null, {}, {}, {})
+      onEntry(probes, thisArg)
+      onReturn(probes, null, thisArg)
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
     })
@@ -1042,12 +1304,12 @@ describe('api', () => {
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       // This onEntry will time out and push null
-      onEntry(probes, {}, { x: 1 })
+      onEntry(probes, thisArg, { x: 1 })
 
       // onReturn should handle the null entry gracefully (no snapshot sent)
       shouldTimeout = false
       callCount = 0
-      onReturn(probes, null, {}, { x: 1 }, {})
+      onReturn(probes, null, thisArg, { x: 1 })
 
       expect(mockBatchAdd).not.toHaveBeenCalled()
     })
@@ -1081,8 +1343,8 @@ describe('api', () => {
       })
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, {}, { x: 1 })
-      onReturn(probes, null, {}, { x: 1 }, {})
+      onEntry(probes, thisArg, { x: 1 })
+      onReturn(probes, null, thisArg, { x: 1 })
 
       // The non-snapshot probe should still send, but both snapshot probes should be dropped
       const calls = mockBatchAdd.mock.calls
@@ -1115,8 +1377,8 @@ describe('api', () => {
       })
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
-      onEntry(probes, {}, { x: 1 })
-      onReturn(probes, null, {}, { x: 1 }, {})
+      onEntry(probes, thisArg, { x: 1 })
+      onReturn(probes, null, thisArg, { x: 1 })
 
       // Both snapshot probes share the deadline -- neither should send
       expect(mockBatchAdd).not.toHaveBeenCalled()
@@ -1131,8 +1393,8 @@ describe('api', () => {
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       expect(() => {
-        onEntry(probes, {}, {})
-        onReturn(probes, null, {}, {}, {})
+        onEntry(probes, thisArg)
+        onReturn(probes, null, thisArg)
       }).not.toThrow()
 
       expect(mockBatchAdd).toHaveBeenCalledTimes(1)
@@ -1145,8 +1407,8 @@ describe('api', () => {
 
       const probes = getProbes(DEFAULT_PROBE_FUNCTION_ID)!
       expect(() => {
-        onEntry(probes, {}, {})
-        onReturn(probes, null, {}, {}, {})
+        onEntry(probes, thisArg)
+        onReturn(probes, null, thisArg)
       }).not.toThrow()
       expect(warnSpy).toHaveBeenCalledWith(
         'Transport is not initialized. Make sure DD_DEBUGGER.init() has been called.'

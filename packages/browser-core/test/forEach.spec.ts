@@ -11,6 +11,7 @@ import { resetInteractionCountPolyfill } from '../../browser-rum-core/src/domain
 import { resetMonitor } from '../src/tools/monitor'
 import { resetTelemetry } from '../src/domain/telemetry'
 import { resetSampleDecisionCache } from '../src/domain/sampler'
+import { resetAllowUntrustedEvents } from '../src/browser/addEventListener'
 import { startLeakDetection } from './leakDetection'
 import type { BuildEnvWindow } from './buildEnv'
 ;(window as unknown as BuildEnvWindow).__BUILD_ENV__SDK_VERSION__ = 'test'
@@ -42,6 +43,7 @@ afterEach(() => {
   resetSampleDecisionCache()
   resetExperimentalFeatures()
   resetManageResourceTimingBufferFull()
+  resetAllowUntrustedEvents()
 })
 
 function clearAllCookies() {

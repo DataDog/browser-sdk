@@ -3,7 +3,7 @@ import type { RelativeTime, Duration, ServerDuration } from '@datadog/js-core/ti
 import { createHook } from '@datadog/browser-core'
 import type { Clock } from '../../../../browser-core/test'
 import { mockClock, registerCleanupTask } from '../../../../browser-core/test'
-import { createPerformanceEntry, mockPerformanceObserver, mockRumConfiguration } from '../../../test'
+import { createPerformanceEntry, mockPerformanceObserver } from '../../../test'
 import { RumEventType } from '../../rawRumEvent.types'
 import * as performanceObservable from '../../browser/performanceObservable'
 import type { AssembleHook, AssembleHookParams } from '../hooks'
@@ -13,7 +13,6 @@ import { PageState, startPageStateHistory } from './pageStateHistory'
 describe('pageStateHistory', () => {
   let clock: Clock
   let hook: AssembleHook
-  const configuration = mockRumConfiguration()
 
   beforeEach(() => {
     clock = mockClock()
@@ -25,7 +24,7 @@ describe('pageStateHistory', () => {
 
     beforeEach(() => {
       mockPerformanceObserver()
-      pageStateHistory = startPageStateHistory(hook, configuration)
+      pageStateHistory = startPageStateHistory(hook)
       registerCleanupTask(pageStateHistory.stop)
     })
 
@@ -70,7 +69,7 @@ describe('pageStateHistory', () => {
 
       beforeEach(() => {
         mockPerformanceObserver()
-        pageStateHistory = startPageStateHistory(hook, configuration)
+        pageStateHistory = startPageStateHistory(hook)
         registerCleanupTask(pageStateHistory.stop)
       })
 
@@ -148,7 +147,7 @@ describe('pageStateHistory', () => {
       it('should limit the number of page states added', () => {
         pageStateHistory.stop()
         const maxPageStateEntriesSelectable = 1
-        pageStateHistory = startPageStateHistory(hook, configuration, maxPageStateEntriesSelectable)
+        pageStateHistory = startPageStateHistory(hook, maxPageStateEntriesSelectable)
         registerCleanupTask(pageStateHistory.stop)
 
         pageStateHistory.addPageState(PageState.ACTIVE)
@@ -181,7 +180,7 @@ describe('pageStateHistory', () => {
 
       beforeEach(() => {
         mockPerformanceObserver()
-        pageStateHistory = startPageStateHistory(hook, configuration)
+        pageStateHistory = startPageStateHistory(hook)
         registerCleanupTask(pageStateHistory.stop)
       })
 
@@ -242,7 +241,7 @@ describe('pageStateHistory', () => {
         }),
       ])
 
-      pageStateHistory = startPageStateHistory(hook, configuration)
+      pageStateHistory = startPageStateHistory(hook)
       registerCleanupTask(pageStateHistory.stop)
 
       expect(pageStateHistory.wasInPageStateDuringPeriod(PageState.ACTIVE, 5 as RelativeTime, 5 as Duration)).toBe(true)
@@ -256,7 +255,7 @@ describe('pageStateHistory', () => {
         supportedEntryTypes: [],
       })
 
-      pageStateHistory = startPageStateHistory(hook, configuration)
+      pageStateHistory = startPageStateHistory(hook)
       registerCleanupTask(pageStateHistory.stop)
 
       expect(pageStateHistory.wasInPageStateDuringPeriod(PageState.ACTIVE, 5 as RelativeTime, 5 as Duration)).toBe(
