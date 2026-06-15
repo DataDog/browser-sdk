@@ -386,9 +386,13 @@
             <div class="stat-label">Matrix / Mandelbrot</div>
             <div class="stat-value" id="stat-matrix-ops">0</div>
           </div>
-          <div class="stat" style="grid-column: 1 / -1">
+          <div class="stat">
             <div class="stat-label">Elapsed</div>
             <div class="stat-value" id="stat-elapsed">0.0s</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Burst workers spawned</div>
+            <div class="stat-value" id="stat-burst-count">0</div>
           </div>
         </div>
       </div>
@@ -423,6 +427,34 @@
             <div class="workload-desc">100×100 grid, 80 iter/pixel — mixed branches + arithmetic</div>
           </div>
         </div>
+      </div>
+
+      <div class="card">
+        <h2>Burst workers (short-lived)</h2>
+        <div class="workload-item">
+          <div class="workload-icon">⚡</div>
+          <div>
+            <div class="workload-name">Sort (10k elements)</div>
+            <div class="workload-desc">Sine-seeded array, native sort — shows up as <code>sortHeavy()</code></div>
+          </div>
+        </div>
+        <div class="workload-item">
+          <div class="workload-icon">🔩</div>
+          <div>
+            <div class="workload-name">Prime factorisation</div>
+            <div class="workload-desc"><code>primeFactors(999983)</code> × 500 — tight division loop</div>
+          </div>
+        </div>
+        <div class="workload-item">
+          <div class="workload-icon">🔐</div>
+          <div>
+            <div class="workload-name">Hash-like burn</div>
+            <div class="workload-desc">200-round mixing loop — looks like crypto in profiles</div>
+          </div>
+        </div>
+        <p style="font-size:0.72rem;color:#8b949e;margin-top:10px;line-height:1.5">
+          Spawned every 30s, runs for ~5s then calls <code>self.close()</code>.
+        </p>
       </div>
 
       <div class="info-box">

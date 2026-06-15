@@ -13,6 +13,37 @@ export function makeProfilerApi(): ProfilerApi {
   let profiler: RUMProfiler | undefined
   let workerCoordinator: WorkerProfilingCoordinator | undefined
 
+  // Buffer addWorker/removeWorker calls that arrive before the coordinator is ready
+  // (i.e. before lazyLoadProfiler resolves). Replayed once the coordinator is assigned.
+  type PendingCall =
+    | { action: 'add'; worker: Worker; options?: { name?: string } }
+    | { action: 'remove'; worker: Worker }
+  const pendingWorkerCalls: PendingCall[] = []
+
+  function getOrBufferCoordinator() {
+    return {
+      addWorker(worker: Worker, options?: { name?: string }) {
+        if (workerCoordinator) {
+          workerCoordinator.addWorker(worker, options)
+        } else {
+          console.log('[DD ProfilerApi] coordinator not ready yet — buffering addWorker call')
+          pendingWorkerCalls.push({ action: 'add', worker, options })
+        }
+      },
+      removeWorker(worker: Worker) {
+        if (workerCoordinator) {
+          workerCoordinator.removeWorker(worker)
+        } else {
+          // Remove any buffered add for this worker
+          const idx = pendingWorkerCalls.findIndex((c) => c.action === 'add' && c.worker === worker)
+          if (idx !== -1) {
+            pendingWorkerCalls.splice(idx, 1)
+          }
+        }
+      },
+    }
+  }
+
   function onRumStart(
     lifeCycle: LifeCycle,
     hooks: Hooks,
@@ -79,6 +110,18 @@ export function makeProfilerApi(): ProfilerApi {
           Math.round((DEFAULT_RUM_PROFILER_CONFIGURATION.collectIntervalMs * 1.5) / DEFAULT_RUM_PROFILER_CONFIGURATION.sampleIntervalMs),
           DEFAULT_RUM_PROFILER_CONFIGURATION.collectIntervalMs
         )
+
+        // Replay any addWorker/removeWorker calls that arrived before the coordinator was ready
+        if (pendingWorkerCalls.length > 0) {
+          console.log(`[DD ProfilerApi] replaying ${pendingWorkerCalls.length} buffered worker call(s)`)
+          for (const call of pendingWorkerCalls.splice(0)) {
+            if (call.action === 'add') {
+              workerCoordinator?.addWorker(call.worker, call.options)
+            } else {
+              workerCoordinator?.removeWorker(call.worker)
+            }
+          }
+        }
       })
       .catch(monitorError)
   }
@@ -89,6 +132,6 @@ export function makeProfilerApi(): ProfilerApi {
       profiler?.stop()
       workerCoordinator?.stop()
     },
-    getWorkerCoordinator: () => workerCoordinator,
+    getWorkerCoordinator: () => getOrBufferCoordinator(),
   }
 }

@@ -76,6 +76,45 @@ worker.addEventListener('error', (event: ErrorEvent) => {
 worker.postMessage({ kind: 'start' })
 
 // ---------------------------------------------------------------------------
+// Short-lived workers — spawned every 30s, run a 5s burst then terminate
+// ---------------------------------------------------------------------------
+const SHORT_LIVED_INTERVAL_MS = 30_000
+let shortLivedCount = 0
+
+function spawnShortLivedWorker(): void {
+  shortLivedCount++
+  const name = `burst-worker-${shortLivedCount}`
+  console.log(`[main] spawning ${name}`)
+
+  const w = new Worker('/short-lived-worker.js', { name })
+  datadogRum.addProfilingWorker(w, { name })
+
+  w.addEventListener('message', (event: MessageEvent) => {
+    if (event.data?.kind === 'done') {
+      console.log(`[main] ${name} done — ${event.data.batches} batches in ${event.data.elapsedMs}ms`)
+      // Worker called self.close() — unregister it
+      datadogRum.removeProfilingWorker(w)
+      updateShortLivedStatus()
+    }
+  })
+
+  w.addEventListener('error', (e: ErrorEvent) => {
+    console.error(`[main] ${name} error:`, e.message)
+    datadogRum.removeProfilingWorker(w)
+  })
+
+  updateShortLivedStatus()
+}
+
+function updateShortLivedStatus(): void {
+  document.getElementById('stat-burst-count')!.textContent = String(shortLivedCount)
+}
+
+// Spawn one immediately, then every 30s
+spawnShortLivedWorker()
+setInterval(spawnShortLivedWorker, SHORT_LIVED_INTERVAL_MS)
+
+// ---------------------------------------------------------------------------
 // Controls
 // ---------------------------------------------------------------------------
 function setWorkerStatus(text: string, color: string): void {
