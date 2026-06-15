@@ -49,26 +49,36 @@ function printHelp() {
 Usage: node scripts/json-schemas.ts [options]
 
 Options:
-  --update <branch>  Update @datadog/rum-events-format to the latest commit on <branch> and run yarn install
+  --update <branch|commit>  Update @datadog/rum-events-format to the latest commit on <branch> (or a specific full commit hash) and run yarn install
   --build            Build json-schema-to-typescript and regenerate TypeScript types from JSON schemas
   --help, -h         Show this help message
 
 Examples:
-  node scripts/json-schemas.ts --update master --build  # Full sync (alias: yarn json-schemas:sync)
+  node scripts/json-schemas.ts --update master --build              # Full sync (alias: yarn json-schemas:sync)
+  node scripts/json-schemas.ts --update <40-char-hash> --build       # Sync to a specific commit
   node scripts/json-schemas.ts --build                  # Regenerate types only (alias: yarn json-schemas:generate)
 `)
 }
 
-async function update(branch: string) {
-  printLog(`Resolving latest commit on ${branch}...`)
-  const response = await fetchHandlingError(`https://api.github.com/repos/DataDog/rum-events-format/branches/${branch}`)
-  const {
-    commit: { sha: commitHash },
-  } = (await response.json()) as { commit: { sha: string } }
-  if (!commitHash) {
-    throw new Error(`Could not resolve branch ${branch}`)
+async function update(branchOrCommit: string) {
+  let commitHash: string
+  if (/^[0-9a-f]{40}$/.test(branchOrCommit)) {
+    commitHash = branchOrCommit
+    printLog(`Using provided commit hash: ${commitHash}`)
+  } else {
+    printLog(`Resolving latest commit on ${branchOrCommit}...`)
+    const response = await fetchHandlingError(
+      `https://api.github.com/repos/DataDog/rum-events-format/branches/${branchOrCommit}`
+    )
+    const {
+      commit: { sha },
+    } = (await response.json()) as { commit: { sha: string } }
+    if (!sha) {
+      throw new Error(`Could not resolve branch ${branchOrCommit}`)
+    }
+    commitHash = sha
+    printLog(`Latest commit: ${commitHash}`)
   }
-  printLog(`Latest commit: ${commitHash}`)
 
   await modifyFile(PACKAGE_JSON_PATH, (content) =>
     content.replace(
