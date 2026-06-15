@@ -39,7 +39,7 @@ See `test/e2e/AGENTS.md` for the full E2E testing guide (setup, writing tests, c
 
 Quick commands:
 
-- `yarn test:e2e:init` — first-time setup
+- `yarn test:e2e:setup` — first-time setup
 - `yarn test:e2e` — run all E2E tests
 - `yarn test:e2e -g "pattern"` — filter by name
 - `yarn test:e2e --ui` — Playwright UI mode
