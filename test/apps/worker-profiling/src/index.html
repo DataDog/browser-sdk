@@ -202,7 +202,7 @@
         background: #161b22;
         border: 1px solid #30363d;
         border-radius: 10px;
-        padding: 16px;
+        overflow: hidden;
         animation: fadeIn 0.25s ease;
       }
 
@@ -211,12 +211,30 @@
         to   { opacity: 1; transform: translateY(0); }
       }
 
-      .profile-header {
+      .profile-summary {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 12px;
+        padding: 12px 16px;
+        cursor: pointer;
+        user-select: none;
+        list-style: none;
       }
+      .profile-summary::-webkit-details-marker { display: none; }
+      .profile-summary:hover { background: #1c2128; }
+
+      .profile-summary-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .profile-chevron {
+        font-size: 0.6rem;
+        color: #8b949e;
+        transition: transform 0.15s;
+      }
+      details[open] .profile-chevron { transform: rotate(90deg); }
 
       .thread-badge {
         font-size: 0.82rem;
@@ -227,6 +245,11 @@
         font-size: 0.72rem;
         color: #8b949e;
         font-variant-numeric: tabular-nums;
+      }
+
+      .profile-body {
+        padding: 12px 16px 16px;
+        border-top: 1px solid #21262d;
       }
 
       .profile-stats {
