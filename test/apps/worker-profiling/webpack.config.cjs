@@ -56,6 +56,15 @@ module.exports = {
   devServer: {
     port: 8081,
     headers: { 'Document-Policy': 'js-profiling' },
+    proxy: [
+      {
+        // Forward /datadog-worker.js to the proxy server so it is served
+        // same-origin (required — browsers block cross-origin Worker construction)
+        context: ['/datadog-worker.js'],
+        target: 'http://localhost:8082',
+        changeOrigin: false,
+      },
+    ],
   },
 
   optimization: { splitChunks: false, runtimeChunk: false },
