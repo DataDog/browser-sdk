@@ -589,6 +589,28 @@ export interface RumPublicApi extends PublicApi {
    * @deprecated You can now omit `name` from a MatchHeader entry to include default headers.
    */
   DEFAULT_TRACKED_RESOURCE_HEADERS: typeof DEFAULT_TRACKED_RESOURCE_HEADERS
+
+  /**
+   * Register a Dedicated Worker for CPU profiling.
+   *
+   * The worker script must be served with the `Document-Policy: js-profiling` HTTP response header.
+   * Profiling starts automatically when the session is sampled for profiling (via `profilingSampleRate`).
+   * Workers registered before `init()` is called are buffered and started when the session begins.
+   *
+   * @experimental Requires Chromium Canary with `DocumentPolicyInDedicatedWorker` and `ProfilerAPIForDedicatedWorker` flags.
+   * @param worker - The Worker instance to profile
+   * @param options.name - Optional label surfaced in Datadog as the `worker.name` tag. Defaults to the worker's script URL.
+   */
+  addProfilingWorker: (worker: Worker, options?: { name?: string }) => void
+
+  /**
+   * Unregister a worker from CPU profiling and stop collecting data from it.
+   * Any in-flight profile for this worker is flushed and sent before stopping.
+   *
+   * @experimental
+   * @param worker - The Worker instance to stop profiling
+   */
+  removeProfilingWorker: (worker: Worker) => void
 }
 
 export interface RecorderApi {
@@ -609,6 +631,7 @@ export interface RecorderApi {
 
 export interface ProfilerApi {
   stop: () => void
+  getWorkerCoordinator: () => { addWorker: (worker: Worker, options?: { name?: string }) => void; removeWorker: (worker: Worker) => void } | undefined
   onRumStart: (
     lifeCycle: LifeCycle,
     hooks: Hooks,
@@ -1036,6 +1059,14 @@ export function makeRumPublicApi(
     failFeatureOperation: failOperation,
 
     DEFAULT_TRACKED_RESOURCE_HEADERS,
+
+    addProfilingWorker: monitor((worker: Worker, options?: { name?: string }) => {
+      profilerApi.getWorkerCoordinator()?.addWorker(worker, options)
+    }),
+
+    removeProfilingWorker: monitor((worker: Worker) => {
+      profilerApi.getWorkerCoordinator()?.removeWorker(worker)
+    }),
   })
 
   return rumPublicApi

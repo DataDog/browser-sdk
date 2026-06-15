@@ -5,5 +5,6 @@ export function makeProfilerApiStub(): ProfilerApi {
   return {
     onRumStart: noop,
     stop: noop,
+    getWorkerCoordinator: () => undefined,
   }
 }

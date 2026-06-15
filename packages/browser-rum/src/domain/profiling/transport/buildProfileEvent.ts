@@ -33,11 +33,12 @@ export interface ProfileEventAttributes {
 export function buildProfileEvent(
   profilerTrace: BrowserProfilerTrace,
   configuration: RumConfiguration,
-  sessionId: string | undefined
+  sessionId: string | undefined,
+  workerCorrelationIds: string[] = []
 ): BrowserProfileEvent {
   const tags = buildTags(configuration) // TODO: get that from the tagContext hook
   const profileAttributes = buildProfileEventAttributes(profilerTrace, configuration.applicationId, sessionId)
-  const profileEventTags = buildProfileEventTags(tags)
+  const profileEventTags = buildProfileEventTags(tags, workerCorrelationIds)
 
   return {
     ...profileAttributes,
@@ -136,8 +137,16 @@ function extractVitalIdsAndLabels(vitals?: RumProfilerVitalEntry[]): {
   return result
 }
 
-function buildProfileEventTags(tags: string[]): string[] {
+function buildProfileEventTags(tags: string[], workerCorrelationIds: string[] = []): string[] {
   // Tags already contains the common tags for all events. (service, env, version, etc.)
   // Here we are adding some specific-to-profiling tags.
-  return tags.concat(['language:javascript', 'runtime:chrome', 'family:chrome', 'host:browser'])
+  const profileEventTags = tags.concat(['language:javascript', 'runtime:chrome', 'family:chrome', 'host:browser'])
+
+  // Include correlation IDs of all currently registered workers so the backend can join
+  // this main-thread profile with the worker profiles collected in the same session.
+  for (const correlationId of workerCorrelationIds) {
+    profileEventTags.push(`thread.correlation_id:${correlationId}`)
+  }
+
+  return profileEventTags
 }

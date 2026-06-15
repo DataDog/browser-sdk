@@ -42,7 +42,8 @@ export function createRumProfiler(
   profilingContextManager: ProfilingContextManager,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
   viewHistory: ViewHistory,
-  profilerConfiguration: RUMProfilerConfiguration = DEFAULT_RUM_PROFILER_CONFIGURATION
+  profilerConfiguration: RUMProfilerConfiguration = DEFAULT_RUM_PROFILER_CONFIGURATION,
+  getWorkerCorrelationIds: () => string[] = () => []
 ): RUMProfiler {
   const emitPayload = canUseEventBridge()
     ? mockable(createBridgeEmitter)()
@@ -369,8 +370,9 @@ export function createRumProfiler(
   }
 
   function handleProfilerTrace(trace: BrowserProfilerTrace, sessionId: string | undefined): void {
+    const workerCorrelationIds = getWorkerCorrelationIds()
     const payload: ProfilingPayload = {
-      profile: buildProfileEvent(trace, configuration, sessionId),
+      profile: buildProfileEvent(trace, configuration, sessionId, workerCorrelationIds),
       trace,
     }
     emitPayload(payload)
