@@ -9,9 +9,9 @@
  *
  * No postMessage, no signaling, no manual cleanup needed in the worker.
  */
-import { startProfilingWorker } from '@datadog/browser-rum/worker'
+import { attachProfiler } from '@datadog/browser-rum/worker'
 
-startProfilingWorker()
+attachProfiler()
 
 // ---------------------------------------------------------------------------
 // Workloads

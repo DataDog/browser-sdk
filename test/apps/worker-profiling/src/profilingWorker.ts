@@ -2,7 +2,7 @@
  * Worker Profiling — dedicated worker script
  *
  * Two responsibilities:
- *  1. Connect to Datadog worker profiling via startProfilingWorker()
+ *  1. Connect to Datadog worker profiling via attachProfiler()
  *  2. Run a continuous CPU-intensive workload so the profiler captures real call stacks
  *
  * Workloads (all pure JS, no I/O):
@@ -11,11 +11,11 @@
  *  - Small matrix multiplication
  *  - Mandelbrot set pixel count
  */
-import { startProfilingWorker } from '@datadog/browser-rum/worker'
+import { attachProfiler } from '@datadog/browser-rum/worker'
 
-// Start Datadog profiling — must be called before any heavy work so the
-// Profiler is already running when the workloads start.
-startProfilingWorker()
+// Attach to the Datadog profiling pipeline — must be called before any heavy
+// work so the Profiler is already running when the workloads start.
+attachProfiler()
 
 // ---------------------------------------------------------------------------
 // State

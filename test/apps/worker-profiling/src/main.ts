@@ -4,7 +4,7 @@
  * Demonstrates:
  *  1. Initializing Datadog RUM with profilingSampleRate: 100
  *  2. Spawning a dedicated worker that runs a CPU-intensive workload
- *  3. Registering the worker with datadogRum.registerProfilingWorker()
+ *  3. Attaching the worker with datadogRum.attachProfilingWorker()
  *  4. Displaying live stats from the worker on the page
  *  5. Displaying captured profiles received from the proxy server via SSE
  */
@@ -35,11 +35,11 @@ datadogRum.init({
 // ---------------------------------------------------------------------------
 // Persistent worker (Pattern A)
 //
-// registerProfilingWorker() returns an unregister function.
+// attachProfilingWorker() returns a detach function.
 // Call it when done — SDK flushes the session. You still control terminate().
 // ---------------------------------------------------------------------------
 const worker = new Worker('/worker.js', { name: 'cpu-workload-worker' })
-let unregisterWorker = datadogRum.registerProfilingWorker(worker, { name: 'cpu-workload-worker' })
+let detachWorker = datadogRum.attachProfilingWorker(worker, { name: 'cpu-workload-worker' })
 
 // ---------------------------------------------------------------------------
 // Worker stats display
@@ -81,7 +81,7 @@ worker.postMessage({ kind: 'start' })
 // Short-lived workers — two variants, alternating every 30s
 //
 // Variant A (self-close): worker calls stop() then self.close() itself
-// Variant B (main-close): main thread unregisters after 5s, then terminates
+// Variant B (main-close): main thread detaches after 5s, then terminates
 // ---------------------------------------------------------------------------
 const SHORT_LIVED_INTERVAL_MS = 30_000
 let shortLivedCount = 0
@@ -94,14 +94,14 @@ function spawnShortLivedWorker(): void {
   console.log(`[main] spawning ${name} (variant: ${variant})`)
 
   const w = new Worker(script, { name })
-  const unregister = datadogRum.registerProfilingWorker(w, { name })
+  const detach = datadogRum.attachProfilingWorker(w, { name })
 
   if (variant === 'main-close') {
     // Variant B: main thread decides when to stop after 5s.
-    // unregister() flushes the current profile session, then we terminate ourselves.
+    // detach() flushes the current profile session, then we terminate ourselves.
     setTimeout(() => {
-      console.log(`[main] unregistering ${name} and terminating`)
-      unregister()
+      console.log(`[main] detaching ${name} and terminating`)
+      detach()
       w.terminate()
       updateShortLivedStatus()
     }, 5_000)
@@ -112,7 +112,7 @@ function spawnShortLivedWorker(): void {
 
   w.addEventListener('error', (e: ErrorEvent) => {
     console.error(`[main] ${name} error:`, e.message)
-    unregister()
+    detach()
   })
 }
 
@@ -135,7 +135,7 @@ function setWorkerStatus(text: string, color: string): void {
 
 document.getElementById('btn-stop')!.addEventListener('click', () => {
   worker.postMessage({ kind: 'stop' })
-  unregisterWorker()
+  detachWorker()
   setWorkerStatus('⏹ Worker stopped', '#888')
   ;(document.getElementById('btn-stop') as HTMLButtonElement).disabled = true
   ;(document.getElementById('btn-restart') as HTMLButtonElement).disabled = false
@@ -143,7 +143,7 @@ document.getElementById('btn-stop')!.addEventListener('click', () => {
 
 document.getElementById('btn-restart')!.addEventListener('click', () => {
   worker.postMessage({ kind: 'start' })
-  unregisterWorker = datadogRum.registerProfilingWorker(worker, { name: 'cpu-workload-worker' })
+  detachWorker = datadogRum.attachProfilingWorker(worker, { name: 'cpu-workload-worker' })
   setWorkerStatus('🟢 Worker running', '#2da44e')
   ;(document.getElementById('btn-stop') as HTMLButtonElement).disabled = false
   ;(document.getElementById('btn-restart') as HTMLButtonElement).disabled = true

@@ -2,14 +2,14 @@
  * Short-lived worker (variant A — self-close).
  *
  * The worker itself decides when it's done. It calls stopAndFlush() which:
- *   1. Flushes the current profiling session (profiler.stop() + postMessage trace)
+ *   1. Flushes the current profiling session (profiler.stop() + posts dd-worker-trace)
  *   2. Calls self.close()
  *
  * No signaling back to the main thread needed.
  */
-import { startProfilingWorker } from '@datadog/browser-rum/worker'
+import { attachProfiler } from '@datadog/browser-rum/worker'
 
-const { stop } = startProfilingWorker()
+const { flush } = attachProfiler()
 
 // ---------------------------------------------------------------------------
 // Workloads
@@ -53,7 +53,7 @@ let batches = 0
 function runBurst(): void {
   if (Date.now() - startTime >= BURST_DURATION_MS) {
     // Flush the profiling session, then close the worker.
-    void stop().then(() => self.close())
+    void flush().then(() => self.close())
     return
   }
 

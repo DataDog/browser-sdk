@@ -2,18 +2,28 @@ import type { ProfilerTrace } from '@datadog/browser-core'
 
 export type WorkerProfilingCommand =
   | {
-      type: 'dd-start-profiling'
+      /**
+       * Sent by the coordinator once a profiling session is active.
+       * Delivers the configuration the worker needs to instantiate its Profiler.
+       * This is not a "start" command — profiling begins inside the worker
+       * only after receiving this and calling `new Profiler()`.
+       */
+      type: 'dd-profiling-config'
       sampleIntervalMs: number
       maxBufferSize: number
       collectIntervalMs: number
       /**
-       * Stable UUID assigned to this worker at registration time.
+       * Stable UUID assigned to this worker at attach time.
        * Reused across all collection intervals for this worker instance.
        */
       correlationId: string
     }
   | {
-      type: 'dd-stop-profiling'
+      /**
+       * Sent by the coordinator when the worker is being detached from the
+       * profiling pipeline. The worker should flush its current session.
+       */
+      type: 'dd-detach-profiler'
     }
 
 
