@@ -28,7 +28,7 @@
     },
     {
       "matchFileNames": ["test/apps/angular-app/**"],
-      "matchPackageNames": ["@angular/**", "typescript"],
+      "matchPackageNames": ["@angular/**", "@angular-devkit/**", "@ngtools/**", "typescript"],
       "matchUpdateTypes": ["major"],
       "enabled": false
     }

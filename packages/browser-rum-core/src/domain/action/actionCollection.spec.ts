@@ -221,7 +221,7 @@ describe('actionCollection', () => {
         startTime: 0 as RelativeTime,
       }) as DefaultTelemetryEventAttributes
       // todo: fix telemetry event type
-      expect(telemetryEventAttributes.action?.id).toEqual(actionId as unknown as string)
+      expect(telemetryEventAttributes.action?.id).toEqual(actionId)
     })
 
     it('should not add action id if the action is not found', () => {
@@ -230,7 +230,7 @@ describe('actionCollection', () => {
         startTime: 0 as RelativeTime,
       }) as DefaultTelemetryEventAttributes
 
-      expect(telemetryEventAttributes.action?.id).toEqual([] as unknown as string)
+      expect(telemetryEventAttributes.action?.id).toEqual([])
     })
   })
 })

@@ -54,7 +54,6 @@ export default defineConfig(
       'test/apps/nuxt-vue-router-v4-app',
       'sandbox',
       'coverage',
-      'rum-events-format',
       '.yarn',
       '**/playwright-report',
       'generated-docs',
