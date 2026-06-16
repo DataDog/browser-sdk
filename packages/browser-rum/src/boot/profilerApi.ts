@@ -66,15 +66,22 @@ export function makeProfilerApi(): ProfilerApi {
     const session = sessionManager.findTrackedSession()
 
     if (!session) {
+      // No session tracked, no profiling.
+      // Note: No Profiling context is set at this stage.
       return
     }
 
+    // Sampling (sticky sampling based on session id, bridge-mode aware)
     if (!isProfilingSampled(configuration, session)) {
+      // No sampling, no profiling.
+      // Note: No Profiling context is set at this stage.
       return
     }
 
+    // Listen to events and add the profiling context to them.
     const profilingContextManager = startProfilingContext(hooks)
 
+    // Browser support check
     if (!mockable(isProfilingSupported)()) {
       profilingContextManager.set({
         status: 'error',
