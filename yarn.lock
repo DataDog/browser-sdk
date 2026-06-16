@@ -34,15 +34,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@angular/common@npm:22.0.0":
-  version: 22.0.0
-  resolution: "@angular/common@npm:22.0.0"
+"@angular/common@npm:22.0.1":
+  version: 22.0.1
+  resolution: "@angular/common@npm:22.0.1"
   dependencies:
     tslib: "npm:^2.3.0"
   peerDependencies:
-    "@angular/core": 22.0.0
+    "@angular/core": 22.0.1
     rxjs: ^6.5.3 || ^7.4.0
-  checksum: 10c0/dd615a4f197ab415fed028ba906e8f898f9937206ce943b55eac80971ab3a3ceaeda8221386cc567093301cd53cb3ad552912993f0a474782a0636dc5ec83646
+  checksum: 10c0/8a843b07bc90608842c4bf4345ace3775ea484f38cb316538066a06232a5a205579214dc8f5580fb7361328ab43a5b13c82242a530b25e4930b7a81c7eb0f547
   languageName: node
   linkType: hard
 
@@ -55,13 +55,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@angular/core@npm:22.0.0":
-  version: 22.0.0
-  resolution: "@angular/core@npm:22.0.0"
+"@angular/core@npm:22.0.1":
+  version: 22.0.1
+  resolution: "@angular/core@npm:22.0.1"
   dependencies:
     tslib: "npm:^2.3.0"
   peerDependencies:
-    "@angular/compiler": 22.0.0
+    "@angular/compiler": 22.0.1
     rxjs: ^6.5.3 || ^7.4.0
     zone.js: ~0.15.0 || ~0.16.0
   peerDependenciesMeta:
@@ -69,7 +69,7 @@ __metadata:
       optional: true
     zone.js:
       optional: true
-  checksum: 10c0/0e8bf7ff2491f19e75dfb7166a541ca2a3891182ac2fa35f3e99b52fa041c9751dca15249255ed04115e1d39a472857f9bd68b08ba3031db0156c643c795e748
+  checksum: 10c0/f5399b1047817700d80c4a2fc067181443e3a8a7e4429f9cb75fce296d0698adadf10431d14aaff6084b86e920e3cb33f1a5d57e78736f70e0b38af4f7cb705a
   languageName: node
   linkType: hard
 
@@ -390,9 +390,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-angular@workspace:packages/browser-rum-angular"
   dependencies:
-    "@angular/common": "npm:22.0.0"
+    "@angular/common": "npm:22.0.1"
     "@angular/compiler": "npm:22.0.0"
-    "@angular/core": "npm:22.0.0"
+    "@angular/core": "npm:22.0.1"
     "@angular/platform-browser": "npm:22.0.0"
     "@angular/router": "npm:22.0.0"
     "@datadog/browser-core": "npm:7.3.0"
