@@ -162,6 +162,7 @@ interface TopFrame {
 interface ProfileEvent {
   type: 'profile'
   thread: 'main' | 'worker'
+  tags: string[]
   workerName: string | undefined
   correlationIds: string[]
   startTime: string
@@ -171,7 +172,6 @@ interface ProfileEvent {
   frameCount: number
   topFrames: TopFrame[]
   sessionId: string | undefined
-  tags: string
 }
 
 interface RumEvent {
@@ -263,6 +263,10 @@ function renderProfile(p: ProfileEvent): void {
       </div>`
           : ''
       }
+      ${p.tags.length ? `
+      <div class="tags-row">
+        ${p.tags.map((t) => `<span class="tag-pill${isWorkerTag(t) ? ' tag-pill--worker' : ''}">${escHtml(t)}</span>`).join('')}
+      </div>` : ''}
       <div class="frames-section">
         <div class="frames-header">Top frames (by sample count)</div>
         ${framesHtml || '<span style="color:#8b949e;font-size:.8rem">no frames</span>'}
@@ -272,6 +276,11 @@ function renderProfile(p: ProfileEvent): void {
 
   // Newest first
   profileList.insertBefore(card, profileList.firstChild)
+}
+
+/** Highlight tags that are specific to worker profiles. */
+function isWorkerTag(tag: string): boolean {
+  return tag.startsWith('thread:worker') || tag.startsWith('worker.name:') || tag.startsWith('thread.correlation_id:')
 }
 
 function escHtml(s: string): string {

@@ -151,6 +151,7 @@ function summariseProfile(event: any, trace: any): object {
   return {
     type: 'profile',
     thread,
+    tags: tags.split(',').filter(Boolean),
     workerName: extractTag(tags, 'worker.name'),
     correlationIds: extractAllTags(tags, 'thread.correlation_id'),
     startTime: event.start,
