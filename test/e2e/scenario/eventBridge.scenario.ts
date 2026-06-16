@@ -152,7 +152,7 @@ test.describe('bridge present', () => {
 
   createTest('send profile to the bridge')
     .withRum({ profilingSampleRate: 100, trackUserInteractions: true })
-    .withEventBridge()
+    .withEventBridge({ capabilities: ['profiles'] })
     .withBasePath('/?js-profiling=true')
     .run(async ({ intakeRegistry, flushEvents, page, browserName }) => {
       test.skip(browserName !== 'chromium', 'JS Profiling API is only available in Chromium')
