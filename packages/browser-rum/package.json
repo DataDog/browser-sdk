@@ -3,7 +3,7 @@
   "version": "7.3.0",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
-  "module": "esm/entries/main.js",
+  "module": "esm/entries/main.mjs",
   "types": "cjs/entries/main.d.ts",
   "files": [
     "bundle/**/*.js",
@@ -39,6 +39,7 @@
     "directory": "packages/browser-rum"
   },
   "devDependencies": {
+    "@datadog/browser-worker": "7.3.0",
     "@types/pako": "2.0.4",
     "pako": "2.1.0"
   },
