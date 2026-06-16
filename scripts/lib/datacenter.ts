@@ -68,7 +68,8 @@ async function fetchDatacentersFromRuntimeMetadataService(): Promise<Datacenters
   const token = await getVaultToken()
 
   // Filter for production environment and site flavor only
-  const selector = 'datacenter.environment == "prod" && datacenter.flavor == "site"'
+  const selector =
+    'datacenter.environment == "prod" && datacenter.flavor == "site" && datacenter.status != "deprecated"'
 
   const response = await fetchHandlingError(
     `${RUNTIME_METADATA_SERVICE_URL}?selector=${encodeURIComponent(selector)}`,
