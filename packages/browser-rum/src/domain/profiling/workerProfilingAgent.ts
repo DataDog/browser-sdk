@@ -33,29 +33,39 @@ interface ActiveSession {
 }
 
 /**
- * Call this once inside your Dedicated Worker to enable Datadog CPU profiling.
- * Must be paired with `datadogRum.addProfilingWorker(worker)` on the main thread.
- *
- * @param workerScope - Defaults to `self`. Pass a custom object for testing.
+ * Handle returned by startProfilingWorker().
  */
 export interface DatadogWorkerHandle {
   /**
-   * Flush the current profiling session and close the worker.
-   * Call this instead of self.close() so the profile is captured before the worker exits.
+   * Flush the current profiling session.
+   *
+   * Call this when the worker is done with its work, before the worker exits.
+   * The profile is posted back to the main thread for upload.
+   *
+   * For Pattern B (self-managed lifecycle), call `stop()` then let the worker
+   * exit naturally (via `self.close()` or by returning from its top-level code).
    *
    * @example
-   * const { stopAndFlush } = connectDatadogWorker()
-   * // ... do work ...
-   * await stopAndFlush()
-   * // worker will self.close() after the trace is posted
+   * const stop = startProfilingWorker()
+   * await doHeavyComputation()
+   * await stop()
+   * self.close()
    */
-  stopAndFlush(): Promise<void>
+  stop(): Promise<void>
 }
 
-export function connectDatadogWorker(workerScope: WorkerScopeForProfiling = self as unknown as WorkerScopeForProfiling): DatadogWorkerHandle {
+/**
+ * Call this once inside your Dedicated Worker to enable Datadog CPU profiling.
+ * Must be paired with `datadogRum.registerProfilingWorker(worker)` on the main thread.
+ *
+ * @param workerScope - Defaults to `self`. Pass a custom object for testing.
+ */
+export function startProfilingWorker(
+  workerScope: WorkerScopeForProfiling = self as unknown as WorkerScopeForProfiling
+): DatadogWorkerHandle {
   let session: ActiveSession | undefined
 
-  console.log('[DD Worker] connectDatadogWorker() called — waiting for dd-start-profiling')
+  console.log('[DD Worker] startProfilingWorker() called — waiting for dd-start-profiling')
 
   workerScope.addEventListener('message', (event: MessageEvent) => {
     const command = event.data as WorkerProfilingCommand
@@ -69,12 +79,6 @@ export function connectDatadogWorker(workerScope: WorkerScopeForProfiling = self
       startSession(command.sampleIntervalMs, command.maxBufferSize, command.collectIntervalMs, command.correlationId)
     } else if (command.type === 'dd-stop-profiling') {
       void stopSession()
-    } else if (command.type === 'dd-flush-and-close') {
-      console.log('[DD Worker] received dd-flush-and-close — flushing then closing')
-      void stopSession().then(() => {
-        console.log('[DD Worker] flush complete, calling self.close()')
-        ;(workerScope as unknown as { close(): void }).close()
-      })
     }
   })
 
@@ -100,7 +104,9 @@ export function connectDatadogWorker(workerScope: WorkerScopeForProfiling = self
     let profiler: WorkerProfiler
     try {
       profiler = new ProfilerConstructor({ sampleInterval: sampleIntervalMs, maxBufferSize })
-      console.log(`[DD Worker] Profiler started — sampleInterval=${sampleIntervalMs}ms maxBufferSize=${maxBufferSize} collectInterval=${collectIntervalMs}ms correlationId=${correlationId}`)
+      console.log(
+        `[DD Worker] Profiler started — sampleInterval=${sampleIntervalMs}ms maxBufferSize=${maxBufferSize} collectInterval=${collectIntervalMs}ms correlationId=${correlationId}`
+      )
     } catch (e) {
       const isDocPolicyError =
         e instanceof Error &&
@@ -143,10 +149,11 @@ export function connectDatadogWorker(workerScope: WorkerScopeForProfiling = self
     }
     const currentSession = session
     session = undefined
-    console.log(`[DD Worker] collectAndRestart — collecting trace for correlationId=${currentSession.correlationId}`)
+    console.log(
+      `[DD Worker] collectAndRestart — collecting trace for correlationId=${currentSession.correlationId}`
+    )
     await collectAndSend(currentSession)
     console.log('[DD Worker] restarting profiler after collect')
-    // Autonomously restart with same options — correlationId is stable for this worker
     startSession(
       currentSession.sampleIntervalMs,
       currentSession.maxBufferSize,
@@ -162,15 +169,10 @@ export function connectDatadogWorker(workerScope: WorkerScopeForProfiling = self
     }
     const currentSession = session
     session = undefined
-    console.log(`[DD Worker] stopSession — collecting final trace for correlationId=${currentSession.correlationId}`)
+    console.log(
+      `[DD Worker] stopSession — collecting final trace for correlationId=${currentSession.correlationId}`
+    )
     await collectAndSend(currentSession)
-  }
-
-  async function stopAndFlush(): Promise<void> {
-    console.log('[DD Worker] stopAndFlush() called — flushing then closing')
-    await stopSession()
-    console.log('[DD Worker] stopAndFlush complete, calling self.close()')
-    ;(workerScope as unknown as { close(): void }).close()
   }
 
   async function collectAndSend(activeSession: ActiveSession): Promise<void> {
@@ -184,7 +186,9 @@ export function connectDatadogWorker(workerScope: WorkerScopeForProfiling = self
       const trace = await activeSession.profiler.stop()
       const endTimeStamp = Date.now()
       const durationMs = endTimeStamp - startTimeStamp
-      console.log(`[DD Worker] profiler.stop() resolved — durationMs=${durationMs} correlationId=${correlationId} — posting dd-worker-trace`)
+      console.log(
+        `[DD Worker] profiler.stop() resolved — durationMs=${durationMs} correlationId=${correlationId} — posting dd-worker-trace`
+      )
       workerScope.postMessage({
         type: 'dd-worker-trace',
         trace: trace as any,
@@ -198,5 +202,5 @@ export function connectDatadogWorker(workerScope: WorkerScopeForProfiling = self
     }
   }
 
-  return { stopAndFlush }
+  return { stop: stopSession }
 }

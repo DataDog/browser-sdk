@@ -4,7 +4,7 @@
  * Demonstrates:
  *  1. Initializing Datadog RUM with profilingSampleRate: 100
  *  2. Spawning a dedicated worker that runs a CPU-intensive workload
- *  3. Registering the worker with datadogRum.addProfilingWorker()
+ *  3. Registering the worker with datadogRum.registerProfilingWorker()
  *  4. Displaying live stats from the worker on the page
  *  5. Displaying captured profiles received from the proxy server via SSE
  */
@@ -27,17 +27,19 @@ datadogRum.init({
   trackResources: true,
   trackLongTasks: true,
   // Use the locally-built deflate worker (served by webpack-dev-middleware)
-  workerUrl: '/datadog-worker.js',  // proxied through webpack-dev-server → port 8082
+  workerUrl: '/datadog-worker.js', // proxied through webpack-dev-server → port 8082
   // All intake traffic goes to the local proxy server so nothing leaves the machine
   proxy: `${PROXY_ORIGIN}/proxy`,
 })
 
 // ---------------------------------------------------------------------------
-// Worker bootstrap
+// Long-lived worker (Pattern A)
+//
+// registerProfilingWorker() returns an unregister function.
+// Call it when done — SDK flushes the session. You still control terminate().
 // ---------------------------------------------------------------------------
 const worker = new Worker('/worker.js', { name: 'cpu-workload-worker' })
-
-datadogRum.addProfilingWorker(worker, { name: 'cpu-workload-worker' })
+let unregisterWorker = datadogRum.registerProfilingWorker(worker, { name: 'cpu-workload-worker' })
 
 // ---------------------------------------------------------------------------
 // Worker stats display
@@ -78,8 +80,8 @@ worker.postMessage({ kind: 'start' })
 // ---------------------------------------------------------------------------
 // Short-lived workers — two variants, alternating every 30s
 //
-// Variant A (self-close): worker calls stopAndFlush() internally then self.close()
-// Variant B (main-close): main thread calls flushAndTerminateProfilingWorker()
+// Variant A (self-close): worker calls stop() then self.close() itself
+// Variant B (main-close): main thread unregisters after 5s, then terminates
 // ---------------------------------------------------------------------------
 const SHORT_LIVED_INTERVAL_MS = 30_000
 let shortLivedCount = 0
@@ -92,25 +94,25 @@ function spawnShortLivedWorker(): void {
   console.log(`[main] spawning ${name} (variant: ${variant})`)
 
   const w = new Worker(script, { name })
-  datadogRum.addProfilingWorker(w, { name })
+  const unregister = datadogRum.registerProfilingWorker(w, { name })
 
   if (variant === 'main-close') {
     // Variant B: main thread decides when to stop after 5s.
-    // flushAndTerminateProfilingWorker sends dd-flush-and-close to the worker,
-    // which flushes the profile and calls self.close().
+    // unregister() flushes the current profile session, then we terminate ourselves.
     setTimeout(() => {
-      console.log(`[main] calling flushAndTerminateProfilingWorker for ${name}`)
-      datadogRum.flushAndTerminateProfilingWorker(w)
+      console.log(`[main] unregistering ${name} and terminating`)
+      unregister()
+      w.terminate()
       updateShortLivedStatus()
     }, 5_000)
   } else {
-    // Variant A: worker calls stopAndFlush() itself after 5s — nothing to do here.
+    // Variant A: worker calls stop() + self.close() itself after 5s — nothing to do here.
     updateShortLivedStatus()
   }
 
   w.addEventListener('error', (e: ErrorEvent) => {
     console.error(`[main] ${name} error:`, e.message)
-    datadogRum.removeProfilingWorker(w)
+    unregister()
   })
 }
 
@@ -123,7 +125,7 @@ spawnShortLivedWorker()
 setInterval(spawnShortLivedWorker, SHORT_LIVED_INTERVAL_MS)
 
 // ---------------------------------------------------------------------------
-// Controls
+// Controls — Stop/Restart the long-lived worker
 // ---------------------------------------------------------------------------
 function setWorkerStatus(text: string, color: string): void {
   const el = document.getElementById('worker-status')!
@@ -133,7 +135,7 @@ function setWorkerStatus(text: string, color: string): void {
 
 document.getElementById('btn-stop')!.addEventListener('click', () => {
   worker.postMessage({ kind: 'stop' })
-  datadogRum.removeProfilingWorker(worker)
+  unregisterWorker()
   setWorkerStatus('⏹ Worker stopped', '#888')
   ;(document.getElementById('btn-stop') as HTMLButtonElement).disabled = true
   ;(document.getElementById('btn-restart') as HTMLButtonElement).disabled = false
@@ -141,7 +143,7 @@ document.getElementById('btn-stop')!.addEventListener('click', () => {
 
 document.getElementById('btn-restart')!.addEventListener('click', () => {
   worker.postMessage({ kind: 'start' })
-  datadogRum.addProfilingWorker(worker, { name: 'cpu-workload-worker' })
+  unregisterWorker = datadogRum.registerProfilingWorker(worker, { name: 'cpu-workload-worker' })
   setWorkerStatus('🟢 Worker running', '#2da44e')
   ;(document.getElementById('btn-stop') as HTMLButtonElement).disabled = false
   ;(document.getElementById('btn-restart') as HTMLButtonElement).disabled = true
@@ -194,7 +196,6 @@ function connectSSE(): void {
   es.onerror = () => {
     proxyStatus.textContent = '🔴 Proxy disconnected — is proxy-server running? (yarn proxy)'
     proxyStatus.style.color = '#e55353'
-    // Retry after 3s
     es.close()
     setTimeout(connectSSE, 3000)
   }
@@ -253,11 +254,15 @@ function renderProfile(p: ProfileEvent): void {
         <div class="pstat"><span class="pstat-label">Duration</span><span class="pstat-value">${duration}s</span></div>
         <div class="pstat"><span class="pstat-label">Session</span><span class="pstat-value session-id">${p.sessionId ? p.sessionId.slice(0, 8) + '…' : '—'}</span></div>
       </div>
-      ${p.correlationIds.length || !isWorker ? `
+      ${
+        p.correlationIds.length || !isWorker
+          ? `
       <div class="correl-row">
         <span class="correl-label">${isWorker ? 'correlation id' : 'worker correlation ids'}</span>
         ${correlIdsHtml}
-      </div>` : ''}
+      </div>`
+          : ''
+      }
       <div class="frames-section">
         <div class="frames-header">Top frames (by sample count)</div>
         ${framesHtml || '<span style="color:#8b949e;font-size:.8rem">no frames</span>'}

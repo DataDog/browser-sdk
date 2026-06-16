@@ -24,9 +24,7 @@ interface WorkerOptions {
 }
 
 export interface WorkerProfilingCoordinator {
-  addWorker(worker: Worker, options?: WorkerOptions): void
-  removeWorker(worker: Worker): void
-  flushAndTerminateWorker(worker: Worker): void
+  registerWorker(worker: Worker, options?: WorkerOptions): () => void
   start(sampleIntervalMs: number, maxBufferSize: number, collectIntervalMs: number): void
   stop(): void
   getCorrelationIds(): string[]
@@ -43,13 +41,14 @@ export function createWorkerProfilingCoordinator(
 
   let activeOptions: { sampleIntervalMs: number; maxBufferSize: number; collectIntervalMs: number } | undefined
 
-  function addWorker(worker: Worker, options?: WorkerOptions): void {
+  function registerWorker(worker: Worker, options?: WorkerOptions): () => void {
     if (registrations.has(worker)) {
-      return
+      // Already registered — return a no-op unregister
+      return () => unregisterWorker(worker)
     }
 
     const correlationId = generateUUID()
-    console.log(`[DD Coordinator] addWorker name=${options?.name ?? '(unnamed)'} correlationId=${correlationId}`)
+    console.log(`[DD Coordinator] registerWorker name=${options?.name ?? '(unnamed)'} correlationId=${correlationId}`)
 
     const messageListener = (event: MessageEvent) => {
       const response = event.data as WorkerProfilingResponse
@@ -83,7 +82,9 @@ export function createWorkerProfilingCoordinator(
 
     // If profiling is already active, start this worker immediately
     if (activeOptions) {
-      console.log(`[DD Coordinator] profiling already active — sending dd-start-profiling immediately to worker ${registration.name ?? '(unnamed)'}`)
+      console.log(
+        `[DD Coordinator] profiling already active — sending dd-start-profiling immediately to worker ${registration.name ?? '(unnamed)'}`
+      )
       sendCommand(registration, {
         type: 'dd-start-profiling',
         ...activeOptions,
@@ -92,9 +93,11 @@ export function createWorkerProfilingCoordinator(
     } else {
       console.log(`[DD Coordinator] profiling not yet active — worker will start when start() is called`)
     }
+
+    return () => unregisterWorker(worker)
   }
 
-  function removeWorker(worker: Worker): void {
+  function unregisterWorker(worker: Worker): void {
     const registration = registrations.get(worker)
     if (!registration) {
       return
@@ -103,31 +106,15 @@ export function createWorkerProfilingCoordinator(
     teardownWorker(worker)
   }
 
-  function flushAndTerminateWorker(worker: Worker): void {
-    const registration = registrations.get(worker)
-    if (!registration) {
-      return
-    }
-    console.log(`[DD Coordinator] flushAndTerminateWorker — sending dd-flush-and-close to ${registration.name ?? '(unnamed)'}`)
-    // dd-flush-and-close tells the agent to flush then call self.close() itself.
-    // We keep the registration alive so the dd-worker-trace response is handled,
-    // then clean up when the worker's error/close event fires naturally.
-    sendCommand(registration, { type: 'dd-flush-and-close' })
-    // Safety net: hard-terminate after 5s in case the worker hangs
-    setTimeout(() => {
-      if (registrations.has(worker)) {
-        console.log(`[DD Coordinator] safety-net terminate for ${registration.name ?? '(unnamed)'}`)
-        teardownWorker(worker)
-        worker.terminate()
-      }
-    }, 5_000)
-  }
-
   function start(sampleIntervalMs: number, maxBufferSize: number, collectIntervalMs: number): void {
-    console.log(`[DD Coordinator] start() — ${registrations.size} worker(s) registered sampleInterval=${sampleIntervalMs}ms collectInterval=${collectIntervalMs}ms`)
+    console.log(
+      `[DD Coordinator] start() — ${registrations.size} worker(s) registered sampleInterval=${sampleIntervalMs}ms collectInterval=${collectIntervalMs}ms`
+    )
     activeOptions = { sampleIntervalMs, maxBufferSize, collectIntervalMs }
     registrations.forEach((registration) => {
-      console.log(`[DD Coordinator] sending dd-start-profiling to worker ${registration.name ?? '(unnamed)'} correlationId=${registration.correlationId}`)
+      console.log(
+        `[DD Coordinator] sending dd-start-profiling to worker ${registration.name ?? '(unnamed)'} correlationId=${registration.correlationId}`
+      )
       sendCommand(registration, {
         type: 'dd-start-profiling',
         sampleIntervalMs,
@@ -176,7 +163,9 @@ export function createWorkerProfilingCoordinator(
     try {
       const sessionId = session.findTrackedSession()?.id
       const durationMs = response.endTimeStamp - response.startTimeStamp
-      console.log(`[DD Coordinator] handleWorkerTrace — worker=${registration.name ?? '(unnamed)'} correlationId=${response.correlationId} durationMs=${durationMs} sessionId=${sessionId ?? '(none)'}`)
+      console.log(
+        `[DD Coordinator] handleWorkerTrace — worker=${registration.name ?? '(unnamed)'} correlationId=${response.correlationId} durationMs=${durationMs} sessionId=${sessionId ?? '(none)'}`
+      )
       const payload = assembleWorkerProfilingPayload(
         response.trace,
         response.startTimeStamp,
@@ -210,5 +199,5 @@ export function createWorkerProfilingCoordinator(
     }
   }
 
-  return { addWorker, removeWorker, flushAndTerminateWorker, start, stop, getCorrelationIds }
+  return { registerWorker, start, stop, getCorrelationIds }
 }
