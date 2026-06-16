@@ -219,8 +219,8 @@ const app = express()
 app.use(cors())
 
 // Deflate worker bundle
-// eslint-disable-next-line @typescript-eslint/no-misused-promises
-app.use(webpackDevMiddleware(deflateWorkerCompiler, { stats: 'minimal' }))
+// Cast avoids @typescript-eslint/no-misused-promises: webpack-dev-middleware typings vary across versions
+app.use(webpackDevMiddleware(deflateWorkerCompiler, { stats: 'minimal' }) as express.RequestHandler)
 
 // SSE
 app.get('/events', (req, res) => {
@@ -233,15 +233,10 @@ app.get('/events', (req, res) => {
 })
 
 // Intake proxy
-// eslint-disable-next-line @typescript-eslint/no-misused-promises
-app.post('/proxy', async (req, res) => {
+app.post('/proxy', (req, res) => {
   const type = intakeType(req)
-  if (type === 'profile') {
-    await handleProfile(req)
-  } else if (type === 'rum') {
-    await handleRum(req)
-  }
-  res.end()
+  const handler = type === 'profile' ? handleProfile(req) : type === 'rum' ? handleRum(req) : Promise.resolve()
+  void handler.then(() => res.end())
 })
 
 http.createServer(app).listen(PORT, () => {
