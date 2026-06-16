@@ -8,7 +8,7 @@
     "types": [],
     "paths": {
       "@datadog/browser-core": ["../../../packages/browser-core/src"],
-      "@datadog/js-core/time": ["../../../packages/js-core/src/time"],
+      "@datadog/js-core/time": ["../../../packages/js-core/src/entries/time"],
       "@datadog/browser-rum-core": ["../../../packages/browser-rum-core/src"],
       "@datadog/browser-rum": ["../../../packages/browser-rum/src/entries/main"],
       "@datadog/browser-rum/worker": ["../../../packages/browser-rum/src/entries/worker"]
