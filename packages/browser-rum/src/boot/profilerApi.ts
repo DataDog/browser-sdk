@@ -5,9 +5,7 @@ import type { RUMProfiler } from '../domain/profiling/types'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { startProfilingContext } from '../domain/profiling/profilingContext'
 import { lazyLoadProfiler } from './lazyLoadProfiler'
-import { createWorkerProfilingCoordinator } from '../domain/profiling/workerProfilingCoordinator'
 import type { WorkerProfilingCoordinator } from '../domain/profiling/workerProfilingCoordinator'
-import { DEFAULT_RUM_PROFILER_CONFIGURATION } from '../domain/profiling/datadogProfiler'
 
 export function makeProfilerApi(): ProfilerApi {
   let profiler: RUMProfiler | undefined
@@ -87,14 +85,16 @@ export function makeProfilerApi(): ProfilerApi {
       return
     }
 
-    workerCoordinator = createWorkerProfilingCoordinator(configuration, lifeCycle, sessionManager, createEncoder)
-
     lazyLoadProfiler()
-      .then((createRumProfiler) => {
-        if (!createRumProfiler) {
+      .then((module) => {
+        if (!module) {
           profilingContextManager.set({ status: 'error', error_reason: 'failed-to-lazy-load' })
           return
         }
+
+        const { createRumProfiler, createWorkerProfilingCoordinator, DEFAULT_RUM_PROFILER_CONFIGURATION } = module
+
+        workerCoordinator = createWorkerProfilingCoordinator(configuration, lifeCycle, sessionManager, createEncoder)
 
         profiler = createRumProfiler(
           configuration,
@@ -108,7 +108,7 @@ export function makeProfilerApi(): ProfilerApi {
         )
         profiler.start()
 
-        workerCoordinator?.start(
+        workerCoordinator.start(
           DEFAULT_RUM_PROFILER_CONFIGURATION.sampleIntervalMs,
           Math.round(
             (DEFAULT_RUM_PROFILER_CONFIGURATION.collectIntervalMs * 1.5) /
@@ -120,7 +120,7 @@ export function makeProfilerApi(): ProfilerApi {
         // Replay any attachWorker calls that arrived before the coordinator was ready
         if (pendingWorkerCalls.length > 0) {
           for (const call of pendingWorkerCalls.splice(0)) {
-            const detach = workerCoordinator!.attachWorker(call.worker, call.options)
+            const detach = workerCoordinator.attachWorker(call.worker, call.options)
             call.resolve(detach)
           }
         }
