@@ -9,7 +9,7 @@
  */
 import { attachProfiler } from '@datadog/browser-rum/worker'
 
-const { flush } = attachProfiler()
+const { detachProfiler } = attachProfiler()
 
 // ---------------------------------------------------------------------------
 // Workloads
@@ -52,8 +52,7 @@ let batches = 0
 
 function runBurst(): void {
   if (Date.now() - startTime >= BURST_DURATION_MS) {
-    // Flush the profiling session, then close the worker.
-    void flush().then(() => self.close())
+    void detachProfiler().then(() => self.close())
     return
   }
 
