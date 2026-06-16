@@ -7,9 +7,9 @@
  *
  * No signaling back to the main thread needed.
  */
-import { connectDatadogWorker } from '@datadog/browser-rum/worker'
+import { startProfilingWorker } from '@datadog/browser-rum/worker'
 
-const { stopAndFlush } = connectDatadogWorker()
+const { stop } = startProfilingWorker()
 
 // ---------------------------------------------------------------------------
 // Workloads
@@ -52,9 +52,8 @@ let batches = 0
 
 function runBurst(): void {
   if (Date.now() - startTime >= BURST_DURATION_MS) {
-    // Done — flush the profiling session and close the worker.
-    // No need to notify the main thread.
-    void stopAndFlush()
+    // Flush the profiling session, then close the worker.
+    void stop().then(() => self.close())
     return
   }
 

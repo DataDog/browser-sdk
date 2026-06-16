@@ -565,31 +565,16 @@ export interface RumPublicApi extends PublicApi {
    * Profiling starts automatically when the session is sampled for profiling (via `profilingSampleRate`).
    * Workers registered before `init()` is called are buffered and started when the session begins.
    *
+   * Returns an `unregister` function. Call it when you want to stop profiling the worker —
+   * the SDK will flush the current profiling session before stopping. You are still responsible
+   * for calling `worker.terminate()` yourself.
+   *
    * @experimental Requires Chromium Canary with `DocumentPolicyInDedicatedWorker` and `ProfilerAPIForDedicatedWorker` flags.
    * @param worker - The Worker instance to profile
    * @param options.name - Optional label surfaced in Datadog as the `worker.name` tag. Defaults to the worker's script URL.
+   * @returns A function to unregister (and flush) the worker from profiling
    */
-  addProfilingWorker: (worker: Worker, options?: { name?: string }) => void
-
-  /**
-   * Unregister a worker from CPU profiling and stop collecting data from it.
-   * Any in-flight profile for this worker is flushed and sent before stopping.
-   *
-   * @experimental
-   * @param worker - The Worker instance to stop profiling
-   */
-  removeProfilingWorker: (worker: Worker) => void
-
-  /**
-   * Flush the current profiling session for a worker and then terminate it.
-   * Use this instead of worker.terminate() for short-lived workers — the worker
-   * will flush its profile, call self.close() on its own, and be hard-terminated
-   * after a 5 second safety timeout.
-   *
-   * @experimental
-   * @param worker - The Worker instance to flush and terminate
-   */
-  flushAndTerminateProfilingWorker: (worker: Worker) => void
+  registerProfilingWorker: (worker: Worker, options?: { name?: string }) => () => void
 }
 
 export interface RecorderApi {
@@ -610,7 +595,7 @@ export interface RecorderApi {
 
 export interface ProfilerApi {
   stop: () => void
-  getWorkerCoordinator: () => { addWorker: (worker: Worker, options?: { name?: string }) => void; removeWorker: (worker: Worker) => void; flushAndTerminateWorker: (worker: Worker) => void } | undefined
+  getWorkerCoordinator: () => { registerWorker: (worker: Worker, options?: { name?: string }) => () => void } | undefined
   onRumStart: (
     lifeCycle: LifeCycle,
     hooks: Hooks,
@@ -1022,16 +1007,13 @@ export function makeRumPublicApi(
     }),
     DEFAULT_TRACKED_RESOURCE_HEADERS,
 
-    addProfilingWorker: monitor((worker: Worker, options?: { name?: string }) => {
-      profilerApi.getWorkerCoordinator()?.addWorker(worker, options)
-    }),
-
-    removeProfilingWorker: monitor((worker: Worker) => {
-      profilerApi.getWorkerCoordinator()?.removeWorker(worker)
-    }),
-
-    flushAndTerminateProfilingWorker: monitor((worker: Worker) => {
-      profilerApi.getWorkerCoordinator()?.flushAndTerminateWorker(worker)
+    registerProfilingWorker: monitor((worker: Worker, options?: { name?: string }) => {
+      const coordinator = profilerApi.getWorkerCoordinator()
+      if (coordinator) {
+        return coordinator.registerWorker(worker, options)
+      }
+      // Profiling not active for this session — return a no-op
+      return () => {}
     }),
   })
 

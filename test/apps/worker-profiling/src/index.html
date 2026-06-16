@@ -377,7 +377,7 @@
           <div class="worker-row">
             <div class="worker-dot orange"></div>
             <span class="worker-label">burst-self-close-N</span>
-            <span class="worker-desc">stopAndFlush()</span>
+            <span class="worker-desc">stop() + self.close()</span>
           </div>
           <div class="worker-row">
             <div class="worker-dot blue"></div>
@@ -452,17 +452,19 @@ datadogRum.init({
   name: 'my-worker', // optional — appears as tag in Datadog
 })
 
-datadogRum.addProfilingWorker(worker, { name: 'my-worker' })
+// Returns an unregister function. Call it when done — SDK flushes
+// the current profiling session. You still control terminate().
+const unregister = datadogRum.registerProfilingWorker(worker, { name: 'my-worker' })
 
 // When you're done with the worker:
-datadogRum.removeProfilingWorker(worker)
-worker.terminate()</code></pre>
+unregister()       // flushes current profile session
+worker.terminate() // you own the worker lifecycle</code></pre>
 
           <div class="file-label">my-worker.ts</div>
-          <pre><code class="language-typescript">import { connectDatadogWorker } from '@datadog/browser-rum/worker'
+          <pre><code class="language-typescript">import { startProfilingWorker } from '@datadog/browser-rum/worker'
 
 // Call once at the top — that's it
-connectDatadogWorker()
+startProfilingWorker()
 
 // ... your worker logic ...</code></pre>
 
@@ -481,33 +483,30 @@ connectDatadogWorker()
             Short-lived worker — self-managed lifecycle
           </div>
           <p class="snippet-desc">
-            The worker knows when it's done. Call <code>stopAndFlush()</code>
-            instead of <code>self.close()</code> — it captures the profile
-            then closes the worker automatically.
+            The worker knows when it's done. Call <code>stop()</code>
+            to flush the current profile, then <code>self.close()</code>
+            to exit. You stay in control of the worker lifecycle.
           </p>
 
           <div class="file-label">main.ts</div>
-          <pre><code class="language-typescript">const worker = new Worker('/burst-worker.js', {
-  name: 'burst-worker',
-})
+          <pre><code class="language-typescript">const worker = new Worker('/burst-worker.js', { name: 'burst-worker' })
 
 // Register — SDK starts profiling immediately
-datadogRum.addProfilingWorker(worker, { name: 'burst-worker' })
+datadogRum.registerProfilingWorker(worker, { name: 'burst-worker' })
 
-// No cleanup needed — worker closes itself via stopAndFlush()</code></pre>
+// No cleanup needed — worker manages its own lifecycle</code></pre>
 
           <div class="file-label">burst-worker.ts</div>
-          <pre><code class="language-typescript">import { connectDatadogWorker } from '@datadog/browser-rum/worker'
+          <pre><code class="language-typescript">import { startProfilingWorker } from '@datadog/browser-rum/worker'
 
-const { stopAndFlush } = connectDatadogWorker()
+const stop = startProfilingWorker()
 
 async function run() {
-  // ... do your work ...
   await doHeavyComputation()
 
-  // Flush the profile and close the worker.
-  // Never call self.close() directly — the profile would be lost.
-  await stopAndFlush()
+  // Flush the profile, then close the worker yourself.
+  await stop()
+  self.close()
 }
 
 run()</code></pre>
@@ -529,23 +528,21 @@ run()</code></pre>
           </p>
 
           <div class="file-label">main.ts</div>
-          <pre><code class="language-typescript">const worker = new Worker('/task-worker.js', {
-  name: 'task-worker',
-})
+          <pre><code class="language-typescript">const worker = new Worker('/task-worker.js', { name: 'task-worker' })
+const unregister = datadogRum.registerProfilingWorker(worker, { name: 'task-worker' })
 
-datadogRum.addProfilingWorker(worker, { name: 'task-worker' })
-
-// Later, when you want to stop it — replaces worker.terminate()
-datadogRum.flushAndTerminateProfilingWorker(worker)</code></pre>
+// Later, when you want to stop it:
+unregister()       // flushes current profile session
+worker.terminate() // you own the worker lifecycle</code></pre>
 
           <div class="file-label">task-worker.ts</div>
-          <pre><code class="language-typescript">import { connectDatadogWorker } from '@datadog/browser-rum/worker'
+          <pre><code class="language-typescript">import { startProfilingWorker } from '@datadog/browser-rum/worker'
 
-// Nothing special — just connect and do work
-connectDatadogWorker()
+// Nothing special — just start and do work
+startProfilingWorker()
 
 // ... your worker logic ...
-// Main thread will call flushAndTerminateProfilingWorker() when done</code></pre>
+// Main thread calls unregister() + worker.terminate() when done</code></pre>
         </div>
 
         <hr class="divider" />

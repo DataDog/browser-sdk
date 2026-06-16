@@ -15,13 +15,7 @@ export type WorkerProfilingCommand =
   | {
       type: 'dd-stop-profiling'
     }
-  | {
-      /**
-       * Sent by the main thread to ask the worker to flush its current profile
-       * and then call self.close() on its own.
-       */
-      type: 'dd-flush-and-close'
-    }
+
 
 export type WorkerProfilingResponse =
   | {
