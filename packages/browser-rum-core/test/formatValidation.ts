@@ -1,11 +1,11 @@
 import Ajv from 'ajv'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { Context } from '@datadog/browser-core'
-import { combine } from '@datadog/browser-core'
+import { combine, ResourceType } from '@datadog/browser-core'
 import type { CommonProperties } from '@datadog/browser-rum-core'
 import type { LifeCycle, RawRumEventCollectedData } from '../src/domain/lifeCycle'
 import { LifeCycleEventType } from '../src/domain/lifeCycle'
-import type { RawRumEvent } from '../src/rawRumEvent.types'
+import { RumEventType, type RawRumEvent } from '../src/rawRumEvent.types'
 import { allJsonSchemas } from './allJsonSchemas'
 
 export function collectAndValidateRawRumEvents(lifeCycle: LifeCycle) {
@@ -22,6 +22,11 @@ export function collectAndValidateRawRumEvents(lifeCycle: LifeCycle) {
 }
 
 function validateRumEventFormat(rawRumEvent: RawRumEvent) {
+  // TODO: Remove this once we have a proper websocket schema
+  if (rawRumEvent.type === RumEventType.RESOURCE && rawRumEvent.resource.type === ResourceType.WEBSOCKET) {
+    return
+  }
+
   const fakeId = '00000000-aaaa-0000-aaaa-000000000000'
   const fakeContext: Partial<CommonProperties> = {
     _dd: {
