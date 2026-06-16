@@ -377,7 +377,7 @@
           <div class="worker-row">
             <div class="worker-dot orange"></div>
             <span class="worker-label">burst-self-close-N</span>
-            <span class="worker-desc">flush() + self.close()</span>
+            <span class="worker-desc">detachProfiler() + self.close()</span>
           </div>
           <div class="worker-row">
             <div class="worker-dot blue"></div>
@@ -435,118 +435,72 @@ datadogRum.init({
 
         <hr class="divider" />
 
-        <!-- ── Persistent worker ────────────────────────────── -->
+        <!-- ── Use-case 1: main thread controls lifecycle ──────── -->
         <div class="snippet-section">
           <div class="snippet-title">
-            <span class="step">Pattern A</span>
-            Persistent worker
+            <span class="step">Use-case 1</span>
+            Main thread controls the lifecycle
           </div>
           <p class="snippet-desc">
-            A worker that runs for the lifetime of the page.
-            Register it once on the main thread; the SDK profiles it continuously,
-            flushing a trace every 60 s.
+            The worker just does its work. The main thread decides when to stop
+            it — whether that's a persistent worker running for the page lifetime,
+            or a short-lived one. Call <code>detach()</code> before
+            <code>worker.terminate()</code> so the current profiling session is
+            flushed first.
           </p>
 
           <div class="file-label">main.ts</div>
-          <pre><code class="language-typescript">const worker = new Worker('/my-worker.js', {
-  name: 'my-worker', // optional — appears as tag in Datadog
-})
-
-// Returns a detach function. Call it when done — SDK flushes
-// the current profiling session. You still control terminate().
+          <pre><code class="language-typescript">const worker = new Worker('/my-worker.js', { name: 'my-worker' })
 const detach = datadogRum.attachProfilingWorker(worker, { name: 'my-worker' })
 
-// When you're done with the worker:
-detach()         // flushes current profile session
+// When done:
+detach()           // flush current profiling session
 worker.terminate() // you own the worker lifecycle</code></pre>
 
           <div class="file-label">my-worker.ts</div>
           <pre><code class="language-typescript">import { attachProfiler } from '@datadog/browser-rum/worker'
 
-// Call once at the top — that's it
+// That's all that's needed in the worker
 attachProfiler()
 
 // ... your worker logic ...</code></pre>
-
-          <p class="snippet-desc">
-            ⚠️ The worker script URL must be served with
-            <code>Document-Policy: js-profiling</code>.
-          </p>
         </div>
 
         <hr class="divider" />
 
-        <!-- ── Short-lived: self-close ───────────────────────── -->
+        <!-- ── Use-case 2: worker controls its own lifecycle ──── -->
         <div class="snippet-section">
           <div class="snippet-title">
-            <span class="step">Pattern B</span>
-            Short-lived worker — self-managed lifecycle
+            <span class="step">Use-case 2</span>
+            Worker controls its own lifecycle
           </div>
           <p class="snippet-desc">
-            The worker knows when it's done. Call <code>flush()</code>
-            to flush the current profile, then <code>self.close()</code>
-            to exit. You stay in control of the worker lifecycle.
+            The worker knows when it's done. Call <code>detachProfiler()</code>
+            before <code>self.close()</code> — it disconnects the worker from the
+            profiling pipeline (capturing the current session as a side-effect).
+            The main thread doesn't need to do anything beyond the initial attach.
           </p>
 
           <div class="file-label">main.ts</div>
-          <pre><code class="language-typescript">const worker = new Worker('/burst-worker.js', { name: 'burst-worker' })
+          <pre><code class="language-typescript">const worker = new Worker('/my-worker.js', { name: 'my-worker' })
 
-// Register — SDK starts profiling immediately
-datadogRum.attachProfilingWorker(worker, { name: 'burst-worker' })
+// No detach needed — the worker handles its own teardown
+datadogRum.attachProfilingWorker(worker, { name: 'my-worker' })</code></pre>
 
-// Profiling begins asynchronously once the session is sampled and the
-// profiling config is delivered to the worker via dd-profiling-config.
-// No cleanup needed — worker manages its own lifecycle</code></pre>
-
-          <div class="file-label">burst-worker.ts</div>
+          <div class="file-label">my-worker.ts</div>
           <pre><code class="language-typescript">import { attachProfiler } from '@datadog/browser-rum/worker'
 
-const { flush } = attachProfiler()
+const { detachProfiler } = attachProfiler()
 
 async function run() {
   await doHeavyComputation()
 
-  // Flush the profile, then close the worker yourself.
-  await flush()
+  await detachProfiler() // detach from the pipeline before exiting
   self.close()
 }
 
 run()</code></pre>
         </div>
-
-        <hr class="divider" />
-
-        <!-- ── Short-lived: main-thread close ────────────────── -->
-        <div class="snippet-section">
-          <div class="snippet-title">
-            <span class="step">Pattern C</span>
-            Short-lived worker — main-thread lifecycle
-          </div>
-          <p class="snippet-desc">
-            The main thread decides when to stop the worker.
-            Call <code>detach()</code> (returned by <code>attachProfilingWorker()</code>)
-            to flush the current profile session, then <code>worker.terminate()</code>
-            as you normally would. The SDK never touches the worker lifecycle.
-          </p>
-
-          <div class="file-label">main.ts</div>
-          <pre><code class="language-typescript">const worker = new Worker('/task-worker.js', { name: 'task-worker' })
-const detach = datadogRum.attachProfilingWorker(worker, { name: 'task-worker' })
-
-// Later, when you want to stop it:
-detach()         // flushes current profile session
-worker.terminate() // you own the worker lifecycle</code></pre>
-
-          <div class="file-label">task-worker.ts</div>
-          <pre><code class="language-typescript">import { attachProfiler } from '@datadog/browser-rum/worker'
-
-// Nothing special — just start and do work
-attachProfiler()
-
-// ... your worker logic ...
-// Main thread calls detach() + worker.terminate() when done</code></pre>
-        </div>
-
         <hr class="divider" />
 
         <!-- ── HTTP header reminder ──────────────────────────── -->

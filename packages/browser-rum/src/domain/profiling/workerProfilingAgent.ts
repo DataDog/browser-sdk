@@ -42,15 +42,15 @@ export interface DatadogWorkerHandle {
    * profile is not lost.
    *
    * Profiling itself stops as a side-effect; the worker lifecycle is entirely
-   * your responsibility (call `self.close()` yourself after awaiting flush).
+   * your responsibility (call `self.close()` yourself after awaiting detachProfiler).
    *
    * @example
-   * const { flush } = attachProfiler()
+   * const { detachProfiler } = attachProfiler()
    * await doHeavyComputation()
-   * await flush()
+   * await detachProfiler()
    * self.close()
    */
-  flush(): Promise<void>
+  detachProfiler(): Promise<void>
 }
 
 /**
@@ -170,13 +170,13 @@ export function attachProfiler(
 
   async function flushSession(): Promise<void> {
     if (!session) {
-      console.log('[DD Worker] flush called but no active session')
+      console.log('[DD Worker] detachProfiler called but no active session')
       return
     }
     const currentSession = session
     session = undefined
     console.log(
-      `[DD Worker] flush — collecting final trace for correlationId=${currentSession.correlationId}`
+      `[DD Worker] detachProfiler — collecting final trace for correlationId=${currentSession.correlationId}`
     )
     await collectAndSend(currentSession)
   }
@@ -208,5 +208,5 @@ export function attachProfiler(
     }
   }
 
-  return { flush: flushSession }
+  return { detachProfiler: flushSession }
 }
