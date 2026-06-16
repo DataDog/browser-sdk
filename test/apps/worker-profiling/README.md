@@ -26,8 +26,10 @@ profiling feature (PROF-15093).
 ## Requirements
 
 - **Chromium Canary** with experimental flags enabled:
-  ```
-  --enable-features=DocumentPolicyInDedicatedWorker,ProfilerAPIForDedicatedWorker
+  ```bash
+  /Applications/Google\ Chrome\ Canary.app/Contents/MacOS/Google\ Chrome\ Canary \
+    --enable-features=DocumentPolicyInDedicatedWorker,ProfilerAPIForDedicatedWorker \
+    http://localhost:8081
   ```
 - The proxy server sets `Document-Policy: js-profiling` on worker script responses automatically.
 
