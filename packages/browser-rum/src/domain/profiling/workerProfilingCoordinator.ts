@@ -48,6 +48,7 @@ export function createWorkerProfilingCoordinator(
   const transport = createFormDataTransport(configuration, lifeCycle, createEncoder, DeflateEncoderStreamId.PROFILING)
 
   let activeOptions: { sampleIntervalMs: number; maxBufferSize: number; collectIntervalMs: number } | undefined
+  let isPaused = false
   let stopPageEventListeners: () => void = () => {}
 
   function attachWorker(worker: Worker, options?: WorkerOptions): () => void {
@@ -111,7 +112,10 @@ export function createWorkerProfilingCoordinator(
     if (!registration) {
       return
     }
-    sendCommand(registration, { type: 'dd-detach-profiler' })
+    // Only flush if not already paused (paused workers already received dd-detach-profiler)
+    if (!isPaused) {
+      sendCommand(registration, { type: 'dd-detach-profiler' })
+    }
     teardownWorker(worker)
   }
 
@@ -145,44 +149,69 @@ export function createWorkerProfilingCoordinator(
   }
 
   /**
-   * Flush all workers without detaching them: send dd-detach-profiler (so each
-   * worker stops its current Profiler instance and posts the trace), then
-   * immediately re-deliver dd-profiling-config so each worker starts a fresh
-   * instance. Mirrors what datadogProfiler's startNextProfilerInstance() does
-   * for the main-thread profiler on beforeunload / visibilitychange.
-   *
-   * @param restartAfter - Pass false when the page is unloading (no point restarting).
+   * Flush all workers: send dd-detach-profiler so each worker stops its current
+   * Profiler instance and posts the trace back.
    */
-  function flushAllWorkers(restartAfter: boolean): void {
+  function pauseAllWorkers(): void {
+    if (!activeOptions || isPaused) {
+      return
+    }
+    console.log('[DD Coordinator] pauseAllWorkers — tab hidden, flushing worker sessions')
+    isPaused = true
+    registrations.forEach((registration) => {
+      sendCommand(registration, { type: 'dd-detach-profiler' })
+    })
+  }
+
+  /**
+   * Re-deliver dd-profiling-config to all workers so they start a fresh
+   * Profiler instance. Called when the tab becomes visible again.
+   */
+  function resumeAllWorkers(): void {
+    if (!activeOptions || !isPaused) {
+      return
+    }
+    console.log('[DD Coordinator] resumeAllWorkers — tab visible, restarting worker profilers')
+    isPaused = false
+    registrations.forEach((registration) => {
+      sendCommand(registration, {
+        type: 'dd-profiling-config',
+        ...activeOptions!,
+        correlationId: registration.correlationId,
+      })
+    })
+  }
+
+  /**
+   * Flush all workers and immediately restart them. Used on beforeunload, which
+   * can fire even when the page stays alive (e.g. mailto: links) — mirrors
+   * datadogProfiler's handleBeforeUnload behaviour.
+   */
+  function flushAndRestartAllWorkers(): void {
     if (!activeOptions) {
       return
     }
-    console.log(`[DD Coordinator] flushAllWorkers restartAfter=${restartAfter}`)
+    console.log('[DD Coordinator] flushAndRestartAllWorkers — beforeunload')
     registrations.forEach((registration) => {
       sendCommand(registration, { type: 'dd-detach-profiler' })
-      if (restartAfter) {
-        sendCommand(registration, {
-          type: 'dd-profiling-config',
-          ...activeOptions!,
-          correlationId: registration.correlationId,
-        })
-      }
+      sendCommand(registration, {
+        type: 'dd-profiling-config',
+        ...activeOptions!,
+        correlationId: registration.correlationId,
+      })
     })
   }
 
   function handleVisibilityChange(): void {
     if (document.visibilityState === 'hidden') {
-      // Flush workers when tab goes hidden — mirrors datadogProfiler behaviour.
-      // Re-deliver config so they restart when the tab becomes visible again
-      // (the worker will start a new Profiler instance on receiving dd-profiling-config).
-      flushAllWorkers(/* restartAfter */ true)
+      pauseAllWorkers()
+    } else if (document.visibilityState === 'visible') {
+      resumeAllWorkers()
     }
-    // No explicit "resume" needed: the worker already restarted itself above.
   }
 
   function handleBeforeUnload(): void {
-    // Page is unloading — flush but don't restart.
-    flushAllWorkers(/* restartAfter */ false)
+    flushAndRestartAllWorkers()
   }
 
   function stop(): void {
@@ -190,9 +219,13 @@ export function createWorkerProfilingCoordinator(
     stopPageEventListeners()
     activeOptions = undefined
     registrations.forEach((registration) => {
-      sendCommand(registration, { type: 'dd-detach-profiler' })
+      // Only flush if not already paused (paused workers already received dd-detach-profiler)
+      if (!isPaused) {
+        sendCommand(registration, { type: 'dd-detach-profiler' })
+      }
       teardownWorker(registration.worker)
     })
+    isPaused = false
   }
 
   function getCorrelationIds(): string[] {
