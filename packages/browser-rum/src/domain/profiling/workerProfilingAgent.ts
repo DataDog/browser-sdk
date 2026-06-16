@@ -33,39 +33,45 @@ interface ActiveSession {
 }
 
 /**
- * Handle returned by startProfilingWorker().
+ * Handle returned by attachProfiler().
  */
 export interface DatadogWorkerHandle {
   /**
-   * Flush the current profiling session.
+   * Flush the current profiling session — posts the collected trace back to
+   * the main thread for upload. Call this before the worker exits so the
+   * profile is not lost.
    *
-   * Call this when the worker is done with its work, before the worker exits.
-   * The profile is posted back to the main thread for upload.
-   *
-   * For Pattern B (self-managed lifecycle), call `stop()` then let the worker
-   * exit naturally (via `self.close()` or by returning from its top-level code).
+   * Profiling itself stops as a side-effect; the worker lifecycle is entirely
+   * your responsibility (call `self.close()` yourself after awaiting flush).
    *
    * @example
-   * const stop = startProfilingWorker()
+   * const { flush } = attachProfiler()
    * await doHeavyComputation()
-   * await stop()
+   * await flush()
    * self.close()
    */
-  stop(): Promise<void>
+  flush(): Promise<void>
 }
 
 /**
- * Call this once inside your Dedicated Worker to enable Datadog CPU profiling.
- * Must be paired with `datadogRum.registerProfilingWorker(worker)` on the main thread.
+ * Connect this Dedicated Worker to the Datadog profiling pipeline.
+ *
+ * Sets up a message listener that waits for the coordinator (main thread) to
+ * deliver profiling configuration via `dd-profiling-config`. Profiling does
+ * not begin until that message is received and `new Profiler()` is called
+ * internally — this call itself is non-blocking and has no side-effects beyond
+ * installing the listener.
+ *
+ * Must be paired with `datadogRum.attachProfilingWorker(worker)` on the main thread.
  *
  * @param workerScope - Defaults to `self`. Pass a custom object for testing.
  */
-export function startProfilingWorker(
+export function attachProfiler(
   workerScope: WorkerScopeForProfiling = self as unknown as WorkerScopeForProfiling
 ): DatadogWorkerHandle {
   let session: ActiveSession | undefined
 
-  console.log('[DD Worker] startProfilingWorker() called — waiting for dd-start-profiling')
+  console.log('[DD Worker] attachProfiler() called — waiting for dd-profiling-config')
 
   workerScope.addEventListener('message', (event: MessageEvent) => {
     const command = event.data as WorkerProfilingCommand
@@ -75,10 +81,10 @@ export function startProfilingWorker(
 
     console.log('[DD Worker] received command:', command.type)
 
-    if (command.type === 'dd-start-profiling') {
+    if (command.type === 'dd-profiling-config') {
       startSession(command.sampleIntervalMs, command.maxBufferSize, command.collectIntervalMs, command.correlationId)
-    } else if (command.type === 'dd-stop-profiling') {
-      void stopSession()
+    } else if (command.type === 'dd-detach-profiler') {
+      void flushSession()
     }
   })
 
@@ -88,7 +94,7 @@ export function startProfilingWorker(
     collectIntervalMs: number,
     correlationId: string
   ): void {
-    // Stop any existing session before starting a new one
+    // Flush any existing session before starting a new one
     if (session) {
       void collectAndSend(session)
       session = undefined
@@ -162,15 +168,15 @@ export function startProfilingWorker(
     )
   }
 
-  async function stopSession(): Promise<void> {
+  async function flushSession(): Promise<void> {
     if (!session) {
-      console.log('[DD Worker] stopSession called but no active session')
+      console.log('[DD Worker] flush called but no active session')
       return
     }
     const currentSession = session
     session = undefined
     console.log(
-      `[DD Worker] stopSession — collecting final trace for correlationId=${currentSession.correlationId}`
+      `[DD Worker] flush — collecting final trace for correlationId=${currentSession.correlationId}`
     )
     await collectAndSend(currentSession)
   }
@@ -202,5 +208,5 @@ export function startProfilingWorker(
     }
   }
 
-  return { stop: stopSession }
+  return { flush: flushSession }
 }

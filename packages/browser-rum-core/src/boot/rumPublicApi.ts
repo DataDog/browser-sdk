@@ -565,16 +565,16 @@ export interface RumPublicApi extends PublicApi {
    * Profiling starts automatically when the session is sampled for profiling (via `profilingSampleRate`).
    * Workers registered before `init()` is called are buffered and started when the session begins.
    *
-   * Returns an `unregister` function. Call it when you want to stop profiling the worker —
-   * the SDK will flush the current profiling session before stopping. You are still responsible
-   * for calling `worker.terminate()` yourself.
+   * Returns a `detach` function. Call it when you want to disconnect the worker from the
+   * profiling pipeline — the SDK will flush the current profiling session before detaching.
+   * You are still responsible for calling `worker.terminate()` yourself.
    *
    * @experimental Requires Chromium Canary with `DocumentPolicyInDedicatedWorker` and `ProfilerAPIForDedicatedWorker` flags.
    * @param worker - The Worker instance to profile
    * @param options.name - Optional label surfaced in Datadog as the `worker.name` tag. Defaults to the worker's script URL.
-   * @returns A function to unregister (and flush) the worker from profiling
+   * @returns A `detach` function that flushes and disconnects the worker from profiling
    */
-  registerProfilingWorker: (worker: Worker, options?: { name?: string }) => () => void
+  attachProfilingWorker: (worker: Worker, options?: { name?: string }) => () => void
 }
 
 export interface RecorderApi {
@@ -595,7 +595,7 @@ export interface RecorderApi {
 
 export interface ProfilerApi {
   stop: () => void
-  getWorkerCoordinator: () => { registerWorker: (worker: Worker, options?: { name?: string }) => () => void } | undefined
+  getWorkerCoordinator: () => { attachWorker: (worker: Worker, options?: { name?: string }) => () => void } | undefined
   onRumStart: (
     lifeCycle: LifeCycle,
     hooks: Hooks,
@@ -1007,12 +1007,12 @@ export function makeRumPublicApi(
     }),
     DEFAULT_TRACKED_RESOURCE_HEADERS,
 
-    registerProfilingWorker: monitor((worker: Worker, options?: { name?: string }) => {
+    attachProfilingWorker: monitor((worker: Worker, options?: { name?: string }) => {
       const coordinator = profilerApi.getWorkerCoordinator()
       if (coordinator) {
-        return coordinator.registerWorker(worker, options)
+        return coordinator.attachWorker(worker, options)
       }
-      // Profiling not active for this session — return a no-op
+      // Profiling not active for this session — return a no-op detach
       return () => {}
     }),
   })

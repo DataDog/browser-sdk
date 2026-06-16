@@ -13,33 +13,33 @@ export function makeProfilerApi(): ProfilerApi {
   let profiler: RUMProfiler | undefined
   let workerCoordinator: WorkerProfilingCoordinator | undefined
 
-  // Buffer registerWorker calls that arrive before the coordinator is ready
+  // Buffer attachWorker calls that arrive before the coordinator is ready
   // (i.e. before lazyLoadProfiler resolves). Replayed once the coordinator is assigned.
-  type PendingCall = { worker: Worker; options?: { name?: string }; resolve: (unregister: () => void) => void }
+  type PendingCall = { worker: Worker; options?: { name?: string }; resolve: (detach: () => void) => void }
   const pendingWorkerCalls: PendingCall[] = []
 
-  function registerWorker(worker: Worker, options?: { name?: string }): () => void {
+  function attachWorker(worker: Worker, options?: { name?: string }): () => void {
     if (workerCoordinator) {
-      return workerCoordinator.registerWorker(worker, options)
+      return workerCoordinator.attachWorker(worker, options)
     }
 
-    // Coordinator not ready yet — buffer the call and return an unregister function
+    // Coordinator not ready yet — buffer the call and return a detach function
     // that either cancels the buffered call or delegates to the coordinator once ready.
-    console.log('[DD ProfilerApi] coordinator not ready yet — buffering registerWorker call')
-    let unregisterFromCoordinator: (() => void) | undefined
+    console.log('[DD ProfilerApi] coordinator not ready yet — buffering attachWorker call')
+    let detachFromCoordinator: (() => void) | undefined
     const pending: PendingCall = {
       worker,
       options,
-      resolve: (unregister) => {
-        unregisterFromCoordinator = unregister
+      resolve: (detach) => {
+        detachFromCoordinator = detach
       },
     }
     pendingWorkerCalls.push(pending)
 
     return () => {
-      if (unregisterFromCoordinator) {
-        // Coordinator has since resolved — delegate to its unregister
-        unregisterFromCoordinator()
+      if (detachFromCoordinator) {
+        // Coordinator has since resolved — delegate to its detach
+        detachFromCoordinator()
       } else {
         // Still buffered — cancel it
         const idx = pendingWorkerCalls.indexOf(pending)
@@ -111,12 +111,12 @@ export function makeProfilerApi(): ProfilerApi {
           DEFAULT_RUM_PROFILER_CONFIGURATION.collectIntervalMs
         )
 
-        // Replay any registerWorker calls that arrived before the coordinator was ready
+        // Replay any attachWorker calls that arrived before the coordinator was ready
         if (pendingWorkerCalls.length > 0) {
-          console.log(`[DD ProfilerApi] replaying ${pendingWorkerCalls.length} buffered registerWorker call(s)`)
+          console.log(`[DD ProfilerApi] replaying ${pendingWorkerCalls.length} buffered attachWorker call(s)`)
           for (const call of pendingWorkerCalls.splice(0)) {
-            const unregister = workerCoordinator!.registerWorker(call.worker, call.options)
-            call.resolve(unregister)
+            const detach = workerCoordinator!.attachWorker(call.worker, call.options)
+            call.resolve(detach)
           }
         }
       })
@@ -129,6 +129,6 @@ export function makeProfilerApi(): ProfilerApi {
       profiler?.stop()
       workerCoordinator?.stop()
     },
-    getWorkerCoordinator: () => ({ registerWorker }),
+    getWorkerCoordinator: () => ({ attachWorker }),
   }
 }
