@@ -350,7 +350,7 @@
 
         <div class="card">
           <div class="status-row">
-            <span id="worker-status">🟢 Long-lived worker</span>
+            <span id="worker-status">🟢 Persistent worker</span>
             <div class="controls">
               <button id="btn-stop">⏹ Stop</button>
               <button id="btn-restart" disabled>▶ Restart</button>
@@ -372,7 +372,7 @@
           <div class="worker-row">
             <div class="worker-dot green"></div>
             <span class="worker-label">cpu-workload-worker</span>
-            <span class="worker-desc">long-lived</span>
+            <span class="worker-desc">persistent</span>
           </div>
           <div class="worker-row">
             <div class="worker-dot orange"></div>
@@ -435,14 +435,14 @@ datadogRum.init({
 
         <hr class="divider" />
 
-        <!-- ── Long-lived worker ─────────────────────────────── -->
+        <!-- ── Persistent worker ────────────────────────────── -->
         <div class="snippet-section">
           <div class="snippet-title">
             <span class="step">Pattern A</span>
-            Long-lived worker
+            Persistent worker
           </div>
           <p class="snippet-desc">
-            A persistent worker that runs for the lifetime of the page.
+            A worker that runs for the lifetime of the page.
             Register it once on the main thread; the SDK profiles it continuously,
             flushing a trace every 60 s.
           </p>
