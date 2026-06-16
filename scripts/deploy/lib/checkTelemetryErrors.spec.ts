@@ -99,7 +99,10 @@ describe('check-telemetry-errors', () => {
       NO_TELEMETRY_ERRORS_ON_SPECIFIC_ORG_MOCK,
       NO_TELEMETRY_ERROR_ON_SPECIFIC_MESSAGE_MOCK,
     ])
-    await assert.rejects(() => checkTelemetryErrors(['us1'], '6.2.1'), /Telemetry errors found in the last 5 minutes/)
+    await assert.rejects(
+      () => checkTelemetryErrors(['us1'], '6.2.1'),
+      /\[datadoghq\.com\] Telemetry errors: found 10000 events \(threshold: 300\) in the last 5 minutes/
+    )
   })
 
   it('should throw an error if telemetry errors on specific org are found for a given datacenter', async () => {
@@ -111,7 +114,7 @@ describe('check-telemetry-errors', () => {
 
     await assert.rejects(
       () => checkTelemetryErrors(['us1'], '6.2.1'),
-      /Telemetry errors on specific org found in the last 5 minutes/
+      /\[datadoghq\.com\] Telemetry errors on specific org: found 500 events \(threshold: 100\) in the last 5 minutes/
     )
   })
 
@@ -124,7 +127,7 @@ describe('check-telemetry-errors', () => {
 
     await assert.rejects(
       () => checkTelemetryErrors(['us1'], '6.2.1'),
-      /Telemetry error on specific message found in the last 5 minutes/
+      /\[datadoghq\.com\] Telemetry error on specific message: found 1600 events \(threshold: 100\) in the last 5 minutes/
     )
   })
 
