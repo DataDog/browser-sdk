@@ -1,15 +1,15 @@
 /**
  * Short-lived worker (variant A — self-close).
  *
- * The worker itself decides when it's done. It calls stopAndFlush() which:
- *   1. Flushes the current profiling session (profiler.stop() + posts dd-worker-trace)
- *   2. Calls self.close()
+ * The worker itself decides when it's done:
+ * 1. Flushes the current profiling session (profiler.stop() + posts dd-worker-trace)
+ * 2. Calls self.close()
  *
  * No signaling back to the main thread needed.
  */
 import { attachProfiler } from '@datadog/browser-rum/worker'
 
-const { detachProfiler } = attachProfiler()
+const handle = attachProfiler()
 
 // ---------------------------------------------------------------------------
 // Workloads
@@ -25,10 +25,15 @@ function primeFactors(n: number): number[] {
   const factors: number[] = []
   let d = 2
   while (d * d <= n) {
-    while (n % d === 0) { factors.push(d); n = Math.floor(n / d) }
+    while (n % d === 0) {
+      factors.push(d)
+      n = Math.floor(n / d)
+    }
     d++
   }
-  if (n > 1) factors.push(n)
+  if (n > 1) {
+    factors.push(n)
+  }
   return factors
 }
 
@@ -36,10 +41,13 @@ function sha256Like(input: string): number {
   let h = 0x6a09e667
   for (let round = 0; round < 200; round++) {
     for (let i = 0; i < input.length; i++) {
+      // eslint-disable-next-line no-bitwise
       h = Math.imul(h ^ input.charCodeAt(i), 0x9e3779b9)
+      // eslint-disable-next-line no-bitwise
       h = (h << 13) | (h >>> 19)
     }
   }
+  // eslint-disable-next-line no-bitwise
   return h >>> 0
 }
 
@@ -52,7 +60,7 @@ let batches = 0
 
 function runBurst(): void {
   if (Date.now() - startTime >= BURST_DURATION_MS) {
-    void detachProfiler().then(() => self.close())
+    void handle.detachProfiler().then(() => self.close())
     return
   }
 
@@ -60,9 +68,13 @@ function runBurst(): void {
   if (phase === 0) {
     sortHeavy(10_000)
   } else if (phase === 1) {
-    for (let i = 0; i < 500; i++) primeFactors(999_983)
+    for (let i = 0; i < 500; i++) {
+      primeFactors(999_983)
+    }
   } else {
-    for (let i = 0; i < 100; i++) sha256Like('datadog-worker-profiling-test')
+    for (let i = 0; i < 100; i++) {
+      sha256Like('datadog-worker-profiling-test')
+    }
   }
 
   batches++

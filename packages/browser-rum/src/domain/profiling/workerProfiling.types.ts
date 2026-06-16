@@ -26,7 +26,6 @@ export type WorkerProfilingCommand =
       type: 'dd-detach-profiler'
     }
 
-
 export type WorkerProfilingResponse =
   | {
       type: 'dd-worker-trace'

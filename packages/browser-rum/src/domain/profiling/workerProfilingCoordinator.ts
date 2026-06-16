@@ -7,10 +7,9 @@ import {
   addEventListener,
   DOM_EVENT,
 } from '@datadog/browser-core'
-import type { RumConfiguration, TransportPayload } from '@datadog/browser-rum-core'
-import { createFormDataTransport } from '@datadog/browser-rum-core'
 import type { Encoder, SessionManager } from '@datadog/browser-core'
-import type { LifeCycle } from '@datadog/browser-rum-core'
+import type { RumConfiguration, TransportPayload, LifeCycle } from '@datadog/browser-rum-core'
+import { createFormDataTransport } from '@datadog/browser-rum-core'
 import type { WorkerProfilingCommand, WorkerProfilingResponse } from './workerProfiling.types'
 import { assembleWorkerProfilingPayload } from './transport/assembleWorkerProfilingPayload'
 
@@ -49,6 +48,7 @@ export function createWorkerProfilingCoordinator(
 
   let activeOptions: { sampleIntervalMs: number; maxBufferSize: number; collectIntervalMs: number } | undefined
   let isPaused = false
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
   let stopPageEventListeners: () => void = () => {}
 
   function attachWorker(worker: Worker, options?: WorkerOptions): () => void {
@@ -72,6 +72,7 @@ export function createWorkerProfilingCoordinator(
     }
 
     const errorListener = (event: ErrorEvent) => {
+      // monitor-until: forever
       addTelemetryDebug('Worker profiling: worker crashed', { error: event.message })
       teardownWorker(worker)
     }
@@ -84,7 +85,10 @@ export function createWorkerProfilingCoordinator(
       errorListener,
     }
 
+    // Safe: Worker.addEventListener is not patched by Zone.js
+    // eslint-disable-next-line local-rules/disallow-zone-js-patched-values
     worker.addEventListener('message', messageListener)
+    // eslint-disable-next-line local-rules/disallow-zone-js-patched-values
     worker.addEventListener('error', errorListener)
     registrations.set(worker, registration)
 
@@ -95,7 +99,6 @@ export function createWorkerProfilingCoordinator(
         ...activeOptions,
         correlationId,
       })
-    } else {
     }
 
     return () => detachWorker(worker)
@@ -229,7 +232,10 @@ export function createWorkerProfilingCoordinator(
     if (!registration) {
       return
     }
+    // Safe: Worker.removeEventListener is not patched by Zone.js
+    // eslint-disable-next-line local-rules/disallow-zone-js-patched-values
     worker.removeEventListener('message', registration.messageListener)
+    // eslint-disable-next-line local-rules/disallow-zone-js-patched-values
     worker.removeEventListener('error', registration.errorListener)
     registrations.delete(worker)
   }
@@ -240,7 +246,6 @@ export function createWorkerProfilingCoordinator(
   ): void {
     try {
       const sessionId = session.findTrackedSession()?.id
-      const durationMs = response.endTimeStamp - response.startTimeStamp
       const payload = assembleWorkerProfilingPayload(
         response.trace,
         response.startTimeStamp,
@@ -268,6 +273,7 @@ export function createWorkerProfilingCoordinator(
           'Note: blob: and data: URL workers are not yet supported.'
       )
     } else {
+      // monitor-until: forever
       addTelemetryDebug('Worker profiling error', { error, workerName: registration.name })
     }
   }

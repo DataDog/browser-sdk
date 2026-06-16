@@ -2,11 +2,11 @@
  * Worker Profiling — test app main thread
  *
  * Demonstrates:
- *  1. Initializing Datadog RUM with profilingSampleRate: 100
- *  2. Spawning a dedicated worker that runs a CPU-intensive workload
- *  3. Attaching the worker with datadogRum.attachProfilingWorker()
- *  4. Displaying live stats from the worker on the page
- *  5. Displaying captured profiles received from the proxy server via SSE
+ * 1. Initializing Datadog RUM with profilingSampleRate: 100
+ * 2. Spawning a dedicated worker that runs a CPU-intensive workload
+ * 3. Attaching the worker with datadogRum.attachProfilingWorker()
+ * 4. Displaying live stats from the worker on the page
+ * 5. Displaying captured profiles received from the proxy server via SSE
  */
 import { datadogRum } from '@datadog/browser-rum'
 
@@ -58,11 +58,15 @@ function updateStats(stats: WorkerStats): void {
   el('stat-primes').textContent = stats.primesFound.toLocaleString()
   el('stat-fib').textContent = stats.fibResult.toLocaleString()
   el('stat-matrix-ops').textContent = stats.matrixOps.toLocaleString()
-  el('stat-elapsed').textContent = stats.elapsedSeconds.toFixed(1) + 's'
+  el('stat-elapsed').textContent = `${stats.elapsedSeconds.toFixed(1)}s`
 }
 
 worker.addEventListener('message', (event: MessageEvent) => {
-  if (typeof event.data === 'object' && typeof event.data.type === 'string' && (event.data.type as string).startsWith('dd-')) {
+  if (
+    typeof event.data === 'object' &&
+    typeof event.data.type === 'string' &&
+    (event.data.type as string).startsWith('dd-')
+  ) {
     return
   }
   if (event.data?.kind === 'stats') {
@@ -177,7 +181,6 @@ function tagValue(tags: string[], key: string): string | undefined {
   return match ? match.slice(key.length + 1) : undefined
 }
 
-
 interface RumEvent {
   type: 'rum'
   eventCount: number
@@ -208,10 +211,10 @@ function connectSSE(): void {
     const data = JSON.parse(event.data) as ProxyEvent
     if (data.type === 'profile') {
       // Normalise: proxy may not have been restarted yet and omit `tags`
-      if (!Array.isArray((data as ProfileEvent).tags)) {
-        ;(data as ProfileEvent).tags = []
+      if (!Array.isArray(data.tags)) {
+        data.tags = []
       }
-      renderProfile(data as ProfileEvent)
+      renderProfile(data)
     }
   }
 }
@@ -223,9 +226,7 @@ function renderProfile(p: ProfileEvent): void {
 
   const isWorker = p.tags.includes('thread:worker')
   const workerName = tagValue(p.tags, 'worker.name')
-  const threadLabel = isWorker
-    ? `🔧 Worker${workerName ? ` — ${workerName}` : ''}`
-    : '🖥 Main thread'
+  const threadLabel = isWorker ? `🔧 Worker${workerName ? ` — ${workerName}` : ''}` : '🖥 Main thread'
   const threadColor = isWorker ? '#f0883e' : '#58a6ff'
 
   const time = new Date(p.startTime).toLocaleTimeString()
@@ -257,12 +258,16 @@ function renderProfile(p: ProfileEvent): void {
         <div class="pstat"><span class="pstat-label">Samples</span><span class="pstat-value">${p.sampleCount.toLocaleString()}</span></div>
         <div class="pstat"><span class="pstat-label">Frames</span><span class="pstat-value">${p.frameCount.toLocaleString()}</span></div>
         <div class="pstat"><span class="pstat-label">Duration</span><span class="pstat-value">${duration}s</span></div>
-        <div class="pstat"><span class="pstat-label">Session</span><span class="pstat-value session-id">${p.sessionId ? p.sessionId.slice(0, 8) + '…' : '—'}</span></div>
+        <div class="pstat"><span class="pstat-label">Session</span><span class="pstat-value session-id">${p.sessionId ? `${p.sessionId.slice(0, 8)}…` : '—'}</span></div>
       </div>
-      ${p.tags.length ? `
+      ${
+        p.tags.length
+          ? `
       <div class="tags-row">
         ${p.tags.map((t) => `<span class="tag-pill${isWorkerTag(t) ? ' tag-pill--worker' : ''}">${escHtml(t)}</span>`).join('')}
-      </div>` : ''}
+      </div>`
+          : ''
+      }
       <div class="frames-section">
         <div class="frames-header">Top frames (by sample count)</div>
         ${framesHtml || '<span style="color:#8b949e;font-size:.8rem">no frames</span>'}
@@ -276,11 +281,7 @@ function renderProfile(p: ProfileEvent): void {
 
 /** Highlight tags that are specific to worker profiles. */
 function isWorkerTag(tag: string): boolean {
-  return (
-    tag.startsWith('thread:') ||
-    tag.startsWith('worker.name:') ||
-    tag.startsWith('thread.correlation_id:')
-  )
+  return tag.startsWith('thread:') || tag.startsWith('worker.name:') || tag.startsWith('thread.correlation_id:')
 }
 
 function escHtml(s: string): string {

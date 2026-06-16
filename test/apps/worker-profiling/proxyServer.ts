@@ -1,13 +1,12 @@
 /**
  * Proxy server for the worker-profiling test app (port 8082).
  *
- * Run in a separate terminal:
- *   yarn proxy
+ * Run in a separate terminal: `yarn proxy`
  *
  * Provides:
- *   POST /proxy?ddforward=...  — intake proxy (no forwarding to Datadog)
- *   GET  /events               — SSE stream of parsed profile summaries
- *   GET  /datadog-worker.js    — deflate worker bundle (built from source)
+ * - `POST /proxy?ddforward=...` — intake proxy (no forwarding to Datadog)
+ * - `GET /events` — SSE stream of parsed profile summaries
+ * - `GET /datadog-worker.js` — deflate worker bundle (built from source)
  */
 import path from 'node:path'
 import zlib from 'node:zlib'
@@ -53,7 +52,9 @@ function isDeflate(buf: Buffer): boolean {
 
 function intakeType(req: express.Request): 'rum' | 'logs' | 'profile' | 'replay' | 'unknown' {
   const ddforward = req.query.ddforward as string | undefined
-  if (!ddforward) return 'unknown'
+  if (!ddforward) {
+    return 'unknown'
+  }
   const { pathname } = new URL(ddforward, 'https://example.org')
   const endpoint = pathname.split('/')[3]
   if (endpoint === 'rum' || endpoint === 'logs' || endpoint === 'profile' || endpoint === 'replay') {
@@ -79,19 +80,22 @@ function handleProfile(req: express.Request): Promise<void> {
 
     bb.on('file', (name: string, stream: NodeJS.ReadableStream) => {
       if (name === 'event') {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         eventPromise = readStream(stream).then((d) => JSON.parse(d.toString()))
       } else if (name === 'wall-time.json') {
         tracePromise = readStream(stream).then((d) => {
           const buf = isDeflate(d) ? zlib.inflateSync(d) : d
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
           return JSON.parse(buf.toString())
         })
       } else {
-        (stream as any).resume()
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        ;(stream as any).resume()
       }
     })
 
     bb.on('finish', () => {
-      Promise.all([eventPromise, tracePromise])
+      void Promise.all([eventPromise, tracePromise])
         .then(([event, trace]) => broadcast(summariseProfile(event, trace)))
         .catch((e) => console.error('[proxy] profile parse error:', e))
         .finally(resolve)
@@ -110,14 +114,24 @@ async function handleRum(req: express.Request): Promise<void> {
   const encoding = req.headers['content-encoding']
   const raw = await readStream(req)
   const body = encoding === 'deflate' ? zlib.inflateSync(raw) : raw
-  const events = body.toString('utf-8').split('\n').filter(Boolean).map((l) => {
-    try { return JSON.parse(l) } catch { return null }
-  }).filter(Boolean)
+  const events = body
+    .toString('utf-8')
+    .split('\n')
+    .filter(Boolean)
+    .map((l) => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return JSON.parse(l)
+      } catch {
+        return null
+      }
+    })
+    .filter(Boolean)
   broadcast({ type: 'rum', eventCount: events.length })
 }
 
 function summariseProfile(event: any, trace: any): object {
-  const tags: string[] = (event.tags_profiler ?? '').split(',').filter(Boolean)
+  const tags: string[] = ((event.tags_profiler ?? '') as string).split(',').filter(Boolean)
   const durationMs = new Date(event.end).getTime() - new Date(event.start).getTime()
 
   const { samples = [], stacks = [], frames = [], resources = [] } = trace
@@ -166,11 +180,18 @@ const deflateWorkerCompiler = webpack({
   entry: path.resolve(__dirname, '../../../packages/browser-worker/src/entries/main.ts'),
   target: ['web', 'es2020'],
   module: {
-    rules: [{
-      test: /\.ts$/,
-      use: [{ loader: 'ts-loader', options: { configFile: tsconfigPath, onlyCompileBundledFiles: true, transpileOnly: true } }],
-      exclude: /node_modules/,
-    }],
+    rules: [
+      {
+        test: /\.ts$/,
+        use: [
+          {
+            loader: 'ts-loader',
+            options: { configFile: tsconfigPath, onlyCompileBundledFiles: true, transpileOnly: true },
+          },
+        ],
+        exclude: /node_modules/,
+      },
+    ],
   },
   resolve: {
     extensions: ['.ts', '.js'],
@@ -198,6 +219,7 @@ const app = express()
 app.use(cors())
 
 // Deflate worker bundle
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
 app.use(webpackDevMiddleware(deflateWorkerCompiler, { stats: 'minimal' }))
 
 // SSE
@@ -211,20 +233,19 @@ app.get('/events', (req, res) => {
 })
 
 // Intake proxy
-app.post('/proxy', (req, res) => {
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
+app.post('/proxy', async (req, res) => {
   const type = intakeType(req)
-  const done = () => res.end()
   if (type === 'profile') {
-    handleProfile(req).then(done)
+    await handleProfile(req)
   } else if (type === 'rum') {
-    handleRum(req).then(done)
-  } else {
-    res.end()
+    await handleRum(req)
   }
+  res.end()
 })
 
 http.createServer(app).listen(PORT, () => {
-  console.log(`\n🔬 Worker Profiling proxy`)
+  console.log('\n🔬 Worker Profiling proxy')
   console.log(`   Intake:  POST http://localhost:${PORT}/proxy`)
   console.log(`   SSE:     GET  http://localhost:${PORT}/events`)
   console.log(`   Worker:  GET  http://localhost:${PORT}/datadog-worker.js\n`)

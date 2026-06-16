@@ -48,11 +48,7 @@ export function assembleWorkerProfilingPayload(
   }
 }
 
-function buildWorkerProfileEventTags(
-  tags: string[],
-  correlationId: string,
-  workerName: string | undefined
-): string[] {
+function buildWorkerProfileEventTags(tags: string[], correlationId: string, workerName: string | undefined): string[] {
   const profileEventTags = tags.concat([
     'language:javascript',
     'runtime:chrome',

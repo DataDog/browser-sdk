@@ -2,10 +2,7 @@
  * Short-lived worker (variant B — main-thread-close).
  *
  * The worker just does its work. The main thread decides when to stop it
- * by calling datadogRum.flushAndTerminateProfilingWorker(worker), which:
- *   1. Sends dd-flush-and-close to the worker
- *   2. Worker flushes its profiling session and calls self.close()
- *   3. Main thread hard-terminates after a 5s safety timeout
+ * by calling `detach()` then `worker.terminate()`.
  *
  * No postMessage, no signaling, no manual cleanup needed in the worker.
  */
@@ -21,7 +18,10 @@ function insertionSort(arr: number[]): number[] {
   for (let i = 1; i < arr.length; i++) {
     const key = arr[i]
     let j = i - 1
-    while (j >= 0 && arr[j] > key) { arr[j + 1] = arr[j]; j-- }
+    while (j >= 0 && arr[j] > key) {
+      arr[j + 1] = arr[j]
+      j--
+    }
     arr[j + 1] = key
   }
   return arr
@@ -56,12 +56,16 @@ function runBatch(): void {
     insertionSort(arr)
   } else if (phase === 1) {
     let total = 0
-    for (let n = 1; n <= 5_000; n++) total += collatz(n)
+    for (let n = 1; n <= 5_000; n++) {
+      total += collatz(n)
+    }
     void total
   } else {
     const coeffs = Array.from({ length: 50 }, (_, i) => Math.sin(i))
     let sum = 0
-    for (let x = 0; x < 1000; x++) sum += polynomialEval(coeffs, x / 1000)
+    for (let x = 0; x < 1000; x++) {
+      sum += polynomialEval(coeffs, x / 1000)
+    }
     void sum
   }
 

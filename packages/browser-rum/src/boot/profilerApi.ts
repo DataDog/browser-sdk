@@ -13,7 +13,6 @@ import type { RUMProfiler } from '../domain/profiling/types'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { startProfilingContext } from '../domain/profiling/profilingContext'
 import { lazyLoadProfiler } from './lazyLoadProfiler'
-import type { WorkerProfilingCoordinator } from '../domain/profiling/workerProfilingCoordinator'
 
 export function makeProfilerApi(): ProfilerApi {
   let profiler: RUMProfiler | undefined
@@ -21,7 +20,11 @@ export function makeProfilerApi(): ProfilerApi {
 
   // Buffer attachWorker calls that arrive before the coordinator is ready
   // (i.e. before lazyLoadProfiler resolves). Replayed once the coordinator is assigned.
-  type PendingCall = { worker: Worker; options?: { name?: string }; resolve: (detach: () => void) => void }
+  interface PendingCall {
+    worker: Worker
+    options?: { name?: string }
+    resolve: (detach: () => void) => void
+  }
   const pendingWorkerCalls: PendingCall[] = []
 
   function attachWorker(worker: Worker, options?: { name?: string }): () => void {
@@ -48,7 +51,9 @@ export function makeProfilerApi(): ProfilerApi {
       } else {
         // Still buffered — cancel it
         const idx = pendingWorkerCalls.indexOf(pending)
-        if (idx !== -1) pendingWorkerCalls.splice(idx, 1)
+        if (idx !== -1) {
+          pendingWorkerCalls.splice(idx, 1)
+        }
       }
     }
   }
