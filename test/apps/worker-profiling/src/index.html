@@ -522,9 +522,9 @@ run()</code></pre>
           </div>
           <p class="snippet-desc">
             The main thread decides when to stop the worker.
-            Call <code>flushAndTerminateProfilingWorker()</code> instead of
-            <code>worker.terminate()</code> — it flushes the profile first,
-            then terminates the worker after a 5 s safety timeout.
+            Call <code>unregister()</code> (returned by <code>registerProfilingWorker()</code>)
+            to flush the current profile session, then <code>worker.terminate()</code>
+            as you normally would. The SDK never touches the worker lifecycle.
           </p>
 
           <div class="file-label">main.ts</div>
