@@ -215,6 +215,7 @@ describe('createDeflateEncoder', () => {
 
     worker.processAllMessages()
 
+    expect(finishCallbackSpy).toHaveBeenCalledTimes(1)
     expect(finishCallbackSpy).toHaveBeenCalledWith({
       rawBytesCount: 3,
       output: new Uint8Array([...ENCODED_BAR, ...TRAILER]),

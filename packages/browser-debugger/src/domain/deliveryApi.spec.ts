@@ -285,6 +285,7 @@ describe('deliveryApi', () => {
       expect(getProbes('test.js;before')).toBeDefined()
       expect(getProbes('test.js;after')).toBeDefined()
       expect(getProbes('test.js;invalid')).toBeUndefined()
+      expect(errorSpy).toHaveBeenCalledTimes(1)
       expect(errorSpy).toHaveBeenCalledWith('Failed to add probe invalid:', expect.any(Error))
     })
 
@@ -308,6 +309,7 @@ describe('deliveryApi', () => {
 
       startDeliveryApiPolling(makeConfig())
       await flushPromises()
+      expect(errorSpy).toHaveBeenCalledTimes(1)
       expect(errorSpy).toHaveBeenCalledWith('Failed to add probe invalid:', expect.any(Error))
 
       errorSpy.mockClear()
@@ -345,6 +347,7 @@ describe('deliveryApi', () => {
 
       startDeliveryApiPolling(makeConfig({ pollInterval: 5000 }))
       await flushPromises()
+      expect(errorSpy).toHaveBeenCalledTimes(1)
       expect(errorSpy).toHaveBeenCalledWith('Failed to add probe invalid:', expect.any(Error))
 
       // A per-probe compilation error is a data error, not a transport failure:

@@ -54,6 +54,7 @@ describe('report observable', () => {
     consoleSubscription = initReportObservable([RawReportType.cspViolation]).subscribe(notifyReport)
     cspEventListener.dispatchEvent()
 
+    expect(notifyReport).toHaveBeenCalledTimes(1)
     expect(notifyReport).toHaveBeenCalledWith({
       startClocks: expect.any(Object),
       source: ErrorSource.REPORT,
