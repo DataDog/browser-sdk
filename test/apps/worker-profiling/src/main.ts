@@ -33,7 +33,7 @@ datadogRum.init({
 })
 
 // ---------------------------------------------------------------------------
-// Long-lived worker (Pattern A)
+// Persistent worker (Pattern A)
 //
 // registerProfilingWorker() returns an unregister function.
 // Call it when done — SDK flushes the session. You still control terminate().
@@ -125,7 +125,7 @@ spawnShortLivedWorker()
 setInterval(spawnShortLivedWorker, SHORT_LIVED_INTERVAL_MS)
 
 // ---------------------------------------------------------------------------
-// Controls — Stop/Restart the long-lived worker
+// Controls — Stop/Restart the persistent worker
 // ---------------------------------------------------------------------------
 function setWorkerStatus(text: string, color: string): void {
   const el = document.getElementById('worker-status')!
