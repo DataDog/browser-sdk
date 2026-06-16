@@ -1,4 +1,12 @@
-import { generateUUID, addTelemetryDebug, display, monitorError, DeflateEncoderStreamId } from '@datadog/browser-core'
+import {
+  generateUUID,
+  addTelemetryDebug,
+  display,
+  monitorError,
+  DeflateEncoderStreamId,
+  addEventListener,
+  DOM_EVENT,
+} from '@datadog/browser-core'
 import type { RumConfiguration, TransportPayload } from '@datadog/browser-rum-core'
 import { createFormDataTransport } from '@datadog/browser-rum-core'
 import type { Encoder, SessionManager } from '@datadog/browser-core'
@@ -40,6 +48,7 @@ export function createWorkerProfilingCoordinator(
   const transport = createFormDataTransport(configuration, lifeCycle, createEncoder, DeflateEncoderStreamId.PROFILING)
 
   let activeOptions: { sampleIntervalMs: number; maxBufferSize: number; collectIntervalMs: number } | undefined
+  let stopPageEventListeners: () => void = () => {}
 
   function attachWorker(worker: Worker, options?: WorkerOptions): () => void {
     if (registrations.has(worker)) {
@@ -111,6 +120,16 @@ export function createWorkerProfilingCoordinator(
       `[DD Coordinator] start() — ${registrations.size} worker(s) attached sampleInterval=${sampleIntervalMs}ms collectInterval=${collectIntervalMs}ms`
     )
     activeOptions = { sampleIntervalMs, maxBufferSize, collectIntervalMs }
+
+    // Hook page-level events so workers are flushed on visibility change / unload,
+    // mirroring what datadogProfiler does for the main-thread profiler.
+    const { stop: stopVisibility } = addEventListener(window, DOM_EVENT.VISIBILITY_CHANGE, handleVisibilityChange)
+    const { stop: stopBeforeUnload } = addEventListener(window, DOM_EVENT.BEFORE_UNLOAD, handleBeforeUnload)
+    stopPageEventListeners = () => {
+      stopVisibility()
+      stopBeforeUnload()
+    }
+
     registrations.forEach((registration) => {
       console.log(
         `[DD Coordinator] sending dd-profiling-config to worker ${registration.name ?? '(unnamed)'} correlationId=${registration.correlationId}`
@@ -125,8 +144,50 @@ export function createWorkerProfilingCoordinator(
     })
   }
 
+  /**
+   * Flush all workers without detaching them: send dd-detach-profiler (so each
+   * worker stops its current Profiler instance and posts the trace), then
+   * immediately re-deliver dd-profiling-config so each worker starts a fresh
+   * instance. Mirrors what datadogProfiler's startNextProfilerInstance() does
+   * for the main-thread profiler on beforeunload / visibilitychange.
+   *
+   * @param restartAfter - Pass false when the page is unloading (no point restarting).
+   */
+  function flushAllWorkers(restartAfter: boolean): void {
+    if (!activeOptions) {
+      return
+    }
+    console.log(`[DD Coordinator] flushAllWorkers restartAfter=${restartAfter}`)
+    registrations.forEach((registration) => {
+      sendCommand(registration, { type: 'dd-detach-profiler' })
+      if (restartAfter) {
+        sendCommand(registration, {
+          type: 'dd-profiling-config',
+          ...activeOptions!,
+          correlationId: registration.correlationId,
+        })
+      }
+    })
+  }
+
+  function handleVisibilityChange(): void {
+    if (document.visibilityState === 'hidden') {
+      // Flush workers when tab goes hidden — mirrors datadogProfiler behaviour.
+      // Re-deliver config so they restart when the tab becomes visible again
+      // (the worker will start a new Profiler instance on receiving dd-profiling-config).
+      flushAllWorkers(/* restartAfter */ true)
+    }
+    // No explicit "resume" needed: the worker already restarted itself above.
+  }
+
+  function handleBeforeUnload(): void {
+    // Page is unloading — flush but don't restart.
+    flushAllWorkers(/* restartAfter */ false)
+  }
+
   function stop(): void {
     console.log('[DD Coordinator] stop() — sending dd-detach-profiler to all workers')
+    stopPageEventListeners()
     activeOptions = undefined
     registrations.forEach((registration) => {
       sendCommand(registration, { type: 'dd-detach-profiler' })
