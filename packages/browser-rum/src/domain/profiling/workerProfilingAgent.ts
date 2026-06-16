@@ -71,7 +71,6 @@ export function attachProfiler(
 ): DatadogWorkerHandle {
   let session: ActiveSession | undefined
 
-  console.log('[DD Worker] attachProfiler() called — waiting for dd-profiling-config')
 
   workerScope.addEventListener('message', (event: MessageEvent) => {
     const command = event.data as WorkerProfilingCommand
@@ -79,7 +78,6 @@ export function attachProfiler(
       return
     }
 
-    console.log('[DD Worker] received command:', command.type)
 
     if (command.type === 'dd-profiling-config') {
       startSession(command.sampleIntervalMs, command.maxBufferSize, command.collectIntervalMs, command.correlationId)
@@ -102,7 +100,6 @@ export function attachProfiler(
 
     const ProfilerConstructor = workerScope.Profiler
     if (!ProfilerConstructor) {
-      console.warn('[DD Worker] Profiler API not available in this scope — missing flag or wrong browser')
       workerScope.postMessage({ type: 'dd-worker-error', error: 'not-supported-by-browser' })
       return
     }
@@ -110,14 +107,10 @@ export function attachProfiler(
     let profiler: WorkerProfiler
     try {
       profiler = new ProfilerConstructor({ sampleInterval: sampleIntervalMs, maxBufferSize })
-      console.log(
-        `[DD Worker] Profiler started — sampleInterval=${sampleIntervalMs}ms maxBufferSize=${maxBufferSize} collectInterval=${collectIntervalMs}ms correlationId=${correlationId}`
-      )
     } catch (e) {
       const isDocPolicyError =
         e instanceof Error &&
         (e.name === 'NotAllowedError' || e.message.includes('disabled by Document Policy'))
-      console.error('[DD Worker] Failed to construct Profiler:', e)
       workerScope.postMessage({
         type: 'dd-worker-error',
         error: isDocPolicyError ? 'missing-document-policy-header' : 'unexpected-exception',
@@ -126,10 +119,8 @@ export function attachProfiler(
     }
 
     const timerId = setTimeout(() => {
-      console.log(`[DD Worker] collectInterval (${collectIntervalMs}ms) elapsed — collecting and restarting`)
       void collectAndRestart()
     }, collectIntervalMs)
-    console.log(`[DD Worker] collection timer set for ${collectIntervalMs}ms`)
 
     session = {
       profiler,
@@ -145,7 +136,6 @@ export function attachProfiler(
   }
 
   function handleBufferFull(): void {
-    console.log('[DD Worker] samplebufferfull — collecting early and restarting')
     void collectAndRestart()
   }
 
@@ -155,11 +145,7 @@ export function attachProfiler(
     }
     const currentSession = session
     session = undefined
-    console.log(
-      `[DD Worker] collectAndRestart — collecting trace for correlationId=${currentSession.correlationId}`
-    )
     await collectAndSend(currentSession)
-    console.log('[DD Worker] restarting profiler after collect')
     startSession(
       currentSession.sampleIntervalMs,
       currentSession.maxBufferSize,
@@ -170,14 +156,10 @@ export function attachProfiler(
 
   async function flushSession(): Promise<void> {
     if (!session) {
-      console.log('[DD Worker] detachProfiler called but no active session')
       return
     }
     const currentSession = session
     session = undefined
-    console.log(
-      `[DD Worker] detachProfiler — collecting final trace for correlationId=${currentSession.correlationId}`
-    )
     await collectAndSend(currentSession)
   }
 
@@ -192,9 +174,6 @@ export function attachProfiler(
       const trace = await activeSession.profiler.stop()
       const endTimeStamp = Date.now()
       const durationMs = endTimeStamp - startTimeStamp
-      console.log(
-        `[DD Worker] profiler.stop() resolved — durationMs=${durationMs} correlationId=${correlationId} — posting dd-worker-trace`
-      )
       workerScope.postMessage({
         type: 'dd-worker-trace',
         trace: trace as any,
@@ -203,7 +182,6 @@ export function attachProfiler(
         correlationId,
       })
     } catch (e) {
-      console.error('[DD Worker] profiler.stop() threw:', e)
       workerScope.postMessage({ type: 'dd-worker-error', error: 'unexpected-exception' })
     }
   }

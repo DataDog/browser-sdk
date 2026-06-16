@@ -25,7 +25,6 @@ export function makeProfilerApi(): ProfilerApi {
 
     // Coordinator not ready yet — buffer the call and return a detach function
     // that either cancels the buffered call or delegates to the coordinator once ready.
-    console.log('[DD ProfilerApi] coordinator not ready yet — buffering attachWorker call')
     let detachFromCoordinator: (() => void) | undefined
     const pending: PendingCall = {
       worker,
@@ -113,7 +112,6 @@ export function makeProfilerApi(): ProfilerApi {
 
         // Replay any attachWorker calls that arrived before the coordinator was ready
         if (pendingWorkerCalls.length > 0) {
-          console.log(`[DD ProfilerApi] replaying ${pendingWorkerCalls.length} buffered attachWorker call(s)`)
           for (const call of pendingWorkerCalls.splice(0)) {
             const detach = workerCoordinator!.attachWorker(call.worker, call.options)
             call.resolve(detach)

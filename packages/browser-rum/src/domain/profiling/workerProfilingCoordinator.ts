@@ -58,14 +58,12 @@ export function createWorkerProfilingCoordinator(
     }
 
     const correlationId = generateUUID()
-    console.log(`[DD Coordinator] attachWorker name=${options?.name ?? '(unnamed)'} correlationId=${correlationId}`)
 
     const messageListener = (event: MessageEvent) => {
       const response = event.data as WorkerProfilingResponse
       if (!response || typeof response.type !== 'string') {
         return
       }
-      console.log(`[DD Coordinator] received from worker: ${response.type}`)
       if (response.type === 'dd-worker-trace') {
         handleWorkerTrace(registration, response)
       } else if (response.type === 'dd-worker-error') {
@@ -92,16 +90,12 @@ export function createWorkerProfilingCoordinator(
 
     // If profiling is already active, deliver config to this worker immediately
     if (activeOptions) {
-      console.log(
-        `[DD Coordinator] profiling already active — sending dd-profiling-config immediately to worker ${registration.name ?? '(unnamed)'}`
-      )
       sendCommand(registration, {
         type: 'dd-profiling-config',
         ...activeOptions,
         correlationId,
       })
     } else {
-      console.log(`[DD Coordinator] profiling not yet active — config will be sent when start() is called`)
     }
 
     return () => detachWorker(worker)
@@ -120,9 +114,6 @@ export function createWorkerProfilingCoordinator(
   }
 
   function start(sampleIntervalMs: number, maxBufferSize: number, collectIntervalMs: number): void {
-    console.log(
-      `[DD Coordinator] start() — ${registrations.size} worker(s) attached sampleInterval=${sampleIntervalMs}ms collectInterval=${collectIntervalMs}ms`
-    )
     activeOptions = { sampleIntervalMs, maxBufferSize, collectIntervalMs }
 
     // Hook page-level events so workers are flushed on visibility change / unload,
@@ -135,9 +126,6 @@ export function createWorkerProfilingCoordinator(
     }
 
     registrations.forEach((registration) => {
-      console.log(
-        `[DD Coordinator] sending dd-profiling-config to worker ${registration.name ?? '(unnamed)'} correlationId=${registration.correlationId}`
-      )
       sendCommand(registration, {
         type: 'dd-profiling-config',
         sampleIntervalMs,
@@ -156,7 +144,6 @@ export function createWorkerProfilingCoordinator(
     if (!activeOptions || isPaused) {
       return
     }
-    console.log('[DD Coordinator] pauseAllWorkers — tab hidden, flushing worker sessions')
     isPaused = true
     registrations.forEach((registration) => {
       sendCommand(registration, { type: 'dd-detach-profiler' })
@@ -171,7 +158,6 @@ export function createWorkerProfilingCoordinator(
     if (!activeOptions || !isPaused) {
       return
     }
-    console.log('[DD Coordinator] resumeAllWorkers — tab visible, restarting worker profilers')
     isPaused = false
     registrations.forEach((registration) => {
       sendCommand(registration, {
@@ -191,7 +177,6 @@ export function createWorkerProfilingCoordinator(
     if (!activeOptions) {
       return
     }
-    console.log('[DD Coordinator] flushAndRestartAllWorkers — beforeunload')
     registrations.forEach((registration) => {
       sendCommand(registration, { type: 'dd-detach-profiler' })
       sendCommand(registration, {
@@ -215,7 +200,6 @@ export function createWorkerProfilingCoordinator(
   }
 
   function stop(): void {
-    console.log('[DD Coordinator] stop() — sending dd-detach-profiler to all workers')
     stopPageEventListeners()
     activeOptions = undefined
     registrations.forEach((registration) => {
@@ -257,9 +241,6 @@ export function createWorkerProfilingCoordinator(
     try {
       const sessionId = session.findTrackedSession()?.id
       const durationMs = response.endTimeStamp - response.startTimeStamp
-      console.log(
-        `[DD Coordinator] handleWorkerTrace — worker=${registration.name ?? '(unnamed)'} correlationId=${response.correlationId} durationMs=${durationMs} sessionId=${sessionId ?? '(none)'}`
-      )
       const payload = assembleWorkerProfilingPayload(
         response.trace,
         response.startTimeStamp,
@@ -269,10 +250,8 @@ export function createWorkerProfilingCoordinator(
         configuration,
         sessionId
       )
-      console.log('[DD Coordinator] sending worker profile payload via transport')
       void transport.send(payload as unknown as TransportPayload)
     } catch (e) {
-      console.error('[DD Coordinator] handleWorkerTrace error:', e)
       monitorError(e)
     }
   }
