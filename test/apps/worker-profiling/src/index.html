@@ -16,7 +16,7 @@
         background: #0f1117;
         color: #e6edf3;
         display: grid;
-        grid-template-columns: 300px 1fr 380px;
+        grid-template-columns: 260px 360px 1fr;
         height: 100vh;
         overflow: hidden;
       }
@@ -170,7 +170,7 @@
       }
 
       /* ─── Center column — docs / snippets ───────────────────── */
-      .col-center { border-right: 1px solid #30363d; }
+      .col-center { /* last column — no right border */ }
 
       .snippet-section { display: flex; flex-direction: column; gap: 8px; }
 
@@ -238,7 +238,8 @@
 
       /* ─── Right column — live profiles ──────────────────────── */
       .col-right {
-        min-height: 0; /* critical: lets the flex child shrink below content size */
+        min-height: 0;
+        border-right: 1px solid #30363d;
       }
 
       #proxy-status { font-size: 0.72rem; font-weight: 600; color: #e55353; }
@@ -395,7 +396,16 @@
       </div>
     </div>
 
-    <!-- ══ Col 2 — Documentation / snippets ═══════════════════ -->
+    <!-- ══ Col 2 — Captured profiles ══════════════════════════ -->
+    <div class="col col-right">
+      <div class="col-header">
+        <h2>Captured profiles</h2>
+        <span id="proxy-status">🔴 Connecting…</span>
+      </div>
+      <div id="profile-list"></div>
+    </div>
+
+    <!-- ══ Col 3 — Documentation / snippets ═══════════════════ -->
     <div class="col col-center">
       <div class="col-header">
         <h2>How to instrument a dedicated worker</h2>
@@ -567,14 +577,6 @@ app.get('/my-worker.js', (req, res, next) => {
       </div>
     </div>
 
-    <!-- ══ Col 3 — Live profiles ═══════════════════════════════ -->
-    <div class="col col-right">
-      <div class="col-header">
-        <h2>Captured profiles</h2>
-        <span id="proxy-status">🔴 Connecting…</span>
-      </div>
-      <div id="profile-list"></div>
-    </div>
 
   </body>
 </html>
