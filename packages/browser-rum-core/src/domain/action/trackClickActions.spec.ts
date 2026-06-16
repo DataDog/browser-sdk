@@ -367,6 +367,7 @@ describe('trackClickActions', () => {
 
       clock.tick(EXPIRE_DELAY)
       expect(events.length).toBe(1)
+      expect(events[0].frustrationTypes).toHaveLength(3)
       expect(events[0].frustrationTypes).toEqual(
         expect.arrayContaining([FrustrationType.DEAD_CLICK, FrustrationType.ERROR_CLICK, FrustrationType.RAGE_CLICK])
       )
@@ -393,6 +394,7 @@ describe('trackClickActions', () => {
 
       clock.tick(EXPIRE_DELAY)
       expect(events.length).toBe(1)
+      expect(events[0].frustrationTypes).toHaveLength(2)
       expect(events[0].frustrationTypes).toEqual(
         expect.arrayContaining([FrustrationType.ERROR_CLICK, FrustrationType.DEAD_CLICK])
       )

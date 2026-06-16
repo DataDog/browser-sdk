@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, type TaskContext } from 'vitest'
 import { isAdoptedStyleSheetsSupported } from '@datadog/browser-core/test'
 import { ChangeType } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
@@ -210,8 +210,9 @@ describe('serializeNode for stylesheets', () => {
   })
 
   describe('for documents with adopted stylesheets', () => {
-    it('serializes the stylesheet', async () => {
+    it('serializes the stylesheet', async (ctx: TaskContext) => {
       if (!isAdoptedStyleSheetsSupported()) {
+        ctx.skip(true, 'No adoptedStyleSheets support.')
         return
       }
 

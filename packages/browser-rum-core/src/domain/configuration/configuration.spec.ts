@@ -629,6 +629,7 @@ describe('validateAndBuildRumConfiguration', () => {
             { match: 'final', propagatorTypes: ['b3multi'] },
           ],
         }
+        expect(serializeRumConfiguration(complexTracingConfig).selected_tracing_propagators).toHaveLength(4)
         expect(serializeRumConfiguration(complexTracingConfig).selected_tracing_propagators).toEqual(
           expect.arrayContaining(['datadog', 'b3', 'b3multi', 'tracecontext'])
         )
