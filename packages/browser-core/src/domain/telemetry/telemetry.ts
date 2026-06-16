@@ -1,6 +1,6 @@
 import { clocksNow } from '@datadog/js-core/time'
+import { getDebugMode } from '@datadog/js-core/util'
 import type { Context } from '../../tools/serialisation/context'
-import { ConsoleApiName } from '../../tools/display'
 import { NO_ERROR_STACK_PRESENT_MESSAGE, isError } from '../error/error'
 import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
 import { getExperimentalFeatures } from '../../tools/experimentalFeatures'
@@ -9,7 +9,8 @@ import type { Configuration } from '../configuration'
 import { buildTags } from '../tags'
 import { INTAKE_SITE_STAGING, INTAKE_SITE_US1_FED, INTAKE_SITE_US2_FED } from '../intakeSites'
 import { BufferedObservable, Observable } from '../../tools/observable'
-import { displayIfDebugEnabled, startMonitorErrorCollection } from '../../tools/monitor'
+import { startMonitorErrorCollection } from '../../tools/monitor'
+import { display } from '../../tools/display'
 import { sendToExtension } from '../../tools/sendToExtension'
 import { performDraw } from '../../tools/utils/numberUtils'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
@@ -261,7 +262,9 @@ function isTelemetryReplicationAllowed(configuration: Configuration) {
 }
 
 export function addTelemetryDebug(message: string, context?: Context) {
-  displayIfDebugEnabled(ConsoleApiName.debug, message, context)
+  if (getDebugMode()) {
+    display.debug('[Telemetry]', message, context)
+  }
   getTelemetryObservable().notify({
     rawEvent: {
       type: TelemetryType.LOG,
