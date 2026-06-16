@@ -494,6 +494,8 @@ attachProfiler()
 // Register — SDK starts profiling immediately
 datadogRum.attachProfilingWorker(worker, { name: 'burst-worker' })
 
+// Profiling begins asynchronously once the session is sampled and the
+// profiling config is delivered to the worker via dd-profiling-config.
 // No cleanup needed — worker manages its own lifecycle</code></pre>
 
           <div class="file-label">burst-worker.ts</div>
