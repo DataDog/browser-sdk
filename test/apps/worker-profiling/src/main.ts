@@ -161,10 +161,7 @@ interface TopFrame {
 
 interface ProfileEvent {
   type: 'profile'
-  thread: 'main' | 'worker'
   tags: string[]
-  workerName: string | undefined
-  correlationIds: string[]
   startTime: string
   endTime: string
   durationMs: number
@@ -173,6 +170,13 @@ interface ProfileEvent {
   topFrames: TopFrame[]
   sessionId: string | undefined
 }
+
+/** Read the first value for `key:value` from a tags array. */
+function tagValue(tags: string[], key: string): string | undefined {
+  const match = tags.find((t) => t.startsWith(`${key}:`))
+  return match ? match.slice(key.length + 1) : undefined
+}
+
 
 interface RumEvent {
   type: 'rum'
@@ -217,9 +221,10 @@ connectSSE()
 function renderProfile(p: ProfileEvent): void {
   profileCount++
 
-  const isWorker = p.thread === 'worker'
+  const isWorker = p.tags.includes('thread:worker')
+  const workerName = tagValue(p.tags, 'worker.name')
   const threadLabel = isWorker
-    ? `🔧 Worker${p.workerName ? ` — ${p.workerName}` : ''}`
+    ? `🔧 Worker${workerName ? ` — ${workerName}` : ''}`
     : '🖥 Main thread'
   const threadColor = isWorker ? '#f0883e' : '#58a6ff'
 
@@ -236,10 +241,6 @@ function renderProfile(p: ProfileEvent): void {
         </div>`
     )
     .join('')
-
-  const correlIdsHtml = p.correlationIds.length
-    ? p.correlationIds.map((id) => `<code class="correl-id">${id.slice(0, 8)}…</code>`).join(' ')
-    : '<span style="color:#8b949e">none</span>'
 
   const card: HTMLDetailsElement = document.createElement('details')
   card.className = 'profile-card'
@@ -258,15 +259,6 @@ function renderProfile(p: ProfileEvent): void {
         <div class="pstat"><span class="pstat-label">Duration</span><span class="pstat-value">${duration}s</span></div>
         <div class="pstat"><span class="pstat-label">Session</span><span class="pstat-value session-id">${p.sessionId ? p.sessionId.slice(0, 8) + '…' : '—'}</span></div>
       </div>
-      ${
-        p.correlationIds.length || !isWorker
-          ? `
-      <div class="correl-row">
-        <span class="correl-label">${isWorker ? 'correlation id' : 'worker correlation ids'}</span>
-        ${correlIdsHtml}
-      </div>`
-          : ''
-      }
       ${p.tags.length ? `
       <div class="tags-row">
         ${p.tags.map((t) => `<span class="tag-pill${isWorkerTag(t) ? ' tag-pill--worker' : ''}">${escHtml(t)}</span>`).join('')}
@@ -284,7 +276,11 @@ function renderProfile(p: ProfileEvent): void {
 
 /** Highlight tags that are specific to worker profiles. */
 function isWorkerTag(tag: string): boolean {
-  return tag.startsWith('thread:worker') || tag.startsWith('worker.name:') || tag.startsWith('thread.correlation_id:')
+  return (
+    tag.startsWith('thread:') ||
+    tag.startsWith('worker.name:') ||
+    tag.startsWith('thread.correlation_id:')
+  )
 }
 
 function escHtml(s: string): string {
