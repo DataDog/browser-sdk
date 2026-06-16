@@ -19,7 +19,7 @@ export function startAccountContext(assembleHook: Hook<any, any>, configuration:
   const accountContextManager = buildAccountContextManager()
 
   if (configuration.storeContextsAcrossPages) {
-    storeContextManager(configuration, accountContextManager, productKey, CustomerDataType.Account)
+    storeContextManager(accountContextManager, productKey, CustomerDataType.Account)
   }
 
   assembleHook.register(() => {

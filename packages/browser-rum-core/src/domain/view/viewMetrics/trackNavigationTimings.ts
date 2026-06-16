@@ -3,7 +3,6 @@ import type { Duration } from '@datadog/js-core/time'
 import { setTimeout, runOnReadyState, clearTimeout, mockable } from '@datadog/browser-core'
 import type { RumPerformanceNavigationTiming } from '../../../browser/performanceObservable'
 import { getNavigationEntry, sanitizeFirstByte } from '../../../browser/performanceUtils'
-import type { RumConfiguration } from '../../configuration'
 
 export interface NavigationTimings {
   domComplete: Duration
@@ -20,11 +19,8 @@ export type RelevantNavigationTiming = Pick<
   'domComplete' | 'domContentLoadedEventEnd' | 'domInteractive' | 'loadEventEnd' | 'responseStart'
 >
 
-export function trackNavigationTimings(
-  configuration: RumConfiguration,
-  callback: (timings: NavigationTimings) => void
-) {
-  return waitAfterLoadEvent(configuration, () => {
+export function trackNavigationTimings(callback: (timings: NavigationTimings) => void) {
+  return waitAfterLoadEvent(() => {
     const entry = mockable(getNavigationEntry)()
 
     if (!isIncompleteNavigation(entry)) {
@@ -47,9 +43,9 @@ function isIncompleteNavigation(entry: RelevantNavigationTiming) {
   return entry.loadEventEnd <= 0
 }
 
-function waitAfterLoadEvent(configuration: RumConfiguration, callback: () => void) {
+function waitAfterLoadEvent(callback: () => void) {
   let timeoutId: TimeoutId | undefined
-  const { stop: stopOnReadyState } = runOnReadyState(configuration, 'complete', () => {
+  const { stop: stopOnReadyState } = runOnReadyState('complete', () => {
     // Invoke the callback a bit after the actual load event, so the "loadEventEnd" timing is accurate
     timeoutId = setTimeout(() => callback())
   })

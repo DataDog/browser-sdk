@@ -11,7 +11,6 @@ import {
   NonErrorPrefix,
   combine,
 } from '@datadog/browser-core'
-import type { RumConfiguration } from '../configuration'
 import type { RawRumErrorEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
@@ -27,11 +26,7 @@ export interface ProvidedError {
   componentStack?: string
 }
 
-export function startErrorCollection(
-  lifeCycle: LifeCycle,
-  configuration: RumConfiguration,
-  bufferedDataObservable: Observable<BufferedData>
-) {
+export function startErrorCollection(lifeCycle: LifeCycle, bufferedDataObservable: Observable<BufferedData>) {
   const errorObservable = new Observable<RawError>()
 
   bufferedDataObservable.subscribe(({ data, type }) => {
@@ -42,7 +37,7 @@ export function startErrorCollection(
     }
   })
 
-  trackReportError(configuration, errorObservable)
+  trackReportError(errorObservable)
 
   errorObservable.subscribe((error) => lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error }))
 

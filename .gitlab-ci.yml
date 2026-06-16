@@ -1,7 +1,7 @@
 variables:
-  CURRENT_STAGING: staging-24
+  CURRENT_STAGING: staging-25
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 112
+  CURRENT_CI_IMAGE: 113
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
@@ -608,6 +608,8 @@ performance-benchmark:
       - $TARGET_TASK_NAME == "performance-benchmark-scheduled"
   script:
     - yarn
+    - yarn build
+    - yarn build:apps
     - yarn test:performance
 
 api-performance-benchmark:

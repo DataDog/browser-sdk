@@ -5,9 +5,9 @@
     "build": "webpack"
   },
   "dependencies": {
-    "react": "19.2.6",
-    "react-dom": "19.2.6",
-    "react-router": "7.16.0"
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "react-router": "7.17.0"
   },
   "peerDependencies": {
     "@datadog/browser-rum": "*",

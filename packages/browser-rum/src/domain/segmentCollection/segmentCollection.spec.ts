@@ -1,7 +1,7 @@
 import type { ClocksState } from '@datadog/js-core/time'
 import type { HttpRequest, HttpRequestEvent } from '@datadog/browser-core'
 import { DeflateEncoderStreamId, Observable, PageExitReason } from '@datadog/browser-core'
-import type { ViewHistory, ViewHistoryEntry, RumConfiguration } from '@datadog/browser-rum-core'
+import type { ViewHistory, ViewHistoryEntry } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
@@ -46,7 +46,6 @@ describe('startSegmentCollection', () => {
   }
   let addRecord: (record: BrowserRecord) => void
   let context: SegmentContext | undefined
-  let configuration: RumConfiguration
 
   function addRecordAndFlushSegment(flushStrategy: () => void = emulatePageUnload) {
     // Make sure the segment is not empty
@@ -65,7 +64,6 @@ describe('startSegmentCollection', () => {
   }
 
   beforeEach(() => {
-    configuration = {} as RumConfiguration
     lifeCycle = new LifeCycle()
     worker = new MockWorker()
     httpRequestSpy = {
@@ -78,7 +76,7 @@ describe('startSegmentCollection', () => {
       lifeCycle,
       () => context,
       httpRequestSpy,
-      createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+      createDeflateEncoder(worker, DeflateEncoderStreamId.REPLAY)
     ))
 
     registerCleanupTask(() => {

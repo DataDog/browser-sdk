@@ -46,7 +46,7 @@
 
       "@datadog/browser-debugger": ["./packages/browser-debugger/src/entries/main"],
 
-      "@datadog/js-core/time": ["./packages/js-core/src/time"]
+      "@datadog/js-core/time": ["./packages/js-core/src/entries/time"]
     }
   }
 }

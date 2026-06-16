@@ -28,6 +28,8 @@ import {
   replaceMockable,
   createSessionManagerMock,
   replaceMockableWithSpy,
+  HIGH_HASH_UUID,
+  LOW_HASH_UUID,
 } from '@datadog/browser-core/test'
 import { mockRumConfiguration, mockViewHistory } from '../../../../browser-rum-core/test'
 import { mockProfiler } from '../../../test'
@@ -948,6 +950,43 @@ describe('profiler', () => {
     expect(profilingContextManager.get()?.status).toBe('stopped')
   })
 
+  it('should not restart profiling on session renewal when new session is not sampled for profiling', async () => {
+    mockProfiler(deepClone(mockedTrace))
+    const testLifeCycle = new LifeCycle()
+    const hooks = createHooks()
+    const profilingContextManager = startProfilingContext(hooks)
+    // Initial session uses LOW_HASH_UUID (sampled at any rate)
+    const sessionManager = createSessionManagerMock().setId(LOW_HASH_UUID)
+
+    const profiler = createRumProfiler(
+      mockRumConfiguration({ sessionSampleRate: 100, profilingSampleRate: 50 }),
+      testLifeCycle,
+      sessionManager,
+      profilingContextManager,
+      createIdentityEncoder,
+      mockViewHistory(),
+      { sampleIntervalMs: 10, collectIntervalMs: 60000, minProfileDurationMs: 0 }
+    )
+
+    // Start directly, simulating profilerApi.ts having validated the initial session
+    profiler.start()
+    await waitForBoolean(() => profiler.isRunning())
+
+    // Session expires
+    testLifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+    expect(profiler.isStopped()).toBeTrue()
+
+    // Session renews with HIGH_HASH_UUID, which is not sampled at profilingSampleRate: 50
+    sessionManager.setId(HIGH_HASH_UUID)
+    testLifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+    await new Promise((resolve) => setTimeout(resolve, 100))
+
+    expect(profiler.isStopped()).toBeTrue()
+
+    profiler.stop()
+  })
+
   it('should not include long tasks outside the profiling window when clocks drift', async () => {
     const clock = mockClock()
     const timeOrigin = performance.timing.navigationStart
@@ -999,25 +1038,20 @@ describe('profiler', () => {
     expect(trace.longTasks[0].id).toBe('long-task-inside')
   })
 
-  it('should pass the profiling start time in the trace for session lookup', async () => {
-    const clock = mockClock()
-    const { profiler } = setupProfiler()
+  it('should use the session id at profiler instance start time, not at collection time', async () => {
+    const { profiler, sessionManager } = setupProfiler()
 
     profiler.start()
-    expect(profiler.isRunning()).toBe(true)
+    await waitForBoolean(() => profiler.isRunning())
 
-    const expectedStartTime = relativeNow()
-
-    clock.tick(1000)
+    // Change session ID after profiler instance started
+    sessionManager.setId('changed-session-id')
 
     profiler.stop()
 
-    await waitNextMicrotask()
-    await waitNextMicrotask()
+    await waitForBoolean(() => emitPayloadSpy.calls.count() >= 1)
 
-    // The trace passed to emitPayload must carry the profiler's start time
-    // so that the FormData emitter can resolve the session id at the right point in time.
-    expect(emitPayloadSpy.calls.argsFor(0)[0].trace.startClocks.relative).toBe(expectedStartTime)
+    expect(emitPayloadSpy.calls.argsFor(0)[0].profile.session).toEqual({ id: 'session-id-1' })
   })
 
   describe('discard logic', () => {

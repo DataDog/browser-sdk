@@ -13,7 +13,7 @@ export function startGlobalContext(
   const globalContextManager = buildGlobalContextManager()
 
   if (configuration.storeContextsAcrossPages) {
-    storeContextManager(configuration, globalContextManager, productKey, CustomerDataType.GlobalContext)
+    storeContextManager(globalContextManager, productKey, CustomerDataType.GlobalContext)
   }
 
   assembleHook.register(() => {

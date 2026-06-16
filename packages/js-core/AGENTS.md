@@ -46,30 +46,31 @@ Do not add:
 ### Sub-path exports
 
 All APIs live under a named sub-path (e.g. `@datadog/js-core/time`). There is no root entry
-point. Each sub-path corresponds to a single source file under `src/`.
+point. Each sub-path corresponds to a single source file under `src/entries/`.
 
 Each sub-path is exposed **two ways** for maximum compatibility:
 
 - **`exports` field** (root `package.json`) — used by modern resolvers (webpack 5, Vite, esbuild,
   Rollup, native Node ESM/CJS, TypeScript `node16`/`nodenext`/`bundler`). Maps the sub-path to the
-  correct `import` (ESM), `require` (CJS), and `types` targets. The build emits `esm/package.json`
-  with `{"type":"module"}` so Node.js correctly treats `esm/*.js` as ES modules (pass
-  `--esm-type-module` to `build-package.ts`).
+  correct `import` (ESM, `.mjs`), `require` (CJS, `.js`), and `types` targets. ESM output uses the
+  `.mjs` extension, so Node.js treats it as an ES module natively without needing an
+  `esm/package.json`.
 - **Physical `<name>/package.json` fallback** — used by legacy resolvers that ignore `exports`
   (webpack 4, old Node, older Jest/ts-node). Relative `main`/`module`/`types` pointing at the
   same built files.
 
 When adding a new sub-path:
 
-1. Create `src/<name>.ts`
+1. Create `src/entries/<name>.ts`
 2. Add `"./<name>"` to the `exports` field in `package.json` with `import`, `require`, and `types`
    conditions
 3. Add a physical `<name>/package.json` with relative `main`/`module`/`types` (see
    `time/package.json`), and add `"<name>"` to the `files` array so it ships in the package
-4. Add `"@datadog/js-core/<name>"` to the `paths` map in the root `tsconfig.base.json`
+4. Add `"@datadog/js-core/<name>"` to the `paths` map in the root `tsconfig.base.json`, pointing at
+   `./packages/js-core/src/entries/<name>`
 
 ## Current sub-paths
 
-| Sub-path                | Source file   | Description    |
-| ----------------------- | ------------- | -------------- |
-| `@datadog/js-core/time` | `src/time.ts` | Time utilities |
+| Sub-path                | Source file           | Description    |
+| ----------------------- | --------------------- | -------------- |
+| `@datadog/js-core/time` | `src/entries/time.ts` | Time utilities |

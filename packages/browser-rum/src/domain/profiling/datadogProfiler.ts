@@ -1,5 +1,4 @@
 import { elapsed, clocksOrigin, clocksNow } from '@datadog/js-core/time'
-import type { RelativeTime } from '@datadog/js-core/time'
 import type { SessionManager, Profiler, DeflateEncoderStreamId, Encoder } from '@datadog/browser-core'
 import {
   addEventListener,
@@ -11,6 +10,8 @@ import {
   display,
   globalObject,
   mockable,
+  isSampled,
+  correctedChildSampleRate,
 } from '@datadog/browser-core'
 
 import type { LifeCycle, RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
@@ -76,6 +77,16 @@ export function createRumProfiler(
       instance.state === 'stopped' &&
       (instance.stateReason === 'session-expired' || instance.stateReason === 'quota_ko')
     ) {
+      const newSession = session.findTrackedSession()
+      if (
+        !newSession ||
+        !isSampled(
+          newSession.id,
+          correctedChildSampleRate(configuration.sessionSampleRate, configuration.profilingSampleRate)
+        )
+      ) {
+        return
+      }
       start()
     }
   })
@@ -100,8 +111,8 @@ export function createRumProfiler(
 
     // Add global clean-up tasks for listeners that are not specific to a profiler instance (eg. visibility change, before unload)
     globalCleanupTasks.push(
-      addEventListener(configuration, window, DOM_EVENT.VISIBILITY_CHANGE, handleVisibilityChange).stop,
-      addEventListener(configuration, window, DOM_EVENT.BEFORE_UNLOAD, handleBeforeUnload).stop
+      addEventListener(window, DOM_EVENT.VISIBILITY_CHANGE, handleVisibilityChange).stop,
+      addEventListener(window, DOM_EVENT.BEFORE_UNLOAD, handleBeforeUnload).stop
     )
 
     // Start profiler instance
@@ -241,6 +252,7 @@ export function createRumProfiler(
       views: [],
       cleanupTasks,
       longTasks: [],
+      sessionId: session.findTrackedSession()?.id,
     }
 
     // Add last view entry
@@ -256,7 +268,7 @@ export function createRumProfiler(
     runningInstance.profiler.removeEventListener('samplebufferfull', handleSampleBufferFull)
 
     // Store instance data snapshot in local variables to use in async callback
-    const { startClocks, views } = runningInstance
+    const { startClocks, views, sessionId } = runningInstance
 
     // Stop current profiler to get trace
     runningInstance.profiler
@@ -291,7 +303,7 @@ export function createRumProfiler(
             views,
             sampleInterval: profilerConfiguration.sampleIntervalMs,
           }),
-          startClocks.relative
+          sessionId
         )
       })
       .catch(monitorError)
@@ -359,8 +371,7 @@ export function createRumProfiler(
     instance.views.push(viewEntry)
   }
 
-  function handleProfilerTrace(trace: BrowserProfilerTrace, startTime: RelativeTime): void {
-    const sessionId = session.findTrackedSession(startTime)?.id
+  function handleProfilerTrace(trace: BrowserProfilerTrace, sessionId: string | undefined): void {
     const payload: ProfilingPayload = {
       profile: buildProfileEvent(trace, configuration, sessionId),
       trace,

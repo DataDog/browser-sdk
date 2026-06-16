@@ -67,7 +67,7 @@ export function trackClickActions(
   const { stop: stopActionEventsListener } = listenActionEvents<{
     clickActionBase: ClickActionBase
     hadActivityOnPointerDown: () => boolean
-  }>(configuration, {
+  }>({
     onPointerDown: (pointerDownEvent) =>
       processPointerDown(configuration, lifeCycle, domMutationObservable, pointerDownEvent, windowOpenObservable),
     onPointerUp: ({ clickActionBase, hadActivityOnPointerDown }, startEvent, getUserActivity) => {

@@ -58,7 +58,7 @@ describe('trackLargestContentfulPaint', () => {
       ])
     }
 
-    const firstHidden = trackFirstHidden(mockRumConfiguration(), clocksOrigin())
+    const firstHidden = trackFirstHidden(clocksOrigin())
     const largestContentfulPaint = trackLargestContentfulPaint(
       mockRumConfiguration(),
       firstHidden,

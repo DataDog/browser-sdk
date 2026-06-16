@@ -28,7 +28,7 @@ yarn test:unit --spec packages/browser-core/src/path/to/feature.spec.ts
 yarn test:unit --seed 123
 
 # setup E2E tests (installs Playwright and builds test apps)
-yarn test:e2e:init
+yarn test:e2e:setup
 
 # Run E2E tests
 yarn test:e2e
