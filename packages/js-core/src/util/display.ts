@@ -1,11 +1,3 @@
-/**
- * Keep references on console methods to avoid triggering patched behaviors
- *
- * NB: in some setup, console could already be patched by another SDK.
- * In this case, some display messages can be sent by the other SDK
- * but we should be safe from infinite loop nonetheless.
- */
-
 /** Names of the console methods wrapped by {@link Display}. */
 export const ConsoleApiName = {
   log: 'log',
@@ -38,7 +30,13 @@ export interface Display {
  */
 export const globalConsole = console
 
-/** The original (unpatched) console methods, captured at module load. */
+/**
+ * Keep references on console methods to avoid triggering patched behaviors
+ *
+ * NB: in some setup, console could already be patched by another SDK.
+ * In this case, some display messages can be sent by the other SDK
+ * but we should be safe from infinite loop nonetheless.
+ */
 export const originalConsoleMethods: Display = {
   log: globalConsole.log,
   debug: globalConsole.debug,

@@ -1,5 +1,5 @@
 import { catchUserErrors } from '../tools/catchUserErrors'
-import { setDebugMode } from '../tools/monitor'
+import { setDebugMode } from '@datadog/js-core/util'
 import { display } from '../tools/display'
 
 // replaced at build time

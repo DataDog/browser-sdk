@@ -109,10 +109,7 @@ export function createMonitor(display: Display, onMonitorErrorCollected: (error:
     __: string,
     descriptor: TypedPropertyDescriptor<T>
   ) {
-    const originalMethod = descriptor.value!
-    descriptor.value = function (this: ThisParameterType<T>, ...args: Parameters<T>): ReturnType<T> {
-      return monitor(originalMethod).apply(this, args) as ReturnType<T>
-    } as T
+    descriptor.value = monitor(descriptor.value!)
   }
 
   function monitor<T extends (...args: any[]) => unknown>(fn: T): T {

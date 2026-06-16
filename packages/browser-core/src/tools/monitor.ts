@@ -3,8 +3,6 @@ import { createMonitor } from '@datadog/js-core/monitor'
 import { setDebugMode } from '@datadog/js-core/util'
 import { display } from './display'
 
-export { setDebugMode }
-
 // The error-collection callback is wired lazily (via `startMonitorErrorCollection`, during telemetry
 // init), so we pass a stable forwarding function to `createMonitor` and keep the real callback in a
 // mutable holder.
