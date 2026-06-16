@@ -571,6 +571,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * @experimental Requires Chromium Canary with `DocumentPolicyInDedicatedWorker` and `ProfilerAPIForDedicatedWorker` flags.
    * @param worker - The Worker instance to profile
+   * @param options - Optional configuration
    * @param options.name - Optional label surfaced in Datadog as the `worker.name` tag. Defaults to the worker's script URL.
    * @returns A `detach` function that flushes and disconnects the worker from profiling
    */
@@ -1013,6 +1014,7 @@ export function makeRumPublicApi(
         return coordinator.attachWorker(worker, options)
       }
       // Profiling not active for this session — return a no-op detach
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
       return () => {}
     }),
   })

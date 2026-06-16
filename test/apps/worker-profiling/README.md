@@ -110,7 +110,7 @@ const worker = new Worker('/my-worker.js', { name: 'my-worker' })
 const detach = datadogRum.attachProfilingWorker(worker, { name: 'my-worker' })
 
 // When done:
-detach()           // flushes the current profiling session
+detach() // flushes the current profiling session
 worker.terminate() // you own the worker lifecycle
 ```
 

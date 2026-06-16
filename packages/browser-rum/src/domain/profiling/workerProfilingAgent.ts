@@ -4,7 +4,14 @@
  * This file has ZERO dependencies on browser-core, browser-rum-core, or any DOM APIs.
  * It must stay standalone so it can be imported inside a WorkerGlobalScope without
  * pulling in anything that references `window` or `document`.
+ *
+ * Intentional rule suppressions:
+ * - `disallow-zone-js-patched-values`: Zone.js does not run inside workers.
+ * - `no-restricted-syntax` (Date.now): browser-core cannot be imported here.
  */
+/* eslint-disable local-rules/disallow-zone-js-patched-values */
+/* eslint-disable no-restricted-syntax */
+import type { ProfilerTrace } from '@datadog/browser-core'
 import type { WorkerProfilingCommand, WorkerProfilingResponse } from './workerProfiling.types'
 
 /**
@@ -17,7 +24,7 @@ export interface WorkerScopeForProfiling {
 }
 
 interface WorkerProfiler {
-  stop(): Promise<object>
+  stop(): Promise<ProfilerTrace>
   addEventListener(type: string, listener: () => void): void
   removeEventListener(type: string, listener: () => void): void
 }
@@ -67,17 +74,16 @@ export interface DatadogWorkerHandle {
  * @param workerScope - Defaults to `self`. Pass a custom object for testing.
  */
 export function attachProfiler(
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
   workerScope: WorkerScopeForProfiling = self as unknown as WorkerScopeForProfiling
 ): DatadogWorkerHandle {
   let session: ActiveSession | undefined
-
 
   workerScope.addEventListener('message', (event: MessageEvent) => {
     const command = event.data as WorkerProfilingCommand
     if (!command || typeof command.type !== 'string') {
       return
     }
-
 
     if (command.type === 'dd-profiling-config') {
       startSession(command.sampleIntervalMs, command.maxBufferSize, command.collectIntervalMs, command.correlationId)
@@ -109,8 +115,7 @@ export function attachProfiler(
       profiler = new ProfilerConstructor({ sampleInterval: sampleIntervalMs, maxBufferSize })
     } catch (e) {
       const isDocPolicyError =
-        e instanceof Error &&
-        (e.name === 'NotAllowedError' || e.message.includes('disabled by Document Policy'))
+        e instanceof Error && (e.name === 'NotAllowedError' || e.message.includes('disabled by Document Policy'))
       workerScope.postMessage({
         type: 'dd-worker-error',
         error: isDocPolicyError ? 'missing-document-policy-header' : 'unexpected-exception',
@@ -173,15 +178,14 @@ export function attachProfiler(
     try {
       const trace = await activeSession.profiler.stop()
       const endTimeStamp = Date.now()
-      const durationMs = endTimeStamp - startTimeStamp
       workerScope.postMessage({
         type: 'dd-worker-trace',
-        trace: trace as any,
+        trace,
         startTimeStamp,
         endTimeStamp,
         correlationId,
       })
-    } catch (e) {
+    } catch {
       workerScope.postMessage({ type: 'dd-worker-error', error: 'unexpected-exception' })
     }
   }

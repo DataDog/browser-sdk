@@ -2,14 +2,14 @@
  * Worker Profiling — dedicated worker script
  *
  * Two responsibilities:
- *  1. Connect to Datadog worker profiling via attachProfiler()
- *  2. Run a continuous CPU-intensive workload so the profiler captures real call stacks
+ * 1. Connect to Datadog worker profiling via attachProfiler()
+ * 2. Run a continuous CPU-intensive workload so the profiler captures real call stacks
  *
  * Workloads (all pure JS, no I/O):
- *  - Sieve of Eratosthenes (prime numbers up to N)
- *  - Recursive Fibonacci
- *  - Small matrix multiplication
- *  - Mandelbrot set pixel count
+ * - Sieve of Eratosthenes (prime numbers up to N)
+ * - Recursive Fibonacci
+ * - Small matrix multiplication
+ * - Mandelbrot set pixel count
  */
 import { attachProfiler } from '@datadog/browser-rum/worker'
 
@@ -43,14 +43,18 @@ function sieve(limit: number): number {
   }
   let count = 0
   for (let i = 2; i <= limit; i++) {
-    if (!composite[i]) count++
+    if (!composite[i]) {
+      count++
+    }
   }
   return count
 }
 
 /** Naive recursive Fibonacci — intentionally slow to produce deep stacks. */
 function fib(n: number): number {
-  if (n <= 1) return n
+  if (n <= 1) {
+    return n
+  }
   return fib(n - 1) + fib(n - 2)
 }
 
@@ -70,7 +74,9 @@ function matmul(n: number): number {
   for (let i = 0; i < n; i++) {
     for (let j = 0; j < n; j++) {
       let sum = 0
-      for (let k = 0; k < n; k++) sum += a[i][k] * b[k][j]
+      for (let k = 0; k < n; k++) {
+        sum += a[i][k] * b[k][j]
+      }
       checksum += sum
     }
   }
@@ -93,7 +99,9 @@ function mandelbrot(size: number, maxIter: number): number {
         x = xTemp
         iter++
       }
-      if (iter === maxIter) inSet++
+      if (iter === maxIter) {
+        inSet++
+      }
     }
   }
   return inSet
@@ -103,7 +111,9 @@ function mandelbrot(size: number, maxIter: number): number {
 // Main loop — runs one batch of work then yields via setTimeout(0)
 // ---------------------------------------------------------------------------
 function runOneBatch(): void {
-  if (!running) return
+  if (!running) {
+    return
+  }
 
   // Alternate workloads each iteration to produce varied call stacks
   const phase = iterations % 4
@@ -143,7 +153,9 @@ function runOneBatch(): void {
 // ---------------------------------------------------------------------------
 self.addEventListener('message', (event: MessageEvent) => {
   const msg = event.data as { kind: string }
-  if (!msg || typeof msg.kind !== 'string') return
+  if (!msg || typeof msg.kind !== 'string') {
+    return
+  }
 
   if (msg.kind === 'start' && !running) {
     running = true
