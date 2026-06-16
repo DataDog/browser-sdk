@@ -203,7 +203,11 @@ function connectSSE(): void {
   es.onmessage = (event) => {
     const data = JSON.parse(event.data) as ProxyEvent
     if (data.type === 'profile') {
-      renderProfile(data)
+      // Normalise: proxy may not have been restarted yet and omit `tags`
+      if (!Array.isArray((data as ProfileEvent).tags)) {
+        ;(data as ProfileEvent).tags = []
+      }
+      renderProfile(data as ProfileEvent)
     }
   }
 }
