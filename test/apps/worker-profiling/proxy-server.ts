@@ -62,13 +62,9 @@ function intakeType(req: express.Request): 'rum' | 'logs' | 'profile' | 'replay'
   return 'unknown'
 }
 
-function extractTag(tags: string, key: string): string | undefined {
-  const match = tags.split(',').find((t) => t.startsWith(`${key}:`))
+function tagValue(tags: string[], key: string): string | undefined {
+  const match = tags.find((t) => t.startsWith(`${key}:`))
   return match ? match.slice(key.length + 1) : undefined
-}
-
-function extractAllTags(tags: string, key: string): string[] {
-  return tags.split(',').filter((t) => t.startsWith(`${key}:`)).map((t) => t.slice(key.length + 1))
 }
 
 // ---------------------------------------------------------------------------
@@ -121,8 +117,7 @@ async function handleRum(req: express.Request): Promise<void> {
 }
 
 function summariseProfile(event: any, trace: any): object {
-  const tags: string = event.tags_profiler ?? ''
-  const thread = tags.includes('thread:worker') ? 'worker' : 'main'
+  const tags: string[] = (event.tags_profiler ?? '').split(',').filter(Boolean)
   const durationMs = new Date(event.end).getTime() - new Date(event.start).getTime()
 
   const { samples = [], stacks = [], frames = [], resources = [] } = trace
@@ -150,17 +145,14 @@ function summariseProfile(event: any, trace: any): object {
 
   return {
     type: 'profile',
-    thread,
-    tags: tags.split(',').filter(Boolean),
-    workerName: extractTag(tags, 'worker.name'),
-    correlationIds: extractAllTags(tags, 'thread.correlation_id'),
+    tags,
     startTime: event.start,
     endTime: event.end,
     durationMs,
     sampleCount: (samples as any[]).length,
     frameCount: (frames as any[]).length,
     topFrames,
-    sessionId: event.session?.id,
+    sessionId: tagValue(tags, 'session_id') ?? event.session?.id,
   }
 }
 
