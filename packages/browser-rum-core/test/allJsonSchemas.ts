@@ -7,3 +7,7 @@ const schemaModules = import.meta.glob('../../../node_modules/@datadog/rum-event
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
 export const allJsonSchemas = Object.values(schemaModules).map((mod: any) => mod.default || mod)
+
+if (allJsonSchemas.length === 0) {
+  throw new Error('No JSON schemas loaded from @datadog/rum-events-format. Check the glob path in allJsonSchemas.ts.')
+}
