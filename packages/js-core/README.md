@@ -76,17 +76,90 @@ import type { Duration, ServerDuration, TimeStamp, RelativeTime, ClocksState } f
 | Export                       | Description                                                                                                                                        |
 | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `addDuration(a, b)`          | Adds two time values, preserving the branded type (`TimeStamp`, `RelativeTime`, or `Duration`).                                                    |
+| `clockDrift()`               | Clock drift in ms between `Date.now()` and `performance.now()` relative to navigation start.                                                       |
 | `clocksNow()`                | Current time as a `ClocksState` (both relative and absolute).                                                                                      |
 | `clocksOrigin()`             | Origin clocks state: `relative = 0`, `timeStamp = getTimeOrigin()`.                                                                                |
-| `clockDrift()`               | Clock drift in ms between `Date.now()` and `performance.now()` relative to navigation start.                                                       |
 | `dateNow()`                  | Current Unix timestamp in ms. Prefer over `Date.now()` to guard against broken polyfills.                                                          |
 | `elapsed(start, end)`        | Duration between two timestamps or relative times.                                                                                                 |
 | `getTimeOrigin()`            | Time origin as a `TimeStamp` (cached). Falls back to `performance.timeOrigin` when `performance.timing` is unavailable (Service Workers, Node.js). |
-| `toRelativeTime(ts)`         | Returns the `RelativeTime` for a given absolute `TimeStamp`.                                                                                       |
-| `toTimeStamp(relative)`      | Returns the absolute `TimeStamp` for a given `RelativeTime`.                                                                                       |
 | `isRelativeTime(time)`       | Heuristic type guard: returns `true` if the value is likely a `RelativeTime` (< one year).                                                         |
 | `relativeNow()`              | Current relative time in ms since navigation/process start (`performance.now()`).                                                                  |
 | `relativeToClocks(relative)` | Converts a `RelativeTime` to a `ClocksState` with a drift-corrected `TimeStamp`.                                                                   |
 | `timeStampNow()`             | Current Unix timestamp as a `TimeStamp`.                                                                                                           |
 | `timeStampToClocks(ts)`      | Converts a `TimeStamp` to a `ClocksState` with its corresponding `RelativeTime`.                                                                   |
+| `toRelativeTime(ts)`         | Returns the `RelativeTime` for a given absolute `TimeStamp`.                                                                                       |
 | `toServerDuration(d)`        | Converts a `Duration` (ms) to a `ServerDuration` (ns). Returns `undefined` if the input is `undefined`.                                            |
+| `toTimeStamp(relative)`      | Returns the absolute `TimeStamp` for a given `RelativeTime`.                                                                                       |
+
+### `@datadog/js-core/monitor`
+
+Error-monitoring utilities that wrap callbacks to catch, report, and suppress SDK-internal exceptions.
+
+Each consumer creates its own isolated monitor via `createMonitor(display, onMonitorErrorCollected)`,
+so error-collection state is not shared between SDKs. The `display` (from `createDisplay` in
+`@datadog/js-core/util`) controls the log prefix. Both arguments are required and fixed for the
+lifetime of the monitor. Caught errors are logged to the console via the given `display`, but only
+when debug mode is on (toggled globally via `setDebugMode` from `@datadog/js-core/util`).
+
+```ts
+import { createMonitor } from '@datadog/js-core/monitor'
+import { createDisplay, setDebugMode } from '@datadog/js-core/util'
+
+const display = createDisplay('Datadog Browser SDK:')
+const { monitor, callMonitored, monitored, monitorError } = createMonitor(display, (error) => reportToTelemetry(error))
+
+setDebugMode(true) // global: also log caught errors to the console
+```
+
+#### Functions
+
+| Export                            | Description                                                                                                                   |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `createMonitor(display, onError)` | Creates an isolated monitor using the given `Display` for debug output and required error callback. Returns instance methods. |
+
+#### Monitor instance (returned by `createMonitor`)
+
+| Method                               | Description                                                                                     |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `callMonitored(fn, context?, args?)` | Calls `fn` with error handling. Returns the function's result, or `undefined` if it throws.     |
+| `monitor(fn)`                        | Wraps a function so that any thrown exception is caught and reported instead of propagating.    |
+| `monitored`                          | Legacy class-method decorator equivalent to wrapping the method with `monitor`.                 |
+| `monitorError(e)`                    | Reports an error directly: logs it if debug mode is on, then forwards it to the error callback. |
+
+### `@datadog/js-core/util`
+
+General-purpose utilities.
+
+```ts
+import {
+  createDisplay,
+  setDebugMode,
+  getDebugMode,
+  ConsoleApiName,
+  globalConsole,
+  originalConsoleMethods,
+} from '@datadog/js-core/util'
+import type { Display } from '@datadog/js-core/util'
+```
+
+#### Types
+
+| Export    | Description                                                              |
+| --------- | ------------------------------------------------------------------------ |
+| `Display` | Console methods pre-bound to the original (unpatched) console, prefixed. |
+
+#### Constants
+
+| Export                   | Description                                                                          |
+| ------------------------ | ------------------------------------------------------------------------------------ |
+| `ConsoleApiName`         | Enum-like map of the console method names (`log`, `debug`, `info`, `warn`, `error`). |
+| `globalConsole`          | Alias for the global `console`, resilient to bundler `console.*` stripping.          |
+| `originalConsoleMethods` | The original (unpatched) console methods, captured at module load.                   |
+
+#### Functions
+
+| Export                  | Description                                                                                                                       |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `createDisplay(prefix)` | Returns a `Display` bound to the original console methods, prefixing every message with `prefix`. Guards against patched console. |
+| `getDebugMode()`        | Returns whether debug mode is currently enabled.                                                                                  |
+| `setDebugMode(enabled)` | Global debug-mode toggle. SDKs check `getDebugMode()` to decide whether to emit internal diagnostic logs to the console.          |

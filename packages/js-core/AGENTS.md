@@ -46,7 +46,10 @@ Do not add:
 ### Sub-path exports
 
 All APIs live under a named sub-path (e.g. `@datadog/js-core/time`). There is no root entry
-point. Each sub-path corresponds to a single source file under `src/entries/`.
+point. Each sub-path corresponds to a single entry file under `src/entries/` — either the
+implementation itself, or a thin barrel that re-exports from sibling implementation files under
+`src/<name>/` (e.g. `src/entries/util.ts` re-exports from `src/util/display.ts` and
+`src/util/debug.ts`).
 
 Each sub-path is exposed **two ways** for maximum compatibility:
 
@@ -61,16 +64,28 @@ Each sub-path is exposed **two ways** for maximum compatibility:
 
 When adding a new sub-path:
 
-1. Create `src/entries/<name>.ts`
+1. Create `src/entries/<name>.ts` (the implementation itself, or a barrel re-exporting from sibling
+   files under `src/<name>/`)
 2. Add `"./<name>"` to the `exports` field in `package.json` with `import`, `require`, and `types`
    conditions
 3. Add a physical `<name>/package.json` with relative `main`/`module`/`types` (see
    `time/package.json`), and add `"<name>"` to the `files` array so it ships in the package
 4. Add `"@datadog/js-core/<name>"` to the `paths` map in the root `tsconfig.base.json`, pointing at
    `./packages/js-core/src/entries/<name>`
+5. Add a section for the new sub-path in `README.md` (see below)
+
+### README maintenance
+
+Every sub-path must have a corresponding section in `README.md`. When adding or changing exports:
+
+- Add or update the sub-path section in `README.md` with an import example and API table(s)
+- **Sort all entries within each API table alphabetically** (by export name)
+- Follow the existing section structure: import example → Types table (if any) → Constants table (if any) → Functions table
 
 ## Current sub-paths
 
-| Sub-path                | Source file           | Description    |
-| ----------------------- | --------------------- | -------------- |
-| `@datadog/js-core/time` | `src/entries/time.ts` | Time utilities |
+| Sub-path                   | Entry file                                      | Description       |
+| -------------------------- | ----------------------------------------------- | ----------------- |
+| `@datadog/js-core/monitor` | `src/entries/monitor.ts`                        | Monitor utilities |
+| `@datadog/js-core/time`    | `src/entries/time.ts`                           | Time utilities    |
+| `@datadog/js-core/util`    | `src/entries/util.ts` (barrel over `src/util/`) | General utilities |

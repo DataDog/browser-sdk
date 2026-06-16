@@ -101,6 +101,9 @@
     "webpack-dev-middleware": "8.0.3",
     "ws": "8.21.0"
   },
+  "resolutions": {
+    "rolldown": "1.1.1"
+  },
   "volta": {
     "node": "26.3.0",
     "yarn": "4.16.0"
