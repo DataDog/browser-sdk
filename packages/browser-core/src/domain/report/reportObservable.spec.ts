@@ -1,5 +1,10 @@
 import type { MockCspEventListener, MockReportingObserver } from '../../../test'
-import { mockReportingObserver, mockCspEventListener, FAKE_CSP_VIOLATION_EVENT } from '../../../test'
+import {
+  mockReportingObserver,
+  mockCspEventListener,
+  FAKE_CSP_VIOLATION_EVENT,
+  FAKE_DOCUMENT_POLICY_VIOLATION_REPORT,
+} from '../../../test'
 import type { Subscription } from '../../tools/observable'
 import { ErrorHandling, ErrorSource } from '../error/error.types'
 import type { RawReportError } from './reportObservable'
@@ -71,6 +76,38 @@ describe('report observable', () => {
 
     consoleSubscription = initReportObservable([RawReportType.cspViolation]).subscribe(notifyReport)
     cspEventListener.dispatchEvent()
+
+    expect(notifyReport).not.toHaveBeenCalled()
+  })
+
+  it(`should notify ${RawReportType.networkEfficiencyGuardrails} reports`, () => {
+    consoleSubscription = initReportObservable([RawReportType.networkEfficiencyGuardrails]).subscribe(notifyReport)
+    reportingObserver.raiseReport('document-policy-violation')
+
+    expect(notifyReport).toHaveBeenCalledOnceWith(
+      jasmine.objectContaining({
+        message: 'document-policy-violation: Document policy violation: resource compression is required.',
+        type: 'network-efficiency-guardrails',
+        csp: { disposition: 'report' },
+      })
+    )
+  })
+
+  it(`should compute stack for ${RawReportType.networkEfficiencyGuardrails}`, () => {
+    consoleSubscription = initReportObservable([RawReportType.networkEfficiencyGuardrails]).subscribe(notifyReport)
+    reportingObserver.raiseReport('document-policy-violation')
+
+    const [report] = notifyReport.calls.mostRecent().args
+
+    expect(report.stack).toEqual(`network-efficiency-guardrails: Document policy violation: resource compression is required.
+  at <anonymous> @ https://foo.bar/large-uncompressed.js`)
+  })
+
+  it(`should not notify document-policy-violation reports with a featureId other than ${RawReportType.networkEfficiencyGuardrails}`, () => {
+    consoleSubscription = initReportObservable([RawReportType.networkEfficiencyGuardrails]).subscribe(notifyReport)
+    reportingObserver.raiseReport('document-policy-violation', {
+      body: { ...FAKE_DOCUMENT_POLICY_VIOLATION_REPORT.body, featureId: 'some-other-policy' },
+    })
 
     expect(notifyReport).not.toHaveBeenCalled()
   })

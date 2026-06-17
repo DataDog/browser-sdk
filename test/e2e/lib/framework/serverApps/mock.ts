@@ -181,8 +181,21 @@ export function createMockServerApp(servers: Servers, setup: string, setupOption
     if (req.query['js-profiling'] === 'true') {
       res.header('Document-Policy', 'js-profiling')
     }
+    if (req.query['network-efficiency-guardrails'] === 'true') {
+      res.header('Document-Policy', 'network-efficiency-guardrails')
+    }
     res.send(setup)
     res.end()
+  })
+
+  // Serves an uncompressed JavaScript file large enough to trigger a network-efficiency-guardrails
+  // policy violation (text resources must be HTTP-compressed).
+  app.get('/uncompressed-script.js', (_req, res) => {
+    res.removeHeader('Content-Encoding')
+    res.header('Content-Type', 'application/javascript')
+    // Explicitly disable compression for this endpoint so the browser detects a violation
+    res.header('Cache-Control', 'no-store')
+    res.send(`// uncompressed script\n${'// padding\n'.repeat(500)}`)
   })
 
   app.get('/no-blob-worker-csp', (_req, res) => {

@@ -1,4 +1,4 @@
-import type { InterventionReport, ReportType } from '../../src/domain/report/browser.types'
+import type { DocumentPolicyViolationReport, InterventionReport, ReportType } from '../../src/domain/report/browser.types'
 import { noop } from '../../src/tools/utils/functionUtils'
 import { registerCleanupTask } from '../registerCleanupTask'
 import { createNewEvent } from './createNewEvent'
@@ -39,9 +39,13 @@ export function mockReportingObserver() {
   })
 
   return {
-    raiseReport(type: ReportType) {
+    raiseReport(type: ReportType, overrides?: Partial<DocumentPolicyViolationReport>) {
       if (callbacks[type]) {
-        callbacks[type].forEach((callback) => callback([{ ...FAKE_REPORT, type }], reportingObserver))
+        const report =
+          type === 'document-policy-violation'
+            ? { ...FAKE_DOCUMENT_POLICY_VIOLATION_REPORT, ...overrides }
+            : { ...FAKE_REPORT, type }
+        callbacks[type].forEach((callback) => callback([report], reportingObserver))
       }
     },
   }
@@ -84,6 +88,21 @@ export const FAKE_CSP_VIOLATION_EVENT = createNewEvent('securitypolicyviolation'
   statusCode: 200,
   violatedDirective: 'worker-src',
 })
+
+export const FAKE_DOCUMENT_POLICY_VIOLATION_REPORT: DocumentPolicyViolationReport = {
+  type: 'document-policy-violation',
+  url: 'http://foo.bar',
+  body: {
+    featureId: 'network-efficiency-guardrails',
+    message: 'Document policy violation: resource compression is required.',
+    disposition: 'report',
+    lineNumber: null,
+    columnNumber: null,
+    sourceFile: 'https://foo.bar/large-uncompressed.js',
+    toJSON: noop,
+  },
+  toJSON: noop,
+}
 
 export const FAKE_REPORT: InterventionReport = {
   type: 'intervention',
