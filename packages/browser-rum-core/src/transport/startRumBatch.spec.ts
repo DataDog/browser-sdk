@@ -284,7 +284,7 @@ describe('createViewBatchRouter', () => {
       registerCleanupTask(resetExperimentalFeatures)
 
       const { batch, upsertSpy } = createMockBatch()
-      const route = createViewBatchRouter(batch)
+      const { route } = createViewBatchRouter(batch)
 
       const v1 = makeView('view-1', 1)
       const v2 = makeView('view-1', 2)
@@ -305,7 +305,7 @@ describe('createViewBatchRouter', () => {
 
     it('should always append non-view events', () => {
       const { batch, addSpy, upsertSpy } = createMockBatch()
-      const route = createViewBatchRouter(batch)
+      const { route } = createViewBatchRouter(batch)
 
       const action = { type: RumEventType.ACTION } as unknown as AssembledRumEvent
       route(action)
@@ -323,7 +323,7 @@ describe('createViewBatchRouter', () => {
 
     it('should upsert the latest full VIEW for every intermediate update', () => {
       const { batch, upsertSpy } = createMockBatch()
-      const route = createViewBatchRouter(batch)
+      const { route } = createViewBatchRouter(batch)
 
       const v1 = makeView('view-1', 1)
       const v2 = makeView('view-1', 2, {
@@ -353,7 +353,7 @@ describe('createViewBatchRouter', () => {
 
     it('should not emit any view_update events while the VIEW is in the batch', () => {
       const { batch, upsertSpy } = createMockBatch()
-      const route = createViewBatchRouter(batch)
+      const { route } = createViewBatchRouter(batch)
 
       route(makeView('view-1', 1))
       route(makeView('view-1', 2))
@@ -372,7 +372,7 @@ describe('createViewBatchRouter', () => {
 
     it('should upsert an aggregate view_update after a flush', () => {
       const { batch, upsertSpy, flush } = createMockBatch()
-      const route = createViewBatchRouter(batch)
+      const { route } = createViewBatchRouter(batch)
 
       route(makeView('view-1', 1))
       flush() // batchHasFullView resets; batchBase = v1
@@ -402,7 +402,7 @@ describe('createViewBatchRouter', () => {
 
     it('should aggregate multiple updates into a single view_update per batch', () => {
       const { batch, upsertSpy, flush } = createMockBatch()
-      const route = createViewBatchRouter(batch)
+      const { route } = createViewBatchRouter(batch)
 
       route(makeView('view-1', 1))
       flush()
@@ -439,7 +439,7 @@ describe('createViewBatchRouter', () => {
 
     it('should compute the diff from batchBase, not from the previous intermediate update', () => {
       const { batch, upsertSpy, flush } = createMockBatch()
-      const route = createViewBatchRouter(batch)
+      const { route } = createViewBatchRouter(batch)
 
       // Initial view with action.count = 0
       route(makeView('view-1', 1))
@@ -486,7 +486,7 @@ describe('createViewBatchRouter', () => {
 
     it('should emit nothing if nothing changed since batchBase', () => {
       const { batch, upsertSpy, flush } = createMockBatch()
-      const route = createViewBatchRouter(batch)
+      const { route } = createViewBatchRouter(batch)
 
       const v1 = makeView('view-1', 1)
       route(v1)
@@ -510,7 +510,7 @@ describe('createViewBatchRouter', () => {
 
     it('should send a full VIEW after PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL intermediate updates', () => {
       const { batch, upsertSpy, flush } = createMockBatch()
-      const route = createViewBatchRouter(batch)
+      const { route } = createViewBatchRouter(batch)
 
       route(makeView('view-1', 1))
       flush()
@@ -550,7 +550,7 @@ describe('createViewBatchRouter', () => {
 
     it('should send a full VIEW when a new view starts', () => {
       const { batch, upsertSpy } = createMockBatch()
-      const route = createViewBatchRouter(batch)
+      const { route } = createViewBatchRouter(batch)
 
       route(makeView('view-1', 1))
       route(makeView('view-2', 1)) // new view
@@ -564,7 +564,7 @@ describe('createViewBatchRouter', () => {
 
     it('should send a full VIEW when the view ends', () => {
       const { batch, upsertSpy, flush } = createMockBatch()
-      const route = createViewBatchRouter(batch)
+      const { route } = createViewBatchRouter(batch)
 
       route(makeView('view-1', 1))
       flush()
@@ -593,7 +593,7 @@ describe('createViewBatchRouter', () => {
 
     it('should reset to opt-1 after a new view starts following a flush', () => {
       const { batch, upsertSpy, flush } = createMockBatch()
-      const route = createViewBatchRouter(batch)
+      const { route } = createViewBatchRouter(batch)
 
       route(makeView('view-1', 1))
       flush()
