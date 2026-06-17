@@ -79,16 +79,18 @@ function createWebSocketObservable() {
       'WebSocket',
       ({ parameters, onPostCall }) => {
         const url = String(parameters[0])
-        const protocols = parameters[1]
+        const protocols = Array.isArray(parameters[1]) ? ([] as string[]).concat(parameters[1]) : parameters[1]
         const startClocks = clocksNow()
+
         onPostCall((instance) => {
           observable.notify({
             state: 'connecting',
             instance,
             url,
-            ...(protocols !== undefined ? { protocols } : {}),
+            protocols,
             startClocks,
           })
+
           attachInstanceListeners(instance, observable)
         })
       }
@@ -100,6 +102,7 @@ function createWebSocketObservable() {
       ({ target: instance, parameters: [data], onPostCall }) => {
         const size = computePayloadSize(data)
         const bufferedAmountPreSend = instance.bufferedAmount
+
         onPostCall(() => {
           observable.notify({
             state: 'message-out',
