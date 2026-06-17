@@ -72,15 +72,9 @@ When adding a new sub-path:
    `time/package.json`), and add `"<name>"` to the `files` array so it ships in the package
 4. Add `"@datadog/js-core/<name>"` to the `paths` map in the root `tsconfig.base.json`, pointing at
    `./packages/js-core/src/entries/<name>`
-5. Add a section for the new sub-path in `README.md` (see below)
-
-### README maintenance
-
-Every sub-path must have a corresponding section in `README.md`. When adding or changing exports:
-
-- Add or update the sub-path section in `README.md` with an import example and API table(s)
-- **Sort all entries within each API table alphabetically** (by export name)
-- Follow the existing section structure: import example → Types table (if any) → Constants table (if any) → Functions table
+5. Add `"src/entries/<name>.ts"` to the `entryPoints` array in `typedoc.json` so the sub-path
+   appears in the generated API docs
+6. Add a row for the new sub-path to the table in `README.md`
 
 ## Current sub-paths
 
