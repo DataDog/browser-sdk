@@ -1,4 +1,8 @@
-import type { DocumentPolicyViolationReport, InterventionReport, ReportType } from '../../src/domain/report/browser.types'
+import type {
+  DocumentPolicyViolationReport,
+  InterventionReport,
+  ReportType,
+} from '../../src/domain/report/browser.types'
 import { noop } from '../../src/tools/utils/functionUtils'
 import { registerCleanupTask } from '../registerCleanupTask'
 import { createNewEvent } from './createNewEvent'

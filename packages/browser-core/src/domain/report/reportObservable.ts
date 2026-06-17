@@ -50,7 +50,7 @@ function buildReportObserverTypes(apis: RawReportType[]): ReportType[] {
     if (api === RawReportType.networkEfficiencyGuardrails) {
       types.add('document-policy-violation')
     } else {
-      types.add(api as ReportType)
+      types.add(api)
     }
   }
   return Array.from(types)
@@ -70,8 +70,7 @@ function createReportObservable(reportTypes: ReportType[]) {
           // whose featureId does not match network-efficiency-guardrails.
           if (
             report.type === 'document-policy-violation' &&
-            (report.body as DocumentPolicyViolationReport['body']).featureId !==
-              RawReportType.networkEfficiencyGuardrails
+            report.body.featureId !== RawReportType.networkEfficiencyGuardrails
           ) {
             return
           }
@@ -109,19 +108,18 @@ function createCspViolationReportObservable() {
 function buildRawReportErrorFromReport(
   report: DeprecationReport | InterventionReport | DocumentPolicyViolationReport
 ): RawReportError {
-  const { type, body } = report
-
-  if (type === 'document-policy-violation') {
-    const { featureId, message, disposition, sourceFile } = body as DocumentPolicyViolationReport['body']
+  if (report.type === 'document-policy-violation') {
+    const { featureId, message, disposition, sourceFile } = report.body
     return buildRawReportError({
       type: featureId,
-      message: `${type}: ${message}`,
+      message: `${report.type}: ${message}`,
       originalError: report,
       csp: { disposition },
       stack: buildStack(featureId, message, sourceFile, null, null),
     })
   }
 
+  const { type, body } = report
   return buildRawReportError({
     type: body.id,
     message: `${type}: ${body.message}`,

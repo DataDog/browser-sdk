@@ -99,7 +99,8 @@ describe('report observable', () => {
 
     const [report] = notifyReport.calls.mostRecent().args
 
-    expect(report.stack).toEqual(`network-efficiency-guardrails: Document policy violation: resource compression is required.
+    expect(report.stack)
+      .toEqual(`network-efficiency-guardrails: Document policy violation: resource compression is required.
   at <anonymous> @ https://foo.bar/large-uncompressed.js`)
   })
 

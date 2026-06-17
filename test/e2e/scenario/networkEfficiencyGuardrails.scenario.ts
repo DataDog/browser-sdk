@@ -1,4 +1,3 @@
-import type { RumErrorEvent } from '@datadog/browser-rum-core'
 import { test, expect } from '@playwright/test'
 import { createTest } from '../lib/framework'
 
@@ -39,7 +38,7 @@ test.describe('network efficiency guardrails', () => {
         // so we may receive more than one. Assert we got at least one for our resource.
         expect(guardrailErrors.length).toBeGreaterThanOrEqual(1)
 
-        const error = guardrailErrors[0].error as RumErrorEvent['error']
+        const error = guardrailErrors[0].error
         expect(error.source).toBe('report')
         expect(error.handling).toBe('unhandled')
         expect(error.csp?.disposition).toMatch(/enforce|report/)
