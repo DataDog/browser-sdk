@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { createTest } from '../lib/framework'
+import type { BrowserConfiguration } from '../../browsers.conf'
 
 // Network Efficiency Guardrails is a Document Policy feature currently only available in Edge 146+
 // and in Chromium behind the "Experimental Web Platform features" flag.
@@ -7,7 +8,13 @@ import { createTest } from '../lib/framework'
 
 test.describe('network efficiency guardrails', () => {
   test.beforeEach(({ browserName }) => {
-    test.skip(browserName !== 'chromium', 'Network Efficiency Guardrails is only available in Chromium-based browsers')
+    const { version } = test.info().project.metadata as BrowserConfiguration
+    // Network Efficiency Guardrails requires Chromium 146+. Pinned projects set an explicit
+    // version; current (unversioned) Chromium is always new enough.
+    test.skip(
+      browserName !== 'chromium' || (version !== undefined && Number(version) < 146),
+      'Network Efficiency Guardrails requires Chromium 146+'
+    )
   })
 
   test.describe('RUM', () => {
