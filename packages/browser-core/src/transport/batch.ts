@@ -8,7 +8,6 @@ import type { Encoder, EncoderResult } from '../tools/encoder'
 import { computeBytesCount, ONE_KIBI_BYTE } from '../tools/utils/byteUtils'
 import { mockable } from '../tools/mockable'
 import type { EndpointBuilder } from '../domain/configuration'
-import type { RawError } from '../domain/error/error.types'
 import { createHttpRequest } from './httpRequest'
 import type { Payload } from './httpRequest'
 import type { FlushController, FlushEvent } from './flushController'
@@ -30,7 +29,7 @@ export function createBatch({
 }: {
   encoder?: Encoder
   endpoints: EndpointBuilder[]
-  reportError: (error: RawError) => void
+  reportError: (message: string) => void
   flushController: FlushController
 }): Batch {
   const request = mockable(createHttpRequest)(endpoints, reportError)

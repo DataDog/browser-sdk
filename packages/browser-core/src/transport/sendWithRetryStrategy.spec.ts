@@ -1,6 +1,5 @@
 import { mockClock, setNavigatorOnLine } from '../../test'
 import type { Clock } from '../../test'
-import { ErrorSource } from '../domain/error/error.types'
 import { Observable } from '../tools/observable'
 import { ONE_MEBI_BYTE } from '../tools/utils/byteUtils'
 import type { RetryState } from './sendWithRetryStrategy'
@@ -166,12 +165,8 @@ describe('sendWithRetryStrategy', () => {
       expect(latestEvents()).toEqual([])
 
       sendMock.respondWith(0, { status: 200 })
-      expect(reportErrorSpy).toHaveBeenCalled()
-      expect(reportErrorSpy.calls.argsFor(0)[0]).toEqual(
-        jasmine.objectContaining({
-          message: `Reached max logs events size queued for upload: ${MAX_QUEUE_BYTES_COUNT / ONE_MEBI_BYTE}MiB`,
-          source: ErrorSource.AGENT,
-        })
+      expect(reportErrorSpy).toHaveBeenCalledWith(
+        `Reached max logs events size queued for upload: ${MAX_QUEUE_BYTES_COUNT / ONE_MEBI_BYTE}MiB`
       )
       reportErrorSpy.calls.reset()
       expect(latestEvents()).toEqual([

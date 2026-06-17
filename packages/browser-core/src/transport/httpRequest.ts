@@ -2,7 +2,6 @@ import type { EndpointBuilder } from '../domain/configuration'
 import type { Context } from '../tools/serialisation/context'
 import { fetch } from '../browser/fetch'
 import { monitor, monitorError } from '../tools/monitor'
-import type { RawError } from '../domain/error/error.types'
 import { Observable } from '../tools/observable'
 import { ONE_KIBI_BYTE } from '../tools/utils/byteUtils'
 import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
@@ -72,7 +71,7 @@ export interface RetryInfo {
 
 export function createHttpRequest<Body extends Payload = Payload>(
   endpointBuilders: EndpointBuilder[],
-  reportError: (error: RawError) => void,
+  reportError: (message: string) => void,
   bytesLimit: number = RECOMMENDED_REQUEST_BYTES_LIMIT
 ): HttpRequest<Body> {
   const observable = new Observable<HttpRequestEvent<Body>>()

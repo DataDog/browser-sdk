@@ -1,4 +1,4 @@
-import type { Context, Observable, PageMayExitEvent, RawError, SessionManager } from '@datadog/browser-core'
+import type { Context, Observable, PageMayExitEvent, SessionManager } from '@datadog/browser-core'
 import {
   createBatch,
   createEndpointBuilder,
@@ -13,7 +13,7 @@ import type { LogsEvent } from '../logsEvent.types'
 export function startLogsBatch(
   configuration: LogsConfiguration,
   lifeCycle: LifeCycle,
-  reportError: (error: RawError) => void,
+  reportError: (message: string) => void,
   pageMayExitObservable: Observable<PageMayExitEvent>,
   sessionManager: SessionManager
 ) {

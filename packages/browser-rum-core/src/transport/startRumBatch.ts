@@ -1,4 +1,4 @@
-import type { Observable, RawError, PageMayExitEvent, Encoder, Context } from '@datadog/browser-core'
+import type { Observable, PageMayExitEvent, Encoder, Context } from '@datadog/browser-core'
 import {
   createBatch,
   createFlushController,
@@ -65,7 +65,7 @@ export function assembleViewUpdateEvent(
 export function startRumBatch(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
-  reportError: (error: RawError) => void,
+  reportError: (message: string) => void,
   pageMayExitObservable: Observable<PageMayExitEvent>,
   sessionExpireObservable: Observable<void>,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
