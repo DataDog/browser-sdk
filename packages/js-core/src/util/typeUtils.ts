@@ -1,5 +1,6 @@
 /**
  * Similar to `typeof`, but distinguish plain objects from `null` and arrays
+ *
  * @returns `'null'` for `null`, `'array'` for arrays, or the result of `typeof` for everything else.
  */
 export function getType(value: unknown) {
@@ -32,6 +33,7 @@ export type RecursivePartial<T> = {
  * This function is intended to be used on values that will be used as "plain objects", i.e. not
  * Array, Date, RegExp or other class instances. But it's safe to use on any value.
  *
+ * @returns `true` if `value` is a non-null object that is not an array.
  * @example
  * ```
  * // Before:
@@ -43,7 +45,6 @@ export type RecursivePartial<T> = {
  *   // use value.property
  * }
  * ```
- * @returns `true` if `value` is a non-null object that is not an array.
  */
 export function isIndexableObject(value: unknown): value is Record<any, unknown> {
   return getType(value) === 'object'

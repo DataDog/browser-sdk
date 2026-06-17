@@ -31,6 +31,7 @@ type Merged<TDestination, TSource> =
  * - Circular references in `source` are silently dropped.
  *
  * Prefer `combine` for a non-mutating deep merge or `deepClone` for a simple deep copy.
+ *
  * @returns The merged value — either `destination` (mutated) or `source` when they cannot be merged.
  */
 export function mergeInto<D, S>(destination: D, source: S): Merged<D, S> {
@@ -81,6 +82,7 @@ function mergeIntoInternal<D, S>(
  * Caveats:
  * - It doesn't maintain prototype chains - don't use with instances of custom classes.
  * - It doesn't handle Map and Set
+ *
  * @returns A deep copy of `value` with the same type.
  */
 export function deepClone<T>(value: T): T {
