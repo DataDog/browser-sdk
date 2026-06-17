@@ -4,6 +4,7 @@ import type { FlushController, FlushEvent } from '@datadog/browser-core/src/tran
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { AssembledRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
+import type { RumViewEvent } from '../rumEvent.types'
 
 type AssembledViewEvent = Extract<AssembledRumEvent, { type: 'view' }>
 import {
