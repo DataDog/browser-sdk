@@ -84,8 +84,9 @@ Every sub-path must have a corresponding section in `README.md`. When adding or 
 
 ## Current sub-paths
 
-| Sub-path                   | Entry file                                      | Description       |
-| -------------------------- | ----------------------------------------------- | ----------------- |
-| `@datadog/js-core/monitor` | `src/entries/monitor.ts`                        | Monitor utilities |
-| `@datadog/js-core/time`    | `src/entries/time.ts`                           | Time utilities    |
-| `@datadog/js-core/util`    | `src/entries/util.ts` (barrel over `src/util/`) | General utilities |
+| Sub-path                    | Entry file                                              | Description              |
+| --------------------------- | ------------------------------------------------------- | ------------------------ |
+| `@datadog/js-core/assembly` | `src/entries/assembly.ts` (barrel over `src/assembly/`) | Hook assembly primitives |
+| `@datadog/js-core/monitor`  | `src/entries/monitor.ts`                                | Monitor utilities        |
+| `@datadog/js-core/time`     | `src/entries/time.ts`                                   | Time utilities           |
+| `@datadog/js-core/util`     | `src/entries/util.ts` (barrel over `src/util/`)         | General utilities        |

@@ -1,5 +1,6 @@
 /**
  * Similar to `typeof`, but distinguish plain objects from `null` and arrays
+ * @returns `'null'` for `null`, `'array'` for arrays, or the result of `typeof` for everything else.
  */
 export function getType(value: unknown) {
   if (value === null) {
@@ -42,6 +43,7 @@ export type RecursivePartial<T> = {
  *   // use value.property
  * }
  * ```
+ * @returns `true` if `value` is a non-null object that is not an array.
  */
 export function isIndexableObject(value: unknown): value is Record<any, unknown> {
   return getType(value) === 'object'

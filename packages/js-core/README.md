@@ -149,9 +149,10 @@ import type { Display } from '@datadog/js-core/util'
 
 #### Types
 
-| Export    | Description                                                              |
-| --------- | ------------------------------------------------------------------------ |
-| `Display` | Console methods pre-bound to the original (unpatched) console, prefixed. |
+| Export                | Description                                                                             |
+| --------------------- | --------------------------------------------------------------------------------------- |
+| `Display`             | Console methods pre-bound to the original (unpatched) console, prefixed.                |
+| `RecursivePartial<T>` | Like `Partial<T>` but applied recursively to all nested object and array element types. |
 
 #### Constants
 
@@ -165,20 +166,14 @@ import type { Display } from '@datadog/js-core/util'
 
 | Export                     | Description                                                                                                                       |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `createDisplay(prefix)`    | Returns a `Display` bound to the original console methods, prefixing every message with `prefix`. Guards against patched console. |
-| `getDebugMode()`           | Returns whether debug mode is currently enabled.                                                                                  |
-| `setDebugMode(enabled)`    | Global debug-mode toggle. SDKs check `getDebugMode()` to decide whether to emit internal diagnostic logs to the console.          |
-| `mergeInto(dest, src)`     | Recursively merges `src` into `dest` in place and returns the result. Prefer `combine` for non-mutating use.                      |
-| `deepClone(value)`         | Returns a deep copy of `value`. Caveats: no prototype chains, no `Map`/`Set` support.                                             |
 | `combine(a, b, ...)`       | Non-mutating deep merge of two or more values. Objects merged by key, arrays by index, `undefined` skipped.                       |
+| `createDisplay(prefix)`    | Returns a `Display` bound to the original console methods, prefixing every message with `prefix`. Guards against patched console. |
+| `deepClone(value)`         | Returns a deep copy of `value`. Caveats: no prototype chains, no `Map`/`Set` support.                                             |
+| `getDebugMode()`           | Returns whether debug mode is currently enabled.                                                                                  |
 | `getType(value)`           | Like `typeof`, but distinguishes `'null'` and `'array'` from `'object'`.                                                          |
 | `isIndexableObject(value)` | Returns `true` if `value` can be safely used as a plain object (i.e. not `null`, not an array, not a primitive).                  |
-
-#### Types
-
-| Export                | Description                                                                             |
-| --------------------- | --------------------------------------------------------------------------------------- |
-| `RecursivePartial<T>` | Like `Partial<T>` but applied recursively to all nested object and array element types. |
+| `mergeInto(dest, src)`     | Recursively merges `src` into `dest` in place and returns the result. Prefer `combine` for non-mutating use.                      |
+| `setDebugMode(enabled)`    | Global debug-mode toggle. SDKs check `getDebugMode()` to decide whether to emit internal diagnostic logs to the console.          |
 
 ### `@datadog/js-core/assembly`
 
