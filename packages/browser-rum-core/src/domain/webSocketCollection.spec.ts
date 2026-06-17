@@ -1,6 +1,6 @@
 import type { WebSocketContext } from '@datadog/browser-core'
 import { initWebSocketObservable, Observable } from '@datadog/browser-core'
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import { mockClock, registerCleanupTask, type Clock } from '@datadog/browser-core/test'
 import type { ClocksState, Duration, RelativeTime } from '@datadog/js-core/time'
 import { elapsed, relativeToClocks } from '@datadog/js-core/time'
 import { mockViewHistory } from '../../test'
@@ -16,8 +16,10 @@ describe('webSocketCollection', () => {
   let wsObservable: Observable<WebSocketContext>
   let completed: WebSocketCompleteEvent[]
   let wsInstance: WebSocket
+  let clock: Clock
 
   beforeEach(() => {
+    clock = mockClock()
     lifeCycle = new LifeCycle()
     wsObservable = new Observable<WebSocketContext>()
     completed = []
@@ -45,7 +47,7 @@ describe('webSocketCollection', () => {
       instance: wsInstance,
       url,
       ...(protocols !== undefined ? { protocols } : {}),
-      startClocks: startClocks ?? relativeToClocks(startRelative as RelativeTime),
+      startClocks: startClocks ?? relativeToClocks(clock.relative(startRelative)),
     })
   }
 
@@ -53,13 +55,13 @@ describe('webSocketCollection', () => {
     wsObservable.notify({
       state: 'open',
       instance: wsInstance,
-      openClocks: openClocks ?? relativeToClocks(openRelative as RelativeTime),
+      openClocks: openClocks ?? relativeToClocks(clock.relative(openRelative)),
       protocol,
     })
   }
 
   function notifyMessageIn(at: number, size: number) {
-    wsObservable.notify({ state: 'message-in', instance: wsInstance, size, at: relativeToClocks(at as RelativeTime) })
+    wsObservable.notify({ state: 'message-in', instance: wsInstance, size, at: relativeToClocks(clock.relative(at)) })
   }
 
   function notifyMessageOut(at: number, size: number, bufferedAmountPreSend = 0) {
@@ -68,7 +70,7 @@ describe('webSocketCollection', () => {
       instance: wsInstance,
       size,
       bufferedAmountPreSend,
-      at: relativeToClocks(at as RelativeTime),
+      at: relativeToClocks(clock.relative(at)),
     })
   }
 
@@ -79,7 +81,7 @@ describe('webSocketCollection', () => {
       code,
       reason,
       wasClean,
-      at: atClocks ?? relativeToClocks(at as RelativeTime),
+      at: atClocks ?? relativeToClocks(clock.relative(at)),
     })
   }
 
@@ -220,10 +222,10 @@ describe('webSocketCollection', () => {
   })
 
   it('records setupDuration as elapsed time from connecting to open', () => {
-    const startAt = 0 as RelativeTime
-    const openAt = 10 as RelativeTime
-    const startClocks = relativeToClocks(startAt)
-    const openClocks = relativeToClocks(openAt)
+    const startAt = 0
+    const openAt = 10
+    const startClocks = relativeToClocks(clock.relative(startAt))
+    const openClocks = relativeToClocks(clock.relative(openAt))
     const expectedSetupDuration = elapsed(startClocks.timeStamp, openClocks.timeStamp)
 
     startTracking()
@@ -235,12 +237,12 @@ describe('webSocketCollection', () => {
   })
 
   it('records setupDuration as elapsed time from connecting to close when open never fires', () => {
-    const startAt = 0 as RelativeTime
-    const closeAt = 25 as RelativeTime
+    const startAt = 0
+    const closeAt = 25
     const closeCode = 1006
     const closeReason = 'abnormal'
-    const startClocks = relativeToClocks(startAt)
-    const closeClocks = relativeToClocks(closeAt)
+    const startClocks = relativeToClocks(clock.relative(startAt))
+    const closeClocks = relativeToClocks(clock.relative(closeAt))
     const expectedSetupDuration = elapsed(startClocks.timeStamp, closeClocks.timeStamp)
 
     startTracking()
@@ -274,11 +276,12 @@ describe('webSocketCollection', () => {
   })
 
   it('captures startViewId and endViewId from viewHistory', () => {
-    const startViewA = 0 as RelativeTime
-    const startViewB = 100 as RelativeTime
+    const startViewB = 100
+    const relativeStartViewA = clock.relative(0)
+    const relativeStartViewB = clock.relative(startViewB)
     const viewByRelative: Record<number, ViewHistoryEntry> = {
-      [startViewA]: { id: 'view-A', startClocks: relativeToClocks(startViewA) },
-      [startViewB]: { id: 'view-B', startClocks: relativeToClocks(startViewB) },
+      [relativeStartViewA]: { id: 'view-A', startClocks: relativeToClocks(relativeStartViewA) },
+      [relativeStartViewB]: { id: 'view-B', startClocks: relativeToClocks(relativeStartViewB) },
     }
     const viewHistory = mockViewHistory()
     spyOn(viewHistory, 'findView').and.callFake((startTime?: RelativeTime) =>
@@ -355,9 +358,10 @@ describe('webSocketCollection', () => {
     })
 
     it('includes url, protocols, and startViewId in the vital context', () => {
-      const startView = 0 as RelativeTime
+      const startView = 0
+      const relativeStartView = clock.relative(startView)
       const viewByRelative: Record<number, ViewHistoryEntry> = {
-        [startView]: { id: 'view-start', startClocks: relativeToClocks(startView) },
+        [relativeStartView]: { id: 'view-start', startClocks: relativeToClocks(relativeStartView) },
       }
       const viewHistory = mockViewHistory()
       spyOn(viewHistory, 'findView').and.callFake((startTime?: RelativeTime) =>
@@ -386,13 +390,13 @@ describe('webSocketCollection', () => {
     const wsInstance = {} as WebSocket
     const wsUrl = 'wss://example.com/socket'
 
-    function notifyConnectionConnecting(startRelative = 0 as RelativeTime) {
+    function notifyConnectionConnecting(offsetMs = 0) {
       // initWebSocketObservable returns a singleton, it will notify the same instance for all calls
       initWebSocketObservable().notify({
         state: 'connecting',
         instance: wsInstance,
         url: wsUrl,
-        startClocks: relativeToClocks(startRelative),
+        startClocks: relativeToClocks(clock.relative(offsetMs)),
       })
     }
 
@@ -424,7 +428,7 @@ describe('webSocketCollection', () => {
         code: 1000,
         reason: 'bye',
         wasClean: true,
-        at: relativeToClocks(1000 as RelativeTime),
+        at: relativeToClocks(clock.relative(1000)),
       })
 
       expect(completed.length).toBe(eventCountAfterStop)
