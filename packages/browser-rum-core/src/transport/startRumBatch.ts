@@ -13,7 +13,7 @@ import type { RumConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
 import type { AssembledRumEvent } from '../rawRumEvent.types'
-import type { RumViewUpdateEvent } from '../rumEvent.types'
+import type { RumViewEvent, RumViewUpdateEvent } from '../rumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import { diffMerge } from '../domain/view/viewDiff'
 
@@ -21,10 +21,7 @@ type AssembledViewEvent = Extract<AssembledRumEvent, { type: 'view' }>
 
 export const PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL = 100
 
-export function computeAssembledViewDiff(
-  current: AssembledViewEvent,
-  last: AssembledViewEvent
-): RumViewUpdateEvent | undefined {
+export function computeAssembledViewDiff(current: RumViewEvent, last: RumViewEvent): RumViewUpdateEvent | undefined {
   const currentObj = current as unknown as Record<string, unknown>
   const lastObj = last as unknown as Record<string, unknown>
 
