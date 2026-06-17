@@ -1,7 +1,6 @@
-import type { Observable, PageMayExitEvent, Encoder, Context } from '@datadog/browser-core'
+import type { Observable, Encoder, Context } from '@datadog/browser-core'
 import {
   createBatch,
-  createFlushController,
   DeflateEncoderStreamId,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
@@ -66,7 +65,6 @@ export function startRumBatch(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   reportError: (message: string) => void,
-  pageMayExitObservable: Observable<PageMayExitEvent>,
   sessionExpireObservable: Observable<void>,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
 ) {
@@ -80,9 +78,8 @@ export function startRumBatch(
     encoder: createEncoder(DeflateEncoderStreamId.RUM),
     endpoints,
     reportError,
-    flushController: createFlushController({ pageMayExitObservable }),
   })
-  sessionExpireObservable.subscribe(() => batch.flushController.forceFlush('session_expire'))
+  sessionExpireObservable.subscribe(() => batch.forceFlush('session_expire'))
 
   let lastSentView: RumViewEvent | undefined
   let viewUpdatesSinceCheckpoint = 0

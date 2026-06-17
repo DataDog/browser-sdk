@@ -85,25 +85,17 @@ export function startRum(
     addTelemetryDebug('Error reported to customer', { 'error.message': message })
   }
 
-  const pageMayExitObservable = createPageMayExitObservable()
-
   if (!canUseEventBridge()) {
-    const batch = startRumBatch(
-      configuration,
-      lifeCycle,
-      reportError,
-      pageMayExitObservable,
-      sessionManager.expireObservable,
-      createEncoder
-    )
-    const preparePageExitSubscription = batch.flushController.prepareUrgentFlushObservable.subscribe((reason) => {
+    const batch = startRumBatch(configuration, lifeCycle, reportError, sessionManager.expireObservable, createEncoder)
+    const preparePageExitSubscription = batch.prepareUrgentFlushObservable.subscribe((reason) => {
       lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, reason)
     })
     cleanupTasks.push(() => preparePageExitSubscription.unsubscribe())
     cleanupTasks.push(() => batch.stop())
-    startCustomerDataTelemetry(telemetry, lifeCycle, batch.flushController.flushObservable)
+    startCustomerDataTelemetry(telemetry, lifeCycle, batch.flushObservable)
   } else {
     startRumEventBridge(lifeCycle)
+    const pageMayExitObservable = createPageMayExitObservable()
     const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => {
       lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, event.reason)
     })

@@ -4,7 +4,9 @@ import { createMockFlushController, replaceMockable } from '../../test'
 import { display } from '../tools/display'
 import type { Encoder } from '../tools/encoder'
 import { createIdentityEncoder } from '../tools/encoder'
+import { createPageMayExitObservable } from '../browser/pageMayExitObservable'
 import { createBatch, MESSAGE_BYTES_LIMIT, type Batch } from './batch'
+import { createFlushController } from './flushController'
 import { createHttpRequest } from './httpRequest'
 import type { HttpRequest, HttpRequestEvent } from './httpRequest'
 
@@ -33,7 +35,9 @@ describe('batch', () => {
     flushController = createMockFlushController()
     encoder = createIdentityEncoder()
     replaceMockable(createHttpRequest, (() => transport) as unknown as typeof createHttpRequest)
-    batch = createBatch({ encoder, endpoints: [], reportError: () => undefined, flushController })
+    replaceMockable(createPageMayExitObservable, () => new Observable())
+    replaceMockable(createFlushController, () => flushController)
+    batch = createBatch({ encoder, endpoints: [], reportError: () => undefined })
   })
 
   it('should send a message', () => {

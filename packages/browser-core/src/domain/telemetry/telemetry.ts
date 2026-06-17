@@ -21,8 +21,7 @@ import { NonErrorPrefix } from '../error/error.types'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { getConnectivity } from '../connectivity'
-import { canUseEventBridge, createFlushController, getEventBridge, createBatch } from '../../transport'
-import { createPageMayExitObservable } from '../../browser/pageMayExitObservable'
+import { canUseEventBridge, getEventBridge, createBatch } from '../../transport'
 import { globalObject, isWorkerEnvironment } from '../../tools/globalObject'
 import { noop } from '../../tools/utils/functionUtils'
 import type { TelemetryEvent } from './telemetryEvent.types'
@@ -214,9 +213,6 @@ export function startTelemetryTransport(
       endpoints,
       // Ignore transport errors for telemetry
       reportError: noop,
-      flushController: createFlushController({
-        pageMayExitObservable: createPageMayExitObservable(),
-      }),
     })
     cleanupTasks.push(telemetryBatch.stop)
     const telemetrySubscription = telemetryObservable.subscribe(telemetryBatch.add)

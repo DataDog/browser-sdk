@@ -1,7 +1,6 @@
 import type { BufferedObservable, BufferedData, SessionManager } from '@datadog/browser-core'
 import {
   sendToExtension,
-  createPageMayExitObservable,
   canUseEventBridge,
   startAccountContext,
   startGlobalContext,
@@ -43,7 +42,6 @@ export function startLogs(
   lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (log) => sendToExtension('logs', log))
 
   const reportError = startReportError(lifeCycle)
-  const pageMayExitObservable = createPageMayExitObservable()
 
   // Start user and account context first to allow overrides from global context
   const assembleHook = hooks.assemble
@@ -64,13 +62,7 @@ export function startLogs(
   startLogsAssembly(configuration, lifeCycle, assembleHook, getCommonContext, reportError)
 
   if (!canUseEventBridge()) {
-    const { stop: stopLogsBatch } = startLogsBatch(
-      configuration,
-      lifeCycle,
-      reportError,
-      pageMayExitObservable,
-      sessionManager
-    )
+    const { stop: stopLogsBatch } = startLogsBatch(configuration, lifeCycle, reportError, sessionManager)
     cleanupTasks.push(() => stopLogsBatch())
   } else {
     startLogsBridge(lifeCycle)
