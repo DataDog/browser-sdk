@@ -92,7 +92,12 @@ export default defineConfig({
     },
   },
 
-  define: buildEnvDefines,
+  define: {
+    ...buildEnvDefines,
+    // Some CJS modules use `global` for environment detection; map it to globalThis
+    // so they patch the real window instead of an empty object.
+    global: 'globalThis',
+  },
 
   // Transpile Vitest's browser client and dependencies to ES2020 so they run on older
   // BrowserStack browsers (Chrome 80, Edge 80, Firefox 78). Without this, Vitest's client.js
