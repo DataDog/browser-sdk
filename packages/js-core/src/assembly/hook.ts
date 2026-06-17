@@ -59,18 +59,6 @@ export function createHook<Params, Result>(): Hook<Params, Result> {
   }
 }
 
-/**
- * Like `Partial<T>`, but applied recursively to all nested object properties.
- * Array element types are also made recursively partial.
- */
-export type RecursivePartial<T> = {
-  [P in keyof T]?: T[P] extends Array<infer U>
-    ? Array<RecursivePartial<U>>
-    : T[P] extends object | undefined
-      ? RecursivePartial<T[P]>
-      : T[P]
-}
-
 /** Sentinel returned by a hook callback to discard the entire event (no further callbacks are invoked). */
 export const DISCARDED = 'DISCARDED'
 /** Sentinel returned by a hook callback to opt out of contributing a result (other callbacks still run). */

@@ -12,6 +12,18 @@ export function getType(value: unknown) {
 }
 
 /**
+ * Like `Partial<T>`, but applied recursively to all nested object properties.
+ * Array element types are also made recursively partial.
+ */
+export type RecursivePartial<T> = {
+  [P in keyof T]?: T[P] extends Array<infer U>
+    ? Array<RecursivePartial<U>>
+    : T[P] extends object | undefined
+      ? RecursivePartial<T[P]>
+      : T[P]
+}
+
+/**
  * Checks whether a value can have properties. Use this when you have an unknown value and you want
  * to access its properties as unknown. This is a friendly solution for dealing with unknown objects
  * in TypeScript.

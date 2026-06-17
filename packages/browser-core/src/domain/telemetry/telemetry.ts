@@ -1,6 +1,7 @@
 import { clocksNow } from '@datadog/js-core/time'
 import { getDebugMode, combine } from '@datadog/js-core/util'
-import type { Hook, RecursivePartial } from '@datadog/js-core/assembly'
+import type { Hook } from '@datadog/js-core/assembly'
+import type { RecursivePartial } from '@datadog/js-core/util'
 import { DISCARDED } from '@datadog/js-core/assembly'
 import type { Context } from '../../tools/serialisation/context'
 import { NO_ERROR_STACK_PRESENT_MESSAGE, isError } from '../error/error'

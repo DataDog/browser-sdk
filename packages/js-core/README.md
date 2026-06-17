@@ -174,6 +174,12 @@ import type { Display } from '@datadog/js-core/util'
 | `getType(value)`           | Like `typeof`, but distinguishes `'null'` and `'array'` from `'object'`.                                                          |
 | `isIndexableObject(value)` | Returns `true` if `value` can be safely used as a plain object (i.e. not `null`, not an array, not a primitive).                  |
 
+#### Types
+
+| Export                | Description                                                                             |
+| --------------------- | --------------------------------------------------------------------------------------- |
+| `RecursivePartial<T>` | Like `Partial<T>` but applied recursively to all nested object and array element types. |
+
 ### `@datadog/js-core/assembly`
 
 Primitives for the hook-based event assembly pattern used across Datadog SDKs.
@@ -202,7 +208,6 @@ const result = hook.trigger({ eventType: 'view' }) // { tags: ['env:prod'] }
 | Export                 | Description                                                                                    |
 | ---------------------- | ---------------------------------------------------------------------------------------------- |
 | `Hook<Params, Result>` | A typed hook: `register` a callback and `trigger` it with params. See interface methods below. |
-| `RecursivePartial<T>`  | Like `Partial<T>` but applied recursively to all nested object and array element types.        |
 
 #### Constants
 
