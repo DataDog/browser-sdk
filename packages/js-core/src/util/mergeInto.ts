@@ -23,8 +23,14 @@ type Merged<TDestination, TSource> =
             TSource
 
 /**
- * Iterate over source and affect its sub values into destination, recursively.
- * If the source and destination can't be merged, return source.
+ * Recursively merges `source` into `destination` in place and returns the result.
+ * - Objects are merged key by key.
+ * - Arrays are merged index by index.
+ * - Primitive and class-instance values replace the destination.
+ * - `undefined` source values leave the destination unchanged.
+ * - Circular references in `source` are silently dropped.
+ *
+ * Prefer `combine` for a non-mutating deep merge or `deepClone` for a simple deep copy.
  */
 export function mergeInto<D, S>(
   destination: D,
@@ -77,13 +83,16 @@ export function deepClone<T>(value: T): T {
 
 type Combined<A, B> = A extends null ? B : B extends null ? A : Merged<A, B>
 
-/*
- * Performs a deep merge of objects and arrays.
- * - Arguments won't be mutated
- * - Object and arrays in the output value are de-referenced ("deep cloned")
- * - Arrays values are merged index by index
- * - Objects are merged by keys
- * - Values get replaced, unless undefined
+/**
+ * Performs a non-mutating deep merge of two or more values.
+ * - All arguments are left unchanged; the result is always a new value.
+ * - Objects are merged key by key; arrays are merged index by index.
+ * - `undefined` values are skipped (they do not overwrite existing values).
+ * - `null` values replace existing values.
+ *
+ * @example
+ * combine({ a: 1 }, { b: 2 }) // { a: 1, b: 2 }
+ * combine({ a: { x: 1 } }, { a: { y: 2 } }) // { a: { x: 1, y: 2 } }
  */
 export function combine<A, B>(a: A, b: B): Combined<A, B>
 export function combine<A, B, C>(a: A, b: B, c: C): Combined<Combined<A, B>, C>

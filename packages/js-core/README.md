@@ -128,7 +128,7 @@ setDebugMode(true) // global: also log caught errors to the console
 
 ### `@datadog/js-core/util`
 
-General-purpose utilities.
+General-purpose utilities: console/display helpers, deep merge, deep clone, and type utilities.
 
 ```ts
 import {
@@ -138,6 +138,11 @@ import {
   ConsoleApiName,
   globalConsole,
   originalConsoleMethods,
+  mergeInto,
+  deepClone,
+  combine,
+  getType,
+  isIndexableObject,
 } from '@datadog/js-core/util'
 import type { Display } from '@datadog/js-core/util'
 ```
@@ -158,8 +163,63 @@ import type { Display } from '@datadog/js-core/util'
 
 #### Functions
 
-| Export                  | Description                                                                                                                       |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `createDisplay(prefix)` | Returns a `Display` bound to the original console methods, prefixing every message with `prefix`. Guards against patched console. |
-| `getDebugMode()`        | Returns whether debug mode is currently enabled.                                                                                  |
-| `setDebugMode(enabled)` | Global debug-mode toggle. SDKs check `getDebugMode()` to decide whether to emit internal diagnostic logs to the console.          |
+| Export                     | Description                                                                                                                       |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `createDisplay(prefix)`    | Returns a `Display` bound to the original console methods, prefixing every message with `prefix`. Guards against patched console. |
+| `getDebugMode()`           | Returns whether debug mode is currently enabled.                                                                                  |
+| `setDebugMode(enabled)`    | Global debug-mode toggle. SDKs check `getDebugMode()` to decide whether to emit internal diagnostic logs to the console.          |
+| `mergeInto(dest, src)`     | Recursively merges `src` into `dest` in place and returns the result. Prefer `combine` for non-mutating use.                      |
+| `deepClone(value)`         | Returns a deep copy of `value`. Caveats: no prototype chains, no `Map`/`Set` support.                                             |
+| `combine(a, b, ...)`       | Non-mutating deep merge of two or more values. Objects merged by key, arrays by index, `undefined` skipped.                       |
+| `getType(value)`           | Like `typeof`, but distinguishes `'null'` and `'array'` from `'object'`.                                                          |
+| `isIndexableObject(value)` | Returns `true` if `value` can be safely used as a plain object (i.e. not `null`, not an array, not a primitive).                  |
+
+### `@datadog/js-core/assembly`
+
+Primitives for the hook-based event assembly pattern used across Datadog SDKs.
+
+A `Hook` is a typed publish/subscribe channel. Multiple callbacks are registered and invoked
+together when the hook is triggered. Each callback may contribute a partial result (`Result`),
+opt out (`SKIPPED`), or abort the entire event (`DISCARDED`). Results from all callbacks are
+deep-merged via `combine`.
+
+```ts
+import { createHook, DISCARDED, SKIPPED } from '@datadog/js-core/assembly'
+import type { Hook, RecursivePartial } from '@datadog/js-core/assembly'
+
+const hook = createHook<{ eventType: string }, { tags: string[] }>()
+
+const { unregister } = hook.register(({ eventType }) => {
+  if (eventType === 'error') return SKIPPED
+  return { tags: ['env:prod'] }
+})
+
+const result = hook.trigger({ eventType: 'view' }) // { tags: ['env:prod'] }
+```
+
+#### Types
+
+| Export                 | Description                                                                                    |
+| ---------------------- | ---------------------------------------------------------------------------------------------- |
+| `Hook<Params, Result>` | A typed hook: `register` a callback and `trigger` it with params. See interface methods below. |
+| `RecursivePartial<T>`  | Like `Partial<T>` but applied recursively to all nested object and array element types.        |
+
+#### Constants
+
+| Export      | Description                                                                                     |
+| ----------- | ----------------------------------------------------------------------------------------------- |
+| `DISCARDED` | Sentinel: a callback returning this causes `trigger` to return `DISCARDED` and stop processing. |
+| `SKIPPED`   | Sentinel: a callback returning this contributes nothing; other callbacks continue to run.       |
+
+#### Functions
+
+| Export         | Description                                                 |
+| -------------- | ----------------------------------------------------------- |
+| `createHook()` | Creates a new `Hook` instance with no registered callbacks. |
+
+#### `Hook<Params, Result>` interface
+
+| Method               | Description                                                                                                                                             |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `register(callback)` | Registers a callback that receives `Params` and returns `Result \| DISCARDED \| SKIPPED`. Returns `{ unregister }` to remove the callback later.        |
+| `trigger(params)`    | Invokes all callbacks, deep-merges `Result` values via `combine`. Returns `DISCARDED` if any callback discards, or `undefined` if none return a result. |
