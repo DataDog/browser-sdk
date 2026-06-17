@@ -17,8 +17,6 @@ import type { RumViewEvent, RumViewUpdateEvent } from '../rumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import { diffMerge } from '../domain/view/viewDiff'
 
-type AssembledViewEvent = Extract<AssembledRumEvent, { type: 'view' }>
-
 export const PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL = 100
 
 export function computeAssembledViewDiff(current: RumViewEvent, last: RumViewEvent): RumViewUpdateEvent | undefined {
@@ -87,10 +85,10 @@ export function computeAssembledViewDiff(current: RumViewEvent, last: RumViewEve
 export function createViewBatchRouter(
   batch: Pick<ReturnType<typeof createBatch>, 'flushController' | 'add' | 'upsert'>
 ): { route: (event: AssembledRumEvent) => void; stop: () => void } {
-  let lastSentView: AssembledViewEvent | undefined
+  let lastSentView: RumViewEvent | undefined
   // Base used to compute the aggregate diff for the current batch's view_update.
   // Reset to lastSentView on each flush (= what the backend received in the previous batch).
-  let batchBase: AssembledViewEvent | undefined
+  let batchBase: RumViewEvent | undefined
   // True when the current batch already contains a full VIEW event for the active view.
   // Reset to false on each flush.
   let batchHasFullView = false
