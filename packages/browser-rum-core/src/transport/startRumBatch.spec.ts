@@ -6,14 +6,13 @@ import type { AssembledRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumViewEvent } from '../rumEvent.types'
 
-type AssembledViewEvent = Extract<AssembledRumEvent, { type: 'view' }>
 import {
   computeAssembledViewDiff,
   createViewBatchRouter,
   PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL,
 } from './startRumBatch'
 
-function makeAssembledView(overrides: Record<string, unknown> = {}): AssembledViewEvent {
+function makeAssembledView(overrides: Record<string, unknown> = {}): RumViewEvent {
   return {
     type: RumEventType.VIEW,
     date: 1000,
@@ -43,7 +42,7 @@ function makeAssembledView(overrides: Record<string, unknown> = {}): AssembledVi
     source: 'browser',
     context: {},
     ...overrides,
-  } as unknown as AssembledViewEvent
+  } as unknown as RumViewEvent
 }
 
 describe('computeAssembledViewDiff', () => {
@@ -271,7 +270,7 @@ function makeView(viewId: string, docVersion: number, overrides: Record<string, 
       configuration: { start_session_replay_recording_manually: false },
     },
     ...overrides,
-  })
+  }) as unknown as AssembledRumEvent
 }
 
 // ---------------------------------------------------------------------------
