@@ -23,7 +23,7 @@
     "directory": "packages/browser-core"
   },
   "dependencies": {
-    "@datadog/js-core": "0.0.2"
+    "@datadog/js-core": "0.0.3"
   },
   "devDependencies": {
     "@types/pako": "2.0.4",
