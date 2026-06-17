@@ -4,6 +4,7 @@ import type { GlobalObject } from '../tools/globalObject'
 import { globalObject } from '../tools/globalObject'
 import { instrumentConstructor, instrumentMethod } from '../tools/instrumentMethod'
 import { Observable } from '../tools/observable'
+import { computeBytesCount } from '../tools/utils/byteUtils'
 import { addEventListener } from './addEventListener'
 
 type GlobalWithWebSocket = GlobalObject & { WebSocket: typeof WebSocket }
@@ -160,12 +161,9 @@ function attachInstanceListeners(instance: WebSocket, observable: Observable<Web
 
 function computePayloadSize(data: unknown): number {
   if (typeof data === 'string') {
-    return new TextEncoder().encode(data).byteLength
+    return computeBytesCount(data)
   }
-  if (data instanceof ArrayBuffer) {
-    return data.byteLength
-  }
-  if (ArrayBuffer.isView(data)) {
+  if (data instanceof ArrayBuffer || ArrayBuffer.isView(data)) {
     return data.byteLength
   }
   if (typeof Blob !== 'undefined' && data instanceof Blob) {
