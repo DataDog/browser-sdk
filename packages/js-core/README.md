@@ -191,7 +191,8 @@ deep-merged via `combine`.
 
 ```ts
 import { createHook, DISCARDED, SKIPPED } from '@datadog/js-core/assembly'
-import type { Hook, RecursivePartial } from '@datadog/js-core/assembly'
+import type { Hook } from '@datadog/js-core/assembly'
+import type { RecursivePartial } from '@datadog/js-core/util'
 
 const hook = createHook<{ eventType: string }, { tags: string[] }>()
 

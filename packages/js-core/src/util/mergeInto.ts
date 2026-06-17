@@ -32,10 +32,14 @@ type Merged<TDestination, TSource> =
  *
  * Prefer `combine` for a non-mutating deep merge or `deepClone` for a simple deep copy.
  */
-export function mergeInto<D, S>(
+export function mergeInto<D, S>(destination: D, source: S): Merged<D, S> {
+  return mergeIntoInternal(destination, source, createCircularReferenceChecker())
+}
+
+function mergeIntoInternal<D, S>(
   destination: D,
   source: S,
-  circularReferenceChecker = createCircularReferenceChecker()
+  circularReferenceChecker: CircularReferenceChecker
 ): Merged<D, S> {
   // ignore the source if it is undefined
   if (source === undefined) {
@@ -57,7 +61,7 @@ export function mergeInto<D, S>(
   } else if (Array.isArray(source)) {
     const merged: any[] = Array.isArray(destination) ? destination : []
     for (let i = 0; i < source.length; ++i) {
-      merged[i] = mergeInto(merged[i], source[i], circularReferenceChecker)
+      merged[i] = mergeIntoInternal(merged[i], source[i], circularReferenceChecker)
     }
     return merged as unknown as Merged<D, S>
   }
@@ -65,7 +69,7 @@ export function mergeInto<D, S>(
   const merged = getType(destination) === 'object' ? (destination as Record<any, any>) : {}
   for (const key in source) {
     if (Object.prototype.hasOwnProperty.call(source, key)) {
-      merged[key] = mergeInto(merged[key], source[key], circularReferenceChecker)
+      merged[key] = mergeIntoInternal(merged[key], source[key], circularReferenceChecker)
     }
   }
   return merged as unknown as Merged<D, S>
