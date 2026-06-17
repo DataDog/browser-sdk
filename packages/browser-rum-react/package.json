@@ -23,7 +23,7 @@
   "dependencies": {
     "@datadog/browser-core": "7.3.0",
     "@datadog/browser-rum-core": "7.3.0",
-    "@datadog/js-core": "0.0.2"
+    "@datadog/js-core": "0.0.3"
   },
   "peerDependencies": {
     "@tanstack/react-router": ">=1.64.0 <2",
