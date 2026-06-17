@@ -5,14 +5,6 @@ import { createTest } from '../lib/framework'
 // and in Chromium behind the "Experimental Web Platform features" flag.
 // We run these tests only on Chromium.
 
-// Enable the Experimental Web Platform features flag required for Network Efficiency Guardrails.
-// Must be top-level: launchOptions forces a new worker and cannot be inside describe().
-test.use({
-  launchOptions: {
-    args: ['--enable-experimental-web-platform-features'],
-  },
-})
-
 test.describe('network efficiency guardrails', () => {
   test.beforeEach(({ browserName }) => {
     test.skip(browserName !== 'chromium', 'Network Efficiency Guardrails is only available in Chromium-based browsers')

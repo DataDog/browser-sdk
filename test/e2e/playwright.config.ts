@@ -168,10 +168,16 @@ function getProjects() {
 }
 
 function project(name: string, device: string) {
+  const isChromium = name.startsWith('chromium')
   return {
     name,
     metadata: { sessionName: device, name } satisfies BrowserConfiguration,
-    use: devices[device],
+    use: {
+      ...devices[device],
+      // Required for experimental APIs (e.g. Network Efficiency Guardrails) that are
+      // gated behind this flag in Chromium. Ignored for non-Chromium browsers.
+      ...(isChromium ? { launchOptions: { args: ['--enable-experimental-web-platform-features'] } } : {}),
+    },
   }
 }
 
