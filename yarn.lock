@@ -356,7 +356,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-core@workspace:packages/browser-core"
   dependencies:
-    "@datadog/js-core": "npm:0.0.2"
+    "@datadog/js-core": "npm:0.0.3"
     "@types/pako": "npm:2.0.4"
     pako: "npm:2.1.0"
   languageName: unknown
@@ -367,7 +367,7 @@ __metadata:
   resolution: "@datadog/browser-debugger@workspace:packages/browser-debugger"
   dependencies:
     "@datadog/browser-core": "npm:7.3.0"
-    "@datadog/js-core": "npm:0.0.2"
+    "@datadog/js-core": "npm:0.0.3"
     acorn: "npm:8.16.0"
   languageName: unknown
   linkType: soft
@@ -377,7 +377,7 @@ __metadata:
   resolution: "@datadog/browser-logs@workspace:packages/browser-logs"
   dependencies:
     "@datadog/browser-core": "npm:7.3.0"
-    "@datadog/js-core": "npm:0.0.2"
+    "@datadog/js-core": "npm:0.0.3"
   peerDependencies:
     "@datadog/browser-rum": 7.3.0
   peerDependenciesMeta:
@@ -397,7 +397,7 @@ __metadata:
     "@angular/router": "npm:22.0.0"
     "@datadog/browser-core": "npm:7.3.0"
     "@datadog/browser-rum-core": "npm:7.3.0"
-    "@datadog/js-core": "npm:0.0.2"
+    "@datadog/js-core": "npm:0.0.3"
     rxjs: "npm:7.8.2"
   peerDependencies:
     "@angular/core": ">=15 <=22"
@@ -411,7 +411,7 @@ __metadata:
   resolution: "@datadog/browser-rum-core@workspace:packages/browser-rum-core"
   dependencies:
     "@datadog/browser-core": "npm:7.3.0"
-    "@datadog/js-core": "npm:0.0.2"
+    "@datadog/js-core": "npm:0.0.3"
     ajv: "npm:8.20.0"
   languageName: unknown
   linkType: soft
@@ -423,7 +423,7 @@ __metadata:
     "@datadog/browser-core": "npm:7.3.0"
     "@datadog/browser-rum-core": "npm:7.3.0"
     "@datadog/browser-rum-react": "npm:7.3.0"
-    "@datadog/js-core": "npm:0.0.2"
+    "@datadog/js-core": "npm:0.0.3"
     "@types/react": "npm:19.2.17"
     next: "npm:16.2.7"
     react: "npm:19.2.7"
@@ -445,7 +445,7 @@ __metadata:
   dependencies:
     "@datadog/browser-core": "npm:7.3.0"
     "@datadog/browser-rum-core": "npm:7.3.0"
-    "@datadog/js-core": "npm:0.0.2"
+    "@datadog/js-core": "npm:0.0.3"
     vue: "npm:3.5.35"
     vue-router: "npm:5.1.0"
   peerDependencies:
@@ -472,7 +472,7 @@ __metadata:
   dependencies:
     "@datadog/browser-core": "npm:7.3.0"
     "@datadog/browser-rum-core": "npm:7.3.0"
-    "@datadog/js-core": "npm:0.0.2"
+    "@datadog/js-core": "npm:0.0.3"
     "@tanstack/react-router": "npm:1.170.15"
     "@types/react": "npm:19.2.17"
     "@types/react-dom": "npm:19.2.3"
@@ -522,7 +522,7 @@ __metadata:
   dependencies:
     "@datadog/browser-core": "npm:7.3.0"
     "@datadog/browser-rum-core": "npm:7.3.0"
-    "@datadog/js-core": "npm:0.0.2"
+    "@datadog/js-core": "npm:0.0.3"
     "@vue/test-utils": "npm:2.4.11"
     vue: "npm:3.5.35"
     vue-router: "npm:5.1.0"
@@ -548,7 +548,7 @@ __metadata:
     "@datadog/browser-core": "npm:7.3.0"
     "@datadog/browser-rum-core": "npm:7.3.0"
     "@datadog/browser-worker": "npm:7.3.0"
-    "@datadog/js-core": "npm:0.0.2"
+    "@datadog/js-core": "npm:0.0.3"
     "@types/pako": "npm:2.0.4"
     pako: "npm:2.1.0"
   peerDependencies:
@@ -591,7 +591,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/js-core@npm:0.0.2, @datadog/js-core@workspace:packages/js-core":
+"@datadog/js-core@npm:0.0.3, @datadog/js-core@workspace:packages/js-core":
   version: 0.0.0-use.local
   resolution: "@datadog/js-core@workspace:packages/js-core"
   languageName: unknown
