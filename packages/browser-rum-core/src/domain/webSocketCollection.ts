@@ -111,8 +111,8 @@ export function trackWebSocket(
           duration: 0 as Duration,
           context: sanitize({
             url: context.url,
-            ...(context.protocols !== undefined ? { protocols: context.protocols } : {}),
-            ...(startViewId !== undefined ? { startViewId } : {}),
+            protocols: context.protocols,
+            startViewId,
           }),
         })
         return
