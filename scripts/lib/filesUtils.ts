@@ -56,13 +56,18 @@ export interface PackageJsonInfo {
   content: PackageJson
 }
 
-interface PackageJson {
+export interface PackageJson {
   name?: string
   private?: boolean
   version?: string
+  exports?: Record<string, unknown>
   dependencies?: Record<string, string>
   devDependencies?: Record<string, string>
   peerDependencies?: Record<string, string>
+}
+
+export function readPackageJson(filePath: string): PackageJson {
+  return JSON.parse(fs.readFileSync(filePath, 'utf-8')) as PackageJson
 }
 
 /**
@@ -114,7 +119,7 @@ export function findPackageJsonFiles(): PackageJsonInfo[] {
       return {
         relativePath: manifestPath,
         path: absoluteManifestPath,
-        content: JSON.parse(fs.readFileSync(absoluteManifestPath, 'utf-8')),
+        content: readPackageJson(absoluteManifestPath),
       }
     })
 }

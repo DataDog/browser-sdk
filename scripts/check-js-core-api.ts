@@ -1,8 +1,8 @@
-import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { parseArgs } from 'node:util'
 import { Extractor, ExtractorConfig, type IConfigFile } from '@microsoft/api-extractor'
 import { printError, printLog, runMain } from './lib/executionUtils.ts'
+import { readPackageJson } from './lib/filesUtils.ts'
 
 runMain(() => {
   const { values } = parseArgs({
@@ -12,10 +12,8 @@ runMain(() => {
   })
 
   const packageDir = path.resolve('packages/js-core')
-  const packageJson = JSON.parse(fs.readFileSync(path.join(packageDir, 'package.json'), 'utf-8')) as {
-    exports: Record<string, unknown>
-  }
-  const subpaths = Object.keys(packageJson.exports).map((subpath) => subpath.replace('./', ''))
+  const packageJson = readPackageJson(path.join(packageDir, 'package.json'))
+  const subpaths = Object.keys(packageJson.exports ?? {}).map((subpath) => subpath.replace('./', ''))
 
   for (const name of subpaths) {
     const entryPoint = path.join(packageDir, `cjs/entries/${name}.d.ts`)
