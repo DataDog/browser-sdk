@@ -1,0 +1,40 @@
+{
+  "name": "worker-profiling-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "webpack --config ./webpack.config.cjs",
+    "dev": "webpack serve --config ./webpack.config.cjs",
+    "proxy": "node proxyServer.ts"
+  },
+  "peerDependencies": {
+    "@datadog/browser-rum": "*"
+  },
+  "resolutions": {
+    "@datadog/browser-core": "file:../../../packages/browser-core/package.tgz",
+    "@datadog/js-core": "file:../../../packages/js-core/package.tgz",
+    "@datadog/browser-rum": "file:../../../packages/browser-rum/package.tgz",
+    "@datadog/browser-rum-core": "file:../../../packages/browser-rum-core/package.tgz"
+  },
+  "dependencies": {
+    "busboy": "*",
+    "cors": "*",
+    "express": "*",
+    "webpack-dev-middleware": "*"
+  },
+  "devDependencies": {
+    "@types/busboy": "*",
+    "@types/cors": "*",
+    "@types/express": "*",
+    "html-webpack-plugin": "5.6.3",
+    "ts-loader": "9.6.0",
+    "tsconfig-paths-webpack-plugin": "4.2.0",
+    "typescript": "6.0.2",
+    "webpack": "5.107.2",
+    "webpack-cli": "6.0.1",
+    "webpack-dev-server": "5.2.1"
+  },
+  "volta": {
+    "extends": "../../../package.json"
+  }
+}

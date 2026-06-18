@@ -557,6 +557,25 @@ export interface RumPublicApi extends PublicApi {
    * List of default headers used by the {@link RumInitConfiguration.trackResourceHeaders | trackResourceHeaders} option. See configuration example for extending them.
    */
   DEFAULT_TRACKED_RESOURCE_HEADERS: typeof DEFAULT_TRACKED_RESOURCE_HEADERS
+
+  /**
+   * Register a Dedicated Worker for CPU profiling.
+   *
+   * The worker script must be served with the `Document-Policy: js-profiling` HTTP response header.
+   * Profiling starts automatically when the session is sampled for profiling (via `profilingSampleRate`).
+   * Workers registered before `init()` is called are buffered and started when the session begins.
+   *
+   * Returns a `detach` function. Call it when you want to disconnect the worker from the
+   * profiling pipeline — the SDK will flush the current profiling session before detaching.
+   * You are still responsible for calling `worker.terminate()` yourself.
+   *
+   * @experimental Requires Chromium Canary with `DocumentPolicyInDedicatedWorker` and `ProfilerAPIForDedicatedWorker` flags.
+   * @param worker - The Worker instance to profile
+   * @param options - Optional configuration
+   * @param options.name - Optional label surfaced in Datadog as the `worker.name` tag. Defaults to the worker's script URL.
+   * @returns A `detach` function that flushes and disconnects the worker from profiling
+   */
+  attachProfilingWorker: (worker: Worker, options?: { name?: string }) => () => void
 }
 
 export interface RecorderApi {
@@ -577,6 +596,7 @@ export interface RecorderApi {
 
 export interface ProfilerApi {
   stop: () => void
+  getWorkerCoordinator: () => { attachWorker: (worker: Worker, options?: { name?: string }) => () => void } | undefined
   onRumStart: (
     lifeCycle: LifeCycle,
     hooks: Hooks,
@@ -987,6 +1007,16 @@ export function makeRumPublicApi(
       strategy.addOperationStepVital(name, 'end', options, failureReason)
     }),
     DEFAULT_TRACKED_RESOURCE_HEADERS,
+
+    attachProfilingWorker: monitor((worker: Worker, options?: { name?: string }) => {
+      const coordinator = profilerApi.getWorkerCoordinator()
+      if (coordinator) {
+        return coordinator.attachWorker(worker, options)
+      }
+      // Profiling not active for this session — return a no-op detach
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      return () => {}
+    }),
   })
 
   return rumPublicApi

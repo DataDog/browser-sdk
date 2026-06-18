@@ -1,0 +1,713 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Worker Profiling — Datadog Browser SDK</title>
+    <!-- Syntax highlighting via highlight.js (CDN, no build step needed) -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      hljs.highlightAll()
+    </script>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #0f1117;
+        color: #e6edf3;
+        display: grid;
+        grid-template-columns: 260px 1fr 1fr;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      /* ─── Shared column styles ───────────────────────────────── */
+      .col {
+        display: flex;
+        flex-direction: column;
+        min-height: 0; /* allow flex children to shrink and scroll */
+        overflow: hidden;
+      }
+
+      .col-header {
+        padding: 14px 20px;
+        border-bottom: 1px solid #30363d;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .col-header h2 {
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: #8b949e;
+      }
+
+      .col-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      /* ─── Left column — demo controls ───────────────────────── */
+      .col-left {
+        border-right: 1px solid #30363d;
+      }
+
+      .badge {
+        display: inline-block;
+        background: #1c2a3a;
+        border: 1px solid #30363d;
+        border-radius: 999px;
+        padding: 2px 9px;
+        font-size: 0.65rem;
+        color: #58a6ff;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .card {
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 10px;
+        padding: 14px;
+      }
+      .card-title {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #8b949e;
+        font-weight: 600;
+        margin-bottom: 12px;
+      }
+
+      .status-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+      #worker-status {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #2da44e;
+      }
+
+      .controls {
+        display: flex;
+        gap: 6px;
+      }
+      button {
+        padding: 5px 12px;
+        border-radius: 6px;
+        border: 1px solid transparent;
+        font-size: 0.72rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.15s;
+      }
+      button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      #btn-stop {
+        background: #da3633;
+        color: #fff;
+        border-color: #b91c1c;
+      }
+      #btn-restart {
+        background: #238636;
+        color: #fff;
+        border-color: #1a7f37;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .stat {
+        background: #0d1117;
+        border: 1px solid #21262d;
+        border-radius: 7px;
+        padding: 10px;
+      }
+      .stat-label {
+        font-size: 0.64rem;
+        color: #8b949e;
+        margin-bottom: 3px;
+      }
+      .stat-value {
+        font-size: 1.1rem;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        font-family: 'SF Mono', ui-monospace, monospace;
+      }
+
+      .worker-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        background: #0d1117;
+        border: 1px solid #21262d;
+        border-radius: 7px;
+        margin-bottom: 6px;
+        font-size: 0.74rem;
+      }
+      .worker-row:last-child {
+        margin-bottom: 0;
+      }
+      .worker-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .worker-dot.green {
+        background: #2da44e;
+      }
+      .worker-dot.orange {
+        background: #f0883e;
+      }
+      .worker-dot.blue {
+        background: #58a6ff;
+      }
+      .worker-label {
+        flex: 1;
+        font-weight: 600;
+      }
+      .worker-desc {
+        color: #8b949e;
+        font-size: 0.68rem;
+      }
+
+      .info-box {
+        background: #0d1117;
+        border: 1px solid #1f4e79;
+        border-radius: 7px;
+        padding: 10px 12px;
+        font-size: 0.72rem;
+        color: #8b949e;
+        line-height: 1.6;
+      }
+      .info-box strong {
+        color: #58a6ff;
+      }
+
+      /* inline code (non-hljs) */
+      code {
+        font-family: 'SF Mono', ui-monospace, monospace;
+        background: #21262d;
+        padding: 1px 4px;
+        border-radius: 3px;
+        font-size: 0.82em;
+        color: #79c0ff;
+      }
+
+      /* ─── Center column — docs / snippets ───────────────────── */
+      .col-center {
+        /* last column — no right border */
+      }
+
+      .snippet-section {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .snippet-title {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: #e6edf3;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .snippet-title .step {
+        background: #1c2a3a;
+        border: 1px solid #1f4e79;
+        color: #58a6ff;
+        font-size: 0.62rem;
+        font-weight: 700;
+        border-radius: 4px;
+        padding: 1px 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .snippet-desc {
+        font-size: 0.72rem;
+        color: #8b949e;
+        line-height: 1.6;
+      }
+
+      /* Override highlight.js container */
+      pre {
+        margin: 0;
+        border-radius: 8px;
+        border: 1px solid #30363d;
+        font-size: 0.72rem;
+        line-height: 1.6;
+        overflow-x: auto;
+      }
+      pre code.hljs {
+        padding: 14px 16px;
+        border-radius: 8px;
+        font-family: 'SF Mono', ui-monospace, monospace;
+        font-size: 0.72rem;
+        background: #0d1117 !important;
+      }
+
+      .file-label {
+        font-size: 0.62rem;
+        color: #8b949e;
+        font-family: 'SF Mono', ui-monospace, monospace;
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-bottom: none;
+        border-radius: 6px 6px 0 0;
+        padding: 4px 12px;
+        display: inline-block;
+      }
+      .file-label + pre {
+        border-top-left-radius: 0;
+      }
+
+      .divider {
+        border: none;
+        border-top: 1px solid #30363d;
+        margin: 4px 0;
+      }
+
+      /* ─── Right column — live profiles ──────────────────────── */
+      .col-right {
+        min-height: 0;
+        border-right: 1px solid #30363d;
+      }
+
+      #proxy-status {
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: #e55353;
+      }
+
+      #profile-list {
+        flex: 1;
+        min-height: 0; /* critical: allow shrinking so overflow-y kicks in */
+        overflow-y: auto;
+        padding: 12px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      #profile-list:empty::before {
+        content: 'Waiting for profiles…';
+        color: #8b949e;
+        font-size: 0.78rem;
+        display: block;
+      }
+
+      .profile-card {
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 9px;
+        overflow: hidden;
+        animation: fadeIn 0.2s ease;
+        flex-shrink: 0; /* never compress cards — scroll instead */
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-5px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .profile-summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px;
+        cursor: pointer;
+        user-select: none;
+        list-style: none;
+      }
+      .profile-summary::-webkit-details-marker {
+        display: none;
+      }
+      .profile-summary:hover {
+        background: #1c2128;
+      }
+
+      .profile-summary-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .profile-chevron {
+        font-size: 0.55rem;
+        color: #8b949e;
+        transition: transform 0.15s;
+      }
+      details[open] .profile-chevron {
+        transform: rotate(90deg);
+      }
+      .thread-badge {
+        font-size: 0.78rem;
+        font-weight: 700;
+      }
+      .profile-meta {
+        font-size: 0.68rem;
+        color: #8b949e;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .profile-body {
+        padding: 10px 14px 14px;
+        border-top: 1px solid #21262d;
+      }
+
+      .profile-stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+      .pstat {
+        background: #0d1117;
+        border: 1px solid #21262d;
+        border-radius: 5px;
+        padding: 7px 8px;
+      }
+      .pstat-label {
+        font-size: 0.6rem;
+        color: #8b949e;
+        margin-bottom: 2px;
+      }
+      .pstat-value {
+        font-size: 0.88rem;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        font-family: 'SF Mono', ui-monospace, monospace;
+      }
+      .session-id {
+        font-size: 0.7rem;
+      }
+
+      .correl-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+      }
+      .correl-label {
+        font-size: 0.62rem;
+        color: #8b949e;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        white-space: nowrap;
+      }
+      .correl-id {
+        font-size: 0.68rem;
+        background: #1c2a3a;
+        color: #58a6ff;
+        border: 1px solid #1f4e79;
+        padding: 1px 5px;
+        border-radius: 3px;
+        font-family: 'SF Mono', ui-monospace, monospace;
+      }
+
+      .tags-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-bottom: 10px;
+      }
+      .tag-pill {
+        font-size: 0.62rem;
+        background: #161b22;
+        color: #c9d1d9;
+        border: 1px solid #30363d;
+        padding: 2px 6px;
+        border-radius: 10px;
+        font-family: 'SF Mono', ui-monospace, monospace;
+        white-space: nowrap;
+      }
+      .tag-pill--worker {
+        color: #f0883e;
+        border-color: #5a3e1b;
+        background: #1f1500;
+      }
+
+      .frames-header {
+        font-size: 0.62rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #8b949e;
+        margin-bottom: 6px;
+      }
+      .frame-row {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+        padding: 3px 0;
+        border-bottom: 1px solid #21262d;
+        font-size: 0.72rem;
+      }
+      .frame-row:last-child {
+        border-bottom: none;
+      }
+      .frame-count {
+        flex-shrink: 0;
+        width: 24px;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        color: #f0883e;
+        font-family: 'SF Mono', ui-monospace, monospace;
+        font-weight: 700;
+        font-size: 0.68rem;
+      }
+      .frame-name {
+        font-family: 'SF Mono', ui-monospace, monospace;
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .frame-resource {
+        flex-shrink: 0;
+        font-size: 0.64rem;
+        color: #8b949e;
+        font-family: 'SF Mono', ui-monospace, monospace;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 130px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ══ Col 1 — Demo controls ══════════════════════════════ -->
+    <div class="col col-left">
+      <div class="col-header">
+        <h2>Live demo</h2>
+        <span class="badge">Canary only</span>
+      </div>
+      <div class="col-body">
+        <div class="card">
+          <div class="status-row">
+            <span id="worker-status">🟢 Persistent worker</span>
+            <div class="controls">
+              <button id="btn-stop">⏹ Stop</button>
+              <button id="btn-restart" disabled>▶ Restart</button>
+            </div>
+          </div>
+          <div class="card-title">Worker stats</div>
+          <div class="stats-grid">
+            <div class="stat">
+              <div class="stat-label">Iterations</div>
+              <div class="stat-value" id="stat-iterations">0</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Primes found</div>
+              <div class="stat-value" id="stat-primes">0</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">fib(30)</div>
+              <div class="stat-value" id="stat-fib">0</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Matrix ops</div>
+              <div class="stat-value" id="stat-matrix-ops">0</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Elapsed</div>
+              <div class="stat-value" id="stat-elapsed">0.0s</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Burst workers</div>
+              <div class="stat-value" id="stat-burst-count">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Active workers</div>
+          <div class="worker-row">
+            <div class="worker-dot green"></div>
+            <span class="worker-label">cpu-workload-worker</span>
+            <span class="worker-desc">persistent</span>
+          </div>
+          <div class="worker-row">
+            <div class="worker-dot orange"></div>
+            <span class="worker-label">burst-self-close-N</span>
+            <span class="worker-desc">detachProfiler() + self.close()</span>
+          </div>
+          <div class="worker-row">
+            <div class="worker-dot blue"></div>
+            <span class="worker-label">burst-main-close-N</span>
+            <span class="worker-desc">flushAndTerminate()</span>
+          </div>
+        </div>
+
+        <div class="info-box">
+          <strong>Flags required:</strong><br />
+          <code>DocumentPolicyInDedicatedWorker</code><br />
+          <code>ProfilerAPIForDedicatedWorker</code><br /><br />
+          <strong>Proxy:</strong> <code>yarn proxy</code> in a second terminal
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ Col 2 — Captured profiles ══════════════════════════ -->
+    <div class="col col-right">
+      <div class="col-header">
+        <h2>Captured profiles</h2>
+        <span id="proxy-status">🔴 Connecting…</span>
+      </div>
+      <div id="profile-list"></div>
+    </div>
+
+    <!-- ══ Col 3 — Documentation / snippets ═══════════════════ -->
+    <div class="col col-center">
+      <div class="col-header">
+        <h2>How to instrument a dedicated worker</h2>
+      </div>
+      <div class="col-body">
+        <!-- ── Step 0: init ─────────────────────────────────── -->
+        <div class="snippet-section">
+          <div class="snippet-title">
+            <span class="step">Step 1</span>
+            Initialize RUM with a profiling sample rate
+          </div>
+          <p class="snippet-desc">
+            Enable profiling on the main thread. Workers are profiled when the session is sampled — no separate rate
+            needed.
+          </p>
+          <div class="file-label">main.ts</div>
+          <pre><code class="language-typescript">import { datadogRum } from '@datadog/browser-rum'
+
+datadogRum.init({
+  clientToken: '...',
+  applicationId: '...',
+  sessionSampleRate: 100,
+  profilingSampleRate: 100, // workers follow this rate
+})</code></pre>
+        </div>
+
+        <hr class="divider" />
+
+        <!-- ── Use-case 1: main thread controls lifecycle ──────── -->
+        <div class="snippet-section">
+          <div class="snippet-title">
+            <span class="step">Use-case 1</span>
+            Main thread controls the lifecycle
+          </div>
+          <p class="snippet-desc">
+            The worker just does its work. The main thread decides when to stop it — whether that's a persistent worker
+            running for the page lifetime, or a short-lived one. Call <code>detach()</code> before
+            <code>worker.terminate()</code> so the current profiling session is flushed first.
+          </p>
+
+          <div class="file-label">main.ts</div>
+          <pre><code class="language-typescript">const worker = new Worker('/my-worker.js', { name: 'my-worker' })
+const detach = datadogRum.attachProfilingWorker(worker, { name: 'my-worker' })
+
+// When done:
+detach()           // flush current profiling session
+worker.terminate() // you own the worker lifecycle</code></pre>
+
+          <div class="file-label">my-worker.ts</div>
+          <pre><code class="language-typescript">import { attachProfiler } from '@datadog/browser-rum/worker'
+
+// That's all that's needed in the worker
+attachProfiler()
+
+// ... your worker logic ...</code></pre>
+        </div>
+
+        <hr class="divider" />
+
+        <!-- ── Use-case 2: worker controls its own lifecycle ──── -->
+        <div class="snippet-section">
+          <div class="snippet-title">
+            <span class="step">Use-case 2</span>
+            Worker controls its own lifecycle
+          </div>
+          <p class="snippet-desc">
+            The worker knows when it's done. Call <code>detachProfiler()</code> before <code>self.close()</code> — it
+            disconnects the worker from the profiling pipeline (capturing the current session as a side-effect). The
+            main thread doesn't need to do anything beyond the initial attach.
+          </p>
+
+          <div class="file-label">main.ts</div>
+          <pre><code class="language-typescript">const worker = new Worker('/my-worker.js', { name: 'my-worker' })
+
+// No detach needed — the worker handles its own teardown
+datadogRum.attachProfilingWorker(worker, { name: 'my-worker' })</code></pre>
+
+          <div class="file-label">my-worker.ts</div>
+          <pre><code class="language-typescript">import { attachProfiler } from '@datadog/browser-rum/worker'
+
+const { detachProfiler } = attachProfiler()
+
+async function run() {
+  await doHeavyComputation()
+
+  await detachProfiler() // detach from the pipeline before exiting
+  self.close()
+}
+
+run()</code></pre>
+        </div>
+        <hr class="divider" />
+
+        <!-- ── HTTP header reminder ──────────────────────────── -->
+        <div class="snippet-section">
+          <div class="snippet-title">
+            <span class="step">Requirement</span>
+            HTTP header on the worker script
+          </div>
+          <p class="snippet-desc">
+            The worker script response (not just the document) must include this header, otherwise
+            <code>new Profiler()</code> throws a <code>NotAllowedError</code>.
+          </p>
+          <pre><code class="language-http">Document-Policy: js-profiling</code></pre>
+
+          <p class="snippet-desc">Express / webpack-dev-server example:</p>
+          <pre><code class="language-javascript">// Express
+app.get('/my-worker.js', (req, res, next) => {
+  res.setHeader('Document-Policy', 'js-profiling')
+  next()
+})
+
+// webpack-dev-server (devServer.headers only sets it on the document)
+// — use setupMiddlewares for the worker route specifically</code></pre>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
