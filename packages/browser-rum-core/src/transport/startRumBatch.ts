@@ -22,10 +22,7 @@ import { diffMerge } from '../domain/view/viewDiff'
 export const PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL = 100
 
 export function computeAssembledViewDiff(current: RumViewEvent, last: RumViewEvent): RumViewUpdateEvent | undefined {
-  const currentObj = current as unknown as Record<string, unknown>
-  const lastObj = last as unknown as Record<string, unknown>
-
-  const diff = diffMerge(currentObj, lastObj, {
+  const diff = diffMerge(current, last, {
     // context, connectivity, usr, device, privacy are objects — use REPLACE to avoid partial updates
     replaceKeys: new Set(['view.custom_timings', 'context', 'connectivity', 'usr', 'device', 'privacy']),
     appendKeys: new Set(['_dd.page_states']),
@@ -46,24 +43,21 @@ export function computeAssembledViewDiff(current: RumViewEvent, last: RumViewEve
     return undefined
   }
 
-  const currentView = currentObj.view as Record<string, unknown>
-  const currentDd = currentObj._dd as Record<string, unknown>
-
   // Merge always-required fields on top of the diff for backend routing
   return combine(diff, {
     type: RumEventType.VIEW_UPDATE,
-    date: currentObj.date,
-    application: currentObj.application,
-    session: currentObj.session,
+    date: current.date,
+    application: current.application,
+    session: current.session,
     view: {
-      id: currentView.id,
-      url: currentView.url,
+      id: current.view.id,
+      url: current.view.url,
     },
     _dd: {
-      document_version: currentDd.document_version,
-      format_version: currentDd.format_version,
+      document_version: current._dd.document_version,
+      format_version: current._dd.format_version,
     },
-  }) as unknown as RumViewUpdateEvent
+  })
 }
 
 /**
