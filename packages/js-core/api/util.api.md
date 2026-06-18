@@ -5,6 +5,27 @@
 ```ts
 
 // @public
+export function combine<A, B>(a: A, b: B): Combined<A, B>;
+
+// @public (undocumented)
+export function combine<A, B, C>(a: A, b: B, c: C): Combined<Combined<A, B>, C>;
+
+// @public (undocumented)
+export function combine<A, B, C, D>(a: A, b: B, c: C, d: D): Combined<Combined<Combined<A, B>, C>, D>;
+
+// @public (undocumented)
+export function combine<A, B, C, D, E>(a: A, b: B, c: C, d: D, e: E): Combined<Combined<Combined<Combined<A, B>, C>, D>, E>;
+
+// @public (undocumented)
+export function combine<A, B, C, D, E, F>(a: A, b: B, c: C, d: D, e: E, f: F): Combined<Combined<Combined<Combined<Combined<A, B>, C>, D>, E>, F>;
+
+// @public (undocumented)
+export function combine<A, B, C, D, E, F, G>(a: A, b: B, c: C, d: D, e: E, f: F, g: G): Combined<Combined<Combined<Combined<Combined<Combined<A, B>, C>, D>, E>, F>, G>;
+
+// @public (undocumented)
+export function combine<A, B, C, D, E, F, G, H>(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H): Combined<Combined<Combined<Combined<Combined<Combined<Combined<A, B>, C>, D>, E>, F>, G>, H>;
+
+// @public
 export const ConsoleApiName: {
     readonly log: "log";
     readonly debug: "debug";
@@ -18,6 +39,9 @@ export type ConsoleApiName = (typeof ConsoleApiName)[keyof typeof ConsoleApiName
 
 // @public
 export function createDisplay(prefix: string): Display;
+
+// @public
+export function deepClone<T>(value: T): T;
 
 // @public
 export interface Display {
@@ -37,10 +61,24 @@ export interface Display {
 export function getDebugMode(): boolean;
 
 // @public
+export function getType(value: unknown): "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function" | "null" | "array";
+
+// @public
 export const globalConsole: Console;
 
 // @public
+export function isIndexableObject(value: unknown): value is Record<any, unknown>;
+
+// @public
+export function mergeInto<D, S>(destination: D, source: S): Merged<D, S>;
+
+// @public
 export const originalConsoleMethods: Display;
+
+// @public
+export type RecursivePartial<T> = {
+    [P in keyof T]?: T[P] extends Array<infer U> ? Array<RecursivePartial<U>> : T[P] extends object | undefined ? RecursivePartial<T[P]> : T[P];
+};
 
 // @public
 export function setDebugMode(newDebugMode: boolean): void;
