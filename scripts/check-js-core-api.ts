@@ -2,7 +2,6 @@ import { globSync } from 'node:fs'
 import * as path from 'node:path'
 import { parseArgs } from 'node:util'
 import { Extractor, ExtractorConfig, type IConfigFile } from '@microsoft/api-extractor'
-import e from 'express'
 import { printError, printLog, runMain } from './lib/executionUtils.ts'
 
 runMain(() => {

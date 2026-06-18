@@ -83,7 +83,7 @@ export type ServerDuration = number & {
     s: 'Duration in ns';
 };
 
-// @public (undocumented)
+// @public
 export type TimeStamp = number & {
     t: 'Epoch time';
 };
