@@ -74,3 +74,41 @@ When adding a new sub-path:
    `./packages/js-core/src/entries/<name>`
 5. Add `"src/entries/<name>.ts"` to the `entryPoints` array in `typedoc.json` so the sub-path
    appears in the generated API docs
+6. Add a section for the new sub-path in `README.md` (see below)
+
+### README maintenance
+
+Every sub-path must have a corresponding section in `README.md`. When adding or changing exports:
+
+- Add or update the sub-path section in `README.md` with an import example and API table(s)
+- **Sort all entries within each API table alphabetically** (by export name)
+- Follow the existing section structure: import example → Types table (if any) → Constants table (if any) → Functions table
+
+### API surface linting
+
+The public API surface of each sub-path is tracked via [API Extractor](https://api-extractor.com/)
+golden files committed to `api/*.api.md`. If you add, remove, or change any exported symbol, the
+check will fail and you must update the reports before merging.
+
+```bash
+# Build the package first (API Extractor reads the compiled .d.ts files)
+yarn workspace @datadog/js-core build
+
+# Check: verify the API surface hasn't changed (run in CI)
+yarn api:check
+
+# Update: regenerate the golden files after an intentional API change
+yarn api:check --update
+```
+
+When adding a new sub-path, build the package then run `yarn api:check --update` —
+`scripts/check-js-core-api.ts` discovers entry points automatically from `cjs/entries/*.d.ts`
+and generates the new golden file.
+
+## Current sub-paths
+
+| Sub-path                   | Entry file                                      | Description       |
+| -------------------------- | ----------------------------------------------- | ----------------- |
+| `@datadog/js-core/monitor` | `src/entries/monitor.ts`                        | Monitor utilities |
+| `@datadog/js-core/time`    | `src/entries/time.ts`                           | Time utilities    |
+| `@datadog/js-core/util`    | `src/entries/util.ts` (barrel over `src/util/`) | General utilities |
