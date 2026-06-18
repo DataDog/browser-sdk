@@ -33,6 +33,11 @@ module.exports = {
   resolve: {
     extensions: ['.ts', '.js'],
     plugins: [new TsconfigPathsPlugin({ configFile: tsconfigPath })],
+    // @datadog/js-core has no built output in the monorepo — resolve sub-path
+    // exports directly to source so webpack can bundle them from TypeScript.
+    alias: {
+      '@datadog/js-core/time': path.resolve(__dirname, '../../../packages/js-core/src/entries/time.ts'),
+    },
   },
 
   output: {
