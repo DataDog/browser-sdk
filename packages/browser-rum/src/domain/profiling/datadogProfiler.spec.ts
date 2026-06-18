@@ -8,8 +8,9 @@ import {
   relativeNow,
 } from '@datadog/js-core/time'
 import type { Duration } from '@datadog/js-core/time'
+import { deepClone } from '@datadog/js-core/util'
 import type { ProfilerTrace } from '@datadog/browser-core'
-import { BridgeCapability, createIdentityEncoder, createValueHistory, deepClone } from '@datadog/browser-core'
+import { BridgeCapability, createIdentityEncoder, createValueHistory } from '@datadog/browser-core'
 import type { ViewHistoryEntry } from '@datadog/browser-rum-core'
 import {
   LifeCycle,

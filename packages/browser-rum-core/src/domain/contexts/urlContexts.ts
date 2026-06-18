@@ -1,14 +1,8 @@
 import type { RelativeTime } from '@datadog/js-core/time'
 import type { Observable } from '@datadog/browser-core'
 import { relativeNow } from '@datadog/js-core/time'
-import {
-  SESSION_TIME_OUT_DELAY,
-  createValueHistory,
-  DISCARDED,
-  mockable,
-  buildUrl,
-  globalObject,
-} from '@datadog/browser-core'
+import { SESSION_TIME_OUT_DELAY, createValueHistory, mockable, buildUrl, globalObject } from '@datadog/browser-core'
+import { DISCARDED } from '@datadog/js-core/assembly'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'

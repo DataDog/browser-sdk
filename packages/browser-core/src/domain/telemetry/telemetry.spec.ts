@@ -1,3 +1,4 @@
+import { createHook } from '@datadog/js-core/assembly'
 import { NO_ERROR_STACK_PRESENT_MESSAGE } from '../error/error'
 import { callMonitored } from '../../tools/monitor'
 import type { ExperimentalFeature } from '../../tools/experimentalFeatures'
@@ -15,7 +16,6 @@ import {
 import type { Context } from '../../tools/serialisation/context'
 import { Observable } from '../../tools/observable'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
-import { createHook } from '../../tools/abstractHooks'
 import {
   addTelemetryError,
   scrubCustomerFrames,

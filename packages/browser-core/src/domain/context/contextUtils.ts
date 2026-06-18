@@ -1,6 +1,6 @@
+import { getType } from '@datadog/js-core/util'
 import type { Context } from '../../tools/serialisation/context'
 import { display } from '../../tools/display'
-import { getType } from '../../tools/utils/typeUtils'
 
 /**
  * Simple check to ensure an object is a valid context

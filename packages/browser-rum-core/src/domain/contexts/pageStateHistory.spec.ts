@@ -1,5 +1,5 @@
 import type { RelativeTime, Duration, ServerDuration } from '@datadog/js-core/time'
-import { createHook } from '@datadog/browser-core'
+import { createHook } from '@datadog/js-core/assembly'
 import type { Clock } from '../../../../browser-core/test'
 import { mockClock, registerCleanupTask } from '../../../../browser-core/test'
 import { createPerformanceEntry, mockPerformanceObserver } from '../../../test'

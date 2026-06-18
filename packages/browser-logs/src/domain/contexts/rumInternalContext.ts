@@ -1,6 +1,7 @@
 import type { RelativeTime } from '@datadog/js-core/time'
 import type { RumInternalContext } from '@datadog/browser-core'
-import { globalObject, willSyntheticsInjectRum, SKIPPED } from '@datadog/browser-core'
+import { globalObject, willSyntheticsInjectRum } from '@datadog/browser-core'
+import { SKIPPED } from '@datadog/js-core/assembly'
 import type { Hooks } from '../hooks'
 
 interface Rum {

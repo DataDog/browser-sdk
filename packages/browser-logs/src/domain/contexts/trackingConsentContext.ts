@@ -1,4 +1,4 @@
-import { DISCARDED, SKIPPED } from '@datadog/browser-core'
+import { DISCARDED, SKIPPED } from '@datadog/js-core/assembly'
 import type { TrackingConsentState } from '@datadog/browser-core'
 import type { Hooks } from '../hooks'
 

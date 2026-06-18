@@ -1,4 +1,5 @@
-import { SKIPPED, getSyntheticsContext, willSyntheticsInjectRum, isSyntheticsTest } from '@datadog/browser-core'
+import { getSyntheticsContext, willSyntheticsInjectRum, isSyntheticsTest } from '@datadog/browser-core'
+import { SKIPPED } from '@datadog/js-core/assembly'
 import type { AssembleHook, DefaultRumEventAttributes } from '../hooks'
 import { SessionType } from './sessionContext'
 
