@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@datadog/browser-core": "7.3.0",
-    "@datadog/js-core": "0.0.2"
+    "@datadog/js-core": "0.0.3"
   },
   "peerDependencies": {
     "@datadog/browser-rum": "7.3.0"
