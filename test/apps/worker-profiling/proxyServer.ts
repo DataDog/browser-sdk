@@ -198,7 +198,7 @@ const deflateWorkerCompiler = webpack({
     // Reuse the monorepo tsconfig path aliases
     alias: {
       '@datadog/browser-core': path.resolve(__dirname, '../../../packages/browser-core/src'),
-      '@datadog/js-core/time': path.resolve(__dirname, '../../../packages/js-core/src/time.ts'),
+      '@datadog/js-core/time': path.resolve(__dirname, '../../../packages/js-core/src/entries/time.ts'),
       '@datadog/browser-rum-core': path.resolve(__dirname, '../../../packages/browser-rum-core/src'),
     },
   },
