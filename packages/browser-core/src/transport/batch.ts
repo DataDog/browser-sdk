@@ -16,12 +16,14 @@ import type { FlushEvent, FlushReason, UrgentFlushReason } from './flushControll
 
 export const MESSAGE_BYTES_LIMIT = 256 * ONE_KIBI_BYTE
 
+export type BatchFlushEvent = FlushEvent & { upsertedKeys: string[] }
+
 export interface Batch {
   /**
-   * Observable that fires after each flush with the keys that were in the upsert buffer.
-   * Subscribers can use this to know which upserted entries were sent in the last batch.
+   * Observable that fires after each flush with the full flush event and the keys that were
+   * in the upsert buffer. Subscribers can use upsertedKeys to know which entries were sent.
    */
-  flushObservable: Observable<{ upsertedKeys: string[] }>
+  flushObservable: Observable<BatchFlushEvent>
   /** True when the batch has no pending messages (encoder empty and upsert buffer empty). */
   isEmpty: boolean
   add: (message: Context) => void
@@ -44,7 +46,7 @@ export function createBatch({
   const pageMayExitObservable = mockable(createPageMayExitObservable)()
   const flushController = mockable(createFlushController)({ pageMayExitObservable })
   let upsertBuffer: { [key: string]: string } = {}
-  const batchFlushObservable = new Observable<{ upsertedKeys: string[] }>()
+  const batchFlushObservable = new Observable<BatchFlushEvent>()
   const flushSubscription = flushController.flushObservable.subscribe((event) => flush(event))
 
   function push(serializedMessage: string, estimatedMessageBytesCount: number, key?: string) {
@@ -85,7 +87,7 @@ export function createBatch({
     const upsertedKeys = Object.keys(upsertBuffer)
     const upsertMessages = objectValues(upsertBuffer).join('\n')
     upsertBuffer = {}
-    batchFlushObservable.notify({ upsertedKeys })
+    batchFlushObservable.notify({ ...event, upsertedKeys })
 
     const pageMightExit = isPageExitReason(event.reason)
     const send = pageMightExit ? request.sendOnExit : request.send

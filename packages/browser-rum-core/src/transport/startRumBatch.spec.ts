@@ -5,6 +5,7 @@ import type { AssembledRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumViewEvent } from '../rumEvent.types'
 
+import type { BatchFlushEvent } from '@datadog/browser-core'
 import {
   computeAssembledViewDiff,
   createViewBatchRouter,
@@ -229,7 +230,7 @@ describe('startRumBatch partial_view_updates routing', () => {
 // ---------------------------------------------------------------------------
 
 function createMockBatch() {
-  const flushObservable = new Observable<{ upsertedKeys: string[] }>()
+  const flushObservable = new Observable<BatchFlushEvent>()
 
   const addSpy = jasmine.createSpy<(message: object) => void>('add')
   const upsertSpy = jasmine.createSpy<(message: object, key: string) => void>('upsert')
@@ -244,7 +245,8 @@ function createMockBatch() {
     batch,
     addSpy,
     upsertSpy,
-    flush: (upsertedKeys: string[] = []) => flushObservable.notify({ upsertedKeys }),
+    flush: (upsertedKeys: string[] = []) =>
+      flushObservable.notify({ upsertedKeys, reason: 'bytes_limit', bytesCount: 0, messagesCount: 0 }),
   }
 }
 
