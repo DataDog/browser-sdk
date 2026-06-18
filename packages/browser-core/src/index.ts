@@ -133,7 +133,7 @@ export type {
   WebSocketOpenContext,
   WebSocketMessageInContext,
   WebSocketMessageOutContext,
-  WebSocketClosedContext as WebSocketCloseContext,
+  WebSocketClosedContext,
 } from './browser/webSocketObservable'
 export { initWebSocketObservable } from './browser/webSocketObservable'
 export { fetch } from './browser/fetch'
