@@ -1,3 +1,4 @@
+import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { parseArgs } from 'node:util'
 import { Extractor, ExtractorConfig, type IConfigFile } from '@microsoft/api-extractor'
@@ -48,6 +49,23 @@ runMain(() => {
       printError(
         `API surface check failed for @datadog/js-core/${name}. Use \`yarn api:check --update\` to update the API report if the changes are intentional`
       )
+      process.exit(1)
+    }
+  }
+
+  const reportFolder = path.join(packageDir, 'api')
+  const staleReports = fs
+    .readdirSync(reportFolder)
+    .filter((file) => file.endsWith('.api.md') && !subpaths.includes(file.replace('.api.md', '')))
+
+  if (staleReports.length > 0) {
+    if (values.update) {
+      for (const file of staleReports) {
+        fs.rmSync(path.join(reportFolder, file))
+        printLog(`Deleted stale API report: ${file}`)
+      }
+    } else {
+      printError(`Stale API reports found: ${staleReports.join(', ')}. Use \`yarn api:check --update\` to remove them.`)
       process.exit(1)
     }
   }
