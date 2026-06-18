@@ -112,38 +112,57 @@ Search: `grep -rn "forwardErrorsToLogs" --include="*.js" --include="*.ts" --incl
 
 ### 4b. `startDurationVital` / `stopDurationVital` (RUM)
 
-The `DurationVitalReference` object is replaced by a `vitalKey` string. **`startDurationVital` now returns nothing** — the v7 API is fire-and-forget; the vital name string is all you need.
+The `DurationVitalReference` object is replaced by a `vitalKey` string. **`startDurationVital` now returns `void`** — the v7 API is fire-and-forget; the vital name string is all you need.
 
 ```js
-// v6
-const ref = DD_RUM.startDurationVital('checkout')
+// v5/v6 — ref-based (CDN: DD_RUM, npm: datadogRum)
+var ref = DD_RUM.startDurationVital('checkout_flow')
+// ... async work ...
 DD_RUM.stopDurationVital(ref)
 
 // v7
-DD_RUM.startDurationVital('checkout', { vitalKey: 'checkout-key' })
-DD_RUM.stopDurationVital('checkout', { vitalKey: 'checkout-key' })
+DD_RUM.startDurationVital('checkout_flow', { vitalKey: 'checkout_flow' })
+DD_RUM.stopDurationVital('checkout_flow', { vitalKey: 'checkout_flow' })
 ```
 
-Search for direct SDK calls: `grep -rn 'startDurationVital|stopDurationVital|DurationVitalReference' --include="*.js" --include="*.ts" --include="*.tsx"`
+**This silently breaks in CDN/plain JS projects.** TypeScript catches it with a type error; plain JS does not. `ref` becomes `undefined` and `stopDurationVital(undefined)` is a no-op — the vital starts but never stops, so the event is never emitted.
 
-**Then trace every variable that captures the return value.** If `startDurationVital` (or any wrapper around it) is assigned to a variable and that variable is passed to the stop call, the vital will never stop in v7 — `stopDurationVital(undefined)` is a no-op.
+**Step 1 — find all `startDurationVital`/`stopDurationVital` usages** (both CDN and npm patterns, all file types):
 
-Search for captured return values: `grep -rn '=\s*.*startDurationVital\|=\s*.*[Ss]tart.*[Vv]ital\|=\s*.*[Ss]tart[Tt]iming' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.svelte" --include="*.vue"`
+```
+grep -rn 'startDurationVital\|stopDurationVital\|DurationVitalReference' \
+  --include="*.js" --include="*.ts" --include="*.tsx" \
+  --include="*.html" --include="*.svelte" --include="*.vue"
+```
 
-**When the SDK is wrapped in a utility** (e.g. `startTiming(name)` delegates to `datadogRum.startDurationVital`):
+**Step 2 — find every variable that captures the return value** (this is the failure point):
 
-1. Update the wrapper so `startDurationVital` receives a `vitalKey` option and returns nothing.
-2. Find all callers that capture the wrapper's return value and update them to pass the vital name string directly to the stop call:
+```
+grep -rn '\(var\|const\|let\)\s\+\w\+\s*=\s*.*startDurationVital\|\w\+\s*=\s*DD_RUM\.startDurationVital\|\w\+\s*=\s*datadogRum\.startDurationVital' \
+  --include="*.js" --include="*.ts" --include="*.tsx" --include="*.html"
+```
+
+For every match: remove the variable assignment and update all uses of that variable in the corresponding `stopDurationVital` call to pass the vital name string directly.
+
+**Step 3 — if the SDK is wrapped in a utility** (e.g. `startTiming` / `stopTiming`):
+
+1. Update the wrapper — pass `vitalKey` to `startDurationVital`, return nothing.
+2. Find callers that capture the wrapper return value:
+
+```
+grep -rn '\(var\|const\|let\)\s\+\w\+\s*=\s*.*[Ss]tart[Tt]iming\|\(var\|const\|let\)\s\+\w\+\s*=\s*.*[Ss]tart.*[Vv]ital' \
+  --include="*.js" --include="*.ts" --include="*.tsx" --include="*.svelte" --include="*.vue"
+```
+
+3. Remove the capture and update the stop call to pass the vital name string directly:
 
 ```js
 // Caller — before
-const ref = startTiming('checkout_flow')
-// ...
-stopTiming(ref) // ref is undefined in v7 → vital never stops
+var ref = startTiming('checkout_flow')
+stopTiming(ref) // undefined in v7 → vital never stops
 
 // Caller — after
 startTiming('checkout_flow')
-// ...
 stopTiming('checkout_flow')
 ```
 
