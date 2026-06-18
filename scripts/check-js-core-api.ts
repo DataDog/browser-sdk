@@ -1,4 +1,4 @@
-import { globSync } from 'node:fs'
+import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { parseArgs } from 'node:util'
 import { Extractor, ExtractorConfig, type IConfigFile } from '@microsoft/api-extractor'
@@ -12,14 +12,17 @@ runMain(() => {
   })
 
   const packageDir = path.resolve('packages/js-core')
-  const entryPoints = globSync('cjs/entries/*.d.ts', { cwd: packageDir })
+  const packageJson = JSON.parse(fs.readFileSync(path.join(packageDir, 'package.json'), 'utf-8')) as {
+    exports: Record<string, unknown>
+  }
+  const subpaths = Object.keys(packageJson.exports).map((subpath) => subpath.replace('./', ''))
 
-  for (const entryPoint of entryPoints) {
-    const name = path.basename(entryPoint, '.d.ts')
+  for (const name of subpaths) {
+    const entryPoint = path.join(packageDir, `cjs/entries/${name}.d.ts`)
     printLog(`Checking API surface for @datadog/js-core/${name}...`)
 
     const configObject: IConfigFile = {
-      mainEntryPointFilePath: path.join(packageDir, entryPoint),
+      mainEntryPointFilePath: entryPoint,
       projectFolder: packageDir,
       compiler: {
         tsconfigFilePath: path.resolve('tsconfig.json'),
