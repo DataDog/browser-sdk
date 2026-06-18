@@ -22,7 +22,7 @@ runMain(() => {
       mainEntryPointFilePath: path.join(packageDir, entryPoint),
       projectFolder: packageDir,
       compiler: {
-        tsconfigFilePath: path.join(packageDir, 'tsconfig.api.json'),
+        tsconfigFilePath: path.resolve('tsconfig.json'),
       },
       apiReport: {
         enabled: true,
