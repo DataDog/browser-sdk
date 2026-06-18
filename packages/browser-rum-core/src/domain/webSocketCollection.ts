@@ -33,7 +33,7 @@ export interface WebSocketCompleteEvent {
   wasClean?: boolean
   handshakeSucceeded: boolean
   trackingEndReason: WebSocketTrackingEndReason
-  setupDuration?: Duration
+  setupDuration: Duration
 }
 
 interface WebSocketConnection {
