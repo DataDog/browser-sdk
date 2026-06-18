@@ -22,7 +22,7 @@ const MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL =
 const PACKAGES_NO_RESTRICTED_SYNTAX_RULES = [
   {
     selector: 'Identifier[name="globalThis"]',
-    message: 'Use `globalObject` from @datadog/browser-core instead of `globalThis`.',
+    message: 'Use `globalObject` from @datadog/js-core/util instead of `globalThis`.',
   },
 ]
 

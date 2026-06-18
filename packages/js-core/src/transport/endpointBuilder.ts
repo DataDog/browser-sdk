@@ -1,10 +1,7 @@
-import { timeStampNow } from '@datadog/js-core/time'
-import { normalizeUrl } from '@datadog/js-core/util'
-import type { Payload } from '../../transport'
-import { generateUUID } from '../../tools/utils/stringUtils'
-import type { Site } from '../intakeSites'
-import { INTAKE_SITE_US1 } from '../intakeSites'
-import type { Configuration, ProxyFn } from './configuration'
+import { timeStampNow } from '../entries/time'
+import { normalizeUrl } from '../entries/util'
+import type { Site } from './intakeSites'
+import { INTAKE_SITE_US1 } from './intakeSites'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
@@ -26,10 +23,33 @@ export type ApiType =
  */
 export type TransportSource = 'browser' | 'flutter' | 'unity' | 'dd_debugger'
 
+export type ProxyFn = (options: { path: string; parameters: string; subdomain?: string }) => string
+
+export interface RetryInfo {
+  count: number
+  lastFailureStatus: number
+}
+
+export interface EndpointPayload {
+  retry?: RetryInfo
+  encoding?: 'deflate'
+}
+
 interface EndpointBuilderConfiguration {
   clientToken: string
   proxy?: string | ProxyFn
   site?: Site
+  source?: TransportSource
+}
+
+interface ReplicaConfiguration {
+  clientToken: string
+  applicationId?: string
+}
+
+interface ConfigurationWithReplica {
+  replica?: ReplicaConfiguration
+  proxy?: string | ProxyFn
   source?: TransportSource
 }
 
@@ -41,7 +61,7 @@ export function createEndpointBuilder(
   extraParameters?: string[]
 ) {
   return {
-    build(api: ApiType, payload: Payload) {
+    build(api: ApiType, payload: EndpointPayload) {
       return buildEndpointUrl({
         proxy: configuration.proxy,
         site: configuration.site,
@@ -59,7 +79,10 @@ export function createEndpointBuilder(
  * The replica always targets the US1 site but keeps the `proxy` and `source` of the main
  * configuration. The RUM track additionally carries the replica `application.id`.
  */
-export function createReplicaEndpointBuilder({ replica, proxy, source }: Configuration, trackType: TrackType) {
+export function createReplicaEndpointBuilder(
+  { replica, proxy, source }: ConfigurationWithReplica,
+  trackType: TrackType
+) {
   if (!replica) {
     return
   }
@@ -125,7 +148,7 @@ function buildEndpointParameters(
   { clientToken, source = 'browser' }: EndpointBuilderConfiguration,
   trackType: TrackType,
   api: ApiType,
-  { retry, encoding }: Payload,
+  { retry, encoding }: EndpointPayload,
   extraParameters: string[] = []
 ) {
   const parameters = [
@@ -149,4 +172,15 @@ function buildEndpointParameters(
   }
 
   return parameters.join('&')
+}
+
+/**
+ * UUID v4
+ * from https://gist.github.com/jed/982883
+ */
+function generateUUID(placeholder?: string): string {
+  return placeholder
+    ? // eslint-disable-next-line  no-bitwise
+      (parseInt(placeholder, 10) ^ ((Math.random() * 16) >> (parseInt(placeholder, 10) / 4))).toString(16)
+    : `${1e7}-${1e3}-${4e3}-${8e3}-${1e11}`.replace(/[018]/g, generateUUID)
 }

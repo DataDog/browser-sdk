@@ -1,5 +1,6 @@
 import type { InitConfiguration, Batch } from '@datadog/browser-core'
-import { createBatch, createEndpointBuilder } from '@datadog/browser-core'
+import { createBatch } from '@datadog/browser-core'
+import { createEndpointBuilder } from '@datadog/js-core/transport'
 import { display } from '../domain/display'
 
 export function startDebuggerBatch(initConfiguration: InitConfiguration): Batch {

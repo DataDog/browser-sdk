@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "main": "../cjs/entries/transport.js",
+  "module": "../esm/entries/transport.mjs",
+  "types": "../cjs/entries/transport.d.ts"
+}

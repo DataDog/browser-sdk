@@ -1,13 +1,7 @@
 import type { HttpRequest, DeflateEncoder, Telemetry, SessionManager } from '@datadog/browser-core'
-import {
-  createHttpRequest,
-  addTelemetryDebug,
-  canUseEventBridge,
-  noop,
-  createEndpointBuilder,
-  ErrorSource,
-} from '@datadog/browser-core'
+import { createHttpRequest, addTelemetryDebug, canUseEventBridge, noop, ErrorSource } from '@datadog/browser-core'
 import { clocksNow } from '@datadog/js-core/time'
+import { createEndpointBuilder } from '@datadog/js-core/transport'
 import type { LifeCycle, ViewHistory, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 

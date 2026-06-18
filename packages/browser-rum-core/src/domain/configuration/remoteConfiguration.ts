@@ -7,9 +7,9 @@ import {
   TelemetryMetrics,
   monitorError,
   fetch,
-  buildEndpointUrl,
 } from '@datadog/browser-core'
 import { isIndexableObject } from '@datadog/js-core/util'
+import { buildEndpointUrl } from '@datadog/js-core/transport'
 import { extractRegexMatch } from '../extractRegexMatch'
 import type { RumInitConfiguration } from './configuration'
 import type { RumSdkConfig, DynamicOption, ContextItem } from './remoteConfiguration.types'
