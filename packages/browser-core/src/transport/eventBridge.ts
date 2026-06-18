@@ -16,6 +16,7 @@ export interface DatadogEventBridge {
 
 export const enum BridgeCapability {
   RECORDS = 'records',
+  PROFILES = 'profiles',
 }
 
 export function getEventBridge<T, E>() {

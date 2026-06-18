@@ -1,6 +1,14 @@
-import type { LifeCycle, ViewHistory, RumConfiguration, ProfilerApi, Hooks } from '@datadog/browser-rum-core'
-import type { SessionManager, DeflateEncoderStreamId, Encoder } from '@datadog/browser-core'
-import { monitorError, correctedChildSampleRate, isSampled, mockable } from '@datadog/browser-core'
+import type { Hooks, LifeCycle, ProfilerApi, RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
+import type { DeflateEncoderStreamId, Encoder, SessionContext, SessionManager } from '@datadog/browser-core'
+import {
+  BridgeCapability,
+  bridgeSupports,
+  canUseEventBridge,
+  correctedChildSampleRate,
+  isSampled,
+  mockable,
+  monitorError,
+} from '@datadog/browser-core'
 import type { RUMProfiler } from '../domain/profiling/types'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { startProfilingContext } from '../domain/profiling/profilingContext'
@@ -25,15 +33,7 @@ export function makeProfilerApi(): ProfilerApi {
       return
     }
 
-    // Sampling (sticky sampling based on session id)
-    if (
-      !isSampled(
-        session.id,
-        correctedChildSampleRate(configuration.sessionSampleRate, configuration.profilingSampleRate)
-      )
-    ) {
-      // No sampling, no profiling.
-      // Note: No Profiling context is set at this stage.
+    if (!isProfilingSampled(configuration, session)) {
       return
     }
 
@@ -49,7 +49,7 @@ export function makeProfilerApi(): ProfilerApi {
       return
     }
 
-    lazyLoadProfiler()
+    mockable(lazyLoadProfiler)()
       .then((createRumProfiler) => {
         if (!createRumProfiler) {
           profilingContextManager.set({ status: 'error', error_reason: 'failed-to-lazy-load' })
@@ -76,4 +76,15 @@ export function makeProfilerApi(): ProfilerApi {
       profiler?.stop()
     },
   }
+}
+
+function isProfilingSampled(configuration: RumConfiguration, session: SessionContext) {
+  if (canUseEventBridge()) {
+    // In bridge mode, native SDK owns the sampling decision, skip the rate check
+    return bridgeSupports(BridgeCapability.PROFILES)
+  }
+  return isSampled(
+    session.id,
+    correctedChildSampleRate(configuration.sessionSampleRate, configuration.profilingSampleRate)
+  )
 }
