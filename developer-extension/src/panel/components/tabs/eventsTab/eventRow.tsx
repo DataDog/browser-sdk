@@ -54,6 +54,7 @@ const LOG_STATUS_COLOR = {
 const RESOURCE_TYPE_LABELS: Record<string, string | undefined> = {
   xhr: 'XHR',
   fetch: 'Fetch',
+  websocket: 'WebSocket',
   document: 'Document',
   beacon: 'Beacon',
   css: 'CSS',
@@ -435,9 +436,12 @@ function ErrorDescription({ event }: { event: RumErrorEvent }) {
   )
 }
 
+// TODO: remove this once we introduce websockets on rum-events-format
+type RumResourceEventTypeWithWebSocket = RumResourceEvent['resource']['type'] | 'websocket'
+
 function ResourceDescription({ event }: { event: RumResourceEvent }) {
-  const resourceType = event.resource.type
-  const isAsset = resourceType !== 'xhr' && resourceType !== 'fetch'
+  const resourceType = event.resource.type as RumResourceEventTypeWithWebSocket
+  const isAsset = resourceType !== 'xhr' && resourceType !== 'fetch' && resourceType !== 'websocket'
 
   if (isAsset) {
     return (
@@ -450,7 +454,8 @@ function ResourceDescription({ event }: { event: RumResourceEvent }) {
 
   return (
     <>
-      {RESOURCE_TYPE_LABELS[resourceType]} request <Emphasis>{event.resource.url}</Emphasis>
+      {`${RESOURCE_TYPE_LABELS[resourceType]} ${resourceType === 'websocket' ? 'connection' : 'request'} `}
+      <Emphasis>{event.resource.url}</Emphasis>
     </>
   )
 }
