@@ -105,9 +105,9 @@ export interface WebSocketResourceProperties {
   last_message_in_at?: TimeStamp
   longest_inbound_silence: ServerDuration
   inbound_idle_duration_before_close?: ServerDuration
-  buffered_amount_max?: number
+  buffered_amount_max: number
   protocol?: string
-  setup_duration?: ServerDuration
+  setup_duration: ServerDuration
 }
 
 export type NetworkHeaders = Record<string, string>
