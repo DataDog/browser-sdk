@@ -1,6 +1,5 @@
 import {
   addTelemetryDebug,
-  combine,
   createTaskQueue,
   display,
   generateUUID,
@@ -12,6 +11,7 @@ import {
   safeTruncate,
   setTimeout,
 } from '@datadog/browser-core'
+import { combine } from '@datadog/js-core/util'
 import type { Duration } from '@datadog/js-core/time'
 import { elapsed, relativeToClocks, toServerDuration } from '@datadog/js-core/time'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../../browser/performanceObservable'

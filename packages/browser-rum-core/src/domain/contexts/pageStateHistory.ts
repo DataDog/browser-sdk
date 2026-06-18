@@ -1,12 +1,7 @@
 import { elapsed, toServerDuration, relativeNow } from '@datadog/js-core/time'
 import type { Duration, RelativeTime } from '@datadog/js-core/time'
-import {
-  SKIPPED,
-  createValueHistory,
-  SESSION_TIME_OUT_DELAY,
-  addEventListeners,
-  DOM_EVENT,
-} from '@datadog/browser-core'
+import { SKIPPED } from '@datadog/js-core/assembly'
+import { createValueHistory, SESSION_TIME_OUT_DELAY, addEventListeners, DOM_EVENT } from '@datadog/browser-core'
 import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../browser/performanceObservable'
 import type { PageStateServerEntry } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'

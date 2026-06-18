@@ -1,7 +1,7 @@
 import type { RelativeTime } from '@datadog/js-core/time'
+import type { Hook } from '@datadog/js-core/assembly'
+import { createHook } from '@datadog/js-core/assembly'
 import { createSessionManagerMock, MOCK_SESSION_ID } from '../../../test'
-import type { Hook } from '../../tools/abstractHooks'
-import { createHook } from '../../tools/abstractHooks'
 import { startTelemetrySessionContext } from './telemetrySessionContext'
 
 describe('telemetrySessionContext', () => {

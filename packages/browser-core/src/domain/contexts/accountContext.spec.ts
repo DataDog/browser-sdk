@@ -1,11 +1,11 @@
 import type { RelativeTime } from '@datadog/js-core/time'
+import type { Hook } from '@datadog/js-core/assembly'
+import { createHook } from '@datadog/js-core/assembly'
 import { registerCleanupTask } from '../../../test'
 import { mockRumConfiguration } from '../../../../browser-rum-core/test'
 import type { ContextManager } from '../context/contextManager'
 import { display } from '../../tools/display'
 import { removeStorageListeners } from '../context/storeContextManager'
-import type { Hook } from '../../tools/abstractHooks'
-import { createHook } from '../../tools/abstractHooks'
 import { startAccountContext } from './accountContext'
 
 describe('account context', () => {

@@ -1,8 +1,8 @@
+import type { Hook } from '@datadog/js-core/assembly'
+import { SKIPPED } from '@datadog/js-core/assembly'
 import type { Configuration } from '../configuration'
 import { CustomerDataType } from '../context/contextConstants'
 import { storeContextManager } from '../context/storeContextManager'
-import type { Hook } from '../../tools/abstractHooks'
-import { SKIPPED } from '../../tools/abstractHooks'
 import { isEmptyObject } from '../../tools/utils/objectUtils'
 import { createContextManager } from '../context/contextManager'
 

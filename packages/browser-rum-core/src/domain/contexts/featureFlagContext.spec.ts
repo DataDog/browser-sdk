@@ -1,6 +1,6 @@
 import type { RelativeTime } from '@datadog/js-core/time'
 import { relativeToClocks } from '@datadog/js-core/time'
-import { createHook } from '@datadog/browser-core'
+import { createHook } from '@datadog/js-core/assembly'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'

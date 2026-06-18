@@ -1,8 +1,8 @@
-import type { RelativeTime } from '@datadog/js-core/time'
-import { DISCARDED, SKIPPED, createHook } from './abstractHooks'
+import type { RelativeTime } from '../entries/time'
+import { DISCARDED, SKIPPED, createHook } from './hook'
 
 describe('createHook', () => {
-  const hookParams = { eventType: 'error', startTime: 1011 as RelativeTime } as any
+  const hookParams = { eventType: 'error', startTime: 1011 as RelativeTime }
 
   it('unregisters a callback', () => {
     const hook = createHook<typeof hookParams, object>()

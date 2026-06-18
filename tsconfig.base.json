@@ -46,6 +46,7 @@
 
       "@datadog/browser-debugger": ["./packages/browser-debugger/src/entries/main"],
 
+      "@datadog/js-core/assembly": ["./packages/js-core/src/entries/assembly"],
       "@datadog/js-core/time": ["./packages/js-core/src/entries/time"],
       "@datadog/js-core/monitor": ["./packages/js-core/src/entries/monitor"],
       "@datadog/js-core/util": ["./packages/js-core/src/entries/util"]

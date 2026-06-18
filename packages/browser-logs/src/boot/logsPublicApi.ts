@@ -7,13 +7,13 @@ import {
   monitor,
   sanitize,
   displayAlreadyInitializedError,
-  deepClone,
   createTrackingConsentState,
   defineContextMethod,
   startBufferingData,
   callMonitored,
   mockable,
 } from '@datadog/browser-core'
+import { deepClone } from '@datadog/js-core/util'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import type { HandlerType } from '../domain/logger'
 import type { StatusType } from '../domain/logger/isAuthorized'

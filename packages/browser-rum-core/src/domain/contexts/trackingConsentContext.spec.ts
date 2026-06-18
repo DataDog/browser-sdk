@@ -1,5 +1,6 @@
 import type { RelativeTime } from '@datadog/js-core/time'
-import { DISCARDED, createTrackingConsentState, TrackingConsent, createHook } from '@datadog/browser-core'
+import { createTrackingConsentState, TrackingConsent } from '@datadog/browser-core'
+import { DISCARDED, createHook } from '@datadog/js-core/assembly'
 import type { AssembleTelemetryHook } from '../hooks'
 import { startTrackingConsentContext } from './trackingConsentContext'
 
