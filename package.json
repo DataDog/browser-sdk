@@ -97,7 +97,7 @@
     "typedoc": "0.28.19",
     "typescript": "6.0.3",
     "typescript-eslint": "8.60.1",
-    "undici": "8.4.0",
+    "undici": "8.5.0",
     "webpack": "5.107.2",
     "webpack-cli": "7.0.3",
     "webpack-dev-middleware": "8.0.3",
