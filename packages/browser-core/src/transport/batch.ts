@@ -8,7 +8,7 @@ import type { Encoder, EncoderResult } from '../tools/encoder'
 import { computeBytesCount, ONE_KIBI_BYTE } from '../tools/utils/byteUtils'
 import { mockable } from '../tools/mockable'
 import type { EndpointBuilder } from '../domain/configuration'
-import type { Observable } from '../tools/observable'
+import { Observable } from '../tools/observable'
 import { createHttpRequest } from './httpRequest'
 import type { Payload } from './httpRequest'
 import { createFlushController } from './flushController'
@@ -17,11 +17,17 @@ import type { FlushEvent, FlushReason, UrgentFlushReason } from './flushControll
 export const MESSAGE_BYTES_LIMIT = 256 * ONE_KIBI_BYTE
 
 export interface Batch {
+  /**
+   * Observable that fires after each flush with the keys that were in the upsert buffer.
+   * Subscribers can use this to know which upserted entries were sent in the last batch.
+   */
+  flushObservable: Observable<{ upsertedKeys: string[] }>
+  /** True when the batch has no pending messages (encoder empty and upsert buffer empty). */
+  isEmpty: boolean
   add: (message: Context) => void
   upsert: (message: Context, key: string) => void
   forceFlush: (reason: FlushReason) => void
   prepareUrgentFlushObservable: Observable<UrgentFlushReason>
-  flushObservable: Observable<FlushEvent>
   stop: () => void
 }
 
@@ -38,6 +44,7 @@ export function createBatch({
   const pageMayExitObservable = mockable(createPageMayExitObservable)()
   const flushController = mockable(createFlushController)({ pageMayExitObservable })
   let upsertBuffer: { [key: string]: string } = {}
+  const batchFlushObservable = new Observable<{ upsertedKeys: string[] }>()
   const flushSubscription = flushController.flushObservable.subscribe((event) => flush(event))
 
   function push(serializedMessage: string, estimatedMessageBytesCount: number, key?: string) {
@@ -75,8 +82,10 @@ export function createBatch({
   }
 
   function flush(event: FlushEvent) {
+    const upsertedKeys = Object.keys(upsertBuffer)
     const upsertMessages = objectValues(upsertBuffer).join('\n')
     upsertBuffer = {}
+    batchFlushObservable.notify({ upsertedKeys })
 
     const pageMightExit = isPageExitReason(event.reason)
     const send = pageMightExit ? request.sendOnExit : request.send
@@ -115,11 +124,14 @@ export function createBatch({
   }
 
   return {
+    flushObservable: batchFlushObservable,
+    get isEmpty() {
+      return encoder.isEmpty && Object.keys(upsertBuffer).length === 0
+    },
     add: addOrUpdate,
     upsert: addOrUpdate,
     prepareUrgentFlushObservable: flushController.prepareUrgentFlushObservable,
     forceFlush: flushController.forceFlush,
-    flushObservable: flushController.flushObservable,
     stop: flushSubscription.unsubscribe,
   }
 }

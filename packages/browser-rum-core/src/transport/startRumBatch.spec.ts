@@ -1,6 +1,5 @@
 import { ExperimentalFeature, Observable, addExperimentalFeatures } from '@datadog/browser-core'
 import { resetExperimentalFeatures } from '@datadog/browser-core/src/tools/experimentalFeatures'
-import type { FlushController, FlushEvent } from '@datadog/browser-core/src/transport/flushController'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { AssembledRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
@@ -230,13 +229,13 @@ describe('startRumBatch partial_view_updates routing', () => {
 // ---------------------------------------------------------------------------
 
 function createMockBatch() {
-  const flushObservable = new Observable<FlushEvent>()
+  const flushObservable = new Observable<{ upsertedKeys: string[] }>()
 
   const addSpy = jasmine.createSpy<(message: object) => void>('add')
   const upsertSpy = jasmine.createSpy<(message: object, key: string) => void>('upsert')
 
   const batch = {
-    flushController: { flushObservable } as unknown as FlushController,
+    flushObservable,
     add: addSpy,
     upsert: upsertSpy,
   }
@@ -245,7 +244,7 @@ function createMockBatch() {
     batch,
     addSpy,
     upsertSpy,
-    flush: () => flushObservable.notify({ reason: 'bytes_limit', bytesCount: 0, messagesCount: 0 }),
+    flush: (upsertedKeys: string[] = []) => flushObservable.notify({ upsertedKeys }),
   }
 }
 
@@ -375,7 +374,7 @@ describe('createViewBatchRouter', () => {
       const { route } = createViewBatchRouter(batch)
 
       route(makeView('view-1', 1))
-      flush() // batchHasFullView resets; batchBase = v1
+      flush(['view-1']) // batchHasFullView resets; batchBase = v1
 
       upsertSpy.calls.reset()
 
@@ -405,7 +404,7 @@ describe('createViewBatchRouter', () => {
       const { route } = createViewBatchRouter(batch)
 
       route(makeView('view-1', 1))
-      flush()
+      flush(['view-1'])
 
       upsertSpy.calls.reset()
 
@@ -443,7 +442,7 @@ describe('createViewBatchRouter', () => {
 
       // Initial view with action.count = 0
       route(makeView('view-1', 1))
-      flush() // batchBase = v1 (action.count: 0)
+      flush(['view-1']) // batchBase = v1 (action.count: 0)
 
       upsertSpy.calls.reset()
 
@@ -490,7 +489,7 @@ describe('createViewBatchRouter', () => {
 
       const v1 = makeView('view-1', 1)
       route(v1)
-      flush()
+      flush(['view-1'])
 
       upsertSpy.calls.reset()
 
@@ -513,7 +512,7 @@ describe('createViewBatchRouter', () => {
       const { route } = createViewBatchRouter(batch)
 
       route(makeView('view-1', 1))
-      flush()
+      flush(['view-1'])
 
       upsertSpy.calls.reset()
 
@@ -567,7 +566,7 @@ describe('createViewBatchRouter', () => {
       const { route } = createViewBatchRouter(batch)
 
       route(makeView('view-1', 1))
-      flush()
+      flush(['view-1'])
 
       upsertSpy.calls.reset()
 
@@ -596,7 +595,7 @@ describe('createViewBatchRouter', () => {
       const { route } = createViewBatchRouter(batch)
 
       route(makeView('view-1', 1))
-      flush()
+      flush(['view-1'])
 
       // Start a new view in the next batch
       route(makeView('view-2', 1))
