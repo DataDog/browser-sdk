@@ -74,12 +74,3 @@ When adding a new sub-path:
    `./packages/js-core/src/entries/<name>`
 5. Add `"src/entries/<name>.ts"` to the `entryPoints` array in `typedoc.json` so the sub-path
    appears in the generated API docs
-6. Add a row for the new sub-path to the table in `README.md`
-
-## Current sub-paths
-
-| Sub-path                   | Entry file                                      | Description       |
-| -------------------------- | ----------------------------------------------- | ----------------- |
-| `@datadog/js-core/monitor` | `src/entries/monitor.ts`                        | Monitor utilities |
-| `@datadog/js-core/time`    | `src/entries/time.ts`                           | Time utilities    |
-| `@datadog/js-core/util`    | `src/entries/util.ts` (barrel over `src/util/`) | General utilities |
