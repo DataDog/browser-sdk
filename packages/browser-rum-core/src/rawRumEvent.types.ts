@@ -73,6 +73,7 @@ export interface RawRumResourceEvent {
     protocol?: string
     delivery_type?: DeliveryType
     graphql?: GraphQlMetadata
+    websocket?: WebSocketResourceProperties
     request?: ResourceRequest
     response?: ResourceResponse
   }
@@ -84,6 +85,29 @@ export interface RawRumResourceEvent {
     page_states?: PageStateServerEntry[]
   }
   context?: Context
+}
+
+export interface WebSocketResourceProperties {
+  connection_id: string
+  handshake_succeeded: boolean
+  start_time: TimeStamp
+  end_time: TimeStamp
+  start_view_id?: string
+  end_view_id?: string
+  tracking_end_reason: 'close_event' | 'session_end'
+  close_code?: number
+  close_reason?: string
+  was_clean?: boolean
+  messages_in: { count: number; size: number }
+  messages_out: { count: number; size: number }
+  time_to_first_message_in?: ServerDuration
+  time_to_first_message_out?: ServerDuration
+  last_message_in_at?: TimeStamp
+  longest_inbound_silence: ServerDuration
+  inbound_idle_duration_before_close?: ServerDuration
+  buffered_amount_max?: number
+  protocol?: string
+  setup_duration?: ServerDuration
 }
 
 export type NetworkHeaders = Record<string, string>
