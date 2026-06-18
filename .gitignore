@@ -3,6 +3,7 @@
 bundle
 cjs
 esm
+temp
 node_modules
 coverage
 tunnel.log
