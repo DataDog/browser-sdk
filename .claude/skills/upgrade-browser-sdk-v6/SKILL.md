@@ -93,7 +93,7 @@ Access-Control-Allow-Headers: traceparent, tracestate
 
 The `site` option has a stricter TypeScript type. If you pass a non-standard value, you get a type error. Use `proxy` for non-standard intake URLs instead.
 
-Search: `grep -rn 'trackUserInteractions\|trackResources\|trackLongTasks\|traceContextInjection\|tracestate' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html"`
+Search: `grep -rn 'trackUserInteractions\|trackResources\|trackLongTasks\|traceContextInjection\|tracestate\|allowedTracingUrls\|propagatorTypes' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html"`
 
 ## Step 4: Handle Session Replay lazy loading
 
