@@ -33,7 +33,7 @@ Then run your package manager (`npm install`, `yarn install`, etc.) and rebuild.
 
 Also upgrade framework integrations to v6 if used: `@datadog/browser-rum-react`.
 
-Search: `grep -r "@datadog/browser-" package.json`
+Search: `grep -r "@datadog/browser-" --include="package.json" .`
 
 ## Step 2: Remove deprecated options
 
