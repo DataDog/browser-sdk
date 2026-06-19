@@ -608,6 +608,58 @@ describe('createViewBatchRouter', () => {
       expect((upsertSpy.calls.argsFor(0)[0] as any).view.is_active).toBe(false)
     })
 
+    it('should upsert a stale view-end without resetting state for the current view', () => {
+      const { batch, upsertSpy, flush } = createMockBatch()
+      const { route } = createViewBatchRouter(batch)
+
+      // view-1 starts and flushes
+      route(makeView('view-1', 1))
+      flush()
+
+      // view-2 starts
+      route(makeView('view-2', 1))
+      upsertSpy.calls.reset()
+
+      // stale view-1 end arrives after view-2 has started
+      const staleEnd = makeView('view-1', 2, {
+        view: {
+          id: 'view-1',
+          url: '/home',
+          referrer: '',
+          is_active: false,
+          action: { count: 0 },
+          error: { count: 0 },
+          long_task: { count: 0 },
+          resource: { count: 0 },
+          time_spent: 0,
+        },
+      })
+      route(staleEnd)
+
+      // stale end is upserted under its own key
+      expect(upsertSpy.calls.count()).toBe(1)
+      expect(upsertSpy.calls.argsFor(0)[1]).toBe('view-1')
+
+      // subsequent update for view-2 still uses opt-1 (state for view-2 was not reset)
+      route(
+        makeView('view-2', 2, {
+          view: {
+            id: 'view-2',
+            url: '/home',
+            referrer: '',
+            is_active: true,
+            action: { count: 1 },
+            error: { count: 0 },
+            long_task: { count: 0 },
+            resource: { count: 0 },
+            time_spent: 0,
+          },
+        })
+      )
+      const view2Type = (upsertSpy.calls.mostRecent().args[0] as AssembledRumEvent).type
+      expect(view2Type).toBe(RumEventType.VIEW)
+    })
+
     it('should reset to opt-1 after a new view starts following a flush', () => {
       const { batch, upsertSpy, flush } = createMockBatch()
       const { route } = createViewBatchRouter(batch)

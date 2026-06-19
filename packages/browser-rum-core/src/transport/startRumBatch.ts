@@ -113,6 +113,22 @@ export function createViewBatchRouter(
 
       const viewId = serverRumEvent.view.id
 
+      // View ended (is_active: false) — always send a full VIEW.
+      // Checked before the new-view guard so that a stale view-end for an old view
+      // (arriving after a new view has already started) is handled correctly: we upsert
+      // it without touching the state of the current view.
+      if (!serverRumEvent.view.is_active) {
+        if (viewId === lastSentView?.view.id) {
+          // Current view ended — reset all state
+          lastSentView = undefined
+          batchBase = undefined
+          batchHasFullView = false
+          viewUpdatesSinceCheckpoint = 0
+        }
+        batch.upsert(serverRumEvent, viewId)
+        return
+      }
+
       // New view started
       if (viewId !== lastSentView?.view.id) {
         viewUpdatesSinceCheckpoint = 0
@@ -124,16 +140,6 @@ export function createViewBatchRouter(
         // If upsert triggered an after-add flush (e.g. messages_limit), the VIEW was sent
         // and the batch is now empty — messagesCount == 0. Otherwise the VIEW is in the batch.
         batchHasFullView = batch.flushController.messagesCount > 0
-        return
-      }
-
-      // View ended (is_active: false)
-      if (!serverRumEvent.view.is_active) {
-        lastSentView = undefined
-        batchBase = undefined
-        batchHasFullView = false
-        viewUpdatesSinceCheckpoint = 0
-        batch.upsert(serverRumEvent, viewId)
         return
       }
 
