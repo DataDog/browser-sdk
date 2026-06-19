@@ -30,7 +30,7 @@ const LOGS_CONFIG: Partial<LogsInitConfiguration> = {
 }
 
 test.describe('microfrontend', () => {
-  test.describe('RUM', () => {
+  test.describe('RUM service and version attribution', () => {
     test.describe('with beforeSend', () => {
       createTest('expose handling stack for fetch requests')
         .withRum(RUM_CONFIG)
@@ -430,7 +430,63 @@ test.describe('microfrontend', () => {
     })
   })
 
-  test.describe('Logs', () => {
+  test.describe('RUM debug_id attribution', () => {
+    createTest('errors from console.error should have debug_id from source code context')
+      .withRum(RUM_CONFIG)
+      .withSetup(microfrontendSetup)
+      .run(async ({ intakeRegistry, flushEvents, page, withBrowserLogs }) => {
+        await page.click('#app1-console-error')
+        await flushEvents()
+
+        expect(intakeRegistry.rumErrorEvents).toHaveLength(2)
+        expect(intakeRegistry.rumErrorEvents[0]._dd?.debug_ids).toBeDefined()
+        expect(intakeRegistry.rumErrorEvents[1]._dd?.debug_ids).toBeDefined()
+
+        withBrowserLogs((browserLogs) => {
+          expect(browserLogs).toHaveLength(2)
+        })
+      })
+    createTest('runtime errors should have debug_id from source code context')
+      .withRum(RUM_CONFIG)
+      .withSetup(microfrontendSetup)
+      .run(async ({ intakeRegistry, flushEvents, page, withBrowserLogs }) => {
+        await page.click('#app1-runtime-error')
+        await page.click('#app2-runtime-error')
+        await flushEvents()
+
+        expect(intakeRegistry.rumErrorEvents).toHaveLength(2)
+        expect(intakeRegistry.rumErrorEvents[0]._dd?.debug_ids).toBeDefined()
+        expect(intakeRegistry.rumErrorEvents[1]._dd?.debug_ids).toBeDefined()
+
+        withBrowserLogs((browserLogs) => {
+          expect(browserLogs).toHaveLength(2)
+        })
+      })
+
+    createTest('LOAf should have debug_id from source code context')
+      .withRum(RUM_CONFIG)
+      .withSetup(microfrontendSetup)
+      .run(async ({ intakeRegistry, flushEvents, page }) => {
+        test.skip(
+          !(await isLongAnimationFrameSupported(page)),
+          'Browser does not support PerformanceLongAnimationFrameTiming'
+        )
+
+        await page.click('#app1-loaf')
+        await page.click('#app2-loaf')
+        await flushEvents()
+
+        const longTaskEvents = intakeRegistry.rumLongTaskEvents.filter((event) =>
+          event.long_task.scripts?.[0]?.invoker?.includes('onclick')
+        )
+
+        expect(longTaskEvents).toHaveLength(2)
+        expect(longTaskEvents[0]._dd?.debug_ids).toBeDefined()
+        expect(longTaskEvents[1]._dd?.debug_ids).toBeDefined()
+      })
+  })
+
+  test.describe('Logs service and version attribution', () => {
     createTest('expose handling stack for console.log')
       .withLogs(LOGS_CONFIG)
       .withLogsInit((configuration) => {

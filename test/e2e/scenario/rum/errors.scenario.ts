@@ -1,6 +1,6 @@
 import type { RumErrorEvent } from '@datadog/browser-rum-core'
 import { test, expect } from '@playwright/test'
-import { createTest, html } from '../../lib/framework'
+import { createTest, html, microfrontendSetup } from '../../lib/framework'
 
 // Note: using `browser.execute` to throw exceptions may result in "Script error." being reported,
 // Use createBody because `page.evaluate()` runs in a different context and breaks stack traces.
