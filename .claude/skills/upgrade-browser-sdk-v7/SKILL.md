@@ -138,7 +138,7 @@ grep -rn 'startDurationVital\|stopDurationVital\|DurationVitalReference' \
 **Step 2 — find every variable that captures the return value** (this is the failure point):
 
 ```
-grep -rEn '(var|const|let)\s+\w+\s*=\s*.+startDurationVital|\w+\s*=\s*DD_RUM\.startDurationVital|\w+\s*=\s*datadogRum\.startDurationVital' \
+grep -rEn '(var|const|let)\s+\w+\s*=\s*.+startDurationVital|[\w.]+\s*=\s*(window\.)?DD_RUM\.startDurationVital|[\w.]+\s*=\s*datadogRum\.startDurationVital' \
   --include="*.js" --include="*.ts" --include="*.tsx" --include="*.html"
 ```
 
