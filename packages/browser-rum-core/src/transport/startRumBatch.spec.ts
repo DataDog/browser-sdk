@@ -1,11 +1,10 @@
 import { ExperimentalFeature, Observable, addExperimentalFeatures } from '@datadog/browser-core'
 import { resetExperimentalFeatures } from '@datadog/browser-core/src/tools/experimentalFeatures'
+import type { FlushController, FlushEvent } from '@datadog/browser-core/src/transport/flushController'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { AssembledRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumViewEvent } from '../rumEvent.types'
-
-import type { BatchFlushEvent } from '@datadog/browser-core'
 import {
   computeAssembledViewDiff,
   createViewBatchRouter,
@@ -230,23 +229,40 @@ describe('startRumBatch partial_view_updates routing', () => {
 // ---------------------------------------------------------------------------
 
 function createMockBatch() {
-  const flushObservable = new Observable<BatchFlushEvent>()
+  const flushObservable = new Observable<FlushEvent>()
+  let messagesCount = 0
+  const upsertedKeys = new Set<string>()
 
   const addSpy = jasmine.createSpy<(message: object) => void>('add')
   const upsertSpy = jasmine.createSpy<(message: object, key: string) => void>('upsert')
 
   const batch = {
-    flushObservable,
+    flushController: {
+      flushObservable,
+      get messagesCount() {
+        return messagesCount
+      },
+    } as unknown as FlushController,
     add: addSpy,
-    upsert: upsertSpy,
+    // Simulate real batch: only new keys increment messagesCount (matching notifyBeforeAddMessage)
+    upsert: (message: object, key: string) => {
+      if (!upsertedKeys.has(key)) {
+        messagesCount++
+        upsertedKeys.add(key)
+      }
+      upsertSpy(message, key)
+    },
   }
 
   return {
     batch,
     addSpy,
     upsertSpy,
-    flush: (upsertedKeys: string[] = []) =>
-      flushObservable.notify({ upsertedKeys, reason: 'bytes_limit', bytesCount: 0, messagesCount: 0 }),
+    flush: () => {
+      messagesCount = 0
+      upsertedKeys.clear()
+      flushObservable.notify({ reason: 'bytes_limit', bytesCount: 0, messagesCount: 0 })
+    },
   }
 }
 
@@ -376,7 +392,7 @@ describe('createViewBatchRouter', () => {
       const { route } = createViewBatchRouter(batch)
 
       route(makeView('view-1', 1))
-      flush(['view-1']) // batchHasFullView resets; batchBase = v1
+      flush() // batchHasFullView resets; batchBase = v1
 
       upsertSpy.calls.reset()
 
@@ -406,7 +422,7 @@ describe('createViewBatchRouter', () => {
       const { route } = createViewBatchRouter(batch)
 
       route(makeView('view-1', 1))
-      flush(['view-1'])
+      flush()
 
       upsertSpy.calls.reset()
 
@@ -444,7 +460,7 @@ describe('createViewBatchRouter', () => {
 
       // Initial view with action.count = 0
       route(makeView('view-1', 1))
-      flush(['view-1']) // batchBase = v1 (action.count: 0)
+      flush() // batchBase = v1 (action.count: 0)
 
       upsertSpy.calls.reset()
 
@@ -491,7 +507,7 @@ describe('createViewBatchRouter', () => {
 
       const v1 = makeView('view-1', 1)
       route(v1)
-      flush(['view-1'])
+      flush()
 
       upsertSpy.calls.reset()
 
@@ -514,7 +530,7 @@ describe('createViewBatchRouter', () => {
       const { route } = createViewBatchRouter(batch)
 
       route(makeView('view-1', 1))
-      flush(['view-1'])
+      flush()
 
       upsertSpy.calls.reset()
 
@@ -568,7 +584,7 @@ describe('createViewBatchRouter', () => {
       const { route } = createViewBatchRouter(batch)
 
       route(makeView('view-1', 1))
-      flush(['view-1'])
+      flush()
 
       upsertSpy.calls.reset()
 
@@ -597,7 +613,7 @@ describe('createViewBatchRouter', () => {
       const { route } = createViewBatchRouter(batch)
 
       route(makeView('view-1', 1))
-      flush(['view-1'])
+      flush()
 
       // Start a new view in the next batch
       route(makeView('view-2', 1))
