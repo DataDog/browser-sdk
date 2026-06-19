@@ -556,8 +556,8 @@ export interface RumPublicApi extends PublicApi {
   /**
    * Start a feature operation.
    *
-   * @deprecated Use {@link startOperation} instead.
    * @category Vital - Feature Operation
+   * @deprecated Use {@link startOperation} instead.
    * @param name - Name of the operation
    * @param options - Options for the operation (operationKey, context, description)
    */
@@ -566,8 +566,8 @@ export interface RumPublicApi extends PublicApi {
   /**
    * Mark a feature operation as successful.
    *
-   * @deprecated Use {@link succeedOperation} instead.
    * @category Vital - Feature Operation
+   * @deprecated Use {@link succeedOperation} instead.
    * @param name - Name of the operation
    * @param options - Options for the operation (operationKey, context, description)
    */
@@ -576,8 +576,8 @@ export interface RumPublicApi extends PublicApi {
   /**
    * Mark a feature operation as failed.
    *
-   * @deprecated Use {@link failOperation} instead.
    * @category Vital - Feature Operation
+   * @deprecated Use {@link failOperation} instead.
    * @param name - Name of the operation
    * @param failureReason - Reason for the failure
    * @param options - Options for the operation (operationKey, context, description)
