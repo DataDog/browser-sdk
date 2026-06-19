@@ -11,6 +11,7 @@
   ],
   "type": "module",
   "scripts": {
+    "api:check": "node scripts/check-js-core-api.ts",
     "build": "yarn workspaces foreach --all --parallel --topological-dev run build",
     "build:bundle": "yarn workspaces foreach --all --parallel run build:bundle",
     "build:apps": "node scripts/build/build-test-apps.ts",
@@ -45,6 +46,7 @@
     "@datadog/rum-events-format": "DataDog/rum-events-format#commit=02c94b31a2676458a156ed627f3edcd87254beb7",
     "@eslint/js": "10.0.1",
     "@jsdevtools/coverage-istanbul-loader": "3.0.5",
+    "@microsoft/api-extractor": "7.58.9",
     "@playwright/test": "1.60.0",
     "@swc/core": "1.15.40",
     "@types/busboy": "1.5.4",
