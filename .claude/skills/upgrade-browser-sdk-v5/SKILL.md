@@ -191,7 +191,7 @@ Resource `method` field is now always uppercase (e.g., `GET`, `POST`). Update an
 
 The `session.plan` field is now only available on session events, not on all event types. Update any dashboard or monitor queries that reference `session.plan` on non-session events.
 
-Search: `grep -rn 'beforeSend\|trackFrustrations\|PerformanceEntryRepresentation\|in_foreground_periods\|context\.event[^s]\|startTime' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx"`
+Search: `grep -rn 'beforeSend\|trackFrustrations\|PerformanceEntryRepresentation\|in_foreground_periods\|context\.event\b\|startTime' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx"`
 
 ## Step 6: Handle trusted events
 
