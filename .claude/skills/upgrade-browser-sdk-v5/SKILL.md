@@ -78,7 +78,7 @@ These v4 API method names no longer exist in v5:
 | `logger.addContext`                 | `logger.setContextProperty`           |
 | `logger.removeContext`              | `logger.removeContextProperty`        |
 
-Search: `grep -rn 'removeUser\|addRumGlobalContext\|removeRumGlobalContext\|getRumGlobalContext\|setRumGlobalContext\|addLoggerGlobalContext\|removeLoggerGlobalContext\|getLoggerGlobalContext\|setLoggerGlobalContext\|\.addContext\|\.removeContext' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx"`
+Search: `grep -rn 'removeUser\|addRumGlobalContext\|removeRumGlobalContext\|getRumGlobalContext\|setRumGlobalContext\|addLoggerGlobalContext\|removeLoggerGlobalContext\|getLoggerGlobalContext\|setLoggerGlobalContext\|\.addContext\|\.removeContext' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html"`
 
 ## Step 4: Update Session Replay configuration
 
