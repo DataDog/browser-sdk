@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { RelativeTime } from '@datadog/js-core/time'
+import type { Hook } from '@datadog/js-core/assembly'
+import { createHook } from '@datadog/js-core/assembly'
 import { registerCleanupTask } from '../../../test'
 import type { LogsConfiguration } from '../../../../browser-logs/src/domain/configuration'
 import type { ContextManager } from '../context/contextManager'
 import { removeStorageListeners } from '../context/storeContextManager'
 import type { Configuration } from '../configuration'
-import type { Hook } from '../../tools/abstractHooks'
-import { createHook } from '../../tools/abstractHooks'
 import { startGlobalContext } from './globalContext'
 
 describe('logs global context', () => {

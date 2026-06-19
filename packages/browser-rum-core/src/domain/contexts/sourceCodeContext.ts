@@ -1,4 +1,5 @@
-import { SKIPPED, computeStackTrace, objectEntries, addTelemetryError, addTelemetryUsage } from '@datadog/browser-core'
+import { computeStackTrace, objectEntries, addTelemetryError, addTelemetryUsage } from '@datadog/browser-core'
+import { SKIPPED } from '@datadog/js-core/assembly'
 import type { AssembleHook, DefaultRumEventAttributes, AssembleHookParams } from '../hooks'
 
 interface SourceCodeContext {

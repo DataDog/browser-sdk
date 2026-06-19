@@ -209,6 +209,11 @@ This is the v7 major release. It removes deprecated options and legacy code path
 - **Higher-quality data** — deterministic sampling (consistent decisions across products), aborted requests no longer polluting error metrics, and a new `session_renewal` view loading type to better understand session boundaries.
 - **A cleaner API** — deprecated options and beta flags removed; what's left is the supported, stable surface going forward.
 
+> [!WARNING]
+> Upgrading to v7 introduces deterministic sampling for distributed traces based on the RUM session ID. As a result, under RUM without Limits, the likelihood to index sessions that had sampled associated traces is significantly increased — meaning more traces will now be retained by your existing Cross-Product Retention Filters RUMxAPM, even without any configuration change.
+>
+> If you have cross-product Retention Filters (e.g. RUM-linked APM traces), you may see an **increase in the volume of indexed spans**, which could lead to **higher costs**. We recommend reviewing your Retention Filter configuration and estimated span volume after upgrading.
+
 **Migrating from v6:**
 
 - Follow the [v6 → v7 migration guide](https://github.com/DataDog/documentation/blob/8ed5928d4cf04351f6ec6f6e8d605267def58351/content/en/real_user_monitoring/guide/browser-sdk-upgrade.md) in the Datadog documentation.

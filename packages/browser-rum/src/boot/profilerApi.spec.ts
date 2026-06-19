@@ -1,10 +1,18 @@
-import { describe, expect, it } from 'vitest'
-import { MID_HASH_UUID, replaceMockableWithSpy, createSessionManagerMock } from '@datadog/browser-core/test'
+import { vi, describe, expect, it, beforeEach, type Mock } from 'vitest'
+import {
+  MID_HASH_UUID,
+  replaceMockableWithSpy,
+  createSessionManagerMock,
+  replaceMockable,
+  waitNextMicrotask,
+  mockEventBridge,
+} from '@datadog/browser-core/test'
 import { mockRumConfiguration, mockViewHistory } from '@datadog/browser-rum-core/test'
 import { createHooks, LifeCycle } from '@datadog/browser-rum-core'
-import { createIdentityEncoder } from '@datadog/browser-core'
+import { BridgeCapability, createIdentityEncoder } from '@datadog/browser-core'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { makeProfilerApi } from './profilerApi'
+import { lazyLoadProfiler } from './lazyLoadProfiler'
 
 describe('profilerApi', () => {
   describe('deterministic sampling', () => {
@@ -25,6 +33,62 @@ describe('profilerApi', () => {
       )
 
       expect(isProfilingSupportedSpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('bridge mode', () => {
+    let createRumProfilerSpy: Mock
+
+    beforeEach(() => {
+      createRumProfilerSpy = vi.fn().mockReturnValue({ start: vi.fn(), stop: vi.fn() })
+      replaceMockable(isProfilingSupported, () => true)
+      replaceMockable(lazyLoadProfiler, () => Promise.resolve(createRumProfilerSpy))
+    })
+
+    async function startApi() {
+      const api = makeProfilerApi()
+      api.onRumStart(
+        new LifeCycle(),
+        createHooks(),
+        mockRumConfiguration({ profilingSampleRate: 100 }),
+        createSessionManagerMock().setId('session-id-1'),
+        mockViewHistory(),
+        createIdentityEncoder
+      )
+      await waitNextMicrotask() // let lazyLoadProfiler().then() run
+      return api
+    }
+
+    it('without bridge, it starts the profiler', async () => {
+      await startApi()
+      expect(createRumProfilerSpy).toHaveBeenCalled()
+    })
+
+    it('without PROFILES capability, it does not start the profiler', async () => {
+      mockEventBridge({ capabilities: [BridgeCapability.RECORDS] })
+      await startApi()
+      expect(createRumProfilerSpy).not.toHaveBeenCalled()
+    })
+
+    it('with PROFILES capability, it starts the profiler', async () => {
+      mockEventBridge({ capabilities: [BridgeCapability.RECORDS, BridgeCapability.PROFILES] })
+      await startApi()
+      expect(createRumProfilerSpy).toHaveBeenCalled()
+    })
+
+    it('with PROFILES capability, it starts the profiler even when profilingSampleRate is 0', async () => {
+      mockEventBridge({ capabilities: [BridgeCapability.RECORDS, BridgeCapability.PROFILES] })
+      const api = makeProfilerApi()
+      api.onRumStart(
+        new LifeCycle(),
+        createHooks(),
+        mockRumConfiguration({ profilingSampleRate: 0 }),
+        createSessionManagerMock().setId('session-id-1'),
+        mockViewHistory(),
+        createIdentityEncoder
+      )
+      await waitNextMicrotask()
+      expect(createRumProfilerSpy).toHaveBeenCalled()
     })
   })
 })

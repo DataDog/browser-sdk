@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import { createTest } from '../lib/framework'
+import { generateLongTask } from '../lib/helpers/browser.ts'
 
 test.describe('profiling', () => {
   test.beforeEach(({ browserName }) => {
@@ -72,8 +73,8 @@ test.describe('profiling', () => {
       const profileRequest = intakeRegistry.profileRequests[0]
 
       // Verify trace file metadata
-      expect(profileRequest.traceFile.encoding).toBe(null)
-      expect(profileRequest.traceFile.filename).toBe('wall-time.json')
+      expect(profileRequest.traceFile!.encoding).toBe(null)
+      expect(profileRequest.traceFile!.filename).toBe('wall-time.json')
 
       expect(profileRequest.trace).toEqual({
         resources: expect.any(Array),
@@ -145,8 +146,8 @@ test.describe('profiling', () => {
 
       const profileRequest = intakeRegistry.profileRequests[0]
 
-      expect(profileRequest.traceFile.encoding).toBe('deflate')
-      expect(profileRequest.traceFile.filename).toBe('wall-time.json')
+      expect(profileRequest.traceFile!.encoding).toBe('deflate')
+      expect(profileRequest.traceFile!.filename).toBe('wall-time.json')
 
       expect(profileRequest.event).toBeDefined()
       expect(profileRequest.trace).toBeDefined()
@@ -180,22 +181,6 @@ test.describe('profiling', () => {
       expect(intakeRegistry.profileRequests).toHaveLength(0)
     })
 })
-
-async function generateLongTask(page: Page, durationMs = 500) {
-  await page.evaluate(
-    (duration) =>
-      new Promise<void>((resolve) => {
-        setTimeout(() => {
-          const start = Date.now()
-          while (Date.now() - start < duration) {
-            /* empty */
-          }
-          resolve()
-        })
-      }),
-    durationMs
-  )
-}
 
 async function generateAction(page: Page) {
   await page.evaluate(() => window.DD_RUM!.addAction('testAction'))

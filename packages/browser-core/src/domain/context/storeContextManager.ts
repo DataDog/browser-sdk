@@ -1,6 +1,6 @@
+import { combine } from '@datadog/js-core/util'
 import { addEventListener, DOM_EVENT } from '../../browser/addEventListener'
 import type { Context } from '../../tools/serialisation/context'
-import { combine } from '../../tools/mergeInto'
 import { isEmptyObject } from '../../tools/utils/objectUtils'
 import type { ContextManager } from './contextManager'
 import type { CustomerDataType } from './contextConstants'

@@ -1,7 +1,7 @@
 import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { RelativeTime } from '@datadog/js-core/time'
 import { clocksNow } from '@datadog/js-core/time'
-import { DISCARDED, createHook } from '@datadog/browser-core'
+import { DISCARDED, createHook } from '@datadog/js-core/assembly'
 import type { SessionManagerMock } from '@datadog/browser-core/test'
 import { createSessionManagerMock } from '@datadog/browser-core/test'
 import { mockRumConfiguration, noopRecorderApi } from '../../../test'

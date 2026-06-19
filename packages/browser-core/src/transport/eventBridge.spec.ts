@@ -51,6 +51,10 @@ describe('matchesHostEntry', () => {
     ['evil.com',                       '*.shopist.io',           false],
     ['app.shopist.io.evil.com',        '*.shopist.io',           false],
     ['anything.foo.anything.bar',      '*.foo.*.bar',            false], // multiple wildcards → invalid
+    ['preview-.shopist.io',            'preview-*.shopist.io',   false], // wildcard must match at least one character
+    ['.shopist.io',                    '*.shopist.io',           false], // wildcard must match at least one character
+    ['app.shopist.io',                 '*',                      true],  // bare "*" matches any host
+    ['shopist.io',                     '*',                      true],  // bare "*" matches any host
   ]
 
   cases.forEach(([host, pattern, expected]) => {

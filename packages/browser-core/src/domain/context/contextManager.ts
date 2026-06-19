@@ -1,4 +1,4 @@
-import { deepClone } from '../../tools/mergeInto'
+import { deepClone } from '@datadog/js-core/util'
 import { sanitize } from '../../tools/serialisation/sanitize'
 import type { Context } from '../../tools/serialisation/context'
 import { Observable } from '../../tools/observable'

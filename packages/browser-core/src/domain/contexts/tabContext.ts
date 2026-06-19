@@ -1,4 +1,4 @@
-import type { Hook } from '../../tools/abstractHooks'
+import type { Hook } from '@datadog/js-core/assembly'
 import { generateUUID } from '../../tools/utils/stringUtils'
 
 export const TAB_ID_STORAGE_KEY = '_dd_tab_id'

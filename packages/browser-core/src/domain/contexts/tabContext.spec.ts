@@ -1,8 +1,8 @@
 import { vi, beforeEach, describe, expect, it } from 'vitest'
 import type { RelativeTime } from '@datadog/js-core/time'
+import type { Hook } from '@datadog/js-core/assembly'
+import { createHook } from '@datadog/js-core/assembly'
 import { registerCleanupTask } from '../../../test'
-import type { Hook } from '../../tools/abstractHooks'
-import { createHook } from '../../tools/abstractHooks'
 import { TAB_ID_STORAGE_KEY, resetCachedTabId, startTabContext } from './tabContext'
 
 const UUID_PATTERN = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/

@@ -1,6 +1,7 @@
 import { vi, afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { RelativeTime } from '@datadog/js-core/time'
-import { display, Observable, createHook } from '@datadog/browser-core'
+import { display, Observable } from '@datadog/browser-core'
+import { createHook } from '@datadog/js-core/assembly'
 import { mockCiVisibilityValues } from '../../../test'
 import type { CookieObservable } from '../../browser/cookieObservable'
 import type { AssembleHook, AssembleHookParams } from '../hooks'

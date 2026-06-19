@@ -1,9 +1,9 @@
 import { vi, afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { clocksNow } from '@datadog/js-core/time'
+import { ConsoleApiName } from '@datadog/js-core/util'
 import type { BufferedData, ConsoleLog, ErrorWithCause, RawError } from '@datadog/browser-core'
 import {
   BufferedDataType,
-  ConsoleApiName,
   ErrorHandling,
   ErrorSource,
   Observable,

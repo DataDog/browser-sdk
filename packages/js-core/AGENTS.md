@@ -46,7 +46,10 @@ Do not add:
 ### Sub-path exports
 
 All APIs live under a named sub-path (e.g. `@datadog/js-core/time`). There is no root entry
-point. Each sub-path corresponds to a single source file under `src/entries/`.
+point. Each sub-path corresponds to a single entry file under `src/entries/` — either the
+implementation itself, or a thin barrel that re-exports from sibling implementation files under
+`src/<name>/` (e.g. `src/entries/util.ts` re-exports from `src/util/display.ts` and
+`src/util/debug.ts`).
 
 Each sub-path is exposed **two ways** for maximum compatibility:
 
@@ -61,16 +64,34 @@ Each sub-path is exposed **two ways** for maximum compatibility:
 
 When adding a new sub-path:
 
-1. Create `src/entries/<name>.ts`
+1. Create `src/entries/<name>.ts` (the implementation itself, or a barrel re-exporting from sibling
+   files under `src/<name>/`)
 2. Add `"./<name>"` to the `exports` field in `package.json` with `import`, `require`, and `types`
    conditions
 3. Add a physical `<name>/package.json` with relative `main`/`module`/`types` (see
    `time/package.json`), and add `"<name>"` to the `files` array so it ships in the package
 4. Add `"@datadog/js-core/<name>"` to the `paths` map in the root `tsconfig.base.json`, pointing at
    `./packages/js-core/src/entries/<name>`
+5. Add `"src/entries/<name>.ts"` to the `entryPoints` array in `typedoc.json` so the sub-path
+   appears in the generated API docs
 
-## Current sub-paths
+### API surface linting
 
-| Sub-path                | Source file           | Description    |
-| ----------------------- | --------------------- | -------------- |
-| `@datadog/js-core/time` | `src/entries/time.ts` | Time utilities |
+The public API surface of each sub-path is tracked via [API Extractor](https://api-extractor.com/)
+golden files committed to `api/*.api.md`. If you add, remove, or change any exported symbol, the
+check will fail and you must update the reports before merging.
+
+```bash
+# Build the package first (API Extractor reads the compiled .d.ts files)
+yarn workspace @datadog/js-core build
+
+# Check: verify the API surface hasn't changed (run in CI)
+yarn api:check
+
+# Update: regenerate the golden files after an intentional API change
+yarn api:check --update
+```
+
+When adding a new sub-path, build the package then run `yarn api:check --update` —
+`scripts/check-js-core-api.ts` discovers entry points automatically from `cjs/entries/*.d.ts`
+and generates the new golden file.

@@ -296,6 +296,16 @@ check-schemas:
     - yarn
     - node scripts/check-schemas.ts
 
+check-js-core-api:
+  extends:
+    - .base-configuration
+    - .test-allowed-branches
+  interruptible: true
+  script:
+    - yarn
+    - yarn workspace @datadog/js-core build
+    - yarn api:check
+
 unit-bs:
   stage: browserstack
   needs: ['unit']

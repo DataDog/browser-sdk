@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { RelativeTime } from '@datadog/js-core/time'
-import { DISCARDED, createTrackingConsentState, TrackingConsent } from '@datadog/browser-core'
+import { createTrackingConsentState, TrackingConsent } from '@datadog/browser-core'
+import { DISCARDED } from '@datadog/js-core/assembly'
 import type { DefaultLogsEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { startTrackingConsentContext } from './trackingConsentContext'

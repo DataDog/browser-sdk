@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest'
 import {
   elapsed,
   timeStampNow,
@@ -9,7 +9,9 @@ import {
   relativeNow,
 } from '@datadog/js-core/time'
 import type { Duration } from '@datadog/js-core/time'
+import { deepClone } from '@datadog/js-core/util'
 import type { ProfilerTrace } from '@datadog/browser-core'
+import { BridgeCapability, createIdentityEncoder, createValueHistory } from '@datadog/browser-core'
 import type { ViewHistoryEntry } from '@datadog/browser-rum-core'
 import {
   LifeCycle,
@@ -18,15 +20,12 @@ import {
   VitalType,
   createHooks,
 } from '@datadog/browser-rum-core'
-import { createIdentityEncoder, createValueHistory, deepClone } from '@datadog/browser-core'
 import {
   setPageVisibility,
   restorePageVisibility,
   createNewEvent,
-  interceptRequests,
-  DEFAULT_FETCH_MOCK,
-  readFormDataRequest,
   mockClock,
+  mockEventBridge,
   waitNextMicrotask,
   replaceMockable,
   createSessionManagerMock,
@@ -41,10 +40,11 @@ import { checkProfilingQuota } from './quotaCheck'
 import type { QuotaResult } from './quotaCheck'
 import { mockedTrace } from './test-utils/mockedTrace'
 import { createRumProfiler } from './datadogProfiler'
+import { createFormDataEmitter } from './transport/formDataEmitter'
+import { createBridgeEmitter } from './transport/profilingBridge'
 import type { RUMProfilerConfiguration } from './types'
 import type { ProfilingContextManager } from './profilingContext'
 import { startProfilingContext } from './profilingContext'
-import type { ProfileEventPayload } from './transport/assembly'
 import { createLongTaskHistory, type LongTaskContext } from './longTaskHistory'
 import type { ActionContext } from './actionHistory'
 import { createActionHistory } from './actionHistory'
@@ -54,12 +54,10 @@ import { createVitalHistory } from './vitalHistory'
 describe('profiler', () => {
   // Store the original pathname
   const originalPathname = document.location.pathname
-  let interceptor: ReturnType<typeof interceptRequests>
   let checkProfilingQuotaSpy: ReturnType<typeof replaceMockableWithSpy<typeof checkProfilingQuota>>
+  let emitPayloadSpy: Mock
 
   beforeEach(() => {
-    interceptor = interceptRequests()
-    interceptor.withFetch(DEFAULT_FETCH_MOCK, DEFAULT_FETCH_MOCK, DEFAULT_FETCH_MOCK)
     // Default: quota always ok. Individual quota-check tests can reconfigure via spy.mockImplementation(...)
     checkProfilingQuotaSpy = replaceMockableWithSpy(checkProfilingQuota)
     checkProfilingQuotaSpy.mockReturnValue(Promise.resolve({ decision: 'quota_ok', reason: 'quota_ok' }))
@@ -127,6 +125,9 @@ describe('profiler', () => {
     })
     replaceMockable(createVitalHistory, () => vitalHistory)
 
+    emitPayloadSpy = vi.fn()
+    replaceMockable(createFormDataEmitter, () => emitPayloadSpy)
+
     // Start collection of profile.
     const profiler = createRumProfiler(
       mockRumConfiguration({ trackLongTasks: true, profilingSampleRate: 100 }),
@@ -191,13 +192,13 @@ describe('profiler', () => {
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
     // Wait for data collection to complete (async fire-and-forget)
-    await waitForBoolean(() => interceptor.requests.length >= 1)
+    await waitForBoolean(() => emitPayloadSpy.mock.calls.length >= 1)
 
-    expect(interceptor.requests.length).toBe(1)
-
-    const request = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[0])
-    expect(request.event.session?.id).toBe('session-id-1')
-    expect(request['wall-time.json']).toEqual(mockedRumProfilerTrace)
+    expect(emitPayloadSpy.mock.calls.length).toBe(1)
+    const payload = emitPayloadSpy.mock.calls[0][0]
+    expect(payload.profile.session).toEqual({ id: 'session-id-1' })
+    expect(payload.trace.stacks).toEqual(mockedRumProfilerTrace.stacks)
+    expect(payload.trace.samples).toEqual(mockedRumProfilerTrace.samples)
   })
 
   it('should pause profiling collection on hidden visibility and restart on visible visibility', async () => {
@@ -219,10 +220,10 @@ describe('profiler', () => {
     expect(profilingContextManager.get()?.status).toBe('running')
 
     // Wait for data collection to complete (async fire-and-forget)
-    await waitForBoolean(() => interceptor.requests.length >= 1)
+    await waitForBoolean(() => emitPayloadSpy.mock.calls.length >= 1)
 
     // Assert that the profiler has collected data on pause.
-    expect(interceptor.requests.length).toBe(1)
+    expect(emitPayloadSpy.mock.calls.length).toBe(1)
 
     // Change back to visible
     setVisibilityState('visible')
@@ -239,15 +240,15 @@ describe('profiler', () => {
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
     // Wait for data collection to complete (async fire-and-forget)
-    await waitForBoolean(() => interceptor.requests.length >= 2)
+    await waitForBoolean(() => emitPayloadSpy.mock.calls.length >= 2)
 
-    expect(interceptor.requests.length).toBe(2)
+    expect(emitPayloadSpy.mock.calls.length).toBe(2)
 
-    // Check the the sendProfilesSpy was called with the mocked trace
-    const request = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[1])
-
-    expect(request.event.session?.id).toBe('session-id-1')
-    expect(request['wall-time.json']).toEqual(mockedRumProfilerTrace)
+    // Check the emitPayloadSpy was called with the mocked trace
+    const payload = emitPayloadSpy.mock.calls[1][0]
+    expect(payload.profile.session).toEqual({ id: 'session-id-1' })
+    expect(payload.trace.stacks).toEqual(mockedRumProfilerTrace.stacks)
+    expect(payload.trace.samples).toEqual(mockedRumProfilerTrace.samples)
   })
 
   it('should collect long task happening during a profiling session', async () => {
@@ -306,16 +307,13 @@ describe('profiler', () => {
     await waitNextMicrotask()
     await waitNextMicrotask()
 
-    expect(interceptor.requests.length).toBe(2)
+    expect(emitPayloadSpy.mock.calls.length).toBe(2)
 
-    const requestOne = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[0])
-    const requestTwo = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[1])
+    const payloadOne = emitPayloadSpy.mock.calls[0][0]
+    const payloadTwo = emitPayloadSpy.mock.calls[1][0]
 
-    const traceOne = requestOne['wall-time.json']
-    const traceTwo = requestTwo['wall-time.json']
-
-    expect(requestOne.event.long_task?.id.length).toBe(2)
-    expect(traceOne.longTasks).toEqual([
+    expect(payloadOne.profile.long_task?.id.length).toBe(2)
+    expect(payloadOne.trace.longTasks).toEqual([
       {
         id: 'long-task-id-2',
         startClocks: expect.any(Object),
@@ -330,8 +328,8 @@ describe('profiler', () => {
       },
     ])
 
-    expect(requestTwo.event.long_task?.id.length).toBe(1)
-    expect(traceTwo.longTasks).toEqual([
+    expect(payloadTwo.profile.long_task?.id.length).toBe(1)
+    expect(payloadTwo.trace.longTasks).toEqual([
       {
         id: 'long-task-id-3',
         startClocks: expect.any(Object),
@@ -397,16 +395,13 @@ describe('profiler', () => {
     await waitNextMicrotask()
     await waitNextMicrotask()
 
-    expect(interceptor.requests.length).toBe(2)
+    expect(emitPayloadSpy.mock.calls.length).toBe(2)
 
-    const requestOne = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[0])
-    const requestTwo = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[1])
+    const payloadOne = emitPayloadSpy.mock.calls[0][0]
+    const payloadTwo = emitPayloadSpy.mock.calls[1][0]
 
-    const traceOne = requestOne['wall-time.json']
-    const traceTwo = requestTwo['wall-time.json']
-
-    expect(requestOne.event.action?.id.length).toBe(2)
-    expect(traceOne.actions).toEqual([
+    expect(payloadOne.profile.action?.id.length).toBe(2)
+    expect(payloadOne.trace.actions).toEqual([
       {
         id: 'action-id-2',
         startClocks: expect.any(Object),
@@ -421,8 +416,8 @@ describe('profiler', () => {
       },
     ])
 
-    expect(requestTwo.event.action?.id.length).toBe(1)
-    expect(traceTwo.actions).toEqual([
+    expect(payloadTwo.profile.action?.id.length).toBe(1)
+    expect(payloadTwo.trace.actions).toEqual([
       {
         id: 'action-id-3',
         startClocks: expect.any(Object),
@@ -491,16 +486,13 @@ describe('profiler', () => {
     await waitNextMicrotask()
     await waitNextMicrotask()
 
-    expect(interceptor.requests.length).toBe(2)
+    expect(emitPayloadSpy.mock.calls.length).toBe(2)
 
-    const requestOne = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[0])
-    const requestTwo = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[1])
+    const payloadOne = emitPayloadSpy.mock.calls[0][0]
+    const payloadTwo = emitPayloadSpy.mock.calls[1][0]
 
-    const traceOne = requestOne['wall-time.json']
-    const traceTwo = requestTwo['wall-time.json']
-
-    expect(requestOne.event.vital?.id.length).toBe(2)
-    expect(traceOne.vitals).toEqual([
+    expect(payloadOne.profile.vital?.id.length).toBe(2)
+    expect(payloadOne.trace.vitals).toEqual([
       {
         id: 'vital-id-2',
         startClocks: expect.any(Object),
@@ -515,8 +507,8 @@ describe('profiler', () => {
       },
     ])
 
-    expect(requestTwo.event.vital?.id.length).toBe(1)
-    expect(traceTwo.vitals).toEqual([
+    expect(payloadTwo.profile.vital?.id.length).toBe(1)
+    expect(payloadTwo.trace.vitals).toEqual([
       {
         id: 'vital-id-3',
         startClocks: expect.any(Object),
@@ -569,15 +561,11 @@ describe('profiler', () => {
     await waitNextMicrotask()
     await waitNextMicrotask()
 
-    expect(interceptor.requests.length).toBe(3)
+    expect(emitPayloadSpy.mock.calls.length).toBe(3)
 
-    const req1 = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[0])
-    const req2 = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[1])
-    const req3 = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[2])
-
-    const vitals1 = req1['wall-time.json'].vitals
-    const vitals2 = req2['wall-time.json'].vitals
-    const vitals3 = req3['wall-time.json'].vitals
+    const vitals1 = emitPayloadSpy.mock.calls[0][0].trace.vitals as BrowserProfilerTrace['vitals']
+    const vitals2 = emitPayloadSpy.mock.calls[1][0].trace.vitals as BrowserProfilerTrace['vitals']
+    const vitals3 = emitPayloadSpy.mock.calls[2][0].trace.vitals as BrowserProfilerTrace['vitals']
 
     // Profile 1: all three operations present, only op1 has a duration
     expect(vitals1?.map((v) => v.id)).toEqual(expect.arrayContaining(['op-id-1', 'op-id-2', 'op-id-3']))
@@ -639,10 +627,9 @@ describe('profiler', () => {
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
     // Wait for data collection to complete (async fire-and-forget)
-    await waitForBoolean(() => interceptor.requests.length >= 1)
+    await waitForBoolean(() => emitPayloadSpy.mock.calls.length >= 1)
 
-    const request = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[0])
-    const views = request['wall-time.json'].views
+    const views = emitPayloadSpy.mock.calls[0][0].trace.views
 
     expect(views.length).toBe(2)
     expect(views[0].viewId).toBe('view-user')
@@ -693,14 +680,14 @@ describe('profiler', () => {
     await waitForBoolean(() => profiler.isPaused())
 
     // Wait for data collection to complete (async fire-and-forget)
-    await waitForBoolean(() => interceptor.requests.length >= 1)
+    await waitForBoolean(() => emitPayloadSpy.mock.calls.length >= 1)
 
     // Assert that the profiler has collected data on pause.
-    expect(interceptor.requests.length).toBe(1)
+    expect(emitPayloadSpy.mock.calls.length).toBe(1)
 
-    const request = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[0])
-    expect(request.event.session?.id).toBe('session-id-1')
-    expect(request['wall-time.json'].views).toEqual([
+    const payload = emitPayloadSpy.mock.calls[0][0]
+    expect(payload.profile.session).toEqual({ id: 'session-id-1' })
+    expect(payload.trace.views).toEqual([
       {
         viewId: initialViewEntry.id,
         viewName: initialViewEntry.name,
@@ -728,14 +715,14 @@ describe('profiler', () => {
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
     // Wait for data collection to complete (async fire-and-forget)
-    await waitForBoolean(() => interceptor.requests.length >= 2)
+    await waitForBoolean(() => emitPayloadSpy.mock.calls.length >= 2)
 
-    expect(interceptor.requests.length).toBe(2)
+    expect(emitPayloadSpy.mock.calls.length).toBe(2)
 
-    // Check the the sendProfilesSpy was called with the mocked trace
-    const request2 = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[1])
-    expect(request2.event.session?.id).toBe('session-id-1')
-    expect(request2['wall-time.json']).toEqual(mockedRumProfilerTrace)
+    const payload2 = emitPayloadSpy.mock.calls[1][0]
+    expect(payload2.profile.session).toEqual({ id: 'session-id-1' })
+    expect(payload2.trace.stacks).toEqual(mockedRumProfilerTrace.stacks)
+    expect(payload2.trace.samples).toEqual(mockedRumProfilerTrace.samples)
   })
 
   it('should stop profiling when session expires', async () => {
@@ -755,10 +742,10 @@ describe('profiler', () => {
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
     // Wait for data collection to complete (async fire-and-forget)
-    await waitForBoolean(() => interceptor.requests.length >= 1)
+    await waitForBoolean(() => emitPayloadSpy.mock.calls.length >= 1)
 
     // Verify that profiler collected data before stopping
-    expect(interceptor.requests.length).toBe(1)
+    expect(emitPayloadSpy.mock.calls.length).toBe(1)
   })
 
   it('should not restart profiling after session expiration when visibility changes', async () => {
@@ -807,10 +794,10 @@ describe('profiler', () => {
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
     // Wait for data collection to complete (async fire-and-forget)
-    await waitForBoolean(() => interceptor.requests.length >= 1)
+    await waitForBoolean(() => emitPayloadSpy.mock.calls.length >= 1)
 
     // Verify that profiler collected data before stopping
-    expect(interceptor.requests.length).toBe(1)
+    expect(emitPayloadSpy.mock.calls.length).toBe(1)
 
     // Notify that the session has been renewed
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
@@ -826,10 +813,10 @@ describe('profiler', () => {
     expect(profiler.isStopped()).toBe(true)
 
     // Wait for data collection to complete (async fire-and-forget)
-    await waitForBoolean(() => interceptor.requests.length >= 2)
+    await waitForBoolean(() => emitPayloadSpy.mock.calls.length >= 2)
 
     // Should have collected data from both sessions (before expiration and after renewal)
-    expect(interceptor.requests.length).toBe(2)
+    expect(emitPayloadSpy.mock.calls.length).toBe(2)
   })
 
   it('should handle multiple session expiration and renewal cycles', async () => {
@@ -847,8 +834,8 @@ describe('profiler', () => {
     expect(profiler.isStopped()).toBe(true)
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
-    await waitForBoolean(() => interceptor.requests.length >= 1)
-    expect(interceptor.requests.length).toBe(1)
+    await waitForBoolean(() => emitPayloadSpy.mock.calls.length >= 1)
+    expect(emitPayloadSpy.mock.calls.length).toBe(1)
 
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
     await waitForBoolean(() => profiler.isRunning())
@@ -859,8 +846,8 @@ describe('profiler', () => {
     expect(profiler.isStopped()).toBe(true)
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
-    await waitForBoolean(() => interceptor.requests.length >= 2)
-    expect(interceptor.requests.length).toBe(2)
+    await waitForBoolean(() => emitPayloadSpy.mock.calls.length >= 2)
+    expect(emitPayloadSpy.mock.calls.length).toBe(2)
 
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
     await waitForBoolean(() => profiler.isRunning())
@@ -871,8 +858,8 @@ describe('profiler', () => {
     expect(profiler.isStopped()).toBe(true)
 
     // Should have collected data from: initial session + first renewal + second renewal = 3 profiles
-    await waitForBoolean(() => interceptor.requests.length >= 3)
-    expect(interceptor.requests.length).toBe(3)
+    await waitForBoolean(() => emitPayloadSpy.mock.calls.length >= 3)
+    expect(emitPayloadSpy.mock.calls.length).toBe(3)
   })
 
   it('should not restart profiling on session renewal if profiler was manually stopped', async () => {
@@ -1044,9 +1031,8 @@ describe('profiler', () => {
     await waitNextMicrotask()
     await waitNextMicrotask()
 
-    expect(interceptor.requests.length).toBe(1)
-    const request = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[0])
-    const trace = request['wall-time.json']
+    expect(emitPayloadSpy.mock.calls.length).toBe(1)
+    const trace = emitPayloadSpy.mock.calls[0][0].trace
 
     // Should only include the long task that occurred during the actual profiling window.
     // Without the fix (using timeStamp for duration), both long tasks would be included
@@ -1066,10 +1052,9 @@ describe('profiler', () => {
 
     profiler.stop()
 
-    await waitForBoolean(() => interceptor.requests.length >= 1)
+    await waitForBoolean(() => emitPayloadSpy.mock.calls.length >= 1)
 
-    const request = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[0])
-    expect(request.event.session?.id).toBe('session-id-1')
+    expect(emitPayloadSpy.mock.calls[0][0].profile.session).toEqual({ id: 'session-id-1' })
   })
 
   describe('discard logic', () => {
@@ -1087,7 +1072,7 @@ describe('profiler', () => {
       await waitNextMicrotask()
       await waitNextMicrotask()
 
-      expect(interceptor.requests.length).toBe(0)
+      expect(emitPayloadSpy.mock.calls.length).toBe(0)
     })
 
     it('should send profile when below duration threshold if a long task is present', async () => {
@@ -1111,7 +1096,7 @@ describe('profiler', () => {
       await waitNextMicrotask()
       await waitNextMicrotask()
 
-      expect(interceptor.requests.length).toBe(1)
+      expect(emitPayloadSpy.mock.calls.length).toBe(1)
     })
 
     it('should send profile when duration threshold is met', async () => {
@@ -1128,7 +1113,7 @@ describe('profiler', () => {
       await waitNextMicrotask()
       await waitNextMicrotask()
 
-      expect(interceptor.requests.length).toBe(1)
+      expect(emitPayloadSpy.mock.calls.length).toBe(1)
     })
   })
 
@@ -1179,7 +1164,7 @@ describe('profiler', () => {
         error_reason: undefined,
         quota_reason: 'quota_exceeded',
       } as any)
-      expect(interceptor.requests.length).toBe(0) // no data sent
+      expect(emitPayloadSpy.mock.calls.length).toBe(0) // no data sent
     })
 
     it('should stop profiler and set org_disabled context when quota check returns org_disabled', async () => {
@@ -1194,7 +1179,7 @@ describe('profiler', () => {
         error_reason: undefined,
         quota_reason: 'org_disabled',
       } as any)
-      expect(interceptor.requests.length).toBe(0) // no data sent
+      expect(emitPayloadSpy.mock.calls.length).toBe(0) // no data sent
     })
 
     it('should stop profiler and set unknown_reason context when quota check returns unknown_reason', async () => {
@@ -1211,7 +1196,7 @@ describe('profiler', () => {
         error_reason: undefined,
         quota_reason: 'unknown_reason',
       } as any)
-      expect(interceptor.requests.length).toBe(0) // no data sent
+      expect(emitPayloadSpy.mock.calls.length).toBe(0) // no data sent
     })
 
     it('should keep profiler running when quota check returns quota-ok', async () => {
@@ -1299,8 +1284,8 @@ describe('profiler', () => {
       expect(profilingContextManager.get()?.error_reason).toBeUndefined()
 
       // data IS sent (normal session-expired collection happens)
-      await waitForBoolean(() => interceptor.requests.length >= 1)
-      expect(interceptor.requests.length).toBeGreaterThanOrEqual(1)
+      await waitForBoolean(() => emitPayloadSpy.mock.calls.length >= 1)
+      expect(emitPayloadSpy.mock.calls.length).toBeGreaterThanOrEqual(1)
     })
 
     it('should stop profiler and not resume when quota-exceeded resolves while paused', async () => {
@@ -1405,6 +1390,44 @@ describe('profiler', () => {
       await waitNextMicrotask()
 
       expect(profiler.isStopped()).toBe(true)
+    })
+
+    it('should not call quota check in bridge mode', async () => {
+      mockEventBridge({ capabilities: [BridgeCapability.PROFILES] })
+      const { profiler } = setupProfiler()
+
+      profiler.start()
+      await waitNextMicrotask()
+      profiler.stop()
+
+      expect(checkProfilingQuotaSpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('transport selection', () => {
+    function buildProfiler() {
+      const hooks = createHooks()
+      return createRumProfiler(
+        mockRumConfiguration({ profilingSampleRate: 100 }),
+        new LifeCycle(),
+        createSessionManagerMock(),
+        startProfilingContext(hooks),
+        createIdentityEncoder,
+        mockViewHistory()
+      )
+    }
+
+    it('uses bridge emitter when event bridge is active', () => {
+      mockEventBridge({ capabilities: [BridgeCapability.PROFILES] })
+      const createBridgeEmitterSpy = replaceMockableWithSpy(createBridgeEmitter)
+      buildProfiler()
+      expect(createBridgeEmitterSpy).toHaveBeenCalled()
+    })
+
+    it('uses form data emitter when no event bridge', () => {
+      const createFormDataEmitterSpy = replaceMockableWithSpy(createFormDataEmitter)
+      buildProfiler()
+      expect(createFormDataEmitterSpy).toHaveBeenCalled()
     })
   })
 })

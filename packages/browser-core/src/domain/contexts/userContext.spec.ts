@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { RelativeTime } from '@datadog/js-core/time'
+import { createHook, type Hook } from '@datadog/js-core/assembly'
 import { registerCleanupTask } from '../../../test'
 import { mockRumConfiguration } from '../../../../browser-rum-core/test'
 import type { ContextManager } from '../context/contextManager'
 import { removeStorageListeners } from '../context/storeContextManager'
 import type { Configuration } from '../configuration'
 import type { SessionContext } from '../session/sessionManager'
-import { createHook, type Hook } from '../../tools/abstractHooks'
 import { startUserContext } from './userContext'
 
 describe('user context', () => {

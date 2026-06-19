@@ -1,15 +1,14 @@
 import type { ClocksState } from '@datadog/js-core/time'
+import { ConsoleApiName, combine } from '@datadog/js-core/util'
 import type { Context, RawError, BufferedData } from '@datadog/browser-core'
 import {
   BufferedDataType,
-  ConsoleApiName,
   Observable,
   ErrorSource,
   generateUUID,
   computeRawError,
   ErrorHandling,
   NonErrorPrefix,
-  combine,
 } from '@datadog/browser-core'
 import type { RawRumErrorEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'

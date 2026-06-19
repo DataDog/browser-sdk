@@ -1,4 +1,5 @@
 import { timeStampNow, clocksNow, timeStampToClocks } from '@datadog/js-core/time'
+import { deepClone } from '@datadog/js-core/util'
 import type { Duration, TimeStamp, RelativeTime } from '@datadog/js-core/time'
 import type {
   Context,
@@ -19,7 +20,6 @@ import type {
 import {
   ContextManagerMethod,
   addTelemetryUsage,
-  deepClone,
   makePublicApi,
   monitor,
   callMonitored,

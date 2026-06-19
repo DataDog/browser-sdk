@@ -71,7 +71,10 @@ export default defineConfig({
       '@datadog/browser-rum-core/test': path.resolve('./packages/browser-rum-core/test'),
 
       // Main package aliases (matching tsconfig.base.json paths)
+      '@datadog/js-core/assembly': path.resolve('./packages/js-core/src/entries/assembly'),
       '@datadog/js-core/time': path.resolve('./packages/js-core/src/entries/time'),
+      '@datadog/js-core/monitor': path.resolve('./packages/js-core/src/entries/monitor'),
+      '@datadog/js-core/util': path.resolve('./packages/js-core/src/entries/util'),
       '@datadog/browser-core': path.resolve('./packages/browser-core/src'),
       '@datadog/browser-flagging': path.resolve('./packages/browser-flagging/src/entries/main'),
       '@datadog/browser-logs': path.resolve('./packages/browser-logs/src/entries/main'),
