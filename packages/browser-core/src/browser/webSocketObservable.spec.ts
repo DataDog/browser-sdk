@@ -1,5 +1,6 @@
 import { registerCleanupTask } from '../../test'
 import type { Subscription } from '../tools/observable'
+import { setAllowUntrustedEvents } from './addEventListener'
 import type { WebSocketContext } from './webSocketObservable'
 import { initWebSocketObservable, resetWebSocketObservable } from './webSocketObservable'
 
@@ -80,7 +81,8 @@ describe('webSocketObservable', () => {
   })
 
   function startTracking() {
-    subscription = initWebSocketObservable({ allowUntrustedEvents: true }).subscribe((context) => {
+    setAllowUntrustedEvents(true)
+    subscription = initWebSocketObservable().subscribe((context) => {
       contexts.push(context)
     })
   }
@@ -320,37 +322,6 @@ describe('webSocketObservable', () => {
 
         expect(contexts.length).toBe(0)
       })
-    })
-  })
-
-  describe('with conflicting allowUntrustedEvents policies across callers', () => {
-    it('does not emit open or message-in for untrusted events when the customer disallows them', () => {
-      initWebSocketObservable({ allowUntrustedEvents: true })
-      subscription = initWebSocketObservable({ allowUntrustedEvents: false }).subscribe((context) => {
-        contexts.push(context)
-      })
-
-      const ws = new windowAsWebSocketHost.WebSocket('wss://example.com/socket')
-      ws.simulateOpen()
-      ws.simulateMessage('hello')
-
-      expect(getContexts('connecting').length).toBe(1)
-      expect(getContexts('open').length).toBe(0)
-      expect(getContexts('message-in').length).toBe(0)
-    })
-
-    it('emits open and message-in for untrusted events when every caller allows them', () => {
-      initWebSocketObservable({ allowUntrustedEvents: true })
-      subscription = initWebSocketObservable({ allowUntrustedEvents: true }).subscribe((context) => {
-        contexts.push(context)
-      })
-
-      const ws = new windowAsWebSocketHost.WebSocket('wss://example.com/socket')
-      ws.simulateOpen()
-      ws.simulateMessage('hello')
-
-      expect(getContexts('open').length).toBe(1)
-      expect(getContexts('message-in').length).toBe(1)
     })
   })
 })
