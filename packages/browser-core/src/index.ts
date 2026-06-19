@@ -101,6 +101,7 @@ export {
   NO_ERROR_STACK_PRESENT_MESSAGE,
 } from './domain/error/error'
 export { NonErrorPrefix } from './domain/error/error.types'
+export { getDebugIds, getSourceCodeContext } from './domain/sourceCodeContext'
 export type { Context, ContextArray, ContextValue } from './tools/serialisation/context'
 export { getCookie, getInitCookie, setCookie, deleteCookie, resetInitCookies } from './browser/cookie'
 export { isCookieStoreSupported } from './browser/cookieAccess'

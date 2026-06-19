@@ -91,6 +91,7 @@ describe('error collection', () => {
               fingerprint: undefined,
               csp: undefined,
             },
+            _dd: { debug_ids: undefined },
             type: RumEventType.ERROR,
             context: undefined,
           },
@@ -258,6 +259,7 @@ describe('error collection', () => {
           fingerprint: undefined,
           csp: undefined,
         },
+        _dd: { debug_ids: undefined },
         type: RumEventType.ERROR,
         context: { foo: 'bar' },
       })

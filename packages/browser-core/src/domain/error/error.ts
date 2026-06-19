@@ -7,6 +7,7 @@ import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
 import type { ErrorSource, ErrorHandling, RawError, RawErrorCause, ErrorWithCause, NonErrorPrefix } from './error.types'
+import { getDebugIds } from '../sourceCodeContext'
 
 export const NO_ERROR_STACK_PRESENT_MESSAGE = 'No stack, consider using an instance of Error'
 
@@ -48,6 +49,10 @@ function computeErrorBase({
   }
 }
 
+function getStackTraceUrls(stackTrace: StackTrace) {
+  return stackTrace.stack.map((frame) => frame.url).filter((url): url is string => !!url)
+}
+
 export function computeRawError({
   stackTrace,
   originalError,
@@ -60,6 +65,7 @@ export function computeRawError({
   handling,
 }: RawErrorParams): RawError {
   const errorBase = computeErrorBase({ originalError, stackTrace, source, useFallbackStack, nonErrorPrefix })
+  const resolvedStackTrace = stackTrace ?? (isError(originalError) ? computeStackTrace(originalError) : undefined)
 
   return {
     startClocks,
@@ -68,6 +74,7 @@ export function computeRawError({
     componentStack,
     originalError,
     ...errorBase,
+    debugIds: resolvedStackTrace ? getDebugIds(getStackTraceUrls(resolvedStackTrace)) : undefined,
     causes: isError(originalError) ? flattenErrorCauses(originalError, source) : undefined,
     fingerprint: tryToGetFingerprint(originalError),
     context: tryToGetErrorContext(originalError),

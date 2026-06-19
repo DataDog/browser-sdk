@@ -50,7 +50,7 @@ import { startDefaultContext } from '../domain/contexts/defaultContext'
 import type { Hooks } from '../domain/hooks'
 import { startEventCollection } from '../domain/event/eventCollection'
 import { startInitialViewMetricsTelemetry } from '../domain/view/viewMetrics/startInitialViewMetricsTelemetry'
-import { startSourceCodeContext } from '../domain/contexts/sourceCodeContext'
+import { startSourceCodeMfeContext } from '../domain/contexts/sourceCodeMfeContext'
 import type { RecorderApi, ProfilerApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -214,7 +214,7 @@ export function startRumEventCollection(
     initialViewOptions
   )
 
-  startSourceCodeContext(assembleHook)
+  startSourceCodeMfeContext(assembleHook)
 
   cleanupTasks.push(stopViewCollection)
 

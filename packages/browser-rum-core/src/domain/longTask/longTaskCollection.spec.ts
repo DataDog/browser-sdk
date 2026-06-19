@@ -80,6 +80,7 @@ describe('longTaskCollection', () => {
         type: RumEventType.LONG_TASK,
         _dd: {
           discarded: false,
+          debug_ids: undefined,
         },
       })
       expect(rawRumEvents[0].domainContext).toEqual({

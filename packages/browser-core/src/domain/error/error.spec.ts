@@ -1,6 +1,6 @@
 import { clocksNow } from '@datadog/js-core/time'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
-import { registerCleanupTask } from '../../../test'
+import { mockSourceCodeContext, registerCleanupTask } from '../../../test'
 import {
   computeRawError,
   getFileFromStackTraceString,
@@ -190,6 +190,32 @@ describe('computeRawError', () => {
     expect(causes[1].source).toContain(ErrorSource.SOURCE)
     expect(causes[1].type).toEqual(deepNestedError.name)
     expect(causes[1].stack).toContain('Error: fiz: buz')
+  })
+
+  it('attaches debug IDs for stack frame URLs present in the source code context', () => {
+    const url = 'http://path/to/debug-id.js'
+    mockSourceCodeContext({ [`Error: ctx\n    at fn (${url}:1:1)`]: { service: 'svc', ddDebugId: 'debug-id-1' } })
+
+    const error = new Error('oh snap!')
+    error.stack = `Error: oh snap!\n    at foo (${url}:52:15)`
+
+    const formatted = computeRawError({
+      ...DEFAULT_RAW_ERROR_PARAMS,
+      originalError: error,
+      handling: ErrorHandling.HANDLED,
+    })
+
+    expect(formatted.debugIds).toEqual({ [url]: 'debug-id-1' })
+  })
+
+  it('does not attach debug IDs when the error has no stack', () => {
+    const formatted = computeRawError({
+      ...DEFAULT_RAW_ERROR_PARAMS,
+      originalError: 'oh snap!',
+      handling: ErrorHandling.HANDLED,
+    })
+
+    expect(formatted.debugIds).toBeUndefined()
   })
 
   it('should propagate the original error without modifications', () => {
