@@ -96,11 +96,12 @@ const baseWebServers = [
     name: 'nuxt app',
     stdout: 'pipe' as const,
     cwd: path.join(__dirname, '../apps/nuxt-app'),
-    command: isLocal ? 'yarn dev' : 'yarn start',
-    env: { NO_COLOR: '1' },
+    // `nuxt dev` shares one vite-node IPC server; parallel Playwright workers can trigger
+    // intermittent EINVAL / aborted navigations. Preview matches CI and tolerates concurrency.
+    command: 'yarn start',
+    env: { NO_COLOR: '1', PORT: '3100', NITRO_PORT: '3100' },
     wait: {
-      // yarn dev logs:   "➜ Local:  http://localhost:PORT"
-      // yarn start logs: "Listening on http://[::]:PORT"
+      // yarn preview logs: "Listening on http://[::]:PORT" (or localhost in some versions)
       stdout: /(?:Local:\s+http:\/\/localhost|Listening on http:\/\/(?:\[[^\]]+\]|[^:]+)):(?<nuxt_app_port>\d+)/,
     },
   },
@@ -108,8 +109,8 @@ const baseWebServers = [
     name: 'nuxt vue router v4 app',
     stdout: 'pipe' as const,
     cwd: path.join(__dirname, '../apps/nuxt-vue-router-v4-app'),
-    command: isLocal ? 'yarn dev' : 'yarn start',
-    env: { NO_COLOR: '1', PORT: '3001', NITRO_PORT: '3001' },
+    command: 'yarn start',
+    env: { NO_COLOR: '1', PORT: '3200', NITRO_PORT: '3200' },
     wait: {
       stdout:
         /(?:Local:\s+http:\/\/localhost|Listening on http:\/\/(?:\[[^\]]+\]|[^:]+)):(?<nuxt_vue_router_v4_app_port>\d+)/,
