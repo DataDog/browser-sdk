@@ -19,7 +19,7 @@ Systematic migration guide from v4 to v5. Follow steps 1-7 in order. Each step i
 
 Replace `us1` with your site: `eu1`, `us3`, `us5`, `ap1`. For US1-FED, the pattern is flat: `datadog-rum-v5.js` (no site prefix). Note: AP2 is not available for v5 — upgrade to v6 first if you need AP2.
 
-Search: `grep -r "datadoghq-browser-agent.com.*v4" --include="*.html" --include="*.js" --include="*.ts" --include="*.tsx"`
+Search: `grep -r "datadoghq-browser-agent.com.*v4" --include="*.html" --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx"`
 
 **npm setup** — update `package.json` dependencies:
 
@@ -49,7 +49,7 @@ These v4 parameter names no longer exist in v5. Replace them:
 | `premiumSampleRate`       | `sessionReplaySampleRate` |
 | `replaySampleRate`        | `sessionReplaySampleRate` |
 
-Search: `grep -rn 'proxyUrl\|sampleRate\|allowedTracingOrigins\|tracingSampleRate\|trackInteractions\|premiumSampleRate\|replaySampleRate' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.html"`
+Search: `grep -rn 'proxyUrl\|sampleRate\|allowedTracingOrigins\|tracingSampleRate\|trackInteractions\|premiumSampleRate\|replaySampleRate' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html"`
 
 **Note**: `sampleRate` matches broadly. Look specifically for init config objects — `sessionSampleRate` is the v5 name for the session sampling rate.
 
@@ -78,7 +78,7 @@ These v4 API method names no longer exist in v5:
 | `logger.addContext`                 | `logger.setContextProperty`           |
 | `logger.removeContext`              | `logger.removeContextProperty`        |
 
-Search: `grep -rn 'removeUser\|addRumGlobalContext\|removeRumGlobalContext\|getRumGlobalContext\|setRumGlobalContext\|addLoggerGlobalContext\|removeLoggerGlobalContext\|getLoggerGlobalContext\|setLoggerGlobalContext\|\.addContext\|\.removeContext' --include="*.js" --include="*.ts" --include="*.tsx"`
+Search: `grep -rn 'removeUser\|addRumGlobalContext\|removeRumGlobalContext\|getRumGlobalContext\|setRumGlobalContext\|addLoggerGlobalContext\|removeLoggerGlobalContext\|getLoggerGlobalContext\|setLoggerGlobalContext\|\.addContext\|\.removeContext' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx"`
 
 ## Step 4: Update Session Replay configuration
 
@@ -132,7 +132,7 @@ DD_RUM.init({
 })
 ```
 
-Search: `grep -rn 'sessionReplaySampleRate\|startSessionReplayRecording\|defaultPrivacyLevel\|trackResources\|trackLongTasks' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.html"`
+Search: `grep -rn 'sessionReplaySampleRate\|startSessionReplayRecording\|defaultPrivacyLevel\|trackResources\|trackLongTasks' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html"`
 
 ## Step 5: Update changed APIs and behaviors
 
@@ -191,7 +191,7 @@ Resource `method` field is now always uppercase (e.g., `GET`, `POST`). Update an
 
 The `session.plan` field is now only available on session events, not on all event types. Update any dashboard or monitor queries that reference `session.plan` on non-session events.
 
-Search: `grep -rn 'beforeSend\|trackFrustrations\|PerformanceEntryRepresentation\|in_foreground_periods\|context\.event[^s]\|startTime' --include="*.js" --include="*.ts" --include="*.tsx"`
+Search: `grep -rn 'beforeSend\|trackFrustrations\|PerformanceEntryRepresentation\|in_foreground_periods\|context\.event[^s]\|startTime' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx"`
 
 ## Step 6: Handle trusted events
 
@@ -213,7 +213,7 @@ DD_RUM.init({
 })
 ```
 
-Search: `grep -rn 'dispatchEvent\|new Event\|new MouseEvent\|new KeyboardEvent' --include="*.js" --include="*.ts" --include="*.tsx"`
+Search: `grep -rn 'dispatchEvent\|new Event\|new MouseEvent\|new KeyboardEvent' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx"`
 
 ## Step 7: Update infrastructure
 

@@ -19,7 +19,7 @@ Systematic migration guide from v5 to v6. Follow steps 1-6 in order. Each step i
 
 Replace `us1` with your site: `eu1`, `us3`, `us5`, `ap1`, `ap2`. For US1-FED, the pattern is flat: `datadog-rum-v6.js` (no site prefix).
 
-Search: `grep -r "datadoghq-browser-agent.com.*v5" --include="*.html" --include="*.js" --include="*.ts" --include="*.tsx"`
+Search: `grep -r "datadoghq-browser-agent.com.*v5" --include="*.html" --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx"`
 
 **npm setup** — update `package.json` dependencies:
 
@@ -49,7 +49,7 @@ Search: `grep -r "@datadog/browser-" --include="package.json" .`
 | -------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | `sendLogsAfterSessionExpiration` | Delete. In v6, logs are always sent after session expiration (without a session ID). The option is no longer needed. |
 
-Search: `grep -rn 'useCrossSiteSessionCookie\|sendLogsAfterSessionExpiration' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.html"`
+Search: `grep -rn 'useCrossSiteSessionCookie\|sendLogsAfterSessionExpiration' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html"`
 
 ## Step 3: Update changed defaults
 
@@ -93,7 +93,7 @@ Access-Control-Allow-Headers: traceparent, tracestate
 
 The `site` option has a stricter TypeScript type. If you pass a non-standard value, you get a type error. Use `proxy` for non-standard intake URLs instead.
 
-Search: `grep -rn 'trackUserInteractions\|trackResources\|trackLongTasks\|traceContextInjection\|tracestate' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.html"`
+Search: `grep -rn 'trackUserInteractions\|trackResources\|trackLongTasks\|traceContextInjection\|tracestate' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html"`
 
 ## Step 4: Handle Session Replay lazy loading
 

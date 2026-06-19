@@ -19,7 +19,7 @@ Systematic migration guide from v6 to v7. Follow steps 1-6 in order. Each step i
 
 Replace `us1` with your site: `eu1`, `us3`, `us5`, `ap1`, `ap2`. For US1-FED, the pattern is flat: `datadog-rum-v7.js` (no site prefix).
 
-Search: `grep -r "datadoghq-browser-agent.com.*v6" --include="*.html" --include="*.js" --include="*.ts" --include="*.tsx"`
+Search: `grep -r "datadoghq-browser-agent.com.*v6" --include="*.html" --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx"`
 
 **npm setup** — update `package.json` dependencies:
 
@@ -80,7 +80,7 @@ Search init calls for these options and apply replacements:
 | -------------- | ----------------------------------------------------------------------------------------------------- |
 | `usePciIntake` | Delete. Standard intake is now PCI compliant. Update CSP if you had PCI-specific domains allowlisted. |
 
-Search: `grep -rn 'betaEncodeCookieOptions|allowFallbackToLocalStorage|trackBfcacheViews|trackEarlyRequests|betaTrackActionsInShadowDom|usePciIntake' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.html"`
+Search: `grep -rn 'betaEncodeCookieOptions|allowFallbackToLocalStorage|trackBfcacheViews|trackEarlyRequests|betaTrackActionsInShadowDom|usePciIntake' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html"`
 
 ## Step 4: Update changed APIs
 
@@ -108,7 +108,7 @@ DD_LOGS.init({
 
 Do **not** replace `forwardErrorsToLogs` with `forwardConsoleLogs` — they control different things.
 
-Search: `grep -rn "forwardErrorsToLogs" --include="*.js" --include="*.ts" --include="*.tsx" --include="*.html"`
+Search: `grep -rn "forwardErrorsToLogs" --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html"`
 
 ### 4b. `startDurationVital` / `stopDurationVital` (RUM)
 
@@ -131,7 +131,7 @@ DD_RUM.stopDurationVital('checkout_flow', { vitalKey: 'checkout_flow' })
 
 ```
 grep -rn 'startDurationVital\|stopDurationVital\|DurationVitalReference' \
-  --include="*.js" --include="*.ts" --include="*.tsx" \
+  --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" \
   --include="*.html" --include="*.svelte" --include="*.vue"
 ```
 
@@ -139,7 +139,7 @@ grep -rn 'startDurationVital\|stopDurationVital\|DurationVitalReference' \
 
 ```
 grep -rEn '(var|const|let)\s+\w+\s*=\s*.+startDurationVital|[\w.]+\s*=\s*(window\.)?DD_RUM\.startDurationVital|[\w.]+\s*=\s*datadogRum\.startDurationVital' \
-  --include="*.js" --include="*.ts" --include="*.tsx" --include="*.html"
+  --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html"
 ```
 
 For every match: remove the variable assignment and update all uses of that variable in the corresponding `stopDurationVital` call to pass the vital name string directly.
@@ -151,7 +151,7 @@ For every match: remove the variable assignment and update all uses of that vari
 
 ```
 grep -rEn '(var|const|let)\s+\w+\s*=\s*.+[Ss]tart[Tt]iming|(var|const|let)\s+\w+\s*=\s*.+[Ss]tart.+[Vv]ital' \
-  --include="*.js" --include="*.ts" --include="*.tsx" --include="*.svelte" --include="*.vue"
+  --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.svelte" --include="*.vue"
 ```
 
 3. Remove the capture and update the stop call to pass the vital name string directly:
@@ -170,7 +170,7 @@ stopTiming('checkout_flow')
 
 The `strategy` field has been removed from the plugin API. If you use `@datadog/browser-rum-react` or other plugin integrations, upgrade them to v7.
 
-Search: `grep -rn "strategy" --include="*.js" --include="*.ts" --include="*.tsx"` (look for plugin definitions)
+Search: `grep -rn "strategy" --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx"` (look for plugin definitions)
 
 ## Step 5: Review behavioral changes (no code required, but may need attention)
 
