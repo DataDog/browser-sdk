@@ -9,7 +9,7 @@ export type RumEventDomainContext<T extends RumEventType = any> = T extends type
   : T extends typeof RumEventType.ACTION
     ? RumActionEventDomainContext
     : T extends typeof RumEventType.RESOURCE
-      ? RumResourceEventDomainContext | RumManualResourceEventDomainContext
+      ? RumResourceEventDomainContext | RumManualResourceEventDomainContext | RumWebSocketResourceEventDomainContext
       : T extends typeof RumEventType.ERROR
         ? RumErrorEventDomainContext
         : T extends typeof RumEventType.LONG_TASK
@@ -47,6 +47,8 @@ export interface RumManualResourceEventDomainContext {
    */
   isManual: true
 }
+
+export type RumWebSocketResourceEventDomainContext = Record<string, never>
 
 export interface RumErrorEventDomainContext {
   error: unknown
