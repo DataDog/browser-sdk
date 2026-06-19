@@ -46,12 +46,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@angular/compiler@npm:22.0.0":
-  version: 22.0.0
-  resolution: "@angular/compiler@npm:22.0.0"
+"@angular/compiler@npm:22.0.1":
+  version: 22.0.1
+  resolution: "@angular/compiler@npm:22.0.1"
   dependencies:
     tslib: "npm:^2.3.0"
-  checksum: 10c0/1bbb5e8691ccaba66abff0e7ef0aa226f44fc1e03b0d967ba4541fd6deb94924a4794e0c3c0358bb6324a494a54fd1692645827b223f76438678068a9690b228
+  checksum: 10c0/eb2a2d21f93980d9f02929cc18583ea2914cc612b5fdb12213f3435c136c9dce8edaaa766112b8ce6f3dd1a06bc052246b5bd9b614ef5ae98252fd52a5dcd43b
   languageName: node
   linkType: hard
 
@@ -73,33 +73,33 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@angular/platform-browser@npm:22.0.0":
-  version: 22.0.0
-  resolution: "@angular/platform-browser@npm:22.0.0"
+"@angular/platform-browser@npm:22.0.1":
+  version: 22.0.1
+  resolution: "@angular/platform-browser@npm:22.0.1"
   dependencies:
     tslib: "npm:^2.3.0"
   peerDependencies:
-    "@angular/animations": 22.0.0
-    "@angular/common": 22.0.0
-    "@angular/core": 22.0.0
+    "@angular/animations": 22.0.1
+    "@angular/common": 22.0.1
+    "@angular/core": 22.0.1
   peerDependenciesMeta:
     "@angular/animations":
       optional: true
-  checksum: 10c0/ece1edec45c8d188e999603d07ae8d36b29718be4cec3071f13711b2fa4ed75762a8d48a093da05e04f9fec66ead09817e156e5fe9a4388d80be362555963d5b
+  checksum: 10c0/cae4ea78b6093b75d9b7805b2a72fde5e5fd6332f3bdd92eca06e071a5cc430c79ac60d38c3e3de66cc06c17f52777096ed9e74f2e409b51d450ef8062d5e290
   languageName: node
   linkType: hard
 
-"@angular/router@npm:22.0.0":
-  version: 22.0.0
-  resolution: "@angular/router@npm:22.0.0"
+"@angular/router@npm:22.0.1":
+  version: 22.0.1
+  resolution: "@angular/router@npm:22.0.1"
   dependencies:
     tslib: "npm:^2.3.0"
   peerDependencies:
-    "@angular/common": 22.0.0
-    "@angular/core": 22.0.0
-    "@angular/platform-browser": 22.0.0
+    "@angular/common": 22.0.1
+    "@angular/core": 22.0.1
+    "@angular/platform-browser": 22.0.1
     rxjs: ^6.5.3 || ^7.4.0
-  checksum: 10c0/571b19b1034615d98180072c3b6b39addcdf1107cfc7da0c35cc3d82cd0a3bf88329c96a572ffc566b6160c304ce4b874f82c61a087156d534cbc0da5ef14788
+  checksum: 10c0/6dfae3da31743a1d21c9c1168e686b0ffcf6b6324a2c2ad1efd70244ff4b5a161717dbf5b0904934c6dcadea87dd384c26ba536f5135f9404d2fce3da6e6a187
   languageName: node
   linkType: hard
 
@@ -391,10 +391,10 @@ __metadata:
   resolution: "@datadog/browser-rum-angular@workspace:packages/browser-rum-angular"
   dependencies:
     "@angular/common": "npm:22.0.1"
-    "@angular/compiler": "npm:22.0.0"
+    "@angular/compiler": "npm:22.0.1"
     "@angular/core": "npm:22.0.1"
-    "@angular/platform-browser": "npm:22.0.0"
-    "@angular/router": "npm:22.0.0"
+    "@angular/platform-browser": "npm:22.0.1"
+    "@angular/router": "npm:22.0.1"
     "@datadog/browser-core": "npm:7.3.0"
     "@datadog/browser-rum-core": "npm:7.3.0"
     "@datadog/js-core": "npm:0.0.3"
@@ -523,6 +523,7 @@ __metadata:
     "@datadog/browser-core": "npm:7.3.0"
     "@datadog/browser-rum-core": "npm:7.3.0"
     "@datadog/js-core": "npm:0.0.3"
+    "@vue/compiler-dom": "npm:3.5.35"
     "@vue/test-utils": "npm:2.4.11"
     vue: "npm:3.5.35"
     vue-router: "npm:5.1.0"
@@ -578,6 +579,7 @@ __metadata:
     react: "npm:19.2.7"
     react-dom: "npm:19.2.7"
     typescript: "npm:6.0.3"
+    vite: "npm:8.0.16"
     wxt: "npm:0.20.26"
   languageName: unknown
   linkType: soft
@@ -11674,7 +11676,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite@npm:^5.4.19 || ^6.3.4 || ^7.0.0 || ^8.0.0-0, vite@npm:^8.0.0":
+"vite@npm:8.0.16, vite@npm:^5.4.19 || ^6.3.4 || ^7.0.0 || ^8.0.0-0, vite@npm:^8.0.0":
   version: 8.0.16
   resolution: "vite@npm:8.0.16"
   dependencies:
