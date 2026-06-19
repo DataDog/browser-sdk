@@ -144,7 +144,8 @@ grep -rn 'startDurationVital\|stopDurationVital\|DurationVitalReference' \
 
 ```
 grep -rEn '(var|const|let)\s+\w+\s*=\s*.+startDurationVital|[\w.]+\s*=\s*(window\.)?DD_RUM\.startDurationVital|[\w.]+\s*=\s*datadogRum\.startDurationVital' \
-  --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html"
+  --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html" \
+  --include="*.svelte" --include="*.vue"
 ```
 
 For every match: remove the variable assignment and update all uses of that variable in the corresponding `stopDurationVital` call to pass the vital name string directly.
