@@ -1,6 +1,6 @@
 ---
 name: upgrade-browser-sdk-v7
-description: Use when upgrading Datadog Browser SDK from v6 to v7, when encountering removed options like betaEncodeCookieOptions, allowFallbackToLocalStorage, trackBfcacheViews, usePciIntake, or when a project references datadoghq-browser-agent.com CDN with /v6/ paths
+description: Use when upgrading Datadog Browser SDK from v6 to v7, when encountering removed options like betaEncodeCookieOptions, allowFallbackToLocalStorage, trackBfcacheViews, usePciIntake, changed APIs like forwardErrorsToLogs, startDurationVital, stopDurationVital, or when a project references datadoghq-browser-agent.com CDN with /v6/ paths
 ---
 
 # Upgrade Datadog Browser SDK to v7
@@ -138,7 +138,7 @@ grep -rn 'startDurationVital\|stopDurationVital\|DurationVitalReference' \
 **Step 2 — find every variable that captures the return value** (this is the failure point):
 
 ```
-grep -rn '\(var\|const\|let\)\s\+\w\+\s*=\s*.*startDurationVital\|\w\+\s*=\s*DD_RUM\.startDurationVital\|\w\+\s*=\s*datadogRum\.startDurationVital' \
+grep -rEn '(var|const|let)\s+\w+\s*=\s*.+startDurationVital|\w+\s*=\s*DD_RUM\.startDurationVital|\w+\s*=\s*datadogRum\.startDurationVital' \
   --include="*.js" --include="*.ts" --include="*.tsx" --include="*.html"
 ```
 
@@ -150,7 +150,7 @@ For every match: remove the variable assignment and update all uses of that vari
 2. Find callers that capture the wrapper return value:
 
 ```
-grep -rn '\(var\|const\|let\)\s\+\w\+\s*=\s*.*[Ss]tart[Tt]iming\|\(var\|const\|let\)\s\+\w\+\s*=\s*.*[Ss]tart.*[Vv]ital' \
+grep -rEn '(var|const|let)\s+\w+\s*=\s*.+[Ss]tart[Tt]iming|(var|const|let)\s+\w+\s*=\s*.+[Ss]tart.+[Vv]ital' \
   --include="*.js" --include="*.ts" --include="*.tsx" --include="*.svelte" --include="*.vue"
 ```
 
@@ -201,6 +201,15 @@ These are **default changes** — no code breaks, but behavior differs from v6:
 - **CORS** (if using `allowedTracingUrls`): Add `"baggage"` to `Access-Control-Allow-Headers` on traced origins — or set `propagateTraceBaggage: false`.
 - **Browser support**: Minimum Chrome 80+, Firefox 78+, Safari 14+ (ES2020). ~0.048% less coverage.
 
+## Common Mistakes
+
+| Mistake                                                                    | What goes wrong                                                                                                     | Fix                                                                                                                                                |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Replacing `forwardErrorsToLogs: true` with `forwardConsoleLogs: ['error']` | Unhandled errors (uncaught exceptions, unhandled rejections) stop being forwarded to Logs                           | Keep `forwardErrorsToLogs: true` unchanged and add `forwardConsoleLogs: ['error']` alongside it — they control different things                    |
+| Updating `startDurationVital` wrapper but not its callers                  | Callers pass the old ref variable (now `undefined`) to `stopDurationVital` — vital never stops, event never emitted | After updating the wrapper, search for every caller that captures the return value and update the stop call to pass the vital name string directly |
+| Missing `vitalKey` option on `stopDurationVital`                           | v7 `stopDurationVital` requires `{ vitalKey: string }` to identify which vital to stop                              | Pass the same string used in `startDurationVital`: `stopDurationVital('name', { vitalKey: 'name' })`                                               |
+| Not checking CDN/plain JS files for ref-based vitals                       | TypeScript projects surface this as a type error; plain JS silently breaks                                          | Run the Step 2 grep explicitly — don't rely on type errors to find all sites                                                                       |
+
 ## Verification checklist
 
 After upgrading, confirm:
@@ -212,3 +221,4 @@ After upgrading, confirm:
 - [ ] Distributed tracing working (no CORS errors from baggage header)
 - [ ] No `_dd_s` cookie remaining after first page load (should be `_dd_s_v2`)
 - [ ] Action names acceptable under new privacy defaults
+- [ ] No variables capturing the return value of `startDurationVital` (or wrappers around it) — all stop calls use the vital name string directly

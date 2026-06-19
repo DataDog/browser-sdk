@@ -251,6 +251,14 @@ The `"console error:"` prefix is removed from log messages. Update queries using
 
 Runtime errors, network logs, report logs, and console logs no longer inherit the main logger's context, level, or handler. Use global context and dedicated init parameters instead.
 
+## Common Mistakes
+
+| Mistake                                                                                      | What goes wrong                                                                                                             | Fix                                                                                                      |
+| -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Setting `sessionReplaySampleRate > 0` without enabling `trackResources` and `trackLongTasks` | Resources and long tasks are silently not collected — they no longer default to `true` when using `sessionReplaySampleRate` | Always add `trackResources: true, trackLongTasks: true` alongside any non-zero `sessionReplaySampleRate` |
+| Using `context.event` instead of `context.events` in `beforeSend` for action events          | Action context property renamed — `context.event` is `undefined`, DOM event details are lost                                | Update to `context.events` (array); iterate if you need all associated DOM events                        |
+| Not updating CSP `connect-src` to the new v5 intake domains                                  | SDK silently fails to send data — old intake domains are no longer valid                                                    | Update `connect-src` to the v5 intake domain for your site (see Step 7)                                  |
+
 ## Verification checklist
 
 After upgrading, confirm:
