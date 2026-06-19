@@ -77,26 +77,24 @@ export function computeAssembledViewDiff(current: RumViewEvent, last: RumViewEve
  * view_update under the same key.
  */
 export function createViewBatchRouter(
-  batch: Pick<ReturnType<typeof createBatch>, 'flushObservable' | 'add' | 'upsert'>
+  batch: Pick<ReturnType<typeof createBatch>, 'flushController' | 'add' | 'upsert'>
 ): { route: (event: AssembledRumEvent) => void; stop: () => void } {
   let lastSentView: RumViewEvent | undefined
   // Base used to compute the aggregate diff for the current batch's view_update.
-  // Advances to lastSentView when the VIEW for the active view is included in a flush.
+  // Reset to lastSentView on each flush (= what the backend received in the previous batch).
   let batchBase: RumViewEvent | undefined
   // True when the current batch already contains a full VIEW event for the active view.
+  // Reset to false on each flush.
   let batchHasFullView = false
   let viewUpdatesSinceCheckpoint = 0
 
-  // After each flush: if the active view's key was in the flushed upsert buffer, the VIEW
-  // (or view_update) was sent — advance batchBase and clear batchHasFullView.
-  // Using batch.flushObservable (not flushController.flushObservable) guarantees we know
-  // exactly which keys were sent, regardless of whether the flush was triggered before or
-  // after batch.upsert() stored the entry.
-  const { unsubscribe } = batch.flushObservable.subscribe(({ upsertedKeys }) => {
-    if (lastSentView && upsertedKeys.includes(lastSentView.view.id)) {
-      batchHasFullView = false
-      batchBase = lastSentView
-    }
+  // On flush: advance batchBase to lastSentView (what the backend now has) and clear the flag.
+  // lastSentView is set AFTER batch.upsert() in the new-view and checkpoint paths so that if
+  // upsert() triggers a sync flush, the subscriber captures the previous view (what the backend
+  // actually received), not the one being added.
+  const { unsubscribe } = batch.flushController.flushObservable.subscribe(() => {
+    batchHasFullView = false
+    batchBase = lastSentView
   })
 
   return {
@@ -117,10 +115,15 @@ export function createViewBatchRouter(
 
       // New view started
       if (viewId !== lastSentView?.view.id) {
-        lastSentView = serverRumEvent
-        batchHasFullView = true
         viewUpdatesSinceCheckpoint = 0
         batch.upsert(serverRumEvent, viewId)
+        // lastSentView set AFTER upsert: if upsert triggers a sync flush, the subscriber
+        // captures the old lastSentView as batchBase (what the backend actually received),
+        // not the new view that hasn't been sent yet.
+        lastSentView = serverRumEvent
+        // If upsert triggered an after-add flush (e.g. messages_limit), the VIEW was sent
+        // and the batch is now empty — messagesCount == 0. Otherwise the VIEW is in the batch.
+        batchHasFullView = batch.flushController.messagesCount > 0
         return
       }
 
@@ -158,8 +161,8 @@ export function createViewBatchRouter(
       viewUpdatesSinceCheckpoint += 1
       if (viewUpdatesSinceCheckpoint >= PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL) {
         viewUpdatesSinceCheckpoint = 0
-        batchHasFullView = true
         batch.upsert(serverRumEvent, viewId)
+        batchHasFullView = batch.flushController.messagesCount > 0
         return
       }
 
