@@ -97,12 +97,13 @@ These are now **independent**. In v6, `forwardErrorsToLogs: true` had a side eff
 // v6
 DD_LOGS.init({
   forwardErrorsToLogs: true,
+  forwardConsoleLogs: ['warn'], // example: existing levels
 })
 
-// v7
+// v7 — keep forwardErrorsToLogs, add 'error' to existing forwardConsoleLogs
 DD_LOGS.init({
   forwardErrorsToLogs: true, // unchanged — still forwards unhandled errors
-  forwardConsoleLogs: ['error'], // new — restores console.error forwarding
+  forwardConsoleLogs: ['warn', 'error'], // add 'error'; preserve any existing levels
 })
 ```
 
