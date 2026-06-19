@@ -1,16 +1,15 @@
 import { Observable } from '../../src/tools/observable'
-import type { PageExitReason } from '../../src/browser/pageMayExitObservable'
-import type { FlushEvent, FlushController, FlushReason } from '../../src/transport'
+import type { FlushEvent, FlushController, FlushReason, UrgentFlushReason } from '../../src/transport'
 
 export type MockFlushController = ReturnType<typeof createMockFlushController>
 
 export function createMockFlushController() {
   const flushObservable = new Observable<FlushEvent>()
-  const preparePageExitFlushObservable = new Observable<PageExitReason>()
+  const prepareUrgentFlushObservable = new Observable<UrgentFlushReason>()
   let currentMessagesCount = 0
   let currentBytesCount = 0
 
-  return {
+  const flushController = {
     notifyBeforeAddMessage: jasmine
       .createSpy<FlushController['notifyBeforeAddMessage']>()
       .and.callFake((messageBytesCount) => {
@@ -22,14 +21,19 @@ export function createMockFlushController() {
       .and.callFake((messageBytesCountDiff = 0) => {
         currentBytesCount += messageBytesCountDiff
       }),
+    flushObservable,
+    prepareUrgentFlushObservable,
+    forceFlush: jasmine.createSpy<FlushController['forceFlush']>(),
+  } satisfies FlushController
+
+  return {
+    ...flushController,
     get messagesCount() {
       return currentMessagesCount
     },
     get bytesCount() {
       return currentBytesCount
     },
-    flushObservable,
-    preparePageExitFlushObservable,
     notifyFlush(reason: FlushReason = 'bytes_limit') {
       if (currentMessagesCount === 0) {
         throw new Error(
@@ -49,5 +53,5 @@ export function createMockFlushController() {
         messagesCount,
       })
     },
-  } satisfies Record<any, any> & FlushController
+  }
 }

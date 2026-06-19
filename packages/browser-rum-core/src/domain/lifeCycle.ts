@@ -1,5 +1,5 @@
 import type { ClocksState, Duration } from '@datadog/js-core/time'
-import type { Context, PageMayExitEvent, RawError } from '@datadog/browser-core'
+import type { Context, RawError, UrgentFlushReason } from '@datadog/browser-core'
 import { AbstractLifeCycle } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumEvent, AssembledRumEvent } from '../rawRumEvent.types'
@@ -37,7 +37,7 @@ export const enum LifeCycleEventType {
   // on the same domain.
   SESSION_EXPIRED,
   SESSION_RENEWED,
-  PAGE_MAY_EXIT,
+  PREPARE_URGENT_FLUSH,
   RAW_RUM_EVENT_COLLECTED,
   RUM_EVENT_COLLECTED,
   RAW_ERROR_COLLECTED,
@@ -72,7 +72,7 @@ declare const LifeCycleEventTypeAsConst: {
   WEBSOCKET_COMPLETED: LifeCycleEventType.WEBSOCKET_COMPLETED
   SESSION_EXPIRED: LifeCycleEventType.SESSION_EXPIRED
   SESSION_RENEWED: LifeCycleEventType.SESSION_RENEWED
-  PAGE_MAY_EXIT: LifeCycleEventType.PAGE_MAY_EXIT
+  PREPARE_URGENT_FLUSH: LifeCycleEventType.PREPARE_URGENT_FLUSH
   RAW_RUM_EVENT_COLLECTED: LifeCycleEventType.RAW_RUM_EVENT_COLLECTED
   RUM_EVENT_COLLECTED: LifeCycleEventType.RUM_EVENT_COLLECTED
   RAW_ERROR_COLLECTED: LifeCycleEventType.RAW_ERROR_COLLECTED
@@ -95,7 +95,7 @@ export interface LifeCycleEventMap {
   [LifeCycleEventTypeAsConst.WEBSOCKET_COMPLETED]: WebSocketCompleteEvent
   [LifeCycleEventTypeAsConst.SESSION_EXPIRED]: void
   [LifeCycleEventTypeAsConst.SESSION_RENEWED]: void
-  [LifeCycleEventTypeAsConst.PAGE_MAY_EXIT]: PageMayExitEvent
+  [LifeCycleEventTypeAsConst.PREPARE_URGENT_FLUSH]: UrgentFlushReason
   [LifeCycleEventTypeAsConst.RAW_RUM_EVENT_COLLECTED]: RawRumEventCollectedData
   [LifeCycleEventTypeAsConst.RUM_EVENT_COLLECTED]: AssembledRumEvent
   [LifeCycleEventTypeAsConst.RAW_ERROR_COLLECTED]: {

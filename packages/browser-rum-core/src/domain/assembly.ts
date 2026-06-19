@@ -1,4 +1,4 @@
-import type { RawError, EventRateLimiter } from '@datadog/browser-core'
+import type { EventRateLimiter } from '@datadog/browser-core'
 import { isEmptyObject, display, createEventRateLimiter, buildTags } from '@datadog/browser-core'
 import { DISCARDED } from '@datadog/js-core/assembly'
 import { combine } from '@datadog/js-core/util'
@@ -58,7 +58,7 @@ export function startRumAssembly(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   assembleHook: AssembleHook,
-  reportError: (error: RawError) => void,
+  reportError: (message: string) => void,
   eventRateLimit?: number
 ) {
   const eventRateLimiters = {

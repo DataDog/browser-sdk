@@ -4,5 +4,5 @@ export type { BrowserWindowWithEventBridge, DatadogEventBridge } from './eventBr
 export { canUseEventBridge, bridgeSupports, getEventBridge, BridgeCapability } from './eventBridge'
 export type { Batch } from './batch'
 export { createBatch } from './batch'
-export type { FlushController, FlushEvent, FlushReason } from './flushController'
+export type { FlushController, FlushEvent, FlushReason, UrgentFlushReason } from './flushController'
 export { createFlushController, FLUSH_DURATION_LIMIT } from './flushController'

@@ -1,6 +1,5 @@
 import type {
   Observable,
-  RawError,
   DeflateEncoderStreamId,
   Encoder,
   BufferedData,
@@ -19,7 +18,9 @@ import {
   startTabContext,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
+  ErrorSource,
 } from '@datadog/browser-core'
+import { clocksNow } from '@datadog/js-core/time'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { createWindowOpenObservable } from '../browser/windowOpenObservable'
 import { startInternalContext } from '../domain/contexts/internalContext'
@@ -79,33 +80,27 @@ export function startRum(
   sessionManager.expireObservable.subscribe(() => lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED))
   sessionManager.renewObservable.subscribe(() => lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED))
 
-  const reportError = (error: RawError) => {
-    lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
+  const reportError = (message: string) => {
+    lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, {
+      error: { message, source: ErrorSource.AGENT, startClocks: clocksNow() },
+    })
     // monitor-until: forever, to keep an eye on the errors reported to customers
-    addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
+    addTelemetryDebug('Error reported to customer', { 'error.message': message })
   }
 
-  const pageMayExitObservable = createPageMayExitObservable()
-
   if (!canUseEventBridge()) {
-    const batch = startRumBatch(
-      configuration,
-      lifeCycle,
-      reportError,
-      pageMayExitObservable,
-      sessionManager.expireObservable,
-      createEncoder
-    )
-    const preparePageExitSubscription = batch.flushController.preparePageExitFlushObservable.subscribe((reason) => {
-      lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, { reason })
+    const batch = startRumBatch(configuration, lifeCycle, reportError, sessionManager.expireObservable, createEncoder)
+    const preparePageExitSubscription = batch.prepareUrgentFlushObservable.subscribe((reason) => {
+      lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, reason)
     })
     cleanupTasks.push(() => preparePageExitSubscription.unsubscribe())
     cleanupTasks.push(() => batch.stop())
-    startCustomerDataTelemetry(telemetry, lifeCycle, batch.flushController.flushObservable)
+    startCustomerDataTelemetry(telemetry, lifeCycle, batch.flushObservable)
   } else {
     startRumEventBridge(lifeCycle)
+    const pageMayExitObservable = createPageMayExitObservable()
     const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => {
-      lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, event)
+      lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, event.reason)
     })
     cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
   }
@@ -152,7 +147,7 @@ export function startRumEventCollection(
   initialViewOptions: ViewOptions | undefined,
   bufferedDataObservable: Observable<BufferedData>,
   sdkName: SdkName | undefined,
-  reportError: (error: RawError) => void
+  reportError: (message: string) => void
 ) {
   const cleanupTasks: Array<() => void> = []
 
