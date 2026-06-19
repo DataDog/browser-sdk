@@ -513,28 +513,60 @@ export interface RumPublicApi extends PublicApi {
   stopDurationVital: (name: string, options?: DurationVitalOptions) => void
 
   /**
-   * Start a feature operation.
+   * Start an operation.
    *
-   * Call {@link succeedFeatureOperation} or {@link failFeatureOperation} with the same name (and optional
+   * Call {@link succeedOperation} or {@link failOperation} with the same name (and optional
    * `operationKey`) to send a RUM vital event marking the end of the operation.
    *
-   * @category Vital - Feature Operation
+   * @category Vital - Operation
    * @param name - Name of the operation
    * @param options - Options for the operation (operationKey, context, description)
    * @example
    * ```ts
-   * datadogRum.startFeatureOperation('checkout')
+   * datadogRum.startOperation('checkout')
    * // ... perform the operation
-   * datadogRum.succeedFeatureOperation('checkout')
+   * datadogRum.succeedOperation('checkout')
    * ```
+   */
+  startOperation: (name: string, options?: FeatureOperationOptions) => void
+
+  /**
+   * Mark an operation as successful.
+   *
+   * Sends a RUM vital event marking the end of the operation started with {@link startOperation}.
+   *
+   * @category Vital - Operation
+   * @param name - Name of the operation
+   * @param options - Options for the operation (operationKey, context, description)
+   */
+  succeedOperation: (name: string, options?: FeatureOperationOptions) => void
+
+  /**
+   * Mark an operation as failed.
+   *
+   * Sends a RUM vital event marking the end of the operation started with {@link startOperation}.
+   *
+   * @category Vital - Operation
+   * @param name - Name of the operation
+   * @param failureReason - Reason for the failure
+   * @param options - Options for the operation (operationKey, context, description)
+   */
+  failOperation: (name: string, failureReason: FailureReason, options?: FeatureOperationOptions) => void
+
+  /**
+   * Start a feature operation.
+   *
+   * @deprecated Use {@link startOperation} instead.
+   * @category Vital - Feature Operation
+   * @param name - Name of the operation
+   * @param options - Options for the operation (operationKey, context, description)
    */
   startFeatureOperation: (name: string, options?: FeatureOperationOptions) => void
 
   /**
    * Mark a feature operation as successful.
    *
-   * Sends a RUM vital event marking the end of the operation started with {@link startFeatureOperation}.
-   *
+   * @deprecated Use {@link succeedOperation} instead.
    * @category Vital - Feature Operation
    * @param name - Name of the operation
    * @param options - Options for the operation (operationKey, context, description)
@@ -544,8 +576,7 @@ export interface RumPublicApi extends PublicApi {
   /**
    * Mark a feature operation as failed.
    *
-   * Sends a RUM vital event marking the end of the operation started with {@link startFeatureOperation}.
-   *
+   * @deprecated Use {@link failOperation} instead.
    * @category Vital - Feature Operation
    * @param name - Name of the operation
    * @param failureReason - Reason for the failure
@@ -969,7 +1000,7 @@ export function makeRumPublicApi(
       })
     }),
 
-    startFeatureOperation: (name, options) => {
+    startOperation: (name, options) => {
       const handlingStack = createHandlingStack('vital')
       callMonitored(() => {
         addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'start' })
@@ -977,15 +1008,23 @@ export function makeRumPublicApi(
       })
     },
 
-    succeedFeatureOperation: monitor((name, options) => {
+    succeedOperation: monitor((name, options) => {
       addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'succeed' })
       strategy.addOperationStepVital(name, 'end', options)
     }),
 
-    failFeatureOperation: monitor((name, failureReason, options) => {
+    failOperation: monitor((name, failureReason, options) => {
       addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'fail' })
       strategy.addOperationStepVital(name, 'end', options, failureReason)
     }),
+
+    // Deprecated aliases — kept for backwards compatibility, forward to the renamed APIs above.
+    startFeatureOperation: (name, options) => rumPublicApi.startOperation(name, options),
+
+    succeedFeatureOperation: (name, options) => rumPublicApi.succeedOperation(name, options),
+
+    failFeatureOperation: (name, failureReason, options) => rumPublicApi.failOperation(name, failureReason, options),
+
     DEFAULT_TRACKED_RESOURCE_HEADERS,
   })
 
