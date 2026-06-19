@@ -1020,7 +1020,13 @@ export function makeRumPublicApi(
     }),
 
     // Deprecated aliases — kept for backwards compatibility, forward to the renamed APIs above.
-    startFeatureOperation: (name, options) => rumPublicApi.startOperation(name, options),
+    startFeatureOperation: (name, options) => {
+      const handlingStack = createHandlingStack('vital')
+      callMonitored(() => {
+        addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'start' })
+        strategy.addOperationStepVital(name, 'start', { ...options, handlingStack })
+      })
+    },
 
     succeedFeatureOperation: (name, options) => rumPublicApi.succeedOperation(name, options),
 

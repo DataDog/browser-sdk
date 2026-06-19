@@ -39,7 +39,8 @@ export interface OperationOptions extends VitalOptions {
   operationKey?: string
 }
 
-export type FeatureOperationOptions = OperationOptions
+/** @deprecated Use {@link OperationOptions} instead. */
+export interface FeatureOperationOptions extends OperationOptions {}
 
 export type FailureReason = 'error' | 'abandoned' | 'other'
 
