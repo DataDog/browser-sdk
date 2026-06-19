@@ -109,7 +109,11 @@ DD_LOGS.init({
 
 Do **not** replace `forwardErrorsToLogs` with `forwardConsoleLogs` — they control different things.
 
-Search: `grep -rn "forwardErrorsToLogs" --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html"`
+Search for explicit config: `grep -rn "forwardErrorsToLogs" --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html"`
+
+Also search for Logs init calls that may be relying on the default (`forwardErrorsToLogs` defaults to `true` in v6, so omitting it still had the side effect): `grep -rn "DD_LOGS\.init\|datadogLogs\.init" --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html"`
+
+For any Logs init call without an explicit `forwardConsoleLogs: ['error']`, add it to preserve v6 behavior.
 
 ### 4b. `startDurationVital` / `stopDurationVital` (RUM)
 
