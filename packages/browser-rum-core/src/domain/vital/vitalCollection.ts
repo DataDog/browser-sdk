@@ -35,9 +35,11 @@ export interface DurationVitalOptions extends VitalOptions {
   vitalKey?: string
 }
 
-export interface FeatureOperationOptions extends VitalOptions {
+export interface OperationOptions extends VitalOptions {
   operationKey?: string
 }
+
+export type FeatureOperationOptions = OperationOptions
 
 export type FailureReason = 'error' | 'abandoned' | 'other'
 
@@ -104,7 +106,7 @@ export function startVitalCollection(lifeCycle: LifeCycle, pageStateHistory: Pag
   function addOperationStepVital(
     name: string,
     stepType: 'start' | 'end',
-    options?: FeatureOperationOptions & { handlingStack?: string },
+    options?: OperationOptions & { handlingStack?: string },
     failureReason?: FailureReason
   ) {
     const { operationKey, context, description, handlingStack } = options || {}

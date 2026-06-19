@@ -45,6 +45,7 @@ import type { ViewOptions } from '../domain/view/trackViews'
 import type {
   AddDurationVitalOptions,
   DurationVitalOptions,
+  OperationOptions,
   FeatureOperationOptions,
   FailureReason,
 } from '../domain/vital/vitalCollection'
@@ -528,7 +529,7 @@ export interface RumPublicApi extends PublicApi {
    * datadogRum.succeedOperation('checkout')
    * ```
    */
-  startOperation: (name: string, options?: FeatureOperationOptions) => void
+  startOperation: (name: string, options?: OperationOptions) => void
 
   /**
    * Mark an operation as successful.
@@ -539,7 +540,7 @@ export interface RumPublicApi extends PublicApi {
    * @param name - Name of the operation
    * @param options - Options for the operation (operationKey, context, description)
    */
-  succeedOperation: (name: string, options?: FeatureOperationOptions) => void
+  succeedOperation: (name: string, options?: OperationOptions) => void
 
   /**
    * Mark an operation as failed.
@@ -551,7 +552,7 @@ export interface RumPublicApi extends PublicApi {
    * @param failureReason - Reason for the failure
    * @param options - Options for the operation (operationKey, context, description)
    */
-  failOperation: (name: string, failureReason: FailureReason, options?: FeatureOperationOptions) => void
+  failOperation: (name: string, failureReason: FailureReason, options?: OperationOptions) => void
 
   /**
    * Start a feature operation.
