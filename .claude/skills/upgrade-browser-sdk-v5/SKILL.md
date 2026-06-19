@@ -213,7 +213,7 @@ DD_RUM.init({
 })
 ```
 
-Search: `grep -rn 'dispatchEvent\|new Event\|new MouseEvent\|new KeyboardEvent' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx"`
+Search: `grep -rn 'dispatchEvent\|new Event\|new MouseEvent\|new KeyboardEvent\|\.click()' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html"`
 
 ## Step 7: Update infrastructure
 
