@@ -65,7 +65,6 @@ export type {
   HttpRequestEvent,
   Payload,
   FlushEvent,
-  BatchFlushEvent,
   FlushReason,
   UrgentFlushReason,
 } from './transport'
