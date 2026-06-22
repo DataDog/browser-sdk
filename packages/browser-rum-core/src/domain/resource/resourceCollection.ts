@@ -159,7 +159,9 @@ function assembleWebSocketResource(
     startClocks: event.startClocks,
     duration,
     rawRumEvent,
-    domainContext: {},
+    domainContext: {
+      isManual: false,
+    },
   }
 }
 
