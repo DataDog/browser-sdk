@@ -1,7 +1,7 @@
 # Helper stage: install pinned Playwright 1.40.1 browsers using Node 20.
 # Node 26 has a yauzl extraction deadlock bug (playwright/playwright#40724)
 # that affects Playwright < 1.60.0 — running this step on Node 20 avoids it.
-FROM node:20-bookworm-slim AS playwright-pinned-browsers
+FROM node:25-bookworm-slim AS playwright-pinned-browsers
 RUN npx -y playwright@1.40.1 install --with-deps chromium firefox webkit
 
 FROM node:26.3.0-bookworm-slim
