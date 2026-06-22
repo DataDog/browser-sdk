@@ -7,7 +7,7 @@ import { RumEventType } from '../rawRumEvent.types'
 import type { RumViewEvent } from '../rumEvent.types'
 import {
   computeAssembledViewDiff,
-  createViewBatchRouter,
+  createBatchDispatcher,
   PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL,
 } from './startRumBatch'
 
@@ -291,22 +291,22 @@ function makeView(viewId: string, docVersion: number, overrides: Record<string, 
 }
 
 // ---------------------------------------------------------------------------
-// createViewBatchRouter tests
+// createBatchDispatcher tests
 // ---------------------------------------------------------------------------
 
-describe('createViewBatchRouter', () => {
+describe('createBatchDispatcher', () => {
   describe('feature flag OFF', () => {
     it('should upsert full VIEW events (legacy behaviour)', () => {
       resetExperimentalFeatures()
       registerCleanupTask(resetExperimentalFeatures)
 
       const { batch, upsertSpy } = createMockBatch()
-      const { route } = createViewBatchRouter(batch)
+      const { dispatch } = createBatchDispatcher(batch)
 
       const v1 = makeView('view-1', 1)
       const v2 = makeView('view-1', 2)
-      route(v1)
-      route(v2)
+      dispatch(v1)
+      dispatch(v2)
 
       expect(upsertSpy.calls.count()).toBe(2)
       expect((upsertSpy.calls.argsFor(0)[0] as AssembledRumEvent).type).toBe(RumEventType.VIEW)
@@ -322,10 +322,10 @@ describe('createViewBatchRouter', () => {
 
     it('should always append non-view events', () => {
       const { batch, addSpy, upsertSpy } = createMockBatch()
-      const { route } = createViewBatchRouter(batch)
+      const { dispatch } = createBatchDispatcher(batch)
 
       const action = { type: RumEventType.ACTION } as unknown as AssembledRumEvent
-      route(action)
+      dispatch(action)
 
       expect(addSpy.calls.count()).toBe(1)
       expect(upsertSpy.calls.count()).toBe(0)
@@ -340,7 +340,7 @@ describe('createViewBatchRouter', () => {
 
     it('should upsert the latest full VIEW for every intermediate update', () => {
       const { batch, upsertSpy } = createMockBatch()
-      const { route } = createViewBatchRouter(batch)
+      const { dispatch } = createBatchDispatcher(batch)
 
       const v1 = makeView('view-1', 1)
       const v2 = makeView('view-1', 2, {
@@ -356,8 +356,8 @@ describe('createViewBatchRouter', () => {
           time_spent: 0,
         },
       })
-      route(v1) // initial — sets batchHasFullView
-      route(v2) // intermediate — opt 1
+      dispatch(v1) // initial — sets batchHasFullView
+      dispatch(v2) // intermediate — opt 1
 
       // Both calls must be upsert with full VIEW type
       expect(upsertSpy.calls.count()).toBe(2)
@@ -370,11 +370,11 @@ describe('createViewBatchRouter', () => {
 
     it('should not emit any view_update events while the VIEW is in the batch', () => {
       const { batch, upsertSpy } = createMockBatch()
-      const { route } = createViewBatchRouter(batch)
+      const { dispatch } = createBatchDispatcher(batch)
 
-      route(makeView('view-1', 1))
-      route(makeView('view-1', 2))
-      route(makeView('view-1', 3))
+      dispatch(makeView('view-1', 1))
+      dispatch(makeView('view-1', 2))
+      dispatch(makeView('view-1', 3))
 
       const emittedTypes = upsertSpy.calls.allArgs().map(([event]) => (event as AssembledRumEvent).type)
       expect(emittedTypes.every((t) => t === RumEventType.VIEW)).toBeTrue()
@@ -389,9 +389,9 @@ describe('createViewBatchRouter', () => {
 
     it('should upsert an aggregate view_update after a flush', () => {
       const { batch, upsertSpy, flush } = createMockBatch()
-      const { route } = createViewBatchRouter(batch)
+      const { dispatch } = createBatchDispatcher(batch)
 
-      route(makeView('view-1', 1))
+      dispatch(makeView('view-1', 1))
       flush() // batchHasFullView resets; batchBase = v1
 
       upsertSpy.calls.reset()
@@ -409,7 +409,7 @@ describe('createViewBatchRouter', () => {
           time_spent: 0,
         },
       })
-      route(v2)
+      dispatch(v2)
 
       expect(upsertSpy.calls.count()).toBe(1)
       const emitted = upsertSpy.calls.argsFor(0)[0] as AssembledRumEvent
@@ -419,9 +419,9 @@ describe('createViewBatchRouter', () => {
 
     it('should aggregate multiple updates into a single view_update per batch', () => {
       const { batch, upsertSpy, flush } = createMockBatch()
-      const { route } = createViewBatchRouter(batch)
+      const { dispatch } = createBatchDispatcher(batch)
 
-      route(makeView('view-1', 1))
+      dispatch(makeView('view-1', 1))
       flush()
 
       upsertSpy.calls.reset()
@@ -441,9 +441,9 @@ describe('createViewBatchRouter', () => {
             time_spent: 0,
           },
         })
-      route(makeUpdate(2, 1))
-      route(makeUpdate(3, 2))
-      route(makeUpdate(4, 3))
+      dispatch(makeUpdate(2, 1))
+      dispatch(makeUpdate(3, 2))
+      dispatch(makeUpdate(4, 3))
 
       // Each call upserts with the same key — the last one is what gets sent.
       // Assert all three called upsert (not add), all under the same key.
@@ -456,16 +456,16 @@ describe('createViewBatchRouter', () => {
 
     it('should compute the diff from batchBase, not from the previous intermediate update', () => {
       const { batch, upsertSpy, flush } = createMockBatch()
-      const { route } = createViewBatchRouter(batch)
+      const { dispatch } = createBatchDispatcher(batch)
 
       // Initial view with action.count = 0
-      route(makeView('view-1', 1))
+      dispatch(makeView('view-1', 1))
       flush() // batchBase = v1 (action.count: 0)
 
       upsertSpy.calls.reset()
 
       // Two intermediate updates: action count goes 0 → 1 → 2
-      route(
+      dispatch(
         makeView('view-1', 2, {
           view: {
             id: 'view-1',
@@ -480,7 +480,7 @@ describe('createViewBatchRouter', () => {
           },
         })
       )
-      route(
+      dispatch(
         makeView('view-1', 3, {
           view: {
             id: 'view-1',
@@ -503,17 +503,17 @@ describe('createViewBatchRouter', () => {
 
     it('should emit nothing if nothing changed since batchBase', () => {
       const { batch, upsertSpy, flush } = createMockBatch()
-      const { route } = createViewBatchRouter(batch)
+      const { dispatch } = createBatchDispatcher(batch)
 
       const v1 = makeView('view-1', 1)
-      route(v1)
+      dispatch(v1)
       flush()
 
       upsertSpy.calls.reset()
 
       // Same content, only document_version differs (always-required, ignored in diff)
       const v2 = makeView('view-1', 2)
-      route(v2)
+      dispatch(v2)
 
       expect(upsertSpy.calls.count()).toBe(0)
     })
@@ -527,16 +527,16 @@ describe('createViewBatchRouter', () => {
 
     it('should send a full VIEW after PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL intermediate updates', () => {
       const { batch, upsertSpy, flush } = createMockBatch()
-      const { route } = createViewBatchRouter(batch)
+      const { dispatch } = createBatchDispatcher(batch)
 
-      route(makeView('view-1', 1))
+      dispatch(makeView('view-1', 1))
       flush()
 
       upsertSpy.calls.reset()
 
       // Trigger exactly PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL updates
       for (let i = 2; i <= PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL + 1; i++) {
-        route(
+        dispatch(
           makeView('view-1', i, {
             view: {
               id: 'view-1',
@@ -567,10 +567,10 @@ describe('createViewBatchRouter', () => {
 
     it('should send a full VIEW when a new view starts', () => {
       const { batch, upsertSpy } = createMockBatch()
-      const { route } = createViewBatchRouter(batch)
+      const { dispatch } = createBatchDispatcher(batch)
 
-      route(makeView('view-1', 1))
-      route(makeView('view-2', 1)) // new view
+      dispatch(makeView('view-1', 1))
+      dispatch(makeView('view-2', 1)) // new view
 
       const keys = upsertSpy.calls.allArgs().map(([, key]) => key)
       expect(keys).toEqual(['view-1', 'view-2'])
@@ -581,9 +581,9 @@ describe('createViewBatchRouter', () => {
 
     it('should send a full VIEW when the view ends', () => {
       const { batch, upsertSpy, flush } = createMockBatch()
-      const { route } = createViewBatchRouter(batch)
+      const { dispatch } = createBatchDispatcher(batch)
 
-      route(makeView('view-1', 1))
+      dispatch(makeView('view-1', 1))
       flush()
 
       upsertSpy.calls.reset()
@@ -601,7 +601,7 @@ describe('createViewBatchRouter', () => {
           time_spent: 0,
         },
       })
-      route(endView)
+      dispatch(endView)
 
       expect(upsertSpy.calls.count()).toBe(1)
       expect((upsertSpy.calls.argsFor(0)[0] as AssembledRumEvent).type).toBe(RumEventType.VIEW)
@@ -610,14 +610,14 @@ describe('createViewBatchRouter', () => {
 
     it('should upsert a stale view-end without resetting state for the current view', () => {
       const { batch, upsertSpy, flush } = createMockBatch()
-      const { route } = createViewBatchRouter(batch)
+      const { dispatch } = createBatchDispatcher(batch)
 
       // view-1 starts and flushes
-      route(makeView('view-1', 1))
+      dispatch(makeView('view-1', 1))
       flush()
 
       // view-2 starts
-      route(makeView('view-2', 1))
+      dispatch(makeView('view-2', 1))
       upsertSpy.calls.reset()
 
       // stale view-1 end arrives after view-2 has started
@@ -634,14 +634,14 @@ describe('createViewBatchRouter', () => {
           time_spent: 0,
         },
       })
-      route(staleEnd)
+      dispatch(staleEnd)
 
       // stale end is upserted under its own key
       expect(upsertSpy.calls.count()).toBe(1)
       expect(upsertSpy.calls.argsFor(0)[1]).toBe('view-1')
 
       // subsequent update for view-2 still uses opt-1 (state for view-2 was not reset)
-      route(
+      dispatch(
         makeView('view-2', 2, {
           view: {
             id: 'view-2',
@@ -662,15 +662,15 @@ describe('createViewBatchRouter', () => {
 
     it('should reset to opt-1 after a new view starts following a flush', () => {
       const { batch, upsertSpy, flush } = createMockBatch()
-      const { route } = createViewBatchRouter(batch)
+      const { dispatch } = createBatchDispatcher(batch)
 
-      route(makeView('view-1', 1))
+      dispatch(makeView('view-1', 1))
       flush()
 
       // Start a new view in the next batch
-      route(makeView('view-2', 1))
+      dispatch(makeView('view-2', 1))
       // Intermediate update for view-2 — should be opt-1 (full VIEW), not opt-2 (view_update)
-      route(
+      dispatch(
         makeView('view-2', 2, {
           view: {
             id: 'view-2',

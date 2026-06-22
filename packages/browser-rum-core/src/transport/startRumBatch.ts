@@ -76,9 +76,9 @@ export function computeAssembledViewDiff(current: RumViewEvent, last: RumViewEve
  * The checkpoint (every N updates in opt-2) upserts a full VIEW, replacing any pending
  * view_update under the same key.
  */
-export function createViewBatchRouter(
+export function createBatchDispatcher(
   batch: Pick<ReturnType<typeof createBatch>, 'flushController' | 'add' | 'upsert'>
-): { route: (event: AssembledRumEvent) => void; stop: () => void } {
+): { dispatch: (event: AssembledRumEvent) => void; stop: () => void } {
   let lastSentView: RumViewEvent | undefined
   // Base used to compute the aggregate diff for the current batch's view_update.
   // Reset to lastSentView on each flush (= what the backend received in the previous batch).
@@ -98,7 +98,7 @@ export function createViewBatchRouter(
   })
 
   return {
-    route: (serverRumEvent: AssembledRumEvent) => {
+    dispatch: (serverRumEvent: AssembledRumEvent) => {
       if (serverRumEvent.type !== RumEventType.VIEW) {
         // Non-view events: always append
         batch.add(serverRumEvent)
@@ -204,12 +204,12 @@ export function startRumBatch(
   })
   sessionExpireObservable.subscribe(() => batch.forceFlush('session_expire'))
 
-  const { route, stop: stopRouter } = createViewBatchRouter(batch)
-  lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, route)
+  const { dispatch, stop: stopDispatcher } = createBatchDispatcher(batch)
+  lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, dispatch)
 
   const originalBatchStop = batch.stop.bind(batch)
   batch.stop = () => {
-    stopRouter()
+    stopDispatcher()
     originalBatchStop()
   }
 
