@@ -1020,6 +1020,7 @@ export function makeRumPublicApi(
     }),
 
     // Deprecated aliases — kept for backwards compatibility, forward to the renamed APIs above.
+    // TODO: remove in the next major version (RUM-16921).
     startFeatureOperation: (name, options) => {
       const handlingStack = createHandlingStack('vital')
       callMonitored(() => {
