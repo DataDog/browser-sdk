@@ -17,7 +17,7 @@ Systematic migration guide from v4 to v5. Follow steps 1-7 in order. Each step i
 | `datadoghq-browser-agent.com/us1/v4/datadog-logs.js`     | `datadoghq-browser-agent.com/us1/v5/datadog-logs.js`     |
 | `datadoghq-browser-agent.com/us1/v4/datadog-rum-slim.js` | `datadoghq-browser-agent.com/us1/v5/datadog-rum-slim.js` |
 
-Replace `us1` with your site: `eu1`, `us3`, `us5`, `ap1`. For US1-FED, the pattern is flat: `datadog-rum-v5.js` (no site prefix). Note: AP2 is not available for v5 — upgrade to v6 first if you need AP2.
+Replace `us1` with your site: `eu1`, `us3`, `us5`, `ap1`. For US1-FED, the pattern is flat with no site prefix: `datadog-rum-v5.js`, `datadog-logs-v5.js`, `datadog-rum-slim-v5.js`. Note: AP2 is not available for v5 — upgrade to v6 first if you need AP2.
 
 Search: `grep -r "datadoghq-browser-agent.com.*v4" --include="*.html" --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx"`
 

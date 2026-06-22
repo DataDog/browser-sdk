@@ -17,7 +17,7 @@ Systematic migration guide from v6 to v7. Follow steps 1-6 in order. Each step i
 | `datadoghq-browser-agent.com/us1/v6/datadog-logs.js`     | `datadoghq-browser-agent.com/us1/v7/datadog-logs.js`     |
 | `datadoghq-browser-agent.com/us1/v6/datadog-rum-slim.js` | `datadoghq-browser-agent.com/us1/v7/datadog-rum-slim.js` |
 
-Replace `us1` with your site: `eu1`, `us3`, `us5`, `ap1`, `ap2`. For US1-FED, the pattern is flat: `datadog-rum-v7.js` (no site prefix).
+Replace `us1` with your site: `eu1`, `us3`, `us5`, `ap1`, `ap2`. For US1-FED, the pattern is flat with no site prefix: `datadog-rum-v7.js`, `datadog-logs-v7.js`, `datadog-rum-slim-v7.js`.
 
 Search: `grep -r "datadoghq-browser-agent.com.*v6" --include="*.html" --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx"`
 
