@@ -12,9 +12,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@datadog/webpack-plugin@npm:3.1.8":
-  version: 3.1.8
-  resolution: "@datadog/webpack-plugin@npm:3.1.8"
+"@datadog/webpack-plugin@npm:3.2.0":
+  version: 3.2.0
+  resolution: "@datadog/webpack-plugin@npm:3.2.0"
   dependencies:
     "@datadog/js-instrumentation-wasm": "npm:1.0.8"
     "@jridgewell/remapping": "npm:2.3.5"
@@ -30,9 +30,9 @@ __metadata:
     simple-git: "npm:3.36.0"
     unplugin: "npm:2.3.11"
   peerDependencies:
-    "@babel/parser": 7.24.5
-    "@babel/traverse": 7.24.5
-    "@babel/types": 7.24.5
+    "@babel/parser": ^7.24.5
+    "@babel/traverse": ^7.24.5
+    "@babel/types": ^7.24.5
     magic-string: ^0.30.0
     webpack: ">= 5.x < 6.x"
   peerDependenciesMeta:
@@ -44,7 +44,7 @@ __metadata:
       optional: true
     magic-string:
       optional: true
-  checksum: 10c0/27572b9c5f2de8977747fff5f94eef00d9e0cddb4d1bee12327e502fa0ff1c4dbba4ba4e3d5c27d17a8157b7ad75fc12a3557867133e2f02cfcccd90eb97a85a
+  checksum: 10c0/7b79e8c04958771e568bf8ee6527e35d472d9f93e828fdba91ab16f9a5309cafc74820e77f59f6057a1425c2c9ddebec708c1b100c92b47da48a07ac40dbdbf9
   languageName: node
   linkType: hard
 
@@ -1347,7 +1347,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "microfrontend-test-app@workspace:."
   dependencies:
-    "@datadog/webpack-plugin": "npm:3.1.8"
+    "@datadog/webpack-plugin": "npm:3.2.0"
     "@module-federation/enhanced": "npm:2.5.1"
     ts-loader: "npm:9.6.0"
     typescript: "npm:6.0.3"
