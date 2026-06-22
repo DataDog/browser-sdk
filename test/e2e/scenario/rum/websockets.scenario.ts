@@ -129,6 +129,27 @@ test.describe('rum websockets', () => {
       expect(wsWithSessionEnd).toBeDefined()
     })
 
+  createTest('websocket resource keeps end_view_id when the session expires')
+    .withRum({ enableExperimentalFeatures: ['track_web_sockets'] })
+    .withBody(WEBSOCKET_TEST_BODY)
+    .run(async ({ intakeRegistry, flushEvents, page, browserContext }) => {
+      await page.locator('#ws-open').click()
+      await expect(page.locator('#ws-status')).toHaveText('open')
+      await expireSession(page, browserContext)
+
+      await flushEvents()
+
+      const wsWithSessionEnd = getWebSocketResources(intakeRegistry.rumResourceEvents).find(
+        (e) => e.resource.websocket.tracking_end_reason === 'session_end'
+      )
+      expect(wsWithSessionEnd).toBeDefined()
+
+      expect(wsWithSessionEnd!.resource.websocket.start_view_id).toBeDefined()
+      // Test websocketCollection is resilient to the session expiration event being emitted after the view history is closed.
+      expect(wsWithSessionEnd!.resource.websocket.end_view_id).toBeDefined()
+      expect(wsWithSessionEnd!.resource.websocket.end_view_id).toBe(wsWithSessionEnd!.resource.websocket.start_view_id)
+    })
+
   createTest('websocket resource records different start and end views when it spanned multiple views')
     .withRum({ enableExperimentalFeatures: ['track_web_sockets'] })
     .withBody(WEBSOCKET_TEST_BODY)

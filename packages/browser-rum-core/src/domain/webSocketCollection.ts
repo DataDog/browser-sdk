@@ -230,7 +230,10 @@ function buildCompletedEvent(
   viewHistory: ViewHistory
 ): WebSocketCompleteEvent {
   const endClocks = endInfo.at
-  const endViewId = viewHistory.findView(endClocks.relative)?.id
+  const endViewId =
+    trackingEndReason === 'session_end'
+      ? viewHistory.findView(endClocks.relative, { returnInactive: true })?.id
+      : viewHistory.findView(endClocks.relative)?.id
   const inboundIdleDurationBeforeClose =
     webSocket.lastMessageInAt !== undefined ? elapsed(webSocket.lastMessageInAt, endClocks.timeStamp) : undefined
 
