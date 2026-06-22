@@ -83,10 +83,11 @@ DD_RUM.init({
 
 ### 3c. `tracestate` header added with `tracecontext` propagator
 
-The `tracecontext` propagator now sends an additional `tracestate` header. Your server must accept it:
+The `tracecontext` propagator now sends an additional `tracestate` header. Your server must accept it. Add it to your existing `Access-Control-Allow-Headers` — do not replace the full list:
 
 ```
-Access-Control-Allow-Headers: traceparent, tracestate
+# Add tracestate alongside your existing headers
+Access-Control-Allow-Headers: <existing-headers>, traceparent, tracestate
 ```
 
 ### 3d. `site` parameter is strongly typed
@@ -125,10 +126,7 @@ No code changes needed. The SDK dynamically loads an additional chunk when recor
 ## Step 6: Update infrastructure
 
 - **Browser support**: ES2018 baseline. IE11 is no longer supported.
-- **CORS**: Add `tracestate` to `Access-Control-Allow-Headers` if using the `tracecontext` propagator:
-  ```
-  Access-Control-Allow-Headers: traceparent, tracestate
-  ```
+- **CORS**: Add `tracestate` to your existing `Access-Control-Allow-Headers` if using the `tracecontext` propagator (do not replace the full list): `Access-Control-Allow-Headers: <existing-headers>, traceparent, tracestate`
 - **CSP**: Allow the dynamically loaded Session Replay chunk (e.g., `datadogRecorder-*-datadog-rum.js`) in `script-src` rules.
 - **Bundler config**: Ensure your bundler supports dynamic imports for Session Replay lazy loading.
 
