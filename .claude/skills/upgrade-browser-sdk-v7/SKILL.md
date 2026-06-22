@@ -210,7 +210,7 @@ These are **default changes** — no code breaks, but behavior differs from v6:
   - Update chunk names like `datadog*-datadog-rum.js` (e.g. `datadogRecorder`, `datadogProfiler`).
   - If you removed `usePciIntake`, update CSP for standard intake domain.
 - **Cookies**: Add `_dd_s_v2` to cookie allowlists. The SDK auto-migrates from `_dd_s` on first load. Rollback to v6 starts new sessions.
-- **CORS** (if using `allowedTracingUrls`): Add `"baggage"` to `Access-Control-Allow-Headers` on traced origins — or set `propagateTraceBaggage: false`.
+- **CORS**: Search for tracing config: `grep -rn "allowedTracingUrls\|propagateTraceBaggage" --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html" --include="*.vue" --include="*.svelte"`. For any project with `allowedTracingUrls` and no explicit `propagateTraceBaggage: false`, add `"baggage"` to your existing `Access-Control-Allow-Headers` on traced origins — or set `propagateTraceBaggage: false` to opt out.
 - **Browser support**: Minimum Chrome 80+, Firefox 78+, Safari 14+ (ES2020). ~0.048% less coverage.
 
 ## Common Mistakes
