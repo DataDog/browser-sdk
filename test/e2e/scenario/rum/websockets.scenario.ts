@@ -150,6 +150,25 @@ test.describe('rum websockets', () => {
       expect(wsWithSessionEnd!.resource.websocket.end_view_id).toBe(wsWithSessionEnd!.resource.websocket.start_view_id)
     })
 
+  // This behavior might be updated when we're able to link the websocket connection with APM traces.
+  createTest('does not collect websocket vital or resource when trackResources is false')
+    .withRum({ enableExperimentalFeatures: ['track_web_sockets'], trackResources: false })
+    .withBody(WEBSOCKET_TEST_BODY)
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.locator('#ws-open').click()
+      await expect(page.locator('#ws-status')).toHaveText('open')
+      await page.locator('#ws-close-client').click()
+      await expect(page.locator('#ws-status')).toContainText('closed')
+
+      await flushEvents()
+
+      const connectingVital = intakeRegistry.rumVitalEvents.find((e) => e.vital.name === 'websocket-connecting')
+      expect(connectingVital).toBeUndefined()
+
+      const wsResources = getWebSocketResources(intakeRegistry.rumResourceEvents)
+      expect(wsResources).toHaveLength(0)
+    })
+
   createTest('websocket resource records different start and end views when it spanned multiple views')
     .withRum({ enableExperimentalFeatures: ['track_web_sockets'] })
     .withBody(WEBSOCKET_TEST_BODY)
