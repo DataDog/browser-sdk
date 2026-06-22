@@ -88,7 +88,7 @@ Search: `grep -rn 'betaEncodeCookieOptions\|allowFallbackToLocalStorage\|trackBf
 
 These are now **independent**. In v6, `forwardErrorsToLogs: true` had a side effect: it also forwarded `console.error()` calls to Logs. In v7, that side effect is removed.
 
-- `forwardErrorsToLogs` — controls forwarding of **unhandled errors** (uncaught exceptions, unhandled rejections) to Logs. **Keep this unchanged.**
+- `forwardErrorsToLogs` — controls forwarding of **unhandled errors** (uncaught exceptions, unhandled rejections) and **network errors** to Logs. **Keep this unchanged.**
 - `forwardConsoleLogs` — controls forwarding of **`console.error()` calls** to Logs. Add `'error'` here to restore the v6 side effect.
 
 **Keep `forwardErrorsToLogs: true` and add `forwardConsoleLogs: ['error']` alongside it:**
