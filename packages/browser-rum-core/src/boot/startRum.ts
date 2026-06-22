@@ -228,7 +228,7 @@ export function startRumEventCollection(
 
   const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory)
 
-  if (isExperimentalFeatureEnabled(ExperimentalFeature.TRACK_WEB_SOCKETS)) {
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.TRACK_WEB_SOCKETS) && configuration.trackResources) {
     const webSocketCollection = startWebSocketCollection(lifeCycle, viewHistory, vitalCollection.addDurationVital)
     cleanupTasks.push(webSocketCollection.stop)
   }
