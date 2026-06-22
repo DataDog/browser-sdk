@@ -241,10 +241,11 @@ v5 sends data to new intake domains. Update your Content Security Policy:
 
 ### CORS headers for distributed tracing
 
-v5 adds `tracecontext` as a default propagator. If you use `allowedTracingUrls`, your server must accept the `traceparent` header:
+v5 adds `tracecontext` as a default propagator. If you use `allowedTracingUrls`, your server must accept the `traceparent` header. Add it to your existing `Access-Control-Allow-Headers` — do not replace the full list:
 
 ```
-Access-Control-Allow-Headers: traceparent
+# Add traceparent alongside your existing headers
+Access-Control-Allow-Headers: <existing-headers>, traceparent
 ```
 
 ### Logs: `error.origin` removed
