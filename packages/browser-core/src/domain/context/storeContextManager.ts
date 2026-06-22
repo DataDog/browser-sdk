@@ -1,7 +1,7 @@
 import { combine } from '@datadog/js-core/util'
 import { addEventListener, DOM_EVENT } from '../../browser/addEventListener'
 import type { Context } from '../../tools/serialisation/context'
-import { isEmptyObject } from '../../tools/utils/objectUtils'
+import { isEmptyObject, tryJsonParse } from '../../tools/utils/objectUtils'
 import type { ContextManager } from './contextManager'
 import type { CustomerDataType } from './contextConstants'
 
@@ -45,7 +45,7 @@ export function storeContextManager(
 
   function getFromStorage() {
     const rawContext = localStorage.getItem(storageKey)
-    return rawContext ? (JSON.parse(rawContext) as Context) : {}
+    return rawContext ? (tryJsonParse<Context>(rawContext) ?? {}) : {}
   }
 }
 
