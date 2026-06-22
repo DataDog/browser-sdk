@@ -733,6 +733,24 @@ export function makeRumPublicApi(
     })
   }
 
+  const startOperation: RumPublicApi['startOperation'] = (name, options) => {
+    const handlingStack = createHandlingStack('vital')
+    callMonitored(() => {
+      addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'start' })
+      strategy.addOperationStepVital(name, 'start', { ...options, handlingStack })
+    })
+  }
+
+  const succeedOperation: RumPublicApi['succeedOperation'] = monitor((name, options) => {
+    addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'succeed' })
+    strategy.addOperationStepVital(name, 'end', options)
+  })
+
+  const failOperation: RumPublicApi['failOperation'] = monitor((name, failureReason, options) => {
+    addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'fail' })
+    strategy.addOperationStepVital(name, 'end', options, failureReason)
+  })
+
   const rumPublicApi: RumPublicApi = makePublicApi<RumPublicApi>({
     init: (initConfiguration) => {
       const errorStack = new Error().stack
@@ -1001,37 +1019,15 @@ export function makeRumPublicApi(
       })
     }),
 
-    startOperation: (name, options) => {
-      const handlingStack = createHandlingStack('vital')
-      callMonitored(() => {
-        addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'start' })
-        strategy.addOperationStepVital(name, 'start', { ...options, handlingStack })
-      })
-    },
-
-    succeedOperation: monitor((name, options) => {
-      addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'succeed' })
-      strategy.addOperationStepVital(name, 'end', options)
-    }),
-
-    failOperation: monitor((name, failureReason, options) => {
-      addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'fail' })
-      strategy.addOperationStepVital(name, 'end', options, failureReason)
-    }),
+    startOperation,
+    succeedOperation,
+    failOperation,
 
     // Deprecated aliases — kept for backwards compatibility, forward to the renamed APIs above.
     // TODO: remove in the next major version (RUM-16921).
-    startFeatureOperation: (name, options) => {
-      const handlingStack = createHandlingStack('vital')
-      callMonitored(() => {
-        addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'start' })
-        strategy.addOperationStepVital(name, 'start', { ...options, handlingStack })
-      })
-    },
-
-    succeedFeatureOperation: (name, options) => rumPublicApi.succeedOperation(name, options),
-
-    failFeatureOperation: (name, failureReason, options) => rumPublicApi.failOperation(name, failureReason, options),
+    startFeatureOperation: startOperation,
+    succeedFeatureOperation: succeedOperation,
+    failFeatureOperation: failOperation,
 
     DEFAULT_TRACKED_RESOURCE_HEADERS,
   })
