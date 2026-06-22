@@ -49,7 +49,7 @@ These v4 parameter names no longer exist in v5. Replace them:
 | `premiumSampleRate`       | `sessionReplaySampleRate` |
 | `replaySampleRate`        | `sessionReplaySampleRate` |
 
-Search: `grep -rn 'proxyUrl\|sampleRate\|allowedTracingOrigins\|tracingSampleRate\|trackInteractions\|premiumSampleRate\|replaySampleRate' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html"`
+Search: `grep -rn 'proxyUrl\|sampleRate\|allowedTracingOrigins\|tracingSampleRate\|trackInteractions\|premiumSampleRate\|replaySampleRate' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html" --include="*.vue" --include="*.svelte"`
 
 **Note**: `sampleRate` matches broadly. Look specifically for init config objects — `sessionSampleRate` is the v5 name for the session sampling rate.
 
@@ -78,7 +78,7 @@ These v4 API method names no longer exist in v5:
 | `logger.addContext`                 | `logger.setContextProperty`           |
 | `logger.removeContext`              | `logger.removeContextProperty`        |
 
-Search: `grep -rn 'removeUser\|addRumGlobalContext\|removeRumGlobalContext\|getRumGlobalContext\|setRumGlobalContext\|addLoggerGlobalContext\|removeLoggerGlobalContext\|getLoggerGlobalContext\|setLoggerGlobalContext\|\.addContext\|\.removeContext' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html"`
+Search: `grep -rn 'removeUser\|addRumGlobalContext\|removeRumGlobalContext\|getRumGlobalContext\|setRumGlobalContext\|addLoggerGlobalContext\|removeLoggerGlobalContext\|getLoggerGlobalContext\|setLoggerGlobalContext\|\.addContext\|\.removeContext' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html" --include="*.vue" --include="*.svelte"`
 
 ## Step 4: Update Session Replay configuration
 
@@ -132,7 +132,7 @@ DD_RUM.init({
 })
 ```
 
-Search: `grep -rn 'sessionReplaySampleRate\|startSessionReplayRecording\|defaultPrivacyLevel\|trackResources\|trackLongTasks' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html"`
+Search: `grep -rn 'sessionReplaySampleRate\|startSessionReplayRecording\|defaultPrivacyLevel\|trackResources\|trackLongTasks' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html" --include="*.vue" --include="*.svelte"`
 
 ## Step 5: Update changed APIs and behaviors
 
@@ -191,7 +191,7 @@ Resource `method` field is now always uppercase (e.g., `GET`, `POST`). Update an
 
 The `session.plan` field is now only available on session events, not on all event types. Update any dashboard or monitor queries that reference `session.plan` on non-session events.
 
-Search: `grep -rn 'beforeSend\|trackFrustrations\|PerformanceEntryRepresentation\|in_foreground_periods\|context\.event\b\|startTime' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html"`
+Search: `grep -rn 'beforeSend\|trackFrustrations\|PerformanceEntryRepresentation\|in_foreground_periods\|context\.event\b\|startTime' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html" --include="*.vue" --include="*.svelte"`
 
 ## Step 6: Handle trusted events
 
@@ -213,7 +213,7 @@ DD_RUM.init({
 })
 ```
 
-Search: `grep -rn 'dispatchEvent\|new Event\|new MouseEvent\|new KeyboardEvent\|\.click()' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html"`
+Search: `grep -rn 'dispatchEvent\|new Event\|new MouseEvent\|new KeyboardEvent\|\.click()' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html" --include="*.vue" --include="*.svelte"`
 
 ## Step 7: Update infrastructure
 
