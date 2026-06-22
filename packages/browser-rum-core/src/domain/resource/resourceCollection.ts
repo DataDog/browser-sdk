@@ -13,6 +13,7 @@ import {
 } from '@datadog/browser-core'
 import type { Duration } from '@datadog/js-core/time'
 import { elapsed, relativeToClocks, toServerDuration } from '@datadog/js-core/time'
+import { combine } from '@datadog/js-core/util'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../../browser/performanceObservable'
 import { getNavigationEntry } from '../../browser/performanceUtils'
 import type { RumResourceEventDomainContext } from '../../domainContext.types'
@@ -43,7 +44,6 @@ import {
 } from './resourceUtils'
 import type { ManualResourceData } from './trackManualResources'
 import { trackManualResources } from './trackManualResources'
-import { combine } from '@datadog/js-core/util'
 
 // Delay before looking up the request matching a request-type performance entry. See the call
 // site in `startResourceCollection` for the rationale.
