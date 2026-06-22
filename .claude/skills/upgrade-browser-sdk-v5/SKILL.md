@@ -200,7 +200,15 @@ v5 only listens to user-generated (trusted) events. Script-generated events are 
 If you rely on programmatic events (e.g., `dispatchEvent`), add the `__ddIsTrusted` attribute:
 
 ```js
+// JavaScript
 const click = new Event('click')
+click.__ddIsTrusted = true
+document.dispatchEvent(click)
+```
+
+```ts
+// TypeScript
+const click = new Event('click') as Event & { __ddIsTrusted?: boolean }
 click.__ddIsTrusted = true
 document.dispatchEvent(click)
 ```
