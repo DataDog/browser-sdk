@@ -59,22 +59,9 @@ export function computeAssembledViewDiff(current: RumViewEvent, last: RumViewEve
 }
 
 /**
- * Creates the VIEW routing handler for the RUM batch.
- *
- * Two optimizations over the naive "always upsert full view" approach:
- *
- * Optimization 1 — VIEW already in batch:
- * Intermediate updates upsert the latest full VIEW (same key), keeping a single up-to-date
- * entry. No view_update event is emitted. Equivalent to the non-experimental path.
- *
- * Optimization 2 — no VIEW in batch (post-flush):
- * Intermediate updates compute an aggregate diff from batchBase (the state the backend
- * received in the last batch) and upsert it under the same key. Multiple updates in the
- * same batch produce one view_update, not N.
- *
- * On each flush, batchHasFullView resets and batchBase advances to lastSentView.
- * The checkpoint (every N updates in opt-2) upserts a full VIEW, replacing any pending
- * view_update under the same key.
+ * Dispatches assembled RUM events to the batch. VIEW events are handled specially:
+ * intermediate updates either replace the full VIEW already in the batch, or are
+ * aggregated into a single view_update diff against the last flushed state.
  */
 export function createBatchDispatcher(
   batch: Pick<ReturnType<typeof createBatch>, 'flushController' | 'add' | 'upsert'>
