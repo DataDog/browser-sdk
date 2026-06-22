@@ -80,7 +80,7 @@ Search init calls for these options and apply replacements:
 | -------------- | ----------------------------------------------------------------------------------------------------- |
 | `usePciIntake` | Delete. Standard intake is now PCI compliant. Update CSP if you had PCI-specific domains allowlisted. |
 
-Search: `grep -rn 'betaEncodeCookieOptions\|allowFallbackToLocalStorage\|trackBfcacheViews\|trackEarlyRequests\|betaTrackActionsInShadowDom\|usePciIntake' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html"`
+Search: `grep -rn 'betaEncodeCookieOptions\|allowFallbackToLocalStorage\|trackBfcacheViews\|trackEarlyRequests\|betaTrackActionsInShadowDom\|usePciIntake' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html" --include="*.vue" --include="*.svelte"`
 
 ## Step 4: Update changed APIs
 
@@ -116,7 +116,7 @@ Do **not** replace `forwardErrorsToLogs` with `forwardConsoleLogs` — they cont
 
 Search for explicit config: `grep -rn "forwardErrorsToLogs" --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html"`
 
-Also search for Logs init calls that may be relying on the default (`forwardErrorsToLogs` defaults to `true` in v6, so omitting it still had the side effect): `grep -rn "DD_LOGS\.init\|datadogLogs\.init" --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html"`
+Also search for Logs init calls that may be relying on the default (`forwardErrorsToLogs` defaults to `true` in v6, so omitting it still had the side effect): `grep -rn "DD_LOGS\.init\|datadogLogs\.init" --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html" --include="*.vue" --include="*.svelte"`
 
 For any Logs init call where `forwardErrorsToLogs` is `true` or omitted, and `forwardConsoleLogs` does not already include `'error'` or `'all'`, add `'error'` to preserve v6 behavior.
 
@@ -162,7 +162,8 @@ For every match: remove the variable assignment and update all uses of that vari
 
 ```
 grep -rEn '(var|const|let)\s+\w+\s*=\s*.+[Ss]tart[Tt]iming|(var|const|let)\s+\w+\s*=\s*.+[Ss]tart.+[Vv]ital' \
-  --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.svelte" --include="*.vue"
+  --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" \
+  --include="*.html" --include="*.svelte" --include="*.vue"
 ```
 
 3. Remove the capture and update the stop call to pass the vital name string directly:
