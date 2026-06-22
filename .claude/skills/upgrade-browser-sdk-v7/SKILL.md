@@ -91,19 +91,24 @@ These are now **independent**. In v6, `forwardErrorsToLogs: true` had a side eff
 - `forwardErrorsToLogs` — controls forwarding of **unhandled errors** (uncaught exceptions, unhandled rejections) and **network errors** to Logs. **Keep this unchanged.**
 - `forwardConsoleLogs` — controls forwarding of **`console.error()` calls** to Logs. Add `'error'` here to restore the v6 side effect.
 
-**Keep `forwardErrorsToLogs: true` and add `forwardConsoleLogs: ['error']` alongside it:**
+**Only add `forwardConsoleLogs: ['error']` when `forwardErrorsToLogs` is `true` or omitted** — in v6 the side effect only applied when the option was enabled (explicitly or via the default). If `forwardErrorsToLogs: false`, there was no side effect to restore; leave it unchanged.
 
 ```js
-// v6
+// v6 — forwardErrorsToLogs: true (explicit or omitted, which defaults to true)
 DD_LOGS.init({
   forwardErrorsToLogs: true,
   forwardConsoleLogs: ['warn'], // example: existing levels
 })
 
-// v7 — keep forwardErrorsToLogs, add 'error' to existing forwardConsoleLogs
+// v7 — add 'error' to restore the side effect; preserve any existing levels
 DD_LOGS.init({
-  forwardErrorsToLogs: true, // unchanged — still forwards unhandled errors
-  forwardConsoleLogs: ['warn', 'error'], // add 'error'; preserve any existing levels
+  forwardErrorsToLogs: true, // unchanged
+  forwardConsoleLogs: ['warn', 'error'], // add 'error'
+})
+
+// v6 — forwardErrorsToLogs: false → no side effect existed; nothing to add
+DD_LOGS.init({
+  forwardErrorsToLogs: false, // leave unchanged, do NOT add forwardConsoleLogs: ['error']
 })
 ```
 
@@ -113,7 +118,7 @@ Search for explicit config: `grep -rn "forwardErrorsToLogs" --include="*.js" --i
 
 Also search for Logs init calls that may be relying on the default (`forwardErrorsToLogs` defaults to `true` in v6, so omitting it still had the side effect): `grep -rn "DD_LOGS\.init\|datadogLogs\.init" --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html"`
 
-For any Logs init call without an explicit `forwardConsoleLogs: ['error']`, add it to preserve v6 behavior.
+For any Logs init call where `forwardErrorsToLogs` is `true` or omitted, and `forwardConsoleLogs` does not already include `'error'` or `'all'`, add `'error'` to preserve v6 behavior.
 
 ### 4b. `startDurationVital` / `stopDurationVital` (RUM)
 
