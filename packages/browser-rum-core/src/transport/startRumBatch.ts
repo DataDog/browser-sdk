@@ -194,10 +194,10 @@ export function startRumBatch(
   const { dispatch, stop: stopDispatcher } = createBatchDispatcher(batch)
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, dispatch)
 
-  const originalBatchStop = batch.stop.bind(batch)
+  const stopBatch = batch.stop.bind(batch)
   batch.stop = () => {
     stopDispatcher()
-    originalBatchStop()
+    stopBatch()
   }
 
   return batch
