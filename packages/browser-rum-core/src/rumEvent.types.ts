@@ -513,6 +513,15 @@ export type RumErrorEvent = CommonProperties &
        * Profiling context
        */
       profiling?: ProfilingInternalContextSchema
+      /**
+       * Mapping of source file URLs to their debug IDs for source map deobfuscation
+       */
+      readonly debug_ids?: {
+        /**
+         * Debug ID (UUID) for the source file
+         */
+        [k: string]: string
+      }[]
       [k: string]: unknown
     }
     [k: string]: unknown
@@ -637,6 +646,15 @@ export type RumLongTaskEvent = CommonProperties &
        * Profiling context
        */
       profiling?: ProfilingInternalContextSchema
+      /**
+       * Mapping of source file URLs to their debug IDs for source map deobfuscation
+       */
+      readonly debug_ids?: {
+        /**
+         * Debug ID (UUID) for the source file
+         */
+        [k: string]: string
+      }[]
       [k: string]: unknown
     }
     [k: string]: unknown
@@ -1657,6 +1675,26 @@ export interface ProfilingInternalContextSchema {
     | 'failed-to-lazy-load'
     | 'missing-document-policy-header'
     | 'unexpected-exception'
+  /**
+   * The reason provided by the profiling quota admission API. This attribute is only present if the status is `stopped` due to quota.
+   *
+   * Possible values:
+   * - `quota_ok`: Quota check passed.
+   * - `quota_exceeded`: The organization has exceeded its profiling quota.
+   * - `org_disabled`: The organization has profiling disabled.
+   * - `backend_unavailable`: The quota admission API is unavailable or not initialized.
+   * - `undefined`: The quota reason is undefined.
+   * - `timeout`: The quota check timed out on the client side.
+   * - `api-error`: An API error occurred on the client side.
+   */
+  readonly quota_reason?:
+    | 'quota_ok'
+    | 'quota_exceeded'
+    | 'org_disabled'
+    | 'backend_unavailable'
+    | 'undefined'
+    | 'timeout'
+    | 'api-error'
   [k: string]: unknown
 }
 /**
