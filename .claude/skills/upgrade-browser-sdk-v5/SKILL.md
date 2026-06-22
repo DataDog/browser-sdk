@@ -187,9 +187,12 @@ Set `trackUserInteractions: true` to collect all user interactions, including fr
 
 Resource `method` field is now always uppercase (e.g., `GET`, `POST`). Update any dashboards or monitors filtering on `resource.method`.
 
-### 5h. `session.plan` field only on session events
+### 5h. `session.plan` field removed
 
-The `session.plan` field is now only available on session events, not on all event types. Update any dashboard or monitor queries that reference `session.plan` on non-session events.
+The `session.plan` field (`lite`/`premium`) is removed in v5 and not emitted on any event type. Replace any dashboard or monitor filter on `session.plan` with the new replay fields:
+
+- `@session.sampled_for_replay:true` — session was sampled for Session Replay
+- `@session.has_replay:true` — session has an actual replay recording
 
 Search: `grep -rn 'beforeSend\|trackFrustrations\|PerformanceEntryRepresentation\|in_foreground_periods\|context\.event\b\|startTime' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html" --include="*.vue" --include="*.svelte"`
 
