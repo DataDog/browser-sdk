@@ -48,7 +48,9 @@ export interface RumManualResourceEventDomainContext {
   isManual: true
 }
 
-export type RumWebSocketResourceEventDomainContext = Record<string, never>
+export interface RumWebSocketResourceEventDomainContext {
+  isManual: false
+}
 
 export interface RumErrorEventDomainContext {
   error: unknown
