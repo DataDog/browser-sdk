@@ -110,7 +110,7 @@ Ensure your bundler supports dynamic imports (code splitting). Most modern bundl
 
 ### CDN setup
 
-No code changes needed. The SDK dynamically loads an additional chunk when recording (e.g., `recorder-<hash>-datadog-rum.js`). Update CSP `script-src` rules if needed to allow the chunk.
+No code changes needed. The SDK dynamically loads an additional chunk when recording (e.g., `datadogRecorder-<hash>-datadog-rum.js`). Update CSP `script-src` rules if needed to allow the chunk.
 
 ## Step 5: Review behavioral changes (no code required, but may need attention)
 
@@ -129,7 +129,7 @@ No code changes needed. The SDK dynamically loads an additional chunk when recor
   ```
   Access-Control-Allow-Headers: traceparent, tracestate
   ```
-- **CSP**: Allow the dynamically loaded Session Replay chunk (e.g., `recorder-*-datadog-rum.js`) in `script-src` rules.
+- **CSP**: Allow the dynamically loaded Session Replay chunk (e.g., `datadogRecorder-*-datadog-rum.js`) in `script-src` rules.
 - **Bundler config**: Ensure your bundler supports dynamic imports for Session Replay lazy loading.
 
 ## Common Mistakes
@@ -138,7 +138,7 @@ No code changes needed. The SDK dynamically loads an additional chunk when recor
 | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | Defensively disabling `trackUserInteractions`, `trackResources`, `trackLongTasks` | Disables features the project needs — these now default to `true`, which is usually the desired behavior  | Only set these to `false` if the project explicitly did not want them; leave them unset to accept the new defaults |
 | Missing `tracestate` in `Access-Control-Allow-Headers`                            | The `tracecontext` propagator now sends a `tracestate` header — cross-origin requests are blocked by CORS | Add `tracestate` alongside `traceparent` in your server's `Access-Control-Allow-Headers`                           |
-| Not updating CSP `script-src` for the lazy-loaded Session Replay chunk            | Recording silently fails on CSP-restricted pages — the dynamic chunk is blocked                           | Allow `recorder-*-datadog-rum.js` in `script-src`                                                                  |
+| Not updating CSP `script-src` for the lazy-loaded Session Replay chunk            | Recording silently fails on CSP-restricted pages — the dynamic chunk is blocked                           | Allow `datadogRecorder-*-datadog-rum.js` in `script-src`                                                           |
 
 ## Verification checklist
 
