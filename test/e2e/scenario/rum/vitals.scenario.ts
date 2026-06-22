@@ -48,7 +48,7 @@ test.describe('vital collection', () => {
     .withRum()
     .run(async ({ flushEvents, intakeRegistry, page }) => {
       await page.evaluate(() => {
-        window.DD_RUM!.startFeatureOperation('foo')
+        window.DD_RUM!.startOperation('foo')
       })
       await flushEvents()
 
