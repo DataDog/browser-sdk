@@ -80,7 +80,7 @@ Search init calls for these options and apply replacements:
 | -------------- | ----------------------------------------------------------------------------------------------------- |
 | `usePciIntake` | Delete. Standard intake is now PCI compliant. Update CSP if you had PCI-specific domains allowlisted. |
 
-Search: `grep -rn 'betaEncodeCookieOptions|allowFallbackToLocalStorage|trackBfcacheViews|trackEarlyRequests|betaTrackActionsInShadowDom|usePciIntake' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html"`
+Search: `grep -rn 'betaEncodeCookieOptions\|allowFallbackToLocalStorage\|trackBfcacheViews\|trackEarlyRequests\|betaTrackActionsInShadowDom\|usePciIntake' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html"`
 
 ## Step 4: Update changed APIs
 
