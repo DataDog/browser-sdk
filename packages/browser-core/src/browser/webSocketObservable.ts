@@ -79,7 +79,6 @@ function createWebSocketObservable() {
       globalObject,
       'WebSocket',
       ({ parameters, onPostCall }) => {
-        const url = String(parameters[0])
         const protocols = Array.isArray(parameters[1]) ? ([] as string[]).concat(parameters[1]) : parameters[1]
         const startClocks = clocksNow()
 
@@ -87,7 +86,7 @@ function createWebSocketObservable() {
           observable.notify({
             state: 'connecting',
             instance,
-            url,
+            url: instance.url,
             protocols,
             startClocks,
           })

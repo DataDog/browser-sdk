@@ -22,7 +22,7 @@ class FakeWebSocket extends EventTarget {
 
   constructor(url: string | URL, protocols?: string | string[]) {
     super()
-    this.url = String(url)
+    this.url = resolveWebSocketUrl(String(url))
     if (typeof protocols === 'string') {
       this.protocol = protocols
     }
@@ -56,6 +56,18 @@ class FakeWebSocket extends EventTarget {
     this.dispatchEvent(event)
     this.onclose?.(event)
   }
+}
+
+// Mimics how a real browser resolves the URL passed to the `WebSocket` constructor: relative URLs
+// are resolved against the document location, and `http(s)` schemes are translated to `ws(s)`.
+function resolveWebSocketUrl(url: string): string {
+  const resolved = new URL(url, location.href)
+  if (resolved.protocol === 'http:') {
+    resolved.protocol = 'ws:'
+  } else if (resolved.protocol === 'https:') {
+    resolved.protocol = 'wss:'
+  }
+  return resolved.href
 }
 
 type FakeWebSocketConstructor = typeof FakeWebSocket
@@ -108,11 +120,12 @@ describe('webSocketObservable', () => {
         expect(connectingContexts[0].startClocks.timeStamp).toEqual(jasmine.any(Number))
       })
 
-      it('coerces URL objects to strings in the "connecting" context', () => {
-        const url = 'wss://example.com/socket'
-        new windowAsWebSocketHost.WebSocket(new URL(url))
+      it('reports the resolved instance.url rather than the raw constructor argument', () => {
+        const ws = new windowAsWebSocketHost.WebSocket('/socket')
 
-        expect(getContexts('connecting')[0].url).toBe(url)
+        const connectingContext = getContexts('connecting')[0]
+        expect(connectingContext.url).not.toBe('/socket')
+        expect(connectingContext.url).toBe(ws.url)
       })
 
       it('does not include protocols in the "connecting" context when omitted', () => {
