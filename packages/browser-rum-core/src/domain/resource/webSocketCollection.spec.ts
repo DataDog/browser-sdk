@@ -155,6 +155,51 @@ describe('webSocketCollection', () => {
     expect(completed[1].connectionId).not.toBe(firstId)
   })
 
+  it('tracks overlapping connections independently with unique connection_ids', () => {
+    const wsA = {} as WebSocket
+    const wsB = {} as WebSocket
+    const urlA = 'wss://example.com/socket-a'
+    const urlB = 'wss://example.com/socket-b'
+
+    startTracking()
+
+    wsInstance = wsA
+    notifyConnecting(0, urlA)
+    notifyOpen(5)
+
+    wsInstance = wsB
+    notifyConnecting(10, urlB)
+    notifyOpen(15)
+
+    wsInstance = wsA
+    notifyMessageIn(20, 10)
+
+    wsInstance = wsB
+    notifyMessageIn(25, 20)
+
+    wsInstance = wsA
+    notifyClosed(30, 1000, 'bye-a', true)
+
+    expect(completed.length).toBe(1)
+    expect(completed[0].url).toBe(urlA)
+    expect(completed[0].messagesIn).toEqual({ count: 1, size: 10 })
+    expect(completed[0].trackingEndReason).toBe('close_event')
+
+    wsInstance = wsB
+    notifyMessageOut(35, 5)
+    notifyClosed(40, 1000, 'bye-b', true)
+
+    expect(completed.length).toBe(2)
+    expect(completed[1].url).toBe(urlB)
+    expect(completed[1].messagesIn).toEqual({ count: 1, size: 20 })
+    expect(completed[1].messagesOut).toEqual({ count: 1, size: 5 })
+    expect(completed[1].trackingEndReason).toBe('close_event')
+    expect(completed[1].connectionId).not.toBe(completed[0].connectionId)
+
+    expect(completed[0].startClocks.relative).toBeLessThan(completed[1].startClocks.relative)
+    expect(completed[1].endClocks.relative).toBeGreaterThan(completed[0].endClocks.relative)
+  })
+
   it('records firstMessageInOffset / firstMessageOutOffset as offsets from open', () => {
     const openAt = 10
     const firstMessageInAt = 13
