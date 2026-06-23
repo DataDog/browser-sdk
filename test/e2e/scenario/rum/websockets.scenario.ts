@@ -183,7 +183,7 @@ test.describe('rum websockets', () => {
       await page.evaluate(() => {
         window.DD_RUM!.startView('view-b')
       })
-      await ws.wsCloseButton.click()
+      await ws.closeFromClient()
 
       await flushEvents()
 
