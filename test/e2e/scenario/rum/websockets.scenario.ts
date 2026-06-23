@@ -1,55 +1,9 @@
 import type { RumResourceEvent } from '@datadog/browser-rum'
 import type { RawRumEvent } from '@datadog/browser-rum-core'
 import { expect, test } from '@playwright/test'
-import { createTest, html } from '../../lib/framework'
+import { createTest } from '../../lib/framework'
 import { expireSession } from '../../lib/helpers/session'
-
-const KNOWN_OUT_WS_MESSAGE = 'e2e-ws-ping'
-const KNOWN_IN_WS_MESSAGE = `echo: ${KNOWN_OUT_WS_MESSAGE}`
-
-const WEBSOCKET_TEST_BODY = html`
-  <p id="ws-status"></p>
-  <p id="ws-last-message"></p>
-  <input id="ws-message" type="text" value="${KNOWN_OUT_WS_MESSAGE}" />
-  <button type="button" id="ws-open">ws-open</button>
-  <button type="button" id="ws-send">ws-send</button>
-  <button type="button" id="ws-close-client">ws-close-client</button>
-  <script>
-    ;(function () {
-      var ws
-      function wsUrl() {
-        var u = new URL('/ws-echo', location.href)
-        u.protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
-        return u.toString()
-      }
-      document.getElementById('ws-open').addEventListener('click', function () {
-        ws = new WebSocket(wsUrl())
-        var status = document.getElementById('ws-status')
-        var last = document.getElementById('ws-last-message')
-        ws.addEventListener('open', function () {
-          status.textContent = 'open'
-        })
-        ws.addEventListener('message', function (ev) {
-          last.textContent = ev.data
-          status.textContent = (status.textContent || '') + '|message'
-        })
-        ws.addEventListener('close', function () {
-          status.textContent = (status.textContent || '') + '|closed'
-        })
-        ws.addEventListener('error', function () {
-          status.textContent = (status.textContent || '') + '|error'
-        })
-      })
-      document.getElementById('ws-send').addEventListener('click', function () {
-        var text = document.getElementById('ws-message').value
-        ws.send(text)
-      })
-      document.getElementById('ws-close-client').addEventListener('click', function () {
-        ws.close()
-      })
-    })()
-  </script>
-`
+import { DEFAULT_WS_OUT_MESSAGE, expectedWsEchoMessage, WebSocketPage } from '../../lib/pages/webSocketPage'
 
 type RawRumResource = Extract<RawRumEvent, { type: 'resource' }>
 type WebSocketResourceProperties = NonNullable<RawRumResource['resource']['websocket']>
@@ -68,14 +22,13 @@ type RumResourceEventWithWebSocket = RumResourceEvent & {
 test.describe('rum websockets', () => {
   createTest('collect websocket-connecting vital and websocket resource when the connection closes')
     .withRum({ enableExperimentalFeatures: ['track_web_sockets'] })
-    .withBody(WEBSOCKET_TEST_BODY)
+    .withBody(WebSocketPage.testBody())
     .run(async ({ intakeRegistry, flushEvents, page }) => {
-      await page.locator('#ws-open').click()
-      await expect(page.locator('#ws-status')).toHaveText('open')
-      await page.locator('#ws-send').click()
-      await expect(page.locator('#ws-last-message')).toHaveText(KNOWN_IN_WS_MESSAGE)
-      await page.locator('#ws-close-client').click()
-      await expect(page.locator('#ws-status')).toContainText('closed')
+      const ws = new WebSocketPage(page)
+
+      await ws.open()
+      await ws.sendDefaultMessageAndExpectEcho()
+      await ws.closeFromClient()
 
       await flushEvents()
 
@@ -85,25 +38,26 @@ test.describe('rum websockets', () => {
       const rumEvent = getLastRumResourceEventWithWebSocket(intakeRegistry.rumResourceEvents)
       expect(rumEvent).toBeDefined()
 
-      const { websocket: ws } = rumEvent!.resource
+      const { websocket } = rumEvent!.resource
 
-      expect(ws.connection_id).toBe(connectingVital!.vital.id)
-      expect(ws.tracking_end_reason).toBe('close_event')
-      expect(ws.messages_out.count).toBe(1)
-      expect(ws.messages_out.size).toBe(KNOWN_OUT_WS_MESSAGE.length)
-      expect(ws.messages_in.count).toBe(1)
-      expect(ws.messages_in.size).toBe(KNOWN_IN_WS_MESSAGE.length)
+      expect(websocket.connection_id).toBe(connectingVital!.vital.id)
+      expect(websocket.tracking_end_reason).toBe('close_event')
+      expect(websocket.messages_out.count).toBe(1)
+      expect(websocket.messages_out.size).toBe(DEFAULT_WS_OUT_MESSAGE.length)
+      expect(websocket.messages_in.count).toBe(1)
+      expect(websocket.messages_in.size).toBe(expectedWsEchoMessage().length)
     })
 
   createTest('websocket resource ends with close_event when the server closes the echo socket')
     .withRum({ enableExperimentalFeatures: ['track_web_sockets'] })
-    .withBody(WEBSOCKET_TEST_BODY)
+    .withBody(WebSocketPage.testBody())
     .run(async ({ intakeRegistry, flushEvents, page, servers }) => {
-      await page.locator('#ws-open').click()
-      await expect(page.locator('#ws-status')).toHaveText('open')
+      const ws = new WebSocketPage(page)
+
+      await ws.open()
 
       servers.base.app.closeEchoWebSockets!()
-      await expect(page.locator('#ws-status')).toContainText('closed')
+      await ws.expectClosed()
 
       await flushEvents()
 
@@ -115,10 +69,11 @@ test.describe('rum websockets', () => {
 
   createTest('websocket resource is reported with session_end when the session expires')
     .withRum({ enableExperimentalFeatures: ['track_web_sockets'] })
-    .withBody(WEBSOCKET_TEST_BODY)
+    .withBody(WebSocketPage.testBody())
     .run(async ({ intakeRegistry, flushEvents, page, browserContext }) => {
-      await page.locator('#ws-open').click()
-      await expect(page.locator('#ws-status')).toHaveText('open')
+      const ws = new WebSocketPage(page)
+
+      await ws.open()
       await expireSession(page, browserContext)
 
       await flushEvents()
@@ -131,10 +86,11 @@ test.describe('rum websockets', () => {
 
   createTest('websocket resource keeps end_view_id when the session expires')
     .withRum({ enableExperimentalFeatures: ['track_web_sockets'] })
-    .withBody(WEBSOCKET_TEST_BODY)
+    .withBody(WebSocketPage.testBody())
     .run(async ({ intakeRegistry, flushEvents, page, browserContext }) => {
-      await page.locator('#ws-open').click()
-      await expect(page.locator('#ws-status')).toHaveText('open')
+      const ws = new WebSocketPage(page)
+
+      await ws.open()
       await expireSession(page, browserContext)
 
       await flushEvents()
@@ -153,12 +109,12 @@ test.describe('rum websockets', () => {
   // This behavior might be updated when we're able to link the websocket connection with APM traces.
   createTest('does not collect websocket vital or resource when trackResources is false')
     .withRum({ enableExperimentalFeatures: ['track_web_sockets'], trackResources: false })
-    .withBody(WEBSOCKET_TEST_BODY)
+    .withBody(WebSocketPage.testBody())
     .run(async ({ intakeRegistry, flushEvents, page }) => {
-      await page.locator('#ws-open').click()
-      await expect(page.locator('#ws-status')).toHaveText('open')
-      await page.locator('#ws-close-client').click()
-      await expect(page.locator('#ws-status')).toContainText('closed')
+      const ws = new WebSocketPage(page)
+
+      await ws.open()
+      await ws.closeFromClient()
 
       await flushEvents()
 
@@ -171,28 +127,29 @@ test.describe('rum websockets', () => {
 
   createTest('websocket resource records different start and end views when it spanned multiple views')
     .withRum({ enableExperimentalFeatures: ['track_web_sockets'] })
-    .withBody(WEBSOCKET_TEST_BODY)
+    .withBody(WebSocketPage.testBody())
     .run(async ({ intakeRegistry, flushEvents, page }) => {
+      const ws = new WebSocketPage(page)
+
       await page.evaluate(() => {
         window.DD_RUM!.startView('view-a')
       })
-      await page.locator('#ws-open').click()
-      await expect(page.locator('#ws-status')).toHaveText('open')
+      await ws.open()
       await page.evaluate(() => {
         window.DD_RUM!.startView('view-b')
       })
-      await page.locator('#ws-close-client').click()
+      await ws.wsCloseButton.click()
 
       await flushEvents()
 
       const rumEvent = getLastRumResourceEventWithWebSocket(intakeRegistry.rumResourceEvents)
       expect(rumEvent).toBeDefined()
 
-      const { websocket: ws } = rumEvent!.resource
+      const { websocket } = rumEvent!.resource
 
-      expect(ws.start_view_id).toBeDefined()
-      expect(ws.end_view_id).toBeDefined()
-      expect(ws.start_view_id).not.toBe(ws.end_view_id)
+      expect(websocket.start_view_id).toBeDefined()
+      expect(websocket.end_view_id).toBeDefined()
+      expect(websocket.start_view_id).not.toBe(websocket.end_view_id)
     })
 })
 
