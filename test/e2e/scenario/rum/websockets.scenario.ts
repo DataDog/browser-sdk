@@ -2,7 +2,7 @@ import type { RumResourceEvent } from '@datadog/browser-rum'
 import type { RawRumEvent } from '@datadog/browser-rum-core'
 import { expect, test } from '@playwright/test'
 import { createTest } from '../../lib/framework'
-import { expireSession } from '../../lib/helpers/session'
+import { expireSession, renewSession } from '../../lib/helpers/session'
 import { DEFAULT_WS_OUT_MESSAGE, expectedWsEchoMessage, WebSocketPage } from '../../lib/pages/webSocketPage'
 
 type RawRumResource = Extract<RawRumEvent, { type: 'resource' }>
@@ -106,6 +106,27 @@ test.describe('rum websockets', () => {
         (e) => e.resource.websocket.tracking_end_reason === 'session_end'
       )
       expect(wsWithSessionEnd).toBeDefined()
+    })
+
+  createTest('does not track websocket activity after the session is renewed')
+    .withRum({ enableExperimentalFeatures: ['track_web_sockets'] })
+    .withBody(WebSocketPage.testBody())
+    .run(async ({ intakeRegistry, flushEvents, page, browserContext }) => {
+      const ws = new WebSocketPage(page)
+
+      await ws.open()
+      await ws.sendDefaultMessageAndExpectEcho()
+      await renewSession(page, browserContext)
+      await ws.sendDefaultMessageAndExpectEcho()
+      await ws.closeFromClient()
+
+      await flushEvents()
+
+      const wsResources = getWebSocketResources(intakeRegistry.rumResourceEvents)
+      expect(wsResources).toHaveLength(1)
+      expect(wsResources[0].resource.websocket.tracking_end_reason).toBe('session_end')
+      expect(wsResources[0].resource.websocket.messages_out.count).toBe(1)
+      expect(wsResources[0].resource.websocket.messages_in.count).toBe(1)
     })
 
   createTest('websocket resource keeps end_view_id when the session expires')

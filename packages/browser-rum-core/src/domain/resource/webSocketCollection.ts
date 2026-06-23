@@ -67,6 +67,9 @@ export function startWebSocketCollection(
 ) {
   const tracker = trackWebSocket(lifeCycle, initWebSocketObservable(), viewHistory, addDurationVital)
 
+  // Session-boundary cleanup happens on SESSION_EXPIRED (fired before SESSION_RENEWED). Open
+  // connections are finalized once with trackingEndReason "session_end"; later events on the same
+  // WebSocket instance are ignored.
   const sessionExpiredSubscription = lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
     tracker.flushOpenConnections('session_end')
   })
