@@ -1,4 +1,4 @@
-import type { RumErrorEvent } from '@datadog/browser-rum-core'
+import type { RumErrorEvent } from '@openobserve/browser-rum-core'
 import { test, expect } from '@playwright/test'
 import { createTest, html } from '../../lib/framework'
 
@@ -108,7 +108,7 @@ test.describe('rum errors', () => {
         throw new Error('oh snap')
       })
       // Simulate a late initialization of the RUM SDK
-      setTimeout(() => window.DD_RUM!.init(configuration))
+      setTimeout(() => window.OO_RUM!.init(configuration))
     })
     .run(async ({ intakeRegistry, flushEvents, withBrowserLogs, baseUrl }) => {
       await flushEvents()
@@ -150,7 +150,7 @@ test.describe('rum errors', () => {
 
   createTest('send custom errors')
     .withRum()
-    .withBody(createBody('DD_RUM.addError(foo())'))
+    .withBody(createBody('OO_RUM.addError(foo())'))
     .run(async ({ flushEvents, page, intakeRegistry, baseUrl, withBrowserLogs }) => {
       const button = page.locator('button')
       await button.click()
@@ -172,7 +172,7 @@ test.describe('rum errors', () => {
   // non-native errors should have the same stack trace as regular errors on ALL BROWSERS
   createTest('send non-native errors')
     .withRum()
-    .withBody(createBody('DD_RUM.addError(customError())'))
+    .withBody(createBody('OO_RUM.addError(customError())'))
     .run(async ({ flushEvents, page, intakeRegistry, baseUrl, withBrowserLogs }) => {
       const button = page.locator('button')
       await button.click()
@@ -195,7 +195,7 @@ test.describe('rum errors', () => {
   // this should also work for custom error classes that inherit from other custom error classes
   createTest('send non-native errors with inheritance')
     .withRum()
-    .withBody(createBody('DD_RUM.addError(customErrorWithInheritance())'))
+    .withBody(createBody('OO_RUM.addError(customErrorWithInheritance())'))
     .run(async ({ flushEvents, page, intakeRegistry, baseUrl, withBrowserLogs }) => {
       const button = page.locator('button')
       await button.click()

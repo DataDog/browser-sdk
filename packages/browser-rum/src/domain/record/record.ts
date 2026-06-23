@@ -1,5 +1,5 @@
-import { sendToExtension } from '@datadog/browser-core'
-import type { LifeCycle, RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
+import { sendToExtension } from '@openobserve/browser-core'
+import type { LifeCycle, RumConfiguration, ViewHistory } from '@openobserve/browser-rum-core'
 import * as replayStats from '../replayStats'
 import type { BrowserRecord } from '../../types'
 import type { Tracker } from './trackers'

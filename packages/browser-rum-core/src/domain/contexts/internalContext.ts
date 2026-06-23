@@ -1,5 +1,5 @@
-import type { RelativeTime } from '@datadog/js-core/time'
-import type { RumInternalContext, SessionManager } from '@datadog/browser-core'
+import type { RelativeTime } from '@openobserve/js-core/time'
+import type { RumInternalContext, SessionManager } from '@openobserve/browser-core'
 import type { ActionContexts } from '../action/actionCollection'
 import type { ViewHistory } from './viewHistory'
 import type { UrlContexts } from './urlContexts'

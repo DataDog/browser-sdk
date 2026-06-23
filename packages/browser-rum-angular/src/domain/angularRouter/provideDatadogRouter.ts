@@ -16,7 +16,7 @@ import { startAngularView } from './startAngularView'
  * ```ts
  * import { bootstrapApplication } from '@angular/platform-browser'
  * import { provideRouter } from '@angular/router'
- * import { provideDatadogRouter } from '@datadog/browser-rum-angular'
+ * import { provideDatadogRouter } from '@openobserve/browser-rum-angular'
  *
  * bootstrapApplication(AppComponent, {
  *   providers: [

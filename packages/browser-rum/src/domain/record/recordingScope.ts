@@ -1,4 +1,4 @@
-import type { RumConfiguration } from '@datadog/browser-rum-core'
+import type { RumConfiguration } from '@openobserve/browser-rum-core'
 
 import type { ElementsScrollPositions } from './elementsScrollPositions'
 import { createEventIds, createNodeIds, createStringIds, createStyleSheetIds } from './itemIds'

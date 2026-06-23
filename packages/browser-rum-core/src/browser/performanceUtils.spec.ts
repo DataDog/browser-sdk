@@ -1,5 +1,5 @@
-import { type RelativeTime } from '@datadog/js-core/time'
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import { type RelativeTime } from '@openobserve/js-core/time'
+import { registerCleanupTask } from '@openobserve/browser-core/test'
 import { createPerformanceEntry, mockGlobalPerformanceBuffer } from '../../test'
 import type { RumPerformanceNavigationTiming } from './performanceObservable'
 import { RumPerformanceEntryType } from './performanceObservable'

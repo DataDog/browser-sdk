@@ -5,8 +5,8 @@ import type {
   DeflateWorker,
   EncoderResult,
   Uint8ArrayBuffer,
-} from '@datadog/browser-core'
-import { addEventListener, concatBuffers } from '@datadog/browser-core'
+} from '@openobserve/browser-core'
+import { addEventListener, concatBuffers } from '@openobserve/browser-core'
 
 export function createDeflateEncoder(worker: DeflateWorker, streamId: DeflateEncoderStreamId): DeflateEncoder {
   let rawBytesCount = 0

@@ -1,5 +1,5 @@
-import { clocksNow } from '@datadog/js-core/time'
-import { ConsoleApiName, globalConsole } from '@datadog/js-core/util'
+import { clocksNow } from '@openobserve/js-core/time'
+import { ConsoleApiName, globalConsole } from '@openobserve/js-core/util'
 import { isError, computeRawError } from '../error/error'
 import { Observable, mergeObservables } from '../../tools/observable'
 import { callMonitored } from '../../tools/monitor'

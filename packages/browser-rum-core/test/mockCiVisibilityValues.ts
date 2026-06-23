@@ -1,6 +1,6 @@
-import { resetInitCookies, deleteCookie, setCookie } from '@datadog/browser-core'
-import { ONE_MINUTE } from '@datadog/js-core/time'
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import { resetInitCookies, deleteCookie, setCookie } from '@openobserve/browser-core'
+import { ONE_MINUTE } from '@openobserve/js-core/time'
+import { registerCleanupTask } from '@openobserve/browser-core/test'
 import { CI_VISIBILITY_TEST_ID_COOKIE_NAME, type CiTestWindow } from '../src/domain/contexts/ciVisibilityContext'
 
 // Duration to create a cookie lasting at least until the end of the test

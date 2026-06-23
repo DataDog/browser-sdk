@@ -1,8 +1,8 @@
-import type { RelativeTime, Duration } from '@datadog/js-core/time'
-import type { Observable } from '@datadog/browser-core'
-import { toServerDuration, addDuration } from '@datadog/js-core/time'
-import { noop } from '@datadog/browser-core'
-import { SKIPPED } from '@datadog/js-core/assembly'
+import type { RelativeTime, Duration } from '@openobserve/js-core/time'
+import type { Observable } from '@openobserve/browser-core'
+import { toServerDuration, addDuration } from '@openobserve/js-core/time'
+import { noop } from '@openobserve/browser-core'
+import { SKIPPED } from '@openobserve/js-core/assembly'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RawRumActionEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -129,7 +129,7 @@ function processAction(action: AutoAction | ManualAction): RawRumEventCollectedD
       },
       ...(isAuto
         ? {
-            _dd: {
+            _oo: {
               action: {
                 target: {
                   selector: action.target?.selector || undefined,

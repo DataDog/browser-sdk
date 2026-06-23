@@ -1,4 +1,4 @@
-import { ONE_MINUTE, relativeToClocks } from '@datadog/js-core/time'
+import { ONE_MINUTE, relativeToClocks } from '@openobserve/js-core/time'
 import type { Clock } from '../../../test'
 import { mockClock } from '../../../test'
 import { noop } from '../../tools/utils/functionUtils'

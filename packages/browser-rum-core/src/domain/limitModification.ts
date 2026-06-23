@@ -1,6 +1,6 @@
-import { sanitize, objectEntries } from '@datadog/browser-core'
-import type { Context } from '@datadog/browser-core'
-import { deepClone, getType } from '@datadog/js-core/util'
+import { sanitize, objectEntries } from '@openobserve/browser-core'
+import type { Context } from '@openobserve/browser-core'
+import { deepClone, getType } from '@openobserve/js-core/util'
 
 export type ModifiableFieldPaths = Record<string, 'string' | 'object'>
 

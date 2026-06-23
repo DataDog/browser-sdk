@@ -1,5 +1,5 @@
-import { clocksOrigin } from '@datadog/js-core/time'
-import { RumPerformanceEntryType } from '@datadog/browser-rum-core'
+import { clocksOrigin } from '@openobserve/js-core/time'
+import { RumPerformanceEntryType } from '@openobserve/browser-rum-core'
 import type { BrowserProfilerTrace, RumViewEntry } from '../../../types'
 import type { LongTaskContext } from '../longTaskHistory'
 import { buildProfileEventAttributes, type ProfileEventAttributes } from './buildProfileEvent'

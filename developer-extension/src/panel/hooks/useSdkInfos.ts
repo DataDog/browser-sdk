@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import type { RumInternalContext, Context } from '@datadog/browser-core'
-import type { LogsInitConfiguration } from '@datadog/browser-logs'
-import type { RumInitConfiguration } from '@datadog/browser-rum'
+import type { RumInternalContext, Context } from '@openobserve/browser-core'
+import type { LogsInitConfiguration } from '@openobserve/browser-logs'
+import type { RumInitConfiguration } from '@openobserve/browser-rum'
 import { createLogger } from '../../common/logger'
 import { evalInWindow } from '../evalInWindow'
 import { computeLogsTrackingType, computeRumTrackingType } from '../sampler'
@@ -75,24 +75,24 @@ async function getInfos(): Promise<SdkInfos> {
         const cookieRawValue = document.cookie
           .split(';')
           .map(cookie => cookie.match(/(\\S*?)=(.*)/)?.slice(1) || [])
-          .find(([name, _]) => name === '_dd_s')
+          .find(([name, _]) => name === '_oo_s')
           ?.[1]
 
         const cookie = cookieRawValue && Object.fromEntries(
           cookieRawValue.split('&').map(value => value.split('='))
         )
-        const rum = window.DD_RUM && {
-          version: window.DD_RUM?.version,
-          config: serializeWithFunctions(window.DD_RUM?.getInitConfiguration?.()),
-          internalContext: window.DD_RUM?.getInternalContext?.(),
-          globalContext: window.DD_RUM?.getGlobalContext?.(),
-          user: window.DD_RUM?.getUser?.(),
+        const rum = window.OO_RUM && {
+          version: window.OO_RUM?.version,
+          config: serializeWithFunctions(window.OO_RUM?.getInitConfiguration?.()),
+          internalContext: window.OO_RUM?.getInternalContext?.(),
+          globalContext: window.OO_RUM?.getGlobalContext?.(),
+          user: window.OO_RUM?.getUser?.(),
         }
-        const logs = window.DD_LOGS && {
-          version: window.DD_LOGS?.version,
-          config: serializeWithFunctions(window.DD_LOGS?.getInitConfiguration?.()),
-          globalContext: window.DD_LOGS?.getGlobalContext?.(),
-          user: window.DD_LOGS?.getUser?.(),
+        const logs = window.OO_LOGS && {
+          version: window.OO_LOGS?.version,
+          config: serializeWithFunctions(window.OO_LOGS?.getInitConfiguration?.()),
+          globalContext: window.OO_LOGS?.getGlobalContext?.(),
+          user: window.OO_LOGS?.getUser?.(),
         }
         return { rum, logs, cookie }
       `

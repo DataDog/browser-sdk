@@ -1,4 +1,4 @@
-import { DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT } from '@datadog/browser-logs/src/domain/configuration'
+import { DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT } from '@openobserve/browser-logs/src/domain/configuration'
 import { test, expect } from '@playwright/test'
 import { createTest, createWorker } from '../lib/framework'
 import { APPLICATION_ID } from '../lib/helpers/configuration'
@@ -19,7 +19,7 @@ test.describe('logs', () => {
         test.skip(browserName !== 'chromium', 'Non-Chromium browsers do not support ES modules in Service Workers')
 
         await evaluateInWorker(() => {
-          self.DD_LOGS!.logger.log('Some message')
+          self.OO_LOGS!.logger.log('Some message')
         })
 
         await flushEvents()
@@ -38,7 +38,7 @@ test.describe('logs', () => {
         )
 
         await evaluateInWorker(() => {
-          self.DD_LOGS!.logger.log('Other message')
+          self.OO_LOGS!.logger.log('Other message')
         })
 
         await flushEvents()
@@ -73,7 +73,7 @@ test.describe('logs', () => {
     .withLogs()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
-        window.DD_LOGS!.logger.log('hello')
+        window.OO_LOGS!.logger.log('hello')
       })
       await flushEvents()
       expect(intakeRegistry.logsEvents).toHaveLength(1)
@@ -84,8 +84,8 @@ test.describe('logs', () => {
     .withLogs()
     .run(async ({ intakeRegistry, flushEvents, page, withBrowserLogs }) => {
       await page.evaluate(() => {
-        window.DD_LOGS!.logger.setHandler('console')
-        window.DD_LOGS!.logger.warn('hello')
+        window.OO_LOGS!.logger.setHandler('console')
+        window.OO_LOGS!.logger.warn('hello')
       })
       await flushEvents()
       expect(intakeRegistry.logsEvents).toHaveLength(0)
@@ -274,7 +274,7 @@ test.describe('logs', () => {
         throw new Error('oh snap')
       })
       // Simulate a late initialization of the RUM SDK
-      setTimeout(() => window.DD_LOGS!.init(configuration))
+      setTimeout(() => window.OO_LOGS!.init(configuration))
     })
     .run(async ({ intakeRegistry, flushEvents, withBrowserLogs }) => {
       await flushEvents()
@@ -290,7 +290,7 @@ test.describe('logs', () => {
     .withLogs()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
-        window.DD_LOGS!.logger.log('hello')
+        window.OO_LOGS!.logger.log('hello')
       })
       await flushEvents()
       expect(intakeRegistry.logsEvents).toHaveLength(1)
@@ -306,7 +306,7 @@ test.describe('logs', () => {
     })
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
-        window.DD_LOGS!.logger.log('hello world!')
+        window.OO_LOGS!.logger.log('hello world!')
       })
       await flushEvents()
       expect(intakeRegistry.logsEvents).toHaveLength(1)
@@ -317,8 +317,8 @@ test.describe('logs', () => {
     .withLogs()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
-        window.DD_LOGS!.logger.addTag('planet', 'mars')
-        window.DD_LOGS!.logger.log('hello world!')
+        window.OO_LOGS!.logger.addTag('planet', 'mars')
+        window.OO_LOGS!.logger.log('hello world!')
       })
 
       await flushEvents()
@@ -330,8 +330,8 @@ test.describe('logs', () => {
     .withLogs()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
-        window.DD_LOGS!.logger.setContextProperty('ddtags', 'planet:mars')
-        window.DD_LOGS!.logger.log('hello world!', { ddtags: 'planet:earth' })
+        window.OO_LOGS!.logger.setContextProperty('ddtags', 'planet:mars')
+        window.OO_LOGS!.logger.log('hello world!', { ddtags: 'planet:earth' })
       })
 
       await flushEvents()
@@ -348,7 +348,7 @@ test.describe('logs', () => {
     })
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
-        window.DD_LOGS!.logger.log('hello', {})
+        window.OO_LOGS!.logger.log('hello', {})
       })
       await flushEvents()
       expect(intakeRegistry.logsEvents).toHaveLength(1)

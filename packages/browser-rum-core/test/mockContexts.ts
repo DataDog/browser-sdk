@@ -1,4 +1,4 @@
-import { noop } from '@datadog/browser-core'
+import { noop } from '@openobserve/browser-core'
 import type { UrlContexts } from '../src/domain/contexts/urlContexts'
 import type { ViewHistory, ViewHistoryEntry } from '../src/domain/contexts/viewHistory'
 

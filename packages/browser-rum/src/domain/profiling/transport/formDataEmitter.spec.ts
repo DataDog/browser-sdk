@@ -1,8 +1,8 @@
-import { relativeNow, timeStampNow } from '@datadog/js-core/time'
-import { createIdentityEncoder } from '@datadog/browser-core'
-import { interceptRequests, DEFAULT_FETCH_MOCK, readFormDataRequest } from '@datadog/browser-core/test'
-import { LifeCycle } from '@datadog/browser-rum-core'
-import { mockRumConfiguration } from '@datadog/browser-rum-core/test'
+import { relativeNow, timeStampNow } from '@openobserve/js-core/time'
+import { createIdentityEncoder } from '@openobserve/browser-core'
+import { interceptRequests, DEFAULT_FETCH_MOCK, readFormDataRequest } from '@openobserve/browser-core/test'
+import { LifeCycle } from '@openobserve/browser-rum-core'
+import { mockRumConfiguration } from '@openobserve/browser-rum-core/test'
 import { mockedTrace } from '../test-utils/mockedTrace'
 import { createFormDataEmitter } from './formDataEmitter'
 
@@ -29,7 +29,7 @@ describe('createFormDataEmitter', () => {
         format: 'json',
         version: 4,
         tags_profiler: 'sdk_version:1.0.0',
-        _dd: { clock_drift: 0 },
+        _oo: { clock_drift: 0 },
       },
       trace: {
         ...mockedTrace,

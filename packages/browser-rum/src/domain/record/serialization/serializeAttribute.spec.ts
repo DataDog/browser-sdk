@@ -1,10 +1,10 @@
-import type { RumConfiguration } from '@datadog/browser-rum-core'
+import type { RumConfiguration } from '@openobserve/browser-rum-core'
 import {
   STABLE_ATTRIBUTES,
   DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE,
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
-} from '@datadog/browser-rum-core'
+} from '@openobserve/browser-rum-core'
 import { serializeAttribute, MAX_ATTRIBUTE_VALUE_CHAR_LENGTH } from './serializeAttribute'
 
 const DEFAULT_CONFIGURATION = {} as RumConfiguration

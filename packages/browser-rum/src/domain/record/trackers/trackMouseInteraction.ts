@@ -1,5 +1,5 @@
-import { addEventListeners, DOM_EVENT } from '@datadog/browser-core'
-import { getNodePrivacyLevel, NodePrivacyLevel } from '@datadog/browser-rum-core'
+import { addEventListeners, DOM_EVENT } from '@openobserve/browser-core'
+import { getNodePrivacyLevel, NodePrivacyLevel } from '@openobserve/browser-rum-core'
 import type { MouseInteraction, MouseInteractionData, BrowserIncrementalSnapshotRecord } from '../../../types'
 import { IncrementalSource, MouseInteractionType } from '../../../types'
 import { assembleIncrementalSnapshot } from '../assembly'

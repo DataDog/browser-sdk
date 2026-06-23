@@ -2,11 +2,11 @@ import { createInflate, inflateSync } from 'node:zlib'
 import https from 'node:https'
 import type express from 'express'
 import createBusboy from 'busboy'
-import type { BrowserProfileEvent, BrowserProfilerTrace } from '@datadog/browser-rum/src/types/profiling'
-import type { BrowserSegment, BrowserSegmentMetadata } from '@datadog/browser-rum/src/types/sessionReplay'
-import type { LogsEvent } from '@datadog/browser-logs/src/logsEvent.types'
-import type { RumEvent } from '@datadog/browser-rum-core/src/rumEvent.types'
-import type { TelemetryEvent } from '@datadog/browser-core/src/domain/telemetry/telemetryEvent.types'
+import type { BrowserProfileEvent, BrowserProfilerTrace } from '@openobserve/browser-rum/src/types/profiling'
+import type { BrowserSegment, BrowserSegmentMetadata } from '@openobserve/browser-rum/src/types/sessionReplay'
+import type { LogsEvent } from '@openobserve/browser-logs/src/logsEvent.types'
+import type { RumEvent } from '@openobserve/browser-rum-core/src/rumEvent.types'
+import type { TelemetryEvent } from '@openobserve/browser-core/src/domain/telemetry/telemetryEvent.types'
 
 interface BaseIntakeRequest {
   isBridge: boolean
@@ -101,7 +101,7 @@ function computeIntakeRequestInfos(req: express.Request): IntakeRequestInfos {
   const { pathname, searchParams } = new URL(ddforward, 'https://example.org')
 
   const encoding = req.headers['content-encoding'] || searchParams.get('dd-evp-encoding')
-  const transport = searchParams.get('_dd.api')
+  const transport = searchParams.get('_oo.api')
   const batchTimeRaw = searchParams.get('batch_time')
   const batchTime = batchTimeRaw ? Number(batchTimeRaw) : null
 

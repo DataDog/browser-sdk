@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import type { RumResourceEvent } from '@datadog/browser-rum'
+import type { RumResourceEvent } from '@openobserve/browser-rum'
 import { isContentTypeAvailableInPerformanceEntry } from '../../lib/helpers/browser'
 import type { IntakeRegistry } from '../../lib/framework'
 import { createTest, html } from '../../lib/framework'
@@ -480,10 +480,10 @@ test.describe('resource headers with trackResourceHeaders', () => {
     .withRum()
     .withRumInit((configuration) => {
       configuration.trackResourceHeaders = [
-        ...window.DD_RUM!.DEFAULT_TRACKED_RESOURCE_HEADERS.map((name) => ({ name })),
+        ...window.OO_RUM!.DEFAULT_TRACKED_RESOURCE_HEADERS.map((name) => ({ name })),
         { name: 'x-request-id' },
       ]
-      window.DD_RUM!.init(configuration)
+      window.OO_RUM!.init(configuration)
     })
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       const url = okUrl({
@@ -509,8 +509,8 @@ test.describe('manual resources with startResource/stopResource', () => {
     .withRum()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
-        window.DD_RUM!.startResource('https://api.example.com/data')
-        window.DD_RUM!.stopResource('https://api.example.com/data')
+        window.OO_RUM!.startResource('https://api.example.com/data')
+        window.OO_RUM!.stopResource('https://api.example.com/data')
       })
       await flushEvents()
 
@@ -527,11 +527,11 @@ test.describe('manual resources with startResource/stopResource', () => {
     .withRum()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
-        window.DD_RUM!.startResource('https://api.example.com/users', {
+        window.OO_RUM!.startResource('https://api.example.com/users', {
           type: 'fetch',
           method: 'POST',
         })
-        window.DD_RUM!.stopResource('https://api.example.com/users', {
+        window.OO_RUM!.stopResource('https://api.example.com/users', {
           statusCode: 201,
         })
       })
@@ -550,10 +550,10 @@ test.describe('manual resources with startResource/stopResource', () => {
     .withRum()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
-        window.DD_RUM!.startResource('https://api.example.com/data', { resourceKey: 'request1' })
-        window.DD_RUM!.startResource('https://api.example.com/data', { resourceKey: 'request2' })
-        window.DD_RUM!.stopResource('https://api.example.com/data', { resourceKey: 'request2' })
-        window.DD_RUM!.stopResource('https://api.example.com/data', { resourceKey: 'request1' })
+        window.OO_RUM!.startResource('https://api.example.com/data', { resourceKey: 'request1' })
+        window.OO_RUM!.startResource('https://api.example.com/data', { resourceKey: 'request2' })
+        window.OO_RUM!.stopResource('https://api.example.com/data', { resourceKey: 'request2' })
+        window.OO_RUM!.stopResource('https://api.example.com/data', { resourceKey: 'request1' })
       })
       await flushEvents()
 
@@ -568,10 +568,10 @@ test.describe('manual resources with startResource/stopResource', () => {
     .withRum()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
-        window.DD_RUM!.startResource('https://api.example.com/data', {
+        window.OO_RUM!.startResource('https://api.example.com/data', {
           context: { request_id: 'abc123' },
         })
-        window.DD_RUM!.stopResource('https://api.example.com/data', {
+        window.OO_RUM!.stopResource('https://api.example.com/data', {
           context: { response_size: 1024 },
         })
       })
@@ -592,11 +592,11 @@ test.describe('manual resources with startResource/stopResource', () => {
   createTest('preserve timing when startResource is called before init')
     .withRum()
     .withRumInit((configuration) => {
-      window.DD_RUM!.startResource('https://api.example.com/early')
+      window.OO_RUM!.startResource('https://api.example.com/early')
 
       setTimeout(() => {
-        window.DD_RUM!.init(configuration)
-        window.DD_RUM!.stopResource('https://api.example.com/early')
+        window.OO_RUM!.init(configuration)
+        window.OO_RUM!.stopResource('https://api.example.com/early')
       }, 50)
     })
     .run(async ({ intakeRegistry, flushEvents }) => {

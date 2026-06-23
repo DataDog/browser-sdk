@@ -1,5 +1,5 @@
-import { datadogRum } from '@datadog/browser-rum'
-import { nuxtRumPlugin } from '@datadog/browser-rum-nuxt'
+import { openobserveRum } from '@openobserve/browser-rum'
+import { nuxtRumPlugin } from '@openobserve/browser-rum-nuxt'
 import { defineNuxtPlugin, useNuxtApp, useRoute, useRouter } from 'nuxt/app'
 
 export default defineNuxtPlugin({
@@ -14,7 +14,7 @@ export default defineNuxtPlugin({
       const raw = Array.isArray(rumConfigParam) ? rumConfigParam[0] : rumConfigParam
       if (raw) {
         const config = JSON.parse(raw)
-        datadogRum.init({ ...config, plugins: [nuxtRumPlugin({ router: useRouter(), nuxtApp: useNuxtApp() })] })
+        openobserveRum.init({ ...config, plugins: [nuxtRumPlugin({ router: useRouter(), nuxtApp: useNuxtApp() })] })
       }
     }
   },

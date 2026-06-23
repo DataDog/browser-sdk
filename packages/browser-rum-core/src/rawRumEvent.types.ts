@@ -1,4 +1,4 @@
-import type { Duration, ServerDuration, TimeStamp } from '@datadog/js-core/time'
+import type { Duration, ServerDuration, TimeStamp } from '@openobserve/js-core/time'
 import type {
   ErrorSource,
   ErrorHandling,
@@ -7,7 +7,7 @@ import type {
   DefaultPrivacyLevel,
   Csp,
   Context,
-} from '@datadog/browser-core'
+} from '@openobserve/browser-core'
 import type { GraphQlMetadata } from './domain/resource/graphql'
 import type { PageState } from './domain/contexts/pageStateHistory'
 import type {
@@ -76,7 +76,7 @@ export interface RawRumResourceEvent {
     request?: ResourceRequest
     response?: ResourceResponse
   }
-  _dd: {
+  _oo: {
     trace_id?: string
     span_id?: string // not available for initial document tracing
     rule_psr?: number
@@ -161,7 +161,7 @@ export interface RawRumViewEvent {
   privacy?: {
     replay_level: DefaultPrivacyLevel
   }
-  _dd: {
+  _oo: {
     document_version: number
     replay_stats?: ReplayStats
     page_states?: PageStateServerEntry[]
@@ -183,7 +183,7 @@ export interface RawRumViewUpdateEvent {
   date: TimeStamp
   type: typeof RumEventType.VIEW_UPDATE
   view: Partial<RawRumViewEvent['view']>
-  _dd: Partial<RawRumViewEvent['_dd']> & {
+  _oo: Partial<RawRumViewEvent['_oo']> & {
     document_version: number
   }
   display?: Partial<ViewDisplay>
@@ -278,7 +278,7 @@ export interface RawRumLongTaskEvent {
     entry_type: typeof RumLongTaskEntryType.LONG_TASK
     duration: ServerDuration
   }
-  _dd: {
+  _oo: {
     discarded: boolean
   }
 }
@@ -319,7 +319,7 @@ export interface RawRumLongAnimationFrameEvent {
       window_attribution: string
     }>
   }
-  _dd: {
+  _oo: {
     discarded: boolean
   }
 }
@@ -344,7 +344,7 @@ export interface RawRumActionEvent {
   view?: {
     in_foreground: boolean
   }
-  _dd?: {
+  _oo?: {
     action?: {
       target?: {
         selector?: string
@@ -396,7 +396,7 @@ export interface RawRumVitalEvent {
     description?: string
     duration?: number
   }
-  _dd?: {
+  _oo?: {
     vital: {
       computed_value: true
     }

@@ -1,8 +1,8 @@
-import type { RelativeTime, Duration } from '@datadog/js-core/time'
-import { clocksNow, clocksOrigin } from '@datadog/js-core/time'
-import { noop, Observable } from '@datadog/browser-core'
-import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, setPageVisibility, restorePageVisibility } from '@datadog/browser-core/test'
+import type { RelativeTime, Duration } from '@openobserve/js-core/time'
+import { clocksNow, clocksOrigin } from '@openobserve/js-core/time'
+import { noop, Observable } from '@openobserve/browser-core'
+import type { Clock } from '@openobserve/browser-core/test'
+import { mockClock, setPageVisibility, restorePageVisibility } from '@openobserve/browser-core/test'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 import {
   createMutationRecord,

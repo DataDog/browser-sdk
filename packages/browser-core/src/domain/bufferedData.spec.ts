@@ -1,5 +1,5 @@
-import { clocksNow } from '@datadog/js-core/time'
-import { ConsoleApiName } from '@datadog/js-core/util'
+import { clocksNow } from '@openobserve/js-core/time'
+import { ConsoleApiName } from '@openobserve/js-core/util'
 import type { MockFetch } from '../../test'
 import { collectAsyncCalls, mockFetch, mockXhr, registerCleanupTask, replaceMockable, withXhr } from '../../test'
 import { Observable } from '../tools/observable'

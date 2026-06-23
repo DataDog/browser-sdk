@@ -1,8 +1,8 @@
 import { resolve } from 'node:path'
 import { test } from '@playwright/test'
 import type { Page, CDPSession, Browser } from '@playwright/test'
-import type { RumInitConfiguration } from '@datadog/browser-rum-core'
-import type { DebuggerInitConfiguration } from '@datadog/browser-debugger'
+import type { RumInitConfiguration } from '@openobserve/browser-rum-core'
+import type { DebuggerInitConfiguration } from '@openobserve/browser-debugger'
 import type { BrowserWindow, Metrics } from './profiling.type'
 import { startProfiling } from './profilers'
 import { reportToConsole } from './reporters/reportToConsole'
@@ -115,13 +115,13 @@ async function injectRumSDK(page: Page, scenarioConfiguration: ScenarioConfigura
           s.src = n
           s.crossOrigin = ''
           o.head.appendChild(s)
-        })(window, document, 'script', sdkBundleUrl, 'DD_RUM')
-        browserWindow.DD_RUM?.onReady(function () {
-          browserWindow.DD_RUM!.setGlobalContextProperty('scenario', {
+        })(window, document, 'script', sdkBundleUrl, 'OO_RUM')
+        browserWindow.OO_RUM?.onReady(function () {
+          browserWindow.OO_RUM!.setGlobalContextProperty('scenario', {
             configuration: scenarioConfiguration,
             name: scenarioName,
           })
-          browserWindow.DD_RUM!.init(configuration as RumInitConfiguration)
+          browserWindow.OO_RUM!.init(configuration as RumInitConfiguration)
         })
       }
 
@@ -162,7 +162,7 @@ async function injectDebugger(page: Page, scenarioConfiguration: ScenarioConfigu
   })
 
   // Inline the SDK source so `DD_DEBUGGER` is available before the test app runs.
-  // TODO: once `@datadog/browser-debugger` is published to the public CDN, switch to the
+  // TODO: once `@openobserve/browser-debugger` is published to the public CDN, switch to the
   // same async-`<script>` snippet pattern used by `injectRumSDK` (load from `SDK_BUNDLE_URL`,
   // init via `onReady`). That matches real customer integration and folds the script-fetch
   // cost into the measured metrics.
@@ -228,7 +228,7 @@ async function warmup(browser: Browser, url: string) {
 
 async function getSDKVersion(page: Page) {
   return await page.evaluate(
-    () => (window as BrowserWindow).DD_RUM?.version || (window as BrowserWindow).DD_DEBUGGER?.version || ''
+    () => (window as BrowserWindow).OO_RUM?.version || (window as BrowserWindow).DD_DEBUGGER?.version || ''
   )
 }
 
@@ -259,7 +259,7 @@ async function flushEvents(page: Page) {
   await page.evaluate(() => {
     Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' })
     const hiddenEvent = new Event('visibilitychange', { bubbles: true })
-    ;(hiddenEvent as unknown as { __ddIsTrusted: boolean }).__ddIsTrusted = true
+    ;(hiddenEvent as unknown as { __ooIsTrusted: boolean }).__ooIsTrusted = true
     document.dispatchEvent(hiddenEvent)
   })
 }

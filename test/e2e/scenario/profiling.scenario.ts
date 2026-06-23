@@ -59,7 +59,7 @@ test.describe('profiling', () => {
         format: 'json',
         version: 4,
         tags_profiler: 'sdk_version:dev,language:javascript,runtime:chrome,family:chrome,host:browser',
-        _dd: {
+        _oo: {
           clock_drift: expect.any(Number),
         },
       })
@@ -164,7 +164,7 @@ test.describe('profiling', () => {
       withBrowserLogs((browserLogs) => {
         const profilingWarnings = browserLogs.filter((log) =>
           log.message.includes(
-            'Datadog Browser SDK: [DD_RUM] Profiler startup failed. Ensure your server includes the `Document-Policy: js-profiling` response header when serving HTML pages'
+            'Datadog Browser SDK: [OO_RUM] Profiler startup failed. Ensure your server includes the `Document-Policy: js-profiling` response header when serving HTML pages'
           )
         )
         expect(profilingWarnings.length).toBeGreaterThan(0)
@@ -183,12 +183,12 @@ test.describe('profiling', () => {
 })
 
 async function generateAction(page: Page) {
-  await page.evaluate(() => window.DD_RUM!.addAction('testAction'))
+  await page.evaluate(() => window.OO_RUM!.addAction('testAction'))
 }
 
 async function generateVital(page: Page, durationMs = 50) {
   await page.evaluate(
-    (duration) => window.DD_RUM!.addDurationVital('testVitals', { startTime: Date.now() - duration, duration }),
+    (duration) => window.OO_RUM!.addDurationVital('testVitals', { startTime: Date.now() - duration, duration }),
     durationMs
   )
 }

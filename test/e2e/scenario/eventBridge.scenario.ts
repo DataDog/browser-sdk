@@ -71,7 +71,7 @@ test.describe('bridge present', () => {
             throw new window.Error('bar')
           },
         }
-        window.DD_LOGS!.logger.log('hop', context)
+        window.OO_LOGS!.logger.log('hop', context)
       })
 
       await flushEvents()
@@ -85,7 +85,7 @@ test.describe('bridge present', () => {
     .withEventBridge()
     .run(async ({ flushEvents, intakeRegistry, page }) => {
       await page.evaluate(() => {
-        window.DD_LOGS!.logger.log('hello')
+        window.OO_LOGS!.logger.log('hello')
       })
       await flushEvents()
 
@@ -111,10 +111,10 @@ test.describe('bridge present', () => {
       await flushEvents()
 
       const tracedResources = intakeRegistry.rumResourceEvents.filter(
-        (event) => event.resource.type === 'xhr' && event._dd?.trace_id
+        (event) => event.resource.type === 'xhr' && event._oo?.trace_id
       )
       expect(tracedResources).toHaveLength(1)
-      expect(tracedResources[0]._dd.trace_id).toMatch(/\d+/)
+      expect(tracedResources[0]._oo.trace_id).toMatch(/\d+/)
     })
 
   createTest('override trace sample rate when bridge provides isTraceSampled false')
@@ -126,7 +126,7 @@ test.describe('bridge present', () => {
 
       const xhrResources = intakeRegistry.rumResourceEvents.filter((event) => event.resource.type === 'xhr')
       expect(xhrResources).toHaveLength(1)
-      expect(xhrResources[0]._dd?.trace_id).toBeUndefined()
+      expect(xhrResources[0]._oo?.trace_id).toBeUndefined()
     })
 
   createTest('do not send records when the recording is stopped')
@@ -138,7 +138,7 @@ test.describe('bridge present', () => {
 
       const preStopRecordsCount = intakeRegistry.replayRecords.length
       await page.evaluate(() => {
-        window.DD_RUM!.stopSessionReplayRecording()
+        window.OO_RUM!.stopSessionReplayRecording()
 
         // trigger a new record
         document.body.appendChild(document.createElement('li'))

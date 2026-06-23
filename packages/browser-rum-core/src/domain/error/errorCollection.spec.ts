@@ -1,7 +1,7 @@
-import type { RelativeTime, TimeStamp } from '@datadog/js-core/time'
-import type { ErrorWithCause } from '@datadog/browser-core'
-import { ErrorHandling, ErrorSource, NO_ERROR_STACK_PRESENT_MESSAGE } from '@datadog/browser-core'
-import { FAKE_CSP_VIOLATION_EVENT } from '@datadog/browser-core/test'
+import type { RelativeTime, TimeStamp } from '@openobserve/js-core/time'
+import type { ErrorWithCause } from '@openobserve/browser-core'
+import { ErrorHandling, ErrorSource, NO_ERROR_STACK_PRESENT_MESSAGE } from '@openobserve/browser-core'
+import { FAKE_CSP_VIOLATION_EVENT } from '@openobserve/browser-core/test'
 import { collectAndValidateRawRumEvents } from '../../../test'
 import type { RawRumErrorEvent, RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -153,10 +153,10 @@ describe('error collection', () => {
       setupErrorCollection()
 
       interface DatadogError extends Error {
-        dd_fingerprint?: string
+        oo_fingerprint?: string
       }
       const error = new Error('foo')
-      ;(error as DatadogError).dd_fingerprint = 'my-fingerprint'
+      ;(error as DatadogError).oo_fingerprint = 'my-fingerprint'
 
       addError({
         error,
@@ -171,7 +171,7 @@ describe('error collection', () => {
       setupErrorCollection()
 
       const error = new Error('foo')
-      ;(error as any).dd_fingerprint = 2
+      ;(error as any).oo_fingerprint = 2
 
       addError({
         error,

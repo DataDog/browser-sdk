@@ -1,8 +1,8 @@
-import { timeStampNow, addDuration, clocksNow, relativeNow } from '@datadog/js-core/time'
-import type { Duration, RelativeTime } from '@datadog/js-core/time'
-import { DefaultPrivacyLevel, Observable, PageExitReason } from '@datadog/browser-core'
-import type { Clock } from '@datadog/browser-core/test'
-import { createNewEvent, mockClock } from '@datadog/browser-core/test'
+import { timeStampNow, addDuration, clocksNow, relativeNow } from '@openobserve/js-core/time'
+import type { Duration, RelativeTime } from '@openobserve/js-core/time'
+import { DefaultPrivacyLevel, Observable, PageExitReason } from '@openobserve/browser-core'
+import type { Clock } from '@openobserve/browser-core/test'
+import { createNewEvent, mockClock } from '@openobserve/browser-core/test'
 import { createFakeClick, createMutationRecord, mockRumConfiguration } from '../../../test'
 import type { AssembledRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ActionType, FrustrationType } from '../../rawRumEvent.types'
@@ -293,7 +293,7 @@ describe('trackClickActions', () => {
 
   describe('with enablePrivacyForActionName true', () => {
     it('does not track click actions when html override set hidden', () => {
-      button.setAttribute('data-dd-privacy', 'hidden')
+      button.setAttribute('data-oo-privacy', 'hidden')
       startClickActionsTracking({
         enablePrivacyForActionName: true,
       })
@@ -516,7 +516,7 @@ describe('trackClickActions', () => {
     })
 
     it('should use allowlist masking when defaultPrivacyLevel is allow and node privacy level is mask-unless-allowlisted', () => {
-      button.setAttribute('data-dd-privacy', 'mask-unless-allowlisted')
+      button.setAttribute('data-oo-privacy', 'mask-unless-allowlisted')
       startClickActionsTracking({
         defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
         enablePrivacyForActionName: true,
@@ -532,7 +532,7 @@ describe('trackClickActions', () => {
     })
 
     it('should preserve mask levels when defaultPrivacyLevel is mask-unless-allowlisted', () => {
-      button.setAttribute('data-dd-privacy', 'mask')
+      button.setAttribute('data-oo-privacy', 'mask')
       startClickActionsTracking({
         defaultPrivacyLevel: DefaultPrivacyLevel.MASK_UNLESS_ALLOWLISTED,
         enablePrivacyForActionName: true,
@@ -548,7 +548,7 @@ describe('trackClickActions', () => {
     })
 
     it('should not use allowlist masking when defaultPrivacyLevel is mask-unless-allowlisted but dd-privacy is allow', () => {
-      button.setAttribute('data-dd-privacy', 'allow')
+      button.setAttribute('data-oo-privacy', 'allow')
       startClickActionsTracking({
         defaultPrivacyLevel: DefaultPrivacyLevel.MASK_UNLESS_ALLOWLISTED,
         enablePrivacyForActionName: true,

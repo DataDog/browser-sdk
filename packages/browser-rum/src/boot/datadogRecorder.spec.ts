@@ -1,9 +1,9 @@
-import type { HttpRequest, HttpRequestEvent, Telemetry } from '@datadog/browser-core'
-import type { TimeStamp } from '@datadog/js-core/time'
-import { PageExitReason, DefaultPrivacyLevel, noop, DeflateEncoderStreamId, Observable } from '@datadog/browser-core'
-import type { ViewCreatedEvent } from '@datadog/browser-rum-core'
-import { LifeCycle, LifeCycleEventType, startViewHistory } from '@datadog/browser-rum-core'
-import type { SessionManagerMock } from '@datadog/browser-core/test'
+import type { HttpRequest, HttpRequestEvent, Telemetry } from '@openobserve/browser-core'
+import type { TimeStamp } from '@openobserve/js-core/time'
+import { PageExitReason, DefaultPrivacyLevel, noop, DeflateEncoderStreamId, Observable } from '@openobserve/browser-core'
+import type { ViewCreatedEvent } from '@openobserve/browser-rum-core'
+import { LifeCycle, LifeCycleEventType, startViewHistory } from '@openobserve/browser-rum-core'
+import type { SessionManagerMock } from '@openobserve/browser-core/test'
 import {
   collectAsyncCalls,
   createNewEvent,
@@ -11,7 +11,7 @@ import {
   registerCleanupTask,
   createSessionManagerMock,
   MOCK_SESSION_ID,
-} from '@datadog/browser-core/test'
+} from '@openobserve/browser-core/test'
 import type { ViewEndedEvent } from '../../../browser-rum-core/src/domain/view/trackViews'
 import { appendElement, mockRumConfiguration } from '../../../browser-rum-core/test'
 

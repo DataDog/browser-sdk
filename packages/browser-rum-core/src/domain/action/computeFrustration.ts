@@ -1,4 +1,4 @@
-import { ONE_SECOND } from '@datadog/js-core/time'
+import { ONE_SECOND } from '@openobserve/js-core/time'
 import { FrustrationType } from '../../rawRumEvent.types'
 import type { Click } from './trackClickActions'
 

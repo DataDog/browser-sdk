@@ -1,11 +1,11 @@
 import { Link, Outlet, RouterProvider, useParams } from 'react-router-dom'
 import React, { useEffect, useState } from 'react'
 import ReactDOM from 'react-dom/client'
-import { datadogRum } from '@datadog/browser-rum'
-import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v7'
-import { reactPlugin, ErrorBoundary, UNSTABLE_ReactComponentTracker } from '@datadog/browser-rum-react'
+import { openobserveRum } from '@openobserve/browser-rum'
+import { createBrowserRouter } from '@openobserve/browser-rum-react/react-router-v7'
+import { reactPlugin, ErrorBoundary, UNSTABLE_ReactComponentTracker } from '@openobserve/browser-rum-react'
 
-datadogRum.init({
+openobserveRum.init({
   applicationId: 'xxx',
   clientToken: 'xxx',
   plugins: [reactPlugin({ router: true })],

@@ -1,5 +1,5 @@
-import { createIdentityEncoder, DeflateEncoderStreamId as CoreDeflateEncoderStreamId } from '@datadog/browser-core'
-import { interceptRequests, readFormDataRequest } from '@datadog/browser-core/test'
+import { createIdentityEncoder, DeflateEncoderStreamId as CoreDeflateEncoderStreamId } from '@openobserve/browser-core'
+import { interceptRequests, readFormDataRequest } from '@openobserve/browser-core/test'
 import { LifeCycle } from '../domain/lifeCycle'
 import { mockRumConfiguration } from '../../test'
 import { createFormDataTransport } from './formDataTransport'

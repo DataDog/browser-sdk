@@ -16,7 +16,7 @@ export const mockableReplacements = new Map<unknown, unknown>()
  * }
  *
  * // In test file:
- * import { replaceMockable } from '@datadog/browser-core/test'
+ * import { replaceMockable } from '@openobserve/browser-core/test'
  * it('...', () => {
  *   replaceMockable(getNavigationEntry, () => FAKE_NAVIGATION_ENTRY)
  *   expect(formatNavigationEntry()).toEqual(...)

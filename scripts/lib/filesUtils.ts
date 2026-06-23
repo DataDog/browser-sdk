@@ -75,7 +75,7 @@ export function readPackageJson(filePath: string): PackageJson {
  * version. They are still built and published as part of the same release process, but their
  * version is managed manually and is not bumped to the release version.
  */
-const INDEPENDENTLY_VERSIONED_PACKAGES = new Set<string>(['@datadog/js-core'])
+const INDEPENDENTLY_VERSIONED_PACKAGES = new Set<string>(['@openobserve/js-core'])
 
 /**
  * Returns whether the given package is versioned independently from the synced Browser SDK release

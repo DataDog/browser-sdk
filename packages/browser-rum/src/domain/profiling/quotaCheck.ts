@@ -1,5 +1,5 @@
-import { fetch, setTimeout, clearTimeout, buildEndpointUrl } from '@datadog/browser-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
+import { fetch, setTimeout, clearTimeout, buildEndpointUrl } from '@openobserve/browser-core'
+import type { RumConfiguration } from '@openobserve/browser-rum-core'
 
 // Reason strings surfaced on RUM events. Backend reasons backend_unavailable and
 // backend_client_not_initialized are both normalised to backend_unavailable.

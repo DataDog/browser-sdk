@@ -1,5 +1,5 @@
-import { clockDrift, timeStampNow } from '@datadog/js-core/time'
-import { canUseEventBridge, round } from '@datadog/browser-core'
+import { clockDrift, timeStampNow } from '@openobserve/js-core/time'
+import { canUseEventBridge, round } from '@openobserve/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { AssembleHook, DefaultRumEventAttributes } from '../hooks'
 
@@ -18,7 +18,7 @@ export function startDefaultContext(
 
     return {
       type: eventType,
-      _dd: {
+      _oo: {
         format_version: 2,
         drift: clockDrift(),
         configuration: {

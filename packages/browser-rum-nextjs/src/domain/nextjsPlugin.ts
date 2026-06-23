@@ -1,5 +1,5 @@
-import { buildUrl } from '@datadog/browser-core'
-import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
+import { buildUrl } from '@openobserve/browser-core'
+import type { RumPlugin, RumPublicApi, StartRumResult } from '@openobserve/browser-rum-core'
 
 export type NextjsPlugin = Pick<Required<RumPlugin>, 'name' | 'onInit' | 'onRumStart'>
 

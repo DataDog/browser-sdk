@@ -1,11 +1,11 @@
-import type { BrowserWindow } from '@datadog/browser-rum-core'
+import type { BrowserWindow } from '@openobserve/browser-rum-core'
 import {
   PRIVACY_ATTR_NAME,
   PRIVACY_ATTR_VALUE_MASK,
   PRIVACY_ATTR_VALUE_MASK_UNLESS_ALLOWLISTED,
   PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
-} from '@datadog/browser-rum-core'
-import { registerCleanupTask } from '@datadog/browser-core/test'
+} from '@openobserve/browser-rum-core'
+import { registerCleanupTask } from '@openobserve/browser-core/test'
 import { ChangeType } from '../../../types'
 
 import { serializeHtml } from '../test/serializeHtml.specHelper'

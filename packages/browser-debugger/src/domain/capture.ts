@@ -1,4 +1,4 @@
-import { getConstructorName, isError } from '@datadog/browser-core'
+import { getConstructorName, isError } from '@openobserve/browser-core'
 
 export interface CaptureOptions {
   maxReferenceDepth?: number

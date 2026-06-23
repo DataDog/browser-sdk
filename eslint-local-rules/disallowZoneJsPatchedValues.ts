@@ -4,26 +4,26 @@ import { RuleCreator } from '@typescript-eslint/utils/eslint-utils'
 const PROBLEMATIC_IDENTIFIERS = {
   // Using the patched `MutationObserver` from Zone.js triggers an infinite callback loop on some
   // occasion, see PRs #376 #866 #1530
-  MutationObserver: 'Use `getMutationObserverConstructor` from @datadog/browser-rum-core instead',
+  MutationObserver: 'Use `getMutationObserverConstructor` from @openobserve/browser-rum-core instead',
 
   // Using the patched `setTimeout` from Zone.js triggers a rendering loop in some Angular
   // component, see issue PR #2030
-  setTimeout: 'Use `setTimeout` from @datadog/browser-core instead',
-  clearTimeout: 'Use `clearTimeout` from @datadog/browser-core instead',
+  setTimeout: 'Use `setTimeout` from @openobserve/browser-core instead',
+  clearTimeout: 'Use `clearTimeout` from @openobserve/browser-core instead',
 
   // We didn't stumble on cases where using the patched `setInterval` from Zone.js is problematic
   // yet, but still consider it problematic in prevention and to unify its usages with `setTimeout`.
-  setInterval: 'Use `setInterval` from @datadog/browser-core instead',
-  clearInterval: 'Use `clearInterval` from @datadog/browser-core instead',
+  setInterval: 'Use `setInterval` from @openobserve/browser-core instead',
+  clearInterval: 'Use `clearInterval` from @openobserve/browser-core instead',
 
   // Using the patched `addEventListener` from Zone.js might trigger a memory leak in Firefox, see
   // PR #1860
-  addEventListener: 'Use `addEventListener` from @datadog/browser-core instead',
-  removeEventListener: 'Use `addEventListener().stop` from @datadog/browser-core instead',
+  addEventListener: 'Use `addEventListener` from @openobserve/browser-core instead',
+  removeEventListener: 'Use `addEventListener().stop` from @openobserve/browser-core instead',
 
   // Using the patched `fetch` from Zone.js triggers unnecessary Angular change detection cycles,
   // see PR #4117.
-  fetch: 'Use `fetch` from @datadog/browser-core instead',
+  fetch: 'Use `fetch` from @openobserve/browser-core instead',
 } as const
 
 type ProblematicIdentifier = keyof typeof PROBLEMATIC_IDENTIFIERS

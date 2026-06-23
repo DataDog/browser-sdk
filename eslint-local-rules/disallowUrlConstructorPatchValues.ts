@@ -8,7 +8,7 @@ export default RuleCreator.withoutDocs({
     },
     schema: [],
     messages: {
-      patchedUrlConstructor: 'This value might be patched. Use `buildUrl` from @datadog/browser-core instead',
+      patchedUrlConstructor: 'This value might be patched. Use `buildUrl` from @openobserve/browser-core instead',
     },
     type: 'suggestion',
   },

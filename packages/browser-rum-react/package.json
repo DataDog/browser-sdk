@@ -1,5 +1,5 @@
 {
-  "name": "@datadog/browser-rum-react",
+  "name": "@openobserve/browser-rum-react",
   "version": "7.3.0",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
@@ -21,9 +21,9 @@
     "prepack": "yarn build"
   },
   "dependencies": {
-    "@datadog/browser-core": "7.3.0",
-    "@datadog/browser-rum-core": "7.3.0",
-    "@datadog/js-core": "0.0.3"
+    "@openobserve/browser-core": "7.3.0",
+    "@openobserve/browser-rum-core": "7.3.0",
+    "@openobserve/js-core": "0.0.3"
   },
   "peerDependencies": {
     "@tanstack/react-router": ">=1.64.0 <2",
@@ -32,10 +32,10 @@
     "react-router-dom": "6 || 7"
   },
   "peerDependenciesMeta": {
-    "@datadog/browser-rum": {
+    "@openobserve/browser-rum": {
       "optional": true
     },
-    "@datadog/browser-rum-slim": {
+    "@openobserve/browser-rum-slim": {
       "optional": true
     },
     "@tanstack/react-router": {

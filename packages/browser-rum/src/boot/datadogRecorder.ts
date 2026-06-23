@@ -1,13 +1,13 @@
-import type { RawError, HttpRequest, DeflateEncoder, Telemetry, SessionManager } from '@datadog/browser-core'
+import type { RawError, HttpRequest, DeflateEncoder, Telemetry, SessionManager } from '@openobserve/browser-core'
 import {
   createHttpRequest,
   addTelemetryDebug,
   canUseEventBridge,
   noop,
   createEndpointBuilder,
-} from '@datadog/browser-core'
-import type { LifeCycle, ViewHistory, RumConfiguration } from '@datadog/browser-rum-core'
-import { LifeCycleEventType } from '@datadog/browser-rum-core'
+} from '@openobserve/browser-core'
+import type { LifeCycle, ViewHistory, RumConfiguration } from '@openobserve/browser-rum-core'
+import { LifeCycleEventType } from '@openobserve/browser-rum-core'
 
 import type { SerializationStats } from '../domain/record'
 import { record } from '../domain/record'

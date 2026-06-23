@@ -1,7 +1,7 @@
-import type { Subscription } from '@datadog/browser-core'
-import type { Duration } from '@datadog/js-core/time'
-import type { Clock } from '@datadog/browser-core/test'
-import { mockClock } from '@datadog/browser-core/test'
+import type { Subscription } from '@openobserve/browser-core'
+import type { Duration } from '@openobserve/js-core/time'
+import type { Clock } from '@openobserve/browser-core/test'
+import { mockClock } from '@openobserve/browser-core/test'
 import { createPerformanceEntry, mockPerformanceObserver } from '../../test'
 import { RumPerformanceEntryType, createPerformanceObservable } from './performanceObservable'
 

@@ -1,8 +1,8 @@
 import Ajv from 'ajv'
-import { registerCleanupTask } from '@datadog/browser-core/test'
-import type { Context } from '@datadog/browser-core'
-import { combine } from '@datadog/js-core/util'
-import type { CommonProperties } from '@datadog/browser-rum-core'
+import { registerCleanupTask } from '@openobserve/browser-core/test'
+import type { Context } from '@openobserve/browser-core'
+import { combine } from '@openobserve/js-core/util'
+import type { CommonProperties } from '@openobserve/browser-rum-core'
 import type { LifeCycle, RawRumEventCollectedData } from '../src/domain/lifeCycle'
 import { LifeCycleEventType } from '../src/domain/lifeCycle'
 import type { RawRumEvent } from '../src/rawRumEvent.types'
@@ -24,7 +24,7 @@ export function collectAndValidateRawRumEvents(lifeCycle: LifeCycle) {
 function validateRumEventFormat(rawRumEvent: RawRumEvent) {
   const fakeId = '00000000-aaaa-0000-aaaa-000000000000'
   const fakeContext: Partial<CommonProperties> = {
-    _dd: {
+    _oo: {
       format_version: 2,
       drift: 0,
       configuration: {

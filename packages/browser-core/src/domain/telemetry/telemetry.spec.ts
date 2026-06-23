@@ -1,4 +1,4 @@
-import { createHook } from '@datadog/js-core/assembly'
+import { createHook } from '@openobserve/js-core/assembly'
 import { NO_ERROR_STACK_PRESENT_MESSAGE } from '../error/error'
 import { callMonitored } from '../../tools/monitor'
 import type { ExperimentalFeature } from '../../tools/experimentalFeatures'
@@ -467,7 +467,7 @@ describe('startTelemetryTransport', () => {
         status: StatusType.error,
         message: 'test error',
       },
-      _dd: {
+      _oo: {
         format_version: 2,
       },
     })

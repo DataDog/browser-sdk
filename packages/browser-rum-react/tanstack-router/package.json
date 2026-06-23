@@ -1,5 +1,5 @@
 {
-  "name": "@datadog/browser-rum-react/tanstack-router",
+  "name": "@openobserve/browser-rum-react/tanstack-router",
   "private": true,
   "main": "../cjs/entries/tanstackRouter.js",
   "module": "../esm/entries/tanstackRouter.mjs",

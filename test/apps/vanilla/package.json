@@ -7,31 +7,31 @@
     "compat:ssr": "webpack --config ./webpack.ssr.js && node dist/app.js"
   },
   "peerDependencies": {
-    "@datadog/browser-logs": "*",
-    "@datadog/browser-rum": "*",
-    "@datadog/browser-debugger": "*"
+    "@openobserve/browser-logs": "*",
+    "@openobserve/browser-rum": "*",
+    "@openobserve/browser-debugger": "*"
   },
   "peerDependenciesMeta": {
-    "@datadog/browser-logs": {
+    "@openobserve/browser-logs": {
       "optional": true
     },
-    "@datadog/browser-rum": {
+    "@openobserve/browser-rum": {
       "optional": true
     },
-    "@datadog/browser-debugger": {
+    "@openobserve/browser-debugger": {
       "optional": true
     }
   },
   "resolutions": {
-    "@datadog/browser-core": "file:../../../packages/browser-core/package.tgz",
-    "@datadog/js-core": "file:../../../packages/js-core/package.tgz",
-    "@datadog/browser-rum": "file:../../../packages/browser-rum/package.tgz",
-    "@datadog/browser-logs": "file:../../../packages/browser-logs/package.tgz",
-    "@datadog/browser-rum-core": "file:../../../packages/browser-rum-core/package.tgz",
-    "@datadog/browser-rum-react": "file:../../../packages/browser-rum-react/package.tgz",
-    "@datadog/browser-rum-slim": "file:../../../packages/browser-rum-slim/package.tgz",
-    "@datadog/browser-worker": "file:../../../packages/browser-worker/package.tgz",
-    "@datadog/browser-debugger": "file:../../../packages/browser-debugger/package.tgz"
+    "@openobserve/browser-core": "file:../../../packages/browser-core/package.tgz",
+    "@openobserve/js-core": "file:../../../packages/js-core/package.tgz",
+    "@openobserve/browser-rum": "file:../../../packages/browser-rum/package.tgz",
+    "@openobserve/browser-logs": "file:../../../packages/browser-logs/package.tgz",
+    "@openobserve/browser-rum-core": "file:../../../packages/browser-rum-core/package.tgz",
+    "@openobserve/browser-rum-react": "file:../../../packages/browser-rum-react/package.tgz",
+    "@openobserve/browser-rum-slim": "file:../../../packages/browser-rum-slim/package.tgz",
+    "@openobserve/browser-worker": "file:../../../packages/browser-worker/package.tgz",
+    "@openobserve/browser-debugger": "file:../../../packages/browser-debugger/package.tgz"
   },
   "devDependencies": {
     "ts-loader": "9.6.0",

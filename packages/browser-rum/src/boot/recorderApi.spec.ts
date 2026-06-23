@@ -5,11 +5,11 @@ import type {
   RawTelemetryEvent,
   SessionManager,
   Telemetry,
-} from '@datadog/browser-core'
-import { BridgeCapability, display, resetSampleDecisionCache } from '@datadog/browser-core'
-import type { RecorderApi } from '@datadog/browser-rum-core'
-import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
-import type { MockTelemetry, SessionManagerMock } from '@datadog/browser-core/test'
+} from '@openobserve/browser-core'
+import { BridgeCapability, display, resetSampleDecisionCache } from '@openobserve/browser-core'
+import type { RecorderApi } from '@openobserve/browser-rum-core'
+import { LifeCycle, LifeCycleEventType } from '@openobserve/browser-rum-core'
+import type { MockTelemetry, SessionManagerMock } from '@openobserve/browser-core/test'
 import {
   collectAsyncCalls,
   mockEventBridge,
@@ -19,7 +19,7 @@ import {
   createSessionManagerMock,
   LOW_HASH_UUID,
   HIGH_HASH_UUID,
-} from '@datadog/browser-core/test'
+} from '@openobserve/browser-core/test'
 import { mockDocumentReadyState, mockRumConfiguration, mockViewHistory } from '../../../browser-rum-core/test'
 import type { CreateDeflateWorker } from '../domain/deflate'
 import { resetDeflateWorkerState, createDeflateWorker } from '../domain/deflate'

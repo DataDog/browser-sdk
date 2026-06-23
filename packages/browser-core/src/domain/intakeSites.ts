@@ -15,7 +15,7 @@ export const INTAKE_SITE_EU1: Site = 'datadoghq.eu'
 export const INTAKE_SITE_US1_FED: Site = 'ddog-gov.com'
 export const INTAKE_SITE_US2_FED: Site = 'us2.ddog-gov.com'
 
-export const INTAKE_URL_PARAMETERS = ['ddsource', 'dd-api-key', 'dd-request-id']
+export const INTAKE_URL_PARAMETERS = ['o2source', 'o2-api-key', 'o2-request-id']
 
 export function isIntakeUrl(url: string): boolean {
   // check if tags is present in the query string

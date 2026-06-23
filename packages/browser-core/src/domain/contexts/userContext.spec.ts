@@ -1,5 +1,5 @@
-import type { RelativeTime } from '@datadog/js-core/time'
-import { createHook, type Hook } from '@datadog/js-core/assembly'
+import type { RelativeTime } from '@openobserve/js-core/time'
+import { createHook, type Hook } from '@openobserve/js-core/assembly'
 import { registerCleanupTask } from '../../../test'
 import { mockRumConfiguration } from '../../../../browser-rum-core/test'
 import type { ContextManager } from '../context/contextManager'
@@ -125,7 +125,7 @@ describe('user context across pages', () => {
     userContext.setContext({ id: '123' })
 
     expect(userContext.getContext()).toEqual({ id: '123' })
-    expect(localStorage.getItem('_dd_c_some_product_key_1')).toBeNull()
+    expect(localStorage.getItem('_oo_c_some_product_key_1')).toBeNull()
   })
 
   it('when enabled, should maintain the user in local storage', () => {
@@ -138,6 +138,6 @@ describe('user context across pages', () => {
 
     userContext.setContext({ id: 'foo', qux: 'qix' })
     expect(userContext.getContext()).toEqual({ id: 'foo', qux: 'qix' })
-    expect(localStorage.getItem('_dd_c_some_product_key_1')).toBe('{"id":"foo","qux":"qix"}')
+    expect(localStorage.getItem('_oo_c_some_product_key_1')).toBe('{"id":"foo","qux":"qix"}')
   })
 })

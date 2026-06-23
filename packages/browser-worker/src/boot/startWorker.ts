@@ -1,5 +1,5 @@
-import type { DeflateWorkerAction, DeflateWorkerResponse, Uint8ArrayBuffer } from '@datadog/browser-core'
-import { concatBuffers } from '@datadog/browser-core'
+import type { DeflateWorkerAction, DeflateWorkerResponse, Uint8ArrayBuffer } from '@openobserve/browser-core'
+import { concatBuffers } from '@openobserve/browser-core'
 import { Deflate, constants } from '../domain/deflate'
 
 declare const __BUILD_ENV__SDK_VERSION__: string

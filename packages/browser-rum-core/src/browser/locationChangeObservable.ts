@@ -6,7 +6,7 @@ import {
   mockable,
   Observable,
   shallowClone,
-} from '@datadog/browser-core'
+} from '@openobserve/browser-core'
 
 export interface LocationChange {
   oldLocation: Readonly<Location>

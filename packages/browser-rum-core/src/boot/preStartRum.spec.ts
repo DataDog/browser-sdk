@@ -1,6 +1,6 @@
-import type { Duration, TimeStamp } from '@datadog/js-core/time'
-import type { DeflateWorker, TrackingConsentState } from '@datadog/browser-core'
-import { toTimeStamp, relativeToClocks, clocksNow } from '@datadog/js-core/time'
+import type { Duration, TimeStamp } from '@openobserve/js-core/time'
+import type { DeflateWorker, TrackingConsentState } from '@openobserve/browser-core'
+import { toTimeStamp, relativeToClocks, clocksNow } from '@openobserve/js-core/time'
 import {
   display,
   noop,
@@ -9,8 +9,8 @@ import {
   DefaultPrivacyLevel,
   startTelemetry,
   startSessionManager,
-} from '@datadog/browser-core'
-import type { Clock } from '@datadog/browser-core/test'
+} from '@openobserve/browser-core'
+import type { Clock } from '@openobserve/browser-core/test'
 import {
   collectAsyncCalls,
   interceptRequests,
@@ -22,7 +22,7 @@ import {
   replaceMockable,
   replaceMockableWithSpy,
   createStartSessionManagerMock,
-} from '@datadog/browser-core/test'
+} from '@openobserve/browser-core/test'
 import type { HybridInitConfiguration, RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
 import { ActionType, VitalType } from '../rawRumEvent.types'

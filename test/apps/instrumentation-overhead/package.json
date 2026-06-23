@@ -5,17 +5,17 @@
     "build": "webpack --config ./webpack.config.js"
   },
   "peerDependencies": {
-    "@datadog/browser-debugger": "*"
+    "@openobserve/browser-debugger": "*"
   },
   "peerDependenciesMeta": {
-    "@datadog/browser-debugger": {
+    "@openobserve/browser-debugger": {
       "optional": true
     }
   },
   "resolutions": {
-    "@datadog/browser-core": "file:../../../packages/browser-core/package.tgz",
-    "@datadog/js-core": "file:../../../packages/js-core/package.tgz",
-    "@datadog/browser-debugger": "file:../../../packages/browser-debugger/package.tgz"
+    "@openobserve/browser-core": "file:../../../packages/browser-core/package.tgz",
+    "@openobserve/js-core": "file:../../../packages/js-core/package.tgz",
+    "@openobserve/browser-debugger": "file:../../../packages/browser-debugger/package.tgz"
   },
   "devDependencies": {
     "ts-loader": "9.6.0",

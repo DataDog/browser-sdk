@@ -1,5 +1,5 @@
-import type { ErrorWithCause } from '@datadog/browser-core'
-import { display, ErrorHandling, NO_ERROR_STACK_PRESENT_MESSAGE } from '@datadog/browser-core'
+import type { ErrorWithCause } from '@openobserve/browser-core'
+import { display, ErrorHandling, NO_ERROR_STACK_PRESENT_MESSAGE } from '@openobserve/browser-core'
 import type { LogsMessage } from './logger'
 import { HandlerType, Logger, STATUSES } from './logger'
 import { StatusType } from './logger/isAuthorized'

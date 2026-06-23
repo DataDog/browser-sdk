@@ -1,7 +1,7 @@
-import { generateUUID, INTAKE_URL_PARAMETERS } from '@datadog/browser-core'
-import type { LogsInitConfiguration } from '@datadog/browser-logs'
-import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
-import type { DebuggerInitConfiguration } from '@datadog/browser-debugger'
+import { generateUUID, INTAKE_URL_PARAMETERS } from '@openobserve/browser-core'
+import type { LogsInitConfiguration } from '@openobserve/browser-logs'
+import type { RumInitConfiguration, RemoteConfiguration } from '@openobserve/browser-rum-core'
+import type { DebuggerInitConfiguration } from '@openobserve/browser-debugger'
 import type test from '@playwright/test'
 import { isBrowserStack, isContinuousIntegration } from './environment'
 import type { Servers } from './httpServers'
@@ -87,9 +87,9 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
 
   if (options.logs) {
     footer += html`<script>
-      ${formatSnippet(logsScriptUrl, 'DD_LOGS')}
-      DD_LOGS.onReady(function () {
-        DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
+      ${formatSnippet(logsScriptUrl, 'OO_LOGS')}
+      OO_LOGS.onReady(function () {
+        OO_LOGS.setGlobalContext(${JSON.stringify(options.context)})
         ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
       })
     </script>`
@@ -97,9 +97,9 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
 
   if (options.rum) {
     footer += html`<script type="text/javascript">
-      ${formatSnippet(rumScriptUrl, 'DD_RUM')}
-      DD_RUM.onReady(function () {
-        DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
+      ${formatSnippet(rumScriptUrl, 'OO_RUM')}
+      OO_RUM.onReady(function () {
+        OO_RUM.setGlobalContext(${JSON.stringify(options.context)})
         ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
       })
     </script>`
@@ -137,7 +137,7 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
   if (options.logs) {
     header += html`<script type="text/javascript" src="${logsScriptUrl}" crossorigin></script>`
     header += html`<script type="text/javascript">
-      DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
+      OO_LOGS.setGlobalContext(${JSON.stringify(options.context)})
       ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
     </script>`
   }
@@ -145,7 +145,7 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
   if (options.rum) {
     header += html`<script type="text/javascript" src="${rumScriptUrl}" crossorigin></script>`
     header += html`<script type="text/javascript">
-      DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
+      OO_RUM.setGlobalContext(${JSON.stringify(options.context)})
       ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
     </script>`
   }
@@ -179,7 +179,7 @@ export function npmSetup(options: SetupOptions, servers: Servers) {
   if (options.logs) {
     header += html`<script type="text/javascript">
       window.LOGS_INIT = () => {
-        window.DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
+        window.OO_LOGS.setGlobalContext(${JSON.stringify(options.context)})
         ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
       }
     </script>`
@@ -188,7 +188,7 @@ export function npmSetup(options: SetupOptions, servers: Servers) {
   if (options.rum) {
     header += html`<script type="text/javascript">
       window.RUM_INIT = () => {
-        window.DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
+        window.OO_RUM.setGlobalContext(${JSON.stringify(options.context)})
         ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
       }
     </script>`
@@ -244,16 +244,16 @@ export function workerSetup(setupOptions: SetupOptions, servers: Servers) {
   if (worker?.logsConfiguration) {
     setup += js`
       ${worker.importScripts ? js`importScripts('/datadog-logs.js');` : js`import '/datadog-logs.js';`}
-      DD_LOGS.init(${formatConfiguration(worker.logsConfiguration, servers)})
-      DD_LOGS.setGlobalContext(${JSON.stringify(context)})
+      OO_LOGS.init(${formatConfiguration(worker.logsConfiguration, servers)})
+      OO_LOGS.setGlobalContext(${JSON.stringify(context)})
     `
   }
 
   if (worker?.rumConfiguration) {
     setup += js`
       ${worker.importScripts ? js`importScripts('/datadog-rum.js');` : js`import '/datadog-rum.js';`}
-      DD_RUM.init(${formatConfiguration(worker.rumConfiguration, servers)})
-      DD_RUM.setGlobalContext(${JSON.stringify(context)})
+      OO_RUM.init(${formatConfiguration(worker.rumConfiguration, servers)})
+      OO_RUM.setGlobalContext(${JSON.stringify(context)})
     `
   }
 
@@ -284,7 +284,7 @@ export function microfrontendSetup(options: SetupOptions, servers: Servers) {
   if (options.rum) {
     header += html`<script type="text/javascript" src="${rumScriptUrl}" crossorigin></script>`
     header += html`<script type="text/javascript">
-      DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
+      OO_RUM.setGlobalContext(${JSON.stringify(options.context)})
       ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
     </script>`
   }

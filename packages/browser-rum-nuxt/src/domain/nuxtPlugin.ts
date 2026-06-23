@@ -1,4 +1,4 @@
-import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
+import type { RumPlugin, RumPublicApi, StartRumResult } from '@openobserve/browser-rum-core'
 import type { Router } from 'vue-router'
 import { startTrackingNuxtViews } from './router/nuxtRouter'
 import type { NuxtApp } from './error/setupNuxtErrorHandling'

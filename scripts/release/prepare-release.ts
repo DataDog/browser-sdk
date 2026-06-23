@@ -59,7 +59,7 @@ runMain(() => {
 function setVersionInPackageJsonFiles(version: string) {
   const packageJsonFiles = findPackageJsonFiles()
 
-  // Independently-versioned packages (e.g. @datadog/js-core) are not synced to the release version.
+  // Independently-versioned packages (e.g. @openobserve/js-core) are not synced to the release version.
   // For now they get a simple patch bump on each release. Compute their new versions up front so we
   // can also update the packages that depend on them.
   const independentVersions = new Map<string, string>()
@@ -84,7 +84,7 @@ function setVersionInPackageJsonFiles(version: string) {
       for (const [key, value] of Object.entries(content[depField])) {
         if (independentVersions.has(key) && isSemanticVersion(value)) {
           content[depField][key] = independentVersions.get(key)!
-        } else if (key.startsWith('@datadog/browser-') && isSemanticVersion(value)) {
+        } else if (key.startsWith('@openobserve/browser-') && isSemanticVersion(value)) {
           content[depField][key] = version
         }
       }

@@ -1,7 +1,7 @@
-import type { ContextManager, ContextValue } from '@datadog/browser-core'
-import { display, objectEntries, TraceContextInjection } from '@datadog/browser-core'
-import type { SessionManagerMock } from '@datadog/browser-core/test'
-import { MID_HASH_UUID, MOCK_SESSION_ID, createSessionManagerMock } from '@datadog/browser-core/test'
+import type { ContextManager, ContextValue } from '@openobserve/browser-core'
+import { display, objectEntries, TraceContextInjection } from '@openobserve/browser-core'
+import type { SessionManagerMock } from '@openobserve/browser-core/test'
+import { MID_HASH_UUID, MOCK_SESSION_ID, createSessionManagerMock } from '@openobserve/browser-core/test'
 import type { RumFetchResolveContext, RumFetchStartContext, RumXhrStartContext } from '../requestCollection'
 import type { RumInitConfiguration } from '../configuration'
 import { validateAndBuildRumConfiguration } from '../configuration'
@@ -189,10 +189,10 @@ describe('tracer', () => {
         })
       )
 
-      expect(xhr.headers['x-datadog-origin']).toBeUndefined()
-      expect(xhr.headers['x-datadog-parent-id']).toBeUndefined()
-      expect(xhr.headers['x-datadog-trace-id']).toBeUndefined()
-      expect(xhr.headers['x-datadog-sampling-priority']).toBeUndefined()
+      expect(xhr.headers['x-openobserve-origin']).toBeUndefined()
+      expect(xhr.headers['x-openobserve-parent-id']).toBeUndefined()
+      expect(xhr.headers['x-openobserve-trace-id']).toBeUndefined()
+      expect(xhr.headers['x-openobserve-sampling-priority']).toBeUndefined()
     })
 
     it('should add headers for B3 (single) and tracecontext propagators', () => {
@@ -225,7 +225,7 @@ describe('tracer', () => {
       expect(xhr.headers['b3']).toBeUndefined()
       expect(xhr.headers['traceparent']).toBeUndefined()
       expect(xhr.headers['tracestate']).toBeUndefined()
-      expect(xhr.headers['x-datadog-trace-id']).toBeUndefined()
+      expect(xhr.headers['x-openobserve-trace-id']).toBeUndefined()
       expect(xhr.headers['X-B3-TraceId']).toBeUndefined()
     })
 
@@ -238,8 +238,8 @@ describe('tracer', () => {
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
       tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
 
-      expect(xhr.headers['x-datadog-trace-id']).toBeUndefined()
-      expect(xhr.headers['x-datadog-sampling-priority']).toBeUndefined()
+      expect(xhr.headers['x-openobserve-trace-id']).toBeUndefined()
+      expect(xhr.headers['x-openobserve-sampling-priority']).toBeUndefined()
     })
 
     it('should add headers when trace sampled and config set to sampled', () => {
@@ -251,8 +251,8 @@ describe('tracer', () => {
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
       tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
 
-      expect(xhr.headers['x-datadog-trace-id']).toBeDefined()
-      expect(xhr.headers['x-datadog-sampling-priority']).toBeDefined()
+      expect(xhr.headers['x-openobserve-trace-id']).toBeDefined()
+      expect(xhr.headers['x-openobserve-sampling-priority']).toBeDefined()
     })
 
     it('should add headers when trace not sampled and config set to all', () => {
@@ -265,8 +265,8 @@ describe('tracer', () => {
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
       tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
 
-      expect(xhr.headers['x-datadog-trace-id']).toBeDefined()
-      expect(xhr.headers['x-datadog-sampling-priority']).toBeDefined()
+      expect(xhr.headers['x-openobserve-trace-id']).toBeDefined()
+      expect(xhr.headers['x-openobserve-sampling-priority']).toBeDefined()
     })
 
     it('should apply the correction factor for chained sampling on the trace sample rate', () => {
@@ -281,7 +281,7 @@ describe('tracer', () => {
       tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
 
       expect(context.traceSampled).toBeUndefined()
-      expect(xhr.headers['x-datadog-trace-id']).toBeUndefined()
+      expect(xhr.headers['x-openobserve-trace-id']).toBeUndefined()
     })
 
     describe('baggage propagation header', () => {
@@ -352,7 +352,7 @@ describe('tracer', () => {
       expect(xhr.headers['b3']).toBeUndefined()
       expect(xhr.headers['traceparent']).toBeUndefined()
       expect(xhr.headers['tracestate']).toBeUndefined()
-      expect(xhr.headers['x-datadog-trace-id']).toBeUndefined()
+      expect(xhr.headers['x-openobserve-trace-id']).toBeUndefined()
       expect(xhr.headers['X-B3-TraceId']).toBeUndefined()
     })
 
@@ -610,10 +610,10 @@ describe('tracer', () => {
         ])
       )
 
-      expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['x-datadog-origin']))
-      expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['x-datadog-parent-id']))
-      expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['x-datadog-trace-id']))
-      expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['x-datadog-sampling-priority']))
+      expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['x-openobserve-origin']))
+      expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['x-openobserve-parent-id']))
+      expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['x-openobserve-trace-id']))
+      expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['x-openobserve-sampling-priority']))
     })
 
     it('should add headers for b3 (single) and tracecontext propagators', () => {
@@ -648,7 +648,7 @@ describe('tracer', () => {
       expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['b3']))
       expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['traceparent']))
       expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['tracestate']))
-      expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['x-datadog-trace-id']))
+      expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['x-openobserve-trace-id']))
       expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['X-B3-TraceId']))
     })
     it('should not add headers when trace not sampled and config set to sampled', () => {
@@ -676,10 +676,10 @@ describe('tracer', () => {
       const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
       tracer.traceFetch(context)
 
-      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-origin']))
-      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-parent-id']))
-      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-trace-id']))
-      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-sampling-priority']))
+      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-openobserve-origin']))
+      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-openobserve-parent-id']))
+      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-openobserve-trace-id']))
+      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-openobserve-sampling-priority']))
     })
 
     it('should add headers when trace not sampled and config set to all', () => {
@@ -693,10 +693,10 @@ describe('tracer', () => {
       const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
       tracer.traceFetch(context)
 
-      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-origin']))
-      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-parent-id']))
-      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-trace-id']))
-      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-sampling-priority']))
+      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-openobserve-origin']))
+      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-openobserve-parent-id']))
+      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-openobserve-trace-id']))
+      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-openobserve-sampling-priority']))
     })
   })
 
@@ -741,10 +741,10 @@ function toPlainObject(headers: Headers) {
 
 function tracingHeadersFor(traceId: TraceIdentifier, spanId: SpanIdentifier, samplingPriority: '1' | '0') {
   return {
-    'x-datadog-origin': 'rum',
-    'x-datadog-parent-id': spanId.toString(),
-    'x-datadog-sampling-priority': samplingPriority,
-    'x-datadog-trace-id': traceId.toString(),
+    'x-openobserve-origin': 'rum',
+    'x-openobserve-parent-id': spanId.toString(),
+    'x-openobserve-sampling-priority': samplingPriority,
+    'x-openobserve-trace-id': traceId.toString(),
     baggage: `session.id=${MOCK_SESSION_ID},user.id=1234,account.id=5678`,
   }
 }

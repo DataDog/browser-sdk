@@ -1,7 +1,7 @@
 import fs from 'fs'
-import type { RumInitConfiguration } from '@datadog/browser-rum-core'
+import type { RumInitConfiguration } from '@openobserve/browser-rum-core'
 import type test from '@playwright/test'
-import type { LogsInitConfiguration } from '@datadog/browser-logs'
+import type { LogsInitConfiguration } from '@openobserve/browser-logs'
 import { createExtensionTest } from '../helpers/extensionFixture'
 import { DEFAULT_LOGS_CONFIGURATION, DEFAULT_RUM_CONFIGURATION } from '../helpers/configuration'
 

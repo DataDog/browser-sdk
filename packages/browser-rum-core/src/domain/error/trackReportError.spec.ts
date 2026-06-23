@@ -1,7 +1,7 @@
-import type { RawError, Subscription } from '@datadog/browser-core'
-import { clocksNow } from '@datadog/js-core/time'
-import { ErrorHandling, ErrorSource, Observable } from '@datadog/browser-core'
-import type { MockCspEventListener, MockReportingObserver } from '@datadog/browser-core/test'
+import type { RawError, Subscription } from '@openobserve/browser-core'
+import { clocksNow } from '@openobserve/js-core/time'
+import { ErrorHandling, ErrorSource, Observable } from '@openobserve/browser-core'
+import type { MockCspEventListener, MockReportingObserver } from '@openobserve/browser-core/test'
 import {
   FAKE_CSP_VIOLATION_EVENT,
   FAKE_REPORT,
@@ -9,7 +9,7 @@ import {
   mockCspEventListener,
   mockReportingObserver,
   registerCleanupTask,
-} from '@datadog/browser-core/test'
+} from '@openobserve/browser-core/test'
 import { trackReportError } from './trackReportError'
 
 describe('trackReportError', () => {

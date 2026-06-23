@@ -1,5 +1,5 @@
-import type { ClocksState } from '@datadog/js-core/time'
-import { clocksNow } from '@datadog/js-core/time'
+import type { ClocksState } from '@openobserve/js-core/time'
+import { clocksNow } from '@openobserve/js-core/time'
 import type { InstrumentedMethodCall } from '../tools/instrumentMethod'
 import { instrumentMethod } from '../tools/instrumentMethod'
 import { monitorError } from '../tools/monitor'

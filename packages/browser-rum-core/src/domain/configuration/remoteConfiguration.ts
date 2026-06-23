@@ -1,4 +1,4 @@
-import type { createContextManager, Context } from '@datadog/browser-core'
+import type { createContextManager, Context } from '@openobserve/browser-core'
 import {
   display,
   mapValues,
@@ -8,8 +8,8 @@ import {
   monitorError,
   fetch,
   buildEndpointUrl,
-} from '@datadog/browser-core'
-import { isIndexableObject } from '@datadog/js-core/util'
+} from '@openobserve/browser-core'
+import { isIndexableObject } from '@openobserve/js-core/util'
 import { extractRegexMatch } from '../extractRegexMatch'
 import type { RumInitConfiguration } from './configuration'
 import type { RumSdkConfig, DynamicOption, ContextItem } from './remoteConfiguration.types'

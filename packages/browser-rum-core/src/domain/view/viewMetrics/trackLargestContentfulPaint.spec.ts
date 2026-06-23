@@ -1,14 +1,14 @@
-import type { RelativeTime } from '@datadog/js-core/time'
-import { clocksOrigin } from '@datadog/js-core/time'
-import { DOM_EVENT } from '@datadog/browser-core'
-import type { Clock } from '@datadog/browser-core/test'
+import type { RelativeTime } from '@openobserve/js-core/time'
+import { clocksOrigin } from '@openobserve/js-core/time'
+import { DOM_EVENT } from '@openobserve/browser-core'
+import type { Clock } from '@openobserve/browser-core/test'
 import {
   setPageVisibility,
   createNewEvent,
   restorePageVisibility,
   registerCleanupTask,
   mockClock,
-} from '@datadog/browser-core/test'
+} from '@openobserve/browser-core/test'
 import type { RumPerformanceEntry } from '../../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import { appendElement, createPerformanceEntry, mockPerformanceObserver, mockRumConfiguration } from '../../../../test'

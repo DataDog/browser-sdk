@@ -101,7 +101,7 @@ test.describe('browser extensions', () => {
           <script src="${logsScriptUrl}" crossorigin></script>
           <script>
             const script = document.createElement('script')
-            script.innerHTML = 'window.DD_RUM.init(${formatConfiguration(options.rum!, servers)}); window.DD_LOGS.init(${formatConfiguration(options.logs!, servers)})'
+            script.innerHTML = 'window.OO_RUM.init(${formatConfiguration(options.rum!, servers)}); window.OO_LOGS.init(${formatConfiguration(options.logs!, servers)})'
             document.head.appendChild(script)
           </script>
         `

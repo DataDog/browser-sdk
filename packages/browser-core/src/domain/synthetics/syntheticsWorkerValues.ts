@@ -2,17 +2,17 @@ import { getInitCookie } from '../../browser/cookie'
 import { globalObject, isWorkerEnvironment } from '../../tools/globalObject'
 import { tryJsonParse } from '../../tools/utils/objectUtils'
 
-const cookieNamePrefix = 'datadog-synthetics-'
+const cookieNamePrefix = 'openobserve-synthetics-'
 export const SYNTHETICS_TEST_ID_COOKIE_NAME = `${cookieNamePrefix}public-id`
 export const SYNTHETICS_RESULT_ID_COOKIE_NAME = `${cookieNamePrefix}result-id`
 export const SYNTHETICS_INJECTS_RUM_COOKIE_NAME = `${cookieNamePrefix}injects-rum`
 export const SYNTHETICS_CONTEXT_COOKIE_NAME = `${cookieNamePrefix}rum-context`
 
 export interface BrowserWindow {
-  _DATADOG_SYNTHETICS_PUBLIC_ID?: unknown
-  _DATADOG_SYNTHETICS_RESULT_ID?: unknown
-  _DATADOG_SYNTHETICS_INJECTS_RUM?: unknown
-  _DATADOG_SYNTHETICS_RUM_CONTEXT?: unknown
+  _OO_SYNTHETICS_PUBLIC_ID?: unknown
+  _OO_SYNTHETICS_RESULT_ID?: unknown
+  _OO_SYNTHETICS_INJECTS_RUM?: unknown
+  _OO_SYNTHETICS_RUM_CONTEXT?: unknown
 }
 
 export interface SyntheticsContext {
@@ -28,7 +28,7 @@ export function willSyntheticsInjectRum(): boolean {
   }
 
   return Boolean(
-    (globalObject as BrowserWindow)._DATADOG_SYNTHETICS_INJECTS_RUM || getInitCookie(SYNTHETICS_INJECTS_RUM_COOKIE_NAME)
+    (globalObject as BrowserWindow)._OO_SYNTHETICS_INJECTS_RUM || getInitCookie(SYNTHETICS_INJECTS_RUM_COOKIE_NAME)
   )
 }
 
@@ -42,7 +42,7 @@ export function isSyntheticsTest(): boolean {
 }
 
 function getRawSyntheticsContext(): unknown {
-  const rawGlobal = (globalObject as BrowserWindow)._DATADOG_SYNTHETICS_RUM_CONTEXT
+  const rawGlobal = (globalObject as BrowserWindow)._OO_SYNTHETICS_RUM_CONTEXT
   if (rawGlobal) {
     return rawGlobal
   }
@@ -53,9 +53,9 @@ function getRawSyntheticsContext(): unknown {
   }
 
   return {
-    test_id: (window as BrowserWindow)._DATADOG_SYNTHETICS_PUBLIC_ID || getInitCookie(SYNTHETICS_TEST_ID_COOKIE_NAME),
+    test_id: (window as BrowserWindow)._OO_SYNTHETICS_PUBLIC_ID || getInitCookie(SYNTHETICS_TEST_ID_COOKIE_NAME),
     result_id:
-      (window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID || getInitCookie(SYNTHETICS_RESULT_ID_COOKIE_NAME),
+      (window as BrowserWindow)._OO_SYNTHETICS_RESULT_ID || getInitCookie(SYNTHETICS_RESULT_ID_COOKIE_NAME),
   }
 }
 

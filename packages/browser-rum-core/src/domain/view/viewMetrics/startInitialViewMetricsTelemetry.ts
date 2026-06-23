@@ -1,5 +1,5 @@
-import type { Context, Telemetry } from '@datadog/browser-core'
-import { addTelemetryMetrics, noop, TelemetryMetrics } from '@datadog/browser-core'
+import type { Context, Telemetry } from '@openobserve/browser-core'
+import { addTelemetryMetrics, noop, TelemetryMetrics } from '@openobserve/browser-core'
 import type { LifeCycle } from '../../lifeCycle'
 import { LifeCycleEventType } from '../../lifeCycle'
 import type { LargestContentfulPaint } from './trackLargestContentfulPaint'

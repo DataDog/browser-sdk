@@ -88,32 +88,32 @@ describe('addEventListener', () => {
       setAllowUntrustedEvents(false)
     })
 
-    it('should be ignored if __ddIsTrusted is absent', () => {
+    it('should be ignored if __ooIsTrusted is absent', () => {
       const listener = jasmine.createSpy()
       const eventTarget = document.createElement('div')
       addEventListener(eventTarget, DOM_EVENT.CLICK, listener)
 
-      const event = createNewEvent(DOM_EVENT.CLICK, { __ddIsTrusted: undefined })
+      const event = createNewEvent(DOM_EVENT.CLICK, { __ooIsTrusted: undefined })
       eventTarget.dispatchEvent(event)
       expect(listener).not.toHaveBeenCalled()
     })
 
-    it('should be ignored if __ddIsTrusted is false', () => {
+    it('should be ignored if __ooIsTrusted is false', () => {
       const listener = jasmine.createSpy()
       const eventTarget = document.createElement('div')
       addEventListener(eventTarget, DOM_EVENT.CLICK, listener)
 
-      const event = createNewEvent(DOM_EVENT.CLICK, { __ddIsTrusted: false })
+      const event = createNewEvent(DOM_EVENT.CLICK, { __ooIsTrusted: false })
       eventTarget.dispatchEvent(event)
       expect(listener).not.toHaveBeenCalled()
     })
 
-    it('should not be ignored if __ddIsTrusted is true', () => {
+    it('should not be ignored if __ooIsTrusted is true', () => {
       const listener = jasmine.createSpy()
       const eventTarget = document.createElement('div')
       addEventListener(eventTarget, DOM_EVENT.CLICK, listener)
 
-      const event = createNewEvent(DOM_EVENT.CLICK, { __ddIsTrusted: true })
+      const event = createNewEvent(DOM_EVENT.CLICK, { __ooIsTrusted: true })
       eventTarget.dispatchEvent(event)
 
       expect(listener).toHaveBeenCalled()
@@ -126,7 +126,7 @@ describe('addEventListener', () => {
 
       addEventListener(eventTarget, DOM_EVENT.CLICK, listener)
 
-      const event = createNewEvent(DOM_EVENT.CLICK, { __ddIsTrusted: undefined })
+      const event = createNewEvent(DOM_EVENT.CLICK, { __ooIsTrusted: undefined })
       eventTarget.dispatchEvent(event)
 
       expect(listener).toHaveBeenCalled()
@@ -144,7 +144,7 @@ describe('addEventListener', () => {
     })
 
     function dispatchUntrustedClick() {
-      eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.CLICK, { __ddIsTrusted: undefined }))
+      eventTarget.dispatchEvent(createNewEvent(DOM_EVENT.CLICK, { __ooIsTrusted: undefined }))
     }
 
     it('passes untrusted events through before any SDK init (undefined state)', () => {

@@ -1,5 +1,5 @@
-import { instrumentMethod } from '@datadog/browser-core'
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import { instrumentMethod } from '@openobserve/browser-core'
+import { registerCleanupTask } from '@openobserve/browser-core/test'
 
 export function initReactOldBrowsersSupport() {
   // TODO next major, bump browsers to versions supporting measureOptions and remove this instrumentation

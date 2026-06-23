@@ -1,5 +1,5 @@
-import { elapsed, toServerDuration } from '@datadog/js-core/time'
-import type { Duration, RelativeTime } from '@datadog/js-core/time'
+import { elapsed, toServerDuration } from '@openobserve/js-core/time'
+import type { Duration, RelativeTime } from '@openobserve/js-core/time'
 import {
   getPathName,
   isValidUrl,
@@ -7,7 +7,7 @@ import {
   isIntakeUrl,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
-} from '@datadog/browser-core'
+} from '@openobserve/browser-core'
 
 import type { RumPerformanceNavigationTiming, RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 

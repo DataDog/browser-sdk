@@ -1,6 +1,6 @@
-import type { RelativeTime } from '@datadog/js-core/time'
-import type { Hook } from '@datadog/js-core/assembly'
-import { createHook } from '@datadog/js-core/assembly'
+import type { RelativeTime } from '@openobserve/js-core/time'
+import type { Hook } from '@openobserve/js-core/assembly'
+import { createHook } from '@openobserve/js-core/assembly'
 import { registerCleanupTask } from '../../../test'
 import type { LogsConfiguration } from '../../../../browser-logs/src/domain/configuration'
 import type { ContextManager } from '../context/contextManager'
@@ -70,7 +70,7 @@ describe('global context across pages', () => {
     globalContext.setContext({ id: '123' })
 
     expect(globalContext.getContext()).toEqual({ id: '123' })
-    expect(localStorage.getItem('_dd_c_some_product_key_2')).toBeNull()
+    expect(localStorage.getItem('_oo_c_some_product_key_2')).toBeNull()
   })
 
   it('when enabled, should maintain the global context in local storage', () => {
@@ -83,6 +83,6 @@ describe('global context across pages', () => {
 
     globalContext.setContext({ id: 'foo', qux: 'qix' })
     expect(globalContext.getContext()).toEqual({ id: 'foo', qux: 'qix' })
-    expect(localStorage.getItem('_dd_c_some_product_key_2')).toBe('{"id":"foo","qux":"qix"}')
+    expect(localStorage.getItem('_oo_c_some_product_key_2')).toBe('{"id":"foo","qux":"qix"}')
   })
 })

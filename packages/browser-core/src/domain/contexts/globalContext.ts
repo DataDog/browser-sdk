@@ -1,4 +1,4 @@
-import type { Hook } from '@datadog/js-core/assembly'
+import type { Hook } from '@openobserve/js-core/assembly'
 import { CustomerDataType } from '../context/contextConstants'
 import { storeContextManager } from '../context/storeContextManager'
 import { createContextManager } from '../context/contextManager'

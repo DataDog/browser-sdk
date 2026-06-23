@@ -1,6 +1,6 @@
-import { clocksNow } from '@datadog/js-core/time'
-import { callMonitored, createHandlingStack } from '@datadog/browser-core'
-import type { Context } from '@datadog/browser-core'
+import { clocksNow } from '@openobserve/js-core/time'
+import { callMonitored, createHandlingStack } from '@openobserve/browser-core'
+import type { Context } from '@openobserve/browser-core'
 import type { ErrorInfo } from 'react'
 import { onRumStart } from '../nextjsPlugin'
 
@@ -13,7 +13,7 @@ import { onRumStart } from '../nextjsPlugin'
  * // app/error.tsx (or app/global-error.tsx)
  * 'use client'
  * import { useEffect } from 'react'
- * import { addNextjsError } from '@datadog/browser-rum-nextjs'
+ * import { addNextjsError } from '@openobserve/browser-rum-nextjs'
  *
  * export default function Error({ error }: { error: Error & { digest?: string } }) {
  *   useEffect(() => {

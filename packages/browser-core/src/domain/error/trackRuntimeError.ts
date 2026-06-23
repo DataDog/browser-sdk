@@ -1,4 +1,4 @@
-import { clocksNow } from '@datadog/js-core/time'
+import { clocksNow } from '@openobserve/js-core/time'
 import { instrumentMethod } from '../../tools/instrumentMethod'
 import { Observable } from '../../tools/observable'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'

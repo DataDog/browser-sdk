@@ -1,6 +1,6 @@
 import type { ComponentInternalInstance, ComponentPublicInstance } from 'vue'
-import { clocksNow } from '@datadog/js-core/time'
-import { callMonitored, createHandlingStack } from '@datadog/browser-core'
+import { clocksNow } from '@openobserve/js-core/time'
+import { callMonitored, createHandlingStack } from '@openobserve/browser-core'
 import { onRumStart } from '../vuePlugin'
 
 /**
@@ -10,7 +10,7 @@ import { onRumStart } from '../vuePlugin'
  * @example
  * ```ts
  * import { createApp } from 'vue'
- * import { addVueError } from '@datadog/browser-rum-vue'
+ * import { addVueError } from '@openobserve/browser-rum-vue'
  *
  * const app = createApp(App)
  * // Report all Vue errors to Datadog automatically

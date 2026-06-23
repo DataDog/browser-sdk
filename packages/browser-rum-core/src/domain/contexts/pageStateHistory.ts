@@ -1,7 +1,7 @@
-import { elapsed, toServerDuration, relativeNow } from '@datadog/js-core/time'
-import type { Duration, RelativeTime } from '@datadog/js-core/time'
-import { SKIPPED } from '@datadog/js-core/assembly'
-import { createValueHistory, SESSION_TIME_OUT_DELAY, addEventListeners, DOM_EVENT } from '@datadog/browser-core'
+import { elapsed, toServerDuration, relativeNow } from '@openobserve/js-core/time'
+import type { Duration, RelativeTime } from '@openobserve/js-core/time'
+import { SKIPPED } from '@openobserve/js-core/assembly'
+import { createValueHistory, SESSION_TIME_OUT_DELAY, addEventListeners, DOM_EVENT } from '@openobserve/browser-core'
 import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../browser/performanceObservable'
 import type { PageStateServerEntry } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -91,7 +91,7 @@ export function startPageStateHistory(
       const pageStates = pageStateEntryHistory.findAll(startTime, duration)
       return {
         type: eventType,
-        _dd: { page_states: processPageStates(pageStates, startTime, maxPageStateEntriesSelectable) },
+        _oo: { page_states: processPageStates(pageStates, startTime, maxPageStateEntriesSelectable) },
       }
     }
 

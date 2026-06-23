@@ -6,19 +6,19 @@ import {
   clocksOrigin,
   ONE_DAY,
   relativeNow,
-} from '@datadog/js-core/time'
-import type { Duration } from '@datadog/js-core/time'
-import { deepClone } from '@datadog/js-core/util'
-import type { ProfilerTrace } from '@datadog/browser-core'
-import { BridgeCapability, createIdentityEncoder, createValueHistory } from '@datadog/browser-core'
-import type { ViewHistoryEntry } from '@datadog/browser-rum-core'
+} from '@openobserve/js-core/time'
+import type { Duration } from '@openobserve/js-core/time'
+import { deepClone } from '@openobserve/js-core/util'
+import type { ProfilerTrace } from '@openobserve/browser-core'
+import { BridgeCapability, createIdentityEncoder, createValueHistory } from '@openobserve/browser-core'
+import type { ViewHistoryEntry } from '@openobserve/browser-rum-core'
 import {
   LifeCycle,
   LifeCycleEventType,
   RumPerformanceEntryType,
   VitalType,
   createHooks,
-} from '@datadog/browser-rum-core'
+} from '@openobserve/browser-rum-core'
 import {
   setPageVisibility,
   restorePageVisibility,
@@ -31,7 +31,7 @@ import {
   replaceMockableWithSpy,
   HIGH_HASH_UUID,
   LOW_HASH_UUID,
-} from '@datadog/browser-core/test'
+} from '@openobserve/browser-core/test'
 import { mockRumConfiguration, mockViewHistory } from '../../../../browser-rum-core/test'
 import { mockProfiler } from '../../../test'
 import type { BrowserProfilerTrace } from '../../types'

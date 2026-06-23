@@ -1,6 +1,6 @@
-import type { ClocksState } from '@datadog/js-core/time'
-import { toServerDuration, relativeToClocks } from '@datadog/js-core/time'
-import { generateUUID } from '@datadog/browser-core'
+import type { ClocksState } from '@openobserve/js-core/time'
+import { toServerDuration, relativeToClocks } from '@openobserve/js-core/time'
+import { generateUUID } from '@openobserve/browser-core'
 import type { RawRumLongTaskEvent, RawRumLongAnimationFrameEvent } from '../../rawRumEvent.types'
 import { RumEventType, RumLongTaskEntryType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'
@@ -58,7 +58,7 @@ function processEntry(
   const baseEvent = {
     date: startClocks.timeStamp,
     type: RumEventType.LONG_TASK,
-    _dd: { discarded: false },
+    _oo: { discarded: false },
   }
 
   if (entry.entryType === RumPerformanceEntryType.LONG_TASK) {

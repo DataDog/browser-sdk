@@ -1,5 +1,5 @@
-import type { TimeoutId, Site } from '@datadog/browser-core'
-import { dateNow } from '@datadog/js-core/time'
+import type { TimeoutId, Site } from '@openobserve/browser-core'
+import { dateNow } from '@openobserve/js-core/time'
 import {
   addTelemetryDebug,
   fetch,
@@ -9,7 +9,7 @@ import {
   setInterval,
   clearInterval,
   INTAKE_SITE_US1,
-} from '@datadog/browser-core'
+} from '@openobserve/browser-core'
 import { display } from './display'
 import { addProbe, clearProbes, removeProbe } from './probes'
 import type { Probe } from './probes'

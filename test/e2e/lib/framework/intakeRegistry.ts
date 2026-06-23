@@ -7,13 +7,13 @@ import type {
   RumViewUpdateEvent,
   RumVitalEvent,
   RumLongTaskEvent,
-} from '@datadog/browser-rum'
+} from '@openobserve/browser-rum'
 import type {
   TelemetryEvent,
   TelemetryErrorEvent,
   TelemetryConfigurationEvent,
   TelemetryUsageEvent,
-} from '@datadog/browser-core'
+} from '@openobserve/browser-core'
 import type {
   DebuggerIntakeRequest,
   IntakeRequest,

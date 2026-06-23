@@ -1,8 +1,8 @@
-import type { Subscription } from '@datadog/browser-core'
-import { ONE_MINUTE } from '@datadog/js-core/time'
-import { deleteCookie, globalObject, setCookie } from '@datadog/browser-core'
-import type { Clock } from '@datadog/browser-core/test'
-import { mockClock } from '@datadog/browser-core/test'
+import type { Subscription } from '@openobserve/browser-core'
+import { ONE_MINUTE } from '@openobserve/js-core/time'
+import { deleteCookie, globalObject, setCookie } from '@openobserve/browser-core'
+import type { Clock } from '@openobserve/browser-core/test'
+import { mockClock } from '@openobserve/browser-core/test'
 import { WATCH_COOKIE_INTERVAL_DELAY, createCookieObservable } from './cookieObservable'
 
 const COOKIE_NAME = 'cookie_name'

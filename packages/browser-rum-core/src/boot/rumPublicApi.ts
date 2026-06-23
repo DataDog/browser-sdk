@@ -1,6 +1,6 @@
-import { timeStampNow, clocksNow, timeStampToClocks } from '@datadog/js-core/time'
-import { deepClone } from '@datadog/js-core/util'
-import type { Duration, TimeStamp, RelativeTime } from '@datadog/js-core/time'
+import { timeStampNow, clocksNow, timeStampToClocks } from '@openobserve/js-core/time'
+import { deepClone } from '@openobserve/js-core/util'
+import type { Duration, TimeStamp, RelativeTime } from '@openobserve/js-core/time'
 import type {
   Context,
   DeflateWorker,
@@ -16,7 +16,7 @@ import type {
   Encoder,
   ResourceType,
   SessionManager,
-} from '@datadog/browser-core'
+} from '@openobserve/browser-core'
 import {
   ContextManagerMethod,
   addTelemetryUsage,
@@ -33,7 +33,7 @@ import {
   startBufferingData,
   mockable,
   generateUUID,
-} from '@datadog/browser-core'
+} from '@openobserve/browser-core'
 
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewHistory } from '../domain/contexts/viewHistory'
@@ -79,7 +79,7 @@ export interface RumPublicApi extends PublicApi {
    * @param initConfiguration - Configuration options of the SDK
    * @example
    * ```ts
-   * datadogRum.init({
+   * openobserveRum.init({
    *   applicationId: '<DATADOG_APPLICATION_ID>',
    *   clientToken: '<DATADOG_CLIENT_TOKEN>',
    *   site: '<DATADOG_SITE>',
@@ -182,9 +182,9 @@ export interface RumPublicApi extends PublicApi {
    * @param options - Options of the action (@default type: 'custom')
    * @example
    * ```ts
-   * datadogRum.startAction('checkout', { context: { cartId: 'abc' } })
+   * openobserveRum.startAction('checkout', { context: { cartId: 'abc' } })
    * // ... user completes checkout
-   * datadogRum.stopAction('checkout')
+   * openobserveRum.stopAction('checkout')
    * ```
    */
   startAction: (name: string, options?: ActionOptions) => void
@@ -212,9 +212,9 @@ export interface RumPublicApi extends PublicApi {
    * @param options - Options of the resource (@default type: 'other')
    * @example
    * ```ts
-   * datadogRum.startResource('https://api.example.com/users', { type: 'fetch', method: 'POST' })
+   * openobserveRum.startResource('https://api.example.com/users', { type: 'fetch', method: 'POST' })
    * // ... perform the request
-   * datadogRum.stopResource('https://api.example.com/users', { statusCode: 201 })
+   * openobserveRum.stopResource('https://api.example.com/users', { statusCode: 201 })
    * ```
    */
   startResource: (url: string, options?: ResourceOptions) => void
@@ -493,13 +493,13 @@ export interface RumPublicApi extends PublicApi {
    * @example
    * ```ts
    * // Simple usage
-   * datadogRum.startDurationVital('my-vital')
-   * datadogRum.stopDurationVital('my-vital')
+   * openobserveRum.startDurationVital('my-vital')
+   * openobserveRum.stopDurationVital('my-vital')
    *
    * // Multiple simultaneous vitals with the same name
    * const key = crypto.randomUUID()
-   * datadogRum.startDurationVital('my-vital', { vitalKey: key })
-   * datadogRum.stopDurationVital('my-vital', { vitalKey: key })
+   * openobserveRum.startDurationVital('my-vital', { vitalKey: key })
+   * openobserveRum.stopDurationVital('my-vital', { vitalKey: key })
    * ```
    */
   startDurationVital: (name: string, options?: DurationVitalOptions) => void
@@ -524,9 +524,9 @@ export interface RumPublicApi extends PublicApi {
    * @param options - Options for the operation (operationKey, context, description)
    * @example
    * ```ts
-   * datadogRum.startOperation('checkout')
+   * openobserveRum.startOperation('checkout')
    * // ... perform the operation
-   * datadogRum.succeedOperation('checkout')
+   * openobserveRum.succeedOperation('checkout')
    * ```
    */
   startOperation: (name: string, options?: OperationOptions) => void
@@ -1039,7 +1039,7 @@ function createPostStartStrategy(preStartStrategy: Strategy, startRumResult: Sta
   return {
     ...preStartStrategy,
     init: (initConfiguration: RumInitConfiguration) => {
-      displayAlreadyInitializedError('DD_RUM', initConfiguration)
+      displayAlreadyInitializedError('OO_RUM', initConfiguration)
     },
     getInternalContext: startRumResult.getInternalContext,
     stopSession: startRumResult.stopSession,

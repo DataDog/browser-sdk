@@ -1,5 +1,5 @@
-import { Observable } from '@datadog/browser-core'
-import { deepClone } from '@datadog/js-core/util'
+import { Observable } from '@openobserve/browser-core'
+import { deepClone } from '@openobserve/js-core/util'
 import { mockRumConfiguration, setupLocationObserver } from '../../../test'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'

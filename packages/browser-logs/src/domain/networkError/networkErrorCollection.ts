@@ -1,4 +1,4 @@
-import type { FetchResolveContext, XhrCompleteContext, Observable, BufferedData } from '@datadog/browser-core'
+import type { FetchResolveContext, XhrCompleteContext, Observable, BufferedData } from '@openobserve/browser-core'
 import {
   BufferedDataType,
   ErrorSource,
@@ -11,7 +11,7 @@ import {
   isIntakeUrl,
   ResponseBodyAction,
   safeTruncate,
-} from '@datadog/browser-core'
+} from '@openobserve/browser-core'
 import type { LogsConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
 import type { LogsEventDomainContext } from '../../domainContext.types'

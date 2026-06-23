@@ -1,8 +1,8 @@
-import type { Observable } from '@datadog/browser-core'
-import { toServerDuration } from '@datadog/js-core/time'
-import type { Duration, ServerDuration } from '@datadog/js-core/time'
-import { getTimeZone, isEmptyObject, mapValues } from '@datadog/browser-core'
-import { DISCARDED } from '@datadog/js-core/assembly'
+import type { Observable } from '@openobserve/browser-core'
+import { toServerDuration } from '@openobserve/js-core/time'
+import type { Duration, ServerDuration } from '@openobserve/js-core/time'
+import { getTimeZone, isEmptyObject, mapValues } from '@openobserve/browser-core'
+import { DISCARDED } from '@openobserve/js-core/assembly'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import type { RawRumViewEvent, ViewPerformanceData } from '../../rawRumEvent.types'
@@ -80,7 +80,7 @@ function processViewUpdate(
   const replayStats = recorderApi.getReplayStats(view.id)
   const clsDevicePixelRatio = view.commonViewMetrics?.cumulativeLayoutShift?.devicePixelRatio
   const viewEvent: RawRumViewEvent = {
-    _dd: {
+    _oo: {
       document_version: view.documentVersion,
       replay_stats: replayStats,
       cls: clsDevicePixelRatio

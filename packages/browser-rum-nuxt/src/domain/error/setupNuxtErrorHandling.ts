@@ -1,7 +1,7 @@
-import type { StartRumResult } from '@datadog/browser-rum-core'
+import type { StartRumResult } from '@openobserve/browser-rum-core'
 import type { ComponentInternalInstance, ComponentPublicInstance, App } from 'vue'
-import { clocksNow } from '@datadog/js-core/time'
-import { callMonitored, createHandlingStack } from '@datadog/browser-core'
+import { clocksNow } from '@openobserve/js-core/time'
+import { callMonitored, createHandlingStack } from '@openobserve/browser-core'
 
 export interface NuxtApp {
   vueApp: App

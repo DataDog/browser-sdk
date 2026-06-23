@@ -6,9 +6,9 @@ import {
   clocksOrigin,
   relativeToClocks,
   isRelativeTime,
-} from '@datadog/js-core/time'
-import type { Duration, TimeStamp, ClocksState, RelativeTime } from '@datadog/js-core/time'
-import type { Subscription, Context, ContextValue } from '@datadog/browser-core'
+} from '@openobserve/js-core/time'
+import type { Duration, TimeStamp, ClocksState, RelativeTime } from '@openobserve/js-core/time'
+import type { Subscription, Context, ContextValue } from '@openobserve/browser-core'
 import {
   noop,
   PageExitReason,
@@ -22,7 +22,7 @@ import {
   Observable,
   createContextManager,
   mockable,
-} from '@datadog/browser-core'
+} from '@openobserve/browser-core'
 import type { ViewCustomTimings } from '../../rawRumEvent.types'
 import { ViewLoadingType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'

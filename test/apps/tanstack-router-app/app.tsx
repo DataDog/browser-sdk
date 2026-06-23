@@ -1,8 +1,8 @@
 import ReactDOM from 'react-dom/client'
 import { RouterProvider, Link, Outlet, useParams, createRootRoute, createRoute, redirect } from '@tanstack/react-router'
-import { datadogRum } from '@datadog/browser-rum'
-import { reactPlugin } from '@datadog/browser-rum-react'
-import { createRouter } from '@datadog/browser-rum-react/tanstack-router'
+import { openobserveRum } from '@openobserve/browser-rum'
+import { reactPlugin } from '@openobserve/browser-rum-react'
+import { createRouter } from '@openobserve/browser-rum-react/tanstack-router'
 
 declare global {
   interface Window {
@@ -11,9 +11,9 @@ declare global {
   }
 }
 
-datadogRum.init({ ...window.RUM_CONFIGURATION, plugins: [reactPlugin({ router: true })] })
+openobserveRum.init({ ...window.RUM_CONFIGURATION, plugins: [reactPlugin({ router: true })] })
 if (window.RUM_CONTEXT) {
-  datadogRum.setGlobalContext(window.RUM_CONTEXT)
+  openobserveRum.setGlobalContext(window.RUM_CONTEXT)
 }
 
 // Routes

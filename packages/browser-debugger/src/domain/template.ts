@@ -2,7 +2,7 @@
  * Template compilation and evaluation utilities for Live Debugger SDK.
  */
 
-import { getConstructorName } from '@datadog/browser-core'
+import { getConstructorName } from '@openobserve/browser-core'
 import { compile } from './expression'
 import { formatUnknownError } from './error'
 

@@ -1,4 +1,4 @@
-import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
+import { createNewEvent, registerCleanupTask } from '@openobserve/browser-core/test'
 import { appendElement } from '../../../../../browser-rum-core/test'
 import { IncrementalSource, RecordType } from '../../../types'
 import type { EmitRecordCallback } from '../record.types'
@@ -41,7 +41,7 @@ describe('trackScroll', () => {
   })
 
   it('do no collects scrolls if the privacy is "hidden"', () => {
-    div.setAttribute('data-dd-privacy', 'hidden')
+    div.setAttribute('data-oo-privacy', 'hidden')
 
     div.dispatchEvent(createNewEvent('scroll', { target: div }))
 

@@ -1,5 +1,5 @@
-import type { ClocksState } from '@datadog/js-core/time'
-import { isIndexableObject } from '@datadog/js-core/util'
+import type { ClocksState } from '@openobserve/js-core/time'
+import { isIndexableObject } from '@openobserve/js-core/util'
 import { sanitize } from '../../tools/serialisation/sanitize'
 import type { Context } from '../../tools/serialisation/context'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
@@ -92,7 +92,7 @@ function computeMessage(
 }
 
 export function tryToGetFingerprint(originalError: unknown) {
-  return isError(originalError) && 'dd_fingerprint' in originalError ? String(originalError.dd_fingerprint) : undefined
+  return isError(originalError) && 'oo_fingerprint' in originalError ? String(originalError.oo_fingerprint) : undefined
 }
 
 export function tryToGetErrorContext(originalError: unknown) {

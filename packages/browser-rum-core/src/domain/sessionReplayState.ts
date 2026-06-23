@@ -1,11 +1,11 @@
-import type { SessionContext } from '@datadog/browser-core'
+import type { SessionContext } from '@openobserve/browser-core'
 import {
   BridgeCapability,
   bridgeSupports,
   canUseEventBridge,
   correctedChildSampleRate,
   isSampled,
-} from '@datadog/browser-core'
+} from '@openobserve/browser-core'
 import type { RumConfiguration } from './configuration'
 
 export const enum SessionReplayState {

@@ -10,7 +10,7 @@ export {
   PRIVACY_ATTR_VALUE_HIDDEN,
   PRIVACY_CLASS_PREFIX,
   NodePrivacyLevel,
-} from '@datadog/browser-rum-core'
+} from '@openobserve/browser-rum-core'
 
 export * from '../types'
 

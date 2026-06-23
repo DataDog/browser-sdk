@@ -1,5 +1,5 @@
-import { dateNow } from '@datadog/js-core/time'
-import type { TimeStamp } from '@datadog/js-core/time'
+import { dateNow } from '@openobserve/js-core/time'
+import type { TimeStamp } from '@openobserve/js-core/time'
 import { SESSION_EXPIRATION_DELAY, SESSION_NOT_TRACKED, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import type { SessionState } from './sessionState'
 import {

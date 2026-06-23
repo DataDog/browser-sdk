@@ -1,6 +1,6 @@
-import type { Context } from '@datadog/browser-core'
-import { clocksNow } from '@datadog/js-core/time'
-import { callMonitored, createHandlingStack } from '@datadog/browser-core'
+import type { Context } from '@openobserve/browser-core'
+import { clocksNow } from '@openobserve/js-core/time'
+import { callMonitored, createHandlingStack } from '@openobserve/browser-core'
 import { onRumStart } from '../angularPlugin'
 
 /**
@@ -12,7 +12,7 @@ import { onRumStart } from '../angularPlugin'
  * @category Error
  * @example
  * ```ts
- * import { addAngularError } from '@datadog/browser-rum-angular'
+ * import { addAngularError } from '@openobserve/browser-rum-angular'
  *
  * // In a custom ErrorHandler
  * handleError(error: any) {

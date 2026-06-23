@@ -1,8 +1,8 @@
-import type { RelativeTime } from '@datadog/js-core/time'
-import type { TelemetryEvent } from '@datadog/browser-core'
-import { createHook } from '@datadog/js-core/assembly'
-import type { Hook } from '@datadog/js-core/assembly'
-import type { RecursivePartial } from '@datadog/js-core/util'
+import type { RelativeTime } from '@openobserve/js-core/time'
+import type { TelemetryEvent } from '@openobserve/browser-core'
+import { createHook } from '@openobserve/js-core/assembly'
+import type { Hook } from '@openobserve/js-core/assembly'
+import type { RecursivePartial } from '@openobserve/js-core/util'
 import type { LogsEvent } from '../logsEvent.types'
 
 export type DefaultLogsEventAttributes = RecursivePartial<LogsEvent>

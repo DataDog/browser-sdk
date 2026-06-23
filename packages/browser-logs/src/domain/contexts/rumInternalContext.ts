@@ -1,7 +1,7 @@
-import type { RelativeTime } from '@datadog/js-core/time'
-import type { RumInternalContext } from '@datadog/browser-core'
-import { globalObject, willSyntheticsInjectRum } from '@datadog/browser-core'
-import { SKIPPED } from '@datadog/js-core/assembly'
+import type { RelativeTime } from '@openobserve/js-core/time'
+import type { RumInternalContext } from '@openobserve/browser-core'
+import { globalObject, willSyntheticsInjectRum } from '@openobserve/browser-core'
+import { SKIPPED } from '@openobserve/js-core/assembly'
 import type { Hooks } from '../hooks'
 
 interface Rum {
@@ -9,8 +9,8 @@ interface Rum {
 }
 
 interface BrowserWindow {
-  DD_RUM?: Rum
-  DD_RUM_SYNTHETICS?: Rum
+  OO_RUM?: Rum
+  OO_RUM_SYNTHETICS?: Rum
 }
 
 export function startRUMInternalContext(hooks: Hooks) {
@@ -41,7 +41,7 @@ export function startRUMInternalContext(hooks: Hooks) {
 
   function getRUMInternalContext(startTime?: RelativeTime) {
     const willSyntheticsInjectRumResult = willSyntheticsInjectRum()
-    const rumSource = willSyntheticsInjectRumResult ? browserWindow.DD_RUM_SYNTHETICS : browserWindow.DD_RUM
+    const rumSource = willSyntheticsInjectRumResult ? browserWindow.OO_RUM_SYNTHETICS : browserWindow.OO_RUM
     const rumContext = getInternalContextFromRumGlobal(startTime, rumSource)
 
     if (rumContext) {

@@ -1,5 +1,5 @@
 {
-  "name": "@datadog/browser-worker",
+  "name": "@openobserve/browser-worker",
   "version": "7.3.0",
   "license": "Apache-2.0",
   "main": "bundle/worker.js",
@@ -15,7 +15,7 @@
     "prepack": "yarn build"
   },
   "dependencies": {
-    "@datadog/browser-core": "7.3.0"
+    "@openobserve/browser-core": "7.3.0"
   },
   "repository": {
     "type": "git",

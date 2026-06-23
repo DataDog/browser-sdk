@@ -1,5 +1,5 @@
-import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN, PRIVACY_ATTR_VALUE_MASK } from '@datadog/browser-rum-core'
-import { DefaultPrivacyLevel } from '@datadog/browser-core'
+import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN, PRIVACY_ATTR_VALUE_MASK } from '@openobserve/browser-rum-core'
+import { DefaultPrivacyLevel } from '@openobserve/browser-core'
 import type { BrowserChangeRecord, BrowserFullSnapshotChangeRecord } from '../../../types'
 import { ChangeType, PlaybackState } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
@@ -300,7 +300,7 @@ describe('serializeNode for DOM nodes', () => {
         </div>
       `)
       expect(record?.data).toEqual([
-        [ChangeType.AddNode, [null, 'DIV', ['data-dd-privacy', 'hidden']]],
+        [ChangeType.AddNode, [null, 'DIV', ['data-oo-privacy', 'hidden']]],
         [ChangeType.Size, [0, jasmine.any(Number), jasmine.any(Number)]],
       ])
     })

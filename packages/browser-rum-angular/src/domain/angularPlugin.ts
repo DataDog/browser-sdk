@@ -1,4 +1,4 @@
-import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
+import type { RumPlugin, RumPublicApi, StartRumResult } from '@openobserve/browser-rum-core'
 
 type InitSubscriber = (configuration: AngularPluginConfiguration, rumPublicApi: RumPublicApi) => void
 type StartSubscriber = (addError: StartRumResult['addError']) => void
@@ -29,10 +29,10 @@ export interface AngularPluginConfiguration {
  * @category Main
  * @example
  * ```ts
- * import { datadogRum } from '@datadog/browser-rum'
- * import { angularPlugin } from '@datadog/browser-rum-angular'
+ * import { openobserveRum } from '@openobserve/browser-rum'
+ * import { angularPlugin } from '@openobserve/browser-rum-angular'
  *
- * datadogRum.init({
+ * openobserveRum.init({
  *   applicationId: '<DATADOG_APPLICATION_ID>',
  *   clientToken: '<DATADOG_CLIENT_TOKEN>',
  *   site: '<DATADOG_SITE>',

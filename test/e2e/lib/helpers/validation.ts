@@ -1,6 +1,6 @@
 import fs from 'fs'
 import * as path from 'node:path'
-import type { RumEvent } from '@datadog/browser-rum'
+import type { RumEvent } from '@openobserve/browser-rum'
 import ajv from 'ajv'
 
 const schemasDir = path.join(path.dirname(require.resolve('@datadog/rum-events-format/package.json')), 'schemas')

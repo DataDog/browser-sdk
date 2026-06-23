@@ -1,5 +1,5 @@
-import { isSafari } from '@datadog/browser-core'
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import { isSafari } from '@openobserve/browser-core'
+import { registerCleanupTask } from '@openobserve/browser-core/test'
 import {
   CENSORED_IMG_MARK,
   CENSORED_STRING_MARK,
@@ -7,8 +7,8 @@ import {
   PRIVACY_ATTR_NAME,
   shouldMaskNode,
   STABLE_ATTRIBUTES,
-} from '@datadog/browser-rum-core'
-import { appendElement } from '@datadog/browser-rum-core/test'
+} from '@openobserve/browser-rum-core'
+import { appendElement } from '@openobserve/browser-rum-core/test'
 import { createSerializationTransactionForTesting } from '../test/serialization.specHelper'
 import type { ScrollPositions } from '../elementsScrollPositions'
 import { getCssRulesString, serializeDOMAttributes, serializeVirtualAttributes } from './serializeAttributes'

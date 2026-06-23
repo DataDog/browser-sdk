@@ -3,8 +3,8 @@ import { Component, inject } from '@angular/core'
 import { bootstrapApplication } from '@angular/platform-browser'
 import { provideRouter, RouterOutlet, RouterLink, ActivatedRoute, type Routes } from '@angular/router'
 import { NgIf } from '@angular/common'
-import { datadogRum } from '@datadog/browser-rum'
-import { angularPlugin, provideDatadogRouter, provideDatadogErrorHandler } from '@datadog/browser-rum-angular'
+import { openobserveRum } from '@openobserve/browser-rum'
+import { angularPlugin, provideDatadogRouter, provideDatadogErrorHandler } from '@openobserve/browser-rum-angular'
 
 declare global {
   interface Window {
@@ -14,9 +14,9 @@ declare global {
 }
 
 // Initialize RUM before bootstrap
-datadogRum.init({ ...window.RUM_CONFIGURATION, plugins: [angularPlugin({ router: true })] })
+openobserveRum.init({ ...window.RUM_CONFIGURATION, plugins: [angularPlugin({ router: true })] })
 if (window.RUM_CONTEXT) {
-  datadogRum.setGlobalContext(window.RUM_CONTEXT)
+  openobserveRum.setGlobalContext(window.RUM_CONTEXT)
 }
 
 // Components

@@ -2,7 +2,7 @@
 
 import { useRef } from 'react'
 import { usePathname, useParams } from 'next/navigation'
-import { mockable } from '@datadog/browser-core'
+import { mockable } from '@openobserve/browser-core'
 import { startNextjsView } from '../nextjsPlugin'
 import { computeViewNameFromParams } from './computeViewNameFromParams'
 

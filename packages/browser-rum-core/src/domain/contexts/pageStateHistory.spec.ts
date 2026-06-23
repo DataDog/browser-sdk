@@ -1,5 +1,5 @@
-import type { RelativeTime, Duration, ServerDuration } from '@datadog/js-core/time'
-import { createHook } from '@datadog/js-core/assembly'
+import type { RelativeTime, Duration, ServerDuration } from '@openobserve/js-core/time'
+import { createHook } from '@openobserve/js-core/assembly'
 import type { Clock } from '../../../../browser-core/test'
 import { mockClock, registerCleanupTask } from '../../../../browser-core/test'
 import { createPerformanceEntry, mockPerformanceObserver } from '../../../test'
@@ -99,7 +99,7 @@ describe('pageStateHistory', () => {
 
         expect(defaultRumEventAttributes).toEqual({
           type: 'view',
-          _dd: {
+          _oo: {
             page_states: [
               {
                 state: PageState.PASSIVE,
@@ -126,7 +126,7 @@ describe('pageStateHistory', () => {
         } as AssembleHookParams)
         expect(defaultRumEventAttributes).toEqual({
           type: 'view',
-          _dd: { page_states: jasmine.any(Array) },
+          _oo: { page_states: jasmine.any(Array) },
         })
       })
 
@@ -139,7 +139,7 @@ describe('pageStateHistory', () => {
 
         expect(defaultRumEventAttributes).toEqual({
           type: 'view',
-          _dd: { page_states: undefined },
+          _oo: { page_states: undefined },
         })
       })
 
@@ -161,7 +161,7 @@ describe('pageStateHistory', () => {
 
         expect(defaultRumEventAttributes).toEqual({
           type: 'view',
-          _dd: {
+          _oo: {
             page_states: [
               {
                 state: PageState.PASSIVE,

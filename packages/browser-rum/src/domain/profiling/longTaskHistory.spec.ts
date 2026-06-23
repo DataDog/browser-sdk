@@ -1,6 +1,6 @@
-import { type Duration, relativeToClocks, type RelativeTime } from '@datadog/js-core/time'
-import { LifeCycle, LifeCycleEventType, RumEventType, RumPerformanceEntryType } from '@datadog/browser-rum-core'
-import { createRawRumEvent } from '@datadog/browser-rum-core/test'
+import { type Duration, relativeToClocks, type RelativeTime } from '@openobserve/js-core/time'
+import { LifeCycle, LifeCycleEventType, RumEventType, RumPerformanceEntryType } from '@openobserve/browser-rum-core'
+import { createRawRumEvent } from '@openobserve/browser-rum-core/test'
 import { createLongTaskHistory } from './longTaskHistory'
 
 describe('longTaskHistory', () => {

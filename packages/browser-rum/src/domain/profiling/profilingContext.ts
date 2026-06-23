@@ -1,6 +1,6 @@
-import { SKIPPED } from '@datadog/js-core/assembly'
-import type { Hooks, ProfilingInternalContextSchema } from '@datadog/browser-rum-core'
-import { RumEventType } from '@datadog/browser-rum-core'
+import { SKIPPED } from '@openobserve/js-core/assembly'
+import type { Hooks, ProfilingInternalContextSchema } from '@openobserve/browser-rum-core'
+import { RumEventType } from '@openobserve/browser-rum-core'
 
 export interface ProfilingContextManager {
   set: (next: ProfilingInternalContextSchema) => void
@@ -24,7 +24,7 @@ export function startProfilingContext(hooks: Hooks): ProfilingContextManager {
 
     return {
       type: eventType,
-      _dd: {
+      _oo: {
         profiling: currentContext,
       },
     }

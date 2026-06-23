@@ -1,9 +1,9 @@
-import type { RelativeTime, Duration, ServerDuration, TimeStamp } from '@datadog/js-core/time'
-import type { Context } from '@datadog/browser-core'
-import { relativeNow } from '@datadog/js-core/time'
-import { ErrorHandling, ErrorSource, generateUUID, ResourceType } from '@datadog/browser-core'
-import { combine } from '@datadog/js-core/util'
-import type { RumMutationRecord } from '@datadog/browser-rum-core'
+import type { RelativeTime, Duration, ServerDuration, TimeStamp } from '@openobserve/js-core/time'
+import type { Context } from '@openobserve/browser-core'
+import { relativeNow } from '@openobserve/js-core/time'
+import { ErrorHandling, ErrorSource, generateUUID, ResourceType } from '@openobserve/browser-core'
+import { combine } from '@openobserve/js-core/util'
+import type { RumMutationRecord } from '@openobserve/browser-rum-core'
 import {
   type RumPerformanceEntry,
   type RumLayoutShiftAttribution,
@@ -54,7 +54,7 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
             duration: 0 as ServerDuration,
             entry_type: RumLongTaskEntryType.LONG_TASK,
           },
-          _dd: {
+          _oo: {
             discarded: false,
           },
         },
@@ -87,7 +87,7 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
             type: ResourceType.OTHER,
             url: 'http://foo.bar',
           },
-          _dd: {
+          _oo: {
             discarded: false,
           },
         },
@@ -97,7 +97,7 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
       return combine(
         {
           type,
-          _dd: {
+          _oo: {
             document_version: 0,
             configuration: {
               start_session_replay_recording_manually: false,
@@ -128,7 +128,7 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
           type,
           date: 0 as TimeStamp,
           view: {},
-          _dd: {
+          _oo: {
             document_version: 1,
           },
         },

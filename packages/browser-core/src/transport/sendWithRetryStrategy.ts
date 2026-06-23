@@ -1,4 +1,4 @@
-import { ONE_MINUTE, ONE_SECOND, clocksNow } from '@datadog/js-core/time'
+import { ONE_MINUTE, ONE_SECOND, clocksNow } from '@openobserve/js-core/time'
 import type { TrackType } from '../domain/configuration'
 import { setTimeout } from '../tools/timer'
 import { ONE_MEBI_BYTE, ONE_KIBI_BYTE } from '../tools/utils/byteUtils'

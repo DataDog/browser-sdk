@@ -1,8 +1,8 @@
-import { ONE_SECOND, toServerDuration, relativeNow } from '@datadog/js-core/time'
-import type { Duration } from '@datadog/js-core/time'
-import type { RawError, BufferedData, SessionManager } from '@datadog/browser-core'
-import { Observable, findLast, noop, createIdentityEncoder, BufferedObservable } from '@datadog/browser-core'
-import type { Clock, SessionManagerMock } from '@datadog/browser-core/test'
+import { ONE_SECOND, toServerDuration, relativeNow } from '@openobserve/js-core/time'
+import type { Duration } from '@openobserve/js-core/time'
+import type { RawError, BufferedData, SessionManager } from '@openobserve/browser-core'
+import { Observable, findLast, noop, createIdentityEncoder, BufferedObservable } from '@openobserve/browser-core'
+import type { Clock, SessionManagerMock } from '@openobserve/browser-core/test'
 import {
   createNewEvent,
   interceptRequests,
@@ -11,7 +11,7 @@ import {
   registerCleanupTask,
   createFakeTelemetryObject,
   createSessionManagerMock,
-} from '@datadog/browser-core/test'
+} from '@openobserve/browser-core/test'
 import { mockRumConfiguration, noopProfilerApi, noopRecorderApi } from '../../test'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { SESSION_KEEP_ALIVE_INTERVAL } from '../domain/view/trackViews'
@@ -231,6 +231,6 @@ describe('view events', () => {
       lastRumEvents,
       (serverRumEvent): serverRumEvent is RumViewEvent => serverRumEvent.type === RumEventType.VIEW
     )!
-    expect(lastRumViewEvent._dd.sdk_name).toBe('rum')
+    expect(lastRumViewEvent._oo.sdk_name).toBe('rum')
   })
 })

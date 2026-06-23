@@ -1,5 +1,5 @@
-import { timeStampNow } from '@datadog/js-core/time'
-import type { TimeStamp } from '@datadog/js-core/time'
+import { timeStampNow } from '@openobserve/js-core/time'
+import type { TimeStamp } from '@openobserve/js-core/time'
 import type { RumRemoteConfiguration } from './remoteConfiguration'
 
 export const CACHE_VERSION = 1

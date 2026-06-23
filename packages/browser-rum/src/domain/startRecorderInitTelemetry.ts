@@ -1,7 +1,7 @@
-import type { Context, Telemetry, Observable } from '@datadog/browser-core'
-import { elapsed, timeStampNow } from '@datadog/js-core/time'
-import type { Duration, TimeStamp } from '@datadog/js-core/time'
-import { TelemetryMetrics, addTelemetryMetrics, noop } from '@datadog/browser-core'
+import type { Context, Telemetry, Observable } from '@openobserve/browser-core'
+import { elapsed, timeStampNow } from '@openobserve/js-core/time'
+import type { Duration, TimeStamp } from '@openobserve/js-core/time'
+import { TelemetryMetrics, addTelemetryMetrics, noop } from '@openobserve/browser-core'
 import type { RecorderInitEvent } from '../boot/postStartStrategy'
 
 type RecorderInitResult = 'aborted' | 'deflate-encoder-load-failed' | 'recorder-load-failed' | 'succeeded'

@@ -1,4 +1,4 @@
-import type { TimeStamp } from '@datadog/js-core/time'
+import type { TimeStamp } from '@openobserve/js-core/time'
 import type { EmitRecordCallback, EmitStatsCallback } from '../record.types'
 import type { RecordingScope } from '../recordingScope'
 import { serializeInTransaction } from './serializationTransaction'

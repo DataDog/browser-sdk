@@ -1,4 +1,4 @@
-import { DatadogAppRouter } from '@datadog/browser-rum-nextjs'
+import { DatadogAppRouter } from '@openobserve/browser-rum-nextjs'
 
 export default function RootLayout({ children, sidebar }: { children: React.ReactNode; sidebar: React.ReactNode }) {
   return (

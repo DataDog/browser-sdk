@@ -1,4 +1,4 @@
-import { ONE_SECOND } from '@datadog/js-core/time'
+import { ONE_SECOND } from '@openobserve/js-core/time'
 import {
   setInterval,
   clearInterval,
@@ -8,7 +8,7 @@ import {
   getCookie,
   globalObject,
   isCookieStoreSupported,
-} from '@datadog/browser-core'
+} from '@openobserve/browser-core'
 
 export type CookieObservable = ReturnType<typeof createCookieObservable>
 

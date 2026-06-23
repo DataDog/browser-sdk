@@ -1,4 +1,4 @@
-import { registerCleanupTask, replaceMockableWithSpy } from '@datadog/browser-core/test'
+import { registerCleanupTask, replaceMockableWithSpy } from '@openobserve/browser-core/test'
 import { initDebuggerTransport } from '../domain/api'
 import { startDeliveryApiPolling } from '../domain/deliveryApi'
 import { display } from '../domain/display'

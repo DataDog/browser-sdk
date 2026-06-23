@@ -1,5 +1,5 @@
-import { noop } from '@datadog/browser-core'
-import type { RecorderApi } from '@datadog/browser-rum-core'
+import { noop } from '@openobserve/browser-core'
+import type { RecorderApi } from '@openobserve/browser-rum-core'
 
 export const noopRecorderApi: RecorderApi = {
   start: noop,

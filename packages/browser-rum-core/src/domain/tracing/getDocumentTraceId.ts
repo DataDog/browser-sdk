@@ -1,6 +1,6 @@
-import { ONE_MINUTE, getTimeOrigin } from '@datadog/js-core/time'
-import type { TimeStamp } from '@datadog/js-core/time'
-import { findCommaSeparatedValue } from '@datadog/browser-core'
+import { ONE_MINUTE, getTimeOrigin } from '@openobserve/js-core/time'
+import type { TimeStamp } from '@openobserve/js-core/time'
+import { findCommaSeparatedValue } from '@openobserve/browser-core'
 import { isCommentNode, isTextNode } from '../../browser/htmlDomUtils'
 
 interface DocumentTraceData {

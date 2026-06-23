@@ -1,4 +1,4 @@
-import { ConsoleApiName } from '@datadog/js-core/util'
+import { ConsoleApiName } from '@openobserve/js-core/util'
 import type { Observable, Subscription } from '../tools/observable'
 import { BufferedObservable } from '../tools/observable'
 import { mockable } from '../tools/mockable'

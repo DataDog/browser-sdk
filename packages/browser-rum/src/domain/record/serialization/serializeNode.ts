@@ -10,7 +10,7 @@ import {
   getScrollX,
   getScrollY,
   isElementNode,
-} from '@datadog/browser-rum-core'
+} from '@openobserve/browser-rum-core'
 import { MediaInteractionType } from '../../../types'
 import type { NodeId, StyleSheetId } from '../itemIds'
 import type { InsertionCursor } from './insertionCursor'

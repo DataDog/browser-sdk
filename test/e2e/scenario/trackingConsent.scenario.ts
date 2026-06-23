@@ -17,7 +17,7 @@ test.describe('tracking consent', () => {
       .withRum({ trackingConsent: 'not-granted' })
       .run(async ({ intakeRegistry, flushEvents, browserContext, page }) => {
         await page.evaluate(() => {
-          window.DD_RUM!.setTrackingConsent('granted')
+          window.OO_RUM!.setTrackingConsent('granted')
         })
 
         await flushEvents()
@@ -30,7 +30,7 @@ test.describe('tracking consent', () => {
       .withRum({ trackUserInteractions: true })
       .run(async ({ intakeRegistry, flushEvents, browserContext, page }) => {
         await page.evaluate(() => {
-          window.DD_RUM!.setTrackingConsent('not-granted')
+          window.OO_RUM!.setTrackingConsent('not-granted')
         })
 
         const htmlElement = page.locator('html')
@@ -48,8 +48,8 @@ test.describe('tracking consent', () => {
         const initialSessionId = await findSessionCookie(browserContext)
 
         await page.evaluate(() => {
-          window.DD_RUM!.setTrackingConsent('not-granted')
-          window.DD_RUM!.setTrackingConsent('granted')
+          window.OO_RUM!.setTrackingConsent('not-granted')
+          window.OO_RUM!.setTrackingConsent('granted')
         })
 
         await flushEvents()
@@ -68,8 +68,8 @@ test.describe('tracking consent', () => {
         // (it begins awaiting setSessionState / cookie lock), and the revoke lands
         // before that async work completes.
         await page.evaluate(() => {
-          window.DD_RUM!.setTrackingConsent('granted')
-          window.DD_RUM!.setTrackingConsent('not-granted')
+          window.OO_RUM!.setTrackingConsent('granted')
+          window.OO_RUM!.setTrackingConsent('not-granted')
         })
 
         // While consent stays revoked the cookie must be marked expired so
@@ -80,7 +80,7 @@ test.describe('tracking consent', () => {
         // Re-grant: the session manager should now finish installing and
         // start collecting events with a fresh session.
         await page.evaluate(() => {
-          window.DD_RUM!.setTrackingConsent('granted')
+          window.OO_RUM!.setTrackingConsent('granted')
         })
 
         await flushEvents()
@@ -92,8 +92,8 @@ test.describe('tracking consent', () => {
     createTest('using setTrackingConsent before init overrides the init parameter')
       .withRum({ trackingConsent: 'not-granted' })
       .withRumInit((configuration) => {
-        window.DD_RUM!.setTrackingConsent('granted')
-        window.DD_RUM!.init(configuration)
+        window.OO_RUM!.setTrackingConsent('granted')
+        window.OO_RUM!.init(configuration)
       })
       .run(async ({ intakeRegistry, flushEvents, browserContext }) => {
         await flushEvents()
@@ -117,7 +117,7 @@ test.describe('tracking consent', () => {
       .withLogs({ trackingConsent: 'not-granted' })
       .run(async ({ intakeRegistry, flushEvents, browserContext, page }) => {
         await page.evaluate(() => {
-          window.DD_LOGS!.setTrackingConsent('granted')
+          window.OO_LOGS!.setTrackingConsent('granted')
         })
 
         await flushEvents()
@@ -130,8 +130,8 @@ test.describe('tracking consent', () => {
       .withLogs()
       .run(async ({ intakeRegistry, flushEvents, browserContext, page }) => {
         await page.evaluate(() => {
-          window.DD_LOGS!.setTrackingConsent('not-granted')
-          window.DD_LOGS!.logger.log('should not be sent')
+          window.OO_LOGS!.setTrackingConsent('not-granted')
+          window.OO_LOGS!.logger.log('should not be sent')
         })
 
         await flushEvents()

@@ -1,5 +1,5 @@
-import type { RelativeTime } from '@datadog/js-core/time'
-import { mockSyntheticsWorkerValues } from '@datadog/browser-core/test'
+import type { RelativeTime } from '@openobserve/js-core/time'
+import { mockSyntheticsWorkerValues } from '@openobserve/browser-core/test'
 import type { Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { startRUMInternalContext } from './rumInternalContext'
@@ -13,8 +13,8 @@ describe('startRUMInternalContext', () => {
   })
 
   afterEach(() => {
-    delete window.DD_RUM
-    delete window.DD_RUM_SYNTHETICS
+    delete window.OO_RUM
+    delete window.OO_RUM_SYNTHETICS
   })
 
   describe('assemble hook', () => {
@@ -27,7 +27,7 @@ describe('startRUMInternalContext', () => {
     })
 
     it('returns undefined if the global variable does not have a `getInternalContext` method', () => {
-      window.DD_RUM = {} as any
+      window.OO_RUM = {} as any
       const defaultLogsEventAttributes = hooks.assemble.trigger({
         startTime: 0 as RelativeTime,
       })
@@ -35,7 +35,7 @@ describe('startRUMInternalContext', () => {
     })
 
     it('returns the internal context from the `getInternalContext` method', () => {
-      window.DD_RUM = {
+      window.OO_RUM = {
         getInternalContext: () => ({ foo: 'bar' }),
       }
       const defaultLogsEventAttributes = hooks.assemble.trigger({
@@ -50,7 +50,7 @@ describe('startRUMInternalContext', () => {
       })
 
       it('uses the global variable created when the synthetics worker is injecting RUM', () => {
-        window.DD_RUM_SYNTHETICS = {
+        window.OO_RUM_SYNTHETICS = {
           getInternalContext: () => ({ foo: 'bar' }),
         }
         const defaultLogsEventAttributes = hooks.assemble.trigger({
@@ -63,7 +63,7 @@ describe('startRUMInternalContext', () => {
 
   describe('assemble telemetry hook', () => {
     it('should set internal context', () => {
-      window.DD_RUM = {
+      window.OO_RUM = {
         getInternalContext: () => ({ application_id: '123', view: { id: '456' }, user_action: { id: '789' } }),
       }
       const defaultRumEventAttributes = hooks.assembleTelemetry.trigger({
@@ -78,7 +78,7 @@ describe('startRUMInternalContext', () => {
     })
 
     it('should not set internal context if the RUM instance is not present', () => {
-      window.DD_RUM = {
+      window.OO_RUM = {
         getInternalContext: () => undefined,
       }
       const defaultRumEventAttributes = hooks.assembleTelemetry.trigger({

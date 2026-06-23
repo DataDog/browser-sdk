@@ -1,6 +1,6 @@
 /* eslint-disable local-rules/disallow-side-effects */
-import { createMonitor } from '@datadog/js-core/monitor'
-import { setDebugMode } from '@datadog/js-core/util'
+import { createMonitor } from '@openobserve/js-core/monitor'
+import { setDebugMode } from '@openobserve/js-core/util'
 import { display } from './display'
 
 // The error-collection callback is wired lazily (via `startMonitorErrorCollection`, during telemetry

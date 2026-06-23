@@ -11,7 +11,7 @@ test.describe('telemetry', () => {
             throw new window.Error('expected error')
           },
         }
-        window.DD_LOGS!.logger.log('hop', context)
+        window.OO_LOGS!.logger.log('hop', context)
       })
       await flushEvents()
       expect(intakeRegistry.telemetryErrorEvents).toHaveLength(1)
@@ -32,7 +32,7 @@ test.describe('telemetry', () => {
             throw new window.Error('expected error')
           },
         }
-        window.DD_RUM!.addAction('hop', context)
+        window.OO_RUM!.addAction('hop', context)
       })
       await flushEvents()
       expect(intakeRegistry.telemetryErrorEvents).toHaveLength(1)
@@ -75,7 +75,7 @@ test.describe('telemetry', () => {
     .withRum()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
-        window.DD_RUM!.addAction('foo')
+        window.OO_RUM!.addAction('foo')
       })
 
       await flushEvents()
@@ -89,7 +89,7 @@ test.describe('telemetry', () => {
     .withLogs()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
-        window.DD_LOGS!.setTrackingConsent('granted')
+        window.OO_LOGS!.setTrackingConsent('granted')
       })
 
       await flushEvents()
@@ -104,10 +104,10 @@ test.describe('telemetry', () => {
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       // Generate initial telemetry, revoke consent, then try to generate more
       await page.evaluate(() => {
-        window.DD_RUM!.addAction('initial-action')
-        window.DD_RUM!.setTrackingConsent('not-granted')
-        window.DD_RUM!.addAction('post-revocation-action')
-        window.DD_RUM!.getAccount()
+        window.OO_RUM!.addAction('initial-action')
+        window.OO_RUM!.setTrackingConsent('not-granted')
+        window.OO_RUM!.addAction('post-revocation-action')
+        window.OO_RUM!.getAccount()
       })
 
       await flushEvents()
@@ -136,7 +136,7 @@ test.describe('telemetry', () => {
         Object.defineProperty(Document.prototype, 'cookie', {
           get: () => originalDescriptor.get.call(document),
           set: (value) => {
-            if (value.includes('_dd_s_v2=')) {
+            if (value.includes('_oo_s_v2=')) {
               throw new Error('expected error')
             }
             originalDescriptor.set.call(document, value)

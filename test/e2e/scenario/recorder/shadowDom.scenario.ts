@@ -1,16 +1,16 @@
-import type { MouseInteractionData, ScrollData } from '@datadog/browser-rum/src/types'
-import { ChangeType, IncrementalSource, MouseInteractionType } from '@datadog/browser-rum/src/types'
+import type { MouseInteractionData, ScrollData } from '@openobserve/browser-rum/src/types'
+import { ChangeType, IncrementalSource, MouseInteractionType } from '@openobserve/browser-rum/src/types'
 
 import {
   findFullSnapshot,
   findIncrementalSnapshot,
   findMouseInteractionRecords,
-} from '@datadog/browser-rum/test/record/segments'
+} from '@openobserve/browser-rum/test/record/segments'
 
 import type { Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
-import { decodeChangeRecords, findChangeRecords } from '@datadog/browser-rum/test/record/changes'
-import { getElementIdsFromFullSnapshot } from '@datadog/browser-rum/test/record/elements'
+import { decodeChangeRecords, findChangeRecords } from '@openobserve/browser-rum/test/record/changes'
+import { getElementIdsFromFullSnapshot } from '@openobserve/browser-rum/test/record/elements'
 import { createTest, html } from '../../lib/framework'
 
 /**
@@ -37,7 +37,7 @@ const inputShadowDom = `<script>
      const privacyOverride = this.getAttribute("privacy");
      const parent = document.createElement("div");
      if (privacyOverride) {
-       parent.setAttribute("data-dd-privacy", privacyOverride);
+       parent.setAttribute("data-oo-privacy", privacyOverride);
      }
      const label = document.createElement("label");
      label.setAttribute("id", "label-" + componentId);
@@ -225,7 +225,7 @@ test.describe('recorder with shadow DOM', () => {
     .withRum({ defaultPrivacyLevel: 'allow' })
     .withBody(html`
       ${inputShadowDom}
-      <div data-dd-privacy="mask-user-input"><my-input-field id="privacy-set-outside" /></div>
+      <div data-oo-privacy="mask-user-input"><my-input-field id="privacy-set-outside" /></div>
       <my-input-field privacy="mask-user-input" id="privacy-set-inside" />
     `)
     .run(async ({ flushEvents, intakeRegistry }) => {
@@ -243,7 +243,7 @@ test.describe('recorder with shadow DOM', () => {
           [0, 'BODY'],
           [1, '#text', '\n      '],
           [0, '#text', '\n \n      '],
-          [0, 'DIV', ['data-dd-privacy', 'mask-user-input']],
+          [0, 'DIV', ['data-oo-privacy', 'mask-user-input']],
           [1, 'MY-INPUT-FIELD', ['id', 'privacy-set-outside']],
           [1, '#shadow-root'],
           [1, 'DIV'],
@@ -254,7 +254,7 @@ test.describe('recorder with shadow DOM', () => {
           [0, 'MY-INPUT-FIELD', ['privacy', 'mask-user-input'], ['id', 'privacy-set-inside']],
           [1, '#text', '\n    '],
           [0, '#shadow-root'],
-          [1, 'DIV', ['data-dd-privacy', 'mask-user-input']],
+          [1, 'DIV', ['data-oo-privacy', 'mask-user-input']],
           [1, 'LABEL', ['id', 'label-privacy-set-inside']],
           [1, '#text', 'field privacy-set-inside: '],
           [3, 'INPUT', ['id', 'input-privacy-set-inside'], ['value', '***']],

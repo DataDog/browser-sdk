@@ -4,8 +4,8 @@ import {
   CENSORED_IMG_MARK,
   sanitizeIfLongDataUrl,
   shouldMaskAttribute,
-} from '@datadog/browser-rum-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
+} from '@openobserve/browser-rum-core'
+import type { RumConfiguration } from '@openobserve/browser-rum-core'
 import { censoredImageForSize } from './serializationUtils'
 
 // TODO: temporarily bump the Session Replay limit to 1Mb for dataUrls

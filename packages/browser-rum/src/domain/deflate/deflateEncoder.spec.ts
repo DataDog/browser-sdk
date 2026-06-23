@@ -1,5 +1,5 @@
-import type { EncoderResult, Uint8ArrayBuffer } from '@datadog/browser-core'
-import { noop, DeflateEncoderStreamId } from '@datadog/browser-core'
+import type { EncoderResult, Uint8ArrayBuffer } from '@openobserve/browser-core'
+import { noop, DeflateEncoderStreamId } from '@openobserve/browser-core'
 import { MockWorker } from '../../../test'
 import { createDeflateEncoder } from './deflateEncoder'
 

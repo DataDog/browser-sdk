@@ -1,6 +1,6 @@
-import type { RelativeTime } from '@datadog/js-core/time'
-import type { Hook } from '@datadog/js-core/assembly'
-import { createHook } from '@datadog/js-core/assembly'
+import type { RelativeTime } from '@openobserve/js-core/time'
+import type { Hook } from '@openobserve/js-core/assembly'
+import { createHook } from '@openobserve/js-core/assembly'
 import { createSessionManagerMock, MOCK_SESSION_ID } from '../../../test'
 import { startTelemetrySessionContext } from './telemetrySessionContext'
 

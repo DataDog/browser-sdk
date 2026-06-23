@@ -1,6 +1,6 @@
-import { setNavigatorOnLine, setNavigatorConnection } from '@datadog/browser-core/test'
-import type { RelativeTime } from '@datadog/js-core/time'
-import { createHook } from '@datadog/js-core/assembly'
+import { setNavigatorOnLine, setNavigatorConnection } from '@openobserve/browser-core/test'
+import type { RelativeTime } from '@openobserve/js-core/time'
+import { createHook } from '@openobserve/js-core/assembly'
 import type { AssembleHook, AssembleHookParams } from '../hooks'
 import { startConnectivityContext } from './connectivityContext'
 

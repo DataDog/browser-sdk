@@ -22,7 +22,7 @@ const MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL =
 const PACKAGES_NO_RESTRICTED_SYNTAX_RULES = [
   {
     selector: 'Identifier[name="globalThis"]',
-    message: 'Use `globalObject` from @datadog/browser-core instead of `globalThis`.',
+    message: 'Use `globalObject` from @openobserve/browser-core instead of `globalThis`.',
   },
 ]
 
@@ -239,7 +239,7 @@ export default defineConfig(
         'error',
         {
           // This is the default order plus 'internal', which is imports like
-          // @datadog/browser-core/test (references a file/folder within a local package)
+          // @openobserve/browser-core/test (references a file/folder within a local package)
           // https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/order.md#groups
           groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
         },
@@ -469,7 +469,7 @@ export default defineConfig(
   {
     files: ['test/e2e/**/*.ts', 'test/performance/**/*.ts'],
     rules: {
-      // E2E codebase is importing @datadog/browser-* packages referenced by tsconfig.
+      // E2E codebase is importing @openobserve/browser-* packages referenced by tsconfig.
       'import-x/no-extraneous-dependencies': 'off',
     },
   },

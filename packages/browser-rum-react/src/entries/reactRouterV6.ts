@@ -5,13 +5,13 @@
  * @example
  * ```ts
  * import { RouterProvider } from 'react-router-dom'
- * import { datadogRum } from '@datadog/browser-rum'
- * import { reactPlugin } from '@datadog/browser-rum-react'
+ * import { openobserveRum } from '@openobserve/browser-rum'
+ * import { reactPlugin } from '@openobserve/browser-rum-react'
  *
- * // ⚠️ Use "createBrowserRouter" from `@datadog/browser-rum-react/react-router-v6` instead of `react-router-dom`
- * import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v6'
+ * // ⚠️ Use "createBrowserRouter" from `@openobserve/browser-rum-react/react-router-v6` instead of `react-router-dom`
+ * import { createBrowserRouter } from '@openobserve/browser-rum-react/react-router-v6'
  *
- * datadogRum.init({
+ * openobserveRum.init({
  *   applicationId: '<DATADOG_APPLICATION_ID>',
  *   clientToken: '<DATADOG_CLIENT_TOKEN>',
  *   plugins: [reactPlugin({ router: true })],

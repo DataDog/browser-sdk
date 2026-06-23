@@ -1,4 +1,4 @@
-import { ONE_MINUTE } from '@datadog/js-core/time'
+import { ONE_MINUTE } from '@openobserve/js-core/time'
 import { getCookie, setCookie } from '../src/browser/cookie'
 import { toSessionState } from '../src/domain/session/sessionState'
 import { SESSION_STORE_KEY } from '../src/domain/session/storeStrategies/sessionStoreStrategy'

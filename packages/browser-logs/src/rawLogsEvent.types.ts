@@ -1,5 +1,5 @@
-import type { ErrorSource, RawErrorCause, ErrorHandling } from '@datadog/browser-core'
-import type { TimeStamp } from '@datadog/js-core/time'
+import type { ErrorSource, RawErrorCause, ErrorHandling } from '@openobserve/browser-core'
+import type { TimeStamp } from '@openobserve/js-core/time'
 import type { StatusType } from './domain/logger/isAuthorized'
 
 export type RawLogsEvent =

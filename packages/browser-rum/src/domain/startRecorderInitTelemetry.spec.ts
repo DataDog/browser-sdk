@@ -1,7 +1,7 @@
-import type { Telemetry, RawTelemetryEvent } from '@datadog/browser-core'
-import { Observable } from '@datadog/browser-core'
-import type { MockTelemetry } from '@datadog/browser-core/test'
-import { registerCleanupTask, startMockTelemetry } from '@datadog/browser-core/test'
+import type { Telemetry, RawTelemetryEvent } from '@openobserve/browser-core'
+import { Observable } from '@openobserve/browser-core'
+import type { MockTelemetry } from '@openobserve/browser-core/test'
+import { registerCleanupTask, startMockTelemetry } from '@openobserve/browser-core/test'
 import type { RecorderInitEvent } from '../boot/postStartStrategy'
 import { type RecorderInitMetrics, startRecorderInitTelemetry } from './startRecorderInitTelemetry'
 

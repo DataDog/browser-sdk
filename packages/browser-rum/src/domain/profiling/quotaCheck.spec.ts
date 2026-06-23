@@ -1,4 +1,4 @@
-import { mockClock, interceptRequests, NETWORK_ERROR_FETCH_MOCK } from '@datadog/browser-core/test'
+import { mockClock, interceptRequests, NETWORK_ERROR_FETCH_MOCK } from '@openobserve/browser-core/test'
 import { mockRumConfiguration } from '../../../../browser-rum-core/test'
 import { checkProfilingQuota } from './quotaCheck'
 

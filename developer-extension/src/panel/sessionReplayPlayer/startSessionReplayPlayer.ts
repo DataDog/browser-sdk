@@ -1,5 +1,5 @@
-import { IncrementalSource, RecordType } from '@datadog/browser-rum/src/types'
-import type { BrowserRecord } from '@datadog/browser-rum/src/types'
+import { IncrementalSource, RecordType } from '@openobserve/browser-rum/src/types'
+import type { BrowserRecord } from '@openobserve/browser-rum/src/types'
 import { createLogger } from '../../common/logger'
 import { onBackgroundMessage } from '../backgroundScriptConnection'
 import {

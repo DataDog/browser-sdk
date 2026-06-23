@@ -45,13 +45,13 @@ const pathsWithSideEffect = new Set([
 
 // Those packages are known to have no side effects when evaluated
 const packagesWithoutSideEffect = new Set([
-  '@datadog/js-core/assembly',
-  '@datadog/js-core/time',
-  '@datadog/js-core/util',
-  '@datadog/js-core/monitor',
-  '@datadog/browser-core',
-  '@datadog/browser-rum-core',
-  '@datadog/browser-rum-react/internal',
+  '@openobserve/js-core/assembly',
+  '@openobserve/js-core/time',
+  '@openobserve/js-core/util',
+  '@openobserve/js-core/monitor',
+  '@openobserve/browser-core',
+  '@openobserve/browser-rum-core',
+  '@openobserve/browser-rum-react/internal',
   'react',
   'react-router-dom',
   'vue',

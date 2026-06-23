@@ -9,7 +9,7 @@ test.describe('partial view updates', () => {
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       // Trigger a user action to cause a view update with changed metrics
       await page.evaluate(() => {
-        window.DD_RUM!.addAction('test-action')
+        window.OO_RUM!.addAction('test-action')
       })
 
       await flushEvents()
@@ -37,15 +37,15 @@ test.describe('partial view updates', () => {
     })
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
-        window.DD_RUM!.addAction('test-action')
+        window.OO_RUM!.addAction('test-action')
       })
 
       await flushEvents()
 
       // Collect document_versions from all view-related events (view + view_update)
       const allDocVersions = [
-        ...intakeRegistry.rumViewEvents.map((e) => e._dd.document_version),
-        ...intakeRegistry.rumViewUpdateEvents.map((e) => (e._dd as { document_version: number }).document_version),
+        ...intakeRegistry.rumViewEvents.map((e) => e._oo.document_version),
+        ...intakeRegistry.rumViewUpdateEvents.map((e) => (e._oo as { document_version: number }).document_version),
       ]
 
       expect(allDocVersions.length).toBeGreaterThanOrEqual(2)
@@ -58,7 +58,7 @@ test.describe('partial view updates', () => {
     .withRum()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
-        window.DD_RUM!.addAction('test-action')
+        window.OO_RUM!.addAction('test-action')
       })
 
       await flushEvents()
@@ -95,7 +95,7 @@ test.describe('partial view updates', () => {
     })
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
-        window.DD_RUM!.addAction('test-action')
+        window.OO_RUM!.addAction('test-action')
       })
 
       await flushEvents()
@@ -109,7 +109,7 @@ test.describe('partial view updates', () => {
         expect(event.application.id).toBeDefined()
         expect(event.session.id).toBeDefined()
         expect(event.view.id).toBeDefined()
-        expect(event._dd.document_version).toBeDefined()
+        expect(event._oo.document_version).toBeDefined()
         expect(event.date).toBeDefined()
       }
     })
@@ -154,7 +154,7 @@ test.describe('partial view updates', () => {
       // All calls are batched in a single evaluate to avoid 102 round-trips to the browser.
       await page.evaluate((count) => {
         for (let i = 0; i < count; i++) {
-          window.DD_RUM!.setViewName(`step-${i}`)
+          window.OO_RUM!.setViewName(`step-${i}`)
         }
       }, 102)
 

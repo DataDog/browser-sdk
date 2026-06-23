@@ -1,8 +1,8 @@
 import { createApp } from 'vue'
 import { createWebHistory } from 'vue-router'
-import { createRouter } from '@datadog/browser-rum-vue/vue-router-v4'
-import { datadogRum } from '@datadog/browser-rum'
-import { vuePlugin, addVueError } from '@datadog/browser-rum-vue'
+import { createRouter } from '@openobserve/browser-rum-vue/vue-router-v4'
+import { openobserveRum } from '@openobserve/browser-rum'
+import { vuePlugin, addVueError } from '@openobserve/browser-rum-vue'
 import App from './App.vue'
 
 declare global {
@@ -29,10 +29,10 @@ const rumContext = params.get('rum-context')
 const config = rumConfig ? JSON.parse(rumConfig) : window.RUM_CONFIGURATION
 const context = rumContext ? JSON.parse(rumContext) : window.RUM_CONTEXT
 
-datadogRum.init({ ...config, plugins: [vuePlugin({ router: true })] })
+openobserveRum.init({ ...config, plugins: [vuePlugin({ router: true })] })
 
 if (context) {
-  datadogRum.setGlobalContext(context)
+  openobserveRum.setGlobalContext(context)
 }
 
 const app = createApp(App)

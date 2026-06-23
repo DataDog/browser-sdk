@@ -1,4 +1,4 @@
-import { getType } from '@datadog/js-core/util'
+import { getType } from '@openobserve/js-core/util'
 import { display } from './display'
 
 export type MatchOption = string | RegExp | ((value: string) => boolean)

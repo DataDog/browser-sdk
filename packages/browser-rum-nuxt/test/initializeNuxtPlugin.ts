@@ -1,7 +1,7 @@
 import type { Router } from 'vue-router'
 import { createRouter, createMemoryHistory } from 'vue-router'
-import type { RumInitConfiguration, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
-import { noop } from '@datadog/browser-core'
+import type { RumInitConfiguration, RumPublicApi, StartRumResult } from '@openobserve/browser-rum-core'
+import { noop } from '@openobserve/browser-core'
 import { nuxtRumPlugin, resetNuxtPlugin } from '../src/domain/nuxtPlugin'
 import { registerCleanupTask } from '../../browser-core/test'
 

@@ -1,4 +1,4 @@
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import { registerCleanupTask } from '@openobserve/browser-core/test'
 import { createMemoryRouter as createMemoryRouterV7 } from 'react-router-dom'
 import { createMemoryRouter as createMemoryRouterV6 } from 'react-router-dom-6'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'

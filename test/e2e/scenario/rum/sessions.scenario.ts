@@ -1,6 +1,6 @@
-import { ONE_HOUR, ONE_MINUTE } from '@datadog/js-core/time'
-import { SESSION_STORE_KEY, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
-import { RecordType } from '@datadog/browser-rum/src/types'
+import { ONE_HOUR, ONE_MINUTE } from '@openobserve/js-core/time'
+import { SESSION_STORE_KEY, SESSION_TIME_OUT_DELAY } from '@openobserve/browser-core'
+import { RecordType } from '@openobserve/browser-rum/src/types'
 import { test, expect } from '@playwright/test'
 import { setCookie } from '../../lib/helpers/browser'
 import { expireSession, findSessionCookie, renewSession } from '../../lib/helpers/session'
@@ -85,14 +85,14 @@ test.describe('rum sessions', () => {
         )
 
         await page.evaluate(() => {
-          window.DD_RUM!.addAction('not collected')
+          window.OO_RUM!.addAction('not collected')
         })
 
         // Makes the tab picks up the new session
         await page.locator('html').click()
 
         await page.evaluate(() => {
-          window.DD_RUM!.addAction('collected')
+          window.OO_RUM!.addAction('collected')
         })
 
         await flushEvents()
@@ -144,7 +144,7 @@ test.describe('rum sessions', () => {
         const anonymousId = (await findSessionCookie(browserContext))?.aid
 
         await page.evaluate(() => {
-          window.DD_RUM!.stopSession()
+          window.OO_RUM!.stopSession()
         })
         await flushEvents()
 
@@ -158,7 +158,7 @@ test.describe('rum sessions', () => {
         expect(anonymousId).not.toBeNull()
 
         await page.evaluate(() => {
-          window.DD_RUM!.stopSession()
+          window.OO_RUM!.stopSession()
         })
         await page.locator('html').click()
 
@@ -174,7 +174,7 @@ test.describe('rum sessions', () => {
         expect((await findSessionCookie(browserContext))?.aid).toBeDefined()
 
         await page.evaluate(() => {
-          window.DD_RUM!.setTrackingConsent('not-granted')
+          window.OO_RUM!.setTrackingConsent('not-granted')
         })
 
         expect((await findSessionCookie(browserContext))?.aid).toBeUndefined()
@@ -188,14 +188,14 @@ test.describe('rum sessions', () => {
         await page.evaluate(
           () =>
             new Promise<void>((resolve) => {
-              window.DD_RUM!.stopSession()
+              window.OO_RUM!.stopSession()
               setTimeout(() => {
                 // If called directly after `stopSession`, the action start time may be the same as the
                 // session end time. In this case, the sopped session is used, and the action is
                 // collected.
                 // We might want to improve this by having a strict comparison between the event start
                 // time and session end time.
-                window.DD_RUM!.addAction('foo')
+                window.OO_RUM!.addAction('foo')
                 resolve()
               }, 5)
             })
@@ -210,7 +210,7 @@ test.describe('rum sessions', () => {
       .withRum()
       .run(async ({ intakeRegistry, flushEvents, browserContext, page }) => {
         await page.evaluate(() => {
-          window.DD_RUM!.stopSession()
+          window.OO_RUM!.stopSession()
         })
 
         await page.locator('html').click()
@@ -219,7 +219,7 @@ test.describe('rum sessions', () => {
         await page.waitForTimeout(1000)
 
         await page.evaluate(() => {
-          window.DD_RUM!.addAction('foo')
+          window.OO_RUM!.addAction('foo')
         })
 
         await flushEvents()
@@ -238,8 +238,8 @@ test.describe('rum sessions', () => {
         expect(intakeRegistry.replaySegments).toHaveLength(0)
 
         await page.evaluate(() => {
-          window.DD_LOGS!.logger.log('foo')
-          window.DD_RUM!.stopSession()
+          window.OO_LOGS!.logger.log('foo')
+          window.OO_RUM!.stopSession()
         })
 
         await waitForRequests(page)
@@ -298,7 +298,7 @@ test.describe('rum sessions', () => {
         await page.waitForTimeout(1100)
 
         await page.evaluate(() => {
-          window.DD_RUM!.addAction('foo')
+          window.OO_RUM!.addAction('foo')
         })
 
         await flushEvents()

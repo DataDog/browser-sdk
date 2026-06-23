@@ -1,4 +1,4 @@
-import type { BufferedObservable, BufferedData, SessionManager } from '@datadog/browser-core'
+import type { BufferedObservable, BufferedData, SessionManager } from '@openobserve/browser-core'
 import {
   sendToExtension,
   createPageMayExitObservable,
@@ -7,7 +7,7 @@ import {
   startGlobalContext,
   startUserContext,
   startTabContext,
-} from '@datadog/browser-core'
+} from '@openobserve/browser-core'
 import type { LogsConfiguration } from '../domain/configuration'
 import { startLogsAssembly } from '../domain/assembly'
 import { startConsoleCollection } from '../domain/console/consoleCollection'

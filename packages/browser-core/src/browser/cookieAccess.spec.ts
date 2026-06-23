@@ -1,4 +1,4 @@
-import { ONE_MINUTE, dateNow } from '@datadog/js-core/time'
+import { ONE_MINUTE, dateNow } from '@openobserve/js-core/time'
 import type { Clock } from '../../test'
 import { collectAsyncCalls, mockClock, registerCleanupTask, replaceMockable } from '../../test'
 import { display } from '../tools/display'

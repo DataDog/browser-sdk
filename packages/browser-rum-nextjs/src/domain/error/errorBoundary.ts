@@ -1,6 +1,6 @@
 'use client'
-import { createErrorBoundary } from '@datadog/browser-rum-react/internal'
-export type { ErrorBoundaryFallback, ErrorBoundaryProps } from '@datadog/browser-rum-react/internal'
+import { createErrorBoundary } from '@openobserve/browser-rum-react/internal'
+export type { ErrorBoundaryFallback, ErrorBoundaryProps } from '@openobserve/browser-rum-react/internal'
 import { addNextjsError } from './addNextjsError'
 
 /**
@@ -11,7 +11,7 @@ import { addNextjsError } from './addNextjsError'
  * @category Error
  * @example
  * ```ts
- * import { ErrorBoundary } from '@datadog/browser-rum-nextjs'
+ * import { ErrorBoundary } from '@openobserve/browser-rum-nextjs'
  *
  * <ErrorBoundary fallback={() => null}>
  *   <Component />

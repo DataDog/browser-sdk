@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import type { RemoteConfiguration } from '@datadog/browser-rum-core'
+import type { RemoteConfiguration } from '@openobserve/browser-rum-core'
 import { test, expect } from '@playwright/test'
 import { createTest, html, waitForServersIdle } from '../../lib/framework'
 
@@ -18,7 +18,7 @@ test.describe('remote configuration', () => {
       })
       .run(async ({ page }) => {
         await waitForRemoteConfigurationToBeAppliedSync(page)
-        const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
+        const initConfiguration = await page.evaluate(() => window.OO_RUM!.getInitConfiguration()!)
         expect(initConfiguration.sessionSampleRate).toBe(1)
       })
 
@@ -36,7 +36,7 @@ test.describe('remote configuration', () => {
       `)
       .run(async ({ page }) => {
         await waitForRemoteConfigurationToBeAppliedSync(page)
-        const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
+        const initConfiguration = await page.evaluate(() => window.OO_RUM!.getInitConfiguration()!)
         expect(initConfiguration.version).toBe('my-version')
       })
 
@@ -53,7 +53,7 @@ test.describe('remote configuration', () => {
       .withBody(html`<span id="version">123</span>`)
       .run(async ({ page }) => {
         await waitForRemoteConfigurationToBeAppliedSync(page)
-        const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
+        const initConfiguration = await page.evaluate(() => window.OO_RUM!.getInitConfiguration()!)
         expect(initConfiguration.version).toBe('123')
       })
 
@@ -70,7 +70,7 @@ test.describe('remote configuration', () => {
       .withBody(html`<span id="version" data-version="123"></span>`)
       .run(async ({ page }) => {
         await waitForRemoteConfigurationToBeAppliedSync(page)
-        const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
+        const initConfiguration = await page.evaluate(() => window.OO_RUM!.getInitConfiguration()!)
         expect(initConfiguration.version).toBe('123')
       })
 
@@ -93,7 +93,7 @@ test.describe('remote configuration', () => {
       `)
       .run(async ({ page }) => {
         await waitForRemoteConfigurationToBeAppliedSync(page)
-        const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
+        const initConfiguration = await page.evaluate(() => window.OO_RUM!.getInitConfiguration()!)
         expect(initConfiguration.version).toBe('js-version')
       })
 
@@ -114,7 +114,7 @@ test.describe('remote configuration', () => {
       `)
       .run(async ({ page }) => {
         await waitForRemoteConfigurationToBeAppliedSync(page)
-        const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
+        const initConfiguration = await page.evaluate(() => window.OO_RUM!.getInitConfiguration()!)
         expect(initConfiguration.version).toBe('localStorage-version')
       })
 
@@ -140,7 +140,7 @@ test.describe('remote configuration', () => {
       `)
       .run(async ({ page }) => {
         await waitForRemoteConfigurationToBeAppliedSync(page)
-        const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
+        const initConfiguration = await page.evaluate(() => window.OO_RUM!.getInitConfiguration()!)
         expect(initConfiguration.version).toBe('1.2.3')
       })
 
@@ -156,7 +156,7 @@ test.describe('remote configuration', () => {
       })
       .run(async ({ page }) => {
         await waitForRemoteConfigurationToBeAppliedSync(page)
-        const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
+        const initConfiguration = await page.evaluate(() => window.OO_RUM!.getInitConfiguration()!)
         expect(initConfiguration.version).toBeUndefined()
       })
 
@@ -182,7 +182,7 @@ test.describe('remote configuration', () => {
       `)
       .run(async ({ page }) => {
         await waitForRemoteConfigurationToBeAppliedSync(page)
-        const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
+        const initConfiguration = await page.evaluate(() => window.OO_RUM!.getInitConfiguration()!)
         expect(initConfiguration.version).toBeUndefined()
       })
 
@@ -203,7 +203,7 @@ test.describe('remote configuration', () => {
       `)
       .run(async ({ page }) => {
         await waitForRemoteConfigurationToBeAppliedSync(page)
-        const user = await page.evaluate(() => window.DD_RUM!.getUser())
+        const user = await page.evaluate(() => window.OO_RUM!.getUser())
         expect(user.id).toBe('my-user-id')
       })
 
@@ -229,7 +229,7 @@ test.describe('remote configuration', () => {
       `)
       .run(async ({ page }) => {
         await waitForRemoteConfigurationToBeAppliedSync(page)
-        const globalContext = await page.evaluate(() => window.DD_RUM!.getGlobalContext())
+        const globalContext = await page.evaluate(() => window.OO_RUM!.getGlobalContext())
         expect(globalContext.foo).toEqual('bar')
       })
   })
@@ -245,7 +245,7 @@ test.describe('remote configuration', () => {
       })
       .run(async ({ page }) => {
         await waitForRemoteConfigurationToBeAppliedAsync(page)
-        const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
+        const initConfiguration = await page.evaluate(() => window.OO_RUM!.getInitConfiguration()!)
         expect(initConfiguration.applicationId).toBe(RC_APP_ID)
         expect(initConfiguration.sessionSampleRate).toBe(1)
       })
@@ -258,7 +258,7 @@ test.describe('remote configuration', () => {
         rum: { applicationId: RC_APP_ID, sessionSampleRate: 1 },
       })
       .run(async ({ page }) => {
-        const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
+        const initConfiguration = await page.evaluate(() => window.OO_RUM!.getInitConfiguration()!)
         expect(initConfiguration.applicationId).not.toBe(RC_APP_ID)
 
         await page.waitForFunction((key) => localStorage.getItem(key) !== null, CACHE_KEY)
@@ -287,7 +287,7 @@ test.describe('remote configuration', () => {
         </script>
       `)
       .run(async ({ page }) => {
-        const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
+        const initConfiguration = await page.evaluate(() => window.OO_RUM!.getInitConfiguration()!)
         expect(initConfiguration.version).toBe('my-version')
       })
 
@@ -309,7 +309,7 @@ test.describe('remote configuration', () => {
         <span id="version">123</span>
       `)
       .run(async ({ page }) => {
-        const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
+        const initConfiguration = await page.evaluate(() => window.OO_RUM!.getInitConfiguration()!)
         expect(initConfiguration.version).toBe('123')
       })
 
@@ -331,7 +331,7 @@ test.describe('remote configuration', () => {
         <span id="version" data-version="123"></span>
       `)
       .run(async ({ page }) => {
-        const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
+        const initConfiguration = await page.evaluate(() => window.OO_RUM!.getInitConfiguration()!)
         expect(initConfiguration.version).toBe('123')
       })
 
@@ -355,7 +355,7 @@ test.describe('remote configuration', () => {
         </script>
       `)
       .run(async ({ page }) => {
-        const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
+        const initConfiguration = await page.evaluate(() => window.OO_RUM!.getInitConfiguration()!)
         expect(initConfiguration.version).toBe('js-version')
       })
 
@@ -379,7 +379,7 @@ test.describe('remote configuration', () => {
         </script>
       `)
       .run(async ({ page }) => {
-        const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
+        const initConfiguration = await page.evaluate(() => window.OO_RUM!.getInitConfiguration()!)
         expect(initConfiguration.version).toBe('localStorage-version')
       })
 
@@ -413,7 +413,7 @@ test.describe('remote configuration', () => {
         </script>
       `)
       .run(async ({ page }) => {
-        const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
+        const initConfiguration = await page.evaluate(() => window.OO_RUM!.getInitConfiguration()!)
         expect(initConfiguration.version).toBe('1.2.3')
       })
 
@@ -434,7 +434,7 @@ test.describe('remote configuration', () => {
         })
       )
       .run(async ({ page }) => {
-        const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
+        const initConfiguration = await page.evaluate(() => window.OO_RUM!.getInitConfiguration()!)
         expect(initConfiguration.version).toBeUndefined()
       })
 
@@ -458,7 +458,7 @@ test.describe('remote configuration', () => {
         </script>
       `)
       .run(async ({ page }) => {
-        const user = await page.evaluate(() => window.DD_RUM!.getUser())
+        const user = await page.evaluate(() => window.OO_RUM!.getUser())
         expect(user.id).toBe('my-user-id')
       })
 
@@ -482,7 +482,7 @@ test.describe('remote configuration', () => {
         </script>
       `)
       .run(async ({ page }) => {
-        const globalContext = await page.evaluate(() => window.DD_RUM!.getGlobalContext())
+        const globalContext = await page.evaluate(() => window.OO_RUM!.getGlobalContext())
         expect(globalContext.foo).toEqual('bar')
       })
   })
@@ -505,7 +505,7 @@ function seedCache(remoteConfig: RemoteConfiguration) {
  */
 async function waitForRemoteConfigurationToBeAppliedSync(page: Page) {
   for (let i = 0; i < 20; i++) {
-    const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
+    const initConfiguration = await page.evaluate(() => window.OO_RUM!.getInitConfiguration()!)
     if (initConfiguration.applicationId === RC_APP_ID) {
       break
     }

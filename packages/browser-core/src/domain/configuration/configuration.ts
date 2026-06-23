@@ -135,12 +135,35 @@ export interface InitConfiguration {
   proxy?: string | ProxyFn | undefined
 
   /**
-   * The Datadog [site](https://docs.datadoghq.com/getting_started/site) parameter of your organization.
+   * The OpenObserve endpoint host of your organization (for example: api.openobserve.ai).
    *
    * @category Transport
-   * @defaultValue datadoghq.com
+   * @defaultValue api.openobserve.ai
    */
   site?: Site | undefined
+
+  /**
+   * The OpenObserve API version used to build the intake path (`/rum/{apiVersion}/{organizationIdentifier}/{trackType}`).
+   *
+   * @category Transport
+   * @defaultValue v1
+   */
+  apiVersion?: string | undefined
+
+  /**
+   * The OpenObserve organization identifier used to build the intake path.
+   *
+   * @category Transport
+   */
+  organizationIdentifier?: string | undefined
+
+  /**
+   * Send data over plain HTTP instead of HTTPS. Intended for local/self-hosted setups.
+   *
+   * @category Transport
+   * @defaultValue false
+   */
+  insecureHTTP?: boolean | undefined
 
   // tag and context options
   /**
@@ -288,6 +311,9 @@ export interface Configuration {
   datacenter: string | undefined
   proxy: string | ProxyFn | undefined
   site: Site
+  apiVersion: string
+  organizationIdentifier: string | undefined
+  insecureHTTP: boolean | undefined
   source: SdkSource
   beforeSend: GenericBeforeSendCallback | undefined
   cookieOptions: CookieOptions | undefined
@@ -319,8 +345,10 @@ function isString(tag: unknown, tagName: string): tag is string | undefined | nu
 }
 
 function isDatadogSite(site: unknown) {
-  if (site && typeof site === 'string' && !/(datadog|ddog|datad0g|dd0g)/.test(site)) {
-    display.error(`Site should be a valid Datadog site. ${MORE_DETAILS} ${DOCS_ORIGIN}/getting_started/site/.`)
+  // OpenObserve: `site` is the endpoint host (e.g. api.openobserve.ai), not a Datadog site,
+  // so the Datadog-specific host validation is intentionally disabled.
+  if (site !== undefined && typeof site !== 'string') {
+    display.error('Site should be a string')
     return false
   }
   return true
@@ -377,6 +405,9 @@ export function validateAndBuildConfiguration(
     clientToken: initConfiguration.clientToken,
     proxy: initConfiguration.proxy,
     site: initConfiguration.site || INTAKE_SITE_US1,
+    apiVersion: initConfiguration.apiVersion ?? 'v1',
+    organizationIdentifier: initConfiguration.organizationIdentifier,
+    insecureHTTP: initConfiguration.insecureHTTP,
     source: validateSource(initConfiguration.source),
     beforeSend:
       initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),

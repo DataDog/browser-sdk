@@ -1,5 +1,5 @@
-import { getEventBridge } from '@datadog/browser-core'
-import type { ViewHistory } from '@datadog/browser-rum-core'
+import { getEventBridge } from '@openobserve/browser-core'
+import type { ViewHistory } from '@openobserve/browser-rum-core'
 import type { BrowserRecord } from '../types'
 
 export function startRecordBridge(viewHistory: ViewHistory) {

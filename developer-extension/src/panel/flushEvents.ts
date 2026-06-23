@@ -6,7 +6,7 @@ export const flushScript = `
 const descriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'visibilityState');
 Object.defineProperty(Document.prototype, 'visibilityState', { value: 'hidden' });
 const hiddenEvent = new Event('visibilitychange', { bubbles: true});
-hiddenEvent.__ddIsTrusted = true;
+hiddenEvent.__ooIsTrusted = true;
 document.dispatchEvent(hiddenEvent);
 Object.defineProperty(Document.prototype, 'visibilityState', descriptor);
 document.dispatchEvent(new Event('visibilitychange', { bubbles: true }));

@@ -1,6 +1,6 @@
-import { display } from '@datadog/browser-core'
-import type { MockTelemetry } from '@datadog/browser-core/test'
-import { replaceMockable, startMockTelemetry } from '@datadog/browser-core/test'
+import { display } from '@openobserve/browser-core'
+import type { MockTelemetry } from '@openobserve/browser-core/test'
+import { replaceMockable, startMockTelemetry } from '@openobserve/browser-core/test'
 import { lazyLoadRecorder, importRecorder } from './lazyLoadRecorder'
 
 describe('lazyLoadRecorder', () => {

@@ -1,4 +1,4 @@
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import { registerCleanupTask } from '@openobserve/browser-core/test'
 
 export function appendText(text: string, container: Element | ShadowRoot = document.body): Text {
   const textNode = document.createTextNode(text)

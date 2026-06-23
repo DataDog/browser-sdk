@@ -1,5 +1,5 @@
-import { display, getInitCookie } from '@datadog/browser-core'
-import { SKIPPED } from '@datadog/js-core/assembly'
+import { display, getInitCookie } from '@openobserve/browser-core'
+import { SKIPPED } from '@openobserve/js-core/assembly'
 import { createCookieObservable } from '../../browser/cookieObservable'
 import type { AssembleHook, DefaultRumEventAttributes } from '../hooks'
 import { SessionType } from './sessionContext'

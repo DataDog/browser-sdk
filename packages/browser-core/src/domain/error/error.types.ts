@@ -1,4 +1,4 @@
-import type { ClocksState } from '@datadog/js-core/time'
+import type { ClocksState } from '@openobserve/js-core/time'
 import type { Context } from '../../tools/serialisation/context'
 
 // TS v4.6 introduced Error.cause[1] typed as `Error`. TS v4.8 changed Error.cause to be

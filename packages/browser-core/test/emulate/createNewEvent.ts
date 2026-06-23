@@ -1,4 +1,4 @@
-import type { MouseEventOnElement } from '@datadog/browser-rum-core'
+import type { MouseEventOnElement } from '@openobserve/browser-rum-core'
 import type { TrustableEvent } from '../../src'
 import { objectEntries } from '../../src'
 
@@ -18,7 +18,7 @@ export function createNewEvent(eventName: string, properties: { [name: string]: 
     event = document.createEvent('Event')
     event.initEvent(eventName, true, true)
   }
-  event.__ddIsTrusted = true
+  event.__ooIsTrusted = true
   objectEntries(properties).forEach(([name, value]) => {
     // Setting values directly or with a `value` descriptor seems unsupported in IE11
     Object.defineProperty(event, name, {

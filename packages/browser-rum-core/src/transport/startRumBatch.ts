@@ -1,4 +1,4 @@
-import type { Observable, RawError, PageMayExitEvent, Encoder, Context } from '@datadog/browser-core'
+import type { Observable, RawError, PageMayExitEvent, Encoder, Context } from '@openobserve/browser-core'
 import {
   createBatch,
   createFlushController,
@@ -9,8 +9,8 @@ import {
   sendToExtension,
   createEndpointBuilder,
   createReplicaEndpointBuilder,
-} from '@datadog/browser-core'
-import { combine } from '@datadog/js-core/util'
+} from '@openobserve/browser-core'
+import { combine } from '@openobserve/js-core/util'
 import type { RumConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
@@ -28,7 +28,7 @@ export function assembleViewUpdateEvent(
   const diff = diffMerge(current, last, {
     // context, connectivity, usr, device, privacy are objects — use REPLACE to avoid partial updates
     replaceKeys: new Set(['view.custom_timings', 'context', 'connectivity', 'usr', 'device', 'privacy']),
-    appendKeys: new Set(['_dd.page_states']),
+    appendKeys: new Set(['_oo.page_states']),
     // Ignore always-required fields — they are added back via combine regardless of changes
     ignoreKeys: new Set([
       'date',
@@ -37,8 +37,8 @@ export function assembleViewUpdateEvent(
       'session',
       'view.id',
       'view.url',
-      '_dd.document_version',
-      '_dd.format_version',
+      '_oo.document_version',
+      '_oo.format_version',
     ]),
   })
 
@@ -56,9 +56,9 @@ export function assembleViewUpdateEvent(
       id: current.view.id,
       url: current.view.url,
     },
-    _dd: {
-      document_version: current._dd.document_version,
-      format_version: current._dd.format_version,
+    _oo: {
+      document_version: current._oo.document_version,
+      format_version: current._oo.format_version,
     },
   }) as RumViewUpdateEvent & Context
 }

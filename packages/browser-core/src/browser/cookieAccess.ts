@@ -1,4 +1,4 @@
-import { ONE_MINUTE, ONE_SECOND, dateNow } from '@datadog/js-core/time'
+import { ONE_MINUTE, ONE_SECOND, dateNow } from '@openobserve/js-core/time'
 import { setInterval, clearInterval } from '../tools/timer'
 import { Observable } from '../tools/observable'
 import { mockable } from '../tools/mockable'

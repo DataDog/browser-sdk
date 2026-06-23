@@ -1,5 +1,5 @@
-import { DOM_EVENT, addEventListeners } from '@datadog/browser-core'
-import { timeStampNow } from '@datadog/js-core/time'
+import { DOM_EVENT, addEventListeners } from '@openobserve/browser-core'
+import { timeStampNow } from '@openobserve/js-core/time'
 import type { FocusRecord } from '../../../types'
 import { RecordType } from '../../../types'
 import type { EmitRecordCallback } from '../record.types'

@@ -1,4 +1,4 @@
-import { isError, safeStringify, safeToString } from '@datadog/browser-core'
+import { isError, safeStringify, safeToString } from '@openobserve/browser-core'
 import type { StackFrame } from './stacktrace'
 import { parseStackTrace } from './stacktrace'
 

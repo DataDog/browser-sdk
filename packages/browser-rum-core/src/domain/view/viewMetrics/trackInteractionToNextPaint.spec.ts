@@ -1,6 +1,6 @@
-import type { RelativeTime, Duration } from '@datadog/js-core/time'
-import { elapsed, relativeNow } from '@datadog/js-core/time'
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import type { RelativeTime, Duration } from '@openobserve/js-core/time'
+import { elapsed, relativeNow } from '@openobserve/js-core/time'
+import { registerCleanupTask } from '@openobserve/browser-core/test'
 import {
   appendElement,
   appendText,

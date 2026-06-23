@@ -1,5 +1,5 @@
-import type { ClocksState } from '@datadog/js-core/time'
-import type { TimeoutId, Profiler } from '@datadog/browser-core'
+import type { ClocksState } from '@openobserve/js-core/time'
+import type { TimeoutId, Profiler } from '@openobserve/browser-core'
 import type { BrowserProfileEvent, BrowserProfilerTrace, RumViewEntry } from '../../types'
 import type { LongTaskContext } from './longTaskHistory'
 

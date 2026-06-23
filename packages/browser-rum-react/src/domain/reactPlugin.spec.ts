@@ -1,4 +1,4 @@
-import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
+import type { RumInitConfiguration, RumPublicApi } from '@openobserve/browser-rum-core'
 import { onRumInit, onRumStart, reactPlugin, resetReactPlugin } from './reactPlugin'
 
 const PUBLIC_API = {} as RumPublicApi

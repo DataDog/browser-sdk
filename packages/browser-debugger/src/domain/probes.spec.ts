@@ -1,5 +1,5 @@
-import type { ErrorWithCause } from '@datadog/browser-core'
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import type { ErrorWithCause } from '@openobserve/browser-core'
+import { registerCleanupTask } from '@openobserve/browser-core/test'
 import {
   initializeProbe,
   getProbes,

@@ -1,5 +1,5 @@
-import { elapsed, timeStampNow, clocksNow } from '@datadog/js-core/time'
-import type { Duration, ClocksState } from '@datadog/js-core/time'
+import { elapsed, timeStampNow, clocksNow } from '@openobserve/js-core/time'
+import type { Duration, ClocksState } from '@openobserve/js-core/time'
 import type { InstrumentedMethodCall } from '../tools/instrumentMethod'
 import { instrumentMethod } from '../tools/instrumentMethod'
 import { Observable } from '../tools/observable'

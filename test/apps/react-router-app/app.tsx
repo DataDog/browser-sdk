@@ -1,13 +1,13 @@
-import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v7'
+import { createBrowserRouter } from '@openobserve/browser-rum-react/react-router-v7'
 import { RouterProvider, Link, useParams, Outlet } from 'react-router'
 import React, { useState } from 'react'
 import ReactDOM from 'react-dom/client'
-import { datadogRum } from '@datadog/browser-rum'
+import { openobserveRum } from '@openobserve/browser-rum'
 import {
   reactPlugin,
   UNSTABLE_ReactComponentTracker as ReactComponentTracker,
   ErrorBoundary,
-} from '@datadog/browser-rum-react'
+} from '@openobserve/browser-rum-react'
 
 declare global {
   interface Window {
@@ -16,9 +16,9 @@ declare global {
   }
 }
 
-datadogRum.init({ ...window.RUM_CONFIGURATION, plugins: [reactPlugin({ router: true })] })
+openobserveRum.init({ ...window.RUM_CONFIGURATION, plugins: [reactPlugin({ router: true })] })
 if (window.RUM_CONTEXT) {
-  datadogRum.setGlobalContext(window.RUM_CONTEXT)
+  openobserveRum.setGlobalContext(window.RUM_CONTEXT)
 }
 
 function HomePage() {

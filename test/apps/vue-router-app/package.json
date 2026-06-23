@@ -11,25 +11,25 @@
     "vue-router": "5.1.0"
   },
   "peerDependencies": {
-    "@datadog/browser-rum": "*",
-    "@datadog/browser-rum-vue": "*"
+    "@openobserve/browser-rum": "*",
+    "@openobserve/browser-rum-vue": "*"
   },
   "peerDependenciesMeta": {
-    "@datadog/browser-rum": {
+    "@openobserve/browser-rum": {
       "optional": true
     },
-    "@datadog/browser-rum-vue": {
+    "@openobserve/browser-rum-vue": {
       "optional": true
     }
   },
   "resolutions": {
-    "@datadog/browser-rum-core": "file:../../../packages/browser-rum-core/package.tgz",
-    "@datadog/browser-core": "file:../../../packages/browser-core/package.tgz",
-    "@datadog/js-core": "file:../../../packages/js-core/package.tgz",
-    "@datadog/browser-rum": "file:../../../packages/browser-rum/package.tgz",
-    "@datadog/browser-rum-vue": "file:../../../packages/browser-rum-vue/package.tgz",
-    "@datadog/browser-rum-slim": "file:../../../packages/browser-rum-slim/package.tgz",
-    "@datadog/browser-worker": "file:../../../packages/browser-worker/package.tgz"
+    "@openobserve/browser-rum-core": "file:../../../packages/browser-rum-core/package.tgz",
+    "@openobserve/browser-core": "file:../../../packages/browser-core/package.tgz",
+    "@openobserve/js-core": "file:../../../packages/js-core/package.tgz",
+    "@openobserve/browser-rum": "file:../../../packages/browser-rum/package.tgz",
+    "@openobserve/browser-rum-vue": "file:../../../packages/browser-rum-vue/package.tgz",
+    "@openobserve/browser-rum-slim": "file:../../../packages/browser-rum-slim/package.tgz",
+    "@openobserve/browser-worker": "file:../../../packages/browser-worker/package.tgz"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "6.x",

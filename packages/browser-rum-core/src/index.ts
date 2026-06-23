@@ -31,7 +31,7 @@ export { LifeCycle, LifeCycleEventType } from './domain/lifeCycle'
 export type { ViewCreatedEvent, ViewOptions } from './domain/view/trackViews'
 export type { ViewHistoryEntry, ViewHistory } from './domain/contexts/viewHistory'
 export { startViewHistory } from './domain/contexts/viewHistory'
-export type { SessionManager } from '@datadog/browser-core'
+export type { SessionManager } from '@openobserve/browser-core'
 export { getMutationObserverConstructor } from './browser/domMutationObservable'
 export type {
   RumMutationRecord,

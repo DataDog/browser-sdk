@@ -1,5 +1,5 @@
-import { NodePrivacyLevel, shouldMaskNode } from '@datadog/browser-rum-core'
-import { isSafari } from '@datadog/browser-core'
+import { NodePrivacyLevel, shouldMaskNode } from '@openobserve/browser-rum-core'
+import { isSafari } from '@openobserve/browser-core'
 import { getElementInputValue, normalizedTagName, switchToAbsoluteUrl } from './serializationUtils'
 import { serializeAttribute } from './serializeAttribute'
 import type { SerializationTransaction } from './serializationTransaction'

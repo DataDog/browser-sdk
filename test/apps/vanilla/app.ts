@@ -1,6 +1,6 @@
-import { datadogLogs } from '@datadog/browser-logs'
-import { datadogRum } from '@datadog/browser-rum'
-import { datadogDebugger } from '@datadog/browser-debugger'
+import { openobserveLogs } from '@openobserve/browser-logs'
+import { openobserveRum } from '@openobserve/browser-rum'
+import { datadogDebugger } from '@openobserve/browser-debugger'
 
 declare global {
   interface Window {
@@ -24,8 +24,8 @@ if (typeof window !== 'undefined') {
   }
 } else {
   // compat test
-  datadogLogs.init({ clientToken: 'xxx', beforeSend: undefined })
-  datadogRum.init({ clientToken: 'xxx', applicationId: 'xxx', beforeSend: undefined })
-  datadogRum.setUser({ id: undefined })
+  openobserveLogs.init({ clientToken: 'xxx', beforeSend: undefined })
+  openobserveRum.init({ clientToken: 'xxx', applicationId: 'xxx', beforeSend: undefined })
+  openobserveRum.setUser({ id: undefined })
   datadogDebugger.init({ clientToken: 'xxx', service: 'xxx' })
 }

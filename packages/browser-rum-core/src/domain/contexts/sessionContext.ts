@@ -1,5 +1,5 @@
-import type { SessionManager } from '@datadog/browser-core'
-import { DISCARDED } from '@datadog/js-core/assembly'
+import type { SessionManager } from '@openobserve/browser-core'
+import { DISCARDED } from '@openobserve/js-core/assembly'
 import type { RumConfiguration } from '../configuration'
 import { SessionReplayState, computeSessionReplayState } from '../sessionReplayState'
 import { RumEventType } from '../../rawRumEvent.types'

@@ -1,5 +1,5 @@
-import type { RelativeTime, Duration } from '@datadog/js-core/time'
-import { ONE_MINUTE, elapsed, relativeNow } from '@datadog/js-core/time'
+import type { RelativeTime, Duration } from '@openobserve/js-core/time'
+import { ONE_MINUTE, elapsed, relativeNow } from '@openobserve/js-core/time'
 import type { RumPerformancePaintTiming } from '../../../browser/performanceObservable'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import type { FirstHidden } from './trackFirstHidden'

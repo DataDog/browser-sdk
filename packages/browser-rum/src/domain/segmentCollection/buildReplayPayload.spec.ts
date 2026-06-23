@@ -1,5 +1,5 @@
 import { deflate } from 'pako'
-import type { Uint8ArrayBuffer } from '@datadog/browser-core'
+import type { Uint8ArrayBuffer } from '@openobserve/browser-core'
 import type { BrowserSegment, BrowserSegmentMetadata } from '../../types'
 import { readReplayPayload } from '../../../test'
 import type { SerializationStats } from '../record'

@@ -1,4 +1,4 @@
-import type { Configuration, InitConfiguration, MatchOption, RawTelemetryConfiguration } from '@datadog/browser-core'
+import type { Configuration, InitConfiguration, MatchOption, RawTelemetryConfiguration } from '@openobserve/browser-core'
 import {
   isMatchOption,
   serializeConfiguration,
@@ -10,8 +10,8 @@ import {
   isSampleRate,
   isNumber,
   isNonEmptyArray,
-} from '@datadog/browser-core'
-import { isIndexableObject } from '@datadog/js-core/util'
+} from '@openobserve/browser-core'
+import { isIndexableObject } from '@openobserve/js-core/util'
 import type { RumEventDomainContext } from '../../domainContext.types'
 import type { RumEvent } from '../../rumEvent.types'
 import type { RumPlugin } from '../plugins'
@@ -22,14 +22,14 @@ export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'data
 
 /**
  * Default list of headers collected on resource events when {@link RumInitConfiguration.trackResourceHeaders | trackResourceHeaders}
- * is set to `true`. Re-exported by the `@datadog/browser-rum` and `@datadog/browser-rum-slim` packages, and exposed on the
- * `DD_RUM` global object when the SDK is loaded via the CDN, so it can be referenced when building a custom matcher list.
+ * is set to `true`. Re-exported by the `@openobserve/browser-rum` and `@openobserve/browser-rum-slim` packages, and exposed on the
+ * `OO_RUM` global object when the SDK is loaded via the CDN, so it can be referenced when building a custom matcher list.
  *
  * @example NPM
  * ```ts
- * import { datadogRum, DEFAULT_TRACKED_RESOURCE_HEADERS } from '@datadog/browser-rum'
+ * import { openobserveRum, DEFAULT_TRACKED_RESOURCE_HEADERS } from '@openobserve/browser-rum'
  *
- * datadogRum.init({
+ * openobserveRum.init({
  *   // ...
  *   trackResourceHeaders: [
  *     ...DEFAULT_TRACKED_RESOURCE_HEADERS.map((name) => ({ name })),
@@ -39,10 +39,10 @@ export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'data
  * ```
  * @example CDN
  * ```ts
- * DD_RUM.init({
+ * OO_RUM.init({
  *   // ...
  *   trackResourceHeaders: [
- *     ...DD_RUM.DEFAULT_TRACKED_RESOURCE_HEADERS.map((name) => ({ name })),
+ *     ...OO_RUM.DEFAULT_TRACKED_RESOURCE_HEADERS.map((name) => ({ name })),
  *     { name: 'x-request-id' },
  *   ],
  * })
@@ -67,9 +67,9 @@ export const DEFAULT_TRACKED_RESOURCE_HEADERS = [
  * @category Main
  * @example NPM
  * ```ts
- * import { datadogRum } from '@datadog/browser-rum'
+ * import { openobserveRum } from '@openobserve/browser-rum'
  *
- * datadogRum.init({
+ * openobserveRum.init({
  *   applicationId: '<DATADOG_APPLICATION_ID>',
  *   clientToken: '<DATADOG_CLIENT_TOKEN>',
  *   site: '<DATADOG_SITE>',
@@ -78,7 +78,7 @@ export const DEFAULT_TRACKED_RESOURCE_HEADERS = [
  * ```
  * @example CDN
  * ```ts
- * DD_RUM.init({
+ * OO_RUM.init({
  *   applicationId: '<DATADOG_APPLICATION_ID>',
  *   clientToken: '<DATADOG_CLIENT_TOKEN>',
  *   site: '<DATADOG_SITE>',

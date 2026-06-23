@@ -1,4 +1,4 @@
-import { display } from '@datadog/browser-core'
+import { display } from '@openobserve/browser-core'
 import type { RouteLocationMatched } from 'vue-router'
 import { initializeVuePlugin } from '../../../test/initializeVuePlugin'
 import { startVueRouterView, computeViewName } from './startVueRouterView'

@@ -1,4 +1,4 @@
-import { isError, safeToString } from '@datadog/browser-core'
+import { isError, safeToString } from '@openobserve/browser-core'
 import { formatUnknownError } from './error'
 
 export interface CompiledCondition {

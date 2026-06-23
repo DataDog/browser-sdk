@@ -1,7 +1,7 @@
 import type { ErrorInfo } from 'react'
-import type { Context } from '@datadog/browser-core'
-import { clocksNow } from '@datadog/js-core/time'
-import { callMonitored, createHandlingStack } from '@datadog/browser-core'
+import type { Context } from '@openobserve/browser-core'
+import { clocksNow } from '@openobserve/js-core/time'
+import { callMonitored, createHandlingStack } from '@openobserve/browser-core'
 import { onRumStart } from '../reactPlugin'
 
 /**
@@ -11,8 +11,8 @@ import { onRumStart } from '../reactPlugin'
  * @example
  * ```ts
  * import { createRoot } from 'react-dom/client'
- * import { datadogRum } from '@datadog/browser-rum'
- * import { addReactError } from '@datadog/browser-rum-react'
+ * import { openobserveRum } from '@openobserve/browser-rum'
+ * import { addReactError } from '@openobserve/browser-rum-react'
  *
  * const container = document.getElementById('root')
  * const root = createRoot(container, {

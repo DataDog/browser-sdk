@@ -1,4 +1,4 @@
-import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
+import type { RumPlugin, RumPublicApi, StartRumResult } from '@openobserve/browser-rum-core'
 
 let globalPublicApi: RumPublicApi | undefined
 let globalConfiguration: VuePluginConfiguration | undefined

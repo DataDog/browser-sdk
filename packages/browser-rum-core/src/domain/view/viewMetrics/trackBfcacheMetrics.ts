@@ -1,4 +1,4 @@
-import type { RelativeTime, ClocksState } from '@datadog/js-core/time'
+import type { RelativeTime, ClocksState } from '@openobserve/js-core/time'
 import type { InitialViewMetrics } from './trackInitialViewMetrics'
 import { trackRestoredFirstContentfulPaint } from './trackFirstContentfulPaint'
 

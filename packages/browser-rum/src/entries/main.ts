@@ -7,9 +7,9 @@
  */
 
 // Keep the following in sync with packages/browser-rum-slim/src/entries/main.ts
-import { defineGlobal, globalObject } from '@datadog/browser-core'
-import type { RumPublicApi } from '@datadog/browser-rum-core'
-import { makeRumPublicApi } from '@datadog/browser-rum-core'
+import { defineGlobal, globalObject } from '@openobserve/browser-core'
+import type { RumPublicApi } from '@openobserve/browser-rum-core'
+import { makeRumPublicApi } from '@openobserve/browser-rum-core'
 import { makeRecorderApi } from '../boot/recorderApi'
 import { createDeflateEncoder, startDeflateWorker } from '../domain/deflate'
 import { makeProfilerApi } from '../boot/profilerApi'
@@ -27,8 +27,8 @@ export type {
   ContextValue,
   ContextArray,
   RumInternalContext,
-} from '@datadog/browser-core'
-export { DefaultPrivacyLevel } from '@datadog/browser-core'
+} from '@openobserve/browser-core'
+export { DefaultPrivacyLevel } from '@openobserve/browser-core'
 
 /**
  * @deprecated Use {@link DatadogRum} instead
@@ -75,9 +75,9 @@ export type {
   RumVitalEventDomainContext,
   RumResourceEventDomainContext,
   RumLongTaskEventDomainContext,
-} from '@datadog/browser-rum-core'
+} from '@openobserve/browser-rum-core'
 
-export { DEFAULT_TRACKED_RESOURCE_HEADERS } from '@datadog/browser-rum-core'
+export { DEFAULT_TRACKED_RESOURCE_HEADERS } from '@openobserve/browser-rum-core'
 
 const recorderApi = makeRecorderApi()
 
@@ -90,13 +90,13 @@ const profilerApi = makeProfilerApi()
  * @see {@link DatadogRum}
  * @see [RUM Browser Monitoring Setup](https://docs.datadoghq.com/real_user_monitoring/browser/)
  */
-export const datadogRum = makeRumPublicApi(recorderApi, profilerApi, {
+export const openobserveRum = makeRumPublicApi(recorderApi, profilerApi, {
   startDeflateWorker,
   createDeflateEncoder,
   sdkName: 'rum',
 })
 
 interface BrowserWindow {
-  DD_RUM?: RumPublicApi
+  OO_RUM?: RumPublicApi
 }
-defineGlobal(globalObject as BrowserWindow, 'DD_RUM', datadogRum)
+defineGlobal(globalObject as BrowserWindow, 'OO_RUM', openobserveRum)

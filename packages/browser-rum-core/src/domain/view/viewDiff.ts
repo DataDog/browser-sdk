@@ -1,4 +1,4 @@
-import { isIndexableObject } from '@datadog/js-core/util'
+import { isIndexableObject } from '@openobserve/js-core/util'
 
 /**
  * Compare two values for deep equality

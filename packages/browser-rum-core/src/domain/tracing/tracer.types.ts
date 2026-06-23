@@ -1,7 +1,7 @@
-import type { MatchOption } from '@datadog/browser-core'
+import type { MatchOption } from '@openobserve/browser-core'
 
 /**
- * datadog: Datadog (x-datadog-*)
+ * datadog: Datadog (x-openobserve-*)
  * tracecontext: W3C Trace Context (traceparent, tracestate)
  * b3: B3 Single Header (b3)
  * b3multi: B3 Multiple Headers (X-B3-*)

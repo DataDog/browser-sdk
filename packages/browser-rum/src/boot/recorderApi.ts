@@ -1,18 +1,18 @@
-import type { DeflateEncoder, DeflateWorker, Telemetry, SessionManager } from '@datadog/browser-core'
+import type { DeflateEncoder, DeflateWorker, Telemetry, SessionManager } from '@openobserve/browser-core'
 import {
   canUseEventBridge,
   noop,
   BridgeCapability,
   bridgeSupports,
   DeflateEncoderStreamId,
-} from '@datadog/browser-core'
+} from '@openobserve/browser-core'
 import type {
   LifeCycle,
   ViewHistory,
   RecorderApi,
   RumConfiguration,
   StartRecordingOptions,
-} from '@datadog/browser-rum-core'
+} from '@openobserve/browser-rum-core'
 import { getReplayStats as getReplayStatsImpl } from '../domain/replayStats'
 import {
   createDeflateEncoder,

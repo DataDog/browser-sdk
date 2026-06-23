@@ -1,15 +1,15 @@
-import type { ClocksState } from '@datadog/js-core/time'
-import type { HttpRequest, HttpRequestEvent } from '@datadog/browser-core'
-import { DeflateEncoderStreamId, Observable, PageExitReason } from '@datadog/browser-core'
-import type { ViewHistory, ViewHistoryEntry } from '@datadog/browser-rum-core'
-import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
-import type { Clock } from '@datadog/browser-core/test'
+import type { ClocksState } from '@openobserve/js-core/time'
+import type { HttpRequest, HttpRequestEvent } from '@openobserve/browser-core'
+import { DeflateEncoderStreamId, Observable, PageExitReason } from '@openobserve/browser-core'
+import type { ViewHistory, ViewHistoryEntry } from '@openobserve/browser-rum-core'
+import { LifeCycle, LifeCycleEventType } from '@openobserve/browser-rum-core'
+import type { Clock } from '@openobserve/browser-core/test'
 import {
   mockClock,
   registerCleanupTask,
   restorePageVisibility,
   createSessionManagerMock,
-} from '@datadog/browser-core/test'
+} from '@openobserve/browser-core/test'
 import type { BrowserRecord, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
 import { MockWorker, readMetadataFromReplayPayload } from '../../../test'

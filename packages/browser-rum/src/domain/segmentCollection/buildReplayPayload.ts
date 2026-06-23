@@ -1,4 +1,4 @@
-import type { Payload, Uint8ArrayBuffer } from '@datadog/browser-core'
+import type { Payload, Uint8ArrayBuffer } from '@openobserve/browser-core'
 import type { BrowserSegmentMetadata } from '../../types'
 import type { SerializationMetric, SerializationStats } from '../record'
 

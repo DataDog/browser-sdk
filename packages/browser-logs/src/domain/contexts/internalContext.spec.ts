@@ -1,4 +1,4 @@
-import { createSessionManagerMock } from '@datadog/browser-core/test'
+import { createSessionManagerMock } from '@openobserve/browser-core/test'
 import { startInternalContext } from './internalContext'
 
 describe('internal context', () => {

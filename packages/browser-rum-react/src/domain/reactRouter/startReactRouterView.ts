@@ -1,4 +1,4 @@
-import { display } from '@datadog/browser-core'
+import { display } from '@openobserve/browser-core'
 import { onRumInit } from '../reactPlugin'
 import type { AnyRouteMatch } from './types'
 

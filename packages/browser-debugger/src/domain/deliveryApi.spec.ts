@@ -1,7 +1,7 @@
-import type { GlobalObject } from '@datadog/browser-core'
-import { globalObject } from '@datadog/browser-core'
-import { registerCleanupTask, mockClock, replaceMockable } from '@datadog/browser-core/test'
-import type { Clock } from '@datadog/browser-core/test'
+import type { GlobalObject } from '@openobserve/browser-core'
+import { globalObject } from '@openobserve/browser-core'
+import { registerCleanupTask, mockClock, replaceMockable } from '@openobserve/browser-core/test'
+import type { Clock } from '@openobserve/browser-core/test'
 import { display } from './display'
 import { getProbes, getAllProbes, clearProbes } from './probes'
 import {

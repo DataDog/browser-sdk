@@ -1,5 +1,5 @@
-import type { RelativeTime } from '@datadog/js-core/time'
-import { createHook } from '@datadog/js-core/assembly'
+import type { RelativeTime } from '@openobserve/js-core/time'
+import { createHook } from '@openobserve/js-core/assembly'
 import type { AssembleHook, AssembleHookParams } from '../hooks'
 import type { DisplayContext } from './displayContext'
 import { startDisplayContext } from './displayContext'

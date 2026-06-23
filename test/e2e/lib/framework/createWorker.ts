@@ -1,5 +1,5 @@
-import type { RumInitConfiguration } from '@datadog/browser-rum-core'
-import type { LogsInitConfiguration } from '@datadog/browser-logs'
+import type { RumInitConfiguration } from '@openobserve/browser-rum-core'
+import type { LogsInitConfiguration } from '@openobserve/browser-logs'
 import { DEFAULT_LOGS_CONFIGURATION, DEFAULT_RUM_CONFIGURATION } from '../helpers/configuration'
 
 interface WorkerOptions {

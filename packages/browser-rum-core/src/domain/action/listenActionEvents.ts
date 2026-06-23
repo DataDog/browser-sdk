@@ -1,5 +1,5 @@
-import { addEventListener, DOM_EVENT } from '@datadog/browser-core'
-import type { RelativeTime } from '@datadog/js-core/time'
+import { addEventListener, DOM_EVENT } from '@openobserve/browser-core'
+import type { RelativeTime } from '@openobserve/js-core/time'
 
 export interface ExtraPointerEventFields {
   target: Element

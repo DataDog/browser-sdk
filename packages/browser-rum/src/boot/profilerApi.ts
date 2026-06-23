@@ -1,5 +1,5 @@
-import type { Hooks, LifeCycle, ProfilerApi, RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
-import type { DeflateEncoderStreamId, Encoder, SessionContext, SessionManager } from '@datadog/browser-core'
+import type { Hooks, LifeCycle, ProfilerApi, RumConfiguration, ViewHistory } from '@openobserve/browser-rum-core'
+import type { DeflateEncoderStreamId, Encoder, SessionContext, SessionManager } from '@openobserve/browser-core'
 import {
   BridgeCapability,
   bridgeSupports,
@@ -8,7 +8,7 @@ import {
   isSampled,
   mockable,
   monitorError,
-} from '@datadog/browser-core'
+} from '@openobserve/browser-core'
 import type { RUMProfiler } from '../domain/profiling/types'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { startProfilingContext } from '../domain/profiling/profilingContext'

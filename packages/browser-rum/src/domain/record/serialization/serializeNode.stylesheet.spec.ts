@@ -1,4 +1,4 @@
-import { isAdoptedStyleSheetsSupported } from '@datadog/browser-core/test'
+import { isAdoptedStyleSheetsSupported } from '@openobserve/browser-core/test'
 import { ChangeType } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
 import { serializeHtml } from '../test/serializeHtml.specHelper'

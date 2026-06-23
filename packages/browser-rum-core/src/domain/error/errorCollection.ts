@@ -1,6 +1,6 @@
-import type { ClocksState } from '@datadog/js-core/time'
-import { ConsoleApiName, combine } from '@datadog/js-core/util'
-import type { Context, RawError, BufferedData } from '@datadog/browser-core'
+import type { ClocksState } from '@openobserve/js-core/time'
+import { ConsoleApiName, combine } from '@openobserve/js-core/util'
+import type { Context, RawError, BufferedData } from '@openobserve/browser-core'
 import {
   BufferedDataType,
   Observable,
@@ -9,7 +9,7 @@ import {
   computeRawError,
   ErrorHandling,
   NonErrorPrefix,
-} from '@datadog/browser-core'
+} from '@openobserve/browser-core'
 import type { RawRumErrorEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'

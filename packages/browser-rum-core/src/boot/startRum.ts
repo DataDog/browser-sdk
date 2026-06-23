@@ -7,7 +7,7 @@ import type {
   BufferedObservable,
   Telemetry,
   SessionManager,
-} from '@datadog/browser-core'
+} from '@openobserve/browser-core'
 import {
   sendToExtension,
   createPageMayExitObservable,
@@ -17,7 +17,7 @@ import {
   startGlobalContext,
   startUserContext,
   startTabContext,
-} from '@datadog/browser-core'
+} from '@openobserve/browser-core'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { createWindowOpenObservable } from '../browser/windowOpenObservable'
 import { startInternalContext } from '../domain/contexts/internalContext'

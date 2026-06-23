@@ -1,5 +1,5 @@
 {
-  "name": "@datadog/browser-rum-core",
+  "name": "@openobserve/browser-rum-core",
   "version": "7.3.0",
   "license": "Apache-2.0",
   "main": "cjs/index.js",
@@ -17,8 +17,8 @@
     "prepack": "yarn build"
   },
   "dependencies": {
-    "@datadog/browser-core": "7.3.0",
-    "@datadog/js-core": "0.0.3"
+    "@openobserve/browser-core": "7.3.0",
+    "@openobserve/js-core": "0.0.3"
   },
   "devDependencies": {
     "ajv": "8.20.0"

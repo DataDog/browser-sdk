@@ -1,5 +1,5 @@
-import type { TimeStamp } from '@datadog/js-core/time'
-import type { NodePrivacyLevelCache, RumMutationRecord } from '@datadog/browser-rum-core'
+import type { TimeStamp } from '@openobserve/js-core/time'
+import type { NodePrivacyLevelCache, RumMutationRecord } from '@openobserve/browser-rum-core'
 import {
   isNodeShadowHost,
   getParentNode,
@@ -7,7 +7,7 @@ import {
   getNodePrivacyLevel,
   getTextContent,
   NodePrivacyLevel,
-} from '@datadog/browser-rum-core'
+} from '@openobserve/browser-rum-core'
 import type { AttributeChange } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
 import type { EmitRecordCallback, EmitStatsCallback } from '../record.types'

@@ -1,6 +1,6 @@
-import type { RelativeTime } from '@datadog/js-core/time'
-import { createTrackingConsentState, TrackingConsent } from '@datadog/browser-core'
-import { DISCARDED, createHook } from '@datadog/js-core/assembly'
+import type { RelativeTime } from '@openobserve/js-core/time'
+import { createTrackingConsentState, TrackingConsent } from '@openobserve/browser-core'
+import { DISCARDED, createHook } from '@openobserve/js-core/assembly'
 import type { AssembleTelemetryHook } from '../hooks'
 import { startTrackingConsentContext } from './trackingConsentContext'
 

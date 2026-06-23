@@ -71,7 +71,7 @@ runMain(async () => {
     body: {
       password,
       name: TOKEN_NAME,
-      token_description: 'Token used to publish Browser SDK packages (@datadog/browser-*) from the CI.',
+      token_description: 'Token used to publish Browser SDK packages (@openobserve/browser-*) from the CI.',
       expires: 90,
       bypass_2fa: true,
       packages: publishablePackages,

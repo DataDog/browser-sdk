@@ -1,7 +1,7 @@
-import { Observable } from '@datadog/browser-core'
-import { DISCARDED } from '@datadog/js-core/assembly'
-import type { Duration, ServerDuration, TimeStamp, RelativeTime } from '@datadog/js-core/time'
-import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import { Observable } from '@openobserve/browser-core'
+import { DISCARDED } from '@openobserve/js-core/assembly'
+import type { Duration, ServerDuration, TimeStamp, RelativeTime } from '@openobserve/js-core/time'
+import { mockClock, registerCleanupTask } from '@openobserve/browser-core/test'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import { collectAndValidateRawRumEvents, mockRumConfiguration, mockViewHistory, noopRecorderApi } from '../../../test'
 import type { RawRumEvent, RawRumViewEvent } from '../../rawRumEvent.types'
@@ -108,7 +108,7 @@ describe('viewCollection', () => {
 
     expect(rawRumEvents[rawRumEvents.length - 1].startClocks.relative).toBe(1234 as RelativeTime)
     expect(rawRumEvents[rawRumEvents.length - 1].rawRumEvent).toEqual({
-      _dd: {
+      _oo: {
         document_version: 3,
         replay_stats: undefined,
         configuration: {
@@ -223,7 +223,7 @@ describe('viewCollection', () => {
       lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
 
       expect(
-        (rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent)._dd.configuration
+        (rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent)._oo.configuration
           .start_session_replay_recording_manually
       ).toBe(false)
     })
@@ -234,7 +234,7 @@ describe('viewCollection', () => {
       lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
 
       expect(
-        (rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent)._dd.configuration
+        (rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent)._oo.configuration
           .start_session_replay_recording_manually
       ).toBe(true)
     })

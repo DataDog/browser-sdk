@@ -1,5 +1,5 @@
 import type { Router, RouteLocationMatched } from 'vue-router'
-import type { RumPublicApi } from '@datadog/browser-rum-core'
+import type { RumPublicApi } from '@openobserve/browser-rum-core'
 
 const TERMINAL_CATCH_ALL_PARAM = '(.*)*'
 const NESTED_CATCH_ALL_PARAM = '([^/]*)*'

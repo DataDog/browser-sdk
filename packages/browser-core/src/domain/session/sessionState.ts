@@ -1,5 +1,5 @@
-import { dateNow } from '@datadog/js-core/time'
-import type { TimeStamp } from '@datadog/js-core/time'
+import { dateNow } from '@openobserve/js-core/time'
+import type { TimeStamp } from '@openobserve/js-core/time'
 import { isEmptyObject } from '../../tools/utils/objectUtils'
 import { objectEntries } from '../../tools/utils/polyfills'
 import { generateUUID } from '../../tools/utils/stringUtils'

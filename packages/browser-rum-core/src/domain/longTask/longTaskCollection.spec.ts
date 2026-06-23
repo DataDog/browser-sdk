@@ -1,5 +1,5 @@
-import type { RelativeTime, ServerDuration } from '@datadog/js-core/time'
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import type { RelativeTime, ServerDuration } from '@openobserve/js-core/time'
+import { registerCleanupTask } from '@openobserve/browser-core/test'
 import {
   collectAndValidateRawRumEvents,
   createPerformanceEntry,
@@ -78,7 +78,7 @@ describe('longTaskCollection', () => {
           ],
         },
         type: RumEventType.LONG_TASK,
-        _dd: {
+        _oo: {
           discarded: false,
         },
       })
@@ -121,7 +121,7 @@ describe('longTaskCollection', () => {
           duration: (100 * 1e6) as ServerDuration,
         },
         type: RumEventType.LONG_TASK,
-        _dd: {
+        _oo: {
           discarded: false,
         },
       })

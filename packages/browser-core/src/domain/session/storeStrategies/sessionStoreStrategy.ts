@@ -3,8 +3,8 @@ import type { SessionPersistence } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
 import type { Observable } from '../../../tools/observable'
 
-export const SESSION_STORE_KEY = '_dd_s_v2'
-export const LEGACY_SESSION_STORE_KEY = '_dd_s'
+export const SESSION_STORE_KEY = '_oo_s_v2'
+export const LEGACY_SESSION_STORE_KEY = '_oo_s'
 
 export const enum CookieApi {
   DOCUMENT_COOKIE,

@@ -1,5 +1,5 @@
-import { noop } from '@datadog/browser-core'
-import type { LifeCycle, RumConfiguration } from '@datadog/browser-rum-core'
+import { noop } from '@openobserve/browser-core'
+import type { LifeCycle, RumConfiguration } from '@openobserve/browser-rum-core'
 import { getSessionReplayLink } from '../domain/getSessionReplayLink'
 
 export function makeRecorderApiStub() {

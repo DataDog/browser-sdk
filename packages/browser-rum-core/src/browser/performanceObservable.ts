@@ -1,6 +1,6 @@
-import type { RelativeTime, Duration } from '@datadog/js-core/time'
-import type { TimeoutId } from '@datadog/browser-core'
-import { addEventListener, Observable, setTimeout, clearTimeout, monitor } from '@datadog/browser-core'
+import type { RelativeTime, Duration } from '@openobserve/js-core/time'
+import type { TimeoutId } from '@openobserve/browser-core'
+import { addEventListener, Observable, setTimeout, clearTimeout, monitor } from '@openobserve/browser-core'
 import { hasValidResourceEntryDuration, isAllowedRequestUrl } from '../domain/resource/resourceUtils'
 
 type RumPerformanceObserverConstructor = new (callback: PerformanceObserverCallback) => RumPerformanceObserver

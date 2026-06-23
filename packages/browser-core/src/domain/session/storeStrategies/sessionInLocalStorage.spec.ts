@@ -69,7 +69,7 @@ describe('LocalStorage SessionStoreStrategy', () => {
         newValue: toSessionString({ id: 'from-other-tab' }),
         storageArea: localStorage,
       })
-      ;(event as TrustableEvent).__ddIsTrusted = true
+      ;(event as TrustableEvent).__ooIsTrusted = true
       window.dispatchEvent(event)
 
       expect(spy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ id: 'from-other-tab' }))
@@ -85,7 +85,7 @@ describe('LocalStorage SessionStoreStrategy', () => {
         newValue: 'value',
         storageArea: localStorage,
       })
-      ;(event as TrustableEvent).__ddIsTrusted = true
+      ;(event as TrustableEvent).__ooIsTrusted = true
       window.dispatchEvent(event)
 
       expect(spy).not.toHaveBeenCalled()

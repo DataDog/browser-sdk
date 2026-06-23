@@ -1,5 +1,5 @@
-import { timeStampNow } from '@datadog/js-core/time'
-import type { TrackingConsentState, SessionManager } from '@datadog/browser-core'
+import { timeStampNow } from '@openobserve/js-core/time'
+import type { TrackingConsentState, SessionManager } from '@openobserve/browser-core'
 import {
   BufferedObservable,
   canUseEventBridge,
@@ -22,7 +22,7 @@ import {
   mockable,
   startTelemetrySessionContext,
   setAllowUntrustedEvents,
-} from '@datadog/browser-core'
+} from '@openobserve/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
@@ -95,7 +95,7 @@ export function createPreStartStrategy(
       cachedInitConfiguration = initConfiguration
 
       if (cachedConfiguration) {
-        displayAlreadyInitializedError('DD_LOGS', initConfiguration)
+        displayAlreadyInitializedError('OO_LOGS', initConfiguration)
         return
       }
 

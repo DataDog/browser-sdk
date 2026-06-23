@@ -1,4 +1,4 @@
-import { timeStampNow } from '@datadog/js-core/time'
+import { timeStampNow } from '@openobserve/js-core/time'
 import type { Payload } from '../../transport'
 import { normalizeUrl } from '../../tools/utils/urlPolyfill'
 import { generateUUID } from '../../tools/utils/stringUtils'
@@ -31,6 +31,9 @@ interface EndpointBuilderConfiguration {
   proxy?: string | ProxyFn
   site?: Site
   source?: TransportSource
+  apiVersion?: string
+  organizationIdentifier?: string
+  insecureHTTP?: boolean
 }
 
 export type EndpointBuilder = ReturnType<typeof createEndpointBuilder>
@@ -45,7 +48,8 @@ export function createEndpointBuilder(
       return buildEndpointUrl({
         proxy: configuration.proxy,
         site: configuration.site,
-        path: `/api/v2/${trackType}`,
+        insecureHTTP: configuration.insecureHTTP,
+        path: `/rum/${configuration.apiVersion ?? 'v1'}/${configuration.organizationIdentifier}/${trackType}`,
         parameters: buildEndpointParameters(configuration, trackType, api, payload, extraParameters),
       })
     },
@@ -59,7 +63,10 @@ export function createEndpointBuilder(
  * The replica always targets the US1 site but keeps the `proxy` and `source` of the main
  * configuration. The RUM track additionally carries the replica `application.id`.
  */
-export function createReplicaEndpointBuilder({ replica, proxy, source }: Configuration, trackType: TrackType) {
+export function createReplicaEndpointBuilder(
+  { replica, proxy, source, apiVersion, organizationIdentifier, insecureHTTP }: Configuration,
+  trackType: TrackType
+) {
   if (!replica) {
     return
   }
@@ -69,6 +76,9 @@ export function createReplicaEndpointBuilder({ replica, proxy, source }: Configu
       proxy,
       source,
       site: INTAKE_SITE_US1,
+      apiVersion,
+      organizationIdentifier,
+      insecureHTTP,
     },
     trackType,
     trackType === 'rum' ? [`application.id=${replica.applicationId}`] : undefined
@@ -81,6 +91,7 @@ export interface BuildEndpointUrlOptions {
   subdomain?: string
   path: string
   parameters?: string
+  insecureHTTP?: boolean
 }
 
 export function buildEndpointUrl({
@@ -89,6 +100,7 @@ export function buildEndpointUrl({
   path,
   parameters = '',
   subdomain,
+  insecureHTTP,
 }: BuildEndpointUrlOptions): string {
   let pathAndParameters = path
   if (parameters) {
@@ -96,9 +108,9 @@ export function buildEndpointUrl({
   }
 
   if (typeof proxy === 'string') {
-    let url = `${normalizeUrl(proxy)}?ddforward=${encodeURIComponent(pathAndParameters)}`
+    let url = `${normalizeUrl(proxy)}?o2forward=${encodeURIComponent(pathAndParameters)}`
     if (subdomain) {
-      url += `&ddforwardSubdomain=${subdomain}`
+      url += `&o2forwardSubdomain=${subdomain}`
     }
     return url
   }
@@ -107,14 +119,9 @@ export function buildEndpointUrl({
     return proxy({ path, parameters, subdomain })
   }
 
-  const domainParts = site.split('.')
-  const extension = domainParts.pop()
-  let domain = `browser-intake-${domainParts.join('-')}.${extension!}`
-  if (subdomain) {
-    domain = `${subdomain}.${domain}`
-  }
-
-  return `https://${domain}${pathAndParameters}`
+  // OpenObserve: `site` is the endpoint host itself; send to it directly.
+  const protocol = insecureHTTP ? 'http' : 'https'
+  return `${protocol}://${site}${pathAndParameters}`
 }
 
 /**
@@ -129,22 +136,22 @@ function buildEndpointParameters(
   extraParameters: string[] = []
 ) {
   const parameters = [
-    `ddsource=${source}`,
-    `dd-api-key=${clientToken}`,
-    `dd-evp-origin-version=${encodeURIComponent(__BUILD_ENV__SDK_VERSION__)}`,
-    'dd-evp-origin=browser',
-    `dd-request-id=${generateUUID()}`,
+    `o2source=${source}`,
+    `o2-api-key=${clientToken}`,
+    `o2-evp-origin-version=${encodeURIComponent(__BUILD_ENV__SDK_VERSION__)}`,
+    'o2-evp-origin=browser',
+    `o2-request-id=${generateUUID()}`,
   ].concat(extraParameters)
 
   if (encoding) {
-    parameters.push(`dd-evp-encoding=${encoding}`)
+    parameters.push(`o2-evp-encoding=${encoding}`)
   }
 
   if (trackType === 'rum') {
-    parameters.push(`batch_time=${timeStampNow()}`, `_dd.api=${api}`)
+    parameters.push(`batch_time=${timeStampNow()}`, `_o2.api=${api}`)
 
     if (retry) {
-      parameters.push(`_dd.retry_count=${retry.count}`, `_dd.retry_after=${retry.lastFailureStatus}`)
+      parameters.push(`_o2.retry_count=${retry.count}`, `_o2.retry_after=${retry.lastFailureStatus}`)
     }
   }
 

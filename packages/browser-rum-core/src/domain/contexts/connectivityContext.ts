@@ -1,4 +1,4 @@
-import { getConnectivity } from '@datadog/browser-core'
+import { getConnectivity } from '@openobserve/browser-core'
 import type { AssembleHook, DefaultRumEventAttributes } from '../hooks'
 
 export function startConnectivityContext(assembleHook: AssembleHook) {

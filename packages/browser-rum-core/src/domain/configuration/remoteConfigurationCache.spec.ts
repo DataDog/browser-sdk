@@ -1,5 +1,5 @@
-import { registerCleanupTask, mockClock } from '@datadog/browser-core/test'
-import type { Clock } from '@datadog/browser-core/test'
+import { registerCleanupTask, mockClock } from '@openobserve/browser-core/test'
+import type { Clock } from '@openobserve/browser-core/test'
 import type { RumRemoteConfiguration } from './remoteConfiguration'
 import { buildCacheKey, createConfigurationCache, CACHE_VERSION, CACHE_KEY_PREFIX } from './remoteConfigurationCache'
 

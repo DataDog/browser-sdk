@@ -1,4 +1,4 @@
-import { getType } from '@datadog/js-core/util'
+import { getType } from '@openobserve/js-core/util'
 import type { Context } from '../../tools/serialisation/context'
 import { display } from '../../tools/display'
 

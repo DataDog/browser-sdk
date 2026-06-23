@@ -8,7 +8,7 @@ import { registerCleanupTask } from './registerCleanupTask'
  * @param value - The original value (must be the same reference passed to mockable())
  * @param replacement - The mock replacement
  * @example
- * import { replaceMockable } from '@datadog/browser-core/test'
+ * import { replaceMockable } from '@openobserve/browser-core/test'
  * import { trackRuntimeError } from '../domain/error/trackRuntimeError'
  *
  * it('...', () => {
@@ -33,7 +33,7 @@ export function replaceMockable<T>(value: T, replacement: T): void {
  * @param value - The original function (must be the same reference passed to mockable())
  * @returns A Jasmine spy that can be used for assertions
  * @example
- * import { replaceMockableWithSpy } from '@datadog/browser-core/test'
+ * import { replaceMockableWithSpy } from '@openobserve/browser-core/test'
  * import { trackRuntimeError } from '../domain/error/trackRuntimeError'
  *
  * it('...', () => {

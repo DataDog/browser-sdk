@@ -1,5 +1,5 @@
 {
-  "name": "@datadog/browser-sdk-developer-extension",
+  "name": "@openobserve/browser-sdk-developer-extension",
   "version": "7.3.0",
   "private": true,
   "scripts": {
@@ -15,12 +15,12 @@
     "vite": "8.0.16"
   },
   "dependencies": {
-    "@datadog/browser-core": "workspace:*",
-    "@datadog/browser-logs": "workspace:*",
-    "@datadog/browser-rum": "workspace:*",
-    "@datadog/browser-rum-core": "workspace:*",
     "@mantine/core": "9.3.1",
     "@mantine/hooks": "9.3.1",
+    "@openobserve/browser-core": "workspace:*",
+    "@openobserve/browser-logs": "workspace:*",
+    "@openobserve/browser-rum": "workspace:*",
+    "@openobserve/browser-rum-core": "workspace:*",
     "@tabler/icons-react": "3.44.0",
     "clsx": "2.1.1",
     "react": "19.2.7",

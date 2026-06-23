@@ -1,4 +1,4 @@
-import { createNewEvent } from '@datadog/browser-core/test'
+import { createNewEvent } from '@openobserve/browser-core/test'
 import type { ActionEventsHooks } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 

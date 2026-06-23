@@ -1,5 +1,5 @@
-import type { StackTrace } from '@datadog/browser-core'
-import { computeStackTrace } from '@datadog/browser-core'
+import type { StackTrace } from '@openobserve/browser-core'
+import { computeStackTrace } from '@openobserve/browser-core'
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- `type` is needed for implicit index signature compatibility with Context
 export type StackFrame = {

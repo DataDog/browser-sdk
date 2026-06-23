@@ -1,4 +1,4 @@
-import { getEventBridge } from '@datadog/browser-core'
+import { getEventBridge } from '@openobserve/browser-core'
 import type { ProfilingPayload } from '../types'
 
 export function createBridgeEmitter(): (payload: ProfilingPayload) => void {

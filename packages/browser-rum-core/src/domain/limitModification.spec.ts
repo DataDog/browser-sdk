@@ -1,5 +1,5 @@
-import type { Context } from '@datadog/browser-core'
-import { display, noop, objectEntries, SANITIZE_DEFAULT_MAX_CHARACTER_COUNT } from '@datadog/browser-core'
+import type { Context } from '@openobserve/browser-core'
+import { display, noop, objectEntries, SANITIZE_DEFAULT_MAX_CHARACTER_COUNT } from '@openobserve/browser-core'
 import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
 

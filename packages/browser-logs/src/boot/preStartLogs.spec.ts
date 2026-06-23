@@ -1,4 +1,4 @@
-import { ONE_SECOND } from '@datadog/js-core/time'
+import { ONE_SECOND } from '@openobserve/js-core/time'
 import {
   collectAsyncCalls,
   type Clock,
@@ -9,15 +9,15 @@ import {
   replaceMockable,
   replaceMockableWithSpy,
   createStartSessionManagerMock,
-} from '@datadog/browser-core/test'
-import type { TrackingConsentState } from '@datadog/browser-core'
+} from '@openobserve/browser-core/test'
+import type { TrackingConsentState } from '@openobserve/browser-core'
 import {
   TrackingConsent,
   createTrackingConsentState,
   display,
   startTelemetry,
   startSessionManager,
-} from '@datadog/browser-core'
+} from '@openobserve/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { HybridInitConfiguration, LogsInitConfiguration } from '../domain/configuration'
 import type { Logger } from '../domain/logger'

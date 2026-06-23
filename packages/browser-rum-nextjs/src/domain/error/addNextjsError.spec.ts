@@ -1,4 +1,4 @@
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import { registerCleanupTask } from '@openobserve/browser-core/test'
 import { resetNextjsPlugin } from '../nextjsPlugin'
 import { initializeNextjsPlugin } from '../../../test/initializeNextjsPlugin'
 import { addNextjsError } from './addNextjsError'

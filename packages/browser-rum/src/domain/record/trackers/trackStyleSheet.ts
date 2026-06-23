@@ -1,4 +1,4 @@
-import { instrumentMethod } from '@datadog/browser-core'
+import { instrumentMethod } from '@openobserve/browser-core'
 import { IncrementalSource } from '../../../types'
 import type { BrowserIncrementalSnapshotRecord, StyleSheetRuleData } from '../../../types'
 import { assembleIncrementalSnapshot } from '../assembly'

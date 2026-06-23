@@ -2,7 +2,7 @@
 // Calls addNextjsError so tests can verify RUM captures root-level errors.
 'use client'
 
-import { addNextjsError } from '@datadog/browser-rum-nextjs'
+import { addNextjsError } from '@openobserve/browser-rum-nextjs'
 import { useEffect } from 'react'
 
 export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {

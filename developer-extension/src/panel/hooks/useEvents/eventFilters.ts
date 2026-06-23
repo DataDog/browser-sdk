@@ -79,7 +79,7 @@ function filterOutdatedVersions(events: SdkEvent[]): SdkEvent[] {
       const otherEvent = upToDateEvents.get(event.view.id)
       if (!otherEvent) {
         upToDateEvents.set(event.view.id, event)
-      } else if (otherEvent._dd.document_version < event._dd.document_version) {
+      } else if (otherEvent._oo.document_version < event._oo.document_version) {
         upToDateEvents.set(event.view.id, event)
         outdatedEvents.add(otherEvent)
       } else {
@@ -96,8 +96,8 @@ function filterOutdatedVersions(events: SdkEvent[]): SdkEvent[] {
 function deduplicateViewAndViewUpdate(events: SdkEvent[]): SdkEvent[] {
   const viewUpdateVersions = new Set<string>()
   for (const event of events) {
-    if (isRumViewUpdateEvent(event) && event.view?.id && event._dd?.document_version) {
-      viewUpdateVersions.add(`${event.view.id}:${event._dd.document_version}`)
+    if (isRumViewUpdateEvent(event) && event.view?.id && event._oo?.document_version) {
+      viewUpdateVersions.add(`${event.view.id}:${event._oo.document_version}`)
     }
   }
 
@@ -106,7 +106,7 @@ function deduplicateViewAndViewUpdate(events: SdkEvent[]): SdkEvent[] {
   }
 
   return events.filter((event) => {
-    if (isRumViewEvent(event) && viewUpdateVersions.has(`${event.view.id}:${event._dd.document_version}`)) {
+    if (isRumViewEvent(event) && viewUpdateVersions.has(`${event.view.id}:${event._oo.document_version}`)) {
       return false
     }
     return true

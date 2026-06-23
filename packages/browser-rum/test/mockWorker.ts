@@ -1,4 +1,4 @@
-import type { DeflateWorker, DeflateWorkerAction } from '@datadog/browser-core'
+import type { DeflateWorker, DeflateWorkerAction } from '@openobserve/browser-core'
 import { createNewEvent, MockEventTarget } from '../../browser-core/test'
 
 export class MockWorker extends MockEventTarget implements DeflateWorker {

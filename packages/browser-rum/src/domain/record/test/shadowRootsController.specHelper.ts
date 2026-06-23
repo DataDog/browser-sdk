@@ -1,4 +1,4 @@
-import { noop } from '@datadog/browser-core'
+import { noop } from '@openobserve/browser-core'
 import type { ShadowRootsController } from '../shadowRootsController'
 
 export const DEFAULT_SHADOW_ROOT_CONTROLLER: ShadowRootsController = {

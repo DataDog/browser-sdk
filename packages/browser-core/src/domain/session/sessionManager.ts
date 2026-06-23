@@ -7,8 +7,8 @@ import {
   timeStampNow,
   clocksOrigin,
   relativeNow,
-} from '@datadog/js-core/time'
-import type { TimeStamp, RelativeTime } from '@datadog/js-core/time'
+} from '@openobserve/js-core/time'
+import type { TimeStamp, RelativeTime } from '@openobserve/js-core/time'
 import { Observable } from '../../tools/observable'
 import { createValueHistory } from '../../tools/valueHistory'
 import { addEventListener, addEventListeners, DOM_EVENT } from '../../browser/addEventListener'

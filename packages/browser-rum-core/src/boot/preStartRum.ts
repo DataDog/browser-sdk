@@ -1,6 +1,6 @@
-import { timeStampNow, clocksNow } from '@datadog/js-core/time'
-import type { TimeStamp } from '@datadog/js-core/time'
-import type { TrackingConsentState, DeflateWorker, Context, Telemetry, SessionManager } from '@datadog/browser-core'
+import { timeStampNow, clocksNow } from '@openobserve/js-core/time'
+import type { TimeStamp } from '@openobserve/js-core/time'
+import type { TrackingConsentState, DeflateWorker, Context, Telemetry, SessionManager } from '@openobserve/browser-core'
 import {
   BufferedObservable,
   display,
@@ -27,7 +27,7 @@ import {
   startTelemetrySessionContext,
   addTelemetryDebug,
   setAllowUntrustedEvents,
-} from '@datadog/browser-core'
+} from '@openobserve/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
@@ -146,7 +146,7 @@ export function createPreStartStrategy(
     cachedInitConfiguration = initConfiguration
 
     if (cachedConfiguration) {
-      displayAlreadyInitializedError('DD_RUM', initConfiguration)
+      displayAlreadyInitializedError('OO_RUM', initConfiguration)
       return
     }
 

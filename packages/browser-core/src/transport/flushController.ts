@@ -1,5 +1,5 @@
-import { ONE_SECOND } from '@datadog/js-core/time'
-import type { Duration } from '@datadog/js-core/time'
+import { ONE_SECOND } from '@openobserve/js-core/time'
+import type { Duration } from '@openobserve/js-core/time'
 import type { PageMayExitEvent, PageExitReason } from '../browser/pageMayExitObservable'
 import { isWorkerEnvironment } from '../tools/globalObject'
 import { Observable } from '../tools/observable'

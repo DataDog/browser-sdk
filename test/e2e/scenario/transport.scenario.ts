@@ -21,7 +21,7 @@ test.describe('transport', () => {
         // Fill the batch close to the 16 KiB limit using a custom action. The action name is sized
         // so that action event is almost at the limit 16KB limit → no flush yet.
         await page.evaluate(() => {
-          window.DD_RUM!.addAction('x'.repeat(15000))
+          window.OO_RUM!.addAction('x'.repeat(15000))
         })
 
         // Navigating away fires beforeunload, which triggers a final view update. Adding the view

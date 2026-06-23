@@ -16,7 +16,7 @@ class DatadogErrorHandler extends ErrorHandler {
  * @category Error
  * @example
  * ```ts
- * import { provideDatadogErrorHandler } from '@datadog/browser-rum-angular'
+ * import { provideDatadogErrorHandler } from '@openobserve/browser-rum-angular'
  *
  * bootstrapApplication(AppComponent, {
  *   providers: [provideDatadogErrorHandler()],

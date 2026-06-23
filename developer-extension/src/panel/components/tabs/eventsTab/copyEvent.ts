@@ -1,4 +1,4 @@
-import type { EndpointBuilder } from '@datadog/browser-core'
+import type { EndpointBuilder } from '@openobserve/browser-core'
 import { createEndpointBuilder } from '../../../../../../packages/browser-core/src/domain/configuration'
 import { copy } from '../../../copy'
 import type { SdkInfos } from '../../../hooks/useSdkInfos'

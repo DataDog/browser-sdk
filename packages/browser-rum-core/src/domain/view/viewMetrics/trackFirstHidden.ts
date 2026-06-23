@@ -1,5 +1,5 @@
-import type { ClocksState, RelativeTime } from '@datadog/js-core/time'
-import { addEventListeners, DOM_EVENT, noop } from '@datadog/browser-core'
+import type { ClocksState, RelativeTime } from '@openobserve/js-core/time'
+import { addEventListeners, DOM_EVENT, noop } from '@openobserve/browser-core'
 import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../../browser/performanceObservable'
 
 export type FirstHidden = ReturnType<typeof trackFirstHidden>

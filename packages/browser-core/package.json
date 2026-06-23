@@ -1,5 +1,5 @@
 {
-  "name": "@datadog/browser-core",
+  "name": "@openobserve/browser-core",
   "version": "7.3.0",
   "license": "Apache-2.0",
   "main": "cjs/index.js",
@@ -23,7 +23,7 @@
     "directory": "packages/browser-core"
   },
   "dependencies": {
-    "@datadog/js-core": "0.0.3"
+    "@openobserve/js-core": "0.0.3"
   },
   "devDependencies": {
     "@types/pako": "2.0.4",

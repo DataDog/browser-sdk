@@ -1,7 +1,7 @@
-import type { DeflateWorker, DeflateWorkerResponse } from '@datadog/browser-core'
-import { ONE_SECOND } from '@datadog/js-core/time'
-import { addTelemetryError, display, addEventListener, setTimeout, mockable } from '@datadog/browser-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
+import type { DeflateWorker, DeflateWorkerResponse } from '@openobserve/browser-core'
+import { ONE_SECOND } from '@openobserve/js-core/time'
+import { addTelemetryError, display, addEventListener, setTimeout, mockable } from '@openobserve/browser-core'
+import type { RumConfiguration } from '@openobserve/browser-rum-core'
 import { reportScriptLoadingError } from '../scriptLoadingError'
 
 export const INITIALIZATION_TIME_OUT_DELAY = 30 * ONE_SECOND

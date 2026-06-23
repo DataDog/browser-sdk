@@ -1,6 +1,6 @@
 import { createRouter, createMemoryHistory } from 'vue-router'
 import type { RouteLocationMatched } from 'vue-router'
-import type { RumPublicApi } from '@datadog/browser-rum-core'
+import type { RumPublicApi } from '@openobserve/browser-rum-core'
 import { startTrackingNuxtViews, computeNuxtViewName } from './nuxtRouter'
 
 function makePublicApi(startViewSpy: jasmine.Spy) {

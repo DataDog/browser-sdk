@@ -1,5 +1,5 @@
-import { BridgeCapability } from '@datadog/browser-core'
-import { mockEventBridge } from '@datadog/browser-core/test'
+import { BridgeCapability } from '@openobserve/browser-core'
+import { mockEventBridge } from '@openobserve/browser-core/test'
 import { mockedTrace } from '../test-utils/mockedTrace'
 import type { ProfilingPayload } from '../types'
 import { createBridgeEmitter } from './profilingBridge'
@@ -21,7 +21,7 @@ describe('createBridgeEmitter', () => {
         format: 'json',
         version: 4,
         tags_profiler: 'sdk_version:1.0.0',
-        _dd: { clock_drift: 0 },
+        _oo: { clock_drift: 0 },
       },
       trace: mockedTrace as any,
     }

@@ -1,5 +1,5 @@
 {
-  "name": "@datadog/browser-rum-nextjs",
+  "name": "@openobserve/browser-rum-nextjs",
   "version": "7.3.0",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
@@ -17,10 +17,10 @@
     "prepack": "yarn build"
   },
   "dependencies": {
-    "@datadog/browser-core": "7.3.0",
-    "@datadog/browser-rum-core": "7.3.0",
-    "@datadog/browser-rum-react": "7.3.0",
-    "@datadog/js-core": "0.0.3"
+    "@openobserve/browser-core": "7.3.0",
+    "@openobserve/browser-rum-core": "7.3.0",
+    "@openobserve/browser-rum-react": "7.3.0",
+    "@openobserve/js-core": "0.0.3"
   },
   "peerDependencies": {
     "next": ">=13.0.0",

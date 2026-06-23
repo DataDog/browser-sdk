@@ -1,5 +1,5 @@
 {
-  "name": "@datadog/browser-rum-angular",
+  "name": "@openobserve/browser-rum-angular",
   "version": "7.3.0",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
@@ -17,9 +17,9 @@
     "prepack": "npm run build"
   },
   "dependencies": {
-    "@datadog/browser-core": "7.3.0",
-    "@datadog/browser-rum-core": "7.3.0",
-    "@datadog/js-core": "0.0.3"
+    "@openobserve/browser-core": "7.3.0",
+    "@openobserve/browser-rum-core": "7.3.0",
+    "@openobserve/js-core": "0.0.3"
   },
   "peerDependencies": {
     "@angular/core": ">=15 <=22",

@@ -1,5 +1,5 @@
-import type { Configuration, InitConfiguration, RawTelemetryConfiguration } from '@datadog/browser-core'
-import { ConsoleApiName } from '@datadog/js-core/util'
+import type { Configuration, InitConfiguration, RawTelemetryConfiguration } from '@openobserve/browser-core'
+import { ConsoleApiName } from '@openobserve/js-core/util'
 import {
   serializeConfiguration,
   ONE_KIBI_BYTE,
@@ -8,7 +8,7 @@ import {
   removeDuplicates,
   RawReportType,
   objectValues,
-} from '@datadog/browser-core'
+} from '@openobserve/browser-core'
 import type { LogsEvent } from '../logsEvent.types'
 import type { LogsEventDomainContext } from '../domainContext.types'
 
@@ -18,9 +18,9 @@ import type { LogsEventDomainContext } from '../domainContext.types'
  * @category Main
  * @example NPM
  * ```ts
- * import { datadogLogs } from '@datadog/browser-logs'
+ * import { openobserveLogs } from '@openobserve/browser-logs'
  *
- * datadogLogs.init({
+ * openobserveLogs.init({
  *   clientToken: '<DATADOG_CLIENT_TOKEN>',
  *   site: '<DATADOG_SITE>',
  *   // ...
@@ -28,7 +28,7 @@ import type { LogsEventDomainContext } from '../domainContext.types'
  * ```
  * @example CDN
  * ```ts
- * DD_LOGS.init({
+ * OO_LOGS.init({
  *   clientToken: '<DATADOG_CLIENT_TOKEN>',
  *   site: '<DATADOG_SITE>',
  *   // ...

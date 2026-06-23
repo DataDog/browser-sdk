@@ -1,9 +1,9 @@
-import type { ServerDuration, TimeStamp } from '@datadog/js-core/time'
+import type { ServerDuration, TimeStamp } from '@openobserve/js-core/time'
 import { test, expect } from '@playwright/test'
-import type { RumPlugin, AllowedRawRumEvent } from '@datadog/browser-rum-core'
-import { ActionType, RumEventType } from '@datadog/browser-rum-core'
-import { clocksNow } from '@datadog/js-core/time'
-import { generateUUID } from '@datadog/browser-core'
+import type { RumPlugin, AllowedRawRumEvent } from '@openobserve/browser-rum-core'
+import { ActionType, RumEventType } from '@openobserve/browser-rum-core'
+import { clocksNow } from '@openobserve/js-core/time'
+import { generateUUID } from '@openobserve/browser-core'
 import { createTest } from '../../lib/framework'
 
 declare global {
@@ -51,7 +51,7 @@ const mockPartialEvents: AllowedRawRumEvent[] = [
       entry_type: 'long-task',
       duration: 100 as ServerDuration,
     },
-    _dd: {
+    _oo: {
       discarded: false,
     },
   },
@@ -67,7 +67,7 @@ const mockPartialEvents: AllowedRawRumEvent[] = [
       duration: 100 as ServerDuration,
       size: 100,
     },
-    _dd: {
+    _oo: {
       discarded: false,
     },
   },

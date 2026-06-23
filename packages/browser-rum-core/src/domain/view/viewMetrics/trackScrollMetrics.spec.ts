@@ -1,8 +1,8 @@
-import type { RelativeTime, TimeStamp } from '@datadog/js-core/time'
-import type { Subscription } from '@datadog/browser-core'
-import { DOM_EVENT, Observable } from '@datadog/browser-core'
-import type { Clock } from '@datadog/browser-core/test'
-import { createNewEvent, mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import type { RelativeTime, TimeStamp } from '@openobserve/js-core/time'
+import type { Subscription } from '@openobserve/browser-core'
+import { DOM_EVENT, Observable } from '@openobserve/browser-core'
+import type { Clock } from '@openobserve/browser-core/test'
+import { createNewEvent, mockClock, registerCleanupTask } from '@openobserve/browser-core/test'
 import type { ScrollMetrics, ScrollValues } from './trackScrollMetrics'
 import { createScrollValuesObservable, trackScrollMetrics } from './trackScrollMetrics'
 

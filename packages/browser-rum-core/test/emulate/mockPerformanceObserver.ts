@@ -1,5 +1,5 @@
-import { registerCleanupTask } from '@datadog/browser-core/test'
-import { objectValues } from '@datadog/browser-core'
+import { registerCleanupTask } from '@openobserve/browser-core/test'
+import { objectValues } from '@openobserve/browser-core'
 import { RumPerformanceEntryType, type RumPerformanceEntry } from '../../src/browser/performanceObservable'
 import { mockGlobalPerformanceBuffer } from './mockGlobalPerformanceBuffer'
 

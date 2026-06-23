@@ -1,4 +1,4 @@
-import { isFirefox, registerCleanupTask } from '@datadog/browser-core/test'
+import { isFirefox, registerCleanupTask } from '@openobserve/browser-core/test'
 import { IncrementalSource, RecordType } from '../../../types'
 import type { EmitRecordCallback } from '../record.types'
 import type { RecordingScope } from '../recordingScope'

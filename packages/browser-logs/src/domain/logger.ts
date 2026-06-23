@@ -1,6 +1,6 @@
-import type { Context, ContextManager } from '@datadog/browser-core'
-import { clocksNow } from '@datadog/js-core/time'
-import { combine } from '@datadog/js-core/util'
+import type { Context, ContextManager } from '@openobserve/browser-core'
+import { clocksNow } from '@openobserve/js-core/time'
+import { combine } from '@openobserve/js-core/util'
 import {
   computeRawError,
   ErrorHandling,
@@ -12,7 +12,7 @@ import {
   createHandlingStack,
   buildTag,
   sanitizeTag,
-} from '@datadog/browser-core'
+} from '@openobserve/browser-core'
 
 import { isAuthorized, StatusType } from './logger/isAuthorized'
 import { createErrorFieldFromRawError } from './createErrorFieldFromRawError'

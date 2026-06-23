@@ -1,7 +1,7 @@
-import type { Encoder } from '@datadog/browser-core'
-import { DeflateEncoderStreamId } from '@datadog/browser-core'
-import type { LifeCycle, RumConfiguration, TransportPayload } from '@datadog/browser-rum-core'
-import { createFormDataTransport } from '@datadog/browser-rum-core'
+import type { Encoder } from '@openobserve/browser-core'
+import { DeflateEncoderStreamId } from '@openobserve/browser-core'
+import type { LifeCycle, RumConfiguration, TransportPayload } from '@openobserve/browser-rum-core'
+import { createFormDataTransport } from '@openobserve/browser-rum-core'
 import type { ProfilingPayload } from '../types'
 
 export function createFormDataEmitter(

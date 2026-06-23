@@ -1,5 +1,5 @@
-import { globalObject } from '@datadog/browser-core'
-import { buildLocation, registerCleanupTask, replaceMockable } from '@datadog/browser-core/test'
+import { globalObject } from '@openobserve/browser-core'
+import { buildLocation, registerCleanupTask, replaceMockable } from '@openobserve/browser-core/test'
 import { createLocationChangeObservable } from './locationChangeObservable'
 
 describe('locationChangeObservable', () => {

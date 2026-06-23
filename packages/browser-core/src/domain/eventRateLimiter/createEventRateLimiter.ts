@@ -1,4 +1,4 @@
-import { ONE_MINUTE, clocksNow } from '@datadog/js-core/time'
+import { ONE_MINUTE, clocksNow } from '@openobserve/js-core/time'
 import { setTimeout } from '../../tools/timer'
 import type { RawError } from '../error/error.types'
 import { ErrorSource } from '../error/error.types'

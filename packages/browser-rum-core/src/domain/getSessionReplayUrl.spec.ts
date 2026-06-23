@@ -1,6 +1,6 @@
-import type { ClocksState } from '@datadog/js-core/time'
-import type { SessionContext } from '@datadog/browser-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
+import type { ClocksState } from '@openobserve/js-core/time'
+import type { SessionContext } from '@openobserve/browser-core'
+import type { RumConfiguration } from '@openobserve/browser-rum-core'
 
 import { getSessionReplayUrl, getDatadogSiteUrl } from './getSessionReplayUrl'
 

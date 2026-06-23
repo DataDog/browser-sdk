@@ -1,4 +1,4 @@
-import type { Context, Observable, PageMayExitEvent, RawError, SessionManager } from '@datadog/browser-core'
+import type { Context, Observable, PageMayExitEvent, RawError, SessionManager } from '@openobserve/browser-core'
 import {
   createBatch,
   createEndpointBuilder,
@@ -6,7 +6,7 @@ import {
   createFlushController,
   createHttpRequest,
   createIdentityEncoder,
-} from '@datadog/browser-core'
+} from '@openobserve/browser-core'
 import type { LogsConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'

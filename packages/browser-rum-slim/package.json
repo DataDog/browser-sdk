@@ -1,5 +1,5 @@
 {
-  "name": "@datadog/browser-rum-slim",
+  "name": "@openobserve/browser-rum-slim",
   "version": "7.3.0",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
@@ -19,14 +19,14 @@
     "prepack": "yarn build"
   },
   "dependencies": {
-    "@datadog/browser-core": "7.3.0",
-    "@datadog/browser-rum-core": "7.3.0"
+    "@openobserve/browser-core": "7.3.0",
+    "@openobserve/browser-rum-core": "7.3.0"
   },
   "peerDependencies": {
-    "@datadog/browser-logs": "7.3.0"
+    "@openobserve/browser-logs": "7.3.0"
   },
   "peerDependenciesMeta": {
-    "@datadog/browser-logs": {
+    "@openobserve/browser-logs": {
       "optional": true
     }
   },

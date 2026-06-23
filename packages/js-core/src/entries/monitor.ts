@@ -94,10 +94,10 @@ export interface Monitor {
  * Creates an isolated monitor with its own error-collection callback and display.
  *
  * Each consumer (SDK) should create its own monitor so that error-collection callbacks do not
- * clobber each other when several SDKs share the same `@datadog/js-core/monitor` module instance.
+ * clobber each other when several SDKs share the same `@openobserve/js-core/monitor` module instance.
  *
  * @param display - {@link Display} used for debug logging (see `createDisplay` in
- * `@datadog/js-core/util`). Lets the consumer control the log prefix and console binding. Debug
+ * `@openobserve/js-core/util`). Lets the consumer control the log prefix and console binding. Debug
  * output is only emitted when debug mode is enabled (see `setDebugMode`/`getDebugMode`).
  * @param onMonitorErrorCollected - Callback invoked with each error caught by the monitor (e.g. to
  * forward it to telemetry). Fixed for the lifetime of the monitor.

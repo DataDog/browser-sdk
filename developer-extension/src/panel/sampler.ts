@@ -1,4 +1,4 @@
-import { isSampled } from '@datadog/browser-core'
+import { isSampled } from '@openobserve/browser-core'
 
 export function computeRumTrackingType(
   sessionId: string,

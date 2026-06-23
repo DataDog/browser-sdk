@@ -1,8 +1,8 @@
-import { clocksNow } from '@datadog/js-core/time'
-import { getDebugMode, combine } from '@datadog/js-core/util'
-import type { Hook } from '@datadog/js-core/assembly'
-import type { RecursivePartial } from '@datadog/js-core/util'
-import { DISCARDED } from '@datadog/js-core/assembly'
+import { clocksNow } from '@openobserve/js-core/time'
+import { getDebugMode, combine } from '@openobserve/js-core/util'
+import type { Hook } from '@openobserve/js-core/assembly'
+import type { RecursivePartial } from '@openobserve/js-core/util'
+import { DISCARDED } from '@openobserve/js-core/assembly'
 import type { Context } from '../../tools/serialisation/context'
 import { NO_ERROR_STACK_PRESENT_MESSAGE, isError } from '../error/error'
 import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
@@ -186,7 +186,7 @@ export function startTelemetryCollection(
       service: telemetryService,
       version: __BUILD_ENV__SDK_VERSION__,
       source: 'browser' as const,
-      _dd: {
+      _oo: {
         format_version: 2 as const,
       },
       telemetry: combine(rawEvent, {

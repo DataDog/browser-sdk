@@ -158,37 +158,37 @@ describe('getNodeSelfPrivacyLevel', () => {
     },
     {
       msg: 'is a "base" element (forced override)',
-      html: '<base class="dd-privacy-mask">',
+      html: '<base class="oo-privacy-mask">',
       expected: NodePrivacyLevel.ALLOW,
     },
     {
       msg: 'is an "input" element of type "password" (forced override)',
-      html: '<input type="password" class="dd-privacy-allow">',
+      html: '<input type="password" class="oo-privacy-allow">',
       expected: NodePrivacyLevel.MASK,
     },
     {
       msg: 'is an "input" element of type "tel" (forced override)',
-      html: '<input type="tel" class="dd-privacy-allow">',
+      html: '<input type="tel" class="oo-privacy-allow">',
       expected: NodePrivacyLevel.MASK,
     },
     {
       msg: 'is an "input" element of type "email" (forced override)',
-      html: '<input type="email" class="dd-privacy-allow">',
+      html: '<input type="email" class="oo-privacy-allow">',
       expected: NodePrivacyLevel.MASK,
     },
     {
       msg: 'is an "input" element of type "hidden" (forced override)',
-      html: '<input type="hidden" class="dd-privacy-allow">',
+      html: '<input type="hidden" class="oo-privacy-allow">',
       expected: NodePrivacyLevel.MASK,
     },
     {
       msg: 'is an "input" element and has an autocomplete attribute starting with "cc-" (forced override)',
-      html: '<input type="text" class="dd-privacy-allow" autocomplete="cc-foo">',
+      html: '<input type="text" class="oo-privacy-allow" autocomplete="cc-foo">',
       expected: NodePrivacyLevel.MASK,
     },
     {
       msg: 'is an "input" element and has an autocomplete attribute ending with "-password" (forced override)',
-      html: '<input type="text" class="dd-privacy-allow" autocomplete="foo-password">',
+      html: '<input type="text" class="oo-privacy-allow" autocomplete="foo-password">',
       expected: NodePrivacyLevel.MASK,
     },
     {
@@ -199,55 +199,55 @@ describe('getNodeSelfPrivacyLevel', () => {
 
     // Class
     {
-      msg: 'has a dd-privacy-allow class',
-      html: '<span class="dd-privacy-allow">',
+      msg: 'has a oo-privacy-allow class',
+      html: '<span class="oo-privacy-allow">',
       expected: NodePrivacyLevel.ALLOW,
     },
     {
-      msg: 'has a dd-privacy-hidden class',
-      html: '<span class="dd-privacy-hidden">',
+      msg: 'has a oo-privacy-hidden class',
+      html: '<span class="oo-privacy-hidden">',
       expected: NodePrivacyLevel.HIDDEN,
     },
     {
-      msg: 'has a dd-privacy-mask class',
-      html: '<span class="dd-privacy-mask">',
+      msg: 'has a oo-privacy-mask class',
+      html: '<span class="oo-privacy-mask">',
       expected: NodePrivacyLevel.MASK,
     },
     {
-      msg: 'has a dd-privacy-mask-user-input class',
-      html: '<span class="dd-privacy-mask-user-input">',
+      msg: 'has a oo-privacy-mask-user-input class',
+      html: '<span class="oo-privacy-mask-user-input">',
       expected: NodePrivacyLevel.MASK_USER_INPUT,
     },
     {
-      msg: 'has an unknown class starting with dd-privacy-',
-      html: '<span class="dd-privacy-foo">',
+      msg: 'has an unknown class starting with oo-privacy-',
+      html: '<span class="oo-privacy-foo">',
       expected: undefined,
     },
 
     // Attributes
     {
-      msg: 'has a data-dd-privacy="allow" attribute',
-      html: '<span data-dd-privacy="allow">',
+      msg: 'has a data-oo-privacy="allow" attribute',
+      html: '<span data-oo-privacy="allow">',
       expected: NodePrivacyLevel.ALLOW,
     },
     {
-      msg: 'has a data-dd-privacy="hidden" attribute',
-      html: '<span data-dd-privacy="hidden">',
+      msg: 'has a data-oo-privacy="hidden" attribute',
+      html: '<span data-oo-privacy="hidden">',
       expected: NodePrivacyLevel.HIDDEN,
     },
     {
-      msg: 'has a data-dd-privacy="mask" attribute',
-      html: '<span data-dd-privacy="mask">',
+      msg: 'has a data-oo-privacy="mask" attribute',
+      html: '<span data-oo-privacy="mask">',
       expected: NodePrivacyLevel.MASK,
     },
     {
-      msg: 'has a data-dd-privacy="mask-user-input" attribute',
-      html: '<span data-dd-privacy="mask-user-input">',
+      msg: 'has a data-oo-privacy="mask-user-input" attribute',
+      html: '<span data-oo-privacy="mask-user-input">',
       expected: NodePrivacyLevel.MASK_USER_INPUT,
     },
     {
-      msg: 'has an unknown data-dd-privacy attribute value',
-      html: '<span data-dd-privacy="foo">',
+      msg: 'has an unknown data-oo-privacy attribute value',
+      html: '<span data-oo-privacy="foo">',
       expected: undefined,
     },
 
@@ -259,7 +259,7 @@ describe('getNodeSelfPrivacyLevel', () => {
     },
     {
       msg: 'should be ignored but has an ALLOW privacy class',
-      html: '<script class="dd-privacy-allow">',
+      html: '<script class="oo-privacy-allow">',
       expected: NodePrivacyLevel.ALLOW,
     },
     {
@@ -286,22 +286,22 @@ describe('getNodeSelfPrivacyLevel', () => {
     // Precedence
     {
       msg: 'has an ALLOW privacy class and a MASK privacy attribute (MASK takes precedence)',
-      html: '<span data-dd-privacy="mask" class="dd-privacy-allow">',
+      html: '<span data-oo-privacy="mask" class="oo-privacy-allow">',
       expected: NodePrivacyLevel.MASK,
     },
     {
       msg: 'has ALLOW and MASK_USER_INPUT privacy classes (MASK_USER_INPUT takes precedence)',
-      html: '<span class="dd-privacy-allow dd-privacy-mask-user-input">',
+      html: '<span class="oo-privacy-allow oo-privacy-mask-user-input">',
       expected: NodePrivacyLevel.MASK_USER_INPUT,
     },
     {
       msg: 'has MASK_USER_INPUT and MASK privacy classes (MASK takes precedence)',
-      html: '<span class="dd-privacy-mask-user-input dd-privacy-mask">',
+      html: '<span class="oo-privacy-mask-user-input oo-privacy-mask">',
       expected: NodePrivacyLevel.MASK,
     },
     {
       msg: 'has MASK and HIDDEN privacy classes (HIDDEN takes precedence)',
-      html: '<span class="dd-privacy-mask dd-privacy-hidden">',
+      html: '<span class="oo-privacy-mask oo-privacy-hidden">',
       expected: NodePrivacyLevel.HIDDEN,
     },
   ].forEach(({ msg, html, expected }) => {

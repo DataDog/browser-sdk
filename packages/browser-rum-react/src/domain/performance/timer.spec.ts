@@ -1,5 +1,5 @@
-import { mockClock } from '@datadog/browser-core/test'
-import type { Duration } from '@datadog/js-core/time'
+import { mockClock } from '@openobserve/browser-core/test'
+import type { Duration } from '@openobserve/js-core/time'
 import { createTimer } from './timer'
 
 describe('createTimer', () => {

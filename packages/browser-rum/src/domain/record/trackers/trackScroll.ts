@@ -1,5 +1,5 @@
-import { DOM_EVENT, throttle, addEventListener } from '@datadog/browser-core'
-import { getScrollX, getScrollY, getNodePrivacyLevel, NodePrivacyLevel } from '@datadog/browser-rum-core'
+import { DOM_EVENT, throttle, addEventListener } from '@openobserve/browser-core'
+import { getScrollX, getScrollY, getNodePrivacyLevel, NodePrivacyLevel } from '@openobserve/browser-rum-core'
 import { getEventTarget } from '../eventsUtils'
 import { IncrementalSource } from '../../../types'
 import type { BrowserIncrementalSnapshotRecord, ScrollData } from '../../../types'

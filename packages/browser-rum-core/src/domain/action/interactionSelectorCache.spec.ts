@@ -1,6 +1,6 @@
-import { relativeNow } from '@datadog/js-core/time'
-import { mockClock } from '@datadog/browser-core/test'
-import type { Clock } from '@datadog/browser-core/test'
+import { relativeNow } from '@openobserve/js-core/time'
+import { mockClock } from '@openobserve/browser-core/test'
+import type { Clock } from '@openobserve/browser-core/test'
 import {
   updateInteractionSelector,
   getInteractionSelector,

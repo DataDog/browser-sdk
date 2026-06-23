@@ -1,5 +1,5 @@
-import { DOM_EVENT } from '@datadog/browser-core'
-import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
+import { DOM_EVENT } from '@openobserve/browser-core'
+import { createNewEvent, registerCleanupTask } from '@openobserve/browser-core/test'
 import { appendElement } from '../../../../../browser-rum-core/test'
 import { IncrementalSource, MouseInteractionType, RecordType } from '../../../types'
 import type { EmitRecordCallback } from '../record.types'

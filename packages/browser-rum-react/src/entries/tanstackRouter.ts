@@ -4,13 +4,13 @@
  * @packageDocumentation
  * @example
  * ```ts
- * import { datadogRum } from '@datadog/browser-rum'
- * import { reactPlugin } from '@datadog/browser-rum-react'
+ * import { openobserveRum } from '@openobserve/browser-rum'
+ * import { reactPlugin } from '@openobserve/browser-rum-react'
  *
- * // ⚠️ Use "createRouter" from `@datadog/browser-rum-react/tanstack-router` instead of `@tanstack/react-router`
- * import { createRouter } from '@datadog/browser-rum-react/tanstack-router'
+ * // ⚠️ Use "createRouter" from `@openobserve/browser-rum-react/tanstack-router` instead of `@tanstack/react-router`
+ * import { createRouter } from '@openobserve/browser-rum-react/tanstack-router'
  *
- * datadogRum.init({
+ * openobserveRum.init({
  *   applicationId: '<DATADOG_APPLICATION_ID>',
  *   clientToken: '<DATADOG_CLIENT_TOKEN>',
  *   plugins: [reactPlugin({ router: true })],

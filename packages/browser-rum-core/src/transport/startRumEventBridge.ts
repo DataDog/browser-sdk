@@ -1,4 +1,4 @@
-import { getEventBridge } from '@datadog/browser-core'
+import { getEventBridge } from '@openobserve/browser-core'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
 import type { RumEvent } from '../rumEvent.types'

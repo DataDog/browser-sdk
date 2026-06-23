@@ -510,7 +510,7 @@ describe('getActionNameFromElement', () => {
     it('preserves privacy level of the element when defaultPrivacyLevel is mask-unless-allowlisted', () => {
       const { name, nameSource } = getActionNameFromElement(
         appendElement(`
-        <div data-dd-privacy="mask">
+        <div data-oo-privacy="mask">
           <span target>bar</span>
         </div>
       `),
@@ -529,11 +529,11 @@ describe('getActionNameFromElement', () => {
       const testCases = [
         {
           html: `
-           <div data-dd-privacy="mask-unless-allowlisted" target>
+           <div data-oo-privacy="mask-unless-allowlisted" target>
             <span>foo</span>
-            <div data-dd-privacy="mask">
+            <div data-oo-privacy="mask">
               <span>bar</span>
-              <div data-dd-privacy="allow">
+              <div data-oo-privacy="allow">
                 <span>baz</span>
               </div>
             </div>
@@ -545,11 +545,11 @@ describe('getActionNameFromElement', () => {
         },
         {
           html: `
-           <div data-dd-privacy="mask-unless-allowlisted" target>
+           <div data-oo-privacy="mask-unless-allowlisted" target>
             <span>foo</span>
-            <div data-dd-privacy="mask">
+            <div data-oo-privacy="mask">
               <span>bar</span>
-              <div data-dd-privacy="allow">
+              <div data-oo-privacy="allow">
                 <span>baz</span>
               </div>
             </div>
@@ -562,9 +562,9 @@ describe('getActionNameFromElement', () => {
         },
         {
           html: `
-           <div data-dd-privacy="mask-unless-allowlisted" target>
+           <div data-oo-privacy="mask-unless-allowlisted" target>
             <span>foo</span>
-            <div data-dd-privacy="allow">
+            <div data-oo-privacy="allow">
               <span>baz</span>
             </div>
           </div>
@@ -575,11 +575,11 @@ describe('getActionNameFromElement', () => {
         },
         {
           html: `
-          <div data-dd-privacy="mask" target>
+          <div data-oo-privacy="mask" target>
             <span>foo</span>
-            <div data-dd-privacy="mask-unless-allowlisted">
+            <div data-oo-privacy="mask-unless-allowlisted">
               <span>bar</span>
-              <div data-dd-privacy="allow">
+              <div data-oo-privacy="allow">
                 <span>baz</span>
               </div>
             </div>
@@ -591,11 +591,11 @@ describe('getActionNameFromElement', () => {
         },
         {
           html: `
-          <div data-dd-privacy="allow" target>
+          <div data-oo-privacy="allow" target>
             <span>foo</span>
-            <div data-dd-privacy="mask-unless-allowlisted">
+            <div data-oo-privacy="mask-unless-allowlisted">
               <span>bar</span>
-              <div data-dd-privacy="allow">
+              <div data-oo-privacy="allow">
                 <span>baz</span>
               </div>
             </div>
@@ -607,11 +607,11 @@ describe('getActionNameFromElement', () => {
         },
         {
           html: `
-          <div data-dd-privacy="allow" target>
+          <div data-oo-privacy="allow" target>
             <span>foo</span>
-            <div data-dd-privacy="mask-unless-allowlisted">
+            <div data-oo-privacy="mask-unless-allowlisted">
               <span>bar</span>
-              <div data-dd-privacy="mask">
+              <div data-oo-privacy="mask">
                 <span>baz</span>
               </div>
             </div>
@@ -623,11 +623,11 @@ describe('getActionNameFromElement', () => {
         },
         {
           html: `
-          <div data-dd-privacy="allow" target>
+          <div data-oo-privacy="allow" target>
             <span>foo</span>
-            <div data-dd-privacy="mask-unless-allowlisted">
+            <div data-oo-privacy="mask-unless-allowlisted">
               <span>bar</span>
-              <div data-dd-privacy="allow">
+              <div data-oo-privacy="allow">
                 <span>baz</span>
               </div>
             </div>
@@ -640,7 +640,7 @@ describe('getActionNameFromElement', () => {
         },
         {
           html: `
-          <div data-dd-privacy="mask-unless-allowlisted" alt="bar" target>
+          <div data-oo-privacy="mask-unless-allowlisted" alt="bar" target>
             <span>bar</span>
           </div>
           `,
@@ -650,7 +650,7 @@ describe('getActionNameFromElement', () => {
         },
         {
           html: `
-          <div data-dd-privacy="mask-unless-allowlisted" alt="foo" target>
+          <div data-oo-privacy="mask-unless-allowlisted" alt="foo" target>
             <span>bar</span>
           </div>
           `,
@@ -781,7 +781,7 @@ describe('getActionNameFromElement', () => {
         expect(
           getActionNameFromElement(
             appendElement(`
-              <div data-dd-privacy="allow">
+              <div data-oo-privacy="allow">
                 <span target>foo</span>
               </div>
         `),
@@ -795,7 +795,7 @@ describe('getActionNameFromElement', () => {
         expect(
           getActionNameFromElement(
             appendElement(`
-              <div data-dd-privacy="mask">
+              <div data-oo-privacy="mask">
                 <span target>foo</span>
               </div>
         `),
@@ -812,11 +812,11 @@ describe('getActionNameFromElement', () => {
         expect(
           getActionNameFromElement(
             appendElement(`
-              <div data-dd-privacy="allow">
+              <div data-oo-privacy="allow">
                 bar
                 <div target>
                   foo
-                  <div data-dd-privacy="mask">
+                  <div data-oo-privacy="mask">
                     <span>secret</span>
                   </div>
                 </div>
@@ -834,11 +834,11 @@ describe('getActionNameFromElement', () => {
         expect(
           getActionNameFromElement(
             appendElement(`
-              <div data-dd-privacy="allow" target>
+              <div data-oo-privacy="allow" target>
                 bar
                 <div>
                   foo
-                  <div data-dd-privacy="hidden">
+                  <div data-oo-privacy="hidden">
                     <span>secret</span>
                   </div>
                 </div>
@@ -857,11 +857,11 @@ describe('getActionNameFromElement', () => {
         expect(
           getActionNameFromElement(
             appendElement(`
-              <div class="dd-privacy-allow">
+              <div class="oo-privacy-allow">
                 bar
                 <div target>
                   foo
-                  <div data-dd-privacy="hidden">
+                  <div data-oo-privacy="hidden">
                     <span>secret</span>
                   </div>
                 </div>
@@ -880,11 +880,11 @@ describe('getActionNameFromElement', () => {
         expect(
           getActionNameFromElement(
             appendElement(`
-              <div class="dd-privacy-allow" target>
+              <div class="oo-privacy-allow" target>
                 bar secret
                 <div>
                   foo 
-                  <div class="dd-privacy-mask">
+                  <div class="oo-privacy-mask">
                     <span>secret</span>
                   </div>
                 </div>
@@ -903,11 +903,11 @@ describe('getActionNameFromElement', () => {
         expect(
           getActionNameFromElement(
             appendElement(`
-              <div class="dd-privacy-allow" target>
+              <div class="oo-privacy-allow" target>
                 bar
                 <div>
                   foo
-                  <div class="dd-privacy-mask">
+                  <div class="oo-privacy-mask">
                     <span>secret</span>
                   </div>
                 </div>

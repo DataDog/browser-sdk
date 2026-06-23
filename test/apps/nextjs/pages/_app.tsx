@@ -1,6 +1,6 @@
 import type { AppProps } from 'next/app'
 import Link from 'next/link'
-import { DatadogPagesRouter } from '@datadog/browser-rum-nextjs'
+import { DatadogPagesRouter } from '@openobserve/browser-rum-nextjs'
 
 export default function MyApp({ Component, pageProps }: AppProps) {
   return (

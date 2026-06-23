@@ -1,5 +1,5 @@
-import type { Duration } from '@datadog/js-core/time'
-import { toServerDuration, relativeToClocks } from '@datadog/js-core/time'
+import type { Duration } from '@openobserve/js-core/time'
+import { toServerDuration, relativeToClocks } from '@openobserve/js-core/time'
 import {
   generateUUID,
   createTaskQueue,
@@ -11,8 +11,8 @@ import {
   addTelemetryDebug,
   RequestType,
   setTimeout,
-} from '@datadog/browser-core'
-import { combine } from '@datadog/js-core/util'
+} from '@openobserve/browser-core'
+import { combine } from '@openobserve/js-core/util'
 import type { MatchHeader, RumConfiguration } from '../configuration'
 import { RumPerformanceEntryType, createPerformanceObservable } from '../../browser/performanceObservable'
 import type { RumResourceEventDomainContext } from '../../domainContext.types'
@@ -143,7 +143,7 @@ function assembleResource(
         ...computeResourceEntryDetails(entry),
       },
       type: RumEventType.RESOURCE,
-      _dd: {
+      _oo: {
         discarded: !configuration.trackResources,
       },
     },
@@ -215,7 +215,7 @@ function computeRequestTracingInfo(request: RequestCompleteEvent, configuration:
     return undefined
   }
   return {
-    _dd: {
+    _oo: {
       span_id: request.spanId!.toString(),
       trace_id: request.traceId!.toString(),
       rule_psr: configuration.rulePsr,
@@ -232,7 +232,7 @@ function computeResourceEntryTracingInfo(entry: ResourceLikeEntry, configuration
     return undefined
   }
   return {
-    _dd: {
+    _oo: {
       trace_id: traceId,
       span_id: createSpanIdentifier().toString(),
       rule_psr: configuration.rulePsr,

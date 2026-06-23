@@ -1,4 +1,4 @@
-import { safeTruncate } from '@datadog/browser-core'
+import { safeTruncate } from '@openobserve/browser-core'
 import { NodePrivacyLevel } from '../privacyConstants'
 import { getNodePrivacyLevel, maskDisallowedTextContent, shouldMaskNode, shouldMaskAttribute } from '../privacy'
 import type { NodePrivacyLevelCache } from '../privacy'

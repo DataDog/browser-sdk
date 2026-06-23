@@ -6,8 +6,8 @@
  * @see [Live Debugger Documentation](https://docs.datadoghq.com/tracing/live_debugger/)
  */
 
-import { defineGlobal, globalObject, makePublicApi, mockable } from '@datadog/browser-core'
-import type { PublicApi, Site } from '@datadog/browser-core'
+import { defineGlobal, globalObject, makePublicApi, mockable } from '@openobserve/browser-core'
+import type { PublicApi, Site } from '@openobserve/browser-core'
 import { initDebuggerTransport, onEntry, onReturn, onThrow } from '../domain/api'
 import { startDeliveryApiPolling } from '../domain/deliveryApi'
 import { display } from '../domain/display'

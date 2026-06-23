@@ -1,4 +1,4 @@
-import type { ErrorWithCause } from '@datadog/browser-core'
+import type { ErrorWithCause } from '@openobserve/browser-core'
 import { display } from './display'
 import { compile } from './expression'
 import { compileCondition } from './condition'

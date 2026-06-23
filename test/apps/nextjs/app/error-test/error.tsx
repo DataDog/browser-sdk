@@ -2,7 +2,7 @@
 // Calls addNextjsError to report both client errors and server errors (with digest) to RUM.
 'use client'
 
-import { addNextjsError } from '@datadog/browser-rum-nextjs'
+import { addNextjsError } from '@openobserve/browser-rum-nextjs'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 

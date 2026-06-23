@@ -1,5 +1,5 @@
-import { instrumentSetter, DOM_EVENT, addEventListeners, noop } from '@datadog/browser-core'
-import { NodePrivacyLevel, getNodePrivacyLevel, shouldMaskNode } from '@datadog/browser-rum-core'
+import { instrumentSetter, DOM_EVENT, addEventListeners, noop } from '@openobserve/browser-core'
+import { NodePrivacyLevel, getNodePrivacyLevel, shouldMaskNode } from '@openobserve/browser-rum-core'
 import { IncrementalSource } from '../../../types'
 import type { InputData, InputState } from '../../../types'
 import { getEventTarget } from '../eventsUtils'

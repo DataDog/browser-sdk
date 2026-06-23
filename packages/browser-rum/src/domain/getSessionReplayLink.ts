@@ -1,6 +1,6 @@
-import type { RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
-import { getSessionReplayUrl, SessionReplayState, computeSessionReplayState } from '@datadog/browser-rum-core'
-import type { SessionManager, SessionContext } from '@datadog/browser-core'
+import type { RumConfiguration, ViewHistory } from '@openobserve/browser-rum-core'
+import { getSessionReplayUrl, SessionReplayState, computeSessionReplayState } from '@openobserve/browser-rum-core'
+import type { SessionManager, SessionContext } from '@openobserve/browser-core'
 export function getSessionReplayLink(
   configuration: RumConfiguration,
   sessionManager: SessionManager,

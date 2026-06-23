@@ -21,6 +21,9 @@ export const EXHAUSTIVE_INIT_CONFIGURATION: Required<InitConfiguration> = {
   trackingConsent: 'not-granted',
   proxy: 'proxy',
   site: 'datadoghq.com',
+  apiVersion: 'v1',
+  organizationIdentifier: 'default',
+  insecureHTTP: false,
   service: 'service',
   env: 'env',
   version: 'version',
@@ -73,6 +76,9 @@ export type MapInitConfigurationKey<Key extends string> =
     : // Those keys should not be serialized
       Key extends
           | 'site'
+          | 'apiVersion'
+          | 'organizationIdentifier'
+          | 'insecureHTTP'
           | 'service'
           | 'clientToken'
           | 'env'

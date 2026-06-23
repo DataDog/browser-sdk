@@ -1,6 +1,6 @@
-import { RumEventType, createHooks } from '@datadog/browser-rum-core'
-import type { RelativeTime } from '@datadog/js-core/time'
-import type { AssembleHookParams } from '@datadog/browser-rum-core/src/domain/hooks'
+import { RumEventType, createHooks } from '@openobserve/browser-rum-core'
+import type { RelativeTime } from '@openobserve/js-core/time'
+import type { AssembleHookParams } from '@openobserve/browser-rum-core/src/domain/hooks'
 import { startProfilingContext } from './profilingContext'
 
 const relativeTime: RelativeTime = 1000 as RelativeTime
@@ -20,7 +20,7 @@ describe('Profiling Context', () => {
 
       expect(eventAttributes).toEqual(
         jasmine.objectContaining({
-          _dd: {
+          _oo: {
             profiling: { status: 'running' },
           },
         })

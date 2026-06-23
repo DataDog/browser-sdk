@@ -5,10 +5,10 @@ import {
   replaceMockable,
   waitNextMicrotask,
   mockEventBridge,
-} from '@datadog/browser-core/test'
-import { mockRumConfiguration, mockViewHistory } from '@datadog/browser-rum-core/test'
-import { createHooks, LifeCycle } from '@datadog/browser-rum-core'
-import { BridgeCapability, createIdentityEncoder } from '@datadog/browser-core'
+} from '@openobserve/browser-core/test'
+import { mockRumConfiguration, mockViewHistory } from '@openobserve/browser-rum-core/test'
+import { createHooks, LifeCycle } from '@openobserve/browser-rum-core'
+import { BridgeCapability, createIdentityEncoder } from '@openobserve/browser-core'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { makeProfilerApi } from './profilerApi'
 import { lazyLoadProfiler } from './lazyLoadProfiler'

@@ -1,4 +1,4 @@
-import type { ContextManager, SessionManager } from '@datadog/browser-core'
+import type { ContextManager, SessionManager } from '@openobserve/browser-core'
 import {
   objectEntries,
   shallowClone,
@@ -8,7 +8,7 @@ import {
   isSampled,
   canUseEventBridge,
   getEventBridge,
-} from '@datadog/browser-core'
+} from '@openobserve/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type {
   RumFetchResolveContext,
@@ -187,10 +187,10 @@ function makeTracingHeaders(
     switch (propagatorType) {
       case 'datadog': {
         Object.assign(tracingHeaders, {
-          'x-datadog-origin': 'rum',
-          'x-datadog-parent-id': spanId.toString(),
-          'x-datadog-sampling-priority': traceSampled ? '1' : '0',
-          'x-datadog-trace-id': traceId.toString(),
+          'x-openobserve-origin': 'rum',
+          'x-openobserve-parent-id': spanId.toString(),
+          'x-openobserve-sampling-priority': traceSampled ? '1' : '0',
+          'x-openobserve-trace-id': traceId.toString(),
         })
         break
       }

@@ -1,4 +1,4 @@
-import { monitor } from '@datadog/browser-core'
+import { monitor } from '@openobserve/browser-core'
 import type { ViewportDimension } from '../../browser/viewportObservable'
 import { getViewportDimension, initViewportObservable } from '../../browser/viewportObservable'
 import type { AssembleHook, DefaultRumEventAttributes } from '../hooks'

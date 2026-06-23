@@ -1,4 +1,4 @@
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import { registerCleanupTask } from '@openobserve/browser-core/test'
 import { formatThrowable, formatUnknownError, safeReadErrorProperty } from './error'
 
 describe('error', () => {

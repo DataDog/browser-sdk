@@ -1,6 +1,6 @@
-import { registerCleanupTask } from '@datadog/browser-core/test'
-import { globalObject } from '@datadog/browser-core'
-import type { ProfilerTrace, ProfilerInitOptions } from '@datadog/browser-core'
+import { registerCleanupTask } from '@openobserve/browser-core/test'
+import { globalObject } from '@openobserve/browser-core'
+import type { ProfilerTrace, ProfilerInitOptions } from '@openobserve/browser-core'
 
 export function mockProfiler(mockedTrace: ProfilerTrace) {
   // Save original Profiler class to restore it during cleanup.

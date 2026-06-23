@@ -1,11 +1,11 @@
-import type { InitConfiguration } from '@datadog/browser-core'
-import { DefaultPrivacyLevel, display, TraceContextInjection } from '@datadog/browser-core'
+import type { InitConfiguration } from '@openobserve/browser-core'
+import { DefaultPrivacyLevel, display, TraceContextInjection } from '@openobserve/browser-core'
 import type {
   ExtractTelemetryConfiguration,
   CamelToSnakeCase,
   MapInitConfigurationKey,
-} from '@datadog/browser-core/test'
-import { EXHAUSTIVE_INIT_CONFIGURATION, SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION } from '@datadog/browser-core/test'
+} from '@openobserve/browser-core/test'
+import { EXHAUSTIVE_INIT_CONFIGURATION, SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION } from '@openobserve/browser-core/test'
 import type { RumInitConfiguration } from './configuration'
 import {
   DEFAULT_PROPAGATOR_TYPES,

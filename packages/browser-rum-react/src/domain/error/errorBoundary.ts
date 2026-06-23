@@ -71,7 +71,7 @@ export function createErrorBoundary(
  * @category Error
  * @example
  * ```ts
- * import { ErrorBoundary } from '@datadog/browser-rum-react'
+ * import { ErrorBoundary } from '@openobserve/browser-rum-react'
  *
  * <ErrorBoundary fallback={() => null}>
  *   <Component />

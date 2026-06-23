@@ -1,5 +1,5 @@
-import type { RelativeTime, Duration, TimeStamp } from '@datadog/js-core/time'
-import { RequestType } from '@datadog/browser-core'
+import type { RelativeTime, Duration, TimeStamp } from '@openobserve/js-core/time'
+import { RequestType } from '@openobserve/browser-core'
 import { createPerformanceEntry } from '../../../test'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'

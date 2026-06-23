@@ -1,21 +1,21 @@
-import type { InputData, StyleSheetRuleData, ScrollData } from '@datadog/browser-rum/src/types'
-import { IncrementalSource, ChangeType, RecordType } from '@datadog/browser-rum/src/types'
+import type { InputData, StyleSheetRuleData, ScrollData } from '@openobserve/browser-rum/src/types'
+import { IncrementalSource, ChangeType, RecordType } from '@openobserve/browser-rum/src/types'
 
-import { DefaultPrivacyLevel, SESSION_STORE_KEY } from '@datadog/browser-core'
+import { DefaultPrivacyLevel, SESSION_STORE_KEY } from '@openobserve/browser-core'
 
-import { decodeChangeRecords, findChangeRecords } from '@datadog/browser-rum/test/record/changes'
+import { decodeChangeRecords, findChangeRecords } from '@openobserve/browser-rum/test/record/changes'
 import {
   getElementIdsFromFullSnapshot,
   getScrollPositionsFromFullSnapshot,
-} from '@datadog/browser-rum/test/record/elements'
+} from '@openobserve/browser-rum/test/record/elements'
 import {
   findFullSnapshot,
   findIncrementalSnapshot,
   findAllIncrementalSnapshots,
   findMeta,
-} from '@datadog/browser-rum/test/record/segments'
+} from '@openobserve/browser-rum/test/record/segments'
 import { test, expect } from '@playwright/test'
-import { wait } from '@datadog/browser-core/test/wait'
+import { wait } from '@openobserve/browser-core/test/wait'
 import { createTest, html } from '../../lib/framework'
 
 const UUID_RE = /^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/
@@ -78,10 +78,10 @@ test.describe('recorder', () => {
       .withRum()
       .withBody(
         html`<div id="not-obfuscated">displayed</div>
-          <p id="hidden-by-attribute" data-dd-privacy="hidden">hidden</p>
-          <span id="hidden-by-classname" class="dd-privacy-hidden">hidden</span>
+          <p id="hidden-by-attribute" data-oo-privacy="hidden">hidden</p>
+          <span id="hidden-by-classname" class="oo-privacy-hidden">hidden</span>
           <input id="input-not-obfuscated" value="displayed" />
-          <input id="input-masked" data-dd-privacy="mask" value="masked" />`
+          <input id="input-masked" data-oo-privacy="mask" value="masked" />`
       )
       .run(async ({ intakeRegistry, flushEvents }) => {
         await flushEvents()
@@ -99,13 +99,13 @@ test.describe('recorder', () => {
             [1, 'DIV', ['id', 'not-obfuscated']],
             [1, '#text', 'displayed'],
             [3, '#text', '\n          '],
-            [0, 'P', ['data-dd-privacy', 'hidden']],
+            [0, 'P', ['data-oo-privacy', 'hidden']],
             [0, '#text', '\n          '],
-            [0, 'SPAN', ['data-dd-privacy', 'hidden']],
+            [0, 'SPAN', ['data-oo-privacy', 'hidden']],
             [0, '#text', '\n          '],
             [0, 'INPUT', ['id', 'input-not-obfuscated'], ['value', 'displayed']],
             [0, '#text', '\n          '],
-            [0, 'INPUT', ['id', 'input-masked'], ['data-dd-privacy', 'mask'], ['value', '***']],
+            [0, 'INPUT', ['id', 'input-masked'], ['data-oo-privacy', 'mask'], ['value', '***']],
           ],
           [ChangeType.Size, [8, expect.any(Number), expect.any(Number)], [10, expect.any(Number), expect.any(Number)]],
           [ChangeType.ScrollPosition, [0, 0, 0]],
@@ -198,7 +198,7 @@ test.describe('recorder', () => {
     createTest("don't record hidden elements mutations")
       .withRum()
       .withBody(html`
-        <div data-dd-privacy="hidden">
+        <div data-oo-privacy="hidden">
           <ul>
             <li></li>
           </ul>
@@ -404,8 +404,8 @@ test.describe('recorder', () => {
       })
       .withBody(html`
         <input type="text" id="first" name="first" />
-        <input type="text" id="second" name="second" data-dd-privacy="input-ignored" />
-        <input type="text" id="third" name="third" class="dd-privacy-input-ignored" />
+        <input type="text" id="second" name="second" data-oo-privacy="input-ignored" />
+        <input type="text" id="third" name="third" class="oo-privacy-input-ignored" />
         <input type="password" id="fourth" name="fourth" />
       `)
       .run(async ({ intakeRegistry, flushEvents, page }) => {
@@ -435,8 +435,8 @@ test.describe('recorder', () => {
     createTest('replace masked values by asterisks')
       .withRum()
       .withBody(html`
-        <input type="text" id="by-data-attribute" data-dd-privacy="mask" />
-        <input type="text" id="by-classname" class="dd-privacy-mask" />
+        <input type="text" id="by-data-attribute" data-oo-privacy="mask" />
+        <input type="text" id="by-classname" class="oo-privacy-mask" />
       `)
       .run(async ({ intakeRegistry, flushEvents, page }) => {
         const firstInput = page.locator('#by-data-attribute')
@@ -595,7 +595,7 @@ test.describe('recorder', () => {
         await scroll({ windowY: 100, containerX: 10 })
 
         await page.evaluate(() => {
-          window.DD_RUM!.startSessionReplayRecording()
+          window.OO_RUM!.startSessionReplayRecording()
         })
 
         // wait for recorder to be properly started
@@ -606,7 +606,7 @@ test.describe('recorder', () => {
 
         // trigger new full snapshot
         await page.evaluate(() => {
-          window.DD_RUM!.startView()
+          window.OO_RUM!.startView()
         })
 
         await flushEvents()
@@ -655,7 +655,7 @@ test.describe('recorder', () => {
       .withRum({ sessionReplaySampleRate: 0 })
       .run(async ({ intakeRegistry, page, flushEvents }) => {
         await page.evaluate(() => {
-          window.DD_RUM!.startSessionReplayRecording()
+          window.OO_RUM!.startSessionReplayRecording()
         })
 
         await flushEvents()
@@ -667,7 +667,7 @@ test.describe('recorder', () => {
       .withRum({ sessionReplaySampleRate: 0 })
       .run(async ({ intakeRegistry, page, flushEvents, browserContext }) => {
         await page.evaluate(() => {
-          window.DD_RUM!.startSessionReplayRecording({ force: true })
+          window.OO_RUM!.startSessionReplayRecording({ force: true })
         })
         const cookies = await browserContext.cookies()
         const sessionCookie = cookies.find((c) => c.name === SESSION_STORE_KEY)
@@ -683,8 +683,8 @@ test.describe('recorder', () => {
     .withRum()
     .run(async ({ intakeRegistry, page, flushEvents }) => {
       await page.evaluate(() => {
-        window.DD_RUM!.stopSessionReplayRecording()
-        window.DD_RUM!.startSessionReplayRecording()
+        window.OO_RUM!.stopSessionReplayRecording()
+        window.OO_RUM!.startSessionReplayRecording()
       })
 
       await flushEvents()

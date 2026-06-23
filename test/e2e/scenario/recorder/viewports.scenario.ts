@@ -1,10 +1,10 @@
-import type { ViewportResizeData, ScrollData } from '@datadog/browser-rum/src/types'
-import { IncrementalSource } from '@datadog/browser-rum/src/types'
+import type { ViewportResizeData, ScrollData } from '@openobserve/browser-rum/src/types'
+import { IncrementalSource } from '@openobserve/browser-rum/src/types'
 
-import { findAllIncrementalSnapshots, findAllVisualViewports } from '@datadog/browser-rum/test/record/segments'
+import { findAllIncrementalSnapshots, findAllVisualViewports } from '@openobserve/browser-rum/test/record/segments'
 import type { Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
-import { wait } from '@datadog/browser-core/test/wait'
+import { wait } from '@openobserve/browser-core/test/wait'
 import type { IntakeRegistry } from '../../lib/framework'
 import { createTest, html } from '../../lib/framework'
 

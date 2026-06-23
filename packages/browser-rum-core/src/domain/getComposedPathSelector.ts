@@ -1,5 +1,5 @@
-import { safeTruncate, ONE_KIBI_BYTE } from '@datadog/browser-core'
-import type { MatchOption } from '@datadog/browser-core'
+import { safeTruncate, ONE_KIBI_BYTE } from '@openobserve/browser-core'
+import type { MatchOption } from '@openobserve/browser-core'
 import {
   STABLE_ATTRIBUTES,
   isGeneratedValue,

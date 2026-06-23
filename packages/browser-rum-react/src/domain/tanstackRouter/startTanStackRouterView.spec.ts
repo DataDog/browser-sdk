@@ -1,4 +1,4 @@
-import { display } from '@datadog/browser-core'
+import { display } from '@openobserve/browser-core'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import { startTanStackRouterView, computeViewName } from './startTanStackRouterView'
 import type { AnyTanStackRouteMatch } from './types'

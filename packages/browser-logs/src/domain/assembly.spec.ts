@@ -1,9 +1,9 @@
-import type { RelativeTime, TimeStamp } from '@datadog/js-core/time'
-import type { Context } from '@datadog/browser-core'
-import { ONE_MINUTE, toTimeStamp } from '@datadog/js-core/time'
-import { ErrorSource, noop } from '@datadog/browser-core'
-import type { Clock } from '@datadog/browser-core/test'
-import { mockClock } from '@datadog/browser-core/test'
+import type { RelativeTime, TimeStamp } from '@openobserve/js-core/time'
+import type { Context } from '@openobserve/browser-core'
+import { ONE_MINUTE, toTimeStamp } from '@openobserve/js-core/time'
+import { ErrorSource, noop } from '@openobserve/browser-core'
+import type { Clock } from '@openobserve/browser-core/test'
+import { mockClock } from '@openobserve/browser-core/test'
 import type { LogsEvent } from '../logsEvent.types'
 import type { CommonContext } from '../rawLogsEvent.types'
 import { startLogsAssembly } from './assembly'
@@ -50,13 +50,13 @@ describe('startLogsAssembly', () => {
     hooks = createHooks()
     startRUMInternalContext(hooks)
     startLogsAssembly(configuration, lifeCycle, hooks.assemble, () => COMMON_CONTEXT, noop)
-    window.DD_RUM = {
+    window.OO_RUM = {
       getInternalContext: noop,
     }
   })
 
   afterEach(() => {
-    delete window.DD_RUM
+    delete window.OO_RUM
     serverLogs = []
   })
 
@@ -86,7 +86,7 @@ describe('startLogsAssembly', () => {
 
   describe('contexts inclusion', () => {
     it('should include message context', () => {
-      spyOn(window.DD_RUM!, 'getInternalContext').and.returnValue({
+      spyOn(window.OO_RUM!, 'getInternalContext').and.returnValue({
         view: { url: 'http://from-rum-context.com', id: 'view-id' },
       })
 
@@ -135,7 +135,7 @@ describe('startLogsAssembly', () => {
     })
 
     it('should include rum internal context related to the error time', () => {
-      window.DD_RUM = {
+      window.OO_RUM = {
         getInternalContext(startTime) {
           return { foo: startTime === 1234 ? 'b' : 'a' }
         },
@@ -149,7 +149,7 @@ describe('startLogsAssembly', () => {
     })
 
     it('should include RUM context', () => {
-      window.DD_RUM = {
+      window.OO_RUM = {
         getInternalContext() {
           return { view: { url: 'http://from-rum-context.com', id: 'view-id' } }
         },

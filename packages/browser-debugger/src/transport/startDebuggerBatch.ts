@@ -1,4 +1,4 @@
-import type { InitConfiguration, PageMayExitEvent, Batch } from '@datadog/browser-core'
+import type { InitConfiguration, PageMayExitEvent, Batch } from '@openobserve/browser-core'
 import {
   addEventListener,
   createBatch,
@@ -8,7 +8,7 @@ import {
   Observable,
   PageExitReason,
   createEndpointBuilder,
-} from '@datadog/browser-core'
+} from '@openobserve/browser-core'
 import { display } from '../domain/display'
 
 export function startDebuggerBatch(initConfiguration: InitConfiguration): Batch {

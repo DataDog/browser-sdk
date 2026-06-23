@@ -1,8 +1,8 @@
-import type { ClocksState, Duration } from '@datadog/js-core/time'
-import { addDuration } from '@datadog/js-core/time'
-import { createValueHistory, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
-import type { LifeCycle } from '@datadog/browser-rum-core'
-import { LifeCycleEventType } from '@datadog/browser-rum-core'
+import type { ClocksState, Duration } from '@openobserve/js-core/time'
+import { addDuration } from '@openobserve/js-core/time'
+import { createValueHistory, SESSION_TIME_OUT_DELAY } from '@openobserve/browser-core'
+import type { LifeCycle } from '@openobserve/browser-rum-core'
+import { LifeCycleEventType } from '@openobserve/browser-rum-core'
 
 export const ACTION_ID_HISTORY_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 

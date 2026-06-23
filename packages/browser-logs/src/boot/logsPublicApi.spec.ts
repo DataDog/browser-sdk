@@ -1,4 +1,4 @@
-import type { ContextManager } from '@datadog/browser-core'
+import type { ContextManager } from '@openobserve/browser-core'
 import {
   monitor,
   display,
@@ -6,14 +6,14 @@ import {
   TrackingConsent,
   startTelemetry,
   startSessionManager,
-} from '@datadog/browser-core'
+} from '@openobserve/browser-core'
 import {
   collectAsyncCalls,
   createFakeTelemetryObject,
   replaceMockable,
   replaceMockableWithSpy,
   createStartSessionManagerMock,
-} from '@datadog/browser-core/test'
+} from '@openobserve/browser-core/test'
 import { HandlerType } from '../domain/logger'
 import { StatusType } from '../domain/logger/isAuthorized'
 import type { LogsPublicApi } from './logsPublicApi'

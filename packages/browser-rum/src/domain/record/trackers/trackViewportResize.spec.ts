@@ -1,4 +1,4 @@
-import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
+import { createNewEvent, registerCleanupTask } from '@openobserve/browser-core/test'
 import { RecordType } from '../../../types'
 import type { EmitRecordCallback } from '../record.types'
 import { takeFullSnapshotForTesting } from '../test/serialization.specHelper'

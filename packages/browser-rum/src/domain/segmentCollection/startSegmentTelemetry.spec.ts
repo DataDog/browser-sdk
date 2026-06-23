@@ -1,7 +1,7 @@
-import type { Telemetry, HttpRequestEvent, BandwidthStats } from '@datadog/browser-core'
-import { Observable } from '@datadog/browser-core'
-import type { MockTelemetry } from '@datadog/browser-core/test'
-import { registerCleanupTask, startMockTelemetry } from '@datadog/browser-core/test'
+import type { Telemetry, HttpRequestEvent, BandwidthStats } from '@openobserve/browser-core'
+import { Observable } from '@openobserve/browser-core'
+import type { MockTelemetry } from '@openobserve/browser-core/test'
+import { registerCleanupTask, startMockTelemetry } from '@openobserve/browser-core/test'
 import { startSegmentTelemetry } from './startSegmentTelemetry'
 import type { ReplayPayload } from './buildReplayPayload'
 

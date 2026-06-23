@@ -7,7 +7,7 @@
  * @see [Browser Log Collection](https://docs.datadoghq.com/logs/log_collection/javascript/)
  */
 
-import { defineGlobal, globalObject } from '@datadog/browser-core'
+import { defineGlobal, globalObject } from '@openobserve/browser-core'
 import type { LogsPublicApi } from '../boot/logsPublicApi'
 import { makeLogsPublicApi } from '../boot/logsPublicApi'
 
@@ -46,8 +46,8 @@ export type {
   Site,
   RawReportType,
   ErrorSource,
-} from '@datadog/browser-core'
-export type { ConsoleApiName } from '@datadog/js-core/util'
+} from '@openobserve/browser-core'
+export type { ConsoleApiName } from '@openobserve/js-core/util'
 
 /**
  * The global Logs instance. Use this to call Logs methods.
@@ -56,9 +56,9 @@ export type { ConsoleApiName } from '@datadog/js-core/util'
  * @see {@link DatadogLogs}
  * @see [Browser Log Collection](https://docs.datadoghq.com/logs/log_collection/javascript/)
  */
-export const datadogLogs = makeLogsPublicApi()
+export const openobserveLogs = makeLogsPublicApi()
 
 interface BrowserWindow {
-  DD_LOGS?: LogsPublicApi
+  OO_LOGS?: LogsPublicApi
 }
-defineGlobal(globalObject as BrowserWindow, 'DD_LOGS', datadogLogs)
+defineGlobal(globalObject as BrowserWindow, 'OO_LOGS', openobserveLogs)

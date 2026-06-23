@@ -356,7 +356,7 @@ function ViewUpdateDescription({ event }: { event: RumViewUpdateEvent }) {
 
   return (
     <>
-      View update{event._dd && <Emphasis> v{event._dd.document_version}</Emphasis>}
+      View update{event._oo && <Emphasis> v{event._oo.document_version}</Emphasis>}
       {viewName && (
         <>
           {' '}

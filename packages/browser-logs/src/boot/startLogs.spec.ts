@@ -1,6 +1,6 @@
-import type { BufferedData } from '@datadog/browser-core'
-import { ErrorSource, display, BufferedObservable, FLUSH_DURATION_LIMIT } from '@datadog/browser-core'
-import type { Clock, Request } from '@datadog/browser-core/test'
+import type { BufferedData } from '@openobserve/browser-core'
+import { ErrorSource, display, BufferedObservable, FLUSH_DURATION_LIMIT } from '@openobserve/browser-core'
+import type { Clock, Request } from '@openobserve/browser-core/test'
 import {
   interceptRequests,
   mockEventBridge,
@@ -9,7 +9,7 @@ import {
   DEFAULT_FETCH_MOCK,
   createSessionManagerMock,
   MOCK_SESSION_ID,
-} from '@datadog/browser-core/test'
+} from '@openobserve/browser-core/test'
 
 import type { LogsConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
@@ -28,8 +28,8 @@ interface Rum {
 }
 declare global {
   interface Window {
-    DD_RUM?: Rum
-    DD_RUM_SYNTHETICS?: Rum
+    OO_RUM?: Rum
+    OO_RUM_SYNTHETICS?: Rum
   }
 }
 
@@ -70,7 +70,7 @@ describe('logs', () => {
   })
 
   afterEach(() => {
-    delete window.DD_RUM
+    delete window.OO_RUM
   })
 
   describe('request', () => {
@@ -229,7 +229,7 @@ describe('logs', () => {
 
     it('RUM context should take precedence over global context', () => {
       const { handleLog, logger, globalContext } = startLogsWithDefaults()
-      window.DD_RUM = {
+      window.OO_RUM = {
         getInternalContext: () => ({ view: { url: 'from-rum-context' } }),
       }
       globalContext.setContext({ view: { url: 'from-global-context' } })

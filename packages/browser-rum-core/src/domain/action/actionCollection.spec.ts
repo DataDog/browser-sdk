@@ -1,7 +1,7 @@
-import type { RelativeTime, Duration, ServerDuration, TimeStamp } from '@datadog/js-core/time'
-import { addDuration } from '@datadog/js-core/time'
-import { Observable } from '@datadog/browser-core'
-import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
+import type { RelativeTime, Duration, ServerDuration, TimeStamp } from '@openobserve/js-core/time'
+import { addDuration } from '@openobserve/js-core/time'
+import { Observable } from '@openobserve/browser-core'
+import { createNewEvent, registerCleanupTask } from '@openobserve/browser-core/test'
 import { collectAndValidateRawRumEvents, mockRumConfiguration } from '../../../test'
 import type { RawRumActionEvent, RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ActionType } from '../../rawRumEvent.types'
@@ -89,7 +89,7 @@ describe('actionCollection', () => {
       },
       date: jasmine.any(Number),
       type: RumEventType.ACTION,
-      _dd: {
+      _oo: {
         action: {
           target: {
             selector: '#foo',

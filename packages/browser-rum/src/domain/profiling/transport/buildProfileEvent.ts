@@ -1,6 +1,6 @@
-import { clockDrift } from '@datadog/js-core/time'
-import { buildTags } from '@datadog/browser-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
+import { clockDrift } from '@openobserve/js-core/time'
+import { buildTags } from '@openobserve/browser-core'
+import type { RumConfiguration } from '@openobserve/browser-rum-core'
 import type { BrowserProfileEvent, BrowserProfilerTrace, RumProfilerVitalEntry, RumViewEntry } from '../../../types'
 
 export interface ProfileEventAttributes {
@@ -49,7 +49,7 @@ export function buildProfileEvent(
     format: 'json',
     version: 4, // Ingestion event version (not the version application tag)
     tags_profiler: profileEventTags.join(','),
-    _dd: {
+    _oo: {
       clock_drift: clockDrift(),
     },
   }

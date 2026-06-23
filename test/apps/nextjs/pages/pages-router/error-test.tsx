@@ -1,5 +1,5 @@
-import { ErrorBoundary } from '@datadog/browser-rum-nextjs'
-import type { ErrorBoundaryFallback } from '@datadog/browser-rum-nextjs'
+import { ErrorBoundary } from '@openobserve/browser-rum-nextjs'
+import type { ErrorBoundaryFallback } from '@openobserve/browser-rum-nextjs'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 

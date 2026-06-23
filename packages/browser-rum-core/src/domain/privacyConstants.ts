@@ -1,4 +1,4 @@
-import { DefaultPrivacyLevel } from '@datadog/browser-core'
+import { DefaultPrivacyLevel } from '@openobserve/browser-core'
 
 export const NodePrivacyLevel = {
   IGNORE: 'ignore',
@@ -10,7 +10,7 @@ export const NodePrivacyLevel = {
 } as const
 export type NodePrivacyLevel = (typeof NodePrivacyLevel)[keyof typeof NodePrivacyLevel]
 
-export const PRIVACY_ATTR_NAME = 'data-dd-privacy'
+export const PRIVACY_ATTR_NAME = 'data-oo-privacy'
 
 // Privacy Attrs
 export const PRIVACY_ATTR_VALUE_ALLOW = 'allow'
@@ -20,7 +20,7 @@ export const PRIVACY_ATTR_VALUE_MASK_UNLESS_ALLOWLISTED = 'mask-unless-allowlist
 export const PRIVACY_ATTR_VALUE_HIDDEN = 'hidden'
 
 // Privacy Classes - not all customers can set plain HTML attributes, so support classes too
-export const PRIVACY_CLASS_PREFIX = 'dd-privacy-'
+export const PRIVACY_CLASS_PREFIX = 'oo-privacy-'
 
 // Private Replacement Templates
 export const CENSORED_STRING_MARK = '***'

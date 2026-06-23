@@ -1,5 +1,5 @@
-import { elapsed, timeStampNow } from '@datadog/js-core/time'
-import type { Duration, ClocksState } from '@datadog/js-core/time'
+import { elapsed, timeStampNow } from '@openobserve/js-core/time'
+import type { Duration, ClocksState } from '@openobserve/js-core/time'
 import type {
   XhrCompleteContext,
   XhrStartContext,
@@ -10,14 +10,14 @@ import type {
   Observable,
   BufferedData,
   Subscription,
-} from '@datadog/browser-core'
+} from '@openobserve/browser-core'
 import {
   RequestType,
   ResponseBodyAction,
   BufferedDataType,
   initFetchObservable,
   initXhrObservable,
-} from '@datadog/browser-core'
+} from '@openobserve/browser-core'
 import type { RumConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'

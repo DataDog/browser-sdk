@@ -1,7 +1,7 @@
-import { display } from '@datadog/browser-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
-import type { Clock, MockTelemetry } from '@datadog/browser-core/test'
-import { mockClock, startMockTelemetry, replaceMockableWithSpy } from '@datadog/browser-core/test'
+import { display } from '@openobserve/browser-core'
+import type { RumConfiguration } from '@openobserve/browser-rum-core'
+import type { Clock, MockTelemetry } from '@openobserve/browser-core/test'
+import { mockClock, startMockTelemetry, replaceMockableWithSpy } from '@openobserve/browser-core/test'
 import { MockWorker } from '../../../test'
 import type { CreateDeflateWorker } from './deflateWorker'
 import {

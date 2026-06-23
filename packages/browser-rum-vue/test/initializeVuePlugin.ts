@@ -1,5 +1,5 @@
-import type { RumInitConfiguration, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
-import { noop } from '@datadog/browser-core'
+import type { RumInitConfiguration, RumPublicApi, StartRumResult } from '@openobserve/browser-rum-core'
+import { noop } from '@openobserve/browser-core'
 import type { VuePluginConfiguration } from '../src/domain/vuePlugin'
 import { vuePlugin, resetVuePlugin } from '../src/domain/vuePlugin'
 import { registerCleanupTask } from '../../browser-core/test'

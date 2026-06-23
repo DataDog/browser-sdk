@@ -47,7 +47,7 @@ test.describe('action collection', () => {
               type: [],
             },
           },
-          _dd: expect.objectContaining({
+          _oo: expect.objectContaining({
             action: {
               target: expect.objectContaining({
                 selector: expect.any(String),
@@ -86,7 +86,7 @@ test.describe('action collection', () => {
 
       expect(actionEvents).toHaveLength(1)
       expect(actionEvents[0].action?.target?.name).toBe('click me')
-      expect(actionEvents[0]._dd.action?.target?.selector).toBe('BODY>BUTTON')
+      expect(actionEvents[0]._oo.action?.target?.selector).toBe('BODY>BUTTON')
     })
 
   createTest('does not report a click on the body when the target element changes between mousedown and mouseup')
@@ -494,10 +494,10 @@ test.describe('action collection', () => {
         const button = document.querySelector('button')
         function click() {
           const down = new PointerEvent('pointerdown', { isPrimary: true })
-          down.__ddIsTrusted = true
+          down.__ooIsTrusted = true
 
           const up = new PointerEvent('pointerup', { isPrimary: true })
-          up.__ddIsTrusted = true
+          up.__ooIsTrusted = true
 
           button.dispatchEvent(down)
           button.dispatchEvent(up)
@@ -544,7 +544,7 @@ test.describe('action collection with shadow DOM', () => {
       const actionEvents = intakeRegistry.rumActionEvents
       expect(actionEvents).toHaveLength(1)
       expect(actionEvents[0].action?.target?.name).toBe('Shadow Button')
-      expect(actionEvents[0]._dd.action?.target?.selector).toEqual('#shadow-host::shadow BUTTON')
+      expect(actionEvents[0]._oo.action?.target?.selector).toEqual('#shadow-host::shadow BUTTON')
     })
 
   createTest('traverse shadow boundary for data-dd-action-name')
@@ -599,7 +599,7 @@ test.describe('action collection with shadow DOM', () => {
 
       const actionEvents = intakeRegistry.rumActionEvents
       expect(actionEvents).toHaveLength(1)
-      expect(actionEvents[0]._dd.action?.target?.selector).toEqual(
+      expect(actionEvents[0]._oo.action?.target?.selector).toEqual(
         '#shadow-host::shadow BUTTON[data-testid="shadow-btn"]'
       )
     })
@@ -610,8 +610,8 @@ test.describe('custom actions with startAction/stopAction', () => {
     .withRum()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
-        window.DD_RUM!.startAction('checkout')
-        window.DD_RUM!.stopAction('checkout')
+        window.OO_RUM!.startAction('checkout')
+        window.OO_RUM!.stopAction('checkout')
       })
       await flushEvents()
 
@@ -626,9 +626,9 @@ test.describe('custom actions with startAction/stopAction', () => {
     .withRum()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
-        window.DD_RUM!.startAction('checkout')
-        window.DD_RUM!.addError(new Error('Payment failed'))
-        window.DD_RUM!.stopAction('checkout')
+        window.OO_RUM!.startAction('checkout')
+        window.OO_RUM!.addError(new Error('Payment failed'))
+        window.OO_RUM!.stopAction('checkout')
       })
       await flushEvents()
 
@@ -649,12 +649,12 @@ test.describe('custom actions with startAction/stopAction', () => {
     .withRum()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
-        window.DD_RUM!.startAction('load-data')
+        window.OO_RUM!.startAction('load-data')
         void fetch('/ok')
       })
       await waitForRequests(page)
       await page.evaluate(() => {
-        window.DD_RUM!.stopAction('load-data')
+        window.OO_RUM!.stopAction('load-data')
       })
       await flushEvents()
 
@@ -674,10 +674,10 @@ test.describe('custom actions with startAction/stopAction', () => {
     .withRum()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
-        window.DD_RUM!.startAction('click', { actionKey: 'button1' })
-        window.DD_RUM!.startAction('click', { actionKey: 'button2' })
-        window.DD_RUM!.stopAction('click', { actionKey: 'button2' })
-        window.DD_RUM!.stopAction('click', { actionKey: 'button1' })
+        window.OO_RUM!.startAction('click', { actionKey: 'button1' })
+        window.OO_RUM!.startAction('click', { actionKey: 'button2' })
+        window.OO_RUM!.stopAction('click', { actionKey: 'button2' })
+        window.OO_RUM!.stopAction('click', { actionKey: 'button1' })
       })
       await flushEvents()
 
@@ -690,8 +690,8 @@ test.describe('custom actions with startAction/stopAction', () => {
     .withRum()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
-        window.DD_RUM!.startAction('purchase', { context: { cart_id: 'abc123' } })
-        window.DD_RUM!.stopAction('purchase', { context: { total: 99.99 } })
+        window.OO_RUM!.startAction('purchase', { context: { cart_id: 'abc123' } })
+        window.OO_RUM!.stopAction('purchase', { context: { total: 99.99 } })
       })
       await flushEvents()
 
@@ -708,11 +708,11 @@ test.describe('custom actions with startAction/stopAction', () => {
   createTest('preserve timing when startAction is called before init')
     .withRum()
     .withRumInit((configuration) => {
-      window.DD_RUM!.startAction('pre_init_action')
+      window.OO_RUM!.startAction('pre_init_action')
 
       setTimeout(() => {
-        window.DD_RUM!.init(configuration)
-        window.DD_RUM!.stopAction('pre_init_action')
+        window.OO_RUM!.init(configuration)
+        window.OO_RUM!.stopAction('pre_init_action')
       }, 50)
     })
     .run(async ({ intakeRegistry, flushEvents }) => {
@@ -727,12 +727,12 @@ test.describe('custom actions with startAction/stopAction', () => {
   createTest('attribute errors and resources to action started before init')
     .withRum()
     .withRumInit((configuration) => {
-      window.DD_RUM!.startAction('pre_init_action')
+      window.OO_RUM!.startAction('pre_init_action')
 
       setTimeout(() => {
-        window.DD_RUM!.init(configuration)
+        window.OO_RUM!.init(configuration)
 
-        window.DD_RUM!.addError(new Error('Test error'))
+        window.OO_RUM!.addError(new Error('Test error'))
         void fetch('/ok')
       }, 10)
     })
@@ -740,7 +740,7 @@ test.describe('custom actions with startAction/stopAction', () => {
       await waitForRequests(page)
 
       await page.evaluate(() => {
-        window.DD_RUM!.stopAction('pre_init_action')
+        window.OO_RUM!.stopAction('pre_init_action')
       })
 
       await flushEvents()
@@ -775,7 +775,7 @@ test.describe('action collection with composed path selector', () => {
 
       const actionEvents = intakeRegistry.rumActionEvents
       expect(actionEvents).toHaveLength(1)
-      expect(actionEvents[0]._dd.action?.target?.composed_path_selector).toBe(
+      expect(actionEvents[0]._oo.action?.target?.composed_path_selector).toBe(
         'BUTTON#my-button[data-test-id="test-btn"].bar.baz.foo:nth-child(2):nth-of-type(2);'
       )
     })

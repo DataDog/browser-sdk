@@ -1,4 +1,4 @@
-import { dateNow } from '@datadog/js-core/time'
+import { dateNow } from '@openobserve/js-core/time'
 import { setTimeout, clearTimeout } from './timer'
 import { monitor } from './monitor'
 

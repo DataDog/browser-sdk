@@ -3,7 +3,7 @@ import { getZoneJsOriginalValue } from '../tools/getZoneJsOriginalValue'
 import { noop } from '../tools/utils/functionUtils'
 import type { CookieStore, CookieStoreEventMap, VisualViewport, VisualViewportEventMap } from './browser.types'
 
-export type TrustableEvent<E extends Event = Event> = E & { __ddIsTrusted?: boolean }
+export type TrustableEvent<E extends Event = Event> = E & { __ooIsTrusted?: boolean }
 
 export const enum DOM_EVENT {
   BEFORE_UNLOAD = 'beforeunload',
@@ -119,7 +119,7 @@ export function addEventListeners<Target extends EventTarget, EventName extends 
   { once, capture, passive }: AddEventListenerOptions = {}
 ) {
   const listenerWithMonitor = monitor((event: TrustableEvent) => {
-    if (!event.isTrusted && !event.__ddIsTrusted && allowUntrustedEventsFromConfiguration === false) {
+    if (!event.isTrusted && !event.__ooIsTrusted && allowUntrustedEventsFromConfiguration === false) {
       return
     }
     if (once) {

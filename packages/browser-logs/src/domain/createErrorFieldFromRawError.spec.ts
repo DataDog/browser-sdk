@@ -1,5 +1,5 @@
-import type { TimeStamp, RelativeTime } from '@datadog/js-core/time'
-import { ErrorHandling, ErrorSource, type RawError } from '@datadog/browser-core'
+import type { TimeStamp, RelativeTime } from '@openobserve/js-core/time'
+import { ErrorHandling, ErrorSource, type RawError } from '@openobserve/browser-core'
 import { createErrorFieldFromRawError } from './createErrorFieldFromRawError'
 
 describe('createErrorFieldFromRawError', () => {

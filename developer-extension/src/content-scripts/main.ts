@@ -1,14 +1,14 @@
-import type { LogsInitConfiguration } from '@datadog/browser-logs'
-import type { RumInitConfiguration } from '@datadog/browser-rum'
+import type { LogsInitConfiguration } from '@openobserve/browser-logs'
+import type { RumInitConfiguration } from '@openobserve/browser-rum'
 import type { Settings } from '../common/extension.types'
 import { EventListeners } from '../common/eventListeners'
 import { DEV_LOGS_URL, DEV_RUM_SLIM_URL, DEV_RUM_URL } from '../common/packagesUrlConstants'
 import { SESSION_STORAGE_SETTINGS_KEY } from '../common/sessionKeyConstant'
 
 const windowWithSdkGlobals = window as Window & {
-  DD_RUM?: SdkPublicApi
-  DD_LOGS?: SdkPublicApi
-  __ddBrowserSdkExtensionCallback?: (message: unknown) => void
+  OO_RUM?: SdkPublicApi
+  OO_LOGS?: SdkPublicApi
+  __ooBrowserSdkExtensionCallback?: (message: unknown) => void
 }
 
 interface SdkPublicApi {
@@ -17,7 +17,7 @@ interface SdkPublicApi {
 
 export function main() {
   // Prevent multiple executions when the devetools are reconnecting
-  if (windowWithSdkGlobals.__ddBrowserSdkExtensionCallback) {
+  if (windowWithSdkGlobals.__ooBrowserSdkExtensionCallback) {
     return
   }
 
@@ -31,8 +31,8 @@ export function main() {
     // This happens when the page is loaded and then the devtools are opened.
     noBrowserSdkLoaded()
   ) {
-    const ddRumGlobal = instrumentGlobal('DD_RUM')
-    const ddLogsGlobal = instrumentGlobal('DD_LOGS')
+    const ddRumGlobal = instrumentGlobal('OO_RUM')
+    const ddLogsGlobal = instrumentGlobal('OO_LOGS')
 
     if (settings.debugMode) {
       setDebug(ddRumGlobal)
@@ -57,10 +57,10 @@ export function main() {
 function sendEventsToExtension() {
   // This script is executed in the "main" execution world, the same world as the webpage. Thus, it
   // can define a global callback variable to listen to SDK events.
-  windowWithSdkGlobals.__ddBrowserSdkExtensionCallback = (message: unknown) => {
+  windowWithSdkGlobals.__ooBrowserSdkExtensionCallback = (message: unknown) => {
     // Relays any message to the "isolated" content-script via a custom event.
     window.dispatchEvent(
-      new CustomEvent('__ddBrowserSdkMessage', {
+      new CustomEvent('__ooBrowserSdkMessage', {
         detail: message,
       })
     )
@@ -80,7 +80,7 @@ function getSettings() {
 }
 
 function noBrowserSdkLoaded() {
-  return !windowWithSdkGlobals.DD_RUM && !windowWithSdkGlobals.DD_LOGS
+  return !windowWithSdkGlobals.OO_RUM && !windowWithSdkGlobals.OO_LOGS
 }
 
 function injectDevBundle(url: string, global: GlobalInstrumentation) {
@@ -187,7 +187,7 @@ function loadSdkScriptFromURL(url: string) {
 }
 
 type GlobalInstrumentation = ReturnType<typeof instrumentGlobal>
-function instrumentGlobal(global: 'DD_RUM' | 'DD_LOGS') {
+function instrumentGlobal(global: 'OO_RUM' | 'OO_LOGS') {
   const eventListeners = new EventListeners<SdkPublicApi>()
   let returnedInstance: SdkPublicApi | undefined
   let lastInstance: SdkPublicApi | undefined

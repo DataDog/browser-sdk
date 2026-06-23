@@ -1,5 +1,5 @@
 {
-  "name": "@datadog/browser-logs",
+  "name": "@openobserve/browser-logs",
   "version": "7.3.0",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
@@ -19,14 +19,14 @@
     "prepack": "yarn build"
   },
   "dependencies": {
-    "@datadog/browser-core": "7.3.0",
-    "@datadog/js-core": "0.0.3"
+    "@openobserve/browser-core": "7.3.0",
+    "@openobserve/js-core": "0.0.3"
   },
   "peerDependencies": {
-    "@datadog/browser-rum": "7.3.0"
+    "@openobserve/browser-rum": "7.3.0"
   },
   "peerDependenciesMeta": {
-    "@datadog/browser-rum": {
+    "@openobserve/browser-rum": {
       "optional": true
     }
   },

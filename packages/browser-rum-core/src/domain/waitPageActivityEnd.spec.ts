@@ -1,8 +1,8 @@
-import type { Subscription } from '@datadog/browser-core'
-import { ONE_SECOND } from '@datadog/js-core/time'
-import { Observable } from '@datadog/browser-core'
-import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, replaceMockable } from '@datadog/browser-core/test'
+import type { Subscription } from '@openobserve/browser-core'
+import { ONE_SECOND } from '@openobserve/js-core/time'
+import { Observable } from '@openobserve/browser-core'
+import type { Clock } from '@openobserve/browser-core/test'
+import { mockClock, replaceMockable } from '@openobserve/browser-core/test'
 import {
   appendElement,
   createMutationRecord,

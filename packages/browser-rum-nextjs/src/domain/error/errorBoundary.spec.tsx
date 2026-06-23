@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { disableJasmineUncaughtExceptionTracking, ignoreConsoleLogs } from '@datadog/browser-core/test'
+import { disableJasmineUncaughtExceptionTracking, ignoreConsoleLogs } from '@openobserve/browser-core/test'
 import { appendComponent } from '../../../../browser-rum-react/test/appendComponent'
 import { initReactOldBrowsersSupport } from '../../../../browser-rum-react/test/reactOldBrowsersSupport'
 import { initializeNextjsPlugin } from '../../../test/initializeNextjsPlugin'

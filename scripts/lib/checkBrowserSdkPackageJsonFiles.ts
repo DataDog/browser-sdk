@@ -17,7 +17,7 @@ export function checkPackageJsonFiles(): void {
 `
   )
 
-  // Map each independently-versioned package (e.g. @datadog/js-core) to its own version, so we can
+  // Map each independently-versioned package (e.g. @openobserve/js-core) to its own version, so we can
   // check that dependents reference the matching version rather than the synced release version.
   const independentVersions = new Map<string, string>()
   for (const { content } of packageJsonFiles) {
@@ -36,7 +36,7 @@ function checkPackageJsonVersion(packageJsonInfo: PackageJsonInfo): void {
     // The developer extension is a private package, but it should still have a version
     if (
       packageJsonInfo.content.version &&
-      packageJsonInfo.content.name !== '@datadog/browser-sdk-developer-extension' &&
+      packageJsonInfo.content.name !== '@openobserve/browser-sdk-developer-extension' &&
       packageJsonInfo.relativePath !== 'package.json'
     ) {
       throw new Error(`Private package ${packageJsonInfo.relativePath} should not have a version`)
@@ -73,7 +73,7 @@ function checkPackageDependencyVersions(
     }
 
     for (const [dependencyName, dependencyVersion] of Object.entries(dependencies)) {
-      // Independently-versioned packages (e.g. @datadog/js-core) are pinned to their own version,
+      // Independently-versioned packages (e.g. @openobserve/js-core) are pinned to their own version,
       // so dependents must reference that version rather than the synced release version.
       const expectedIndependentVersion = independentVersions.get(dependencyName)
       if (expectedIndependentVersion !== undefined) {

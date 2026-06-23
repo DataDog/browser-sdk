@@ -1,5 +1,5 @@
-import { ONE_MINUTE, addDuration } from '@datadog/js-core/time'
-import type { Duration, RelativeTime } from '@datadog/js-core/time'
+import { ONE_MINUTE, addDuration } from '@openobserve/js-core/time'
+import type { Duration, RelativeTime } from '@openobserve/js-core/time'
 import type { Clock } from '../../test'
 import { mockClock } from '../../test'
 import { CLEAR_OLD_VALUES_INTERVAL, type ValueHistory, createValueHistory } from './valueHistory'

@@ -1,4 +1,4 @@
-import type { Encoder, EncoderResult, Uint8ArrayBuffer } from '@datadog/browser-core'
+import type { Encoder, EncoderResult, Uint8ArrayBuffer } from '@openobserve/browser-core'
 import type { BrowserRecord, BrowserSegmentMetadata, CreationReason, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
 import * as replayStats from '../replayStats'

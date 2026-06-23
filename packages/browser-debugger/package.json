@@ -1,5 +1,5 @@
 {
-  "name": "@datadog/browser-debugger",
+  "name": "@openobserve/browser-debugger",
   "private": true,
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
@@ -22,8 +22,8 @@
     "acorn": "8.17.0"
   },
   "dependencies": {
-    "@datadog/browser-core": "7.3.0",
-    "@datadog/js-core": "0.0.3"
+    "@openobserve/browser-core": "7.3.0",
+    "@openobserve/js-core": "0.0.3"
   },
   "repository": {
     "type": "git",

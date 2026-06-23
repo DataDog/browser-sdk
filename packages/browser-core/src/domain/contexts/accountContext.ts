@@ -1,5 +1,5 @@
-import type { Hook } from '@datadog/js-core/assembly'
-import { SKIPPED } from '@datadog/js-core/assembly'
+import type { Hook } from '@openobserve/js-core/assembly'
+import { SKIPPED } from '@openobserve/js-core/assembly'
 import type { Configuration } from '../configuration'
 import { CustomerDataType } from '../context/contextConstants'
 import { storeContextManager } from '../context/storeContextManager'

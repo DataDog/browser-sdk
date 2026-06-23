@@ -1,5 +1,5 @@
-import { elapsed, clocksOrigin, clocksNow } from '@datadog/js-core/time'
-import type { SessionManager, Profiler, DeflateEncoderStreamId, Encoder } from '@datadog/browser-core'
+import { elapsed, clocksOrigin, clocksNow } from '@openobserve/js-core/time'
+import type { SessionManager, Profiler, DeflateEncoderStreamId, Encoder } from '@openobserve/browser-core'
 import {
   addEventListener,
   canUseEventBridge,
@@ -12,10 +12,10 @@ import {
   mockable,
   isSampled,
   correctedChildSampleRate,
-} from '@datadog/browser-core'
+} from '@openobserve/browser-core'
 
-import type { LifeCycle, RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
-import { LifeCycleEventType } from '@datadog/browser-rum-core'
+import type { LifeCycle, RumConfiguration, ViewHistory } from '@openobserve/browser-rum-core'
+import { LifeCycleEventType } from '@openobserve/browser-rum-core'
 import type { BrowserProfilerTrace, RumViewEntry } from '../../types'
 import type {
   RumProfilerInstance,
@@ -231,7 +231,7 @@ export function createRumProfiler(
         // Missing Response Header (`js-profiling`) that is required to enable the profiler.
         // We should suggest the user to enable the Response Header in their server configuration.
         display.warn(
-          '[DD_RUM] Profiler startup failed. Ensure your server includes the `Document-Policy: js-profiling` response header when serving HTML pages.',
+          '[OO_RUM] Profiler startup failed. Ensure your server includes the `Document-Policy: js-profiling` response header when serving HTML pages.',
           e
         )
         profilingContextManager.set({ status: 'error', error_reason: 'missing-document-policy-header' })

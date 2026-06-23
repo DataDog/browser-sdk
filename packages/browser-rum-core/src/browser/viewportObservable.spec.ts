@@ -1,6 +1,6 @@
-import type { Subscription } from '@datadog/browser-core/src/tools/observable'
-import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, createNewEvent, registerCleanupTask, waitAfterNextPaint } from '@datadog/browser-core/test'
+import type { Subscription } from '@openobserve/browser-core/src/tools/observable'
+import type { Clock } from '@openobserve/browser-core/test'
+import { mockClock, createNewEvent, registerCleanupTask, waitAfterNextPaint } from '@openobserve/browser-core/test'
 import type { ViewportDimension } from './viewportObservable'
 import { getViewportDimension, initViewportObservable } from './viewportObservable'
 

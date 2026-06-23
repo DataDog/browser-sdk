@@ -1,4 +1,4 @@
-import type { ProfilerTrace } from '@datadog/browser-core'
+import type { ProfilerTrace } from '@openobserve/browser-core'
 
 const generateFiftyRandomSamples = () => {
   const samples = []

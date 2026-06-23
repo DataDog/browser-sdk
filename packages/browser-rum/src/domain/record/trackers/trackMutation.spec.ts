@@ -1,12 +1,12 @@
-import { DefaultPrivacyLevel } from '@datadog/browser-core'
-import { registerCleanupTask } from '@datadog/browser-core/test'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
+import { DefaultPrivacyLevel } from '@openobserve/browser-core'
+import { registerCleanupTask } from '@openobserve/browser-core/test'
+import type { RumConfiguration } from '@openobserve/browser-rum-core'
 import {
   PRIVACY_ATTR_NAME,
   PRIVACY_ATTR_VALUE_ALLOW,
   PRIVACY_ATTR_VALUE_MASK,
   PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
-} from '@datadog/browser-rum-core'
+} from '@openobserve/browser-rum-core'
 import type { BrowserChangeRecord, BrowserFullSnapshotChangeRecord, BrowserRecord } from '../../../types'
 import { ChangeType } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
@@ -488,13 +488,13 @@ describe('trackMutation', () => {
 
     it('respects the parent privacy level when emitting a text node mutation', async () => {
       const { mutation } = await recordMutationOf(
-        '<div data-dd-privacy="allow"><div>foo 81</div></div>',
+        '<div data-oo-privacy="allow"><div>foo 81</div></div>',
         (sandbox: HTMLElement): void => {
           sandbox.firstElementChild!.firstChild!.textContent = 'bazz 7'
         },
         { configuration: { defaultPrivacyLevel: DefaultPrivacyLevel.MASK } }
       )
-      // sandbox=0 (with data-dd-privacy="allow"), inner div=1, text=2.
+      // sandbox=0 (with data-oo-privacy="allow"), inner div=1, text=2.
       // sandbox's "allow" overrides the MASK default for its descendants.
       expect(mutation?.data).toEqual([[ChangeType.Text, [2, 'bazz 7']]])
     })
@@ -628,7 +628,7 @@ describe('trackMutation', () => {
   describe('hidden nodes', () => {
     it('does not emit attribute mutations on hidden nodes', async () => {
       const { mutation } = await recordMutationOf(
-        '<div><div data-dd-privacy="hidden"></div></div>',
+        '<div><div data-oo-privacy="hidden"></div></div>',
         (sandbox: HTMLElement): void => {
           ;(sandbox.firstElementChild as HTMLElement).setAttribute('foo', 'bar')
         }
@@ -639,7 +639,7 @@ describe('trackMutation', () => {
     describe('does not emit mutations occurring in hidden node', () => {
       it('when adding a new node', async () => {
         const { mutation } = await recordMutationOf(
-          '<div><div data-dd-privacy="hidden"></div></div>',
+          '<div><div data-oo-privacy="hidden"></div></div>',
           (sandbox: HTMLElement): void => {
             sandbox.firstElementChild!.appendChild(sandbox.ownerDocument.createTextNode('function foo() {}'))
           }
@@ -649,7 +649,7 @@ describe('trackMutation', () => {
 
       it('when mutating a known child node', async () => {
         const { mutation } = await recordMutationOf(
-          '<div><div data-dd-privacy="hidden"></div></div>',
+          '<div><div data-oo-privacy="hidden"></div></div>',
           (sandbox: HTMLElement): void => {
             ;(sandbox.firstElementChild!.firstChild as Text).data = 'function bar() {}'
           },
@@ -665,7 +665,7 @@ describe('trackMutation', () => {
 
       it('when moving a known node into an hidden node', async () => {
         const { mutation } = await recordMutationOf(
-          '<div><div data-dd-privacy="hidden"></div>function foo() {}</div>',
+          '<div><div data-oo-privacy="hidden"></div>function foo() {}</div>',
           (sandbox: HTMLElement): void => {
             const textNode = sandbox.lastChild as Text
             sandbox.firstElementChild!.appendChild(textNode)

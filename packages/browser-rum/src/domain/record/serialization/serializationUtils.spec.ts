@@ -1,4 +1,4 @@
-import { NodePrivacyLevel } from '@datadog/browser-rum-core'
+import { NodePrivacyLevel } from '@openobserve/browser-rum-core'
 import { getElementInputValue, switchToAbsoluteUrl } from './serializationUtils'
 
 describe('getElementInputValue', () => {

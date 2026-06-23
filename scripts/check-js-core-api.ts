@@ -18,7 +18,7 @@ runMain(() => {
 
   for (const name of subpaths) {
     const entryPoint = path.join(packageDir, `cjs/entries/${name}.d.ts`)
-    printLog(`Checking API surface for @datadog/js-core/${name}...`)
+    printLog(`Checking API surface for @openobserve/js-core/${name}...`)
 
     const configObject: IConfigFile = {
       mainEntryPointFilePath: entryPoint,
@@ -47,7 +47,7 @@ runMain(() => {
 
     if (!result.succeeded) {
       printError(
-        `API surface check failed for @datadog/js-core/${name}. Use \`yarn api:check --update\` to update the API report if the changes are intentional`
+        `API surface check failed for @openobserve/js-core/${name}. Use \`yarn api:check --update\` to update the API report if the changes are intentional`
       )
       process.exit(1)
     }

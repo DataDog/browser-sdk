@@ -1,4 +1,4 @@
-import { ONE_MINUTE } from '@datadog/js-core/time'
+import { ONE_MINUTE } from '@openobserve/js-core/time'
 import {
   DefaultPrivacyLevel,
   INTAKE_SITE_US1,
@@ -6,8 +6,8 @@ import {
   setCookie,
   deleteCookie,
   createContextManager,
-} from '@datadog/browser-core'
-import { interceptRequests, registerCleanupTask } from '@datadog/browser-core/test'
+} from '@openobserve/browser-core'
+import { interceptRequests, registerCleanupTask } from '@openobserve/browser-core/test'
 import { appendElement } from '../../../test'
 import type { RumInitConfiguration } from './configuration'
 import {

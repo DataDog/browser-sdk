@@ -1,6 +1,6 @@
-import type { LogsInitConfiguration } from '@datadog/browser-logs'
-import type { DebuggerInitConfiguration } from '@datadog/browser-debugger'
-import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
+import type { LogsInitConfiguration } from '@openobserve/browser-logs'
+import type { DebuggerInitConfiguration } from '@openobserve/browser-debugger'
+import type { RumInitConfiguration, RemoteConfiguration } from '@openobserve/browser-rum-core'
 import type { BrowserContext, Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
 import { addTag, addTestOptimizationTags } from '../helpers/tags'
@@ -315,11 +315,11 @@ class TestBuilder {
   }
 
   private rumInit: (configuration: RumInitConfiguration) => void = (configuration) => {
-    window.DD_RUM!.init(configuration)
+    window.OO_RUM!.init(configuration)
   }
 
   private logsInit: (configuration: LogsInitConfiguration) => void = (configuration) => {
-    window.DD_LOGS!.init(configuration)
+    window.OO_LOGS!.init(configuration)
   }
 }
 

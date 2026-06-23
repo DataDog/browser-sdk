@@ -352,253 +352,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@datadog/browser-core@npm:7.3.0, @datadog/browser-core@workspace:*, @datadog/browser-core@workspace:packages/browser-core":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-core@workspace:packages/browser-core"
-  dependencies:
-    "@datadog/js-core": "npm:0.0.3"
-    "@types/pako": "npm:2.0.4"
-    pako: "npm:2.1.0"
-  languageName: unknown
-  linkType: soft
-
-"@datadog/browser-debugger@workspace:packages/browser-debugger":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-debugger@workspace:packages/browser-debugger"
-  dependencies:
-    "@datadog/browser-core": "npm:7.3.0"
-    "@datadog/js-core": "npm:0.0.3"
-    acorn: "npm:8.17.0"
-  languageName: unknown
-  linkType: soft
-
-"@datadog/browser-logs@workspace:*, @datadog/browser-logs@workspace:packages/browser-logs":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-logs@workspace:packages/browser-logs"
-  dependencies:
-    "@datadog/browser-core": "npm:7.3.0"
-    "@datadog/js-core": "npm:0.0.3"
-  peerDependencies:
-    "@datadog/browser-rum": 7.3.0
-  peerDependenciesMeta:
-    "@datadog/browser-rum":
-      optional: true
-  languageName: unknown
-  linkType: soft
-
-"@datadog/browser-rum-angular@workspace:packages/browser-rum-angular":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-rum-angular@workspace:packages/browser-rum-angular"
-  dependencies:
-    "@angular/common": "npm:22.0.1"
-    "@angular/compiler": "npm:22.0.1"
-    "@angular/core": "npm:22.0.1"
-    "@angular/platform-browser": "npm:22.0.1"
-    "@angular/router": "npm:22.0.1"
-    "@datadog/browser-core": "npm:7.3.0"
-    "@datadog/browser-rum-core": "npm:7.3.0"
-    "@datadog/js-core": "npm:0.0.3"
-    rxjs: "npm:7.8.2"
-  peerDependencies:
-    "@angular/core": ">=15 <=22"
-    "@angular/router": ">=15 <=22"
-    rxjs: ">=7"
-  languageName: unknown
-  linkType: soft
-
-"@datadog/browser-rum-core@npm:7.3.0, @datadog/browser-rum-core@workspace:*, @datadog/browser-rum-core@workspace:packages/browser-rum-core":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-rum-core@workspace:packages/browser-rum-core"
-  dependencies:
-    "@datadog/browser-core": "npm:7.3.0"
-    "@datadog/js-core": "npm:0.0.3"
-    ajv: "npm:8.20.0"
-  languageName: unknown
-  linkType: soft
-
-"@datadog/browser-rum-nextjs@workspace:packages/browser-rum-nextjs":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-rum-nextjs@workspace:packages/browser-rum-nextjs"
-  dependencies:
-    "@datadog/browser-core": "npm:7.3.0"
-    "@datadog/browser-rum-core": "npm:7.3.0"
-    "@datadog/browser-rum-react": "npm:7.3.0"
-    "@datadog/js-core": "npm:0.0.3"
-    "@types/react": "npm:19.2.17"
-    next: "npm:16.2.9"
-    react: "npm:19.2.7"
-    react-dom: "npm:19.2.7"
-  peerDependencies:
-    next: ">=13.0.0"
-    react: ">=18.0.0"
-  peerDependenciesMeta:
-    next:
-      optional: true
-    react:
-      optional: true
-  languageName: unknown
-  linkType: soft
-
-"@datadog/browser-rum-nuxt@workspace:packages/browser-rum-nuxt":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-rum-nuxt@workspace:packages/browser-rum-nuxt"
-  dependencies:
-    "@datadog/browser-core": "npm:7.3.0"
-    "@datadog/browser-rum-core": "npm:7.3.0"
-    "@datadog/js-core": "npm:0.0.3"
-    vue: "npm:3.5.38"
-    vue-router: "npm:5.1.0"
-  peerDependencies:
-    nuxt: 3 || 4
-    vue: ^3.5.0
-    vue-router: ^4.0.0 || ^5.0.0
-  peerDependenciesMeta:
-    "@datadog/browser-rum":
-      optional: true
-    "@datadog/browser-rum-slim":
-      optional: true
-    nuxt:
-      optional: true
-    vue:
-      optional: true
-    vue-router:
-      optional: true
-  languageName: unknown
-  linkType: soft
-
-"@datadog/browser-rum-react@npm:7.3.0, @datadog/browser-rum-react@workspace:packages/browser-rum-react":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-rum-react@workspace:packages/browser-rum-react"
-  dependencies:
-    "@datadog/browser-core": "npm:7.3.0"
-    "@datadog/browser-rum-core": "npm:7.3.0"
-    "@datadog/js-core": "npm:0.0.3"
-    "@tanstack/react-router": "npm:1.170.15"
-    "@types/react": "npm:19.2.17"
-    "@types/react-dom": "npm:19.2.3"
-    react: "npm:19.2.7"
-    react-dom: "npm:19.2.7"
-    react-router: "npm:7.17.0"
-    react-router-dom: "npm:7.17.0"
-    react-router-dom-6: "npm:react-router-dom@6.30.4"
-  peerDependencies:
-    "@tanstack/react-router": ">=1.64.0 <2"
-    react: 18 || 19
-    react-router: 6 || 7
-    react-router-dom: 6 || 7
-  peerDependenciesMeta:
-    "@datadog/browser-rum":
-      optional: true
-    "@datadog/browser-rum-slim":
-      optional: true
-    "@tanstack/react-router":
-      optional: true
-    react:
-      optional: true
-    react-router:
-      optional: true
-    react-router-dom:
-      optional: true
-  languageName: unknown
-  linkType: soft
-
-"@datadog/browser-rum-slim@workspace:packages/browser-rum-slim":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-rum-slim@workspace:packages/browser-rum-slim"
-  dependencies:
-    "@datadog/browser-core": "npm:7.3.0"
-    "@datadog/browser-rum-core": "npm:7.3.0"
-  peerDependencies:
-    "@datadog/browser-logs": 7.3.0
-  peerDependenciesMeta:
-    "@datadog/browser-logs":
-      optional: true
-  languageName: unknown
-  linkType: soft
-
-"@datadog/browser-rum-vue@workspace:packages/browser-rum-vue":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-rum-vue@workspace:packages/browser-rum-vue"
-  dependencies:
-    "@datadog/browser-core": "npm:7.3.0"
-    "@datadog/browser-rum-core": "npm:7.3.0"
-    "@datadog/js-core": "npm:0.0.3"
-    "@vue/compiler-dom": "npm:3.5.38"
-    "@vue/test-utils": "npm:2.4.11"
-    vue: "npm:3.5.38"
-    vue-router: "npm:5.1.0"
-  peerDependencies:
-    vue: ^3.5.0
-    vue-router: ^4.0.0 || ^5.0.0
-  peerDependenciesMeta:
-    "@datadog/browser-rum":
-      optional: true
-    "@datadog/browser-rum-slim":
-      optional: true
-    vue:
-      optional: true
-    vue-router:
-      optional: true
-  languageName: unknown
-  linkType: soft
-
-"@datadog/browser-rum@workspace:*, @datadog/browser-rum@workspace:packages/browser-rum":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-rum@workspace:packages/browser-rum"
-  dependencies:
-    "@datadog/browser-core": "npm:7.3.0"
-    "@datadog/browser-rum-core": "npm:7.3.0"
-    "@datadog/browser-worker": "npm:7.3.0"
-    "@datadog/js-core": "npm:0.0.3"
-    "@types/pako": "npm:2.0.4"
-    pako: "npm:2.1.0"
-  peerDependencies:
-    "@datadog/browser-logs": 7.3.0
-  peerDependenciesMeta:
-    "@datadog/browser-logs":
-      optional: true
-  languageName: unknown
-  linkType: soft
-
-"@datadog/browser-sdk-developer-extension@workspace:developer-extension":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-sdk-developer-extension@workspace:developer-extension"
-  dependencies:
-    "@datadog/browser-core": "workspace:*"
-    "@datadog/browser-logs": "workspace:*"
-    "@datadog/browser-rum": "workspace:*"
-    "@datadog/browser-rum-core": "workspace:*"
-    "@mantine/core": "npm:9.3.1"
-    "@mantine/hooks": "npm:9.3.1"
-    "@tabler/icons-react": "npm:3.44.0"
-    "@types/chrome": "npm:0.1.43"
-    "@types/react": "npm:19.2.17"
-    "@types/react-dom": "npm:19.2.3"
-    "@wxt-dev/module-react": "npm:1.2.2"
-    clsx: "npm:2.1.1"
-    react: "npm:19.2.7"
-    react-dom: "npm:19.2.7"
-    typescript: "npm:6.0.3"
-    vite: "npm:8.0.16"
-    wxt: "npm:0.20.26"
-  languageName: unknown
-  linkType: soft
-
-"@datadog/browser-worker@npm:7.3.0, @datadog/browser-worker@workspace:packages/browser-worker":
-  version: 0.0.0-use.local
-  resolution: "@datadog/browser-worker@workspace:packages/browser-worker"
-  dependencies:
-    "@datadog/browser-core": "npm:7.3.0"
-    webpack: "npm:5.107.2"
-  languageName: unknown
-  linkType: soft
-
-"@datadog/js-core@npm:0.0.3, @datadog/js-core@workspace:packages/js-core":
-  version: 0.0.0-use.local
-  resolution: "@datadog/js-core@workspace:packages/js-core"
-  languageName: unknown
-  linkType: soft
-
 "@datadog/rum-events-format@DataDog/rum-events-format#commit=02c94b31a2676458a156ed627f3edcd87254beb7":
   version: 0.0.0
   resolution: "@datadog/rum-events-format@https://github.com/DataDog/rum-events-format.git#commit=02c94b31a2676458a156ed627f3edcd87254beb7"
@@ -1815,6 +1568,253 @@ __metadata:
   checksum: 10c0/54700e055037f1a63bfcc86d24822203b25759598c2c3e295d1435130a449108aebc119c9c2e467744767dbe0b6ab47a182c61aa1071ba7368f5e20ab197ba65
   languageName: node
   linkType: hard
+
+"@openobserve/browser-core@npm:7.3.0, @openobserve/browser-core@workspace:*, @openobserve/browser-core@workspace:packages/browser-core":
+  version: 0.0.0-use.local
+  resolution: "@openobserve/browser-core@workspace:packages/browser-core"
+  dependencies:
+    "@openobserve/js-core": "npm:0.0.3"
+    "@types/pako": "npm:2.0.4"
+    pako: "npm:2.1.0"
+  languageName: unknown
+  linkType: soft
+
+"@openobserve/browser-debugger@workspace:packages/browser-debugger":
+  version: 0.0.0-use.local
+  resolution: "@openobserve/browser-debugger@workspace:packages/browser-debugger"
+  dependencies:
+    "@openobserve/browser-core": "npm:7.3.0"
+    "@openobserve/js-core": "npm:0.0.3"
+    acorn: "npm:8.17.0"
+  languageName: unknown
+  linkType: soft
+
+"@openobserve/browser-logs@workspace:*, @openobserve/browser-logs@workspace:packages/browser-logs":
+  version: 0.0.0-use.local
+  resolution: "@openobserve/browser-logs@workspace:packages/browser-logs"
+  dependencies:
+    "@openobserve/browser-core": "npm:7.3.0"
+    "@openobserve/js-core": "npm:0.0.3"
+  peerDependencies:
+    "@openobserve/browser-rum": 7.3.0
+  peerDependenciesMeta:
+    "@openobserve/browser-rum":
+      optional: true
+  languageName: unknown
+  linkType: soft
+
+"@openobserve/browser-rum-angular@workspace:packages/browser-rum-angular":
+  version: 0.0.0-use.local
+  resolution: "@openobserve/browser-rum-angular@workspace:packages/browser-rum-angular"
+  dependencies:
+    "@angular/common": "npm:22.0.1"
+    "@angular/compiler": "npm:22.0.1"
+    "@angular/core": "npm:22.0.1"
+    "@angular/platform-browser": "npm:22.0.1"
+    "@angular/router": "npm:22.0.1"
+    "@openobserve/browser-core": "npm:7.3.0"
+    "@openobserve/browser-rum-core": "npm:7.3.0"
+    "@openobserve/js-core": "npm:0.0.3"
+    rxjs: "npm:7.8.2"
+  peerDependencies:
+    "@angular/core": ">=15 <=22"
+    "@angular/router": ">=15 <=22"
+    rxjs: ">=7"
+  languageName: unknown
+  linkType: soft
+
+"@openobserve/browser-rum-core@npm:7.3.0, @openobserve/browser-rum-core@workspace:*, @openobserve/browser-rum-core@workspace:packages/browser-rum-core":
+  version: 0.0.0-use.local
+  resolution: "@openobserve/browser-rum-core@workspace:packages/browser-rum-core"
+  dependencies:
+    "@openobserve/browser-core": "npm:7.3.0"
+    "@openobserve/js-core": "npm:0.0.3"
+    ajv: "npm:8.20.0"
+  languageName: unknown
+  linkType: soft
+
+"@openobserve/browser-rum-nextjs@workspace:packages/browser-rum-nextjs":
+  version: 0.0.0-use.local
+  resolution: "@openobserve/browser-rum-nextjs@workspace:packages/browser-rum-nextjs"
+  dependencies:
+    "@openobserve/browser-core": "npm:7.3.0"
+    "@openobserve/browser-rum-core": "npm:7.3.0"
+    "@openobserve/browser-rum-react": "npm:7.3.0"
+    "@openobserve/js-core": "npm:0.0.3"
+    "@types/react": "npm:19.2.17"
+    next: "npm:16.2.9"
+    react: "npm:19.2.7"
+    react-dom: "npm:19.2.7"
+  peerDependencies:
+    next: ">=13.0.0"
+    react: ">=18.0.0"
+  peerDependenciesMeta:
+    next:
+      optional: true
+    react:
+      optional: true
+  languageName: unknown
+  linkType: soft
+
+"@openobserve/browser-rum-nuxt@workspace:packages/browser-rum-nuxt":
+  version: 0.0.0-use.local
+  resolution: "@openobserve/browser-rum-nuxt@workspace:packages/browser-rum-nuxt"
+  dependencies:
+    "@openobserve/browser-core": "npm:7.3.0"
+    "@openobserve/browser-rum-core": "npm:7.3.0"
+    "@openobserve/js-core": "npm:0.0.3"
+    vue: "npm:3.5.38"
+    vue-router: "npm:5.1.0"
+  peerDependencies:
+    nuxt: 3 || 4
+    vue: ^3.5.0
+    vue-router: ^4.0.0 || ^5.0.0
+  peerDependenciesMeta:
+    "@openobserve/browser-rum":
+      optional: true
+    "@openobserve/browser-rum-slim":
+      optional: true
+    nuxt:
+      optional: true
+    vue:
+      optional: true
+    vue-router:
+      optional: true
+  languageName: unknown
+  linkType: soft
+
+"@openobserve/browser-rum-react@npm:7.3.0, @openobserve/browser-rum-react@workspace:packages/browser-rum-react":
+  version: 0.0.0-use.local
+  resolution: "@openobserve/browser-rum-react@workspace:packages/browser-rum-react"
+  dependencies:
+    "@openobserve/browser-core": "npm:7.3.0"
+    "@openobserve/browser-rum-core": "npm:7.3.0"
+    "@openobserve/js-core": "npm:0.0.3"
+    "@tanstack/react-router": "npm:1.170.15"
+    "@types/react": "npm:19.2.17"
+    "@types/react-dom": "npm:19.2.3"
+    react: "npm:19.2.7"
+    react-dom: "npm:19.2.7"
+    react-router: "npm:7.17.0"
+    react-router-dom: "npm:7.17.0"
+    react-router-dom-6: "npm:react-router-dom@6.30.4"
+  peerDependencies:
+    "@tanstack/react-router": ">=1.64.0 <2"
+    react: 18 || 19
+    react-router: 6 || 7
+    react-router-dom: 6 || 7
+  peerDependenciesMeta:
+    "@openobserve/browser-rum":
+      optional: true
+    "@openobserve/browser-rum-slim":
+      optional: true
+    "@tanstack/react-router":
+      optional: true
+    react:
+      optional: true
+    react-router:
+      optional: true
+    react-router-dom:
+      optional: true
+  languageName: unknown
+  linkType: soft
+
+"@openobserve/browser-rum-slim@workspace:packages/browser-rum-slim":
+  version: 0.0.0-use.local
+  resolution: "@openobserve/browser-rum-slim@workspace:packages/browser-rum-slim"
+  dependencies:
+    "@openobserve/browser-core": "npm:7.3.0"
+    "@openobserve/browser-rum-core": "npm:7.3.0"
+  peerDependencies:
+    "@openobserve/browser-logs": 7.3.0
+  peerDependenciesMeta:
+    "@openobserve/browser-logs":
+      optional: true
+  languageName: unknown
+  linkType: soft
+
+"@openobserve/browser-rum-vue@workspace:packages/browser-rum-vue":
+  version: 0.0.0-use.local
+  resolution: "@openobserve/browser-rum-vue@workspace:packages/browser-rum-vue"
+  dependencies:
+    "@openobserve/browser-core": "npm:7.3.0"
+    "@openobserve/browser-rum-core": "npm:7.3.0"
+    "@openobserve/js-core": "npm:0.0.3"
+    "@vue/compiler-dom": "npm:3.5.38"
+    "@vue/test-utils": "npm:2.4.11"
+    vue: "npm:3.5.38"
+    vue-router: "npm:5.1.0"
+  peerDependencies:
+    vue: ^3.5.0
+    vue-router: ^4.0.0 || ^5.0.0
+  peerDependenciesMeta:
+    "@openobserve/browser-rum":
+      optional: true
+    "@openobserve/browser-rum-slim":
+      optional: true
+    vue:
+      optional: true
+    vue-router:
+      optional: true
+  languageName: unknown
+  linkType: soft
+
+"@openobserve/browser-rum@workspace:*, @openobserve/browser-rum@workspace:packages/browser-rum":
+  version: 0.0.0-use.local
+  resolution: "@openobserve/browser-rum@workspace:packages/browser-rum"
+  dependencies:
+    "@openobserve/browser-core": "npm:7.3.0"
+    "@openobserve/browser-rum-core": "npm:7.3.0"
+    "@openobserve/browser-worker": "npm:7.3.0"
+    "@openobserve/js-core": "npm:0.0.3"
+    "@types/pako": "npm:2.0.4"
+    pako: "npm:2.1.0"
+  peerDependencies:
+    "@openobserve/browser-logs": 7.3.0
+  peerDependenciesMeta:
+    "@openobserve/browser-logs":
+      optional: true
+  languageName: unknown
+  linkType: soft
+
+"@openobserve/browser-sdk-developer-extension@workspace:developer-extension":
+  version: 0.0.0-use.local
+  resolution: "@openobserve/browser-sdk-developer-extension@workspace:developer-extension"
+  dependencies:
+    "@mantine/core": "npm:9.3.1"
+    "@mantine/hooks": "npm:9.3.1"
+    "@openobserve/browser-core": "workspace:*"
+    "@openobserve/browser-logs": "workspace:*"
+    "@openobserve/browser-rum": "workspace:*"
+    "@openobserve/browser-rum-core": "workspace:*"
+    "@tabler/icons-react": "npm:3.44.0"
+    "@types/chrome": "npm:0.1.43"
+    "@types/react": "npm:19.2.17"
+    "@types/react-dom": "npm:19.2.3"
+    "@wxt-dev/module-react": "npm:1.2.2"
+    clsx: "npm:2.1.1"
+    react: "npm:19.2.7"
+    react-dom: "npm:19.2.7"
+    typescript: "npm:6.0.3"
+    vite: "npm:8.0.16"
+    wxt: "npm:0.20.26"
+  languageName: unknown
+  linkType: soft
+
+"@openobserve/browser-worker@npm:7.3.0, @openobserve/browser-worker@workspace:packages/browser-worker":
+  version: 0.0.0-use.local
+  resolution: "@openobserve/browser-worker@workspace:packages/browser-worker"
+  dependencies:
+    "@openobserve/browser-core": "npm:7.3.0"
+    webpack: "npm:5.107.2"
+  languageName: unknown
+  linkType: soft
+
+"@openobserve/js-core@npm:0.0.3, @openobserve/js-core@workspace:packages/js-core":
+  version: 0.0.0-use.local
+  resolution: "@openobserve/js-core@workspace:packages/js-core"
+  languageName: unknown
+  linkType: soft
 
 "@oxc-project/types@npm:=0.135.0":
   version: 0.135.0

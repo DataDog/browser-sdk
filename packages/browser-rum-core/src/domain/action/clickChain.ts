@@ -1,6 +1,6 @@
-import type { TimeoutId } from '@datadog/browser-core'
-import { ONE_SECOND } from '@datadog/js-core/time'
-import { clearTimeout, setTimeout } from '@datadog/browser-core'
+import type { TimeoutId } from '@openobserve/browser-core'
+import { ONE_SECOND } from '@openobserve/js-core/time'
+import { clearTimeout, setTimeout } from '@openobserve/browser-core'
 import type { Click } from './trackClickActions'
 
 export interface ClickChain {

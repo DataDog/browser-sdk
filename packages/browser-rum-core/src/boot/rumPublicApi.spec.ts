@@ -1,8 +1,8 @@
-import { ONE_SECOND, timeStampToClocks, toTimeStamp } from '@datadog/js-core/time'
-import type { TimeStamp, RelativeTime } from '@datadog/js-core/time'
-import type { DeflateWorker } from '@datadog/browser-core'
-import { display, DefaultPrivacyLevel, ResourceType, startTelemetry, startSessionManager } from '@datadog/browser-core'
-import type { Clock } from '@datadog/browser-core/test'
+import { ONE_SECOND, timeStampToClocks, toTimeStamp } from '@openobserve/js-core/time'
+import type { TimeStamp, RelativeTime } from '@openobserve/js-core/time'
+import type { DeflateWorker } from '@openobserve/browser-core'
+import { display, DefaultPrivacyLevel, ResourceType, startTelemetry, startSessionManager } from '@openobserve/browser-core'
+import type { Clock } from '@openobserve/browser-core/test'
 import {
   collectAsyncCalls,
   mockClock,
@@ -11,7 +11,7 @@ import {
   replaceMockable,
   replaceMockableWithSpy,
   createStartSessionManagerMock,
-} from '@datadog/browser-core/test'
+} from '@openobserve/browser-core/test'
 import { noopRecorderApi, noopProfilerApi } from '../../test'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { RumPublicApi, RecorderApi, ProfilerApi, RumPublicApiOptions } from './rumPublicApi'

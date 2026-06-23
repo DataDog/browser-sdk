@@ -1,5 +1,5 @@
-import { globalObject } from '@datadog/browser-core'
-import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import { globalObject } from '@openobserve/browser-core'
+import { mockClock, registerCleanupTask } from '@openobserve/browser-core/test'
 import { onEntry, onReturn, onThrow, initDebuggerTransport, resetDebuggerTransport } from './api'
 import { display } from './display'
 import { addProbe, removeProbe, getProbes, clearProbes } from './probes'
@@ -1385,8 +1385,8 @@ describe('api', () => {
   })
 
   describe('error handling', () => {
-    it('should handle missing DD_RUM gracefully', () => {
-      delete (window as any).DD_RUM
+    it('should handle missing OO_RUM gracefully', () => {
+      delete (window as any).OO_RUM
 
       addProbe(createProbe())
 

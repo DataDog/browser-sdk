@@ -1,4 +1,4 @@
-import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
+import type { RumPlugin, RumPublicApi, StartRumResult } from '@openobserve/browser-rum-core'
 
 let globalPublicApi: RumPublicApi | undefined
 let globalConfiguration: ReactPluginConfiguration | undefined
@@ -17,9 +17,9 @@ const onRumStartSubscribers: StartSubscriber[] = []
 export interface ReactPluginConfiguration {
   /**
    * Enable router integration. Make sure to use functions from
-   * {@link @datadog/browser-rum-react/react-router-v6! | @datadog/browser-rum-react/react-router-v6},
-   * {@link @datadog/browser-rum-react/react-router-v7! | @datadog/browser-rum-react/react-router-v7}, or
-   * {@link @datadog/browser-rum-react/tanstack-router! | @datadog/browser-rum-react/tanstack-router}
+   * {@link @openobserve/browser-rum-react/react-router-v6! | @openobserve/browser-rum-react/react-router-v6},
+   * {@link @openobserve/browser-rum-react/react-router-v7! | @openobserve/browser-rum-react/react-router-v7}, or
+   * {@link @openobserve/browser-rum-react/tanstack-router! | @openobserve/browser-rum-react/tanstack-router}
    * to create the router.
    * ```
    */
@@ -41,10 +41,10 @@ export type ReactPlugin = Required<RumPlugin>
  * @category Main
  * @example
  * ```ts
- * import { datadogRum } from '@datadog/browser-rum'
- * import { reactPlugin } from '@datadog/browser-rum-react'
+ * import { openobserveRum } from '@openobserve/browser-rum'
+ * import { reactPlugin } from '@openobserve/browser-rum-react'
  *
- * datadogRum.init({
+ * openobserveRum.init({
  *   applicationId: '<DATADOG_APPLICATION_ID>',
  *   clientToken: '<DATADOG_CLIENT_TOKEN>',
  *   site: '<DATADOG_SITE>',
