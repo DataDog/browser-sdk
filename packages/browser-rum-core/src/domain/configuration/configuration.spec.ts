@@ -30,9 +30,7 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, applicationId: undefined as any })
       ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith(
-        'Application ID is not configured, no RUM data will be collected.'
-      )
+      expect(displayErrorSpy).toHaveBeenCalledOnceWith('"applicationId" is required')
     })
   })
 
@@ -52,18 +50,14 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionReplaySampleRate: 'foo' as any })
       ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith(
-        'Session Replay Sample Rate should be a number between 0 and 100'
-      )
+      expect(displayErrorSpy).toHaveBeenCalledOnceWith('"sessionReplaySampleRate" must be a number between 0 and 100')
 
       displayErrorSpy.calls.reset()
 
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionReplaySampleRate: 200 })
       ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith(
-        'Session Replay Sample Rate should be a number between 0 and 100'
-      )
+      expect(displayErrorSpy).toHaveBeenCalledOnceWith('"sessionReplaySampleRate" must be a number between 0 and 100')
     })
   })
 
@@ -82,11 +76,11 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceSampleRate: 'foo' as any })
       ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Trace Sample Rate should be a number between 0 and 100')
+      expect(displayErrorSpy).toHaveBeenCalledOnceWith('"traceSampleRate" must be a number between 0 and 100')
 
       displayErrorSpy.calls.reset()
       expect(validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceSampleRate: 200 })).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Trace Sample Rate should be a number between 0 and 100')
+      expect(displayErrorSpy).toHaveBeenCalledOnceWith('"traceSampleRate" must be a number between 0 and 100')
     })
   })
 
@@ -187,7 +181,7 @@ describe('validateAndBuildRumConfiguration', () => {
       ).toEqual([{ match: 'simple', propagatorTypes: DEFAULT_PROPAGATOR_TYPES }])
     })
 
-    it('should filter out unexpected parameter types', () => {
+    it('should filter out items where match is invalid, falling back to default propagatorTypes for invalid propagatorTypes', () => {
       expect(
         validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
@@ -199,9 +193,7 @@ describe('validateAndBuildRumConfiguration', () => {
             { match: 'toto', propagatorTypes: 42 },
           ],
         })!.allowedTracingUrls
-      ).toEqual([])
-
-      expect(displayWarnSpy).toHaveBeenCalledTimes(4)
+      ).toEqual([{ match: 'toto', propagatorTypes: DEFAULT_PROPAGATOR_TYPES }])
     })
 
     it('does not validate the configuration if a value is provided and service is undefined', () => {
@@ -211,11 +203,11 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(displayErrorSpy).toHaveBeenCalledOnceWith('Service needs to be configured when tracing is enabled')
     })
 
-    it('does not validate the configuration if an incorrect value is provided', () => {
+    it('does not validate the configuration if a single valid value is provided without service', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, allowedTracingUrls: 'foo' as any })
       ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Allowed Tracing URLs should be an array')
+      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Service needs to be configured when tracing is enabled')
     })
   })
 
@@ -246,11 +238,11 @@ describe('validateAndBuildRumConfiguration', () => {
       ).toEqual([customUrlFunction])
     })
 
-    it('does not validate the configuration if an incorrect value is provided', () => {
+    it('normalizes a single valid value to an array', () => {
       expect(
-        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, excludedActivityUrls: 'foo' as any })
-      ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Excluded Activity Urls should be an array')
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, excludedActivityUrls: 'foo' as any })!
+          .excludedActivityUrls
+      ).toEqual(['foo'])
     })
   })
 
@@ -706,7 +698,7 @@ describe('validateAndBuildRumConfiguration', () => {
         ...DEFAULT_INIT_CONFIGURATION,
         plugins: [plugin],
       })
-      expect(configuration!.plugins).toEqual([plugin])
+      expect(configuration!.plugins).toEqual([jasmine.objectContaining(plugin)])
     })
   })
   describe('trackFeatureFlagsForEvents', () => {
@@ -723,12 +715,12 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(configuration.trackFeatureFlagsForEvents).toEqual(['resource', 'long_task', 'vital'])
       expect(displayWarnSpy).not.toHaveBeenCalled()
     })
-    it('does not validate the configuration if an incorrect value is provided', () => {
-      validateAndBuildRumConfiguration({
+    it('falls back to default when an incorrect value is provided', () => {
+      const config = validateAndBuildRumConfiguration({
         ...DEFAULT_INIT_CONFIGURATION,
         trackFeatureFlagsForEvents: 123 as any,
       })!
-      expect(displayWarnSpy).toHaveBeenCalledOnceWith('trackFeatureFlagsForEvents should be an array')
+      expect(config.trackFeatureFlagsForEvents).toEqual([])
     })
   })
 

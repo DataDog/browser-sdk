@@ -27,6 +27,7 @@ import {
   startTelemetrySessionContext,
   addTelemetryDebug,
   setAllowUntrustedEvents,
+  isAllowedTrackingOrigins,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
@@ -150,8 +151,8 @@ export function createPreStartStrategy(
       return
     }
 
-    const configuration = validateAndBuildRumConfiguration(initConfiguration, errorStack)
-    if (!configuration) {
+    const configuration = validateAndBuildRumConfiguration(initConfiguration)
+    if (!configuration || !isAllowedTrackingOrigins(configuration, errorStack ?? '')) {
       return
     }
 
