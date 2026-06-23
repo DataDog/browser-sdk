@@ -165,6 +165,7 @@ function assembleWebSocketResource(
     duration,
     rawRumEvent,
     domainContext: {
+      isWebSocket: true,
       isManual: false,
       webSocket: event.webSocket,
     },
@@ -263,6 +264,7 @@ function getResourceDomainContext(
     performanceEntry: entry as unknown as PerformanceResourceTiming | PerformanceNavigationTiming,
     isManual: false,
     isAborted: request ? request.isAborted : false,
+    isWebSocket: false,
     handlingStack: request?.handlingStack,
     requestInit: request?.init,
     requestInput: request?.input as RequestInfo | undefined,
