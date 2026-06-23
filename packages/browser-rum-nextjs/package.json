@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-rum-nextjs",
-  "version": "7.3.0",
+  "version": "7.4.0",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
   "module": "esm/entries/main.mjs",
@@ -17,10 +17,10 @@
     "prepack": "yarn build"
   },
   "dependencies": {
-    "@datadog/browser-core": "7.3.0",
-    "@datadog/browser-rum-core": "7.3.0",
-    "@datadog/browser-rum-react": "7.3.0",
-    "@datadog/js-core": "0.0.3"
+    "@datadog/browser-core": "7.4.0",
+    "@datadog/browser-rum-core": "7.4.0",
+    "@datadog/browser-rum-react": "7.4.0",
+    "@datadog/js-core": "0.0.4"
   },
   "peerDependencies": {
     "next": ">=13.0.0",
