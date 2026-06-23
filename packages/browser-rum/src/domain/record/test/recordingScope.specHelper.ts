@@ -17,7 +17,10 @@ export function createRecordingScopeForTesting({
   removeShadowRoot?: RemoveShadowRootCallBack
 } = {}): RecordingScope {
   return createRecordingScope(
-    (configuration as RumConfiguration) || { ...DEFAULT_CONFIGURATION },
+    {
+      ...DEFAULT_CONFIGURATION,
+      ...configuration,
+    },
     createElementsScrollPositions(),
     {
       ...DEFAULT_SHADOW_ROOT_CONTROLLER,
