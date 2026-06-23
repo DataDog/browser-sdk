@@ -59,13 +59,13 @@ v6 changes several default behaviors. Review each and adjust if needed:
 
 In v5, these were `false` by default. In v6, they are enabled out of the box. This does not impact billing.
 
-To preserve v5 behavior, explicitly disable them:
+To preserve v5 behavior, explicitly disable **only the options that were not already enabled in v5**. If an option was already `true` in v5, leave it unchanged:
 
 ```js
 DD_RUM.init({
-  trackUserInteractions: false,
-  trackResources: false,
-  trackLongTasks: false,
+  trackUserInteractions: false, // only if not already true in v5
+  trackResources: false, // only if not already true in v5
+  trackLongTasks: false, // only if not already true in v5
 })
 ```
 
