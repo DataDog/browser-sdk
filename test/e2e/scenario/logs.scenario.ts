@@ -1,4 +1,4 @@
-import { DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT } from '@datadog/browser-logs/src/domain/configuration'
+import { DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT } from '@datadog/browser-logs/src/domain/networkError/networkErrorCollection'
 import { test, expect } from '@playwright/test'
 import { createTest, createWorker } from '../lib/framework'
 import { APPLICATION_ID } from '../lib/helpers/configuration'

@@ -5,12 +5,13 @@ import {
   ERROR_NOT_ALLOWED_TRACKING_ORIGIN,
   ERROR_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN,
 } from './allowedTrackingOrigins'
+import type { Configuration } from './configuration'
 
 const DEFAULT_CONFIG = {
   applicationId: 'xxx',
   clientToken: 'xxx',
   allowedTrackingOrigins: undefined as any,
-}
+} as unknown as Configuration
 
 describe('checkForAllowedTrackingOrigins', () => {
   let displayErrorSpy: jasmine.Spy
