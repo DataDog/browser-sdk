@@ -50,6 +50,7 @@ export interface RumManualResourceEventDomainContext {
 
 export interface RumWebSocketResourceEventDomainContext {
   isManual: false
+  webSocket: WebSocket
 }
 
 export interface RumErrorEventDomainContext {
