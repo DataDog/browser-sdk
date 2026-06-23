@@ -51,7 +51,7 @@ script.crossOrigin = 'anonymous' // Must set BEFORE setting src
 script.src = 'https://www.datadoghq-browser-agent.com/us1/v7/datadog-rum.js'
 ```
 
-Search: `grep -rn "datadoghq-browser-agent" --include="*.html" --include="*.js" --include="*.ts"`
+Search: `grep -rn "datadoghq-browser-agent" --include="*.html" --include="*.js" --include="*.ts" --include="*.jsx"`
 
 Check every match for the `crossorigin` attribute (HTML) or `.crossOrigin` property (JS).
 
