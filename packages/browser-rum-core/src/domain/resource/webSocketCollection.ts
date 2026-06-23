@@ -13,6 +13,7 @@ export const WEBSOCKET_CONNECTING_VITAL_NAME = 'websocket-connecting'
 export type WebSocketTrackingEndReason = 'close_event' | 'session_end'
 
 export interface WebSocketCompleteEvent {
+  webSocket: WebSocket
   connectionId: string
   url: string
   protocol?: string
@@ -37,6 +38,7 @@ export interface WebSocketCompleteEvent {
 }
 
 interface WebSocketConnection {
+  webSocket: WebSocket
   connectionId: string
   url: string
   protocol?: string
@@ -92,6 +94,7 @@ export function trackWebSocket(
         const connectionId = generateUUID()
         const startViewId = viewHistory.findView(context.startClocks.relative)?.id
         const webSocket: WebSocketConnection = {
+          webSocket: context.instance,
           connectionId,
           url: context.url,
           startClocks: context.startClocks,

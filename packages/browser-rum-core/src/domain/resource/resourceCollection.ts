@@ -161,6 +161,7 @@ function assembleWebSocketResource(
     rawRumEvent,
     domainContext: {
       isManual: false,
+      webSocket: event.webSocket,
     },
   }
 }
