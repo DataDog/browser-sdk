@@ -23,7 +23,7 @@ import {
   replaceMockableWithSpy,
   createStartSessionManagerMock,
 } from '@datadog/browser-core/test'
-import type { HybridInitConfiguration, RumInitConfiguration } from '../domain/configuration'
+import type { RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { RumPlugin } from '../domain/plugins'
@@ -103,21 +103,23 @@ describe('preStartRum', () => {
     describe('if event bridge present', () => {
       it('init should accept empty application id and client token', () => {
         mockEventBridge()
-        const hybridInitConfiguration: HybridInitConfiguration = {}
+        const hybridInitConfiguration: Omit<RumInitConfiguration, 'applicationId' | 'clientToken'> = {}
         strategy.init(hybridInitConfiguration as RumInitConfiguration, PUBLIC_API)
         expect(display.error).not.toHaveBeenCalled()
       })
 
       it('should force session sample rate to 100', () => {
         mockEventBridge()
-        const invalidConfiguration: HybridInitConfiguration = { sessionSampleRate: 50 }
+        const invalidConfiguration: Omit<RumInitConfiguration, 'applicationId' | 'clientToken'> = {
+          sessionSampleRate: 50,
+        }
         strategy.init(invalidConfiguration as RumInitConfiguration, PUBLIC_API)
         expect(strategy.initConfiguration?.sessionSampleRate).toEqual(100)
       })
 
       it('should set the default privacy level received from the bridge if the not provided in the init configuration', () => {
         mockEventBridge({ privacyLevel: DefaultPrivacyLevel.ALLOW })
-        const hybridInitConfiguration: HybridInitConfiguration = {}
+        const hybridInitConfiguration: Omit<RumInitConfiguration, 'applicationId' | 'clientToken'> = {}
         strategy.init(hybridInitConfiguration as RumInitConfiguration, PUBLIC_API)
         expect((strategy.initConfiguration as RumInitConfiguration)?.defaultPrivacyLevel).toEqual(
           DefaultPrivacyLevel.ALLOW
@@ -126,7 +128,9 @@ describe('preStartRum', () => {
 
       it('should set the default privacy level from the init configuration if provided', () => {
         mockEventBridge({ privacyLevel: DefaultPrivacyLevel.ALLOW })
-        const hybridInitConfiguration: HybridInitConfiguration = { defaultPrivacyLevel: DefaultPrivacyLevel.MASK }
+        const hybridInitConfiguration: Omit<RumInitConfiguration, 'applicationId' | 'clientToken'> = {
+          defaultPrivacyLevel: DefaultPrivacyLevel.MASK,
+        }
         strategy.init(hybridInitConfiguration as RumInitConfiguration, PUBLIC_API)
         expect((strategy.initConfiguration as RumInitConfiguration)?.defaultPrivacyLevel).toEqual(
           hybridInitConfiguration.defaultPrivacyLevel
@@ -135,7 +139,7 @@ describe('preStartRum', () => {
 
       it('should set the default privacy level to "mask" if not provided in init configuration nor the bridge', () => {
         mockEventBridge({ privacyLevel: undefined })
-        const hybridInitConfiguration: HybridInitConfiguration = {}
+        const hybridInitConfiguration: Omit<RumInitConfiguration, 'applicationId' | 'clientToken'> = {}
         strategy.init(hybridInitConfiguration as RumInitConfiguration, PUBLIC_API)
         expect((strategy.initConfiguration as RumInitConfiguration)?.defaultPrivacyLevel).toEqual(
           DefaultPrivacyLevel.MASK
