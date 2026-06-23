@@ -134,6 +134,8 @@ DD_RUM.init({
 
 Search: `grep -rn 'sessionReplaySampleRate\|startSessionReplayRecording\|defaultPrivacyLevel\|trackResources\|trackLongTasks' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html" --include="*.vue" --include="*.svelte"`
 
+Also search for all RUM init calls to catch projects that omit these options and rely on v4 defaults: `grep -rn 'DD_RUM\.init\|datadogRum\.init' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html" --include="*.vue" --include="*.svelte"`. For each init call, verify that `sessionReplaySampleRate`, `defaultPrivacyLevel`, and `trackResources`/`trackLongTasks` are explicitly set.
+
 ## Step 5: Update changed APIs and behaviors
 
 ### 5a. `beforeSend` must return a boolean
