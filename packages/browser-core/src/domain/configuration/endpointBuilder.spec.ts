@@ -1,7 +1,6 @@
 import type { EndpointPayload } from '@datadog/js-core/transport'
 import { buildEndpointUrl, createEndpointBuilder, createReplicaEndpointBuilder } from '@datadog/js-core/transport'
-import type { InitConfiguration } from './configuration'
-import { validateAndBuildConfiguration } from './configuration'
+import type { Configuration, InitConfiguration } from './configuration'
 
 const DEFAULT_PAYLOAD = {} as EndpointPayload
 
@@ -134,47 +133,47 @@ describe('endpointBuilder', () => {
     const replica = { clientToken: 'replica_client_token', applicationId: 'replica_application_id' }
 
     it('returns undefined when no replica is configured', () => {
-      const configuration = validateAndBuildConfiguration({ clientToken })!
+      const configuration = { clientToken } as Configuration
       expect(createReplicaEndpointBuilder(configuration, 'rum')).toBeUndefined()
     })
 
     it('uses the replica client token', () => {
-      const configuration = validateAndBuildConfiguration({ clientToken, replica })!
+      const configuration = { clientToken, replica } as Configuration
       expect(createReplicaEndpointBuilder(configuration, 'rum')!.build('fetch', DEFAULT_PAYLOAD)).toContain(
         `dd-api-key=${replica.clientToken}`
       )
     })
 
     it('always targets the US1 site, even when the main site differs', () => {
-      const configuration = validateAndBuildConfiguration({ clientToken, site: 'datadoghq.eu', replica })!
+      const configuration = { clientToken, site: 'datadoghq.eu', replica } as Configuration
       expect(createReplicaEndpointBuilder(configuration, 'rum')!.build('fetch', DEFAULT_PAYLOAD)).toContain(
         'https://browser-intake-datadoghq.com'
       )
     })
 
     it('keeps the proxy of the main configuration', () => {
-      const configuration = validateAndBuildConfiguration({ clientToken, proxy: 'https://proxy.io/path', replica })!
+      const configuration = { clientToken, proxy: 'https://proxy.io/path', replica } as Configuration
       expect(createReplicaEndpointBuilder(configuration, 'rum')!.build('fetch', DEFAULT_PAYLOAD)).toContain(
         'https://proxy.io/path?ddforward'
       )
     })
 
     it('keeps the source of the main configuration', () => {
-      const configuration = validateAndBuildConfiguration({ clientToken, source: 'flutter', replica })!
+      const configuration = { clientToken, source: 'flutter', replica } as Configuration
       expect(createReplicaEndpointBuilder(configuration, 'rum')!.build('fetch', DEFAULT_PAYLOAD)).toContain(
         'ddsource=flutter'
       )
     })
 
     it('adds the replica application id to the rum endpoint', () => {
-      const configuration = validateAndBuildConfiguration({ clientToken, replica })!
+      const configuration = { clientToken, replica } as Configuration
       expect(createReplicaEndpointBuilder(configuration, 'rum')!.build('fetch', DEFAULT_PAYLOAD)).toContain(
         `application.id=${replica.applicationId}`
       )
     })
 
     it('does not add the application id to non-rum endpoints', () => {
-      const configuration = validateAndBuildConfiguration({ clientToken, replica })!
+      const configuration = { clientToken, replica } as Configuration
       expect(createReplicaEndpointBuilder(configuration, 'logs')!.build('fetch', DEFAULT_PAYLOAD)).not.toContain(
         'application.id'
       )

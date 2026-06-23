@@ -27,14 +27,9 @@ export async function selectSessionStoreStrategyType(
   return undefined
 }
 
-function normalizePersistenceList(
-  sessionPersistence: SessionPersistence | SessionPersistence[] | undefined
-): SessionPersistence[] {
-  if (Array.isArray(sessionPersistence)) {
-    return sessionPersistence
-  }
+function normalizePersistenceList(sessionPersistence: SessionPersistence[] | undefined): SessionPersistence[] {
   if (sessionPersistence !== undefined) {
-    return [sessionPersistence]
+    return sessionPersistence
   }
 
   // In worker environments, default to memory since cookie and localStorage are not available

@@ -20,7 +20,7 @@ describe('session store', () => {
 
       it('returns cookie strategy when sessionPersistence is cookie', async () => {
         const sessionStoreStrategyType = await selectSessionStoreStrategyType(
-          mockBaseConfiguration({ sessionPersistence: SessionPersistence.COOKIE })
+          mockBaseConfiguration({ sessionPersistence: [SessionPersistence.COOKIE] })
         )
         expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.COOKIE }))
       })
@@ -29,7 +29,7 @@ describe('session store', () => {
     describe('sessionPersistence: local-storage', () => {
       it('returns local storage strategy when sessionPersistence is local storage', async () => {
         const sessionStoreStrategyType = await selectSessionStoreStrategyType(
-          mockBaseConfiguration({ sessionPersistence: SessionPersistence.LOCAL_STORAGE })
+          mockBaseConfiguration({ sessionPersistence: [SessionPersistence.LOCAL_STORAGE] })
         )
         expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.LOCAL_STORAGE }))
       })
@@ -37,7 +37,7 @@ describe('session store', () => {
       it('returns undefined when local storage is not available', async () => {
         disableLocalStorage()
         const sessionStoreStrategyType = await selectSessionStoreStrategyType(
-          mockBaseConfiguration({ sessionPersistence: SessionPersistence.LOCAL_STORAGE })
+          mockBaseConfiguration({ sessionPersistence: [SessionPersistence.LOCAL_STORAGE] })
         )
         expect(sessionStoreStrategyType).toBeUndefined()
       })
@@ -46,7 +46,7 @@ describe('session store', () => {
     describe('sessionPersistence: memory', () => {
       it('returns memory strategy when sessionPersistence is memory', async () => {
         const sessionStoreStrategyType = await selectSessionStoreStrategyType(
-          mockBaseConfiguration({ sessionPersistence: SessionPersistence.MEMORY })
+          mockBaseConfiguration({ sessionPersistence: [SessionPersistence.MEMORY] })
         )
         expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.MEMORY }))
       })
@@ -56,7 +56,7 @@ describe('session store', () => {
       const displayErrorSpy = spyOn(display, 'error')
 
       const sessionStoreStrategyType = await selectSessionStoreStrategyType(
-        mockBaseConfiguration({ sessionPersistence: 'invalid' as SessionPersistence })
+        mockBaseConfiguration({ sessionPersistence: ['invalid'] as unknown as SessionPersistence[] })
       )
       expect(sessionStoreStrategyType).toBeUndefined()
       expect(displayErrorSpy).toHaveBeenCalledOnceWith("Invalid session persistence 'invalid'")

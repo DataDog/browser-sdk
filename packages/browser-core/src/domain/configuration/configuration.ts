@@ -1,14 +1,9 @@
 import type { ProxyFn, Site } from '@datadog/js-core/transport'
 import { INTAKE_SITE_US1 } from '@datadog/js-core/transport'
-import { catchUserErrors } from '../../tools/catchUserErrors'
-import { DOCS_ORIGIN, MORE_DETAILS, display } from '../../tools/display'
+import type { InferredConfig, MatchOption } from '@datadog/js-core/configuration'
 import type { RawTelemetryConfiguration } from '../telemetry'
-import { isPercentage } from '../../tools/utils/numberUtils'
-import { objectHasValue } from '../../tools/utils/objectUtils'
 import { TrackingConsent } from '../trackingConsent'
 import type { SessionPersistence } from '../session/sessionConstants'
-import type { MatchOption } from '../../tools/matchOption'
-import { isAllowedTrackingOrigins } from '../allowedTrackingOrigins'
 
 /**
  * Default privacy level for the browser SDK.
@@ -275,130 +270,67 @@ export interface ReplicaInitConfiguration {
 
 export type SdkSource = 'browser' | 'flutter' | 'unity'
 
-export interface Configuration {
-  clientToken: string
-  datacenter: string | undefined
-  proxy: string | ProxyFn | undefined
-  site: Site
-  source: SdkSource
-  beforeSend: GenericBeforeSendCallback | undefined
-  sessionPersistence: SessionPersistence | SessionPersistence[] | undefined
-  sessionSampleRate: number
-  telemetrySampleRate: number
-  telemetryConfigurationSampleRate: number
-  telemetryUsageSampleRate: number
-  service?: string | undefined
-  version?: string | undefined
-  env?: string | undefined
-  silentMultipleInit: boolean
-  trackingConsent: TrackingConsent
-  storeContextsAcrossPages: boolean
-  trackAnonymousUser?: boolean
-  useSecureSessionCookie: boolean
-  usePartitionedCrossSiteSessionCookie: boolean
-  trackSessionAcrossSubdomains: boolean
+export const BROWSER_CORE_SCHEMA = {
+  clientToken: { type: 'string', required: true },
 
-  // internal
-  sdkVersion: string | undefined
-  variant: string | undefined
-  replica: ReplicaInitConfiguration | undefined
-}
+  // Optional tag fields
+  service: { type: 'string' },
+  env: { type: 'string' },
+  version: { type: 'string' },
 
-function isString(tag: unknown, tagName: string): tag is string | undefined | null {
-  if (tag !== undefined && tag !== null && typeof tag !== 'string') {
-    display.error(`${tagName} must be defined as a string`)
-    return false
-  }
-  return true
-}
+  // Transport
+  site: { type: 'site', default: INTAKE_SITE_US1 },
+  proxy: {
+    type: 'union',
+    variants: [{ type: 'string' }, { type: 'function', signature: undefined as ProxyFn | undefined }],
+  },
 
-function isDatadogSite(site: unknown) {
-  if (site && typeof site === 'string' && !/(datadog|ddog|datad0g|dd0g)/.test(site)) {
-    display.error(`Site should be a valid Datadog site. ${MORE_DETAILS} ${DOCS_ORIGIN}/getting_started/site/.`)
-    return false
-  }
-  return true
-}
+  // Sample rates
+  sessionSampleRate: { type: 'percentage', default: 100 },
+  telemetrySampleRate: { type: 'percentage', default: 20 },
+  telemetryConfigurationSampleRate: { type: 'percentage', default: 5 },
+  telemetryUsageSampleRate: { type: 'percentage', default: 5 },
 
-export function isSampleRate(sampleRate: unknown, name: string) {
-  if (sampleRate !== undefined && !isPercentage(sampleRate)) {
-    display.error(`${name} Sample Rate should be a number between 0 and 100`)
-    return false
-  }
-  return true
-}
+  // Booleans
+  silentMultipleInit: { type: 'boolean', default: false, strict: false },
+  storeContextsAcrossPages: { type: 'boolean', default: false, strict: false },
+  trackAnonymousUser: { type: 'boolean', default: true, strict: false },
+  useSecureSessionCookie: { type: 'boolean', default: false, strict: false },
+  usePartitionedCrossSiteSessionCookie: { type: 'boolean', default: false, strict: false },
+  trackSessionAcrossSubdomains: { type: 'boolean', default: false, strict: false },
 
-export function validateAndBuildConfiguration(
-  initConfiguration: InitConfiguration,
-  errorStack?: string
-): Configuration | undefined {
-  if (!initConfiguration?.clientToken) {
-    display.error('Client Token is not configured, we will not send any data.')
-    return
-  }
+  // Cookie/extension origin validation
+  allowedTrackingOrigins: { type: 'match-option', multiple: true },
 
-  if (
-    initConfiguration.allowedTrackingOrigins !== undefined &&
-    !Array.isArray(initConfiguration.allowedTrackingOrigins)
-  ) {
-    display.error('Allowed Tracking Origins must be an array')
-    return
-  }
+  // Privacy
+  trackingConsent: { type: 'enum', values: TrackingConsent, default: TrackingConsent.GRANTED },
 
-  if (
-    !isDatadogSite(initConfiguration.site) ||
-    !isSampleRate(initConfiguration.sessionSampleRate, 'Session') ||
-    !isSampleRate(initConfiguration.telemetrySampleRate, 'Telemetry') ||
-    !isSampleRate(initConfiguration.telemetryConfigurationSampleRate, 'Telemetry Configuration') ||
-    !isSampleRate(initConfiguration.telemetryUsageSampleRate, 'Telemetry Usage') ||
-    !isString(initConfiguration.version, 'Version') ||
-    !isString(initConfiguration.env, 'Env') ||
-    !isString(initConfiguration.service, 'Service') ||
-    !isAllowedTrackingOrigins(initConfiguration, errorStack ?? '')
-  ) {
-    return
-  }
+  // Callbacks
+  beforeSend: { type: 'function', signature: undefined as GenericBeforeSendCallback | undefined },
 
-  if (
-    initConfiguration.trackingConsent !== undefined &&
-    !objectHasValue(TrackingConsent, initConfiguration.trackingConsent)
-  ) {
-    display.error('Tracking Consent should be either "granted" or "not-granted"')
-    return
-  }
+  // Passthroughs
+  source: { type: 'enum', values: ['browser', 'flutter', 'unity'] as const, default: 'browser', strict: false },
+  sessionPersistence: {
+    type: 'enum',
+    values: ['cookie', 'local-storage', 'memory'] as const,
+    multiple: true,
+    strict: false,
+  },
+  replica: {
+    type: 'schema',
+    schema: {
+      clientToken: { type: 'string', required: true },
+      applicationId: { type: 'string' },
+    },
+  },
 
-  return {
-    clientToken: initConfiguration.clientToken,
-    proxy: initConfiguration.proxy,
-    site: initConfiguration.site || INTAKE_SITE_US1,
-    source: validateSource(initConfiguration.source),
-    beforeSend:
-      initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
-    sessionPersistence: initConfiguration.sessionPersistence,
-    sessionSampleRate: initConfiguration.sessionSampleRate ?? 100,
-    telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
-    telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,
-    telemetryUsageSampleRate: initConfiguration.telemetryUsageSampleRate ?? 5,
-    service: initConfiguration.service ?? undefined,
-    env: initConfiguration.env ?? undefined,
-    version: initConfiguration.version ?? undefined,
-    datacenter: initConfiguration.datacenter ?? undefined,
-    silentMultipleInit: !!initConfiguration.silentMultipleInit,
-    trackingConsent: initConfiguration.trackingConsent ?? TrackingConsent.GRANTED,
-    trackAnonymousUser: initConfiguration.trackAnonymousUser ?? true,
-    storeContextsAcrossPages: !!initConfiguration.storeContextsAcrossPages,
-    useSecureSessionCookie: !!initConfiguration.useSecureSessionCookie,
-    usePartitionedCrossSiteSessionCookie: !!initConfiguration.usePartitionedCrossSiteSessionCookie,
-    trackSessionAcrossSubdomains: !!initConfiguration.trackSessionAcrossSubdomains,
+  // Internal
+  datacenter: { type: 'string' },
+  sdkVersion: { type: 'string' },
+  variant: { type: 'string' },
+} as const
 
-    /**
-     * The source of the SDK, used for support plugins purposes.
-     */
-    variant: initConfiguration.variant,
-    sdkVersion: initConfiguration.sdkVersion,
-    replica: initConfiguration.replica,
-  }
-}
+export type Configuration = InferredConfig<typeof BROWSER_CORE_SCHEMA>
 
 export function serializeConfiguration(initConfiguration: InitConfiguration) {
   return {
@@ -424,11 +356,4 @@ export function serializeConfiguration(initConfiguration: InitConfiguration) {
     sdk_version: initConfiguration.sdkVersion,
     variant: initConfiguration.variant,
   } satisfies RawTelemetryConfiguration
-}
-
-function validateSource(source: string | undefined): SdkSource {
-  if (source === 'flutter' || source === 'unity') {
-    return source
-  }
-  return 'browser'
 }
