@@ -122,13 +122,13 @@ DD_RUM.init({
 
 ### 4d. `trackResources` and `trackLongTasks` must be explicit
 
-When using `sessionReplaySampleRate` (instead of the removed `replaySampleRate` or `premiumSampleRate`), resources and long tasks are no longer collected by default. You must enable them explicitly:
+When using `sessionReplaySampleRate` (instead of the removed `replaySampleRate` or `premiumSampleRate`), resources and long tasks are no longer collected by default. Enable them explicitly — **unless** the v4 config already set them to `false` intentionally:
 
 ```js
 DD_RUM.init({
   sessionReplaySampleRate: 100,
-  trackResources: true,
-  trackLongTasks: true,
+  trackResources: true, // omit if v4 explicitly had trackResources: false
+  trackLongTasks: true, // omit if v4 explicitly had trackLongTasks: false
 })
 ```
 
