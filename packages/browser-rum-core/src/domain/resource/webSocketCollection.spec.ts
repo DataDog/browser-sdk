@@ -434,10 +434,16 @@ describe('webSocketCollection', () => {
   describe('startWebSocketCollection', () => {
     const wsInstance = {} as WebSocket
     const wsUrl = 'wss://example.com/socket'
+    const singletonObservable = () => initWebSocketObservable()
 
-    function notifyConnectionConnecting(offsetMs = 0) {
-      // initWebSocketObservable returns a singleton, it will notify the same instance for all calls
-      initWebSocketObservable().notify({
+    function startCollection() {
+      const collection = startWebSocketCollection(lifeCycle, mockViewHistory(), jasmine.createSpy())
+      registerCleanupTask(() => collection.stop())
+      return collection
+    }
+
+    function notifyConnecting(offsetMs = 0) {
+      singletonObservable().notify({
         state: 'connecting',
         instance: wsInstance,
         url: wsUrl,
@@ -445,10 +451,39 @@ describe('webSocketCollection', () => {
       })
     }
 
+    function notifyOpen(openRelative = 10, protocol = '') {
+      singletonObservable().notify({
+        state: 'open',
+        instance: wsInstance,
+        openClocks: relativeToClocks(clock.relative(openRelative)),
+        protocol,
+      })
+    }
+
+    function notifyMessageOut(at: number, size: number, bufferedAmountPreSend = 0) {
+      singletonObservable().notify({
+        state: 'message-out',
+        instance: wsInstance,
+        size,
+        bufferedAmountPreSend,
+        at: relativeToClocks(clock.relative(at)),
+      })
+    }
+
+    function notifyClosed(at: number, code: number, reason: string, wasClean: boolean) {
+      singletonObservable().notify({
+        state: 'closed',
+        instance: wsInstance,
+        code,
+        reason,
+        wasClean,
+        at: relativeToClocks(clock.relative(at)),
+      })
+    }
+
     it('finalizes open connections with tracking_end_reason="session_end" when the session expires', () => {
-      const collection = startWebSocketCollection(lifeCycle, mockViewHistory(), jasmine.createSpy())
-      registerCleanupTask(() => collection.stop())
-      notifyConnectionConnecting()
+      startCollection()
+      notifyConnecting()
 
       lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
 
@@ -461,22 +496,35 @@ describe('webSocketCollection', () => {
     })
 
     it('ignores further WebSocket events from the same instance after stop()', () => {
-      const collection = startWebSocketCollection(lifeCycle, mockViewHistory(), jasmine.createSpy())
-      notifyConnectionConnecting()
+      const collection = startCollection()
+      notifyConnecting()
       collection.stop()
 
       const eventCountAfterStop = completed.length
 
-      initWebSocketObservable().notify({
-        state: 'closed',
-        instance: wsInstance,
-        code: 1000,
-        reason: 'bye',
-        wasClean: true,
-        at: relativeToClocks(clock.relative(1000)),
-      })
+      notifyClosed(1000, 1000, 'bye', true)
 
       expect(completed.length).toBe(eventCountAfterStop)
+    })
+
+    it('ignores further WebSocket events from the same instance after the session expires', () => {
+      startCollection()
+      notifyConnecting()
+      notifyOpen(10)
+      notifyMessageOut(20, 10)
+
+      lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+
+      expect(completed.length).toBe(1)
+      expect(completed[0].trackingEndReason).toBe('session_end')
+      expect(completed[0].messagesOut).toEqual({ count: 1, size: 10 })
+
+      notifyMessageOut(40, 7)
+      notifyClosed(50, 1000, 'bye', true)
+
+      expect(completed.length).toBe(1)
+      expect(completed[0].trackingEndReason).toBe('session_end')
+      expect(completed[0].messagesOut).toEqual({ count: 1, size: 10 })
     })
   })
 })
