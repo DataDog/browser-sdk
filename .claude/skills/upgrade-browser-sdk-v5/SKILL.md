@@ -265,6 +265,8 @@ The `"console error:"` prefix is removed from log messages. Update queries using
 
 Runtime errors, network logs, report logs, and console logs no longer inherit the main logger's context, level, or handler. Use global context and dedicated init parameters instead.
 
+Search for main logger configuration that may have been relying on this inheritance: `grep -rn 'DD_LOGS\.logger\.setLevel\|DD_LOGS\.logger\.setHandler\|DD_LOGS\.logger\.setContext\|DD_LOGS\.logger\.setContextProperty' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html" --include="*.vue" --include="*.svelte"`. For each match, verify the setting is intentional for the main logger only — it will no longer affect runtime errors, network logs, or console logs.
+
 ## Common Mistakes
 
 | Mistake                                                                                      | What goes wrong                                                                                                             | Fix                                                                                                      |
