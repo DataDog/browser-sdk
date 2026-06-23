@@ -1,6 +1,6 @@
 import { ExperimentalFeature, Observable, addExperimentalFeatures } from '@datadog/browser-core'
 import { resetExperimentalFeatures } from '@datadog/browser-core/src/tools/experimentalFeatures'
-import type { FlushController, FlushEvent } from '@datadog/browser-core/src/transport/flushController'
+import type { FlushEvent } from '@datadog/browser-core/src/transport/flushController'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { AssembledRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
@@ -10,6 +10,7 @@ import {
   createBatchDispatcher,
   PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL,
 } from './startRumBatch'
+import type { AssembledViewDiff } from './startRumBatch'
 
 function makeAssembledView(overrides: Record<string, unknown> = {}): RumViewEvent {
   return {
@@ -87,12 +88,12 @@ describe('computeAssembledViewDiff', () => {
     const result = computeAssembledViewDiff(current, last)!
 
     expect(result.type).toBe(RumEventType.VIEW_UPDATE)
-    expect((result as any).application).toEqual({ id: 'app-1' })
-    expect((result as any).session).toEqual({ id: 'sess-1', type: 'user' })
-    expect((result.view as any).id).toBe('view-1')
-    expect((result.view as any).url).toBe('/home')
-    expect((result._dd as any).document_version).toBe(2)
-    expect((result._dd as any).format_version).toBe(2)
+    expect(result.application).toEqual({ id: 'app-1' })
+    expect(result.session).toEqual({ id: 'sess-1', type: 'user' })
+    expect(result.view.id).toBe('view-1')
+    expect(result.view.url).toBe('/home')
+    expect(result._dd?.document_version).toBe(2)
+    expect(result._dd?.format_version).toBe(2)
   })
 
   it('should include only changed view.* fields', () => {
@@ -119,11 +120,11 @@ describe('computeAssembledViewDiff', () => {
     })
     const result = computeAssembledViewDiff(current, last)!
 
-    expect((result.view as any).action).toEqual({ count: 3 }) // changed
-    expect((result.view as any).time_spent).toBe(5000) // changed
-    expect((result.view as any).error).toBeUndefined() // unchanged, stripped
-    expect((result.view as any).name).toBeUndefined() // unchanged, stripped
-    expect((result.view as any).url).toBe('/home') // required routing field, always present
+    expect(result.view.action).toEqual({ count: 3 }) // changed
+    expect(result.view.time_spent).toBe(5000) // changed
+    expect(result.view.error).toBeUndefined() // unchanged, stripped
+    expect(result.view.name).toBeUndefined() // unchanged, stripped
+    expect(result.view.url).toBe('/home') // required routing field, always present
   })
 
   it('should strip unchanged top-level assembled fields', () => {
@@ -153,7 +154,7 @@ describe('computeAssembledViewDiff', () => {
     const result = computeAssembledViewDiff(current, last)!
 
     expect(result.service).toBeUndefined() // unchanged, stripped
-    expect((result as any).version).toBeUndefined() // unchanged, stripped
+    expect(result.version).toBeUndefined() // unchanged, stripped
   })
 
   it('should keep top-level assembled fields that changed', () => {
@@ -230,26 +231,19 @@ describe('startRumBatch partial_view_updates routing', () => {
 
 function createMockBatch() {
   const flushObservable = new Observable<FlushEvent>()
-  let messagesCount = 0
   const upsertedKeys = new Set<string>()
 
   const addSpy = jasmine.createSpy<(message: object) => void>('add')
   const upsertSpy = jasmine.createSpy<(message: object, key: string) => void>('upsert')
 
   const batch = {
-    flushController: {
-      flushObservable,
-      get messagesCount() {
-        return messagesCount
-      },
-    } as unknown as FlushController,
+    flushObservable,
+    get isEmpty() {
+      return upsertedKeys.size === 0
+    },
     add: addSpy,
-    // Simulate real batch: only new keys increment messagesCount (matching notifyBeforeAddMessage)
     upsert: (message: object, key: string) => {
-      if (!upsertedKeys.has(key)) {
-        messagesCount++
-        upsertedKeys.add(key)
-      }
+      upsertedKeys.add(key)
       upsertSpy(message, key)
     },
   }
@@ -259,7 +253,6 @@ function createMockBatch() {
     addSpy,
     upsertSpy,
     flush: () => {
-      messagesCount = 0
       upsertedKeys.clear()
       flushObservable.notify({ reason: 'bytes_limit', bytesCount: 0, messagesCount: 0 })
     },
@@ -497,8 +490,8 @@ describe('createBatchDispatcher', () => {
       )
 
       // The second upsert's aggregate diff must reflect action.count: 2 (diff from base, not from v2)
-      const lastEmitted = upsertSpy.calls.mostRecent().args[0] as AssembledRumEvent
-      expect((lastEmitted.view as any).action.count).toBe(2)
+      const lastEmitted = upsertSpy.calls.mostRecent().args[0] as AssembledViewDiff
+      expect(lastEmitted.view.action?.count).toBe(2)
     })
 
     it('should emit nothing if nothing changed since batchBase', () => {
@@ -605,7 +598,7 @@ describe('createBatchDispatcher', () => {
 
       expect(upsertSpy.calls.count()).toBe(1)
       expect((upsertSpy.calls.argsFor(0)[0] as AssembledRumEvent).type).toBe(RumEventType.VIEW)
-      expect((upsertSpy.calls.argsFor(0)[0] as any).view.is_active).toBe(false)
+      expect((upsertSpy.calls.argsFor(0)[0] as RumViewEvent).view.is_active).toBe(false)
     })
 
     it('should upsert a stale view-end without resetting state for the current view', () => {

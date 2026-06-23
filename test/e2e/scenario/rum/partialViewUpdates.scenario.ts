@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { createTest, html, waitForRequests } from '../../lib/framework'
+import { createTest, waitForRequests } from '../../lib/framework'
 
 test.describe('partial view updates', () => {
   createTest('should send a view_update event when the update arrives in a new batch')
@@ -109,17 +109,8 @@ test.describe('partial view updates', () => {
     .withRum({
       enableExperimentalFeatures: ['partial_view_updates'],
     })
-    .withBody(html`
-      <a id="nav-link">Navigate</a>
-      <script>
-        document.getElementById('nav-link').addEventListener('click', () => {
-          history.pushState(null, '', '/new-page')
-        })
-      </script>
-    `)
     .run(async ({ intakeRegistry, flushEvents, page }) => {
-      // Trigger a route change to create a new view
-      await page.click('#nav-link')
+      await page.evaluate(() => history.pushState(null, '', '/new-page'))
 
       await flushEvents()
 
@@ -165,17 +156,8 @@ test.describe('partial view updates', () => {
     .withRum({
       enableExperimentalFeatures: ['partial_view_updates'],
     })
-    .withBody(html`
-      <a id="nav-link">Navigate</a>
-      <script>
-        document.getElementById('nav-link').addEventListener('click', () => {
-          history.pushState(null, '', '/other-page')
-        })
-      </script>
-    `)
     .run(async ({ intakeRegistry, flushEvents, page }) => {
-      // Navigate to trigger view end on the first view
-      await page.click('#nav-link')
+      await page.evaluate(() => history.pushState(null, '', '/other-page'))
 
       await flushEvents()
 
