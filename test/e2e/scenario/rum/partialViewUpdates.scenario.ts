@@ -72,15 +72,15 @@ test.describe('partial view updates', () => {
 
       await flushEvents()
 
-      // Collect all view-related events (view + view_update) sorted by document_version
+      // Collect all view-related events (view + view_update) in arrival order
       const allViewRelatedEvents = [
         ...intakeRegistry.rumViewEvents.map((e) => ({ _dd: e._dd })),
         ...intakeRegistry.rumViewUpdateEvents.map((e) => ({ _dd: e._dd })),
-      ].sort((a, b) => a._dd.document_version - b._dd.document_version)
+      ]
 
       expect(allViewRelatedEvents.length).toBeGreaterThanOrEqual(2)
 
-      // Verify monotonic increase
+      // Verify strictly increasing document_version in the order events were received
       for (let i = 1; i < allViewRelatedEvents.length; i++) {
         expect(allViewRelatedEvents[i]._dd.document_version).toBeGreaterThan(
           allViewRelatedEvents[i - 1]._dd.document_version
