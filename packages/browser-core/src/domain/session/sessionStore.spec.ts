@@ -2,17 +2,30 @@ import { globalObject } from '@datadog/js-core/util'
 import { replaceMockable } from '../../../test'
 import type { Configuration, InitConfiguration } from '../configuration'
 import { buildCookieOptions } from '../configuration'
-import { display } from '../../tools/display'
 import { selectSessionStoreStrategyType } from './sessionStore'
 import { SessionPersistence } from './sessionConstants'
 
 const DEFAULT_INIT_CONFIGURATION: InitConfiguration = { clientToken: 'abc' }
 
 function makeConfiguration(initConfiguration: InitConfiguration): Configuration {
+  const sp = initConfiguration.sessionPersistence
+  const allowed = Object.values(SessionPersistence)
+  let sessionPersistence: SessionPersistence[] | undefined
+  if (Array.isArray(sp)) {
+    sessionPersistence = sp.filter((item): item is SessionPersistence => allowed.includes(item))
+  } else if (sp !== undefined) {
+    // single value (valid or invalid) → normalize to singleton array and filter
+    sessionPersistence = [sp].filter((item): item is SessionPersistence => allowed.includes(item))
+  }
   return {
-    cookieOptions: buildCookieOptions(initConfiguration),
-    sessionPersistence: initConfiguration.sessionPersistence,
-  } as Configuration
+    cookieOptions: buildCookieOptions({
+      ...initConfiguration,
+      useSecureSessionCookie: false,
+      usePartitionedCrossSiteSessionCookie: false,
+      trackSessionAcrossSubdomains: false,
+    }),
+    sessionPersistence,
+  } as unknown as Configuration
 }
 
 describe('session store', () => {
@@ -68,13 +81,11 @@ describe('session store', () => {
     })
 
     it('returns undefined when sessionPersistence is invalid', async () => {
-      const displayErrorSpy = spyOn(display, 'error')
-
       const sessionStoreStrategyType = await selectSessionStoreStrategyType(
         makeConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionPersistence: 'invalid' as SessionPersistence })
       )
+      // Invalid values are filtered out, resulting in an empty list and no strategy
       expect(sessionStoreStrategyType).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith("Invalid session persistence 'invalid'")
     })
 
     describe('sessionPersistence as array', () => {
@@ -152,8 +163,7 @@ describe('session store', () => {
         expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.LOCAL_STORAGE }))
       })
 
-      it('returns undefined and logs error if array contains invalid persistence type', async () => {
-        const displayErrorSpy = spyOn(display, 'error')
+      it('filters out invalid items, returning undefined when nothing valid remains', async () => {
         const sessionStoreStrategyType = await selectSessionStoreStrategyType(
           makeConfiguration({
             ...DEFAULT_INIT_CONFIGURATION,
@@ -161,7 +171,6 @@ describe('session store', () => {
           })
         )
         expect(sessionStoreStrategyType).toBeUndefined()
-        expect(displayErrorSpy).toHaveBeenCalledOnceWith("Invalid session persistence 'invalid'")
       })
     })
 

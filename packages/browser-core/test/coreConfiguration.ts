@@ -15,7 +15,7 @@ export const EXHAUSTIVE_INIT_CONFIGURATION: Required<InitConfiguration> = {
   sessionSampleRate: 50,
   telemetrySampleRate: 60,
   silentMultipleInit: true,
-  sessionPersistence: 'cookie',
+  sessionPersistence: ['cookie'],
   allowUntrustedEvents: true,
   storeContextsAcrossPages: true,
   trackingConsent: 'not-granted',
