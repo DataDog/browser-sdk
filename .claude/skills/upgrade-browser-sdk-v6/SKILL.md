@@ -96,6 +96,8 @@ The `site` option has a stricter TypeScript type. If you pass a non-standard val
 
 Search: `grep -rn 'trackUserInteractions\|trackResources\|trackLongTasks\|traceContextInjection\|tracestate\|allowedTracingUrls\|propagatorTypes' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html" --include="*.vue" --include="*.svelte"`
 
+Also search for all RUM init calls to catch projects that omit these options and relied on the v5 `false` defaults: `grep -rn 'DD_RUM\.init\|datadogRum\.init' --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html" --include="*.vue" --include="*.svelte"`. For each init call, check whether `trackUserInteractions`, `trackResources`, and `trackLongTasks` are explicitly set — if omitted, they now default to `true` in v6.
+
 ## Step 4: Handle Session Replay lazy loading
 
 Session Replay is now lazy-loaded using dynamic imports. The module loads only for sessions sampled for replay, reducing bundle size for others.
