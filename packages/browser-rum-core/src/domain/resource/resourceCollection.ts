@@ -54,8 +54,13 @@ export function startResourceCollection(lifeCycle: LifeCycle, configuration: Rum
   const requestRegistry = createRequestRegistry(lifeCycle)
 
   lifeCycle.subscribe(LifeCycleEventType.WEBSOCKET_COMPLETED, (event: WebSocketCompleteEvent) => {
-    handleResource(() => assembleWebSocketResource(event, configuration))
+    // Avoid taskQueue to ensure the websocket resource is reported before the session expires.
+    const rawEvent = assembleWebSocketResource(event, configuration)
+    if (rawEvent) {
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
+    }
   })
+
   const performanceResourceSubscription = createPerformanceObservable({
     type: RumPerformanceEntryType.RESOURCE,
     buffered: true,
