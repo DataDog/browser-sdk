@@ -30,6 +30,7 @@ export interface RumActionEventDomainContext {
 
 export interface RumResourceEventDomainContext {
   isManual: false
+  isWebSocket: false
   performanceEntry: PerformanceResourceTiming | PerformanceNavigationTiming
   xhr: XMLHttpRequest | undefined
   isAborted: boolean
@@ -50,6 +51,7 @@ export interface RumManualResourceEventDomainContext {
 
 export interface RumWebSocketResourceEventDomainContext {
   isManual: false
+  isWebSocket: true
   webSocket: WebSocket
 }
 
