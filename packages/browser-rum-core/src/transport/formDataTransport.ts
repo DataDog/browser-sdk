@@ -1,18 +1,13 @@
-import type {
-  Uint8ArrayBuffer,
-  Encoder,
-  EncoderResult,
-  DeflateEncoderStreamId,
-  RawError,
-  Context,
-} from '@datadog/browser-core'
+import type { Uint8ArrayBuffer, Encoder, EncoderResult, DeflateEncoderStreamId, Context } from '@datadog/browser-core'
 import {
   addTelemetryDebug,
   createEndpointBuilder,
   createHttpRequest,
   jsonStringify,
   objectEntries,
+  ErrorSource,
 } from '@datadog/browser-core'
+import { clocksNow } from '@datadog/js-core/time'
 import type { RumConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
@@ -35,11 +30,13 @@ export function createFormDataTransport<T extends TransportPayload>(
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
   streamId: DeflateEncoderStreamId
 ) {
-  const reportError = (error: RawError) => {
-    lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
+  const reportError = (message: string) => {
+    lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, {
+      error: { message, source: ErrorSource.AGENT, startClocks: clocksNow() },
+    })
 
     // monitor-until: forever, to keep an eye on the errors reported to customers
-    addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
+    addTelemetryDebug('Error reported to customer', { 'error.message': message })
   }
 
   const httpRequest = createHttpRequest([createEndpointBuilder(configuration, 'profile')], reportError)

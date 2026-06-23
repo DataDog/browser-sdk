@@ -1,8 +1,7 @@
-import { ONE_MINUTE, relativeToClocks } from '@datadog/js-core/time'
+import { ONE_MINUTE } from '@datadog/js-core/time'
 import type { Clock } from '../../../test'
 import { mockClock } from '../../../test'
 import { noop } from '../../tools/utils/functionUtils'
-import type { RawError } from '../error/error.types'
 import { createEventRateLimiter } from './createEventRateLimiter'
 import type { EventRateLimiter } from './createEventRateLimiter'
 
@@ -36,17 +35,13 @@ describe('createEventRateLimiter', () => {
     expect(eventLimiter.isLimitReached()).toBe(false)
   })
 
-  it('calls the "onLimitReached" callback with the raw "limit reached" error when the limit is reached', () => {
-    const onLimitReachedSpy = jasmine.createSpy<(rawError: RawError) => void>()
+  it('calls the "onLimitReached" callback with the "limit reached" message when the limit is reached', () => {
+    const onLimitReachedSpy = jasmine.createSpy<(message: string) => void>()
     eventLimiter = createEventRateLimiter('error', onLimitReachedSpy, limit)
 
     eventLimiter.isLimitReached()
     eventLimiter.isLimitReached()
-    expect(onLimitReachedSpy).toHaveBeenCalledOnceWith({
-      message: 'Reached max number of errors by minute: 1',
-      source: 'agent',
-      startClocks: relativeToClocks(clock.relative(0)),
-    })
+    expect(onLimitReachedSpy).toHaveBeenCalledOnceWith('Reached max number of errors by minute: 1')
   })
 
   it('returns false when called from the "onLimitReached" callback to bypass the limit for the "limit reached" error', () => {
@@ -63,7 +58,7 @@ describe('createEventRateLimiter', () => {
   })
 
   it('does not call the "onLimitReached" callback more than once when the limit is reached', () => {
-    const onLimitReachedSpy = jasmine.createSpy<(rawError: RawError) => void>()
+    const onLimitReachedSpy = jasmine.createSpy<(message: string) => void>()
     eventLimiter = createEventRateLimiter('error', onLimitReachedSpy, limit)
 
     eventLimiter.isLimitReached()

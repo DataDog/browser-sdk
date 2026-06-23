@@ -21,15 +21,7 @@ import { NonErrorPrefix } from '../error/error.types'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { getConnectivity } from '../connectivity'
-import {
-  canUseEventBridge,
-  createFlushController,
-  createHttpRequest,
-  getEventBridge,
-  createBatch,
-} from '../../transport'
-import { createIdentityEncoder } from '../../tools/encoder'
-import { createPageMayExitObservable } from '../../browser/pageMayExitObservable'
+import { canUseEventBridge, getEventBridge, createBatch } from '../../transport'
 import { globalObject, isWorkerEnvironment } from '../../tools/globalObject'
 import { noop } from '../../tools/utils/functionUtils'
 import type { TelemetryEvent } from './telemetryEvent.types'
@@ -218,19 +210,9 @@ export function startTelemetryTransport(
       endpoints.push(replicaEndpoint)
     }
     const telemetryBatch = createBatch({
-      encoder: createIdentityEncoder(),
-      request: createHttpRequest(
-        endpoints,
-        // Ignore transport errors for telemetry
-        noop
-      ),
-      flushController: createFlushController({
-        pageMayExitObservable: createPageMayExitObservable(),
-
-        // We don't use an actual session expire observable here, to make telemetry collection
-        // independent of the session. This allows to start and send telemetry events earlier.
-        sessionExpireObservable: new Observable(),
-      }),
+      endpoints,
+      // Ignore transport errors for telemetry
+      reportError: noop,
     })
     cleanupTasks.push(telemetryBatch.stop)
     const telemetrySubscription = telemetryObservable.subscribe(telemetryBatch.add)
