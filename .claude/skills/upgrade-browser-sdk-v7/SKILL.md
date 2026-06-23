@@ -33,7 +33,7 @@ Then run your package manager (`npm install`, `yarn install`, etc.) and rebuild.
 
 Also upgrade framework integrations to v7: `@datadog/browser-rum-react`, `@datadog/browser-rum-angular`, `@datadog/browser-rum-vue`, `@datadog/browser-rum-nextjs`.
 
-Search: `grep -r "@datadog/browser-" package.json`
+Search: `grep -r "@datadog/browser-" --include="package.json" .`
 
 ## Step 2: Add `crossorigin="anonymous"` (CDN only)
 
@@ -114,7 +114,7 @@ DD_LOGS.init({
 
 Do **not** replace `forwardErrorsToLogs` with `forwardConsoleLogs` — they control different things.
 
-Search for explicit config: `grep -rn "forwardErrorsToLogs" --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html"`
+Search for explicit config: `grep -rn "forwardErrorsToLogs" --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html" --include="*.vue" --include="*.svelte"`
 
 Also search for Logs init calls that may be relying on the default (`forwardErrorsToLogs` defaults to `true` in v6, so omitting it still had the side effect): `grep -rn "DD_LOGS\.init\|datadogLogs\.init" --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" --include="*.html" --include="*.vue" --include="*.svelte"`
 
