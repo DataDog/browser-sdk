@@ -84,6 +84,30 @@ test.describe('rum websockets', () => {
       expect(wsWithSessionEnd).toBeDefined()
     })
 
+  createTest(
+    'websocket resource with session_end is still reported when the session is renewed before resource assembly'
+  )
+    .withRum({ enableExperimentalFeatures: ['track_web_sockets'] })
+    .withBody(WebSocketPage.testBody())
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      const ws = new WebSocketPage(page)
+
+      await ws.open()
+
+      await page.evaluate(() => {
+        window.DD_RUM!.stopSession()
+        // Generate user activity to trigger session renewal
+        document.documentElement.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+      })
+
+      await flushEvents()
+
+      const wsWithSessionEnd = getWebSocketResources(intakeRegistry.rumResourceEvents).find(
+        (e) => e.resource.websocket.tracking_end_reason === 'session_end'
+      )
+      expect(wsWithSessionEnd).toBeDefined()
+    })
+
   createTest('websocket resource keeps end_view_id when the session expires')
     .withRum({ enableExperimentalFeatures: ['track_web_sockets'] })
     .withBody(WebSocketPage.testBody())
