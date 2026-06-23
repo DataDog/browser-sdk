@@ -50,7 +50,7 @@ test.describe('partial view updates', () => {
       await flushEvents()
 
       // Should have exactly one full VIEW event (the latest state after all in-batch updates)
-      expect(intakeRegistry.rumViewEvents.length).toBeGreaterThanOrEqual(1)
+      expect(intakeRegistry.rumViewEvents.length).toBe(1)
 
       // Should NOT have any view_update events (opt-1: full VIEW replaced in batch)
       const viewUpdateEvents = intakeRegistry.rumViewUpdateEvents
