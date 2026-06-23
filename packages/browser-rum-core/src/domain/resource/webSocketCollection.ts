@@ -202,13 +202,12 @@ export function trackWebSocket(
 }
 
 function recordMessageTiming(webSocket: WebSocketConnection, at: ClocksState, direction: 'in' | 'out') {
-  const handshakeFailed = webSocket.openClocks === undefined
-
-  if (handshakeFailed) {
+  if (webSocket.openClocks === undefined) {
+    // handshake failed
     return
   }
 
-  const offset = elapsed(webSocket.openClocks!.timeStamp, at.timeStamp)
+  const offset = elapsed(webSocket.openClocks.timeStamp, at.timeStamp)
   if (direction === 'in' && webSocket.firstMessageInOffset === undefined) {
     webSocket.firstMessageInOffset = offset
   } else if (direction === 'out' && webSocket.firstMessageOutOffset === undefined) {
