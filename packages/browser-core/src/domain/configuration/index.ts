@@ -5,5 +5,5 @@ export {
   isSampleRate,
   validateAndBuildConfiguration,
   serializeConfiguration,
-  buildCookieOptions,
 } from './configuration'
+export { buildCookieOptions } from '../../browser/cookie'

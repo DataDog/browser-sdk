@@ -5,7 +5,7 @@ import { DOCS_ORIGIN, MORE_DETAILS, display } from '../../tools/display'
 import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
 import { TrackingConsent } from '../trackingConsent'
 import type { InitConfiguration } from './configuration'
-import { buildCookieOptions, serializeConfiguration, validateAndBuildConfiguration } from './configuration'
+import { serializeConfiguration, validateAndBuildConfiguration } from './configuration'
 
 describe('validateAndBuildConfiguration', () => {
   const clientToken = 'some_client_token'
@@ -218,33 +218,30 @@ describe('validateAndBuildConfiguration', () => {
       expect(serializedConfiguration).toEqual(SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION)
     })
   })
-})
 
-describe('buildCookieOptions', () => {
-  const clientToken = 'abc'
+  describe('cookie options', () => {
+    it('defaults useSecureSessionCookie to false', () => {
+      expect(validateAndBuildConfiguration({ clientToken })!.useSecureSessionCookie).toBe(false)
+    })
 
-  it('should not be secure nor crossSite by default', () => {
-    const cookieOptions = buildCookieOptions({ clientToken })
-    expect(cookieOptions).toEqual({ secure: false, crossSite: false, partitioned: false })
-  })
+    it('defaults usePartitionedCrossSiteSessionCookie to false', () => {
+      expect(validateAndBuildConfiguration({ clientToken })!.usePartitionedCrossSiteSessionCookie).toBe(false)
+    })
 
-  it('should be secure when `useSecureSessionCookie` is truthy', () => {
-    const cookieOptions = buildCookieOptions({ clientToken, useSecureSessionCookie: true })
-    expect(cookieOptions).toEqual({ secure: true, crossSite: false, partitioned: false })
-  })
+    it('defaults trackSessionAcrossSubdomains to false', () => {
+      expect(validateAndBuildConfiguration({ clientToken })!.trackSessionAcrossSubdomains).toBe(false)
+    })
 
-  it('should be secure, crossSite and partitioned when `usePartitionedCrossSiteSessionCookie` is truthy', () => {
-    const cookieOptions = buildCookieOptions({ clientToken, usePartitionedCrossSiteSessionCookie: true })
-    expect(cookieOptions).toEqual({ secure: true, crossSite: true, partitioned: true })
-  })
-
-  it('should have domain when `trackSessionAcrossSubdomains` is truthy', () => {
-    const cookieOptions = buildCookieOptions({ clientToken, trackSessionAcrossSubdomains: true })
-    expect(cookieOptions).toEqual({
-      secure: false,
-      crossSite: false,
-      partitioned: false,
-      domain: jasmine.any(String),
+    it('uses the provided values when set', () => {
+      const configuration = validateAndBuildConfiguration({
+        clientToken,
+        useSecureSessionCookie: true,
+        usePartitionedCrossSiteSessionCookie: true,
+        trackSessionAcrossSubdomains: true,
+      })!
+      expect(configuration.useSecureSessionCookie).toBe(true)
+      expect(configuration.usePartitionedCrossSiteSessionCookie).toBe(true)
+      expect(configuration.trackSessionAcrossSubdomains).toBe(true)
     })
   })
 })

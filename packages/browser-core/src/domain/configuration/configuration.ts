@@ -5,8 +5,6 @@ import { DOCS_ORIGIN, MORE_DETAILS, display } from '../../tools/display'
 import type { RawTelemetryConfiguration } from '../telemetry'
 import { isPercentage } from '../../tools/utils/numberUtils'
 import { objectHasValue } from '../../tools/utils/objectUtils'
-import type { CookieOptions } from '../../browser/cookie'
-import { getCurrentSite } from '../../browser/cookie'
 import { TrackingConsent } from '../trackingConsent'
 import type { SessionPersistence } from '../session/sessionConstants'
 import type { MatchOption } from '../../tools/matchOption'
@@ -284,7 +282,6 @@ export interface Configuration {
   site: Site
   source: SdkSource
   beforeSend: GenericBeforeSendCallback | undefined
-  cookieOptions: CookieOptions | undefined
   sessionPersistence: SessionPersistence | SessionPersistence[] | undefined
   sessionSampleRate: number
   telemetrySampleRate: number
@@ -297,6 +294,9 @@ export interface Configuration {
   trackingConsent: TrackingConsent
   storeContextsAcrossPages: boolean
   trackAnonymousUser?: boolean
+  useSecureSessionCookie: boolean
+  usePartitionedCrossSiteSessionCookie: boolean
+  trackSessionAcrossSubdomains: boolean
 
   // internal
   sdkVersion: string | undefined
@@ -374,7 +374,6 @@ export function validateAndBuildConfiguration(
     source: validateSource(initConfiguration.source),
     beforeSend:
       initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
-    cookieOptions: buildCookieOptions(initConfiguration),
     sessionPersistence: initConfiguration.sessionPersistence,
     sessionSampleRate: initConfiguration.sessionSampleRate ?? 100,
     telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
@@ -388,6 +387,9 @@ export function validateAndBuildConfiguration(
     trackingConsent: initConfiguration.trackingConsent ?? TrackingConsent.GRANTED,
     trackAnonymousUser: initConfiguration.trackAnonymousUser ?? true,
     storeContextsAcrossPages: !!initConfiguration.storeContextsAcrossPages,
+    useSecureSessionCookie: !!initConfiguration.useSecureSessionCookie,
+    usePartitionedCrossSiteSessionCookie: !!initConfiguration.usePartitionedCrossSiteSessionCookie,
+    trackSessionAcrossSubdomains: !!initConfiguration.trackSessionAcrossSubdomains,
 
     /**
      * The source of the SDK, used for support plugins purposes.
@@ -396,25 +398,6 @@ export function validateAndBuildConfiguration(
     sdkVersion: initConfiguration.sdkVersion,
     replica: initConfiguration.replica,
   }
-}
-
-export function buildCookieOptions(initConfiguration: InitConfiguration): CookieOptions | undefined {
-  const cookieOptions: CookieOptions = {}
-
-  cookieOptions.secure =
-    !!initConfiguration.useSecureSessionCookie || !!initConfiguration.usePartitionedCrossSiteSessionCookie
-  cookieOptions.crossSite = !!initConfiguration.usePartitionedCrossSiteSessionCookie
-  cookieOptions.partitioned = !!initConfiguration.usePartitionedCrossSiteSessionCookie
-
-  if (initConfiguration.trackSessionAcrossSubdomains) {
-    const currentSite = getCurrentSite()
-    if (!currentSite) {
-      return
-    }
-    cookieOptions.domain = currentSite
-  }
-
-  return cookieOptions
 }
 
 export function serializeConfiguration(initConfiguration: InitConfiguration) {
