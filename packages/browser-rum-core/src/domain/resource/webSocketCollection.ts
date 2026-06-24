@@ -237,7 +237,8 @@ function buildCompletedEvent(
   const endClocks = endInfo.at
   const endViewId =
     trackingEndReason === 'session_end'
-      ? viewHistory.findView(endClocks.relative, { returnInactive: true })?.id
+      ? // On session_end, the websocket event can be received after the active view has been closed.
+        viewHistory.findView(endClocks.relative, { returnInactive: true })?.id
       : viewHistory.findView(endClocks.relative)?.id
   const inboundIdleDurationBeforeClose =
     webSocket.lastMessageInAt !== undefined ? elapsed(webSocket.lastMessageInAt, endClocks.timeStamp) : undefined
