@@ -5,6 +5,13 @@ import { fileURLToPath } from 'node:url'
 
 const args = process.argv.slice(2).filter((arg) => arg !== '--')
 const orgArgs = getOrgArgs(args)
+const homePath = '/lightning/page/home'
+const homeWithRumPath =
+  `${homePath}?c__applicationId=1397744d-34f4-4a6a-a735-801e31c18221` +
+  '&c__clientToken=pub2ad3fe2578f01b9f329bd0ea4a2f08c5' +
+  '&c__env=dev' +
+  '&c__service=browser-sdk-sandbox' +
+  '&c__site=datadoghq.com'
 
 syncDatadogBundle()
 run('sf', ['project', 'deploy', 'start', ...args])
@@ -71,7 +78,10 @@ function printAppUrl() {
   }
 
   const { result: openResult } = JSON.parse(result.stdout)
+  const lightningUrl = new URL(openResult.url).origin.replace('.my.salesforce.com', '.lightning.force.com')
+
   console.log(`Home: ${openResult.url}`)
+  console.log(`Home with RUM: ${lightningUrl}${homeWithRumPath}`)
 }
 
 function getOrgArgs(args) {

@@ -6,12 +6,7 @@ import { loadScript } from 'lightning/platformResourceLoader'
 let datadogInitialization
 let lastStartedUrl
 
-const datadogRumConfig = {
-  applicationId: '1397744d-34f4-4a6a-a735-801e31c18221',
-  clientToken: 'pub2ad3fe2578f01b9f329bd0ea4a2f08c5',
-  env: 'dev',
-  service: 'browser-sdk-sandbox',
-  site: 'datadoghq.com',
+const defaultDatadogRumConfig = {
   trackViewsManually: true,
   trackEarlyRequests: true,
   trackLongTasks: true,
@@ -57,7 +52,15 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
 
   loadDatadogRum() {
     return loadScript(this, datadogRumSlim).then(() => {
-      window.DD_RUM.init(datadogRumConfig)
+      const searchParams = new URLSearchParams(window.location.search)
+      window.DD_RUM.init({
+        applicationId: searchParams.get('c__applicationId'),
+        clientToken: searchParams.get('c__clientToken'),
+        env: searchParams.get('c__env'),
+        service: searchParams.get('c__service'),
+        site: searchParams.get('c__site'),
+        ...defaultDatadogRumConfig,
+      })
       lastStartedUrl = window.location.pathname + window.location.search + window.location.hash
       window.DD_RUM.startView({
         name: lastStartedUrl,
