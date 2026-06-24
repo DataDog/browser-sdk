@@ -4,7 +4,7 @@ export function trackReportError(errorObservable: Observable<RawError>) {
   const subscription = initReportObservable([
     RawReportType.cspViolation,
     RawReportType.intervention,
-    RawReportType.networkEfficiencyGuardrails,
+    RawReportType.documentPolicyViolation,
   ]).subscribe((rawError) => errorObservable.notify(rawError))
 
   return {

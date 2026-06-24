@@ -54,7 +54,7 @@ test.describe('network efficiency guardrails', () => {
 
   test.describe('Logs', () => {
     createTest('should forward network-efficiency-guardrails violations via forwardReports')
-      .withLogs({ forwardReports: ['network-efficiency-guardrails'] })
+      .withLogs({ forwardReports: ['document-policy-violation'] })
       .withBasePath('/?network-efficiency-guardrails=true')
       .run(async ({ page, intakeRegistry, flushEvents, withBrowserLogs }) => {
         await page.evaluate(() => fetch('/uncompressed-script.js'))
@@ -75,7 +75,7 @@ test.describe('network efficiency guardrails', () => {
         })
       })
 
-    createTest('should not forward network-efficiency-guardrails violations when not in forwardReports')
+    createTest('should not forward network-efficiency-guardrails violations when not opted in')
       .withLogs({ forwardReports: [] })
       .withBasePath('/?network-efficiency-guardrails=true')
       .run(async ({ page, intakeRegistry, flushEvents, withBrowserLogs }) => {

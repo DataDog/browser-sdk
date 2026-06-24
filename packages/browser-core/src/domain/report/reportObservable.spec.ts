@@ -80,8 +80,8 @@ describe('report observable', () => {
     expect(notifyReport).not.toHaveBeenCalled()
   })
 
-  it(`should notify ${RawReportType.networkEfficiencyGuardrails} reports`, () => {
-    consoleSubscription = initReportObservable([RawReportType.networkEfficiencyGuardrails]).subscribe(notifyReport)
+  it(`should notify ${RawReportType.documentPolicyViolation} reports`, () => {
+    consoleSubscription = initReportObservable([RawReportType.documentPolicyViolation]).subscribe(notifyReport)
     reportingObserver.raiseReport('document-policy-violation')
 
     expect(notifyReport).toHaveBeenCalledOnceWith(
@@ -93,8 +93,8 @@ describe('report observable', () => {
     )
   })
 
-  it(`should compute stack for ${RawReportType.networkEfficiencyGuardrails}`, () => {
-    consoleSubscription = initReportObservable([RawReportType.networkEfficiencyGuardrails]).subscribe(notifyReport)
+  it(`should compute stack for ${RawReportType.documentPolicyViolation}`, () => {
+    consoleSubscription = initReportObservable([RawReportType.documentPolicyViolation]).subscribe(notifyReport)
     reportingObserver.raiseReport('document-policy-violation')
 
     const [report] = notifyReport.calls.mostRecent().args
@@ -104,12 +104,16 @@ describe('report observable', () => {
   at <anonymous> @ https://foo.bar/large-uncompressed.js`)
   })
 
-  it(`should not notify document-policy-violation reports with a featureId other than ${RawReportType.networkEfficiencyGuardrails}`, () => {
-    consoleSubscription = initReportObservable([RawReportType.networkEfficiencyGuardrails]).subscribe(notifyReport)
+  it(`should notify ${RawReportType.documentPolicyViolation} reports regardless of featureId`, () => {
+    consoleSubscription = initReportObservable([RawReportType.documentPolicyViolation]).subscribe(notifyReport)
     reportingObserver.raiseReport('document-policy-violation', {
       body: { ...FAKE_DOCUMENT_POLICY_VIOLATION_REPORT.body, featureId: 'some-other-policy' },
     })
 
-    expect(notifyReport).not.toHaveBeenCalled()
+    expect(notifyReport).toHaveBeenCalledOnceWith(
+      jasmine.objectContaining({
+        type: 'some-other-policy',
+      })
+    )
   })
 })

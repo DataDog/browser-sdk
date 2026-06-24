@@ -12,7 +12,7 @@ export const RawReportType = {
   intervention: 'intervention',
   deprecation: 'deprecation',
   cspViolation: 'csp_violation',
-  networkEfficiencyGuardrails: 'network-efficiency-guardrails',
+  documentPolicyViolation: 'document-policy-violation',
 } as const
 
 export type RawReportType = (typeof RawReportType)[keyof typeof RawReportType]
@@ -28,32 +28,12 @@ export function initReportObservable(apis: RawReportType[]) {
     observables.push(createCspViolationReportObservable())
   }
 
-  const reportTypes = buildReportObserverTypes(apis)
+  const reportTypes = apis.filter((api): api is ReportType => api !== RawReportType.cspViolation)
   if (reportTypes.length) {
     observables.push(createReportObservable(reportTypes))
   }
 
   return mergeObservables(...observables)
-}
-
-/**
- * Maps internal RawReportType values to the browser ReportingObserver type strings.
- * `network-efficiency-guardrails` is exposed via `document-policy-violation` reports,
- * filtered by `body.featureId === 'network-efficiency-guardrails'`.
- */
-function buildReportObserverTypes(apis: RawReportType[]): ReportType[] {
-  const types = new Set<ReportType>()
-  for (const api of apis) {
-    if (api === RawReportType.cspViolation) {
-      continue
-    }
-    if (api === RawReportType.networkEfficiencyGuardrails) {
-      types.add('document-policy-violation')
-    } else {
-      types.add(api)
-    }
-  }
-  return Array.from(types)
 }
 
 function createReportObservable(reportTypes: ReportType[]) {
@@ -64,18 +44,7 @@ function createReportObservable(reportTypes: ReportType[]) {
 
     const handleReports = monitor(
       (reports: Array<DeprecationReport | InterventionReport | DocumentPolicyViolationReport>, _: ReportingObserver) =>
-        reports.forEach((report) => {
-          // document-policy-violation reports are only subscribed to when
-          // network-efficiency-guardrails is requested. Skip any document policy violation
-          // whose featureId does not match network-efficiency-guardrails.
-          if (
-            report.type === 'document-policy-violation' &&
-            report.body.featureId !== RawReportType.networkEfficiencyGuardrails
-          ) {
-            return
-          }
-          observable.notify(buildRawReportErrorFromReport(report))
-        })
+        reports.forEach((report) => observable.notify(buildRawReportErrorFromReport(report)))
     ) as ReportingObserverCallback
 
     const observer = new window.ReportingObserver(handleReports, {
