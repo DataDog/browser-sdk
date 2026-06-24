@@ -53,14 +53,14 @@ export default class CustomActionButtons extends LightningElement {
 
   // Vitals: measure a live 300ms window.
   handleStartStopVitalClick() {
-    const vital = window.DD_RUM?.startDurationVital('salesforce.start_stop_vital_test', {
+    window.DD_RUM?.startDurationVital('salesforce.start_stop_vital_test', {
       description: 'salesforce start-stop vital test',
       context: {
         source: 'salesforce-home-button',
       },
     })
 
-    setTimeout(() => window.DD_RUM?.stopDurationVital(vital), 300)
+    setTimeout(() => window.DD_RUM?.stopDurationVital('salesforce.start_stop_vital_test'), 300)
   }
 
   async handleFetchResourceClick() {

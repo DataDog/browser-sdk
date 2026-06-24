@@ -21,6 +21,11 @@ const defaultDatadogRumConfig = {
       event.view.url = cleanUrl.href
       event.view.name = cleanUrl.pathname + cleanUrl.search + cleanUrl.hash
     }
+    if (event.resource?.url) {
+      const cleanUrl = new URL(event.resource.url, window.location.origin)
+      DATADOG_PARAMS.forEach((param) => cleanUrl.searchParams.delete(param))
+      event.resource.url = cleanUrl.href
+    }
   },
 }
 
