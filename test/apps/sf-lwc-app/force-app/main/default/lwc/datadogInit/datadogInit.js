@@ -6,12 +6,22 @@ import { loadScript } from 'lightning/platformResourceLoader'
 let datadogInitialization
 let lastStartedUrl
 
+const DATADOG_PARAMS = ['c__applicationId', 'c__clientToken', 'c__env', 'c__service', 'c__site']
+
 const defaultDatadogRumConfig = {
   trackViewsManually: true,
   trackEarlyRequests: true,
   trackLongTasks: true,
   trackResources: true,
   trackUserInteractions: true,
+  beforeSend: (event) => {
+    if (event.view) {
+      const cleanUrl = new URL(event.view.url, window.location.origin)
+      DATADOG_PARAMS.forEach((param) => cleanUrl.searchParams.delete(param))
+      event.view.url = cleanUrl.href
+      event.view.name = cleanUrl.pathname + cleanUrl.search + cleanUrl.hash
+    }
+  },
 }
 
 export default class DatadogInit extends NavigationMixin(LightningElement) {
@@ -53,9 +63,17 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
   loadDatadogRum() {
     return loadScript(this, datadogRumSlim).then(() => {
       const searchParams = new URLSearchParams(window.location.search)
+      const applicationId = searchParams.get('c__applicationId')
+      const clientToken = searchParams.get('c__clientToken')
+
+      if (!applicationId || !clientToken) {
+        window.console.warn('Datadog RUM not initialized: missing c__applicationId or c__clientToken')
+        return
+      }
+
       window.DD_RUM.init({
-        applicationId: searchParams.get('c__applicationId'),
-        clientToken: searchParams.get('c__clientToken'),
+        applicationId,
+        clientToken,
         env: searchParams.get('c__env'),
         service: searchParams.get('c__service'),
         site: searchParams.get('c__site'),
