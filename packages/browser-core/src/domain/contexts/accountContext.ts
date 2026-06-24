@@ -1,8 +1,8 @@
+import type { Hook } from '@datadog/js-core/assembly'
+import { SKIPPED } from '@datadog/js-core/assembly'
 import type { Configuration } from '../configuration'
 import { CustomerDataType } from '../context/contextConstants'
 import { storeContextManager } from '../context/storeContextManager'
-import { HookNames, SKIPPED } from '../../tools/abstractHooks'
-import type { AbstractHooks } from '../../tools/abstractHooks'
 import { isEmptyObject } from '../../tools/utils/objectUtils'
 import { createContextManager } from '../context/contextManager'
 
@@ -15,14 +15,14 @@ export interface Account {
   [key: string]: unknown
 }
 
-export function startAccountContext(hooks: AbstractHooks, configuration: Configuration, productKey: string) {
+export function startAccountContext(assembleHook: Hook<any, any>, configuration: Configuration, productKey: string) {
   const accountContextManager = buildAccountContextManager()
 
   if (configuration.storeContextsAcrossPages) {
-    storeContextManager(configuration, accountContextManager, productKey, CustomerDataType.Account)
+    storeContextManager(accountContextManager, productKey, CustomerDataType.Account)
   }
 
-  hooks.register(HookNames.Assemble, () => {
+  assembleHook.register(() => {
     const account = accountContextManager.getContext() as Account
 
     if (isEmptyObject(account) || !account.id) {

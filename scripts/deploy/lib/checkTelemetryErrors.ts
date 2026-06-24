@@ -57,6 +57,10 @@ function getQueries(version: string): Query[] {
 export async function checkTelemetryErrors(datacenters: string[], version: string): Promise<void> {
   const queries = getQueries(version)
 
+  printLog(
+    `Checking telemetry errors for version ${version} across ${datacenters.length} datacenter(s): ${datacenters.join(', ')}`
+  )
+
   // Create a fresh HTTP agent for this batch of telemetry checks
   const agent = createTelemetryAgent()
 
@@ -83,19 +87,22 @@ async function checkDatacenterTelemetryErrors(datacenter: string, queries: Query
   const applicationKey = getTelemetryOrgApplicationKey(site)
 
   if (!apiKey || !applicationKey) {
-    printLog(`No API key or application key found for ${site}, skipping...`)
+    printLog(`[${site}] No API key or application key found for ${site}, skipping...`)
     return
   }
 
   for (let i = 0; i < queries.length; i++) {
     const query = queries[i]
     const buckets = await queryLogsApi(site, apiKey, applicationKey, query, agent)
+    const count = buckets[0]?.computes?.c0
 
     // buckets are sorted by count, so we only need to check the first one
-    if (buckets[0]?.computes?.c0 > query.threshold) {
-      throw new Error(`${query.name} found in the last ${TIME_WINDOW_IN_MINUTES} minutes,
+    if (count > query.threshold) {
+      throw new Error(`[${site}] ${query.name}: found ${count} events (threshold: ${query.threshold}) in the last ${TIME_WINDOW_IN_MINUTES} minutes,
 see ${computeLogsLink(site, query)}`)
     }
+
+    printLog(`[${site}] ${query.name}: found ${count} event(s) (threshold: ${query.threshold})`)
 
     // Skip rate limit delay after last query
     if (i < queries.length - 1) {
@@ -112,52 +119,61 @@ async function queryLogsApi(
   agent: Agent,
   attempt: number = 1
 ): Promise<QueryResultBucket[]> {
-  const response = await fetch(`https://api.${site}/api/v2/logs/analytics/aggregate`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'DD-API-KEY': apiKey,
-      'DD-APPLICATION-KEY': applicationKey,
-    },
-    body: JSON.stringify({
-      compute: [
-        {
-          aggregation: 'count',
-        },
-      ],
-      ...(query.groupBy
-        ? {
-            group_by: [
-              {
-                facet: query.groupBy,
-                sort: {
-                  type: 'measure',
-                  aggregation: 'count',
-                },
-              },
-            ],
-          }
-        : {}),
-      filter: {
-        from: `now-${TIME_WINDOW_IN_MINUTES}m`,
-        to: 'now',
-        query: query.query,
+  let response: Response
+  try {
+    response = await fetch(`https://api.${site}/api/v2/logs/analytics/aggregate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'DD-API-KEY': apiKey,
+        'DD-APPLICATION-KEY': applicationKey,
       },
-    }),
-    // Use dedicated agent to avoid connection pool conflicts.
-    dispatcher: agent,
-  })
+      body: JSON.stringify({
+        compute: [
+          {
+            aggregation: 'count',
+          },
+        ],
+        ...(query.groupBy
+          ? {
+              group_by: [
+                {
+                  facet: query.groupBy,
+                  sort: {
+                    type: 'measure',
+                    aggregation: 'count',
+                  },
+                },
+              ],
+            }
+          : {}),
+        filter: {
+          from: `now-${TIME_WINDOW_IN_MINUTES}m`,
+          to: 'now',
+          query: query.query,
+        },
+      }),
+      // Use dedicated agent to avoid connection pool conflicts.
+      dispatcher: agent,
+    })
+  } catch (error) {
+    throw new Error(`[${site}] Network error on attempt ${attempt}/${MAX_RETRIES} for "${query.name}"`, {
+      cause: error,
+    })
+  }
 
   if (shouldRetry(response, attempt)) {
     printLog(
-      `503 Service Unavailable, retrying in ${RATE_LIMIT_DELAY_MS / 1000}s (attempt ${attempt}/${MAX_RETRIES})...`
+      `[${site}] 503 Service Unavailable for "${query.name}", retrying in ${RATE_LIMIT_DELAY_MS / 1000}s (attempt ${attempt}/${MAX_RETRIES})...`
     )
     await timeout(RATE_LIMIT_DELAY_MS)
     return queryLogsApi(site, apiKey, applicationKey, query, agent, attempt + 1)
   }
 
   if (!response.ok) {
-    throw await createFetchError(response)
+    throw new Error(`[${site}] HTTP error on attempt ${attempt}/${MAX_RETRIES} for "${query.name}"`, {
+      cause: await createFetchError(response),
+    })
   }
 
   const data = (await response.json()) as QueryResult

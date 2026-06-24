@@ -1,7 +1,6 @@
 import { ONE_SECOND, elapsed, relativeNow } from '@datadog/js-core/time'
 import type { Duration, ClocksState } from '@datadog/js-core/time'
 import { Observable, throttle, addEventListener, DOM_EVENT, monitor } from '@datadog/browser-core'
-import type { RumConfiguration } from '../../configuration'
 import { getScrollY } from '../../../browser/scroll'
 import { getViewportDimension } from '../../../browser/viewportObservable'
 
@@ -16,10 +15,9 @@ export interface ScrollMetrics {
 }
 
 export function trackScrollMetrics(
-  configuration: RumConfiguration,
   viewStart: ClocksState,
   callback: (scrollMetrics: ScrollMetrics) => void,
-  scrollValues = createScrollValuesObservable(configuration)
+  scrollValues = createScrollValuesObservable()
 ) {
   let maxScrollDepth = 0
   let maxScrollHeight = 0
@@ -77,10 +75,7 @@ export function computeScrollValues() {
   }
 }
 
-export function createScrollValuesObservable(
-  configuration: RumConfiguration,
-  throttleDuration = THROTTLE_SCROLL_DURATION
-): Observable<ScrollValues> {
+export function createScrollValuesObservable(throttleDuration = THROTTLE_SCROLL_DURATION): Observable<ScrollValues> {
   return new Observable<ScrollValues>((observable) => {
     function notify() {
       observable.notify(computeScrollValues())
@@ -96,7 +91,7 @@ export function createScrollValuesObservable(
     if (observerTarget) {
       resizeObserver.observe(observerTarget)
     }
-    const eventListener = addEventListener(configuration, window, DOM_EVENT.SCROLL, throttledNotify.throttled, {
+    const eventListener = addEventListener(window, DOM_EVENT.SCROLL, throttledNotify.throttled, {
       passive: true,
     })
 

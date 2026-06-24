@@ -1,4 +1,4 @@
-import { getType } from './utils/typeUtils'
+import { getType } from './typeUtils'
 
 type Merged<TDestination, TSource> =
   // case 1 - source is undefined - return destination
@@ -23,13 +23,25 @@ type Merged<TDestination, TSource> =
             TSource
 
 /**
- * Iterate over source and affect its sub values into destination, recursively.
- * If the source and destination can't be merged, return source.
+ * Recursively merges `source` into `destination` in place and returns the result.
+ * - Objects are merged key by key.
+ * - Arrays are merged index by index.
+ * - Primitive and class-instance values replace the destination.
+ * - `undefined` source values leave the destination unchanged.
+ * - Circular references in `source` are silently dropped.
+ *
+ * Prefer `combine` for a non-mutating deep merge or `deepClone` for a simple deep copy.
+ *
+ * @returns The merged value — either `destination` (mutated) or `source` when they cannot be merged.
  */
-export function mergeInto<D, S>(
+export function mergeInto<D, S>(destination: D, source: S): Merged<D, S> {
+  return mergeIntoInternal(destination, source, createCircularReferenceChecker())
+}
+
+function mergeIntoInternal<D, S>(
   destination: D,
   source: S,
-  circularReferenceChecker = createCircularReferenceChecker()
+  circularReferenceChecker: CircularReferenceChecker
 ): Merged<D, S> {
   // ignore the source if it is undefined
   if (source === undefined) {
@@ -51,15 +63,16 @@ export function mergeInto<D, S>(
   } else if (Array.isArray(source)) {
     const merged: any[] = Array.isArray(destination) ? destination : []
     for (let i = 0; i < source.length; ++i) {
-      merged[i] = mergeInto(merged[i], source[i], circularReferenceChecker)
+      merged[i] = mergeIntoInternal(merged[i], source[i], circularReferenceChecker)
     }
     return merged as unknown as Merged<D, S>
   }
 
   const merged = getType(destination) === 'object' ? (destination as Record<any, any>) : {}
   for (const key in source) {
-    if (Object.prototype.hasOwnProperty.call(source, key)) {
-      merged[key] = mergeInto(merged[key], source[key], circularReferenceChecker)
+    // Skip __proto__: it resolves to Object.prototype via [[Get]], enabling prototype pollution
+    if (Object.prototype.hasOwnProperty.call(source, key) && key !== '__proto__') {
+      merged[key] = mergeIntoInternal(merged[key], source[key], circularReferenceChecker)
     }
   }
   return merged as unknown as Merged<D, S>
@@ -70,6 +83,8 @@ export function mergeInto<D, S>(
  * Caveats:
  * - It doesn't maintain prototype chains - don't use with instances of custom classes.
  * - It doesn't handle Map and Set
+ *
+ * @returns A deep copy of `value` with the same type.
  */
 export function deepClone<T>(value: T): T {
   return mergeInto(undefined, value) as T
@@ -77,13 +92,17 @@ export function deepClone<T>(value: T): T {
 
 type Combined<A, B> = A extends null ? B : B extends null ? A : Merged<A, B>
 
-/*
- * Performs a deep merge of objects and arrays.
- * - Arguments won't be mutated
- * - Object and arrays in the output value are de-referenced ("deep cloned")
- * - Arrays values are merged index by index
- * - Objects are merged by keys
- * - Values get replaced, unless undefined
+/**
+ * Performs a non-mutating deep merge of two or more values.
+ * - All arguments are left unchanged; the result is always a new value.
+ * - Objects are merged key by key; arrays are merged index by index.
+ * - `undefined` values are skipped (they do not overwrite existing values).
+ * - `null` values replace existing values.
+ *
+ * @returns A new deeply-merged value of the combined type.
+ * @example
+ * combine({ a: 1 }, { b: 2 }) // { a: 1, b: 2 }
+ * combine({ a: { x: 1 } }, { a: { y: 2 } }) // { a: { x: 1, y: 2 } }
  */
 export function combine<A, B>(a: A, b: B): Combined<A, B>
 export function combine<A, B, C>(a: A, b: B, c: C): Combined<Combined<A, B>, C>
@@ -142,24 +161,12 @@ interface CircularReferenceChecker {
 }
 
 function createCircularReferenceChecker(): CircularReferenceChecker {
-  if (typeof WeakSet !== 'undefined') {
-    const set: WeakSet<any> = new WeakSet()
-    return {
-      hasAlreadyBeenSeen(value) {
-        const has = set.has(value)
-        if (!has) {
-          set.add(value)
-        }
-        return has
-      },
-    }
-  }
-  const array: any[] = []
+  const set = new WeakSet<any>()
   return {
     hasAlreadyBeenSeen(value) {
-      const has = array.indexOf(value) >= 0
+      const has = set.has(value)
       if (!has) {
-        array.push(value)
+        set.add(value)
       }
       return has
     },

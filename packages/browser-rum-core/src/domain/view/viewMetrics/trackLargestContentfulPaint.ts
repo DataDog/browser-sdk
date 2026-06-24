@@ -40,7 +40,6 @@ export function trackLargestContentfulPaint(
   // but the web-vitals reference implementation uses this as a safeguard.
   let firstInteractionTimestamp = Infinity
   const { stop: stopEventListener } = addEventListeners(
-    configuration,
     eventTarget,
     [DOM_EVENT.POINTER_DOWN, DOM_EVENT.KEY_DOWN],
     (event) => {
@@ -50,7 +49,7 @@ export function trackLargestContentfulPaint(
   )
 
   let biggestLcpSize = 0
-  const performanceLcpSubscription = createPerformanceObservable(configuration, {
+  const performanceLcpSubscription = createPerformanceObservable({
     type: RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT,
     buffered: true,
   }).subscribe((entries) => {

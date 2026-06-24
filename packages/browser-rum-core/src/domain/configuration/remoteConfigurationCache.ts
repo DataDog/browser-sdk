@@ -1,4 +1,5 @@
 import { timeStampNow } from '@datadog/js-core/time'
+import { tryJsonParse } from '@datadog/browser-core'
 import type { TimeStamp } from '@datadog/js-core/time'
 import type { RumRemoteConfiguration } from './remoteConfiguration'
 
@@ -57,11 +58,8 @@ export function createConfigurationCache({ remoteConfigurationId }: { remoteConf
         return { status: 'miss' }
       }
 
-      let parsed: unknown
-
-      try {
-        parsed = JSON.parse(raw)
-      } catch {
+      const parsed = tryJsonParse(raw)
+      if (parsed === undefined) {
         this.remove()
 
         return { status: 'error' }

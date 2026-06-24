@@ -21,6 +21,7 @@ import {
   TelemetryService,
   mockable,
   startTelemetrySessionContext,
+  setAllowUntrustedEvents,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
@@ -84,6 +85,7 @@ export function createPreStartStrategy(
       }
       // Set the experimental feature flags as early as possible, so we can use them in most places
       initFeatureFlags(initConfiguration.enableExperimentalFeatures)
+      setAllowUntrustedEvents(initConfiguration.allowUntrustedEvents)
 
       if (canUseEventBridge()) {
         initConfiguration = overrideInitConfigurationForBridge(initConfiguration)
@@ -108,7 +110,7 @@ export function createPreStartStrategy(
 
       trackingConsentState.onGrantedOnce(() => {
         startTrackingConsentContext(hooks, trackingConsentState)
-        mockable(startTelemetry)(TelemetryService.LOGS, configuration, hooks)
+        mockable(startTelemetry)(TelemetryService.LOGS, configuration, hooks.assembleTelemetry)
         const sessionManagerPromise = canUseEventBridge()
           ? startSessionManagerStub()
           : mockable(startSessionManager)(configuration, trackingConsentState)
@@ -119,7 +121,7 @@ export function createPreStartStrategy(
               return
             }
             sessionManager = newSessionManager
-            startTelemetrySessionContext(hooks, sessionManager)
+            startTelemetrySessionContext(hooks.assembleTelemetry, sessionManager)
             addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
             tryStartLogs()
           })

@@ -33,11 +33,11 @@ export async function selectCookieStrategy(
     return undefined
   }
 
-  if (isCookieStoreSupported() && (await areCookiesAuthorized(createCookieStoreAccess, cookieOptions, configuration))) {
+  if (isCookieStoreSupported() && (await areCookiesAuthorized(createCookieStoreAccess, cookieOptions))) {
     return { type: SessionPersistence.COOKIE, cookieOptions, cookieApi: CookieApi.COOKIE_STORE }
   }
 
-  if (await areCookiesAuthorized(createDocumentCookieAccess, cookieOptions, configuration)) {
+  if (await areCookiesAuthorized(createDocumentCookieAccess, cookieOptions)) {
     return { type: SessionPersistence.COOKIE, cookieOptions, cookieApi: CookieApi.DOCUMENT_COOKIE }
   }
 
@@ -55,7 +55,7 @@ export function initCookieStrategy(
   const sessionObservable = new Observable<SessionState>()
   const trackAnonymousUser = !!configuration.trackAnonymousUser
   const opts = encodeCookieOptions(cookieOptions)
-  const cookieAccess = mockable(createCookieAccess)(cookieApi, configuration, cookieOptions)
+  const cookieAccess = mockable(createCookieAccess)(cookieApi, cookieOptions)
   let isFirstCall = true
 
   cookieAccess.observable.subscribe(() => {
@@ -117,13 +117,9 @@ function isContextGoingAwayError(error: unknown): boolean {
   return error.name === 'AbortError' || error.message.includes('no longer runnable')
 }
 
-export function createCookieAccess(
-  cookieApi: CookieApi,
-  configuration: Configuration,
-  cookieOptions: CookieOptions
-): CookieAccess {
+export function createCookieAccess(cookieApi: CookieApi, cookieOptions: CookieOptions): CookieAccess {
   return cookieApi === CookieApi.COOKIE_STORE
-    ? createCookieStoreAccess(SESSION_STORE_KEY, cookieOptions, configuration)
+    ? createCookieStoreAccess(SESSION_STORE_KEY, cookieOptions)
     : createDocumentCookieAccess(SESSION_STORE_KEY, cookieOptions)
 }
 

@@ -1,5 +1,6 @@
 import type { RelativeTime } from '@datadog/js-core/time'
-import { DISCARDED, HookNames, createTrackingConsentState, TrackingConsent } from '@datadog/browser-core'
+import { createTrackingConsentState, TrackingConsent } from '@datadog/browser-core'
+import { DISCARDED } from '@datadog/js-core/assembly'
 import type { DefaultLogsEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { startTrackingConsentContext } from './trackingConsentContext'
@@ -15,7 +16,7 @@ describe('tracking consent context', () => {
     const trackingConsentState = createTrackingConsentState(TrackingConsent.NOT_GRANTED)
     startTrackingConsentContext(hooks, trackingConsentState)
 
-    const defaultLogAttributes = hooks.triggerHook(HookNames.Assemble, {
+    const defaultLogAttributes = hooks.assemble.trigger({
       startTime: 0 as RelativeTime,
     })
 
@@ -26,7 +27,7 @@ describe('tracking consent context', () => {
     const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
     startTrackingConsentContext(hooks, trackingConsentState)
 
-    const defaultLogAttributes = hooks.triggerHook(HookNames.Assemble, {
+    const defaultLogAttributes = hooks.assemble.trigger({
       startTime: undefined as any,
     }) as DefaultLogsEventAttributes
 
@@ -37,7 +38,7 @@ describe('tracking consent context', () => {
     const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
     startTrackingConsentContext(hooks, trackingConsentState)
 
-    const defaultLogAttributes = hooks.triggerHook(HookNames.Assemble, {
+    const defaultLogAttributes = hooks.assemble.trigger({
       startTime: 100 as RelativeTime,
     })
 
@@ -48,7 +49,7 @@ describe('tracking consent context', () => {
     const trackingConsentState = createTrackingConsentState(TrackingConsent.NOT_GRANTED)
     startTrackingConsentContext(hooks, trackingConsentState)
 
-    const defaultLogAttributes = hooks.triggerHook(HookNames.Assemble, {
+    const defaultLogAttributes = hooks.assemble.trigger({
       startTime: 100 as RelativeTime,
     })
 

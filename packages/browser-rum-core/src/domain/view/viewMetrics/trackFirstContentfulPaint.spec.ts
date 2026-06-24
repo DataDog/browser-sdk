@@ -3,7 +3,7 @@ import { clocksOrigin } from '@datadog/js-core/time'
 import { registerCleanupTask, restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
 import type { RumPerformanceEntry } from '../../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
-import { createPerformanceEntry, mockPerformanceObserver, mockRumConfiguration } from '../../../../test'
+import { createPerformanceEntry, mockPerformanceObserver } from '../../../../test'
 import { FCP_MAXIMUM_DELAY, trackFirstContentfulPaint } from './trackFirstContentfulPaint'
 import { trackFirstHidden } from './trackFirstHidden'
 
@@ -15,8 +15,8 @@ describe('trackFirstContentfulPaint', () => {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
 
     fcpCallback = jasmine.createSpy()
-    const firstHidden = trackFirstHidden(mockRumConfiguration(), clocksOrigin())
-    const firstContentfulPaint = trackFirstContentfulPaint(mockRumConfiguration(), firstHidden, fcpCallback)
+    const firstHidden = trackFirstHidden(clocksOrigin())
+    const firstContentfulPaint = trackFirstContentfulPaint(firstHidden, fcpCallback)
 
     registerCleanupTask(() => {
       firstHidden.stop()

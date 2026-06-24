@@ -1,7 +1,7 @@
 import Ajv from 'ajv'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { Context } from '@datadog/browser-core'
-import { combine } from '@datadog/browser-core'
+import { combine } from '@datadog/js-core/util'
 import type { CommonProperties } from '@datadog/browser-rum-core'
 import type { LifeCycle, RawRumEventCollectedData } from '../src/domain/lifeCycle'
 import { LifeCycleEventType } from '../src/domain/lifeCycle'

@@ -1,6 +1,9 @@
 import { clocksNow } from '@datadog/js-core/time'
+import { getDebugMode, combine } from '@datadog/js-core/util'
+import type { Hook } from '@datadog/js-core/assembly'
+import type { RecursivePartial } from '@datadog/js-core/util'
+import { DISCARDED } from '@datadog/js-core/assembly'
 import type { Context } from '../../tools/serialisation/context'
-import { ConsoleApiName } from '../../tools/display'
 import { NO_ERROR_STACK_PRESENT_MESSAGE, isError } from '../error/error'
 import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
 import { getExperimentalFeatures } from '../../tools/experimentalFeatures'
@@ -9,26 +12,16 @@ import type { Configuration } from '../configuration'
 import { buildTags } from '../tags'
 import { INTAKE_SITE_STAGING, INTAKE_SITE_US1_FED, INTAKE_SITE_US2_FED } from '../intakeSites'
 import { BufferedObservable, Observable } from '../../tools/observable'
-import { displayIfDebugEnabled, startMonitorErrorCollection } from '../../tools/monitor'
+import { startMonitorErrorCollection } from '../../tools/monitor'
+import { display } from '../../tools/display'
 import { sendToExtension } from '../../tools/sendToExtension'
 import { performDraw } from '../../tools/utils/numberUtils'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
-import { combine } from '../../tools/mergeInto'
 import { NonErrorPrefix } from '../error/error.types'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { getConnectivity } from '../connectivity'
-import {
-  canUseEventBridge,
-  createFlushController,
-  createHttpRequest,
-  getEventBridge,
-  createBatch,
-} from '../../transport'
-import { createIdentityEncoder } from '../../tools/encoder'
-import { createPageMayExitObservable } from '../../browser/pageMayExitObservable'
-import type { AbstractHooks, RecursivePartial } from '../../tools/abstractHooks'
-import { HookNames, DISCARDED } from '../../tools/abstractHooks'
+import { canUseEventBridge, getEventBridge, createBatch } from '../../transport'
 import { globalObject, isWorkerEnvironment } from '../../tools/globalObject'
 import { noop } from '../../tools/utils/functionUtils'
 import type { TelemetryEvent } from './telemetryEvent.types'
@@ -90,10 +83,10 @@ export function getTelemetryObservable() {
 export function startTelemetry(
   telemetryService: TelemetryService,
   configuration: Configuration,
-  hooks: AbstractHooks
+  hook: Hook<any, any>
 ): Telemetry {
   const observable = new Observable<TelemetryEvent & Context>()
-  const { enabled, metricsEnabled } = startTelemetryCollection(telemetryService, configuration, hooks, observable)
+  const { enabled, metricsEnabled } = startTelemetryCollection(telemetryService, configuration, hook, observable)
   const { stop } = startTelemetryTransport(configuration, observable)
   return {
     stop,
@@ -105,7 +98,7 @@ export function startTelemetry(
 export function startTelemetryCollection(
   telemetryService: TelemetryService,
   configuration: Configuration,
-  hooks: AbstractHooks,
+  hook: Hook<any, any>,
   observable: Observable<TelemetryEvent & Context>,
   metricSampleRate = METRIC_SAMPLE_RATE,
   maxTelemetryEventsPerPage = MAX_TELEMETRY_EVENTS_PER_PAGE
@@ -145,7 +138,7 @@ export function startTelemetryCollection(
       return
     }
 
-    const defaultTelemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
+    const defaultTelemetryEventAttributes = hook.trigger({
       startTime: clocksNow().relative,
     })
 
@@ -217,19 +210,9 @@ export function startTelemetryTransport(
       endpoints.push(replicaEndpoint)
     }
     const telemetryBatch = createBatch({
-      encoder: createIdentityEncoder(),
-      request: createHttpRequest(
-        endpoints,
-        // Ignore transport errors for telemetry
-        noop
-      ),
-      flushController: createFlushController({
-        pageMayExitObservable: createPageMayExitObservable(configuration),
-
-        // We don't use an actual session expire observable here, to make telemetry collection
-        // independent of the session. This allows to start and send telemetry events earlier.
-        sessionExpireObservable: new Observable(),
-      }),
+      endpoints,
+      // Ignore transport errors for telemetry
+      reportError: noop,
     })
     cleanupTasks.push(telemetryBatch.stop)
     const telemetrySubscription = telemetryObservable.subscribe(telemetryBatch.add)
@@ -261,7 +244,9 @@ function isTelemetryReplicationAllowed(configuration: Configuration) {
 }
 
 export function addTelemetryDebug(message: string, context?: Context) {
-  displayIfDebugEnabled(ConsoleApiName.debug, message, context)
+  if (getDebugMode()) {
+    display.debug('[Telemetry]', message, context)
+  }
   getTelemetryObservable().notify({
     rawEvent: {
       type: TelemetryType.LOG,

@@ -1,6 +1,6 @@
 import { ONE_SECOND, toServerDuration, relativeNow } from '@datadog/js-core/time'
 import type { Duration } from '@datadog/js-core/time'
-import type { RawError, BufferedData, SessionManager } from '@datadog/browser-core'
+import type { BufferedData, SessionManager } from '@datadog/browser-core'
 import { Observable, findLast, noop, createIdentityEncoder, BufferedObservable } from '@datadog/browser-core'
 import type { Clock, SessionManagerMock } from '@datadog/browser-core/test'
 import {
@@ -33,7 +33,7 @@ function startRumStub(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
   sessionManager: SessionManager,
-  reportError: (error: RawError) => void
+  reportError: (message: string) => void
 ) {
   const hooks = createHooks()
 

@@ -1,7 +1,6 @@
 import type { BufferedObservable, BufferedData, SessionManager } from '@datadog/browser-core'
 import {
   sendToExtension,
-  createPageMayExitObservable,
   canUseEventBridge,
   startAccountContext,
   startGlobalContext,
@@ -43,15 +42,15 @@ export function startLogs(
   lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (log) => sendToExtension('logs', log))
 
   const reportError = startReportError(lifeCycle)
-  const pageMayExitObservable = createPageMayExitObservable(configuration)
 
   // Start user and account context first to allow overrides from global context
-  startSessionContext(hooks, configuration, sessionManager)
-  const accountContext = startAccountContext(hooks, configuration, LOGS_STORAGE_KEY)
-  const userContext = startUserContext(hooks, configuration, sessionManager, LOGS_STORAGE_KEY)
-  const globalContext = startGlobalContext(hooks, configuration, LOGS_STORAGE_KEY, false)
+  const assembleHook = hooks.assemble
+  startSessionContext(assembleHook, configuration, sessionManager)
+  const accountContext = startAccountContext(assembleHook, configuration, LOGS_STORAGE_KEY)
+  const userContext = startUserContext(assembleHook, configuration, sessionManager, LOGS_STORAGE_KEY)
+  const globalContext = startGlobalContext(assembleHook, configuration, LOGS_STORAGE_KEY, false)
   startRUMInternalContext(hooks)
-  startTabContext(hooks)
+  startTabContext(assembleHook)
 
   startNetworkErrorCollection(configuration, lifeCycle, bufferedDataObservable)
   startRuntimeErrorCollection(configuration, lifeCycle, bufferedDataObservable)
@@ -60,16 +59,10 @@ export function startLogs(
   startReportCollection(configuration, lifeCycle)
   const { handleLog } = startLoggerCollection(lifeCycle)
 
-  startLogsAssembly(configuration, lifeCycle, hooks, getCommonContext, reportError)
+  startLogsAssembly(configuration, lifeCycle, assembleHook, getCommonContext, reportError)
 
   if (!canUseEventBridge()) {
-    const { stop: stopLogsBatch } = startLogsBatch(
-      configuration,
-      lifeCycle,
-      reportError,
-      pageMayExitObservable,
-      sessionManager
-    )
+    const { stop: stopLogsBatch } = startLogsBatch(configuration, lifeCycle, reportError, sessionManager)
     cleanupTasks.push(() => stopLogsBatch())
   } else {
     startLogsBridge(lifeCycle)

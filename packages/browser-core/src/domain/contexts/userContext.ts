@@ -1,8 +1,8 @@
 import type { RelativeTime } from '@datadog/js-core/time'
-import type { AbstractHooks } from '../../tools/abstractHooks'
+import type { Hook } from '@datadog/js-core/assembly'
+import { SKIPPED } from '@datadog/js-core/assembly'
 import { CustomerDataType } from '../context/contextConstants'
 import { storeContextManager } from '../context/storeContextManager'
-import { HookNames, SKIPPED } from '../../tools/abstractHooks'
 import { createContextManager } from '../context/contextManager'
 import type { Configuration } from '../configuration'
 import { isEmptyObject } from '../../tools/utils/objectUtils'
@@ -15,7 +15,7 @@ export interface User {
 }
 
 export function startUserContext(
-  hooks: AbstractHooks,
+  hook: Hook<{ eventType?: string; startTime: RelativeTime }, { usr?: User }>,
   configuration: Configuration,
   sessionManager: {
     findTrackedSession: (startTime?: RelativeTime) => { anonymousId?: string } | undefined
@@ -25,10 +25,10 @@ export function startUserContext(
   const userContextManager = buildUserContextManager()
 
   if (configuration.storeContextsAcrossPages) {
-    storeContextManager(configuration, userContextManager, productKey, CustomerDataType.User)
+    storeContextManager(userContextManager, productKey, CustomerDataType.User)
   }
 
-  hooks.register(HookNames.Assemble, ({ eventType, startTime }) => {
+  hook.register(({ eventType, startTime }) => {
     const user = userContextManager.getContext()
     const session = sessionManager.findTrackedSession(startTime)
 

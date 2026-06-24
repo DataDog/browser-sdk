@@ -1,7 +1,5 @@
-import { ONE_MINUTE, clocksNow } from '@datadog/js-core/time'
+import { ONE_MINUTE } from '@datadog/js-core/time'
 import { setTimeout } from '../../tools/timer'
-import type { RawError } from '../error/error.types'
-import { ErrorSource } from '../error/error.types'
 
 export type EventRateLimiter = ReturnType<typeof createEventRateLimiter>
 
@@ -10,7 +8,7 @@ const EVENT_RATE_LIMIT = 3000
 
 export function createEventRateLimiter(
   eventType: string,
-  onLimitReached: (limitError: RawError) => void,
+  onLimitReached: (message: string) => void,
   limit = EVENT_RATE_LIMIT
 ) {
   let eventCount = 0
@@ -33,11 +31,7 @@ export function createEventRateLimiter(
       if (eventCount === limit + 1) {
         allowNextEvent = true
         try {
-          onLimitReached({
-            message: `Reached max number of ${eventType}s by minute: ${limit}`,
-            source: ErrorSource.AGENT,
-            startClocks: clocksNow(),
-          })
+          onLimitReached(`Reached max number of ${eventType}s by minute: ${limit}`)
         } finally {
           allowNextEvent = false
         }

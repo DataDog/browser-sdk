@@ -1,9 +1,9 @@
 {
   "name": "@datadog/browser-rum",
-  "version": "7.2.0",
+  "version": "7.4.0",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
-  "module": "esm/entries/main.js",
+  "module": "esm/entries/main.mjs",
   "types": "cjs/entries/main.d.ts",
   "files": [
     "bundle/**/*.js",
@@ -21,12 +21,12 @@
     "prepack": "yarn build"
   },
   "dependencies": {
-    "@datadog/browser-core": "7.2.0",
-    "@datadog/browser-rum-core": "7.2.0",
-    "@datadog/js-core": "0.0.1"
+    "@datadog/browser-core": "7.4.0",
+    "@datadog/browser-rum-core": "7.4.0",
+    "@datadog/js-core": "0.0.4"
   },
   "peerDependencies": {
-    "@datadog/browser-logs": "7.2.0"
+    "@datadog/browser-logs": "7.4.0"
   },
   "peerDependenciesMeta": {
     "@datadog/browser-logs": {
@@ -39,6 +39,7 @@
     "directory": "packages/browser-rum"
   },
   "devDependencies": {
+    "@datadog/browser-worker": "7.4.0",
     "@types/pako": "2.0.4",
     "pako": "2.1.0"
   },

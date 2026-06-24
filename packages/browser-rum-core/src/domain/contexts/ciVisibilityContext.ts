@@ -1,7 +1,7 @@
-import type { Configuration } from '@datadog/browser-core'
-import { display, getInitCookie, HookNames, SKIPPED } from '@datadog/browser-core'
+import { display, getInitCookie } from '@datadog/browser-core'
+import { SKIPPED } from '@datadog/js-core/assembly'
 import { createCookieObservable } from '../../browser/cookieObservable'
-import type { DefaultRumEventAttributes, Hooks } from '../hooks'
+import type { AssembleHook, DefaultRumEventAttributes } from '../hooks'
 import { SessionType } from './sessionContext'
 
 export const CI_VISIBILITY_TEST_ID_COOKIE_NAME = 'datadog-ci-visibility-test-execution-id'
@@ -13,9 +13,8 @@ export interface CiTestWindow extends Window {
 }
 
 export function startCiVisibilityContext(
-  configuration: Configuration,
-  hooks: Hooks,
-  cookieObservable = createCookieObservable(configuration, CI_VISIBILITY_TEST_ID_COOKIE_NAME)
+  assembleHook: AssembleHook,
+  cookieObservable = createCookieObservable(CI_VISIBILITY_TEST_ID_COOKIE_NAME)
 ) {
   let testExecutionId = getInitCookie(CI_VISIBILITY_TEST_ID_COOKIE_NAME) || readCypressTraceId()
 
@@ -23,7 +22,7 @@ export function startCiVisibilityContext(
     testExecutionId = value
   })
 
-  hooks.register(HookNames.Assemble, ({ eventType }): DefaultRumEventAttributes | SKIPPED => {
+  assembleHook.register(({ eventType }): DefaultRumEventAttributes | SKIPPED => {
     if (typeof testExecutionId !== 'string') {
       return SKIPPED
     }

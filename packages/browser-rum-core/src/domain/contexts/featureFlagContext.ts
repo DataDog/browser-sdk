@@ -1,10 +1,11 @@
 import type { ContextValue, Context } from '@datadog/browser-core'
-import { HookNames, SESSION_TIME_OUT_DELAY, SKIPPED, createValueHistory, isEmptyObject } from '@datadog/browser-core'
+import { SESSION_TIME_OUT_DELAY, createValueHistory, isEmptyObject } from '@datadog/browser-core'
+import { SKIPPED } from '@datadog/js-core/assembly'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { RumConfiguration } from '../configuration'
-import type { DefaultRumEventAttributes, Hooks } from '../hooks'
+import type { AssembleHook, DefaultRumEventAttributes } from '../hooks'
 
 export const FEATURE_FLAG_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 export const BYTES_COMPUTATION_THROTTLING_DELAY = 200
@@ -25,7 +26,7 @@ export interface FeatureFlagContexts {
  */
 export function startFeatureFlagContexts(
   lifeCycle: LifeCycle,
-  hooks: Hooks,
+  assembleHook: AssembleHook,
   configuration: RumConfiguration
 ): FeatureFlagContexts {
   const featureFlagContexts = createValueHistory<FeatureFlagContext>({
@@ -40,7 +41,7 @@ export function startFeatureFlagContexts(
     featureFlagContexts.closeActive(endClocks.relative)
   })
 
-  hooks.register(HookNames.Assemble, ({ startTime, eventType }): DefaultRumEventAttributes | SKIPPED => {
+  assembleHook.register(({ startTime, eventType }): DefaultRumEventAttributes | SKIPPED => {
     const trackFeatureFlagsForEvents = (configuration.trackFeatureFlagsForEvents as RumEventType[]).concat([
       RumEventType.VIEW,
       RumEventType.ERROR,

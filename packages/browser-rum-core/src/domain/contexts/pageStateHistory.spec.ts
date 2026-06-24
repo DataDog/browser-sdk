@@ -1,23 +1,21 @@
 import type { RelativeTime, Duration, ServerDuration } from '@datadog/js-core/time'
-import { HookNames } from '@datadog/browser-core'
+import { createHook } from '@datadog/js-core/assembly'
 import type { Clock } from '../../../../browser-core/test'
 import { mockClock, registerCleanupTask } from '../../../../browser-core/test'
-import { createPerformanceEntry, mockPerformanceObserver, mockRumConfiguration } from '../../../test'
+import { createPerformanceEntry, mockPerformanceObserver } from '../../../test'
 import { RumEventType } from '../../rawRumEvent.types'
 import * as performanceObservable from '../../browser/performanceObservable'
-import type { AssembleHookParams, Hooks } from '../hooks'
-import { createHooks } from '../hooks'
+import type { AssembleHook, AssembleHookParams } from '../hooks'
 import type { PageStateHistory } from './pageStateHistory'
 import { PageState, startPageStateHistory } from './pageStateHistory'
 
 describe('pageStateHistory', () => {
   let clock: Clock
-  let hooks: Hooks
-  const configuration = mockRumConfiguration()
+  let hook: AssembleHook
 
   beforeEach(() => {
     clock = mockClock()
-    hooks = createHooks()
+    hook = createHook()
   })
 
   describe('wasInPageStateDuringPeriod', () => {
@@ -25,7 +23,7 @@ describe('pageStateHistory', () => {
 
     beforeEach(() => {
       mockPerformanceObserver()
-      pageStateHistory = startPageStateHistory(hooks, configuration)
+      pageStateHistory = startPageStateHistory(hook)
       registerCleanupTask(pageStateHistory.stop)
     })
 
@@ -70,7 +68,7 @@ describe('pageStateHistory', () => {
 
       beforeEach(() => {
         mockPerformanceObserver()
-        pageStateHistory = startPageStateHistory(hooks, configuration)
+        pageStateHistory = startPageStateHistory(hook)
         registerCleanupTask(pageStateHistory.stop)
       })
 
@@ -93,7 +91,7 @@ describe('pageStateHistory', () => {
       page state time    0     10    20    30    40
       event time                  15<-------->35
       */
-        const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        const defaultRumEventAttributes = hook.trigger({
           eventType: 'view',
           startTime: clock.relative(15),
           duration: 20 as Duration,
@@ -121,7 +119,7 @@ describe('pageStateHistory', () => {
       })
 
       it('should add the current state when starting', () => {
-        const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        const defaultRumEventAttributes = hook.trigger({
           eventType: 'view',
           startTime: clock.relative(0),
           duration: 10 as Duration,
@@ -133,7 +131,7 @@ describe('pageStateHistory', () => {
       })
 
       it('should not add the page state if the time period is out of history bounds', () => {
-        const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        const defaultRumEventAttributes = hook.trigger({
           eventType: 'view',
           startTime: clock.relative(-10),
           duration: 0 as Duration,
@@ -148,14 +146,14 @@ describe('pageStateHistory', () => {
       it('should limit the number of page states added', () => {
         pageStateHistory.stop()
         const maxPageStateEntriesSelectable = 1
-        pageStateHistory = startPageStateHistory(hooks, configuration, maxPageStateEntriesSelectable)
+        pageStateHistory = startPageStateHistory(hook, maxPageStateEntriesSelectable)
         registerCleanupTask(pageStateHistory.stop)
 
         pageStateHistory.addPageState(PageState.ACTIVE)
         clock.tick(10)
         pageStateHistory.addPageState(PageState.PASSIVE)
 
-        const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        const defaultRumEventAttributes = hook.trigger({
           eventType: 'view',
           startTime: clock.relative(0),
           duration: Infinity as Duration,
@@ -181,14 +179,14 @@ describe('pageStateHistory', () => {
 
       beforeEach(() => {
         mockPerformanceObserver()
-        pageStateHistory = startPageStateHistory(hooks, configuration)
+        pageStateHistory = startPageStateHistory(hook)
         registerCleanupTask(pageStateHistory.stop)
       })
 
       it('should add in_foreground: true when the page is active', () => {
         pageStateHistory.addPageState(PageState.ACTIVE)
 
-        const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        const defaultRumEventAttributes = hook.trigger({
           eventType,
           startTime: clock.relative(0),
           duration: 0 as Duration,
@@ -203,7 +201,7 @@ describe('pageStateHistory', () => {
       it('should add in_foreground: false when the page is not active', () => {
         pageStateHistory.addPageState(PageState.HIDDEN)
 
-        const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        const defaultRumEventAttributes = hook.trigger({
           eventType,
           startTime: clock.relative(0),
           duration: 0 as Duration,
@@ -242,7 +240,7 @@ describe('pageStateHistory', () => {
         }),
       ])
 
-      pageStateHistory = startPageStateHistory(hooks, configuration)
+      pageStateHistory = startPageStateHistory(hook)
       registerCleanupTask(pageStateHistory.stop)
 
       expect(pageStateHistory.wasInPageStateDuringPeriod(PageState.ACTIVE, 5 as RelativeTime, 5 as Duration)).toBeTrue()
@@ -256,7 +254,7 @@ describe('pageStateHistory', () => {
         supportedEntryTypes: [],
       })
 
-      pageStateHistory = startPageStateHistory(hooks, configuration)
+      pageStateHistory = startPageStateHistory(hook)
       registerCleanupTask(pageStateHistory.stop)
 
       expect(

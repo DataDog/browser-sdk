@@ -46,7 +46,6 @@ export function trackMove(
   )
 
   const { stop: removeListener } = addEventListeners(
-    scope.configuration,
     document,
     [DOM_EVENT.MOUSE_MOVE, DOM_EVENT.TOUCH_MOVE],
     updatePosition,

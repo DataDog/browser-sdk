@@ -10,8 +10,8 @@ import {
   isSampleRate,
   isNumber,
   isNonEmptyArray,
-  isIndexableObject,
 } from '@datadog/browser-core'
+import { isIndexableObject } from '@datadog/js-core/util'
 import type { RumEventDomainContext } from '../../domainContext.types'
 import type { RumEvent } from '../../rumEvent.types'
 import type { RumPlugin } from '../plugins'

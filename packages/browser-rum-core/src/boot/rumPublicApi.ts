@@ -1,4 +1,5 @@
 import { timeStampNow, clocksNow, timeStampToClocks } from '@datadog/js-core/time'
+import { deepClone } from '@datadog/js-core/util'
 import type { Duration, TimeStamp, RelativeTime } from '@datadog/js-core/time'
 import type {
   Context,
@@ -19,7 +20,6 @@ import type {
 import {
   ContextManagerMethod,
   addTelemetryUsage,
-  deepClone,
   makePublicApi,
   monitor,
   callMonitored,
@@ -45,6 +45,7 @@ import type { ViewOptions } from '../domain/view/trackViews'
 import type {
   AddDurationVitalOptions,
   DurationVitalOptions,
+  OperationOptions,
   FeatureOperationOptions,
   FailureReason,
 } from '../domain/vital/vitalCollection'
@@ -513,29 +514,61 @@ export interface RumPublicApi extends PublicApi {
   stopDurationVital: (name: string, options?: DurationVitalOptions) => void
 
   /**
-   * Start a feature operation.
+   * Start an operation.
    *
-   * Call {@link succeedFeatureOperation} or {@link failFeatureOperation} with the same name (and optional
+   * Call {@link succeedOperation} or {@link failOperation} with the same name (and optional
    * `operationKey`) to send a RUM vital event marking the end of the operation.
    *
-   * @category Vital - Feature Operation
+   * @category Vital - Operation
    * @param name - Name of the operation
    * @param options - Options for the operation (operationKey, context, description)
    * @example
    * ```ts
-   * datadogRum.startFeatureOperation('checkout')
+   * datadogRum.startOperation('checkout')
    * // ... perform the operation
-   * datadogRum.succeedFeatureOperation('checkout')
+   * datadogRum.succeedOperation('checkout')
    * ```
+   */
+  startOperation: (name: string, options?: OperationOptions) => void
+
+  /**
+   * Mark an operation as successful.
+   *
+   * Sends a RUM vital event marking the end of the operation started with {@link startOperation}.
+   *
+   * @category Vital - Operation
+   * @param name - Name of the operation
+   * @param options - Options for the operation (operationKey, context, description)
+   */
+  succeedOperation: (name: string, options?: OperationOptions) => void
+
+  /**
+   * Mark an operation as failed.
+   *
+   * Sends a RUM vital event marking the end of the operation started with {@link startOperation}.
+   *
+   * @category Vital - Operation
+   * @param name - Name of the operation
+   * @param failureReason - Reason for the failure
+   * @param options - Options for the operation (operationKey, context, description)
+   */
+  failOperation: (name: string, failureReason: FailureReason, options?: OperationOptions) => void
+
+  /**
+   * Start a feature operation.
+   *
+   * @category Vital - Feature Operation
+   * @deprecated Use {@link startOperation} instead.
+   * @param name - Name of the operation
+   * @param options - Options for the operation (operationKey, context, description)
    */
   startFeatureOperation: (name: string, options?: FeatureOperationOptions) => void
 
   /**
    * Mark a feature operation as successful.
    *
-   * Sends a RUM vital event marking the end of the operation started with {@link startFeatureOperation}.
-   *
    * @category Vital - Feature Operation
+   * @deprecated Use {@link succeedOperation} instead.
    * @param name - Name of the operation
    * @param options - Options for the operation (operationKey, context, description)
    */
@@ -544,9 +577,8 @@ export interface RumPublicApi extends PublicApi {
   /**
    * Mark a feature operation as failed.
    *
-   * Sends a RUM vital event marking the end of the operation started with {@link startFeatureOperation}.
-   *
    * @category Vital - Feature Operation
+   * @deprecated Use {@link failOperation} instead.
    * @param name - Name of the operation
    * @param failureReason - Reason for the failure
    * @param options - Options for the operation (operationKey, context, description)
@@ -594,11 +626,7 @@ export interface RumPublicApiOptions {
     source: string,
     onInitializationFailure: () => void
   ) => DeflateWorker | undefined
-  createDeflateEncoder?: (
-    configuration: RumConfiguration,
-    worker: DeflateWorker,
-    streamId: DeflateEncoderStreamId
-  ) => DeflateEncoder
+  createDeflateEncoder?: (worker: DeflateWorker, streamId: DeflateEncoderStreamId) => DeflateEncoder
   sdkName?: SdkName
 }
 
@@ -647,7 +675,7 @@ export function makeRumPublicApi(
     (configuration, sessionManager, deflateWorker, initialViewOptions, telemetry, hooks) => {
       const createEncoder =
         deflateWorker && options.createDeflateEncoder
-          ? (streamId: DeflateEncoderStreamId) => options.createDeflateEncoder!(configuration, deflateWorker, streamId)
+          ? (streamId: DeflateEncoderStreamId) => options.createDeflateEncoder!(deflateWorker, streamId)
           : createIdentityEncoder
 
       const startRumResult = mockable(startRum)(
@@ -704,6 +732,24 @@ export function makeRumPublicApi(
       addTelemetryUsage({ feature: 'start-view' })
     })
   }
+
+  const startOperation: RumPublicApi['startOperation'] = (name, options) => {
+    const handlingStack = createHandlingStack('vital')
+    callMonitored(() => {
+      addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'start' })
+      strategy.addOperationStepVital(name, 'start', { ...options, handlingStack })
+    })
+  }
+
+  const succeedOperation: RumPublicApi['succeedOperation'] = monitor((name, options) => {
+    addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'succeed' })
+    strategy.addOperationStepVital(name, 'end', options)
+  })
+
+  const failOperation: RumPublicApi['failOperation'] = monitor((name, failureReason, options) => {
+    addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'fail' })
+    strategy.addOperationStepVital(name, 'end', options, failureReason)
+  })
 
   const rumPublicApi: RumPublicApi = makePublicApi<RumPublicApi>({
     init: (initConfiguration) => {
@@ -973,23 +1019,16 @@ export function makeRumPublicApi(
       })
     }),
 
-    startFeatureOperation: (name, options) => {
-      const handlingStack = createHandlingStack('vital')
-      callMonitored(() => {
-        addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'start' })
-        strategy.addOperationStepVital(name, 'start', { ...options, handlingStack })
-      })
-    },
+    startOperation,
+    succeedOperation,
+    failOperation,
 
-    succeedFeatureOperation: monitor((name, options) => {
-      addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'succeed' })
-      strategy.addOperationStepVital(name, 'end', options)
-    }),
+    // Deprecated aliases — kept for backwards compatibility, forward to the renamed APIs above.
+    // TODO: remove in the next major version (RUM-16921).
+    startFeatureOperation: startOperation,
+    succeedFeatureOperation: succeedOperation,
+    failFeatureOperation: failOperation,
 
-    failFeatureOperation: monitor((name, failureReason, options) => {
-      addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'fail' })
-      strategy.addOperationStepVital(name, 'end', options, failureReason)
-    }),
     DEFAULT_TRACKED_RESOURCE_HEADERS,
   })
 

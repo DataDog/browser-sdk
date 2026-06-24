@@ -2,7 +2,9 @@
  * Template compilation and evaluation utilities for Live Debugger SDK.
  */
 
+import { getConstructorName } from '@datadog/browser-core'
 import { compile } from './expression'
+import { formatUnknownError } from './error'
 
 const MAX_MESSAGE_LENGTH = 8 * 1024 // 8KB
 
@@ -56,7 +58,7 @@ export function compileSegments(segments: TemplateSegment[]): string {
             const result = ${compile(json)}
             return typeof result === 'string' ? result : $dd_inspect(result)
           } catch (e) {
-            return { expr: ${JSON.stringify(dsl)}, message: \`\${e.name}: \${e.message}\` }
+            return { expr: ${JSON.stringify(dsl)}, message: $dd_format_error(e) }
           }
         })()`
         : JSON.stringify(str)
@@ -142,7 +144,7 @@ function browserInspectInternal(value: unknown, depthExceeded: boolean = false):
     }
     return JSON.stringify(value, replacer, 0)
   } catch {
-    return `[${(value as any).constructor?.name || 'Object'}]`
+    return `[${getConstructorName(value) ?? 'Object'}]`
   }
 }
 
@@ -212,7 +214,7 @@ export function evaluateProbeMessage(probe: ProbeWithTemplate, context: Record<s
         })
         .join('')
     } catch (e) {
-      message = `{Error: ${(e as Error).message}}`
+      message = `{${formatUnknownError(e)}}`
     }
   } else {
     message = probe.template

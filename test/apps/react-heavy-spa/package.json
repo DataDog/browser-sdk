@@ -8,20 +8,20 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "react": "19.2.6",
-    "react-dom": "19.2.6",
-    "react-is": "19.2.6",
-    "react-router-dom": "7.16.0",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "react-is": "19.2.7",
+    "react-router-dom": "7.17.0",
     "react-window": "2.2.7",
     "recharts": "3.8.1"
   },
   "devDependencies": {
-    "@types/node": "25.9.1",
-    "@types/react": "19.2.15",
+    "@types/node": "25.9.3",
+    "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
-    "@vitejs/plugin-react": "5.2.0",
+    "@vitejs/plugin-react": "6.0.2",
     "globals": "17.6.0",
     "typescript": "6.0.3",
-    "vite": "7.3.5"
+    "vite": "8.0.16"
   }
 }

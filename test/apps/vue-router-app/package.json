@@ -7,7 +7,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "vue": "3.5.35",
+    "vue": "3.5.38",
     "vue-router": "5.1.0"
   },
   "peerDependencies": {
@@ -34,7 +34,7 @@
   "devDependencies": {
     "@vitejs/plugin-vue": "6.x",
     "typescript": "6.x",
-    "vite": "7.x"
+    "vite": "8.x"
   },
   "volta": {
     "extends": "../../../package.json"

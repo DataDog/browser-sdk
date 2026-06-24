@@ -1,7 +1,7 @@
 variables:
-  CURRENT_STAGING: staging-24
+  CURRENT_STAGING: staging-26
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 112
+  CURRENT_CI_IMAGE: 113
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
@@ -295,6 +295,16 @@ check-schemas:
     - yarn
     - node scripts/check-schemas.ts
 
+check-js-core-api:
+  extends:
+    - .base-configuration
+    - .test-allowed-branches
+  interruptible: true
+  script:
+    - yarn
+    - yarn workspace @datadog/js-core build
+    - yarn api:check
+
 unit-bs:
   stage: browserstack
   needs: ['unit']
@@ -353,17 +363,17 @@ deploy-staging:
     - node ./scripts/deploy/deploy.ts staging staging root
     - node ./scripts/deploy/upload-source-maps.ts staging root
 
-# deploy-prod-canary:
-#   stage: deploy:canary
-#   extends:
-#     - .base-configuration
-#     - .main
-#   script:
-#     - export BUILD_MODE=canary
-#     - yarn
-#     - yarn build:bundle
-#     - node ./scripts/deploy/deploy.ts prod canary root
-#     - node ./scripts/deploy/upload-source-maps.ts canary root
+deploy-prod-canary:
+  stage: deploy:canary
+  extends:
+    - .base-configuration
+    - .main
+  script:
+    - export BUILD_MODE=canary
+    - yarn
+    - yarn build:bundle
+    - node ./scripts/deploy/deploy.ts prod canary root
+    - node ./scripts/deploy/upload-source-maps.ts canary root
 
 deploy-next-major-canary:
   stage: deploy
@@ -608,6 +618,8 @@ performance-benchmark:
       - $TARGET_TASK_NAME == "performance-benchmark-scheduled"
   script:
     - yarn
+    - yarn build
+    - yarn build:apps
     - yarn test:performance
 
 api-performance-benchmark:

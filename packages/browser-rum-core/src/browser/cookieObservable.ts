@@ -1,5 +1,4 @@
 import { ONE_SECOND } from '@datadog/js-core/time'
-import type { Configuration } from '@datadog/browser-core'
 import {
   setInterval,
   clearInterval,
@@ -13,19 +12,17 @@ import {
 
 export type CookieObservable = ReturnType<typeof createCookieObservable>
 
-export function createCookieObservable(configuration: Configuration, cookieName: string) {
-  const detectCookieChangeStrategy = isCookieStoreSupported()
-    ? listenToCookieStoreChange(configuration)
-    : watchCookieFallback
+export function createCookieObservable(cookieName: string) {
+  const detectCookieChangeStrategy = isCookieStoreSupported() ? listenToCookieStoreChange() : watchCookieFallback
 
   return new Observable<string | undefined>((observable) =>
     detectCookieChangeStrategy(cookieName, (event) => observable.notify(event))
   )
 }
 
-function listenToCookieStoreChange(configuration: Configuration) {
+function listenToCookieStoreChange() {
   return (cookieName: string, callback: (event: string | undefined) => void) => {
-    const listener = addEventListener(configuration, globalObject.cookieStore!, DOM_EVENT.CHANGE, (event) => {
+    const listener = addEventListener(globalObject.cookieStore!, DOM_EVENT.CHANGE, (event) => {
       // Based on our experimentation, we're assuming that entries for the same cookie cannot be in both the 'changed' and 'deleted' arrays.
       // However, due to ambiguity in the specification, we asked for clarification: https://github.com/WICG/cookie-store/issues/226
       const changeEvent =

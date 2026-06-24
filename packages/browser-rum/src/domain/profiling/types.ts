@@ -1,6 +1,6 @@
 import type { ClocksState } from '@datadog/js-core/time'
 import type { TimeoutId, Profiler } from '@datadog/browser-core'
-import type { RumViewEntry } from '../../types'
+import type { BrowserProfileEvent, BrowserProfilerTrace, RumViewEntry } from '../../types'
 import type { LongTaskContext } from './longTaskHistory'
 
 /**
@@ -42,6 +42,8 @@ export interface RumProfilerRunningInstance extends RumProfilerEnrichmentData {
   readonly timeoutId: TimeoutId
   /** Clean-up tasks to execute after running the Profiler */
   readonly cleanupTasks: Array<() => void>
+  /** Session ID */
+  readonly sessionId: string | undefined
 }
 
 export type RumProfilerInstance = RumProfilerStoppedInstance | RumProfilerPausedInstance | RumProfilerRunningInstance
@@ -52,6 +54,11 @@ export interface RUMProfiler {
   isStopped: () => boolean
   isRunning: () => boolean
   isPaused: () => boolean
+}
+
+export interface ProfilingPayload {
+  profile: BrowserProfileEvent
+  trace: BrowserProfilerTrace
 }
 
 export interface RUMProfilerConfiguration {
