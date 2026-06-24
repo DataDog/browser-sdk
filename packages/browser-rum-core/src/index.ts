@@ -18,6 +18,7 @@ export type {
   RumErrorEventDomainContext,
   RumManualResourceEventDomainContext,
   RumResourceEventDomainContext,
+  RumWebSocketResourceEventDomainContext,
   RumActionEventDomainContext,
   RumViewEventDomainContext,
   RumEventDomainContext,
