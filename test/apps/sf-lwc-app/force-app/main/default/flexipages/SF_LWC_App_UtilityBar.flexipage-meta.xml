@@ -9,29 +9,9 @@
                     <value>true</value>
                 </componentInstanceProperties>
                 <componentInstanceProperties>
-                    <name>height</name>
-                    <type>decorator</type>
-                    <value>240</value>
-                </componentInstanceProperties>
-                <componentInstanceProperties>
-                    <name>icon</name>
-                    <type>decorator</type>
-                    <value>metrics</value>
-                </componentInstanceProperties>
-                <componentInstanceProperties>
                     <name>label</name>
                     <type>decorator</type>
                     <value>Datadog Init</value>
-                </componentInstanceProperties>
-                <componentInstanceProperties>
-                    <name>scrollable</name>
-                    <type>decorator</type>
-                    <value>false</value>
-                </componentInstanceProperties>
-                <componentInstanceProperties>
-                    <name>width</name>
-                    <type>decorator</type>
-                    <value>320</value>
                 </componentInstanceProperties>
                 <componentName>datadogInit</componentName>
                 <identifier>datadogInit</identifier>
@@ -40,17 +20,9 @@
         <name>utilityItems</name>
         <type>Region</type>
     </flexiPageRegions>
-    <flexiPageRegions>
-        <name>backgroundComponents</name>
-        <type>Background</type>
-    </flexiPageRegions>
     <masterLabel>SF LWC App UtilityBar</masterLabel>
     <template>
         <name>one:utilityBarTemplateDesktop</name>
-        <properties>
-            <name>isLeftAligned</name>
-            <value>true</value>
-        </properties>
     </template>
     <type>UtilityBar</type>
 </FlexiPage>
