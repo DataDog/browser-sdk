@@ -3,7 +3,7 @@ import { dirname, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 
-const args = process.argv.slice(2)
+const args = process.argv.slice(2).filter((arg) => arg !== '--')
 const orgArgs = getOrgArgs(args)
 
 syncDatadogBundle()

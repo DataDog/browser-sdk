@@ -4,26 +4,6 @@
         <itemInstances>
             <componentInstance>
                 <componentInstanceProperties>
-                    <name>applicationId</name>
-                    <value>1397744d-34f4-4a6a-a735-801e31c18221</value>
-                </componentInstanceProperties>
-                <componentInstanceProperties>
-                    <name>clientToken</name>
-                    <value>pub2ad3fe2578f01b9f329bd0ea4a2f08c5</value>
-                </componentInstanceProperties>
-                <componentInstanceProperties>
-                    <name>site</name>
-                    <value>datadoghq.com</value>
-                </componentInstanceProperties>
-                <componentInstanceProperties>
-                    <name>service</name>
-                    <value>browser-sdk-sandbox</value>
-                </componentInstanceProperties>
-                <componentInstanceProperties>
-                    <name>env</name>
-                    <value>dev</value>
-                </componentInstanceProperties>
-                <componentInstanceProperties>
                     <name>eager</name>
                     <type>decorator</type>
                     <value>true</value>

@@ -16,7 +16,7 @@ This app is Lightning-only.
 From this directory:
 
 ```sh
-npm run setup -- -o engrumdev --ignore-conflicts
+yarn run setup -o engrumdev --ignore-conflicts
 ```
 
 The setup script copies the local RUM slim bundle into the static resource, deploys the app, assigns the app permission set to the target user, and prints the app-specific Home URL.

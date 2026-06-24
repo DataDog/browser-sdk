@@ -1,17 +1,17 @@
 <template>
-  <section class="explorer" data-testid="product-explorer">
-    <div class="product-list" aria-label="Products">
+  <section data-testid="product-explorer">
+    <div aria-label="Products">
       <template for:each="{productsForView}" for:item="product">
         <button
           key="{product.id}"
-          class="{product.buttonClass}"
           data-id="{product.id}"
           type="button"
           onclick="{handleSelectProduct}"
+          style="display: block; margin-bottom: 0.75rem; text-align: left"
         >
-          <span class="product-name">{product.name}</span>
-          <span class="product-meta">{product.level} / {product.material}</span>
-          <span class="product-price">
+          <span>{product.name}</span>
+          <span>{product.level} / {product.material}</span>
+          <span>
             <lightning-formatted-number
               format-style="currency"
               currency-code="USD"
@@ -23,8 +23,8 @@
       </template>
     </div>
 
-    <div class="editor">
-      <header class="editor-header">
+    <div>
+      <header>
         <div>
           <h2>{selectedProduct.name}</h2>
           <p>{selectedProduct.category} / {selectedProduct.level}</p>
@@ -36,7 +36,7 @@
         ></lightning-button>
       </header>
 
-      <div class="editor-grid">
+      <div>
         <lightning-input
           label="Product Name"
           data-field="name"

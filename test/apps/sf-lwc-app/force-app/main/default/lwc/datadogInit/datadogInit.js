@@ -1,4 +1,4 @@
-import { LightningElement, api, wire } from 'lwc'
+import { LightningElement, wire } from 'lwc'
 import { NavigationMixin, CurrentPageReference } from 'lightning/navigation'
 import datadogRumSlim from '@salesforce/resourceUrl/datadog_rum_slim'
 import { loadScript } from 'lightning/platformResourceLoader'
@@ -6,14 +6,20 @@ import { loadScript } from 'lightning/platformResourceLoader'
 let datadogInitialization
 let lastStartedUrl
 
-export default class DatadogInit extends NavigationMixin(LightningElement) {
-  @api applicationId = '1397744d-34f4-4a6a-a735-801e31c18221'
-  @api clientToken = 'pub2ad3fe2578f01b9f329bd0ea4a2f08c5'
-  @api site = 'datadoghq.com'
-  @api service = 'my-salesforce-app'
-  @api env = 'dev'
-  @api trackViewsManually
+const datadogRumConfig = {
+  applicationId: '1397744d-34f4-4a6a-a735-801e31c18221',
+  clientToken: 'pub2ad3fe2578f01b9f329bd0ea4a2f08c5',
+  env: 'dev',
+  service: 'browser-sdk-sandbox',
+  site: 'datadoghq.com',
+  trackViewsManually: true,
+  trackEarlyRequests: true,
+  trackLongTasks: true,
+  trackResources: true,
+  trackUserInteractions: true,
+}
 
+export default class DatadogInit extends NavigationMixin(LightningElement) {
   connectedCallback() {
     this.initialize()
   }
@@ -51,19 +57,7 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
 
   loadDatadogRum() {
     return loadScript(this, datadogRumSlim).then(() => {
-      const initConfig = {
-        applicationId: this.applicationId,
-        clientToken: this.clientToken,
-        env: this.env,
-        service: this.service,
-        site: this.site,
-        trackViewsManually: true,
-        trackEarlyRequests: true,
-        trackLongTasks: true,
-        trackResources: true,
-        trackUserInteractions: true,
-      }
-      window.DD_RUM.init(initConfig)
+      window.DD_RUM.init(datadogRumConfig)
       lastStartedUrl = window.location.pathname + window.location.search + window.location.hash
       window.DD_RUM.startView({
         name: lastStartedUrl,

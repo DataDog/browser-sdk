@@ -1,10 +1,10 @@
 <template>
-  <section class="action-card" data-testid="home-custom-actions">
-    <div class="action-card__header">
+  <section data-testid="home-custom-actions">
+    <div>
       <h2>Datadog Custom Actions</h2>
       <p>Use these buttons to send manual RUM custom actions from the home page.</p>
     </div>
-    <div class="action-card__buttons">
+    <div>
       <lightning-button
         label="Custom Action 1"
         variant="brand"
@@ -20,15 +20,15 @@
       ></lightning-button>
     </div>
     <template lwc:if="{lastActionName}">
-      <p class="action-card__status">Last sent: {lastActionName}</p>
+      <p>Last sent: {lastActionName}</p>
     </template>
   </section>
-  <section class="action-card">
-    <div class="action-card__header">
+  <section>
+    <div>
       <h2>Datadog Custom Errors</h2>
       <p>Use these buttons to send manual RUM custom errors from the home page.</p>
     </div>
-    <div class="action-card__buttons">
+    <div>
       <lightning-button
         label="Custom Error 1"
         variant="destructive"
@@ -44,15 +44,15 @@
       ></lightning-button>
     </div>
     <template lwc:if="{lastErrorName}">
-      <p class="action-card__status">Last sent: {lastErrorName}</p>
+      <p>Last sent: {lastErrorName}</p>
     </template>
   </section>
-  <section class="action-card">
-    <div class="action-card__header">
+  <section>
+    <div>
       <h2>Datadog Runtime Errors</h2>
       <p>Use this button to trigger an unhandled error that should be captured via window.onerror.</p>
     </div>
-    <div class="action-card__buttons">
+    <div>
       <lightning-button
         label="Runtime Error"
         variant="destructive"
@@ -60,12 +60,12 @@
       ></lightning-button>
     </div>
   </section>
-  <section class="action-card">
-    <div class="action-card__header">
+  <section>
+    <div>
       <h2>Datadog Long Tasks</h2>
       <p>Blocks the main thread to generate a long_task RUM event.</p>
     </div>
-    <div class="action-card__buttons">
+    <div>
       <lightning-button
         label="Long Task"
         variant="brand"
@@ -74,12 +74,12 @@
       ></lightning-button>
     </div>
   </section>
-  <section class="action-card">
-    <div class="action-card__header">
+  <section>
+    <div>
       <h2>Datadog Vitals</h2>
       <p>Add Duration Vital and Start/Stop Vital use the DD_RUM vitals API directly.</p>
     </div>
-    <div class="action-card__buttons">
+    <div>
       <lightning-button
         label="Add Duration Vital"
         variant="brand"
@@ -92,12 +92,12 @@
       ></lightning-button>
     </div>
   </section>
-  <section class="action-card">
-    <div class="action-card__header">
+  <section>
+    <div>
       <h2>Datadog Resources</h2>
       <p>Use these buttons to generate resource timing entries for fetch and XHR.</p>
     </div>
-    <div class="action-card__buttons">
+    <div>
       <lightning-button
         label="Fetch Resource"
         variant="brand"
@@ -110,26 +110,26 @@
       ></lightning-button>
     </div>
     <template lwc:if="{lastResourceName}">
-      <p class="action-card__status">Last requested: {lastResourceName}</p>
+      <p>Last requested: {lastResourceName}</p>
     </template>
   </section>
-  <section class="action-card">
-    <div class="action-card__header">
+  <section>
+    <div>
       <h2>Datadog Selector Probe</h2>
       <p>Use this button to compare the LWC internal click target with the automatic RUM click selector.</p>
     </div>
-    <div class="action-card__buttons">
+    <div>
       <button
-        class="selector-probe"
         data-dd-action-name="inner selector probe button"
         data-testid="inner-selector-probe-button"
         onclick="{handleSelectorProbeClick}"
+        style="margin: 0.75rem 0; padding: 0.25rem 0.75rem"
       >
         Inner Selector Probe
       </button>
     </div>
     <template lwc:if="{lastSelectorProbe}">
-      <p class="action-card__status">Last probe: {lastSelectorProbe}</p>
+      <p>Last probe: {lastSelectorProbe}</p>
     </template>
   </section>
 </template>

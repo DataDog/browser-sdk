@@ -6,14 +6,4 @@
     <targets>
         <target>lightning__UtilityBar</target>
     </targets>
-    <targetConfigs>
-        <targetConfig targets="lightning__UtilityBar">
-            <property name="applicationId" type="String" label="Application ID" description="Datadog RUM application ID" />
-            <property name="clientToken" type="String" label="Client Token" description="Datadog browser client token" />
-            <property name="site" type="String" label="Site" default="datadoghq.com" />
-            <property name="service" type="String" label="Service" default="my-salesforce-app" />
-            <property name="env" type="String" label="Env" default="dev" />
-            <property name="trackViewsManually" type="Boolean" label="Track Views Manually" default="true" />
-        </targetConfig>
-    </targetConfigs>
 </LightningComponentBundle>
