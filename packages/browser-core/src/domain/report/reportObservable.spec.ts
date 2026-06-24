@@ -87,7 +87,8 @@ describe('report observable', () => {
     expect(notifyReport).toHaveBeenCalledOnceWith(
       jasmine.objectContaining({
         message: 'document-policy-violation: Document policy violation: resource compression is required.',
-        type: 'network-efficiency-guardrails',
+        type: 'document-policy-violation',
+        featureId: 'network-efficiency-guardrails',
         csp: { disposition: 'report' },
       })
     )
@@ -112,7 +113,8 @@ describe('report observable', () => {
 
     expect(notifyReport).toHaveBeenCalledOnceWith(
       jasmine.objectContaining({
-        type: 'some-other-policy',
+        type: 'document-policy-violation',
+        featureId: 'some-other-policy',
       })
     )
   })

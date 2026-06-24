@@ -80,7 +80,8 @@ function buildRawReportErrorFromReport(
   if (report.type === 'document-policy-violation') {
     const { featureId, message, disposition, sourceFile } = report.body
     return buildRawReportError({
-      type: featureId,
+      type: report.type,
+      featureId,
       message: `${report.type}: ${message}`,
       originalError: report,
       csp: { disposition },
