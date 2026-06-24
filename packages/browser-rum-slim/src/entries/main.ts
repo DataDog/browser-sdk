@@ -63,6 +63,7 @@ export type {
   RumActionEventDomainContext,
   RumVitalEventDomainContext,
   RumResourceEventDomainContext,
+  RumWebSocketResourceEventDomainContext,
   RumLongTaskEventDomainContext,
 } from '@datadog/browser-rum-core'
 export { DEFAULT_TRACKED_RESOURCE_HEADERS } from '@datadog/browser-rum-core'
