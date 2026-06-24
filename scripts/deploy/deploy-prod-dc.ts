@@ -35,10 +35,17 @@ export async function main(...args: string[]): Promise<void> {
   })
 
   const version = positionals[0]
-  const datacenters = await getDatacenters(positionals[1])
+  const datacenterGroup = positionals[1]
 
-  if (!datacenters) {
+  if (!datacenterGroup) {
     throw new Error('DATACENTER argument is required')
+  }
+
+  const datacenters = await getDatacenters(datacenterGroup)
+
+  if (datacenters.length === 0) {
+    printLog('No datacenters found, skipping deployment.')
+    return
   }
 
   // Skip all telemetry error checks for gov datacenter deployments
