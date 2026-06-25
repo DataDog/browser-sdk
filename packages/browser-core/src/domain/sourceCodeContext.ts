@@ -38,7 +38,7 @@ function syncSourceCodeContext() {
     processedStacks.add(stack)
 
     const url = computeStackTrace({ stack }).stack[0]?.url
-    if (url) {
+    if (url && !contextByUrl.has(url)) {
       contextByUrl.set(url, entry)
     }
   }

@@ -65,6 +65,21 @@ describe('getSourceCodeContext', () => {
   it('should return undefined for an unknown URL', () => {
     expect(getSourceCodeContext(url)).toBeUndefined()
   })
+
+  it('should ignore updates to an existing URL after it has been read', () => {
+    const mock = mockSourceCodeContext({ [makeStack(url)]: { service: 'svc', version: '1.0.0' } })
+
+    // First read caches the entry by its top frame URL
+    expect(getSourceCodeContext(url)).toEqual({ service: 'svc', version: '1.0.0' })
+
+    // A different stack resolving to the same top frame URL must not override the cached entry
+    const otherStackSameTopUrl = `Error: context
+    at init (${url}:41:27)
+    at HTMLButtonElement.other (http://source-code-context-spec.example.com/other-runtime.js:1:1)`
+    mock.addEntry(otherStackSameTopUrl, { service: 'updated-svc', version: '1.1.0' })
+
+    expect(getSourceCodeContext(url)).toEqual({ service: 'svc', version: '1.0.0' })
+  })
 })
 
 describe('source code context telemetry usage', () => {
