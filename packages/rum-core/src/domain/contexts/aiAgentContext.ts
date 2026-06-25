@@ -1,4 +1,12 @@
-import { getInitCookie, HookNames, isSyntheticsTest, mockable, SKIPPED } from '@datadog/browser-core'
+import {
+  getInitCookie,
+  globalConsole,
+  HookNames,
+  isSyntheticsTest,
+  mockable,
+  originalConsoleMethods,
+  SKIPPED,
+} from '@datadog/browser-core'
 import type { DefaultRumEventAttributes, Hooks } from '../hooks'
 
 export const AI_AGENT_COOKIE_NAME = 'datadog-ai-agent-id'
@@ -157,6 +165,12 @@ export function detectHeadlessEnvironment(): AiAgentContext | undefined {
 // CDP Runtime.enable causes Chrome to enumerate console method arguments during
 // serialization. A Proxy trap detects this enumeration, revealing an active CDP
 // connection. Note: also triggers when DevTools is open (acceptable for Tier 2).
+//
+// We call the original, un-instrumented console method captured at module load
+// (originalConsoleMethods.debug) instead of console.debug. The SDK's own console
+// observable patches console.debug and serializes its arguments to forward logs,
+// which would itself trip the Proxy trap and yield a false positive for every
+// session where console forwarding is enabled.
 export function detectCDP(): AiAgentContext | undefined {
   if (typeof Proxy === 'undefined') {
     return undefined
@@ -170,8 +184,7 @@ export function detectCDP(): AiAgentContext | undefined {
         return Reflect.ownKeys(obj)
       },
     })
-    // eslint-disable-next-line no-console
-    console.debug(proxy)
+    originalConsoleMethods.debug.call(globalConsole, proxy)
   } catch {
     // Ignore errors
   }
