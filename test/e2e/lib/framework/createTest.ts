@@ -21,7 +21,7 @@ import {
   VUE_ROUTER_APP_PORT,
   VUE_ROUTER_V4_APP_PORT,
 } from '../helpers/playwright'
-import { buildFrontdoorUrl } from '../helpers/sfSession'
+import { buildSalesforceLwcUrl } from '../helpers/salesforceApp'
 import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
@@ -562,7 +562,7 @@ async function setUpTest(
       test.skip(true, `Mock clock is not supported in this browser: ${String(e)}`)
     }
   }
-  await page.goto(salesforceApp ? await buildFrontdoorUrl() : baseUrl)
+  await page.goto(salesforceApp ? buildSalesforceLwcUrl() : baseUrl)
   await waitForServersIdle()
 }
 

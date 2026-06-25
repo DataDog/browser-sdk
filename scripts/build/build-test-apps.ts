@@ -5,7 +5,6 @@ import { parseArgs } from 'node:util'
 import { printLog, runMain } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
 import { modifyFile } from '../lib/filesUtils.ts'
-import { getSfClientId, getSfInstanceUrl, getSfJwtPrivateKey, getSfRunAsUser } from '../lib/secrets.ts'
 
 type AppConfig<T extends AppBuilderOptions = AppBuilderOptions> =
   | {
@@ -45,9 +44,6 @@ const APPS: AppConfig[] = [
   // Vue Router apps
   { name: 'vue-router-v4-app', builderFn: buildVueRouterV4App, deps: ['vue-router-app'] },
   { name: 'nuxt-vue-router-v4-app', builderFn: buildNuxtVueRouterV4App, deps: ['nuxt-app'] },
-
-  // Salesforce LWC app
-  { name: 'sf-lwc-app', builderFn: buildSfLwcApp },
 
   // browser extensions
   { name: 'base-extension' },
@@ -232,32 +228,6 @@ async function modifyPackageJson(appPath: string, update: (packageJson: TestAppP
     update(packageJson)
     return `${JSON.stringify(packageJson, null, 2)}\n`
   })
-}
-
-async function buildSfLwcApp() {
-  let instanceUrl: string
-  let clientId: string
-  let jwtPrivateKey: string
-  let runAsUser: string
-  try {
-    instanceUrl = getSfInstanceUrl()
-    clientId = getSfClientId()
-    jwtPrivateKey = getSfJwtPrivateKey()
-    runAsUser = getSfRunAsUser()
-  } catch {
-    printLog('Skipping sf-lwc-app: SF credentials not available')
-    return
-  }
-
-  printLog('Building sf-lwc-app...')
-  await command`node test/apps/sf-lwc-app/scripts/setup.mjs`
-    .withEnvironment({
-      SF_INSTANCE_URL: instanceUrl,
-      SF_CLIENT_ID: clientId,
-      SF_JWT_PRIVATE_KEY: jwtPrivateKey,
-      SF_RUN_AS_USER: runAsUser,
-    })
-    .runAsync()
 }
 
 async function buildExtension(appName: string, options?: { runAt?: string }): Promise<void> {

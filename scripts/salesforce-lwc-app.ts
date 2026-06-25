@@ -1,0 +1,198 @@
+import { chmodSync, copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
+import { dirname, resolve } from 'node:path'
+import { spawnSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
+import { tmpdir } from 'node:os'
+
+import { command } from './lib/command.ts'
+import { printLog, runMain } from './lib/executionUtils.ts'
+import { getSfLwcClientId, getSfLwcInstanceUrl, getSfLwcJwtPrivateKey, getSfLwcUsername } from './lib/secrets.ts'
+
+const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+const salesforceAppDir = resolve(repositoryRoot, 'test/apps/sf-lwc-app')
+const bundlePath = resolve(repositoryRoot, 'packages/browser-rum-slim/bundle/datadog-rum-slim.js')
+const stableStaticResourcePath = resolve(salesforceAppDir, 'force-app/main/default/staticresources/datadog_rum_slim.js')
+const generatedStateDir = resolve(salesforceAppDir, '.sf-e2e')
+const generatedStaticResourcesDir = resolve(generatedStateDir, 'force-app/main/default/staticresources')
+const resourceNamePath = resolve(generatedStateDir, 'resource-name')
+const salesforceHomePath = '/lightning/app/c__SF_LWC_App/page/home'
+const defaultTargetOrg = 'sf-lwc-ci'
+
+runMain(() => {
+  const [commandName] = process.argv.slice(2)
+
+  switch (commandName) {
+    case 'auth':
+      authenticate()
+      break
+    case 'deploy-app':
+      deployApp()
+      break
+    case 'deploy-bundle':
+      deployBundle()
+      break
+    case 'open-url':
+      process.stdout.write(`${buildOpenUrl()}\n`)
+      break
+    default:
+      throw new Error('Usage: node scripts/salesforce-lwc-app.ts <auth|deploy-app|deploy-bundle|open-url>')
+  }
+})
+
+function authenticate() {
+  const keyDirectory = mkdtempSync(resolve(tmpdir(), 'sf-lwc-jwt-'))
+  const keyPath = resolve(keyDirectory, 'server.key')
+
+  try {
+    writeFileSync(keyPath, getSfLwcJwtPrivateKey(), { mode: 0o600 })
+    chmodSync(keyPath, 0o600)
+
+    printLog(`Authenticating Salesforce CLI alias ${defaultTargetOrg}...`)
+    command`
+      sf org login jwt
+        --client-id ${getSfLwcClientId()}
+        --jwt-key-file ${keyPath}
+        --username ${getSfLwcUsername()}
+        --instance-url ${getSfLwcInstanceUrl()}
+        --alias ${defaultTargetOrg}
+        --json
+    `
+      .withCurrentWorkingDirectory(salesforceAppDir)
+      .run()
+    printLog(`Salesforce CLI authenticated as ${defaultTargetOrg}.`)
+  } finally {
+    rmSync(keyDirectory, { recursive: true, force: true })
+  }
+}
+
+function deployApp() {
+  const targetOrg = getTargetOrg()
+
+  printLog(`Deploying Salesforce LWC app to ${targetOrg}...`)
+  copyFileSync(bundlePath, stableStaticResourcePath)
+  command`sf project deploy start --target-org ${targetOrg} --source-dir force-app`
+    .withCurrentWorkingDirectory(salesforceAppDir)
+    .withLogs()
+    .run()
+
+  printLog('Salesforce LWC app deployed.')
+}
+
+function deployBundle() {
+  const targetOrg = getTargetOrg()
+  const bundle = readFileSync(bundlePath)
+  const resourceName = computeResourceName(bundle)
+
+  printLog(`Deploying Salesforce LWC bundle ${resourceName} to ${targetOrg}...`)
+  writeGeneratedStaticResource(resourceName, bundle)
+  command`sf project deploy start --target-org ${targetOrg} --source-dir ${generatedStaticResourcesDir}`
+    .withCurrentWorkingDirectory(salesforceAppDir)
+    .withLogs()
+    .run()
+  writeFileSync(resourceNamePath, `${resourceName}\n`)
+  printLog(`Salesforce LWC bundle deployed: ${resourceName}`)
+}
+
+function buildOpenUrl(): string {
+  const targetOrg = getTargetOrg()
+  const resourceName = readResourceName()
+  const path = new URL(salesforceHomePath, 'https://salesforce.local')
+
+  path.searchParams.set('c__datadogResourceName', resourceName)
+  path.searchParams.set(
+    'c__datadogInitConfiguration',
+    JSON.stringify({
+      applicationId: '37fe52bf-b3d5-4ac7-ad9b-44882d479ec8',
+      clientToken: 'pubf2099de38f9c85797d20d64c7d632a69',
+      defaultPrivacyLevel: 'allow',
+      trackResources: true,
+      trackLongTasks: true,
+      enableExperimentalFeatures: [],
+      allowUntrustedEvents: true,
+      sessionReplaySampleRate: 100,
+      telemetrySampleRate: 100,
+      telemetryUsageSampleRate: 100,
+      telemetryConfigurationSampleRate: 100,
+      service: 'browser-sdk-salesforce-e2e',
+      env: 'e2e',
+    })
+  )
+
+  const result = spawnSync(
+    'sf',
+    ['org', 'open', '--target-org', targetOrg, '--path', `${path.pathname}${path.search}`, '--url-only', '--json'],
+    {
+      encoding: 'utf8',
+      cwd: salesforceAppDir,
+    }
+  )
+  if (result.status !== 0) {
+    throw new Error(result.stderr || result.stdout)
+  }
+
+  const data = parseSfJsonOutput(result.stdout, result.stderr)
+  if (!data.result?.url) {
+    throw new Error(`Salesforce CLI did not return a URL: ${result.stdout}`)
+  }
+  return data.result.url
+}
+
+function parseSfJsonOutput(stdout: string, stderr: string): { result?: { url?: string } } {
+  const sanitizedStdout = stripCliControlCharacters(stdout)
+  const jsonStart = sanitizedStdout.indexOf('{')
+  const jsonEnd = sanitizedStdout.lastIndexOf('}')
+
+  if (jsonStart === -1 || jsonEnd === -1 || jsonEnd < jsonStart) {
+    throw new Error(`Salesforce CLI did not return JSON.\nstdout:\n${stdout}\nstderr:\n${stderr}`)
+  }
+
+  try {
+    return JSON.parse(sanitizedStdout.slice(jsonStart, jsonEnd + 1)) as { result?: { url?: string } }
+  } catch (error) {
+    throw new Error(`Salesforce CLI returned invalid JSON.\nstdout:\n${stdout}\nstderr:\n${stderr}`, { cause: error })
+  }
+}
+
+/* eslint-disable no-control-regex */
+function stripCliControlCharacters(output: string): string {
+  return output
+    .replace(/\x1b\][^\x07]*(?:\x07|\x1b\\)/g, '')
+    .replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, '')
+    .replace(/\x1b[PX^_][\s\S]*?\x1b\\/g, '')
+    .replace(/\x1b[@-Z\\-_]/g, '')
+    .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, '')
+}
+/* eslint-enable no-control-regex */
+
+function getTargetOrg(): string {
+  return process.env.SF_TARGET_ORG || defaultTargetOrg
+}
+
+function computeResourceName(bundle: Buffer): string {
+  const hash = createHash('sha256').update(bundle).digest('hex').slice(0, 12)
+  return `datadog_rum_slim_${hash}`
+}
+
+function writeGeneratedStaticResource(resourceName: string, bundle: Buffer) {
+  rmSync(generatedStaticResourcesDir, { recursive: true, force: true })
+  mkdirSync(generatedStaticResourcesDir, { recursive: true })
+  writeFileSync(resolve(generatedStaticResourcesDir, `${resourceName}.js`), bundle)
+  writeFileSync(
+    resolve(generatedStaticResourcesDir, `${resourceName}.resource-meta.xml`),
+    `<?xml version="1.0" encoding="UTF-8" ?>
+<StaticResource xmlns="http://soap.sforce.com/2006/04/metadata">
+    <cacheControl>Private</cacheControl>
+    <contentType>application/javascript</contentType>
+</StaticResource>
+`
+  )
+}
+
+function readResourceName(): string {
+  try {
+    return readFileSync(resourceNamePath, 'utf8').trim()
+  } catch {
+    throw new Error('SF LWC resource name not found. Run `yarn salesforce:deploy-bundle` first.')
+  }
+}

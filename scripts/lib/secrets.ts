@@ -84,21 +84,21 @@ export function getBrowserStackAccessKey(): string {
   return getSecretKey('ci.browser-sdk.bs_access_key')
 }
 
-export function getSfInstanceUrl(): string {
-  return process.env.SF_INSTANCE_URL ?? getSecretKey('ci.browser-sdk.sf_instance_url')
+export function getSfLwcClientId(): string {
+  return process.env.SF_LWC_CLIENT_ID ?? getSecretKey('ci.browser-sdk.sf_lwc_client_id')
 }
 
-export function getSfClientId(): string {
-  return process.env.SF_CLIENT_ID ?? getSecretKey('ci.browser-sdk.sf_client_id')
+export function getSfLwcUsername(): string {
+  return process.env.SF_LWC_USERNAME ?? getSecretKey('ci.browser-sdk.sf_lwc_username')
 }
 
-export function getSfJwtPrivateKey(): string {
-  const key = process.env.SF_JWT_PRIVATE_KEY ?? getSecretKey('ci.browser-sdk.sf_jwt_private_key')
-  return key.replace(/\\n/g, '\n')
+export function getSfLwcInstanceUrl(): string {
+  return process.env.SF_LWC_INSTANCE_URL ?? getSecretKey('ci.browser-sdk.sf_lwc_instance_url')
 }
 
-export function getSfRunAsUser(): string {
-  return process.env.SF_RUN_AS_USER ?? getSecretKey('ci.browser-sdk.sf_run_as_user')
+export function getSfLwcJwtPrivateKey(): string {
+  const key = process.env.SF_LWC_JWT_PRIVATE_KEY_B64 ?? getSecretKey('ci.browser-sdk.sf_lwc_jwt_private_key_b64')
+  return Buffer.from(key, 'base64').toString('utf8')
 }
 
 function getSecretKey(name: string): string {

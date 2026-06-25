@@ -1,7 +1,7 @@
 import { expect } from '@playwright/test'
 import { createTest } from '../../lib/framework'
 
-createTest('salesforce')
+createTest('salesforce @salesforce')
   .withSalesforceApp()
   .run(async ({ page, intakeRegistry, flushEvents }) => {
     await expect(page.getByTestId('home-custom-actions')).toBeVisible({ timeout: 60000 })
