@@ -108,7 +108,7 @@ export type {
   NetworkInformation,
   Navigator,
   NetworkInterface,
-  EffectiveType,
+  NetworkEffectiveType,
   Profiler,
   ProfilerConstructor,
   ProfilerTrace,

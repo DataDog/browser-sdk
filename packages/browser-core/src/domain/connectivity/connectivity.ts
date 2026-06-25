@@ -1,10 +1,10 @@
-import type { EffectiveType, NetworkInterface } from '@datadog/js-core/util'
+import type { NetworkEffectiveType, NetworkInterface } from '@datadog/js-core/util'
 import { globalObject } from '@datadog/js-core/util'
 
 export interface Connectivity {
   status: 'connected' | 'not_connected'
   interfaces?: NetworkInterface[]
-  effective_type?: EffectiveType
+  effective_type?: NetworkEffectiveType
   [key: string]: unknown
 }
 

@@ -9,7 +9,7 @@ export type {
   Navigator,
   NetworkInformation,
   NetworkInterface,
-  EffectiveType,
+  NetworkEffectiveType,
   CookieStoreItem,
   CookieStore,
   CookieChangeItem,

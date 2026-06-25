@@ -1,6 +1,6 @@
 import type { ClocksState } from '@datadog/js-core/time'
 import { clocksNow } from '@datadog/js-core/time'
-import { normalizeUrl, globalObject  } from '@datadog/js-core/util'
+import { normalizeUrl, globalObject } from '@datadog/js-core/util'
 import type { GlobalObject } from '@datadog/js-core/util'
 import type { InstrumentedMethodCall } from '../tools/instrumentMethod'
 import { instrumentMethod } from '../tools/instrumentMethod'

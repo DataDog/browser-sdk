@@ -1,5 +1,5 @@
 import { clocksNow } from '@datadog/js-core/time'
-import { getDebugMode, combine, globalObject, isWorkerEnvironment  } from '@datadog/js-core/util'
+import { getDebugMode, combine, globalObject, isWorkerEnvironment } from '@datadog/js-core/util'
 import type { Hook } from '@datadog/js-core/assembly'
 import type { RecursivePartial } from '@datadog/js-core/util'
 import { DISCARDED } from '@datadog/js-core/assembly'

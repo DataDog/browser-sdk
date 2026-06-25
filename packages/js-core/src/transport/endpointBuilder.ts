@@ -6,8 +6,11 @@ import { INTAKE_SITE_US1 } from './intakeSites'
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
 
+/** The Datadog backend track a request is being sent to. */
 export type TrackType = 'logs' | 'rum' | 'replay' | 'profile' | 'exposures' | 'flagevaluation' | 'debugger'
-export type ApiType =
+
+/** The mechanism used to send a request to an intake endpoint. */
+export type TransportApiType =
   | 'fetch'
   | 'beacon'
   // 'manual' reflects that the request have been sent manually, outside of the SDK (ex: via curl or
@@ -23,15 +26,22 @@ export type ApiType =
  */
 export type TransportSource = 'browser' | 'flutter' | 'unity' | 'dd_debugger'
 
+/** A function that builds a proxy URL for an intake request. */
 export type ProxyFn = (options: { path: string; parameters: string; subdomain?: string }) => string
 
-export interface RetryInfo {
+/** Metadata about a request retry attempt. */
+export interface TransportRetryInfo {
+  /** Number of retry attempts so far. */
   count: number
+  /** HTTP status code of the last failed attempt. */
   lastFailureStatus: number
 }
 
+/** The data and metadata associated with a single intake request. */
 export interface EndpointPayload {
-  retry?: RetryInfo
+  /** Present when this is a retry; carries the previous attempt's metadata. */
+  retry?: TransportRetryInfo
+  /** Compression applied to the payload body, if any. */
   encoding?: 'deflate'
 }
 
@@ -53,15 +63,22 @@ interface ConfigurationWithReplica {
   source?: TransportSource
 }
 
-export type EndpointBuilder = ReturnType<typeof createEndpointBuilder>
+/** Builds intake URLs for a specific track. */
+export interface EndpointBuilder {
+  /** Builds the intake URL for the given API type and payload metadata. */
+  build(api: TransportApiType, payload: EndpointPayload): string
+  /** The track this builder targets. */
+  trackType: TrackType
+}
 
+/** Creates an {@link EndpointBuilder} for the given track type. */
 export function createEndpointBuilder(
   configuration: EndpointBuilderConfiguration,
   trackType: TrackType,
   extraParameters?: string[]
-) {
+): EndpointBuilder {
   return {
-    build(api: ApiType, payload: EndpointPayload) {
+    build(api: TransportApiType, payload: EndpointPayload) {
       return buildEndpointUrl({
         proxy: configuration.proxy,
         site: configuration.site,
@@ -82,7 +99,7 @@ export function createEndpointBuilder(
 export function createReplicaEndpointBuilder(
   { replica, proxy, source }: ConfigurationWithReplica,
   trackType: TrackType
-) {
+): EndpointBuilder | undefined {
   if (!replica) {
     return
   }
@@ -98,14 +115,21 @@ export function createReplicaEndpointBuilder(
   )
 }
 
+/** Options for building a Datadog intake URL. */
 export interface BuildEndpointUrlOptions {
+  /** Optional proxy URL or function to route intake requests through. */
   proxy?: string | ProxyFn
+  /** Target Datadog site. Defaults to `INTAKE_SITE_US1` when undefined. */
   site: Site | undefined
+  /** Optional subdomain prepended to the intake domain (e.g. `'sdk-configuration'`). */
   subdomain?: string
+  /** The API path (e.g. `/api/v2/rum`). */
   path: string
+  /** Pre-built query string appended to the URL, without a leading `?`. */
   parameters?: string
 }
 
+/** Builds a Datadog intake URL from the given options. */
 export function buildEndpointUrl({
   proxy,
   site = INTAKE_SITE_US1,
@@ -147,7 +171,7 @@ export function buildEndpointUrl({
 function buildEndpointParameters(
   { clientToken, source = 'browser' }: EndpointBuilderConfiguration,
   trackType: TrackType,
-  api: ApiType,
+  api: TransportApiType,
   { retry, encoding }: EndpointPayload,
   extraParameters: string[] = []
 ) {

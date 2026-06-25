@@ -1,11 +1,11 @@
 export type {
   TrackType,
-  ApiType,
+  TransportApiType,
   TransportSource,
   EndpointBuilder,
   BuildEndpointUrlOptions,
   ProxyFn,
-  RetryInfo,
+  TransportRetryInfo,
   EndpointPayload,
 } from '../transport/endpointBuilder'
 export { createEndpointBuilder, createReplicaEndpointBuilder, buildEndpointUrl } from '../transport/endpointBuilder'

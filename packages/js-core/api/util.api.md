@@ -5,6 +5,9 @@
 ```ts
 
 // @public
+export function buildUrl(url: string, base?: string): URL;
+
+// @public
 export function combine<A, B>(a: A, b: B): Combined<A, B>;
 
 // @public (undocumented)
@@ -38,6 +41,65 @@ export const ConsoleApiName: {
 export type ConsoleApiName = (typeof ConsoleApiName)[keyof typeof ConsoleApiName];
 
 // @public
+type CookieChangeEvent_2 = Event & {
+    changed: CookieChangeItem[];
+    deleted: CookieChangeItem[];
+};
+export { CookieChangeEvent_2 as CookieChangeEvent }
+
+// @public
+export interface CookieChangeItem {
+    name: string;
+    value: string | undefined;
+}
+
+// @public
+interface CookieStore_2 extends EventTarget {
+    addEventListener<K extends keyof CookieStoreEventMap_2>(type: K, listener: (ev: CookieStoreEventMap_2[K]) => any, options?: boolean | AddEventListenerOptions): void;
+    addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+    delete(options: {
+        name: string;
+        domain?: string;
+        path?: string;
+        partitioned?: boolean;
+    }): Promise<void>;
+    get(name: string): Promise<CookieStoreItem | null>;
+    getAll(name?: string): Promise<CookieStoreItem[]>;
+    removeEventListener<K extends keyof CookieStoreEventMap_2>(type: K, listener: (ev: CookieStoreEventMap_2[K]) => any, options?: boolean | EventListenerOptions): void;
+    removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    set(options: {
+        name: string;
+        value: string;
+        expires?: number | Date;
+        domain?: string;
+        path?: string;
+        secure?: boolean;
+        sameSite?: 'strict' | 'lax' | 'none';
+        partitioned?: boolean;
+    }): Promise<void>;
+}
+export { CookieStore_2 as CookieStore }
+
+// @internal (undocumented)
+interface CookieStoreEventMap_2 {
+    // (undocumented)
+    change: CookieChangeEvent_2;
+}
+export { CookieStoreEventMap_2 as CookieStoreEventMap }
+
+// @public
+export interface CookieStoreItem {
+    domain?: string;
+    expires?: number;
+    name: string;
+    partitioned?: boolean;
+    path?: string;
+    sameSite?: 'strict' | 'lax' | 'none';
+    secure?: boolean;
+    value: string;
+}
+
+// @public
 export function createDisplay(prefix: string): Display;
 
 // @public
@@ -61,24 +123,129 @@ export interface Display {
 export function getDebugMode(): boolean;
 
 // @public
+export function getPathName(url: string): string;
+
+// @public
+export function getPristineWindow(): Pick<Window & typeof globalThis, "URL">;
+
+// @public
 export function getType(value: unknown): "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function" | "null" | "array";
 
 // @public
 export const globalConsole: Console;
 
 // @public
+export interface GlobalObject extends Omit<typeof globalThis, 'navigator' | 'queueMicrotask' | 'cookieStore' | 'Profiler' | 'window'> {
+    cookieStore?: CookieStore_2;
+    navigator?: Navigator_2;
+    Profiler?: ProfilerConstructor;
+    queueMicrotask?: typeof queueMicrotask;
+    window?: Window;
+}
+
+// @public
+export const globalObject: GlobalObject;
+
+// @public
 export function isIndexableObject(value: unknown): value is Record<any, unknown>;
+
+// @public
+export function isValidUrl(url: string): boolean;
+
+// @public
+export const isWorkerEnvironment: boolean;
 
 // @public
 export function mergeInto<D, S>(destination: D, source: S): Merged<D, S>;
 
 // @public
+interface Navigator_2 {
+    connection?: NetworkInformation;
+    onLine: boolean;
+}
+export { Navigator_2 as Navigator }
+
+// @public
+export type NetworkEffectiveType = 'slow-2g' | '2g' | '3g' | '4g';
+
+// @public
+export interface NetworkInformation {
+    effectiveType?: NetworkEffectiveType;
+    saveData: boolean;
+    type?: NetworkInterface;
+}
+
+// @public
+export type NetworkInterface = 'bluetooth' | 'cellular' | 'ethernet' | 'none' | 'wifi' | 'wimax' | 'other' | 'unknown';
+
+// @public
+export function normalizeUrl(url: string): string;
+
+// @public
 export const originalConsoleMethods: Display;
+
+// @public
+export interface Profiler extends EventTarget {
+    addEventListener<K extends keyof ProfilerEventMap>(type: K, listener: (ev: ProfilerEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+    addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+    removeEventListener<K extends keyof ProfilerEventMap>(type: K, listener: (ev: ProfilerEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+    removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    readonly sampleInterval: number;
+    stop(): Promise<ProfilerTrace>;
+    readonly stopped: boolean;
+}
+
+// @public
+export interface ProfilerConstructor {
+    new (options: ProfilerInitOptions): Profiler;
+}
+
+// @public
+export interface ProfilerFrame {
+    readonly column?: number;
+    readonly line?: number;
+    readonly name: string;
+    readonly resourceId?: number;
+}
+
+// @public
+export interface ProfilerInitOptions {
+    readonly maxBufferSize: number;
+    readonly sampleInterval: number;
+}
+
+// @public
+export type ProfilerResource = string;
+
+// @public
+export interface ProfilerSample {
+    readonly stackId?: number;
+    readonly timestamp: number;
+}
+
+// @public
+export interface ProfilerStack {
+    readonly frameId: number;
+    readonly parentId?: number;
+}
+
+// @public
+export interface ProfilerTrace {
+    readonly frames: ProfilerFrame[];
+    readonly resources: ProfilerResource[];
+    readonly samples: ProfilerSample[];
+    readonly stacks: ProfilerStack[];
+}
 
 // @public
 export type RecursivePartial<T> = {
     [P in keyof T]?: T[P] extends Array<infer U> ? Array<RecursivePartial<U>> : T[P] extends object | undefined ? RecursivePartial<T[P]> : T[P];
 };
+
+// @public
+export interface SampleBufferFullEvent extends Event {
+    readonly target: Profiler;
+}
 
 // @public
 export function setDebugMode(newDebugMode: boolean): void;
