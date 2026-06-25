@@ -1,4 +1,5 @@
 import { registerCleanupTask } from '@datadog/browser-core/test'
+import { originalConsoleMethods } from '@datadog/js-core/util'
 import { detectCDP, detectHeadlessEnvironment, detectSoftwareRenderer } from './aiAgentContext'
 
 describe('Tier 2 detection functions', () => {
@@ -115,9 +116,13 @@ describe('Tier 2 detection functions', () => {
 
   describe('detectCDP', () => {
     it('should return an AiAgentContext when CDP is detected', () => {
+      // detectCDP probes for an inspector by calling the (un-instrumented) console.debug.
+      // Spy on it so the probe does not reach the browser console and trip the
+      // karma-unexpected-error-log reporter. Suppressing the call means the Proxy trap
+      // cannot fire, so detection resolves to undefined in this environment.
+      spyOn(originalConsoleMethods, 'debug')
+
       const result = detectCDP()
-      // In our test environment (Karma + Chrome Headless), CDP is active
-      // so this should detect it
       if (result) {
         expect(result).toEqual({ detection_method: 'cdp' })
       }
