@@ -4,8 +4,8 @@ import { dirname, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { tmpdir } from 'node:os'
+import type { SpawnSyncOptionsWithStringEncoding, SpawnSyncReturns } from 'node:child_process'
 
-import { command } from './lib/command.ts'
 import { printLog, runMain } from './lib/executionUtils.ts'
 import { getSfLwcClientId, getSfLwcInstanceUrl, getSfLwcJwtPrivateKey, getSfLwcUsername } from './lib/secrets.ts'
 
@@ -18,6 +18,7 @@ const generatedStaticResourcesDir = resolve(generatedStateDir, 'force-app/main/d
 const resourceNamePath = resolve(generatedStateDir, 'resource-name')
 const salesforceHomePath = '/lightning/app/c__SF_LWC_App/page/home'
 const defaultTargetOrg = 'sf-lwc-ci'
+const salesforceCliPackage = '@salesforce/cli@2.139.6'
 
 runMain(() => {
   const [commandName] = process.argv.slice(2)
@@ -49,17 +50,22 @@ function authenticate() {
     chmodSync(keyPath, 0o600)
 
     printLog(`Authenticating Salesforce CLI alias ${defaultTargetOrg}...`)
-    command`
-      sf org login jwt
-        --client-id ${getSfLwcClientId()}
-        --jwt-key-file ${keyPath}
-        --username ${getSfLwcUsername()}
-        --instance-url ${getSfLwcInstanceUrl()}
-        --alias ${defaultTargetOrg}
-        --json
-    `
-      .withCurrentWorkingDirectory(salesforceAppDir)
-      .run()
+    runSf([
+      'org',
+      'login',
+      'jwt',
+      '--client-id',
+      getSfLwcClientId(),
+      '--jwt-key-file',
+      keyPath,
+      '--username',
+      getSfLwcUsername(),
+      '--instance-url',
+      getSfLwcInstanceUrl(),
+      '--alias',
+      defaultTargetOrg,
+      '--json',
+    ])
     printLog(`Salesforce CLI authenticated as ${defaultTargetOrg}.`)
   } finally {
     rmSync(keyDirectory, { recursive: true, force: true })
@@ -71,10 +77,7 @@ function deployApp() {
 
   printLog(`Deploying Salesforce LWC app to ${targetOrg}...`)
   copyFileSync(bundlePath, stableStaticResourcePath)
-  command`sf project deploy start --target-org ${targetOrg} --source-dir force-app`
-    .withCurrentWorkingDirectory(salesforceAppDir)
-    .withLogs()
-    .run()
+  runSf(['project', 'deploy', 'start', '--target-org', targetOrg, '--source-dir', 'force-app'], { stdio: 'inherit' })
 
   printLog('Salesforce LWC app deployed.')
 }
@@ -86,10 +89,9 @@ function deployBundle() {
 
   printLog(`Deploying Salesforce LWC bundle ${resourceName} to ${targetOrg}...`)
   writeGeneratedStaticResource(resourceName, bundle)
-  command`sf project deploy start --target-org ${targetOrg} --source-dir ${generatedStaticResourcesDir}`
-    .withCurrentWorkingDirectory(salesforceAppDir)
-    .withLogs()
-    .run()
+  runSf(['project', 'deploy', 'start', '--target-org', targetOrg, '--source-dir', generatedStaticResourcesDir], {
+    stdio: 'inherit',
+  })
   writeFileSync(resourceNamePath, `${resourceName}\n`)
   printLog(`Salesforce LWC bundle deployed: ${resourceName}`)
 }
@@ -119,23 +121,50 @@ function buildOpenUrl(): string {
     })
   )
 
-  const result = spawnSync(
-    'sf',
-    ['org', 'open', '--target-org', targetOrg, '--path', `${path.pathname}${path.search}`, '--url-only', '--json'],
-    {
-      encoding: 'utf8',
-      cwd: salesforceAppDir,
-    }
-  )
-  if (result.status !== 0) {
-    throw new Error(result.stderr || result.stdout)
-  }
+  const result = runSf([
+    'org',
+    'open',
+    '--target-org',
+    targetOrg,
+    '--path',
+    `${path.pathname}${path.search}`,
+    '--url-only',
+    '--json',
+  ])
 
   const data = parseSfJsonOutput(result.stdout, result.stderr)
   if (!data.result?.url) {
     throw new Error(`Salesforce CLI did not return a URL: ${result.stdout}`)
   }
   return data.result.url
+}
+
+function runSf(
+  args: string[],
+  options: Partial<SpawnSyncOptionsWithStringEncoding> = {}
+): SpawnSyncReturns<string> {
+  const spawnOptions = {
+    encoding: 'utf8' as const,
+    cwd: salesforceAppDir,
+    ...options,
+  }
+  const result = spawnSync('sf', args, spawnOptions)
+
+  if (result.error && (result.error as NodeJS.ErrnoException).code === 'ENOENT') {
+    return runSfWithYarnDlx(args, spawnOptions)
+  }
+  if (result.status !== 0) {
+    throw new Error(result.stderr || result.stdout || result.error?.message)
+  }
+  return result
+}
+
+function runSfWithYarnDlx(args: string[], options: SpawnSyncOptionsWithStringEncoding): SpawnSyncReturns<string> {
+  const result = spawnSync('yarn', ['dlx', '-p', salesforceCliPackage, 'sf', ...args], options)
+  if (result.status !== 0) {
+    throw new Error(result.stderr || result.stdout || result.error?.message)
+  }
+  return result
 }
 
 function parseSfJsonOutput(stdout: string, stderr: string): { result?: { url?: string } } {
