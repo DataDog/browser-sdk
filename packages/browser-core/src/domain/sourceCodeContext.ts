@@ -1,5 +1,6 @@
 import { computeStackTrace } from '../tools/stackTrace/computeStackTrace'
 import { isEmptyObject } from '../tools/utils/objectUtils'
+import { addTelemetryUsage } from './telemetry'
 
 export interface SourceCodeContextEntry {
   service?: string
@@ -13,6 +14,7 @@ export interface BrowserWindow {
 
 const contextByUrl = new Map<string, SourceCodeContextEntry>()
 const processedStacks = new Set<string>()
+let hasFiredTelemetry = false
 
 function syncSourceCodeContext() {
   const sourceCodeContext = (window as BrowserWindow).DD_SOURCE_CODE_CONTEXT
@@ -20,7 +22,15 @@ function syncSourceCodeContext() {
     return
   }
 
+  let useDebugId = false
+  let useService = false
+  let useVersion = false
+
   for (const [stack, entry] of Object.entries(sourceCodeContext)) {
+    useDebugId = useDebugId || entry.ddDebugId !== undefined
+    useService = useService || entry.service !== undefined
+    useVersion = useVersion || entry.version !== undefined
+
     if (processedStacks.has(stack)) {
       continue
     }
@@ -32,12 +42,22 @@ function syncSourceCodeContext() {
       contextByUrl.set(url, entry)
     }
   }
+
+  if (!hasFiredTelemetry) {
+    hasFiredTelemetry = true
+    addTelemetryUsage({
+      feature: 'source-code-context',
+      use_debug_id: useDebugId,
+      use_service: useService,
+      use_version: useVersion,
+    })
+  }
 }
 
-export function getDebugIds(urls: string[]): Record<string, string> | undefined {
+export function getDebugIds(urls: string[]): { [url: string]: string } | undefined {
   syncSourceCodeContext()
 
-  const debugIds: Record<string, string> = {}
+  const debugIds: { [url: string]: string } = {}
 
   for (const url of urls) {
     const debugId = contextByUrl.get(url)?.ddDebugId
@@ -57,4 +77,5 @@ export function getSourceCodeContext(url: string): SourceCodeContextEntry | unde
 export function resetSourceCodeContext() {
   contextByUrl.clear()
   processedStacks.clear()
+  hasFiredTelemetry = false
 }

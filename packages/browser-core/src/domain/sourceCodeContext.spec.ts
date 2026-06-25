@@ -1,4 +1,4 @@
-import { mockSourceCodeContext } from '../../test'
+import { mockSourceCodeContext, startMockTelemetry } from '../../test'
 import { getDebugIds, getSourceCodeContext } from './sourceCodeContext'
 
 const url = 'http://source-code-context-spec.example.com/file.js'
@@ -33,7 +33,7 @@ describe('getDebugIds', () => {
     expect(getDebugIds([url])).toBeUndefined()
   })
 
-  it('should only matche the top frame URL, not deeper frames of the context stack', () => {
+  it('should only match the top frame URL, not deeper frames of the context stack', () => {
     mockSourceCodeContext({
       [`Error: ctx\n    at top (${url}:1:1)\n    at deeper (${otherUrl}:2:2)`]: { ddDebugId: 'id-1' },
     })
@@ -64,5 +64,44 @@ describe('getSourceCodeContext', () => {
 
   it('should return undefined for an unknown URL', () => {
     expect(getSourceCodeContext(url)).toBeUndefined()
+  })
+})
+
+describe('source code context telemetry usage', () => {
+  it('should report which fields are present when DD_SOURCE_CODE_CONTEXT is detected', async () => {
+    const telemetry = startMockTelemetry()
+    mockSourceCodeContext({
+      [makeStack(url)]: { ddDebugId: 'id-1' },
+      [makeStack(otherUrl)]: { service: 'svc' },
+    })
+
+    getSourceCodeContext(url)
+
+    const events = await telemetry.getEvents()
+    expect(events).toEqual([
+      jasmine.objectContaining({
+        type: 'usage',
+        usage: { feature: 'source-code-context', use_debug_id: true, use_service: true, use_version: false },
+      }),
+    ])
+  })
+
+  it('should report usage only once even across multiple syncs', async () => {
+    const telemetry = startMockTelemetry()
+    mockSourceCodeContext({ [makeStack(url)]: { ddDebugId: 'id-1' } })
+
+    getSourceCodeContext(url)
+    getSourceCodeContext(otherUrl)
+
+    const events = await telemetry.getEvents()
+    expect(events.length).toBe(1)
+  })
+
+  it('should not report usage when DD_SOURCE_CODE_CONTEXT is absent', async () => {
+    const telemetry = startMockTelemetry()
+
+    getSourceCodeContext(url)
+
+    expect(await telemetry.hasEvents()).toBe(false)
   })
 })
