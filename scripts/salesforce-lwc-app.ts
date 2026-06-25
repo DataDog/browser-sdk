@@ -88,6 +88,7 @@ function deployBundle() {
   const resourceName = computeResourceName(bundle)
 
   printLog(`Deploying Salesforce LWC bundle ${resourceName} to ${targetOrg}...`)
+  writeFileSync(stableStaticResourcePath, bundle)
   writeGeneratedStaticResource(resourceName, bundle)
   runSf(['project', 'deploy', 'start', '--target-org', targetOrg, '--source-dir', generatedStaticResourcesDir], {
     stdio: 'inherit',
@@ -139,10 +140,7 @@ function buildOpenUrl(): string {
   return data.result.url
 }
 
-function runSf(
-  args: string[],
-  options: Partial<SpawnSyncOptionsWithStringEncoding> = {}
-): SpawnSyncReturns<string> {
+function runSf(args: string[], options: Partial<SpawnSyncOptionsWithStringEncoding> = {}): SpawnSyncReturns<string> {
   const spawnOptions = {
     encoding: 'utf8' as const,
     cwd: salesforceAppDir,
