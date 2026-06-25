@@ -117,7 +117,7 @@ export function createBatch({
 
   return {
     get isEmpty() {
-      return encoder.isEmpty && Object.keys(upsertBuffer).length === 0
+      return flushController.messagesCount === 0
     },
     add: addOrUpdate,
     upsert: addOrUpdate,
