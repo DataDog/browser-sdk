@@ -1,6 +1,5 @@
 import { RumEventType, createHooks } from '@datadog/browser-rum-core'
 import type { RelativeTime } from '@datadog/js-core/time'
-import { HookNames } from '@datadog/browser-core'
 import type { AssembleHookParams } from '@datadog/browser-rum-core/src/domain/hooks'
 import { startProfilingContext } from './profilingContext'
 
@@ -14,7 +13,7 @@ describe('Profiling Context', () => {
     profilingContextManager.set({ status: 'running' })
 
     for (const eventType of [RumEventType.VIEW, RumEventType.LONG_TASK, RumEventType.ACTION, RumEventType.VITAL]) {
-      const eventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const eventAttributes = hooks.assemble.trigger({
         eventType,
         startTime: relativeTime,
       } as AssembleHookParams)
@@ -29,7 +28,7 @@ describe('Profiling Context', () => {
     }
 
     for (const eventType of [RumEventType.ERROR, RumEventType.RESOURCE]) {
-      const eventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      const eventAttributes = hooks.assemble.trigger({
         eventType,
         startTime: relativeTime,
       } as AssembleHookParams)

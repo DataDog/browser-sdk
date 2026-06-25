@@ -1,10 +1,14 @@
 import type { SessionManager } from '@datadog/browser-core'
-import { DISCARDED, HookNames } from '@datadog/browser-core'
+import { DISCARDED } from '@datadog/js-core/assembly'
 import type { LogsConfiguration } from '../configuration'
-import type { Hooks } from '../hooks'
+import type { AssembleHook } from '../hooks'
 
-export function startSessionContext(hooks: Hooks, configuration: LogsConfiguration, sessionManager: SessionManager) {
-  hooks.register(HookNames.Assemble, ({ startTime }) => {
+export function startSessionContext(
+  hook: AssembleHook,
+  configuration: LogsConfiguration,
+  sessionManager: SessionManager
+) {
+  hook.register(({ startTime }) => {
     const session = sessionManager.findTrackedSession(startTime)
 
     const isSessionTracked = sessionManager.findTrackedSession(startTime, {

@@ -48,10 +48,7 @@ export default class ProductExplorer extends LightningElement {
   materialOptions = toOptions(['Aluminum', 'Carbon', 'Steel'])
 
   get productsForView() {
-    return this.products.map((product) => ({
-      ...product,
-      buttonClass: product.id === this.selectedProductId ? 'product-button product-button_selected' : 'product-button',
-    }))
+    return this.products
   }
 
   get selectedProduct() {

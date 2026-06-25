@@ -1,25 +1,43 @@
 {
   "name": "@datadog/js-core",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "license": "Apache-2.0",
   "sideEffects": false,
   "exports": {
+    "./assembly": {
+      "import": "./esm/entries/assembly.mjs",
+      "require": "./cjs/entries/assembly.js",
+      "types": "./cjs/entries/assembly.d.ts"
+    },
     "./time": {
-      "import": "./esm/time.js",
-      "require": "./cjs/time.js",
-      "types": "./cjs/time.d.ts"
+      "import": "./esm/entries/time.mjs",
+      "require": "./cjs/entries/time.js",
+      "types": "./cjs/entries/time.d.ts"
+    },
+    "./monitor": {
+      "import": "./esm/entries/monitor.mjs",
+      "require": "./cjs/entries/monitor.js",
+      "types": "./cjs/entries/monitor.d.ts"
+    },
+    "./util": {
+      "import": "./esm/entries/util.mjs",
+      "require": "./cjs/entries/util.js",
+      "types": "./cjs/entries/util.d.ts"
     }
   },
   "files": [
     "cjs",
     "esm",
     "src",
+    "assembly",
     "time",
+    "monitor",
+    "util",
     "!src/**/*.spec.ts",
     "!src/**/*.specHelper.ts"
   ],
   "scripts": {
-    "build": "node ../../scripts/build/build-package.ts --modules --esm-type-module",
+    "build": "node ../../scripts/build/build-package.ts --modules",
     "prepack": "yarn build"
   },
   "repository": {

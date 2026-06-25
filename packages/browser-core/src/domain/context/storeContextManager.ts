@@ -1,8 +1,7 @@
+import { combine } from '@datadog/js-core/util'
 import { addEventListener, DOM_EVENT } from '../../browser/addEventListener'
 import type { Context } from '../../tools/serialisation/context'
-import type { Configuration } from '../configuration'
-import { combine } from '../../tools/mergeInto'
-import { isEmptyObject } from '../../tools/utils/objectUtils'
+import { isEmptyObject, tryJsonParse } from '../../tools/utils/objectUtils'
 import type { ContextManager } from './contextManager'
 import type { CustomerDataType } from './contextConstants'
 
@@ -11,7 +10,6 @@ const CONTEXT_STORE_KEY_PREFIX = '_dd_c'
 const storageListeners: Array<{ stop: () => void }> = []
 
 export function storeContextManager(
-  configuration: Configuration,
   contextManager: ContextManager,
   productKey: string,
   customerDataType: CustomerDataType
@@ -24,7 +22,7 @@ export function storeContextManager(
   const storageKey = buildStorageKey(productKey, customerDataType)
 
   storageListeners.push(
-    addEventListener(configuration, window, DOM_EVENT.STORAGE, ({ key }) => {
+    addEventListener(window, DOM_EVENT.STORAGE, ({ key }) => {
       if (storageKey === key) {
         synchronizeWithStorage()
       }
@@ -47,7 +45,7 @@ export function storeContextManager(
 
   function getFromStorage() {
     const rawContext = localStorage.getItem(storageKey)
-    return rawContext ? (JSON.parse(rawContext) as Context) : {}
+    return rawContext ? (tryJsonParse<Context>(rawContext) ?? {}) : {}
   }
 }
 

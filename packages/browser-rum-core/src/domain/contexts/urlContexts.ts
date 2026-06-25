@@ -1,19 +1,12 @@
 import type { RelativeTime } from '@datadog/js-core/time'
 import type { Observable } from '@datadog/browser-core'
 import { relativeNow } from '@datadog/js-core/time'
-import {
-  SESSION_TIME_OUT_DELAY,
-  createValueHistory,
-  HookNames,
-  DISCARDED,
-  mockable,
-  buildUrl,
-  globalObject,
-} from '@datadog/browser-core'
+import { SESSION_TIME_OUT_DELAY, createValueHistory, mockable, buildUrl, globalObject } from '@datadog/browser-core'
+import { DISCARDED } from '@datadog/js-core/assembly'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
-import type { DefaultRumEventAttributes, Hooks } from '../hooks'
+import type { AssembleHook, DefaultRumEventAttributes } from '../hooks'
 
 /**
  * We want to attach to an event:
@@ -35,7 +28,7 @@ export interface UrlContexts {
 
 export function startUrlContexts(
   lifeCycle: LifeCycle,
-  hooks: Hooks,
+  assembleHook: AssembleHook,
   locationChangeObservable: Observable<LocationChange>
 ) {
   const urlContextHistory = createValueHistory<UrlContext>({ expireDelay: URL_CONTEXT_TIME_OUT_DELAY })
@@ -81,7 +74,7 @@ export function startUrlContexts(
     }
   }
 
-  hooks.register(HookNames.Assemble, ({ startTime, eventType }): DefaultRumEventAttributes | DISCARDED => {
+  assembleHook.register(({ startTime, eventType }): DefaultRumEventAttributes | DISCARDED => {
     const urlContext = urlContextHistory.find(startTime)
 
     if (!urlContext) {

@@ -4,19 +4,12 @@
         <actionName>Tab</actionName>
         <content>SF_LWC_App_Home</content>
         <formFactor>Large</formFactor>
-        <skipRecordTypeSelect>false</skipRecordTypeSelect>
         <type>Flexipage</type>
         <pageOrSobjectType>standard-home</pageOrSobjectType>
     </actionOverrides>
-    <formFactors>Small</formFactors>
     <formFactors>Large</formFactors>
-    <isNavAutoTempTabsDisabled>false</isNavAutoTempTabsDisabled>
-    <isNavPersonalizationDisabled>false</isNavPersonalizationDisabled>
-    <isNavTabPersistenceDisabled>false</isNavTabPersistenceDisabled>
-    <isOmniPinnedViewEnabled>false</isOmniPinnedViewEnabled>
     <label>SF LWC App</label>
     <navType>Standard</navType>
-    <setupExperience>all</setupExperience>
     <tabs>standard-home</tabs>
     <tabs>Product_Explorer</tabs>
     <uiType>Lightning</uiType>

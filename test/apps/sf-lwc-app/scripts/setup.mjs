@@ -26,7 +26,9 @@ async function uploadBundle(instanceUrl, accessToken, resourceName) {
   const bodyB64 = readFileSync(bundlePath).toString('base64')
 
   const { records } = await (
-    await fetch(`${api}/query?q=${encodeURIComponent(`SELECT Id FROM StaticResource WHERE Name='${resourceName}'`)}`, { headers })
+    await fetch(`${api}/query?q=${encodeURIComponent(`SELECT Id FROM StaticResource WHERE Name='${resourceName}'`)}`, {
+      headers,
+    })
   ).json()
   const existingId = records?.[0]?.Id
 
@@ -91,20 +93,20 @@ function deployLwcApp(instanceUrl, sfArgs) {
   copyFileSync(bundlePath, resolve(appDir, 'force-app/main/default/staticresources/datadog_rum_slim.js'))
   const org = sfArgs.length ? sfArgs : ['-o', instanceUrl]
   run('sf', ['project', 'deploy', 'start', ...org])
-  const r = spawnSync('sf', ['org', 'assign', 'permset', '-n', 'SF_LWC_App', '-o', instanceUrl], {
+  const result = spawnSync('sf', ['org', 'assign', 'permset', '-n', 'SF_LWC_App', '-o', instanceUrl], {
     encoding: 'utf8',
     cwd: appDir,
   })
-  if (r.status !== 0 && !`${r.stdout}${r.stderr}`.includes('Duplicate PermissionSetAssignment')) {
-    process.stdout.write(r.stdout)
-    process.stderr.write(r.stderr)
-    process.exit(r.status ?? 1)
+  if (result.status !== 0 && !`${result.stdout}${result.stderr}`.includes('Duplicate PermissionSetAssignment')) {
+    process.stdout.write(result.stdout)
+    process.stderr.write(result.stderr)
+    process.exit(result.status ?? 1)
   }
 }
 
-function run(cmd, args) {
-  const r = spawnSync(cmd, args, { stdio: 'inherit', cwd: appDir })
-  if (r.status !== 0) process.exit(r.status ?? 1)
+function run(command, args) {
+  const result = spawnSync(command, args, { stdio: 'inherit', cwd: appDir })
+  if (result.status !== 0) process.exit(result.status ?? 1)
 }
 
 function parseArgs() {

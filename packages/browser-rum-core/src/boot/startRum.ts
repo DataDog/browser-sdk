@@ -1,6 +1,5 @@
 import type {
   Observable,
-  RawError,
   DeflateEncoderStreamId,
   Encoder,
   BufferedData,
@@ -17,7 +16,9 @@ import {
   startGlobalContext,
   startUserContext,
   startTabContext,
+  ErrorSource,
 } from '@datadog/browser-core'
+import { clocksNow } from '@datadog/js-core/time'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { createWindowOpenObservable } from '../browser/windowOpenObservable'
 import { startInternalContext } from '../domain/contexts/internalContext'
@@ -76,33 +77,27 @@ export function startRum(
   sessionManager.expireObservable.subscribe(() => lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED))
   sessionManager.renewObservable.subscribe(() => lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED))
 
-  const reportError = (error: RawError) => {
-    lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
+  const reportError = (message: string) => {
+    lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, {
+      error: { message, source: ErrorSource.AGENT, startClocks: clocksNow() },
+    })
     // monitor-until: forever, to keep an eye on the errors reported to customers
-    addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
+    addTelemetryDebug('Error reported to customer', { 'error.message': message })
   }
 
-  const pageMayExitObservable = createPageMayExitObservable(configuration)
-
   if (!canUseEventBridge()) {
-    const batch = startRumBatch(
-      configuration,
-      lifeCycle,
-      reportError,
-      pageMayExitObservable,
-      sessionManager.expireObservable,
-      createEncoder
-    )
-    const preparePageExitSubscription = batch.flushController.preparePageExitFlushObservable.subscribe((reason) => {
-      lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, { reason })
+    const batch = startRumBatch(configuration, lifeCycle, reportError, sessionManager.expireObservable, createEncoder)
+    const preparePageExitSubscription = batch.prepareUrgentFlushObservable.subscribe((reason) => {
+      lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, reason)
     })
     cleanupTasks.push(() => preparePageExitSubscription.unsubscribe())
     cleanupTasks.push(() => batch.stop())
-    startCustomerDataTelemetry(telemetry, lifeCycle, batch.flushController.flushObservable)
+    startCustomerDataTelemetry(telemetry, lifeCycle, batch.flushObservable)
   } else {
     startRumEventBridge(lifeCycle)
+    const pageMayExitObservable = createPageMayExitObservable()
     const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => {
-      lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, event)
+      lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, event.reason)
     })
     cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
   }
@@ -149,29 +144,30 @@ export function startRumEventCollection(
   initialViewOptions: ViewOptions | undefined,
   bufferedDataObservable: Observable<BufferedData>,
   sdkName: SdkName | undefined,
-  reportError: (error: RawError) => void
+  reportError: (message: string) => void
 ) {
   const cleanupTasks: Array<() => void> = []
 
   const domMutationObservable = createDOMMutationObservable()
-  const locationChangeObservable = createLocationChangeObservable(configuration)
+  const locationChangeObservable = createLocationChangeObservable()
   const { observable: windowOpenObservable, stop: stopWindowOpen } = createWindowOpenObservable()
   cleanupTasks.push(stopWindowOpen)
 
-  startDefaultContext(hooks, configuration, sdkName)
-  const pageStateHistory = startPageStateHistory(hooks, configuration)
+  const { assemble: assembleHook } = hooks
+  startDefaultContext(assembleHook, configuration, sdkName)
+  const pageStateHistory = startPageStateHistory(assembleHook)
   cleanupTasks.push(() => pageStateHistory.stop())
   const viewHistory = startViewHistory(lifeCycle)
   cleanupTasks.push(() => viewHistory.stop())
-  const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable)
+  const urlContexts = startUrlContexts(lifeCycle, assembleHook, locationChangeObservable)
   cleanupTasks.push(() => urlContexts.stop())
-  const featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, configuration)
-  startSessionContext(hooks, configuration, sessionManager, recorderApi, viewHistory)
-  startConnectivityContext(hooks)
-  startTabContext(hooks)
-  const globalContext = startGlobalContext(hooks, configuration, 'rum', true)
-  const userContext = startUserContext(hooks, configuration, sessionManager, 'rum')
-  const accountContext = startAccountContext(hooks, configuration, 'rum')
+  const featureFlagContexts = startFeatureFlagContexts(lifeCycle, assembleHook, configuration)
+  startSessionContext(assembleHook, configuration, sessionManager, recorderApi, viewHistory)
+  startConnectivityContext(assembleHook)
+  startTabContext(assembleHook)
+  const globalContext = startGlobalContext(assembleHook, configuration, 'rum', true)
+  const userContext = startUserContext(assembleHook, configuration, sessionManager, 'rum')
+  const accountContext = startAccountContext(assembleHook, configuration, 'rum')
 
   const actionCollection = startActionCollection(
     lifeCycle,
@@ -184,13 +180,13 @@ export function startRumEventCollection(
 
   const eventCollection = startEventCollection(lifeCycle)
 
-  const displayContext = startDisplayContext(hooks, configuration)
+  const displayContext = startDisplayContext(assembleHook)
   cleanupTasks.push(displayContext.stop)
-  const ciVisibilityContext = startCiVisibilityContext(configuration, hooks)
+  const ciVisibilityContext = startCiVisibilityContext(assembleHook)
   cleanupTasks.push(ciVisibilityContext.stop)
-  startSyntheticsContext(hooks)
+  startSyntheticsContext(assembleHook)
 
-  startRumAssembly(configuration, lifeCycle, hooks, reportError)
+  startRumAssembly(configuration, lifeCycle, assembleHook, reportError)
 
   const {
     addTiming,
@@ -213,7 +209,7 @@ export function startRumEventCollection(
     initialViewOptions
   )
 
-  startSourceCodeContext(hooks)
+  startSourceCodeContext(assembleHook)
 
   cleanupTasks.push(stopViewCollection)
 
@@ -223,7 +219,7 @@ export function startRumEventCollection(
   const { stop: stopLongTaskCollection } = startLongTaskCollection(lifeCycle, configuration)
   cleanupTasks.push(stopLongTaskCollection)
 
-  const { addError } = startErrorCollection(lifeCycle, configuration, bufferedDataObservable)
+  const { addError } = startErrorCollection(lifeCycle, bufferedDataObservable)
 
   startRequestCollection(lifeCycle, configuration, sessionManager, userContext, accountContext, bufferedDataObservable)
 

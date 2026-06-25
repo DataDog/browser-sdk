@@ -47,6 +47,7 @@ export interface WorkerOptions {
 
 export interface EventBridgeOptions {
   isTraceSampled?: boolean
+  capabilities?: string[]
 }
 
 export type SetupFactory = (options: SetupOptions, servers: Servers) => string
@@ -329,10 +330,12 @@ function setupEventBridge(servers: Servers, options: EventBridgeOptions = {}) {
       },`
       : ''
 
+  const capabilities = options.capabilities ?? ['records']
+
   return html`<script type="text/javascript">
     window.DatadogEventBridge = {
       getCapabilities() {
-        return '["records"]'
+        return '${JSON.stringify(capabilities)}'
       },
       getPrivacyLevel() {
         return 'mask'

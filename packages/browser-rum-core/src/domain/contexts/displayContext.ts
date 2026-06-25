@@ -1,12 +1,11 @@
-import { HookNames, monitor } from '@datadog/browser-core'
-import type { RumConfiguration } from '../configuration'
+import { monitor } from '@datadog/browser-core'
 import type { ViewportDimension } from '../../browser/viewportObservable'
 import { getViewportDimension, initViewportObservable } from '../../browser/viewportObservable'
-import type { DefaultRumEventAttributes, Hooks } from '../hooks'
+import type { AssembleHook, DefaultRumEventAttributes } from '../hooks'
 
 export type DisplayContext = ReturnType<typeof startDisplayContext>
 
-export function startDisplayContext(hooks: Hooks, configuration: RumConfiguration) {
+export function startDisplayContext(assembleHook: AssembleHook) {
   let viewport: ViewportDimension | undefined
   // Use requestAnimationFrame to delay the calculation of viewport dimensions until after SDK initialization, preventing long tasks.
   const animationFrameId = requestAnimationFrame(
@@ -15,12 +14,11 @@ export function startDisplayContext(hooks: Hooks, configuration: RumConfiguratio
     })
   )
 
-  const unsubscribeViewport = initViewportObservable(configuration).subscribe((viewportDimension) => {
+  const unsubscribeViewport = initViewportObservable().subscribe((viewportDimension) => {
     viewport = viewportDimension
   }).unsubscribe
 
-  hooks.register(
-    HookNames.Assemble,
+  assembleHook.register(
     ({ eventType }): DefaultRumEventAttributes => ({
       type: eventType,
       display: viewport ? { viewport } : undefined,

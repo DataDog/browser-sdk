@@ -103,6 +103,25 @@ describe('combine', () => {
   })
 })
 
+describe('prototype pollution guards', () => {
+  afterEach(() => {
+    delete (Object.prototype as any).injected
+    delete (Object.prototype as any).polluted
+  })
+
+  it('should not pollute Object.prototype via __proto__', () => {
+    const source = JSON.parse('{"__proto__":{"injected":true}}')
+    mergeInto({}, source)
+    expect(({} as any).injected).toBeUndefined()
+  })
+
+  it('should not pollute Object.prototype via nested __proto__', () => {
+    const source = JSON.parse('{"a":{"__proto__":{"injected":true}}}')
+    mergeInto({}, source)
+    expect(({} as any).injected).toBeUndefined()
+  })
+})
+
 describe('deepClone', () => {
   it('should pass-through primitive values', () => {
     expect(deepClone('test')).toBe('test')

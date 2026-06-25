@@ -1,6 +1,8 @@
 import type { Duration, RelativeTime } from '@datadog/js-core/time'
-import type { DISCARDED, HookNamesAsConst, RecursivePartial, SKIPPED, TelemetryEvent } from '@datadog/browser-core'
-import { abstractHooks } from '@datadog/browser-core'
+import type { TelemetryEvent } from '@datadog/browser-core'
+import { createHook } from '@datadog/js-core/assembly'
+import type { Hook } from '@datadog/js-core/assembly'
+import type { RecursivePartial } from '@datadog/js-core/util'
 import type { RumEvent } from '../rumEvent.types'
 import type { RawRumEvent } from '../rawRumEvent.types'
 import type { RumEventDomainContext } from '../domainContext.types'
@@ -24,13 +26,17 @@ export interface AssembleHookParams {
   readonly duration?: Duration | undefined
 }
 
-export interface HookCallbackMap {
-  [HookNamesAsConst.ASSEMBLE]: (param: AssembleHookParams) => DefaultRumEventAttributes | SKIPPED | DISCARDED
-  [HookNamesAsConst.ASSEMBLE_TELEMETRY]: (param: {
-    startTime: RelativeTime
-  }) => DefaultTelemetryEventAttributes | SKIPPED | DISCARDED
+export type AssembleHook = Hook<AssembleHookParams, DefaultRumEventAttributes>
+export type AssembleTelemetryHook = Hook<{ startTime: RelativeTime }, DefaultTelemetryEventAttributes>
+
+export interface Hooks {
+  assemble: AssembleHook
+  assembleTelemetry: AssembleTelemetryHook
 }
 
-export type Hooks = ReturnType<typeof createHooks>
-
-export const createHooks = abstractHooks<HookCallbackMap>
+export function createHooks(): Hooks {
+  return {
+    assemble: createHook(),
+    assembleTelemetry: createHook(),
+  }
+}

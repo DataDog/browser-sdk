@@ -130,7 +130,7 @@ export function createPageActivityObservable(
         }
       }),
       windowOpenObservable.subscribe(notifyPageActivity),
-      createPerformanceObservable(configuration, { type: RumPerformanceEntryType.RESOURCE }).subscribe((entries) => {
+      createPerformanceObservable({ type: RumPerformanceEntryType.RESOURCE }).subscribe((entries) => {
         if (entries.some((entry) => !isExcludedUrl(configuration, entry.name))) {
           notifyPageActivity()
         }

@@ -1,15 +1,19 @@
 import { clockDrift, timeStampNow } from '@datadog/js-core/time'
-import { canUseEventBridge, HookNames, round } from '@datadog/browser-core'
+import { canUseEventBridge, round } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
-import type { DefaultRumEventAttributes, Hooks } from '../hooks'
+import type { AssembleHook, DefaultRumEventAttributes } from '../hooks'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
 
 export type SdkName = 'rum' | 'rum-slim' | 'rum-synthetics'
 
-export function startDefaultContext(hooks: Hooks, configuration: RumConfiguration, sdkName: SdkName | undefined) {
-  hooks.register(HookNames.Assemble, ({ eventType }): DefaultRumEventAttributes => {
+export function startDefaultContext(
+  assembleHook: AssembleHook,
+  configuration: RumConfiguration,
+  sdkName: SdkName | undefined
+) {
+  assembleHook.register(({ eventType }): DefaultRumEventAttributes => {
     const source = configuration.source
 
     return {

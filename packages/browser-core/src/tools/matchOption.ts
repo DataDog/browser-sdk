@@ -1,5 +1,5 @@
+import { getType } from '@datadog/js-core/util'
 import { display } from './display'
-import { getType } from './utils/typeUtils'
 
 export type MatchOption = string | RegExp | ((value: string) => boolean)
 

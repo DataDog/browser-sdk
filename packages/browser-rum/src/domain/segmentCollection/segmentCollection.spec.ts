@@ -1,7 +1,7 @@
 import type { ClocksState } from '@datadog/js-core/time'
 import type { HttpRequest, HttpRequestEvent } from '@datadog/browser-core'
 import { DeflateEncoderStreamId, Observable, PageExitReason } from '@datadog/browser-core'
-import type { ViewHistory, ViewHistoryEntry, RumConfiguration } from '@datadog/browser-rum-core'
+import type { ViewHistory, ViewHistoryEntry } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
@@ -46,7 +46,6 @@ describe('startSegmentCollection', () => {
   }
   let addRecord: (record: BrowserRecord) => void
   let context: SegmentContext | undefined
-  let configuration: RumConfiguration
 
   function addRecordAndFlushSegment(flushStrategy: () => void = emulatePageUnload) {
     // Make sure the segment is not empty
@@ -57,7 +56,7 @@ describe('startSegmentCollection', () => {
   }
 
   function emulatePageUnload() {
-    lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, { reason: PageExitReason.UNLOADING })
+    lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.UNLOADING)
   }
 
   function readMostRecentMetadata(spy: jasmine.Spy<HttpRequest['send']>) {
@@ -65,7 +64,6 @@ describe('startSegmentCollection', () => {
   }
 
   beforeEach(() => {
-    configuration = {} as RumConfiguration
     lifeCycle = new LifeCycle()
     worker = new MockWorker()
     httpRequestSpy = {
@@ -78,7 +76,7 @@ describe('startSegmentCollection', () => {
       lifeCycle,
       () => context,
       httpRequestSpy,
-      createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+      createDeflateEncoder(worker, DeflateEncoderStreamId.REPLAY)
     ))
 
     registerCleanupTask(() => {
@@ -157,7 +155,7 @@ describe('startSegmentCollection', () => {
 
     describe('flush when the page exits because it gets hidden', () => {
       function emulatePageHidden() {
-        lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, { reason: PageExitReason.HIDDEN })
+        lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.HIDDEN)
       }
 
       it('uses `httpRequest.sendOnExit` when sending the segment', () => {
@@ -174,7 +172,7 @@ describe('startSegmentCollection', () => {
 
     describe('flush when the page exits because it gets frozen', () => {
       function emulatePageFrozen() {
-        lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, { reason: PageExitReason.FROZEN })
+        lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.FROZEN)
       }
 
       it('uses `httpRequest.sendOnExit` when sending the segment', () => {

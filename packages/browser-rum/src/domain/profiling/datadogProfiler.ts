@@ -1,20 +1,21 @@
 import { elapsed, clocksOrigin, clocksNow } from '@datadog/js-core/time'
-import type { RelativeTime } from '@datadog/js-core/time'
-import type { Encoder, SessionManager, Profiler } from '@datadog/browser-core'
+import type { SessionManager, Profiler, DeflateEncoderStreamId, Encoder } from '@datadog/browser-core'
 import {
   addEventListener,
+  canUseEventBridge,
   clearTimeout,
   setTimeout,
   DOM_EVENT,
   monitorError,
   display,
   globalObject,
-  DeflateEncoderStreamId,
   mockable,
+  isSampled,
+  correctedChildSampleRate,
 } from '@datadog/browser-core'
 
-import type { LifeCycle, RumConfiguration, TransportPayload, ViewHistory } from '@datadog/browser-rum-core'
-import { createFormDataTransport, LifeCycleEventType } from '@datadog/browser-rum-core'
+import type { LifeCycle, RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
+import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { BrowserProfilerTrace, RumViewEntry } from '../../types'
 import type {
   RumProfilerInstance,
@@ -22,10 +23,13 @@ import type {
   RUMProfiler,
   RUMProfilerConfiguration,
   RumProfilerStoppedInstance,
+  ProfilingPayload,
 } from './types'
 import type { ProfilingContextManager } from './profilingContext'
+import { createBridgeEmitter } from './transport/profilingBridge'
+import { createFormDataEmitter } from './transport/formDataEmitter'
 import { getCustomOrDefaultViewName } from './utils/getCustomOrDefaultViewName'
-import { assembleProfilingPayload } from './transport/assembly'
+import { buildProfileEvent } from './transport/buildProfileEvent'
 import { createLongTaskHistory } from './longTaskHistory'
 import { createActionHistory } from './actionHistory'
 import { createVitalHistory } from './vitalHistory'
@@ -47,7 +51,9 @@ export function createRumProfiler(
   viewHistory: ViewHistory,
   profilerConfiguration: RUMProfilerConfiguration = DEFAULT_RUM_PROFILER_CONFIGURATION
 ): RUMProfiler {
-  const transport = createFormDataTransport(configuration, lifeCycle, createEncoder, DeflateEncoderStreamId.PROFILING)
+  const emitPayload = canUseEventBridge()
+    ? mockable(createBridgeEmitter)()
+    : mockable(createFormDataEmitter)(configuration, lifeCycle, createEncoder)
 
   let lastViewEntry: RumViewEntry | undefined
 
@@ -71,6 +77,16 @@ export function createRumProfiler(
       instance.state === 'stopped' &&
       (instance.stateReason === 'session-expired' || instance.stateReason === 'quota_ko')
     ) {
+      const newSession = session.findTrackedSession()
+      if (
+        !newSession ||
+        !isSampled(
+          newSession.id,
+          correctedChildSampleRate(configuration.sessionSampleRate, configuration.profilingSampleRate)
+        )
+      ) {
+        return
+      }
       start()
     }
   })
@@ -95,14 +111,21 @@ export function createRumProfiler(
 
     // Add global clean-up tasks for listeners that are not specific to a profiler instance (eg. visibility change, before unload)
     globalCleanupTasks.push(
-      addEventListener(configuration, window, DOM_EVENT.VISIBILITY_CHANGE, handleVisibilityChange).stop,
-      addEventListener(configuration, window, DOM_EVENT.BEFORE_UNLOAD, handleBeforeUnload).stop
+      addEventListener(window, DOM_EVENT.VISIBILITY_CHANGE, handleVisibilityChange).stop,
+      addEventListener(window, DOM_EVENT.BEFORE_UNLOAD, handleBeforeUnload).stop
     )
 
     // Start profiler instance
     startNextProfilerInstance()
+    triggerQuotaCheck()
+  }
 
-    // Quota check — optimistic: profiler already recording, only gates sending.
+  function triggerQuotaCheck() {
+    if (canUseEventBridge()) {
+      // Quota check only in non-bridge mode.
+      return
+    }
+    // Optimistic: profiler already recording, only gates sending.
     // Generation counter invalidates results from a prior session (incremented on each start() call).
     // State guard handles within-session cancellation (user stop, session expiry, etc.).
     const checkGeneration = ++quotaCheckGeneration
@@ -229,6 +252,7 @@ export function createRumProfiler(
       views: [],
       cleanupTasks,
       longTasks: [],
+      sessionId: session.findTrackedSession()?.id,
     }
 
     // Add last view entry
@@ -244,7 +268,7 @@ export function createRumProfiler(
     runningInstance.profiler.removeEventListener('samplebufferfull', handleSampleBufferFull)
 
     // Store instance data snapshot in local variables to use in async callback
-    const { startClocks, views } = runningInstance
+    const { startClocks, views, sessionId } = runningInstance
 
     // Stop current profiler to get trace
     runningInstance.profiler
@@ -268,8 +292,8 @@ export function createRumProfiler(
         }
 
         handleProfilerTrace(
-          // Enrich trace with time and instance data
-          Object.assign(trace, {
+          // Enrich trace with time and instance data — create new object to avoid mutating the raw trace
+          Object.assign({} as BrowserProfilerTrace, trace, {
             startClocks,
             endClocks,
             clocksOrigin: clocksOrigin(),
@@ -279,7 +303,7 @@ export function createRumProfiler(
             views,
             sampleInterval: profilerConfiguration.sampleIntervalMs,
           }),
-          startClocks.relative
+          sessionId
         )
       })
       .catch(monitorError)
@@ -347,11 +371,12 @@ export function createRumProfiler(
     instance.views.push(viewEntry)
   }
 
-  function handleProfilerTrace(trace: BrowserProfilerTrace, startTime: RelativeTime): void {
-    const sessionId = session.findTrackedSession(startTime)?.id
-    const payload = assembleProfilingPayload(trace, configuration, sessionId)
-
-    void transport.send(payload as unknown as TransportPayload)
+  function handleProfilerTrace(trace: BrowserProfilerTrace, sessionId: string | undefined): void {
+    const payload: ProfilingPayload = {
+      profile: buildProfileEvent(trace, configuration, sessionId),
+      trace,
+    }
+    emitPayload(payload)
   }
 
   function handleSampleBufferFull(): void {

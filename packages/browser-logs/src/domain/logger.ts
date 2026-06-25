@@ -1,12 +1,12 @@
 import type { Context, ContextManager } from '@datadog/browser-core'
 import { clocksNow } from '@datadog/js-core/time'
+import { combine } from '@datadog/js-core/util'
 import {
   computeRawError,
   ErrorHandling,
-  combine,
   createContextManager,
   ErrorSource,
-  monitored,
+  callMonitored,
   sanitize,
   NonErrorPrefix,
   createHandlingStack,
@@ -55,7 +55,6 @@ export class Logger {
     }
   }
 
-  @monitored
   logImplementation(
     message: string,
     messageContext?: object,
@@ -63,38 +62,40 @@ export class Logger {
     error?: Error,
     handlingStack?: string
   ) {
-    const sanitizedMessageContext = sanitize(messageContext) as Context
-    let context: Context
+    callMonitored(() => {
+      const sanitizedMessageContext = sanitize(messageContext) as Context
+      let context: Context
 
-    if (error !== undefined && error !== null) {
-      const rawError = computeRawError({
-        originalError: error,
-        nonErrorPrefix: NonErrorPrefix.PROVIDED,
-        source: ErrorSource.LOGGER,
-        handling: ErrorHandling.HANDLED,
-        startClocks: clocksNow(),
-      })
+      if (error !== undefined && error !== null) {
+        const rawError = computeRawError({
+          originalError: error,
+          nonErrorPrefix: NonErrorPrefix.PROVIDED,
+          source: ErrorSource.LOGGER,
+          handling: ErrorHandling.HANDLED,
+          startClocks: clocksNow(),
+        })
 
-      context = combine(
+        context = combine(
+          {
+            error: createErrorFieldFromRawError(rawError, { includeMessage: true }),
+          },
+          rawError.context,
+          sanitizedMessageContext
+        )
+      } else {
+        context = sanitizedMessageContext
+      }
+
+      this.handleLogStrategy(
         {
-          error: createErrorFieldFromRawError(rawError, { includeMessage: true }),
+          message: sanitize(message)!,
+          context,
+          status,
         },
-        rawError.context,
-        sanitizedMessageContext
+        this,
+        handlingStack
       )
-    } else {
-      context = sanitizedMessageContext
-    }
-
-    this.handleLogStrategy(
-      {
-        message: sanitize(message)!,
-        context,
-        status,
-      },
-      this,
-      handlingStack
-    )
+    })
   }
 
   log(message: string, messageContext?: object, status: StatusType = StatusType.info, error?: Error) {

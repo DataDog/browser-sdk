@@ -1,4 +1,3 @@
-import type { Configuration } from '../configuration'
 import { createNewEvent } from '../../../test'
 import { DOM_EVENT } from '../../browser/addEventListener'
 import type { Context } from '../../tools/serialisation/context'
@@ -10,12 +9,6 @@ describe('storeContextManager', () => {
   const PRODUCT_KEY = 'fake'
   const CUSTOMER_DATA_TYPE = CustomerDataType.User
   const STORAGE_KEY = buildStorageKey(PRODUCT_KEY, CUSTOMER_DATA_TYPE)
-
-  let configuration: Configuration
-
-  beforeEach(() => {
-    configuration = {} as Configuration
-  })
 
   afterEach(() => {
     localStorage.clear()
@@ -84,6 +77,12 @@ describe('storeContextManager', () => {
     expect(localStorage.getItem(buildStorageKey(PRODUCT_KEY, CustomerDataType.GlobalContext))).toBe('{"qux":"qix"}')
   })
 
+  it('should return empty context when localStorage contains invalid JSON', () => {
+    localStorage.setItem(STORAGE_KEY, 'not valid json')
+    const manager = createStoredContextManager()
+    expect(manager.getContext()).toEqual({})
+  })
+
   function createStoredContextManager({
     initialContext,
     productKey = PRODUCT_KEY,
@@ -97,7 +96,7 @@ describe('storeContextManager', () => {
     if (initialContext) {
       manager.setContext(initialContext)
     }
-    storeContextManager(configuration, manager, productKey, customerDataType)
+    storeContextManager(manager, productKey, customerDataType)
     return manager
   }
 })

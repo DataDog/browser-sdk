@@ -1,7 +1,6 @@
 import { generateUUID } from '../../../tools/utils/stringUtils'
 import { Observable } from '../../../tools/observable'
 import { addEventListener } from '../../../browser/addEventListener'
-import type { Configuration } from '../../configuration'
 import { SessionPersistence } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
 import { isSessionInNotStartedState, toSessionString, toSessionState } from '../sessionState'
@@ -23,10 +22,10 @@ export function selectLocalStorageStrategy(): SessionStoreStrategyType | undefin
   }
 }
 
-export function initLocalStorageStrategy(configuration: Configuration): SessionStoreStrategy {
+export function initLocalStorageStrategy(): SessionStoreStrategy {
   const sessionObservable = new Observable<SessionState>(
     (observable) =>
-      addEventListener(configuration, window, 'storage', (event) => {
+      addEventListener(window, 'storage', (event) => {
         if (event.key === SESSION_STORE_KEY && event.storageArea === localStorage) {
           observable.notify(toSessionState(event.newValue))
         }

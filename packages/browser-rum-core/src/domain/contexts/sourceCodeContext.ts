@@ -1,12 +1,6 @@
-import {
-  SKIPPED,
-  computeStackTrace,
-  objectEntries,
-  addTelemetryError,
-  HookNames,
-  addTelemetryUsage,
-} from '@datadog/browser-core'
-import type { Hooks, DefaultRumEventAttributes, AssembleHookParams } from '../hooks'
+import { computeStackTrace, objectEntries, addTelemetryError, addTelemetryUsage } from '@datadog/browser-core'
+import { SKIPPED } from '@datadog/js-core/assembly'
+import type { AssembleHook, DefaultRumEventAttributes, AssembleHookParams } from '../hooks'
 
 interface SourceCodeContext {
   service: string
@@ -18,7 +12,7 @@ export interface BrowserWindow {
 }
 type StackFrameUrl = string
 
-export function startSourceCodeContext(hooks: Hooks) {
+export function startSourceCodeContext(assembleHook: AssembleHook) {
   const browserWindow = window as BrowserWindow
   const contextByFile = new Map<StackFrameUrl, SourceCodeContext>()
 
@@ -47,7 +41,7 @@ export function startSourceCodeContext(hooks: Hooks) {
 
   buildContextByFile()
 
-  hooks.register(HookNames.Assemble, ({ domainContext, rawRumEvent }): DefaultRumEventAttributes | SKIPPED => {
+  assembleHook.register(({ domainContext, rawRumEvent }): DefaultRumEventAttributes | SKIPPED => {
     buildContextByFile()
 
     if (contextByFile.size === 0) {

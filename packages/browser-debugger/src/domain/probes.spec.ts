@@ -13,6 +13,20 @@ import { createProbe } from './probe.specHelper'
 
 const DEFAULT_PROBE_FUNCTION_ID = 'test.js;testMethod'
 
+interface CaptureExpressionsWithCache {
+  expressions: Array<{
+    name: string
+    expression: string
+    capture: {
+      maxReferenceDepth?: number
+      maxCollectionSize?: number
+      maxFieldCount?: number
+      maxLength?: number
+    }
+  }>
+  evaluateExpression: (expression: string, context: Record<string, any>) => unknown
+}
+
 describe('probes', () => {
   beforeEach(() => {
     clearProbes()
@@ -38,6 +52,18 @@ describe('probes', () => {
     it('should return undefined for non-existent probe', () => {
       const retrieved = getProbes('non-existent')
       expect(retrieved).toBeUndefined()
+    })
+
+    it('should not register a probe when initialization throws', () => {
+      const probe = createProbe({
+        when: {
+          dsl: 'invalid',
+          json: { invalidOp: 'bad' } as any,
+        },
+      })
+
+      expect(() => addProbe(probe)).toThrow()
+      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
     })
   })
 
@@ -142,17 +168,17 @@ describe('probes', () => {
       )
     })
 
-    it('should not add probe when condition compilation fails', () => {
+    it('should throw when condition compilation fails', () => {
+      const probe = createProbe({
+        when: {
+          dsl: 'invalid',
+          json: { invalidOp: 'bad' } as any,
+        },
+      })
+
       let error: unknown
       try {
-        addProbe(
-          createProbe({
-            when: {
-              dsl: 'invalid',
-              json: { invalidOp: 'bad' } as any,
-            },
-          })
-        )
+        initializeProbe(probe)
       } catch (err) {
         error = err
       }
@@ -160,7 +186,6 @@ describe('probes', () => {
       expect(error).toEqual(jasmine.any(Error))
       expect((error as Error).message).toContain('Cannot compile condition')
       expect((error as ErrorWithCause).cause).toEqual(jasmine.any(TypeError))
-      expect(getProbes(DEFAULT_PROBE_FUNCTION_ID)).toBeUndefined()
     })
 
     it('should calculate msBetweenSampling for snapshot probes', () => {
@@ -204,6 +229,85 @@ describe('probes', () => {
 
       expect(probe.evaluateTemplate!({ x: 1 })).toEqual(['1'])
       expect(probe.evaluateTemplate!({ x: 2 })).toEqual(['2'])
+    })
+
+    it('should compile capture expressions with per-expression limits', () => {
+      const probe = createProbe({
+        captureSnapshot: false,
+        capture: { maxReferenceDepth: 3, maxCollectionSize: 4, maxFieldCount: 5, maxLength: 6 },
+        captureExpressions: [
+          { name: 'arg', expr: { dsl: 'arg', json: { ref: 'arg' } } },
+          {
+            name: 'obj.value',
+            expr: { dsl: 'obj.value', json: { getmember: [{ ref: 'obj' }, 'value'] } },
+            capture: { maxReferenceDepth: 1, maxLength: 2 },
+          },
+        ],
+      })
+
+      initializeProbe(probe)
+
+      const compiledCaptureExpressions = probe.compiledCaptureExpressions as CaptureExpressionsWithCache
+      expect(compiledCaptureExpressions.expressions.length).toBe(2)
+      expect(compiledCaptureExpressions.expressions[0]).toEqual(
+        jasmine.objectContaining({
+          name: 'arg',
+          expression: 'arg',
+          capture: { maxReferenceDepth: 3, maxCollectionSize: 4, maxFieldCount: 5, maxLength: 6 },
+        })
+      )
+      expect(compiledCaptureExpressions.expressions[1]).toEqual(
+        jasmine.objectContaining({
+          name: 'obj.value',
+          capture: { maxReferenceDepth: 1, maxCollectionSize: 4, maxFieldCount: 5, maxLength: 2 },
+        })
+      )
+      expect(compiledCaptureExpressions.expressions[1].expression).toContain('obj')
+      expect(compiledCaptureExpressions.expressions[1].expression).toContain('value')
+      expect(compiledCaptureExpressions.evaluateExpression('arg', { arg: 1 })).toBe(1)
+      expect(probe.captureExpressions).toBeUndefined()
+    })
+
+    it('should not compile capture expressions when the array is empty', () => {
+      const probe = createProbe({ captureSnapshot: false, captureExpressions: [] })
+
+      initializeProbe(probe)
+
+      expect(probe.compiledCaptureExpressions).toBeUndefined()
+    })
+
+    it('should throw when capture expression compilation fails', () => {
+      const probe = createProbe({
+        captureSnapshot: false,
+        captureExpressions: [
+          {
+            name: 'invalid expr',
+            expr: { dsl: 'not a valid identifier!', json: { ref: 'not a valid identifier!' } },
+          },
+        ],
+      })
+
+      let error: unknown
+      try {
+        initializeProbe(probe)
+      } catch (err) {
+        error = err
+      }
+
+      expect(error).toEqual(jasmine.any(Error))
+      expect((error as Error).message).toContain('Cannot compile capture expression: invalid expr')
+      expect((error as ErrorWithCause).cause).toEqual(jasmine.any(SyntaxError))
+    })
+
+    it('should not compile capture expressions when snapshot capture is enabled', () => {
+      const probe = createProbe({
+        captureSnapshot: true,
+        captureExpressions: [{ name: 'arg', expr: { dsl: 'arg', json: { ref: 'arg' } } }],
+      })
+
+      initializeProbe(probe)
+
+      expect(probe.compiledCaptureExpressions).toBeUndefined()
     })
   })
 

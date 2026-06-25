@@ -1,4 +1,4 @@
-import { LightningElement, api, wire } from 'lwc'
+import { LightningElement, wire } from 'lwc'
 import { NavigationMixin, CurrentPageReference } from 'lightning/navigation'
 import datadogRumSlim from '@salesforce/resourceUrl/datadog_rum_slim'
 import { loadScript } from 'lightning/platformResourceLoader'
@@ -6,17 +6,38 @@ import { loadScript } from 'lightning/platformResourceLoader'
 let datadogInitialization
 let lastStartedUrl
 
-export default class DatadogInit extends NavigationMixin(LightningElement) {
-  @api applicationId = '1397744d-34f4-4a6a-a735-801e31c18221'
-  @api clientToken = 'pub2ad3fe2578f01b9f329bd0ea4a2f08c5'
-  @api site = 'datadoghq.com'
-  @api service = 'my-salesforce-app'
-  @api env = 'dev'
-  @api allowedTracingUrls
-  @api proxy
-  @api resourceName
-  @api trackViewsManually
+const DATADOG_PARAMS = [
+  'c__applicationId',
+  'c__clientToken',
+  'c__datadogInitConfiguration',
+  'c__datadogResourceName',
+  'c__env',
+  'c__service',
+  'c__site',
+]
 
+const defaultDatadogRumConfig = {
+  trackViewsManually: true,
+  trackEarlyRequests: true,
+  trackLongTasks: true,
+  trackResources: true,
+  trackUserInteractions: true,
+  beforeSend: (event) => {
+    if (event.view) {
+      const cleanUrl = new URL(event.view.url, window.location.origin)
+      DATADOG_PARAMS.forEach((param) => cleanUrl.searchParams.delete(param))
+      event.view.url = cleanUrl.href
+      event.view.name = cleanUrl.pathname + cleanUrl.search + cleanUrl.hash
+    }
+    if (event.resource?.url) {
+      const cleanUrl = new URL(event.resource.url, window.location.origin)
+      DATADOG_PARAMS.forEach((param) => cleanUrl.searchParams.delete(param))
+      event.resource.url = cleanUrl.href
+    }
+  },
+}
+
+export default class DatadogInit extends NavigationMixin(LightningElement) {
   connectedCallback() {
     this.initialize()
   }
@@ -54,25 +75,16 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
 
   loadDatadogRum() {
     const searchParams = new URLSearchParams(window.location.search)
-    // By appending the resource name to the query string, we can load a different bundle for the e2e tests.
-    const resourceName = searchParams.get('c__datadogResourceName') || this.resourceName
-    const queryInitConfiguration = this.getQueryInitConfiguration(searchParams)
+    const resourceName = searchParams.get('c__datadogResourceName')
     const resourceUrl = resourceName ? `/resource/${encodeURIComponent(resourceName)}` : datadogRumSlim
 
     return loadScript(this, resourceUrl).then(() => {
-      const initConfig = {
-        applicationId: this.applicationId,
-        clientToken: this.clientToken,
-        env: this.env,
-        service: this.service,
-        site: this.site,
-        trackViewsManually: true,
-        trackEarlyRequests: true,
-        trackLongTasks: true,
-        trackResources: true,
-        trackUserInteractions: true,
-        ...queryInitConfiguration,
+      const initConfig = this.getInitConfiguration(searchParams)
+      if (!initConfig.applicationId || !initConfig.clientToken) {
+        window.console.warn('Datadog RUM not initialized: missing applicationId or clientToken')
+        return
       }
+
       window.DD_RUM.init(initConfig)
       lastStartedUrl = window.location.pathname + window.location.search + window.location.hash
       window.DD_RUM.startView({
@@ -80,6 +92,18 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
         url: window.location.href,
       })
     })
+  }
+
+  getInitConfiguration(searchParams) {
+    return {
+      applicationId: searchParams.get('c__applicationId'),
+      clientToken: searchParams.get('c__clientToken'),
+      env: searchParams.get('c__env'),
+      service: searchParams.get('c__service'),
+      site: searchParams.get('c__site'),
+      ...defaultDatadogRumConfig,
+      ...this.getQueryInitConfiguration(searchParams),
+    }
   }
 
   getQueryInitConfiguration(searchParams) {

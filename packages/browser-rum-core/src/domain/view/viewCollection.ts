@@ -1,7 +1,8 @@
 import type { Observable } from '@datadog/browser-core'
 import { toServerDuration } from '@datadog/js-core/time'
 import type { Duration, ServerDuration } from '@datadog/js-core/time'
-import { getTimeZone, DISCARDED, HookNames, isEmptyObject, mapValues } from '@datadog/browser-core'
+import { getTimeZone, isEmptyObject, mapValues } from '@datadog/browser-core'
+import { DISCARDED } from '@datadog/js-core/assembly'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import type { RawRumViewEvent, ViewPerformanceData } from '../../rawRumEvent.types'
@@ -33,7 +34,7 @@ export function startViewCollection(
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processViewUpdate(view, configuration, recorderApi))
   )
 
-  hooks.register(HookNames.Assemble, ({ startTime, eventType }): DefaultRumEventAttributes | DISCARDED => {
+  hooks.assemble.register(({ startTime, eventType }): DefaultRumEventAttributes | DISCARDED => {
     const view = viewHistory.findView(startTime)
 
     if (!view) {
@@ -52,8 +53,7 @@ export function startViewCollection(
     }
   })
 
-  hooks.register(
-    HookNames.AssembleTelemetry,
+  hooks.assembleTelemetry.register(
     ({ startTime }): DefaultTelemetryEventAttributes => ({
       view: {
         id: viewHistory.findView(startTime)?.id,

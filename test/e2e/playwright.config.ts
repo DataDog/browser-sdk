@@ -20,7 +20,7 @@ import type { BrowserConfiguration } from '../browsers.conf'
 //   when a pinned project is selected, so non-pinned runs don't pay the boot cost.
 //
 // Initial install of the pinned browser binaries:
-//   yarn test:e2e:init
+//   yarn test:e2e:setup
 
 const isCi = !!process.env.CI
 const isLocal = !isCi

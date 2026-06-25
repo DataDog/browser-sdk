@@ -1,7 +1,6 @@
 import type { Duration } from '@datadog/js-core/time'
 import { toServerDuration, relativeToClocks } from '@datadog/js-core/time'
 import {
-  combine,
   generateUUID,
   createTaskQueue,
   mockable,
@@ -13,6 +12,7 @@ import {
   RequestType,
   setTimeout,
 } from '@datadog/browser-core'
+import { combine } from '@datadog/js-core/util'
 import type { MatchHeader, RumConfiguration } from '../configuration'
 import { RumPerformanceEntryType, createPerformanceObservable } from '../../browser/performanceObservable'
 import type { RumResourceEventDomainContext } from '../../domainContext.types'
@@ -51,7 +51,7 @@ export function startResourceCollection(lifeCycle: LifeCycle, configuration: Rum
   const taskQueue = mockable(createTaskQueue)()
   const requestRegistry = createRequestRegistry(lifeCycle)
 
-  const performanceResourceSubscription = createPerformanceObservable(configuration, {
+  const performanceResourceSubscription = createPerformanceObservable({
     type: RumPerformanceEntryType.RESOURCE,
     buffered: true,
   }).subscribe((entries) => {
@@ -80,7 +80,7 @@ export function startResourceCollection(lifeCycle: LifeCycle, configuration: Rum
     }
   })
 
-  const { stop: stopRunOnReadyState } = runOnReadyState(configuration, 'interactive', () => {
+  const { stop: stopRunOnReadyState } = runOnReadyState('interactive', () => {
     handleResource(() => assembleResource(getNavigationEntry(), undefined, configuration))
   })
 

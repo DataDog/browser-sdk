@@ -48,7 +48,7 @@ export {
   addTelemetryUsage,
   addTelemetryMetrics,
 } from './domain/telemetry'
-export { monitored, monitor, callMonitored, setDebugMode, monitorError } from './tools/monitor'
+export { monitored, monitor, callMonitored, monitorError } from './tools/monitor'
 export type { Subscription } from './tools/observable'
 export { Observable, BufferedObservable } from './tools/observable'
 export type { SessionManager, SessionContext } from './domain/session/sessionManager'
@@ -66,6 +66,7 @@ export type {
   Payload,
   FlushEvent,
   FlushReason,
+  UrgentFlushReason,
 } from './transport'
 export {
   createHttpRequest,
@@ -92,8 +93,8 @@ export { sendToExtension } from './tools/sendToExtension'
 export { runOnReadyState, asyncRunOnReadyState } from './browser/runOnReadyState'
 export { getZoneJsOriginalValue } from './tools/getZoneJsOriginalValue'
 export { mockable } from './tools/mockable'
-export type { InstrumentedMethodCall } from './tools/instrumentMethod'
-export { instrumentMethod, instrumentSetter } from './tools/instrumentMethod'
+export type { InstrumentedMethodCall, InstrumentedConstructorCall } from './tools/instrumentMethod'
+export { instrumentMethod, instrumentConstructor, instrumentSetter } from './tools/instrumentMethod'
 export {
   computeRawError,
   getFileFromStackTraceString,
@@ -171,17 +172,15 @@ export * from './tools/utils/byteUtils'
 export * from './tools/utils/objectUtils'
 export * from './tools/utils/functionUtils'
 export * from './tools/serialisation/jsonStringify'
-export * from './tools/mergeInto'
+export * from './tools/serialisation/stringify'
 export * from './tools/utils/stringUtils'
 export * from './tools/matchOption'
 export * from './tools/utils/responseUtils'
-export * from './tools/utils/typeUtils'
 export type { RawError, RawErrorCause, ErrorWithCause, Csp } from './domain/error/error.types'
 export { ErrorHandling, ErrorSource } from './domain/error/error.types'
 export * from './domain/deflate'
 export * from './domain/connectivity'
 export * from './tools/stackTrace/handlingStack'
-export * from './tools/abstractHooks'
 export * from './domain/tags'
 export { correctedChildSampleRate, isSampled, resetSampleDecisionCache, sampleUsingKnuthFactor } from './domain/sampler'
 export { startTelemetrySessionContext } from './domain/contexts/telemetrySessionContext'

@@ -2,6 +2,6 @@
   "name": "@datadog/browser-rum-react/react-router-v7",
   "private": true,
   "main": "../cjs/entries/reactRouterV7.js",
-  "module": "../esm/entries/reactRouterV7.js",
+  "module": "../esm/entries/reactRouterV7.mjs",
   "types": "../cjs/entries/reactRouterV7.d.ts"
 }

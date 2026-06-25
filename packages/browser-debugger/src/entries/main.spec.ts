@@ -1,4 +1,5 @@
 import { registerCleanupTask, replaceMockableWithSpy } from '@datadog/browser-core/test'
+import { Observable } from '@datadog/browser-core'
 import { initDebuggerTransport } from '../domain/api'
 import { startDeliveryApiPolling } from '../domain/deliveryApi'
 import { display } from '../domain/display'
@@ -36,9 +37,11 @@ describe('datadogDebugger', () => {
   it('should default the init version from build-plugin metadata', async () => {
     browserWindow.__DD_LIVE_DEBUGGER_BUILD__ = { version: 'build-version' }
     replaceMockableWithSpy(startDebuggerBatch).and.callFake(() => ({
-      flushController: undefined as any,
+      flushObservable: new Observable(),
+      prepareUrgentFlushObservable: new Observable(),
       add: () => undefined,
       flush: () => undefined,
+      forceFlush: () => undefined,
       stop: () => undefined,
       upsert: () => undefined,
     }))
@@ -67,9 +70,11 @@ describe('datadogDebugger', () => {
   it('should warn when the explicit init version mismatches build-plugin metadata', async () => {
     browserWindow.__DD_LIVE_DEBUGGER_BUILD__ = { version: 'build-version' }
     replaceMockableWithSpy(startDebuggerBatch).and.callFake(() => ({
-      flushController: undefined as any,
+      flushObservable: new Observable(),
+      prepareUrgentFlushObservable: new Observable(),
       add: () => undefined,
       flush: () => undefined,
+      forceFlush: () => undefined,
       stop: () => undefined,
       upsert: () => undefined,
     }))

@@ -62,12 +62,12 @@ export function trackClickActions(
   let currentClickChain: ClickChain | undefined
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, stopClickChain)
-  lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, stopClickChain)
+  lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, stopClickChain)
 
   const { stop: stopActionEventsListener } = listenActionEvents<{
     clickActionBase: ClickActionBase
     hadActivityOnPointerDown: () => boolean
-  }>(configuration, {
+  }>({
     onPointerDown: (pointerDownEvent) =>
       processPointerDown(configuration, lifeCycle, domMutationObservable, pointerDownEvent, windowOpenObservable),
     onPointerUp: ({ clickActionBase, hadActivityOnPointerDown }, startEvent, getUserActivity) => {
@@ -207,7 +207,7 @@ function startClickAction(
     click.stop(endClocks.timeStamp)
   })
 
-  const pageMayExitSubscription = lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, () => {
+  const pageMayExitSubscription = lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, () => {
     click.stop(timeStampNow())
   })
 

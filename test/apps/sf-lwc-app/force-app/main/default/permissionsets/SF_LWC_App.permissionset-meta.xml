@@ -4,7 +4,6 @@
         <application>SF_LWC_App</application>
         <visible>true</visible>
     </applicationVisibilities>
-    <hasActivationRequired>false</hasActivationRequired>
     <label>SF LWC App</label>
     <tabSettings>
         <tab>Product_Explorer</tab>

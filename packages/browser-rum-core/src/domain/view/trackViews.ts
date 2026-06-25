@@ -119,7 +119,7 @@ export function trackViews(
   let locationChangeSubscription: Subscription
   if (areViewsTrackedAutomatically) {
     locationChangeSubscription = renewViewOnLocationChange(locationChangeObservable)
-    stopOnBFCacheRestore = onBFCacheRestore(configuration, (pageshowEvent) => {
+    stopOnBFCacheRestore = onBFCacheRestore((pageshowEvent) => {
       currentView.end()
       const startClocks = relativeToClocks(pageshowEvent.timeStamp as RelativeTime)
       currentView = startNewView(ViewLoadingType.BF_CACHE, startClocks, undefined)
@@ -279,8 +279,8 @@ function newView(
   // Session keep alive
   const keepAliveIntervalId = setInterval(triggerViewUpdate, SESSION_KEEP_ALIVE_INTERVAL)
 
-  const pageMayExitSubscription = lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, (pageMayExitEvent) => {
-    if (pageMayExitEvent.reason === PageExitReason.UNLOADING) {
+  const pageMayExitSubscription = lifeCycle.subscribe(LifeCycleEventType.PREPARE_URGENT_FLUSH, (reason) => {
+    if (reason === PageExitReason.UNLOADING) {
       triggerViewUpdate()
     }
   })
