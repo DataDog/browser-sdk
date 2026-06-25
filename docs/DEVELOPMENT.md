@@ -26,6 +26,7 @@ label our Commit messages and Pull Request titles:
 - 🚨 **Linting** - Add/fix linter rules
 - 🧹 **Cleanup** - Minor cleanup, housekeeping
 - 🔊 **Logging** - Add/modify debug logs, telemetry
+- 🔇 **Remove logs** - Remove debug logs or telemetry
 
 ## Dependency Management
 
@@ -61,11 +62,14 @@ npm view <package>@latest version
 
 ## RUM Events Schema Management
 
-Types auto-generated from [rum-events-format](https://github.com/DataDog/rum-events-format) submodule → `src/rumEvent.types.ts` (committed).
+Types auto-generated from [rum-events-format](https://github.com/DataDog/rum-events-format) (Yarn GitHub dependency) → `src/rumEvent.types.ts` (committed).
 
 ```bash
-yarn json-schemas:sync      # Update submodule + regenerate types
+yarn json-schemas:sync      # Bump @datadog/rum-events-format to latest master commit + regenerate types
 yarn json-schemas:generate  # Regenerate types only
+
+# Try a specific branch of rum-events-format (e.g. while iterating on schema changes)
+node scripts/json-schemas.ts --update YOUR_RUM_EVENTS_FORMAT_BRANCH --build
 ```
 
 **Fork dependency**: Uses `bcaudan/json-schema-to-typescript#bcaudan/add-readonly-support` (v11.0.1) for `readonly` modifier support. Built lazily when generating types (not during `yarn install`) to avoid CI rate limiting.

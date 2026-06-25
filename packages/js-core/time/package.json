@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "main": "../cjs/entries/time.js",
+  "module": "../esm/entries/time.mjs",
+  "types": "../cjs/entries/time.d.ts"
+}

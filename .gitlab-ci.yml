@@ -1,13 +1,13 @@
 variables:
-  CURRENT_STAGING: staging-21
+  CURRENT_STAGING: staging-26
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 107
+  CURRENT_CI_IMAGE: 113
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
   MAIN_BRANCH: 'main'
   NEXT_MAJOR_BRANCH: ''
-  CHROME_PACKAGE_VERSION: 148.0.7778.96-1
+  CHROME_PACKAGE_VERSION: 149.0.7827.53-1
   FF_TIMESTAMPS: 'true' # Enable timestamps for gitlab-ci logs
 
 workflow:
@@ -200,8 +200,7 @@ bundle-size:
   script:
     - yarn
     - yarn build:bundle
-    - node ./scripts/deploy/deploy.ts staging pull-request pull-request
-    - node ./scripts/performance/index.ts
+    - node ./scripts/bundle-size/index.ts
 
 build-bundle:
   extends:
@@ -244,7 +243,7 @@ e2e:
   interruptible: true
   parallel:
     matrix:
-      - BROWSER: [chromium, chromium-pinned, firefox-pinned, webkit-pinned]
+      - BROWSER: [chromium, firefox, webkit, chromium-pinned, firefox-pinned, webkit-pinned]
   artifacts:
     when: always
     reports:
@@ -296,6 +295,16 @@ check-schemas:
     - yarn
     - node scripts/check-schemas.ts
 
+check-js-core-api:
+  extends:
+    - .base-configuration
+    - .test-allowed-branches
+  interruptible: true
+  script:
+    - yarn
+    - yarn workspace @datadog/js-core build
+    - yarn api:check
+
 unit-bs:
   stage: browserstack
   needs: ['unit']
@@ -303,7 +312,9 @@ unit-bs:
     - .base-configuration
     - .bs-allowed-branches
   interruptible: true
-  resource_group: browserstack
+  parallel:
+    matrix:
+      - BS_BROWSER: [edge, firefox, safari-desktop, chrome-desktop, chrome-mobile]
   artifacts:
     reports:
       junit: test-report/unit-bs/*.xml
@@ -607,6 +618,8 @@ performance-benchmark:
       - $TARGET_TASK_NAME == "performance-benchmark-scheduled"
   script:
     - yarn
+    - yarn build
+    - yarn build:apps
     - yarn test:performance
 
 api-performance-benchmark:

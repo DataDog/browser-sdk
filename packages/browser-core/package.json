@@ -1,0 +1,38 @@
+{
+  "name": "@datadog/browser-core",
+  "version": "7.4.0",
+  "license": "Apache-2.0",
+  "main": "cjs/index.js",
+  "module": "esm/index.mjs",
+  "types": "cjs/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "cjs",
+    "esm",
+    "src",
+    "!src/**/*.spec.ts",
+    "!src/**/*.specHelper.ts"
+  ],
+  "scripts": {
+    "build": "node ../../scripts/build/build-package.ts --modules",
+    "prepack": "yarn build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DataDog/browser-sdk.git",
+    "directory": "packages/browser-core"
+  },
+  "dependencies": {
+    "@datadog/js-core": "0.0.4"
+  },
+  "devDependencies": {
+    "@types/pako": "2.0.4",
+    "pako": "2.1.0"
+  },
+  "volta": {
+    "extends": "../../package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

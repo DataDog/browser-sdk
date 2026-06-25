@@ -1,4 +1,5 @@
 import { mock, type Mock } from 'node:test'
+import type { Datacenter } from '../../lib/datacenter.ts'
 
 export async function mockModule(modulePath: string, mockObject: Record<string, any>): Promise<void> {
   const moduleExports = await import(modulePath)
@@ -83,16 +84,18 @@ export function mockCommandImplementation(mockFn: Mock<(...args: any[]) => void>
   return commands
 }
 
-export const MOCK_DATACENTER_RESPONSE = [
-  { name: 'ap1.prod.dog', site: 'ap1.datadoghq.com' },
-  { name: 'ap2.prod.dog', site: 'ap2.datadoghq.com' },
-  { name: 'eu1.prod.dog', site: 'datadoghq.eu' },
-  { name: 'us1.prod.dog', site: 'datadoghq.com' },
-  { name: 'us3.prod.dog', site: 'us3.datadoghq.com' },
-  { name: 'us5.prod.dog', site: 'us5.datadoghq.com' },
-  { name: 'prtest00.prod.dog', site: 'prtest00.datadoghq.com' },
-  { name: 'prtest01.prod.dog', site: 'prtest01.datadoghq.com' },
+export const MOCK_DATACENTERS: Datacenter[] = [
+  { name: 'ap1', site: 'ap1.datadoghq.com', type: 'minor' },
+  { name: 'ap2', site: 'ap2.datadoghq.com', type: 'minor' },
+  { name: 'eu1', site: 'datadoghq.eu', type: 'major' },
+  { name: 'us1', site: 'datadoghq.com', type: 'major' },
+  { name: 'us3', site: 'us3.datadoghq.com', type: 'minor' },
+  { name: 'us5', site: 'us5.datadoghq.com', type: 'minor' },
+  { name: 'prtest00', site: 'prtest00.datadoghq.com', type: 'private' },
+  { name: 'prtest01', site: 'prtest01.datadoghq.com', type: 'private' },
 ]
+
+const MOCK_DATACENTER_RESPONSE = MOCK_DATACENTERS.map((dc) => ({ name: `${dc.name}.prod.dog`, site: dc.site }))
 
 type FetchMockHandler = (url: string, options?: RequestInit) => Promise<Response> | undefined
 

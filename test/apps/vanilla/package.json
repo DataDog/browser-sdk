@@ -23,19 +23,20 @@
     }
   },
   "resolutions": {
-    "@datadog/browser-core": "file:../../../packages/core/package.tgz",
-    "@datadog/browser-rum": "file:../../../packages/rum/package.tgz",
-    "@datadog/browser-logs": "file:../../../packages/logs/package.tgz",
-    "@datadog/browser-rum-core": "file:../../../packages/rum-core/package.tgz",
-    "@datadog/browser-rum-react": "file:../../../packages/rum-react/package.tgz",
-    "@datadog/browser-rum-slim": "file:../../../packages/rum-slim/package.tgz",
-    "@datadog/browser-worker": "file:../../../packages/worker/package.tgz",
-    "@datadog/browser-debugger": "file:../../../packages/debugger/package.tgz"
+    "@datadog/browser-core": "file:../../../packages/browser-core/package.tgz",
+    "@datadog/js-core": "file:../../../packages/js-core/package.tgz",
+    "@datadog/browser-rum": "file:../../../packages/browser-rum/package.tgz",
+    "@datadog/browser-logs": "file:../../../packages/browser-logs/package.tgz",
+    "@datadog/browser-rum-core": "file:../../../packages/browser-rum-core/package.tgz",
+    "@datadog/browser-rum-react": "file:../../../packages/browser-rum-react/package.tgz",
+    "@datadog/browser-rum-slim": "file:../../../packages/browser-rum-slim/package.tgz",
+    "@datadog/browser-worker": "file:../../../packages/browser-worker/package.tgz",
+    "@datadog/browser-debugger": "file:../../../packages/browser-debugger/package.tgz"
   },
   "devDependencies": {
-    "ts-loader": "9.5.7",
+    "ts-loader": "9.6.0",
     "typescript": "6.0.2",
-    "webpack": "5.106.2"
+    "webpack": "5.107.2"
   },
   "volta": {
     "extends": "../../../package.json"

@@ -1,0 +1,144 @@
+import { elapsed, timeStampNow, clocksNow } from '@datadog/js-core/time'
+import type { Duration, ClocksState } from '@datadog/js-core/time'
+import type { InstrumentedMethodCall } from '../tools/instrumentMethod'
+import { instrumentMethod } from '../tools/instrumentMethod'
+import { Observable } from '../tools/observable'
+import { normalizeUrl } from '../tools/utils/urlPolyfill'
+import { globalObject } from '../tools/globalObject'
+import { addEventListener } from './addEventListener'
+
+export interface XhrOpenContext {
+  state: 'open'
+  method: string
+  url: string
+}
+
+export interface XhrStartContext extends Omit<XhrOpenContext, 'state'> {
+  state: 'start'
+  startClocks: ClocksState
+  isAborted: boolean
+  xhr: XMLHttpRequest
+  handlingStack?: string
+  requestBody?: unknown
+}
+
+export interface XhrCompleteContext extends Omit<XhrStartContext, 'state'> {
+  state: 'complete'
+  duration: Duration
+  status: number
+  responseBody?: string
+}
+
+export type XhrContext = XhrOpenContext | XhrStartContext | XhrCompleteContext
+
+let xhrObservable: Observable<XhrContext> | undefined
+const xhrContexts = new WeakMap<XMLHttpRequest, XhrContext>()
+
+export function initXhrObservable() {
+  if (!xhrObservable) {
+    xhrObservable = createXhrObservable()
+  }
+  return xhrObservable
+}
+
+function createXhrObservable() {
+  if (!('XMLHttpRequest' in globalObject)) {
+    return new Observable<XhrContext>()
+  }
+
+  return new Observable<XhrContext>((observable) => {
+    const { stop: stopInstrumentingStart } = instrumentMethod(XMLHttpRequest.prototype, 'open', openXhr)
+
+    const { stop: stopInstrumentingSend } = instrumentMethod(
+      XMLHttpRequest.prototype,
+      'send',
+      (call) => {
+        sendXhr(call, observable)
+      },
+      { computeHandlingStack: true }
+    )
+
+    const { stop: stopInstrumentingAbort } = instrumentMethod(XMLHttpRequest.prototype, 'abort', abortXhr)
+
+    return () => {
+      stopInstrumentingStart()
+      stopInstrumentingSend()
+      stopInstrumentingAbort()
+    }
+  })
+}
+
+function openXhr({ target: xhr, parameters: [method, url] }: InstrumentedMethodCall<XMLHttpRequest, 'open'>) {
+  xhrContexts.set(xhr, {
+    state: 'open',
+    method: String(method).toUpperCase(),
+    url: normalizeUrl(String(url)),
+  })
+}
+
+function sendXhr(
+  { target: xhr, parameters: [body], handlingStack }: InstrumentedMethodCall<XMLHttpRequest, 'send'>,
+  observable: Observable<XhrContext>
+) {
+  const context = xhrContexts.get(xhr)
+  if (!context) {
+    return
+  }
+
+  const startContext = context as XhrStartContext
+  startContext.state = 'start'
+  startContext.startClocks = clocksNow()
+  startContext.isAborted = false
+  startContext.xhr = xhr
+  startContext.handlingStack = handlingStack
+  startContext.requestBody = body
+
+  let hasBeenReported = false
+
+  const { stop: stopInstrumentingOnReadyStateChange } = instrumentMethod(xhr, 'onreadystatechange', () => {
+    if (xhr.readyState === XMLHttpRequest.DONE) {
+      // Try to report the XHR as soon as possible, because the XHR may be mutated by the
+      // application during a future event. For example, Angular is calling .abort() on
+      // completed requests during an onreadystatechange event, so the status becomes '0'
+      // before the request is collected.
+      onEnd()
+    }
+  })
+
+  const onEnd = () => {
+    unsubscribeLoadEndListener()
+    stopInstrumentingOnReadyStateChange()
+    if (hasBeenReported) {
+      return
+    }
+    hasBeenReported = true
+
+    const completeContext = context as XhrCompleteContext
+    completeContext.duration = elapsed(startContext.startClocks.timeStamp, timeStampNow())
+    completeContext.status = xhr.status
+    if (typeof xhr.response === 'string') {
+      completeContext.responseBody = xhr.response
+    }
+    observable.notify({ ...completeContext, state: 'complete' })
+  }
+
+  const { stop: unsubscribeLoadEndListener } = addEventListener(xhr, 'loadend', onEnd)
+
+  observable.notify(startContext)
+}
+
+function abortXhr({ target: xhr }: InstrumentedMethodCall<XMLHttpRequest, 'abort'>) {
+  const context = xhrContexts.get(xhr) as XhrStartContext | undefined
+  if (context) {
+    context.isAborted = true
+  }
+}
+
+/**
+ * Reset the XHR observable global state. This is useful for testing to ensure clean state between tests.
+ *
+ * @internal
+ */
+export function resetXhrObservable() {
+  xhrObservable = undefined
+}

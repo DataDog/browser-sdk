@@ -1,0 +1,39 @@
+// Prevent prototype pollution: __proto__ as an own property in parsed JSON can corrupt Object.prototype
+const stripDangerousKeys = (key: string, value: unknown) => (key === '__proto__' ? undefined : value)
+
+export function tryJsonParse<T = unknown>(text: string): T | undefined {
+  try {
+    return JSON.parse(text, stripDangerousKeys) as T
+  } catch {
+    // ignore
+  }
+}
+
+export function shallowClone<T>(object: T): T & Record<string, never> {
+  return { ...object } as T & Record<string, never>
+}
+
+export function objectHasValue<T extends { [key: string]: unknown }>(object: T, value: unknown): value is T[keyof T] {
+  return Object.keys(object).some((key) => object[key] === value)
+}
+
+export function isEmptyObject(object: object) {
+  return Object.keys(object).length === 0
+}
+
+export function mapValues<A, B>(object: { [key: string]: A }, fn: (arg: A) => B) {
+  const newObject: { [key: string]: B } = {}
+  for (const key of Object.keys(object)) {
+    newObject[key] = fn(object[key])
+  }
+  return newObject
+}
+
+export function getConstructorName(value: unknown): string | undefined {
+  try {
+    const name = (value as { constructor?: { name?: unknown } } | null | undefined)?.constructor?.name
+    return typeof name === 'string' && name ? name : undefined
+  } catch {
+    // ignore: accessing `constructor` can throw on hostile objects
+  }
+}

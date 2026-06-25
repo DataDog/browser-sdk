@@ -5,6 +5,7 @@ import { getTestReportDirectory } from '../envUtils.ts'
 import jasmineSeedReporterPlugin from './jasmineSeedReporterPlugin.js'
 import karmaSkippedFailedReporterPlugin from './karmaSkippedFailedReporterPlugin.js'
 import karmaDuplicateTestNameReporterPlugin from './karmaDuplicateTestNameReporterPlugin.js'
+import karmaUnexpectedErrorLogReporterPlugin from './karmaUnexpectedErrorLogReporterPlugin.js'
 
 const webpackConfig = webpackBase({
   mode: 'development',
@@ -14,6 +15,9 @@ const webpackConfig = webpackBase({
 })
 
 const reporters = ['spec', 'jasmine-seed', 'karma-skipped-failed', 'karma-duplicate-test-name']
+if (process.env.CI) {
+  reporters.push('karma-unexpected-error-log')
+}
 
 const testReportDirectory = getTestReportDirectory()
 if (testReportDirectory) {
@@ -27,8 +31,8 @@ const FILES = [
   // Make sure 'forEach.spec' is the first file to be loaded, so its `beforeEach` hook is executed
   // before all other `beforeEach` hooks, and its `afterEach` hook is executed after all other
   // `afterEach` hooks.
-  'packages/core/test/forEach.spec.ts',
-  'packages/rum/test/record/toto.css',
+  'packages/browser-core/test/forEach.spec.ts',
+  'packages/browser-rum/test/record/toto.css',
 ]
 
 const FILES_SPECS = [
@@ -50,7 +54,7 @@ const { values } = parseArgs({
   },
 })
 
-// eslint-disable-next-line import/no-default-export
+// eslint-disable-next-line import-x/no-default-export
 export default {
   basePath: '../..',
   files: [...FILES, ...(values.spec || FILES_SPECS)],
@@ -101,6 +105,7 @@ export default {
     jasmineSeedReporterPlugin,
     karmaSkippedFailedReporterPlugin,
     karmaDuplicateTestNameReporterPlugin,
+    karmaUnexpectedErrorLogReporterPlugin,
   ],
 
   // Running tests on low performance environments (ex: BrowserStack) can block JS execution for a

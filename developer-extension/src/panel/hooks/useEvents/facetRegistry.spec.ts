@@ -1,4 +1,4 @@
-import { isChromium } from '../../../../../packages/core/src/tools/utils/browserDetection'
+import { isChromium } from '../../../../../packages/browser-core/src/tools/utils/browserDetection'
 import { getAllFields } from './facetRegistry'
 
 describe('getAllFields', () => {

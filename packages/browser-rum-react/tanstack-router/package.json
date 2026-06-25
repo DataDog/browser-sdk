@@ -1,0 +1,7 @@
+{
+  "name": "@datadog/browser-rum-react/tanstack-router",
+  "private": true,
+  "main": "../cjs/entries/tanstackRouter.js",
+  "module": "../esm/entries/tanstackRouter.mjs",
+  "types": "../cjs/entries/tanstackRouter.d.ts"
+}

@@ -56,13 +56,57 @@ export interface PackageJsonInfo {
   content: PackageJson
 }
 
-interface PackageJson {
+export interface PackageJson {
   name?: string
   private?: boolean
   version?: string
+  exports?: Record<string, unknown>
   dependencies?: Record<string, string>
   devDependencies?: Record<string, string>
   peerDependencies?: Record<string, string>
+}
+
+export function readPackageJson(filePath: string): PackageJson {
+  return JSON.parse(fs.readFileSync(filePath, 'utf-8')) as PackageJson
+}
+
+/**
+ * Packages under `packages/` that are versioned independently from the synced Browser SDK release
+ * version. They are still built and published as part of the same release process, but their
+ * version is managed manually and is not bumped to the release version.
+ */
+const INDEPENDENTLY_VERSIONED_PACKAGES = new Set<string>(['@datadog/js-core'])
+
+/**
+ * Returns whether the given package is versioned independently from the synced Browser SDK release
+ * version. See {@link INDEPENDENTLY_VERSIONED_PACKAGES}.
+ */
+export function isIndependentlyVersionedPackage(name: string | undefined): boolean {
+  return name !== undefined && INDEPENDENTLY_VERSIONED_PACKAGES.has(name)
+}
+
+/**
+ * Returns whether the given string is an exact semantic version (e.g. `1.2.3`), without range
+ * prefixes (`^`, `~`) or pre-release/build metadata.
+ */
+export function isSemanticVersion(input: string | undefined): boolean {
+  return input !== undefined && /^\d+\.\d+\.\d+$/.test(input)
+}
+
+let browserSdkPackageNames: Set<string> | undefined
+
+/**
+ * Returns whether the given name is a Browser SDK package defined in this monorepo (under
+ * `packages/`).
+ */
+export function isBrowserSdkPackageName(name: string): boolean {
+  browserSdkPackageNames ??= new Set(
+    findPackageJsonFiles()
+      .filter((packageJsonFile) => packageJsonFile.relativePath.startsWith('packages/'))
+      .map((packageJsonFile) => packageJsonFile.content.name)
+      .filter((packageName): packageName is string => Boolean(packageName))
+  )
+  return browserSdkPackageNames.has(name)
 }
 
 export function findPackageJsonFiles(): PackageJsonInfo[] {
@@ -75,7 +119,7 @@ export function findPackageJsonFiles(): PackageJsonInfo[] {
       return {
         relativePath: manifestPath,
         path: absoluteManifestPath,
-        content: JSON.parse(fs.readFileSync(absoluteManifestPath, 'utf-8')),
+        content: readPackageJson(absoluteManifestPath),
       }
     })
 }

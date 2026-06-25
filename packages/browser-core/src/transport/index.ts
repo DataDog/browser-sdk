@@ -1,0 +1,8 @@
+export type { BandwidthStats, HttpRequest, HttpRequestEvent, Payload, RetryInfo } from './httpRequest'
+export { createHttpRequest } from './httpRequest'
+export type { BrowserWindowWithEventBridge, DatadogEventBridge } from './eventBridge'
+export { canUseEventBridge, bridgeSupports, getEventBridge, BridgeCapability } from './eventBridge'
+export type { Batch } from './batch'
+export { createBatch } from './batch'
+export type { FlushController, FlushEvent, FlushReason, UrgentFlushReason } from './flushController'
+export { createFlushController, FLUSH_DURATION_LIMIT } from './flushController'

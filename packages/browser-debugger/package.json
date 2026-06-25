@@ -1,0 +1,39 @@
+{
+  "name": "@datadog/browser-debugger",
+  "private": true,
+  "license": "Apache-2.0",
+  "main": "cjs/entries/main.js",
+  "module": "esm/entries/main.mjs",
+  "types": "cjs/entries/main.d.ts",
+  "files": [
+    "bundle/**/*.js",
+    "cjs",
+    "esm",
+    "src",
+    "!src/**/*.spec.ts",
+    "!src/**/*.specHelper.ts"
+  ],
+  "scripts": {
+    "build": "node ../../scripts/build/build-package.ts --modules --bundle datadog-debugger.js",
+    "build:bundle": "node ../../scripts/build/build-package.ts --bundle datadog-debugger.js",
+    "prepack": "yarn build"
+  },
+  "devDependencies": {
+    "acorn": "8.17.0"
+  },
+  "dependencies": {
+    "@datadog/browser-core": "7.4.0",
+    "@datadog/js-core": "0.0.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DataDog/browser-sdk.git",
+    "directory": "packages/browser-debugger"
+  },
+  "volta": {
+    "extends": "../../package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

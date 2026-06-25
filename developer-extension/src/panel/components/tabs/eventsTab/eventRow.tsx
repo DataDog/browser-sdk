@@ -3,8 +3,8 @@ import { IconCopy, IconDotsVertical, IconColumnInsertRight } from '@tabler/icons
 import type { ComponentPropsWithoutRef, ReactNode } from 'react'
 import React, { useRef, useState } from 'react'
 import { default as clsx } from 'clsx'
-import type { TelemetryEvent } from '../../../../../../packages/core/src/domain/telemetry'
-import type { LogsEvent } from '../../../../../../packages/logs/src/logsEvent.types'
+import type { TelemetryEvent } from '../../../../../../packages/browser-core/src/domain/telemetry'
+import type { LogsEvent } from '../../../../../../packages/browser-logs/src/logsEvent.types'
 import type {
   RumActionEvent,
   RumErrorEvent,
@@ -13,7 +13,7 @@ import type {
   RumViewEvent,
   RumViewUpdateEvent,
   RumVitalEvent,
-} from '../../../../../../packages/rum-core/src/rumEvent.types'
+} from '../../../../../../packages/browser-rum-core/src/rumEvent.types'
 import type { SdkEvent } from '../../../sdkEvent'
 import { isTelemetryEvent, isLogEvent, isRumEvent } from '../../../sdkEvent'
 import { formatDate, formatDuration } from '../../../formatNumber'
@@ -459,6 +459,10 @@ function Emphasis({ children }: { children: ReactNode }) {
   return <strong>{children}</strong>
 }
 
-function getViewName(view: { name?: string; url: string }) {
-  return view.name ?? new URL(view.url).pathname
+function getViewName(view: { name?: string; url: string }): string {
+  try {
+    return view.name ?? new URL(view.url).pathname
+  } catch {
+    return view.url ?? '<unknown view>'
+  }
 }

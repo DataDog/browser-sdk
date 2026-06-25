@@ -52,7 +52,7 @@ export async function createGitHubRelease({ version, body }: GitHubReleaseParams
     throw new Error(`Release ${version} already exists`)
   } catch (error) {
     const fetchError = findError(error, FetchError)
-    if (!fetchError || fetchError.response.status !== 404) {
+    if (fetchError?.response.status !== 404) {
       throw error
     }
   }
@@ -66,10 +66,11 @@ export async function createGitHubRelease({ version, body }: GitHubReleaseParams
   })
 }
 
-export function createPullRequest(mainBranch: string) {
+export function createPullRequest(mainBranch: string, labels?: string[]) {
   using token = getGithubPullRequestToken()
   command`gh auth login --with-token`.withInput(token.value).run()
-  const pullRequestUrl = command`gh pr create --fill --base ${mainBranch}`.run()
+  const labelArgs = labels?.flatMap((label) => ['--label', label]) ?? []
+  const pullRequestUrl = command`gh pr create --fill --base ${mainBranch} ${labelArgs}`.run()
   return pullRequestUrl.trim()
 }
 

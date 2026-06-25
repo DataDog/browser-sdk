@@ -1,0 +1,210 @@
+import type { Observable } from '@datadog/browser-core'
+import { toServerDuration } from '@datadog/js-core/time'
+import type { Duration, ServerDuration } from '@datadog/js-core/time'
+import { getTimeZone, isEmptyObject, mapValues } from '@datadog/browser-core'
+import { DISCARDED } from '@datadog/js-core/assembly'
+import { discardNegativeDuration } from '../discardNegativeDuration'
+import type { RecorderApi } from '../../boot/rumPublicApi'
+import type { RawRumViewEvent, ViewPerformanceData } from '../../rawRumEvent.types'
+import { RumEventType } from '../../rawRumEvent.types'
+import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
+import { LifeCycleEventType } from '../lifeCycle'
+import type { LocationChange } from '../../browser/locationChangeObservable'
+import type { RumConfiguration } from '../configuration'
+import type { ViewHistory } from '../contexts/viewHistory'
+import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
+import type { RumMutationRecord } from '../../browser/domMutationObservable'
+import { trackViews } from './trackViews'
+import type { ViewEvent, ViewOptions } from './trackViews'
+import type { CommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
+import type { InitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
+
+export function startViewCollection(
+  lifeCycle: LifeCycle,
+  hooks: Hooks,
+  configuration: RumConfiguration,
+  domMutationObservable: Observable<RumMutationRecord[]>,
+  pageOpenObservable: Observable<void>,
+  locationChangeObservable: Observable<LocationChange>,
+  recorderApi: RecorderApi,
+  viewHistory: ViewHistory,
+  initialViewOptions?: ViewOptions
+) {
+  lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processViewUpdate(view, configuration, recorderApi))
+  )
+
+  hooks.assemble.register(({ startTime, eventType }): DefaultRumEventAttributes | DISCARDED => {
+    const view = viewHistory.findView(startTime)
+
+    if (!view) {
+      return DISCARDED
+    }
+
+    return {
+      type: eventType,
+      service: view.service,
+      version: view.version,
+      context: view.context,
+      view: {
+        id: view.id,
+        name: view.name,
+      },
+    }
+  })
+
+  hooks.assembleTelemetry.register(
+    ({ startTime }): DefaultTelemetryEventAttributes => ({
+      view: {
+        id: viewHistory.findView(startTime)?.id,
+      },
+    })
+  )
+
+  return trackViews(
+    lifeCycle,
+    domMutationObservable,
+    pageOpenObservable,
+    configuration,
+    locationChangeObservable,
+    !configuration.trackViewsManually,
+    initialViewOptions
+  )
+}
+
+function processViewUpdate(
+  view: ViewEvent,
+  configuration: RumConfiguration,
+  recorderApi: RecorderApi
+): RawRumEventCollectedData<RawRumViewEvent> {
+  const replayStats = recorderApi.getReplayStats(view.id)
+  const clsDevicePixelRatio = view.commonViewMetrics?.cumulativeLayoutShift?.devicePixelRatio
+  const viewEvent: RawRumViewEvent = {
+    _dd: {
+      document_version: view.documentVersion,
+      replay_stats: replayStats,
+      cls: clsDevicePixelRatio
+        ? {
+            device_pixel_ratio: clsDevicePixelRatio,
+          }
+        : undefined,
+      configuration: {
+        start_session_replay_recording_manually: configuration.startSessionReplayRecordingManually,
+      },
+    },
+    date: view.startClocks.timeStamp,
+    type: RumEventType.VIEW,
+    view: {
+      action: {
+        count: view.eventCounts.actionCount,
+      },
+      frustration: {
+        count: view.eventCounts.frustrationCount,
+      },
+      cumulative_layout_shift: view.commonViewMetrics.cumulativeLayoutShift?.value,
+      cumulative_layout_shift_time: toServerDuration(view.commonViewMetrics.cumulativeLayoutShift?.time),
+      cumulative_layout_shift_target_selector: view.commonViewMetrics.cumulativeLayoutShift?.targetSelector,
+      first_byte: toServerDuration(view.initialViewMetrics.navigationTimings?.firstByte),
+      dom_complete: toServerDuration(view.initialViewMetrics.navigationTimings?.domComplete),
+      dom_content_loaded: toServerDuration(view.initialViewMetrics.navigationTimings?.domContentLoaded),
+      dom_interactive: toServerDuration(view.initialViewMetrics.navigationTimings?.domInteractive),
+      error: {
+        count: view.eventCounts.errorCount,
+      },
+      first_contentful_paint: toServerDuration(view.initialViewMetrics.firstContentfulPaint),
+      interaction_to_next_paint: toServerDuration(view.commonViewMetrics.interactionToNextPaint?.value),
+      interaction_to_next_paint_time: toServerDuration(view.commonViewMetrics.interactionToNextPaint?.time),
+      interaction_to_next_paint_target_selector: view.commonViewMetrics.interactionToNextPaint?.targetSelector,
+      is_active: view.isActive,
+      name: view.name,
+      largest_contentful_paint: toServerDuration(view.initialViewMetrics.largestContentfulPaint?.value),
+      largest_contentful_paint_target_selector: view.initialViewMetrics.largestContentfulPaint?.targetSelector,
+      load_event: toServerDuration(view.initialViewMetrics.navigationTimings?.loadEvent),
+      loading_time: discardNegativeDuration(toServerDuration(view.commonViewMetrics.loadingTime)),
+      loading_type: view.loadingType,
+      long_task: {
+        count: view.eventCounts.longTaskCount,
+      },
+      performance: computeViewPerformanceData(view.commonViewMetrics, view.initialViewMetrics),
+      resource: {
+        count: view.eventCounts.resourceCount,
+      },
+      time_spent: toServerDuration(view.duration),
+    },
+    display: view.commonViewMetrics.scroll
+      ? {
+          scroll: {
+            max_depth: view.commonViewMetrics.scroll.maxDepth,
+            max_depth_scroll_top: view.commonViewMetrics.scroll.maxDepthScrollTop,
+            max_scroll_height: view.commonViewMetrics.scroll.maxScrollHeight,
+            max_scroll_height_time: toServerDuration(view.commonViewMetrics.scroll.maxScrollHeightTime),
+          },
+        }
+      : undefined,
+    privacy: {
+      replay_level: configuration.defaultPrivacyLevel,
+    },
+    device: {
+      locale: navigator.language,
+      locales: navigator.languages,
+      time_zone: getTimeZone(),
+    },
+  }
+
+  if (!isEmptyObject(view.customTimings)) {
+    viewEvent.view.custom_timings = mapValues(
+      view.customTimings,
+      toServerDuration as (duration: Duration) => ServerDuration
+    )
+  }
+
+  return {
+    rawRumEvent: viewEvent,
+    startClocks: view.startClocks,
+    duration: view.duration,
+    domainContext: {
+      location: view.location,
+      handlingStack: view.handlingStack,
+    },
+  }
+}
+
+function computeViewPerformanceData(
+  { cumulativeLayoutShift, interactionToNextPaint }: CommonViewMetrics,
+  { firstContentfulPaint, largestContentfulPaint }: InitialViewMetrics
+): ViewPerformanceData {
+  return {
+    cls: cumulativeLayoutShift && {
+      score: cumulativeLayoutShift.value,
+      timestamp: toServerDuration(cumulativeLayoutShift.time),
+      target_selector: cumulativeLayoutShift.targetSelector,
+      previous_rect: cumulativeLayoutShift.previousRect,
+      current_rect: cumulativeLayoutShift.currentRect,
+    },
+    fcp: firstContentfulPaint && { timestamp: toServerDuration(firstContentfulPaint) },
+    inp: interactionToNextPaint && {
+      duration: toServerDuration(interactionToNextPaint.value),
+      timestamp: toServerDuration(interactionToNextPaint.time),
+      target_selector: interactionToNextPaint.targetSelector,
+      sub_parts: interactionToNextPaint.subParts
+        ? {
+            input_delay: toServerDuration(interactionToNextPaint.subParts.inputDelay),
+            processing_duration: toServerDuration(interactionToNextPaint.subParts.processingDuration),
+            presentation_delay: toServerDuration(interactionToNextPaint.subParts.presentationDelay),
+          }
+        : undefined,
+    },
+    lcp: largestContentfulPaint && {
+      timestamp: toServerDuration(largestContentfulPaint.value),
+      target_selector: largestContentfulPaint.targetSelector,
+      resource_url: largestContentfulPaint.resourceUrl,
+      sub_parts: largestContentfulPaint.subParts
+        ? {
+            load_delay: toServerDuration(largestContentfulPaint.subParts.loadDelay),
+            load_time: toServerDuration(largestContentfulPaint.subParts.loadTime),
+            render_delay: toServerDuration(largestContentfulPaint.subParts.renderDelay),
+          }
+        : undefined,
+    },
+  }
+}

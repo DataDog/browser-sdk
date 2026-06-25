@@ -5,7 +5,7 @@ import { runBasePluginRouterTests } from './basePluginRouterTests'
 
 const reactApps = [
   { appName: 'react-router-v6-app', description: 'React Router v6' },
-  { appName: 'react-router-v7-app', description: 'React Router v7' },
+  { appName: 'react-router-app', description: 'React Router v7' },
 ]
 
 const reactPluginApps = reactApps.map(({ appName, description }) => ({
@@ -94,6 +94,20 @@ test.describe('plugin: react', () => {
             expect(browserLogs.filter((log) => log.level === 'error').length).toBeGreaterThan(0)
           })
         })
+
+      if (appName === 'react-router-app') {
+        createTest('should call RouterProvider onError when initial route loader throws synchronously')
+          .withRum()
+          .withApp(appName)
+          .withBasePath('/?test-loader-error')
+          .run(async ({ page, flushBrowserLogs }) => {
+            await page.waitForSelector('[data-testid="on-error-fired"]', { timeout: 10000 })
+            const errorText = await page.textContent('[data-testid="on-error-fired"]')
+            expect(errorText).toBe('Synchronous loader error')
+
+            flushBrowserLogs()
+          })
+      }
     })
   }
 })

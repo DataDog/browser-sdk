@@ -1,5 +1,5 @@
 import type { EndpointBuilder } from '@datadog/browser-core'
-import { computeTransportConfiguration } from '../../../../../../packages/core/src/domain/configuration'
+import { createEndpointBuilder } from '../../../../../../packages/browser-core/src/domain/configuration'
 import { copy } from '../../../copy'
 import type { SdkInfos } from '../../../hooks/useSdkInfos'
 import type { SdkEvent } from '../../../sdkEvent'
@@ -75,7 +75,7 @@ export function getIntakeUrlForEvent(sdkInfos: SdkInfos, event: SdkEvent) {
         return
       }
       version = sdkInfos.rum.version
-      builder = computeTransportConfiguration(sdkInfos.rum.config).rumEndpointBuilder
+      builder = createEndpointBuilder(sdkInfos.rum.config, 'rum')
       break
     }
 
@@ -84,7 +84,7 @@ export function getIntakeUrlForEvent(sdkInfos: SdkInfos, event: SdkEvent) {
         return
       }
       version = sdkInfos.logs.version
-      builder = computeTransportConfiguration(sdkInfos.logs.config).logsEndpointBuilder
+      builder = createEndpointBuilder(sdkInfos.logs.config, 'logs')
       break
   }
 

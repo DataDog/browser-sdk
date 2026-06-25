@@ -4,7 +4,7 @@ Browser SDK for collecting Real User Monitoring (RUM) and logging data from web 
 
 ## Package Manager
 
-This project uses Yarn workspaces (v4.12.0). Never use `npm` or `npx`.
+This project uses Yarn workspaces (latest version). Never use `npm` or `npx`.
 
 ## Key Commands
 
@@ -22,13 +22,13 @@ yarn build:apps
 yarn test:unit
 
 # Run specific test file
-yarn test:unit --spec packages/core/src/path/to/feature.spec.ts
+yarn test:unit --spec packages/browser-core/src/path/to/feature.spec.ts
 
 # Run tests on a specific seed
 yarn test:unit --seed 123
 
 # setup E2E tests (installs Playwright and builds test apps)
-yarn test:e2e:init
+yarn test:e2e:setup
 
 # Run E2E tests
 yarn test:e2e
@@ -75,6 +75,7 @@ scripts/             # Build, deploy, release automation
 
 For deeper context, see:
 
+- `docs/REVIEW.md` — what to look for (and what to skip) when reviewing a PR
 - `docs/DEVELOPMENT.md` — commit conventions, dependency management, schema generation, TS compatibility
 - `docs/CONVENTIONS.md` — coding style, file organization, size control
 - `docs/ARCHITECTURE.md` — package dependencies, data pipeline
@@ -130,5 +131,5 @@ To test with specific config options (e.g. `forwardErrorsToLogs: true`), just ed
 
 - Branch naming: `<username>/<feature>` (e.g., `john.doe/fix-session-bug`)
 - Always branch from `main` unless explicitly decided otherwise
-- PR title follows commit message convention (used when squashing to main)
+- PR title **must** follow commit message convention (see `docs/DEVELOPMENT.md`)
 - PR template at `.github/PULL_REQUEST_TEMPLATE.md` - use it for all PRs

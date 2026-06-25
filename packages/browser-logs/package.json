@@ -1,0 +1,44 @@
+{
+  "name": "@datadog/browser-logs",
+  "version": "7.4.0",
+  "license": "Apache-2.0",
+  "main": "cjs/entries/main.js",
+  "module": "esm/entries/main.mjs",
+  "types": "cjs/entries/main.d.ts",
+  "files": [
+    "bundle/**/*.js",
+    "cjs",
+    "esm",
+    "src",
+    "!src/**/*.spec.ts",
+    "!src/**/*.specHelper.ts"
+  ],
+  "scripts": {
+    "build": "node ../../scripts/build/build-package.ts --modules --bundle datadog-logs.js",
+    "build:bundle": "node ../../scripts/build/build-package.ts --bundle datadog-logs.js",
+    "prepack": "yarn build"
+  },
+  "dependencies": {
+    "@datadog/browser-core": "7.4.0",
+    "@datadog/js-core": "0.0.4"
+  },
+  "peerDependencies": {
+    "@datadog/browser-rum": "7.4.0"
+  },
+  "peerDependenciesMeta": {
+    "@datadog/browser-rum": {
+      "optional": true
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DataDog/browser-sdk.git",
+    "directory": "packages/browser-logs"
+  },
+  "volta": {
+    "extends": "../../package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

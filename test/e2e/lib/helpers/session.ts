@@ -18,7 +18,7 @@ export async function expireSession(page: Page, browserContext: BrowserContext) 
   const cookies = await browserContext.cookies()
   const sessionCookieValue = cookies.find((c) => c.name === SESSION_STORE_KEY)?.value ?? ''
   const anonymousId = sessionCookieValue.match(/aid=[a-z0-9-]+/)
-  const expireCookie = `isExpired=1&${anonymousId && anonymousId[0]}`
+  const expireCookie = `isExpired=1&${anonymousId?.[0]}`
 
   await setCookie(page, SESSION_STORE_KEY, expireCookie, SESSION_TIME_OUT_DELAY)
 

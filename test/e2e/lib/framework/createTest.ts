@@ -14,14 +14,21 @@ import {
 } from '../helpers/configuration'
 import { validateRumFormat } from '../helpers/validation'
 import type { BrowserConfiguration } from '../../../browsers.conf'
-import { NEXTJS_APP_ROUTER_PORT, NUXT_APP_PORT, VUE_ROUTER_APP_PORT } from '../helpers/playwright'
+import {
+  NEXTJS_APP_ROUTER_PORT,
+  NUXT_APP_PORT,
+  NUXT_VUE_ROUTER_V4_APP_PORT,
+  VUE_ROUTER_APP_PORT,
+  VUE_ROUTER_V4_APP_PORT,
+} from '../helpers/playwright'
 import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
 import { getTestServers, waitForServersIdle } from './httpServers'
 import type { CallerLocation, EventBridgeOptions, SetupFactory, SetupOptions, UrlHook } from './pageSetups'
 import { html, DEFAULT_SETUPS, npmSetup, appSetup, formatConfiguration } from './pageSetups'
-import { createIntakeServerApp } from './serverApps/intake'
+import { createDatadogHttpApi } from './serverApps/datadogHttpApi'
+import type { DatadogHttpApiControl } from './serverApps/datadogHttpApi'
 import { createMockServerApp } from './serverApps/mock'
 import type { Extension } from './createExtension'
 import type { Worker } from './createWorker'
@@ -72,6 +79,7 @@ export function createTest(title: string) {
 interface TestContext {
   baseUrl: string
   intakeRegistry: IntakeRegistry
+  datadogHttpApiControl: DatadogHttpApiControl
   servers: Servers
   page: Page
   browserContext: BrowserContext
@@ -166,9 +174,9 @@ class TestBuilder {
     return this
   }
 
-  withVueApp() {
+  withVueApp(routerVersion: 'v4' | 'v5' = 'v5') {
     this.baseUrlHooks.push((baseUrl, servers, { rum, context }) => {
-      baseUrl.port = VUE_ROUTER_APP_PORT
+      baseUrl.port = routerVersion === 'v4' ? VUE_ROUTER_V4_APP_PORT : VUE_ROUTER_APP_PORT
       if (rum) {
         baseUrl.searchParams.set('rum-config', formatConfiguration(rum, servers))
       }
@@ -198,9 +206,9 @@ class TestBuilder {
     return this
   }
 
-  withNuxtApp() {
+  withNuxtApp(routerVersion: 'v4' | 'v5' = 'v5') {
     this.baseUrlHooks.push((baseUrl, servers, { rum, context }) => {
-      baseUrl.port = NUXT_APP_PORT
+      baseUrl.port = routerVersion === 'v4' ? NUXT_VUE_ROUTER_V4_APP_PORT : NUXT_APP_PORT
       if (rum) {
         baseUrl.searchParams.set('rum-config', formatConfiguration(rum, servers))
       }
@@ -416,8 +424,19 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
 
     const browserLogs = new BrowserLogsManager()
 
-    const testContext = createTestContext(servers, page, context, browserLogs, browserName, baseUrl.href)
-    servers.intake.bindServerApp(createIntakeServerApp(testContext.intakeRegistry))
+    const intakeRegistry = new IntakeRegistry()
+    const datadogHttpApi = createDatadogHttpApi(intakeRegistry)
+    const testContext = createTestContext(
+      servers,
+      intakeRegistry,
+      datadogHttpApi.control,
+      page,
+      context,
+      browserLogs,
+      browserName,
+      baseUrl.href
+    )
+    servers.datadogHttpApi.bindServerApp(datadogHttpApi.app)
 
     const setup = factory(setupOptions, servers)
     servers.base.bindServerApp(createMockServerApp(servers, setup, setupOptions))
@@ -436,6 +455,8 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
 
 function createTestContext(
   servers: Servers,
+  intakeRegistry: IntakeRegistry,
+  datadogHttpApiControl: DatadogHttpApiControl,
   page: Page,
   browserContext: BrowserContext,
   browserLogsManager: BrowserLogsManager,
@@ -444,7 +465,8 @@ function createTestContext(
 ): TestContext {
   return {
     baseUrl,
-    intakeRegistry: new IntakeRegistry(),
+    intakeRegistry,
+    datadogHttpApiControl,
     servers,
     page,
     browserContext,

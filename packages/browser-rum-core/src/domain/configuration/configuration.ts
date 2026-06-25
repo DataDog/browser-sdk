@@ -1,0 +1,690 @@
+import type { Configuration, InitConfiguration, MatchOption, RawTelemetryConfiguration } from '@datadog/browser-core'
+import {
+  isMatchOption,
+  serializeConfiguration,
+  DefaultPrivacyLevel,
+  TraceContextInjection,
+  display,
+  objectHasValue,
+  validateAndBuildConfiguration,
+  isSampleRate,
+  isNumber,
+  isNonEmptyArray,
+} from '@datadog/browser-core'
+import { isIndexableObject } from '@datadog/js-core/util'
+import type { RumEventDomainContext } from '../../domainContext.types'
+import type { RumEvent } from '../../rumEvent.types'
+import type { RumPlugin } from '../plugins'
+import type { PropagatorType, TracingOption } from '../tracing/tracer.types'
+import { getRemoteConfigurationId } from './remoteConfiguration'
+
+export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'datadog']
+
+/**
+ * Default list of headers collected on resource events when {@link RumInitConfiguration.trackResourceHeaders | trackResourceHeaders}
+ * is set to `true`. Re-exported by the `@datadog/browser-rum` and `@datadog/browser-rum-slim` packages, and exposed on the
+ * `DD_RUM` global object when the SDK is loaded via the CDN, so it can be referenced when building a custom matcher list.
+ *
+ * @example NPM
+ * ```ts
+ * import { datadogRum, DEFAULT_TRACKED_RESOURCE_HEADERS } from '@datadog/browser-rum'
+ *
+ * datadogRum.init({
+ *   // ...
+ *   trackResourceHeaders: [
+ *     ...DEFAULT_TRACKED_RESOURCE_HEADERS.map((name) => ({ name })),
+ *     { name: 'x-request-id' },
+ *   ],
+ * })
+ * ```
+ * @example CDN
+ * ```ts
+ * DD_RUM.init({
+ *   // ...
+ *   trackResourceHeaders: [
+ *     ...DD_RUM.DEFAULT_TRACKED_RESOURCE_HEADERS.map((name) => ({ name })),
+ *     { name: 'x-request-id' },
+ *   ],
+ * })
+ * ```
+ */
+export const DEFAULT_TRACKED_RESOURCE_HEADERS = [
+  'cache-control',
+  'etag',
+  'age',
+  'expires',
+  'content-type',
+  'content-encoding',
+  'vary',
+  'content-length',
+  'server-timing',
+  'x-cache',
+] as const
+
+/**
+ * Init Configuration for the RUM browser SDK.
+ *
+ * @category Main
+ * @example NPM
+ * ```ts
+ * import { datadogRum } from '@datadog/browser-rum'
+ *
+ * datadogRum.init({
+ *   applicationId: '<DATADOG_APPLICATION_ID>',
+ *   clientToken: '<DATADOG_CLIENT_TOKEN>',
+ *   site: '<DATADOG_SITE>',
+ *   // ...
+ * })
+ * ```
+ * @example CDN
+ * ```ts
+ * DD_RUM.init({
+ *   applicationId: '<DATADOG_APPLICATION_ID>',
+ *   clientToken: '<DATADOG_CLIENT_TOKEN>',
+ *   site: '<DATADOG_SITE>',
+ *   ...
+ * })
+ * ```
+ */
+export interface RumInitConfiguration extends InitConfiguration {
+  // global options
+  /**
+   * The RUM application ID.
+   *
+   * @category Authentication
+   */
+  applicationId: string
+
+  /**
+   * Whether to propagate user and account IDs in the baggage header of trace requests.
+   *
+   * @category Tracing
+   * @defaultValue false
+   */
+  propagateTraceBaggage?: boolean | undefined
+
+  /**
+   * Access to every event collected by the RUM SDK before they are sent to Datadog.
+   * It allows:
+   * - Enrich your RUM events with additional context attributes
+   * - Modify your RUM events to modify their content, or redact sensitive sequences (see the list of editable properties)
+   * - Discard selected RUM events
+   *
+   * See [Enrich And Control Browser RUM Data With beforeSend](https://docs.datadoghq.com/real_user_monitoring/guide/enrich-and-control-rum-data) for further information.
+   *
+   * @category Data Collection
+   */
+  beforeSend?: RumBeforeSend | undefined
+
+  /**
+   * A list of request origins ignored when computing the page activity.
+   * See [How page activity is calculated](https://docs.datadoghq.com/real_user_monitoring/browser/monitoring_page_performance/#how-page-activity-is-calculated) for further information.
+   */
+  excludedActivityUrls?: MatchOption[] | undefined
+
+  /**
+   * URL pointing to the Datadog Browser SDK Worker JavaScript file. The URL can be relative or absolute, but is required to have the same origin as the web application.
+   * See [Content Security Policy guidelines](https://docs.datadoghq.com/integrations/content_security_policy_logs/?tab=firefox#use-csp-with-real-user-monitoring-and-session-replay) for further information.
+   *
+   * @category Transport
+   */
+  workerUrl?: string
+
+  /**
+   * Compress requests sent to the Datadog intake to reduce bandwidth usage when sending large amounts of data. The compression is done in a Worker thread.
+   * See [Content Security Policy guidelines](https://docs.datadoghq.com/integrations/content_security_policy_logs/?tab=firefox#use-csp-with-real-user-monitoring-and-session-replay) for further information.
+   *
+   * @category Transport
+   */
+  compressIntakeRequests?: boolean | undefined
+
+  /**
+   * [Internal option] Id of the remote configuration.
+   * Prefer `remoteConfiguration.id` for the non-blocking cache-and-reload path.
+   *
+   * @internal
+   */
+  remoteConfigurationId?: string | undefined
+
+  /**
+   * [Internal option] Remote configuration descriptor. By default the SDK reads a cached
+   * configuration synchronously and refreshes it in the background. Set `sync: true` to fall back
+   * to the legacy blocking fetch. Set `required: true` to prevent the SDK from starting on the
+   * current page load when the remote configuration cache is empty or unreadable (the background
+   * fetch still runs to populate the cache for the next load). Ignored when `sync: true` is set
+   * or when the legacy `remoteConfigurationId` field is used.
+   *
+   * @internal
+   */
+  remoteConfiguration?: { id: string; sync?: boolean; required?: boolean } | undefined
+
+  /**
+   * [Internal option] set a proxy URL for the remote configuration
+   *
+   * @internal
+   */
+  remoteConfigurationProxy?: string | undefined
+
+  // tracing options
+  /**
+   * A list of request URLs used to inject tracing headers.
+   * See [Connect RUM and Traces](https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum) for further information.
+   *
+   * @category Tracing
+   */
+  allowedTracingUrls?:
+    | Array<MatchOption | { match: MatchOption; propagatorTypes?: PropagatorType[] | null | undefined }>
+    | undefined
+
+  /**
+   * The percentage of requests to trace: 100 for all, 0 for none.
+   * See [Connect RUM and Traces](https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum) for further information.
+   *
+   * @category Tracing
+   * @defaultValue 100
+   */
+  traceSampleRate?: number | undefined
+  /**
+   * If you set a `traceSampleRate`, to ensure backend services' sampling decisions are still applied, configure the `traceContextInjection` initialization parameter to sampled.
+   *
+   * See [Connect RUM and Traces](https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum) for further information.
+   *
+   * @category Tracing
+   * @defaultValue sampled
+   */
+  traceContextInjection?: TraceContextInjection | undefined
+
+  // replay options
+  /**
+   * Allow to protect end user privacy and prevent sensitive organizational information from being collected.
+   *
+   * See [Replay Privacy Options](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser/privacy_options) for further information.
+   *
+   * @category Privacy
+   * @defaultValue mask-user-input
+   */
+  defaultPrivacyLevel?: DefaultPrivacyLevel | undefined
+
+  /**
+   * If you are accessing Datadog through a custom subdomain, you can set `subdomain` to include your custom domain in the `getSessionReplayLink()` returned URL .
+   *
+   * See [Connect Session Replay To Your Third-Party Tools](https://docs.datadoghq.com/real_user_monitoring/guide/connect-session-replay-to-your-third-party-tools) for further information.
+   *
+   * @category Session Replay
+   */
+  subdomain?: string
+
+  /**
+   * The percentage of tracked sessions with [Browser RUM & Session Replay pricing](https://www.datadoghq.com/pricing/?product=real-user-monitoring--session-replay#real-user-monitoring--session-replay) features: 100 for all, 0 for none.
+   *
+   * See [Configure Your Setup For Browser RUM and Browser RUM & Session Replay Sampling](https://docs.datadoghq.com/real_user_monitoring/guide/sampling-browser-plans) for further information.
+   *
+   * @category Session Replay
+   * @defaultValue 0
+   */
+  sessionReplaySampleRate?: number | undefined
+
+  /**
+   * If the session is sampled for Session Replay, only start the recording when `startSessionReplayRecording()` is called, instead of at the beginning of the session. Default: if startSessionReplayRecording is 0, true; otherwise, false.
+   *
+   * See [Session Replay Usage](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser/#usage) for further information.
+   *
+   * @category Session Replay
+   */
+  startSessionReplayRecordingManually?: boolean | undefined
+
+  /**
+   * Enables privacy control for action names.
+   *
+   * @category Privacy
+   * @defaultValue true
+   */
+  enablePrivacyForActionName?: boolean | undefined
+
+  /**
+   * Enables automatic collection of users actions.
+   *
+   * See [Tracking User Actions](https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions) for further information.
+   *
+   * @category Data Collection
+   * @defaultValue true
+   */
+  trackUserInteractions?: boolean | undefined
+
+  /**
+   * Specify your own attribute to use to name actions.
+   *
+   * See [Declare a name for click actions](https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions/#declare-a-name-for-click-actions) for further information.
+   *
+   * @category Data Collection
+   */
+  actionNameAttribute?: string | undefined
+
+  // view options
+  /**
+   * Allows you to control RUM views creation. See [Override default RUM view names](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/?tab=npm#override-default-rum-view-names) for further information.
+   *
+   * @category Data Collection
+   */
+  trackViewsManually?: boolean | undefined
+
+  /**
+   * Enables collection of resource events.
+   *
+   * @category Data Collection
+   * @defaultValue true
+   */
+  trackResources?: boolean | undefined
+
+  /**
+   * Enables collection of request and response headers on resource events.
+   *
+   * - `true`: collect {@link DEFAULT_TRACKED_RESOURCE_HEADERS} for all URLs, both directions
+   * - `MatchHeader[]`: each {@link MatchHeader} targets a header name, with optional URL scope
+   * (`url`), value extraction (`extractor`), and `location`. By default, both request and
+   * response headers are captured; set `location` to `'request'` or `'response'` to restrict
+   * to one.
+   *
+   * Headers whose names match a built-in sensitive-data pattern are always dropped, regardless
+   * of the configured matchers. The pattern blocks headers whose names contain: `token`, `cookie`,
+   * `secret`, `authorization`, `api-key`, `secret-key`, `access-key`, `app-key`, `client-ip`,
+   * `connecting-ip`, `real-ip`, or `forwarded`.
+   *
+   * @category Data Collection
+   * @defaultValue false (disabled)
+   * @example
+   * // Collect default headers plus custom ones for all URLs
+   * trackResourceHeaders: [
+   *   ...DEFAULT_TRACKED_RESOURCE_HEADERS.map((h) => ({ name: h })),
+   *   { name: 'x-request-id' },
+   * ]
+   * @example
+   * // URL-scoped rule: capture specific response headers only for calls to /api
+   * trackResourceHeaders: [{ url: /\/api\//, name: 'cache-control', location: 'response' }]
+   * @example
+   * // Extract a partial value from a header
+   * trackResourceHeaders: [{ url: /\/api\//, name: 'server-timing', extractor: /dur=(\d+)/, location: 'response' }]
+   */
+  trackResourceHeaders?: boolean | MatchHeader[] | undefined
+
+  /**
+   * Enables collection of long task events.
+   *
+   * @category Data Collection
+   * @defaultValue true
+   */
+  trackLongTasks?: boolean | undefined
+
+  /**
+   * List of plugins to enable. The plugins API is unstable and experimental, and may change without
+   * notice. Please use only plugins provided by Datadog matching the version of the SDK you are
+   * using.
+   */
+  plugins?: RumPlugin[] | undefined
+
+  /**
+   * Enables collection of features flags in additional events (e.g. long task, resource, action, vital).
+   *
+   * @category Data Collection
+   */
+  trackFeatureFlagsForEvents?: FeatureFlagsForEvents[]
+
+  /**
+   * The percentage of users profiled. A value between 0 and 100.
+   *
+   * @category Profiling
+   * @defaultValue 0
+   */
+  profilingSampleRate?: number | undefined
+
+  /**
+   * A list of GraphQL endpoint URLs to track and enrich with GraphQL-specific metadata.
+   *
+   * @category Data Collection
+   */
+  allowedGraphQlUrls?: Array<MatchOption | GraphQlUrlOption> | undefined
+}
+
+export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
+
+export type FeatureFlagsForEvents = 'vital' | 'action' | 'long_task' | 'resource'
+
+/**
+ * Function called before a RUM event is sent to Datadog. See {@link RumInitConfiguration.beforeSend}
+ *
+ * @param event - The RUM event
+ * @param context - The RUM event domain context providing access to native browser data based on the event type (e.g. error, performance entry).
+ * @returns true if the event should be sent to Datadog, false otherwise
+ */
+export type RumBeforeSend = (event: RumEvent, context: RumEventDomainContext) => boolean
+
+export interface GraphQlUrlOption {
+  match: MatchOption
+  trackPayload?: boolean
+  trackResponseErrors?: boolean
+}
+
+export interface MatchHeader {
+  url?: MatchOption
+  name: MatchOption
+  extractor?: RegExp
+  location?: 'request' | 'response' | 'any'
+}
+
+export interface RumConfiguration extends Configuration {
+  // Built from init configuration
+  actionNameAttribute: string | undefined
+  traceSampleRate: number
+  rulePsr: number | undefined
+  allowedTracingUrls: TracingOption[]
+  excludedActivityUrls: MatchOption[]
+  workerUrl: string | undefined
+  compressIntakeRequests: boolean
+  applicationId: string
+  defaultPrivacyLevel: DefaultPrivacyLevel
+  enablePrivacyForActionName: boolean
+  sessionReplaySampleRate: number
+  startSessionReplayRecordingManually: boolean
+  trackUserInteractions: boolean
+  trackViewsManually: boolean
+  trackResources: boolean
+  trackResourceHeaders: MatchHeader[]
+  trackLongTasks: boolean
+  subdomain?: string
+  traceContextInjection: TraceContextInjection
+  plugins: RumPlugin[]
+  trackFeatureFlagsForEvents: FeatureFlagsForEvents[]
+  profilingSampleRate: number
+  propagateTraceBaggage: boolean
+  allowedGraphQlUrls: GraphQlUrlOption[]
+}
+
+export function validateAndBuildRumConfiguration(
+  initConfiguration: RumInitConfiguration,
+  errorStack?: string
+): RumConfiguration | undefined {
+  if (
+    initConfiguration.trackFeatureFlagsForEvents !== undefined &&
+    !Array.isArray(initConfiguration.trackFeatureFlagsForEvents)
+  ) {
+    display.warn('trackFeatureFlagsForEvents should be an array')
+  }
+
+  if (!initConfiguration.applicationId) {
+    display.error('Application ID is not configured, no RUM data will be collected.')
+    return
+  }
+
+  if (
+    !isSampleRate(initConfiguration.sessionReplaySampleRate, 'Session Replay') ||
+    !isSampleRate(initConfiguration.traceSampleRate, 'Trace')
+  ) {
+    return
+  }
+
+  if (initConfiguration.excludedActivityUrls !== undefined && !Array.isArray(initConfiguration.excludedActivityUrls)) {
+    display.error('Excluded Activity Urls should be an array')
+    return
+  }
+
+  const allowedTracingUrls = validateAndBuildTracingOptions(initConfiguration)
+  if (!allowedTracingUrls) {
+    return
+  }
+
+  const baseConfiguration = validateAndBuildConfiguration(initConfiguration, errorStack)
+
+  const allowedGraphQlUrls = validateAndBuildGraphQlOptions(initConfiguration)
+
+  if (!baseConfiguration) {
+    return
+  }
+
+  const sessionReplaySampleRate = initConfiguration.sessionReplaySampleRate ?? 0
+
+  return {
+    applicationId: initConfiguration.applicationId,
+    actionNameAttribute: initConfiguration.actionNameAttribute,
+    sessionReplaySampleRate,
+    startSessionReplayRecordingManually:
+      initConfiguration.startSessionReplayRecordingManually !== undefined
+        ? !!initConfiguration.startSessionReplayRecordingManually
+        : sessionReplaySampleRate === 0,
+    traceSampleRate: initConfiguration.traceSampleRate ?? 100,
+    rulePsr: isNumber(initConfiguration.traceSampleRate) ? initConfiguration.traceSampleRate / 100 : undefined,
+    allowedTracingUrls,
+    excludedActivityUrls: initConfiguration.excludedActivityUrls ?? [],
+    workerUrl: initConfiguration.workerUrl,
+    compressIntakeRequests: !!initConfiguration.compressIntakeRequests,
+    trackUserInteractions: !!(initConfiguration.trackUserInteractions ?? true),
+    trackViewsManually: !!initConfiguration.trackViewsManually,
+    trackResources: !!(initConfiguration.trackResources ?? true),
+    trackResourceHeaders: validateAndBuildTrackResourceHeaders(initConfiguration),
+    trackLongTasks: !!(initConfiguration.trackLongTasks ?? true),
+    subdomain: initConfiguration.subdomain,
+    defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
+      ? initConfiguration.defaultPrivacyLevel
+      : DefaultPrivacyLevel.MASK_USER_INPUT,
+    enablePrivacyForActionName: initConfiguration.enablePrivacyForActionName !== false,
+    traceContextInjection: objectHasValue(TraceContextInjection, initConfiguration.traceContextInjection)
+      ? initConfiguration.traceContextInjection
+      : TraceContextInjection.SAMPLED,
+    plugins: initConfiguration.plugins || [],
+    trackFeatureFlagsForEvents: initConfiguration.trackFeatureFlagsForEvents || [],
+    profilingSampleRate: initConfiguration.profilingSampleRate ?? 0,
+    propagateTraceBaggage: initConfiguration.propagateTraceBaggage !== false,
+    allowedGraphQlUrls,
+    ...baseConfiguration,
+  }
+}
+
+/**
+ * Validates allowedTracingUrls and converts match options to tracing options
+ */
+function validateAndBuildTracingOptions(initConfiguration: RumInitConfiguration): TracingOption[] | undefined {
+  if (initConfiguration.allowedTracingUrls === undefined) {
+    return []
+  }
+  if (!Array.isArray(initConfiguration.allowedTracingUrls)) {
+    display.error('Allowed Tracing URLs should be an array')
+    return
+  }
+  if (initConfiguration.allowedTracingUrls.length !== 0 && initConfiguration.service === undefined) {
+    display.error('Service needs to be configured when tracing is enabled')
+    return
+  }
+  // Convert from (MatchOption | TracingOption) to TracingOption, remove unknown properties
+  const tracingOptions: TracingOption[] = []
+  initConfiguration.allowedTracingUrls.forEach((option) => {
+    const normalizedOption = normalizeTracingOption(option)
+    if (normalizedOption) {
+      tracingOptions.push(normalizedOption)
+    } else {
+      display.warn(
+        'Allowed Tracing Urls parameters should be a string, RegExp, function, or an object. Ignoring parameter',
+        option
+      )
+    }
+  })
+
+  return tracingOptions
+}
+
+/**
+ * Combines the selected tracing propagators from the different options in allowedTracingUrls
+ */
+function getSelectedTracingPropagators(configuration: RumInitConfiguration): PropagatorType[] {
+  const usedTracingPropagators = new Set<PropagatorType>()
+
+  if (isNonEmptyArray(configuration.allowedTracingUrls)) {
+    configuration.allowedTracingUrls.forEach((option) => {
+      normalizeTracingOption(option)?.propagatorTypes.forEach((propagatorType) =>
+        usedTracingPropagators.add(propagatorType)
+      )
+    })
+  }
+
+  return Array.from(usedTracingPropagators)
+}
+
+function normalizeTracingOption(option: unknown): TracingOption | undefined {
+  if (isMatchOption(option)) {
+    return { match: option, propagatorTypes: DEFAULT_PROPAGATOR_TYPES }
+  }
+
+  if (
+    isIndexableObject(option) &&
+    isMatchOption(option.match) &&
+    (option.propagatorTypes === null || option.propagatorTypes === undefined || Array.isArray(option.propagatorTypes))
+  ) {
+    return {
+      match: option.match,
+      propagatorTypes: option.propagatorTypes || DEFAULT_PROPAGATOR_TYPES,
+    }
+  }
+}
+
+/**
+ * Build GraphQL options from configuration
+ */
+function validateAndBuildGraphQlOptions(initConfiguration: RumInitConfiguration): GraphQlUrlOption[] {
+  if (!initConfiguration.allowedGraphQlUrls) {
+    return []
+  }
+
+  if (!Array.isArray(initConfiguration.allowedGraphQlUrls)) {
+    display.warn('allowedGraphQlUrls should be an array')
+    return []
+  }
+
+  const graphQlOptions: GraphQlUrlOption[] = []
+
+  initConfiguration.allowedGraphQlUrls.forEach((option) => {
+    if (isMatchOption(option)) {
+      graphQlOptions.push({ match: option, trackPayload: false, trackResponseErrors: false })
+    } else if (isIndexableObject(option) && isMatchOption(option.match)) {
+      graphQlOptions.push({
+        match: option.match,
+        trackPayload: !!option.trackPayload,
+        trackResponseErrors: !!option.trackResponseErrors,
+      })
+    }
+  })
+
+  return graphQlOptions
+}
+
+const VALID_HEADER_LOCATIONS = ['request', 'response', 'any']
+
+function validateAndBuildTrackResourceHeaders(initConfiguration: RumInitConfiguration): MatchHeader[] {
+  const option = initConfiguration.trackResourceHeaders
+
+  if (option === undefined || option === false) {
+    return []
+  }
+
+  if (option === true) {
+    return DEFAULT_TRACKED_RESOURCE_HEADERS.map((name) => ({ name }))
+  }
+
+  if (!Array.isArray(option)) {
+    display.warn('trackResourceHeaders should be true or an array of MatchHeader')
+    return []
+  }
+
+  if (option.length === 0) {
+    display.warn('trackResourceHeaders is an empty array, no headers will be captured')
+    return []
+  }
+
+  const result: MatchHeader[] = []
+
+  option.forEach((item, index) => {
+    if (!isIndexableObject(item) || !isMatchOption(item.name)) {
+      display.warn(`trackResourceHeaders[${index}] should be a MatchHeader object with a 'name' property`)
+      return
+    }
+    if (item.url !== undefined && !isMatchOption(item.url)) {
+      display.warn(`trackResourceHeaders[${index}].url should be a MatchOption`)
+      return
+    }
+    if (item.extractor !== undefined && !(item.extractor instanceof RegExp)) {
+      display.warn(`trackResourceHeaders[${index}].extractor should be a RegExp`)
+      return
+    }
+    if (item.location !== undefined && !VALID_HEADER_LOCATIONS.includes(item.location)) {
+      display.warn(`trackResourceHeaders[${index}].location should be 'request', 'response', or 'any'`)
+      return
+    }
+
+    result.push({
+      ...item,
+      name: typeof item.name === 'string' ? item.name.toLowerCase() : item.name,
+    })
+  })
+
+  return result
+}
+
+function hasGraphQlPayloadTracking(allowedGraphQlUrls: RumInitConfiguration['allowedGraphQlUrls']): boolean {
+  return (
+    isNonEmptyArray(allowedGraphQlUrls) &&
+    allowedGraphQlUrls.some((option) => isIndexableObject(option) && option.trackPayload)
+  )
+}
+
+function hasGraphQlResponseErrorsTracking(allowedGraphQlUrls: RumInitConfiguration['allowedGraphQlUrls']): boolean {
+  return (
+    isNonEmptyArray(allowedGraphQlUrls) &&
+    allowedGraphQlUrls.some((option) => isIndexableObject(option) && option.trackResponseErrors)
+  )
+}
+
+function getTrackResourceHeadersTelemetryValue(
+  trackResourceHeaders: RumInitConfiguration['trackResourceHeaders']
+): 'default_headers' | 'custom' | undefined {
+  if (trackResourceHeaders === true) {
+    return 'default_headers'
+  }
+  if (Array.isArray(trackResourceHeaders)) {
+    return 'custom'
+  }
+}
+
+export function serializeRumConfiguration(configuration: RumInitConfiguration) {
+  const baseSerializedConfiguration = serializeConfiguration(configuration)
+
+  // `use_` prefix is for telemetry options that track usage of a configuration option as a boolean to avoid capturing customer data
+  return {
+    session_replay_sample_rate: configuration.sessionReplaySampleRate,
+    start_session_replay_recording_manually: configuration.startSessionReplayRecordingManually,
+    trace_sample_rate: configuration.traceSampleRate,
+    trace_context_injection: configuration.traceContextInjection,
+    propagate_trace_baggage: configuration.propagateTraceBaggage,
+    action_name_attribute: configuration.actionNameAttribute,
+    use_allowed_tracing_urls: isNonEmptyArray(configuration.allowedTracingUrls),
+    use_allowed_graph_ql_urls: isNonEmptyArray(configuration.allowedGraphQlUrls),
+    use_track_graph_ql_payload: hasGraphQlPayloadTracking(configuration.allowedGraphQlUrls),
+    use_track_graph_ql_response_errors: hasGraphQlResponseErrorsTracking(configuration.allowedGraphQlUrls),
+    selected_tracing_propagators: getSelectedTracingPropagators(configuration),
+    default_privacy_level: configuration.defaultPrivacyLevel,
+    enable_privacy_for_action_name: configuration.enablePrivacyForActionName,
+    use_excluded_activity_urls: isNonEmptyArray(configuration.excludedActivityUrls),
+    use_worker_url: !!configuration.workerUrl,
+    compress_intake_requests: configuration.compressIntakeRequests,
+    track_views_manually: configuration.trackViewsManually,
+    track_user_interactions: configuration.trackUserInteractions,
+    track_resources: configuration.trackResources,
+    track_long_task: configuration.trackLongTasks,
+    plugins: configuration.plugins?.map((plugin) => ({
+      name: plugin.name,
+      ...plugin.getConfigurationTelemetry?.(),
+    })),
+    track_feature_flags_for_events: configuration.trackFeatureFlagsForEvents,
+    remote_configuration_id: getRemoteConfigurationId(configuration),
+    profiling_sample_rate: configuration.profilingSampleRate,
+    use_remote_configuration_proxy: !!configuration.remoteConfigurationProxy,
+    track_resource_headers: getTrackResourceHeadersTelemetryValue(configuration.trackResourceHeaders),
+    ...baseSerializedConfiguration,
+  } satisfies RawTelemetryConfiguration
+}

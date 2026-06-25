@@ -1,4 +1,3 @@
-import type { DatadogLogs } from '@datadog/browser-logs'
 import { DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT } from '@datadog/browser-logs/src/domain/configuration'
 import { test, expect } from '@playwright/test'
 import { createTest, createWorker } from '../lib/framework'
@@ -10,8 +9,6 @@ declare global {
   interface Window {
     myServiceWorker: ServiceWorkerRegistration
   }
-  // Used in evaluateInWorker callbacks (code runs in the service worker global scope)
-  var DD_LOGS: DatadogLogs | undefined
 }
 
 test.describe('logs', () => {
@@ -22,7 +19,7 @@ test.describe('logs', () => {
         test.skip(browserName !== 'chromium', 'Non-Chromium browsers do not support ES modules in Service Workers')
 
         await evaluateInWorker(() => {
-          DD_LOGS!.logger.log('Some message')
+          self.DD_LOGS!.logger.log('Some message')
         })
 
         await flushEvents()
@@ -41,7 +38,7 @@ test.describe('logs', () => {
         )
 
         await evaluateInWorker(() => {
-          DD_LOGS!.logger.log('Other message')
+          self.DD_LOGS!.logger.log('Other message')
         })
 
         await flushEvents()

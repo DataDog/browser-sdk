@@ -62,7 +62,7 @@ export function createApp(id: string, title: string, borderColor: string) {
   })
 
   createButton(container, 'feature-operation', () => {
-    window.DD_RUM.startFeatureOperation(`${id}-feature-operation`)
+    window.DD_RUM.startOperation(`${id}-feature-operation`)
   })
 
   createButton(container, 'view', () => {

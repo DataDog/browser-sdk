@@ -1,0 +1,33 @@
+import { getType } from '@datadog/js-core/util'
+import { display } from './display'
+
+export type MatchOption = string | RegExp | ((value: string) => boolean)
+
+export function isMatchOption(item: unknown): item is MatchOption {
+  const itemType = getType(item)
+  return itemType === 'string' || itemType === 'function' || item instanceof RegExp
+}
+
+/**
+ * Returns true if value can be matched by at least one of the provided MatchOptions.
+ * When comparing strings, setting useStartsWith to true will compare the value with the start of
+ * the option, instead of requiring an exact match.
+ */
+export function matchList(list: MatchOption[], value: string, useStartsWith = false): boolean {
+  return list.some((item) => {
+    try {
+      if (typeof item === 'function') {
+        return item(value)
+      } else if (item instanceof RegExp) {
+        // Prevent stateful matching
+        item.lastIndex = 0
+        return item.test(value)
+      } else if (typeof item === 'string') {
+        return useStartsWith ? value.startsWith(item) : item === value
+      }
+    } catch (e) {
+      display.error(e)
+    }
+    return false
+  })
+}

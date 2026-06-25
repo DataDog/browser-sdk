@@ -1,0 +1,114 @@
+import { ONE_MINUTE } from '@datadog/js-core/time'
+import type { Clock } from '../../../test'
+import { mockClock } from '../../../test'
+import { noop } from '../../tools/utils/functionUtils'
+import { createEventRateLimiter } from './createEventRateLimiter'
+import type { EventRateLimiter } from './createEventRateLimiter'
+
+describe('createEventRateLimiter', () => {
+  let eventLimiter: EventRateLimiter | undefined
+  let clock: Clock
+  const limit = 1
+  beforeEach(() => {
+    clock = mockClock()
+  })
+
+  it('returns false if the limit is not reached', () => {
+    eventLimiter = createEventRateLimiter('error', noop, limit)
+
+    expect(eventLimiter.isLimitReached()).toBe(false)
+  })
+
+  it('returns true if the limit is reached', () => {
+    eventLimiter = createEventRateLimiter('error', noop, limit)
+
+    eventLimiter.isLimitReached()
+    expect(eventLimiter.isLimitReached()).toBe(true)
+  })
+
+  it('returns false again when one minute is passed after the first counted error', () => {
+    eventLimiter = createEventRateLimiter('error', noop, limit)
+
+    eventLimiter.isLimitReached()
+    eventLimiter.isLimitReached()
+    clock.tick(ONE_MINUTE)
+    expect(eventLimiter.isLimitReached()).toBe(false)
+  })
+
+  it('calls the "onLimitReached" callback with the "limit reached" message when the limit is reached', () => {
+    const onLimitReachedSpy = jasmine.createSpy<(message: string) => void>()
+    eventLimiter = createEventRateLimiter('error', onLimitReachedSpy, limit)
+
+    eventLimiter.isLimitReached()
+    eventLimiter.isLimitReached()
+    expect(onLimitReachedSpy).toHaveBeenCalledOnceWith('Reached max number of errors by minute: 1')
+  })
+
+  it('returns false when called from the "onLimitReached" callback to bypass the limit for the "limit reached" error', () => {
+    eventLimiter = createEventRateLimiter(
+      'error',
+      () => {
+        expect(eventLimiter!.isLimitReached()).toBe(false)
+      },
+      limit
+    )
+
+    eventLimiter.isLimitReached()
+    eventLimiter.isLimitReached()
+  })
+
+  it('does not call the "onLimitReached" callback more than once when the limit is reached', () => {
+    const onLimitReachedSpy = jasmine.createSpy<(message: string) => void>()
+    eventLimiter = createEventRateLimiter('error', onLimitReachedSpy, limit)
+
+    eventLimiter.isLimitReached()
+    eventLimiter.isLimitReached()
+    eventLimiter.isLimitReached()
+    eventLimiter.isLimitReached()
+    eventLimiter.isLimitReached()
+    expect(onLimitReachedSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('returns true after reaching the limit even if the "onLimitReached" callback throws', () => {
+    eventLimiter = createEventRateLimiter(
+      'error',
+      () => {
+        throw new Error('oops')
+      },
+      limit
+    )
+
+    eventLimiter.isLimitReached()
+    expect(() => eventLimiter!.isLimitReached()).toThrow()
+    expect(eventLimiter.isLimitReached()).toBe(true)
+    expect(eventLimiter.isLimitReached()).toBe(true)
+  })
+
+  it('returns true when the limit is reached and the "onLimitReached" callback does not call "isLimitReached" (ex: excluded by beforeSend)', () => {
+    eventLimiter = createEventRateLimiter(
+      'error',
+      () => {
+        // do not call isLimitReached
+      },
+      limit
+    )
+
+    eventLimiter.isLimitReached()
+    eventLimiter.isLimitReached()
+    expect(eventLimiter.isLimitReached()).toBe(true)
+  })
+
+  it('returns false only once when called from the "onLimitReached" callback (edge case)', () => {
+    eventLimiter = createEventRateLimiter(
+      'error',
+      () => {
+        expect(eventLimiter!.isLimitReached()).toBe(false)
+        expect(eventLimiter!.isLimitReached()).toBe(true)
+      },
+      limit
+    )
+
+    eventLimiter.isLimitReached()
+    eventLimiter.isLimitReached()
+  })
+})

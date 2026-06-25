@@ -1,4 +1,5 @@
-import { ONE_HOUR, ONE_MINUTE, SESSION_STORE_KEY, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
+import { ONE_HOUR, ONE_MINUTE } from '@datadog/js-core/time'
+import { SESSION_STORE_KEY, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
 import { RecordType } from '@datadog/browser-rum/src/types'
 import { test, expect } from '@playwright/test'
 import { setCookie } from '../../lib/helpers/browser'
