@@ -1,5 +1,5 @@
-import { registerCleanupTask, replaceMockableWithSpy } from '@datadog/browser-core/test'
 import { Observable } from '@datadog/browser-core'
+import { registerCleanupTask, replaceMockableWithSpy } from '@datadog/browser-core/test'
 import { initDebuggerTransport } from '../domain/api'
 import { startDeliveryApiPolling } from '../domain/deliveryApi'
 import { display } from '../domain/display'
@@ -39,6 +39,7 @@ describe('datadogDebugger', () => {
     replaceMockableWithSpy(startDebuggerBatch).and.callFake(() => ({
       flushObservable: new Observable(),
       prepareUrgentFlushObservable: new Observable(),
+      isEmpty: false,
       add: () => undefined,
       flush: () => undefined,
       forceFlush: () => undefined,
@@ -72,6 +73,7 @@ describe('datadogDebugger', () => {
     replaceMockableWithSpy(startDebuggerBatch).and.callFake(() => ({
       flushObservable: new Observable(),
       prepareUrgentFlushObservable: new Observable(),
+      isEmpty: false,
       add: () => undefined,
       flush: () => undefined,
       forceFlush: () => undefined,

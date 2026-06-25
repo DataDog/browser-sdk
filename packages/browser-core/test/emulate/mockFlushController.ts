@@ -24,6 +24,9 @@ export function createMockFlushController() {
     flushObservable,
     prepareUrgentFlushObservable,
     forceFlush: jasmine.createSpy<FlushController['forceFlush']>(),
+    get messagesCount() {
+      return currentMessagesCount
+    },
   } satisfies FlushController
 
   return {

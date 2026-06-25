@@ -17,6 +17,7 @@ import type { FlushEvent, FlushReason, UrgentFlushReason } from './flushControll
 export const MESSAGE_BYTES_LIMIT = 256 * ONE_KIBI_BYTE
 
 export interface Batch {
+  isEmpty: boolean
   add: (message: Context) => void
   upsert: (message: Context, key: string) => void
   forceFlush: (reason: FlushReason) => void
@@ -115,6 +116,9 @@ export function createBatch({
   }
 
   return {
+    get isEmpty() {
+      return flushController.messagesCount === 0
+    },
     add: addOrUpdate,
     upsert: addOrUpdate,
     prepareUrgentFlushObservable: flushController.prepareUrgentFlushObservable,
