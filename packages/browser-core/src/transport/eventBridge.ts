@@ -1,5 +1,5 @@
+import { globalObject } from '@datadog/js-core/util'
 import { display } from '../tools/display'
-import { globalObject } from '../tools/globalObject'
 import type { DefaultPrivacyLevel } from '../domain/configuration'
 
 export interface BrowserWindowWithEventBridge {

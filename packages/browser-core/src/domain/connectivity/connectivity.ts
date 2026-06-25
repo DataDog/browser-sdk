@@ -1,5 +1,5 @@
-import type { EffectiveType, NetworkInterface } from '../../browser/browser.types'
-import { globalObject } from '../../tools/globalObject'
+import type { EffectiveType, NetworkInterface } from '@datadog/js-core/util'
+import { globalObject } from '@datadog/js-core/util'
 
 export interface Connectivity {
   status: 'connected' | 'not_connected'
@@ -9,11 +9,11 @@ export interface Connectivity {
 }
 
 export function getConnectivity(): Connectivity {
-  const navigator = globalObject.navigator
+  const { navigator } = globalObject
 
   return {
-    status: navigator.onLine ? 'connected' : 'not_connected',
-    interfaces: navigator.connection?.type ? [navigator.connection.type] : undefined,
-    effective_type: navigator.connection?.effectiveType,
+    status: navigator?.onLine ? 'connected' : 'not_connected',
+    interfaces: navigator?.connection?.type ? [navigator.connection.type] : undefined,
+    effective_type: navigator?.connection?.effectiveType,
   }
 }

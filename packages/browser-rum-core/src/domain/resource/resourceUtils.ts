@@ -1,13 +1,7 @@
 import { elapsed, toServerDuration } from '@datadog/js-core/time'
 import type { Duration, RelativeTime } from '@datadog/js-core/time'
-import {
-  getPathName,
-  isValidUrl,
-  ResourceType,
-  isIntakeUrl,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
-} from '@datadog/browser-core'
+import { ResourceType, isExperimentalFeatureEnabled, ExperimentalFeature, isIntakeUrl } from '@datadog/browser-core'
+import { getPathName, isValidUrl } from '@datadog/js-core/util'
 
 import type { RumPerformanceNavigationTiming, RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 

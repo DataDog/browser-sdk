@@ -1,5 +1,5 @@
-import type { GlobalObject } from '../globalObject'
-import { globalObject } from '../globalObject'
+import type { GlobalObject } from './globalObject'
+import { globalObject } from './globalObject'
 
 export function normalizeUrl(url: string) {
   return buildUrl(url, globalObject.location?.href).href

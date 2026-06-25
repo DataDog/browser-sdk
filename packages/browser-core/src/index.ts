@@ -81,11 +81,12 @@ export {
 export * from './tools/display'
 export type { Encoder, EncoderResult } from './tools/encoder'
 export { createIdentityEncoder } from './tools/encoder'
-export * from './tools/utils/urlPolyfill'
+export { normalizeUrl, isValidUrl, getPathName, buildUrl, getPristineWindow } from '@datadog/js-core/util'
 export * from './tools/utils/arrayUtils'
 
 export * from './tools/serialisation/sanitize'
-export * from './tools/globalObject'
+export { globalObject, isWorkerEnvironment } from '@datadog/js-core/util'
+export type { GlobalObject } from '@datadog/js-core/util'
 export { AbstractLifeCycle } from './tools/abstractLifeCycle'
 export * from './domain/eventRateLimiter/createEventRateLimiter'
 export * from './tools/utils/browserDetection'
@@ -105,12 +106,11 @@ export { NonErrorPrefix } from './domain/error/error.types'
 export type { Context, ContextArray, ContextValue } from './tools/serialisation/context'
 export { getCookie, getInitCookie, setCookie, deleteCookie, resetInitCookies } from './browser/cookie'
 export { isCookieStoreSupported } from './browser/cookieAccess'
+export type { WeakRef, WeakRefConstructor } from './browser/browser.types'
 export type {
   CookieStore,
-  WeakRef,
-  WeakRefConstructor,
   NetworkInformation,
-  BrowserNavigator,
+  Navigator,
   NetworkInterface,
   EffectiveType,
   Profiler,
@@ -122,7 +122,7 @@ export type {
   ProfilerSample,
   ProfilerResource,
   SampleBufferFullEvent,
-} from './browser/browser.types'
+} from '@datadog/js-core/util'
 export type { XhrCompleteContext, XhrStartContext, XhrContext } from './browser/xhrObservable'
 export { initXhrObservable } from './browser/xhrObservable'
 export type { FetchResolveContext, FetchStartContext, FetchContext } from './browser/fetchObservable'
