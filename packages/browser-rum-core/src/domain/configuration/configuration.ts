@@ -284,6 +284,8 @@ export interface RumInitConfiguration extends InitConfiguration {
    * (`url`), value extraction (`extractor`), and `location`. By default, both request and
    * response headers are captured; set `location` to `'request'` or `'response'` to restrict
    * to one.
+   * - `{ includeDefaults: true }` (as an array entry): expands to {@link DEFAULT_TRACKED_RESOURCE_HEADERS}
+   * in place, so the defaults can be combined with custom matchers without listing them manually.
    *
    * Headers whose names match a built-in sensitive-data pattern are always dropped, regardless
    * of the configured matchers. The pattern blocks headers whose names contain: `token`, `cookie`,
@@ -294,10 +296,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @defaultValue false (disabled)
    * @example
    * // Collect default headers plus custom ones for all URLs
-   * trackResourceHeaders: [
-   *   ...DEFAULT_TRACKED_RESOURCE_HEADERS.map((h) => ({ name: h })),
-   *   { name: 'x-request-id' },
-   * ]
+   * trackResourceHeaders: [{ includeDefaults: true }, { name: 'x-request-id' }]
    * @example
    * // URL-scoped rule: capture specific response headers only for calls to /api
    * trackResourceHeaders: [{ url: /\/api\//, name: 'cache-control', location: 'response' }]
@@ -305,7 +304,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    * // Extract a partial value from a header
    * trackResourceHeaders: [{ url: /\/api\//, name: 'server-timing', extractor: /dur=(\d+)/, location: 'response' }]
    */
-  trackResourceHeaders?: boolean | MatchHeader[] | undefined
+  trackResourceHeaders?: boolean | Array<MatchHeader | { includeDefaults: true }> | undefined
 
   /**
    * Enables collection of long task events.
@@ -576,6 +575,10 @@ function validateAndBuildGraphQlOptions(initConfiguration: RumInitConfiguration)
 
 const VALID_HEADER_LOCATIONS = ['request', 'response', 'any']
 
+function shouldIncludeDefaultHeaders(item: MatchHeader | { includeDefaults: true }): item is { includeDefaults: true } {
+  return isIndexableObject(item) && item.includeDefaults === true
+}
+
 function validateAndBuildTrackResourceHeaders(initConfiguration: RumInitConfiguration): MatchHeader[] {
   const option = initConfiguration.trackResourceHeaders
 
@@ -600,6 +603,10 @@ function validateAndBuildTrackResourceHeaders(initConfiguration: RumInitConfigur
   const result: MatchHeader[] = []
 
   option.forEach((item, index) => {
+    if (shouldIncludeDefaultHeaders(item)) {
+      DEFAULT_TRACKED_RESOURCE_HEADERS.forEach((name) => result.push({ name }))
+      return
+    }
     if (!isIndexableObject(item) || !isMatchOption(item.name)) {
       display.warn(`trackResourceHeaders[${index}] should be a MatchHeader object with a 'name' property`)
       return

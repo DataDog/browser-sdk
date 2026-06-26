@@ -434,6 +434,24 @@ describe('validateAndBuildRumConfiguration', () => {
         expect(result).toEqual(DEFAULT_TRACKED_RESOURCE_HEADERS.map((name) => ({ name })))
       })
 
+      it('expands { includeDefaults: true } to the default headers', () => {
+        const result = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackResourceHeaders: [{ includeDefaults: true }],
+        })!.trackResourceHeaders
+
+        expect(result).toEqual(DEFAULT_TRACKED_RESOURCE_HEADERS.map((name) => ({ name })))
+      })
+
+      it('combines { includeDefaults: true } with custom matchers in array order', () => {
+        const result = validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackResourceHeaders: [{ includeDefaults: true }, { name: 'x-custom' }],
+        })!.trackResourceHeaders
+
+        expect(result).toEqual([...DEFAULT_TRACKED_RESOURCE_HEADERS.map((name) => ({ name })), { name: 'x-custom' }])
+      })
+
       it('accepts a MatchHeader with only name', () => {
         const result = validateAndBuildRumConfiguration({
           ...DEFAULT_INIT_CONFIGURATION,
