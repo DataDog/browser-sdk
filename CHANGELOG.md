@@ -15,6 +15,46 @@
 
 ---
 
+## v7.4.0
+
+**Public Changes:**
+
+- ✨Rename feature operation APIs to operation ([#4810](https://github.com/DataDog/browser-sdk/pull/4810))
+- ✨[RUM-16632] add profiling bridge mode support ([#4747](https://github.com/DataDog/browser-sdk/pull/4747))
+- 🐛 [VULN-81506] fix prototype pollution via mergeInto and tryJsonParse ([#4820](https://github.com/DataDog/browser-sdk/pull/4820))
+- 🐛 Fix flaky stylesheet rules test ([#4803](https://github.com/DataDog/browser-sdk/pull/4803))
+- 🐛 [Profiler] Fix empty session ID & quota check on renew ([#4766](https://github.com/DataDog/browser-sdk/pull/4766))
+- 🐛 Tolerate an invalid view URL in the developer extension ([#4773](https://github.com/DataDog/browser-sdk/pull/4773))
+- 📝 add deterministic sampling warning to v7.0.0 release notes ([#4805](https://github.com/DataDog/browser-sdk/pull/4805))
+- 📝 use typedoc for js-core ([#4801](https://github.com/DataDog/browser-sdk/pull/4801))
+
+**Internal Changes:**
+
+- 👷 Update Node.js to v25 ([#4818](https://github.com/DataDog/browser-sdk/pull/4818))
+- 👷 Update Puppeteer to v25 ([#4819](https://github.com/DataDog/browser-sdk/pull/4819))
+- 👷 Update dependency babel-loader to v10 ([#4817](https://github.com/DataDog/browser-sdk/pull/4817))
+- 👷 Update all non-major dependencies ([#4816](https://github.com/DataDog/browser-sdk/pull/4816))
+- 👷 Update dependency undici to v8.5.0 [SECURITY] ([#4808](https://github.com/DataDog/browser-sdk/pull/4808))
+- 👷 Update Angular, Vue compiler-dom, and Vite dependencies ([#4799](https://github.com/DataDog/browser-sdk/pull/4799))
+- 👷 Add API surface linting for @datadog/js-core via API Extractor ([#4804](https://github.com/DataDog/browser-sdk/pull/4804))
+- 👷 Bump @datadog/js-core to 0.0.3 ([#4800](https://github.com/DataDog/browser-sdk/pull/4800))
+- 👷 [RUM-16634] Require WebView wildcard to match at least one character ([#4785](https://github.com/DataDog/browser-sdk/pull/4785))
+- 👷 Improve checkTelemetryErrors: exclude deprecated datacenters and add detailed logging ([#4794](https://github.com/DataDog/browser-sdk/pull/4794))
+- 👷 migrate module builds from TypeScript compiler API to tsdown ([#4767](https://github.com/DataDog/browser-sdk/pull/4767))
+- 👷 Update dependency @angular/common to v22.0.1 [SECURITY] ([#4789](https://github.com/DataDog/browser-sdk/pull/4789))
+- 👷 Update dependency @angular/core to v22.0.1 [SECURITY] ([#4786](https://github.com/DataDog/browser-sdk/pull/4786))
+- 👷 Allow passing a full commit hash to `json-schemas --update` ([#4784](https://github.com/DataDog/browser-sdk/pull/4784))
+- 👷 also pin angular-cli deps on angular-app ([#4783](https://github.com/DataDog/browser-sdk/pull/4783))
+- 👷 fix performance benchmark CI and rename e2e setup script ([#4781](https://github.com/DataDog/browser-sdk/pull/4781))
+- 👷 Update all non-major dependencies ([#4777](https://github.com/DataDog/browser-sdk/pull/4777))
+- 👷 Update dependency @vitejs/plugin-react to v6 ([#4776](https://github.com/DataDog/browser-sdk/pull/4776))
+- 👷 Update dependency webpack-cli to v7 ([#4780](https://github.com/DataDog/browser-sdk/pull/4780))
+- 👷 Update dependency vite to v8 ([#4778](https://github.com/DataDog/browser-sdk/pull/4778))
+- 👷 use rum-events-format as a yarn dependency ([#4772](https://github.com/DataDog/browser-sdk/pull/4772))
+- ♻️ move hook and merge utilities from browser-core to @datadog/js-core ([#4797](https://github.com/DataDog/browser-sdk/pull/4797))
+- ♻️ Migrate browser-core monitoring/display to @datadog/js-core ([#4758](https://github.com/DataDog/browser-sdk/pull/4758))
+- 🔧 set ephemeral:false for staging branches ([#4813](https://github.com/DataDog/browser-sdk/pull/4813))
+
 ## v7.3.0
 
 **Public Changes:**

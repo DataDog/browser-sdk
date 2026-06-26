@@ -343,13 +343,7 @@ describe('logs limitation', () => {
 
       expect(serverLogs.length).toEqual(1)
       expect(serverLogs[0].message).toBe('foo')
-      expect(reportErrorSpy).toHaveBeenCalledTimes(1)
-      expect(reportErrorSpy.mock.calls[0][0]).toEqual(
-        expect.objectContaining({
-          message,
-          source: ErrorSource.AGENT,
-        })
-      )
+      expect(reportErrorSpy).toHaveBeenCalledWith(message)
     })
 
     it(`does not take discarded ${status} logs into account (message: "${message}")`, () => {
@@ -398,12 +392,7 @@ describe('logs limitation', () => {
       expect(serverLogs.length).toEqual(2)
       expect(serverLogs[0].message).toEqual('foo')
       expect(serverLogs[1].message).toEqual('baz')
-      expect(reportErrorSpy).toHaveBeenCalledTimes(1)
-      expect(reportErrorSpy.mock.calls[0][0]).toEqual(
-        expect.objectContaining({
-          source: ErrorSource.AGENT,
-        })
-      )
+      expect(reportErrorSpy).toHaveBeenCalledWith(message)
     })
 
     it(`allows to send logs with a different status when reaching the limit (message: "${message}")`, () => {
@@ -424,12 +413,7 @@ describe('logs limitation', () => {
       expect(serverLogs.length).toEqual(2)
       expect(serverLogs[0].message).toEqual('foo')
       expect(serverLogs[1].message).toEqual('baz')
-      expect(reportErrorSpy).toHaveBeenCalledTimes(1)
-      expect(reportErrorSpy.mock.calls[0][0]).toEqual(
-        expect.objectContaining({
-          source: ErrorSource.AGENT,
-        })
-      )
+      expect(reportErrorSpy).toHaveBeenCalledWith(message)
     })
   })
 
@@ -446,11 +430,6 @@ describe('logs limitation', () => {
 
     expect(serverLogs.length).toEqual(1)
     expect(serverLogs[0].message).toEqual('foo')
-    expect(reportErrorSpy).toHaveBeenCalledTimes(1)
-    expect(reportErrorSpy.mock.calls[0][0]).toEqual(
-      expect.objectContaining({
-        source: ErrorSource.AGENT,
-      })
-    )
+    expect(reportErrorSpy).toHaveBeenCalledWith('Reached max number of customs by minute: 1')
   })
 })

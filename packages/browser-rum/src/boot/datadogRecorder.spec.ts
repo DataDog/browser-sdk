@@ -281,7 +281,7 @@ describe.skipIf(!__BUILD_ENV__WORKER_STRING__)('startRecording', () => {
 })
 
 function flushSegment(lifeCycle: LifeCycle) {
-  lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, { reason: PageExitReason.UNLOADING })
+  lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.UNLOADING)
 }
 
 function createRandomString(minLength: number) {

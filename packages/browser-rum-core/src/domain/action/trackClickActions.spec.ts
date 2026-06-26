@@ -225,9 +225,7 @@ describe('trackClickActions', () => {
 
     clock.tick(12)
 
-    lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, {
-      reason: PageExitReason.HIDDEN,
-    })
+    lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.HIDDEN)
 
     expect(events.length).toBe(1)
     expect(events[0].duration).toBe(12 as Duration)

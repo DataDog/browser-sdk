@@ -33,6 +33,7 @@ export type {
   StartRecordingOptions,
   AddDurationVitalOptions,
   DurationVitalOptions,
+  OperationOptions,
   FeatureOperationOptions,
   FailureReason,
   ActionOptions,

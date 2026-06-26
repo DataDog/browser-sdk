@@ -1,31 +1,43 @@
 import { DOCS_TROUBLESHOOTING, MORE_DETAILS, display } from '../tools/display'
 import type { Context } from '../tools/serialisation/context'
 import { objectValues } from '../tools/utils/polyfills'
-import { isPageExitReason } from '../browser/pageMayExitObservable'
+import { isPageExitReason, createPageMayExitObservable } from '../browser/pageMayExitObservable'
 import { jsonStringify } from '../tools/serialisation/jsonStringify'
+import { createIdentityEncoder } from '../tools/encoder'
 import type { Encoder, EncoderResult } from '../tools/encoder'
 import { computeBytesCount, ONE_KIBI_BYTE } from '../tools/utils/byteUtils'
-import type { HttpRequest, Payload } from './httpRequest'
-import type { FlushController, FlushEvent } from './flushController'
+import { mockable } from '../tools/mockable'
+import type { EndpointBuilder } from '../domain/configuration'
+import type { Observable } from '../tools/observable'
+import { createHttpRequest } from './httpRequest'
+import type { Payload } from './httpRequest'
+import { createFlushController } from './flushController'
+import type { FlushEvent, FlushReason, UrgentFlushReason } from './flushController'
 
 export const MESSAGE_BYTES_LIMIT = 256 * ONE_KIBI_BYTE
 
 export interface Batch {
-  flushController: FlushController
+  isEmpty: boolean
   add: (message: Context) => void
   upsert: (message: Context, key: string) => void
+  forceFlush: (reason: FlushReason) => void
+  prepareUrgentFlushObservable: Observable<UrgentFlushReason>
+  flushObservable: Observable<FlushEvent>
   stop: () => void
 }
 
 export function createBatch({
-  encoder,
-  request,
-  flushController,
+  encoder = createIdentityEncoder(),
+  endpoints,
+  reportError,
 }: {
-  encoder: Encoder
-  request: HttpRequest
-  flushController: FlushController
+  encoder?: Encoder
+  endpoints: EndpointBuilder[]
+  reportError: (message: string) => void
 }): Batch {
+  const request = mockable(createHttpRequest)(endpoints, reportError)
+  const pageMayExitObservable = mockable(createPageMayExitObservable)()
+  const flushController = mockable(createFlushController)({ pageMayExitObservable })
   let upsertBuffer: { [key: string]: string } = {}
   const flushSubscription = flushController.flushObservable.subscribe((event) => flush(event))
 
@@ -104,9 +116,14 @@ export function createBatch({
   }
 
   return {
-    flushController,
+    get isEmpty() {
+      return flushController.messagesCount === 0
+    },
     add: addOrUpdate,
     upsert: addOrUpdate,
+    prepareUrgentFlushObservable: flushController.prepareUrgentFlushObservable,
+    forceFlush: flushController.forceFlush,
+    flushObservable: flushController.flushObservable,
     stop: flushSubscription.unsubscribe,
   }
 }

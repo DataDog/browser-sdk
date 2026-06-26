@@ -78,6 +78,12 @@ describe('storeContextManager', () => {
     expect(localStorage.getItem(buildStorageKey(PRODUCT_KEY, CustomerDataType.GlobalContext))).toBe('{"qux":"qix"}')
   })
 
+  it('should return empty context when localStorage contains invalid JSON', () => {
+    localStorage.setItem(STORAGE_KEY, 'not valid json')
+    const manager = createStoredContextManager()
+    expect(manager.getContext()).toEqual({})
+  })
+
   function createStoredContextManager({
     initialContext,
     productKey = PRODUCT_KEY,

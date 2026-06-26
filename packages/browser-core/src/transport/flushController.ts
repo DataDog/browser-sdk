@@ -7,7 +7,8 @@ import type { TimeoutId } from '../tools/timer'
 import { clearTimeout, setTimeout } from '../tools/timer'
 import { RECOMMENDED_REQUEST_BYTES_LIMIT } from './httpRequest'
 
-export type FlushReason = PageExitReason | 'duration_limit' | 'bytes_limit' | 'messages_limit' | 'session_expire'
+export type UrgentFlushReason = PageExitReason
+export type FlushReason = UrgentFlushReason | 'duration_limit' | 'bytes_limit' | 'messages_limit' | 'session_expire'
 
 /**
  * flush automatically, aim to be lower than ALB connection timeout
@@ -30,7 +31,6 @@ export interface FlushEvent {
 
 interface FlushControllerOptions {
   pageMayExitObservable: Observable<PageMayExitEvent>
-  sessionExpireObservable: Observable<void>
 }
 
 /**
@@ -38,23 +38,21 @@ interface FlushControllerOptions {
  * to happen. The implementation is designed to support both synchronous and asynchronous usages,
  * but relies on invariants described in each method documentation to keep a coherent state.
  */
-export function createFlushController({ pageMayExitObservable, sessionExpireObservable }: FlushControllerOptions) {
+export function createFlushController({ pageMayExitObservable }: FlushControllerOptions) {
   let forcedFlushReason: FlushReason | undefined
-  const preparePageExitFlushObservable = new Observable<PageExitReason>()
+  const prepareUrgentFlushObservable = new Observable<UrgentFlushReason>()
   const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => {
     forcedFlushReason = event.reason
     try {
-      preparePageExitFlushObservable.notify(event.reason)
+      prepareUrgentFlushObservable.notify(event.reason)
     } finally {
       forcedFlushReason = undefined
     }
     flush(event.reason)
   })
-  const sessionExpireSubscription = sessionExpireObservable.subscribe(() => flush('session_expire'))
 
   const flushObservable = new Observable<FlushEvent>(() => () => {
     pageMayExitSubscription.unsubscribe()
-    sessionExpireSubscription.unsubscribe()
   })
 
   let currentBytesCount = 0
@@ -95,7 +93,8 @@ export function createFlushController({ pageMayExitObservable, sessionExpireObse
 
   return {
     flushObservable,
-    preparePageExitFlushObservable,
+    prepareUrgentFlushObservable,
+    forceFlush: flush,
     get messagesCount() {
       return currentMessagesCount
     },

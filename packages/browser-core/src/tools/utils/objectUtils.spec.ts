@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getConstructorName } from './objectUtils'
+import { getConstructorName, tryJsonParse } from './objectUtils'
 
 describe('objectUtils', () => {
   describe('getConstructorName', () => {
@@ -38,6 +38,27 @@ describe('objectUtils', () => {
     it('should return undefined when the constructor name is not a non-empty string', () => {
       expect(getConstructorName({ constructor: { name: '' } })).toBeUndefined()
       expect(getConstructorName({ constructor: { name: 42 } })).toBeUndefined()
+    })
+  })
+
+  describe('tryJsonParse', () => {
+    it('should parse valid JSON', () => {
+      expect(tryJsonParse('{"a":1}')).toEqual({ a: 1 })
+    })
+
+    it('should return undefined for invalid JSON', () => {
+      expect(tryJsonParse('not json')).toBeUndefined()
+    })
+
+    it('should strip __proto__ key', () => {
+      const result = tryJsonParse('{"a":1,"__proto__":{"injected":true}}')
+      expect(Object.prototype.hasOwnProperty.call(result, '__proto__')).toBe(false)
+      expect(({} as any).injected).toBeUndefined()
+    })
+
+    it('should strip nested __proto__ key', () => {
+      tryJsonParse('{"a":{"__proto__":{"injected":true}}}')
+      expect(({} as any).injected).toBeUndefined()
     })
   })
 })

@@ -345,7 +345,7 @@ describe('view lifecycle', () => {
 
         expect(getViewEndCount()).toEqual(0)
 
-        lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, { reason: exitReason })
+        lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, exitReason)
 
         expect(getViewEndCount()).toEqual(0)
       })
@@ -356,7 +356,7 @@ describe('view lifecycle', () => {
 
       expect(getViewUpdateCount()).toEqual(1)
 
-      lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, { reason: PageExitReason.UNLOADING })
+      lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.UNLOADING)
 
       expect(getViewUpdateCount()).toEqual(2)
     })
@@ -366,7 +366,7 @@ describe('view lifecycle', () => {
 
       expect(getViewCreateCount()).toEqual(1)
 
-      lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, { reason: PageExitReason.UNLOADING })
+      lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.UNLOADING)
 
       expect(getViewCreateCount()).toEqual(1)
     })
@@ -374,7 +374,7 @@ describe('view lifecycle', () => {
     it('should not set the view as inactive on unloading', () => {
       const { getViewUpdate, getViewUpdateCount } = viewTest
 
-      lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, { reason: PageExitReason.UNLOADING })
+      lifeCycle.notify(LifeCycleEventType.PREPARE_URGENT_FLUSH, PageExitReason.UNLOADING)
 
       expect(getViewUpdate(getViewUpdateCount() - 1).isActive).toBe(true)
     })
