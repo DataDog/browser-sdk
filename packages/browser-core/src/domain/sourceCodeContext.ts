@@ -1,3 +1,4 @@
+import { globalObject } from '../tools/globalObject'
 import { computeStackTrace } from '../tools/stackTrace/computeStackTrace'
 import { isEmptyObject } from '../tools/utils/objectUtils'
 import { addTelemetryUsage } from './telemetry'
@@ -17,7 +18,8 @@ const processedStacks = new Set<string>()
 let hasFiredTelemetry = false
 
 function syncSourceCodeContext() {
-  const sourceCodeContext = (window as BrowserWindow).DD_SOURCE_CODE_CONTEXT
+  // globalObject.window is undefined in service worker environments
+  const sourceCodeContext = (globalObject.window as BrowserWindow | undefined)?.DD_SOURCE_CODE_CONTEXT
   if (!sourceCodeContext) {
     return
   }
