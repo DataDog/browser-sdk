@@ -21,7 +21,7 @@ type RumResourceEventWithWebSocket = RumResourceEvent & {
 
 test.describe('rum websockets', () => {
   createTest('collect websocket-connecting vital and websocket resource when the connection closes')
-    .withRum({ enableExperimentalFeatures: ['track_web_sockets'] })
+    .withRum({ enableExperimentalFeatures: ['track_websockets'] })
     .withBody(WebSocketPage.testBody())
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       const ws = new WebSocketPage(page)
@@ -49,7 +49,7 @@ test.describe('rum websockets', () => {
     })
 
   createTest('websocket resource ends with close_event when the server closes the echo socket')
-    .withRum({ enableExperimentalFeatures: ['track_web_sockets'] })
+    .withRum({ enableExperimentalFeatures: ['track_websockets'] })
     .withBody(WebSocketPage.testBody())
     .run(async ({ intakeRegistry, flushEvents, page, servers }) => {
       const ws = new WebSocketPage(page)
@@ -68,7 +68,7 @@ test.describe('rum websockets', () => {
     })
 
   createTest('websocket resource is reported with session_end when the session expires')
-    .withRum({ enableExperimentalFeatures: ['track_web_sockets'] })
+    .withRum({ enableExperimentalFeatures: ['track_websockets'] })
     .withBody(WebSocketPage.testBody())
     .run(async ({ intakeRegistry, flushEvents, page, browserContext }) => {
       const ws = new WebSocketPage(page)
@@ -87,7 +87,7 @@ test.describe('rum websockets', () => {
   createTest(
     'websocket resource with session_end is still reported when the session is renewed before resource assembly'
   )
-    .withRum({ enableExperimentalFeatures: ['track_web_sockets'] })
+    .withRum({ enableExperimentalFeatures: ['track_websockets'] })
     .withBody(WebSocketPage.testBody())
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       const ws = new WebSocketPage(page)
@@ -109,7 +109,7 @@ test.describe('rum websockets', () => {
     })
 
   createTest('does not track websocket activity after the session is renewed')
-    .withRum({ enableExperimentalFeatures: ['track_web_sockets'] })
+    .withRum({ enableExperimentalFeatures: ['track_websockets'] })
     .withBody(WebSocketPage.testBody())
     .run(async ({ intakeRegistry, flushEvents, page, browserContext }) => {
       const ws = new WebSocketPage(page)
@@ -130,7 +130,7 @@ test.describe('rum websockets', () => {
     })
 
   createTest('websocket resource keeps end_view_id when the session expires')
-    .withRum({ enableExperimentalFeatures: ['track_web_sockets'] })
+    .withRum({ enableExperimentalFeatures: ['track_websockets'] })
     .withBody(WebSocketPage.testBody())
     .run(async ({ intakeRegistry, flushEvents, page, browserContext }) => {
       const ws = new WebSocketPage(page)
@@ -153,7 +153,7 @@ test.describe('rum websockets', () => {
 
   // This behavior might be updated when we're able to link the websocket connection with APM traces.
   createTest('does not collect websocket vital or resource when trackResources is false')
-    .withRum({ enableExperimentalFeatures: ['track_web_sockets'], trackResources: false })
+    .withRum({ enableExperimentalFeatures: ['track_websockets'], trackResources: false })
     .withBody(WebSocketPage.testBody())
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       const ws = new WebSocketPage(page)
@@ -171,7 +171,7 @@ test.describe('rum websockets', () => {
     })
 
   createTest('websocket resource records different start and end views when it spanned multiple views')
-    .withRum({ enableExperimentalFeatures: ['track_web_sockets'] })
+    .withRum({ enableExperimentalFeatures: ['track_websockets'] })
     .withBody(WebSocketPage.testBody())
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       const ws = new WebSocketPage(page)
