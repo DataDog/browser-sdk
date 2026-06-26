@@ -8,6 +8,12 @@ let lastStartedUrl
 
 const DATADOG_PARAMS = ['c__applicationId', 'c__clientToken', 'c__env', 'c__service', 'c__site']
 
+const cleanUrl = (url) => {
+  const cleanUrl = new URL(url, window.location.origin)
+  DATADOG_PARAMS.forEach((param) => cleanUrl.searchParams.delete(param))
+  return cleanUrl.href
+}
+
 const defaultDatadogRumConfig = {
   trackViewsManually: true,
   trackEarlyRequests: true,
@@ -16,15 +22,11 @@ const defaultDatadogRumConfig = {
   trackUserInteractions: true,
   beforeSend: (event) => {
     if (event.view) {
-      const cleanUrl = new URL(event.view.url, window.location.origin)
-      DATADOG_PARAMS.forEach((param) => cleanUrl.searchParams.delete(param))
-      event.view.url = cleanUrl.href
+      event.view.url = cleanUrl(event.view.url)
       event.view.name = cleanUrl.pathname + cleanUrl.search + cleanUrl.hash
     }
     if (event.resource?.url) {
-      const cleanUrl = new URL(event.resource.url, window.location.origin)
-      DATADOG_PARAMS.forEach((param) => cleanUrl.searchParams.delete(param))
-      event.resource.url = cleanUrl.href
+      event.resource.url = cleanUrl(event.resource.url)
     }
   },
 }
