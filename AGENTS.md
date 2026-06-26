@@ -50,17 +50,27 @@ yarn format
 
 ```
 packages/
-├── core/           # Shared utilities (Observable, configuration, transport)
-├── rum-core/       # Core RUM functionality
-├── rum/            # Full RUM package
-├── rum-slim/       # Lightweight RUM
-├── rum-react/      # React integration
-├── logs/           # Browser logging
-└── worker/         # Web Worker support
+├── browser-core/           # Shared utilities (Observable, configuration, transport)
+├── browser-rum-core/       # Core RUM functionality
+├── browser-rum/            # Full RUM package
+├── browser-rum-slim/       # Lightweight RUM
+├── browser-rum-react/      # React integration
+├── browser-rum-angular/    # Angular integration
+├── browser-rum-vue/        # Vue integration
+├── browser-rum-nextjs/     # Next.js integration
+├── browser-rum-nuxt/       # Nuxt integration
+├── browser-logs/           # Browser logging
+├── browser-worker/         # Web Worker support
+├── browser-debugger/       # Live Debugger (capture function snapshots without code changes)
+└── js-core/                # Runtime-agnostic core utilities shared across Datadog JS SDKs
 
-developer-extension/ # Chrome DevTools extension
+developer-extension/  # Chrome DevTools extension
 
-docs/                # Repository documentation
+remote-configuration/ # Remote configuration schema (mirrors internal repo)
+
+sandbox/              # Local dev sandbox (served by `yarn dev` at localhost:8080)
+
+docs/                 # Repository documentation
 
 test/
 ├── apps/            # Test apps for E2E and performance testing
