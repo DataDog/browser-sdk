@@ -22,8 +22,9 @@ const defaultDatadogRumConfig = {
   trackUserInteractions: true,
   beforeSend: (event) => {
     if (event.view) {
-      event.view.url = cleanUrl(event.view.url)
-      event.view.name = cleanUrl.pathname + cleanUrl.search + cleanUrl.hash
+      const sanitizedViewUrl = new URL(cleanUrl(event.view.url))
+      event.view.url = sanitizedViewUrl.href
+      event.view.name = sanitizedViewUrl.pathname + sanitizedViewUrl.search + sanitizedViewUrl.hash
     }
     if (event.resource?.url) {
       event.resource.url = cleanUrl(event.resource.url)
