@@ -61,7 +61,7 @@
     "ajv": "8.20.0",
     "browserstack-local": "1.5.13",
     "busboy": "1.6.0",
-    "chrome-webstore-upload": "4.0.4",
+    "chrome-webstore-upload": "6.0.0",
     "cors": "2.8.6",
     "emoji-name-map": "2.0.3",
     "eslint": "10.5.0",
