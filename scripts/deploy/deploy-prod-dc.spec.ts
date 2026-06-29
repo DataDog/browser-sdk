@@ -2,8 +2,9 @@ import assert from 'node:assert/strict'
 import path from 'node:path'
 import { beforeEach, before, after, describe, it, mock, type Mock } from 'node:test'
 import { browserSdkVersion } from '../lib/browserSdkVersion.ts'
+import { mockDatacenters, resetDatacenterCache } from '../lib/datacenter.ts'
 import type { CommandDetail } from './lib/testHelpers.ts'
-import { mockModule, mockCommandImplementation, mockFetchHandlingError } from './lib/testHelpers.ts'
+import { mockModule, mockCommandImplementation, mockFetchHandlingError, MOCK_DATACENTERS } from './lib/testHelpers.ts'
 
 const currentBrowserSdkVersionMajor = browserSdkVersion.split('.')[0]
 
@@ -33,6 +34,7 @@ describe('deploy-prod-dc', () => {
   })
 
   beforeEach(() => {
+    mockDatacenters(MOCK_DATACENTERS)
     commands = mockCommandImplementation(commandMock)
     checkTelemetryErrorsCalls = []
     checkTelemetryErrorsMock.mock.mockImplementation((datacenters: string[], version: string) => {
@@ -46,8 +48,8 @@ describe('deploy-prod-dc', () => {
   })
 
   after(() => {
-    // Restore original Date.now
     Date.now = originalDateNow
+    resetDatacenterCache()
   })
 
   it('should deploy a given datacenter', async () => {
@@ -101,6 +103,14 @@ describe('deploy-prod-dc', () => {
       { command: 'node ./scripts/deploy/deploy.ts prod v6 prtest00,prtest01' },
       { command: 'node ./scripts/deploy/upload-source-maps.ts v6 prtest00,prtest01' },
     ])
+  })
+
+  it('should skip deployment when no private regions exist', async () => {
+    mockDatacenters(MOCK_DATACENTERS.filter((dc) => dc.type !== 'private'))
+
+    await runScript('./deploy-prod-dc.ts', 'v6', 'private-regions')
+
+    assert.strictEqual(commands.length, 0)
   })
 
   it('should deploy gov datacenters to the root upload path and skip all telemetry error checks', async () => {
