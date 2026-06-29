@@ -3,7 +3,7 @@ import * as path from 'node:path'
 import { parseArgs } from 'node:util'
 
 import type jsonSchemaToTypescriptModule from 'json-schema-to-typescript'
-import { resolveConfig } from 'prettier'
+import { format, resolveConfig } from 'prettier'
 
 import { printLog, printWarning, runMain, fetchHandlingError } from './lib/executionUtils.ts'
 import { command } from './lib/command.ts'
@@ -120,11 +120,15 @@ async function build() {
     const compiledTypes = await compileFromFile(schemaPath, {
       cwd: path.dirname(schemaPath),
       bannerComment: '/**\n * DO NOT MODIFY IT BY HAND. Run `yarn json-schemas:sync` instead.\n*/',
-      style: prettierConfig || {},
+      // Skip json-schema-to-typescript's internal prettier pass: it resolves an ambient
+      // prettier that can differ between environments. Format with the repo's pinned prettier
+      // below instead, so the output is deterministic and matches `prettier --check .`.
+      format: false,
       ...options,
     })
     printLog(`Writing ${typesPath}...`)
-    fs.writeFileSync(absoluteTypesPath, compiledTypes)
+    const formattedTypes = await format(compiledTypes, { ...prettierConfig, parser: 'typescript' })
+    fs.writeFileSync(absoluteTypesPath, formattedTypes)
   }
 
   printLog('Done.')
