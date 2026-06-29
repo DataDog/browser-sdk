@@ -1,3 +1,5 @@
+import type { ProxyFn, Site } from '@datadog/js-core/transport'
+import { INTAKE_SITE_US1 } from '@datadog/js-core/transport'
 import { catchUserErrors } from '../../tools/catchUserErrors'
 import { DOCS_ORIGIN, MORE_DETAILS, display } from '../../tools/display'
 import type { RawTelemetryConfiguration } from '../telemetry'
@@ -9,8 +11,6 @@ import { TrackingConsent } from '../trackingConsent'
 import type { SessionPersistence } from '../session/sessionConstants'
 import type { MatchOption } from '../../tools/matchOption'
 import { isAllowedTrackingOrigins } from '../allowedTrackingOrigins'
-import { INTAKE_SITE_US1 } from '../intakeSites'
-import type { Site } from '../intakeSites'
 
 /**
  * Default privacy level for the browser SDK.
@@ -266,12 +266,6 @@ export interface InitConfiguration {
 // This type is only used to build the core configuration. Logs and RUM SDKs are using a proper type
 // for this option.
 type GenericBeforeSendCallback = (event: any, context?: any) => unknown
-
-/**
- * path: /api/vX/product
- * parameters: xxx=yyy&zzz=aaa
- */
-export type ProxyFn = (options: { path: string; parameters: string; subdomain?: string }) => string
 
 /**
  * @internal

@@ -1,5 +1,6 @@
 import type { Context, SessionManager } from '@datadog/browser-core'
-import { createBatch, createEndpointBuilder, createReplicaEndpointBuilder } from '@datadog/browser-core'
+import { createBatch } from '@datadog/browser-core'
+import { createEndpointBuilder, createReplicaEndpointBuilder } from '@datadog/js-core/transport'
 import type { LogsConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'

@@ -1,4 +1,4 @@
-import { isIntakeUrl } from './intakeSites'
+import { isIntakeUrl } from '@datadog/js-core/transport'
 
 describe('intakeSites', () => {
   const clientToken = 'some_client_token'

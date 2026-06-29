@@ -1,6 +1,6 @@
+import { globalObject } from '@datadog/js-core/util'
 import { Observable } from '../tools/observable'
 import { objectValues } from '../tools/utils/polyfills'
-import { globalObject } from '../tools/globalObject'
 import { addEventListeners, addEventListener, DOM_EVENT } from './addEventListener'
 
 export const PageExitReason = {

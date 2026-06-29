@@ -259,12 +259,14 @@ export function createRumProfiler(
     collectViewEntry(lastViewEntry)
 
     // Add event handler case we overflow the buffer
+    // eslint-disable-next-line local-rules/disallow-zone-js-patched-values -- FIXME use the `addEventListener` helper
     profiler.addEventListener('samplebufferfull', handleSampleBufferFull)
   }
 
   function collectProfilerInstance(runningInstance: RumProfilerRunningInstance) {
     // Cleanup instance
     clearTimeout(runningInstance.timeoutId)
+    // eslint-disable-next-line local-rules/disallow-zone-js-patched-values -- FIXME use the `addEventListener` helper
     runningInstance.profiler.removeEventListener('samplebufferfull', handleSampleBufferFull)
 
     // Store instance data snapshot in local variables to use in async callback
@@ -336,6 +338,7 @@ export function createRumProfiler(
     if (stateReason === 'quota_ko') {
       // Discard data — quota denied means we should not send anything
       clearTimeout(runningInstance.timeoutId)
+      // eslint-disable-next-line local-rules/disallow-zone-js-patched-values -- FIXME use the `addEventListener` helper
       runningInstance.profiler.removeEventListener('samplebufferfull', handleSampleBufferFull)
       void runningInstance.profiler.stop().catch(monitorError)
     } else {

@@ -42,11 +42,10 @@ export type {
   SessionPersistence,
   TrackingConsent,
   MatchOption,
-  ProxyFn,
-  Site,
   RawReportType,
   ErrorSource,
 } from '@datadog/browser-core'
+export type { ProxyFn, Site } from '@datadog/js-core/transport'
 export type { ConsoleApiName } from '@datadog/js-core/util'
 
 /**

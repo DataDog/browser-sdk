@@ -1,12 +1,11 @@
 import { ONE_SECOND } from '@datadog/js-core/time'
+import { buildUrl, globalObject } from '@datadog/js-core/util'
 import {
   findAllCommaSeparatedValues,
   findCommaSeparatedValue,
   findCommaSeparatedValues,
   generateUUID,
 } from '../tools/utils/stringUtils'
-import { buildUrl } from '../tools/utils/urlPolyfill'
-import { globalObject } from '../tools/globalObject'
 
 export interface CookieOptions {
   secure?: boolean

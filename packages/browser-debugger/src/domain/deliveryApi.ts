@@ -1,4 +1,4 @@
-import type { TimeoutId, Site } from '@datadog/browser-core'
+import type { TimeoutId } from '@datadog/browser-core'
 import { dateNow } from '@datadog/js-core/time'
 import {
   addTelemetryDebug,
@@ -8,8 +8,9 @@ import {
   mockable,
   setInterval,
   clearInterval,
-  INTAKE_SITE_US1,
 } from '@datadog/browser-core'
+import { INTAKE_SITE_US1 } from '@datadog/js-core/transport'
+import type { Site } from '@datadog/js-core/transport'
 import { display } from './display'
 import { addProbe, clearProbes, removeProbe } from './probes'
 import type { Probe } from './probes'
