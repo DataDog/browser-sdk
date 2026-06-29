@@ -8,6 +8,16 @@ export const salesforceLwcBundlePath = resolve(
   'test/apps/sf-lwc-app/force-app/main/default/staticresources/datadog_rum_slim.js'
 )
 
+export function getSalesforceConfig(): { targetOrg: string; isConfigured: boolean } {
+  const targetOrg = process.env.SF_TARGET_ORG ?? 'sf-lwc-ci'
+  const isConfigured =
+    spawnSync('sf', ['org', 'display', '--target-org', targetOrg], {
+      encoding: 'utf8',
+      cwd: repositoryRoot,
+    }).status === 0
+  return { targetOrg, isConfigured }
+}
+
 export function buildSalesforceLwcUrl(): string {
   const result = spawnSync('node', ['scripts/salesforce-lwc-app.ts', 'open-url'], {
     encoding: 'utf8',

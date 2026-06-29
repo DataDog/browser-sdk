@@ -1,14 +1,18 @@
-import { expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import { createTest } from '../../lib/framework'
+import { getSalesforceConfig } from '../../lib/helpers/salesforceApp'
 
-createTest('salesforce @salesforce')
+const { targetOrg, isConfigured } = getSalesforceConfig()
+test.skip(!isConfigured, `Salesforce org "${targetOrg}" is not configured; run yarn salesforce:auth first`)
+
+createTest('salesforce')
   .withSalesforceApp()
   .run(async ({ page, intakeRegistry, flushEvents }) => {
-    await expect(page.getByTestId('home-custom-actions')).toBeVisible({ timeout: 60000 })
+    await expect(page.getByTestId('home-custom-actions')).toBeVisible()
 
     await page.getByTestId('custom-action-1').click()
     await page.locator('a[href*="/lightning/n/Product_Explorer"]').click()
-    await expect(page.getByTestId('product-explorer')).toBeVisible({ timeout: 60000 })
+    await expect(page.getByTestId('product-explorer')).toBeVisible()
 
     await flushEvents()
 

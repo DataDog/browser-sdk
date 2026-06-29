@@ -454,19 +454,20 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
 
     if (setupOptions.salesforceApp) {
+      // Serve the local bundle from the static resource
       await page.route(/\/resource(?:\/[^/?#]+)?\/datadog_rum_slim(?:\.js)?(?:[/?#].*)?$/, async (route) => {
         await route.fulfill({
           body: await readFile(salesforceLwcBundlePath),
           contentType: 'application/javascript',
         })
       })
+      // Because of CSP, we need to intercept the intake request and push it to the intake registry
       await page.route('*/**/api/v2/rum**', async (route) => {
         const request = route.request()
         const infos = computeIntakeRequestInfos(request)
         const intakeRequest = await readIntakeRequest(request, infos)
         intakeRegistry.push(intakeRequest)
-        const response = await route.fetch()
-        await route.fulfill({ response })
+        await route.fulfill({ status: 202 })
       })
     }
 

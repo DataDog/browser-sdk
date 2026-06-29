@@ -254,13 +254,8 @@ e2e:
     - yarn build:apps
     # Browsers are pre-installed in the CI image. If playwright (current or pinned 1.40.1)
     # is upgraded without rebuilding the image, this job will crash — rebuild the image to fix it.
-    - |
-      if [ "$BROWSER" = "chromium" ]; then
-        node scripts/salesforce-lwc-app.ts auth
-        FORCE_COLOR=1 PW_BROWSER=$BROWSER yarn test:e2e --project=$BROWSER
-      else
-        FORCE_COLOR=1 PW_BROWSER=$BROWSER yarn test:e2e --project=$BROWSER --grep-invert @salesforce
-      fi
+    - if [ "$BROWSER" = "chromium" ]; then node scripts/salesforce-lwc-app.ts auth; fi
+    - FORCE_COLOR=1 PW_BROWSER=$BROWSER yarn test:e2e --project=$BROWSER
   after_script:
     - node ./scripts/test/export-test-result.ts e2e
 

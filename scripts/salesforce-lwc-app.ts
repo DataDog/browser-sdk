@@ -102,7 +102,22 @@ function deployApp() {
     printLog('Warning: Source tracking update failed (Could not find HEAD). Components were deployed successfully.')
   }
 
+  assignPermissionSet(targetOrg, 'SF_LWC_App')
   printLog('Salesforce LWC app deployed.')
+}
+
+function assignPermissionSet(targetOrg: string, permSetName: string) {
+  const result = spawnSync(
+    'sf',
+    ['org', 'assign', 'permset', '--name', permSetName, '--target-org', targetOrg, '--json'],
+    { encoding: 'utf8', cwd: salesforceAppDir }
+  )
+  const output = (result.stdout ?? '') + (result.stderr ?? '')
+  // A duplicate assignment error means the permset is already assigned — not a real failure.
+  if (result.status !== 0 && !output.includes('Duplicate')) {
+    throw new Error(`Failed to assign permission set ${permSetName}: ${result.stderr || result.stdout}`)
+  }
+  printLog(`Permission set ${permSetName} assigned.`)
 }
 
 function buildOpenUrl(): string {
