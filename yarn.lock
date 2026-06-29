@@ -508,6 +508,7 @@ __metadata:
   dependencies:
     "@datadog/browser-core": "npm:7.4.0"
     "@datadog/browser-rum-core": "npm:7.4.0"
+    "@datadog/js-core": "npm:0.0.4"
   peerDependencies:
     "@datadog/browser-logs": 7.4.0
   peerDependenciesMeta:
@@ -568,6 +569,7 @@ __metadata:
     "@datadog/browser-logs": "workspace:*"
     "@datadog/browser-rum": "workspace:*"
     "@datadog/browser-rum-core": "workspace:*"
+    "@datadog/js-core": "workspace:*"
     "@mantine/core": "npm:9.3.2"
     "@mantine/hooks": "npm:9.3.2"
     "@tabler/icons-react": "npm:3.44.0"
@@ -593,7 +595,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/js-core@npm:0.0.4, @datadog/js-core@workspace:packages/js-core":
+"@datadog/js-core@npm:0.0.4, @datadog/js-core@workspace:*, @datadog/js-core@workspace:packages/js-core":
   version: 0.0.0-use.local
   resolution: "@datadog/js-core@workspace:packages/js-core"
   languageName: unknown

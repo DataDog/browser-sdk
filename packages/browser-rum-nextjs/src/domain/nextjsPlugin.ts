@@ -1,4 +1,4 @@
-import { buildUrl } from '@datadog/browser-core'
+import { buildUrl } from '@datadog/js-core/util'
 import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
 
 export type NextjsPlugin = Pick<Required<RumPlugin>, 'name' | 'onInit' | 'onRumStart'>

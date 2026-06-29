@@ -1,5 +1,5 @@
+import { globalObject } from '@datadog/js-core/util'
 import { registerCleanupTask } from '../../../../test'
-import { globalObject } from '../../../tools/globalObject'
 import type { SessionState } from '../sessionState'
 import type { GlobalObjectWithSession } from './sessionInMemory'
 import { initMemorySessionStoreStrategy, MEMORY_SESSION_STORE_KEY } from './sessionInMemory'

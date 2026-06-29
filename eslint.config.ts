@@ -22,7 +22,7 @@ const MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL =
 const PACKAGES_NO_RESTRICTED_SYNTAX_RULES = [
   {
     selector: 'Identifier[name="globalThis"]',
-    message: 'Use `globalObject` from @datadog/browser-core instead of `globalThis`.',
+    message: 'Use `globalObject` from @datadog/js-core/util instead of `globalThis`.',
   },
 ]
 
@@ -52,6 +52,7 @@ export default defineConfig(
       'test/apps/vue-router-v4-app',
       'test/apps/nuxt-app',
       'test/apps/nuxt-vue-router-v4-app',
+      'test/apps/sf-lwc-app',
       'sandbox',
       'coverage',
       '.yarn',

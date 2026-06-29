@@ -1,5 +1,5 @@
+import { globalObject } from '@datadog/js-core/util'
 import { registerCleanupTask, replaceMockable, mockCookies, collectAsyncCalls } from '../../../../test'
-import { globalObject } from '../../../tools/globalObject'
 import { Observable } from '../../../tools/observable'
 import type { SessionState } from '../sessionState'
 import type { Configuration, InitConfiguration } from '../../configuration'

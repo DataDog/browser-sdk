@@ -5,10 +5,9 @@ import {
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
   sendToExtension,
-  createEndpointBuilder,
-  createReplicaEndpointBuilder,
 } from '@datadog/browser-core'
 import { combine } from '@datadog/js-core/util'
+import { createEndpointBuilder, createReplicaEndpointBuilder } from '@datadog/js-core/transport'
 import type { RumConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'

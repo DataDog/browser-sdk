@@ -1,4 +1,4 @@
-export type { Configuration, InitConfiguration, ProxyFn } from './configuration'
+export type { Configuration, InitConfiguration } from './configuration'
 export {
   DefaultPrivacyLevel,
   TraceContextInjection,
@@ -7,5 +7,3 @@ export {
   serializeConfiguration,
   buildCookieOptions,
 } from './configuration'
-export type { EndpointBuilder, TrackType } from './endpointBuilder'
-export { createEndpointBuilder, createReplicaEndpointBuilder, buildEndpointUrl } from './endpointBuilder'

@@ -1,4 +1,4 @@
-import type { EndpointBuilder } from '../domain/configuration'
+import type { EndpointBuilder, TransportRetryInfo } from '@datadog/js-core/transport'
 import type { Context } from '../tools/serialisation/context'
 import { fetch } from '../browser/fetch'
 import { monitor, monitorError } from '../tools/monitor'
@@ -60,13 +60,8 @@ export type HttpRequestEvent<Body extends Payload = Payload> =
 export interface Payload {
   data: string | FormData | Blob
   bytesCount: number
-  retry?: RetryInfo
+  retry?: TransportRetryInfo
   encoding?: 'deflate'
-}
-
-export interface RetryInfo {
-  count: number
-  lastFailureStatus: number
 }
 
 export function createHttpRequest<Body extends Payload = Payload>(

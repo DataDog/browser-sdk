@@ -1,16 +1,21 @@
 import { clocksNow } from '@datadog/js-core/time'
-import { getDebugMode, combine } from '@datadog/js-core/util'
+import { getDebugMode, combine, globalObject, isWorkerEnvironment } from '@datadog/js-core/util'
 import type { Hook } from '@datadog/js-core/assembly'
 import type { RecursivePartial } from '@datadog/js-core/util'
 import { DISCARDED } from '@datadog/js-core/assembly'
+import {
+  createEndpointBuilder,
+  createReplicaEndpointBuilder,
+  INTAKE_SITE_STAGING,
+  INTAKE_SITE_US1_FED,
+  INTAKE_SITE_US2_FED,
+} from '@datadog/js-core/transport'
 import type { Context } from '../../tools/serialisation/context'
 import { NO_ERROR_STACK_PRESENT_MESSAGE, isError } from '../error/error'
 import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
 import { getExperimentalFeatures } from '../../tools/experimentalFeatures'
-import { createEndpointBuilder, createReplicaEndpointBuilder } from '../configuration'
 import type { Configuration } from '../configuration'
 import { buildTags } from '../tags'
-import { INTAKE_SITE_STAGING, INTAKE_SITE_US1_FED, INTAKE_SITE_US2_FED } from '../intakeSites'
 import { BufferedObservable, Observable } from '../../tools/observable'
 import { startMonitorErrorCollection } from '../../tools/monitor'
 import { display } from '../../tools/display'
@@ -22,7 +27,6 @@ import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { getConnectivity } from '../connectivity'
 import { canUseEventBridge, getEventBridge, createBatch } from '../../transport'
-import { globalObject, isWorkerEnvironment } from '../../tools/globalObject'
 import { noop } from '../../tools/utils/functionUtils'
 import type { TelemetryEvent } from './telemetryEvent.types'
 import type {
