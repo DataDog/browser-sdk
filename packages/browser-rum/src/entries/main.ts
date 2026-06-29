@@ -74,6 +74,7 @@ export type {
   RumActionEventDomainContext,
   RumVitalEventDomainContext,
   RumResourceEventDomainContext,
+  RumWebSocketResourceEventDomainContext,
   RumLongTaskEventDomainContext,
 } from '@datadog/browser-rum-core'
 

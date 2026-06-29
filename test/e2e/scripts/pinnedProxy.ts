@@ -17,8 +17,9 @@
 
 import http from 'node:http'
 import process from 'node:process'
-import { Buffer } from 'node:buffer'
 import { WebSocketServer, WebSocket, type RawData } from 'ws'
+
+import { rawDataToString } from '../lib/helpers/rawDataToString.ts'
 
 interface JsonRpcMessage {
   method?: string
@@ -134,16 +135,6 @@ httpServer.on('upgrade', (req, socket, head) => {
 httpServer.listen(LISTEN, '127.0.0.1', () => {
   console.log(`[pinnedProxy] listening on ws://127.0.0.1:${LISTEN}/ -> ws://${UPSTREAM}/`)
 })
-
-function rawDataToString(data: RawData): string {
-  if (Array.isArray(data)) {
-    return Buffer.concat(data).toString('utf8')
-  }
-  if (Buffer.isBuffer(data)) {
-    return data.toString('utf8')
-  }
-  return Buffer.from(data).toString('utf8')
-}
 
 function forwardHeader(headers: http.IncomingHttpHeaders, name: string): Record<string, string> {
   const value = headers[name]

@@ -127,6 +127,15 @@ export type { XhrCompleteContext, XhrStartContext, XhrContext } from './browser/
 export { initXhrObservable } from './browser/xhrObservable'
 export type { FetchResolveContext, FetchStartContext, FetchContext } from './browser/fetchObservable'
 export { initFetchObservable, ResponseBodyAction } from './browser/fetchObservable'
+export type {
+  WebSocketContext,
+  WebSocketConnectingContext,
+  WebSocketOpenContext,
+  WebSocketMessageInContext,
+  WebSocketMessageOutContext,
+  WebSocketClosedContext,
+} from './browser/webSocketObservable'
+export { initWebSocketObservable } from './browser/webSocketObservable'
 export { fetch } from './browser/fetch'
 export type { PageMayExitEvent } from './browser/pageMayExitObservable'
 export { createPageMayExitObservable, PageExitReason, isPageExitReason } from './browser/pageMayExitObservable'
