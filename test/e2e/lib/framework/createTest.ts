@@ -275,6 +275,9 @@ class TestBuilder {
   withSalesforceApp() {
     this.salesforceApp = true
     this.setups = [{ factory: () => '' }]
+    this.baseUrlHooks.push((baseUrl) => {
+      baseUrl.href = buildSalesforceLwcUrl()
+    })
     return this
   }
 
@@ -542,7 +545,7 @@ function createTestContext(
 
 async function setUpTest(
   browserLogsManager: BrowserLogsManager,
-  { mockClock, salesforceApp }: SetupOptions,
+  { mockClock }: SetupOptions,
   { baseUrl, page, browserContext }: TestContext
 ) {
   browserContext.on('console', (msg) => {
@@ -570,7 +573,7 @@ async function setUpTest(
       test.skip(true, `Mock clock is not supported in this browser: ${String(e)}`)
     }
   }
-  await page.goto(salesforceApp ? buildSalesforceLwcUrl() : baseUrl)
+  await page.goto(baseUrl)
   await waitForServersIdle()
 }
 
