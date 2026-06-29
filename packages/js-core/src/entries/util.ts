@@ -4,6 +4,11 @@ export { setDebugMode, getDebugMode } from '../util/debug'
 export * from '../util/mergeInto'
 export * from '../util/typeUtils'
 export { globalObject, isWorkerEnvironment } from '../util/globalObject'
+export * from '../util/byteUtils'
+export type { Context, ContextValue, ContextArray } from '../util/context'
+export * from '../util/jsonStringify'
+export { objectValues } from '../util/polyfills'
+export { isServerError } from '../util/responseUtils'
 export type {
   GlobalObject,
   Navigator,

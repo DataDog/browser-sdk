@@ -29,6 +29,12 @@ export function combine<A, B, C, D, E, F, G>(a: A, b: B, c: C, d: D, e: E, f: F,
 export function combine<A, B, C, D, E, F, G, H>(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H): Combined<Combined<Combined<Combined<Combined<Combined<Combined<A, B>, C>, D>, E>, F>, G>, H>;
 
 // @public
+export function computeBytesCount(candidate: string): number;
+
+// @public
+export function concatBuffers(buffers: Uint8ArrayBuffer[]): Uint8ArrayBuffer;
+
+// @public
 export const ConsoleApiName: {
     readonly log: "log";
     readonly debug: "debug";
@@ -39,6 +45,19 @@ export const ConsoleApiName: {
 
 // @public
 export type ConsoleApiName = (typeof ConsoleApiName)[keyof typeof ConsoleApiName];
+
+// @public
+export interface Context {
+    // (undocumented)
+    [x: string]: ContextValue;
+}
+
+// @public
+export interface ContextArray extends Array<ContextValue> {
+}
+
+// @public
+export type ContextValue = string | number | boolean | Context | ContextArray | undefined | null;
 
 // @public
 type CookieChangeEvent_2 = Event & {
@@ -106,6 +125,9 @@ export function createDisplay(prefix: string): Display;
 export function deepClone<T>(value: T): T;
 
 // @public
+export function detachToJsonMethod(value: object): () => void;
+
+// @public
 export interface Display {
     // (undocumented)
     debug: typeof console.debug;
@@ -150,10 +172,16 @@ export const globalObject: GlobalObject;
 export function isIndexableObject(value: unknown): value is Record<any, unknown>;
 
 // @public
+export function isServerError(status: number): boolean;
+
+// @public
 export function isValidUrl(url: string): boolean;
 
 // @public
 export const isWorkerEnvironment: boolean;
+
+// @public
+export function jsonStringify(value: unknown, replacer?: Array<string | number>, space?: string | number): string | undefined;
 
 // @public
 export function mergeInto<D, S>(destination: D, source: S): Merged<D, S>;
@@ -180,6 +208,23 @@ export type NetworkInterface = 'bluetooth' | 'cellular' | 'ethernet' | 'none' | 
 
 // @public
 export function normalizeUrl(url: string): string;
+
+// @public
+export function objectValues<T = unknown>(object: {
+    [key: string]: T;
+}): T[];
+
+// @public
+export interface ObjectWithToJsonMethod {
+    // (undocumented)
+    toJSON?: () => unknown;
+}
+
+// @public
+export const ONE_KIBI_BYTE = 1024;
+
+// @public
+export const ONE_MEBI_BYTE: number;
 
 // @public
 export const originalConsoleMethods: Display;
@@ -249,6 +294,14 @@ export interface SampleBufferFullEvent extends Event {
 
 // @public
 export function setDebugMode(newDebugMode: boolean): void;
+
+// @public
+export interface Uint8ArrayBuffer extends Uint8Array {
+    // (undocumented)
+    readonly buffer: ArrayBuffer;
+    // (undocumented)
+    subarray(begin?: number, end?: number): Uint8ArrayBuffer;
+}
 
 // (No @packageDocumentation comment for this package)
 
