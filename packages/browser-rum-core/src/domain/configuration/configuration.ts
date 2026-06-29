@@ -343,6 +343,14 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @category Data Collection
    */
   allowedGraphQlUrls?: Array<MatchOption | GraphQlUrlOption> | undefined
+
+  /**
+   * Enable partial view updates, which reduces bandwidth by sending only changed
+   * fields instead of full view events on intermediate updates.
+   *
+   * @category Beta
+   */
+  betaEnableViewUpdates?: boolean | undefined
 }
 
 export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
@@ -386,6 +394,7 @@ export interface RumConfiguration extends Configuration {
   sessionReplaySampleRate: number
   startSessionReplayRecordingManually: boolean
   trackUserInteractions: boolean
+  betaEnableViewUpdates: boolean
   trackViewsManually: boolean
   trackResources: boolean
   trackResourceHeaders: MatchHeader[]
@@ -458,6 +467,7 @@ export function validateAndBuildRumConfiguration(
     workerUrl: initConfiguration.workerUrl,
     compressIntakeRequests: !!initConfiguration.compressIntakeRequests,
     trackUserInteractions: !!(initConfiguration.trackUserInteractions ?? true),
+    betaEnableViewUpdates: !!initConfiguration.betaEnableViewUpdates,
     trackViewsManually: !!initConfiguration.trackViewsManually,
     trackResources: !!(initConfiguration.trackResources ?? true),
     trackResourceHeaders: validateAndBuildTrackResourceHeaders(initConfiguration),
@@ -687,6 +697,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     profiling_sample_rate: configuration.profilingSampleRate,
     use_remote_configuration_proxy: !!configuration.remoteConfigurationProxy,
     track_resource_headers: getTrackResourceHeadersTelemetryValue(configuration.trackResourceHeaders),
+    beta_enable_view_updates: configuration.betaEnableViewUpdates,
     ...baseSerializedConfiguration,
   } satisfies RawTelemetryConfiguration
 }

@@ -15,7 +15,6 @@ import { objectHasValue } from './utils/objectUtils'
 // eslint-disable-next-line no-restricted-syntax
 export enum ExperimentalFeature {
   TRACK_INTAKE_REQUESTS = 'track_intake_requests',
-  PARTIAL_VIEW_UPDATES = 'partial_view_updates',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()
