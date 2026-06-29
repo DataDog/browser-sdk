@@ -3937,7 +3937,7 @@ __metadata:
     ajv: "npm:8.20.0"
     browserstack-local: "npm:1.5.13"
     busboy: "npm:1.6.0"
-    chrome-webstore-upload: "npm:4.0.4"
+    chrome-webstore-upload: "npm:6.0.0"
     cors: "npm:2.8.6"
     emoji-name-map: "npm:2.0.3"
     eslint: "npm:10.5.0"
@@ -4233,13 +4233,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chrome-webstore-upload@npm:4.0.4":
-  version: 4.0.4
-  resolution: "chrome-webstore-upload@npm:4.0.4"
+"chrome-webstore-upload@npm:6.0.0":
+  version: 6.0.0
+  resolution: "chrome-webstore-upload@npm:6.0.0"
   dependencies:
     junk: "npm:^4.0.1"
     yazl: "npm:^3.3.1"
-  checksum: 10c0/99442364b43a6ed5816c8ac1147c5879f2d63de1c49b3830314ae19dfd6316a8a2c2d5750414273a15b6793a0ddd34c1a11183beea00242c4baa42ddf4fbd5ec
+  checksum: 10c0/3c190f603645f930c4fefa78058c56ad9df6b1e907468dd718ef4382b3557efd1b2ff7041c04a02a42ca95c4f5ccd08efa4d480ca02a0db6c930b8021a13f72f
   languageName: node
   linkType: hard
 
