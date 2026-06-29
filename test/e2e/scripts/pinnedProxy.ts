@@ -1,4 +1,4 @@
-// WebSocket translation proxy that lets a recent @playwright/test client (1.60) drive an
+// WebSocket translation proxy that lets a recent @playwright/test client (1.61) drive an
 // older `playwright run-server` (1.40). Two layers of translation:
 //
 // 1) HTTP upgrade — the 1.40 server's User-Agent version check rejects mismatched clients
@@ -10,7 +10,7 @@
 //
 // Patches were derived from a diff of the JSON-RPC protocol schema in packages/protocol/src
 // (`protocol.yml` up to v1.59.1, `channels.d.ts` from v1.60.0 onward — `protocol.yml` was
-// removed in 1.60) between v1.40.1 and v1.60.0 — only the divergences exercised by this
+// removed in 1.60) between v1.40.1 and v1.61.0 — only the divergences exercised by this
 // repo's e2e tests are translated.
 //
 // Usage: node pinnedProxy.ts --listen 5400 --upstream 127.0.0.1:5401
@@ -269,6 +269,15 @@ function rewriteClientToServer(
   if (typeof msg.method !== 'string') {
     return text
   }
+
+  // __waitInfo__ is a fire-and-forget instrumentation message added in 1.61 (replacing the
+  // old EventTargetChannel.waitForEventInfo pattern). The client never registers a callback
+  // for it, so if the 1.40 server receives it and sends back an error response, the client
+  // throws "Cannot find command to respond: <id>". Drop it instead of forwarding.
+  if (msg.method === '__waitInfo__') {
+    return null
+  }
+
   const type = msg.guid ? guidTypes.get(msg.guid) : undefined
   const params = msg.params || {}
 
