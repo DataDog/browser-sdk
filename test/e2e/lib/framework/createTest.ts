@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises'
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { DebuggerInitConfiguration } from '@datadog/browser-debugger'
 import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
@@ -21,7 +22,7 @@ import {
   VUE_ROUTER_APP_PORT,
   VUE_ROUTER_V4_APP_PORT,
 } from '../helpers/playwright'
-import { buildSalesforceLwcUrl } from '../helpers/salesforceApp'
+import { buildSalesforceLwcUrl, salesforceLwcBundlePath } from '../helpers/salesforceApp'
 import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
@@ -453,6 +454,12 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
 
     if (setupOptions.salesforceApp) {
+      await page.route(/\/resource(?:\/[^/?#]+)?\/datadog_rum_slim(?:\.js)?(?:[/?#].*)?$/, async (route) => {
+        await route.fulfill({
+          body: await readFile(salesforceLwcBundlePath),
+          contentType: 'application/javascript',
+        })
+      })
       await page.route('*/**/api/v2/rum**', async (route) => {
         const request = route.request()
         const infos = computeIntakeRequestInfos(request)

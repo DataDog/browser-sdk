@@ -3,6 +3,11 @@ import { resolve } from 'node:path'
 
 const repositoryRoot = resolve(__dirname, '../../../..')
 
+export const salesforceLwcBundlePath = resolve(
+  repositoryRoot,
+  'test/apps/sf-lwc-app/force-app/main/default/staticresources/datadog_rum_slim.js'
+)
+
 export function buildSalesforceLwcUrl(): string {
   const result = spawnSync('node', ['scripts/salesforce-lwc-app.ts', 'open-url'], {
     encoding: 'utf8',

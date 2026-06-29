@@ -10,7 +10,6 @@ const DATADOG_PARAMS = [
   'c__applicationId',
   'c__clientToken',
   'c__datadogInitConfiguration',
-  'c__datadogResourceName',
   'c__env',
   'c__service',
   'c__site',
@@ -75,10 +74,8 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
 
   loadDatadogRum() {
     const searchParams = new URLSearchParams(window.location.search)
-    const resourceName = searchParams.get('c__datadogResourceName')
-    const resourceUrl = resourceName ? `/resource/${encodeURIComponent(resourceName)}` : datadogRumSlim
 
-    return loadScript(this, resourceUrl).then(() => {
+    return loadScript(this, datadogRumSlim).then(() => {
       const initConfig = this.getInitConfiguration(searchParams)
       if (!initConfig.applicationId || !initConfig.clientToken) {
         window.console.warn('Datadog RUM not initialized: missing applicationId or clientToken')

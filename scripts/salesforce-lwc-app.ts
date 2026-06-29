@@ -1,5 +1,4 @@
-import { chmodSync, copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
-import { createHash } from 'node:crypto'
+import { chmodSync, copyFileSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
@@ -13,9 +12,6 @@ const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const salesforceAppDir = resolve(repositoryRoot, 'test/apps/sf-lwc-app')
 const bundlePath = resolve(repositoryRoot, 'packages/browser-rum-slim/bundle/datadog-rum-slim.js')
 const stableStaticResourcePath = resolve(salesforceAppDir, 'force-app/main/default/staticresources/datadog_rum_slim.js')
-const generatedStateDir = resolve(salesforceAppDir, '.sf-e2e')
-const generatedStaticResourcesDir = resolve(generatedStateDir, 'force-app/main/default/staticresources')
-const resourceNamePath = resolve(generatedStateDir, 'resource-name')
 const salesforceHomePath = '/lightning/app/c__SF_LWC_App/page/home'
 const defaultTargetOrg = 'sf-lwc-ci'
 const salesforceCliPackage = '@salesforce/cli@2.139.6'
@@ -30,14 +26,11 @@ runMain(() => {
     case 'deploy-app':
       deployApp()
       break
-    case 'deploy-bundle':
-      deployBundle()
-      break
     case 'open-url':
       process.stdout.write(`${buildOpenUrl()}\n`)
       break
     default:
-      throw new Error('Usage: node scripts/salesforce-lwc-app.ts <auth|deploy-app|deploy-bundle|open-url>')
+      throw new Error('Usage: node scripts/salesforce-lwc-app.ts <auth|deploy-app|open-url>')
   }
 })
 
@@ -77,32 +70,45 @@ function deployApp() {
 
   printLog(`Deploying Salesforce LWC app to ${targetOrg}...`)
   copyFileSync(bundlePath, stableStaticResourcePath)
-  runSf(['project', 'deploy', 'start', '--target-org', targetOrg, '--source-dir', 'force-app'], { stdio: 'inherit' })
+
+  const deployArgs = [
+    'project',
+    'deploy',
+    'start',
+    '--target-org',
+    targetOrg,
+    '--source-dir',
+    'force-app',
+    '--ignore-conflicts',
+  ]
+  const spawnOptions: SpawnSyncOptionsWithStringEncoding = { encoding: 'utf8', cwd: salesforceAppDir, stdio: 'pipe' }
+
+  let result = spawnSync('sf', deployArgs, spawnOptions)
+  if (result.error && (result.error as NodeJS.ErrnoException).code === 'ENOENT') {
+    result = spawnSync('yarn', ['dlx', '-p', salesforceCliPackage, 'sf', ...deployArgs], spawnOptions)
+  }
+
+  if (result.stdout) {
+    process.stdout.write(result.stdout)
+  }
+
+  if (result.status !== 0) {
+    const output = (result.stdout ?? '') + (result.stderr ?? '')
+    // Source tracking fails on orgs that don't support it (e.g. developer orgs), but components
+    // are deployed successfully. Treat this specific post-deploy tracking error as non-fatal.
+    if (!output.includes('Could not find HEAD')) {
+      throw new Error(result.stderr || result.stdout || result.error?.message)
+    }
+    printLog('Warning: Source tracking update failed (Could not find HEAD). Components were deployed successfully.')
+  }
 
   printLog('Salesforce LWC app deployed.')
 }
 
-function deployBundle() {
-  const targetOrg = getTargetOrg()
-  const bundle = readFileSync(bundlePath)
-  const resourceName = computeResourceName(bundle)
-
-  printLog(`Deploying Salesforce LWC bundle ${resourceName} to ${targetOrg}...`)
-  writeFileSync(stableStaticResourcePath, bundle)
-  writeGeneratedStaticResource(resourceName, bundle)
-  runSf(['project', 'deploy', 'start', '--target-org', targetOrg, '--source-dir', generatedStaticResourcesDir], {
-    stdio: 'inherit',
-  })
-  writeFileSync(resourceNamePath, `${resourceName}\n`)
-  printLog(`Salesforce LWC bundle deployed: ${resourceName}`)
-}
-
 function buildOpenUrl(): string {
   const targetOrg = getTargetOrg()
-  const resourceName = readResourceName()
   const path = new URL(salesforceHomePath, 'https://salesforce.local')
 
-  path.searchParams.set('c__datadogResourceName', resourceName)
   path.searchParams.set(
     'c__datadogInitConfiguration',
     JSON.stringify({
@@ -194,32 +200,4 @@ function stripCliControlCharacters(output: string): string {
 
 function getTargetOrg(): string {
   return process.env.SF_TARGET_ORG || defaultTargetOrg
-}
-
-function computeResourceName(bundle: Buffer): string {
-  const hash = createHash('sha256').update(bundle).digest('hex').slice(0, 12)
-  return `datadog_rum_slim_${hash}`
-}
-
-function writeGeneratedStaticResource(resourceName: string, bundle: Buffer) {
-  rmSync(generatedStaticResourcesDir, { recursive: true, force: true })
-  mkdirSync(generatedStaticResourcesDir, { recursive: true })
-  writeFileSync(resolve(generatedStaticResourcesDir, `${resourceName}.js`), bundle)
-  writeFileSync(
-    resolve(generatedStaticResourcesDir, `${resourceName}.resource-meta.xml`),
-    `<?xml version="1.0" encoding="UTF-8" ?>
-<StaticResource xmlns="http://soap.sforce.com/2006/04/metadata">
-    <cacheControl>Private</cacheControl>
-    <contentType>application/javascript</contentType>
-</StaticResource>
-`
-  )
-}
-
-function readResourceName(): string {
-  try {
-    return readFileSync(resourceNamePath, 'utf8').trim()
-  } catch {
-    throw new Error('SF LWC resource name not found. Run `yarn salesforce:deploy-bundle` first.')
-  }
 }

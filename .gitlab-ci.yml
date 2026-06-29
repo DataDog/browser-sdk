@@ -254,29 +254,13 @@ e2e:
     - yarn build:apps
     # Browsers are pre-installed in the CI image. If playwright (current or pinned 1.40.1)
     # is upgraded without rebuilding the image, this job will crash — rebuild the image to fix it.
-    - FORCE_COLOR=1 PW_BROWSER=$BROWSER yarn test:e2e --project=$BROWSER --grep-invert @salesforce
-  after_script:
-    - node ./scripts/test/export-test-result.ts e2e
-
-salesforce-e2e:
-  extends:
-    - .base-configuration
-    - .test-allowed-branches
-    - .resource-allocation-4-cpus
-  resource_group: salesforce-engrumdev
-  interruptible: true
-  artifacts:
-    when: always
-    reports:
-      junit: test-report/e2e/*.xml
-  script:
-    - yarn
-    - yarn build
-    - yarn build:apps
-    - node scripts/salesforce-lwc-app.ts auth
-    - export SF_TARGET_ORG=sf-lwc-ci
-    - yarn salesforce:deploy-bundle
-    - FORCE_COLOR=1 PW_BROWSER=chromium yarn test:e2e --project=chromium --grep @salesforce
+    - |
+      if [ "$BROWSER" = "chromium" ]; then
+        node scripts/salesforce-lwc-app.ts auth
+        FORCE_COLOR=1 PW_BROWSER=$BROWSER yarn test:e2e --project=$BROWSER
+      else
+        FORCE_COLOR=1 PW_BROWSER=$BROWSER yarn test:e2e --project=$BROWSER --grep-invert @salesforce
+      fi
   after_script:
     - node ./scripts/test/export-test-result.ts e2e
 

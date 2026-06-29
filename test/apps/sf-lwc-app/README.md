@@ -15,7 +15,7 @@ This app is Lightning-only.
 
 The Salesforce flow uses the Salesforce CLI. Authenticate once, then deploy/open/test through the CLI alias.
 
-Credentials are set as CI variables. 
+Credentials are set as CI variables.
 
 For local overrides, set the matching environment variables from the repository root:
 
@@ -32,8 +32,6 @@ Then authenticate the default `sf-lwc-ci` alias:
 node scripts/salesforce-lwc-app.ts auth
 ```
 
-All Salesforce commands default to `sf-lwc-ci`. To use another authenticated alias, set `SF_TARGET_ORG` for the command.
-
 ## Initial App Deploy
 
 The full app deploy is only needed when Salesforce metadata changes or the org is being prepared from scratch:
@@ -44,21 +42,21 @@ yarn salesforce:deploy-app
 
 This builds the local RUM slim bundle, copies it to the stable `datadog_rum_slim` static resource, deploys the app metadata, and assigns the `SF_LWC_App` permission set.
 
-## Bundle Deploy
+## Local Bundle
 
-After the app exists in the org, deploy only the current RUM slim bundle with:
+After the app exists in the org, regular test runs do not deploy the current SDK bundle to Salesforce.
+Build the test apps from the repository root instead:
 
 ```sh
-yarn salesforce:deploy-bundle
+yarn build:apps --app sf-lwc-app
 ```
 
-This builds the local RUM slim bundle, deploys it as a content-hashed static resource, for example `datadog_rum_slim_012345abcdef`, and writes that resource name to `.sf-e2e/resource-name`.
-
-Tests can load a different deployed bundle by opening Salesforce with `c__datadogResourceName=<resourceName>` in the query string. If the query parameter is absent, `c:datadogInit` falls back to the stable `datadog_rum_slim` static resource.
+This copies the locally built RUM slim bundle into the ignored stable `datadog_rum_slim` static resource file.
+Playwright fulfills Salesforce static resource requests with this local file during E2E tests.
 
 ## Open The App
 
-Open the app with the current hashed resource:
+Open the app with the E2E RUM configuration:
 
 ```sh
 yarn salesforce:open
@@ -67,7 +65,7 @@ yarn salesforce:open
 The printed URL is authenticated and should be treated as sensitive. It opens the app with RUM query parameters shaped like:
 
 ```text
-/lightning/app/c__SF_LWC_App/page/home?c__datadogResourceName=<resourceName>&c__applicationId=<applicationId>&c__clientToken=<clientToken>&c__env=dev&c__service=browser-sdk-salesforce-e2e&c__site=datadoghq.com
+/lightning/app/c__SF_LWC_App/page/home?c__datadogInitConfiguration=<configuration>
 ```
 
 To open the app without the generated query parameters:
@@ -78,13 +76,14 @@ sf org open --target-org sf-lwc-ci --path /lightning/app/c__SF_LWC_App/page/home
 
 ## Run E2E Tests
 
-Deploy the current bundle, then run the Salesforce scenario:
+Build the SDK and test apps, then run the Salesforce scenario:
 
 ```sh
-yarn salesforce:deploy-bundle
+yarn build
+yarn build:apps --app sf-lwc-app
 FORCE_COLOR=1 PW_BROWSER=chromium yarn test:e2e --project=chromium --grep @salesforce
 ```
 
 ## CI
 
-The `salesforce-e2e` job retrieves Salesforce credentials through `scripts/lib/secrets.ts`, authenticates `sf-lwc-ci`, deploys only the generated hashed bundle, and runs the `@salesforce` Playwright scenario. The regular `e2e` matrix excludes `@salesforce`.
+The regular `e2e` job runs the Salesforce scenario in the Chromium matrix entry only. It authenticates `sf-lwc-ci`, opens the deployed Salesforce app, and serves the locally built SDK bundle through Playwright route fulfillment instead of deploying a bundle to Salesforce for each run.

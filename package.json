@@ -16,7 +16,6 @@
     "build:bundle": "yarn workspaces foreach --all --parallel run build:bundle",
     "build:apps": "node scripts/build/build-test-apps.ts",
     "salesforce:deploy-app": "yarn workspace @datadog/browser-rum-slim build:bundle && node scripts/salesforce-lwc-app.ts deploy-app",
-    "salesforce:deploy-bundle": "yarn workspace @datadog/browser-rum-slim build:bundle && node scripts/salesforce-lwc-app.ts deploy-bundle",
     "salesforce:open": "node scripts/salesforce-lwc-app.ts open-url",
     "build:docs:json": "typedoc --logLevel Verbose --json ./generated-docs.json",
     "build:docs:html": "typedoc --out ./generated-docs",
