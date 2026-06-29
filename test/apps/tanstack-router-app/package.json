@@ -5,7 +5,7 @@
     "build": "webpack"
   },
   "dependencies": {
-    "@tanstack/react-router": "1.170.15",
+    "@tanstack/react-router": "1.170.16",
     "react": "19.2.7",
     "react-dom": "19.2.7"
   },
@@ -31,7 +31,7 @@
     "@datadog/browser-worker": "file:../../../packages/browser-worker/package.tgz"
   },
   "devDependencies": {
-    "ts-loader": "9.6.0",
+    "ts-loader": "9.6.2",
     "typescript": "6.0.3",
     "webpack": "5.107.2",
     "webpack-cli": "7.0.3"
