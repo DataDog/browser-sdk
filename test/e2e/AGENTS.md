@@ -5,8 +5,13 @@ E2E tests use Playwright to test the SDK in real browser environments.
 ## Running E2E Tests
 
 ```bash
-# First time setup (builds packages, apps, installs or updates Playwright browsers)
+# First-time setup: builds packages and apps; installs or updates Playwright browsers
+# for the workspace Playwright version.
 yarn test:e2e:setup
+
+# Optional: install Chromium, Firefox, and WebKit for Playwright 1.40.1. Required
+# locally if you run the firefox-pinned / webkit-pinned projects (see docs/TESTING.md).
+yarn test:e2e:setup:pinned
 
 # Run E2E tests locally
 yarn test:e2e
