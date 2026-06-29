@@ -18,12 +18,12 @@
     "@datadog/browser-debugger": "file:../../../packages/browser-debugger/package.tgz"
   },
   "devDependencies": {
-    "ts-loader": "9.6.0",
+    "ts-loader": "9.6.2",
     "typescript": "6.0.3",
     "webpack": "5.107.2"
   },
   "volta": {
     "extends": "../../../package.json"
   },
-  "packageManager": "yarn@4.16.0"
+  "packageManager": "yarn@4.17.0"
 }
