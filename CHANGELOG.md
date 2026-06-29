@@ -257,7 +257,7 @@ This is the v7 major release. It removes deprecated options and legacy code path
 **Migrating from v6:**
 
 - Follow the [v6 → v7 migration guide](https://github.com/DataDog/documentation/blob/8ed5928d4cf04351f6ec6f6e8d605267def58351/content/en/real_user_monitoring/guide/browser-sdk-upgrade.md) in the Datadog documentation.
-- For automated assistance, use the [`upgrade-browser-sdk-v7` Claude Code skill](https://github.com/DataDog/browser-sdk/blob/main/.claude/skills/upgrade-browser-sdk-v7/SKILL.md) shipped in this repo.
+- For automated assistance, use the [`upgrade-browser-sdk-v7` Claude Code skill](https://github.com/DataDog/datadog-labs/blob/main/browser-sdk/.claude/skills/upgrade-browser-sdk-v7/SKILL.md) available in datadog-labs.
 
 **Public Changes:**
 
