@@ -81,7 +81,7 @@ Build the SDK and test apps, then run the Salesforce scenario:
 ```sh
 yarn build
 yarn build:apps --app sf-lwc-app
-FORCE_COLOR=1 PW_BROWSER=chromium yarn test:e2e --project=chromium --grep @salesforce
+FORCE_COLOR=1 PW_BROWSER=chromium yarn test:e2e --project=chromium --grep salesforce
 ```
 
 ## CI

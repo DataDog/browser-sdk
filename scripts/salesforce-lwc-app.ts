@@ -107,15 +107,19 @@ function deployApp() {
 }
 
 function assignPermissionSet(targetOrg: string, permSetName: string) {
-  const result = spawnSync(
-    'sf',
-    ['org', 'assign', 'permset', '--name', permSetName, '--target-org', targetOrg, '--json'],
-    { encoding: 'utf8', cwd: salesforceAppDir }
-  )
+  const args = ['org', 'assign', 'permset', '--name', permSetName, '--target-org', targetOrg, '--json']
+  const spawnOptions: SpawnSyncOptionsWithStringEncoding = { encoding: 'utf8', cwd: salesforceAppDir }
+
+  let result = spawnSync('sf', args, spawnOptions)
+  if (result.error && (result.error as NodeJS.ErrnoException).code === 'ENOENT') {
+    result = spawnSync('yarn', ['dlx', '-p', salesforceCliPackage, 'sf', ...args], spawnOptions)
+  }
+
   const output = (result.stdout ?? '') + (result.stderr ?? '')
-  // A duplicate assignment error means the permset is already assigned — not a real failure.
-  if (result.status !== 0 && !output.includes('Duplicate')) {
-    throw new Error(`Failed to assign permission set ${permSetName}: ${result.stderr || result.stdout}`)
+  // Duplicate = already assigned; "cannot be inserted" = admin user (already has full access).
+  if (result.status !== 0 && !output.includes('Duplicate') && !output.includes('cannot be inserted')) {
+    // stdout has the JSON error body; stderr has CLI warnings (e.g. update available)
+    throw new Error(result.stdout || result.stderr || result.error?.message)
   }
   printLog(`Permission set ${permSetName} assigned.`)
 }

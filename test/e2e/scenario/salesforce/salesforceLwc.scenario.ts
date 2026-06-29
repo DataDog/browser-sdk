@@ -3,7 +3,10 @@ import { createTest } from '../../lib/framework'
 import { getSalesforceConfig } from '../../lib/helpers/salesforceApp'
 
 const { targetOrg, isConfigured } = getSalesforceConfig()
-test.skip(!isConfigured, `Salesforce org "${targetOrg}" is not configured; run yarn salesforce:auth first`)
+test.skip(
+  !isConfigured,
+  `Salesforce org "${targetOrg}" is not configured; run node scripts/salesforce-lwc-app.ts auth first`
+)
 
 createTest('salesforce')
   .withSalesforceApp()
