@@ -1,7 +1,8 @@
-import type { HttpRequest, HttpRequestEvent } from '@datadog/browser-core'
+import type { HttpRequest } from '@datadog/browser-core'
 import { PageExitReason } from '@datadog/browser-core'
 import { Observable } from '@datadog/js-core/util'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
+import type { HttpRequestEvent } from '@datadog/js-core/transport'
 import type { ResourcePayload } from './buildResourcePayload'
 import { startReplayResourceCollection } from './replayResourceCollection'
 

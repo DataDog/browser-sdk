@@ -1,5 +1,5 @@
 import type { ClocksState } from '@datadog/js-core/time'
-import type { HttpRequest, HttpRequestEvent } from '@datadog/browser-core'
+import type { HttpRequest } from '@datadog/browser-core'
 import { DeflateEncoderStreamId, PageExitReason } from '@datadog/browser-core'
 import { Observable } from '@datadog/js-core/util'
 import type { ViewHistory, ViewHistoryEntry } from '@datadog/browser-rum-core'
@@ -11,6 +11,7 @@ import {
   restorePageVisibility,
   createSessionManagerMock,
 } from '@datadog/browser-core/test'
+import type { HttpRequestEvent } from '@datadog/js-core/transport'
 import type { BrowserRecord, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
 import { MockWorker, readMetadataFromReplayPayload } from '../../../test'
