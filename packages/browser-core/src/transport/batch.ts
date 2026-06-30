@@ -1,32 +1,30 @@
-import type { EndpointBuilder, Payload  } from '@datadog/js-core/transport'
+import { createBatch as jsCreateBatch, MESSAGE_BYTES_LIMIT } from '@datadog/js-core/transport'
+import type { EndpointBuilder, Batch } from '@datadog/js-core/transport'
+import { createPageMayExitObservable } from '../browser/pageMayExitObservable'
 import { DOCS_TROUBLESHOOTING, MORE_DETAILS, display } from '../tools/display'
-import type { Context } from '../tools/serialisation/context'
-import { objectValues } from '../tools/utils/polyfills'
-import { isPageExitReason, createPageMayExitObservable } from '../browser/pageMayExitObservable'
-import { jsonStringify } from '../tools/serialisation/jsonStringify'
-import { createIdentityEncoder } from '../tools/encoder'
-import type { Encoder, EncoderResult } from '../tools/encoder'
-import { computeBytesCount, ONE_KIBI_BYTE } from '../tools/utils/byteUtils'
+import type { Encoder } from '../tools/encoder'
 import { mockable } from '../tools/mockable'
-import type { Observable } from '../tools/observable'
 import { createHttpRequest } from './httpRequest'
-import { createFlushController } from './flushController'
-import type { FlushEvent, FlushReason, UrgentFlushReason } from './flushController'
 
-export const MESSAGE_BYTES_LIMIT = 256 * ONE_KIBI_BYTE
+export type { Batch }
+export { MESSAGE_BYTES_LIMIT }
 
-export interface Batch {
-  isEmpty: boolean
-  add: (message: Context) => void
-  upsert: (message: Context, key: string) => void
-  forceFlush: (reason: FlushReason) => void
-  prepareUrgentFlushObservable: Observable<UrgentFlushReason>
-  flushObservable: Observable<FlushEvent>
-  stop: () => void
-}
-
+/**
+ * Creates a batch wired to the browser's HTTP transport and page-exit detection.
+ *
+ * This is a thin browser-core wrapper around the generic `createBatch` from js-core.
+ * It injects:
+ * - an `HttpRequest` built from `endpoints` using the browser fetch / sendBeacon strategies
+ * - a `pageMayExitObservable` backed by DOM visibility and beforeunload events
+ * - `display.warn` for oversized-message warnings (with the troubleshooting docs URL)
+ *
+ * @param options - See parameter descriptions below.
+ * @param options.endpoints - Intake endpoint builders to send to.
+ * @param options.reportError - Called when the send queue overflows.
+ * @param options.encoder - Optional encoder; defaults to the identity encoder.
+ */
 export function createBatch({
-  encoder = createIdentityEncoder(),
+  encoder,
   endpoints,
   reportError,
 }: {
@@ -36,116 +34,13 @@ export function createBatch({
 }): Batch {
   const request = mockable(createHttpRequest)(endpoints, reportError)
   const pageMayExitObservable = mockable(createPageMayExitObservable)()
-  const flushController = mockable(createFlushController)({ pageMayExitObservable })
-  let upsertBuffer: { [key: string]: string } = {}
-  const flushSubscription = flushController.flushObservable.subscribe((event) => flush(event))
 
-  function push(serializedMessage: string, estimatedMessageBytesCount: number, key?: string) {
-    if (key !== undefined) {
-      let bytesDiff: number
-      if (upsertBuffer[key] !== undefined) {
-        bytesDiff = estimatedMessageBytesCount - encoder.estimateEncodedBytesCount(upsertBuffer[key])
-      } else {
-        flushController.notifyBeforeAddMessage(estimatedMessageBytesCount)
-        bytesDiff = 0
-      }
-      upsertBuffer[key] = serializedMessage
-      flushController.notifyAfterAddMessage(bytesDiff)
-    } else {
-      flushController.notifyBeforeAddMessage(estimatedMessageBytesCount)
-      encoder.write(encoder.isEmpty ? serializedMessage : `\n${serializedMessage}`, (realMessageBytesCount) => {
-        flushController.notifyAfterAddMessage(realMessageBytesCount - estimatedMessageBytesCount)
-      })
-    }
-  }
-
-  function addOrUpdate(message: Context, key?: string) {
-    const serializedMessage = jsonStringify(message)!
-
-    const estimatedMessageBytesCount = encoder.estimateEncodedBytesCount(serializedMessage)
-
-    if (estimatedMessageBytesCount >= MESSAGE_BYTES_LIMIT) {
-      display.warn(
-        `Discarded a message whose size was bigger than the maximum allowed size ${MESSAGE_BYTES_LIMIT / ONE_KIBI_BYTE}KiB. ${MORE_DETAILS} ${DOCS_TROUBLESHOOTING}/#technical-limitations`
-      )
-      return
-    }
-
-    push(serializedMessage, estimatedMessageBytesCount, key)
-  }
-
-  function flush(event: FlushEvent) {
-    const upsertMessages = objectValues(upsertBuffer).join('\n')
-    upsertBuffer = {}
-
-    const pageMightExit = isPageExitReason(event.reason)
-    const send = pageMightExit ? request.sendOnExit : request.send
-
-    if (
-      pageMightExit &&
-      // Note: checking that the encoder is async is not strictly needed, but it's an optimization:
-      // if the encoder is async we need to send two requests in some cases (one for encoded data
-      // and the other for non-encoded data). But if it's not async, we don't have to worry about
-      // it and always send a single request.
-      encoder.isAsync
-    ) {
-      const encoderResult = encoder.finishSync()
-
-      // Send encoded messages
-      if (encoderResult.outputBytesCount) {
-        send(formatPayloadFromEncoder(encoderResult))
-      }
-
-      // Send messages that are not yet encoded at this point
-      const pendingMessages = [encoderResult.pendingData, upsertMessages].filter(Boolean).join('\n')
-      if (pendingMessages) {
-        send({
-          data: pendingMessages,
-          bytesCount: computeBytesCount(pendingMessages),
-        })
-      }
-    } else {
-      if (upsertMessages) {
-        encoder.write(encoder.isEmpty ? upsertMessages : `\n${upsertMessages}`)
-      }
-      encoder.finish((encoderResult) => {
-        send(formatPayloadFromEncoder(encoderResult))
-      })
-    }
-  }
-
-  return {
-    get isEmpty() {
-      return flushController.messagesCount === 0
-    },
-    add: addOrUpdate,
-    upsert: addOrUpdate,
-    prepareUrgentFlushObservable: flushController.prepareUrgentFlushObservable,
-    forceFlush: flushController.forceFlush,
-    flushObservable: flushController.flushObservable,
-    stop: flushSubscription.unsubscribe,
-  }
-}
-
-function formatPayloadFromEncoder(encoderResult: EncoderResult): Payload {
-  let data: string | Blob
-  if (typeof encoderResult.output === 'string') {
-    data = encoderResult.output
-  } else {
-    data = new Blob([encoderResult.output], {
-      // This will set the 'Content-Type: text/plain' header. Reasoning:
-      // * The intake rejects the request if there is no content type.
-      // * The browser will issue CORS preflight requests if we set it to 'application/json', which
-      // could induce higher intake load (and maybe has other impacts).
-      // * Also it's not quite JSON, since we are concatenating multiple JSON objects separated by
-      // new lines.
-      type: 'text/plain',
-    })
-  }
-
-  return {
-    data,
-    bytesCount: encoderResult.outputBytesCount,
-    encoding: encoderResult.encoding,
-  }
+  return jsCreateBatch({
+    request,
+    pageMayExitObservable,
+    encoder,
+    reportError,
+    warn: (message) =>
+      display.warn(`${message} ${MORE_DETAILS} ${DOCS_TROUBLESHOOTING}/#technical-limitations`),
+  })
 }
