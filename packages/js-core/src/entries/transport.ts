@@ -9,6 +9,8 @@ export type {
   EndpointPayload,
 } from '../transport/endpointBuilder'
 export { createEndpointBuilder, createReplicaEndpointBuilder, buildEndpointUrl } from '../transport/endpointBuilder'
+export type { Encoder, EncoderResult } from '../transport/encoder'
+export { createIdentityEncoder } from '../transport/encoder'
 export type { Site } from '../transport/intakeSites'
 export {
   INTAKE_SITE_STAGING,
