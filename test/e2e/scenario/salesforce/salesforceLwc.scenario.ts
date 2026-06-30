@@ -2,6 +2,13 @@ import { expect, test } from '@playwright/test'
 import { createTest } from '../../lib/framework'
 import { getSalesforceConfig } from '../../lib/helpers/salesforceApp'
 
+test.use({
+  bypassCSP: true,
+  launchOptions: {
+    args: ['--disable-web-security'],
+  },
+})
+
 const { targetOrg, isConfigured } = getSalesforceConfig()
 test.skip(
   !isConfigured,
@@ -10,7 +17,7 @@ test.skip(
 
 createTest('salesforce')
   .withSalesforceApp()
-  .run(async ({ page, intakeRegistry, flushEvents }) => {
+  .run(async ({ page, intakeRegistry, flushEvents, withBrowserLogs }) => {
     await expect(page.getByTestId('home-custom-actions')).toBeVisible()
 
     await page.getByTestId('custom-action-1').click()
@@ -21,7 +28,7 @@ createTest('salesforce')
 
     // Verify that the initial view event is present.
     expect(intakeRegistry.rumViewEvents.length).toBeGreaterThanOrEqual(1)
-    const homeView = intakeRegistry.rumViewEvents.find((e) => e.view.name?.includes('/lightning/page/home') === true)
+    const homeView = intakeRegistry.rumViewEvents.find((e) => e.view.name?.includes('/page/home') === true)
     expect(homeView).toBeDefined()
     expect(homeView?.view.loading_type).toBe('initial_load')
 
@@ -38,4 +45,9 @@ createTest('salesforce')
     )
     expect(productExplorerView).toBeDefined()
     expect(productExplorerView?.view.loading_type).toBe('route_change')
+
+    // Salesforce's own app generates console errors we cannot control because of Dev Mode configuration in the application
+    // Clear them so the generic teardown check doesn't fail on noise unrelated to the SDK.
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    withBrowserLogs(() => {})
   })

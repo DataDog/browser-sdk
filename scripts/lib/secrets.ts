@@ -101,8 +101,7 @@ export function getSfLwcInstanceUrl(): string {
 }
 
 export function getSfLwcJwtPrivateKey(): string {
-  const key = process.env.SF_LWC_JWT_PRIVATE_KEY_B64 ?? getSecretKey('ci.browser-sdk.sf_lwc_jwt_private_key_b64')
-  return Buffer.from(key, 'base64').toString('utf8')
+  return process.env.SF_LWC_JWT_PRIVATE_KEY_B64 ?? getSecretKey('ci.browser-sdk.sf_lwc_jwt_private_key_b64')
 }
 
 function getSecretKey(name: string): string {

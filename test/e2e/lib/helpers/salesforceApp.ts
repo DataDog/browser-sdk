@@ -18,10 +18,11 @@ export function getSalesforceConfig(): { targetOrg: string; isConfigured: boolea
   return { targetOrg, isConfigured }
 }
 
-export function buildSalesforceLwcUrl(): string {
+export function buildSalesforceLwcUrl(proxy: string): string {
   const result = spawnSync('node', ['scripts/salesforce-lwc-app.ts', 'open-url'], {
     encoding: 'utf8',
     cwd: repositoryRoot,
+    env: { ...process.env, DD_SALESFORCE_E2E_PROXY: proxy },
   })
 
   if (result.status !== 0) {

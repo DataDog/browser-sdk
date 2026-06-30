@@ -39,7 +39,7 @@ function authenticate() {
   const keyPath = resolve(keyDirectory, 'server.key')
 
   try {
-    writeFileSync(keyPath, getSfLwcJwtPrivateKey(), { mode: 0o600 })
+    writeFileSync(keyPath, Buffer.from(getSfLwcJwtPrivateKey(), 'base64').toString('utf8'), { mode: 0o600 })
     chmodSync(keyPath, 0o600)
 
     printLog(`Authenticating Salesforce CLI alias ${defaultTargetOrg}...`)
@@ -126,6 +126,7 @@ function assignPermissionSet(targetOrg: string, permSetName: string) {
 
 function buildOpenUrl(): string {
   const targetOrg = getTargetOrg()
+  const proxy = process.env.DD_SALESFORCE_E2E_PROXY
   const path = new URL(salesforceHomePath, 'https://salesforce.local')
 
   path.searchParams.set(
@@ -144,6 +145,7 @@ function buildOpenUrl(): string {
       telemetryConfigurationSampleRate: 100,
       service: 'browser-sdk-salesforce-e2e',
       env: 'e2e',
+      ...(proxy ? { proxy } : {}),
     })
   )
 

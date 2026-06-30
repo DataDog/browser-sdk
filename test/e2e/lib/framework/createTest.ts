@@ -29,7 +29,6 @@ import type { Servers } from './httpServers'
 import { getTestServers, waitForServersIdle } from './httpServers'
 import type { CallerLocation, EventBridgeOptions, SetupFactory, SetupOptions, UrlHook } from './pageSetups'
 import { html, DEFAULT_SETUPS, npmSetup, appSetup, formatConfiguration } from './pageSetups'
-import { computeIntakeRequestInfos, readIntakeRequest } from './intakeProxyMiddleware'
 import { createDatadogHttpApi } from './serverApps/datadogHttpApi'
 import type { DatadogHttpApiControl } from './serverApps/datadogHttpApi'
 import { createMockServerApp } from './serverApps/mock'
@@ -275,8 +274,8 @@ class TestBuilder {
   withSalesforceApp() {
     this.salesforceApp = true
     this.setups = [{ factory: () => '' }]
-    this.baseUrlHooks.push((baseUrl) => {
-      baseUrl.href = buildSalesforceLwcUrl()
+    this.baseUrlHooks.push((baseUrl, servers) => {
+      baseUrl.href = buildSalesforceLwcUrl(servers.datadogHttpApi.origin)
     })
     return this
   }
@@ -463,14 +462,6 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
           body: await readFile(salesforceLwcBundlePath),
           contentType: 'application/javascript',
         })
-      })
-      // Because of CSP, we need to intercept the intake request and push it to the intake registry
-      await page.route('*/**/api/v2/rum**', async (route) => {
-        const request = route.request()
-        const infos = computeIntakeRequestInfos(request)
-        const intakeRequest = await readIntakeRequest(request, infos)
-        intakeRegistry.push(intakeRequest)
-        await route.fulfill({ status: 202 })
       })
     }
 
