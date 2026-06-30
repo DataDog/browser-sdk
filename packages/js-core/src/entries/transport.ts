@@ -12,6 +12,9 @@ export { createEndpointBuilder, createReplicaEndpointBuilder, buildEndpointUrl }
 export type { Encoder, EncoderResult } from '../transport/encoder'
 export { createIdentityEncoder } from '../transport/encoder'
 export type { Payload, HttpResponse, BandwidthStats, HttpRequestEvent } from '../transport/payload'
+export { RECOMMENDED_REQUEST_BYTES_LIMIT } from '../transport/payload'
+export { PageExitReason, createFlushController, FLUSH_DURATION_LIMIT, MESSAGES_LIMIT } from '../transport/flushController'
+export type { PageMayExitEvent, UrgentFlushReason, FlushReason, FlushEvent, FlushController } from '../transport/flushController'
 export {
   sendWithRetryStrategy,
   newRetryState,

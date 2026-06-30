@@ -1,16 +1,10 @@
 import type { EndpointBuilder, Payload, HttpResponse, HttpRequestEvent } from '@datadog/js-core/transport'
+import { RECOMMENDED_REQUEST_BYTES_LIMIT } from '@datadog/js-core/transport'
 import { monitor, monitorError } from '@datadog/js-core/monitor'
 import type { Context } from '../tools/serialisation/context'
 import { fetch } from '../browser/fetch'
 import { Observable } from '../tools/observable'
-import { ONE_KIBI_BYTE } from '../tools/utils/byteUtils'
 import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
-
-/**
- * beacon payload max queue size implementation is 64kb
- * ensure that we leave room for logs, rum and potential other users
- */
-export const RECOMMENDED_REQUEST_BYTES_LIMIT = 16 * ONE_KIBI_BYTE
 
 /**
  * Use POST request without content type to:

@@ -26,6 +26,16 @@ export interface BuildEndpointUrlOptions {
 export function createEndpointBuilder(configuration: EndpointBuilderConfiguration, trackType: TrackType, extraParameters?: string[]): EndpointBuilder;
 
 // @public
+export function createFlushController(input: FlushControllerOptions): {
+    flushObservable: Observable<FlushEvent>;
+    prepareUrgentFlushObservable: Observable<PageExitReason>;
+    forceFlush: (flushReason: FlushReason) => void;
+    readonly messagesCount: number;
+    notifyBeforeAddMessage(estimatedMessageBytesCount: number): void;
+    notifyAfterAddMessage(messageBytesCountDiff?: number): void;
+};
+
+// @public
 export function createIdentityEncoder(): Encoder<string>;
 
 // @public
@@ -62,6 +72,22 @@ export interface EndpointPayload {
     encoding?: 'deflate';
     retry?: TransportRetryInfo;
 }
+
+// @public
+export const FLUSH_DURATION_LIMIT: Duration;
+
+// @public
+export type FlushController = ReturnType<typeof createFlushController>;
+
+// @public
+export interface FlushEvent {
+    bytesCount: number;
+    messagesCount: number;
+    reason: FlushReason;
+}
+
+// @public
+export type FlushReason = UrgentFlushReason | 'duration_limit' | 'bytes_limit' | 'messages_limit' | 'session_expire';
 
 // @public
 export type HttpRequestEvent<Body extends Payload = Payload> = {
@@ -123,7 +149,27 @@ export const MAX_ONGOING_REQUESTS = 32;
 export const MAX_QUEUE_BYTES_COUNT: number;
 
 // @public
+export const MESSAGES_LIMIT: number;
+
+// @public
 export function newRetryState<Body extends Payload>(): RetryState<Body>;
+
+// @public
+export const PageExitReason: {
+    readonly HIDDEN: "visibility_hidden";
+    readonly UNLOADING: "before_unload";
+    readonly PAGEHIDE: "page_hide";
+    readonly FROZEN: "page_frozen";
+};
+
+// @public (undocumented)
+export type PageExitReason = (typeof PageExitReason)[keyof typeof PageExitReason];
+
+// @public
+export interface PageMayExitEvent {
+    // (undocumented)
+    reason: PageExitReason;
+}
 
 // @public
 export interface Payload {
@@ -143,6 +189,9 @@ export type ProxyFn = (options: {
     parameters: string;
     subdomain?: string;
 }) => string;
+
+// @public
+export const RECOMMENDED_REQUEST_BYTES_LIMIT: number;
 
 // @public
 export interface RetryState<Body extends Payload> {
@@ -178,6 +227,9 @@ export interface TransportRetryInfo {
 
 // @public
 export type TransportSource = 'browser' | 'flutter' | 'unity' | 'dd_debugger';
+
+// @public
+export type UrgentFlushReason = PageExitReason;
 
 // (No @packageDocumentation comment for this package)
 
