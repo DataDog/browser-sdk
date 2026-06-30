@@ -1,8 +1,3 @@
-import { mockClock, setNavigatorOnLine } from '../../test'
-import type { Clock } from '../../test'
-import { Observable } from '../tools/observable'
-import { ONE_MEBI_BYTE } from '../tools/utils/byteUtils'
-import type { RetryState } from './sendWithRetryStrategy'
 import {
   newRetryState,
   sendWithRetryStrategy,
@@ -10,8 +5,12 @@ import {
   MAX_ONGOING_REQUESTS,
   MAX_QUEUE_BYTES_COUNT,
   INITIAL_BACKOFF_TIME,
-} from './sendWithRetryStrategy'
-import type { Payload, HttpResponse, HttpRequestEvent } from './httpRequest'
+} from '@datadog/js-core/transport'
+import type { RetryState, Payload, HttpResponse, HttpRequestEvent } from '@datadog/js-core/transport'
+import { mockClock, setNavigatorOnLine } from '../../test'
+import type { Clock } from '../../test'
+import { Observable } from '../tools/observable'
+import { ONE_MEBI_BYTE } from '../tools/utils/byteUtils'
 
 describe('sendWithRetryStrategy', () => {
   const ENDPOINT_TYPE = 'logs'

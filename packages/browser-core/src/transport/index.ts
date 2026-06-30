@@ -1,4 +1,5 @@
-export type { BandwidthStats, HttpRequest, HttpRequestEvent, Payload } from './httpRequest'
+export type { BandwidthStats, HttpRequestEvent, Payload } from '@datadog/js-core/transport'
+export type { HttpRequest } from './httpRequest'
 export { createHttpRequest } from './httpRequest'
 export type { BrowserWindowWithEventBridge, DatadogEventBridge } from './eventBridge'
 export { canUseEventBridge, bridgeSupports, getEventBridge, BridgeCapability } from './eventBridge'

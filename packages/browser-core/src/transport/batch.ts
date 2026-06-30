@@ -1,4 +1,4 @@
-import type { EndpointBuilder } from '@datadog/js-core/transport'
+import type { EndpointBuilder, Payload } from '@datadog/js-core/transport'
 import { MORE_DETAILS } from '@datadog/js-core/util'
 import { DOCS_TROUBLESHOOTING, display } from '../tools/display'
 import type { Context } from '../tools/serialisation/context'
@@ -11,7 +11,6 @@ import { computeBytesCount, ONE_KIBI_BYTE } from '../tools/utils/byteUtils'
 import { mockable } from '../tools/mockable'
 import type { Observable } from '../tools/observable'
 import { createHttpRequest } from './httpRequest'
-import type { Payload } from './httpRequest'
 import { createFlushController } from './flushController'
 import type { FlushEvent, FlushReason, UrgentFlushReason } from './flushController'
 
