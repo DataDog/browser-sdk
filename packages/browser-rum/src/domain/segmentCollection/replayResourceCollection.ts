@@ -1,7 +1,6 @@
-import { isPageExitReason } from '@datadog/browser-core'
 import type { LifeCycle } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
-import { PageExitReason } from '@datadog/js-core/transport'
+import { PageExitReason, isPageExitReason } from '@datadog/js-core/transport'
 import type { HttpRequest } from '@datadog/js-core/transport'
 import type { EmitResourceCallback } from '../record'
 import { buildResourcePayload } from './buildResourcePayload'

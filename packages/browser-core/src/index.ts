@@ -54,7 +54,6 @@ export {
   SESSION_NOT_TRACKED,
   SessionPersistence,
 } from './domain/session/sessionConstants'
-export type { Batch } from './transport'
 export {
   createHttpRequest,
   canUseEventBridge,
@@ -91,7 +90,7 @@ export type { XhrCompleteContext, XhrStartContext, XhrContext } from './browser/
 export { initXhrObservable } from './browser/xhrObservable'
 export type { FetchResolveContext, FetchStartContext, FetchContext } from './browser/fetchObservable'
 export { initFetchObservable, ResponseBodyAction } from './browser/fetchObservable'
-export { createPageMayExitObservable, isPageExitReason } from './browser/pageMayExitObservable'
+export { createPageMayExitObservable } from './browser/pageMayExitObservable'
 export { requestIdleCallback } from './tools/requestIdleCallback'
 export * from './tools/taskQueue'
 export * from './tools/thenable'
