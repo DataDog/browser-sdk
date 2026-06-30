@@ -75,8 +75,6 @@ export {
   FLUSH_DURATION_LIMIT,
 } from './transport'
 export * from './tools/display'
-export type { Encoder, EncoderResult } from './tools/encoder'
-export { createIdentityEncoder } from './tools/encoder'
 export * from './tools/utils/arrayUtils'
 
 export * from './tools/serialisation/sanitize'

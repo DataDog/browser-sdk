@@ -20,7 +20,30 @@ export interface BuildEndpointUrlOptions {
 export function createEndpointBuilder(configuration: EndpointBuilderConfiguration, trackType: TrackType, extraParameters?: string[]): EndpointBuilder;
 
 // @public
+export function createIdentityEncoder(): Encoder<string>;
+
+// @public
 export function createReplicaEndpointBuilder(input: ConfigurationWithReplica, trackType: TrackType): EndpointBuilder | undefined;
+
+// @public
+export interface Encoder<Output extends string | Uint8ArrayBuffer = string | Uint8ArrayBuffer> {
+    estimateEncodedBytesCount(data: string): number;
+    finish(callback: (result: EncoderResult<Output>) => void): void;
+    finishSync(): EncoderResult<Output> & {
+        pendingData: string;
+    };
+    isAsync: boolean;
+    isEmpty: boolean;
+    write(data: string, callback?: (additionalEncodedBytesCount: number) => void): void;
+}
+
+// @public
+export interface EncoderResult<Output extends string | Uint8ArrayBuffer = string | Uint8ArrayBuffer> {
+    encoding?: 'deflate';
+    output: Output;
+    outputBytesCount: number;
+    rawBytesCount: number;
+}
 
 // @public
 export interface EndpointBuilder {
