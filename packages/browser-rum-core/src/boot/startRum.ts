@@ -16,6 +16,8 @@ import {
   startGlobalContext,
   startUserContext,
   startTabContext,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
   ErrorSource,
 } from '@datadog/browser-core'
 import { clocksNow } from '@datadog/js-core/time'
@@ -40,6 +42,7 @@ import { startCustomerDataTelemetry } from '../domain/startCustomerDataTelemetry
 import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
 import { startDisplayContext } from '../domain/contexts/displayContext'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
+import { startAiAgentContext } from '../domain/contexts/aiAgentContext'
 import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext'
 import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
 import { startSyntheticsContext } from '../domain/contexts/syntheticsContext'
@@ -182,6 +185,9 @@ export function startRumEventCollection(
 
   const displayContext = startDisplayContext(assembleHook)
   cleanupTasks.push(displayContext.stop)
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.AI_AGENT_DETECTION)) {
+    startAiAgentContext(assembleHook)
+  }
   const ciVisibilityContext = startCiVisibilityContext(assembleHook)
   cleanupTasks.push(ciVisibilityContext.stop)
   startSyntheticsContext(assembleHook)
