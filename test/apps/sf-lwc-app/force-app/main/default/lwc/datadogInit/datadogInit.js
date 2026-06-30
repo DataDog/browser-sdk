@@ -6,14 +6,6 @@ import { loadScript } from 'lightning/platformResourceLoader'
 let datadogInitialization
 let lastStartedUrl
 
-const defaultDatadogRumConfig = {
-  trackViewsManually: true,
-  trackEarlyRequests: true,
-  trackLongTasks: true,
-  trackResources: true,
-  trackUserInteractions: true,
-}
-
 export default class DatadogInit extends NavigationMixin(LightningElement) {
   connectedCallback() {
     this.initialize()
@@ -76,7 +68,11 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
       env: searchParams.get('c__env'),
       service: searchParams.get('c__service'),
       site: searchParams.get('c__site'),
-      ...defaultDatadogRumConfig,
+      trackViewsManually: true,
+      trackEarlyRequests: true,
+      trackLongTasks: true,
+      trackResources: true,
+      trackUserInteractions: true,
       ...this.getQueryInitConfiguration(searchParams),
     }
   }

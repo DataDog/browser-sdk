@@ -72,7 +72,7 @@ function deployApp() {
   // We will replace the deployed bundle with the local bundle in the E2E tests
   copyFileSync(bundlePath, stableStaticResourcePath)
 
-  const deployArgs = [
+  const args = [
     'project',
     'deploy',
     'start',
@@ -82,12 +82,7 @@ function deployApp() {
     'force-app',
     '--ignore-conflicts',
   ]
-  const spawnOptions: SpawnSyncOptionsWithStringEncoding = { encoding: 'utf8', cwd: salesforceAppDir, stdio: 'pipe' }
-
-  let result = spawnSync('sf', deployArgs, spawnOptions)
-  if (result.error && (result.error as NodeJS.ErrnoException).code === 'ENOENT') {
-    result = spawnSync('yarn', ['dlx', '-p', salesforceCliPackage, 'sf', ...deployArgs], spawnOptions)
-  }
+  const result = spawnSf(args, { encoding: 'utf8', cwd: salesforceAppDir, stdio: 'pipe' })
 
   if (result.stdout) {
     process.stdout.write(result.stdout)
@@ -109,12 +104,7 @@ function deployApp() {
 
 function assignPermissionSet(targetOrg: string, permSetName: string) {
   const args = ['org', 'assign', 'permset', '--name', permSetName, '--target-org', targetOrg, '--json']
-  const spawnOptions: SpawnSyncOptionsWithStringEncoding = { encoding: 'utf8', cwd: salesforceAppDir }
-
-  let result = spawnSync('sf', args, spawnOptions)
-  if (result.error && (result.error as NodeJS.ErrnoException).code === 'ENOENT') {
-    result = spawnSync('yarn', ['dlx', '-p', salesforceCliPackage, 'sf', ...args], spawnOptions)
-  }
+  const result = spawnSf(args, { encoding: 'utf8', cwd: salesforceAppDir })
 
   const output = (result.stdout ?? '') + (result.stderr ?? '')
   // Duplicate = already assigned; "cannot be inserted" = admin user (already has full access).
@@ -168,25 +158,16 @@ function buildOpenUrl(): string {
   return data.result.url
 }
 
-function runSf(args: string[], options: Partial<SpawnSyncOptionsWithStringEncoding> = {}): SpawnSyncReturns<string> {
-  const spawnOptions = {
-    encoding: 'utf8' as const,
-    cwd: salesforceAppDir,
-    ...options,
-  }
-  const result = spawnSync('sf', args, spawnOptions)
-
+function spawnSf(args: string[], options: SpawnSyncOptionsWithStringEncoding): SpawnSyncReturns<string> {
+  const result = spawnSync('sf', args, options)
   if (result.error && (result.error as NodeJS.ErrnoException).code === 'ENOENT') {
-    return runSfWithYarnDlx(args, spawnOptions)
-  }
-  if (result.status !== 0) {
-    throw new Error(result.stderr || result.stdout || result.error?.message)
+    return spawnSync('yarn', ['dlx', '-p', salesforceCliPackage, 'sf', ...args], options)
   }
   return result
 }
 
-function runSfWithYarnDlx(args: string[], options: SpawnSyncOptionsWithStringEncoding): SpawnSyncReturns<string> {
-  const result = spawnSync('yarn', ['dlx', '-p', salesforceCliPackage, 'sf', ...args], options)
+function runSf(args: string[], options: Partial<SpawnSyncOptionsWithStringEncoding> = {}): SpawnSyncReturns<string> {
+  const result = spawnSf(args, { encoding: 'utf8', cwd: salesforceAppDir, ...options })
   if (result.status !== 0) {
     throw new Error(result.stderr || result.stdout || result.error?.message)
   }

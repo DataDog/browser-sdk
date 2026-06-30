@@ -35,7 +35,7 @@ export interface BrowserLog {
   timestamp: number
 }
 
-// Salesforce Dev Mode generates console errors we cannot control
+// Salesforce generates console errors we cannot control
 const SALESFORCE_DEV_MODE_LOG_MESSAGES = [
   'Unsupported WebVital metrics',
   'Failed to load resource: the server responded with a status of 404 ()',
