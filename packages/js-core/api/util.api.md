@@ -320,8 +320,6 @@ export interface Uint8ArrayBuffer extends Uint8Array {
 ```
 ## API Report File for "@datadog/js-core"
 
-
-
 // @public
 export class BufferedObservable<T> extends Observable<T> {
     constructor(maxBufferSize: number, onDrop?: ((count: number) => void) | undefined);
@@ -332,43 +330,6 @@ export class BufferedObservable<T> extends Observable<T> {
     unbuffer(): void;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // @public
 export function mergeObservables<T>(...observables: Array<Observable<T>>): Observable<T>;
 
@@ -377,13 +338,6 @@ export function mockable<T>(value: T): T;
 
 // @public
 export const mockableReplacements: Map<unknown, unknown>;
-
-
-
-
-
-
-
 
 // @public
 export class Observable<T> {
@@ -398,6 +352,46 @@ export class Observable<T> {
     subscribe(observer: Observer<T>): Subscription;
 }
 
+// @public
+export interface Subscription {
+    // (undocumented)
+    unsubscribe: () => void;
+}
+
+
+
+
+// @public
+export interface BrowserWindowWithZoneJs {
+    // (undocumented)
+    Zone?: {
+        __symbol__?: (name: string) => string;
+    };
+}
+
+
+
+// @public
+function clearInterval_2(timeoutId: TimeoutId | undefined): void;
+export { clearInterval_2 as clearInterval }
+
+// @public
+function clearTimeout_2(timeoutId: TimeoutId | undefined): void;
+export { clearTimeout_2 as clearTimeout }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -413,10 +407,53 @@ export class Observable<T> {
 
 
 // @public
-export interface Subscription {
-    // (undocumented)
-    unsubscribe: () => void;
-}
+export function getZoneJsOriginalValue<Target, Name extends keyof Target & string>(target: Target, name: Name): Target[Name];
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// @public
+function setInterval_2(callback: () => void, delay?: number): TimeoutId;
+export { setInterval_2 as setInterval }
+
+// @public
+function setTimeout_2(callback: () => void, delay?: number): TimeoutId;
+export { setTimeout_2 as setTimeout }
+
+
+// @public
+export type TimeoutId = ReturnType<GlobalObject['setTimeout']>;
 
 
 
