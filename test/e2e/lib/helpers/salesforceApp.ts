@@ -2,7 +2,6 @@ import { spawnSync } from 'node:child_process'
 import { resolve } from 'node:path'
 
 const repositoryRoot = resolve(__dirname, '../../../..')
-const salesforceCliPackage = '@salesforce/cli@2.139.6'
 
 export const salesforceLwcBundlePath = resolve(
   repositoryRoot,
@@ -15,9 +14,9 @@ export function getSalesforceConfig(): { targetOrg: string; isConfigured: boolea
   const args = ['org', 'display', '--target-org', targetOrg]
   const options = { encoding: 'utf8' as const, cwd: repositoryRoot }
 
-  let result = spawnSync('sf', args, options)
+  const result = spawnSync('sf', args, options)
   if (result.error && (result.error as NodeJS.ErrnoException).code === 'ENOENT') {
-    result = spawnSync('yarn', ['dlx', '-p', salesforceCliPackage, 'sf', ...args], options)
+    return { targetOrg, isConfigured: false }
   }
 
   return { targetOrg, isConfigured: result.status === 0 }
