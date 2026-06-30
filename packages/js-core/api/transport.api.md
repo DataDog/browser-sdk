@@ -5,6 +5,12 @@
 ```ts
 
 // @public
+export interface BandwidthStats {
+    ongoingByteCount: number;
+    ongoingRequestCount: number;
+}
+
+// @public
 export function buildEndpointUrl(input: BuildEndpointUrlOptions): string;
 
 // @public
@@ -58,6 +64,32 @@ export interface EndpointPayload {
 }
 
 // @public
+export type HttpRequestEvent<Body extends Payload = Payload> = {
+    type: 'failure';
+    bandwidth: BandwidthStats;
+    payload: Body;
+} | {
+    type: 'queue-full';
+    bandwidth: BandwidthStats;
+    payload: Body;
+} | {
+    type: 'success';
+    bandwidth: BandwidthStats;
+    payload: Body;
+};
+
+// @public
+export interface HttpResponse extends Context {
+    // (undocumented)
+    status: number;
+    // (undocumented)
+    type?: ResponseType;
+}
+
+// @public (undocumented)
+export const INITIAL_BACKOFF_TIME: Duration;
+
+// @public
 export const INTAKE_SITE_EU1: Site;
 
 // @public
@@ -78,12 +110,56 @@ export const INTAKE_URL_PARAMETERS: string[];
 // @public
 export function isIntakeUrl(url: string): boolean;
 
+// @public (undocumented)
+export const MAX_BACKOFF_TIME: Duration;
+
+// @public (undocumented)
+export const MAX_ONGOING_BYTES_COUNT: number;
+
+// @public (undocumented)
+export const MAX_ONGOING_REQUESTS = 32;
+
+// @public (undocumented)
+export const MAX_QUEUE_BYTES_COUNT: number;
+
+// @public
+export function newRetryState<Body extends Payload>(): RetryState<Body>;
+
+// @public
+export interface Payload {
+    // (undocumented)
+    bytesCount: number;
+    // (undocumented)
+    data: string | FormData | Blob;
+    // (undocumented)
+    encoding?: 'deflate';
+    // (undocumented)
+    retry?: TransportRetryInfo;
+}
+
 // @public
 export type ProxyFn = (options: {
     path: string;
     parameters: string;
     subdomain?: string;
 }) => string;
+
+// @public
+export interface RetryState<Body extends Payload> {
+    // (undocumented)
+    bandwidthMonitor: ReturnType<typeof newBandwidthMonitor>;
+    // (undocumented)
+    currentBackoffTime: number;
+    // (undocumented)
+    queuedPayloads: ReturnType<typeof newPayloadQueue<Body>>;
+    // (undocumented)
+    queueFullReported: boolean;
+    // (undocumented)
+    transportStatus: TransportStatus;
+}
+
+// @public
+export function sendWithRetryStrategy<Body extends Payload>(payload: Body, state: RetryState<Body>, sendStrategy: SendStrategy<Body>, trackType: TrackType, reportError: (message: string) => void, requestObservable: Observable<HttpRequestEvent<Body>>): void;
 
 // @public
 export type Site = 'datadoghq.com' | 'us3.datadoghq.com' | 'us5.datadoghq.com' | 'datadoghq.eu' | 'ddog-gov.com' | 'us2.ddog-gov.com' | 'ap1.datadoghq.com' | 'ap2.datadoghq.com' | (string & {});

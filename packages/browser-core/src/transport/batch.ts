@@ -1,4 +1,4 @@
-import type { EndpointBuilder, Encoder, EncoderResult } from '@datadog/js-core/transport'
+import type { EndpointBuilder, Encoder, EncoderResult, Payload } from '@datadog/js-core/transport'
 import { MORE_DETAILS, computeBytesCount, ONE_KIBI_BYTE, mockable, jsonStringify } from '@datadog/js-core/util'
 import type { Context, Observable } from '@datadog/js-core/util'
 import { createIdentityEncoder } from '@datadog/js-core/transport'
@@ -6,7 +6,6 @@ import { DOCS_TROUBLESHOOTING, display } from '../tools/display'
 import { objectValues } from '../tools/utils/polyfills'
 import { isPageExitReason, createPageMayExitObservable } from '../browser/pageMayExitObservable'
 import { createHttpRequest } from './httpRequest'
-import type { Payload } from './httpRequest'
 import { createFlushController } from './flushController'
 import type { FlushEvent, FlushReason, UrgentFlushReason } from './flushController'
 

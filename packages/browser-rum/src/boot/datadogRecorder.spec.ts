@@ -1,4 +1,4 @@
-import type { HttpRequest, HttpRequestEvent, Telemetry } from '@datadog/browser-core'
+import type { HttpRequest, Telemetry } from '@datadog/browser-core'
 import type { TimeStamp } from '@datadog/js-core/time'
 import { PageExitReason, DefaultPrivacyLevel, DeflateEncoderStreamId } from '@datadog/browser-core'
 import { Observable, noop } from '@datadog/js-core/util'
@@ -15,6 +15,7 @@ import {
   createSessionManagerMock,
   MOCK_SESSION_ID,
 } from '@datadog/browser-core/test'
+import type { HttpRequestEvent } from '@datadog/js-core/transport'
 import type { ViewEndedEvent } from '../../../browser-rum-core/src/domain/view/trackViews'
 import { appendElement, mockRumConfiguration } from '../../../browser-rum-core/test'
 

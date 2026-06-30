@@ -54,16 +54,7 @@ export {
   SESSION_NOT_TRACKED,
   SessionPersistence,
 } from './domain/session/sessionConstants'
-export type {
-  Batch,
-  BandwidthStats,
-  HttpRequest,
-  HttpRequestEvent,
-  Payload,
-  FlushEvent,
-  FlushReason,
-  UrgentFlushReason,
-} from './transport'
+export type { Batch, HttpRequest, FlushEvent, FlushReason, UrgentFlushReason } from './transport'
 export {
   createHttpRequest,
   canUseEventBridge,
