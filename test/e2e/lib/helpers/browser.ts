@@ -35,15 +35,11 @@ export interface BrowserLog {
   timestamp: number
 }
 
-// Salesforce generates console errors we cannot control
-const SALESFORCE_DEV_MODE_LOG_MESSAGES = [
-  'Unsupported WebVital metrics',
-  'Failed to load resource: the server responded with a status of 404 ()',
-]
 const IGNORE_LOG_MESSAGES = [
   'Ignoring unsupported entryTypes:',
   'Layout was forced before the page was fully loaded.',
-  ...SALESFORCE_DEV_MODE_LOG_MESSAGES,
+  // Salesforce generates console errors we cannot control
+  'O11Y Error {name: Error, message: Unsupported WebVital metrics',
 ]
 
 export class BrowserLogsManager {

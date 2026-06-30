@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process'
 import { resolve } from 'node:path'
 
 const repositoryRoot = resolve(__dirname, '../../../..')
+const salesforceCliPackage = '@salesforce/cli@2.139.6'
 
 export const salesforceLwcBundlePath = resolve(
   repositoryRoot,
@@ -11,12 +12,15 @@ export const salesforceLwcBundlePath = resolve(
 // Check if the Salesforce org is configured
 export function getSalesforceConfig(): { targetOrg: string; isConfigured: boolean } {
   const targetOrg = process.env.SF_TARGET_ORG ?? 'sf-lwc-ci'
-  const isConfigured =
-    spawnSync('sf', ['org', 'display', '--target-org', targetOrg], {
-      encoding: 'utf8',
-      cwd: repositoryRoot,
-    }).status === 0
-  return { targetOrg, isConfigured }
+  const args = ['org', 'display', '--target-org', targetOrg]
+  const options = { encoding: 'utf8' as const, cwd: repositoryRoot }
+
+  let result = spawnSync('sf', args, options)
+  if (result.error && (result.error as NodeJS.ErrnoException).code === 'ENOENT') {
+    result = spawnSync('yarn', ['dlx', '-p', salesforceCliPackage, 'sf', ...args], options)
+  }
+
+  return { targetOrg, isConfigured: result.status === 0 }
 }
 
 // Build the URL to open in the test browser
