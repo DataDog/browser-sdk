@@ -9,6 +9,12 @@ import { WATCH_COOKIE_INTERVAL_DELAY, createCookieObservable } from './cookieObs
 const COOKIE_NAME = 'cookie_name'
 const COOKIE_DURATION = ONE_MINUTE
 
+// Safari on BrowserStack cannot access cookies because vitest runs tests in an iframe
+// and BrowserStack replaces localhost with bs-local.com, triggering Safari's ITP restrictions.
+beforeEach((ctx) => {
+  ctx.skip(navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome'), 'Safari on BrowserStack')
+})
+
 describe('cookieObservable', () => {
   let subscription: Subscription
   let originalSupportedEntryTypes: PropertyDescriptor | undefined

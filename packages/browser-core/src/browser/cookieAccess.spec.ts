@@ -1,4 +1,4 @@
-import { vi, describe, expect, it, type Mock } from 'vitest'
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { ONE_MINUTE, dateNow } from '@datadog/js-core/time'
 import { globalObject } from '@datadog/js-core/util'
 import type { Clock } from '../../test'
@@ -18,6 +18,13 @@ import {
 
 const COOKIE_NAME = 'test_cookie'
 const COOKIE_OPTIONS = { secure: false, crossSite: false, partitioned: false }
+
+// Safari on BrowserStack cannot access cookies because vitest runs tests in an iframe
+// and BrowserStack replaces localhost with bs-local.com, triggering Safari's ITP restrictions.
+// https://www.browserstack.com/support/faq/local-testing/local-exceptions/i-face-issues-while-testing-localhost-urls-or-private-servers-in-safari-on-macos-os-x-and-ios
+beforeEach((ctx) => {
+  ctx.skip(navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome'), 'Safari on BrowserStack')
+})
 
 function disableCookieStore() {
   replaceMockable(globalObject.cookieStore, undefined)
@@ -114,6 +121,14 @@ describe('cookieAccess', () => {
 
   for (const { title, setup } of setups) {
     describe(title, () => {
+      beforeEach((ctx) => {
+        // Skip CookieStore API tests when the API is not available
+        // (Jasmine's pending() inside setup() threw and skipped the enclosing it())
+        if (title === 'CookieStore API' && !globalObject.cookieStore) {
+          ctx.skip(true, 'CookieStore API not available')
+        }
+      })
+
       describe('getAllAndSet', () => {
         it('should pass current cookie values to callback', async () => {
           const { createCookieAccess, setCookieWithCleanup } = setup()
@@ -154,8 +169,11 @@ describe('cookieAccess', () => {
 
         it('should pass all cookie values to callback', async (ctx) => {
           const browserVersion = detectVersion()
-          if (!isChromium() || (browserVersion !== undefined && browserVersion < 145)) {
-            ctx.skip(true, 'Only Recent Chromium supports multiple cookies with the same name with different options')
+          if (!isChromium() || browserVersion === undefined || browserVersion < 145) {
+            ctx.skip(true, 'Only recent Chromium (>=145) supports multiple cookies with the same name')
+          }
+          if (location.protocol !== 'https:') {
+            ctx.skip(true, 'Partitioned cookies require a secure (HTTPS) context')
           }
 
           const { createCookieAccess, setCookieWithCleanup } = setup()

@@ -113,7 +113,7 @@ function runTests(): Promise<boolean> {
     let output = ''
     let timeoutId: NodeJS.Timeout
     let testsCompleted = false
-    let hasFailures = false
+    let killedByWrapper = false
 
     child.stdout!.pipe(process.stdout)
     child.stdout!.on('data', onOutput)
@@ -122,10 +122,12 @@ function runTests(): Promise<boolean> {
     child.stderr!.on('data', onOutput)
 
     child.on('exit', (code, signal) => {
-      if (testsCompleted && !hasFailures) {
-        // Vitest hung after completion (vitest#10151) — treat as success
-        resolve(true)
+      if (killedByWrapper && testsCompleted) {
+        // Vitest hung during teardown (vitest#10151) and we killed it.
+        // No exit code to trust — check the output for failures.
+        resolve(!hasTestFailures(output))
       } else {
+        // Vitest exited on its own — trust its exit code.
         resolve(!signal && code === 0)
       }
     })
@@ -137,12 +139,6 @@ function runTests(): Promise<boolean> {
       // Once tests are done, don't reset the force-kill countdown
       if (testsCompleted) {
         return
-      }
-
-      // Match Vitest's failure summary line (e.g. "Test Files  2 failed | 40 passed")
-      // but not test console output like "3 failed retries" or "Session Replay failed to start"
-      if (/\d+ failed \|/.test(chunk)) {
-        hasFailures = true
       }
 
       clearTimeout(timeoutId)
@@ -160,9 +156,18 @@ function runTests(): Promise<boolean> {
 
     function killIt(message: string): void {
       printError(`Killing the browserstack job because of ${message}`)
+      killedByWrapper = true
       child.kill('SIGKILL')
     }
   })
+}
+
+function hasTestFailures(output: string): boolean {
+  // Strip ANSI escape codes — FORCE_COLOR inserts sequences between "failed" and "|"
+  // eslint-disable-next-line no-control-regex
+  const plain = output.replace(/\x1b\[[0-9;]*m/g, '')
+  // Match Vitest's summary line: "Test Files  2 failed | 40 passed (42)"
+  return /\d+ failed \|/.test(plain)
 }
 
 function hasUnrecoverableFailure(stdout: string): boolean {
