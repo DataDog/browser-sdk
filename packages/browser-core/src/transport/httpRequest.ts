@@ -1,5 +1,4 @@
-import type { EndpointBuilder, TransportRetryInfo } from '@datadog/js-core/transport'
-import type { Context } from '../tools/serialisation/context'
+import type { EndpointBuilder, Payload, HttpResponse, HttpRequestEvent } from '@datadog/js-core/transport'
 import { fetch } from '../browser/fetch'
 import { monitor, monitorError } from '../tools/monitor'
 import { Observable } from '../tools/observable'
@@ -27,42 +26,6 @@ export interface HttpRequest<Body extends Payload = Payload> {
   sendOnExit(this: void, payload: Body): void
 }
 
-export interface HttpResponse extends Context {
-  status: number
-  type?: ResponseType
-}
-
-export interface BandwidthStats {
-  ongoingByteCount: number
-  ongoingRequestCount: number
-}
-
-export type HttpRequestEvent<Body extends Payload = Payload> =
-  | {
-      // A request to send the given payload failed. (We may retry.)
-      type: 'failure'
-      bandwidth: BandwidthStats
-      payload: Body
-    }
-  | {
-      // The given payload was discarded because the request queue is full.
-      type: 'queue-full'
-      bandwidth: BandwidthStats
-      payload: Body
-    }
-  | {
-      // A request to send the given payload succeeded.
-      type: 'success'
-      bandwidth: BandwidthStats
-      payload: Body
-    }
-
-export interface Payload {
-  data: string | FormData | Blob
-  bytesCount: number
-  retry?: TransportRetryInfo
-  encoding?: 'deflate'
-}
 
 export function createHttpRequest<Body extends Payload = Payload>(
   endpointBuilders: EndpointBuilder[],
