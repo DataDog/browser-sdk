@@ -3,9 +3,9 @@ import * as path from 'node:path'
 import { parseArgs } from 'node:util'
 
 import type jsonSchemaToTypescriptModule from 'json-schema-to-typescript'
-import { resolveConfig } from 'prettier'
+import { format, resolveConfig } from 'prettier'
 
-import { printLog, runMain, fetchHandlingError } from './lib/executionUtils.ts'
+import { printLog, printWarning, runMain, fetchHandlingError } from './lib/executionUtils.ts'
 import { command } from './lib/command.ts'
 import { modifyFile } from './lib/filesUtils.ts'
 import { SCHEMAS } from './lib/generatedSchemaTypes.ts'
@@ -67,8 +67,24 @@ async function update(branchOrCommit: string) {
     printLog(`Using provided commit hash: ${commitHash}`)
   } else {
     printLog(`Resolving latest commit on ${branchOrCommit}...`)
+    // Unauthenticated GitHub API requests are limited to 60/hour per IP, which is easily exhausted
+    // behind a shared NAT. Authenticate with the user's `gh` CLI token to get the 5000/hour limit.
+    let token = ''
+    try {
+      token = command`gh auth token`.run().trim()
+    } catch {
+      printWarning(
+        'Could not get a token from `gh auth token`; issuing unauthenticated GitHub requests (limited to 60/hour per IP).'
+      )
+    }
     const response = await fetchHandlingError(
-      `https://api.github.com/repos/DataDog/rum-events-format/branches/${branchOrCommit}`
+      `https://api.github.com/repos/DataDog/rum-events-format/branches/${branchOrCommit}`,
+      {
+        headers: {
+          ...(token ? { Authorization: `token ${token}` } : {}),
+          'X-GitHub-Api-Version': '2022-11-28',
+        },
+      }
     )
     const {
       commit: { sha },
@@ -104,11 +120,15 @@ async function build() {
     const compiledTypes = await compileFromFile(schemaPath, {
       cwd: path.dirname(schemaPath),
       bannerComment: '/**\n * DO NOT MODIFY IT BY HAND. Run `yarn json-schemas:sync` instead.\n*/',
-      style: prettierConfig || {},
+      // Skip json-schema-to-typescript's internal prettier pass: it resolves an ambient
+      // prettier that can differ between environments. Format with the repo's pinned prettier
+      // below instead, so the output is deterministic and matches `prettier --check .`.
+      format: false,
       ...options,
     })
     printLog(`Writing ${typesPath}...`)
-    fs.writeFileSync(absoluteTypesPath, compiledTypes)
+    const formattedTypes = await format(compiledTypes, { ...prettierConfig, parser: 'typescript' })
+    fs.writeFileSync(absoluteTypesPath, formattedTypes)
   }
 
   printLog('Done.')

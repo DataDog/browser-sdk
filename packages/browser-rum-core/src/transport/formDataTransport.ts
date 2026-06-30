@@ -1,13 +1,7 @@
 import type { Uint8ArrayBuffer, Encoder, EncoderResult, DeflateEncoderStreamId, Context } from '@datadog/browser-core'
-import {
-  addTelemetryDebug,
-  createEndpointBuilder,
-  createHttpRequest,
-  jsonStringify,
-  objectEntries,
-  ErrorSource,
-} from '@datadog/browser-core'
+import { addTelemetryDebug, createHttpRequest, jsonStringify, objectEntries, ErrorSource } from '@datadog/browser-core'
 import { clocksNow } from '@datadog/js-core/time'
+import { createEndpointBuilder } from '@datadog/js-core/transport'
 import type { RumConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'

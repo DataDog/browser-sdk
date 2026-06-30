@@ -130,31 +130,35 @@ function showHelpAndExit() {
 }
 
 async function buildApp(appName: string) {
-  const appPath = `test/apps/${appName}`
-  printLog(`Building app at ${appPath}...`)
-  await command`yarn install --no-immutable`.withCurrentWorkingDirectory(appPath).runAsync()
+  try {
+    const appPath = `test/apps/${appName}`
+    printLog(`Building app at ${appPath}...`)
+    await command`yarn install --no-immutable`.withCurrentWorkingDirectory(appPath).runAsync()
 
-  // install peer dependencies if any
-  // intent: renovate does not allow to generate local packages before install
-  // so local packages are marked as optional peer dependencies and only installed when we build the test apps
-  const packageJson = JSON.parse(fs.readFileSync(path.join(appPath, 'package.json'), 'utf-8'))
-  if (packageJson.peerDependencies) {
-    // For each peer dependency, install it
-    for (const [name] of Object.entries(packageJson.peerDependencies)) {
-      const resolution = packageJson.resolutions?.[name]
-      const specifier = resolution ? `${name}@${resolution}` : name
-      await command`yarn add -D ${specifier}`.withCurrentWorkingDirectory(appPath).runAsync()
+    // install peer dependencies if any
+    // intent: renovate does not allow to generate local packages before install
+    // so local packages are marked as optional peer dependencies and only installed when we build the test apps
+    const packageJson = JSON.parse(fs.readFileSync(path.join(appPath, 'package.json'), 'utf-8'))
+    if (packageJson.peerDependencies) {
+      // For each peer dependency, install it
+      for (const [name] of Object.entries(packageJson.peerDependencies)) {
+        const resolution = packageJson.resolutions?.[name]
+        const specifier = resolution ? `${name}@${resolution}` : name
+        await command`yarn add -D ${specifier}`.withCurrentWorkingDirectory(appPath).runAsync()
+      }
+      // revert package.json & yarn.lock changes if they are versioned
+      const areFilesVersioned = await command`git ls-files package.json yarn.lock`
+        .withCurrentWorkingDirectory(appPath)
+        .runAsync()
+      if (areFilesVersioned) {
+        await command`git checkout package.json yarn.lock`.withCurrentWorkingDirectory(appPath).runAsync()
+      }
     }
-    // revert package.json & yarn.lock changes if they are versioned
-    const areFilesVersioned = await command`git ls-files package.json yarn.lock`
-      .withCurrentWorkingDirectory(appPath)
-      .runAsync()
-    if (areFilesVersioned) {
-      await command`git checkout package.json yarn.lock`.withCurrentWorkingDirectory(appPath).runAsync()
-    }
+
+    await command`yarn build`.withCurrentWorkingDirectory(appPath).runAsync()
+  } catch (error) {
+    throw new Error(`Failed to build app '${appName}'`, { cause: error })
   }
-
-  await command`yarn build`.withCurrentWorkingDirectory(appPath).runAsync()
 }
 
 async function buildReactRouterV6App() {

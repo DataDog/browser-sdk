@@ -1,13 +1,7 @@
 import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { ONE_MINUTE } from '@datadog/js-core/time'
-import {
-  DefaultPrivacyLevel,
-  INTAKE_SITE_US1,
-  display,
-  setCookie,
-  deleteCookie,
-  createContextManager,
-} from '@datadog/browser-core'
+import { DefaultPrivacyLevel, display, setCookie, deleteCookie, createContextManager } from '@datadog/browser-core'
+import { INTAKE_SITE_US1 } from '@datadog/js-core/transport'
 import { interceptRequests, registerCleanupTask } from '@datadog/browser-core/test'
 import { appendElement } from '../../../test'
 import type { RumInitConfiguration } from './configuration'

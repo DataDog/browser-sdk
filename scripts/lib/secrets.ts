@@ -76,6 +76,10 @@ export function getChromeWebStoreRefreshToken(): string {
   return getSecretKey('ci.browser-sdk.chrome_web_store.refresh_token')
 }
 
+export function getChromeWebStorePublisherId(): string {
+  return getSecretKey('ci.browser-sdk.chrome_web_store.publisher_id')
+}
+
 export function getBrowserStackUsername(): string {
   return getSecretKey('ci.browser-sdk.bs_username')
 }

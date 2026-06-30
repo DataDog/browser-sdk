@@ -8,10 +8,10 @@ import {
   toStackTraceString,
   noop,
   isServerError,
-  isIntakeUrl,
   ResponseBodyAction,
   safeTruncate,
 } from '@datadog/browser-core'
+import { isIntakeUrl } from '@datadog/js-core/transport'
 import type { LogsConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
 import type { LogsEventDomainContext } from '../../domainContext.types'

@@ -1,7 +1,7 @@
 import { ONE_SECOND } from '@datadog/js-core/time'
 import type { Duration } from '@datadog/js-core/time'
+import { isWorkerEnvironment } from '@datadog/js-core/util'
 import type { PageMayExitEvent, PageExitReason } from '../browser/pageMayExitObservable'
-import { isWorkerEnvironment } from '../tools/globalObject'
 import { Observable } from '../tools/observable'
 import type { TimeoutId } from '../tools/timer'
 import { clearTimeout, setTimeout } from '../tools/timer'

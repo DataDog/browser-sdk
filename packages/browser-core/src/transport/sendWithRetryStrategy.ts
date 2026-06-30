@@ -1,5 +1,5 @@
 import { ONE_MINUTE, ONE_SECOND } from '@datadog/js-core/time'
-import type { TrackType } from '../domain/configuration'
+import type { TrackType } from '@datadog/js-core/transport'
 import { setTimeout } from '../tools/timer'
 import { ONE_MEBI_BYTE, ONE_KIBI_BYTE } from '../tools/utils/byteUtils'
 import { isServerError } from '../tools/utils/responseUtils'

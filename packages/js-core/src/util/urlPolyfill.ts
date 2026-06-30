@@ -1,10 +1,12 @@
-import type { GlobalObject } from '../globalObject'
-import { globalObject } from '../globalObject'
+import type { GlobalObject } from './globalObject'
+import { globalObject } from './globalObject'
 
+/** Resolves a URL against the current page location, returning a normalized absolute URL string. */
 export function normalizeUrl(url: string) {
   return buildUrl(url, globalObject.location?.href).href
 }
 
+/** Returns true if the given string is a valid URL. */
 export function isValidUrl(url: string) {
   try {
     return !!buildUrl(url)
@@ -13,11 +15,13 @@ export function isValidUrl(url: string) {
   }
 }
 
+/** Extracts the pathname from a URL, ensuring it starts with `/`. */
 export function getPathName(url: string) {
   const pathname = buildUrl(url).pathname
   return pathname[0] === '/' ? pathname : `/${pathname}`
 }
 
+/** Constructs a URL object, using the native URL constructor from a pristine iframe to avoid polyfill interference. */
 export function buildUrl(url: string, base?: string) {
   const { URL } = getPristineWindow()
 
@@ -28,13 +32,12 @@ export function buildUrl(url: string, base?: string) {
   }
 }
 
-/**
- * Get native URL constructor from a clean iframe
- * This avoids polyfill issues by getting the native implementation from a fresh iframe context
- * Falls back to the original URL constructor if iframe approach fails
- */
 let getPristineGlobalObjectCache: Pick<typeof window, 'URL'> | undefined
 
+/**
+ * Returns a `{ URL }` object sourced from a pristine iframe, bypassing any patched URL constructor.
+ * Falls back to the current global if iframe creation fails.
+ */
 export function getPristineWindow() {
   if (!getPristineGlobalObjectCache) {
     let iframe: HTMLIFrameElement | undefined

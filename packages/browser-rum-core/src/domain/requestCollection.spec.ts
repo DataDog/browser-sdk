@@ -1,6 +1,6 @@
 import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
-import type { Payload } from '@datadog/browser-core'
-import { createEndpointBuilder, RequestType, startBufferingData } from '@datadog/browser-core'
+import { RequestType, startBufferingData } from '@datadog/browser-core'
+import { createEndpointBuilder, type EndpointPayload } from '@datadog/js-core/transport'
 import type { MockFetch, MockFetchManager } from '@datadog/browser-core/test'
 import { registerCleanupTask, mockFetch, mockXhr, withXhr } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../test'
@@ -11,7 +11,7 @@ import type { Tracer } from './tracing/tracer'
 import { clearTracingIfNeeded } from './tracing/tracer'
 import { createSpanIdentifier, createTraceIdentifier } from './tracing/identifier'
 
-const DEFAULT_PAYLOAD = {} as Payload
+const DEFAULT_PAYLOAD = {} as EndpointPayload
 
 describe('collect fetch', () => {
   const FAKE_URL = 'http://fake-url/'

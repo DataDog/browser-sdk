@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import type { Payload } from '../../transport'
+import type { EndpointPayload } from '@datadog/js-core/transport'
+import { buildEndpointUrl, createEndpointBuilder, createReplicaEndpointBuilder } from '@datadog/js-core/transport'
 import type { InitConfiguration } from './configuration'
 import { validateAndBuildConfiguration } from './configuration'
-import { buildEndpointUrl, createEndpointBuilder, createReplicaEndpointBuilder } from './endpointBuilder'
 
-const DEFAULT_PAYLOAD = {} as Payload
+const DEFAULT_PAYLOAD = {} as EndpointPayload
 
 describe('endpointBuilder', () => {
   const clientToken = 'some_client_token'

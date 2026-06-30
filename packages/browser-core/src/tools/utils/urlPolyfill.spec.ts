@@ -1,5 +1,5 @@
 import { vi, describe, expect, it } from 'vitest'
-import { buildUrl, getPathName, isValidUrl, normalizeUrl, getPristineWindow } from './urlPolyfill'
+import { buildUrl, getPathName, isValidUrl, normalizeUrl, getPristineWindow } from '@datadog/js-core/util'
 
 describe('normalize url', () => {
   it('should resolve absolute paths', () => {

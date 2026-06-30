@@ -1,5 +1,5 @@
+import { globalObject } from '@datadog/js-core/util'
 import { display } from '../tools/display'
-import { globalObject } from '../tools/globalObject'
 import { matchList } from '../tools/matchOption'
 import { mockable } from '../tools/mockable'
 import type { InitConfiguration } from './configuration'
