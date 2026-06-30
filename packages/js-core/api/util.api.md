@@ -5,6 +5,16 @@
 ```ts
 
 // @public
+export class BufferedObservable<T> extends Observable<T> {
+    constructor(maxBufferSize: number, onDrop?: ((count: number) => void) | undefined);
+    // (undocumented)
+    notify(data: T): void;
+    // (undocumented)
+    subscribe(observer: Observer<T>): Subscription;
+    unbuffer(): void;
+}
+
+// @public
 export function buildUrl(url: string, base?: string): URL;
 
 // @public
@@ -187,6 +197,15 @@ export function jsonStringify(value: unknown, replacer?: Array<string | number>,
 export function mergeInto<D, S>(destination: D, source: S): Merged<D, S>;
 
 // @public
+export function mergeObservables<T>(...observables: Array<Observable<T>>): Observable<T>;
+
+// @public
+export function mockable<T>(value: T): T;
+
+// @public
+export const mockableReplacements: Map<unknown, unknown>;
+
+// @public
 interface Navigator_2 {
     connection?: NetworkInformation;
     onLine: boolean;
@@ -218,6 +237,19 @@ export function objectValues<T = unknown>(object: {
 export interface ObjectWithToJsonMethod {
     // (undocumented)
     toJSON?: () => unknown;
+}
+
+// @public
+export class Observable<T> {
+    constructor(onFirstSubscribe?: ((observable: Observable<T>) => (() => void) | void) | undefined);
+    // (undocumented)
+    protected addObserver(observer: Observer<T>): void;
+    notify(data: T): void;
+    // (undocumented)
+    protected observers: Array<Observer<T>>;
+    // (undocumented)
+    protected removeObserver(observer: Observer<T>): void;
+    subscribe(observer: Observer<T>): Subscription;
 }
 
 // @public
@@ -294,6 +326,12 @@ export interface SampleBufferFullEvent extends Event {
 
 // @public
 export function setDebugMode(newDebugMode: boolean): void;
+
+// @public
+export interface Subscription {
+    // (undocumented)
+    unsubscribe: () => void;
+}
 
 // @public
 export interface Uint8ArrayBuffer extends Uint8Array {

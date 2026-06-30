@@ -9,6 +9,9 @@ export type { Context, ContextValue, ContextArray } from '../util/context'
 export * from '../util/jsonStringify'
 export { objectValues } from '../util/polyfills'
 export { isServerError } from '../util/responseUtils'
+export { mockable, mockableReplacements } from '../util/mockable'
+export type { Subscription } from '../util/observable'
+export { Observable, BufferedObservable, mergeObservables } from '../util/observable'
 export type {
   GlobalObject,
   Navigator,
