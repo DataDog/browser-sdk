@@ -318,3 +318,106 @@ export interface Uint8ArrayBuffer extends Uint8Array {
 // (No @packageDocumentation comment for this package)
 
 ```
+## API Report File for "@datadog/js-core"
+
+
+
+// @public
+export class BufferedObservable<T> extends Observable<T> {
+    constructor(maxBufferSize: number, onDrop?: ((count: number) => void) | undefined);
+    // (undocumented)
+    notify(data: T): void;
+    // (undocumented)
+    subscribe(observer: Observer<T>): Subscription;
+    unbuffer(): void;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// @public
+export function mergeObservables<T>(...observables: Array<Observable<T>>): Observable<T>;
+
+// @public
+export function mockable<T>(value: T): T;
+
+// @public
+export const mockableReplacements: Map<unknown, unknown>;
+
+
+
+
+
+
+
+
+// @public
+export class Observable<T> {
+    constructor(onFirstSubscribe?: ((observable: Observable<T>) => (() => void) | void) | undefined);
+    // (undocumented)
+    protected addObserver(observer: Observer<T>): void;
+    notify(data: T): void;
+    // (undocumented)
+    protected observers: Array<Observer<T>>;
+    // (undocumented)
+    protected removeObserver(observer: Observer<T>): void;
+    subscribe(observer: Observer<T>): Subscription;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// @public
+export interface Subscription {
+    // (undocumented)
+    unsubscribe: () => void;
+}
+
+
+
+```
