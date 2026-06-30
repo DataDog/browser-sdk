@@ -14,9 +14,12 @@ export { createIdentityEncoder } from '../transport/encoder'
 export type { Payload, HttpResponse, BandwidthStats, HttpRequestEvent } from '../transport/payload'
 export type { HttpRequest, SendStrategy, SendOnExitStrategy } from '../transport/httpRequest'
 export { createHttpRequest } from '../transport/httpRequest'
+export type { Batch } from '../transport/batch'
+export { createBatch, MESSAGE_BYTES_LIMIT } from '../transport/batch'
 export { RECOMMENDED_REQUEST_BYTES_LIMIT } from '../transport/payload'
 export {
   PageExitReason,
+  isPageExitReason,
   createFlushController,
   FLUSH_DURATION_LIMIT,
   MESSAGES_LIMIT,

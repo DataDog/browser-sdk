@@ -28,6 +28,15 @@ export interface PageMayExitEvent {
 }
 
 /**
+ * Returns `true` when `reason` is a {@link PageExitReason} value.
+ *
+ * @param reason - Any string to test.
+ */
+export function isPageExitReason(reason: string): reason is PageExitReason {
+  return Object.values(PageExitReason).includes(reason as PageExitReason)
+}
+
+/**
  * A flush triggered by a page-exit signal — the most urgent kind because the
  * page may unload before a normal flush cycle completes.
  */

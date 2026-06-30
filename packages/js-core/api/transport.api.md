@@ -11,6 +11,17 @@ export interface BandwidthStats {
 }
 
 // @public
+export interface Batch {
+    add: (message: Context) => void;
+    flushObservable: Observable<FlushEvent>;
+    forceFlush: (reason: FlushReason) => void;
+    isEmpty: boolean;
+    prepareUrgentFlushObservable: Observable<UrgentFlushReason>;
+    stop: () => void;
+    upsert: (message: Context, key: string) => void;
+}
+
+// @public
 export function buildEndpointUrl(input: BuildEndpointUrlOptions): string;
 
 // @public
@@ -21,6 +32,16 @@ export interface BuildEndpointUrlOptions {
     site: Site | undefined;
     subdomain?: string;
 }
+
+// @public
+export function createBatch(input: {
+    request: HttpRequest;
+    pageMayExitObservable: Observable<PageMayExitEvent>;
+    endpoints?: EndpointBuilder[];
+    reportError: (message: string) => void;
+    warn: (message: string) => void;
+    encoder?: Encoder;
+}): Batch;
 
 // @public
 export function createEndpointBuilder(configuration: EndpointBuilderConfiguration, trackType: TrackType, extraParameters?: string[]): EndpointBuilder;
@@ -146,6 +167,9 @@ export const INTAKE_URL_PARAMETERS: string[];
 // @public
 export function isIntakeUrl(url: string): boolean;
 
+// @public
+export function isPageExitReason(reason: string): reason is PageExitReason;
+
 // @public (undocumented)
 export const MAX_BACKOFF_TIME: Duration;
 
@@ -157,6 +181,9 @@ export const MAX_ONGOING_REQUESTS = 32;
 
 // @public (undocumented)
 export const MAX_QUEUE_BYTES_COUNT: number;
+
+// @public
+export const MESSAGE_BYTES_LIMIT: number;
 
 // @public
 export const MESSAGES_LIMIT: number;

@@ -1,11 +1,11 @@
 import { Observable } from '@datadog/js-core/util'
-import { createIdentityEncoder, createFlushController } from '@datadog/js-core/transport'
-import type { Encoder, HttpRequestEvent, HttpRequest } from '@datadog/js-core/transport'
+import { createIdentityEncoder, createFlushController, MESSAGE_BYTES_LIMIT } from '@datadog/js-core/transport'
+import type { Encoder, HttpRequestEvent, HttpRequest, Batch } from '@datadog/js-core/transport'
 import type { MockFlushController } from '../../test'
 import { createMockFlushController, replaceMockable } from '../../test'
 import { display } from '../tools/display'
 import { createPageMayExitObservable } from '../browser/pageMayExitObservable'
-import { createBatch, MESSAGE_BYTES_LIMIT, type Batch } from './batch'
+import { createBatch } from './batch'
 import { createHttpRequest } from './httpRequest'
 
 describe('batch', () => {
