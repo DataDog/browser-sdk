@@ -5,6 +5,14 @@
 ```ts
 
 // @public
+export interface BrowserWindowWithZoneJs {
+    // (undocumented)
+    Zone?: {
+        __symbol__?: (name: string) => string;
+    };
+}
+
+// @public
 export class BufferedObservable<T> extends Observable<T> {
     constructor(maxBufferSize: number, onDrop?: ((count: number) => void) | undefined);
     // (undocumented)
@@ -16,6 +24,14 @@ export class BufferedObservable<T> extends Observable<T> {
 
 // @public
 export function buildUrl(url: string, base?: string): URL;
+
+// @public
+function clearInterval_2(timeoutId: TimeoutId | undefined): void;
+export { clearInterval_2 as clearInterval }
+
+// @public
+function clearTimeout_2(timeoutId: TimeoutId | undefined): void;
+export { clearTimeout_2 as clearTimeout }
 
 // @public
 export function combine<A, B>(a: A, b: B): Combined<A, B>;
@@ -162,6 +178,9 @@ export function getPristineWindow(): Pick<Window & typeof globalThis, "URL">;
 
 // @public
 export function getType(value: unknown): "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function" | "null" | "array";
+
+// @public
+export function getZoneJsOriginalValue<Target, Name extends keyof Target & string>(target: Target, name: Name): Target[Name];
 
 // @public
 export const globalConsole: Console;
@@ -328,10 +347,21 @@ export interface SampleBufferFullEvent extends Event {
 export function setDebugMode(newDebugMode: boolean): void;
 
 // @public
+function setInterval_2(callback: () => void, delay?: number): TimeoutId;
+export { setInterval_2 as setInterval }
+
+// @public
+function setTimeout_2(callback: () => void, delay?: number): TimeoutId;
+export { setTimeout_2 as setTimeout }
+
+// @public
 export interface Subscription {
     // (undocumented)
     unsubscribe: () => void;
 }
+
+// @public
+export type TimeoutId = ReturnType<GlobalObject['setTimeout']>;
 
 // @public
 export interface Uint8ArrayBuffer extends Uint8Array {
