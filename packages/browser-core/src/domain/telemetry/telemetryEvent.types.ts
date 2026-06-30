@@ -482,6 +482,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        * Whether the beta encode cookie options is enabled
        */
       beta_encode_cookie_options?: boolean
+      /**
+       * Whether the beta partial view updates feature is enabled
+       */
+      beta_enable_view_updates?: boolean
       [k: string]: unknown
     }
     [k: string]: unknown

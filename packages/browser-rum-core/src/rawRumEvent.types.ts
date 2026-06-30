@@ -170,6 +170,7 @@ export interface RawRumViewEvent {
     }
     configuration: {
       start_session_replay_recording_manually: boolean
+      remote_configuration_id?: string
     }
   }
   device?: {

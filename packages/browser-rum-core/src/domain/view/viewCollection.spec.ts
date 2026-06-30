@@ -113,6 +113,7 @@ describe('viewCollection', () => {
         replay_stats: undefined,
         configuration: {
           start_session_replay_recording_manually: jasmine.any(Boolean),
+          remote_configuration_id: undefined,
         },
         cls: undefined,
       },
@@ -237,6 +238,26 @@ describe('viewCollection', () => {
         (rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent)._dd.configuration
           .start_session_replay_recording_manually
       ).toBe(true)
+    })
+  })
+
+  describe('with configuration.remote_configuration_id', () => {
+    it('should include the remote configuration id when configured', () => {
+      setupViewCollection({ remoteConfigurationId: 'foo' })
+      lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
+
+      expect(
+        (rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent)._dd.configuration.remote_configuration_id
+      ).toBe('foo')
+    })
+
+    it('should be undefined when remote configuration is not used', () => {
+      setupViewCollection({ remoteConfigurationId: undefined })
+      lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
+
+      expect(
+        (rawRumEvents[rawRumEvents.length - 1].rawRumEvent as RawRumViewEvent)._dd.configuration.remote_configuration_id
+      ).toBeUndefined()
     })
   })
 
