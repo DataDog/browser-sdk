@@ -1,9 +1,10 @@
+import { describe, it, expect, vi } from 'vitest'
 import { createDisplay, originalConsoleMethods } from '@datadog/js-core/util'
 import { DEBUGGER_DISPLAY_PREFIX } from './display'
 
 describe('debugger display', () => {
   it('should use the debugger SDK prefix', () => {
-    const warnSpy = spyOn(originalConsoleMethods, 'warn')
+    const warnSpy = vi.spyOn(originalConsoleMethods, 'warn')
 
     createDisplay(DEBUGGER_DISPLAY_PREFIX).warn('message')
 

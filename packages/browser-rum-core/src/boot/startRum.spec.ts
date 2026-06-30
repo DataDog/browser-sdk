@@ -1,4 +1,5 @@
-import { ONE_SECOND, toServerDuration, relativeNow } from '@datadog/js-core/time'
+import { vi, beforeEach, describe, expect, it } from 'vitest'
+import { ONE_SECOND, toServerDuration } from '@datadog/js-core/time'
 import type { Duration } from '@datadog/js-core/time'
 import type { BufferedData, SessionManager } from '@datadog/browser-core'
 import { Observable, findLast, noop, createIdentityEncoder, BufferedObservable } from '@datadog/browser-core'
@@ -80,7 +81,7 @@ describe('rum session', () => {
     expect(serverRumEvents.length).toEqual(2)
 
     sessionManager.setId('43')
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, undefined)
 
     expect(serverRumEvents.length).toEqual(3)
 
@@ -143,7 +144,6 @@ describe('rum session keep alive', () => {
 })
 
 describe('view events', () => {
-  let clock: Clock
   let interceptor: ReturnType<typeof interceptRequests>
   let stop: () => void
 
@@ -166,7 +166,7 @@ describe('view events', () => {
   }
 
   beforeEach(() => {
-    clock = mockClock()
+    mockClock()
 
     registerCleanupTask(() => {
       stop()
@@ -182,7 +182,7 @@ describe('view events', () => {
 
     setupViewCollectionTest()
 
-    clock.tick(VIEW_DURATION - relativeNow())
+    vi.setSystemTime(performance.timing.navigationStart + VIEW_DURATION)
     window.dispatchEvent(createNewEvent('beforeunload'))
 
     const lastRumEvents = interceptor.requests[interceptor.requests.length - 1].body
@@ -198,16 +198,16 @@ describe('view events', () => {
 
   it('sends a view update on page unload when bridge is present', () => {
     const eventBridge = mockEventBridge()
-    const sendSpy = spyOn(eventBridge, 'send')
+    const sendSpy = vi.spyOn(eventBridge, 'send')
 
     const VIEW_DURATION = ONE_SECOND as Duration
 
     setupViewCollectionTest()
 
-    clock.tick(VIEW_DURATION - relativeNow())
+    vi.setSystemTime(performance.timing.navigationStart + VIEW_DURATION)
     window.dispatchEvent(createNewEvent('beforeunload'))
 
-    const lastBridgeMessage = JSON.parse(sendSpy.calls.mostRecent().args[0]) as {
+    const lastBridgeMessage = JSON.parse(sendSpy.mock.lastCall![0]) as {
       eventType: 'rum'
       event: RumEvent
     }
@@ -221,7 +221,7 @@ describe('view events', () => {
 
     setupViewCollectionTest()
 
-    clock.tick(VIEW_DURATION - relativeNow())
+    vi.setSystemTime(performance.timing.navigationStart + VIEW_DURATION)
     window.dispatchEvent(createNewEvent('beforeunload'))
 
     const lastRumEvents = interceptor.requests[interceptor.requests.length - 1].body

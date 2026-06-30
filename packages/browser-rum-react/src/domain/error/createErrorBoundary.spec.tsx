@@ -1,3 +1,4 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import React, { act } from 'react'
 
 import { disableJasmineUncaughtExceptionTracking, ignoreConsoleLogs } from '../../../../browser-core/test'
@@ -16,16 +17,18 @@ describe('createErrorBoundary', () => {
   })
 
   it('renders children', () => {
-    const TestErrorBoundary = createErrorBoundary(jasmine.createSpy(), 'TestErrorBoundary')
+    const TestErrorBoundary = createErrorBoundary(vi.fn(), 'TestErrorBoundary')
     const container = appendComponent(<TestErrorBoundary fallback={() => null}>bar</TestErrorBoundary>)
 
     expect(container.innerHTML).toBe('bar')
   })
 
   it('renders the fallback when an error occurs', () => {
-    const TestErrorBoundary = createErrorBoundary(jasmine.createSpy(), 'TestErrorBoundary')
-    const fallbackSpy = jasmine.createSpy<FallbackFunctionComponent>().and.returnValue('fallback')
-    const ComponentSpy = jasmine.createSpy().and.throwError(new Error('error'))
+    const TestErrorBoundary = createErrorBoundary(vi.fn(), 'TestErrorBoundary')
+    const fallbackSpy = vi.fn<FallbackFunctionComponent>().mockReturnValue('fallback' as any)
+    const ComponentSpy = vi.fn().mockImplementation(() => {
+      throw new Error('error')
+    })
     const container = appendComponent(
       <TestErrorBoundary fallback={fallbackSpy}>
         <ComponentSpy />
@@ -33,28 +36,30 @@ describe('createErrorBoundary', () => {
     )
 
     expect(fallbackSpy).toHaveBeenCalled()
-    fallbackSpy.calls.all().forEach(({ args }) => {
-      expect(args[0]).toEqual({
+    fallbackSpy.mock.calls.forEach(([arg]) => {
+      expect(arg).toEqual({
         error: new Error('error'),
-        resetError: jasmine.any(Function),
+        resetError: expect.any(Function),
       })
     })
     expect(container.innerHTML).toBe('fallback')
   })
 
   it('resets the error when resetError is called', () => {
-    const TestErrorBoundary = createErrorBoundary(jasmine.createSpy(), 'TestErrorBoundary')
-    const fallbackSpy = jasmine.createSpy<FallbackFunctionComponent>().and.returnValue('fallback')
-    const ComponentSpy = jasmine.createSpy().and.throwError(new Error('error'))
+    const TestErrorBoundary = createErrorBoundary(vi.fn(), 'TestErrorBoundary')
+    const fallbackSpy = vi.fn<FallbackFunctionComponent>().mockReturnValue('fallback' as any)
+    const ComponentSpy = vi.fn().mockImplementation(() => {
+      throw new Error('error')
+    })
     const container = appendComponent(
       <TestErrorBoundary fallback={fallbackSpy}>
         <ComponentSpy />
       </TestErrorBoundary>
     )
 
-    ComponentSpy.and.returnValue('bar')
+    ComponentSpy.mockReturnValue('bar' as any)
 
-    const { resetError } = fallbackSpy.calls.mostRecent().args[0]
+    const { resetError } = fallbackSpy.mock.lastCall![0]
     act(() => {
       resetError()
     })
@@ -63,10 +68,12 @@ describe('createErrorBoundary', () => {
   })
 
   it('passes error and errorInfo to the report callback', () => {
-    const reportErrorSpy = jasmine.createSpy()
+    const reportErrorSpy = vi.fn()
     const TestErrorBoundary = createErrorBoundary(reportErrorSpy, 'TestErrorBoundary')
     const originalError = new Error('error')
-    const ComponentSpy = jasmine.createSpy().and.throwError(originalError)
+    const ComponentSpy = vi.fn().mockImplementation(() => {
+      throw originalError
+    })
     ;(ComponentSpy as any).displayName = 'ComponentSpy'
 
     appendComponent(
@@ -75,10 +82,11 @@ describe('createErrorBoundary', () => {
       </TestErrorBoundary>
     )
 
-    expect(reportErrorSpy).toHaveBeenCalledOnceWith(
+    expect(reportErrorSpy).toHaveBeenCalledTimes(1)
+    expect(reportErrorSpy).toHaveBeenCalledWith(
       originalError,
-      jasmine.objectContaining({
-        componentStack: jasmine.stringContaining('ComponentSpy'),
+      expect.objectContaining({
+        componentStack: expect.stringContaining('ComponentSpy'),
       })
     )
   })

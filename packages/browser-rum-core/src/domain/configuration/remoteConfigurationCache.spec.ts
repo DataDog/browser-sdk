@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { registerCleanupTask, mockClock } from '@datadog/browser-core/test'
 import type { Clock } from '@datadog/browser-core/test'
 import type { RumRemoteConfiguration } from './remoteConfiguration'
@@ -93,7 +94,9 @@ describe('remoteConfigurationCache', () => {
       })
 
       it('should return error when localStorage.getItem throws', () => {
-        spyOn(Storage.prototype, 'getItem').and.throwError('SecurityError')
+        vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+          throw new Error('SecurityError')
+        })
 
         const cache = createConfigurationCache({ remoteConfigurationId: REMOTE_CONFIGURATION_ID })
 
@@ -150,7 +153,9 @@ describe('remoteConfigurationCache', () => {
       })
 
       it('should silently swallow localStorage.setItem errors', () => {
-        spyOn(Storage.prototype, 'setItem').and.throwError('QuotaExceededError')
+        vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+          throw new Error('QuotaExceededError')
+        })
 
         const cache = createConfigurationCache({ remoteConfigurationId: REMOTE_CONFIGURATION_ID })
 
@@ -172,7 +177,9 @@ describe('remoteConfigurationCache', () => {
       })
 
       it('should silently swallow localStorage.removeItem errors', () => {
-        spyOn(Storage.prototype, 'removeItem').and.throwError('SecurityError')
+        vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+          throw new Error('SecurityError')
+        })
 
         const cache = createConfigurationCache({ remoteConfigurationId: REMOTE_CONFIGURATION_ID })
 

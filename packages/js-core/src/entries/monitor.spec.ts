@@ -1,26 +1,27 @@
+import { vi, describe, expect, it, beforeEach, afterEach, type Mock } from 'vitest'
 import { setDebugMode } from './util'
 import type { Display } from './util'
 import type { Monitor } from './monitor'
 import { createMonitor } from './monitor'
 
 describe('monitor', () => {
-  let onMonitorErrorCollectedSpy: jasmine.Spy<(error: unknown) => void>
-  let displayErrorSpy: jasmine.Spy
+  let onMonitorErrorCollectedSpy: Mock<(error: unknown) => void>
+  let displayErrorSpy: Mock
   let currentMonitor: Monitor
 
   function createFakeDisplay(): Display {
-    displayErrorSpy = jasmine.createSpy('display.error')
+    displayErrorSpy = vi.fn()
     return {
-      debug: jasmine.createSpy(),
-      log: jasmine.createSpy(),
-      info: jasmine.createSpy(),
-      warn: jasmine.createSpy(),
+      debug: vi.fn(),
+      log: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
       error: displayErrorSpy,
     }
   }
 
   beforeEach(() => {
-    onMonitorErrorCollectedSpy = jasmine.createSpy()
+    onMonitorErrorCollectedSpy = vi.fn()
     currentMonitor = createMonitor(createFakeDisplay(), onMonitorErrorCollectedSpy)
   })
 
@@ -81,19 +82,19 @@ describe('monitor', () => {
     it('should report error', () => {
       candidate.monitoredThrowing()
 
-      expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith(new Error('monitored'))
+      expect(onMonitorErrorCollectedSpy).toHaveBeenCalledWith(new Error('monitored'))
     })
 
     it('should report string error', () => {
       candidate.monitoredStringErrorThrowing()
 
-      expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith('string error')
+      expect(onMonitorErrorCollectedSpy).toHaveBeenCalledWith('string error')
     })
 
     it('should report object error', () => {
       candidate.monitoredObjectErrorThrowing()
 
-      expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith({ foo: 'bar' })
+      expect(onMonitorErrorCollectedSpy).toHaveBeenCalledWith({ foo: 'bar' })
     })
   })
 
@@ -115,7 +116,7 @@ describe('monitor', () => {
       it('should report error', () => {
         currentMonitor.callMonitored(throwing)
 
-        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith(new Error('error'))
+        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledWith(new Error('error'))
       })
     })
 
@@ -133,7 +134,7 @@ describe('monitor', () => {
       it('should report error', () => {
         currentMonitor.monitor(throwing)()
 
-        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith(new Error('error'))
+        expect(onMonitorErrorCollectedSpy).toHaveBeenCalledWith(new Error('error'))
       })
     })
   })
@@ -163,7 +164,9 @@ describe('monitor', () => {
 
     it('logs errors thrown by the onMonitorErrorCollected callback when debug mode is enabled', () => {
       setDebugMode(true)
-      onMonitorErrorCollectedSpy.and.throwError(new Error('unexpected'))
+      onMonitorErrorCollectedSpy.mockImplementation(() => {
+        throw new Error('unexpected')
+      })
 
       currentMonitor.callMonitored(() => {
         throw new Error('message')

@@ -1,7 +1,9 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import { ExperimentalFeature, Observable, addExperimentalFeatures } from '@datadog/browser-core'
-import { resetExperimentalFeatures } from '@datadog/browser-core/src/tools/experimentalFeatures'
 import type { FlushEvent } from '@datadog/browser-core/src/transport/flushController'
 import { registerCleanupTask } from '@datadog/browser-core/test'
+import { resetExperimentalFeatures } from '../../../browser-core/src/tools/experimentalFeatures'
 import type { AssembledRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumViewEvent } from '../rumEvent.types'
@@ -233,8 +235,8 @@ function createMockBatch() {
   const flushObservable = new Observable<FlushEvent>()
   const upsertedKeys = new Set<string>()
 
-  const addSpy = jasmine.createSpy<(message: object) => void>('add')
-  const upsertSpy = jasmine.createSpy<(message: object, key: string) => void>('upsert')
+  const addSpy: Mock<(message: object) => void> = vi.fn()
+  const upsertSpy: Mock<(message: object, key: string) => void> = vi.fn()
 
   const batch = {
     flushObservable,
@@ -301,9 +303,9 @@ describe('createBatchDispatcher', () => {
       dispatch(v1)
       dispatch(v2)
 
-      expect(upsertSpy.calls.count()).toBe(2)
-      expect((upsertSpy.calls.argsFor(0)[0] as AssembledRumEvent).type).toBe(RumEventType.VIEW)
-      expect((upsertSpy.calls.argsFor(1)[0] as AssembledRumEvent).type).toBe(RumEventType.VIEW)
+      expect(upsertSpy.mock.calls.length).toBe(2)
+      expect((upsertSpy.mock.calls[0][0] as AssembledRumEvent).type).toBe(RumEventType.VIEW)
+      expect((upsertSpy.mock.calls[1][0] as AssembledRumEvent).type).toBe(RumEventType.VIEW)
     })
   })
 
@@ -320,8 +322,8 @@ describe('createBatchDispatcher', () => {
       const action = { type: RumEventType.ACTION } as unknown as AssembledRumEvent
       dispatch(action)
 
-      expect(addSpy.calls.count()).toBe(1)
-      expect(upsertSpy.calls.count()).toBe(0)
+      expect(addSpy.mock.calls.length).toBe(1)
+      expect(upsertSpy.mock.calls.length).toBe(0)
     })
   })
 
@@ -353,12 +355,12 @@ describe('createBatchDispatcher', () => {
       dispatch(v2) // intermediate — opt 1
 
       // Both calls must be upsert with full VIEW type
-      expect(upsertSpy.calls.count()).toBe(2)
-      expect((upsertSpy.calls.argsFor(0)[0] as AssembledRumEvent).type).toBe(RumEventType.VIEW)
-      expect((upsertSpy.calls.argsFor(1)[0] as AssembledRumEvent).type).toBe(RumEventType.VIEW)
+      expect(upsertSpy.mock.calls.length).toBe(2)
+      expect((upsertSpy.mock.calls[0][0] as AssembledRumEvent).type).toBe(RumEventType.VIEW)
+      expect((upsertSpy.mock.calls[1][0] as AssembledRumEvent).type).toBe(RumEventType.VIEW)
       // Both use the same key (view ID)
-      expect(upsertSpy.calls.argsFor(0)[1]).toBe('view-1')
-      expect(upsertSpy.calls.argsFor(1)[1]).toBe('view-1')
+      expect(upsertSpy.mock.calls[0][1]).toBe('view-1')
+      expect(upsertSpy.mock.calls[1][1]).toBe('view-1')
     })
 
     it('should not emit any view_update events while the VIEW is in the batch', () => {
@@ -369,8 +371,8 @@ describe('createBatchDispatcher', () => {
       dispatch(makeView('view-1', 2))
       dispatch(makeView('view-1', 3))
 
-      const emittedTypes = upsertSpy.calls.allArgs().map(([event]) => (event as AssembledRumEvent).type)
-      expect(emittedTypes.every((t) => t === RumEventType.VIEW)).toBeTrue()
+      const emittedTypes = upsertSpy.mock.calls.map(([event]) => (event as AssembledRumEvent).type)
+      expect(emittedTypes.every((t) => t === RumEventType.VIEW)).toBe(true)
     })
   })
 
@@ -387,7 +389,7 @@ describe('createBatchDispatcher', () => {
       dispatch(makeView('view-1', 1))
       flush() // batchHasFullView resets; batchBase = v1
 
-      upsertSpy.calls.reset()
+      upsertSpy.mockClear()
 
       const v2 = makeView('view-1', 2, {
         view: {
@@ -404,10 +406,10 @@ describe('createBatchDispatcher', () => {
       })
       dispatch(v2)
 
-      expect(upsertSpy.calls.count()).toBe(1)
-      const emitted = upsertSpy.calls.argsFor(0)[0] as AssembledRumEvent
+      expect(upsertSpy.mock.calls.length).toBe(1)
+      const emitted = upsertSpy.mock.calls[0][0] as AssembledRumEvent
       expect(emitted.type).toBe(RumEventType.VIEW_UPDATE)
-      expect(upsertSpy.calls.argsFor(0)[1]).toBe('view-1')
+      expect(upsertSpy.mock.calls[0][1]).toBe('view-1')
     })
 
     it('should aggregate multiple updates into a single view_update per batch', () => {
@@ -417,7 +419,7 @@ describe('createBatchDispatcher', () => {
       dispatch(makeView('view-1', 1))
       flush()
 
-      upsertSpy.calls.reset()
+      upsertSpy.mockClear()
 
       // Three intermediate updates, each with a distinct action.count so each produces a diff.
       const makeUpdate = (docVersion: number, actionCount: number) =>
@@ -440,11 +442,11 @@ describe('createBatchDispatcher', () => {
 
       // Each call upserts with the same key — the last one is what gets sent.
       // Assert all three called upsert (not add), all under the same key.
-      expect(upsertSpy.calls.count()).toBe(3)
-      upsertSpy.calls.allArgs().forEach(([, key]) => expect(key).toBe('view-1'))
+      expect(upsertSpy.mock.calls.length).toBe(3)
+      upsertSpy.mock.calls.forEach(([, key]) => expect(key).toBe('view-1'))
       // All emitted events are view_update type (aggregate, not full VIEW)
-      const emittedTypes = upsertSpy.calls.allArgs().map(([e]) => (e as { type: string }).type)
-      expect(emittedTypes.every((t) => t === RumEventType.VIEW_UPDATE)).toBeTrue()
+      const emittedTypes = upsertSpy.mock.calls.map(([e]) => (e as { type: string }).type)
+      expect(emittedTypes.every((t) => t === RumEventType.VIEW_UPDATE)).toBe(true)
     })
 
     it('should compute the diff from batchBase, not from the previous intermediate update', () => {
@@ -455,7 +457,7 @@ describe('createBatchDispatcher', () => {
       dispatch(makeView('view-1', 1))
       flush() // batchBase = v1 (action.count: 0)
 
-      upsertSpy.calls.reset()
+      upsertSpy.mockClear()
 
       // Two intermediate updates: action count goes 0 → 1 → 2
       dispatch(
@@ -490,7 +492,7 @@ describe('createBatchDispatcher', () => {
       )
 
       // The second upsert's aggregate diff must reflect action.count: 2 (diff from base, not from v2)
-      const lastEmitted = upsertSpy.calls.mostRecent().args[0] as AssembledViewDiff
+      const lastEmitted = upsertSpy.mock.lastCall![0] as AssembledViewDiff
       expect(lastEmitted.view.action?.count).toBe(2)
     })
 
@@ -502,13 +504,13 @@ describe('createBatchDispatcher', () => {
       dispatch(v1)
       flush()
 
-      upsertSpy.calls.reset()
+      upsertSpy.mockClear()
 
       // Same content, only document_version differs (always-required, ignored in diff)
       const v2 = makeView('view-1', 2)
       dispatch(v2)
 
-      expect(upsertSpy.calls.count()).toBe(0)
+      expect(upsertSpy.mock.calls.length).toBe(0)
     })
   })
 
@@ -525,7 +527,7 @@ describe('createBatchDispatcher', () => {
       dispatch(makeView('view-1', 1))
       flush()
 
-      upsertSpy.calls.reset()
+      upsertSpy.mockClear()
 
       // Trigger exactly PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL updates
       for (let i = 2; i <= PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL + 1; i++) {
@@ -547,7 +549,7 @@ describe('createBatchDispatcher', () => {
       }
 
       // The last upserted event must be a full VIEW (checkpoint)
-      const lastEmitted = upsertSpy.calls.mostRecent().args[0] as AssembledRumEvent
+      const lastEmitted = upsertSpy.mock.lastCall![0] as AssembledRumEvent
       expect(lastEmitted.type).toBe(RumEventType.VIEW)
     })
   })
@@ -565,10 +567,10 @@ describe('createBatchDispatcher', () => {
       dispatch(makeView('view-1', 1))
       dispatch(makeView('view-2', 1)) // new view
 
-      const keys = upsertSpy.calls.allArgs().map(([, key]) => key)
+      const keys = upsertSpy.mock.calls.map(([, key]) => key)
       expect(keys).toEqual(['view-1', 'view-2'])
 
-      const types = upsertSpy.calls.allArgs().map(([e]) => (e as AssembledRumEvent).type)
+      const types = upsertSpy.mock.calls.map(([e]) => (e as AssembledRumEvent).type)
       expect(types).toEqual([RumEventType.VIEW, RumEventType.VIEW])
     })
 
@@ -579,7 +581,7 @@ describe('createBatchDispatcher', () => {
       dispatch(makeView('view-1', 1))
       flush()
 
-      upsertSpy.calls.reset()
+      upsertSpy.mockClear()
 
       const endView = makeView('view-1', 2, {
         view: {
@@ -596,9 +598,9 @@ describe('createBatchDispatcher', () => {
       })
       dispatch(endView)
 
-      expect(upsertSpy.calls.count()).toBe(1)
-      expect((upsertSpy.calls.argsFor(0)[0] as AssembledRumEvent).type).toBe(RumEventType.VIEW)
-      expect((upsertSpy.calls.argsFor(0)[0] as RumViewEvent).view.is_active).toBe(false)
+      expect(upsertSpy.mock.calls.length).toBe(1)
+      expect((upsertSpy.mock.calls[0][0] as AssembledRumEvent).type).toBe(RumEventType.VIEW)
+      expect((upsertSpy.mock.calls[0][0] as RumViewEvent).view.is_active).toBe(false)
     })
 
     it('should upsert a stale view-end without resetting state for the current view', () => {
@@ -611,7 +613,7 @@ describe('createBatchDispatcher', () => {
 
       // view-2 starts
       dispatch(makeView('view-2', 1))
-      upsertSpy.calls.reset()
+      upsertSpy.mockClear()
 
       // stale view-1 end arrives after view-2 has started
       const staleEnd = makeView('view-1', 2, {
@@ -630,8 +632,8 @@ describe('createBatchDispatcher', () => {
       dispatch(staleEnd)
 
       // stale end is upserted under its own key
-      expect(upsertSpy.calls.count()).toBe(1)
-      expect(upsertSpy.calls.argsFor(0)[1]).toBe('view-1')
+      expect(upsertSpy.mock.calls.length).toBe(1)
+      expect(upsertSpy.mock.calls[0][1]).toBe('view-1')
 
       // subsequent update for view-2 still uses opt-1 (state for view-2 was not reset)
       dispatch(
@@ -649,7 +651,7 @@ describe('createBatchDispatcher', () => {
           },
         })
       )
-      const view2Type = (upsertSpy.calls.mostRecent().args[0] as AssembledRumEvent).type
+      const view2Type = (upsertSpy.mock.lastCall![0] as AssembledRumEvent).type
       expect(view2Type).toBe(RumEventType.VIEW)
     })
 
@@ -679,9 +681,9 @@ describe('createBatchDispatcher', () => {
         })
       )
 
-      const view2Calls = upsertSpy.calls.allArgs().filter(([, k]) => k === 'view-2')
+      const view2Calls = upsertSpy.mock.calls.filter(([, k]) => k === 'view-2')
       const emittedTypes = view2Calls.map(([e]) => (e as AssembledRumEvent).type)
-      expect(emittedTypes.every((t) => t === RumEventType.VIEW)).toBeTrue()
+      expect(emittedTypes.every((t) => t === RumEventType.VIEW)).toBe(true)
     })
   })
 })

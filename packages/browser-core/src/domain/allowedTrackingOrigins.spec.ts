@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { replaceMockable, STACK_WITH_INIT_IN_EXTENSION, STACK_WITH_INIT_IN_PAGE } from '../../test'
 import { display } from '../tools/display'
 import {
@@ -13,14 +14,14 @@ const DEFAULT_CONFIG = {
 }
 
 describe('checkForAllowedTrackingOrigins', () => {
-  let displayErrorSpy: jasmine.Spy
+  let displayErrorSpy: Mock
 
   function mockOrigin(origin: string) {
     replaceMockable(location, { origin } as Location)
   }
 
   beforeEach(() => {
-    displayErrorSpy = spyOn(display, 'error')
+    displayErrorSpy = vi.spyOn(display, 'error')
   })
 
   it('should not warn if not in extension environment', () => {

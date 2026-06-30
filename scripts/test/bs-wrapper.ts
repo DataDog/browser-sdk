@@ -22,6 +22,9 @@ import { browserStackRequest } from '../lib/bsUtils.ts'
 
 const AVAILABILITY_CHECK_DELAY = 30_000
 const NO_OUTPUT_TIMEOUT = 5 * 60_000
+// After all Vitest sessions finish, the orchestrator may hang indefinitely (vitest#10151).
+// Force-exit after this delay and treat it as success if no test failures were detected.
+const POST_COMPLETION_TIMEOUT = 30_000
 const BS_PLAN_URL = 'https://api.browserstack.com/automate/plan.json'
 
 const bsLocal = new browserStack.Local()
@@ -109,6 +112,8 @@ function runTests(): Promise<boolean> {
 
     let output = ''
     let timeoutId: NodeJS.Timeout
+    let testsCompleted = false
+    let killedByWrapper = false
 
     child.stdout!.pipe(process.stdout)
     child.stdout!.on('data', onOutput)
@@ -117,16 +122,33 @@ function runTests(): Promise<boolean> {
     child.stderr!.on('data', onOutput)
 
     child.on('exit', (code, signal) => {
-      resolve(!signal && code === 0)
+      if (killedByWrapper && testsCompleted) {
+        // Vitest hung during teardown (vitest#10151) and we killed it.
+        // No exit code to trust — check the output for failures.
+        resolve(!hasTestFailures(output))
+      } else {
+        // Vitest exited on its own — trust its exit code.
+        resolve(!signal && code === 0)
+      }
     })
 
     function onOutput(data: Buffer | string): void {
-      output += data.toString()
+      const chunk = data.toString()
+      output += chunk
+
+      // Once tests are done, don't reset the force-kill countdown
+      if (testsCompleted) {
+        return
+      }
 
       clearTimeout(timeoutId)
 
       if (hasUnrecoverableFailure(output)) {
         killIt('unrecoverable failure')
+      } else if (output.includes('no more tests to run')) {
+        testsCompleted = true
+        printLog('Tests completed, waiting for Vitest to exit...')
+        timeoutId = setTimeout(() => killIt('post-completion hang (vitest#10151)'), POST_COMPLETION_TIMEOUT)
       } else {
         timeoutId = setTimeout(() => killIt('no output timeout'), NO_OUTPUT_TIMEOUT)
       }
@@ -134,12 +156,18 @@ function runTests(): Promise<boolean> {
 
     function killIt(message: string): void {
       printError(`Killing the browserstack job because of ${message}`)
-      // use 'SIGKILL' instead of 'SIGTERM' because Karma intercepts 'SIGTERM' and terminates the process with a 0 exit code,
-      // which is not what we want here (we want to indicate a failure).
-      // see https://github.com/karma-runner/karma/blob/master/lib/server.js#L391
+      killedByWrapper = true
       child.kill('SIGKILL')
     }
   })
+}
+
+function hasTestFailures(output: string): boolean {
+  // Strip ANSI escape codes — FORCE_COLOR inserts sequences between "failed" and "|"
+  // eslint-disable-next-line no-control-regex
+  const plain = output.replace(/\x1b\[[0-9;]*m/g, '')
+  // Match Vitest's summary line: "Test Files  2 failed | 40 passed (42)"
+  return /\d+ failed \|/.test(plain)
 }
 
 function hasUnrecoverableFailure(stdout: string): boolean {

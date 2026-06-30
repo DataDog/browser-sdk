@@ -1,7 +1,17 @@
-import type { BufferedData, ConsoleLog, RawError } from '@datadog/browser-core'
+import { vi, afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { clocksNow } from '@datadog/js-core/time'
 import { ConsoleApiName } from '@datadog/js-core/util'
-import { BufferedDataType, ErrorHandling, ErrorSource, Observable, noop, objectEntries } from '@datadog/browser-core'
+import type { BufferedData, ConsoleLog, ErrorWithCause, RawError } from '@datadog/browser-core'
+import {
+  BufferedDataType,
+  ErrorHandling,
+  ErrorSource,
+  Observable,
+  noop,
+  objectEntries,
+  startBufferingData,
+} from '@datadog/browser-core'
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RawConsoleLogsEvent } from '../../rawLogsEvent.types'
 import { validateAndBuildLogsConfiguration } from '../configuration'
 import type { RawLogsEventCollectedData } from '../lifeCycle'
@@ -42,6 +52,11 @@ describe('console collection', () => {
       rawLogsEvents.push(rawLogsEvent as RawLogsEventCollectedData<RawConsoleLogsEvent>)
     )
     stopConsoleCollection = noop
+    vi.spyOn(console, 'log').mockImplementation(() => true)
+    vi.spyOn(console, 'debug').mockImplementation(() => true)
+    vi.spyOn(console, 'info').mockImplementation(() => true)
+    vi.spyOn(console, 'warn').mockImplementation(() => true)
+    vi.spyOn(console, 'error').mockImplementation(() => true)
   })
 
   afterEach(() => {
@@ -63,16 +78,15 @@ describe('console collection', () => {
         error: undefined,
       } as ConsoleLog)
 
-      expect(rawLogsEvents[0].rawLogsEvent).toEqual({
-        date: jasmine.any(Number),
+      expect(rawLogsEvents[0].rawLogsEvent).toMatchObject({
         message: 'foo bar',
         status,
         origin: ErrorSource.CONSOLE,
-        error: whatever(),
       })
+      expect(typeof rawLogsEvents[0].rawLogsEvent.date).toBe('number')
 
-      expect(rawLogsEvents[0].domainContext).toEqual({
-        handlingStack: jasmine.any(String),
+      expect(rawLogsEvents[0].domainContext).toMatchObject({
+        handlingStack: expect.any(String),
       })
     })
 
@@ -134,11 +148,53 @@ describe('console collection', () => {
 
     expect(rawLogsEvents[0].messageContext).toEqual({ foo: 'bar' })
   })
-})
 
-function whatever() {
-  return {
-    asymmetricMatch: () => true,
-    jasmineToString: () => '<whatever>',
-  }
-}
+  it('should retrieve causes from console error', async () => {
+    const { observable: consoleBufferedObservable, stop: stopBuffering } = startBufferingData()
+    registerCleanupTask(stopBuffering)
+    ;({ stop: stopConsoleCollection } = startConsoleCollection(
+      validateAndBuildLogsConfiguration({ ...initConfiguration, forwardConsoleLogs: ['error'] })!,
+      lifeCycle,
+      consoleBufferedObservable
+    ))
+    const error = new Error('High level error') as ErrorWithCause
+    error.stack = 'Error: High level error'
+
+    const nestedError = new Error('Mid level error') as ErrorWithCause
+    nestedError.stack = 'Error: Mid level error'
+
+    const deepNestedError = new TypeError('Low level error') as ErrorWithCause
+    deepNestedError.stack = 'TypeError: Low level error'
+
+    nestedError.cause = deepNestedError
+    error.cause = nestedError
+
+    // eslint-disable-next-line no-console
+    console.error(error)
+
+    // Wait for BufferedObservable microtask to deliver the event to subscribers
+    await new Promise<void>((resolve) => queueMicrotask(resolve))
+
+    expect(rawLogsEvents[0].rawLogsEvent.error).toEqual({
+      stack: expect.any(String),
+      handling: ErrorHandling.HANDLED,
+      causes: [
+        {
+          source: ErrorSource.CONSOLE,
+          type: 'Error',
+          stack: expect.any(String),
+          message: 'Mid level error',
+        },
+        {
+          source: ErrorSource.CONSOLE,
+          type: 'TypeError',
+          stack: expect.any(String),
+          message: 'Low level error',
+        },
+      ],
+      fingerprint: undefined,
+      kind: 'Error',
+      message: undefined,
+    })
+  })
+})

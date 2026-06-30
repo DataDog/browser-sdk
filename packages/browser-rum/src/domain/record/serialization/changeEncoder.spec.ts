@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import { ChangeType } from '../../../types'
 import type { StringId } from '../itemIds'
 import { createStringIds, StringIdConstants } from '../itemIds'
@@ -40,7 +41,7 @@ describe('ChangeEncoder', () => {
 
       expect(changes).toEqual([
         [ChangeType.AddString, 'Hello World'],
-        [ChangeType.Text, [0, 0 as StringId]],
+        [ChangeType.Text, [0, 0]],
       ])
     })
 
@@ -52,7 +53,7 @@ describe('ChangeEncoder', () => {
 
       expect(changes).toEqual([
         [ChangeType.AddString, 'foo', 'bar'],
-        [ChangeType.Text, [0, 0 as StringId], [1, 1 as StringId], [2, 0 as StringId]],
+        [ChangeType.Text, [0, 0], [1, 1], [2, 0]],
       ])
     })
 
@@ -111,7 +112,7 @@ describe('ChangeEncoder', () => {
 
       expect(changes).toEqual([
         [ChangeType.AddString, ''],
-        [ChangeType.Text, [0, 0 as StringId]],
+        [ChangeType.Text, [0, 0]],
       ])
     })
 
@@ -125,7 +126,7 @@ describe('ChangeEncoder', () => {
 
       expect(changes).toEqual([
         [ChangeType.AddString, 'new-string'], // Only the new string is added.
-        [ChangeType.Text, [0, preExistingId], [1, 1 as StringId]],
+        [ChangeType.Text, [0, preExistingId], [1, 1]],
       ])
     })
 
@@ -137,7 +138,7 @@ describe('ChangeEncoder', () => {
       const changes = encoder.flush()
 
       // The second flush should not have an AddString change for 'persistent'.
-      expect(changes).toEqual([[ChangeType.Text, [1, 0 as StringId]]])
+      expect(changes).toEqual([[ChangeType.Text, [1, 0]]])
     })
   })
 

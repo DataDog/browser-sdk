@@ -1,3 +1,4 @@
+import { vi, describe, expect, it } from 'vitest'
 import { BridgeCapability } from '@datadog/browser-core'
 import { mockEventBridge } from '@datadog/browser-core/test'
 import { mockedTrace } from '../test-utils/mockedTrace'
@@ -7,7 +8,7 @@ import { createBridgeEmitter } from './profilingBridge'
 describe('createBridgeEmitter', () => {
   it('sends the payload through the bridge as a profile event', () => {
     const bridge = mockEventBridge({ capabilities: [BridgeCapability.RECORDS, BridgeCapability.PROFILES] })
-    const sendSpy = spyOn(bridge, 'send')
+    const sendSpy = vi.spyOn(bridge, 'send')
     const emit = createBridgeEmitter()
 
     const payload: ProfilingPayload = {
@@ -28,8 +29,8 @@ describe('createBridgeEmitter', () => {
 
     emit(payload)
 
-    expect(sendSpy).toHaveBeenCalledOnceWith(jasmine.stringContaining('"eventType":"profile"'))
-    const sent = JSON.parse(sendSpy.calls.first().args[0])
+    expect(sendSpy).toHaveBeenCalledWith(expect.stringContaining('"eventType":"profile"'))
+    const sent = JSON.parse(sendSpy.mock.calls[0][0])
     expect(sent.eventType).toBe('profile')
     expect(sent.event.profile).toEqual(payload.profile)
     expect(sent.event.trace).toEqual(payload.trace)

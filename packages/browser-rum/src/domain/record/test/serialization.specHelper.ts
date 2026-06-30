@@ -1,5 +1,5 @@
-import type { TimeStamp } from '@datadog/js-core/time'
 import { noop } from '@datadog/browser-core'
+import type { TimeStamp } from '@datadog/js-core/time'
 import { RecordType, SnapshotFormat } from '../../../types'
 import type { BrowserFullSnapshotChangeRecord, BrowserRecord } from '../../../types'
 import type { RecordingScope } from '../recordingScope'

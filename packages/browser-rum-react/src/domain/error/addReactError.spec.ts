@@ -1,21 +1,23 @@
+import { vi, describe, expect, it } from 'vitest'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import { addReactError } from './addReactError'
 
 describe('addReactError', () => {
-  it('delegates the error to addError', () => {
-    const addErrorSpy = jasmine.createSpy()
+  it('reports the error to the SDK', () => {
+    const addEventSpy = vi.fn()
     initializeReactPlugin({
-      addError: addErrorSpy,
+      addError: addEventSpy,
     })
     const originalError = new Error('error message')
 
     addReactError(originalError, { componentStack: 'at ComponentSpy toto.js' })
 
-    expect(addErrorSpy).toHaveBeenCalledOnceWith({
+    expect(addEventSpy).toHaveBeenCalledTimes(1)
+    expect(addEventSpy).toHaveBeenCalledWith({
       error: originalError,
-      handlingStack: jasmine.any(String),
+      handlingStack: expect.any(String),
       componentStack: 'at ComponentSpy toto.js',
-      startClocks: jasmine.any(Object),
+      startClocks: expect.any(Object),
       context: {
         framework: 'react',
       },
@@ -23,18 +25,17 @@ describe('addReactError', () => {
   })
 
   it('should merge dd_context from the original error with react error context', () => {
-    const addErrorSpy = jasmine.createSpy()
+    const addEventSpy = vi.fn()
     initializeReactPlugin({
-      addError: addErrorSpy,
+      addError: addEventSpy,
     })
     const originalError = new Error('error message')
     ;(originalError as any).dd_context = { component: 'Menu', param: 123 }
 
     addReactError(originalError, {})
 
-    expect(addErrorSpy).toHaveBeenCalledWith(
-      jasmine.objectContaining({
-        error: originalError,
+    expect(addEventSpy.mock.lastCall![0]).toEqual(
+      expect.objectContaining({
         context: {
           framework: 'react',
           component: 'Menu',

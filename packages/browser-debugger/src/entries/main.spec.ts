@@ -1,3 +1,4 @@
+import { vi, describe, expect, it, beforeEach } from 'vitest'
 import { Observable } from '@datadog/browser-core'
 import { registerCleanupTask, replaceMockableWithSpy } from '@datadog/browser-core/test'
 import { initDebuggerTransport } from '../domain/api'
@@ -28,15 +29,15 @@ describe('datadogDebugger', () => {
 
   it('should only expose init, version, and onReady', () => {
     expect(datadogDebugger).toEqual({
-      init: jasmine.any(Function),
-      version: jasmine.any(String),
-      onReady: jasmine.any(Function),
+      init: expect.any(Function),
+      version: expect.any(String),
+      onReady: expect.any(Function),
     })
   })
 
   it('should default the init version from build-plugin metadata', async () => {
     browserWindow.__DD_LIVE_DEBUGGER_BUILD__ = { version: 'build-version' }
-    replaceMockableWithSpy(startDebuggerBatch).and.callFake(() => ({
+    replaceMockableWithSpy(startDebuggerBatch).mockImplementation(() => ({
       flushObservable: new Observable(),
       prepareUrgentFlushObservable: new Observable(),
       isEmpty: false,
@@ -58,10 +59,10 @@ describe('datadogDebugger', () => {
     await flushPromises()
 
     expect(initTransportSpy).toHaveBeenCalledWith(
-      jasmine.objectContaining({ version: 'build-version' }),
-      jasmine.anything()
+      expect.objectContaining({ version: 'build-version' }),
+      expect.anything()
     )
-    expect(startDeliveryApiPollingSpy).toHaveBeenCalledWith(jasmine.objectContaining({ version: 'build-version' }))
+    expect(startDeliveryApiPollingSpy).toHaveBeenCalledWith(expect.objectContaining({ version: 'build-version' }))
     expect(browserWindow.$dd_entry).toBeDefined()
     expect(browserWindow.$dd_return).toBeDefined()
     expect(browserWindow.$dd_throw).toBeDefined()
@@ -70,7 +71,7 @@ describe('datadogDebugger', () => {
 
   it('should warn when the explicit init version mismatches build-plugin metadata', async () => {
     browserWindow.__DD_LIVE_DEBUGGER_BUILD__ = { version: 'build-version' }
-    replaceMockableWithSpy(startDebuggerBatch).and.callFake(() => ({
+    replaceMockableWithSpy(startDebuggerBatch).mockImplementation(() => ({
       flushObservable: new Observable(),
       prepareUrgentFlushObservable: new Observable(),
       isEmpty: false,
@@ -82,7 +83,7 @@ describe('datadogDebugger', () => {
     }))
     replaceMockableWithSpy(initDebuggerTransport)
     const startDeliveryApiPollingSpy = replaceMockableWithSpy(startDeliveryApiPolling)
-    const warnSpy = spyOn(display, 'warn')
+    const warnSpy = vi.spyOn(display, 'warn')
 
     datadogDebugger.init({
       clientToken: 'client-token',
@@ -93,8 +94,8 @@ describe('datadogDebugger', () => {
 
     await flushPromises()
 
-    expect(warnSpy).toHaveBeenCalledWith(jasmine.stringMatching(/does not match the build-plugin version/))
-    expect(startDeliveryApiPollingSpy).toHaveBeenCalledWith(jasmine.objectContaining({ version: 'runtime-version' }))
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/does not match the build-plugin version/))
+    expect(startDeliveryApiPollingSpy).toHaveBeenCalledWith(expect.objectContaining({ version: 'runtime-version' }))
   })
 })
 

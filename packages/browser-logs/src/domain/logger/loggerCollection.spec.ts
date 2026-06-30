@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it } from 'vitest'
 import type { TimeStamp } from '@datadog/js-core/time'
 import { timeStampNow } from '@datadog/js-core/time'
 import { ErrorSource } from '@datadog/browser-core'
@@ -26,7 +27,7 @@ describe('logger collection', () => {
     lifeCycle.subscribe(LifeCycleEventType.RAW_LOG_COLLECTED, (rawLogsEvent) =>
       rawLogsEvents.push(rawLogsEvent as RawLogsEventCollectedData<RawLoggerLogsEvent>)
     )
-    spyOn(console, 'error').and.callFake(() => true)
+    vi.spyOn(console, 'error').mockImplementation(() => true)
     logger = new Logger((...params) => handleLog(...params))
     ;({ handleLog: handleLog } = startLoggerCollection(lifeCycle))
     mockClock()
@@ -35,11 +36,11 @@ describe('logger collection', () => {
   describe('when handle type is set to "console"', () => {
     beforeEach(() => {
       logger.setHandler(HandlerType.console)
-      spyOn(originalConsoleMethods, 'debug')
-      spyOn(originalConsoleMethods, 'info')
-      spyOn(originalConsoleMethods, 'warn')
-      spyOn(originalConsoleMethods, 'error')
-      spyOn(originalConsoleMethods, 'log')
+      vi.spyOn(originalConsoleMethods, 'debug')
+      vi.spyOn(originalConsoleMethods, 'info')
+      vi.spyOn(originalConsoleMethods, 'warn')
+      vi.spyOn(originalConsoleMethods, 'error')
+      vi.spyOn(originalConsoleMethods, 'log')
     })
 
     it('should print the log message and context to the console', () => {
@@ -52,7 +53,8 @@ describe('logger collection', () => {
         COMMON_CONTEXT
       )
 
-      expect(originalConsoleMethods.error).toHaveBeenCalledOnceWith('message', {
+      expect(originalConsoleMethods.error).toHaveBeenCalledTimes(1)
+      expect(originalConsoleMethods.error).toHaveBeenCalledWith('message', {
         foo: 'from-logger',
         bar: 'from-message',
       })

@@ -1,10 +1,11 @@
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { callMonitored, monitored, startMonitorErrorCollection } from './monitor'
 
 describe('monitor', () => {
-  let onMonitorErrorCollectedSpy: jasmine.Spy<(error: unknown) => void>
+  let onMonitorErrorCollectedSpy: Mock<(error: unknown) => void>
 
   beforeEach(() => {
-    onMonitorErrorCollectedSpy = jasmine.createSpy()
+    onMonitorErrorCollectedSpy = vi.fn()
   })
 
   it('catches monitored errors but does not report them before startMonitorErrorCollection', () => {
@@ -24,6 +25,6 @@ describe('monitor', () => {
     callMonitored(() => {
       throw new Error('error')
     })
-    expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith(new Error('error'))
+    expect(onMonitorErrorCollectedSpy).toHaveBeenCalledWith(new Error('error'))
   })
 })

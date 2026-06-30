@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it } from 'vitest'
 import { ONE_MINUTE } from '@datadog/js-core/time'
 import type { Clock } from '../../../test'
 import { mockClock } from '../../../test'
@@ -36,12 +37,12 @@ describe('createEventRateLimiter', () => {
   })
 
   it('calls the "onLimitReached" callback with the "limit reached" message when the limit is reached', () => {
-    const onLimitReachedSpy = jasmine.createSpy<(message: string) => void>()
+    const onLimitReachedSpy = vi.fn<(message: string) => void>()
     eventLimiter = createEventRateLimiter('error', onLimitReachedSpy, limit)
 
     eventLimiter.isLimitReached()
     eventLimiter.isLimitReached()
-    expect(onLimitReachedSpy).toHaveBeenCalledOnceWith('Reached max number of errors by minute: 1')
+    expect(onLimitReachedSpy).toHaveBeenCalledWith('Reached max number of errors by minute: 1')
   })
 
   it('returns false when called from the "onLimitReached" callback to bypass the limit for the "limit reached" error', () => {
@@ -58,7 +59,7 @@ describe('createEventRateLimiter', () => {
   })
 
   it('does not call the "onLimitReached" callback more than once when the limit is reached', () => {
-    const onLimitReachedSpy = jasmine.createSpy<(message: string) => void>()
+    const onLimitReachedSpy = vi.fn<(message: string) => void>()
     eventLimiter = createEventRateLimiter('error', onLimitReachedSpy, limit)
 
     eventLimiter.isLimitReached()

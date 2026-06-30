@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { DefaultPrivacyLevel, findLast, noop } from '@datadog/browser-core'
 import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
@@ -23,11 +24,11 @@ import { createChangeDecoder } from './serialization'
 describe('record', () => {
   let recordApi: RecordAPI
   let lifeCycle: LifeCycle
-  let emitSpy: jasmine.Spy<EmitRecordCallback>
+  let emitSpy: Mock<EmitRecordCallback>
   const FAKE_VIEW_ID = '123'
 
   beforeEach(() => {
-    emitSpy = jasmine.createSpy()
+    emitSpy = vi.fn()
 
     registerCleanupTask(() => {
       recordApi?.stop()
@@ -64,12 +65,12 @@ describe('record', () => {
       .map((record) => record.data)
 
     expect(styleSheetRuleData).toEqual([
-      jasmine.objectContaining({ adds: [{ rule: 'body { background: #000; }', index: undefined }] }),
-      jasmine.objectContaining({ adds: [{ rule: 'body { background: #111; }', index: undefined }] }),
-      jasmine.objectContaining({ removes: [{ index: 0 }] }),
-      jasmine.objectContaining({ adds: [{ rule: 'body { color: #fff; }', index: undefined }] }),
-      jasmine.objectContaining({ removes: [{ index: 0 }] }),
-      jasmine.objectContaining({ adds: [{ rule: 'body { color: #ccc; }', index: undefined }] }),
+      expect.objectContaining({ adds: [{ rule: 'body { background: #000; }', index: undefined }] }),
+      expect.objectContaining({ adds: [{ rule: 'body { background: #111; }', index: undefined }] }),
+      expect.objectContaining({ removes: [{ index: 0 }] }),
+      expect.objectContaining({ adds: [{ rule: 'body { color: #fff; }', index: undefined }] }),
+      expect.objectContaining({ removes: [{ index: 0 }] }),
+      expect.objectContaining({ adds: [{ rule: 'body { color: #ccc; }', index: undefined }] }),
     ])
   })
 
@@ -235,7 +236,7 @@ describe('record', () => {
       const shadowRoot = createShadow()
       appendElement('<div class="toto"></div>', shadowRoot)
       startRecording()
-      spyOn(recordApi.shadowRootsController, 'removeShadowRoot')
+      vi.spyOn(recordApi.shadowRootsController, 'removeShadowRoot')
 
       expect(getEmittedRecordCount()).toBe(recordsPerFullSnapshot())
       expect(recordApi.shadowRootsController.removeShadowRoot).toHaveBeenCalledTimes(0)
@@ -263,8 +264,8 @@ describe('record', () => {
       appendElement('<div></div>', host.shadowRoot!)
 
       startRecording()
-      spyOn(recordApi.shadowRootsController, 'removeShadowRoot')
-      expect(getEmittedRecordCount()).toBe(recordsPerFullSnapshot())
+      vi.spyOn(recordApi.shadowRootsController, 'removeShadowRoot')
+      expect(getEmittedRecords().length).toBe(recordsPerFullSnapshot())
       expect(recordApi.shadowRootsController.removeShadowRoot).toHaveBeenCalledTimes(0)
 
       parent.remove()
@@ -303,7 +304,7 @@ describe('record', () => {
       input = appendElement('<input target />') as HTMLInputElement
       audio = appendElement('<audio controls autoplay target></audio>') as HTMLAudioElement
       startRecording()
-      emitSpy.calls.reset()
+      emitSpy.mockClear()
     })
 
     it('move', () => {
@@ -358,9 +359,10 @@ describe('record', () => {
       expect(getEmittedRecords()[0].type).toBe(RecordType.Focus)
     })
 
-    it('visual viewport resize', () => {
+    it('visual viewport resize', (ctx) => {
       if (!window.visualViewport) {
-        pending('visualViewport not supported')
+        ctx.skip(true, 'VisualViewport API not supported')
+        return
       }
 
       visualViewport!.dispatchEvent(createNewEvent('resize'))
@@ -394,14 +396,14 @@ describe('record', () => {
   }
 
   function getEmittedRecordCount(): number {
-    return emitSpy.calls.allArgs().length
+    return getEmittedRecords().length
   }
 
   function getEmittedRecords(): BrowserRecord[] {
     const changeDecoder = createChangeDecoder()
 
     const decodedRecords: BrowserRecord[] = []
-    for (const [record] of emitSpy.calls.allArgs()) {
+    for (const [record] of emitSpy.mock.calls) {
       if (
         record.type === RecordType.Change ||
         (record.type === RecordType.FullSnapshot && record.format === SnapshotFormat.Change)
@@ -425,7 +427,7 @@ export function getLastIncrementalSnapshotData<T extends BrowserIncrementalSnaps
     (record): record is BrowserIncrementalSnapshotRecord & { data: T } =>
       record.type === RecordType.IncrementalSnapshot && record.data.source === source
   )
-  expect(record).toBeTruthy(`Could not find IncrementalSnapshot/${source} in ${records.length} records`)
+  expect(record).toBeTruthy()
   return record!.data
 }
 

@@ -1,4 +1,5 @@
-import type { RelativeTime, Duration, TimeStamp } from '@datadog/js-core/time'
+import { describe, expect, it } from 'vitest'
+import type { Duration, RelativeTime, TimeStamp } from '@datadog/js-core/time'
 import { RequestType } from '@datadog/browser-core'
 import { createPerformanceEntry } from '../../../test'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
