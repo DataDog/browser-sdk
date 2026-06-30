@@ -11,6 +11,17 @@ export interface BandwidthStats {
 }
 
 // @public
+export interface Batch {
+    add: (message: Context) => void;
+    flushObservable: Observable<FlushEvent>;
+    forceFlush: (reason: FlushReason) => void;
+    isEmpty: boolean;
+    prepareUrgentFlushObservable: Observable<UrgentFlushReason>;
+    stop: () => void;
+    upsert: (message: Context, key: string) => void;
+}
+
+// @public
 export function buildEndpointUrl(input: BuildEndpointUrlOptions): string;
 
 // @public
@@ -21,6 +32,16 @@ export interface BuildEndpointUrlOptions {
     site: Site | undefined;
     subdomain?: string;
 }
+
+// @public
+export function createBatch(input: {
+    request: HttpRequest;
+    pageMayExitObservable: Observable<PageMayExitEvent>;
+    endpoints?: EndpointBuilder[];
+    reportError: (message: string) => void;
+    warn: (message: string) => void;
+    encoder?: Encoder;
+}): Batch;
 
 // @public
 export function createEndpointBuilder(configuration: EndpointBuilderConfiguration, trackType: TrackType, extraParameters?: string[]): EndpointBuilder;
@@ -34,6 +55,9 @@ export function createFlushController(input: FlushControllerOptions): {
     notifyBeforeAddMessage(estimatedMessageBytesCount: number): void;
     notifyAfterAddMessage(messageBytesCountDiff?: number): void;
 };
+
+// @public
+export function createHttpRequest<Body extends Payload = Payload>(endpointBuilders: EndpointBuilder[], reportError: (message: string) => void, sendStrategy: SendStrategy<Body>, sendOnExitStrategy: SendOnExitStrategy<Body>): HttpRequest<Body>;
 
 // @public
 export function createIdentityEncoder(): Encoder<string>;
@@ -90,6 +114,13 @@ export interface FlushEvent {
 export type FlushReason = UrgentFlushReason | 'duration_limit' | 'bytes_limit' | 'messages_limit' | 'session_expire';
 
 // @public
+export interface HttpRequest<Body extends Payload = Payload> {
+    observable: Observable<HttpRequestEvent<Body>>;
+    send(this: void, payload: Body): void;
+    sendOnExit(this: void, payload: Body): void;
+}
+
+// @public
 export type HttpRequestEvent<Body extends Payload = Payload> = {
     type: 'failure';
     bandwidth: BandwidthStats;
@@ -136,6 +167,9 @@ export const INTAKE_URL_PARAMETERS: string[];
 // @public
 export function isIntakeUrl(url: string): boolean;
 
+// @public
+export function isPageExitReason(reason: string): reason is PageExitReason;
+
 // @public (undocumented)
 export const MAX_BACKOFF_TIME: Duration;
 
@@ -147,6 +181,9 @@ export const MAX_ONGOING_REQUESTS = 32;
 
 // @public (undocumented)
 export const MAX_QUEUE_BYTES_COUNT: number;
+
+// @public
+export const MESSAGE_BYTES_LIMIT: number;
 
 // @public
 export const MESSAGES_LIMIT: number;
@@ -208,7 +245,13 @@ export interface RetryState<Body extends Payload> {
 }
 
 // @public
-export function sendWithRetryStrategy<Body extends Payload>(payload: Body, state: RetryState<Body>, sendStrategy: SendStrategy<Body>, trackType: TrackType, reportError: (message: string) => void, requestObservable: Observable<HttpRequestEvent<Body>>): void;
+export type SendOnExitStrategy<Body extends Payload = Payload> = (endpointBuilder: EndpointBuilder, payload: Body) => void;
+
+// @public
+export type SendStrategy<Body extends Payload = Payload> = (endpointBuilder: EndpointBuilder, payload: Body, onResponse: (response: HttpResponse) => void) => void;
+
+// @public
+export function sendWithRetryStrategy<Body extends Payload>(payload: Body, state: RetryState<Body>, sendStrategy: SendStrategy_2<Body>, trackType: TrackType, reportError: (message: string) => void, requestObservable: Observable<HttpRequestEvent<Body>>): void;
 
 // @public
 export type Site = 'datadoghq.com' | 'us3.datadoghq.com' | 'us5.datadoghq.com' | 'datadoghq.eu' | 'ddog-gov.com' | 'us2.ddog-gov.com' | 'ap1.datadoghq.com' | 'ap2.datadoghq.com' | (string & {});
