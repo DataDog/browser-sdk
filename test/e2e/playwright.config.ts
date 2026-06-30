@@ -168,10 +168,16 @@ function getProjects() {
 }
 
 function project(name: string, device: string) {
+  const isChromium = name === 'chromium'
   return {
     name,
     metadata: { sessionName: device, name } satisfies BrowserConfiguration,
-    use: devices[device],
+    use: {
+      ...devices[device],
+      // Required for experimental APIs (e.g. Network Efficiency Guardrails).
+      // Only passed to current Chromium — pinned browsers use pinnedProject() and may not support it.
+      ...(isChromium ? { launchOptions: { args: ['--enable-experimental-web-platform-features'] } } : {}),
+    },
   }
 }
 

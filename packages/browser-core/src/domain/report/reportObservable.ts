@@ -6,18 +6,19 @@ import { addEventListener, DOM_EVENT, isEventSupported } from '../../browser/add
 import { safeTruncate } from '../../tools/utils/stringUtils'
 import type { RawError } from '../error/error.types'
 import { ErrorHandling, ErrorSource } from '../error/error.types'
-import type { ReportType, InterventionReport, DeprecationReport } from './browser.types'
+import type { ReportType, InterventionReport, DeprecationReport, DocumentPolicyViolationReport } from './browser.types'
 
 export const RawReportType = {
   intervention: 'intervention',
   deprecation: 'deprecation',
   cspViolation: 'csp_violation',
+  documentPolicyViolation: 'document-policy-violation',
 } as const
 
 export type RawReportType = (typeof RawReportType)[keyof typeof RawReportType]
 
 export type RawReportError = RawError & {
-  originalError: SecurityPolicyViolationEvent | DeprecationReport | InterventionReport
+  originalError: SecurityPolicyViolationEvent | DeprecationReport | InterventionReport | DocumentPolicyViolationReport
 }
 
 export function initReportObservable(apis: RawReportType[]) {
@@ -27,7 +28,7 @@ export function initReportObservable(apis: RawReportType[]) {
     observables.push(createCspViolationReportObservable())
   }
 
-  const reportTypes = apis.filter((api: RawReportType): api is ReportType => api !== RawReportType.cspViolation)
+  const reportTypes = apis.filter((api): api is ReportType => api !== RawReportType.cspViolation)
   if (reportTypes.length) {
     observables.push(createReportObservable(reportTypes))
   }
@@ -41,8 +42,9 @@ function createReportObservable(reportTypes: ReportType[]) {
       return
     }
 
-    const handleReports = monitor((reports: Array<DeprecationReport | InterventionReport>, _: ReportingObserver) =>
-      reports.forEach((report) => observable.notify(buildRawReportErrorFromReport(report)))
+    const handleReports = monitor(
+      (reports: Array<DeprecationReport | InterventionReport | DocumentPolicyViolationReport>, _: ReportingObserver) =>
+        reports.forEach((report) => observable.notify(buildRawReportErrorFromReport(report)))
     ) as ReportingObserverCallback
 
     const observer = new window.ReportingObserver(handleReports, {
@@ -72,9 +74,22 @@ function createCspViolationReportObservable() {
   })
 }
 
-function buildRawReportErrorFromReport(report: DeprecationReport | InterventionReport): RawReportError {
-  const { type, body } = report
+function buildRawReportErrorFromReport(
+  report: DeprecationReport | InterventionReport | DocumentPolicyViolationReport
+): RawReportError {
+  if (report.type === 'document-policy-violation') {
+    const { featureId, message, disposition, sourceFile } = report.body
+    return buildRawReportError({
+      type: report.type,
+      featureId,
+      message: `${report.type}: ${message}`,
+      originalError: report,
+      csp: { disposition },
+      stack: buildStack(featureId, message, sourceFile, null, null),
+    })
+  }
 
+  const { type, body } = report
   return buildRawReportError({
     type: body.id,
     message: `${type}: ${body.message}`,

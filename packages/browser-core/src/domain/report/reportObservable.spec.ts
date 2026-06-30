@@ -1,5 +1,10 @@
 import type { MockCspEventListener, MockReportingObserver } from '../../../test'
-import { mockReportingObserver, mockCspEventListener, FAKE_CSP_VIOLATION_EVENT } from '../../../test'
+import {
+  mockReportingObserver,
+  mockCspEventListener,
+  FAKE_CSP_VIOLATION_EVENT,
+  FAKE_DOCUMENT_POLICY_VIOLATION_REPORT,
+} from '../../../test'
 import type { Subscription } from '../../tools/observable'
 import { ErrorHandling, ErrorSource } from '../error/error.types'
 import type { RawReportError } from './reportObservable'
@@ -73,5 +78,44 @@ describe('report observable', () => {
     cspEventListener.dispatchEvent()
 
     expect(notifyReport).not.toHaveBeenCalled()
+  })
+
+  it(`should notify ${RawReportType.documentPolicyViolation} reports`, () => {
+    consoleSubscription = initReportObservable([RawReportType.documentPolicyViolation]).subscribe(notifyReport)
+    reportingObserver.raiseReport('document-policy-violation')
+
+    expect(notifyReport).toHaveBeenCalledOnceWith(
+      jasmine.objectContaining({
+        message: 'document-policy-violation: Document policy violation: resource compression is required.',
+        type: 'document-policy-violation',
+        featureId: 'network-efficiency-guardrails',
+        csp: { disposition: 'report' },
+      })
+    )
+  })
+
+  it(`should compute stack for ${RawReportType.documentPolicyViolation}`, () => {
+    consoleSubscription = initReportObservable([RawReportType.documentPolicyViolation]).subscribe(notifyReport)
+    reportingObserver.raiseReport('document-policy-violation')
+
+    const [report] = notifyReport.calls.mostRecent().args
+
+    expect(report.stack)
+      .toEqual(`network-efficiency-guardrails: Document policy violation: resource compression is required.
+  at <anonymous> @ https://foo.bar/large-uncompressed.js`)
+  })
+
+  it(`should notify ${RawReportType.documentPolicyViolation} reports regardless of featureId`, () => {
+    consoleSubscription = initReportObservable([RawReportType.documentPolicyViolation]).subscribe(notifyReport)
+    reportingObserver.raiseReport('document-policy-violation', {
+      body: { ...FAKE_DOCUMENT_POLICY_VIOLATION_REPORT.body, featureId: 'some-other-policy' },
+    })
+
+    expect(notifyReport).toHaveBeenCalledOnceWith(
+      jasmine.objectContaining({
+        type: 'document-policy-violation',
+        featureId: 'some-other-policy',
+      })
+    )
   })
 })

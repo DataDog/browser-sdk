@@ -14,6 +14,7 @@ describe('createErrorFieldFromRawError', () => {
     componentStack: 'at Flex',
     originalError: new Error('baz'),
     type: 'qux',
+    featureId: 'quux-feature',
     message: 'quux',
     stack: 'quuz',
     causes: [
@@ -43,6 +44,7 @@ describe('createErrorFieldFromRawError', () => {
     expect(createErrorFieldFromRawError(exhaustiveRawError)).toEqual({
       message: undefined,
       kind: 'qux',
+      feature_id: 'quux-feature',
       stack: 'quuz',
       causes: [
         {
