@@ -54,7 +54,7 @@ export {
   SESSION_NOT_TRACKED,
   SessionPersistence,
 } from './domain/session/sessionConstants'
-export type { Batch, HttpRequest } from './transport'
+export type { Batch } from './transport'
 export {
   createHttpRequest,
   canUseEventBridge,

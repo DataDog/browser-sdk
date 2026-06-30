@@ -12,6 +12,8 @@ export { createEndpointBuilder, createReplicaEndpointBuilder, buildEndpointUrl }
 export type { Encoder, EncoderResult } from '../transport/encoder'
 export { createIdentityEncoder } from '../transport/encoder'
 export type { Payload, HttpResponse, BandwidthStats, HttpRequestEvent } from '../transport/payload'
+export type { HttpRequest, SendStrategy, SendOnExitStrategy } from '../transport/httpRequest'
+export { createHttpRequest } from '../transport/httpRequest'
 export { RECOMMENDED_REQUEST_BYTES_LIMIT } from '../transport/payload'
 export {
   PageExitReason,

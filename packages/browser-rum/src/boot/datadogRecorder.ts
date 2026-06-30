@@ -1,4 +1,4 @@
-import type { HttpRequest, DeflateEncoder, Telemetry, SessionManager } from '@datadog/browser-core'
+import type { DeflateEncoder, Telemetry, SessionManager } from '@datadog/browser-core'
 import { noop } from '@datadog/js-core/util'
 import { createHttpRequest, addTelemetryDebug, canUseEventBridge, ErrorSource } from '@datadog/browser-core'
 import { clocksNow } from '@datadog/js-core/time'
@@ -6,6 +6,7 @@ import { createEndpointBuilder, PageExitReason } from '@datadog/js-core/transpor
 import type { LifeCycle, ViewHistory, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 
+import type { HttpRequest } from '@datadog/js-core/transport'
 import type { EmitResourceCallback, SerializationStats } from '../domain/record'
 import { record } from '../domain/record'
 import type { ReplayPayload, ResourcePayload } from '../domain/segmentCollection'
