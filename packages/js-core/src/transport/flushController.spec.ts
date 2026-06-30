@@ -1,10 +1,9 @@
-import { Observable } from '@datadog/js-core/util'
-import type { Clock } from '../../test'
-import { mockClock } from '../../test'
-import type { PageMayExitEvent } from '../browser/pageMayExitObservable'
-import type { FlushController, FlushEvent } from './flushController'
+import type { Clock } from '../../../browser-core/test'
+import { mockClock } from '../../../browser-core/test'
+import { Observable } from '../util/observable'
+import { RECOMMENDED_REQUEST_BYTES_LIMIT } from './payload'
+import type { FlushController, FlushEvent, PageMayExitEvent } from './flushController'
 import { createFlushController, FLUSH_DURATION_LIMIT, MESSAGES_LIMIT } from './flushController'
-import { RECOMMENDED_REQUEST_BYTES_LIMIT } from './httpRequest'
 
 const BYTES_LIMIT = RECOMMENDED_REQUEST_BYTES_LIMIT
 // Arbitrary message size that is below the BYTES_LIMIT

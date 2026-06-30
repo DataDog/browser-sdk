@@ -1,6 +1,6 @@
 import type { HttpRequest, Telemetry } from '@datadog/browser-core'
 import type { TimeStamp } from '@datadog/js-core/time'
-import { PageExitReason, DefaultPrivacyLevel, DeflateEncoderStreamId } from '@datadog/browser-core'
+import { DefaultPrivacyLevel, DeflateEncoderStreamId } from '@datadog/browser-core'
 import { Observable, noop } from '@datadog/js-core/util'
 import type { ViewCreatedEvent, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType, startViewHistory } from '@datadog/browser-rum-core'
@@ -16,6 +16,7 @@ import {
   MOCK_SESSION_ID,
 } from '@datadog/browser-core/test'
 import type { HttpRequestEvent } from '@datadog/js-core/transport'
+import { PageExitReason } from '@datadog/js-core/transport'
 import type { ViewEndedEvent } from '../../../browser-rum-core/src/domain/view/trackViews'
 import { appendElement, mockRumConfiguration } from '../../../browser-rum-core/test'
 

@@ -1,5 +1,15 @@
+import { ONE_KIBI_BYTE } from '../util/byteUtils'
 import type { Context } from '../util/context'
 import type { TransportRetryInfo } from './endpointBuilder'
+
+/**
+ * Maximum recommended byte count for a single HTTP request body.
+ *
+ * Beacon payloads are capped at 64 KiB by the browser; we leave room for
+ * logs, RUM and other consumers by using 16 KiB as the recommended limit.
+ * Used both to trigger batch flushes and as the default `sendBeacon` size guard.
+ */
+export const RECOMMENDED_REQUEST_BYTES_LIMIT = 16 * ONE_KIBI_BYTE
 
 /**
  * A unit of data ready to be sent to an intake endpoint.
