@@ -1,8 +1,8 @@
 import { Observable, noop } from '@datadog/js-core/util'
-import type { FlushEvent } from '@datadog/browser-core/src/transport/flushController'
 import { createNewEvent, interceptRequests, registerCleanupTask } from '@datadog/browser-core/test'
 
 import { createIdentityEncoder } from '@datadog/js-core/transport'
+import type { FlushEvent } from '@datadog/js-core/transport'
 import { mockRumConfiguration } from '../../test'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import type { AssembledRumEvent } from '../rawRumEvent.types'

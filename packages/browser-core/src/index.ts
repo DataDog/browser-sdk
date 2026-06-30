@@ -54,7 +54,7 @@ export {
   SESSION_NOT_TRACKED,
   SessionPersistence,
 } from './domain/session/sessionConstants'
-export type { Batch, HttpRequest, FlushEvent, FlushReason, UrgentFlushReason } from './transport'
+export type { Batch, HttpRequest } from './transport'
 export {
   createHttpRequest,
   canUseEventBridge,
@@ -62,8 +62,6 @@ export {
   bridgeSupports,
   BridgeCapability,
   createBatch,
-  createFlushController,
-  FLUSH_DURATION_LIMIT,
 } from './transport'
 export * from './tools/display'
 export * from './tools/utils/arrayUtils'
@@ -93,8 +91,7 @@ export type { XhrCompleteContext, XhrStartContext, XhrContext } from './browser/
 export { initXhrObservable } from './browser/xhrObservable'
 export type { FetchResolveContext, FetchStartContext, FetchContext } from './browser/fetchObservable'
 export { initFetchObservable, ResponseBodyAction } from './browser/fetchObservable'
-export type { PageMayExitEvent } from './browser/pageMayExitObservable'
-export { createPageMayExitObservable, PageExitReason, isPageExitReason } from './browser/pageMayExitObservable'
+export { createPageMayExitObservable, isPageExitReason } from './browser/pageMayExitObservable'
 export { requestIdleCallback } from './tools/requestIdleCallback'
 export * from './tools/taskQueue'
 export * from './tools/thenable'
