@@ -35,7 +35,16 @@ export interface BrowserLog {
   timestamp: number
 }
 
-const IGNORE_LOG_MESSAGES = ['Ignoring unsupported entryTypes:', 'Layout was forced before the page was fully loaded.']
+// Salesforce Dev Mode generates console errors we cannot control
+const SALESFORCE_DEV_MODE_LOG_MESSAGES = [
+  'Unsupported WebVital metrics',
+  'Failed to load resource: the server responded with a status of 404 ()',
+]
+const IGNORE_LOG_MESSAGES = [
+  'Ignoring unsupported entryTypes:',
+  'Layout was forced before the page was fully loaded.',
+  ...SALESFORCE_DEV_MODE_LOG_MESSAGES,
+]
 
 export class BrowserLogsManager {
   private logs: BrowserLog[] = []

@@ -69,6 +69,7 @@ function deployApp() {
   const targetOrg = getTargetOrg()
 
   printLog(`Deploying Salesforce LWC app to ${targetOrg}...`)
+  // We will replace the deployed bundle with the local bundle in the E2E tests
   copyFileSync(bundlePath, stableStaticResourcePath)
 
   const deployArgs = [

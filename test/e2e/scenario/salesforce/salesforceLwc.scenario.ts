@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test'
 import { createTest } from '../../lib/framework'
 import { getSalesforceConfig } from '../../lib/helpers/salesforceApp'
 
+// Bypass CSP and CORS restrictions in the Salesforce app
 test.use({
   bypassCSP: true,
   launchOptions: {
@@ -17,7 +18,7 @@ test.skip(
 
 createTest('salesforce')
   .withSalesforceApp()
-  .run(async ({ page, intakeRegistry, flushEvents, withBrowserLogs }) => {
+  .run(async ({ page, intakeRegistry, flushEvents }) => {
     await expect(page.getByTestId('home-custom-actions')).toBeVisible()
 
     await page.getByTestId('custom-action-1').click()
@@ -45,9 +46,4 @@ createTest('salesforce')
     )
     expect(productExplorerView).toBeDefined()
     expect(productExplorerView?.view.loading_type).toBe('route_change')
-
-    // Salesforce's own app generates console errors we cannot control because of Dev Mode configuration in the application
-    // Clear them so the generic teardown check doesn't fail on noise unrelated to the SDK.
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    withBrowserLogs(() => {})
   })

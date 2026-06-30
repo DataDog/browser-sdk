@@ -8,6 +8,7 @@ export const salesforceLwcBundlePath = resolve(
   'test/apps/sf-lwc-app/force-app/main/default/staticresources/datadog_rum_slim.js'
 )
 
+// Check if the Salesforce org is configured
 export function getSalesforceConfig(): { targetOrg: string; isConfigured: boolean } {
   const targetOrg = process.env.SF_TARGET_ORG ?? 'sf-lwc-ci'
   const isConfigured =
@@ -18,6 +19,7 @@ export function getSalesforceConfig(): { targetOrg: string; isConfigured: boolea
   return { targetOrg, isConfigured }
 }
 
+// Build the URL to open in the test browser
 export function buildSalesforceLwcUrl(proxy: string): string {
   const result = spawnSync('node', ['scripts/salesforce-lwc-app.ts', 'open-url'], {
     encoding: 'utf8',

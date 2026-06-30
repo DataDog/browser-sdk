@@ -6,34 +6,12 @@ import { loadScript } from 'lightning/platformResourceLoader'
 let datadogInitialization
 let lastStartedUrl
 
-const DATADOG_PARAMS = [
-  'c__applicationId',
-  'c__clientToken',
-  'c__datadogInitConfiguration',
-  'c__env',
-  'c__service',
-  'c__site',
-]
-
 const defaultDatadogRumConfig = {
   trackViewsManually: true,
   trackEarlyRequests: true,
   trackLongTasks: true,
   trackResources: true,
   trackUserInteractions: true,
-  beforeSend: (event) => {
-    if (event.view) {
-      const cleanUrl = new URL(event.view.url, window.location.origin)
-      DATADOG_PARAMS.forEach((param) => cleanUrl.searchParams.delete(param))
-      event.view.url = cleanUrl.href
-      event.view.name = cleanUrl.pathname + cleanUrl.search + cleanUrl.hash
-    }
-    if (event.resource?.url) {
-      const cleanUrl = new URL(event.resource.url, window.location.origin)
-      DATADOG_PARAMS.forEach((param) => cleanUrl.searchParams.delete(param))
-      event.resource.url = cleanUrl.href
-    }
-  },
 }
 
 export default class DatadogInit extends NavigationMixin(LightningElement) {
