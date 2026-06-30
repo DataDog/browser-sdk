@@ -11,7 +11,7 @@ import {
   INTAKE_SITE_US2_FED,
 } from '@datadog/js-core/transport'
 import type { Context } from '../../tools/serialisation/context'
-import { NO_ERROR_STACK_PRESENT_MESSAGE, isError } from '../error/error'
+import { NO_ERROR_STACK_PRESENT_MESSAGE, isError } from '../error/isError'
 import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
 import { getExperimentalFeatures } from '../../tools/experimentalFeatures'
 import type { Configuration } from '../configuration'

@@ -1,6 +1,6 @@
 import type { ClocksState } from '@datadog/js-core/time'
 import { toServerDuration, relativeToClocks } from '@datadog/js-core/time'
-import { generateUUID } from '@datadog/browser-core'
+import { generateUUID, getDebugIds } from '@datadog/browser-core'
 import type { RawRumLongTaskEvent, RawRumLongAnimationFrameEvent } from '../../rawRumEvent.types'
 import { RumEventType, RumLongTaskEntryType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'
@@ -71,9 +71,12 @@ function processEntry(
       },
     }
   }
+  const scriptUrls = entry.scripts.map((script) => script.sourceURL).filter((url): url is string => !!url)
+  const debugIds = getDebugIds(scriptUrls)
 
   return {
     ...baseEvent,
+    _dd: { discarded: false, debug_ids: debugIds },
     long_task: {
       id,
       entry_type: RumLongTaskEntryType.LONG_ANIMATION_FRAME,

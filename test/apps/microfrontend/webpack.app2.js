@@ -18,6 +18,7 @@ module.exports = webpackBase({
         sourceCodeContext: {
           service: 'mfe-app2-service',
           version: '0.2.0',
+          debugId: true,
         },
       },
     }),

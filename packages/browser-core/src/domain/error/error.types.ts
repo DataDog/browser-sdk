@@ -39,6 +39,7 @@ export interface RawError {
   fingerprint?: string
   csp?: Csp
   context?: Context
+  debugIds?: { [url: string]: string }
 }
 
 export const ErrorSource = {
