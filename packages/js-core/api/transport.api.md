@@ -36,6 +36,9 @@ export function createFlushController(input: FlushControllerOptions): {
 };
 
 // @public
+export function createHttpRequest<Body extends Payload = Payload>(endpointBuilders: EndpointBuilder[], reportError: (message: string) => void, sendStrategy: SendStrategy<Body>, sendOnExitStrategy: SendOnExitStrategy<Body>): HttpRequest<Body>;
+
+// @public
 export function createIdentityEncoder(): Encoder<string>;
 
 // @public
@@ -88,6 +91,13 @@ export interface FlushEvent {
 
 // @public
 export type FlushReason = UrgentFlushReason | 'duration_limit' | 'bytes_limit' | 'messages_limit' | 'session_expire';
+
+// @public
+export interface HttpRequest<Body extends Payload = Payload> {
+    observable: Observable<HttpRequestEvent<Body>>;
+    send(this: void, payload: Body): void;
+    sendOnExit(this: void, payload: Body): void;
+}
 
 // @public
 export type HttpRequestEvent<Body extends Payload = Payload> = {
@@ -208,7 +218,13 @@ export interface RetryState<Body extends Payload> {
 }
 
 // @public
-export function sendWithRetryStrategy<Body extends Payload>(payload: Body, state: RetryState<Body>, sendStrategy: SendStrategy<Body>, trackType: TrackType, reportError: (message: string) => void, requestObservable: Observable<HttpRequestEvent<Body>>): void;
+export type SendOnExitStrategy<Body extends Payload = Payload> = (endpointBuilder: EndpointBuilder, payload: Body) => void;
+
+// @public
+export type SendStrategy<Body extends Payload = Payload> = (endpointBuilder: EndpointBuilder, payload: Body, onResponse: (response: HttpResponse) => void) => void;
+
+// @public
+export function sendWithRetryStrategy<Body extends Payload>(payload: Body, state: RetryState<Body>, sendStrategy: SendStrategy_2<Body>, trackType: TrackType, reportError: (message: string) => void, requestObservable: Observable<HttpRequestEvent<Body>>): void;
 
 // @public
 export type Site = 'datadoghq.com' | 'us3.datadoghq.com' | 'us5.datadoghq.com' | 'datadoghq.eu' | 'ddog-gov.com' | 'us2.ddog-gov.com' | 'ap1.datadoghq.com' | 'ap2.datadoghq.com' | (string & {});
