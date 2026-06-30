@@ -90,6 +90,7 @@ function processViewUpdate(
         : undefined,
       configuration: {
         start_session_replay_recording_manually: configuration.startSessionReplayRecordingManually,
+        remote_configuration_id: configuration.remoteConfigurationId,
       },
     },
     date: view.startClocks.timeStamp,

@@ -397,6 +397,7 @@ export interface RumConfiguration extends Configuration {
   profilingSampleRate: number
   propagateTraceBaggage: boolean
   allowedGraphQlUrls: GraphQlUrlOption[]
+  remoteConfigurationId: string | undefined
 }
 
 export function validateAndBuildRumConfiguration(
@@ -474,6 +475,7 @@ export function validateAndBuildRumConfiguration(
     profilingSampleRate: initConfiguration.profilingSampleRate ?? 0,
     propagateTraceBaggage: initConfiguration.propagateTraceBaggage !== false,
     allowedGraphQlUrls,
+    remoteConfigurationId: getRemoteConfigurationId(initConfiguration),
     ...baseConfiguration,
   }
 }
