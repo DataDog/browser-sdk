@@ -1,12 +1,12 @@
 import { chmodSync, copyFileSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
-import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { tmpdir } from 'node:os'
-import type { SpawnSyncOptionsWithStringEncoding, SpawnSyncReturns } from 'node:child_process'
+import { parseArgs } from 'node:util'
 
 import { printLog, runMain } from './lib/executionUtils.ts'
 import { getSfLwcClientId, getSfLwcInstanceUrl, getSfLwcJwtPrivateKey, getSfLwcUsername } from './lib/secrets.ts'
+import { command } from './lib/command.ts'
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const salesforceAppDir = resolve(repositoryRoot, 'test/apps/sf-lwc-app')
@@ -14,51 +14,70 @@ const bundlePath = resolve(repositoryRoot, 'packages/browser-rum-slim/bundle/dat
 const stableStaticResourcePath = resolve(salesforceAppDir, 'force-app/main/default/staticresources/datadog_rum_slim.js')
 const salesforceHomePath = '/lightning/app/c__SF_LWC_App/page/home'
 const defaultTargetOrg = 'sf-lwc-ci'
-const salesforceCliPackage = '@salesforce/cli@2.139.6'
 
 runMain(() => {
-  const [commandName] = process.argv.slice(2)
+  const { values, positionals } = parseArgs({
+    allowPositionals: true,
+    options: {
+      help: {
+        type: 'boolean',
+        short: 'h',
+      },
+      proxy: {
+        type: 'string',
+      },
+    },
+  })
+
+  if (values.help) {
+    showUsageAndExit()
+  }
+
+  if (positionals.length !== 1) {
+    throw new Error('Usage: node scripts/salesforce-lwc-app.ts <auth|deploy-app|get-url>')
+  }
+
+  const commandName = positionals[0]
 
   switch (commandName) {
+    // Authenticate in the Salesforce CLI.
     case 'auth':
       authenticate()
       break
+    // Deploy the app to the Salesforce org. To be done only when the app is updated.
     case 'deploy-app':
       deployApp()
       break
-    case 'open-url':
-      process.stdout.write(`${buildOpenUrl()}\n`)
+    // Get the authenticated URL of the app with the RUM configuration.
+    case 'get-url':
+      process.stdout.write(`with the following URL: ${buildOpenUrl(values.proxy)}\n`)
       break
     default:
-      throw new Error('Usage: node scripts/salesforce-lwc-app.ts <auth|deploy-app|open-url>')
+      throw new Error(`Unknown command "${commandName ?? ''}". Expected: auth|deploy-app|get-url`)
   }
 })
 
+function showUsageAndExit() {
+  console.log('Usage: node scripts/salesforce-lwc-app.ts <auth|deploy-app|get-url> [--proxy <url>]')
+  process.exit(0)
+}
+
 function authenticate() {
+  // Temporary directory holding the JWT private key for the duration of authentication.
+  // Using a unique temp dir avoids collisions when multiple CI jobs run in parallel.
   const keyDirectory = mkdtempSync(resolve(tmpdir(), 'sf-lwc-jwt-'))
-  const keyPath = resolve(keyDirectory, 'server.key')
+  const serverKeyPath = resolve(keyDirectory, 'server.key')
 
   try {
-    writeFileSync(keyPath, Buffer.from(getSfLwcJwtPrivateKey(), 'base64').toString('utf8'), { mode: 0o600 })
-    chmodSync(keyPath, 0o600)
+    writeFileSync(serverKeyPath, Buffer.from(getSfLwcJwtPrivateKey(), 'base64').toString('utf8'), { mode: 0o600 })
+    // writeFileSync mode can be masked by the process umask; chmodSync guarantees owner-only access.
+    chmodSync(serverKeyPath, 0o600)
 
     printLog(`Authenticating Salesforce CLI alias ${defaultTargetOrg}...`)
-    runSf([
-      'org',
-      'login',
-      'jwt',
-      '--client-id',
-      getSfLwcClientId(),
-      '--jwt-key-file',
-      keyPath,
-      '--username',
-      getSfLwcUsername(),
-      '--instance-url',
-      getSfLwcInstanceUrl(),
-      '--alias',
-      defaultTargetOrg,
-      '--json',
-    ])
+    command`sf org login jwt --client-id ${getSfLwcClientId()} --jwt-key-file ${serverKeyPath} --username ${getSfLwcUsername()} --instance-url ${getSfLwcInstanceUrl()} --alias ${defaultTargetOrg}`
+      .withCurrentWorkingDirectory(salesforceAppDir)
+      .withLogs()
+      .run()
     printLog(`Salesforce CLI authenticated as ${defaultTargetOrg}.`)
   } finally {
     rmSync(keyDirectory, { recursive: true, force: true })
@@ -69,137 +88,58 @@ function deployApp() {
   const targetOrg = getTargetOrg()
 
   printLog(`Deploying Salesforce LWC app to ${targetOrg}...`)
-  // We will replace the deployed bundle with the local bundle in the E2E tests
+  // Deploy the app to the Salesforce org. To be done only when the app is updated.
   copyFileSync(bundlePath, stableStaticResourcePath)
 
-  const args = [
-    'project',
-    'deploy',
-    'start',
-    '--target-org',
-    targetOrg,
-    '--source-dir',
-    'force-app',
-    '--ignore-conflicts',
-  ]
-  const result = spawnSf(args, { encoding: 'utf8', cwd: salesforceAppDir, stdio: 'pipe' })
-
-  if (result.stdout) {
-    process.stdout.write(result.stdout)
-  }
-
-  if (result.status !== 0) {
-    const output = (result.stdout ?? '') + (result.stderr ?? '')
-    // Source tracking fails on orgs that don't support it (e.g. developer orgs), but components
-    // are deployed successfully. Treat this specific post-deploy tracking error as non-fatal.
-    if (!output.includes('Could not find HEAD')) {
-      throw new Error(result.stderr || result.stdout || result.error?.message)
-    }
-    printLog('Warning: Source tracking update failed (Could not find HEAD). Components were deployed successfully.')
-  }
-
-  assignPermissionSet(targetOrg, 'SF_LWC_App')
+  // Clear stale source-tracking state so the deploy doesn't skip files it thinks are already in sync.
+  resetSourceTracking(targetOrg)
+  command`sf project deploy start --target-org ${targetOrg} --source-dir force-app --ignore-conflicts --concise`
+    .withCurrentWorkingDirectory(salesforceAppDir)
+    .withLogs()
+    .run()
   printLog('Salesforce LWC app deployed.')
 }
 
-function assignPermissionSet(targetOrg: string, permSetName: string) {
-  const args = ['org', 'assign', 'permset', '--name', permSetName, '--target-org', targetOrg, '--json']
-  const result = spawnSf(args, { encoding: 'utf8', cwd: salesforceAppDir })
-
-  const output = (result.stdout ?? '') + (result.stderr ?? '')
-  // Duplicate = already assigned; "cannot be inserted" = admin user (already has full access).
-  if (result.status !== 0 && !output.includes('Duplicate') && !output.includes('cannot be inserted')) {
-    // stdout has the JSON error body; stderr has CLI warnings (e.g. update available)
-    throw new Error(result.stdout || result.stderr || result.error?.message)
-  }
-  printLog(`Permission set ${permSetName} assigned.`)
+function resetSourceTracking(targetOrg: string) {
+  command`sf project reset tracking --target-org ${targetOrg} --no-prompt`
+    .withCurrentWorkingDirectory(salesforceAppDir)
+    .withLogs()
+    .run()
 }
 
-function buildOpenUrl(): string {
+function buildOpenUrl(proxy?: string): string {
   const targetOrg = getTargetOrg()
-  const proxy = process.env.DD_SALESFORCE_E2E_PROXY
   const path = new URL(salesforceHomePath, 'https://salesforce.local')
 
-  path.searchParams.set(
-    'c__datadogInitConfiguration',
-    JSON.stringify({
-      applicationId: '37fe52bf-b3d5-4ac7-ad9b-44882d479ec8',
-      clientToken: 'pubf2099de38f9c85797d20d64c7d632a69',
-      defaultPrivacyLevel: 'allow',
-      trackResources: true,
-      trackLongTasks: true,
-      enableExperimentalFeatures: [],
-      allowUntrustedEvents: true,
-      sessionReplaySampleRate: 100,
-      telemetrySampleRate: 100,
-      telemetryUsageSampleRate: 100,
-      telemetryConfigurationSampleRate: 100,
-      service: 'browser-sdk-salesforce-e2e',
-      env: 'e2e',
-      ...(proxy ? { proxy } : {}),
-    })
-  )
-
-  const result = runSf([
-    'org',
-    'open',
-    '--target-org',
-    targetOrg,
-    '--path',
-    `${path.pathname}${path.search}`,
-    '--url-only',
-    '--json',
-  ])
-
-  const data = parseSfJsonOutput(result.stdout, result.stderr)
-  if (!data.result?.url) {
-    throw new Error(`Salesforce CLI did not return a URL: ${result.stdout}`)
-  }
-  return data.result.url
-}
-
-function spawnSf(args: string[], options: SpawnSyncOptionsWithStringEncoding): SpawnSyncReturns<string> {
-  const result = spawnSync('sf', args, options)
-  if (result.error && (result.error as NodeJS.ErrnoException).code === 'ENOENT') {
-    return spawnSync('yarn', ['dlx', '-p', salesforceCliPackage, 'sf', ...args], options)
-  }
-  return result
-}
-
-function runSf(args: string[], options: Partial<SpawnSyncOptionsWithStringEncoding> = {}): SpawnSyncReturns<string> {
-  const result = spawnSf(args, { encoding: 'utf8', cwd: salesforceAppDir, ...options })
-  if (result.status !== 0) {
-    throw new Error(result.stderr || result.stdout || result.error?.message)
-  }
-  return result
-}
-
-function parseSfJsonOutput(stdout: string, stderr: string): { result?: { url?: string } } {
-  const sanitizedStdout = stripCliControlCharacters(stdout)
-  const jsonStart = sanitizedStdout.indexOf('{')
-  const jsonEnd = sanitizedStdout.lastIndexOf('}')
-
-  if (jsonStart === -1 || jsonEnd === -1 || jsonEnd < jsonStart) {
-    throw new Error(`Salesforce CLI did not return JSON.\nstdout:\n${stdout}\nstderr:\n${stderr}`)
+  // c__datadogInitConfiguration must be part of the path (not a top-level frontdoor.jsp param)
+  // so that Salesforce passes it through to the Lightning app after authentication.
+  if (proxy) {
+    path.searchParams.set(
+      'c__datadogInitConfiguration',
+      JSON.stringify({
+        applicationId: '37fe52bf-b3d5-4ac7-ad9b-44882d479ec8',
+        clientToken: 'pubf2099de38f9c85797d20d64c7d632a69',
+        defaultPrivacyLevel: 'allow',
+        trackResources: true,
+        trackLongTasks: true,
+        proxy,
+      })
+    )
   }
 
-  try {
-    return JSON.parse(sanitizedStdout.slice(jsonStart, jsonEnd + 1)) as { result?: { url?: string } }
-  } catch (error) {
-    throw new Error(`Salesforce CLI returned invalid JSON.\nstdout:\n${stdout}\nstderr:\n${stderr}`, { cause: error })
-  }
-}
+  const output = command`sf org open --target-org ${targetOrg} --path ${path.pathname}${path.search} --url-only`
+    .withCurrentWorkingDirectory(salesforceAppDir)
+    .run()
 
-/* eslint-disable no-control-regex */
-function stripCliControlCharacters(output: string): string {
-  return output
-    .replace(/\x1b\][^\x07]*(?:\x07|\x1b\\)/g, '')
-    .replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, '')
-    .replace(/\x1b[PX^_][\s\S]*?\x1b\\/g, '')
-    .replace(/\x1b[@-Z\\-_]/g, '')
-    .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, '')
+  // The sf CLI appends ANSI reset codes (\x1b[39m etc.) directly to the URL on stdout.
+  // Excluding control characters (0x00–0x1f, which includes ESC/0x1b) strips them cleanly.
+  // eslint-disable-next-line no-control-regex
+  const url = output.match(/https:\/\/[^\s\x00-\x1f]+/g)?.at(-1)
+  if (!url) {
+    throw new Error(`Unable to find Salesforce URL in command output:\n${output}`)
+  }
+  return url
 }
-/* eslint-enable no-control-regex */
 
 function getTargetOrg(): string {
   return process.env.SF_TARGET_ORG || defaultTargetOrg

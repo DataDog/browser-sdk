@@ -29,7 +29,7 @@ export SF_LWC_JWT_PRIVATE_KEY_B64='<base64-encoded-private-key>'
 Then authenticate the default `sf-lwc-ci` alias:
 
 ```sh
-node scripts/salesforce-lwc-app.ts auth
+yarn salesforce:auth
 ```
 
 ## Initial App Deploy
@@ -40,7 +40,7 @@ The full app deploy is only needed when Salesforce metadata changes or the org i
 yarn salesforce:deploy-app
 ```
 
-This builds the local RUM slim bundle, copies it to the stable `datadog_rum_slim` static resource, deploys the app metadata, and assigns the `SF_LWC_App` permission set.
+This builds the local RUM slim bundle, copies it to the stable `datadog_rum_slim` static resource, and deploys the app metadata.
 
 ## Local Bundle
 
@@ -56,19 +56,16 @@ Playwright fulfills Salesforce static resource requests with this local file dur
 
 ## Open The App
 
-Open the app with the E2E RUM configuration:
+Print an authenticated URL for the app:
 
 ```sh
 yarn salesforce:open
 ```
 
-The printed URL is authenticated and should be treated as sensitive. It opens the app with RUM query parameters shaped like:
+The printed URL is authenticated and should be treated as sensitive.
+During E2E tests, the test setup calls this script with `--proxy` after the local intake server is available, so the generated Salesforce URL includes the `c__datadogInitConfiguration` query parameter.
 
-```text
-/lightning/app/c__SF_LWC_App/page/home?c__datadogInitConfiguration=<configuration>
-```
-
-To open the app without the generated query parameters:
+To open the same app directly in your browser:
 
 ```sh
 sf org open --target-org sf-lwc-ci --path /lightning/app/c__SF_LWC_App/page/home

@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { DebuggerInitConfiguration } from '@datadog/browser-debugger'
 import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
@@ -15,6 +16,7 @@ import {
 } from '../helpers/configuration'
 import { validateRumFormat } from '../helpers/validation'
 import type { BrowserConfiguration } from '../../../browsers.conf'
+import { command } from '../../../../scripts/lib/command.ts'
 import {
   NEXTJS_APP_ROUTER_PORT,
   NUXT_APP_PORT,
@@ -22,7 +24,6 @@ import {
   VUE_ROUTER_APP_PORT,
   VUE_ROUTER_V4_APP_PORT,
 } from '../helpers/playwright'
-import { buildSalesforceLwcUrl, salesforceLwcBundlePath } from '../helpers/salesforceApp'
 import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
@@ -35,6 +36,8 @@ import { createMockServerApp } from './serverApps/mock'
 import type { Extension } from './createExtension'
 import type { Worker } from './createWorker'
 import { isBrowserStack } from './environment'
+
+const repositoryRoot = resolve(__dirname, '../../../..')
 
 /**
  * Init script applied to every WebKit context to work around a Playwright-specific
@@ -73,6 +76,11 @@ const WEBKIT_PLAYWRIGHT_WORKAROUND = `
   }
 })();
 `
+
+const salesforceLwcBundlePath = resolve(
+  __dirname,
+  '../../../apps/sf-lwc-app/force-app/main/default/staticresources/datadog_rum_slim.js'
+)
 
 export function createTest(title: string) {
   return new TestBuilder(title, captureCallerLocation())
@@ -378,6 +386,24 @@ function declareTestsForSetups(
   } else {
     console.warn('no setup available for', title)
   }
+}
+
+// The frontdoor.jsp OTP expires in ~1 minute, so the URL must be generated at test time —
+// not at suite startup — to guarantee a valid token when the test actually navigates.
+function buildSalesforceLwcUrl(proxy: string): string {
+  const output = command`node scripts/salesforce-lwc-app.ts get-url --proxy ${proxy}`
+    .withCurrentWorkingDirectory(repositoryRoot)
+    .run()
+  const url =
+    // eslint-disable-next-line no-control-regex
+    output.match(/with the following URL: (?<url>https:\/\/[^\s\x00-\x1f]+)/)?.groups?.url ??
+    // eslint-disable-next-line no-control-regex
+    output.match(/https:\/\/[^\s\x00-\x1f]+/g)?.at(-1)
+
+  if (!url) {
+    throw new Error(`Unable to find Salesforce URL in command output:\n${output}`)
+  }
+  return url
 }
 
 /**

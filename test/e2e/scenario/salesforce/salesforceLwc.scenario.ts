@@ -1,25 +1,19 @@
 import { expect, test } from '@playwright/test'
 import { createTest } from '../../lib/framework'
-import { getSalesforceConfig } from '../../lib/helpers/salesforceApp'
 
 // Bypass CSP and CORS restrictions in the Salesforce app
 test.use({
   bypassCSP: true,
   launchOptions: {
+    // This flag is chromium-only
     args: ['--disable-web-security'],
   },
 })
 
-const { targetOrg, isConfigured } = getSalesforceConfig()
-test.skip(
-  !isConfigured,
-  `Salesforce org "${targetOrg}" is not configured; run node scripts/salesforce-lwc-app.ts auth first`
-)
-
 createTest('salesforce')
   .withSalesforceApp()
   .run(async ({ page, intakeRegistry, flushEvents }) => {
-    await expect(page.getByTestId('home-custom-actions')).toBeVisible()
+    await expect(page.getByTestId('home-custom-actions')).toBeVisible({ timeout: 30000 })
 
     await page.getByTestId('custom-action-1').click()
     await page.locator('a[href*="/lightning/n/Product_Explorer"]').click()
