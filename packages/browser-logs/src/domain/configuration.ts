@@ -1,14 +1,14 @@
-import type { Configuration, InitConfiguration, RawTelemetryConfiguration } from '@datadog/browser-core'
+import type { InitConfiguration, RawTelemetryConfiguration } from '@datadog/browser-core'
 import { ConsoleApiName } from '@datadog/js-core/util'
 import {
   serializeConfiguration,
-  ONE_KIBI_BYTE,
-  validateAndBuildConfiguration,
+  catchUserErrors,
   display,
-  removeDuplicates,
   RawReportType,
-  objectValues,
+  BROWSER_CORE_SCHEMA,
 } from '@datadog/browser-core'
+import { validateAndBuildConfiguration } from '@datadog/js-core/configuration'
+import type { InferredConfig } from '@datadog/js-core/configuration'
 import type { LogsEvent } from '../logsEvent.types'
 import type { LogsEventDomainContext } from '../domainContext.types'
 
@@ -82,66 +82,42 @@ export interface LogsInitConfiguration extends InitConfiguration {
  */
 export type LogsBeforeSend = (event: LogsEvent, context: LogsEventDomainContext) => boolean
 
-export type HybridInitConfiguration = Omit<LogsInitConfiguration, 'clientToken'>
+export const LOGS_SCHEMA = {
+  ...BROWSER_CORE_SCHEMA,
+  forwardErrorsToLogs: { type: 'boolean', default: true, strict: false },
+  forwardConsoleLogs: {
+    type: 'enum',
+    values: ConsoleApiName,
+    multiple: true,
+    allowAll: true,
+    default: [] as ConsoleApiName[],
+  },
+  forwardReports: {
+    type: 'enum',
+    values: RawReportType,
+    multiple: true,
+    allowAll: true,
+    default: [] as RawReportType[],
+  },
+} as const
 
-export interface LogsConfiguration extends Configuration {
-  forwardErrorsToLogs: boolean
-  forwardConsoleLogs: ConsoleApiName[]
-  forwardReports: RawReportType[]
-  requestErrorResponseLengthLimit: number
-}
-
-/**
- * arbitrary value, byte precision not needed
- */
-export const DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT = 32 * ONE_KIBI_BYTE
+export type LogsConfiguration = InferredConfig<typeof LOGS_SCHEMA>
 
 export function validateAndBuildLogsConfiguration(
-  initConfiguration: LogsInitConfiguration,
-  errorStack?: string
+  initConfiguration: LogsInitConfiguration
 ): LogsConfiguration | undefined {
-  const baseConfiguration = validateAndBuildConfiguration(initConfiguration, errorStack)
-
-  const forwardConsoleLogs = validateAndBuildForwardOption<ConsoleApiName>(
-    initConfiguration.forwardConsoleLogs,
-    objectValues(ConsoleApiName),
-    'Forward Console Logs'
+  const config = validateAndBuildConfiguration(
+    initConfiguration as unknown as Record<string, unknown>,
+    LOGS_SCHEMA,
+    display
   )
-
-  const forwardReports = validateAndBuildForwardOption<RawReportType>(
-    initConfiguration.forwardReports,
-    objectValues(RawReportType),
-    'Forward Reports'
-  )
-
-  if (!baseConfiguration || !forwardConsoleLogs || !forwardReports) {
+  if (!config) {
     return
   }
-
   return {
-    forwardErrorsToLogs: initConfiguration.forwardErrorsToLogs !== false,
-    forwardConsoleLogs,
-    forwardReports,
-    requestErrorResponseLengthLimit: DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT,
-    ...baseConfiguration,
+    ...config,
+    beforeSend: config.beforeSend ? catchUserErrors(config.beforeSend as any, 'beforeSend threw an error:') : undefined,
   }
-}
-
-export function validateAndBuildForwardOption<T>(
-  option: readonly T[] | 'all' | undefined,
-  allowedValues: T[],
-  label: string
-): T[] | undefined {
-  if (option === undefined) {
-    return []
-  }
-
-  if (!(option === 'all' || (Array.isArray(option) && option.every((api) => allowedValues.includes(api))))) {
-    display.error(`${label} should be "all" or an array with allowed values "${allowedValues.join('", "')}"`)
-    return
-  }
-
-  return option === 'all' ? allowedValues : removeDuplicates<T>(option)
 }
 
 export function serializeLogsConfiguration(configuration: LogsInitConfiguration) {

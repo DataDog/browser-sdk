@@ -1,13 +1,20 @@
+import { validateAndBuildConfiguration as _validateAndBuildConfiguration } from '@datadog/js-core/configuration'
 import type { RumEvent } from '../../../../browser-rum-core/src'
 import { EXHAUSTIVE_INIT_CONFIGURATION, SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION } from '../../../test'
 import type { ExtractTelemetryConfiguration, MapInitConfigurationKey } from '../../../test'
-import { DOCS_ORIGIN, MORE_DETAILS, display } from '../../tools/display'
+import { display } from '../../tools/display'
 import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
 import { TrackingConsent } from '../trackingConsent'
 import type { InitConfiguration } from './configuration'
-import { buildCookieOptions, serializeConfiguration, validateAndBuildConfiguration } from './configuration'
+import { BROWSER_CORE_SCHEMA, serializeConfiguration } from './configuration'
 
-describe('validateAndBuildConfiguration', () => {
+describe('BROWSER_CORE_SCHEMA', () => {
+  const validateAndBuildConfiguration = (initConfiguration: InitConfiguration) =>
+    _validateAndBuildConfiguration(
+      initConfiguration as unknown as Record<string, unknown>,
+      BROWSER_CORE_SCHEMA,
+      display
+    )
   const clientToken = 'some_client_token'
 
   let displaySpy: jasmine.Spy<typeof display.error>
@@ -42,12 +49,12 @@ describe('validateAndBuildConfiguration', () => {
   describe('validate init configuration', () => {
     it('requires the InitConfiguration to be defined', () => {
       expect(validateAndBuildConfiguration(undefined as unknown as InitConfiguration)).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('Client Token is not configured, we will not send any data.')
+      expect(displaySpy).not.toHaveBeenCalled()
     })
 
     it('requires clientToken to be defined', () => {
       expect(validateAndBuildConfiguration({} as unknown as InitConfiguration)).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('Client Token is not configured, we will not send any data.')
+      expect(displaySpy).toHaveBeenCalledOnceWith('"clientToken" is required')
     })
 
     it("shouldn't display any error if the configuration is correct", () => {
@@ -55,30 +62,30 @@ describe('validateAndBuildConfiguration', () => {
       expect(displaySpy).not.toHaveBeenCalled()
     })
 
-    it('requires sessionSampleRate to be a percentage', () => {
+    it('displays an error and rejects the configuration on invalid sessionSampleRate', () => {
       expect(
         validateAndBuildConfiguration({ clientToken, sessionSampleRate: 'foo' } as unknown as InitConfiguration)
       ).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('Session Sample Rate should be a number between 0 and 100')
+      expect(displaySpy).toHaveBeenCalledOnceWith('"sessionSampleRate" must be a number between 0 and 100')
 
       displaySpy.calls.reset()
       expect(validateAndBuildConfiguration({ clientToken, sessionSampleRate: 200 })).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('Session Sample Rate should be a number between 0 and 100')
+      expect(displaySpy).toHaveBeenCalledOnceWith('"sessionSampleRate" must be a number between 0 and 100')
 
       displaySpy.calls.reset()
       validateAndBuildConfiguration({ clientToken: 'yes', sessionSampleRate: 1 })
       expect(displaySpy).not.toHaveBeenCalled()
     })
 
-    it('requires telemetrySampleRate to be a percentage', () => {
+    it('displays an error and rejects the configuration on invalid telemetrySampleRate', () => {
       expect(
         validateAndBuildConfiguration({ clientToken, telemetrySampleRate: 'foo' } as unknown as InitConfiguration)
       ).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('Telemetry Sample Rate should be a number between 0 and 100')
+      expect(displaySpy).toHaveBeenCalledOnceWith('"telemetrySampleRate" must be a number between 0 and 100')
 
       displaySpy.calls.reset()
       expect(validateAndBuildConfiguration({ clientToken, telemetrySampleRate: 200 })).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('Telemetry Sample Rate should be a number between 0 and 100')
+      expect(displaySpy).toHaveBeenCalledOnceWith('"telemetrySampleRate" must be a number between 0 and 100')
 
       displaySpy.calls.reset()
       validateAndBuildConfiguration({ clientToken: 'yes', telemetrySampleRate: 1 })
@@ -131,17 +138,6 @@ describe('validateAndBuildConfiguration', () => {
       expect(configuration.beforeSend!({ view: { url: '/foo' } }, {})).toBeFalse()
       expect(configuration.beforeSend!({ view: { url: '/bar' } }, {})).toBeUndefined()
     })
-
-    it('should catch errors and log them', () => {
-      const myError = 'Ooops!'
-      const beforeSend = () => {
-        // eslint-disable-next-line @typescript-eslint/only-throw-error
-        throw myError
-      }
-      const configuration = validateAndBuildConfiguration({ clientToken, beforeSend })!
-      expect(configuration.beforeSend!(null, {})).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledWith('beforeSend threw an error:', myError)
-    })
   })
 
   describe('trackingConsent', () => {
@@ -161,50 +157,56 @@ describe('validateAndBuildConfiguration', () => {
 
     it('rejects invalid values', () => {
       expect(validateAndBuildConfiguration({ clientToken: 'yes', trackingConsent: 'foo' as any })).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('Tracking Consent should be either "granted" or "not-granted"')
+      expect(displaySpy).toHaveBeenCalledOnceWith('"trackingConsent" must be one of: "granted", "not-granted"')
     })
   })
 
   describe('site parameter validation', () => {
-    it('should validate the site parameter', () => {
-      validateAndBuildConfiguration({ clientToken, site: 'foo.com' })
+    it('should fail and display an error on an unrecognized site', () => {
+      expect(validateAndBuildConfiguration({ clientToken, site: 'foo.com' })).toBeUndefined()
       expect(displaySpy).toHaveBeenCalledOnceWith(
-        `Site should be a valid Datadog site. ${MORE_DETAILS} ${DOCS_ORIGIN}/getting_started/site/.`
+        '"site" must be a valid Datadog site. More details: https://docs.datadoghq.com/getting_started/site/.'
       )
     })
   })
 
   describe('env parameter validation', () => {
-    it('should validate the env parameter', () => {
-      validateAndBuildConfiguration({ clientToken, env: false as any })
-      expect(displaySpy).toHaveBeenCalledOnceWith('Env must be defined as a string')
+    it('should display an error and reject the configuration on invalid env', () => {
+      expect(validateAndBuildConfiguration({ clientToken, env: false as any })).toBeUndefined()
+      expect(displaySpy).toHaveBeenCalledOnceWith('"env" must be a non-empty string')
     })
   })
 
   describe('service parameter validation', () => {
-    it('should validate the service parameter', () => {
-      validateAndBuildConfiguration({ clientToken, service: 1 as any })
-      expect(displaySpy).toHaveBeenCalledOnceWith('Service must be defined as a string')
+    it('should display an error and reject the configuration on invalid service', () => {
+      expect(validateAndBuildConfiguration({ clientToken, service: 1 as any })).toBeUndefined()
+      expect(displaySpy).toHaveBeenCalledOnceWith('"service" must be a non-empty string')
     })
 
     it('should not reject null', () => {
       const configuration = validateAndBuildConfiguration({ clientToken, service: null })
-      expect(displaySpy).not.toHaveBeenCalled()
       expect(configuration!.service).toBeUndefined()
+      expect(displaySpy).not.toHaveBeenCalled()
     })
   })
 
   describe('version parameter validation', () => {
-    it('should validate the version parameter', () => {
-      validateAndBuildConfiguration({ clientToken, version: 0 as any })
-      expect(displaySpy).toHaveBeenCalledOnceWith('Version must be defined as a string')
+    it('should display an error and reject the configuration on invalid version', () => {
+      expect(validateAndBuildConfiguration({ clientToken, version: 0 as any })).toBeUndefined()
+      expect(displaySpy).toHaveBeenCalledOnceWith('"version" must be a non-empty string')
     })
   })
 
   describe('allowedTrackingOrigins parameter validation', () => {
-    it('should validate the allowedTrackingOrigins parameter', () => {
-      validateAndBuildConfiguration({ clientToken, allowedTrackingOrigins: 'foo' as any })
-      expect(displaySpy).toHaveBeenCalledOnceWith('Allowed Tracking Origins must be an array')
+    it('should normalize a single valid value to an array without error', () => {
+      const config = validateAndBuildConfiguration({ clientToken, allowedTrackingOrigins: 'foo' as any })
+      expect(config!.allowedTrackingOrigins).toEqual(['foo'])
+      expect(displaySpy).not.toHaveBeenCalled()
+    })
+
+    it('should display an error and fail for a non-match-option value', () => {
+      expect(validateAndBuildConfiguration({ clientToken, allowedTrackingOrigins: 42 as any })).toBeUndefined()
+      expect(displaySpy).toHaveBeenCalledOnceWith('"allowedTrackingOrigins" must be a string, RegExp, or function')
     })
   })
 
@@ -216,35 +218,6 @@ describe('validateAndBuildConfiguration', () => {
         serializeConfiguration(EXHAUSTIVE_INIT_CONFIGURATION)
 
       expect(serializedConfiguration).toEqual(SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION)
-    })
-  })
-})
-
-describe('buildCookieOptions', () => {
-  const clientToken = 'abc'
-
-  it('should not be secure nor crossSite by default', () => {
-    const cookieOptions = buildCookieOptions({ clientToken })
-    expect(cookieOptions).toEqual({ secure: false, crossSite: false, partitioned: false })
-  })
-
-  it('should be secure when `useSecureSessionCookie` is truthy', () => {
-    const cookieOptions = buildCookieOptions({ clientToken, useSecureSessionCookie: true })
-    expect(cookieOptions).toEqual({ secure: true, crossSite: false, partitioned: false })
-  })
-
-  it('should be secure, crossSite and partitioned when `usePartitionedCrossSiteSessionCookie` is truthy', () => {
-    const cookieOptions = buildCookieOptions({ clientToken, usePartitionedCrossSiteSessionCookie: true })
-    expect(cookieOptions).toEqual({ secure: true, crossSite: true, partitioned: true })
-  })
-
-  it('should have domain when `trackSessionAcrossSubdomains` is truthy', () => {
-    const cookieOptions = buildCookieOptions({ clientToken, trackSessionAcrossSubdomains: true })
-    expect(cookieOptions).toEqual({
-      secure: false,
-      crossSite: false,
-      partitioned: false,
-      domain: jasmine.any(String),
     })
   })
 })

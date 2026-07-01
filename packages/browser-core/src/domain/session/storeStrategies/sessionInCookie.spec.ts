@@ -233,8 +233,11 @@ describe('session in cookie strategy', () => {
 
   describe('selectCookieStrategy', () => {
     function makeConfiguration(): Configuration {
-      const cookieOptions = buildCookieOptions({ clientToken: 'abc' })
-      return { cookieOptions } as Configuration
+      return {
+        useSecureSessionCookie: false,
+        usePartitionedCrossSiteSessionCookie: false,
+        trackSessionAcrossSubdomains: false,
+      } as unknown as Configuration
     }
 
     function disableCookieStore() {
@@ -265,11 +268,6 @@ describe('session in cookie strategy', () => {
       disableCookieStore()
       disableDocumentCookie()
       const strategy = await selectCookieStrategy(makeConfiguration())
-      expect(strategy).toBeUndefined()
-    })
-
-    it('returns undefined when cookieOptions is undefined', async () => {
-      const strategy = await selectCookieStrategy({ cookieOptions: undefined } as unknown as Configuration)
       expect(strategy).toBeUndefined()
     })
   })

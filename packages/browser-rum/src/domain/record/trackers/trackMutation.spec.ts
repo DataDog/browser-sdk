@@ -474,11 +474,10 @@ describe('trackMutation', () => {
     })
 
     it('respects the default privacy level setting', async () => {
-      const scope = createRecordingScopeForTesting()
+      const scope = createRecordingScopeForTesting({ configuration: { defaultPrivacyLevel: DefaultPrivacyLevel.MASK } })
       const { mutation } = await recordMutationOf(
         '<div>foo</div>',
         (sandbox: HTMLElement): void => {
-          scope.configuration.defaultPrivacyLevel = DefaultPrivacyLevel.MASK
           ;(sandbox.firstChild as Text).data = 'foo bar'
         },
         { scope }

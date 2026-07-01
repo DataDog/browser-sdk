@@ -116,3 +116,27 @@ function getCookieDefaultHostName(hostname: string, referrer: string) {
 export function resetGetCurrentSite() {
   getCurrentSiteCache = undefined
 }
+
+export interface CookieConfiguration {
+  useSecureSessionCookie?: boolean
+  usePartitionedCrossSiteSessionCookie?: boolean
+  trackSessionAcrossSubdomains?: boolean
+}
+
+export function buildCookieOptions(configuration: CookieConfiguration): CookieOptions | undefined {
+  const cookieOptions: CookieOptions = {}
+
+  cookieOptions.secure = configuration.useSecureSessionCookie || configuration.usePartitionedCrossSiteSessionCookie
+  cookieOptions.crossSite = configuration.usePartitionedCrossSiteSessionCookie
+  cookieOptions.partitioned = configuration.usePartitionedCrossSiteSessionCookie
+
+  if (configuration.trackSessionAcrossSubdomains) {
+    const currentSite = getCurrentSite()
+    if (!currentSite) {
+      return
+    }
+    cookieOptions.domain = currentSite
+  }
+
+  return cookieOptions
+}
