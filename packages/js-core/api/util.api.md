@@ -5,7 +5,33 @@
 ```ts
 
 // @public
+export interface BrowserWindowWithZoneJs {
+    // (undocumented)
+    Zone?: {
+        __symbol__?: (name: string) => string;
+    };
+}
+
+// @public
+export class BufferedObservable<T> extends Observable<T> {
+    constructor(maxBufferSize: number, onDrop?: ((count: number) => void) | undefined);
+    // (undocumented)
+    notify(data: T): void;
+    // (undocumented)
+    subscribe(observer: Observer<T>): Subscription;
+    unbuffer(): void;
+}
+
+// @public
 export function buildUrl(url: string, base?: string): URL;
+
+// @public
+function clearInterval_2(timeoutId: TimeoutId | undefined): void;
+export { clearInterval_2 as clearInterval }
+
+// @public
+function clearTimeout_2(timeoutId: TimeoutId | undefined): void;
+export { clearTimeout_2 as clearTimeout }
 
 // @public
 export function combine<A, B>(a: A, b: B): Combined<A, B>;
@@ -157,6 +183,9 @@ export function getPristineWindow(): Pick<Window & typeof globalThis, "URL">;
 export function getType(value: unknown): "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function" | "null" | "array";
 
 // @public
+export function getZoneJsOriginalValue<Target, Name extends keyof Target & string>(target: Target, name: Name): Target[Name];
+
+// @public
 export const globalConsole: Console;
 
 // @public
@@ -196,6 +225,15 @@ export function jsonStringify(value: unknown, replacer?: Array<string | number>,
 export function mergeInto<D, S>(destination: D, source: S): Merged<D, S>;
 
 // @public
+export function mergeObservables<T>(...observables: Array<Observable<T>>): Observable<T>;
+
+// @public
+export function mockable<T>(value: T): T;
+
+// @public
+export const mockableReplacements: Map<unknown, unknown>;
+
+// @public
 export const MORE_DETAILS = "More details:";
 
 // @public
@@ -230,6 +268,19 @@ export function objectValues<T = unknown>(object: {
 export interface ObjectWithToJsonMethod {
     // (undocumented)
     toJSON?: () => unknown;
+}
+
+// @public
+export class Observable<T> {
+    constructor(onFirstSubscribe?: ((observable: Observable<T>) => (() => void) | void) | undefined);
+    // (undocumented)
+    protected addObserver(observer: Observer<T>): void;
+    notify(data: T): void;
+    // (undocumented)
+    protected observers: Array<Observer<T>>;
+    // (undocumented)
+    protected removeObserver(observer: Observer<T>): void;
+    subscribe(observer: Observer<T>): Subscription;
 }
 
 // @public
@@ -308,6 +359,23 @@ export interface SampleBufferFullEvent extends Event {
 export function setDebugMode(newDebugMode: boolean): void;
 
 // @public
+function setInterval_2(callback: () => void, delay?: number): TimeoutId;
+export { setInterval_2 as setInterval }
+
+// @public
+function setTimeout_2(callback: () => void, delay?: number): TimeoutId;
+export { setTimeout_2 as setTimeout }
+
+// @public
+export interface Subscription {
+    // (undocumented)
+    unsubscribe: () => void;
+}
+
+// @public
+export type TimeoutId = ReturnType<GlobalObject['setTimeout']>;
+
+// @public
 export interface Uint8ArrayBuffer extends Uint8Array {
     // (undocumented)
     readonly buffer: ArrayBuffer;
@@ -316,145 +384,5 @@ export interface Uint8ArrayBuffer extends Uint8Array {
 }
 
 // (No @packageDocumentation comment for this package)
-
-```
-## API Report File for "@datadog/js-core"
-
-// @public
-export class BufferedObservable<T> extends Observable<T> {
-    constructor(maxBufferSize: number, onDrop?: ((count: number) => void) | undefined);
-    // (undocumented)
-    notify(data: T): void;
-    // (undocumented)
-    subscribe(observer: Observer<T>): Subscription;
-    unbuffer(): void;
-}
-
-// @public
-export function mergeObservables<T>(...observables: Array<Observable<T>>): Observable<T>;
-
-// @public
-export function mockable<T>(value: T): T;
-
-// @public
-export const mockableReplacements: Map<unknown, unknown>;
-
-// @public
-export class Observable<T> {
-    constructor(onFirstSubscribe?: ((observable: Observable<T>) => (() => void) | void) | undefined);
-    // (undocumented)
-    protected addObserver(observer: Observer<T>): void;
-    notify(data: T): void;
-    // (undocumented)
-    protected observers: Array<Observer<T>>;
-    // (undocumented)
-    protected removeObserver(observer: Observer<T>): void;
-    subscribe(observer: Observer<T>): Subscription;
-}
-
-// @public
-export interface Subscription {
-    // (undocumented)
-    unsubscribe: () => void;
-}
-
-
-
-
-// @public
-export interface BrowserWindowWithZoneJs {
-    // (undocumented)
-    Zone?: {
-        __symbol__?: (name: string) => string;
-    };
-}
-
-
-
-// @public
-function clearInterval_2(timeoutId: TimeoutId | undefined): void;
-export { clearInterval_2 as clearInterval }
-
-// @public
-function clearTimeout_2(timeoutId: TimeoutId | undefined): void;
-export { clearTimeout_2 as clearTimeout }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// @public
-export function getZoneJsOriginalValue<Target, Name extends keyof Target & string>(target: Target, name: Name): Target[Name];
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// @public
-function setInterval_2(callback: () => void, delay?: number): TimeoutId;
-export { setInterval_2 as setInterval }
-
-// @public
-function setTimeout_2(callback: () => void, delay?: number): TimeoutId;
-export { setTimeout_2 as setTimeout }
-
-
-// @public
-export type TimeoutId = ReturnType<GlobalObject['setTimeout']>;
-
-
 
 ```

@@ -1,4 +1,7 @@
-import { createHttpRequest as jsCoreCreateHttpRequest, RECOMMENDED_REQUEST_BYTES_LIMIT } from '@datadog/js-core/transport'
+import {
+  createHttpRequest as jsCoreCreateHttpRequest,
+  RECOMMENDED_REQUEST_BYTES_LIMIT,
+} from '@datadog/js-core/transport'
 import type { EndpointBuilder, Payload, HttpResponse } from '@datadog/js-core/transport'
 import { monitor, monitorError } from '@datadog/js-core/monitor'
 import { fetch } from '../browser/fetch'

@@ -95,7 +95,9 @@ export function createBatch({
     const estimatedMessageBytesCount = encoder.estimateEncodedBytesCount(serializedMessage)
 
     if (estimatedMessageBytesCount >= MESSAGE_BYTES_LIMIT) {
-      warn(`Discarded a message whose size was bigger than the maximum allowed size ${MESSAGE_BYTES_LIMIT / ONE_KIBI_BYTE}KiB.`)
+      warn(
+        `Discarded a message whose size was bigger than the maximum allowed size ${MESSAGE_BYTES_LIMIT / ONE_KIBI_BYTE}KiB.`
+      )
       return
     }
 

@@ -45,5 +45,3 @@ export function createPageMayExitObservable(): Observable<PageMayExitEvent> {
     }
   })
 }
-
-
