@@ -47,16 +47,6 @@ export function createBatch(input: {
 export function createEndpointBuilder(configuration: EndpointBuilderConfiguration, trackType: TrackType, extraParameters?: string[]): EndpointBuilder;
 
 // @public
-export function createFlushController(input: FlushControllerOptions): {
-    flushObservable: Observable<FlushEvent>;
-    prepareUrgentFlushObservable: Observable<PageExitReason>;
-    forceFlush: (flushReason: FlushReason) => void;
-    readonly messagesCount: number;
-    notifyBeforeAddMessage(estimatedMessageBytesCount: number): void;
-    notifyAfterAddMessage(messageBytesCountDiff?: number): void;
-};
-
-// @public
 export function createHttpRequest<Body extends Payload = Payload>(endpointBuilders: EndpointBuilder[], reportError: (message: string) => void, sendStrategy: SendStrategy<Body>, sendOnExitStrategy: SendOnExitStrategy<Body>): HttpRequest<Body>;
 
 // @public
@@ -101,9 +91,6 @@ export interface EndpointPayload {
 export const FLUSH_DURATION_LIMIT: Duration;
 
 // @public
-export type FlushController = ReturnType<typeof createFlushController>;
-
-// @public
 export interface FlushEvent {
     bytesCount: number;
     messagesCount: number;
@@ -143,9 +130,6 @@ export interface HttpResponse extends Context {
     type?: ResponseType;
 }
 
-// @public (undocumented)
-export const INITIAL_BACKOFF_TIME: Duration;
-
 // @public
 export const INTAKE_SITE_EU1: Site;
 
@@ -170,26 +154,8 @@ export function isIntakeUrl(url: string): boolean;
 // @public
 export function isPageExitReason(reason: string): reason is PageExitReason;
 
-// @public (undocumented)
-export const MAX_BACKOFF_TIME: Duration;
-
-// @public (undocumented)
-export const MAX_ONGOING_BYTES_COUNT: number;
-
-// @public (undocumented)
-export const MAX_ONGOING_REQUESTS = 32;
-
-// @public (undocumented)
-export const MAX_QUEUE_BYTES_COUNT: number;
-
 // @public
 export const MESSAGE_BYTES_LIMIT: number;
-
-// @public
-export const MESSAGES_LIMIT: number;
-
-// @public
-export function newRetryState<Body extends Payload>(): RetryState<Body>;
 
 // @public
 export const PageExitReason: {
@@ -231,27 +197,10 @@ export type ProxyFn = (options: {
 export const RECOMMENDED_REQUEST_BYTES_LIMIT: number;
 
 // @public
-export interface RetryState<Body extends Payload> {
-    // (undocumented)
-    bandwidthMonitor: ReturnType<typeof newBandwidthMonitor>;
-    // (undocumented)
-    currentBackoffTime: number;
-    // (undocumented)
-    queuedPayloads: ReturnType<typeof newPayloadQueue<Body>>;
-    // (undocumented)
-    queueFullReported: boolean;
-    // (undocumented)
-    transportStatus: TransportStatus;
-}
-
-// @public
 export type SendOnExitStrategy<Body extends Payload = Payload> = (endpointBuilder: EndpointBuilder, payload: Body) => void;
 
 // @public
 export type SendStrategy<Body extends Payload = Payload> = (endpointBuilder: EndpointBuilder, payload: Body, onResponse: (response: HttpResponse) => void) => void;
-
-// @public
-export function sendWithRetryStrategy<Body extends Payload>(payload: Body, state: RetryState<Body>, sendStrategy: SendStrategy_2<Body>, trackType: TrackType, reportError: (message: string) => void, requestObservable: Observable<HttpRequestEvent<Body>>): void;
 
 // @public
 export type Site = 'datadoghq.com' | 'us3.datadoghq.com' | 'us5.datadoghq.com' | 'datadoghq.eu' | 'ddog-gov.com' | 'us2.ddog-gov.com' | 'ap1.datadoghq.com' | 'ap2.datadoghq.com' | (string & {});
