@@ -9,7 +9,7 @@ export type RumEventDomainContext<T extends RumEventType = any> = T extends type
   : T extends typeof RumEventType.ACTION
     ? RumActionEventDomainContext
     : T extends typeof RumEventType.RESOURCE
-      ? RumResourceEventDomainContext | RumManualResourceEventDomainContext
+      ? RumResourceEventDomainContext | RumManualResourceEventDomainContext | RumWebSocketResourceEventDomainContext
       : T extends typeof RumEventType.ERROR
         ? RumErrorEventDomainContext
         : T extends typeof RumEventType.LONG_TASK
@@ -30,6 +30,7 @@ export interface RumActionEventDomainContext {
 
 export interface RumResourceEventDomainContext {
   isManual: false
+  isWebSocket: false
   performanceEntry: PerformanceResourceTiming | PerformanceNavigationTiming
   xhr: XMLHttpRequest | undefined
   isAborted: boolean
@@ -46,6 +47,12 @@ export interface RumManualResourceEventDomainContext {
    * a performance entry or request/response objects.
    */
   isManual: true
+}
+
+export interface RumWebSocketResourceEventDomainContext {
+  isManual: false
+  isWebSocket: true
+  webSocket: WebSocket
 }
 
 export interface RumErrorEventDomainContext {
