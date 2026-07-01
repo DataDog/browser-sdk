@@ -366,7 +366,7 @@ export interface GraphQlUrlOption {
 
 export interface MatchHeader {
   url?: MatchOption
-  name: MatchOption
+  name?: MatchOption
   extractor?: RegExp
   location?: 'request' | 'response' | 'any'
 }
@@ -574,7 +574,7 @@ function validateAndBuildGraphQlOptions(initConfiguration: RumInitConfiguration)
   return graphQlOptions
 }
 
-const VALID_HEADER_LOCATIONS = ['request', 'response', 'any']
+const VALID_HEADER_LOCATIONS: unknown[] = ['request', 'response', 'any']
 
 function validateAndBuildTrackResourceHeaders(initConfiguration: RumInitConfiguration): MatchHeader[] {
   const option = initConfiguration.trackResourceHeaders
@@ -584,7 +584,7 @@ function validateAndBuildTrackResourceHeaders(initConfiguration: RumInitConfigur
   }
 
   if (option === true) {
-    return DEFAULT_TRACKED_RESOURCE_HEADERS.map((name) => ({ name }))
+    return [{}]
   }
 
   if (!Array.isArray(option)) {
@@ -600,8 +600,12 @@ function validateAndBuildTrackResourceHeaders(initConfiguration: RumInitConfigur
   const result: MatchHeader[] = []
 
   option.forEach((item, index) => {
-    if (!isIndexableObject(item) || !isMatchOption(item.name)) {
-      display.warn(`trackResourceHeaders[${index}] should be a MatchHeader object with a 'name' property`)
+    if (!isIndexableObject(item)) {
+      display.warn(`trackResourceHeaders[${index}] should be a MatchHeader object`)
+      return
+    }
+    if (item.name !== undefined && !isMatchOption(item.name)) {
+      display.warn(`trackResourceHeaders[${index}].name should be a MatchOption`)
       return
     }
     if (item.url !== undefined && !isMatchOption(item.url)) {

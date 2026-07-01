@@ -47,6 +47,19 @@ import { trackManualResources } from './trackManualResources'
 // site in `startResourceCollection` for the rationale.
 export const REQUEST_MATCHING_DELAY = 50 as Duration
 
+export const DEFAULT_TRACKED_RESOURCE_HEADERS = [
+  'cache-control',
+  'etag',
+  'age',
+  'expires',
+  'content-type',
+  'content-encoding',
+  'vary',
+  'content-length',
+  'server-timing',
+  'x-cache',
+]
+
 export function startResourceCollection(lifeCycle: LifeCycle, configuration: RumConfiguration) {
   const taskQueue = mockable(createTaskQueue)()
   const requestRegistry = createRequestRegistry(lifeCycle)
@@ -348,7 +361,9 @@ function filterHeaders(headers: Headers, matchers: MatchHeader[]): NetworkHeader
       return
     }
 
-    const matchHeader = matchers.find((m) => matchList([m.name], lowerName))
+    const matchHeader = matchers.find((m) =>
+      matchList([m.name || ((name) => DEFAULT_TRACKED_RESOURCE_HEADERS.includes(name))], lowerName)
+    )
     if (!matchHeader) {
       return
     }
