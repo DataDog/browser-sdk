@@ -77,9 +77,10 @@ export function createPullRequest(mainBranch: string, labels?: string[]) {
 
 /**
  * Push the current HEAD commit to a new remote branch as a signed (Verified) commit, using
- * commit-headless to create it through the GitHub API instead of a plain `git push`. The local
- * branch is then made to track the newly created remote branch, so callers (e.g. `gh pr create`)
- * don't attempt an unsigned push of their own.
+ * commit-headless to create it through the GitHub API instead of a plain `git push`. Since the
+ * remote commit is re-signed, its SHA differs from the local one: `--reset` resets the local
+ * branch to it, so callers (e.g. `gh pr create`) see it as fully pushed and don't attempt an
+ * unsigned push of their own.
  */
 export function pushSignedCommit(branch: string): void {
   // `--create-branch` has no default branch point, so `--head-sha` must be given explicitly: the
@@ -87,10 +88,9 @@ export function pushSignedCommit(branch: string): void {
   const headSha = command`git rev-parse HEAD^`.run().trim()
 
   using token = getGithubCommitToken()
-  command`commit-headless push -T DataDog/browser-sdk --branch ${branch} --create-branch --head-sha ${headSha}`
+  command`commit-headless push -T DataDog/browser-sdk --branch ${branch} --create-branch --head-sha ${headSha} --reset`
     .withEnvironment({ GITHUB_TOKEN: token.value })
     .run()
-  command`git fetch --no-tags origin ${branch}`.run()
   command`git branch --set-upstream-to=origin/${branch} ${branch}`.run()
 }
 
