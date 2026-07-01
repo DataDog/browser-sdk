@@ -16,7 +16,7 @@ import {
 } from '../helpers/configuration'
 import { validateRumFormat } from '../helpers/validation'
 import type { BrowserConfiguration } from '../../../browsers.conf'
-import { command } from '../../../../scripts/lib/command.ts'
+import { buildSalesforceLwcUrl } from '../../../../scripts/lib/buildSalesforceLwcUrl'
 import {
   NEXTJS_APP_ROUTER_PORT,
   NUXT_APP_PORT,
@@ -36,8 +36,6 @@ import { createMockServerApp } from './serverApps/mock'
 import type { Extension } from './createExtension'
 import type { Worker } from './createWorker'
 import { isBrowserStack } from './environment'
-
-const repositoryRoot = resolve(__dirname, '../../../..')
 
 /**
  * Init script applied to every WebKit context to work around a Playwright-specific
@@ -386,24 +384,6 @@ function declareTestsForSetups(
   } else {
     console.warn('no setup available for', title)
   }
-}
-
-// The frontdoor.jsp OTP expires in ~1 minute, so the URL must be generated at test time —
-// not at suite startup — to guarantee a valid token when the test actually navigates.
-function buildSalesforceLwcUrl(proxy: string): string {
-  const output = command`node scripts/salesforce-lwc-app.ts get-url --proxy ${proxy}`
-    .withCurrentWorkingDirectory(repositoryRoot)
-    .run()
-  const url =
-    // eslint-disable-next-line no-control-regex
-    output.match(/with the following URL: (?<url>https:\/\/[^\s\x00-\x1f]+)/)?.groups?.url ??
-    // eslint-disable-next-line no-control-regex
-    output.match(/https:\/\/[^\s\x00-\x1f]+/g)?.at(-1)
-
-  if (!url) {
-    throw new Error(`Unable to find Salesforce URL in command output:\n${output}`)
-  }
-  return url
 }
 
 /**

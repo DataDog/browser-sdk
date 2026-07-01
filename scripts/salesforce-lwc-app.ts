@@ -1,4 +1,4 @@
-import { chmodSync, copyFileSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { chmodSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { tmpdir } from 'node:os'
@@ -7,12 +7,10 @@ import { parseArgs } from 'node:util'
 import { printLog, runMain } from './lib/executionUtils.ts'
 import { getSfLwcClientId, getSfLwcInstanceUrl, getSfLwcJwtPrivateKey, getSfLwcUsername } from './lib/secrets.ts'
 import { command } from './lib/command.ts'
+import { buildSalesforceLwcUrl } from './lib/buildSalesforceLwcUrl.ts'
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const salesforceAppDir = resolve(repositoryRoot, 'test/apps/sf-lwc-app')
-const bundlePath = resolve(repositoryRoot, 'packages/browser-rum-slim/bundle/datadog-rum-slim.js')
-const stableStaticResourcePath = resolve(salesforceAppDir, 'force-app/main/default/staticresources/datadog_rum_slim.js')
-const salesforceHomePath = '/lightning/app/c__SF_LWC_App/page/home'
 const defaultTargetOrg = 'sf-lwc-ci'
 
 runMain(() => {
@@ -50,7 +48,7 @@ runMain(() => {
       break
     // Get the authenticated URL of the app with the RUM configuration.
     case 'get-url':
-      process.stdout.write(`with the following URL: ${buildOpenUrl(values.proxy)}\n`)
+      process.stdout.write(`with the following URL: ${buildSalesforceLwcUrl(values.proxy)}\n`)
       break
     default:
       throw new Error(`Unknown command "${commandName ?? ''}". Expected: auth|deploy-app|get-url`)
@@ -85,62 +83,12 @@ function authenticate() {
 }
 
 function deployApp() {
-  const targetOrg = getTargetOrg()
+  const targetOrg = process.env.SF_TARGET_ORG ?? defaultTargetOrg
 
   printLog(`Deploying Salesforce LWC app to ${targetOrg}...`)
-  // Deploy the app to the Salesforce org. To be done only when the app is updated.
-  copyFileSync(bundlePath, stableStaticResourcePath)
-
-  // Clear stale source-tracking state so the deploy doesn't skip files it thinks are already in sync.
-  resetSourceTracking(targetOrg)
   command`sf project deploy start --target-org ${targetOrg} --source-dir force-app --ignore-conflicts --concise`
     .withCurrentWorkingDirectory(salesforceAppDir)
     .withLogs()
     .run()
   printLog('Salesforce LWC app deployed.')
-}
-
-function resetSourceTracking(targetOrg: string) {
-  command`sf project reset tracking --target-org ${targetOrg} --no-prompt`
-    .withCurrentWorkingDirectory(salesforceAppDir)
-    .withLogs()
-    .run()
-}
-
-function buildOpenUrl(proxy?: string): string {
-  const targetOrg = getTargetOrg()
-  const path = new URL(salesforceHomePath, 'https://salesforce.local')
-
-  // c__datadogInitConfiguration must be part of the path (not a top-level frontdoor.jsp param)
-  // so that Salesforce passes it through to the Lightning app after authentication.
-  if (proxy) {
-    path.searchParams.set(
-      'c__datadogInitConfiguration',
-      JSON.stringify({
-        applicationId: '37fe52bf-b3d5-4ac7-ad9b-44882d479ec8',
-        clientToken: 'pubf2099de38f9c85797d20d64c7d632a69',
-        defaultPrivacyLevel: 'allow',
-        trackResources: true,
-        trackLongTasks: true,
-        proxy,
-      })
-    )
-  }
-
-  const output = command`sf org open --target-org ${targetOrg} --path ${path.pathname}${path.search} --url-only`
-    .withCurrentWorkingDirectory(salesforceAppDir)
-    .run()
-
-  // The sf CLI appends ANSI reset codes (\x1b[39m etc.) directly to the URL on stdout.
-  // Excluding control characters (0x00–0x1f, which includes ESC/0x1b) strips them cleanly.
-  // eslint-disable-next-line no-control-regex
-  const url = output.match(/https:\/\/[^\s\x00-\x1f]+/g)?.at(-1)
-  if (!url) {
-    throw new Error(`Unable to find Salesforce URL in command output:\n${output}`)
-  }
-  return url
-}
-
-function getTargetOrg(): string {
-  return process.env.SF_TARGET_ORG || defaultTargetOrg
 }
