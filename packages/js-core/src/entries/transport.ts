@@ -17,18 +17,9 @@ export { createHttpRequest } from '../transport/httpRequest'
 export type { Batch } from '../transport/batch'
 export { createBatch, MESSAGE_BYTES_LIMIT } from '../transport/batch'
 export { RECOMMENDED_REQUEST_BYTES_LIMIT } from '../transport/payload'
-export { PageExitReason, isPageExitReason, createFlushController, FLUSH_DURATION_LIMIT, MESSAGES_LIMIT } from '../transport/flushController'
-export type { PageMayExitEvent, UrgentFlushReason, FlushReason, FlushEvent, FlushController } from '../transport/flushController'
-export {
-  sendWithRetryStrategy,
-  newRetryState,
-  MAX_ONGOING_BYTES_COUNT,
-  MAX_ONGOING_REQUESTS,
-  MAX_QUEUE_BYTES_COUNT,
-  MAX_BACKOFF_TIME,
-  INITIAL_BACKOFF_TIME,
-} from '../transport/sendWithRetryStrategy'
-export type { RetryState } from '../transport/sendWithRetryStrategy'
+export { PageExitReason, isPageExitReason, FLUSH_DURATION_LIMIT } from '../transport/flushController'
+export type { PageMayExitEvent, UrgentFlushReason, FlushReason, FlushEvent } from '../transport/flushController'
+
 export type { Site } from '../transport/intakeSites'
 export {
   INTAKE_SITE_STAGING,
