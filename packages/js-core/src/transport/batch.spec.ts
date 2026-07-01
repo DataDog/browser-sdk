@@ -1,14 +1,13 @@
-import type { HttpRequestEvent } from '@datadog/js-core/transport'
-import { Observable } from '..'
-import type { MockFlushController } from '../../test'
-import { createMockFlushController, replaceMockable } from '../../test'
-import { display } from '../tools/display'
-import type { Encoder } from '../tools/encoder'
-import { createIdentityEncoder } from '../tools/encoder'
-import { createPageMayExitObservable } from '../browser/pageMayExitObservable'
-import { createBatch, MESSAGE_BYTES_LIMIT, type Batch } from './batch'
+import { Observable } from '../util/observable'
+import { replaceMockable } from '../../test/replaceMockable'
+import type { MockFlushController } from '../../test/mockFlushController'
+import { createMockFlushController } from '../../test/mockFlushController'
+import type { HttpRequestEvent } from './payload'
+import type { Encoder } from './encoder'
+import { createIdentityEncoder } from './encoder'
 import { createFlushController } from './flushController'
-import { createHttpRequest } from './httpRequest'
+import { createBatch, MESSAGE_BYTES_LIMIT } from './batch'
+import type { Batch } from './batch'
 import type { HttpRequest } from './httpRequest'
 
 describe('batch', () => {
@@ -23,9 +22,9 @@ describe('batch', () => {
     send: jasmine.Spy<HttpRequest['send']>
     sendOnExit: jasmine.Spy<HttpRequest['sendOnExit']>
   }
-
   let flushController: MockFlushController
   let encoder: Encoder<string>
+  let warnSpy: jasmine.Spy
 
   beforeEach(() => {
     transport = {
@@ -35,10 +34,15 @@ describe('batch', () => {
     } satisfies HttpRequest
     flushController = createMockFlushController()
     encoder = createIdentityEncoder()
-    replaceMockable(createHttpRequest, (() => transport) as unknown as typeof createHttpRequest)
-    replaceMockable(createPageMayExitObservable, () => new Observable())
+    warnSpy = jasmine.createSpy('warn')
     replaceMockable(createFlushController, () => flushController)
-    batch = createBatch({ encoder, endpoints: [], reportError: () => undefined })
+    batch = createBatch({
+      request: transport,
+      pageMayExitObservable: new Observable(),
+      encoder,
+      reportError: () => undefined,
+      warn: warnSpy,
+    })
   })
 
   it('should send a message', () => {
@@ -95,7 +99,6 @@ describe('batch', () => {
     })
 
     it('should not send a message with a bytes size above the limit', () => {
-      const warnSpy = spyOn(display, 'warn')
       batch.add(BIG_MESSAGE_OVER_BYTES_LIMIT)
 
       expect(warnSpy).toHaveBeenCalled()

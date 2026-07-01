@@ -40,7 +40,6 @@ export function createBatch({
     pageMayExitObservable,
     encoder,
     reportError,
-    warn: (message) =>
-      display.warn(`${message} ${MORE_DETAILS} ${DOCS_TROUBLESHOOTING}/#technical-limitations`),
+    warn: (message) => display.warn(`${message} ${MORE_DETAILS} ${DOCS_TROUBLESHOOTING}/#technical-limitations`),
   })
 }
