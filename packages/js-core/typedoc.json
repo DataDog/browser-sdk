@@ -1,4 +1,10 @@
 {
   "$schema": "https://typedoc.org/schema.json",
-  "entryPoints": ["src/entries/time.ts", "src/entries/monitor.ts", "src/entries/util.ts", "src/entries/assembly.ts"]
+  "entryPoints": [
+    "src/entries/time.ts",
+    "src/entries/monitor.ts",
+    "src/entries/util.ts",
+    "src/entries/assembly.ts",
+    "src/entries/configuration.ts"
+  ]
 }
