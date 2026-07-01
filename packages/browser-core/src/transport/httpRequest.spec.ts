@@ -1,11 +1,7 @@
 import type { EndpointBuilder, HttpRequestEvent, HttpRequest } from '@datadog/js-core/transport'
-import { noop } from '@datadog/js-core/util'
-import {
-  createEndpointBuilder,
-  RECOMMENDED_REQUEST_BYTES_LIMIT,
-  INITIAL_BACKOFF_TIME,
-  MAX_ONGOING_BYTES_COUNT,
-} from '@datadog/js-core/transport'
+import { ONE_SECOND } from '@datadog/js-core/time'
+import { noop, ONE_KIBI_BYTE } from '@datadog/js-core/util'
+import { createEndpointBuilder, RECOMMENDED_REQUEST_BYTES_LIMIT } from '@datadog/js-core/transport'
 import type { Clock, Request } from '../../test'
 import {
   collectAsyncCalls,
@@ -309,6 +305,10 @@ describe('httpRequest', () => {
     })
   })
 })
+
+// Mirror the (internal) retry strategy constants from @datadog/js-core/transport
+const INITIAL_BACKOFF_TIME = ONE_SECOND
+const MAX_ONGOING_BYTES_COUNT = 80 * ONE_KIBI_BYTE
 
 describe('httpRequest with several endpoints', () => {
   interface FetchCall {
