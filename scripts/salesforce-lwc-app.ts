@@ -7,10 +7,10 @@ import { parseArgs } from 'node:util'
 import { printLog, runMain } from './lib/executionUtils.ts'
 import { getSfLwcClientId, getSfLwcInstanceUrl, getSfLwcJwtPrivateKey, getSfLwcUsername } from './lib/secrets.ts'
 import { command } from './lib/command.ts'
-import { buildSalesforceLwcUrl } from './lib/buildSalesforceLwcUrl.ts'
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const salesforceAppDir = resolve(repositoryRoot, 'test/apps/sf-lwc-app')
+const salesforceHomePath = '/lightning/app/c__SF_LWC_App/page/home'
 const defaultTargetOrg = 'sf-lwc-ci'
 
 runMain(() => {
@@ -21,9 +21,6 @@ runMain(() => {
         type: 'boolean',
         short: 'h',
       },
-      proxy: {
-        type: 'string',
-      },
     },
   })
 
@@ -32,31 +29,27 @@ runMain(() => {
   }
 
   if (positionals.length !== 1) {
-    throw new Error('Usage: node scripts/salesforce-lwc-app.ts <auth|deploy-app|get-url>')
+    throw new Error('Usage: node scripts/salesforce-lwc-app.ts <deploy-app|get-url>')
   }
 
   const commandName = positionals[0]
 
   switch (commandName) {
-    // Authenticate in the Salesforce CLI.
-    case 'auth':
-      authenticate()
-      break
     // Deploy the app to the Salesforce org. To be done only when the app is updated.
     case 'deploy-app':
       deployApp()
       break
-    // Get the authenticated URL of the app with the RUM configuration.
+    // Get the authenticated URL of the app.
     case 'get-url':
-      process.stdout.write(`with the following URL: ${buildSalesforceLwcUrl(values.proxy)}\n`)
+      process.stdout.write(`${buildSalesforceLwcUrl()}\n`)
       break
     default:
-      throw new Error(`Unknown command "${commandName ?? ''}". Expected: auth|deploy-app|get-url`)
+      throw new Error(`Unknown command "${commandName ?? ''}". Expected: deploy-app|get-url`)
   }
 })
 
 function showUsageAndExit() {
-  console.log('Usage: node scripts/salesforce-lwc-app.ts <auth|deploy-app|get-url> [--proxy <url>]')
+  console.log('Usage: node scripts/salesforce-lwc-app.ts <deploy-app|get-url>')
   process.exit(0)
 }
 
@@ -85,10 +78,41 @@ function authenticate() {
 function deployApp() {
   const targetOrg = process.env.SF_TARGET_ORG ?? defaultTargetOrg
 
+  if (!isOrgAuthenticated(targetOrg)) {
+    authenticate()
+  }
+
   printLog(`Deploying Salesforce LWC app to ${targetOrg}...`)
   command`sf project deploy start --target-org ${targetOrg} --source-dir force-app --ignore-conflicts --concise`
     .withCurrentWorkingDirectory(salesforceAppDir)
     .withLogs()
     .run()
   printLog('Salesforce LWC app deployed.')
+}
+
+function isOrgAuthenticated(targetOrg: string): boolean {
+  try {
+    command`sf org display --target-org ${targetOrg}`.withCurrentWorkingDirectory(salesforceAppDir).run()
+    return true
+  } catch {
+    return false
+  }
+}
+
+function buildSalesforceLwcUrl(): string {
+  const targetOrg = process.env.SF_TARGET_ORG ?? defaultTargetOrg
+  const path = new URL(salesforceHomePath, 'https://salesforce.local')
+
+  const output = command`sf org open --target-org ${targetOrg} --path ${path.pathname}${path.search} --url-only`
+    .withCurrentWorkingDirectory(salesforceAppDir)
+    .run()
+
+  // The sf CLI appends ANSI reset codes (\x1b[39m etc.) directly to the URL on stdout.
+  // Excluding control characters (0x00–0x1f, which includes ESC/0x1b) strips them cleanly.
+  // eslint-disable-next-line no-control-regex
+  const url = output.match(/https:\/\/[^\s\x00-\x1f]+/g)?.at(-1)
+  if (!url) {
+    throw new Error(`Unable to find Salesforce URL in command output:\n${output}`)
+  }
+  return url
 }

@@ -16,7 +16,6 @@ import {
 } from '../helpers/configuration'
 import { validateRumFormat } from '../helpers/validation'
 import type { BrowserConfiguration } from '../../../browsers.conf'
-import { buildSalesforceLwcUrl } from '../../../../scripts/lib/buildSalesforceLwcUrl'
 import {
   NEXTJS_APP_ROUTER_PORT,
   NUXT_APP_PORT,
@@ -24,6 +23,7 @@ import {
   VUE_ROUTER_APP_PORT,
   VUE_ROUTER_V4_APP_PORT,
 } from '../helpers/playwright'
+import { buildSalesforceLwcUrl } from './buildSalesforceLwcUrl'
 import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
@@ -280,8 +280,8 @@ class TestBuilder {
   withSalesforceApp() {
     this.salesforceApp = true
     this.setups = [{ factory: () => '' }]
-    this.baseUrlHooks.push((baseUrl, servers) => {
-      baseUrl.href = buildSalesforceLwcUrl(servers.datadogHttpApi.origin)
+    this.baseUrlHooks.push(async (baseUrl) => {
+      baseUrl.href = await buildSalesforceLwcUrl()
     })
     return this
   }
@@ -422,7 +422,9 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
 
     const servers = await getTestServers()
     const baseUrl = new URL(servers.base.origin)
-    setupOptions.baseUrlHooks.forEach((hook) => hook(baseUrl, servers, setupOptions))
+    for (const hook of setupOptions.baseUrlHooks) {
+      await hook(baseUrl, servers, setupOptions)
+    }
 
     test.skip(
       baseUrl.hostname.endsWith('.localhost') && isBrowserStack,
@@ -469,6 +471,13 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
           contentType: 'application/javascript',
         })
       })
+
+      await page.addInitScript(
+        `window.dd_RUM_CONFIGURATION = ${JSON.stringify({
+          ...DEFAULT_RUM_CONFIGURATION,
+          proxy: servers.datadogHttpApi.origin,
+        })}`
+      )
     }
 
     await setUpTest(browserLogs, setupOptions, testContext)
