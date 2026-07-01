@@ -4,7 +4,7 @@ import { createTest, waitForRequests } from '../../lib/framework'
 test.describe('partial view updates', () => {
   createTest('should send a view_update event when the update arrives in a new batch')
     .withRum({
-      enableExperimentalFeatures: ['partial_view_updates'],
+      betaEnableViewUpdates: true,
     })
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       // Flush the initial VIEW so it lands in its own batch. Any update that arrives
@@ -38,7 +38,7 @@ test.describe('partial view updates', () => {
 
   createTest('should upsert the full VIEW when a view update arrives in the same batch')
     .withRum({
-      enableExperimentalFeatures: ['partial_view_updates'],
+      betaEnableViewUpdates: true,
     })
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       // Trigger a view update without flushing first — it lands in the same batch as the initial VIEW.
@@ -59,7 +59,7 @@ test.describe('partial view updates', () => {
 
   createTest('should have strictly increasing document_version across view and view_update events')
     .withRum({
-      enableExperimentalFeatures: ['partial_view_updates'],
+      betaEnableViewUpdates: true,
     })
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       // Flush the initial VIEW first so the subsequent update lands in a new batch (opt-2 path).
@@ -107,7 +107,7 @@ test.describe('partial view updates', () => {
 
   createTest('should emit a new full view event after navigation')
     .withRum({
-      enableExperimentalFeatures: ['partial_view_updates'],
+      betaEnableViewUpdates: true,
     })
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => history.pushState(null, '', '/new-page'))
@@ -125,7 +125,7 @@ test.describe('partial view updates', () => {
 
   createTest('should include required fields in all view_update events')
     .withRum({
-      enableExperimentalFeatures: ['partial_view_updates'],
+      betaEnableViewUpdates: true,
     })
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       // Flush the initial VIEW first so the update lands in a new batch (opt-2 path).
@@ -154,7 +154,7 @@ test.describe('partial view updates', () => {
 
   createTest('should send a full VIEW event (not view_update) with is_active false when view ends')
     .withRum({
-      enableExperimentalFeatures: ['partial_view_updates'],
+      betaEnableViewUpdates: true,
     })
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => history.pushState(null, '', '/other-page'))
@@ -176,7 +176,7 @@ test.describe('partial view updates', () => {
 
   createTest('should emit a full view checkpoint event during a long-lived view')
     .withRum({
-      enableExperimentalFeatures: ['partial_view_updates'],
+      betaEnableViewUpdates: true,
     })
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       // Flush the initial VIEW first so it arrives at the intake in its own batch.

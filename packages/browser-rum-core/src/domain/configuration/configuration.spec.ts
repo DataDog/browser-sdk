@@ -832,6 +832,7 @@ describe('serializeRumConfiguration', () => {
       profilingSampleRate: 42,
       propagateTraceBaggage: true,
       trackResourceHeaders: true,
+      betaEnableViewUpdates: true,
     }
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
@@ -887,6 +888,7 @@ describe('serializeRumConfiguration', () => {
       use_remote_configuration_proxy: true,
       profiling_sample_rate: 42,
       track_resource_headers: 'default_headers',
+      beta_enable_view_updates: true,
     })
   })
 })
