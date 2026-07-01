@@ -6,32 +6,6 @@ import { loadScript } from 'lightning/platformResourceLoader'
 let datadogInitialization
 let lastStartedUrl
 
-const DATADOG_PARAMS = ['c__applicationId', 'c__clientToken', 'c__env', 'c__service', 'c__site']
-
-const cleanUrl = (url) => {
-  const cleanUrl = new URL(url, window.location.origin)
-  DATADOG_PARAMS.forEach((param) => cleanUrl.searchParams.delete(param))
-  return cleanUrl.href
-}
-
-const defaultDatadogRumConfig = {
-  trackViewsManually: true,
-  trackEarlyRequests: true,
-  trackLongTasks: true,
-  trackResources: true,
-  trackUserInteractions: true,
-  beforeSend: (event) => {
-    if (event.view) {
-      const sanitizedViewUrl = new URL(cleanUrl(event.view.url))
-      event.view.url = sanitizedViewUrl.href
-      event.view.name = sanitizedViewUrl.pathname + sanitizedViewUrl.search + sanitizedViewUrl.hash
-    }
-    if (event.resource?.url) {
-      event.resource.url = cleanUrl(event.resource.url)
-    }
-  },
-}
-
 export default class DatadogInit extends NavigationMixin(LightningElement) {
   connectedCallback() {
     this.initialize()
@@ -69,29 +43,47 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
   }
 
   loadDatadogRum() {
-    return loadScript(this, datadogRumSlim).then(() => {
-      const searchParams = new URLSearchParams(window.location.search)
-      const applicationId = searchParams.get('c__applicationId')
-      const clientToken = searchParams.get('c__clientToken')
+    const searchParams = new URLSearchParams(window.location.search)
 
-      if (!applicationId || !clientToken) {
-        window.console.warn('Datadog RUM not initialized: missing c__applicationId or c__clientToken')
+    return loadScript(this, datadogRumSlim).then(() => {
+      const initConfig = this.getInitConfiguration(searchParams)
+      if (!initConfig.applicationId || !initConfig.clientToken) {
+        window.console.warn('Datadog RUM not initialized: missing applicationId or clientToken')
         return
       }
 
-      window.DD_RUM.init({
-        applicationId,
-        clientToken,
-        env: searchParams.get('c__env'),
-        service: searchParams.get('c__service'),
-        site: searchParams.get('c__site'),
-        ...defaultDatadogRumConfig,
-      })
+      window.DD_RUM.init(initConfig)
       lastStartedUrl = window.location.pathname + window.location.search + window.location.hash
       window.DD_RUM.startView({
         name: lastStartedUrl,
         url: window.location.href,
       })
     })
+  }
+
+  getInitConfiguration(searchParams) {
+    return {
+      trackViewsManually: true,
+      trackEarlyRequests: true,
+      trackLongTasks: true,
+      trackResources: true,
+      trackUserInteractions: true,
+      ...window.dd_RUM_CONFIGURATION,
+      ...this.getQueryInitConfiguration(searchParams),
+    }
+  }
+
+  getQueryInitConfiguration(searchParams) {
+    const configuration = searchParams.get('c__datadogInitConfiguration')
+    if (!configuration) {
+      return {}
+    }
+
+    try {
+      return JSON.parse(configuration)
+    } catch (error) {
+      window.console.warn('Invalid Datadog init configuration query parameter', error)
+      return {}
+    }
   }
 }

@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { DebuggerInitConfiguration } from '@datadog/browser-debugger'
 import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
@@ -21,6 +23,7 @@ import {
   VUE_ROUTER_APP_PORT,
   VUE_ROUTER_V4_APP_PORT,
 } from '../helpers/playwright'
+import { buildSalesforceLwcUrl } from './buildSalesforceLwcUrl'
 import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
@@ -72,6 +75,11 @@ const WEBKIT_PLAYWRIGHT_WORKAROUND = `
 })();
 `
 
+const salesforceLwcBundlePath = resolve(
+  __dirname,
+  '../../../apps/sf-lwc-app/force-app/main/default/staticresources/datadog_rum_slim.js'
+)
+
 export function createTest(title: string) {
   return new TestBuilder(title, captureCallerLocation())
 }
@@ -113,6 +121,7 @@ class TestBuilder {
     logsConfiguration?: LogsInitConfiguration
   } = {}
   private worker: Worker | undefined
+  private salesforceApp = false
 
   constructor(
     private title: string,
@@ -268,6 +277,15 @@ class TestBuilder {
     return this
   }
 
+  withSalesforceApp() {
+    this.salesforceApp = true
+    this.setups = [{ factory: () => '' }]
+    this.baseUrlHooks.push(async (baseUrl) => {
+      baseUrl.href = await buildSalesforceLwcUrl()
+    })
+    return this
+  }
+
   withHostName(hostName: string) {
     this.baseUrlHooks.push((baseUrl) => {
       baseUrl.hostname = hostName
@@ -297,6 +315,7 @@ class TestBuilder {
       worker: this.worker,
       callerLocation: this.callerLocation,
       mockClock: this.mockClock,
+      salesforceApp: this.salesforceApp,
     }
 
     if (this.alsoRunWithRumSlim) {
@@ -403,7 +422,9 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
 
     const servers = await getTestServers()
     const baseUrl = new URL(servers.base.origin)
-    setupOptions.baseUrlHooks.forEach((hook) => hook(baseUrl, servers, setupOptions))
+    for (const hook of setupOptions.baseUrlHooks) {
+      await hook(baseUrl, servers, setupOptions)
+    }
 
     test.skip(
       baseUrl.hostname.endsWith('.localhost') && isBrowserStack,
@@ -441,6 +462,23 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     const setup = factory(setupOptions, servers)
     servers.base.bindServerApp(createMockServerApp(servers, setup, setupOptions))
     servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
+
+    if (setupOptions.salesforceApp) {
+      // Serve the local bundle from the static resource
+      await page.route(/\/resource(?:\/[^/?#]+)?\/datadog_rum_slim(?:\.js)?(?:[/?#].*)?$/, async (route) => {
+        await route.fulfill({
+          body: await readFile(salesforceLwcBundlePath),
+          contentType: 'application/javascript',
+        })
+      })
+
+      await page.addInitScript(
+        `window.dd_RUM_CONFIGURATION = ${JSON.stringify({
+          ...DEFAULT_RUM_CONFIGURATION,
+          proxy: servers.datadogHttpApi.origin,
+        })}`
+      )
+    }
 
     await setUpTest(browserLogs, setupOptions, testContext)
 

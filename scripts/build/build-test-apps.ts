@@ -35,6 +35,7 @@ const APPS: AppConfig[] = [
   { name: 'vue-router-app' },
   { name: 'nuxt-app' },
   { name: 'instrumentation-overhead' },
+  { name: 'sf-lwc-app', builderFn: buildSalesforceLwcApp },
 
   // React Router apps
   { name: 'react-router-app' },
@@ -159,6 +160,14 @@ async function buildApp(appName: string) {
   } catch (error) {
     throw new Error(`Failed to build app '${appName}'`, { cause: error })
   }
+}
+
+function buildSalesforceLwcApp() {
+  const sourceBundle = 'packages/browser-rum-slim/bundle/datadog-rum-slim.js'
+  const targetBundle = 'test/apps/sf-lwc-app/force-app/main/default/staticresources/datadog_rum_slim.js'
+
+  printLog('Building app at test/apps/sf-lwc-app...')
+  fs.copyFileSync(sourceBundle, targetBundle)
 }
 
 async function buildReactRouterV6App() {

@@ -31,6 +31,7 @@ export interface SetupOptions {
   worker?: WorkerOptions
   callerLocation?: CallerLocation
   mockClock: boolean
+  salesforceApp: boolean
 }
 
 export interface CallerLocation {
@@ -51,7 +52,7 @@ export interface EventBridgeOptions {
 }
 
 export type SetupFactory = (options: SetupOptions, servers: Servers) => string
-export type UrlHook = (baseUrl: URL, servers: Servers, options: SetupOptions) => void
+export type UrlHook = (baseUrl: URL, servers: Servers, options: SetupOptions) => void | Promise<void>
 
 // By default, run tests only with the 'bundle' setup outside of the CI (to run faster on the
 // developer laptop) or with Browser Stack (to limit flakiness).
