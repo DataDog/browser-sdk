@@ -50,7 +50,6 @@ import type { SdkName } from '../domain/contexts/defaultContext'
 import { startDefaultContext } from '../domain/contexts/defaultContext'
 import type { Hooks } from '../domain/hooks'
 import { startEventCollection } from '../domain/event/eventCollection'
-import { startInitialViewMetricsTelemetry } from '../domain/view/viewMetrics/startInitialViewMetricsTelemetry'
 import { startSourceCodeContext } from '../domain/contexts/sourceCodeContext'
 import type { RecorderApi, ProfilerApi } from './rumPublicApi'
 
@@ -101,9 +100,6 @@ export function startRum(
     })
     cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
   }
-
-  const { stop: stopInitialViewMetricsTelemetry } = startInitialViewMetricsTelemetry(lifeCycle, telemetry)
-  cleanupTasks.push(stopInitialViewMetricsTelemetry)
 
   const { stop: stopRumEventCollection, ...startRumEventCollectionResult } = startRumEventCollection(
     lifeCycle,
