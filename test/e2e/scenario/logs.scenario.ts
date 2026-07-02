@@ -1,4 +1,6 @@
 import { DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT } from '@datadog/browser-logs/src/domain/configuration'
+import { ONE_HOUR, ONE_MINUTE } from '@datadog/js-core/time'
+import { SESSION_EXPIRATION_DELAY } from '@datadog/browser-core'
 import { test, expect } from '@playwright/test'
 import { createTest, createWorker } from '../lib/framework'
 import { APPLICATION_ID } from '../lib/helpers/configuration'
@@ -354,4 +356,38 @@ test.describe('logs', () => {
       expect(intakeRegistry.logsEvents).toHaveLength(1)
       expect(intakeRegistry.logsEvents[0].foo).toBe('bar')
     })
+
+  test.describe('session expiration', () => {
+    createTest('logs should keep being sent forever, even long after the session has expired')
+      .withLogs()
+      .withMockClock()
+      .run(async ({ intakeRegistry, flushEvents, page }) => {
+        // Logs should keep being sent indefinitely, with or without a session attached, even
+        // long after the session has expired.
+
+        // Let the session expire from inactivity (no click/scroll/keydown/touch).
+        await page.clock.fastForward(SESSION_EXPIRATION_DELAY + ONE_MINUTE)
+
+        await page.evaluate(() => {
+          window.DD_LOGS!.logger.log('shortly after session expiration')
+        })
+
+        // Fast-forward well past the point where the session is expired.
+        await page.clock.fastForward(24 * ONE_HOUR)
+
+        await page.evaluate(() => {
+          window.DD_LOGS!.logger.log('long after session expiration')
+        })
+
+        await flushEvents()
+
+        expect(intakeRegistry.logsEvents).toHaveLength(2)
+
+        expect(intakeRegistry.logsEvents[0].message).toBe('shortly after session expiration')
+        expect(intakeRegistry.logsEvents[0].session_id).toBeUndefined()
+
+        expect(intakeRegistry.logsEvents[1].message).toBe('long after session expiration')
+        expect(intakeRegistry.logsEvents[1].session_id).toBeUndefined()
+      })
+  })
 })

@@ -220,6 +220,18 @@ describe('valueHistory', () => {
       valueHistory1.stop()
       valueHistory2.stop()
     })
+
+    it('should not clear closed entries based on elapsed time when expireDelay is not set', () => {
+      const maxEntriesOnlyHistory = createValueHistory<string>({ maxEntries: MAX_ENTRIES })
+      const originalTime = performance.now() as RelativeTime
+      maxEntriesOnlyHistory.add('foo', originalTime).close(addDuration(originalTime, 10 as Duration))
+
+      clock.tick(EXPIRE_DELAY + CLEAR_OLD_VALUES_INTERVAL)
+
+      expect(maxEntriesOnlyHistory.find(originalTime, { returnInactive: true })).toBeDefined()
+
+      maxEntriesOnlyHistory.stop()
+    })
   })
 
   it('should limit the number of entries', () => {
