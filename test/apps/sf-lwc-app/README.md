@@ -13,7 +13,7 @@ This app is Lightning-only.
 
 ## Authentication
 
-The Salesforce flow uses the Salesforce CLI. Authenticate once, then deploy/open/test through the CLI alias.
+The Salesforce flow uses the Salesforce CLI with a JWT keypair. There is no separate manual auth step: `yarn salesforce:deploy-app` and `yarn salesforce:get-url` authenticate the `sf-lwc-ci` alias automatically whenever it isn't already authenticated.
 
 Credentials are set as CI variables.
 
@@ -24,12 +24,6 @@ export SF_LWC_CLIENT_ID='<connected-app-client-id>'
 export SF_LWC_USERNAME='<salesforce-username>'
 export SF_LWC_INSTANCE_URL='https://test.salesforce.com'
 export SF_LWC_JWT_PRIVATE_KEY_B64='<base64-encoded-private-key>'
-```
-
-Then authenticate the default `sf-lwc-ci` alias:
-
-```sh
-yarn salesforce:auth
 ```
 
 ## Initial App Deploy
@@ -44,7 +38,7 @@ This builds the local RUM slim bundle, copies it to the stable `datadog_rum_slim
 
 ## Local Bundle
 
-After the app exists in the org, regular test runs do not deploy the current SDK bundle to Salesforce.
+Regular test runs do not deploy the current SDK bundle to Salesforce.
 Build the test apps from the repository root instead:
 
 ```sh
@@ -59,11 +53,13 @@ Playwright fulfills Salesforce static resource requests with this local file dur
 Print an authenticated URL for the app:
 
 ```sh
-yarn salesforce:open
+yarn salesforce:get-url
 ```
 
 The printed URL is authenticated and should be treated as sensitive.
-During E2E tests, the test setup calls this script with `--proxy` after the local intake server is available, so the generated Salesforce URL includes the `c__datadogInitConfiguration` query parameter.
+E2E tests don't use this script: they build their own authenticated URL via the JWT/REST flow in
+`test/e2e/lib/framework/buildSalesforceLwcUrl.ts`, and inject the RUM configuration on the page as
+`window.dd_RUM_CONFIGURATION` instead of a URL query parameter (see `datadogInit.js`).
 
 To open the same app directly in your browser:
 
@@ -78,9 +74,5 @@ Build the SDK and test apps, then run the Salesforce scenario:
 ```sh
 yarn build
 yarn build:apps --app sf-lwc-app
-FORCE_COLOR=1 PW_BROWSER=chromium yarn test:e2e --project=chromium --grep salesforce
+yarn test:e2e --project=chromium --grep salesforce
 ```
-
-## CI
-
-The regular `e2e` job runs the Salesforce scenario in the Chromium matrix entry only. It authenticates `sf-lwc-ci`, opens the deployed Salesforce app, and serves the locally built SDK bundle through Playwright route fulfillment instead of deploying a bundle to Salesforce for each run.
