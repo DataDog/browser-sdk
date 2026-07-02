@@ -6,6 +6,12 @@ import { loadScript } from 'lightning/platformResourceLoader'
 let datadogInitialization
 let lastStartedUrl
 
+const defaultInitConfiguration = {
+  applicationId: 'xxx',
+  clientToken: 'xxx',
+  site: 'datadoghq.com',
+}
+
 export default class DatadogInit extends NavigationMixin(LightningElement) {
   connectedCallback() {
     this.initialize()
@@ -43,43 +49,14 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
   }
 
   loadDatadogRum() {
-    const searchParams = new URLSearchParams(window.location.search)
-
     return loadScript(this, datadogRumSlim).then(() => {
-      const initConfig = this.getInitConfiguration(searchParams)
-      if (!initConfig.applicationId || !initConfig.clientToken) {
-        window.console.warn('Datadog RUM not initialized: missing applicationId or clientToken')
-        return
-      }
-
       window.DD_RUM.setGlobalContext(window.RUM_CONTEXT)
-      window.DD_RUM.init(initConfig)
+      window.DD_RUM.init({ ...defaultInitConfiguration, ...window.RUM_CONFIGURATION })
       lastStartedUrl = window.location.pathname + window.location.search + window.location.hash
       window.DD_RUM.startView({
         name: lastStartedUrl,
         url: window.location.href,
       })
     })
-  }
-
-  getInitConfiguration(searchParams) {
-    return {
-      ...window.RUM_CONFIGURATION,
-      ...this.getQueryInitConfiguration(searchParams),
-    }
-  }
-
-  getQueryInitConfiguration(searchParams) {
-    const configuration = searchParams.get('c__datadogInitConfiguration')
-    if (!configuration) {
-      return {}
-    }
-
-    try {
-      return JSON.parse(configuration)
-    } catch (error) {
-      window.console.warn('Invalid Datadog init configuration query parameter', error)
-      return {}
-    }
   }
 }
