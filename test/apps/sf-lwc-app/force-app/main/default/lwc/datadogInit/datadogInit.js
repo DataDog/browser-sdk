@@ -52,6 +52,7 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
         return
       }
 
+      window.DD_RUM.setGlobalContext(window.RUM_CONTEXT)
       window.DD_RUM.init(initConfig)
       lastStartedUrl = window.location.pathname + window.location.search + window.location.hash
       window.DD_RUM.startView({
@@ -63,7 +64,7 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
 
   getInitConfiguration(searchParams) {
     return {
-      ...window.dd_RUM_CONFIGURATION,
+      ...window.RUM_CONFIGURATION,
       ...this.getQueryInitConfiguration(searchParams),
     }
   }

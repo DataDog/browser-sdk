@@ -41,7 +41,7 @@ runMain(() => {
       break
     // Get the authenticated URL of the app.
     case 'get-url':
-      process.stdout.write(`${buildSalesforceLwcUrl()}\n`)
+      printSalesforceLwcUrl()
       break
     default:
       throw new Error(`Unknown command "${commandName ?? ''}". Expected: deploy-app|get-url`)
@@ -88,20 +88,14 @@ function deployApp() {
   printLog('Salesforce LWC app deployed.')
 }
 
-function buildSalesforceLwcUrl(): string {
+function printSalesforceLwcUrl(): void {
   const targetOrg = process.env.SF_TARGET_ORG ?? defaultTargetOrg
+  const path = new URL(salesforceHomePath, 'https://salesforce.local')
 
   authenticate(targetOrg)
 
-  const path = new URL(salesforceHomePath, 'https://salesforce.local')
-
-  const output = command`sf org open --target-org ${targetOrg} --path ${path.pathname}${path.search} --url-only --json`
+  command`sf org open --target-org ${targetOrg} --path ${path.pathname}${path.search} --url-only`
     .withCurrentWorkingDirectory(salesforceAppDir)
+    .withLogs()
     .run()
-
-  const { result } = JSON.parse(output) as { result?: { url?: string } }
-  if (!result?.url) {
-    throw new Error(`Unable to find Salesforce URL in command output:\n${output}`)
-  }
-  return result.url
 }

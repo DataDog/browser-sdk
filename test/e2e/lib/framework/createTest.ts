@@ -473,17 +473,12 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
         })
       })
 
-      await page.addInitScript(
-        `window.dd_RUM_CONFIGURATION = ${JSON.stringify({
-          ...DEFAULT_RUM_CONFIGURATION,
-          trackViewsManually: true,
-          trackEarlyRequests: true,
-          trackLongTasks: true,
-          trackResources: true,
-          trackUserInteractions: true,
-          proxy: servers.datadogHttpApi.origin,
-        })}`
-      )
+      if (setupOptions.rum) {
+        await page.addInitScript(
+          `window.RUM_CONFIGURATION = ${formatConfiguration(setupOptions.rum, servers)}
+          window.RUM_CONTEXT = ${JSON.stringify(setupOptions.context)}`
+        )
+      }
     }
 
     await setUpTest(browserLogs, setupOptions, testContext)

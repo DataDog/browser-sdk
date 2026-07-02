@@ -12,6 +12,12 @@ test.use({
 })
 
 createTest('salesforce')
+  .withRum({
+    trackViewsManually: true,
+    trackLongTasks: true,
+    trackResources: true,
+    trackUserInteractions: true,
+  })
   .withSalesforceApp()
   .run(async ({ page, intakeRegistry, flushEvents }) => {
     await expect(page.getByTestId('home-custom-actions')).toBeVisible({ timeout: 30000 })
