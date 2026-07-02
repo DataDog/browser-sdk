@@ -2,6 +2,14 @@ import { computeStackTrace, getSourceCodeContext } from '@datadog/browser-core'
 import { SKIPPED } from '@datadog/js-core/assembly'
 import type { DefaultRumEventAttributes, AssembleHookParams, AssembleHook } from '../hooks'
 
+/**
+ * Attributes service and version from the source code context (injected at build time by the
+ * Datadog build plugins) to RUM events emitted by micro-frontend bundles.
+ *
+ * Note: service/version attribution relies on a single URL (the top frame of the error stack, or the
+ * first script of a long animation frame). Debug IDs, on the other hand, are resolved separately and
+ * cover every bundle URL across the full error cause chain — not just that top frame.
+ */
 export function startSourceCodeMfeContext(assembleHook: AssembleHook) {
   assembleHook.register(({ domainContext, rawRumEvent }): DefaultRumEventAttributes | SKIPPED => {
     const url = getSourceUrl(domainContext, rawRumEvent)

@@ -431,32 +431,35 @@ test.describe('microfrontend', () => {
   })
 
   test.describe('RUM debug_id attribution', () => {
-    createTest('errors from console.error should have debug_id from source code context')
-      .withRum(RUM_CONFIG)
-      .withSetup(microfrontendSetup)
-      .run(async ({ intakeRegistry, flushEvents, page, withBrowserLogs }) => {
-        await page.click('#app1-console-error')
-        await flushEvents()
+    // Debug IDs are deterministic: the build plugin derives them from each emitted chunk's content
+    // hash, so they are stable across clean rebuilds (only change if the app source/deps change — in
+    // which case regenerate these constants). Most app code lives in each app's Module-Federation
+    // expose chunk (app{1,2}.ts + common.ts); the shared `lib` remote is a separate chunk loaded once,
+    // so its debug ID is identical for every app.
+    const APP1_EXPOSE_CHUNK = '__federation_expose_app1-accc082f23076dbc990c-app1.js'
+    const APP1_DEBUG_ID = '7f4e903c-5e69-4057-b441-f5bb51bae1d8'
+    const APP2_EXPOSE_CHUNK = '__federation_expose_app2-a643d830138dc5aacaf7-app2.js'
+    const APP2_DEBUG_ID = 'b57a6e82-90d9-47c8-af9b-cf3a7ee28078'
+    const LIB_EXPOSE_CHUNK = '__federation_expose_lib-f7d73fec27c87d18a3e2-lib.js'
+    const LIB_DEBUG_ID = '8d90326d-0657-4beb-8f71-439ed03ea3cd'
 
-        expect(intakeRegistry.rumErrorEvents).toHaveLength(2)
-        expect(intakeRegistry.rumErrorEvents[0]._dd?.debug_ids).toBeDefined()
-        expect(intakeRegistry.rumErrorEvents[1]._dd?.debug_ids).toBeDefined()
-
-        withBrowserLogs((browserLogs) => {
-          expect(browserLogs).toHaveLength(2)
-        })
-      })
     createTest('runtime errors should have debug_id from source code context')
       .withRum(RUM_CONFIG)
       .withSetup(microfrontendSetup)
-      .run(async ({ intakeRegistry, flushEvents, page, withBrowserLogs }) => {
+      .run(async ({ intakeRegistry, flushEvents, page, withBrowserLogs, baseUrl }) => {
         await page.click('#app1-runtime-error')
         await page.click('#app2-runtime-error')
         await flushEvents()
 
         expect(intakeRegistry.rumErrorEvents).toHaveLength(2)
-        expect(intakeRegistry.rumErrorEvents[0]._dd?.debug_ids).toBeDefined()
-        expect(intakeRegistry.rumErrorEvents[1]._dd?.debug_ids).toBeDefined()
+        // frame 0 -> app1 expose chunk (app1.ts + common.ts)
+        expect(intakeRegistry.rumErrorEvents[0]._dd?.debug_ids).toEqual({
+          [`${baseUrl}microfrontend/chunks/${APP1_EXPOSE_CHUNK}`]: APP1_DEBUG_ID,
+        })
+        // frame 0 -> app2 expose chunk (app2.ts + common.ts)
+        expect(intakeRegistry.rumErrorEvents[1]._dd?.debug_ids).toEqual({
+          [`${baseUrl}microfrontend/chunks/${APP2_EXPOSE_CHUNK}`]: APP2_DEBUG_ID,
+        })
 
         withBrowserLogs((browserLogs) => {
           expect(browserLogs).toHaveLength(2)
@@ -466,7 +469,7 @@ test.describe('microfrontend', () => {
     createTest('LOAf should have debug_id from source code context')
       .withRum(RUM_CONFIG)
       .withSetup(microfrontendSetup)
-      .run(async ({ intakeRegistry, flushEvents, page }) => {
+      .run(async ({ intakeRegistry, flushEvents, page, baseUrl }) => {
         test.skip(
           !(await isLongAnimationFrameSupported(page)),
           'Browser does not support PerformanceLongAnimationFrameTiming'
@@ -481,8 +484,39 @@ test.describe('microfrontend', () => {
         )
 
         expect(longTaskEvents).toHaveLength(2)
-        expect(longTaskEvents[0]._dd?.debug_ids).toBeDefined()
-        expect(longTaskEvents[1]._dd?.debug_ids).toBeDefined()
+        // script 0 -> app1 expose chunk (app1.ts + common.ts)
+        expect(longTaskEvents[0]._dd?.debug_ids).toEqual({
+          [`${baseUrl}microfrontend/chunks/${APP1_EXPOSE_CHUNK}`]: APP1_DEBUG_ID,
+        })
+        // script 0 -> app2 expose chunk (app2.ts + common.ts)
+        expect(longTaskEvents[1]._dd?.debug_ids).toEqual({
+          [`${baseUrl}microfrontend/chunks/${APP2_EXPOSE_CHUNK}`]: APP2_DEBUG_ID,
+        })
+      })
+
+    createTest('errors spanning multiple chunks should have a debug_id for each chunk in the stack')
+      .withRum(RUM_CONFIG)
+      .withSetup(microfrontendSetup)
+      .run(async ({ intakeRegistry, flushEvents, page, withBrowserLogs, baseUrl }) => {
+        await page.click('#app1-nested-error')
+        await page.click('#app2-nested-error')
+        await flushEvents()
+
+        expect(intakeRegistry.rumErrorEvents).toHaveLength(2)
+        // frame 0 (throw) -> shared lib chunk (boom), frame 1 (caller) -> app1 expose chunk
+        expect(intakeRegistry.rumErrorEvents[0]._dd?.debug_ids).toEqual({
+          [`${baseUrl}microfrontend/chunks/${LIB_EXPOSE_CHUNK}`]: LIB_DEBUG_ID,
+          [`${baseUrl}microfrontend/chunks/${APP1_EXPOSE_CHUNK}`]: APP1_DEBUG_ID,
+        })
+        // same shared lib debug ID, merged with app2's own chunk
+        expect(intakeRegistry.rumErrorEvents[1]._dd?.debug_ids).toEqual({
+          [`${baseUrl}microfrontend/chunks/${LIB_EXPOSE_CHUNK}`]: LIB_DEBUG_ID,
+          [`${baseUrl}microfrontend/chunks/${APP2_EXPOSE_CHUNK}`]: APP2_DEBUG_ID,
+        })
+
+        withBrowserLogs((browserLogs) => {
+          expect(browserLogs).toHaveLength(2)
+        })
       })
   })
 

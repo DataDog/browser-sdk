@@ -3,6 +3,13 @@ import { computeStackTrace } from '../tools/stackTrace/computeStackTrace'
 import { isEmptyObject } from '../tools/utils/objectUtils'
 import { addTelemetryUsage } from './telemetry'
 
+/**
+ * Entry of the `DD_SOURCE_CODE_CONTEXT` map injected at build time. Depending on the build plugin
+ * configuration, an entry can hold:
+ * - service/version only (source code attribution),
+ * - a debug ID only (sourcemap resolution),
+ * - or both.
+ */
 export interface SourceCodeContextEntry {
   service?: string
   version?: string
@@ -56,19 +63,19 @@ function syncSourceCodeContext() {
   }
 }
 
-export function getDebugIds(urls: string[]): { [url: string]: string } | undefined {
+export function buildDebugIdByUrl(urls: string[]): { [url: string]: string } | undefined {
   syncSourceCodeContext()
 
-  const debugIds: { [url: string]: string } = {}
+  const debugIdByUrl: { [url: string]: string } = {}
 
   for (const url of urls) {
     const debugId = contextByUrl.get(url)?.ddDebugId
     if (debugId !== undefined) {
-      debugIds[url] = debugId
+      debugIdByUrl[url] = debugId
     }
   }
 
-  return isEmptyObject(debugIds) ? undefined : debugIds
+  return isEmptyObject(debugIdByUrl) ? undefined : debugIdByUrl
 }
 
 export function getSourceCodeContext(url: string): SourceCodeContextEntry | undefined {

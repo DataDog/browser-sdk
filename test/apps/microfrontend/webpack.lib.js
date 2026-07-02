@@ -3,24 +3,21 @@ const { ModuleFederationPlugin } = require('@module-federation/enhanced/webpack'
 const webpackBase = require('./webpack.base')
 
 module.exports = webpackBase({
-  name: 'app2',
+  name: 'lib',
   plugins: [
     new ModuleFederationPlugin({
-      name: 'app2',
-      filename: 'app2Entry.js',
+      name: 'lib',
+      filename: 'libEntry.js',
       exposes: {
-        './app2': './app2.ts',
-      },
-      remotes: {
-        lib: 'lib@/microfrontend/libEntry.js',
+        './lib': './lib.ts',
       },
     }),
     datadogWebpackPlugin({
       rum: {
         enable: true,
         sourceCodeContext: {
-          service: 'mfe-app2-service',
-          version: '0.2.0',
+          service: 'mf-lib-service',
+          version: '3.0.0',
           debugId: true,
         },
       },

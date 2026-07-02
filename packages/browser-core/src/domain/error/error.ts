@@ -6,7 +6,7 @@ import { jsonStringify } from '../../tools/serialisation/jsonStringify'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
-import { getDebugIds } from '../sourceCodeContext'
+import { buildDebugIdByUrl } from '../sourceCodeContext'
 import type { ErrorSource, ErrorHandling, RawError, ErrorWithCause, NonErrorPrefix } from './error.types'
 import { isError, NO_ERROR_STACK_PRESENT_MESSAGE } from './isError'
 
@@ -55,7 +55,7 @@ function getErrorDebugIds(
   errorCauses: Array<{ stackTrace: StackTrace | undefined }>
 ) {
   const errorCausesUrls = errorCauses.flatMap(({ stackTrace }) => getStackTraceUrls(stackTrace))
-  return getDebugIds(getStackTraceUrls(stackTrace).concat(errorCausesUrls))
+  return buildDebugIdByUrl(getStackTraceUrls(stackTrace).concat(errorCausesUrls))
 }
 
 export function flattenErrorCauses(
@@ -65,9 +65,10 @@ export function flattenErrorCauses(
   let current: unknown = error.cause
 
   while (current !== undefined && current !== null && chain.length < 10) {
-    const stackTrace = isError(current) ? computeStackTrace(current) : undefined
+    const isCurrentError = isError(current)
+    const stackTrace = isCurrentError ? computeStackTrace(current) : undefined
     chain.push({ originalError: current, stackTrace })
-    current = isError(current) ? (current as ErrorWithCause).cause : undefined
+    current = isCurrentError ? (current as ErrorWithCause).cause : undefined
   }
 
   return chain

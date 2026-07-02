@@ -1,5 +1,5 @@
 import type { RelativeTime, ServerDuration } from '@datadog/js-core/time'
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import { mockSourceCodeContext, registerCleanupTask } from '@datadog/browser-core/test'
 import {
   collectAndValidateRawRumEvents,
   createPerformanceEntry,
@@ -8,7 +8,7 @@ import {
 } from '../../../test'
 import type { RumPerformanceEntry } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
-import type { RawRumEvent } from '../../rawRumEvent.types'
+import type { RawRumEvent, RawRumLongAnimationFrameEvent } from '../../rawRumEvent.types'
 import { RumEventType, RumLongTaskEntryType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle } from '../lifeCycle'
@@ -86,6 +86,32 @@ describe('longTaskCollection', () => {
       expect(rawRumEvents[0].domainContext).toEqual({
         performanceEntry: performanceLongAnimationFrameTiming,
       })
+    })
+
+    it('should attach debug_ids resolved from the source code context for script urls', () => {
+      // createPerformanceEntry builds a script whose source_url is http://example.com/script.js
+      const debugId = '01234567-89ab-cdef-0123-456789abcdef'
+      mockSourceCodeContext({
+        'Error: ctx\n    at fn (http://example.com/script.js:1:1)': { ddDebugId: debugId },
+      })
+      setupLongTaskCollection()
+
+      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LONG_ANIMATION_FRAME)])
+
+      expect((rawRumEvents[0].rawRumEvent as RawRumLongAnimationFrameEvent)._dd.debug_ids).toEqual({
+        'http://example.com/script.js': debugId,
+      })
+    })
+
+    it('should not attach debug_ids when no script url matches the source code context', () => {
+      mockSourceCodeContext({
+        'Error: ctx\n    at fn (http://example.com/other.js:1:1)': { ddDebugId: 'debug-id-1' },
+      })
+      setupLongTaskCollection()
+
+      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LONG_ANIMATION_FRAME)])
+
+      expect((rawRumEvents[0].rawRumEvent as RawRumLongAnimationFrameEvent)._dd.debug_ids).toBeUndefined()
     })
 
     it('should only listen to long animation frame performance entry', () => {

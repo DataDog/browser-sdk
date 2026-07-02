@@ -11,6 +11,9 @@ module.exports = webpackBase({
       exposes: {
         './app1': './app1.ts',
       },
+      remotes: {
+        lib: 'lib@/microfrontend/libEntry.js',
+      },
     }),
     datadogWebpackPlugin({
       rum: {

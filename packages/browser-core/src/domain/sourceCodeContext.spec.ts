@@ -1,5 +1,5 @@
 import { mockSourceCodeContext, startMockTelemetry } from '../../test'
-import { getDebugIds, getSourceCodeContext } from './sourceCodeContext'
+import { buildDebugIdByUrl, getSourceCodeContext } from './sourceCodeContext'
 
 const url = 'http://source-code-context-spec.example.com/file.js'
 const otherUrl = 'http://source-code-context-spec.example.com/other.js'
@@ -12,7 +12,7 @@ function makeStack(topFrameUrl: string) {
     at HTMLButtonElement.onclick (http://source-code-context-spec.example.com/runtime.js:107:146)`
 }
 
-describe('getDebugIds', () => {
+describe('buildDebugIdByUrl', () => {
   it('should return debug IDs for the requested URLs present in DD_SOURCE_CODE_CONTEXT', () => {
     mockSourceCodeContext({
       [makeStack(url)]: { ddDebugId: 'id-1' },
@@ -20,17 +20,17 @@ describe('getDebugIds', () => {
       [makeStack(thirdUrl)]: { ddDebugId: 'id-3' },
     })
 
-    expect(getDebugIds([url, otherUrl])).toEqual({ [url]: 'id-1', [otherUrl]: 'id-2' })
+    expect(buildDebugIdByUrl([url, otherUrl])).toEqual({ [url]: 'id-1', [otherUrl]: 'id-2' })
   })
 
   it('should return undefined for a URL not in DD_SOURCE_CODE_CONTEXT', () => {
-    expect(getDebugIds([url])).toBeUndefined()
+    expect(buildDebugIdByUrl([url])).toBeUndefined()
   })
 
   it('should omit URLs whose entry has no ddDebugId', () => {
     mockSourceCodeContext({ [makeStack(url)]: { service: 'my-service' } })
 
-    expect(getDebugIds([url])).toBeUndefined()
+    expect(buildDebugIdByUrl([url])).toBeUndefined()
   })
 
   it('should only match the top frame URL, not deeper frames of the context stack', () => {
@@ -38,20 +38,20 @@ describe('getDebugIds', () => {
       [`Error: ctx\n    at top (${url}:1:1)\n    at deeper (${otherUrl}:2:2)`]: { ddDebugId: 'id-1' },
     })
 
-    expect(getDebugIds([url])).toEqual({ [url]: 'id-1' })
-    expect(getDebugIds([otherUrl])).toBeUndefined()
+    expect(buildDebugIdByUrl([url])).toEqual({ [url]: 'id-1' })
+    expect(buildDebugIdByUrl([otherUrl])).toBeUndefined()
   })
 
   it('should support late updates to DD_SOURCE_CODE_CONTEXT', () => {
     const mock = mockSourceCodeContext()
 
     // First call: context not yet set
-    expect(getDebugIds([url])).toBeUndefined()
+    expect(buildDebugIdByUrl([url])).toBeUndefined()
 
     // Context added later
     mock.addEntry(makeStack(url), { service: 'late-service', ddDebugId: 'late-id' })
 
-    expect(getDebugIds([url])).toEqual({ [url]: 'late-id' })
+    expect(buildDebugIdByUrl([url])).toEqual({ [url]: 'late-id' })
   })
 })
 
