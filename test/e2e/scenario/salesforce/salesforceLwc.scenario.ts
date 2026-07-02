@@ -1,12 +1,12 @@
 import { expect, test } from '@playwright/test'
 import { createTest } from '../../lib/framework'
 
-// Bypass CSP and CORS restrictions in the Salesforce app
+// Bypass CSP and CORS restrictions in the Salesforce app.
+// --disable-web-security is chromium-only
 test.use({
   bypassCSP: true,
-  launchOptions: {
-    // This flag is chromium-only
-    args: ['--disable-web-security'],
+  launchOptions: async ({ browserName }, use) => {
+    await use(browserName === 'chromium' ? { args: ['--disable-web-security'] } : {})
   },
 })
 
