@@ -1,4 +1,4 @@
-import { globalObject } from '../tools/globalObject'
+import { globalObject } from '@datadog/js-core/util'
 import { computeStackTrace } from '../tools/stackTrace/computeStackTrace'
 import { isEmptyObject } from '../tools/utils/objectUtils'
 import { addTelemetryUsage } from './telemetry'
