@@ -13,7 +13,7 @@ This app is Lightning-only.
 
 ## Authentication
 
-The Salesforce flow uses the Salesforce CLI with a JWT keypair. There is no separate manual auth step: `yarn salesforce:deploy-app` and `yarn salesforce:get-url` authenticate the `sf-lwc-ci` alias automatically whenever it isn't already authenticated.
+The Salesforce flow uses the Salesforce CLI with a JWT keypair. There is no separate manual auth step: `yarn salesforce:deploy-app` and `yarn salesforce:get-url` always (re-)authenticate the `sf-lwc-ci` alias before running, since the JWT private key file used for authentication is deleted right after login and can't be reused to refresh a cached session.
 
 Credentials are set as CI variables.
 

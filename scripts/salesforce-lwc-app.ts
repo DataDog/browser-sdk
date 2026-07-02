@@ -90,6 +90,9 @@ function deployApp() {
 
 function buildSalesforceLwcUrl(): string {
   const targetOrg = process.env.SF_TARGET_ORG ?? defaultTargetOrg
+
+  authenticate(targetOrg)
+
   const path = new URL(salesforceHomePath, 'https://salesforce.local')
 
   const output = command`sf org open --target-org ${targetOrg} --path ${path.pathname}${path.search} --url-only --json`
