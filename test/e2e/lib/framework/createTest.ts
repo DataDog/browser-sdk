@@ -414,6 +414,9 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     addTag('test.browserName', browserName)
     addTestOptimizationTags(test.info().project.metadata as BrowserConfiguration)
 
+    // Skip before building the Salesforce URL
+    test.skip(setupOptions.salesforceApp && browserName !== 'chromium', 'Salesforce app is tested on chromium only')
+
     // The bug only reproduces on Playwright's macOS WebKit build; skip on every other platform
     // (notably Linux CI runners) to avoid installing the prototype override where it serves no purpose.
     if (browserName === 'webkit' && process.platform === 'darwin') {
@@ -422,6 +425,7 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
 
     const servers = await getTestServers()
     const baseUrl = new URL(servers.base.origin)
+    // Some hooks (e.g. building the Salesforce URL) need to await network calls before mutating baseUrl
     for (const hook of setupOptions.baseUrlHooks) {
       await hook(baseUrl, servers, setupOptions)
     }

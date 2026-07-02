@@ -11,6 +11,7 @@ const salesforceHomePath = '/lightning/app/c__SF_LWC_App/page/home'
 
 // The frontdoor.jsp OTP expires in ~1 minute, so the URL must be generated at test time —
 // not at suite startup — to guarantee a valid token when the test actually navigates.
+// This functions is similar to the one in scripts/salesforce-lwc-app.ts, but it is not using the sf CLI so we can call it at test time.
 export async function buildSalesforceLwcUrl(): Promise<string> {
   const instanceUrl = getSfLwcInstanceUrl()
   const privateKey = Buffer.from(getSfLwcJwtPrivateKey(), 'base64').toString('utf8')

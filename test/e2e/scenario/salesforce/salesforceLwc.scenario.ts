@@ -12,11 +12,7 @@ test.use({
 
 createTest('salesforce')
   .withSalesforceApp()
-  .run(async ({ page, intakeRegistry, flushEvents, browserName }) => {
-    if (browserName !== 'chromium') {
-      return
-    }
-
+  .run(async ({ page, intakeRegistry, flushEvents }) => {
     await expect(page.getByTestId('home-custom-actions')).toBeVisible({ timeout: 30000 })
 
     await page.getByTestId('custom-action-1').click()
