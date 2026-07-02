@@ -13,6 +13,10 @@ const salesforceHomePath = '/lightning/app/c__SF_LWC_App/page/home'
 // not at suite startup — to guarantee a valid token when the test actually navigates.
 // This functions is similar to the one in scripts/salesforce-lwc-app.ts, but it is not using the sf CLI so we can call it at test time.
 export async function buildSalesforceLwcUrl(): Promise<string> {
+  if (!getSfLwcClientId() || !getSfLwcInstanceUrl() || !getSfLwcJwtPrivateKey() || !getSfLwcUsername()) {
+    console.error('Salesforce credentials are not set')
+    return ''
+  }
   const instanceUrl = getSfLwcInstanceUrl()
   const privateKey = Buffer.from(getSfLwcJwtPrivateKey(), 'base64').toString('utf8')
   const accessToken = await getAccessToken(getSfLwcClientId(), getSfLwcUsername(), instanceUrl, privateKey)
