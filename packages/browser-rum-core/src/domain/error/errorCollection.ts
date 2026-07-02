@@ -69,20 +69,24 @@ export function doStartErrorCollection(lifeCycle: LifeCycle) {
 function processError(error: RawError): RawRumEventCollectedData<RawRumErrorEvent> {
   const rawRumEvent: RawRumErrorEvent = {
     date: error.startClocks.timeStamp,
-    error: {
-      id: generateUUID(),
-      message: error.message,
-      source: error.source,
-      stack: error.stack,
-      handling_stack: error.handlingStack,
-      component_stack: error.componentStack,
-      type: error.type,
-      handling: error.handling,
-      causes: error.causes,
-      source_type: 'browser',
-      fingerprint: error.fingerprint,
-      csp: error.csp,
-    },
+    error: combine(
+      {
+        id: generateUUID(),
+        message: error.message,
+        source: error.source,
+        stack: error.stack,
+        handling_stack: error.handlingStack,
+        component_stack: error.componentStack,
+        type: error.type,
+        handling: error.handling,
+        causes: error.causes,
+        source_type: 'browser' as const,
+        fingerprint: error.fingerprint,
+        csp: error.csp,
+      },
+      // TODO: add feature_id to the rum-events-format schema then remove this combine()
+      error.featureId !== undefined ? { feature_id: error.featureId } : {}
+    ),
     type: RumEventType.ERROR,
     context: error.context,
   }

@@ -23,12 +23,14 @@ export interface RawErrorCause {
 
 export interface Csp {
   disposition: 'enforce' | 'report'
+  featureId?: string
 }
 
 export interface RawError {
   startClocks: ClocksState
   message: string
   type?: string
+  featureId?: string
   stack?: string
   source: ErrorSource
   originalError?: unknown

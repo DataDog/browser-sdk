@@ -14,6 +14,7 @@ export function createErrorFieldFromRawError(
   return {
     stack: rawError.stack,
     kind: rawError.type,
+    feature_id: rawError.featureId,
     message: includeMessage ? rawError.message : undefined,
     causes: rawError.causes,
     fingerprint: rawError.fingerprint,

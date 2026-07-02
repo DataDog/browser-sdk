@@ -13,6 +13,7 @@ export type RawLogsEvent =
 interface Error {
   message?: string
   kind?: string
+  feature_id?: string
   stack?: string
   fingerprint?: string
   causes?: RawErrorCause[]
