@@ -4,18 +4,17 @@
 
 ```ts
 
-// @public (undocumented)
+// @public
 export type BooleanField = {
     type: 'boolean';
 } & Optionality & Multiple & Strict;
 
-// @public (undocumented)
+// @public
 export interface ConfigurationSchema {
-    // (undocumented)
     readonly [key: string]: FieldDef;
 }
 
-// @public (undocumented)
+// @public
 export type EnumField = ({
     type: 'enum';
     values: readonly string[];
@@ -26,16 +25,16 @@ export type EnumField = ({
     allowAll?: true;
 } & Optionality & Multiple & Strict);
 
-// @public (undocumented)
+// @public
 export type FieldDef = StringField | PercentageField | BooleanField | SiteField | MatchOptionField | EnumField | UnionField | SchemaField | FunctionField;
 
-// @public (undocumented)
+// @public
 export type FunctionField = {
     type: 'function';
     signature?: ((...args: any[]) => any) | undefined;
 } & Optionality & Multiple & Strict;
 
-// @public (undocumented)
+// @public
 export type InferredConfig<S extends ConfigurationSchema> = {
     [K in keyof S]: InferOutput<S[K]>;
 };
@@ -43,39 +42,60 @@ export type InferredConfig<S extends ConfigurationSchema> = {
 // @public
 export type MatchOption = string | RegExp | ((value: string) => boolean);
 
-// @public (undocumented)
+// @public
 export type MatchOptionField = {
     type: 'match-option';
 } & Optionality & Multiple & Strict;
 
-// @public (undocumented)
+// @public
+export interface Multiple {
+    multiple?: true;
+}
+
+// @public
+export type Optionality = {
+    required: true;
+    default?: never;
+} | {
+    required?: false;
+    default: unknown;
+} | {
+    required?: false;
+};
+
+// @public
 export type PercentageField = {
     type: 'percentage';
 } & Optionality & Multiple & Strict;
 
-// @public (undocumented)
+// @public
 export type SchemaField = {
     type: 'schema';
     schema: ConfigurationSchema;
 } & Optionality & Multiple & Strict;
 
-// @public (undocumented)
+// @public
 export type SiteField = {
     type: 'site';
 } & Optionality & Multiple & Strict;
 
-// @public (undocumented)
+// @public
+export interface Strict {
+    strict?: false;
+}
+
+// @public
 export type StringField = {
     type: 'string';
 } & Optionality & Multiple & Strict;
 
-// @public (undocumented)
+// @public
 export type UnionField = {
     type: 'union';
     variants: readonly FieldDef[];
 } & Optionality & Multiple & Strict;
 
-// @public (undocumented)
+// @public
 export function validateAndBuildConfiguration<S extends ConfigurationSchema>(initConfig: unknown, schema: S, display: Display): InferredConfig<S> | undefined;
 
 // (No @packageDocumentation comment for this package)

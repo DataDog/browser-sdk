@@ -7,52 +7,96 @@ import type { Display } from '../util/display'
 /** A value that can match against a string: an exact string, a RegExp, or a predicate function. */
 export type MatchOption = string | RegExp | ((value: string) => boolean)
 
-type Optionality = { required: true; default?: never } | { required?: false; default: unknown } | { required?: false }
-// multiple: true — field expects an array; each item is validated by the base type.
-interface Multiple {
+/**
+ * Controls whether a field is required, and what it falls back to when absent.
+ * A field is either `required: true` (no default allowed), has an explicit `default`,
+ * or is optional with no default (resolves to `undefined` when absent).
+ */
+export type Optionality =
+  | { required: true; default?: never }
+  | { required?: false; default: unknown }
+  | { required?: false }
+
+/**
+ * When `multiple: true`, the field expects an array instead of a single value; each item
+ * is validated against the field's base type.
+ */
+export interface Multiple {
+  /** When `true`, the field expects an array; each item is validated by the base type. */
   multiple?: true
 }
-// strict: false — when a provided value fails validation, fall back to the default instead of
-// aborting. Defaults to true (abort). Use for backward-compatible relaxation of validation.
-interface Strict {
+
+/**
+ * When `strict: false`, a value that fails validation falls back to the field's default
+ * instead of aborting the whole configuration. Defaults to `true` (abort). Use this for
+ * backward-compatible relaxation of validation on a field.
+ */
+export interface Strict {
+  /** When `false`, an invalid value falls back to the default instead of aborting. Defaults to `true`. */
   strict?: false
 }
 
+/** A free-text string field. Rejects empty strings. */
 export type StringField = { type: 'string' } & Optionality & Multiple & Strict
+
+/** A numeric field constrained to the 0–100 range, typically used for sample rates. */
 export type PercentageField = { type: 'percentage' } & Optionality & Multiple & Strict
+
+/**
+ * A boolean field. When `strict: false`, a non-boolean value is coerced with `!!value`
+ * instead of being rejected.
+ */
 export type BooleanField = { type: 'boolean' } & Optionality & Multiple & Strict
-// Validates that the value looks like a Datadog site (/(datadog|ddog|datad0g|dd0g)/ regex).
+
+/** Validates that the value looks like a Datadog site (matches `/(datadog|ddog|datad0g|dd0g)/`). */
 export type SiteField = { type: 'site' } & Optionality & Multiple & Strict
-// Accepts string | RegExp | function — valid MatchOption values.
+
+/** Accepts a {@link MatchOption}: a string, a RegExp, or a predicate function. */
 export type MatchOptionField = { type: 'match-option' } & Optionality & Multiple & Strict
-// allowAll: true — only valid with multiple: true. Accepts the string 'all' as a shorthand
-// for the full set of values.
+
+/**
+ * Restricts the value to one of a fixed set of values, given either as an array of strings
+ * or as an object mapping (e.g. a TypeScript const object used as an enum).
+ * `allowAll: true` (only meaningful combined with `multiple: true`) accepts the string
+ * `'all'` as shorthand for every value in the set.
+ */
 export type EnumField =
   | ({ type: 'enum'; values: readonly string[]; allowAll?: true } & Optionality & Multiple & Strict)
   | ({ type: 'enum'; values: Record<string, string>; allowAll?: true } & Optionality & Multiple & Strict)
-// Tries each variant in order; uses the first that returns a non-undefined value.
+
+/** Tries each variant in `variants`, in order, and uses the first one that validates successfully. */
 export type UnionField = {
   type: 'union'
   variants: readonly FieldDef[]
 } & Optionality &
   Multiple &
   Strict
-// Validates a nested object against a sub-schema; returns the validated sub-config or undefined.
+
+/**
+ * Validates a nested object against a sub-schema, producing a nested {@link InferredConfig}.
+ * Resolves to `undefined` if the sub-schema validation fails.
+ */
 export type SchemaField = {
   type: 'schema'
   schema: ConfigurationSchema
 } & Optionality &
   Multiple &
   Strict
-// signature — phantom property, never set at runtime. Assign `undefined as YourFnType | undefined`
-// to make InferredConfig infer a specific function type instead of the generic fallback.
+
+/** A field expecting a function value. */
 export type FunctionField = {
   type: 'function'
+  /**
+   * Phantom property, never set at runtime. Assign `undefined as YourFnType | undefined`
+   * to make {@link InferredConfig} infer that specific function type instead of the generic
+   * `(...args: unknown[]) => unknown` fallback.
+   */
   signature?: ((...args: any[]) => any) | undefined
 } & Optionality &
   Multiple &
   Strict
 
+/** The union of all field definition types supported by a {@link ConfigurationSchema}. */
 export type FieldDef =
   | StringField
   | PercentageField
@@ -64,7 +108,13 @@ export type FieldDef =
   | SchemaField
   | FunctionField
 
+/**
+ * A declarative map of field names to their {@link FieldDef}, used to derive both the
+ * validated configuration type (via {@link InferredConfig}) and its runtime validation
+ * (via {@link validateAndBuildConfiguration}).
+ */
 export interface ConfigurationSchema {
+  /** The field definition for a given configuration key. */
   readonly [key: string]: FieldDef
 }
 
@@ -142,6 +192,10 @@ type InferOutput<F extends FieldDef> = F extends { multiple: true }
       : Array<InferBase<F>> | undefined
   : InferScalar<F>
 
+/**
+ * Infers the validated configuration output type for a given {@link ConfigurationSchema} —
+ * the return type of {@link validateAndBuildConfiguration} for that schema.
+ */
 export type InferredConfig<S extends ConfigurationSchema> = {
   [K in keyof S]: InferOutput<S[K]>
 }
@@ -175,6 +229,19 @@ function buildErrorMessage(key: string, field: FieldDef): string {
   }
 }
 
+/**
+ * Validates a raw init configuration object against a {@link ConfigurationSchema} and builds
+ * the corresponding {@link InferredConfig}. Use this to derive a schema-driven configuration
+ * builder for a package (e.g. `validateAndBuildRumConfiguration`) instead of writing
+ * per-field validation by hand.
+ *
+ * @param initConfig - The raw, untrusted configuration object provided by the SDK consumer.
+ * @param schema - The {@link ConfigurationSchema} describing every field to validate.
+ * @param display - Optional error reporter; when provided, validation failures are reported
+ * through `display.error` with a message naming the offending field.
+ * @returns The validated, defaulted configuration, or `undefined` if `initConfig` is missing
+ * or a required/strict field failed validation.
+ */
 export function validateAndBuildConfiguration<S extends ConfigurationSchema>(
   initConfig: unknown,
   schema: S,
