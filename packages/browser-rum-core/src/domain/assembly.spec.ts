@@ -226,6 +226,46 @@ describe('rum assembly', () => {
         })
       })
 
+      describe('_dd.debug_ids', () => {
+        const url = 'http://path/to/app.js'
+
+        it('should allow deleting _dd.debug_ids on error events', () => {
+          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+            partialConfiguration: {
+              beforeSend: (event) => {
+                delete event._dd.debug_ids
+              },
+            },
+          })
+
+          notifyRawRumEvent(lifeCycle, {
+            rawRumEvent: createRawRumEvent(RumEventType.ERROR, {
+              _dd: { debug_ids: { [url]: 'debug-id' } },
+            }),
+          })
+
+          expect((serverRumEvents[0] as any)._dd.debug_ids).toEqual({})
+        })
+
+        it('should allow modification of _dd.debug_ids on long task events', () => {
+          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+            partialConfiguration: {
+              beforeSend: (event) => {
+                event._dd.debug_ids = { [url]: 'modified-debug-id' }
+              },
+            },
+          })
+
+          notifyRawRumEvent(lifeCycle, {
+            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, {
+              _dd: { debug_ids: { [url]: 'debug-id' } },
+            }),
+          })
+
+          expect((serverRumEvents[0] as any)._dd.debug_ids).toEqual({ [url]: 'modified-debug-id' })
+        })
+      })
+
       describe('field resource.graphql on Resource events', () => {
         it('should allow modification of resource.graphql.variables property', () => {
           const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
