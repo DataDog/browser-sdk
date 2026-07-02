@@ -12,9 +12,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@datadog/webpack-plugin@npm:3.2.2":
-  version: 3.2.2
-  resolution: "@datadog/webpack-plugin@npm:3.2.2"
+"@datadog/webpack-plugin@npm:3.2.5":
+  version: 3.2.5
+  resolution: "@datadog/webpack-plugin@npm:3.2.5"
   dependencies:
     "@datadog/js-instrumentation-wasm": "npm:1.0.8"
     "@jridgewell/remapping": "npm:2.3.5"
@@ -25,6 +25,7 @@ __metadata:
     glob: "npm:11.1.0"
     json-stream-stringify: "npm:3.1.6"
     jszip: "npm:3.10.1"
+    magic-string: "npm:0.30.21"
     oauth4webapi: "npm:3.8.6"
     outdent: "npm:0.8.0"
     p-queue: "npm:6.6.2"
@@ -35,7 +36,6 @@ __metadata:
     "@babel/parser": ^7.24.5
     "@babel/traverse": ^7.24.5
     "@babel/types": ^7.24.5
-    magic-string: ^0.30.0
     webpack: ">= 5.x < 6.x"
   dependenciesMeta:
     "@napi-rs/keyring":
@@ -47,9 +47,7 @@ __metadata:
       optional: true
     "@babel/types":
       optional: true
-    magic-string:
-      optional: true
-  checksum: 10c0/f1ffb380586c077e83eff17ba0e765eae59045a98dd2565a77d7590e13f1a483a172713783b8b1fbbf607f4d0179809cc04f27b778867832216c4069b96c7744
+  checksum: 10c0/9610cc15fc901471c1141c202222b0ae0aa782e55e3ffe80df86efd82b453922d30b46ed4d51d4c5670a4ef331c8d8ef0edede26af60118fbb5a26ea636fcc46
   languageName: node
   linkType: hard
 
@@ -1465,7 +1463,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "microfrontend-test-app@workspace:."
   dependencies:
-    "@datadog/webpack-plugin": "npm:3.2.2"
+    "@datadog/webpack-plugin": "npm:3.2.5"
     "@module-federation/enhanced": "npm:2.5.1"
     ts-loader: "npm:9.6.2"
     typescript: "npm:6.0.3"

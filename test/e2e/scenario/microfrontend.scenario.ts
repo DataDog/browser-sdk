@@ -436,10 +436,10 @@ test.describe('microfrontend', () => {
     // which case regenerate these constants). Most app code lives in each app's Module-Federation
     // expose chunk (app{1,2}.ts + common.ts); the shared `lib` remote is a separate chunk loaded once,
     // so its debug ID is identical for every app.
-    const APP1_EXPOSE_CHUNK = '__federation_expose_app1-accc082f23076dbc990c-app1.js'
-    const APP1_DEBUG_ID = '7f4e903c-5e69-4057-b441-f5bb51bae1d8'
-    const APP2_EXPOSE_CHUNK = '__federation_expose_app2-a643d830138dc5aacaf7-app2.js'
-    const APP2_DEBUG_ID = 'b57a6e82-90d9-47c8-af9b-cf3a7ee28078'
+    const APP1_EXPOSE_CHUNK = '__federation_expose_app1-8adfc35e0ddfff22d7d0-app1.js'
+    const APP1_DEBUG_ID = 'efcb171a-1822-45ad-81f1-a82adab920c7'
+    const APP2_EXPOSE_CHUNK = '__federation_expose_app2-e9242831fd6d69399e3b-app2.js'
+    const APP2_DEBUG_ID = 'ff6353d8-f8d4-4b83-a316-9307c565f8f7'
     const LIB_EXPOSE_CHUNK = '__federation_expose_lib-f7d73fec27c87d18a3e2-lib.js'
     const LIB_DEBUG_ID = '8d90326d-0657-4beb-8f71-439ed03ea3cd'
 
