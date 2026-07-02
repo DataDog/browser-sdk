@@ -476,6 +476,11 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
       await page.addInitScript(
         `window.dd_RUM_CONFIGURATION = ${JSON.stringify({
           ...DEFAULT_RUM_CONFIGURATION,
+          trackViewsManually: true,
+          trackEarlyRequests: true,
+          trackLongTasks: true,
+          trackResources: true,
+          trackUserInteractions: true,
           proxy: servers.datadogHttpApi.origin,
         })}`
       )

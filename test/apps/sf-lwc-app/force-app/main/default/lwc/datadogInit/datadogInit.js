@@ -63,11 +63,6 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
 
   getInitConfiguration(searchParams) {
     return {
-      trackViewsManually: true,
-      trackEarlyRequests: true,
-      trackLongTasks: true,
-      trackResources: true,
-      trackUserInteractions: true,
       ...window.dd_RUM_CONFIGURATION,
       ...this.getQueryInitConfiguration(searchParams),
     }
