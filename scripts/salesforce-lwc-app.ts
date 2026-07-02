@@ -78,9 +78,7 @@ function authenticate(targetOrg: string) {
 function deployApp() {
   const targetOrg = process.env.SF_TARGET_ORG ?? defaultTargetOrg
 
-  if (!isOrgAuthenticated(targetOrg)) {
-    authenticate(targetOrg)
-  }
+  authenticate(targetOrg)
 
   printLog(`Deploying Salesforce LWC app to ${targetOrg}...`)
   command`sf project deploy start --target-org ${targetOrg} --source-dir force-app --ignore-conflicts --concise`
@@ -90,29 +88,17 @@ function deployApp() {
   printLog('Salesforce LWC app deployed.')
 }
 
-function isOrgAuthenticated(targetOrg: string): boolean {
-  try {
-    command`sf org display --target-org ${targetOrg}`.withCurrentWorkingDirectory(salesforceAppDir).run()
-    return true
-  } catch {
-    return false
-  }
-}
-
 function buildSalesforceLwcUrl(): string {
   const targetOrg = process.env.SF_TARGET_ORG ?? defaultTargetOrg
   const path = new URL(salesforceHomePath, 'https://salesforce.local')
 
-  const output = command`sf org open --target-org ${targetOrg} --path ${path.pathname}${path.search} --url-only`
+  const output = command`sf org open --target-org ${targetOrg} --path ${path.pathname}${path.search} --url-only --json`
     .withCurrentWorkingDirectory(salesforceAppDir)
     .run()
 
-  // The sf CLI appends ANSI reset codes (\x1b[39m etc.) directly to the URL on stdout.
-  // Excluding control characters (0x00–0x1f, which includes ESC/0x1b) strips them cleanly.
-  // eslint-disable-next-line no-control-regex
-  const url = output.match(/https:\/\/[^\s\x00-\x1f]+/g)?.at(-1)
-  if (!url) {
+  const { result } = JSON.parse(output) as { result?: { url?: string } }
+  if (!result?.url) {
     throw new Error(`Unable to find Salesforce URL in command output:\n${output}`)
   }
-  return url
+  return result.url
 }
