@@ -18,13 +18,17 @@ export interface CookieAccess {
 
 export type CookieAccessFactory = (cookieName: string, cookieOptions: CookieOptions) => CookieAccess
 
+// Used to identify capability-probe cookies so their write failures aren't reported as telemetry:
+// failing to write them is an expected outcome (it triggers the document.cookie fallback), not a bug.
+export const TEST_COOKIE_NAME_PREFIX = 'dd_cookie_test_'
+
 export async function areCookiesAuthorized(
   createAccess: CookieAccessFactory,
   cookieOptions: CookieOptions
 ): Promise<boolean> {
   // Use a unique cookie name to avoid issues when the SDK is initialized multiple times during
   // the test cookie lifetime
-  const testCookieName = `dd_cookie_test_${generateUUID()}`
+  const testCookieName = `${TEST_COOKIE_NAME_PREFIX}${generateUUID()}`
   const testCookieValue = 'test'
   const access = createAccess(testCookieName, cookieOptions)
   try {
@@ -83,20 +87,22 @@ export function createCookieStoreAccess(cookieName: string, cookieOptions: Cooki
           partitioned: cookieOptions.partitioned,
         })
       } catch (error) {
-        const documentCookies = getCookies(cookieName)
-        // monitor-until: 2026-07-01
-        addTelemetryDebug('Failed to set cookie using Cookie Store API', {
-          'error.message': (error as Error).message,
-          newValue: value,
-          cookieOptions: {
-            ...cookieOptions,
-          },
-          cookies: items.map((item) => ({
-            ...item,
-          })),
-          cookieCount: items.length,
-          documentCookies,
-        })
+        if (!cookieName.startsWith(TEST_COOKIE_NAME_PREFIX)) {
+          const documentCookies = getCookies(cookieName)
+          // monitor-until: 2026-10-01
+          addTelemetryDebug('Failed to set cookie using Cookie Store API', {
+            'error.message': (error as Error).message,
+            newValue: value,
+            cookieOptions: {
+              ...cookieOptions,
+            },
+            cookies: items.map((item) => ({
+              ...item,
+            })),
+            cookieCount: items.length,
+            documentCookies,
+          })
+        }
       }
     },
 
