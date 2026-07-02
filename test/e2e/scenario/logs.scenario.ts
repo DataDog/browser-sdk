@@ -364,7 +364,6 @@ test.describe('logs', () => {
       .run(async ({ intakeRegistry, flushEvents, page }) => {
         // Logs should keep being sent indefinitely, with or without a session attached, even
         // long after the session has expired.
-        test.fail()
 
         // Let the session expire from inactivity (no click/scroll/keydown/touch).
         await page.clock.fastForward(SESSION_EXPIRATION_DELAY + ONE_MINUTE)

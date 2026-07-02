@@ -40,27 +40,35 @@ function cleanupHistories() {
   cleanupTasks.forEach((task) => task())
 }
 
-export function createValueHistory<Value>({
-  expireDelay,
-  maxEntries,
-}: {
-  expireDelay: number
-  maxEntries?: number
-}): ValueHistory<Value> {
+type ValueHistoryArgs =
+  | {
+      expireDelay?: number
+      maxEntries: number
+    }
+  | {
+      expireDelay: number
+      maxEntries?: number
+    }
+
+export function createValueHistory<Value>({ expireDelay, maxEntries }: ValueHistoryArgs): ValueHistory<Value> {
   let entries: Array<ValueHistoryEntry<Value>> = []
 
-  if (!cleanupHistoriesInterval) {
-    cleanupHistoriesInterval = setInterval(() => cleanupHistories(), CLEAR_OLD_VALUES_INTERVAL)
-  }
-
   const clearExpiredValues = () => {
+    if (!expireDelay) {
+      return
+    }
     const oldTimeThreshold = relativeNow() - expireDelay
     while (entries.length > 0 && entries[entries.length - 1].endTime < oldTimeThreshold) {
       entries.pop()
     }
   }
 
-  cleanupTasks.add(clearExpiredValues)
+  if (expireDelay) {
+    if (!cleanupHistoriesInterval) {
+      cleanupHistoriesInterval = setInterval(() => cleanupHistories(), CLEAR_OLD_VALUES_INTERVAL)
+    }
+    cleanupTasks.add(clearExpiredValues)
+  }
 
   /**
    * Add a value to the history associated with a start time. Returns a reference to this newly
