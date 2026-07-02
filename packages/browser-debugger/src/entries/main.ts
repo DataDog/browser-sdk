@@ -7,7 +7,8 @@
  */
 
 import { defineGlobal, globalObject, makePublicApi, mockable } from '@datadog/browser-core'
-import type { PublicApi, Site } from '@datadog/browser-core'
+import type { PublicApi } from '@datadog/browser-core'
+import type { Site } from '@datadog/js-core/transport'
 import { initDebuggerTransport, onEntry, onReturn, onThrow } from '../domain/api'
 import { startDeliveryApiPolling } from '../domain/deliveryApi'
 import { display } from '../domain/display'

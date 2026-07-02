@@ -21,14 +21,13 @@ export type {
   SessionPersistence,
   TrackingConsent,
   MatchOption,
-  ProxyFn,
-  Site,
   Context,
   ContextValue,
   ContextArray,
   RumInternalContext,
 } from '@datadog/browser-core'
 export { DefaultPrivacyLevel } from '@datadog/browser-core'
+export type { ProxyFn, Site } from '@datadog/js-core/transport'
 
 /**
  * @deprecated Use {@link DatadogRum} instead
@@ -43,6 +42,7 @@ export type {
   StartRecordingOptions,
   AddDurationVitalOptions,
   DurationVitalOptions,
+  OperationOptions,
   FeatureOperationOptions,
   FailureReason,
   ActionOptions,

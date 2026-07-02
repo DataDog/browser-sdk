@@ -1,7 +1,7 @@
 import { ONE_MINUTE, relativeToClocks } from '@datadog/js-core/time'
 import type { TimeStamp, ClocksState, RelativeTime } from '@datadog/js-core/time'
 import type { SessionManager } from '@datadog/browser-core'
-import { ErrorSource, display, startGlobalContext, startTabContext } from '@datadog/browser-core'
+import { display, startGlobalContext, startTabContext } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { registerCleanupTask, mockClock, createSessionManagerMock } from '@datadog/browser-core/test'
 import { createRawRumEvent, mockRumConfiguration, mockViewHistory, noopRecorderApi } from '../../test'
@@ -615,13 +615,7 @@ describe('rum assembly', () => {
 
         expect(serverRumEvents.length).toBe(1)
         expect(serverRumEvents[0].date).toBe(100)
-        expect(reportErrorSpy).toHaveBeenCalledTimes(1)
-        expect(reportErrorSpy.calls.argsFor(0)[0]).toEqual(
-          jasmine.objectContaining({
-            message,
-            source: ErrorSource.AGENT,
-          })
-        )
+        expect(reportErrorSpy).toHaveBeenCalledWith(message)
       })
 
       it(`does not take discarded ${eventType} events into account`, () => {

@@ -70,7 +70,8 @@ function mergeIntoInternal<D, S>(
 
   const merged = getType(destination) === 'object' ? (destination as Record<any, any>) : {}
   for (const key in source) {
-    if (Object.prototype.hasOwnProperty.call(source, key)) {
+    // Skip __proto__: it resolves to Object.prototype via [[Get]], enabling prototype pollution
+    if (Object.prototype.hasOwnProperty.call(source, key) && key !== '__proto__') {
       merged[key] = mergeIntoInternal(merged[key], source[key], circularReferenceChecker)
     }
   }

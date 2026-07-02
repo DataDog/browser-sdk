@@ -1,6 +1,6 @@
 {
   "name": "@datadog/js-core",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "license": "Apache-2.0",
   "sideEffects": false,
   "exports": {
@@ -23,6 +23,11 @@
       "import": "./esm/entries/util.mjs",
       "require": "./cjs/entries/util.js",
       "types": "./cjs/entries/util.d.ts"
+    },
+    "./transport": {
+      "import": "./esm/entries/transport.mjs",
+      "require": "./cjs/entries/transport.js",
+      "types": "./cjs/entries/transport.d.ts"
     }
   },
   "files": [
@@ -33,6 +38,7 @@
     "time",
     "monitor",
     "util",
+    "transport",
     "!src/**/*.spec.ts",
     "!src/**/*.specHelper.ts"
   ],

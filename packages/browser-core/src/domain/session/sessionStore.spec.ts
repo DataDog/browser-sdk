@@ -1,5 +1,5 @@
+import { globalObject } from '@datadog/js-core/util'
 import { replaceMockable } from '../../../test'
-import { globalObject } from '../../tools/globalObject'
 import type { Configuration, InitConfiguration } from '../configuration'
 import { buildCookieOptions } from '../configuration'
 import { display } from '../../tools/display'

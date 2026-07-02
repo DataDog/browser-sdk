@@ -39,7 +39,8 @@ See `test/e2e/AGENTS.md` for the full E2E testing guide (setup, writing tests, c
 
 Quick commands:
 
-- `yarn test:e2e:setup` — first-time setup
+- `yarn test:e2e:setup` — first-time setup (builds packages and apps, then installs browsers for the workspace Playwright version)
+- `yarn test:e2e:setup:pinned` — optional; installs Chromium, Firefox, and WebKit for Playwright **1.40.1** (required to run the `firefox-pinned` and `webkit-pinned` projects; run after the usual setup when you need those projects locally)
 - `yarn test:e2e` — run all E2E tests
 - `yarn test:e2e -g "pattern"` — filter by name
 - `yarn test:e2e --ui` — Playwright UI mode
@@ -52,6 +53,8 @@ translation proxy. Run them with:
 
 - `yarn test:e2e --project=firefox-pinned`
 - `yarn test:e2e --project=webkit-pinned`
+
+If those projects fail because browsers are missing, run `yarn test:e2e:setup:pinned` once so the Playwright 1.40.1 browser binaries are installed alongside the default setup.
 
 ## Run unit tests in BrowserStack
 

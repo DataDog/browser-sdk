@@ -1,5 +1,5 @@
+import { isWorkerEnvironment } from '@datadog/js-core/util'
 import type { Configuration } from '../configuration'
-import { isWorkerEnvironment } from '../../tools/globalObject'
 import { display } from '../../tools/display'
 import { SessionPersistence } from './sessionConstants'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'

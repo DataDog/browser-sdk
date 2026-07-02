@@ -1,4 +1,5 @@
-import { generateUUID, INTAKE_URL_PARAMETERS } from '@datadog/browser-core'
+import { generateUUID } from '@datadog/browser-core'
+import { INTAKE_URL_PARAMETERS } from '@datadog/js-core/transport'
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
 import type { DebuggerInitConfiguration } from '@datadog/browser-debugger'

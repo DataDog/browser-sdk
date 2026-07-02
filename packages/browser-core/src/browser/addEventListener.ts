@@ -1,7 +1,8 @@
+import type { CookieStore, CookieStoreEventMap } from '@datadog/js-core/util'
 import { monitor } from '../tools/monitor'
 import { getZoneJsOriginalValue } from '../tools/getZoneJsOriginalValue'
 import { noop } from '../tools/utils/functionUtils'
-import type { CookieStore, CookieStoreEventMap, VisualViewport, VisualViewportEventMap } from './browser.types'
+import type { VisualViewport, VisualViewportEventMap } from './browser.types'
 
 export type TrustableEvent<E extends Event = Event> = E & { __ddIsTrusted?: boolean }
 

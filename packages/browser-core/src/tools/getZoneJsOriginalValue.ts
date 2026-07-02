@@ -1,4 +1,4 @@
-import { globalObject } from './globalObject'
+import { globalObject } from '@datadog/js-core/util'
 
 export interface BrowserWindowWithZoneJs {
   Zone?: {

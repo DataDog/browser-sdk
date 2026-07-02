@@ -2068,6 +2068,10 @@ export interface ViewProperties {
        * Whether session replay recording configured to start manually
        */
       readonly start_session_replay_recording_manually?: boolean
+      /**
+       * The id of the remote configuration applied to the SDK, if any
+       */
+      readonly remote_configuration_id?: string
       [k: string]: unknown
     }
     /**

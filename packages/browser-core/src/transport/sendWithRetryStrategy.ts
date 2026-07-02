@@ -1,10 +1,8 @@
-import { ONE_MINUTE, ONE_SECOND, clocksNow } from '@datadog/js-core/time'
-import type { TrackType } from '../domain/configuration'
+import { ONE_MINUTE, ONE_SECOND } from '@datadog/js-core/time'
+import type { TrackType } from '@datadog/js-core/transport'
 import { setTimeout } from '../tools/timer'
 import { ONE_MEBI_BYTE, ONE_KIBI_BYTE } from '../tools/utils/byteUtils'
 import { isServerError } from '../tools/utils/responseUtils'
-import type { RawError } from '../domain/error/error.types'
-import { ErrorSource } from '../domain/error/error.types'
 import type { Observable } from '../tools/observable'
 import type { Payload, HttpRequestEvent, HttpResponse, BandwidthStats } from './httpRequest'
 
@@ -40,7 +38,7 @@ export function sendWithRetryStrategy<Body extends Payload>(
   state: RetryState<Body>,
   sendStrategy: SendStrategy<Body>,
   trackType: TrackType,
-  reportError: (error: RawError) => void,
+  reportError: (message: string) => void,
   requestObservable: Observable<HttpRequestEvent<Body>>
 ) {
   if (
@@ -69,7 +67,7 @@ function scheduleRetry<Body extends Payload>(
   state: RetryState<Body>,
   sendStrategy: SendStrategy<Body>,
   trackType: TrackType,
-  reportError: (error: RawError) => void,
+  reportError: (message: string) => void,
   requestObservable: Observable<HttpRequestEvent<Body>>
 ) {
   if (state.transportStatus !== TransportStatus.DOWN) {
@@ -124,15 +122,11 @@ function retryQueuedPayloads<Body extends Payload>(
   state: RetryState<Body>,
   sendStrategy: SendStrategy<Body>,
   trackType: TrackType,
-  reportError: (error: RawError) => void,
+  reportError: (message: string) => void,
   requestObservable: Observable<HttpRequestEvent<Body>>
 ) {
   if (reason === RetryReason.AFTER_SUCCESS && state.queuedPayloads.isFull() && !state.queueFullReported) {
-    reportError({
-      message: `Reached max ${trackType} events size queued for upload: ${MAX_QUEUE_BYTES_COUNT / ONE_MEBI_BYTE}MiB`,
-      source: ErrorSource.AGENT,
-      startClocks: clocksNow(),
-    })
+    reportError(`Reached max ${trackType} events size queued for upload: ${MAX_QUEUE_BYTES_COUNT / ONE_MEBI_BYTE}MiB`)
     state.queueFullReported = true
   }
   const previousQueue = state.queuedPayloads

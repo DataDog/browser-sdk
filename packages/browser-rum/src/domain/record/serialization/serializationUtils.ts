@@ -1,4 +1,4 @@
-import { buildUrl } from '@datadog/browser-core'
+import { buildUrl } from '@datadog/js-core/util'
 import { CENSORED_STRING_MARK, shouldMaskNode } from '@datadog/browser-rum-core'
 import type { NodePrivacyLevel } from '@datadog/browser-rum-core'
 

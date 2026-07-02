@@ -6,7 +6,7 @@
     "start": "next start --port 0"
   },
   "dependencies": {
-    "next": "16.2.7",
+    "next": "16.2.9",
     "react": "19.2.7",
     "react-dom": "19.2.7"
   },
@@ -37,7 +37,7 @@
     "@datadog/browser-worker": "file:../../../packages/browser-worker/package.tgz"
   },
   "devDependencies": {
-    "@types/node": "22.19.20",
+    "@types/node": "26.0.0",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
     "typescript": "6.0.3"

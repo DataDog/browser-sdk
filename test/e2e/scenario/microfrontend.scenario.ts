@@ -182,13 +182,13 @@ test.describe('microfrontend', () => {
           expect(event?.context?.handlingStack).toMatch(HANDLING_STACK_REGEX)
         })
 
-      createTest('expose handling stack for DD_RUM.startFeatureOperation')
+      createTest('expose handling stack for DD_RUM.startOperation')
         .withRum({ ...RUM_CONFIG })
         .withRumInit((configuration) => {
           window.DD_RUM!.init(configuration)
 
           function testHandlingStack() {
-            window.DD_RUM!.startFeatureOperation('test-operation')
+            window.DD_RUM!.startOperation('test-operation')
           }
 
           testHandlingStack()
@@ -410,7 +410,7 @@ test.describe('microfrontend', () => {
           ])
         })
 
-      createTest('feature operations should have service and version from source code context')
+      createTest('operations should have service and version from source code context')
         .withRum({ ...RUM_CONFIG })
         .withSetup(microfrontendSetup)
         .run(async ({ intakeRegistry, flushEvents, page }) => {

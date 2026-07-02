@@ -1,0 +1,135 @@
+<template>
+  <section data-testid="home-custom-actions">
+    <div>
+      <h2>Datadog Custom Actions</h2>
+      <p>Use these buttons to send manual RUM custom actions from the home page.</p>
+    </div>
+    <div>
+      <lightning-button
+        label="Custom Action 1"
+        variant="brand"
+        data-action-name="custom action 1"
+        data-testid="custom-action-1"
+        onclick="{handleActionClick}"
+      ></lightning-button>
+      <lightning-button
+        label="Custom Action 2"
+        variant="neutral"
+        data-action-name="custom action 2"
+        onclick="{handleActionClick}"
+      ></lightning-button>
+    </div>
+    <template lwc:if="{lastActionName}">
+      <p>Last sent: {lastActionName}</p>
+    </template>
+  </section>
+  <section>
+    <div>
+      <h2>Datadog Custom Errors</h2>
+      <p>Use these buttons to send manual RUM custom errors from the home page.</p>
+    </div>
+    <div>
+      <lightning-button
+        label="Custom Error 1"
+        variant="destructive"
+        data-error-name="custom error 1"
+        data-testid="custom-error-1"
+        onclick="{handleErrorClick}"
+      ></lightning-button>
+      <lightning-button
+        label="Custom Error 2"
+        variant="destructive-text"
+        data-error-name="custom error 2"
+        onclick="{handleErrorClick}"
+      ></lightning-button>
+    </div>
+    <template lwc:if="{lastErrorName}">
+      <p>Last sent: {lastErrorName}</p>
+    </template>
+  </section>
+  <section>
+    <div>
+      <h2>Datadog Runtime Errors</h2>
+      <p>Use this button to trigger an unhandled error that should be captured via window.onerror.</p>
+    </div>
+    <div>
+      <lightning-button
+        label="Runtime Error"
+        variant="destructive"
+        onclick="{handleRuntimeErrorClick}"
+      ></lightning-button>
+    </div>
+  </section>
+  <section>
+    <div>
+      <h2>Datadog Long Tasks</h2>
+      <p>Blocks the main thread to generate a long_task RUM event.</p>
+    </div>
+    <div>
+      <lightning-button
+        label="Long Task"
+        variant="brand"
+        data-testid="long-task"
+        onclick="{handleLongTaskClick}"
+      ></lightning-button>
+    </div>
+  </section>
+  <section>
+    <div>
+      <h2>Datadog Vitals</h2>
+      <p>Add Duration Vital and Start/Stop Vital use the DD_RUM vitals API directly.</p>
+    </div>
+    <div>
+      <lightning-button
+        label="Add Duration Vital"
+        variant="brand"
+        onclick="{handleAddDurationVitalClick}"
+      ></lightning-button>
+      <lightning-button
+        label="Start/Stop Vital"
+        variant="brand"
+        onclick="{handleStartStopVitalClick}"
+      ></lightning-button>
+    </div>
+  </section>
+  <section>
+    <div>
+      <h2>Datadog Resources</h2>
+      <p>Use these buttons to generate resource timing entries for fetch and XHR.</p>
+    </div>
+    <div>
+      <lightning-button
+        label="Fetch Resource"
+        variant="brand"
+        onclick="{handleFetchResourceClick}"
+      ></lightning-button>
+      <lightning-button
+        label="XHR Resource"
+        variant="brand"
+        onclick="{handleXhrResourceClick}"
+      ></lightning-button>
+    </div>
+    <template lwc:if="{lastResourceName}">
+      <p>Last requested: {lastResourceName}</p>
+    </template>
+  </section>
+  <section>
+    <div>
+      <h2>Datadog Selector Probe</h2>
+      <p>Use this button to compare the LWC internal click target with the automatic RUM click selector.</p>
+    </div>
+    <div>
+      <button
+        data-dd-action-name="inner selector probe button"
+        data-testid="inner-selector-probe-button"
+        onclick="{handleSelectorProbeClick}"
+        style="margin: 0.75rem 0; padding: 0.25rem 0.75rem"
+      >
+        Inner Selector Probe
+      </button>
+    </div>
+    <template lwc:if="{lastSelectorProbe}">
+      <p>Last probe: {lastSelectorProbe}</p>
+    </template>
+  </section>
+</template>

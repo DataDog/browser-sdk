@@ -40,6 +40,14 @@ export async function getDatacenterMetadata(name: string): Promise<Datacenter | 
 
 let cachedDatacentersPromise: Promise<Datacenter[]> | undefined
 
+export function mockDatacenters(datacenters: Datacenter[]): void {
+  cachedDatacentersPromise = Promise.resolve(datacenters)
+}
+
+export function resetDatacenterCache(): void {
+  cachedDatacentersPromise = undefined
+}
+
 export function getAllDatacentersMetadata(): Promise<Datacenter[]> {
   if (cachedDatacentersPromise) {
     return cachedDatacentersPromise

@@ -1,4 +1,4 @@
-import type { Context, EventRateLimiter, RawError } from '@datadog/browser-core'
+import type { Context, EventRateLimiter } from '@datadog/browser-core'
 import { ErrorSource, buildTags, createEventRateLimiter } from '@datadog/browser-core'
 import { toRelativeTime } from '@datadog/js-core/time'
 import { DISCARDED } from '@datadog/js-core/assembly'
@@ -16,7 +16,7 @@ export function startLogsAssembly(
   lifeCycle: LifeCycle,
   hook: AssembleHook,
   getCommonContext: () => CommonContext,
-  reportError: (error: RawError) => void,
+  reportError: (message: string) => void,
   eventRateLimit?: number
 ) {
   const statusWithCustom = (STATUSES as string[]).concat(['custom'])

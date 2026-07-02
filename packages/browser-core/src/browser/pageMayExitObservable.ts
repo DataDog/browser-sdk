@@ -1,6 +1,6 @@
+import { globalObject } from '@datadog/js-core/util'
 import { Observable } from '../tools/observable'
 import { objectValues } from '../tools/utils/polyfills'
-import { isWorkerEnvironment } from '../tools/globalObject'
 import { addEventListeners, addEventListener, DOM_EVENT } from './addEventListener'
 
 export const PageExitReason = {
@@ -18,8 +18,9 @@ export interface PageMayExitEvent {
 
 export function createPageMayExitObservable(): Observable<PageMayExitEvent> {
   return new Observable<PageMayExitEvent>((observable) => {
-    if (isWorkerEnvironment) {
-      // Page exit is not observable in worker environments (no window/document events)
+    const window = globalObject.window
+    if (!window) {
+      // Page exit is not observable in non-browser environments
       return
     }
     const { stop: stopListeners } = addEventListeners(

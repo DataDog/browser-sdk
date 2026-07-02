@@ -1,53 +1,13 @@
-import type { InitConfiguration, PageMayExitEvent, Batch } from '@datadog/browser-core'
-import {
-  addEventListener,
-  createBatch,
-  createFlushController,
-  createHttpRequest,
-  createIdentityEncoder,
-  Observable,
-  PageExitReason,
-  createEndpointBuilder,
-} from '@datadog/browser-core'
+import type { InitConfiguration, Batch } from '@datadog/browser-core'
+import { createBatch } from '@datadog/browser-core'
+import { createEndpointBuilder } from '@datadog/js-core/transport'
 import { display } from '../domain/display'
 
 export function startDebuggerBatch(initConfiguration: InitConfiguration): Batch {
   const debuggerEndpointBuilder = createEndpointBuilder({ ...initConfiguration, source: 'dd_debugger' }, 'debugger')
 
-  const batch = createBatch({
-    encoder: createIdentityEncoder(),
-    request: createHttpRequest([debuggerEndpointBuilder], (error) => display.error('transport error:', error)),
-    flushController: createFlushController({
-      pageMayExitObservable: createSimplePageMayExitObservable(),
-      sessionExpireObservable: new Observable(),
-    }),
-  })
-
-  return batch
-}
-
-function createSimplePageMayExitObservable(): Observable<PageMayExitEvent> {
-  return new Observable<PageMayExitEvent>((observable) => {
-    if (typeof window === 'undefined') {
-      return
-    }
-
-    const onVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        observable.notify({ reason: PageExitReason.HIDDEN })
-      }
-    }
-
-    const onBeforeUnload = () => {
-      observable.notify({ reason: PageExitReason.UNLOADING })
-    }
-
-    const visibilityListener = addEventListener(window, 'visibilitychange', onVisibilityChange, { capture: true })
-    const unloadListener = addEventListener(window, 'beforeunload', onBeforeUnload)
-
-    return () => {
-      visibilityListener.stop()
-      unloadListener.stop()
-    }
+  return createBatch({
+    endpoints: [debuggerEndpointBuilder],
+    reportError: (message) => display.error('transport error:', message),
   })
 }

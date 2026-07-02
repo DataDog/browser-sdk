@@ -1,4 +1,4 @@
-import type { EndpointBuilder } from '../src'
+import type { EndpointBuilder } from '@datadog/js-core/transport'
 import { noop } from '../src'
 import { mockXhr, MockXhr } from './emulate/mockXhr'
 import { readFormData } from './readFormData'

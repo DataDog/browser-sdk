@@ -1,16 +1,21 @@
 import { clocksNow } from '@datadog/js-core/time'
-import { getDebugMode, combine } from '@datadog/js-core/util'
+import { getDebugMode, combine, globalObject, isWorkerEnvironment } from '@datadog/js-core/util'
 import type { Hook } from '@datadog/js-core/assembly'
 import type { RecursivePartial } from '@datadog/js-core/util'
 import { DISCARDED } from '@datadog/js-core/assembly'
+import {
+  createEndpointBuilder,
+  createReplicaEndpointBuilder,
+  INTAKE_SITE_STAGING,
+  INTAKE_SITE_US1_FED,
+  INTAKE_SITE_US2_FED,
+} from '@datadog/js-core/transport'
 import type { Context } from '../../tools/serialisation/context'
 import { NO_ERROR_STACK_PRESENT_MESSAGE, isError } from '../error/isError'
 import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
 import { getExperimentalFeatures } from '../../tools/experimentalFeatures'
-import { createEndpointBuilder, createReplicaEndpointBuilder } from '../configuration'
 import type { Configuration } from '../configuration'
 import { buildTags } from '../tags'
-import { INTAKE_SITE_STAGING, INTAKE_SITE_US1_FED, INTAKE_SITE_US2_FED } from '../intakeSites'
 import { BufferedObservable, Observable } from '../../tools/observable'
 import { startMonitorErrorCollection } from '../../tools/monitor'
 import { display } from '../../tools/display'
@@ -21,16 +26,7 @@ import { NonErrorPrefix } from '../error/error.types'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { getConnectivity } from '../connectivity'
-import {
-  canUseEventBridge,
-  createFlushController,
-  createHttpRequest,
-  getEventBridge,
-  createBatch,
-} from '../../transport'
-import { createIdentityEncoder } from '../../tools/encoder'
-import { createPageMayExitObservable } from '../../browser/pageMayExitObservable'
-import { globalObject, isWorkerEnvironment } from '../../tools/globalObject'
+import { canUseEventBridge, getEventBridge, createBatch } from '../../transport'
 import { noop } from '../../tools/utils/functionUtils'
 import type { TelemetryEvent } from './telemetryEvent.types'
 import type {
@@ -218,19 +214,9 @@ export function startTelemetryTransport(
       endpoints.push(replicaEndpoint)
     }
     const telemetryBatch = createBatch({
-      encoder: createIdentityEncoder(),
-      request: createHttpRequest(
-        endpoints,
-        // Ignore transport errors for telemetry
-        noop
-      ),
-      flushController: createFlushController({
-        pageMayExitObservable: createPageMayExitObservable(),
-
-        // We don't use an actual session expire observable here, to make telemetry collection
-        // independent of the session. This allows to start and send telemetry events earlier.
-        sessionExpireObservable: new Observable(),
-      }),
+      endpoints,
+      // Ignore transport errors for telemetry
+      reportError: noop,
     })
     cleanupTasks.push(telemetryBatch.stop)
     const telemetrySubscription = telemetryObservable.subscribe(telemetryBatch.add)
