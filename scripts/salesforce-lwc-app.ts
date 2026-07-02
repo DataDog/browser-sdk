@@ -53,7 +53,7 @@ function showUsageAndExit() {
   process.exit(0)
 }
 
-function authenticate() {
+function authenticate(targetOrg: string) {
   // Temporary directory holding the JWT private key for the duration of authentication.
   // Using a unique temp dir avoids collisions when multiple CI jobs run in parallel.
   const keyDirectory = mkdtempSync(resolve(tmpdir(), 'sf-lwc-jwt-'))
@@ -64,12 +64,12 @@ function authenticate() {
     // writeFileSync mode can be masked by the process umask; chmodSync guarantees owner-only access.
     chmodSync(serverKeyPath, 0o600)
 
-    printLog(`Authenticating Salesforce CLI alias ${defaultTargetOrg}...`)
-    command`sf org login jwt --client-id ${getSfLwcClientId()} --jwt-key-file ${serverKeyPath} --username ${getSfLwcUsername()} --instance-url ${getSfLwcInstanceUrl()} --alias ${defaultTargetOrg}`
+    printLog(`Authenticating Salesforce CLI alias ${targetOrg}...`)
+    command`sf org login jwt --client-id ${getSfLwcClientId()} --jwt-key-file ${serverKeyPath} --username ${getSfLwcUsername()} --instance-url ${getSfLwcInstanceUrl()} --alias ${targetOrg}`
       .withCurrentWorkingDirectory(salesforceAppDir)
       .withLogs()
       .run()
-    printLog(`Salesforce CLI authenticated as ${defaultTargetOrg}.`)
+    printLog(`Salesforce CLI authenticated as ${targetOrg}.`)
   } finally {
     rmSync(keyDirectory, { recursive: true, force: true })
   }
@@ -79,7 +79,7 @@ function deployApp() {
   const targetOrg = process.env.SF_TARGET_ORG ?? defaultTargetOrg
 
   if (!isOrgAuthenticated(targetOrg)) {
-    authenticate()
+    authenticate(targetOrg)
   }
 
   printLog(`Deploying Salesforce LWC app to ${targetOrg}...`)

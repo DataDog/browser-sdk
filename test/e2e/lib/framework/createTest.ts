@@ -414,9 +414,6 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     addTag('test.browserName', browserName)
     addTestOptimizationTags(test.info().project.metadata as BrowserConfiguration)
 
-    // Skip before building the Salesforce URL
-    test.skip(setupOptions.salesforceApp && browserName !== 'chromium', 'Salesforce app is tested on chromium only')
-
     // The bug only reproduces on Playwright's macOS WebKit build; skip on every other platform
     // (notably Linux CI runners) to avoid installing the prototype override where it serves no purpose.
     if (browserName === 'webkit' && process.platform === 'darwin') {
