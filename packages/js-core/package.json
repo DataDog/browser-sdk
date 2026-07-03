@@ -28,6 +28,11 @@
       "import": "./esm/entries/transport.mjs",
       "require": "./cjs/entries/transport.js",
       "types": "./cjs/entries/transport.d.ts"
+    },
+    "./runtime": {
+      "import": "./esm/entries/runtime.mjs",
+      "require": "./cjs/entries/runtime.js",
+      "types": "./cjs/entries/runtime.d.ts"
     }
   },
   "files": [
@@ -39,6 +44,7 @@
     "monitor",
     "util",
     "transport",
+    "runtime",
     "!src/**/*.spec.ts",
     "!src/**/*.specHelper.ts"
   ],
