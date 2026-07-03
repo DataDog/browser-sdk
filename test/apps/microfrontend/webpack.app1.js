@@ -11,6 +11,9 @@ module.exports = webpackBase({
       exposes: {
         './app1': './app1.ts',
       },
+      remotes: {
+        lib: 'lib@/microfrontend/libEntry.js',
+      },
     }),
     datadogWebpackPlugin({
       rum: {
@@ -18,6 +21,7 @@ module.exports = webpackBase({
         sourceCodeContext: {
           service: 'mfe-app1-service',
           version: '1.0.0',
+          debugId: true,
         },
       },
     }),

@@ -6,9 +6,11 @@ import { jsonStringify } from '../../tools/serialisation/jsonStringify'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
-import type { ErrorSource, ErrorHandling, RawError, RawErrorCause, ErrorWithCause, NonErrorPrefix } from './error.types'
+import { buildDebugIdByUrl } from '../sourceCodeContext'
+import type { ErrorSource, ErrorHandling, RawError, ErrorWithCause, NonErrorPrefix } from './error.types'
+import { isError, NO_ERROR_STACK_PRESENT_MESSAGE } from './isError'
 
-export const NO_ERROR_STACK_PRESENT_MESSAGE = 'No stack, consider using an instance of Error'
+export { isError, NO_ERROR_STACK_PRESENT_MESSAGE }
 
 interface RawErrorParams {
   stackTrace?: StackTrace
@@ -36,16 +38,40 @@ function computeErrorBase({
   nonErrorPrefix?: NonErrorPrefix
 }) {
   const isErrorInstance = isError(originalError)
-  if (!stackTrace && isErrorInstance) {
-    stackTrace = computeStackTrace(originalError)
-  }
-
   return {
     source,
     type: stackTrace ? stackTrace.name : undefined,
     message: computeMessage(stackTrace, isErrorInstance, nonErrorPrefix, originalError),
     stack: stackTrace ? toStackTraceString(stackTrace) : useFallbackStack ? NO_ERROR_STACK_PRESENT_MESSAGE : undefined,
   }
+}
+
+function getStackTraceUrls(stackTrace: StackTrace | undefined): string[] {
+  return stackTrace?.stack.map((frame) => frame.url).filter((url): url is string => !!url) ?? []
+}
+
+function getErrorDebugIds(
+  stackTrace: StackTrace | undefined,
+  errorCauses: Array<{ stackTrace: StackTrace | undefined }>
+) {
+  const errorCausesUrls = errorCauses.flatMap(({ stackTrace }) => getStackTraceUrls(stackTrace))
+  return buildDebugIdByUrl(getStackTraceUrls(stackTrace).concat(errorCausesUrls))
+}
+
+export function flattenErrorCauses(
+  error: ErrorWithCause
+): Array<{ originalError: unknown; stackTrace: StackTrace | undefined }> {
+  const chain: Array<{ originalError: unknown; stackTrace: StackTrace | undefined }> = []
+  let current: unknown = error.cause
+
+  while (current !== undefined && current !== null && chain.length < 10) {
+    const isCurrentError = isError(current)
+    const stackTrace = isCurrentError ? computeStackTrace(current) : undefined
+    chain.push({ originalError: current, stackTrace })
+    current = isCurrentError ? (current as ErrorWithCause).cause : undefined
+  }
+
+  return chain
 }
 
 export function computeRawError({
@@ -59,7 +85,21 @@ export function computeRawError({
   source,
   handling,
 }: RawErrorParams): RawError {
-  const errorBase = computeErrorBase({ originalError, stackTrace, source, useFallbackStack, nonErrorPrefix })
+  const errorStackTrace = stackTrace ?? (isError(originalError) ? computeStackTrace(originalError) : undefined)
+
+  const errorCauses = isError(originalError) ? flattenErrorCauses(originalError) : []
+
+  const errorBase = computeErrorBase({
+    originalError,
+    stackTrace: errorStackTrace,
+    source,
+    useFallbackStack,
+    nonErrorPrefix,
+  })
+
+  const rawErrorCauses = errorCauses.map(({ originalError, stackTrace }) =>
+    computeErrorBase({ originalError, stackTrace, source, useFallbackStack: false })
+  )
 
   return {
     startClocks,
@@ -68,7 +108,8 @@ export function computeRawError({
     componentStack,
     originalError,
     ...errorBase,
-    causes: isError(originalError) ? flattenErrorCauses(originalError, source) : undefined,
+    debugIds: getErrorDebugIds(errorStackTrace, errorCauses),
+    causes: rawErrorCauses.length ? rawErrorCauses : undefined,
     fingerprint: tryToGetFingerprint(originalError),
     context: tryToGetErrorContext(originalError),
   }
@@ -103,31 +144,4 @@ export function tryToGetErrorContext(originalError: unknown) {
 
 export function getFileFromStackTraceString(stack: string) {
   return /@ (.+)/.exec(stack)?.[1]
-}
-
-export function isError(error: unknown): error is Error {
-  try {
-    return error instanceof Error || Object.prototype.toString.call(error) === '[object Error]'
-  } catch {
-    return false
-  }
-}
-
-export function flattenErrorCauses(error: ErrorWithCause, parentSource: ErrorSource): RawErrorCause[] | undefined {
-  const causes: RawErrorCause[] = []
-  let currentCause = error.cause
-
-  while (currentCause !== undefined && currentCause !== null && causes.length < 10) {
-    const causeBase = computeErrorBase({
-      originalError: currentCause,
-      source: parentSource,
-      useFallbackStack: false,
-    })
-
-    causes.push(causeBase)
-
-    currentCause = isError(currentCause) ? (currentCause as ErrorWithCause).cause : undefined
-  }
-
-  return causes.length ? causes : undefined
 }

@@ -1,7 +1,7 @@
 import type { RelativeTime, TimeStamp } from '@datadog/js-core/time'
 import type { ErrorWithCause } from '@datadog/browser-core'
 import { ErrorHandling, ErrorSource, NO_ERROR_STACK_PRESENT_MESSAGE } from '@datadog/browser-core'
-import { FAKE_CSP_VIOLATION_EVENT } from '@datadog/browser-core/test'
+import { FAKE_CSP_VIOLATION_EVENT, mockSourceCodeContext } from '@datadog/browser-core/test'
 import { collectAndValidateRawRumEvents } from '../../../test'
 import type { RawRumErrorEvent, RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -91,6 +91,7 @@ describe('error collection', () => {
               fingerprint: undefined,
               csp: undefined,
             },
+            _dd: { debug_ids: undefined },
             type: RumEventType.ERROR,
             context: undefined,
           },
@@ -208,6 +209,23 @@ describe('error collection', () => {
       })
     })
 
+    it('should attach debug_ids resolved from the source code context', () => {
+      const url = 'http://path/to/debug-id.js'
+      const debugId = '01234567-89ab-cdef-0123-456789abcdef'
+      mockSourceCodeContext({ [`Error: ctx\n    at fn (${url}:1:1)`]: { ddDebugId: debugId } })
+      setupErrorCollection()
+
+      const error = new Error('foo')
+      error.stack = `Error: foo\n    at foo (${url}:52:15)`
+      addError({
+        error,
+        handlingStack: 'Error: handling foo',
+        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+      })
+
+      expect((rawRumEvents[0].rawRumEvent as RawRumErrorEvent)._dd).toEqual({ debug_ids: { [url]: debugId } })
+    })
+
     it('should include handling stack', () => {
       setupErrorCollection()
 
@@ -258,6 +276,7 @@ describe('error collection', () => {
           fingerprint: undefined,
           csp: undefined,
         },
+        _dd: { debug_ids: undefined },
         type: RumEventType.ERROR,
         context: { foo: 'bar' },
       })

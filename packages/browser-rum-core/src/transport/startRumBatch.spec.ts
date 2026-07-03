@@ -1,7 +1,6 @@
-import { ExperimentalFeature, Observable, addExperimentalFeatures } from '@datadog/browser-core'
-import { resetExperimentalFeatures } from '@datadog/browser-core/src/tools/experimentalFeatures'
+import { Observable } from '@datadog/browser-core'
 import type { FlushEvent } from '@datadog/browser-core/src/transport/flushController'
-import { registerCleanupTask } from '@datadog/browser-core/test'
+
 import type { AssembledRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumViewEvent } from '../rumEvent.types'
@@ -215,11 +214,6 @@ describe('computeAssembledViewDiff', () => {
 })
 
 describe('startRumBatch partial_view_updates routing', () => {
-  beforeEach(() => {
-    addExperimentalFeatures([ExperimentalFeature.PARTIAL_VIEW_UPDATES])
-    registerCleanupTask(resetExperimentalFeatures)
-  })
-
   it('PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL should be 100', () => {
     expect(PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL).toBe(100)
   })
@@ -288,13 +282,10 @@ function makeView(viewId: string, docVersion: number, overrides: Record<string, 
 // ---------------------------------------------------------------------------
 
 describe('createBatchDispatcher', () => {
-  describe('feature flag OFF', () => {
+  describe('feature disabled', () => {
     it('should upsert full VIEW events (legacy behaviour)', () => {
-      resetExperimentalFeatures()
-      registerCleanupTask(resetExperimentalFeatures)
-
       const { batch, upsertSpy } = createMockBatch()
-      const { dispatch } = createBatchDispatcher(batch)
+      const { dispatch } = createBatchDispatcher(batch, false)
 
       const v1 = makeView('view-1', 1)
       const v2 = makeView('view-1', 2)
@@ -308,14 +299,9 @@ describe('createBatchDispatcher', () => {
   })
 
   describe('non-view events', () => {
-    beforeEach(() => {
-      addExperimentalFeatures([ExperimentalFeature.PARTIAL_VIEW_UPDATES])
-      registerCleanupTask(resetExperimentalFeatures)
-    })
-
     it('should always append non-view events', () => {
       const { batch, addSpy, upsertSpy } = createMockBatch()
-      const { dispatch } = createBatchDispatcher(batch)
+      const { dispatch } = createBatchDispatcher(batch, true)
 
       const action = { type: RumEventType.ACTION } as unknown as AssembledRumEvent
       dispatch(action)
@@ -326,14 +312,9 @@ describe('createBatchDispatcher', () => {
   })
 
   describe('optimization 1 — VIEW already in batch', () => {
-    beforeEach(() => {
-      addExperimentalFeatures([ExperimentalFeature.PARTIAL_VIEW_UPDATES])
-      registerCleanupTask(resetExperimentalFeatures)
-    })
-
     it('should upsert the latest full VIEW for every intermediate update', () => {
       const { batch, upsertSpy } = createMockBatch()
-      const { dispatch } = createBatchDispatcher(batch)
+      const { dispatch } = createBatchDispatcher(batch, true)
 
       const v1 = makeView('view-1', 1)
       const v2 = makeView('view-1', 2, {
@@ -363,7 +344,7 @@ describe('createBatchDispatcher', () => {
 
     it('should not emit any view_update events while the VIEW is in the batch', () => {
       const { batch, upsertSpy } = createMockBatch()
-      const { dispatch } = createBatchDispatcher(batch)
+      const { dispatch } = createBatchDispatcher(batch, true)
 
       dispatch(makeView('view-1', 1))
       dispatch(makeView('view-1', 2))
@@ -375,14 +356,9 @@ describe('createBatchDispatcher', () => {
   })
 
   describe('optimization 2 — no VIEW in batch (post-flush)', () => {
-    beforeEach(() => {
-      addExperimentalFeatures([ExperimentalFeature.PARTIAL_VIEW_UPDATES])
-      registerCleanupTask(resetExperimentalFeatures)
-    })
-
     it('should upsert an aggregate view_update after a flush', () => {
       const { batch, upsertSpy, flush } = createMockBatch()
-      const { dispatch } = createBatchDispatcher(batch)
+      const { dispatch } = createBatchDispatcher(batch, true)
 
       dispatch(makeView('view-1', 1))
       flush() // batchHasFullView resets; batchBase = v1
@@ -412,7 +388,7 @@ describe('createBatchDispatcher', () => {
 
     it('should aggregate multiple updates into a single view_update per batch', () => {
       const { batch, upsertSpy, flush } = createMockBatch()
-      const { dispatch } = createBatchDispatcher(batch)
+      const { dispatch } = createBatchDispatcher(batch, true)
 
       dispatch(makeView('view-1', 1))
       flush()
@@ -449,7 +425,7 @@ describe('createBatchDispatcher', () => {
 
     it('should compute the diff from batchBase, not from the previous intermediate update', () => {
       const { batch, upsertSpy, flush } = createMockBatch()
-      const { dispatch } = createBatchDispatcher(batch)
+      const { dispatch } = createBatchDispatcher(batch, true)
 
       // Initial view with action.count = 0
       dispatch(makeView('view-1', 1))
@@ -496,7 +472,7 @@ describe('createBatchDispatcher', () => {
 
     it('should emit nothing if nothing changed since batchBase', () => {
       const { batch, upsertSpy, flush } = createMockBatch()
-      const { dispatch } = createBatchDispatcher(batch)
+      const { dispatch } = createBatchDispatcher(batch, true)
 
       const v1 = makeView('view-1', 1)
       dispatch(v1)
@@ -513,14 +489,9 @@ describe('createBatchDispatcher', () => {
   })
 
   describe('checkpoint', () => {
-    beforeEach(() => {
-      addExperimentalFeatures([ExperimentalFeature.PARTIAL_VIEW_UPDATES])
-      registerCleanupTask(resetExperimentalFeatures)
-    })
-
     it('should send a full VIEW after PARTIAL_VIEW_UPDATE_CHECKPOINT_INTERVAL intermediate updates', () => {
       const { batch, upsertSpy, flush } = createMockBatch()
-      const { dispatch } = createBatchDispatcher(batch)
+      const { dispatch } = createBatchDispatcher(batch, true)
 
       dispatch(makeView('view-1', 1))
       flush()
@@ -553,14 +524,9 @@ describe('createBatchDispatcher', () => {
   })
 
   describe('view lifecycle', () => {
-    beforeEach(() => {
-      addExperimentalFeatures([ExperimentalFeature.PARTIAL_VIEW_UPDATES])
-      registerCleanupTask(resetExperimentalFeatures)
-    })
-
     it('should send a full VIEW when a new view starts', () => {
       const { batch, upsertSpy } = createMockBatch()
-      const { dispatch } = createBatchDispatcher(batch)
+      const { dispatch } = createBatchDispatcher(batch, true)
 
       dispatch(makeView('view-1', 1))
       dispatch(makeView('view-2', 1)) // new view
@@ -574,7 +540,7 @@ describe('createBatchDispatcher', () => {
 
     it('should send a full VIEW when the view ends', () => {
       const { batch, upsertSpy, flush } = createMockBatch()
-      const { dispatch } = createBatchDispatcher(batch)
+      const { dispatch } = createBatchDispatcher(batch, true)
 
       dispatch(makeView('view-1', 1))
       flush()
@@ -603,7 +569,7 @@ describe('createBatchDispatcher', () => {
 
     it('should upsert a stale view-end without resetting state for the current view', () => {
       const { batch, upsertSpy, flush } = createMockBatch()
-      const { dispatch } = createBatchDispatcher(batch)
+      const { dispatch } = createBatchDispatcher(batch, true)
 
       // view-1 starts and flushes
       dispatch(makeView('view-1', 1))
@@ -655,7 +621,7 @@ describe('createBatchDispatcher', () => {
 
     it('should reset to opt-1 after a new view starts following a flush', () => {
       const { batch, upsertSpy, flush } = createMockBatch()
-      const { dispatch } = createBatchDispatcher(batch)
+      const { dispatch } = createBatchDispatcher(batch, true)
 
       dispatch(makeView('view-1', 1))
       flush()

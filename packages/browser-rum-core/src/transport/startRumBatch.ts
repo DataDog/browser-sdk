@@ -1,11 +1,5 @@
 import type { Observable, Encoder, Context } from '@datadog/browser-core'
-import {
-  createBatch,
-  DeflateEncoderStreamId,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
-  sendToExtension,
-} from '@datadog/browser-core'
+import { createBatch, DeflateEncoderStreamId, sendToExtension } from '@datadog/browser-core'
 import { combine } from '@datadog/js-core/util'
 import { createEndpointBuilder, createReplicaEndpointBuilder } from '@datadog/js-core/transport'
 import type { RumConfiguration } from '../domain/configuration'
@@ -68,7 +62,8 @@ export function computeAssembledViewDiff(current: RumViewEvent, last: RumViewEve
  * aggregated into a single view_update diff against the last flushed state.
  */
 export function createBatchDispatcher(
-  batch: Pick<ReturnType<typeof createBatch>, 'flushObservable' | 'isEmpty' | 'add' | 'upsert'>
+  batch: Pick<ReturnType<typeof createBatch>, 'flushObservable' | 'isEmpty' | 'add' | 'upsert'>,
+  enableViewUpdates: boolean
 ): { dispatch: (event: AssembledRumEvent) => void; stop: () => void } {
   let lastSentView: RumViewEvent | undefined
   // Base used to compute the aggregate diff for the current batch's view_update.
@@ -96,7 +91,7 @@ export function createBatchDispatcher(
         return
       }
 
-      if (!isExperimentalFeatureEnabled(ExperimentalFeature.PARTIAL_VIEW_UPDATES)) {
+      if (!enableViewUpdates) {
         // Feature OFF: existing behavior — upsert full view
         batch.upsert(serverRumEvent, serverRumEvent.view.id)
         return
@@ -195,7 +190,7 @@ export function startRumBatch(
   })
   sessionExpireObservable.subscribe(() => batch.forceFlush('session_expire'))
 
-  const { dispatch, stop: stopDispatcher } = createBatchDispatcher(batch)
+  const { dispatch, stop: stopDispatcher } = createBatchDispatcher(batch, configuration.betaEnableViewUpdates)
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, dispatch)
 
   const stopBatch = batch.stop.bind(batch)
