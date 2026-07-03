@@ -10,8 +10,8 @@ import { command } from './lib/command.ts'
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const salesforceAppDir = resolve(repositoryRoot, 'test/apps/sf-lwc-app')
-const salesforceHomePath = '/lightning/app/c__SF_LWC_App/page/home'
-const defaultTargetOrg = 'sf-lwc-ci'
+const SALESFORCE_HOME_PATH = '/lightning/app/c__SF_LWC_App/page/home'
+const TARGET_ORG = 'sf-lwc-ci'
 
 runMain(() => {
   const { values, positionals } = parseArgs({
@@ -76,12 +76,10 @@ function authenticate(targetOrg: string) {
 }
 
 function deployApp() {
-  const targetOrg = process.env.SF_TARGET_ORG ?? defaultTargetOrg
+  authenticate(TARGET_ORG)
 
-  authenticate(targetOrg)
-
-  printLog(`Deploying Salesforce LWC app to ${targetOrg}...`)
-  command`sf project deploy start --target-org ${targetOrg} --source-dir force-app --ignore-conflicts --concise`
+  printLog(`Deploying Salesforce LWC app to ${TARGET_ORG}...`)
+  command`sf project deploy start --target-org ${TARGET_ORG} --source-dir force-app --ignore-conflicts --concise`
     .withCurrentWorkingDirectory(salesforceAppDir)
     .withLogs()
     .run()
@@ -89,12 +87,11 @@ function deployApp() {
 }
 
 function printSalesforceLwcUrl(): void {
-  const targetOrg = process.env.SF_TARGET_ORG ?? defaultTargetOrg
-  const path = new URL(salesforceHomePath, 'https://salesforce.local')
+  const path = new URL(SALESFORCE_HOME_PATH, 'https://salesforce.local')
 
-  authenticate(targetOrg)
+  authenticate(TARGET_ORG)
 
-  command`sf org open --target-org ${targetOrg} --path ${path.pathname}${path.search} --url-only`
+  command`sf org open --target-org ${TARGET_ORG} --path ${path.pathname}${path.search} --url-only`
     .withCurrentWorkingDirectory(salesforceAppDir)
     .withLogs()
     .run()

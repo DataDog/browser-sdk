@@ -17,18 +17,15 @@ The Salesforce flow uses the Salesforce CLI with a JWT keypair. There is no sepa
 
 Credentials are set as CI variables.
 
-For local overrides, set the matching environment variables from the repository root:
-
-```sh
-export SF_LWC_CLIENT_ID='<connected-app-client-id>'
-export SF_LWC_USERNAME='<salesforce-username>'
-export SF_LWC_INSTANCE_URL='https://test.salesforce.com'
-export SF_LWC_JWT_PRIVATE_KEY_B64='<base64-encoded-private-key>'
-```
+For local overrides, set the matching environment variables from `.env.example`:
 
 ## Initial App Deploy
 
-The full app deploy is only needed when Salesforce metadata changes or the org is being prepared from scratch:
+This app runs from Salesforce metadata already deployed to
+the Salesforce org, so any change to that metadata (Apex, LWC markup/config, permission sets, etc.) requires a full
+redeploy to take effect.
+
+For E2E testing, deployment is not necesary since we will override the deployed rum_slim bundle with Playwright.
 
 ```sh
 yarn salesforce:deploy-app
@@ -59,13 +56,7 @@ yarn salesforce:get-url
 The printed URL is authenticated and should be treated as sensitive.
 E2E tests don't use this script: they build their own authenticated URL via the JWT/REST flow in
 `test/e2e/lib/framework/buildSalesforceLwcUrl.ts`, and inject the RUM configuration on the page as
-`window.dd_RUM_CONFIGURATION` instead of a URL query parameter (see `datadogInit.js`).
-
-To open the same app directly in your browser:
-
-```sh
-sf org open --target-org sf-lwc-ci --path /lightning/app/c__SF_LWC_App/page/home
-```
+`window.RUM_CONFIGURATION`.
 
 ## Run E2E Tests
 
