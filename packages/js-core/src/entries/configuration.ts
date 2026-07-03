@@ -176,6 +176,14 @@ type InferVariant<F> = F extends { type: 'string' }
                     : unknown
 
 // `{ default: {} }` matches any non-null/undefined default value
+// A field is always present (never undefined) once validated if it's required or has a default.
+type IsFieldRequired<F extends FieldDef> = F extends { required: true }
+  ? true
+  : // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+    F extends { default: {} }
+    ? true
+    : false
+
 type InferScalar<F extends FieldDef> = F extends { required: true }
   ? InferBase<F>
   : // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -192,12 +200,24 @@ type InferOutput<F extends FieldDef> = F extends { multiple: true }
       : Array<InferBase<F>> | undefined
   : InferScalar<F>
 
+type RequiredConfigKeys<S extends ConfigurationSchema> = {
+  [K in keyof S]: IsFieldRequired<S[K]> extends true ? K : never
+}[keyof S]
+
+type OptionalConfigKeys<S extends ConfigurationSchema> = Exclude<keyof S, RequiredConfigKeys<S>>
+
 /**
  * Infers the validated configuration output type for a given {@link ConfigurationSchema} —
  * the return type of {@link validateAndBuildConfiguration} for that schema.
+ *
+ * Fields that are required or have a default are always present; other fields are optional
+ * keys, so consumers building a configuration object literal by hand (e.g. test fixtures) can
+ * omit them instead of having to write `field: undefined` explicitly.
  */
 export type InferredConfig<S extends ConfigurationSchema> = {
-  [K in keyof S]: InferOutput<S[K]>
+  [K in RequiredConfigKeys<S>]: InferOutput<S[K]>
+} & {
+  [K in OptionalConfigKeys<S>]?: InferOutput<S[K]>
 }
 
 // ──────────────────────────────────────────────────────────────────────────────

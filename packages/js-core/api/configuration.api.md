@@ -36,7 +36,9 @@ export type FunctionField = {
 
 // @public
 export type InferredConfig<S extends ConfigurationSchema> = {
-    [K in keyof S]: InferOutput<S[K]>;
+    [K in RequiredConfigKeys<S>]: InferOutput<S[K]>;
+} & {
+    [K in OptionalConfigKeys<S>]?: InferOutput<S[K]>;
 };
 
 // @public

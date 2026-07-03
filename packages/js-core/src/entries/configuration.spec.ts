@@ -1,6 +1,6 @@
 import type { Display } from '../util/display'
 import { validateAndBuildConfiguration } from './configuration'
-import type { MatchOption } from './configuration'
+import type { ConfigurationSchema, InferredConfig, MatchOption } from './configuration'
 
 let display: jasmine.SpyObj<Display>
 
@@ -446,6 +446,19 @@ describe('validateAndBuildConfiguration', () => {
       const config = validateAndBuildConfiguration({ level: 'debug' }, schema, display)!
       const _level: 'debug' | 'info' | 'warn' = config.level
       void _level
+    })
+
+    it('makes required fields required keys and non-required fields optional keys on object literals', () => {
+      interface Schema extends ConfigurationSchema {
+        token: { type: 'string'; required: true }
+        rate: { type: 'percentage'; default: 20 }
+        env: { type: 'string' }
+      }
+
+      // Compile-time check: `env` (no required, no default) can be omitted entirely from an
+      // object literal of this type, unlike `token` (required) and `rate` (has a default).
+      const literal: InferredConfig<Schema> = { token: 'abc', rate: 20 }
+      void literal
     })
   })
 
