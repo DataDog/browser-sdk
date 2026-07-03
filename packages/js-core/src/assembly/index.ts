@@ -1,2 +1,2 @@
 export * from './hook'
-export type * from './context'
+export type { Context, ContextValue, ContextArray } from './context'
