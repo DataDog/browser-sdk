@@ -88,6 +88,22 @@ export function getBrowserStackAccessKey(): string {
   return getSecretKey('ci.browser-sdk.bs_access_key')
 }
 
+export function getSfLwcClientId(): string {
+  return process.env.SF_LWC_CLIENT_ID ?? getSecretKey('ci.browser-sdk.sf_lwc_client_id')
+}
+
+export function getSfLwcUsername(): string {
+  return process.env.SF_LWC_USERNAME ?? getSecretKey('ci.browser-sdk.sf_lwc_username')
+}
+
+export function getSfLwcInstanceUrl(): string {
+  return process.env.SF_LWC_INSTANCE_URL ?? getSecretKey('ci.browser-sdk.sf_lwc_instance_url')
+}
+
+export function getSfLwcJwtPrivateKey(): string {
+  return process.env.SF_LWC_JWT_PRIVATE_KEY_B64 ?? getSecretKey('ci.browser-sdk.sf_lwc_jwt_private_key_b64')
+}
+
 function getSecretKey(name: string): string {
   return command`
     aws ssm get-parameter --region=us-east-1 --with-decryption --query=Parameter.Value --out=text --name=${name}
