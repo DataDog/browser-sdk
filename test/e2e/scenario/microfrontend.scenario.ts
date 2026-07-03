@@ -431,11 +431,9 @@ test.describe('microfrontend', () => {
   })
 
   test.describe('RUM debug_id attribution', () => {
-    // Debug IDs are deterministic: the build plugin derives them from each emitted chunk's content
-    // hash, so they are stable across clean rebuilds (only change if the app source/deps change — in
-    // which case regenerate these constants). Most app code lives in each app's Module-Federation
-    // expose chunk (app{1,2}.ts + common.ts); the shared `lib` remote is a separate chunk loaded once,
-    // so its debug ID is identical for every app.
+    // Debug IDs are derived from each chunk's content hash, so they're stable across rebuilds
+    // (regenerate these constants if app source/deps change). The shared `lib` remote is its own chunk,
+    // so its debug ID is the same for every app.
     const APP1_EXPOSE_CHUNK = '__federation_expose_app1-8adfc35e0ddfff22d7d0-app1.js'
     const APP1_DEBUG_ID = 'efcb171a-1822-45ad-81f1-a82adab920c7'
     const APP2_EXPOSE_CHUNK = '__federation_expose_app2-e9242831fd6d69399e3b-app2.js'
@@ -452,12 +450,16 @@ test.describe('microfrontend', () => {
         await flushEvents()
 
         expect(intakeRegistry.rumErrorEvents).toHaveLength(2)
-        // frame 0 -> app1 expose chunk (app1.ts + common.ts)
-        expect(intakeRegistry.rumErrorEvents[0]._dd?.debug_ids).toEqual({
+
+        // Stacks are browser-dependent and Firefox reports more frames/chunks, adding more debug_ids entries.
+        // We assert the chunk with toMatchObject instead of toEqual to allow those extras.
+
+        // frame 0 -> app1 expose chunk (app1.ts + common.ts).
+        expect(intakeRegistry.rumErrorEvents[0]._dd?.debug_ids).toMatchObject({
           [`${baseUrl}microfrontend/chunks/${APP1_EXPOSE_CHUNK}`]: APP1_DEBUG_ID,
         })
         // frame 0 -> app2 expose chunk (app2.ts + common.ts)
-        expect(intakeRegistry.rumErrorEvents[1]._dd?.debug_ids).toEqual({
+        expect(intakeRegistry.rumErrorEvents[1]._dd?.debug_ids).toMatchObject({
           [`${baseUrl}microfrontend/chunks/${APP2_EXPOSE_CHUNK}`]: APP2_DEBUG_ID,
         })
 
@@ -484,12 +486,16 @@ test.describe('microfrontend', () => {
         )
 
         expect(longTaskEvents).toHaveLength(2)
+
+        // Stacks are browser-dependent and Firefox reports more frames/chunks, adding more debug_ids entries.
+        // We assert the chunk with toMatchObject instead of toEqual to allow those extras.
+
         // script 0 -> app1 expose chunk (app1.ts + common.ts)
-        expect(longTaskEvents[0]._dd?.debug_ids).toEqual({
+        expect(longTaskEvents[0]._dd?.debug_ids).toMatchObject({
           [`${baseUrl}microfrontend/chunks/${APP1_EXPOSE_CHUNK}`]: APP1_DEBUG_ID,
         })
         // script 0 -> app2 expose chunk (app2.ts + common.ts)
-        expect(longTaskEvents[1]._dd?.debug_ids).toEqual({
+        expect(longTaskEvents[1]._dd?.debug_ids).toMatchObject({
           [`${baseUrl}microfrontend/chunks/${APP2_EXPOSE_CHUNK}`]: APP2_DEBUG_ID,
         })
       })
@@ -503,13 +509,17 @@ test.describe('microfrontend', () => {
         await flushEvents()
 
         expect(intakeRegistry.rumErrorEvents).toHaveLength(2)
+
+        // Stacks are browser-dependent and Firefox reports more frames/chunks, adding more debug_ids entries.
+        // We assert the chunk with toMatchObject instead of toEqual to allow those extras.
+
         // frame 0 (throw) -> shared lib chunk (boom), frame 1 (caller) -> app1 expose chunk
-        expect(intakeRegistry.rumErrorEvents[0]._dd?.debug_ids).toEqual({
+        expect(intakeRegistry.rumErrorEvents[0]._dd?.debug_ids).toMatchObject({
           [`${baseUrl}microfrontend/chunks/${LIB_EXPOSE_CHUNK}`]: LIB_DEBUG_ID,
           [`${baseUrl}microfrontend/chunks/${APP1_EXPOSE_CHUNK}`]: APP1_DEBUG_ID,
         })
         // same shared lib debug ID, merged with app2's own chunk
-        expect(intakeRegistry.rumErrorEvents[1]._dd?.debug_ids).toEqual({
+        expect(intakeRegistry.rumErrorEvents[1]._dd?.debug_ids).toMatchObject({
           [`${baseUrl}microfrontend/chunks/${LIB_EXPOSE_CHUNK}`]: LIB_DEBUG_ID,
           [`${baseUrl}microfrontend/chunks/${APP2_EXPOSE_CHUNK}`]: APP2_DEBUG_ID,
         })
