@@ -799,6 +799,18 @@ describe('startSessionManager', () => {
       expect(sessionManager.findTrackedSession()).toBeUndefined()
     })
 
+    it('should return the session older than TRACKED_SESSION_MAX_AGE when a larger maxAge is provided', async () => {
+      const sessionManager = await startSessionManagerWithDefaults()
+
+      // Let the session expire from inactivity, then age well past TRACKED_SESSION_MAX_AGE. The
+      // in-memory session context entry is kept (bounded by maxEntries, not elapsed time), so it
+      // can still be returned with `returnInactive: true` regardless of how old it is.
+      clock.tick(TRACKED_SESSION_MAX_AGE + ONE_SECOND)
+
+      expect(sessionManager.findTrackedSession(undefined, { returnInactive: true })).toBeUndefined()
+      expect(sessionManager.findTrackedSession(undefined, { returnInactive: true, maxAge: Infinity })).toBeDefined()
+    })
+
     describe('deterministic sampling', () => {
       it('should track a session whose ID has a low hash, even with a low sessionSampleRate', async () => {
         setupFakeStrategy({

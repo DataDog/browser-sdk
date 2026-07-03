@@ -23,7 +23,6 @@ import { display } from '../../tools/display'
 import { isSampled } from '../sampler'
 import { TelemetryMetrics, addTelemetryMetrics } from '../telemetry'
 import { monitorError } from '../../tools/monitor'
-import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import type { SessionState } from './sessionState'
 import {
   expandOnly,
@@ -38,7 +37,10 @@ import { getSessionStoreStrategy, selectSessionStoreStrategyType } from './sessi
 
 export interface SessionManager {
   findSession: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => SessionContext | undefined
-  findTrackedSession: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => SessionContext | undefined
+  findTrackedSession: (
+    startTime?: RelativeTime,
+    options?: { returnInactive?: boolean; maxAge?: number }
+  ) => SessionContext | undefined
   renewObservable: Observable<void>
   expireObservable: Observable<void>
   expire: () => void
@@ -53,7 +55,12 @@ export interface SessionContext {
 }
 
 export const VISIBILITY_CHECK_DELAY = ONE_MINUTE
-const SESSION_CONTEXT_TIMEOUT_DELAY = SESSION_TIME_OUT_DELAY
+
+// Arbitrary value to cap memory consumption for very long-lived pages with many session
+// renewals. Entries are *not* evicted based on elapsed time: an idle session's sole (closed)
+// entry must survive indefinitely so browser-logs can keep sending logs after it expires, with
+// or without a session attached (see browser-logs/src/domain/contexts/sessionContext.ts).
+export const MAX_SESSION_CONTEXT_HISTORY_ENTRIES = 1000
 
 // Maximum duration for which we can send data related to a session.
 //
@@ -84,7 +91,7 @@ export async function startSessionManager(
   const strategy = mockable(getSessionStoreStrategy)(sessionStoreStrategyType, configuration)
 
   const sessionContextHistory = createValueHistory<SessionContext>({
-    expireDelay: SESSION_CONTEXT_TIMEOUT_DELAY,
+    maxEntries: MAX_SESSION_CONTEXT_HISTORY_ENTRIES,
   })
   stopCallbacks.push(() => sessionContextHistory.stop())
 
@@ -216,14 +223,14 @@ export async function startSessionManager(
   function buildSessionManager(): SessionManager {
     return {
       findSession: (startTime, options) => sessionContextHistory.find(startTime, options),
-      findTrackedSession: (startTime, options) => {
-        const session = sessionContextHistory.find(startTime, options)
+      findTrackedSession: (startTime, { returnInactive = false, maxAge = TRACKED_SESSION_MAX_AGE } = {}) => {
+        const session = sessionContextHistory.find(startTime, { returnInactive })
 
         if (!session || session.id === 'invalid' || !isSampled(session.id, configuration.sessionSampleRate)) {
           return
         }
 
-        if (dateNow() - session.createdAt > TRACKED_SESSION_MAX_AGE) {
+        if (dateNow() - session.createdAt > maxAge) {
           return
         }
 

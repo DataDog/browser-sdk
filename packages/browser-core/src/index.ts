@@ -51,6 +51,7 @@ export type { SessionManager, SessionContext } from './domain/session/sessionMan
 export { startSessionManager, startSessionManagerStub, stopSessionManager } from './domain/session/sessionManager'
 export {
   SESSION_TIME_OUT_DELAY, // Exposed for tests
+  SESSION_EXPIRATION_DELAY,
   SESSION_NOT_TRACKED,
   SessionPersistence,
 } from './domain/session/sessionConstants'
