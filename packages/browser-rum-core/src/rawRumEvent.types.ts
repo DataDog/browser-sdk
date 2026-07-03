@@ -118,6 +118,9 @@ export interface RawRumErrorEvent {
     source_type: 'browser'
     csp?: Csp
   }
+  _dd?: {
+    debug_ids?: { [url: string]: string }
+  }
   view?: {
     in_foreground: boolean
   }
@@ -322,6 +325,7 @@ export interface RawRumLongAnimationFrameEvent {
   }
   _dd: {
     discarded: boolean
+    debug_ids?: { [url: string]: string }
   }
 }
 

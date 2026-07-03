@@ -1,43 +1,31 @@
 import type { RelativeTime } from '@datadog/js-core/time'
 import { createHook } from '@datadog/js-core/assembly'
+import { mockSourceCodeContext } from '../../../../browser-core/test'
 import type { AssembleHook, AssembleHookParams } from '../hooks'
-import { registerCleanupTask } from '../../../../browser-core/test'
 import type { RawRumLongAnimationFrameEvent } from '../../rawRumEvent.types'
-import type { BrowserWindow } from './sourceCodeContext'
-import { startSourceCodeContext } from './sourceCodeContext'
+import { startSourceCodeMfeContext } from './sourceCodeMfeContext'
 
 describe('sourceCodeContext', () => {
   let hook: AssembleHook
-  let browserWindow: BrowserWindow
+  // Top frame URL the context is keyed on
+  const MATCHING_URL = 'http://localhost:8080/file.js'
+
   const TEST_STACK = `Error: Test error
-    at testFunction (http://localhost:8080/file.js:41:27)
+    at testFunction (${MATCHING_URL}:41:27)
     at HTMLButtonElement.onclick (http://localhost:8080/file-2.js:107:146)`
 
-  const MATCHING_TEST_STACK = `Error: Another error
-    at anotherFunction (http://localhost:8080/file.js:41:27)
-    at HTMLButtonElement.onPointerUp (http://localhost:8080/another-file.js:107:146)`
+  // Event stack whose top frame URL matches the registered context (deeper frames differ)
+  const MATCHING_TEST_STACK = `Error: event
+    at anotherFunction (${MATCHING_URL}:41:27)
+    at HTMLButtonElement.onPointerUp (http://localhost:8080/file-2.js:107:146)`
 
   beforeEach(() => {
     hook = createHook()
-    browserWindow = window as BrowserWindow
   })
 
-  function setupBrowserWindowWithContext() {
-    browserWindow.DD_SOURCE_CODE_CONTEXT = {
-      [TEST_STACK]: {
-        service: 'my-service',
-        version: '1.0.0',
-      },
-    }
-
-    registerCleanupTask(() => {
-      delete browserWindow.DD_SOURCE_CODE_CONTEXT
-    })
-  }
-
   it('should add source code context matching the error stack first frame URL', () => {
-    setupBrowserWindowWithContext()
-    startSourceCodeContext(hook)
+    mockSourceCodeContext({ [TEST_STACK]: { service: 'my-service', version: '1.0.0' } })
+    startSourceCodeMfeContext(hook)
 
     const result = hook.trigger({
       eventType: 'error',
@@ -59,8 +47,8 @@ describe('sourceCodeContext', () => {
   })
 
   it('should add source code context matching the handling_stack first frame URL', () => {
-    setupBrowserWindowWithContext()
-    startSourceCodeContext(hook)
+    mockSourceCodeContext({ [TEST_STACK]: { service: 'my-service', version: '1.0.0' } })
+    startSourceCodeMfeContext(hook)
 
     const result = hook.trigger({
       eventType: 'action',
@@ -81,8 +69,8 @@ describe('sourceCodeContext', () => {
   })
 
   it('should add source code context matching the LoAF first script source URL', () => {
-    setupBrowserWindowWithContext()
-    startSourceCodeContext(hook)
+    mockSourceCodeContext({ [TEST_STACK]: { service: 'my-service', version: '1.0.0' } })
+    startSourceCodeMfeContext(hook)
 
     const result = hook.trigger({
       eventType: 'long_task',
@@ -109,8 +97,8 @@ describe('sourceCodeContext', () => {
   })
 
   it('should not add source code context matching no stack', () => {
-    setupBrowserWindowWithContext()
-    startSourceCodeContext(hook)
+    mockSourceCodeContext({ [TEST_STACK]: { service: 'my-service', version: '1.0.0' } })
+    startSourceCodeMfeContext(hook)
 
     const result = hook.trigger({
       eventType: 'error',
@@ -126,59 +114,5 @@ describe('sourceCodeContext', () => {
     } as AssembleHookParams)
 
     expect(result).toBeUndefined()
-  })
-
-  it('should support late updates to DD_SOURCE_CODE_CONTEXT', () => {
-    startSourceCodeContext(hook)
-
-    // Add context AFTER initialization
-    setupBrowserWindowWithContext()
-
-    const result = hook.trigger({
-      eventType: 'error',
-      startTime: 0 as RelativeTime,
-      domainContext: {},
-      rawRumEvent: {
-        type: 'error',
-        error: {
-          stack: TEST_STACK,
-        },
-      },
-    } as AssembleHookParams)
-
-    expect(result).toEqual({
-      type: 'error',
-      service: 'my-service',
-      version: '1.0.0',
-    })
-  })
-
-  it('should ignore updates to existing source code context after initialization', () => {
-    setupBrowserWindowWithContext()
-    startSourceCodeContext(hook)
-
-    // Update existing entry
-    browserWindow.DD_SOURCE_CODE_CONTEXT![TEST_STACK] = {
-      service: 'updated-service',
-      version: '1.1.0',
-    }
-
-    const result = hook.trigger({
-      eventType: 'error',
-      startTime: 0 as RelativeTime,
-      domainContext: {},
-      rawRumEvent: {
-        type: 'error',
-        error: {
-          stack: TEST_STACK,
-        },
-      },
-    } as AssembleHookParams)
-
-    expect(result).toEqual({
-      type: 'error',
-      service: 'my-service',
-      version: '1.0.0',
-    })
   })
 })

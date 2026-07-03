@@ -1,3 +1,7 @@
+declare module 'lib/lib' {
+  export function boom(id: string): never
+}
+
 interface Window {
   DD_RUM: {
     addError: (error: Error) => void

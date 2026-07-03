@@ -226,6 +226,55 @@ describe('rum assembly', () => {
         })
       })
 
+      describe('_dd.debug_ids', () => {
+        const url = 'http://path/to/redact/app.js'
+
+        const redactDebugIdUrls = (debugIds: { [url: string]: string }) => {
+          Object.keys(debugIds).forEach((debugIdUrl) => {
+            if (debugIdUrl.includes('path/to/redact')) {
+              debugIds['redacted-url'] = debugIds[debugIdUrl]
+              delete debugIds[debugIdUrl]
+            }
+          })
+        }
+
+        it('should allow redaction of the url in _dd.debug_ids on error events', () => {
+          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+            partialConfiguration: {
+              beforeSend: (event) => {
+                redactDebugIdUrls(event._dd.debug_ids)
+              },
+            },
+          })
+
+          notifyRawRumEvent(lifeCycle, {
+            rawRumEvent: createRawRumEvent(RumEventType.ERROR, {
+              _dd: { debug_ids: { [url]: 'debug-id' } },
+            }),
+          })
+
+          expect((serverRumEvents[0] as any)._dd.debug_ids).toEqual({ 'redacted-url': 'debug-id' })
+        })
+
+        it('should allow redaction of the url in _dd.debug_ids on long task events', () => {
+          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+            partialConfiguration: {
+              beforeSend: (event) => {
+                redactDebugIdUrls(event._dd.debug_ids)
+              },
+            },
+          })
+
+          notifyRawRumEvent(lifeCycle, {
+            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, {
+              _dd: { debug_ids: { [url]: 'debug-id' } },
+            }),
+          })
+
+          expect((serverRumEvents[0] as any)._dd.debug_ids).toEqual({ 'redacted-url': 'debug-id' })
+        })
+      })
+
       describe('field resource.graphql on Resource events', () => {
         it('should allow modification of resource.graphql.variables property', () => {
           const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({

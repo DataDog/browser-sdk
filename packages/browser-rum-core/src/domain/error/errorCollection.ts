@@ -83,6 +83,7 @@ function processError(error: RawError): RawRumEventCollectedData<RawRumErrorEven
       fingerprint: error.fingerprint,
       csp: error.csp,
     },
+    _dd: { debug_ids: error.debugIds },
     type: RumEventType.ERROR,
     context: error.context,
   }
@@ -92,9 +93,5 @@ function processError(error: RawError): RawRumEventCollectedData<RawRumErrorEven
     handlingStack: error.handlingStack,
   }
 
-  return {
-    rawRumEvent,
-    startClocks: error.startClocks,
-    domainContext,
-  }
+  return { rawRumEvent, startClocks: error.startClocks, domainContext }
 }
