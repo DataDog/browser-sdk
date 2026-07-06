@@ -17,14 +17,14 @@ export interface SdkInfos {
     internalContext?: RumInternalContext
     globalContext?: Context
     user: Context
-    account: Context
+    account?: Context
   }
   logs?: {
     version?: string
     config?: LogsInitConfiguration
     globalContext?: Context
     user: Context
-    account: Context
+    account?: Context
   }
   cookie?: {
     id?: string
