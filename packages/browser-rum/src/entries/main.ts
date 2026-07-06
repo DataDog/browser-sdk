@@ -11,7 +11,7 @@ import { defineGlobal, globalObject } from '@datadog/browser-core'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
 import { makeRumPublicApi } from '@datadog/browser-rum-core'
 import { makeRecorderApi } from '../boot/recorderApi'
-import { createDeflateEncoder, startDeflateWorker } from '../domain/deflate'
+import { lazyLoadDeflateWorker } from '../boot/lazyLoadDeflateWorker'
 import { makeProfilerApi } from '../boot/profilerApi'
 
 export type {
@@ -90,8 +90,7 @@ const profilerApi = makeProfilerApi()
  * @see [RUM Browser Monitoring Setup](https://docs.datadoghq.com/real_user_monitoring/browser/)
  */
 export const datadogRum = makeRumPublicApi(recorderApi, profilerApi, {
-  startDeflateWorker,
-  createDeflateEncoder,
+  loadDeflateWorker: lazyLoadDeflateWorker,
   sdkName: 'rum',
 })
 

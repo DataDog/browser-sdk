@@ -42,7 +42,7 @@ export function createPostStartStrategy(
   lifeCycle: LifeCycle,
   sessionManager: SessionManager,
   viewHistory: ViewHistory,
-  getOrCreateDeflateEncoder: () => DeflateEncoder | undefined,
+  getOrCreateDeflateEncoder: () => Promise<DeflateEncoder | undefined>,
   telemetry: Telemetry
 ): Strategy {
   let status = RecorderStatus.Stopped
@@ -83,7 +83,7 @@ export function createPostStartStrategy(
       return
     }
 
-    const deflateEncoder = getOrCreateDeflateEncoder()
+    const deflateEncoder = await getOrCreateDeflateEncoder()
     if (!deflateEncoder) {
       status = RecorderStatus.Stopped
       observable.notify({ type: 'deflate-encoder-load-failed' })

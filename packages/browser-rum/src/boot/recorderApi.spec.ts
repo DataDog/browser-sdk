@@ -23,12 +23,14 @@ import {
 import { mockDocumentReadyState, mockRumConfiguration, mockViewHistory } from '../../../browser-rum-core/test'
 import type { CreateDeflateWorker } from '../domain/deflate'
 import { resetDeflateWorkerState, createDeflateWorker } from '../domain/deflate'
+import * as deflateModule from '../domain/deflate'
 import { MockWorker } from '../../test'
 import * as replayStats from '../domain/replayStats'
 import { type RecorderInitMetrics } from '../domain/startRecorderInitTelemetry'
 import { makeRecorderApi } from './recorderApi'
 import type { StartRecording } from './postStartStrategy'
 import { importRecorder } from './lazyLoadRecorder'
+import { importDeflateWorker } from './lazyLoadDeflateWorker'
 
 describe('makeRecorderApi', () => {
   let lifeCycle: LifeCycle
@@ -55,6 +57,9 @@ describe('makeRecorderApi', () => {
     telemetry = startMockTelemetry()
     mockWorker = new MockWorker()
     createDeflateWorkerSpy = replaceMockableWithSpy(createDeflateWorker).and.callFake(() => mockWorker)
+    // The deflate worker module is loaded on demand; resolve the dynamic import to the real module
+    // (instead of exercising a real code-split chunk, which the test bundler doesn't support).
+    replaceMockableWithSpy(importDeflateWorker).and.resolveTo(deflateModule)
     spyOn(display, 'error')
 
     lifeCycle = new LifeCycle()

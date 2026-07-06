@@ -14,12 +14,8 @@ import type {
   StartRecordingOptions,
 } from '@datadog/browser-rum-core'
 import { getReplayStats as getReplayStatsImpl } from '../domain/replayStats'
-import {
-  createDeflateEncoder,
-  DeflateWorkerStatus,
-  getDeflateWorkerStatus,
-  startDeflateWorker,
-} from '../domain/deflate'
+import type { DeflateModule } from './lazyLoadDeflateWorker'
+import { lazyLoadDeflateWorker } from './lazyLoadDeflateWorker'
 import { createPostStartStrategy } from './postStartStrategy'
 import { createPreStartStrategy } from './preStartStrategy'
 
@@ -37,6 +33,10 @@ export function makeRecorderApi(): RecorderApi {
 
   // eslint-disable-next-line prefer-const
   let { strategy, shouldStartImmediately } = createPreStartStrategy()
+
+  // The deflate worker module is loaded on demand (when recording starts) to keep it out of the main
+  // bundle. It stays undefined until then, which means the worker is not initialized yet.
+  let deflateModule: DeflateModule | undefined
 
   return {
     start: (options?: StartRecordingOptions) => strategy.start(options),
@@ -66,10 +66,9 @@ export function makeRecorderApi(): RecorderApi {
       //
       // In the future, when the compression worker will also be used for RUM data, this will be
       // less important since no RUM event will be sent when the worker fails to initialize.
-      getDeflateWorkerStatus() === DeflateWorkerStatus.Initialized && strategy.isRecording(),
+      (deflateModule?.isDeflateWorkerInitialized() ?? false) && strategy.isRecording(),
 
-    getReplayStats: (viewId) =>
-      getDeflateWorkerStatus() === DeflateWorkerStatus.Initialized ? getReplayStatsImpl(viewId) : undefined,
+    getReplayStats: (viewId) => (deflateModule?.isDeflateWorkerInitialized() ? getReplayStatsImpl(viewId) : undefined),
   }
 
   function onRumStart(
@@ -82,12 +81,17 @@ export function makeRecorderApi(): RecorderApi {
   ) {
     let cachedDeflateEncoder: DeflateEncoder | undefined
 
-    function getOrCreateDeflateEncoder() {
+    async function getOrCreateDeflateEncoder() {
       if (!cachedDeflateEncoder) {
-        worker ??= startDeflateWorker(configuration, 'Datadog Session Replay', () => strategy.stop())
+        deflateModule ??= await lazyLoadDeflateWorker()
+        if (!deflateModule) {
+          return
+        }
+
+        worker ??= deflateModule.startDeflateWorker(configuration, 'Datadog Session Replay', () => strategy.stop())
 
         if (worker) {
-          cachedDeflateEncoder = createDeflateEncoder(worker, DeflateEncoderStreamId.REPLAY)
+          cachedDeflateEncoder = deflateModule.createDeflateEncoder(worker, DeflateEncoderStreamId.REPLAY)
         }
       }
       return cachedDeflateEncoder
