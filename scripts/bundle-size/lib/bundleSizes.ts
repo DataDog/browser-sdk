@@ -6,7 +6,7 @@ import { fetchPerformanceMetrics } from './fetchPerformanceMetrics.ts'
 import { markdownArray, type Pr } from './reportAsAPrComment.ts'
 
 // The value is set to 5% as it's around 10 times the average value for small PRs.
-const SIZE_INCREASE_THRESHOLD = 5
+const SIZE_INCREASE_THRESHOLD = 0.05
 
 export async function computeAndReportBundleSizes(pr?: Pr) {
   const localBundleSizes = extractUncompressedBundleSizes(calculateBundleSizes())
