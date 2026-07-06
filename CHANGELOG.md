@@ -15,6 +15,35 @@
 
 ---
 
+## v7.5.0
+
+**Public Changes:**
+
+- ✨ [RUM-16925] attach debug IDs from DD_SOURCE_CODE_CONTEXT to error and long task events ([#4812](https://github.com/DataDog/browser-sdk/pull/4812))
+- ✨ Add betaEnableViewUpdates config option ([#4833](https://github.com/DataDog/browser-sdk/pull/4833))
+- ✨ add support for `remote_configuration_id` in view events ([#4835](https://github.com/DataDog/browser-sdk/pull/4835))
+- 🐛 fix logs not being sent long after session expiration ([#4839](https://github.com/DataDog/browser-sdk/pull/4839))
+- ⚗️ Partial view updates — batch optimizations ([#4807](https://github.com/DataDog/browser-sdk/pull/4807))
+
+**Internal Changes:**
+
+- 🐛 fix empty private regions deployment step ([#4823](https://github.com/DataDog/browser-sdk/pull/4823))
+- 📝 update AGENTS.md monorepo structure to reflect current packages ([#4826](https://github.com/DataDog/browser-sdk/pull/4826))
+- 👷 Bump chrome to 150.0.7871.46-1 ([#4836](https://github.com/DataDog/browser-sdk/pull/4836))
+- 👷 Update all non-major dependencies ([#4827](https://github.com/DataDog/browser-sdk/pull/4827))
+- 👷 Update dependency @playwright/test to v1.61.0 ([#4828](https://github.com/DataDog/browser-sdk/pull/4828))
+- 👷 Update dependency chrome-webstore-upload to v6 ([#4831](https://github.com/DataDog/browser-sdk/pull/4831))
+- 👷 Make json-schemas sync reliable: authenticate API requests and format output deterministically ([#4832](https://github.com/DataDog/browser-sdk/pull/4832))
+- 👷 Update dependency @types/node to v26 ([#4830](https://github.com/DataDog/browser-sdk/pull/4830))
+- 👷 Update actions/checkout action to v7 ([#4829](https://github.com/DataDog/browser-sdk/pull/4829))
+- ♻️ move `endpointBuilder` and its dependencies to `@datadog/js-core` ([#4824](https://github.com/DataDog/browser-sdk/pull/4824))
+- ♻️ clean up `createBatch` API before migrating to js-core ([#4802](https://github.com/DataDog/browser-sdk/pull/4802))
+- ✅ Add Salesforce E2E tests ([#4761](https://github.com/DataDog/browser-sdk/pull/4761))
+- ✅ Add Salesforce LWC Test Application. ([#4757](https://github.com/DataDog/browser-sdk/pull/4757))
+- 🔧 Dissociate pinned e2e setup ([#4811](https://github.com/DataDog/browser-sdk/pull/4811))
+- 🔥 Remove upgrade SDK migration skills (moved to datadog-labs) ([#4834](https://github.com/DataDog/browser-sdk/pull/4834))
+- 🔇 postpone/cleanup cookie and telemetry monitor-until dates ([#4840](https://github.com/DataDog/browser-sdk/pull/4840))
+
 ## v7.4.0
 
 **Public Changes:**
