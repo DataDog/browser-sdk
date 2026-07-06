@@ -105,6 +105,7 @@ export function InfosTab() {
               {infos.cookie.forcedReplay && <Entry name="Is Replay Forced" value={'True'} />}
               <Entry name="Created" value={infos.cookie.created && formatDate(Number(infos.cookie.created))} />
               <Entry name="Expire" value={infos.cookie.expire && formatDate(Number(infos.cookie.expire))} />
+              <Entry name="Anonymous ID" value={infos.cookie.anonymousId} />
               <Button color="violet" variant="light" onClick={endSession} className="dd-privacy-allow">
                 End current session
               </Button>
@@ -145,6 +146,7 @@ export function InfosTab() {
               <Entry name="Internal context" value={infos.rum.internalContext} />
               <Entry name="Global context" value={infos.rum.globalContext} />
               <Entry name="User" value={infos.rum.user} />
+              <Entry name="Account" value={infos.rum.account} />
             </>
           )}
         </Columns.Column>
@@ -176,6 +178,7 @@ export function InfosTab() {
               />
               <Entry name="Global context" value={infos.logs.globalContext} />
               <Entry name="User" value={infos.logs.user} />
+              <Entry name="Account" value={infos.logs.account} />
             </>
           )}
         </Columns.Column>
@@ -325,6 +328,7 @@ function endSession() {
   evalInWindow(
     `
       document.cookie = '_dd_s=isExpired=1; expires=${expires}; path=/'
+      document.cookie = '_dd_s_v2=isExpired=1; expires=${expires}; path=/'
     `
   ).catch((error) => logger.error('Error while ending session:', error))
 }
