@@ -9,9 +9,27 @@ import { getSfLwcClientId, getSfLwcInstanceUrl, getSfLwcJwtPrivateKey, getSfLwcU
 import { command } from './lib/command.ts'
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const salesforceAppDir = resolve(repositoryRoot, 'test/apps/sf-lwc-app')
-const SALESFORCE_HOME_PATH = '/lightning/app/c__SF_LWC_App/page/home'
 const TARGET_ORG = 'sf-lwc-ci'
+const EXPERIENCE_URL_PATH_PREFIX = 'sfexperiencecloud'
+
+type AppKey = 'lwc' | 'experience-cloud'
+
+const APP_KEYS: AppKey[] = ['lwc', 'experience-cloud']
+
+const APPS: Record<AppKey, { dir: string; urlPath: string; buildBundle: boolean }> = {
+  lwc: {
+    dir: resolve(repositoryRoot, 'test/apps/sf-lwc-app'),
+    urlPath: '/lightning/app/c__SF_LWC_App/page/home',
+    buildBundle: true,
+  },
+  'experience-cloud': {
+    dir: resolve(repositoryRoot, 'test/apps/sf-experience-app'),
+    urlPath: `/${EXPERIENCE_URL_PATH_PREFIX}/s`,
+    buildBundle: false,
+  },
+}
+
+const SUPPORTED_COMMANDS = ['deploy-app', 'get-url']
 
 runMain(() => {
   const { values, positionals } = parseArgs({
@@ -21,6 +39,9 @@ runMain(() => {
         type: 'boolean',
         short: 'h',
       },
+      app: {
+        type: 'string',
+      },
     },
   })
 
@@ -29,31 +50,46 @@ runMain(() => {
   }
 
   if (positionals.length !== 1) {
-    throw new Error('Usage: node scripts/salesforce-lwc-app.ts <deploy-app|get-url>')
+    throw new Error(
+      `Usage: node scripts/salesforce-lwc-app.ts <${SUPPORTED_COMMANDS.join('|')}> [--app ${APP_KEYS.join('|')}]`
+    )
   }
 
   const commandName = positionals[0]
+  const appKeys = resolveAppKeys(values.app)
 
   switch (commandName) {
-    // Deploy the app to the Salesforce org. To be done only when the app is updated.
+    // Deploy the app(s) to the Salesforce org. To be done only when an app is updated.
     case 'deploy-app':
-      deployApp()
+      deployApp(appKeys)
       break
-    // Get the authenticated URL of the app.
+    // Get the authenticated URL of the app(s).
     case 'get-url':
-      printSalesforceLwcUrl()
+      printUrl(appKeys)
       break
     default:
-      throw new Error(`Unknown command "${commandName ?? ''}". Expected: deploy-app|get-url`)
+      throw new Error(`Unknown command "${commandName ?? ''}". Expected: ${SUPPORTED_COMMANDS.join('|')}`)
   }
 })
 
 function showUsageAndExit() {
-  console.log('Usage: node scripts/salesforce-lwc-app.ts <deploy-app|get-url>')
+  console.log(
+    `Usage: node scripts/salesforce-lwc-app.ts <${SUPPORTED_COMMANDS.join('|')}> [--app ${APP_KEYS.join('|')}]`
+  )
   process.exit(0)
 }
 
-function authenticate(targetOrg: string) {
+function resolveAppKeys(appFlag: string | undefined): AppKey[] {
+  if (!appFlag) {
+    return APP_KEYS
+  }
+  if (!APP_KEYS.includes(appFlag as AppKey)) {
+    throw new Error(`Unknown --app "${appFlag}". Expected one of: ${APP_KEYS.join('|')}`)
+  }
+  return [appFlag as AppKey]
+}
+
+function authenticate(targetOrg: string, cwd: string) {
   // Temporary directory holding the JWT private key for the duration of authentication.
   // Using a unique temp dir avoids collisions when multiple CI jobs run in parallel.
   const keyDirectory = mkdtempSync(resolve(tmpdir(), 'sf-lwc-jwt-'))
@@ -66,7 +102,7 @@ function authenticate(targetOrg: string) {
 
     printLog(`Authenticating Salesforce CLI alias ${targetOrg}...`)
     command`sf org login jwt --client-id ${getSfLwcClientId()} --jwt-key-file ${serverKeyPath} --username ${getSfLwcUsername()} --instance-url ${getSfLwcInstanceUrl()} --alias ${targetOrg}`
-      .withCurrentWorkingDirectory(salesforceAppDir)
+      .withCurrentWorkingDirectory(cwd)
       .withLogs()
       .run()
     printLog(`Salesforce CLI authenticated as ${targetOrg}.`)
@@ -75,24 +111,36 @@ function authenticate(targetOrg: string) {
   }
 }
 
-function deployApp() {
-  authenticate(TARGET_ORG)
+function deployApp(appKeys: AppKey[]) {
+  for (const appKey of appKeys) {
+    const { dir, buildBundle } = APPS[appKey]
 
-  printLog(`Deploying Salesforce LWC app to ${TARGET_ORG}...`)
-  command`sf project deploy start --target-org ${TARGET_ORG} --source-dir force-app --ignore-conflicts --concise`
-    .withCurrentWorkingDirectory(salesforceAppDir)
-    .withLogs()
-    .run()
-  printLog('Salesforce LWC app deployed.')
+    if (buildBundle) {
+      printLog('Building RUM slim bundle...')
+      command`yarn workspace ${'@datadog/browser-rum-slim'} build:bundle`.withLogs().run()
+    }
+
+    authenticate(TARGET_ORG, dir)
+
+    printLog(`Deploying Salesforce ${appKey} app to ${TARGET_ORG}...`)
+    command`sf project deploy start --target-org ${TARGET_ORG} --source-dir force-app --ignore-conflicts --concise`
+      .withCurrentWorkingDirectory(dir)
+      .withLogs()
+      .run()
+    printLog(`Salesforce ${appKey} app deployed.`)
+  }
 }
 
-function printSalesforceLwcUrl(): void {
-  const path = new URL(SALESFORCE_HOME_PATH, 'https://salesforce.local')
+function printUrl(appKeys: AppKey[]): void {
+  for (const appKey of appKeys) {
+    const { dir, urlPath } = APPS[appKey]
+    const path = new URL(urlPath, 'https://salesforce.local')
 
-  authenticate(TARGET_ORG)
+    authenticate(TARGET_ORG, dir)
 
-  command`sf org open --target-org ${TARGET_ORG} --path ${path.pathname}${path.search} --url-only`
-    .withCurrentWorkingDirectory(salesforceAppDir)
-    .withLogs()
-    .run()
+    command`sf org open --target-org ${TARGET_ORG} --path ${path.pathname}${path.search} --url-only`
+      .withCurrentWorkingDirectory(dir)
+      .withLogs()
+      .run()
+  }
 }
