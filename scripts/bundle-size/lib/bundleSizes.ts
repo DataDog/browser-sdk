@@ -84,7 +84,7 @@ export function formatBundleSizes({
   })
 
   if (highIncreaseDetected) {
-    message += `\n⚠️ The increase is particularly high and exceeds ${SIZE_INCREASE_THRESHOLD}%. Please check the changes.`
+    message += `\n⚠️ The increase is particularly high and exceeds ${formatPercentage(SIZE_INCREASE_THRESHOLD)}. Please check the changes.`
   }
 
   return message
