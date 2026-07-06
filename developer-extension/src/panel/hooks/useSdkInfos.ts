@@ -17,12 +17,14 @@ export interface SdkInfos {
     internalContext?: RumInternalContext
     globalContext?: Context
     user: Context
+    account: Context
   }
   logs?: {
     version?: string
     config?: LogsInitConfiguration
     globalContext?: Context
     user: Context
+    account: Context
   }
   cookie?: {
     id?: string
@@ -31,6 +33,7 @@ export interface SdkInfos {
     logs?: string
     rum?: string
     forcedReplay?: '1'
+    anonymousId?: string
   }
   rumTrackingType?: string
   logsTrackingType?: string
@@ -76,15 +79,22 @@ async function getInfos(): Promise<SdkInfos> {
           return JSON.parse(stringified)
         }
 
-        const cookies = new Map(
-          document.cookie
+        // SDK v7 renamed the session cookie from '_dd_s' to '_dd_s_v2'. Prefer the new
+        // name and fall back to the legacy one so this works for both v6 and v7 apps.
+        function findCookieValue(name) {
+          return document.cookie
             .split(';')
-            .map(cookie => cookie.match(/(\\S*?)=(.*)/)?.slice(1))
-            .filter(cookie => cookie !== undefined)
-        );
-        const cookieRawValue = cookies.get('_dd_s_v2') ?? cookies.get('_dd_s');
-        const cookie = cookieRawValue && Object.fromEntries(
-          cookieRawValue.split('&').map(value => value.split('='))
+            .map(c => c.match(/(\\S*?)=(.*)/)?.slice(1) || [])
+            .find(([cookieName]) => cookieName === name)
+            ?.[1]
+        }
+        const cookieRawValue = findCookieValue('_dd_s_v2') ?? findCookieValue('_dd_s')
+
+        const cookieEntries = cookieRawValue
+          ? cookieRawValue.split('&').map((value) => value.split('='))
+          : null
+        const cookie = cookieEntries && Object.fromEntries(
+          cookieEntries.map(([key, val]) => (key === 'aid' ? ['anonymousId', val] : [key, val]))
         )
 
         const rum = window.DD_RUM && {
@@ -93,6 +103,7 @@ async function getInfos(): Promise<SdkInfos> {
           internalContext: window.DD_RUM?.getInternalContext?.(),
           globalContext: window.DD_RUM?.getGlobalContext?.(),
           user: window.DD_RUM?.getUser?.(),
+          account: window.DD_RUM?.getAccount?.(),
         }
 
         const logs = window.DD_LOGS && {
@@ -100,6 +111,7 @@ async function getInfos(): Promise<SdkInfos> {
           config: serializeWithFunctions(window.DD_LOGS?.getInitConfiguration?.()),
           globalContext: window.DD_LOGS?.getGlobalContext?.(),
           user: window.DD_LOGS?.getUser?.(),
+          account: window.DD_LOGS?.getAccount?.(),
         }
 
         return { rum, logs, cookie }
