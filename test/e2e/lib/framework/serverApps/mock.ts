@@ -197,6 +197,21 @@ export function createMockServerApp(servers: Servers, setup: string, setupOption
     res.end()
   })
 
+  app.get('/trusted-types-csp', (_req, res) => {
+    res.header(
+      'Content-Security-Policy',
+      [
+        `connect-src ${servers.datadogHttpApi.origin} ${servers.base.origin} ${servers.crossOrigin.origin} https://quota.browser-intake-datadoghq.com`,
+        `script-src 'self' 'unsafe-inline' ${servers.crossOrigin.origin}`,
+        "worker-src blob: 'self'",
+        "require-trusted-types-for 'script'",
+        'trusted-types datadog-chunks datadog-worker',
+      ].join(';')
+    )
+    res.send(setup)
+    res.end()
+  })
+
   app.get(/datadog-(?<packageName>[a-z-]*)\.js/, (req, res) => {
     const { originalUrl, params } = req
 
