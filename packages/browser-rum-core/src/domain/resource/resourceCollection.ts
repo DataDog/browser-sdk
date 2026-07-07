@@ -1,45 +1,47 @@
-import type { Duration } from '@datadog/js-core/time'
-import { toServerDuration, relativeToClocks } from '@datadog/js-core/time'
 import {
-  generateUUID,
-  createTaskQueue,
-  mockable,
-  runOnReadyState,
-  matchList,
-  safeTruncate,
-  display,
   addTelemetryDebug,
+  createTaskQueue,
+  display,
+  generateUUID,
+  matchList,
+  mockable,
   RequestType,
+  ResourceType,
+  runOnReadyState,
+  safeTruncate,
   setTimeout,
 } from '@datadog/browser-core'
+import type { Duration } from '@datadog/js-core/time'
+import { elapsed, relativeToClocks, toServerDuration } from '@datadog/js-core/time'
 import { combine } from '@datadog/js-core/util'
-import type { MatchHeader, RumConfiguration } from '../configuration'
-import { RumPerformanceEntryType, createPerformanceObservable } from '../../browser/performanceObservable'
+import { createPerformanceObservable, RumPerformanceEntryType } from '../../browser/performanceObservable'
+import { getNavigationEntry } from '../../browser/performanceUtils'
 import type { RumResourceEventDomainContext } from '../../domainContext.types'
 import type { NetworkHeaders, RawRumResourceEvent, ResourceRequest, ResourceResponse } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
-import type { RawRumEventCollectedData, LifeCycle } from '../lifeCycle'
-import { LifeCycleEventType } from '../lifeCycle'
-import type { RequestCompleteEvent } from '../requestCollection'
-import { createSpanIdentifier } from '../tracing/identifier'
-import { getDocumentTraceId } from '../tracing/getDocumentTraceId'
-import { getNavigationEntry } from '../../browser/performanceUtils'
+import type { MatchHeader, RumConfiguration } from '../configuration'
 import { startEventTracker } from '../eventTracker'
 import { extractRegexMatch } from '../extractRegexMatch'
+import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
+import { LifeCycleEventType } from '../lifeCycle'
+import type { RequestCompleteEvent } from '../requestCollection'
+import { getDocumentTraceId } from '../tracing/getDocumentTraceId'
+import { createSpanIdentifier } from '../tracing/identifier'
+import type { WebSocketCompleteEvent } from './webSocketCollection'
+import type { GraphQlMetadata } from './graphql'
+import { extractGraphQlMetadata, findGraphQlConfiguration } from './graphql'
+import { createRequestRegistry } from './requestRegistry'
+import type { ResourceLikeEntry } from './resourceUtils'
 import {
+  computeResourceEntryDeliveryType,
   computeResourceEntryDetails,
   computeResourceEntryDuration,
-  computeResourceEntryType,
-  computeResourceEntrySize,
   computeResourceEntryProtocol,
-  computeResourceEntryDeliveryType,
+  computeResourceEntrySize,
+  computeResourceEntryType,
   isResourceEntryRequestType,
   sanitizeIfLongDataUrl,
 } from './resourceUtils'
-import type { ResourceLikeEntry } from './resourceUtils'
-import { createRequestRegistry } from './requestRegistry'
-import type { GraphQlMetadata } from './graphql'
-import { extractGraphQlMetadata, findGraphQlConfiguration } from './graphql'
 import type { ManualResourceData } from './trackManualResources'
 import { trackManualResources } from './trackManualResources'
 
@@ -50,6 +52,14 @@ export const REQUEST_MATCHING_DELAY = 50 as Duration
 export function startResourceCollection(lifeCycle: LifeCycle, configuration: RumConfiguration) {
   const taskQueue = mockable(createTaskQueue)()
   const requestRegistry = createRequestRegistry(lifeCycle)
+
+  lifeCycle.subscribe(LifeCycleEventType.WEBSOCKET_COMPLETED, (event: WebSocketCompleteEvent) => {
+    // Avoid taskQueue to ensure the websocket resource is reported before the session expires.
+    const rawEvent = assembleWebSocketResource(event, configuration)
+    if (rawEvent) {
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
+    }
+  })
 
   const performanceResourceSubscription = createPerformanceObservable({
     type: RumPerformanceEntryType.RESOURCE,
@@ -104,6 +114,60 @@ export function startResourceCollection(lifeCycle: LifeCycle, configuration: Rum
       taskQueue.stop()
       performanceResourceSubscription.unsubscribe()
       resourceTracker.stopAll()
+    },
+  }
+}
+
+function assembleWebSocketResource(
+  event: WebSocketCompleteEvent,
+  configuration: RumConfiguration
+): RawRumEventCollectedData<RawRumResourceEvent> | undefined {
+  const duration = elapsed(event.startClocks.timeStamp, event.endClocks.timeStamp)
+
+  const rawRumEvent: RawRumResourceEvent = {
+    date: event.startClocks.timeStamp,
+    type: RumEventType.RESOURCE,
+    resource: {
+      id: generateUUID(),
+      type: ResourceType.WEBSOCKET,
+      url: event.url,
+      duration: toServerDuration(duration),
+      websocket: {
+        connection_id: event.connectionId,
+        handshake_succeeded: event.handshakeSucceeded,
+        start_time: event.startClocks.timeStamp,
+        end_time: event.endClocks.timeStamp,
+        start_view_id: event.startViewId,
+        end_view_id: event.endViewId,
+        tracking_end_reason: event.trackingEndReason,
+        close_code: event.closeCode,
+        close_reason: event.closeReason,
+        was_clean: event.wasClean,
+        messages_in: event.messagesIn,
+        messages_out: event.messagesOut,
+        time_to_first_message_in: toServerDuration(event.firstMessageInOffset),
+        time_to_first_message_out: toServerDuration(event.firstMessageOutOffset),
+        last_message_in_at: event.lastMessageInAt,
+        longest_inbound_silence: toServerDuration(event.longestInboundSilence),
+        inbound_idle_duration_before_close: toServerDuration(event.inboundIdleDurationBeforeClose),
+        buffered_amount_max: event.bufferedAmountMax,
+        protocol: event.protocol,
+        setup_duration: toServerDuration(event.setupDuration),
+      },
+    },
+    _dd: {
+      discarded: !configuration.trackResources,
+    },
+  }
+
+  return {
+    startClocks: event.startClocks,
+    duration,
+    rawRumEvent,
+    domainContext: {
+      isWebSocket: true,
+      isManual: false,
+      webSocket: event.webSocket,
     },
   }
 }
@@ -200,6 +264,7 @@ function getResourceDomainContext(
     performanceEntry: entry as unknown as PerformanceResourceTiming | PerformanceNavigationTiming,
     isManual: false,
     isAborted: request ? request.isAborted : false,
+    isWebSocket: false,
     handlingStack: request?.handlingStack,
     requestInit: request?.init,
     requestInput: request?.input as RequestInfo | undefined,

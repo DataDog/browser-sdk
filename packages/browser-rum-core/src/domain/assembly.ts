@@ -41,6 +41,7 @@ const MODIFIABLE_FIELD_PATHS_BY_EVENT: Record<AssembledRumEvent['type'], Modifia
     'resource.graphql.variables': 'string',
     'resource.request.headers': 'object',
     'resource.response.headers': 'object',
+    'resource.websocket.close_reason': 'string',
   },
   [RumEventType.ACTION]: {
     ...COMMON_MODIFIABLE_FIELD_PATHS,
