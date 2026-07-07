@@ -1,5 +1,6 @@
 import * as http from 'http'
 import type { AddressInfo } from 'net'
+import type { Duplex } from 'stream'
 import { test } from '@playwright/test'
 import type { Browser } from '@playwright/test'
 import { getIp } from '../../../envUtils'
@@ -10,10 +11,14 @@ const MAX_SERVER_CREATION_RETRY = 5
 const PORT_MIN = 9200
 const PORT_MAX = 9400
 
-export type ServerApp = (req: http.IncomingMessage, res: http.ServerResponse) => any
+export interface ServerApp {
+  (req: http.IncomingMessage, res: http.ServerResponse): any
+  handleUpgrade?: (req: http.IncomingMessage, socket: Duplex, head: Buffer) => void
+}
 
 export type MockServerApp = ServerApp & {
   getLargeResponseWroteSize(): number
+  closeEchoWebSockets?: () => void
 }
 
 export interface Server<App extends ServerApp> {
@@ -66,6 +71,14 @@ async function createServer<App extends ServerApp>(): Promise<Server<App>> {
     } else {
       res.writeHead(202)
       res.end()
+    }
+  })
+
+  server.on('upgrade', (req: http.IncomingMessage, socket: Duplex, head: Buffer) => {
+    if (serverApp?.handleUpgrade) {
+      serverApp.handleUpgrade(req, socket, head)
+    } else {
+      socket.destroy()
     }
   })
 
