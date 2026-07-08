@@ -1,5 +1,5 @@
 import type { ClocksState } from '@datadog/js-core/time'
-import type { Context } from '../../tools/serialisation/context'
+import type { Context } from '@datadog/js-core/assembly'
 
 // TS v4.6 introduced Error.cause[1] typed as `Error`. TS v4.8 changed Error.cause to be
 // `unknown`[2].

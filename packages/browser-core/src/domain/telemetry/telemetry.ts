@@ -1,6 +1,6 @@
 import { clocksNow } from '@datadog/js-core/time'
 import { getDebugMode, combine, globalObject, isWorkerEnvironment } from '@datadog/js-core/util'
-import type { Hook } from '@datadog/js-core/assembly'
+import type { Context, Hook } from '@datadog/js-core/assembly'
 import type { RecursivePartial } from '@datadog/js-core/util'
 import { DISCARDED } from '@datadog/js-core/assembly'
 import {
@@ -10,7 +10,6 @@ import {
   INTAKE_SITE_US1_FED,
   INTAKE_SITE_US2_FED,
 } from '@datadog/js-core/transport'
-import type { Context } from '../../tools/serialisation/context'
 import { NO_ERROR_STACK_PRESENT_MESSAGE, isError } from '../error/isError'
 import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
 import { getExperimentalFeatures } from '../../tools/experimentalFeatures'

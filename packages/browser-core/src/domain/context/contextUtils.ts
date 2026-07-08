@@ -1,5 +1,5 @@
 import { getType } from '@datadog/js-core/util'
-import type { Context } from '../../tools/serialisation/context'
+import type { Context } from '@datadog/js-core/assembly'
 import { display } from '../../tools/display'
 
 /**

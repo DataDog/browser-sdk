@@ -1,6 +1,6 @@
 import { deepClone } from '@datadog/js-core/util'
+import type { Context } from '@datadog/js-core/assembly'
 import { sanitize } from '../../tools/serialisation/sanitize'
-import type { Context } from '../../tools/serialisation/context'
 import { Observable } from '../../tools/observable'
 import { display } from '../../tools/display'
 import { checkContext } from './contextUtils'

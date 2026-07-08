@@ -1,4 +1,4 @@
-import type { Context } from '../../tools/serialisation/context'
+import type { Context } from '@datadog/js-core/assembly'
 
 export interface RumInternalContext extends Context {
   application_id: string

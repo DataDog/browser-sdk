@@ -1,7 +1,7 @@
 import type { ClocksState } from '@datadog/js-core/time'
 import { isIndexableObject } from '@datadog/js-core/util'
+import type { Context } from '@datadog/js-core/assembly'
 import { sanitize } from '../../tools/serialisation/sanitize'
-import type { Context } from '../../tools/serialisation/context'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
