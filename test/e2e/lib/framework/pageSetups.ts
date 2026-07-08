@@ -1,8 +1,11 @@
+import { readFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
 import { generateUUID } from '@datadog/browser-core'
 import { INTAKE_URL_PARAMETERS } from '@datadog/js-core/transport'
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
 import type { DebuggerInitConfiguration } from '@datadog/browser-debugger'
+import type { Page } from '@playwright/test'
 import type test from '@playwright/test'
 import { isBrowserStack, isContinuousIntegration } from './environment'
 import type { Servers } from './httpServers'
@@ -52,7 +55,7 @@ export interface EventBridgeOptions {
   capabilities?: string[]
 }
 
-export type SetupFactory = (options: SetupOptions, servers: Servers) => string
+export type SetupFactory = (options: SetupOptions, servers: Servers, page: Page) => string | Promise<string>
 export type UrlHook = (baseUrl: URL, servers: Servers, options: SetupOptions) => void | Promise<void>
 
 // By default, run tests only with the 'bundle' setup outside of the CI (to run faster on the
@@ -298,6 +301,61 @@ export function microfrontendSetup(options: SetupOptions, servers: Servers) {
     header,
     body: options.body,
   })
+}
+
+const salesforceLwcBundlePath = resolve(
+  __dirname,
+  '../../../apps/sf-lwc-app/force-app/main/default/staticresources/datadog_rum_slim.js'
+)
+
+// Salesforce apps don't serve a locally-generated page body; this factory only drives the
+// page-side setup needed to init RUM on the (remote) Salesforce page.
+export async function salesforceSetup(options: SetupOptions, servers: Servers, page: Page): Promise<string> {
+  // Serve the local bundle from the static resource
+  await page.route(/\/resource(?:\/[^/?#]+)?\/datadog_rum_slim(?:\.js)?(?:[/?#].*)?$/, async (route) => {
+    await route.fulfill({
+      body: await readFile(salesforceLwcBundlePath),
+      contentType: 'application/javascript',
+    })
+  })
+
+  if (options.rum) {
+    if (options.salesforceApp === 'lwc' || options.salesforceApp === 'experience-cloud') {
+      // Both sf-lwc-app and sf-experience-app have a committed datadogInit LWC that reads
+      // these globals and calls DD_RUM.init. On experience-cloud, that component only runs
+      // when the page is loaded with `init=true` (see withSalesforceApp).
+      await page.addInitScript(
+        `window.RUM_CONFIGURATION = ${formatConfiguration(options.rum, servers)}
+      window.RUM_CONTEXT = ${JSON.stringify(options.context)}`
+      )
+    } else {
+      // 'experience-head-markup': stands in for Experience Builder's org-side head markup config
+      // (which isn't in this repo) by injecting an equivalent <script> tag at runtime. This
+      // bypasses the committed datadogInit LWC entirely (init=true isn't set, so its gate never opens).
+      await page.addInitScript(`
+        ;(function () {
+          function inject() {
+            var script = document.createElement('script')
+            script.src = '/resource/datadog_rum_slim.js'
+            script.onload = function () {
+              if (window.RUM_CONTEXT) {
+                window.DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
+              }
+              window.DD_RUM.init(${formatConfiguration(options.rum, servers)})
+            }
+            document.head.appendChild(script)
+          }
+          if (document.head) {
+            inject()
+          } else {
+            document.addEventListener('DOMContentLoaded', inject)
+          }
+        })()
+      `)
+    }
+  }
+
+  return ''
 }
 
 function basePage({ header, body, footer }: { header?: string; body?: string; footer?: string }) {

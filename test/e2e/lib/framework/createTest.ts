@@ -1,5 +1,3 @@
-import { readFile } from 'node:fs/promises'
-import { resolve } from 'node:path'
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { DebuggerInitConfiguration } from '@datadog/browser-debugger'
 import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
@@ -30,7 +28,7 @@ import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
 import { getTestServers, waitForServersIdle } from './httpServers'
 import type { CallerLocation, EventBridgeOptions, SetupFactory, SetupOptions, UrlHook } from './pageSetups'
-import { html, DEFAULT_SETUPS, npmSetup, appSetup, formatConfiguration } from './pageSetups'
+import { html, DEFAULT_SETUPS, npmSetup, appSetup, formatConfiguration, salesforceSetup } from './pageSetups'
 import { createDatadogHttpApi } from './serverApps/datadogHttpApi'
 import type { DatadogHttpApiControl } from './serverApps/datadogHttpApi'
 import { createMockServerApp } from './serverApps/mock'
@@ -75,11 +73,6 @@ const WEBKIT_PLAYWRIGHT_WORKAROUND = `
   }
 })();
 `
-
-const salesforceLwcBundlePath = resolve(
-  __dirname,
-  '../../../apps/sf-lwc-app/force-app/main/default/staticresources/datadog_rum_slim.js'
-)
 
 export function createTest(title: string) {
   return new TestBuilder(title, captureCallerLocation())
@@ -280,9 +273,12 @@ class TestBuilder {
 
   withSalesforceApp(app: SalesforceApp) {
     this.salesforceApp = app
-    this.setups = [{ factory: () => '' }]
+    this.setups = [{ factory: salesforceSetup }]
     this.baseUrlHooks.push(async (baseUrl) => {
       baseUrl.href = await buildSalesforceUrl(app)
+      if (app === 'experience-cloud') {
+        baseUrl.searchParams.set('init', 'true')
+      }
     })
     return this
   }
@@ -324,7 +320,9 @@ class TestBuilder {
         declareTestsForSetups('rum', this.setups, setupOptions, runner)
         declareTestsForSetups(
           'rum-slim',
-          this.setups.filter((setup) => setup.factory !== npmSetup && setup.factory !== appSetup),
+          this.setups.filter(
+            (setup) => setup.factory !== npmSetup && (setup.factory as unknown) !== (appSetup as unknown)
+          ),
           { ...setupOptions, useRumSlim: true },
           runner
         )
@@ -461,52 +459,9 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     )
     servers.datadogHttpApi.bindServerApp(datadogHttpApi.app)
 
-    const setup = factory(setupOptions, servers)
+    const setup = await factory(setupOptions, servers, page)
     servers.base.bindServerApp(createMockServerApp(servers, setup, setupOptions))
     servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
-
-    if (setupOptions.salesforceApp) {
-      // Serve the local bundle from the static resource
-      await page.route(/\/resource(?:\/[^/?#]+)?\/datadog_rum_slim(?:\.js)?(?:[/?#].*)?$/, async (route) => {
-        await route.fulfill({
-          body: await readFile(salesforceLwcBundlePath),
-          contentType: 'application/javascript',
-        })
-      })
-
-      if (setupOptions.rum) {
-        if (setupOptions.salesforceApp === 'lwc') {
-          await page.addInitScript(
-            `window.RUM_CONFIGURATION = ${formatConfiguration(setupOptions.rum, servers)}
-          window.RUM_CONTEXT = ${JSON.stringify(setupOptions.context)}`
-          )
-        } else {
-          // Unlike sf-lwc-app (which has a committed datadogInit LWC calling DD_RUM.init), the
-          // experience-cloud site relies on Experience Builder's live head markup to load and init
-          // the SDK.
-          await page.addInitScript(`
-          ;(function () {
-            function inject() {
-              var script = document.createElement('script')
-              script.src = '/resource/datadog_rum_slim.js'
-              script.onload = function () {
-                if (window.RUM_CONTEXT) {
-                  window.DD_RUM.setGlobalContext(${JSON.stringify(setupOptions.context)})
-                }
-                window.DD_RUM.init(${formatConfiguration(setupOptions.rum, servers)})
-              }
-              document.head.appendChild(script)
-            }
-            if (document.head) {
-              inject()
-            } else {
-              document.addEventListener('DOMContentLoaded', inject)
-            }
-          })()
-        `)
-        }
-      }
-    }
 
     await setUpTest(browserLogs, setupOptions, testContext)
 

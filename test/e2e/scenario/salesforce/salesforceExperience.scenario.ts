@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { createTest } from '../../lib/framework'
+import { SalesforceApp } from '../../lib/framework/buildSalesforceUrl'
 
 // Skip non chromium browsers because --disable-web-security is chromium-only.
 test.skip(() => test.info().project.name !== 'chromium', 'Salesforce app is tested on chromium only')
@@ -15,10 +16,23 @@ const salesforceRumConfiguration = {
   trackResources: true,
   trackUserInteractions: true,
 }
+// why do we have 2 apps: they behave differently in the readme
+for (const app of ['experience-cloud', 'experience-head-markup']) {
+createTest(`salesforce experience ${app}`)
+  .withRum(salesforceRumConfiguration)
+  .withSalesforceApp(app as SalesforceApp)
+  .run(async ({ page, intakeRegistry, flushEvents }) => {
+    await expect(page.getByTestId('experience-home-actions')).toBeVisible({ timeout: 30000 })
 
+    await flushEvents()
+
+    const homeView = intakeRegistry.rumViewEvents.find((e) => e.view.url?.includes('sfexperiencecloud') === true)
+    expect(homeView).toBeDefined()
+  })
+}
 createTest('salesforce experience views')
   .withRum(salesforceRumConfiguration)
-  .withSalesforceApp('experience-cloud')
+  .withSalesforceApp('experience-head-markup')
   .run(async ({ page, intakeRegistry, flushEvents }) => {
     await expect(page.getByTestId('experience-home-actions')).toBeVisible({ timeout: 30000 })
 
@@ -38,9 +52,10 @@ createTest('salesforce experience views')
     expect(productExplorerView?.view.loading_type).toBe('route_change')
   })
 
+  // merge these 2
 createTest('salesforce experience resources')
   .withRum(salesforceRumConfiguration)
-  .withSalesforceApp('experience-cloud')
+  .withSalesforceApp('experience-head-markup')
   .run(async ({ page, intakeRegistry, flushEvents }) => {
     await expect(page.getByTestId('experience-home-actions')).toBeVisible({ timeout: 30000 })
 
@@ -57,7 +72,7 @@ createTest('salesforce experience resources')
 
 createTest('salesforce experience long tasks')
   .withRum(salesforceRumConfiguration)
-  .withSalesforceApp('experience-cloud')
+  .withSalesforceApp('experience-head-markup')
   .run(async ({ page, intakeRegistry, flushEvents }) => {
     await expect(page.getByTestId('experience-home-actions')).toBeVisible({ timeout: 30000 })
 
@@ -70,7 +85,7 @@ createTest('salesforce experience long tasks')
 
 createTest('salesforce experience actions')
   .withRum(salesforceRumConfiguration)
-  .withSalesforceApp('experience-cloud')
+  .withSalesforceApp('experience-head-markup')
   .run(async ({ page, intakeRegistry, flushEvents }) => {
     await expect(page.getByTestId('experience-home-actions')).toBeVisible({ timeout: 30000 })
 
@@ -89,7 +104,7 @@ createTest('salesforce experience actions')
 
 createTest('salesforce experience errors')
   .withRum(salesforceRumConfiguration)
-  .withSalesforceApp('experience-cloud')
+  .withSalesforceApp('experience-head-markup')
   .run(async ({ page, intakeRegistry, flushEvents, withBrowserLogs }) => {
     await expect(page.getByTestId('experience-home-actions')).toBeVisible({ timeout: 30000 })
 
