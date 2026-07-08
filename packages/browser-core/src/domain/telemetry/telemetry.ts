@@ -3,6 +3,7 @@ import { getDebugMode, combine, globalObject, isWorkerEnvironment } from '@datad
 import type { Hook } from '@datadog/js-core/assembly'
 import type { RecursivePartial } from '@datadog/js-core/util'
 import { DISCARDED } from '@datadog/js-core/assembly'
+import { performDraw } from '@datadog/js-core/sample'
 import {
   createEndpointBuilder,
   createReplicaEndpointBuilder,
@@ -20,7 +21,6 @@ import { BufferedObservable, Observable } from '../../tools/observable'
 import { startMonitorErrorCollection } from '../../tools/monitor'
 import { display } from '../../tools/display'
 import { sendToExtension } from '../../tools/sendToExtension'
-import { performDraw } from '../../tools/utils/numberUtils'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
 import { NonErrorPrefix } from '../error/error.types'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
