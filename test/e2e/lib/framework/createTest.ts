@@ -23,7 +23,8 @@ import {
   VUE_ROUTER_APP_PORT,
   VUE_ROUTER_V4_APP_PORT,
 } from '../helpers/playwright'
-import { buildSalesforceLwcUrl } from './buildSalesforceLwcUrl'
+import { buildSalesforceUrl } from './buildSalesforceUrl'
+import type { SalesforceApp } from './buildSalesforceUrl'
 import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
@@ -121,7 +122,7 @@ class TestBuilder {
     logsConfiguration?: LogsInitConfiguration
   } = {}
   private worker: Worker | undefined
-  private salesforceApp = false
+  private salesforceApp: SalesforceApp | undefined = undefined
 
   constructor(
     private title: string,
@@ -277,11 +278,11 @@ class TestBuilder {
     return this
   }
 
-  withSalesforceApp() {
-    this.salesforceApp = true
+  withSalesforceApp(app: SalesforceApp) {
+    this.salesforceApp = app
     this.setups = [{ factory: () => '' }]
     this.baseUrlHooks.push(async (baseUrl) => {
-      baseUrl.href = await buildSalesforceLwcUrl()
+      baseUrl.href = await buildSalesforceUrl(app)
     })
     return this
   }
@@ -474,10 +475,36 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
       })
 
       if (setupOptions.rum) {
-        await page.addInitScript(
-          `window.RUM_CONFIGURATION = ${formatConfiguration(setupOptions.rum, servers)}
+        if (setupOptions.salesforceApp === 'lwc') {
+          await page.addInitScript(
+            `window.RUM_CONFIGURATION = ${formatConfiguration(setupOptions.rum, servers)}
           window.RUM_CONTEXT = ${JSON.stringify(setupOptions.context)}`
-        )
+          )
+        } else {
+          // Unlike sf-lwc-app (which has a committed datadogInit LWC calling DD_RUM.init), the
+          // experience-cloud site relies on Experience Builder's live head markup to load and init
+          // the SDK.
+          await page.addInitScript(`
+          ;(function () {
+            function inject() {
+              var script = document.createElement('script')
+              script.src = '/resource/datadog_rum_slim.js'
+              script.onload = function () {
+                if (window.RUM_CONTEXT) {
+                  window.DD_RUM.setGlobalContext(${JSON.stringify(setupOptions.context)})
+                }
+                window.DD_RUM.init(${formatConfiguration(setupOptions.rum, servers)})
+              }
+              document.head.appendChild(script)
+            }
+            if (document.head) {
+              inject()
+            } else {
+              document.addEventListener('DOMContentLoaded', inject)
+            }
+          })()
+        `)
+        }
       }
     }
 

@@ -6,11 +6,6 @@ export default class ExperienceHomeActions extends LightningElement {
   @track lastResourceName
   @track lastSelectorProbe
 
-  handleNavigationClick(event) {
-    event.preventDefault()
-    window.location.assign(event.currentTarget.href)
-  }
-
   handleActionClick(event) {
     const actionName = event.currentTarget.dataset.actionName
     this.lastActionName = actionName

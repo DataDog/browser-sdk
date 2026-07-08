@@ -6,6 +6,7 @@ import type { DebuggerInitConfiguration } from '@datadog/browser-debugger'
 import type test from '@playwright/test'
 import { isBrowserStack, isContinuousIntegration } from './environment'
 import type { Servers } from './httpServers'
+import type { SalesforceApp } from './buildSalesforceUrl'
 
 export interface SetupOptions {
   rum?: RumInitConfiguration
@@ -31,7 +32,7 @@ export interface SetupOptions {
   worker?: WorkerOptions
   callerLocation?: CallerLocation
   mockClock: boolean
-  salesforceApp: boolean
+  salesforceApp: SalesforceApp | undefined
 }
 
 export interface CallerLocation {

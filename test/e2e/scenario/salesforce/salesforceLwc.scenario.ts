@@ -25,7 +25,7 @@ const salesforceRumConfiguration = {
 
 createTest('salesforce views')
   .withRum(salesforceRumConfiguration)
-  .withSalesforceApp()
+  .withSalesforceApp('lwc')
   .run(async ({ page, intakeRegistry, flushEvents }) => {
     await expect(page.getByTestId('home-custom-actions')).toBeVisible({ timeout: 30000 })
 
@@ -47,7 +47,7 @@ createTest('salesforce views')
 
 createTest('salesforce resources')
   .withRum(salesforceRumConfiguration)
-  .withSalesforceApp()
+  .withSalesforceApp('lwc')
   .run(async ({ page, intakeRegistry, flushEvents }) => {
     await expect(page.getByTestId('home-custom-actions')).toBeVisible({ timeout: 30000 })
 
@@ -64,7 +64,7 @@ createTest('salesforce resources')
 
 createTest('salesforce long tasks and vitals')
   .withRum(salesforceRumConfiguration)
-  .withSalesforceApp()
+  .withSalesforceApp('lwc')
   .run(async ({ page, intakeRegistry, flushEvents }) => {
     await expect(page.getByTestId('home-custom-actions')).toBeVisible({ timeout: 30000 })
 
@@ -79,7 +79,7 @@ createTest('salesforce long tasks and vitals')
 
 createTest('salesforce actions')
   .withRum(salesforceRumConfiguration)
-  .withSalesforceApp()
+  .withSalesforceApp('lwc')
   .run(async ({ page, intakeRegistry, flushEvents }) => {
     await expect(page.getByTestId('home-custom-actions')).toBeVisible({ timeout: 30000 })
 
@@ -99,7 +99,7 @@ createTest('salesforce actions')
 
 createTest('salesforce errors')
   .withRum(salesforceRumConfiguration)
-  .withSalesforceApp()
+  .withSalesforceApp('lwc')
   .run(async ({ page, intakeRegistry, flushEvents, withBrowserLogs }) => {
     await expect(page.getByTestId('home-custom-actions')).toBeVisible({ timeout: 30000 })
 
