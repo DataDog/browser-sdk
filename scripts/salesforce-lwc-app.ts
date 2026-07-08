@@ -16,7 +16,7 @@ type AppKey = 'lwc' | 'experience-cloud'
 
 const APP_KEYS: AppKey[] = ['lwc', 'experience-cloud']
 
-const APPS: Record<AppKey, { dir: string; urlPath: string; buildBundle: boolean }> = {
+const APPS: Record<AppKey, { dir: string; urlPath: string; buildBundle: boolean; siteName?: string }> = {
   lwc: {
     dir: resolve(repositoryRoot, 'test/apps/sf-lwc-app'),
     urlPath: '/lightning/app/c__SF_LWC_App/page/home',
@@ -26,6 +26,7 @@ const APPS: Record<AppKey, { dir: string; urlPath: string; buildBundle: boolean 
     dir: resolve(repositoryRoot, 'test/apps/sf-experience-app'),
     urlPath: `/${EXPERIENCE_URL_PATH_PREFIX}/s`,
     buildBundle: false,
+    siteName: 'SF Experience Cloud App',
   },
 }
 
@@ -113,7 +114,7 @@ function authenticate(targetOrg: string, cwd: string) {
 
 function deployApp(appKeys: AppKey[]) {
   for (const appKey of appKeys) {
-    const { dir, buildBundle } = APPS[appKey]
+    const { dir, buildBundle, siteName } = APPS[appKey]
 
     if (buildBundle) {
       printLog('Building RUM slim bundle...')
@@ -128,6 +129,17 @@ function deployApp(appKeys: AppKey[]) {
       .withLogs()
       .run()
     printLog(`Salesforce ${appKey} app deployed.`)
+
+    if (siteName) {
+      // Metadata deploys only update the site's draft version; publishing is a separate step
+      // required to make the changes live on an Experience Builder / LWR site.
+      printLog(`Publishing Salesforce site "${siteName}"...`)
+      command`sf community publish --name ${siteName} --target-org ${TARGET_ORG}`
+        .withCurrentWorkingDirectory(dir)
+        .withLogs()
+        .run()
+      printLog(`Salesforce site "${siteName}" published.`)
+    }
   }
 }
 

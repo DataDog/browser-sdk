@@ -23,7 +23,7 @@ Credentials are set as CI variables; for local overrides, set the matching envir
 yarn salesforce:deploy-app --app experience-cloud
 ```
 
-This only deploys the LWC bundles.
+This deploys the LWC bundles and publishes the "SF Experience Cloud App" site, so changes go live.
 
 ## Open The Site
 
