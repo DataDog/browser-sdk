@@ -434,12 +434,12 @@ test.describe('microfrontend', () => {
     // Debug IDs are derived from each chunk's content hash, so they're stable across rebuilds
     // (regenerate these constants if app source/deps change). The shared `lib` remote is its own chunk,
     // so its debug ID is the same for every app.
-    const APP1_EXPOSE_CHUNK = '__federation_expose_app1-8adfc35e0ddfff22d7d0-app1.js'
-    const APP1_DEBUG_ID = 'efcb171a-1822-45ad-81f1-a82adab920c7'
-    const APP2_EXPOSE_CHUNK = '__federation_expose_app2-e9242831fd6d69399e3b-app2.js'
-    const APP2_DEBUG_ID = 'ff6353d8-f8d4-4b83-a316-9307c565f8f7'
-    const LIB_EXPOSE_CHUNK = '__federation_expose_lib-f7d73fec27c87d18a3e2-lib.js'
-    const LIB_DEBUG_ID = '8d90326d-0657-4beb-8f71-439ed03ea3cd'
+    const APP1_EXPOSE_CHUNK = '__federation_expose_app1-0b975610772143724d2f-app1.js'
+    const APP1_DEBUG_ID = '33164643-dc2f-4bf0-8440-b443adfa15c3'
+    const APP2_EXPOSE_CHUNK = '__federation_expose_app2-8042c1cdfd7c71d0bf47-app2.js'
+    const APP2_DEBUG_ID = 'cb80d79d-2dfc-4bc0-9872-92b454fb59e1'
+    const LIB_EXPOSE_CHUNK = '__federation_expose_lib-c0a8a100340f04ff2712-lib.js'
+    const LIB_DEBUG_ID = '4564c6ea-a5bb-4355-968a-7de8d685fe65'
 
     createTest('runtime errors should have debug_id from source code context')
       .withRum(RUM_CONFIG)
