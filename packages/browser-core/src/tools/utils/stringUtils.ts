@@ -1,14 +1,3 @@
-/**
- * UUID v4
- * from https://gist.github.com/jed/982883
- */
-export function generateUUID(placeholder?: string): string {
-  return placeholder
-    ? // eslint-disable-next-line  no-bitwise
-      (parseInt(placeholder, 10) ^ ((Math.random() * 16) >> (parseInt(placeholder, 10) / 4))).toString(16)
-    : `${1e7}-${1e3}-${4e3}-${8e3}-${1e11}`.replace(/[018]/g, generateUUID)
-}
-
 // Assuming input string is following the HTTP Cookie format defined in
 // https://www.ietf.org/rfc/rfc2616.txt and https://www.ietf.org/rfc/rfc6265.txt, we don't need to
 // be too strict with this regex.
