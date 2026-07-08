@@ -59,6 +59,8 @@ export const DEFAULT_TRACKED_RESOURCE_HEADERS = [
   'content-length',
   'server-timing',
   'x-cache',
+  'cf-cache-status',
+  'x-vercel-cache',
 ] as const
 
 /**
