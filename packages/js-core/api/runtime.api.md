@@ -5,7 +5,7 @@
 ```ts
 
 // @public
-export function defineGlobal<Global, Name extends keyof Global>(global: Global, name: Name, api: Global[Name]): void;
+export function defineGlobal<Global, Name extends keyof Global>(global: Global, name: Name, api: Global[Name], display?: Display): void;
 
 // (No @packageDocumentation comment for this package)
 

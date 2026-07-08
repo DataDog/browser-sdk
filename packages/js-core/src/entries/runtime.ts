@@ -1,3 +1,4 @@
+import type { Display } from '../util/display'
 import { createDisplay } from '../util/display'
 
 interface GlobalWithOnReadyQueue {
@@ -19,9 +20,16 @@ interface GlobalWithOnReadyQueue {
  * @param global - The object to attach the API to, typically the global/window object.
  * @param name - The property name to define, e.g. `'DD_RUM'`.
  * @param api - The public API object to expose.
+ * @param display - {@link Display} used to print the warnings above. Defaults to a generic
+ * `'Datadog SDK:'`-prefixed one; pass your own (see `createDisplay` in `@datadog/js-core/util`) to
+ * customize the prefix shown to end users.
  */
-export function defineGlobal<Global, Name extends keyof Global>(global: Global, name: Name, api: Global[Name]) {
-  const display = createDisplay('Datadog SDK:')
+export function defineGlobal<Global, Name extends keyof Global>(
+  global: Global,
+  name: Name,
+  api: Global[Name],
+  display: Display = createDisplay('Datadog SDK:')
+) {
   const existingGlobalVariable = global[name] as unknown as GlobalWithOnReadyQueue | undefined
   if (existingGlobalVariable && !existingGlobalVariable.q && existingGlobalVariable.version) {
     display.warn('SDK is loaded more than once. This is unsupported and might have unexpected behavior.')
@@ -32,7 +40,7 @@ export function defineGlobal<Global, Name extends keyof Global>(global: Global, 
   }
 }
 
-function callOnReadyCallback(display: ReturnType<typeof createDisplay>, fn: () => void) {
+function callOnReadyCallback(display: Display, fn: () => void) {
   try {
     fn()
   } catch (err) {
