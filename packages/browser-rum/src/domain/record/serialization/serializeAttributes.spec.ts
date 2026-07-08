@@ -81,12 +81,10 @@ describe('serializeDOMAttributes', () => {
       { html: `<div ${PRIVACY_ATTR_NAME}="value">`, expectedBehavior: 'always-unmasked' },
 
       // Stable attributes should always be unmasked.
-      ...STABLE_ATTRIBUTES.map(
-        (attribute: string): TestCase => ({
-          html: `<div ${attribute}="value">`,
-          expectedBehavior: 'always-unmasked',
-        })
-      ),
+      ...STABLE_ATTRIBUTES.map((attribute: string): TestCase => ({
+        html: `<div ${attribute}="value">`,
+        expectedBehavior: 'always-unmasked',
+      })),
 
       // Most data attributes should be maskable.
       { html: '<div data-foo="value">', expectedBehavior: 'maskable' },
