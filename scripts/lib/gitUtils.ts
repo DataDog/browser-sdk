@@ -90,6 +90,7 @@ export function pushSignedCommit(branch: string): void {
   using token = getGithubCommitToken()
   command`commit-headless push -T DataDog/browser-sdk --branch ${branch} --create-branch --head-sha ${headSha} --reset`
     .withEnvironment({ GITHUB_TOKEN: token.value })
+    .withLogs()
     .run()
   command`git branch --set-upstream-to=origin/${branch} ${branch}`.run()
 }
