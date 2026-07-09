@@ -1,8 +1,5 @@
 export type EventListColumn =
-  | { type: 'date' }
-  | { type: 'description' }
-  | { type: 'type' }
-  | { type: 'field'; path: string }
+  { type: 'date' } | { type: 'description' } | { type: 'type' } | { type: 'field'; path: string }
 
 export const DEFAULT_COLUMNS: EventListColumn[] = [{ type: 'date' }, { type: 'type' }, { type: 'description' }]
 

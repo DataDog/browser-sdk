@@ -18,12 +18,10 @@ export function startDisplayContext(assembleHook: AssembleHook) {
     viewport = viewportDimension
   }).unsubscribe
 
-  assembleHook.register(
-    ({ eventType }): DefaultRumEventAttributes => ({
-      type: eventType,
-      display: viewport ? { viewport } : undefined,
-    })
-  )
+  assembleHook.register(({ eventType }): DefaultRumEventAttributes => ({
+    type: eventType,
+    display: viewport ? { viewport } : undefined,
+  }))
 
   return {
     stop: () => {

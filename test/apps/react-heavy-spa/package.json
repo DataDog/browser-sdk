@@ -11,17 +11,17 @@
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "react-is": "19.2.7",
-    "react-router-dom": "7.18.0",
+    "react-router-dom": "7.18.1",
     "react-window": "2.2.7",
-    "recharts": "3.8.1"
+    "recharts": "3.9.1"
   },
   "devDependencies": {
-    "@types/node": "26.0.0",
+    "@types/node": "26.0.1",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
-    "@vitejs/plugin-react": "6.0.2",
-    "globals": "17.6.0",
+    "@vitejs/plugin-react": "6.0.3",
+    "globals": "17.7.0",
     "typescript": "6.0.3",
-    "vite": "8.0.16"
+    "vite": "8.1.2"
   }
 }
