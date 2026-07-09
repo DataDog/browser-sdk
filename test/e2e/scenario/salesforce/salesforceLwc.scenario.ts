@@ -10,12 +10,6 @@ test.use({
   launchOptions: { args: ['--disable-web-security'] },
 })
 
-// All tests authenticate as the same Salesforce user via the JWT bearer + UI Bridge
-// (frontdoor/singleaccess) flow. Running them concurrently across workers races
-// that single user's session and can invalidate each other's frontdoor URLs, so
-// force this file to run serially in one worker.
-test.describe.configure({ mode: 'serial' })
-
 const salesforceRumConfiguration = {
   trackViewsManually: true,
   trackLongTasks: true,

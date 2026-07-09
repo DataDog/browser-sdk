@@ -23,7 +23,7 @@ import {
   VUE_ROUTER_APP_PORT,
   VUE_ROUTER_V4_APP_PORT,
 } from '../helpers/playwright'
-import { buildSalesforceLwcUrl } from './buildSalesforceLwcUrl'
+import { buildSalesforceLwcUrl, getSalesforceLwcSession } from './buildSalesforceLwcUrl'
 import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
@@ -472,6 +472,21 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
           contentType: 'application/javascript',
         })
       })
+
+      // Set the session cookie directly instead of navigating through the frontdoor.jsp OTP
+      // flow, which is more prone to flakiness and expires ~1 minute after being generated.
+      const { accessToken, instanceUrl } = await getSalesforceLwcSession()
+      await context.addCookies([
+        {
+          name: 'sid',
+          value: accessToken,
+          domain: new URL(instanceUrl).hostname,
+          path: '/',
+          httpOnly: true,
+          secure: true,
+          sameSite: 'Lax',
+        },
+      ])
 
       if (setupOptions.rum) {
         await page.addInitScript(
