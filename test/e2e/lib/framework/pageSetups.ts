@@ -9,6 +9,7 @@ import type { Page } from '@playwright/test'
 import type test from '@playwright/test'
 import { isBrowserStack, isContinuousIntegration } from './environment'
 import type { Servers } from './httpServers'
+import { getSalesforceLwcSession } from './buildSalesforceUrl'
 import type { SalesforceApp } from './buildSalesforceUrl'
 
 export interface SetupOptions {
@@ -318,6 +319,21 @@ export async function salesforceSetup(options: SetupOptions, servers: Servers, p
       contentType: 'application/javascript',
     })
   })
+
+  if (options.salesforceApp === 'lwc') {
+    const { accessToken, instanceUrl } = await getSalesforceLwcSession()
+    await page.context().addCookies([
+      {
+        name: 'sid',
+        value: accessToken,
+        domain: new URL(instanceUrl).hostname,
+        path: '/',
+        httpOnly: true,
+        secure: true,
+        sameSite: 'Lax',
+      },
+    ])
+  }
 
   if (options.rum) {
     if (options.salesforceApp === 'lwc' || options.salesforceApp === 'experience-cloud') {

@@ -1,4 +1,5 @@
 import { createSign } from 'node:crypto'
+import { execFileSync } from 'node:child_process'
 
 import {
   getSfLwcClientId,
@@ -11,44 +12,77 @@ export type SalesforceApp = 'lwc' | 'experience-cloud' | 'experience-head-markup
 
 const salesforceHomePath = '/lightning/app/c__SF_LWC_App/page/home'
 const experienceSitePath = '/sfexperiencecloud/'
+let salesforceLwcSession: Promise<SalesforceLwcSession> | undefined
+
+export interface SalesforceLwcSession {
+  instanceUrl: string
+  accessToken: string
+}
 
 export async function buildSalesforceUrl(app: SalesforceApp): Promise<string> {
   return app === 'lwc' ? await buildSalesforceLwcUrl() : buildSalesforceExperienceUrl()
 }
 
-// The frontdoor.jsp OTP expires in ~1 minute, so the URL must be generated at test time —
-// not at suite startup — to guarantee a valid token when the test actually navigates.
-// This functions is similar to the one in scripts/salesforce-lwc-app.ts, but it is not using the sf CLI so we can call it at test time.
+export function getSalesforceLwcSession(): Promise<SalesforceLwcSession> {
+  salesforceLwcSession ??= buildSalesforceLwcSession()
+  return salesforceLwcSession
+}
+
 async function buildSalesforceLwcUrl(): Promise<string> {
-  if (!getSfLwcClientId() || !getSfLwcInstanceUrl() || !getSfLwcJwtPrivateKey() || !getSfLwcUsername()) {
-    console.error('Salesforce credentials are not set')
-    return ''
+  const { instanceUrl } = await getSalesforceLwcSession()
+  return new URL(salesforceHomePath, instanceUrl).href
+}
+
+async function buildSalesforceLwcSession(): Promise<SalesforceLwcSession> {
+  try {
+    return await buildSalesforceLwcJwtSession()
+  } catch (error) {
+    const cliSession = buildSalesforceLwcCliSession()
+    if (cliSession) {
+      return cliSession
+    }
+    throw error
   }
+}
+
+async function buildSalesforceLwcJwtSession(): Promise<SalesforceLwcSession> {
+  const clientId = getSfLwcClientId()
   const instanceUrl = getSfLwcInstanceUrl()
-  const privateKey = Buffer.from(getSfLwcJwtPrivateKey(), 'base64').toString('utf8')
-  const accessToken = await getAccessToken(getSfLwcClientId(), getSfLwcUsername(), instanceUrl, privateKey)
+  const jwtPrivateKey = getSfLwcJwtPrivateKey()
+  const username = getSfLwcUsername()
 
-  const path = new URL(salesforceHomePath, 'https://salesforce.local')
-
-  const response = await fetch(`${instanceUrl}/services/oauth2/singleaccess`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      access_token: accessToken,
-      redirect_uri: `${path.pathname}${path.search}`,
-    }),
-  })
-
-  if (!response.ok) {
-    throw new Error(`UI Bridge API failed (${response.status}): ${await response.text()}`)
+  if (!clientId || !instanceUrl || !jwtPrivateKey || !username) {
+    throw new Error('Salesforce credentials are not set')
   }
 
-  const json = (await response.json()) as Record<string, string>
-  const frontdoorUri = json['frontdoor_uri']
-  if (!frontdoorUri) {
-    throw new Error('UI Bridge API response missing frontdoor_uri')
+  const privateKey = Buffer.from(jwtPrivateKey, 'base64').toString('utf8')
+  const accessToken = await getAccessToken(clientId, username, instanceUrl, privateKey)
+  return { instanceUrl, accessToken }
+}
+
+function buildSalesforceLwcCliSession(): SalesforceLwcSession | undefined {
+  const alias = process.env.SF_ORG_ALIAS ?? 'sf-lwc-ci'
+
+  try {
+    const accessTokenOutput = execFileSync(
+      'sf',
+      ['org', 'auth', 'show-access-token', '--target-org', alias, '--json'],
+      {
+        encoding: 'utf8',
+      }
+    )
+    const orgDisplayOutput = execFileSync('sf', ['org', 'display', '--target-org', alias, '--json'], {
+      encoding: 'utf8',
+    })
+    const accessTokenJson = JSON.parse(accessTokenOutput) as { result: { accessToken: string } }
+    const orgDisplayJson = JSON.parse(orgDisplayOutput) as { result: { instanceUrl: string } }
+    return {
+      accessToken: accessTokenJson.result.accessToken,
+      instanceUrl: orgDisplayJson.result.instanceUrl,
+    }
+  } catch {
+    return undefined
   }
-  return frontdoorUri
 }
 
 async function getAccessToken(
