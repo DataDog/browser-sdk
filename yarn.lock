@@ -478,13 +478,13 @@ __metadata:
     "@types/react-dom": "npm:19.2.3"
     react: "npm:19.2.7"
     react-dom: "npm:19.2.7"
-    react-router: "npm:7.18.1"
+    react-router: "npm:8.1.0"
     react-router-dom: "npm:7.18.1"
-    react-router-dom-6: "npm:react-router-dom@6.30.4"
+    react-router-dom-6: "npm:react-router-dom@7.18.1"
   peerDependencies:
     "@tanstack/react-router": ">=1.64.0 <2"
     react: 18 || 19
-    react-router: 6 || 7
+    react-router: 6 || 7 || 8
     react-router-dom: 6 || 7
   peerDependenciesMeta:
     "@datadog/browser-rum":
@@ -1902,13 +1902,6 @@ __metadata:
   dependencies:
     quansync: "npm:^1.0.0"
   checksum: 10c0/41a7e145d4fc349eaeac20ee7ffe0c876a7c26b2268d5704b462b3e7379091221336e315b2b346d5b07a531502a41cad15c9f374800cc60b6339d074ef99aa16
-  languageName: node
-  linkType: hard
-
-"@remix-run/router@npm:1.23.3":
-  version: 1.23.3
-  resolution: "@remix-run/router@npm:1.23.3"
-  checksum: 10c0/73622465dd9e9a2c5a7ced7d1151ea6e9195a8a979c99b4f70a67093eeff7f339daf03a7c6304709a9c27deb2081a8fff6737663aacb33529c1a12a0a0827a17
   languageName: node
   linkType: hard
 
@@ -4575,7 +4568,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cookie-es@npm:^3.0.0":
+"cookie-es@npm:^3.0.0, cookie-es@npm:^3.1.1":
   version: 3.1.1
   resolution: "cookie-es@npm:3.1.1"
   checksum: 10c0/62cf0c325cc547b52477b351e9b5d068b3ffc74f7d143cdf7af854648dd1015fca3aed1498b355365e24b0746333f0b15688ed3a535abecc5ed0a046ae956a84
@@ -9292,20 +9285,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-router-dom-6@npm:react-router-dom@6.30.4":
-  version: 6.30.4
-  resolution: "react-router-dom@npm:6.30.4"
-  dependencies:
-    "@remix-run/router": "npm:1.23.3"
-    react-router: "npm:6.30.4"
-  peerDependencies:
-    react: ">=16.8"
-    react-dom: ">=16.8"
-  checksum: 10c0/1b25ab26a288da852f7b58eec5c14b3f37919e6773a557cd846d3a05d7a7d890c8d49bda93c0a7f497f240df1df8b0ad50635f990aafb55f2fc545ad8269a822
-  languageName: node
-  linkType: hard
-
-"react-router-dom@npm:7.18.1":
+"react-router-dom-6@npm:react-router-dom@7.18.1, react-router-dom@npm:7.18.1":
   version: 7.18.1
   resolution: "react-router-dom@npm:7.18.1"
   dependencies:
@@ -9314,17 +9294,6 @@ __metadata:
     react: ">=18"
     react-dom: ">=18"
   checksum: 10c0/5efb99f2f09cecf445788f3459a8f5ff952ed85061f2d40f8de25fdd6e2ce6aeea8e40e4bacad470ea42a45d0460feb6fb59c62f14d87720b43d5c96cd9b2cb6
-  languageName: node
-  linkType: hard
-
-"react-router@npm:6.30.4":
-  version: 6.30.4
-  resolution: "react-router@npm:6.30.4"
-  dependencies:
-    "@remix-run/router": "npm:1.23.3"
-  peerDependencies:
-    react: ">=16.8"
-  checksum: 10c0/fb6de7d1002bcab9ea12c4072d93792eca494f1e4f30cfec334ccb6523756d23ce3e093c7c1241399296cebed94789a3fb89f96ee76004e0e746458a8f6bab33
   languageName: node
   linkType: hard
 
@@ -9341,6 +9310,21 @@ __metadata:
     react-dom:
       optional: true
   checksum: 10c0/1a559de58d656bad5565f2232e4f4fab7e9f5282dfaf95bc24f195a06e7e85b281077fe5c21ed3ff527e3d90d930447e0d0bb0f0713950d2a56ad0f0377a7d09
+  languageName: node
+  linkType: hard
+
+"react-router@npm:8.1.0":
+  version: 8.1.0
+  resolution: "react-router@npm:8.1.0"
+  dependencies:
+    cookie-es: "npm:^3.1.1"
+  peerDependencies:
+    react: ">=19.2.7"
+    react-dom: ">=19.2.7"
+  peerDependenciesMeta:
+    react-dom:
+      optional: true
+  checksum: 10c0/28c336a5c32ad011a305b82fb27ae1abb892a971591618d3dcb4c8ff3fef3440c215e2b9b365217dd43774db4b3d526c4a95e5d3faecacf42ed9356402bab03f
   languageName: node
   linkType: hard
 
