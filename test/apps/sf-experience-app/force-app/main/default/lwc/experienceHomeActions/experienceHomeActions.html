@@ -1,0 +1,124 @@
+<template>
+  <nav style="display: flex; gap: 1.25rem; margin-bottom: 1rem" aria-label="Experience Cloud pages">
+    <a style="color: #06c; text-decoration: underline" href="{homeHref}" aria-current="page">Home</a>
+    <a style="color: #06c; text-decoration: underline" data-testid="product-explorer-link" href="{productExplorerHref}"
+      >Product Explorer</a
+    >
+  </nav>
+
+  <div data-testid="experience-home-actions">
+    <div>
+      <h2>Datadog Custom Actions</h2>
+      <p>Use these buttons to send manual RUM custom actions from the home page.</p>
+      <button
+        data-action-name="custom action 1"
+        data-testid="custom-action-1"
+        onclick={handleActionClick}
+      >
+        Custom Action 1
+      </button>
+      <button
+        data-action-name="custom action 2"
+        onclick={handleActionClick}
+      >
+        Custom Action 2
+      </button>
+      <template lwc:if="{lastActionName}">
+        <p>Last sent: {lastActionName}</p>
+      </template>
+    </div>
+
+    <div>
+      <h2>Datadog Custom Errors</h2>
+      <p>Use these buttons to send manual RUM custom errors from the home page.</p>
+      <button
+        data-error-name="custom error 1"
+        data-testid="custom-error-1"
+        onclick={handleErrorClick}
+      >
+        Custom Error 1
+      </button>
+      <button
+        data-error-name="custom error 2"
+        onclick={handleErrorClick}
+      >
+        Custom Error 2
+      </button>
+      <template lwc:if="{lastErrorName}">
+        <p>Last sent: {lastErrorName}</p>
+      </template>
+    </div>
+
+    <div>
+      <h2>Datadog Runtime Errors</h2>
+      <p>Use this button to trigger an unhandled error that should be captured via window.onerror.</p>
+      <button
+        data-testid="runtime-error"
+        onclick={handleRuntimeErrorClick}
+      >
+        Runtime Error
+      </button>
+    </div>
+
+    <div>
+      <h2>Datadog Long Tasks</h2>
+      <p>Blocks the main thread to generate a long_task RUM event.</p>
+      <button
+        data-testid="long-task"
+        onclick={handleLongTaskClick}
+      >
+        Long Task
+      </button>
+    </div>
+
+    <div>
+      <h2>Datadog Vitals</h2>
+      <p>Add Duration Vital and Start/Stop Vital use the DD_RUM vitals API directly.</p>
+      <button
+        onclick={handleAddDurationVitalClick}
+      >
+        Add Duration Vital
+      </button>
+      <button
+        onclick={handleStartStopVitalClick}
+      >
+        Start/Stop Vital
+      </button>
+    </div>
+
+    <div>
+      <h2>Datadog Resources</h2>
+      <p>Use these buttons to generate resource timing entries for fetch and XHR.</p>
+      <button
+        data-testid="fetch-resource"
+        onclick={handleFetchResourceClick}
+      >
+        Fetch Resource
+      </button>
+      <button
+        data-testid="xhr-resource"
+        onclick={handleXhrResourceClick}
+      >
+        XHR Resource
+      </button>
+      <template lwc:if="{lastResourceName}">
+        <p>Last requested: {lastResourceName}</p>
+      </template>
+    </div>
+
+    <div>
+      <h2>Datadog Selector Probe</h2>
+      <p>Use this button to compare the LWC internal click target with the automatic RUM click selector.</p>
+      <button
+        data-dd-action-name="inner selector probe button"
+        data-testid="inner-selector-probe-button"
+        onclick={handleSelectorProbeClick}
+      >
+        Inner Selector Probe
+      </button>
+      <template lwc:if="{lastSelectorProbe}">
+        <p>Last probe: {lastSelectorProbe}</p>
+      </template>
+    </div>
+  </div>
+</template>
