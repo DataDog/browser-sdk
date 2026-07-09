@@ -223,7 +223,7 @@ describe('error collection', () => {
         startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       })
 
-      expect((rawRumEvents[0].rawRumEvent as RawRumErrorEvent)._dd).toEqual({ debug_ids: { [url]: debugId } })
+      expect((rawRumEvents[0].rawRumEvent as RawRumErrorEvent)._dd).toEqual({ debug_ids: [{ url, id: debugId }] })
     })
 
     it('should include handling stack', () => {

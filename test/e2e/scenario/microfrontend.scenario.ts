@@ -455,13 +455,13 @@ test.describe('microfrontend', () => {
         // We assert the chunk with toMatchObject instead of toEqual to allow those extras.
 
         // frame 0 -> app1 expose chunk (app1.ts + common.ts).
-        expect(intakeRegistry.rumErrorEvents[0]._dd?.debug_ids).toMatchObject({
-          [`${baseUrl}microfrontend/chunks/${APP1_EXPOSE_CHUNK}`]: APP1_DEBUG_ID,
-        })
+        expect(intakeRegistry.rumErrorEvents[0]._dd?.debug_ids).toEqual(
+          expect.arrayContaining([{ url: `${baseUrl}microfrontend/chunks/${APP1_EXPOSE_CHUNK}`, id: APP1_DEBUG_ID }])
+        )
         // frame 0 -> app2 expose chunk (app2.ts + common.ts)
-        expect(intakeRegistry.rumErrorEvents[1]._dd?.debug_ids).toMatchObject({
-          [`${baseUrl}microfrontend/chunks/${APP2_EXPOSE_CHUNK}`]: APP2_DEBUG_ID,
-        })
+        expect(intakeRegistry.rumErrorEvents[1]._dd?.debug_ids).toEqual(
+          expect.arrayContaining([{ url: `${baseUrl}microfrontend/chunks/${APP2_EXPOSE_CHUNK}`, id: APP2_DEBUG_ID }])
+        )
 
         withBrowserLogs((browserLogs) => {
           expect(browserLogs).toHaveLength(2)
@@ -491,13 +491,13 @@ test.describe('microfrontend', () => {
         // We assert the chunk with toMatchObject instead of toEqual to allow those extras.
 
         // script 0 -> app1 expose chunk (app1.ts + common.ts)
-        expect(longTaskEvents[0]._dd?.debug_ids).toMatchObject({
-          [`${baseUrl}microfrontend/chunks/${APP1_EXPOSE_CHUNK}`]: APP1_DEBUG_ID,
-        })
+        expect(longTaskEvents[0]._dd?.debug_ids).toEqual(
+          expect.arrayContaining([{ url: `${baseUrl}microfrontend/chunks/${APP1_EXPOSE_CHUNK}`, id: APP1_DEBUG_ID }])
+        )
         // script 0 -> app2 expose chunk (app2.ts + common.ts)
-        expect(longTaskEvents[1]._dd?.debug_ids).toMatchObject({
-          [`${baseUrl}microfrontend/chunks/${APP2_EXPOSE_CHUNK}`]: APP2_DEBUG_ID,
-        })
+        expect(longTaskEvents[1]._dd?.debug_ids).toEqual(
+          expect.arrayContaining([{ url: `${baseUrl}microfrontend/chunks/${APP2_EXPOSE_CHUNK}`, id: APP2_DEBUG_ID }])
+        )
       })
 
     createTest('errors spanning multiple chunks should have a debug_id for each chunk in the stack')
@@ -514,15 +514,19 @@ test.describe('microfrontend', () => {
         // We assert the chunk with toMatchObject instead of toEqual to allow those extras.
 
         // frame 0 (throw) -> shared lib chunk (boom), frame 1 (caller) -> app1 expose chunk
-        expect(intakeRegistry.rumErrorEvents[0]._dd?.debug_ids).toMatchObject({
-          [`${baseUrl}microfrontend/chunks/${LIB_EXPOSE_CHUNK}`]: LIB_DEBUG_ID,
-          [`${baseUrl}microfrontend/chunks/${APP1_EXPOSE_CHUNK}`]: APP1_DEBUG_ID,
-        })
+        expect(intakeRegistry.rumErrorEvents[0]._dd?.debug_ids).toEqual(
+          expect.arrayContaining([
+            { url: `${baseUrl}microfrontend/chunks/${LIB_EXPOSE_CHUNK}`, id: LIB_DEBUG_ID },
+            { url: `${baseUrl}microfrontend/chunks/${APP1_EXPOSE_CHUNK}`, id: APP1_DEBUG_ID },
+          ])
+        )
         // same shared lib debug ID, merged with app2's own chunk
-        expect(intakeRegistry.rumErrorEvents[1]._dd?.debug_ids).toMatchObject({
-          [`${baseUrl}microfrontend/chunks/${LIB_EXPOSE_CHUNK}`]: LIB_DEBUG_ID,
-          [`${baseUrl}microfrontend/chunks/${APP2_EXPOSE_CHUNK}`]: APP2_DEBUG_ID,
-        })
+        expect(intakeRegistry.rumErrorEvents[1]._dd?.debug_ids).toEqual(
+          expect.arrayContaining([
+            { url: `${baseUrl}microfrontend/chunks/${LIB_EXPOSE_CHUNK}`, id: LIB_DEBUG_ID },
+            { url: `${baseUrl}microfrontend/chunks/${APP2_EXPOSE_CHUNK}`, id: APP2_DEBUG_ID },
+          ])
+        )
 
         withBrowserLogs((browserLogs) => {
           expect(browserLogs).toHaveLength(2)

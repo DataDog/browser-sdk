@@ -37,7 +37,7 @@ describe('createErrorFieldFromRawError', () => {
     context: {
       foo: 'bar',
     },
-    debugIds: {},
+    debugIds: [],
   }
 
   it('creates an error field from a raw error', () => {
