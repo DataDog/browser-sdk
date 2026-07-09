@@ -12,6 +12,7 @@
     "internal",
     "react-router-v6",
     "react-router-v7",
+    "react-router-v8",
     "tanstack-router",
     "!src/**/*.spec.*",
     "!src/**/*.specHelper.*"
