@@ -2,7 +2,7 @@
   "name": "microfrontend-test-app",
   "private": true,
   "scripts": {
-    "build": "webpack --config webpack.lib.js && webpack --config webpack.app1.js && webpack --config webpack.app2.js && webpack --config webpack.shell.js"
+    "build": "rm -rf dist && webpack --config webpack.lib.js && webpack --config webpack.app1.js && webpack --config webpack.app2.js && webpack --config webpack.shell.js"
   },
   "devDependencies": {
     "@datadog/webpack-plugin": "3.2.5",
