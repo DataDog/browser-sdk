@@ -41,8 +41,6 @@ Copy the Datadog slim RUM bundle into the project as
 </StaticResource>
 ```
 
-(In this org the `datadog_rum_slim` static resource is already deployed by `sf-lwc-app`; we do not need to add it from this app.)
-
 ### 2. Configure CSP for the Datadog intake endpoint
 
 Experience Cloud sites enforce CSP. In **Experience Builder → Settings → Security & Privacy**:
