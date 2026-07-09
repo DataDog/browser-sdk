@@ -10,11 +10,6 @@ test.use({
   launchOptions: { args: ['--disable-web-security'] },
 })
 
-// All tests authenticate as the same Salesforce user via a JWT bearer session cookie. Running
-// them concurrently across workers races that single user's session, so force this file to run
-// serially in one worker.
-test.describe.configure({ mode: 'serial' })
-
 const salesforceRumConfiguration = {
   trackViewsManually: true,
   trackLongTasks: true,

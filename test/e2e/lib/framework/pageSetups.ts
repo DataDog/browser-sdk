@@ -326,11 +326,7 @@ export async function salesforceSetup(options: SetupOptions, servers: Servers, p
       {
         name: 'sid',
         value: accessToken,
-        domain: new URL(instanceUrl).hostname,
-        path: '/',
-        httpOnly: true,
-        secure: true,
-        sameSite: 'Lax',
+        url: new URL('/', instanceUrl).href,
       },
     ])
   }
@@ -354,9 +350,7 @@ export async function salesforceSetup(options: SetupOptions, servers: Servers, p
             var script = document.createElement('script')
             script.src = '/resource/datadog_rum_slim.js'
             script.onload = function () {
-              if (window.RUM_CONTEXT) {
-                window.DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
-              }
+              window.DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
               window.DD_RUM.init(${formatConfiguration(options.rum, servers)})
             }
             document.head.appendChild(script)

@@ -1,5 +1,4 @@
 import { createSign } from 'node:crypto'
-import { execFileSync } from 'node:child_process'
 
 import {
   getSfLwcClientId,
@@ -24,25 +23,13 @@ export async function buildSalesforceUrl(app: SalesforceApp): Promise<string> {
 }
 
 export function getSalesforceLwcSession(): Promise<SalesforceLwcSession> {
-  salesforceLwcSession ??= buildSalesforceLwcSession()
+  salesforceLwcSession ??= buildSalesforceLwcJwtSession()
   return salesforceLwcSession
 }
 
 async function buildSalesforceLwcUrl(): Promise<string> {
   const { instanceUrl } = await getSalesforceLwcSession()
   return new URL(salesforceHomePath, instanceUrl).href
-}
-
-async function buildSalesforceLwcSession(): Promise<SalesforceLwcSession> {
-  try {
-    return await buildSalesforceLwcJwtSession()
-  } catch (error) {
-    const cliSession = buildSalesforceLwcCliSession()
-    if (cliSession) {
-      return cliSession
-    }
-    throw error
-  }
 }
 
 async function buildSalesforceLwcJwtSession(): Promise<SalesforceLwcSession> {
@@ -58,31 +45,6 @@ async function buildSalesforceLwcJwtSession(): Promise<SalesforceLwcSession> {
   const privateKey = Buffer.from(jwtPrivateKey, 'base64').toString('utf8')
   const accessToken = await getAccessToken(clientId, username, instanceUrl, privateKey)
   return { instanceUrl, accessToken }
-}
-
-function buildSalesforceLwcCliSession(): SalesforceLwcSession | undefined {
-  const alias = process.env.SF_ORG_ALIAS ?? 'sf-lwc-ci'
-
-  try {
-    const accessTokenOutput = execFileSync(
-      'sf',
-      ['org', 'auth', 'show-access-token', '--target-org', alias, '--json'],
-      {
-        encoding: 'utf8',
-      }
-    )
-    const orgDisplayOutput = execFileSync('sf', ['org', 'display', '--target-org', alias, '--json'], {
-      encoding: 'utf8',
-    })
-    const accessTokenJson = JSON.parse(accessTokenOutput) as { result: { accessToken: string } }
-    const orgDisplayJson = JSON.parse(orgDisplayOutput) as { result: { instanceUrl: string } }
-    return {
-      accessToken: accessTokenJson.result.accessToken,
-      instanceUrl: orgDisplayJson.result.instanceUrl,
-    }
-  } catch {
-    return undefined
-  }
 }
 
 async function getAccessToken(
