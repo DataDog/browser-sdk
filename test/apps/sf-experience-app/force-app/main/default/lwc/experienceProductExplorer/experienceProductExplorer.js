@@ -18,6 +18,14 @@ export default class ExperienceProductExplorer extends LightningElement {
   selectedMaterials = []
   selectedLevels = []
 
+  get homeHref() {
+    return `./${window.location.search}`
+  }
+
+  get productExplorerHref() {
+    return `product-explorer${window.location.search}`
+  }
+
   handleSearchKeyChange(event) {
     this.searchKey = event.target.value
   }

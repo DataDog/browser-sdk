@@ -8,7 +8,10 @@ This app deploys to the same org as `sf-lwc-app` (alias `sf-lwc-ci`), site "SF E
 ## What It Contains
 
 - Two Lightning Web Components, `experienceHomeActions` (on the Home page) and
-  `experienceSecondPageActions` (on the "Actions" page).
+  `experienceProductExplorer` (on the "Product Explorer" page).
+- An `experienceDatadogInit` Lightning Web Component that loads and initializes the local `datadog_rum_slim` static
+  resource only when the page URL contains `?init=true`, using default `xxx` credentials overridden by
+  `window.RUM_CONFIGURATION`.
 
 ## Authentication
 
@@ -24,6 +27,12 @@ yarn salesforce:deploy-app --app experience-cloud
 ```
 
 This deploys the LWC bundles and publishes the "SF Experience Cloud App" site, so changes go live.
+
+The deploy does not currently source-control the Experience Builder theme metadata for this app. To initialize RUM on
+all pages, add `Experience Datadog Init` once to the shared theme/header region in Experience Builder. In
+ExperienceBundle source, the equivalent is adding a `c:experienceDatadogInit` component to the active theme's
+`themeHeader` region for each layout type used by the site, like the shared theme wiring in
+`salesforce/ebikes-lwc/force-app/main/default/experiences/E_Bikes1/themes/jepson.json`.
 
 ## Open The Site
 
