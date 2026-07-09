@@ -15,6 +15,7 @@ module.exports = ({ name, plugins, entry }) => ({
     filename: `${name}.js`,
     chunkFilename: `chunks/[name]-[contenthash]-${name}.js`,
     publicPath: 'auto',
+    clean: true,
   },
   plugins,
 })
