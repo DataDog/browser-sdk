@@ -32,12 +32,7 @@ export const RumEventType = {
 export type RumEventType = (typeof RumEventType)[keyof typeof RumEventType]
 
 export type AssembledRumEvent = (
-  | RumViewEvent
-  | RumActionEvent
-  | RumResourceEvent
-  | RumErrorEvent
-  | RumVitalEvent
-  | RumLongTaskEvent
+  RumViewEvent | RumActionEvent | RumResourceEvent | RumErrorEvent | RumVitalEvent | RumLongTaskEvent
 ) &
   Context
 
@@ -314,12 +309,7 @@ export interface RawRumLongTaskEvent {
 export type DeliveryType = 'cache' | 'navigational-prefetch' | 'other'
 
 export type InvokerType =
-  | 'user-callback'
-  | 'event-listener'
-  | 'resolve-promise'
-  | 'reject-promise'
-  | 'classic-script'
-  | 'module-script'
+  'user-callback' | 'event-listener' | 'resolve-promise' | 'reject-promise' | 'classic-script' | 'module-script'
 
 export interface RawRumLongAnimationFrameEvent {
   date: TimeStamp
