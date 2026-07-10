@@ -138,10 +138,7 @@ export type AddCDataSectionNodeChange = [InsertionPoint, '#cdata-section' | Stri
  * Browser-specific. Schema representing the insertion point of a node which is being added to the document.
  */
 export type InsertionPoint =
-  | AppendChildInsertionPoint
-  | InsertAfterPreviousInsertionPoint
-  | InsertBeforeInsertionPoint
-  | RootInsertionPoint
+  AppendChildInsertionPoint | InsertAfterPreviousInsertionPoint | InsertBeforeInsertionPoint | RootInsertionPoint
 /**
  * A positive integer insertion point. Inserting a node at positive integer N indicates that the new node's parent is the node with an id N lower than the new node, and that we should insert the new node at the end of its parent's child list, as if the DOM method appendChild() was being used.
  */
@@ -266,9 +263,7 @@ export type AddStyleSheetChange = StyleSheetSnapshot
  * @minItems 1
  */
 export type StyleSheetSnapshot =
-  | [StyleSheetRules]
-  | [StyleSheetRules, StyleSheetMediaList]
-  | [StyleSheetRules, StyleSheetMediaList, boolean]
+  [StyleSheetRules] | [StyleSheetRules, StyleSheetMediaList] | [StyleSheetRules, StyleSheetMediaList, boolean]
 /**
  * Schema representing a CSS stylesheet's rules, encoded either as a single string or as an array containing a separate string for each rule.
  */

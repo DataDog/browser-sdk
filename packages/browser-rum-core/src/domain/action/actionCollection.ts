@@ -86,12 +86,10 @@ export function startActionCollection(
     }
   })
 
-  hooks.assembleTelemetry.register(
-    ({ startTime }): DefaultTelemetryEventAttributes => ({
-      // todo: fix telemetry event type
-      action: { id: actionContexts.findActionId(startTime) as unknown as string },
-    })
-  )
+  hooks.assembleTelemetry.register(({ startTime }): DefaultTelemetryEventAttributes => ({
+    // todo: fix telemetry event type
+    action: { id: actionContexts.findActionId(startTime) as unknown as string },
+  }))
 
   return {
     addAction: manualActions.addAction,

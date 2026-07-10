@@ -22,9 +22,7 @@ export interface RumChildListMutationRecord {
 }
 
 export type RumMutationRecord =
-  | RumCharacterDataMutationRecord
-  | RumAttributesMutationRecord
-  | RumChildListMutationRecord
+  RumCharacterDataMutationRecord | RumAttributesMutationRecord | RumChildListMutationRecord
 
 export function createDOMMutationObservable() {
   const MutationObserver = getMutationObserverConstructor()

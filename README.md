@@ -46,7 +46,6 @@ Datadog provides one CDN bundle per [site][70]:
 [2]: https://imgix.datadoghq.com/img/favicons/favicon-32x32.png
 [01]: https://badge.fury.io/js/%40datadog%2Fbrowser-logs.svg
 [02]: https://badge.fury.io/js/%40datadog%2Fbrowser-logs
-
 [03]: https://deno.bundlejs.com/badge?q=@datadog/browser-logs&treeshake=[*]
 [04]: https://bundlejs.com/?q=@datadog/browser-logs&treeshake=[*]
 [08]: https://docs.datadoghq.com/logs/log_collection/javascript
