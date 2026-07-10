@@ -34,7 +34,10 @@ export function addReactError(error: unknown, info: ErrorInfo) {
         handlingStack,
         componentStack: info.componentStack ?? undefined,
         startClocks,
-        context: { ...(error as Error & { dd_context?: Context }).dd_context, framework: 'react' },
+        context: {
+          ...(typeof error === 'object' && error !== null ? (error as { dd_context?: Context }).dd_context : undefined),
+          framework: 'react',
+        },
       })
     })
   })
