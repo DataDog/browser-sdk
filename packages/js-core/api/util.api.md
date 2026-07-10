@@ -120,6 +120,9 @@ export interface Display {
 }
 
 // @public
+export const DOCS_ORIGIN = "https://docs.datadoghq.com";
+
+// @public
 export function getDebugMode(): boolean;
 
 // @public
@@ -157,6 +160,9 @@ export const isWorkerEnvironment: boolean;
 
 // @public
 export function mergeInto<D, S>(destination: D, source: S): Merged<D, S>;
+
+// @public
+export const MORE_DETAILS = "More details:";
 
 // @public
 interface Navigator_2 {

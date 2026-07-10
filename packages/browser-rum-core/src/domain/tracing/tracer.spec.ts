@@ -341,6 +341,7 @@ describe('tracer', () => {
     })
 
     it('should fall back to default propagator types when all provided values are invalid', () => {
+      spyOn(display, 'error')
       const tracer = startTracerWithDefaults({
         initConfiguration: {
           allowedTracingUrls: [{ match: window.location.origin, propagatorTypes: ['foo', 32, () => true] as any }],

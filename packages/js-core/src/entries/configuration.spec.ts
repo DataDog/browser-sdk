@@ -555,5 +555,19 @@ describe('validateAndBuildConfiguration', () => {
       validateAndBuildConfiguration({ hosts: ['a', 42] }, schema, display)
       expect(display.error).toHaveBeenCalledOnceWith('"hosts" must be a non-empty string')
     })
+
+    it('reports the specific nested field message for an invalid schema field, in addition to the outer message', () => {
+      const schema = {
+        replica: {
+          type: 'schema' as const,
+          schema: {
+            clientToken: { type: 'string' as const, required: true as const },
+          },
+        },
+      }
+      validateAndBuildConfiguration({ replica: { clientToken: 42 } }, schema, display)
+      expect(display.error).toHaveBeenCalledWith('"clientToken" must be a non-empty string')
+      expect(display.error).toHaveBeenCalledWith('"replica" is not a valid object')
+    })
   })
 })

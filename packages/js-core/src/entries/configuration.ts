@@ -1,3 +1,4 @@
+import { DOCS_ORIGIN, MORE_DETAILS } from '../util/display'
 import type { Display } from '../util/display'
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -233,7 +234,7 @@ function buildErrorMessage(key: string, field: FieldDef): string {
     case 'boolean':
       return `"${key}" must be a boolean`
     case 'site':
-      return `"${key}" must be a valid Datadog site. More details: https://docs.datadoghq.com/getting_started/site/.`
+      return `"${key}" must be a valid Datadog site. ${MORE_DETAILS} ${DOCS_ORIGIN}/getting_started/site/.`
     case 'match-option':
       return `"${key}" must be a string, RegExp, or function`
     case 'enum': {
@@ -272,12 +273,27 @@ export function validateAndBuildConfiguration<S extends ConfigurationSchema>(
     return undefined
   }
 
+  return validateSchemaFields(schema, initConfig as Record<string, unknown>, display) as InferredConfig<S> | undefined
+}
+
+/**
+ * Validates every field of `schema` against `rawConfig`. Shared by {@link validateAndBuildConfiguration}
+ * and nested `type: 'schema'` field validation. `display` is threaded down into nested fields
+ * (`type: 'schema'`, `type: 'union'`, `multiple: true`) so a nested validation failure reports
+ * its own specific message, in addition to the outer field's generic message.
+ */
+function validateSchemaFields(
+  schema: ConfigurationSchema,
+  rawConfig: Record<string, unknown>,
+  display: Display
+): Record<string, unknown> | undefined {
   const result: Record<string, unknown> = {}
-  const rawConfig = initConfig as Record<string, unknown>
 
   for (const [key, field] of Object.entries(schema)) {
     const rawValue = rawConfig[key]
-    const validated = field.multiple ? validateArrayField(field, rawValue) : validateField(field, rawValue)
+    const validated = field.multiple
+      ? validateArrayField(field, rawValue, display)
+      : validateField(field, rawValue, display)
 
     if (validated === undefined) {
       if (rawValue !== undefined && rawValue !== null && rawValue !== '') {
@@ -295,10 +311,10 @@ export function validateAndBuildConfiguration<S extends ConfigurationSchema>(
     }
   }
 
-  return result as InferredConfig<S>
+  return result
 }
 
-function validateArrayField(field: FieldDef, value: unknown): unknown {
+function validateArrayField(field: FieldDef, value: unknown, display: Display): unknown {
   if (value === undefined || value === null) {
     return undefined
   }
@@ -310,7 +326,7 @@ function validateArrayField(field: FieldDef, value: unknown): unknown {
   const items = Array.isArray(value) ? value : [value]
   const results: unknown[] = []
   for (const item of items) {
-    const validated = validateField(field, item)
+    const validated = validateField(field, item, display)
     if (validated === undefined) {
       if (field.strict !== false) {
         return undefined
@@ -328,36 +344,12 @@ function validateArrayField(field: FieldDef, value: unknown): unknown {
 
 const DATADOG_SITE_REGEX = /(datadog|ddog|datad0g|dd0g)/
 
-function validateInnerSchema(
-  schema: ConfigurationSchema,
-  obj: Record<string, unknown>
-): Record<string, unknown> | undefined {
-  const result: Record<string, unknown> = {}
-  for (const [key, field] of Object.entries(schema)) {
-    const rawValue = obj[key]
-    const validated = field.multiple ? validateArrayField(field, rawValue) : validateField(field, rawValue)
-    if (validated === undefined) {
-      if (rawValue !== undefined && rawValue !== null && rawValue !== '') {
-        if (field.required || field.strict !== false) {
-          return undefined
-        }
-      } else if (field.required) {
-        return undefined
-      }
-      result[key] = 'default' in field ? field.default : undefined
-    } else {
-      result[key] = validated
-    }
-  }
-  return result
-}
-
-function validateField(field: FieldDef, value: unknown): unknown {
+function validateField(field: FieldDef, value: unknown, display: Display): unknown {
   if (field.type === 'schema') {
     if (typeof value !== 'object' || value === null) {
       return undefined
     }
-    return validateInnerSchema(field.schema, value as Record<string, unknown>)
+    return validateSchemaFields(field.schema, value as Record<string, unknown>, display)
   }
 
   if (field.type === 'union') {
@@ -365,7 +357,7 @@ function validateField(field: FieldDef, value: unknown): unknown {
       return undefined
     }
     for (const variant of field.variants) {
-      const result = validateField(variant, value)
+      const result = validateField(variant, value, display)
       if (result !== undefined) {
         return result
       }
