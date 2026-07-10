@@ -226,11 +226,12 @@ export interface RumInitConfiguration extends InitConfiguration {
   sessionReplaySampleRate?: number | undefined
 
   /**
-   * If the session is sampled for Session Replay, only start the recording when `startSessionReplayRecording()` is called, instead of at the beginning of the session. Default: if startSessionReplayRecording is 0, true; otherwise, false.
+   * If the session is sampled for Session Replay, only start the recording when `startSessionReplayRecording()` is called, instead of at the beginning of the session.
    *
    * See [Session Replay Usage](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser/#usage) for further information.
    *
    * @category Session Replay
+   * @defaultValue false
    */
   startSessionReplayRecordingManually?: boolean | undefined
 
@@ -403,8 +404,7 @@ export const RUM_SCHEMA = {
   betaEnableViewUpdates: { type: 'boolean', default: false },
   enablePrivacyForActionName: { type: 'boolean', default: true },
   propagateTraceBaggage: { type: 'boolean', default: true },
-  // conditional default: sessionReplaySampleRate === 0 — resolved in post-processing
-  startSessionReplayRecordingManually: { type: 'boolean', strict: false },
+  startSessionReplayRecordingManually: { type: 'boolean', default: false, strict: false },
 
   // Enums
   defaultPrivacyLevel: {
@@ -469,12 +469,8 @@ export const RUM_SCHEMA = {
   },
 } as const
 
-export type RumConfiguration = Omit<
-  InferredConfig<typeof RUM_SCHEMA>,
-  'allowedTracingUrls' | 'startSessionReplayRecordingManually'
-> & {
+export type RumConfiguration = Omit<InferredConfig<typeof RUM_SCHEMA>, 'allowedTracingUrls'> & {
   allowedTracingUrls: TracingOption[]
-  startSessionReplayRecordingManually: boolean
   rulePsr: number | undefined
   trackResourceHeaders: MatchHeader[]
   allowedGraphQlUrls: GraphQlUrlOption[]
@@ -507,8 +503,6 @@ export function validateAndBuildRumConfiguration(
     beforeSend: config.beforeSend
       ? (catchUserErrors(config.beforeSend, 'beforeSend threw an error:') as typeof config.beforeSend)
       : undefined,
-    startSessionReplayRecordingManually:
-      config.startSessionReplayRecordingManually ?? config.sessionReplaySampleRate === 0,
     rulePsr: isNumber(initConfiguration.traceSampleRate) ? initConfiguration.traceSampleRate / 100 : undefined,
     trackResourceHeaders: validateAndBuildTrackResourceHeaders(initConfiguration),
     allowedGraphQlUrls: validateAndBuildGraphQlOptions(initConfiguration),
