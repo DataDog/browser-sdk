@@ -53,13 +53,11 @@ export function startViewCollection(
     }
   })
 
-  hooks.assembleTelemetry.register(
-    ({ startTime }): DefaultTelemetryEventAttributes => ({
-      view: {
-        id: viewHistory.findView(startTime)?.id,
-      },
-    })
-  )
+  hooks.assembleTelemetry.register(({ startTime }): DefaultTelemetryEventAttributes => ({
+    view: {
+      id: viewHistory.findView(startTime)?.id,
+    },
+  }))
 
   return trackViews(
     lifeCycle,

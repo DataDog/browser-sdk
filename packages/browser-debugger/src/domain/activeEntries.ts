@@ -9,8 +9,7 @@ interface ActiveEntryThrowable {
 }
 
 type ActiveEntryEntry =
-  | { arguments: CapturedFields; captureExpressions?: never }
-  | { arguments?: never; captureExpressions: CapturedFields }
+  { arguments: CapturedFields; captureExpressions?: never } | { arguments?: never; captureExpressions: CapturedFields }
 
 type ActiveEntryReturn =
   | (ActiveEntryThrowable & {
