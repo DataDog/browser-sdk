@@ -4,10 +4,30 @@ import { startTrackingNuxtViews } from './router/nuxtRouter'
 import type { NuxtApp } from './error/setupNuxtErrorHandling'
 import { reportNuxtError, setupNuxtErrorHandling } from './error/setupNuxtErrorHandling'
 
+/**
+ * Nuxt plugin type.
+ *
+ * The plugins API is unstable and experimental, and may change without notice. Please don't use this type directly.
+ *
+ * @internal
+ */
 export type NuxtPlugin = Pick<Required<RumPlugin>, 'name' | 'onInit' | 'onRumStart' | 'getConfigurationTelemetry'>
 
+/**
+ * Nuxt plugin configuration.
+ *
+ * @category Main
+ */
 export interface NuxtPluginConfiguration {
+  /**
+   * The Vue Router instance used by the Nuxt application, used to automatically track route
+   * changes as RUM views.
+   */
   router: Router
+  /**
+   * The Nuxt app instance, used to automatically report Vue component errors and Nuxt startup
+   * errors caught by the `app:error` hook. Optional, but recommended.
+   */
   nuxtApp?: NuxtApp
 }
 
@@ -20,6 +40,35 @@ let globalAddError: StartRumResult['addError'] | undefined
 const onRumInitSubscribers: InitSubscriber[] = []
 const onRumStartSubscribers: StartSubscriber[] = []
 
+/**
+ * Nuxt plugin constructor.
+ *
+ * @category Main
+ * @example
+ * ```ts
+ * import { datadogRum } from '@datadog/browser-rum'
+ * import { nuxtRumPlugin } from '@datadog/browser-rum-nuxt'
+ * import { defineNuxtPlugin, useNuxtApp, useRouter } from 'nuxt/app'
+ *
+ * export default defineNuxtPlugin({
+ *   name: 'datadog-rum',
+ *   enforce: 'pre',
+ *   setup() {
+ *     datadogRum.init({
+ *       applicationId: '<DATADOG_APPLICATION_ID>',
+ *       clientToken: '<DATADOG_CLIENT_TOKEN>',
+ *       site: '<DATADOG_SITE>',
+ *       plugins: [
+ *         nuxtRumPlugin({
+ *           router: useRouter(),
+ *           nuxtApp: useNuxtApp(),
+ *         }),
+ *       ],
+ *     })
+ *   },
+ * })
+ * ```
+ */
 export function nuxtRumPlugin(configuration: NuxtPluginConfiguration): NuxtPlugin {
   return {
     name: 'nuxt',

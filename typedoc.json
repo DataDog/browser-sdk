@@ -25,8 +25,23 @@
   "hideGenerator": true,
   "includeHierarchySummary": true,
   "navigation": {
-    "includeCategories": true
+    "includeCategories": true,
+    "compactFolders": false
   },
+  "highlightLanguages": [
+    "bash",
+    "console",
+    "css",
+    "html",
+    "javascript",
+    "json",
+    "jsonc",
+    "json5",
+    "yaml",
+    "tsx",
+    "typescript",
+    "vue"
+  ],
   "packageOptions": {
     "excludeInternal": true,
 

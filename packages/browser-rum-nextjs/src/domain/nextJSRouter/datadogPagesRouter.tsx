@@ -3,6 +3,26 @@ import { useRouter } from 'next/router'
 import { mockable } from '@datadog/browser-core'
 import { startNextjsView } from '../nextjsPlugin'
 
+/**
+ * Component tracking Pages Router navigations as RUM views. Render it once, in your custom App.
+ *
+ * @category Main
+ * @example
+ * ```tsx
+ * // pages/_app.tsx
+ * import type { AppProps } from 'next/app'
+ * import { DatadogPagesRouter } from '@datadog/browser-rum-nextjs'
+ *
+ * export default function MyApp({ Component, pageProps }: AppProps) {
+ *   return (
+ *     <>
+ *       <DatadogPagesRouter />
+ *       <Component {...pageProps} />
+ *     </>
+ *   )
+ * }
+ * ```
+ */
 export function DatadogPagesRouter() {
   const router = mockable(useRouter)()
   const previousPath = mockable(useRef)<string | null>(null)
