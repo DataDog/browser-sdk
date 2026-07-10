@@ -17,7 +17,6 @@ test.use({
 test.describe.configure({ mode: 'serial' })
 
 const salesforceRumConfiguration = {
-  trackViewsManually: true,
   trackLongTasks: true,
   trackResources: true,
   trackUserInteractions: true,
@@ -27,10 +26,10 @@ createTest('salesforce views')
   .withRum(salesforceRumConfiguration)
   .withSalesforceApp()
   .run(async ({ page, intakeRegistry, flushEvents }) => {
-    await expect(page.getByTestId('home-custom-actions')).toBeVisible({ timeout: 30000 })
+    await expect(page.getByTestId('salesforce-home-actions')).toBeVisible({ timeout: 30000 })
 
-    await page.locator('a[href*="/lightning/n/Product_Explorer"]').click()
-    await expect(page.getByTestId('product-explorer')).toBeVisible()
+    await page.getByRole('link', { name: 'Product Explorer' }).click()
+    await expect(page.getByTestId('salesforce-product-explorer')).toBeVisible()
 
     await flushEvents()
 
@@ -49,7 +48,7 @@ createTest('salesforce resources')
   .withRum(salesforceRumConfiguration)
   .withSalesforceApp()
   .run(async ({ page, intakeRegistry, flushEvents }) => {
-    await expect(page.getByTestId('home-custom-actions')).toBeVisible({ timeout: 30000 })
+    await expect(page.getByTestId('salesforce-home-actions')).toBeVisible({ timeout: 30000 })
 
     await page.getByRole('button', { name: 'Fetch Resource' }).click()
     await page.getByRole('button', { name: 'XHR Resource' }).click()
@@ -66,7 +65,7 @@ createTest('salesforce long tasks and vitals')
   .withRum(salesforceRumConfiguration)
   .withSalesforceApp()
   .run(async ({ page, intakeRegistry, flushEvents }) => {
-    await expect(page.getByTestId('home-custom-actions')).toBeVisible({ timeout: 30000 })
+    await expect(page.getByTestId('salesforce-home-actions')).toBeVisible({ timeout: 30000 })
 
     await page.getByTestId('long-task').click()
     await page.getByRole('button', { name: 'Add Duration Vital' }).click()
@@ -81,7 +80,7 @@ createTest('salesforce actions')
   .withRum(salesforceRumConfiguration)
   .withSalesforceApp()
   .run(async ({ page, intakeRegistry, flushEvents }) => {
-    await expect(page.getByTestId('home-custom-actions')).toBeVisible({ timeout: 30000 })
+    await expect(page.getByTestId('salesforce-home-actions')).toBeVisible({ timeout: 30000 })
 
     await page.getByTestId('custom-action-1').click()
 
@@ -101,7 +100,7 @@ createTest('salesforce errors')
   .withRum(salesforceRumConfiguration)
   .withSalesforceApp()
   .run(async ({ page, intakeRegistry, flushEvents, withBrowserLogs }) => {
-    await expect(page.getByTestId('home-custom-actions')).toBeVisible({ timeout: 30000 })
+    await expect(page.getByTestId('salesforce-home-actions')).toBeVisible({ timeout: 30000 })
 
     await page.getByTestId('custom-error-1').click()
     await page.getByRole('button', { name: 'Runtime Error' }).click()

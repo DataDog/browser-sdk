@@ -6,7 +6,7 @@
     >
   </nav>
 
-  <div data-testid="experience-home-actions">
+  <div data-testid="salesforce-home-actions">
     <div>
       <h2>Datadog Custom Actions</h2>
       <p>Use these buttons to send manual RUM custom actions from the home page.</p>
@@ -100,6 +100,12 @@
         onclick={handleXhrResourceClick}
       >
         XHR Resource
+      </button>
+      <button
+        data-testid="image-resource"
+        onclick={handleImageResourceClick}
+      >
+        Image Resource
       </button>
       <template lwc:if="{lastResourceName}">
         <p>Last requested: {lastResourceName}</p>
