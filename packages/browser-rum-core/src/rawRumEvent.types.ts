@@ -7,6 +7,7 @@ import type {
   DefaultPrivacyLevel,
   Csp,
   Context,
+  DebugIdEntry,
 } from '@datadog/browser-core'
 import type { GraphQlMetadata } from './domain/resource/graphql'
 import type { PageState } from './domain/contexts/pageStateHistory'
@@ -138,7 +139,7 @@ export interface RawRumErrorEvent {
     csp?: Csp
   }
   _dd?: {
-    debug_ids?: { [url: string]: string }
+    debug_ids?: DebugIdEntry[]
   }
   view?: {
     in_foreground: boolean
@@ -339,7 +340,7 @@ export interface RawRumLongAnimationFrameEvent {
   }
   _dd: {
     discarded: boolean
-    debug_ids?: { [url: string]: string }
+    debug_ids?: DebugIdEntry[]
   }
 }
 

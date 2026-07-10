@@ -1,5 +1,6 @@
 import type { ClocksState } from '@datadog/js-core/time'
 import type { Context } from '../../tools/serialisation/context'
+import type { DebugIdEntry } from '../sourceCodeContext'
 
 // TS v4.6 introduced Error.cause[1] typed as `Error`. TS v4.8 changed Error.cause to be
 // `unknown`[2].
@@ -39,7 +40,7 @@ export interface RawError {
   fingerprint?: string
   csp?: Csp
   context?: Context
-  debugIds?: { [url: string]: string }
+  debugIds?: DebugIdEntry[]
 }
 
 export const ErrorSource = {
