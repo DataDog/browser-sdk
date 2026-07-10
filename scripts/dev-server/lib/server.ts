@@ -31,6 +31,7 @@ export function runServer({ writeIntakeFile = true }: { writeIntakeFile?: boolea
 
   app.use((_req, res, next) => {
     res.setHeader('Document-Policy', 'js-profiling')
+    res.setHeader('Access-Control-Allow-Origin', '*')
     next()
   })
 

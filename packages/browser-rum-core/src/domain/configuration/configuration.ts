@@ -60,6 +60,8 @@ export const DEFAULT_TRACKED_RESOURCE_HEADERS = [
   'content-length',
   'server-timing',
   'x-cache',
+  'cf-cache-status',
+  'x-vercel-cache',
 ] as const
 
 /**
@@ -174,8 +176,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @category Tracing
    */
   allowedTracingUrls?:
-    | Array<MatchOption | { match: MatchOption; propagatorTypes?: PropagatorType[] | null | undefined }>
-    | undefined
+    Array<MatchOption | { match: MatchOption; propagatorTypes?: PropagatorType[] | null | undefined }> | undefined
 
   /**
    * The percentage of requests to trace: 100 for all, 0 for none.

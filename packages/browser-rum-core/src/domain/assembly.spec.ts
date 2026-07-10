@@ -226,6 +226,54 @@ describe('rum assembly', () => {
         })
       })
 
+      describe('_dd.debug_ids', () => {
+        const url = 'http://path/to/redact/app.js'
+
+        const redactDebugIdUrls = (debugIds: Array<{ url: string; id: string }>) => {
+          debugIds.forEach((entry) => {
+            if (entry.url.includes('path/to/redact')) {
+              entry.url = 'redacted-url'
+            }
+          })
+        }
+
+        it('should allow redaction of the url in _dd.debug_ids on error events', () => {
+          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+            partialConfiguration: {
+              beforeSend: (event) => {
+                redactDebugIdUrls(event._dd.debug_ids)
+              },
+            },
+          })
+
+          notifyRawRumEvent(lifeCycle, {
+            rawRumEvent: createRawRumEvent(RumEventType.ERROR, {
+              _dd: { debug_ids: [{ url, id: 'debug-id' }] },
+            }),
+          })
+
+          expect((serverRumEvents[0] as any)._dd.debug_ids).toEqual([{ url: 'redacted-url', id: 'debug-id' }])
+        })
+
+        it('should allow redaction of the url in _dd.debug_ids on long task events', () => {
+          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+            partialConfiguration: {
+              beforeSend: (event) => {
+                redactDebugIdUrls(event._dd.debug_ids)
+              },
+            },
+          })
+
+          notifyRawRumEvent(lifeCycle, {
+            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, {
+              _dd: { debug_ids: [{ url, id: 'debug-id' }] },
+            }),
+          })
+
+          expect((serverRumEvents[0] as any)._dd.debug_ids).toEqual([{ url: 'redacted-url', id: 'debug-id' }])
+        })
+      })
+
       describe('field resource.graphql on Resource events', () => {
         it('should allow modification of resource.graphql.variables property', () => {
           const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({

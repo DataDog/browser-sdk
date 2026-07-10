@@ -163,12 +163,7 @@ export type RumActionEvent = CommonProperties &
          * The strategy of how the auto click action name is computed
          */
         name_source?:
-          | 'custom_attribute'
-          | 'mask_placeholder'
-          | 'standard_attribute'
-          | 'text_content'
-          | 'mask_disallowed'
-          | 'blank'
+          'custom_attribute' | 'mask_placeholder' | 'standard_attribute' | 'text_content' | 'mask_disallowed' | 'blank'
         [k: string]: unknown
       }
       [k: string]: unknown
@@ -516,12 +511,17 @@ export type RumErrorEvent = CommonProperties &
       /**
        * Mapping of source file URLs to their debug IDs for source map deobfuscation
        */
-      readonly debug_ids?: {
+      debug_ids?: {
+        /**
+         * URL of the source file
+         */
+        url: string
         /**
          * Debug ID (UUID) for the source file
          */
-        [k: string]: string
-      }
+        id: string
+        [k: string]: unknown
+      }[]
       [k: string]: unknown
     }
     [k: string]: unknown
@@ -620,12 +620,7 @@ export type RumLongTaskEvent = CommonProperties &
          * Type of the invoker of the script
          */
         readonly invoker_type?:
-          | 'user-callback'
-          | 'event-listener'
-          | 'resolve-promise'
-          | 'reject-promise'
-          | 'classic-script'
-          | 'module-script'
+          'user-callback' | 'event-listener' | 'resolve-promise' | 'reject-promise' | 'classic-script' | 'module-script'
         /**
          * The container (the top-level document, or an <iframe>) the long animation frame occurred in
          */
@@ -649,12 +644,17 @@ export type RumLongTaskEvent = CommonProperties &
       /**
        * Mapping of source file URLs to their debug IDs for source map deobfuscation
        */
-      readonly debug_ids?: {
+      debug_ids?: {
+        /**
+         * URL of the source file
+         */
+        url: string
         /**
          * Debug ID (UUID) for the source file
          */
-        [k: string]: string
-      }
+        id: string
+        [k: string]: unknown
+      }[]
       [k: string]: unknown
     }
     [k: string]: unknown
@@ -681,17 +681,7 @@ export type RumResourceEvent = CommonProperties &
        * Resource type
        */
       readonly type:
-        | 'document'
-        | 'xhr'
-        | 'beacon'
-        | 'fetch'
-        | 'css'
-        | 'js'
-        | 'image'
-        | 'font'
-        | 'media'
-        | 'other'
-        | 'native'
+        'document' | 'xhr' | 'beacon' | 'fetch' | 'css' | 'js' | 'image' | 'font' | 'media' | 'other' | 'native'
       /**
        * HTTP method of the resource
        */
@@ -1199,15 +1189,7 @@ export interface CommonProperties {
      * The list of available network interfaces
      */
     readonly interfaces?: (
-      | 'bluetooth'
-      | 'cellular'
-      | 'ethernet'
-      | 'wifi'
-      | 'wimax'
-      | 'mixed'
-      | 'other'
-      | 'unknown'
-      | 'none'
+      'bluetooth' | 'cellular' | 'ethernet' | 'wifi' | 'wimax' | 'mixed' | 'other' | 'unknown' | 'none'
     )[]
     /**
      * Cellular connection type reflecting the measured network performance
@@ -1598,10 +1580,7 @@ export interface ProfilingInternalContextSchema {
    * - `unexpected-exception`: An exception occurred when starting the Profiler.
    */
   readonly error_reason?:
-    | 'not-supported-by-browser'
-    | 'failed-to-lazy-load'
-    | 'missing-document-policy-header'
-    | 'unexpected-exception'
+    'not-supported-by-browser' | 'failed-to-lazy-load' | 'missing-document-policy-header' | 'unexpected-exception'
   /**
    * The reason provided by the profiling quota admission API. This attribute is only present if the status is `stopped` due to quota.
    *
@@ -1615,13 +1594,7 @@ export interface ProfilingInternalContextSchema {
    * - `api-error`: An API error occurred on the client side.
    */
   readonly quota_reason?:
-    | 'quota_ok'
-    | 'quota_exceeded'
-    | 'org_disabled'
-    | 'backend_unavailable'
-    | 'undefined'
-    | 'timeout'
-    | 'api-error'
+    'quota_ok' | 'quota_exceeded' | 'org_disabled' | 'backend_unavailable' | 'undefined' | 'timeout' | 'api-error'
   [k: string]: unknown
 }
 /**
