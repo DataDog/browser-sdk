@@ -4,7 +4,11 @@ import {
   type RouteObject as RouteObjectV6,
   type RouteMatch as RouteMatchV6,
 } from 'react-router-dom-6'
-import { createMemoryRouter as createMemoryRouterV7 } from 'react-router-dom'
+import {
+  createMemoryRouter as createMemoryRouterV7,
+  type RouteObject as RouteObjectV7,
+  type RouteMatch as RouteMatchV7,
+} from 'react-router-dom'
 import { registerCleanupTask } from '../../../../browser-core/test'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import { startReactRouterView, computeViewName } from './startReactRouterView'
@@ -68,7 +72,7 @@ routerVersions.forEach(({ version, createMemoryRouter }) => {
             { route: { path: '/foo' } },
             { route: {} },
             { route: { path: ':id' } },
-          ] as unknown as RouteMatchV6[])
+          ] as unknown as RouteMatchV6[] & RouteMatchV7[])
         ).toBe('/foo/:id')
       })
 
@@ -121,10 +125,10 @@ routerVersions.forEach(({ version, createMemoryRouter }) => {
             .split(' > ')
             .reduceRight(
               (childRoute, routePath) => ({ path: routePath, children: childRoute ? [childRoute] : undefined }),
-              undefined as RouteObjectV6 | undefined
+              undefined as RouteObjectV6 | RouteObjectV7 | undefined
             )!
 
-          const router = createMemoryRouter([route], {
+          const router = createMemoryRouter([route] as any, {
             initialEntries: [path],
           })
           registerCleanupTask(() => router.dispose())
