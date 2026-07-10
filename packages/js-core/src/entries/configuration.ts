@@ -14,9 +14,7 @@ export type MatchOption = string | RegExp | ((value: string) => boolean)
  * or is optional with no default (resolves to `undefined` when absent).
  */
 export type Optionality =
-  | { required: true; default?: never }
-  | { required?: false; default: unknown }
-  | { required?: false }
+  { required: true; default?: never } | { required?: false; default: unknown } | { required?: false }
 
 /**
  * When `multiple: true`, the field expects an array instead of a single value; each item
