@@ -1,4 +1,4 @@
-import { chmodSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { tmpdir } from 'node:os'
@@ -10,7 +10,6 @@ import { command } from './lib/command.ts'
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const TARGET_ORG = 'sf-lwc-ci'
-const EXPERIENCE_URL_PATH_PREFIX = 'sfexperiencecloud'
 
 type AppKey = 'lwc' | 'experience-cloud'
 
@@ -24,7 +23,7 @@ const APPS: Record<AppKey, { dir: string; urlPath: string; buildBundle: boolean;
   },
   'experience-cloud': {
     dir: resolve(repositoryRoot, 'test/apps/sf-experience-app'),
-    urlPath: `/${EXPERIENCE_URL_PATH_PREFIX}`,
+    urlPath: `/sfexperiencecloud`,
     buildBundle: false,
     siteName: 'SF Experience Cloud App',
   },
@@ -98,8 +97,6 @@ function authenticate(targetOrg: string, cwd: string) {
 
   try {
     writeFileSync(serverKeyPath, Buffer.from(getSfLwcJwtPrivateKey(), 'base64').toString('utf8'), { mode: 0o600 })
-    // writeFileSync mode can be masked by the process umask; chmodSync guarantees owner-only access.
-    chmodSync(serverKeyPath, 0o600)
 
     printLog(`Authenticating Salesforce CLI alias ${targetOrg}...`)
     command`sf org login jwt --client-id ${getSfLwcClientId()} --jwt-key-file ${serverKeyPath} --username ${getSfLwcUsername()} --instance-url ${getSfLwcInstanceUrl()} --alias ${targetOrg}`

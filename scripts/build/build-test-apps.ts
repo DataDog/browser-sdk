@@ -35,8 +35,6 @@ const APPS: AppConfig[] = [
   { name: 'vue-router-app' },
   { name: 'nuxt-app' },
   { name: 'instrumentation-overhead' },
-  { name: 'sf-lwc-app', builderFn: buildSalesforceApp },
-  { name: 'sf-experience-app', builderFn: buildSalesforceApp },
 
   // React Router apps
   { name: 'react-router-app' },
@@ -60,6 +58,10 @@ const APPS: AppConfig[] = [
     options: { runAt: 'document_start' },
     deps: ['base-extension'],
   },
+
+  // Salesforce apps
+  { name: 'sf-lwc-app', builderFn: buildSalesforceApp },
+  { name: 'sf-experience-app', builderFn: buildSalesforceApp },
 ]
 
 runMain(async () => {
