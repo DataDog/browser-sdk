@@ -24,7 +24,7 @@ import { onRumStart } from '../reactPlugin'
  * // ...
  * ```
  */
-export function addReactError(error: Error, info: ErrorInfo) {
+export function addReactError(error: unknown, info: ErrorInfo) {
   const handlingStack = createHandlingStack('react error')
   const startClocks = clocksNow()
   onRumStart((addError) => {
