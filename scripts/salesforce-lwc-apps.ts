@@ -23,7 +23,7 @@ const APPS: Record<AppKey, { dir: string; urlPath: string; buildBundle: boolean;
   },
   'experience-cloud': {
     dir: resolve(repositoryRoot, 'test/apps/sf-experience-app'),
-    urlPath: `/sfexperiencecloud`,
+    urlPath: 'sfexperiencecloud',
     buildBundle: false,
     siteName: 'SF Experience Cloud App',
   },
