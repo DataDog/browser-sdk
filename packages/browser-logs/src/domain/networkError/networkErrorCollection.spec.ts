@@ -1,16 +1,15 @@
 import type { BufferedData, FetchResolveContext } from '@datadog/browser-core'
 import { clocksNow } from '@datadog/js-core/time'
-import { BufferedDataType, ErrorSource, Observable, ONE_KIBI_BYTE } from '@datadog/browser-core'
+import { BufferedDataType, ErrorSource, Observable } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RawNetworkLogsEvent } from '../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../configuration'
 
-const DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT = 32 * ONE_KIBI_BYTE
 import type { RawLogsEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { StatusType } from '../logger/isAuthorized'
 
-import { startNetworkErrorCollection } from './networkErrorCollection'
+import { DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT, startNetworkErrorCollection } from './networkErrorCollection'
 
 const CONFIGURATION = {} as LogsConfiguration
 
