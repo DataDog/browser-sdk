@@ -41,6 +41,7 @@ const APPS: AppConfig[] = [
   { name: 'react-router-app' },
   { name: 'tanstack-router-app' },
   { name: 'react-router-v6-app', builderFn: buildReactRouterV6App, deps: ['react-router-app'] },
+  { name: 'react-router-v8-app', builderFn: buildReactRouterV8App, deps: ['react-router-app'] },
 
   // Vue Router apps
   { name: 'vue-router-v4-app', builderFn: buildVueRouterV4App, deps: ['vue-router-app'] },
@@ -201,6 +202,24 @@ async function buildReactRouterV6App() {
       content
         .replace('react-router-app.js', 'react-router-v6-app.js')
         .replace('react-router-app.js', 'react-router-v6-app.js')
+    )
+  })
+}
+
+async function buildReactRouterV8App() {
+  await buildGeneratedApp('react-router-app', 'react-router-v8-app', async (appPath) => {
+    await modifyFile(path.join(appPath, 'package.json'), (content: string) =>
+      content.replace(/"name": "react-router-app"/, '"name": "react-router-v8-app"')
+    )
+
+    await modifyFile(path.join(appPath, 'app.tsx'), (content: string) =>
+      content.replace('@datadog/browser-rum-react/react-router-v7', '@datadog/browser-rum-react/react-router-v8')
+    )
+
+    await modifyFile(path.join(appPath, 'webpack.config.js'), (content: string) =>
+      content
+        .replace('react-router-app.js', 'react-router-v8-app.js')
+        .replace('react-router-app.js', 'react-router-v8-app.js')
     )
   })
 }

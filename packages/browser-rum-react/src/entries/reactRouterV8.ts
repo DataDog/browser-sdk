@@ -29,10 +29,4 @@
  * ReactDOM.createRoot(document.getElementById('root')).render(<RouterProvider router={router} />)
  * ```
  */
-export {
-  createBrowserRouter,
-  createHashRouter,
-  createMemoryRouter,
-  useRoutes,
-  Routes,
-} from './reactRouterV7'
+export { createBrowserRouter, createHashRouter, createMemoryRouter, useRoutes, Routes } from './reactRouterV7'
