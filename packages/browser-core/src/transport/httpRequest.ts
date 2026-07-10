@@ -1,5 +1,5 @@
 import type { EndpointBuilder, TransportRetryInfo } from '@datadog/js-core/transport'
-import type { Context } from '../tools/serialisation/context'
+import type { Context } from '@datadog/js-core/assembly'
 import { fetch } from '../browser/fetch'
 import { monitor, monitorError } from '../tools/monitor'
 import { Observable } from '../tools/observable'

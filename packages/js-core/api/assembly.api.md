@@ -5,6 +5,19 @@
 ```ts
 
 // @public
+export interface Context {
+    // (undocumented)
+    [x: string]: ContextValue;
+}
+
+// @public
+export interface ContextArray extends Array<ContextValue> {
+}
+
+// @public
+export type ContextValue = string | number | boolean | Context | ContextArray | undefined | null;
+
+// @public
 export function createHook<Params, Result>(): Hook<Params, Result>;
 
 // @public

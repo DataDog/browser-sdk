@@ -1,5 +1,5 @@
+import type { Context } from '@datadog/js-core/assembly'
 import { display } from '../../tools/display'
-import type { Context } from '../../tools/serialisation/context'
 import type { Account } from '../contexts/accountContext'
 import type { User } from '../contexts/userContext'
 import { checkContext } from './contextUtils'

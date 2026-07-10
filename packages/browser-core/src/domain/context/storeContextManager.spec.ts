@@ -1,6 +1,6 @@
+import type { Context } from '@datadog/js-core/assembly'
 import { createNewEvent } from '../../../test'
 import { DOM_EVENT } from '../../browser/addEventListener'
-import type { Context } from '../../tools/serialisation/context'
 import { storeContextManager, buildStorageKey, removeStorageListeners } from './storeContextManager'
 import { CustomerDataType } from './contextConstants'
 import { createContextManager } from './contextManager'
