@@ -161,7 +161,7 @@ describe('computeRawError', () => {
       handling: ErrorHandling.HANDLED,
     })
 
-    expect(formatted.debugIds).toEqual({ [url]: 'debug-id-1' })
+    expect(formatted.debugIds).toEqual([{ url, id: 'debug-id-1' }])
   })
 
   it('should not attach debug IDs when the error has no stack', () => {
@@ -252,7 +252,10 @@ describe('computeRawError', () => {
         handling: ErrorHandling.HANDLED,
       })
 
-      expect(formatted.debugIds).toEqual({ [url]: 'debug-id-1', [causeUrl]: 'debug-id-cause' })
+      expect(formatted.debugIds).toEqual([
+        { url, id: 'debug-id-1' },
+        { url: causeUrl, id: 'debug-id-cause' },
+      ])
     })
 
     it('should return undefined causes when error has no cause', () => {
