@@ -27,7 +27,7 @@
   },
   "devDependencies": {
     "@types/pako": "2.0.4",
-    "pako": "2.2.0"
+    "pako": "3.0.0"
   },
   "volta": {
     "extends": "../../package.json"
