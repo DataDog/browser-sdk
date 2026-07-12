@@ -53,6 +53,7 @@ export default defineConfig(
       'test/apps/nuxt-app',
       'test/apps/nuxt-vue-router-v4-app',
       'test/apps/sf-lwc-app',
+      'test/apps/sf-experience-app',
       'sandbox',
       'coverage',
       '.yarn',
