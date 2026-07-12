@@ -35,6 +35,7 @@ const APPS: AppConfig[] = [
   { name: 'vue-router-app' },
   { name: 'nuxt-app' },
   { name: 'instrumentation-overhead' },
+  { name: 'sf-lwc-app', builderFn: buildSalesforceLwcApp },
 
   // React Router apps
   { name: 'react-router-app' },
@@ -58,10 +59,6 @@ const APPS: AppConfig[] = [
     options: { runAt: 'document_start' },
     deps: ['base-extension'],
   },
-
-  // Salesforce apps
-  { name: 'sf-lwc-app', builderFn: buildSalesforceApp },
-  { name: 'sf-experience-app', builderFn: buildSalesforceApp },
 ]
 
 runMain(async () => {
@@ -165,11 +162,11 @@ async function buildApp(appName: string) {
   }
 }
 
-function buildSalesforceApp(appName: string) {
+function buildSalesforceLwcApp() {
   const sourceBundle = 'packages/browser-rum-slim/bundle/datadog-rum-slim.js'
-  const targetBundle = `test/apps/${appName}/force-app/main/default/staticresources/datadog_rum_slim.js`
+  const targetBundle = 'test/apps/sf-lwc-app/force-app/main/default/staticresources/datadog_rum_slim.js'
 
-  printLog(`Building app at test/apps/${appName}...`)
+  printLog('Building app at test/apps/sf-lwc-app...')
   fs.copyFileSync(sourceBundle, targetBundle)
 }
 
