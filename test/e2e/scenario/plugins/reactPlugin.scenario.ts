@@ -5,7 +5,8 @@ import { runBasePluginRouterTests } from './basePluginRouterTests'
 
 const reactApps = [
   { appName: 'react-router-v6-app', description: 'React Router v6' },
-  { appName: 'react-router-app', description: 'React Router v7' },
+  { appName: 'react-router-app', description: 'React Router v8' },
+  { appName: 'react-router-v7-app', description: 'React Router v7' },
 ]
 
 const reactPluginApps = reactApps.map(({ appName, description }) => ({
@@ -95,7 +96,7 @@ test.describe('plugin: react', () => {
           })
         })
 
-      if (appName === 'react-router-app') {
+      if (appName === 'react-router-app' || appName === 'react-router-v7-app') {
         createTest('should call RouterProvider onError when initial route loader throws synchronously')
           .withRum()
           .withApp(appName)

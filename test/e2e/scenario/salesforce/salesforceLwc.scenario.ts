@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 import { createTest } from '../../lib/framework'
 
 // Skip non chromium browsers because --disable-web-security is chromium-only.
-test.skip(() => test.info().project.name !== 'chromium', 'Salesforce app is tested on chromium only')
+test.skip(true, 'Skip until we fix the frontdoor authentication')
 
 // Bypass CSP and CORS restrictions in the Salesforce app.
 test.use({
