@@ -1,5 +1,4 @@
 import { createSign } from 'node:crypto'
-import type { BrowserContextOptions } from '@playwright/test'
 
 import {
   getSfLwcClientId,
@@ -20,26 +19,6 @@ export interface SalesforceLwcSession {
 export async function buildSalesforceLwcUrl(): Promise<string> {
   const { instanceUrl } = await getSalesforceLwcSession()
   return new URL(salesforceHomePath, instanceUrl).href
-}
-
-export async function buildSalesforceLwcStorageState(): Promise<NonNullable<BrowserContextOptions['storageState']>> {
-  const { accessToken, instanceUrl } = await getSalesforceLwcSession()
-  const instance = new URL(instanceUrl)
-  return {
-    cookies: [
-      {
-        name: 'sid',
-        value: accessToken,
-        domain: instance.hostname,
-        path: '/',
-        expires: -1,
-        httpOnly: true,
-        secure: instance.protocol === 'https:',
-        sameSite: 'Lax',
-      },
-    ],
-    origins: [],
-  }
 }
 
 export function getSalesforceLwcSession(): Promise<SalesforceLwcSession> {
