@@ -40,7 +40,7 @@
   },
   "devDependencies": {
     "@datadog/browser-worker": "7.5.0",
-    "pako": "3.0.0"
+    "pako": "3.0.1"
   },
   "volta": {
     "extends": "../../package.json"

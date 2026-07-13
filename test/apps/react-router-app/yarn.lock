@@ -608,7 +608,7 @@ __metadata:
   dependencies:
     react: "npm:19.2.7"
     react-dom: "npm:19.2.7"
-    react-router: "npm:8.1.0"
+    react-router: "npm:8.2.0"
     ts-loader: "npm:9.6.2"
     typescript: "npm:6.0.3"
     webpack: "npm:5.108.4"
@@ -623,9 +623,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"react-router@npm:8.1.0":
-  version: 8.1.0
-  resolution: "react-router@npm:8.1.0"
+"react-router@npm:8.2.0":
+  version: 8.2.0
+  resolution: "react-router@npm:8.2.0"
   dependencies:
     cookie-es: "npm:^3.1.1"
   peerDependencies:
@@ -634,7 +634,7 @@ __metadata:
   peerDependenciesMeta:
     react-dom:
       optional: true
-  checksum: 10c0/28c336a5c32ad011a305b82fb27ae1abb892a971591618d3dcb4c8ff3fef3440c215e2b9b365217dd43774db4b3d526c4a95e5d3faecacf42ed9356402bab03f
+  checksum: 10c0/6137d8db61f1a011d40a1b167d509c806a15ea9a04d238d9ea149d9063b640e4cccbf45974a85924fe44bd3e1080fecc613fe6e5af1d7e7caf648bba16280f6f
   languageName: node
   linkType: hard
 
