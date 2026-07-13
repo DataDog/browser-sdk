@@ -1,42 +1,98 @@
-import { getCurrentJasmineSpec } from './getCurrentJasmineSpec'
+import { onTestFinished, type Mock } from 'vitest'
 
-const originalPlanForGuard = new WeakMap<() => void, () => void>()
+const activeGuards = new WeakMap<object, () => void>()
+const originalImplementations = new WeakMap<(...args: any[]) => any, ((...args: any[]) => any) | undefined>()
 
-export function collectAsyncCalls<F extends jasmine.Func>(
-  spy: jasmine.Spy<F>,
+export interface MockCalls<F extends (...args: any[]) => any> {
+  all(): Array<{ args: Parameters<F>; returnValue: ReturnType<F> }>
+  count(): number
+  argsFor(index: number): Parameters<F>
+  mostRecent(): { args: Parameters<F>; returnValue: ReturnType<F> }
+}
+
+export function collectAsyncCalls<F extends (...args: any[]) => any>(
+  spy: Mock<F>,
   expectedCallsCount = 1
-): Promise<jasmine.Calls<F>> {
+): Promise<MockCalls<F>> {
   return new Promise((resolve, reject) => {
-    const currentSpec = getCurrentJasmineSpec()
-    if (!currentSpec) {
-      reject(new Error('collectAsyncCalls should be called within jasmine code'))
-      return
+    const currentImplementation = spy.getMockImplementation() as ((...args: any[]) => any) | undefined
+    const originalImplementation =
+      currentImplementation && originalImplementations.has(currentImplementation)
+        ? originalImplementations.get(currentImplementation)
+        : currentImplementation
+    activeGuards.get(spy)?.()
+
+    let guardIsActive = true
+    activeGuards.set(spy, () => {
+      guardIsActive = false
+    })
+
+    onTestFinished(() => {
+      // Some callers explicitly clear the mock during cleanup to stop the guard before tearing
+      // down the observed component. Extra calls still throw synchronously when they happen.
+      if (guardIsActive && spy.mock.calls.length !== 0 && spy.mock.calls.length !== expectedCallsCount) {
+        throw createUnexpectedCallCountError(spy, expectedCallsCount)
+      }
+    })
+
+    function extraCallDetected(): Error {
+      const error = createUnexpectedCallCountError(spy, expectedCallsCount)
+      reject(error)
+      return error
     }
 
     const checkCalls = () => {
-      if (spy.calls.count() === expectedCallsCount) {
-        resolve(spy.calls)
-      } else if (spy.calls.count() > expectedCallsCount) {
-        const message = `Unexpected extra call for spec '${currentSpec.fullName}'`
-        fail(message)
-        reject(new Error(message))
+      if (spy.mock.calls.length === expectedCallsCount) {
+        const guardImplementation = ((...args: Parameters<F>) => {
+          originalImplementation?.(...args)
+          throw extraCallDetected()
+        }) as unknown as Parameters<Mock<F>['mockImplementation']>[0]
+        originalImplementations.set(guardImplementation, originalImplementation)
+        spy.mockImplementation(guardImplementation)
+        resolve(wrapMockCalls(spy))
+      } else if (spy.mock.calls.length > expectedCallsCount) {
+        extraCallDetected()
       }
     }
 
-    checkCalls()
+    const collectingImplementation = ((...args: Parameters<F>) => {
+      let result: ReturnType<F> | undefined
+      try {
+        result = originalImplementation?.(...args)
+      } finally {
+        checkCalls()
+      }
+      return result as ReturnType<F>
+    }) as Parameters<Mock<F>['mockImplementation']>[0]
+    originalImplementations.set(collectingImplementation, originalImplementation)
+    spy.mockImplementation(collectingImplementation)
 
-    const originalPlan = getOriginalPlan(spy)
-    const guard = ((...args: Parameters<F>) => {
-      checkCalls()
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-      return originalPlan(...args)
-    }) as F
-    originalPlanForGuard.set(guard, originalPlan)
-    spy.and.callFake(guard)
+    checkCalls()
   })
 }
 
-function getOriginalPlan<F extends () => void>(spy: jasmine.Spy<F>): F {
-  const originalPlanOrGuard: F = (spy.and as unknown as { plan: F }).plan
-  return (originalPlanForGuard.get(originalPlanOrGuard) as F | undefined) ?? originalPlanOrGuard
+function createUnexpectedCallCountError<F extends (...args: any[]) => any>(
+  spy: Mock<F>,
+  expectedCallsCount: number
+): Error {
+  return new Error(`Unexpected call count (expected ${expectedCallsCount}, got ${spy.mock.calls.length})`)
+}
+
+function wrapMockCalls<F extends (...args: any[]) => any>(spy: Mock<F>): MockCalls<F> {
+  return {
+    all: () =>
+      spy.mock.calls.map((args, i) => ({
+        args: args as Parameters<F>,
+        returnValue: spy.mock.results[i]?.value as ReturnType<F>,
+      })),
+    count: () => spy.mock.calls.length,
+    argsFor: (index: number) => spy.mock.calls[index] as Parameters<F>,
+    mostRecent: () => {
+      const lastIndex = spy.mock.calls.length - 1
+      return {
+        args: spy.mock.calls[lastIndex] as Parameters<F>,
+        returnValue: spy.mock.results[lastIndex]?.value as ReturnType<F>,
+      }
+    },
+  }
 }

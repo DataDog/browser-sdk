@@ -2,8 +2,8 @@
 description: Standards for Test-Driven Development in the Browser SDK project
 globs:
 tags:
-  - jasmine
-  - karma
+  - vitest
+  - browser-mode
 alwaysApply: true
 ---
 
@@ -29,9 +29,11 @@ touch packages/some-package/src/path/to/feature.spec.ts
 
 **Spec file must exist BEFORE implementation file**
 
-## 3. Spec Structure (Jasmine/Karma)
+## 3. Spec Structure (Vitest Browser Mode)
 
 ```typescript
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
 describe('FeatureName', () => {
 // Setup variables
 let feature: FeatureType
@@ -39,7 +41,7 @@ let mockDependency: MockType
 
 beforeEach(() => {
     // Setup for each test
-    mockDependency = jasmine.createSpy()
+    mockDependency = vi.fn()
     feature = new FeatureName(mockDependency)
 
     // Use registerCleanupTask for cleanup

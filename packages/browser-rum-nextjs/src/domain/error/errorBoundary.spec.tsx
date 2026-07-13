@@ -1,6 +1,7 @@
+import { vi, describe, it, expect } from 'vitest'
 import React from 'react'
 
-import { disableJasmineUncaughtExceptionTracking, ignoreConsoleLogs } from '@datadog/browser-core/test'
+import { disableUncaughtExceptionTracking, ignoreConsoleLogs } from '@datadog/browser-core/test'
 import { appendComponent } from '../../../../browser-rum-react/test/appendComponent'
 import { initReactOldBrowsersSupport } from '../../../../browser-rum-react/test/reactOldBrowsersSupport'
 import { initializeNextjsPlugin } from '../../../test/initializeNextjsPlugin'
@@ -12,13 +13,15 @@ import { ErrorBoundary } from './errorBoundary'
 describe('NextjsErrorBoundary', () => {
   it('reports the error through addNextjsError', () => {
     ignoreConsoleLogs('error', 'Error: error')
-    disableJasmineUncaughtExceptionTracking()
+    disableUncaughtExceptionTracking()
     initReactOldBrowsersSupport()
 
-    const addErrorSpy = jasmine.createSpy()
+    const addErrorSpy = vi.fn()
     initializeNextjsPlugin({ addError: addErrorSpy })
     const originalError = new Error('error')
-    const ComponentSpy = jasmine.createSpy().and.throwError(originalError)
+    const ComponentSpy = vi.fn().mockImplementation(() => {
+      throw originalError
+    })
     ;(ComponentSpy as any).displayName = 'ComponentSpy'
 
     appendComponent(
@@ -27,15 +30,16 @@ describe('NextjsErrorBoundary', () => {
       </ErrorBoundary>
     )
 
-    expect(addErrorSpy).toHaveBeenCalledOnceWith(
-      jasmine.objectContaining({
+    expect(addErrorSpy).toHaveBeenCalledTimes(1)
+    expect(addErrorSpy).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({
         error: originalError,
-        handlingStack: jasmine.any(String),
-        startClocks: jasmine.any(Object),
-        context: jasmine.objectContaining({
+        handlingStack: expect.any(String),
+        startClocks: expect.any(Object),
+        context: expect.objectContaining({
           framework: 'nextjs',
         }),
-        componentStack: jasmine.stringContaining('ComponentSpy'),
+        componentStack: expect.stringContaining('ComponentSpy'),
       })
     )
   })

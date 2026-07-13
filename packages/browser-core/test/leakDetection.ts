@@ -1,5 +1,5 @@
 import { display } from '../src/tools/display'
-import { getCurrentJasmineSpec } from './getCurrentJasmineSpec'
+import { getCurrentTest } from './getCurrentTest'
 import { registerCleanupTask } from './registerCleanupTask'
 
 export function startLeakDetection() {
@@ -34,10 +34,10 @@ export function startLeakDetection() {
 }
 
 function withLeakDetection(eventName: string, listener: EventListener) {
-  const specWhenAdded = getCurrentJasmineSpec()
+  const testWhenAdded = getCurrentTest()
   const stackWhenAdded = new Error().stack
   if (
-    !specWhenAdded ||
+    !testWhenAdded ||
     // Ignore listeners added by React: React is adding listeners to DOM elements for synthetic events, and there is no way to remove them
     stackWhenAdded?.includes('listenToAllSupportedEvents')
   ) {
@@ -45,12 +45,12 @@ function withLeakDetection(eventName: string, listener: EventListener) {
   }
 
   return (event: Event) => {
-    const currentSpec = getCurrentJasmineSpec()
-    if (specWhenAdded.fullName !== currentSpec?.fullName) {
+    const currentTest = getCurrentTest()
+    if (testWhenAdded.id !== currentTest?.id) {
       display.error(`Leaked listener
   event names: "${eventName}"
-  attached with: "${specWhenAdded.fullName}"
-  ${currentSpec ? `executed with: "${currentSpec.fullName}"` : 'executed outside of a spec'}
+  attached with: "${testWhenAdded.name}"
+  ${currentTest ? `executed with: "${currentTest.name}"` : 'executed outside of a test'}
   attachment stack: ${stackWhenAdded}`)
     }
     listener(event)

@@ -21,16 +21,16 @@ Use this strategy to test the integration on Real applications.
 ## Work with unit tests
 
 1. Write a unit test.
-2. Run only your tests by temporarily replacing `describe(...)` with `fdescribe(...)` or `it(...)` with `fit(...)`.
-3. Run `yarn test` in the project root. It will launch the tests in watch mode, and also expose [a local URL](http://localhost:9876/) that you can open in any browser.
-4. Look at your terminal to see your test results.
-5. For deeper investigation, open [the "debug" page](http://localhost:9876/debug.html#) to inspect test execution via the devtools.
+2. Run the spec directly with `yarn test:unit --spec packages/path/to/feature.spec.ts`.
+3. Use `it.only(...)` or `describe.only(...)` temporarily when you need to focus further. ESLint prevents focused tests from being checked in.
+4. Run `yarn test` for Vitest watch mode, or `yarn test:unit` for a single full run.
+5. Look at the terminal output; failure screenshots are written next to the failing spec under `__screenshots__`.
 
 ## Debug flaky unit tests
 
 Top-level `describe` blocks are run in a random order. Sometimes, an issue can only be reproduced with a given order. To reproduce a test run order:
 
-1. Check the `Randomized with seed XXXX` message from the test output.
+1. Check the `Running tests with seed "XXXX"` message from the test output.
 2. Run `yarn test:unit --seed XXXX`.
 
 ## Work with E2E tests

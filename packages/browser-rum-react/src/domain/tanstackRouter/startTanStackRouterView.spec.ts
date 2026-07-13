@@ -1,3 +1,4 @@
+import { describe, it, expect, vi } from 'vitest'
 import { display } from '@datadog/browser-core'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import { startTanStackRouterView, computeViewName } from './startTanStackRouterView'
@@ -5,7 +6,7 @@ import type { AnyTanStackRouteMatch } from './types'
 
 describe('startTanStackRouterView', () => {
   it('creates a new view with the computed view name', () => {
-    const startViewSpy = jasmine.createSpy()
+    const startViewSpy = vi.fn()
     initializeReactPlugin({
       configuration: {
         router: true,
@@ -20,17 +21,19 @@ describe('startTanStackRouterView', () => {
       { fullPath: '/users/$userId', pathname: '/users/1', params: { userId: '1' } },
     ])
 
-    expect(startViewSpy).toHaveBeenCalledOnceWith('/users/$userId')
+    expect(startViewSpy).toHaveBeenCalledTimes(1)
+    expect(startViewSpy).toHaveBeenCalledExactlyOnceWith('/users/$userId')
   })
 
   it('displays a warning if the router integration is not enabled', () => {
-    const displayWarnSpy = spyOn(display, 'warn')
+    const displayWarnSpy = vi.spyOn(display, 'warn').mockImplementation(() => undefined)
     initializeReactPlugin({
       configuration: {},
     })
 
     startTanStackRouterView([])
-    expect(displayWarnSpy).toHaveBeenCalledOnceWith(
+    expect(displayWarnSpy).toHaveBeenCalledTimes(1)
+    expect(displayWarnSpy).toHaveBeenCalledExactlyOnceWith(
       '`router: true` is missing from the react plugin configuration, the view will not be tracked.'
     )
   })

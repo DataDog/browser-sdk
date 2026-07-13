@@ -15,9 +15,5 @@
     "checkJs": false,
     "allowImportingTsExtensions": true
   },
-  "include": ["scripts", "**/webpack.*.*", "test/envUtils.ts", "eslint.config.ts", "eslint-local-rules", "test/unit"],
-  // `test/apps` is excluded (like in tsconfig.default.json): its generated `node_modules` contain
-  // `@datadog/webpack-plugin` types that import browser source, which would otherwise be pulled into
-  // this Node-only program via the `**/webpack.*.*` glob and fail for lack of DOM libs.
-  "exclude": ["test/apps"]
+  "include": ["scripts", "**/webpack.*.*", "test/envUtils.ts", "eslint.config.ts", "eslint-local-rules"]
 }

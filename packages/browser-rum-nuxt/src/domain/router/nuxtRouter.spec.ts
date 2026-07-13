@@ -1,15 +1,17 @@
+import { describe, it, expect, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import type { RouteLocationMatched } from 'vue-router'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
 import { startTrackingNuxtViews, computeNuxtViewName } from './nuxtRouter'
 
-function makePublicApi(startViewSpy: jasmine.Spy) {
+function makePublicApi(startViewSpy: Mock) {
   return { startView: startViewSpy } as unknown as RumPublicApi
 }
 
 describe('startTrackingNuxtViews', () => {
-  it('tracks the initial view via afterEach when router is not yet ready', (done) => {
-    const startViewSpy = jasmine.createSpy()
+  it('tracks the initial view via afterEach when router is not yet ready', async () => {
+    const startViewSpy = vi.fn()
     const router = createRouter({
       history: createMemoryHistory(),
       routes: [{ path: '/', component: {} }],
@@ -18,34 +20,26 @@ describe('startTrackingNuxtViews', () => {
     startTrackingNuxtViews(makePublicApi(startViewSpy), router)
     expect(startViewSpy).not.toHaveBeenCalled()
 
-    router
-      .push('/')
-      .then(() => {
-        expect(startViewSpy).toHaveBeenCalledOnceWith('/')
-        done()
-      })
-      .catch(done.fail)
+    await router.push('/')
+    expect(startViewSpy).toHaveBeenCalledTimes(1)
+    expect(startViewSpy).toHaveBeenCalledExactlyOnceWith('/')
   })
 
-  it('tracks the initial view immediately when router is already ready', (done) => {
-    const startViewSpy = jasmine.createSpy()
+  it('tracks the initial view immediately when router is already ready', async () => {
+    const startViewSpy = vi.fn()
     const router = createRouter({
       history: createMemoryHistory(),
       routes: [{ path: '/', component: {} }],
     })
 
-    router
-      .push('/')
-      .then(() => {
-        startTrackingNuxtViews(makePublicApi(startViewSpy), router)
-        expect(startViewSpy).toHaveBeenCalledOnceWith('/')
-        done()
-      })
-      .catch(done.fail)
+    await router.push('/')
+    startTrackingNuxtViews(makePublicApi(startViewSpy), router)
+    expect(startViewSpy).toHaveBeenCalledTimes(1)
+    expect(startViewSpy).toHaveBeenCalledExactlyOnceWith('/')
   })
 
-  it('tracks subsequent navigations', (done) => {
-    const startViewSpy = jasmine.createSpy()
+  it('tracks subsequent navigations', async () => {
+    const startViewSpy = vi.fn()
     const router = createRouter({
       history: createMemoryHistory(),
       routes: [
@@ -54,22 +48,16 @@ describe('startTrackingNuxtViews', () => {
       ],
     })
 
-    router
-      .push('/')
-      .then(() => {
-        startTrackingNuxtViews(makePublicApi(startViewSpy), router)
-        startViewSpy.calls.reset()
-        return router.push('/about')
-      })
-      .then(() => {
-        expect(startViewSpy).toHaveBeenCalledOnceWith('/about')
-        done()
-      })
-      .catch(done.fail)
+    await router.push('/')
+    startTrackingNuxtViews(makePublicApi(startViewSpy), router)
+    startViewSpy.mockClear()
+    await router.push('/about')
+    expect(startViewSpy).toHaveBeenCalledTimes(1)
+    expect(startViewSpy).toHaveBeenCalledExactlyOnceWith('/about')
   })
 
-  it('does not track a new view when navigation fails', (done) => {
-    const startViewSpy = jasmine.createSpy()
+  it('does not track a new view when navigation fails', async () => {
+    const startViewSpy = vi.fn()
     const router = createRouter({
       history: createMemoryHistory(),
       routes: [
@@ -84,60 +72,40 @@ describe('startTrackingNuxtViews', () => {
       }
     })
 
-    router
-      .push('/')
-      .then(() => {
-        startTrackingNuxtViews(makePublicApi(startViewSpy), router)
-        startViewSpy.calls.reset()
-        return router.push('/protected')
-      })
-      .then(() => {
-        expect(startViewSpy).not.toHaveBeenCalled()
-        done()
-      })
-      .catch(done.fail)
+    await router.push('/')
+    startTrackingNuxtViews(makePublicApi(startViewSpy), router)
+    startViewSpy.mockClear()
+    await router.push('/protected')
+    expect(startViewSpy).not.toHaveBeenCalled()
   })
 
-  it('does not track a new view when only query params change', (done) => {
-    const startViewSpy = jasmine.createSpy()
+  it('does not track a new view when only query params change', async () => {
+    const startViewSpy = vi.fn()
     const router = createRouter({
       history: createMemoryHistory(),
       routes: [{ path: '/products', component: {} }],
     })
 
-    router
-      .push('/products?page=1')
-      .then(() => {
-        startTrackingNuxtViews(makePublicApi(startViewSpy), router)
-        startViewSpy.calls.reset()
-        return router.push('/products?page=2')
-      })
-      .then(() => {
-        expect(startViewSpy).not.toHaveBeenCalled()
-        done()
-      })
-      .catch(done.fail)
+    await router.push('/products?page=1')
+    startTrackingNuxtViews(makePublicApi(startViewSpy), router)
+    startViewSpy.mockClear()
+    await router.push('/products?page=2')
+    expect(startViewSpy).not.toHaveBeenCalled()
   })
 
-  it('tracks a new view when the hash changes', (done) => {
-    const startViewSpy = jasmine.createSpy()
+  it('tracks a new view when the hash changes', async () => {
+    const startViewSpy = vi.fn()
     const router = createRouter({
       history: createMemoryHistory(),
       routes: [{ path: '/products', component: {} }],
     })
 
-    router
-      .push('/products?page=1')
-      .then(() => {
-        startTrackingNuxtViews(makePublicApi(startViewSpy), router)
-        startViewSpy.calls.reset()
-        return router.push('/products#details')
-      })
-      .then(() => {
-        expect(startViewSpy).toHaveBeenCalledOnceWith('/products')
-        done()
-      })
-      .catch(done.fail)
+    await router.push('/products?page=1')
+    startTrackingNuxtViews(makePublicApi(startViewSpy), router)
+    startViewSpy.mockClear()
+    await router.push('/products#details')
+    expect(startViewSpy).toHaveBeenCalledTimes(1)
+    expect(startViewSpy).toHaveBeenCalledExactlyOnceWith('/products')
   })
 })
 

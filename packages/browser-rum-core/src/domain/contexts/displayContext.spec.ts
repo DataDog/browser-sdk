@@ -1,3 +1,4 @@
+import { afterEach, vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { RelativeTime } from '@datadog/js-core/time'
 import { createHook } from '@datadog/js-core/assembly'
 import type { AssembleHook, AssembleHookParams } from '../hooks'
@@ -6,12 +7,12 @@ import { startDisplayContext } from './displayContext'
 
 describe('displayContext', () => {
   let displayContext: DisplayContext
-  let requestAnimationFrameSpy: jasmine.Spy
+  let requestAnimationFrameSpy: Mock
   let hook: AssembleHook
 
   beforeEach(() => {
     hook = createHook()
-    requestAnimationFrameSpy = spyOn(window, 'requestAnimationFrame').and.callFake((callback) => {
+    requestAnimationFrameSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
       callback(1)
       return 1
     })
@@ -35,8 +36,8 @@ describe('displayContext', () => {
         type: 'view',
         display: {
           viewport: {
-            width: jasmine.any(Number),
-            height: jasmine.any(Number),
+            width: expect.any(Number),
+            height: expect.any(Number),
           },
         },
       })

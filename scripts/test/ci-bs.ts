@@ -9,6 +9,8 @@ const RELEVANT_FILE_PATTERNS = [
   'test/*',
   'developer-extension/*',
   'scripts/test/*',
+  'vitest.config.ts',
+  'vitest.bs.config.ts',
   'package.json',
   'yarn.lock',
   'tsconfig*',

@@ -76,7 +76,7 @@ test/
 ├── apps/            # Test apps for E2E and performance testing
 ├── e2e/             # Playwright E2E test scenarios
 ├── performance/     # Performance benchmarking tests
-└── unit/            # Karma/Jasmine unit test configuration
+└── unit/            # Vitest Browser Mode unit test configuration
 
 scripts/             # Build, deploy, release automation
 ```
@@ -97,8 +97,8 @@ For deeper context, see:
 
 ### Unit Tests
 
-- Test framework: Jasmine + Karma. Spec files co-located with implementation: `feature.ts` → `feature.spec.ts`
-- Focus tests with `fit()` / `fdescribe()`, skip with `xit()` / `xdescribe()`
+- Test framework: Vitest Browser Mode. Spec files co-located with implementation: `feature.ts` → `feature.spec.ts`
+- Focus tests with `it.only()` / `describe.only()`, skip with `it.skip()` / `describe.skip()`
 - Use `registerCleanupTask()` for cleanup, NOT `afterEach()`
 - Prefer `collectAsyncCalls(spy, n)` over `waitFor(() => spy.calls.count() > 0)` for waiting on spy calls
 - Don't destructure methods from `spy.calls` (e.g., `argsFor`, `mostRecent`) - use `calls.argsFor()` to avoid `@typescript-eslint/unbound-method` errors

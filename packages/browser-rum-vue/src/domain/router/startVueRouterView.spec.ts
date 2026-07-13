@@ -1,3 +1,4 @@
+import { describe, it, expect, vi } from 'vitest'
 import { display } from '@datadog/browser-core'
 import type { RouteLocationMatched } from 'vue-router'
 import { initializeVuePlugin } from '../../../test/initializeVuePlugin'
@@ -5,7 +6,7 @@ import { startVueRouterView, computeViewName } from './startVueRouterView'
 
 describe('startVueRouterView', () => {
   it('starts a new view with the computed view name', () => {
-    const startViewSpy = jasmine.createSpy()
+    const startViewSpy = vi.fn()
     initializeVuePlugin({
       configuration: { router: true },
       publicApi: { startView: startViewSpy },
@@ -16,14 +17,16 @@ describe('startVueRouterView', () => {
       '/user/1'
     )
 
-    expect(startViewSpy).toHaveBeenCalledOnceWith('/user/:id')
+    expect(startViewSpy).toHaveBeenCalledTimes(1)
+    expect(startViewSpy).toHaveBeenCalledExactlyOnceWith('/user/:id')
   })
 
   it('warns if router: true is missing from plugin config', () => {
-    const warnSpy = spyOn(display, 'warn')
+    const warnSpy = vi.spyOn(display, 'warn').mockImplementation(() => undefined)
     initializeVuePlugin({ configuration: {} })
     startVueRouterView([], '/')
-    expect(warnSpy).toHaveBeenCalledOnceWith(
+    expect(warnSpy).toHaveBeenCalledTimes(1)
+    expect(warnSpy).toHaveBeenCalledExactlyOnceWith(
       '`router: true` is missing from the vue plugin configuration, the view will not be tracked.'
     )
   })

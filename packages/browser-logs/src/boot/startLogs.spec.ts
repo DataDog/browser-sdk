@@ -1,3 +1,4 @@
+import { vi, afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { BufferedData } from '@datadog/browser-core'
 import { ErrorSource, display, BufferedObservable, FLUSH_DURATION_LIMIT } from '@datadog/browser-core'
 import type { Clock, Request } from '@datadog/browser-core/test'
@@ -38,8 +39,11 @@ const COMMON_CONTEXT = {
   view: { referrer: 'common_referrer', url: 'common_url' },
 }
 
-function startLogsWithDefaults({ configuration }: { configuration?: Partial<LogsConfiguration> } = {}) {
-  const sessionManager = createSessionManagerMock()
+function startLogsWithDefaults({
+  configuration,
+  sessionManager: customSessionManager,
+}: { configuration?: Partial<LogsConfiguration>; sessionManager?: ReturnType<typeof createSessionManagerMock> } = {}) {
+  const sessionManager = customSessionManager ?? createSessionManagerMock()
   const { handleLog, stop, globalContext, accountContext, userContext } = startLogs(
     {
       ...validateAndBuildLogsConfiguration({ clientToken: 'xxx', service: 'service', telemetrySampleRate: 0 })!,
@@ -92,14 +96,14 @@ describe('logs', () => {
         /^https:\/\/browser-intake-datadoghq\.com\/api\/v2\/logs\?ddsource=browser&dd-api-key=xxx&dd-evp-origin-version=test&dd-evp-origin=browser&dd-request-id=/
       )
       expect(getLoggedMessage(requests, 0)).toEqual({
-        date: jasmine.any(Number),
+        date: expect.any(Number),
         foo: 'bar',
         message: 'message',
         service: 'service',
         ddtags: 'sdk_version:test,service:service',
-        session_id: jasmine.any(String),
+        session_id: expect.any(String),
         session: {
-          id: jasmine.any(String),
+          id: expect.any(String),
         },
         status: StatusType.warn,
         view: {
@@ -108,10 +112,10 @@ describe('logs', () => {
         },
         origin: ErrorSource.LOGGER,
         usr: {
-          anonymous_id: jasmine.any(String),
+          anonymous_id: expect.any(String),
         },
         tab: {
-          id: jasmine.any(String),
+          id: expect.any(String),
         },
       })
     })
@@ -130,7 +134,7 @@ describe('logs', () => {
     })
 
     it('should send bridge event when bridge is present', () => {
-      const sendSpy = spyOn(mockEventBridge(), 'send')
+      const sendSpy = vi.spyOn(mockEventBridge(), 'send').mockImplementation(() => undefined)
       const { handleLog, logger } = startLogsWithDefaults()
 
       handleLog(DEFAULT_MESSAGE, logger)
@@ -138,18 +142,42 @@ describe('logs', () => {
       clock.tick(FLUSH_DURATION_LIMIT)
 
       expect(requests.length).toEqual(0)
-      const [message] = sendSpy.calls.mostRecent().args
+      const [message] = sendSpy.mock.lastCall!
       const parsedMessage = JSON.parse(message)
       expect(parsedMessage).toEqual({
         eventType: 'log',
-        event: jasmine.objectContaining({ message: 'message' }),
+        event: expect.objectContaining({ message: 'message' }),
       })
     })
   })
 
+  describe('sampling', () => {
+    it('should be applied when event bridge is present (rate 0)', () => {
+      const sendSpy = vi.spyOn(mockEventBridge(), 'send').mockImplementation(() => undefined)
+
+      const { handleLog, logger } = startLogsWithDefaults({
+        sessionManager: createSessionManagerMock().setNotTracked(),
+      })
+      handleLog(DEFAULT_MESSAGE, logger)
+
+      expect(sendSpy).not.toHaveBeenCalled()
+    })
+
+    it('should be applied when event bridge is present (rate 100)', () => {
+      const sendSpy = vi.spyOn(mockEventBridge(), 'send').mockImplementation(() => undefined)
+
+      const { handleLog, logger } = startLogsWithDefaults({
+        configuration: { sessionSampleRate: 100 },
+      })
+      handleLog(DEFAULT_MESSAGE, logger)
+
+      expect(sendSpy).toHaveBeenCalled()
+    })
+  })
+
   it('should not print the log twice when console handler is enabled', () => {
-    const consoleLogSpy = spyOn(console, 'log')
-    const displayLogSpy = spyOn(display, 'log')
+    const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined)
+    const displayLogSpy = vi.spyOn(display, 'log').mockImplementation(() => undefined)
     startLogsWithDefaults({
       configuration: { forwardConsoleLogs: ['log'] },
     })
@@ -224,7 +252,7 @@ describe('logs', () => {
       clock.tick(FLUSH_DURATION_LIMIT)
 
       const firstRequest = getLoggedMessage(requests, 0)
-      expect(firstRequest.usr).toEqual(jasmine.objectContaining({ id: 'from-global-context' }))
+      expect(firstRequest.usr).toEqual(expect.objectContaining({ id: 'from-global-context' }))
     })
 
     it('RUM context should take precedence over global context', () => {

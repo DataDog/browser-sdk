@@ -1,3 +1,4 @@
+import { describe, expect, it, assert, type TestContext } from 'vitest'
 import * as acorn from 'acorn'
 import {
   literals,
@@ -55,14 +56,17 @@ describe('Expression language', () => {
       const baseName = generateTestCaseName(ast, vars, expected, suffix, execute)
       const uniqueName = makeUniqueName(baseName, testNameCounts)
 
-      it(uniqueName, () => {
+      it(uniqueName, (ctx: TestContext) => {
         if (before) {
-          before()
+          const skipReason = before() as string | undefined
+          if (skipReason) {
+            ctx.skip(true, skipReason)
+          }
         }
 
         if (execute === false) {
           if (expected instanceof Error) {
-            expect(() => compile(ast)).toThrowError(expected.constructor as new (...args: any[]) => Error)
+            expect(() => compile(ast)).toThrowError(expected.constructor)
           } else {
             expect(compile(ast)).toBe(expected)
           }
@@ -86,7 +90,7 @@ describe('Expression language', () => {
 
         if (expected instanceof Error) {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
-          expect(() => fn(...args)).toThrowError(expected.constructor as new (...args: any[]) => Error)
+          expect(() => fn(...args)).toThrowError(expected.constructor)
         } else {
           const result = runWithDebug(fn, args)
           if (expected !== null && typeof expected === 'object') {
@@ -163,7 +167,7 @@ describe('browser compatibility of generated code', () => {
     try {
       acorn.parse(functionCode, { ecmaVersion: OLDEST_BROWSER_ECMA_VERSION, sourceType: 'script' })
     } catch (e: unknown) {
-      fail(
+      assert.fail(
         `Generated code is not ES${OLDEST_BROWSER_ECMA_VERSION}-compatible: ${(e as Error).message}\n\nGenerated code:\n${code}`
       )
     }

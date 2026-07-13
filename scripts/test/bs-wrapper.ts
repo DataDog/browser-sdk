@@ -6,12 +6,9 @@
 // It used to re-run the test command based on its output (in particular, when the BrowserStack
 // session failed to be created), but we observed that:
 //
-// * The retry logic of karma and wdio was more efficient to retry this kind of tests (the
-// BrowserStack connection is re-created on each retry)
+// * The previous runner retried this kind of failure by recreating the BrowserStack connection.
 //
-// * Aborting the test command via a SIGTERM signal was buggy and the command continued to run even
-// after killing it. There might be a better way of prematurely aborting the test command if we need
-// to in the future.
+// * Aborting the previous test command via SIGTERM was buggy and the command continued to run.
 
 import { randomUUID } from 'node:crypto'
 import { spawn, type ChildProcess } from 'node:child_process'
@@ -108,20 +105,26 @@ function runTests(): Promise<boolean> {
     })
 
     let output = ''
-    let timeoutId: NodeJS.Timeout
-
-    child.stdout!.pipe(process.stdout)
-    child.stdout!.on('data', onOutput)
-
-    child.stderr!.pipe(process.stderr)
-    child.stderr!.on('data', onOutput)
+    let timeoutId = setTimeout(() => killIt('no output timeout'), NO_OUTPUT_TIMEOUT)
+    child.stdout!.on('data', (data) => onOutput(data, process.stdout))
+    child.stderr!.on('data', (data) => onOutput(data, process.stderr))
 
     child.on('exit', (code, signal) => {
+      clearTimeout(timeoutId)
+      // Only the test process owns the result. Inferring success from human-readable output can
+      // hide setup, collection, reporter, or unhandled errors.
       resolve(!signal && code === 0)
     })
+    child.on('error', (error) => {
+      clearTimeout(timeoutId)
+      printError('Unable to start the BrowserStack test process:', error)
+      resolve(false)
+    })
 
-    function onOutput(data: Buffer | string): void {
-      output += data.toString()
+    function onOutput(data: Buffer | string, destination: NodeJS.WriteStream): void {
+      const chunk = redactBrowserStackCredentials(data.toString())
+      output += chunk
+      destination.write(chunk)
 
       clearTimeout(timeoutId)
 
@@ -134,12 +137,19 @@ function runTests(): Promise<boolean> {
 
     function killIt(message: string): void {
       printError(`Killing the browserstack job because of ${message}`)
-      // use 'SIGKILL' instead of 'SIGTERM' because Karma intercepts 'SIGTERM' and terminates the process with a 0 exit code,
-      // which is not what we want here (we want to indicate a failure).
-      // see https://github.com/karma-runner/karma/blob/master/lib/server.js#L391
       child.kill('SIGKILL')
     }
   })
+}
+
+function redactBrowserStackCredentials(output: string): string {
+  let redactedOutput = output
+  for (const credential of [process.env.BS_USERNAME, process.env.BS_ACCESS_KEY]) {
+    if (credential) {
+      redactedOutput = redactedOutput.replaceAll(credential, '[REDACTED]')
+    }
+  }
+  return redactedOutput
 }
 
 function hasUnrecoverableFailure(stdout: string): boolean {

@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it } from 'vitest'
 import type { Context } from '@datadog/browser-core'
 import { display, noop, objectEntries, SANITIZE_DEFAULT_MAX_CHARACTER_COUNT } from '@datadog/browser-core'
 import type { ModifiableFieldPaths } from './limitModification'
@@ -196,7 +197,7 @@ describe('limitModification', () => {
   })
 
   it("should not reset unsafe literal fields that the user didn't alter", () => {
-    spyOn(display, 'warn')
+    vi.spyOn(display, 'warn').mockImplementation(() => undefined)
     const wayTooLongUrl = `/${'a'.repeat(SANITIZE_DEFAULT_MAX_CHARACTER_COUNT + 1)}`
     const object: Context = { resource: { url: wayTooLongUrl } }
     const modifier = noop
@@ -205,7 +206,7 @@ describe('limitModification', () => {
   })
 
   it('should sanitize object fields (fieldType "object") even with a noop modifier', () => {
-    spyOn(display, 'warn')
+    vi.spyOn(display, 'warn').mockImplementation(() => undefined)
     const wayTooLongUrl = `/${'a'.repeat(SANITIZE_DEFAULT_MAX_CHARACTER_COUNT + 1)}`
     const object: Context = {
       context: {

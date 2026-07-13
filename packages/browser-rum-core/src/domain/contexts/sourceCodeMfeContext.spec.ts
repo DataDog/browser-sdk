@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import type { RelativeTime } from '@datadog/js-core/time'
 import { createHook } from '@datadog/js-core/assembly'
 import { mockSourceCodeContext } from '../../../../browser-core/test'

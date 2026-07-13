@@ -1,3 +1,4 @@
+import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { ONE_MINUTE } from '@datadog/js-core/time'
 import { DefaultPrivacyLevel, display, setCookie, deleteCookie, createContextManager } from '@datadog/browser-core'
 import { INTAKE_SITE_US1 } from '@datadog/js-core/transport'
@@ -134,7 +135,7 @@ describe('remoteConfiguration', () => {
     const COOKIE_NAME = 'unit_rc'
     const root = window as any
 
-    let displaySpy: jasmine.Spy
+    let displaySpy: Mock
     let supportedContextManagers: {
       user: ReturnType<typeof createContextManager>
       context: ReturnType<typeof createContextManager>
@@ -159,7 +160,7 @@ describe('remoteConfiguration', () => {
     }
 
     beforeEach(() => {
-      displaySpy = spyOn(display, 'error')
+      displaySpy = vi.spyOn(display, 'error').mockImplementation(() => undefined)
       supportedContextManagers = { user: createContextManager(), context: createContextManager() }
       metrics = initMetrics()
     })
@@ -724,7 +725,7 @@ describe('remoteConfiguration', () => {
           {}
         )
         expect(metrics.get()).toEqual(
-          jasmine.objectContaining({
+          expect.objectContaining({
             cookie: { success: 2, missing: 1 },
             js: { success: 1 },
           })
@@ -758,7 +759,7 @@ describe('remoteConfiguration', () => {
       context: ReturnType<typeof createContextManager>
     }
     let interceptor: ReturnType<typeof interceptRequests>
-    let displaySpy: jasmine.Spy
+    let displaySpy: Mock
 
     function withCachedEntry(config: RumRemoteConfiguration) {
       localStorage.setItem(CACHE_KEY, JSON.stringify({ version: 1, config, fetchedAt: 1000 }))
@@ -785,7 +786,7 @@ describe('remoteConfiguration', () => {
       }
       supportedContextManagers = { user: createContextManager(), context: createContextManager() }
       interceptor = interceptRequests()
-      displaySpy = spyOn(display, 'error')
+      displaySpy = vi.spyOn(display, 'error').mockImplementation(() => undefined) as Mock
 
       registerCleanupTask(() => {
         localStorage.clear()

@@ -1,28 +1,30 @@
+import { describe, it, expect, vi } from 'vitest'
 import type { ComponentInternalInstance, ComponentPublicInstance } from 'vue'
 import { initializeNuxtPlugin } from '../../../test/initializeNuxtPlugin'
 import { addNuxtError } from './addNuxtError'
 
 describe('addNuxtError', () => {
   it('reports the error to the SDK with info as first line of component_stack', () => {
-    const addErrorSpy = jasmine.createSpy()
+    const addErrorSpy = vi.fn()
     initializeNuxtPlugin({ addError: addErrorSpy })
 
     const error = new Error('something broke')
     addNuxtError(error, null, 'mounted hook')
 
-    expect(addErrorSpy).toHaveBeenCalledOnceWith(
-      jasmine.objectContaining({
+    expect(addErrorSpy).toHaveBeenCalledTimes(1)
+    expect(addErrorSpy).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({
         error,
-        handlingStack: jasmine.any(String),
+        handlingStack: expect.any(String),
         componentStack: 'mounted hook',
-        startClocks: jasmine.any(Object),
+        startClocks: expect.any(Object),
         context: { framework: 'nuxt' },
       })
     )
   })
 
   it('includes component hierarchy in component_stack when instance is provided', () => {
-    const addErrorSpy = jasmine.createSpy()
+    const addErrorSpy = vi.fn()
     initializeNuxtPlugin({ addError: addErrorSpy })
 
     const parentInternal = { type: { name: 'ParentComponent' }, parent: null } as unknown as ComponentInternalInstance
@@ -34,29 +36,29 @@ describe('addNuxtError', () => {
 
     addNuxtError(new Error('oops'), mockInstance, 'mounted hook')
 
-    const componentStack = addErrorSpy.calls.mostRecent().args[0].componentStack as string
+    const componentStack = addErrorSpy.mock.lastCall![0].componentStack as string
     expect(componentStack).toContain('mounted hook')
     expect(componentStack).toContain('at <ChildComponent>')
     expect(componentStack).toContain('at <ParentComponent>')
   })
 
   it('handles empty info gracefully', () => {
-    const addErrorSpy = jasmine.createSpy()
+    const addErrorSpy = vi.fn()
     initializeNuxtPlugin({ addError: addErrorSpy })
     addNuxtError(new Error('oops'), null, '')
     expect(addErrorSpy).toHaveBeenCalledTimes(1)
-    expect(addErrorSpy.calls.mostRecent().args[0].componentStack).toBeUndefined()
+    expect(addErrorSpy.mock.lastCall![0].componentStack).toBeUndefined()
   })
 
   it('should merge dd_context from the original error with nuxt error context', () => {
-    const addErrorSpy = jasmine.createSpy()
+    const addErrorSpy = vi.fn()
     initializeNuxtPlugin({ addError: addErrorSpy })
     const originalError = new Error('error message')
     ;(originalError as any).dd_context = { component: 'Menu', param: 123 }
 
     addNuxtError(originalError, null, 'mounted hook')
 
-    expect(addErrorSpy.calls.mostRecent().args[0].context).toEqual({
+    expect(addErrorSpy.mock.lastCall![0].context).toEqual({
       framework: 'nuxt',
       component: 'Menu',
       param: 123,

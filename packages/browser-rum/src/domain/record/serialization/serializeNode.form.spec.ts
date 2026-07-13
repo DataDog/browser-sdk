@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest'
 import type { BrowserWindow } from '@datadog/browser-rum-core'
 import {
   PRIVACY_ATTR_NAME,
@@ -11,17 +12,6 @@ import { ChangeType } from '../../../types'
 import { serializeHtml } from '../test/serializeHtml.specHelper'
 
 describe('serializeNode for form elements', () => {
-  let originalTimeout: number
-
-  beforeAll(() => {
-    originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000
-  })
-
-  afterAll(() => {
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout
-  })
-
   describe('<input type="button">', () => {
     it('serializes the element', async () => {
       const record = await serializeHtml('<input type="button" value="Click here"></input>')
@@ -689,15 +679,15 @@ describe('serializeNode for form elements', () => {
       select.options.selectedIndex = 1
 
       expect(await serializeHtmlNode(select, NodePrivacyLevel.ALLOW, transaction)).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           attributes: { value: 'bar' },
           childNodes: [
-            jasmine.objectContaining({
+            expect.objectContaining({
               attributes: {
                 value: 'foo',
               },
             }),
-            jasmine.objectContaining({
+            expect.objectContaining({
               attributes: {
                 value: 'bar',
                 selected: '',
