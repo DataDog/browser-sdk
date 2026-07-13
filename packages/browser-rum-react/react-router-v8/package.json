@@ -1,0 +1,7 @@
+{
+  "name": "@datadog/browser-rum-react/react-router-v8",
+  "private": true,
+  "main": "../cjs/entries/reactRouterV8.js",
+  "module": "../esm/entries/reactRouterV8.mjs",
+  "types": "../cjs/entries/reactRouterV8.d.ts"
+}

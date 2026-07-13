@@ -466,13 +466,22 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
 
     if (setupOptions.salesforceApp) {
       const { accessToken, instanceUrl } = await getSalesforceLwcSession()
-      await page.context().addCookies([
-        {
-          name: 'sid',
-          value: accessToken,
-          url: new URL('/', instanceUrl).href,
-        },
-      ])
+      const salesforceUrl = new URL(instanceUrl)
+      await context.setStorageState({
+        cookies: [
+          {
+            name: 'sid',
+            value: accessToken,
+            domain: salesforceUrl.hostname,
+            path: '/',
+            expires: -1,
+            httpOnly: false,
+            secure: salesforceUrl.protocol === 'https:',
+            sameSite: 'Lax',
+          },
+        ],
+        origins: [],
+      })
       // Serve the local bundle from the static resource
       await page.route(/\/resource(?:\/[^/?#]+)?\/datadog_rum_slim(?:\.js)?(?:[/?#].*)?$/, async (route) => {
         await route.fulfill({
