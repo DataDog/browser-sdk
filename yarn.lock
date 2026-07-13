@@ -357,7 +357,6 @@ __metadata:
   resolution: "@datadog/browser-core@workspace:packages/browser-core"
   dependencies:
     "@datadog/js-core": "npm:0.0.5"
-    "@types/pako": "npm:2.0.4"
     pako: "npm:3.0.0"
   languageName: unknown
   linkType: soft
@@ -551,7 +550,6 @@ __metadata:
     "@datadog/browser-rum-core": "npm:7.5.0"
     "@datadog/browser-worker": "npm:7.5.0"
     "@datadog/js-core": "npm:0.0.5"
-    "@types/pako": "npm:2.0.4"
     pako: "npm:3.0.0"
   peerDependencies:
     "@datadog/browser-logs": 7.5.0
@@ -2596,13 +2594,6 @@ __metadata:
   dependencies:
     undici-types: "npm:~8.3.0"
   checksum: 10c0/31d204333c70124da6bcac7d1f27d8980149fe3f95a8419bfcd19c3e5823705c0e370d71ac34399352e1263b2d5fc41c87af964ec81e5a05a32224d65d8d224e
-  languageName: node
-  linkType: hard
-
-"@types/pako@npm:2.0.4":
-  version: 2.0.4
-  resolution: "@types/pako@npm:2.0.4"
-  checksum: 10c0/5765bf8bc7e77ee141c454118f03e544b8f6cb51eb257d82dc5830feeab8cd00818af3a1eabefdfbe8dd3ae9916ed5403937bf1031a0ee51deea27fdf4dccdfb
   languageName: node
   linkType: hard
 

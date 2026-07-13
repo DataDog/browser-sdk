@@ -26,7 +26,6 @@
     "@datadog/js-core": "0.0.5"
   },
   "devDependencies": {
-    "@types/pako": "2.0.4",
     "pako": "3.0.0"
   },
   "volta": {
