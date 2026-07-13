@@ -11,6 +11,8 @@ import type { BrowserConfiguration } from '../browsers.conf'
 // bypass TypeScript/webpack transpilation and must only use syntax supported by all target browsers.
 export const OLDEST_BROWSER_ECMA_VERSION = 2020
 
+// BrowserStack's real Android integration uses Playwright's separate `_android` API, which is not
+// supported by Vitest's Playwright provider. Keep this matrix to browser-type connections only.
 export const browserConfigurations: BrowserConfiguration[] = [
   {
     id: 'edge',
@@ -42,13 +44,5 @@ export const browserConfigurations: BrowserConfiguration[] = [
     version: '87.0',
     os: 'Windows',
     osVersion: '11',
-  },
-  {
-    id: 'chrome-mobile',
-    sessionName: 'Chrome mobile',
-    name: 'chrome',
-    os: 'android',
-    osVersion: '13.0',
-    device: 'Google Pixel 7 Pro',
   },
 ]

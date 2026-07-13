@@ -315,7 +315,7 @@ unit-bs:
   interruptible: true
   parallel:
     matrix:
-      - BS_BROWSER: [edge, firefox, webkit-desktop, chrome-desktop, chrome-mobile]
+      - BS_BROWSER: [edge, firefox, webkit-desktop, chrome-desktop]
   artifacts:
     when: always
     reports:

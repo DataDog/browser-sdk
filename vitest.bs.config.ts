@@ -8,7 +8,7 @@ import { defineConfig } from 'vitest/config'
 import { getBuildInfos } from './test/envUtils.ts'
 import { browserConfigurations as allBrowserConfigurations } from './test/unit/browsers.conf.ts'
 import { UnitTestReporter, recordUnexpectedConsoleLog } from './scripts/test/lib/unitTestReporter.ts'
-import { getBrowserStackCapabilities, getPlaywrightBrowserName } from './scripts/test/lib/browserstackUnitConfig.ts'
+import { getBrowserStackInstance } from './scripts/test/lib/browserstackUnitConfig.ts'
 /* eslint-enable local-rules/disallow-test-import-export-from-src */
 import { getBuildEnvValue } from './scripts/lib/buildEnv.ts'
 
@@ -45,8 +45,8 @@ const buildEnvDefines: Record<string, string> = {
   __BUILD_ENV__WORKER_STRING__: JSON.stringify(getBuildEnvValue('WORKER_STRING')),
 }
 
-function getCapabilities(configuration: (typeof browserConfigurations)[number]) {
-  return getBrowserStackCapabilities(configuration, {
+function createBrowserStackInstance(configuration: (typeof browserConfigurations)[number]) {
+  return getBrowserStackInstance(configuration, {
     username: process.env.BS_USERNAME,
     accessKey: process.env.BS_ACCESS_KEY,
     localIdentifier: process.env.BROWSERSTACK_LOCAL_IDENTIFIER,
@@ -99,15 +99,12 @@ export default defineConfig({
   // Transpile project modules to the syntax level supported by the oldest branded browsers in
   // the matrix. The Vitest client itself still determines the runner's documented browser floor.
   // See https://github.com/vitest-dev/vitest/issues/4304
-  esbuild: {
+  oxc: {
     target: 'es2020',
   },
 
   optimizeDeps: {
     include: ['pako'],
-    esbuildOptions: {
-      target: 'es2020',
-    },
   },
 
   test: {
@@ -122,15 +119,7 @@ export default defineConfig({
         host: 'bs-local.com',
       },
       testerHtmlPath: './test/unit/vitest.tester.html',
-      instances: browserConfigurations.map((config) => ({
-        browser: getPlaywrightBrowserName(config.name),
-        name: config.sessionName,
-        playwright: {
-          connectOptions: {
-            wsEndpoint: `wss://cdp.browserstack.com/playwright?caps=${encodeURIComponent(JSON.stringify(getCapabilities(config)))}`,
-          },
-        },
-      })),
+      instances: browserConfigurations.map(createBrowserStackInstance),
     },
 
     // Exclude developer-extension: only compatible with Chrome, no point testing on other browsers

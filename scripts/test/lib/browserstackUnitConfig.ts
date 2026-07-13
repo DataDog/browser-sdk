@@ -1,10 +1,12 @@
+import { playwright } from '@vitest/browser-playwright'
+import type { BrowserInstanceOption } from 'vitest/node'
+
 export interface BrowserStackUnitConfiguration {
   sessionName: string
   name: string
   version?: string
   os?: string
   osVersion?: string
-  device?: string
 }
 
 export interface BrowserStackCapabilityOptions {
@@ -15,16 +17,6 @@ export interface BrowserStackCapabilityOptions {
   playwrightVersion: string
 }
 
-export function getPlaywrightBrowserName(name: string): 'chromium' | 'firefox' | 'webkit' {
-  if (name.includes('firefox')) {
-    return 'firefox'
-  }
-  if (name.includes('webkit')) {
-    return 'webkit'
-  }
-  return 'chromium'
-}
-
 export function getBrowserStackCapabilities(
   configuration: BrowserStackUnitConfiguration,
   options: BrowserStackCapabilityOptions
@@ -32,9 +24,8 @@ export function getBrowserStackCapabilities(
   const isBundledBrowser = configuration.name.startsWith('playwright-')
 
   return {
-    ...(configuration.device
-      ? { osVersion: configuration.osVersion, deviceName: configuration.device, realMobile: 'true' }
-      : { os: configuration.os, os_version: configuration.osVersion }),
+    os: configuration.os,
+    os_version: configuration.osVersion,
     browser: configuration.name,
     ...(configuration.version ? { browser_version: configuration.version } : {}),
     'browserstack.username': options.username,
@@ -51,4 +42,25 @@ export function getBrowserStackCapabilities(
     'browserstack.networkLogs': false,
     'browserstack.interactiveDebugging': false,
   }
+}
+
+export function getBrowserStackInstance(
+  configuration: BrowserStackUnitConfiguration,
+  options: BrowserStackCapabilityOptions
+) {
+  const capabilities = getBrowserStackCapabilities(configuration, options)
+
+  return {
+    // BrowserStack's Playwright endpoint is always reached through chromium.connect(); the
+    // capability selects whether the remote browser is Chrome, Edge, Firefox, or WebKit.
+    browser: 'chromium' as const,
+    name: configuration.sessionName,
+    // Vitest reads remote connection options from each instance provider. Other instance keys are
+    // ignored and make Playwright fall back to launching a browser on the CI runner.
+    provider: playwright({
+      connectOptions: {
+        wsEndpoint: `wss://cdp.browserstack.com/playwright?caps=${encodeURIComponent(JSON.stringify(capabilities))}`,
+      },
+    }),
+  } satisfies BrowserInstanceOption
 }
