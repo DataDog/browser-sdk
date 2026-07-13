@@ -23,7 +23,7 @@ import {
   VUE_ROUTER_APP_PORT,
   VUE_ROUTER_V4_APP_PORT,
 } from '../helpers/playwright'
-import { buildSalesforceLwcUrl, getSalesforceLwcSession } from './buildSalesforceLwcUrl'
+import { buildSalesforceLwcStorageState, buildSalesforceLwcUrl } from './buildSalesforceLwcUrl'
 import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
@@ -279,6 +279,11 @@ class TestBuilder {
 
   withSalesforceApp() {
     this.salesforceApp = true
+    this.testFixture = this.testFixture.extend({
+      storageState: async (_args, use) => {
+        await use(await buildSalesforceLwcStorageState())
+      },
+    })
     this.setups = [{ factory: () => '' }]
     this.baseUrlHooks.push(async (baseUrl) => {
       baseUrl.href = await buildSalesforceLwcUrl()
@@ -465,14 +470,6 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
 
     if (setupOptions.salesforceApp) {
-      const { accessToken, instanceUrl } = await getSalesforceLwcSession()
-      await page.context().addCookies([
-        {
-          name: 'sid',
-          value: accessToken,
-          url: new URL('/', instanceUrl).href,
-        },
-      ])
       // Serve the local bundle from the static resource
       await page.route(/\/resource(?:\/[^/?#]+)?\/datadog_rum_slim(?:\.js)?(?:[/?#].*)?$/, async (route) => {
         await route.fulfill({
