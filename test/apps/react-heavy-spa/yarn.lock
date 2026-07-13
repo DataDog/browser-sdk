@@ -291,12 +291,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:26.0.1":
-  version: 26.0.1
-  resolution: "@types/node@npm:26.0.1"
+"@types/node@npm:26.1.0":
+  version: 26.1.0
+  resolution: "@types/node@npm:26.1.0"
   dependencies:
     undici-types: "npm:~8.3.0"
-  checksum: 10c0/31d204333c70124da6bcac7d1f27d8980149fe3f95a8419bfcd19c3e5823705c0e370d71ac34399352e1263b2d5fc41c87af964ec81e5a05a32224d65d8d224e
+  checksum: 10c0/61c22ad1ef215e24138cb8b7368fb68bab9de4c123b3f23d411749b015ba1b7d22f878ad54add26a0b69068d7e07c04af665069d8571b6c6c3b9b2fb73b7bd91
   languageName: node
   linkType: hard
 
@@ -569,7 +569,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "heavy-spa@workspace:."
   dependencies:
-    "@types/node": "npm:26.0.1"
+    "@types/node": "npm:26.1.0"
     "@types/react": "npm:19.2.17"
     "@types/react-dom": "npm:19.2.3"
     "@vitejs/plugin-react": "npm:6.0.3"
@@ -579,9 +579,9 @@ __metadata:
     react-is: "npm:19.2.7"
     react-router-dom: "npm:7.18.1"
     react-window: "npm:2.2.7"
-    recharts: "npm:3.9.1"
+    recharts: "npm:3.9.2"
     typescript: "npm:6.0.3"
-    vite: "npm:8.1.2"
+    vite: "npm:8.1.3"
   languageName: unknown
   linkType: soft
 
@@ -896,9 +896,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"recharts@npm:3.9.1":
-  version: 3.9.1
-  resolution: "recharts@npm:3.9.1"
+"recharts@npm:3.9.2":
+  version: 3.9.2
+  resolution: "recharts@npm:3.9.2"
   dependencies:
     "@reduxjs/toolkit": "npm:^1.9.0 || 2.x.x"
     clsx: "npm:^2.1.1"
@@ -915,7 +915,7 @@ __metadata:
     react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
     react-dom: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
     react-is: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-  checksum: 10c0/081106d981a250b8163633810db5b54132aba1efcf677216dd238853e78d185e6453c0c5811aec1451df1eb017aa1e9cfbe726d6d74246f8f3cda8799fd44cc9
+  checksum: 10c0/4054833c67b6951d1fa989082c3b9fd14520f1828775deca51fb16b26300fd25de2c03446751046f5c03da65281e4663c92111fd165f8101b4ead5f8a33be7fc
   languageName: node
   linkType: hard
 
@@ -1132,9 +1132,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite@npm:8.1.2":
-  version: 8.1.2
-  resolution: "vite@npm:8.1.2"
+"vite@npm:8.1.3":
+  version: 8.1.3
+  resolution: "vite@npm:8.1.3"
   dependencies:
     fsevents: "npm:~2.3.3"
     lightningcss: "npm:^1.32.0"
@@ -1185,7 +1185,7 @@ __metadata:
       optional: true
   bin:
     vite: bin/vite.js
-  checksum: 10c0/b39731dc31250b267ae5ddae81d737deafe2163bd0e1aa04849fb5f7c66b7ff7bcffa50883480b5f9fb47b1596b772021a8f9f671986e57b88d98300710ded77
+  checksum: 10c0/e3c95e95f9c19b36be3c9d1c4de7f57d24d5af71613a221cfa22f1fd1568adebdb640e30ef9a7f2361fbb15478883955c9d8932e4fa5566280dd7a16bffa64f9
   languageName: node
   linkType: hard
 

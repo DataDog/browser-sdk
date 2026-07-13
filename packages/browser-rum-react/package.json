@@ -52,7 +52,7 @@
     }
   },
   "devDependencies": {
-    "@tanstack/react-router": "1.170.16",
+    "@tanstack/react-router": "1.170.17",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
     "react": "19.2.7",
