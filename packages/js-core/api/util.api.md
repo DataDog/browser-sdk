@@ -29,6 +29,9 @@ export function combine<A, B, C, D, E, F, G>(a: A, b: B, c: C, d: D, e: E, f: F,
 export function combine<A, B, C, D, E, F, G, H>(a: A, b: B, c: C, d: D, e: E, f: F, g: G, h: H): Combined<Combined<Combined<Combined<Combined<Combined<Combined<A, B>, C>, D>, E>, F>, G>, H>;
 
 // @public
+export type Combined<A, B> = A extends null ? B : B extends null ? A : Merged<A, B>;
+
+// @public
 export const ConsoleApiName: {
     readonly log: "log";
     readonly debug: "debug";
@@ -156,6 +159,9 @@ export function isValidUrl(url: string): boolean;
 export const isWorkerEnvironment: boolean;
 
 // @public
+export type Merged<TDestination, TSource> = TSource extends undefined ? TDestination : TDestination extends undefined ? TSource : TSource extends any[] ? TDestination extends any[] ? TDestination & TSource : TSource : TSource extends object ? TDestination extends object ? TDestination extends any[] ? TSource : TDestination & TSource : TSource : TSource;
+
+// @public
 export function mergeInto<D, S>(destination: D, source: S): Merged<D, S>;
 
 // @public
@@ -198,6 +204,12 @@ export interface Profiler extends EventTarget {
 // @public
 export interface ProfilerConstructor {
     new (options: ProfilerInitOptions): Profiler;
+}
+
+// @internal (undocumented)
+export interface ProfilerEventMap {
+    // (undocumented)
+    samplebufferfull: SampleBufferFullEvent;
 }
 
 // @public
