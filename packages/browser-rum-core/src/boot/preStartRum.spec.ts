@@ -32,7 +32,6 @@ import type { RumPublicApi, RumPublicApiOptions, Strategy } from './rumPublicApi
 import type { StartRumResult } from './startRum'
 import type { DoStartRum } from './preStartRum'
 import { createPreStartStrategy } from './preStartRum'
-import { CACHE_VERSION } from '../domain/configuration/remoteConfigurationCache'
 
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const INVALID_INIT_CONFIGURATION = { clientToken: 'yes' } as RumInitConfiguration
@@ -550,7 +549,7 @@ describe('preStartRum', () => {
         it('should start the SDK with the cached configuration on cache hit', async () => {
           localStorage.setItem(
             CACHE_KEY,
-            JSON.stringify({ version: CACHE_VERSION, config: { rum: { sessionSampleRate: 75 } }, fetchedAt: 1000 })
+            JSON.stringify({ version: 2, config: { rum: { sessionSampleRate: 75 } }, fetchedAt: 1000 })
           )
           const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
 
