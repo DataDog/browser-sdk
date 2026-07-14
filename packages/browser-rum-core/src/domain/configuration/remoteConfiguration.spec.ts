@@ -117,7 +117,19 @@ describe('remoteConfiguration', () => {
       })
     })
 
-    it('should throw an error if the remote config does not contain rum config', async () => {
+    it('should succeed if the remote config contains only a profiling section', async () => {
+      interceptor.withFetch(() =>
+        Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ profiling: { sampleRate: 10 } }),
+        })
+      )
+
+      const fetchResult = await fetchRemoteConfiguration(configuration)
+      expect(fetchResult).toEqual({ ok: true, value: { profiling: { sampleRate: 10 } } })
+    })
+
+    it('should return an error if the remote config does not contain rum or profiling', async () => {
       interceptor.withFetch(() =>
         Promise.resolve({
           ok: true,

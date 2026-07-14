@@ -311,7 +311,7 @@ export async function fetchRemoteConfiguration(
     }
   }
   const remoteConfiguration: RemoteConfiguration = await response.json()
-  if (remoteConfiguration.rum) {
+  if (remoteConfiguration.rum || remoteConfiguration.profiling) {
     return {
       ok: true,
       value: remoteConfiguration,
