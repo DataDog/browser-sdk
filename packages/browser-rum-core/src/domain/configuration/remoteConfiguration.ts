@@ -19,13 +19,20 @@ import { CACHE_STATUS_TO_METRIC_MAP, createConfigurationCache } from './remoteCo
 export type RemoteConfiguration = RumSdkConfig
 export type RumRemoteConfiguration = Exclude<RemoteConfiguration['rum'], undefined>
 const REMOTE_CONFIGURATION_VERSION = 'v1'
-const SUPPORTED_FIELDS: Array<keyof RumInitConfiguration> = [
+const SUPPORTED_RUM_FIELDS: Array<keyof RumInitConfiguration> = [
   'applicationId',
   'service',
   'env',
   'version',
   'sessionSampleRate',
   'sessionReplaySampleRate',
+  'telemetrySampleRate',
+  'trackAnonymousUser',
+  'trackUserInteractions',
+  'trackResources',
+  'trackLongTasks',
+  'traceContextInjection',
+  'actionNameAttribute',
   'defaultPrivacyLevel',
   'enablePrivacyForActionName',
   'traceSampleRate',
@@ -86,15 +93,16 @@ export async function fetchAndApplyRemoteConfiguration(
 
 export function applyRemoteConfiguration(
   initConfiguration: RumInitConfiguration,
-  rumRemoteConfiguration: RumRemoteConfiguration & { [key: string]: unknown },
+  remoteConfiguration: RemoteConfiguration,
   supportedContextManagers: SupportedContextManagers,
   metrics: ReturnType<typeof initMetrics>
 ): RumInitConfiguration {
+  const rumRemoteConfiguration = remoteConfiguration.rum as RumRemoteConfiguration & { [key: string]: unknown }
   // intents:
   // - explicitly set each supported field to limit risk in case an attacker can create configurations
   // - check the existence in the remote config to avoid clearing a provided init field
   const appliedConfiguration = { ...initConfiguration } as RumInitConfiguration & { [key: string]: unknown }
-  SUPPORTED_FIELDS.forEach((option: string) => {
+  SUPPORTED_RUM_FIELDS.forEach((option: string) => {
     if (option in rumRemoteConfiguration) {
       appliedConfiguration[option] = resolveConfigurationProperty(rumRemoteConfiguration[option])
     }
@@ -104,6 +112,9 @@ export function applyRemoteConfiguration(
       resolveContextProperty(supportedContextManagers[context], rumRemoteConfiguration[context])
     }
   })
+  if (remoteConfiguration.profiling?.sampleRate !== undefined) {
+    appliedConfiguration.profilingSampleRate = remoteConfiguration.profiling.sampleRate
+  }
   return appliedConfiguration
 
   // share context to access metrics
@@ -282,7 +293,7 @@ function extractValue(extractor: SerializedRegex, candidate: string) {
   return extractRegexMatch(candidate, resolvedExtractor)
 }
 
-type FetchRemoteConfigurationResult = { ok: true; value: RumRemoteConfiguration } | { ok: false; error: Error }
+type FetchRemoteConfigurationResult = { ok: true; value: RemoteConfiguration } | { ok: false; error: Error }
 
 export async function fetchRemoteConfiguration(
   configuration: RumInitConfiguration
@@ -303,7 +314,7 @@ export async function fetchRemoteConfiguration(
   if (remoteConfiguration.rum) {
     return {
       ok: true,
-      value: remoteConfiguration.rum,
+      value: remoteConfiguration,
     }
   }
   return {

@@ -6,13 +6,14 @@ import { appendElement } from '../../../test'
 import type { RumInitConfiguration } from './configuration'
 import {
   type RumRemoteConfiguration,
+  type RemoteConfiguration,
   initMetrics,
   applyRemoteConfiguration,
   buildEndpoint,
   fetchRemoteConfiguration,
   getRemoteConfiguration,
 } from './remoteConfiguration'
-import { buildCacheKey } from './remoteConfigurationCache'
+import { buildCacheKey, CACHE_VERSION } from './remoteConfigurationCache'
 
 const DEFAULT_INIT_CONFIGURATION: RumInitConfiguration = {
   clientToken: 'xxx',
@@ -82,10 +83,12 @@ describe('remoteConfiguration', () => {
       expect(fetchResult).toEqual({
         ok: true,
         value: {
-          applicationId: 'xxx',
-          sessionSampleRate: 50,
-          sessionReplaySampleRate: 50,
-          defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
+          rum: {
+            applicationId: 'xxx',
+            sessionSampleRate: 50,
+            sessionReplaySampleRate: 50,
+            defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
+          },
         },
       })
     })
@@ -150,7 +153,12 @@ describe('remoteConfiguration', () => {
         ...actual,
       }
       expect(
-        applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration, supportedContextManagers, metrics)
+        applyRemoteConfiguration(
+          DEFAULT_INIT_CONFIGURATION,
+          { rum: rumRemoteConfiguration },
+          supportedContextManagers,
+          metrics
+        )
       ).toEqual({
         ...DEFAULT_INIT_CONFIGURATION,
         applicationId: 'yyy',
@@ -188,7 +196,12 @@ describe('remoteConfiguration', () => {
         defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
       }
       expect(
-        applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration, supportedContextManagers, metrics)
+        applyRemoteConfiguration(
+          DEFAULT_INIT_CONFIGURATION,
+          { rum: rumRemoteConfiguration },
+          supportedContextManagers,
+          metrics
+        )
       ).toEqual({
         applicationId: 'yyy',
         clientToken: 'xxx',
@@ -749,8 +762,8 @@ describe('remoteConfiguration', () => {
   describe('async loading (getRemoteConfiguration)', () => {
     const REMOTE_CONFIGURATION_ID = 'rc-test-id'
     const CACHE_KEY = buildCacheKey(REMOTE_CONFIGURATION_ID)
-    const FRESH_RUM_CONFIG: RumRemoteConfiguration = { applicationId: 'fresh-app' }
-    const CACHED_RUM_CONFIG: RumRemoteConfiguration = { applicationId: 'cached-app' }
+    const FRESH_RUM_CONFIG: RemoteConfiguration = { rum: { applicationId: 'fresh-app' } }
+    const CACHED_RUM_CONFIG: RemoteConfiguration = { rum: { applicationId: 'cached-app' } }
 
     let initConfiguration: RumInitConfiguration
     let supportedContextManagers: {
@@ -760,12 +773,12 @@ describe('remoteConfiguration', () => {
     let interceptor: ReturnType<typeof interceptRequests>
     let displaySpy: jasmine.Spy
 
-    function withCachedEntry(config: RumRemoteConfiguration) {
-      localStorage.setItem(CACHE_KEY, JSON.stringify({ version: 1, config, fetchedAt: 1000 }))
+    function withCachedEntry(config: RemoteConfiguration) {
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ version: CACHE_VERSION, config, fetchedAt: 1000 }))
     }
 
-    function withFetchSuccess(config: RumRemoteConfiguration = FRESH_RUM_CONFIG) {
-      interceptor.withFetch(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ rum: config }) }))
+    function withFetchSuccess(config: RemoteConfiguration = FRESH_RUM_CONFIG) {
+      interceptor.withFetch(() => Promise.resolve({ ok: true, json: () => Promise.resolve(config) }))
     }
 
     function withFetchFailure() {
@@ -832,7 +845,7 @@ describe('remoteConfiguration', () => {
 
       const stored = JSON.parse(localStorage.getItem(CACHE_KEY)!)
       expect(stored.config).toEqual(FRESH_RUM_CONFIG)
-      expect(stored.version).toBe(1)
+      expect(stored.version).toBe(CACHE_VERSION)
     })
 
     it('should not overwrite cache when background fetch fails', async () => {
@@ -858,7 +871,7 @@ describe('remoteConfiguration', () => {
 
       function withFetchSuccessReturningSpy() {
         return interceptor.withFetch(() =>
-          Promise.resolve({ ok: true, json: () => Promise.resolve({ rum: FRESH_RUM_CONFIG }) })
+          Promise.resolve({ ok: true, json: () => Promise.resolve(FRESH_RUM_CONFIG) })
         )
       }
     })
