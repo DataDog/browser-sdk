@@ -870,9 +870,7 @@ describe('remoteConfiguration', () => {
       expect(fetchSpy).toHaveBeenCalledTimes(1)
 
       function withFetchSuccessReturningSpy() {
-        return interceptor.withFetch(() =>
-          Promise.resolve({ ok: true, json: () => Promise.resolve(FRESH_RUM_CONFIG) })
-        )
+        return interceptor.withFetch(() => Promise.resolve({ ok: true, json: () => Promise.resolve(FRESH_RUM_CONFIG) }))
       }
     })
 
