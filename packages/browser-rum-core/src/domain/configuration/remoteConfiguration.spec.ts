@@ -756,6 +756,38 @@ describe('remoteConfiguration', () => {
         )
       })
     })
+
+    it('should apply the new RFC fields when present in the rum section', () => {
+      const result = applyRemoteConfiguration(
+        DEFAULT_INIT_CONFIGURATION,
+        {
+          rum: {
+            applicationId: 'xxx',
+            trackResources: false,
+            trackLongTasks: false,
+            telemetrySampleRate: 10,
+            actionNameAttribute: 'data-label',
+          },
+        },
+        supportedContextManagers,
+        metrics
+      )
+      expect(result.trackResources).toBeFalse()
+      expect(result.trackLongTasks).toBeFalse()
+      expect(result.telemetrySampleRate).toBe(10)
+      expect(result.actionNameAttribute).toBe('data-label')
+    })
+
+    it('should apply profiling.sampleRate and skip rum fields when only profiling is present', () => {
+      const result = applyRemoteConfiguration(
+        DEFAULT_INIT_CONFIGURATION,
+        { profiling: { sampleRate: 25 } },
+        supportedContextManagers,
+        metrics
+      )
+      expect(result.profilingSampleRate).toBe(25)
+      expect(result.sessionSampleRate).toBe(DEFAULT_INIT_CONFIGURATION.sessionSampleRate)
+    })
   })
 
   describe('buildEndpoint', () => {

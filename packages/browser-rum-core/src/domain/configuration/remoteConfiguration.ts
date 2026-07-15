@@ -97,21 +97,23 @@ export function applyRemoteConfiguration(
   supportedContextManagers: SupportedContextManagers,
   metrics: ReturnType<typeof initMetrics>
 ): RumInitConfiguration {
-  const rumRemoteConfiguration = remoteConfiguration.rum as RumRemoteConfiguration & { [key: string]: unknown }
   // intents:
   // - explicitly set each supported field to limit risk in case an attacker can create configurations
   // - check the existence in the remote config to avoid clearing a provided init field
   const appliedConfiguration = { ...initConfiguration } as RumInitConfiguration & { [key: string]: unknown }
-  SUPPORTED_RUM_FIELDS.forEach((option: string) => {
-    if (option in rumRemoteConfiguration) {
-      appliedConfiguration[option] = resolveConfigurationProperty(rumRemoteConfiguration[option])
-    }
-  })
-  ;(Object.keys(supportedContextManagers) as Array<keyof SupportedContextManagers>).forEach((context) => {
-    if (rumRemoteConfiguration[context] !== undefined) {
-      resolveContextProperty(supportedContextManagers[context], rumRemoteConfiguration[context])
-    }
-  })
+  if (remoteConfiguration.rum) {
+    const rumRemoteConfiguration = remoteConfiguration.rum as RumRemoteConfiguration & { [key: string]: unknown }
+    SUPPORTED_RUM_FIELDS.forEach((option: string) => {
+      if (option in rumRemoteConfiguration) {
+        appliedConfiguration[option] = resolveConfigurationProperty(rumRemoteConfiguration[option])
+      }
+    })
+    ;(Object.keys(supportedContextManagers) as Array<keyof SupportedContextManagers>).forEach((context) => {
+      if (rumRemoteConfiguration[context] !== undefined) {
+        resolveContextProperty(supportedContextManagers[context], rumRemoteConfiguration[context])
+      }
+    })
+  }
   if (remoteConfiguration.profiling?.sampleRate !== undefined) {
     appliedConfiguration.profilingSampleRate = remoteConfiguration.profiling.sampleRate
   }
