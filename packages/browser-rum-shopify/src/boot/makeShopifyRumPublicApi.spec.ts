@@ -19,9 +19,7 @@ describe('makeShopifyRumPublicApi', () => {
     const shopifyRum = makeShopifyRumPublicApi(datadogRum, 'https://shop.example/checkout')
     shopifyRum.init({ applicationId: 'app-id', clientToken: 'token' })
 
-    expect(initSpy).toHaveBeenCalledWith(
-      jasmine.objectContaining({ applicationId: 'app-id', clientToken: 'token' })
-    )
+    expect(initSpy).toHaveBeenCalledWith(jasmine.objectContaining({ applicationId: 'app-id', clientToken: 'token' }))
   })
 
   it('exposes the wrapped instance methods unchanged', () => {

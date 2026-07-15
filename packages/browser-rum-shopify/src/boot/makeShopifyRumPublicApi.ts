@@ -1,6 +1,6 @@
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 
-// Matches /checkouts/*, /checkout, including locale-prefixed paths. 
+// Matches /checkouts/*, /checkout, including locale-prefixed paths.
 // Storefront pages never match, so init() is a no-op there: those pages
 // already get a `DD_RUM` instance from the Theme Liquid snippet, and initializing here too would
 // create a second, independent SDK instance double-tracking the same page view.
@@ -20,12 +20,12 @@ export function makeShopifyRumPublicApi(datadogRum: RumPublicApi, url: string | 
       }
       datadogRum.init({
         ...initConfiguration,
-        trackViewsManually: true,         // Views are started explicitly via startView()
-        sessionReplaySampleRate: 0,       // Session Replay is not usable in the Pixel sandbox iframe
-        trackUserInteractions:   false,   // Pixel sandbox iframe has no real DOM to interact with
-        trackResources:          false,   // Iframe resources are not meaningful
-        trackLongTasks:          false,   // PerformanceObserver tracks the empty iframe
-        sessionPersistence:      'cookie',
+        trackViewsManually: true, // Views are started explicitly via startView()
+        sessionReplaySampleRate: 0, // Session Replay is not usable in the Pixel sandbox iframe
+        trackUserInteractions: false, // Pixel sandbox iframe has no real DOM to interact with
+        trackResources: false, // Iframe resources are not meaningful
+        trackLongTasks: false, // PerformanceObserver tracks the empty iframe
+        sessionPersistence: 'cookie',
       })
     },
   }
