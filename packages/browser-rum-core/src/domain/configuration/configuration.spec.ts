@@ -410,6 +410,19 @@ describe('validateAndBuildRumConfiguration', () => {
     })
   })
 
+  describe('betaTrackWebSockets', () => {
+    it('defaults to false', () => {
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.betaTrackWebSockets).toBeFalse()
+    })
+
+    it('is true when the option is enabled', () => {
+      expect(
+        validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, betaTrackWebSockets: true })!
+          .betaTrackWebSockets
+      ).toBeTrue()
+    })
+  })
+
   describe('trackResourceHeaders', () => {
     describe('disabled', () => {
       it('defaults to empty array', () => {
@@ -833,6 +846,7 @@ describe('serializeRumConfiguration', () => {
       propagateTraceBaggage: true,
       trackResourceHeaders: true,
       betaEnableViewUpdates: true,
+      betaTrackWebSockets: true,
     }
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
@@ -848,7 +862,9 @@ describe('serializeRumConfiguration', () => {
           ? 'track_long_task' // We forgot the s, keeping this for backward compatibility
           : // The following options are not reported as telemetry. Please avoid adding more of them.
             // `remoteConfiguration` is covered by the legacy `remote_configuration_id` field.
-            Key extends 'applicationId' | 'subdomain' | 'remoteConfiguration'
+            // TODO: report `betaTrackWebSockets` as `beta_track_web_sockets` once the generated telemetry
+            // schema declares it; then remove it here and serialize it in `serializeRumConfiguration`.
+            Key extends 'applicationId' | 'subdomain' | 'remoteConfiguration' | 'betaTrackWebSockets'
             ? never
             : CamelToSnakeCase<Key>
     // By specifying the type here, we can ensure that serializeConfiguration is returning an

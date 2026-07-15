@@ -352,6 +352,18 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @category Beta
    */
   betaEnableViewUpdates?: boolean | undefined
+
+  /**
+   * Enables collection of WebSocket resource events.
+   *
+   * Warning: enabling this option introduces WebSocket resource events to the `beforeSend` hook.
+   * Their domain context is WebSocket-specific and does not contain the XHR, Fetch, or performance
+   * entry fields available on regular resource events. Narrow the context using the existing
+   * `isManual` and `isWebSocket` discriminants before accessing those fields.
+   *
+   * @category Beta
+   */
+  betaTrackWebSockets?: boolean | undefined
 }
 
 export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
@@ -396,6 +408,7 @@ export interface RumConfiguration extends Configuration {
   startSessionReplayRecordingManually: boolean
   trackUserInteractions: boolean
   betaEnableViewUpdates: boolean
+  betaTrackWebSockets: boolean
   trackViewsManually: boolean
   trackResources: boolean
   trackResourceHeaders: MatchHeader[]
@@ -469,6 +482,7 @@ export function validateAndBuildRumConfiguration(
     compressIntakeRequests: !!initConfiguration.compressIntakeRequests,
     trackUserInteractions: !!(initConfiguration.trackUserInteractions ?? true),
     betaEnableViewUpdates: !!initConfiguration.betaEnableViewUpdates,
+    betaTrackWebSockets: !!initConfiguration.betaTrackWebSockets,
     trackViewsManually: !!initConfiguration.trackViewsManually,
     trackResources: !!(initConfiguration.trackResources ?? true),
     trackResourceHeaders: validateAndBuildTrackResourceHeaders(initConfiguration),
