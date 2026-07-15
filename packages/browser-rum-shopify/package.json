@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-rum-shopify",
-  "version": "7.5.0",
+  "version": "7.6.1",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
   "module": "esm/entries/main.mjs",
@@ -19,10 +19,10 @@
     "prepack": "yarn build"
   },
   "dependencies": {
-    "@datadog/browser-core": "7.5.0",
-    "@datadog/browser-rum": "7.5.0",
-    "@datadog/browser-rum-core": "7.5.0",
-    "@datadog/js-core": "0.0.5"
+    "@datadog/browser-core": "7.6.1",
+    "@datadog/browser-rum": "7.6.1",
+    "@datadog/browser-rum-core": "7.6.1",
+    "@datadog/js-core": "0.0.7"
   },
   "repository": {
     "type": "git",
