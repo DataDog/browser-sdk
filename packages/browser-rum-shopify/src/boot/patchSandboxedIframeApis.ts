@@ -18,14 +18,12 @@ export function patchSandboxedIframeApis() {
   disableProperty(globalObject, 'cookieStore')
   disableProperty(navigator, 'locks')
 
-
   Object.defineProperty(HTMLIFrameElement.prototype, 'contentWindow', {
     get() {
       return null
     },
     configurable: true,
   })
-  
 }
 
 function disableProperty(target: object, key: string) {

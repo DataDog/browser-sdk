@@ -27,13 +27,13 @@ if (shopifyAnalytics) {
     }
     installed = true
 
-    const url = event?.context?.document?.location?.href;
+    const url = event?.context?.document?.location?.href
 
     const datadogRum = makeShopifyRumPublicApi(
       makeRumPublicApi(makeRecorderApiStub(), makeProfilerApiStub(), {
         sdkName: 'rum-shopify-custom-pixel',
       }),
-      url,
+      url
     )
 
     initShopifyBindings(datadogRum, shopifyAnalytics)
@@ -47,4 +47,3 @@ if (shopifyAnalytics) {
 
   defineGlobal(global, 'DD_RUM', datadogRum)
 }
-

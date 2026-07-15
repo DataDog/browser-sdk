@@ -220,16 +220,13 @@ describe('initShopifyBindings', () => {
       },
     })
 
-    expect(addError).toHaveBeenCalledWith(
-      jasmine.objectContaining({ message: 'Boom', stack: 'stack trace' }),
-      {
-        extension: {
-          name: 'my-extension',
-          target: 'purchase.checkout.block.render',
-          type: 'RUNTIME',
-          appName: 'my-app',
-        },
-      }
-    )
+    expect(addError).toHaveBeenCalledWith(jasmine.objectContaining({ message: 'Boom', stack: 'stack trace' }), {
+      extension: {
+        name: 'my-extension',
+        target: 'purchase.checkout.block.render',
+        type: 'RUNTIME',
+        appName: 'my-app',
+      },
+    })
   })
 })
