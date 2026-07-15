@@ -252,8 +252,13 @@ function sanitizeEvent(event: Event): SanitizedEvent {
  *
  */
 function tryToApplyToJSON(value: ExtendedContextValue) {
+  // Primitive values are sanitized directly and should not use inherited toJSON methods.
+  if ((typeof value !== 'object' || value === null) && typeof value !== 'function') {
+    return value
+  }
+
   const object = value as ObjectWithToJsonMethod
-  if (object && typeof object.toJSON === 'function') {
+  if (typeof object.toJSON === 'function') {
     try {
       return object.toJSON() as ExtendedContextValue
     } catch {
