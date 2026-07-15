@@ -202,6 +202,14 @@ describe('sanitize', () => {
       expect(toJSON).not.toHaveBeenCalled()
     })
 
+    it('should use toJSON methods defined on functions', () => {
+      const toJSON = jasmine.createSpy().and.returnValue({ foo: 'bar' })
+      const value = Object.assign(() => undefined, { toJSON })
+
+      expect(sanitize(value)).toEqual({ foo: 'bar' })
+      expect(toJSON).toHaveBeenCalledTimes(1)
+    })
+
     it('should use toJSON functions if available on root object', () => {
       const toJSON = jasmine.createSpy('toJSON', () => 'Specific').and.callThrough()
       const obj = { a: 1, b: 2, toJSON }
