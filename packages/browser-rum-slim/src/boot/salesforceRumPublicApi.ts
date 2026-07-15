@@ -13,7 +13,7 @@ export function makeSalesforceRumPublicApi(rumPublicApi: RumPublicApi): RumPubli
     init({
       ...initConfiguration,
       sessionReplaySampleRate: 0,
-      plugins: [...(initConfiguration.plugins ?? []), salesforcePlugin()],
+      plugins: (initConfiguration.plugins || []).concat(salesforcePlugin()),
     })
   return rumPublicApi
 }
