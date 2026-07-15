@@ -182,6 +182,34 @@ describe('sanitize', () => {
   })
 
   describe('toJson functions handling', () => {
+    it('should not use toJSON functions inherited by primitive values', () => {
+      const stringPrototype = String.prototype as { toJSON?: () => unknown }
+      const originalToJSON = stringPrototype.toJSON
+      const toJSON = jasmine.createSpy().and.returnValue({})
+      stringPrototype.toJSON = toJSON
+      registerCleanupTask(() => {
+        if (originalToJSON) {
+          stringPrototype.toJSON = originalToJSON
+        } else {
+          delete stringPrototype.toJSON
+        }
+      })
+
+      const value = '{"foo":"bar"}'
+
+      expect(sanitize(value)).toBe(value)
+      expect(sanitize({ value })).toEqual({ value })
+      expect(toJSON).not.toHaveBeenCalled()
+    })
+
+    it('should use toJSON methods defined on functions', () => {
+      const toJSON = jasmine.createSpy().and.returnValue({ foo: 'bar' })
+      const value = Object.assign(() => undefined, { toJSON })
+
+      expect(sanitize(value)).toEqual({ foo: 'bar' })
+      expect(toJSON).toHaveBeenCalledTimes(1)
+    })
+
     it('should use toJSON functions if available on root object', () => {
       const toJSON = jasmine.createSpy('toJSON', () => 'Specific').and.callThrough()
       const obj = { a: 1, b: 2, toJSON }
