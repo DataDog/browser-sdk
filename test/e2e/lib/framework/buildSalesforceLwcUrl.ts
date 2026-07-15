@@ -9,39 +9,36 @@ import {
 
 const salesforceHomePath = '/lightning/app/c__SF_LWC_App/page/home'
 
-// The frontdoor.jsp OTP expires in ~1 minute, so the URL must be generated at test time —
-// not at suite startup — to guarantee a valid token when the test actually navigates.
-// This functions is similar to the one in scripts/salesforce-lwc-app.ts, but it is not using the sf CLI so we can call it at test time.
+let salesforceLwcSession: Promise<SalesforceLwcSession> | undefined
+
+export interface SalesforceLwcSession {
+  instanceUrl: string
+  accessToken: string
+}
+
 export async function buildSalesforceLwcUrl(): Promise<string> {
-  if (!getSfLwcClientId() || !getSfLwcInstanceUrl() || !getSfLwcJwtPrivateKey() || !getSfLwcUsername()) {
-    console.error('Salesforce credentials are not set')
-    return ''
-  }
+  const { instanceUrl } = await getSalesforceLwcSession()
+  return new URL(salesforceHomePath, instanceUrl).href
+}
+
+export function getSalesforceLwcSession(): Promise<SalesforceLwcSession> {
+  salesforceLwcSession ??= buildSalesforceLwcJwtSession()
+  return salesforceLwcSession
+}
+
+async function buildSalesforceLwcJwtSession(): Promise<SalesforceLwcSession> {
+  const clientId = getSfLwcClientId()
   const instanceUrl = getSfLwcInstanceUrl()
-  const privateKey = Buffer.from(getSfLwcJwtPrivateKey(), 'base64').toString('utf8')
-  const accessToken = await getAccessToken(getSfLwcClientId(), getSfLwcUsername(), instanceUrl, privateKey)
+  const jwtPrivateKey = getSfLwcJwtPrivateKey()
+  const username = getSfLwcUsername()
 
-  const path = new URL(salesforceHomePath, 'https://salesforce.local')
-
-  const response = await fetch(`${instanceUrl}/services/oauth2/singleaccess`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      access_token: accessToken,
-      redirect_uri: `${path.pathname}${path.search}`,
-    }),
-  })
-
-  if (!response.ok) {
-    throw new Error(`UI Bridge API failed (${response.status}): ${await response.text()}`)
+  if (!clientId || !instanceUrl || !jwtPrivateKey || !username) {
+    throw new Error('Salesforce credentials are not set')
   }
 
-  const json = (await response.json()) as Record<string, string>
-  const frontdoorUri = json['frontdoor_uri']
-  if (!frontdoorUri) {
-    throw new Error('UI Bridge API response missing frontdoor_uri')
-  }
-  return frontdoorUri
+  const privateKey = Buffer.from(jwtPrivateKey, 'base64').toString('utf8')
+  const accessToken = await getAccessToken(clientId, username, instanceUrl, privateKey)
+  return { instanceUrl, accessToken }
 }
 
 async function getAccessToken(
@@ -56,7 +53,7 @@ async function getAccessToken(
       iss: clientId,
       sub: username,
       aud: instanceUrl,
-      // JWT expiry is set to 3 minutes — enough to complete the token exchange.
+      // JWT expiry is set to 3 minutes, enough to complete the token exchange.
       exp: Math.floor(Date.now() / 1000) + 180,
     })
   ).toString('base64url')
