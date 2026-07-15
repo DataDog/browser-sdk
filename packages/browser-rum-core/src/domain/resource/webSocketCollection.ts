@@ -2,6 +2,7 @@ import type { Observable, WebSocketContext } from '@datadog/browser-core'
 import { generateUUID, initWebSocketObservable, sanitize } from '@datadog/browser-core'
 import type { ClocksState, Duration, TimeStamp } from '@datadog/js-core/time'
 import { clocksNow, elapsed } from '@datadog/js-core/time'
+import { buildUrl } from '@datadog/js-core/util'
 import { VitalType } from '../../rawRumEvent.types'
 import type { ViewHistory } from '../contexts/viewHistory'
 import type { LifeCycle } from '../lifeCycle'
@@ -96,10 +97,11 @@ export function trackWebSocket(
       case 'connecting': {
         const connectionId = generateUUID()
         const startViewId = viewHistory.findView(context.startClocks.relative)?.id
+        const url = sanitizeWebSocketUrl(context.url)
         const webSocket: WebSocketConnection = {
           webSocket: context.instance,
           connectionId,
-          url: context.url,
+          url,
           startClocks: context.startClocks,
           startViewId,
           messagesIn: { count: 0, size: 0 },
@@ -116,8 +118,7 @@ export function trackWebSocket(
           startClocks: context.startClocks,
           duration: 0 as Duration,
           context: sanitize({
-            url: context.url,
-            protocols: context.protocols,
+            url,
             startViewId,
           }),
         })
@@ -202,6 +203,12 @@ export function trackWebSocket(
       webSocketRegistry.clear()
     },
   }
+}
+
+function sanitizeWebSocketUrl(url: string) {
+  const sanitizedUrl = buildUrl(url)
+  sanitizedUrl.search = ''
+  return sanitizedUrl.href
 }
 
 function recordMessageTiming(webSocket: WebSocketConnection, at: ClocksState, direction: 'in' | 'out') {

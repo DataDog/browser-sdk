@@ -142,6 +142,25 @@ describe('webSocketCollection', () => {
     expect(webSocket.bufferedAmountMax).toBe(bufferedAmount)
   })
 
+  it('removes query parameters from the completed WebSocket URL', () => {
+    const url = 'wss://example.com:8443/path/socket%3Froom?token=secret&tenant=acme'
+
+    startTracking()
+    notifyConnecting(0, url)
+    notifyClosed(10, 1000, 'bye', true)
+
+    expect(completed[0].url).toBe('wss://example.com:8443/path/socket%3Froom')
+  })
+
+  it('keeps the server-negotiated protocol on the completed event', () => {
+    startTracking()
+    notifyConnecting(0, 'wss://example.com/socket', undefined, ['auth-token', 'chat.v1'])
+    notifyOpen(5, 'chat.v1')
+    notifyClosed(10, 1000, 'bye', true)
+
+    expect(completed[0].protocol).toBe('chat.v1')
+  })
+
   it('generates a unique connection_id per connection', () => {
     startTracking()
     notifyConnecting()
@@ -402,7 +421,7 @@ describe('webSocketCollection', () => {
       expect(addDurationVital).toHaveBeenCalledOnceWith(jasmine.objectContaining({ id: completed[0].connectionId }))
     })
 
-    it('includes url, protocols, and startViewId in the vital context', () => {
+    it('includes the sanitized URL and startViewId without constructor protocols', () => {
       const startView = 0
       const relativeStartView = clock.relative(startView)
       const viewByRelative: Record<number, ViewHistoryEntry> = {
@@ -413,21 +432,35 @@ describe('webSocketCollection', () => {
         startTime !== undefined ? viewByRelative[startTime as number] : undefined
       )
       const addDurationVital = jasmine.createSpy<(vital: DurationVital) => void>()
-      const url = 'wss://example.com/socket'
-      const protocols = ['chat.v1', 'json']
 
       startTracking(viewHistory, addDurationVital)
-      notifyConnecting(startView, url, undefined, protocols)
+      notifyConnecting(startView, 'wss://example.com/socket?token=secret&tenant=acme', undefined, [
+        'auth-token',
+        'chat.v1',
+      ])
 
       expect(addDurationVital).toHaveBeenCalledOnceWith(
         jasmine.objectContaining({
           context: {
-            url,
-            protocols,
+            url: 'wss://example.com/socket',
             startViewId: 'view-start',
           },
         })
       )
+      const context = addDurationVital.calls.mostRecent().args[0].context
+      expect('protocols' in context).toBeFalse()
+    })
+
+    ;(['auth-token', ['auth-token', 'chat.v1']] as Array<string | string[]>).forEach((protocols) => {
+      it(`does not include constructor protocols in the vital context when provided as ${typeof protocols === 'string' ? 'a string' : 'an array'}`, () => {
+        const addDurationVital = jasmine.createSpy<(vital: DurationVital) => void>()
+        startTracking(mockViewHistory(), addDurationVital)
+
+        notifyConnecting(0, 'wss://example.com/socket', undefined, protocols)
+
+        const context = addDurationVital.calls.mostRecent().args[0].context
+        expect('protocols' in context).toBeFalse()
+      })
     })
   })
 
