@@ -2,7 +2,7 @@ import path from 'node:path'
 import fs from 'node:fs'
 import zlib from 'node:zlib'
 
-const packages = ['browser-rum', 'browser-logs', 'browser-rum-slim', 'browser-worker'] as const
+const packages = ['browser-rum', 'browser-logs', 'browser-rum-slim', 'browser-worker', 'browser-rum-shopify'] as const
 
 interface BundleSize {
   uncompressed: number
