@@ -1,7 +1,7 @@
 import { ONE_MINUTE, relativeToClocks } from '@datadog/js-core/time'
 import type { TimeStamp, ClocksState, RelativeTime } from '@datadog/js-core/time'
 import type { SessionManager } from '@datadog/browser-core'
-import { display, startGlobalContext, startTabContext } from '@datadog/browser-core'
+import { display, ResourceType, startGlobalContext, startTabContext } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { registerCleanupTask, mockClock, createSessionManagerMock } from '@datadog/browser-core/test'
 import { createRawRumEvent, mockRumConfiguration, mockViewHistory, noopRecorderApi } from '../../test'
@@ -16,6 +16,7 @@ import type { RumConfiguration } from './configuration'
 import type { ViewHistory } from './contexts/viewHistory'
 import { startSessionContext } from './contexts/sessionContext'
 import { createHooks } from './hooks'
+import { WEBSOCKET_CONNECTING_VITAL_NAME } from './resource/webSocketCollection'
 
 describe('rum assembly', () => {
   describe('beforeSend', () => {
@@ -208,6 +209,29 @@ describe('rum assembly', () => {
 
           expect(serverRumEvents[0].context!.foo).toBe('bar')
         })
+
+        it('should allow beforeSend to add protocols to the websocket-connecting vital context', () => {
+          const protocols = ['chat.v1']
+          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+            partialConfiguration: {
+              beforeSend: (event) => {
+                if (event.type === RumEventType.VITAL && event.vital.name === WEBSOCKET_CONNECTING_VITAL_NAME) {
+                  event.context.protocols = protocols
+                }
+                return true
+              },
+            },
+          })
+
+          notifyRawRumEvent(lifeCycle, {
+            rawRumEvent: createRawRumEvent(RumEventType.VITAL, {
+              vital: { name: WEBSOCKET_CONNECTING_VITAL_NAME },
+              context: { url: 'wss://example.com/socket' },
+            }),
+          })
+
+          expect(serverRumEvents[0].context!.protocols).toEqual(protocols)
+        })
       })
 
       describe('allowed customer provided field', () => {
@@ -353,6 +377,34 @@ describe('rum assembly', () => {
           expect(resource.response!.headers!['x-powered-by']).toBeUndefined()
           expect(resource.response!.headers!['content-type']).toBe('text/html')
         })
+      })
+
+      it('should allow beforeSend to redact the WebSocket resource protocol', () => {
+        const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+          partialConfiguration: {
+            beforeSend: (event) => {
+              if (event.type === RumEventType.RESOURCE) {
+                const webSocket = event.resource.websocket as { protocol?: string } | undefined
+                if (webSocket) {
+                  webSocket.protocol = '[REDACTED]'
+                }
+              }
+              return true
+            },
+          },
+        })
+
+        notifyRawRumEvent(lifeCycle, {
+          rawRumEvent: createRawRumEvent(RumEventType.RESOURCE, {
+            resource: {
+              type: ResourceType.WEBSOCKET,
+              websocket: { protocol: 'credential-bearing-protocol' },
+            },
+          }),
+        })
+
+        const resource = serverRumEvents[0] as RumResourceEvent
+        expect((resource.resource.websocket as { protocol?: string }).protocol).toBe('[REDACTED]')
       })
 
       it('should reject modification of field not sensitive, context or customer provided', () => {
