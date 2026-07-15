@@ -1,14 +1,16 @@
 # Salesforce Lightning RUM
 
-This entrypoint is intended for Salesforce Lightning and LWC applications.
+This entrypoint is intended for Salesforce Lightning and LWC applications. It exposes the SDK as `window.DD_RUM`
+and forces `sessionReplaySampleRate` to `0`.
 
 ## Recommended LWC Setup
 
 ### 1. Add the static resource
 
-Copy `packages/browser-rum-slim/bundle/datadog-rum-slim.js` into your Salesforce project as `staticresources/datadog_rum_slim.js`.
+Copy `packages/browser-rum-slim/bundle/datadog-rum-salesforce.js` into your Salesforce project as
+`staticresources/datadog_rum_salesforce.js`.
 
-Create the accompanying metadata file `staticresources/datadog_rum_slim.resource-meta.xml`:
+Create the accompanying metadata file `staticresources/datadog_rum_salesforce.resource-meta.xml`:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
@@ -53,7 +55,7 @@ Then create `lwc/datadogInit/datadogInit.js`:
 ```js
 import { LightningElement, api, wire } from 'lwc'
 import { NavigationMixin, CurrentPageReference } from 'lightning/navigation'
-import datadogRumSlim from '@salesforce/resourceUrl/datadog_rum_slim'
+import datadogRumSalesforce from '@salesforce/resourceUrl/datadog_rum_salesforce'
 import { loadScript } from 'lightning/platformResourceLoader'
 
 let datadogInitialization
@@ -102,7 +104,7 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
   }
 
   loadDatadogRum() {
-    return loadScript(this, datadogRumSlim).then(() => {
+    return loadScript(this, datadogRumSalesforce).then(() => {
       const initConfig = {
         applicationId: this.applicationId,
         clientToken: this.clientToken,
