@@ -29,6 +29,8 @@
 
       "@datadog/browser-rum-slim": ["./packages/browser-rum-slim/src/entries/main"],
 
+      "@datadog/browser-rum-shopify": ["./packages/browser-rum-shopify/src/entries/main"],
+
       "@datadog/browser-rum-react": ["./packages/browser-rum-react/src/entries/main"],
       "@datadog/browser-rum-react/internal": ["./packages/browser-rum-react/src/entries/internal"],
       "@datadog/browser-rum-react/react-router-v6": ["./packages/browser-rum-react/src/entries/reactRouterV6"],

@@ -603,6 +603,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@datadog/browser-rum-shopify@workspace:packages/browser-rum-shopify":
+  version: 0.0.0-use.local
+  resolution: "@datadog/browser-rum-shopify@workspace:packages/browser-rum-shopify"
+  dependencies:
+    "@datadog/browser-core": "npm:7.4.0"
+    "@datadog/browser-rum": "npm:7.4.0"
+    "@datadog/browser-rum-core": "npm:7.4.0"
+    "@datadog/js-core": "npm:0.0.4"
+  languageName: unknown
+  linkType: soft
+
 "@datadog/browser-rum-slim@workspace:packages/browser-rum-slim":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-slim@workspace:packages/browser-rum-slim"
@@ -644,7 +655,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-rum@workspace:*, @datadog/browser-rum@workspace:packages/browser-rum":
+"@datadog/browser-rum@npm:7.4.0, @datadog/browser-rum@workspace:*, @datadog/browser-rum@workspace:packages/browser-rum":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum@workspace:packages/browser-rum"
   dependencies:
