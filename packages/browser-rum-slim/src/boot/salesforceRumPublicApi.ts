@@ -1,4 +1,11 @@
-import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
+import type { RumInitConfiguration, RumPlugin, RumPublicApi } from '@datadog/browser-rum-core'
+
+const salesforcePlugin = (): RumPlugin => ({
+  name: 'salesforce',
+  getConfigurationTelemetry() {
+    return { salesforce: true }
+  },
+})
 
 export function makeSalesforceRumPublicApi(rumPublicApi: RumPublicApi): RumPublicApi {
   const init = rumPublicApi.init
@@ -6,6 +13,7 @@ export function makeSalesforceRumPublicApi(rumPublicApi: RumPublicApi): RumPubli
     init({
       ...initConfiguration,
       sessionReplaySampleRate: 0,
+      plugins: [...(initConfiguration.plugins ?? []), salesforcePlugin()],
     })
   return rumPublicApi
 }
