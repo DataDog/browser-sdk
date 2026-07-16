@@ -34,7 +34,7 @@ export const SCHEMAS: SchemaConfig[] = [
     options: { additionalProperties: false },
   },
   {
-    typesPath: 'packages/browser-rum-core/src/domain/configuration/remoteConfiguration.types.ts',
+    typesPath: 'packages/browser-core/src/domain/remoteConfiguration/remoteConfiguration.types.ts',
     schemaPath: path.join(rootDir, 'remote-configuration/rum-sdk-config.json'),
   },
 ]
