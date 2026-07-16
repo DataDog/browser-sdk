@@ -343,7 +343,7 @@ export function buildEndpoint(configuration: RumInitConfiguration) {
 
 function doBackgroundCacheSync(
   initConfiguration: RumInitConfiguration,
-  cache: ReturnType<typeof createConfigurationCache>,
+  cache: ReturnType<typeof createConfigurationCache<RemoteConfiguration>>,
   metrics: ReturnType<typeof initMetrics>
 ) {
   fetchRemoteConfiguration(initConfiguration)
@@ -367,7 +367,7 @@ export function getRemoteConfiguration(
   initConfiguration: RumInitConfiguration,
   supportedContextManagers: SupportedContextManagers
 ): RumInitConfiguration | undefined {
-  const configurationCache = createConfigurationCache({
+  const configurationCache = createConfigurationCache<RemoteConfiguration>({
     remoteConfigurationId: getRemoteConfigurationId(initConfiguration)!,
   })
   const metrics = initMetrics()
