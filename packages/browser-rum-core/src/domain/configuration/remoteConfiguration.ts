@@ -1,5 +1,4 @@
-import type { createContextManager, Context } from '@datadog/browser-core'
-import {
+import type { createContextManager, Context,
   display,
   mapValues,
   getCookie,
@@ -10,9 +9,8 @@ import {
   buildEndpoint,
   getRemoteConfigurationId,
   type FetchRemoteConfigurationResult,
-  type RemoteConfiguration,
-} from '@datadog/browser-core'
-export { buildEndpoint, getRemoteConfigurationId }
+  type RemoteConfiguration } from '@datadog/browser-core'
+export type { buildEndpoint, getRemoteConfigurationId }
 import { isIndexableObject } from '@datadog/js-core/util'
 import { extractRegexMatch } from '../extractRegexMatch'
 import type { RumInitConfiguration } from './configuration'
