@@ -151,6 +151,37 @@
         }
       }
     },
+    "logs": {
+      "type": "object",
+      "description": "Logs feature Remote Configuration properties",
+      "additionalProperties": false,
+      "properties": {
+        "forwardErrorsToLogs": {
+          "type": "boolean",
+          "description": "Whether to forward console.error calls as Datadog log events"
+        },
+        "forwardConsoleLogs": {
+          "description": "Console methods to forward as Datadog log events",
+          "oneOf": [
+            { "type": "string", "const": "all" },
+            {
+              "type": "array",
+              "items": { "type": "string", "enum": ["log", "debug", "info", "warn", "error"] }
+            }
+          ]
+        },
+        "forwardReports": {
+          "description": "Reporting API types to forward as Datadog log events",
+          "oneOf": [
+            { "type": "string", "const": "all" },
+            {
+              "type": "array",
+              "items": { "type": "string", "enum": ["intervention", "deprecation", "csp_violation"] }
+            }
+          ]
+        }
+      }
+    },
     "rum": {
       "type": "object",
       "description": "RUM feature Remote Configuration properties",
