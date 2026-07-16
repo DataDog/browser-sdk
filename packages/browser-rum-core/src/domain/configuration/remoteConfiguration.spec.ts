@@ -1,5 +1,5 @@
 import { ONE_MINUTE } from '@datadog/js-core/time'
-import { DefaultPrivacyLevel, display, setCookie, deleteCookie, createContextManager } from '@datadog/browser-core'
+import { DefaultPrivacyLevel, display, setCookie, deleteCookie, createContextManager, buildCacheKey, CACHE_VERSION  } from '@datadog/browser-core'
 import { INTAKE_SITE_US1 } from '@datadog/js-core/transport'
 import { interceptRequests, registerCleanupTask } from '@datadog/browser-core/test'
 import { appendElement } from '../../../test'
@@ -13,7 +13,6 @@ import {
   fetchRemoteConfiguration,
   getRemoteConfiguration,
 } from './remoteConfiguration'
-import { buildCacheKey, CACHE_VERSION } from './remoteConfigurationCache'
 
 const DEFAULT_INIT_CONFIGURATION: RumInitConfiguration = {
   clientToken: 'xxx',

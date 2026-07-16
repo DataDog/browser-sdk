@@ -1,4 +1,5 @@
-import type { createContextManager, Context,
+import type { createContextManager, Context, FetchRemoteConfigurationResult, RemoteConfiguration, DynamicOption, ContextItem } from '@datadog/browser-core'
+import {
   display,
   mapValues,
   getCookie,
@@ -8,15 +9,14 @@ import type { createContextManager, Context,
   fetchRemoteConfiguration as fetchRemoteConfigurationCore,
   buildEndpoint,
   getRemoteConfigurationId,
-  type FetchRemoteConfigurationResult,
-  type RemoteConfiguration } from '@datadog/browser-core'
-export type { buildEndpoint, getRemoteConfigurationId }
+  CACHE_STATUS_TO_METRIC_MAP,
+  createConfigurationCache,
+} from '@datadog/browser-core'
+export { buildEndpoint, getRemoteConfigurationId }
 import { isIndexableObject } from '@datadog/js-core/util'
 import { extractRegexMatch } from '../extractRegexMatch'
 import type { RumInitConfiguration } from './configuration'
-import type { DynamicOption, ContextItem } from './remoteConfiguration.types'
 import { parseJsonPath } from './jsonPathParser'
-import { CACHE_STATUS_TO_METRIC_MAP, createConfigurationCache } from './remoteConfigurationCache'
 
 export type { RemoteConfiguration }
 export type RumRemoteConfiguration = Exclude<RemoteConfiguration['rum'], undefined>
