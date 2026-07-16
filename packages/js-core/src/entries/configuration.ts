@@ -1,5 +1,6 @@
 import { DOCS_ORIGIN, MORE_DETAILS } from '../util/display'
 import type { Display } from '../util/display'
+import { isPercentage, isMatchOption } from '../util/typeUtils'
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Schema field types
@@ -235,10 +236,8 @@ function buildErrorMessage(key: string, field: FieldDef): string {
       return `"${key}" must be a valid Datadog site. ${MORE_DETAILS} ${DOCS_ORIGIN}/getting_started/site/.`
     case 'match-option':
       return `"${key}" must be a string, RegExp, or function`
-    case 'enum': {
-      const values = Array.isArray(field.values) ? field.values : Object.values(field.values)
-      return `"${key}" must be one of: "${values.join('", "')}"`
-    }
+    case 'enum':
+      return `"${key}" must be one of: "${getEnumValues(field.values).join('", "')}"`
     case 'union':
       return `"${key}" does not match any expected type`
     case 'schema':
@@ -318,7 +317,7 @@ function validateArrayField(field: FieldDef, value: unknown, display: Display): 
   }
   // 'all' shorthand: expand to the full set of enum values
   if (field.type === 'enum' && field.allowAll && value === 'all') {
-    return Array.isArray(field.values) ? ([] as string[]).concat(field.values) : Object.values(field.values)
+    return getEnumValues(field.values)
   }
   // Normalize a single value to a singleton array for convenience
   const items = Array.isArray(value) ? value : [value]
@@ -373,7 +372,7 @@ function validateField(field: FieldDef, value: unknown, display: Display): unkno
     case 'string':
       return typeof value === 'string' && value.length > 0 ? value : undefined
     case 'percentage':
-      return typeof value === 'number' && value >= 0 && value <= 100 ? value : undefined
+      return isPercentage(value) ? value : undefined
     case 'boolean':
       return typeof value === 'boolean' ? value : field.strict === false ? !!value : undefined
     case 'site':
@@ -382,11 +381,18 @@ function validateField(field: FieldDef, value: unknown, display: Display): unkno
       }
       return value
     case 'match-option':
-      return typeof value === 'string' || value instanceof RegExp || typeof value === 'function' ? value : undefined
+      return isMatchOption(value) ? value : undefined
     case 'enum':
-      if (Array.isArray(field.values)) {
-        return typeof value === 'string' && field.values.includes(value) ? value : undefined
-      }
-      return typeof value === 'string' && Object.values(field.values).includes(value) ? value : undefined
+      return typeof value === 'string' && getEnumValues(field.values).includes(value) ? value : undefined
   }
+}
+
+function getEnumValues(values: EnumField['values']): readonly string[] {
+  return isReadonlyStringArray(values) ? values : Object.values(values)
+}
+
+// `Array.isArray`'s built-in predicate narrows to `any[]`, which degrades a
+// `readonly string[] | Record<string, string>` union to `any[]` instead of `readonly string[]`.
+function isReadonlyStringArray(value: unknown): value is readonly string[] {
+  return Array.isArray(value)
 }

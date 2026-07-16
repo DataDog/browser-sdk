@@ -1,7 +1,6 @@
 import type { InitConfiguration, RawTelemetryConfiguration } from '@datadog/browser-core'
 import {
   catchUserErrors,
-  isMatchOption,
   serializeConfiguration,
   DefaultPrivacyLevel,
   TraceContextInjection,
@@ -10,7 +9,7 @@ import {
   isNonEmptyArray,
   BROWSER_CORE_SCHEMA,
 } from '@datadog/browser-core'
-import { isIndexableObject } from '@datadog/js-core/util'
+import { isIndexableObject, isMatchOption } from '@datadog/js-core/util'
 import { validateAndBuildConfiguration } from '@datadog/js-core/configuration'
 import type { InferredConfig, MatchOption } from '@datadog/js-core/configuration'
 import type { RumEventDomainContext } from '../../domainContext.types'
