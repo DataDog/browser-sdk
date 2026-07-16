@@ -1,7 +1,7 @@
 import { registerCleanupTask, mockClock } from '@datadog/browser-core/test'
 import type { Clock } from '@datadog/browser-core/test'
+import { buildCacheKey, createConfigurationCache, CACHE_VERSION, CACHE_KEY_PREFIX } from '@datadog/browser-core'
 import type { RemoteConfiguration } from './remoteConfiguration'
-import { buildCacheKey, createConfigurationCache, CACHE_VERSION, CACHE_KEY_PREFIX } from './remoteConfigurationCache'
 
 const REMOTE_CONFIGURATION_ID = 'test-id'
 const CACHE_KEY = `${CACHE_KEY_PREFIX}${REMOTE_CONFIGURATION_ID}`
