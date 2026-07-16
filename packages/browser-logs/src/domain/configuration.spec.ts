@@ -17,6 +17,15 @@ import {
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx' }
 
 describe('validateAndBuildLogsConfiguration', () => {
+  it('should accept remoteConfigurationId', () => {
+    const result = validateAndBuildLogsConfiguration({
+      clientToken: 'xxx',
+      remoteConfigurationId: 'rc-test-id',
+    })
+    expect(result).toBeDefined()
+    expect(result!.remoteConfigurationId).toBe('rc-test-id')
+  })
+
   describe('forwardErrorsToLogs', () => {
     it('defaults to true if the option is not provided', () => {
       expect(validateAndBuildLogsConfiguration(DEFAULT_INIT_CONFIGURATION)!.forwardErrorsToLogs).toBeTrue()
@@ -124,11 +133,18 @@ describe('serializeLogsConfiguration', () => {
       forwardErrorsToLogs: true,
       forwardConsoleLogs: 'all',
       forwardReports: 'all',
+      remoteConfigurationId: 'rc-test-id',
+      remoteConfiguration: { id: 'rc-test-id' },
+      remoteConfigurationProxy: 'https://proxy.example.com',
     }
 
     type MapLogsInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
       ? MapInitConfigurationKey<Key>
-      : CamelToSnakeCase<Key>
+      : Key extends 'remoteConfiguration'
+        ? never
+        : Key extends 'remoteConfigurationProxy'
+          ? 'use_remote_configuration_proxy'
+          : CamelToSnakeCase<Key>
 
     // By specifying the type here, we can ensure that serializeConfiguration is returning an
     // object containing all expected properties.
@@ -141,6 +157,8 @@ describe('serializeLogsConfiguration', () => {
       forward_errors_to_logs: true,
       forward_console_logs: 'all',
       forward_reports: 'all',
+      remote_configuration_id: 'rc-test-id',
+      use_remote_configuration_proxy: true,
     })
   })
 })

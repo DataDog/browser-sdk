@@ -152,7 +152,7 @@ function restoreFunctions(
       typeof resultValue === 'object' &&
       !Array.isArray(resultValue)
     ) {
-      result[key] = restoreFunctions(originalValue, resultValue)
+      result[key] = restoreFunctions(originalValue as SDKInitConfiguration, resultValue)
     }
   }
 
