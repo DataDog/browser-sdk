@@ -43,6 +43,10 @@ export async function fetchRemoteConfiguration(
   if (!response?.ok) {
     return { ok: false, error: new Error('Error fetching the remote configuration.') }
   }
-  const value: RemoteConfiguration = await response.json()
-  return { ok: true, value }
+  try {
+    const value: RemoteConfiguration = await response.json()
+    return { ok: true, value }
+  } catch {
+    return { ok: false, error: new Error('Error parsing the remote configuration.') }
+  }
 }

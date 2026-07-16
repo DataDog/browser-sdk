@@ -17,6 +17,8 @@ import {
   display,
   startTelemetry,
   startSessionManager,
+  CACHE_VERSION,
+  buildCacheKey,
 } from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { HybridInitConfiguration, LogsInitConfiguration } from '../domain/configuration'
@@ -250,6 +252,32 @@ describe('preStartLogs', () => {
       await waitNextMicrotask()
 
       expect(doStartLogsSpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('remote configuration', () => {
+    const RC_ID = 'test-rc-id'
+
+    afterEach(() => {
+      localStorage.removeItem(buildCacheKey(RC_ID))
+    })
+
+    it('applies cached remote config overrides before starting', async () => {
+      localStorage.setItem(
+        buildCacheKey(RC_ID),
+        JSON.stringify({
+          version: CACHE_VERSION,
+          config: { logs: { forwardErrorsToLogs: false } },
+          fetchedAt: Date.now(),
+        })
+      )
+
+      const { strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults()
+      strategy.init({ clientToken: 'xxx', remoteConfiguration: { id: RC_ID } })
+      await collectAsyncCalls(doStartLogsSpy, 1)
+
+      const [configuration] = doStartLogsSpy.calls.argsFor(0)
+      expect(configuration.forwardErrorsToLogs).toBe(false)
     })
   })
 

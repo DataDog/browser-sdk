@@ -8,6 +8,7 @@ import {
   removeDuplicates,
   RawReportType,
   objectValues,
+  getRemoteConfigurationId,
 } from '@datadog/browser-core'
 import type { LogsEvent } from '../logsEvent.types'
 import type { LogsEventDomainContext } from '../domainContext.types'
@@ -71,6 +72,27 @@ export interface LogsInitConfiguration extends InitConfiguration {
    * @category Data Collection
    */
   forwardReports?: RawReportType[] | 'all' | undefined
+
+  /**
+   * The ID of the remote configuration to apply. Use this for the non-blocking cache-and-reload path.
+   *
+   * @category Remote Configuration
+   */
+  remoteConfigurationId?: string | undefined
+
+  /**
+   * Remote configuration options.
+   *
+   * @category Remote Configuration
+   */
+  remoteConfiguration?: { id: string; sync?: boolean; required?: boolean } | undefined
+
+  /**
+   * Proxy URL for fetching the remote configuration.
+   *
+   * @category Remote Configuration
+   */
+  remoteConfigurationProxy?: string | undefined
 }
 
 /**
@@ -89,6 +111,7 @@ export interface LogsConfiguration extends Configuration {
   forwardConsoleLogs: ConsoleApiName[]
   forwardReports: RawReportType[]
   requestErrorResponseLengthLimit: number
+  remoteConfigurationId: string | undefined
 }
 
 /**
@@ -123,6 +146,7 @@ export function validateAndBuildLogsConfiguration(
     forwardConsoleLogs,
     forwardReports,
     requestErrorResponseLengthLimit: DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT,
+    remoteConfigurationId: getRemoteConfigurationId(initConfiguration),
     ...baseConfiguration,
   }
 }
@@ -151,6 +175,8 @@ export function serializeLogsConfiguration(configuration: LogsInitConfiguration)
     forward_errors_to_logs: configuration.forwardErrorsToLogs,
     forward_console_logs: configuration.forwardConsoleLogs,
     forward_reports: configuration.forwardReports,
+    remote_configuration_id: getRemoteConfigurationId(configuration),
+    use_remote_configuration_proxy: configuration.remoteConfigurationProxy !== undefined || undefined,
     ...baseSerializedInitConfiguration,
   } satisfies RawTelemetryConfiguration
 }
