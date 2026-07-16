@@ -58,7 +58,8 @@ export function sampleUsingKnuthFactor(identifier: bigint, sampleRate: number): 
   // BigInt arithmetic to write. In practice this does not matter, as we are using floating point
   // numbers in the end, and Number(2n**64n-1n) === Number(2n**64n).
   const knuthFactor = 1111111111111111111n
-  const twoPow64 = 2n ** 64n
+  // Avoid `**` as it can be downleveled to `Math.pow`, which does not support BigInts.
+  const twoPow64 = BigInt('0x10000000000000000')
   const hash = (identifier * knuthFactor) % twoPow64
   return Number(hash) <= (sampleRate / 100) * Number(twoPow64)
 }
