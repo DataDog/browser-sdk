@@ -4,6 +4,7 @@ import {
   serializeConfiguration,
   catchUserErrors,
   display,
+  getRemoteConfigurationId,
   RawReportType,
   BROWSER_CORE_SCHEMA,
 } from '@datadog/browser-core'
@@ -71,6 +72,31 @@ export interface LogsInitConfiguration extends InitConfiguration {
    * @category Data Collection
    */
   forwardReports?: RawReportType[] | 'all' | undefined
+
+  /**
+   * The ID of the remote configuration to apply. Triggers synchronous loading — the SDK waits for
+   * the fetch to complete before starting. Use `remoteConfiguration: { id }` for the non-blocking
+   * cache-and-reload path instead.
+   *
+   * @category Remote Configuration
+   */
+  remoteConfigurationId?: string | undefined
+
+  /**
+   * Remote configuration options. Use `{ id }` for the non-blocking cache-and-reload path (the SDK
+   * starts immediately using a cached value and refreshes in the background). Use `{ id, sync: true }`
+   * to block startup on a live fetch.
+   *
+   * @category Remote Configuration
+   */
+  remoteConfiguration?: { id: string; sync?: boolean; required?: boolean } | undefined
+
+  /**
+   * Proxy URL for fetching the remote configuration.
+   *
+   * @category Remote Configuration
+   */
+  remoteConfigurationProxy?: string | undefined
 }
 
 /**
@@ -127,6 +153,8 @@ export function serializeLogsConfiguration(configuration: LogsInitConfiguration)
     forward_errors_to_logs: configuration.forwardErrorsToLogs,
     forward_console_logs: configuration.forwardConsoleLogs,
     forward_reports: configuration.forwardReports,
+    remote_configuration_id: getRemoteConfigurationId(configuration),
+    use_remote_configuration_proxy: configuration.remoteConfigurationProxy !== undefined || undefined,
     ...baseSerializedInitConfiguration,
   } satisfies RawTelemetryConfiguration
 }
