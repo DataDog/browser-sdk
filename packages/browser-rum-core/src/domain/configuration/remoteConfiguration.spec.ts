@@ -757,7 +757,7 @@ describe('remoteConfiguration', () => {
       })
     })
 
-    it('should apply the new RFC fields when present in the rum section', () => {
+    it('should apply telemetrySampleRate, trackResources, trackLongTasks, and actionNameAttribute from the rum section', () => {
       const result = applyRemoteConfiguration(
         DEFAULT_INIT_CONFIGURATION,
         {
