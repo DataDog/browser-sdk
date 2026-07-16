@@ -1,6 +1,6 @@
 import { timeStampNow } from '@datadog/js-core/time'
-import { tryJsonParse } from '../../tools/utils/objectUtils'
 import type { TimeStamp } from '@datadog/js-core/time'
+import { tryJsonParse } from '../../tools/utils/objectUtils'
 
 export const CACHE_VERSION = 2
 export const CACHE_KEY_PREFIX = 'dd_rc_'
