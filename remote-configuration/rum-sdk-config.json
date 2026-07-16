@@ -138,6 +138,19 @@
     }
   },
   "properties": {
+    "profiling": {
+      "type": "object",
+      "description": "Profiling feature Remote Configuration properties",
+      "additionalProperties": false,
+      "properties": {
+        "sampleRate": {
+          "type": "number",
+          "description": "The percentage of users profiled",
+          "minimum": 0,
+          "maximum": 100
+        }
+      }
+    },
     "rum": {
       "type": "object",
       "description": "RUM feature Remote Configuration properties",
@@ -172,6 +185,37 @@
           "description": "The percentage of sessions with RUM & Session Replay pricing tracked",
           "minimum": 0,
           "maximum": 100
+        },
+        "telemetrySampleRate": {
+          "type": "number",
+          "description": "The percentage of telemetry events sampled",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "trackAnonymousUser": {
+          "type": "boolean",
+          "description": "Whether to track anonymous users"
+        },
+        "trackUserInteractions": {
+          "type": "boolean",
+          "description": "Whether to automatically collect user actions"
+        },
+        "trackResources": {
+          "type": "boolean",
+          "description": "Whether to collect resource events"
+        },
+        "trackLongTasks": {
+          "type": "boolean",
+          "description": "Whether to collect long task events"
+        },
+        "traceContextInjection": {
+          "type": "string",
+          "description": "Controls when tracing headers are injected",
+          "enum": ["all", "sampled"]
+        },
+        "actionNameAttribute": {
+          "type": "string",
+          "description": "HTML attribute used as the RUM action name"
         },
         "defaultPrivacyLevel": {
           "type": "string",
