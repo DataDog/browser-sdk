@@ -1,5 +1,5 @@
 import { timeStampNow } from '@datadog/js-core/time'
-import type { TrackingConsentState, SessionManager } from '@datadog/browser-core'
+import type { TrackingConsentState, SessionManager, RemoteConfiguration } from '@datadog/browser-core'
 import {
   BufferedObservable,
   canUseEventBridge,
@@ -22,11 +22,15 @@ import {
   mockable,
   startTelemetrySessionContext,
   setAllowUntrustedEvents,
+  createConfigurationCache,
+  fetchRemoteConfiguration,
+  getRemoteConfigurationId,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
 import { serializeLogsConfiguration, validateAndBuildLogsConfiguration } from '../domain/configuration'
+import { applyLogsRemoteConfiguration } from '../domain/remoteConfiguration'
 import type { CommonContext } from '../rawLogsEvent.types'
 import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { Strategy } from './logsPublicApi'
@@ -71,7 +75,48 @@ export function createPreStartStrategy(
     }
 
     trackingConsentStateSubscription.unsubscribe()
-    const startLogsResult = doStartLogs(cachedConfiguration, sessionManager, hooks)
+
+    const remoteConfigId = getRemoteConfigurationId(cachedInitConfiguration)
+    let configurationToUse = cachedConfiguration
+
+    if (remoteConfigId) {
+      const cache = createConfigurationCache<RemoteConfiguration>({ remoteConfigurationId: remoteConfigId })
+      const cacheResult = cache.read()
+
+      // Background sync — always kick off a fresh fetch to update the cache
+      fetchRemoteConfiguration(cachedInitConfiguration)
+        .then((fetchResult) => {
+          if (fetchResult.ok) {
+            cache.write(fetchResult.value)
+          }
+        })
+        .catch(monitorError)
+
+      if (cacheResult.status === 'hit') {
+        const resolvedInitConfig = applyLogsRemoteConfiguration(cachedInitConfiguration, cacheResult.config)
+        const resolvedLogsConfig = validateAndBuildLogsConfiguration(resolvedInitConfig)
+        if (resolvedLogsConfig) {
+          configurationToUse = resolvedLogsConfig
+        }
+      } else if (cachedInitConfiguration.remoteConfiguration?.required) {
+        fetchRemoteConfiguration(cachedInitConfiguration)
+          .then((fetchResult) => {
+            const resolvedInitConfig = fetchResult.ok
+              ? applyLogsRemoteConfiguration(cachedInitConfiguration!, fetchResult.value)
+              : cachedInitConfiguration!
+            const resolvedLogsConfig = validateAndBuildLogsConfiguration(resolvedInitConfig)
+            if (resolvedLogsConfig) {
+              const startLogsResult = doStartLogs(resolvedLogsConfig, sessionManager!, hooks)
+              bufferApiCalls.subscribe((callback) => callback(startLogsResult))
+              bufferApiCalls.unbuffer()
+            }
+          })
+          .catch(monitorError)
+        return
+      }
+    }
+
+    const startLogsResult = doStartLogs(configurationToUse, sessionManager, hooks)
 
     bufferApiCalls.subscribe((callback) => callback(startLogsResult))
     bufferApiCalls.unbuffer()
