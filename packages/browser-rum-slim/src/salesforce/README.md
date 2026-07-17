@@ -1,7 +1,6 @@
 # Salesforce Lightning RUM
 
-This entrypoint is intended for Salesforce Lightning and LWC applications. It exposes the SDK as `window.DD_RUM`
-and forces `sessionReplaySampleRate` to `0`.
+This entrypoint is intended for Salesforce Lightning and LWC applications.
 
 ## Recommended LWC Setup
 

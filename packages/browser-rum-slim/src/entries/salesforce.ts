@@ -3,7 +3,6 @@ import type { RumPublicApi } from '@datadog/browser-rum-core'
 import { makeRumPublicApi } from '@datadog/browser-rum-core'
 import { makeRecorderApiStub } from '../boot/stubRecorderApi'
 import { makeProfilerApiStub } from '../boot/stubProfilerApi'
-import { makeSalesforceRumPublicApi } from '../boot/salesforceRumPublicApi'
 
 export type {
   User,
@@ -74,11 +73,9 @@ export { DefaultPrivacyLevel } from '@datadog/browser-core'
  * @category Main
  * @see {@link DatadogRum}
  */
-export const datadogRum = makeSalesforceRumPublicApi(
-  makeRumPublicApi(makeRecorderApiStub(), makeProfilerApiStub(), {
-    sdkName: 'rum-slim',
-  })
-)
+export const datadogRum = makeRumPublicApi(makeRecorderApiStub(), makeProfilerApiStub(), {
+  sdkName: 'rum-slim',
+})
 
 interface BrowserWindow {
   DD_RUM?: RumPublicApi
