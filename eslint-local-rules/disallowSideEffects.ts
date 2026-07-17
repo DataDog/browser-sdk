@@ -42,7 +42,6 @@ const pathsWithSideEffect = new Set([
   `${packagesRoot}/browser-rum-slim/src/entries/main.ts`,
   `${packagesRoot}/browser-rum-shopify/src/entries/main.ts`,
   `${packagesRoot}/browser-rum-slim/src/entries/salesforce.ts`,
-  `${packagesRoot}/browser-rum-slim/src/entries/salesforce.ts`,
   `${packagesRoot}/browser-debugger/src/entries/main.ts`,
 ])
 
