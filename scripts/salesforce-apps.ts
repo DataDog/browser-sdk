@@ -142,13 +142,7 @@ function deployApp(appKeys: AppKey[]) {
 
 function printUrl(appKeys: AppKey[]): void {
   for (const appKey of appKeys) {
-    const { siteName, url } = APPS[appKey]
-
-    if (siteName) {
-      console.log(url)
-      continue
-    }
-
+    const { url } = APPS[appKey]
     console.log(url)
   }
 }
