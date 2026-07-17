@@ -1,4 +1,5 @@
-import { addEventListener, DOM_EVENT } from '@datadog/browser-core'
+import { addEventListener, clearTimeout, DOM_EVENT, setTimeout } from '@datadog/browser-core'
+import type { TimeoutId } from '@datadog/browser-core'
 import type { RelativeTime } from '@datadog/js-core/time'
 
 export interface ExtraPointerEventFields {
@@ -29,6 +30,16 @@ export interface ActionEventsHooks<ClickContext> {
  */
 export const ACTION_SCROLL_DISTANCE_THRESHOLD = 10
 
+/**
+ * When a touch/pen pointer moves beyond ACTION_SCROLL_DISTANCE_THRESHOLD, the action is not dropped
+ * immediately: it is held for this long to see whether the browser fires a corroborating `click`.
+ * A genuine tap fires `click` right after `pointerup` even if the finger wobbled past the movement
+ * threshold, so a corroborated gesture is kept; a real scroll/drag never fires `click`, so it is
+ * dropped once this delay elapses. This makes the guard robust to devices whose tap slop exceeds our
+ * movement threshold (see docs/specs §9, §11) — we never discard a browser-confirmed click.
+ */
+export const CLICK_CORROBORATION_TIMEOUT = 50
+
 export function listenActionEvents<ClickContext>({ onPointerDown, onPointerUp }: ActionEventsHooks<ClickContext>) {
   let selectionEmptyAtPointerDown: boolean
   let userActivity: UserActivity = {
@@ -38,6 +49,15 @@ export function listenActionEvents<ClickContext>({ onPointerDown, onPointerUp }:
   }
   let clickContext: ClickContext | undefined
   let pointerDownEvent: MouseEventOnElement | undefined
+  // A moved pointerup awaiting a corroborating `click` before it is emitted or dropped.
+  let pendingScrollCandidate: { emit: () => void; timeoutId: TimeoutId } | undefined
+
+  function dropPendingScrollCandidate() {
+    if (pendingScrollCandidate) {
+      clearTimeout(pendingScrollCandidate.timeoutId)
+      pendingScrollCandidate = undefined
+    }
+  }
 
   const listeners = [
     addEventListener(
@@ -83,18 +103,41 @@ export function listenActionEvents<ClickContext>({ onPointerDown, onPointerUp }:
       DOM_EVENT.POINTER_UP,
       (event: PointerEvent) => {
         if (isValidPointerEvent(event) && clickContext) {
-          if (isScrollGesture(pointerDownEvent, event)) {
-            // The pointer moved like a scroll/drag rather than a tap, so this is not a click.
-            // This notably happens in Android WebViews: when the native layer handles the scroll,
-            // the page receives pointerdown -> pointerup (no `pointercancel`, no synthetic `click`)
-            // even though the finger moved. Recording it would create a spurious click action.
-            clickContext = undefined
-            return
-          }
           // Use a scoped variable to make sure the value is not changed by other clicks
           const localUserActivity = userActivity
-          onPointerUp(clickContext, event, () => localUserActivity)
+          const context = clickContext
           clickContext = undefined
+          const emit = () => onPointerUp(context, event, () => localUserActivity)
+
+          if (isScrollGesture(pointerDownEvent, event)) {
+            // The pointer moved like a scroll/drag rather than a tap. This notably happens in
+            // Android WebViews / iOS WKWebViews: when the native layer handles the scroll, the page
+            // receives pointerdown -> pointerup (no `pointercancel`) even though the finger moved.
+            // Instead of dropping it outright, hold it briefly: if the browser fires a corroborating
+            // `click`, it really was a tap (the movement threshold was too tight for this device),
+            // so keep it. A real scroll never fires `click`, so it is dropped on timeout.
+            dropPendingScrollCandidate()
+            pendingScrollCandidate = {
+              emit,
+              timeoutId: setTimeout(dropPendingScrollCandidate, CLICK_CORROBORATION_TIMEOUT),
+            }
+            return
+          }
+          emit()
+        }
+      },
+      { capture: true }
+    ),
+
+    addEventListener(
+      window,
+      DOM_EVENT.CLICK,
+      () => {
+        // A `click` after a moved pointerup proves the browser considered it a tap: keep it.
+        if (pendingScrollCandidate) {
+          const { emit } = pendingScrollCandidate
+          dropPendingScrollCandidate()
+          emit()
         }
       },
       { capture: true }
@@ -112,6 +155,7 @@ export function listenActionEvents<ClickContext>({ onPointerDown, onPointerUp }:
 
   return {
     stop: () => {
+      dropPendingScrollCandidate()
       listeners.forEach((listener) => listener.stop())
     },
   }

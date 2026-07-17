@@ -1,6 +1,7 @@
-import { createNewEvent } from '@datadog/browser-core/test'
+import { createNewEvent, mockClock } from '@datadog/browser-core/test'
+import type { Clock } from '@datadog/browser-core/test'
 import type { ActionEventsHooks } from './listenActionEvents'
-import { ACTION_SCROLL_DISTANCE_THRESHOLD, listenActionEvents } from './listenActionEvents'
+import { ACTION_SCROLL_DISTANCE_THRESHOLD, CLICK_CORROBORATION_TIMEOUT, listenActionEvents } from './listenActionEvents'
 
 describe('listenActionEvents', () => {
   let actionEventsHooks: {
@@ -305,10 +306,12 @@ describe('listenActionEvents', () => {
       pointerType,
       from,
       to,
+      thenClick,
     }: {
       pointerType: string
       from: { x: number; y: number }
       to: { x: number; y: number }
+      thenClick?: boolean
     }) {
       window.dispatchEvent(
         createNewEvent('pointerdown', {
@@ -328,6 +331,81 @@ describe('listenActionEvents', () => {
           clientY: to.y,
         })
       )
+      if (thenClick) {
+        window.dispatchEvent(createNewEvent('click', { target: document.body, clientX: to.x, clientY: to.y }))
+      }
+    }
+  })
+
+  // A moved touch/pen pointer is not dropped outright: it is held briefly, and kept only if the
+  // browser fires a corroborating `click` (proving it was a tap despite the movement). This protects
+  // against devices whose tap slop exceeds ACTION_SCROLL_DISTANCE_THRESHOLD.
+  describe('click corroboration', () => {
+    let clock: Clock
+
+    beforeEach(() => {
+      clock = mockClock()
+    })
+
+    it('keeps a moved touch pointer when a corroborating `click` fires (real tap past the threshold)', () => {
+      emulateCorroboratedGesture({ pointerType: 'touch', from: { x: 100, y: 100 }, to: { x: 100, y: 260 }, thenClick: true })
+      expect(actionEventsHooks.onPointerUp).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not emit a moved touch pointer before a `click` corroborates it', () => {
+      emulateCorroboratedGesture({ pointerType: 'touch', from: { x: 100, y: 100 }, to: { x: 100, y: 260 } })
+      expect(actionEventsHooks.onPointerUp).not.toHaveBeenCalled()
+    })
+
+    it('drops a moved touch pointer when no `click` corroborates within the timeout (scroll)', () => {
+      emulateCorroboratedGesture({ pointerType: 'touch', from: { x: 100, y: 100 }, to: { x: 100, y: 260 } })
+      clock.tick(CLICK_CORROBORATION_TIMEOUT)
+      expect(actionEventsHooks.onPointerUp).not.toHaveBeenCalled()
+    })
+
+    it('does not emit twice when a corroborated click is followed by the timeout', () => {
+      emulateCorroboratedGesture({ pointerType: 'touch', from: { x: 100, y: 100 }, to: { x: 100, y: 260 }, thenClick: true })
+      clock.tick(CLICK_CORROBORATION_TIMEOUT)
+      expect(actionEventsHooks.onPointerUp).toHaveBeenCalledTimes(1)
+    })
+
+    it('a late `click` after the timeout does not resurrect a dropped gesture', () => {
+      window.dispatchEvent(
+        createNewEvent('pointerdown', { target: document.body, isPrimary: true, pointerType: 'touch', clientX: 100, clientY: 100 })
+      )
+      window.dispatchEvent(
+        createNewEvent('pointerup', { target: document.body, isPrimary: true, pointerType: 'touch', clientX: 100, clientY: 260 })
+      )
+      clock.tick(CLICK_CORROBORATION_TIMEOUT)
+      window.dispatchEvent(createNewEvent('click', { target: document.body, clientX: 100, clientY: 260 }))
+      expect(actionEventsHooks.onPointerUp).not.toHaveBeenCalled()
+    })
+
+    it('emits a small-movement tap immediately without waiting for corroboration', () => {
+      emulateCorroboratedGesture({ pointerType: 'touch', from: { x: 100, y: 100 }, to: { x: 102, y: 102 } })
+      expect(actionEventsHooks.onPointerUp).toHaveBeenCalledTimes(1)
+    })
+
+    function emulateCorroboratedGesture({
+      pointerType,
+      from,
+      to,
+      thenClick,
+    }: {
+      pointerType: string
+      from: { x: number; y: number }
+      to: { x: number; y: number }
+      thenClick?: boolean
+    }) {
+      window.dispatchEvent(
+        createNewEvent('pointerdown', { target: document.body, isPrimary: true, pointerType, clientX: from.x, clientY: from.y })
+      )
+      window.dispatchEvent(
+        createNewEvent('pointerup', { target: document.body, isPrimary: true, pointerType, clientX: to.x, clientY: to.y })
+      )
+      if (thenClick) {
+        window.dispatchEvent(createNewEvent('click', { target: document.body, clientX: to.x, clientY: to.y }))
+      }
     }
   })
 
