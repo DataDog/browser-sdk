@@ -37,6 +37,8 @@ createTest('salesforce views')
     )
     expect(productExplorerView).toBeDefined()
     expect(productExplorerView?.view.loading_type).toBe('route_change')
+
+    expect(intakeRegistry.telemetryEvents.some((e) => e.telemetry.bundle_name === 'rum-salesforce')).toBe(true)
   })
 
 createTest('salesforce resources')

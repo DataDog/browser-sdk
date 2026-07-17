@@ -164,7 +164,7 @@ async function buildApp(appName: string) {
 }
 
 function buildSalesforceLwcApp() {
-  const sourceBundle = 'packages/browser-rum-slim/bundle/datadog-rum-slim.js'
+  const sourceBundle = 'packages/browser-rum-slim/bundle/datadog-rum-salesforce.js'
   const targetBundle = 'test/apps/sf-lwc-app/force-app/main/default/staticresources/datadog_rum_slim.js'
 
   printLog('Building app at test/apps/sf-lwc-app...')
