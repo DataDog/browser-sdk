@@ -331,6 +331,68 @@ describe('listenActionEvents', () => {
     }
   })
 
+  // Preserve today's behavior: only moved pointers on surfaces the browser is allowed to scroll are
+  // dropped (native-scroll leaks). Drags on surfaces the page owns (touch-action:none / axis-
+  // restricted / preventDefault) are kept — a normal browser records them too.
+  describe('touch-action awareness', () => {
+    let target: HTMLElement
+
+    afterEach(() => {
+      target?.remove()
+    })
+
+    it('drops a moved touch on a scrollable (touch-action:auto) surface — native-scroll leak', () => {
+      emulateDrag({ touchAction: 'auto', from: { x: 100, y: 100 }, to: { x: 100, y: 260 } })
+      expect(actionEventsHooks.onPointerUp).not.toHaveBeenCalled()
+    })
+
+    it('keeps a moved touch on a touch-action:none surface (map / carousel / drawing)', () => {
+      emulateDrag({ touchAction: 'none', from: { x: 100, y: 100 }, to: { x: 100, y: 260 } })
+      expect(actionEventsHooks.onPointerUp).toHaveBeenCalledTimes(1)
+    })
+
+    it('drops a vertical drag on a pan-y surface (the browser scrolls vertically there)', () => {
+      emulateDrag({ touchAction: 'pan-y', from: { x: 100, y: 100 }, to: { x: 100, y: 260 } })
+      expect(actionEventsHooks.onPointerUp).not.toHaveBeenCalled()
+    })
+
+    it('keeps a horizontal drag on a pan-y surface (the browser cannot pan horizontally there)', () => {
+      emulateDrag({ touchAction: 'pan-y', from: { x: 100, y: 100 }, to: { x: 260, y: 100 } })
+      expect(actionEventsHooks.onPointerUp).toHaveBeenCalledTimes(1)
+    })
+
+    it('keeps a moved touch when the page handled the move (touchmove preventDefault)', () => {
+      emulateDrag({ touchAction: 'auto', from: { x: 100, y: 100 }, to: { x: 100, y: 260 }, preventTouchMove: true })
+      expect(actionEventsHooks.onPointerUp).toHaveBeenCalledTimes(1)
+    })
+
+    function emulateDrag({
+      touchAction,
+      from,
+      to,
+      preventTouchMove,
+    }: {
+      touchAction: string
+      from: { x: number; y: number }
+      to: { x: number; y: number }
+      preventTouchMove?: boolean
+    }) {
+      target = document.createElement('div')
+      target.style.touchAction = touchAction
+      document.body.appendChild(target)
+      window.dispatchEvent(
+        createNewEvent('pointerdown', { target, isPrimary: true, pointerType: 'touch', clientX: from.x, clientY: from.y })
+      )
+      if (preventTouchMove) {
+        // The page's own handler called preventDefault, so it is driving the scroll/drag itself.
+        window.dispatchEvent(createNewEvent('touchmove', { target, defaultPrevented: true }))
+      }
+      window.dispatchEvent(
+        createNewEvent('pointerup', { target, isPrimary: true, pointerType: 'touch', clientX: to.x, clientY: to.y })
+      )
+    }
+  })
+
   function emulateClick({
     beforeMouseUp,
     target = document.body,
