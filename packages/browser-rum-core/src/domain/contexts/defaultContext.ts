@@ -6,7 +6,8 @@ import type { AssembleHook, DefaultRumEventAttributes } from '../hooks'
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
 
-export type SdkName = 'rum' | 'rum-slim' | 'rum-synthetics' | 'rum-salesforce'
+export type SdkName =
+  'rum' | 'rum-slim' | 'rum-synthetics' | 'rum-shopify-custom-pixel' | 'rum-shopify-storefront' | 'rum-salesforce'
 
 export function startDefaultContext(
   assembleHook: AssembleHook,
