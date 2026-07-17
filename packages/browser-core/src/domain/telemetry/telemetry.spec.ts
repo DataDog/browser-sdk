@@ -35,9 +35,10 @@ import { StatusType, TelemetryType } from './rawTelemetryEvent.types'
 function startAndSpyTelemetry(
   configuration?: Partial<Configuration>,
   {
+    sdkName,
     metricSampleRate,
     maxTelemetryEventsPerPage,
-  }: { metricSampleRate?: number; maxTelemetryEventsPerPage?: number } = {}
+  }: { sdkName?: string; metricSampleRate?: number; maxTelemetryEventsPerPage?: number } = {}
 ) {
   const observable = new Observable<TelemetryEvent & Context>()
 
@@ -53,6 +54,7 @@ function startAndSpyTelemetry(
     } as Configuration,
     hook,
     observable,
+    sdkName,
     metricSampleRate,
     maxTelemetryEventsPerPage
   )
@@ -238,6 +240,15 @@ describe('telemetry', () => {
     })
 
     expect((await getTelemetryEvents())[0].telemetry.bundle_name).toEqual(jasmine.any(String))
+  })
+
+  it('should use the sdk name as the bundle name when provided', async () => {
+    const { getTelemetryEvents } = startAndSpyTelemetry(undefined, { sdkName: 'rum-salesforce' })
+    callMonitored(() => {
+      throw new Error('message')
+    })
+
+    expect((await getTelemetryEvents())[0].telemetry.bundle_name).toBe('rum-salesforce')
   })
 
   it('should collect pre start events', async () => {

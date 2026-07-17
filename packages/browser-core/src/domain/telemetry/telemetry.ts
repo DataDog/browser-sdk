@@ -87,10 +87,17 @@ export function getTelemetryObservable() {
 export function startTelemetry(
   telemetryService: TelemetryService,
   configuration: Configuration,
-  hook: Hook<any, any>
+  hook: Hook<any, any>,
+  sdkName?: string
 ): Telemetry {
   const observable = new Observable<TelemetryEvent & Context>()
-  const { enabled, metricsEnabled } = startTelemetryCollection(telemetryService, configuration, hook, observable)
+  const { enabled, metricsEnabled } = startTelemetryCollection(
+    telemetryService,
+    configuration,
+    hook,
+    observable,
+    sdkName
+  )
   const { stop } = startTelemetryTransport(configuration, observable)
   return {
     stop,
@@ -104,6 +111,7 @@ export function startTelemetryCollection(
   configuration: Configuration,
   hook: Hook<any, any>,
   observable: Observable<TelemetryEvent & Context>,
+  sdkName?: string,
   metricSampleRate = METRIC_SAMPLE_RATE,
   maxTelemetryEventsPerPage = MAX_TELEMETRY_EVENTS_PER_PAGE
 ) {
@@ -189,7 +197,7 @@ export function startTelemetryCollection(
         runtime_env: runtimeEnvInfo,
         connectivity: getConnectivity(),
         sdk_setup: __BUILD_ENV__SDK_SETUP__,
-        bundle_name: __BUILD_ENV__SDK_BUNDLE_NAME__,
+        bundle_name: sdkName ?? __BUILD_ENV__SDK_BUNDLE_NAME__,
       }) as TelemetryEvent['telemetry'],
       ddtags: buildTags(configuration).join(','),
       experimental_features: Array.from(getExperimentalFeatures()),
