@@ -55,7 +55,7 @@ export type { ConsoleApiName } from '@datadog/js-core/util'
  * @see {@link DatadogLogs}
  * @see [Browser Log Collection](https://docs.datadoghq.com/logs/log_collection/javascript/)
  */
-export const datadogLogs = makeLogsPublicApi()
+export const datadogLogs = makeLogsPublicApi({ sdkName: 'logs' })
 
 interface BrowserWindow {
   DD_LOGS?: LogsPublicApi
