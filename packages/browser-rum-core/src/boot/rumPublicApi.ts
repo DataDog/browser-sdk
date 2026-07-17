@@ -619,14 +619,22 @@ export interface ProfilerApi {
   ) => void
 }
 
-export interface RumPublicApiOptions {
-  ignoreInitIfSyntheticsWillInjectRum?: boolean
-  startDeflateWorker?: (
+export interface DeflateWorkerModule {
+  startDeflateWorker: (
     configuration: RumConfiguration,
     source: string,
     onInitializationFailure: () => void
   ) => DeflateWorker | undefined
-  createDeflateEncoder?: (worker: DeflateWorker, streamId: DeflateEncoderStreamId) => DeflateEncoder
+  createDeflateEncoder: (worker: DeflateWorker, streamId: DeflateEncoderStreamId) => DeflateEncoder
+}
+
+export type CreateDeflateEncoder = DeflateWorkerModule['createDeflateEncoder']
+
+export interface RumPublicApiOptions {
+  ignoreInitIfSyntheticsWillInjectRum?: boolean
+  // The deflate worker embeds a sizeable inlined worker string, so it is loaded on demand (only when
+  // session replay or intake request compression is used) to keep it out of the main bundle.
+  loadDeflateWorker?: () => Promise<DeflateWorkerModule | undefined>
   sdkName?: SdkName
 }
 
@@ -672,10 +680,10 @@ export function makeRumPublicApi(
   let strategy = createPreStartStrategy(
     options,
     trackingConsentState,
-    (configuration, sessionManager, deflateWorker, initialViewOptions, telemetry, hooks) => {
+    (configuration, sessionManager, deflateWorker, createDeflateEncoder, initialViewOptions, telemetry, hooks) => {
       const createEncoder =
-        deflateWorker && options.createDeflateEncoder
-          ? (streamId: DeflateEncoderStreamId) => options.createDeflateEncoder!(deflateWorker, streamId)
+        deflateWorker && createDeflateEncoder
+          ? (streamId: DeflateEncoderStreamId) => createDeflateEncoder(deflateWorker, streamId)
           : createIdentityEncoder
 
       const startRumResult = mockable(startRum)(

@@ -56,6 +56,11 @@ describe('deploy', () => {
         env,
       },
       {
+        // Deflate worker chunk
+        command: `aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/browser-rum/bundle/chunks/datadogDeflateWorker-${FAKE_CHUNK_HASH}-datadog-rum.js s3://browser-agent-artifacts-prod/chunks/datadogDeflateWorker-${FAKE_CHUNK_HASH}-datadog-rum.js`,
+        env,
+      },
+      {
         // Profiler chunk
         command: `aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/browser-rum/bundle/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js s3://browser-agent-artifacts-prod/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js`,
         env,
@@ -86,7 +91,7 @@ describe('deploy', () => {
 
     assert.deepEqual(getCloudfrontCommands(), [
       {
-        command: `aws cloudfront create-invalidation --distribution-id EGB08BYCT1DD9 --paths /datadog-logs-v6.js,/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/datadog-rum-v6.js,/datadog-rum-slim-v6.js,/datadog-debugger-v6.js`,
+        command: `aws cloudfront create-invalidation --distribution-id EGB08BYCT1DD9 --paths /datadog-logs-v6.js,/chunks/datadogDeflateWorker-${FAKE_CHUNK_HASH}-datadog-rum.js,/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/datadog-rum-v6.js,/datadog-rum-slim-v6.js,/datadog-debugger-v6.js`,
         env,
       },
     ])
@@ -101,7 +106,11 @@ describe('deploy', () => {
           'aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/browser-logs/bundle/datadog-logs.js s3://browser-agent-artifacts-prod/us1/v6/datadog-logs.js',
         env,
       },
-      // RUM Profiler Chunk
+      {
+        // Deflate worker chunk
+        command: `aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/browser-rum/bundle/chunks/datadogDeflateWorker-${FAKE_CHUNK_HASH}-datadog-rum.js s3://browser-agent-artifacts-prod/us1/v6/chunks/datadogDeflateWorker-${FAKE_CHUNK_HASH}-datadog-rum.js`,
+        env,
+      },
       {
         command: `aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/browser-rum/bundle/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js s3://browser-agent-artifacts-prod/us1/v6/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js`,
         env,
@@ -128,7 +137,7 @@ describe('deploy', () => {
     ])
     assert.deepEqual(getCloudfrontCommands(), [
       {
-        command: `aws cloudfront create-invalidation --distribution-id EGB08BYCT1DD9 --paths /us1/v6/datadog-logs.js,/us1/v6/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/us1/v6/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/us1/v6/datadog-rum.js,/us1/v6/datadog-rum-slim.js,/us1/v6/datadog-debugger.js`,
+        command: `aws cloudfront create-invalidation --distribution-id EGB08BYCT1DD9 --paths /us1/v6/datadog-logs.js,/us1/v6/chunks/datadogDeflateWorker-${FAKE_CHUNK_HASH}-datadog-rum.js,/us1/v6/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/us1/v6/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/us1/v6/datadog-rum.js,/us1/v6/datadog-rum-slim.js,/us1/v6/datadog-debugger.js`,
         env,
       },
     ])
@@ -143,7 +152,11 @@ describe('deploy', () => {
           'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-logs/bundle/datadog-logs.js s3://browser-agent-artifacts-staging/datadog-logs-staging.js',
         env,
       },
-      // RUM Profiler Chunk
+      {
+        // Deflate worker chunk
+        command: `aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum/bundle/chunks/datadogDeflateWorker-${FAKE_CHUNK_HASH}-datadog-rum.js s3://browser-agent-artifacts-staging/chunks/datadogDeflateWorker-${FAKE_CHUNK_HASH}-datadog-rum.js`,
+        env,
+      },
       {
         command: `aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum/bundle/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js s3://browser-agent-artifacts-staging/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js`,
         env,
@@ -171,7 +184,7 @@ describe('deploy', () => {
 
     assert.deepEqual(getCloudfrontCommands(), [
       {
-        command: `aws cloudfront create-invalidation --distribution-id E2FP11ZSCFD3EU --paths /datadog-logs-staging.js,/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/datadog-rum-staging.js,/datadog-rum-slim-staging.js,/datadog-debugger-staging.js`,
+        command: `aws cloudfront create-invalidation --distribution-id E2FP11ZSCFD3EU --paths /datadog-logs-staging.js,/chunks/datadogDeflateWorker-${FAKE_CHUNK_HASH}-datadog-rum.js,/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/datadog-rum-staging.js,/datadog-rum-slim-staging.js,/datadog-debugger-staging.js`,
         env,
       },
     ])
@@ -184,6 +197,11 @@ describe('deploy', () => {
       {
         command:
           'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-logs/bundle/datadog-logs.js s3://browser-agent-artifacts-prod/datadog-logs-canary.js',
+        env,
+      },
+      {
+        // Deflate worker chunk
+        command: `aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum/bundle/chunks/datadogDeflateWorker-${FAKE_CHUNK_HASH}-datadog-rum.js s3://browser-agent-artifacts-prod/chunks/datadogDeflateWorker-${FAKE_CHUNK_HASH}-datadog-rum.js`,
         env,
       },
       {
@@ -213,7 +231,7 @@ describe('deploy', () => {
 
     assert.deepEqual(getCloudfrontCommands(), [
       {
-        command: `aws cloudfront create-invalidation --distribution-id EGB08BYCT1DD9 --paths /datadog-logs-canary.js,/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/datadog-rum-canary.js,/datadog-rum-slim-canary.js,/datadog-debugger-canary.js`,
+        command: `aws cloudfront create-invalidation --distribution-id EGB08BYCT1DD9 --paths /datadog-logs-canary.js,/chunks/datadogDeflateWorker-${FAKE_CHUNK_HASH}-datadog-rum.js,/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/datadog-rum-canary.js,/datadog-rum-slim-canary.js,/datadog-debugger-canary.js`,
         env,
       },
     ])
@@ -226,6 +244,11 @@ describe('deploy', () => {
       {
         command:
           'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-logs/bundle/datadog-logs.js s3://browser-agent-artifacts-prod/datadog-logs-v7-canary.js',
+        env,
+      },
+      {
+        // Deflate worker chunk
+        command: `aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum/bundle/chunks/datadogDeflateWorker-${FAKE_CHUNK_HASH}-datadog-rum.js s3://browser-agent-artifacts-prod/chunks/datadogDeflateWorker-${FAKE_CHUNK_HASH}-datadog-rum.js`,
         env,
       },
       {
@@ -255,7 +278,7 @@ describe('deploy', () => {
 
     assert.deepEqual(getCloudfrontCommands(), [
       {
-        command: `aws cloudfront create-invalidation --distribution-id EGB08BYCT1DD9 --paths /datadog-logs-v7-canary.js,/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/datadog-rum-v7-canary.js,/datadog-rum-slim-v7-canary.js,/datadog-debugger-v7-canary.js`,
+        command: `aws cloudfront create-invalidation --distribution-id EGB08BYCT1DD9 --paths /datadog-logs-v7-canary.js,/chunks/datadogDeflateWorker-${FAKE_CHUNK_HASH}-datadog-rum.js,/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/datadog-rum-v7-canary.js,/datadog-rum-slim-v7-canary.js,/datadog-debugger-v7-canary.js`,
         env,
       },
     ])
@@ -273,7 +296,11 @@ describe('deploy', () => {
           'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-logs/bundle/datadog-logs.js s3://browser-agent-artifacts-staging/pull-request/123/datadog-logs.js',
         env,
       },
-      // RUM Profiler Chunk
+      {
+        // Deflate worker chunk
+        command: `aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum/bundle/chunks/datadogDeflateWorker-${FAKE_CHUNK_HASH}-datadog-rum.js s3://browser-agent-artifacts-staging/pull-request/123/chunks/datadogDeflateWorker-${FAKE_CHUNK_HASH}-datadog-rum.js`,
+        env,
+      },
       {
         command: `aws s3 cp --cache-control max-age=900, s-maxage=60 packages/browser-rum/bundle/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js s3://browser-agent-artifacts-staging/pull-request/123/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js`,
         env,
@@ -301,7 +328,7 @@ describe('deploy', () => {
 
     assert.deepEqual(getCloudfrontCommands(), [
       {
-        command: `aws cloudfront create-invalidation --distribution-id E2FP11ZSCFD3EU --paths /pull-request/123/datadog-logs.js,/pull-request/123/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/pull-request/123/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/pull-request/123/datadog-rum.js,/pull-request/123/datadog-rum-slim.js,/pull-request/123/datadog-debugger.js`,
+        command: `aws cloudfront create-invalidation --distribution-id E2FP11ZSCFD3EU --paths /pull-request/123/datadog-logs.js,/pull-request/123/chunks/datadogDeflateWorker-${FAKE_CHUNK_HASH}-datadog-rum.js,/pull-request/123/chunks/datadogProfiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/pull-request/123/chunks/datadogRecorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/pull-request/123/datadog-rum.js,/pull-request/123/datadog-rum-slim.js,/pull-request/123/datadog-debugger.js`,
         env,
       },
     ])

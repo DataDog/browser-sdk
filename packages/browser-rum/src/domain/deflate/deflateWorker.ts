@@ -78,6 +78,10 @@ export function getDeflateWorkerStatus() {
   return state.status
 }
 
+export function isDeflateWorkerInitialized() {
+  return state.status === DeflateWorkerStatus.Initialized
+}
+
 /**
  * Starts the deflate worker and handle messages and errors
  *

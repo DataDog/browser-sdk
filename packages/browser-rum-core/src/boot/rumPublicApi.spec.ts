@@ -67,7 +67,11 @@ describe('rum public api', () => {
             onRumStart: recorderApiOnRumStartSpy,
           },
           rumPublicApiOptions: {
-            startDeflateWorker: () => FAKE_WORKER,
+            loadDeflateWorker: () =>
+              Promise.resolve({
+                startDeflateWorker: () => FAKE_WORKER,
+                createDeflateEncoder: (() => ({})) as any,
+              }),
           },
         }))
       })

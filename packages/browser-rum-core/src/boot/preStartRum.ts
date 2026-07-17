@@ -44,19 +44,20 @@ import type { OperationOptions, FailureReason } from '../domain/vital/vitalColle
 import { callPluginsMethod } from '../domain/plugins'
 import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { StartRumResult } from './startRum'
-import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
+import type { CreateDeflateEncoder, RumPublicApiOptions, Strategy } from './rumPublicApi'
 
 export type DoStartRum = (
   configuration: RumConfiguration,
   sessionManager: SessionManager,
   deflateWorker: DeflateWorker | undefined,
+  createDeflateEncoder: CreateDeflateEncoder | undefined,
   initialViewOptions: ViewOptions | undefined,
   telemetry: Telemetry,
   hooks: Hooks
 ) => StartRumResult
 
 export function createPreStartStrategy(
-  { ignoreInitIfSyntheticsWillInjectRum = true, startDeflateWorker }: RumPublicApiOptions,
+  { ignoreInitIfSyntheticsWillInjectRum = true, loadDeflateWorker }: RumPublicApiOptions,
   trackingConsentState: TrackingConsentState,
   doStartRum: DoStartRum
 ): Strategy {
@@ -79,6 +80,11 @@ export function createPreStartStrategy(
   let firstStartViewCall:
     { options: ViewOptions | undefined; callback: (startRumResult: StartRumResult) => void } | undefined
   let deflateWorker: DeflateWorker | undefined
+  let createDeflateEncoder: CreateDeflateEncoder | undefined
+  // Tracks the on-demand loading of the deflate worker (used for intake request compression):
+  // 'loading' while its chunk is being fetched, 'failed' when it could not be started. When set,
+  // RUM start is held back until the worker is ready (or aborted if it failed).
+  let deflateWorkerLoadingState: 'loading' | 'failed' | undefined
 
   let cachedInitConfiguration: RumInitConfiguration | undefined
   let cachedConfiguration: RumConfiguration | undefined
@@ -94,6 +100,13 @@ export function createPreStartStrategy(
 
   function tryStartRum() {
     if (started || !cachedInitConfiguration || !cachedConfiguration || !sessionManager || !telemetry) {
+      return
+    }
+
+    if (deflateWorkerLoadingState) {
+      // 'loading': wait for the deflate worker before starting; it will call tryStartRum again once
+      // ready. 'failed': intake request compression was requested but the worker is unavailable, so
+      // we abort the start (matching the previous synchronous behavior).
       return
     }
 
@@ -120,6 +133,7 @@ export function createPreStartStrategy(
       cachedConfiguration,
       sessionManager,
       deflateWorker,
+      createDeflateEncoder,
       initialViewOptions,
       telemetry,
       hooks
@@ -154,19 +168,30 @@ export function createPreStartStrategy(
       return
     }
 
-    if (configuration.compressIntakeRequests && !eventBridgeAvailable && startDeflateWorker) {
-      deflateWorker = startDeflateWorker(
-        configuration,
-        'Datadog RUM',
-        // Worker initialization can fail asynchronously, especially in Firefox where even CSP
-        // issues are reported asynchronously. For now, the SDK will continue its execution even if
-        // data won't be sent to Datadog. We could improve this behavior in the future.
-        noop
-      )
-      if (!deflateWorker) {
-        // `startDeflateWorker` should have logged an error message explaining the issue
-        return
-      }
+    if (configuration.compressIntakeRequests && !eventBridgeAvailable && loadDeflateWorker) {
+      // The deflate worker lives in its own chunk, so it is fetched lazily here (in parallel with
+      // the session manager) and RUM start is held back until it is ready.
+      deflateWorkerLoadingState = 'loading'
+      loadDeflateWorker()
+        .then((deflateModule) => {
+          deflateWorker = deflateModule?.startDeflateWorker(
+            configuration,
+            'Datadog RUM',
+            // Worker initialization can fail asynchronously, especially in Firefox where even CSP
+            // issues are reported asynchronously. For now, the SDK will continue its execution even
+            // if data won't be sent to Datadog. We could improve this behavior in the future.
+            noop
+          )
+          if (!deflateWorker) {
+            // the failure has already been logged (chunk loading error or `startDeflateWorker`)
+            deflateWorkerLoadingState = 'failed'
+            return
+          }
+          createDeflateEncoder = deflateModule!.createDeflateEncoder
+          deflateWorkerLoadingState = undefined
+          tryStartRum()
+        })
+        .catch(monitorError)
     }
 
     cachedConfiguration = configuration
