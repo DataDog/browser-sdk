@@ -17,6 +17,7 @@ runMain(async () => {
       },
       bundle: {
         type: 'string',
+        multiple: true,
       },
       verbose: {
         type: 'boolean',
@@ -30,43 +31,60 @@ runMain(async () => {
     await buildModules({ verbose: values.verbose })
   }
 
-  if (values.bundle) {
+  if (values.bundle?.length) {
     printLog('Building bundle...')
-    await buildBundle({
-      filename: values.bundle,
-      verbose: values.verbose,
-    })
+    await buildBundles({ bundles: values.bundle.map(parseBundleOption), verbose: values.verbose })
   }
 
   printLog('Done.')
 })
 
-async function buildBundle({ filename, verbose }: { filename: string; verbose: boolean }) {
+interface Bundle {
+  filename: string
+  entry: string
+}
+
+function parseBundleOption(bundle: string): Bundle {
+  const separatorIndex = bundle.indexOf('=')
+  if (separatorIndex === -1) {
+    return { filename: bundle, entry: './src/entries/main.ts' }
+  }
+  return {
+    filename: bundle.slice(0, separatorIndex),
+    entry: bundle.slice(separatorIndex + 1),
+  }
+}
+
+async function buildBundles({ bundles, verbose }: { bundles: Bundle[]; verbose: boolean }) {
   await fs.rm('./bundle', { recursive: true, force: true })
-  return new Promise<void>((resolve, reject) => {
-    webpack(
-      webpackBase({
-        mode: 'production',
-        entry: './src/entries/main.ts',
-        filename,
-      }),
-      (error, stats) => {
-        if (error) {
-          reject(error)
-        } else if (!stats) {
-          reject(new Error('Webpack did not return stats'))
-        } else if (stats.hasErrors()) {
-          printStats(stats)
-          reject(new Error('Failed to build bundle due to Webpack errors'))
-        } else {
-          if (verbose) {
+  await Promise.all(bundles.map(buildBundle))
+
+  function buildBundle({ filename, entry }: Bundle) {
+    return new Promise<void>((resolve, reject) => {
+      webpack(
+        webpackBase({
+          mode: 'production',
+          entry,
+          filename,
+        }),
+        (error, stats) => {
+          if (error) {
+            reject(error)
+          } else if (!stats) {
+            reject(new Error('Webpack did not return stats'))
+          } else if (stats.hasErrors()) {
             printStats(stats)
+            reject(new Error('Failed to build bundle due to Webpack errors'))
+          } else {
+            if (verbose) {
+              printStats(stats)
+            }
+            resolve()
           }
-          resolve()
         }
-      }
-    )
-  })
+      )
+    })
+  }
 
   function printStats(stats: webpack.Stats) {
     console.log(stats.toString({ colors: true }))
