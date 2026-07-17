@@ -239,6 +239,52 @@ describe('listenActionEvents', () => {
     }
   })
 
+  describe('scroll gesture (touch drag)', () => {
+    it('does not trigger onPointerUp when a touch pointer moves beyond the scroll threshold', () => {
+      emulateGesture({ pointerType: 'touch', from: { x: 100, y: 100 }, to: { x: 100, y: 260 } })
+      expect(actionEventsHooks.onPointerUp).not.toHaveBeenCalled()
+    })
+
+    it('triggers onPointerUp for a touch pointer that stays within the scroll threshold', () => {
+      emulateGesture({ pointerType: 'touch', from: { x: 100, y: 100 }, to: { x: 103, y: 104 } })
+      expect(actionEventsHooks.onPointerUp).toHaveBeenCalledTimes(1)
+    })
+
+    it('still triggers onPointerUp for a mouse pointer that moves beyond the threshold', () => {
+      emulateGesture({ pointerType: 'mouse', from: { x: 100, y: 100 }, to: { x: 100, y: 260 } })
+      expect(actionEventsHooks.onPointerUp).toHaveBeenCalledTimes(1)
+    })
+
+    function emulateGesture({
+      pointerType,
+      from,
+      to,
+    }: {
+      pointerType: string
+      from: { x: number; y: number }
+      to: { x: number; y: number }
+    }) {
+      window.dispatchEvent(
+        createNewEvent('pointerdown', {
+          target: document.body,
+          isPrimary: true,
+          pointerType,
+          clientX: from.x,
+          clientY: from.y,
+        })
+      )
+      window.dispatchEvent(
+        createNewEvent('pointerup', {
+          target: document.body,
+          isPrimary: true,
+          pointerType,
+          clientX: to.x,
+          clientY: to.y,
+        })
+      )
+    }
+  })
+
   function emulateClick({
     beforeMouseUp,
     target = document.body,
