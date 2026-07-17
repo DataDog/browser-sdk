@@ -50,7 +50,7 @@ runMain(() => {
 
   if (positionals.length !== 1) {
     throw new Error(
-      `Usage: node scripts/salesforce-lwc-apps.ts <${SUPPORTED_COMMANDS.join('|')}> [--app ${APP_KEYS.join('|')}]`
+      `Usage: node scripts/salesforce-apps.ts <${SUPPORTED_COMMANDS.join('|')}> [--app ${APP_KEYS.join('|')}]`
     )
   }
 
@@ -70,7 +70,7 @@ runMain(() => {
 })
 
 function showUsageAndExit() {
-  console.log(`Usage: node scripts/salesforce-lwc-apps.ts <command> [--app ${APP_KEYS.join('|')}]`)
+  console.log(`Usage: node scripts/salesforce-apps.ts <command> [--app ${APP_KEYS.join('|')}]`)
   console.log('')
   console.log('Commands:')
   console.log('  deploy-apps  Deploy the app(s) to the Salesforce org. To be done only when an app is updated.')
