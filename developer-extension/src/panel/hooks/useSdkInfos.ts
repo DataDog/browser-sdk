@@ -60,7 +60,7 @@ async function getInfos(): Promise<SdkInfos> {
       `
         // Helper to serialize objects while preserving function metadata
         function serializeWithFunctions(obj) {
-          return JSON.parse(JSON.stringify(obj, function(key, value) {
+          const stringified = JSON.stringify(obj, function(key, value) {
             if (typeof value === 'function') {
               return {
                 __type: 'function',
@@ -69,7 +69,11 @@ async function getInfos(): Promise<SdkInfos> {
               }
             }
             return value
-          }))
+          })
+          if (stringified === undefined) {
+            return stringified
+          }
+          return JSON.parse(stringified)
         }
 
         const cookies = new Map(
