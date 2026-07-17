@@ -29,7 +29,7 @@ const WORKER_PATH = path.join(import.meta.dirname, '../../packages/browser-worke
 const buildEnvCache = new Map<string, string>()
 
 type BuildEnvFactories = {
-  [K in 'SDK_VERSION' | 'SDK_SETUP' | 'WORKER_STRING']: () => string
+  [K in 'SDK_VERSION' | 'SDK_SETUP' | 'SDK_BUNDLE_NAME' | 'WORKER_STRING']: () => string
 }
 
 const buildEnvFactories: BuildEnvFactories = {
@@ -48,6 +48,10 @@ const buildEnvFactories: BuildEnvFactories = {
     }
   },
   SDK_SETUP: () => getSdkSetup(),
+  // Identifies which package/bundle is emitting telemetry (e.g. 'rum', 'rum-slim', 'logs'), derived
+  // from the package being built rather than an env var, since it must be correct without every
+  // package's build script having to set it explicitly.
+  SDK_BUNDLE_NAME: () => getBundleName(),
   WORKER_STRING: () => {
     if (needsWorkerRebuild()) {
       command`yarn build`.withCurrentWorkingDirectory(WORKER_PATH).run()
@@ -89,6 +93,11 @@ function getSdkSetup(): SdkSetup {
   }
   console.log(`Invalid SDK setup "${process.env.SDK_SETUP}". Possible SDK setups are: ${SDK_SETUPS.join(', ')}`)
   process.exit(1)
+}
+
+function getBundleName(): string {
+  const { name } = JSON.parse(fs.readFileSync('./package.json', 'utf8')) as { name: string }
+  return name.replace(/^@datadog\/browser-/, '')
 }
 
 function needsWorkerRebuild(): boolean {

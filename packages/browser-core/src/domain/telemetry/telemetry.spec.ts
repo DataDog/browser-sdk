@@ -231,6 +231,15 @@ describe('telemetry', () => {
     })
   })
 
+  it('should contain the bundle name', async () => {
+    const { getTelemetryEvents } = startAndSpyTelemetry()
+    callMonitored(() => {
+      throw new Error('message')
+    })
+
+    expect((await getTelemetryEvents())[0].telemetry.bundle_name).toEqual(jasmine.any(String))
+  })
+
   it('should collect pre start events', async () => {
     addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: 'granted' })
 
