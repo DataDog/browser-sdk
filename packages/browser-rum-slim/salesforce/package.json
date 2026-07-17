@@ -1,7 +1,0 @@
-{
-  "name": "@datadog/browser-rum-slim/salesforce",
-  "private": true,
-  "main": "../cjs/entries/salesforce.js",
-  "module": "../esm/entries/salesforce.mjs",
-  "types": "../cjs/entries/salesforce.d.ts"
-}

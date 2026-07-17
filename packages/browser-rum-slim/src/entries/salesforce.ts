@@ -74,7 +74,7 @@ export { DefaultPrivacyLevel } from '@datadog/browser-core'
  * @see {@link DatadogRum}
  */
 export const datadogRum = makeRumPublicApi(makeRecorderApiStub(), makeProfilerApiStub(), {
-  sdkName: 'rum-slim',
+  sdkName: 'rum-salesforce',
 })
 
 interface BrowserWindow {

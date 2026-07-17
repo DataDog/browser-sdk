@@ -57,9 +57,7 @@ function parseBundleOption(bundle: string): Bundle {
 
 async function buildBundles({ bundles, verbose }: { bundles: Bundle[]; verbose: boolean }) {
   await fs.rm('./bundle', { recursive: true, force: true })
-  for (const bundle of bundles) {
-    await buildBundle(bundle)
-  }
+  await Promise.all(bundles.map(buildBundle))
 
   function buildBundle({ filename, entry }: Bundle) {
     return new Promise<void>((resolve, reject) => {

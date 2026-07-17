@@ -3,8 +3,7 @@
     "packages/*",
     "packages/browser-rum-react/react-router-v6",
     "packages/browser-rum-react/react-router-v7",
-    "packages/browser-rum-vue/vue-router-v4",
-    "packages/browser-rum-slim/salesforce"
+    "packages/browser-rum-vue/vue-router-v4"
   ],
   "entryPointStrategy": "packages",
   "includeVersion": true,

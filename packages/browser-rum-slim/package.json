@@ -9,7 +9,6 @@
     "bundle/**/*.js",
     "cjs",
     "esm",
-    "salesforce",
     "src",
     "!src/**/*.spec.ts",
     "!src/**/*.specHelper.ts"
