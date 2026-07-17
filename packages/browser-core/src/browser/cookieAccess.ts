@@ -7,12 +7,13 @@ import { display } from '../tools/display'
 import { generateUUID } from '../tools/utils/stringUtils'
 import { addTelemetryDebug } from '../domain/telemetry'
 import { addEventListener, DOM_EVENT, isEventSupported } from './addEventListener'
-import { getCookies, setCookie } from './cookie'
+import { deleteCookie, getCookies, setCookie } from './cookie'
 import type { CookieOptions } from './cookie'
 
 export interface CookieAccess {
   getAll(): Promise<string[]>
   getAllAndSet(cb: (value: string[]) => { value: string; expireDelay: number }): Promise<void>
+  delete(): Promise<void>
   observable: Observable<void>
 }
 
@@ -40,7 +41,7 @@ export async function areCookiesAuthorized(
     return false
   } finally {
     try {
-      await access.getAllAndSet(() => ({ value: '', expireDelay: 0 }))
+      await access.delete()
     } catch {
       // Best-effort cleanup
     }
@@ -67,6 +68,15 @@ export function createCookieStoreAccess(cookieName: string, cookieOptions: Cooki
     async getAll() {
       const items = await cookieStore.getAll(cookieName)
       return items.map((item) => item.value)
+    },
+
+    delete() {
+      return cookieStore.delete({
+        name: cookieName,
+        domain: cookieOptions.domain,
+        path: '/',
+        partitioned: cookieOptions.partitioned,
+      })
     },
 
     async getAllAndSet(cb: (value: string[]) => { value: string; expireDelay: number }) {
@@ -143,6 +153,12 @@ export function createDocumentCookieAccess(cookieName: string, cookieOptions: Co
       setCookie(cookieName, value, expireDelay, cookieOptions)
       await Promise.resolve()
       notifyCookieValueIfChanged([value])
+    },
+
+    async delete() {
+      deleteCookie(cookieName, cookieOptions)
+      await Promise.resolve()
+      notifyCookieValueIfChanged([])
     },
 
     observable,
