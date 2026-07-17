@@ -13,10 +13,6 @@ const defaultInitConfiguration = {
 }
 
 export default class DatadogInit extends NavigationMixin(LightningElement) {
-  connectedCallback() {
-    this.initialize()
-  }
-
   @wire(CurrentPageReference)
   handleCurrentPageReference(pageReference) {
     if (!pageReference) {
@@ -28,6 +24,10 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
     if (window.DD_RUM) {
       this.startViewForPageReference(pageReference)
     }
+  }
+
+  connectedCallback() {
+    this.initialize()
   }
 
   startViewForPageReference(pageReference) {

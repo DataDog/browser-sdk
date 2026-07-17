@@ -1,6 +1,5 @@
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { parseArgs } from 'node:util'
 
@@ -8,22 +7,22 @@ import { printLog, runMain } from './lib/executionUtils.ts'
 import { getSfLwcClientId, getSfLwcInstanceUrl, getSfLwcJwtPrivateKey, getSfLwcUsername } from './lib/secrets.ts'
 import { command } from './lib/command.ts'
 
-const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+const repositoryRoot = resolve(import.meta.dirname, '..')
 const TARGET_ORG = 'sf-lwc-ci'
 
 type AppKey = 'lwc' | 'experience-cloud'
 
 const APP_KEYS: AppKey[] = ['lwc', 'experience-cloud']
 
-const APPS: Record<AppKey, { dir: string; urlPath: string; buildBundle: boolean; siteName?: string }> = {
+const APPS: Record<AppKey, { dir: string; url: string; buildBundle: boolean; siteName?: string }> = {
   lwc: {
     dir: resolve(repositoryRoot, 'test/apps/sf-lwc-app'),
-    urlPath: '/lightning/app/c__SF_LWC_App/page/home',
+    url: new URL('/lightning/app/c__SF_LWC_App/page/home', getSfLwcInstanceUrl()).href,
     buildBundle: true,
   },
   'experience-cloud': {
     dir: resolve(repositoryRoot, 'test/apps/sf-experience-app'),
-    urlPath: 'sfexperiencecloud',
+    url: new URL('sfexperiencecloud/', getSalesforceSiteUrl()).href,
     buildBundle: false,
     siteName: 'SF Experience Cloud App',
   },
@@ -59,11 +58,9 @@ runMain(() => {
   const appKeys = resolveAppKeys(values.app)
 
   switch (commandName) {
-    // Deploy the app(s) to the Salesforce org. To be done only when an app is updated.
     case 'deploy-apps':
       deployApp(appKeys)
       break
-    // Get the authenticated URL of the app(s).
     case 'get-urls':
       printUrl(appKeys)
       break
@@ -73,9 +70,11 @@ runMain(() => {
 })
 
 function showUsageAndExit() {
-  console.log(
-    `Usage: node scripts/salesforce-lwc-apps.ts <${SUPPORTED_COMMANDS.join('|')}> [--app ${APP_KEYS.join('|')}]`
-  )
+  console.log(`Usage: node scripts/salesforce-lwc-apps.ts <command> [--app ${APP_KEYS.join('|')}]`)
+  console.log('')
+  console.log('Commands:')
+  console.log('  deploy-apps  Deploy the app(s) to the Salesforce org. To be done only when an app is updated.')
+  console.log('  get-urls     Get the authenticated URL of the app(s).')
   process.exit(0)
 }
 
@@ -115,7 +114,7 @@ function deployApp(appKeys: AppKey[]) {
 
     if (buildBundle) {
       printLog('Building RUM slim bundle...')
-      command`yarn workspace ${'@datadog/browser-rum-slim'} build:bundle`.withLogs().run()
+      command`yarn workspace @datadog/browser-rum-slim build:bundle`.withLogs().run()
     }
 
     authenticate(TARGET_ORG, dir)
@@ -143,15 +142,14 @@ function deployApp(appKeys: AppKey[]) {
 
 function printUrl(appKeys: AppKey[]): void {
   for (const appKey of appKeys) {
-    const { siteName, urlPath } = APPS[appKey]
-    const path = new URL(urlPath, 'https://salesforce.local')
+    const { siteName, url } = APPS[appKey]
 
     if (siteName) {
-      console.log(new URL(`${path.pathname}/`, getSalesforceSiteUrl()).href)
+      console.log(url)
       continue
     }
 
-    console.log(new URL(`${path.pathname}${path.search}`, getSfLwcInstanceUrl()).href)
+    console.log(url)
   }
 }
 

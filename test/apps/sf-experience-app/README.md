@@ -11,7 +11,7 @@ Test Datadog RUM in [Experience Cloud](https://help.salesforce.com/s/articleView
 using two initialization approaches:
 
 1. **Head markup** — inject the SDK in the LWR template
-  ([docs](https://developer.salesforce.com/docs/atlas.en-us.exp_cloud_lwr.meta/exp_cloud_lwr/template_differences_markup.htm))
+   ([docs](https://developer.salesforce.com/docs/atlas.en-us.exp_cloud_lwr.meta/exp_cloud_lwr/template_differences_markup.htm))
 2. **`experienceDatadogInit` LWC** — load the slim bundle from a static resource and start views on SPA navigation
 
 ## What It Contains
@@ -48,12 +48,10 @@ Experience Cloud sites enforce CSP. In **Experience Builder → Settings → Sec
 - Change the security level from **Strict CSP** to **Relaxed CSP**
 - Add the Datadog browser intake as a trusted site
 
-
 | Field | Value                                  |
 | ----- | -------------------------------------- |
 | Name  | `browser_intake_datadoghq_com`         |
 | URL   | `https://browser-intake-datadoghq.com` |
-
 
 For non-US1 Datadog sites, use the intake endpoint for your site.
 

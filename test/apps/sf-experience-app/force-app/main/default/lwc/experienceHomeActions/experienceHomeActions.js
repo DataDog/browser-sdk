@@ -111,7 +111,6 @@ export default class ExperienceHomeActions extends LightningElement {
     this.lastResourceName = `image: ${token}`
 
     const image = new Image()
-    image.onerror = () => {}
     image.src = url
     this.resourceImage = image
   }
