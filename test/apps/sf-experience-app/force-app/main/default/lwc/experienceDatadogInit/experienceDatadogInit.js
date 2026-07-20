@@ -10,9 +10,10 @@ const defaultInitConfiguration = {
   applicationId: 'xxx',
   clientToken: 'xxx',
   site: 'datadoghq.com',
+  trackViewsManually: true,
 }
 
-export default class DatadogInit extends NavigationMixin(LightningElement) {
+export default class ExperienceDatadogInit extends NavigationMixin(LightningElement) {
   @wire(CurrentPageReference)
   handleCurrentPageReference(pageReference) {
     if (!pageReference) {
@@ -31,26 +32,31 @@ export default class DatadogInit extends NavigationMixin(LightningElement) {
   }
 
   startViewForPageReference(pageReference) {
-    const urlPromise = this[NavigationMixin.GenerateUrl](pageReference)
-    urlPromise.then((url) => {
+    this[NavigationMixin.GenerateUrl](pageReference).then((url) => {
       if (url === lastStartedUrl) {
         return
       }
       lastStartedUrl = url
-      const absoluteUrl = new URL(url, window.location.origin).href
-      window.DD_RUM.startView({ name: url, url: absoluteUrl })
+      window.DD_RUM.startView({
+        name: url,
+        url: new URL(url, window.location.origin).href,
+      })
     })
   }
 
   initialize() {
-    if (!datadogInitialization) {
-      datadogInitialization = this.loadDatadogRum()
+    if (new URLSearchParams(window.location.search).get('init') !== 'true' || datadogInitialization) {
+      return
     }
+
+    datadogInitialization = this.loadDatadogRum()
   }
 
   loadDatadogRum() {
     return loadScript(this, datadogRumSlim).then(() => {
-      window.DD_RUM.setGlobalContext(window.RUM_CONTEXT)
+      if (window.RUM_CONTEXT) {
+        window.DD_RUM.setGlobalContext(window.RUM_CONTEXT)
+      }
       window.DD_RUM.init({ ...defaultInitConfiguration, ...window.RUM_CONFIGURATION })
       lastStartedUrl = window.location.pathname + window.location.search + window.location.hash
       window.DD_RUM.startView({
