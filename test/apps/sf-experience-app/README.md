@@ -108,6 +108,7 @@ Credentials are set as CI variables; for local overrides, set the matching envir
 Build the RUM Salesforce bundle, deploy metadata, and publish the site:
 
 ```sh
+yarn build:apps --app sf-experience-app
 yarn salesforce:deploy-apps --app experience-cloud
 ```
 
