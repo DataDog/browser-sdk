@@ -9,7 +9,7 @@ This app is Lightning-only.
 - A Lightning app named `SF LWC App`
 - A trimmed Home page with Datadog test controls
 - A `Product Explorer` app page with three hardcoded editable products
-- `c:datadogInit` in the utility bar, backed by the `datadog_rum_slim` static resource
+- `c:datadogInit` in the utility bar, backed by the `datadog_rum_salesforce` static resource
 
 ## Authentication
 
@@ -31,7 +31,7 @@ For E2E testing, deployment is not necesary since we will override the deployed 
 yarn salesforce:deploy-apps --app lwc
 ```
 
-This builds the local RUM slim bundle, copies it to the stable `datadog_rum_slim` static resource, and deploys the app metadata.
+This builds the local RUM Salesforce bundle, copies it to the stable `datadog_rum_salesforce` static resource, and deploys the app metadata.
 
 ## Local Bundle
 
@@ -42,7 +42,7 @@ Build the test apps from the repository root instead:
 yarn build:apps --app sf-lwc-app
 ```
 
-This copies the locally built RUM slim bundle into the ignored stable `datadog_rum_slim` static resource file.
+This copies the locally built RUM Salesforce bundle into the ignored stable `datadog_rum_salesforce` static resource file.
 Playwright fulfills Salesforce static resource requests with this local file during E2E tests.
 
 ## Open The App
