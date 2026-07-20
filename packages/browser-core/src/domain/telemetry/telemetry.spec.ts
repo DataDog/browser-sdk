@@ -233,22 +233,22 @@ describe('telemetry', () => {
     })
   })
 
-  it('should contain the bundle name', async () => {
+  it('should not contain a sdk name when none is provided', async () => {
     const { getTelemetryEvents } = startAndSpyTelemetry()
     callMonitored(() => {
       throw new Error('message')
     })
 
-    expect((await getTelemetryEvents())[0].telemetry.bundle_name).toEqual(jasmine.any(String))
+    expect((await getTelemetryEvents())[0].telemetry.sdk_name).toBeUndefined()
   })
 
-  it('should use the sdk name as the bundle name when provided', async () => {
+  it('should contain the sdk name', async () => {
     const { getTelemetryEvents } = startAndSpyTelemetry(undefined, { sdkName: 'rum-salesforce' })
     callMonitored(() => {
       throw new Error('message')
     })
 
-    expect((await getTelemetryEvents())[0].telemetry.bundle_name).toBe('rum-salesforce')
+    expect((await getTelemetryEvents())[0].telemetry.sdk_name).toBe('rum-salesforce')
   })
 
   it('should collect pre start events', async () => {
