@@ -328,7 +328,9 @@ function endSession() {
   evalInWindow(
     `
       document.cookie = '_dd_s=isExpired=1; expires=${expires}; path=/'
-      document.cookie = '_dd_s_v2=isExpired=1; expires=${expires}; path=/'
+      if (document.cookie.includes('_dd_s_v2=')) {
+        document.cookie = '_dd_s_v2=isExpired=1; expires=${expires}; path=/'
+      }
     `
   ).catch((error) => logger.error('Error while ending session:', error))
 }
