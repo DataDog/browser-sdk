@@ -14,7 +14,7 @@ export interface TestCaseObject {
   vars?: VariableBindings
   expected?: unknown
   execute?: boolean
-  before?: () => void
+  before?: () => string | void
   suffix?: string
 }
 export type TestCase = TestCaseTuple | TestCaseObject
@@ -763,7 +763,7 @@ export const typeAndDefinitionChecks: TestCase[] = [
     expected: typeof BigInt !== 'undefined' ? true : undefined,
     before: () => {
       if (typeof BigInt === 'undefined') {
-        pending('BigInt is not supported in this browser')
+        return 'BigInt is not supported in this browser'
       }
     },
   },

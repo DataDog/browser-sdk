@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { ONE_SECOND } from '@datadog/js-core/time'
 import {
   collectAsyncCalls,
@@ -38,13 +39,13 @@ describe('preStartLogs', () => {
   })
 
   describe('configuration validation', () => {
-    let displaySpy: jasmine.Spy
-    let doStartLogsSpy: jasmine.Spy<DoStartLogs>
+    let displaySpy: Mock
+    let doStartLogsSpy: Mock<DoStartLogs>
     let strategy: Strategy
 
     beforeEach(() => {
       ;({ strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults())
-      displaySpy = spyOn(display, 'error')
+      displaySpy = vi.spyOn(display, 'error').mockImplementation(() => undefined)
     })
 
     it('should start when the configuration is valid', async () => {
@@ -134,7 +135,7 @@ describe('preStartLogs', () => {
     strategy.init(DEFAULT_INIT_CONFIGURATION)
     await collectAsyncCalls(handleLogSpy, 1)
 
-    expect(handleLogSpy.calls.all().length).toBe(1)
+    expect(handleLogSpy.mock.calls.length).toBe(1)
     expect(getLoggedMessage(0).message.message).toBe('message')
   })
 
@@ -163,7 +164,7 @@ describe('preStartLogs', () => {
 
     it('saves the URL', async () => {
       const { strategy, getLoggedMessage, getCommonContextSpy, handleLogSpy } = createPreStartStrategyWithDefaults()
-      getCommonContextSpy.and.returnValue({ view: { url: 'url' } } as unknown as CommonContext)
+      getCommonContextSpy.mockReturnValue({ view: { url: 'url' } } as unknown as CommonContext)
       strategy.handleLog(
         {
           status: StatusType.info,
@@ -206,7 +207,7 @@ describe('preStartLogs', () => {
 
   describe('tracking consent', () => {
     let strategy: Strategy
-    let doStartLogsSpy: jasmine.Spy<DoStartLogs>
+    let doStartLogsSpy: Mock<DoStartLogs>
     let trackingConsentState: TrackingConsentState
 
     beforeEach(() => {
@@ -244,7 +245,7 @@ describe('preStartLogs', () => {
     it('do not call startLogs when tracking consent state is updated after init', async () => {
       strategy.init(DEFAULT_INIT_CONFIGURATION)
       await collectAsyncCalls(doStartLogsSpy, 1)
-      doStartLogsSpy.calls.reset()
+      doStartLogsSpy.mockClear()
 
       trackingConsentState.update(TrackingConsent.GRANTED)
       await waitNextMicrotask()
@@ -289,12 +290,12 @@ function createPreStartStrategyWithDefaults({
   trackingConsentState?: TrackingConsentState
   startSessionManagerMock?: typeof startSessionManager
 } = {}) {
-  const handleLogSpy = jasmine.createSpy()
-  const doStartLogsSpy = jasmine.createSpy<DoStartLogs>().and.returnValue({
+  const handleLogSpy = vi.fn()
+  const doStartLogsSpy = vi.fn<DoStartLogs>().mockReturnValue({
     handleLog: handleLogSpy,
   } as unknown as StartLogsResult)
-  const getCommonContextSpy = jasmine.createSpy<() => CommonContext>()
-  const startTelemetrySpy = replaceMockableWithSpy(startTelemetry).and.callFake(createFakeTelemetryObject)
+  const getCommonContextSpy = vi.fn<() => CommonContext>()
+  const startTelemetrySpy = replaceMockableWithSpy(startTelemetry).mockImplementation(createFakeTelemetryObject)
   replaceMockable(startSessionManager, startSessionManagerMock)
 
   return {
@@ -304,7 +305,7 @@ function createPreStartStrategyWithDefaults({
     doStartLogsSpy,
     getCommonContextSpy,
     getLoggedMessage: (index: number) => {
-      const [message, logger, handlingStack, savedCommonContext, savedDate] = handleLogSpy.calls.argsFor(index)
+      const [message, logger, handlingStack, savedCommonContext, savedDate] = handleLogSpy.mock.calls[index]
       return { message, logger, handlingStack, savedCommonContext, savedDate }
     },
   }

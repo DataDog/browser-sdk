@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { getDefaultViewName } from './getDefaultViewName'
 
 // Replicating the tests from SimpleUrlGroupingProcessorTest.java

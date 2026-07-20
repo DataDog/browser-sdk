@@ -1,11 +1,10 @@
 import eslint from '@eslint/js'
+import vitest from '@vitest/eslint-plugin'
 import { defineConfig } from 'eslint/config'
 import * as tseslint from 'typescript-eslint'
 import { importX } from 'eslint-plugin-import-x'
 import unicornPlugin from 'eslint-plugin-unicorn'
 import jsdocPlugin from 'eslint-plugin-jsdoc'
-// @ts-expect-error -- eslint-plugin-jasmine is not typed
-import jasmine from 'eslint-plugin-jasmine'
 import globals from 'globals'
 // eslint-disable-next-line local-rules/disallow-protected-directory-import
 import eslintLocalRules from './eslint-local-rules/index.ts'
@@ -36,6 +35,7 @@ export default defineConfig(
     ignores: [
       ...SCHEMAS.map((schema) => schema.typesPath),
       'packages/*/bundle',
+      'bundle',
       'packages/*/cjs',
       'packages/*/esm',
       'test/**/dist',
@@ -75,7 +75,7 @@ export default defineConfig(
       unicorn: unicornPlugin,
       'local-rules': { rules: eslintLocalRules as Record<string, any> },
       jsdoc: jsdocPlugin,
-      jasmine,
+      vitest,
     },
 
     languageOptions: {
@@ -246,7 +246,6 @@ export default defineConfig(
         },
       ],
 
-      'jasmine/no-focused-tests': 'error',
       'jsdoc/check-alignment': 'error',
       'jsdoc/check-indentation': 'error',
       'jsdoc/no-blank-blocks': 'error',
@@ -472,6 +471,16 @@ export default defineConfig(
     rules: {
       // E2E codebase is importing @datadog/browser-* packages referenced by tsconfig.
       'import-x/no-extraneous-dependencies': 'off',
+    },
+  },
+
+  {
+    files: [SPEC_FILES, 'packages/*/test/**/*.ts'],
+    rules: {
+      // vitest is a root devDependency, not listed in each sub-package
+      'import-x/no-extraneous-dependencies': 'off',
+      'vitest/no-focused-tests': 'error',
+      'vitest/no-identical-title': 'error',
     },
   },
 

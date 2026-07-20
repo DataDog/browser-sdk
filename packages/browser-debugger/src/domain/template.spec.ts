@@ -1,3 +1,4 @@
+import { vi, describe, expect, it, type TestContext } from 'vitest'
 import { templateRequiresEvaluation, compileSegments, evaluateProbeMessage, browserInspect } from './template'
 import { formatUnknownError } from './error'
 
@@ -87,10 +88,9 @@ describe('template', () => {
       expect(browserInspect(false)).toBe('false')
     })
 
-    it('should inspect bigint', () => {
+    it('should inspect bigint', (ctx: TestContext) => {
       if (typeof BigInt === 'undefined') {
-        pending('BigInt is not supported in this browser')
-        return
+        ctx.skip(true, 'BigInt not supported')
       }
       expect(browserInspect(BigInt(123))).toBe('123n')
     })
@@ -131,7 +131,7 @@ describe('template', () => {
 
     it('should not call custom toString when object serialization fails', () => {
       const obj: any = {
-        toString: jasmine.createSpy('toString', () => 'custom').and.callThrough(),
+        toString: vi.fn(() => 'custom'),
       }
       obj.self = obj
 

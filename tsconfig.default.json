@@ -3,7 +3,6 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "types": ["jasmine"],
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
@@ -36,6 +35,10 @@
     "packages/browser-rum-nextjs",
 
     // Skip typechecking for these folders for now
-    "test/apps"
+    "test/apps",
+
+    // Files included in ./tsconfig.unit.json
+    "vitest.config.ts",
+    "vitest.bs.config.ts"
   ]
 }

@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import type { RelativeTime } from '@datadog/js-core/time'
 import { relativeToClocks } from '@datadog/js-core/time'
 import { CLEAR_OLD_VALUES_INTERVAL } from '@datadog/browser-core'
@@ -137,7 +138,7 @@ describe('ViewHistory', () => {
       expect(viewHistory.findView(15 as RelativeTime)).toBeDefined()
       expect(viewHistory.findView(25 as RelativeTime)).toBeDefined()
 
-      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED, undefined)
 
       expect(viewHistory.findView(15 as RelativeTime)).toBeUndefined()
       expect(viewHistory.findView(25 as RelativeTime)).toBeUndefined()

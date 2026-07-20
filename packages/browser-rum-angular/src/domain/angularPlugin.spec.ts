@@ -1,3 +1,4 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '../../../browser-core/test'
 import { angularPlugin, onRumInit, onRumStart, resetAngularPlugin } from './angularPlugin'
@@ -15,16 +16,16 @@ describe('angularPlugin', () => {
   it('returns a plugin object', () => {
     const plugin = angularPlugin()
     expect(plugin).toEqual(
-      jasmine.objectContaining({
+      expect.objectContaining({
         name: 'angular',
-        onInit: jasmine.any(Function),
-        onRumStart: jasmine.any(Function),
+        onInit: expect.any(Function),
+        onRumStart: expect.any(Function),
       })
     )
   })
 
   it('calls callbacks registered with onRumInit during onInit', () => {
-    const callbackSpy = jasmine.createSpy()
+    const callbackSpy = vi.fn()
     const pluginConfiguration = {}
     onRumInit(callbackSpy)
 
@@ -36,12 +37,12 @@ describe('angularPlugin', () => {
     })
 
     expect(callbackSpy).toHaveBeenCalledTimes(1)
-    expect(callbackSpy.calls.mostRecent().args[0]).toBe(pluginConfiguration)
-    expect(callbackSpy.calls.mostRecent().args[1]).toBe(PUBLIC_API)
+    expect(callbackSpy.mock.lastCall![0]).toBe(pluginConfiguration)
+    expect(callbackSpy.mock.lastCall![1]).toBe(PUBLIC_API)
   })
 
   it('calls callbacks immediately if onInit was already invoked', () => {
-    const callbackSpy = jasmine.createSpy()
+    const callbackSpy = vi.fn()
     const pluginConfiguration = {}
     angularPlugin(pluginConfiguration).onInit!({
       publicApi: PUBLIC_API,
@@ -51,8 +52,8 @@ describe('angularPlugin', () => {
     onRumInit(callbackSpy)
 
     expect(callbackSpy).toHaveBeenCalledTimes(1)
-    expect(callbackSpy.calls.mostRecent().args[0]).toBe(pluginConfiguration)
-    expect(callbackSpy.calls.mostRecent().args[1]).toBe(PUBLIC_API)
+    expect(callbackSpy.mock.lastCall![0]).toBe(pluginConfiguration)
+    expect(callbackSpy.mock.lastCall![1]).toBe(PUBLIC_API)
   })
 
   it('enforce manual view tracking when router is enabled', () => {
@@ -77,8 +78,8 @@ describe('angularPlugin', () => {
   })
 
   it('calls onRumStart subscribers during onRumStart', () => {
-    const callbackSpy = jasmine.createSpy()
-    const addErrorSpy = jasmine.createSpy()
+    const callbackSpy = vi.fn()
+    const addErrorSpy = vi.fn()
     onRumStart(callbackSpy)
 
     angularPlugin().onRumStart!({ addError: addErrorSpy })
@@ -87,10 +88,10 @@ describe('angularPlugin', () => {
   })
 
   it('calls onRumStart subscribers immediately if already started', () => {
-    const addErrorSpy = jasmine.createSpy()
+    const addErrorSpy = vi.fn()
     angularPlugin().onRumStart!({ addError: addErrorSpy })
 
-    const callbackSpy = jasmine.createSpy()
+    const callbackSpy = vi.fn()
     onRumStart(callbackSpy)
 
     expect(callbackSpy).toHaveBeenCalledWith(addErrorSpy)

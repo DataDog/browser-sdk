@@ -1,3 +1,4 @@
+import { vi, describe, it, expect, beforeEach } from 'vitest'
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '../../../browser-core/test'
 import {
@@ -12,7 +13,7 @@ import {
 const INIT_CONFIGURATION = {} as RumInitConfiguration
 
 function createPublicApi() {
-  const startViewSpy = jasmine.createSpy('startView')
+  const startViewSpy = vi.fn()
   return { publicApi: { startView: startViewSpy } as unknown as RumPublicApi, startViewSpy }
 }
 
@@ -34,10 +35,10 @@ describe('nextjsPlugin', () => {
     const plugin = nextjsPlugin()
 
     expect(plugin).toEqual(
-      jasmine.objectContaining({
+      expect.objectContaining({
         name: 'nextjs',
-        onInit: jasmine.any(Function),
-        onRumStart: jasmine.any(Function),
+        onInit: expect.any(Function),
+        onRumStart: expect.any(Function),
       })
     )
   })
@@ -62,7 +63,8 @@ describe('nextjsPlugin', () => {
 
     startNextjsView('/about')
 
-    expect(startViewSpy).toHaveBeenCalledOnceWith({ name: '/about', url: undefined })
+    expect(startViewSpy).toHaveBeenCalledTimes(1)
+    expect(startViewSpy).toHaveBeenCalledExactlyOnceWith({ name: '/about', url: undefined })
   })
 
   it('uses onRouterTransitionStart URL when available', () => {
@@ -71,7 +73,8 @@ describe('nextjsPlugin', () => {
     onRouterTransitionStart('/about?foo=bar')
     startNextjsView('/about')
 
-    expect(startViewSpy).toHaveBeenCalledOnceWith({
+    expect(startViewSpy).toHaveBeenCalledTimes(1)
+    expect(startViewSpy).toHaveBeenCalledExactlyOnceWith({
       name: '/about',
       url: `${window.location.origin}/about?foo=bar`,
     })
@@ -84,12 +87,12 @@ describe('nextjsPlugin', () => {
     startNextjsView('/about')
     startNextjsView('/other')
 
-    expect(startViewSpy.calls.mostRecent().args[0]).toEqual({ name: '/other', url: undefined })
+    expect(startViewSpy.mock.lastCall![0]).toEqual({ name: '/other', url: undefined })
   })
 
   describe('lifecycle subscribers', () => {
     it('calls onRumInit subscribers during onInit', () => {
-      const callbackSpy = jasmine.createSpy()
+      const callbackSpy = vi.fn()
       const { publicApi } = createPublicApi()
       onRumInit(callbackSpy)
 
@@ -101,11 +104,11 @@ describe('nextjsPlugin', () => {
       })
 
       expect(callbackSpy).toHaveBeenCalledTimes(1)
-      expect(callbackSpy.calls.mostRecent().args[0]).toBe(publicApi)
+      expect(callbackSpy.mock.lastCall![0]).toBe(publicApi)
     })
 
     it('calls onRumInit subscriber immediately if already initialized', () => {
-      const callbackSpy = jasmine.createSpy()
+      const callbackSpy = vi.fn()
       const { publicApi } = createPublicApi()
 
       nextjsPlugin().onInit({
@@ -116,12 +119,12 @@ describe('nextjsPlugin', () => {
       onRumInit(callbackSpy)
 
       expect(callbackSpy).toHaveBeenCalledTimes(1)
-      expect(callbackSpy.calls.mostRecent().args[0]).toBe(publicApi)
+      expect(callbackSpy.mock.lastCall![0]).toBe(publicApi)
     })
 
     it('calls onRumStart subscribers during onRumStart', () => {
-      const callbackSpy = jasmine.createSpy()
-      const mockAddError = jasmine.createSpy()
+      const callbackSpy = vi.fn()
+      const mockAddError = vi.fn()
       onRumStart(callbackSpy)
 
       const { plugin } = initPlugin()
@@ -131,11 +134,11 @@ describe('nextjsPlugin', () => {
     })
 
     it('calls onRumStart subscriber immediately if already started', () => {
-      const mockAddError = jasmine.createSpy()
+      const mockAddError = vi.fn()
       const { plugin } = initPlugin()
       plugin.onRumStart({ addError: mockAddError })
 
-      const callbackSpy = jasmine.createSpy()
+      const callbackSpy = vi.fn()
       onRumStart(callbackSpy)
 
       expect(callbackSpy).toHaveBeenCalledWith(mockAddError)

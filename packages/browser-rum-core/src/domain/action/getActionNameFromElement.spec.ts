@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { appendElement, mockRumConfiguration } from '../../../test'
 import { NodePrivacyLevel } from '../privacyConstants'
 import { getNodeSelfPrivacyLevel } from '../privacy'

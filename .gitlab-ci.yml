@@ -231,6 +231,7 @@ unit:
       junit: test-report/unit/*.xml
   script:
     - yarn
+    - yarn playwright install chromium --with-deps
     - yarn test:unit
   after_script:
     - node ./scripts/test/export-test-result.ts unit
@@ -314,13 +315,14 @@ unit-bs:
   interruptible: true
   parallel:
     matrix:
-      - BS_BROWSER: [edge, firefox, safari-desktop, chrome-desktop, chrome-mobile]
+      - BS_BROWSER: [edge, firefox, webkit-desktop, chrome-desktop]
   artifacts:
+    when: always
     reports:
       junit: test-report/unit-bs/*.xml
   script:
     - yarn
-    - node scripts/test/ci-bs.ts test:unit
+    - FORCE_COLOR=1 node scripts/test/ci-bs.ts test:unit
   after_script:
     - node ./scripts/test/export-test-result.ts unit-bs
 

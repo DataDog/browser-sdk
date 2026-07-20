@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it } from 'vitest'
 import type { RelativeTime, Duration, ServerDuration, TimeStamp } from '@datadog/js-core/time'
 import { addDuration } from '@datadog/js-core/time'
 import { Observable } from '@datadog/browser-core'
@@ -87,7 +88,7 @@ describe('actionCollection', () => {
         },
         type: ActionType.CLICK,
       },
-      date: jasmine.any(Number),
+      date: expect.any(Number),
       type: RumEventType.ACTION,
       _dd: {
         action: {
@@ -121,7 +122,7 @@ describe('actionCollection', () => {
     expect(rawRumEvents[0].startClocks.relative).toBe(1234 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       action: {
-        id: jasmine.any(String),
+        id: expect.any(String),
         target: {
           name: 'foo',
         },
@@ -130,7 +131,7 @@ describe('actionCollection', () => {
           type: [],
         },
       },
-      date: jasmine.any(Number),
+      date: expect.any(Number),
       type: RumEventType.ACTION,
       context: { foo: 'bar' },
     })
@@ -175,7 +176,7 @@ describe('actionCollection', () => {
     ;[RumEventType.RESOURCE, RumEventType.LONG_TASK, RumEventType.ERROR].forEach((eventType) => {
       it(`should add action properties on ${eventType} from the context`, () => {
         const actionId = ['1']
-        spyOn(actionContexts, 'findActionId').and.returnValue(actionId)
+        vi.spyOn(actionContexts, 'findActionId').mockReturnValue(actionId)
         const defaultRumEventAttributes = hooks.assemble.trigger({
           eventType,
           startTime: 0 as RelativeTime,
@@ -187,7 +188,7 @@ describe('actionCollection', () => {
     ;[RumEventType.VIEW, RumEventType.VITAL].forEach((eventType) => {
       it(`should not add action properties on ${eventType} from the context`, () => {
         const actionId = ['1']
-        spyOn(actionContexts, 'findActionId').and.returnValue(actionId)
+        vi.spyOn(actionContexts, 'findActionId').mockReturnValue(actionId)
         const defaultRumEventAttributes = hooks.assemble.trigger({
           eventType,
           startTime: 0 as RelativeTime,
@@ -199,7 +200,7 @@ describe('actionCollection', () => {
 
     it('should add action properties on long task from the context when the start time is slightly before the action start time', () => {
       const longTaskStartTime = 100 as RelativeTime
-      const findActionIdSpy = spyOn(actionContexts, 'findActionId').and.returnValue([])
+      const findActionIdSpy = vi.spyOn(actionContexts, 'findActionId').mockReturnValue([])
 
       hooks.assemble.trigger({
         eventType: RumEventType.LONG_TASK,
@@ -207,7 +208,7 @@ describe('actionCollection', () => {
         duration: 50 as Duration,
       } as AssembleHookParams)
 
-      const [correctedStartTime] = findActionIdSpy.calls.mostRecent().args
+      const [correctedStartTime] = findActionIdSpy.mock.calls[findActionIdSpy.mock.calls.length - 1]
       expect(correctedStartTime).toEqual(addDuration(longTaskStartTime, LONG_TASK_START_TIME_CORRECTION))
     })
   })
@@ -215,7 +216,7 @@ describe('actionCollection', () => {
   describe('assemble telemetry hook', () => {
     it('should add action id', () => {
       const actionId = ['1']
-      spyOn(actionContexts, 'findActionId').and.returnValue(actionId)
+      vi.spyOn(actionContexts, 'findActionId').mockReturnValue(actionId)
       const telemetryEventAttributes = hooks.assembleTelemetry.trigger({
         startTime: 0 as RelativeTime,
       }) as DefaultTelemetryEventAttributes
@@ -224,7 +225,7 @@ describe('actionCollection', () => {
     })
 
     it('should not add action id if the action is not found', () => {
-      spyOn(actionContexts, 'findActionId').and.returnValue([])
+      vi.spyOn(actionContexts, 'findActionId').mockReturnValue([])
       const telemetryEventAttributes = hooks.assembleTelemetry.trigger({
         startTime: 0 as RelativeTime,
       }) as DefaultTelemetryEventAttributes

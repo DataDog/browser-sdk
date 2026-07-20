@@ -1,12 +1,14 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import type { Mock } from 'vitest'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import { wrapCreateRouter } from './wrapCreateRouter'
 import type { AnyTanStackCreateRouter, AnyTanStackNavigationEvent, AnyTanStackRouterInstance } from './types'
 
 describe('wrapCreateRouter', () => {
-  let startViewSpy: jasmine.Spy<(name?: string | object) => void>
+  let startViewSpy: Mock<(name?: string | object) => void>
 
   beforeEach(() => {
-    startViewSpy = jasmine.createSpy()
+    startViewSpy = vi.fn()
     initializeReactPlugin({
       configuration: { router: true },
       publicApi: { startView: startViewSpy },
@@ -27,7 +29,7 @@ describe('wrapCreateRouter', () => {
   it('should not start a new view when only query params change', () => {
     const { triggerOnLoad } = createFakeRouter([{ fullPath: '/', pathname: '/', params: {} }])
 
-    startViewSpy.calls.reset()
+    startViewSpy.mockClear()
     triggerOnLoad({ type: 'onLoad', pathChanged: false, toLocation: { pathname: '/' } })
 
     expect(startViewSpy).not.toHaveBeenCalled()

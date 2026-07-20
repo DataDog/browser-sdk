@@ -19,7 +19,7 @@
       "groupName": "all non-major dependencies",
       "groupSlug": "all-minor-patch",
       "matchUpdateTypes": ["minor", "patch"],
-      "matchPackageNames": ["!karma-webpack", "!@playwright/test"]
+      "matchPackageNames": ["!@playwright/test"]
     },
     {
       "matchFileNames": ["test/apps/vanilla/**"],
@@ -40,6 +40,6 @@
     }
   ],
   "toolSettings": {
-    "nodeMaxMemory": 2048
+    "nodeMaxMemory": 4096
   }
 }

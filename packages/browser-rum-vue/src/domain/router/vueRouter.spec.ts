@@ -1,10 +1,11 @@
+import { describe, it, expect, vi } from 'vitest'
 import { createMemoryHistory } from 'vue-router'
 import { initializeVuePlugin } from '../../../test/initializeVuePlugin'
 import { createRouter } from './vueRouter'
 
 describe('createRouter (wrapped)', () => {
-  it('calls startView on navigation', (done) => {
-    const startViewSpy = jasmine.createSpy()
+  it('calls startView on navigation', async () => {
+    const startViewSpy = vi.fn()
     initializeVuePlugin({
       configuration: { router: true },
       publicApi: { startView: startViewSpy },
@@ -18,21 +19,14 @@ describe('createRouter (wrapped)', () => {
       ],
     })
 
-    router
-      .push('/')
-      .then(() => {
-        expect(startViewSpy).toHaveBeenCalledWith('/')
-        return router.push('/about')
-      })
-      .then(() => {
-        expect(startViewSpy).toHaveBeenCalledWith('/about')
-        done()
-      })
-      .catch(done.fail)
+    await router.push('/')
+    expect(startViewSpy).toHaveBeenCalledExactlyOnceWith('/')
+    await router.push('/about')
+    expect(startViewSpy).toHaveBeenCalledWith('/about')
   })
 
-  it('does not call startView when navigation is duplicated', (done) => {
-    const startViewSpy = jasmine.createSpy()
+  it('does not call startView when navigation is duplicated', async () => {
+    const startViewSpy = vi.fn()
     initializeVuePlugin({
       configuration: { router: true },
       publicApi: { startView: startViewSpy },
@@ -43,21 +37,14 @@ describe('createRouter (wrapped)', () => {
       routes: [{ path: '/', component: {} }],
     })
 
-    router
-      .push('/')
-      .then(() => {
-        startViewSpy.calls.reset()
-        return router.push('/')
-      })
-      .then(() => {
-        expect(startViewSpy).not.toHaveBeenCalled()
-        done()
-      })
-      .catch(done.fail)
+    await router.push('/')
+    startViewSpy.mockClear()
+    await router.push('/')
+    expect(startViewSpy).not.toHaveBeenCalled()
   })
 
-  it('does not call startView when only query params change', (done) => {
-    const startViewSpy = jasmine.createSpy()
+  it('does not call startView when only query params change', async () => {
+    const startViewSpy = vi.fn()
     initializeVuePlugin({
       configuration: { router: true },
       publicApi: { startView: startViewSpy },
@@ -68,21 +55,14 @@ describe('createRouter (wrapped)', () => {
       routes: [{ path: '/products', component: {} }],
     })
 
-    router
-      .push('/products?page=1')
-      .then(() => {
-        startViewSpy.calls.reset()
-        return router.push('/products?page=2')
-      })
-      .then(() => {
-        expect(startViewSpy).not.toHaveBeenCalled()
-        done()
-      })
-      .catch(done.fail)
+    await router.push('/products?page=1')
+    startViewSpy.mockClear()
+    await router.push('/products?page=2')
+    expect(startViewSpy).not.toHaveBeenCalled()
   })
 
-  it('calls startView on initial navigation to /', (done) => {
-    const startViewSpy = jasmine.createSpy()
+  it('calls startView on initial navigation to /', async () => {
+    const startViewSpy = vi.fn()
     initializeVuePlugin({
       configuration: { router: true },
       publicApi: { startView: startViewSpy },
@@ -93,17 +73,13 @@ describe('createRouter (wrapped)', () => {
       routes: [{ path: '/', component: {} }],
     })
 
-    router
-      .push('/')
-      .then(() => {
-        expect(startViewSpy).toHaveBeenCalledOnceWith('/')
-        done()
-      })
-      .catch(done.fail)
+    await router.push('/')
+    expect(startViewSpy).toHaveBeenCalledTimes(1)
+    expect(startViewSpy).toHaveBeenCalledWith('/')
   })
 
-  it('substitutes catch-all pattern with the actual path', (done) => {
-    const startViewSpy = jasmine.createSpy()
+  it('substitutes catch-all pattern with the actual path', async () => {
+    const startViewSpy = vi.fn()
     initializeVuePlugin({
       configuration: { router: true },
       publicApi: { startView: startViewSpy },
@@ -117,17 +93,12 @@ describe('createRouter (wrapped)', () => {
       ],
     })
 
-    router
-      .push('/unknown/page')
-      .then(() => {
-        expect(startViewSpy).toHaveBeenCalledWith('/unknown/page')
-        done()
-      })
-      .catch(done.fail)
+    await router.push('/unknown/page')
+    expect(startViewSpy).toHaveBeenCalledWith('/unknown/page')
   })
 
-  it('does not call startView when navigation is blocked', (done) => {
-    const startViewSpy = jasmine.createSpy()
+  it('does not call startView when navigation is blocked', async () => {
+    const startViewSpy = vi.fn()
     initializeVuePlugin({
       configuration: { router: true },
       publicApi: { startView: startViewSpy },
@@ -148,16 +119,9 @@ describe('createRouter (wrapped)', () => {
       }
     })
 
-    router
-      .push('/')
-      .then(() => {
-        startViewSpy.calls.reset()
-        return router.push('/protected')
-      })
-      .then(() => {
-        expect(startViewSpy).not.toHaveBeenCalled()
-        done()
-      })
-      .catch(done.fail)
+    await router.push('/')
+    startViewSpy.mockClear()
+    await router.push('/protected')
+    expect(startViewSpy).not.toHaveBeenCalled()
   })
 })

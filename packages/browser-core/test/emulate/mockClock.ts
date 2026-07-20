@@ -1,19 +1,41 @@
+import { vi } from 'vitest'
 import type { TimeStamp, RelativeTime } from '@datadog/js-core/time'
 import { registerCleanupTask } from '../registerCleanupTask'
 
 export type Clock = ReturnType<typeof mockClock>
 
 export function mockClock() {
-  jasmine.clock().install()
-  jasmine.clock().mockDate()
+  // Use performance.timing.navigationStart as timeOrigin — it's an integer set once
+  // at page load, so it doesn't suffer from timing races between performance.now()
+  // and Date.now() captures. This matches getNavigationStart() in timeUtils.ts.
+  const timeOrigin = performance.timing.navigationStart
 
-  const timeOrigin = performance.timing.navigationStart // @see getTimeOrigin() in @datadog/js-core/time
+  // Exclude 'performance' from faking so our override sticks on the real object
+  // AND so performance.timing.navigationStart remains accessible.
+  // When performance IS faked, @sinonjs/fake-timers replaces the object and our
+  // override silently fails (the fake performance.now() starts at 0).
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'],
+  })
+
+  // Capture Date.now() AFTER vi.useFakeTimers() to get the exact frozen value.
   const timeStampStart = Date.now()
   const relativeStart = timeStampStart - timeOrigin
 
-  spyOn(performance, 'now').and.callFake(() => Date.now() - timeOrigin)
+  const originalPerformanceNowDescriptor = Object.getOwnPropertyDescriptor(performance, 'now')
+  Object.defineProperty(performance, 'now', {
+    configurable: true,
+    value: () => Date.now() - timeOrigin,
+  })
 
-  registerCleanupTask(() => jasmine.clock().uninstall())
+  registerCleanupTask(() => {
+    if (originalPerformanceNowDescriptor) {
+      Object.defineProperty(performance, 'now', originalPerformanceNowDescriptor)
+    } else {
+      delete (performance as unknown as { now?: () => number }).now
+    }
+    vi.useRealTimers()
+  })
 
   return {
     /**
@@ -26,7 +48,11 @@ export function mockClock() {
      * invokation (the start of the test).
      */
     timeStamp: (duration: number) => (timeStampStart + duration) as TimeStamp,
-    tick: (ms: number) => jasmine.clock().tick(ms),
-    setDate: (date: Date) => jasmine.clock().mockDate(date),
+    // Wrap tick() to return void — vi.advanceTimersByTime returns the Vi instance,
+    // which breaks React useEffect cleanup that expects void.
+    tick: (ms: number) => {
+      vi.advanceTimersByTime(ms)
+    },
+    setDate: (date: Date) => vi.setSystemTime(date),
   }
 }

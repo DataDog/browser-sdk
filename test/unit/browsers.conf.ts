@@ -2,50 +2,47 @@
 
 import type { BrowserConfiguration } from '../browsers.conf'
 
-// The ECMAScript version supported by the oldest browser in the list below (Edge/Chrome 80 → ES2020).
+// Vitest Browser Mode supports Chrome >=87, Edge >=88, Firefox >=78 and Safari >=15.4. Firefox
+// and WebKit are selected through Playwright's bundled-browser capabilities, so BrowserStack uses
+// the versions paired with the pinned `playwright` dependency.
+//
+// The ECMAScript version supported by the oldest branded browser below (Chrome 87 → ES2020).
 // Used by tests that validate runtime-generated code strings (e.g. the expression compiler) which
 // bypass TypeScript/webpack transpilation and must only use syntax supported by all target browsers.
 export const OLDEST_BROWSER_ECMA_VERSION = 2020
 
+// BrowserStack's real Android integration uses Playwright's separate `_android` API, which is not
+// supported by Vitest's Playwright provider. Keep this matrix to browser-type connections only.
 export const browserConfigurations: BrowserConfiguration[] = [
   {
     id: 'edge',
     sessionName: 'Edge',
-    name: 'Edge',
-    version: '80.0',
+    name: 'edge',
+    version: '88.0',
     os: 'Windows',
     osVersion: '11',
   },
   {
     id: 'firefox',
-    sessionName: 'Firefox',
-    name: 'Firefox',
-    version: '78.0',
+    sessionName: 'Firefox (Playwright)',
+    name: 'playwright-firefox',
     os: 'Windows',
     osVersion: '11',
   },
   {
-    id: 'safari-desktop',
-    sessionName: 'Safari desktop',
-    name: 'Safari',
-    version: '14.0',
+    id: 'webkit-desktop',
+    sessionName: 'WebKit desktop',
+    name: 'playwright-webkit',
     os: 'OS X',
-    osVersion: 'Big Sur',
+    // BrowserStack does not provide WebKit on Ventura or Sonoma for Playwright 1.59.
+    osVersion: 'Sequoia',
   },
   {
     id: 'chrome-desktop',
     sessionName: 'Chrome desktop',
-    name: 'Chrome',
-    version: '80.0',
+    name: 'chrome',
+    version: '87.0',
     os: 'Windows',
     osVersion: '11',
-  },
-  {
-    id: 'chrome-mobile',
-    sessionName: 'Chrome mobile',
-    name: 'chrome',
-    os: 'android',
-    osVersion: '12.0',
-    device: 'Google Pixel 6',
   },
 ]

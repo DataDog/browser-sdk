@@ -1,7 +1,6 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "types": ["jasmine"],
     "allowImportingTsExtensions": true,
     "noEmit": true
   },

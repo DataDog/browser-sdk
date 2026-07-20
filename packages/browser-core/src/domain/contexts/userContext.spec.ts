@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import type { RelativeTime } from '@datadog/js-core/time'
 import { createHook, type Hook } from '@datadog/js-core/assembly'
 import { registerCleanupTask } from '../../../test'

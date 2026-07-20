@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import type { RelativeTime, ServerDuration } from '@datadog/js-core/time'
 import { mockSourceCodeContext, registerCleanupTask } from '@datadog/browser-core/test'
 import {
@@ -51,9 +52,9 @@ describe('longTaskCollection', () => {
 
       expect(rawRumEvents[0].startClocks.relative).toBe(1234 as RelativeTime)
       expect(rawRumEvents[0].rawRumEvent).toEqual({
-        date: jasmine.any(Number),
+        date: expect.any(Number),
         long_task: {
-          id: jasmine.any(String),
+          id: expect.any(String),
           entry_type: RumLongTaskEntryType.LONG_ANIMATION_FRAME,
           duration: (82 * 1e6) as ServerDuration,
           blocking_duration: 0 as ServerDuration,
@@ -141,9 +142,9 @@ describe('longTaskCollection', () => {
 
       expect(rawRumEvents[0].startClocks.relative).toBe(1234 as RelativeTime)
       expect(rawRumEvents[0].rawRumEvent).toEqual({
-        date: jasmine.any(Number),
+        date: expect.any(Number),
         long_task: {
-          id: jasmine.any(String),
+          id: expect.any(String),
           entry_type: RumLongTaskEntryType.LONG_TASK,
           duration: (100 * 1e6) as ServerDuration,
         },
@@ -158,7 +159,7 @@ describe('longTaskCollection', () => {
           duration: 100,
           entryType: 'longtask',
           startTime: 1234,
-          toJSON: jasmine.any(Function),
+          toJSON: expect.any(Function),
         },
       })
     })

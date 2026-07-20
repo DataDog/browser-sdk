@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { RelativeTime, Duration, ServerDuration, TimeStamp } from '@datadog/js-core/time'
 import type { MatchOption, TaskQueue } from '@datadog/browser-core'
 import { elapsed, relativeToClocks, toServerDuration } from '@datadog/js-core/time'
@@ -38,7 +39,7 @@ describe('resourceCollection', () => {
   let lifeCycle: LifeCycle
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
-  let taskQueuePushSpy: jasmine.Spy<TaskQueue['push']>
+  let taskQueuePushSpy: Mock<TaskQueue['push']>
   let clock: Clock
 
   function setupResourceCollection(partialConfig: Partial<RumConfiguration> = { trackResources: true }) {
@@ -46,7 +47,7 @@ describe('resourceCollection', () => {
     lifeCycle = new LifeCycle()
     const taskQueue = createTaskQueue()
     replaceMockable(createTaskQueue, () => taskQueue)
-    taskQueuePushSpy = spyOn(taskQueue, 'push')
+    taskQueuePushSpy = vi.spyOn(taskQueue, 'push').mockImplementation(() => undefined)
     const startResult = startResourceCollection(lifeCycle, { ...baseConfiguration, ...partialConfig })
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
@@ -79,9 +80,9 @@ describe('resourceCollection', () => {
 
     expect(rawRumEvents[0].startClocks.relative).toBe(200 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
-      date: jasmine.any(Number) as unknown as TimeStamp,
+      date: expect.any(Number),
       resource: {
-        id: jasmine.any(String),
+        id: expect.any(String),
         duration: (100 * 1e6) as ServerDuration,
         size: 51,
         encoded_body_size: 42,
@@ -89,8 +90,8 @@ describe('resourceCollection', () => {
         transfer_size: 63,
         type: ResourceType.IMAGE,
         url: 'https://resource.com/valid',
-        download: jasmine.any(Object),
-        first_byte: jasmine.any(Object),
+        download: expect.any(Object),
+        first_byte: expect.any(Object),
         status_code: 200,
         protocol: 'HTTP/1.0',
         delivery_type: 'cache',
@@ -166,9 +167,9 @@ describe('resourceCollection', () => {
 
     expect(rawRumEvents[0].startClocks.relative).toBe(200 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
-      date: jasmine.any(Number),
+      date: expect.any(Number),
       resource: {
-        id: jasmine.any(String),
+        id: expect.any(String),
         duration: (100 * 1e6) as ServerDuration,
         method: 'GET',
         status_code: 200,
@@ -192,9 +193,9 @@ describe('resourceCollection', () => {
     })
     expect(rawRumEvents[0].domainContext).toEqual({
       xhr,
-      performanceEntry: jasmine.any(Object),
+      performanceEntry: expect.any(Object),
       isAborted: false,
-      handlingStack: jasmine.stringMatching(HANDLING_STACK_REGEX),
+      handlingStack: expect.stringMatching(HANDLING_STACK_REGEX),
       isManual: false,
       isWebSocket: false,
       requestInit: undefined,
@@ -265,8 +266,8 @@ describe('resourceCollection', () => {
           })
 
           expect(rawRumEvents[0].rawRumEvent).toEqual(
-            jasmine.objectContaining({
-              resource: jasmine.objectContaining({
+            expect.objectContaining({
+              resource: expect.objectContaining({
                 graphql: {
                   operationType: 'query',
                   operationName: 'GetUser',
@@ -313,8 +314,8 @@ describe('resourceCollection', () => {
           })
 
           expect(rawRumEvents[0].rawRumEvent).toEqual(
-            jasmine.objectContaining({
-              resource: jasmine.objectContaining({
+            expect.objectContaining({
+              resource: expect.objectContaining({
                 graphql: {
                   operationType: 'mutation',
                   operationName: 'CreateUser',
@@ -341,8 +342,8 @@ describe('resourceCollection', () => {
       runTasks()
 
       expect(rawRumEvents[0].rawRumEvent).toEqual(
-        jasmine.objectContaining({
-          resource: jasmine.objectContaining({
+        expect.objectContaining({
+          resource: expect.objectContaining({
             response: {
               headers: {
                 'content-type': 'image/png',
@@ -377,9 +378,9 @@ describe('resourceCollection', () => {
     expect(rawRumEvents.length).toBe(1)
     expect(rawRumEvents[0].startClocks.relative).toBe(200 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
-      date: jasmine.any(Number),
+      date: expect.any(Number),
       resource: {
-        id: jasmine.any(String),
+        id: expect.any(String),
         duration: (100 * 1e6) as ServerDuration,
         method: undefined,
         status_code: 200,
@@ -402,7 +403,7 @@ describe('resourceCollection', () => {
       },
     })
     expect(rawRumEvents[0].domainContext).toEqual({
-      performanceEntry: jasmine.any(Object),
+      performanceEntry: expect.any(Object),
       isManual: false,
       isWebSocket: false,
       isAborted: false,
@@ -439,7 +440,12 @@ describe('resourceCollection', () => {
     })
 
     describe('and resource is traced', () => {
-      it('should collect the initial document navigation entry', () => {
+      it('should collect the initial document navigation entry', (ctx) => {
+        // Safari on BrowserStack may emit extra navigation performance entries in the iframe context
+        if (navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome')) {
+          ctx.skip(true, 'Safari emits extra navigation entries in iframe context')
+        }
+
         replaceMockable(getDocumentTraceId, () => '1234')
         const { triggerOnDomLoaded } = setupResourceCollection({ trackResources: false })
 
@@ -447,7 +453,7 @@ describe('resourceCollection', () => {
         runTasks()
 
         expect(rawRumEvents.length).toBe(1)
-        expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
+        expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBe(true)
       })
 
       it('should collect a resource from a completed XHR request', () => {
@@ -462,7 +468,7 @@ describe('resourceCollection', () => {
         })
 
         expect(rawRumEvents.length).toBe(1)
-        expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
+        expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBe(true)
       })
     })
   })
@@ -487,9 +493,9 @@ describe('resourceCollection', () => {
 
     expect(rawRumEvents[0].startClocks.relative).toBe(200 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
-      date: jasmine.any(Number),
+      date: expect.any(Number),
       resource: {
-        id: jasmine.any(String),
+        id: expect.any(String),
         duration: (100 * 1e6) as ServerDuration,
         method: 'GET',
         status_code: 200,
@@ -513,13 +519,13 @@ describe('resourceCollection', () => {
       },
     })
     expect(rawRumEvents[0].domainContext).toEqual({
-      performanceEntry: jasmine.any(Object),
+      performanceEntry: expect.any(Object),
       response,
       requestInput: 'https://resource.com/valid',
       requestInit: { headers: { foo: 'bar' } },
       error: undefined,
       isAborted: false,
-      handlingStack: jasmine.stringMatching(HANDLING_STACK_REGEX),
+      handlingStack: expect.stringMatching(HANDLING_STACK_REGEX),
       isManual: false,
       isWebSocket: false,
       xhr: undefined,
@@ -547,7 +553,7 @@ describe('resourceCollection', () => {
     })
 
     expect(rawRumEvents[0].domainContext).toEqual(
-      jasmine.objectContaining({
+      expect.objectContaining({
         error,
       })
     )
@@ -628,7 +634,7 @@ describe('resourceCollection', () => {
         })
 
         const xhr = new XMLHttpRequest()
-        spyOn(xhr, 'getAllResponseHeaders').and.returnValue(
+        vi.spyOn(xhr, 'getAllResponseHeaders').mockReturnValue(
           'Content-Type: application/json\r\nCache-Control: max-age=300\r\nX-Other: ignored\r\n'
         )
 
@@ -650,7 +656,7 @@ describe('resourceCollection', () => {
         setupResourceCollection({ trackResourceHeaders: buildMatchHeadersForAllUrls(['content-type']) })
 
         const xhr = new XMLHttpRequest()
-        spyOn(xhr, 'getAllResponseHeaders').and.returnValue('Content-Type: text/html\r\n')
+        vi.spyOn(xhr, 'getAllResponseHeaders').mockReturnValue('Content-Type: text/html\r\n')
 
         notifyRequest({
           request: { type: RequestType.XHR, xhr },
@@ -799,7 +805,7 @@ describe('resourceCollection', () => {
 
     describe('limit headers size', () => {
       it('should truncate header values exceeding the max length', () => {
-        const displaySpy = spyOn(display, 'warn')
+        const displaySpy = vi.spyOn(display, 'warn').mockImplementation(() => undefined)
         setupResourceCollection({ trackResourceHeaders: buildMatchHeadersForAllUrls(['x-long']) })
         const longValue = 'a'.repeat(200)
 
@@ -812,11 +818,14 @@ describe('resourceCollection', () => {
 
         const event = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
         expect(event.resource.response!.headers!['x-long']).toBe('a'.repeat(128))
-        expect(displaySpy).toHaveBeenCalledOnceWith('Header "x-long" value was truncated from 200 to 128 characters.')
+        expect(displaySpy).toHaveBeenCalledTimes(1)
+        expect(displaySpy).toHaveBeenCalledExactlyOnceWith(
+          'Header "x-long" value was truncated from 200 to 128 characters.'
+        )
       })
 
       it('should limit the number of collected headers', () => {
-        spyOn(display, 'warn')
+        vi.spyOn(display, 'warn').mockImplementation(() => undefined)
         const headerNames = Array.from({ length: 101 }, (_, i) => `x-header-${i}`)
         setupResourceCollection({ trackResourceHeaders: buildMatchHeadersForAllUrls(headerNames) })
 
@@ -837,7 +846,7 @@ describe('resourceCollection', () => {
       })
 
       it('should only count headers that pass filtering toward the limit', () => {
-        spyOn(display, 'warn')
+        vi.spyOn(display, 'warn').mockImplementation(() => undefined)
         const allowedHeaders = Array.from({ length: 100 }, (_, i) => `x-header-${i}`)
         // Include a forbidden header name in the matchers - it won't be counted
         const allMatchers = [...allowedHeaders, 'authorization', 'x-extra']
@@ -865,7 +874,7 @@ describe('resourceCollection', () => {
       })
 
       it('should not emit telemetry when the max number of headers has not been reached', async () => {
-        spyOn(display, 'warn')
+        vi.spyOn(display, 'warn').mockImplementation(() => undefined)
         const telemetry: MockTelemetry = startMockTelemetry()
         setupResourceCollection({ trackResourceHeaders: buildMatchHeadersForAllUrls(['x-header-0', 'x-header-1']) })
 
@@ -876,13 +885,13 @@ describe('resourceCollection', () => {
           },
         })
 
-        expect(await telemetry.getEvents()).not.toContain(
-          jasmine.objectContaining({ message: 'Maximum number of resource headers reached' })
+        expect(await telemetry.getEvents()).not.toContainEqual(
+          expect.objectContaining({ message: 'Maximum number of resource headers reached' })
         )
       })
 
       it('should warn and emit telemetry when the max number of headers is reached', async () => {
-        const displaySpy = spyOn(display, 'warn')
+        const displaySpy = vi.spyOn(display, 'warn').mockImplementation(() => undefined)
         const telemetry: MockTelemetry = startMockTelemetry()
         const headerNames = Array.from({ length: 110 }, (_, i) => `x-header-${i}`)
         setupResourceCollection({ trackResourceHeaders: buildMatchHeadersForAllUrls(headerNames) })
@@ -900,11 +909,12 @@ describe('resourceCollection', () => {
           },
         })
 
-        expect(displaySpy).toHaveBeenCalledOnceWith(
+        expect(displaySpy).toHaveBeenCalledTimes(1)
+        expect(displaySpy).toHaveBeenCalledExactlyOnceWith(
           'Maximum number of headers (100) has been reached. Further headers are dropped.'
         )
-        expect(await telemetry.getEvents()).toContain(
-          jasmine.objectContaining({
+        expect(await telemetry.getEvents()).toContainEqual(
+          expect.objectContaining({
             message: 'Maximum number of resource headers reached',
             collectedHeaderCount: 100,
             // Account for automatically added content-type header
@@ -1168,7 +1178,7 @@ describe('resourceCollection', () => {
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields).toBeDefined()
       expect(privateFields.trace_id).toBe('1234')
-      expect(privateFields.span_id).toEqual(jasmine.any(String))
+      expect(privateFields.span_id).toEqual(expect.any(String))
     })
 
     it('should be processed from sampled completed request', () => {
@@ -1310,7 +1320,7 @@ describe('resourceCollection', () => {
 
     expect(rawRumEvents.length).toBe(0)
 
-    taskQueuePushSpy.calls.allArgs().forEach(([task], index) => {
+    taskQueuePushSpy.mock.calls.forEach(([task], index) => {
       task()
       expect(rawRumEvents.length).toBe(index + 1)
     })
@@ -1320,10 +1330,10 @@ describe('resourceCollection', () => {
     // Request-type entries are queued through a `setTimeout(…, REQUEST_MATCHING_DELAY)` before
     // they reach the task queue — advance past it so they get pushed.
     clock.tick(REQUEST_MATCHING_DELAY)
-    taskQueuePushSpy.calls.allArgs().forEach(([task]) => {
+    taskQueuePushSpy.mock.calls.forEach(([task]) => {
       task()
     })
-    taskQueuePushSpy.calls.reset()
+    taskQueuePushSpy.mockClear()
   }
 
   function notifyRequest({

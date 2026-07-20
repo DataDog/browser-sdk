@@ -9,7 +9,7 @@ alwaysApply: false
 
 - **Run all unit tests**: `yarn test:unit`
 - **Run a specific spec file**: `yarn test:unit --spec <file-path>`
-- **Focus on specific tests**: Prepend `f` to `describe` and `it` (e.g., `fdescribe`, `fit`)
+- **Focus on specific tests**: Use `describe.only` or `it.only` temporarily
 
 ### Examples
 
@@ -33,7 +33,7 @@ yarn test:unit --spec "packages/browser-core/**/browser/*.spec.ts"
 #### Focus on Specific Tests
 ```typescript
 // Run only this describe block
-fdescribe('addEventListener', () => {
+describe.only('addEventListener', () => {
   // All tests in this block will run
   it('should add event listener', () => {})
   it('should remove event listener', () => {})
@@ -41,7 +41,7 @@ fdescribe('addEventListener', () => {
 
 // Run only this single test
 describe('addEventListener', () => {
-  fit('should add event listener', () => {
+  it.only('should add event listener', () => {
     // Only this test will run
   })
 
@@ -64,24 +64,10 @@ describe('addEventListener', () => {
 ```bash
 # 1. Check test output for randomization seed
 yarn test:unit
-# Look for: "Randomized with seed 65781"
+# Look for: Running tests with seed "65781"
 
-# 2. Set seed in karma configuration
-# Edit test/unit/karma.base.conf.js:
-module.exports = {
-  // ... other config
-  client: {
-    jasmine: {
-      // ... other jasmine config
-      seed: 65781  // Use the seed from step 1
-    }
-  }
-}
-
-# 3. Run tests with the same order
-yarn test:unit
-
-# 4. Remove seed after debugging
+# 2. Run tests with the same order
+yarn test:unit --seed 65781
 ```
 
 ### File Organization
@@ -169,7 +155,7 @@ beforeEach(() => {
   clock = mockClock()
 })
 it('should handle delayed operations', () => {
-  const callback = jasmine.createSpy()
+  const callback = vi.fn()
   setTimeout(callback, 1000)
 
   clock.tick(1000) // Instant!
