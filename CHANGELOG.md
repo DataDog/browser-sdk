@@ -5,15 +5,49 @@
 > **Legend**
 >
 > - 💥 **Breaking change** - Breaking API changes
+>
 > - ✨ **New feature** - New public API, behavior, event, property
+>
 > - 🐛 **Bug fix** - Fix bugs, regressions, crashes
+>
 > - ⚡️ **Performance** - Improve performance, reduce bundle size
+>
 > - 📝 **Documentation** - User-facing documentation
+>
 > - ⚗️ **Experimental** - New public feature behind a feature flag
 >
 > See [Gitmoji](https://gitmoji.dev/) for a guide on the emojis used.
 
 ---
+
+## v7.6.0
+
+**Public Changes:**
+
+- ✨ Add salesforce bundle entrypoint ([#4879](https://github.com/DataDog/browser-sdk/pull/4879))
+- ✨ Extend remote configuration supported parameters ([#4877](https://github.com/DataDog/browser-sdk/pull/4877))
+- ✨ Add CDN default headers ([#4857](https://github.com/DataDog/browser-sdk/pull/4857))
+- 🐛 Update session replay sandbox URL and cookie name in developer extension ([#4886](https://github.com/DataDog/browser-sdk/pull/4886))
+- 🐛 Keep primitive values unchanged during sanitization ([#4881](https://github.com/DataDog/browser-sdk/pull/4881))
+- 🐛 Add react-router-v8 to tsconfig ([#4880](https://github.com/DataDog/browser-sdk/pull/4880))
+- 🐛 Use unknown type for addReactError error parameter ([#4863](https://github.com/DataDog/browser-sdk/pull/4863))
+- 🐛 fix bundle size increase threshold never triggering ([#4852](https://github.com/DataDog/browser-sdk/pull/4852))
+- ⚗️ Collect WebSocket resource events ([#4718](https://github.com/DataDog/browser-sdk/pull/4718))
+
+**Internal Changes:**
+
+- 👷 Update dependency pako to v3 ([#4869](https://github.com/DataDog/browser-sdk/pull/4869))
+- 👷 Update all non-major dependencies ([#4868](https://github.com/DataDog/browser-sdk/pull/4868))
+- 👷 Update react-router monorepo (major) ([#4846](https://github.com/DataDog/browser-sdk/pull/4846))
+- 👷 Upgrade Yarn to 4.17.1 ([#4864](https://github.com/DataDog/browser-sdk/pull/4864))
+- 👷 Lock file maintenance ([#4850](https://github.com/DataDog/browser-sdk/pull/4850))
+- 👷 Update dependency @playwright/test to v1.61.1 ([#4847](https://github.com/DataDog/browser-sdk/pull/4847))
+- 👷 Update all non-major dependencies ([#4848](https://github.com/DataDog/browser-sdk/pull/4848))
+- ♻️ [RUM-16925] switch debug_ids to recommended URL/Debug-ID array format ([#4862](https://github.com/DataDog/browser-sdk/pull/4862))
+- ✅ Skip Salesforce LWC tests ([#4860](https://github.com/DataDog/browser-sdk/pull/4860))
+- 🔧 Add Salesforce Experience Cloud testing app ([#4872](https://github.com/DataDog/browser-sdk/pull/4872))
+- 🔧 Use session cookies for Salesforce LWC E2E tests ([#4870](https://github.com/DataDog/browser-sdk/pull/4870))
+- 🔧 Add react V7 to git ignored test applications ([#4873](https://github.com/DataDog/browser-sdk/pull/4873))
 
 ## v7.5.0
 

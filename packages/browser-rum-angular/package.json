@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-rum-angular",
-  "version": "7.5.0",
+  "version": "7.6.0",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
   "module": "esm/entries/main.mjs",
@@ -17,9 +17,9 @@
     "prepack": "npm run build"
   },
   "dependencies": {
-    "@datadog/browser-core": "7.5.0",
-    "@datadog/browser-rum-core": "7.5.0",
-    "@datadog/js-core": "0.0.5"
+    "@datadog/browser-core": "7.6.0",
+    "@datadog/browser-rum-core": "7.6.0",
+    "@datadog/js-core": "0.0.6"
   },
   "peerDependencies": {
     "@angular/core": ">=15 <=22",
