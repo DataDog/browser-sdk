@@ -82,15 +82,7 @@ export function createPreStartStrategy(
     if (remoteConfigId) {
       const cache = createConfigurationCache<RemoteConfiguration>({ remoteConfigurationId: remoteConfigId })
       const cacheResult = cache.read()
-
-      // Background sync — always kick off a fresh fetch to update the cache
-      fetchRemoteConfiguration(cachedInitConfiguration)
-        .then((fetchResult) => {
-          if (fetchResult.ok) {
-            cache.write(fetchResult.value)
-          }
-        })
-        .catch(monitorError)
+      const fetchPromise = fetchRemoteConfiguration(cachedInitConfiguration)
 
       if (cacheResult.status === 'hit') {
         const resolvedInitConfig = applyLogsRemoteConfiguration(cachedInitConfiguration, cacheResult.config)
@@ -98,9 +90,20 @@ export function createPreStartStrategy(
         if (resolvedLogsConfig) {
           configurationToUse = resolvedLogsConfig
         }
-      } else if (cachedInitConfiguration.remoteConfiguration?.required) {
-        fetchRemoteConfiguration(cachedInitConfiguration)
+        // Background sync — update the cache for the next page load
+        fetchPromise
           .then((fetchResult) => {
+            if (fetchResult.ok) {
+              cache.write(fetchResult.value)
+            }
+          })
+          .catch(monitorError)
+      } else if (cachedInitConfiguration.remoteConfiguration?.required) {
+        fetchPromise
+          .then((fetchResult) => {
+            if (fetchResult.ok) {
+              cache.write(fetchResult.value)
+            }
             const resolvedInitConfig = fetchResult.ok
               ? applyLogsRemoteConfiguration(cachedInitConfiguration!, fetchResult.value)
               : cachedInitConfiguration!
@@ -113,6 +116,15 @@ export function createPreStartStrategy(
           })
           .catch(monitorError)
         return
+      } else {
+        // Cache miss, not required — still refresh the cache for next load
+        fetchPromise
+          .then((fetchResult) => {
+            if (fetchResult.ok) {
+              cache.write(fetchResult.value)
+            }
+          })
+          .catch(monitorError)
       }
     }
 
