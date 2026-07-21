@@ -28,7 +28,7 @@ You should also enable [Lightning Web Security][1] in the Salesforce org.
 Finally, you need the [Datadog RUM Salesforce Bundle][2]. Download it into your Salesforce project's static resources folder, for example:
 
 ```shell
-curl -o staticresources/datadog_rum_salesforce.js https://www.datadoghq-browser-agent.com/us1/v7/datadog-rum-salesforce.js
+curl -o staticresources/datadog_rum.js https://www.datadoghq-browser-agent.com/us1/v7/datadog-rum-salesforce.js
 ```
 
 Once you have these, follow one of the deployment paths below:
@@ -219,7 +219,7 @@ Expose the component to the Lightning Utility Bar, then add it to your app's Uti
 </LightningComponentBundle>
 ```
 
-`flexipages/MyApp_UtilityBar.flexipage-meta.xml`
+Add the following `componentInstance` excerpt to your app's existing Utility Bar FlexiPage metadata, for example in `flexipages/MyApp_UtilityBar.flexipage-meta.xml`.
 
 ```xml
 <componentInstance>
@@ -231,27 +231,27 @@ Expose the component to the Lightning Utility Bar, then add it to your app's Uti
   <componentInstanceProperties>
     <name>applicationId</name>
     <type>String</type>
-    <value><YOUR_DATADOG_APPLICATION_ID></value>
+    <value>YOUR_DATADOG_APPLICATION_ID</value>
   </componentInstanceProperties>
   <componentInstanceProperties>
     <name>clientToken</name>
     <type>String</type>
-    <value><YOUR_DATADOG_CLIENT_TOKEN></value>
+    <value>YOUR_DATADOG_CLIENT_TOKEN</value>
   </componentInstanceProperties>
   <componentInstanceProperties>
     <name>site</name>
     <type>String</type>
-    <value><YOUR_DATADOG_SITE></value>
+    <value>YOUR_DATADOG_SITE</value>
   </componentInstanceProperties>
   <componentInstanceProperties>
     <name>service</name>
     <type>String</type>
-    <value><YOUR_SERVICE_NAME></value>
+    <value>YOUR_SERVICE_NAME</value>
   </componentInstanceProperties>
   <componentInstanceProperties>
     <name>env</name>
     <type>String</type>
-    <value><YOUR_ENV_NAME></value>
+    <value>YOUR_ENV_NAME</value>
   </componentInstanceProperties>
   <componentName>datadogInit</componentName>
   <identifier>datadogInit</identifier>
