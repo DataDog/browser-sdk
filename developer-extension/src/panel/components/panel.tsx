@@ -13,6 +13,7 @@ import { SettingsTab } from './tabs/settingsTab'
 import { InfosTab } from './tabs/infosTab'
 import { EventsTab, DEFAULT_COLUMNS } from './tabs/eventsTab'
 import { ReplayTab } from './tabs/replayTab'
+import { FlagsTab } from './tabs/flagsTab'
 
 import * as classes from './panel.module.css'
 
@@ -53,6 +54,9 @@ export function Panel() {
           <Tabs.Tab value={PanelTabs.Replay}>
             <Text>Live replay</Text>
           </Tabs.Tab>
+          <Tabs.Tab value={PanelTabs.Flags}>
+            <Text>Flags</Text>
+          </Tabs.Tab>
           <Tabs.Tab
             value={PanelTabs.Settings}
             rightSection={
@@ -91,6 +95,9 @@ export function Panel() {
       </Tabs.Panel>
       <Tabs.Panel value={PanelTabs.Replay} className={classes.tab}>
         <ReplayTab />
+      </Tabs.Panel>
+      <Tabs.Panel value={PanelTabs.Flags} className={classes.tab}>
+        <FlagsTab />
       </Tabs.Panel>
       <Tabs.Panel value={PanelTabs.Settings} className={classes.tab}>
         <SettingsTab />

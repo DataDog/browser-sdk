@@ -57,4 +57,9 @@ export interface Settings {
   logsConfigurationOverride: object | null
   debugMode: boolean
   datadogMode: boolean
+  // Temporary credentials for the feature-flag catalog fetch. Stored in chrome.storage.local
+  // only (never source). To be replaced by OAuth (see FFL-2596 / RFC Decision 4).
+  flagsApiKey: string
+  flagsAppKey: string
+  flagsSite: string
 }

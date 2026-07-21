@@ -1,1 +1,1 @@
-chrome.devtools.panels.create('Browser SDK', 'icon.png', 'panel.html')
+chrome.devtools.panels.create('🚩 Browser SDK LOCAL', 'icon.png', 'panel.html')

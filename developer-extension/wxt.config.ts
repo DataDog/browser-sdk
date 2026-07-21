@@ -8,7 +8,7 @@ export default defineConfig({
   entrypointsDir: 'src/entrypoints',
   manifest: {
     name: 'Datadog Browser SDK developer extension',
-    permissions: ['storage', 'browsingData', 'declarativeNetRequest', 'webNavigation', 'scripting'],
+    permissions: ['storage', 'browsingData', 'declarativeNetRequest', 'webNavigation', 'scripting', 'identity'],
     host_permissions: ['<all_urls>'],
     icons: {
       '256': 'icon.png',
