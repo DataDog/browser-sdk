@@ -12,7 +12,7 @@ using two initialization approaches:
 
 1. **Head markup** — inject the SDK in the LWR template
    ([docs](https://developer.salesforce.com/docs/atlas.en-us.exp_cloud_lwr.meta/exp_cloud_lwr/template_differences_markup.htm))
-2. **`experienceDatadogInit` LWC** — load the slim bundle from a static resource and start views on SPA navigation
+2. **`experienceDatadogInit` LWC** — load the RUM Salesforce bundle from a static resource and start views on SPA navigation
 
 ## What It Contains
 
@@ -29,7 +29,7 @@ and `[test/apps/sf-lwc-app/README.md](../sf-lwc-app/README.md)`.
 
 ### 1. Add the static resource
 
-Copy the Datadog slim RUM bundle into the project as
+Copy the Datadog RUM Salesforce bundle into the project as
 `force-app/main/default/staticresources/datadog_rum_salesforce.js` and register it with
 `datadog_rum_salesforce.resource-meta.xml`:
 
@@ -124,7 +124,7 @@ locally without deploying:
 yarn build:apps --app sf-experience-app
 ```
 
-This copies the locally built RUM slim bundle into the gitignored
+This copies the locally built RUM Salesforce bundle into the gitignored
 `force-app/main/default/staticresources/datadog_rum_salesforce.js` file.
 
 ## Open The Site

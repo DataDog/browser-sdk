@@ -25,7 +25,7 @@ This app runs from Salesforce metadata already deployed to
 the Salesforce org, so any change to that metadata (Apex, LWC markup/config, permission sets, etc.) requires a full
 redeploy to take effect.
 
-For E2E testing, deployment is not necesary since we will override the deployed rum_slim bundle with Playwright.
+For E2E testing, deployment is not necesary since we will override the deployed RUM Salesforce bundle with Playwright.
 
 ```sh
 yarn salesforce:deploy-apps --app lwc
