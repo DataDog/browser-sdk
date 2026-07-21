@@ -79,8 +79,9 @@ async function getInfos(): Promise<SdkInfos> {
           return JSON.parse(stringified)
         }
 
-        // SDK v7 renamed the session cookie from '_dd_s' to '_dd_s_v2'. Prefer the new
-        // name and fall back to the legacy one so this works for both v6 and v7 apps.
+        // SDK v7 renamed the session cookie from '_dd_s' to '_dd_s_v2'. Only prefer the
+        // new name when a v7 SDK is detected on the page, so a stale _dd_s_v2 left over
+        // from a previous v7 session doesn't shadow an active v6 session.
         function findCookieValue(name) {
           return document.cookie
             .split(';')
@@ -88,7 +89,8 @@ async function getInfos(): Promise<SdkInfos> {
             .find(([cookieName]) => cookieName === name)
             ?.[1]
         }
-        const cookieRawValue = findCookieValue('_dd_s_v2') ?? findCookieValue('_dd_s')
+        const isV7 = window.DD_RUM?.version?.startsWith('7') || window.DD_LOGS?.version?.startsWith('7')
+        const cookieRawValue = isV7 ? (findCookieValue('_dd_s_v2') ?? findCookieValue('_dd_s')) : findCookieValue('_dd_s')
 
         const cookieEntries = cookieRawValue
           ? cookieRawValue.split('&').map((value) => value.split('='))
