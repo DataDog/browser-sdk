@@ -37,4 +37,17 @@ describe('fetchRemoteConfiguration', () => {
     expect(result.ok).toBeFalse()
     expect((result as { ok: false; error: Error }).error).toBeInstanceOf(Error)
   })
+
+  it('returns ok:false when response body is not valid JSON', async () => {
+    interceptor.withFetch(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.reject(new SyntaxError('Unexpected end of JSON input')),
+      })
+    )
+
+    const result = await fetchRemoteConfiguration(options)
+    expect(result.ok).toBeFalse()
+    expect((result as { ok: false; error: Error }).error).toBeInstanceOf(Error)
+  })
 })
