@@ -8,9 +8,7 @@ const CACHE_KEY = `dd_rc_${RC_ID}`
 test.describe('logs remote configuration', () => {
   createTest('should apply forwardErrorsToLogs: false from cached remote configuration')
     .withLogs({ remoteConfigurationId: RC_ID })
-    .withHead(
-      seedCache({ logs: { forwardErrorsToLogs: false } })
-    )
+    .withHead(seedCache({ logs: { forwardErrorsToLogs: false } }))
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
         console.error('test error')

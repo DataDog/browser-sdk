@@ -1,4 +1,11 @@
-import type { createContextManager, Context, FetchRemoteConfigurationResult, RemoteConfiguration, DynamicOption, ContextItem } from '@datadog/browser-core'
+import type {
+  createContextManager,
+  Context,
+  FetchRemoteConfigurationResult,
+  RemoteConfiguration,
+  DynamicOption,
+  ContextItem,
+} from '@datadog/browser-core'
 import {
   display,
   mapValues,

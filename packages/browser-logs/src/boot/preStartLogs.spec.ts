@@ -265,7 +265,11 @@ describe('preStartLogs', () => {
     it('applies cached remote config overrides before starting', async () => {
       localStorage.setItem(
         buildCacheKey(RC_ID),
-        JSON.stringify({ version: CACHE_VERSION, config: { logs: { forwardErrorsToLogs: false } }, fetchedAt: Date.now() })
+        JSON.stringify({
+          version: CACHE_VERSION,
+          config: { logs: { forwardErrorsToLogs: false } },
+          fetchedAt: Date.now(),
+        })
       )
 
       const { strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults()
