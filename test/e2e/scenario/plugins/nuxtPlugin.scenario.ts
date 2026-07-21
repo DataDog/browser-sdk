@@ -101,7 +101,7 @@ test.describe('plugin: nuxt error', () => {
             expect(browserLogs.filter((log) => log.level === 'error').length).toBeGreaterThan(0)
           })
         })
-      createTest('should not render the full-page error for non-fatal client errors after hydration')
+      createTest('should not render the 500 Internal Server Error page for non-fatal client errors after hydration')
         .withBasePath('/error-test')
         .withRum()
         .withNuxtApp(routerVersion)
@@ -109,6 +109,8 @@ test.describe('plugin: nuxt error', () => {
           // Wait for hydration (app:suspense:resolve) to complete: only the initial render is
           // allowed to trigger the full-page error.
           await page.click('[data-testid="trigger-error"]')
+          // Verify that the 500 error page is not rendered.
+          // This is proven by showing that we are still in the same page and the button is still visible.
           await expect(page.locator('h1')).toHaveText('Error Page')
           await expect(page.getByTestId('trigger-error')).toBeVisible()
           await expect(page.getByTestId('error-handled')).toBeVisible()

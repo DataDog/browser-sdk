@@ -29,13 +29,13 @@ describe('setupNuxtErrorHandling', () => {
 
   it("stops calling Nuxt's default error handler after hydration", () => {
     const reportErrorSpy = jasmine.createSpy()
-    const originalErrorHandlerSpy = jasmine.createSpy() as jasmine.Spy & { __nuxt_default?: true }
-    originalErrorHandlerSpy.__nuxt_default = true
+    const nuxtDefaultErrorHandlerSpy = jasmine.createSpy() as jasmine.Spy & { __nuxt_default?: true }
+    nuxtDefaultErrorHandlerSpy.__nuxt_default = true
     let suspenseResolveCallback!: () => void
     const nuxtApp = {
       vueApp: {
         config: {
-          errorHandler: originalErrorHandlerSpy,
+          errorHandler: nuxtDefaultErrorHandlerSpy,
         },
       },
       hook: jasmine.createSpy().and.callFake((name: string, callback: () => void) => {
@@ -50,6 +50,7 @@ describe('setupNuxtErrorHandling', () => {
     const initialError = new Error('initial')
     const errorHandler = nuxtApp.vueApp.config.errorHandler as NonNullable<App['config']['errorHandler']>
     errorHandler(initialError, null, 'mounted hook')
+
     suspenseResolveCallback()
 
     const postHydrationError = new Error('post hydration')
@@ -59,17 +60,17 @@ describe('setupNuxtErrorHandling', () => {
       [initialError, null, 'mounted hook'],
       [postHydrationError, null, 'native event handler'],
     ])
-    expect(originalErrorHandlerSpy).toHaveBeenCalledOnceWith(initialError, null, 'mounted hook')
+    expect(nuxtDefaultErrorHandlerSpy).toHaveBeenCalledOnceWith(initialError, null, 'mounted hook')
   })
 
-  it('keeps calling a custom original error handler after hydration', () => {
+  it('keeps calling a custom error handler after hydration', () => {
     const reportErrorSpy = jasmine.createSpy()
-    const originalErrorHandlerSpy = jasmine.createSpy()
+    const customErrorHandlerSpy = jasmine.createSpy()
     let suspenseResolveCallback!: () => void
     const nuxtApp = {
       vueApp: {
         config: {
-          errorHandler: originalErrorHandlerSpy,
+          errorHandler: customErrorHandlerSpy,
         },
       },
       hook: jasmine.createSpy().and.callFake((name: string, callback: () => void) => {
@@ -88,7 +89,7 @@ describe('setupNuxtErrorHandling', () => {
     errorHandler(error, null, 'mounted hook')
 
     expect(reportErrorSpy).toHaveBeenCalledOnceWith(error, null, 'mounted hook')
-    expect(originalErrorHandlerSpy).toHaveBeenCalledOnceWith(error, null, 'mounted hook')
+    expect(customErrorHandlerSpy).toHaveBeenCalledOnceWith(error, null, 'mounted hook')
   })
 
   it('deduplicates the same error between Vue and app:error hooks', () => {
