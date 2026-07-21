@@ -97,6 +97,17 @@ export default class CustomActionButtons extends LightningElement {
     xhr.send()
   }
 
+  handleImageResourceClick() {
+    const token = `dd-image-test-${Date.now()}`
+    const url = this.getResourceTestUrl(token)
+    this.lastResourceName = `image: ${token}`
+
+    const image = new Image()
+    image.onerror = () => {}
+    image.src = url
+    this.resourceImage = image
+  }
+
   handleSelectorProbeClick(event) {
     const innerActionName = event.currentTarget.getAttribute('data-dd-action-name')
     this.lastSelectorProbe = innerActionName

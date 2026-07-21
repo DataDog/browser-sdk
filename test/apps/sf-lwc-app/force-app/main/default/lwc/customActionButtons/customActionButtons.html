@@ -108,6 +108,11 @@
         variant="brand"
         onclick="{handleXhrResourceClick}"
       ></lightning-button>
+      <lightning-button
+        label="Image Resource"
+        variant="brand"
+        onclick="{handleImageResourceClick}"
+      ></lightning-button>
     </div>
     <template lwc:if="{lastResourceName}">
       <p>Last requested: {lastResourceName}</p>

@@ -55,7 +55,7 @@ yarn salesforce:get-urls --app lwc
 
 The printed URL is a direct Lightning app URL. It requires an existing browser session for the Salesforce org.
 E2E tests don't use this script: they build their own authenticated URL via the JWT/REST flow in
-`test/e2e/lib/framework/buildSalesforceLwcUrl.ts`, and inject the RUM configuration on the page as
+`test/e2e/lib/framework/buildSalesforceUrl.ts`, and inject the RUM configuration on the page as
 `window.RUM_CONFIGURATION`.
 
 ## Run E2E Tests
