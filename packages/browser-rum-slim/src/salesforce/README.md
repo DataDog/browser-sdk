@@ -344,22 +344,27 @@ In Experience Builder:
 5. Replace the placeholder values with your Datadog RUM configuration.
 
 ```html
-<x-oasis-script src="/sfsites/c/resource/datadog_rum"></x-oasis-script>
-<x-oasis-script>
-  window.DD_RUM.onReady(function () {
-    window.DD_RUM.init({
-      applicationId: '<YOUR_DATADOG_APPLICATION_ID>',
-      clientToken: '<YOUR_DATADOG_CLIENT_TOKEN>',
-      site: '<YOUR_DATADOG_SITE>',
-      env: '<YOUR_ENV_NAME>',
-      service: '<YOUR_SERVICE_NAME>',
-      sessionSampleRate: 100,
-      sessionReplaySampleRate: 0,
-      trackLongTasks: true,
-      trackResources: true,
-      trackUserInteractions: true,
-    })
-  })
+<x-oasis-script hidden>
+  ;(function () {
+    var datadogScript = document.createElement('script')
+    datadogScript.src = '/sfsites/c/resource/datadog_rum'
+    datadogScript.onload = function () {
+      window.DD_RUM.onReady(function () {
+        window.DD_RUM.init({
+          applicationId: '<YOUR_DATADOG_APPLICATION_ID>',
+          clientToken: '<YOUR_DATADOG_CLIENT_TOKEN>',
+          site: '<YOUR_DATADOG_SITE>',
+          env: '<YOUR_ENV_NAME>',
+          service: '<YOUR_SERVICE_NAME>',
+          sessionSampleRate: 100,
+          trackLongTasks: true,
+          trackResources: true,
+          trackUserInteractions: true,
+        })
+      })
+    }
+    document.head.appendChild(datadogScript)
+  })()
 </x-oasis-script>
 ```
 
