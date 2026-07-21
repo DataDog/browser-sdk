@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-core",
-  "version": "7.5.0",
+  "version": "7.6.0",
   "license": "Apache-2.0",
   "main": "cjs/index.js",
   "module": "esm/index.mjs",
@@ -23,7 +23,7 @@
     "directory": "packages/browser-core"
   },
   "dependencies": {
-    "@datadog/js-core": "0.0.5"
+    "@datadog/js-core": "0.0.6"
   },
   "devDependencies": {
     "pako": "3.0.0"

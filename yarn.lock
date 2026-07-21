@@ -454,11 +454,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@datadog/browser-core@npm:7.5.0, @datadog/browser-core@workspace:*, @datadog/browser-core@workspace:packages/browser-core":
+"@datadog/browser-core@npm:7.6.0, @datadog/browser-core@workspace:*, @datadog/browser-core@workspace:packages/browser-core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-core@workspace:packages/browser-core"
   dependencies:
-    "@datadog/js-core": "npm:0.0.5"
+    "@datadog/js-core": "npm:0.0.6"
     pako: "npm:3.0.0"
   languageName: unknown
   linkType: soft
@@ -467,8 +467,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-debugger@workspace:packages/browser-debugger"
   dependencies:
-    "@datadog/browser-core": "npm:7.5.0"
-    "@datadog/js-core": "npm:0.0.5"
+    "@datadog/browser-core": "npm:7.6.0"
+    "@datadog/js-core": "npm:0.0.6"
     acorn: "npm:8.17.0"
   languageName: unknown
   linkType: soft
@@ -477,10 +477,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-logs@workspace:packages/browser-logs"
   dependencies:
-    "@datadog/browser-core": "npm:7.5.0"
-    "@datadog/js-core": "npm:0.0.5"
+    "@datadog/browser-core": "npm:7.6.0"
+    "@datadog/js-core": "npm:0.0.6"
   peerDependencies:
-    "@datadog/browser-rum": 7.5.0
+    "@datadog/browser-rum": 7.6.0
   peerDependenciesMeta:
     "@datadog/browser-rum":
       optional: true
@@ -496,9 +496,9 @@ __metadata:
     "@angular/core": "npm:22.0.5"
     "@angular/platform-browser": "npm:22.0.5"
     "@angular/router": "npm:22.0.5"
-    "@datadog/browser-core": "npm:7.5.0"
-    "@datadog/browser-rum-core": "npm:7.5.0"
-    "@datadog/js-core": "npm:0.0.5"
+    "@datadog/browser-core": "npm:7.6.0"
+    "@datadog/browser-rum-core": "npm:7.6.0"
+    "@datadog/js-core": "npm:0.0.6"
     rxjs: "npm:7.8.2"
   peerDependencies:
     "@angular/core": ">=15 <=22"
@@ -507,12 +507,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-rum-core@npm:7.5.0, @datadog/browser-rum-core@workspace:*, @datadog/browser-rum-core@workspace:packages/browser-rum-core":
+"@datadog/browser-rum-core@npm:7.6.0, @datadog/browser-rum-core@workspace:*, @datadog/browser-rum-core@workspace:packages/browser-rum-core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-core@workspace:packages/browser-rum-core"
   dependencies:
-    "@datadog/browser-core": "npm:7.5.0"
-    "@datadog/js-core": "npm:0.0.5"
+    "@datadog/browser-core": "npm:7.6.0"
+    "@datadog/js-core": "npm:0.0.6"
     ajv: "npm:8.20.0"
   languageName: unknown
   linkType: soft
@@ -521,10 +521,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-nextjs@workspace:packages/browser-rum-nextjs"
   dependencies:
-    "@datadog/browser-core": "npm:7.5.0"
-    "@datadog/browser-rum-core": "npm:7.5.0"
-    "@datadog/browser-rum-react": "npm:7.5.0"
-    "@datadog/js-core": "npm:0.0.5"
+    "@datadog/browser-core": "npm:7.6.0"
+    "@datadog/browser-rum-core": "npm:7.6.0"
+    "@datadog/browser-rum-react": "npm:7.6.0"
+    "@datadog/js-core": "npm:0.0.6"
     "@types/react": "npm:19.2.17"
     next: "npm:16.2.10"
     react: "npm:19.2.7"
@@ -544,9 +544,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-nuxt@workspace:packages/browser-rum-nuxt"
   dependencies:
-    "@datadog/browser-core": "npm:7.5.0"
-    "@datadog/browser-rum-core": "npm:7.5.0"
-    "@datadog/js-core": "npm:0.0.5"
+    "@datadog/browser-core": "npm:7.6.0"
+    "@datadog/browser-rum-core": "npm:7.6.0"
+    "@datadog/js-core": "npm:0.0.6"
     vue: "npm:3.5.39"
     vue-router: "npm:5.1.0"
   peerDependencies:
@@ -567,13 +567,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-rum-react@npm:7.5.0, @datadog/browser-rum-react@workspace:packages/browser-rum-react":
+"@datadog/browser-rum-react@npm:7.6.0, @datadog/browser-rum-react@workspace:packages/browser-rum-react":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-react@workspace:packages/browser-rum-react"
   dependencies:
-    "@datadog/browser-core": "npm:7.5.0"
-    "@datadog/browser-rum-core": "npm:7.5.0"
-    "@datadog/js-core": "npm:0.0.5"
+    "@datadog/browser-core": "npm:7.6.0"
+    "@datadog/browser-rum-core": "npm:7.6.0"
+    "@datadog/js-core": "npm:0.0.6"
     "@tanstack/react-router": "npm:1.170.17"
     "@types/react": "npm:19.2.17"
     "@types/react-dom": "npm:19.2.3"
@@ -607,11 +607,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-slim@workspace:packages/browser-rum-slim"
   dependencies:
-    "@datadog/browser-core": "npm:7.5.0"
-    "@datadog/browser-rum-core": "npm:7.5.0"
-    "@datadog/js-core": "npm:0.0.5"
+    "@datadog/browser-core": "npm:7.6.0"
+    "@datadog/browser-rum-core": "npm:7.6.0"
+    "@datadog/js-core": "npm:0.0.6"
   peerDependencies:
-    "@datadog/browser-logs": 7.5.0
+    "@datadog/browser-logs": 7.6.0
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
@@ -622,9 +622,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-vue@workspace:packages/browser-rum-vue"
   dependencies:
-    "@datadog/browser-core": "npm:7.5.0"
-    "@datadog/browser-rum-core": "npm:7.5.0"
-    "@datadog/js-core": "npm:0.0.5"
+    "@datadog/browser-core": "npm:7.6.0"
+    "@datadog/browser-rum-core": "npm:7.6.0"
+    "@datadog/js-core": "npm:0.0.6"
     "@vue/compiler-dom": "npm:3.5.39"
     "@vue/test-utils": "npm:2.4.11"
     vue: "npm:3.5.39"
@@ -648,13 +648,13 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum@workspace:packages/browser-rum"
   dependencies:
-    "@datadog/browser-core": "npm:7.5.0"
-    "@datadog/browser-rum-core": "npm:7.5.0"
-    "@datadog/browser-worker": "npm:7.5.0"
-    "@datadog/js-core": "npm:0.0.5"
+    "@datadog/browser-core": "npm:7.6.0"
+    "@datadog/browser-rum-core": "npm:7.6.0"
+    "@datadog/browser-worker": "npm:7.6.0"
+    "@datadog/js-core": "npm:0.0.6"
     pako: "npm:3.0.0"
   peerDependencies:
-    "@datadog/browser-logs": 7.5.0
+    "@datadog/browser-logs": 7.6.0
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
@@ -686,25 +686,25 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-worker@npm:7.5.0, @datadog/browser-worker@workspace:packages/browser-worker":
+"@datadog/browser-worker@npm:7.6.0, @datadog/browser-worker@workspace:packages/browser-worker":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-worker@workspace:packages/browser-worker"
   dependencies:
-    "@datadog/browser-core": "npm:7.5.0"
+    "@datadog/browser-core": "npm:7.6.0"
     webpack: "npm:5.108.4"
   languageName: unknown
   linkType: soft
 
-"@datadog/js-core@npm:0.0.5, @datadog/js-core@workspace:*, @datadog/js-core@workspace:packages/js-core":
+"@datadog/js-core@npm:0.0.6, @datadog/js-core@workspace:*, @datadog/js-core@workspace:packages/js-core":
   version: 0.0.0-use.local
   resolution: "@datadog/js-core@workspace:packages/js-core"
   languageName: unknown
   linkType: soft
 
-"@datadog/rum-events-format@DataDog/rum-events-format#commit=4ed60cbe47c30afcef051481a035adf88161d4b7":
+"@datadog/rum-events-format@DataDog/rum-events-format#commit=02a3fbe611005aec9e3530201412ac71bf34c1e4":
   version: 0.0.0
-  resolution: "@datadog/rum-events-format@https://github.com/DataDog/rum-events-format.git#commit=4ed60cbe47c30afcef051481a035adf88161d4b7"
-  checksum: 10c0/16677d35d476ba78fbf8cd37f0367577a839dcdfa29edbbe195ddae2511d6d22746aaaef894bc7bedd747e9163551dfc4bb27e8595fbfcee7d4ca41ac800fed3
+  resolution: "@datadog/rum-events-format@https://github.com/DataDog/rum-events-format.git#commit=02a3fbe611005aec9e3530201412ac71bf34c1e4"
+  checksum: 10c0/831a49695bbe7908a2e7a95b7359ee54adaafd485eae5b3910f04c273b4953efe15ff2d4f66517bdced1c72363eebba53208bd1bd61fc35edd1977f1545dd285
   languageName: node
   linkType: hard
 
@@ -6272,7 +6272,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "browser-sdk@workspace:."
   dependencies:
-    "@datadog/rum-events-format": "DataDog/rum-events-format#commit=4ed60cbe47c30afcef051481a035adf88161d4b7"
+    "@datadog/rum-events-format": "DataDog/rum-events-format#commit=02a3fbe611005aec9e3530201412ac71bf34c1e4"
     "@eslint/js": "npm:10.0.1"
     "@jsdevtools/coverage-istanbul-loader": "npm:3.0.5"
     "@microsoft/api-extractor": "npm:7.58.9"

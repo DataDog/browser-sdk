@@ -29,6 +29,16 @@ const LOGS_CONFIG: Partial<LogsInitConfiguration> = {
   },
 }
 
+// Debug IDs are derived from each chunk's content hash, so they're stable across rebuilds
+// (regenerate these constants if app source/deps change). The shared `lib` remote is its own chunk,
+// so its debug ID is the same for every app.
+const APP1_EXPOSE_CHUNK = '__federation_expose_app1-0b975610772143724d2f-app1.js'
+const APP1_DEBUG_ID = '33164643-dc2f-4bf0-8440-b443adfa15c3'
+const APP2_EXPOSE_CHUNK = '__federation_expose_app2-8042c1cdfd7c71d0bf47-app2.js'
+const APP2_DEBUG_ID = 'cb80d79d-2dfc-4bc0-9872-92b454fb59e1'
+const LIB_EXPOSE_CHUNK = '__federation_expose_lib-c0a8a100340f04ff2712-lib.js'
+const LIB_DEBUG_ID = '4564c6ea-a5bb-4355-968a-7de8d685fe65'
+
 test.describe('microfrontend', () => {
   test.describe('RUM service and version attribution', () => {
     test.describe('with beforeSend', () => {
@@ -431,16 +441,6 @@ test.describe('microfrontend', () => {
   })
 
   test.describe('RUM debug_id attribution', () => {
-    // Debug IDs are derived from each chunk's content hash, so they're stable across rebuilds
-    // (regenerate these constants if app source/deps change). The shared `lib` remote is its own chunk,
-    // so its debug ID is the same for every app.
-    const APP1_EXPOSE_CHUNK = '__federation_expose_app1-0b975610772143724d2f-app1.js'
-    const APP1_DEBUG_ID = '33164643-dc2f-4bf0-8440-b443adfa15c3'
-    const APP2_EXPOSE_CHUNK = '__federation_expose_app2-8042c1cdfd7c71d0bf47-app2.js'
-    const APP2_DEBUG_ID = 'cb80d79d-2dfc-4bc0-9872-92b454fb59e1'
-    const LIB_EXPOSE_CHUNK = '__federation_expose_lib-c0a8a100340f04ff2712-lib.js'
-    const LIB_DEBUG_ID = '4564c6ea-a5bb-4355-968a-7de8d685fe65'
-
     createTest('runtime errors should have debug_id from source code context')
       .withRum(RUM_CONFIG)
       .withSetup(microfrontendSetup)
@@ -531,6 +531,40 @@ test.describe('microfrontend', () => {
         withBrowserLogs((browserLogs) => {
           expect(browserLogs).toHaveLength(2)
         })
+      })
+  })
+
+  test.describe('RUM profiling debug_id attribution', () => {
+    test.beforeEach(({ browserName }) => {
+      test.skip(browserName !== 'chromium', 'JS Profiling API is only available in Chromium')
+    })
+
+    createTest('profiling should have debug_id from source code context')
+      .withRum({ ...RUM_CONFIG, profilingSampleRate: 100 })
+      .withBasePath('/?js-profiling=true')
+      .withSetup(microfrontendSetup)
+      .run(async ({ intakeRegistry, flushEvents, page }) => {
+        await page.click('#app1-loaf')
+        await page.click('#app2-loaf')
+        await flushEvents()
+
+        expect(intakeRegistry.profileRequests).toHaveLength(1)
+
+        const trace = intakeRegistry.profileRequests[0].trace
+        // Microfrontend chunks are served from a cross-origin host, so their resource URL
+        // doesn't share `baseUrl`'s origin - match by chunk filename instead.
+        const app1ResourceId = trace.resources.findIndex((url: string) => url.endsWith(APP1_EXPOSE_CHUNK))
+        const app2ResourceId = trace.resources.findIndex((url: string) => url.endsWith(APP2_EXPOSE_CHUNK))
+
+        expect(app1ResourceId).toBeGreaterThan(-1)
+        expect(app2ResourceId).toBeGreaterThan(-1)
+
+        expect(trace.debugIds).toEqual(
+          expect.arrayContaining([
+            { resourceId: app1ResourceId, debugId: APP1_DEBUG_ID },
+            { resourceId: app2ResourceId, debugId: APP2_DEBUG_ID },
+          ])
+        )
       })
   })
 
