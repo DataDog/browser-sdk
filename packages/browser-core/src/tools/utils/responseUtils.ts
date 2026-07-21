@@ -1,6 +1,4 @@
-export function isServerError(status: number) {
-  return status >= 500
-}
+export { isServerError } from '@datadog/js-core/util'
 
 export function tryToClone(response: Response): Response | undefined {
   try {

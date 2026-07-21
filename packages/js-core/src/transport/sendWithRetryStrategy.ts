@@ -1,16 +1,18 @@
-import { ONE_MINUTE, ONE_SECOND } from '@datadog/js-core/time'
-import type { TrackType } from '@datadog/js-core/transport'
-import { setTimeout } from '../tools/timer'
-import { ONE_MEBI_BYTE, ONE_KIBI_BYTE } from '../tools/utils/byteUtils'
-import { isServerError } from '../tools/utils/responseUtils'
-import type { Observable } from '../tools/observable'
-import type { Payload, HttpRequestEvent, HttpResponse, BandwidthStats } from './httpRequest'
+import type { Duration } from '../entries/time'
+import { ONE_MINUTE, ONE_SECOND } from '../entries/time'
+import { setTimeout } from '../util/timer'
+import { ONE_MEBI_BYTE, ONE_KIBI_BYTE } from '../util/byteUtils'
+import { isServerError } from '../util/responseUtils'
+import { globalObject } from '../util/globalObject'
+import type { Observable } from '../util/observable'
+import type { TrackType } from './endpointBuilder'
+import type { Payload, HttpRequestEvent, HttpResponse, BandwidthStats } from './payload'
 
 export const MAX_ONGOING_BYTES_COUNT = 80 * ONE_KIBI_BYTE
 export const MAX_ONGOING_REQUESTS = 32
 export const MAX_QUEUE_BYTES_COUNT = 20 * ONE_MEBI_BYTE
-export const MAX_BACKOFF_TIME = ONE_MINUTE
-export const INITIAL_BACKOFF_TIME = ONE_SECOND
+export const MAX_BACKOFF_TIME = ONE_MINUTE as Duration
+export const INITIAL_BACKOFF_TIME = ONE_SECOND as Duration
 
 const enum TransportStatus {
   UP,
@@ -23,6 +25,7 @@ const enum RetryReason {
   AFTER_RESUME,
 }
 
+/** Internal retry state held by each {@link createHttpRequest} instance. */
 export interface RetryState<Body extends Payload> {
   transportStatus: TransportStatus
   currentBackoffTime: number
@@ -33,6 +36,17 @@ export interface RetryState<Body extends Payload> {
 
 type SendStrategy<Body extends Payload> = (payload: Body, onResponse: (r: HttpResponse) => void) => void
 
+/**
+ * Sends `payload` via `sendStrategy`, automatically retrying on transient failures with
+ * exponential back-off.
+ *
+ * @param payload - The payload to send.
+ * @param state - Mutable retry state shared across calls for the same track type.
+ * @param sendStrategy - The function that performs the actual HTTP request.
+ * @param trackType - The intake track being targeted (used in error messages).
+ * @param reportError - Called with a human-readable message when the queue overflows.
+ * @param requestObservable - Observable notified with every request outcome.
+ */
 export function sendWithRetryStrategy<Body extends Payload>(
   payload: Body,
   state: RetryState<Body>,
@@ -139,13 +153,18 @@ function retryQueuedPayloads<Body extends Payload>(
 function shouldRetryRequest(response: HttpResponse) {
   return (
     response.type !== 'opaque' &&
-    ((response.status === 0 && !navigator.onLine) ||
+    ((response.status === 0 && !globalObject.navigator?.onLine) ||
       response.status === 408 ||
       response.status === 429 ||
       isServerError(response.status))
   )
 }
 
+/**
+ * Creates a fresh {@link RetryState} for a new intake track connection.
+ *
+ * @returns An initialised {@link RetryState} ready for use with {@link sendWithRetryStrategy}.
+ */
 export function newRetryState<Body extends Payload>(): RetryState<Body> {
   return {
     transportStatus: TransportStatus.UP,

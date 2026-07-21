@@ -1,5 +1,5 @@
-import type { EndpointBuilder } from '@datadog/js-core/transport'
-import { createEndpointBuilder } from '@datadog/js-core/transport'
+import type { EndpointBuilder, HttpRequestEvent } from '@datadog/js-core/transport'
+import { createEndpointBuilder, RECOMMENDED_REQUEST_BYTES_LIMIT } from '@datadog/js-core/transport'
 import type { Request } from '../../test'
 import {
   collectAsyncCalls,
@@ -11,8 +11,8 @@ import {
   wait,
 } from '../../test'
 import { noop } from '../tools/utils/functionUtils'
-import type { HttpRequest, HttpRequestEvent } from './httpRequest'
-import { createHttpRequest, fetchStrategy, RECOMMENDED_REQUEST_BYTES_LIMIT } from './httpRequest'
+import type { HttpRequest } from './httpRequest'
+import { createHttpRequest, fetchStrategy } from './httpRequest'
 
 describe('httpRequest', () => {
   const ENDPOINT_URL = 'http://my.website'
