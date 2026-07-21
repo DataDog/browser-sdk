@@ -209,8 +209,8 @@ Expose the component to the Lightning Utility Bar, then add it to your app's Uti
   </targets>
   <targetConfigs>
     <targetConfig targets="lightning__UtilityBar">
-      <property name="applicationId" type="String" label="Application ID" />
-      <property name="clientToken" type="String" label="Client Token" />
+      <property name="applicationId" type="String" label="Application ID" required="true" />
+      <property name="clientToken" type="String" label="Client Token" required="true" />
       <property name="site" type="String" label="Site" />
       <property name="service" type="String" label="Service" />
       <property name="env" type="String" label="Env" />
@@ -333,19 +333,19 @@ Use the following trusted site configuration for US1:
 
 For non-US1 Datadog sites, use the intake endpoint for the correct [Datadog site][4].
 
-### 4. Add the Head Markup script
+### 4. Add the Head Markup
 
 In Experience Builder:
 
 1. Go to **Settings > Advanced**.
 2. Open **Head Markup**.
 3. Click **Edit Head Markup**.
-4. Paste the following script.
+4. Paste the following markup.
 5. Replace the placeholder values with your Datadog RUM configuration.
 
 ```html
-<script src="/sfsites/c/resource/datadog_rum"></script>
-<script>
+<x-oasis-script src="/sfsites/c/resource/datadog_rum"></x-oasis-script>
+<x-oasis-script>
   window.DD_RUM.onReady(function () {
     window.DD_RUM.init({
       applicationId: '<YOUR_DATADOG_APPLICATION_ID>',
@@ -360,7 +360,7 @@ In Experience Builder:
       trackUserInteractions: true,
     })
   })
-</script>
+</x-oasis-script>
 ```
 
 ### 5. Publish the Experience Cloud site
