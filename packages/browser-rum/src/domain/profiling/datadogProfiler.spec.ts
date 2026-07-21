@@ -31,6 +31,7 @@ import {
   replaceMockableWithSpy,
   HIGH_HASH_UUID,
   LOW_HASH_UUID,
+  mockSourceCodeContext,
 } from '@datadog/browser-core/test'
 import { mockRumConfiguration, mockViewHistory } from '../../../../browser-rum-core/test'
 import { mockProfiler } from '../../../test'
@@ -69,13 +70,17 @@ describe('profiler', () => {
 
   let lifeCycle = new LifeCycle()
 
-  function setupProfiler(currentView?: ViewHistoryEntry, profilerConfigOverrides?: Partial<RUMProfilerConfiguration>) {
+  function setupProfiler(
+    currentView?: ViewHistoryEntry,
+    profilerConfigOverrides?: Partial<RUMProfilerConfiguration>,
+    traceOverrides?: Partial<ProfilerTrace>
+  ) {
     const sessionManager = createSessionManagerMock().setId('session-id-1')
     lifeCycle = new LifeCycle()
     const hooks = createHooks()
     const profilingContextManager: ProfilingContextManager = startProfilingContext(hooks)
 
-    const mockProfilerTrace: ProfilerTrace = deepClone(mockedTrace)
+    const mockProfilerTrace: ProfilerTrace = { ...deepClone(mockedTrace), ...traceOverrides }
 
     const mockedRumProfilerTrace: BrowserProfilerTrace = Object.assign(mockProfilerTrace, {
       startClocks: {
@@ -197,6 +202,33 @@ describe('profiler', () => {
     expect(payload.profile.session).toEqual({ id: 'session-id-1' })
     expect(payload.trace.stacks).toEqual(mockedRumProfilerTrace.stacks)
     expect(payload.trace.samples).toEqual(mockedRumProfilerTrace.samples)
+  })
+
+  it('should attach debugIds resolved from the source code context for trace resources', async () => {
+    const url = 'http://example.com/resource1.js'
+    mockSourceCodeContext({ [`Error: ctx\n    at fn (${url}:1:1)`]: { ddDebugId: 'debug-id-1' } })
+
+    const { profiler } = setupProfiler(undefined, undefined, { resources: [url] })
+
+    profiler.start()
+    await waitForBoolean(() => profiler.isRunning())
+    profiler.stop()
+    await waitForBoolean(() => emitPayloadSpy.calls.count() >= 1)
+
+    const payload = emitPayloadSpy.calls.argsFor(0)[0]
+    expect(payload.trace.debugIds).toEqual([{ resourceId: 0, debugId: 'debug-id-1' }])
+  })
+
+  it('should omit debugIds when no trace resource matches the source code context', async () => {
+    const { profiler } = setupProfiler()
+
+    profiler.start()
+    await waitForBoolean(() => profiler.isRunning())
+    profiler.stop()
+    await waitForBoolean(() => emitPayloadSpy.calls.count() >= 1)
+
+    const payload = emitPayloadSpy.calls.argsFor(0)[0]
+    expect(payload.trace.debugIds).toBeUndefined()
   })
 
   it('should pause profiling collection on hidden visibility and restart on visible visibility', async () => {
