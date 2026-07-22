@@ -6,11 +6,11 @@ import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
 import type { DebuggerInitConfiguration } from '@datadog/browser-debugger'
 import type test from '@playwright/test'
-import { Page } from '@playwright/test'
+import { type Page } from '@playwright/test'
 import { isBrowserStack, isContinuousIntegration } from './environment'
 import type { Servers } from './httpServers'
-import { getSalesforceLwcSession } from './buildSalesforceUrl'
 import type { SalesforceApp } from './buildSalesforceUrl'
+import { getSalesforceLwcSession } from './buildSalesforceUrl'
 
 export interface SetupOptions {
   rum?: RumInitConfiguration
