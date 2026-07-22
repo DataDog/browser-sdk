@@ -118,6 +118,14 @@ export default defineConfig({
       api: {
         host: 'bs-local.com',
       },
+      // Vitest's orchestrator and tester iframe have separate globals, so both need the bootstrap.
+      // Keep this a classic script so it executes before Vitest's module bundle.
+      orchestratorScripts: [
+        {
+          src: path.resolve('./test/unit/vitestBrowserPolyfills.js'),
+          type: 'text/javascript',
+        },
+      ],
       testerHtmlPath: './test/unit/vitest.tester.html',
       instances: browserConfigurations.map(createBrowserStackInstance),
     },

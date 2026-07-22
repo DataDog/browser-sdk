@@ -3,6 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <title>Browser SDK unit tests</title>
+    <!-- Keep this blocking classic script ahead of Vitest's injected module scripts. -->
+    <script src="/test/unit/vitestBrowserPolyfills.js"></script>
   </head>
   <body></body>
 </html>

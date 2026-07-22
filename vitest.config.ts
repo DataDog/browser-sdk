@@ -66,6 +66,14 @@ export default defineConfig({
       enabled: true,
       provider: playwright(),
       headless: true,
+      // Vitest's client runs in the main page before setupFiles and needs the same legacy-browser
+      // polyfills as the tester iframe. A classic script executes before its module bundle.
+      orchestratorScripts: [
+        {
+          src: path.resolve('./test/unit/vitestBrowserPolyfills.js'),
+          type: 'text/javascript',
+        },
+      ],
       // Empty body prevents DOM serialization tests from breaking on Vitest's default tester HTML
       testerHtmlPath: './test/unit/vitest.tester.html',
       instances: [{ browser: localBrowser }],

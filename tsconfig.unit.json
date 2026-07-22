@@ -9,5 +9,5 @@
     "resolveJsonModule": true,
     "noEmit": true
   },
-  "include": ["vitest.config.ts", "vitest.bs.config.ts", "test/unit/**/*.ts"]
+  "include": ["vitest.config.ts", "vitest.bs.config.ts", "test/unit/**/*.ts", "test/unit/vitestBrowserPolyfills.js"]
 }
