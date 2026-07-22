@@ -164,6 +164,33 @@ describe('trackClickActions', () => {
     )
   })
 
+  it('starts a click action when composedPath throws', () => {
+    startClickActionsTracking()
+    emulateClick({
+      activity: {},
+      eventProperty: {
+        composedPath: () => {
+          throw new TypeError('Illegal invocation')
+        },
+      },
+    })
+    clock.tick(EXPIRE_DELAY)
+
+    expect(events).toHaveSize(1)
+    expect(events[0]).toEqual(
+      jasmine.objectContaining({
+        name: 'Click me',
+        type: ActionType.CLICK,
+        target: {
+          selector: '#button',
+          composedPathSelector: undefined,
+          width: 100,
+          height: 100,
+        },
+      })
+    )
+  })
+
   it('should keep track of previously validated click actions', () => {
     startClickActionsTracking()
     const pointerDownStart = relativeNow()

@@ -231,11 +231,12 @@ function computeClickActionBase(
   configuration: RumConfiguration
 ): ClickActionBase {
   const target = getEventTarget(event)
+  const composedPath = getEventComposedPath(event)
 
   const rect = target.getBoundingClientRect()
   const selector = getSelectorFromElement(target, configuration.actionNameAttribute)
 
-  const composedPathSelector = getComposedPathSelector(event.composedPath(), configuration.actionNameAttribute)
+  const composedPathSelector = getComposedPathSelector(composedPath, configuration.actionNameAttribute)
 
   if (selector) {
     updateInteractionSelector(event.timeStamp, selector)
@@ -261,9 +262,20 @@ function computeClickActionBase(
   }
 }
 
+function getEventComposedPath(event: MouseEventOnElement): EventTarget[] {
+  try {
+    return event.composedPath()
+  } catch {
+    console.error('Error getting composed path', event)
+    // Salesforce can expose native events through a proxy that causes composedPath() to throw
+    // "Illegal invocation". The composed path is optional metadata, so fall back to the event target.
+    return []
+  }
+}
+
 function getEventTarget(event: MouseEventOnElement): Element {
-  if (event.composed && isNodeShadowHost(event.target) && typeof event.composedPath === 'function') {
-    const composedPath = event.composedPath()
+  if (event.composed && isNodeShadowHost(event.target)) {
+    const composedPath = getEventComposedPath(event)
     if (composedPath.length > 0 && composedPath[0] instanceof Element) {
       return composedPath[0]
     }
