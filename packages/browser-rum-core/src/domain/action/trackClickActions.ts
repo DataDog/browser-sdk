@@ -266,6 +266,7 @@ function getEventComposedPath(event: MouseEventOnElement): EventTarget[] {
   try {
     return event.composedPath()
   } catch {
+    // eslint-disable-next-line no-console
     console.error('Error getting composed path', event)
     // Salesforce can expose native events through a proxy that causes composedPath() to throw
     // "Illegal invocation". The composed path is optional metadata, so fall back to the event target.
