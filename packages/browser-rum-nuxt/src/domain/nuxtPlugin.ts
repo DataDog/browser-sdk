@@ -48,7 +48,7 @@ export function nuxtRumPlugin(configuration: NuxtPluginConfiguration): NuxtPlugi
       }
     },
     getConfigurationTelemetry() {
-      return { router: !!configuration.router, nuxt: true }
+      return { router: !!configuration.router, router_type: 'nuxt-router', nuxt: true }
     },
   } satisfies RumPlugin
 }

@@ -7,6 +7,7 @@ runBasePluginRouterTests([
     name: 'with TanStack Router',
     loadApp: (b) => b.withApp('tanstack-router-app'),
     viewPrefix: '',
+    plugin: { name: 'react', routerType: 'tanstack-router-v1' },
     router: {
       homeViewName: '/',
       homeUrlPattern: '**/',

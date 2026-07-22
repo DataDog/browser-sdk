@@ -14,15 +14,35 @@ interface RouterPluginTestConfig {
   name: string
   loadApp: (builder: TestBuilder) => TestBuilder
   viewPrefix: string
+  plugin?: {
+    name: string
+    routerType?: string
+  }
   router: RouterConfig
 }
 
 export function runBasePluginRouterTests(configs: RouterPluginTestConfig[]) {
-  for (const { name, loadApp, viewPrefix, router } of configs) {
+  for (const { name, loadApp, viewPrefix, plugin, router } of configs) {
     const { homeViewName, homeUrlPattern, userRouteName, guidesRouteName } = router
 
     test.describe(`base plugin: ${name}`, () => {
       test.describe('router', () => {
+        if (plugin) {
+          loadApp(createTest('should send router configuration telemetry').withRum()).run(
+            async ({ flushEvents, intakeRegistry }) => {
+              await flushEvents()
+
+              expect(intakeRegistry.telemetryConfigurationEvents).toHaveLength(1)
+              const pluginConfiguration =
+                intakeRegistry.telemetryConfigurationEvents[0].telemetry.configuration.plugins?.find(
+                  ({ name }) => name === plugin.name
+                )
+              expect(pluginConfiguration).toEqual(expect.objectContaining({ name: plugin.name, router: true }))
+              expect(pluginConfiguration?.router_type).toBe(plugin.routerType)
+            }
+          )
+        }
+
         loadApp(createTest('should track initial home view').withRum()).run(async ({ flushEvents, intakeRegistry }) => {
           await flushEvents()
 

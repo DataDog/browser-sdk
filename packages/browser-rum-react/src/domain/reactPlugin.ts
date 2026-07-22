@@ -1,10 +1,13 @@
 import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
 
+type ReactRouterType = 'react-router-v6' | 'react-router-v7' | 'react-router-v8' | 'tanstack-router-v1'
+type InitSubscriber = (configuration: ReactPluginConfiguration, rumPublicApi: RumPublicApi) => void
+type StartSubscriber = (addError: StartRumResult['addError']) => void
+
 let globalPublicApi: RumPublicApi | undefined
 let globalConfiguration: ReactPluginConfiguration | undefined
 let globalAddError: StartRumResult['addError'] | undefined
-type InitSubscriber = (configuration: ReactPluginConfiguration, rumPublicApi: RumPublicApi) => void
-type StartSubscriber = (addError: StartRumResult['addError']) => void
+let routerType: ReactRouterType | undefined
 
 const onRumInitSubscribers: InitSubscriber[] = []
 const onRumStartSubscribers: StartSubscriber[] = []
@@ -75,9 +78,13 @@ export function reactPlugin(configuration: ReactPluginConfiguration = {}): React
       }
     },
     getConfigurationTelemetry() {
-      return { router: !!configuration.router }
+      return { router: !!configuration.router, router_type: configuration.router ? routerType : undefined }
     },
   } satisfies RumPlugin
+}
+
+export function setReactRouterType(type: ReactRouterType) {
+  routerType = type
 }
 
 export function onRumInit(callback: InitSubscriber) {
@@ -100,6 +107,7 @@ export function resetReactPlugin() {
   globalPublicApi = undefined
   globalConfiguration = undefined
   globalAddError = undefined
+  routerType = undefined
   onRumInitSubscribers.length = 0
   onRumStartSubscribers.length = 0
 }

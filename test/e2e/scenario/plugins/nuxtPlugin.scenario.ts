@@ -11,13 +11,15 @@ const nuxtPluginApps = nuxtApps.map(({ routerVersion, description }) => ({
   name: `with Nuxt ${description}`,
   loadApp: (b: ReturnType<typeof createTest>) => b.withNuxtApp(routerVersion),
   viewPrefix: '',
+  plugin: { name: 'nuxt', routerType: 'nuxt-router' },
 }))
 
 runBasePluginRouterTests(
-  nuxtPluginApps.map(({ name, loadApp, viewPrefix }) => ({
+  nuxtPluginApps.map(({ name, loadApp, viewPrefix, plugin }) => ({
     name,
     loadApp,
     viewPrefix,
+    plugin,
     router: {
       homeViewName: '/',
       homeUrlPattern: '**/',

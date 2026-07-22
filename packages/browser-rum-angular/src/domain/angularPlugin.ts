@@ -63,7 +63,7 @@ export function angularPlugin(configuration: AngularPluginConfiguration = {}): R
       }
     },
     getConfigurationTelemetry() {
-      return { router: !!configuration.router }
+      return { router: !!configuration.router, router_type: configuration.router ? 'angular-router' : undefined }
     },
   } satisfies RumPlugin
 }

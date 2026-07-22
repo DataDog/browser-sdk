@@ -1,5 +1,5 @@
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
-import { onRumInit, onRumStart, reactPlugin, resetReactPlugin } from './reactPlugin'
+import { onRumInit, onRumStart, reactPlugin, resetReactPlugin, setReactRouterType } from './reactPlugin'
 
 const PUBLIC_API = {} as RumPublicApi
 const INIT_CONFIGURATION = {} as RumInitConfiguration
@@ -70,7 +70,15 @@ describe('reactPlugin', () => {
     const pluginConfiguration = { router: true }
     const plugin = reactPlugin(pluginConfiguration)
 
-    expect(plugin.getConfigurationTelemetry()).toEqual({ router: true })
+    setReactRouterType('react-router-v7')
+
+    expect(plugin.getConfigurationTelemetry()).toEqual({ router: true, router_type: 'react-router-v7' })
+  })
+
+  it('does not return a router type when router tracking is disabled', () => {
+    setReactRouterType('react-router-v7')
+
+    expect(reactPlugin().getConfigurationTelemetry()).toEqual({ router: false, router_type: undefined })
   })
 
   it('calls onRumStart subscribers during onRumStart', () => {

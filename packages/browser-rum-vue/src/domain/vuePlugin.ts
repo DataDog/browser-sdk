@@ -38,7 +38,7 @@ export function vuePlugin(configuration: VuePluginConfiguration = {}): VuePlugin
       }
     },
     getConfigurationTelemetry() {
-      return { router: !!configuration.router }
+      return { router: !!configuration.router, router_type: configuration.router ? 'vue-router' : undefined }
     },
   } satisfies RumPlugin
 }

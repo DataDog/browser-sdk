@@ -43,6 +43,9 @@ describe('vuePlugin', () => {
   })
 
   it('returns configuration telemetry', () => {
-    expect(vuePlugin({ router: true }).getConfigurationTelemetry()).toEqual({ router: true })
+    expect(vuePlugin({ router: true }).getConfigurationTelemetry()).toEqual({
+      router: true,
+      router_type: 'vue-router',
+    })
   })
 })

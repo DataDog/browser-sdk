@@ -29,6 +29,10 @@ describe('nuxtRumPlugin', () => {
   })
 
   it('returns configuration telemetry', () => {
-    expect(nuxtRumPlugin({ router: makeRouter() }).getConfigurationTelemetry()).toEqual({ router: true, nuxt: true })
+    expect(nuxtRumPlugin({ router: makeRouter() }).getConfigurationTelemetry()).toEqual({
+      router: true,
+      router_type: 'nuxt-router',
+      nuxt: true,
+    })
   })
 })

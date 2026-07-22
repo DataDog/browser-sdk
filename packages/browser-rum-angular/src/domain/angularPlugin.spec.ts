@@ -73,7 +73,7 @@ describe('angularPlugin', () => {
     const pluginConfiguration = { router: true }
     const plugin = angularPlugin(pluginConfiguration)
 
-    expect(plugin.getConfigurationTelemetry!()).toEqual({ router: true })
+    expect(plugin.getConfigurationTelemetry!()).toEqual({ router: true, router_type: 'angular-router' })
   })
 
   it('calls onRumStart subscribers during onRumStart', () => {

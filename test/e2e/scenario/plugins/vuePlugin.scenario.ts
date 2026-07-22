@@ -12,13 +12,15 @@ const vuePluginApps = vueApps.map(({ routerVersion, description }) => ({
   name: `with ${description}`,
   loadApp: (b: ReturnType<typeof createTest>) => b.withVueApp(routerVersion),
   viewPrefix: '',
+  plugin: { name: 'vue', routerType: 'vue-router' },
 }))
 
 runBasePluginRouterTests(
-  vuePluginApps.map(({ name, loadApp, viewPrefix }) => ({
+  vuePluginApps.map(({ name, loadApp, viewPrefix, plugin }) => ({
     name,
     loadApp,
     viewPrefix,
+    plugin,
     router: {
       homeViewName: '/',
       homeUrlPattern: '**/',
