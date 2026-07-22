@@ -9,12 +9,13 @@ test.describe('logs remote configuration', () => {
   createTest('should apply forwardErrorsToLogs: false from cached remote configuration')
     .withLogs({ remoteConfigurationId: RC_ID })
     .withHead(seedCache({ logs: { forwardErrorsToLogs: false } }))
-    .run(async ({ intakeRegistry, flushEvents, page }) => {
+    .run(async ({ intakeRegistry, flushEvents, flushBrowserLogs, page }) => {
       await page.evaluate(() => {
         console.error('test error')
       })
 
       await flushEvents()
+      flushBrowserLogs()
 
       expect(intakeRegistry.logsEvents.filter((e) => e.message === 'test error')).toHaveLength(0)
     })
