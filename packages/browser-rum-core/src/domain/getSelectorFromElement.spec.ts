@@ -1,3 +1,4 @@
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import { appendElement } from '../../test'
 import { getSelectorFromElement, isSelectorUniqueAmongSiblings, SHADOW_DOM_MARKER } from './getSelectorFromElement'
 
@@ -9,6 +10,22 @@ describe('getSelectorFromElement', () => {
   it('returns undefined for detached elements', () => {
     const element = document.createElement('div')
     expect(getSelector(element)).toBeUndefined()
+  })
+
+  it('returns undefined when CSS is unavailable', () => {
+    const cssDescriptor = Object.getOwnPropertyDescriptor(window, 'CSS')
+    Object.defineProperty(window, 'CSS', { configurable: true, value: undefined })
+    registerCleanupTask(() => restoreProperty(window, 'CSS', cssDescriptor))
+
+    expect(getSelector('<div id="foo"></div>')).toBeUndefined()
+  })
+
+  it('returns undefined when CSS.escape is unavailable', () => {
+    const cssEscapeDescriptor = Object.getOwnPropertyDescriptor(CSS, 'escape')
+    Object.defineProperty(CSS, 'escape', { configurable: true, value: undefined })
+    registerCleanupTask(() => restoreProperty(CSS, 'escape', cssEscapeDescriptor))
+
+    expect(getSelector('<div id="foo"></div>')).toBeUndefined()
   })
 
   describe('ID selector', () => {
@@ -159,6 +176,14 @@ describe('getSelectorFromElement', () => {
     )
   }
 })
+
+function restoreProperty(target: object, property: PropertyKey, descriptor: PropertyDescriptor | undefined) {
+  if (descriptor) {
+    Object.defineProperty(target, property, descriptor)
+  } else {
+    Reflect.deleteProperty(target, property)
+  }
+}
 
 describe('isSelectorUniqueAmongSiblings', () => {
   it('returns true when the element is alone', () => {

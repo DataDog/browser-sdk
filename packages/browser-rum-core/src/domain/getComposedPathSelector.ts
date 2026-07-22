@@ -7,6 +7,7 @@ import {
   getTagNameSelector,
   getNthOfTypeSelector,
   getAttributeValueSelector,
+  isCssEscapeSupported,
 } from './getSelectorFromElement'
 
 const FILTERED_TAGNAMES = ['HTML', 'BODY']
@@ -49,6 +50,10 @@ export const SAFE_ATTRIBUTES = STABLE_ATTRIBUTES.concat([
  * @returns A selector string
  */
 export function getComposedPathSelector(composedPath: EventTarget[], actionNameAttribute: string | undefined): string {
+  if (!isCssEscapeSupported()) {
+    return ''
+  }
+
   // Filter to only include Element nodes
   const elements = composedPath.filter(
     (el): el is Element => el instanceof Element && !FILTERED_TAGNAMES.includes(el.tagName)

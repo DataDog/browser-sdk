@@ -56,6 +56,10 @@ export function getSelectorFromElement(
   targetElement: Element,
   actionNameAttribute: string | undefined
 ): string | undefined {
+  if (!isCssEscapeSupported()) {
+    return
+  }
+
   if (!targetElement.isConnected) {
     // We cannot compute a selector for a detached element, as we don't have access to all of its
     // parents, and we cannot determine if it's unique in the document.
@@ -74,6 +78,14 @@ export function getSelectorFromElement(
   }
 
   return selectorParts.join(SHADOW_DOM_MARKER)
+}
+
+/**
+ * CSS.escape can be unavailable in sandboxed environments, such as Salesforce.
+ * Selectors are optional metadata and should not prevent the associated RUM event from being collected.
+ */
+export function isCssEscapeSupported(): boolean {
+  return typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
 }
 
 /**

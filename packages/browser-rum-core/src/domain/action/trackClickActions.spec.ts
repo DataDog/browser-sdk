@@ -2,7 +2,7 @@ import { timeStampNow, addDuration, clocksNow, relativeNow } from '@datadog/js-c
 import type { Duration, RelativeTime } from '@datadog/js-core/time'
 import { DefaultPrivacyLevel, Observable, PageExitReason } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { createNewEvent, mockClock } from '@datadog/browser-core/test'
+import { createNewEvent, mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { createFakeClick, createMutationRecord, mockRumConfiguration } from '../../../test'
 import type { AssembledRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ActionType, FrustrationType } from '../../rawRumEvent.types'
@@ -132,6 +132,36 @@ describe('trackClickActions', () => {
         events: [domEvent],
       }),
     ])
+  })
+
+  it('starts a click action without selector metadata when CSS is unavailable', () => {
+    const cssDescriptor = Object.getOwnPropertyDescriptor(window, 'CSS')
+    Object.defineProperty(window, 'CSS', { configurable: true, value: undefined })
+    registerCleanupTask(() => {
+      if (cssDescriptor) {
+        Object.defineProperty(window, 'CSS', cssDescriptor)
+      } else {
+        Reflect.deleteProperty(window, 'CSS')
+      }
+    })
+
+    startClickActionsTracking()
+    emulateClick({ activity: {} })
+    clock.tick(EXPIRE_DELAY)
+
+    expect(events).toHaveSize(1)
+    expect(events[0]).toEqual(
+      jasmine.objectContaining({
+        name: 'Click me',
+        type: ActionType.CLICK,
+        target: {
+          selector: undefined,
+          composedPathSelector: undefined,
+          width: 100,
+          height: 100,
+        },
+      })
+    )
   })
 
   it('should keep track of previously validated click actions', () => {

@@ -1,3 +1,4 @@
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import { appendElement } from '../../test'
 import { getComposedPathSelector, CHARACTER_LIMIT } from './getComposedPathSelector'
 
@@ -12,6 +13,22 @@ describe('getSelectorFromComposedPath', () => {
     it('returns an empty string for an empty composedPath', () => {
       const result = getComposedPathSelector([], undefined)
       expect(result).toEqual('')
+    })
+
+    it('returns an empty string when CSS.escape is unavailable', () => {
+      const cssEscapeDescriptor = Object.getOwnPropertyDescriptor(CSS, 'escape')
+      Object.defineProperty(CSS, 'escape', { configurable: true, value: undefined })
+      registerCleanupTask(() => {
+        if (cssEscapeDescriptor) {
+          Object.defineProperty(CSS, 'escape', cssEscapeDescriptor)
+        } else {
+          Reflect.deleteProperty(CSS, 'escape')
+        }
+      })
+
+      const element = appendElementInIsolation('<button></button>')
+
+      expect(getComposedPathSelector([element], undefined)).toBe('')
     })
 
     it('filters out non-Element items from composedPath', () => {
