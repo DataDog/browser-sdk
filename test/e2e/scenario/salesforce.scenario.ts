@@ -51,7 +51,7 @@ for (const app of salesforceApps) {
       await flushEvents()
 
       const resourceTypes = new Set(intakeRegistry.rumResourceEvents.map((e) => e.resource.type))
-      for (const resourceType of ['document', 'other', 'xhr', 'fetch'] as const) {
+      for (const resourceType of ['document', 'other', 'xhr', 'fetch', 'image'] as const) {
         expect(
           resourceTypes.has(resourceType),
           `missing resource type "${resourceType}", got: [${[...resourceTypes].join(', ')}]`
@@ -108,6 +108,11 @@ for (const app of salesforceApps) {
       await page.evaluate(() => window.console.error('salesforce console error test'))
 
       await flushEvents()
+
+      const consoleError = intakeRegistry.rumErrorEvents.find(
+        (e) => e.error.source === 'console' && e.error.message?.includes('salesforce console error test') === true
+      )
+      expect(consoleError).toBeDefined()
 
       withBrowserLogs((logs) => {
         expect(logs.filter((log) => log.level === 'error').length).toBeGreaterThanOrEqual(1)
