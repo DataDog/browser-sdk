@@ -1,6 +1,6 @@
 import { timeStampNow, clocksNow } from '@datadog/js-core/time'
 import type { TimeStamp } from '@datadog/js-core/time'
-import type { TrackingConsentState, DeflateWorker, Context, Telemetry, SessionManager } from '@datadog/browser-core'
+import type { TrackingConsentState, DeflateWorker, Context, Telemetry, SessionManager, RawTelemetryUsage } from '@datadog/browser-core'
 import {
   BufferedObservable,
   display,
@@ -11,6 +11,7 @@ import {
   getEventBridge,
   initFeatureFlags,
   addTelemetryConfiguration,
+  addTelemetryUsage,
   CustomerContextKey,
   buildAccountContextManager,
   buildGlobalContextManager,
@@ -242,6 +243,10 @@ export function createPreStartStrategy(
       }
 
       callPluginsMethod(initConfiguration.plugins, 'onInit', { initConfiguration, publicApi })
+
+      initConfiguration.plugins?.forEach((plugin) => {
+        addTelemetryUsage({ feature: 'use-plugin', plugin_name: plugin.name } as unknown as RawTelemetryUsage)
+      })
 
       const hasRemoteConfiguration = getRemoteConfigurationId(initConfiguration)
 

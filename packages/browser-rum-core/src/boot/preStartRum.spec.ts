@@ -22,6 +22,7 @@ import {
   replaceMockable,
   replaceMockableWithSpy,
   createStartSessionManagerMock,
+  startMockTelemetry,
 } from '@datadog/browser-core/test'
 import type { HybridInitConfiguration, RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
@@ -594,6 +595,22 @@ describe('preStartRum', () => {
           initConfiguration,
           publicApi: PUBLIC_API,
         })
+      })
+
+      it('reports a telemetry usage event for each plugin', async () => {
+        const telemetry = startMockTelemetry()
+        const pluginA = { name: 'plugin-a' }
+        const pluginB = { name: 'plugin-b' }
+        const { strategy } = createPreStartStrategyWithDefaults()
+        strategy.init({ ...DEFAULT_INIT_CONFIGURATION, plugins: [pluginA, pluginB] }, PUBLIC_API)
+
+        const events = await telemetry.getEvents()
+        expect(events).toEqual(
+          jasmine.arrayContaining([
+            jasmine.objectContaining({ type: 'usage', usage: { feature: 'use-plugin', plugin_name: 'plugin-a' } }),
+            jasmine.objectContaining({ type: 'usage', usage: { feature: 'use-plugin', plugin_name: 'plugin-b' } }),
+          ])
+        )
       })
 
       it('plugins can edit the init configuration prior to validation', async () => {
