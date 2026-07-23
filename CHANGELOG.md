@@ -20,6 +20,20 @@
 
 ---
 
+## v6.7.1
+
+**Public Changes:**
+
+- ✨ [RUM-17395] Add debug_ids to profiler wall-time trace for sourcemap unminification ([#4897](https://github.com/DataDog/browser-sdk/pull/4897))
+- 🐛 [rum-nuxt] Fix Nuxt post-hydration error handling ([#4899](https://github.com/DataDog/browser-sdk/pull/4899))
+- 🐛 Avoid BigInt exponentiation in sampling ([#4883](https://github.com/DataDog/browser-sdk/pull/4883))
+- 📝 Add salesforce readme ([#4900](https://github.com/DataDog/browser-sdk/pull/4900))
+
+**Internal Changes:**
+
+- 👷 sign chrome-bump commits with commit-headless ([#4838](https://github.com/DataDog/browser-sdk/pull/4838))
+- ♻️ Add explicit delete method to CookieAccess ([#4887](https://github.com/DataDog/browser-sdk/pull/4887))
+
 ## v7.6.0
 
 **Public Changes:**
