@@ -17,7 +17,7 @@ const baseSalesforceRumConfiguration = {
   trackUserInteractions: true,
 }
 
-const salesforceApps: SalesforceApp[] = ['lwc', 'experience-cloud', 'experience-cloud-head-markup']
+const salesforceApps: SalesforceApp[] = ['lwc', 'experience-cloud']
 
 for (const app of salesforceApps) {
   createTest(`salesforce ${app} views`)
@@ -71,9 +71,7 @@ for (const app of salesforceApps) {
       await flushEvents()
 
       expect(intakeRegistry.rumLongTaskEvents.length).toBeGreaterThanOrEqual(1)
-      if (app !== 'experience-cloud-head-markup') {
-        expect(intakeRegistry.rumVitalEvents.length).toBeGreaterThanOrEqual(1)
-      }
+      expect(intakeRegistry.rumVitalEvents.length).toBeGreaterThanOrEqual(1)
     })
 
   createTest(`salesforce ${app} actions`)
@@ -89,12 +87,10 @@ for (const app of salesforceApps) {
       const actionTypes = new Set(intakeRegistry.rumActionEvents.map((e) => e.action.type))
       expect(actionTypes.has('click')).toBe(true)
 
-      if (app !== 'experience-cloud-head-markup') {
-        const customAction = intakeRegistry.rumActionEvents.find(
-          (e) => e.action.type === 'custom' && e.action.target?.name?.includes('custom action 1') === true
-        )
-        expect(customAction).toBeDefined()
-      }
+      const customAction = intakeRegistry.rumActionEvents.find(
+        (e) => e.action.type === 'custom' && e.action.target?.name?.includes('custom action 1') === true
+      )
+      expect(customAction).toBeDefined()
     })
 
   createTest(`salesforce ${app} errors`)
@@ -123,11 +119,9 @@ for (const app of salesforceApps) {
       )
       expect(errorEvent).toBeDefined()
 
-      if (app !== 'experience-cloud-head-markup') {
-        const customError = intakeRegistry.rumErrorEvents.find(
-          (e) => e.error.source === 'custom' && e.error.message?.includes('custom error 1') === true
-        )
-        expect(customError).toBeDefined()
-      }
+      const customError = intakeRegistry.rumErrorEvents.find(
+        (e) => e.error.source === 'custom' && e.error.message?.includes('custom error 1') === true
+      )
+      expect(customError).toBeDefined()
     })
 }

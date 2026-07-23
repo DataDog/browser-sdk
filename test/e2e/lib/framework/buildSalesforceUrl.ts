@@ -7,7 +7,7 @@ import {
   getSfLwcUsername,
 } from '../../../../scripts/lib/secrets.ts'
 
-export type SalesforceApp = 'lwc' | 'experience-cloud' | 'experience-cloud-head-markup'
+export type SalesforceApp = 'lwc' | 'experience-cloud'
 
 const salesforceHomePath = '/lightning/app/c__SF_LWC_App/page/home'
 const experienceSitePath = '/sfexperiencecloud/'

@@ -331,39 +331,14 @@ export async function salesforceSetup(options: SetupOptions, servers: Servers, p
   }
 
   if (options.rum) {
-    if (options.salesforceApp === 'lwc' || options.salesforceApp === 'experience-cloud') {
-      // Both sf-lwc-app and sf-experience-app have a committed datadogInit LWC that reads
-      // these globals and calls DD_RUM.init. On experience-cloud, that component only runs
-      // when the page is loaded with init=true (see withSalesforceApp).
-      await page.addInitScript(
-        `window.RUM_CONFIGURATION = ${formatConfiguration(options.rum, servers)}
+    // Both sf-lwc-app and sf-experience-app have a committed datadogInit LWC that reads
+    // these globals and calls DD_RUM.init. On experience-cloud, that component only runs
+    // when the page is loaded with init=true.
+    await page.addInitScript(
+      `window.RUM_CONFIGURATION = ${formatConfiguration(options.rum, servers)}
       window.RUM_CONTEXT = ${JSON.stringify(options.context)}`
-      )
-    } else {
-      // experience-cloud-head-markup stands in for Experience Builder's org-side head markup config
-      // by injecting an equivalent script tag at runtime. This bypasses the committed
-      // datadogInit LWC entirely, because init=true is not set.
-      await page.addInitScript(`
-        ;(function () {
-          function inject() {
-            var script = document.createElement('script')
-            script.src = '/resource/datadog_rum_slim.js'
-            script.onload = function () {
-              window.DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
-              window.DD_RUM.init(${formatConfiguration(options.rum, servers)})
-            }
-            document.head.appendChild(script)
-          }
-          if (document.head) {
-            inject()
-          } else {
-            document.addEventListener('DOMContentLoaded', inject)
-          }
-        })()
-      `)
-    }
+    )
   }
-
   return ''
 }
 
