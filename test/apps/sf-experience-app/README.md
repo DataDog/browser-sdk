@@ -12,13 +12,13 @@ using two initialization approaches:
 
 1. **Head markup** — inject the SDK in the LWR template
    ([docs](https://developer.salesforce.com/docs/atlas.en-us.exp_cloud_lwr.meta/exp_cloud_lwr/template_differences_markup.htm))
-2. **`experienceDatadogInit` LWC** — load the slim bundle from a static resource and start views on SPA navigation
+2. **`experienceDatadogInit` LWC** — load the RUM Salesforce bundle from a static resource and start views on SPA navigation
 
 ## What It Contains
 
 - `experienceHomeActions` and `experienceProductExplorer` — page components for manual RUM testing
-- `experienceDatadogInit` — loads `datadog_rum_slim` and initializes RUM when the URL contains `?init=true`
-- `datadog_rum_slim` static resource metadata (the `.js` bundle is gitignored and produced by the build)
+- `experienceDatadogInit` — loads `datadog_rum_salesforce` and initializes RUM when the URL contains `?init=true`
+- `datadog_rum_salesforce` static resource metadata (the `.js` bundle is gitignored and produced by the build)
 - `browser_intake_datadoghq_com` CSP trusted site metadata (US1 intake endpoint)
 
 For the canonical Lightning App setup (`datadogInit` in a utility bar), see
@@ -29,9 +29,9 @@ and `[test/apps/sf-lwc-app/README.md](../sf-lwc-app/README.md)`.
 
 ### 1. Add the static resource
 
-Copy the Datadog slim RUM bundle into the project as
-`force-app/main/default/staticresources/datadog_rum_slim.js` and register it with
-`datadog_rum_slim.resource-meta.xml`:
+Copy the Datadog RUM Salesforce bundle into the project as
+`force-app/main/default/staticresources/datadog_rum_salesforce.js` and register it with
+`datadog_rum_salesforce.resource-meta.xml`:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" ?>
@@ -62,7 +62,7 @@ For non-US1 Datadog sites, use the intake endpoint for your site.
 This app uses `experienceDatadogInit` (`force-app/main/default/lwc/experienceDatadogInit/`). The
 component:
 
-- Loads the `datadog_rum_slim` static resource via `lightning/platformResourceLoader`
+- Loads the `datadog_rum_salesforce` static resource via `lightning/platformResourceLoader`
 - Initializes only when `?init=true` is present in the page URL
 - Calls `DD_RUM.startView()` on each SPA navigation using `NavigationMixin` and `CurrentPageReference`
 - Merges `window.RUM_CONFIGURATION` over default `xxx` credentials at init time
@@ -105,7 +105,7 @@ Credentials are set as CI variables; for local overrides, set the matching envir
 
 ## Deploy
 
-Build the RUM slim bundle, then deploy metadata and publish the site:
+Build the RUM Salesforce bundle, deploy metadata, and publish the site:
 
 ```sh
 yarn build:apps --app sf-experience-app
@@ -124,8 +124,8 @@ locally without deploying:
 yarn build:apps --app sf-experience-app
 ```
 
-This copies the locally built RUM slim bundle into the gitignored
-`force-app/main/default/staticresources/datadog_rum_slim.js` file.
+This copies the locally built RUM Salesforce bundle into the gitignored
+`force-app/main/default/staticresources/datadog_rum_salesforce.js` file.
 
 ## Open The Site
 
