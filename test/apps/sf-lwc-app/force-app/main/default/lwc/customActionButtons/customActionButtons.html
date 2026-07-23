@@ -56,6 +56,7 @@
       <lightning-button
         label="Runtime Error"
         variant="destructive"
+        data-testid="runtime-error"
         onclick="{handleRuntimeErrorClick}"
       ></lightning-button>
     </div>
@@ -101,12 +102,20 @@
       <lightning-button
         label="Fetch Resource"
         variant="brand"
+        data-testid="fetch-resource"
         onclick="{handleFetchResourceClick}"
       ></lightning-button>
       <lightning-button
         label="XHR Resource"
         variant="brand"
+        data-testid="xhr-resource"
         onclick="{handleXhrResourceClick}"
+      ></lightning-button>
+      <lightning-button
+        label="Image Resource"
+        variant="brand"
+        data-testid="image-resource"
+        onclick="{handleImageResourceClick}"
       ></lightning-button>
     </div>
     <template lwc:if="{lastResourceName}">

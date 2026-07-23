@@ -1,5 +1,3 @@
-import { readFile } from 'node:fs/promises'
-import { resolve } from 'node:path'
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { DebuggerInitConfiguration } from '@datadog/browser-debugger'
 import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
@@ -23,13 +21,14 @@ import {
   VUE_ROUTER_APP_PORT,
   VUE_ROUTER_V4_APP_PORT,
 } from '../helpers/playwright'
-import { buildSalesforceLwcUrl, getSalesforceLwcSession } from './buildSalesforceLwcUrl'
+import { buildSalesforceUrl } from './buildSalesforceUrl'
+import type { SalesforceApp } from './buildSalesforceUrl'
 import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
 import { getTestServers, waitForServersIdle } from './httpServers'
 import type { CallerLocation, EventBridgeOptions, SetupFactory, SetupOptions, UrlHook } from './pageSetups'
-import { html, DEFAULT_SETUPS, npmSetup, appSetup, formatConfiguration } from './pageSetups'
+import { html, DEFAULT_SETUPS, npmSetup, appSetup, formatConfiguration, salesforceSetup } from './pageSetups'
 import { createDatadogHttpApi } from './serverApps/datadogHttpApi'
 import type { DatadogHttpApiControl } from './serverApps/datadogHttpApi'
 import { createMockServerApp } from './serverApps/mock'
@@ -75,11 +74,6 @@ const WEBKIT_PLAYWRIGHT_WORKAROUND = `
 })();
 `
 
-const salesforceLwcBundlePath = resolve(
-  __dirname,
-  '../../../apps/sf-lwc-app/force-app/main/default/staticresources/datadog_rum_salesforce.js'
-)
-
 export function createTest(title: string) {
   return new TestBuilder(title, captureCallerLocation())
 }
@@ -121,7 +115,7 @@ class TestBuilder {
     logsConfiguration?: LogsInitConfiguration
   } = {}
   private worker: Worker | undefined
-  private salesforceApp = false
+  private salesforceApp: SalesforceApp | undefined = undefined
 
   constructor(
     private title: string,
@@ -277,11 +271,14 @@ class TestBuilder {
     return this
   }
 
-  withSalesforceApp() {
-    this.salesforceApp = true
-    this.setups = [{ factory: () => '' }]
+  withSalesforceApp(app: SalesforceApp) {
+    this.salesforceApp = app
+    this.setups = [{ factory: salesforceSetup }]
     this.baseUrlHooks.push(async (baseUrl) => {
-      baseUrl.href = await buildSalesforceLwcUrl()
+      baseUrl.href = await buildSalesforceUrl(app)
+      if (app === 'experience-cloud') {
+        baseUrl.searchParams.set('init', 'true')
+      }
     })
     return this
   }
@@ -323,7 +320,9 @@ class TestBuilder {
         declareTestsForSetups('rum', this.setups, setupOptions, runner)
         declareTestsForSetups(
           'rum-slim',
-          this.setups.filter((setup) => setup.factory !== npmSetup && setup.factory !== appSetup),
+          this.setups.filter(
+            (setup) => setup.factory !== npmSetup && (setup.factory as unknown) !== (appSetup as unknown)
+          ),
           { ...setupOptions, useRumSlim: true },
           runner
         )
@@ -460,43 +459,9 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     )
     servers.datadogHttpApi.bindServerApp(datadogHttpApi.app)
 
-    const setup = factory(setupOptions, servers)
+    const setup = await factory(setupOptions, servers, page)
     servers.base.bindServerApp(createMockServerApp(servers, setup, setupOptions))
     servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
-
-    if (setupOptions.salesforceApp) {
-      const { accessToken, instanceUrl } = await getSalesforceLwcSession()
-      const salesforceUrl = new URL(instanceUrl)
-      await context.setStorageState({
-        cookies: [
-          {
-            name: 'sid',
-            value: accessToken,
-            domain: salesforceUrl.hostname,
-            path: '/',
-            expires: -1,
-            httpOnly: false,
-            secure: salesforceUrl.protocol === 'https:',
-            sameSite: 'Lax',
-          },
-        ],
-        origins: [],
-      })
-      // Serve the local bundle from the static resource
-      await page.route(/\/resource(?:\/[^/?#]+)?\/datadog_rum_salesforce(?:\.js)?(?:[/?#].*)?$/, async (route) => {
-        await route.fulfill({
-          body: await readFile(salesforceLwcBundlePath),
-          contentType: 'application/javascript',
-        })
-      })
-
-      if (setupOptions.rum) {
-        await page.addInitScript(
-          `window.RUM_CONFIGURATION = ${formatConfiguration(setupOptions.rum, servers)}
-          window.RUM_CONTEXT = ${JSON.stringify(setupOptions.context)}`
-        )
-      }
-    }
 
     await setUpTest(browserLogs, setupOptions, testContext)
 

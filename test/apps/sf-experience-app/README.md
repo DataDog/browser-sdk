@@ -21,7 +21,7 @@ using two initialization approaches:
 - `datadog_rum_salesforce` static resource metadata (the `.js` bundle is gitignored and produced by the build)
 - `browser_intake_datadoghq_com` CSP trusted site metadata (US1 intake endpoint)
 
-For the canonical Lightning App setup (`datadogInit` in a utility bar), see
+For the canonical RUM integration setup, see
 `[packages/browser-rum-slim/src/salesforce/README.md](../../../packages/browser-rum-slim/src/salesforce/README.md)`
 and `[test/apps/sf-lwc-app/README.md](../sf-lwc-app/README.md)`.
 
@@ -125,7 +125,8 @@ yarn build:apps --app sf-experience-app
 ```
 
 This copies the locally built RUM Salesforce bundle into the gitignored
-`force-app/main/default/staticresources/datadog_rum_salesforce.js` file.
+`force-app/main/default/staticresources/datadog_rum_salesforce.js` file. Playwright fulfills Salesforce
+static resource requests with this local file during E2E tests.
 
 ## Open The Site
 
@@ -135,4 +136,19 @@ yarn salesforce:get-urls --app experience-cloud
 
 The site is configured for unauthenticated/public access, so this prints the published URL directly:
 `https://datadog--engrumdev.sandbox.my.site.com/sfexperiencecloud/`.
+
 Append `?init=true` to enable the `experienceDatadogInit` component.
+
+E2E tests don't use this script: they build their own URL via the JWT/REST flow in
+`test/e2e/lib/framework/buildSalesforceUrl.ts`, and inject the RUM configuration on the page as
+`window.RUM_CONFIGURATION`.
+
+## Run E2E Tests
+
+Build the SDK and test apps, then run the Salesforce scenario:
+
+```sh
+yarn build
+yarn build:apps --app sf-experience-app
+yarn test:e2e --project=chromium --grep salesforce
+```

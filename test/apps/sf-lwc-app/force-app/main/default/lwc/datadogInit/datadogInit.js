@@ -10,6 +10,7 @@ const defaultInitConfiguration = {
   applicationId: 'xxx',
   clientToken: 'xxx',
   site: 'datadoghq.com',
+  trackViewsManually: true,
 }
 
 export default class DatadogInit extends NavigationMixin(LightningElement) {
