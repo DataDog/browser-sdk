@@ -17,6 +17,7 @@ test.describe('telemetry', () => {
       expect(intakeRegistry.telemetryErrorEvents).toHaveLength(1)
       const event = intakeRegistry.telemetryErrorEvents[0]
       expect(event.service).toEqual('browser-logs-sdk')
+      expect(event.telemetry.sdk_name).toBe('logs')
       expect(event.telemetry.message).toBe('expected error')
       expect(event.telemetry.error!.kind).toBe('Error')
       expect(event.telemetry.status).toBe('error')
@@ -38,6 +39,7 @@ test.describe('telemetry', () => {
       expect(intakeRegistry.telemetryErrorEvents).toHaveLength(1)
       const event = intakeRegistry.telemetryErrorEvents[0]
       expect(event.service).toEqual('browser-rum-sdk')
+      expect(event.telemetry.sdk_name).toBe('rum')
       expect(event.telemetry.message).toBe('expected error')
       expect(event.telemetry.error!.kind).toBe('Error')
       expect(event.telemetry.status).toBe('error')
@@ -53,6 +55,7 @@ test.describe('telemetry', () => {
       expect(intakeRegistry.telemetryConfigurationEvents).toHaveLength(1)
       const event = intakeRegistry.telemetryConfigurationEvents[0]
       expect(event.service).toEqual('browser-logs-sdk')
+      expect(event.telemetry.sdk_name).toBe('logs')
       expect(event.telemetry.configuration.forward_errors_to_logs).toEqual(true)
       expect(event.session!.id).toEqual(expect.any(String))
     })
@@ -66,6 +69,7 @@ test.describe('telemetry', () => {
       expect(intakeRegistry.telemetryConfigurationEvents).toHaveLength(1)
       const event = intakeRegistry.telemetryConfigurationEvents[0]
       expect(event.service).toEqual('browser-rum-sdk')
+      expect(event.telemetry.sdk_name).toBe('rum')
       expect(event.telemetry.configuration.track_user_interactions).toEqual(true)
       expect(event.session!.id).toEqual(expect.any(String))
       expect(event.application!.id).toEqual(expect.any(String))
@@ -82,6 +86,7 @@ test.describe('telemetry', () => {
       expect(intakeRegistry.telemetryUsageEvents).toHaveLength(2)
       const event = intakeRegistry.telemetryUsageEvents[1] // first event is 'set-global-context' done in pageSetup.ts
       expect(event.service).toEqual('browser-rum-sdk')
+      expect(event.telemetry.sdk_name).toBe('rum')
       expect(event.telemetry.usage.feature).toEqual('add-action')
     })
 
@@ -96,6 +101,7 @@ test.describe('telemetry', () => {
       expect(intakeRegistry.telemetryUsageEvents).toHaveLength(1)
       const event = intakeRegistry.telemetryUsageEvents[0]
       expect(event.service).toEqual('browser-logs-sdk')
+      expect(event.telemetry.sdk_name).toBe('logs')
       expect(event.telemetry.usage.feature).toEqual('set-tracking-consent')
     })
 
