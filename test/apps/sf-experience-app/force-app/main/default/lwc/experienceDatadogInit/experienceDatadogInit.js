@@ -1,6 +1,6 @@
 import { LightningElement, wire } from 'lwc'
 import { NavigationMixin, CurrentPageReference } from 'lightning/navigation'
-import datadogRumSlim from '@salesforce/resourceUrl/datadog_rum_slim'
+import datadogRum from '@salesforce/resourceUrl/datadog_rum_salesforce'
 import { loadScript } from 'lightning/platformResourceLoader'
 
 let datadogInitialization
@@ -53,7 +53,7 @@ export default class ExperienceDatadogInit extends NavigationMixin(LightningElem
   }
 
   loadDatadogRum() {
-    return loadScript(this, datadogRumSlim).then(() => {
+    return loadScript(this, datadogRum).then(() => {
       if (window.RUM_CONTEXT) {
         window.DD_RUM.setGlobalContext(window.RUM_CONTEXT)
       }
