@@ -1,5 +1,5 @@
 import { setDebugMode } from '@datadog/js-core/util'
-import { catchUserErrors } from '../tools/catchUserErrors'
+import { defineGlobal as coreDefineGlobal } from '@datadog/js-core/runtime'
 import { display } from '../tools/display'
 
 // replaced at build time
@@ -44,12 +44,5 @@ export function makePublicApi<T extends PublicApi>(stub: Omit<T, keyof PublicApi
 }
 
 export function defineGlobal<Global, Name extends keyof Global>(global: Global, name: Name, api: Global[Name]) {
-  const existingGlobalVariable = global[name] as { q?: Array<() => void>; version?: string } | undefined
-  if (existingGlobalVariable && !existingGlobalVariable.q && existingGlobalVariable.version) {
-    display.warn('SDK is loaded more than once. This is unsupported and might have unexpected behavior.')
-  }
-  global[name] = api
-  if (existingGlobalVariable?.q) {
-    existingGlobalVariable.q.forEach((fn) => catchUserErrors(fn, 'onReady callback threw an error:')())
-  }
+  coreDefineGlobal(global, name, api, display)
 }

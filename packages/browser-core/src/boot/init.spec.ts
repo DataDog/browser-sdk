@@ -2,36 +2,14 @@ import { display } from '../tools/display'
 import { defineGlobal } from './init'
 
 describe('defineGlobal', () => {
-  it('adds new property to the global object', () => {
+  it('delegates to @datadog/js-core/runtime and adds new property to the global object', () => {
     const myGlobal = {} as any
     const value = 'my value'
     defineGlobal(myGlobal, 'foo', value)
     expect(myGlobal.foo).toBe(value)
   })
 
-  it('overrides property if exists on the global object', () => {
-    const myGlobal = { foo: 'old value' }
-    const value = 'my value'
-    defineGlobal(myGlobal, 'foo', value)
-    expect(myGlobal.foo).toBe(value)
-  })
-
-  it('run the queued callbacks on the old value', () => {
-    const fn1 = jasmine.createSpy()
-    const fn2 = jasmine.createSpy()
-    const myGlobal: any = {
-      foo: {
-        q: [fn1, fn2],
-      },
-    }
-    const value = 'my value'
-    defineGlobal(myGlobal, 'foo', value)
-    expect(myGlobal.foo).toBe(value)
-    expect(fn1).toHaveBeenCalled()
-    expect(fn2).toHaveBeenCalled()
-  })
-
-  it('catches the errors thrown by the queued callbacks', () => {
+  it('delegates to @datadog/js-core/runtime using browser-core own display', () => {
     const myError = 'Ooops!'
     const onReady = () => {
       // eslint-disable-next-line @typescript-eslint/only-throw-error
