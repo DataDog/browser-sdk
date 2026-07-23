@@ -101,6 +101,13 @@ describe('validateAndBuildConfiguration', () => {
     it('uses the default when not provided', () => {
       expect(validateAndBuildConfiguration({}, schema, display)).toEqual({ level: [] })
     })
+
+    it('does not leak the schema-owned default array across validations', () => {
+      const first = validateAndBuildConfiguration({}, schema, display)!
+      first.level.push('a')
+      const second = validateAndBuildConfiguration({}, schema, display)!
+      expect(second.level).toEqual([])
+    })
   })
 
   describe('enum fields (array form)', () => {

@@ -1,6 +1,7 @@
 import { DOCS_ORIGIN, MORE_DETAILS } from '../util/display'
 import type { Display } from '../util/display'
 import { isPercentage, isMatchOption } from '../util/typeUtils'
+import { deepClone } from '../util/mergeInto'
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Schema field types
@@ -302,7 +303,9 @@ function validateSchemaFields(
         display.error(`"${key}" is required`)
         return undefined
       }
-      result[key] = 'default' in field ? field.default : undefined
+      // Schema-owned array/object defaults (e.g. `default: []`) are shared across every
+      // validation call; clone so mutating one built configuration can't affect another.
+      result[key] = 'default' in field ? deepClone(field.default) : undefined
     } else {
       result[key] = validated
     }
