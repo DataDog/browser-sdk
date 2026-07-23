@@ -31,6 +31,11 @@ function createMockCookieAccess() {
         observable.notify()
         return Promise.resolve()
       },
+      delete(): Promise<void> {
+        storedValues = []
+        observable.notify()
+        return Promise.resolve()
+      },
       observable,
     },
     mockCookie: {

@@ -35,12 +35,12 @@ const APPS: AppConfig[] = [
   { name: 'vue-router-app' },
   { name: 'nuxt-app' },
   { name: 'instrumentation-overhead' },
-  { name: 'sf-lwc-app', builderFn: buildSalesforceLwcApp },
 
   // React Router apps
   { name: 'react-router-app' },
   { name: 'tanstack-router-app' },
   { name: 'react-router-v6-app', builderFn: buildReactRouterV6App, deps: ['react-router-app'] },
+  { name: 'react-router-v7-app', builderFn: buildReactRouterV7App, deps: ['react-router-app'] },
 
   // Vue Router apps
   { name: 'vue-router-v4-app', builderFn: buildVueRouterV4App, deps: ['vue-router-app'] },
@@ -59,6 +59,10 @@ const APPS: AppConfig[] = [
     options: { runAt: 'document_start' },
     deps: ['base-extension'],
   },
+
+  // Salesforce apps
+  { name: 'sf-lwc-app', builderFn: buildSalesforceApp },
+  { name: 'sf-experience-app', builderFn: buildSalesforceApp },
 ]
 
 runMain(async () => {
@@ -162,11 +166,11 @@ async function buildApp(appName: string) {
   }
 }
 
-function buildSalesforceLwcApp() {
+function buildSalesforceApp(appName: string) {
   const sourceBundle = 'packages/browser-rum-slim/bundle/datadog-rum-slim.js'
-  const targetBundle = 'test/apps/sf-lwc-app/force-app/main/default/staticresources/datadog_rum_slim.js'
+  const targetBundle = `test/apps/${appName}/force-app/main/default/staticresources/datadog_rum_slim.js`
 
-  printLog('Building app at test/apps/sf-lwc-app...')
+  printLog(`Building app at test/apps/${appName}...`)
   fs.copyFileSync(sourceBundle, targetBundle)
 }
 
@@ -180,7 +184,7 @@ async function buildReactRouterV6App() {
 
     await modifyFile(path.join(appPath, 'app.tsx'), (content: string) =>
       content
-        .replace('@datadog/browser-rum-react/react-router-v7', '@datadog/browser-rum-react/react-router-v6')
+        .replace('@datadog/browser-rum-react/react-router-v8', '@datadog/browser-rum-react/react-router-v6')
         .replace("from 'react-router'", "from 'react-router-dom'")
         // Remove the v7-only onError prop
         .replace(
@@ -201,6 +205,26 @@ async function buildReactRouterV6App() {
       content
         .replace('react-router-app.js', 'react-router-v6-app.js')
         .replace('react-router-app.js', 'react-router-v6-app.js')
+    )
+  })
+}
+
+async function buildReactRouterV7App() {
+  await buildGeneratedApp('react-router-app', 'react-router-v7-app', async (appPath) => {
+    await modifyFile(path.join(appPath, 'package.json'), (content: string) =>
+      content
+        .replace(/"name": "react-router-app"/, '"name": "react-router-v7-app"')
+        .replace(/"react-router": "[^"]*"/, '"react-router": "7.18.1"')
+    )
+
+    await modifyFile(path.join(appPath, 'app.tsx'), (content: string) =>
+      content.replace('@datadog/browser-rum-react/react-router-v8', '@datadog/browser-rum-react/react-router-v7')
+    )
+
+    await modifyFile(path.join(appPath, 'webpack.config.js'), (content: string) =>
+      content
+        .replace('react-router-app.js', 'react-router-v7-app.js')
+        .replace('react-router-app.js', 'react-router-v7-app.js')
     )
   })
 }

@@ -40,6 +40,7 @@ const pathsWithSideEffect = new Set([
   `${packagesRoot}/browser-logs/src/entries/main.ts`,
   `${packagesRoot}/browser-rum/src/entries/main.ts`,
   `${packagesRoot}/browser-rum-slim/src/entries/main.ts`,
+  `${packagesRoot}/browser-rum-slim/src/entries/salesforce.ts`,
   `${packagesRoot}/browser-debugger/src/entries/main.ts`,
 ])
 

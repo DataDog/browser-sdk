@@ -21,6 +21,7 @@ dev,@eslint/js,MIT,Copyright OpenJS Foundation and other contributors, <www.open
 dev,@jsdevtools/coverage-istanbul-loader,MIT,Copyright (c) 2015 James Messinger
 dev,@ngtools/webpack,MIT,Copyright (c) 2017 Google LLC
 dev,@playwright/test,Apache-2.0,Copyright Microsoft Corporation
+dev,@salesforce/cli,Apache-2.0,Copyright (c) 2026 Salesforce, Inc.
 dev,@swc/core,Apache-2.0,Copyright (c) SWC Contributors
 dev,@tanstack/react-router,MIT,Copyright (c) 2021-present Tanner Linsley
 dev,@types/chrome,MIT,Copyright Microsoft Corporation
@@ -31,7 +32,6 @@ dev,@types/jasmine,MIT,Copyright Microsoft Corporation
 dev,@types/node,MIT,Copyright Microsoft Corporation
 dev,@types/node-forge,MIT,Copyright Microsoft Corporation
 dev,@types/ws,MIT,Copyright Microsoft Corporation
-dev,@types/pako,MIT,Copyright Microsoft Corporation
 dev,@types/react,MIT,Copyright Microsoft Corporation
 dev,@types/react-dom,MIT,Copyright Microsoft Corporation
 dev,@typescript-eslint/utils,MIT,Copyright (c) 2019 typescript-eslint and other contributors

@@ -60,7 +60,7 @@ async function getInfos(): Promise<SdkInfos> {
       `
         // Helper to serialize objects while preserving function metadata
         function serializeWithFunctions(obj) {
-          return JSON.parse(JSON.stringify(obj, function(key, value) {
+          const stringified = JSON.stringify(obj, function(key, value) {
             if (typeof value === 'function') {
               return {
                 __type: 'function',
@@ -69,18 +69,24 @@ async function getInfos(): Promise<SdkInfos> {
               }
             }
             return value
-          }))
+          })
+          if (stringified === undefined) {
+            return stringified
+          }
+          return JSON.parse(stringified)
         }
 
-        const cookieRawValue = document.cookie
-          .split(';')
-          .map(cookie => cookie.match(/(\\S*?)=(.*)/)?.slice(1) || [])
-          .find(([name, _]) => name === '_dd_s')
-          ?.[1]
-
+        const cookies = new Map(
+          document.cookie
+            .split(';')
+            .map(cookie => cookie.match(/(\\S*?)=(.*)/)?.slice(1))
+            .filter(cookie => cookie !== undefined)
+        );
+        const cookieRawValue = cookies.get('_dd_s_v2') ?? cookies.get('_dd_s');
         const cookie = cookieRawValue && Object.fromEntries(
           cookieRawValue.split('&').map(value => value.split('='))
         )
+
         const rum = window.DD_RUM && {
           version: window.DD_RUM?.version,
           config: serializeWithFunctions(window.DD_RUM?.getInitConfiguration?.()),
@@ -88,12 +94,14 @@ async function getInfos(): Promise<SdkInfos> {
           globalContext: window.DD_RUM?.getGlobalContext?.(),
           user: window.DD_RUM?.getUser?.(),
         }
+
         const logs = window.DD_LOGS && {
           version: window.DD_LOGS?.version,
           config: serializeWithFunctions(window.DD_LOGS?.getInitConfiguration?.()),
           globalContext: window.DD_LOGS?.getGlobalContext?.(),
           user: window.DD_LOGS?.getUser?.(),
         }
+
         return { rum, logs, cookie }
       `
     )) as SdkInfos

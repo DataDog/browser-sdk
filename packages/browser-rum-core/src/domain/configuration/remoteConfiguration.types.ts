@@ -38,6 +38,15 @@ export type DynamicOption =
  */
 export interface RumSdkConfig {
   /**
+   * Profiling feature Remote Configuration properties
+   */
+  profiling?: {
+    /**
+     * The percentage of users profiled
+     */
+    sampleRate?: number
+  }
+  /**
    * RUM feature Remote Configuration properties
    */
   rum?: {
@@ -94,6 +103,34 @@ export interface RumSdkConfig {
      * The percentage of sessions with RUM & Session Replay pricing tracked
      */
     sessionReplaySampleRate?: number
+    /**
+     * The percentage of telemetry events sampled
+     */
+    telemetrySampleRate?: number
+    /**
+     * Whether to track anonymous users
+     */
+    trackAnonymousUser?: boolean
+    /**
+     * Whether to automatically collect user actions
+     */
+    trackUserInteractions?: boolean
+    /**
+     * Whether to collect resource events
+     */
+    trackResources?: boolean
+    /**
+     * Whether to collect long task events
+     */
+    trackLongTasks?: boolean
+    /**
+     * Controls when tracing headers are injected
+     */
+    traceContextInjection?: 'all' | 'sampled'
+    /**
+     * HTML attribute used as the RUM action name
+     */
+    actionNameAttribute?: string
     /**
      * Session replay default privacy level
      */

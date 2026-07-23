@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-rum-angular",
-  "version": "7.5.0",
+  "version": "7.6.0",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
   "module": "esm/entries/main.mjs",
@@ -17,9 +17,9 @@
     "prepack": "npm run build"
   },
   "dependencies": {
-    "@datadog/browser-core": "7.5.0",
-    "@datadog/browser-rum-core": "7.5.0",
-    "@datadog/js-core": "0.0.5"
+    "@datadog/browser-core": "7.6.0",
+    "@datadog/browser-rum-core": "7.6.0",
+    "@datadog/js-core": "0.0.6"
   },
   "peerDependencies": {
     "@angular/core": ">=15 <=22",
@@ -38,11 +38,11 @@
     "access": "public"
   },
   "devDependencies": {
-    "@angular/common": "22.0.4",
-    "@angular/compiler": "22.0.4",
-    "@angular/core": "22.0.4",
-    "@angular/platform-browser": "22.0.4",
-    "@angular/router": "22.0.4",
+    "@angular/common": "22.0.5",
+    "@angular/compiler": "22.0.5",
+    "@angular/core": "22.0.5",
+    "@angular/platform-browser": "22.0.5",
+    "@angular/router": "22.0.5",
     "rxjs": "7.8.2"
   }
 }
