@@ -306,13 +306,13 @@ export function microfrontendSetup(options: SetupOptions, servers: Servers) {
 
 const salesforceLwcBundlePath = resolve(
   __dirname,
-  '../../../apps/sf-lwc-app/force-app/main/default/staticresources/datadog_rum_slim.js'
+  '../../../apps/sf-lwc-app/force-app/main/default/staticresources/datadog_rum_salesforce.js'
 )
 
 // Salesforce apps don't serve a locally-generated page body; this factory only drives the
 // page-side setup needed to init RUM on the remote Salesforce page.
 export async function salesforceSetup(options: SetupOptions, servers: Servers, page: Page): Promise<string> {
-  await page.route(/\/resource(?:\/[^/?#]+)?\/datadog_rum_slim(?:\.js)?(?:[/?#].*)?$/, async (route) => {
+  await page.route(/\/resource(?:\/[^/?#]+)?\/datadog_rum_salesforce(?:\.js)?(?:[/?#].*)?$/, async (route) => {
     await route.fulfill({
       body: await readFile(salesforceLwcBundlePath),
       contentType: 'application/javascript',
