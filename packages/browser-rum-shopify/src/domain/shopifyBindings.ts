@@ -1,31 +1,6 @@
 import type { RumPublicApi } from '@datadog/browser-rum-core'
 import type { ShopifyAnalyticsApi, ShopifyPixelEvent } from './shopifyAnalytics'
 
-export interface CheckoutData {
-  token?: string
-}
-
-export interface CheckoutStartedData extends CheckoutData {
-  currencyCode?: string
-  totalPrice?: unknown
-}
-
-export interface CheckoutShippingData extends CheckoutData {
-  shippingLine?: { price?: unknown }
-}
-
-export interface CheckoutCompletedData extends CheckoutData {
-  order?: { id?: string }
-  totalPrice?: unknown
-}
-
-export interface AlertData {
-  message?: string
-  type?: string
-  target?: string
-  value?: unknown
-}
-
 export interface ElementData {
   id?: string
 }
@@ -39,6 +14,12 @@ export interface ErrorData {
   appName?: string
 }
 
+// Matches /checkouts/*, /checkout, including locale-prefixed paths.
+// Storefront pages never match, so init() is a no-op there: those pages
+// already get a `DD_RUM` instance from the Theme Liquid snippet, and initializing here too would
+// create a second, independent SDK instance double-tracking the same page view.
+const CHECKOUT_PATH = /\/(([a-z]{2}(-[a-z0-9]+)?)\/)?(checkouts?)(\/|$)/i
+
 /**
  * Wires Shopify Web Pixel standard events to the RUM public API. `analytics` is the sandbox's
  * `analytics` global (or `undefined` outside the sandbox, in which case bindings are skipped).
@@ -49,69 +30,14 @@ export function initShopifyBindings(rumPublicApi: RumPublicApi, analytics: Shopi
   }
 
   analytics.subscribe('page_viewed', (event) => {
-    rumPublicApi.startView({
-      name: event.context?.document?.title,
-      url: event.context?.document?.location?.href,
-    })
-  })
+    const url = event.context?.document?.location?.href
 
-  analytics.subscribe('checkout_started', (event: ShopifyPixelEvent<{ checkout?: CheckoutStartedData }>) => {
-    const checkout = event.data?.checkout
-    rumPublicApi.addAction('checkout_started', {
-      currencyCode: checkout?.currencyCode,
-      totalPrice: checkout?.totalPrice,
-    })
-  })
-
-  analytics.subscribe('checkout_contact_info_submitted', (event: ShopifyPixelEvent<{ checkout?: CheckoutData }>) => {
-    const checkout = event.data?.checkout
-    rumPublicApi.addAction('checkout_contact_info_submitted', {
-      checkoutToken: checkout?.token,
-    })
-  })
-
-  analytics.subscribe('checkout_address_info_submitted', (event: ShopifyPixelEvent<{ checkout?: CheckoutData }>) => {
-    const checkout = event.data?.checkout
-    rumPublicApi.addAction('checkout_address_info_submitted', {
-      checkoutToken: checkout?.token,
-    })
-  })
-
-  analytics.subscribe(
-    'checkout_shipping_info_submitted',
-    (event: ShopifyPixelEvent<{ checkout?: CheckoutShippingData }>) => {
-      const checkout = event.data?.checkout
-      rumPublicApi.addAction('checkout_shipping_info_submitted', {
-        checkoutToken: checkout?.token,
-        shippingPrice: checkout?.shippingLine?.price,
-      })
+    if (!url || !CHECKOUT_PATH.test(url)) {
+      return
     }
-  )
 
-  analytics.subscribe('payment_info_submitted', (event: ShopifyPixelEvent<{ checkout?: CheckoutData }>) => {
-    const checkout = event.data?.checkout
-    rumPublicApi.addAction('payment_info_submitted', {
-      checkoutToken: checkout?.token,
-    })
-  })
-
-  analytics.subscribe('checkout_completed', (event: ShopifyPixelEvent<{ checkout?: CheckoutCompletedData }>) => {
-    const checkout = event.data?.checkout
-    rumPublicApi.addAction('checkout_completed', {
-      orderId: checkout?.order?.id,
-      totalPrice: checkout?.totalPrice,
-    })
-  })
-
-  // Fires on checkout validation errors (invalid card, missing field, inventory error, etc.) —
-  // mapped as a custom action for funnel friction analysis.
-  analytics.subscribe('alert_displayed', (event: ShopifyPixelEvent<{ alert?: AlertData }>) => {
-    const alert = event.data?.alert
-    rumPublicApi.addAction('alert_displayed', {
-      message: alert?.message,
-      type: alert?.type,
-      target: alert?.target,
-      value: alert?.value,
+    rumPublicApi.startView({
+      url,
     })
   })
 

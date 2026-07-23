@@ -33,7 +33,7 @@ describe('initShopifyBindings', () => {
     expect(startView).not.toHaveBeenCalled()
   })
 
-  it('maps "page_viewed" to startView with the page title and url', () => {
+  it('maps "page_viewed" to startView with the url, when the page is a checkout page', () => {
     const { rumPublicApi, startView } = createFakeRumPublicApi()
     const { analytics, emit } = createFakeAnalytics()
 
@@ -42,128 +42,51 @@ describe('initShopifyBindings', () => {
       name: 'page_viewed',
       id: '1',
       timestamp: '2026-07-06T00:00:00Z',
-      context: { document: { title: 'Home page', location: { href: 'https://shop.example/home' } } },
+      context: { document: { title: 'Checkout', location: { href: 'https://shop.example/checkout' } } },
     })
 
-    expect(startView).toHaveBeenCalledWith({ name: 'Home page', url: 'https://shop.example/home' })
+    expect(startView).toHaveBeenCalledWith({ url: 'https://shop.example/checkout' })
   })
 
-  it('maps "checkout_started" to addAction with the currency and total price', () => {
-    const { rumPublicApi, addAction } = createFakeRumPublicApi()
-    const { analytics, emit } = createFakeAnalytics()
+  describe('"page_viewed" checkout-path gating', () => {
+    function emitPageViewed(url: string | undefined) {
+      const { rumPublicApi, startView } = createFakeRumPublicApi()
+      const { analytics, emit } = createFakeAnalytics()
 
-    initShopifyBindings(rumPublicApi, analytics)
-    emit('checkout_started', {
-      name: 'checkout_started',
-      id: '2',
-      timestamp: '2026-07-06T00:00:00Z',
-      data: { checkout: { currencyCode: 'USD', totalPrice: { amount: 42 } } },
+      initShopifyBindings(rumPublicApi, analytics)
+      emit('page_viewed', {
+        name: 'page_viewed',
+        id: '1',
+        timestamp: '2026-07-06T00:00:00Z',
+        context: { document: { title: 'Page', location: { href: url } } },
+      })
+
+      return startView
+    }
+
+    it('does not start a view on storefront pages', () => {
+      expect(emitPageViewed('https://shop.example/products/foo')).not.toHaveBeenCalled()
     })
 
-    expect(addAction).toHaveBeenCalledWith('checkout_started', {
-      currencyCode: 'USD',
-      totalPrice: { amount: 42 },
-    })
-  })
-
-  it('maps "checkout_contact_info_submitted" to addAction with the checkout token', () => {
-    const { rumPublicApi, addAction } = createFakeRumPublicApi()
-    const { analytics, emit } = createFakeAnalytics()
-
-    initShopifyBindings(rumPublicApi, analytics)
-    emit('checkout_contact_info_submitted', {
-      name: 'checkout_contact_info_submitted',
-      id: '3',
-      timestamp: '2026-07-06T00:00:00Z',
-      data: { checkout: { email: 'jane@example.com', token: 'tok_1' } },
+    it('starts a view on /checkout and /checkouts/* pages', () => {
+      expect(emitPageViewed('https://shop.example/checkout')).toHaveBeenCalledTimes(1)
+      expect(emitPageViewed('https://shop.example/checkouts/abc123')).toHaveBeenCalledTimes(1)
     })
 
-    expect(addAction).toHaveBeenCalledWith('checkout_contact_info_submitted', { checkoutToken: 'tok_1' })
-  })
-
-  it('maps "checkout_address_info_submitted" to addAction with the checkout token', () => {
-    const { rumPublicApi, addAction } = createFakeRumPublicApi()
-    const { analytics, emit } = createFakeAnalytics()
-
-    initShopifyBindings(rumPublicApi, analytics)
-    emit('checkout_address_info_submitted', {
-      name: 'checkout_address_info_submitted',
-      id: '5',
-      timestamp: '2026-07-06T00:00:00Z',
-      data: { checkout: { token: 'tok_3' } },
+    it('does not start a view on /orders/* pages (Order Status)', () => {
+      expect(emitPageViewed('https://shop.example/orders/abc123')).not.toHaveBeenCalled()
     })
 
-    expect(addAction).toHaveBeenCalledWith('checkout_address_info_submitted', { checkoutToken: 'tok_3' })
-  })
-
-  it('maps "checkout_shipping_info_submitted" to addAction with the checkout token and shipping price', () => {
-    const { rumPublicApi, addAction } = createFakeRumPublicApi()
-    const { analytics, emit } = createFakeAnalytics()
-
-    initShopifyBindings(rumPublicApi, analytics)
-    emit('checkout_shipping_info_submitted', {
-      name: 'checkout_shipping_info_submitted',
-      id: '6',
-      timestamp: '2026-07-06T00:00:00Z',
-      data: { checkout: { token: 'tok_4', shippingLine: { price: { amount: 5 } } } },
+    it('does not start a view on Customer Account pages', () => {
+      expect(emitPageViewed('https://shop.example/account/orders')).not.toHaveBeenCalled()
     })
 
-    expect(addAction).toHaveBeenCalledWith('checkout_shipping_info_submitted', {
-      checkoutToken: 'tok_4',
-      shippingPrice: { amount: 5 },
-    })
-  })
-
-  it('maps "payment_info_submitted" to addAction with the checkout token', () => {
-    const { rumPublicApi, addAction } = createFakeRumPublicApi()
-    const { analytics, emit } = createFakeAnalytics()
-
-    initShopifyBindings(rumPublicApi, analytics)
-    emit('payment_info_submitted', {
-      name: 'payment_info_submitted',
-      id: '7',
-      timestamp: '2026-07-06T00:00:00Z',
-      data: { checkout: { token: 'tok_5' } },
+    it('starts a view on locale-prefixed checkout paths', () => {
+      expect(emitPageViewed('https://shop.example/en-us/checkout')).toHaveBeenCalledTimes(1)
     })
 
-    expect(addAction).toHaveBeenCalledWith('payment_info_submitted', { checkoutToken: 'tok_5' })
-  })
-
-  it('maps "checkout_completed" to addAction with the order id and total price', () => {
-    const { rumPublicApi, addAction } = createFakeRumPublicApi()
-    const { analytics, emit } = createFakeAnalytics()
-
-    initShopifyBindings(rumPublicApi, analytics)
-    emit('checkout_completed', {
-      name: 'checkout_completed',
-      id: '8',
-      timestamp: '2026-07-06T00:00:00Z',
-      data: { checkout: { order: { id: 'order_1' }, totalPrice: { amount: 42 } } },
-    })
-
-    expect(addAction).toHaveBeenCalledWith('checkout_completed', {
-      orderId: 'order_1',
-      totalPrice: { amount: 42 },
-    })
-  })
-
-  it('maps "alert_displayed" to addAction with the alert details', () => {
-    const { rumPublicApi, addAction } = createFakeRumPublicApi()
-    const { analytics, emit } = createFakeAnalytics()
-
-    initShopifyBindings(rumPublicApi, analytics)
-    emit('alert_displayed', {
-      name: 'alert_displayed',
-      id: '9',
-      timestamp: '2026-07-06T00:00:00Z',
-      data: { alert: { message: 'Invalid card', type: 'PAYMENT_ERROR', target: 'payment.card', value: undefined } },
-    })
-
-    expect(addAction).toHaveBeenCalledWith('alert_displayed', {
-      message: 'Invalid card',
-      type: 'PAYMENT_ERROR',
-      target: 'payment.card',
-      value: undefined,
+    it('does not start a view when the url is undefined', () => {
+      expect(emitPageViewed(undefined)).not.toHaveBeenCalled()
     })
   })
 

@@ -1,23 +1,17 @@
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 
-// Matches /checkouts/*, /checkout, including locale-prefixed paths.
-// Storefront pages never match, so init() is a no-op there: those pages
-// already get a `DD_RUM` instance from the Theme Liquid snippet, and initializing here too would
-// create a second, independent SDK instance double-tracking the same page view.
-const CHECKOUT_PATH = /\/(([a-z]{2}(-[a-z0-9]+)?)\/)?(checkouts?)(\/|$)/i
-
 /**
- * Wraps a `RumPublicApi` instance, adding default init configuration for the Shopify Pixel sandbox
- * iframe and gating `init()` behind a checkout-path check so the pixel is a no-op on storefront
- * page views (the pixel's `page_viewed` event fires on every page, not just checkout).
+ * In the Custom Pixel sandbox, wraps `RumPublicApi.init()` with default configuration suited to
+ * that iframe (see below). Outside the sandbox (storefront context), returns `datadogRum` as-is.
  */
-export function makeShopifyRumPublicApi(datadogRum: RumPublicApi, url: string | undefined): RumPublicApi {
+export function makeShopifyRumPublicApi(datadogRum: RumPublicApi, isCustomPixelSandbox: boolean): RumPublicApi {
+  if (!isCustomPixelSandbox) {
+    return datadogRum
+  }
+
   return {
     ...datadogRum,
     init(initConfiguration: RumInitConfiguration) {
-      if (!url || !CHECKOUT_PATH.test(url)) {
-        return
-      }
       datadogRum.init({
         ...initConfiguration,
         trackViewsManually: true, // Views are started explicitly via startView()

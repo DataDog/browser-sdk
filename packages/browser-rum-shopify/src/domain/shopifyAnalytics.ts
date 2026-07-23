@@ -23,21 +23,16 @@ export interface ShopifyAnalyticsApi {
 
 interface ShopifyGlobal {
   analytics?: ShopifyAnalyticsApi
-  _DATADOG_SHOPIFY_FORCE_PIXEL_CONTEXT?: boolean
 }
 
 /**
  * Returns the `analytics` global injected by the Shopify Custom Pixel sandbox, or `undefined` if
- * the pixel is running outside that sandbox (e.g. loaded standalone for testing).
+ * the pixel is running outside that sandbox (e.g. a storefront page).
  *
- * Auto-detects the pixel sandbox context via the presence of the `analytics` global (the only
- * reliable signal — see https://shopify.dev/docs/api/web-pixels-api). `_DATADOG_SHOPIFY_FORCE_PIXEL_CONTEXT`
- * is an escape hatch overriding that detection: set it to `false` to force bindings off.
+ * Auto-detects the pixel sandbox context via the presence of the `analytics` global — the only
+ * reliable signal, see https://shopify.dev/docs/api/web-pixels-api.
  */
 export function getShopifyAnalytics(): ShopifyAnalyticsApi | undefined {
   const global = globalObject as ShopifyGlobal
-  if (global._DATADOG_SHOPIFY_FORCE_PIXEL_CONTEXT === false) {
-    return undefined
-  }
   return global.analytics
 }
