@@ -1,6 +1,13 @@
 import { buildUrl } from '@datadog/js-core/util'
 import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
 
+/**
+ * Next.js plugin type.
+ *
+ * The plugins API is unstable and experimental, and may change without notice. Please don't use this type directly.
+ *
+ * @internal
+ */
 export type NextjsPlugin = Pick<Required<RumPlugin>, 'name' | 'onInit' | 'onRumStart'>
 
 type InitSubscriber = (rumPublicApi: RumPublicApi) => void
@@ -13,6 +20,28 @@ let lastNavigationUrl: string | undefined
 const onRumInitSubscribers: InitSubscriber[] = []
 const onRumStartSubscribers: StartSubscriber[] = []
 
+/**
+ * Next.js plugin constructor.
+ *
+ * @category Main
+ * @example
+ * ```ts
+ * // instrumentation-client.js
+ * import { datadogRum } from '@datadog/browser-rum'
+ * import { nextjsPlugin, onRouterTransitionStart } from '@datadog/browser-rum-nextjs'
+ *
+ * // Only needed for the App Router, so Next.js can call it on client-side navigations
+ * export { onRouterTransitionStart }
+ *
+ * datadogRum.init({
+ *   applicationId: '<DATADOG_APPLICATION_ID>',
+ *   clientToken: '<DATADOG_CLIENT_TOKEN>',
+ *   site: '<DATADOG_SITE>',
+ *   plugins: [nextjsPlugin()],
+ *   // ...
+ * })
+ * ```
+ */
 export function nextjsPlugin(): NextjsPlugin {
   return {
     name: 'nextjs',
@@ -44,7 +73,22 @@ export function startNextjsView(viewName: string) {
   }
 }
 
-// Must be re-exported from the user's instrumentation-client.ts so we can capture the URL before React renders
+/**
+ * Notifies the plugin that an App Router navigation has started, so the target URL can be
+ * captured before React renders and `window.location` updates.
+ *
+ * Must be re-exported from the user's `instrumentation-client.js` so Next.js can call it on
+ * client-side navigations. Only needed for the App Router; the Pages Router doesn't use it.
+ *
+ * @category Main
+ * @example
+ * ```ts
+ * // instrumentation-client.js
+ * import { onRouterTransitionStart } from '@datadog/browser-rum-nextjs'
+ *
+ * export { onRouterTransitionStart }
+ * ```
+ */
 export function onRouterTransitionStart(url: string) {
   lastNavigationUrl = url
 }

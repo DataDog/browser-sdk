@@ -1,6 +1,10 @@
 import { getType } from './typeUtils'
 
-type Merged<TDestination, TSource> =
+/**
+ * The resulting type of deeply merging `TSource` into `TDestination`, as performed by
+ * {@link mergeInto} and {@link combine}.
+ */
+export type Merged<TDestination, TSource> =
   // case 1 - source is undefined - return destination
   TSource extends undefined
     ? TDestination
@@ -90,7 +94,10 @@ export function deepClone<T>(value: T): T {
   return mergeInto(undefined, value) as T
 }
 
-type Combined<A, B> = A extends null ? B : B extends null ? A : Merged<A, B>
+/**
+ * The resulting type of deeply merging `A` and `B`, as returned by {@link combine}.
+ */
+export type Combined<A, B> = A extends null ? B : B extends null ? A : Merged<A, B>
 
 /**
  * Performs a non-mutating deep merge of two or more values.

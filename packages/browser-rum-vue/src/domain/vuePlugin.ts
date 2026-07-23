@@ -10,12 +10,47 @@ type StartSubscriber = (addError: StartRumResult['addError']) => void
 const onRumInitSubscribers: InitSubscriber[] = []
 const onRumStartSubscribers: StartSubscriber[] = []
 
+/**
+ * Vue plugin configuration.
+ *
+ * @category Main
+ */
 export interface VuePluginConfiguration {
+  /**
+   * Enable Vue Router integration. Make sure to use `createRouter()` from
+   * {@link @datadog/browser-rum-vue/vue-router-v4! | @datadog/browser-rum-vue/vue-router-v4}
+   * to create the router.
+   */
   router?: boolean
 }
 
+/**
+ * Vue plugin type.
+ *
+ * The plugins API is unstable and experimental, and may change without notice. Please don't use this type directly.
+ *
+ * @internal
+ */
 export type VuePlugin = Required<RumPlugin>
 
+/**
+ * Vue plugin constructor.
+ *
+ * @category Main
+ * @example
+ * ```ts
+ * import { datadogRum } from '@datadog/browser-rum'
+ * import { vuePlugin } from '@datadog/browser-rum-vue'
+ *
+ * datadogRum.init({
+ *   applicationId: '<DATADOG_APPLICATION_ID>',
+ *   clientToken: '<DATADOG_CLIENT_TOKEN>',
+ *   site: '<DATADOG_SITE>',
+ *   plugins: [vuePlugin()],
+ *   // ...
+ * })
+ * ```
+ */
 export function vuePlugin(configuration: VuePluginConfiguration = {}): VuePlugin {
   return {
     name: 'vue',

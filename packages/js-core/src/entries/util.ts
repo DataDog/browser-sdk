@@ -21,6 +21,7 @@ export type {
   ProfilerResource,
   ProfilerTrace,
   ProfilerInitOptions,
+  ProfilerEventMap,
   SampleBufferFullEvent,
   Profiler,
   ProfilerConstructor,

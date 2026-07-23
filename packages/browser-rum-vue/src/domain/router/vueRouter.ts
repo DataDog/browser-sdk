@@ -2,6 +2,12 @@ import { createRouter as originalCreateRouter } from 'vue-router'
 import type { RouterOptions, Router } from 'vue-router'
 import { startVueRouterView } from './startVueRouterView'
 
+/**
+ * Use this function in place of `vue-router` `createRouter`. Every time a route is
+ * rendered, a new RUM view is created.
+ *
+ * @see https://router.vuejs.org/api/interfaces/RouterOptions.html
+ */
 export function createRouter(options: RouterOptions): Router {
   const router = originalCreateRouter(options)
 
