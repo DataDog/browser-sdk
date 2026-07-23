@@ -340,7 +340,8 @@ describe('tracer', () => {
       })
     })
 
-    it('should ignore wrong propagator types', () => {
+    it('should fall back to default propagator types when all provided values are invalid', () => {
+      spyOn(display, 'error')
       const tracer = startTracerWithDefaults({
         initConfiguration: {
           allowedTracingUrls: [{ match: window.location.origin, propagatorTypes: ['foo', 32, () => true] as any }],
@@ -349,10 +350,10 @@ describe('tracer', () => {
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
       tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
 
+      // All-invalid propagatorTypes fall back to DEFAULT_PROPAGATOR_TYPES (['tracecontext', 'datadog'])
+      expect(xhr.headers['traceparent']).toBeDefined()
+      expect(xhr.headers['x-datadog-trace-id']).toBeDefined()
       expect(xhr.headers['b3']).toBeUndefined()
-      expect(xhr.headers['traceparent']).toBeUndefined()
-      expect(xhr.headers['tracestate']).toBeUndefined()
-      expect(xhr.headers['x-datadog-trace-id']).toBeUndefined()
       expect(xhr.headers['X-B3-TraceId']).toBeUndefined()
     })
 

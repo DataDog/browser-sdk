@@ -746,7 +746,7 @@ describe('rum public api', () => {
     it('is started with the default startSessionReplayRecordingManually', async () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       const calls = await collectAsyncCalls(recorderApi.onRumStart, 1)
-      expect(calls.mostRecent().args[1].startSessionReplayRecordingManually).toBe(true)
+      expect(calls.mostRecent().args[1].startSessionReplayRecordingManually).toBe(false)
     })
 
     it('is started with the configured startSessionReplayRecordingManually', async () => {

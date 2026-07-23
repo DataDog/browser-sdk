@@ -1,4 +1,4 @@
-import { DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT } from '@datadog/browser-logs/src/domain/configuration'
+import { DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT } from '@datadog/browser-logs/src/domain/networkError/networkErrorCollection'
 import { ONE_HOUR, ONE_MINUTE } from '@datadog/js-core/time'
 import { SESSION_EXPIRATION_DELAY } from '@datadog/browser-core'
 import { test, expect } from '@playwright/test'

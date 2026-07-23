@@ -1,17 +1,17 @@
-import type { Configuration, InitConfiguration, MatchOption, RawTelemetryConfiguration } from '@datadog/browser-core'
+import type { InitConfiguration, RawTelemetryConfiguration } from '@datadog/browser-core'
 import {
-  isMatchOption,
+  catchUserErrors,
   serializeConfiguration,
   DefaultPrivacyLevel,
   TraceContextInjection,
   display,
-  objectHasValue,
-  validateAndBuildConfiguration,
-  isSampleRate,
   isNumber,
   isNonEmptyArray,
+  BROWSER_CORE_SCHEMA,
 } from '@datadog/browser-core'
-import { isIndexableObject } from '@datadog/js-core/util'
+import { isIndexableObject, isMatchOption } from '@datadog/js-core/util'
+import { validateAndBuildConfiguration } from '@datadog/js-core/configuration'
+import type { InferredConfig, MatchOption } from '@datadog/js-core/configuration'
 import type { RumEventDomainContext } from '../../domainContext.types'
 import type { RumEvent } from '../../rumEvent.types'
 import type { RumPlugin } from '../plugins'
@@ -226,11 +226,12 @@ export interface RumInitConfiguration extends InitConfiguration {
   sessionReplaySampleRate?: number | undefined
 
   /**
-   * If the session is sampled for Session Replay, only start the recording when `startSessionReplayRecording()` is called, instead of at the beginning of the session. Default: if startSessionReplayRecording is 0, true; otherwise, false.
+   * If the session is sampled for Session Replay, only start the recording when `startSessionReplayRecording()` is called, instead of at the beginning of the session.
    *
    * See [Session Replay Usage](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser/#usage) for further information.
    *
    * @category Session Replay
+   * @defaultValue false
    */
   startSessionReplayRecordingManually?: boolean | undefined
 
@@ -354,8 +355,6 @@ export interface RumInitConfiguration extends InitConfiguration {
   betaEnableViewUpdates?: boolean | undefined
 }
 
-export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
-
 export type FeatureFlagsForEvents = 'vital' | 'action' | 'long_task' | 'resource'
 
 /**
@@ -380,147 +379,135 @@ export interface MatchHeader {
   location?: 'request' | 'response' | 'any'
 }
 
-export interface RumConfiguration extends Configuration {
-  // Built from init configuration
-  actionNameAttribute: string | undefined
-  traceSampleRate: number
-  rulePsr: number | undefined
+export const RUM_SCHEMA = {
+  ...BROWSER_CORE_SCHEMA,
+
+  // Required
+  applicationId: { type: 'string', required: true },
+
+  // Optional strings
+  actionNameAttribute: { type: 'string' },
+  workerUrl: { type: 'string' },
+  subdomain: { type: 'string' },
+
+  // Sample rates
+  sessionReplaySampleRate: { type: 'percentage', default: 0 },
+  traceSampleRate: { type: 'percentage', default: 100 },
+  profilingSampleRate: { type: 'percentage', default: 0 },
+
+  // Booleans
+  compressIntakeRequests: { type: 'boolean', default: false },
+  trackUserInteractions: { type: 'boolean', default: true, strict: false },
+  trackResources: { type: 'boolean', default: true, strict: false },
+  trackLongTasks: { type: 'boolean', default: true, strict: false },
+  trackViewsManually: { type: 'boolean', default: false, strict: false },
+  betaEnableViewUpdates: { type: 'boolean', default: false },
+  enablePrivacyForActionName: { type: 'boolean', default: true },
+  propagateTraceBaggage: { type: 'boolean', default: true },
+  startSessionReplayRecordingManually: { type: 'boolean', default: false, strict: false },
+
+  // Enums
+  defaultPrivacyLevel: {
+    type: 'enum',
+    values: DefaultPrivacyLevel,
+    default: DefaultPrivacyLevel.MASK_USER_INPUT,
+    strict: false,
+  },
+  traceContextInjection: {
+    type: 'enum',
+    values: TraceContextInjection,
+    default: TraceContextInjection.SAMPLED,
+    strict: false,
+  },
+
+  // Arrays
+  excludedActivityUrls: { type: 'match-option', multiple: true, default: [] as MatchOption[] },
+  allowedTracingUrls: {
+    type: 'union',
+    multiple: true,
+    strict: false,
+    default: [] as Array<MatchOption | { match: MatchOption; propagatorTypes: PropagatorType[] }>,
+    variants: [
+      { type: 'match-option' },
+      {
+        type: 'schema',
+        schema: {
+          match: { type: 'match-option', required: true },
+          propagatorTypes: {
+            type: 'enum',
+            values: ['datadog', 'b3', 'b3multi', 'tracecontext'] as const,
+            multiple: true,
+            strict: false,
+            default: DEFAULT_PROPAGATOR_TYPES,
+          },
+        },
+      },
+    ],
+  },
+  plugins: {
+    type: 'schema',
+    multiple: true,
+    strict: false,
+    default: [] as RumPlugin[],
+    schema: {
+      name: { type: 'string', required: true },
+      getConfigurationTelemetry: {
+        type: 'function',
+        strict: false,
+        signature: undefined as RumPlugin['getConfigurationTelemetry'],
+      },
+      onInit: { type: 'function', strict: false, signature: undefined as RumPlugin['onInit'] },
+      onRumStart: { type: 'function', strict: false, signature: undefined as RumPlugin['onRumStart'] },
+    },
+  },
+  trackFeatureFlagsForEvents: {
+    type: 'enum',
+    values: ['vital', 'action', 'long_task', 'resource'] as const,
+    multiple: true,
+    strict: false,
+    default: [] as FeatureFlagsForEvents[],
+  },
+} as const
+
+export type RumConfiguration = Omit<InferredConfig<typeof RUM_SCHEMA>, 'allowedTracingUrls'> & {
   allowedTracingUrls: TracingOption[]
-  excludedActivityUrls: MatchOption[]
-  workerUrl: string | undefined
-  compressIntakeRequests: boolean
-  applicationId: string
-  defaultPrivacyLevel: DefaultPrivacyLevel
-  enablePrivacyForActionName: boolean
-  sessionReplaySampleRate: number
-  startSessionReplayRecordingManually: boolean
-  trackUserInteractions: boolean
-  betaEnableViewUpdates: boolean
-  trackViewsManually: boolean
-  trackResources: boolean
+  rulePsr: number | undefined
   trackResourceHeaders: MatchHeader[]
-  trackLongTasks: boolean
-  subdomain?: string
-  traceContextInjection: TraceContextInjection
-  plugins: RumPlugin[]
-  trackFeatureFlagsForEvents: FeatureFlagsForEvents[]
-  profilingSampleRate: number
-  propagateTraceBaggage: boolean
   allowedGraphQlUrls: GraphQlUrlOption[]
   remoteConfigurationId: string | undefined
 }
 
 export function validateAndBuildRumConfiguration(
-  initConfiguration: RumInitConfiguration,
-  errorStack?: string
+  initConfiguration: RumInitConfiguration
 ): RumConfiguration | undefined {
-  if (
-    initConfiguration.trackFeatureFlagsForEvents !== undefined &&
-    !Array.isArray(initConfiguration.trackFeatureFlagsForEvents)
-  ) {
-    display.warn('trackFeatureFlagsForEvents should be an array')
-  }
+  const config = validateAndBuildConfiguration(
+    initConfiguration as unknown as Record<string, unknown>,
+    RUM_SCHEMA,
+    display
+  )
 
-  if (!initConfiguration.applicationId) {
-    display.error('Application ID is not configured, no RUM data will be collected.')
+  if (!config) {
     return
   }
 
-  if (
-    !isSampleRate(initConfiguration.sessionReplaySampleRate, 'Session Replay') ||
-    !isSampleRate(initConfiguration.traceSampleRate, 'Trace')
-  ) {
-    return
-  }
+  const allowedTracingUrls = config.allowedTracingUrls.map(normalizeTracingOption).filter(Boolean) as TracingOption[]
 
-  if (initConfiguration.excludedActivityUrls !== undefined && !Array.isArray(initConfiguration.excludedActivityUrls)) {
-    display.error('Excluded Activity Urls should be an array')
-    return
-  }
-
-  const allowedTracingUrls = validateAndBuildTracingOptions(initConfiguration)
-  if (!allowedTracingUrls) {
-    return
-  }
-
-  const baseConfiguration = validateAndBuildConfiguration(initConfiguration, errorStack)
-
-  const allowedGraphQlUrls = validateAndBuildGraphQlOptions(initConfiguration)
-
-  if (!baseConfiguration) {
-    return
-  }
-
-  const sessionReplaySampleRate = initConfiguration.sessionReplaySampleRate ?? 0
-
-  return {
-    applicationId: initConfiguration.applicationId,
-    actionNameAttribute: initConfiguration.actionNameAttribute,
-    sessionReplaySampleRate,
-    startSessionReplayRecordingManually:
-      initConfiguration.startSessionReplayRecordingManually !== undefined
-        ? !!initConfiguration.startSessionReplayRecordingManually
-        : sessionReplaySampleRate === 0,
-    traceSampleRate: initConfiguration.traceSampleRate ?? 100,
-    rulePsr: isNumber(initConfiguration.traceSampleRate) ? initConfiguration.traceSampleRate / 100 : undefined,
-    allowedTracingUrls,
-    excludedActivityUrls: initConfiguration.excludedActivityUrls ?? [],
-    workerUrl: initConfiguration.workerUrl,
-    compressIntakeRequests: !!initConfiguration.compressIntakeRequests,
-    trackUserInteractions: !!(initConfiguration.trackUserInteractions ?? true),
-    betaEnableViewUpdates: !!initConfiguration.betaEnableViewUpdates,
-    trackViewsManually: !!initConfiguration.trackViewsManually,
-    trackResources: !!(initConfiguration.trackResources ?? true),
-    trackResourceHeaders: validateAndBuildTrackResourceHeaders(initConfiguration),
-    trackLongTasks: !!(initConfiguration.trackLongTasks ?? true),
-    subdomain: initConfiguration.subdomain,
-    defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
-      ? initConfiguration.defaultPrivacyLevel
-      : DefaultPrivacyLevel.MASK_USER_INPUT,
-    enablePrivacyForActionName: initConfiguration.enablePrivacyForActionName !== false,
-    traceContextInjection: objectHasValue(TraceContextInjection, initConfiguration.traceContextInjection)
-      ? initConfiguration.traceContextInjection
-      : TraceContextInjection.SAMPLED,
-    plugins: initConfiguration.plugins || [],
-    trackFeatureFlagsForEvents: initConfiguration.trackFeatureFlagsForEvents || [],
-    profilingSampleRate: initConfiguration.profilingSampleRate ?? 0,
-    propagateTraceBaggage: initConfiguration.propagateTraceBaggage !== false,
-    allowedGraphQlUrls,
-    remoteConfigurationId: getRemoteConfigurationId(initConfiguration),
-    ...baseConfiguration,
-  }
-}
-
-/**
- * Validates allowedTracingUrls and converts match options to tracing options
- */
-function validateAndBuildTracingOptions(initConfiguration: RumInitConfiguration): TracingOption[] | undefined {
-  if (initConfiguration.allowedTracingUrls === undefined) {
-    return []
-  }
-  if (!Array.isArray(initConfiguration.allowedTracingUrls)) {
-    display.error('Allowed Tracing URLs should be an array')
-    return
-  }
-  if (initConfiguration.allowedTracingUrls.length !== 0 && initConfiguration.service === undefined) {
+  if (allowedTracingUrls.length > 0 && !config.service) {
     display.error('Service needs to be configured when tracing is enabled')
     return
   }
-  // Convert from (MatchOption | TracingOption) to TracingOption, remove unknown properties
-  const tracingOptions: TracingOption[] = []
-  initConfiguration.allowedTracingUrls.forEach((option) => {
-    const normalizedOption = normalizeTracingOption(option)
-    if (normalizedOption) {
-      tracingOptions.push(normalizedOption)
-    } else {
-      display.warn(
-        'Allowed Tracing Urls parameters should be a string, RegExp, function, or an object. Ignoring parameter',
-        option
-      )
-    }
-  })
 
-  return tracingOptions
+  return {
+    ...config,
+    allowedTracingUrls,
+    beforeSend: config.beforeSend
+      ? (catchUserErrors(config.beforeSend, 'beforeSend threw an error:') as typeof config.beforeSend)
+      : undefined,
+    rulePsr: isNumber(initConfiguration.traceSampleRate) ? initConfiguration.traceSampleRate / 100 : undefined,
+    trackResourceHeaders: validateAndBuildTrackResourceHeaders(initConfiguration),
+    allowedGraphQlUrls: validateAndBuildGraphQlOptions(initConfiguration),
+    remoteConfigurationId: getRemoteConfigurationId(initConfiguration),
+  }
 }
 
 /**

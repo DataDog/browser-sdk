@@ -1,3 +1,9 @@
+/** Base origin for Datadog documentation links referenced in display messages. */
+export const DOCS_ORIGIN = 'https://docs.datadoghq.com'
+
+/** Prefix used before a documentation link in a display message (e.g. `"${MORE_DETAILS} ${DOCS_ORIGIN}/..."`). */
+export const MORE_DETAILS = 'More details:'
+
 /** Names of the console methods wrapped by {@link Display}. */
 export const ConsoleApiName = {
   log: 'log',

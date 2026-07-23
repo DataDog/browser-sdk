@@ -51,7 +51,8 @@
       "@datadog/js-core/time": ["./packages/js-core/src/entries/time"],
       "@datadog/js-core/monitor": ["./packages/js-core/src/entries/monitor"],
       "@datadog/js-core/util": ["./packages/js-core/src/entries/util"],
-      "@datadog/js-core/transport": ["./packages/js-core/src/entries/transport"]
+      "@datadog/js-core/transport": ["./packages/js-core/src/entries/transport"],
+      "@datadog/js-core/configuration": ["./packages/js-core/src/entries/configuration"]
     }
   }
 }

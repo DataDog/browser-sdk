@@ -1,14 +1,18 @@
 import { globalObject } from '@datadog/js-core/util'
-import { registerCleanupTask, replaceMockable, mockCookies, collectAsyncCalls } from '../../../../test'
+import {
+  registerCleanupTask,
+  replaceMockable,
+  mockCookies,
+  mockBaseConfiguration,
+  collectAsyncCalls,
+} from '../../../../test'
 import { Observable } from '../../../tools/observable'
 import type { SessionState } from '../sessionState'
-import type { Configuration, InitConfiguration } from '../../configuration'
+import type { Configuration } from '../../configuration'
 import { buildCookieOptions } from '../../configuration'
 import { SESSION_COOKIE_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY, SessionPersistence } from '../sessionConstants'
 import { CookieApi, LEGACY_SESSION_STORE_KEY } from './sessionStoreStrategy'
 import { createCookieAccess, selectCookieStrategy, initCookieStrategy } from './sessionInCookie'
-
-const DEFAULT_INIT_CONFIGURATION = { clientToken: 'abc', trackAnonymousUser: true }
 
 function createMockCookieAccess() {
   let storedValues: string[] = []
@@ -48,14 +52,9 @@ function createMockCookieAccess() {
   }
 }
 
-function setupCookieStrategy(partialInitConfiguration: Partial<InitConfiguration> = {}) {
-  const initConfiguration = {
-    ...DEFAULT_INIT_CONFIGURATION,
-    ...partialInitConfiguration,
-  } as InitConfiguration
-
-  const cookieOptions = buildCookieOptions(initConfiguration)!
-  const configuration = { trackAnonymousUser: initConfiguration.trackAnonymousUser ?? true } as Configuration
+function setupCookieStrategy(partialConfiguration: Partial<Configuration> = {}) {
+  const configuration = mockBaseConfiguration({ trackAnonymousUser: true, ...partialConfiguration })
+  const cookieOptions = buildCookieOptions(configuration)!
 
   const { mockCookieAccess, mockCookie } = createMockCookieAccess()
   replaceMockable(createCookieAccess, () => mockCookieAccess)
@@ -237,11 +236,6 @@ describe('session in cookie strategy', () => {
   })
 
   describe('selectCookieStrategy', () => {
-    function makeConfiguration(): Configuration {
-      const cookieOptions = buildCookieOptions({ clientToken: 'abc' })
-      return { cookieOptions } as Configuration
-    }
-
     function disableCookieStore() {
       replaceMockable(globalObject.cookieStore, undefined)
     }
@@ -255,26 +249,21 @@ describe('session in cookie strategy', () => {
         pending('CookieStore API not available')
       }
       mockCookies()
-      const strategy = await selectCookieStrategy(makeConfiguration())
+      const strategy = await selectCookieStrategy(mockBaseConfiguration())
       expect(strategy).toEqual(jasmine.objectContaining({ cookieApi: CookieApi.COOKIE_STORE }))
     })
 
     it('falls back to document.cookie when CookieStore is unavailable', async () => {
       disableCookieStore()
       mockCookies()
-      const strategy = await selectCookieStrategy(makeConfiguration())
+      const strategy = await selectCookieStrategy(mockBaseConfiguration())
       expect(strategy).toEqual(jasmine.objectContaining({ cookieApi: CookieApi.DOCUMENT_COOKIE }))
     })
 
     it('returns undefined when both APIs are unavailable', async () => {
       disableCookieStore()
       disableDocumentCookie()
-      const strategy = await selectCookieStrategy(makeConfiguration())
-      expect(strategy).toBeUndefined()
-    })
-
-    it('returns undefined when cookieOptions is undefined', async () => {
-      const strategy = await selectCookieStrategy({ cookieOptions: undefined } as unknown as Configuration)
+      const strategy = await selectCookieStrategy(mockBaseConfiguration())
       expect(strategy).toBeUndefined()
     })
   })

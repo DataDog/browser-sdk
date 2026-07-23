@@ -4,7 +4,7 @@ import { NO_ERROR_STACK_PRESENT_MESSAGE } from '../error/error'
 import { callMonitored } from '../../tools/monitor'
 import type { ExperimentalFeature } from '../../tools/experimentalFeatures'
 import { addExperimentalFeatures } from '../../tools/experimentalFeatures'
-import { validateAndBuildConfiguration, type Configuration } from '../configuration'
+import { type Configuration } from '../configuration'
 import {
   setNavigatorOnLine,
   setNavigatorConnection,
@@ -448,10 +448,7 @@ describe('startTelemetryTransport', () => {
     const interceptor = interceptRequests()
     const telemetryObservable = new Observable<TelemetryEvent & Context>()
 
-    const { stop } = startTelemetryTransport(
-      validateAndBuildConfiguration({ clientToken: 'xxx' })!,
-      telemetryObservable
-    )
+    const { stop } = startTelemetryTransport({ clientToken: 'xxx' } as Configuration, telemetryObservable)
 
     registerCleanupTask(stop)
 

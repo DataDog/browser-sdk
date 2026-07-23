@@ -10,9 +10,13 @@ import {
   isServerError,
   ResponseBodyAction,
   safeTruncate,
+  ONE_KIBI_BYTE,
 } from '@datadog/browser-core'
 import { isIntakeUrl } from '@datadog/js-core/transport'
 import type { LogsConfiguration } from '../configuration'
+
+/** arbitrary value, byte precision not needed */
+export const DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT = 32 * ONE_KIBI_BYTE
 import type { LifeCycle } from '../lifeCycle'
 import type { LogsEventDomainContext } from '../../domainContext.types'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -63,7 +67,7 @@ export function startNetworkErrorCollection(
         message: `${format(type)} error ${request.method} ${request.url}`,
         date: request.startClocks.timeStamp,
         error: {
-          stack: safeTruncate(stack, configuration.requestErrorResponseLengthLimit, '...'),
+          stack: safeTruncate(stack, DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT, '...'),
           // We don't know if the error was handled or not, so we set it to undefined
           handling: undefined,
         },
