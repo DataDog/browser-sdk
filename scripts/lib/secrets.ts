@@ -34,6 +34,13 @@ export function getGithubReadToken() {
   return new OctoStsToken('read')
 }
 
+/**
+ * This token is scoped to main branch only.
+ */
+export function getGithubCommitToken() {
+  return new OctoStsToken('commit')
+}
+
 export function getOrg2ApiKey(): string {
   return getSecretKey('ci.browser-sdk.datadog_ci_api_key')
 }
