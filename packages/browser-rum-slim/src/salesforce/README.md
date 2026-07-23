@@ -318,18 +318,31 @@ If you configure this through the Salesforce UI:
 
 ### 3. Configure CSP for the Datadog intake endpoint
 
-In Experience Builder:
+Allow the browser to send RUM events to Datadog. This requires two changes.
 
-1. Go to **Settings > Security & Privacy**.
-2. Change the security level from **Strict CSP** to **Relaxed CSP**.
-3. Add the Datadog browser intake endpoint as a trusted site.
+#### Add a Trusted URL in Setup
 
-Use the following trusted site configuration for US1:
+1. Go to **Setup > Security > Trusted URLs**.
+2. Click **New Trusted URL**.
+3. Fill in the form:
+   - **API Name:** `browser_intake_datadoghq_com`
+   - **URL:** your Datadog browser intake endpoint (see table below)
+   - **Active:** checked
+4. In **CSP Directives**, check **connect-src (scripts)**. This allows the SDK to send RUM events to Datadog.
+5. Click **Save**.
 
-| Field | Value                                  |
-| ----- | -------------------------------------- |
-| Name  | `browser_intake_datadoghq_com`         |
-| URL   | `https://browser-intake-datadoghq.com` |
+#### Relax CSP in Experience Builder
+
+1. Open the site in Experience Builder.
+2. Go to **Settings > Security & Privacy**.
+3. Change the security level from **Strict CSP** to **Relaxed CSP**.
+
+Use the following trusted URL configuration for US1:
+
+| Field    | Value                                  |
+| -------- | -------------------------------------- |
+| API Name | `browser_intake_datadoghq_com`         |
+| URL      | `https://browser-intake-datadoghq.com` |
 
 For non-US1 Datadog sites, use the intake endpoint for the correct [Datadog site][4].
 
@@ -433,18 +446,31 @@ If you configure this through the Salesforce UI:
 
 ### 2. Configure CSP for the Datadog intake endpoint
 
-In Experience Builder:
+Allow the browser to send RUM events to Datadog. This requires two changes.
 
-1. Go to **Settings > Security & Privacy**.
-2. Change the security level from **Strict CSP** to **Relaxed CSP**.
-3. Add the Datadog browser intake endpoint as a trusted site.
+#### Add a Trusted URL in Setup
 
-Use the following trusted site configuration for US1:
+1. Go to **Setup > Security > Trusted URLs**.
+2. Click **New Trusted URL**.
+3. Fill in the form:
+   - **API Name:** `browser_intake_datadoghq_com`
+   - **URL:** your Datadog browser intake endpoint (see table below)
+   - **Active:** checked
+4. In **CSP Directives**, check **connect-src (scripts)**. This allows the SDK to send RUM events to Datadog.
+5. Click **Save**.
 
-| Field | Value                                  |
-| ----- | -------------------------------------- |
-| Name  | `browser_intake_datadoghq_com`         |
-| URL   | `https://browser-intake-datadoghq.com` |
+#### Relax CSP in Experience Builder
+
+1. Open the site in Experience Builder.
+2. Go to **Settings > Security & Privacy**.
+3. Change the security level from **Strict CSP** to **Relaxed CSP**.
+
+Use the following trusted URL configuration for US1:
+
+| Field    | Value                                  |
+| -------- | -------------------------------------- |
+| API Name | `browser_intake_datadoghq_com`         |
+| URL      | `https://browser-intake-datadoghq.com` |
 
 For non-US1 Datadog sites, use the intake endpoint for the correct [Datadog site][4].
 
