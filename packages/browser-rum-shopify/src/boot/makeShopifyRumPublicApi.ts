@@ -15,9 +15,9 @@ interface ShopifyInitConfiguration extends RumInitConfiguration {
  * suited to that iframe (see below). Otherwise (storefront context), forwards to `init()` as-is.
  */
 export function makeShopifyRumPublicApi(datadogRum: RumPublicApi): RumPublicApi {
-  const originalInit = datadogRum.init.bind(datadogRum);
+  const originalInit = datadogRum.init.bind(datadogRum)
 
-  datadogRum.init = function(initConfiguration: RumInitConfiguration | ShopifyInitConfiguration) {
+  datadogRum.init = function (initConfiguration: RumInitConfiguration | ShopifyInitConfiguration) {
     if ('shopifyAnalytics' in initConfiguration && initConfiguration.shopifyAnalytics) {
       const { shopifyAnalytics: analytics, ...initOptions } = initConfiguration
       mockable(patchSandboxedIframeApis)()
@@ -38,5 +38,5 @@ export function makeShopifyRumPublicApi(datadogRum: RumPublicApi): RumPublicApi 
     return originalInit(initConfiguration)
   }
 
-  return datadogRum;
+  return datadogRum
 }
