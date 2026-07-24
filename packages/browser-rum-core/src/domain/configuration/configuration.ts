@@ -713,6 +713,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     use_remote_configuration_proxy: !!configuration.remoteConfigurationProxy,
     track_resource_headers: getTrackResourceHeadersTelemetryValue(configuration.trackResourceHeaders),
     beta_enable_view_updates: configuration.betaEnableViewUpdates,
+    beta_track_web_sockets: configuration.betaTrackWebSockets,
     ...baseSerializedConfiguration,
   } satisfies RawTelemetryConfiguration
 }

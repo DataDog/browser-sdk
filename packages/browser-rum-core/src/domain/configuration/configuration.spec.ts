@@ -846,7 +846,7 @@ describe('serializeRumConfiguration', () => {
       propagateTraceBaggage: true,
       trackResourceHeaders: true,
       betaEnableViewUpdates: true,
-      betaTrackWebSockets: true,
+      betaTrackWebSockets: false,
     }
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
@@ -862,9 +862,7 @@ describe('serializeRumConfiguration', () => {
           ? 'track_long_task' // We forgot the s, keeping this for backward compatibility
           : // The following options are not reported as telemetry. Please avoid adding more of them.
             // `remoteConfiguration` is covered by the legacy `remote_configuration_id` field.
-            // TODO: report `betaTrackWebSockets` as `beta_track_web_sockets` once the generated telemetry
-            // schema declares it; then remove it here and serialize it in `serializeRumConfiguration`.
-            Key extends 'applicationId' | 'subdomain' | 'remoteConfiguration' | 'betaTrackWebSockets'
+            Key extends 'applicationId' | 'subdomain' | 'remoteConfiguration'
             ? never
             : CamelToSnakeCase<Key>
     // By specifying the type here, we can ensure that serializeConfiguration is returning an
@@ -905,6 +903,7 @@ describe('serializeRumConfiguration', () => {
       profiling_sample_rate: 42,
       track_resource_headers: 'default_headers',
       beta_enable_view_updates: true,
+      beta_track_web_sockets: false,
     })
   })
 })
